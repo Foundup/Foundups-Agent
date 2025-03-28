@@ -1,24 +1,79 @@
-# FoundUps Agent - Module Change Log (ModLog)
+# FoundUps Agent Modular Change Log
 
-This log tracks significant changes to modules within the FoundUps Agent project, adhering to the Windsurf Protocol.
+This log tracks module changes, updates, and versioning for FoundUps Agent under the Windsurf modular development model.
 
-| Module        | Version | Timestamp (UTC)     | Description                                                                 | Status      | Author      | PR Link |
-|---------------|---------|---------------------|-----------------------------------------------------------------------------|-------------|-------------|---------|
-| `project`     | 0.1.0   | 2024-03-28 13:10:00 | Initial project structure setup with all core directories                    | Completed   | AI Assistant| N/A     |
-| `utils`       | 0.1.0   | 2024-03-28 13:15:00 | Added `logging_config.py` for centralized logging setup                     | Completed   | AI Assistant| N/A     |
-| `.gitignore`  | 0.1.0   | 2024-03-28 13:17:00 | Created comprehensive gitignore rules for Python, credentials, and logs     | Completed   | AI Assistant| N/A     |
-| `rules`       | 0.1.0   | 2024-03-28 13:12:00 | Created `coding_rules.json` with Windsurf Protocol standards               | Completed   | AI Assistant| N/A     |
-| `config`      | 0.1.0   | 2024-03-28 13:44:00 | Created `.env.example` with all required environment variables              | Completed   | AI Assistant| N/A     |
-| `modules`     | 0.1.0   | 2024-03-28 13:37:00 | Added `stream_resolver.py` for stream management                           | Completed   | AI Assistant| N/A     |
-| `modules`     | 0.2.0   | 2024-03-28 13:49:00 | Implemented `youtube_auth.py` for OAuth2 flow and service creation         | Completed   | AI Assistant| N/A     |
-| `modules`     | 0.3.0   | 2024-03-28 13:50:00 | Created `livechat.py` with chat listener and message handling              | Completed   | AI Assistant| N/A     |
-| `main.py`     | 0.1.0   | 2024-03-28 13:51:00 | Created main entry point with arg parsing and error handling               | Completed   | AI Assistant| N/A     |
-| `docker`      | 0.1.0   | 2024-03-28 13:52:00 | Created Dockerfile with proper volume mounts and security notes            | Completed   | AI Assistant| N/A     |
-| `docs`        | 0.1.0   | 2024-03-28 13:54:00 | Enhanced README.md with comprehensive setup and usage instructions          | Completed   | AI Assistant| N/A     |
-| `docs`        | 0.2.0   | 2024-03-28 13:58:00 | Added project logo to docs/logo.png                                        | Completed   | AI Assistant| N/A     |
-| `license`     | 0.1.0   | 2024-03-28 14:03:00 | Added MIT License file                                                     | Completed   | AI Assistant| N/A     |
-| `docs`        | 0.3.0   | 2024-03-28 14:05:00 | Created comprehensive CONTRIBUTING.md guidelines                            | Completed   | AI Assistant| N/A     |
+## Project Roadmap
 
----
-**Status Codes:** `Planned`, `In Progress`, `Completed`, `Deprecated`
+### ✅ Proof of Concept
+- [x] Connect to YouTube livestream
+- [x] Authenticate via OAuth
+- [x] Send greeting message on join
+- [x] Log chat messages per user
 
+### 🚧 Prototype
+- [x] StreamResolver module for dynamic video ID
+- [ ] Modular chat processor with LLM hooks
+- [ ] AI response and moderation module
+- [ ] Prompt-throttle logic by channel activity
+- [ ] ModLog updater
+- [ ] Agent personality framework
+
+### ⏳ Minimum Viable Product (MVP)
+- [ ] Make bot publicly usable by other YouTubers
+- [ ] Website with user onboarding (landing page + auth)
+- [ ] Cloud deployment and user instance spin-up
+- [ ] Bot tokenization and usage metering
+- [ ] Admin dashboard for managing streams
+- [ ] AI persona config for streamers
+- [ ] Payment/paywall system
+
+### 🧩 Release Phases
+
+#### Tier 1 — Blockchain Foundation (DAE)
+- [ ] Blockchain integration module toggle via `.env`
+- [ ] Token drop + reward logic
+- [ ] Wallet generation for viewers
+- [ ] Token reclaim + decay logic
+
+#### Tier 2 — DAO Evolution
+- [ ] Token governance structure
+- [ ] Voting logic for protocol decisions
+- [ ] DAO treasury and fund routing
+
+## Status Key
+- Planned
+- In Progress
+- Complete
+- Deprecated
+
+## [ModLog Updater] - Updated
+- Version: 1.4.0
+- Date: 2025-03-29 05:14
+- Description: Fixed entry ordering to maintain descending chronological order
+- Notes: Added date parsing and sorting functionality
+
+
+## [ModLog Updater] - Updated
+- Version: 1.3.0
+- Date: 2025-03-29 05:12
+- Description: Updated Project Roadmap with new multi-phase structure
+- Notes: Added detailed roadmap with Proof of Concept, Prototype, MVP, and Release Phases
+
+## [ModLog Updater] - Updated
+- Version: 1.1.0
+- Date: 2025-03-29 04:53
+- Description: Updated to prepend new entries at the top of the log
+- Notes: Improved UX for scanning recent updates
+
+## [ModLog Updater] - Added
+- Version: 1.0.0
+- Date: 2025-03-29 04:49
+- Description: Added utility module for automatic ModLog updates
+- Notes: Initial implementation with basic functionality
+
+
+## [ModLog Updater] - Added
+- Version: 1.0.0
+- Date: 2025-03-29 04:44
+- Description: Added utility module for automatic ModLog updates
+- Notes: Initial implementation with basic functionality
