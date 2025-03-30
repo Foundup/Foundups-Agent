@@ -33,6 +33,7 @@ else:
 def get_env_variable(key: str, default: Optional[str] = None) -> Optional[str]:
     """
     Retrieves the value of an environment variable, respecting load priority.
+    For API keys, implements fallback logic when quota is exceeded.
 
     Priority Order:
     1. System Environment Variables (set before script execution)
@@ -49,14 +50,28 @@ def get_env_variable(key: str, default: Optional[str] = None) -> Optional[str]:
         The `default` value if the key is not found and a `default` was provided.
         `None` if the key is not found and no `default` was provided. Logs a warning in this case.
     """
-    # os.getenv() automatically checks the current environment dictionary (os.environ),
-    # which has been populated/updated by the load_dotenv calls above.
-    value = os.getenv(key, default)
-
-    # Log a warning only if the key was truly not found *and* no fallback was provided
-    if value is None and default is None:
-        logger.warning(f"Environment variable '{key}' not found and no default value was provided.")
-    else:
-        logger.debug(f"Retrieved environment variable '{key}' with value: {value}")
-
-    return value 
+    # Special handling for API keys with fallback
+    if key == "YOUTUBE_API_KEY":
+        primary_key = os.getenv(key)
+        if primary_key:
+            return primary_key
+            
+        # Try fallback API key
+        fallback_key = os.getenv("YOUTUBE_API_KEY2")
+        if fallback_key:
+            logger.info("Using fallback YouTube API key (YOUTUBE_API_KEY2)")
+            return fallback_key
+            
+        logger.warning("No YouTube API keys found in environment variables")
+        return default
+        
+    # Standard environment variable retrieval
+    value = os.getenv(key)
+    if value is not None:
+        return value
+        
+    if default is not None:
+        return default
+        
+    logger.warning(f"Environment variable '{key}' not found and no default provided")
+    return None 
