@@ -1,3 +1,7 @@
+# Logs
+02_logs/
+*.log
+
 # Python
 __pycache__/
 *.py[cod]
@@ -22,9 +26,8 @@ wheels/
 
 # Virtual Environment
 venv/
-ENV/
 env/
-.env
+ENV/
 
 # IDE
 .idea/
@@ -32,16 +35,15 @@ env/
 *.swp
 *.swo
 
-# Logs
-*.log
-logs/
-memory/
+# Environment variables
+.env
+.env.local
 
 # Credentials
-credentials/
-*.json
-!package.json
+credentials/*.json
+!credentials/.gitkeep
 
 # System Files
 .DS_Store
 Thumbs.db 
+02_log\DevLog.md

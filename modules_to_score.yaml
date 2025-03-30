@@ -1,0 +1,95 @@
+# modules_to_score.yaml
+# Define modules and their scores (1-5) for prioritization.
+
+modules:
+  - name: banter_engine
+    scores:
+      CX: 4  # Complex AI/ML implementation
+      IM: 5  # Critical for user engagement
+      IP: 5  # High impact on user experience
+      ADV: 5 # Valuable for AI training
+      ADF: 4 # Good potential for AI assistance
+      DF: 4  # Other modules depend on this
+      RF: 3  # Moderate risk if delayed
+
+  - name: livechat
+    scores:
+      CX: 3  # Standard chat implementation
+      IM: 5  # Critical for real-time interaction
+      IP: 4  # High impact on user engagement
+      ADV: 4 # Good for AI training
+      ADF: 4 # Good potential for AI assistance
+      DF: 4  # Other modules need this
+      RF: 4  # High risk if delayed
+
+  - name: live_chat_poller
+    scores:
+      CX: 2  # Standard polling implementation
+      IM: 4  # Important for data collection
+      IP: 3  # Moderate impact
+      ADV: 3 # Moderate AI training value
+      ADF: 3 # Moderate AI assistance potential
+      DF: 3  # Some modules depend on this
+      RF: 2  # Low risk if delayed
+
+  - name: live_chat_processor
+    scores:
+      CX: 3  # Standard processing implementation
+      IM: 4  # Important for data handling
+      IP: 4  # High impact on data quality
+      ADV: 4 # Good for AI training
+      ADF: 4 # Good potential for AI assistance
+      DF: 4  # Other modules need this
+      RF: 3  # Moderate risk if delayed
+
+  - name: stream_resolver
+    scores:
+      CX: 3  # Standard stream handling
+      IM: 4  # Important for stream management
+      IP: 4  # High impact on functionality
+      ADV: 2 # Limited AI training value
+      ADF: 3 # Moderate AI assistance potential
+      DF: 3  # Some modules depend on this
+      RF: 3  # Moderate risk if delayed
+
+  - name: token_manager
+    scores:
+      CX: 2  # Standard token handling
+      IM: 5  # Critical for authentication
+      IP: 4  # High impact on security
+      ADV: 1 # Limited AI training value
+      ADF: 2 # Limited AI assistance potential
+      DF: 4  # Many modules need this
+      RF: 4  # High risk if delayed
+
+  - name: youtube_auth
+    scores:
+      CX: 2  # Standard auth implementation
+      IM: 5  # Critical for API access
+      IP: 4  # High impact on functionality
+      ADV: 1 # Limited AI training value
+      ADF: 2 # Limited AI assistance potential
+      DF: 4  # Many modules need this
+      RF: 4  # High risk if delayed
+
+  # --- Example of missing score (will cause validation error) ---
+  # - name: IncompleteModule
+  #   scores:
+  #     CX: 1
+  #     IM: 1
+  #     IP: 1
+  #     ADV: 1
+  #     ADF: 1
+  #     # DF: is missing
+  #     RF: 1
+
+  # --- Example of invalid score value (will cause validation error) ---
+  # - name: InvalidScoreModule
+  #   scores:
+  #     CX: 1
+  #     IM: 1
+  #     IP: 6 # Invalid score > 5
+  #     ADV: 1
+  #     ADF: 1
+  #     DF: 1
+  #     RF: 1 

@@ -1,9 +1,10 @@
 import unittest
-from unittest.mock import patch, MagicMock, mock_open, call
+from unittest.mock import patch, MagicMock, mock_open, call, Mock
 import os
 from datetime import datetime
 from googleapiclient.errors import HttpError
 from modules.livechat import LiveChatListener
+from modules.banter_engine import BanterEngine
 
 class TestLiveChatListener(unittest.TestCase):
     """Test suite for LiveChatListener class."""
@@ -213,6 +214,106 @@ class TestLiveChatListener(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         pass
+
+class TestLiveChatEmojiTrigger(unittest.TestCase):
+    def setUp(self):
+        """Set up test environment before each test."""
+        self.mock_youtube = Mock()
+        self.listener = LiveChatListener(
+            youtube_service=self.mock_youtube,
+            video_id="test_video_id"
+        )
+        self.listener.live_chat_id = "test_chat_id"
+        self.listener.send_chat_message = Mock(return_value=True)
+        self.listener.banter_engine = Mock()  # Mock the banter engine
+
+    def test_emoji_trigger_all_present(self):
+        """Test when all required emojis are present in message."""
+        test_message = {
+            "id": "test_id",
+            "snippet": {
+                "displayMessage": "Hello ✊ world ✋ test 🖐️"
+            },
+            "authorDetails": {
+                "displayName": "TestUser"
+            }
+        }
+        
+        # Set up mock response
+        self.listener.banter_engine.get_random_banter.return_value = "Test banter response"
+        
+        self.listener._process_message(test_message)
+        
+        # Verify banter was called with correct theme
+        self.listener.banter_engine.get_random_banter.assert_called_once_with(theme="greeting")
+        
+        # Verify send_chat_message was called
+        self.listener.send_chat_message.assert_called_once_with("Test banter response")
+
+    def test_emoji_trigger_missing_emoji(self):
+        """Test when one or more required emojis are missing."""
+        test_message = {
+            "id": "test_id",
+            "snippet": {
+                "displayMessage": "Hello ✊ world ✋ test"  # Missing 🖐️
+            },
+            "authorDetails": {
+                "displayName": "TestUser"
+            }
+        }
+        
+        self.listener._process_message(test_message)
+        
+        # Verify banter was not called
+        self.listener.banter_engine.get_random_banter.assert_not_called()
+        
+        # Verify send_chat_message was not called
+        self.listener.send_chat_message.assert_not_called()
+
+    def test_emoji_trigger_send_failure(self):
+        """Test when banter response fails to send."""
+        test_message = {
+            "id": "test_id",
+            "snippet": {
+                "displayMessage": "Hello ✊ world ✋ test 🖐️"
+            },
+            "authorDetails": {
+                "displayName": "TestUser"
+            }
+        }
+        
+        # Set up mock response
+        self.listener.banter_engine.get_random_banter.return_value = "Test banter response"
+        self.listener.send_chat_message.return_value = False
+        
+        self.listener._process_message(test_message)
+        
+        # Verify banter was called
+        self.listener.banter_engine.get_random_banter.assert_called_once_with(theme="greeting")
+        
+        # Verify send_chat_message was called but failed
+        self.listener.send_chat_message.assert_called_once_with("Test banter response")
+
+    def test_emoji_trigger_banter_error(self):
+        """Test when banter engine raises an exception."""
+        test_message = {
+            "id": "test_id",
+            "snippet": {
+                "displayMessage": "Hello ✊ world ✋ test 🖐️"
+            },
+            "authorDetails": {
+                "displayName": "TestUser"
+            }
+        }
+        
+        # Make banter engine raise an exception
+        self.listener.banter_engine.get_random_banter.side_effect = Exception("Test banter error")
+        
+        # Should not raise exception
+        self.listener._process_message(test_message)
+        
+        # Verify send_chat_message was not called
+        self.listener.send_chat_message.assert_not_called()
 
 if __name__ == '__main__':
     unittest.main()

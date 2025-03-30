@@ -1,72 +1,69 @@
-import os
 import logging
-import argparse
+import os
+import sys
+import asyncio
 from dotenv import load_dotenv
-import googleapiclient.errors
-from modules.youtube_auth import get_authenticated_service
-from modules.livechat import LiveChatListener
-from modules.stream_resolver import get_active_livestream_video_id
-from utils.logging_config import setup_logging
+from googleapiclient.discovery import build
+from modules.stream_resolver.src.stream_resolver import get_active_livestream_video_id
+from modules.livechat.src.livechat import LiveChatListener
+from utils.oauth_manager import get_authenticated_service
 from utils.env_loader import get_env_variable
 
-# --- Setup Logging ---
-# This must be done before importing modules that use logging
-setup_logging()
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
-# --- Load Environment Variables ---
-# This ensures proper loading order: system > .env.local > .env
-load_dotenv(override=True)  # Force reload environment variables
+def mask_sensitive_id(id_str: str) -> str:
+    """Mask sensitive IDs in logs."""
+    if not id_str:
+        return "None"
+    return f"{id_str[:4]}...{id_str[-4:]}"
 
-# Get environment variables after loading
-CHANNEL_ID = get_env_variable("CHANNEL_ID")
-YOUTUBE_API_KEY = get_env_variable("YOUTUBE_API_KEY")
-AGENT_GREETING_MESSAGE = get_env_variable("AGENT_GREETING_MESSAGE", default="Hello everyone! reporting for duty. I'm here to listen and learn (and maybe crack a joke). Beep boop!")
-
-def main():
+async def main():
     """Main entry point for the FoundUps Agent."""
-    logger = logging.getLogger(__name__)
-    logger.info("--- FoundUps Agent Initializing ---")
-
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description="FoundUps Agent - YouTube Livestream Chat Bot")
-    parser.add_argument(
-        "--video-id",
-        help="YouTube Video ID of the livestream to join. If not provided, will search for active livestream on the channel.",
-        default=None
-    )
-    args = parser.parse_args()
-
     try:
-        # Attempt YouTube authentication
-        logger.info("Attempting YouTube authentication...")
-        youtube_service = get_authenticated_service()
-        logger.info("Authentication successful.")
-
-        # Get video ID either from command line or by searching for active livestream
-        video_id = args.video_id
-        if not video_id:
-            if not CHANNEL_ID:
-                logger.critical("Error: CHANNEL_ID is required in .env file when no video ID is provided.")
-                return
-                
-            logger.info("No video ID provided, searching for active livestream...")
-            video_id = get_active_livestream_video_id(youtube_service, CHANNEL_ID)
-            if video_id:
-                logger.info(f"Found active livestream with video ID: {video_id}")
-            else:
-                logger.error("No active livestream found on the channel.")
-                return
-
-        # Initialize and start the chat listener
-        logger.info(f"Initializing chat listener for video ID: {video_id}")
-        chat_listener = LiveChatListener(youtube_service, video_id)
-        chat_listener.start_listening()
-
-    except googleapiclient.errors.HttpError as http_error:
-        logger.error(f"HTTP error occurred: {http_error}")
+        # Load environment variables
+        load_dotenv()
+        
+        # Get API key and channel ID
+        api_key = get_env_variable("YOUTUBE_API_KEY")
+        channel_id = get_env_variable("CHANNEL_ID")
+        
+        if not api_key or not channel_id:
+            logger.error("Missing required environment variables")
+            return
+            
+        # Initialize YouTube API client with OAuth
+        youtube = get_authenticated_service()
+        if not youtube:
+            logger.error("Failed to get authenticated YouTube service")
+            return
+        
+        # Get active livestream
+        logger.info(f"Attempting to find active livestream for channel ID: {mask_sensitive_id(channel_id)}")
+        result = get_active_livestream_video_id(youtube, channel_id)
+        
+        if not result:
+            logger.error("No active livestream found")
+            return
+            
+        video_id, chat_id = result
+        logger.info(f"Found active livestream - Video ID: {mask_sensitive_id(video_id)}, Chat ID: {mask_sensitive_id(chat_id)}")
+        
+        # Initialize chat listener
+        logger.info("Starting chat listener...")
+        listener = LiveChatListener(youtube, video_id, chat_id)
+        
+        # Start listening to chat
+        logger.info("Starting chat polling...")
+        await listener.start_listening()
+        
     except Exception as e:
-        logger.error(f"Critical error: {e}")
+        logger.error(f"Error in main: {str(e)}")
         raise
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

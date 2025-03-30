@@ -5,79 +5,108 @@ import google.oauth2.credentials
 import google_auth_oauthlib.flow
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
+from googleapiclient.errors import HttpError
 
 logger = logging.getLogger(__name__)
+
+def get_credentials_for_index(index):
+    """
+    Get credentials for a specific index (1-4).
+    Returns tuple of (client_secrets_file, token_file) or None if not found.
+    """
+    client_secrets = os.getenv(f'GOOGLE_CLIENT_SECRETS_FILE_{index}')
+    token_file = os.getenv(f'OAUTH_TOKEN_FILE_{index}')
+    
+    if not client_secrets or not token_file:
+        return None
+        
+    if not os.path.exists(client_secrets):
+        logger.error(f"Client secrets file not found at: {client_secrets}")
+        return None
+        
+    return client_secrets, token_file
 
 def get_authenticated_service():
     """
     Authenticates the user using OAuth 2.0 and returns a YouTube API service object.
     Handles token loading, refreshing, and the initial authorization flow.
+    Implements multi-client OAuth fallback for quota management.
     """
     load_dotenv()
-    client_secrets_file = os.getenv('GOOGLE_CLIENT_SECRETS_FILE')
     scopes = os.getenv('YOUTUBE_SCOPES', '').split()
-    token_file = os.getenv('OAUTH_TOKEN_FILE', 'credentials/oauth_token.json')
-
-    if not client_secrets_file or not os.path.exists(client_secrets_file):
-        logger.error(f"Client secrets file not found at: {client_secrets_file}")
-        raise FileNotFoundError(f"Client secrets file not found: {client_secrets_file}")
+    
     if not scopes:
         logger.error("YouTube scopes not defined in .env file.")
         raise ValueError("YOUTUBE_SCOPES must be defined in .env")
 
-    creds = None
-    # The file token_file stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first time.
-    if os.path.exists(token_file):
-        try:
-            creds = google.oauth2.credentials.Credentials.from_authorized_user_file(token_file, scopes)
-            logger.info(f"Loaded credentials from {token_file}")
-        except Exception as e:
-            logger.error(f"Failed to load credentials from {token_file}: {e}")
-            # Optionally delete the corrupted token file?
-            # os.remove(token_file)
+    # Try each credential set in sequence
+    for index in range(1, 5):
+        logger.info(f"Attempting authentication with credential set {index}")
+        creds_data = get_credentials_for_index(index)
+        if not creds_data:
+            continue
+            
+        client_secrets_file, token_file = creds_data
+        creds = None
 
-
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            logger.info("Credentials expired, attempting refresh...")
+        # Try to load existing credentials
+        if os.path.exists(token_file):
             try:
-                creds.refresh(Request())
-                logger.info("Credentials refreshed successfully.")
+                creds = google.oauth2.credentials.Credentials.from_authorized_user_file(token_file, scopes)
+                logger.info(f"Loaded credentials from {token_file}")
             except Exception as e:
-                logger.error(f"Failed to refresh token: {e}. Need to re-authenticate.")
-                # Force re-authentication if refresh fails
-                creds = None
-        else:
-            logger.info("No valid credentials found, initiating OAuth flow...")
-            flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
-                client_secrets_file, scopes)
-            # Specify port 0 to use a random available port, avoid conflicts
-            creds = flow.run_local_server(port=0)
-            logger.info("OAuth flow completed successfully.")
+                logger.error(f"Failed to load credentials from {token_file}: {e}")
 
-        # Save the credentials for the next run
-        os.makedirs(os.path.dirname(token_file), exist_ok=True)
+        # Handle credential refresh or new authentication
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                logger.info(f"Credentials expired for set {index}, attempting refresh...")
+                try:
+                    creds.refresh(Request())
+                    logger.info(f"Credentials refreshed successfully for set {index}")
+                except Exception as e:
+                    logger.error(f"Failed to refresh token for set {index}: {e}")
+                    creds = None
+            else:
+                logger.info(f"No valid credentials found for set {index}, initiating OAuth flow...")
+                flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
+                    client_secrets_file, scopes)
+                creds = flow.run_local_server(port=0)
+                logger.info(f"OAuth flow completed successfully for set {index}")
+
+            # Save the credentials
+            os.makedirs(os.path.dirname(token_file), exist_ok=True)
+            try:
+                with open(token_file, 'w') as token:
+                    token.write(creds.to_json())
+                logger.info(f"Credentials saved to {token_file}")
+            except Exception as e:
+                logger.error(f"Failed to save credentials to {token_file}: {e}")
+                continue
+
+        if not creds:
+            logger.error(f"Failed to obtain credentials for set {index}")
+            continue
+
         try:
-            with open(token_file, 'w') as token:
-                token.write(creds.to_json())
-            logger.info(f"Credentials saved to {token_file}")
+            # Try to build service with current credentials
+            youtube_service = build('youtube', 'v3', credentials=creds)
+            logger.info(f"YouTube API service built successfully with credential set {index}")
+            return youtube_service
+        except HttpError as e:
+            if 'quotaExceeded' in str(e):
+                logger.warning(f"[AUTH] Quota exceeded for credential set {index}, trying next set...")
+                continue
+            else:
+                logger.error(f"Failed to build YouTube service with set {index}: {e}")
+                continue
         except Exception as e:
-             logger.error(f"Failed to save credentials to {token_file}: {e}")
+            logger.error(f"Failed to build YouTube service with set {index}: {e}")
+            continue
 
-
-    if not creds:
-         logger.critical("Failed to obtain credentials.")
-         raise Exception("Could not authenticate with Google.")
-
-    try:
-        youtube_service = build('youtube', 'v3', credentials=creds)
-        logger.info("YouTube API service built successfully.")
-        return youtube_service
-    except Exception as e:
-        logger.error(f"Failed to build YouTube service: {e}")
-        raise
+    # If we get here, all credential sets failed
+    logger.critical("All credential sets failed to authenticate.")
+    raise Exception("Could not authenticate with any Google credential set.")
 
 # Example usage (for testing purposes, typically called from main.py)
 if __name__ == '__main__':
