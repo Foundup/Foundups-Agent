@@ -1,7 +1,8 @@
 """
-BanterEngine Module for Windsurf Project
+Banter Engine module for handling emoji-based interactions.
 """
 
-from .src.banter_engine import BanterEngine
+from .banter_engine import BanterEngine
+from .emoji_sequence_map import EmojiSequenceMap
 
-__all__ = ['BanterEngine']
+__all__ = ['BanterEngine', 'EmojiSequenceMap']

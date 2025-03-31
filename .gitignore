@@ -1,6 +1,7 @@
-# Logs
-02_logs/
-*.log
+# Environment variables
+.env
+.env.*
+!.env.example
 
 # Python
 __pycache__/
@@ -28,22 +29,90 @@ wheels/
 venv/
 env/
 ENV/
+.venv/
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
-
-# Environment variables
-.env
-.env.local
-
-# Credentials
-credentials/*.json
-!credentials/.gitkeep
-
-# System Files
 .DS_Store
-Thumbs.db 
-02_log\DevLog.md
+
+# Logs
+*.log
+logs/
+02_log/
+02_logs/
+DevLog.md
+
+# Memory and user data
+memory/
+memory/*
+!memory/__init__.py
+!memory/memory_manager.py
+
+# Backup and temporary directories
+01/
+01/*
+02_logs/
+build/
+foundups-agent-clean/
+
+# BanterEngine specific
+modules/banter_engine/src/emoji_sequence_map.py
+
+# Documentation
+docs/esm_abstract.md
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Local development settings
+local_settings.py
+
+# Database
+*.db
+*.sqlite3
+
+# Backup files
+*.bak
+*.swp
+*~
+
+# Temporary files
+*.tmp
+*.temp
