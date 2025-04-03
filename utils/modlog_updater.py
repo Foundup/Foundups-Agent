@@ -1,147 +1,132 @@
 import os
-from datetime import datetime
-from typing import Optional, List, Tuple
+from typing import Optional, List, Dict
+import re
 
-def parse_entry_date(entry: str) -> datetime:
-    """Extract and parse the date from a log entry."""
-    for line in entry.split('\n'):
-        if line.startswith('- Date: '):
-            date_str = line.replace('- Date: ', '').strip()
-            return datetime.strptime(date_str, "%Y-%m-%d %H:%M")
-    return datetime.min
+def validate_version(version: str) -> bool:
+    """Validate version string follows semver pattern."""
+    pattern = r'^(0\.0\.\d+|0\.1\.\d+|0\.[2-9]\.\d+|1\.\d+\.\d+)$'
+    return bool(re.match(pattern, version))
 
-def sort_entries(entries: List[str]) -> List[str]:
-    """Sort entries by date in descending order."""
-    # Group entries by their header
-    entry_groups = []
-    current_entry = []
+def get_next_version(current_version: str) -> str:
+    """Get next version number following semver pattern."""
+    major, minor, patch = map(int, current_version.split('.'))
+    return f"{major}.{minor}.{patch + 1}"
+
+def validate_template_structure(content: str, template_path: str) -> bool:
+    """Validate content structure against template."""
+    try:
+        with open(template_path, 'r', encoding='utf-8') as f:
+            template = f.read()
+        
+        # Check for required sections
+        required_sections = [
+            "# FoundUps Agent Modular Change Log",
+            "## FoundUps-Agent Roadmap",
+            "## Status Ledger",
+            "## MODLOG - [+UPDATES]:", # Ensure this is checked
+            "## VERSION GUIDE"
+        ]
+        
+        for section in required_sections:
+            if section not in content:
+                 print(f"Validation Failed: Section '{section}' missing.") # Add print
+                 return False
+                
+        return True
+    except Exception as e: # Keep exception logging
+        print(f"Validation Exception: {e}")
+        return False
+
+def format_entry(
+    module: str,
+    change_type: str,
+    version: str,
+    description: str,
+    notes: Optional[str] = None,
+    features: Optional[List[str]] = None
+) -> str:
+    """Format a log entry according to the template structure."""
+    entry = f"""- Version: {version}
+- Description: {description}"""
+
+    if notes:
+        entry += f"\n- Notes: {notes}"
     
-    for line in entries:
-        if line.startswith('## [') and current_entry:
-            entry_groups.append('\n'.join(current_entry))
-            current_entry = []
-        current_entry.append(line)
+    if features:
+        entry += "\n- Features:"
+        for feature in features:
+            entry += f"\n  - {feature}"
     
-    if current_entry:
-        entry_groups.append('\n'.join(current_entry))
-    
-    # Sort entries by date
-    return sorted(entry_groups, key=parse_entry_date, reverse=True)
+    entry += "\n\n"
+    return entry
 
 def log_update(
     module: str,
     change_type: str,
     version: str,
     description: str,
-    notes: Optional[str] = None
+    notes: Optional[str] = None,
+    features: Optional[List[str]] = None
 ) -> bool:
     """
-    Prepends a structured log entry to ModLog.md, placing it after the header and roadmap sections.
-    Maintains entries in descending chronological order.
+    Updates ModLog.md with a new entry, following the template structure.
     
     Args:
         module: Name of the module being modified
         change_type: Type of change (e.g., "Added", "Updated", "Fixed")
-        version: Version number (e.g., "1.0.0")
+        version: Version number (e.g., "0.1.0")
         description: Brief description of the changes
         notes: Optional additional details
+        features: Optional list of features
         
     Returns:
         bool: True if update was successful, False otherwise
     """
     try:
-        # Format the entry with exact spacing
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-        entry = f"""## [{module}] - {change_type}
-- Version: {version}
-- Date: {timestamp}
-- Description: {description}"""
+        # Validate version format
+        if not validate_version(version):
+            print(f"Invalid version format: {version}")
+            return False
 
-        if notes:
-            entry += f"\n- Notes: {notes}"
-        
-        entry += "\n\n"  # Add spacing between entries
+        # Define paths
+        modlog_path = "docs/ModLog.md" # Use path in docs/
+        template_path = "docs/ModLog_Template.md"
 
-        # Define the header and roadmap structure
-        header = """# FoundUps Agent Modular Change Log
-
-This log tracks module changes, updates, and versioning for FoundUps Agent under the Windsurf modular development model.
-
-## Project Roadmap
-
-### ✅ Proof of Concept
-- [x] Connect to YouTube livestream
-- [x] Authenticate via OAuth
-- [x] Send greeting message on join
-- [x] Log chat messages per user
-
-### 🚧 Prototype
-- [x] StreamResolver module for dynamic video ID
-- [ ] Modular chat processor with LLM hooks
-- [ ] AI response and moderation module
-- [ ] Prompt-throttle logic by channel activity
-- [ ] ModLog updater
-- [ ] Agent personality framework
-
-### ⏳ Minimum Viable Product (MVP)
-- [ ] Make bot publicly usable by other YouTubers
-- [ ] Website with user onboarding (landing page + auth)
-- [ ] Cloud deployment and user instance spin-up
-- [ ] Bot tokenization and usage metering
-- [ ] Admin dashboard for managing streams
-- [ ] AI persona config for streamers
-- [ ] Payment/paywall system
-
-### 🧩 Release Phases
-
-#### Tier 1 — Blockchain Foundation (DAE)
-- [ ] Blockchain integration module toggle via `.env`
-- [ ] Token drop + reward logic
-- [ ] Wallet generation for viewers
-- [ ] Token reclaim + decay logic
-
-#### Tier 2 — DAO Evolution
-- [ ] Token governance structure
-- [ ] Voting logic for protocol decisions
-- [ ] DAO treasury and fund routing
-
-## Status Key
-- Planned
-- In Progress
-- Complete
-- Deprecated
-
-"""
-
-        # Read existing content if file exists
+        # Read existing content
         existing_content = ""
-        if os.path.exists("ModLog.md"):
-            with open("ModLog.md", "r", encoding="utf-8") as f:
+        if os.path.exists(modlog_path): # Use modlog_path
+            with open(modlog_path, "r", encoding="utf-8") as f: # Use modlog_path
                 existing_content = f.read()
 
-        # Extract existing entries
-        content_lines = existing_content.split('\n')
-        entries = []
-        current_entry = []
-        
-        for line in content_lines:
-            if line.startswith('## [') and current_entry:
-                entries.append('\n'.join(current_entry))
-                current_entry = []
-            if line.startswith('## [') or current_entry:
-                current_entry.append(line)
-        
-        if current_entry:
-            entries.append('\n'.join(current_entry))
+        # Format new entry
+        new_entry = format_entry(
+            module=module,
+            change_type=change_type,
+            version=version,
+            description=description,
+            notes=notes,
+            features=features
+        )
 
-        # Add new entry and sort all entries
-        entries.append(entry)
-        sorted_entries = sort_entries(entries)
+        # Find the insertion point (after MODLOG - [+UPDATES]: heading)
+        insertion_point = "## MODLOG - [+UPDATES]:"
+        sections = existing_content.split(insertion_point)
+        if len(sections) != 2:
+            print(f"Could not find insertion point: {insertion_point}")
+            return False
 
-        # Write the file with sorted entries
-        with open("ModLog.md", "w", encoding="utf-8") as f:
-            f.write(header)
-            f.write('\n'.join(sorted_entries))
+        # Insert new entry immediately after the heading
+        # Add only one extra newline after the header for spacing
+        updated_content = sections[0] + insertion_point + "\n" + new_entry + sections[1]
+
+        # Validate against template
+        if not validate_template_structure(updated_content, template_path): # Use template_path
+            print("Generated content does not match template structure")
+            return False
+
+        # Write updated content
+        with open(modlog_path, "w", encoding="utf-8") as f: # Use modlog_path
+            f.write(updated_content)
 
         return True
 
@@ -149,18 +134,32 @@ This log tracks module changes, updates, and versioning for FoundUps Agent under
         print(f"Error updating ModLog: {e}")
         return False
 
-# Example usage
+def format_checkbox_item(completed: bool = False) -> str:
+    """Format checkbox item with new style."""
+    return '[✅]' if completed else '[ ]'
+
+# Example usage (Restore original example)
 if __name__ == "__main__":
     # Test the module
-    success = log_update(
-        module="ModLog Updater",
-        change_type="Updated",
-        version="1.4.0",
-        description="Fixed entry ordering to maintain descending chronological order",
-        notes="Added date parsing and sorting functionality"
-    )
+    update = {
+        "module": "StreamResolver",
+        "change_type": "Updated",
+        "version": "0.1.1",
+        "description": "Enhanced StreamResolver with dynamic rate limiting and quota management",
+        "notes": "Added smart throttling system, quota error handling, and secure ID masking",
+        "features": [
+            "Dynamic delays based on activity levels",
+            "Quota error handling with retries",
+            "Fallback credential support",
+            "Random jitter for human-like behavior",
+            "Smooth transitions between delays",
+            "Secure ID masking in logs",
+            "Development mode support"
+        ]
+    }
     
+    success = log_update(**update)
     if success:
-        print("Successfully updated ModLog.md")
+        print(f"Successfully updated ModLog.md for {update['module']}")
     else:
-        print("Failed to update ModLog.md") 
+        print(f"Failed to update ModLog.md for {update['module']}") 

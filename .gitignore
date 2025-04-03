@@ -27,9 +27,8 @@ wheels/
 
 # Virtual Environment
 venv/
-env/
 ENV/
-.venv/
+env/
 
 # IDE
 .idea/
@@ -116,3 +115,9 @@ local_settings.py
 # Temporary files
 *.tmp
 *.temp
+
+# Credentials and Secrets
+credentials/
+*.pem
+*.key
+02_logs\backup\DevLog.md

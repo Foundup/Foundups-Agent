@@ -12,18 +12,8 @@ from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
-
-# Add project root to Python path for imports
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
-
-from utils.oauth_manager import (
-    quota_manager,
-    get_authenticated_service,
-    get_oauth_token_file,
-    get_client_secrets_file
-)
+from modules.youtube_auth import get_authenticated_service
+from utils.oauth_manager import get_oauth_token_file
 
 logger = logging.getLogger(__name__)
 
@@ -55,49 +45,51 @@ class TokenManager:
             
         # Check cooldown first
         if token_index in self.token_health_cache:
-            last_check = self.token_health_cache[token_index].get('last_check')
-            if last_check and time.time() - last_check < self.health_check_interval:
-                return self.token_health_cache[token_index].get('is_healthy', False)
-                
-        # Check token file exists
-        token_file = get_oauth_token_file(token_index)
-        if not os.path.exists(token_file):
-            logger.error(f"Token file not found: {token_file}")
-            self._update_health_cache(token_index, False)
-            return False
-            
-        try:
-            # Load and validate token
-            credentials = Credentials.from_authorized_user_file(token_file)
-            if not credentials or not credentials.valid:
-                if credentials and credentials.expired and credentials.refresh_token:
-                    credentials.refresh(Request())
-                    with open(token_file, 'w') as token:
-                        token.write(credentials.to_json())
-                else:
-                    logger.error(f"Invalid or expired token in {token_file}")
-                    self._update_health_cache(token_index, False)
+            cache_entry = self.token_health_cache[token_index]
+            if not cache_entry.get('healthy', False):
+                cooldown_end = cache_entry.get('cooldown_end', 0)
+                if time.time() < cooldown_end:
+                    logger.info(f"Token set_{token_index + 1} is in cooldown until {datetime.fromtimestamp(cooldown_end)}")
                     return False
                     
-            # Check quota
-            if not quota_manager.check_quota(token_index):
-                logger.warning(f"Quota exceeded for token {token_index}")
+        # Check cache for healthy tokens
+        if token_index in self.token_health_cache:
+            cache_entry = self.token_health_cache[token_index]
+            if time.time() - cache_entry['timestamp'] < self.health_check_interval:
+                return cache_entry['healthy']
+        
+        # Get token file path
+        token_file = get_oauth_token_file(f"set_{token_index + 1}")
+        
+        try:
+            # Try to load and validate token
+            service = get_authenticated_service(token_index)
+            if not service:
+                logger.warning(f"Token health check failed for set_{token_index + 1}: Service creation failed")
                 self._update_health_cache(token_index, False)
                 return False
                 
+            # Test token with a lightweight API call
+            service.channels().list(
+                part="snippet",
+                id="UC-LSSlOZwpGIRIYihaz8zCw"  # Using a known channel ID
+            ).execute()
+            
+            logger.info(f"Token health check passed for set_{token_index + 1}")
             self._update_health_cache(token_index, True)
             return True
             
         except Exception as e:
-            logger.error(f"Error checking token health: {str(e)}")
+            logger.error(f"Token health check failed for set_{token_index + 1}: {e}")
             self._update_health_cache(token_index, False)
             return False
             
     def _update_health_cache(self, token_index: int, is_healthy: bool):
-        """Update the health cache for a token."""
+        """Updates the health check cache for a token."""
         self.token_health_cache[token_index] = {
-            'is_healthy': is_healthy,
-            'last_check': time.time()
+            'healthy': is_healthy,
+            'timestamp': time.time(),
+            'cooldown_end': time.time() + self.cooldown_period if not is_healthy else 0
         }
         
     async def _check_token_parallel(self, token_index: int) -> Optional[int]:
@@ -106,61 +98,63 @@ class TokenManager:
             is_healthy = self.check_token_health(token_index)
             return token_index if is_healthy else None
         except Exception as e:
-            logger.error(f"Error checking token {token_index}: {str(e)}")
+            logger.error(f"Parallel token check failed for set_{token_index + 1}: {e}")
             return None
             
     async def _check_tokens_parallel(self, token_indices: List[int]) -> Optional[int]:
-        """Check multiple tokens' health in parallel."""
+        """Check multiple tokens in parallel and return the first healthy one."""
         tasks = [self._check_token_parallel(idx) for idx in token_indices]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        for result in results:
-            if isinstance(result, Exception):
-                logger.error(f"Error in parallel token check: {str(result)}")
-            elif result is not None:
-                return result
-                
+        try:
+            results = await asyncio.wait_for(asyncio.gather(*tasks), timeout=self.parallel_check_timeout)
+            for result in results:
+                if result is not None:
+                    return result
+        except asyncio.TimeoutError:
+            logger.warning("Parallel token check timed out")
+        except Exception as e:
+            logger.error(f"Parallel token check failed: {e}")
         return None
         
     async def rotate_tokens(self) -> Optional[int]:
         """
-        Rotate to the next healthy token if available.
+        Rotates to the next available healthy token using parallel checking.
         
         Returns:
-            Optional[int]: Index of the new token if successful, None otherwise
+            Optional[int]: Index of the new token if successful, None if rotation failed
         """
-        # Get all available token indices
-        token_files = [f for f in os.listdir(os.path.dirname(get_oauth_token_file(0)))
-                      if f.startswith('token_') and f.endswith('.json')]
-        token_indices = [int(f.split('_')[1].split('.')[0]) for f in token_files]
+        original_index = self.current_token_index
+        all_indices = list(range(4))  # Assuming 4 token sets
         
-        if not token_indices:
-            logger.error("No token files found")
-            return None
-            
-        # Check current token first
-        if self.check_token_health(self.current_token_index):
+        # Try all tokens in parallel first
+        healthy_token = await self._check_tokens_parallel(all_indices)
+        if healthy_token is not None:
+            self.current_token_index = healthy_token
+            logger.info(f"Successfully rotated to token set_{self.current_token_index + 1}")
             return self.current_token_index
             
-        # Check other tokens in parallel
-        other_indices = [idx for idx in token_indices if idx != self.current_token_index]
-        if not other_indices:
-            logger.error("No alternative tokens available")
-            return None
+        # If parallel check fails, fall back to sequential checking
+        attempts = 0
+        while attempts < self.max_retries:
+            # Try next token
+            self.current_token_index = (self.current_token_index + 1) % 4
             
-        try:
-            new_index = await self._check_tokens_parallel(other_indices)
-            if new_index is not None:
-                self.current_token_index = new_index
-                logger.info(f"Rotated to token {new_index}")
-                return new_index
-            else:
-                logger.error("No healthy tokens found")
+            # Skip if we've tried all tokens
+            if self.current_token_index == original_index:
+                logger.error("All tokens failed health check")
                 return None
                 
-        except Exception as e:
-            logger.error(f"Error during token rotation: {str(e)}")
-            return None
+            # Check if token is healthy
+            if self.check_token_health(self.current_token_index):
+                logger.info(f"Successfully rotated to token set_{self.current_token_index + 1}")
+                return self.current_token_index
+                
+            attempts += 1
+            if attempts < self.max_retries:
+                logger.warning(f"Token rotation attempt {attempts} failed, retrying...")
+                await asyncio.sleep(self.retry_delay)
+                
+        logger.error("Token rotation failed after maximum retries")
+        return None
 
-# Create singleton instance
+# Initialize token manager
 token_manager = TokenManager() 

@@ -2,25 +2,15 @@ import logging
 import os
 import sys
 import asyncio
+import time
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
-from modules.stream_resolver.src.stream_resolver import get_active_livestream_video_id
-from modules.livechat.src.livechat import LiveChatListener
-from utils.oauth_manager import get_authenticated_service
+from modules.stream_resolver import get_active_livestream_video_id, check_video_details, StreamResolver, QuotaExceededError
+from modules.livechat import LiveChatListener
+from utils.oauth_manager import get_authenticated_service, get_authenticated_service_with_fallback, start_credential_cooldown, Credentials
 from utils.env_loader import get_env_variable
-from modules.banter_engine.banter_engine import BanterEngine
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-
-# Set specific logger for emoji map module to DEBUG
-logging.getLogger('modules.banter_engine.emoji_sequence_map').setLevel(logging.DEBUG)
-
-# Get logger for this module
-logger = logging.getLogger(__name__)
+from modules.banter_engine import BanterEngine
+from googleapiclient.errors import HttpError
 
 def mask_sensitive_id(id_str: str) -> str:
     """Mask sensitive IDs in logs."""
@@ -28,53 +18,113 @@ def mask_sensitive_id(id_str: str) -> str:
         return "None"
     return f"{id_str[:4]}...{id_str[-4:]}"
 
-def main():
-    """Main entry point for the FoundUps Agent."""
+async def find_active_livestream(service, channel_id, max_attempts=None):
+    """Continuously search for active livestream with throttling."""
+    logger = logging.getLogger(__name__)
+    attempt = 0
+    previous_delay = None
+    
+    while True:
+        if max_attempts and attempt >= max_attempts:
+            logger.error(f"Max attempts ({max_attempts}) reached without finding livestream")
+            return None, None
+            
+        attempt += 1
+        logger.info(f"Attempt {attempt} to find active livestream for channel: {mask_sensitive_id(channel_id)}")
+        
+        # Calculate and apply throttling delay
+        delay = calculate_dynamic_delay(previous_delay=previous_delay)
+        logger.info(f"Waiting {delay:.1f} seconds before checking for livestream...")
+        await asyncio.sleep(delay)
+        
+        try:
+            result = get_active_livestream_video_id(service, channel_id)
+            if result:
+                video_id, chat_id = result
+                logger.info(f"Found active livestream - Video ID: {mask_sensitive_id(video_id)}, Chat ID: {mask_sensitive_id(chat_id)}")
+                return video_id, chat_id
+            else:
+                logger.info("No active livestream found, will retry...")
+                previous_delay = delay
+        except QuotaExceededError:
+            logger.debug("QuotaExceededError caught in find_active_livestream, re-raising for main loop handler.")
+            raise
+        except Exception as e:
+            logger.error(f"Error searching for livestream: {e}")
+            previous_delay = delay * 2  # Double the delay on error
+
+async def main():
+    """Main entry point for the application."""
+    logger = logging.getLogger(__name__)
+    
     try:
-        # Load environment variables
-        load_dotenv()
-        
-        # Initialize BanterEngine for greetings
-        engine = BanterEngine()
-        greeting = engine.get_random_banter(theme="greeting")
-        logger.info(greeting)
-        
-        # Get API key and channel ID
-        api_key = get_env_variable("YOUTUBE_API_KEY")
+        # Get channel ID from environment
         channel_id = get_env_variable("CHANNEL_ID")
-        
-        if not api_key or not channel_id:
-            logger.error("Missing required environment variables")
+        if not channel_id:
+            logger.error("CHANNEL_ID not found in environment variables")
             return
             
-        # Initialize YouTube API client with OAuth
-        youtube = get_authenticated_service()
-        if not youtube:
-            logger.error("Failed to get authenticated YouTube service")
+        # Get authenticated service with fallback first
+        auth_result = get_authenticated_service_with_fallback()
+        if not auth_result:
+            logger.error("Failed to get authenticated YouTube service initially")
             return
+        service, current_credentials, current_credential_set = auth_result
+        logger.info(f"Initial authentication successful with {current_credential_set}")
         
-        # Get active livestream
-        logger.info(f"Attempting to find active livestream for channel ID: {mask_sensitive_id(channel_id)}")
-        result = get_active_livestream_video_id(youtube, channel_id)
+        # Initialize banter engine
+        banter_engine = BanterEngine()
         
-        if not result:
-            logger.error("No active livestream found")
-            return
+        # Continuously look for active livestream
+        while True:
+            try:
+                video_id, chat_id = await find_active_livestream(service, channel_id)
+                
+                if video_id and chat_id:
+                    # Initialize chat listener
+                    listener = LiveChatListener(service, current_credentials, video_id, chat_id, banter_engine=banter_engine)
+                    
+                    # Start listening
+                    logger.info("Starting chat listener...")
+                    await listener.start_listening()
+                    
+                    # If we get here, the listener has stopped
+                    logger.info("Chat listener stopped, will look for new livestream...")
+                else:
+                    logger.info("No active livestream found, will continue searching...")
             
-        video_id, chat_id = result
-        logger.info(f"Found active livestream - Video ID: {mask_sensitive_id(video_id)}, Chat ID: {mask_sensitive_id(chat_id)}")
-        
-        # Initialize chat listener with BanterEngine
-        logger.info("Starting chat listener...")
-        listener = LiveChatListener(youtube, video_id, chat_id, banter_engine=engine)
-        
-        # Start listening to chat
-        logger.info("Starting chat polling...")
-        asyncio.run(listener.start_listening())
+            except QuotaExceededError:
+                logger.warning(f"Quota exceeded with {current_credential_set}. Attempting rotation.")
+                start_credential_cooldown(current_credential_set) # Put the failed set in cooldown
+                
+                # Try to get the next credential set
+                auth_result = get_authenticated_service_with_fallback()
+                if not auth_result:
+                    logger.critical("All credential sets are exhausted or in cooldown. Waiting 1 hour before trying again.")
+                    # TODO: Implement a more robust waiting strategy (e.g., exponential backoff)
+                    await asyncio.sleep(3600) # Wait 1 hour
+                    continue # Restart the auth process
+                
+                service, current_credentials, current_credential_set = auth_result
+                logger.info(f"Successfully rotated to {current_credential_set}")
+                # Loop will continue and try find_active_livestream again with the new service
+                
+            except Exception as e:
+                # Catch other potential errors during find_active_livestream or listener execution
+                logger.error(f"An unexpected error occurred in the main loop: {e}")
+                logger.info("Waiting 60 seconds before retrying...")
+                await asyncio.sleep(60) # Wait a bit before retrying the loop
         
     except Exception as e:
-        logger.error(f"Error in main: {str(e)}")
+        logger.error(f"Error in main: {e}")
         raise
 
 if __name__ == "__main__":
-    main()
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s'
+    )
+    
+    # Run the async main function
+    asyncio.run(main())

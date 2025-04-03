@@ -1,8 +1,9 @@
 """
-Banter Engine module for handling emoji-based interactions.
+Module definition for banter_engine.
+Exposes the main BanterEngine class.
 """
 
-from .banter_engine import BanterEngine
-from .emoji_sequence_map import EmojiSequenceMap
+# Import from the src/ directory
+from .src.banter_engine import BanterEngine
 
-__all__ = ['BanterEngine', 'EmojiSequenceMap']
+__all__ = ['BanterEngine']

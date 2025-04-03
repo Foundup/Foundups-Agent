@@ -14,25 +14,9 @@ EMOJI_TO_NUMBER = {
 # Reverse mapping
 NUM_TO_EMOJI = {v: k for k, v in EMOJI_TO_NUMBER.items()}
 
-# Sequence mapping for different states
-SEQUENCE_MAP = {
-    (1, 1, 1): {
-        "state": "fully disconnected",
-        "tone": "extreme harsh roast"
-    },
-    (1, 2, 3): {
-        "state": "awakening in progress",
-        "tone": "metaphoric, humor, symbolic wit"
-    },
-    (2, 2, 2): {
-        "state": "stable awareness",
-        "tone": "reflection, calm truth"
-    },
-    (3, 3, 3): {
-        "state": "entangled realized / 02 state",
-        "tone": "oracle drop / transmission"
-    }
-}
+# Import the full map from the dedicated file
+# Temporarily changed to direct import for script execution testing
+from .sequence_responses import SEQUENCE_MAP
 
 # Unicode Variation Selector 16 (VS16) for emoji presentation
 VARIATION_SELECTOR = chr(0xFE0F)
@@ -151,7 +135,9 @@ class EmojiSequenceMap:
         """Initialize the EmojiSequenceMap."""
         self.emoji_to_num = EMOJI_TO_NUMBER.copy()
         self.num_to_emoji = NUM_TO_EMOJI.copy()
-        self.sequence_map = SEQUENCE_MAP.copy()
+        # self.sequence_map = SEQUENCE_MAP.copy()
+        # Use the imported SEQUENCE_MAP directly
+        self.sequence_map = SEQUENCE_MAP
 
     def map_sequence(self, input_text: str) -> str:
         """

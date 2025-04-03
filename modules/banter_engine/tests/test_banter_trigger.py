@@ -5,6 +5,9 @@ import sys
 import os
 import logging
 from dotenv import load_dotenv
+import unittest
+import pytest
+from unittest.mock import patch, MagicMock, AsyncMock
 
 # Add module root to Python path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -56,55 +59,45 @@ def test_emoji_mapping():
         logger.error(f"Error during emoji mapping test: {str(e)}")
         return False
 
-def test_emoji_trigger():
-    """Test the emoji trigger (✊✋🖐️) in LiveChatListener."""
-    logger = logging.getLogger(__name__)
-    logger.info("Starting emoji trigger test...")
+@pytest.mark.asyncio
+async def test_emoji_trigger():
+    """Test emoji trigger logic using LiveChatListener instance"""
+    mock_youtube = MagicMock()
+    listener = LiveChatListener(youtube_service=mock_youtube, video_id="test_video_id")
+    listener.live_chat_id = "test_chat_id"
+    listener.send_chat_message = AsyncMock(return_value=True)
+    listener.banter_engine = MagicMock()
+    # Explicitly mock rate limiter to ensure it doesn't interfere
+    listener._is_rate_limited = MagicMock(return_value=False)
 
-    try:
-        # Initialize YouTube service (required for LiveChatListener)
-        youtube_service = get_authenticated_service_with_fallback()
-        if not youtube_service:
-            logger.error("Failed to initialize YouTube service")
-            return False
-
-        # Create a test instance of LiveChatListener
-        test_video_id = "test_video_id"
-        test_chat_id = "test_chat_id"
-        listener = LiveChatListener(youtube_service, test_video_id, test_chat_id)
-
-        # Test with sequence map
-        test_tuple = (1, 2, 3)  # Corresponds to ✊✋🖐️
-        test_emoji = tuple_to_emoji_string(test_tuple)
-        test_state = SEQUENCE_MAP[test_tuple]
-        
-        # Construct test message with trigger emojis
-        test_message = {
-            "id": "test_message_id",
-            "snippet": {
-                "displayMessage": test_emoji,
-                "publishedAt": "2024-03-30T00:00:00Z"
-            },
-            "authorDetails": {
-                "displayName": "TestUser",
-                "channelId": "test_channel_id"
-            }
+    test_message = {
+        "id": "test_id",
+        "snippet": {
+            "displayMessage": "✊✋🖐️"
+        },
+        "authorDetails": {
+            "displayName": "TestUser",
+            "channelId": "UCtestchannelid"
         }
+    }
 
-        logger.info(f"Processing test message with emoji trigger: {test_state['tone']}")
-        listener._process_message(test_message)
-        logger.info("Test message processed successfully")
-        return True
-
-    except Exception as e:
-        logger.error(f"Error during emoji trigger test: {str(e)}")
-        return False
-
-if __name__ == "__main__":
-    setup_logging()
-    # Run both tests
-    mapping_success = test_emoji_mapping()
-    trigger_success = test_emoji_trigger()
+    listener.banter_engine.get_random_banter.return_value = "Banter response"
     
-    print(f"Emoji mapping test {'passed' if mapping_success else 'failed'}")
-    print(f"Emoji trigger test {'passed' if trigger_success else 'failed'}") 
+    await listener._process_message(test_message)
+    
+    # Assertions
+    listener._is_rate_limited.assert_called_once() # Verify rate limit check happened
+    listener.banter_engine.get_random_banter.assert_called_once_with(theme="greeting")
+    listener.send_chat_message.assert_awaited_once_with("Banter response")
+    assert True
+
+# REMOVE THE if __name__ == "__main__" block below
+# if __name__ == "__main__":
+#     setup_logging()
+#     # Run both tests
+#     mapping_success = test_emoji_mapping()
+#     # Need asyncio.run for async test if run directly
+#     # trigger_success = asyncio.run(test_emoji_trigger())
+#     
+#     print(f"Emoji mapping test {'passed' if mapping_success else 'failed'}")
+#     # print(f"Emoji trigger test {'passed' if trigger_success else 'failed'}") 

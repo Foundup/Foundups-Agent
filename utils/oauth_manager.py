@@ -50,6 +50,10 @@ class QuotaManager:
     def __init__(self):
         self.quota_file = os.path.join(CREDENTIALS_DIR, "quota_usage.json")
         self.usage_data = self._load_usage_data()
+        self.cooldowns = {}  # Track cooldown timestamps per credential set
+        self.COOLDOWN_DURATION = 3600  # 1 hour cooldown in seconds
+        logger = logging.getLogger(__name__)
+        logger.info("📊 Initialized QuotaManager")
         
     def _load_usage_data(self) -> Dict[str, Any]:
         """Load quota usage data from file."""
@@ -133,6 +137,31 @@ class QuotaManager:
             if not self.is_quota_exceeded(credential_type, is_api_key):
                 return credential_type
         return None
+
+    def start_cooldown(self, credential_set: str):
+        """Start a cooldown period for a credential set."""
+        self.cooldowns[credential_set] = time.time()
+        cooldown_end = time.time() + self.COOLDOWN_DURATION
+        logger = logging.getLogger(__name__)
+        logger.info(f"⏳ Started cooldown for {credential_set}")
+        logger.info(f"⏰ Cooldown will end at: {time.strftime('%H:%M:%S', time.localtime(cooldown_end))}")
+    
+    def is_in_cooldown(self, credential_set: str) -> bool:
+        """Check if a credential set is still in cooldown."""
+        if credential_set not in self.cooldowns:
+            return False
+            
+        cooldown_start = self.cooldowns[credential_set]
+        now = time.time()
+        is_in_cooldown = (now - cooldown_start) < self.COOLDOWN_DURATION
+        
+        if not is_in_cooldown:
+            # Clean up expired cooldown
+            del self.cooldowns[credential_set]
+            logger = logging.getLogger(__name__)
+            logger.info(f"✅ Cooldown expired for {credential_set}")
+            
+        return is_in_cooldown
 
 # Initialize quota manager
 quota_manager = QuotaManager()
@@ -228,7 +257,7 @@ def get_authenticated_service(credential_set_index: int = 0) -> Optional[Any]:
         credential_set_index: Index of the credential set to use (0-based)
         
     Returns:
-        YouTube API service object if successful, None otherwise
+        Tuple (service, credentials) if successful, None otherwise
     """
     logger = logging.getLogger(__name__)
     
@@ -244,7 +273,7 @@ def get_authenticated_service(credential_set_index: int = 0) -> Optional[Any]:
             try:
                 service = build(API_SERVICE_NAME, API_VERSION, credentials=creds)
                 logger.info(f"Successfully authenticated with {config_name}")
-                return service
+                return service, creds
             except Exception as e:
                 logger.error(f"Failed to build service with {config_name}: {e}")
                 return None
@@ -260,34 +289,68 @@ def get_authenticated_service_with_fallback() -> Optional[Any]:
     """
     Attempts to authenticate with YouTube API using multiple credentials with fallback support.
     Tries each credential set in sequence until one succeeds or all fail.
+    Handles quota exceeded errors by rotating to the next credential set.
     
     Returns:
-        YouTube API service object if successful, None otherwise
+        Tuple (service, credentials, credential_set_name) if successful, None otherwise
     """
     logger = logging.getLogger(__name__)
-    logger.info("Attempting YouTube authentication with fallback support")
+    logger.info("🔄 Starting credential rotation process")
     
     # Test each set individually
-    for i in range(5):  # Test sets 1-5
+    for i in range(4):  # Test sets 1-4
         try:
-            logger.info(f"Testing authentication with set_{i+1}")
-            service = get_authenticated_service(i)
-            if service:
-                logger.info(f"Successfully authenticated with set_{i+1}")
-                return service
+            credential_set = f"set_{i+1}"
+            logger.info(f"🔑 Attempting to use credential set: {credential_set}")
+            
+            # Check if this credential set is in cooldown
+            if quota_manager.is_in_cooldown(credential_set):
+                cooldown_start = quota_manager.cooldowns[credential_set]
+                time_remaining = quota_manager.COOLDOWN_DURATION - (time.time() - cooldown_start)
+                logger.info(f"⏳ Credential {credential_set} is in cooldown. Time remaining: {time_remaining/3600:.1f} hours")
+                continue
+                
+            auth_result = get_authenticated_service(i)
+            if auth_result:
+                service, creds = auth_result
+                logger.info(f"✅ Successfully authenticated with {credential_set}")
+                print(f"✅ Using credential set: {credential_set}")
+                return service, creds, credential_set
+                
+        except HttpError as e:
+            if 'quotaExceeded' in str(e):
+                logger.warning(f"⚠️ Quota exceeded for {credential_set}")
+                quota_manager.start_cooldown(credential_set)
+                cooldown_start = quota_manager.cooldowns[credential_set]
+                logger.info(f"⏳ {credential_set} placed in 3-hour cooldown until {time.strftime('%H:%M:%S', time.localtime(cooldown_start + quota_manager.COOLDOWN_DURATION))}")
+                logger.info(f"🔄 Rotating to next credential set...")
+                continue
+            else:
+                logger.error(f"❌ HTTP error with {credential_set}: {e}")
+                continue
         except Exception as e:
-            logger.error(f"Failed to authenticate with set_{i+1}: {e}")
+            logger.error(f"❌ Failed to authenticate with {credential_set}: {e}")
             continue
     
-    logger.critical("Failed to authenticate with any credential set")
+    logger.critical("❌ Failed to authenticate with any credential set")
     return None
+
+def start_credential_cooldown(credential_set: str):
+    """Manually start the cooldown period for a specific credential set."""
+    logger = logging.getLogger(__name__)
+    logger.warning(f"⚠️ Manually placing {credential_set} into cooldown due to external failure (e.g., quota exceeded post-auth).")
+    quota_manager.start_cooldown(credential_set)
 
 # Example usage and testing
 if __name__ == '__main__':
     from utils.logging_config import setup_logging
     setup_logging()
     
-    service = get_authenticated_service_with_fallback()
+    auth_result = get_authenticated_service_with_fallback()
+    if auth_result:
+        service, credentials, credential_set = auth_result
+    else:
+        service = None
     if service:
         try:
             # Test the service

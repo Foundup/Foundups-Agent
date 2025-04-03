@@ -8,6 +8,9 @@ FoundUps Agent is an open-source, modular AI-powered co-host designed to join Yo
 
 **Status:** Prototype Phase (Core chat listening and logging functional)
 
+## Unique Approach: Emoji Sentiment Mapper (ESM)
+This agent utilizes the **Emoji Sentiment Mapper (ESM)**, a novel symbolic interpretive layer designed to understand user interaction beyond surface text. ESM maps user statements (sentiment, rhetoric, aggression) to numerical triads corresponding to defined psycho-emotional states on the UN-DAO-DU symbolic axis. This allows the agent to decode user disposition in real-time and select calibrated responses (e.g., roast, truth drop, soft echo) aimed at fostering logical discussion, countering misinformation, and potentially guiding users toward more constructive dialogue, effectively acting as a system for "targeted memetic surgery". *(See `docs/esm_abstract.md` for details)*.
+
 ## Features (Current & Planned)
 
 *   **Real-time Chat Monitoring:** Connects to any public YouTube livestream chat.

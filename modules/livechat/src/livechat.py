@@ -4,94 +4,20 @@ import time
 from datetime import datetime
 import googleapiclient.errors
 from dotenv import load_dotenv
-import asyncio
-from typing import Optional, Dict, Any
-from googleapiclient.discovery import Resource
-from modules.banter_engine.src.banter_engine import BanterEngine
-from modules.stream_resolver.src.stream_resolver import check_video_details
-from utils.env_loader import get_env_variable
-import json
-
-# Add project root to Python path for imports
-import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
-
 from utils.throttling import calculate_dynamic_delay
 from modules.token_manager import token_manager
+from modules.banter_engine import BanterEngine
 from utils.oauth_manager import get_authenticated_service
+import asyncio
 
-# Configure logging
 logger = logging.getLogger(__name__)
-
-def mask_sensitive_id(id_str: str, id_type: str = "default") -> str:
-    """
-    Mask sensitive IDs in logs with consistent formatting.
-    
-    Args:
-        id_str: The ID to mask
-        id_type: Type of ID for specific masking rules ("channel", "video", "chat", "default")
-        
-    Returns:
-        Masked ID string
-    """
-    if not id_str:
-        return "None"
-        
-    if id_type == "channel":
-        # Channel IDs start with UC-, mask middle
-        return f"{id_str[:3]}***...***{id_str[-4:]}"
-    elif id_type == "video":
-        # Video IDs are shorter, show first 3 and last 2
-        return f"{id_str[:3]}...{id_str[-2:]}"
-    elif id_type == "chat":
-        # Chat IDs are longer, mask most of it
-        return f"***ChatID***{id_str[-4:]}"
-    else:
-        # Default masking: show first 3 and last 2
-        return f"{id_str[:3]}...{id_str[-2:]}"
-
-# Load environment variables
-AGENT_GREETING_MESSAGE = get_env_variable("AGENT_GREETING_MESSAGE")
-LOG_LEVEL = get_env_variable("LOG_LEVEL", default="INFO")
-
-# Constants
-MAX_MESSAGE_LENGTH = 200
-ERROR_BACKOFF_SECONDS = 5
-
-class DelayTuner:
-    """Tune polling delay based on message activity."""
-    def __init__(self, initial_delay=5, min_delay=1, max_delay=60):
-        self.delay = initial_delay
-        self.min_delay = min_delay
-        self.max_delay = max_delay
-        self.zero_streak = 0
-        self.valid_streak = 0
-
-    def update(self, message):
-        """Update delay based on message activity."""
-        if message == "0":
-            self.zero_streak += 1
-            self.valid_streak = 0
-            if self.zero_streak == 5:
-                self.delay = min(self.delay + 1, self.max_delay)
-                self.zero_streak = 0
-        else:
-            self.valid_streak += 1
-            self.zero_streak = 0
-            if self.valid_streak == 5:
-                self.delay = max(self.delay - 1, self.min_delay)
-                self.valid_streak = 0
-
-    def get_delay(self):
-        """Get current delay value."""
-        return self.delay
 
 class LiveChatListener:
     """
     Connects to a YouTube livestream chat, listens for messages,
     logs them, and provides hooks for sending messages and AI interaction.
     """
-    def __init__(self, youtube_service, video_id, live_chat_id=None, banter_engine=None):
+    def __init__(self, youtube_service, video_id, live_chat_id=None):
         self.youtube = youtube_service
         self.video_id = video_id
         self.live_chat_id = live_chat_id
@@ -99,149 +25,148 @@ class LiveChatListener:
         self.poll_interval_ms = 100000  # Default: 100 seconds
         self.error_backoff_seconds = 5  # Initial backoff for errors
         self.memory_dir = "memory"
-        self.greeting_message = AGENT_GREETING_MESSAGE
+        self.greeting_message = os.getenv("AGENT_GREETING_MESSAGE", "FoundUps Agent reporting in!")
         self.message_queue = []  # Queue for storing messages
         self.viewer_count = 0  # Track current viewer count
-        self.banter_engine = banter_engine
+        self.banter_engine = BanterEngine()  # Initialize banter engine
+        self.trigger_emojis = ["✊", "✋", "🖐️"]  # Configurable emoji trigger set
         self.last_trigger_time = {}  # Track last trigger time per user
         self.trigger_cooldown = 60  # Cooldown period in seconds
-        self.greeting_sent = False  # Track if greeting has been sent
-        self.delay_tuner = DelayTuner()  # Initialize delay tuner
-        self.last_banter_time = 0  # Track last banter reply time
-        self.banter_cooldown = 10  # seconds between allowed banter replies
-        self.bot_name = "Foundups Agent"  # Bot's display name
-        self.logger = logging.getLogger(__name__)  # Initialize logger
 
         os.makedirs(self.memory_dir, exist_ok=True)
-        self.logger.info(f"Memory directory set to: {self.memory_dir}")
+        logger.info(f"Memory directory set to: {self.memory_dir}")
 
     async def _handle_auth_error(self, error):
         """Handle authentication errors by attempting token rotation."""
         if isinstance(error, googleapiclient.errors.HttpError):
             if error.resp.status in [401, 403]:  # Authentication errors
                 logger.warning("Authentication error detected, attempting token rotation")
-                try:
-                    new_token_index = await token_manager.rotate_tokens()
-                    if new_token_index is not None:
-                        logger.info(f"Successfully rotated to token set_{new_token_index + 1}")
-                        # Reinitialize service with new token
+                new_token_index = await token_manager.rotate_tokens()
+                if new_token_index is not None:
+                    logger.info(f"Successfully rotated to token set_{new_token_index + 1}")
+                    # Re-authenticate with the new token
+                    try:
                         self.youtube = get_authenticated_service(new_token_index)
-                        return True
-                    else:
-                        logger.error("Token rotation failed")
-                        return False
-                except Exception as e:
-                    logger.error(f"Error during token rotation: {e}")
-                    return False
-        return False
+                        logger.info("Re-authenticated with new token.")
+                        return True # Indicate success, caller should retry the API call
+                    except Exception as auth_e:
+                        logger.error(f"Failed to re-authenticate after token rotation: {auth_e}")
+                        return False # Indicate failure
+                else:
+                    logger.error("Token rotation failed, unable to recover.")
+                    return False # Indicate failure
+        return False # Error not handled
 
     def _get_live_chat_id(self):
-        """Get the live chat ID for the current video."""
+        """Retrieves the liveChatId for the specified video_id."""
         try:
-            request = self.youtube.videos().list(
+            logger.info(f"Fetching livestream details for video ID: {self.video_id}")
+            response = self.youtube.videos().list(
                 part="liveStreamingDetails",
                 id=self.video_id
-            )
-            response = request.execute()
-            
-            if not response.get('items'):
-                logger.error(f"No video found with ID: {self.video_id}")
-                return None
-                
-            live_details = response['items'][0].get('liveStreamingDetails', {})
-            chat_id = live_details.get('activeLiveChatId')
-            
+            ).execute()
+
+            items = response.get("items", [])
+            if not items:
+                logger.error(f"Video not found: {self.video_id}")
+                raise ValueError(f"Video not found: {self.video_id}")
+
+            live_streaming_details = items[0].get("liveStreamingDetails", {})
+            if not live_streaming_details:
+                logger.error(f"No active live chat for video: {self.video_id}")
+                raise ValueError(f"No active live chat for video: {self.video_id}")
+
+            chat_id = live_streaming_details.get("activeLiveChatId")
             if not chat_id:
-                logger.warning(f"No active chat found for video: {self.video_id}")
-                return None
-                
-            logger.info(f"Found live chat ID: {chat_id}")
-            self.live_chat_id = chat_id  # Assign the chat ID to the instance
+                logger.error(f"No active live chat for video: {self.video_id}")
+                raise ValueError(f"No active live chat for video: {self.video_id}")
+
+            self.live_chat_id = chat_id
+            logger.info(f"Retrieved live chat ID: {chat_id}")
             return chat_id
-            
+
         except googleapiclient.errors.HttpError as e:
-            logger.error(f"Error getting live chat ID: {str(e)}")
-            return None
+            logger.error(f"HTTP error getting live chat ID: {e}")
+            raise
+        except ValueError:
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error getting live chat ID: {e}")
+            raise ValueError(f"Failed to get live chat ID: {e}")
 
     def _update_viewer_count(self):
-        """Update the current viewer count from the video."""
+        """Update viewer count from livestream statistics."""
         try:
-            request = self.youtube.videos().list(
-                part="liveStreamingDetails",
+            response = self.youtube.videos().list(
+                part="statistics",
                 id=self.video_id
-            )
-            response = request.execute()
+            ).execute()
             
-            if response.get('items'):
-                live_details = response['items'][0].get('liveStreamingDetails', {})
-                self.viewer_count = int(live_details.get('concurrentViewers', 0))
+            items = response.get("items", [])
+            if items:
+                self.viewer_count = int(items[0]["statistics"].get("viewCount", 0))
                 logger.debug(f"Updated viewer count: {self.viewer_count}")
-                
         except Exception as e:
-            logger.error(f"Error updating viewer count: {str(e)}")
+            logger.error(f"Failed to update viewer count: {e}")
 
     async def _poll_chat_messages(self):
-        """Poll for new chat messages."""
-        logger.info("🔍 Starting _poll_chat_messages()")
+        """Polls the YouTube API for new chat messages."""
         try:
-            if not self.live_chat_id:
-                logger.info("⚠️ No live_chat_id, attempting to get it")
-                self.live_chat_id = self._get_live_chat_id()
-                if not self.live_chat_id:
-                    logger.error("❌ No live chat ID available")
-                    return []
-
-            logger.info(f"📡 Polling chat with ID: {mask_sensitive_id(self.live_chat_id, 'chat')}")
-            request = self.youtube.liveChatMessages().list(
+            response = self.youtube.liveChatMessages().list(
                 liveChatId=self.live_chat_id,
                 part="snippet,authorDetails",
-                maxResults=2000,
                 pageToken=self.next_page_token
-            )
+            ).execute()
+
+            # Get the polling interval from YouTube's response
+            server_poll_interval = response.get("pollingIntervalMillis", 10000)  # Default to 10 seconds if not specified
             
-            logger.debug("🔄 Executing chat messages request")
-            response = request.execute()
-            messages = response.get('items', [])
-            logger.info(f"📥 Received {len(messages)} messages")
+            # Calculate dynamic delay based on viewer count
+            dynamic_delay = calculate_dynamic_delay(self.viewer_count)
             
-            self.next_page_token = response.get('nextPageToken')
+            # Use the larger of server's interval or our calculated interval
+            self.poll_interval_ms = max(server_poll_interval, int(dynamic_delay * 1000))
             
-            # Process messages
-            for message in messages:
-                message_text = message.get('snippet', {}).get('displayMessage', '')
-                author_name = message.get('authorDetails', {}).get('displayName', '')
-                
-                # Skip messages sent by the bot itself
-                if author_name == self.bot_name:
-                    logger.debug(f"⏭️ Skipping bot's own message: {message_text}")
-                    continue
-                
-                logger.debug(f"📝 Processing message from {author_name}: {message_text}")
-                await self._process_message(message)
-                
-            return messages
-            
+            self.next_page_token = response.get("nextPageToken")
+            self.error_backoff_seconds = 5  # Reset error backoff on success
+
+            messages = response.get("items", [])
+            if messages:
+                logger.debug(f"Received {len(messages)} new messages.")
+                return messages
+            else:
+                logger.debug("No new messages.")
+                return []
+
         except googleapiclient.errors.HttpError as e:
-            logger.error(f"❌ HTTP Error in _poll_chat_messages: {str(e)}")
-            if not await self._handle_auth_error(e):
-                logger.error(f"❌ Error polling chat messages: {str(e)}")
-            return []
+            logger.error(f"API Error polling messages: {e}")
+            if await self._handle_auth_error(e):
+                logger.info("Auth error handled, polling might recover.")
+                return []
+            else:
+                raise
         except Exception as e:
-            logger.error(f"❌ Unexpected error in _poll_chat_messages: {str(e)}")
+            logger.error(f"Unexpected error polling chat: {e}")
+            time.sleep(self.error_backoff_seconds)
+            self.error_backoff_seconds = min(self.error_backoff_seconds * 2, 60)
             return []
 
     def _is_rate_limited(self, user_id):
-        """Check if a user is rate limited based on their last trigger time."""
-        if user_id not in self.last_trigger_time:
-            return False
-            
-        last_time = self.last_trigger_time[user_id]
-        current_time = time.time()
+        """
+        Check if a user is rate limited from triggering gestures.
         
-        if current_time - last_time < self.trigger_cooldown:
-            self.logger.debug(f"User {user_id} is rate limited")
-            return True
+        Args:
+            user_id (str): The user's ID
             
+        Returns:
+            bool: True if user is rate limited, False otherwise
+        """
+        current_time = time.time()
+        if user_id in self.last_trigger_time:
+            time_since_last = current_time - self.last_trigger_time[user_id]
+            if time_since_last < self.trigger_cooldown:
+                logger.debug(f"Rate limited user {user_id} for {self.trigger_cooldown - time_since_last:.1f}s")
+                return True
         return False
 
     def _update_trigger_time(self, user_id):
@@ -249,138 +174,105 @@ class LiveChatListener:
         self.last_trigger_time[user_id] = time.time()
 
     async def _process_message(self, message):
-        """Process a single chat message."""
-        try:
-            if self.should_ignore(message):
-                return
-
-            # Extract message text
-            message_text = message.get('snippet', {}).get('displayMessage', '')
-            
-            # Process message with BanterEngine if available
-            if self.banter_engine and message_text:
-                result, response = self.banter_engine.process_input(message_text)
-                self.logger.info(f"BanterEngine processed '{message_text}': {result}")
+        """
+        Process a single chat message and handle triggers.
+        
+        Args:
+            message (dict): YouTube chat message object containing:
+                - id: Message identifier
+                - snippet: Message content and metadata
+                - authorDetails: Information about the message sender
                 
-                # If we got a valid response, send it
-                if response:
-                    author = message.get('authorDetails', {})
-                    user_id = author.get('channelId', '')
-                    
-                    # Check rate limiting
-                    if not self._is_rate_limited(user_id):
-                        if await self.send_chat_message(response):
-                            self.logger.info(f"✅ Successfully sent banter response: {response}")
-                            self._update_trigger_time(user_id)
-                        else:
-                            self.logger.error("❌ Failed to send banter response")
-                    else:
-                        self.logger.debug(f"⏳ User {user_id} is rate limited")
-
-            # Extract message details
-            snippet = message.get('snippet', {})
-            author = message.get('authorDetails', {})
-            user_id = author.get('channelId', '')
+        Returns:
+            dict: Processed log entry containing message details
             
-            self.logger.debug(f"🔍 Processing message from {user_id}: {message_text}")
-            
-            # Log message to user file
-            self._log_to_user_file(message)
-            
-            # Send greeting if not sent yet
-            if self.greeting_message and not self.greeting_sent:
-                self.logger.info("🚀 Sending initial greeting message...")
-                if await self.send_chat_message(self.greeting_message):
-                    self.greeting_sent = True
-                    self.logger.info("Greeting message sent successfully")
-                else:
-                    self.logger.error("Failed to send greeting message")
-                        
-        except Exception as e:
-            self.logger.error(f"❌ Error processing message: {str(e)}")
-
-    def _check_emoji_trigger(self, message):
-        """Check if a message contains the trigger emoji sequence."""
+        Raises:
+            Exception: If message processing fails
+        """
         try:
-            message_text = message.get('snippet', {}).get('displayMessage', '')
-            self.logger.debug(f"🔍 Checking for emojis {self.trigger_emojis} in message: {message_text}")
+            msg_id = message["id"]
+            snippet = message["snippet"]
+            author_details = message["authorDetails"]
+            author_id = author_details.get("channelId", "unknown")
+
+            display_message = snippet.get("displayMessage", "")
+            author_name = author_details["displayName"]
+
+            # Diagnostic logging for message processing
+            logger.debug(f"Chat message received: {display_message}")
+            logger.debug(f"Message length: {len(display_message)}")
+            logger.debug(f"Looking for emojis: {self.trigger_emojis}")
             
-            # Log each emoji's presence
-            for emoji in self.trigger_emojis:
-                if emoji in message_text:
-                    self.logger.debug(f"✅ Found emoji {emoji} in message")
-                else:
-                    self.logger.debug(f"❌ Emoji {emoji} not found in message")
-            
-            has_trigger = all(emoji in message_text for emoji in self.trigger_emojis)
-            self.logger.debug(f"🎯 Emoji trigger check result: {has_trigger}")
-            return has_trigger
+            # Check for exact emoji sequence
+            if "✊✋🖐️" in display_message:
+                logger.info(f"Emoji sequence detected in message from {author_name}: {display_message}")
+                
+                # Check rate limiting
+                if self._is_rate_limited(author_id):
+                    logger.debug(f"Skipping trigger for rate-limited user {author_name}")
+                    return None
+                
+                try:
+                    # Get banter response with fallback
+                    response = self.banter_engine.get_random_banter(theme="greeting")
+                    if not response or not isinstance(response, str) or not response.strip():
+                        logger.warning(f"Empty or invalid banter response for {author_name}, using fallback")
+                        response = "Hey there! Thanks for the gesture! 👋"
+                    
+                    logger.debug(f"Generated banter response for {author_name}: {response}")
+                    
+                    if await self.send_chat_message(response):
+                        logger.info(f"Successfully queued banter response for {author_name}")
+                        self._update_trigger_time(author_id)
+                    else:
+                        logger.error(f"Failed to queue banter response for {author_name}")
+                except Exception as e:
+                    logger.error(f"Error processing emoji trigger for {author_name}: {str(e)}")
+                    # Continue processing even if trigger fails
+
+            log_entry = {
+                "id": msg_id,
+                "author": author_name,
+                "message": display_message,
+                "timestamp": datetime.now().isoformat()
+            }
+
+            self._log_to_user_file(message)
+            return log_entry
         except Exception as e:
-            self.logger.error(f"❌ Error checking emoji trigger: {str(e)}")
-            return False
-
-    def normalize_username(self, raw_name):
-        """Normalize username for file paths."""
-        # Lowercase, remove underscores, strip spaces
-        return raw_name.lower().replace("_", " ").strip()
-
-    def is_youtube_json(self, message):
-        """Check if message is a raw YouTube JSON dump."""
-        return '"kind": "youtube#liveChatMessage"' in str(message)
-
-    def should_ignore(self, message):
-        """Check if message should be ignored (e.g., system messages)."""
-        return '"kind": "youtube#liveChatMessage"' in str(message)
+            logger.error(f"Error processing message: {str(e)}")
+            raise
 
     def _log_to_user_file(self, message):
-        """Log chat message to user-specific file."""
+        """Appends a log entry to a user-specific file."""
         try:
-            # Block raw YouTube JSON messages
-            if self.is_youtube_json(message):
-                self.logger.debug("⏭️ Skipping raw YouTube JSON message")
-                return
-
-            # Extract user details
-            author = message.get('authorDetails', {})
-            user = author.get('displayName', 'unknown')
+            username = message["authorDetails"]["displayName"]
+            log_dir = os.path.join(self.memory_dir, "chat_logs").replace("\\", "/")
+            os.makedirs(log_dir, exist_ok=True)
             
-            # Normalize username for file path
-            normalized_user = self.normalize_username(user)
-            self.logger.debug(f"👤 Normalized username: {user} -> {normalized_user}")
-            
-            # Create user directory if it doesn't exist
-            user_dir = os.path.join(self.memory_dir, normalized_user)
-            os.makedirs(user_dir, exist_ok=True)
-            self.logger.debug(f"📁 Ensured user directory exists: {user_dir}")
-            
-            # Write message to file
-            filepath = os.path.join(user_dir, "chat_history.txt")
-            with open(filepath, "a", encoding="utf-8") as f:
-                json.dump(message, f)
-                f.write("\n")
-            self.logger.debug(f"📝 Logged message from {user} to {filepath}")
-            
+            log_filename = os.path.join(log_dir, f"{username}.jsonl").replace("\\", "/")
+            with open(log_filename, "a", encoding="utf-8") as f:
+                import json
+                f.write(json.dumps(message) + "\n")
+            logger.debug(f"Logged message from {username}")
         except Exception as e:
-            self.logger.error(f"❌ Error logging to user file: {str(e)}")
-            # Don't raise the exception - logging errors shouldn't break the chat
+            logger.error(f"Failed to write to log file: {e}")
+            raise
 
-    def _truncate_message(self, message, max_length=200):
-        """Truncate a message to fit YouTube's length limit."""
-        if len(message) <= max_length - 3:  # Account for "..."
-            return message
-        return message[:max_length-3] + "..."
+    async def send_chat_message(self, message_text):
+        """Sends a text message to the live chat."""
+        if not self.live_chat_id:
+            logger.error("Cannot send message, live_chat_id is not set.")
+            return False
 
-    async def send_chat_message(self, message):
-        """Send a message to the live chat."""
+        logger.debug(f"Preparing to send message to chat ID: {self.live_chat_id}")
+        max_len = 200
+        if len(message_text) > max_len - 3:  # Leave room for '...'
+            logger.warning(f"Message too long ({len(message_text)} chars), truncating to {max_len}.")
+            message_text = message_text[:max_len-3] + "..."
+
         try:
-            if not self.live_chat_id:
-                self.logger.error("No live chat ID available")
-                return False
-
-            # Truncate message if needed
-            truncated_message = self._truncate_message(message)
-            self.logger.debug(f"Attempting to send message: {truncated_message}")
-            
+            logger.debug("Constructing API request...")
             request = self.youtube.liveChatMessages().insert(
                 part="snippet",
                 body={
@@ -388,80 +280,82 @@ class LiveChatListener:
                         "liveChatId": self.live_chat_id,
                         "type": "textMessageEvent",
                         "textMessageDetails": {
-                            "messageText": truncated_message
+                            "messageText": message_text
                         }
                     }
                 }
             )
-            
-            # Wrap synchronous API call in asyncio.to_thread
-            response = await asyncio.to_thread(request.execute)
-            self.logger.info(f"Successfully sent message: {truncated_message}")
+            logger.debug("Executing API request...")
+            response = request.execute()
+            logger.info(f"Message sent successfully to chat ID: {self.live_chat_id}")
             return True
-            
         except googleapiclient.errors.HttpError as e:
-            if not await self._handle_auth_error(e):
-                self.logger.error(f"Failed to send message: {str(e)}")
-            return False
+            logger.error(f"Failed to send message: {e}")
+            if await self._handle_auth_error(e):
+                logger.info("Auth error handled during send, retrying might work if implemented.")
+                # Consider implementing a retry mechanism here if needed
+                return False # Indicate failure for this attempt
+            else:
+                return False # Unhandled error or rotation failed
         except Exception as e:
-            self.logger.error(f"Unexpected error sending message: {str(e)}")
+            logger.error(f"Unexpected error sending message: {e}")
             return False
 
     async def start_listening(self):
-        """Start listening to the live chat."""
-        self.logger.info("🚀 Starting chat listener")
-        try:
-            self.logger.info(f"📺 Initializing for video ID: {mask_sensitive_id(self.video_id, 'video')}")
+        """Starts the chat listener loop."""
+        if not self.is_running:
+            logger.info("Attempting to start live chat listener...")
             
-            # Get live chat ID if not already set
-            if not self.live_chat_id:
-                self.logger.info("🔍 No live_chat_id, checking video details")
-                video_details = check_video_details(self.youtube, self.video_id)
-                if video_details and "liveStreamingDetails" in video_details:
-                    self.live_chat_id = video_details["liveStreamingDetails"].get("activeLiveChatId")
-                    if self.live_chat_id:
-                        self.logger.info(f"✅ Found live chat ID: {mask_sensitive_id(self.live_chat_id, 'chat')}")
-                        # Send greeting only after we have confirmed live_chat_id and haven't sent it yet
-                        if self.greeting_message and not self.greeting_sent:
-                            self.logger.info("🚀 Sending initial greeting message...")
-                            if await self.send_chat_message(self.greeting_message):
-                                self.greeting_sent = True
-                                self.logger.info("✅ Greeting message sent successfully")
-                            else:
-                                self.logger.error("❌ Failed to send greeting message")
-                    else:
-                        self.logger.error("❌ No active live chat ID found")
+            try:
+                if not self.live_chat_id:
+                    logger.info("No live_chat_id provided, attempting to fetch it...")
+                    self.live_chat_id = self._get_live_chat_id()
+                    if not self.live_chat_id:
+                        logger.error(f"Could not find active live chat for video {self.video_id}. Exiting listener.")
                         return
                 else:
-                    self.logger.error("❌ Could not get video details")
-                    return
-            
-            # Start polling for messages
-            self.logger.info("🔄 Starting chat message polling loop")
-            while True:
-                try:
-                    self.logger.debug("🔄 Polling for new messages...")
+                    logger.info(f"Using provided live chat ID: {self.live_chat_id}")
+
+                logger.info(f"Successfully connected to chat ID: {self.live_chat_id}")
+
+                if self.greeting_message:
+                    logger.info(f"Attempting to send greeting message: {self.greeting_message}")
+                    try:
+                        if await self.send_chat_message(self.greeting_message):
+                            logger.info("Greeting message sent successfully")
+                        else:
+                            logger.error("Failed to send greeting message - send_chat_message returned False")
+                    except Exception as e:
+                        logger.error(f"Exception while sending greeting message: {e}")
+                    time.sleep(2)
+                else:
+                    logger.warning("No greeting message configured")
+
+                logger.info("Starting chat polling loop...")
+                self.is_running = True
+                while self.is_running:
+                    # Update viewer count and adjust polling interval
+                    self._update_viewer_count()
+                    
                     messages = await self._poll_chat_messages()
-                    
-                    # Update delay based on message count
-                    message_count = len(messages)
-                    self.delay_tuner.update(str(message_count))
-                    current_delay = self.delay_tuner.get_delay()
-                    
-                    self.logger.debug(f"⏳ Waiting {current_delay}s before next poll (messages: {message_count})")
-                    await asyncio.sleep(current_delay)
-                    
-                except googleapiclient.errors.HttpError as e:
-                    if e.resp.status == 403 and "quotaExceeded" in str(e):
-                        self.logger.warning("⚠️ Quota exceeded, waiting before retry...")
-                        await asyncio.sleep(30)
-                    else:
-                        self.logger.error(f"❌ Error polling chat: {e}")
-                        await asyncio.sleep(5)
-                except Exception as e:
-                    self.logger.error(f"❌ Error in chat polling loop: {e}")
-                    await asyncio.sleep(5)
-                    
-        except Exception as e:
-            self.logger.error(f"❌ Error starting chat listener: {e}")
-            raise 
+                    if messages is None:  # None indicates critical failure
+                        logger.error("Polling failed critically. Stopping listener.")
+                        break
+
+                    # Process messages asynchronously if _process_message is async
+                    if messages:
+                        for message in messages:
+                            try:
+                                await self._process_message(message)
+                            except Exception as processing_e:
+                                logger.error(f"Error during message processing: {processing_e}")
+
+                    sleep_time_seconds = self.poll_interval_ms / 1000.0
+                    logger.debug(f"Current viewer count: {self.viewer_count}, Waiting {sleep_time_seconds:.2f}s before next poll")
+                    await asyncio.sleep(sleep_time_seconds)
+
+            except Exception as e:
+                logger.error(f"Critical error in chat listener: {str(e)}")
+                raise
+
+            logger.info("Chat listener stopped.")

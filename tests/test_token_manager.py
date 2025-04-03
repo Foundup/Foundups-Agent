@@ -1,5 +1,6 @@
 import logging
 import asyncio
+import pytest
 from unittest.mock import patch
 from modules.token_manager import TokenManager
 
@@ -14,18 +15,20 @@ def mock_authenticated_service_success(*args, **kwargs):
 def mock_authenticated_service_fail(*args, **kwargs):
     return None  # simulate failure
 
+@pytest.mark.asyncio
 async def test_check_token_health_pass():
     print("✅ test_check_token_health_pass")
     manager = TokenManager()
-    with patch("modules.token_manager.get_authenticated_service", side_effect=mock_authenticated_service_success):
+    with patch("modules.token_manager.src.token_manager.get_authenticated_service", side_effect=mock_authenticated_service_success):
         result = manager.check_token_health(0)
         print("Result:", result)
         assert result is True
 
+@pytest.mark.asyncio
 async def test_check_token_health_fail_and_cooldown():
     print("✅ test_check_token_health_fail_and_cooldown")
     manager = TokenManager()
-    with patch("modules.token_manager.get_authenticated_service", side_effect=mock_authenticated_service_fail):
+    with patch("modules.token_manager.src.token_manager.get_authenticated_service", side_effect=mock_authenticated_service_fail):
         result = manager.check_token_health(0)
         print("Initial result (should fail):", result)
         assert result is False
@@ -34,6 +37,7 @@ async def test_check_token_health_fail_and_cooldown():
         print("Cooldown result (should skip):", result)
         assert result is False
 
+@pytest.mark.asyncio
 async def test_rotate_tokens_mixed():
     print("✅ test_rotate_tokens_mixed")
     manager = TokenManager()

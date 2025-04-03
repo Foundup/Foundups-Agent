@@ -52,12 +52,12 @@ def read_log_file(file_path: Path) -> List[str]:
         logger.error(f"Error reading log file {file_path}: {e}")
         raise
 
-def write_markdown_log(output_path: Path, content: str) -> None:
+def write_reversed_log(output_path: Path, content: str) -> None:
     """
-    Write the combined log content to a markdown file.
+    Write the reversed log content to a file.
     
     Args:
-        output_path: Path to write the markdown file
+        output_path: Path to write the reversed log file
         content: Content to write
         
     Raises:
@@ -66,116 +66,55 @@ def write_markdown_log(output_path: Path, content: str) -> None:
     try:
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(content)
-        logger.info(f"Successfully wrote combined log to {output_path}")
+        logger.info(f"Successfully wrote reversed log to {output_path}")
     except IOError as e:
-        logger.error(f"Error writing markdown file {output_path}: {e}")
+        logger.error(f"Error writing reversed log file {output_path}: {e}")
         raise
 
-def update_gitignore(gitignore_path: Path, target_path: Path) -> None:
+def process_single_log(file_path: Path, output_path: Path) -> bool:
     """
-    Add the target file to .gitignore if not already present.
+    Process a single log file and write its reversed content.
     
     Args:
-        gitignore_path: Path to .gitignore file
-        target_path: Path to add to .gitignore
-    """
-    try:
-        # Create .gitignore if it doesn't exist
-        if not gitignore_path.exists():
-            gitignore_path.touch()
-            logger.info(f"Created {gitignore_path}")
-        
-        # Read current content
-        with open(gitignore_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        # Add target if not present
-        target_str = str(target_path)
-        if target_str not in content:
-            with open(gitignore_path, 'a', encoding='utf-8') as f:
-                f.write(f"\n{target_str}")
-            logger.info(f"Added {target_str} to .gitignore")
-    except IOError as e:
-        logger.error(f"Error updating .gitignore: {e}")
-
-def combine_reversed_logs(log_dir: Path) -> Optional[str]:
-    """
-    Combine and reverse multiple log files.
-    
-    Args:
-        log_dir: Directory containing log files
+        file_path: Path to the log file
+        output_path: Path to write the reversed log
         
     Returns:
-        Combined and reversed log content as markdown string
+        bool: True if successful, False otherwise
     """
     try:
-        # Get log files
-        log_files = sorted(log_dir.glob('02_log_*.txt'))
-        if not log_files:
-            logger.error(f"No log files found in {log_dir}")
-            return None
-            
-        # Read and combine logs
-        all_lines = []
-        for log_file in reversed(log_files):  # Process newer files first
-            logger.info(f"Processing {log_file}")
-            lines = read_log_file(log_file)
-            all_lines.extend(lines)
-            
-        # Reverse all lines
-        reversed_lines = list(reversed(all_lines))
-        
-        # Create markdown content
-        content = "## Combined Reversed Log (Most Recent First)\n\n"
-        content += "```log\n"
-        content += "".join(reversed_lines)
-        content += "\n```"
-        
-        return content
-        
+        logger.info(f"Processing {file_path}")
+        lines = read_log_file(file_path)
+        reversed_lines = list(reversed(lines))
+        content = "".join(reversed_lines)
+        write_reversed_log(output_path, content)
+        return True
     except Exception as e:
-        logger.error(f"Error combining logs: {e}")
-        return None
+        logger.error(f"Error processing log {file_path}: {e}")
+        return False
 
 def main() -> int:
     """Main entry point for the script."""
     try:
-        # Parse arguments
-        parser = argparse.ArgumentParser(description='Combine and reverse log files')
-        parser.add_argument('--log-dir', default='02_log',
-                          help='Directory containing log files')
-        args = parser.parse_args()
-        
         # Setup paths
-        log_dir = Path(args.log_dir)
-        output_path = log_dir / 'DevLog.md'
-        gitignore_path = Path('.gitignore')
+        backup_dir = Path('02_logs/backup')
+        output_dir = Path('02_logs')
         
-        # Create log directory if it doesn't exist
-        if not log_dir.exists():
-            log_dir.mkdir(parents=True)
-            logger.info(f"Created log directory: {log_dir}")
+        # Process each log file
+        for i in range(1, 4):
+            input_file = backup_dir / f'02_{i:03d}log.txt'
+            output_file = output_dir / f'r_{i:03d}log.txt'
             
-        # Create test log files if they don't exist
-        test_files = ['02_log_001.txt', '02_log_002.txt']
-        for file_name in test_files:
-            file_path = log_dir / file_name
-            if not file_path.exists():
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(f"Test log entry for {file_name}\n")
-                logger.info(f"Created test log file: {file_path}")
-            
-        # Combine and reverse logs
-        content = combine_reversed_logs(log_dir)
-        if not content:
-            return 1
-            
-        # Write markdown file
-        write_markdown_log(output_path, content)
-        
-        # Update .gitignore
-        update_gitignore(gitignore_path, output_path)
-        
+            if not input_file.exists():
+                logger.error(f"Input file not found: {input_file}")
+                continue
+                
+            logger.info(f"Processing {input_file} -> {output_file}")
+            if process_single_log(input_file, output_file):
+                logger.info(f"Successfully reversed {input_file}")
+            else:
+                logger.error(f"Failed to reverse {input_file}")
+                
         return 0
         
     except Exception as e:

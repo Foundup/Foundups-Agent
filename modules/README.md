@@ -1,6 +1,57 @@
-# Core Agent Modules
+# Foundups Agent Modules
 
-This directory contains the primary functional modules for the FoundUps Agent.
+This directory contains the core functional modules of the Foundups Agent. The structure and development process follow the **Windsurf Protocol (WSP)** to ensure modularity, testability, and atomic changes.
+
+## Foundups Modular Framework
+
+The system is designed like a **stack of expanding cubes**, where each layer (module or feature) is built, tested, and locked before the next one begins. This is enforced by a methodical dev-test flow driven by WSP prompts.
+
+### Core Principles:
+
+1.  **Windsurf Protocol (WSP):**
+    *   Every change is defined through a **WSP prompt**.
+    *   WSPs represent **atomic tasks**: one file, one function, one logical change, with no side effects outside the defined scope.
+    *   Each WSP is like a clean commit, including its own specific testing logic (unit and integration).
+
+2.  **Modular Architecture:**
+    *   The Agent is composed of distinct, plug-and-play **modules**, each residing in its own subdirectory within `modules/`. Examples include:
+        *   `banter_engine/` (Handles emoji-tone mapping and responses)
+        *   `live_chat_listener/` (Monitors input streams)
+        *   `oauth_manager/` (Manages credentials and authentication)
+        *   `twin_trainer/` (Builds personality models)
+        *   `stream_resolver/`
+        *   `emoji_mapper/`
+        *   *(add other modules as they are created)*
+    *   **Module Structure:** Each module directory (`modules/<module_name>/`) should contain:
+        *   `src/`: Main source code for the module.
+        *   `tests/`: Unit and integration tests specific to the module.
+        *   `__init__.py`: Makes the directory a Python package and exposes necessary components.
+        *   *(Optionally)* `config/`, `handlers/`, `assets/`, etc., as needed by the module.
+    *   **Lifecycle:** Modules progress through phases: POC (`0.0.x`) → Prototype (`0.1.x – 0.9.x`) → MVP/Production (`1.x.x+`).
+
+3.  **Strict Change Logs (`MODLOG`):**
+    *   All significant changes, especially those corresponding to WSPs, should be tracked in a `MODLOG` file (likely at the project root).
+    *   Use tags like `[+WSP]`, `[+todo]`, or `[+UPDATES]` for clarity.
+
+4.  **Clean Reference Baseline:**
+    *   All changes and behaviors are validated against a pristine baseline branch (e.g., `Foundups-Agent-CleanX`). This prevents regression and unscoped changes.
+
+5.  **Testing by Phase:**
+    *   Each WSP must complete its cycle: code update → unit test → integration/live test → lock-in.
+    *   Work does not proceed to the next WSP or phase until all tests pass and the scope is verified against the baseline.
+
+### Why This Structure?
+
+This approach ensures:
+*   **Decoupling:** Modules operate independently, minimizing unforeseen interactions.
+*   **Testability:** Atomic units are easier to test thoroughly.
+*   **Traceability:** WSPs and MODLOG make changes easy to follow.
+*   **Scalability:** The system scales horizontally like snap-together blocks, avoiding central failure points.
+*   **Alignment:** Conforms to the principles of modular AI alignment.
+
+---
+
+*This document reflects the standard structure and protocol for developing modules within the Foundups Agent.*
 
 ## Module Overview
 

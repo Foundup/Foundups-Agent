@@ -9,6 +9,9 @@ from googleapiclient.errors import HttpError
 
 logger = logging.getLogger(__name__)
 
+# Load environment variables once when the module is imported
+load_dotenv()
+
 def get_credentials_for_index(index):
     """
     Get credentials for a specific index (1-4).
@@ -32,7 +35,6 @@ def get_authenticated_service():
     Handles token loading, refreshing, and the initial authorization flow.
     Implements multi-client OAuth fallback for quota management.
     """
-    load_dotenv()
     scopes = os.getenv('YOUTUBE_SCOPES', '').split()
     
     if not scopes:
@@ -56,6 +58,8 @@ def get_authenticated_service():
                 logger.info(f"Loaded credentials from {token_file}")
             except Exception as e:
                 logger.error(f"Failed to load credentials from {token_file}: {e}")
+                # If loading fails, skip to the next credential set
+                continue
 
         # Handle credential refresh or new authentication
         if not creds or not creds.valid:
