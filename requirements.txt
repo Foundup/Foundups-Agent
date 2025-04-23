@@ -8,3 +8,5 @@ requests>=2.25.0 # Often a dependency, good to specify
 # web3
 # Testing framework
 pytest>=7.0.0
+pytest-asyncio>=0.26.0 # Added previously for async tests
+pytest-cov>=2.10.0 # For coverage reporting

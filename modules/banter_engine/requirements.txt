@@ -1,0 +1,11 @@
+# Banter Engine Module Dependencies
+
+# Standard library dependencies (listed for clarity)
+# logging
+# random
+# typing
+
+# No external package dependencies required
+
+# Internal dependencies are handled through local imports
+# modules.banter_engine.sequence_responses (SEQUENCE_MAP) 

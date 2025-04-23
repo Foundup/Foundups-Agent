@@ -80,11 +80,11 @@ class LiveChatListener:
             if not chat_id:
                 logger.error(f"No active live chat for video: {self.video_id}")
                 raise ValueError(f"No active live chat for video: {self.video_id}")
-
+                
             self.live_chat_id = chat_id
             logger.info(f"Retrieved live chat ID: {chat_id}")
             return chat_id
-
+            
         except googleapiclient.errors.HttpError as e:
             logger.error(f"HTTP error getting live chat ID: {e}")
             raise
@@ -137,7 +137,7 @@ class LiveChatListener:
             else:
                 logger.debug("No new messages.")
                 return []
-
+            
         except googleapiclient.errors.HttpError as e:
             logger.error(f"API Error polling messages: {e}")
             if await self._handle_auth_error(e):
@@ -166,82 +166,160 @@ class LiveChatListener:
             time_since_last = current_time - self.last_trigger_time[user_id]
             if time_since_last < self.trigger_cooldown:
                 logger.debug(f"Rate limited user {user_id} for {self.trigger_cooldown - time_since_last:.1f}s")
-                return True
+            return True
         return False
 
     def _update_trigger_time(self, user_id):
         """Update the last trigger time for a user."""
         self.last_trigger_time[user_id] = time.time()
 
+    def _extract_message_metadata(self, message):
+        """
+        Extract key metadata from a chat message.
+        
+        Args:
+            message (dict): The YouTube chat message object
+            
+        Returns:
+            tuple: (msg_id, display_message, author_name, author_id)
+            
+        Raises:
+            KeyError: If required message fields are missing
+        """
+        msg_id = message["id"]
+        snippet = message["snippet"]
+        author_details = message["authorDetails"]
+        
+        author_id = author_details.get("channelId", "unknown")
+        display_message = snippet.get("displayMessage", "")
+        author_name = author_details["displayName"]
+        
+        logger.debug(f"Chat message received: {display_message}")
+        logger.debug(f"Message length: {len(display_message)}")
+        logger.debug(f"Looking for emojis: {self.trigger_emojis}")
+        
+        return msg_id, display_message, author_name, author_id
+    
+    def _check_trigger_patterns(self, message_text):
+        """
+        Check if a message contains any trigger patterns.
+        
+        Args:
+            message_text (str): The message text to check
+            
+        Returns:
+            bool: True if a trigger pattern was found, False otherwise
+        """
+        # Check for the emoji sequence formed by joining the trigger emojis
+        trigger_sequence = "".join(self.trigger_emojis)
+        if trigger_sequence in message_text:
+            return True
+        return False
+    
+    async def _handle_emoji_trigger(self, author_name, author_id, message_text):
+        """
+        Handle a detected emoji trigger sequence.
+        
+        Args:
+            author_name (str): Display name of the message author
+            author_id (str): Channel ID of the message author
+            message_text (str): The message text containing the trigger
+            
+        Returns:
+            bool: True if the trigger was handled successfully, False otherwise
+        """
+        logger.info(f"Emoji sequence detected in message from {author_name}: {message_text}")
+        
+        # Check rate limiting
+        if self._is_rate_limited(author_id):
+            logger.debug(f"Skipping trigger for rate-limited user {author_name}")
+            return False
+        
+        try:
+            # Get banter response
+            response = self.banter_engine.get_random_banter(theme="greeting")
+            if not response or not isinstance(response, str) or not response.strip():
+                logger.warning(f"Empty or invalid banter response for {author_name}, using fallback")
+                response = "Hey there! Thanks for the gesture! 👋"
+            
+            logger.debug(f"Generated banter response for {author_name}: {response}")
+            
+            # Send response
+            if await self.send_chat_message(response):
+                logger.info(f"Successfully queued banter response for {author_name}")
+                self._update_trigger_time(author_id)
+                return True
+            else:
+                logger.error(f"Failed to queue banter response for {author_name}")
+                return False
+        except Exception as e:
+            logger.error(f"Error processing emoji trigger for {author_name}: {str(e)}")
+            return False
+
+    def _create_log_entry(self, msg_id, author_name, display_message):
+        """
+        Create a standardized log entry from message data.
+        
+        Args:
+            msg_id (str): Message identifier
+            author_name (str): Display name of the author
+            display_message (str): Message content
+            
+        Returns:
+            dict: Log entry with standardized fields
+        """
+        return {
+            "id": msg_id,
+            "author": author_name,
+            "message": display_message,
+            "timestamp": datetime.now().isoformat()
+        }
+    
     async def _process_message(self, message):
         """
         Process a single chat message and handle triggers.
         
         Args:
-            message (dict): YouTube chat message object containing:
-                - id: Message identifier
-                - snippet: Message content and metadata
-                - authorDetails: Information about the message sender
-                
+            message (dict): YouTube chat message object
+                    
         Returns:
             dict: Processed log entry containing message details
             
-        Raises:
-            Exception: If message processing fails
+        Notes:
+            Returns None if an error occurs or if the message contains a trigger
+            that was rate-limited
         """
         try:
-            msg_id = message["id"]
-            snippet = message["snippet"]
-            author_details = message["authorDetails"]
-            author_id = author_details.get("channelId", "unknown")
-
-            display_message = snippet.get("displayMessage", "")
-            author_name = author_details["displayName"]
-
-            # Diagnostic logging for message processing
-            logger.debug(f"Chat message received: {display_message}")
-            logger.debug(f"Message length: {len(display_message)}")
-            logger.debug(f"Looking for emojis: {self.trigger_emojis}")
+            # Extract message metadata
+            msg_id, display_message, author_name, author_id = self._extract_message_metadata(message)
             
-            # Check for exact emoji sequence
-            if "✊✋🖐️" in display_message:
-                logger.info(f"Emoji sequence detected in message from {author_name}: {display_message}")
-                
-                # Check rate limiting
-                if self._is_rate_limited(author_id):
-                    logger.debug(f"Skipping trigger for rate-limited user {author_name}")
+            # Check for trigger patterns
+            if self._check_trigger_patterns(display_message):
+                # Handle emoji trigger
+                trigger_success = await self._handle_emoji_trigger(author_name, author_id, display_message)
+                if not trigger_success and self._is_rate_limited(author_id):
+                    # If handling failed due to rate limiting, return None
                     return None
-                
-                try:
-                    # Get banter response with fallback
-                    response = self.banter_engine.get_random_banter(theme="greeting")
-                    if not response or not isinstance(response, str) or not response.strip():
-                        logger.warning(f"Empty or invalid banter response for {author_name}, using fallback")
-                        response = "Hey there! Thanks for the gesture! 👋"
-                    
-                    logger.debug(f"Generated banter response for {author_name}: {response}")
-                    
-                    if await self.send_chat_message(response):
-                        logger.info(f"Successfully queued banter response for {author_name}")
-                        self._update_trigger_time(author_id)
-                    else:
-                        logger.error(f"Failed to queue banter response for {author_name}")
-                except Exception as e:
-                    logger.error(f"Error processing emoji trigger for {author_name}: {str(e)}")
-                    # Continue processing even if trigger fails
-
-            log_entry = {
-                "id": msg_id,
-                "author": author_name,
-                "message": display_message,
-                "timestamp": datetime.now().isoformat()
-            }
-
-            self._log_to_user_file(message)
+            
+            # Create log entry
+            log_entry = self._create_log_entry(msg_id, author_name, display_message)
+            
+            # Log the message
+            try:
+                self._log_to_user_file(message)
+            except Exception as log_e:
+                # Log but don't fail the whole processing if logging fails
+                logger.error(f"Failed to log message: {log_e}")
+            
             return log_entry
         except Exception as e:
             logger.error(f"Error processing message: {str(e)}")
-            raise
+            # Return a minimal log entry with error information rather than raising
+            # This prevents a single bad message from breaking batch processing
+            return {
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
 
     def _log_to_user_file(self, message):
         """Appends a log entry to a user-specific file."""
@@ -301,61 +379,112 @@ class LiveChatListener:
             logger.error(f"Unexpected error sending message: {e}")
             return False
 
+    async def _initialize_chat_session(self) -> bool:
+        """
+        Initialize the chat session by validating or obtaining the chat ID.
+        
+        Returns:
+            bool: True if initialization was successful, False otherwise
+        """
+        if not self.live_chat_id:
+            logger.info("No live_chat_id provided, attempting to fetch it...")
+            try:
+                self.live_chat_id = self._get_live_chat_id()
+                if not self.live_chat_id:
+                    logger.error(f"Could not find active live chat for video {self.video_id}. Exiting listener.")
+                    return False
+            except Exception as e:
+                logger.error(f"Failed to fetch live chat ID: {e}")
+                return False
+        else:
+            logger.info(f"Using provided live chat ID: {self.live_chat_id}")
+        
+        logger.info(f"Successfully connected to chat ID: {self.live_chat_id}")
+        return True
+        
+    async def _send_greeting_message(self) -> None:
+        """Send a greeting message to the chat if configured."""
+        if not self.greeting_message:
+            logger.warning("No greeting message configured")
+            return
+                
+        logger.info(f"Attempting to send greeting message: {self.greeting_message}")
+        try:
+            if await self.send_chat_message(self.greeting_message):
+                logger.info("Greeting message sent successfully")
+            else:
+                logger.error("Failed to send greeting message - send_chat_message returned False")
+        except Exception as e:
+            logger.error(f"Exception while sending greeting message: {e}")
+        
+        # Brief pause after greeting (using asyncio.sleep to avoid blocking)
+        await asyncio.sleep(2)
+        
+    async def _poll_chat_cycle(self) -> bool:
+        """
+        Execute a single polling cycle (update viewers, poll messages, process messages).
+        
+        Returns:
+            bool: True if a critical failure occurred, False otherwise
+        """
+        # Update viewer count and adjust polling interval
+        self._update_viewer_count()
+        
+        # Poll for new messages
+        messages = await self._poll_chat_messages()
+        if messages is None:  # None indicates critical failure
+            logger.error("Polling failed critically. Stopping listener.")
+            return True
+        
+        # Process received messages
+        if messages:
+            await self._process_message_batch(messages)
+        
+        return False
+        
+    async def _process_message_batch(self, messages) -> None:
+        """
+        Process a batch of messages with proper error handling.
+        
+        Args:
+            messages: List of messages to process
+        """
+        for message in messages:
+            try:
+                await self._process_message(message)
+            except Exception as processing_e:
+                logger.error(f"Error during message processing: {processing_e}")
+        
     async def start_listening(self):
         """Starts the chat listener loop."""
         if not self.is_running:
             logger.info("Attempting to start live chat listener...")
             
             try:
-                if not self.live_chat_id:
-                    logger.info("No live_chat_id provided, attempting to fetch it...")
-                    self.live_chat_id = self._get_live_chat_id()
-                    if not self.live_chat_id:
-                        logger.error(f"Could not find active live chat for video {self.video_id}. Exiting listener.")
-                        return
-                else:
-                    logger.info(f"Using provided live chat ID: {self.live_chat_id}")
-
-                logger.info(f"Successfully connected to chat ID: {self.live_chat_id}")
-
-                if self.greeting_message:
-                    logger.info(f"Attempting to send greeting message: {self.greeting_message}")
-                    try:
-                        if await self.send_chat_message(self.greeting_message):
-                            logger.info("Greeting message sent successfully")
-                        else:
-                            logger.error("Failed to send greeting message - send_chat_message returned False")
-                    except Exception as e:
-                        logger.error(f"Exception while sending greeting message: {e}")
-                    time.sleep(2)
-                else:
-                    logger.warning("No greeting message configured")
-
+                # Initialize chat session
+                if not await self._initialize_chat_session():
+                    return
+                
+                # Send greeting message
+                await self._send_greeting_message()
+                
+                # Start polling loop
                 logger.info("Starting chat polling loop...")
                 self.is_running = True
+                
                 while self.is_running:
-                    # Update viewer count and adjust polling interval
-                    self._update_viewer_count()
-                    
-                    messages = await self._poll_chat_messages()
-                    if messages is None:  # None indicates critical failure
-                        logger.error("Polling failed critically. Stopping listener.")
+                    # Execute one polling cycle
+                    critical_failure = await self._poll_chat_cycle()
+                    if critical_failure:
                         break
-
-                    # Process messages asynchronously if _process_message is async
-                    if messages:
-                        for message in messages:
-                            try:
-                                await self._process_message(message)
-                            except Exception as processing_e:
-                                logger.error(f"Error during message processing: {processing_e}")
-
+                    
+                    # Sleep until next poll
                     sleep_time_seconds = self.poll_interval_ms / 1000.0
                     logger.debug(f"Current viewer count: {self.viewer_count}, Waiting {sleep_time_seconds:.2f}s before next poll")
                     await asyncio.sleep(sleep_time_seconds)
-
+                    
             except Exception as e:
                 logger.error(f"Critical error in chat listener: {str(e)}")
                 raise
-
+            
             logger.info("Chat listener stopped.")

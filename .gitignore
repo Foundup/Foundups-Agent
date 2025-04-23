@@ -121,3 +121,6 @@ credentials/
 *.pem
 *.key
 02_logs\backup\DevLog.md
+
+# Legacy clean states
+legacy/

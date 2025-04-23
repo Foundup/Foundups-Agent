@@ -1,0 +1,21 @@
+# Stream Resolver Module Dependencies
+
+# Google API dependencies
+google-api-python-client>=2.79.0
+google-auth>=2.16.0
+google-auth-oauthlib>=1.0.0
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# Standard library dependencies (listed for clarity)
+# time
+# random
+# logging
+# typing
+# os
+
+# Internal dependencies 
+# These are other modules within the Foundups project
+# utils.oauth_manager
+# utils.env_loader 

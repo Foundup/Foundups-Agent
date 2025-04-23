@@ -25,39 +25,39 @@ from modules.banter_engine.src.emoji_sequence_map import (
 
 def test_emoji_mapping():
     """Test the emoji-to-number mapping functionality."""
-    logger = logging.getLogger(__name__)
-    logger.info("Starting emoji mapping test...")
+    # logger = logging.getLogger(__name__)
+    # logger.info("Starting emoji mapping test...")
 
-    try:
-        # Test basic mapping
-        test_sequence = "✊✋🖐️"
-        expected_tuple = (1, 2, 3)
-        result = emoji_string_to_tuple(test_sequence)
-        assert result == expected_tuple, f"Expected {expected_tuple}, got {result}"
-        
-        # Test reverse mapping
-        result_emoji = tuple_to_emoji_string(expected_tuple)
-        assert result_emoji == test_sequence, f"Expected {test_sequence}, got {result_emoji}"
-        
-        # Test with unknown emoji
-        test_with_unknown = "✊❓🖐️"
-        result = emoji_string_to_tuple(test_with_unknown)
-        assert result == (1, 0, 3), f"Expected (1, 0, 3), got {result}"
-        
-        # Test sequence map lookup
-        test_state = SEQUENCE_MAP[expected_tuple]
-        assert test_state["tone"] == "metaphoric, humor, symbolic wit"
-        assert test_state["state"] == "awakening in progress"
-        
-        logger.info("Emoji mapping tests passed successfully")
-        return True
+    # try:
+    # Test basic mapping
+    test_sequence = "✊✋🖐️"
+    expected_tuple = (1, 2, 3)
+    result = emoji_string_to_tuple(test_sequence)
+    assert result == expected_tuple, f"Expected {expected_tuple}, got {result}"
+    
+    # Test reverse mapping
+    result_emoji = tuple_to_emoji_string(expected_tuple)
+    assert result_emoji == test_sequence, f"Expected {test_sequence}, got {result_emoji}"
+    
+    # Test with unknown emoji
+    test_with_unknown = "✊❓🖐️"
+    result = emoji_string_to_tuple(test_with_unknown)
+    assert result == (1, 0, 3), f"Expected (1, 0, 3), got {result}"
+    
+    # Test sequence map lookup
+    test_state = SEQUENCE_MAP[expected_tuple]
+    assert test_state["tone"] == "metaphoric, humor, symbolic wit"
+    assert test_state["state"] == "awakening in progress"
+    
+    # logger.info("Emoji mapping tests passed successfully")
+    # return True # REMOVED
 
-    except AssertionError as e:
-        logger.error(f"Assertion error in emoji mapping test: {str(e)}")
-        return False
-    except Exception as e:
-        logger.error(f"Error during emoji mapping test: {str(e)}")
-        return False
+    # except AssertionError as e:
+    #     logger.error(f"Assertion error in emoji mapping test: {str(e)}")
+    #     return False # REMOVED
+    # except Exception as e:
+    #     logger.error(f"Error during emoji mapping test: {str(e)}")
+    #     return False # REMOVED
 
 @pytest.mark.asyncio
 async def test_emoji_trigger():

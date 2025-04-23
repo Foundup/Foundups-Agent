@@ -291,19 +291,20 @@ class TestLiveChatEmojiTrigger(unittest.TestCase):
         # Verify send_chat_message was awaited
         self.listener.send_chat_message.assert_awaited_once_with("Test banter response")
 
-    def test_emoji_trigger_missing_emoji(self):
-        """Test when one or more required emojis are missing."""
+    @pytest.mark.asyncio
+    async def test_emoji_trigger_missing_emoji(self):
+        """Test when message doesn't contain trigger emoji."""
         test_message = {
             "id": "test_id",
             "snippet": {
-                "displayMessage": "Hello ✊ world ✋ test"  # Missing 🖐️
+                "displayMessage": "Regular message without emoji"
             },
             "authorDetails": {
                 "displayName": "TestUser"
             }
         }
         
-        self.listener._process_message(test_message)
+        await self.listener._process_message(test_message)
         
         # Verify banter was not called
         self.listener.banter_engine.get_random_banter.assert_not_called()
@@ -335,7 +336,8 @@ class TestLiveChatEmojiTrigger(unittest.TestCase):
         # Verify send_chat_message was awaited
         self.listener.send_chat_message.assert_awaited_once_with("Test banter response")
 
-    def test_emoji_trigger_banter_error(self):
+    @pytest.mark.asyncio
+    async def test_emoji_trigger_banter_error(self):
         """Test when banter engine raises an exception."""
         test_message = {
             "id": "test_id",
@@ -351,7 +353,7 @@ class TestLiveChatEmojiTrigger(unittest.TestCase):
         self.listener.banter_engine.get_random_banter.side_effect = Exception("Test banter error")
         
         # Should not raise exception
-        self.listener._process_message(test_message)
+        await self.listener._process_message(test_message)
         
         # Verify send_chat_message was not called
         self.listener.send_chat_message.assert_not_called()

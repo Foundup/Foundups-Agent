@@ -324,3 +324,263 @@ This WSP applies to any `.py` file currently residing directly in the root `/mod
 ---
 
 This WSP provides a consistent methodology for bringing the FoundUps codebase into full Windsurf compliance, ensuring a robust, maintainable, and AI-ready modular architecture.
+
+WSP: FoundUps Module Test Audit & Coverage Verification
+
+Document Version: 1.1
+Date: [Insert Date]
+Applies To: FoundUps codebase, specifically performing a final test validation sweep across all Windsurf-compliant modules before integration or major release milestones.
+
+1. Purpose
+This Windsurf Standard Procedure (WSP) defines the process for conducting a comprehensive test audit across all active FoundUps modules (Micro Cubes). Its primary objectives are:
+
+Quality Gate: Serve as a final check on the health, test completeness, and structural integrity of modules before integration into larger systems or release branches.
+
+Windsurf Compliance: Verify adherence to Windsurf Protocol requirements regarding test existence and structure, as validated by FMAS.
+
+Risk Reduction: Identify and eliminate pytest warnings, deprecated features, and test failures that could indicate underlying code issues or future breakages.
+
+Coverage Assurance: Ensure adequate unit test coverage for each module to increase confidence in code reliability and reduce regressions.
+
+Integration Readiness: Confirm that the modular codebase meets defined quality standards before proceeding with integration steps.
+
+2. Scope
+Included: All module directories located under the root /modules/ directory that contain both /src/ and /tests/ subdirectories and are intended for the upcoming integration/release.
+
+Excluded:
+
+Modules explicitly marked as "experimental" or "deprecated" (if applicable, based on project conventions).
+
+Third-party libraries or code not managed under the FoundUps module structure.
+
+Folders within /modules/ lacking a /tests/ subdirectory (these should have been addressed by the Refactoring WSP or flagged by FMAS).
+
+3. Prerequisites
+Environment: Clean Git working directory; Python environment configured with all project dependencies, including pytest and pytest-cov.
+
+Tools: Access to the FoundUps Modular Audit System (FMAS) script (tools/modular_audit/modular_audit.py).
+
+Access: Read access to the relevant baseline (e.g., CLEAN4) if FMAS comparison is needed.
+
+Knowledge: Familiarity with pytest, code coverage concepts, Windsurf Protocol, and the FMAS tool.
+
+Branch: A dedicated Git branch created for this audit process (e.g., feature/test-audit-v0.1.7).
+
+4. Responsibilities
+Execution: Designated Developer or QA Engineer.
+
+Review (Optional): Peer developer or team lead.
+
+5. Procedure (Step-by-Step)
+Preparation:
+
+Ensure your local environment is up-to-date: git checkout main && git pull.
+
+Create and switch to a dedicated branch: git checkout -b feature/test-audit-vX.Y.Z (e.g., feature/test-audit-v0.1.7).
+
+Ensure all project dependencies are installed: pip install -r requirements.txt (or equivalent).
+
+Step 1: Test File Existence Verification (FMAS)
+
+Action: Run the FMAS tool to check for structural compliance, specifically focusing on missing test files.
+
+Command:
+
+```bash
+python tools/modular_audit/modular_audit.py ./modules --baseline <path_to_CLEAN4_root>
+```
+(Adjust paths as necessary)
+
+Check: Look for `NO_TEST` errors in the FMAS output.
+
+Remediation: If `NO_TEST` errors are found for modules within the scope of this audit:
+
+Create the corresponding test file in the module's `/tests/` directory (e.g., `modules/<module_name>/tests/test_<source_file_name>.py`).
+
+Add a basic test structure or `pytest.skip("TODO: Implement tests")` marker. A file must exist.
+
+Goal: FMAS reports zero `NO_TEST` errors for all in-scope modules.
+
+Step 2: Warning & Failure Sweep (pytest -ra)
+
+Action: Run pytest to identify failures, errors, warnings, and skips across all modules. The `-ra` flag provides a summary report of non-passing tests.
+
+Command:
+
+```bash
+pytest -ra modules/
+```
+
+Check: Analyze the summary section of the output. Look for:
+
+F (Failures), E (Errors): Must be fixed.
+
+W (Warnings - PytestWarning, DeprecationWarning, etc.): Must be addressed.
+
+s (Skipped), x (XFail - expected failures), X (XPass - unexpected passes): Review for validity.
+
+Remediation:
+
+Fix Failures/Errors: Debug and correct the code or tests causing F or E. This is the highest priority.
+
+Address Warnings:
+
+Fix the underlying code issue causing the warning.
+
+If the warning is unavoidable or comes from a dependency, filter it using `pytest.ini` or `@pytest.mark.filterwarnings`. Document the reason.
+
+Update dependencies if warnings relate to deprecated library usage.
+
+Review Skips/XFails: Ensure `@pytest.mark.skip` or `@pytest.mark.xfail` markers are still relevant and have clear reasons documented in the code. Remove them if the underlying issue is resolved.
+
+Goal: A clean `pytest -ra` run showing only `.` (passes) and potentially justified/documented `s` or `x` results. Zero F, E, or unaddressed W entries.
+
+Step 3: Per-Module Coverage Analysis (pytest --cov)
+
+Action: Run pytest with coverage analysis for each individual module to ensure granular coverage targets are met.
+
+Method: Iterate through each in-scope module directory.
+
+Command (Conceptual Loop):
+
+```bash
+# For each module_name in relevant subdirectories of ./modules/
+echo "--- Checking Coverage for: ${module_name} ---"
+pytest modules/${module_name}/tests/ \
+       --cov=modules.${module_name}.src \
+       --cov-report=term-missing \
+       --cov-fail-under=90 # Enforce 90% minimum coverage for this module
+# Check exit code of pytest command here. If non-zero, fail the audit for this module.
+```
+(Note: Automate this loop with a shell script or run manually for each module)
+
+Check:
+
+Review the `term-missing` output for lines/branches not covered.
+
+Ensure the pytest command exits successfully (exit code 0), indicating coverage met or exceeded the 90% threshold.
+
+Remediation:
+
+If coverage is below 90% or the command fails:
+
+Analyze the missing lines/branches in the report.
+
+Write additional unit tests in the module's `/tests/` directory to cover the identified gaps. Focus on edge cases, error conditions, and core logic paths.
+
+Re-run the coverage check for the specific module until the threshold is met.
+
+Goal: Every in-scope module achieves >= 90% test coverage individually.
+
+Step 4: Generate Aggregate Report & Documentation
+
+Action: Create a summary report documenting the audit findings and results. Generate the final aggregate HTML coverage report.
+
+Command (Aggregate HTML Report):
+
+```bash
+pytest modules/ --cov=modules --cov-report=html:reports/coverage_html_vX.Y.Z
+```
+(This generates an overall report in `reports/coverage_html_vX.Y.Z/index.html` - the total % might be different from per-module checks but provides a browseable view)
+
+Action: Create the Markdown summary file.
+
+File: `reports/test_audit_vX.Y.Z.md` (e.g., `reports/test_audit_v0.1.7.md`)
+
+Content:
+
+```markdown
+# Test Audit Summary - vX.Y.Z
+
+**Date:** [Insert Date]
+**Branch:** feature/test-audit-vX.Y.Z
+**Auditor:** [Your Name]
+
+## Overall Status: PASS / FAIL
+
+## Summary:
+This audit verified test existence, warning status, and coverage across all active FoundUps modules prior to [Specify Integration/Release Goal].
+
+## 1. FMAS Test File Check:
+- [PASS/FAIL] All modules passed `NO_TEST` validation.
+- Notes: [List any modules where stub tests were created, if any]
+
+## 2. Pytest Warnings & Failures (`pytest -ra`):
+- [PASS] Zero Failures or Errors.
+- [PASS/FAIL] Zero unaddressed Warnings.
+- Notes: [Detail any warnings addressed or filtered, list any remaining justified skips/xfails with reasons]
+
+## 3. Per-Module Test Coverage (>= 90% Required):
+| Module Name         | Coverage (%) | Status | Notes                                    |
+|---------------------|--------------|--------|------------------------------------------|
+| `module_one`        | 95%          | PASS   |                                          |
+| `module_two`        | 88% -> 91%   | PASS   | Added tests for `src/utils.py`           |
+| `module_three`      | 99%          | PASS   |                                          |
+| ...                 | ...          | ...    |                                          |
+| **Overall Average** | XX%          | INFO   | *(Optional: Calculated from pytest-cov)* |
+
+## 4. Aggregate HTML Coverage Report:
+- Generated at: `reports/coverage_html_vX.Y.Z/index.html` [Link if possible]
+
+## Conclusion:
+All modules meet the required testing and coverage standards for integration readiness. / The following modules require further remediation before integration: [List failing modules/criteria].
+```
+
+Step 5: Commit Results
+
+Action: If all acceptance criteria are met (Overall Status: PASS), commit the changes made during the audit (test additions, warning fixes) and the generated report.
+
+Commands:
+
+```bash
+git add modules/ reports/test_audit_vX.Y.Z.md # Add specific changes + report
+# Maybe 'git add reports/coverage_html_vX.Y.Z/' if HTML report is tracked
+git commit -m "feat(test): Complete test audit vX.Y.Z
+
+- Verified test existence via FMAS for all modules.
+- Resolved all pytest warnings and failures.
+- Achieved >= 90% test coverage for all audited modules.
+- Generated audit report: reports/test_audit_vX.Y.Z.md"
+```
+
+Action: Push the branch and create a Pull Request for review (if applicable).
+
+6. Acceptance Criteria (Audit PASS)
+FMAS reports zero `NO_TEST` errors for all in-scope modules.
+
+`pytest -ra` reports zero Failures (F), Errors (E), or unaddressed Warnings (W).
+
+All Skips (s) or XFails (x) are reviewed and justified/documented.
+
+Each in-scope module achieves >= 90% test coverage when measured individually (`pytest --cov=modules.<module>.src --cov-fail-under=90`).
+
+The final audit report (`reports/test_audit_vX.Y.Z.md`) is accurately completed and reflects a PASS status.
+
+7. Failure / Rollback
+If any of the Acceptance Criteria are not met, the Overall Status is FAIL.
+
+Do not proceed with integration or merge the audit branch until all criteria are met.
+
+Address the specific failures (add tests, fix code, fix warnings) and re-run the relevant steps of this procedure.
+
+Update the audit report to reflect the remediation steps taken.
+
+This improved WSP provides a more structured, detailed, and verifiable process for ensuring the testing quality of FoundUps modules before they move forward.
+
+# WINDSURF DOCUMENT BUILDER: SAIL MODE - SECTIONAL EXECUTION
+
+You are building the **FoundUps Windsurf Protocol System (WPS) Framework** by generating **one section at a time**, fully and independently.
+
+## Rules:
+- Only generate the section you are instructed to (e.g., `WSP0`), not the whole document.
+- Each output must be a finalized, complete Markdown document for that single WSP section.
+- Do not reference or include other sections.
+- After completing a section, **exit immediately.**
+- Wait for the next prompt to proceed to the next WSP section.
+
+## Output Format:
+- Begin with the section title (e.g., `# WSP0: Protocol Overview & Enforcement Rules`)
+- Use Markdown formatting for headers, lists, and code blocks.
+- End with a clean finish. No continuations or prompts.
+
+You will receive the scaffold next. Begin when instructed with the first target section.

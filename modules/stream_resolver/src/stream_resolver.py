@@ -257,21 +257,22 @@ def search_livestreams(youtube_client, event_type="live", retry_count: int = 0, 
 
 def get_active_livestream_video_id(youtube_client: Resource, channel_id: str) -> Optional[Tuple[str, str]]:
     """
-    Get the video ID and live chat ID of the active livestream for a channel.
+    Get the video ID of an active or upcoming livestream and its chat ID.
+    Handles both active and upcoming streams, with preference to active.
     
     Args:
-        youtube_client: Authenticated YouTube API client
-        channel_id: YouTube channel ID
+        youtube_client: Authenticated YouTube Data API client
+        channel_id: YouTube channel ID to search
         
     Returns:
-        tuple: (video_id, live_chat_id) if found, None otherwise
+        Tuple (video_id, live_chat_id) if found, None otherwise
     """
-    logger.info(f"Attempting to find active livestream for channel ID: {mask_sensitive_id(channel_id, 'channel')}")
+    logger.debug(f"Looking for active/upcoming livestream for channel {mask_sensitive_id(channel_id, 'channel')}")
     
-    # Optional override using .env YOUTUBE_VIDEO_ID
+    # First check if there's an override video ID in environment
     env_video_id = get_env_variable("YOUTUBE_VIDEO_ID", default=None)
     if env_video_id:
-        logger.info(f"Using YOUTUBE_VIDEO_ID override from .env: {mask_sensitive_id(env_video_id, 'video')}")
+        logger.info(f"Using override video ID from environment: {mask_sensitive_id(env_video_id, 'video')}")
         video_details = check_video_details(youtube_client, env_video_id)
         if video_details and "liveStreamingDetails" in video_details:
             live_chat_id = video_details["liveStreamingDetails"].get("activeLiveChatId")
@@ -284,25 +285,29 @@ def get_active_livestream_video_id(youtube_client: Resource, channel_id: str) ->
     previous_delay = INITIAL_DELAY
 
     while consecutive_failures < MAX_CONSECUTIVE_FAILURES:
-        # Search for active livestream
-        video_id = search_livestreams(youtube_client, event_type="live", previous_delay=previous_delay, consecutive_failures=consecutive_failures)
-        if video_id:
-            video_details = check_video_details(youtube_client, video_id)
-            if video_details and "liveStreamingDetails" in video_details:
-                live_chat_id = video_details["liveStreamingDetails"].get("activeLiveChatId")
-                if live_chat_id:
-                    logger.info(f"Found active livestream with chat ID: {mask_sensitive_id(live_chat_id, 'chat')}")
-                    return video_id, live_chat_id
+        try:
+            # Search for active livestream
+            video_id = search_livestreams(youtube_client, event_type="live", previous_delay=previous_delay, consecutive_failures=consecutive_failures)
+            if video_id:
+                video_details = check_video_details(youtube_client, video_id)
+                if video_details and "liveStreamingDetails" in video_details:
+                    live_chat_id = video_details["liveStreamingDetails"].get("activeLiveChatId")
+                    if live_chat_id:
+                        logger.info(f"Found active livestream with chat ID: {mask_sensitive_id(live_chat_id, 'chat')}")
+                        return video_id, live_chat_id
 
-        # If no active livestream found, check for upcoming streams
-        video_id = search_livestreams(youtube_client, event_type="upcoming", previous_delay=previous_delay, consecutive_failures=consecutive_failures)
-        if video_id:
-            video_details = check_video_details(youtube_client, video_id)
-            if video_details and "liveStreamingDetails" in video_details:
-                live_chat_id = video_details["liveStreamingDetails"].get("activeLiveChatId")
-                if live_chat_id:
-                    logger.info(f"Found upcoming livestream with chat ID: {mask_sensitive_id(live_chat_id, 'chat')}")
-                    return video_id, live_chat_id
+            # If no active livestream found, check for upcoming streams
+            video_id = search_livestreams(youtube_client, event_type="upcoming", previous_delay=previous_delay, consecutive_failures=consecutive_failures)
+            if video_id:
+                video_details = check_video_details(youtube_client, video_id)
+                if video_details and "liveStreamingDetails" in video_details:
+                    live_chat_id = video_details["liveStreamingDetails"].get("activeLiveChatId")
+                    if live_chat_id:
+                        logger.info(f"Found upcoming livestream with chat ID: {mask_sensitive_id(live_chat_id, 'chat')}")
+                        return video_id, live_chat_id
+        except Exception as e:
+            logger.error(f"Error while searching for livestream: {e}")
+            # Continue with the failure handling logic below
 
         # Increment consecutive failures and update delay
         consecutive_failures += 1
