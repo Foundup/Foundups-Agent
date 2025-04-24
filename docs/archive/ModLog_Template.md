@@ -16,15 +16,15 @@ This log tracks module changes, updates, and versioning for FoundUps Agent under
 - [x] Send greeting message on join
 - [x] Log chat messages per user
 
-### 🔄 [+Prototype] (0.1.x - 0.9.x)
+### 🔄 +Prototype (0.1.x - 0.9.x)
 - [x] StreamResolver module for dynamic video ID
 - [x] Modular chat processor with LLM hooks
 - [x] AI response and moderation module
 - [x] Prompt-throttle logic by channel activity
 - [x] ModLog updater
-- [x] ESM (Emoji Sentiment Mapper) foundation (incl. 111-333 triad mapping)
-- [ ] LLM Integration Layer (Core interfaces/plumbing)
-- [x] Windsurf Protocol (WSP) development framework (incl. FMAS Compatibility)
+- [x] ESM (Emoji Sentiment Mapper) foundation
+- [x] LLM Integration Layer
+- [x] Windsurf Protocol (WSP) development framework
 - [ ] Agent personality framework
 - [ ] 
 
@@ -91,85 +91,6 @@ This log tracks module changes, updates, and versioning for FoundUps Agent under
 ====================================================================
 
 ## MODLOG - [+UPDATES]:
-
-- Version: 0.1.9
-- Date: 2025-04-24
-- Description: Implemented full FMAS Mode 2 baseline comparison functionality (WSP 3)
-- Notes: Added comprehensive baseline comparison capabilities to the Foundups Modular Audit System (FMAS), completing all WSP 3.5 requirements
-- Features/Fixes/Changes:
-  - ✨ [feat:fmas] - Added baseline directory traversal and comparison
-  - ✨ [feat:fmas] - Implemented MISSING file detection with WSP 3.5 reporting
-  - ✨ [feat:fmas] - Implemented EXTRA file detection with WSP 3.5 reporting
-  - ✨ [feat:fmas] - Implemented MODIFIED file detection (content comparison) with WSP 3.5 reporting
-  - ✨ [feat:fmas] - Implemented FOUND_IN_FLAT file detection (baseline flat files) with WSP 3.5 reporting
-  - 🧪 [test:fmas] - Added comprehensive test suite for all Mode 2 functionality
-  - 📝 [docs:fmas] - Updated code documentation for all new functionality
-
-- Version: 0.1.8.5
-- Date: 2025-04-24
-- Description: Significantly improved test coverage for stream_resolver module (WSP 5)
-- Notes: Increased test coverage from 79% to 93%, significantly exceeding the WSP 5 requirement of 90%
-- Features/Fixes/Changes:
-  - 🧪 [test:stream_resolver] - Added comprehensive tests for edge cases in YouTube API interactions
-  - 🧪 [test:stream_resolver] - Improved testing for quota exceeded error scenarios
-  - 🧪 [test:stream_resolver] - Added tests for keyboard interrupt handling
-  - 🧪 [test:stream_resolver] - Enhanced coverage of failure recovery paths
-  - 🧪 [test:stream_resolver] - Added test_edge_cases.py with additional test scenarios
-  - 📝 [docs:wsp] - Updated documentation to reflect coverage achievements
-  - 🗄️ [chore:docs] - Archived outdated documentation and moved to docs/archive
-
-- Version: 0.1.8
-- Date: [CURRENT_DATE]
-- Description: Enhanced WSP Framework with language agnosticism and interface/dependency management
-- Notes: Added two new WSPs (11 & 12) and enhanced existing WSPs to better support the 0102 agent's universal modularization mission
-- Features/Fixes/Changes:
-  - 📄 [docs:WSP_Framework] - Added language agnosticism notes to WSPs 1, 3, and 5
-  - 📄 [docs:WSP_Framework] - Enhanced WSP 1 with 0102 agent role in preliminary analysis
-  - 📄 [docs:WSP_Framework] - Updated FMAS (WSP 3) to check interface definitions and dependency manifests
-  - 📄 [docs:WSP_Framework] - Added interface contract testing to Test Audit (WSP 5)
-  - 📄 [docs:WSP_Framework] - Enhanced regression checks (WSP 7) to cover interfaces and dependencies
-  - 📄 [docs:WSP_Framework] - Updated milestone rules (WSP 8) to require stable interfaces for MVP
-  - 📄 [docs:WSP_Framework] - Enhanced versioning (WSP 10) with interface-driven SemVer guidance
-  - ✨ [docs:WSP_Framework] - Added WSP 11: Module Interface Definition & Validation
-  - ✨ [docs:WSP_Framework] - Added WSP 12: Dependency Management & Packaging
-
-- Version: 0.1.7
-- Description: Resolved numerous test failures (40+) across youtube_auth, token_manager, livechat, live_chat_processor after module refactoring (src layout) and async implementation.
-- Notes: Addressed issues with mocking, patch targets, async handling (pytest-asyncio), logging assertions, and test logic (e.g., trigger sequence checks). Cleaned up test file structure.
-- Features:
-  - Corrected patch targets for refactored code.
-  - Integrated pytest-asyncio for proper async test execution.
-  - Resolved async/await mismatches in application code and tests.
-  - Fixed mock assertion logic (double calls, logging, rate limits).
-  - Achieved 100% passing tests (42/42).
-  - Standardized module structure (using src/).
-  - Removed placeholder comments from ModLog.md.
-
-- Version: 0.1.6
-- Description:
-  - Removed dead import: `StreamResolver` from `live_chat_processor`.
-  - Cleaned `__all__` in `stream_resolver/__init__.py` to reflect actual exports.
-  - Fixed failing test: `test_message_sending` by isolating mock with `reset_mock()`.
-- Notes:
-  - Verified `StreamResolver` was unused and non-existent.
-  - Confirmed test isolation fixed false positive on `insert()` call count.
-  - All 8 `live_chat_processor` tests now pass.
-- Features:
-  - Cleaner import structure
-  - Accurate mock test handling
-  - Improved module isolation
-
-- Version: 0.1.5
-- Description: Fixed [OAuthManager]/[StreamResolver] credential rotation loop and locked StreamResolver module.
-- Notes: Resolved issue where exhausted credentials weren't properly put into cooldown, causing infinite loops. Implemented external rotation orchestration via main.py. StreamResolver logic (based on clean3 + fix) is now considered canonical and should not be overwritten without WSP flag.
-- Features:
-  - Correct credential rotation upon quota exhaustion (403 errors).
-  - Cooldown mechanism for exhausted credential sets.
-  - External rotation control flow managed by main.py.
-  - Added QuotaExceededError exception in StreamResolver.
-  - Passed Credentials object to LiveChatListener to fix startup error.
-  - Manual guard requested for modules/stream_resolver/src/stream_resolver.py against overwrites.
-
 - Version: 0.1.4
 - Description: Added [Windsurf Protocol] (WSP) to Prototype phase
 - Notes: Integrated WSP development framework into project infrastructure
@@ -192,6 +113,25 @@ This log tracks module changes, updates, and versioning for FoundUps Agent under
   - Priority-based task organization
   - Memory system audit task with detailed subtasks
   - Assignee and due date tracking support
+
+- Version: 0.1.1
+- Description: Enhanced [StreamResolver] with dynamic rate limiting and quota management
+- Notes: Added smart throttling system, quota error handling, and secure ID masking
+- Features:
+  - Dynamic delays based on activity levels
+  - Quota error handling with retries
+  - Fallback credential support
+  - Random jitter for human-like behavior
+  - Smooth transitions between delays
+  - Secure ID masking in logs
+  - Development mode support
+
+- Version: 0.1.1
+- Description: Improved Agent login, Enhanced chat interaction with gesture recognition via [BanterEngine]
+- Notes: Added support for [✊✋🖐] 123 gestures in live chat messages
+- tied guesters to numbers 111, 123, 222, and 3333 
+- added [streamResolver] and [TokenManager]
+- Created [TestMods]
 
 - Version: 0.0.9
 - Description: Updated [ModLog] to remove dates and improve versioning

@@ -21,4 +21,25 @@ A critical discrepancy exists between the documentation and implementation of th
 Temporarily using WSP 7 (Snapshot Regression Comparison) manual procedures with `git diff` and `diff -r` until proper FMAS Mode 2 is implemented.
 
 **Action Required:**  
-Implement FMAS Mode 2 functionality as specified in WSP 3. 
+Implement FMAS Mode 2 functionality as specified in WSP 3.
+
+## WSP Compliance Rules
+
+### Test Directory Structure
+
+**Date Implemented:** [Current Date]  
+**Status:** Enforced  
+**WSP Reference:** WSP Architecture Standards  
+
+**Description:**  
+The following rules apply to test directory structure and test file placement:
+
+- **Module Tests Location:** All module-specific tests MUST reside within their respective module directory at `modules/<module_name>/tests/`.
+- **Legacy Tests Directory:** The top-level `tests/` directory has been renamed to `tests_archived/` and is NOT for active module tests. This directory contains only historical artifacts and should not be used for new tests.
+- **Test File Naming:** Test files should follow the naming convention `test_<component_name>.py`.
+
+**Rationale:**  
+This structure ensures tests are co-located with the modules they test, improving discoverability, maintainability, and adherence to the WSP framework's modular architecture principles.
+
+**Action Required:**  
+Ensure all new tests are placed in the appropriate module test directory. Do not add new tests to the `tests_archived/` directory. 
