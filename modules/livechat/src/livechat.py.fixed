@@ -1,4 +1,4 @@
-﻿import logging
+import logging
 import os
 import time
 from datetime import datetime
@@ -29,7 +29,7 @@ class LiveChatListener:
         self.message_queue = []  # Queue for storing messages
         self.viewer_count = 0  # Track current viewer count
         self.banter_engine = BanterEngine()  # Initialize banter engine
-        self.trigger_emojis = ["✊", "✋", "🖐️"]  # Configurable emoji trigger set
+        self.trigger_emojis = ["?", "?", "???"]  # Configurable emoji trigger set
         self.last_trigger_time = {}  # Track last trigger time per user
         self.trigger_cooldown = 60  # Cooldown period in seconds
         self.is_running = False  # Flag to control the listening loop
@@ -240,7 +240,7 @@ class LiveChatListener:
             response = self.banter_engine.get_random_banter(theme="greeting")
             if not response or not isinstance(response, str) or not response.strip():
                 logger.warning(f"Empty or invalid banter response for {author_name}, using fallback")
-                response = "Hey there! Thanks for the gesture! 窓"
+                response = "Hey there! Thanks for the gesture! 👋"
             
             logger.debug(f"Generated banter response for {author_name}: {response}")
             

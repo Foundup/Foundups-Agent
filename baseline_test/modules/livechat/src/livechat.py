@@ -1,4 +1,4 @@
-﻿import logging
+import logging
 import os
 import time
 from datetime import datetime
@@ -32,7 +32,6 @@ class LiveChatListener:
         self.trigger_emojis = ["✊", "✋", "🖐️"]  # Configurable emoji trigger set
         self.last_trigger_time = {}  # Track last trigger time per user
         self.trigger_cooldown = 60  # Cooldown period in seconds
-        self.is_running = False  # Flag to control the listening loop
 
         os.makedirs(self.memory_dir, exist_ok=True)
         logger.info(f"Memory directory set to: {self.memory_dir}")
@@ -197,6 +196,7 @@ class LiveChatListener:
         
         logger.debug(f"Chat message received: {display_message}")
         logger.debug(f"Message length: {len(display_message)}")
+        logger.debug(f"Looking for emojis: {self.trigger_emojis}")
         
         return msg_id, display_message, author_name, author_id
     
@@ -211,7 +211,7 @@ class LiveChatListener:
             bool: True if a trigger pattern was found, False otherwise
         """
         # Check for the emoji sequence formed by joining the trigger emojis
-        trigger_sequence = ''.join(self.trigger_emojis)
+        trigger_sequence = "".join(self.trigger_emojis)
         if trigger_sequence in message_text:
             return True
         return False
@@ -240,7 +240,7 @@ class LiveChatListener:
             response = self.banter_engine.get_random_banter(theme="greeting")
             if not response or not isinstance(response, str) or not response.strip():
                 logger.warning(f"Empty or invalid banter response for {author_name}, using fallback")
-                response = "Hey there! Thanks for the gesture! 窓"
+                response = "Hey there! Thanks for the gesture! 👋"
             
             logger.debug(f"Generated banter response for {author_name}: {response}")
             
@@ -486,31 +486,5 @@ class LiveChatListener:
             except Exception as e:
                 logger.error(f"Critical error in chat listener: {str(e)}")
                 raise
-            finally:
-                self.is_running = False
             
             logger.info("Chat listener stopped.")
-            
-    def stop_listening(self):
-        """Stops the chat listener loop by setting is_running to False."""
-        logger.info("Stopping live chat listener...")
-        self.is_running = False
-
-    def calculate_wait_time(self, quota_usage):
-        """Calculate wait time based on quota usage."""
-        if not quota_usage:
-            return 0
-        
-        # Base calculation on user limit vs current usage
-        if self.user_rate_limit is not None:
-            if quota_usage < self.user_rate_limit:
-                return 0
-            
-            # If over limit, wait proportionally to how far over
-            overage = quota_usage - self.user_rate_limit
-            return max(5, overage // 5)
-        
-        return 0
-
-
-

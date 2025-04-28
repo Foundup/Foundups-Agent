@@ -91,16 +91,16 @@ def discover_source_files(root_path):
     
     # Then scan module directories as before
     for module_dir in modules_dir.iterdir():
-        if module_dir.is_dir() and not module_dir.name.startswith('.'):
+        if module_dir.is_dir() and not module_dir.name.startswith('.') and module_dir.name != '__pycache__':
             module_name = module_dir.name
             module_files[module_name] = set()
             
             # Find all source files in the module directory (recursively)
             for file_path in module_dir.glob('**/*'):
-                if file_path.is_file() and not file_path.name.startswith('.'):
+                if file_path.is_file() and not file_path.name.startswith('.') and '__pycache__' not in str(file_path):
                     # Store the path relative to the module directory
                     relative_path = file_path.relative_to(module_dir)
-                    module_files[module_name].add(relative_path)
+                    module_files[module_name].add(str(relative_path))  # Convert Path to string for consistent comparison
     
     return module_files, flat_files
 
@@ -128,7 +128,7 @@ def audit_all_modules(modules_root):
     module_count = 0
     
     for module_dir in modules_dir.iterdir():
-        if not module_dir.is_dir() or module_dir.name.startswith('.'):
+        if not module_dir.is_dir() or module_dir.name.startswith('.') or module_dir.name == '__pycache__':
             continue
         
         module_count += 1
@@ -155,6 +155,34 @@ def audit_all_modules(modules_root):
             findings.append(f"WARNING: Module '{module_name}' is missing the module.json dependency manifest")
     
     return findings, module_count
+
+def compute_file_hash(file_path):
+    """
+    Compute a SHA256 hash of a file's contents.
+    
+    Args:
+        file_path: Path to the file
+        
+    Returns:
+        str: Hexadecimal digest of the file hash, or None if the file cannot be read
+    """
+    hash_obj = hashlib.sha256()
+    
+    try:
+        with open(file_path, 'rb') as f:
+            # Read in chunks to handle large files efficiently
+            for chunk in iter(lambda: f.read(4096), b''):
+                hash_obj.update(chunk)
+        return hash_obj.hexdigest()
+    except FileNotFoundError:
+        logging.error(f"Error computing hash: File not found: {file_path}")
+        return None
+    except PermissionError:
+        logging.error(f"Error computing hash: Permission denied for file: {file_path}")
+        return None
+    except Exception as e:
+        logging.error(f"Error computing hash for {file_path}: {str(e)}")
+        return None
 
 def audit_with_baseline_comparison(target_root, baseline_root):
     """
@@ -208,7 +236,12 @@ def audit_with_baseline_comparison(target_root, baseline_root):
             # Check each file in the target module
             for file_path in target_files:
                 # Check if this is a file that was moved from the flat structure
-                if file_path.name in baseline_flat_files:
+                if isinstance(file_path, Path):
+                    file_name = file_path.name
+                else:
+                    file_name = Path(file_path).name
+                    
+                if file_name in baseline_flat_files:
                     found_in_flat_files.append(file_path)
                     # WSP 3.5 detailed FOUND_IN_FLAT file logging
                     logging.warning(f"[{module_name}] FOUND_IN_FLAT: Found only in baseline flat modules/, needs proper placement. (File path: {file_path})")
@@ -228,9 +261,7 @@ def audit_with_baseline_comparison(target_root, baseline_root):
             logging.info(f"New module found: {module_name} with {len(target_files)} files")
             
             # Check if this is a critical module
-            module_path = target_root / "modules" / module_name
-            interface_path = module_path / "src" / f"{module_name}.py"
-            if interface_path.exists():
+            if module_name in CRITICAL_MODULES:
                 logging.warning(f"New critical module found: {module_name}")
         else:
             # Existing module, check for file changes
@@ -243,7 +274,12 @@ def audit_with_baseline_comparison(target_root, baseline_root):
             # Check if any "new" files actually exist in the baseline's flat files
             for file_path in list(new_files):
                 # Check if this is a file that was moved from the flat structure
-                if file_path.name in baseline_flat_files:
+                if isinstance(file_path, Path):
+                    file_name = file_path.name
+                else:
+                    file_name = Path(file_path).name
+                    
+                if file_name in baseline_flat_files:
                     found_in_flat_files.append(file_path)
                     new_files.remove(file_path)
                     # WSP 3.5 detailed FOUND_IN_FLAT file logging
@@ -284,17 +320,17 @@ def audit_with_baseline_comparison(target_root, baseline_root):
             modified_files = []
             
             for common_file in common_files:
-                target_file_path = target_root / "modules" / module_name / common_file
-                baseline_file_path = baseline_root / "modules" / module_name / common_file
+                target_file_path = target_root / "modules" / module_name / Path(common_file)
+                baseline_file_path = baseline_root / "modules" / module_name / Path(common_file)
                 
                 # Compare file contents using hash
                 target_hash = compute_file_hash(target_file_path)
                 baseline_hash = compute_file_hash(baseline_file_path)
                 
-                if target_hash != baseline_hash:
+                if target_hash is not None and baseline_hash is not None and target_hash != baseline_hash:
                     modified_files.append(common_file)
                     # WSP 3.5 detailed MODIFIED file logging
-                    logging.warning(f"[{module_name}] MODIFIED: Content differs from baseline. (File path: {common_file})")
+                    logging.warning(f"[{module_name}] MODIFIED: Content differs from baseline src/. (File path: {common_file})")
             
             if modified_files:
                 if module_name not in summary["modules"]["modified"]:
@@ -310,34 +346,26 @@ def audit_with_baseline_comparison(target_root, baseline_root):
             logging.info(f"Deleted module found: {module_name} with {len(baseline_files)} files")
             
             # Check if this was a critical module
-            module_path = baseline_root / "modules" / module_name
-            interface_path = module_path / "src" / f"{module_name}.py"
-            if interface_path.exists():
+            if module_name in CRITICAL_MODULES:
                 logging.warning(f"Critical module deleted: {module_name}")
+            
+            # WSP 3.5 detailed MISSING file logging for all files in the deleted module
+            for missing_file in baseline_files:
+                logging.warning(f"[{module_name}] MISSING: File missing from target module. (Baseline path: {missing_file})")
     
-    return summary
-
-def compute_file_hash(file_path):
-    """
-    Compute a SHA256 hash of a file's contents.
+    # Determine overall status based on findings
+    has_changes = (
+        len(summary["modules"]["new"]) > 0 or 
+        len(summary["modules"]["modified"]) > 0 or 
+        len(summary["modules"]["deleted"]) > 0
+    )
     
-    Args:
-        file_path: Path to the file
+    if has_changes:
+        summary["has_changes"] = True
+    else:
+        summary["has_changes"] = False
         
-    Returns:
-        str: Hexadecimal digest of the file hash
-    """
-    hash_obj = hashlib.sha256()
-    
-    try:
-        with open(file_path, 'rb') as f:
-            # Read in chunks to handle large files efficiently
-            for chunk in iter(lambda: f.read(4096), b''):
-                hash_obj.update(chunk)
-        return hash_obj.hexdigest()
-    except Exception as e:
-        logging.error(f"Error computing hash for {file_path}: {e}")
-        return None
+    return summary
 
 def main():
     """Main entry point for the modular audit tool."""
@@ -347,7 +375,7 @@ def main():
     parser.add_argument("--quiet", "-q", action="store_true", help="Suppress most output")
     parser.add_argument("--mode", type=int, choices=[1, 2], default=1, 
                       help="Audit mode: 1=Structure audit, 2=Baseline comparison")
-    parser.add_argument("--baseline", type=str, help="Path to the baseline directory for comparison (required for Mode 2)")
+    parser.add_argument("--baseline", type=Path, help="Path to the baseline directory for comparison (required for Mode 2)")
     
     args = parser.parse_args()
     
@@ -407,7 +435,7 @@ def main():
             logging.error("Baseline path is required for Mode 2. Use --baseline to specify the path.")
             sys.exit(1)
         
-        baseline_path = Path(args.baseline).resolve()
+        baseline_path = args.baseline.resolve()
         logging.info(f"Baseline path: {baseline_path}")
         
         # Run the baseline comparison
@@ -444,9 +472,7 @@ def main():
                 logging.info(f"  - {module}")
         
         # Exit with status based on whether changes were detected
-        has_changes = (len(comparison_results['modules']['new']) > 0 or 
-                       len(comparison_results['modules']['modified']) > 0 or 
-                       len(comparison_results['modules']['deleted']) > 0)
+        has_changes = comparison_results.get("has_changes", False)
         
         if has_changes:
             logging.warning("Changes detected between target and baseline.")

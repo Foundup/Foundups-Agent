@@ -51,8 +51,8 @@ class TestMinimal:
             assert result is True
             mock_rotate.assert_awaited_once()
             mock_auth.assert_called_once_with(1)
-            assert listener.youtube == mock_auth.return_value
-            
+            assert listener.youtube == mock_auth.return_value 
+
     @pytest.mark.asyncio
     async def test_handle_auth_error_rotation_failure_minimal(self):
         """Test _handle_auth_error when token rotation fails."""

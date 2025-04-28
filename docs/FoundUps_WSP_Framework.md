@@ -24,6 +24,10 @@ This document outlines the core Windsurf Standard Procedures (WSPs) governing de
 *   **Verification Steps:** Clearly describe user testing/verification steps upon completing components.
 *   **Error Analysis:** Automatically check logs/problem reports post-changes, analyze errors, propose solutions with Confidence Levels (CL%), and preserve context. (See Rule 7).
 *   **Repetition Handling:** If user repeats similar instructions 3+ times, suggest creating a new standard command/procedure.
+*   **Test Management & Documentation (tests/README.md):**
+    *   **Before Creating/Modifying Tests:** When tasked with adding or modifying tests within a module (`modules/<module_name>/tests/`), FIRST read the `tests/README.md` file in that directory. Analyze the descriptions and file list to identify any existing tests covering similar functionality or source code areas. Also, review current code coverage reports (`pytest-cov`) if available.
+    *   **Prioritize Extension:** Explicitly prioritize *extending* existing, relevant test files/classes/functions over creating new ones if feasible and logical. State the intention to extend an existing test if applicable.
+    *   **Update README:** After successfully adding a new test file OR significantly modifying/extending existing tests (e.g., adding new major scenarios), update the `tests/README.md` file to accurately reflect the current test suite structure and coverage. Add/update the file entry and description. Prompt the user for confirmation on the description if needed.
 *   **Web Search:** Utilize web searches aggressively to inform solutions and verify information.
 *   **Analytical Reasoning & Justification:**
     *   Provide evidence-based rationale for significant choices.
@@ -132,23 +136,24 @@ Applies to any flat `.py` file in `/modules/` representing a logical module.
 #### 1.4. Standard Procedure (Summary)
 *(See detailed version in separate WSP 1 document if needed)*
 1.  Identify Target File & Module Name.
-2.  Create `modules/<name>/`, `.../src/`, `.../tests/` dirs.
+2.  Create `modules/<n>/`, `.../src/`, `.../tests/` dirs.
 3.  Execute Confirmed Plan: Perform analysis as per 1.4a.
 4.  `git mv` source file to `src/`.
 5.  Create/Update module `__init__.py` (define public API from `src`).
-6.  Define/refine the module's public API in `modules/<name>/__init__.py` (or language equivalent) and document it according to WSP 11.
+6.  Define/refine the module's public API in `modules/<n>/__init__.py` (or language equivalent) and document it according to WSP 11.
 7.  Declare identified dependencies according to WSP 12 (e.g., update requirements.txt, package.json).
 8.  Create/Update (usually empty) `src/__init__.py`.
 9.  Fix internal imports within the moved file.
 10. Find (`git grep`) and update external callers to use new import paths.
 11. `git mv` existing tests to `tests/` or create stubs; update test imports.
-12. Run `pytest` for module and callers.
-13. Troubleshoot test failures.
-14. Run Interface Validation checks as defined in WSP 11.
-15. Verify Dependency Manifest correctness as per WSP 12.
-16. Verify with `FMAS` (`STRUCTURE_ERROR`, `NO_TEST`).
-17. `git commit` with standard message.
-18. Repeat.
+12. **Create/Update `tests/README.md`:** Add a `modules/<name>/tests/README.md` file. List any tests moved in step 11 with brief descriptions. If no tests exist yet, create a placeholder README indicating this. (See Section I AI Guidelines for ongoing updates).
+13. Run `pytest` for module and callers.
+14. Troubleshoot test failures.
+15. Run Interface Validation checks as defined in WSP 11.
+16. Verify Dependency Manifest correctness as per WSP 12.
+17. Verify with `FMAS` (Check for `TEST_README_MISSING` warning, WSP 3).
+18. `git commit` with standard message.
+19. Repeat.
 
 #### 1.5. Common Issues & Troubleshooting
 *   `ImportError`: Check `__init__.py`, paths, name existence.
@@ -285,6 +290,7 @@ FMAS reports findings via standard logging messages. Pay attention to `WARNING` 
 *   `[<module>] INTERFACE_MISSING: Required interface definition file (e.g., INTERFACE.md, openapi.yaml) not found.`: The module is missing the required interface definition. (Blocks WSP 11 compliance).
 *   `[<module>] DEPENDENCY_MANIFEST_MISSING: Required dependency file (e.g., requirements.txt, package.json) not found or empty.`: The module is missing the required dependency manifest. (Blocks WSP 12 compliance).
 *   `[<module>] STRUCTURE_ERROR: Non-standard directory found...`: Flag unexpected directories unless allowed by language-specific rules.
+*   `[<module>] TEST_README_MISSING: 'tests/README.md' file not found.`: (WARN Level) The recommended test documentation file is missing from the `tests/` directory. See WSP standard.
 *   `✅ PASSED / ❌ FAILED` (Summary): Final lines indicating overall audit status based on findings. The script exits with code 0 on PASS and 1 on FAIL.
 
 #### 3.6. Workflow Integration (When to Run FMAS)
@@ -309,6 +315,7 @@ Address FMAS findings based on the reported status code:
 *   `FOUND_IN_FLAT`: This usually indicates an issue needing fixing in the baseline itself (the file should be moved to `src/` there) or confirms that a file refactored in the current workspace was previously flat. Requires careful review based on WSP 1 refactoring goals.
 *   `INTERFACE_MISSING`: Create the required interface definition file according to WSP 11.
 *   `DEPENDENCY_MANIFEST_MISSING`: Create the required dependency manifest file according to WSP 12.
+*   `TEST_README_MISSING`: Create a `tests/README.md` file. Populate it by listing existing test files and their purpose, following the standard defined in Section I AI Guidelines and WSP 1.
 
 #### 3.8. Compliance Gate
 

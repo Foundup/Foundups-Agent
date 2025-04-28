@@ -1,0 +1,5 @@
+{
+  "name": "livechat",
+  "dependencies": ["youtube_auth", "token_manager"],
+  "description": "Handles listening to and responding to YouTube Live Chat messages, including message processing, rate limiting, and viewer tracking."
+} 

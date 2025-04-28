@@ -211,7 +211,6 @@ class LiveChatListener:
             bool: True if a trigger pattern was found, False otherwise
         """
         # Check for the emoji sequence formed by joining the trigger emojis
-        trigger_sequence = ''.join(self.trigger_emojis)
         if trigger_sequence in message_text:
             return True
         return False
@@ -486,8 +485,6 @@ class LiveChatListener:
             except Exception as e:
                 logger.error(f"Critical error in chat listener: {str(e)}")
                 raise
-            finally:
-                self.is_running = False
             
             logger.info("Chat listener stopped.")
             

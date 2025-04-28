@@ -3,8 +3,8 @@ import logging
 # Configure logging (optional, but helpful for seeing engine logs)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-# Correct import path from the root directory
-from modules.banter_engine.src.banter_engine import BanterEngine
+# Updated import path for the new location
+from ..src.banter_engine import BanterEngine
 
 if __name__ == "__main__":
     # Test the BanterEngine

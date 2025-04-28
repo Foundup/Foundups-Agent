@@ -6,9 +6,9 @@ import logging
 
 # Basic emoji to number mapping
 EMOJI_TO_NUMBER = {
-    '✊': 1,  # UN
-    '✋': 2,  # DAO
-    '🖐️': 3  # DU
+    '✊': 0,  # UN - Conscious state
+    '✋': 1,  # DAO - Unconscious state
+    '🖐️': 2  # DU - Entanglement state
 }
 
 # Reverse mapping
@@ -161,3 +161,26 @@ class EmojiSequenceMap:
             return f"State: {state_info['state']}, Tone: {state_info['tone']}"
         
         return "Unknown sequence" 
+    
+    
+#Valid Semantic States:
+
+# 000 = ✊✊✊ → Pure unconscious state (deep memory or latent mode)
+
+# 001 = ✊✊✋ → Emergent signal within unconscious
+
+# 002 = ✊✊🖐️ → Unconscious entanglement detected
+
+# 011 = ✊✋✋ → Conscious state stabilizing over unconscious base
+
+# 012 = ✊✋🖐️ → Conscious awareness bridging into entanglement
+
+# 022 = ✊🖐️🖐️ → Full unconscious–entangled overlay (receptive openness)
+
+# 111 = ✋✋✋ → Pure DAO processing (focused conscious mode)
+
+# 112 = ✋✋🖐️ → Conscious resonance extending into entanglement
+
+# 122 = ✋🖐️🖐️ → DAO yielding to entangled response
+
+# 222 = 🖐️🖐️🖐️ → Full DU entanglement (nonlocal or distributed identity)

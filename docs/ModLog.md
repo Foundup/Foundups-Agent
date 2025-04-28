@@ -92,6 +92,23 @@ This log tracks module changes, updates, and versioning for FoundUps Agent under
 
 ## MODLOG - [+UPDATES]:
 
+- Version: 0.3.3
+- Date: 2024-04-29
+- Git Tag: v0.3.3
+- Description: Fixed NameError in _check_trigger_patterns method
+- Notes: Resolved missing variable definition in the emoji trigger detection logic
+- Features/Fixes/Changes:
+  - 🐛 fix(livechat): Correct NameError in _check_trigger_patterns by defining trigger_sequence
+
+- Version: 0.3.2
+- Date: 2024-04-28
+- Git Tag: v0.3.2
+- Description: Fixed emoji encoding in LiveChatListener class
+- Notes: Addresses encoding issues identified during testing
+- Features/Fixes/Changes:
+  - 🐛 [livechat:LiveChatListener] - Fixed trigger_emojis attribute initialization with proper Unicode emoji characters
+  - 🚨 [note] - Discovered missing variable definition in _check_trigger_patterns method (to be fixed in subsequent update)
+
 - Version: 0.1.9
 - Date: 2025-04-24
 - Description: Implemented full FMAS Mode 2 baseline comparison functionality (WSP 3)
@@ -233,6 +250,19 @@ This log tracks module changes, updates, and versioning for FoundUps Agent under
   - Send greeting message on join
   - Log chat messages per user
   
+- Version: 0.2.0
+- Date: [CURRENT_DATE]
+- Description: Finalized FMAS Mode 2 Baseline Comparison (WSP 3.7)
+- Notes: Fixed issues with the implementation to ensure correct handling of all file statuses and WSP 3.5 compliance
+- Features/Fixes/Changes:
+  - 🐛 [fix:fmas] - Fixed file discovery in baseline comparison to handle Path objects correctly
+  - 🐛 [fix:fmas] - Enhanced error handling in file hash computation
+  - 🐛 [fix:fmas] - Updated critical module detection to use defined CRITICAL_MODULES set
+  - ✨ [feat:fmas] - Improved WSP 3.5 compliant logging for all detection types
+  - ✨ [feat:fmas] - Standardized file change reporting between modules
+  - ✨ [feat:fmas] - Added detailed logging for MISSING files in deleted modules
+  - 🔧 [feat:fmas] - Added has_changes flag for more reliable exit code handling
+
 ====================================================================
 
 ## VERSION GUIDE

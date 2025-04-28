@@ -16,21 +16,24 @@ The system is designed like a **stack of expanding cubes**, where each layer (mo
 2.  **Modular Architecture:**
     *   The Agent is composed of distinct, plug-and-play **modules**, each residing in its own subdirectory within `modules/`. Examples include:
         *   `banter_engine/` (Handles emoji-tone mapping and responses)
-        *   `live_chat_listener/` (Monitors input streams)
-        *   `oauth_manager/` (Manages credentials and authentication)
-        *   `twin_trainer/` (Builds personality models)
-        *   `stream_resolver/`
-        *   `emoji_mapper/`
-        *   *(add other modules as they are created)*
+        *   `livechat/` (Monitors input streams and manages chat interactions)
+        *   `youtube_auth/` (Manages credentials and authentication)
+        *   `stream_resolver/` (Resolves stream IDs and metadata)
+        *   `token_manager/` (Handles token authentication and refresh)
+        *   `live_chat_poller/` (Polls for new chat messages)
+        *   `live_chat_processor/` (Processes incoming chat messages)
     *   **Module Structure:** Each module directory (`modules/<module_name>/`) should contain:
         *   `src/`: Main source code for the module.
         *   `tests/`: Unit and integration tests specific to the module.
         *   `__init__.py`: Makes the directory a Python package and exposes necessary components.
-        *   *(Optionally)* `config/`, `handlers/`, `assets/`, etc., as needed by the module.
+        *   `README.md`: Documentation specific to the module.
+        *   `INTERFACE.md`: Defines the module's public interface (WSP 11).
+        *   `requirements.txt`: Lists module-specific dependencies (WSP 12).
+        *   *(Optionally)* `docs/`, `memory/`, `assets/`, etc., as needed by the module.
     *   **Lifecycle:** Modules progress through phases: POC (`0.0.x`) → Prototype (`0.1.x – 0.9.x`) → MVP/Production (`1.x.x+`).
 
 3.  **Strict Change Logs (`MODLOG`):**
-    *   All significant changes, especially those corresponding to WSPs, should be tracked in a `MODLOG` file (likely at the project root).
+    *   All significant changes, especially those corresponding to WSPs, should be tracked in a `MODLOG` file (typically at the project root).
     *   Use tags like `[+WSP]`, `[+todo]`, or `[+UPDATES]` for clarity.
 
 4.  **Clean Reference Baseline:**
@@ -39,6 +42,29 @@ The system is designed like a **stack of expanding cubes**, where each layer (mo
 5.  **Testing by Phase:**
     *   Each WSP must complete its cycle: code update → unit test → integration/live test → lock-in.
     *   Work does not proceed to the next WSP or phase until all tests pass and the scope is verified against the baseline.
+    *   **Test Organization:** Each module's tests are contained in its own `tests/` directory with a `README.md` describing the available tests.
+
+### Recent Refactoring
+
+The codebase has undergone significant modular refactoring, following WSP 1 guidelines:
+
+1. **Test Structure Reorganization:**
+   * All tests have been moved from the root `tests/` directory (now `tests_archived/`) to their respective module directories (`modules/<module_name>/tests/`).
+   * Each module's test directory includes a README.md documenting the available tests.
+
+2. **Test File Refactoring:**
+   * Large test files like `test_livechat.py` have been refactored into smaller, focused test files:
+     * `test_livechat_lifecycle.py` - Tests for initialization and shutdown
+     * `test_livechat_message_processing.py` - Tests for message handling
+     * `test_livechat_emoji_triggers.py` - Tests for emoji detection and reactions
+     * `test_livechat_rate_limiting.py` - Tests for rate limit handling
+     * And several other focused test files
+   * This improves maintainability and alleviates issues with test runtime and coverage reporting.
+
+3. **FMAS Compliance:**
+   * All modules now follow the structure required by the Foundups Modular Audit System (FMAS).
+   * Standard module interfaces are defined in INTERFACE.md files.
+   * Module dependencies are explicitly declared in requirements.txt files.
 
 ### Why This Structure?
 
@@ -55,7 +81,7 @@ This approach ensures:
 
 ## Module Overview
 
-### `youtube_auth.py`
+### `youtube_auth`
 Handles authentication with Google/YouTube via OAuth2.
 
 **Key Features:**
@@ -72,7 +98,7 @@ from modules.youtube_auth import get_authenticated_service
 youtube = get_authenticated_service()
 ```
 
-### `livechat.py`
+### `livechat`
 Manages connection, listening, logging, and sending messages to a YouTube Live Chat.
 
 **Key Features:**
@@ -91,7 +117,7 @@ listener = LiveChatListener(youtube_service, video_id)
 listener.start_listening()
 ```
 
-### `stream_resolver.py`
+### `stream_resolver`
 Handles YouTube stream identification and metadata management.
 
 **Key Features:**
@@ -110,12 +136,10 @@ stream_info = get_stream_info(youtube_service, video_id)
 
 ## Dependencies
 
-These modules depend on:
+Each module has its own `requirements.txt` file listing its specific dependencies. Common dependencies across modules include:
 - `google-auth-oauthlib`
 - `google-api-python-client`
 - `python-dotenv`
-
-All dependencies are listed in the root `requirements.txt` file.
 
 ## Configuration
 

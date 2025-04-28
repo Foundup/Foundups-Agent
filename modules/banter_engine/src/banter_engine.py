@@ -52,7 +52,7 @@ class BanterEngine:
     # --- Helper to extract emoji sequence ---
     def _extract_emoji_sequence(self, input_text: str) -> Optional[Tuple[int, int, int]]:
         """Extracts the first sequence of 3 known emojis (✊✋🖐️) from text."""
-        emoji_map = {'✊': 1, '✋': 2, '🖐️': 3}
+        emoji_map = {'✊': 0, '✋': 1, '🖐️': 2}
         sequence = []
         for char in input_text:
             if char in emoji_map:
@@ -74,20 +74,20 @@ class BanterEngine:
         if not input_text:
             return "Empty input", None
 
-        # FIXME: Implement actual emoji sequence detection (e.g., using _extract_emoji_sequence)
-        # For now, just return a placeholder and a default response
-        
-        # Example: Simulate finding a sequence based on keywords (VERY basic)
-        if "✊✋🖐️" in input_text:
-             sequence_tuple = (1, 2, 3)
-        elif "✊✊✊" in input_text:
-             sequence_tuple = (1, 1, 1)
-        elif "✋✋✋" in input_text:
-             sequence_tuple = (2, 2, 2)
-        elif "🖐️🖐️🖐️" in input_text:
-             sequence_tuple = (3, 3, 3)
-        else:
-             sequence_tuple = None
+        # Use the _extract_emoji_sequence method to detect emoji sequences
+        sequence_tuple = self._extract_emoji_sequence(input_text)
+
+        # If no sequence detected through extraction, try simple pattern matching
+        if not sequence_tuple:
+            # Example: Simulate finding a sequence based on keywords (VERY basic)
+            if "✊✋🖐️" in input_text:
+                 sequence_tuple = (0, 1, 2)
+            elif "✊✊✊" in input_text:
+                 sequence_tuple = (0, 0, 0)
+            elif "✋✋✋" in input_text:
+                 sequence_tuple = (1, 1, 1)
+            elif "🖐️🖐️🖐️" in input_text:
+                 sequence_tuple = (2, 2, 2)
 
         if sequence_tuple and sequence_tuple in self.sequence_map_data:
             sequence_info = self.sequence_map_data[sequence_tuple]

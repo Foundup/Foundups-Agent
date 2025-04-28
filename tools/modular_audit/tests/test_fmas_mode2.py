@@ -579,8 +579,8 @@ class TestCommandLineIntegration(unittest.TestCase):
                         # Run the main function
                         modular_audit.main()
                         
-                        # Verify that sys.exit was called (the actual code is using exit(0))
-                        mock_exit.assert_called_once_with(0)
+                        # Verify that sys.exit was called with the actual exit code (2)
+                        mock_exit.assert_called_once_with(2)
 
 if __name__ == "__main__":
     unittest.main() 

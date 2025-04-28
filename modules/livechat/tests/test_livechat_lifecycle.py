@@ -383,15 +383,11 @@ class TestLiveChatListenerLifecycle(unittest.TestCase):
         """Test the capability to stop the listener by setting is_running to False."""
         # Setup - listener is running
         self.listener.is_running = True
-        
-        # Directly set is_running to False (simulating what a stop_listening method would do)
-        self.listener.is_running = False
-        
+
+        # Call the stop_listening method
+        self.listener.stop_listening()
+
         # Verify is_running is set to False
-        self.assertFalse(self.listener.is_running)
-        
-        # Test idempotence - setting is_running to False when already False
-        self.listener.is_running = False
         self.assertFalse(self.listener.is_running)
 
     # Tests for _initialize_chat_session method
