@@ -12,7 +12,7 @@ from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
-from modules.platform_integration.youtube_auth.youtube_auth import get_authenticated_service
+from modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth import get_authenticated_service
 from utils.oauth_manager import get_oauth_token_file
 
 logger = logging.getLogger(__name__)
@@ -49,17 +49,24 @@ class TokenManager:
             if not cache_entry.get('healthy', False):
                 cooldown_end = cache_entry.get('cooldown_end', 0)
                 if time.time() < cooldown_end:
-                    logger.info(f"Token set_{token_index + 1} is in cooldown until {datetime.fromtimestamp(cooldown_end)}")
+                    logger.debug(f"Token set_{token_index + 1} is in cooldown until {datetime.fromtimestamp(cooldown_end)}")
                     return False
                     
-        # Check cache for healthy tokens
+        # Check cache for healthy tokens (improved cache hit logic)
         if token_index in self.token_health_cache:
             cache_entry = self.token_health_cache[token_index]
-            if time.time() - cache_entry['timestamp'] < self.health_check_interval:
+            cache_age = time.time() - cache_entry['timestamp']
+            if cache_age < self.health_check_interval:
+                logger.debug(f"Using cached health status for set_{token_index + 1}: {cache_entry['healthy']}")
                 return cache_entry['healthy']
         
         # Get token file path
-        token_file = get_oauth_token_file(f"set_{token_index + 1}")
+        try:
+            token_file = get_oauth_token_file(f"set_{token_index + 1}")
+        except Exception as e:
+            logger.error(f"Failed to get token file for set_{token_index + 1}: {e}")
+            self._update_health_cache(token_index, False)
+            return False
         
         try:
             # Try to load and validate token
@@ -70,12 +77,18 @@ class TokenManager:
                 return False
                 
             # Test token with a lightweight API call
-            service.channels().list(
+            response = service.channels().list(
                 part="snippet",
-                id="UC-LSSlOZwpGIRIYihaz8zCw"  # Using a known channel ID
+                mine=True  # Use 'mine=True' for better token validation
             ).execute()
             
-            logger.info(f"Token health check passed for set_{token_index + 1}")
+            # Validate response structure
+            if not response.get("items"):
+                logger.warning(f"Token health check failed for set_{token_index + 1}: No channel data returned")
+                self._update_health_cache(token_index, False)
+                return False
+            
+            logger.debug(f"Token health check passed for set_{token_index + 1}")
             self._update_health_cache(token_index, True)
             return True
             
@@ -117,7 +130,7 @@ class TokenManager:
         
     async def rotate_tokens(self) -> Optional[int]:
         """
-        Rotates to the next available healthy token using parallel checking.
+        Rotates to the next available healthy token using parallel checking with fallback.
         
         Returns:
             Optional[int]: Index of the new token if successful, None if rotation failed
@@ -125,35 +138,52 @@ class TokenManager:
         original_index = self.current_token_index
         all_indices = list(range(4))  # Assuming 4 token sets
         
-        # Try all tokens in parallel first
-        healthy_token = await self._check_tokens_parallel(all_indices)
-        if healthy_token is not None:
-            self.current_token_index = healthy_token
-            logger.info(f"Successfully rotated to token set_{self.current_token_index + 1}")
-            return self.current_token_index
-            
-        # If parallel check fails, fall back to sequential checking
-        attempts = 0
-        while attempts < self.max_retries:
-            # Try next token
-            self.current_token_index = (self.current_token_index + 1) % 4
-            
-            # Skip if we've tried all tokens
-            if self.current_token_index == original_index:
-                logger.error("All tokens failed health check")
-                return None
-                
-            # Check if token is healthy
-            if self.check_token_health(self.current_token_index):
-                logger.info(f"Successfully rotated to token set_{self.current_token_index + 1}")
+        logger.info(f"🔄 Starting token rotation from set_{original_index + 1}")
+        
+        # Try all tokens in parallel first (improved parallel logic)
+        try:
+            healthy_token = await self._check_tokens_parallel(all_indices)
+            if healthy_token is not None:
+                self.current_token_index = healthy_token
+                logger.info(f"✅ Parallel rotation successful to set_{self.current_token_index + 1}")
                 return self.current_token_index
+        except Exception as e:
+            logger.warning(f"⚠️ Parallel token check failed: {e}, falling back to sequential")
+            
+        # If parallel check fails, fall back to sequential checking with retry logic
+        for retry_attempt in range(self.max_retries):
+            logger.info(f"🔄 Sequential rotation attempt {retry_attempt + 1}/{self.max_retries}")
+            
+            tokens_tried = 0
+            while tokens_tried < 4:  # Try all 4 tokens
+                # Try next token
+                self.current_token_index = (self.current_token_index + 1) % 4
+                tokens_tried += 1
                 
-            attempts += 1
-            if attempts < self.max_retries:
-                logger.warning(f"Token rotation attempt {attempts} failed, retrying...")
+                # Skip if we're back to the original (all tokens tried)
+                if self.current_token_index == original_index and tokens_tried > 1:
+                    logger.warning(f"⚠️ Completed full token cycle, no healthy tokens found")
+                    break
+                    
+                # Check if token is healthy
+                try:
+                    if self.check_token_health(self.current_token_index):
+                        logger.info(f"✅ Sequential rotation successful to set_{self.current_token_index + 1}")
+                        return self.current_token_index
+                except Exception as e:
+                    logger.error(f"❌ Health check failed for set_{self.current_token_index + 1}: {e}")
+                    continue
+                    
+            # If we get here, no healthy tokens found in this attempt
+            if retry_attempt < self.max_retries - 1:
+                logger.warning(f"⏳ Retry attempt {retry_attempt + 1} failed, waiting {self.retry_delay}s...")
                 await asyncio.sleep(self.retry_delay)
+            else:
+                logger.error("❌ All retry attempts exhausted")
                 
-        logger.error("Token rotation failed after maximum retries")
+        # Reset to original index if rotation completely failed
+        self.current_token_index = original_index
+        logger.error(f"💥 Token rotation failed completely, staying with set_{original_index + 1}")
         return None
 
 # Initialize token manager

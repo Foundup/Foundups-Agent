@@ -1,209 +1,184 @@
+#!/usr/bin/env python3
+"""
+FoundUps Agent - Main Entry Point
+
+Simplified architecture focusing on core functionality:
+1. Clean authentication setup
+2. Livestream discovery
+3. Chat listener initialization
+4. Graceful error handling
+"""
+
 import logging
 import os
 import sys
 import asyncio
-import time
-from unittest.mock import MagicMock # Added for mocking
+import signal
 from dotenv import load_dotenv
-from googleapiclient.discovery import build
-from modules.platform_integration.stream_resolver.stream_resolver import get_active_livestream_video_id, check_video_details, QuotaExceededError, calculate_dynamic_delay
-from modules.communication.livechat.livechat import LiveChatListener
-from utils.oauth_manager import get_authenticated_service, get_authenticated_service_with_fallback, start_credential_cooldown, Credentials
+
+# Configure logging first with UTF-8 support
+import sys
+import os
+
+# Set console to UTF-8 if possible (Windows fix)
+if os.name == 'nt':  # Windows
+    try:
+        # Try to set console to UTF-8
+        os.system('chcp 65001 > nul')
+    except:
+        pass
+
+# Create console handler with error handling for emojis
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.INFO)
+
+# Create file handler with UTF-8 encoding
+file_handler = logging.FileHandler('foundups_agent.log', encoding='utf-8')
+file_handler.setLevel(logging.INFO)
+
+# Set up logging with both handlers
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[file_handler, console_handler]
+)
+
+from modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver import StreamResolver
+from modules.communication.livechat.livechat.src.livechat import LiveChatListener
+from utils.oauth_manager import get_authenticated_service_with_fallback
 from utils.env_loader import get_env_variable
-from modules.ai_intelligence.banter_engine.banter_engine import BanterEngine
-from googleapiclient.errors import HttpError
 
-def mask_sensitive_id(id_str: str) -> str:
-    """Mask sensitive IDs in logs."""
-    if not id_str:
-        return "None"
-    return f"{id_str[:4]}...{id_str[-4:]}"
+logger = logging.getLogger(__name__)
 
-async def find_active_livestream(service, channel_id, max_attempts=None):
-    """Continuously search for active livestream with throttling."""
-    logger = logging.getLogger(__name__)
-    attempt = 0
-    previous_delay = None
+class FoundUpsAgent:
+    """Main application controller for FoundUps Agent."""
     
-    while True:
-        if max_attempts and attempt >= max_attempts:
-            logger.error(f"Max attempts ({max_attempts}) reached without finding livestream")
-            return None, None
-            
-        attempt += 1
-        logger.info(f"Attempt {attempt} to find active livestream for channel: {mask_sensitive_id(channel_id)}")
+    def __init__(self):
+        self.running = False
+        self.service = None
+        self.current_listener = None
+        self.stream_resolver = None
         
-        # Calculate and apply throttling delay
-        delay = calculate_dynamic_delay(previous_delay=previous_delay)
-        logger.info(f"Waiting {delay:.1f} seconds before checking for livestream...")
-        await asyncio.sleep(delay)
+    async def initialize(self):
+        """Initialize the agent with authentication and configuration."""
+        logger.info("🚀 Initializing FoundUps Agent...")
+        
+        # Load environment variables
+        load_dotenv()
+        
+        # Get required configuration
+        self.channel_id = get_env_variable("CHANNEL_ID")
+        if not self.channel_id:
+            raise ValueError("CHANNEL_ID not found in environment variables")
+            
+        # Setup authentication
+        auth_result = get_authenticated_service_with_fallback()
+        if not auth_result:
+            raise RuntimeError("Failed to authenticate with YouTube API")
+            
+        self.service, credentials, credential_set = auth_result
+        logger.info(f"✅ Authentication successful with {credential_set}")
+        
+        # Initialize stream resolver with session caching
+        self.stream_resolver = StreamResolver(self.service)
+        logger.info("📋 Stream resolver initialized with session caching")
+        
+        return True
+        
+    async def find_livestream(self):
+        """Find an active livestream using session caching for faster reconnection."""
+        logger.info(f"🔍 Searching for active livestream...")
         
         try:
-            result = get_active_livestream_video_id(service, channel_id)
+            result = self.stream_resolver.resolve_stream(self.channel_id)
             if result:
                 video_id, chat_id = result
-                logger.info(f"Found active livestream - Video ID: {mask_sensitive_id(video_id)}, Chat ID: {mask_sensitive_id(chat_id)}")
+                logger.info(f"✅ Found active livestream: {video_id[:8]}...")
                 return video_id, chat_id
             else:
-                logger.info("No active livestream found, will retry...")
-                previous_delay = delay
-        except QuotaExceededError:
-            logger.debug("QuotaExceededError caught in find_active_livestream, re-raising for main loop handler.")
-            raise
+                logger.info("⏳ No active livestream found")
+                return None, None
+                
         except Exception as e:
-            logger.error(f"Error searching for livestream: {e}")
-            previous_delay = delay * 2  # Double the delay on error
-
-async def main():
-    """Main entry point for the application."""
-    logger = logging.getLogger(__name__)
-    
-    try:
-        # Get channel ID from environment
-        channel_id = get_env_variable("CHANNEL_ID")
-        if not channel_id:
-            logger.error("CHANNEL_ID not found in environment variables")
-            return
+            logger.error(f"❌ Error finding livestream: {e}")
+            return None, None
             
-        # --- Authentication with Mocking Option ---
-        auth_result = None
-        mock_enabled = os.getenv('FOUNDUPS_OAUTH_MOCK_ENABLED') == 'true'
+    async def start_chat_listener(self, video_id, chat_id):
+        """Start the chat listener for the given livestream."""
+        logger.info(f"💬 Starting chat listener for video: {video_id[:8]}...")
         
-        if mock_enabled:
-            logger.warning("--- OAuth Mocking Enabled --- FOUNDUPS_OAUTH_MOCK_ENABLED=true")
-            # Create mock objects to simulate successful authentication
-            mock_service = MagicMock()
+        try:
+            self.current_listener = LiveChatListener(self.service, video_id, chat_id)
+            await self.current_listener.start_listening()
             
-            # Configure the mock service for find_active_livestream
-            search_mock = MagicMock()
-            search_list_mock = MagicMock()
-            search_list_mock.list.return_value.execute.return_value = {"items": [{"id": {"videoId": "dummy_video_id"}, "snippet": {"title": "Mocked Livestream"}}]}
-            mock_service.search.return_value = search_list_mock
+        except Exception as e:
+            logger.error(f"❌ Chat listener error: {e}")
             
-            # Configure the mock service for check_video_details AND viewer count updates
-            videos_mock = MagicMock()
-            videos_list_mock = MagicMock()
+        finally:
+            self.current_listener = None
             
-            # Create a function to return different responses based on the 'part' parameter
-            def mock_videos_response(*args, **kwargs):
-                part = kwargs.get('part', '')
-                if 'statistics' in part:
-                    # Response for _update_viewer_count calls
-                    return MagicMock(execute=MagicMock(return_value={
-                        "items": [{
-                            "statistics": {
-                                "viewCount": "100"
-                            }
-                        }]
-                    }))
-                else:
-                    # Response for check_video_details calls (liveStreamingDetails)
-                    return MagicMock(execute=MagicMock(return_value={
-                        "items": [{
-                            "liveStreamingDetails": {
-                                "activeLiveChatId": "dummy_chat_id"
-                            }
-                        }]
-                    }))
-            
-            videos_list_mock.list.side_effect = mock_videos_response
-            mock_service.videos.return_value = videos_list_mock
-            
-            # Configure mock for liveChatMessages (used in _poll_chat_messages)
-            livechat_mock = MagicMock()
-            livechat_list_mock = MagicMock()
-            livechat_list_mock.list.return_value.execute.return_value = {
-                "pollingIntervalMillis": 10000,
-                "nextPageToken": "dummy_next_token",
-                "items": []
-            }
-            mock_service.liveChatMessages.return_value = livechat_list_mock
-            
-            # Configure mock for channels (used in _get_bot_channel_id)
-            channels_mock = MagicMock()
-            channels_list_mock = MagicMock()
-            channels_list_mock.list.return_value.execute.return_value = {
-                "items": [{
-                    "id": "dummy_bot_channel_id"
-                }]
-            }
-            mock_service.channels.return_value = channels_list_mock
-            
-            # Mock credentials
-            mock_credentials = MagicMock(spec=Credentials)
-            mock_credential_set = 'mock_set_1'
-            
-            # Add _developerKey to match real service
-            mock_service._developerKey = "dummy_developer_key"
-            
-            auth_result = (mock_service, mock_credentials, mock_credential_set)
-            logger.info(f"Using MOCKED authentication result with credential set: {mock_credential_set}")
-        else:
-            # Get authenticated service with fallback first (Real Path)
-            logger.info("Attempting real authentication...")
-            auth_result = get_authenticated_service_with_fallback()
-
-        # Check if authentication (real or mocked) succeeded
-        if not auth_result:
-            logger.error("Failed to get authenticated YouTube service (real or mocked)")
-            return
-            
-        service, current_credentials, current_credential_set = auth_result
-        # Log success, indicating if it was mocked
-        auth_type = "MOCKED" if mock_enabled else "REAL"
-        logger.info(f"Initial {auth_type} authentication successful with {current_credential_set}")
-        # --- End Authentication Block ---
+    async def run(self):
+        """Main application loop."""
+        self.running = True
+        logger.info("🎯 FoundUps Agent started - Monitoring for livestreams...")
         
-        # Continuously look for active livestream
-        while True:
+        while self.running:
             try:
-                video_id, chat_id = await find_active_livestream(service, channel_id)
+                # Look for active livestream
+                video_id, chat_id = await self.find_livestream()
                 
                 if video_id and chat_id:
-                    # Initialize chat listener
-                    listener = LiveChatListener(service, video_id, chat_id)
-                    
-                    # Start listening
-                    logger.info("Starting chat listener...")
-                    await listener.start_listening()
-                    
-                    # If we get here, the listener has stopped
-                    logger.info("Chat listener stopped, will look for new livestream...")
+                    # Start chat listener
+                    await self.start_chat_listener(video_id, chat_id)
+                    logger.info("📡 Chat session ended, searching for new livestream...")
                 else:
-                    logger.info("No active livestream found, will continue searching...")
-            
-            except QuotaExceededError:
-                logger.warning(f"Quota exceeded with {current_credential_set}. Attempting rotation.")
-                start_credential_cooldown(current_credential_set) # Put the failed set in cooldown
-                
-                # Try to get the next credential set
-                auth_result = get_authenticated_service_with_fallback()
-                if not auth_result:
-                    logger.critical("All credential sets are exhausted or in cooldown. Waiting 1 hour before trying again.")
-                    # TODO: Implement a more robust waiting strategy (e.g., exponential backoff)
-                    await asyncio.sleep(3600) # Wait 1 hour
-                    continue # Restart the auth process
-                
-                service, current_credentials, current_credential_set = auth_result
-                logger.info(f"Successfully rotated to {current_credential_set}")
-                # Loop will continue and try find_active_livestream again with the new service
+                    # Wait before checking again
+                    logger.info("⏳ Waiting 30 seconds before next check...")
+                    await asyncio.sleep(30)
+                    
+            except KeyboardInterrupt:
+                logger.info("🛑 Shutdown requested by user")
+                break
                 
             except Exception as e:
-                # Catch other potential errors during find_active_livestream or listener execution
-                logger.error(f"An unexpected error occurred in the main loop: {e}")
-                logger.info("Waiting 60 seconds before retrying...")
-                await asyncio.sleep(60) # Wait a bit before retrying the loop
+                logger.error(f"❌ Unexpected error: {e}")
+                logger.info("⏳ Waiting 60 seconds before retry...")
+                await asyncio.sleep(60)
+                
+        logger.info("👋 FoundUps Agent shutdown complete")
+        
+    def stop(self):
+        """Stop the agent gracefully."""
+        logger.info("🛑 Stopping FoundUps Agent...")
+        self.running = False
+        
+        if self.current_listener:
+            self.current_listener.stop_listening()
+
+async def main():
+    """Application entry point."""
+    agent = FoundUpsAgent()
+    
+    # Setup signal handlers for graceful shutdown
+    def signal_handler(signum, frame):
+        logger.info(f"📡 Received signal {signum}")
+        agent.stop()
+        
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    
+    try:
+        # Initialize and run
+        await agent.initialize()
+        await agent.run()
         
     except Exception as e:
-        logger.error(f"Error in main: {e}")
-        raise
+        logger.error(f"💥 Fatal error: {e}")
+        return 1
+        
+    return 0
 
 if __name__ == "__main__":
-    # Configure logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
-    )
-    
-    # Run the async main function
-    asyncio.run(main())
+    # Run the application
+    exit_code = asyncio.run(main())
+    sys.exit(exit_code)

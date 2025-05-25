@@ -333,7 +333,7 @@ class TestLiveChatListenerEmojiTriggers(unittest.TestCase):
     async def test_handle_emoji_trigger_logging_calls(self):
         """Test that _handle_emoji_trigger makes appropriate logging calls."""
         # Mock logger to track calls
-        with patch('modules.livechat.src.livechat.logger') as mock_logger, \
+        with patch('modules.communication.livechat.livechat.src.livechat.logger') as mock_logger, \
              patch.object(self.listener, '_is_rate_limited', return_value=False), \
              patch.object(self.listener, 'send_chat_message', new_callable=AsyncMock) as mock_send, \
              patch.object(self.listener, '_update_trigger_time'):
@@ -363,7 +363,7 @@ class TestLiveChatListenerEmojiTriggers(unittest.TestCase):
     async def test_handle_emoji_trigger_logging_failure(self):
         """Test that _handle_emoji_trigger logs errors when send_chat_message fails."""
         # Mock logger to track calls
-        with patch('modules.livechat.src.livechat.logger') as mock_logger, \
+        with patch('modules.communication.livechat.livechat.src.livechat.logger') as mock_logger, \
              patch.object(self.listener, '_is_rate_limited', return_value=False), \
              patch.object(self.listener, 'send_chat_message', new_callable=AsyncMock) as mock_send:
             

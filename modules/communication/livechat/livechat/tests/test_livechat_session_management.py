@@ -278,7 +278,7 @@ class TestLiveChatListenerSessionManagement(unittest.TestCase):
         }
         
         # Mock the logger to capture log messages
-        with patch('modules.livechat.src.livechat.logger') as mock_logger:
+        with patch('modules.communication.livechat.livechat.src.livechat.logger') as mock_logger:
             # Call the method
             result = self.listener._get_live_chat_id()
             
@@ -652,7 +652,7 @@ class TestLiveChatListenerSessionManagement(unittest.TestCase):
         )
         
         # Now call the method on this fresh instance
-        with patch('modules.livechat.src.livechat.logger') as mock_logger:
+        with patch('modules.communication.livechat.livechat.src.livechat.logger') as mock_logger:
             result = listener._get_live_chat_id()
             
             # Verify the logger calls that should happen in this method
@@ -703,7 +703,7 @@ class TestLiveChatListenerSessionManagement(unittest.TestCase):
         }
         
         # Mock logger to capture log messages
-        with patch('modules.livechat.src.livechat.logger') as mock_logger:
+        with patch('modules.communication.livechat.livechat.src.livechat.logger') as mock_logger:
             # Call the method
             result = await self.listener._initialize_chat_session()
             
@@ -719,7 +719,7 @@ class TestLiveChatListenerSessionManagement(unittest.TestCase):
         self.listener.live_chat_id = "existing_id_for_logging_test"
         
         # Mock logger again
-        with patch('modules.livechat.src.livechat.logger') as mock_logger:
+        with patch('modules.communication.livechat.livechat.src.livechat.logger') as mock_logger:
             # Call the method
             result = await self.listener._initialize_chat_session()
             
@@ -737,7 +737,7 @@ class TestLiveChatListenerSessionManagement(unittest.TestCase):
         self.listener.live_chat_id = ""
         
         # Mock logger
-        with patch('modules.livechat.src.livechat.logger') as mock_logger:
+        with patch('modules.communication.livechat.livechat.src.livechat.logger') as mock_logger:
             # Call the method
             result = await self.listener._initialize_chat_session()
             
@@ -757,7 +757,7 @@ class TestLiveChatListenerSessionManagement(unittest.TestCase):
         self.listener.live_chat_id = test_chat_id
         
         # Mock logger
-        with patch('modules.livechat.src.livechat.logger') as mock_logger:
+        with patch('modules.communication.livechat.livechat.src.livechat.logger') as mock_logger:
             # Call the method
             result = await self.listener._initialize_chat_session()
             
@@ -778,7 +778,7 @@ class TestLiveChatListenerSessionManagement(unittest.TestCase):
         
         # Mock _get_live_chat_id to raise error
         with patch.object(self.listener, '_get_live_chat_id', side_effect=custom_error), \
-             patch('modules.livechat.src.livechat.logger') as mock_logger:
+             patch('modules.communication.livechat.livechat.src.livechat.logger') as mock_logger:
             
             # Call the method
             result = await self.listener._initialize_chat_session()

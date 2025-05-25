@@ -1,5 +1,0 @@
-{
-  "name": "live_chat_processor",
-  "dependencies": ["livechat", "banter_engine"],
-  "description": "Processes incoming chat messages, handles triggers, and manages message responses."
-} 

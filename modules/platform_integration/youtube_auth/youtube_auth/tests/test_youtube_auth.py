@@ -39,10 +39,10 @@ class TestYoutubeAuth(unittest.TestCase):
             else:
                 os.environ[var] = value
 
-    @patch('modules.youtube_auth.src.youtube_auth.build')
-    @patch('modules.youtube_auth.src.youtube_auth.google.oauth2.credentials.Credentials.from_authorized_user_file')
-    @patch('modules.youtube_auth.src.youtube_auth.os.path.exists')
-    @patch('modules.youtube_auth.src.youtube_auth.get_credentials_for_index')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.build')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.google.oauth2.credentials.Credentials.from_authorized_user_file')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.os.path.exists')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.get_credentials_for_index')
     def test_get_authenticated_service_with_valid_token(self, mock_get_creds, mock_exists, mock_from_file, mock_build):
         """Test successful authentication with valid token."""
         # Arrange
@@ -66,13 +66,13 @@ class TestYoutubeAuth(unittest.TestCase):
         mock_build.assert_called_once_with('youtube', 'v3', credentials=mock_creds)
 
 
-    @patch('modules.youtube_auth.src.youtube_auth.build')
-    @patch('modules.youtube_auth.src.youtube_auth.Request')
-    @patch('modules.youtube_auth.src.youtube_auth.google.oauth2.credentials.Credentials.from_authorized_user_file')
-    @patch('modules.youtube_auth.src.youtube_auth.os.path.exists')
-    @patch('modules.youtube_auth.src.youtube_auth.get_credentials_for_index')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.build')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.Request')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.google.oauth2.credentials.Credentials.from_authorized_user_file')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.os.path.exists')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.get_credentials_for_index')
     @patch('builtins.open', new_callable=mock_open)
-    @patch('modules.youtube_auth.src.youtube_auth.os.makedirs')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.os.makedirs')
     def test_get_authenticated_service_with_expired_token(self, mock_makedirs, mock_open_file, mock_get_creds, mock_exists, mock_from_file, mock_request, mock_build):
         """Test token refresh when expired."""
         # Arrange
@@ -109,12 +109,12 @@ class TestYoutubeAuth(unittest.TestCase):
         mock_build.assert_called_once_with('youtube', 'v3', credentials=mock_creds)
 
 
-    @patch('modules.youtube_auth.src.youtube_auth.build')
-    @patch('modules.youtube_auth.src.youtube_auth.google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file')
-    @patch('modules.youtube_auth.src.youtube_auth.os.path.exists')
-    @patch('modules.youtube_auth.src.youtube_auth.get_credentials_for_index')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.build')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.os.path.exists')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.get_credentials_for_index')
     @patch('builtins.open', new_callable=mock_open)
-    @patch('modules.youtube_auth.src.youtube_auth.os.makedirs')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.os.makedirs')
     def test_get_authenticated_service_new_oauth_flow(self, mock_makedirs, mock_open_file, mock_get_creds, mock_exists, mock_flow, mock_build):
         """Test new OAuth flow when no token exists."""
         # Arrange
@@ -145,7 +145,7 @@ class TestYoutubeAuth(unittest.TestCase):
         mock_build.assert_called_once_with('youtube', 'v3', credentials=mock_new_creds)
 
 
-    @patch('modules.youtube_auth.src.youtube_auth.get_credentials_for_index')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.get_credentials_for_index')
     def test_get_authenticated_service_missing_client_secrets(self, mock_get_creds):
         """Test error handling when client secrets file cannot be resolved by get_credentials_for_index."""
         # Arrange
@@ -163,9 +163,9 @@ class TestYoutubeAuth(unittest.TestCase):
         mock_get_creds.assert_any_call(4)
 
 
-    @patch('modules.youtube_auth.src.youtube_auth.google.oauth2.credentials.Credentials.from_authorized_user_file')
-    @patch('modules.youtube_auth.src.youtube_auth.os.path.exists')
-    @patch('modules.youtube_auth.src.youtube_auth.get_credentials_for_index')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.google.oauth2.credentials.Credentials.from_authorized_user_file')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.os.path.exists')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.get_credentials_for_index')
     # Note: We are not mocking the OAuth flow here, as the ValueError should prevent it
     def test_get_authenticated_service_invalid_token(self, mock_get_creds, mock_exists, mock_from_file):
         """Test error handling for invalid token file that raises non-refresh error."""
@@ -189,8 +189,8 @@ class TestYoutubeAuth(unittest.TestCase):
         self.assertEqual(mock_get_creds.call_count, 4)
 
 
-    @patch('modules.youtube_auth.src.youtube_auth.build')
-    @patch('modules.youtube_auth.src.youtube_auth.get_credentials_for_index')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.build')
+    @patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.get_credentials_for_index')
     def test_get_authenticated_service_quota_exceeded(self, mock_get_creds, mock_build):
         """Test fallback mechanism when HttpError (quotaExceeded) occurs."""
         # Arrange
@@ -210,9 +210,9 @@ class TestYoutubeAuth(unittest.TestCase):
         mock_get_creds.side_effect = side_effect_get_creds
 
         # Mock os.path.exists to always return true for token files
-        with patch('modules.youtube_auth.src.youtube_auth.os.path.exists', return_value=True) as mock_exists_inner:
+        with patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.os.path.exists', return_value=True) as mock_exists_inner:
             # Mock from_authorized_user_file to return appropriate creds
-            with patch('modules.youtube_auth.src.youtube_auth.google.oauth2.credentials.Credentials.from_authorized_user_file') as mock_from_file_inner:
+            with patch('modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth.google.oauth2.credentials.Credentials.from_authorized_user_file') as mock_from_file_inner:
                 def side_effect_from_file(token_file, scopes):
                     if token_file == 'path/to/token1.json':
                         return mock_creds1

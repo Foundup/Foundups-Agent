@@ -1,5 +1,0 @@
-{
-  "name": "live_chat_poller",
-  "dependencies": ["livechat", "youtube_auth"],
-  "description": "Polls YouTube Live Chat for new messages and manages the chat polling cycle."
-} 

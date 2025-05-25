@@ -464,7 +464,7 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
             return {"processed": True, "id": message["id"]}
         
         with patch.object(self.listener, '_process_message', new_callable=AsyncMock) as mock_process, \
-             patch('modules.livechat.src.livechat.logger') as mock_logger:
+             patch('modules.communication.livechat.livechat.src.livechat.logger') as mock_logger:
             
             mock_process.side_effect = process_side_effect
             
@@ -631,7 +631,7 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
         self.listener.trigger_emojis = ["✊", "✋", "🖐️"]
         
         # Mock logger to capture debug messages
-        with patch('modules.livechat.src.livechat.logger') as mock_logger:
+        with patch('modules.communication.livechat.livechat.src.livechat.logger') as mock_logger:
             # Call the method
             msg_id, display_message, author_name, author_id = self.listener._extract_message_metadata(test_message)
             
@@ -830,7 +830,7 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
         
         # Mock dependencies and force exception
         with patch.object(self.listener, '_extract_message_metadata') as mock_extract, \
-             patch('modules.livechat.src.livechat.logger') as mock_logger, \
+             patch('modules.communication.livechat.livechat.src.livechat.logger') as mock_logger, \
              patch('modules.livechat.src.livechat.datetime') as mock_datetime:
             
             # Configure mocks to trigger the exception path
@@ -917,7 +917,7 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
              patch.object(self.listener, '_check_trigger_patterns') as mock_check, \
              patch.object(self.listener, '_create_log_entry') as mock_create, \
              patch.object(self.listener, '_log_to_user_file') as mock_log, \
-             patch('modules.livechat.src.livechat.logger') as mock_logger:
+             patch('modules.communication.livechat.livechat.src.livechat.logger') as mock_logger:
             
             # Configure mocks
             mock_extract.return_value = ("msg123", "Test message for log exception handling", "TestUser", "user123")

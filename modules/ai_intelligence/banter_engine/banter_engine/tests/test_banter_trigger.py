@@ -35,15 +35,33 @@ def test_emoji_mapping():
     result_emoji = tuple_to_emoji_string(expected_tuple)
     assert result_emoji == test_sequence, f"Expected {test_sequence}, got {result_emoji}"
     
-    # Test with unknown emoji - unknown emojis are skipped
+    # Test with invalid sequence (contains unknown emoji) - should return empty tuple
     test_with_unknown = "✊❓🖐️"
     result = emoji_string_to_tuple(test_with_unknown)
-    assert result == (0, 2), f"Expected (0, 2), got {result}"  # Unknown emoji is skipped
+    assert result == (), f"Expected (), got {result}"  # Invalid sequence returns empty tuple
     
-    # Test all known emojis
+    # Test that single emojis return empty tuple (only 3-emoji sequences are valid)
     for emoji, expected_num in EMOJI_TO_NUMBER.items():
         result = emoji_string_to_tuple(emoji)
-        assert result == (expected_num,), f"Expected ({expected_num},), got {result}"
+        assert result == (), f"Expected (), got {result} for single emoji '{emoji}'"
+    
+    # Test valid 3-emoji sequences
+    valid_sequences = [
+        ("✊✊✊", (0, 0, 0)),
+        ("✊✊✋", (0, 0, 1)),
+        ("✊✊🖐️", (0, 0, 2)),
+        ("✊✋✋", (0, 1, 1)),
+        ("✊✋🖐️", (0, 1, 2)),
+        ("✊🖐️🖐️", (0, 2, 2)),
+        ("✋✋✋", (1, 1, 1)),
+        ("✋✋🖐️", (1, 1, 2)),
+        ("✋🖐️🖐️", (1, 2, 2)),
+        ("🖐️🖐️🖐️", (2, 2, 2))
+    ]
+    
+    for emoji_seq, expected_tuple in valid_sequences:
+        result = emoji_string_to_tuple(emoji_seq)
+        assert result == expected_tuple, f"Expected {expected_tuple}, got {result} for sequence '{emoji_seq}'"
 
 @pytest.mark.asyncio
 async def test_emoji_trigger():

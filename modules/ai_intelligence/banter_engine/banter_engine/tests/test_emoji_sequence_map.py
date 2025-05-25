@@ -74,10 +74,11 @@ class TestEmojiStringToTuple(unittest.TestCase):
     
     def test_variation_selector(self):
         """Test handling of variation selectors."""
-        # Test with variation selector
-        self.assertEqual(emoji_string_to_tuple("🖐️"), (2,))
-        # Test without variation selector (should still work)
-        self.assertEqual(emoji_string_to_tuple("🖐"), (2,))
+        # Single emojis return empty tuple (only 3-emoji sequences are valid)
+        self.assertEqual(emoji_string_to_tuple("🖐️"), ())
+        self.assertEqual(emoji_string_to_tuple("🖐"), ())
+        # Test 3-emoji sequence with variation selector
+        self.assertEqual(emoji_string_to_tuple("🖐️🖐️🖐️"), (2, 2, 2))
     
     def test_mixed_sequence(self):
         """Test mixed emoji sequence."""
@@ -88,8 +89,10 @@ class TestEmojiStringToTuple(unittest.TestCase):
         """Test behavior with unknown emoji."""
         # Unknown emoji should return empty tuple
         self.assertEqual(emoji_string_to_tuple("👍"), ())
-        # Mix of known and unknown - only known emojis are processed
-        self.assertEqual(emoji_string_to_tuple("✊��✋"), (0, 1))
+        # Single emojis return empty tuple (only 3-emoji sequences are valid)
+        self.assertEqual(emoji_string_to_tuple("✊"), ())
+        # Mix of known and unknown emojis returns empty tuple (invalid sequence)
+        self.assertEqual(emoji_string_to_tuple("✊👍✋"), ())
 
 class TestTupleToEmojiString(unittest.TestCase):
     """Test suite for tuple_to_emoji_string function."""

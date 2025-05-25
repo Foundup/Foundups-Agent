@@ -4,11 +4,12 @@ EmojiSequenceMap class for handling emoji-to-number mappings and sequence proces
 
 import logging
 
-# Basic emoji to number mapping
+# Basic emoji to number mapping - includes both variants for compatibility
 EMOJI_TO_NUMBER = {
     '✊': 0,  # UN - Conscious state
     '✋': 1,  # DAO - Unconscious state
-    '🖐️': 2  # DU - Entanglement state
+    '🖐️': 2,  # DU - Entanglement state (with variation selector)
+    '🖐': 2   # DU - Entanglement state (without variation selector)
 }
 
 # Reverse mapping
@@ -72,6 +73,8 @@ def emoji_string_to_tuple(emoji_str: str) -> tuple:
     # Split into individual emojis, handling multi-character emojis
     emojis = []
     i = 0
+    has_non_emoji = False
+    
     while i < len(emoji_str):
         logger.debug(f"Processing character at index {i}: '{emoji_str[i]}'")
         
@@ -98,12 +101,19 @@ def emoji_string_to_tuple(emoji_str: str) -> tuple:
             emojis.append(norm_char)
             i += 1
             continue
-            
-        # Skip non-emoji characters
-        logger.debug(f"Skipping non-emoji character: '{emoji_str[i]}'")
+        
+        # Found non-emoji character - mark as invalid
+        logger.debug(f"Found non-emoji character: '{emoji_str[i]}' - invalid sequence")
+        has_non_emoji = True
         i += 1
     
     logger.debug(f"Extracted emojis: {emojis}")
+    logger.debug(f"Has non-emoji characters: {has_non_emoji}")
+    
+    # If there are any non-emoji characters, return empty tuple
+    if has_non_emoji:
+        logger.debug("Sequence contains non-emoji characters - invalid")
+        return ()
     
     # Convert emojis to numbers using normalized dictionary
     numbers = []
@@ -113,10 +123,17 @@ def emoji_string_to_tuple(emoji_str: str) -> tuple:
             logger.debug(f"Converting emoji '{emoji}' to number {number}")
             numbers.append(number)
         else:
-            logger.debug(f"Unknown emoji: '{emoji}'")
+            logger.debug(f"Unknown emoji: '{emoji}' - invalid sequence")
+            # If any emoji is unknown, return empty tuple (invalid sequence)
+            return ()
     
-    logger.debug(f"Final number sequence: {numbers}")
-    return tuple(numbers)
+    # Only return valid 3-emoji sequences
+    if len(numbers) == 3:
+        logger.debug(f"Valid 3-emoji sequence: {numbers}")
+        return tuple(numbers)
+    else:
+        logger.debug(f"Invalid sequence length {len(numbers)}, expected 3")
+        return ()
 
 def tuple_to_emoji_string(num_tuple: tuple) -> str:
     """

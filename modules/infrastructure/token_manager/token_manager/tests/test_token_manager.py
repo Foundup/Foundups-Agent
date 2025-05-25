@@ -19,7 +19,7 @@ def mock_authenticated_service_fail(*args, **kwargs):
 async def test_check_token_health_pass():
     print("✅ test_check_token_health_pass")
     manager = TokenManager()
-    with patch("modules.token_manager.src.token_manager.get_authenticated_service", side_effect=mock_authenticated_service_success):
+    with patch("modules.infrastructure.token_manager.token_manager.src.token_manager.get_authenticated_service", side_effect=mock_authenticated_service_success):
         result = manager.check_token_health(0)
         print("Result:", result)
         assert result is True
@@ -28,7 +28,7 @@ async def test_check_token_health_pass():
 async def test_check_token_health_fail_and_cooldown():
     print("✅ test_check_token_health_fail_and_cooldown")
     manager = TokenManager()
-    with patch("modules.token_manager.src.token_manager.get_authenticated_service", side_effect=mock_authenticated_service_fail):
+    with patch("modules.infrastructure.token_manager.token_manager.src.token_manager.get_authenticated_service", side_effect=mock_authenticated_service_fail):
         result = manager.check_token_health(0)
         print("Initial result (should fail):", result)
         assert result is False

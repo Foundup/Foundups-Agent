@@ -1,0 +1,8 @@
+Rank,ModuleName,MPS_Score,CX,IM,IP,ADV,ADF,DF,RF
+1,banter_engine,94.00,4,5,5,5,4,4,3
+2,livechat,91.00,3,5,4,4,4,4,4
+3,live_chat_processor,84.00,3,4,4,4,4,4,3
+4,token_manager,76.00,2,5,4,1,2,4,4
+5,youtube_auth,76.00,2,5,4,1,2,4,4
+6,stream_resolver,68.00,3,4,4,2,3,3,3
+7,live_chat_poller,67.00,2,4,3,3,3,3,2

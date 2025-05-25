@@ -5,8 +5,8 @@ from datetime import datetime
 import googleapiclient.errors
 from dotenv import load_dotenv
 from utils.throttling import calculate_dynamic_delay
-from modules.infrastructure.token_manager.token_manager import token_manager
-from modules.ai_intelligence.banter_engine.banter_engine import BanterEngine
+from modules.infrastructure.token_manager.token_manager.src.token_manager import token_manager
+from modules.ai_intelligence.banter_engine.banter_engine.src.banter_engine import BanterEngine
 from utils.oauth_manager import get_authenticated_service
 import asyncio
 from typing import List, Dict, Any, Optional, Tuple
@@ -26,7 +26,7 @@ class LiveChatListener:
         self.video_id = video_id
         self.live_chat_id = live_chat_id
         self.next_page_token = None
-        self.poll_interval_ms = 100000  # Default: 100 seconds
+        self.poll_interval_ms = 5000  # Default: 5 seconds for faster response
         self.error_backoff_seconds = 5  # Initial backoff for errors
         self.memory_dir = "memory"
         self.greeting_message = os.getenv("AGENT_GREETING_MESSAGE", "FoundUps Agent reporting in!")
@@ -36,7 +36,9 @@ class LiveChatListener:
         self.llm_bypass_engine = LLMBypassEngine()  # Fallback engine for when main engine fails
         self.trigger_emojis = ["✊", "✋", "🖐️"]  # Configurable emoji trigger set
         self.last_trigger_time = {}  # Track last trigger time per user
-        self.trigger_cooldown = 60  # Cooldown period in seconds
+        self.trigger_cooldown = 30  # Cooldown period in seconds (reduced from 60)
+        self.last_global_response = 0  # Track last response time globally
+        self.global_cooldown = 5  # Minimum 5 seconds between any responses
         self.is_running = False  # Flag to control the listening loop
 
         os.makedirs(self.memory_dir, exist_ok=True)
@@ -134,30 +136,32 @@ class LiveChatListener:
             ).execute()
 
             # Get the polling interval from YouTube's response (handle mock objects)
-            server_poll_interval = response.get("pollingIntervalMillis", 10000)
+            server_poll_interval = response.get("pollingIntervalMillis", 5000)
             if not isinstance(server_poll_interval, int):
                 # In mock mode, use a safe default
-                server_poll_interval = 10000
+                server_poll_interval = 5000
             
             # Calculate dynamic delay based on viewer count (handle mock objects)
             try:
                 if isinstance(self.viewer_count, int):
                     dynamic_delay = calculate_dynamic_delay(self.viewer_count)
+                    # Cap the delay at 10 seconds max for responsiveness
+                    dynamic_delay = min(dynamic_delay, 10.0)
                 else:
                     # In mock mode or if viewer_count is not an int, use a safe default
-                    dynamic_delay = 10.0  # Default 10 second delay
+                    dynamic_delay = 5.0  # Default 5 second delay for faster response
             except Exception:
-                dynamic_delay = 10.0  # Fallback delay
+                dynamic_delay = 5.0  # Fallback delay
             
-            # Use the larger of server's interval or our calculated interval
-            self.poll_interval_ms = max(server_poll_interval, int(dynamic_delay * 1000))
+            # Use the larger of server's interval or our calculated interval, but cap at 15 seconds
+            self.poll_interval_ms = min(max(server_poll_interval, int(dynamic_delay * 1000)), 15000)
             
             self.next_page_token = response.get("nextPageToken")
             self.error_backoff_seconds = 5  # Reset error backoff on success
 
             messages = response.get("items", [])
             if messages:
-                logger.debug(f"Received {len(messages)} new messages.")
+                logger.info(f"📥 Received {len(messages)} new messages")
                 return messages
             else:
                 logger.debug("No new messages.")
@@ -190,8 +194,8 @@ class LiveChatListener:
         if user_id in self.last_trigger_time:
             time_since_last = current_time - self.last_trigger_time[user_id]
             if time_since_last < self.trigger_cooldown:
-                logger.debug(f"Rate limited user {user_id} for {self.trigger_cooldown - time_since_last:.1f}s")
-            return True
+                logger.debug(f"⏰ Rate limited user {user_id} for {self.trigger_cooldown - time_since_last:.1f}s")
+                return True
         return False
 
     def _update_trigger_time(self, user_id):
@@ -219,7 +223,7 @@ class LiveChatListener:
         display_message = snippet.get("displayMessage", "")
         author_name = author_details["displayName"]
         
-        logger.debug(f"Chat message received: {display_message}")
+        logger.info(f"💬 [{author_name}]: {display_message}")
         logger.debug(f"Message length: {len(display_message)}")
         
         return msg_id, display_message, author_name, author_id
@@ -234,25 +238,21 @@ class LiveChatListener:
         Returns:
             bool: True if a trigger pattern was found, False otherwise
         """
-        # Count emojis properly, handling multi-character emojis
-        emoji_count = 0
-        i = 0
-        while i < len(message_text):
-            # Check for multi-character emoji first (🖐️)
-            if i + 1 < len(message_text):
-                two_char = message_text[i:i+2]
-                if two_char in EMOJI_TO_NUM:
-                    emoji_count += 1
-                    i += 2
-                    continue
-            
-            # Check for single-character emoji
-            char = message_text[i]
-            if char in EMOJI_TO_NUM:
-                emoji_count += 1
-            i += 1
+        # Define valid emoji sequences that should trigger responses
+        # Include both variants: with and without variation selector (️)
+        valid_sequences = [
+            "✊✊✊", "✊✊✋", "✊✊🖐️", "✊✊🖐", "✊✋✋", "✊✋🖐️", "✊✋🖐", 
+            "✊🖐️🖐️", "✊🖐🖐", "✋✋✋", "✋✋🖐️", "✋✋🖐", "✋🖐️🖐️", 
+            "✋🖐🖐", "🖐️🖐️🖐️", "🖐🖐🖐"
+        ]
         
-        return emoji_count >= 3
+        # Check if any valid sequence is in the message
+        for sequence in valid_sequences:
+            if sequence in message_text:
+                logger.info(f"🎯 Found valid emoji sequence: {sequence}")
+                return True
+        
+        return False
 
     async def _handle_emoji_trigger(self, author_name, author_id, message_text):
         """
@@ -270,18 +270,32 @@ class LiveChatListener:
         
         # Check if this is a self-message (bot responding to its own emoji)
         if hasattr(self, 'bot_channel_id') and self.bot_channel_id and author_id == self.bot_channel_id:
-            logger.debug(f"Ignoring self-message from bot {author_name}")
+            logger.debug(f"🚫 Ignoring self-message from bot {author_name}")
+            return False
+        
+        # Additional check for bot username (fallback if channel ID check fails)
+        if author_name in ["UnDaoDu", "FoundUps Agent", "FoundUpsAgent"]:
+            logger.debug(f"🚫 Ignoring message from bot username {author_name}")
             return False
         
         # Check rate limiting
         if self._is_rate_limited(author_id):
-            logger.debug(f"Skipping trigger for rate-limited user {author_name}")
+            logger.debug(f"⏰ Skipping trigger for rate-limited user {author_name}")
+            return False
+        
+        # Check global rate limiting
+        current_time = time.time()
+        if current_time - self.last_global_response < self.global_cooldown:
+            logger.debug(f"🌍 Global rate limit active, waiting {self.global_cooldown - (current_time - self.last_global_response):.1f}s")
             return False
         
         try:
             # Use banter engine to process the message directly - it handles detection internally
+            start_time = time.time()
+            logger.info(f"🎯 Calling banter_engine.process_input with message: '{message_text}'")
             state_info, response = self.banter_engine.process_input(message_text)
-            logger.info(f"Banter engine returned state: {state_info}, response: {response}")
+            processing_time = time.time() - start_time
+            logger.info(f"Banter engine processed in {processing_time:.2f}s - state: {state_info}, response: {response}")
             
             if not response or not isinstance(response, str) or not response.strip():
                 logger.warning(f"Empty or invalid banter response for {author_name}, trying LLM bypass")
@@ -290,23 +304,33 @@ class LiveChatListener:
                     bypass_state, bypass_response = self.llm_bypass_engine.process_input(message_text)
                     if bypass_response and isinstance(bypass_response, str) and bypass_response.strip():
                         logger.info(f"LLM bypass provided response: {bypass_response}")
-                        response = bypass_response
+                        response = f"@{author_name} {bypass_response}"
                     else:
                         logger.warning(f"LLM bypass also failed, using final fallback")
                         response = self.llm_bypass_engine.get_fallback_response(author_name)
+                        if response and not response.startswith(f"@{author_name}"):
+                            response = f"@{author_name} {response}"
                 except Exception as bypass_error:
                     logger.error(f"LLM bypass engine failed: {bypass_error}")
-                    response = f"Hey {author_name}! Thanks for the gesture! 👋"
+                    response = f"@{author_name} Hey! Thanks for the gesture! 👋"
+            else:
+                # Add @mention to successful banter responses too
+                if response and not response.startswith(f"@{author_name}"):
+                    response = f"@{author_name} {response}"
             
-            logger.debug(f"Generated banter response for {author_name}: {response}")
+            logger.info(f"🤖 Responding to {author_name}: {response}")
             
             # Send response
+            send_start = time.time()
             if await self.send_chat_message(response):
-                logger.info(f"Successfully queued banter response for {author_name}")
+                send_time = time.time() - send_start
+                logger.info(f"✅ Successfully sent response to @{author_name} in {send_time:.2f}s")
                 self._update_trigger_time(author_id)
+                self.last_global_response = time.time()  # Update global response time
                 return True
             else:
-                logger.error(f"Failed to queue banter response for {author_name}")
+                send_time = time.time() - send_start
+                logger.error(f"❌ Failed to send response to @{author_name} after {send_time:.2f}s")
                 return False
         except Exception as e:
             logger.error(f"Error processing emoji trigger for {author_name}: {str(e)}")
@@ -369,12 +393,16 @@ class LiveChatListener:
             msg_id, display_message, author_name, author_id = self._extract_message_metadata(message)
             
             # Check for trigger patterns
+            logger.debug(f"🔍 Checking trigger patterns for message: '{display_message}'")
             if self._check_trigger_patterns(display_message):
+                logger.info(f"🎯 TRIGGER DETECTED! Processing emoji trigger for {author_name}")
                 # Handle emoji trigger
                 trigger_success = await self._handle_emoji_trigger(author_name, author_id, display_message)
                 if not trigger_success and self._is_rate_limited(author_id):
                     # If handling failed due to rate limiting, return None
                     return None
+            else:
+                logger.debug(f"❌ No trigger patterns found in: '{display_message}'")
             
             # Create log entry
             log_entry = self._create_log_entry(msg_id, author_name, display_message)
@@ -397,17 +425,44 @@ class LiveChatListener:
             }
 
     def _log_to_user_file(self, message):
-        """Appends a log entry to a user-specific file."""
+        """Appends a clean log entry to a user-specific file for LLM consumption."""
         try:
             username = message["authorDetails"]["displayName"]
-            log_dir = os.path.join(self.memory_dir, "chat_logs").replace("\\", "/")
-            os.makedirs(log_dir, exist_ok=True)
+            channel_id = message["authorDetails"].get("channelId", "unknown")
+            message_text = message["snippet"].get("displayMessage", "")
             
-            log_filename = os.path.join(log_dir, f"{username}.jsonl").replace("\\", "/")
+            # Skip empty messages
+            if not message_text.strip():
+                return
+            
+            # Create memory directories
+            log_dir = os.path.join(self.memory_dir, "chat_logs").replace("\\", "/")
+            conversation_dir = os.path.join(self.memory_dir, "conversations").replace("\\", "/")
+            os.makedirs(log_dir, exist_ok=True)
+            os.makedirs(conversation_dir, exist_ok=True)
+            
+            # Use channel ID as filename to prevent impersonation
+            log_filename = os.path.join(log_dir, f"{channel_id}.jsonl").replace("\\", "/")
+            
+            # Store just the message content for LLM consumption
             with open(log_filename, "a", encoding="utf-8") as f:
-                import json
-                f.write(json.dumps(message) + "\n")
-            logger.debug(f"Logged message from {username}")
+                f.write(message_text + "\n")
+            
+            # Create comprehensive conversation log for LLM context
+            msg_id = message["id"]
+            date_str = datetime.now().strftime("%Y-%m-%d")
+            
+            # Stream-specific conversation log with date and video ID
+            stream_log = os.path.join(conversation_dir, f"stream_{date_str}_{self.video_id}.txt").replace("\\", "/")
+            with open(stream_log, "a", encoding="utf-8") as f:
+                f.write(f"[{msg_id}] {username}: {message_text}\n")
+            
+            # Daily conversation summary for LLM analysis
+            daily_summary = os.path.join(conversation_dir, f"daily_summary_{date_str}.txt").replace("\\", "/")
+            with open(daily_summary, "a", encoding="utf-8") as f:
+                f.write(f"[{msg_id}] {username}: {message_text}\n")
+            
+            logger.debug(f"Logged message from {username} ({channel_id})")
         except Exception as e:
             logger.error(f"Failed to write to log file: {e}")
             raise

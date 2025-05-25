@@ -326,10 +326,6 @@ class BanterEngine:
                 self.logger.warning(f"Invalid input type: {type(input_text)}")
                 return "Invalid input type", None
             
-            # Check for whitespace-only input (backward compatibility)
-            if input_text.isspace():
-                return "Empty input", None
-            
             # Length validation
             if len(input_text) > config.MAX_INPUT_LENGTH:
                 self.logger.warning(f"Input too long, truncating: {len(input_text)} chars")
@@ -503,5 +499,4 @@ class BanterEngine:
     # Backward compatibility aliases
     process_input = process_input_enhanced
     get_random_banter = get_random_banter_enhanced
-    list_themes = list_themes_enhanced
-    _extract_emoji_sequence = _extract_emoji_sequence_enhanced 
+    list_themes = list_themes_enhanced 

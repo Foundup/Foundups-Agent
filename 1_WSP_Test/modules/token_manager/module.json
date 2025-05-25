@@ -1,5 +1,0 @@
-{
-  "name": "token_manager",
-  "dependencies": [],
-  "description": "Manages OAuth tokens, refresh tokens, and token storage for API authentication."
-} 

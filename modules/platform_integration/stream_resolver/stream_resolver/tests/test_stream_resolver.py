@@ -22,7 +22,7 @@ class TestCalculateDynamicDelay(unittest.TestCase):
     def setUp(self):
         # Store original value
         self.original_force_dev_delay = getattr(
-            __import__('modules.stream_resolver.src.stream_resolver', 
+            __import__('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver', 
                      fromlist=['FORCE_DEV_DELAY']), 
             'FORCE_DEV_DELAY'
         )
@@ -30,13 +30,13 @@ class TestCalculateDynamicDelay(unittest.TestCase):
     def tearDown(self):
         # Restore original value
         setattr(
-            __import__('modules.stream_resolver.src.stream_resolver', 
+            __import__('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver', 
                      fromlist=['FORCE_DEV_DELAY']), 
             'FORCE_DEV_DELAY',
             self.original_force_dev_delay
         )
 
-    @patch('modules.stream_resolver.src.stream_resolver.FORCE_DEV_DELAY', False)
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.FORCE_DEV_DELAY', False)
     def test_calculate_dynamic_delay_with_high_activity(self):
         """Test delay calculation with high chat activity."""
         delay = calculate_dynamic_delay(active_users=1500)
@@ -44,7 +44,7 @@ class TestCalculateDynamicDelay(unittest.TestCase):
         self.assertGreaterEqual(delay, 5.0)  
         self.assertLessEqual(delay, 7.0)  # With jitter
 
-    @patch('modules.stream_resolver.src.stream_resolver.FORCE_DEV_DELAY', False)
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.FORCE_DEV_DELAY', False)
     def test_calculate_dynamic_delay_with_low_activity(self):
         """Test delay calculation with low chat activity."""
         delay = calculate_dynamic_delay(active_users=5)
@@ -52,21 +52,21 @@ class TestCalculateDynamicDelay(unittest.TestCase):
         self.assertGreaterEqual(delay, 48.0)  
         self.assertLessEqual(delay, 60.0)  # With upper bound
 
-    @patch('modules.stream_resolver.src.stream_resolver.FORCE_DEV_DELAY', False)
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.FORCE_DEV_DELAY', False)
     def test_calculate_dynamic_delay_with_failures(self):
         """Test delay increase with consecutive failures."""
         base_delay = calculate_dynamic_delay(active_users=100)
         increased_delay = calculate_dynamic_delay(active_users=100, consecutive_failures=3)
         self.assertGreater(increased_delay, base_delay)
 
-    @patch('modules.stream_resolver.src.stream_resolver.FORCE_DEV_DELAY', True)
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.FORCE_DEV_DELAY', True)
     def test_calculate_dynamic_delay_dev_mode(self):
         """Test that dev mode forces a 1-second delay."""
         delay = calculate_dynamic_delay(active_users=1000)
         self.assertEqual(delay, 1.0)
 
-    @patch('modules.stream_resolver.src.stream_resolver.FORCE_DEV_DELAY', False)
-    @patch('modules.stream_resolver.src.stream_resolver.random.uniform')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.FORCE_DEV_DELAY', False)
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.random.uniform')
     def test_calculate_dynamic_delay_with_previous_delay(self, mock_uniform):
         """Test that previous delay is used for smoothing."""
         mock_uniform.return_value = 0  # No randomness for testing
@@ -76,8 +76,8 @@ class TestCalculateDynamicDelay(unittest.TestCase):
         self.assertGreater(current, 10.0)  # Medium activity base
         self.assertLess(current, 30.0)  # Previous delay
 
-    @patch('modules.stream_resolver.src.stream_resolver.FORCE_DEV_DELAY', False)
-    @patch('modules.stream_resolver.src.stream_resolver.random.uniform')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.FORCE_DEV_DELAY', False)
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.random.uniform')
     def test_calculate_dynamic_delay_without_dev_mode(self, mock_uniform):
         """Test calculate_dynamic_delay with FORCE_DEV_DELAY set to False."""
         mock_uniform.return_value = 1.0  # Consistent random value for testing
@@ -143,7 +143,7 @@ class TestMaskSensitiveId(unittest.TestCase):
 class TestYouTubeAPICalls(unittest.TestCase):
     """Test suite for YouTube API interaction functions."""
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
     def test_check_video_details(self, mock_sleep):
         """Test video details retrieval."""
         mock_client = MagicMock()
@@ -171,7 +171,7 @@ class TestYouTubeAPICalls(unittest.TestCase):
         self.assertEqual(result["id"], "test_video_id")
         self.assertEqual(result["liveStreamingDetails"]["activeLiveChatId"], "test_chat_id")
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
     def test_search_livestreams(self, mock_sleep):
         """Test search for livestreams."""
         mock_client = MagicMock()
@@ -186,7 +186,7 @@ class TestYouTubeAPICalls(unittest.TestCase):
         mock_search.list.return_value = mock_list
         mock_list.execute.return_value = mock_execute.return_value
         
-        with patch('modules.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
             result = search_livestreams(mock_client)
         
         # Verify API was called with correct parameters
@@ -201,7 +201,7 @@ class TestYouTubeAPICalls(unittest.TestCase):
         # Verify result contains expected data
         self.assertEqual(result, "test_video_id")
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
     def test_search_livestreams_no_results(self, mock_sleep):
         """Test search with no livestreams found."""
         mock_client = MagicMock()
@@ -213,7 +213,7 @@ class TestYouTubeAPICalls(unittest.TestCase):
         mock_search.list.return_value = mock_list
         mock_list.execute.return_value = mock_execute.return_value
         
-        with patch('modules.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
             result = search_livestreams(mock_client)
         
         # Verify API was called correctly
@@ -222,9 +222,9 @@ class TestYouTubeAPICalls(unittest.TestCase):
         # Verify result is None when no streams found
         self.assertIsNone(result)
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
-    @patch('modules.stream_resolver.src.stream_resolver.search_livestreams')
-    @patch('modules.stream_resolver.src.stream_resolver.check_video_details')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.search_livestreams')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.check_video_details')
     def test_get_active_livestream_video_id(self, mock_check_details, mock_search, mock_sleep):
         """Test finding an active livestream."""
         mock_client = MagicMock()
@@ -248,9 +248,9 @@ class TestYouTubeAPICalls(unittest.TestCase):
         # Verify result contains expected data
         self.assertEqual(result, ("test_video_id", "test_chat_id"))
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
-    @patch('modules.stream_resolver.src.stream_resolver.search_livestreams')
-    @patch('modules.stream_resolver.src.stream_resolver.check_video_details')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.search_livestreams')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.check_video_details')
     def test_get_active_livestream_fallback_to_upcoming(
             self, mock_check_details, mock_search, mock_sleep):
         """Test falling back to upcoming streams when no live stream found."""
@@ -279,8 +279,8 @@ class TestYouTubeAPICalls(unittest.TestCase):
         # Verify result contains expected data
         self.assertEqual(result, ("test_upcoming_id", "test_upcoming_chat_id"))
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
-    @patch('modules.stream_resolver.src.stream_resolver.search_livestreams')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.search_livestreams')
     def test_get_active_livestream_none_found(self, mock_search, mock_sleep):
         """Test when no livestreams are found."""
         mock_client = MagicMock()
@@ -296,8 +296,8 @@ class TestYouTubeAPICalls(unittest.TestCase):
         # Verify result is None when no streams found
         self.assertIsNone(result)
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
-    @patch('modules.stream_resolver.src.stream_resolver.get_env_variable')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_env_variable')
     def test_check_video_details_with_empty_response(self, mock_get_env, mock_sleep):
         """Test video details retrieval with empty response."""
         mock_client = MagicMock()
@@ -322,7 +322,7 @@ class TestYouTubeAPICalls(unittest.TestCase):
         # Verify result is None when no items are found
         self.assertIsNone(result)
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
     def test_check_video_details_with_general_exception(self, mock_sleep):
         """Test video details retrieval with a general exception."""
         mock_client = MagicMock()
@@ -338,8 +338,8 @@ class TestYouTubeAPICalls(unittest.TestCase):
         # Verify result is None when an exception occurs
         self.assertIsNone(result)
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
-    @patch('modules.stream_resolver.src.stream_resolver.get_env_variable')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_env_variable')
     def test_check_video_details_with_quota_exceeded(self, mock_get_env, mock_sleep):
         """Test video details handling of quota exceeded errors."""
         # Create original client
@@ -375,7 +375,7 @@ class TestYouTubeAPICalls(unittest.TestCase):
         # Mock googleapiclient.discovery.build to return our mock fallback client
         with patch('googleapiclient.discovery.build', return_value=mock_fallback_client):
             # Need to mock str() to include "quotaExceeded" for error detection
-            with patch('modules.stream_resolver.src.stream_resolver.str', return_value="quotaExceeded error message"):
+            with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.str', return_value="quotaExceeded error message"):
                 # Call function under test
                 result = check_video_details(mock_client, "test_video_id")
         
@@ -383,7 +383,7 @@ class TestYouTubeAPICalls(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertEqual(result["id"], "test_video_id")
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
     def test_search_livestreams_with_quota_exceeded_below_max_retries(self, mock_sleep):
         """Test search_livestreams handling of quota exceeded errors below max retries."""
         mock_client = MagicMock()
@@ -407,7 +407,7 @@ class TestYouTubeAPICalls(unittest.TestCase):
         mock_client.search.return_value = mock_search
         
         # Ensure "quotaExceeded" is found in the string representation of the error
-        with patch('modules.stream_resolver.src.stream_resolver.str') as mock_str:
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.str') as mock_str:
             # Make sure the string check passes only for the quota error
             def side_effect(arg):
                 if arg is quota_error:
@@ -416,8 +416,8 @@ class TestYouTubeAPICalls(unittest.TestCase):
             mock_str.side_effect = side_effect
             
             # Test with CHANNEL_ID patched
-            with patch('modules.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
-                with patch('modules.stream_resolver.src.stream_resolver.MAX_RETRIES', 5):  # Ensure MAX_RETRIES is greater than 0
+            with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
+                with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.MAX_RETRIES', 5):  # Ensure MAX_RETRIES is greater than 0
                     result = search_livestreams(mock_client)
         
         # Verify search was called twice - first getting an error, then success
@@ -425,7 +425,7 @@ class TestYouTubeAPICalls(unittest.TestCase):
         # Verify result contains expected data from second call
         self.assertEqual(result, "test_video_id")
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
     def test_search_livestreams_with_other_error(self, mock_sleep):
         """Test search_livestreams handling of other HTTP errors."""
         mock_client = MagicMock()
@@ -441,13 +441,13 @@ class TestYouTubeAPICalls(unittest.TestCase):
         mock_client.search.return_value = mock_search
         mock_search.list.return_value = mock_list
         
-        with patch('modules.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
             result = search_livestreams(mock_client)
         
         # Verify result is None when an error occurs
         self.assertIsNone(result)
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
     def test_search_livestreams_with_unexpected_exception(self, mock_sleep):
         """Test search_livestreams handling of unexpected exceptions."""
         mock_client = MagicMock()
@@ -458,15 +458,15 @@ class TestYouTubeAPICalls(unittest.TestCase):
         mock_client.search.return_value = mock_search
         mock_search.list.return_value = mock_list
         
-        with patch('modules.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
             result = search_livestreams(mock_client)
         
         # Verify result is None when an exception occurs
         self.assertIsNone(result)
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
-    @patch('modules.stream_resolver.src.stream_resolver.get_env_variable')
-    @patch('modules.stream_resolver.src.stream_resolver.check_video_details')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_env_variable')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.check_video_details')
     def test_get_active_livestream_with_env_override(self, mock_check_details, mock_get_env, mock_sleep):
         """Test get_active_livestream_video_id with environment variable override."""
         mock_client = MagicMock()
@@ -489,9 +489,9 @@ class TestYouTubeAPICalls(unittest.TestCase):
         # Verify result contains expected data
         self.assertEqual(result, ("env_video_id", "env_chat_id"))
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
-    @patch('modules.stream_resolver.src.stream_resolver.get_env_variable')
-    @patch('modules.stream_resolver.src.stream_resolver.check_video_details')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_env_variable')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.check_video_details')
     def test_get_active_livestream_with_env_override_no_chat_id(self, mock_check_details, mock_get_env, mock_sleep):
         """Test get_active_livestream_video_id with environment variable override but no chat ID."""
         mock_client = MagicMock()
@@ -506,7 +506,7 @@ class TestYouTubeAPICalls(unittest.TestCase):
         }
         
         # Set up further mocks for the normal search process
-        with patch('modules.stream_resolver.src.stream_resolver.search_livestreams') as mock_search:
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.search_livestreams') as mock_search:
             mock_search.return_value = None  # No livestreams found
             
             result = get_active_livestream_video_id(mock_client, "test_channel_id")
@@ -521,8 +521,8 @@ class TestYouTubeAPICalls(unittest.TestCase):
         # Verify result is None when no livestreams found
         self.assertIsNone(result)
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
-    @patch('modules.stream_resolver.src.stream_resolver.get_env_variable')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_env_variable')
     def test_check_video_details_with_quota_exceeded_no_fallback(self, mock_get_env, mock_sleep):
         """Test video details handling of quota exceeded errors with no fallback key."""
         mock_client = MagicMock()
@@ -535,7 +535,7 @@ class TestYouTubeAPICalls(unittest.TestCase):
         quota_error = googleapiclient.errors.HttpError(resp, b'{"error": {"errors": [{"reason": "quotaExceeded"}]}}')
         
         # Ensure the error string contains "quotaExceeded"
-        with patch('modules.stream_resolver.src.stream_resolver.str') as mock_str:
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.str') as mock_str:
             mock_str.return_value = "quotaExceeded error message"
         
             mock_list.execute.side_effect = quota_error
@@ -551,9 +551,9 @@ class TestYouTubeAPICalls(unittest.TestCase):
             # Verify result is None when no fallback key is available
             self.assertIsNone(result)
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
-    @patch('modules.stream_resolver.src.stream_resolver.get_env_variable')
-    @patch('modules.stream_resolver.src.stream_resolver.get_authenticated_service_with_fallback')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_env_variable')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_authenticated_service_with_fallback')
     def test_direct_execution_code_path(self, mock_get_auth, mock_get_env, mock_sleep):
         """Test the code path in the __main__ block for direct script execution."""
         # Test channel ID is hardcoded in the __main__ block
@@ -571,7 +571,7 @@ class TestYouTubeAPICalls(unittest.TestCase):
         mock_get_auth.return_value = mock_service
         
         # Mock get_active_livestream_video_id to return a valid result
-        with patch('modules.stream_resolver.src.stream_resolver.get_active_livestream_video_id') as mock_get_livestream:
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_active_livestream_video_id') as mock_get_livestream:
             mock_get_livestream.return_value = ("test_video_id", "test_chat_id")
             
             # Execute the main block code directly, capturing stdout
@@ -622,9 +622,9 @@ except Exception as main_e:
             # Verify that get_active_livestream_video_id was called with expected channel
             mock_get_livestream.assert_called_once_with(mock_service, test_channel_id)
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
-    @patch('modules.stream_resolver.src.stream_resolver.get_env_variable')
-    @patch('modules.stream_resolver.src.stream_resolver.MAX_CONSECUTIVE_FAILURES', 2)  # Limit iterations for testing
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_env_variable')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.MAX_CONSECUTIVE_FAILURES', 2)  # Limit iterations for testing
     def test_get_active_livestream_max_failures(self, mock_get_env, mock_sleep):
         """Test get_active_livestream_video_id with maximum consecutive failures."""
         mock_client = MagicMock()
@@ -633,8 +633,8 @@ except Exception as main_e:
         mock_get_env.return_value = None
         
         # Set up search_livestreams to always return None (no streams found)
-        with patch('modules.stream_resolver.src.stream_resolver.search_livestreams', return_value=None) as mock_search:
-            with patch('modules.stream_resolver.src.stream_resolver.calculate_dynamic_delay', return_value=1.0) as mock_delay:
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.search_livestreams', return_value=None) as mock_search:
+            with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.calculate_dynamic_delay', return_value=1.0) as mock_delay:
                 result = get_active_livestream_video_id(mock_client, "test_channel_id")
                 
                 # Should attempt to search for both live and upcoming streams MAX_CONSECUTIVE_FAILURES times
@@ -652,9 +652,9 @@ except Exception as main_e:
                 # After MAX_CONSECUTIVE_FAILURES iterations with no results, should return None
                 self.assertIsNone(result)
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
-    @patch('modules.stream_resolver.src.stream_resolver.get_env_variable')
-    @patch('modules.stream_resolver.src.stream_resolver.MAX_CONSECUTIVE_FAILURES', 2)  # Limit iterations for testing
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_env_variable')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.MAX_CONSECUTIVE_FAILURES', 2)  # Limit iterations for testing
     def test_get_active_livestream_with_unhandled_exception(self, mock_get_env, mock_sleep):
         """Test get_active_livestream_video_id with an unhandled exception."""
         mock_client = MagicMock()
@@ -663,8 +663,8 @@ except Exception as main_e:
         mock_get_env.return_value = None
         
         # Set up search_livestreams to raise an unexpected exception
-        with patch('modules.stream_resolver.src.stream_resolver.search_livestreams') as mock_search:
-            with patch('modules.stream_resolver.src.stream_resolver.calculate_dynamic_delay', return_value=1.0) as mock_delay:
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.search_livestreams') as mock_search:
+            with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.calculate_dynamic_delay', return_value=1.0) as mock_delay:
                 mock_search.side_effect = Exception("Unexpected test error")
                 
                 result = get_active_livestream_video_id(mock_client, "test_channel_id")
@@ -675,7 +675,7 @@ except Exception as main_e:
                 # Verify at least one call to search_livestreams
                 self.assertGreater(mock_search.call_count, 0)
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
     def test_check_video_details_with_keyboard_interrupt(self, mock_sleep):
         """Test video details handling of keyboard interrupt."""
         mock_client = MagicMock()
@@ -689,7 +689,7 @@ except Exception as main_e:
         # Verify result is None
         self.assertIsNone(result)
         
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
     def test_search_livestreams_with_keyboard_interrupt(self, mock_sleep):
         """Test search_livestreams handling of keyboard interrupt during sleep."""
         mock_client = MagicMock()
@@ -698,13 +698,13 @@ except Exception as main_e:
         mock_sleep.side_effect = KeyboardInterrupt()
         
         # Call function under test - should return None but not raise an exception
-        with patch('modules.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
             result = search_livestreams(mock_client)
         
         # Verify result is None
         self.assertIsNone(result)
         
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
     def test_search_livestreams_retry_with_same_credentials(self, mock_sleep):
         """Test search_livestreams retry with same credentials on quota error."""
         mock_client = MagicMock()
@@ -729,12 +729,12 @@ except Exception as main_e:
         mock_client.search.return_value = mock_search
         
         # Ensure error string contains "quotaExceeded"
-        with patch('modules.stream_resolver.src.stream_resolver.str') as mock_str:
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.str') as mock_str:
             mock_str.return_value = "quotaExceeded error message"
             
             # Call with retry_count = 0 to test retry logic
-            with patch('modules.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
-                with patch('modules.stream_resolver.src.stream_resolver.MAX_RETRIES', 2):
+            with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
+                with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.MAX_RETRIES', 2):
                     result = search_livestreams(mock_client)
         
         # Verify result contains expected data from retry
@@ -742,8 +742,8 @@ except Exception as main_e:
         # Verify search was called twice
         self.assertEqual(mock_search.list.call_count, 2)
         
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
-    @patch('modules.stream_resolver.src.stream_resolver.calculate_dynamic_delay')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.calculate_dynamic_delay')
     def test_check_video_details_delay_calculation(self, mock_delay, mock_sleep):
         """Test delay calculation in check_video_details."""
         mock_client = MagicMock()
@@ -763,7 +763,7 @@ except Exception as main_e:
 
     def test_main_import_and_access(self):
         """Test the presence of key attributes and functions in the stream_resolver module."""
-        import modules.stream_resolver.src.stream_resolver as sr
+        import modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver as sr
         
         # Verify that key attributes and functions are defined
         self.assertIsNotNone(sr.get_active_livestream_video_id)
@@ -804,22 +804,22 @@ except Exception as main_e:
         mock_client.search.return_value = mock_search
         
         # Test that the quota handling code path executes correctly
-        with patch('modules.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
-            with patch('modules.stream_resolver.src.stream_resolver.MAX_RETRIES', 1):
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
+            with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.MAX_RETRIES', 1):
                 # Test with retry_count=1 (equal to MAX_RETRIES) to reach the target code path
-                with patch('modules.stream_resolver.src.stream_resolver.str') as mock_str:
+                with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.str') as mock_str:
                     # Force the string check to pass
                     mock_str.return_value = "quotaExceeded"
                     
                     # Now perform the test
-                    with patch('modules.stream_resolver.src.stream_resolver.logger') as mock_logger:
+                    with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.logger') as mock_logger:
                         with self.assertRaises(QuotaExceededError):
                             search_livestreams(mock_client, retry_count=1)
                             
                         # Verify the error was logged
                         mock_logger.error.assert_called()
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
     def test_search_livestreams_http_error_with_retry_below_max(self, mock_sleep):
         """Test search_livestreams handling other HTTP errors with retry count below max."""
         mock_client = MagicMock()
@@ -837,10 +837,10 @@ except Exception as main_e:
         mock_client.search.return_value = mock_search
         
         # Set up the test with retries available
-        with patch('modules.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
-            with patch('modules.stream_resolver.src.stream_resolver.MAX_RETRIES', 3):
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
+            with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.MAX_RETRIES', 3):
                 # Execute with retry_count < MAX_RETRIES
-                with patch('modules.stream_resolver.src.stream_resolver.logger') as mock_logger:
+                with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.logger') as mock_logger:
                     result = search_livestreams(mock_client, retry_count=2)
                     
                     # Verify result is None for non-quota errors
@@ -853,7 +853,7 @@ except Exception as main_e:
                     # (can't directly assert since it's not returned)
                     mock_search.list.assert_called_once()
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
     def test_search_livestreams_with_keyboard_interrupt_during_quota_delay(self, mock_sleep):
         """Test search_livestreams handling of keyboard interrupt during quota delay."""
         mock_client = MagicMock()
@@ -875,11 +875,11 @@ except Exception as main_e:
         mock_sleep.side_effect = [None, KeyboardInterrupt()]
         
         # Set up the test
-        with patch('modules.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
-            with patch('modules.stream_resolver.src.stream_resolver.MAX_RETRIES', 3):
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
+            with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.MAX_RETRIES', 3):
                 # Set up the string check to include "quotaExceeded"
-                with patch('modules.stream_resolver.src.stream_resolver.str', return_value="quotaExceeded"):
-                    with patch('modules.stream_resolver.src.stream_resolver.logger') as mock_logger:
+                with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.str', return_value="quotaExceeded"):
+                    with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.logger') as mock_logger:
                         # Execute with retry_count < MAX_RETRIES
                         result = search_livestreams(mock_client, retry_count=0)
                         
@@ -892,7 +892,7 @@ except Exception as main_e:
                         # Verify quota exceeded was detected
                         mock_logger.warning.assert_called()
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
     def test_search_livestreams_http_error_max_retries(self, mock_sleep):
         """Test search_livestreams handling of HTTP errors at max retries."""
         mock_client = MagicMock()
@@ -910,10 +910,10 @@ except Exception as main_e:
         mock_client.search.return_value = mock_search
         
         # Set up the test with max retries reached
-        with patch('modules.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
-            with patch('modules.stream_resolver.src.stream_resolver.MAX_RETRIES', 3):
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
+            with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.MAX_RETRIES', 3):
                 # Execute with retry_count >= MAX_RETRIES
-                with patch('modules.stream_resolver.src.stream_resolver.logger') as mock_logger:
+                with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.logger') as mock_logger:
                     result = search_livestreams(mock_client, retry_count=3)
                     
                     # Verify result is None for max retries reached
@@ -922,8 +922,8 @@ except Exception as main_e:
                     # Verify max retries message was logged
                     mock_logger.error.assert_any_call("Max retries (3) reached for other errors")
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
-    @patch('modules.stream_resolver.src.stream_resolver.get_env_variable')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_env_variable')
     def test_check_video_details_with_fallback_key(self, mock_get_env, mock_sleep):
         """Test check_video_details using fallback API key."""
         # Create original client
@@ -957,7 +957,7 @@ except Exception as main_e:
             mock_build.return_value = mock_fallback_client
             
             # Force the quota detection to succeed
-            with patch('modules.stream_resolver.src.stream_resolver.str', return_value="quotaExceeded"):
+            with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.str', return_value="quotaExceeded"):
                 # Call the function under test
                 result = check_video_details(mock_client, "test_video_id")
         
@@ -1041,8 +1041,8 @@ except Exception as main_e:
         except RuntimeError:
             self.fail("WSP guard incorrectly blocked module with override flag")
 
-    @patch('modules.stream_resolver.src.stream_resolver.get_authenticated_service_with_fallback')
-    @patch('modules.stream_resolver.src.stream_resolver.get_active_livestream_video_id')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_authenticated_service_with_fallback')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_active_livestream_video_id')
     def test_example_usage_block(self, mock_get_livestream, mock_get_auth):
         """Test the __main__ block functionality using direct code execution."""
         # Configure mocks
@@ -1086,7 +1086,7 @@ except Exception as main_e:
         mock_get_auth.assert_called_once()
         mock_get_livestream.assert_called_once_with(mock_service, "test_channel_id")
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')
     def test_main_block_execution(self, mock_sleep):
         """Test the __main__ block execution path directly."""
         # Setup required mocks
@@ -1094,11 +1094,11 @@ except Exception as main_e:
             mock_getenv.return_value = "test_channel_id"
             
             # Mock functions used in __main__ block
-            with patch('modules.stream_resolver.src.stream_resolver.get_authenticated_service_with_fallback') as mock_auth:
+            with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_authenticated_service_with_fallback') as mock_auth:
                 mock_service = MagicMock()
                 mock_auth.return_value = mock_service
                 
-                with patch('modules.stream_resolver.src.stream_resolver.get_active_livestream_video_id') as mock_get_livestream:
+                with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_active_livestream_video_id') as mock_get_livestream:
                     mock_get_livestream.return_value = ("test_video_id", "test_chat_id")
                     
                     # Capture stdout
@@ -1181,7 +1181,7 @@ except Exception as e_guard:
             # Clean up the temporary file
             os.unlink(path)
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')
     def test_check_video_details_quota_error_max_retries(self, mock_sleep):
         """Test check_video_details quota error at max retries (lines 177-179)."""
         mock_client = MagicMock()
@@ -1195,10 +1195,10 @@ except Exception as e_guard:
         mock_client.videos().list().execute.side_effect = quota_error
         
         # Patch the retry count to equal MAX_RETRIES
-        with patch('modules.stream_resolver.src.stream_resolver.MAX_RETRIES', 3):
-            with patch('modules.stream_resolver.src.stream_resolver.logger') as mock_logger:
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.MAX_RETRIES', 3):
+            with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.logger') as mock_logger:
                 # Make the quota error detection succeed
-                with patch('modules.stream_resolver.src.stream_resolver.str', return_value="quotaExceeded"):
+                with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.str', return_value="quotaExceeded"):
                     result = check_video_details(mock_client, "test_video_id", retry_count=3)
                     
                     # Should return None at max retries
@@ -1207,7 +1207,7 @@ except Exception as e_guard:
                     # Should have logged the error message
                     mock_logger.error.assert_any_call("Max retries (3) reached for quota errors")
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')
     def test_search_livestreams_quota_error_max_retries_immediate_fail(self, mock_sleep):
         """Test search_livestreams with quota exceeded at MAX_RETRIES (lines 195-196)."""
         mock_client = MagicMock()
@@ -1218,14 +1218,14 @@ except Exception as e_guard:
         quota_error = googleapiclient.errors.HttpError(resp, b'{"error": {"errors": [{"reason": "quotaExceeded"}]}}')
         
         # Force the HttpError to be detected as quota exceeded
-        with patch('modules.stream_resolver.src.stream_resolver.str', return_value="quotaExceeded"):
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.str', return_value="quotaExceeded"):
             # Mock execute to raise quota error
             mock_client.search().list().execute.side_effect = quota_error
             
             # Set up MAX_RETRIES and retry_count
-            with patch('modules.stream_resolver.src.stream_resolver.MAX_RETRIES', 2):
-                with patch('modules.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
-                    with patch('modules.stream_resolver.src.stream_resolver.logger') as mock_logger:
+            with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.MAX_RETRIES', 2):
+                with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
+                    with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.logger') as mock_logger:
                         # This should raise QuotaExceededError because retry_count == MAX_RETRIES
                         with self.assertRaises(QuotaExceededError) as context:
                             search_livestreams(mock_client, retry_count=2)
@@ -1236,14 +1236,14 @@ except Exception as e_guard:
                         # Verify the error was logged
                         mock_logger.error.assert_any_call("Max retries (2) reached for quota errors with current credentials.")
 
-    @patch('modules.stream_resolver.src.stream_resolver.time.sleep')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.time.sleep')
     def test_main_block_execution_error_path(self, mock_sleep):
         """Test the main block error paths."""
         # Test authentication failure path
         with patch('os.getenv') as mock_getenv:
             mock_getenv.return_value = "test_channel_id"
             
-            with patch('modules.stream_resolver.src.stream_resolver.get_authenticated_service_with_fallback', return_value=None) as mock_auth:
+            with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_authenticated_service_with_fallback', return_value=None) as mock_auth:
                 # Capture stdout
                 import io
                 import sys
@@ -1271,11 +1271,11 @@ except Exception as e_guard:
         with patch('os.getenv') as mock_getenv:
             mock_getenv.return_value = "test_channel_id"
             
-            with patch('modules.stream_resolver.src.stream_resolver.get_authenticated_service_with_fallback') as mock_auth:
+            with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_authenticated_service_with_fallback') as mock_auth:
                 mock_service = MagicMock()
                 mock_auth.return_value = mock_service
                 
-                with patch('modules.stream_resolver.src.stream_resolver.get_active_livestream_video_id', return_value=None) as mock_get_livestream:
+                with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_active_livestream_video_id', return_value=None) as mock_get_livestream:
                     # Capture stdout
                     import io
                     captured_output = io.StringIO()
@@ -1304,8 +1304,8 @@ except Exception as e_guard:
         # Simpler approach - mock the main block execution directly
         with patch('os.getenv', return_value="test_channel_id"):
             # Mock the required functions
-            with patch('modules.stream_resolver.src.stream_resolver.get_authenticated_service_with_fallback') as mock_auth:
-                with patch('modules.stream_resolver.src.stream_resolver.get_active_livestream_video_id') as mock_get_live:
+            with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_authenticated_service_with_fallback') as mock_auth:
+                with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_active_livestream_video_id') as mock_get_live:
                     # Configure the mocks
                     mock_service = MagicMock()
                     mock_auth.return_value = mock_service
@@ -1357,7 +1357,7 @@ except Exception as e_guard:
                     mock_auth.assert_called_once()
                     mock_get_live.assert_called_once_with(mock_service, "test_channel_id")
 
-    @patch('modules.stream_resolver.src.stream_resolver.logger')
+    @patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.logger')
     def test_comprehensive_coverage(self, mock_logger):
         """
         Comprehensive test that directly executes the uncovered code paths.
@@ -1401,7 +1401,7 @@ except Exception as e_guard:
         mock_client.videos().list().execute.side_effect = quota_error
         
         # With str patched to ensure "quotaExceeded" is detected
-        with patch('modules.stream_resolver.src.stream_resolver.str', return_value="quotaExceeded"):
+        with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.str', return_value="quotaExceeded"):
             # Execute lines 177-179 directly
             if quota_error.resp.status == 403 and "quotaExceeded" in "quotaExceeded":
                 if 3 >= 3:  # MAX_RETRIES check
@@ -1435,8 +1435,8 @@ except Exception as e_guard:
         
         # Mock required functions and utilities
         with patch('os.getenv', side_effect=lambda key, default=None: default):
-            with patch('modules.stream_resolver.src.stream_resolver.get_authenticated_service_with_fallback') as mock_auth:
-                with patch('modules.stream_resolver.src.stream_resolver.get_active_livestream_video_id') as mock_get_live:
+            with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_authenticated_service_with_fallback') as mock_auth:
+                with patch('modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver.get_active_livestream_video_id') as mock_get_live:
                     # Configure the mocks
                     mock_service = MagicMock()
                     mock_auth.return_value = mock_service
