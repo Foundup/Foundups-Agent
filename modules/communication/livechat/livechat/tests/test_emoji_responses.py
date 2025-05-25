@@ -8,8 +8,8 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 
-from modules.banter_engine import BanterEngine
-from modules.livechat.src.llm_bypass_engine import LLMBypassEngine
+from modules.ai_intelligence.banter_engine.banter_engine import BanterEngine
+from modules.communication.livechat.livechat.src.llm_bypass_engine import LLMBypassEngine
 
 def test_emoji_sequences():
     """Test all supported emoji sequences (0-1-2 system)"""

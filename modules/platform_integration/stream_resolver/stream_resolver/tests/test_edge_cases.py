@@ -8,7 +8,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 import googleapiclient.errors
 from googleapiclient.errors import HttpError
-from modules.stream_resolver.src.stream_resolver import (
+from modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver import (
     search_livestreams,
     check_video_details,
     QuotaExceededError,

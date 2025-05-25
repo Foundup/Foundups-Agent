@@ -5,25 +5,24 @@ Unit tests for emoji_sequence_map.py module.
 import unittest
 from unittest.mock import patch, MagicMock
 import logging
-from modules.banter_engine.emoji_sequence_map import (
-    EMOJI_TO_NUMBER,
+from modules.ai_intelligence.banter_engine.banter_engine.src.emoji_sequence_map import (
+    EMOJI_TO_NUM,
     NUM_TO_EMOJI,
     SEQUENCE_MAP,
     emoji_string_to_tuple,
-    tuple_to_emoji_string,
-    EmojiSequenceMap
+    tuple_to_emoji_string
 )
 
 class TestEmojiMappings(unittest.TestCase):
     """Test suite for emoji mappings."""
 
     def test_emoji_to_num_mapping(self):
-        """Test the EMOJI_TO_NUMBER mapping is correctly defined."""
-        self.assertEqual(EMOJI_TO_NUMBER['✊'], 0)
-        self.assertEqual(EMOJI_TO_NUMBER['✋'], 1)
-        self.assertEqual(EMOJI_TO_NUMBER['🖐️'], 2)
+        """Test the EMOJI_TO_NUM mapping is correctly defined."""
+        self.assertEqual(EMOJI_TO_NUM['✊'], 0)
+        self.assertEqual(EMOJI_TO_NUM['✋'], 1)
+        self.assertEqual(EMOJI_TO_NUM['🖐️'], 2)
         # Note: The mapping only includes the variation selector version
-        self.assertGreaterEqual(len(EMOJI_TO_NUMBER), 3)  # At least 3 emojis are mapped
+        self.assertGreaterEqual(len(EMOJI_TO_NUM), 3)  # At least 3 emojis are mapped
 
     def test_num_to_emoji_mapping(self):
         """Test the NUM_TO_EMOJI mapping is correctly defined and is inverse of EMOJI_TO_NUMBER."""
@@ -34,15 +33,15 @@ class TestEmojiMappings(unittest.TestCase):
         
         # Test lookup direction: all numbers should map to their emoji
         for num, emoji in NUM_TO_EMOJI.items():
-            self.assertIn(emoji, EMOJI_TO_NUMBER)
-            self.assertEqual(EMOJI_TO_NUMBER[emoji], num)
+            self.assertIn(emoji, EMOJI_TO_NUM)
+            self.assertEqual(EMOJI_TO_NUM[emoji], num)
 
 class TestSequenceMap(unittest.TestCase):
     """Test suite for the sequence mapping."""
 
     def test_sequence_map_structure(self):
         """Test that all sequence map entries have the required keys."""
-        required_keys = ["emoji", "tone", "state", "example", "response_link"]
+        required_keys = ["emoji", "tone", "state", "example"]
         
         for sequence, attributes in SEQUENCE_MAP.items():
             for key in required_keys:

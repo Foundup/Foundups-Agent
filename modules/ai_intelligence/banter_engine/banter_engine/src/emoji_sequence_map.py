@@ -142,9 +142,7 @@ def emoji_string_to_tuple(emoji_str: str) -> tuple:
         code = EMOJI_TO_NUM.get(current_char)
         if code is not None:
             codes.append(code)
-        else:
-            # If neither combined nor base character found, append 0
-            codes.append(0)
+        # If neither combined nor base character found, skip it (don't append anything)
 
         i += 1 # Advance by one character
 

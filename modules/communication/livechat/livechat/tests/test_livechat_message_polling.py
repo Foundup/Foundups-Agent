@@ -9,7 +9,7 @@ import httplib2
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 import googleapiclient.errors
-from modules.livechat.src.livechat import LiveChatListener
+from modules.communication.livechat.livechat.src.livechat import LiveChatListener
 
 class AsyncMock(MagicMock):
     """Mock class for async methods."""

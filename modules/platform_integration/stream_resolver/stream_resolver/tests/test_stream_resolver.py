@@ -599,7 +599,7 @@ try:
         print("Please set TEST_CHANNEL_ID in your .env file or environment for testing.")
     else:
         print(f"Attempting to authenticate and find live stream for channel: {test_channel_id}")
-        from modules.stream_resolver.src.stream_resolver import get_authenticated_service_with_fallback, get_active_livestream_video_id
+        from modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver import get_authenticated_service_with_fallback, get_active_livestream_video_id
         service = get_authenticated_service_with_fallback()
         if service:
             live_video_id, live_chat_id = get_active_livestream_video_id(service, test_channel_id)
@@ -1322,7 +1322,7 @@ except Exception as e_guard:
                         # This covers lines 323-352
                         print("Running stream_resolver module directly...")
                         
-                        from modules.stream_resolver.src.stream_resolver import (
+                        from modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver import (
                             get_authenticated_service_with_fallback,
                             get_active_livestream_video_id
                         )

@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 import logging
 import googleapiclient.errors
-from modules.live_chat_poller.src.live_chat_poller import LiveChatPoller
+from modules.communication.livechat.live_chat_poller.src.live_chat_poller import LiveChatPoller
 
 class TestLiveChatPoller(unittest.TestCase):
     def setUp(self):

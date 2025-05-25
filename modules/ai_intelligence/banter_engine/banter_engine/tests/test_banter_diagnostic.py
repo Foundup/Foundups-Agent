@@ -13,8 +13,8 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..
 sys.path.insert(0, project_root)
 
 # Import the banter engine and supporting modules
-from modules.banter_engine import BanterEngine
-from modules.banter_engine.emoji_sequence_map import SEQUENCE_MAP, emoji_string_to_tuple
+from modules.ai_intelligence.banter_engine.banter_engine import BanterEngine
+from modules.ai_intelligence.banter_engine.banter_engine.src.emoji_sequence_map import SEQUENCE_MAP, emoji_string_to_tuple
 
 def test_sequence_map_integrity():
     """Test that the SEQUENCE_MAP is properly loaded and accessible"""
