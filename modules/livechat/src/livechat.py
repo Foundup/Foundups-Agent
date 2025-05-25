@@ -9,6 +9,9 @@ from modules.token_manager import token_manager
 from modules.banter_engine import BanterEngine
 from utils.oauth_manager import get_authenticated_service
 import asyncio
+from typing import List, Dict, Any, Optional, Tuple
+from utils.env_loader import get_env_variable
+from modules.livechat.src.llm_bypass_engine import LLMBypassEngine
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +32,7 @@ class LiveChatListener:
         self.message_queue = []  # Queue for storing messages
         self.viewer_count = 0  # Track current viewer count
         self.banter_engine = BanterEngine()  # Initialize banter engine
+        self.llm_bypass_engine = LLMBypassEngine()  # Fallback engine for when main engine fails
         self.trigger_emojis = ["✊", "✋", "🖐️"]  # Configurable emoji trigger set
         self.last_trigger_time = {}  # Track last trigger time per user
         self.trigger_cooldown = 60  # Cooldown period in seconds
@@ -122,8 +126,15 @@ class LiveChatListener:
             # Get the polling interval from YouTube's response
             server_poll_interval = response.get("pollingIntervalMillis", 10000)  # Default to 10 seconds if not specified
             
-            # Calculate dynamic delay based on viewer count
-            dynamic_delay = calculate_dynamic_delay(self.viewer_count)
+            # Calculate dynamic delay based on viewer count (handle mock objects)
+            try:
+                if isinstance(self.viewer_count, int):
+                    dynamic_delay = calculate_dynamic_delay(self.viewer_count)
+                else:
+                    # In mock mode or if viewer_count is not an int, use a safe default
+                    dynamic_delay = 10.0  # Default 10 second delay
+            except Exception:
+                dynamic_delay = 10.0  # Fallback delay
             
             # Use the larger of server's interval or our calculated interval
             self.poll_interval_ms = max(server_poll_interval, int(dynamic_delay * 1000))
@@ -210,12 +221,11 @@ class LiveChatListener:
         Returns:
             bool: True if a trigger pattern was found, False otherwise
         """
-        # Check for the emoji sequence formed by joining the trigger emojis
-        trigger_sequence = ''.join(self.trigger_emojis)
-        if trigger_sequence in message_text:
-            return True
-        return False
-    
+        # Simple check for our known emojis
+        trigger_emojis = ['✊', '✋', '🖐️']
+        emoji_count = sum(1 for char in message_text if char in trigger_emojis)
+        return emoji_count >= 3
+
     async def _handle_emoji_trigger(self, author_name, author_id, message_text):
         """
         Handle a detected emoji trigger sequence.
@@ -230,17 +240,35 @@ class LiveChatListener:
         """
         logger.info(f"Emoji sequence detected in message from {author_name}: {message_text}")
         
+        # Check if this is a self-message (bot responding to its own emoji)
+        if hasattr(self, 'bot_channel_id') and self.bot_channel_id and author_id == self.bot_channel_id:
+            logger.debug(f"Ignoring self-message from bot {author_name}")
+            return False
+        
         # Check rate limiting
         if self._is_rate_limited(author_id):
             logger.debug(f"Skipping trigger for rate-limited user {author_name}")
             return False
         
         try:
-            # Get banter response
-            response = self.banter_engine.get_random_banter(theme="greeting")
+            # Use banter engine to process the message directly - it handles detection internally
+            state_info, response = self.banter_engine.process_input(message_text)
+            logger.info(f"Banter engine returned state: {state_info}, response: {response}")
+            
             if not response or not isinstance(response, str) or not response.strip():
-                logger.warning(f"Empty or invalid banter response for {author_name}, using fallback")
-                response = "Hey there! Thanks for the gesture! 窓"
+                logger.warning(f"Empty or invalid banter response for {author_name}, trying LLM bypass")
+                # Try LLM bypass engine as fallback
+                try:
+                    bypass_state, bypass_response = self.llm_bypass_engine.process_input(message_text)
+                    if bypass_response and isinstance(bypass_response, str) and bypass_response.strip():
+                        logger.info(f"LLM bypass provided response: {bypass_response}")
+                        response = bypass_response
+                    else:
+                        logger.warning(f"LLM bypass also failed, using final fallback")
+                        response = self.llm_bypass_engine.get_fallback_response(author_name)
+                except Exception as bypass_error:
+                    logger.error(f"LLM bypass engine failed: {bypass_error}")
+                    response = f"Hey {author_name}! Thanks for the gesture! 👋"
             
             logger.debug(f"Generated banter response for {author_name}: {response}")
             
@@ -255,6 +283,25 @@ class LiveChatListener:
         except Exception as e:
             logger.error(f"Error processing emoji trigger for {author_name}: {str(e)}")
             return False
+
+    async def _get_bot_channel_id(self):
+        """
+        Get the channel ID of the bot to prevent responding to its own messages.
+        
+        Returns:
+            str: The bot's channel ID, or None if unable to retrieve
+        """
+        try:
+            request = self.youtube.channels().list(part='id', mine=True)
+            response = request.execute()
+            items = response.get('items', [])
+            if items:
+                bot_channel_id = items[0]['id']
+                logger.info(f"Bot channel ID identified: {bot_channel_id}")
+                return bot_channel_id
+        except Exception as e:
+            logger.warning(f"Could not get bot channel ID: {e}")
+        return None
 
     def _create_log_entry(self, msg_id, author_name, display_message):
         """
@@ -464,6 +511,9 @@ class LiveChatListener:
                 # Initialize chat session
                 if not await self._initialize_chat_session():
                     return
+
+                # Get bot channel ID for self-response prevention
+                self.bot_channel_id = await self._get_bot_channel_id()
                 
                 # Send greeting message
                 await self._send_greeting_message()
@@ -486,8 +536,6 @@ class LiveChatListener:
             except Exception as e:
                 logger.error(f"Critical error in chat listener: {str(e)}")
                 raise
-            finally:
-                self.is_running = False
             
             logger.info("Chat listener stopped.")
             
