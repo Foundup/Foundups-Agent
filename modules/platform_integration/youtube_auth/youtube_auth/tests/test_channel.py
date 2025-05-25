@@ -1,5 +1,5 @@
 import logging
-from modules.youtube_auth import get_authenticated_service
+from modules.platform_integration.youtube_auth.youtube_auth import get_authenticated_service
 from utils.env_loader import get_env_variable
 import os
 from dotenv import load_dotenv

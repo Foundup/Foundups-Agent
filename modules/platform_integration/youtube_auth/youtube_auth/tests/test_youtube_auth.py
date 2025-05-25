@@ -7,7 +7,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Now import the module under test and dependencies
-from modules.youtube_auth.src.youtube_auth import get_authenticated_service
+from modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth import get_authenticated_service
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request # Import Request

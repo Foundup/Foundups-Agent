@@ -6,7 +6,7 @@ import os
 import sys
 import pytest
 import googleapiclient.errors
-from modules.stream_resolver.src.stream_resolver import (
+from modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver import (
     calculate_dynamic_delay,
     mask_sensitive_id,
     check_video_details,

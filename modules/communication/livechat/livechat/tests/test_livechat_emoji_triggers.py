@@ -14,8 +14,8 @@ import pytest
 import googleapiclient.errors
 from googleapiclient.errors import HttpError
 import httplib2
-from modules.livechat.src.livechat import LiveChatListener
-from modules.banter_engine import BanterEngine
+from modules.communication.livechat.livechat.src.livechat import LiveChatListener
+from modules.ai_intelligence.banter_engine.banter_engine import BanterEngine
 
 class TestLiveChatListenerEmojiTriggers(unittest.TestCase):
     """Test cases for emoji trigger functionality of LiveChatListener."""

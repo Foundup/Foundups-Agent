@@ -14,8 +14,8 @@ import pytest
 import googleapiclient.errors
 from googleapiclient.errors import HttpError
 import httplib2
-from modules.livechat.src.livechat import LiveChatListener
-from modules.banter_engine import BanterEngine
+from modules.communication.livechat.livechat.src.livechat import LiveChatListener
+from modules.ai_intelligence.banter_engine.banter_engine import BanterEngine
 
 class TestLiveChatListenerLifecycle(unittest.TestCase):
     """Test cases for lifecycle functionality of LiveChatListener."""

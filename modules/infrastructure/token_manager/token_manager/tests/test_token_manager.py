@@ -2,7 +2,7 @@ import logging
 import asyncio
 import pytest
 from unittest.mock import patch
-from modules.token_manager import TokenManager
+from modules.infrastructure.token_manager.token_manager import TokenManager
 
 def mock_authenticated_service_success(*args, **kwargs):
     class MockChannels:
