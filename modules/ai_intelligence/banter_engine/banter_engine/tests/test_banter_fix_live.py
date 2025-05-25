@@ -8,7 +8,7 @@ import sys
 import os
 
 import sys
-from modules.banter_engine import BanterEngine
+from modules.ai_intelligence.banter_engine.banter_engine import BanterEngine
 
 def test_banter_response_format():
     """Test that banter engine returns the expected tuple format"""
