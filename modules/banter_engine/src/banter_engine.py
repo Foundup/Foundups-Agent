@@ -4,9 +4,10 @@ BanterEngine class for processing chat messages and generating responses.
 
 import logging
 from typing import Optional, Dict, Tuple, List
-# Correct import for sequence_responses (one level up)
+import logging
+
+# Import the SEQUENCE_MAP from sequence_responses
 from ..sequence_responses import SEQUENCE_MAP
-# Removed: from .emoji_sequence_map import EmojiSequenceMap
 
 class BanterEngine:
     def __init__(self):
@@ -52,14 +53,31 @@ class BanterEngine:
     # --- Helper to extract emoji sequence ---
     def _extract_emoji_sequence(self, input_text: str) -> Optional[Tuple[int, int, int]]:
         """Extracts the first sequence of 3 known emojis (✊✋🖐️) from text."""
-        emoji_map = {'✊': 0, '✋': 1, '🖐️': 2}
+        # Import the correct emoji mapping
+        from ..emoji_sequence_map import EMOJI_TO_NUMBER
+        
         sequence = []
-        for char in input_text:
-            if char in emoji_map:
-                sequence.append(emoji_map[char])
+        i = 0
+        while i < len(input_text):
+            # Check for multi-character emoji first (🖐️)
+            if i + 1 < len(input_text):
+                two_char = input_text[i:i+2]
+                if two_char in EMOJI_TO_NUMBER:
+                    sequence.append(EMOJI_TO_NUMBER[two_char])
+                    if len(sequence) == 3:
+                        return tuple(sequence)
+                    i += 2
+                    continue
+            
+            # Check for single-character emoji
+            char = input_text[i]
+            if char in EMOJI_TO_NUMBER:
+                sequence.append(EMOJI_TO_NUMBER[char])
                 if len(sequence) == 3:
-                    return tuple(sequence) # type: ignore
-        return None # Return None if fewer than 3 emojis are found
+                    return tuple(sequence)
+            i += 1
+            
+        return None  # Return None if fewer than 3 emojis are found
 
     def process_input(self, input_text: str) -> Tuple[str, Optional[str]]:
         """

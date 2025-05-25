@@ -13,8 +13,8 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..
 sys.path.insert(0, project_root)
 
 # Import the banter engine and supporting modules
-from modules.banter_engine.src.banter_engine import BanterEngine
-from modules.banter_engine.src.emoji_sequence_map import SEQUENCE_MAP, emoji_string_to_tuple
+from modules.banter_engine import BanterEngine
+from modules.banter_engine.emoji_sequence_map import SEQUENCE_MAP, emoji_string_to_tuple
 
 def test_sequence_map_integrity():
     """Test that the SEQUENCE_MAP is properly loaded and accessible"""
@@ -74,11 +74,14 @@ def test_banter_engine_initialization():
             else:
                 print(f"  ❌ Theme '{theme}' not found")
         
-        return engine
+        # Assert that initialization was successful instead of returning
+        assert engine is not None
+        assert len(engine.sequence_map_data) > 0
+        assert len(engine._themes) > 0
         
     except Exception as e:
         print(f"  ❌ Failed to initialize BanterEngine: {e}")
-        return None
+        assert False, f"BanterEngine initialization failed: {e}"
 
 def test_banter_engine_processing():
     """Test banter engine input processing with known sequences"""
@@ -158,11 +161,7 @@ def main():
     test_emoji_string_conversion()
     print("\n" + "=" * 60)
     
-    engine = test_banter_engine_initialization()
-    if not engine:
-        print("❌ Cannot continue - BanterEngine failed to initialize")
-        return
-    
+    test_banter_engine_initialization()
     print("\n" + "=" * 60)
     
     test_sequence_extraction()

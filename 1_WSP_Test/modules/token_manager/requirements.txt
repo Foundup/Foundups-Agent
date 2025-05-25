@@ -1,0 +1,14 @@
+# Token Manager Module Dependencies
+
+# Google API dependencies
+google-auth>=2.16.0
+google-auth-oauthlib>=1.0.0
+google-api-python-client>=2.79.0
+
+# Async support
+asyncio>=3.4.3
+
+# Internal dependencies
+# These are other modules within the Foundups project
+# modules.youtube_auth
+# utils.oauth_manager 

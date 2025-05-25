@@ -1,0 +1,11 @@
+﻿# YouTube Authentication Module Dependencies
+
+# Google API dependencies
+google-auth>=2.16.0
+google-auth-oauthlib>=1.0.0
+google-api-python-client>=2.79.0
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# Logging

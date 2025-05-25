@@ -3,9 +3,10 @@ import os
 import sys
 import asyncio
 import time
+from unittest.mock import MagicMock # Added for mocking
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
-from modules.stream_resolver import get_active_livestream_video_id, check_video_details, StreamResolver, QuotaExceededError
+from modules.stream_resolver import get_active_livestream_video_id, check_video_details, QuotaExceededError, calculate_dynamic_delay
 from modules.livechat import LiveChatListener
 from utils.oauth_manager import get_authenticated_service, get_authenticated_service_with_fallback, start_credential_cooldown, Credentials
 from utils.env_loader import get_env_variable
@@ -64,16 +65,94 @@ async def main():
             logger.error("CHANNEL_ID not found in environment variables")
             return
             
-        # Get authenticated service with fallback first
-        auth_result = get_authenticated_service_with_fallback()
-        if not auth_result:
-            logger.error("Failed to get authenticated YouTube service initially")
-            return
-        service, current_credentials, current_credential_set = auth_result
-        logger.info(f"Initial authentication successful with {current_credential_set}")
+        # --- Authentication with Mocking Option ---
+        auth_result = None
+        mock_enabled = os.getenv('FOUNDUPS_OAUTH_MOCK_ENABLED') == 'true'
         
-        # Initialize banter engine
-        banter_engine = BanterEngine()
+        if mock_enabled:
+            logger.warning("--- OAuth Mocking Enabled --- FOUNDUPS_OAUTH_MOCK_ENABLED=true")
+            # Create mock objects to simulate successful authentication
+            mock_service = MagicMock()
+            
+            # Configure the mock service for find_active_livestream
+            search_mock = MagicMock()
+            search_list_mock = MagicMock()
+            search_list_mock.list.return_value.execute.return_value = {"items": [{"id": {"videoId": "dummy_video_id"}, "snippet": {"title": "Mocked Livestream"}}]}
+            mock_service.search.return_value = search_list_mock
+            
+            # Configure the mock service for check_video_details AND viewer count updates
+            videos_mock = MagicMock()
+            videos_list_mock = MagicMock()
+            
+            # Create a function to return different responses based on the 'part' parameter
+            def mock_videos_response(*args, **kwargs):
+                part = kwargs.get('part', '')
+                if 'statistics' in part:
+                    # Response for _update_viewer_count calls
+                    return MagicMock(execute=MagicMock(return_value={
+                        "items": [{
+                            "statistics": {
+                                "viewCount": "100"
+                            }
+                        }]
+                    }))
+                else:
+                    # Response for check_video_details calls (liveStreamingDetails)
+                    return MagicMock(execute=MagicMock(return_value={
+                        "items": [{
+                            "liveStreamingDetails": {
+                                "activeLiveChatId": "dummy_chat_id"
+                            }
+                        }]
+                    }))
+            
+            videos_list_mock.list.side_effect = mock_videos_response
+            mock_service.videos.return_value = videos_list_mock
+            
+            # Configure mock for liveChatMessages (used in _poll_chat_messages)
+            livechat_mock = MagicMock()
+            livechat_list_mock = MagicMock()
+            livechat_list_mock.list.return_value.execute.return_value = {
+                "pollingIntervalMillis": 10000,
+                "nextPageToken": "dummy_next_token",
+                "items": []
+            }
+            mock_service.liveChatMessages.return_value = livechat_list_mock
+            
+            # Configure mock for channels (used in _get_bot_channel_id)
+            channels_mock = MagicMock()
+            channels_list_mock = MagicMock()
+            channels_list_mock.list.return_value.execute.return_value = {
+                "items": [{
+                    "id": "dummy_bot_channel_id"
+                }]
+            }
+            mock_service.channels.return_value = channels_list_mock
+            
+            # Mock credentials
+            mock_credentials = MagicMock(spec=Credentials)
+            mock_credential_set = 'mock_set_1'
+            
+            # Add _developerKey to match real service
+            mock_service._developerKey = "dummy_developer_key"
+            
+            auth_result = (mock_service, mock_credentials, mock_credential_set)
+            logger.info(f"Using MOCKED authentication result with credential set: {mock_credential_set}")
+        else:
+            # Get authenticated service with fallback first (Real Path)
+            logger.info("Attempting real authentication...")
+            auth_result = get_authenticated_service_with_fallback()
+
+        # Check if authentication (real or mocked) succeeded
+        if not auth_result:
+            logger.error("Failed to get authenticated YouTube service (real or mocked)")
+            return
+            
+        service, current_credentials, current_credential_set = auth_result
+        # Log success, indicating if it was mocked
+        auth_type = "MOCKED" if mock_enabled else "REAL"
+        logger.info(f"Initial {auth_type} authentication successful with {current_credential_set}")
+        # --- End Authentication Block ---
         
         # Continuously look for active livestream
         while True:
@@ -82,7 +161,7 @@ async def main():
                 
                 if video_id and chat_id:
                     # Initialize chat listener
-                    listener = LiveChatListener(service, current_credentials, video_id, chat_id, banter_engine=banter_engine)
+                    listener = LiveChatListener(service, video_id, chat_id)
                     
                     # Start listening
                     logger.info("Starting chat listener...")

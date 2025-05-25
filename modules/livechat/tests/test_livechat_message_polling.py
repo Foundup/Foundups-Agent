@@ -305,3 +305,45 @@ class TestLiveChatListenerMessagePolling(unittest.TestCase):
             # Verify results
             mock_process.assert_not_called()  # Should not call _process_message for empty list
 
+    @pytest.mark.asyncio
+    async def test_poll_chat_messages_quota_error(self):
+        """Test polling chat messages when a quota error (403) occurs."""
+        # Setup quota error
+        quota_error = googleapiclient.errors.HttpError(
+            resp=httplib2.Response({"status": 403}),
+            content=b"Quota Exceeded"
+        )
+        self.mock_youtube.liveChatMessages().list.return_value.execute.side_effect = quota_error
+
+        # Mock handle_auth_error to return True (handled error)
+        with patch.object(self.listener, '_handle_auth_error', new_callable=AsyncMock, return_value=True) as mock_handle:
+            messages = await self.listener._poll_chat_messages()
+            self.assertEqual(messages, [])
+            mock_handle.assert_called_once_with(quota_error)
+
+    @pytest.mark.asyncio
+    @patch('time.sleep')
+    async def test_poll_chat_messages_general_exception_backoff(self, mock_sleep):
+        """Test that error_backoff_seconds doubles and caps at 60 on repeated exceptions."""
+        self.listener.error_backoff_seconds = 30
+        self.mock_youtube.liveChatMessages().list.return_value.execute.side_effect = Exception("General error")
+        messages = await self.listener._poll_chat_messages()
+        self.assertEqual(messages, [])
+        mock_sleep.assert_called_once_with(30)
+        self.assertEqual(self.listener.error_backoff_seconds, 60)
+
+    @pytest.mark.asyncio
+    async def test_poll_chat_messages_next_page_token_and_items(self):
+        """Test that next_page_token and poll_interval_ms are set from response."""
+        test_messages = [{"id": "msg1"}]
+        self.mock_youtube.liveChatMessages().list.return_value.execute.return_value = {
+            "pollingIntervalMillis": 1234,
+            "nextPageToken": "token123",
+            "items": test_messages
+        }
+        messages = await self.listener._poll_chat_messages()
+        self.assertEqual(messages, test_messages)
+        self.assertEqual(self.listener.next_page_token, "token123")
+        self.assertEqual(self.listener.poll_interval_ms, 1234)
+        self.assertEqual(self.listener.error_backoff_seconds, 5)
+

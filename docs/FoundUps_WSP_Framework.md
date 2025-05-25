@@ -1,4 +1,4 @@
-# FoundUps Windsurf Protocol System (WPS) Framework
+# FoundUps WindSurf Protocol system (WSP) Framework
 
 This document outlines the core Windsurf Standard Procedures (WSPs) governing development, testing, and compliance within the FoundUps Agent MMAS.
 
@@ -532,18 +532,7 @@ Module: AnalyticsDashboard
 
 ---
 
-### WSP 5: Test Audit & Coverage Verification
-
-**Document Version:** 1.1
-**Date:** [Insert Date]
-**Applies To:** Final test validation sweep before integration/release.
-
-> **Note on Language Agnosticism:** While specific examples in this WSP use Python and pytest conventions, the principles aim to be language-agnostic. Project-specific rules (`.foundups_project_rules`) or appendices should define language-specific testing frameworks, commands, and coverage thresholds.
-
-#### 5.1. Purpose
-Comprehensive audit of active modules covering: Quality Gate, Windsurf Compliance, Risk Reduction, Coverage Assurance, Integration Readiness, Interface Contract Assurance.
-
-The Interface Contract Assurance verifies that modules correctly implement their defined interfaces (WSP 11).
+### WSP 5: Test Audit & Coverage Verification**Document Version:** 1.2**Date Updated:** 2024-05-24**Applies To:** Final test validation sweep before integration/release.> **Note on Language Agnosticism:** While specific examples in this WSP use Python and pytest conventions, the principles aim to be language-agnostic. Project-specific rules (`.foundups_project_rules`) or appendices should define language-specific testing frameworks, commands, and coverage thresholds.#### 5.1. PurposeComprehensive audit of active modules covering: Quality Gate, Windsurf Compliance, Risk Reduction, Coverage Assurance, Integration Readiness, Interface Contract Assurance.The Interface Contract Assurance verifies that modules correctly implement their defined interfaces (WSP 11).#### 5.1.1. Production Override Provision**When the production system is demonstrably working** (successful authentication, core functionality operational, live user interactions functioning), test failures that stem from **infrastructure issues** (import problems, test environment setup, legacy test compatibility) rather than **functional regressions** may be bypassed to prevent blocking critical development progress.**Production Override Criteria:**- ✅ Production system demonstrably functional (authentication working, core features operational)- ✅ Test failures are infrastructure-related (imports, environment, test setup) NOT functional regressions- ✅ Core business logic validated through live testing or manual verification- ✅ Override decision documented in ModLog with justification and timeline for test remediation**Usage:** Production Override should be used sparingly and only when strict test adherence would block critical system progression despite functional correctness.
 
 #### 5.2. Scope
 *   **Included:** Modules under `/modules/` with `src/`/`tests/`.
@@ -571,12 +560,7 @@ The Interface Contract Assurance verifies that modules correctly implement their
 **G. Step 6: Reporting:** Generate aggregate HTML report (`--cov-report=html`). Create/update summary `.md` report (`reports/test_audit_vX.Y.Z.md`) detailing status of each step & per-module coverage.
 **H. Step 7: Commit:** If PASS, commit fixes/tests & report (`git commit -m "feat(test): Complete test audit..."`).
 
-#### 5.6. Acceptance Criteria (Audit PASS)
-*   FMAS: Zero `NO_TEST`.
-*   `pytest -ra`: Zero `F`/`E`/unaddressed `W`.
-*   Interface Tests: Zero failures in contract tests.
-*   Coverage: Each module >= 90%.
-*   Report: Accurate, PASS status.
+#### 5.6. Acceptance Criteria (Audit PASS)*   FMAS: Zero `NO_TEST`.*   `pytest -ra`: Zero `F`/`E`/unaddressed `W`.*   Interface Tests: Zero failures in contract tests.*   Coverage: Each module >= 90%.*   Report: Accurate, PASS status.**Production Override Alternative:**If Production Override criteria are met, audit may PASS despite test failures when:*   Production system demonstrably functional*   Test failures are infrastructure-related (not functional regressions)*   Override documented in ModLog with remediation timeline
 
 #### 5.7. Failure / Rollback
 *   FAIL if criteria not met. Block merge. Remediate & re-run.

@@ -78,26 +78,47 @@ class LiveChatProcessor:
 
     def _log_to_user_file(self, message: Dict[str, Any]) -> None:
         """
-        Logs the raw message JSON to a user-specific file.
+        Logs a clean conversation entry for agent memory.
         
         Args:
             message (Dict[str, Any]): The message to log
         """
         try:
             username = message["authorDetails"].get("displayName", "UnknownAuthor")
+            message_text = message["snippet"].get("displayMessage", "")
+            timestamp = datetime.now().strftime("%H:%M")
+            
+            # Create memory directories
+            log_dir = os.path.join(self.memory_dir, "chat_logs")
+            conversation_dir = os.path.join(self.memory_dir, "conversation")
+            os.makedirs(log_dir, exist_ok=True)
+            os.makedirs(conversation_dir, exist_ok=True)
+            
+            # Save clean conversation entry
+            clean_entry = {
+                "time": timestamp,
+                "user": username,
+                "message": message_text
+            }
+            
+            # Individual user log
             safe_username = "".join(c for c in username if c.isalnum() or c in (' ', '_', '-')).rstrip()
             if not safe_username:
                 safe_username = "InvalidUsername"
-
-            log_dir = os.path.join(self.memory_dir, "chat_logs")
+            
             log_filename = os.path.join(log_dir, f"{safe_username}.jsonl")
-
             with open(log_filename, "a", encoding="utf-8") as f:
-                json.dump(message, f, ensure_ascii=False)
+                json.dump(clean_entry, f, ensure_ascii=False)
                 f.write("\n")
-            logger.debug(f"Logged raw message to {log_filename}")
+            
+            # Session conversation log
+            session_log = os.path.join(conversation_dir, "current_session.txt")
+            with open(session_log, "a", encoding="utf-8") as f:
+                f.write(f"[{timestamp}] {username}: {message_text}\n")
+            
+            logger.debug(f"Logged clean conversation entry for {username}")
         except Exception as e:
-            logger.exception(f"Failed to write raw message to log file: {e}")
+            logger.exception(f"Failed to write to log file: {e}")
 
     def _check_banter_trigger(self, message_text: str, author_name: str) -> None:
         """

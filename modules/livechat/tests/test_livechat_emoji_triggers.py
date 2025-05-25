@@ -84,55 +84,50 @@ class TestLiveChatListenerEmojiTriggers(unittest.TestCase):
             self.assertTrue(self.listener._check_trigger_patterns(test_case))
     
     def test_check_trigger_patterns_no_match(self):
-        """Test that non-matching messages are correctly identified."""
-        # Set trigger emojis
-        self.listener.trigger_emojis = ["✊", "✋", "🖐️"]
-        
-        # Test messages with no matching emoji sequence
+        """Test that messages without trigger patterns return False."""
         test_cases = [
-            "Message with no emojis",
-            "Message with different emojis 😀😁😂",
-            "Partial sequence ✊✋ only",
-            "Reversed sequence 🖐️✋✊"
+            "Hello world",
+            "No emojis here",
+            "✊✋",  # Only 2 emojis, not enough
+            "Just one ✊",
+            "",
+            "   ",
+            "Random text with no patterns"
         ]
         
-        # Verify all test cases return False
         for test_case in test_cases:
-            self.assertFalse(self.listener._check_trigger_patterns(test_case))
+            with self.subTest(test_case=test_case):
+                self.assertFalse(self.listener._check_trigger_patterns(test_case))
     
     def test_check_trigger_patterns_with_whitespace(self):
-        """Test pattern detection with whitespace in the message."""
-        # Set trigger emojis
-        self.listener.trigger_emojis = ["✊", "✋", "🖐️"]
-        
-        # Test messages with whitespace around/between emojis
-        # Current implementation requires exact sequence with no whitespace between emojis
+        """Test trigger patterns with whitespace and mixed content."""
         test_cases = [
-            "Message with spaced emojis ✊ ✋ 🖐️", # Should not match (spaces between)
-            "Message with newlines ✊\n✋\n🖐️"     # Should not match (newlines between)
+            "  ✊ ✋  ",  # Only 2 emojis with whitespace
+            "Hello ✊ world ✋",  # Only 2 emojis
+            "✊ ✋ text",  # Only 2 emojis
         ]
         
-        # Verify all test cases return False (current implementation requires exact sequence)
         for test_case in test_cases:
-            self.assertFalse(self.listener._check_trigger_patterns(test_case))
+            with self.subTest(test_case=test_case):
+                self.assertFalse(self.listener._check_trigger_patterns(test_case))
     
     def test_check_trigger_patterns_different_sequences(self):
-        """Test different valid emoji sequences."""
-        # Test different sequences
-        test_sequences = [
-            ["🎮", "🎲", "🎯"],  # Gaming emojis
-            ["🌟", "⭐", "✨"],   # Star emojis
-            ["🐶", "🐱", "🐭"]    # Animal emojis
+        """Test various valid emoji sequences that should trigger."""
+        test_cases = [
+            "✊✊✊",
+            "✋✋✋", 
+            "🖐️🖐️🖐️",
+            "✊✋🖐️",
+            "✋🖐️✊",
+            "🖐️✊✋",
+            "Hello ✊✊✊ world",  # Embedded sequence
+            "✊✊✊ at the start",
+            "at the end ✋✋✋",
         ]
         
-        # For each sequence, set it as the trigger and test a matching message
-        for sequence in test_sequences:
-            self.listener.trigger_emojis = sequence
-            joined_sequence = "".join(sequence)
-            test_message = f"Message with sequence {joined_sequence}"
-            
-            # Should match
-            self.assertTrue(self.listener._check_trigger_patterns(test_message))
+        for test_case in test_cases:
+            with self.subTest(test_case=test_case):
+                self.assertTrue(self.listener._check_trigger_patterns(test_case))
     
     @pytest.mark.asyncio
     async def test_handle_emoji_trigger_success(self):

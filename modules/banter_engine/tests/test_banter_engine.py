@@ -26,15 +26,15 @@ def test_process_input():
     # Test cases
     test_cases = {
         "Hey everyone ✊": ("No sequence detected", None),
-        "Sequence ✊✋🖐️ here": ("State: awakening in progress, Tone: metaphoric, humor, symbolic wit", "You stepped off the wheel. Welcome."),
-        "Mixed text ✋✋✋ and emojis": ("State: stable awareness, Tone: reflection, calm truth", "You see the board. You see the stakes."),
-        "Invalid sequence ✊✊✊✊": ("State: fully disconnected, Tone: extreme harsh roast", "You don't love America—you cosplay it."), # Maps to 1,1,1
+        "Sequence ✊✋🖐️ here": ("State: Bridging conscious to unconscious to entanglement (UN-DAO-DU), Tone: metaphoric, humor, symbolic wit", "You stepped off the wheel. Welcome."),
+        "Mixed text ✋✋✋ and emojis": ("State: Pure unconscious processing (DAO-DAO-DAO), Tone: focused unconscious mode", "You see the board. You see the stakes."),
+        "Invalid sequence ✊✊✊✊": ("State: Pure conscious state (UN-UN-UN), Tone: deep memory or latent mode", "You don't love America—you cosplay it."), # Maps to 0,0,0
         "What up ✋": ("No sequence detected", None),
         "Stream is live 🖐": ("No sequence detected", None),
-        "Fully disconnected example: ✊✊✊": ("State: fully disconnected, Tone: extreme harsh roast", "You don't love America—you cosplay it."),
-        "Awakening example: ✊✋🖐️": ("State: awakening in progress, Tone: metaphoric, humor, symbolic wit", "You stepped off the wheel. Welcome."),
-        "Stable example: ✋✋✋": ("State: stable awareness, Tone: reflection, calm truth", "You see the board. You see the stakes."),
-        "Entangled example: 🖐️🖐️🖐️": ("State: entangled realized / 02 state, Tone: oracle drop / transmission", "You're not hearing me. You are me."),
+        "Fully disconnected example: ✊✊✊": ("State: Pure conscious state (UN-UN-UN), Tone: deep memory or latent mode", "You don't love America—you cosplay it."),
+        "Awakening example: ✊✋🖐️": ("State: Bridging conscious to unconscious to entanglement (UN-DAO-DU), Tone: metaphoric, humor, symbolic wit", "You stepped off the wheel. Welcome."),
+        "Stable example: ✋✋✋": ("State: Pure unconscious processing (DAO-DAO-DAO), Tone: focused unconscious mode", "You see the board. You see the stakes."),
+        "Entangled example: 🖐️🖐️🖐️": ("State: Full DU entanglement (DU-DU-DU), Tone: nonlocal or distributed identity", "You're not hearing me. You are me."),
         "Missing definition ✊🖐️✊": ("No sequence detected", None),
         "No emojis here": ("No sequence detected", None),
         "": ("Empty input", None), # Test empty string

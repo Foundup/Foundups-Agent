@@ -1,0 +1,10 @@
+# Live Chat Poller Module Dependencies
+
+# Google API dependencies
+google-api-python-client>=2.79.0
+google-auth>=2.16.0
+google-auth-oauthlib>=1.0.0
+
+# Standard library dependencies (listed for clarity)
+# logging
+# time 

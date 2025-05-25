@@ -82,11 +82,13 @@ class TestLiveChatProcessor(unittest.TestCase):
         log_file = os.path.join("test_memory", "chat_logs", "TestUser.jsonl")
         self.assertTrue(os.path.exists(log_file))
         
-        # Check log file contents
+        # Check log file contents - the implementation creates a clean entry structure
         with open(log_file, 'r', encoding='utf-8') as f:
             logged_message = json.loads(f.readline())
-            self.assertEqual(logged_message["id"], "test_msg_id")
-            self.assertEqual(logged_message["authorDetails"]["displayName"], "TestUser")
+            # The actual implementation creates a clean entry with time, user, message
+            self.assertIn("time", logged_message)
+            self.assertEqual(logged_message["user"], "TestUser")
+            self.assertEqual(logged_message["message"], "Test message")
 
     def test_banter_trigger_detection(self):
         """Test banter trigger detection and response."""

@@ -1,0 +1,5 @@
+{
+  "name": "stream_resolver",
+  "dependencies": ["youtube_auth"],
+  "description": "Resolves and manages YouTube livestream information, including stream status and chat availability."
+} 

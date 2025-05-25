@@ -1,0 +1,5 @@
+{
+  "name": "youtube_auth",
+  "dependencies": ["token_manager"],
+  "description": "Handles YouTube API authentication, token management, and authorization flows."
+} 
