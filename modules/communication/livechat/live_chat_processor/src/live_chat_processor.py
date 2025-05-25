@@ -14,8 +14,8 @@ import json
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 import googleapiclient.errors
-from modules.banter_engine import BanterEngine
-from modules.live_chat_poller import LiveChatPoller
+from modules.ai_intelligence.banter_engine.banter_engine import BanterEngine
+from modules.communication.livechat.live_chat_poller import LiveChatPoller
 # StreamResolver import removed as it's unused and caused errors
 
 # Configure logging

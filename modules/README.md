@@ -14,15 +14,20 @@ The system is designed like a **stack of expanding cubes**, where each layer (mo
     *   Each WSP is like a clean commit, including its own specific testing logic (unit and integration).
 
 2.  **Modular Architecture:**
-    *   The Agent is composed of distinct, plug-and-play **modules**, each residing in its own subdirectory within `modules/`. Examples include:
-        *   `banter_engine/` (Handles emoji-tone mapping and responses)
-        *   `livechat/` (Monitors input streams and manages chat interactions)
-        *   `youtube_auth/` (Manages credentials and authentication)
-        *   `stream_resolver/` (Resolves stream IDs and metadata)
-        *   `token_manager/` (Handles token authentication and refresh)
-        *   `live_chat_poller/` (Polls for new chat messages)
-        *   `live_chat_processor/` (Processes incoming chat messages)
-    *   **Module Structure:** Each module directory (`modules/<module_name>/`) should contain:
+    *   The Agent is composed of distinct, plug-and-play **modules**, organized in a hierarchical Enterprise Domain structure within `modules/`. The structure follows the "cube-based philosophy" with four levels:
+        *   **Enterprise Domains (Level 1):** `communication/`, `ai_intelligence/`, `platform_integration/`, `infrastructure/`
+        *   **Feature Groups (Level 2):** `livechat/`, `banter_engine/`, `youtube_auth/`, `token_manager/`, etc.
+        *   **Modules (Level 3):** Individual module directories containing `src/`, `tests/`, etc.
+        *   **Code Components (Level 4):** Functions, classes within module source files
+    *   Examples of the new structure:
+        *   `communication/livechat/livechat/` (Main chat interaction and management)
+        *   `communication/livechat/live_chat_processor/` (Processes incoming chat messages)
+        *   `communication/livechat/live_chat_poller/` (Polls for new chat messages)
+        *   `ai_intelligence/banter_engine/banter_engine/` (Handles emoji-tone mapping and responses)
+        *   `platform_integration/youtube_auth/youtube_auth/` (Manages credentials and authentication)
+        *   `platform_integration/stream_resolver/stream_resolver/` (Resolves stream IDs and metadata)
+        *   `infrastructure/token_manager/token_manager/` (Handles token authentication and refresh)
+    *   **Module Structure:** Each module directory (`modules/<domain>/<feature_group>/<module_name>/`) should contain:
         *   `src/`: Main source code for the module.
         *   `tests/`: Unit and integration tests specific to the module.
         *   `__init__.py`: Makes the directory a Python package and exposes necessary components.
@@ -92,7 +97,7 @@ Handles authentication with Google/YouTube via OAuth2.
 
 **Usage Example:**
 ```python
-from modules.youtube_auth import get_authenticated_service
+from modules.platform_integration.youtube_auth.youtube_auth import get_authenticated_service
 
 # Get an authenticated YouTube service object
 youtube = get_authenticated_service()
@@ -110,7 +115,7 @@ Manages connection, listening, logging, and sending messages to a YouTube Live C
 
 **Usage Example:**
 ```python
-from modules.livechat import LiveChatListener
+from modules.communication.livechat.livechat import LiveChatListener
 
 # Initialize and start the chat listener
 listener = LiveChatListener(youtube_service, video_id)
@@ -128,7 +133,7 @@ Handles YouTube stream identification and metadata management.
 
 **Usage Example:**
 ```python
-from modules.stream_resolver import get_stream_info
+from modules.platform_integration.stream_resolver.stream_resolver import get_stream_info
 
 # Get information about a livestream
 stream_info = get_stream_info(youtube_service, video_id)

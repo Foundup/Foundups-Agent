@@ -6,11 +6,11 @@ import time
 from unittest.mock import MagicMock # Added for mocking
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
-from modules.stream_resolver import get_active_livestream_video_id, check_video_details, QuotaExceededError, calculate_dynamic_delay
-from modules.livechat import LiveChatListener
+from modules.platform_integration.stream_resolver.stream_resolver import get_active_livestream_video_id, check_video_details, QuotaExceededError, calculate_dynamic_delay
+from modules.communication.livechat.livechat import LiveChatListener
 from utils.oauth_manager import get_authenticated_service, get_authenticated_service_with_fallback, start_credential_cooldown, Credentials
 from utils.env_loader import get_env_variable
-from modules.banter_engine import BanterEngine
+from modules.ai_intelligence.banter_engine.banter_engine import BanterEngine
 from googleapiclient.errors import HttpError
 
 def mask_sensitive_id(id_str: str) -> str:

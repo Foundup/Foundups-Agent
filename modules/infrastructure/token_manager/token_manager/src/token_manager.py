@@ -12,7 +12,7 @@ from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
-from modules.youtube_auth import get_authenticated_service
+from modules.platform_integration.youtube_auth.youtube_auth import get_authenticated_service
 from utils.oauth_manager import get_oauth_token_file
 
 logger = logging.getLogger(__name__)

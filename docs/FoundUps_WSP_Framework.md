@@ -212,37 +212,210 @@ Maintain list, purpose, date, tag in: **`docs/clean_states.md`**.
 
 ---
 
-### WSP 3: FMAS – FoundUps Modular Audit System Usage
+### WSP 3: Enterprise Domain Architecture & Hierarchical Module Organization
 
-**Document Version:** 1.1
+**Document Version:** 1.0
 **Date Updated:** [Insert Date]
 **Status:** Active
-**Applies To:** Validation of modules within the `modules/` directory using the `modular_audit.py` tool.
-
-> **Note on Language Agnosticism:** While specific examples in this WSP use Python conventions, the principles aim to be language-agnostic. Project-specific rules (`.foundups_project_rules`) or appendices should define language-specific tooling, file structures, and commands for different programming languages.
+**Applies To:** All module creation, organization, and refactoring within the FoundUps Agent ecosystem.
 
 #### 3.1. Purpose
 
+To overcome the limitations of a flat module structure as the system scales.
+To provide a clear and logical organization for a large number of modules (e.g., 100+).
+To facilitate team-based ownership and specialized development by domain.
+To improve separation of concerns, reduce cognitive load, and enhance modularity.
+To support the structured development of autonomous agents and features within well-defined domains.
+To establish a scalable architectural framework ("cube-based philosophy") that supports long-term growth and evolution of the FoundUps platform.
+
+#### 3.2. Scope
+
+Defines the new mandatory top-level directory structure (Enterprise Domains) within the main modules/ directory.
+Outlines principles for classifying modules into Enterprise Domains and further into Feature Groups/Sub-Domains.
+Impacts all new module creation, requiring placement within this hierarchy.
+Mandates the refactoring of existing modules from a flat structure into this hierarchy.
+Requires updates to tooling, particularly FMAS (see WSP 4 - FMAS Usage), to support and validate the new structure.
+
+#### 3.3. Core Principles: The Cube-Based Philosophy
+
+This WSP adopts a "cube-based" philosophy to visualize and organize the system's architecture in layers of increasing granularity:
+
+**Enterprise Domains (Level 1 "Enterprise Cubes"):**
+These are the broadest, high-level strategic areas of functionality or business capability within the FoundUps ecosystem.
+They form the primary top-level directories directly under modules/.
+Each Enterprise Domain represents a major area of concern and potential team ownership.
+
+**Feature Groups / Sub-Domains (Level 2 "Feature Cubes"):**
+These are logical groupings of related modules that collectively deliver a significant feature set or address a specific sub-problem within an Enterprise Domain.
+They form subdirectories within their respective Enterprise Domain directories.
+This level helps further organize modules and can map to specific epics or larger features.
+
+**Modules (Level 3 "Component Cubes"):**
+These are individual, self-contained units of functionality, each adhering to the structure defined in WSP 1 (Module Refactoring to Windsurf Structure) (e.g., containing src/, tests/, interface definitions, dependency manifests).
+Modules reside within the most appropriate Feature Group/Sub-Domain directory.
+
+**Code Components (Level 4 "Code Cubes"):**
+These are the fundamental building blocks within a module, such as functions, classes, and other code elements located in the module's src/ directory. Their organization is internal to the module.
+
+#### 3.4. Defined Enterprise Domains & Example Structure
+
+The initial set of Enterprise Domains is defined as follows. This list can evolve through a formal architectural review process, documented in foundups_global_rules.md or an equivalent architecture decision record (ADR).
+
+```
+modules/
+├── ai_intelligence/          # Enterprise Domain: AI & LLM Core Capabilities
+│   ├── llm_agents/           # Feature Group: Foundational LLM Agent implementations
+│   │   └── [module_name]/    # Module (WSP 1 compliant)
+│   ├── sentiment_analysis/   # Feature Group
+│   │   └── [module_name]/
+│   ├── banter_engine/        # Feature Group
+│   │   └── [module_name]/
+│   └── prompt_management/    # Feature Group
+│       └── [module_name]/
+├── communication/            # Enterprise Domain: User Interaction & Presentation
+│   ├── livechat/             # Feature Group
+│   │   └── [module_name]/
+│   ├── voice_interface/      # Feature Group
+│   │   └── [module_name]/
+│   └── ui_components/        # Feature Group
+│       └── [module_name]/
+├── platform_integration/     # Enterprise Domain: External Systems & Services
+│   ├── youtube_auth/         # Feature Group
+│   │   └── [module_name]/
+│   ├── stream_resolver/      # Feature Group
+│   │   └── [module_name]/
+│   └── social_platforms/     # Feature Group (e.g., twitter_api, discord_bot)
+│       └── [module_name]/
+├── infrastructure/           # Enterprise Domain: Core Systems, Security, & Operations
+│   ├── token_manager/        # Feature Group
+│   │   └── [module_name]/
+│   ├── security/             # Feature Group (e.g., access_control, encryption_services)
+│   │   └── [module_name]/
+│   └── monitoring/           # Feature Group (e.g., logging_service, metrics_collector)
+│       └── [module_name]/
+└── data_processing/          # Enterprise Domain: Data Handling, Analytics, & Persistence
+    ├── analytics/            # Feature Group
+    │   └── [module_name]/
+    ├── user_data/            # Feature Group (e.g., profile_management, preference_storage)
+    │   └── [module_name]/
+    └── content_processing/   # Feature Group (e.g., text_parser, image_processor)
+        └── [module_name]/
+```
+
+#### 3.5. Module Placement & Classification
+
+**Guidelines:**
+When creating a new module or refactoring an existing one, it MUST be placed within the most relevant Enterprise Domain and an appropriate Feature Group/Sub-Domain.
+If a suitable Feature Group/Sub-Domain does not exist, one should be proposed and created following discussion and approval (documented via ADR or project rules).
+Consider the module's primary responsibility, its key interactions, and the logical cohesion with other modules in the proposed location.
+
+**Domain Analyzer Tool:** A (to-be-developed or designated AI agent) "Domain Analyzer" tool (see section 3.7) should be utilized to suggest or assist in the classification of modules, especially for new or complex cases.
+
+**Review Process:** Module placement decisions, particularly for new Feature Groups or debatable classifications, should be reviewed by the relevant domain owners or technical leads.
+
+#### 3.6. Migration Strategy (for existing flat modules)
+
+The transition from a flat modules/ structure to the hierarchical domain-based architecture will be conducted in phases:
+
+**Phase 1: Audit, Classification & Planning:**
+Conduct a comprehensive audit of all existing modules in the current flat /modules/ directory.
+For each module, determine its most appropriate Enterprise Domain and Feature Group/Sub-Domain.
+Utilize the (future) Domain Analyzer tool or manual analysis based on module purpose and dependencies to aid classification.
+Document the proposed new hierarchical path for every existing module (e.g., in a migration plan or spreadsheet).
+Prioritize modules for migration based on MPS (WSP 5) or strategic importance.
+
+**Phase 2: Structural Refactoring & Tool Updates:**
+Incrementally refactor modules according to the migration plan:
+Create the target domain and sub-domain directories if they don't exist.
+Use git mv modules/<old_module_name> modules/<domain_name>/<sub_domain_name>/<module_name>/ to move the module directory. Note: the module itself might need to be renamed if its old name was too generic.
+Update all import paths across the entire codebase that referenced the moved module. This is a critical and potentially extensive step. Tools like grep and IDE refactoring capabilities will be essential.
+Update FMAS (see WSP 4) to become "Domain-Aware FMAS." This includes validating the new hierarchical structure, checking for modules outside recognized domains, and potentially enforcing rules about module placement.
+After each significant batch of module moves, run comprehensive tests (all relevant WSPs, especially WSP 6 - Test Audit) and regression checks (WSP 8 - Snapshot Regression) to ensure system integrity.
+
+**Phase 3: Ongoing Management & Future Modules:**
+All newly created modules MUST adhere to this hierarchical domain structure from their inception.
+The Domain Analyzer tool should be used to guide the placement of new modules.
+Periodically review the domain structure itself (Enterprise Domains and Feature Groups) for continued relevance and make adjustments as the system evolves (via a formal ADR process).
+
+#### 3.7. Tooling Enhancements
+
+To support this architecture, the following tooling capabilities are required or highly recommended:
+
+**Domain-Aware FMAS (Update to WSP 4 - FMAS Usage):**
+FMAS must be enhanced to understand and validate the hierarchical structure.
+It should verify that all modules reside within a recognized Enterprise Domain.
+It can optionally check if modules are within defined Feature Groups/Sub-Domains (if these are strictly cataloged).
+It should report on modules found directly under modules/ (violating the hierarchy, except for special cases like a shared common/ or utils/ if explicitly allowed).
+
+**Domain Analyzer Tool (New Tool Development):**
+An AI-powered tool (or an extension of 0102 Agent capabilities) designed to:
+Analyze a module's code (functions, classes, dependencies, comments, naming).
+Suggest the most appropriate Enterprise Domain and Feature Group/Sub-Domain for its placement.
+Potentially identify modules with low cohesion that might be candidates for splitting across domains.
+Assist in auditing the current structure for consistency.
+
+**Cross-Domain Dependency Management & Visualization:**
+While modules in different domains can interact (ideally through well-defined interfaces per WSP 12), it's crucial to manage and understand these cross-domain dependencies.
+Tools or practices should be established to:
+Clearly document cross-domain interfaces.
+Potentially visualize the dependency graph between domains and sub-domains to identify unwanted tight coupling or circular dependencies at a higher architectural level.
+Enforce stricter rules or review processes for introducing new cross-domain dependencies.
+
+#### 3.8. Benefits for Enterprise Scalability
+
+**Improved Organization & Clarity:** Provides a clean, understandable structure for potentially hundreds of modules, making the system easier to navigate and comprehend.
+**Enhanced Team Ownership & Autonomy:** Allows for clear assignment of Enterprise Domains (and their sub-groups) to specific development teams, fostering expertise and accountability.
+**Reduced Cognitive Load:** Developers can more easily focus on a specific domain or sub-domain relevant to their current task without needing to understand the entire system at once.
+**Stronger Separation of Concerns:** Enforces logical boundaries between different parts of the system, leading to more robust and maintainable code.
+**Scalable Autonomous Development:** Offers a structured environment for developing and integrating new AI agents or complex features within their respective domains.
+**Clear Architectural Roadmap:** The "cube" philosophy provides a tangible model for discussing and planning future architectural evolution and growth.
+**Simplified Onboarding:** New team members can be introduced to specific domains first, making the learning curve more manageable.
+
+#### 3.9. Related WSPs
+
+This WSP has a broad impact on how other WSPs are applied:
+**WSP 1 (Module Refactoring):** The fundamental structure of individual modules (src/, tests/) defined in WSP 1 still applies, but these modules now reside within the domain hierarchy.
+**WSP 2 (Clean Slate Snapshot Management):** Clean states capture the entire Foundups-Agent repository, including this new hierarchical structure.
+**WSP 4 (FMAS):** Must be updated to validate the hierarchical domain structure.
+**WSP 5 (MPS):** Module prioritization now considers domain context and cross-domain dependencies.
+**WSP 6 (Test Audit):** Test execution must account for the new module paths.
+**WSP 11 (Interface Definition):** Cross-domain interfaces become particularly important.
+**WSP 12 (Dependency Management):** Dependencies between domains require special attention.
+
+---
+
+### WSP 4: FMAS – FoundUps Modular Audit System Usage
+
+**Document Version:** 1.2
+**Date Updated:** [Insert Date]
+**Status:** Active
+**Applies To:** Validation of modules within the hierarchical `modules/` directory structure using the `modular_audit.py` tool.
+
+> **Note on Language Agnosticism:** While specific examples in this WSP use Python conventions, the principles aim to be language-agnostic. Project-specific rules (`.foundups_project_rules`) or appendices should define language-specific tooling, file structures, and commands for different programming languages.
+
+#### 4.1. Purpose
+
 The **FoundUps Modular Audit System (FMAS)**, implemented via the `modular_audit.py` script, serves as the primary automated tool for enforcing structural compliance and detecting regressions within the FoundUps module ecosystem. Its core functions are:
 
-*   **Structural Validation:** Verifying that modules adhere to the mandatory Windsurf directory structure (`src/`, `tests/`) defined in **WSP 1**.
+*   **Hierarchical Structure Validation:** Verifying that modules adhere to the Enterprise Domain hierarchy defined in **WSP 3** and the mandatory Windsurf directory structure (`src/`, `tests/`) defined in **WSP 1**.
+*   **Domain Compliance Check:** Ensuring modules reside within recognized Enterprise Domains and Feature Groups as defined in **WSP 3**.
 *   **Structural Validation (Language Specific):** Verifying adherence to mandatory Windsurf directory structures (`src/`, `tests/`, `docs/`, potentially `interface/`) which may have language-specific variations defined in project rules.
 *   **Test Existence Check:** Ensuring that source files have corresponding test files according to defined conventions.
-*   **Interface Definition Check:** Ensuring modules contain required interface definition artifacts (WSP 11).
-*   **Dependency Manifest Check:** Ensuring modules contain required dependency declaration artifacts (WSP 12).
+*   **Interface Definition Check:** Ensuring modules contain required interface definition artifacts (WSP 12).
+*   **Dependency Manifest Check:** Ensuring modules contain required dependency declaration artifacts (WSP 13).
 *   **Baseline Comparison:** Detecting file-level changes (**`MISSING`**, **`MODIFIED`**, **`EXTRA`**) by comparing the current working state against a designated **Clean State** baseline (defined in **WSP 2**).
-*   **Legacy Code Identification:** Flagging files potentially originating from older, non-Windsurf structures (**`FOUND_IN_FLAT`**).
+*   **Legacy Code Identification:** Flagging files potentially originating from older, non-Windsurf structures (**`FOUND_IN_FLAT`**) or flat module structures that violate the Enterprise Domain hierarchy.
 
 Passing FMAS checks is a prerequisite for many other WSP procedures, acting as a critical quality gate.
 
-#### 3.2. Tool Location
+#### 4.2. Tool Location
 
 The canonical path to the FMAS script within the repository is:
 ```bash
 tools/modular_audit/modular_audit.py
 ```
 
-#### 3.3. Execution & Modes
+#### 4.3. Execution & Modes
 
 FMAS operates based on the provided command-line arguments. The presence or absence of the `--baseline` flag determines the audit mode:
 
@@ -266,7 +439,7 @@ FMAS operates based on the provided command-line arguments. The presence or abse
     ```
     *(Note: Adjust the relative path to the baseline as needed)*
 
-#### 3.4. Command-Line Arguments
+#### 4.4. Command-Line Arguments
 
 *   `modules_root` (Required): Positional argument specifying the path to the root directory containing the module folders to be audited (e.g., `./modules`).
 *   `--baseline <path>` (Optional): Path to the root directory of the Clean State snapshot to use for comparison (e.g., `../foundups-agent-clean4/`). The script expects baseline modules within a `modules/` subdirectory of this path (e.g., `<baseline_root>/modules/<module_name>/...`). Activates Mode 2 audit.
@@ -275,7 +448,7 @@ FMAS operates based on the provided command-line arguments. The presence or abse
 *   `--file-types <ext1,ext2>` (Optional): Comma-separated list of source file extensions to check within `src/` (e.g., `.py,.json`). Defaults defined in the script.
 *   `--lang <language>` (Optional): Specify language context to apply appropriate structural rules and find relevant interface/dependency files.
 
-#### 3.5. Output Interpretation & Status Codes
+#### 4.5. Output Interpretation & Status Codes
 
 FMAS reports findings via standard logging messages. Pay attention to `WARNING` and `ERROR` level messages:
 
@@ -293,7 +466,7 @@ FMAS reports findings via standard logging messages. Pay attention to `WARNING` 
 *   `[<module>] TEST_README_MISSING: 'tests/README.md' file not found.`: (WARN Level) The recommended test documentation file is missing from the `tests/` directory. See WSP standard.
 *   `✅ PASSED / ❌ FAILED` (Summary): Final lines indicating overall audit status based on findings. The script exits with code 0 on PASS and 1 on FAIL.
 
-#### 3.6. Workflow Integration (When to Run FMAS)
+#### 4.6. Workflow Integration (When to Run FMAS)
 
 Executing FMAS is mandatory at several key points:
 
@@ -303,7 +476,7 @@ Executing FMAS is mandatory at several key points:
 *   **Before Committing Significant Changes:** Run Mode 1 (or Mode 2 if relevant) locally to catch issues early.
 *   **In Pull Request Checks (CI/CD):** Automate FMAS runs (Mode 1 minimum, Mode 2 ideally) as a required check before merging branches (WSP 6).
 
-#### 3.7. Remediation Steps
+#### 4.7. Remediation Steps
 
 Address FMAS findings based on the reported status code:
 
@@ -317,7 +490,7 @@ Address FMAS findings based on the reported status code:
 *   `DEPENDENCY_MANIFEST_MISSING`: Create the required dependency manifest file according to WSP 12.
 *   `TEST_README_MISSING`: Create a `tests/README.md` file. Populate it by listing existing test files and their purpose, following the standard defined in Section I AI Guidelines and WSP 1.
 
-#### 3.8. Compliance Gate
+#### 4.8. Compliance Gate
 
 Passing relevant FMAS checks is a non-negotiable prerequisite.
 
@@ -328,26 +501,27 @@ Passing relevant FMAS checks is a non-negotiable prerequisite.
 
 Remediate all reported FMAS issues before attempting to proceed with these dependent actions.
 
-#### 3.9. Related WSPs
+#### 4.9. Related WSPs
 
 *   WSP 1: Defines the target structure (`src/`/`tests/`) that FMAS validates.
 *   WSP 2: Defines the Clean State baselines used by FMAS Mode 2 comparison.
-*   WSP 5: Mandates FMAS execution as its first step.
-*   WSP 6: Incorporates FMAS checks into PR validation.
-*   WSP 7: Uses similar comparison principles for regression detection, often manually or with different tools.
-*   WSP 11: Defines interface requirements checked by FMAS.
-*   WSP 12: Defines dependency management requirements checked by FMAS.
+*   WSP 3: Defines the Enterprise Domain hierarchy that FMAS validates.
+*   WSP 6: Mandates FMAS execution as its first step.
+*   WSP 7: Incorporates FMAS checks into PR validation.
+*   WSP 8: Uses similar comparison principles for regression detection, often manually or with different tools.
+*   WSP 12: Defines interface requirements checked by FMAS.
+*   WSP 13: Defines dependency management requirements checked by FMAS.
 
 ---
 
-### WSP 4: Module Prioritization Scoring (MPS) System
+### WSP 5: Module Prioritization Scoring (MPS) System
 
 **Document Version:** 1.0
 **Date Updated:** [Insert Date]
 **Status:** Active
 **Applies To:** Prioritization of development efforts across modules within the FoundUps Agent ecosystem.
 
-#### 4.1. Purpose
+#### 5.1. Purpose
 
 The **Module Prioritization Scoring (MPS) System** provides a consistent, objective methodology for evaluating and ranking modules based on their strategic importance and implementation considerations. This enables the development team to:
 
@@ -357,14 +531,14 @@ The **Module Prioritization Scoring (MPS) System** provides a consistent, object
 *   Balance immediate needs with long-term architectural goals.
 *   Communicate priorities clearly to all stakeholders.
 
-#### 4.2. Scope
+#### 5.2. Scope
 
 This WSP applies to:
-*   All modules within the `modules/` directory.
+*   All modules within the hierarchical `modules/` directory structure.
 *   Proposed modules not yet implemented but under consideration.
 *   Major feature enhancements to existing modules that warrant re-evaluation.
 
-#### 4.3. Scoring Criteria
+#### 5.3. Scoring Criteria
 
 Each module receives a score from 1 (lowest) to 5 (highest) in four dimensions:
 
@@ -433,7 +607,7 @@ Each module receives a score from 1 (lowest) to 5 (highest) in four dimensions:
 | 4     | Major                  | Substantial value enhancement, highly visible improvements          |
 | 5     | Transformative         | Game-changing capability that redefines system value                |
 
-#### 4.4. Scoring Process
+#### 5.4. Scoring Process
 
 1.  **Initial Assessment:** For each module, assign scores (1-5) for Complexity, Importance, Deferability, and Impact based on the criteria tables.
 2.  **Calculate MPS Score:** Sum the four dimension scores to obtain the total MPS score.
@@ -443,7 +617,7 @@ Each module receives a score from 1 (lowest) to 5 (highest) in four dimensions:
 3.  **Document Rationale:** Briefly explain the reasoning behind each score to facilitate discussion and future reevaluation.
 4.  **Review & Consensus:** The development team should review scores together to align understanding and reach consensus on final values.
 
-#### 4.5. Priority Classification
+#### 5.5. Priority Classification
 
 Based on the total MPS score (range: 4-20), modules are classified into priority tiers:
 
@@ -455,7 +629,7 @@ Based on the total MPS score (range: 4-20), modules are classified into priority
 | 7-9             | Low (P3)                | Should be implemented eventually but can be deferred         |
 | 4-6             | Backlog (P4)            | Reconsidered in future planning cycles                       |
 
-#### 4.6. Documentation & Version Control
+#### 5.6. Documentation & Version Control
 
 *   **Format:** MPS scores and rationales should be maintained in version-controlled YAML:
     *   Primary file: `modules_to_score.yaml` in the repository root.
@@ -479,14 +653,14 @@ Based on the total MPS score (range: 4-20), modules are classified into priority
     *   At the start of each release planning cycle.
     *   After major architectural changes that may affect dependencies.
 
-#### 4.7. Integration with Workflow
+#### 5.7. Integration with Workflow
 
 *   **Planning:** Priority classifications directly influence sprint/milestone planning, with higher-priority modules addressed first.
 *   **Resource Allocation:** Engineering resources are allocated proportionally to module priority levels.
 *   **Visualization:** The roadmap should visually indicate module priorities (e.g., color-coding by priority tier).
 *   **Granularity:** For complex modules, consider scoring sub-components separately to identify critical paths.
 
-#### 4.8. Automation
+#### 5.8. Automation
 
 *   A helper script (`prioritize_module.py`) exists to:
     *   Calculate and validate MPS scores.
@@ -499,14 +673,15 @@ Based on the total MPS score (range: 4-20), modules are classified into priority
     python prioritize_module.py --report top10
     ```
 
-#### 4.9. Related WSPs
+#### 5.9. Related WSPs
 
 *   **WSP 1 (Refactoring):** MPS scores inform which modules are prioritized for refactoring to Windsurf structure.
-*   **WSP 5 (Test Audit):** Higher-priority modules warrant more thorough test coverage and earlier auditing.
-*   **WSP 8 (Milestone Rules):** MPS classification influences which modules progress from PoC to Prototype to MVP first.
-*   **WSP 10 (Versioning):** Release planning is informed by module priorities.
+*   **WSP 3 (Enterprise Domains):** Module prioritization now considers domain context and cross-domain dependencies.
+*   **WSP 6 (Test Audit):** Higher-priority modules warrant more thorough test coverage and earlier auditing.
+*   **WSP 9 (Milestone Rules):** MPS classification influences which modules progress from PoC to Prototype to MVP first.
+*   **WSP 11 (Versioning):** Release planning is informed by module priorities.
 
-#### 4.10. Examples
+#### 5.10. Examples
 
 **Example 1: StreamListener Module**
 ```
@@ -532,7 +707,19 @@ Module: AnalyticsDashboard
 
 ---
 
-### WSP 5: Test Audit & Coverage Verification**Document Version:** 1.2**Date Updated:** 2024-05-24**Applies To:** Final test validation sweep before integration/release.> **Note on Language Agnosticism:** While specific examples in this WSP use Python and pytest conventions, the principles aim to be language-agnostic. Project-specific rules (`.foundups_project_rules`) or appendices should define language-specific testing frameworks, commands, and coverage thresholds.#### 5.1. PurposeComprehensive audit of active modules covering: Quality Gate, Windsurf Compliance, Risk Reduction, Coverage Assurance, Integration Readiness, Interface Contract Assurance.The Interface Contract Assurance verifies that modules correctly implement their defined interfaces (WSP 11).#### 5.1.1. Production Override Provision**When the production system is demonstrably working** (successful authentication, core functionality operational, live user interactions functioning), test failures that stem from **infrastructure issues** (import problems, test environment setup, legacy test compatibility) rather than **functional regressions** may be bypassed to prevent blocking critical development progress.**Production Override Criteria:**- ✅ Production system demonstrably functional (authentication working, core features operational)- ✅ Test failures are infrastructure-related (imports, environment, test setup) NOT functional regressions- ✅ Core business logic validated through live testing or manual verification- ✅ Override decision documented in ModLog with justification and timeline for test remediation**Usage:** Production Override should be used sparingly and only when strict test adherence would block critical system progression despite functional correctness.
+### WSP 6: Test Audit & Coverage Verification
+
+**Document Version:** 1.2
+**Date Updated:** 2024-05-24
+**Applies To:** Final test validation sweep before integration/release.
+
+> **Note on Language Agnosticism:** While specific examples in this WSP use Python and pytest conventions, the principles aim to be language-agnostic. Project-specific rules (`.foundups_project_rules`) or appendices should define language-specific testing frameworks, commands, and coverage thresholds.
+
+#### 6.1. Purpose
+
+Comprehensive audit of active modules covering: Quality Gate, Windsurf Compliance, Risk Reduction, Coverage Assurance, Integration Readiness, Interface Contract Assurance.
+
+The Interface Contract Assurance verifies that modules correctly implement their defined interfaces (WSP 12).#### 5.1.1. Production Override Provision**When the production system is demonstrably working** (successful authentication, core functionality operational, live user interactions functioning), test failures that stem from **infrastructure issues** (import problems, test environment setup, legacy test compatibility) rather than **functional regressions** may be bypassed to prevent blocking critical development progress.**Production Override Criteria:**- ✅ Production system demonstrably functional (authentication working, core features operational)- ✅ Test failures are infrastructure-related (imports, environment, test setup) NOT functional regressions- ✅ Core business logic validated through live testing or manual verification- ✅ Override decision documented in ModLog with justification and timeline for test remediation**Usage:** Production Override should be used sparingly and only when strict test adherence would block critical system progression despite functional correctness.
 
 #### 5.2. Scope
 *   **Included:** Modules under `/modules/` with `src/`/`tests/`.
