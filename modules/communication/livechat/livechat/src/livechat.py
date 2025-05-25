@@ -12,7 +12,7 @@ import asyncio
 from typing import List, Dict, Any, Optional, Tuple
 from utils.env_loader import get_env_variable
 from modules.communication.livechat.livechat.src.llm_bypass_engine import LLMBypassEngine
-from modules.ai_intelligence.banter_engine.banter_engine.src.emoji_sequence_map import EMOJI_TO_NUM
+from modules.ai_intelligence.banter_engine.banter_engine.emoji_sequence_map import EMOJI_TO_NUMBER as EMOJI_TO_NUM
 
 logger = logging.getLogger(__name__)
 

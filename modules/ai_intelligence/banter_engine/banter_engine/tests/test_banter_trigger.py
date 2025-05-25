@@ -15,13 +15,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from utils.logging_config import setup_logging
 from modules.communication.livechat.livechat import LiveChatListener
 from utils.oauth_manager import get_authenticated_service_with_fallback
-from modules.ai_intelligence.banter_engine.banter_engine.src.emoji_sequence_map import (
-    EMOJI_TO_NUM,
+from modules.ai_intelligence.banter_engine.banter_engine.emoji_sequence_map import (
+    EMOJI_TO_NUMBER,
     NUM_TO_EMOJI,
-    SEQUENCE_MAP,
     emoji_string_to_tuple,
     tuple_to_emoji_string,
 )
+from modules.ai_intelligence.banter_engine.banter_engine.sequence_responses import SEQUENCE_MAP
 
 def test_emoji_mapping():
     """Test the emoji-to-number mapping functionality."""
@@ -41,7 +41,7 @@ def test_emoji_mapping():
     assert result == (0, 2), f"Expected (0, 2), got {result}"  # Unknown emoji is skipped
     
     # Test all known emojis
-    for emoji, expected_num in EMOJI_TO_NUM.items():
+    for emoji, expected_num in EMOJI_TO_NUMBER.items():
         result = emoji_string_to_tuple(emoji)
         assert result == (expected_num,), f"Expected ({expected_num},), got {result}"
 

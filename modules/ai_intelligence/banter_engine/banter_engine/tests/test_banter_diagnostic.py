@@ -14,7 +14,8 @@ sys.path.insert(0, project_root)
 
 # Import the banter engine and supporting modules
 from modules.ai_intelligence.banter_engine.banter_engine import BanterEngine
-from modules.ai_intelligence.banter_engine.banter_engine.src.emoji_sequence_map import SEQUENCE_MAP, emoji_string_to_tuple
+from modules.ai_intelligence.banter_engine.banter_engine.emoji_sequence_map import emoji_string_to_tuple
+from modules.ai_intelligence.banter_engine.banter_engine.sequence_responses import SEQUENCE_MAP
 
 def test_sequence_map_integrity():
     """Test that the SEQUENCE_MAP is properly loaded and accessible"""
