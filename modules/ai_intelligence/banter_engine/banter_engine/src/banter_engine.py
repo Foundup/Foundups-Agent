@@ -54,7 +54,7 @@ class BanterEngine:
     def _extract_emoji_sequence(self, input_text: str) -> Optional[Tuple[int, int, int]]:
         """Extracts the first sequence of 3 known emojis (✊✋🖐️) from text."""
         # Import the correct emoji mapping
-        from ..emoji_sequence_map import EMOJI_TO_NUMBER
+        from ..emoji_sequence_map import EMOJI_TO_NUM
         
         sequence = []
         i = 0
@@ -62,8 +62,8 @@ class BanterEngine:
             # Check for multi-character emoji first (🖐️)
             if i + 1 < len(input_text):
                 two_char = input_text[i:i+2]
-                if two_char in EMOJI_TO_NUMBER:
-                    sequence.append(EMOJI_TO_NUMBER[two_char])
+                if two_char in EMOJI_TO_NUM:
+                    sequence.append(EMOJI_TO_NUM[two_char])
                     if len(sequence) == 3:
                         return tuple(sequence)
                     i += 2
@@ -71,8 +71,8 @@ class BanterEngine:
             
             # Check for single-character emoji
             char = input_text[i]
-            if char in EMOJI_TO_NUMBER:
-                sequence.append(EMOJI_TO_NUMBER[char])
+            if char in EMOJI_TO_NUM:
+                sequence.append(EMOJI_TO_NUM[char])
                 if len(sequence) == 3:
                     return tuple(sequence)
             i += 1

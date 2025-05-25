@@ -12,7 +12,7 @@ import asyncio
 from typing import List, Dict, Any, Optional, Tuple
 from utils.env_loader import get_env_variable
 from modules.communication.livechat.livechat.src.llm_bypass_engine import LLMBypassEngine
-from modules.ai_intelligence.banter_engine.banter_engine.src.emoji_sequence_map import EMOJI_TO_NUMBER
+from modules.ai_intelligence.banter_engine.banter_engine.src.emoji_sequence_map import EMOJI_TO_NUM
 
 logger = logging.getLogger(__name__)
 
@@ -241,14 +241,14 @@ class LiveChatListener:
             # Check for multi-character emoji first (🖐️)
             if i + 1 < len(message_text):
                 two_char = message_text[i:i+2]
-                if two_char in EMOJI_TO_NUMBER:
+                if two_char in EMOJI_TO_NUM:
                     emoji_count += 1
                     i += 2
                     continue
             
             # Check for single-character emoji
             char = message_text[i]
-            if char in EMOJI_TO_NUMBER:
+            if char in EMOJI_TO_NUM:
                 emoji_count += 1
             i += 1
         
