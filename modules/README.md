@@ -16,7 +16,7 @@ The system is designed like a **stack of expanding cubes**, where each layer (mo
 2.  **Modular Architecture:**
     *   The Agent is composed of distinct, plug-and-play **modules**, organized in a hierarchical Enterprise Domain structure within `modules/`. The structure follows the "cube-based philosophy" with four levels:
         *   **Enterprise Domains (Level 1):** `communication/`, `ai_intelligence/`, `platform_integration/`, `infrastructure/`
-        *   **Feature Groups (Level 2):** `livechat/`, `banter_engine/`, `youtube_auth/`, `token_manager/`, etc.
+        *   **Feature Groups (Level 2):** `livechat/`, `banter_engine/`, `oauth_management/`, `token_manager/`, etc.
         *   **Modules (Level 3):** Individual module directories containing `src/`, `tests/`, etc.
         *   **Code Components (Level 4):** Functions, classes within module source files
     *   Examples of the new structure:
@@ -24,7 +24,7 @@ The system is designed like a **stack of expanding cubes**, where each layer (mo
         *   `communication/livechat/live_chat_processor/` (Processes incoming chat messages)
         *   `communication/livechat/live_chat_poller/` (Polls for new chat messages)
         *   `ai_intelligence/banter_engine/banter_engine/` (Handles emoji-tone mapping and responses)
-        *   `platform_integration/youtube_auth/youtube_auth/` (Manages credentials and authentication)
+        *   `infrastructure/oauth_management/oauth_management/` (Manages OAuth credentials and authentication)
         *   `platform_integration/stream_resolver/stream_resolver/` (Resolves stream IDs and metadata)
         *   `infrastructure/token_manager/token_manager/` (Handles token authentication and refresh)
     *   **Module Structure:** Each module directory (`modules/<domain>/<feature_group>/<module_name>/`) should contain:
@@ -86,22 +86,29 @@ This approach ensures:
 
 ## Module Overview
 
-### `youtube_auth`
-Handles authentication with Google/YouTube via OAuth2.
+### `oauth_management`
+**CANONICAL AUTHENTICATION SYSTEM** - Handles OAuth 2.0 authentication with Google/YouTube APIs.
 
 **Key Features:**
-- OAuth2 flow management for YouTube API access
-- Token storage and refresh handling
-- Secure credential management
-- Service object creation for API interactions
+- Multi-credential OAuth 2.0 authentication (4 credential sets)
+- Intelligent credential rotation and fallback
+- Quota management with cooldown tracking
+- Automatic token refresh and storage
+- Environment-based credential forcing
+- Comprehensive error handling and logging
 
 **Usage Example:**
 ```python
-from modules.platform_integration.youtube_auth.youtube_auth import get_authenticated_service
+from modules.infrastructure.oauth_management.oauth_management import get_authenticated_service_with_fallback
 
-# Get an authenticated YouTube service object
-youtube = get_authenticated_service()
+# Get authenticated service with automatic fallback
+result = get_authenticated_service_with_fallback()
+if result:
+    service, credentials, credential_set = result
+    print(f"✅ Authenticated with {credential_set}")
 ```
+
+**Migration Note:** This module replaces the legacy `utils/oauth_manager.py` and duplicate `youtube_auth` module. A compatibility shim exists for backward compatibility.
 
 ### `livechat`
 Manages connection, listening, logging, and sending messages to a YouTube Live Chat.
@@ -149,7 +156,9 @@ Each module has its own `requirements.txt` file listing its specific dependencie
 ## Configuration
 
 Modules read configuration from environment variables defined in `.env`:
-- `GOOGLE_CLIENT_SECRETS_FILE`: Path to OAuth client secrets
+- `GOOGLE_CLIENT_SECRETS_FILE_1` through `GOOGLE_CLIENT_SECRETS_FILE_4`: OAuth client secrets (4 sets)
+- `OAUTH_TOKEN_FILE_1` through `OAUTH_TOKEN_FILE_4`: OAuth token files (4 sets)
+- `FORCE_CREDENTIAL_SET`: Force specific credential set (1-4)
 - `YOUTUBE_VIDEO_ID`: Target livestream ID
 - `LOG_LEVEL`: Logging verbosity
 - `AGENT_GREETING_MESSAGE`: Custom greeting on connection
@@ -157,10 +166,11 @@ Modules read configuration from environment variables defined in `.env`:
 ## Error Handling
 
 All modules implement comprehensive error handling:
-- API quota management
+- API quota management with automatic rotation
 - Network error recovery
 - Token refresh handling
 - Rate limiting compliance
+- Cooldown management for quota exceeded scenarios
 
 ## Logging
 
@@ -176,6 +186,7 @@ logger = logging.getLogger(__name__)
 - Use environment variables for sensitive data
 - Mount credential files via Docker volumes
 - Follow YouTube API usage guidelines
+- The system supports 4 credential sets for quota distribution
 
 ## Future Enhancements
 

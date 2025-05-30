@@ -1,33 +1,23 @@
 """
-Comprehensive Chat Communication Tests for Banter Engine
-Following WSP Guidelines for Test-to-Main Refactoring
+Comprehensive test suite for chat communication system.
 
-This test suite covers all aspects of in-chat communication:
-1. Emoji Detection & Response
-2. LLM Guidance Integration  
-3. Rate Limiting & Throttling
-4. Fallback Systems
-5. Real-time Communication Flow
-6. Error Handling & Recovery
-
-WSP Compliance:
-- Comprehensive coverage of emoji-guided LLM response system
-- Tests ensure agent responds appropriately to all emoji triggers
-- Validates the complete communication pipeline
+This module tests the complete integration between the BanterEngine,
+LiveChatListener, and LLMBypassEngine components to ensure proper
+emoji sequence detection, response generation, and message processing.
 """
 
+import unittest
 import pytest
 import asyncio
-import unittest
-from unittest.mock import Mock, MagicMock, AsyncMock, patch
-import logging
 import time
+import logging
+from unittest.mock import MagicMock, AsyncMock, patch
 from datetime import datetime, timedelta
 
 # Import the modules we're testing
-from ..src.banter_engine import BanterEngine, BanterEngineError, EmojiSequenceError
-from ....communication.livechat.livechat.src.livechat import LiveChatListener
-from ....communication.livechat.livechat.src.llm_bypass_engine import LLMBypassEngine
+from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine, BanterEngineError, EmojiSequenceError
+from modules.communication.livechat.livechat.src.livechat import LiveChatListener
+from modules.communication.livechat.livechat.src.llm_bypass_engine import LLMBypassEngine
 
 
 class TestComprehensiveChatCommunication(unittest.TestCase):

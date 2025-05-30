@@ -1,6 +1,6 @@
 import logging
 from utils.logging_config import setup_logging
-from modules.platform_integration.youtube_auth.youtube_auth import get_authenticated_service
+from modules.infrastructure.oauth_management.oauth_management import get_authenticated_service
 from modules.platform_integration.stream_resolver.stream_resolver import check_video_details
 from utils.env_loader import get_env_variable
 
@@ -18,11 +18,13 @@ def main():
     logger.info(f"Checking details for video ID: {video_id}")
 
     try:
-        # Get authenticated service
-        youtube_service = get_authenticated_service()
-        if not youtube_service:
+        # Get authenticated service (updated to use new oauth_management module)
+        auth_result = get_authenticated_service()
+        if not auth_result:
             logger.error("Failed to get authenticated service")
             return
+            
+        youtube_service, credentials = auth_result
 
         # Check video details
         video_details = check_video_details(youtube_service, video_id)

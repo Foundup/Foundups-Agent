@@ -326,33 +326,22 @@ def check_video_details_enhanced(
             if retry_count < config.MAX_RETRIES:
                 logger.warning(f"Quota exceeded (attempt {retry_count + 1}/{config.MAX_RETRIES})")
                 
-                # Enhanced fallback logic
-                fallback_key = get_env_variable("YOUTUBE_API_KEY2")
-                if fallback_key:
-                    logger.info(f"🔁 Retrying with fallback key: {mask_sensitive_id(fallback_key, 'api_key')}")
+                # Use credential rotation instead of API key fallback
+                logger.info("🔄 Attempting credential rotation...")
+                fallback_result = get_authenticated_service_with_fallback()
+                if fallback_result:
+                    fallback_service, fallback_creds, credential_set = fallback_result
+                    logger.info(f"✅ Rotated to credential {credential_set}")
                     
-                    try:
-                        from googleapiclient.discovery import build
-                        fallback_client = build("youtube", "v3", developerKey=fallback_key)
-                        
-                        # Validate fallback client
-                        if validate_api_client(fallback_client):
-                            delay = config.QUOTA_ERROR_DELAY
-                            logger.debug(f"Waiting {delay:.1f} seconds before fallback retry...")
-                            time.sleep(delay)
-                            
-                            return check_video_details_enhanced(
-                                fallback_client, video_id, retry_count + 1, delay
-                            )
-                        else:
-                            logger.error("Fallback client validation failed")
-                            return None
-                            
-                    except Exception as fallback_error:
-                        logger.error(f"Fallback client creation failed: {fallback_error}")
-                        return None
+                    delay = config.QUOTA_ERROR_DELAY
+                    logger.debug(f"Waiting {delay:.1f} seconds before retry with new credentials...")
+                    time.sleep(delay)
+                    
+                    return check_video_details_enhanced(
+                        fallback_service, video_id, retry_count + 1, delay
+                    )
                 else:
-                    logger.error("No fallback API key available")
+                    logger.error("❌ Credential rotation failed - no working credentials available")
                     return None
             else:
                 logger.error(f"Max retries ({config.MAX_RETRIES}) reached for quota errors")
@@ -454,20 +443,29 @@ def search_livestreams_enhanced(
         if "quotaExceeded" in str(e) and retry_count < config.MAX_RETRIES:
             logger.warning(f"Quota exceeded for {event_type} search (attempt {retry_count + 1}/{config.MAX_RETRIES})")
             
-            # Enhanced quota handling with exponential backoff
-            quota_delay = config.QUOTA_ERROR_DELAY * (config.EXPONENTIAL_BACKOFF_BASE ** retry_count)
-            quota_delay = min(quota_delay, config.MAX_BACKOFF_DELAY)
-            
-            logger.info(f"Waiting {quota_delay:.1f} seconds before retrying...")
-            try:
-                time.sleep(quota_delay)
-            except KeyboardInterrupt:
-                logger.info("Operation interrupted by user")
-                return None
+            # Use credential rotation for search quota exceeded
+            logger.info("🔄 Attempting credential rotation for search...")
+            fallback_result = get_authenticated_service_with_fallback()
+            if fallback_result:
+                fallback_service, fallback_creds, credential_set = fallback_result
+                logger.info(f"✅ Rotated to credential {credential_set} for search")
+                
+                quota_delay = config.QUOTA_ERROR_DELAY * (config.EXPONENTIAL_BACKOFF_BASE ** retry_count)
+                quota_delay = min(quota_delay, config.MAX_BACKOFF_DELAY)
+                
+                logger.info(f"Waiting {quota_delay:.1f} seconds before retrying search with new credentials...")
+                try:
+                    time.sleep(quota_delay)
+                except KeyboardInterrupt:
+                    logger.info("Operation interrupted by user")
+                    return None
 
-            return search_livestreams_enhanced(
-                youtube_client, event_type, retry_count + 1, quota_delay, consecutive_failures
-            )
+                return search_livestreams_enhanced(
+                    fallback_service, event_type, retry_count + 1, quota_delay, consecutive_failures
+                )
+            else:
+                logger.error("❌ Credential rotation failed for search - no working credentials available")
+                return None
             
         elif "quotaExceeded" in str(e) and retry_count >= config.MAX_RETRIES:
             logger.error(f"Max retries ({config.MAX_RETRIES}) reached for quota errors")
@@ -675,6 +673,8 @@ class StreamResolver:
     
     def _try_cached_stream(self, cache):
         """Try to connect to cached stream if it's still active."""
+        global circuit_breaker
+        
         try:
             video_id = cache.get('video_id')
             chat_id = cache.get('chat_id')
@@ -685,26 +685,79 @@ class StreamResolver:
             
             self.logger.info(f"🔄 Trying cached stream: {stream_title}")
             
-            # Check if the stream is still live and has active chat
-            response = self.youtube.videos().list(
-                part="liveStreamingDetails",
-                id=video_id
-            ).execute()
-            
-            items = response.get("items", [])
-            if not items:
-                self.logger.info("❌ Cached stream no longer exists")
-                return None, None
-            
-            live_details = items[0].get("liveStreamingDetails", {})
-            active_chat_id = live_details.get("activeLiveChatId")
-            
-            if active_chat_id == chat_id:
-                self.logger.info(f"✅ Cached stream still active: {stream_title}")
-                return video_id, chat_id
-            else:
-                self.logger.info("❌ Cached stream chat no longer active")
-                return None, None
+            # Use credential rotation for cached stream verification
+            try:
+                # Check if the stream is still live and has active chat
+                response = self.youtube.videos().list(
+                    part="liveStreamingDetails",
+                    id=video_id
+                ).execute()
+                
+                items = response.get("items", [])
+                if not items:
+                    self.logger.info("❌ Cached stream no longer exists")
+                    return None, None
+                
+                live_details = items[0].get("liveStreamingDetails", {})
+                active_chat_id = live_details.get("activeLiveChatId")
+                
+                if active_chat_id and active_chat_id == chat_id:
+                    self.logger.info(f"✅ Cached stream still active: {stream_title}")
+                    return video_id, chat_id
+                else:
+                    self.logger.info("❌ Cached stream no longer active")
+                    return None, None
+                    
+            except Exception as e:
+                # Check if it's an HttpError with quota exceeded
+                if hasattr(e, 'resp') and hasattr(e.resp, 'status') and e.resp.status == 403 and "quotaExceeded" in str(e):
+                    self.logger.warning("🔄 Quota exceeded verifying cached stream, trying credential rotation...")
+                    # Try with credential rotation
+                    fallback_result = get_authenticated_service_with_fallback()
+                    if fallback_result:
+                        fallback_service, fallback_creds, credential_set = fallback_result
+                        self.logger.info(f"✅ Rotated to credential {credential_set} for cached stream verification")
+                        
+                        # Update our service instance
+                        self.youtube = fallback_service
+                        
+                        # Reset circuit breaker for new credentials
+                        circuit_breaker.failure_count = 0
+                        circuit_breaker.state = "CLOSED"
+                        circuit_breaker.last_failure_time = None
+                        self.logger.info("🔄 Circuit breaker RESET after successful credential rotation")
+                        
+                        # Retry with new credentials
+                        try:
+                            response = self.youtube.videos().list(
+                                part="liveStreamingDetails",
+                                id=video_id
+                            ).execute()
+                            
+                            items = response.get("items", [])
+                            if not items:
+                                self.logger.info("❌ Cached stream no longer exists")
+                                return None, None
+                            
+                            live_details = items[0].get("liveStreamingDetails", {})
+                            active_chat_id = live_details.get("activeLiveChatId")
+                            
+                            if active_chat_id and active_chat_id == chat_id:
+                                self.logger.info(f"✅ Cached stream still active: {stream_title}")
+                                return video_id, chat_id
+                            else:
+                                self.logger.info("❌ Cached stream no longer active")
+                                return None, None
+                                
+                        except Exception as retry_e:
+                            self.logger.warning(f"❌ Retry after credential rotation failed: {retry_e}")
+                            return None, None
+                    else:
+                        self.logger.error("❌ Credential rotation failed")
+                        return None, None
+                else:
+                    self.logger.warning(f"Failed to verify cached stream: {e}")
+                    return None, None
                 
         except Exception as e:
             self.logger.warning(f"Failed to verify cached stream: {e}")
@@ -712,7 +765,7 @@ class StreamResolver:
     
     def resolve_stream(self, channel_id=None):
         """
-        Main method to resolve active livestream with session caching for faster reconnection.
+        Main method to resolve active livestream with intelligent cache-first approach.
         
         Args:
             channel_id: Optional channel ID to search (uses config default if not provided)
@@ -720,34 +773,103 @@ class StreamResolver:
         Returns:
             Tuple of (video_id, chat_id) if found, None otherwise
         """
-        # Try cached stream first for faster reconnection
+        global circuit_breaker
+        
+        # PRIORITY 1: Try cached stream first for instant reconnection
         cache = self._load_session_cache()
         if cache:
+            self.logger.info("🔄 Attempting cached stream reconnection...")
             video_id, chat_id = self._try_cached_stream(cache)
             if video_id and chat_id:
-                self.logger.info(f"🚀 Quick reconnection successful using cached stream!")
+                self.logger.info(f"🚀 INSTANT reconnection successful using cached stream!")
                 return video_id, chat_id
+            else:
+                self.logger.info("❌ Cached stream no longer active, proceeding to fresh search")
         
-        # Fall back to full search if cache failed
-        self.logger.info("🔍 Cache failed, searching for active livestream...")
+        # PRIORITY 2: Check circuit breaker before making API calls
+        if circuit_breaker.state == "OPEN":
+            self.logger.warning(f"🚫 Circuit breaker OPEN - API calls blocked for {circuit_breaker.timeout/60:.1f} minutes")
+            # Try to reset if timeout expired
+            if circuit_breaker._should_attempt_reset():
+                self.logger.info("🔄 Circuit breaker timeout expired, attempting reset...")
+                circuit_breaker.state = "HALF_OPEN"
+            else:
+                self.logger.error("❌ Circuit breaker still OPEN, cannot search for new streams")
+                return None
         
-        # Use provided channel_id or fall back to config
+        # PRIORITY 3: Use provided channel_id or fall back to config
         search_channel_id = channel_id or config.CHANNEL_ID
         if not search_channel_id:
-            self.logger.error("No channel ID provided and none configured")
+            self.logger.error("❌ No channel ID provided and none configured")
             return None
         
-        # Search for active livestream
-        result = get_active_livestream_video_id_enhanced(self.youtube, search_channel_id)
-        
-        if result:
-            video_id, chat_id = result
-            # Save successful connection to cache for future use
-            self._save_session_cache(video_id, chat_id)
-            self.logger.info(f"✅ Found and cached new livestream for future quick access")
-            return video_id, chat_id
-        else:
-            self.logger.info("❌ No active livestream found")
+        # PRIORITY 4: Search for active livestream with circuit breaker protection
+        try:
+            self.logger.info("🔍 Cache failed, searching for active livestream...")
+            
+            # Try with current service first
+            try:
+                result = circuit_breaker.call(
+                    get_active_livestream_video_id_enhanced, 
+                    self.youtube, 
+                    search_channel_id
+                )
+                
+                if result:
+                    video_id, chat_id = result
+                    # Save successful connection to cache for future instant access
+                    self._save_session_cache(video_id, chat_id)
+                    self.logger.info(f"✅ Found and cached new livestream for future instant access")
+                    return video_id, chat_id
+                else:
+                    self.logger.info("❌ No active livestream found")
+                    return None
+                    
+            except QuotaExceededError:
+                self.logger.warning("🔄 Quota exceeded during stream search, trying credential rotation...")
+                # Try with credential rotation
+                fallback_result = get_authenticated_service_with_fallback()
+                if fallback_result:
+                    fallback_service, fallback_creds, credential_set = fallback_result
+                    self.logger.info(f"✅ Rotated to credential {credential_set} for stream search")
+                    
+                    # Update our service instance
+                    self.youtube = fallback_service
+                    
+                    # Reset circuit breaker for new credentials
+                    circuit_breaker.failure_count = 0
+                    circuit_breaker.state = "CLOSED"
+                    circuit_breaker.last_failure_time = None
+                    self.logger.info("🔄 Circuit breaker RESET after successful credential rotation")
+                    
+                    # Retry with new credentials
+                    result = circuit_breaker.call(
+                        get_active_livestream_video_id_enhanced, 
+                        self.youtube, 
+                        search_channel_id
+                    )
+                    
+                    if result:
+                        video_id, chat_id = result
+                        # Save successful connection to cache for future instant access
+                        self._save_session_cache(video_id, chat_id)
+                        self.logger.info(f"✅ Found and cached new livestream with rotated credentials")
+                        return video_id, chat_id
+                    else:
+                        self.logger.info("❌ No active livestream found with rotated credentials")
+                        return None
+                else:
+                    self.logger.error("❌ Credential rotation failed for stream search")
+                    return None
+                
+        except StreamResolverError as e:
+            if "Circuit breaker is OPEN" in str(e):
+                self.logger.error("🚫 Circuit breaker prevented API call - too many recent failures")
+            else:
+                self.logger.error(f"❌ Stream resolution failed: {e}")
+            return None
+        except Exception as e:
+            self.logger.error(f"❌ Unexpected error during stream resolution: {e}")
             return None
 
 # Example usage block with enhanced error handling

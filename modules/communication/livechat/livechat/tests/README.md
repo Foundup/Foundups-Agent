@@ -19,6 +19,7 @@ The tests have been refactored into smaller, focused test files to improve maint
 | test_livechat_viewer_tracking.py | Tests for the `_update_viewer_count` method, covering successful updates, error handling for API errors, and handling of various malformed API responses |
 | test_livechat_lifecycle.py | Tests for the listener lifecycle (start/stop) including `start_listening`, `stop_listening`, and `_poll_chat_cycle` methods that control the operational lifecycle of the LiveChatListener |
 | test_livechat_session_management.py | Tests for session management functionality, including getting and validating live chat IDs (`_get_live_chat_id`) and initializing chat sessions (`_initialize_chat_session`) with proper error handling |
+| test_livechat_auto_moderation.py | Tests for auto-moderation functionality, including banned phrase detection, user timeout logic, YouTube API integration, cooldown management, and error handling for the AutoModerator class and its integration with LiveChatListener |
 | test_quota_manager.py | *Note: This file tests the QuotaManager class from utils.oauth_manager and is not directly related to the LiveChatListener. It will be relocated to a more appropriate location (utils/tests/ or utils/oauth_manager/tests/) as part of a planned task (see APS Task List).* |
 
 ## Test Coverage
@@ -63,6 +64,7 @@ python -m pytest modules/livechat/tests/ --cov=modules.livechat.src --cov-report
 - ✅ Lifecycle tests consolidated in test_livechat_lifecycle.py (Phase 3i complete)
 - ✅ Viewer tracking tests created in test_livechat_viewer_tracking.py (Phase 3j complete)
 - ✅ Logging tests consolidated in test_livechat_logging.py (Phase 3k complete)
+- ✅ Auto-moderation tests created in test_livechat_auto_moderation.py (Phase 3l complete)
 - ✅ Remove duplicate tests from test_livechat.py
 - ✅ Complete remaining specialized test files
 
@@ -79,4 +81,5 @@ python -m pytest modules/livechat/tests/ --cov=modules.livechat.src --cov-report
 - Lifecycle tests (start/stop listening, poll_chat_cycle) consolidated in test_livechat_lifecycle.py, including implementation of a new test for stop_listening method 
 - Viewer tracking tests added to test the `_update_viewer_count` method, including successful updates and handling of various error conditions 
 - Logging tests consolidated in test_livechat_logging.py, including comprehensive tests for the `_log_to_user_file` method with tests for success cases, file errors, directory creation errors, and JSON serialization errors 
+- Auto-moderation tests created in test_livechat_auto_moderation.py, covering the AutoModerator class functionality, integration with LiveChatListener, banned phrase detection, timeout logic, API error handling, and cooldown management
 - All specialized test files have been fully consolidated, with their functionality moved to the appropriate modular test files 

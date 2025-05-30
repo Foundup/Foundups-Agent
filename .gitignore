@@ -37,12 +37,20 @@ env/
 *.swo
 .DS_Store
 
-# Logs
+# Logs and runtime data
 *.log
 logs/
 02_log/
 02_logs/
 DevLog.md
+foundups_agent.log
+agent.log
+
+# Analysis and reporting (keep structure, ignore content)
+reports/analysis/*.md
+reports/testing/*.log
+reports/testing/*.json
+reports/analysis/*.json
 
 # Memory and user data
 memory/
@@ -63,7 +71,7 @@ modules/banter_engine/src/emoji_sequence_map.py
 # Documentation
 docs/esm_abstract.md
 
-# Test coverage
+# Test coverage and artifacts
 .coverage
 htmlcov/
 .pytest_cache/
@@ -78,6 +86,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+tools/testing/coverage/.coverage*
 
 # Distribution / packaging
 .Python

@@ -15,13 +15,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from utils.logging_config import setup_logging
 from modules.communication.livechat.livechat import LiveChatListener
 from utils.oauth_manager import get_authenticated_service_with_fallback
-from modules.ai_intelligence.banter_engine.banter_engine.emoji_sequence_map import (
+from modules.ai_intelligence.banter_engine.emoji_sequence_map import (
     EMOJI_TO_NUMBER,
     NUM_TO_EMOJI,
     emoji_string_to_tuple,
     tuple_to_emoji_string,
 )
-from modules.ai_intelligence.banter_engine.banter_engine.sequence_responses import SEQUENCE_MAP
+from modules.ai_intelligence.banter_engine.sequence_responses import SEQUENCE_MAP
 
 def test_emoji_mapping():
     """Test the emoji-to-number mapping functionality."""
