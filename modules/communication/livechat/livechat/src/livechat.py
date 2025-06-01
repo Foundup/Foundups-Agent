@@ -14,6 +14,7 @@ from utils.env_loader import get_env_variable
 from modules.communication.livechat.livechat.src.llm_bypass_engine import LLMBypassEngine
 from modules.ai_intelligence.banter_engine.emoji_sequence_map import EMOJI_TO_NUMBER as EMOJI_TO_NUM
 from modules.communication.livechat.livechat.src.auto_moderator import AutoModerator
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,15 @@ class LiveChatListener:
         self.stream_title_short = None  # Cache for shortened stream title
         self.processed_message_ids = set()  # Track processed message IDs to prevent duplicates
         self.max_processed_ids = 1000       # Maximum number of processed IDs to keep in memory
+
+        # User rate limiting
+        self.user_trigger_times = {}  # user_id -> last_trigger_time
+        self.user_cooldown = 30  # 30 seconds cooldown per user
+        
+        # WSP Enhancement: Random delay configuration for human-like behavior
+        self.random_delay_enabled = True
+        self.min_random_delay = 0.8  # Minimum random delay (seconds)
+        self.max_random_delay = 4.0  # Maximum random delay (seconds)
 
         os.makedirs(self.memory_dir, exist_ok=True)
         logger.info(f"Memory directory set to: {self.memory_dir}")
@@ -610,7 +620,11 @@ class LiveChatListener:
             raise
 
     async def send_chat_message(self, message_text):
-        """Sends a text message to the live chat."""
+        """
+        Sends a text message to the live chat with human-like random delay.
+        
+        WSP Enhancement: Added random pre-send delay for more natural response timing.
+        """
         if not self.live_chat_id:
             logger.error("Cannot send message, live_chat_id is not set.")
             return False
@@ -622,6 +636,12 @@ class LiveChatListener:
             message_text = message_text[:max_len-3] + "..."
 
         try:
+            # WSP Enhancement: Add random pre-send delay for human-like behavior
+            if self.random_delay_enabled:
+                random_delay = random.uniform(self.min_random_delay, self.max_random_delay)
+                logger.info(f"⏱️ Pre-send random delay: {random_delay:.2f}s (making response more human-like)")
+                await asyncio.sleep(random_delay)
+
             logger.debug("Constructing API request...")
             request = self.youtube.liveChatMessages().insert(
                 part="snippet",
@@ -637,7 +657,7 @@ class LiveChatListener:
             )
             logger.debug("Executing API request...")
             response = request.execute()
-            logger.info(f"Message sent successfully to chat ID: {self.live_chat_id}")
+            logger.info(f"✅ Message sent successfully to chat ID: {self.live_chat_id}")
             return True
         except googleapiclient.errors.HttpError as e:
             logger.error(f"Failed to send message: {e}")
@@ -650,6 +670,21 @@ class LiveChatListener:
         except Exception as e:
             logger.error(f"Unexpected error sending message: {e}")
             return False
+
+    def configure_random_delays(self, enabled: bool = True, min_delay: float = 0.8, max_delay: float = 4.0):
+        """
+        Configure random delay settings for human-like behavior.
+        
+        Args:
+            enabled: Whether to enable random delays
+            min_delay: Minimum random delay in seconds  
+            max_delay: Maximum random delay in seconds
+        """
+        self.random_delay_enabled = enabled
+        self.min_random_delay = max(0.1, min_delay)  # Ensure minimum of 0.1s
+        self.max_random_delay = max(self.min_random_delay + 0.1, max_delay)  # Ensure max > min
+        
+        logger.info(f"🎲 Random delays configured: enabled={enabled}, range={self.min_random_delay:.1f}s-{self.max_random_delay:.1f}s")
 
     async def _initialize_chat_session(self) -> bool:
         """

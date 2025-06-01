@@ -3,27 +3,35 @@ Chat Sender Component
 
 Handles sending messages to YouTube Live Chat.
 Separated from the main LiveChatListener for better maintainability.
+
+WSP Enhancement: Added random response delays for human-like behavior (v1.1)
 """
 
 import logging
 import asyncio
+import random
 from typing import Optional
 import googleapiclient.errors
 
 logger = logging.getLogger(__name__)
 
 class ChatSender:
-    """Handles sending messages to YouTube Live Chat."""
+    """Handles sending messages to YouTube Live Chat with human-like random delays."""
     
     def __init__(self, youtube_service, live_chat_id):
         self.youtube = youtube_service
         self.live_chat_id = live_chat_id
         self.bot_channel_id = None
-        self.send_delay = 2.0  # Delay between sends to avoid rate limiting
+        self.send_delay = 2.0  # Base delay between sends to avoid rate limiting
+        
+        # WSP Enhancement: Random delay configuration for human-like behavior
+        self.random_delay_enabled = True
+        self.min_random_delay = 0.5  # Minimum random delay (seconds)
+        self.max_random_delay = 3.0  # Maximum random delay (seconds)
         
     async def send_message(self, message_text: str) -> bool:
         """
-        Send a message to the live chat.
+        Send a message to the live chat with optional random delay.
         
         Args:
             message_text: The message to send
@@ -39,6 +47,12 @@ class ChatSender:
             # Ensure we have bot channel ID
             if not self.bot_channel_id:
                 await self._get_bot_channel_id()
+            
+            # WSP Enhancement: Add random pre-send delay for human-like behavior
+            if self.random_delay_enabled:
+                random_delay = random.uniform(self.min_random_delay, self.max_random_delay)
+                logger.info(f"⏱️ Pre-send random delay: {random_delay:.2f}s (making response more human-like)")
+                await asyncio.sleep(random_delay)
             
             logger.info(f"📤 Sending message: {message_text}")
             
@@ -62,7 +76,7 @@ class ChatSender:
             message_id = response.get("id", "unknown")
             logger.info(f"✅ Message sent successfully (ID: {message_id})")
             
-            # Add delay to avoid rate limiting
+            # Add base delay to avoid rate limiting
             await asyncio.sleep(self.send_delay)
             
             return True
@@ -85,6 +99,21 @@ class ChatSender:
         except Exception as e:
             logger.error(f"❌ Unexpected error sending message: {e}")
             return False
+    
+    def configure_random_delays(self, enabled: bool = True, min_delay: float = 0.5, max_delay: float = 3.0):
+        """
+        Configure random delay settings for human-like behavior.
+        
+        Args:
+            enabled: Whether to enable random delays
+            min_delay: Minimum random delay in seconds
+            max_delay: Maximum random delay in seconds
+        """
+        self.random_delay_enabled = enabled
+        self.min_random_delay = max(0.1, min_delay)  # Ensure minimum of 0.1s
+        self.max_random_delay = max(self.min_random_delay + 0.1, max_delay)  # Ensure max > min
+        
+        logger.info(f"🎲 Random delays configured: enabled={enabled}, range={self.min_random_delay:.1f}s-{self.max_random_delay:.1f}s")
     
     async def send_greeting(self, greeting_message: str) -> bool:
         """
@@ -150,5 +179,7 @@ class ChatSender:
             "live_chat_id": self.live_chat_id,
             "bot_channel_id": self.bot_channel_id,
             "send_delay": self.send_delay,
+            "random_delay_enabled": self.random_delay_enabled,
+            "random_delay_range": f"{self.min_random_delay:.1f}s-{self.max_random_delay:.1f}s",
             "has_service": self.youtube is not None
         } 
