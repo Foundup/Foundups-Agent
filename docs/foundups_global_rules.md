@@ -28,9 +28,18 @@ modules/
 │   │   └── youtube_auth/     # Module: OAuth2 authentication management
 │   └── stream_resolver/      # Feature Group: Stream identification
 │       └── stream_resolver/  # Module: Livestream detection and metadata
-└── infrastructure/           # Enterprise Domain: Core Systems & Operations
-    └── token_manager/        # Feature Group: Token management
-        └── token_manager/    # Module: OAuth token rotation and health checking
+├── infrastructure/           # Enterprise Domain: Core Systems & Operations
+│   └── token_manager/        # Feature Group: Token management
+│       └── token_manager/    # Module: OAuth token rotation and health checking
+├── foundups/                 # Enterprise Domain: Individual FoundUps Projects
+│   └── [example_project]/    # Feature Group: e.g., josi_agent
+│       └── [module_name]/
+├── gamification/             # Enterprise Domain: Engagement Mechanics & Behavioral Systems
+│   └── [example_feature]/    # Feature Group: e.g., rewards_engine
+│       └── [module_name]/
+├── blockchain/               # Enterprise Domain: Decentralized Infrastructure & DAE
+│   └── [example_feature]/    # Feature Group: e.g., chain_connectors
+│       └── [module_name]/
 ```
 
 **Migration Completed:**
@@ -98,7 +107,7 @@ Systematically update all import paths to use new hierarchical structure.
 **WSP Reference:** WSP 3 - Enterprise Domain Architecture  
 
 **Mandatory Structure:**
-- **Level 1 - Enterprise Domains:** `ai_intelligence/`, `communication/`, `platform_integration/`, `infrastructure/`
+- **Level 1 - Enterprise Domains:** `ai_intelligence/`, `communication/`, `platform_integration/`, `infrastructure/`, `foundups/`, `gamification/`, `blockchain/`
 - **Level 2 - Feature Groups:** Logical groupings within domains (e.g., `livechat/`, `banter_engine/`)
 - **Level 3 - Modules:** Individual modules with `src/`, `tests/`, `INTERFACE.md`, `requirements.txt`
 - **Level 4 - Code Components:** Functions, classes within module source files

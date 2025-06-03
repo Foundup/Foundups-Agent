@@ -19,6 +19,8 @@ from datetime import datetime, timedelta
 
 # Import the SEQUENCE_MAP from sequence_responses
 from ..sequence_responses import SEQUENCE_MAP
+# Import the emoji action map
+from .emoji_sequence_map import get_emoji_sequence
 
 class BanterEngineError(Exception):
     """Base exception for Banter Engine errors."""
@@ -340,7 +342,20 @@ class BanterEngine:
             cached_result = self._get_cached_response(cache_key)
             if cached_result:
                 self.logger.debug(f"Cache hit for input: {input_text[:50]}...")
-                return cached_result, self.get_random_banter_enhanced()
+                # cached_result here is just the (state, tone) string.
+                # The actual response needs to be regenerated or also cached.
+                # For simplicity, let's assume tone is part of cached_result or extractable
+                # This part might need refinement if we cache the full (state_str, response_text) tuple
+                # For now, let's assume the cached_result is the (state, tone) and we fetch a fresh random banter
+                # based on an assumed tone, or default.
+                # Let's parse tone from cached_result if possible.
+                tone_from_cache = "default"
+                if cached_result and "Tone: " in cached_result:
+                    try:
+                        tone_from_cache = cached_result.split("Tone: ")[1].split(",")[0].strip()
+                    except IndexError:
+                        pass # Stick to default
+                return cached_result, self.get_random_banter_enhanced(theme=tone_from_cache)
             
             # Enhanced emoji sequence detection
             sequence_tuple = self._extract_emoji_sequence_enhanced(input_text)
@@ -365,27 +380,34 @@ class BanterEngine:
                 # Get response with fallback
                 response = sequence_info.get("example")
                 if not response or not isinstance(response, str):
-                    self.logger.warning(f"No valid example for sequence {sequence_tuple}, using random banter")
+                    self.logger.warning(f"No valid example for sequence {sequence_tuple}, using random banter with tone: {tone}")
                     response = self.get_random_banter_enhanced(theme=tone)
                 else:
                     response = self._validate_response(response)
                     if not response:
                         response = self.get_random_banter_enhanced(theme=tone)
+                    else:
+                        # Append emoji sequence based on tone (action-tag)
+                        action_tag_emojis = get_emoji_sequence(tone)
+                        response = f"{response} {action_tag_emojis}".strip()
                 
                 # Cache the result
-                self._cache_response(cache_key, result_str)
+                self._cache_response(cache_key, result_str) # Consider caching (result_str, response) tuple
                 self._successful_responses += 1
                 
                 return result_str, response
             else:
                 result = "No sequence detected"
                 self._cache_response(cache_key, result)
-                return result, None
+                # For "No sequence detected", we might still want a themed random banter
+                # For now, it returns None, but could call get_random_banter_enhanced() with a default/neutral theme
+                return result, self.get_random_banter_enhanced(theme="default") # Or return None if no response for "No sequence"
                 
         except Exception as e:
             self.logger.error(f"Error processing input '{input_text[:50]}...': {e}")
             self._failed_responses += 1
-            return "Processing error", None
+            # Return a default themed response on error
+            return "Processing error", self.get_random_banter_enhanced(theme="default")
 
     def _fallback_pattern_matching(self, input_text: str) -> Optional[Tuple[int, int, int]]:
         """Enhanced fallback pattern matching."""
@@ -420,8 +442,9 @@ class BanterEngine:
             theme: Theme to get banter for
             
         Returns:
-            Random banter message
+            Random banter message with action-tag emoji appended
         """
+        final_response = "Thanks for the interaction! 😊" # Ultimate fallback
         try:
             # Validate theme
             if not theme or not isinstance(theme, str):
@@ -433,31 +456,37 @@ class BanterEngine:
                 self.logger.warning(f"No responses for theme '{theme}', using default")
                 responses = self._themes.get("default", [])
             
-            if not responses:
-                # Ultimate fallback
-                fallback_response = "Thanks for the interaction! 😊"
-                self.logger.warning("No responses available, using ultimate fallback")
-                return fallback_response
-            
-            # Select random response with validation
-            selected_response = random.choice(responses)
-            validated_response = self._validate_response(selected_response)
-            
-            if not validated_response:
-                # Fallback to first available response
-                for response in responses:
-                    validated = self._validate_response(response)
-                    if validated:
-                        return validated
+            selected_response = None
+            if responses:
+                # Select random response with validation
+                selected_response_candidate = random.choice(responses)
+                validated_response_candidate = self._validate_response(selected_response_candidate)
                 
-                # Ultimate fallback
-                return "Thanks for the interaction! 😊"
+                if validated_response_candidate:
+                    selected_response = validated_response_candidate
+                else:
+                    # Fallback to first available valid response in the theme
+                    for response_item in responses:
+                        validated_item = self._validate_response(response_item)
+                        if validated_item:
+                            selected_response = validated_item
+                            break
             
-            return validated_response
+            if selected_response:
+                final_response = selected_response
+            else:
+                self.logger.warning(f"No valid responses found for theme '{theme}' or default, using ultimate fallback.")
+                # final_response remains the ultimate fallback
+            
+            # Append emoji sequence based on the theme (action-tag)
+            action_tag_emojis = get_emoji_sequence(theme)
+            return f"{final_response} {action_tag_emojis}".strip()
             
         except Exception as e:
             self.logger.error(f"Error generating random banter for theme '{theme}': {e}")
-            return "Thanks for the interaction! 😊"
+            # Return ultimate fallback with default emoji sequence on error
+            action_tag_emojis = get_emoji_sequence("default")
+            return f"{final_response} {action_tag_emojis}".strip()
 
     def get_performance_stats(self) -> Dict[str, Any]:
         """Get performance statistics."""

@@ -242,10 +242,21 @@ def authenticate_with_config(client_secrets_file: str, token_file: str, config_n
                         logger.info(f"{config_name}: Token file is empty, triggering OAuth login")
                         creds = None
                     else:
+                        # WSP Patch ❶: Validate OAuth token structure
+                        # Check for required OAuth token keys to skip malformed files
+                        required_oauth_keys = ['token', 'refresh_token', 'client_id']
+                        missing_keys = [key for key in required_oauth_keys if key not in token_data]
+                        
+                        if missing_keys:
+                            logger.warning(f"{config_name}: Token file has invalid structure - missing required OAuth keys: {missing_keys}")
+                            logger.warning(f"{config_name}: File appears to contain client secrets instead of OAuth tokens - SKIPPING")
+                            logger.info(f"{config_name}: Skipping malformed credential set to prevent crash")
+                            return None  # Skip this credential set entirely
+                        
                         logger.info(f"{config_name}: Loaded existing credentials from {token_file}")
                         creds = Credentials.from_authorized_user_file(token_file, SCOPES)
             except json.JSONDecodeError:
-                logger.warning(f"{config_name}: Token file is invalid, triggering OAuth login")
+                logger.warning(f"{config_name}: Token file is invalid JSON, triggering OAuth login")
                 creds = None
         else:
             logger.info(f"{config_name}: No token file found at {token_file}, triggering OAuth login")

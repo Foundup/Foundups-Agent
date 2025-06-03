@@ -10,7 +10,7 @@ The tests have been refactored into smaller, focused test files to improve maint
 |-----------|-------------|
 | test_livechat_initialization.py | Tests for LiveChatListener initialization, parameter handling, session setup, ID handling, and greeting messages |
 | test_livechat_message_polling.py | Tests for polling messages from YouTube API, error handling, rate limiting, and chat cycles |
-| test_livechat_message_processing.py | Tests for message processing, metadata extraction, trigger pattern detection, log entry creation, and file logging |
+| test_livechat_message_processing.py | Tests for message processing, metadata extraction, author role detection, trigger pattern detection, log entry creation, and file logging |
 | test_livechat_message_sending.py | Tests for the `send_chat_message` method functionality, including success cases, truncation, error handling, greeting message sending, and emoji trigger message interactions |
 | test_livechat_auth_handling.py | Tests for authentication error handling (`_handle_auth_error` method) |
 | test_livechat_emoji_triggers.py | Tests for emoji trigger detection and response |

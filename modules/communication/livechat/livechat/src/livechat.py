@@ -1,7 +1,7 @@
 ﻿import logging
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 import googleapiclient.errors
 from dotenv import load_dotenv
 from utils.throttling import calculate_dynamic_delay
@@ -15,15 +15,19 @@ from modules.communication.livechat.livechat.src.llm_bypass_engine import LLMByp
 from modules.ai_intelligence.banter_engine.emoji_sequence_map import EMOJI_TO_NUMBER as EMOJI_TO_NUM
 from modules.communication.livechat.livechat.src.auto_moderator import AutoModerator
 import random
+import json
 
 logger = logging.getLogger(__name__)
+
+MAX_RETRIES = 3
+MAX_MESSAGES_PER_CALL = 200
 
 class LiveChatListener:
     """
     Connects to a YouTube livestream chat, listens for messages,
     logs them, and provides hooks for sending messages and AI interaction.
     """
-    def __init__(self, youtube_service, video_id, live_chat_id=None):
+    def __init__(self, youtube_service, video_id, live_chat_id=None, agent_config=None):
         self.youtube = youtube_service
         self.video_id = video_id
         self.live_chat_id = live_chat_id
@@ -31,7 +35,7 @@ class LiveChatListener:
         self.poll_interval_ms = 5000  # Default: 5 seconds for faster response
         self.error_backoff_seconds = 5  # Initial backoff for errors
         self.memory_dir = "memory"
-        self.greeting_message = os.getenv("AGENT_GREETING_MESSAGE", "FoundUps Agent reporting in!")
+        self.greeting_message = os.getenv("AGENT_GREETING_MESSAGE", "🤖 UnDaoDu is now monitoring chat! ✊🤚🖐️")
         self.message_queue = []  # Queue for storing messages
         self.viewer_count = 0  # Track current viewer count
         self.banter_engine = BanterEngine()  # Initialize banter engine
@@ -47,6 +51,7 @@ class LiveChatListener:
         self.stream_title_short = None  # Cache for shortened stream title
         self.processed_message_ids = set()  # Track processed message IDs to prevent duplicates
         self.max_processed_ids = 1000       # Maximum number of processed IDs to keep in memory
+        self.listener_start_time = None # Timestamp for when the listener truly started polling
 
         # User rate limiting
         self.user_trigger_times = {}  # user_id -> last_trigger_time
@@ -57,9 +62,24 @@ class LiveChatListener:
         self.min_random_delay = 0.8  # Minimum random delay (seconds)
         self.max_random_delay = 4.0  # Maximum random delay (seconds)
 
+        self.user_tiers = {}
+        if agent_config and "admin_users" in agent_config:
+            admin_users_data = agent_config["admin_users"]
+            if isinstance(admin_users_data, dict):
+                for user_id, data in admin_users_data.items():
+                    if isinstance(data, dict) and "tier" in data:
+                        self.user_tiers[user_id] = data["tier"].lower() # Standardize to lowercase
+                    elif isinstance(data, str): # Older format support
+                        self.user_tiers[user_id] = data.lower() # Standardize to lowercase
+            else:
+                logger.warning(f"Unexpected format for admin_users in agent_config: {type(admin_users_data)}. Expected dict.")
+        logger.info(f"🛡️ User tiers loaded: {self.user_tiers}")
+
         os.makedirs(self.memory_dir, exist_ok=True)
         logger.info(f"Memory directory set to: {self.memory_dir}")
         logger.info("🛡️ Auto-moderation system enabled")
+
+        self.last_message_author_id = None # ID of the author of the last processed message
 
     async def _handle_auth_error(self, error):
         """Handle authentication errors by attempting OAuth credential rotation."""
@@ -291,7 +311,7 @@ class LiveChatListener:
             message (dict): The YouTube chat message object
             
         Returns:
-            tuple: (msg_id, display_message, author_name, author_id)
+            tuple: (msg_id, display_message, author_name, author_id, author_role)
             
         Raises:
             KeyError: If required message fields are missing
@@ -303,11 +323,29 @@ class LiveChatListener:
         author_id = author_details.get("channelId", "unknown")
         display_message = snippet.get("displayMessage", "")
         author_name = author_details["displayName"]
+
+        # Role detection
+        author_role = "user" # Default role
+        if author_details.get("isChatOwner", False):
+            author_role = "owner"
+        elif author_details.get("isChatModerator", False):
+            # If they are a moderator, check their tier from config
+            if author_id in self.user_tiers:
+                tier = self.user_tiers[author_id]
+                if tier == "managing_mod":
+                    author_role = "managing_mod"
+                elif tier == "standard_mod": # Explicitly check for standard_mod
+                    author_role = "standard_mod"
+                else: # Could be 'owner' or other tiers if defined, default to standard_mod if just 'moderator'
+                    author_role = "standard_mod" # Fallback for any other tier string if they are a YT mod
+            else:
+                # If a moderator is not in user_tiers, default them to standard_mod
+                author_role = "standard_mod"
         
-        logger.info(f"💬 [{author_name}]: {display_message}")
+        logger.info(f"💬 [{author_name} ({author_role})]: {display_message}")
         logger.debug(f"Message length: {len(display_message)}")
         
-        return msg_id, display_message, author_name, author_id
+        return msg_id, display_message, author_name, author_id, author_role
     
     def _check_trigger_patterns(self, message_text):
         """
@@ -349,13 +387,14 @@ class LiveChatListener:
         Returns:
             bool: True if the trigger was handled successfully, False otherwise
         """
-        # Ensure proper UTF-8 encoding for emoji logging
-        safe_message = message_text.encode('utf-8', errors='replace').decode('utf-8')
-        logger.info(f"Emoji sequence detected in message from {author_name}: {safe_message}")
+        # Prevent bot from talking after itself
+        if self.bot_channel_id and self.last_message_author_id == self.bot_channel_id:
+            logger.info(f"🚫 Agent {self.greeting_message} sent the last message. Skipping response to {author_name} to avoid self-reply.")
+            return False
         
-        # Check if this is a self-message (bot responding to its own emoji)
-        if hasattr(self, 'bot_channel_id') and self.bot_channel_id and author_id == self.bot_channel_id:
-            logger.debug(f"🚫 Ignoring self-message from bot {author_name} (channel ID match)")
+        # Check if the message author is the bot itself
+        if self.bot_channel_id and author_id == self.bot_channel_id:
+            logger.debug(f"🚫 Ignoring message from bot {author_name} (channel ID match)")
             return False
         
         # Enhanced check for bot usernames (covers all possible bot names)
@@ -446,7 +485,7 @@ class LiveChatListener:
             logger.warning(f"Could not get bot channel ID: {e}")
         return None
 
-    def _create_log_entry(self, msg_id, author_name, display_message):
+    def _create_log_entry(self, msg_id, author_name, display_message, author_role):
         """
         Create a standardized log entry from message data.
         
@@ -454,6 +493,7 @@ class LiveChatListener:
             msg_id (str): Message identifier
             author_name (str): Display name of the author
             display_message (str): Message content
+            author_role (str): Detected role of the author (e.g., user, owner, moderator)
             
         Returns:
             dict: Log entry with standardized fields
@@ -461,6 +501,7 @@ class LiveChatListener:
         return {
             "id": msg_id,
             "author": author_name,
+            "role": author_role,
             "message": display_message,
             "timestamp": datetime.now().isoformat()
         }
@@ -481,7 +522,7 @@ class LiveChatListener:
         """
         try:
             # Extract message metadata
-            msg_id, display_message, author_name, author_id = self._extract_message_metadata(message)
+            msg_id, display_message, author_name, author_id, author_role = self._extract_message_metadata(message)
             
             # AUTO-MODERATION CHECK - Check for banned phrases and spam patterns first
             violation_detected, violation_reason = self.auto_moderator.check_message(display_message, author_id, author_name)
@@ -497,16 +538,19 @@ class LiveChatListener:
                     logger.error(f"❌ Failed to timeout {author_name}")
                 
                 # Still create log entry for moderation tracking
-                log_entry = self._create_log_entry(msg_id, author_name, display_message)
+                log_entry = self._create_log_entry(msg_id, author_name, display_message, author_role)
                 log_entry["moderation_action"] = "timeout_applied" if timeout_success else "timeout_failed"
                 log_entry["reason"] = violation_reason
                 log_entry["violation_type"] = violation_reason.split(":")[0] if ":" in violation_reason else violation_reason
                 
                 # Log the message for record keeping
                 try:
-                    self._log_to_user_file(message)
+                    self._log_to_user_file(message, log_entry)
                 except Exception as log_e:
                     logger.error(f"Failed to log moderated message: {log_e}")
+                
+                # Update the last message author ID *after* all processing for this message is done
+                self.last_message_author_id = author_id
                 
                 return log_entry
             
@@ -525,14 +569,17 @@ class LiveChatListener:
                 logger.debug(f"❌ No trigger patterns found in: '{display_message}'")
             
             # Create log entry
-            log_entry = self._create_log_entry(msg_id, author_name, display_message)
+            log_entry = self._create_log_entry(msg_id, author_name, display_message, author_role)
             
             # Log the message
             try:
-                self._log_to_user_file(message)
+                self._log_to_user_file(message, log_entry)
             except Exception as log_e:
                 # Log but don't fail the whole processing if logging fails
                 logger.error(f"Failed to log message: {log_e}")
+            
+            # Update the last message author ID *after* all processing for this message is done
+            self.last_message_author_id = author_id
             
             return log_entry
         except Exception as e:
@@ -570,54 +617,90 @@ class LiveChatListener:
         self.stream_title_short = "Unknown"
         return self.stream_title
 
-    def _log_to_user_file(self, message):
-        """Appends a clean log entry to a user-specific file for LLM consumption."""
+    def _log_to_user_file(self, raw_message, log_entry):
+        """Appends a clean log entry to a user-specific file for LLM consumption if the user is a configured admin."""
         try:
-            username = message["authorDetails"]["displayName"]
-            channel_id = message["authorDetails"].get("channelId", "unknown")
-            message_text = message["snippet"].get("displayMessage", "")
+            # Determine if this user is a configured admin
+            # This requires loading agent_registry.json and checking against channel_id
+            # For simplicity in this diff, we assume a helper self.admin_channel_ids exists (needs to be implemented)
+            # self.admin_channel_ids should be populated from memory/agent_registry.json at init or periodically
             
-            # Skip empty messages
-            if not message_text.strip():
+            # --- This logic needs to be properly implemented in __init__ or a helper method ---
+            if not hasattr(self, 'admin_channel_ids'): 
+                # Placeholder: Load admin channel IDs. In a real scenario, this should be robust.
+                self.admin_channel_ids = set()
+                try:
+                    registry_path = os.path.join(self.memory_dir, "agent_registry.json").replace("\\", "/")
+                    if os.path.exists(registry_path):
+                        with open(registry_path, 'r', encoding='utf-8') as f:
+                            registry_data = json.load(f)
+                            for agent_config in registry_data.get('agents', []):
+                                if agent_config.get('channel_id'):
+                                    self.admin_channel_ids.add(agent_config['channel_id'])
+                    logger.info(f"Loaded admin channel IDs: {self.admin_channel_ids}")
+                except Exception as e_reg:
+                    logger.error(f"Failed to load admin_registry.json for admin check: {e_reg}")
+            # --- End of placeholder admin loading logic ---
+
+            author_channel_id = raw_message["authorDetails"].get("channelId", "unknown")
+
+            # Log to structured JSON file ONLY if the author is a configured admin
+            if author_channel_id in self.admin_channel_ids:
+                admin_log_dir = os.path.join(self.memory_dir, "chat_logs").replace("\\", "/")
+                os.makedirs(admin_log_dir, exist_ok=True)
+                admin_log_filename = os.path.join(admin_log_dir, f"{author_channel_id}.json").replace("\\", "/")
+
+                admin_log_data = {"messages": [], "patterns": {}}
+                if os.path.exists(admin_log_filename):
+                    try:
+                        with open(admin_log_filename, "r", encoding="utf-8") as f_admin:
+                            admin_log_data = json.load(f_admin)
+                            if not isinstance(admin_log_data.get("messages"), list):
+                                admin_log_data["messages"] = [] # Ensure messages is a list
+                            if not isinstance(admin_log_data.get("patterns"), dict):
+                                admin_log_data["patterns"] = {} # Ensure patterns is a dict
+                    except json.JSONDecodeError:
+                        logger.warning(f"Could not decode existing admin log {admin_log_filename}, starting fresh.")
+                        admin_log_data = {"messages": [], "patterns": {}} # Reset if corrupt
+                    except Exception as e_read_admin:
+                        logger.error(f"Error reading admin log {admin_log_filename}: {e_read_admin}, starting fresh.")
+                        admin_log_data = {"messages": [], "patterns": {}} # Reset on other errors
+                admin_log_data["messages"].append(log_entry)
+                # The 'patterns' key is preserved; its population is a separate process.
+
+                try:
+                    with open(admin_log_filename, "w", encoding="utf-8") as f_admin_write:
+                        json.dump(admin_log_data, f_admin_write, indent=2, ensure_ascii=False)
+                    logger.info(f"Logged message from admin {log_entry['author']} ({author_channel_id}) to structured log.")
+                except Exception as e_write_admin:
+                    logger.error(f"Failed to write to admin log file {admin_log_filename}: {e_write_admin}")
+
+            # Existing general conversation logging (to .txt file in memory/conversations/)
+            # This part remains for all messages, regardless of admin status.
+            message_text = raw_message["snippet"].get("displayMessage", "")
+            if not message_text.strip(): # Skip empty messages for conversation log too
                 return
-            
-            # Get stream title for enhanced logging
-            self._get_stream_title()
-            
-            # Create memory directories
-            log_dir = os.path.join(self.memory_dir, "chat_logs").replace("\\", "/")
+
+            self._get_stream_title() # Ensure stream title is available
             conversation_dir = os.path.join(self.memory_dir, "conversations").replace("\\", "/")
-            os.makedirs(log_dir, exist_ok=True)
             os.makedirs(conversation_dir, exist_ok=True)
             
-            # Use channel ID as filename to prevent impersonation
-            log_filename = os.path.join(log_dir, f"{channel_id}.jsonl").replace("\\", "/")
-            
-            # Store just the message content for LLM consumption
-            with open(log_filename, "a", encoding="utf-8") as f:
-                f.write(message_text + "\n")
-            
-            # Create enhanced conversation logs with stream title
-            msg_id = message["id"]
             date_str = datetime.now().strftime("%Y-%m-%d")
-            
-            # Enhanced stream-specific conversation log with date, stream title, and video ID
-            # Format: YYYY-MM-DD_StreamTitle_VideoID.txt
             safe_title = "".join(c for c in self.stream_title_short if c.isalnum() or c in (' ', '-', '_')).rstrip()
             safe_title = safe_title.replace(' ', '_')
-            stream_log = os.path.join(conversation_dir, f"{date_str}_{safe_title}_{self.video_id}.txt").replace("\\", "/")
-            with open(stream_log, "a", encoding="utf-8") as f:
-                f.write(f"[{msg_id}] {username}: {message_text}\n")
+            stream_log_filename = os.path.join(conversation_dir, f"{date_str}_{safe_title}_{self.video_id}.txt").replace("\\", "/")
             
-            # Enhanced daily conversation summary with stream context
-            daily_summary = os.path.join(conversation_dir, f"daily_summary_{date_str}.txt").replace("\\", "/")
-            with open(daily_summary, "a", encoding="utf-8") as f:
-                f.write(f"[{self.stream_title_short}] [{msg_id}] {username}: {message_text}\n")
+            # Use the author_name and display_message from the structured log_entry for consistency
+            formatted_conversation_line = f"[{log_entry['timestamp']}] {log_entry['author']} ({log_entry['role']}): {log_entry['message']}\n"
             
-            logger.debug(f"Logged message from {username} to {safe_title} stream log")
+            with open(stream_log_filename, "a", encoding="utf-8") as f_conv:
+                f_conv.write(formatted_conversation_line)
+
+        except KeyError as ke:
+            logger.error(f"KeyError in _log_to_user_file: {ke}. Message: {raw_message}")
         except Exception as e:
             logger.error(f"Failed to write to log file: {e}")
-            raise
+            # Do not raise here to prevent breaking message processing loop
 
     async def send_chat_message(self, message_text):
         """
@@ -763,6 +846,26 @@ class LiveChatListener:
             try:
                 # Extract message ID for deduplication
                 msg_id = message.get("id")
+                
+                # >>> WSP: Skip messages published before the listener started <<< 
+                if self.listener_start_time:
+                    published_at_str = message.get("snippet", {}).get("publishedAt")
+                    if published_at_str:
+                        try:
+                            # YouTube timestamps are ISO 8601, usually ending in 'Z' (UTC)
+                            # Ensure it's offset-aware for correct comparison
+                            message_time = datetime.fromisoformat(published_at_str.replace('Z', '+00:00'))
+                            if message_time < self.listener_start_time:
+                                logger.debug(f"Skipping old message ID {msg_id} from {message_time.isoformat()} (before listener start)")
+                                # Add to processed_message_ids anyway to prevent re-processing if polling somehow gets it again
+                                if msg_id: self.processed_message_ids.add(msg_id)
+                                continue # Skip to the next message
+                        except ValueError as ve:
+                            logger.warning(f"Could not parse message timestamp '{published_at_str}': {ve}. Processing anyway.")
+                    else:
+                        logger.warning(f"Message ID {msg_id} missing publishedAt timestamp. Processing anyway.")
+                # >>> END WSP <<< 
+
                 if not msg_id:
                     logger.warning("Message missing ID, skipping deduplication check")
                     await self._process_message(message)
@@ -811,6 +914,10 @@ class LiveChatListener:
                 
                 # Send greeting message
                 await self._send_greeting_message()
+                
+                # Set the listener start time *after* all initialization and greeting
+                self.listener_start_time = datetime.now(timezone.utc)
+                logger.info(f"🎧 Live chat listener started polling at {self.listener_start_time.isoformat()}")
                 
                 # Start polling loop
                 logger.info("Starting chat polling loop...")

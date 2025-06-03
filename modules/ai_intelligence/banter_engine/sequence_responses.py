@@ -31,7 +31,7 @@ SEQUENCE_MAP = {
         "state": "Entanglement detected within conscious state (UN-UN-DU)",
         "tone": "intuitive breakthrough",
         "emoji": "✊✊🖐️",
-        "example": "It hit you like thunder. Let it echo.",
+        "example": "@Username, 'Un Un Du' You.",
         "response_link": "res://0-0-2"
     },
     (0, 1, 1): {

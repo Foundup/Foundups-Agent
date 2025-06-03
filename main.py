@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 """
-FoundUps Agent - Main Entry Point with Multi-Agent Management
+FoundUps Agent - Main Entry Point
 
-Enhanced architecture with same-account conflict prevention:
-1. Multi-agent management system integration
-2. Automatic conflict detection and resolution
-3. Safe agent selection (UnDaoDu preferred over Move2Japan)
-4. Clean authentication setup with agent coordination
-5. Livestream discovery with session caching
-6. Chat listener initialization with bot identity management
-7. Graceful error handling and recovery
+Multi-agent architecture with fallback to simplified core functionality:
+1. Attempt multi-agent setup with conflict detection
+2. Fallback to simple authentication if multi-agent fails
+3. Livestream discovery
+4. Chat listener initialization  
+5. Graceful error handling
 """
 
 import logging
@@ -48,111 +46,117 @@ logging.basicConfig(
 
 from modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver import StreamResolver
 from modules.communication.livechat.livechat.src.livechat import LiveChatListener
-from modules.infrastructure.agent_management.agent_management.src.multi_agent_manager import (
-    get_agent_manager, MultiAgentManager, AgentIdentity
-)
-from utils.oauth_manager import get_authenticated_service, get_authenticated_service_with_fallback
+
+# Import multi-agent system with fallback
+try:
+    from modules.infrastructure.agent_management.agent_management.src.multi_agent_manager import MultiAgentManager
+    MULTI_AGENT_AVAILABLE = True
+    logger = logging.getLogger(__name__)
+    logger.info("🤖 Multi-agent management system available")
+except ImportError as e:
+    MULTI_AGENT_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning(f"⚠️ Multi-agent system not available: {e}")
+    logger.info("🔄 Will use simple authentication fallback")
+
+# Always import fallback authentication
+from utils.oauth_manager import get_authenticated_service_with_fallback
 from utils.env_loader import get_env_variable
 
 logger = logging.getLogger(__name__)
 
 class FoundUpsAgent:
-    """Main application controller for FoundUps Agent with multi-agent support."""
+    """Main application controller for FoundUps Agent with multi-agent support and fallback."""
     
     def __init__(self):
         self.running = False
         self.service = None
         self.current_listener = None
         self.stream_resolver = None
-        self.agent_manager: MultiAgentManager = None
-        self.current_agent: AgentIdentity = None
-        self.user_channel_id = None
+        self.agent_manager = None
+        self.current_agent = None
+        self.channel_id = None
+        self.using_multi_agent = False
         
     async def initialize(self, force_agent: str = None):
-        """
-        Initialize the agent with multi-agent management and conflict prevention.
-        
-        Args:
-            force_agent: Force specific agent (e.g., "UnDaoDu" to avoid Move2Japan conflicts)
-        """
+        """Initialize the agent with multi-agent management or fallback to simple auth."""
         logger.info("🚀 Initializing FoundUps Agent with Multi-Agent Management...")
         
         # Load environment variables
         load_dotenv()
         
         # Get required configuration
-        self.user_channel_id = get_env_variable("CHANNEL_ID")
-        if not self.user_channel_id:
+        self.channel_id = get_env_variable("CHANNEL_ID")
+        if not self.channel_id:
             raise ValueError("CHANNEL_ID not found in environment variables")
             
-        logger.info(f"👤 User Channel ID: {self.user_channel_id[:8]}...{self.user_channel_id[-4:]}")
+        logger.info(f"👤 User Channel ID: {self.channel_id[:8]}...{self.channel_id[-4:]}")
         
-        # Initialize multi-agent management system
-        self.agent_manager = get_agent_manager()
-        success = self.agent_manager.initialize(self.user_channel_id)
+        # Try multi-agent setup first
+        if MULTI_AGENT_AVAILABLE:
+            try:
+                return await self._try_multi_agent_setup(force_agent)
+            except Exception as e:
+                logger.error(f"❌ Multi-agent setup failed: {e}")
+                logger.info("🔄 Falling back to simple authentication...")
         
+        # Fallback to simple authentication (clean4 approach)
+        return await self._fallback_simple_setup()
+    
+    async def _try_multi_agent_setup(self, force_agent: str = None):
+        """Try to set up multi-agent management system."""
+        self.agent_manager = MultiAgentManager()
+        
+        # Initialize multi-agent system
+        success = self.agent_manager.initialize(self.channel_id)
         if not success:
-            raise RuntimeError("Failed to initialize multi-agent management system")
+            raise RuntimeError("Multi-agent initialization failed")
         
-        # Try to select an agent
-        selected_agent = self.agent_manager.select_agent(preferred_name="UnDaoDu")
-        
-        if not selected_agent:
-            logger.warning("⚠️ Could not select UnDaoDu, trying auto-selection...")
-            selected_agent = self.agent_manager.select_agent()
-            
-        if not selected_agent:
-            logger.warning("⚠️ No agents available due to conflicts, using credential rotation...")
-            # Use credential rotation instead of agent selection
-            auth_result = get_authenticated_service_with_fallback()
-            if not auth_result:
-                logger.error("💥 Fatal error: No working credentials available!")
-                return False
-                
-            self.service, credentials, credential_set = auth_result
-            logger.info(f"🔑 Using credential rotation: {credential_set}")
-            
-            # Create a mock agent identity for the working credential
-            class MockAgent:
-                def __init__(self, credential_set):
-                    self.credential_set = credential_set
-                    self.channel_name = f"CredentialRotation_{credential_set}"
-                    self.agent_id = f"mock_agent_{credential_set}"
-                    self.status = "active"
-                    self.channel_id = "mock_channel_id"
-            
-            selected_agent = MockAgent(credential_set)
-            logger.info(f"✅ Selected agent: {selected_agent.channel_name} ({selected_agent.credential_set})")
-            
-            # Register the mock agent with the agent manager's registry
-            self.agent_manager.registry.agents[selected_agent.agent_id] = selected_agent
+        # Select an agent
+        if force_agent:
+            logger.info(f"🎯 Attempting to force selection of agent: {force_agent}")
+            self.current_agent = self.agent_manager.select_agent(force_agent)
         else:
-            # Authenticate with selected agent's credentials
-            credential_index = int(selected_agent.credential_set.split('_')[1]) - 1
-            logger.info(f"🔑 Using credential index {credential_index} for {selected_agent.credential_set}")
-            auth_result = get_authenticated_service(credential_index)
-            
-            if not auth_result:
-                logger.error(f"❌ Authentication failed for {selected_agent.channel_name}")
-                return False
-                
-            self.service, credentials = auth_result
+            # Default to UnDaoDu to avoid same-account conflicts
+            logger.info("🎯 Defaulting to UnDaoDu agent to avoid same-account conflicts")
+            self.current_agent = self.agent_manager.select_agent("UnDaoDu")
         
-        self.current_agent = selected_agent
-        logger.info(f"✅ Selected agent: {selected_agent.channel_name} ({selected_agent.credential_set})")
+        if not self.current_agent:
+            raise RuntimeError("No suitable agent found")
+        
+        # Get the service from the selected agent's credentials
+        credential_index = int(self.current_agent.credential_set.split('_')[1]) - 1
+        
+        # Import at the correct time
+        from modules.infrastructure.oauth_management.oauth_management.src.oauth_manager import get_authenticated_service
+        auth_result = get_authenticated_service(credential_index)
+        if not auth_result:
+            raise RuntimeError(f"Failed to authenticate with agent {self.current_agent.channel_name}")
+        
+        self.service, credentials = auth_result
+        logger.info(f"✅ Multi-agent authentication successful with {self.current_agent.channel_name}")
+        
+        # Initialize stream resolver
+        self.stream_resolver = StreamResolver(self.service)
+        self.using_multi_agent = True
+        return True
+    
+    async def _fallback_simple_setup(self):
+        """Fallback to simple authentication setup (clean4 approach)."""
+        logger.info("🔄 Using simple authentication fallback...")
+        
+        # Setup authentication using fallback method
+        auth_result = get_authenticated_service_with_fallback()
+        if not auth_result:
+            raise RuntimeError("Failed to authenticate with YouTube API")
+            
+        self.service, credentials, credential_set = auth_result
+        logger.info(f"✅ Simple authentication successful with {credential_set}")
         
         # Initialize stream resolver with session caching
         self.stream_resolver = StreamResolver(self.service)
         logger.info("📋 Stream resolver initialized with session caching")
-        
-        # Show conflict warnings if any
-        conflicted_agents = self.agent_manager.registry.get_conflicted_agents()
-        if conflicted_agents:
-            logger.warning("⚠️ SAME-ACCOUNT CONFLICTS DETECTED:")
-            for agent in conflicted_agents:
-                logger.warning(f"   • {agent.channel_name} ({agent.credential_set}) - Cannot be used")
-            logger.info("💡 These agents share the same account as the user and are blocked for safety")
-        
+        self.using_multi_agent = False
         return True
         
     async def find_livestream(self):
@@ -160,15 +164,13 @@ class FoundUpsAgent:
         logger.info(f"🔍 Searching for active livestream...")
         
         try:
-            result = self.stream_resolver.resolve_stream(self.user_channel_id)
+            result = self.stream_resolver.resolve_stream(self.channel_id)
             if result:
                 video_id, chat_id = result
                 logger.info(f"✅ Found active livestream: {video_id[:8]}...")
                 return video_id, chat_id
             else:
                 logger.info("⏳ No active livestream found")
-                logger.info("⏳ Waiting 60 seconds before next check")  # Increased from 30 to 60 seconds
-                await asyncio.sleep(60)
                 return None, None
                 
         except Exception as e:
@@ -176,53 +178,64 @@ class FoundUpsAgent:
             return None, None
             
     async def start_chat_listener(self, video_id, chat_id):
-        """Start the chat listener for the given livestream with agent session management."""
+        """Start the chat listener for the given livestream."""
         logger.info(f"💬 Starting chat listener for video: {video_id[:8]}...")
         
         try:
-            # Start agent session
-            stream_title = "Live Stream"  # Will be updated by stream resolver
-            success = self.agent_manager.start_agent_session(
-                self.current_agent, 
-                video_id, 
-                stream_title
-            )
+            # Start agent session if using multi-agent
+            if self.using_multi_agent and self.agent_manager and self.current_agent:
+                success = self.agent_manager.start_agent_session(
+                    self.current_agent, 
+                    video_id, 
+                    self.stream_resolver._get_stream_title(video_id) or "Unknown Stream"
+                )
+                if not success:
+                    logger.error("❌ Failed to start agent session")
+                    logger.info("⏳ Waiting 10 seconds before retrying...")
+                    await asyncio.sleep(10)  # Add delay to prevent rapid retry loop
+                    return
             
-            if not success:
-                logger.error("❌ Failed to start agent session")
-                logger.info("⏳ Waiting 10 seconds before retrying...")
-                await asyncio.sleep(10)  # Add delay to prevent rapid retry loop
-                return
-            
-            # Create chat listener with bot identity management
-            self.current_listener = LiveChatListener(self.service, video_id, chat_id)
+            # Create chat listener with bot identity management and agent configuration
+            if self.using_multi_agent and self.current_agent:
+                # Create agent_config dict with just the admin_users data the LiveChatListener expects
+                agent_config = {
+                    "admin_users": self.current_agent.admin_users
+                } if self.current_agent.admin_users else None
+                
+                self.current_listener = LiveChatListener(
+                    self.service, 
+                    video_id, 
+                    chat_id,
+                    agent_config=agent_config
+                )
+            else:
+                # Simple setup for fallback mode
+                self.current_listener = LiveChatListener(
+                    self.service, 
+                    video_id, 
+                    chat_id
+                )
             
             # Set greeting message during initialization
-            greeting = f"Hello everyone ✊✋🖐! {self.current_agent.channel_name} reporting for duty. I'm here to listen and learn (and maybe crack a joke). Beep boop!"
-            self.current_listener.greeting_message = greeting
+            if self.using_multi_agent and self.current_agent:
+                self.current_listener.greeting_message = f"🤖 {self.current_agent.channel_name} is now monitoring chat!"
             
-            # Set bot identity list for self-detection
-            bot_identities = self.agent_manager.get_bot_identity_list()
-            if hasattr(self.current_listener, 'set_bot_identities'):
-                self.current_listener.set_bot_identities(bot_identities)
-            
-            # Start listening (no parameters needed)
             await self.current_listener.start_listening()
             
         except Exception as e:
             logger.error(f"❌ Chat listener error: {e}")
             
         finally:
-            # End agent session
-            if self.agent_manager and self.current_agent:
+            # End agent session if using multi-agent
+            if self.using_multi_agent and self.agent_manager:
                 self.agent_manager.end_current_session()
             self.current_listener = None
             
     async def run(self):
-        """Main application loop with multi-agent coordination."""
+        """Main application loop."""
         self.running = True
-        logger.info("🎯 FoundUps Agent started - Monitoring for livestreams...")
-        logger.info(f"🤖 Active Agent: {self.current_agent.channel_name}")
+        mode = "Multi-Agent" if self.using_multi_agent else "Simple"
+        logger.info(f"🎯 FoundUps Agent started in {mode} mode - Monitoring for livestreams...")
         
         while self.running:
             try:
@@ -230,7 +243,7 @@ class FoundUpsAgent:
                 video_id, chat_id = await self.find_livestream()
                 
                 if video_id and chat_id:
-                    # Start chat listener with agent session
+                    # Start chat listener
                     await self.start_chat_listener(video_id, chat_id)
                     logger.info("📡 Chat session ended, searching for new livestream...")
                 else:
@@ -256,12 +269,9 @@ class FoundUpsAgent:
         
         if self.current_listener:
             self.current_listener.stop_listening()
-            
-        if self.agent_manager and self.current_agent:
-            self.agent_manager.end_current_session()
 
 async def main():
-    """Application entry point with agent selection."""
+    """Application entry point."""
     agent = FoundUpsAgent()
     
     # Setup signal handlers for graceful shutdown
@@ -273,15 +283,8 @@ async def main():
     signal.signal(signal.SIGTERM, signal_handler)
     
     try:
-        # Check for forced agent selection via environment variable
-        force_agent = os.getenv("FORCE_AGENT")
-        if not force_agent:
-            # Default: Force UnDaoDu to avoid Move2Japan same-account conflicts
-            force_agent = "UnDaoDu"
-            logger.info("🎯 Defaulting to UnDaoDu agent to avoid same-account conflicts")
-        
-        # Initialize with forced agent selection
-        await agent.initialize(force_agent=force_agent)
+        # Initialize and run
+        await agent.initialize()
         await agent.run()
         
     except Exception as e:
@@ -291,53 +294,22 @@ async def main():
     return 0
 
 def show_agent_status():
-    """Show current multi-agent status."""
-    from modules.infrastructure.agent_management.agent_management.src.multi_agent_manager import show_agent_status
-    show_agent_status()
+    """Show current agent status if multi-agent is available."""
+    if MULTI_AGENT_AVAILABLE:
+        try:
+            from modules.infrastructure.agent_management.agent_management.src.multi_agent_manager import show_agent_status as show_status
+            show_status()
+        except Exception as e:
+            logger.error(f"❌ Failed to show agent status: {e}")
+    else:
+        print("❌ Multi-agent system not available")
 
 def force_agent_selection(agent_name: str):
     """Force selection of a specific agent."""
-    os.environ["FORCE_AGENT"] = agent_name
-    logger.info(f"🎯 Environment set to force agent: {agent_name}")
-    logger.info("💡 Restart the application to use the new agent")
+    logger.info(f"🎯 Force agent selection: {agent_name}")
+    return asyncio.run(FoundUpsAgent().initialize(force_agent=agent_name))
 
 if __name__ == "__main__":
-    # Check for command line arguments
-    if len(sys.argv) > 1:
-        command = sys.argv[1].lower()
-        
-        if command == "status":
-            show_agent_status()
-            sys.exit(0)
-        elif command == "force-undaodu":
-            force_agent_selection("UnDaoDu")
-            sys.exit(0)
-        elif command == "force-move2japan":
-            logger.warning("⚠️ WARNING: Move2Japan may have same-account conflicts!")
-            force_agent_selection("Move2Japan")
-            sys.exit(0)
-        elif command.startswith("force-"):
-            agent_name = command[6:].replace("-", "")
-            force_agent_selection(agent_name)
-            sys.exit(0)
-        elif command in ["help", "-h", "--help"]:
-            print("\n🤖 FoundUps Agent - Multi-Agent Management")
-            print("=" * 50)
-            print("Usage:")
-            print("  python main.py                    # Run with UnDaoDu (safe)")
-            print("  python main.py status             # Show agent status")
-            print("  python main.py force-undaodu      # Force UnDaoDu agent")
-            print("  python main.py force-move2japan   # Force Move2Japan (risky)")
-            print("  python main.py help               # Show this help")
-            print("\nEnvironment Variables:")
-            print("  FORCE_AGENT=UnDaoDu              # Force specific agent")
-            print("  CHANNEL_ID=UC...                 # User's channel ID")
-            print("\nSame-Account Conflict Prevention:")
-            print("  • UnDaoDu agent is recommended (different account)")
-            print("  • Move2Japan agent may conflict if user is logged in as Move2Japan")
-            print("  • System automatically detects and prevents conflicts")
-            sys.exit(0)
-    
     # Run the application
     exit_code = asyncio.run(main())
     sys.exit(exit_code)

@@ -8,13 +8,15 @@ Tests direct LLM integration for emoji sequence responses
 import sys
 import os
 import logging
+import asyncio
 
 # Add project root to sys.path for module imports
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
 sys.path.insert(0, project_root)
 
 # Import required modules
-from modules.ai_intelligence.banter_engine.banter_engine.emoji_sequence_map import SEQUENCE_MAP, emoji_string_to_tuple
+from modules.ai_intelligence.banter_engine import SEQUENCE_MAP, emoji_string_to_tuple
+from modules.communication.livechat.livechat.src.livechat import LiveChatListener
 
 logger = logging.getLogger(__name__)
 

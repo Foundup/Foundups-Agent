@@ -14,12 +14,18 @@ import json
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 import googleapiclient.errors
-from modules.ai_intelligence.banter_engine.banter_engine import BanterEngine
+from modules.ai_intelligence.banter_engine import BanterEngine
 from modules.communication.livechat.live_chat_poller.src.live_chat_poller import LiveChatPoller
+from unittest.mock import Mock, patch, MagicMock
+from modules.infrastructure.models.chat_message import ChatMessage, Author
+from modules.infrastructure.token_manager.src.token_manager import TokenManager
 # StreamResolver import removed as it's unused and caused errors
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
+# Suppress overly verbose logging from googleapiclient.discovery
+logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 
 class LiveChatProcessor:
     """

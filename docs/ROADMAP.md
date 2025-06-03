@@ -73,23 +73,28 @@ This roadmap tracks project phases, development cycles, and future planning for 
 
 ## 🧩 MVP Release Phases
 
-### ⏳ Tier 1 — Blockchain Foundation (DAE)
+### ⏳ Tier 1 — Blockchain Foundation (DAE) (Domain: Blockchain)
 - [ ] Blockchain integration module toggle via `.env`
-- [ ] Token drop + reward logic
+- [ ] Token drop + reward logic (cross-domain with Gamification)
 - [ ] Wallet generation for viewers
 - [ ] Token reclaim + decay logic
 
-### ⏳ Tier 2 — DAO Evolution
+### ⏳ Tier 2 — DAO Evolution (Domain: Blockchain)
 - [ ] Token governance structure
 - [ ] Voting logic for protocol decisions
 - [ ] DAO treasury and fund routing
 
-### 🔄 Blockchain Ledger
-- [ ] Ledger module for tracking user interactions
+### 🔄 Gamification Layer (Domain: Gamification)
+- [ ] Ledger module for tracking user interactions (points, achievements) (was: Blockchain Ledger)
 - [ ] User points system
 - [ ] Achievement tracking
-- [ ] Reward distribution
-- [ ] Historical data analysis
+- [ ] Reward distribution (integrates with Blockchain for token rewards)
+- [ ] Historical data analysis for engagement metrics
+
+### ⏳ Tier 3 — FoundUps Platform (Domain: FoundUps)
+- [ ] Framework for onboarding individual FoundUp entities (e.g., JOSI, EDGWIT)
+- [ ] Standardized APIs for FoundUp project interaction with core agent services
+- [ ] Discovery and management features for multiple FoundUp projects
 
 ## Version Guide
 ### Development Phases (Correlated with WSP 9 & LLME Scores):

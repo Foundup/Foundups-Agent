@@ -33,6 +33,7 @@ class AgentIdentity:
     status: str = "available"  # available, active, cooldown, error, same_account_conflict
     capabilities: List[str] = None
     conflict_reason: Optional[str] = None
+    admin_users: Optional[Dict[str, Any]] = None
     
     def __post_init__(self):
         if self.capabilities is None:

@@ -3,7 +3,7 @@ Unit tests for the authentication handling functionality of LiveChatListener cla
 """
 
 import unittest
-from unittest.mock import patch, MagicMock, AsyncMock, mock_open
+from unittest.mock import patch, MagicMock, AsyncMock, mock_open, PropertyMock
 import asyncio
 import logging
 import time
@@ -15,7 +15,7 @@ import googleapiclient.errors
 from googleapiclient.errors import HttpError
 import httplib2
 from modules.communication.livechat.livechat.src.livechat import LiveChatListener
-from modules.ai_intelligence.banter_engine.banter_engine import BanterEngine
+from modules.ai_intelligence.banter_engine import BanterEngine
 
 class TestLiveChatListenerAuthHandling(unittest.TestCase):
     """Test cases for authentication handling functionality of LiveChatListener."""

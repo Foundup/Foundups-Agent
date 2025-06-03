@@ -44,7 +44,10 @@ START HERE
 ├─ platform_integration/    → External APIs (YouTube, OAuth)
 ├─ infrastructure/          → Core systems, agents, auth
 ├─ monitoring/             → Logging, metrics, health
-└─ development/            → Tools, testing, utilities
+├─ development/            → Tools, testing, utilities
+├─ foundups/               → Individual FoundUps projects (modular, autonomous applications)
+├─ gamification/           → Engagement mechanics, rewards, token loops, behavioral recursion
+└─ blockchain/             → Decentralized infrastructure, chain integrations, token logic, DAE persistence
 ```
 
 **🎯 ACTION:** Choose domain → Create `modules/<domain>/<your_module>/`
@@ -239,6 +242,9 @@ python -m pytest modules/ --cov=modules --cov-report=html
 | `infrastructure` | Core systems | agent_management, oauth_management |
 | `monitoring` | System health | logging, metrics, alerts |
 | `development` | Dev tools | testing_tools, automation |
+| `foundups` | Individual FoundUps projects | josi_agent, edgwit_project |
+| `gamification` | Engagement, rewards, token loops | rewards_engine, token_mechanics |
+| `blockchain` | Decentralized infra, token logic | chain_connectors, dae_persistence |
 
 ### WSP Quick Commands
 | Task | Command | WSP Reference |

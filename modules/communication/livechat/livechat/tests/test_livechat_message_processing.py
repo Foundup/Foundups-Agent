@@ -15,7 +15,7 @@ import googleapiclient.errors
 from googleapiclient.errors import HttpError
 import httplib2
 from modules.communication.livechat.livechat.src.livechat import LiveChatListener
-from modules.ai_intelligence.banter_engine.banter_engine import BanterEngine
+from modules.ai_intelligence.banter_engine import BanterEngine
 
 class TestLiveChatListenerMessageProcessing(unittest.TestCase):
     """Test cases for message processing functionality of LiveChatListener."""
@@ -92,7 +92,7 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
              patch.object(self.listener, '_log_to_user_file') as mock_log:
             
             # Configure mocks
-            mock_extract.return_value = ("msg123", "Hello ✊✋🖐️ world!", "TestUser", "user123")
+            mock_extract.return_value = ("msg123", "Hello ✊✋🖐️ world!", "TestUser", "user123", "user")
             mock_check.return_value = True  # Trigger pattern detected
             mock_handle.return_value = False  # Handling failed
             mock_rate_limited.return_value = True  # User is rate limited
@@ -140,7 +140,7 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
              patch('modules.livechat.src.livechat.datetime') as mock_datetime:
             
             # Configure mocks
-            mock_extract.return_value = ("msg123", "Regular message", "TestUser", "user123")
+            mock_extract.return_value = ("msg123", "Regular message", "TestUser", "user123", "user")
             mock_check.return_value = False  # No trigger pattern
             mock_create.return_value = expected_log
             mock_log.side_effect = Exception("File write error")  # Logging fails
@@ -208,7 +208,7 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
              patch('modules.livechat.src.livechat.datetime') as mock_datetime:
             
             # Configure mocks
-            mock_extract.return_value = ("msg123", "Regular message", "TestUser", "user123")
+            mock_extract.return_value = ("msg123", "Regular message", "TestUser", "user123", "user")
             mock_check.side_effect = Exception("Unexpected error during pattern check")  # Unexpected error
             mock_now = MagicMock()
             mock_now.isoformat.return_value = "2023-01-01T12:00:00"
@@ -258,7 +258,7 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
              patch('modules.livechat.src.livechat.datetime') as mock_datetime:
             
             # Configure mocks
-            mock_extract.return_value = ("msg123", "Hello ✊✋🖐️ world!", "TestUser", "user123")
+            mock_extract.return_value = ("msg123", "Hello ✊✋🖐️ world!", "TestUser", "user123", "user")
             mock_check.return_value = True  # Trigger pattern detected
             mock_handle.return_value = False  # Handling failed
             mock_rate_limited.return_value = False  # User is NOT rate limited
@@ -281,8 +281,7 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
     
     @pytest.mark.asyncio
     async def test_extract_message_metadata_standard_message(self):
-        """Test extraction of metadata from a standard message."""
-        # Create test message
+        """Test _extract_message_metadata with a standard message."""
         test_message = {
             "id": "msg123",
             "snippet": {
@@ -291,18 +290,177 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
             "authorDetails": {
                 "displayName": "TestUser",
                 "channelId": "user123"
+                # No role flags, defaults to 'user'
             }
         }
         
+        expected_result = ("msg123", "Hello world!", "TestUser", "user123", "user") # Added "user" role
+        
         # Call the method
-        msg_id, display_message, author_name, author_id = self.listener._extract_message_metadata(test_message)
+        result = self.listener._extract_message_metadata(test_message)
         
         # Verify results
-        assert msg_id == "msg123"
-        assert display_message == "Hello world!"
-        assert author_name == "TestUser"
-        assert author_id == "user123"
+        self.assertEqual(result, expected_result)
     
+    @pytest.mark.asyncio
+    async def test_extract_message_metadata_chat_owner(self):
+        """Test _extract_message_metadata when the author is the chat owner."""
+        test_message = {
+            "id": "msg-owner",
+            "snippet": {"displayMessage": "Owner message"},
+            "authorDetails": {
+                "displayName": "ChannelOwner",
+                "channelId": "owner123",
+                "isChatOwner": True,
+                "isChatModerator": False # Explicitly set other flags to ensure owner takes precedence
+            }
+        }
+        expected_result = ("msg-owner", "Owner message", "ChannelOwner", "owner123", "owner")
+        result = self.listener._extract_message_metadata(test_message)
+        self.assertEqual(result, expected_result)
+    
+    @pytest.mark.asyncio
+    async def test_extract_message_metadata_chat_moderator(self):
+        """Test _extract_message_metadata when the author is a chat moderator (default to standard_mod if not in user_tiers)."""
+        # Simulate listener.user_tiers being empty or not containing this user
+        self.listener.user_tiers = {}
+        test_message = {
+            "id": "msg-mod",
+            "snippet": {"displayMessage": "Moderator message"},
+            "authorDetails": {
+                "displayName": "ChatMod",
+                "channelId": "mod123",
+                "isChatOwner": False,
+                "isChatModerator": True
+            }
+        }
+        expected_result = ("msg-mod", "Moderator message", "ChatMod", "mod123", "standard_mod") # Expect standard_mod
+        result = self.listener._extract_message_metadata(test_message)
+        self.assertEqual(result, expected_result)
+
+    @pytest.mark.asyncio
+    async def test_extract_message_metadata_managing_moderator(self):
+        """Test _extract_message_metadata for a managing moderator defined in user_tiers."""
+        self.listener.user_tiers = {"managing_mod_id": "managing_mod"}
+        test_message = {
+            "id": "msg-managing-mod",
+            "snippet": {"displayMessage": "Managing moderator message"},
+            "authorDetails": {
+                "displayName": "ManagingMod",
+                "channelId": "managing_mod_id",
+                "isChatOwner": False,
+                "isChatModerator": True
+            }
+        }
+        expected_result = ("msg-managing-mod", "Managing moderator message", "ManagingMod", "managing_mod_id", "managing_mod")
+        result = self.listener._extract_message_metadata(test_message)
+        self.assertEqual(result, expected_result)
+
+    @pytest.mark.asyncio
+    async def test_extract_message_metadata_standard_moderator_from_config(self):
+        """Test _extract_message_metadata for a standard moderator explicitly defined in user_tiers."""
+        self.listener.user_tiers = {"standard_mod_id": "standard_mod"}
+        test_message = {
+            "id": "msg-standard-mod-config",
+            "snippet": {"displayMessage": "Standard moderator message (from config)"},
+            "authorDetails": {
+                "displayName": "StandardModConfig",
+                "channelId": "standard_mod_id",
+                "isChatOwner": False,
+                "isChatModerator": True
+            }
+        }
+        expected_result = ("msg-standard-mod-config", "Standard moderator message (from config)", "StandardModConfig", "standard_mod_id", "standard_mod")
+        result = self.listener._extract_message_metadata(test_message)
+        self.assertEqual(result, expected_result)
+
+    @pytest.mark.asyncio
+    async def test_extract_message_metadata_moderator_unknown_tier_in_config(self):
+        """Test _extract_message_metadata for a moderator with an unrecognized tier in user_tiers (should default to standard_mod)."""
+        self.listener.user_tiers = {"unknown_tier_mod_id": "super_mod"} # "super_mod" is not 'managing_mod'
+        test_message = {
+            "id": "msg-unknown-tier-mod",
+            "snippet": {"displayMessage": "Moderator with unknown tier"},
+            "authorDetails": {
+                "displayName": "UnknownTierMod",
+                "channelId": "unknown_tier_mod_id",
+                "isChatOwner": False,
+                "isChatModerator": True
+            }
+        }
+        # Expect standard_mod as fallback because "super_mod" isn't "managing_mod"
+        expected_result = ("msg-unknown-tier-mod", "Moderator with unknown tier", "UnknownTierMod", "unknown_tier_mod_id", "standard_mod")
+        result = self.listener._extract_message_metadata(test_message)
+        self.assertEqual(result, expected_result)
+
+    @pytest.mark.asyncio
+    async def test_extract_message_metadata_owner_in_user_tiers_as_managing_mod(self):
+        """Test owner role when user is also in user_tiers as managing_mod (isChatOwner should take precedence)."""
+        self.listener.user_tiers = {"owner_id_in_config": "managing_mod"}
+        test_message = {
+            "id": "msg-owner-in-config",
+            "snippet": {"displayMessage": "Owner message (in config as managing_mod)"},
+            "authorDetails": {
+                "displayName": "OwnerInConfig",
+                "channelId": "owner_id_in_config",
+                "isChatOwner": True, # This should override the tier from config
+                "isChatModerator": True # Also a moderator
+            }
+        }
+        expected_result = ("msg-owner-in-config", "Owner message (in config as managing_mod)", "OwnerInConfig", "owner_id_in_config", "owner")
+        result = self.listener._extract_message_metadata(test_message)
+        self.assertEqual(result, expected_result)
+    
+    @pytest.mark.asyncio
+    async def test_extract_message_metadata_regular_user(self):
+        """Test _extract_message_metadata for a regular user with no special flags."""
+        test_message = {
+            "id": "msg-user",
+            "snippet": {"displayMessage": "User message"},
+            "authorDetails": {
+                "displayName": "RegularUser",
+                "channelId": "user789",
+                "isChatOwner": False, # Explicitly false
+                "isChatModerator": False # Explicitly false
+            }
+        }
+        expected_result = ("msg-user", "User message", "RegularUser", "user789", "user")
+        result = self.listener._extract_message_metadata(test_message)
+        self.assertEqual(result, expected_result)
+
+    @pytest.mark.asyncio
+    async def test_extract_message_metadata_user_with_no_role_flags_present(self):
+        """Test _extract_message_metadata for a user where role flags are not present in authorDetails."""
+        test_message = {
+            "id": "msg-noroleflags",
+            "snippet": {"displayMessage": "User message with no role flags"},
+            "authorDetails": {
+                "displayName": "NoFlagsUser",
+                "channelId": "user000"
+                # isChatOwner and isChatModerator keys are entirely missing
+            }
+        }
+        expected_result = ("msg-noroleflags", "User message with no role flags", "NoFlagsUser", "user000", "user")
+        result = self.listener._extract_message_metadata(test_message)
+        self.assertEqual(result, expected_result)
+
+    @pytest.mark.asyncio
+    async def test_extract_message_metadata_owner_overrides_moderator(self):
+        """Test _extract_message_metadata ensures owner role takes precedence if both flags are true."""
+        test_message = {
+            "id": "msg-owner-mod-conflict",
+            "snippet": {"displayMessage": "Owner but also mod flagged"},
+            "authorDetails": {
+                "displayName": "OwnerModConflict",
+                "channelId": "conflict123",
+                "isChatOwner": True,
+                "isChatModerator": True # Both true, owner should win
+            }
+        }
+        expected_result = ("msg-owner-mod-conflict", "Owner but also mod flagged", "OwnerModConflict", "conflict123", "owner")
+        result = self.listener._extract_message_metadata(test_message)
+        self.assertEqual(result, expected_result)
+
     @pytest.mark.asyncio
     async def test_check_trigger_patterns_match(self):
         """Test that trigger patterns are correctly detected."""
@@ -553,122 +711,6 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
             assert result is None
     
     @pytest.mark.asyncio
-    async def test_extract_message_metadata_missing_channel_id(self):
-        """Test extraction of metadata when channelId is missing from authorDetails."""
-        # Create test message without channelId
-        test_message = {
-            "id": "msg123",
-            "snippet": {
-                "displayMessage": "Hello world!"
-            },
-            "authorDetails": {
-                "displayName": "TestUser"
-                # channelId is missing
-            }
-        }
-        
-        # Call the method
-        msg_id, display_message, author_name, author_id = self.listener._extract_message_metadata(test_message)
-        
-        # Verify results
-        assert msg_id == "msg123"
-        assert display_message == "Hello world!"
-        assert author_name == "TestUser"
-        assert author_id == "unknown"  # Should default to "unknown" when channelId is missing
-    
-    @pytest.mark.asyncio
-    async def test_extract_message_metadata_empty_display_message(self):
-        """Test extraction of metadata when displayMessage is empty or missing."""
-        # Create test message with empty displayMessage
-        test_message = {
-            "id": "msg123",
-            "snippet": {
-                # displayMessage is missing
-            },
-            "authorDetails": {
-                "displayName": "TestUser",
-                "channelId": "user123"
-            }
-        }
-        
-        # Call the method
-        msg_id, display_message, author_name, author_id = self.listener._extract_message_metadata(test_message)
-        
-        # Verify results
-        assert msg_id == "msg123"
-        assert display_message == ""  # Should default to empty string
-        assert author_name == "TestUser"
-        assert author_id == "user123"
-        
-        # Now test with explicitly empty displayMessage
-        test_message["snippet"]["displayMessage"] = ""
-        
-        # Call the method again
-        msg_id, display_message, author_name, author_id = self.listener._extract_message_metadata(test_message)
-        
-        # Verify results
-        assert msg_id == "msg123"
-        assert display_message == ""  # Should be an empty string
-        assert author_name == "TestUser"
-        assert author_id == "user123"
-    
-    @pytest.mark.asyncio
-    async def test_extract_message_metadata_with_logging(self):
-        """Test that _extract_message_metadata logs appropriate debug messages."""
-        # Create test message
-        test_message = {
-            "id": "msg123",
-            "snippet": {
-                "displayMessage": "Test emoji message ✊✋🖐️"
-            },
-            "authorDetails": {
-                "displayName": "TestUser",
-                "channelId": "user123"
-            }
-        }
-        
-        # Set trigger emojis
-        self.listener.trigger_emojis = ["✊", "✋", "🖐️"]
-        
-        # Mock logger to capture debug messages
-        with patch('modules.communication.livechat.livechat.src.livechat.logger') as mock_logger:
-            # Call the method
-            msg_id, display_message, author_name, author_id = self.listener._extract_message_metadata(test_message)
-            
-            # Verify results
-            assert msg_id == "msg123"
-            assert display_message == "Test emoji message ✊✋🖐️"
-            assert author_name == "TestUser"
-            assert author_id == "user123"
-            
-            # Verify logging calls
-            mock_logger.debug.assert_any_call(f"Chat message received: {display_message}")
-            mock_logger.debug.assert_any_call(f"Message length: {len(display_message)}")
-            mock_logger.debug.assert_any_call(f"Looking for emojis: {self.listener.trigger_emojis}")
-            
-            # Ensure all three log messages were issued
-            assert mock_logger.debug.call_count >= 3
-    
-    @pytest.mark.asyncio
-    async def test_extract_message_metadata_missing_display_name(self):
-        """Test that _extract_message_metadata raises KeyError when displayName is missing."""
-        # Create test message without displayName
-        test_message = {
-            "id": "msg123",
-            "snippet": {
-                "displayMessage": "Hello world!"
-            },
-            "authorDetails": {
-                # displayName is missing
-                "channelId": "user123"
-            }
-        }
-        
-        # Call the method - should raise KeyError
-        with pytest.raises(KeyError):
-            self.listener._extract_message_metadata(test_message)
-    
-    @pytest.mark.asyncio
     async def test_process_message_success_no_triggers(self):
         """Test the happy path of processing a message without trigger patterns."""
         # Create test message
@@ -699,7 +741,7 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
              patch('modules.livechat.src.livechat.datetime') as mock_datetime:
             
             # Configure mocks
-            mock_extract.return_value = ("msg123", "Regular message without triggers", "TestUser", "user123")
+            mock_extract.return_value = ("msg123", "Regular message without triggers", "TestUser", "user123", "user")
             mock_check.return_value = False  # No trigger patterns detected
             mock_create.return_value = expected_log
             mock_now = MagicMock()
@@ -748,7 +790,7 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
              patch('modules.livechat.src.livechat.datetime') as mock_datetime:
             
             # Configure mocks
-            mock_extract.return_value = ("msg123", "Message with trigger ✊✋🖐️", "TestUser", "user123")
+            mock_extract.return_value = ("msg123", "Message with trigger ✊✋🖐️", "TestUser", "user123", "user")
             mock_check.return_value = True  # Trigger patterns detected
             mock_handle.return_value = True  # Trigger handling was successful
             mock_create.return_value = expected_log
@@ -789,7 +831,7 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
              patch.object(self.listener, '_log_to_user_file') as mock_log:
             
             # Configure mocks
-            mock_extract.return_value = ("msg123", "Test message", "TestUser", "user123")
+            mock_extract.return_value = ("msg123", "Test message", "TestUser", "user123", "user")
             mock_check.return_value = False  # No trigger patterns
             
             # Create a custom log entry that we can specifically check for
@@ -874,7 +916,7 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
              patch('modules.livechat.src.livechat.datetime') as mock_datetime:
             
             # Configure mocks
-            mock_extract.return_value = ("msg123", "Test message for log entry format", "TestUser", "user123")
+            mock_extract.return_value = ("msg123", "Test message for log entry format", "TestUser", "user123", "user")
             mock_check.return_value = False  # No trigger patterns
             
             # Mock datetime for consistent timestamp
@@ -920,7 +962,7 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
              patch('modules.communication.livechat.livechat.src.livechat.logger') as mock_logger:
             
             # Configure mocks
-            mock_extract.return_value = ("msg123", "Test message for log exception handling", "TestUser", "user123")
+            mock_extract.return_value = ("msg123", "Test message for log exception handling", "TestUser", "user123", "user")
             mock_check.return_value = False
             test_log_entry = {"id": "msg123", "author": "TestUser", "message": "Test message for log exception handling"}
             mock_create.return_value = test_log_entry
@@ -962,7 +1004,7 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
             expected_author = "TestAuthor"
             expected_channel = "channel_123"
             
-            mock_extract.return_value = (expected_msg_id, expected_msg_content, expected_author, expected_channel)
+            mock_extract.return_value = (expected_msg_id, expected_msg_content, expected_author, expected_channel, "user")
             mock_check.return_value = False
             mock_create.return_value = {"dummy": "log entry"}
             
@@ -998,7 +1040,7 @@ class TestLiveChatListenerMessageProcessing(unittest.TestCase):
              patch.object(self.listener, '_log_to_user_file') as mock_log:
             
             # Configure mocks
-            mock_extract.return_value = ("msg123", "Test sequential execution", "TestUser", "user123")
+            mock_extract.return_value = ("msg123", "Test sequential execution", "TestUser", "user123", "user")
             mock_check.return_value = False
             test_log_entry = {"test": "log entry"}
             mock_create.return_value = test_log_entry

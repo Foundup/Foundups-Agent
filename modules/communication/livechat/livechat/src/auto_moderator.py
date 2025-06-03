@@ -418,31 +418,31 @@ class AutoModerator:
         
         # Classic IRC trout slap variations with modern twists
         trout_slaps = [
-            f"🐟 *slaps {author_name} around a bit with a large trout* 🐟",
-            f"🐟 *whacks {author_name} with a mighty salmon for {timeout_duration}s* 🐟",
-            f"🐟 *bonks {author_name} with a hefty halibut* - Chat rules matter! 🐟",
-            f"🐟 *smacks {author_name} with a supersonic sardine* - Behave yourself! 🐟",
-            f"🐟 *wallops {author_name} with a wiggly walleye* - {timeout_duration}s timeout! 🐟",
-            f"🐟 *thwacks {author_name} with a tremendous tuna* - No spam allowed! 🐟",
-            f"🐟 *clobbers {author_name} with a colossal cod* - Take a break! 🐟",
-            f"🐟 *bops {author_name} with a bouncing bass* - Cool it for {timeout_duration}s! 🐟",
-            f"🐟 *swipes {author_name} with a slippery snapper* - Read the rules! 🐟",
-            f"🐟 *clunks {author_name} with a chunky catfish* - Timeout engaged! 🐟"
+            f"🐟 *slaps {author_name} around a bit with a large trout* ✊✊✊🐟",
+            f"🐟 *whacks {author_name} with a mighty salmon for {timeout_duration}s* ✋✋✋🐟",
+            f"🐟 *bonks {author_name} with a hefty halibut* - Chat rules matter! 🖐️🖐️🖐️🐟",
+            f"🐟 *smacks {author_name} with a supersonic sardine* - Behave yourself! ✊✊✊🐟",
+            f"🐟 *wallops {author_name} with a wiggly walleye* - {timeout_duration}s timeout! ✋✋✋🐟",
+            f"🐟 *thwacks {author_name} with a tremendous tuna* - No spam allowed! 🖐️🖐️🖐️🐟",
+            f"🐟 *clobbers {author_name} with a colossal cod* - Take a break! ✊✊✊🐟",
+            f"🐟 *bops {author_name} with a bouncing bass* - Cool it for {timeout_duration}s! ✋✋✋🐟",
+            f"🐟 *swipes {author_name} with a slippery snapper* - Read the rules! 🖐️🖐️🖐️🐟",
+            f"🐟 *clunks {author_name} with a chunky catfish* - Timeout engaged! ✊✊✊🐟"
         ]
         
         # Political spam specific slaps
         political_slaps = [
-            f"🐟 *slaps {author_name} with a democracy-defending trout* - Political spam is not welcome! 🐟",
-            f"🐟 *whacks {author_name} with a bipartisan bass* - Keep politics civil or stay quiet! 🐟", 
-            f"🐟 *bonks {author_name} with a constitutional cod* - No extremist content here! 🐟",
-            f"🐟 *smacks {author_name} with a liberty-loving lobster* - Political trolling = timeout! 🐟"
+            f"🐟 *slaps {author_name} with a democracy-defending trout* - Political spam is not welcome! ✋✋✋🐟",
+            f"🐟 *whacks {author_name} with a bipartisan bass* - Keep politics civil or stay quiet! 🖐️🖐️🖐️🐟", 
+            f"🐟 *bonks {author_name} with a constitutional cod* - No extremist content here! ✊✊✊🐟",
+            f"🐟 *smacks {author_name} with a liberty-loving lobster* - Political trolling = timeout! ✋✋✋🐟"
         ]
         
         # QAnon/conspiracy specific slaps
         conspiracy_slaps = [
-            f"🐟 *slaps {author_name} with a fact-checking flounder* - Conspiracy theories not allowed! 🐟",
-            f"🐟 *whacks {author_name} with a reality-checking ray* - Stay grounded in facts! 🐟",
-            f"🐟 *bonks {author_name} with a truth-telling trout* - No conspiracy spam! 🐟"
+            f"🐟 *slaps {author_name} with a fact-checking flounder* - Conspiracy theories not allowed! 🖐️🖐️🖐️🐟",
+            f"🐟 *whacks {author_name} with a reality-checking ray* - Stay grounded in facts! ✊✊✊🐟",
+            f"🐟 *bonks {author_name} with a truth-telling trout* - No conspiracy spam! ✋✋✋🐟"
         ]
         
         # Choose appropriate slap based on violation reason
@@ -781,7 +781,7 @@ class AutoModerator:
         try:
             # Create specific callout message with the format the user wants
             safe_name = author_name.replace(" ", "_")  # Make name safe for @ mention
-            callout_message = f"0102 sees you UnDaoDu! Nice try @{safe_name}! Testing auto-mod protection? 😄🛡 #ModeratorProtected"
+            callout_message = f"0102 sees you UnDaoDu! Nice try @{safe_name}! Testing auto-mod protection? 😄🛡 🖐️🖐️🖐️ #ModeratorProtected"
             
             # Create chat message request
             message_request = {

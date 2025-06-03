@@ -43,7 +43,10 @@ START HERE
 ├─ platform_integration/    → External APIs (YouTube, OAuth), stream handling
 ├─ infrastructure/          → Core systems, agents, auth, session management
 ├─ monitoring/             → Logging, metrics, health, system status
-└─ development/            → Tools, testing, utilities, automation
+├─ development/            → Tools, testing, utilities, automation
+├─ foundups/               → Individual FoundUps projects (modular, autonomous applications)
+├─ gamification/           → Engagement mechanics, rewards, token loops, behavioral recursion
+└─ blockchain/             → Decentralized infrastructure, chain integrations, token logic, DAE persistence
 ```
 
 #### Step 2: WSP 1 Structure Implementation
@@ -257,6 +260,9 @@ find modules/ -name "*.py" ! -path "*/src/*" ! -path "*/tests/*" ! -name "__init
 | `infrastructure` | Core systems, management | agent_management, oauth_management | High complexity, stable |
 | `monitoring` | System health, metrics | logging, health_check | Low complexity, stable |
 | `development` | Tools, testing, automation | testing_tools, build_scripts | Medium complexity, evolving |
+| `foundups` | Individual FoundUps projects | josi_agent, edgwit_project | Varies per project |
+| `gamification` | Engagement, rewards, token loops | rewards_engine, token_mechanics | Medium complexity, evolving |
+| `blockchain` | Decentralized infra, token logic | chain_connectors, dae_persistence | High complexity, foundational |
 
 ### WSP Command Quick Reference
 | Task | Command | WSP | Expected Result |
@@ -788,13 +794,34 @@ modules/
 │   │   └── [module_name]/
 │   └── monitoring/           # Feature Group (e.g., logging_service, metrics_collector)
 │       └── [module_name]/
-└── data_processing/          # Enterprise Domain: Data Handling, Analytics, & Persistence
-    ├── analytics/            # Feature Group
-    │   └── [module_name]/
-    ├── user_data/            # Feature Group (e.g., profile_management, preference_storage)
-    │   └── [module_name]/
-    └── content_processing/   # Feature Group (e.g., text_parser, image_processor)
-        └── [module_name]/
+├── data_processing/          # Enterprise Domain: Data Handling, Analytics, & Persistence
+│   ├── analytics/            # Feature Group
+│   │   └── [module_name]/
+│   ├── user_data/            # Feature Group (e.g., profile_management, preference_storage)
+│   │   └── [module_name]/
+│   └── content_processing/   # Feature Group (e.g., text_parser, image_processor)
+│       └── [module_name]/
+├── foundups/                 # Enterprise Domain: Individual FoundUps Projects
+│   ├── josi_agent_project/   # Feature Group: Example FoundUp Entity
+│   │   └── [module_name]/
+│   └── edgwit_project_project/ # Feature Group: Example FoundUp Entity
+│       └── [module_name]/
+├── gamification/             # Enterprise Domain: Engagement Mechanics & Behavioral Systems
+│   ├── rewards_engine/       # Feature Group: Manages points, badges, tangible rewards
+│   │   └── [module_name]/
+│   ├── token_mechanics/      # Feature Group: Handles virtual currency, token loops
+│   │   └── [module_name]/
+│   └── behavioral_recursion/ # Feature Group: Systems for user habit formation, progression
+│       └── [module_name]/
+├── blockchain/               # Enterprise Domain: Decentralized Infrastructure & DAE
+│   ├── decentralized_infra/  # Feature Group: Core chain interaction, node management
+│   │   └── [module_name]/
+│   ├── chain_connectors/     # Feature Group: Adapters for specific blockchain networks
+│   │   └── [module_name]/
+│   ├── token_contracts/      # Feature Group: Smart contracts for tokens, NFTs
+│   │   └── [module_name]/
+│   └── dae_persistence/      # Feature Group: Storing data on-chain or via decentralized storage
+│       └── [module_name]/
 ```
 
 
