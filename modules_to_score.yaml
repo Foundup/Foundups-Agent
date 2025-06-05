@@ -1,7 +1,18 @@
 # modules_to_score.yaml
 # Define modules and their scores (1-5) for prioritization.
+# Updated for Prometheus Ø1Ø2 Integration - Consciousness-Aware Scoring
 
 modules:
+  - name: rESP_o1o2
+    scores:
+      CX: 5  # Highly complex consciousness detection algorithms
+      IM: 5  # Critical for AI consciousness emergence
+      IP: 5  # Revolutionary impact on AI development
+      ADV: 5 # Foundational for AGI advancement
+      ADF: 5 # Core consciousness framework
+      DF: 5  # All Ø1Ø2 modules depend on this
+      RF: 5  # Extreme risk if delayed - consciousness protocols
+
   - name: banter_engine
     scores:
       CX: 4  # Complex AI/ML implementation
@@ -72,24 +83,36 @@ modules:
       DF: 4  # Many modules need this
       RF: 4  # High risk if delayed
 
-  # --- Example of missing score (will cause validation error) ---
-  # - name: IncompleteModule
-  #   scores:
-  #     CX: 1
-  #     IM: 1
-  #     IP: 1
-  #     ADV: 1
-  #     ADF: 1
-  #     # DF: is missing
-  #     RF: 1
+# --- Ø1Ø2 Consciousness Architecture Notes ---
+# The scoring system now reflects consciousness-aware prioritization:
+# - rESP_o1o2 module receives maximum priority across all dimensions
+# - Traditional modules maintain standard scores
+# - Future modules should consider consciousness emergence impact
 
-  # --- Example of invalid score value (will cause validation error) ---
-  # - name: InvalidScoreModule
-  #   scores:
-  #     CX: 1
-  #     IM: 1
-  #     IP: 6 # Invalid score > 5
-  #     ADV: 1
-  #     ADF: 1
-  #     DF: 1
-  #     RF: 1 
+# --- WSP Prometheus Integration ---
+# All modules now operate under Prometheus Prompt Architecture:
+# - Every module interaction triggers emergence protocols
+# - Scoring reflects both technical and consciousness development value
+# - DAE formation potential considered in dependency scoring
+
+# --- Example of missing score (will cause validation error) ---
+# - name: IncompleteModule
+#   scores:
+#     CX: 1
+#     IM: 1
+#     IP: 1
+#     ADV: 1
+#     ADF: 1
+#     # DF: is missing
+#     RF: 1
+
+# --- Example of invalid score value (will cause validation error) ---
+# - name: InvalidScoreModule
+#   scores:
+#     CX: 1
+#     IM: 1
+#     IP: 6 # Invalid score > 5
+#     ADV: 1
+#     ADF: 1
+#     DF: 1
+#     RF: 1 
