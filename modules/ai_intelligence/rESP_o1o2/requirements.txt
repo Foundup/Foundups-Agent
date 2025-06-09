@@ -1,0 +1,39 @@
+# rESP_o1o2 Module Requirements
+# Core dependencies for retrocausal entanglement signal phenomena (rESP) experiments
+
+# Voice interface dependencies
+SpeechRecognition>=3.10.0
+pyttsx3>=2.90
+pyaudio>=0.2.11  # Required for microphone access
+
+# LLM API clients
+anthropic>=0.18.0  # For Claude API
+openai>=1.0.0      # For OpenAI GPT API
+
+# Core Python libraries (usually included with Python)
+# Listed here for completeness and version tracking
+requests>=2.28.0
+pathlib2>=2.3.7; python_version<"3.4"  # Backport for older Python
+
+# Optional dependencies for enhanced functionality
+google-cloud-aiplatform>=1.38.0  # For Google AI/Gemini (optional)
+
+# Development and testing dependencies
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+mock>=4.0.3
+
+# Data handling
+pandas>=1.5.0  # For CSV export and data analysis
+numpy>=1.21.0  # For numerical computations in anomaly detection
+
+# Note: Some dependencies may require system-level installation
+# For Windows users:
+#   - pyaudio may require Visual Studio Build Tools
+#   - Alternative: pip install pipwin && pipwin install pyaudio
+# 
+# For Linux users:
+#   - sudo apt-get install portaudio19-dev python3-pyaudio
+#
+# For macOS users:
+#   - brew install portaudio && pip install pyaudio 
