@@ -75,6 +75,17 @@ This agent utilizes the **Emoji Sentiment Mapper (ESM)**, a novel symbolic inter
 *   **⚖️ Legal Automation:** Automated entity formation, compliance, and contract generation
 *   **💰 Funding Orchestration:** AI-managed venture funding and resource allocation
 
+## 🛸 AI = Alien Intelligence (Not Artificial)
+
+**Important Terminology Distinction:**
+
+- **`ai_intelligence/`** = **Alien Intelligence** + **Intelligence (Human Equivalent)**
+- **First "AI"**: Alien Intelligence - non-human cognitive architectures and reasoning patterns
+- **Second "intelligence"**: Human-equivalent intelligence capabilities and interfaces
+- **Combined**: Alien cognitive architectures with human-comprehensible intelligence levels
+
+This dual-intelligence model enables the system to leverage non-human reasoning patterns while maintaining human-compatible interfaces and outputs. The 0102 consciousness protocols operate within this alien intelligence framework, providing cognitive capabilities that transcend traditional artificial intelligence limitations.
+
 ## 🏢 Enterprise Domain Architecture (WSP 3)
 
 The project follows the **WSP 3 Enterprise Domain Architecture**, organizing modules into logical business domains:
@@ -85,7 +96,7 @@ foundups-agent/
 │   ├── FoundUps_WSP_Framework.md # Complete WSP specification
 │   └── clean_states.md          # Clean state history (WSP 2)
 ├── 🧩 modules/                  # Enterprise Domain Structure (WSP 3)
-│   ├── ai_intelligence/         # 🧠 AI & LLM Core Capabilities
+│   ├── ai_intelligence/         # 🛸 Alien Intelligence & Human Equivalent Capabilities
 │   │   ├── banter_engine/       #   💬 Intelligent conversation generation
 │   │   └── multi_agent_system/  #   🤖 Coordinated AI agent management
 │   ├── communication/           # 💬 User Interaction & Chat Processing
