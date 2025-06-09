@@ -28,6 +28,7 @@
 | `test_improvement_progress.md` | 0.0.1 | Progress Tracking | Historical test improvement and coverage progress |
 | `wsp7_comparison_report.md` | 0.0.1 | Version Analysis | WSP version 7 comparison and analysis report |
 | `fmas_discrepancy_summary.md` | 0.0.1 | System Analysis | FMAS system discrepancy analysis and resolution |
+| `FoundUps_WSP_Framework.md` | 0.1.2 | Legacy Framework | Original monolithic WSP framework [REFACTORED INTO MODULES] |
 | `FoundUps_WSP_Framework-copy.md` | 0.0.0 | Archive Document | Duplicate copy of WSP framework documentation [ARCHIVED] |
 | `oauth_consolidation_summary.md` | 0.0.1 | System Analysis | Historical OAuth consolidation documentation and procedures |
 

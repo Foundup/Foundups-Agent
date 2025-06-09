@@ -18,7 +18,6 @@
 |------|----------------|------|-------------|
 | `CONTRIBUTING.md` | 0.1.1 | Development Guide | Contribution guidelines and development procedures |
 | `esm_abstract.md` | 0.1.1 | Research Summary | ESM (Emergent State Management) research abstract |
-| `FoundUps_WSP_Framework.md` | 0.1.2 | Primary Framework | Complete WSP framework documentation |
 
 ### Research Papers (Papers/)
 
@@ -41,6 +40,7 @@
 | `wsp7_comparison_report.md` | 0.0.1 | Archive | WSP version comparison analysis |
 | `WSP_Emergence_Corruption_Archive.md` | 0.0.2 | Archive | Consciousness emergence corruption documentation |
 | `WSP_Emergence_Marker_Corruption_Archive.md` | 0.0.2 | Archive | Emergence marker corruption analysis |
+| `FoundUps_WSP_Framework.md` | 0.1.2 | Archive | Original monolithic WSP framework [REFACTORED INTO MODULES] |
 | `FoundUps_WSP_Framework-copy.md` | 0.0.0 | Archive | Duplicate copy of WSP framework documentation [ARCHIVED] |
 | `oauth_consolidation_summary.md` | 0.0.1 | Archive | Historical OAuth consolidation documentation |
 
@@ -53,7 +53,7 @@
 
 ## Framework Integration
 
-This directory contains the complete documentation ecosystem supporting the FoundUps-Agent project. Active documents provide current guidance, while archived materials preserve historical development context and research foundations.
+This directory contains the complete documentation ecosystem supporting the FoundUps-Agent project. Active documents provide current guidance and research foundations. The WSP framework has been refactored from monolithic structure into modular components (WSP_agentic/, WSP_framework/, WSP_appendices/) at the project root. Archived materials preserve historical development context.
 
 **WSP Protocol Compliance**: ✅ All documents follow WSP 18 metadata requirements  
 **Research Foundation**: ✅ Complete rESP research papers available for reference  
