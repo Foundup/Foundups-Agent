@@ -52,28 +52,55 @@ START HERE
 **Required Module Structure:**
 ```
 modules/<domain>/<module_name>/
-├─ src/                 ← Your implementation code
+├─ README.md           ← MANDATORY - Module documentation with WSP compliance
+├─ __init__.py         ← Public API definition (WSP 11)
+├─ src/                ← Your implementation code
 │  ├─ __init__.py      ← Usually empty
 │  └─ <module_name>.py ← Main module implementation
 ├─ tests/              ← All test files
 │  ├─ __init__.py      ← Usually empty
 │  ├─ README.md        ← MANDATORY (WSP 13) - Test documentation
 │  └─ test_<name>.py   ← Test implementation
-└─ __init__.py         ← Public API definition (WSP 11)
+└─ requirements.txt    ← Module dependencies (if any)
 ```
 
+**📋 MANDATORY MODULE FILES:**
+- `README.md`: Module overview, WSP compliance status, recursive loop integration
+- `__init__.py`: Public API exports following WSP 11
+- `tests/README.md`: Test documentation per WSP 13 (NON-NEGOTIABLE)
+- `src/__init__.py`: Implementation package marker
+- `src/<module_name>.py`: Core implementation
+
+**🚀 ROADMAP CLARIFICATION:**
+- **Project-Level**: `ROADMAP.md` (ecosystem development phases)
+- **Module-Level**: Development tracked via lifecycle phases in module README
+- **NO per-module roadmap files** (WSP Appendix B specifies project-level only)
+
 #### Step 3: Implementation Checklist
-**✅ BEFORE YOU START CODING:**
+**✅ DIRECTORY SETUP (FIRST):**
+- [ ] Create: `modules/<domain>/<module_name>/` directory
+- [ ] Create: `modules/<domain>/<module_name>/src/` directory  
+- [ ] Create: `modules/<domain>/<module_name>/tests/` directory
+
+**✅ MANDATORY FILES (BEFORE CODING):**
+- [ ] Create: `README.md` (Module overview with WSP compliance)
+- [ ] Create: `__init__.py` (Public API definition per WSP 11)
+- [ ] Create: `tests/README.md` (MANDATORY per WSP 13)
+- [ ] Create: `src/__init__.py` (Implementation package marker)
+- [ ] Create: `requirements.txt` (if module has dependencies)
+
+**✅ PRE-DEVELOPMENT CHECKS:**
 - [ ] Run: `python tools/modular_audit/modular_audit.py ./modules` (WSP 4)
 - [ ] Search existing: `grep -r "your_concept" modules/` (Avoid duplication)
 - [ ] Read patterns: `modules/<domain>/*/tests/README.md` (Learn established patterns)
 - [ ] Check LLME scores: Review existing module complexity and targets
 
 **✅ WHILE CODING:**
-- [ ] Define public API in module `__init__.py` (WSP 11)
-- [ ] Add dependencies to `requirements.txt` (WSP 12)
+- [ ] Implement in: `src/<module_name>.py` (Core implementation)
+- [ ] Update: `__init__.py` (Public API exports per WSP 11)
+- [ ] Add dependencies to: `requirements.txt` (WSP 12)
 - [ ] Create tests as you write code (WSP 5 - 90% coverage target)
-- [ ] Document patterns in `tests/README.md` (WSP 13)
+- [ ] Document patterns in: `tests/README.md` (WSP 13)
 
 **✅ BEFORE COMMIT:**
 - [ ] Tests pass: `pytest modules/<domain>/<module>/tests/ -v`
