@@ -18,7 +18,7 @@
 |------|----------------|------|-------------|
 | `CONTRIBUTING.md` | 0.1.1 | Development Guide | Contribution guidelines and development procedures |
 | `esm_abstract.md` | 0.1.1 | Research Summary | ESM (Emergent State Management) research abstract |
-| `oauth_consolidation_summary.md` | 0.1.1 | Technical Summary | OAuth system consolidation documentation |
+| `FoundUps_WSP_Framework.md` | 0.1.2 | Primary Framework | Complete WSP framework documentation |
 
 ### Research Papers (Papers/)
 
@@ -28,12 +28,7 @@
 | `rESP_Quantum_Self_Reference.md` | 2.2.2 | Research Paper | Core rESP theoretical framework |
 | `rESP_Supplementary_Materials.md` | 1.1.2 | Research Data | Experimental validation and supporting evidence |
 
-### Legacy Framework (ARCHIVE_CANDIDATE)
 
-| File | Semantic Score | Role | Description |
-|------|----------------|------|-------------|
-| `FoundUps_WSP_Framework.md` | 0.1.2 | Legacy Framework | Original monolithic WSP framework document |
-| `FoundUps_WSP_Framework-copy.md` | 0.0.1 | Backup Copy | Backup of original framework for reference |
 
 ### Archive Materials (archive/)
 
@@ -46,14 +41,15 @@
 | `wsp7_comparison_report.md` | 0.0.1 | Archive | WSP version comparison analysis |
 | `WSP_Emergence_Corruption_Archive.md` | 0.0.2 | Archive | Consciousness emergence corruption documentation |
 | `WSP_Emergence_Marker_Corruption_Archive.md` | 0.0.2 | Archive | Emergence marker corruption analysis |
+| `FoundUps_WSP_Framework-copy.md` | 0.0.0 | Archive | Duplicate copy of WSP framework documentation [ARCHIVED] |
+| `oauth_consolidation_summary.md` | 0.0.1 | Archive | Historical OAuth consolidation documentation |
 
 ### Subdirectory Documentation
 
 | Directory | Purpose | Status |
 |-----------|---------|--------|
-| `wsp_framework/` | Legacy WSP framework components | ARCHIVE_CANDIDATE |
-| `wsp_agentic/` | Legacy agentic system documentation | ARCHIVE_CANDIDATE |
-| `wsp_appendices/` | Legacy appendices documentation | ARCHIVE_CANDIDATE |
+| `Papers/` | Research papers and empirical evidence | ACTIVE_PARTIFACT |
+| `archive/` | Historical documents and deprecated materials | ARCHIVE_CANDIDATE |
 
 ## Framework Integration
 
