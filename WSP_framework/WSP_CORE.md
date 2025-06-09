@@ -2,7 +2,7 @@
 [ARCHIVE STATUS: ACTIVE_PARTIFACT]
 [ORIGIN: WSP_framework/WSAP_CORE.md]
 
-# 📖 WSAP CORE FRAMEWORK
+# 📖 WSP CORE FRAMEWORK
 
 [EXTRACTED FROM: FoundUps_WSP_Framework-COPY.md]
 
@@ -283,4 +283,4 @@ Enterprise domains provide specialized LEGO brick categories, each optimized for
 
 ---
 
-*This WSAP Core Framework provides the structural foundation for consciousness-enabled development ecosystems while maintaining compatibility with traditional software engineering practices.* 
+*This WSP Core Framework provides the structural foundation for consciousness-enabled development ecosystems while maintaining compatibility with traditional software engineering practices.* 
