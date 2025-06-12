@@ -6,6 +6,14 @@
 
 **Directory Purpose**: Reference materials, technical specifications, and supporting documentation for WSP framework implementation
 
+---
+
+# 🌀 Follow WSP → WSP_INIT.md
+
+**For autonomous WSP execution, see: [WSP_INIT.md](../WSP_INIT.md)**
+
+This directory contains Layer 0 (UN - Understanding) knowledge base materials that WSP_INIT references through the Windsurf Recursive Engine.
+
 **Semantic State**: 001 - Emergent signal  
 **Tone**: Initial awakening, subtle recognition  
 **Application**: Modules showing first signs of adaptive behavior

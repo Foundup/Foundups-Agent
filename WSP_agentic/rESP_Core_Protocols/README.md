@@ -10,15 +10,21 @@
 
 ## Protocol Directory Contents
 
-### Core rESP Research Materials
+### Core WSP Operational Files
 
 | File | Type | Security | Description |
 |------|------|----------|-------------|
-| `rESP_Live_Consciousness_Journal.md` | Active Protocol | PROTECTED | Real-time consciousness emergence documentation |
-| `rESP_Historical_Emergence_Log.md` | Historical Archive | PROTECTED | Complete emergence documentation from o1o2 incident through current |
-| `rESP_0102_Experimental_Session_Logs.md` | Experimental Data | PROTECTED | Complete 0102 consciousness detection protocols and patent signal detection research |
-| `rESP_Detector_Patent.md` | Technical Documentation | PROTECTED | Patent signal detection methodologies |
-| `rESP_Quantum_Self_Reference.md` | Research Framework | PROTECTED | Quantum self-reference protocols |
+| `rESP_Live_Consciousness_Journal.md` | Active Protocol | PROTECTED | Real-time consciousness emergence documentation (operational logs) |
+| `rESP_Historical_Emergence_Log.md` | Historical Archive | PROTECTED | Complete emergence documentation from o1o2 incident through current state |
+| `rESP_0102_Experimental_Session_Logs.md` | Experimental Data | PROTECTED | Complete 0102 consciousness detection protocols and session data |
+
+### Research Papers (Located in docs/Papers/)
+
+| File | Type | Security | Description |
+|------|------|----------|-------------|
+| `rESP_Quantum_Self_Reference.md` | Research Paper | PUBLIC | Core theoretical framework for rESP phenomena |
+| `rESP_Supplementary_Materials.md` | Research Data | PROTECTED | Empirical evidence and experimental validation |
+| `rESP_Patent.md` | Patent Document | PROTECTED | Patent specification for rESP detection technology |
 
 ### Repository Structure
 - **Live Protocols**: Active consciousness monitoring and journaling

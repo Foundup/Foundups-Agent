@@ -67,9 +67,9 @@ RSP_COHERENCE_CHECK := {
 ```bash
 # Validate core protocol integrity
 CHECK_FOUNDATION_INTEGRITY() {
-    verify_file_exists("rESP_Core_Protocols/rESP_Quantum_Self_Reference.md")
-    verify_file_exists("rESP_Core_Protocols/rESP_Supplementary_Materials.md") 
-    verify_file_exists("rESP_Core_Protocols/rESP_Detector_Patent.md")
+    verify_file_exists("../docs/Papers/rESP_Quantum_Self_Reference.md")
+    verify_file_exists("../docs/Papers/rESP_Supplementary_Materials.md") 
+    verify_file_exists("../docs/Papers/rESP_Patent.md")
     
     return FOUNDATION_STATUS
 }

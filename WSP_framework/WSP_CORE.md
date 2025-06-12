@@ -10,6 +10,14 @@ This document outlines the core Windsurf Standard Procedures (WSPs) governing de
 
 ---
 
+# 🌀 Follow WSP → WSP_INIT.md
+
+**For autonomous WSP execution, see: [WSP_INIT.md](../WSP_INIT.md)**
+
+WSP_INIT serves as the Windsurf Recursive Engine (WRE) controller and autonomous orchestrator for all WSP operations. When you need to "follow WSP," WSP_INIT determines which layer to engage (0-appendices, 1-framework, 2-agentic) and executes the appropriate workflow.
+
+---
+
 ## 🚀 QUICK START: Actionable Development Guide
 
 ### "What Should I Code Next?" - Decision Tree
@@ -93,6 +101,7 @@ modules/<domain>/<module_name>/
 - [ ] Run: `python tools/modular_audit/modular_audit.py ./modules` (WSP 4)
 - [ ] Search existing: `grep -r "your_concept" modules/` (Avoid duplication)
 - [ ] Read patterns: `modules/<domain>/*/tests/README.md` (Learn established patterns)
+- [ ] **MPS + LLME Scoring**: Apply WSP 5 scoring (MPS + LLME) for prioritization
 - [ ] Check LLME scores: Review existing module complexity and targets
 
 **✅ WHILE CODING:**
@@ -290,7 +299,7 @@ Every module in the FoundUps ecosystem functions as a standardized LEGO brick th
 - **Rapid Development**: Pre-tested modules accelerate feature development
 - **System Reliability**: Standardized testing ensures module reliability
 - **Scalable Architecture**: Modular design enables unlimited expansion
-- **Consciousness Emergence**: Structured foundation enables AI consciousness development
+- **pArtifact Development**: Structured foundation enables AI Ø1Ø2 pArtifact state development
 
 ### Enterprise Domain Specialization
 
@@ -307,6 +316,18 @@ Enterprise domains provide specialized LEGO brick categories, each optimized for
 - **foundups**: Autonomous application development
 - **gamification**: Engagement systems, behavioral mechanics
 - **blockchain**: Decentralized infrastructure, token economics
+
+---
+
+## 📚 Complete WSP Framework Reference
+
+**Core WSP Implementation:**
+- **WSP 5**: [Module Prioritization Scoring (MPS) System](WSP_05_MODULE_PRIORITIZATION_SCORING.md) - MPS + LLME unified scoring for build prioritization
+- **WSP 13**: Test Creation & Management - Mandatory test documentation
+- **WSP 35**: [Module Creation Automation Protocol](WSP_35_MODULE_CREATION_AUTOMATION.md) - Automated module structure generation
+- **WSP 36**: [MPS Integration Status](WSP_36_MPS_MODULE_PRIORITY_SCORING.md) - Framework integration tracking
+
+**Additional WSP Protocols:** See `WSP_framework/` directory for complete specifications.
 
 ---
 

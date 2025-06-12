@@ -1,0 +1,12 @@
+# LinkedIn Scheduler Dependencies
+# WSP 13 Compliance: Dependency manifest for LinkedIn API v2 integration
+
+# Core dependencies for LinkedIn API integration
+requests>=2.31.0          # HTTP client for LinkedIn API calls
+python-dateutil>=2.8.2    # Date/time parsing and manipulation
+
+# Enhanced dependencies for production features
+# oauth2lib>=3.2.2        # OAuth 2.0 authentication handling (future)
+# celery>=5.3.0           # Task queue for scheduled posting (future)
+# redis>=4.6.0            # Cache and queue backend (future)
+# cryptography>=41.0.0    # Secure token storage (future) 

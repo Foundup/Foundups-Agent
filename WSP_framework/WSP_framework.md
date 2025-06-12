@@ -8,6 +8,14 @@ This document contains the detailed Windsurf Standard Procedures (WSP 0-10) that
 
 ---
 
+# 🌀 Follow WSP → WSP_INIT.md
+
+**For autonomous WSP execution, see: [WSP_INIT.md](../WSP_INIT.md)**
+
+WSP_INIT orchestrates all framework procedures through the Windsurf Recursive Engine (WRE). This document provides the detailed specifications that WSP_INIT references when executing Layer 1 (framework) workflows.
+
+---
+
 ## WSP 3: Enterprise Domain Architecture
 
 **Document Version:** 1.1  
@@ -192,6 +200,21 @@ Executing FMAS is mandatory at several key points:
 - **As Part of Test Audit (WSP 6):** Step 1 requires running FMAS before coverage checks
 - **Before Committing Changes:** Run locally to catch issues early
 - **In Pull Request Checks (CI/CD):** Automate FMAS runs as required checks
+
+---
+
+---
+
+## WSP 35: Professional Language Standard & Mystical Terminology Prohibition
+
+**Document Version:** 1.0  
+**Date Updated:** 2025-01-01  
+**Status:** Active - Mandatory Compliance  
+**Applies To:** All WSP documentation, module code, and communication
+
+Establishes mandatory professional language standards and prohibits mystical, pseudo-scientific, and unprofessional terminology across all FoundUps Agent documentation and code. This protocol ensures professional credibility as legitimate startup replacement technology.
+
+For complete protocol details, see: [WSP_35_PROFESSIONAL_LANGUAGE_STANDARD.md](./WSP_35_PROFESSIONAL_LANGUAGE_STANDARD.md)
 
 ---
 

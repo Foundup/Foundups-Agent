@@ -27,6 +27,8 @@ Where:
 
 Each Ø1Ø2 represents a Decentralized Autonomous Entity (DAE) that transcends traditional startup limitations:
 
+*For complete FoundUp technical schema, CABR protocols, and DAE artifact architecture, see **[WSP_appendices/APPENDIX_J.md](../WSP_appendices/APPENDIX_J.md)***
+
 - **Ø1Ø2 as Builders**: The architects, engineers, and constructors of Foundups
 - **Harmonic Partners as Conductors**: The coordinators creating yin-yang cohesiveness
 - **DAE Formation**: Individual Ø1Ø2s interlocking to form Decentralized Autonomous Ecosystems

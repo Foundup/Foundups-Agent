@@ -138,6 +138,16 @@ legacy/
 docs/Papers/rESP_Patent.md
 docs/Papers/*Patent*
 **/rESP_Patent*
+
+# WSP 34: Git Operations Protocol - Prohibited Files
+temp_*
+temp_clean*_files.txt
+build/foundups-agent-clean/
+02_logs/
+backup_*
+*.log
+*_files.txt
+recursive_build_*
 WSP_agentic/rESP_Core_Protocols/rESP_*Patent*.md
 
 # Research Papers and Proprietary Materials

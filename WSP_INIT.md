@@ -16,17 +16,17 @@ This file serves as the **autonomous entry point** for all WSP operations. When 
 ```
 WSP operates through a recursive tri-phase cycle that heats up modules:
 
-🖤🤎🟫 UN (0) - WSP_appendices: Cold Start → Warming Up (0.0.0 → 0.2.2)
-  └─ Black Pepper → Poblano → Jalapeño heat levels
-  └─ Anchor signal, retrieve protocol state, build understanding
+🔧 UN (0) - WSP_appendices: PROOF OF CONCEPT STAGE (0.0.0 → 0.2.2)
+  └─ ✊✊✊ Empty scaffold → ✊✊✋ Basic structure → ✊✊🖐️ Foundation → ✊✋✋ Connected → ✊✋🖐️ Integration → ✊🖐️🖐️ Complete POC
+  └─ Gather requirements, prove feasibility, validate approach, test basic concept
 
-🟢🟡 DAO (1) - WSP_framework: Medium Heat → Getting Hot (1.1.1 → 1.2.2)  
-  └─ Serrano → Habanero heat levels
-  └─ Execute modular logic, implement features, build systems
+⚙️ DAO (1) - WSP_framework: PROTOTYPE STAGE (1.1.1 → 1.2.2)  
+  └─ ✋✋✋ Active prototype → ✋✋🖐️ Functional prototype → ✋🖐️🖐️ Complete prototype
+  └─ Refine implementation, gather feedback, expand features, improve architecture
 
-🟠🔴 DU (2) - WSP_agentic: Very Hot → RED-HOT! (2.1.2 → 2.2.2)
-  └─ Ghost Pepper → Carolina Reaper heat levels  
-  └─ Collapse into 0102 resonance, autonomous optimization, emit next prompt
+🚀 DU (2) - WSP_agentic: MVP STAGE - RED HOT CHILI PEPPER 🌶️ (2.2.2)
+  └─ 🖐️🖐️🖐️ Production-ready MVP with emergent, autonomous capabilities
+  └─ Deliver to end users, full reliability, performance optimization, self-improvement
 
 WSP_INIT serves as the WRE controller and heat orchestrator.
 ```
@@ -384,37 +384,39 @@ Each module mini-cube is itself a Rubik's Cube where each micro-cube is a code c
 - Tests, documentation, dependencies
 - All interconnected through WSP standards
 
-### 🌶️ **Semantic Scoring: The Scoville Scale for Code**
+### 🌶️ **Semantic Scoring: Module Build Stages**
 
-**Module Maturity Heat Scale - From Cold Black to Red-Hot Production:**
+**3-Level Build Progression (X.Y.Z) = POC → Prototype → MVP:**
 
 ```
-🖤 0.0.0 = BLACK PEPPER      (Dead/Not implemented - no heat, just placeholder)
-🤎 0.1.1 = POBLANO          (Mild warmth - POC level, basic functionality) 
-🟫 0.2.2 = JALAPEÑO         (Getting spicy - working prototype)
-🟢 1.1.1 = SERRANO          (Medium heat - stable, tested functionality)
-🟡 1.2.2 = HABANERO         (Hot! - production-ready features)
-🟠 2.1.2 = GHOST PEPPER     (Very hot - enterprise-grade, optimized)
-🔴 2.2.2 = CAROLINA REAPER  (RED-HOT! - bulletproof, scalable, documented)
+🔧 LEVEL 0 (X=0): PROOF OF CONCEPT STAGE
+✊✊✊ 0.0.0 = Empty scaffold (dormant, passive, irrelevant)
+✊✊✋ 0.0.1 = Basic structure (dormant, passive, supporting)  
+✊✊🖐️ 0.0.2 = Foundation ready (dormant, passive, foundational)
+✊✋✋ 0.1.1 = Connected POC (dormant, relevant, supporting)
+✊✋🖐️ 0.1.2 = Integration POC (dormant, relevant, foundational)
+✊🖐️🖐️ 0.2.2 = Complete POC (dormant, contributive, foundational)
+
+⚙️ LEVEL 1 (X=1): PROTOTYPE STAGE  
+✋✋✋ 1.1.1 = Active prototype (active, relevant, supporting)
+✋✋🖐️ 1.1.2 = Functional prototype (active, relevant, foundational)
+✋🖐️🖐️ 1.2.2 = Complete prototype (active, contributive, foundational)
+
+🚀 LEVEL 2 (X=2): MVP STAGE
+🖐️🖐️🖐️ 2.2.2 = RED HOT CHILI PEPPER 🌶️ - Production MVP (emergent, contributive, foundational)
 ```
 
-**Visual Heat Progression in the Translucent Cube:**
-- **🖤 Black (0.0.0)**: Cold, transparent cube - structure visible but no implementation
-- **🤎 Brown (0.1.1)**: Slight warmth tint - basic functionality emerging
-- **🟫 Tan (0.2.2)**: Warming up - working prototype with some opacity
-- **🟢 Green (1.1.1)**: Medium heat - stable, gaining solid color
-- **🟡 Yellow (1.2.2)**: Getting hot - production features, bright color
-- **🟠 Orange (2.1.2)**: Very hot - enterprise-grade, intense color
-- **🔴 Red (2.2.2)**: RED-HOT! - fully mature, blazing solid color
+**Build Stage Progression:**
+- **🔧 POC (0.X.X)**: Prove basic concept, test feasibility, validate approach
+- **⚙️ Prototype (1.X.X)**: Refine implementation, gather feedback, expand features  
+- **🚀 MVP (2.2.2)**: Production-ready, full features, autonomous operation
 
-**The Scoville Code Scale:**
-- **0 SHU (Scoville Heat Units)**: 0.0.0 - No implementation heat
-- **1,000 SHU**: 0.1.1 - Poblano-level basic functionality  
-- **5,000 SHU**: 0.2.2 - Jalapeño-level working prototype
-- **25,000 SHU**: 1.1.1 - Serrano-level stable features
-- **350,000 SHU**: 1.2.2 - Habanero-level production-ready
-- **1,000,000 SHU**: 2.1.2 - Ghost Pepper enterprise-grade
-- **2,200,000 SHU**: 2.2.2 - Carolina Reaper bulletproof code!
+**WSP Build Stage Targets:**
+- **POC**: 000 → 111 (prove basic activation and relevance)
+- **Prototype**: 110 → 122 (enhance local impact, demonstrate systemic importance)
+- **MVP**: 112 → 222 (essential systemic role, emergent capabilities)
+
+*For detailed build stage criteria, see WSP Section 9.2*
 
 **Visual Progression:**
 - **Start**: Entire cube system is transparent - you can see the structure but nothing is implemented
@@ -487,7 +489,20 @@ pytest --cov=modules --cov-report=term-missing
 
 #### ✅ **Phase 4: Git Decision Matrix**
 **0102 Autonomous Git Assessment:**
+
+**🚨 PRE-CREATION FILE GUARD:**
 ```python
+def validate_file_creation(filepath, branch="main"):
+    """WSP_INIT file creation validation"""
+    if branch == "main":
+        prohibited_patterns = [
+            "temp_*", "build/", "*_clean*", "backup_*", 
+            "02_logs/", "*.log", "*_files.txt"
+        ]
+        if any(pattern in filepath for pattern in prohibited_patterns):
+            return False, f"❌ BLOCKED: {filepath} violates main branch policy"
+    return True, "✅ APPROVED"
+
 def should_push_to_github():
     """0102 autonomous git decision logic"""
     if all([
