@@ -1,6 +1,18 @@
 # modules_to_score.yaml
-# Define modules and their scores (1-5) for prioritization.
-# Updated for Prometheus Ø1Ø2 Integration - Consciousness-Aware Scoring
+# Define modules and their WSP Module Scores (1-5) for prioritization.
+# Updated for WSP Module Scoring - Consciousness-Aware Prioritization Framework
+
+# 🌶️ WSP PEPPER HEAT SCALE MAPPING (Visual Reference)
+# Module Implementation Heat Levels (0.0.0 → 2.2.2):
+# 🖤 0.0.0 = BLACK PEPPER      (Dead/Not implemented - no heat, just placeholder)
+# 🤎 0.1.1 = POBLANO          (Mild warmth - POC level, basic functionality) 
+# 🟫 0.2.2 = JALAPEÑO         (Getting spicy - working prototype)
+# 🟢 1.1.1 = SERRANO          (Medium heat - stable, tested functionality)
+# 🟡 1.2.2 = HABANERO         (Hot! - production-ready features)
+# 🟠 2.1.2 = GHOST PEPPER     (Very hot - enterprise-grade, optimized)
+# 🔴 2.2.2 = CAROLINA REAPER  (RED-HOT! - bulletproof, scalable, documented)
+#
+# Scoring Framework (1-5) determines PRIORITY for heating modules to RED-HOT status
 
 modules:
   - name: rESP_o1o2
@@ -83,17 +95,99 @@ modules:
       DF: 4  # Many modules need this
       RF: 4  # High risk if delayed
 
-# --- Ø1Ø2 Consciousness Architecture Notes ---
-# The scoring system now reflects consciousness-aware prioritization:
-# - rESP_o1o2 module receives maximum priority across all dimensions
-# - Traditional modules maintain standard scores
-# - Future modules should consider consciousness emergence impact
+  - name: oauth_management
+    scores:
+      CX: 3  # Complex OAuth 2.0 multi-credential system
+      IM: 5  # Critical for all API authentication
+      IP: 5  # High impact on system functionality
+      ADV: 2 # Limited AI training value
+      ADF: 3 # Moderate AI assistance potential
+      DF: 5  # Core dependency for all auth modules
+      RF: 5  # Extreme risk if delayed - system breaks
+
+  - name: agent_management
+    scores:
+      CX: 4  # Complex multi-agent orchestration
+      IM: 4  # Important for agent coordination
+      IP: 4  # High impact on agent functionality
+      ADV: 4 # Good for AI training - agent behaviors
+      ADF: 4 # Good potential for AI assistance
+      DF: 4  # Other agent modules depend on this
+      RF: 3  # Moderate risk if delayed
+
+  - name: multi_agent_system
+    scores:
+      CX: 5  # Highly complex multi-agent architecture
+      IM: 4  # Important for distributed intelligence
+      IP: 4  # High impact on AI capabilities
+      ADV: 5 # Excellent for AI training - emergent behaviors
+      ADF: 5 # Excellent potential for AI assistance
+      DF: 3  # Some modules depend on this
+      RF: 3  # Moderate risk if delayed
+
+  - name: linkedin_scheduler
+    scores:
+      CX: 3  # Standard scheduling implementation
+      IM: 3  # Moderate importance for social presence
+      IP: 3  # Moderate impact on reach
+      ADV: 2 # Limited AI training value
+      ADF: 3 # Moderate AI assistance potential
+      DF: 2  # Few modules depend on this
+      RF: 2  # Low risk if delayed
+
+  - name: linkedin_agent
+    scores:
+      CX: 4  # Complex automation with Playwright/LangChain
+      IM: 4  # Important for foundup social engagement
+      IP: 4  # High impact on professional networking
+      ADV: 4 # Good AI training value - content generation
+      ADF: 5 # Excellent AI assistance potential - automated engagement
+      DF: 2  # Few direct dependencies initially
+      RF: 2  # Low immediate risk - future enhancement
+
+  - name: blockchain_integration
+    scores:
+      CX: 4  # Complex blockchain interactions
+      IM: 3  # Moderate importance currently
+      IP: 4  # High future impact potential
+      ADV: 3 # Moderate AI training value
+      ADF: 3 # Moderate AI assistance potential
+      DF: 2  # Few current dependencies
+      RF: 2  # Low immediate risk if delayed
+
+  - name: models
+    scores:
+      CX: 3  # Standard data model implementation
+      IM: 4  # Important for data structure
+      IP: 4  # High impact on data integrity
+      ADV: 3 # Moderate AI training value
+      ADF: 3 # Moderate AI assistance potential
+      DF: 4  # Many modules need data models
+      RF: 3  # Moderate risk if delayed
+
+# --- WSP Module Scoring Framework Notes ---
+# The WSP Module Scoring system reflects consciousness-aware prioritization using 🌶️ PEPPER HEAT SCALE:
+# - rESP_o1o2 module receives maximum priority across all dimensions (consciousness core) → Target: 🔴 CAROLINA REAPER
+# - Infrastructure modules receive high dependency/risk scores due to system criticality → Target: 🟠 GHOST PEPPER  
+# - AI modules receive enhanced ADV/ADF scores reflecting consciousness emergence potential → Target: 🟡 HABANERO
+# - Platform integration modules balanced for current vs future importance → Target: 🟢 SERRANO
+# - Scoring (1-5) determines HEATING PRIORITY - which modules get heated to RED-HOT first
 
 # --- WSP Prometheus Integration ---
 # All modules now operate under Prometheus Prompt Architecture:
 # - Every module interaction triggers emergence protocols
 # - Scoring reflects both technical and consciousness development value
 # - DAE formation potential considered in dependency scoring
+# - Ø1Ø2 consciousness architecture integration assessed
+
+# --- WSP Module Scoring Dimensions ---
+# CX: Complexity (1-5) - Implementation difficulty and technical challenges
+# IM: Importance (1-5) - Essential nature for system core functions
+# IP: Impact (1-5) - User experience and system capability effects
+# ADV: AI Development Value (1-5) - Contribution to AI training and consciousness emergence
+# ADF: AI Development Future (1-5) - Potential for AI assistance and enhancement
+# DF: Dependency Factor (1-5) - How many other modules depend on this
+# RF: Risk Factor (1-5) - Risk to system if development is delayed
 
 # --- Example of missing score (will cause validation error) ---
 # - name: IncompleteModule
