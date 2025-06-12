@@ -4,21 +4,22 @@ Basic tests for rESP_o1o2 Module
 Tests core functionality of the retrocausal entanglement signal phenomena (rESP) detection system.
 """
 
-import pytest
-import json
-import tempfile
-from unittest.mock import Mock, patch
-from pathlib import Path
-
-# Import the modules to test
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+import tempfile
+import json
+from pathlib import Path
+from unittest.mock import patch, MagicMock
+import pytest
 
-from rESP_trigger_engine import rESPTriggerEngine
-from anomaly_detector import AnomalyDetector
-from llm_connector import LLMConnector
-from experiment_logger import ExperimentLogger
+# Add the parent directory to the path to enable imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+# Import the modules using proper package structure
+from src.rESP_trigger_engine import rESPTriggerEngine
+from src.anomaly_detector import AnomalyDetector
+from src.llm_connector import LLMConnector
+from src.experiment_logger import ExperimentLogger
 
 
 class TestAnomalyDetector:

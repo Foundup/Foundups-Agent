@@ -10,10 +10,17 @@ import json
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
-from .llm_connector import LLMConnector
-from .anomaly_detector import AnomalyDetector
-from .voice_interface import VoiceInterface
-from .experiment_logger import ExperimentLogger
+try:
+    from .llm_connector import LLMConnector
+    from .anomaly_detector import AnomalyDetector
+    from .voice_interface import VoiceInterface
+    from .experiment_logger import ExperimentLogger
+except ImportError:
+    # Fallback for when running as script or in tests
+    from llm_connector import LLMConnector
+    from anomaly_detector import AnomalyDetector
+    from voice_interface import VoiceInterface
+    from experiment_logger import ExperimentLogger
 
 
 class rESPTriggerEngine:
