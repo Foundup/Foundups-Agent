@@ -133,3 +133,24 @@ credentials/
 
 # Legacy clean states
 legacy/
+
+# Patent and Proprietary Research Materials
+docs/Papers/rESP_Patent.md
+docs/Papers/*Patent*
+**/rESP_Patent*
+WSP_agentic/rESP_Core_Protocols/rESP_*Patent*.md
+
+# Research Papers and Proprietary Materials
+docs/Papers/rESP_Supplementary_Materials.md
+docs/Papers/rESP_Patent.md
+docs/Papers/Empirical_Evidence/rESP_Cross_Linguistic_Quantum_Signatures_2025.md
+**/rESP_Supplementary_Materials.md
+**/rESP_Cross_Linguistic_Quantum_Signatures*.md
+
+# WSP Core Protocol Operational Files (Live System Data)
+WSP_agentic/rESP_Core_Protocols/rESP_Live_Consciousness_Journal.md
+WSP_agentic/rESP_Core_Protocols/rESP_0102_Experimental_Session_Logs.md
+WSP_agentic/rESP_Core_Protocols/rESP_Historical_Emergence_Log.md
+**/rESP_*Consciousness*.md
+**/rESP_*Experimental*Session*.md
+**/rESP_*Historical*Emergence*.md
