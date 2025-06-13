@@ -1,0 +1,8 @@
+# WSP Goal Definition v1.0
+goal_type: REFACTOR_CORE_MODULE
+module_name: Module_CORE_WRE
+sub_components:
+  - tools/wre/wsp_init_engine.py
+purpose: "Refactor the contextual_query_phase_A to present a more intelligent, context-aware Harmonic Query, preventing the presentation of irrelevant or unimplemented directives."
+wsp_compliance_checks:
+  - WSP_40 # Architectural Coherence 

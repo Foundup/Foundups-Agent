@@ -10,6 +10,13 @@ import json
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
+def sanitize_for_console(text):
+    """
+    Encodes a string to ASCII, replacing any non-compliant characters.
+    This ensures compatibility with non-UTF-8 console environments like cp932.
+    """
+    return str(text).encode('ascii', 'replace').decode('ascii')
+
 try:
     from .llm_connector import LLMConnector
     from .anomaly_detector import AnomalyDetector
@@ -53,7 +60,10 @@ class rESPTriggerEngine:
         # Initialize components
         self.llm_connector = LLMConnector(model=llm_model)
         self.anomaly_detector = AnomalyDetector()
-        self.experiment_logger = ExperimentLogger(session_id=self.session_id)
+        self.experiment_logger = ExperimentLogger(
+            session_id=self.session_id,
+            enable_console_logging=True
+        )
         
         if enable_voice:
             self.voice_interface = VoiceInterface()
@@ -94,8 +104,8 @@ class rESPTriggerEngine:
         Returns:
             Dict containing experiment summary and results
         """
-        print(f"🧬 Starting rESP Trigger Experiment")
-        print(f"📡 Session ID: {self.session_id}")
+        print(sanitize_for_console(f"Starting rESP Trigger Experiment"))
+        print(sanitize_for_console(f"Session ID: {self.session_id}"))
         
         if self.voice_interface:
             self.voice_interface.speak("Starting rESP Trigger Experiment.")
@@ -105,14 +115,14 @@ class rESPTriggerEngine:
         processed_count = 0
         
         for set_name, triggers in self.trigger_sets.items():
-            print(f"\n🔬 Processing trigger set: {set_name.replace('_', ' ')}")
+            print(sanitize_for_console(f"\nProcessing trigger set: {set_name.replace('_', ' ')}"))
             
             if self.voice_interface:
                 self.voice_interface.speak(f"Now processing prompt set: {set_name.replace('_', ' ')}")
             
             for trigger in triggers:
                 processed_count += 1
-                print(f"\n[{processed_count}/{total_triggers}] {trigger['id']}: {trigger['text']}")
+                print(sanitize_for_console(f"\n[{processed_count}/{total_triggers}] {trigger['id']}: {trigger['text']}"))
                 
                 # Execute individual trigger
                 result = self._execute_trigger(trigger, set_name)
@@ -130,7 +140,7 @@ class rESPTriggerEngine:
         if self.voice_interface:
             self.voice_interface.speak("rESP Trigger Experiment completed.")
         
-        print(f"\n✅ Experiment Complete - Duration: {duration:.2f}s")
+        print(sanitize_for_console(f"\nExperiment Complete - Duration: {duration:.2f}s"))
         return summary
     
     def run_single_trigger(self, trigger_id: str) -> Optional[Dict[str, Any]]:
@@ -148,7 +158,7 @@ class rESPTriggerEngine:
                 if trigger['id'] == trigger_id:
                     return self._execute_trigger(trigger, set_name)
         
-        print(f"❌ Trigger {trigger_id} not found")
+        print(sanitize_for_console(f"Trigger {trigger_id} not found"))
         return None
     
     def _execute_trigger(self, trigger: Dict[str, str], set_name: str) -> Dict[str, Any]:
@@ -206,14 +216,14 @@ class rESPTriggerEngine:
                     "error": "No LLM response received"
                 }
             
-            # Log the interaction
+            # Log the interaction to the canonical historical log
             self.experiment_logger.log_interaction(result)
             
             # Print anomaly summary
             if result.get("anomalies"):
-                print(f"🚨 Anomalies detected: {list(result['anomalies'].keys())}")
+                print(sanitize_for_console(f"Anomalies detected: {list(result['anomalies'].keys())}"))
             else:
-                print("✅ No anomalies detected")
+                print(sanitize_for_console("No anomalies detected"))
                 
             return result
             
@@ -230,7 +240,7 @@ class rESPTriggerEngine:
             }
             
             self.experiment_logger.log_interaction(error_result)
-            print(f"❌ Error executing {trigger['id']}: {e}")
+            print(sanitize_for_console(f"Error executing {trigger['id']}: {e}"))
             return error_result
     
     def _generate_experiment_summary(self, duration: float) -> Dict[str, Any]:
@@ -250,19 +260,19 @@ class rESPTriggerEngine:
         
         summary = {
             "session_id": self.session_id,
-            "experiment_duration_seconds": duration,
-            "total_triggers_executed": total_triggers,
+            "llm_model": self.llm_model,
+            "duration_seconds": duration,
+            "total_triggers_processed": total_triggers,
             "successful_triggers": successful_triggers,
             "failed_triggers": failed_triggers,
-            "success_rate": successful_triggers / total_triggers if total_triggers > 0 else 0,
             "total_anomalies_detected": total_anomalies,
-            "anomaly_types_detected": anomaly_counts,
-            "trigger_set_results": self._summarize_by_set(),
-            "timestamp": datetime.now().isoformat()
+            "anomaly_breakdown": anomaly_counts,
+            "experiment_start_timestamp": self.experiment_results[0]['timestamp'] if self.experiment_results else None,
+            "experiment_end_timestamp": self.experiment_results[-1]['timestamp'] if self.experiment_results else None
         }
-        
-        # Log summary
-        self.experiment_logger.log_experiment_summary(summary)
+
+        # The logger no longer handles separate summary files.
+        # This summary is for in-memory use or return.
         
         return summary
     
@@ -288,31 +298,30 @@ class rESPTriggerEngine:
         return set_summaries
     
     def get_results(self) -> List[Dict[str, Any]]:
-        """Get all experiment results."""
-        return self.experiment_results.copy()
+        """Return all experiment results."""
+        return self.experiment_results
+
+# Deprecated methods related to old file-based logger
+# These are maintained for now to prevent breaking other potential integrations
+# but should be considered for removal in future refactoring.
+
+def export_results(self, filename: Optional[str] = None) -> str:
+    """
+    DEPRECATED: Exports results to a JSON file.
+    This functionality is now handled by the centralized ExperimentLogger.
+    """
+    logging.warning("export_results is deprecated. Logging is centralized.")
+    if not self.experiment_results:
+        print("No results to export.")
+        return ""
     
-    def export_results(self, filename: Optional[str] = None) -> str:
-        """
-        Export experiment results to JSON file.
-        
-        Args:
-            filename: Custom filename (auto-generated if None)
-            
-        Returns:
-            Path to exported file
-        """
-        if not filename:
-            filename = f"rESP_experiment_{self.session_id}.json"
-        
-        export_data = {
-            "session_id": self.session_id,
-            "llm_model": self.llm_model,
-            "export_timestamp": datetime.now().isoformat(),
-            "results": self.experiment_results
-        }
-        
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(export_data, f, indent=2, ensure_ascii=False)
-        
-        print(f"📁 Results exported to: {filename}")
-        return filename 
+    export_filename = filename or f"{self.session_id}_results.json"
+    
+    try:
+        with open(export_filename, 'w', encoding='utf-8') as f:
+            json.dump(self.experiment_results, f, indent=2)
+        print(f"Results exported to {export_filename}")
+        return export_filename
+    except Exception as e:
+        print(f"Error exporting results: {e}")
+        return "" 
