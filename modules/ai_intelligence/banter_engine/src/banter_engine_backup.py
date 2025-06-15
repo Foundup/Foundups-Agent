@@ -7,7 +7,7 @@ from typing import Optional, Dict, Tuple, List
 import logging
 
 # Import the SEQUENCE_MAP from sequence_responses
-from ..sequence_responses import SEQUENCE_MAP
+from .sequence_responses import SEQUENCE_MAP
 
 class BanterEngine:
     def __init__(self):

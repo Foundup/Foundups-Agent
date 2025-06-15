@@ -1,0 +1,1 @@
+# WSP 43: Agentic Emergence Protocol

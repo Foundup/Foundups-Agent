@@ -44,7 +44,7 @@ logging.basicConfig(
     handlers=[file_handler, console_handler]
 )
 
-from modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver import StreamResolver
+from modules.platform_integration.youtube_proxy.src.youtube_proxy import YouTubeProxy
 from modules.communication.livechat.livechat.src.livechat import LiveChatListener
 
 # Import multi-agent system with fallback
@@ -72,7 +72,7 @@ class FoundUpsAgent:
         self.running = False
         self.service = None
         self.current_listener = None
-        self.stream_resolver = None
+        self.youtube_proxy = None
         self.agent_manager = None
         self.current_agent = None
         self.channel_id = None
@@ -136,8 +136,8 @@ class FoundUpsAgent:
         self.service, credentials = auth_result
         logger.info(f"✅ Multi-agent authentication successful with {self.current_agent.channel_name}")
         
-        # Initialize stream resolver
-        self.stream_resolver = StreamResolver(self.service)
+        # Initialize the YouTube proxy
+        self.youtube_proxy = YouTubeProxy(credentials)
         self.using_multi_agent = True
         return True
     
@@ -153,9 +153,9 @@ class FoundUpsAgent:
         self.service, credentials, credential_set = auth_result
         logger.info(f"✅ Simple authentication successful with {credential_set}")
         
-        # Initialize stream resolver with session caching
-        self.stream_resolver = StreamResolver(self.service)
-        logger.info("📋 Stream resolver initialized with session caching")
+        # Initialize the YouTube proxy with session caching
+        self.youtube_proxy = YouTubeProxy(credentials)
+        logger.info("📋 YouTube proxy initialized.")
         self.using_multi_agent = False
         return True
         
@@ -164,7 +164,7 @@ class FoundUpsAgent:
         logger.info(f"🔍 Searching for active livestream...")
         
         try:
-            result = self.stream_resolver.resolve_stream(self.channel_id)
+            result = self.youtube_proxy.find_active_livestream(self.channel_id)
             if result:
                 video_id, chat_id = result
                 logger.info(f"✅ Found active livestream: {video_id[:8]}...")
@@ -184,10 +184,11 @@ class FoundUpsAgent:
         try:
             # Start agent session if using multi-agent
             if self.using_multi_agent and self.agent_manager and self.current_agent:
+                stream_title = self.youtube_proxy.get_stream_title(video_id)
                 success = self.agent_manager.start_agent_session(
                     self.current_agent, 
                     video_id, 
-                    self.stream_resolver._get_stream_title(video_id) or "Unknown Stream"
+                    stream_title
                 )
                 if not success:
                     logger.error("❌ Failed to start agent session")

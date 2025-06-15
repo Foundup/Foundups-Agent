@@ -218,6 +218,17 @@ def get_oauth_token_file(credential_type: str) -> str:
         index = {"primary": 0, "secondary": 1, "tertiary": 2, "quaternary": 3}[credential_type]
     return os.path.join(CREDENTIALS_DIR, OAUTH_TOKEN_FILES[index])
 
+def save_oauth_token_file(credentials: Credentials, credential_type: str) -> None:
+    """Saves the OAuth credentials to the specified token file."""
+    token_file_path = get_oauth_token_file(credential_type)
+    try:
+        os.makedirs(os.path.dirname(token_file_path), exist_ok=True)
+        with open(token_file_path, 'w') as token_file:
+            token_file.write(credentials.to_json())
+        logger.info(f"Refreshed token saved successfully to {token_file_path}")
+    except Exception as e:
+        logger.error(f"Failed to save token file to {token_file_path}: {e}")
+
 def authenticate_with_config(client_secrets_file: str, token_file: str, config_name: str) -> Optional[Credentials]:
     """
     Authenticates with YouTube API using the specified configuration files.

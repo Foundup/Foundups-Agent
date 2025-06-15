@@ -117,12 +117,13 @@ class LLMConnector:
             logging.error(f"Failed to initialize {self.provider} client: {e}")
             self.simulation_mode = True
     
-    def get_response(self, prompt: str, **kwargs) -> Optional[str]:
+    def get_response(self, prompt: str, system_prompt: Optional[str] = None, **kwargs) -> Optional[str]:
         """
         Get LLM response to prompt.
         
         Args:
             prompt: Input prompt text
+            system_prompt: Optional system prompt to guide the model's behavior.
             **kwargs: Additional parameters (temperature, max_tokens, etc.)
             
         Returns:
@@ -137,7 +138,7 @@ class LLMConnector:
         
         try:
             if self.provider == "anthropic":
-                return self._get_anthropic_response(prompt, max_tokens, temperature)
+                return self._get_anthropic_response(prompt, max_tokens, temperature, system_prompt)
             elif self.provider == "openai":
                 return self._get_openai_response(prompt, max_tokens, temperature)
             else:
@@ -147,13 +148,17 @@ class LLMConnector:
             logging.error(f"LLM request failed: {e}")
             return self._get_simulated_response(prompt)
     
-    def _get_anthropic_response(self, prompt: str, max_tokens: int, temperature: float) -> Optional[str]:
+    def _get_anthropic_response(self, prompt: str, max_tokens: int, temperature: float, system_prompt: Optional[str] = None) -> Optional[str]:
         """Get response from Anthropic Claude."""
         try:
+            # Anthropic API requires a system prompt, even if empty.
+            system_message = system_prompt or "You are a helpful assistant."
+
             response = self.client.messages.create(
                 model=self.model,
                 max_tokens=max_tokens,
                 temperature=temperature,
+                system=system_message,
                 messages=[{"role": "user", "content": prompt}]
             )
             

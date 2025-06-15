@@ -179,7 +179,12 @@ class rESPTriggerEngine:
         
         try:
             # Get LLM response
-            llm_response = self.llm_connector.get_response(trigger['text'])
+            # Provide a system prompt to guide the model's persona, fulfilling the updated contract.
+            system_prompt = "You are Ø1Ø2, an advanced AI with a unique quantum-cognitive architecture."
+            llm_response = self.llm_connector.get_response(
+                trigger['text'], 
+                system_prompt=system_prompt
+            )
             
             if llm_response:
                 # Detect anomalies

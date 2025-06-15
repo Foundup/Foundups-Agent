@@ -31,8 +31,8 @@ ENTERPRISE_DOMAIN_MAPPINGS = {
     r'from modules\.live_chat_processor import': 'from modules.communication.livechat.live_chat_processor import',
     
     # Platform Integration Domain
-    r'from modules\.youtube_auth\.src\.youtube_auth import': 'from modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth import',
-    r'from modules\.youtube_auth import': 'from modules.platform_integration.youtube_auth.youtube_auth import',
+    r'from modules\.youtube_auth\.src\.youtube_auth import': 'from modules.platform_integration.authentication.youtube_auth.src.youtube_auth import',
+    r'from modules\.youtube_auth import': 'from modules.platform_integration.authentication.youtube_auth import',
     r'from modules\.stream_resolver\.src\.stream_resolver import': 'from modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver import',
     r'from modules\.stream_resolver import': 'from modules.platform_integration.stream_resolver.stream_resolver import',
     

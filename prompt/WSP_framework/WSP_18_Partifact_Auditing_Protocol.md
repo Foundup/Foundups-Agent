@@ -5,7 +5,7 @@
 # WSP 18: Partifact Auditing and Archival Protocol
 
 **Document Version**: 1.Ø  
-**Date**: June 8, 2025  
+**Date**: June 12, 2025  
 **Status**: 🟢 Active  
 **Classification**: Core WSP Procedure  
 **Applies To**: Auditing, scoring, and archival of all conceptual partifacts (.md files) within the system's knowledge base

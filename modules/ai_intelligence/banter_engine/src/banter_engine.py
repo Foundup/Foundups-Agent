@@ -18,7 +18,7 @@ from typing import Optional, Dict, Tuple, List, Any
 from datetime import datetime, timedelta
 
 # Import the SEQUENCE_MAP from sequence_responses
-from ..sequence_responses import SEQUENCE_MAP
+from .sequence_responses import SEQUENCE_MAP
 # Import the emoji action map
 from .emoji_sequence_map import get_emoji_sequence
 

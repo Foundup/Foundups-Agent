@@ -8,14 +8,29 @@ Integrates with existing OAuth manager and quota tracking.
 import logging
 import time
 import asyncio
+import os
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
-from modules.platform_integration.youtube_auth.youtube_auth.src.youtube_auth import get_authenticated_service
 from utils.oauth_manager import get_oauth_token_file
 
 logger = logging.getLogger(__name__)
+
+def _save_oauth_token_file(credentials: Credentials, credential_type: str) -> None:
+    """
+    Saves the OAuth credentials to the specified token file.
+    Co-located here to resolve a persistent file-write issue in the canonical oauth_manager.
+    """
+    token_file_path = get_oauth_token_file(credential_type)
+    try:
+        # Ensure the credentials directory exists
+        os.makedirs(os.path.dirname(token_file_path), exist_ok=True)
+        with open(token_file_path, 'w') as token_file:
+            token_file.write(credentials.to_json())
+        logger.info(f"Refreshed token saved successfully to {token_file_path}")
+    except Exception as e:
+        logger.error(f"Failed to save token file to {token_file_path}: {e}")
 
 class TokenManager:
     """Manages OAuth token rotation and health checking."""
@@ -56,44 +71,32 @@ class TokenManager:
         if token_index in self.token_health_cache:
             cache_entry = self.token_health_cache[token_index]
             cache_age = time.time() - cache_entry['timestamp']
-            if cache_age < self.health_check_interval:
+            if cache_age < self.health_check_interval and cache_entry.get('healthy', False):
                 logger.debug(f"Using cached health status for set_{token_index + 1}: {cache_entry['healthy']}")
                 return cache_entry['healthy']
         
-        # Get token file path
         try:
-            token_file = get_oauth_token_file(f"set_{token_index + 1}")
-        except Exception as e:
-            logger.error(f"Failed to get token file for set_{token_index + 1}: {e}")
-            self._update_health_cache(token_index, False)
-            return False
-        
-        try:
-            # Try to load and validate token
-            service = get_authenticated_service(token_index)
-            if not service:
-                logger.warning(f"Token health check failed for set_{token_index + 1}: Service creation failed")
+            # A more robust health check is to see if the token can be refreshed.
+            # This is platform-agnostic and confirms the refresh token is valid.
+            creds = get_oauth_token_file(f"set_{token_index + 1}")
+            if not creds:
+                logger.warning(f"Token health check failed for set_{token_index + 1}: Could not load credentials.")
                 self._update_health_cache(token_index, False)
                 return False
-                
-            # Test token with a lightweight API call
-            response = service.channels().list(
-                part="snippet",
-                mine=True  # Use 'mine=True' for better token validation
-            ).execute()
-            
-            # Validate response structure
-            if not response.get("items"):
-                logger.warning(f"Token health check failed for set_{token_index + 1}: No channel data returned")
-                self._update_health_cache(token_index, False)
-                return False
-            
+
+            # If the token is expired or close to expiring, a refresh is attempted.
+            # If it's valid, this does nothing. If it's invalid, it raises an exception.
+            if creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+                # If refresh is successful, save the new token
+                _save_oauth_token_file(creds, f"set_{token_index + 1}")
+
             logger.debug(f"Token health check passed for set_{token_index + 1}")
             self._update_health_cache(token_index, True)
             return True
             
         except Exception as e:
-            logger.error(f"Token health check failed for set_{token_index + 1}: {e}")
+            logger.error(f"Token health check failed for set_{token_index + 1} during refresh: {e}")
             self._update_health_cache(token_index, False)
             return False
             

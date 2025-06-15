@@ -1,0 +1,1 @@
+# WSP 35: Module Creation Automation

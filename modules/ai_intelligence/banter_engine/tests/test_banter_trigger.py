@@ -21,7 +21,7 @@ from modules.ai_intelligence.banter_engine.emoji_sequence_map import (
     emoji_string_to_tuple,
     tuple_to_emoji_string,
 )
-from modules.ai_intelligence.banter_engine.sequence_responses import SEQUENCE_MAP
+from modules.ai_intelligence.banter_engine.emoji_sequence_map import SEQUENCE_MAP
 
 def test_emoji_mapping():
     """Test the emoji-to-number mapping functionality."""

@@ -1,0 +1,1 @@
+# WSP 38: Agentic Activation Protocol

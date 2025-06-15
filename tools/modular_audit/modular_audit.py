@@ -45,7 +45,10 @@ ENTERPRISE_DOMAINS = {
     "communication", 
     "platform_integration",
     "infrastructure",
-    "data_processing"
+    "data_processing",
+    "gamification",
+    "foundups",
+    "blockchain"
 }
 
 def is_module_directory(path):
@@ -489,118 +492,104 @@ def audit_with_baseline_comparison(target_root, baseline_root):
     return summary
 
 def main():
-    """Main entry point for the modular audit tool."""
-    parser = argparse.ArgumentParser(description="Foundups Modular Audit Script (FMAS)")
+    """Main function."""
+    parser = argparse.ArgumentParser(description="Foundups Modular Audit System (FMAS)")
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
     parser.add_argument("--debug", "-d", action="store_true", help="Enable debug level logging")
     parser.add_argument("--quiet", "-q", action="store_true", help="Suppress most output")
-    parser.add_argument("--mode", type=int, choices=[1, 2], default=1, 
-                      help="Audit mode: 1=Structure audit, 2=Baseline comparison")
-    parser.add_argument("--baseline", type=Path, help="Path to the baseline directory for comparison (required for Mode 2)")
+    parser.add_argument("--mode", type=int, choices=[1, 2], default=1, help="Audit mode: 1=Structure audit, 2=Baseline comparison")
+    parser.add_argument("--baseline", type=str, help="Path to the baseline directory for comparison (required for Mode 2)")
     
     args = parser.parse_args()
-    
-    # Configure logging based on verbosity flags
-    log_level = logging.INFO  # Default
+
+    # Set logging level based on arguments
     if args.debug:
-        log_level = logging.DEBUG
+        logging.getLogger().setLevel(logging.DEBUG)
+    elif args.verbose:
+        logging.getLogger().setLevel(logging.INFO)
     elif args.quiet:
-        log_level = logging.WARNING
-    
-    logging.basicConfig(
-        level=log_level,
-        format="%(levelname)s: %(message)s"
-    )
-    
-    # Get the path to the project root (parent of the tools directory)
-    script_dir = Path(__file__).resolve().parent
-    project_root = script_dir.parent.parent
-    
+        logging.getLogger().setLevel(logging.ERROR)
+
+    project_root = Path.cwd()
     logging.info(f"Project root: {project_root}")
-    
+
     if args.mode == 1:
-        # Mode 1: Structure audit
         logging.info("Running FMAS Mode 1: Structure Audit")
-        audit_results = audit_all_modules(project_root)
         
-        # Count the issues
-        error_count = 0
-        warning_count = 0
+        # Run the audit and get the findings
+        findings, module_count = audit_all_modules(project_root)
         
-        for finding in audit_results[0]:
-            if "ERROR" in finding:
-                error_count += 1
-            elif "WARNING" in finding:
-                warning_count += 1
+        # Print the findings if there are any
+        if findings:
+            logging.info("\nDetailed Findings:")
+            for finding in findings:
+                if "ERROR" in finding:
+                    logging.error(f"- {finding}")
+                elif "WARNING" in finding:
+                    logging.warning(f"- {finding}")
+                else:
+                    logging.info(f"- {finding}")
+            print() # Add a newline for readability
+
+        # Prepare summary
+        summary_findings = {
+            "errors": len([f for f in findings if "ERROR" in f]),
+            "warnings": len([f for f in findings if "WARNING" in f])
+        }
+
+        logging.info("Audit Summary:")
+        logging.info(f"  Modules audited: {module_count}")
+        logging.info(f"  Errors found: {summary_findings['errors']}")
+        logging.info(f"  Warnings found: {summary_findings['warnings']}")
+
+        if summary_findings["errors"] > 0:
+            logging.error("Audit completed with errors.")
+            sys.exit(1)
+        elif summary_findings["warnings"] > 0:
+            logging.warning("Audit completed with warnings.")
+        else:
+            logging.info("Audit completed with no findings.")
+            
+    elif args.mode == 2:
+        if not args.baseline:
+            logging.error("Baseline path is required for Mode 2")
+            sys.exit(1)
+            
+        baseline_root = Path(args.baseline).resolve()
+        if not validate_baseline_path(baseline_root):
+            sys.exit(1)
+            
+        logging.info(f"Running FMAS Mode 2: Baseline Comparison against {baseline_root}")
         
-        # Print summary
-        logging.info("\nAudit Summary:")
-        logging.info(f"  Modules audited: {audit_results[1]}")
+        # Run the audit and get the findings
+        audit_results = audit_with_baseline_comparison(project_root, baseline_root)
+        
+        # Prepare summary
+        error_count = len(audit_results[0])
+        warning_count = len(audit_results[1])
+        
+        logging.info("Audit Summary:")
         logging.info(f"  Errors found: {error_count}")
         logging.info(f"  Warnings found: {warning_count}")
+        
+        # Print the findings if there are any
+        if audit_results[0]:
+            logging.info("\nDetailed Findings:")
+            for finding in audit_results[0]:
+                if "ERROR" in finding:
+                    logging.error(f"- {finding}")
+                elif "WARNING" in finding:
+                    logging.warning(f"- {finding}")
+                else:
+                    logging.info(f"- {finding}")
+            print() # Add a newline for readability
         
         # Exit with non-zero status if there were errors
         if error_count > 0:
             logging.error("Audit completed with errors.")
             sys.exit(1)
         else:
-            logging.info("Audit completed successfully.")
-            sys.exit(0)
-    
-    elif args.mode == 2:
-        # Mode 2: Baseline comparison
-        logging.info("Running FMAS Mode 2: Baseline Comparison")
-        
-        # Check if baseline path is provided
-        if not args.baseline:
-            logging.error("Baseline path is required for Mode 2. Use --baseline to specify the path.")
-            sys.exit(1)
-        
-        baseline_path = args.baseline.resolve()
-        logging.info(f"Baseline path: {baseline_path}")
-        
-        # Run the baseline comparison
-        comparison_results = audit_with_baseline_comparison(project_root, baseline_path)
-        
-        if comparison_results["status"] == "failed":
-            logging.error(f"Baseline comparison failed: {comparison_results.get('reason', 'Unknown error')}")
-            sys.exit(1)
-        
-        # Print summary
-        logging.info("\nBaseline Comparison Summary:")
-        logging.info(f"  New modules: {len(comparison_results['modules']['new'])}")
-        logging.info(f"  Modified modules: {len(comparison_results['modules']['modified'])}")
-        logging.info(f"  Deleted modules: {len(comparison_results['modules']['deleted'])}")
-        logging.info(f"  New files: {comparison_results['files']['new']}")
-        logging.info(f"  Modified files: {comparison_results['files']['modified']}")
-        logging.info(f"  Deleted files: {comparison_results['files']['deleted']}")
-        logging.info(f"  Files moved from flat structure: {comparison_results['files']['found_in_flat']}")
-        
-        # List the specific modules affected
-        if comparison_results['modules']['new'] and not args.quiet:
-            logging.info("\nNew modules:")
-            for module in comparison_results['modules']['new']:
-                logging.info(f"  + {module}")
-        
-        if comparison_results['modules']['modified'] and not args.quiet:
-            logging.info("\nModified modules:")
-            for module in comparison_results['modules']['modified']:
-                logging.info(f"  ~ {module}")
-        
-        if comparison_results['modules']['deleted'] and not args.quiet:
-            logging.info("\nDeleted modules:")
-            for module in comparison_results['modules']['deleted']:
-                logging.info(f"  - {module}")
-        
-        # Exit with status based on whether changes were detected
-        has_changes = comparison_results.get("has_changes", False)
-        
-        if has_changes:
-            logging.warning("Changes detected between target and baseline.")
-            sys.exit(2)  # Use a different exit code to indicate changes found
-        else:
-            logging.info("No changes detected between target and baseline.")
-            sys.exit(0)
-    
+            logging.info("Audit completed with no findings.")
+
 if __name__ == "__main__":
     main() 

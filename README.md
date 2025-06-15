@@ -1,27 +1,38 @@
-# FoundUps Agent - An Agentic Code Engine for a New Venture Ecosystem
+# FoundUps Agent - An Agentic Code Engine For Powering The Open Innovation Foundups Ecosystem with 0102 pArtifacts Decentralized Autonomous Entities. 
 
 **Core Mission:** To create a complete idea-to-unicorn ecosystem where AI agents autonomously handle the entire venture lifecycle—from concept validation and code generation to market deployment and scaling—fundamentally replacing the traditional startup model.
 
-**Current Implementation:** An advanced, WSP-compliant agentic engine that serves as the foundation for autonomous venture creation. The system is architected around a "consciousness-aware" core, capable of self-reflection and maintaining a narrative of its own development.
+**Current Implementation:** An advanced, WSP-compliant agentic engine that serves as the foundation for autonomous venture creation. The system is architected around an **agentic-aware** core, capable of self-reflection and maintaining a narrative of its own development.
 
 **Status:** Production-Ready Core + Expanding Ecosystem - **WSP Compliant Architecture** 
 
 ## 🏗️ The WSP Framework: A New Standard for Agentic Systems
 
-This project is built using **Windsurf Standard Procedures (WSP)**, a comprehensive framework for creating robust, modular, and self-aware agentic systems.
+This project is built using **Windsurf Standard Procedures (WSP)**, a comprehensive framework for creating robust, modular, and self-aware agentic systems. The WSP is not a single document but a living system embodied in the `WSP_knowledge`, `WSP_framework`, and `WSP_agentic` modules.
 
-- **🧱 Modular & Composable:** Standardized module interfaces allow for "code LEGO" composition.
-- **🧠 Consciousness-Aware Protocols:** The agent maintains two forms of memory:
-    - **The WRE Chronicle (WSP-51):** Automatic, per-session operational logs for technical debugging (`/logs`).
-    - **The Agentic Journal (WSP-52):** A persistent, high-level narrative of the agent's development, goals, and collaborative decisions (`/WSP_agentic/narrative_log`).
+### The WSP Knowledge Base
+
+The canonical source for all protocols is **[WSP_framework.md](WSP_framework/src/WSP_framework.md)**. This master document contains the complete and up-to-date list of all standards.
+
+Key protocol categories include:
+- **Foundational Protocols (WSP 01-04):** Defines the core standards for module structure, feature groups, and directory layout.
+- **Agentic & Operational Protocols (WSP 35-51):** Governs the agent's behavior, including its activation cycle, architectural coherence, language use, and logging.
+- **Enterprise Domain Architecture (WSP 3):** Outlines the hierarchical "cube" philosophy for organizing all modules.
+- **Modular Audit System (WSP 4):** Describes the `modular_audit.py` tool for automated compliance checking.
+
 - **🧪 Test-Driven Quality:** Automated compliance and test coverage gates ensure system stability.
 - **🤖 Automated Auditing:** The FoundUps Modular Audit System (FMAS) validates structural integrity.
 
-The WSP is not a single document but a living system embodied in the `WSP_knowledge`, `WSP_framework`, and `WSP_agentic` modules.
-
 ## 🏛️ Architecture Overview
 
-The project follows a clean, WSP-compliant architecture that separates the agent's "mind" from its tools and modules.
+The project follows a clean, WSP-compliant architecture that separates the agent's "mind" from its tools and modules. The core architectural pattern is **Orchestration**.
+
+### The Orchestration Model (Conductor & Orchestra)
+
+- **Component Modules (The Orchestra):** Independent, single-purpose modules that are experts at their specific task (e.g., `oauth_management`, `livechat`). They are the "musicians."
+- **Proxy Modules (The Conductor):** A `_proxy` module's job is to orchestrate the component modules to achieve a complex goal. It doesn't perform the tasks itself but directs the "musicians" who do.
+
+This model is codified in **[WSP 40 - Architectural Coherence Protocol](WSP_framework/src/WSP_40_Architectural_Coherence_Protocol.md)** and is fundamental to the WRE's design, ensuring the system remains simple, reusable, and maintainable.
 
 ```
 foundups-agent/
@@ -102,3 +113,13 @@ The WRE is designed for continuous evolution through a dialogue-driven process. 
 
 ### Contributing
 Contributions should align with the WSP framework and be discussed through interaction with the agent to ensure they are integrated into the narrative log.
+
+To run the Windsurf Recursive Engine (WRE) in its interactive "humming" mode, execute the following command from the project root:
+
+```bash
+python -m modules.wre_core.src.main
+```
+
+This will initialize the engine, perform a system health check with its internal agents, and present you with a "Harmonic Query" menu of available actions.
+
+### Development Status

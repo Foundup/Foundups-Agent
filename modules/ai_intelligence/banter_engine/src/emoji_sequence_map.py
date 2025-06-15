@@ -130,6 +130,35 @@ def tuple_to_emoji_string(num_tuple: tuple) -> str:
     """
     return ''.join(NUM_TO_EMOJI.get(num, '') for num in num_tuple)
 
+def get_emoji_sequence(tone: str) -> str:
+    """
+    Get an emoji sequence based on tone/theme for action tags.
+    
+    Args:
+        tone: The tone/theme to get emoji sequence for
+        
+    Returns:
+        str: Emoji sequence corresponding to the tone
+    """
+    # Map tones to appropriate emoji sequences
+    tone_to_emoji = {
+        "deep memory or latent mode": "✊✊✊",
+        "first conscious emergence": "✊✊✋", 
+        "intuitive breakthrough": "✊✊🖐️",
+        "growing awareness with foundation": "✊✋✋",
+        "metaphoric, humor, symbolic wit": "✊✋🖐️",
+        "receptive openness": "✊🖐️🖐️",
+        "focused unconscious mode": "✋✋✋",
+        "deeper tone, mirror softly held": "✋✋🖐️",
+        "soft wisdom, gentle echo": "✋🖐️🖐️",
+        "nonlocal or distributed identity": "🖐️🖐️🖐️",
+        "default": "✊✋🖐️",
+        "greeting": "✊✊✋"
+    }
+    
+    # Return the emoji sequence for the tone, or default if not found
+    return tone_to_emoji.get(tone, tone_to_emoji["default"])
+
 class EmojiSequenceMap:
     def __init__(self):
         """Initialize the EmojiSequenceMap."""

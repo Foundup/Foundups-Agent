@@ -43,10 +43,8 @@ def run_simulation(sandbox_path, goal_file):
     
     cmd = [
         sys.executable,
-        str(wre_engine_path),
-        '--simulation',  # Run WRE in simulation mode (no live API keys)
-        '--goal',
-        str(sandboxed_goal_path)
+        "-m", "modules.wre_core.src.main",
+        "--goal", str(sandboxed_goal_path)
     ]
     
     # The WRE engine is now non-interactive when a goal is passed.

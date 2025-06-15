@@ -1,0 +1,1 @@
+# WSP 44: Semantic State Engine Protocol

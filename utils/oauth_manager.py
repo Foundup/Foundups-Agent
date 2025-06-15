@@ -1,31 +1,12 @@
-"""
+﻿"""
 LEGACY COMPATIBILITY SHIM - utils/oauth_manager.py
-
-⚠️  DEPRECATION NOTICE ⚠️
-========================
-This file is a COMPATIBILITY SHIM only. The actual OAuth Manager has been moved to:
-modules/infrastructure/oauth_management/oauth_management/src/oauth_manager.py
-
-This shim exists to maintain backward compatibility during the transition period.
-All new code should import directly from the new location:
-
-    from modules.infrastructure.oauth_management.oauth_management.src.oauth_manager import (
-        get_authenticated_service, get_authenticated_service_with_fallback, QuotaManager
-    )
-
-This shim will be removed in a future version once all imports have been updated.
 """
-
 import warnings
-
-# Issue deprecation warning
-warnings.warn(
-    "utils.oauth_manager is deprecated. Use modules.infrastructure.oauth_management.oauth_management.src.oauth_manager instead.",
-    DeprecationWarning,
-    stacklevel=2
-)
-
-# Import everything from the new location for backward compatibility
+from google.oauth2.credentials import Credentials
+import os
+import logging
+logger = logging.getLogger(__name__)
+warnings.warn("utils.oauth_manager is deprecated. Use modules.infrastructure.oauth_management.oauth_management.src.oauth_manager instead.", DeprecationWarning, stacklevel=2)
 from modules.infrastructure.oauth_management.oauth_management.src.oauth_manager import (
     # Core authentication functions
     get_authenticated_service,
@@ -76,4 +57,17 @@ __all__ = [
     'QUOTA_LIMIT_7D',
     'QUOTA_RESET_3H',
     'QUOTA_RESET_7D'
-] 
+]
+
+def save_oauth_token_file(credentials: Credentials, credential_type: str) -> None:
+    """Saves the OAuth credentials to the specified token file."""
+    from modules.infrastructure.oauth_management.oauth_management.src.oauth_manager import get_oauth_token_file, CREDENTIALS_DIR
+    token_file_path = get_oauth_token_file(credential_type)
+    try:
+        os.makedirs(os.path.dirname(token_file_path), exist_ok=True)
+        with open(token_file_path, 'w') as token_file:
+            token_file.write(credentials.to_json())
+        logger.info(f"Refreshed token saved successfully to {token_file_path}")
+    except Exception as e:
+        logger.error(f"Failed to save token file to {token_file_path}: {e}")
+__all__.append('save_oauth_token_file')

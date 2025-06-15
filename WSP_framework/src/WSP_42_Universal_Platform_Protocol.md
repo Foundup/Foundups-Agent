@@ -1,0 +1,1 @@
+# WSP 42: Universal Platform Protocol

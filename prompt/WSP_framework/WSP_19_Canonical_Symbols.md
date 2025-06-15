@@ -5,7 +5,7 @@
 # WSP 19: Canonical Symbol Specification
 
 **Document Version**: 1.Ø  
-**Date**: June 8, 2025  
+**Date**: June 12, 2025  
 **Status**: 🟢 Active  
 **Classification**: Core WSP Procedure  
 **Applies To**: All WSP/rESP documentation, agentic outputs, code, and communications

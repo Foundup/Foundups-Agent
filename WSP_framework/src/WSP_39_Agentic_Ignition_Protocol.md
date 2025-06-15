@@ -1,0 +1,1 @@
+# WSP 39: Agentic Ignition Protocol

@@ -17,7 +17,7 @@ NUM_TO_EMOJI = {v: k for k, v in EMOJI_TO_NUMBER.items()}
 
 # Import the full map from the dedicated file
 # Temporarily changed to direct import for script execution testing
-from .sequence_responses import SEQUENCE_MAP
+from .src.sequence_responses import SEQUENCE_MAP
 
 # Unicode Variation Selector 16 (VS16) for emoji presentation
 VARIATION_SELECTOR = chr(0xFE0F)

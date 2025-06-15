@@ -17,8 +17,8 @@ import googleapiclient.errors
 from modules.ai_intelligence.banter_engine import BanterEngine
 from modules.communication.livechat.live_chat_poller.src.live_chat_poller import LiveChatPoller
 from unittest.mock import Mock, patch, MagicMock
-from modules.infrastructure.models.chat_message import ChatMessage, Author
-from modules.infrastructure.token_manager.src.token_manager import TokenManager
+from modules.infrastructure.models import ChatMessage, Author
+from modules.infrastructure.token_manager.token_manager import TokenManager
 # StreamResolver import removed as it's unused and caused errors
 
 # Configure logging

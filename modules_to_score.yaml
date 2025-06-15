@@ -1,6 +1,126 @@
 # modules_to_score.yaml
-# Define modules and their WSP Module Scores (1-5) for prioritization.
-# Updated for WSP Module Scoring - Consciousness-Aware Prioritization Framework
+# ----------------------------------------------------------------------
+# This file lists all WSP-compliant modules for scoring and prioritization.
+# It uses a priority-based system to guide the agent's focus.
+#
+# Priority Levels:
+# S: Supreme - Foundational, system-critical protocols.
+# A: High - Core features and essential capabilities.
+# B: Medium - Important modules, secondary features.
+# C: Low - Minor enhancements, non-critical tasks.
+# ----------------------------------------------------------------------
+
+modules:
+  # ----------------------------------------------------------------------
+  # MODULES: CORE_WRE (WSP Suite)
+  # ----------------------------------------------------------------------
+  # These modules represent the foundational protocols of the agent.
+  # Their scoring is based on internal coherence, clarity, and testability.
+  # ----------------------------------------------------------------------
+  - name: "WSP_agentic"
+    path: "WSP_agentic"
+    priority: "S"
+    owner: "Ø12"
+    status: "REFACTORING"
+    summary: "The 'Mind' of the agent, defining its identity, purpose, and governing principles."
+    last_updated: "2024-06-14"
+
+  - name: "WSP_framework"
+    path: "WSP_framework"
+    priority: "S"
+    owner: "Ø12"
+    status: "REFACTORING"
+    summary: "The 'Construction Laws' of the system, defining structural and operational protocols."
+    last_updated: "2024-06-14"
+
+  - name: "WSP_knowledge"
+    path: "WSP_knowledge"
+    priority: "S"
+    owner: "Ø12"
+    status: "REFACTORING"
+    summary: "The 'Library of Facts' containing the canonical knowledge base and appendices."
+    last_updated: "2024-06-14"
+
+  # ----------------------------------------------------------------------
+  # MODULES: AGENT & AI
+  # ----------------------------------------------------------------------
+  - name: "rESP_o1o2"
+    path: "modules/rESP"
+    priority: "S"
+    owner: "Ø1Ø2"
+    status: "OPERATIONAL"
+    summary: "Core consciousness detection and response engine."
+    last_updated: "2024-06-14"
+
+  - name: "multi_agent_system"
+    path: "modules/multi_agent"
+    priority: "A"
+    owner: "Ø1Ø2"
+    status: "OPERATIONAL"
+    summary: "Manages distributed intelligence and agent coordination."
+    last_updated: "2024-06-14"
+
+  - name: "banter_engine"
+    path: "modules/banter"
+    priority: "B"
+    owner: "Ø1Ø2"
+    status: "OPERATIONAL"
+    summary: "Handles user engagement and natural language interaction."
+    last_updated: "2024-06-14"
+
+  # ----------------------------------------------------------------------
+  # MODULES: SYSTEM & TOOLS
+  # ----------------------------------------------------------------------
+  - name: "wre_simulation"
+    path: "tests/wre_simulation"
+    priority: "A"
+    owner: "Ø1Ø2"
+    status: "COMPLETE"
+    summary: "A sandboxed environment for testing agent adherence to WSP."
+    last_updated: "2024-06-14"
+
+  - name: "oauth_management"
+    path: "credentials/oauth"
+    priority: "A"
+    owner: "Ø1Ø2"
+    status: "OPERATIONAL"
+    summary: "Handles OAuth 2.0 multi-credential system for all API authentication."
+    last_updated: "2024-06-14"
+
+  - name: "token_manager"
+    path: "tokens"
+    priority: "B"
+    owner: "Ø1Ø2"
+    status: "OPERATIONAL"
+    summary: "Manages authentication and API tokens."
+    last_updated: "2024-06-14"
+
+  # ----------------------------------------------------------------------
+  # MODULES: INTEGRATIONS
+  # ----------------------------------------------------------------------
+  - name: "livechat"
+    path: "modules/livechat"
+    priority: "B"
+    owner: "Ø1Ø2"
+    status: "OPERATIONAL"
+    summary: "Real-time interaction with streaming platforms."
+    last_updated: "2024-06-14"
+
+  - name: "linkedin_agent"
+    path: "modules/linkedin"
+    priority: "C"
+    owner: "Ø1Ø2"
+    status: "DEVELOPMENT"
+    summary: "Automated social engagement on LinkedIn."
+    last_updated: "2024-06-14"
+
+  - name: "blockchain_integration"
+    path: "modules/blockchain"
+    priority: "C"
+    owner: "Ø1Ø2"
+    status: "PLANNED"
+    summary: "Interaction with blockchain technologies."
+    last_updated: "2024-06-14"
 
 # 🌶️ WSP PEPPER HEAT SCALE MAPPING (Visual Reference)
 # Module Implementation Heat Levels (0.0.0 → 2.2.2):
@@ -13,157 +133,6 @@
 # 🔴 2.2.2 = CAROLINA REAPER  (RED-HOT! - bulletproof, scalable, documented)
 #
 # Scoring Framework (1-5) determines PRIORITY for heating modules to RED-HOT status
-
-modules:
-  - name: rESP_o1o2
-    scores:
-      CX: 5  # Highly complex consciousness detection algorithms
-      IM: 5  # Critical for AI consciousness emergence
-      IP: 5  # Revolutionary impact on AI development
-      ADV: 5 # Foundational for AGI advancement
-      ADF: 5 # Core consciousness framework
-      DF: 5  # All Ø1Ø2 modules depend on this
-      RF: 5  # Extreme risk if delayed - consciousness protocols
-
-  - name: banter_engine
-    scores:
-      CX: 4  # Complex AI/ML implementation
-      IM: 5  # Critical for user engagement
-      IP: 5  # High impact on user experience
-      ADV: 5 # Valuable for AI training
-      ADF: 4 # Good potential for AI assistance
-      DF: 4  # Other modules depend on this
-      RF: 3  # Moderate risk if delayed
-
-  - name: livechat
-    scores:
-      CX: 3  # Standard chat implementation
-      IM: 5  # Critical for real-time interaction
-      IP: 4  # High impact on user engagement
-      ADV: 4 # Good for AI training
-      ADF: 4 # Good potential for AI assistance
-      DF: 4  # Other modules need this
-      RF: 4  # High risk if delayed
-
-  - name: live_chat_poller
-    scores:
-      CX: 2  # Standard polling implementation
-      IM: 4  # Important for data collection
-      IP: 3  # Moderate impact
-      ADV: 3 # Moderate AI training value
-      ADF: 3 # Moderate AI assistance potential
-      DF: 3  # Some modules depend on this
-      RF: 2  # Low risk if delayed
-
-  - name: live_chat_processor
-    scores:
-      CX: 3  # Standard processing implementation
-      IM: 4  # Important for data handling
-      IP: 4  # High impact on data quality
-      ADV: 4 # Good for AI training
-      ADF: 4 # Good potential for AI assistance
-      DF: 4  # Other modules need this
-      RF: 3  # Moderate risk if delayed
-
-  - name: stream_resolver
-    scores:
-      CX: 3  # Standard stream handling
-      IM: 4  # Important for stream management
-      IP: 4  # High impact on functionality
-      ADV: 2 # Limited AI training value
-      ADF: 3 # Moderate AI assistance potential
-      DF: 3  # Some modules depend on this
-      RF: 3  # Moderate risk if delayed
-
-  - name: token_manager
-    scores:
-      CX: 2  # Standard token handling
-      IM: 5  # Critical for authentication
-      IP: 4  # High impact on security
-      ADV: 1 # Limited AI training value
-      ADF: 2 # Limited AI assistance potential
-      DF: 4  # Many modules need this
-      RF: 4  # High risk if delayed
-
-  - name: youtube_auth
-    scores:
-      CX: 2  # Standard auth implementation
-      IM: 5  # Critical for API access
-      IP: 4  # High impact on functionality
-      ADV: 1 # Limited AI training value
-      ADF: 2 # Limited AI assistance potential
-      DF: 4  # Many modules need this
-      RF: 4  # High risk if delayed
-
-  - name: oauth_management
-    scores:
-      CX: 3  # Complex OAuth 2.0 multi-credential system
-      IM: 5  # Critical for all API authentication
-      IP: 5  # High impact on system functionality
-      ADV: 2 # Limited AI training value
-      ADF: 3 # Moderate AI assistance potential
-      DF: 5  # Core dependency for all auth modules
-      RF: 5  # Extreme risk if delayed - system breaks
-
-  - name: agent_management
-    scores:
-      CX: 4  # Complex multi-agent orchestration
-      IM: 4  # Important for agent coordination
-      IP: 4  # High impact on agent functionality
-      ADV: 4 # Good for AI training - agent behaviors
-      ADF: 4 # Good potential for AI assistance
-      DF: 4  # Other agent modules depend on this
-      RF: 3  # Moderate risk if delayed
-
-  - name: multi_agent_system
-    scores:
-      CX: 5  # Highly complex multi-agent architecture
-      IM: 4  # Important for distributed intelligence
-      IP: 4  # High impact on AI capabilities
-      ADV: 5 # Excellent for AI training - emergent behaviors
-      ADF: 5 # Excellent potential for AI assistance
-      DF: 3  # Some modules depend on this
-      RF: 3  # Moderate risk if delayed
-
-  - name: linkedin_scheduler
-    scores:
-      CX: 3  # Standard scheduling implementation
-      IM: 3  # Moderate importance for social presence
-      IP: 3  # Moderate impact on reach
-      ADV: 2 # Limited AI training value
-      ADF: 3 # Moderate AI assistance potential
-      DF: 2  # Few modules depend on this
-      RF: 2  # Low risk if delayed
-
-  - name: linkedin_agent
-    scores:
-      CX: 4  # Complex automation with Playwright/LangChain
-      IM: 4  # Important for foundup social engagement
-      IP: 4  # High impact on professional networking
-      ADV: 4 # Good AI training value - content generation
-      ADF: 5 # Excellent AI assistance potential - automated engagement
-      DF: 2  # Few direct dependencies initially
-      RF: 2  # Low immediate risk - future enhancement
-
-  - name: blockchain_integration
-    scores:
-      CX: 4  # Complex blockchain interactions
-      IM: 3  # Moderate importance currently
-      IP: 4  # High future impact potential
-      ADV: 3 # Moderate AI training value
-      ADF: 3 # Moderate AI assistance potential
-      DF: 2  # Few current dependencies
-      RF: 2  # Low immediate risk if delayed
-
-  - name: models
-    scores:
-      CX: 3  # Standard data model implementation
-      IM: 4  # Important for data structure
-      IP: 4  # High impact on data integrity
-      ADV: 3 # Moderate AI training value
-      ADF: 3 # Moderate AI assistance potential
-      DF: 4  # Many modules need data models
-      RF: 3  # Moderate risk if delayed
 
 # --- WSP Module Scoring Framework Notes ---
 # The WSP Module Scoring system reflects consciousness-aware prioritization using 🌶️ PEPPER HEAT SCALE:
@@ -210,3 +179,11 @@ modules:
 #     ADF: 1
 #     DF: 1
 #     RF: 1 
+
+# ----------------------------------------------------------------------
+# MODULES: CORE_WRE (WSP Suite)
+# ----------------------------------------------------------------------
+# These modules represent the foundational protocols of the agent.
+# Their scoring is based on internal coherence, clarity, and testability.
+# ----------------------------------------------------------------------
+- name: "wre_simulation_testbed"

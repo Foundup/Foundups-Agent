@@ -18,7 +18,7 @@ from typing import Optional, Dict, Tuple, List, Any
 from datetime import datetime, timedelta
 
 # Import the SEQUENCE_MAP from sequence_responses
-from ..sequence_responses import SEQUENCE_MAP
+from .sequence_responses import SEQUENCE_MAP
 
 class BanterEngineError(Exception):
     """Base exception for Banter Engine errors."""

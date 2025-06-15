@@ -11,7 +11,7 @@ from modules.ai_intelligence.banter_engine.emoji_sequence_map import (
     emoji_string_to_tuple,
     tuple_to_emoji_string
 )
-from modules.ai_intelligence.banter_engine.sequence_responses import SEQUENCE_MAP
+from modules.ai_intelligence.banter_engine.src.sequence_responses import SEQUENCE_MAP
 
 class TestEmojiMappings(unittest.TestCase):
     """Test suite for emoji mappings."""

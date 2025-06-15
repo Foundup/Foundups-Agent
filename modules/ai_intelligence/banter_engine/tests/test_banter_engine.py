@@ -2,7 +2,7 @@ import logging
 # Updated import path for BanterEngine (now in src)
 from ..src.banter_engine import BanterEngine
 # Updated import path for SEQUENCE_MAP (now one level above src)
-from ..sequence_responses import SEQUENCE_MAP
+from modules.ai_intelligence.banter_engine.src.sequence_responses import SEQUENCE_MAP
 
 def test_greeting_banter():
     print("🧪 Testing BanterEngine: greeting theme")

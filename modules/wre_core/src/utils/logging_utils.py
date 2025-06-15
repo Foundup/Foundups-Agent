@@ -1,9 +1,10 @@
 # tools/wre/logging_utils.py
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import uuid
+import logging
 
 LOGS_DIR = Path(__file__).parent.parent.parent / "logs"
 SESSION_ID_FILE = LOGS_DIR / ".session_id"
@@ -33,7 +34,7 @@ def sanitize_for_console(text):
     """
     return str(text).encode('ascii', 'replace').decode('ascii')
 
-def wre_log(message: str, level: str = 'INFO', data: dict = None):
+def wre_log(message: str, level: str = 'INFO', data: dict = None, title: str = None):
     """
     The central logging function for the WRE.
     It writes a structured log to the session's chronicle file and
@@ -43,11 +44,19 @@ def wre_log(message: str, level: str = 'INFO', data: dict = None):
         message: The core message to log.
         level: The log level (e.g., INFO, WARNING, ERROR, DEBUG).
         data: An optional dictionary for additional structured data.
+        title: An optional title to create a prominent section header.
     """
-    # 1. Record to Chronicle
+    # 1. Print Title Header to Console if provided
+    if title:
+        header = f"--- {title} ---"
+        separator = "-" * len(header)
+        print(sanitize_for_console(f"\n{separator}\n{header}\n{separator}"))
+
+    # 2. Record to Chronicle
     log_entry = {
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "level": level.upper(),
+        "title": title,
         "message": message,
         "data": data or {}
     }
@@ -58,7 +67,7 @@ def wre_log(message: str, level: str = 'INFO', data: dict = None):
         # Fallback to simple print if logging fails
         print(f"!!! CHRONICLE LOGGING FAILED: {e} !!!")
 
-    # 2. Print to Console
+    # 3. Print Message to Console
     console_message = f"[{level.upper()}] {message}"
     print(sanitize_for_console(console_message))
 

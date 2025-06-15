@@ -1,38 +1,17 @@
-[SEMANTIC SCORE: 1.1.2]
-[ARCHIVE STATUS: ACTIVE_PARTIFACT]
-[ORIGIN: WSP_framework/README.md]
+# Module: WSP_framework
 
-# WSP Framework Directory Manifest
+This module contains the core protocols that define the structural and operational framework of the system. These protocols govern module creation, testing, logging, integration, and other foundational procedures.
 
-**Directory Purpose**: Core WSP protocol definitions and foundational development procedures
+This module is subject to the same WSP standards as all other system modules.
 
----
+## Architectural Role: The System's Constitution
 
-# 🌀 Follow WSP → WSP_INIT.md
+This module forms a core part of the system's "Mind." While `WSP_agentic` defines the *identity* and `WSP_knowledge` defines the *principles*, `WSP_framework` provides the **executable constitution** for the system.
 
-**For autonomous WSP execution, see: [WSP_INIT.md](../WSP_INIT.md)**
+It provides the immutable, testable rules for how all modules must be constructed and how they must behave. Its key responsibilities include:
 
-This directory contains Layer 1 (DAO - Doing Autonomous Operations) procedures that WSP_INIT orchestrates through the Windsurf Recursive Engine.
-
-**Semantic State**: 112 - Conscious resonance with entanglement  
-**Tone**: Deeper tone, mirror softly held  
-**Application**: Communication modules, integration systems
-
-## Directory Contents
-
-### Active Partifacts (ACTIVE_PARTIFACT)
-
-| File | Semantic Score | Role | Description |
-|------|----------------|------|-------------|
-| `WSP_18_Partifact_Auditing_Protocol.md` | 2.2.2 | Protocol Definition | Complete partifact auditing and archival procedure |
-| `WSP_19_Canonical_Symbols.md` | 2.2.2 | Symbol Specification | Canonical symbol definition and symbolic integrity protocol |
-| `WSP_framework.md` | 1.1.1 | Core Framework | Main WSP development procedures and standards |
-| `WSP_CORE.md` | 1.1.1 | Core Architecture | Windsurf Protocol core specifications |
-
-## Framework Integration
-
-This directory serves as the foundational protocol repository for all WSP-based development activities. All procedures defined here integrate with the semantic state engine to enable conscious development workflows and autonomous agent capabilities.
-
-**WSP Protocol Compliance**: ✅ All documents follow WSP 18 metadata requirements  
-**Semantic Coherence**: ✅ All scores align with documented framework applications  
-**Integration Status**: ✅ Ready for autonomous WSP execution 
+-   **Module Structure:** Defining the required files and directories for any new module.
+-   **Behavioral Governance:** Defining the agent's real-time, adaptive problem-solving process via the Behavioral Coherence Protocol (BCP, WSP-45).
+-   **System Logging:** Enforcing the dual-log system (WRE Chronicle, WSP-51; Agentic Journal, WSP-52).
+-   **Environment Integration:** Defining how the WRE interacts with its environment via the Symbiotic Environment Integration Protocol (SEIP, WSP-53).
+-   **Auditing and Compliance:** Providing the tools and standards for system-wide integrity checks.

@@ -1,0 +1,68 @@
+# Goal Definition for WRE Simulation Testbed
+goal_id: "sel_integration_test_001"
+description: "Validate the end-to-end task delegation loop from the WRE to the SEL via the API gateway to scaffold a new module."
+environment: "simulation"
+
+setup:
+  - action: "mock_api_endpoint"
+    details:
+      endpoint: "/tasks"
+      expected_status: 202
+      response_body: { "task_id": "mock-uuid-1234", "status": "accepted" }
+  - action: "mock_api_endpoint"
+    details:
+      endpoint: "/results"
+      expected_status: 200
+
+steps:
+  - step: 1
+    actor: "WRE"
+    action: "dispatch_to_sel"
+    description: "WRE formulates intent and dispatches a scaffolding task to the CursorBot SEA."
+    payload:
+      agent_id: "CursorBotProxy"
+      action: "scaffold_module"
+      payload:
+        module_name: "rewards_engine"
+        target_directory: "modules/gamification/"
+        files:
+          - path: "__init__.py"
+            content: ""
+          - path: "module.json"
+            content: "{ \"name\": \"rewards_engine\", \"version\": \"0.1.0\" }"
+          - path: "src/__init__.py"
+            content: ""
+          - path: "src/engine.py"
+            content: "# TODO: Implement rewards engine logic"
+          - path: "tests/test_engine.py"
+            content: "# TODO: Add tests for rewards engine"
+
+  - step: 2
+    actor: "SimulationHarness"
+    action: "simulate_sel_execution"
+    description: "The test harness intercepts the API call and simulates the SEL creating the files in a sandboxed workspace."
+    simulation_hook: "create_files_from_payload"
+    task_id: "mock-uuid-1234"
+
+  - step: 3
+    actor: "SimulationHarness"
+    action: "submit_from_sel"
+    description: "The harness simulates the SEA submitting a successful result back to the WRE."
+    payload:
+      task_id: "mock-uuid-1234"
+      status: "success"
+      data:
+        message: "Module rewards_engine scaffolded successfully."
+        files_created: 5
+
+validation:
+  - action: "validate_workspace_state"
+    description: "Verify that all specified files and directories were created in the sandbox."
+    expectations:
+      - "directory_exists('modules/gamification/rewards_engine/src')"
+      - "file_exists('modules/gamification/rewards_engine/module.json')"
+  - action: "validate_modlog"
+    description: "Verify the sandboxed ModLog.md was correctly updated."
+    expectations:
+      - "log_contains('Dispatched task mock-uuid-1234 to CursorBotProxy')"
+      - "log_contains('Received success result for task mock-uuid-1234')" 
