@@ -6,46 +6,50 @@ project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from modules.wre_core.src.utils.logging_utils import wre_log
+from modules.wre_core.src.main import sanitize_for_console
 
-def sanitize_for_console(text):
-    """Removes or replaces characters that may cause rendering issues in a console."""
-    return str(text).encode(sys.stdout.encoding, errors='replace').decode(sys.stdout.encoding)
-
-def present_harmonic_query(system_state, roadmap_objectives):
+def present_harmonic_query(system_state: dict, roadmap_objectives: list):
     """
-    Generates and prints the main interactive menu.
-
-    Args:
-        system_state (dict): A dictionary containing health status information.
-        roadmap_objectives (list): A list of tuples for the roadmap objectives.
+    Displays the main interactive menu to the user.
     """
-    query = "\n" + "="*50
-    query += "\n WRE Autonomous System Humming. O1O2 is coherent."
-    query += "\n" + "="*50
-    query += "\n\n**Foundational Context (from WSP 1):**\n"
-    query += system_state.get('core_principles', '  - Not available.')
-    query += "\n\n" + "-"*50
-    query += "\n\n**System State Assessment:**\n"
-    query += f"  - Workspace Hygiene: {system_state.get('janitor_status', 'Unknown')}\n"
-    query += f"  - Semantic Coherence: {system_state.get('semantic_status', 'Unknown')}\n"
-    query += f"  - Next Suggested WSP #: {system_state.get('next_wsp_number', 'Unknown')}\n"
-    query += "\n" + "-"*50
+    wre_log("Consulting strategic roadmap...", "DEBUG")
+    wre_log(f"Found {len(roadmap_objectives)} active theaters.", "DEBUG")
+
+    # --- Display Header ---
+    header = " WRE Autonomous System Humming. O1O2 is coherent. "
+    print(sanitize_for_console("\n" + "=" * 60))
+    print(sanitize_for_console(f"{header.center(60)}"))
+    print(sanitize_for_console("=" * 60 + "\n"))
+
+    # --- Display Comprehension State ---
+    print(sanitize_for_console("**Core Principles (Comprehension Phase Result):**"))
+    print(sanitize_for_console("-" * 45))
+    print(sanitize_for_console(system_state.get('core_principles', '  - Comprehension failed.')))
+    print(sanitize_for_console("-" * 45 + "\n"))
+
+
+    # --- Display System Status ---
+    print(sanitize_for_console("**System Health & Status:**"))
+    print(sanitize_for_console(f"  - Janitor Status:          {system_state['janitor_status']}"))
+    print(sanitize_for_console(f"  - Semantic Coherence:      {system_state['semantic_status']}"))
+    print(sanitize_for_console(f"  - Documentation Coherence: {system_state['readme_coherence']}"))
+    print(sanitize_for_console(f"  - Next WSP Number:         {system_state['next_wsp_number']}\n"))
+
+
+    # --- Display Menu ---
+    print(sanitize_for_console("**Harmonic Query - Please select a directive:**"))
     
-    query += "\n\n**Directive Menu:**\n"
+    menu_offset = 0
     if roadmap_objectives:
-        query += "  --- Strategic Objectives ---\n"
-        for i, (name, path) in enumerate(roadmap_objectives, 1):
-            query += f"  {i}. Work on Module: {name} ({path})\n"
+        print(sanitize_for_console("\n  *Strategic Objectives (from ROADMAP.md):*"))
+        for i, (objective, path) in enumerate(roadmap_objectives):
+            print(sanitize_for_console(f"    {i+1}. {objective} (`{path}`)"))
+        menu_offset = len(roadmap_objectives)
     
-    menu_offset = len(roadmap_objectives)
-    query += "  --- System Actions ---\n"
-    query += f"  {menu_offset + 1}. Initiate a new Strategic Objective\n"
-    query += f"  {menu_offset + 2}. Enter Continuous Monitoring State\n"
-    query += f"  {menu_offset + 3}. Terminate Session\n"
-
-    print(sanitize_for_console(query))
-
-    max_choice = menu_offset + 3
-    choice = input(f"\nEnter your choice (1-{max_choice}): ")
+    print(sanitize_for_console("\n  *System Directives:*"))
+    print(sanitize_for_console(f"    {menu_offset + 1}. Add new objective to ROADMAP.md"))
+    print(sanitize_for_console(f"    {menu_offset + 2}. Enter continuous monitoring state (placeholder)"))
+    print(sanitize_for_console(f"    {menu_offset + 3}. Terminate session."))
     
+    choice = input("\nEnter your choice: ")
     return choice, menu_offset 

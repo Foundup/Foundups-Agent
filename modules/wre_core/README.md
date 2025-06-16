@@ -18,12 +18,9 @@ The engine's logic is separated into several key components located in `src/comp
 -   **`menu_handler.py`**: Generates and displays the "Harmonic Query" interactive menu for the user.
 
 ### Internal Agent Suite
-The agents are the hands of the engine, performing specific, targeted tasks. They are located in `src/agents/`.
+The agents are the hands of the engine, performing specific, targeted tasks. They are located in the `modules/infrastructure/agents/` feature group, in accordance with the WSP architectural framework.
 
--   **Compliance Agent (`compliance_agent.py`):** The Sentinel of the WSP framework. This agent ensures that all proposed code changes and new modules adhere to the established protocols and standards.
--   **Loremaster Agent (`loremaster_agent.py`):** Responsible for reading all WSP documents and generating a comprehensive audit report, which is crucial for maintaining situational awareness and identifying documentation gaps.
--   **Module Scaffolding Agent (`module_scaffolding_agent.py`):** An agentic builder that automatically constructs the standard WSP-compliant directory and file structure for a new module.
--   **Janitor Agent (`janitor_agent.py`):** Performs workspace hygiene by identifying and deleting temporary files, maintaining a clean work environment.
+The duties and specifications for each agent are formally defined in **WSP-54: WRE Agent Duties Specification**. This central document ensures that all agents operate under a unified, well-defined mandate.
 
 ## How to Run
 

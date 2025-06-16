@@ -6,21 +6,9 @@ project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from modules.wre_core.src.utils.logging_utils import wre_log
-from modules.wre_core.src.agents.janitor_agent import JanitorAgent
-from modules.wre_core.src.agents.loremaster_agent import LoremasterAgent
-
-def get_next_wsp_number(root_path):
-    """Helper function to find the next available WSP number.
-    Could be moved to a more appropriate utility file later."""
-    import re
-    wsp_dirs = [d for d in root_path.glob('WSP_*') if d.is_dir()]
-    max_num = 0
-    for directory in wsp_dirs:
-        for wsp_file in directory.glob('WSP_*.md'):
-            match = re.search(r'WSP_(\d+)', wsp_file.name)
-            if match:
-                max_num = max(max_num, int(match.group(1)))
-    return max_num + 1
+from modules.infrastructure.agents.janitor_agent.src.janitor_agent import JanitorAgent
+from modules.infrastructure.agents.loremaster_agent.src.loremaster_agent import LoremasterAgent
+from modules.infrastructure.agents.chronicler_agent.src.chronicler_agent import ChroniclerAgent
 
 def run_system_health_check(root_path: Path):
     """
@@ -34,24 +22,36 @@ def run_system_health_check(root_path: Path):
     """
     wre_log("Dispatching internal agents for system health check...", "INFO")
     
-    # In the future, agents would return structured data. For now, we simulate it.
-    
-    janitor = JanitorAgent(root_path)
-    janitor.run()
-    janitor_status = "Clean" # Placeholder
-    
-    loremaster = LoremasterAgent(root_path)
-    loremaster.run()
-    semantic_status = "COHERENT" # Placeholder
+    # Initialize all agents
+    janitor = JanitorAgent()
+    loremaster = LoremasterAgent()
+    chronicler = ChroniclerAgent(modlog_path_str=str(root_path / "ModLog.md"))
 
-    # TODO: Extract Core Principles from WSP 1 properly.
-    core_principles = "  - Principles loaded (WSP 1)."
+    # Run Janitor Agent and log the event
+    janitor_result = janitor.clean_workspace()
+    janitor_status = f"Clean ({janitor_result['files_deleted']} files deleted)"
+    chronicler.log_event({
+        "title": "WRE System Health Check - Janitor",
+        "version": "1.7.0", # This should be dynamic in a real scenario
+        "description": "The JanitorAgent performed its routine workspace hygiene check.",
+        "achievements": [
+            f"Scanned the workspace and deleted {janitor_result['files_deleted']} temporary files."
+        ]
+    })
+    
+    loremaster = LoremasterAgent()
+    lore_result = loremaster.run_audit(root_path)
+    semantic_status = f"COHERENT ({lore_result.get('docs_found', 0)} docs audited)"
+    core_principles = lore_result.get("core_principles", "  - ERROR: Core principles not found.")
+    next_wsp_number = lore_result.get("next_wsp_number", "Unknown")
+    readme_coherence = lore_result.get("readme_coherence", "Unknown")
 
     system_state = {
         "core_principles": core_principles,
         "janitor_status": janitor_status,
         "semantic_status": semantic_status,
-        "next_wsp_number": get_next_wsp_number(root_path)
+        "next_wsp_number": next_wsp_number,
+        "readme_coherence": readme_coherence
     }
     
     wre_log("System health check complete.", "DEBUG")

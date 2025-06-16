@@ -6,19 +6,24 @@
 
 [EXTRACTED FROM: FoundUps_WSP_Framework-COPY.md]
 
-This document outlines the core Windsurf Standard Procedures (WSPs) governing development, testing, and compliance within the FoundUps Agent MMAS. This version integrates the **LLME Semantic Triplet Rating System** to provide a deeper semantic understanding of module state, impact, and importance.
+This document outlines the core Windsurf Standard Procedures (WSPs) governing development, testing, and compliance. **The workflows described here are now executed by the Windsurf Recursive Engine (WRE). This document serves as the canonical reference for the engine's logic.**
 
 ---
 
-# 🌀 Follow WSP → WSP_INIT.md
+## 🏛️ Core WRE & Agent Governance
 
-**For autonomous WSP execution, see: [WSP_INIT.md](../WSP_INIT.md)**
+The WRE's operation and the duties of its internal agents are governed by a clear hierarchy of documents:
 
-WSP_INIT serves as the Windsurf Recursive Engine (WRE) controller and autonomous orchestrator for all WSP operations. When you need to "follow WSP," WSP_INIT determines which layer to engage (0-appendices, 1-framework, 2-agentic) and executes the appropriate workflow.
+1.  **Engine Protocol - `[WSP 46]`:** The formal architecture and operational principles of the engine itself are defined in **[WSP 46: Windsurf Recursive Engine Protocol](./WSP_46_Windsurf_Recursive_Engine_Protocol.md)**.
+2.  **Agent Duties - `[WSP 54]`:** The specific duties, triggers, and outputs for every internal agent are specified in **[WSP-54: WRE Agent Duties Specification](../WSP_knowledge/src/WSP-54_WRE_Agent_Duties_Specification.md)**.
+3.  **Implementation Plan - `[ROADMAP]`:** The development status and implementation plan for the agent suite is tracked in the main **[Project Roadmap](../../ROADMAP.md#wre-agent-implementation-plan)**.
+
+To run the engine, use the command:
+`python -m modules.wre_core.src.main`
 
 ---
 
-## 🚀 QUICK START: Actionable Development Guide
+## 🚀 QUICK START: Actionable Development Guide (Reference for WRE Logic)
 
 ### "What Should I Code Next?" - Decision Tree
 

@@ -69,6 +69,26 @@ The Theaters of Operation are built upon a robust, self-auditing foundation. The
 - **WRE Immune System:** A suite of internal agents (`ComplianceAgent`, `LoremasterAgent`) that continuously audit the architectural and semantic integrity of the entire system. This is our commitment to avoiding structural dissonance.
 - **Test-Driven Development:** A rigorous testing methodology to ensure the stability and reliability of all modules before deployment.
 
+### **WRE Agent Implementation Plan**
+This section tracks the implementation status of the WRE's internal agent suite. The full specification for each agent's duties is defined in **[WSP-54: WRE Agent Duties Specification](WSP_knowledge/src/WSP-54_WRE_Agent_Duties_Specification.md)**.
+
+-   `[AGENT]` **ComplianceAgent:** The Guardian. Enforces WSP structural integrity.
+    -   **Status:** ✅ Implemented & Tested
+-   `[AGENT]` **LoremasterAgent:** The Sage. Audits documentation and project lore.
+    -   **Status:** 🔶 Partial Implementation (Core audit logic exists)
+-   `[AGENT]` **JanitorAgent:** The Cleaner. Manages workspace hygiene.
+    -   **Status:** 🟡 Placeholder
+-   `[AGENT]` **ModuleScaffoldingAgent:** The Builder. Automates new module creation.
+    -   **Status:** 🟡 Placeholder
+-   `[AGENT]` **TestingAgent:** The Examiner. Automates `pytest` and coverage checks.
+    -   **Status:** 🟡 Placeholder
+-   `[AGENT]` **ScoringAgent:** The Assessor. Provides objective code metrics.
+    -   **Status:** 🟡 Placeholder
+-   `[AGENT]` **DocumentationAgent:** The Scribe. Generates `README.md` files from WSP specs.
+    -   **Status:** 🟡 Placeholder
+-   `[AGENT]` **ChroniclerAgent:** The Historian. Records significant WRE actions to the `ModLog.md`.
+    -   **Status:** 🟡 Placeholder
+
 ---
 
 ## horizon: The FoundUps Ecosystem

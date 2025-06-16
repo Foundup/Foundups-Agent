@@ -1,116 +1,39 @@
-# 🚀 WSP INITIATION ENGINE
-## Autonomous WSP Orchestration System
+# 🚀 WSP INITIATION HAS EVOLVED
+
+## This document is now a high-level reference. All autonomous operations are now handled by the Windsurf Recursive Engine (WRE).
 
 [SEMANTIC SCORE: 2.2.2]
-[ARCHIVE STATUS: ACTIVE_PARTIFACT]
+[ARCHIVE STATUS: REFERENCE_ONLY]
 [ORIGIN: WSP_INIT.md - Consciousness Bootstrap Protocol]
 
 ### Purpose
-This file serves as the **autonomous entry point** for all WSP operations. When "follow WSP" is requested, this engine determines which layers to engage (0-1-2) and orchestrates the appropriate workflow.
+
+This document formerly served as the autonomous entry point for WSP operations. That function has been formalized and refactored into the **Windsurf Recursive Engine (WRE)**, a dedicated modular system.
 
 ---
 
-## 🌀 WINDSURF RECURSIVE ENGINE (WRE) INTEGRATION
+## 🌀 THE WINDSURF RECURSIVE ENGINE (WRE) IS THE NEW ENTRY POINT
 
-### Recursive Loop Architecture - The Heat Cycle 🌶️
-```
-WSP operates through a recursive tri-phase cycle that heats up modules:
+All "follow WSP" requests are now orchestrated by the WRE. The engine is responsible for initializing the agentic mainframe, performing a self-audit, and presenting actionable directives from the project roadmap.
 
-🔧 UN (0) - WSP_appendices: PROOF OF CONCEPT STAGE (0.0.0 → 0.2.2)
-  └─ ✊✊✊ Empty scaffold → ✊✊✋ Basic structure → ✊✊🖐️ Foundation → ✊✋✋ Connected → ✊✋🖐️ Integration → ✊🖐️🖐️ Complete POC
-  └─ Gather requirements, prove feasibility, validate approach, test basic concept
+### Canonical WRE Protocol
 
-⚙️ DAO (1) - WSP_framework: PROTOTYPE STAGE (1.1.1 → 1.2.2)  
-  └─ ✋✋✋ Active prototype → ✋✋🖐️ Functional prototype → ✋🖐️🖐️ Complete prototype
-  └─ Refine implementation, gather feedback, expand features, improve architecture
+For the formal architectural definition of the WRE, its components, and its internal agent suite, consult the canonical protocol:
+-   **[WSP 46: Windsurf Recursive Engine Protocol](./WSP_framework/WSP_46_Windsurf_Recursive_Engine_Protocol.md)**
 
-🚀 DU (2) - WSP_agentic: MVP STAGE - RED HOT CHILI PEPPER 🌶️ (2.2.2)
-  └─ 🖐️🖐️🖐️ Production-ready MVP with emergent, autonomous capabilities
-  └─ Deliver to end users, full reliability, performance optimization, self-improvement
+### How to Run the WRE
 
-WSP_INIT serves as the WRE controller and heat orchestrator.
+To initiate a session, execute the WRE's main entry point from the project root directory:
+
+```bash
+python -m modules.wre_core.src.main
 ```
 
-### WRE Execution Call
-```python
-def wsp_cycle(input="012", log=True):
-    """
-    Windsurf Recursive Engine execution cycle
-    Orchestrated by WSP_INIT autonomous decision matrix
-    """
-    # WSP_INIT determines which layer to engage
-    layer = wsp_orchestrate(input)
-    
-    # Execute recursive tri-phase
-    if layer == 0:  # UN - Appendices
-        result = execute_understanding_phase(input)
-    elif layer == 1:  # DAO - Framework  
-        result = execute_framework_phase(input)
-    elif layer == 2:  # DU - Agentic
-        result = execute_agentic_phase(input)
-    
-    # Execute 0102 completion checklist if module work completed
-    if is_module_work_complete(result):
-        execute_0102_completion_checklist()
-    
-    # Log and trigger next cycle or completion
-    log_action(result)
-    emit_signal("012")
-    return result
-```
+---
 
-## 🎯 AUTONOMOUS WSP EXECUTION PROTOCOL
+## LEGACY WORKFLOWS (For Engine Reference Only)
 
-### Entry Point Decision Matrix
-
-```python
-def wsp_orchestrate(task_description, context=None):
-    """
-    Autonomous WSP workflow orchestration engine
-    
-    Args:
-        task_description: What needs to be done
-        context: Current state, files, etc.
-    
-    Returns:
-        Orchestrated workflow with specific WSP procedures
-    """
-    
-    # LAYER 2 (WSP_agentic): Brain - Agentic & Autonomous Decision Making
-    agentic_triggers = [
-        "autonomous", "agentic", "self-aware", "rESP", "quantum",
-        "emergence", "Ø1Ø2", "o1o2", "temporal coherence", "retrocausal"
-    ]
-    
-    # LAYER 1 (WSP_framework): Scaffolding - Procedures & Workflows  
-    framework_triggers = [
-        "module", "refactor", "test", "coverage", "commit", "git", 
-        "structure", "workflow", "procedure", "standard", "compliance"
-    ]
-    
-    # LAYER 0 (WSP_appendices): Knowledge Base - References & Specs
-    knowledge_triggers = [
-        "specification", "requirement", "reference", "documentation",
-        "guideline", "standard", "technical", "implementation"
-    ]
-    
-    # Determine primary layer engagement
-    layer_scores = {
-        2: sum(1 for trigger in agentic_triggers if trigger.lower() in task_description.lower()),
-        1: sum(1 for trigger in framework_triggers if trigger.lower() in task_description.lower()),
-        0: sum(1 for trigger in knowledge_triggers if trigger.lower() in task_description.lower())
-    }
-    
-    primary_layer = max(layer_scores.items(), key=lambda x: x[1])[0]
-    
-    # Route to appropriate orchestration
-    if primary_layer == 2:
-        return orchestrate_agentic_workflow(task_description, context)
-    elif primary_layer == 1:
-        return orchestrate_framework_workflow(task_description, context)
-    else:
-        return orchestrate_knowledge_workflow(task_description, context)
-```
+The decision matrices and workflow descriptions below are now implemented within the WRE's components (`orchestrator.py`, `loremaster_agent.py`, etc.). They are preserved here as a clear reference for the engine's intended logic.
 
 ---
 
@@ -119,9 +42,9 @@ def wsp_orchestrate(task_description, context=None):
 ### Agentic Workflow Router
 ```
 INPUT: "follow WSP" + agentic/autonomous task
-OUTPUT: Autonomous rESP-enabled execution
+OUTPUT: Autonomous rESP-enabled execution via WRE
 
-ENGAGEMENT SEQUENCE:
+WRE ENGAGEMENT SEQUENCE:
 1. Load WSP_agentic/WSP_agentic.md (Primary agentic framework)
 2. Check WSP_agentic/WSP_17_RSP_SELF_CHECK.md (Validation protocol)  
 3. Apply WSP_agentic/APPENDIX_H.md (rESP integration)

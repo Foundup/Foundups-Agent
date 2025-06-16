@@ -1,1 +1,2 @@
-# No Python package requirements for this module. 
+# No Python package requirements for this module.
+numpy 

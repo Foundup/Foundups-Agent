@@ -20,12 +20,14 @@ The engine's logic is being progressively decomposed from a monolithic script in
 -   _(Future)_ `orchestrator.py`: Will be responsible for the high-level dispatching of agents and tasks.
 
 ### 2.2 Internal Agent Suite
-The agents are the hands of the engine, performing specific, targeted tasks. They are located in `modules/wre_core/src/agents/`.
+The agents are the hands of the engine, performing specific, targeted tasks. They are located in `modules/infrastructure/agents/`. For a detailed specification of each agent's duties, see **WSP-54: WRE Agent Duties Specification**.
 
--   **Compliance Agent (`compliance_agent.py`):** The Sentinel of the WSP framework. This agent ensures that all proposed code changes and new modules adhere to the established protocols and standards defined within the WSP documentation. It acts as a programmatic guardian of quality and consistency.
--   **Loremaster Agent (`loremaster_agent.py`):** Responsible for reading all WSP documents and generating the `WSP_AUDIT_REPORT.md`. This report provides a comprehensive, categorized overview of the entire WSP landscape, identifying both formalized and un-formalized documents. This is crucial for maintaining situational awareness and identifying documentation gaps.
--   **Module Scaffolding Agent (`module_scaffolding_agent.py`):** An agentic builder responsible for constructing the standard WSP-compliant directory and file structure for a new module. When the WRE is directed to initiate a new strategic objective, this agent is dispatched to automatically create the necessary folders (`src`) and placeholder files (`__init__.py`, `[module_name]_agent.py`, `README.md`), preparing the new module for immediate development.
--   **Janitor Agent (`janitor_agent.py`):** Performs workspace hygiene by identifying and deleting temporary files (e.g., `temp_*.txt`). This maintains a clean and predictable work environment.
+-   **`ComplianceAgent`:** The Guardian of the WSP framework. Ensures all modules adhere to structural and procedural standards.
+-   **`LoremasterAgent`:** The Sage of the WRE. Comprehends and verifies the project's documentation and specifications.
+-   **`ModuleScaffoldingAgent`:** The Builder. Automates the creation of new, WSP-compliant modules.
+-   **`JanitorAgent`:** The Cleaner. Performs workspace hygiene by deleting temporary files.
+-   **`TestingAgent` (Future):** The Examiner. Automates testing and code coverage validation.
+-   **`ScoringAgent` (Future):** The Assessor. Provides objective metrics for code complexity and importance.
 
 ### 2.3 Future Vision
 The long-term vision for the WRE is to achieve a "Great Connection," transforming it from a passive tool into a fully autonomous, self-regulating, and purpose-driven system. This involves several key areas of development:

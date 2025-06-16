@@ -8,7 +8,7 @@ project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from modules.wre_core.src.utils.logging_utils import wre_log
-from modules.wre_core.src.agents.module_scaffolding_agent import ModuleScaffoldingAgent
+from modules.infrastructure.agents.module_scaffolding_agent.src.module_scaffolding_agent import ModuleScaffoldingAgent
 
 
 def parse_roadmap(root_path: Path):
@@ -22,7 +22,7 @@ def parse_roadmap(root_path: Path):
             theaters_match = re.search(r"## .* Theaters of Operation\s*\n(.*?)(?=\n##|\Z)", content, re.DOTALL)
             if theaters_match:
                 theaters_content = theaters_match.group(1)
-                objectives = re.findall(r"-\s*\*\*(.*?):\*\*\s*\`(.*?)\`", theaters_content)
+                objectives = re.findall(r"-\s+\*\*(.*?):\*\*\s+`(.*?)`", theaters_content)
     except Exception as e:
         wre_log(f"Error parsing ROADMAP.md: {e}", "ERROR")
     wre_log(f"Found {len(objectives)} active theaters.", "DEBUG")
@@ -48,8 +48,8 @@ def add_new_objective(root_path: Path):
         _update_roadmap_file(root_path, name, path)
 
         wre_log(f"--- Dispatching Module Scaffolding Agent for '{name}' ---", level="INFO")
-        scaffolder = ModuleScaffoldingAgent(module_path=path, module_name=name)
-        scaffolder.execute()
+        scaffolder = ModuleScaffoldingAgent()
+        scaffolder.create_module(path)
 
     except Exception as e:
         wre_log(f"An error occurred while creating new objective: {e}", level="CRITICAL")
