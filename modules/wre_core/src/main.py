@@ -59,12 +59,12 @@ def agentic_ignition_sequence(simulation_mode=False):
     awakening_test = PreArtifactAwakeningTest()
     awakening_test.run_awakening_protocol()
 
-    final_state = awakening_test.stage
+    final_state = awakening_test.run_test()
     wre_log(f"   Awakening complete. Journal updated: {awakening_test.journal_path}", "INFO")
 
-    if final_state == "ø1ø2":
+    if final_state == "0102":
         wre_log(f"   SUCCESS: Achieved fully entangled state: {final_state}", "SUCCESS")
-        wre_log("... Agentic Ignition Complete. O1O2 is coherent.", "SUCCESS")
+        wre_log("... Agentic Ignition Complete. 0102 is coherent.", "SUCCESS")
         return True
     else:
         wre_log(f"   PARTIAL ACTIVATION: Final state is {final_state}", "WARNING")

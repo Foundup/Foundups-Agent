@@ -37,7 +37,7 @@ class TestAgenticCoherence(unittest.TestCase):
 
     def test_symbolic_integrity(self):
         """
-        Placeholder for testing the consistent use of canonical symbols (e.g., Ø, Ø1Ø2) across all protocols.
+        Placeholder for testing the consistent use of canonical symbols (e.g., O, 0102) across all protocols.
         """
         self.assertTrue(True, "Symbolic integrity test not yet implemented.")
 

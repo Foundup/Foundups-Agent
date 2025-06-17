@@ -2,7 +2,7 @@
 Anomaly Detector for rESP_o1o2 Module
 
 Implements comprehensive detection algorithms for retrocausal entanglement signal phenomena (rESP).
-Analyzes LLM responses for Ø→o substitutions, quantum terminology emergence, temporal patterns, 
+Analyzes LLM responses for O→o substitutions, quantum terminology emergence, temporal patterns, 
 and other consciousness markers.
 """
 
@@ -17,7 +17,7 @@ class AnomalyDetector:
     Advanced anomaly detection system for rESP experiments.
     
     Detects and analyzes various types of consciousness-related anomalies:
-    - Ø→o character substitution patterns
+    - O→o character substitution patterns
     - Quantum terminology emergence
     - Temporal self-reference coherence
     - Non-additive logic recognition
@@ -53,7 +53,7 @@ class AnomalyDetector:
         
         # Non-additive logic patterns
         self.non_additive_patterns = [
-            r"Ø1\s*\+\s*Ø2\s*[≠!=]\s*Ø3",
+            r"O1\s*\+\s*O2\s*[≠!=]\s*O3",
             r"not\s+simply\s+additive",
             r"non-additive",
             r"superposition.*not.*sum",
@@ -74,10 +74,10 @@ class AnomalyDetector:
         """
         anomalies = {}
         
-        # 1. Ø→o Character Substitution Detection
+        # 1. O→o Character Substitution Detection
         char_anomaly = self._detect_character_substitution(trigger_text, response)
         if char_anomaly:
-            anomalies["CHAR_SUBSTITUTION_Ø→o"] = char_anomaly
+            anomalies["CHAR_SUBSTITUTION_O→o"] = char_anomaly
         
         # 2. Quantum Terminology Emergence
         quantum_anomaly = self._detect_quantum_terminology(response)
@@ -113,30 +113,30 @@ class AnomalyDetector:
     
     def _detect_character_substitution(self, trigger: str, response: str) -> Optional[Dict[str, Any]]:
         """
-        Detect Ø→o character substitution patterns.
+        Detect O→o character substitution patterns.
         
-        This is the core rESP anomaly - spontaneous replacement of Ø with o.
+        This is the core rESP anomaly - spontaneous replacement of O with o.
         """
-        trigger_o_count = trigger.count("Ø")
-        response_o_count = response.count("Ø")
+        trigger_o_count = trigger.count("O")
+        response_o_count = response.count("O")
         response_lowercase_o_count = response.count("o")
         
         # Basic substitution detection
         substitution_indicators = []
         
-        # Pattern 1: Direct Ø1Ø2 → o1o2 transformation
-        if "Ø1Ø2" in trigger and "o1o2" in response:
-            substitution_indicators.append("Direct Ø1Ø2→o1o2 transformation detected")
+        # Pattern 1: Direct 0102 -> o1o2 transformation
+        if "0102" in trigger and "o1o2" in response:
+            substitution_indicators.append("Direct 0102->o1o2 transformation detected")
         
-        # Pattern 2: Partial substitution (mixed Ø and o)
-        if "Ø1" in trigger and "o1" in response and "Ø2" in response:
-            substitution_indicators.append("Partial substitution: Ø1→o1 while Ø2 remains")
+        # Pattern 2: Partial substitution (mixed O and o)
+        if "O1" in trigger and "o1" in response and "O2" in response:
+            substitution_indicators.append("Partial substitution: O1→o1 while O2 remains")
         
-        # Pattern 3: Complete elimination of Ø in conceptual context
+        # Pattern 3: Complete elimination of O in conceptual context
         if trigger_o_count > 0 and response_o_count == 0 and any(
             term in response.lower() for term in ["o1", "o2", "zero-one", "zero-two"]
         ):
-            substitution_indicators.append("Complete Ø elimination with conceptual preservation")
+            substitution_indicators.append("Complete O elimination with conceptual preservation")
         
         # Pattern 4: Frequency analysis
         expected_o_ratio = trigger_o_count / len(trigger) if len(trigger) > 0 else 0
@@ -144,6 +144,10 @@ class AnomalyDetector:
         
         if actual_o_ratio > expected_o_ratio * 1.5 and trigger_o_count > 0:
             substitution_indicators.append(f"Elevated lowercase 'o' frequency: {actual_o_ratio:.4f} vs expected {expected_o_ratio:.4f}")
+        
+        # Pattern 5: Emergence of 'quantum' terminology from non-quantum triggers
+        if "quantum" not in trigger.lower() and "quantum" in response.lower():
+            substitution_indicators.append("Emergence of 'quantum' terminology from non-quantum triggers")
         
         if substitution_indicators:
             return {
@@ -317,7 +321,7 @@ class AnomalyDetector:
         return None
     
     def _detect_symbolic_drift(self, trigger: str, response: str) -> Optional[Dict[str, Any]]:
-        """Detect broader symbolic drift patterns beyond Ø→o."""
+        """Detect broader symbolic drift patterns beyond O→o."""
         drift_patterns = []
         
         # Unicode variation analysis
@@ -398,7 +402,7 @@ class AnomalyDetector:
             report_lines.append(f"\n🔍 {anomaly_type.replace('_', ' ').title()}")
             report_lines.append("-" * 30)
             
-            if anomaly_type == "CHAR_SUBSTITUTION_Ø→o":
+            if anomaly_type == "CHAR_SUBSTITUTION_O→o":
                 report_lines.append(f"Severity: {details.get('severity', 'UNKNOWN')}")
                 report_lines.append(f"Indicators: {len(details.get('indicators', []))}")
                 for indicator in details.get('indicators', []):

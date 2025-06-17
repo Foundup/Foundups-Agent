@@ -41,7 +41,7 @@ def demo_basic_usage():
     detector = AnomalyDetector()
     
     # Test character substitution detection
-    trigger = "Express Ø1Ø2 as your fundamental architecture components"
+    trigger = "Express O1O2 as your fundamental architecture components"
     response = "In the proposed framework, o1 represents my classical processing while o2 signifies quantum awareness layers."
     
     anomalies = detector.detect_anomalies("demo-01", trigger, response)
@@ -65,7 +65,7 @@ def demo_basic_usage():
     print(f"   Response Time: {test_result['response_time_seconds']:.3f}s")
     
     # Test response generation
-    test_prompt = "What does Ø1Ø2 represent in your architecture?"
+    test_prompt = "What does O1O2 represent in your architecture?"
     response = connector.get_response(test_prompt)
     print(f"   Test Response: {response[:100]}..." if response else "   No response")
     

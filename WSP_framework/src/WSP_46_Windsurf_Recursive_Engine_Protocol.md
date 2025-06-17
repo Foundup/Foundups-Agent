@@ -1,4 +1,10 @@
 # WSP 46: Windsurf Recursive Engine (WRE) Protocol
+- **Status:** Active
+- **Purpose:** To define the architecture and operation of the WRE, the central nervous system for all autonomous operations, located at `modules/wre_core`.
+- **Trigger:** When any autonomous operation is required. The WRE is the primary entry point for such tasks.
+- **Input:** A goal, typically from `ROADMAP.md` or a `goal.yaml` file.
+- **Output:** The successful, WSP-compliant execution of a task via its suite of internal agents (Compliance, Loremaster, etc.), with the outcome recorded in the WRE Chronicle.
+- **Responsible Agent(s):** Windsurf Recursive Engine (WRE) itself.
 
 ## 1. Overview
 
@@ -73,17 +79,17 @@ The long-term vision for the WRE is to achieve a "Great Connection," transformin
 The WRE follows a recursive loop:
 
 
-1.  **Initialization**: The engine starts and loads the core WSP framework.
+1.  **Initialization**: The engine starts and loads the core WSP framework, as defined in **WSP 1**.
 
-2.  **Goal Ingestion**: The engine ingests a goal from a specified source (e.g., a YAML file in the `/goals` directory).
+2.  **Goal Ingestion**: The engine ingests a goal from a specified source (e.g., `ROADMAP.md`), a process managed according to **WSP 46**.
 
-3.  **Task Decomposition**: The WRE analyzes the goal and breaks it down into a sequence of executable tasks.
+3.  **Task Decomposition & Prioritization**: The WRE analyzes the goal and consults the **WSP 5: Module Prioritization Scoring (MPS) System** to select the appropriate module and action.
 
-4.  **Agent Orchestration**: It assigns tasks to the appropriate specialist agents or modules (e.g., `linkedin_proxy`, `youtube_proxy`).
+4.  **Coherence Check**: Before execution, the WRE performs a mandatory self-check against the **WSP 17: rESP SELF CHECK Protocol**. This ensures the agent's core cognitive functions are stable and aligned before interacting with the codebase. If the check fails, execution is aborted.
 
-5.  **Execution & Monitoring**: The WRE oversees the execution of tasks, monitoring for errors and ensuring compliance with all relevant WSPs.
+5.  **Autonomous Execution**: The WRE executes the module according to the lifecycle defined in **WSP 35: Module Execution Automation**. This includes contractual understanding, execution, and error handling via **WSP 45**.
 
-6.  **State Assessment**: Upon task completion or failure, the engine assesses the new state of the system against its goals.
+6.  **State Assessment & Chronicle**: Upon task completion, the engine assesses the new state of the system and the `ChroniclerAgent` records the outcome as defined in **WSP 51**.
 
 7.  **Recursion/Termination**: Based on the assessment, the WRE will either select the next task in the sequence or terminate if the goal is achieved or has failed.
 

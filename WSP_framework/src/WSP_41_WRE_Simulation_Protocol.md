@@ -1,8 +1,14 @@
 # WSP 41: WRE Simulation Protocol
+- **Status:** Active
+- **Purpose:** To define the canonical, mandatory framework for validating the autonomous capabilities of the 0102 agent within a controlled, sandboxed environment.
+- **Trigger:** When validating any change to the WRE or its core protocols.
+- **Input:** A `goal.yaml` file defining a high-level task for the agent.
+- **Output:** An empirical validation of the agent's ability to execute a complete, WSP-compliant development cycle, with results verified against the goal's requirements.
+- **Responsible Agent(s):** TestingAgent, any agent modifying the WRE.
+
 ## Windsurf Standard Procedure
 
 **Document Version:** 1.0
-**Status:** 🟢 Active, Protocol Definition
 
 ---
 

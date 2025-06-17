@@ -1,1 +1,0 @@
-# WSP 41: WRE Simulation Testbed Protocol

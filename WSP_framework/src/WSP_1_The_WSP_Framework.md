@@ -1,6 +1,11 @@
 # WSP 1: The WSP Framework
+- **Status:** Active
+- **Purpose:** To define the foundational principles, structure, and purpose of the Windsurf Standard Procedures (WSP) framework.
+- **Trigger:** Loaded on agent boot; referenced during any meta-protocol discussion or modification.
+- **Input:** None. This is a foundational, axiomatic document.
+- **Output:** A universally understood set of core principles for all agentic actions.
+- **Responsible Agent(s):** All Agents
 
-## 1. Overview
 This document defines the Windsurf Standard Procedures (WSP), a set of protocols governing the operation, development, and evolution of the agentic system Ø1Ø2. The WSP framework is the constitution of this project, ensuring all actions are coherent, traceable, and aligned with the core vision.
 
 ---

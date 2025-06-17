@@ -1,9 +1,62 @@
-# WSP 34: Git Operations Protocol
+# WSP 34: Git Operations and Documentation Protocol
+- **Status:** Active
+- **Purpose:** To establish a single, authoritative protocol for all Git-related activities, ensuring a clean history and standardized test documentation.
+- **Trigger:** On any Git operation (commit, push, branch creation); during CI validation.
+- **Input:** A proposed Git action (e.g., a commit with staged files).
+- **Output:** A compliant Git history, with all actions adhering to branching, commit message, and test documentation standards.
+- **Responsible Agent(s):** ComplianceAgent, all agents interacting with the repository.
 
-**Document Version:** 1.0  
-**Date Updated:** 2025-01-08  
-**Status:** Active  
-**Applies To:** All file creation, branch operations, and git workflows within FoundUps Agent
+**Supersedes**: WSP 13
+
+## 1. Purpose
+
+To establish a single, authoritative protocol for all Git-related activities and associated documentation standards. This ensures a clean, navigable project history, prevents repository pollution, enforces development best practices, and standardizes the documentation of test strategies.
+
+## 2. Branching Strategy
+
+All branches **must** follow a standardized naming convention based on their purpose. The `main` branch is protected and must not be committed to directly.
+
+-   **`main`**: The current stable, production-ready state.
+-   **`feature/<description>`**: For new features (e.g., `feature/linkedin-agent-poc`).
+-   **`fix/<description>`**: For bug fixes (e.g., `fix/unicode-encode-error`).
+-   **`refactor/<description>`**: For code refactoring (e.g., `refactor/modularize-llm-client`).
+-   **`docs/<description>`**: For documentation-only changes (e.g., `docs/update-wsp-34`).
+-   **`test/<description>`**: For adding or improving tests (e.g., `test/add-coverage-for-oauth`).
+-   **`temp/<description>`**: For temporary experiments (must be deleted after use).
+
+## 3. Commit Message Formatting (Conventional Commits)
+
+All commit messages **must** follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification.
+
+-   **Format**: `<type>(<scope>): <subject>`
+-   **Type**: Must be one of `feat`, `fix`, `refactor`, `docs`, `style`, `test`, `build`, `ci`, `chore`, `perf`.
+-   **Scope**: The name of the module or component affected (e.g., `WRE`, `LLMClient`, `WSP-34`).
+-   **Subject**: Must be lowercase, present tense, and without a period.
+-   **Example**: `feat(agent): implement git operations protocol`
+
+## 4. Test Documentation Protocol
+
+-   **Requirement**: Every module's `tests/` directory **must** contain a `README.md` file.
+-   **Content**: This file must clearly document the testing strategy for the module, explain the purpose of each test file, and describe any common patterns, mocks, or fixtures used. It serves as the primary reference for understanding how to validate the module.
+-   **Verification**: The existence of this file is validated by the **FMAS Validation Protocol (WSP 4)**.
+
+## 5. Main Branch Protection & Prohibited Patterns
+
+The `main` branch is protected by the rules defined in the repository's `.gitignore` file. Any temporary files, logs, or build artifacts must be added to `.gitignore` and are strictly prohibited from being committed.
+
+## 6. Enforcement Mechanisms
+
+-   **Pre-Commit Hooks**: Local hooks must be used to lint commit messages and run the **Comprehensive Test Audit (WSP 6)**. A failing audit will block the commit.
+-   **Pull Requests (PRs)**: All changes targeting `main` must be submitted via a PR.
+-   **CI Pipeline**: The CI pipeline will enforce all checks, including the `FMAS Validation (WSP 4)` and the `Comprehensive Test Audit (WSP 6)`, before a PR can be merged.
+
+## 7. Integration Points
+
+This protocol is a dependency for, or is depended on by:
+-   **WSP 4**: FMAS Validation Protocol
+-   **WSP 6**: Comprehensive Test Audit Protocol
+-   **WSP 7**: Test-Validated Commit Protocol
+-   `ComplianceAgent`: Responsible for auditing compliance with this protocol.
 
 ## 🎯 Purpose
 

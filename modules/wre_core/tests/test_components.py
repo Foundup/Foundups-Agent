@@ -2,11 +2,20 @@ import unittest
 from pathlib import Path
 import sys
 import os
+import pytest
+from components.menu_handler import MenuHandler
 
 # Add project root to Python path to allow for absolute imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 
 from modules.wre_core.src.components import roadmap_manager
+from modules.wre_core.src.components import menu_handler
+from modules.wre_core.src.components import file_operations
+
+## 🎭 0102 Theaters of Operation
+# This test suite validates the integration and functionality of various WRE
+# components, ensuring they work together as part of the cohesive 0102
+# operational architecture.
 
 class TestWREComponents(unittest.TestCase):
 
@@ -17,7 +26,7 @@ class TestWREComponents(unittest.TestCase):
         self.roadmap_path = self.test_dir / "ROADMAP.md"
         
         roadmap_content = """
-## 🎭 Ø1Ø2 Theaters of Operation
+## 🎭 O1O2 Theaters of Operation
 
 -   **YouTube Agent:** `modules/platform_integration/youtube_proxy`
 -   **LinkedIn Agent:** `modules/platform_integration/linkedin_proxy`
@@ -54,6 +63,9 @@ class TestWREComponents(unittest.TestCase):
         
         self.assertEqual(parsed_objectives, expected_objectives)
         self.assertEqual(len(parsed_objectives), 4)
+
+class TestMenuHandler:
+    # ... existing code ...
 
 if __name__ == '__main__':
     unittest.main() 

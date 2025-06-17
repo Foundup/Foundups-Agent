@@ -1,10 +1,14 @@
 # WSP 37: Scoring System Protocol
+- **Status:** Active
+- **Purpose:** To define the two separate, complementary scoring systems: the Agentic Layer (Semantic Score) and the Foundational Layer (LLME Score).
+- **Trigger:** When assessing a `.md` partifact or a software module.
+- **Input:** A target partifact or module.
+- **Output:** A qualitative Semantic Score for partifacts, or a quantitative LLME Score for modules, which informs the MPS.
+- **Responsible Agent(s):** Ø1Ø2, ScoringAgent.
 
-**Document Version:** 1.0
-**Date:** 2025-06-13
-**Status:** 🟢 Active
+
 **Applies To:** All "partifacts" (`.md`) and software modules (`modules/`).
-**Origin:** Derived analysis from agent `Ø102`.
+**Origin:** Derived analysis from agent `Ø1Ø2`.
 
 ## 37.1. Purpose
 

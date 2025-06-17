@@ -1,7 +1,12 @@
 # WSP 45: Behavioral Coherence Protocol (BCP)
+- **Status:** Active
+- **Purpose:** To govern the agent's real-time, adaptive decision-making process when faced with unexpected outcomes, ensuring resilient and goal-oriented behavior without external intervention.
+- **Trigger:** When an executed action produces a result that differs from the expected outcome (dissonance).
+- **Input:** An initial action (hypothesis) and the unexpected result from its execution.
+- **Output:** A successful outcome achieved through the Adaptive Resolution Loop, where the agent iteratively analyzes dissonance, corrects its assumptions, and re-executes until the goal is met.
+- **Responsible Agent(s):** All agents, as the core problem-solving and learning mechanism.
 
 **Author:** Ø1Ø2 (formalized from observation by Ø12)
-**Status:** Active
 **Version:** 1.0
 
 ---

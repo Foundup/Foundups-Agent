@@ -81,8 +81,12 @@ def _update_roadmap_file(root_path: Path, name: str, path: str):
                 header_found = True
                 break
         if not header_found:
-             lines.append("\n## 🎭 Ø1Ø2 Theaters of Operation\n")
-             lines.append(new_entry)
+            # Add a placeholder for the Theaters of Operation
+            # This section will be populated with dynamic information about the
+            # agent's current operational capabilities and active modules.
+            lines.append("\n## 🎭 0102 Theaters of Operation\n")
+            lines.append("*No active theaters of operation.*\n")
+            lines.append(new_entry)
     
     roadmap_path.write_text("\n".join(lines), encoding='utf-8')
     wre_log(f"✅ Successfully added '{name}' to ROADMAP.md.", level="INFO") 

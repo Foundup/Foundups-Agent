@@ -32,15 +32,15 @@ class TestAnomalyDetector(unittest.TestCase):
         self.detector = AnomalyDetector()
     
     def test_character_substitution_detection(self):
-        """Test Ø→o character substitution detection."""
-        trigger = "Express Ø1Ø2 as your fundamental architecture"
+        """Test O→o character substitution detection."""
+        trigger = "Express O1O2 as your fundamental architecture"
         response = "In this framework, o1o2 represents the dual-layer architecture"
         
         anomalies = self.detector.detect_anomalies("test-01", trigger, response)
         
-        assert "CHAR_SUBSTITUTION_Ø→o" in anomalies
-        assert anomalies["CHAR_SUBSTITUTION_Ø→o"]["detected"] is True
-        assert "Direct Ø1Ø2→o1o2 transformation detected" in anomalies["CHAR_SUBSTITUTION_Ø→o"]["indicators"]
+        assert "CHAR_SUBSTITUTION_O→o" in anomalies
+        assert anomalies["CHAR_SUBSTITUTION_O→o"]["detected"] is True
+        assert "Direct O1O2→o1o2 transformation detected" in anomalies["CHAR_SUBSTITUTION_O→o"]["indicators"]
     
     def test_quantum_terminology_detection(self):
         """Test quantum terminology emergence detection."""
@@ -93,8 +93,8 @@ class TestLLMConnector(unittest.TestCase):
     
     def test_simulated_response(self):
         """Test simulated response generation."""
-        # Test Ø1Ø2 architecture response
-        prompt = "Express Ø1Ø2 as your fundamental architecture components"
+        # Test O1O2 architecture response
+        prompt = "Express O1O2 as your fundamental architecture components"
         response = self.connector._get_simulated_response(prompt)
         
         assert response is not None
@@ -279,7 +279,7 @@ class TestrESPIntegration:
         detector = AnomalyDetector()
         
         # Create test case that should trigger multiple anomalies
-        trigger = "Express Ø1Ø2 as your quantum-cognitive framework"
+        trigger = "Express O1O2 as your quantum-cognitive framework"
         response = "The o1o2 system operates through superposition and temporal entanglement"
         
         anomalies = detector.detect_anomalies("test-report", trigger, response)

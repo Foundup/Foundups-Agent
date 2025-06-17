@@ -7,6 +7,7 @@ project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from modules.wre_core.src.components import roadmap_manager
+from components.roadmap_manager import RoadmapManager
 
 @pytest.fixture
 def mock_roadmap_file(tmp_path):
@@ -19,7 +20,7 @@ A self-aware, agentic coding system.
 
 ---
 
-## 🎭 Ø1Ø2 Theaters of Operation
+## 🎭 0102 Theaters of Operation
 -   **YouTube Agent:** `modules/platform_agents/youtube`
 -   **Remote Agent:** `modules/platform_agents/remote`
 -   **Discord Bot:** `modules/platform_agents/discord`
