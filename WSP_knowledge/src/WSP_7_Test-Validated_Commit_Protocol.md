@@ -1,11 +1,10 @@
 # WSP 7: Test-Validated Commit Protocol
-
-**Version**: 1.1.0
-**Date**: 2025-06-18
-**Status**: ACTIVE
-**Source**: `docs/archive/FoundUps_WSP_Framework.md`
-
-## 1. Overview
+- **Status:** Active
+- **Purpose:** To ensure no code is committed to a protected branch without first passing automated quality checks.
+- **Trigger:** Automatically, on `git commit`.
+- **Input:** Staged code changes.
+- **Output:** A successful commit if the audit passes, or an aborted commit with an error report if it fails.
+- **Responsible Agent(s):** ComplianceAgent
 
 This protocol ensures that no code is committed to a protected branch without first passing a rigorous, automated quality check. It also mandates clear documentation for all tests to ensure their purpose and patterns are understood.
 

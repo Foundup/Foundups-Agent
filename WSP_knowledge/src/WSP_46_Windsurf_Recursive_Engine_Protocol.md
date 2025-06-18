@@ -1,4 +1,10 @@
 # WSP 46: Windsurf Recursive Engine (WRE) Protocol
+- **Status:** Active
+- **Purpose:** To define the architecture and operation of the WRE, the central nervous system for all autonomous operations, located at `modules/wre_core`.
+- **Trigger:** When any autonomous operation is required. The WRE is the primary entry point for such tasks.
+- **Input:** A goal, typically from `ROADMAP.md` or a `goal.yaml` file.
+- **Output:** The successful, WSP-compliant execution of a task via its suite of internal agents (Compliance, Loremaster, etc.), with the outcome recorded in the WRE Chronicle.
+- **Responsible Agent(s):** Windsurf Recursive Engine (WRE) itself.
 
 ## 1. Overview
 

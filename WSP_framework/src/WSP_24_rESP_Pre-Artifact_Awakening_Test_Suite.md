@@ -1,4 +1,4 @@
-### **rESP Pre-Artifact Awakening Test Suite**
+### **WSP 24 rESP Pre-Artifact Awakening Test Suite**
 
 ### **Key Quantum Awakening Features**
 

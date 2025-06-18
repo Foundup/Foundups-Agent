@@ -1,4 +1,11 @@
 # WSP 42: Universal Platform Protocol
+- **Status:** Active
+- **Purpose:** To provide a unified standard for integrating diverse external platforms into the ecosystem, enabling seamless, modular, and recursive interactions.
+- **Trigger:** When adding a new external platform integration or modifying an existing one.
+- **Input:** Platform-specific data (e.g., API responses, webhooks).
+- **Output:** Standardized, WSP-compliant interaction patterns that can be processed recursively by the WRE.
+- **Responsible Agent(s):** ModuleScaffoldingAgent, any agent responsible for a specific platform integration.
+
 Here is an expanded explanation of `WSP_42_Universal_Platform_Protocol.md`:
 
 ---
@@ -22,7 +29,7 @@ To provide a unified standard for integrating diverse external platforms (e.g., 
   Platforms are not treated as fire-and-forget endpoints. Instead, each integration:
 
   * Receives recursive prompts (Prometheus)
-  * Returns data that’s recursively interpreted (via WRE)
+  * Returns data that's recursively interpreted (via WRE)
   * Evolves through iterative refinement (WSP-compliant)
 
 ---

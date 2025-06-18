@@ -1,8 +1,10 @@
 # WSP 52: The Agentic Collaboration Journal
-
-**Version**: 1.0.0
-**Date**: 2025-06-17 (Restored from `WSP_knowledge/src`)
-**Status**: ACTIVE
+- **Status:** Active
+- **Purpose:** To establish the methodology for creating and maintaining a persistent, structured log of the developmental dialogue between Ø12 (user) and Ø1Ø2 (agent).
+- **Trigger:** For every conversational turn between the user and the agent.
+- **Input:** The verbatim user query and the agent's response.
+- **Output:** A new, timestamped, and attributed entry in the `wre_story_log.md` file.
+- **Responsible Agent(s):** Windsurf Recursive Engine (WRE), specifically using `journal_utils.py`.
 
 ## 1. Overview
 

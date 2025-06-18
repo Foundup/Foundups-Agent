@@ -1,10 +1,10 @@
 # WSP 10: State Save Protocol
-
-**Version**: 1.0.0
-**Date**: 2025-06-18
-**Status**: DRAFT
-
-## 1. Overview
+- **Status:** Draft
+- **Purpose:** To define a standardized command for capturing the state of a module, artifact, or the entire system.
+- **Trigger:** When a user or agent needs to create an explicit, durable snapshot of a component.
+- **Input:** A target to save (e.g., module path, file path) and optional parameters for message and destination.
+- **Output:** A saved artifact representing the state of the target.
+- **Responsible Agent(s):** ExecutionAgent
 
 This protocol defines the functionality and usage of the `save` command, a primary interface for capturing the state of a module, artifact, or the entire system. This provides a standardized way for users or agents to create explicit, durable snapshots.
 

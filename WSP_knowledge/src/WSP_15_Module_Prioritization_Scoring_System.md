@@ -1,10 +1,10 @@
-# WSP 5: Module Prioritization Scoring (MPS) System
-
-**Version**: 1.0.0
-**Date**: 2025-06-17 (Restored from archive)
-**Status**: ACTIVE
-
-## 1. Overview
+# WSP 15: Module Prioritization Scoring (MPS) System
+- **Status:** Active
+- **Purpose:** To provide a consistent, objective methodology for evaluating and ranking modules to guide development priorities.
+- **Trigger:** When planning a new development cycle; when a new module is proposed.
+- **Input:** A module or list of modules to be evaluated.
+- **Output:** A priority score (P0-P4) for each module, documented in `modules_to_score.yaml`.
+- **Responsible Agent(s):** ScoringAgent
 
 The **Module Prioritization Scoring (MPS) System** provides a consistent, objective methodology for evaluating and ranking modules based on their strategic importance and implementation considerations. This is augmented by the **LLME Semantic Triplet Rating** (see `WSP 11`), which provides a qualitative layer for understanding a module's state, local impact, and systemic importance. This combined approach enables the development team to:
 

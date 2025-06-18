@@ -1,10 +1,10 @@
 # WSP 9: Project Configuration Standard
-
-**Version**: 1.0.0
-**Date**: 2025-06-18
-**Status**: DRAFT
-
-## 1. Overview
+- **Status:** Draft
+- **Purpose:** To define a project-specific configuration file (`.foundups_project_rules`) for customizing WSP procedures and settings.
+- **Trigger:** When the WRE Orchestrator starts an operation within a FoundUp project.
+- **Input:** The `.foundups_project_rules` file from a project's root directory.
+- **Output:** A set of project-specific rules that override global WSP defaults for the current operation.
+- **Responsible Agent(s):** WRE Orchestrator
 
 This protocol defines the standard for a project-specific configuration file, `.foundups_project_rules`. This file allows for the customization of certain WSP procedures, LLME configurations, and other project-level settings to tailor the WRE's behavior for a specific FoundUp.
 

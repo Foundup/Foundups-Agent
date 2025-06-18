@@ -1,11 +1,10 @@
 # WSP 8: LLME Semantic Triplet WSP Rating System
-
-**Version**: 1.0.0
-**Date**: 2025-06-18
-**Status**: ACTIVE
-**Source**: Formalized from Appendix G.
-
-## 1. Overview
+- **Status:** Active
+- **Purpose:** To define a qualitative framework (LLME) for assessing the state, impact, and importance of a module.
+- **Trigger:** When a module's priority is being assessed (in conjunction with WSP 5/15); when a module's state changes.
+- **Input:** A specific module to be evaluated.
+- **Output:** A three-digit LLME score (e.g., `1-2-2`) representing the module's state.
+- **Responsible Agent(s):** ScoringAgent, any agent performing a strategic review.
 
 This protocol defines the **LLME (Lifecycle, Legacy, Maintainability, Ecosystem Impact) Semantic Triplet Rating System**. It is a qualitative framework used to assess the state, impact, and importance of a software module or agentic component.
 

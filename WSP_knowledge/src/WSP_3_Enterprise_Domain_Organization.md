@@ -1,11 +1,10 @@
 # WSP 3: Enterprise Domain Organization
-
-**Version**: 1.0.0
-**Date**: 2025-06-17
-**Status**: ACTIVE
-**Source**: Restored from `docs/archive/FoundUps_WSP_Framework.md`.
-
-## 1. Overview
+- **Status:** Active
+- **Purpose:** To define the canonical directory structure for all modules, ensuring logical organization of the codebase.
+- **Trigger:** When a new module is created, or during a structural audit.
+- **Input:** A module's conceptual domain.
+- **Output:** The correct parent directory path for the new module.
+- **Responsible Agent(s):** ModuleScaffoldingAgent, ComplianceAgent
 
 This protocol defines the official Enterprise Domain Structure for the FoundUps Agent project. All modules **must** be categorized into one of these domains. This structure ensures a logical organization of the codebase, making it easier to navigate, maintain, and scale.
 

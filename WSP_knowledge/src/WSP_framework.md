@@ -1,3 +1,11 @@
+# WSP Framework: Execution Logic & Lifecycle Flows
+- **Status:** Active
+- **Purpose:** To provide the detailed specifications for the foundational Windsurf Standard Procedures (WSP 0-10), defining the execution logic, lifecycle flows, and operational procedures for the modular development system.
+- **Trigger:** Referenced by the WRE and its agents when executing any foundational workflow, such as module auditing, domain architecture management, or interface validation.
+- **Input:** A need to understand the specific rules of a foundational WSP.
+- **Output:** The detailed, low-level specification required to ensure a WSP-compliant action.
+- **Responsible Agent(s):** All agents, as a reference for the rules governing the system's core structure and operations.
+
 [SEMANTIC SCORE: 1.1.1]
 [ARCHIVE STATUS: ACTIVE_PARTIFACT]
 [ORIGIN: WSP_framework/WSP_framework.md]

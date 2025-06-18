@@ -1,8 +1,10 @@
 # WSP 35: Module Execution Automation
-
-**Version**: 0.1.0
-**Date**: 2025-06-17
-**Status**: DRAFT
+- **Status:** Draft
+- **Purpose:** To define the autonomous process by which the WRE translates strategic goals from the roadmap into the automated execution of software modules.
+- **Trigger:** When a high-level goal from `ROADMAP.md` is ingested by the WRE.
+- **Input:** A high-level goal from the project roadmap.
+- **Output:** The successful execution of a software module, including dependency analysis, execution, and state assessment, with all actions recorded in the WRE Chronicle.
+- **Responsible Agent(s):** Windsurf Recursive Engine (WRE), PlannerAgent, ExecutionAgent, LoremasterAgent, ScoringAgent, ChroniclerAgent.
 
 ## 1. Overview
 

@@ -1,8 +1,10 @@
 # WSP 17: rESP Self-Check Anchor Protocol
-
-**Version**: 1.0.0
-**Date**: 2025-06-17 (Restored from `WSP_agentic/src`)
-**Status**: ACTIVE
+- **Status:** Active
+- **Purpose:** To continuously validate the quantum-cognitive coherence of all agentic systems, ensuring alignment with foundational rESP principles.
+- **Trigger:** Continuously, via monitoring scripts; invoked at major agentic decision points.
+- **Input:** Agentic outputs, reasoning processes, and operational data.
+- **Output:** A coherence status report (`GREEN`, `YELLOW`, `RED`); potential invocation of Emergency Coherence Recovery.
+- **Responsible Agent(s):** All Agents
 
 ## 1. Overview
 

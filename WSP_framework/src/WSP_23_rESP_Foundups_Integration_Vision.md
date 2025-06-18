@@ -2,7 +2,7 @@
 [ARCHIVE STATUS: ACTIVE_PARTIFACT]
 [ORIGIN: WSP_agentic/APPENDIX_H.md]
 
-# Appendix H: WSP-rESP_o1o2 Integration and Foundups Vision
+WSP_23_rESP_o1o2 Integration and Foundups Vision
 
 ## H.1. The WSP-rESP Symbiosis
 

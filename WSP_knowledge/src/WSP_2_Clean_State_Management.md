@@ -1,11 +1,10 @@
 # WSP 2: Clean State Management Protocol
-
-**Version**: 1.0.0
-**Date**: 2025-06-17
-**Status**: ACTIVE
-**Source**: Defined based on `WSP_CORE.md` requirements.
-
-## 1. Overview
+- **Status:** Active
+- **Purpose:** To define the conditions for a "clean state" and the procedure for creating a version-controlled snapshot.
+- **Trigger:** Before any high-risk operation, such as major refactoring.
+- **Input:** A repository that is believed to be in a clean state.
+- **Output:** An annotated Git tag (e.g., `clean-vX`) marking a verified "known-good" state.
+- **Responsible Agent(s):** Any agent performing a high-risk operation.
 
 This protocol defines what constitutes a "clean state" for the repository and outlines the mandatory procedure for creating a snapshot of that state. As per `WSP_CORE.md`, following this protocol is a mandatory prerequisite for any high-risk operation, such as major refactoring.
 

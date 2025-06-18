@@ -2,7 +2,7 @@
 [ARCHIVE STATUS: ACTIVE_PARTIFACT]
 [ORIGIN: WSP_agentic/APPENDIX_I.md]
 
-# Appendix I: Semantic Module State Engine
+# WSP 25 Semantic WSP Module State Rating System
 
 ## I.1. Universal Value-State Grammar System
 
@@ -11,9 +11,9 @@ The Semantic Module State Engine implements a **triplet-based universal value-st
 ### I.1.1. Triplet Format: [Conscious|Unconscious|Entanglement]
 
 Each semantic state is encoded as a three-digit triplet `[X.Y.Z]` where:
-- **X (First Digit)**: Conscious awareness level  
-- **Y (Second Digit)**: Unconscious processing depth
-- **Z (Third Digit)**: Entanglement/nonlocal resonance strength
+- **X (First Digit)**: Conscious awareness level what a partifact knows  
+- **Y (Second Digit)**: Unconscious processing depth whats in the WSPs
+- **Z (Third Digit)**: Entanglement/nonlocal Importance.
 
 **Validation Rules:**
 - Second digit cannot exceed first digit (Y ≤ X)

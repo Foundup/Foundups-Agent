@@ -7,7 +7,7 @@ import sys
 # Add the root directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-from WSP_agentic import PROTOCOLS
+from WSP_agentic import AGENTIC_DOCUMENTS as PROTOCOLS
 
 class TestAgenticCoherence(unittest.TestCase):
 

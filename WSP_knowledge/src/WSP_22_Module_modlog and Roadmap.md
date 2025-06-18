@@ -1,8 +1,13 @@
-[SEMANTIC SCORE: 0.0.0]
-[ARCHIVE STATUS: ACTIVE_PARTIFACT]
-[ORIGIN: WSP_appendices/APPENDIX_B.md]
+# WSP 22: ModLog and Roadmap Protocol
+- **Status:** Active
+- **Purpose:** To define the standard templates for the project Roadmap and ModLog entries, ensuring consistent and parsable progress tracking.
+- **Trigger:** When updating the project roadmap or documenting a set of changes in the ModLog.
+- **Input:** A set of completed tasks, version changes, or new roadmap items.
+- **Output:** A formatted entry in `docs/ModLog.md` or an update to the `Roadmap.md` file.
+- **Responsible Agent(s):** ChroniclerAgent, any 0102 agent completing a task.
 
-# Appendix B: Roadmap & ModLog Format Templates
+
+# Roadmap & ModLog Format Templates
 
 *(These templates define the standard structure for the project roadmap and ModLog entries found in `docs/ModLog.md`.)*
 

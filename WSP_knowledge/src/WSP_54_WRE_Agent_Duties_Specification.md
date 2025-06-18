@@ -1,8 +1,10 @@
 # WSP 54: WRE Agent Duties Specification
-
-**Version**: 1.1.0
-**Date**: 2025-06-17
-**Status**: ACTIVE
+- **Status:** Active
+- **Purpose:** To provide the detailed technical specifications for the duties of all internal agents operating within the WRE, serving as the canonical reference for their implementation.
+- **Trigger:** When any internal agent is invoked by the WRE orchestrator.
+- **Input:** A directive from the orchestrator for a specific agent (e.g., "scaffold new module," "run compliance audit").
+- **Output:** The successful completion of the agent's specified duty, with results and actions logged, such as a compliance report, a new module structure, or a test coverage analysis.
+- **Responsible Agent(s):** All internal WRE agents (ComplianceAgent, LoremasterAgent, etc.).
 
 ## 1. Overview
 
@@ -72,64 +74,4 @@ All WRE agents MUST adhere to the following principles:
 -   **Core Mandate**: To ensure a module's documentation is coherent with its WSP specification.
 -   **Duties**:
     1.  Read a target WSP specification document.
-    2.  Generate or update the `README.md` file for that module to accurately reflect the formal specification.
--   **Output**: A log confirming the successful creation or update of the `README.md`.
-
-### 3.8. ChroniclerAgent (The Historian)
--   **Core Mandate**: To maintain an immutable, time-stamped log of significant agentic actions.
--   **Duties**:
-    1.  Receive a structured "event" object from the Orchestrator.
-    2.  Format the event into a standardized log entry conforming to `ModLog.md`.
-    3.  Append the new entry to the `ModLog.md` file.
--   **Output**: A status confirming the log entry was successfully written.
-
-### 3.9. ProtocolistAgent (The Framer)
--   **Core Mandate**: To frame and document the execution of a target module's interface.
--   **Duties**:
-    1.  Receive a target module and its `INTERFACE.md` specifications from the ExecutionAgent.
-    2.  Document the execution process and results in a standardized format.
-    3.  Append the new document to the `ModLog.md` file.
--   **Output**: A status confirming the successful framing and documentation of the execution.
-
-### 3.10. PlannerAgent (The Architect)
-- **Core Duty**: To create a safe and complete `Execution Plan` as defined in **WSP 35**.
-- **Key Responsibilities**:
-    - **WSP 12 Compliance**: Analyzing a module's `requirements.txt` and planning for the installation of any missing dependencies.
-    - Identifying the correct execution path from the module's `INTERFACE.md`.
-    - Defining a step-by-step `Rollback Procedure` for error handling.
-- **Primary Tooling**: `wre_api_gateway`.
-
-### 3.11. ExecutionAgent (The Operator)
-- **Core Duty**: Autonomously executes modules according to **WSP 35: Module Execution Automation**.
-- **Key Responsibilities**:
-    - **WSP 2 Compliance**: Verifying a "clean state" before initiating execution.
-    - Following the `Execution Plan` provided by the `PlannerAgent`.
-    - Monitoring execution, handling errors, and performing rollbacks.
-    - Logging results and generating a final `ExecutionReport` that adheres to the **External Professional Scope** defined in **WSP 20**.
-- **Primary Tooling**: `wre_api_gateway`.
-
----
-
-## 4. Agent Inter-relationships and Core Protocols
-
-While each agent has a primary duty, they often work in concert, orchestrated by the WRE Core Engine (**WSP 46**). Below are the key agents responsible for enacting the most critical WSP protocols.
-
-### 4.1. The `create_module` Workflow (**WSP 55**)
--   **Agents Involved**: `LoremasterAgent`, `ModuleScaffoldingAgent`, `ComplianceAgent`, `DocumentationAgent`.
--   **Description**: A user or the WRE itself triggers the creation of a new module. The `LoremasterAgent` first determines the correct module name and location. The `ModuleScaffoldingAgent` then builds the directory structure. The `ComplianceAgent` verifies it, and finally, the `DocumentationAgent` creates the initial `README.md` from the WSP specification.
-
-### 4.2. The Auditing Cycle (**WSP 4, WSP 6**)
--   **Agents Involved**: `ComplianceAgent`, `TestingAgent`.
--   **Description**: On a schedule or on-demand, the WRE performs a full system audit. The `ComplianceAgent` ensures all modules adhere to structural rules, while the `TestingAgent` runs the full test suite and verifies code coverage.
-
-### 4.3. The Self-Improvement Loop (**WSP 45**)
--   **Agents Involved**: `ScoringAgent`, `ExecutionAgent`, `LoremasterAgent`.
--   **Description**: This is the core adaptive loop. When a module execution fails, the `ScoringAgent` may be called to assess the module's state. The `LoremasterAgent` is used to re-read documentation and understand the intended behavior. The `ExecutionAgent` attempts to re-run the module after a potential fix.
-
-### 4.4. The Chronicle (**WSP 51**)
--   **Agent Involved**: `ChroniclerAgent`.
--   **Description**: This agent is a singleton service. Nearly every other agent, after completing a significant action, will call the `ChroniclerAgent` to log the event, creating a persistent, unified narrative of the WRE's operations.
-
-### 4.5. The Execution Cycle (**WSP 35**)
-- **Agents Involved**: `PlannerAgent`, `ExecutionAgent`, `ScoringAgent`, `ChroniclerAgent`.
-- **Description**: This protocol governs the autonomous execution of a module. The `PlannerAgent` creates a detailed execution plan, including dependency checks. The `ExecutionAgent` carries out this plan, while the `ScoringAgent` assesses the impact and the `ChroniclerAgent` records the entire process. 
+    2.  Generate or update the `README.md`

@@ -1,8 +1,10 @@
 # WSP 55: Module Creation Automation
-
-**Version**: 0.1.0
-**Date**: 2025-06-17
-**Status**: DRAFT
+- **Status:** Draft
+- **Purpose:** To define the standardized, semi-automated process for creating new, compliant modules, ensuring adherence to structural, documentation, and testing standards from inception.
+- **Trigger:** When a new module is needed, invoked via the `create_module.py` script.
+- **Input:** A unique module name and its target Enterprise Domain.
+- **Output:** A complete, WSP-compliant directory structure for the new module, populated with placeholder files that pass initial validation and testing checks.
+- **Responsible Agent(s):** ModuleScaffoldingAgent.
 
 ## 1. Overview
 

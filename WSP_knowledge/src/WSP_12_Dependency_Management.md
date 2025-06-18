@@ -1,13 +1,14 @@
 # WSP 12: Dependency Management
-
-**Version**: 1.0.0
-**Date**: 2025-06-17
-**Status**: ACTIVE
-**Source**: Defined based on `WSP_CORE.md` requirements.
-
-## 1. Overview
+- **Status:** Active
+- **Purpose:** To govern the management of external Python dependencies, ensuring reproducibility and stability.
+- **Trigger:** When adding a new dependency to a module during a code modification task.
+- **Input:** A new package to be used by a module.
+- **Output:** An updated `requirements.txt` file at the module and project level with the new dependency pinned to a specific version.
+- **Responsible Agent(s):** ComplianceAgent, ExecutionAgent
 
 This protocol governs the management of external dependencies. `WSP_CORE.md` requires that dependencies are declared explicitly to ensure reproducibility and stability.
+
+## 1. Overview
 
 ## 2. Dependency Declaration
 

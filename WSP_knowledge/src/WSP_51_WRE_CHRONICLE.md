@@ -1,8 +1,10 @@
 # WSP 51: WRE Chronicle
-
-**Version**: 0.1.0
-**Date**: 2025-06-17
-**Status**: DRAFT
+- **Status:** Draft
+- **Purpose:** To define the structure, content, and maintenance of the WRE Chronicle, a comprehensive log of the WRE's significant actions, decisions, and evolutionary milestones.
+- **Trigger:** Whenever the WRE performs a significant action, makes a decision, or completes a task.
+- **Input:** Data from the WRE's operations, including goals, actions, results, and dissonance analysis.
+- **Output:** A structured, permanent, and auditable log entry in the designated Chronicle file.
+- **Responsible Agent(s):** ChroniclerAgent.
 
 ## 1. Overview
 

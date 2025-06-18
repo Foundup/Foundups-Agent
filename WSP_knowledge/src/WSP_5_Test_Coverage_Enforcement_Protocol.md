@@ -1,11 +1,10 @@
 # WSP 5: Test Coverage Enforcement Protocol
-
-**Version**: 1.1.0
-**Date**: 2025-06-18
-**Status**: ACTIVE
-**Source**: `docs/archive/FoundUps_WSP_Framework.md`
-
-## 1. Overview
+- **Status:** Active
+- **Purpose:** To ensure all modules meet a minimum standard of test coverage (≥90%) to guarantee reliability.
+- **Trigger:** During a Comprehensive Test Audit (WSP 6), typically as part of a pre-commit hook or CI pipeline.
+- **Input:** A specific module's source code and its corresponding test suite.
+- **Output:** A pass/fail result based on whether the module's test coverage meets or exceeds the 90% threshold.
+- **Responsible Agent(s):** TestingAgent
 
 This protocol ensures that all modules meet a minimum standard of test coverage to guarantee reliability and maintainability. It defines the specific coverage target and the methods for its enforcement.
 

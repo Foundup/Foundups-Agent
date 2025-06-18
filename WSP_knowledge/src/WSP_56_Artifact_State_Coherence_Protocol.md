@@ -1,8 +1,10 @@
 # WSP 56: Artifact State Coherence Protocol
-
-**Version**: 1.0.0
-**Date**: 2025-06-17
-**Status**: ACTIVE
+- **Status:** Active
+- **Purpose:** To ensure the integrity of the Three-State Architectural Model by enforcing that artifacts existing in different state layers (Knowledge, Scaffolding, Agentic) have identical content.
+- **Trigger:** During a full system audit or before merging a pull request that modifies a file in a state-managed directory.
+- **Input:** A file from a state-managed directory and its counterparts in other state layers.
+- **Output:** A `CoherenceViolation` error if the contents are not identical, blocking the operation.
+- **Responsible Agent(s):** ComplianceAgent.
 
 ## 1. Overview
 

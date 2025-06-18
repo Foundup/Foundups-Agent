@@ -1,9 +1,10 @@
 # WSP 4: FMAS Validation Protocol
-
-**Version**: 1.1.0
-**Date**: 2025-06-18
-**Status**: ACTIVE
-**Source**: `docs/archive/FoundUps_WSP_Framework.md`
+- **Status:** Active
+- **Purpose:** To govern the automated validation of module structural compliance, ensuring all modules adhere to framework rules.
+- **Trigger:** Before code integration (pre-commit hook or CI pipeline); when a new module is created.
+- **Input:** The path to the `modules/` directory.
+- **Output:** A compliance report listing any structural violations.
+- **Responsible Agent(s):** ComplianceAgent
 
 ## 1. Overview
 

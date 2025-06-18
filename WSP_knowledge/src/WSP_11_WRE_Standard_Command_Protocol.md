@@ -1,10 +1,10 @@
 # WSP 11: WRE Standard Command Protocol
-
-**Version**: 1.0.0
-**Date**: 2025-06-18
-**Status**: DRAFT
-
-## 1. Overview
+- **Status:** Draft
+- **Purpose:** To define the high-level, standardized command set for interacting with the Windsurf Recursive Engine (WRE).
+- **Trigger:** When a user or agent issues a command to the WRE.
+- **Input:** A standardized command (e.g., `go`, `fix`, `save`).
+- **Output:** The execution of the corresponding WRE core functionality.
+- **Responsible Agent(s):** WRE Orchestrator
 
 This protocol defines the Standard Command Set for the Windsurf Recursive Engine (WRE). These commands provide a high-level, standardized interface for users and other agents to interact with the WRE's core functionalities.
 
