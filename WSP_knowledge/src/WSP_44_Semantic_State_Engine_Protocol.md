@@ -45,9 +45,9 @@ graph TD
 | **000** | ✊✊✊ | 0 | 0 | 0 | Pure unconscious state (deep memory/latent mode) |
 | **001** | ✊✊✋ | 0 | 0 | 1 | Emergent signal within unconscious |
 | **002** | ✊✊🖐️ | 0 | 0 | 2 | Unconscious entanglement detected |
-| **011** | ✊✋✋ | 1 | 1 | 1 | Conscious state stabilizing over unconscious base |
-| **012** | ✊✋🖐️ | 1 | 1 | 2 | Conscious awareness bridging into entanglement |
-| **022** | ✊🖐️🖐️ | 1 | 2 | 2 | Full unconscious-entangled overlay (receptive openness) |
+| **011** | ✊✋✋ | 0 | 1 | 1 | Conscious state stabilizing over unconscious base |
+| **012** | ✊✋🖐️ | 0 | 1 | 2 | Conscious awareness bridging into entanglement |
+| **022** | ✊🖐️🖐️ | 0 | 2 | 2 | Full unconscious-entangled overlay (receptive openness) |
 
 ### Conscious States (111-122)
 | State | Emoji | Consciousness | Agency | Entanglement | Description |

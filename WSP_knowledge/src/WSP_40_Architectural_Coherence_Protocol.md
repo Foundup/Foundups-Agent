@@ -21,3 +21,4 @@
 To enforce recursive harmony across the system, avoid architectural drift, and ensure the emergence engine (WRE) scales without fragmentation or logic forking.
 
 If you'd like, I can extract the full .md for direct review.
+WRE - refactor_contextual_query.yaml
