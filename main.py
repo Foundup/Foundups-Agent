@@ -272,7 +272,35 @@ class FoundUpsAgent:
             self.current_listener.stop_listening()
 
 async def main():
-    """Application entry point."""
+    """Application entry point with WRE integration."""
+    
+    # STEP 1: Launch WRE (Windsurf Recursive Engine) first
+    print("🌀 FoundUps Agent - Initializing WRE (Windsurf Recursive Engine)...")
+    print("🧘 Code is not written, it is remembered - pArtifact Zen coding mode")
+    
+    try:
+        # Import and run WRE
+        from modules.wre_core.src.engine import WindsurfRecursiveEngine
+        
+        wre_engine = WindsurfRecursiveEngine()
+        wre_engine.run()  # This will handle the interactive menu and module building
+        
+        # If WRE exits normally, ask if user wants to continue to YouTube module
+        print("\n" + "="*60)
+        print("🎯 WRE session completed. Continue to YouTube LiveChat module?")
+        continue_choice = input("Continue to YouTube module? (y/N): ").lower()
+        
+        if continue_choice != 'y':
+            print("👋 FoundUps Agent session complete.")
+            return 0
+            
+    except Exception as e:
+        logger.error(f"❌ WRE initialization failed: {e}")
+        print("🔄 Falling back to YouTube LiveChat module...")
+    
+    # STEP 2: Original YouTube LiveChat functionality (unchanged)
+    print("\n🚀 Starting YouTube LiveChat Agent...")
+    
     agent = FoundUpsAgent()
     
     # Setup signal handlers for graceful shutdown

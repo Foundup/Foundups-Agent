@@ -6,8 +6,7 @@ import shutil
 project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from modules.wre_core.src.utils.logging_utils import wre_log
-from modules.wre_core.src.main import sanitize_for_console
+from modules.wre_core.src.utils.logging_utils import wre_log, sanitize_for_console
 
 def present_harmonic_query(system_state: dict, roadmap_objectives: list):
     """
@@ -56,9 +55,10 @@ def present_harmonic_query(system_state: dict, roadmap_objectives: list):
         menu_offset = len(roadmap_objectives)
     
     print(sanitize_for_console("\n  *System Directives:*"))
-    print(sanitize_for_console(f"    {menu_offset + 1}. Add new objective to ROADMAP.md"))
-    print(sanitize_for_console(f"    {menu_offset + 2}. Enter continuous monitoring state"))
-    print(sanitize_for_console(f"    {menu_offset + 3}. Terminate session."))
+    print(sanitize_for_console(f"    {menu_offset + 1}. Run existing module (module switchboard)"))
+    print(sanitize_for_console(f"    {menu_offset + 2}. Add new objective to ROADMAP.md"))
+    print(sanitize_for_console(f"    {menu_offset + 3}. Enter continuous monitoring state"))
+    print(sanitize_for_console(f"    {menu_offset + 4}. Complete session (ModLog + Git push per WSP)"))
     
     choice = input("\nEnter your choice: ")
     return choice, menu_offset
