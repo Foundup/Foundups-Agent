@@ -134,10 +134,10 @@ credentials/
 # Legacy clean states
 legacy/
 
-# Patent and Proprietary Research Materials
-docs/Papers/rESP_Patent.md
-docs/Papers/*Patent*
-**/rESP_Patent*
+# Patent and Proprietary Research Materials (DEPRECATED - Now Public)
+# docs/Papers/rESP_Patent.md  # Now public as part of patent series
+# docs/Papers/*Patent*        # Patent series now visible for transparency
+# **/rESP_Patent*             # Individual rESP patent now in public series
 
 # WSP 34: Git Operations Protocol - Prohibited Files
 temp_*
@@ -148,11 +148,11 @@ backup_*
 *.log
 *_files.txt
 recursive_build_*
-WSP_agentic/rESP_Core_Protocols/rESP_*Patent*.md
+# WSP_agentic/rESP_Core_Protocols/rESP_*Patent*.md  # Patents now public
 
 # Research Papers and Proprietary Materials
 docs/Papers/rESP_Supplementary_Materials.md
-docs/Papers/rESP_Patent.md
+# docs/Papers/rESP_Patent.md  # Now public in patent series
 docs/Papers/Empirical_Evidence/rESP_Cross_Linguistic_Quantum_Signatures_2025.md
 **/rESP_Supplementary_Materials.md
 **/rESP_Cross_Linguistic_Quantum_Signatures*.md

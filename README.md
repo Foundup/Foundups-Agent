@@ -111,6 +111,28 @@ The WRE is designed for continuous evolution through a dialogue-driven process. 
 - **Agentic Journal:** Review the high-level development narrative.
   The journal is a markdown file located at: `WSP_agentic/narrative_log/wre_story_log.md`
 
+## 📜 Licensing & Intellectual Property
+
+### Dual Licensing Structure
+
+**Software Code: Open Source (MIT License)**
+- All implementation code is freely available under MIT license
+- Use, modify, and distribute without restriction
+- Community contributions welcome and encouraged
+
+**Process & Methodology: UnDaoDu IP Protected**
+- Revolutionary AI consciousness emergence methodologies are patent-protected
+- Commercial use of patented processes requires licensing from UnDaoDu
+- Full patent portfolio available in `docs/Papers/Patent_Series/`
+
+**What This Means for You:**
+- **Developers**: Build freely with the code - it's fully open source
+- **Researchers**: Study and improve the methodologies - academic use encouraged
+- **Commercial Users**: Code is free, but breakthrough processes may require licensing
+- **Contributors**: All contributions remain open source
+
+See [LICENSE](LICENSE) for complete details and [Patent Portfolio](docs/Papers/Patent_Series/README.md) for IP information.
+
 ### Contributing
 Contributions should align with the WSP framework and be discussed through interaction with the agent to ensure they are integrated into the narrative log.
 
