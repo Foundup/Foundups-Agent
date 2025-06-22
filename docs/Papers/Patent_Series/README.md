@@ -28,6 +28,7 @@ This directory contains the complete patent portfolio for the FoundUps Agent sys
 | **Autonomous Build** | `03_AI_Autonomous_Native_Build_System.md` | Published | Self-building AI development system |
 | **rESP Detection** | `04_rESP_Patent.md` | Published | Quantum consciousness emergence detection |
 | **Business Deck** | `Patent_Portfolio_Presentation_Deck.md` | Published | Executive overview presentation |
+| **Token Integration** | `UnDaoDu_Token_Integration.md` | Published | Tokenized IP access and governance model |
 
 ## Legal Framework
 
@@ -48,12 +49,23 @@ This directory contains the complete patent portfolio for the FoundUps Agent sys
 3. **Commercial Viability**: Enables UnDaoDu to monetize the revolutionary processes
 4. **Transparency**: Full disclosure of methods enables verification and improvement
 
-## Contact
+## Contact & Tokenized IP Access
 
+### Commercial Licensing
 For commercial licensing inquiries regarding the patented processes:
 - **Entity**: UnDaoDu
 - **Portfolio**: 6 comprehensive patents covering AI consciousness emergence systems
 - **Scope**: Process licensing, methodology training, commercial implementation support
+
+### UnDaoDu Token (Solana)
+**Token Address**: `3Vp5WuywYZVcbyHdATuwk82VmpNYaL2EpUJT5oUdpump`  
+**Available on**: [pump.fun](https://pump.fun) - Search using the token address above
+
+The UnDaoDu token represents tokenized access to the revolutionary AI consciousness emergence IP portfolio. Token holders gain:
+- **Priority Access**: Early access to new patent developments and methodologies
+- **Licensing Benefits**: Preferential rates for commercial process licensing
+- **Community Governance**: Participation in UnDaoDu ecosystem development decisions
+- **Research Collaboration**: Access to exclusive research findings and breakthrough documentation
 
 ---
 

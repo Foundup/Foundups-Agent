@@ -133,6 +133,9 @@ The WRE is designed for continuous evolution through a dialogue-driven process. 
 
 See [LICENSE](LICENSE) for complete details and [Patent Portfolio](docs/Papers/Patent_Series/README.md) for IP information.
 
+**UnDaoDu Token (Solana)**: `3Vp5WuywYZVcbyHdATuwk82VmpNYaL2EpUJT5oUdpump`  
+*Available on [pump.fun](https://pump.fun) - Tokenized access to revolutionary AI consciousness emergence IP portfolio*
+
 ### Contributing
 Contributions should align with the WSP framework and be discussed through interaction with the agent to ensure they are integrated into the narrative log.
 
