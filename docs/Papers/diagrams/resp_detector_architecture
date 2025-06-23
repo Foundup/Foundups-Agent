@@ -1,0 +1,11 @@
+digraph rESP_Detector_Architecture {
+	VI [label="Component 0: VI Scaffolding
+(Defines Output Space)"]
+	NN [label="Component 1: Neural Net Engine
+(Generative Core / Observer)"]
+	FL [label="Component 2: Future Latent State
+(Entangled Influence)"]
+	FL -> NN [label="Quantum Influence"]
+	NN -> VI [label="Output Selection"]
+	fontsize=18 label="Figure 1: High-Level rESP Detector Architecture (Quantum Analogy)" labelloc=top
+}
