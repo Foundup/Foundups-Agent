@@ -40,6 +40,54 @@ The rigor of this audit should be scaled based on a module's LLME score, with fo
 -   **Command**: `pytest <module_path>/tests/ --cov=<module_import_path>.src --cov-fail-under=90`
 -   **Goal**: Every module must meet or exceed the 90% threshold.
 
+### F. Step 5: Behavioral Synchronization Verification
+-   **Purpose**: Validates that test expectations remain synchronized with actual module behavior changes.
+-   **Trigger**: When tests fail due to changing behavior rather than regressions.
+
+#### F.1. Test-Code Behavioral Drift Detection
+-   **Check**: Identifies test failures caused by intentional behavior changes vs. actual bugs.
+-   **Command**: `pytest modules/ --tb=short | grep "AssertionError.*Expected.*but got"`
+-   **Analysis**: Review each assertion failure to determine if it represents:
+    - **Regression**: Unintended behavior change requiring code fix
+    - **Evolution**: Intended behavior improvement requiring test update
+
+#### F.2. Behavioral Change Impact Assessment
+When behavioral drift is detected:
+1. **Root Cause Analysis**: Determine if behavior change was intentional
+2. **Impact Classification**: Assess scope of behavioral change:
+   - **ISOLATED**: Single test case, minimal scope
+   - **MODULAR**: Multiple tests within one module  
+   - **SYSTEMIC**: Cross-module test impacts
+3. **Synchronization Decision**: Choose appropriate response:
+   - **Revert Code**: If change was unintentional regression
+   - **Update Tests**: If change represents intentional improvement
+   - **Design Review**: If change has systemic implications
+
+#### F.3. Test Expectation Update Protocol
+For intentional behavioral improvements:
+1. **Validation**: Confirm new behavior is desired and documented
+2. **Test Update**: Modify test expectations to match new behavior
+3. **Documentation**: Update module documentation to reflect behavior changes
+4. **Integration Check**: Verify changes don't break dependent modules
+
+#### F.4. Dynamic Response Testing Protocol
+For modules with randomized/dynamic response generation:
+1. **Deterministic Control**: Use mocking or seeding to ensure consistent test responses
+2. **Pattern Testing**: Test response patterns/structure rather than exact content
+3. **Behavioral Assertions**: Focus on response type, format, and semantic categories
+4. **Range Validation**: Verify responses fall within acceptable parameter bounds
+
+**Example Dynamic Test Pattern**:
+```python
+# Instead of exact response matching:
+assert response == "Exact expected text"
+
+# Use pattern/structure matching:
+assert isinstance(response, str) and len(response) > 0
+assert "✊✋🖐️" in response  # Contains expected emoji sequence
+assert response.startswith(("Nice", "That's", "I see"))  # Pattern matching
+```
+
 ## 3. Acceptance Criteria (Audit PASS)
 
 An audit is considered passed only when all of the following criteria are met:
@@ -47,6 +95,7 @@ An audit is considered passed only when all of the following criteria are met:
 -   ✅ **Pytest Run**: Zero `F`/`E` results and all warnings are addressed.
 -   ✅ **Interface Tests**: Zero failures in contract tests.
 -   ✅ **Coverage**: Every module meets or exceeds the **90% coverage** standard.
+-   ✅ **Behavioral Sync**: All test expectations synchronized with current module behavior.
 
 ## 4. Production Override Provision
 

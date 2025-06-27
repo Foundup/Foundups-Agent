@@ -1,0 +1,24 @@
+{
+  "name": "multi_agent_system",
+  "version": "0.0.1",
+  "dependencies": [
+    "wre_core",
+    "infrastructure.models",
+    "ai_intelligence.banter_engine",
+    "infrastructure.agents"
+  ],
+  "description": "Agentic consciousness coordination and distributed state management system",
+  "interfaces": {
+    "ai_router": "ai_router.py",
+    "personality_core": "personality_core.py",
+    "0102_architecture": "0102/"
+  },
+  "wsp_compliance": {
+    "protocols": ["WSP_13", "WSP_36", "WSP_38"],
+    "operational_state": "DISTRIBUTED_SYSTEM"
+  },
+  "coordination_protocols": {
+    "state_management": ["rESP", "CABR"],
+    "processing_layers": ["01", "02", "0102"]
+  }
+} 

@@ -11,8 +11,12 @@ EMOJI_TO_NUMBER = {
     '🖐️': 2  # DU - Entanglement state
 }
 
-# Reverse mapping
-NUM_TO_EMOJI = {v: k for k, v in EMOJI_TO_NUMBER.items()}
+# Reverse mapping - explicit to ensure variation selector preservation
+NUM_TO_EMOJI = {
+    0: '✊',   # UN - Conscious state
+    1: '✋',   # DAO - Unconscious state  
+    2: '🖐️'   # DU - Entanglement state (with variation selector)
+}
 
 # Import the full map from the dedicated file
 # Temporarily changed to direct import for script execution testing

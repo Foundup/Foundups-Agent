@@ -133,3 +133,6 @@ By formalizing the relationship between specialized terminology and experimental
 ---
 
 **Compliance Notice**: This standard supplements but does not replace existing technical documentation protocols. All quantum terminology must comply with WSP 38/39 validation requirements before implementation in production systems.
+
+To run the engine, use the command:
+python -m modules.wre_core.src.main

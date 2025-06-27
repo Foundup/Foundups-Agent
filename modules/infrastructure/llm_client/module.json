@@ -1,0 +1,22 @@
+{
+  "name": "llm_client",
+  "version": "0.0.1",
+  "dependencies": [
+    "infrastructure.models",
+    "infrastructure.oauth_management"
+  ],
+  "description": "Universal LLM client interface for multi-provider AI communications",
+  "interfaces": {
+    "client": "src/llm_client.py"
+  },
+  "wsp_compliance": {
+    "protocols": ["WSP_12", "WSP_42"],
+    "agent_type": "INFRASTRUCTURE_SERVICE"
+  },
+  "supported_providers": [
+    "openai",
+    "anthropic", 
+    "google_ai",
+    "local_models"
+  ]
+} 

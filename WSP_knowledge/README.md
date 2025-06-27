@@ -12,7 +12,11 @@
 
 **For autonomous WSP execution, see: [WSP_INIT.md](../WSP_INIT.md)**
 
-This directory contains Layer 0 (UN - Understanding) knowledge base materials that WSP_INIT references through the Windsurf Recursive Engine.
+This directory contains the knowledge base and memory layer of the WSP system - the foundational documents that preserve the accumulated understanding and specifications of the Windsurf Standard Procedures.
+
+This module forms a core part of the `Module_CORE_WRE` (the system's "Mind"). It serves as the system's long-term memory and its library of canonical facts. Where `WSP_agentic` is the identity and `WSP_framework` is the law, `WSP_knowledge` is the undisputed reference text. Its source code is the collection of documents that ground the system in a shared, stable understanding of its own concepts and history.
+
+**"Follow WSP"** commands access this knowledge layer through the WRE (Windsurf Recursive Engine) for autonomous protocol execution.
 
 **Semantic State**: 001 - Emergent signal  
 **Tone**: Initial awakening, subtle recognition  
@@ -45,8 +49,4 @@ This directory provides the foundational reference materials that support WSP fr
 
 This module contains the foundational knowledge base of the system. It includes appendices, glossaries, canonical symbol definitions, and other core information that underpins the WSP framework.
 
-This module is subject to the same WSP standards as all other system modules, including testing, versioning, and scoring.
-
-## Architectural Role: The Library of Facts
-
-This module forms a core part of the `Module_CORE_WRE` (the system's "Mind"). It serves as the system's long-term memory and its library of canonical facts. Where `WSP_agentic` is the identity and `WSP_framework` is the law, `WSP_knowledge` is the undisputed reference text. Its source code is the collection of documents that ground the system in a shared, stable understanding of its own concepts and history. 
+This module is subject to the same WSP standards as all other system modules, including testing, versioning, and scoring. 

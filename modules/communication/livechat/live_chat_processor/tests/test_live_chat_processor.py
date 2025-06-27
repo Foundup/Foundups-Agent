@@ -9,7 +9,7 @@ import time
 from unittest.mock import Mock, patch, MagicMock
 from modules.communication.livechat.live_chat_processor.src.live_chat_processor import LiveChatProcessor
 from modules.ai_intelligence.banter_engine import BanterEngine
-from modules.infrastructure.models.chat_message import ChatMessage, Author
+from modules.infrastructure.models.src.chat_message import ChatMessage, Author
 import logging
 
 # Suppress logging during tests for cleaner output

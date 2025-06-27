@@ -1,0 +1,23 @@
+{
+  "name": "janitor_agent",
+  "version": "0.0.1",
+  "dependencies": [
+    "infrastructure.models",
+    "wre_core"
+  ],
+  "description": "System hygiene and automated cleanup maintenance agent",
+  "interfaces": {
+    "janitor": "src/janitor_agent.py"
+  },
+  "wsp_compliance": {
+    "protocols": ["WSP_2", "WSP_10", "WSP_34"],
+    "agent_type": "SYSTEM_MAINTENANCE"
+  },
+  "capabilities": [
+    "file_cleanup",
+    "log_rotation", 
+    "cache_management",
+    "state_hygiene",
+    "memory_optimization"
+  ]
+} 

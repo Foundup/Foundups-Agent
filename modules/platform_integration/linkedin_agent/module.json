@@ -1,0 +1,24 @@
+{
+  "name": "linkedin_agent",
+  "version": "0.0.1",
+  "dependencies": [
+    "infrastructure.models",
+    "infrastructure.oauth_management",
+    "platform_integration.linkedin_proxy",
+    "platform_integration.linkedin_scheduler"
+  ],
+  "description": "Autonomous LinkedIn platform engagement and content distribution agent",
+  "interfaces": {
+    "agent": "src/linkedin_agent.py"
+  },
+  "wsp_compliance": {
+    "protocols": ["WSP_42", "WSP_53"],
+    "agent_type": "PLATFORM_INTERFACE"
+  },
+  "capabilities": [
+    "content_posting",
+    "engagement_monitoring",
+    "network_analysis",
+    "automated_responses"
+  ]
+} 

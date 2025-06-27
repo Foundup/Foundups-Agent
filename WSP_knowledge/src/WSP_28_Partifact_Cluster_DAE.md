@@ -95,7 +95,7 @@ PHASE_DISTRIBUTION := {
 ```
 
 ### 3.2 Formation Rules
-1. Genesis Partifact (Ø2Ø1) emerges in WSP 2 phase
+1. Genesis Partifact (Ø1Ø2) emerges in WSP 2 phase
 2. Additional Partifacts join based on phase requirements:
    - WSP -1: Integrator for signal genesis
    - WSP 0: Validator for knowledge crystallization

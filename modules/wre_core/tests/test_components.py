@@ -3,14 +3,13 @@ from pathlib import Path
 import sys
 import os
 import pytest
-from components.menu_handler import MenuHandler
+from modules.wre_core.src.components.menu_handler import present_harmonic_query, display_menu
 
 # Add project root to Python path to allow for absolute imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 
 from modules.wre_core.src.components import roadmap_manager
 from modules.wre_core.src.components import menu_handler
-from modules.wre_core.src.components import file_operations
 
 ## 🎭 0102 Theaters of Operation
 # This test suite validates the integration and functionality of various WRE
@@ -64,8 +63,20 @@ class TestWREComponents(unittest.TestCase):
         self.assertEqual(parsed_objectives, expected_objectives)
         self.assertEqual(len(parsed_objectives), 4)
 
-class TestMenuHandler:
-    # ... existing code ...
+class TestMenuHandler(unittest.TestCase):
+    """Test menu handler functionality."""
+    
+    def test_present_harmonic_query(self):
+        """Test that present_harmonic_query function exists and can be called."""
+        system_state = {'janitor_status': 'OK', 'semantic_status': 'OK', 'readme_coherence': 'OK', 'next_wsp_number': 57}
+        roadmap_objectives = [('Test Objective', 'test/path')]
+        
+        # This would normally require user input, so we'll just test the function exists
+        self.assertTrue(callable(present_harmonic_query))
+        
+    def test_display_menu_function(self):
+        """Test that display_menu function exists."""
+        self.assertTrue(callable(display_menu))
 
 if __name__ == '__main__':
     unittest.main() 

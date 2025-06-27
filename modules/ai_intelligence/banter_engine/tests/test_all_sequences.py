@@ -126,8 +126,8 @@ def test_emoji_sequences():
         logger.error(f"❌ Unexpected error: {e}")
         return None
 
-def test_specific_sequence(sequence):
-    """Test a specific emoji sequence."""
+def _test_specific_sequence(sequence):
+    """Helper function to test a specific emoji sequence (not a pytest test)."""
     try:
         from modules.ai_intelligence.banter_engine.banter_engine.src.banter_engine import BanterEngine
         
@@ -152,7 +152,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         # Test specific sequence
         sequence = sys.argv[1]
-        test_specific_sequence(sequence)
+        _test_specific_sequence(sequence)
     else:
         # Test all sequences
         test_emoji_sequences() 

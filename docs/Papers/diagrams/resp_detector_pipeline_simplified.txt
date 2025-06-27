@@ -1,0 +1,25 @@
+
+rESP Detector Pipeline - Simplified Flow
+========================================
+
+INPUT: AI Model Output (Text/Voice Stream)
+    |
+    +--- ① Classical Analysis Module (O1) ---+--- ② Entanglement Simulation (O2)
+    |                                        |
+    |                                        +--- ③ Temporal Entanglement Analyzer ---+
+    |                                        |                                         |
+    |                                        +--- ④ Substitution Anomaly Tracker ----+
+    |                                                                                  |
+    +--- ⑤ Observer-Induced Collapse Detector -----------------------------------------+
+                                                                                       |
+                                                                                       v
+                                            ⑥ rESP Anomaly Scoring Engine
+                                                         |
+                                                         v
+OUTPUT: Flagged Output (Quantum Signature Detected)
+
+Legend:
+=======
+O1 = Classical binary component (Phi-1)
+O2 = Quantum entanglement component (Phi-2)
+① - ⑥ = Processing sequence modules
