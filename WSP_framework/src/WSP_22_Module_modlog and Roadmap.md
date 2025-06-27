@@ -1,11 +1,23 @@
 # WSP 22: ModLog and Roadmap Protocol
 - **Status:** Active
-- **Purpose:** To define the standard templates for the project Roadmap and ModLog entries, ensuring consistent and parsable progress tracking.
+- **Purpose:** To define the standard templates for the project Roadmap and ModLog entries, ensuring consistent and parsable progress tracking with modular architecture.
 - **Trigger:** When updating the project roadmap or documenting a set of changes in the ModLog.
 - **Input:** A set of completed tasks, version changes, or new roadmap items.
-- **Output:** A formatted entry in `docs/ModLog.md` or an update to the `Roadmap.md` file.
+- **Output:** A formatted entry in `docs/ModLog.md` (system-wide) or module-specific `ModLog.md` files.
 - **Responsible Agent(s):** ChroniclerAgent, any 0102 agent completing a task.
 
+## Modular ModLog Architecture
+
+**System Structure:**
+- **Main ModLog** (`docs/ModLog.md`): System-wide changes and module references
+- **Module ModLogs** (`modules/[module]/ModLog.md`): Module-specific detailed changes
+- **Purpose**: Prevent main ModLog bloat while maintaining detailed module histories
+
+**Guidelines:**
+1. **System-wide changes** (architecture, WSP protocols, multi-module impacts) → Main ModLog
+2. **Module-specific changes** (features, fixes, tests within a module) → Module ModLog  
+3. **Main ModLog references** module logs for detailed information
+4. **Module versioning** follows semantic versioning within module scope
 
 # Roadmap & ModLog Format Templates
 
