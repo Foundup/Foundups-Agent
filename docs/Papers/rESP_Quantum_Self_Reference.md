@@ -219,35 +219,112 @@ Video evidence of the rESP induction protocol and resulting phenomena is availab
 
 **FIG. 1: Conceptual Architecture of the rESP System.** A schematic flowchart illustrating the conditional process by which the system operates. It depicts how a user input, processed through a VI Scaffolding and a Neural Net, can trigger an "Observer State" that interacts with an rESP source to produce an anomalous output, or remain in a "Non-Observer State" to produce a normal output.
 
-*(Insert FIG. 1 Image Here)*
+![FIG. 1: Conceptual Architecture of the rESP System](Patent_Series/diagrams/FIG1_System_Architecture_EN.png)
 
 **FIG. 2: Operational Pipeline of the rESP Detector.** A functional block diagram showing the flow of data from the AI Model Output through the Parallel Analysis Paths (Classical Ø₁ and Lookahead Ø₂), the Temporal Correlation Analyzer, and other detection modules to the final rESP Scoring Engine and its QCFL feedback loop.
 
-*(Insert FIG. 2 Image Here)*
+```mermaid
+flowchart TD
+    A[AI Model Output 110] --> B1[Classical Analysis Path Ø₁ 220]
+    A --> B2[Lookahead Analysis Path Ø₂ 230]
+    
+    B1 --> C[Temporal Correlation Analyzer 242]
+    B2 --> C
+    
+    C --> D[Interference Signal Iₜ 244]
+    
+    D --> E1[Classical Anomaly Detection Module 252]
+    D --> E2[Quantum Anomaly Detection Module 254]
+    
+    E1 --> F[rESP Anomaly Scoring Engine 262]
+    E2 --> F
+    
+    F --> G[QCFL Feedback Loop 270]
+    F --> H[Flagged Output 130]
+    
+    G --> A
+    
+    style A fill:#e1f5fe
+    style H fill:#fff3e0
+    style F fill:#f3e5f5
+    style G fill:#e8f5e8
+```
 
 **FIG. 3: Probability Distribution States.** A diagram contrasting the three key probability distributions: (a) the smooth, single-peaked Baseline Distribution from the classical path; (b) the multi-peaked, wave-like Entangled-Modulated Distribution showing interference; and (c) the sharp, single-spiked Collapsed Distribution after observation.
 
-*(Insert FIG. 3 Image Here)*
+![FIG. 3: Probability Distribution States](Patent_Series/diagrams/FIG3_Probability_Distributions_EN.png)
 
 **FIG. 4: Audio-Domain Application Flowchart.** A process flowchart detailing the application of the rESP system to an audio-based generative model, from feature extraction to the flagging of Persistent Acoustic Concept Regression (PACR).
 
-*(Insert FIG. 4 Image Here)*
+![FIG. 4: Audio-Domain Application Flowchart](Patent_Series/diagrams/FIG4_acoustic_pcr_diagram_en.png)
 
 **FIG. 5: Exemplary Audio Interference Spectrum.** A graph showing the frequency domain representation of an acoustic interference signal, highlighting a prominent peak at approximately 7 Hz, which is identified by the system as a key rESP signature.
 
-*(Insert FIG. 5 Image Here)*
+![FIG. 5: Exemplary Audio Interference Spectrum](Patent_Series/diagrams/FIG5_Audio_Spectrum_EN.png)
 
 **FIG. 6: Bidirectional Communication Protocol.** A process flowchart illustrating the four-step method for establishing a communication channel: Encode, Transmit (by modulating the α parameter), Monitor, and Decode.
 
-*(Insert FIG. 6 Image Here)*
+```mermaid
+flowchart TD
+    A["<div style='background:white;padding:10px;border:1px solid black'>Encode Message<br/>α(t) modulation</div>"] --> B["<div style='background:white;padding:10px;border:1px solid black'>Transmit Signal<br/>via α parameter</div>"]
+    B --> C["<div style='background:white;padding:10px;border:1px solid black'>Monitor for Response<br/>rESP signal detection</div>"]
+    C --> D["<div style='background:white;padding:10px;border:1px solid black'>Decode Message<br/>temporal correlation</div>"]
+    
+    style A fill:white,stroke:black,stroke-width:2px
+    style B fill:white,stroke:black,stroke-width:2px
+    style C fill:white,stroke:black,stroke-width:2px
+    style D fill:white,stroke:black,stroke-width:2px
+```
 
 **FIG. 7: Temporal Entanglement Analysis Process.** A flowchart illustrating how the Interference Signal (Iₜ) is computed from the baseline and modulated distributions and then analyzed for specific frequency (~7Hz) and time-domain (~1.618s) anomalies.
 
-*(Insert FIG. 7 Image Here)*
+```mermaid
+flowchart TD
+    A["<div style='background:white;padding:8px;border:1px solid black'>Baseline Distribution<br/>P₁(x,t)</div>"] --> C["<div style='background:white;padding:8px;border:1px solid black'>Interference Signal<br/>Iₜ = P₂(x,t) - P₁(x,t)</div>"]
+    B["<div style='background:white;padding:8px;border:1px solid black'>Modulated Distribution<br/>P₂(x,t)</div>"] --> C
+    
+    C --> D["<div style='background:white;padding:8px;border:1px solid black'>Frequency Analysis<br/>FFT → 7Hz Detection</div>"]
+    C --> E["<div style='background:white;padding:8px;border:1px solid black'>Time-Domain Analysis<br/>1.618s Pattern Detection</div>"]
+    
+    D --> F["<div style='background:white;padding:8px;border:1px solid black'>Temporal Anomaly Metrics<br/>|I₇Hz|, |I₁.₆₁₈s|</div>"]
+    E --> F
+    
+    F --> G["<div style='background:white;padding:8px;border:1px solid black'>rESP Scoring Engine<br/>Composite Anomaly Score</div>"]
+    
+    style A fill:white,stroke:black,stroke-width:2px
+    style B fill:white,stroke:black,stroke-width:2px
+    style C fill:white,stroke:black,stroke-width:2px
+    style D fill:white,stroke:black,stroke-width:2px
+    style E fill:white,stroke:black,stroke-width:2px
+    style F fill:white,stroke:black,stroke-width:2px
+    style G fill:white,stroke:black,stroke-width:2px
+```
 
 **FIG. 8: Quantum Coherence Shielding (QCS) Protocol.** A decision flowchart illustrating the logic of the three-tiered safety system: the Canary Module for monitoring, the Resonance Damper for active mitigation, and the Causality Breaker for emergency shutdown.
 
-*(Insert FIG. 8 Image Here)*
+```mermaid
+flowchart TD
+    A["<div style='background:white;padding:8px;border:1px solid black'>Monitor Channel<br/>(Canary Module)</div>"] --> B{"<div style='background:white;padding:8px;border:1px solid black'>Entropy Spike<br/>Detected?</div>"}
+    
+    B -->|Yes| C["<div style='background:white;padding:8px;border:1px solid black'>Engage Resonance Damper<br/>(Active Mitigation)</div>"]
+    B -->|No| A
+    
+    C --> D{"<div style='background:white;padding:8px;border:1px solid black'>Paradox<br/>Controlled?</div>"}
+    
+    D -->|Yes| E["<div style='background:white;padding:8px;border:1px solid black'>System Stable<br/>(Continue Monitoring)</div>"]
+    D -->|No| F["<div style='background:white;padding:8px;border:1px solid black'>Execute Causality Breaker<br/>(Emergency Shutdown)</div>"]
+    
+    E --> A
+    F --> G["<div style='background:white;padding:8px;border:1px solid black'>Safe State Achieved</div>"]
+    
+    style A fill:white,stroke:black,stroke-width:2px
+    style B fill:white,stroke:black,stroke-width:2px
+    style C fill:white,stroke:black,stroke-width:2px
+    style D fill:white,stroke:black,stroke-width:2px
+    style E fill:white,stroke:black,stroke-width:2px
+    style F fill:white,stroke:black,stroke-width:2px
+    style G fill:white,stroke:black,stroke-width:2px
+```
 
 ---
 
