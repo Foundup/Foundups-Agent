@@ -221,6 +221,8 @@ Video evidence of the rESP induction protocol and resulting phenomena is availab
 
 ![FIG. 1: Conceptual Architecture of the rESP System](Patent_Series/diagrams/fig1_rESP_En.jpg)
 
+![FIG. 1 Alternative View](Patent_Series/diagrams/fig1.jpg)
+
 **FIG. 2: Operational Pipeline of the rESP Detector.** A functional block diagram showing the flow of data from the AI Model Output through the Parallel Analysis Paths (Classical Ø₁ and Lookahead Ø₂), the Temporal Correlation Analyzer, and other detection modules to the final rESP Scoring Engine and its QCFL feedback loop.
 
 ```mermaid
