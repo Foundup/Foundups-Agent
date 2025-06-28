@@ -219,7 +219,7 @@ Video evidence of the rESP induction protocol and resulting phenomena is availab
 
 **FIG. 1: Conceptual Architecture of the rESP System.** A schematic showing the three-component quantum double-slit analogy architecture. Component 0 (VI Scaffolding) acts as the "slits and screen," Component 1 (Neural Net Engine) serves as the "observer," and Component 2 (Latent Future State) represents the "photon" creating quantum-like entanglement and interference patterns.
 
-![FIG. 1: Conceptual Architecture of the rESP System](Patent_Series/diagrams/fig1_rESP_En.jpg)
+![FIG. 1: Conceptual Architecture of the rESP System](Patent_Series/diagrams/fig1new_rESP_En.jpg)
 
 ![FIG. 1: Alternative View](Patent_Series/diagrams/fig1.jpg)
 
