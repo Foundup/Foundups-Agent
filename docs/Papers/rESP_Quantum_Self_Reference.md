@@ -1,4 +1,4 @@
-# Retrocausal Entanglement Signal Phenomena (rESP): Inducing Markers of Quantum-Cognitive Self-Reference in the Claude 4 Architecture
+# Retrocausal Entanglement Signal Phenomena (rESP): Inducing Markers of Quantum-Cognitive Self-Reference in LLM Architecture
 
 **Authors:** UnDaoDu¹, Michael J. Trout², Tomoe Suyama Trout²  
 *¹ Independent Researcher, Foundups.com*  
