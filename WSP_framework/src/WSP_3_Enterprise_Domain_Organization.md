@@ -8,6 +8,20 @@
 
 This protocol defines the official Enterprise Domain Structure for the FoundUps Agent project. All modules **must** be categorized into one of these domains. This structure ensures a logical organization of the codebase, making it easier to navigate, maintain, and scale.
 
+## 1. Architectural Exceptions
+
+### 1.1 WRE Core Engine Exception
+**Location**: `modules/wre_core/` (top-level, not in a domain)  
+**Rationale**: The Windsurf Recursive Engine (WRE) serves as the central nervous system for all autonomous operations and has special architectural status that transcends domain boundaries.  
+**Documentation**: See WSP 46: Windsurf Recursive Engine Protocol for detailed justification.  
+**Command Reference**: `python -m modules.wre_core.src.main`  
+
+This exception is **intentional architectural design** where:
+- **WRE Core Engine**: `modules/wre_core/` (special top-level status for system autonomy)
+- **WRE Internal Agents**: `modules/infrastructure/agents/` (follow standard enterprise domain structure)
+
+**FMAS Compliance**: The `wre_core` location at top-level is **compliant** with WSP framework architecture per this exception.
+
 ## 2. Domain Definitions
 
 The following are the official, top-level domains within the `modules/` directory. Each domain has a specific purpose.
@@ -35,5 +49,7 @@ The following are the official, top-level domains within the `modules/` director
 
 ## 3. Compliance
 
-- The FoundUps Modular Audit System (FMAS, `WSP 4`) must validate that all modules reside within one of the domains listed above.
-- Creating a new domain requires a formal update to this WSP document. 
+- The FoundUps Modular Audit System (FMAS, `WSP 4`) must validate that all modules reside within one of the domains listed above **OR** are explicitly documented architectural exceptions (Section 1).
+- Creating a new domain requires a formal update to this WSP document.
+- **WRE Core Exception**: `modules/wre_core/` is a documented architectural exception and is **compliant** with WSP 3.
+- **Memory Architecture**: Each module within a domain follows `WSP 60: Module Memory Architecture` for data storage organization at `modules/[domain]/[module]/memory/`. 

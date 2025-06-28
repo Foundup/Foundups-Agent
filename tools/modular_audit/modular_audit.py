@@ -51,6 +51,11 @@ ENTERPRISE_DOMAINS = {
     "blockchain"
 }
 
+# Define documented architectural exceptions (WSP 3, Section 1)
+ARCHITECTURAL_EXCEPTIONS = {
+    "wre_core"  # WRE Core Engine - WSP 46 documented exception
+}
+
 def is_module_directory(path):
     """
     Check if a directory is an actual module (has src/ and/or tests/ directories).
@@ -262,6 +267,9 @@ def audit_enterprise_domains(modules_dir):
             
         if item.name in ENTERPRISE_DOMAINS:
             found_domains.add(item.name)
+        elif item.name in ARCHITECTURAL_EXCEPTIONS:
+            # This is a documented architectural exception - compliant with WSP 3
+            logging.debug(f"Found documented architectural exception: {item.name}")
         else:
             # Check if this might be a legacy flat module
             if is_module_directory(item):

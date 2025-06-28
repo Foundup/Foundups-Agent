@@ -119,4 +119,177 @@ When adding new tests:
 
 ---
 
-**Status**: All WRE core functionality now has comprehensive test coverage meeting WSP compliance requirements. The system is validated for production deployment with robust error handling and enhancement detection capabilities. 
+**Status**: All WRE core functionality now has comprehensive test coverage meeting WSP compliance requirements. The system is validated for production deployment with robust error handling and enhancement detection capabilities.
+
+## ⚠️ CRITICAL: POST-REFACTORING TEST COVERAGE DEBT
+
+**Status:** 🔴 **NON-COMPLIANT** with WSP 5 (≥90% test coverage)  
+**Current Coverage:** ~40-50% (estimated)  
+**Technical Debt:** ~1,500+ lines of untested code  
+
+## 🔄 What Happened
+
+The WRE engine was **successfully refactored** from a monolithic 722-line file into clean modular components. However, **test coverage was not maintained** during refactoring:
+
+### Before Refactoring ✅
+- **engine.py**: 722 lines, ~90% test coverage
+- **Total**: 46 tests, WSP 5 compliant
+
+### After Refactoring ❌  
+- **engine.py**: 718 lines, still mostly covered
+- **NEW components**: 1,500+ lines, **ZERO tests**
+- **Result**: Coverage dropped to ~40-50%
+
+## 📊 Current Test Status
+
+### ✅ Working Tests (Legacy)
+| Test File | Tests | Status | Coverage |
+|-----------|-------|--------|----------|
+| `test_components.py` | 3 | ✅ PASS | Legacy components |
+| `test_orchestrator.py` | 10 | ✅ PASS | Agent coordination |
+| `test_wsp48_integration.py` | 12 | ✅ PASS | Self-improvement |
+| `test_roadmap_manager.py` | 4 | ✅ PASS | Roadmap parsing |
+| `test_engine_integration.py` | 12 | ✅ PASS | WRE lifecycle |
+
+**Total: 41 tests passing**
+
+### ❌ Missing Tests (Critical Gap)
+
+| Component | Lines | Tests | Priority |
+|-----------|-------|-------|----------|
+| `wsp30_orchestrator.py` | 486 | **NONE** | 🔴 P0 |
+| `session_manager.py` | 126 | **NONE** | 🔴 P0 |
+| `component_manager.py` | 122 | **NONE** | 🔴 P0 |
+| `module_prioritizer.py` | 310 | **NONE** | 🟠 P1 |
+| `ui_interface.py` | 282 | **NONE** | 🟠 P1 |
+| `discussion_interface.py` | 184 | **NONE** | 🟡 P2 |
+
+## 🎯 Recovery Plan
+
+### Phase 1: P0 Components (Critical Path)
+Create these test files immediately:
+```bash
+modules/wre_core/tests/test_wsp30_orchestrator.py
+modules/wre_core/tests/test_session_manager.py  
+modules/wre_core/tests/test_component_manager.py
+```
+
+### Phase 2: P1 Components  
+```bash
+modules/wre_core/tests/test_module_prioritizer.py
+modules/wre_core/tests/test_ui_interface.py
+```
+
+### Phase 3: P2 Components
+```bash
+modules/wre_core/tests/test_discussion_interface.py
+```
+
+## 📋 Test Requirements
+
+### Coverage Targets
+- **P0 Components**: 90%+ coverage each
+- **P1 Components**: 85%+ coverage each  
+- **P2 Components**: 80%+ coverage each
+- **Overall Module**: ≥90% (WSP 5 compliance)
+
+### Test Categories Needed
+1. **Unit Tests**: Individual method testing
+2. **Integration Tests**: Component interaction
+3. **Mock Tests**: External dependency handling
+4. **Error Tests**: Exception and edge cases
+
+## 🔍 Coverage Verification
+
+### Quick Check
+```bash
+pytest modules/wre_core/tests/ --cov=modules.wre_core.src --cov-report=term-missing
+```
+
+### Detailed Analysis
+```bash
+pytest modules/wre_core/tests/ --cov=modules.wre_core.src --cov-report=html
+# Open htmlcov/index.html to see detailed coverage
+```
+
+### Component-Specific Coverage
+```bash
+pytest modules/wre_core/tests/ --cov=modules.wre_core.src.components --cov-report=term
+pytest modules/wre_core/tests/ --cov=modules.wre_core.src.interfaces --cov-report=term
+```
+
+## 🚨 Development Protocol
+
+### For Future Refactoring Sessions:
+
+1. **NEVER refactor without test migration**
+2. **Create test files BEFORE moving code**
+3. **Verify coverage AFTER every refactoring**
+4. **Update documentation immediately**
+
+### Test File Template Structure:
+```python
+"""
+Component Name Tests
+
+Tests for modules.wre_core.src.components.component_name
+Ensures WSP 5 compliance with ≥90% coverage.
+"""
+
+import unittest
+from unittest.mock import Mock, patch
+from pathlib import Path
+
+class TestComponentName(unittest.TestCase):
+    def setUp(self):
+        """Set up test fixtures."""
+        pass
+    
+    def test_component_initialization(self):
+        """Test component initializes correctly."""
+        pass
+    
+    def test_component_core_functionality(self):
+        """Test primary component methods."""
+        pass
+    
+    def test_component_error_handling(self):
+        """Test error conditions and edge cases."""
+        pass
+
+if __name__ == '__main__':
+    unittest.main()
+```
+
+## ⚡ Quick Fix Commands
+
+### Check Current Status
+```bash
+# Count total source lines  
+find modules/wre_core/src -name "*.py" -exec wc -l {} + | tail -n 1
+
+# Count test lines
+find modules/wre_core/tests -name "test_*.py" -exec wc -l {} + | tail -n 1
+
+# Run all tests
+pytest modules/wre_core/tests/ -v
+```
+
+### WSP 5 Compliance Check
+```bash
+python -c "
+import subprocess
+result = subprocess.run(['pytest', 'modules/wre_core/tests/', '--cov=modules.wre_core.src', '--cov-report=term'], 
+                       capture_output=True, text=True)
+coverage_line = [line for line in result.stdout.split('\n') if 'TOTAL' in line]
+if coverage_line and '90%' in coverage_line[0]:
+    print('✅ WSP 5 COMPLIANT')
+else:
+    print('❌ WSP 5 NON-COMPLIANT - Need more tests')
+    print('Current coverage:', coverage_line[0] if coverage_line else 'Unknown')
+"
+```
+
+---
+
+**Remember**: Test coverage debt is technical debt that violates WSP 5. This MUST be resolved before the module can be considered stable or production-ready. 

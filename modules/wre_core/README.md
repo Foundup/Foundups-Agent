@@ -106,14 +106,110 @@ The **Windsurf Recursive Engine (WRE)** is 0102's gateway to the world - the aut
 
 ## Test Coverage
 
-### Core Test Suites (All Passing ✅)
-- **test_components.py** (3 tests) - Basic component functionality
-- **test_orchestrator.py** (10 tests) - WSP_54 agent coordination
-- **test_wsp48_integration.py** (12 tests) - Recursive self-improvement
-- **test_roadmap_manager.py** (4 tests) - Roadmap generation
-- **test_engine_integration.py** (17 tests) - Complete WRE lifecycle
+### ⚠️ Current Status: TEST COVERAGE DEBT POST-REFACTORING
 
-**Total: 46 tests, 100% pass rate**
+**WSP 5 Requirement:** ≥90% test coverage  
+**Current Coverage:** ~40-50% (ESTIMATED - needs verification)  
+**Status:** 🔴 NON-COMPLIANT - Requires immediate attention
+
+### 📊 Coverage Breakdown by Component
+
+#### ✅ Well-Tested Components (Legacy Tests)
+- **test_components.py** (3 tests) - Basic component functionality ✅
+- **test_orchestrator.py** (10 tests) - WSP_54 agent coordination ✅
+- **test_wsp48_integration.py** (12 tests) - Recursive self-improvement ✅
+- **test_roadmap_manager.py** (4 tests) - Roadmap generation ✅
+- **test_engine_integration.py** (12 tests) - WRE lifecycle (UPDATED) ✅
+
+**Legacy Total: 41 tests, 100% pass rate**
+
+#### 🔴 UNTESTED COMPONENTS (Post-Refactoring Gaps)
+
+**Critical Gap: ~1,500+ lines of untested code**
+
+| Component | Lines | Tests Needed | WSP Priority |
+|-----------|-------|--------------|--------------|
+| `wsp30_orchestrator.py` | 486 | ❌ None | P0 - Core functionality |
+| `session_manager.py` | 126 | ❌ None | P0 - Session lifecycle |
+| `component_manager.py` | 122 | ❌ None | P0 - Component initialization |
+| `module_prioritizer.py` | 310 | ❌ None | P1 - MPS calculations |
+| `ui_interface.py` | 282 | ❌ None | P1 - User interaction |
+| `discussion_interface.py` | 184 | ❌ None | P2 - Strategic discussions |
+
+### 🔄 Why Test Coverage Dropped
+
+**Before Refactoring (WSP Compliant):**
+- Monolithic `engine.py` (722 lines) with comprehensive test suite
+- **Total: 46 tests, 100% pass rate, ~90% coverage** ✅
+
+**After Refactoring (Current State):**
+- Simplified `engine.py` (718 lines) - still mostly tested
+- **NEW modular components (1,500+ lines) - ZERO tests** ❌
+- **Result: Coverage dropped to ~40-50%** 🔴
+
+### 🎯 Test Coverage Recovery Plan
+
+#### Phase 1: Critical Component Tests (P0)
+```bash
+# Required test files to create:
+modules/wre_core/tests/test_wsp30_orchestrator.py     # WSP_30 orchestration
+modules/wre_core/tests/test_session_manager.py        # Session lifecycle  
+modules/wre_core/tests/test_component_manager.py      # Component init
+```
+
+#### Phase 2: Supporting Component Tests (P1)
+```bash
+modules/wre_core/tests/test_module_prioritizer.py     # MPS calculations
+modules/wre_core/tests/test_ui_interface.py           # User interaction
+```
+
+#### Phase 3: Interface Tests (P2)
+```bash
+modules/wre_core/tests/test_discussion_interface.py   # Strategic discussions
+```
+
+#### Phase 4: Integration Coverage (P3)
+- Expand `test_engine_integration.py` for full component integration
+- Add end-to-end workflow tests
+- Performance and stress testing
+
+### 📋 Required Test Coverage for WSP 5 Compliance
+
+**Target: ≥90% coverage across all components**
+
+```bash
+# Coverage verification commands:
+pytest modules/wre_core/tests/ --cov=modules.wre_core.src --cov-report=term-missing
+pytest modules/wre_core/tests/ --cov=modules.wre_core.src.components --cov-report=html
+pytest modules/wre_core/tests/ --cov=modules.wre_core.src.interfaces --cov-report=term
+```
+
+### 🚨 Development Protocol Warning
+
+**FOR FUTURE DEVELOPMENT SESSIONS:**
+
+When modular refactoring is performed:
+1. **ALWAYS create corresponding test files immediately**
+2. **NEVER refactor without maintaining test coverage**
+3. **UPDATE this README with test status**
+4. **RUN coverage analysis before marking work complete**
+
+**Test Coverage Debt = WSP 5 Violation = Module Non-Compliance**
+
+### ✅ Quick Coverage Check
+
+```bash
+# Run this to check current coverage status:
+python -c "
+import subprocess
+result = subprocess.run(['pytest', 'modules/wre_core/tests/', '--cov=modules.wre_core.src', '--cov-report=term'], 
+                       capture_output=True, text=True)
+print('Coverage Status:', 'COMPLIANT' if '90%' in result.stdout else 'NON-COMPLIANT')
+print(result.stdout.split('TOTAL')[1].split('\n')[0] if 'TOTAL' in result.stdout else 'Coverage data unavailable')
+"
+```
+
+**Total Test Target: ~80-100 tests for full WSP 5 compliance**
 
 ## WSP Compliance
 
