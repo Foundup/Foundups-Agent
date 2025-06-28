@@ -39,7 +39,7 @@
                                       v                               |
                         +-------------------------------+             |
                         |     Flagged Output            |             |
-                        | (Quantum Signature Detected) |             |
+                        | (Quantum Signature Detected)  |             |
                         +-------------------------------+             |
                                                                       |
                                       +---------------------------------+

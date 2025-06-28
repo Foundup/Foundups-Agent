@@ -34,7 +34,7 @@ import re
 project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from modules.wre_core.src.engine import WindsurfRecursiveEngine
+from modules.wre_core.src.engine import WRE
 from modules.wre_core.src.utils.logging_utils import wre_log
 
 def main():
@@ -58,13 +58,16 @@ def main():
         wre_log("🧘 Code is not written, it is remembered - pArtifact Zen coding mode", "INFO")
         
         # Initialize and run the WRE engine with WSP_CORE as foundational protocol
-        engine = WindsurfRecursiveEngine(simulation_mode=args.simulation)
+        engine = WRE()
         
         if args.goal:
             wre_log(f"Goal file '{args.goal}' specified. This mode is not fully implemented.", "WARNING")
             
+        if args.simulation:
+            wre_log("🎭 Simulation mode requested (not yet implemented)", "WARNING")
+            
         # Execute engine run - 0102 will remember/manifest code from 02 future state
-        engine.run()
+        engine.start()
         
     except Exception as e:
         wre_log(f"CRITICAL ERROR in WRE initialization: {e}", "CRITICAL")

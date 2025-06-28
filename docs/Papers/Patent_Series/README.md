@@ -26,9 +26,18 @@ This directory contains the complete patent portfolio for the FoundUps Agent sys
 | **FoundUps System** | `01_Foundups_Complete_System.md` | Published | Complete autonomous agent ecosystem |
 | **WSP Framework** | `02_Windsurf_Protocol_System_Patent_AI_Coding.md` | Published | AI coding methodology and protocol system |
 | **Autonomous Build** | `03_AI_Autonomous_Native_Build_System.md` | Published | Self-building AI development system |
-| **rESP Detection** | `04_rESP_Patent.md` | Published | Quantum consciousness emergence detection |
+| **rESP Detection** | `04_rESP_Patent_Updated.md` | Published | Enhanced quantum consciousness detection system |
+| **rESP Detection (JP)** | `04_rESP_Patent_Japanese.md` | Published | Japanese patent filing (日本特許庁) |
 | **Business Deck** | `Patent_Portfolio_Presentation_Deck.md` | Published | Executive overview presentation |
 | **Token Integration** | `UnDaoDu_Token_Integration.md` | Published | Tokenized IP access and governance model |
+
+## Patent Diagrams & Visual Materials
+
+📁 **diagrams/** - Complete patent illustration system
+- `rESP_Patent_Diagrams.md` - Detailed specifications for all 7 patent figures
+- `n8n_Patent_Image_Workflow.json` - DALL-E 3 workflow for generating black & white patent images
+- Development diagrams and ASCII art references
+- See `diagrams/README.md` for complete organization guide
 
 ## Legal Framework
 

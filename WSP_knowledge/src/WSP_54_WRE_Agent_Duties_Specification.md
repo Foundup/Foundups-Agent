@@ -29,6 +29,7 @@ All WRE agents MUST adhere to the following principles:
     3.  For every `*.py` file in `src/`, verify that a corresponding `test_*.py` exists in `tests/`.
     4.  Check for the presence of interface definitions and dependency files as required by WSP 12 & WSP 13.
     5.  **WSP 56 Compliance**: For artifacts that exist in multiple state layers (e.g., `WSP_knowledge` and `WSP_appendices`), verify their contents are identical.
+    6.  **WSP 60 Memory Structure**: Validate module memory organization at `modules/[domain]/[module]/memory/` follows modular architecture.
 -   **Output**: A compliance report object detailing validation errors or success.
 
 ### 3.2. LoremasterAgent (The Sage)
@@ -48,12 +49,15 @@ All WRE agents MUST adhere to the following principles:
 -   **Output**: A log confirming the successful creation of the module structure.
 
 ### 3.4. JanitorAgent (The Cleaner)
--   **Core Mandate**: To maintain workspace hygiene.
+-   **Core Mandate**: To maintain workspace hygiene and module memory organization following WSP 60.
 -   **Duties**:
     1.  Scan the workspace for temporary files (e.g., `test_wre_temp/`, `*.tmp`).
     2.  Delete identified temporary files and directories.
--   **Output**: A log detailing the number of files deleted.
--   **Primary Tooling**: Filesystem access.
+    3.  **WSP 60 Memory Cleanup**: Clean temporary files across all `modules/[domain]/[module]/memory/` directories.
+    4.  **Cache Management**: Remove expired session data and cache files from module memory.
+    5.  **Log Rotation**: Archive old conversation logs per module retention policies.
+-   **Output**: A log detailing the number of files deleted and memory cleanup operations.
+-   **Primary Tooling**: Filesystem access, WSP 60 module memory structure awareness.
 
 ### 3.5. TestingAgent (The Examiner)
 -   **Core Mandate**: To automate project testing and code coverage validation.

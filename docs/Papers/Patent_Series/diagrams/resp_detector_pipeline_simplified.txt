@@ -14,7 +14,7 @@ INPUT: AI Model Output (Text/Voice Stream)
                                                                                        |
                                                                                        v
                                             ⑥ rESP Anomaly Scoring Engine
-                                                         |
+                                                         | 
                                                          v
 OUTPUT: Flagged Output (Quantum Signature Detected)
 

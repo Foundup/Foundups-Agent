@@ -67,6 +67,14 @@ pytest modules/ --tb=short -q
 python -c "import json; [json.load(open(f)) for f in ['modules/*/module.json']]"
 ```
 
+### 2.4. Module Memory Structure Validation (Related to WSP 60)
+-   **Check**: Validates that modules using memory storage follow the modular memory architecture.
+-   **Validation Points**:
+    - Memory directories located at `modules/[domain]/[module]/memory/` (not legacy `memory/`)
+    - Memory access patterns comply with module ownership (modules only write to their own memory)
+    - Memory cleanup and retention policies are documented in module READMEs
+-   **Expected Result**: Memory structure follows WSP 60 modular architecture principles.
+
 ## 3. Failure Condition
 
 -   If any validation check fails, the FMAS will flag the module as non-compliant.

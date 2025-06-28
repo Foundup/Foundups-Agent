@@ -153,7 +153,7 @@ class WRE:
                 "1": "youtube_module",
                 "2": "linkedin_module", 
                 "3": "x_module",
-                "4": "remote_module"
+                "4": "remote_builder"
             }
             self._handle_module_development(module_names[choice])
             
@@ -182,6 +182,24 @@ class WRE:
         wre_log(f"🏗️ Entering module development for: {module_name}", "INFO")
         self.session_manager.log_module_access(module_name, "development")
         
+        # Special handling for YouTube module - redirect to main.py
+        if module_name == "youtube_module":
+            wre_log("📺 YouTube module selected - redirecting to main.py", "INFO")
+            self.ui_interface.display_success("Launching FoundUps Agent main.py for YouTube module...")
+            
+            try:
+                import subprocess
+                import sys
+                
+                # Launch main.py in the same terminal
+                subprocess.run([sys.executable, 'main.py'], cwd=self.project_root)
+                
+            except Exception as e:
+                self.ui_interface.display_error(f"Failed to launch main.py: {e}")
+                input("\nPress Enter to continue...")
+            return
+        
+        # Standard module development for other modules
         while True:
             choice = self.ui_interface.display_module_menu(module_name)
             
@@ -392,7 +410,287 @@ class WRE:
         
     def _handle_system_management(self):
         """Handle system management tasks."""
-        self.ui_interface.display_warning("System management not yet implemented")
+        wre_log("🔧 Entering System Management", "INFO")
+        
+        while True:
+            self.ui_interface._clear_screen()
+            print("🔧 System Management")
+            print("=" * 60)
+            print()
+            print("1. 📤 Push to Git (Auto-updates main ModLog.md)")
+            print("2. 📝 Update Module ModLog (Module-specific MODLOG.md)")
+            print("3. 🔍 Run FMAS Audit (WSP_4)")
+            print("4. 📊 Check Test Coverage (WSP_5)")
+            print("5. 🏷️ Create Clean State Tag (WSP_2)")
+            print("6. 📋 View Git Status")
+            print("7. ⬅️ Back to Main Menu")
+            print()
+            print("ℹ️  Note: Main project ModLog.md auto-updates on git push")
+            
+            choice = self.ui_interface._get_user_choice("Select system operation", ["1", "2", "3", "4", "5", "6", "7"])
+            
+            if choice == "1":
+                self._push_to_git()
+            elif choice == "2":
+                self._update_modlog()
+            elif choice == "3":
+                self._run_fmas_audit()
+            elif choice == "4":
+                self._check_test_coverage()
+            elif choice == "5":
+                self._create_clean_state()
+            elif choice == "6":
+                self._view_git_status()
+            elif choice == "7":
+                break
+                
+    def _push_to_git(self):
+        """Push changes to git following WSP_2 protocol with auto-ModLog update."""
+        wre_log("📤 Pushing to Git (Auto-ModLog will update)...", "INFO")
+        
+        try:
+            import subprocess
+            
+            # Check if there are changes to commit
+            result = subprocess.run(['git', 'status', '--porcelain'], 
+                                  capture_output=True, text=True, cwd=self.project_root)
+            
+            if result.stdout.strip():
+                print("\n📋 Uncommitted changes found:")
+                print(result.stdout)
+                
+                if self.ui_interface.prompt_yes_no("Do you want to commit and push these changes?"):
+                    # Add all changes
+                    subprocess.run(['git', 'add', '.'], cwd=self.project_root)
+                    
+                    # Get commit message
+                    commit_msg = self.ui_interface.prompt_for_input("Enter commit message")
+                    
+                    # Commit changes
+                    subprocess.run(['git', 'commit', '-m', commit_msg], cwd=self.project_root)
+                    
+                    # Push changes
+                    push_result = subprocess.run(['git', 'push'], 
+                                               capture_output=True, text=True, cwd=self.project_root)
+                    
+                    if push_result.returncode == 0:
+                        self.ui_interface.display_success("✅ Changes pushed to Git successfully!")
+                        self.ui_interface.display_success("📝 ModLog.md will auto-update from git push")
+                    else:
+                        self.ui_interface.display_error(f"Git push failed: {push_result.stderr}")
+            else:
+                self.ui_interface.display_success("No uncommitted changes found")
+                
+        except Exception as e:
+            self.ui_interface.display_error(f"Git operation failed: {e}")
+            
+        input("\nPress Enter to continue...")
+        
+    def _update_modlog(self):
+        """Update module-specific ModLog following WSP documentation protocol."""
+        wre_log("📝 Updating Module ModLog...", "INFO")
+        
+        try:
+            # Get module selection
+            print("\n📝 Module ModLog Update")
+            print("-" * 30)
+            
+            # List available modules
+            modules_dir = self.project_root / "modules"
+            available_modules = []
+            
+            for domain_dir in modules_dir.iterdir():
+                if domain_dir.is_dir() and not domain_dir.name.startswith('.'):
+                    for module_dir in domain_dir.iterdir():
+                        if module_dir.is_dir() and not module_dir.name.startswith('.'):
+                            module_path = f"{domain_dir.name}/{module_dir.name}"
+                            available_modules.append(module_path)
+            
+            if not available_modules:
+                self.ui_interface.display_warning("No modules found for ModLog update")
+                input("\nPress Enter to continue...")
+                return
+                
+            print("\nAvailable modules:")
+            for i, module in enumerate(available_modules, 1):
+                print(f"{i}. {module}")
+            
+            choice = self.ui_interface.prompt_for_input("Select module number or enter module path")
+            
+            try:
+                # Try to parse as number
+                module_idx = int(choice) - 1
+                if 0 <= module_idx < len(available_modules):
+                    selected_module = available_modules[module_idx]
+                else:
+                    selected_module = choice
+            except ValueError:
+                selected_module = choice
+            
+            module_modlog_path = modules_dir / selected_module / "MODLOG.md"
+            
+            # Get entry details
+            entry_type = self.ui_interface.prompt_for_input("Entry type (e.g., [Enhancement], [Bug Fix])")
+            version = self.ui_interface.prompt_for_input("Version (e.g., 1.2.0)")
+            description = self.ui_interface.prompt_for_input("Description")
+            notes = self.ui_interface.prompt_for_input("Notes (optional)", lambda x: True)
+            
+            # Use the existing modlog_updater utility for proper formatting
+            import sys
+            import os
+            sys.path.append(os.path.join(str(self.project_root), 'utils'))
+            
+            try:
+                from modlog_updater import log_update
+                
+                success = log_update(
+                    module=selected_module,
+                    change_type=entry_type,
+                    version=version,
+                    description=description,
+                    notes=notes if notes else None
+                )
+                
+                if success:
+                    self.ui_interface.display_success(f"Module ModLog updated successfully for {selected_module}!")
+                else:
+                    self.ui_interface.display_error("ModLog update failed - check format")
+                    
+            except ImportError:
+                # Fallback manual entry
+                self.ui_interface.display_warning("Using fallback ModLog entry method")
+                
+                from datetime import datetime
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                
+                entry = f"\n### {entry_type} - {timestamp}\n"
+                entry += f"* **Version**: {version}\n"
+                entry += f"* **Description**: {description}\n"
+                if notes:
+                    entry += f"* **Notes**: {notes}\n"
+                entry += f"* **WSP Compliance**: Following WSP module documentation protocols\n\n"
+                
+                # Append to module ModLog
+                with open(module_modlog_path, 'a', encoding='utf-8') as f:
+                    f.write(entry)
+                    
+                self.ui_interface.display_success(f"Module ModLog updated successfully for {selected_module}!")
+            
+        except Exception as e:
+            self.ui_interface.display_error(f"Module ModLog update failed: {e}")
+            
+        input("\nPress Enter to continue...")
+        
+    def _run_fmas_audit(self):
+        """Run FMAS audit (WSP_4)."""
+        wre_log("🔍 Running FMAS Audit...", "INFO")
+        
+        try:
+            import subprocess
+            
+            audit_cmd = [
+                'python', 'tools/modular_audit/modular_audit.py'
+            ]
+            
+            result = subprocess.run(audit_cmd, capture_output=True, text=True, cwd=self.project_root)
+            
+            print("\n🔍 FMAS Audit Results:")
+            print("=" * 40)
+            print(result.stdout)
+            
+            if result.stderr:
+                print("\nErrors:")
+                print(result.stderr)
+                
+            if result.returncode == 0:
+                self.ui_interface.display_success("FMAS Audit completed successfully!")
+            else:
+                self.ui_interface.display_warning("FMAS Audit found violations")
+                
+        except Exception as e:
+            self.ui_interface.display_error(f"FMAS Audit failed: {e}")
+            
+        input("\nPress Enter to continue...")
+        
+    def _check_test_coverage(self):
+        """Check test coverage (WSP_5)."""
+        wre_log("📊 Checking Test Coverage...", "INFO")
+        
+        try:
+            import subprocess
+            
+            coverage_cmd = [
+                'python', '-m', 'pytest', 'modules/', '--cov=modules', '--cov-report=term'
+            ]
+            
+            result = subprocess.run(coverage_cmd, capture_output=True, text=True, cwd=self.project_root)
+            
+            print("\n📊 Test Coverage Report:")
+            print("=" * 40)
+            print(result.stdout)
+            
+            if result.stderr:
+                print("\nErrors:")
+                print(result.stderr)
+                
+        except Exception as e:
+            self.ui_interface.display_error(f"Coverage check failed: {e}")
+            
+        input("\nPress Enter to continue...")
+        
+    def _create_clean_state(self):
+        """Create clean state tag (WSP_2)."""
+        wre_log("🏷️ Creating Clean State...", "INFO")
+        
+        try:
+            import subprocess
+            
+            # Get tag name
+            tag_name = self.ui_interface.prompt_for_input("Enter clean state tag name (e.g., clean-v7)")
+            reason = self.ui_interface.prompt_for_input("Enter reason for clean state")
+            
+            # Create tag
+            subprocess.run(['git', 'tag', '-a', tag_name, '-m', f"WSP_2: {reason}"], cwd=self.project_root)
+            subprocess.run(['git', 'push', 'origin', tag_name], cwd=self.project_root)
+            
+            # Update clean_states.md
+            clean_states_path = self.project_root / "docs" / "clean_states.md"
+            if clean_states_path.exists():
+                from datetime import datetime
+                timestamp = datetime.now().strftime("%Y-%m-%d")
+                
+                entry = f"\n## {tag_name}\n"
+                entry += f"- **Date**: {timestamp}\n"
+                entry += f"- **Purpose**: {reason}\n"
+                entry += f"- **WSP Compliance**: Clean state checkpoint\n\n"
+                
+                with open(clean_states_path, 'a', encoding='utf-8') as f:
+                    f.write(entry)
+                    
+            self.ui_interface.display_success(f"Clean state {tag_name} created successfully!")
+            
+        except Exception as e:
+            self.ui_interface.display_error(f"Clean state creation failed: {e}")
+            
+        input("\nPress Enter to continue...")
+        
+    def _view_git_status(self):
+        """View current git status."""
+        wre_log("📋 Checking Git Status...", "INFO")
+        
+        try:
+            import subprocess
+            
+            result = subprocess.run(['git', 'status'], capture_output=True, text=True, cwd=self.project_root)
+            
+            print("\n📋 Git Status:")
+            print("=" * 40)
+            print(result.stdout)
+            
+        except Exception as e:
+            self.ui_interface.display_error(f"Git status check failed: {e}")
+            
+        input("\nPress Enter to continue...")
         
     def _handle_module_analysis(self):
         """Handle module analysis tasks."""

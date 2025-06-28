@@ -52,7 +52,7 @@ class UIInterface:
         print("1. 📺 YouTube Module Development")
         print("2. 💼 LinkedIn Module Development") 
         print("3. 🐦 X (Twitter) Module Development")
-        print("4. 🌐 Remote Module Development")
+        print("4. 🌐 Remote Builder Development")
         print("5. 🎯 WSP_30 Agentic Module Build Orchestration")
         print("6. 📊 View Development Roadmap")
         print("7. 🔧 System Management")

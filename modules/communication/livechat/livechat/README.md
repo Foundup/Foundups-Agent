@@ -205,6 +205,45 @@ This demonstrates:
 - ✅ User violation tracking
 - ✅ Administrative controls
 
+### 💾 Memory Architecture (WSP 60)
+
+Following **WSP 60: Module Memory Architecture**, this module now uses modular memory storage:
+
+#### **Memory Location**: `modules/communication/livechat/memory/`
+
+#### **Data Types Stored**:
+- **Session Data**: `session_state.json` - Current chat session state and runtime configuration
+- **Historical Data**: `chat_logs/` - Conversation archives organized by user
+- **Cache Data**: `conversations/` - Full session transcripts for analysis
+- **Behavioral Data**: `user_patterns.json` - User interaction patterns and preferences
+
+#### **File Descriptions**:
+```
+modules/communication/livechat/memory/
+├── chat_logs/                     # User-specific message archives
+│   ├── UnDaoDu_messages.json     # Admin user message history
+│   └── [user_id]_messages.json   # Individual user message logs
+├── conversations/                 # Full session transcripts
+│   ├── daily_summaries/          # Daily conversation summaries
+│   ├── stream_transcripts/       # Complete stream conversations
+│   └── session_logs/             # Session-based conversation logs
+├── session_state.json            # Current chat session runtime state
+└── user_patterns.json            # Behavioral analysis and user patterns
+```
+
+#### **Access Patterns**:
+- **Write Access**: Only livechat module components write to this memory
+- **Read Access**: Other modules may read for cross-module integration (read-only)
+- **Agent Access**: WSP_54 agents manage cleanup and validation of memory structure
+
+#### **Retention Policies**:
+- **Session Data**: Cleared on module restart
+- **Chat Logs**: Permanent retention for admin users, 90-day retention for regular users
+- **Conversations**: 90-day rolling retention with optional archival
+- **User Patterns**: Persistent with periodic cleanup of inactive users
+
+**Migration**: Legacy `memory/` folder data migrated to module-specific memory following WSP 60 protocol.
+
 ### 🏗️ WSP Architecture Compliance
 
 This implementation follows WSP standards:

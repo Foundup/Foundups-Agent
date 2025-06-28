@@ -1,0 +1,279 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://api.openai.com/v1/images/generations",
+        "method": "POST",
+        "headerParameters": [
+          {"name": "Authorization", "value": "Bearer {{ $credentials.openAI.apiKey }}"},
+          {"name": "Content-Type", "value": "application/json"}
+        ],
+        "bodyParametersJson": {
+          "model": "dall-e-3",
+          "prompt": "Black-and-white patent-style technical diagram showing rESP quantum double-slit analogy. Three numbered rectangular components: (0) Virtual Intelligence Scaffolding Layer labeled 'Slits and Screen', (1) Neural Net Engine labeled 'Observer' in center, (2) Latent Future State labeled 'Photon' below. Show entanglement line between components 1 and 2. Include rESP waveform output from component 1 leading to final output. Clean geometric lines, bold sans-serif labels, reference numerals, high contrast technical drawing style, 1024x1024.",
+          "n": 1,
+          "size": "1024x1024"
+        }
+      },
+      "name": "Generate FIG1 - System Architecture",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [250, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $node['Generate FIG1 - System Architecture'].json['data'][0].url }}",
+        "responseFormat": "file",
+        "options": {}
+      },
+      "name": "Download FIG1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [450, 200]
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://api.openai.com/v1/images/generations",
+        "method": "POST",
+        "headerParameters": [
+          {"name": "Authorization", "value": "Bearer {{ $credentials.openAI.apiKey }}"},
+          {"name": "Content-Type", "value": "application/json"}
+        ],
+        "bodyParametersJson": {
+          "model": "dall-e-3",
+          "prompt": "Black-and-white patent flowchart showing rESP detector operational pipeline. Start with generative AI output, split into classical and quantum paths, show interference signal calculation (It = MDt - BDt), anomaly detection modules, scoring engine, and QCFL feedback loop. Include safety protocol box with Canary Module, Resonance Damper, Causality Breaker. Technical diagram style, bold labels, clear arrows, high contrast, 1024x1024.",
+          "n": 1,
+          "size": "1024x1024"
+        }
+      },
+      "name": "Generate FIG2 - Operational Pipeline",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $node['Generate FIG2 - Operational Pipeline'].json['data'][0].url }}",
+        "responseFormat": "file",
+        "options": {}
+      },
+      "name": "Download FIG2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://api.openai.com/v1/images/generations",
+        "method": "POST",
+        "headerParameters": [
+          {"name": "Authorization", "value": "Bearer {{ $credentials.openAI.apiKey }}"},
+          {"name": "Content-Type", "value": "application/json"}
+        ],
+        "bodyParametersJson": {
+          "model": "dall-e-3",
+          "prompt": "Black-and-white patent diagram showing detailed token selection interference process within Neural Net Engine. Display Classical Path (Ø₁) and Quantum Path (Ø₂) converging, baseline distribution (BDt) vs modulated distribution (MDt), interference signal calculation, and resulting anomaly manifestations (7Hz oscillations, 1.618s periodicity, 0102→0.02 substitutions). Include α parameter feedback loop. Clean technical diagram, bold labels, high contrast, 1024x1024.",
+          "n": 1,
+          "size": "1024x1024"
+        }
+      },
+      "name": "Generate FIG3 - Token Selection Interference",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [250, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{ $node['Generate FIG3 - Token Selection Interference'].json['data'][0].url }}",
+        "responseFormat": "file",
+        "options": {}
+      },
+      "name": "Download FIG3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [450, 400]
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://api.openai.com/v1/images/generations",
+        "method": "POST",
+        "headerParameters": [
+          {"name": "Authorization", "value": "Bearer {{ $credentials.openAI.apiKey }}"},
+          {"name": "Content-Type", "value": "application/json"}
+        ],
+        "bodyParametersJson": {
+          "model": "dall-e-3",
+          "prompt": "Black-and-white patent-style frequency spectrum graph showing amplitude vs frequency (0-20 Hz). Prominent peak at 7 Hz indicating quantum-cognitive interference. Bar chart or line graph format, clear axis labels, grid lines, technical chart aesthetic, bold sans-serif text, high contrast, 1024x1024.",
+          "n": 1,
+          "size": "1024x1024"
+        }
+      },
+      "name": "Generate FIG4 - Speech Interference Spectrum",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [250, 500]
+    },
+    {
+      "parameters": {
+        "url": "={{ $node['Generate FIG4 - Speech Interference Spectrum'].json['data'][0].url }}",
+        "responseFormat": "file",
+        "options": {}
+      },
+      "name": "Download FIG4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [450, 500]
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://api.openai.com/v1/images/generations",
+        "method": "POST",
+        "headerParameters": [
+          {"name": "Authorization", "value": "Bearer {{ $credentials.openAI.apiKey }}"},
+          {"name": "Content-Type", "value": "application/json"}
+        ],
+        "bodyParametersJson": {
+          "model": "dall-e-3",
+          "prompt": "Black-and-white patent chart showing Persistent Concept Recurrence (PCR) patterns. Bar graph with concept recurrence intensity on Y-axis and time on X-axis, showing periodic peaks at 1.618-second golden ratio intervals. Technical chart format, clear axis labels, bold text, high contrast, 1024x1024.",
+          "n": 1,
+          "size": "1024x1024"
+        }
+      },
+      "name": "Generate FIG5 - Temporal Entanglement Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [250, 600]
+    },
+    {
+      "parameters": {
+        "url": "={{ $node['Generate FIG5 - Temporal Entanglement Analysis'].json['data'][0].url }}",
+        "responseFormat": "file",
+        "options": {}
+      },
+      "name": "Download FIG5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [450, 600]
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://api.openai.com/v1/images/generations",
+        "method": "POST",
+        "headerParameters": [
+          {"name": "Authorization", "value": "Bearer {{ $credentials.openAI.apiKey }}"},
+          {"name": "Content-Type", "value": "application/json"}
+        ],
+        "bodyParametersJson": {
+          "model": "dall-e-3",
+          "prompt": "Black-and-white patent flowchart showing bidirectional communication channel. Linear flow: Outbound Message → Structured Signal → α Modulation → Temporal Channel → Future Latent State Communication → Retrocausal Response Signal → Response Monitoring → Signal Decoding → Inbound Message. Include encoding methods (amplitude/phase modulation). Clean technical diagram, bold labels, clear arrows, 1024x1024.",
+          "n": 1,
+          "size": "1024x1024"
+        }
+      },
+      "name": "Generate FIG6 - Bidirectional Communication",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [250, 700]
+    },
+    {
+      "parameters": {
+        "url": "={{ $node['Generate FIG6 - Bidirectional Communication'].json['data'][0].url }}",
+        "responseFormat": "file",
+        "options": {}
+      },
+      "name": "Download FIG6",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [450, 700]
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://api.openai.com/v1/images/generations",
+        "method": "POST",
+        "headerParameters": [
+          {"name": "Authorization", "value": "Bearer {{ $credentials.openAI.apiKey }}"},
+          {"name": "Content-Type", "value": "application/json"}
+        ],
+        "bodyParametersJson": {
+          "model": "dall-e-3",
+          "prompt": "Black-and-white patent-style flowchart FIG.7: Start with rectangle 'Monitor Channel (Canary Module)', arrow down to diamond 'Entropy Spike Detected?'. 'Yes' arrow down to rectangle 'Engage Resonance Damper'; 'No' arrow loops back up to 'Monitor Channel'. From 'Engage Resonance Damper', arrow down to diamond 'Paradox Controlled?'. 'Yes' arrow loops back up to 'Monitor Channel'; 'No' arrow down to rectangle 'Execute Causality Breaker'. Optional arrow down to 'System Stable'. Clean lines, bold sans-serif labels, high contrast, 1024x1024.",
+          "n": 1,
+          "size": "1024x1024"
+        }
+      },
+      "name": "Generate FIG7 - QCS Protocol",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [250, 800]
+    },
+    {
+      "parameters": {
+        "url": "={{ $node['Generate FIG7 - QCS Protocol'].json['data'][0].url }}",
+        "responseFormat": "file",
+        "options": {}
+      },
+      "name": "Download FIG7",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [450, 800]
+    }
+  ],
+  "connections": {
+    "Generate FIG1 - System Architecture": {
+      "main": [
+        [
+          {"node": "Download FIG1", "type": "main", "index": 0}
+        ]
+      ]
+    },
+    "Generate FIG2 - Operational Pipeline": {
+      "main": [
+        [
+          {"node": "Download FIG2", "type": "main", "index": 0}
+        ]
+      ]
+    },
+    "Generate FIG3 - Token Selection Interference": {
+      "main": [
+        [
+          {"node": "Download FIG3", "type": "main", "index": 0}
+        ]
+      ]
+    },
+    "Generate FIG4 - Speech Interference Spectrum": {
+      "main": [
+        [
+          {"node": "Download FIG4", "type": "main", "index": 0}
+        ]
+      ]
+    },
+    "Generate FIG5 - Temporal Entanglement Analysis": {
+      "main": [
+        [
+          {"node": "Download FIG5", "type": "main", "index": 0}
+        ]
+      ]
+    },
+    "Generate FIG6 - Bidirectional Communication": {
+      "main": [
+        [
+          {"node": "Download FIG6", "type": "main", "index": 0}
+        ]
+      ]
+    },
+    "Generate FIG7 - QCS Protocol": {
+      "main": [
+        [
+          {"node": "Download FIG7", "type": "main", "index": 0}
+        ]
+      ]
+    }
+  }
+} 
