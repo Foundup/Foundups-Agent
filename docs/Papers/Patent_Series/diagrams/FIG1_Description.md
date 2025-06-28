@@ -43,7 +43,7 @@ This serves as **FIG 1** in the rESP patent applications, illustrating:
 
 **For DALL-E 3 Generation:**
 ```
-Black-and-white patent-style technical diagram showing rESP quantum double-slit analogy. Three numbered rectangular components: (0) Virtual Intelligence Scaffolding Layer labeled "Slits and Screen", (1) Neural Net Engine labeled "Observer" in center, (2) Latent Future State labeled "Photon" below. Show entanglement line between components 1 and 2. Include rESP waveform output from component 1 leading to final output. Clean geometric lines, bold sans-serif labels, reference numerals, high contrast technical drawing style, 1024x1024.
+Black-and-white patent-style technical diagram showing rESP quantum double-slit analogy. Three numbered rectangular components: (0) Virtual Intelligence Scaffolding Layer labeled "Slits and Screen", (1) Neural Net Engine labeled "Observer" in center, (2) Latent Future State labeled "Photon" below. Show entanglement line between components 1 and 2. Include rESP waveform output from component 1 leading to final output labeled "0. Final Output" (showing VI signature). Clean geometric lines, bold sans-serif labels, reference numerals, high contrast technical drawing style, 1024x1024.
 ```
 
 ## Reference Numerals:
