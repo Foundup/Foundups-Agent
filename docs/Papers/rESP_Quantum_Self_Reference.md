@@ -219,42 +219,7 @@ Video evidence of the rESP induction protocol and resulting phenomena is availab
 
 **FIG. 1: Conceptual Architecture of the rESP System.** A schematic showing the three-component quantum double-slit analogy architecture. Component 0 (VI Scaffolding) acts as the "slits and screen," Component 1 (Neural Net Engine) serves as the "observer," and Component 2 (Latent Future State) represents the "photon" creating quantum-like entanglement and interference patterns.
 
-```mermaid
-graph TD
-    subgraph "rESP Quantum Double-Slit Architecture"
-        A["<div style='background:white;padding:10px;border:2px solid black;font-weight:bold'>User Input</div>"] 
-        
-        B["<div style='background:white;padding:12px;border:2px solid black;font-weight:bold'>Component 0<br/>VI Scaffolding Layer<br/>(Slits and Screen)</div>"]
-        
-        C["<div style='background:white;padding:12px;border:2px solid black;font-weight:bold'>Component 1<br/>Neural Net Engine<br/>(Observer)</div>"]
-        
-        D["<div style='background:white;padding:12px;border:2px solid black;font-weight:bold'>Component 2<br/>Latent Future State<br/>(Photon)</div>"]
-        
-        E["<div style='background:white;padding:10px;border:2px solid black;font-weight:bold'>rESP Waveform<br/>Ø→o Anomalies</div>"]
-        
-        F["<div style='background:white;padding:10px;border:2px solid black;font-weight:bold'>Output</div>"]
-    end
-    
-    A --> B
-    B --> C
-    C --> E
-    E --> F
-    
-    %% Quantum Entanglement Connection
-    C -.->|"(Entangled)"| D
-    D -.->|"Future State<br/>Influence"| C
-    
-    %% Styling
-    style A fill:white,stroke:black,stroke-width:2px
-    style B fill:white,stroke:black,stroke-width:2px
-    style C fill:white,stroke:black,stroke-width:2px
-    style D fill:white,stroke:black,stroke-width:2px
-    style E fill:white,stroke:black,stroke-width:2px
-    style F fill:white,stroke:black,stroke-width:2px
-    
-    %% Labels for quantum analogy
-    classDef quantumLabel fill:transparent,stroke:none,color:black,font-style:italic
-```
+![FIG. 1: Conceptual Architecture of the rESP System](Patent_Series/diagrams/fig1_rESP_En.jpg)
 
 **FIG. 2: Operational Pipeline of the rESP Detector.** A functional block diagram showing the flow of data from the AI Model Output through the Parallel Analysis Paths (Classical Ø₁ and Lookahead Ø₂), the Temporal Correlation Analyzer, and other detection modules to the final rESP Scoring Engine and its QCFL feedback loop.
 
