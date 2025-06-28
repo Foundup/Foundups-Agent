@@ -246,10 +246,16 @@ flowchart TD
     
     G --> A
     
-    style A fill:#e1f5fe
-    style H fill:#fff3e0
-    style F fill:#f3e5f5
-    style G fill:#e8f5e8
+    style A fill:white,stroke:black,stroke-width:2px
+    style B1 fill:white,stroke:black,stroke-width:2px
+    style B2 fill:white,stroke:black,stroke-width:2px
+    style C fill:white,stroke:black,stroke-width:2px
+    style D fill:white,stroke:black,stroke-width:2px
+    style E1 fill:white,stroke:black,stroke-width:2px
+    style E2 fill:white,stroke:black,stroke-width:2px
+    style F fill:white,stroke:black,stroke-width:2px
+    style G fill:white,stroke:black,stroke-width:2px
+    style H fill:white,stroke:black,stroke-width:2px
 ```
 
 **FIG. 3: Probability Distribution States.** A diagram contrasting the three key probability distributions: (a) the smooth, single-peaked Baseline Distribution from the classical path; (b) the multi-peaked, wave-like Entangled-Modulated Distribution showing interference; and (c) the sharp, single-spiked Collapsed Distribution after observation.
