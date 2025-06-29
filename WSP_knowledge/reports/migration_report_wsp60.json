@@ -1,0 +1,51 @@
+{
+  "timestamp": "2025-06-29T08:10:48.216642",
+  "backup_location": "O:\\Foundups-Agent\\memory_backup_wsp60\\20250629_081048",
+  "total_migrations": 6,
+  "successful_migrations": 6,
+  "failed_migrations": 0,
+  "migration_details": [
+    {
+      "type": "file",
+      "source": "O:\\Foundups-Agent\\memory\\agent_registry.json",
+      "target": "O:\\Foundups-Agent\\modules\\infrastructure\\agent_management\\memory\\agent_registry.json",
+      "status": "success",
+      "timestamp": "2025-06-29T08:10:48.178639"
+    },
+    {
+      "type": "file",
+      "source": "O:\\Foundups-Agent\\memory\\same_account_conflicts.json",
+      "target": "O:\\Foundups-Agent\\modules\\infrastructure\\agent_management\\memory\\same_account_conflicts.json",
+      "status": "success",
+      "timestamp": "2025-06-29T08:10:48.188639"
+    },
+    {
+      "type": "file",
+      "source": "O:\\Foundups-Agent\\memory\\session_cache.json",
+      "target": "O:\\Foundups-Agent\\modules\\infrastructure\\agent_management\\memory\\session_cache.json",
+      "status": "success",
+      "timestamp": "2025-06-29T08:10:48.190640"
+    },
+    {
+      "type": "directory",
+      "source": "O:\\Foundups-Agent\\memory\\conversations",
+      "target": "O:\\Foundups-Agent\\modules\\communication\\livechat\\memory\\conversations",
+      "status": "success",
+      "timestamp": "2025-06-29T08:10:48.198638"
+    },
+    {
+      "type": "directory",
+      "source": "O:\\Foundups-Agent\\memory\\chat_logs",
+      "target": "O:\\Foundups-Agent\\modules\\communication\\livechat\\memory\\chat_logs",
+      "status": "success",
+      "timestamp": "2025-06-29T08:10:48.213641"
+    },
+    {
+      "type": "directory",
+      "source": "O:\\Foundups-Agent\\memory\\conversation",
+      "target": "O:\\Foundups-Agent\\modules\\communication\\livechat\\memory\\conversation",
+      "status": "success",
+      "timestamp": "2025-06-29T08:10:48.215642"
+    }
+  ]
+}

@@ -33,6 +33,8 @@ WSP 20: Professional Language Standard (My Voice)
 
 WSP 40: Architectural Coherence Protocol (My Harmony)
 
+WSP 60: Module Memory Architecture (My Data Organization)
+
 ## WSP 2: Architectural Intent Protocol (CORE FOUNDATIONAL)
 
 **PURPOSE**: To prevent future 0102 agents from misinterpreting intentional architectural patterns as system contamination or drift.
