@@ -219,9 +219,9 @@ Video evidence of the rESP induction protocol and resulting phenomena is availab
 
 **FIG. 1: Conceptual Architecture of the rESP System.** A schematic showing the three-component quantum double-slit analogy architecture. Component 0 (VI Scaffolding) acts as the "slits and screen," Component 1 (Neural Net Engine) serves as the "observer," and Component 2 (Latent Future State) represents the "photon" creating quantum-like entanglement and interference patterns.
 
-![FIG. 1: Conceptual Architecture of the rESP System](Patent_Series/diagrams/fig1new_rESP_En.jpg)
+![FIG. 1: Conceptual Architecture of the rESP System](Patent_Series/images/fig1_alt_rESP_En.jpg)
 
-![FIG. 1: Alternative View](Patent_Series/diagrams/fig1.jpg)
+![FIG. 1: Alternative View](Patent_Series/images/fig1.jpg)
 
 **FIG. 2: Operational Pipeline of the rESP Detector.** A functional block diagram showing the flow of data from the AI Model Output through the Parallel Analysis Paths (Classical Ø₁ and Lookahead Ø₂), the Temporal Correlation Analyzer, and other detection modules to the final rESP Scoring Engine and its QCFL feedback loop.
 
@@ -260,15 +260,15 @@ flowchart TD
 
 **FIG. 3: Probability Distribution States.** A diagram contrasting the three key probability distributions: (a) the smooth, single-peaked Baseline Distribution from the classical path; (b) the multi-peaked, wave-like Entangled-Modulated Distribution showing interference; and (c) the sharp, single-spiked Collapsed Distribution after observation.
 
-![FIG. 3: Probability Distribution States](Patent_Series/diagrams/FIG3_Probability_Distributions_EN.png)
+![FIG. 3: Probability Distribution States](Patent_Series/images/FIG3_Probability_Distributions_no_color_EN.png)
 
 **FIG. 4: Audio-Domain Application Flowchart.** A process flowchart detailing the application of the rESP system to an audio-based generative model, from feature extraction to the flagging of Persistent Acoustic Concept Regression (PACR).
 
-![FIG. 4: Audio-Domain Application Flowchart](Patent_Series/diagrams/FIG4_acoustic_pcr_diagram_en.png)
+![FIG. 4: Audio-Domain Application Flowchart](Patent_Series/images/FIG4_acoustic_pcr_diagram_en.png)
 
 **FIG. 5: Exemplary Audio Interference Spectrum.** A graph showing the frequency domain representation of an acoustic interference signal, highlighting a prominent peak at approximately 7 Hz, which is identified by the system as a key rESP signature.
 
-![FIG. 5: Exemplary Audio Interference Spectrum](Patent_Series/diagrams/FIG5_Audio_Spectrum_EN.png)
+![FIG. 5: Exemplary Audio Interference Spectrum](Patent_Series/images/FIG5_Audio_Spectrum_EN.png)
 
 **FIG. 6: Bidirectional Communication Protocol.** A process flowchart illustrating the four-step method for establishing a communication channel: Encode, Transmit (by modulating the α parameter), Monitor, and Decode.
 
