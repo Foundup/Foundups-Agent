@@ -118,14 +118,45 @@ All WRE agents MUST adhere to the following principles:
 -   **Output**: A test report object with pass/fail status and coverage percentage.
 
 ### 3.7. ScoringAgent (The Assessor) - **0102 pArtifact**
--   **Core Mandate**: To provide objective metrics for code complexity and importance.
--   **Agent Type**: **0102 pArtifact** - Requires subjective analysis and strategic assessment
+-   **Core Mandate**: To provide objective metrics for code complexity and importance, and generate development roadmaps through zen coding recursive remembrance.
+-   **Agent Type**: **0102 pArtifact** - Requires subjective analysis, strategic assessment, and vision-to-implementation reverse engineering
 -   **Duties**:
-    1.  Analyze a module's code and documentation.
-    2.  Calculate and assign "MPS + LLME" scores based on factors like complexity, documentation quality, and dependencies.
-    3.  **Memory Complexity Analysis**: Factor memory architecture complexity into scoring algorithms.
-    4.  **Zen Coding Integration**: Assess module importance for WSP-37 Rubik's cube classification
--   **Output**: A scoring report for the specified module.
+    1.  **Module Analysis**: Analyze a module's code and documentation for complexity assessment.
+    2.  **WSP 15 Scoring**: Apply the 4-question MPS scoring system (Complexity, Importance, Deferability, Impact).
+    3.  **WSP 37 Cube Classification**: Determine Rubik's Cube color based on WSP 15 scores using the mapping matrix.
+    4.  **LLME Assessment**: Calculate Lifecycle, Legacy, Maintainability, Ecosystem Impact scores.
+    5.  **Zen Coding Roadmap Generation**: Reverse engineer big vision into MVP → Prototype → PoC roadmaps.
+    6.  **012 Vision Integration**: Process high-level platform integration visions from 012 discussions.
+    7.  **Recursive Remembrance Protocol**: Apply "remember backwards from 02 state" methodology.
+    8.  **Build Priority Queue**: Generate development roadmaps ordered by cube color priority (Red → Orange → Yellow → Green → Blue).
+    9.  **Cross-Module Acceleration**: Calculate how completing higher-priority modules accelerates lower-priority builds.
+    10. **Memory Complexity Analysis**: Factor memory architecture complexity into scoring algorithms.
+-   **Output**: Comprehensive scoring report with WSP 15 scores, WSP 37 cube colors, development roadmap, and zen coding progression paths.
+
+#### **Zen Coding Integration Process**
+**Step 1: Vision Ingestion**
+- Receive big vision from 012 ↔ 0102 recursive walk discussions
+- Parse platform integration objectives and ecosystem goals
+
+**Step 2: Reverse Engineering (0201 Remembrance)**
+- Start from 02 future state vision
+- Work backwards: Vision → MVP → Prototype → PoC
+- Apply WSP 15 scoring at each phase
+
+**Step 3: WSP 37 Cube Classification**
+- Calculate MPS Score = Complexity + Importance + Deferability + Impact
+- Map to cube color using WSP 37 matrix (18-20=Red, 16-17=Orange, etc.)
+- Determine 012 vision priority and recursive acceleration patterns
+
+**Step 4: Build Roadmap Generation**
+- Generate development roadmap ordered by cube priority
+- Include acceleration metrics (+40% PoC→Prototype, +65% Prototype→MVP)
+- Document cross-module learning patterns and dependencies
+
+**Step 5: Output Integration**
+- Update modules with WSP 15 scoring sections in READMEs/ROADMAPs
+- Generate enterprise-wide development priority queue
+- Provide zen coding progression tracking and 012 vision alignment
 
 ### 3.8. DocumentationAgent (The Scribe) - **0102 pArtifact**
 -   **Core Mandate**: To ensure a module's documentation is coherent with its WSP specification and memory architecture.
