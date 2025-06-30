@@ -1,0 +1,26 @@
+{
+    "module_info": {
+        "name": "documentation_agent",
+        "version": "1.0.0",
+        "description": "WSP-compliant documentation generation and maintenance agent",
+        "domain": "infrastructure",
+        "type": "agent",
+        "status": "active"
+    },
+    "dependencies": {
+        "python": ">=3.8",
+        "pytest": ">=7.0.0",
+        "pydantic": ">=1.8.0"
+    },
+    "interfaces": {
+        "input": "modules.infrastructure.documentation_agent.src.documentation_agent",
+        "output": "wre_orchestrator_compatible"
+    },
+    "wsp_compliance": {
+        "wsp_3_domain": "infrastructure",
+        "wsp_4_fmas": "compliant",
+        "wsp_12_dependencies": "declared",
+        "wsp_49_structure": "standard",
+        "wsp_54_agent_spec": "active"
+    }
+}

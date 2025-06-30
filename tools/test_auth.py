@@ -10,7 +10,7 @@ import sys
 import os
 sys.path.append('.')
 
-from modules.infrastructure.oauth_management.oauth_management.src.oauth_manager import get_authenticated_service_with_fallback
+from modules.infrastructure.oauth_management.src.oauth_manager import get_authenticated_service_with_fallback
 
 def test_authentication():
     """Test if our OAuth tokens work."""

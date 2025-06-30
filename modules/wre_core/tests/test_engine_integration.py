@@ -38,7 +38,7 @@ class TestWREInitialization(unittest.TestCase):
     
     def test_initialize_board_component(self):
         """Test board (Cursor interface) initialization via component manager."""
-        with patch('modules.infrastructure.agents.module_scaffolding_agent.src.module_scaffolding_agent.ModuleScaffoldingAgent') as mock_agent:
+        with patch('modules.infrastructure.module_scaffolding_agent.src.module_scaffolding_agent.ModuleScaffoldingAgent') as mock_agent:
             mock_instance = Mock()
             mock_agent.return_value = mock_instance
             
@@ -50,7 +50,7 @@ class TestWREInitialization(unittest.TestCase):
     
     def test_initialize_mast_component(self):
         """Test mast (LoreMaster) initialization via component manager."""
-        with patch('modules.infrastructure.agents.loremaster_agent.src.loremaster_agent.LoremasterAgent') as mock_agent:
+        with patch('modules.infrastructure.loremaster_agent.src.loremaster_agent.LoremasterAgent') as mock_agent:
             mock_instance = Mock()
             mock_agent.return_value = mock_instance
             

@@ -8,7 +8,7 @@ project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from modules.wre_core.src.utils.logging_utils import wre_log
-from modules.infrastructure.agents.module_scaffolding_agent.src.module_scaffolding_agent import ModuleScaffoldingAgent
+from modules.infrastructure.module_scaffolding_agent.src.module_scaffolding_agent import ModuleScaffoldingAgent
 
 
 def parse_roadmap(root_path: Path):

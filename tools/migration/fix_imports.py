@@ -23,7 +23,7 @@ ENTERPRISE_DOMAIN_MAPPINGS = {
     r'from modules\.banter_engine\.src\.banter_engine import': 'from modules.ai_intelligence.banter_engine.banter_engine.src.banter_engine import',
     
     # Communication Domain
-    r'from modules\.livechat\.src\.livechat import': 'from modules.communication.livechat.livechat.src.livechat import',
+    r'from modules\.livechat\.src\.livechat import': 'from modules.communication.livechat.src.livechat import',
     r'from modules\.livechat import': 'from modules.communication.livechat.livechat import',
     r'from modules\.live_chat_poller\.src\.live_chat_poller import': 'from modules.communication.livechat.live_chat_poller.src.live_chat_poller import',
     r'from modules\.live_chat_poller import': 'from modules.communication.livechat.live_chat_poller import',
@@ -33,14 +33,14 @@ ENTERPRISE_DOMAIN_MAPPINGS = {
     # Platform Integration Domain
     r'from modules\.youtube_auth\.src\.youtube_auth import': 'from modules.platform_integration.authentication.youtube_auth.src.youtube_auth import',
     r'from modules\.youtube_auth import': 'from modules.platform_integration.authentication.youtube_auth import',
-    r'from modules\.stream_resolver\.src\.stream_resolver import': 'from modules.platform_integration.stream_resolver.stream_resolver.src.stream_resolver import',
+    r'from modules\.stream_resolver\.src\.stream_resolver import': 'from modules.platform_integration.stream_resolver.src.stream_resolver import',
     r'from modules\.stream_resolver import': 'from modules.platform_integration.stream_resolver.stream_resolver import',
     
     # Infrastructure Domain
-    r'from modules\.token_manager\.src\.token_manager import': 'from modules.infrastructure.token_manager.token_manager.src.token_manager import',
+    r'from modules\.token_manager\.src\.token_manager import': 'from modules.infrastructure.token_manager.src.token_manager import',
     r'from modules\.token_manager import': 'from modules.infrastructure.token_manager.token_manager import',
-    r'from modules\.agent_management\.src\.multi_agent_manager import': 'from modules.infrastructure.agent_management.agent_management.src.multi_agent_manager import',
-    r'from modules\.oauth_management\.src\.oauth_manager import': 'from modules.infrastructure.oauth_management.oauth_management.src.oauth_manager import',
+    r'from modules\.agent_management\.src\.multi_agent_manager import': 'from modules.infrastructure.agent_management.src.multi_agent_manager import',
+    r'from modules\.oauth_management\.src\.oauth_manager import': 'from modules.infrastructure.oauth_management.src.oauth_manager import',
 }
 
 def fix_imports_in_file(file_path: Path) -> bool:

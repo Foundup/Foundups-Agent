@@ -8,13 +8,13 @@ project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from modules.wre_core.src.utils.logging_utils import wre_log
-from modules.infrastructure.agents.janitor_agent.src.janitor_agent import JanitorAgent
-from modules.infrastructure.agents.loremaster_agent.src.loremaster_agent import LoremasterAgent
-from modules.infrastructure.agents.chronicler_agent.src.chronicler_agent import ChroniclerAgent
-from modules.infrastructure.agents.compliance_agent.src.compliance_agent import ComplianceAgent
-from modules.infrastructure.agents.testing_agent.src.testing_agent import TestingAgent
-from modules.infrastructure.agents.scoring_agent.src.scoring_agent import ScoringAgent
-from modules.infrastructure.agents.documentation_agent.src.documentation_agent import DocumentationAgent
+from modules.infrastructure.janitor_agent.src.janitor_agent import JanitorAgent
+from modules.infrastructure.loremaster_agent.src.loremaster_agent import LoremasterAgent
+from modules.infrastructure.chronicler_agent.src.chronicler_agent import ChroniclerAgent
+from modules.infrastructure.compliance_agent.src.compliance_agent import ComplianceAgent
+from modules.infrastructure.testing_agent.src.testing_agent import TestingAgent
+from modules.infrastructure.scoring_agent.src.scoring_agent import ScoringAgent
+from modules.infrastructure.documentation_agent.src.documentation_agent import DocumentationAgent
 
 def get_version() -> str:
     """Get the current version from version.json"""

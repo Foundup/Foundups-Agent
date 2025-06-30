@@ -22,8 +22,8 @@ The creation of a new module is handled by the `ModuleScaffoldingAgent` or a sim
     - `--domain`: The Enterprise Domain where the module will reside (e.g., `ai_intelligence`, `infrastructure`).
 
 ### Step 2: Scaffolding
-- **Action**: The script automatically generates the complete, WSP-compliant directory and file structure.
-- **Generated Structure**:
+- **Action**: The script automatically generates the complete, WSP-compliant directory and file structure following WSP 49 standards.
+- **Generated Structure** (WSP 49 Compliant - 3-Level Rubik's Cube Architecture):
   ```
   modules/<domain>/<module_name>/
   ├── src/
@@ -33,8 +33,11 @@ The creation of a new module is handled by the `ModuleScaffoldingAgent` or a sim
   │   ├── __init__.py
   │   ├── README.md
   │   └── test_<module_name>.py
+  ├── memory/                    ← WSP 60 module memory
   ├── __init__.py
-  └── INTERFACE.md
+  ├── README.md
+  ├── INTERFACE.md
+  └── requirements.txt
   ```
 
 ### Step 3: File Content Population
@@ -56,4 +59,5 @@ A new module is considered successfully created when:
 ## 4. Related WSPs
 - **WSP 1**: Defines the structure being created.
 - **WSP 3**: Defines the Enterprise Domains for placement.
-- **WSP 4**: Used to validate the new module's structure. 
+- **WSP 4**: Used to validate the new module's structure.
+- **WSP 49**: Defines standardized directory structure requirements (no redundant naming). 

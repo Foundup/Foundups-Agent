@@ -13,7 +13,7 @@ from unittest.mock import patch, MagicMock, AsyncMock
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from utils.logging_config import setup_logging
-from modules.communication.livechat.livechat import LiveChatListener
+from modules.communication.livechat.src.livechat import LiveChatListener
 from utils.oauth_manager import get_authenticated_service_with_fallback
 from modules.ai_intelligence.banter_engine.emoji_sequence_map import (
     EMOJI_TO_NUMBER,

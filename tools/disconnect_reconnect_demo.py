@@ -12,7 +12,7 @@ import logging
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from modules.infrastructure.agent_management.agent_management.src.multi_agent_manager import (
+from modules.infrastructure.agent_management.src.multi_agent_manager import (
     get_agent_manager, show_agent_status
 )
 

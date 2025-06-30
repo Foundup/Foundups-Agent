@@ -6,8 +6,8 @@ from google.oauth2.credentials import Credentials
 import os
 import logging
 logger = logging.getLogger(__name__)
-warnings.warn("utils.oauth_manager is deprecated. Use modules.infrastructure.oauth_management.oauth_management.src.oauth_manager instead.", DeprecationWarning, stacklevel=2)
-from modules.infrastructure.oauth_management.oauth_management.src.oauth_manager import (
+warnings.warn("utils.oauth_manager is deprecated. Use modules.infrastructure.oauth_management.src.oauth_manager instead.", DeprecationWarning, stacklevel=2)
+from modules.infrastructure.oauth_management.src.oauth_manager import (
     # Core authentication functions
     get_authenticated_service,
     get_authenticated_service_with_fallback,
@@ -61,7 +61,7 @@ __all__ = [
 
 def save_oauth_token_file(credentials: Credentials, credential_type: str) -> None:
     """Saves the OAuth credentials to the specified token file."""
-    from modules.infrastructure.oauth_management.oauth_management.src.oauth_manager import get_oauth_token_file, CREDENTIALS_DIR
+    from modules.infrastructure.oauth_management.src.oauth_manager import get_oauth_token_file, CREDENTIALS_DIR
     token_file_path = get_oauth_token_file(credential_type)
     try:
         os.makedirs(os.path.dirname(token_file_path), exist_ok=True)

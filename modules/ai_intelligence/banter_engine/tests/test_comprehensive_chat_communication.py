@@ -16,8 +16,8 @@ from datetime import datetime, timedelta
 
 # Import the modules we're testing
 from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine, BanterEngineError, EmojiSequenceError
-from modules.communication.livechat.livechat.src.livechat import LiveChatListener
-from modules.communication.livechat.livechat.src.llm_bypass_engine import LLMBypassEngine
+from modules.communication.livechat.src.livechat import LiveChatListener
+from modules.communication.livechat.src.llm_bypass_engine import LLMBypassEngine
 
 
 class TestComprehensiveChatCommunication(unittest.TestCase):

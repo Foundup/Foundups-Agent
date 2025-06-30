@@ -421,13 +421,15 @@ class WRE:
             print("2. 📝 Update Module ModLog (Module-specific MODLOG.md)")
             print("3. 🔍 Run FMAS Audit (WSP_4)")
             print("4. 📊 Check Test Coverage (WSP_5)")
-            print("5. 🏷️ Create Clean State Tag (WSP_2)")
-            print("6. 📋 View Git Status")
-            print("7. ⬅️ Back to Main Menu")
+            print("5. 🤖 WSP 54 Agent Health Check")
+            print("6. 🌐 WRE API Gateway Status")
+            print("7. 🏷️ Create Clean State Tag (WSP_2)")
+            print("8. 📋 View Git Status")
+            print("9. ⬅️ Back to Main Menu")
             print()
             print("ℹ️  Note: Main project ModLog.md auto-updates on git push")
             
-            choice = self.ui_interface._get_user_choice("Select system operation", ["1", "2", "3", "4", "5", "6", "7"])
+            choice = self.ui_interface._get_user_choice("Select system operation", ["1", "2", "3", "4", "5", "6", "7", "8", "9"])
             
             if choice == "1":
                 self._push_to_git()
@@ -438,10 +440,14 @@ class WRE:
             elif choice == "4":
                 self._check_test_coverage()
             elif choice == "5":
-                self._create_clean_state()
+                self._run_wsp54_health_check()
             elif choice == "6":
-                self._view_git_status()
+                self._check_wre_api_gateway()
             elif choice == "7":
+                self._create_clean_state()
+            elif choice == "8":
+                self._view_git_status()
+            elif choice == "9":
                 break
                 
     def _push_to_git(self):
@@ -635,6 +641,85 @@ class WRE:
                 
         except Exception as e:
             self.ui_interface.display_error(f"Coverage check failed: {e}")
+            
+        input("\nPress Enter to continue...")
+        
+    def _run_wsp54_health_check(self):
+        """Run WSP 54 Agent Suite health check and orchestration."""
+        wre_log("🤖 Running WSP 54 Agent Suite Health Check...", "INFO")
+        
+        try:
+            from modules.wre_core.src.components.orchestrator import run_system_health_check
+            
+            print("\n🤖 WSP 54 Agent Suite Health Check")
+            print("=" * 50)
+            
+            # Run comprehensive agent health check
+            result = run_system_health_check(self.project_root)
+            
+            print(f"✅ Agent Suite Status: {result.get('operational_agents', 0)}/{result.get('total_agents', 0)} agents operational")
+            print(f"📊 System Health: {result.get('overall_health', 'Unknown')}")
+            
+            # Display agent statuses
+            agent_status = result.get('agent_status', {})
+            for agent_name, status in agent_status.items():
+                status_icon = "✅" if status else "❌"
+                print(f"{status_icon} {agent_name}: {'OPERATIONAL' if status else 'FAILED'}")
+            
+            # Display enhancement opportunities
+            enhancements = result.get('enhancement_opportunities', [])
+            if enhancements:
+                print(f"\n🔄 WSP 48 Enhancement Opportunities: {len(enhancements)}")
+                for enhancement in enhancements[:3]:  # Show top 3
+                    print(f"  • {enhancement.get('type', 'Unknown')}: {enhancement.get('trigger', 'No details')}")
+                    
+            self.ui_interface.display_success("WSP 54 Agent Suite health check completed!")
+            
+        except Exception as e:
+            self.ui_interface.display_error(f"WSP 54 health check failed: {e}")
+            
+        input("\nPress Enter to continue...")
+        
+    def _check_wre_api_gateway(self):
+        """Check WRE API Gateway status and integration."""
+        wre_log("🌐 Checking WRE API Gateway status...", "INFO")
+        
+        try:
+            from modules.infrastructure.wre_api_gateway.src.wre_api_gateway import WREAPIGateway
+            
+            print("\n🌐 WRE API Gateway Status")
+            print("=" * 40)
+            
+            # Initialize and test API Gateway
+            gateway = WREAPIGateway()
+            status = gateway.get_status()
+            
+            print(f"✅ Gateway Status: {status.get('status', 'Unknown')}")
+            print(f"🤖 Agents Registered: {status.get('agents_registered', 0)}")
+            print(f"📊 Active Sessions: {status.get('active_sessions', 0)}")
+            print(f"📋 Total Requests: {status.get('total_requests', 0)}")
+            
+            # Display registered agents
+            registry = status.get('agent_registry', [])
+            print(f"\n📋 Registered WSP 54 Agents ({len(registry)}):")
+            for agent in registry:
+                print(f"  • {agent}")
+            
+            # Test health check
+            import asyncio
+            health_result = asyncio.run(gateway.health_check())
+            
+            healthy_agents = health_result.get('healthy_agents', 0)
+            total_agents = health_result.get('total_agents', 0)
+            overall_status = health_result.get('overall_status', 'unknown')
+            
+            print(f"\n🏥 Agent Health: {healthy_agents}/{total_agents} agents healthy")
+            print(f"🎯 Overall Status: {overall_status}")
+            
+            self.ui_interface.display_success("WRE API Gateway operational!")
+            
+        except Exception as e:
+            self.ui_interface.display_error(f"WRE API Gateway check failed: {e}")
             
         input("\nPress Enter to continue...")
         

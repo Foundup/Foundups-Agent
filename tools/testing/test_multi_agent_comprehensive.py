@@ -27,7 +27,7 @@ from typing import Dict, List, Optional
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 try:
-    from modules.infrastructure.agent_management.agent_management.src.multi_agent_manager import (
+    from modules.infrastructure.agent_management.src.multi_agent_manager import (
         MultiAgentManager, AgentIdentity, AgentSession
     )
 except ImportError as e:

@@ -42,11 +42,11 @@ logging.basicConfig(
 )
 
 from modules.platform_integration.youtube_proxy.src.youtube_proxy import YouTubeProxy
-from modules.communication.livechat.livechat.src.livechat import LiveChatListener
+from modules.communication.livechat.src.livechat import LiveChatListener
 
 # Import multi-agent system with fallback
 try:
-    from modules.infrastructure.agent_management.agent_management.src.multi_agent_manager import MultiAgentManager
+    from modules.infrastructure.agent_management.src.multi_agent_manager import MultiAgentManager
     MULTI_AGENT_AVAILABLE = True
     logger = logging.getLogger(__name__)
     logger.info("🤖 Multi-agent management system available")
@@ -125,7 +125,7 @@ class FoundUpsLiveChatModule:
         credential_index = int(self.current_agent.credential_set.split('_')[1]) - 1
         
         # Import at the correct time
-        from modules.infrastructure.oauth_management.oauth_management.src.oauth_manager import get_authenticated_service
+        from modules.infrastructure.oauth_management.src.oauth_manager import get_authenticated_service
         auth_result = get_authenticated_service(credential_index)
         if not auth_result:
             raise RuntimeError(f"Failed to authenticate with agent {self.current_agent.channel_name}")

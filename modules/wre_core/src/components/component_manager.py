@@ -53,7 +53,7 @@ class ComponentManager:
     def initialize_board(self):
         """Initialize the Cursor interface (code execution)"""
         try:
-            from modules.infrastructure.agents.module_scaffolding_agent.src.module_scaffolding_agent import ModuleScaffoldingAgent
+            from modules.infrastructure.module_scaffolding_agent.src.module_scaffolding_agent import ModuleScaffoldingAgent
             self.board = ModuleScaffoldingAgent()
             wre_log("🏄 Board (Cursor) interface initialized", "INFO")
         except ImportError as e:
@@ -63,7 +63,7 @@ class ComponentManager:
     def initialize_mast(self):
         """Initialize the LoreMaster (logging/observation)"""
         try:
-            from modules.infrastructure.agents.loremaster_agent.src.loremaster_agent import LoremasterAgent
+            from modules.infrastructure.loremaster_agent.src.loremaster_agent import LoremasterAgent
             self.mast = LoremasterAgent()
             wre_log("🗼 Mast (LoreMaster) system initialized", "INFO")
         except ImportError as e:
@@ -73,7 +73,7 @@ class ComponentManager:
     def initialize_sails(self):
         """Initialize both sails (trajectory and analysis)"""
         try:
-            from modules.infrastructure.agents.chronicler_agent.src.chronicler_agent import ChroniclerAgent
+            from modules.infrastructure.chronicler_agent.src.chronicler_agent import ChroniclerAgent
             modlog_path = str(self.project_root / "docs" / "ModLog.md")
             self.back_sail = ChroniclerAgent(modlog_path_str=modlog_path)
             wre_log("⛵ Back Sail (Trajectory/ChroniclerAgent) initialized", "INFO")
@@ -90,7 +90,7 @@ class ComponentManager:
     def initialize_boom(self):
         """Initialize the WSP compliance system"""
         try:
-            from modules.infrastructure.agents.compliance_agent.src.compliance_agent import ComplianceAgent
+            from modules.infrastructure.compliance_agent.src.compliance_agent import ComplianceAgent
             self.boom = ComplianceAgent()
             wre_log("🎛️ Boom (WSP Compliance) system initialized", "INFO")
         except ImportError as e:

@@ -1,20 +1,25 @@
 """
-Agent Management Module
-Handles multi-agent coordination and identity management for FoundUps Agent.
+Agent Management Package
+Multi-agent coordination and identity management system.
 """
 
-from .agent_management.src.multi_agent_manager import (
+from .src.multi_agent_manager import (
     MultiAgentManager,
     AgentIdentity,
     AgentSession,
+    SameAccountDetector,
+    AgentRegistry,
     get_agent_manager,
     show_agent_status
 )
 
+__version__ = "1.0.0"
 __all__ = [
     'MultiAgentManager',
-    'AgentIdentity', 
-    'AgentSession',
+    'AgentIdentity',
+    'AgentSession', 
+    'SameAccountDetector',
+    'AgentRegistry',
     'get_agent_manager',
     'show_agent_status'
 ] 

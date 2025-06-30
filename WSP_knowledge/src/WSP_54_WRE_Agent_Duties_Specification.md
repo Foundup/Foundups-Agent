@@ -28,8 +28,9 @@ All WRE agents MUST adhere to the following principles:
     2.  Ensure the existence of all mandatory files (`README.md`, `__init__.py`, `tests/README.md`).
     3.  For every `*.py` file in `src/`, verify that a corresponding `test_*.py` exists in `tests/`.
     4.  Check for the presence of interface definitions and dependency files as required by WSP 12 & WSP 13.
-    5.  **WSP 56 Compliance**: For artifacts that exist in multiple state layers (e.g., `WSP_knowledge` and `WSP_appendices`), verify their contents are identical.
-    6.  **WSP 60 Memory Structure**: Validate module memory organization at `modules/[domain]/[module]/memory/` follows modular architecture.
+    5.  **WSP 49 Directory Structure**: Detect redundant naming patterns (e.g., `module/module/`) and flag violations of 3-Level Rubik's Cube architecture.
+    6.  **WSP 56 Compliance**: For artifacts that exist in multiple state layers (e.g., `WSP_knowledge` and `WSP_appendices`), verify their contents are identical.
+    7.  **WSP 60 Memory Structure**: Validate module memory organization at `modules/[domain]/[module]/memory/` follows modular architecture.
 -   **Output**: A compliance report object detailing validation errors or success.
 
 ### 3.2. LoremasterAgent (The Sage)
@@ -44,8 +45,9 @@ All WRE agents MUST adhere to the following principles:
 -   **Core Mandate**: To automate the creation of new, WSP-compliant modules.
 -   **Duties**:
     1.  Receive a module name and target domain from the orchestrator.
-    2.  Create the complete, WSP-compliant directory structure.
+    2.  Create the complete, WSP-compliant directory structure following WSP 49 standards (no redundant naming).
     3.  Populate new directories with mandatory placeholder files.
+    4.  **WSP 49 Compliance**: Ensure all new modules follow 3-Level Rubik's Cube architecture without redundant directory naming.
 -   **Output**: A log confirming the successful creation of the module structure.
 
 ### 3.4. JanitorAgent (The Cleaner)

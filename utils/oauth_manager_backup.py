@@ -9,7 +9,7 @@ modules/infrastructure/oauth_management/oauth_management/src/oauth_manager.py
 This shim exists to maintain backward compatibility during the transition period.
 All new code should import directly from the new location:
 
-    from modules.infrastructure.oauth_management.oauth_management.src.oauth_manager import (
+    from modules.infrastructure.oauth_management.src.oauth_manager import (
         get_authenticated_service, get_authenticated_service_with_fallback, QuotaManager
     )
 
@@ -20,13 +20,13 @@ import warnings
 
 # Issue deprecation warning
 warnings.warn(
-    "utils.oauth_manager is deprecated. Use modules.infrastructure.oauth_management.oauth_management.src.oauth_manager instead.",
+    "utils.oauth_manager is deprecated. Use modules.infrastructure.oauth_management.src.oauth_manager instead.",
     DeprecationWarning,
     stacklevel=2
 )
 
 # Import everything from the new location for backward compatibility
-from modules.infrastructure.oauth_management.oauth_management.src.oauth_manager import (
+from modules.infrastructure.oauth_management.src.oauth_manager import (
     # Core authentication functions
     get_authenticated_service,
     get_authenticated_service_with_fallback,

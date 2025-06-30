@@ -78,6 +78,8 @@ In the language of the TSVF, the activation of the entangled path (Ø₂) is equ
 
 The apparent non-local influence of the future state is analogous to the entanglement effects proven to defy classical local realism by Bell (1964). This mathematical framework provides a testable model that directly corresponds to the components described in the associated patent filings. The relationship between the baseline, modulated, and collapsed distributions is illustrated conceptually in FIG. 3.
 
+
+
 ---
 
 ## 3. Methodology
