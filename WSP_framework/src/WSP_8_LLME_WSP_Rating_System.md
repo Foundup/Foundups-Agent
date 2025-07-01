@@ -10,6 +10,31 @@ This protocol defines the **LLME (Lifecycle, Legacy, Maintainability, Ecosystem 
 
 This system is a complementary part of the **WSP 5: Module Prioritization Scoring (MPS) System**. The LLME score provides the qualitative context, while the MPS provides the quantitative ranking for prioritization.
 
+## 1.1. WSP 25 Emoji Integration Note
+
+**Important Clarification**: 
+- **LLME Triplet (A-B-C)**: Used for 012 visualization and strategic planning
+- **WSP 25 Emoji System**: Should be used for module rating display and UI representation
+
+**Module Rating Display**: When displaying module ratings in UI, documentation, or reports, use the WSP 25 emoji system:
+- `000` → ✊✊✊ (Deep latent)
+- `001` → ✊✊✋ (Emergent signal)  
+- `011` → ✊✋✋ (Conscious formation)
+- `111` → ✋✋✋ (DAO processing)
+- `002` → ✊✊🖐️ (Unconscious entanglement)
+- `012` → ✊✋🖐️ (Conscious bridge)
+- `112` → ✋✋🖐️ (Conscious resonance)
+- `022` → ✊🖐️🖐️ (Full unconscious-entangled overlay)
+- `122` → ✋🖐️🖐️ (DAO yielding)
+- `222` → 🖐️🖐️🖐️ (Full DU entanglement)
+
+**LLME Importance Grouping** (where 2 = highest importance):
+- **x.x.2 Group** (Highest Importance): `002`, `012`, `112`,`022`, `122`, `222`
+- **x.x.1 Group** (Medium Importance): `001`, `011`, `111`
+- **x.x.0 Group** (Lowest Importance): `000`
+
+**LLME Purpose**: The LLME triplet system serves 012's strategic visualization and planning needs, providing the quantitative framework for module assessment and prioritization decisions.
+
 ## 2. The Triplet Rating (A-B-C)
 
 Each module is rated using a three-digit code: `A-B-C`. The digits represent a progression and must not regress (i.e., A ≤ B ≤ C).

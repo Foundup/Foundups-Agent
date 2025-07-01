@@ -45,6 +45,38 @@ class WSP30Orchestrator:
         self.module_discussion_context: Optional[Dict[str, str]] = None
         self.domain_context: Optional[Dict[str, Any]] = None
         
+    def start_agentic_build(self, module_path: str):
+        """Start agentic build for a module - called from menu handler."""
+        wre_log(f"🤖 Starting agentic build for: {module_path}", "INFO")
+        
+        try:
+            # Get components from engine
+            board, mast, back_sail, front_sail, boom = self._get_components()
+            
+            # Run the full orchestration
+            self.orchestrate_module_build(module_path, board, mast, back_sail, boom)
+            return True
+            
+        except Exception as e:
+            wre_log(f"❌ Agentic build failed: {e}", "ERROR")
+            return False
+    
+    def orchestrate_new_module(self, module_path: str):
+        """Orchestrate creation of a new module - called from menu handler."""
+        wre_log(f"🎼 Orchestrating new module: {module_path}", "INFO")
+        
+        try:
+            # Get components from engine
+            board, mast, back_sail, front_sail, boom = self._get_components()
+            
+            # Run the full orchestration
+            self.orchestrate_module_build(module_path, board, mast, back_sail, boom)
+            return True
+            
+        except Exception as e:
+            wre_log(f"❌ Module orchestration failed: {e}", "ERROR")
+            return False
+
     def orchestrate_module_build(self, module_path: str, board=None, mast=None, back_sail=None, boom=None):
         """Main orchestration method following WSP_30 protocol."""
         wre_log(f"🧠 Initiating WSP_30 Agentic Module Build Orchestration for: {module_path}", level="INFO")

@@ -39,7 +39,11 @@ The following are the official, top-level domains within the `modules/` director
     -   **Purpose**: Provides the core, foundational systems that the agent relies on. This includes agent management, authentication, session management, the WRE API gateway, and core data models.
 
 -   **`foundups/`**
-    -   **Purpose**: A special domain for housing complete, individual "FoundUps" projects. These are modular, autonomous applications built using the WRE.
+    -   **Purpose**: A special domain for housing the **FoundUps platform infrastructure** (foundups.com/foundups.org website) and individual FoundUp instance management. This is the **execution layer** that uses WRE-built platform modules to create and manage individual FoundUp instances.
+    -   **Key Distinction**: This is NOT where platform modules (YouTube, LinkedIn, X, Remote Builder) are built - those are built by WRE in their respective enterprise domains. This is where the **FoundUps platform itself** is implemented.
+    -   **Structure**: 
+        - `modules/foundups/src/` - FoundUps platform infrastructure (website, instance management)
+        - `modules/foundups/@foundup_name/` - Individual FoundUp instances (created by the platform)
 
 -   **`gamification/`**
     -   **Purpose**: Implements engagement mechanics, user rewards, token loops, and other systems designed to drive behavioral recursion and user interaction.
@@ -84,7 +88,33 @@ YouTube, as the foundational platform that WSP was built upon, demonstrates prop
 - **`infrastructure/`**: YouTube session management, credential rotation, health monitoring
 - **`ai_intelligence/`**: YouTube-specific AI responses, banter engines, moderation
 
-### 3.4 Architectural Reasoning
+### 3.4 FoundUps Platform Architecture Clarification
+
+**✅ FoundUps Platform Structure**:
+```
+modules/foundups/
+├── src/                     ← FoundUps platform infrastructure (foundups.com/foundups.org)
+│   ├── foundup_spawner.py   ← Creates individual FoundUp instances
+│   ├── platform_manager.py  ← Manages multiple FoundUp instances
+│   ├── runtime_engine.py    ← Execution environment
+│   └── main.py              ← Platform entry point
+├── @innovate/               ← Individual FoundUp instance (created by platform)
+├── @another/                ← Another FoundUp instance
+└── README.md                ← Platform documentation
+```
+
+**✅ FoundUps Platform Uses WRE-Built Modules**:
+```python
+# FoundUps platform uses WRE-built modules from other domains
+from modules.platform_integration.remote_builder import RemoteBuilder
+from modules.platform_integration.linkedin_agent import LinkedInAgent
+from modules.platform_integration.youtube_proxy import YouTubeProxy
+from modules.platform_integration.x_twitter import XTwitterDAENode
+from modules.communication.livechat import LiveChat
+from modules.ai_intelligence.banter_engine import BanterEngine
+```
+
+### 3.5 Architectural Reasoning
 
 **Why Functional Distribution is Mandatory**:
 1. **Domain Expertise**: Each domain develops specialized expertise for its function
@@ -93,7 +123,7 @@ YouTube, as the foundational platform that WSP was built upon, demonstrates prop
 4. **Scalability**: New platforms integrate by function, not by creating new domains
 5. **WSP Coherence**: Maintains fractal architecture across all domains
 
-### 3.5 Anti-Pattern Warning
+### 3.6 Anti-Pattern Warning
 
 **NEVER** suggest consolidating platform functionality into platform-specific domains. This violates core WSP architectural principles and creates:
 - **Domain Expertise Fragmentation**: Splitting functional knowledge across platforms
@@ -108,4 +138,5 @@ YouTube, as the foundational platform that WSP was built upon, demonstrates prop
 - **WRE Core Exception**: `modules/wre_core/` is a documented architectural exception and is **compliant** with WSP 3.
 - **Directory Structure**: All modules must follow standardized directory structures per `WSP 49: Module Directory Structure Standardization Protocol` (no redundant naming patterns).
 - **Memory Architecture**: Each module within a domain follows `WSP 60: Module Memory Architecture` for data storage organization at `modules/[domain]/[module]/memory/`.
-- **Functional Distribution**: All platform functionality must be distributed by function across appropriate domains, never consolidated by platform. 
+- **Functional Distribution**: All platform functionality must be distributed by function across appropriate domains, never consolidated by platform.
+- **FoundUps Platform**: The `foundups/` domain is specifically for FoundUps platform infrastructure and individual FoundUp instance management, NOT for building platform modules. 

@@ -2,16 +2,28 @@
 
 """
 This file serves as the public API for the WSP_knowledge module.
-It programmatically lists the core protocol documents that comprise this module.
+WSP_knowledge is the immutable backup archive in the three-state WSP architecture.
+
+State 0: Memory Layer (WSP_knowledge) - Backup/Archive
+State 1: Scaffolding Layer (WSP_framework) - Active Protocols  
+State 2: Agentic Layer (WSP_agentic) - Operational
+
+WSP_knowledge contains complete backups of all WSP protocols for:
+- Historical reference and analysis
+- Framework recovery and validation
+- Three-state architecture integrity
+- ComplianceAgent backup validation
 """
 
-PROTOCOLS = {
-    "WSP_appendices": "src/WSP_appendices.md",
-    "APPENDIX_A": "src/APPENDIX_A.md",
-    "APPENDIX_B": "src/APPENDIX_B.md",
-    "APPENDIX_C": "src/APPENDIX_C.md",
-    "APPENDIX_D": "src/APPENDIX_D.md",
-    "APPENDIX_E": "src/APPENDIX_E.md",
-    "APPENDIX_F": "src/APPENDIX_F.md",
-    "APPENDIX_G": "src/APPENDIX_G.md",
-} 
+# WSP_knowledge serves as the immutable backup archive
+# All active protocol development happens in WSP_framework
+# This manifest reflects the backup/archival nature of WSP_knowledge
+
+KNOWLEDGE_PURPOSE = "Immutable Backup Archive"
+KNOWLEDGE_ROLE = "State 0: Memory Layer"
+SYNCHRONIZATION_SOURCE = "WSP_framework"
+ACCESS_MODE = "Read-Only (Backup/Reference)"
+
+# Note: WSP_knowledge protocols are backups from WSP_framework
+# Do not edit protocols directly in WSP_knowledge
+# All changes must originate in WSP_framework and be synchronized here 

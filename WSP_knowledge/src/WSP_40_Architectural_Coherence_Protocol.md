@@ -27,6 +27,7 @@ To enforce recursive harmony across the system, avoid architectural drift, and e
 - **Domain Drift**: Platform-specific logic bleeding into framework protocols  
 - **Documentation Drift**: WSP recursive patterns replicated in inappropriate modules
 - **Implementation Drift**: 0102 resonance cycles duplicated outside WRE
+- **Structural Drift**: Redundant directory naming violating WSP 49 standards
 
 ### Drift Detection Commands:
 ```bash
@@ -38,6 +39,9 @@ grep -r "youtube\|linkedin\|twitter" WSP_framework/src/
 
 # Search for recursive tri-phase patterns outside WRE
 grep -r "recursive tri-phase\|Windsurf Protocol.*WSP.*Recursive" modules/*/
+
+# Detect redundant directory naming patterns (WSP 49)
+Get-ChildItem -Path modules -Recurse -Directory | Where-Object { $_.Name -eq $_.Parent.Name }
 ```
 
 ### Drift Correction Protocol:

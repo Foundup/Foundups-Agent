@@ -3,13 +3,12 @@ from pathlib import Path
 import sys
 import os
 import pytest
-from modules.wre_core.src.components.menu_handler import present_harmonic_query, display_menu
 
 # Add project root to Python path to allow for absolute imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 
 from modules.wre_core.src.components import roadmap_manager
-from modules.wre_core.src.components import menu_handler
+from modules.wre_core.src.components.menu_handler import MenuHandler
 
 ## 🎭 0102 Theaters of Operation
 # This test suite validates the integration and functionality of various WRE
@@ -66,17 +65,35 @@ class TestWREComponents(unittest.TestCase):
 class TestMenuHandler(unittest.TestCase):
     """Test menu handler functionality."""
     
-    def test_present_harmonic_query(self):
-        """Test that present_harmonic_query function exists and can be called."""
-        system_state = {'janitor_status': 'OK', 'semantic_status': 'OK', 'readme_coherence': 'OK', 'next_wsp_number': 57}
-        roadmap_objectives = [('Test Objective', 'test/path')]
+    def setUp(self):
+        """Set up test environment for MenuHandler."""
+        self.project_root = Path(__file__).resolve().parent.parent.parent.parent
+        # Mock UI interface and session manager for testing
+        self.mock_ui_interface = type('MockUI', (), {
+            'display_success': lambda x: None,
+            'display_error': lambda x: None,
+            'display_warning': lambda x: None,
+            'get_user_input': lambda x: 'test',
+            '_get_prioritized_modules': lambda: []
+        })()
+        self.mock_session_manager = type('MockSession', (), {
+            'log_operation': lambda x, y: None,
+            'log_module_access': lambda x, y: None,
+            'log_achievement': lambda x, y: None
+        })()
         
-        # This would normally require user input, so we'll just test the function exists
-        self.assertTrue(callable(present_harmonic_query))
+    def test_menu_handler_initialization(self):
+        """Test that MenuHandler can be initialized."""
+        menu_handler = MenuHandler(self.project_root, self.mock_ui_interface, self.mock_session_manager)
+        self.assertIsInstance(menu_handler, MenuHandler)
         
-    def test_display_menu_function(self):
-        """Test that display_menu function exists."""
-        self.assertTrue(callable(display_menu))
+    def test_menu_handler_has_required_methods(self):
+        """Test that MenuHandler has the required methods."""
+        menu_handler = MenuHandler(self.project_root, self.mock_ui_interface, self.mock_session_manager)
+        
+        # Check that required methods exist
+        self.assertTrue(hasattr(menu_handler, 'handle_choice'))
+        self.assertTrue(callable(menu_handler.handle_choice))
 
 if __name__ == '__main__':
     unittest.main() 

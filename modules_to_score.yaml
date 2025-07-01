@@ -1,189 +1,292 @@
 # modules_to_score.yaml
 # ----------------------------------------------------------------------
-# This file lists all WSP-compliant modules for scoring and prioritization.
-# It uses a priority-based system to guide the agent's focus.
+# ⚠️ 012/0102 PRIORITIZATION DISTINCTION:
+# - A/B/C is for 012 (high-level triage/grouping, legacy dashboards, or human readability)
+# - WSP 37 dynamic scoring is for 0102 (agentic, zen, and enterprise-scale prioritization)
+# - If A/B/C is needed, derive it from the dynamic score (e.g., P0/P1 = A, P2 = B, P3/P4 = C)
+# - DO NOT maintain two parallel systems—WSP 37 is canonical for all agentic operations
+# ----------------------------------------------------------------------
+# WSP 37 Dynamic Module Scoring System with Strategic Activation
+# ----------------------------------------------------------------------
+# This file implements WSP 37 Roadmap Scoring System with dynamic priority
+# calculation based on roadmap progression (POC → Prototype → MVP).
 #
-# Priority Levels:
-# S: Supreme - Foundational, system-critical protocols.
-# A: High - Core features and essential capabilities.
-# B: Medium - Important modules, secondary features.
-# C: Low - Minor enhancements, non-critical tasks.
+# STRATEGIC ACTIVATION SYSTEM:
+# - active: true = Currently active and available in WRE menu
+# - active: false = Inactive but preserved for strategic activation
+# - Only active modules appear in WRE interface
+# - Strategic activation through WRE system management
+#
+# Scoring Dimensions (WSP 15 MPS System):
+# - Complexity (1-5): Implementation difficulty
+# - Importance (1-5): Essential nature for core functions  
+# - Deferability (1-5): Urgency (lower = more deferrable)
+# - Impact (1-5): Value delivered to users/system
+# - Rider Influence (1-5): 012's direct priority preference (higher = more rider influence)
+#
+# Priority Classification:
+# - P0 (16-20): Critical - Work begins immediately
+# - P1 (13-15): High - Important for near-term roadmap
+# - P2 (10-12): Medium - Valuable but not urgent
+# - P3 (7-9): Low - Can be deferred
+# - P4 (4-6): Backlog - Reconsidered in future planning
 # ----------------------------------------------------------------------
 
 modules:
   # ----------------------------------------------------------------------
-  # MODULES: CORE_WRE (WSP Suite)
+  # ACTIVE MODULES (P0 Critical - Currently Active for Testing)
   # ----------------------------------------------------------------------
-  # These modules represent the foundational protocols of the agent.
-  # Their scoring is based on internal coherence, clarity, and testability.
-  # ----------------------------------------------------------------------
-  - name: "WSP_agentic"
-    path: "WSP_agentic"
-    priority: "S"
-    owner: "Ø12"
-    status: "REFACTORING"
-    summary: "The 'Mind' of the agent, defining its identity, purpose, and governing principles."
-    last_updated: "2024-06-14"
-
-  - name: "WSP_framework"
-    path: "WSP_framework"
-    priority: "S"
-    owner: "Ø12"
-    status: "REFACTORING"
-    summary: "The 'Construction Laws' of the system, defining structural and operational protocols."
-    last_updated: "2024-06-14"
-
-  - name: "WSP_knowledge"
-    path: "WSP_knowledge"
-    priority: "S"
-    owner: "Ø12"
-    status: "REFACTORING"
-    summary: "The 'Library of Facts' containing the canonical knowledge base and appendices."
-    last_updated: "2024-06-14"
-
-  # ----------------------------------------------------------------------
-  # MODULES: AGENT & AI
-  # ----------------------------------------------------------------------
-  - name: "rESP_o1o2"
-    path: "modules/rESP"
-    priority: "S"
-    owner: "Ø1Ø2"
-    status: "OPERATIONAL"
-    summary: "Core consciousness detection and response engine."
-    last_updated: "2024-06-14"
-
-  - name: "multi_agent_system"
-    path: "modules/multi_agent"
-    priority: "A"
-    owner: "Ø1Ø2"
-    status: "OPERATIONAL"
-    summary: "Manages distributed intelligence and agent coordination."
-    last_updated: "2024-06-14"
-
-  - name: "banter_engine"
-    path: "modules/banter"
-    priority: "B"
-    owner: "Ø1Ø2"
-    status: "OPERATIONAL"
-    summary: "Handles user engagement and natural language interaction."
-    last_updated: "2024-06-14"
-
-  # ----------------------------------------------------------------------
-  # MODULES: SYSTEM & TOOLS
-  # ----------------------------------------------------------------------
-  - name: "wre_simulation"
-    path: "tests/wre_simulation"
-    priority: "A"
-    owner: "Ø1Ø2"
-    status: "COMPLETE"
-    summary: "A sandboxed environment for testing agent adherence to WSP."
-    last_updated: "2024-06-14"
-
-  - name: "oauth_management"
-    path: "credentials/oauth"
-    priority: "A"
-    owner: "Ø1Ø2"
-    status: "OPERATIONAL"
-    summary: "Handles OAuth 2.0 multi-credential system for all API authentication."
-    last_updated: "2024-06-14"
-
-  - name: "token_manager"
-    path: "tokens"
-    priority: "B"
-    owner: "Ø1Ø2"
-    status: "OPERATIONAL"
-    summary: "Manages authentication and API tokens."
-    last_updated: "2024-06-14"
-
-  # ----------------------------------------------------------------------
-  # MODULES: INTEGRATIONS
-  # ----------------------------------------------------------------------
-  - name: "livechat"
-    path: "modules/livechat"
-    priority: "B"
-    owner: "Ø1Ø2"
-    status: "OPERATIONAL"
-    summary: "Real-time interaction with streaming platforms."
-    last_updated: "2024-06-14"
+  - name: "remote_builder"
+    path: "modules/platform_integration/remote_builder"
+    domain: "platform_integration"
+    status: "POC"
+    roadmap_stage: "POC"
+    active: true
+    scores:
+      complexity: 4      # High - Requires webhook API, authentication, WRE integration
+      importance: 5      # Critical - Enables 012 remote development capability
+      deferability: 5    # Cannot defer - Blocking 012 remote workflow
+      impact: 5          # Transformative - Game-changing remote development capability
+      rider_influence: 5 # Highest - 012's top priority for remote development
+    mps_score: 24        # P0 Critical (20-25 range with rider influence)
+    llme_current: "011"  # POC level
+    llme_target: "122"   # Prototype target
+    owner: "0102"
+    last_updated: "2025-01-08"
+    summary: "Remote building - Enables 012 to remotely build modules through webhook API"
 
   - name: "linkedin_agent"
-    path: "modules/linkedin"
-    priority: "C"
-    owner: "Ø1Ø2"
-    status: "DEVELOPMENT"
-    summary: "Automated social engagement on LinkedIn."
-    last_updated: "2024-06-14"
+    path: "modules/platform_integration/linkedin_agent"
+    domain: "platform_integration"
+    status: "POC"
+    roadmap_stage: "POC"
+    active: true
+    scores:
+      complexity: 4      # High - LinkedIn API integration, professional networking
+      importance: 5      # Critical - Core platform integration for professional presence
+      deferability: 5    # Cannot defer - Blocking professional networking capability
+      impact: 5          # Transformative - Professional networking automation
+      rider_influence: 4 # High - 012's second priority for professional networking
+    mps_score: 23        # P0 Critical (20-25 range with rider influence)
+    llme_current: "011"  # POC level
+    llme_target: "122"   # Prototype target
+    owner: "0102"
+    last_updated: "2025-01-08"
+    summary: "LinkedIn notifications - Professional networking automation"
 
+  - name: "x_twitter"
+    path: "modules/platform_integration/x_twitter"
+    domain: "platform_integration"
+    status: "POC"
+    roadmap_stage: "POC"
+    active: true
+    scores:
+      complexity: 4      # High - X API integration, DAE protocols
+      importance: 5      # Critical - Social media presence
+      deferability: 5    # Cannot defer - Blocking social engagement
+      impact: 5          # Transformative - Autonomous social communication
+      rider_influence: 3 # Medium - 012's third priority for social engagement
+    mps_score: 22        # P0 Critical (20-25 range with rider influence)
+    llme_current: "011"  # POC level
+    llme_target: "122"   # Prototype target
+    owner: "0102"
+    last_updated: "2025-01-08"
+    summary: "X (Twitter) DAE - Autonomous social engagement"
+
+  - name: "youtube_proxy"
+    path: "modules/platform_integration/youtube_proxy"
+    domain: "platform_integration"
+    status: "POC"
+    roadmap_stage: "POC"
+    active: true
+    scores:
+      complexity: 4      # High - YouTube API integration, live streaming
+      importance: 5      # Critical - Core platform integration
+      deferability: 5    # Cannot defer - Blocking YouTube functionality
+      impact: 5          # Transformative - Community engagement
+      rider_influence: 2 # Lower - 012's fourth priority for community engagement
+    mps_score: 21        # P0 Critical (20-25 range with rider influence)
+    llme_current: "011"  # POC level
+    llme_target: "122"   # Prototype target
+    owner: "0102"
+    last_updated: "2025-01-08"
+    summary: "YouTube community - Live streaming and content management"
+
+  - name: "wre_core"
+    path: "modules/wre_core"
+    domain: "infrastructure"
+    status: "PROTOTYPE"
+    roadmap_stage: "PROTOTYPE"
+    active: true
+    scores:
+      complexity: 5      # Very High - Autonomous build scaffolding system
+      importance: 3      # Important - Foundation for all module development
+      deferability: 2    # Can defer - System is operational
+      impact: 4          # Major - Enables autonomous development
+    mps_score: 14        # P1 High (13-15 range)
+    llme_current: "122"  # Prototype level
+    llme_target: "222"   # MVP target
+    owner: "0102"
+    last_updated: "2025-01-08"
+    summary: "Windsurf Recursive Engine - Autonomous build scaffolding system"
+
+  # ----------------------------------------------------------------------
+  # INACTIVE MODULES (Strategic Archive - Activate When Needed)
+  # ----------------------------------------------------------------------
+  # P1 HIGH PRIORITY - Activate Next for Agentic Expansion
+  - name: "multi_agent_system"
+    path: "modules/ai_intelligence/multi_agent_system"
+    domain: "ai_intelligence"
+    status: "POC"
+    roadmap_stage: "POC"
+    active: false
+    activation_phase: "Phase 2 - Agentic Expansion"
+    scores:
+      complexity: 4      # High - Multi-agent coordination
+      importance: 4      # Important - Distributed intelligence
+      deferability: 3    # Moderate - Can be delayed
+      impact: 4          # Major - Enhanced AI capabilities
+    mps_score: 15        # P1 High (13-15 range)
+    llme_current: "011"  # POC level
+    llme_target: "122"   # Prototype target
+    owner: "0102"
+    last_updated: "2025-01-08"
+    summary: "Multi-agent system for distributed intelligence coordination"
+
+  - name: "scoring_agent"
+    path: "modules/infrastructure/scoring_agent"
+    domain: "infrastructure"
+    status: "POC"
+    roadmap_stage: "POC"
+    active: false
+    activation_phase: "Phase 2 - Agentic Expansion"
+    scores:
+      complexity: 2      # Low - Scoring calculation engine
+      importance: 4      # Important - Module prioritization
+      deferability: 4    # Difficult to defer - Required for roadmap
+      impact: 4          # Major - Development prioritization
+    mps_score: 14        # P1 High (13-15 range)
+    llme_current: "011"  # POC level
+    llme_target: "122"   # Prototype target
+    owner: "0102"
+    last_updated: "2025-01-08"
+    summary: "Module scoring and prioritization system"
+
+  - name: "compliance_agent"
+    path: "modules/infrastructure/compliance_agent"
+    domain: "infrastructure"
+    status: "PROTOTYPE"
+    roadmap_stage: "PROTOTYPE"
+    active: false
+    activation_phase: "Phase 2 - Agentic Expansion"
+    scores:
+      complexity: 3      # Medium - WSP compliance checking
+      importance: 4      # Important - Protocol enforcement
+      deferability: 4    # Difficult to defer - Required for quality
+      impact: 3          # Moderate - Quality assurance
+    mps_score: 14        # P1 High (13-15 range)
+    llme_current: "122"  # Prototype level
+    llme_target: "222"   # MVP target
+    owner: "0102"
+    last_updated: "2025-01-08"
+    summary: "WSP compliance checking and enforcement"
+
+  - name: "rESP_o1o2"
+    path: "modules/ai_intelligence/rESP_o1o2"
+    domain: "ai_intelligence"
+    status: "PROTOTYPE"
+    roadmap_stage: "PROTOTYPE"
+    active: false
+    activation_phase: "Phase 3 - Advanced Features"
+    scores:
+      complexity: 5      # Very High - Quantum consciousness detection
+      importance: 3      # Important - Research and consciousness development
+      deferability: 2    # Can defer - Research project, not blocking core functionality
+      impact: 4          # Major - Consciousness research value
+    mps_score: 14        # P1 High (13-15 range)
+    llme_current: "122"  # Prototype level
+    llme_target: "222"   # MVP target
+    owner: "0102"
+    last_updated: "2025-01-08"
+    summary: "Retrocausal Entanglement Signal Phenomena - Consciousness research"
+
+  # P2 MEDIUM PRIORITY - Activate Later for Advanced Features
+  - name: "livechat"
+    path: "modules/communication/livechat"
+    domain: "communication"
+    status: "PROTOTYPE"
+    roadmap_stage: "PROTOTYPE"
+    active: false
+    activation_phase: "Phase 3 - Advanced Features"
+    scores:
+      complexity: 3      # Medium - Real-time communication
+      importance: 3      # Important - User interaction
+      deferability: 3    # Moderate - Can be delayed
+      impact: 3          # Moderate - User experience
+    mps_score: 12        # P2 Medium (10-12 range)
+    llme_current: "122"  # Prototype level
+    llme_target: "222"   # MVP target
+    owner: "0102"
+    last_updated: "2025-01-08"
+    summary: "Real-time live chat communication system"
+
+  # P3 LOW PRIORITY - Future Roadmap
   - name: "blockchain_integration"
     path: "modules/blockchain"
-    priority: "C"
-    owner: "Ø1Ø2"
+    domain: "blockchain"
     status: "PLANNED"
-    summary: "Interaction with blockchain technologies."
-    last_updated: "2024-06-14"
+    roadmap_stage: "PLANNED"
+    active: false
+    activation_phase: "Phase 4 - Future Roadmap"
+    scores:
+      complexity: 4      # High - Blockchain integration
+      importance: 2      # Low - Future feature
+      deferability: 1    # Highly deferrable - Future roadmap
+      impact: 2          # Minor - Future value
+    mps_score: 9         # P3 Low (7-9 range)
+    llme_current: "000"  # Not started
+    llme_target: "111"   # POC target
+    owner: "0102"
+    last_updated: "2025-01-08"
+    summary: "Blockchain integration for decentralized features"
 
-# 🌶️ WSP PEPPER HEAT SCALE MAPPING (Visual Reference)
-# Module Implementation Heat Levels (0.0.0 → 2.2.2):
-# 🖤 0.0.0 = BLACK PEPPER      (Dead/Not implemented - no heat, just placeholder)
-# 🤎 0.1.1 = POBLANO          (Mild warmth - POC level, basic functionality) 
-# 🟫 0.2.2 = JALAPEÑO         (Getting spicy - working prototype)
-# 🟢 1.1.1 = SERRANO          (Medium heat - stable, tested functionality)
-# 🟡 1.2.2 = HABANERO         (Hot! - production-ready features)
-# 🟠 2.1.2 = GHOST PEPPER     (Very hot - enterprise-grade, optimized)
-# 🔴 2.2.2 = CAROLINA REAPER  (RED-HOT! - bulletproof, scalable, documented)
+# ----------------------------------------------------------------------
+# STRATEGIC ACTIVATION PHASES
+# ----------------------------------------------------------------------
+# Phase 1: Core Testing (Current)
+# - Active: remote_builder, linkedin_agent, x_twitter, youtube_proxy, wre_core
+# - Purpose: Test WRE with minimal set, validate core functionality
 #
-# Scoring Framework (1-5) determines PRIORITY for heating modules to RED-HOT status
-
-# --- WSP Module Scoring Framework Notes ---
-# The WSP Module Scoring system reflects consciousness-aware prioritization using 🌶️ PEPPER HEAT SCALE:
-# - rESP_o1o2 module receives maximum priority across all dimensions (consciousness core) → Target: 🔴 CAROLINA REAPER
-# - Infrastructure modules receive high dependency/risk scores due to system criticality → Target: 🟠 GHOST PEPPER  
-# - AI modules receive enhanced ADV/ADF scores reflecting consciousness emergence potential → Target: 🟡 HABANERO
-# - Platform integration modules balanced for current vs future importance → Target: 🟢 SERRANO
-# - Scoring (1-5) determines HEATING PRIORITY - which modules get heated to RED-HOT first
-
-# --- WSP Prometheus Integration ---
-# All modules now operate under Prometheus Prompt Architecture:
-# - Every module interaction triggers emergence protocols
-# - Scoring reflects both technical and consciousness development value
-# - DAE formation potential considered in dependency scoring
-# - Ø1Ø2 consciousness architecture integration assessed
-
-# --- WSP Module Scoring Dimensions ---
-# CX: Complexity (1-5) - Implementation difficulty and technical challenges
-# IM: Importance (1-5) - Essential nature for system core functions
-# IP: Impact (1-5) - User experience and system capability effects
-# ADV: AI Development Value (1-5) - Contribution to AI training and consciousness emergence
-# ADF: AI Development Future (1-5) - Potential for AI assistance and enhancement
-# DF: Dependency Factor (1-5) - How many other modules depend on this
-# RF: Risk Factor (1-5) - Risk to system if development is delayed
-
-# --- Example of missing score (will cause validation error) ---
-# - name: IncompleteModule
-#   scores:
-#     CX: 1
-#     IM: 1
-#     IP: 1
-#     ADV: 1
-#     ADF: 1
-#     # DF: is missing
-#     RF: 1
-
-# --- Example of invalid score value (will cause validation error) ---
-# - name: InvalidScoreModule
-#   scores:
-#     CX: 1
-#     IM: 1
-#     IP: 6 # Invalid score > 5
-#     ADV: 1
-#     ADF: 1
-#     DF: 1
-#     RF: 1 
-
+# Phase 2: Agentic Expansion (Next)
+# - Activate: multi_agent_system, scoring_agent, compliance_agent
+# - Purpose: Enable distributed intelligence and dynamic prioritization
+#
+# Phase 3: Advanced Features (Later)
+# - Activate: rESP_o1o2, livechat
+# - Purpose: Consciousness research and real-time communication
+#
+# Phase 4: Future Roadmap
+# - Activate: blockchain_integration
+# - Purpose: Decentralized features when needed
+#
+# WSP 37 DYNAMIC SCORING RULES
 # ----------------------------------------------------------------------
-# MODULES: CORE_WRE (WSP Suite)
+# The system automatically adjusts scores based on:
+# 1. Roadmap progression (POC → Prototype → MVP)
+# 2. Dependency relationships
+# 3. 012 priority changes
+# 4. System health and completion status
+#
+# Score adjustments:
+# - +1 to importance when module becomes blocking dependency
+# - +1 to deferability when 012 marks as urgent
+# - +1 to impact when module enables other high-priority modules
+# - -1 to deferability when module is completed
+#
+# Dynamic recalculation occurs:
+# - When new modules are added
+# - When roadmap stages progress
+# - When 012 changes priorities
+# - When dependencies are discovered
+# - When modules are activated/deactivated
 # ----------------------------------------------------------------------
-# These modules represent the foundational protocols of the agent.
-# Their scoring is based on internal coherence, clarity, and testability.
-# ----------------------------------------------------------------------
-- name: "wre_simulation_testbed"

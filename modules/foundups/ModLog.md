@@ -4,7 +4,7 @@ This log tracks changes specific to the FoundUps core functionality module.
 
 ====================================================================
 ## MODLOG - [FoundUps WRE Integration]:
-- Version: 1.1.0 (WRE Module Integration)
+- Version: 0.1.0 (WRE Module Integration)
 - Date: 2025-06-28
 - Git Tag: foundups-v1.1.0-wre
 - Description: Integration of FoundUps LiveChat functionality into WRE module system
@@ -22,7 +22,7 @@ This log tracks changes specific to the FoundUps core functionality module.
 ====================================================================
 
 ## MODLOG - [FoundUps Core Foundation]:
-- Version: 1.0.0 (Initial FoundUps Implementation)
+- Version: 0.0.0 (Initial FoundUps Implementation)
 - Date: 2025-06-16
 - Git Tag: foundups-v1.0.0
 - Description: Core FoundUps Agent functionality

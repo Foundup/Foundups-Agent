@@ -1,6 +1,79 @@
-# WRE Core Test Suite
+# WRE Core Testing Suite
 
-Complete test coverage for the Windsurf Recursive Engine (WRE) following WSP 6 requirements and WSP_48 enhancement protocols.
+## Overview
+This directory contains the comprehensive test suite for the WRE Core module, following WSP 1-13 protocols for autonomous agentic development. All tests are designed to ensure full compliance, modular integrity, and robust interface coverage.
+
+## Test Types
+- **Unit Tests:** Validate individual functions and classes in isolation.
+- **Integration Tests:** Ensure correct interaction between WRE Core components.
+- **System/Compliance Tests:** Validate WSP protocol adherence, ModLog updates, and end-to-end flows.
+
+## Specialized Test Scripts
+
+### 1. `test_wre_menu.py`
+- **Purpose:** Troubleshoots and validates the WRE menu system, UI interface, pagination, menu handler, and system management integration.
+- **How it works:**
+  - Instantiates the UI interface and WRE core components.
+  - Checks prioritized module retrieval, menu display, pagination logic, rider influence, and module selection.
+  - Verifies initialization of all core handlers and system management.
+- **Usage:**
+  ```bash
+  python test_wre_menu.py
+  ```
+- **Expected Output:**
+  - Confirms all menu and handler components are working.
+  - Summarizes test results and readiness.
+
+### 2. `test_wre_interactive.py`
+- **Purpose:** Simulates user menu selections and verifies each main menu option, including pagination and handler integration.
+- **How it works:**
+  - Mocks user choices for each menu path (module selection, new module, system management, WSP compliance, rider influence, exit).
+  - Tests pagination navigation and menu handler/WSP30 orchestrator integration.
+- **Usage:**
+  ```bash
+  python test_wre_interactive.py
+  ```
+- **Expected Output:**
+  - Confirms all menu selections are properly configured and functional.
+  - Summarizes interactive test results.
+
+### 3. `test_wre_live.py`
+- **Purpose:** Runs the live WRE system, validating real initialization, session management, component validation, module prioritization, and orchestrator readiness.
+- **How it works:**
+  - Instantiates the WRECore and runs a live session.
+  - Validates session start/end, component checks, and module prioritization using WSP37ScoringEngine.
+  - Shows the expected main menu structure and provides instructions for running the full system.
+- **Usage:**
+  ```bash
+  python test_wre_live.py
+  ```
+- **Expected Output:**
+  - Confirms live system readiness and operational status.
+  - Summarizes live test results and next steps.
+
+## WSP Compliance
+- All test scripts and coverage are maintained in accordance with WSP 4 (FMAS audit), WSP 5 (≥90% test coverage), and WSP 6 (full suite validation).
+- **Do not create redundant tests for menu, integration, or live system flows.** Use or extend the above scripts as needed.
+- Update this README and the ModLog with any new test flows or major changes.
+
+## Running All Tests
+To run the full suite (excluding interactive/live scripts):
+```bash
+pytest -v
+```
+
+## Notes
+- For full WRE system operation, use:
+  ```bash
+  python -m modules.wre_core.src.main
+  ```
+- For compliance audits, run:
+  ```bash
+  python tools/modular_audit/modular_audit.py modules/
+  ```
+
+---
+*This documentation is maintained for agentic remembrance and WSP protocol compliance. All future test additions must reference this file to avoid duplication and ensure zen coding integrity.*
 
 ## Test Status: ✅ **43/43 TESTS PASSING**
 

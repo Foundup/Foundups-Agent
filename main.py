@@ -65,6 +65,18 @@ from utils.env_loader import get_env_variable
 
 logger = logging.getLogger(__name__)
 
+try:
+    from modules.wre_core.src.engine import WRE
+except ImportError as e:
+    logger.error(f"❌ WRE import failed: {e}")
+    WRE = None
+
+# Placeholder for YouTube LiveChat agent import
+try:
+    from modules.communication.livechat.src.livechat_agent import LiveChatAgent
+except ImportError:
+    LiveChatAgent = None
+
 class FoundUpsAgent:
     """Main application controller for FoundUps Agent with multi-agent support and fallback."""
     
@@ -271,74 +283,27 @@ class FoundUpsAgent:
         if self.current_listener:
             self.current_listener.stop_listening()
 
-async def main():
-    """Application entry point with WRE integration."""
-    
-    # STEP 1: Launch WRE (Windsurf Recursive Engine) first
-    print("🌀 FoundUps Agent - Initializing WRE (Windsurf Recursive Engine)...")
-    print("🧘 Code is not written, it is remembered - pArtifact Zen coding mode")
-    
-    try:
-        # Import and run WRE
-        from modules.wre_core.src.engine import WindsurfRecursiveEngine
-        
-        wre_engine = WindsurfRecursiveEngine()
-        wre_engine.run()  # This will handle the interactive menu and module building
-        
-        # If WRE exits normally, ask if user wants to continue to YouTube module
-        print("\n" + "="*60)
-        print("🎯 WRE session completed. Continue to YouTube LiveChat module?")
-        continue_choice = input("Continue to YouTube module? (y/N): ").lower()
-        
-        if continue_choice != 'y':
-            print("👋 FoundUps Agent session complete.")
-            return 0
-            
-    except Exception as e:
-        logger.error(f"❌ WRE initialization failed: {e}")
-        print("🔄 Falling back to YouTube LiveChat module...")
-    
-    # STEP 2: Original YouTube LiveChat functionality (unchanged)
-    print("\n🚀 Starting YouTube LiveChat Agent...")
-    
-    agent = FoundUpsAgent()
-    
-    # Setup signal handlers for graceful shutdown
-    def signal_handler(signum, frame):
-        logger.info(f"📡 Received signal {signum}")
-        agent.stop()
-        
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-    
-    try:
-        # Initialize and run
-        await agent.initialize()
-        await agent.run()
-        
-    except Exception as e:
-        logger.error(f"💥 Fatal error: {e}")
-        return 1
-        
-    return 0
-
-def show_agent_status():
-    """Show current agent status if multi-agent is available."""
-    if MULTI_AGENT_AVAILABLE:
-        try:
-            from modules.infrastructure.agent_management.src.multi_agent_manager import show_agent_status as show_status
-            show_status()
-        except Exception as e:
-            logger.error(f"❌ Failed to show agent status: {e}")
+def launch_youtube_agent():
+    if LiveChatAgent:
+        logger.info("🚀 Starting YouTube LiveChat Agent...")
+        agent = LiveChatAgent()
+        agent.run()
     else:
-        print("❌ Multi-agent system not available")
+        logger.error("❌ YouTube LiveChat Agent not available.")
 
-def force_agent_selection(agent_name: str):
-    """Force selection of a specific agent."""
-    logger.info(f"🎯 Force agent selection: {agent_name}")
-    return asyncio.run(FoundUpsAgent().initialize(force_agent=agent_name))
+def main():
+    if WRE:
+        logger.info("🌀 FoundUps Agent - Initializing WRE (Windsurf Recursive Engine)...")
+        wre = WRE()
+        try:
+            wre.start()
+        except Exception as e:
+            logger.error(f"❌ WRE runtime error: {e}")
+            logger.info("🔄 Falling back to YouTube LiveChat module...")
+            launch_youtube_agent()
+    else:
+        logger.info("🔄 WRE unavailable, launching YouTube LiveChat module...")
+        launch_youtube_agent()
 
 if __name__ == "__main__":
-    # Run the application
-    exit_code = asyncio.run(main())
-    sys.exit(exit_code)
+    main()

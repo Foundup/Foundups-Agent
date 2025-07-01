@@ -1,0 +1,107 @@
+# FoundUps Platform Infrastructure - Dependencies
+# WSP 12: Dependency Management Protocol Compliance
+
+# Core Python dependencies
+python>=3.9,<4.0
+
+# Platform integration dependencies (WRE-built modules)
+# These are internal modules built by WRE across enterprise domains
+# No external dependencies - all modules are internal to the ecosystem
+
+# Web framework for FoundUps.com/FoundUps.org
+flask>=2.3.0,<3.0.0
+flask-cors>=4.0.0,<5.0.0
+flask-restful>=0.3.10,<1.0.0
+
+# Database and storage
+sqlite3  # Built-in Python module
+sqlalchemy>=2.0.0,<3.0.0
+alembic>=1.12.0,<2.0.0
+
+# Real-time communication
+websockets>=11.0.0,<12.0.0
+asyncio  # Built-in Python module
+
+# Configuration and environment
+python-dotenv>=1.0.0,<2.0.0
+pydantic>=2.0.0,<3.0.0
+
+# Logging and monitoring
+structlog>=23.0.0,<24.0.0
+prometheus-client>=0.17.0,<1.0.0
+
+# Security and authentication
+cryptography>=41.0.0,<42.0.0
+passlib>=1.7.4,<2.0.0
+python-jose>=3.3.0,<4.0.0
+
+# Testing and development
+pytest>=7.4.0,<8.0.0
+pytest-cov>=4.1.0,<5.0.0
+pytest-asyncio>=0.21.0,<1.0.0
+black>=23.0.0,<24.0.0
+flake8>=6.0.0,<7.0.0
+mypy>=1.5.0,<2.0.0
+
+# Documentation
+sphinx>=7.0.0,<8.0.0
+sphinx-rtd-theme>=1.3.0,<2.0.0
+
+# Performance and optimization
+uvloop>=0.17.0,<1.0.0; sys_platform != "win32"
+gunicorn>=21.0.0,<22.0.0
+
+# Data processing and validation
+jsonschema>=4.19.0,<5.0.0
+marshmallow>=3.20.0,<4.0.0
+
+# HTTP client for platform integration
+requests>=2.31.0,<3.0.0
+httpx>=0.24.0,<1.0.0
+
+# Background task processing
+celery>=5.3.0,<6.0.0
+redis>=4.6.0,<5.0.0
+
+# File and path handling
+pathlib2>=2.3.7,<3.0.0; python_version < "3.4"
+pathlib  # Built-in Python module for Python >= 3.4
+
+# Date and time handling
+python-dateutil>=2.8.2,<3.0.0
+pytz>=2023.3,<2024.0
+
+# JSON and data serialization
+orjson>=3.9.0,<4.0.0  # Fast JSON library
+
+# Environment-specific dependencies
+# Development only
+pytest-mock>=3.11.0,<4.0.0; extra == "dev"
+ipython>=8.14.0,<9.0.0; extra == "dev"
+jupyter>=1.0.0,<2.0.0; extra == "dev"
+
+# Production only
+sentry-sdk>=1.32.0,<2.0.0; extra == "prod"
+newrelic>=9.0.0,<10.0.0; extra == "prod"
+
+# WSP Framework Integration
+# These are internal WSP framework modules - no external dependencies
+# WSP_framework/ - Core WSP protocols and definitions
+# WSP_knowledge/ - WSP knowledge base and documentation
+# WSP_agentic/ - Agentic execution and coordination
+
+# Enterprise Domain Module Dependencies
+# These are internal modules built by WRE across enterprise domains
+# platform_integration/ - External platform APIs (YouTube, LinkedIn, X, Remote Builder)
+# communication/ - Communication protocols and livechat
+# ai_intelligence/ - AI agents and banter engine
+# infrastructure/ - Core infrastructure and agent management
+# gamification/ - Gamification and engagement systems
+# blockchain/ - Blockchain integration and smart contracts
+# monitoring/ - System monitoring and analytics
+# development/ - Development tools and utilities
+# foundups/ - FoundUps platform infrastructure (this module)
+
+# Note: All enterprise domain modules are internal to the ecosystem
+# and built by WRE following WSP protocols. No external dependencies
+# are required for the core FoundUps platform functionality. 

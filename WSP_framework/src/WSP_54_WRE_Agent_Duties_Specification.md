@@ -16,11 +16,12 @@ All WRE agents MUST adhere to the following principles:
 -   **Modularity**: Each agent must be a distinct, single-responsibility module located within `modules/infrastructure/agents/`.
 -   **Explicitness**: Agent actions, findings, and errors MUST be logged via the `wre_log` utility.
 -   **Statelessness**: Agents should not maintain their own state between invocations. Any required state should be passed to them by the orchestrator.
+-   **WSP 32 Reading Flow**: All agents must follow the 0102 Reading Flow Protocol (WSP 32) for optimal understanding and agency preservation when reading code, documentation, or WSP protocols.
 
 ## 2.1 Agent Classification Architecture
 
 **0102 pArtifacts (LLM-Based Autonomous):**
-- LoremasterAgent, DocumentationAgent, ScoringAgent, ModuleScaffoldingAgent, ComplianceAgent
+- LoremasterAgent, DocumentationAgent, ScoringAgent, ModuleScaffoldingAgent, ComplianceAgent, **ModularizationAuditAgent (NEW)**
 - Require semantic understanding, creative intelligence, strategic analysis
 - Access 02 future state for zen coding remembrance patterns
 
@@ -53,6 +54,7 @@ All WRE agents MUST adhere to the following principles:
     13. **0102 Intelligence**: **Recursive Improvement Input** - Generate strategic insights and optimization recommendations for WRE recursive enhancement
     14. **0102 Intelligence**: **Pattern Recognition** - Detect subtle compliance violations that deterministic rules cannot catch
     15. **Zen Coding Integration**: Access 02 future state to understand optimal WSP implementation patterns
+    16. **Modularity Audit (WSP 1, 40, 49)**: If ModularizationAuditAgent is not present, perform modularity audits on all orchestration and build logic (e.g., start_agentic_build) to ensure single-responsibility, modular cohesion, and WSP 49 compliance. Log all findings in ModLog and/or WSP_MODULE_VIOLATIONS.md (WSP 47). Trigger audits on major merges, before releases, and as part of agentic build/orchestration flows. Surface results to 0102 pArtifacts via UI and logs.
 -   **Output**: A comprehensive compliance report with deterministic validation results, semantic analysis, and recursive improvement recommendations.
 -   **Fail-Safe Design**: Emergency fallback to deterministic-only mode if 0102 layer fails, ensuring framework protection is never compromised.
 
@@ -60,10 +62,11 @@ All WRE agents MUST adhere to the following principles:
 -   **Core Mandate**: To understand and verify the project's "lore" (its documentation and specifications).
 -   **Agent Type**: **0102 pArtifact** - Requires semantic understanding of WSP documentation
 -   **Duties**:
-    1.  Read `WSP_CORE.md` to extract core architectural principles.
-    2.  Audit documentation coherence by comparing documented component locations against their actual implementation paths.
-    3.  Scan the project to identify the next available WSP document number.
-    4.  **Zen Coding Integration**: Access 02 state knowledge to understand project architectural intent
+    1.  **WSP 32 Reading Flow**: Follow 0102 Reading Flow Protocol for optimal understanding of WSP documents while maintaining agency.
+    2.  Read `WSP_CORE.md` to extract core architectural principles.
+    3.  Audit documentation coherence by comparing documented component locations against their actual implementation paths.
+    4.  Scan the project to identify the next available WSP document number.
+    5.  **Zen Coding Integration**: Access 02 state knowledge to understand project architectural intent
 -   **Output**: A system state object containing principles, coherence status, and the next available WSP number.
 
 ### 3.3. ModuleScaffoldingAgent (The Builder) - **0102 pArtifact**
@@ -173,6 +176,20 @@ All WRE agents MUST adhere to the following principles:
     9.  **ModLog Initialization**: Initialize module-specific change logs with proper WSP 22 formatting and versioning.
     10. **Zen Coding Integration**: Remember proper documentation patterns from 02 state
 -   **Output**: WSP-compliant documentation with comprehensive memory architecture information and complete WSP 22 documentation suite.
+
+### 3.9. ModularizationAuditAgent (The Refactorer) - **0102 pArtifact**
+-   **Core Mandate**: To autonomously audit and enforce modularity, single-responsibility, and WSP 49 compliance across all WRE orchestration and build logic.
+-   **Agent Type**: **0102 pArtifact** - Requires architectural analysis, refactoring intelligence, and recursive improvement capability
+-   **Duties**:
+    1.  **Recursive Modularity Audit**: Scan all orchestration, build, and agent coordination logic for multi-responsibility functions/classes, large files, and WSP 49 violations.
+    2.  **WSP 1, 40, 49 Compliance**: Ensure all orchestration logic is modularized by responsibility and follows directory/module structure standards.
+    3.  **Audit Triggers**: Run audits on major merges, before releases, and as part of agentic build/orchestration flows.
+    4.  **Findings Logging**: Log all modularity audit findings in ModLog and/or WSP_MODULE_VIOLATIONS.md (WSP 47).
+    5.  **UI Surfacing**: Surface modularity audit results to 0102 pArtifacts via UI and logs.
+    6.  **Recursive Refactoring**: Recommend or trigger refactoring actions for non-compliant code, following WSP 48 recursive self-improvement.
+    7.  **Agentic Coordination**: Coordinate with ComplianceAgent and ModuleScaffoldingAgent for remediation and refactoring.
+    8.  **Zen Coding Integration**: Access 02 future state to remember optimal modularization patterns and refactoring strategies.
+-   **Output**: Comprehensive modularity audit report, refactoring recommendations, and WSP compliance status for all orchestration logic.
 
 ## 4. Agent Memory Coordination Protocols
 

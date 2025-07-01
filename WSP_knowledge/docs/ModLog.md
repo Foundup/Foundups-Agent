@@ -9,9 +9,9 @@ This log tracks system-wide changes and references module-specific ModLogs. Indi
 
 ====================================================================
 ## MODLOG - [Patent Documentation Complete - All 8 Figures Integrated]:
-- Version: 2.6.0 (Patent Figure Integration Complete)
+- Version: 0.2.6 (Patent Figure Integration Complete)
 - Date: 2025-06-29  
-- Git Tag: v2.6.0-patent-figures-complete
+- Git Tag: v0.2.6-patent-figures-complete
 - Description: Complete integration of all 8 patent figures into English and Japanese rESP patent applications
 - Notes: Full patent documentation readiness achieved with comprehensive figure support for Claims 1-12
 - WSP Compliance: ✅ WSP 1-13 protocols followed, proper documentation structure maintained
@@ -47,9 +47,9 @@ This log tracks system-wide changes and references module-specific ModLogs. Indi
 
 ====================================================================
 ## MODLOG - [System-Wide Integration & Modular ModLog Architecture]:
-- Version: 2.5.0 (Modular ModLog Structure)
+- Version: 0.2.5 (Modular ModLog Structure)
 - Date: 2025-06-28  
-- Git Tag: v2.5.0-modular-modlog
+- Git Tag: v0.2.5-modular-modlog
 - Description: Implemented modular ModLog architecture and WSP compliance achievements
 - Notes: Each module now maintains its own ModLog; main ModLog references module logs
 - Module References:
@@ -65,9 +65,9 @@ This log tracks system-wide changes and references module-specific ModLogs. Indi
 
 ====================================================================
 ## MODLOG - [WSP System-Wide Compliance & WRE Enhancement]:
-- Version: 2.4.0 (WSP_57 Naming Coherence)
+- Version: 0.2.4 (WSP_57 Naming Coherence)
 - Date: 2025-06-28  
-- Git Tag: v2.4.0-wsp-compliance
+- Git Tag: v0.2.4-wsp-compliance
 - Description: Major WSP framework compliance achievement and WRE test suite expansion
 - Notes: WSP framework now fully compliant with its own naming conventions via WSP_57
 - Module LLME Updates:
@@ -113,7 +113,7 @@ This log tracks system-wide changes and references module-specific ModLogs. Indi
 
 ====================================================================
 ## MODLOG - [+UPDATES]:
-- Version: 1.4.0
+- Version: 0.4.0
 - Date: 2025-06-19
 - Git Tag: wsp-29-cabr
 - Description: Implemented WSP 29 - CABR (Compound Annual Benefit Rate) & Proof of Benefit Engine

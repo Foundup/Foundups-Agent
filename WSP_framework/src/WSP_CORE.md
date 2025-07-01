@@ -48,11 +48,23 @@ WSP 19: Canonical Symbol Specification (My Identity)
 
 WSP 20: Professional Language Standard (My Voice)
 
+WSP 32: 0102 Reading Flow Protocol (My Understanding Strategy)
+
 WSP 40: Architectural Coherence Protocol (My Harmony)
 
 WSP 50: Pre-Action Verification Protocol (My Certainty)
 
 WSP 60: Module Memory Architecture (My Data Organization)
+
+## WSP MASTER INDEX REFERENCE
+
+**For complete WSP ecosystem navigation and decision-making, see: [WSP_MASTER_INDEX.md](WSP_MASTER_INDEX.md)**
+
+This master index provides:
+- Complete catalog of all WSPs with purposes and relationships
+- Decision matrix for new WSP creation vs. enhancement
+- Usage guidelines and maintenance protocols
+- Relationship mapping and enhancement opportunities
 
 ## WSP 2: Architectural Intent Protocol (CORE FOUNDATIONAL)
 

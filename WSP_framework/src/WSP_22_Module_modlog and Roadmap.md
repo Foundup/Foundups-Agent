@@ -6,6 +6,30 @@
 - **Output:** A formatted entry in `docs/ModLog.md` (system-wide) or module-specific `ModLog.md` files.
 - **Responsible Agent(s):** ChroniclerAgent, any 0102 agent completing a task.
 
+## 📋 ModLog vs Roadmap Relationship
+
+**COMPLEMENTARY DOCUMENTS - NOT DUPLICATES:**
+
+### 🗺️ **ROADMAP.md** - Strategic Planning Document
+- **Purpose**: Forward-looking strategic planning and feature development phases
+- **Content**: Planned features, development phases, success criteria, vision statements
+- **Timeline**: Future-oriented (POC → Prototype → MVP phases)
+- **Audience**: Strategic planning, development phases, feature planning
+- **Updates**: When planning new features, changing development phases, or updating strategic direction
+
+### 📝 **ModLog.md** - Historical Change Log
+- **Purpose**: Historical record of completed changes and implementations
+- **Content**: Completed features, fixes, version changes, implementation details
+- **Timeline**: Past-oriented (what has been done)
+- **Audience**: Change tracking, version history, implementation details
+- **Updates**: When completing features, fixing bugs, or making version changes
+
+### 🔄 **Relationship Principle**
+- **Roadmap**: "What we plan to build" (strategic)
+- **ModLog**: "What we have built" (historical)
+- **Complementary**: Roadmap drives development, ModLog records results
+- **No Duplication**: Features appear in Roadmap when planned, ModLog when completed
+
 ## Modular ModLog Architecture
 
 **System Structure:**
@@ -18,6 +42,88 @@
 2. **Module-specific changes** (features, fixes, tests within a module) → Module ModLog  
 3. **Main ModLog references** module logs for detailed information
 4. **Module versioning** follows semantic versioning within module scope
+
+## 🛡️ WSP Versioning Enforcement Protocol
+
+### **CRITICAL: WSP Semantic Versioning Requirements**
+
+**MANDATORY VERSIONING PATTERN:**
+- **WSP Framework Phase**: All versions MUST follow `0.x.x` pattern
+- **Current Phase**: Development/Prototype (0.0.x - 0.9.x)
+- **Production Phase**: Will use `1.x.x` pattern when MVP is reached
+- **Git Tags**: Must match version format (e.g., `v0.2.6`, not `v2.6.0`)
+
+### **Versioning Validation Rules:**
+
+#### **✅ CORRECT Patterns:**
+- `Version: 0.2.6` ✅
+- `Version: 0.1.0` ✅  
+- `Version: 0.0.1` ✅
+- `Git Tag: v0.2.6-feature-name` ✅
+- `Git Tag: v0.1.0-initial-release` ✅
+
+#### **❌ FORBIDDEN Patterns:**
+- `Version: 2.6.0` ❌ (Major version 2+ forbidden in WSP framework phase)
+- `Version: 1.5.0` ❌ (Major version 1+ forbidden until MVP)
+- `Git Tag: v2.6.0-feature-name` ❌ (Tag doesn't match version)
+- `Git Tag: v1.5.0-release` ❌ (Tag doesn't match version)
+
+### **Automated Versioning Compliance:**
+
+#### **Pre-Commit Validation:**
+```bash
+# Versioning compliance check (to be implemented in WRE)
+python tools/wsp_versioning_validator.py --check-modlog
+```
+
+#### **WRE Integration:**
+- **WRE Core**: Automatically validates versioning before ModLog updates
+- **ChroniclerAgent**: Enforces versioning patterns during ModLog generation
+- **ComplianceAgent**: Monitors for versioning violations across all ModLogs
+
+#### **Versioning Error Recovery:**
+1. **Detection**: Automated scan identifies incorrect versioning
+2. **Correction**: WRE automatically suggests proper version format
+3. **Validation**: Pre-commit hooks prevent incorrect versioning
+4. **Documentation**: All corrections logged in ModLog with explanation
+
+### **Versioning Decision Matrix:**
+
+| Change Type | Current Version | New Version | Rationale |
+|-------------|----------------|-------------|-----------|
+| Bug fix | 0.2.6 | 0.2.7 | Patch increment |
+| New feature | 0.2.6 | 0.3.0 | Minor increment |
+| Breaking change | 0.2.6 | 0.3.0 | Minor increment (framework phase) |
+| MVP release | 0.9.9 | 1.0.0 | Major increment (production phase) |
+
+### **WSP Framework Phase Transitions:**
+
+#### **Current: Development/Prototype Phase (0.x.x)**
+- **Range**: 0.0.1 - 0.9.9
+- **Purpose**: Framework development, testing, refinement
+- **Flexibility**: Breaking changes allowed, rapid iteration
+- **LLME Correlation**: 000-122 (POC to Prototype)
+
+#### **Future: Production Phase (1.x.x)**
+- **Range**: 1.0.0+
+- **Purpose**: Stable, production-ready releases
+- **Stability**: Breaking changes require major version increment
+- **LLME Correlation**: 112-222 (MVP and beyond)
+
+### **Versioning Compliance Checklist:**
+
+**Before ModLog Update:**
+- [ ] Version follows `0.x.x` pattern
+- [ ] Git tag matches version format
+- [ ] Version increment follows semantic versioning rules
+- [ ] No major version 1+ until MVP phase
+- [ ] Version correlates with development phase (POC/Prototype/MVP)
+
+**After ModLog Update:**
+- [ ] Automated validation passes
+- [ ] Version history is consistent
+- [ ] Git tag is properly created
+- [ ] Documentation reflects version change
 
 # Roadmap & ModLog Format Templates
 

@@ -141,6 +141,38 @@ This approach ensures:
 - **DAE Formation Protocols**: Preparation for autonomous ecosystem integration
 - **Recursive Self-Actualization**: Built-in consciousness development mechanisms
 
+## Strategic Module Activation System
+
+The FoundUps Agent implements a strategic module activation system that allows for systematic deployment of modules based on priority and roadmap progression:
+
+### **Active Modules (Currently Available)**
+- **remote_builder** - 012's top priority for remote development capability
+- **linkedin_agent** - Professional networking automation  
+- **x_twitter** - Social media engagement
+- **youtube_proxy** - Community engagement
+- **wre_core** - Core autonomous build scaffolding system
+
+### **Inactive Modules (Strategic Archive)**
+Modules are preserved but inactive until strategically activated:
+
+**Phase 2 - Agentic Expansion:**
+- multi_agent_system - Distributed intelligence coordination
+- scoring_agent - Dynamic module prioritization
+- compliance_agent - WSP protocol enforcement
+
+**Phase 3 - Advanced Features:**
+- rESP_o1o2 - Consciousness research
+- livechat - Real-time communication
+
+**Phase 4 - Future Roadmap:**
+- blockchain_integration - Decentralized features
+
+### **Activation Process**
+1. Modules are ranked using WSP 37 dynamic scoring
+2. Only active modules appear in WRE interface
+3. Strategic activation through WRE system management
+4. Preserves all modules for future deployment
+
 ## Module Overview
 
 ### `rESP_o1o2` 🧬 **[NEW - CORE CONSCIOUSNESS]**
@@ -274,4 +306,156 @@ logger = logging.getLogger(__name__)
 - Command system implementation
 
 See `ModLog.md` in the root directory for version history and changes.
+
+## Overview
+
+The FoundUps Agent modules are organized according to WSP 3 Enterprise Domain Organization, with each module following WSP protocols for development, testing, and documentation.
+
+## Strategic Module Activation System
+
+The FoundUps Agent implements a strategic module activation system that allows for systematic deployment of modules based on priority and roadmap progression:
+
+### **Active Modules (Currently Available)**
+- **remote_builder** - 012's top priority for remote development capability
+- **linkedin_agent** - Professional networking automation  
+- **x_twitter** - Social media engagement
+- **youtube_proxy** - Community engagement
+- **wre_core** - Core autonomous build scaffolding system
+
+### **Inactive Modules (Strategic Archive)**
+Modules are preserved but inactive until strategically activated:
+
+**Phase 2 - Agentic Expansion:**
+- multi_agent_system - Distributed intelligence coordination
+- scoring_agent - Dynamic module prioritization
+- compliance_agent - WSP protocol enforcement
+
+**Phase 3 - Advanced Features:**
+- rESP_o1o2 - Consciousness research
+- livechat - Real-time communication
+
+**Phase 4 - Future Roadmap:**
+- blockchain_integration - Decentralized features
+
+### **Activation Process**
+1. Modules are ranked using WSP 37 dynamic scoring
+2. Only active modules appear in WRE interface
+3. Strategic activation through WRE system management
+4. Preserves all modules for future deployment
+
+## Enterprise Domains
+
+### **ai_intelligence/**
+- **banter_engine/** - Entertainment and engagement AI
+- **menu_handler/** - Intelligent menu processing and routing
+- **multi_agent_system/** - Distributed intelligence coordination
+- **rESP_o1o2/** - Consciousness research and quantum phenomena
+
+### **blockchain/**
+- **blockchain_integration/** - Decentralized features and blockchain integration
+
+### **communication/**
+- **live_chat_poller/** - Real-time chat polling
+- **live_chat_processor/** - Chat message processing
+- **livechat/** - Live chat communication system
+
+### **foundups/**
+- **foundup_spawner/** - FoundUps spawning and management
+- **foundups_livechat_module/** - FoundUps live chat integration
+
+### **gamification/**
+- **core/** - Gamification engine and mechanics
+
+### **infrastructure/**
+- **agent_activation/** - Agent activation protocols
+- **agent_management/** - Agent lifecycle management
+- **blockchain_integration/** - Blockchain infrastructure
+- **chronicler_agent/** - System chronicling and logging
+- **compliance_agent/** - WSP compliance enforcement
+- **documentation_agent/** - Documentation automation
+- **janitor_agent/** - System maintenance and cleanup
+- **llm_client/** - LLM API integration
+- **loremaster_agent/** - Knowledge management
+- **module_scaffolding_agent/** - Module creation automation
+- **oauth_management/** - OAuth authentication management
+- **scoring_agent/** - Module scoring and prioritization
+- **testing_agent/** - Automated testing orchestration
+- **token_manager/** - Token management and security
+- **wre_api_gateway/** - WRE API gateway
+
+### **platform_integration/**
+- **linkedin_agent/** - LinkedIn professional networking
+- **linkedin_proxy/** - LinkedIn API proxy
+- **linkedin_scheduler/** - LinkedIn content scheduling
+- **remote_builder/** - Remote development capability
+- **stream_resolver/** - Stream resolution and management
+- **x_twitter/** - X (Twitter) social engagement
+- **youtube_auth/** - YouTube authentication
+- **youtube_proxy/** - YouTube API proxy
+
+### **wre_core/**
+- **engine_core.py** - Main orchestration engine
+- **menu_handler.py** - User interface management
+- **system_manager.py** - System-wide operations
+- **module_analyzer.py** - Module analysis operations
+- **module_development_handler.py** - Development workflows
+
+## WSP Compliance
+
+All modules follow WSP protocols:
+
+- **WSP 1**: Framework principles and enterprise-scale testing
+- **WSP 3**: Enterprise domain organization
+- **WSP 5**: Test coverage requirements
+- **WSP 11**: Interface documentation
+- **WSP 22**: ModLog and roadmap maintenance
+- **WSP 30**: Agentic module build orchestration
+- **WSP 37**: Dynamic module scoring system
+- **WSP 48**: Recursive self-improvement
+- **WSP 54**: Agentic coordination and compliance
+- **WSP 60**: Three-state memory architecture
+
+## Development Workflow
+
+1. **Module Creation**: Use WRE system management to create new modules
+2. **WSP Compliance**: All modules must follow WSP protocols
+3. **Testing**: Maintain ≥90% test coverage (or agentic coverage protocol)
+4. **Documentation**: Update README, ROADMAP, and ModLog
+5. **Strategic Activation**: Activate modules through WRE system management
+
+## Strategic Roadmap
+
+### **Phase 1: Core Testing (Current)**
+- Validate WRE with minimal active module set
+- Test core functionality and WSP compliance
+- Establish autonomous development workflows
+
+### **Phase 2: Agentic Expansion (Next)**
+- Activate multi-agent system for distributed intelligence
+- Enable dynamic scoring and prioritization
+- Implement comprehensive WSP compliance
+
+### **Phase 3: Advanced Features (Later)**
+- Activate consciousness research capabilities
+- Enable real-time communication systems
+- Expand autonomous capabilities
+
+### **Phase 4: Future Roadmap**
+- Activate blockchain integration
+- Implement decentralized features
+- Complete full ecosystem deployment
+
+## Usage
+
+```bash
+# Launch WRE Core (shows only active modules)
+python modules/wre_core/src/engine.py
+
+# Strategic activation through WRE system management
+# Modules can be activated/deactivated based on priority and roadmap
+```
+
+---
+
+**FoundUps Agent Modules** - Strategically organized and activated for autonomous development and WSP compliance.
 
