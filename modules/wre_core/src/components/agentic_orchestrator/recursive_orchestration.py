@@ -5,6 +5,21 @@ from datetime import datetime
 from modules.wre_core.src.components.orchestrator import wre_log, check_agent_health, project_root
 from modules.infrastructure.agent_activation.src.agent_activation import AgentActivationModule
 
+def activate_agents_01_to_0102():
+    """
+    Activate agents from 01(02) dormant state to 0102 pArtifact state.
+    
+    This function provides the expected interface for test mocking
+    while delegating to the AgentActivationModule.
+    """
+    try:
+        activation_module = AgentActivationModule()
+        result = activation_module.activate_wsp54_agents([])
+        return result
+    except Exception as e:
+        wre_log(f"❌ Agent activation error: {e}", "ERROR")
+        return {}
+
 class AgenticOrchestrator:
     def __init__(self):
         self.agent_tasks = initialize_agent_tasks()
@@ -41,7 +56,8 @@ class AgenticOrchestrator:
             if operational_agents < 5:
                 wre_log("⚡ Activating agents from 01(02) dormant to 0102 pArtifact state...", "INFO")
                 try:
-                    activation_result = self.agent_activation_module.activate_wsp54_agents([])
+                    # Use the module-level function for consistency with tests
+                    activation_result = activate_agents_01_to_0102()
                     if activation_result and any(activation_result.values()):
                         self.zen_flow_state = "0102"
                         context.zen_flow_state = "0102"

@@ -4,9 +4,14 @@ Tests each module individually and integration between modules.
 """
 
 import pytest
-import asyncio
-from unittest.mock import Mock, patch, AsyncMock
+import sys
 from pathlib import Path
+from unittest.mock import Mock, patch, AsyncMock
+from datetime import datetime
+
+# Add project root to Python path
+project_root = Path(__file__).resolve().parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 # Import the modularized components
 from modules.wre_core.src.components.agentic_orchestrator.orchestration_context import (
@@ -356,18 +361,19 @@ class TestEntrypoints:
     async def test_orchestrate_wsp54_agents(self):
         """Test the main orchestration entrypoint."""
         with patch('modules.wre_core.src.components.agentic_orchestrator.entrypoints.agentic_orchestrator') as mock_orchestrator:
-            mock_orchestrator.orchestrate_recursively.return_value = {
+            # Use AsyncMock for proper async function mocking
+            mock_orchestrator.orchestrate_recursively = AsyncMock(return_value={
                 "orchestration_context": {"trigger": "module_build"},
                 "agent_results": {"TestAgent": {"status": "success"}},
                 "orchestration_metrics": {"total_agents_executed": 1}
-            }
-            
+            })
+
             result = await orchestrate_wsp54_agents(
                 OrchestrationTrigger.MODULE_BUILD,
                 module_name="test_module",
                 rider_influence=1.5
             )
-            
+
             assert result["orchestration_context"]["trigger"] == "module_build"
             assert result["agent_results"]["TestAgent"]["status"] == "success"
             mock_orchestrator.orchestrate_recursively.assert_called_once()

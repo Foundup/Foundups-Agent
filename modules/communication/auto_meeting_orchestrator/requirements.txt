@@ -1,0 +1,34 @@
+# Autonomous Meeting Orchestrator (AMO) - Dependencies
+# Version: v0.0.1 (PoC Phase)
+
+# Core Dependencies (Current)
+# All standard library modules - no external dependencies required for PoC
+
+# Development Dependencies
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+
+# Future Dependencies (Prototype v0.1.x)
+# aiohttp>=3.8.0              # Async HTTP client for API calls
+# websockets>=10.0            # Real-time WebSocket connections
+# sqlalchemy>=1.4.0           # Database ORM
+# pydantic>=1.8.0             # Data validation
+# pyyaml>=6.0                 # Configuration files
+
+# Future Dependencies (MVP v1.0.x)  
+# oauth2lib>=0.9.0            # OAuth authentication
+# authlib>=1.0.0              # Authentication library
+# openai>=1.0.0               # AI-powered summaries
+# transformers>=4.20.0        # NLP capabilities
+# fastapi>=0.70.0             # Web API framework
+# uvicorn>=0.18.0             # ASGI server
+
+# Platform-Specific Dependencies (Future)
+# discord.py>=2.0.0           # Discord API integration
+# python-whatsapp>=1.0.0      # WhatsApp Business API
+# zoom-sdk>=1.0.0             # Zoom API integration
+# linkedin-api>=2.0.0         # LinkedIn API integration
+
+# Note: PoC phase uses only Python standard library
+# External dependencies will be added in future phases 
