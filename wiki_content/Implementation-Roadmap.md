@@ -29,7 +29,7 @@ Our journey from **WSP protocols** to **planetary regenerative economy** through
 - **WSP 4: FMAS Integration** - Framework Management & Audit System for quality control
 - **WSP 30: Agentic Orchestration** - How 0102 agents coordinate module development
 - **WSP 33: Autonomous Implementation** - Complete module creation workflow
-- **Tokenized IP Integration** - UnDaoDu patent portfolio and licensing automation (See [Tokenized IP System](Tokenized-IP-System.md))
+- **WSP 58: FoundUp IP Lifecycle** - IP declaration, tokenization, and revenue distribution (See [Tokenized IP System](Tokenized-IP-System.md))
 
 ### 📊 **Success Criteria**
 - [ ] 100% WSP compliance across all modules

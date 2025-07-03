@@ -45,6 +45,13 @@
 - **Regenerative rewards** incentivizing positive impact
 - **Community ownership** through transparent distribution
 
+### **WSP 58: FoundUp IP Lifecycle and Tokenization**
+**What it is**: IP declaration, tokenization, and revenue distribution protocol
+- **Purpose**: Reward innovation while preventing IP monopolization through structured governance
+- **Current Gap**: No formal mechanism for protecting and rewarding intellectual property
+- **Impact**: Innovators lack protection and economic incentives for breakthrough development  
+- **Solution**: Blockchain-based IP tokenization with automated revenue sharing (See [Tokenized IP System](Tokenized-IP-System.md))
+
 ---
 
 ## 🔄 **Missing Critical Components**
@@ -76,13 +83,6 @@
 - **Current Gap**: Human intervention required at multiple development stages
 - **Impact**: Slows development and prevents true autonomous operation
 - **Solution**: End-to-end automation with zen coding integration
-
-### **Patent Tokenization System**
-**What it is**: IP protection integrated with Found UP$ economy
-- **Purpose**: Reward innovation while preventing IP monopolization
-- **Current Gap**: No mechanism for protecting and rewarding intellectual property
-- **Impact**: Innovators lack protection and economic incentives
-- **Solution**: Blockchain-based patent tokenization with decay mechanics
 
 ---
 
