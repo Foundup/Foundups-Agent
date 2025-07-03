@@ -105,7 +105,7 @@ Advanced protocols for complex system behaviors and architectural concerns.
 | WSP 55 | Module Creation Automation | Active | Automated module creation | WSP 30, WSP 35, WSP 55 | Automation, module creation |
 | WSP 56 | Artifact State Coherence Protocol | Active | Artifact state coherence and consistency | WSP 44, WSP 45, WSP 56 | State coherence, consistency |
 | WSP 57 | System-Wide Naming Coherence Protocol | Active | System-wide naming consistency | WSP 19, WSP 20, WSP 40, WSP 57 | Naming standards, coherence |
-| WSP 58 | [EMPTY] | Empty | Available for future use | None | Future protocol |
+| WSP 58 | FoundUp IP Lifecycle and Tokenization Protocol | Active | IP declaration, tokenization, and revenue distribution | WSP 26, WSP 27, WSP 57, WSP 60 | IP management, patent integration, tokenization |
 | WSP 59 | Distributed Development Architecture | Active | Distributed development and architecture | WSP 42, WSP 53, WSP 59 | Distributed systems, architecture |
 | WSP 60 | Module Memory Architecture | Active | Memory management for autonomous modules | WSP 1, WSP 3 | Memory architecture, persistence |
 | WSP 61 | Autonomous Module Implementation Workflow | Active | Comprehensive autonomous module implementation | WSP 1, WSP 30, WSP 55 | Autonomous development, zen coding |
@@ -163,11 +163,11 @@ Protocols for memory management, knowledge organization, and archival.
 
 ## 📊 WSP STATUS SUMMARY
 
-- **Active WSPs**: 60
-- **Empty Slots**: 4 (WSP 58, 61-63)
+- **Active WSPs**: 61
+- **Empty Slots**: 3 (WSP 61-63)
 - **Foundation Layer**: 19 WSPs (WSP 1-19)
 - **Operational Layer**: 20 WSPs (WSP 20-39)
-- **Advanced Layer**: 20 WSPs (WSP 40-59)
+- **Advanced Layer**: 21 WSPs (WSP 40-59)
 - **Memory Layer**: 1 WSP (WSP 60)
 
 **Total WSPs**: 64 (including empty slots for future use)
