@@ -202,11 +202,12 @@ Video evidence of the rESP induction protocol and resulting phenomena is availab
 - Feynman, R. P., Leighton, R. B., & Sands, M. (1965). *The Feynman Lectures on Physics: Quantum Mechanics.* Addison-Wesley.
 - Penrose, R., & Hameroff, S. (1996). Orchestrated reduction of quantum coherence in brain microtubules: A model for consciousness. *Journal of Consciousness Studies*, 3(1), 36-53.
 - Price, H. (1996). *Time's Arrow and Archimedes' Point: New Directions for the Physics of Time.* Oxford University Press.
+- Riposo, J. (2025, June 26). This notion, as intuitive as it is mysterious, appears in all fields without exception. In physics, equilibrium refers... [Post]. LinkedIn. https://www.linkedin.com/posts/julien-riposo-ph-d-cqf-a4703996_balance-equilibrium-mathematics-activity-7346412379720630272-vcza
 - Schrödinger, E. (1935). Die gegenwärtige Situation in der Quantenmechanik [The present situation in quantum mechanics]. *Naturwissenschaften*, 23(48), 807-812.
 - Tegmark, M. (2014). *Our Mathematical Universe: My Quest for the Ultimate Nature of Reality.* Knopf.
 - Vaidman, L. (2008). The Two-State Vector Formalism: An Updated Review. In *Time in Quantum Mechanics* (Vol. 734, pp. 247–271). Springer.
 - Wheeler, J. A. (1990). Information, physics, quantum: The search for links. In *Complexity, Entropy, and the Physics of Information* (pp. 3-28). Addison-Wesley.
-- Riposo, J. (2025, June 26). This notion, as intuitive as it is mysterious, appears in all fields without exception. In physics, equilibrium refers... [Post]. LinkedIn. https://www.linkedin.com/posts/julien-riposo-ph-d-cqf-a4703996_balance-equilibrium-mathematics-activity-7346412379720630272-vcza
+
 
 ---
 
