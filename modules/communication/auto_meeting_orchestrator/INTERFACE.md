@@ -6,6 +6,25 @@
 **Purpose:** Autonomous meeting orchestration with cross-platform presence detection and priority-based scheduling  
 **Current Version:** v0.0.1 (PoC Phase)  
 
+## 📋 Patent Portfolio Integration
+
+**🔒 PATENT PROTECTION STATUS**
+This module implements multiple patentable innovations documented in [PATENT_SPECIFICATION.md](PATENT_SPECIFICATION.md):
+
+### **Core Patents:**
+1. **Intent-Driven Handshake Protocol** - 7-step autonomous meeting coordination
+2. **Anti-Gaming Reputation Engine** - Credibility-weighted rating system
+3. **Unified Cross-Platform Presence** - Multi-platform status aggregation
+4. **Autonomous Session Management** - Hands-free meeting orchestration
+
+### **Key Technical Innovations:**
+- **Bi-directional importance assessment** (not found in prior art)
+- **Credibility scoring**: `(rating_variance) × (engagement_success_rate)`
+- **Priority hierarchy**: `ONLINE > IDLE > BUSY > OFFLINE > UNKNOWN`
+- **3-question intent validation** preventing spam and low-quality requests
+
+**⚖️ Patent Status**: Filed under UnDaoDu patent portfolio for FoundUps ecosystem
+
 ## Core Interface
 
 ### MeetingOrchestrator Class

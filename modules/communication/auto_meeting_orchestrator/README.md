@@ -39,6 +39,120 @@ await amo.update_presence("bob", "discord", PresenceStatus.ONLINE)
 # Meeting automatically orchestrated when both available!
 ```
 
+## 🔄 Core Handshake Protocol
+
+### **Minimal Viable Flow - 7-Step Process**
+
+#### **1️⃣ User Availability Status**
+When users log in, they select **availability scope**:
+- **Public** - Anyone can request meetings
+- **Contacts only** - LinkedIn, Facebook, Twitter connections only  
+- **Private** - No meeting requests accepted
+
+```python
+availability_scope = "public" | "contacts" | "private"
+```
+
+This governs **who can see them as available** and request meetings.
+
+#### **2️⃣ Intent Declaration (3-Question Form)**
+Someone wanting to meet completes structured context:
+
+1. **Why do you want to meet?** *(Purpose)*
+2. **What do you hope to get out of it?** *(Expected Outcome)*  
+3. **How long do you expect it to take?** *(Duration)*
+
+Plus **Importance Rating (1-10)** from requester's perspective.
+
+**Example Intent:**
+```json
+{
+  "why": "Brainstorm partnership project",
+  "outcome": "Agree on next steps and timeline", 
+  "duration": "30 minutes",
+  "importance_rating": 8
+}
+```
+
+#### **3️⃣ Eligibility & Visibility Check**
+System automatically validates:
+- ✅ Is recipient **public** or within **requester's network**?
+- ✅ If yes: Show in available list
+- ✅ If no: Block request silently
+
+#### **4️⃣ Recipient Notification & Response**
+Recipient receives **context-rich prompt**:
+- Who wants to meet
+- The 3 structured answers
+- Requester's importance rating (1-10)
+
+**Recipient actions:**
+- Accept or decline meeting
+- Rate **how important it is to meet (1-10)** from their perspective
+
+#### **5️⃣ Rating Integrity & Anti-Gaming**
+**Critical Innovation:** System tracks **rating distribution patterns**:
+
+```python
+credibility_score = (variance_of_ratings) × (historical_engagement_success_rate)
+```
+
+**Anti-Gaming Measures:**
+- Users who always rate "10" get **reduced weight** in priority sorting
+- Users consistently rated low by others get **reduced visibility**
+- **Reputation scoring** prevents spam and gaming
+
+#### **6️⃣ Handshake Completion**
+If recipient **accepts**:
+- ✅ System records both party ratings
+- ✅ Stores complete intent metadata
+- ✅ Marks handshake **active**
+- ✅ Triggers **intelligent channel selection** (Discord, Zoom, WhatsApp, etc.)
+
+#### **7️⃣ Autonomous Session Launch**
+- ✅ Auto-creates meeting on optimal platform
+- ✅ Sends invitations with preserved context
+- ✅ Logs complete meeting lifecycle
+- ✅ Schedules or launches immediately based on mutual availability
+
+## 🌐 **Minimal Web App Architecture**
+
+### **Frontend Requirements**
+```typescript
+// Core Components
+- Login (OAuth: LinkedIn/Google)
+- Availability Toggle (Public/Contacts/Private)  
+- Request Form (3 questions + importance slider)
+- Incoming Request View (with context display)
+- Accept/Decline Interface (with rating)
+- Meeting Dashboard (active sessions)
+```
+
+### **Backend Architecture** 
+```python
+# Minimal Stack
+- Node/Express or Python/FastAPI
+- PostgreSQL or SQLite database
+- OAuth authentication
+- Reputation scoring engine
+- Platform integration APIs
+
+# Core Database Schema
+Users: {id, name, email, availability_scope, credibility_score}
+Requests: {id, requester_id, recipient_id, intent_data, status}
+Ratings: {id, request_id, requester_rating, recipient_rating}
+Sessions: {id, request_id, platform, meeting_link, status}
+```
+
+### **API Routes**
+```javascript
+POST /api/requests          // Create meeting intent
+GET  /api/requests/pending  // Get incoming requests  
+PUT  /api/requests/:id      // Accept/decline with rating
+POST /api/availability      // Update availability scope
+GET  /api/sessions/active   // Current meeting sessions
+```
+
 ## 🔄 Workflow
 
 ### 1️⃣ Intent Declaration
