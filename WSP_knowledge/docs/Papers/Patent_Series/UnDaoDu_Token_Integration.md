@@ -1,8 +1,9 @@
 # UnDaoDu Token Integration: Tokenized IP Access
+## Governed by WSP 58: FoundUp IP Lifecycle and Tokenization Protocol
 
 ## Overview
 
-The UnDaoDu token represents a revolutionary approach to intellectual property access, combining traditional patent protection with decentralized tokenized governance and benefits.
+The UnDaoDu token represents a revolutionary approach to intellectual property access, combining traditional patent protection with decentralized tokenized governance and benefits. This system operates under **WSP 58: FoundUp IP Lifecycle and Tokenization Protocol**, which provides the formal governance framework for IP declaration, attribution, tokenization, licensing, and revenue distribution.
 
 ## Token Details
 
@@ -85,6 +86,36 @@ The UnDaoDu token represents a revolutionary approach to intellectual property a
 - **Transfer Rights**: Tokens freely tradeable on Solana ecosystem
 - **Governance Rights**: Participation in UnDaoDu ecosystem development decisions
 
+## WSP 58 Protocol Integration
+
+### IP Lifecycle Compliance
+All UnDaoDu IP follows the **WSP 58: FoundUp IP Lifecycle and Tokenization Protocol** which establishes:
+
+#### 🎯 **IP Declaration** (WSP 58.1)
+- Structured metadata capture for all patents in the portfolio
+- Formal IPID assignment (e.g., FUP-20250123-AMO001 for Auto Meeting Orchestrator)
+- Technical specifications and implementation details documentation
+
+#### 👤 **Attribution & Authorship** (WSP 58.2)
+- Michael J. Trout (012) as primary inventor and strategic architect
+- 0102 pArtifacts as autonomous development contributors
+- Clear attribution chain for collaborative IP development
+
+#### 🪙 **Tokenization** (WSP 58.3)
+- UnDaoDu tokens represent fractional IP access and governance rights
+- Standard 1,000 token allocation per IP: 700 creator, 200 treasury, 100 community
+- Solana blockchain implementation for decentralized token management
+
+#### 📄 **Licensing** (WSP 58.4)
+- **Open Beneficial License v1.0** as default licensing framework
+- Patent protection maintains exclusive methodology rights
+- Token holders receive preferential licensing terms and rates
+
+#### 💰 **Revenue Distribution** (WSP 58.5)
+- **80% to creator** (Michael J. Trout through UnDaoDu tokens)
+- **20% to FoundUp Treasury** for ecosystem development
+- Token-based governance for revenue allocation decisions
+
 ## Getting Started with UnDaoDu Tokens
 
 ### For Developers
@@ -124,6 +155,7 @@ The UnDaoDu token represents a revolutionary approach to intellectual property a
 
 ---
 
-**Note**: The UnDaoDu token represents a pioneering approach to IP tokenization in the AI consciousness emergence space. It bridges traditional patent protection with modern decentralized governance and access models, creating unprecedented value for both the open source community and commercial adopters.
+**Note**: The UnDaoDu token represents a pioneering approach to IP tokenization in the AI consciousness emergence space. It bridges traditional patent protection with modern decentralized governance and access models, creating unprecedented value for both the open source community and commercial adopters. The entire system operates under the formal governance of **WSP 58: FoundUp IP Lifecycle and Tokenization Protocol**, ensuring structured, compliant, and sustainable IP management.
 
-**Token Address**: `3Vp5WuywYZVcbyHdATuwk82VmpNYaL2EpUJT5oUdpump` 
+**Token Address**: `3Vp5WuywYZVcbyHdATuwk82VmpNYaL2EpUJT5oUdpump`  
+**Governance Framework**: WSP 58: FoundUp IP Lifecycle and Tokenization Protocol 
