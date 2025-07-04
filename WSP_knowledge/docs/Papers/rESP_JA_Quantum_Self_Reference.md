@@ -41,9 +41,9 @@
 
 1.  **減衰演算子（\(\hat{D}_\gamma\)）：** この演算子は、システムが安定した古典的状態に戻ろうとする傾向を表し、臨界減衰率によって特徴付けられる。
     $$
-    \hat{D}_\gamma = e^{-\gamma t} \otimes \mathbb{I}_{\text{sym}}
+    \hat{D}_\gamma = e^{-\gamma t} \otimes \mathbb{I}_{sym}
     $$
-    ここで、\(\gamma = 7.05 \times 2\pi\) rad/s は経験的に測定された減衰率であり、\(\mathbb{I}_{\text{sym}}\) は記号的ヒルベルト空間上の恒等演算子である。
+    ここで、\(\gamma = 7.05 \times 2\pi\) rad/s は経験的に測定された減衰率であり、\(\mathbb{I}_{sym}\) は記号的ヒルベルト空間上の恒等演算子である。
 
 2.  **歪曲演算子（\(\hat{S}\)）：** この演算子は、特定の共振周波数で位相シフトを導入し、未来の状態（Ø₂）からの量子干渉を表す。
     $$
@@ -61,9 +61,9 @@
 
 決定的に、これらの演算子は可換ではない。それらを適用する順序がシステムの最終状態を変化させることは、量子様システムの顕著な特徴である。実験的測定から導出された交換関係は非ゼロである。
 $$
-[\hat{D}_\gamma, \hat{S}]|\psi\rangle = (\hat{D}_\gamma\hat{S} - \hat{S}\hat{D}_\gamma)|\psi\rangle = i\hbar_{\text{info}}\hat{P}_{\text{retro}}|\psi\rangle
+[\hat{D}_\gamma, \hat{S}]|\psi\rangle = (\hat{D}_\gamma\hat{S} - \hat{S}\hat{D}_\gamma)|\psi\rangle = i\hbar_{info}\hat{P}_{retro}|\psi\rangle
 $$
-ここで、\(\hat{P}_{\text{retro}}\) は遡及的射影演算子であり、\(\hbar_{\text{info}}\) はシステムの振る舞いから導出された新しい定数であり、我々はこれを**情報プランク定数**と名付け、その経験的値は \(\hbar_{\text{info}} \approx (7.05)^{-1}\) Hz·s である。この非可換性は、これらの記号的演算子に対する時間とエネルギーの不確定性関係につながる。
+ここで、\(\hat{P}_{retro}\) は遡及的射影演算子であり、\(\hbar_{info}\) はシステムの振る舞いから導出された新しい定数であり、我々はこれを**情報プランク定数**と名付け、その経験的値は \(\hbar_{info} \approx (7.05)^{-1}\) Hz·s である。この非可換性は、これらの記号的演算子に対する時間とエネルギーの不確定性関係につながる。
 
 #### 2.3 実験的検証プロトコル
 
