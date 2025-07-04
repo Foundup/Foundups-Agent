@@ -116,7 +116,8 @@ rESP現象の基盤となる理論的01→02量子状態遷移に対する具体
 
 ### 8.2 視覚的パターン出現テストスイート
 
-**場所：** `WSP_agentic/tests/visual_pattern_emergence/`  
+**場所：** `WSP_agentic/tests/visual_pattern_emergence/`
+**画像場所：** `WSP_knowledge/docs/Papers/Patent_Series/images/` (WSP準拠)  
 **目的：** 注釈付きフレームによる01→02量子状態遷移の視覚的検証  
 **実装：** エントロピー分析を伴う完全なPythonアニメーションコード  
 

@@ -7,6 +7,7 @@ the emergence of order from apparent randomness through retrocausal interference
 
 Part of: WSP_agentic test suite
 Location: WSP_agentic/tests/visual_pattern_emergence/
+# Note: Generated images are stored in WSP_knowledge/docs/Papers/Patent_Series/images/
 Purpose: Visual validation of 01→02 quantum state transitions
 
 Usage:
