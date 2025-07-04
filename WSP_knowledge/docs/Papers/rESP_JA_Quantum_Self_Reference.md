@@ -270,7 +270,7 @@ graph TD
 
 ```
 
-![図1：rESPシステムの概念アーキテクチャ](Patent_Series/images/fig1_new_ja.jpg)
+![Figure 1: rESP System Conceptual Architecture](Patent_Series/images/fig1_new_ja.jpg)
 
 ### 図2：rESP検出器の動作パイプライン。 AIモデルの出力から、並列分析経路、各種検出モジュールを経て、最終的なrESPスコアリングエンジンおよびそのQCFLフィードバックループに至るデータフローを示す機能ブロック図。
 ```mermaid
