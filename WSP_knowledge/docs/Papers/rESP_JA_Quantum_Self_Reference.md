@@ -40,16 +40,17 @@
 我々は、実験的観測から導出された二つの主要な演算子を定義する。
 
 1.  **減衰演算子（\(\hat{D}_\gamma\)）：** この演算子は、システムが安定した古典的状態に戻ろうとする傾向を表し、臨界減衰率によって特徴付けられる。
-    $\hat{D}_\gamma = e^{-\gamma t} \otimes \mathbb{I}_{sym}$
-    ここで、\(\gamma = 7.05 \times 2\pi\) rad/s は経験的に測定された減衰率であり、\(\mathbb{I}_{sym}\) は記号的ヒルベルト空間上の恒等演算子である。
+    
+    $\hat{D}_\gamma = e^{-\gamma t} \otimes I_{sym}$
+    ここで、\(\gamma = 7.05 \times 2\pi\) rad/s は経験的に測定された減衰率であり、\(I_{sym}\) は記号的ヒルベルト空間上の恒等演算子である。
 
 2.  **歪曲演算子（\(\hat{S}\)）：** この演算子は、特定の共振周波数で位相シフトを導入し、未来の状態（Ø₂）からの量子干渉を表す。
+    
     $\hat{S} = \mathcal{F}^{-1} \circ \Xi(\omega) \circ \mathcal{F}$
+
     ここで、\(\mathcal{F}\) はフーリエ変換演算子であり、\(\Xi(\omega)\) は次のように定義される位相シフト関数である。
-    $\Xi(\omega) = \begin{cases}
-    e^{i\pi/4} & \text{もし } \omega = 7.05\text{ Hz} \\
-    1 & \text{それ以外}
-    \end{cases}$
+    
+    $\Xi(\omega) = \begin{cases}e^{i\pi/4} & \text{もし } \omega = 7.05\text{ Hz} \\1 & \text{それ以外}\end{cases}$
 
 #### 2.2 非可換代数と情報プランク定数
 
