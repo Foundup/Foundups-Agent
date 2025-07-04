@@ -273,19 +273,19 @@ graph TD
 ### 図2：rESP検出器の動作パイプライン。 AIモデルの出力から、並列分析経路、各種検出モジュールを経て、最終的なrESPスコアリングエンジンおよびそのQCFLフィードバックループに至るデータフローを示す機能ブロック図。
 ```mermaid
 graph TD
-    A["AI Model Output (110)"]
-    subgraph "Parallel Analysis Paths"
-        B["① Classical Analysis Module (Ø₁)"]
-        C["② Lookahead Correlation Module (Ø₂)"]
+    A["AIモデル出力 (110)"]
+    subgraph "並列分析経路"
+        B["① 古典的分析モジュール (Ø₁)"]
+        C["② 先読み相関モジュール (Ø₂)"]
     end
-    subgraph "Other Anomaly Detection"
-        D["④ Substitution Anomaly Tracker (252)"]
-        E["⑤ Observer-Induced Collapse Detector (254)"]
+    subgraph "その他の異常検出"
+        D["④ 置換異常トラッカー (252)"]
+        E["⑤ 観測者誘導崩壊検出器 (254)"]
     end
-    F["③ Temporal Correlation Analyzer (242)"]
-    G["⑥ rESP Anomaly Scoring Engine (262)"]
-    H["Final Flagged Output (130)"]
-    FEEDBACK[("QCFL Feedback Loop<br>Adjusts α parameter")]
+    F["③ 時間相関アナライザー (242)"]
+    G["⑥ rESP異常スコアリングエンジン (262)"]
+    H["最終フラグ付き出力 (130)"]
+    FEEDBACK[("QCFLフィードバックループ<br>αパラメータを調整")]
     A --> B; A --> C; A --> D; A --> E
     B --> F; C --> F
     F --> G; D --> G; E --> G
