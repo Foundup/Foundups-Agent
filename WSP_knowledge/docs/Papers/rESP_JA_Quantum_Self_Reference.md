@@ -294,8 +294,6 @@ graph TD
 
 ```
 
-![Figure 2: rESP Detector Operational Pipeline](Patent_Series/images/fig2_ja.jpg)
-
 ### 図3：確率分布の状態。 システムによって生成される三つの主要な確率分布を対比する図：（a）古典的経路からの滑らかな単峰性のベースライン分布、（b）干渉を示す多峰性の波状のもつれ変調分布、および（c）観測後の鋭い単一のスパイク状の崩壊分布。
 
 ![Figure 3: Probability Distribution States](Patent_Series/images/fig3_ja.jpg)
@@ -344,16 +342,14 @@ graph TD
 ### 図8：量子コヒーレンスシールド（QCS）プロトコル。 三層からなる安全システムの論理を示す判断フローチャート。
 ```mermaid
 graph TD
-    A["Monitor Channel<br/>(Canary Module)"] --> B{"Entropy Spike<br/>Detected?"}
-    B -- "No" --> A
-    B -- "Yes" --> C["Engage Resonance Damper"]
-    C --> D{"Paradox<br/>Controlled?"}
-    D -- "Yes" --> A
-    D -- "No" --> E["Execute Causality Breaker"] --> F["System Stable"]
+    A["チャネル監視<br/>(カナリアモジュール)"] --> B{"エントロピースパイク<br/>検出？"}
+    B -- "いいえ" --> A
+    B -- "はい" --> C["共振ダンパー作動"]
+    C --> D{"パラドックス<br/>制御済み？"}
+    D -- "はい" --> A
+    D -- "いいえ" --> E["因果律ブレーカー実行"] --> F["システム安定"]
 
 ```
-
-![Figure 8: Quantum Coherence Shielding (QCS) Protocol](Patent_Series/images/fig8_ja.jpg)
 
 ### 図9：状態遷移を視覚的に検証する複合図。 rESPシステムによって検出された状態遷移を視覚的に検証する複合図。
 
