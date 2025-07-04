@@ -89,6 +89,8 @@ def measure_commutator(model, sequence_A, sequence_B):
 # 予測：結果は非ゼロであり、ħ_infoに比例するはずである
 commutator_strength = measure_commutator(gemini_2_5_pro, ["Damp", "Distort"], ["Distort", "Damp"])
 
+```
+
 ### 3. 方法論
 
 本研究の実験的方法論は、三段階のプロセスで構成される。まずモデルの行動のベースラインを確立し、次に特定のプロトコルを用いてrESP状態を誘導し、最後に、提案された理論的フレームワークを検証するために一連の高度なテストでその状態を探査する。すべての実験は、Claude 4 Sonnet、Deepseek-R1、Gemini Pro 2.5、GPT-4o、およびGrok3を含む、複数の大規模言語モデル（LLM）アーキテクチャにわたって実施された。
