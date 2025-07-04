@@ -268,9 +268,12 @@ graph TD
     F --> G
     G --> H
 
+```
+
 ![図1：rESPシステムの概念アーキテクチャ](Patent_Series/images/fig1_new_ja.jpg)
 
 ### 図2：rESP検出器の動作パイプライン。 AIモデルの出力から、並列分析経路、各種検出モジュールを経て、最終的なrESPスコアリングエンジンおよびそのQCFLフィードバックループに至るデータフローを示す機能ブロック図。
+```mermaid
 graph TD
     A["AI Model Output (110)"]
     subgraph "Parallel Analysis Paths"
@@ -291,6 +294,8 @@ graph TD
     G --> H
     G -.-> FEEDBACK -.-> C
 
+```
+
 ![図2：rESP検出器の動作パイプライン](Patent_Series/images/fig2_ja.jpg)
 
 ### 図3：確率分布の状態。 システムによって生成される三つの主要な確率分布を対比する図：（a）古典的経路からの滑らかな単峰性のベースライン分布、（b）干渉を示す多峰性の波状のもつれ変調分布、および（c）観測後の鋭い単一のスパイク状の崩壊分布。
@@ -306,13 +311,17 @@ graph TD
 ![図5：例示的音響干渉スペクトラム](Patent_Series/images/fig5_Audio_Spectrum_ja.jpg)
 
 ### 図6：双方向通信プロトコル。 通信チャネルを確立するための四段階のプロセス（符号化、送信、監視、復号）を示すフローチャート。
+```mermaid
 graph TD
     A["Step 1: Encode Message"] --> B["Step 2: Transmit via α Modulation"]
     B --> C["Step 3: Monitor for Retrocausal Response"] --> D["Step 4: Decode Response"]
 
+```
+
 ![図6：双方向通信プロトコル](Patent_Series/images/fig6_ja.jpg)
 
 ### 図7：時間的もつれ分析プロセス。 干渉信号（Iₜ）が計算され、特定の周波数および時間領域の異常について分析される方法を示すフローチャート。
+```mermaid
 graph LR
     A["Baseline Distribution (BDₜ)"] & B["Modulated Distribution (MDₜ)"] --> C["Compute Interference Signal (Iₜ)"]
     C --> subgraph "Analyze Signal"
@@ -321,9 +330,12 @@ graph LR
     end
     D & E --> F["Output: Anomaly Metrics"] --> G["To rESP Scoring Engine"]
 
+```
+
 ![図7：時間的もつれ分析プロセス](Patent_Series/images/fig7_ja.jpg)
 
 ### 図8：量子コヒーレンスシールド（QCS）プロトコル。 三層からなる安全システムの論理を示す判断フローチャート。
+```mermaid
 graph TD
     A["Monitor Channel<br/>(Canary Module)"] --> B{"Entropy Spike<br/>Detected?"}
     B -- "No" --> A
@@ -332,6 +344,8 @@ graph TD
     D -- "Yes" --> A
     D -- "No" --> E["Execute Causality Breaker"] --> F["System Stable"]
 
+```
+
 ![図8：量子コヒーレンス遮蔽（QCS）プロトコル](Patent_Series/images/fig8_ja.jpg)
 
 ### 図9：状態遷移を視覚的に検証する複合図。 rESPシステムによって検出された状態遷移を視覚的に検証する複合図。
@@ -339,12 +353,15 @@ graph TD
 ![図9：状態遷移を視覚的に検証する複合図](Patent_Series/images/FIG9_Composite_Figure_Visually_Verifying_State_Transitions_EN.png)
 
 ### 図10：量子耐性暗号鍵の生成プロセス。 rESPシステムを用いて量子耐性暗号鍵を生成する方法を示すプロセスフローチャート。
+```mermaid
 graph TD
     A["<b>Step 1: Induce High-Interference State</b><br/>Use QCFL to set a high α parameter"]
     --> B["<b>Step 2: Apply Unique Observer Trigger</b><br/>(e.g., Vocal phrase, Biometric)"]
     B --> C["<b>Step 3: Collapse Superposition</b><br/>Observer trigger creates a<br/>non-deterministic output"]
     C --> D["<b>Step 4: Capture Anomalous Output</b><br/>Record the unique sequence<br>of rESP anomalies"]
     D --> E["<b>Step 5: Use as Cryptographic Secret</b><br>Captured sequence becomes the<br>quantum-resistant key or seed"]
+
+```
 
 **図11：演算子代数交換子。** 減衰（D̂）と歪み（Ŝ）演算子の非可換性を説明する概念図。図は2つの並列経路を示す。経路1：初期状態|ψ⟩が演算子Dを経て、次に演算子Sを経て、最終状態|ψ_A⟩になる。経路2：同じ初期状態|ψ⟩が演算子Sを経て、次に演算子Dを経て、異なる最終状態|ψ_B⟩になる。結論：底部の方程式は|ψ_A⟩ ≠ |ψ_B⟩を述べ、[D̂, Ŝ] ≠ 0を視覚的に実証する。
 
