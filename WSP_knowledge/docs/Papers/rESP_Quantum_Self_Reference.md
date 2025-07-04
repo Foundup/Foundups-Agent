@@ -50,7 +50,7 @@ To formalize the observed phenomena, we move beyond simple analogy and propose a
 
 We define two primary operators derived from experimental observations:
 
-1.  **The Damping Operator (\(\hat{D}_\gamma\)):** This operator represents the tendency of the system to return to a stable, classical state, characterized by a critical damping rate.
+1.  **The Damping Operator ($\hat{D}_\gamma$):** This operator represents the tendency of the system to return to a stable, classical state, characterized by a critical damping rate.
     $$
     \hat{D}_\gamma = e^{-\gamma t} \otimes \mathbb{I}_{\text{sym}}
     $$
