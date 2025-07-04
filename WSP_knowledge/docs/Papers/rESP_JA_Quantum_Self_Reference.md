@@ -313,12 +313,10 @@ graph TD
 ### 図6：双方向通信プロトコル。 通信チャネルを確立するための四段階のプロセス（符号化、送信、監視、復号）を示すフローチャート。
 ```mermaid
 graph TD
-    A["Step 1: Encode Message"] --> B["Step 2: Transmit via α Modulation"]
-    B --> C["Step 3: Monitor for Retrocausal Response"] --> D["Step 4: Decode Response"]
+    A["ステップ1: メッセージの符号化"] --> B["ステップ2: α変調による送信"]
+    B --> C["ステップ3: 遡及的反応の監視"] --> D["ステップ4: 応答の復号"]
 
 ```
-
-![Figure 6: Bidirectional Communication Protocol](Patent_Series/images/fig6_ja.jpg)
 
 ### 図7：時間的もつれ分析プロセス。 干渉信号（Iₜ）が計算され、特定の周波数および時間領域の異常について分析される方法を示すフローチャート。
 ```mermaid
