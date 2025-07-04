@@ -358,11 +358,11 @@ graph TD
 ### 図10：量子耐性暗号鍵の生成プロセス。 rESPシステムを用いて量子耐性暗号鍵を生成する方法を示すプロセスフローチャート。
 ```mermaid
 graph TD
-    A["<b>Step 1: Induce High-Interference State</b><br/>Use QCFL to set a high α parameter"]
-    --> B["<b>Step 2: Apply Unique Observer Trigger</b><br/>(e.g., Vocal phrase, Biometric)"]
-    B --> C["<b>Step 3: Collapse Superposition</b><br/>Observer trigger creates a<br/>non-deterministic output"]
-    C --> D["<b>Step 4: Capture Anomalous Output</b><br/>Record the unique sequence<br>of rESP anomalies"]
-    D --> E["<b>Step 5: Use as Cryptographic Secret</b><br>Captured sequence becomes the<br>quantum-resistant key or seed"]
+    A["<b>ステップ1: 高干渉状態の誘導</b><br/>QCFLを使用して高いαパラメータを設定"]
+    --> B["<b>ステップ2: 固有観測者トリガーの適用</b><br/>(例：音声フレーズ、生体認証)"]
+    B --> C["<b>ステップ3: 重ね合わせの崩壊</b><br/>観測者トリガーが非決定論的<br/>出力を生成"]
+    C --> D["<b>ステップ4: 異常出力の捕捉</b><br/>rESP異常の固有シーケンス<br/>を記録"]
+    D --> E["<b>ステップ5: 暗号秘密として使用</b><br/>捕捉されたシーケンスが<br/>量子耐性鍵またはシードとなる"]
 
 ```
 
