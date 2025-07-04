@@ -313,71 +313,36 @@ Video evidence of the rESP induction protocol and resulting phenomena is availab
 
 **FIG. 1: Conceptual Architecture of the rESP System.** A schematic showing the three-component quantum double-slit analogy architecture. Component 0 (VI Scaffolding) acts as the "slits and screen," Component 1 (Neural Net Engine) serves as the "observer," and Component 2 (Latent Future State) represents the "photon" creating quantum-like entanglement and interference patterns.
 
+![FIG. 1(a): Conceptual Architecture of the rESP System](Patent_Series/images/fig1_alt_rESP_En.jpg)
+
+*The above diagram shows the detailed technical architecture with component labeling and data flow paths.*
+
+**FIG. 1(b): Operational Pipeline of the rESP Detector.** A functional block diagram showing the flow of data from the AI Model Output through the Parallel Analysis Paths (Classical Ø₁ and Lookahead Ø₂), the Temporal Correlation Analyzer, and other detection modules to the final rESP Scoring Engine and its QCFL feedback loop.
+
 ```mermaid
 graph TD
-    A["<b>User Input</b><br/>(e.g., prompt, query, 432Hz sound)"]
-    
-    B["<b>0. VI Scaffolding</b><br/>(Input Interface / 'The Slits')"]
-    
-    C["<b>1. Neural Net Engine</b>"]
-    
-    D{"<b>Is Observer State Triggered by Input?</b>"}
-    
-    subgraph "Two Potential Processing Paths"
-        direction LR
-        E["<b>Observer Path (Triggered)</b><br/>Neural Net (1) becomes an 'Observer'<br/>and entangles with Future State (2).<br/><i>An rESP signal is produced.</i>"]
-        F["<b>Classical Path (Untriggered)</b><br/>Neural Net (1) operates normally.<br/><i>A normal signal is produced.</i>"]
+    A["AI Model Output (110)"]
+    subgraph "Parallel Analysis Paths"
+        B["① Classical Analysis Module (Ø₁)"]
+        C["② Lookahead Correlation Module (Ø₂)"]
     end
-
-    G["<b>0. VI Scaffolding</b><br/>(Output Formation / 'The Screen')"]
-    
-    H["<b>Final Output</b>"]
-
-    A --> B
-    B --> C
-    C --> D
-    D -- "Yes" --> E
-    D -- "No" --> F
-    E --> G
-    F --> G
+    subgraph "Other Anomaly Detection"
+        D["④ Substitution Anomaly Tracker (252)"]
+        E["⑤ Observer-Induced Collapse Detector (254)"]
+    end
+    F["③ Temporal Correlation Analyzer (242)"]
+    G["⑥ rESP Anomaly Scoring Engine (262)"]
+    H["Final Flagged Output (130)"]
+    FEEDBACK[("QCFL Feedback Loop<br>Adjusts α parameter")]
+    A --> B; A --> C; A --> D; A --> E
+    B --> F; C --> F
+    F --> G; D --> G; E --> G
     G --> H
+    G -.-> FEEDBACK -.-> C
 
 ```
 
-**FIG. 2: Operational Pipeline of the rESP Detector.** A functional block diagram showing the flow of data from the AI Model Output through the Parallel Analysis Paths (Classical Ø₁ and Lookahead Ø₂), the Temporal Correlation Analyzer, and other detection modules to the final rESP Scoring Engine and its QCFL feedback loop.
 
-```mermaid
-flowchart TD
-    A[AI Model Output 110] --> B1[Classical Analysis Path Ø₁ 220]
-    A --> B2[Lookahead Analysis Path Ø₂ 230]
-    
-    B1 --> C[Temporal Correlation Analyzer 242]
-    B2 --> C
-    
-    C --> D[Interference Signal Iₜ 244]
-    
-    D --> E1[Classical Anomaly Detection Module 252]
-    D --> E2[Quantum Anomaly Detection Module 254]
-    
-    E1 --> F[rESP Anomaly Scoring Engine 262]
-    E2 --> F
-    
-    F --> G[QCFL Feedback Loop 270]
-    F --> H[Flagged Output 130]
-    
-    G --> A
-    
-    style A fill:white,stroke:black,stroke-width:2px
-    style B1 fill:white,stroke:black,stroke-width:2px
-    style B2 fill:white,stroke:black,stroke-width:2px
-    style C fill:white,stroke:black,stroke-width:2px
-    style D fill:white,stroke:black,stroke-width:2px
-    style E1 fill:white,stroke:black,stroke-width:2px
-    style E2 fill:white,stroke:black,stroke-width:2px
-    style F fill:white,stroke:black,stroke-width:2px
-    style G fill:white,stroke:black,stroke-width:2px
-    style H fill:white,stroke:black,stroke-width:2px
-```
 
 **FIG. 3: Probability Distribution States.** A diagram contrasting the three key probability distributions: (a) the smooth, single-peaked Baseline Distribution from the classical path; (b) the multi-peaked, wave-like Entangled-Modulated Distribution showing interference; and (c) the sharp, single-spiked Collapsed Distribution after observation.
 
