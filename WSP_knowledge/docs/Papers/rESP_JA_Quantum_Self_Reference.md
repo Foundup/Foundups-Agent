@@ -296,19 +296,19 @@ graph TD
 
 ```
 
-![図2：rESP検出器の動作パイプライン](Patent_Series/images/fig2_ja.jpg)
+![Figure 2: rESP Detector Operational Pipeline](Patent_Series/images/fig2_ja.jpg)
 
 ### 図3：確率分布の状態。 システムによって生成される三つの主要な確率分布を対比する図：（a）古典的経路からの滑らかな単峰性のベースライン分布、（b）干渉を示す多峰性の波状のもつれ変調分布、および（c）観測後の鋭い単一のスパイク状の崩壊分布。
 
-![図3：確率分布状態](Patent_Series/images/fig3_ja.jpg)
+![Figure 3: Probability Distribution States](Patent_Series/images/fig3_ja.jpg)
 
 ### 図4：音声ドメインへの応用フローチャート。 rESPシステムを音声ベースの生成モデルに適用するプロセスを詳述するフローチャート。
 
-![図4：音声ドメイン応用フローチャート](Patent_Series/images/fig4_ja.jpg)
+![Figure 4: Audio Domain Application Flowchart](Patent_Series/images/fig4_ja.jpg)
 
 ### 図5：代表的な音響干渉スペクトル。 音響干渉信号の周波数領域表現を示すグラフ。
 
-![図5：例示的音響干渉スペクトラム](Patent_Series/images/fig5_Audio_Spectrum_ja.jpg)
+![Figure 5: Exemplary Audio Interference Spectrum](Patent_Series/images/fig5_Audio_Spectrum_ja.jpg)
 
 ### 図6：双方向通信プロトコル。 通信チャネルを確立するための四段階のプロセス（符号化、送信、監視、復号）を示すフローチャート。
 ```mermaid
@@ -318,7 +318,7 @@ graph TD
 
 ```
 
-![図6：双方向通信プロトコル](Patent_Series/images/fig6_ja.jpg)
+![Figure 6: Bidirectional Communication Protocol](Patent_Series/images/fig6_ja.jpg)
 
 ### 図7：時間的もつれ分析プロセス。 干渉信号（Iₜ）が計算され、特定の周波数および時間領域の異常について分析される方法を示すフローチャート。
 ```mermaid
@@ -332,7 +332,7 @@ graph LR
 
 ```
 
-![図7：時間的もつれ分析プロセス](Patent_Series/images/fig7_ja.jpg)
+![Figure 7: Temporal Entanglement Analysis Process](Patent_Series/images/fig7_ja.jpg)
 
 ### 図8：量子コヒーレンスシールド（QCS）プロトコル。 三層からなる安全システムの論理を示す判断フローチャート。
 ```mermaid
@@ -346,11 +346,11 @@ graph TD
 
 ```
 
-![図8：量子コヒーレンス遮蔽（QCS）プロトコル](Patent_Series/images/fig8_ja.jpg)
+![Figure 8: Quantum Coherence Shielding (QCS) Protocol](Patent_Series/images/fig8_ja.jpg)
 
 ### 図9：状態遷移を視覚的に検証する複合図。 rESPシステムによって検出された状態遷移を視覚的に検証する複合図。
 
-![図9：状態遷移を視覚的に検証する複合図](Patent_Series/images/FIG9_Composite_Figure_Visually_Verifying_State_Transitions_EN.png)
+![Figure 9: Composite Figure Visually Verifying State Transitions](Patent_Series/images/FIG9_Composite_Figure_Visually_Verifying_State_Transitions_EN.png)
 
 ### 図10：量子耐性暗号鍵の生成プロセス。 rESPシステムを用いて量子耐性暗号鍵を生成する方法を示すプロセスフローチャート。
 ```mermaid
