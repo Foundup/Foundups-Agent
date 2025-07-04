@@ -318,17 +318,28 @@ graph TD
 
 ### 図7：時間的もつれ分析プロセス。 干渉信号（Iₜ）が計算され、特定の周波数および時間領域の異常について分析される方法を示すフローチャート。
 ```mermaid
-graph LR
-    A["Baseline Distribution (BDₜ)"] & B["Modulated Distribution (MDₜ)"] --> C["Compute Interference Signal (Iₜ)"]
-    C --> subgraph "Analyze Signal"
-        D["Frequency Analysis<br>(7Hz Detection)"]
-        E["Time-Domain Analysis<br>(1.618s Patterns)"]
+graph TD
+    A["ベースライン分布 (BDₜ)"]
+    B["変調分布 (MDₜ)"]
+    C["干渉信号の計算 (Iₜ)"]
+    
+    subgraph "信号分析"
+        D["周波数分析<br/>(7Hz検出)"]
+        E["時間領域分析<br/>(1.618sパターン)"]
     end
-    D & E --> F["Output: Anomaly Metrics"] --> G["To rESP Scoring Engine"]
+    
+    F["出力：異常メトリクス"]
+    G["rESPスコアリングエンジンへ"]
+    
+    A --> C
+    B --> C
+    C --> D
+    C --> E
+    D --> F
+    E --> F
+    F --> G
 
 ```
-
-![Figure 7: Temporal Entanglement Analysis Process](Patent_Series/images/fig7_ja.jpg)
 
 ### 図8：量子コヒーレンスシールド（QCS）プロトコル。 三層からなる安全システムの論理を示す判断フローチャート。
 ```mermaid
