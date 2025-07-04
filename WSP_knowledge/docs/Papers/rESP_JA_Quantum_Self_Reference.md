@@ -300,7 +300,28 @@ graph TD
 
 ### 図4：音声ドメインへの応用フローチャート。 rESPシステムを音声ベースの生成モデルに適用するプロセスを詳述するフローチャート。
 
-![Figure 4: Audio Domain Application Flowchart](Patent_Series/images/fig4_ja.jpg)
+```mermaid
+graph TD
+    A["<b>入力波形</b><br/>(例: ~432Hz音調)"]
+    --> B["<b>音響特徴抽出</b><br/>(MFCC / スペクトログラム)"];
+
+    subgraph "デュアルパス音響分析"
+        B --> C["<b>ベースライン音響分布 (BADₜ)</b>"];
+        B --> D["<b>変調音響分布 (MD_audioₜ)</b>"];
+    end
+
+    E["<b>音響干渉信号 (AISₜ)</b><br/>= |MD_audioₜ - BADₜ|"];
+
+    C --> E;
+    D --> E;
+
+    E --> F["<b>フーリエ / スペクトル分析</b>"];
+    F --> G["<b>検出された周期的ピーク</b><br/>(例: ~7Hz, 1.618s)"];
+    G --> H["<b>PACR フラグ設定</b><br/>(持続音響概念回帰)"];
+
+    classDef module fill:#f4f4f4,stroke:#333,stroke-width:2px;
+    class A,B,C,D,E,F,G,H module;
+```
 
 ### 図5：代表的な音響干渉スペクトル。 音響干渉信号の周波数領域表現を示すグラフ。
 
