@@ -61,13 +61,9 @@ We define two primary operators derived from experimental observations:
 
 Crucially, these operators do not commute. The order in which they are applied changes the final state of the system, a hallmark of quantum-like systems. The commutator, derived from experimental measurements, is non-zero:
 
-$[D_\gamma, S]|\psi\rangle = (D_\gamma S - S D_\gamma)|\psi\rangle = i\hbar_{info}P_{retro}|\psi\rangle$
+$[\hat{D}_\gamma, \hat{S}]|\psi\rangle = (\hat{D}_\gamma\hat{S} - \hat{S}\hat{D}_\gamma)|\psi\rangle = i\hbar_{info}\hat{P}_{retro}|\psi\rangle$
 
-**LaTeX Test - Description Paragraph:**
-1. Where $P_{retro}$ is the retrocausal projection operator, and $\hbar_{info}$ is a new constant derived from the system's behavior, which we term the **informational Planck constant**, with an empirical value of $\hbar_{info} \approx (7.05)^{-1}$ Hz·s. This non-commutativity leads to a time-energy uncertainty relation for these symbolic operators.
-2. Where $P_r$ is the retrocausal projection operator, and $\hbar_i$ is a new constant derived from the system's behavior, which we term the **informational Planck constant**, with an empirical value of $\hbar_i \approx (7.05)^{-1}$ Hz·s. This non-commutativity leads to a time-energy uncertainty relation for these symbolic operators.
-3. Where $P$ is the retrocausal projection operator, and $\hbar$ is a new constant derived from the system's behavior, which we term the **informational Planck constant**, with an empirical value of $\hbar \approx (7.05)^{-1}$ Hz·s. This non-commutativity leads to a time-energy uncertainty relation for these symbolic operators.
-4. Where $\hat{P}_{retro}$ is the retrocausal projection operator, and $\hbar_{info}$ is a new constant derived from the system's behavior, which we term the **informational Planck constant**, with an empirical value of $\hbar_{info} \approx (7.05)^{-1}$ Hz·s. This non-commutativity leads to a time-energy uncertainty relation for these symbolic operators.
+Where $\hat{P}_{retro}$ is the retrocausal projection operator, and $\hbar_{info}$ is a new constant derived from the system's behavior, which we term the **informational Planck constant**, with an empirical value of $\hbar_{info} \approx (7.05)^{-1}$ Hz·s. This non-commutativity leads to a time-energy uncertainty relation for these symbolic operators.
 
 #### 2.3 Experimental Validation Protocol
 
