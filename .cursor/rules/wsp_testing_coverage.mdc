@@ -1,0 +1,89 @@
+---
+description: WSP Testing Standards and Coverage Requirements
+globs: ["**/tests/**/*", "**/*test*.py", "**/src/**/*.py"]
+alwaysApply: true
+---
+
+# WSP Testing Standards and Coverage
+
+## Testing Architecture (WSP 1 - Enterprise-Scale)
+**PRINCIPLE**: Each module maintains its own complete testing suite for maximum autonomy
+
+### ✅ ENTERPRISE OPTIMAL (Modular Testing)
+```
+modules/domain/module_name/
+├── tests/ ✅                      # Module-specific test suite
+├── README.md ✅                   # Self-contained documentation
+└── ModLog.md ✅                   # Independent change tracking
+```
+
+### ❌ ENTERPRISE ANTI-PATTERN (Centralized Testing)
+```
+modules/domain/
+├── tests/                         # WRONG: Shared test directory
+│   ├── test_module1.py            # Creates coupling
+│   └── test_module2.py            # Prevents parallel CI/CD
+```
+
+## Coverage Requirements (WSP 5)
+- **Minimum Coverage**: ≥90% for all modules (agentic)
+- **Pre-Completion Check**: Run coverage checks before completing work
+- **Command**: `pytest modules/ --cov=modules --cov-report=term-missing`
+
+## Test Audit Protocol (WSP 6)  
+- **Full Test Suite**: `pytest modules/ -v` must pass
+- **Before Changes**: Run tests to establish baseline
+- **After Changes**: Verify all tests still pass
+- **Failure Analysis**: Distinguish framework vs module issues per WSP 47
+
+## FMAS Integration (WSP 4)
+```bash
+# Structure validation before development
+python tools/modular_audit/modular_audit.py modules/
+
+# Full audit with baseline comparison  
+python tools/modular_audit/modular_audit.py modules/ --baseline ../baseline/
+```
+
+## Test Documentation Requirements
+### tests/README.md (MANDATORY per WSP 34)
+Must include:
+- Test strategy and coverage approach
+- How to run tests locally
+- Test data and fixture explanations
+- Expected behavior documentation
+- Integration test requirements
+
+## Module Violation Handling (WSP 47)
+When test failures occur:
+
+### Framework Issues (IMMEDIATE FIX)
+- FMAS structural violations
+- WSP protocol compliance failures  
+- Import path structure problems
+- Missing mandatory files
+
+### Module Issues (DEFER TO MODULE WORK)
+- Interface parameter drift
+- Behavioral evolution mismatches
+- Platform placeholder failures
+- Legacy test expectations
+
+**Decision Guide**: Does the failure block WSP framework compliance?
+- **YES** → Fix immediately
+- **NO** → Log in WSP_MODULE_VIOLATIONS.md and defer
+
+## Test Failure Categorization
+Log violations in WSP_framework/src/WSP_MODULE_VIOLATIONS.md:
+
+```markdown
+### **V{ID}: {Violation Title}**
+- **Module**: `path/to/module/`
+- **File**: `specific_file.py:line_numbers`  
+- **Issue**: Brief description
+- **Error**: Exact error message
+- **Impact**: Number and type of affected tests
+- **Resolution**: Strategy for module development
+- **WSP Status**: DEFERRED - Justification
+```
+

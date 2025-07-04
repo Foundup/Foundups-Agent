@@ -1,0 +1,135 @@
+---
+description: WSP Module Development Workflow and Compliance
+globs: ["modules/**/*"]
+alwaysApply: false
+---
+
+# WSP Module Development Workflow
+
+## Pre-Development Analysis (MANDATORY)
+
+### 1. Agentic Modularity Question (FIRST STEP)
+**"Should this be a module or be added to an existing module?"**
+
+**Decision Matrix**:
+| Criteria | Create Module | Add to Existing |
+|----------|---------------|-----------------|
+| **Single Responsibility** | ✅ New distinct capability | ❌ Multiple responsibilities |
+| **Domain Placement** | ✅ Fits enterprise domain | ❌ Violates domain boundaries |
+| **Reusability** | ✅ Used across modules | ❌ Single module use |
+| **WSP Protocol** | ✅ Implements WSP protocol | ❌ Violates WSP principles |
+| **Complexity** | ✅ Complex enough for module | ❌ Simple utility function |
+
+### 2. Enterprise Domain Classification
+- **Step 1**: Determine correct enterprise domain per WSP 3
+- **Step 2**: Validate domain fit with existing architecture
+- **Step 3**: Identify cross-domain dependencies
+- **Step 4**: Plan functional distribution (never platform consolidation)
+
+### 3. WSP Compliance Planning
+Required WSP protocols for compliance:
+- **WSP 3**: Enterprise domain placement
+- **WSP 4**: FMAS structural compliance
+- **WSP 5**: Test coverage ≥90%
+- **WSP 6**: Test audit requirements
+- **WSP 11**: Interface definition
+- **WSP 12**: Dependency management
+- **WSP 22**: Documentation and ModLog
+- **WSP 49**: Module structure
+- **WSP 60**: Memory architecture
+
+## Development Workflow
+
+### Phase 1: Setup and Structure
+```bash
+# 1. Create module directory structure
+mkdir -p modules/<domain>/<module_name>/{src,tests,memory}
+
+# 2. Create mandatory files
+touch modules/<domain>/<module_name>/{README.md,ROADMAP.md,ModLog.md,INTERFACE.md,requirements.txt,__init__.py}
+touch modules/<domain>/<module_name>/src/{__init__.py,<module_name>.py}
+touch modules/<domain>/<module_name>/tests/{README.md,test_<module_name>.py}
+touch modules/<domain>/<module_name>/memory/README.md
+
+# 3. Run FMAS validation
+python tools/modular_audit/modular_audit.py modules/
+```
+
+### Phase 2: Implementation
+1. **Document First**: Complete README.md with module purpose
+2. **Interface Definition**: Define public API in INTERFACE.md
+3. **Test Strategy**: Document testing approach in tests/README.md
+4. **Dependencies**: Declare in requirements.txt per WSP 12
+5. **Memory Architecture**: Design per WSP 60
+
+### Phase 3: Testing and Validation
+```bash
+# 1. Run tests with coverage
+pytest modules/<domain>/<module_name>/ --cov=modules/<domain>/<module_name> --cov-report=term-missing
+
+# 2. Verify ≥90% coverage (WSP 5)
+# Coverage must meet minimum threshold
+
+# 3. Run full test suite (WSP 6)
+pytest modules/ -v
+
+# 4. FMAS structural validation
+python tools/modular_audit/modular_audit.py modules/
+```
+
+## LLME Progression Tracking
+
+### Progression States
+- **000**: Placeholder/concept stage
+- **111**: Basic implementation  
+- **122**: Enhanced integration
+- **222**: Production-ready
+
+### Roadmap Requirements
+Document in ROADMAP.md:
+- **Current State**: LLME score and justification
+- **Next Phase**: Specific enhancement targets
+- **Dependencies**: Required modules or infrastructure
+- **Success Criteria**: Measurable completion metrics
+
+## Compliance Checklist
+
+### Pre-Development ✅
+- [ ] Agentic Modularity Question answered
+- [ ] Enterprise domain correctly identified
+- [ ] Functional distribution planned
+- [ ] WSP protocols mapped to requirements
+- [ ] Cross-domain dependencies identified
+
+### Development ✅  
+- [ ] Module structure follows WSP 49
+- [ ] All mandatory files created
+- [ ] Documentation follows WSP 22
+- [ ] Interface documented per WSP 11
+- [ ] Dependencies declared per WSP 12
+- [ ] Memory architecture per WSP 60
+
+### Post-Development ✅
+- [ ] FMAS audit passes (0 errors, 0 warnings)
+- [ ] Test coverage ≥90% (WSP 5)
+- [ ] Full test suite passes (WSP 6)
+- [ ] Documentation complete and accurate
+- [ ] ModLog updated with all changes
+- [ ] Integration tested with dependent modules
+
+## Anti-Pattern Prevention
+
+### ❌ Architectural Violations
+- **Platform Consolidation**: Never create platform-specific domains
+- **Code-First Development**: Never write code before WSP analysis
+- **Incomplete Documentation**: Never skip mandatory documentation
+- **Domain Confusion**: Never place modules in wrong domains
+- **Memory Neglect**: Never skip memory architecture
+
+### ✅ Success Patterns
+- **Functional Distribution**: Spread platform features across domains
+- **WSP-Guided Development**: Follow protocols before coding
+- **Complete Documentation**: All mandatory files from start
+- **Proper Domain Placement**: Match function to enterprise domain
+- **Memory Architecture**: Plan data persistence from design phase
+

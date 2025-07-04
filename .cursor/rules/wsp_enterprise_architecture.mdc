@@ -1,0 +1,72 @@
+---
+description: WSP Enterprise Domain Architecture and Module Organization
+globs: ["modules/**/*"]
+alwaysApply: true
+---
+
+# Enterprise Domain Architecture (WSP 3)
+
+## Enterprise Domains - FUNCTIONAL DISTRIBUTION REQUIRED
+```
+modules/
+├── ai_intelligence/          # AI logic, LLMs, decision engines, banter systems
+├── communication/           # Chat, messages, protocols, live interactions  
+├── platform_integration/   # External APIs (YouTube, OAuth), stream handling
+├── infrastructure/         # Core systems, agents, auth, session management
+├── monitoring/             # Logging, metrics, health, system status
+├── development/            # Tools, testing, utilities, automation
+├── foundups/               # Individual FoundUps projects (modular applications)
+├── gamification/           # Engagement mechanics, rewards, token loops
+└── blockchain/             # Decentralized infrastructure, chain integrations
+```
+
+## CRITICAL: Functional Distribution vs Platform Consolidation
+**✅ CORRECT**: Distribute by function across domains
+- YouTube chat → communication/livechat
+- YouTube auth → platform_integration/youtube_auth  
+- YouTube proxy → platform_integration/youtube_proxy
+- Engagement mechanics → gamification/
+- Session management → infrastructure/
+
+**❌ VIOLATION**: Consolidate all platform functionality into one domain
+- NEVER suggest youtube/ domain with all YouTube functionality
+- Functional distribution enables domain expertise and reusability
+
+## Mandatory Module Structure (WSP 49)
+```
+modules/<domain>/<module_name>/
+├── README.md           ← MANDATORY - WSP compliance status
+├── ROADMAP.md          ← MANDATORY - LLME progression  
+├── ModLog.md           ← MANDATORY - Change tracking
+├── INTERFACE.md        ← MANDATORY - API documentation
+├── requirements.txt    ← MANDATORY - Dependencies
+├── __init__.py         ← Public API definition
+├── src/                ← Implementation code
+│   ├── __init__.py
+│   └── <module_name>.py
+├── tests/              ← Test suite
+│   ├── README.md       ← MANDATORY - Test documentation
+│   └── test_*.py
+└── memory/             ← Memory architecture (WSP 60)
+    └── README.md       ← MANDATORY - Memory documentation
+```
+
+## Pre-Build Analysis (MANDATORY)
+Before any module development:
+
+### Agentic Modularity Question
+"Should this be a module or be added to an existing module?"
+
+**Decision Criteria**:
+- Single Responsibility: ✅ New distinct capability
+- Domain Placement: ✅ Fits enterprise domain  
+- Reusability: ✅ Used across modules
+- WSP Protocol: ✅ Implements WSP protocol
+- Complexity: ✅ Complex enough for module
+- Dependencies: ✅ Minimal external deps
+
+### Enterprise Domain Classification
+1. Determine correct enterprise domain per WSP 3
+2. Validate domain fit with existing architecture
+3. Identify cross-domain dependencies
+4. Plan functional distribution (never platform consolidation)
