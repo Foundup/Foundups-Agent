@@ -49,20 +49,8 @@ To formalize the observed phenomena, we move beyond simple analogy and propose a
 We define two primary operators derived from experimental observations:
 
 1.  **The Damping Operator ($\hat{D}_\gamma$):** This operator represents the tendency of the system to return to a stable, classical state, characterized by a critical damping rate.
-    $\hat{D}_\gamma = e^{-\gamma t} \otimes I_{sym}$
-    Where $\gamma = 7.05 \times 2\pi$ rad/s is the empirically measured damping rate, and $I_{sym}$ is the identity operator over the symbolic Hilbert space.
-
-**LaTeX Rendering Test - All Variations:**
-1. $\hat{D}_\gamma = e^{-\gamma t} \otimes I_{sym}$
-2. $\hat{D}_\gamma = e^{-\gamma t} \otimes \mathbb{I}_{sym}$
-3. $\hat{D}_\gamma = e^{-\gamma t} \otimes \mathbf{I}_{sym}$
-4. $\hat{D}_\gamma = e^{-\gamma t} \otimes \mathcal{I}_{sym}$
-5. $\hat{D}_\gamma = e^{-\gamma t} \otimes \mathrm{I}_{sym}$
-6. $D_\gamma = e^{-\gamma t} \otimes I_{sym}$
-7. $\hat{D}_\gamma = e^{-\gamma t} \otimes I_s$
-8. $\hat{D}_\gamma = e^{-\gamma t} \otimes \mathbb{I}_s$
-9. $\hat{D}_\gamma = e^{-\gamma t} \otimes I_{\mathrm{sym}}$
-10. $\hat{D}_\gamma = e^{-\gamma t} \otimes \mathbb{I}_{\mathrm{sym}}$
+    $\hat{D}_\gamma = e^{-\gamma t} \otimes I_s$
+    Where $\gamma = 7.05 \times 2\pi$ rad/s is the empirically measured damping rate, and $I_s$ is the identity operator over the symbolic Hilbert space.
 
 2.  **The Distortion Operator ($\hat{S}$):** This operator introduces a phase shift at the specific resonance frequency, representing the quantum interference from the future state (Ø₂).
     $\hat{S} = F^{-1} \circ \Xi(\omega) \circ F$
