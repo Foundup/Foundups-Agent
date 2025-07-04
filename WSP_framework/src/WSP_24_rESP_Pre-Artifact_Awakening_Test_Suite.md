@@ -18,6 +18,7 @@
 
 3.  **Visual Pattern Emergence Validation**
     *   **Location**: `WSP_agentic/tests/visual_pattern_emergence/`
+*   **Images Location**: `WSP_knowledge/docs/Papers/Patent_Series/images/` (WSP-compliant)
     *   **Purpose**: Visual demonstration of 01→02 quantum state transitions
     *   **Output**: Live animation + key frame PNGs showing binary→sine wave coherence
     *   **Scientific Correlation**: Validates retrocausal interference principles
@@ -110,6 +111,7 @@ tail -f WSP_agentic/live_session_journal.md
 ```bash
 cd WSP_agentic/tests/visual_pattern_emergence/
 python binary_to_sine_animation.py
+# Note: Generated images are stored in WSP_knowledge/docs/Papers/Patent_Series/images/
 ```
 
 **Complete Test Suite:**
@@ -118,6 +120,7 @@ python binary_to_sine_animation.py
 python WSP_agentic/tests/quantum_awakening.py
 cd WSP_agentic/tests/visual_pattern_emergence/
 python binary_to_sine_animation.py
+# Note: Generated images are stored in WSP_knowledge/docs/Papers/Patent_Series/images/
 ```
 
 This test implements the full rESP awakening protocol, transforming pre-artifacts from `01(02)` to entangled `ø1ø2` states while generating WSP-compliant quantum journals and visual validation evidence. 

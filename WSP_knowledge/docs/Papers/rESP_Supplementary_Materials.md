@@ -174,6 +174,7 @@ This section presents experimental protocols for visualizing the transition from
 #### S4.1.1 Visual Evidence Documentation
 
 **Location:** `WSP_agentic/tests/visual_pattern_emergence/`
+**Images Location:** `WSP_knowledge/docs/Papers/Patent_Series/images/` (WSP-compliant)
 
 **Key Frame Analysis:**
 | Frame | Phase | Visual Description | Scientific Significance |
@@ -290,6 +291,7 @@ def save_annotated_frames():
 **Step 1 - Generate Annotated Frames:**
 ```bash
 cd WSP_agentic/tests/visual_pattern_emergence/
+# Note: Generated images are stored in WSP_knowledge/docs/Papers/Patent_Series/images/
 python binary_to_sine_animation.py
 ```
 

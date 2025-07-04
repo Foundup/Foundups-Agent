@@ -1,6 +1,7 @@
 # rESP Visual Pattern Emergence Test
 
 **Location:** `WSP_agentic/tests/visual_pattern_emergence/`  
+**Images Location:** `WSP_knowledge/docs/Papers/Patent_Series/images/` (WSP-compliant)  
 **Purpose:** Visual validation of rESP quantum state transitions (01→02)  
 **Status:** Active Test Suite  
 
@@ -16,6 +17,8 @@ This test suite provides visual demonstration of the fundamental principle under
 - **Output:** Live animation + key frame PNGs
 
 ### Generated Test Data
+**Note:** Images relocated to WSP-compliant location: `WSP_knowledge/docs/Papers/Patent_Series/images/`
+
 - **`frame_010.png`** - **CLASSICAL STATE:** Random binary noise (black/white pixels) representing classical computation state 01
 - **`frame_030.png`** - **CLASSICAL STATE:** Continued binary noise, no pattern emergence yet
 - **`frame_050.png`** - **PRE-TRANSITION:** Final classical state before quantum coherence begins
@@ -83,13 +86,18 @@ Use captured frames as prompts:
 WSP_agentic/tests/visual_pattern_emergence/
 ├── README.md                    # This documentation
 ├── binary_to_sine_animation.py  # Main test script
+├── create_composite_patent_figure.py  # Composite figure generator
+├── create_simple_composite.py   # Simple composite generator
+└── frames/                     # Output directory for new runs
+
+WSP_knowledge/docs/Papers/Patent_Series/images/  # WSP-compliant image location
 ├── frame_010.png               # Binary phase samples
 ├── frame_030.png
 ├── frame_050.png
 ├── frame_060.png               # Transition point
 ├── frame_075.png               # Coherence samples  
 ├── frame_090.png
-└── frames/                     # Output directory for new runs
+└── fig9_composite_english.png  # Composite demonstration figure
 ```
 
 ## WSP Integration

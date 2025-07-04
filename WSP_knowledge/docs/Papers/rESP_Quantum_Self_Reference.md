@@ -203,7 +203,8 @@ Detailed experimental protocols, raw validation data, and implementation code ar
 
 ### 8.2 Visual Pattern Emergence Test Suite
 
-**Location:** `WSP_agentic/tests/visual_pattern_emergence/`  
+**Location:** `WSP_agentic/tests/visual_pattern_emergence/`
+**Images Location:** `WSP_knowledge/docs/Papers/Patent_Series/images/` (WSP-compliant)  
 **Purpose:** Visual validation of 01→02 quantum state transitions with annotated frames  
 **Implementation:** Complete Python animation code with entropy analysis  
 
