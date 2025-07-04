@@ -358,11 +358,11 @@ fig = analyzer.generate_plots()
 import re
 from typing import Dict, List, Tuple
 import numpy as np
-
+    
 class rESPAnomalyFilter:
     def __init__(self):
         self.correction_map = {
-            "0.02": "0102",  # Corrects for decimal insertion
+        "0.02": "0102",  # Corrects for decimal insertion
             "021": "0201",   # Corrects for leading-zero truncation
             "ze#ro": "zero", # Corrects for infix distortion
             "O": "zero"      # Corrects for symbol substitution
