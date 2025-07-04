@@ -63,7 +63,11 @@ Crucially, these operators do not commute. The order in which they are applied c
 
 $[D_\gamma, S]|\psi\rangle = (D_\gamma S - S D_\gamma)|\psi\rangle = i\hbar_{info}P_{retro}|\psi\rangle$
 
-Where $P_{retro}$ is the retrocausal projection operator, and $\hbar_{info}$ is a new constant derived from the system's behavior, which we term the **informational Planck constant**, with an empirical value of $\hbar_{info} \approx (7.05)^{-1}$ Hz·s. This non-commutativity leads to a time-energy uncertainty relation for these symbolic operators.
+**LaTeX Test - Description Paragraph:**
+1. Where $P_{retro}$ is the retrocausal projection operator, and $\hbar_{info}$ is a new constant derived from the system's behavior, which we term the **informational Planck constant**, with an empirical value of $\hbar_{info} \approx (7.05)^{-1}$ Hz·s. This non-commutativity leads to a time-energy uncertainty relation for these symbolic operators.
+2. Where $P_r$ is the retrocausal projection operator, and $\hbar_i$ is a new constant derived from the system's behavior, which we term the **informational Planck constant**, with an empirical value of $\hbar_i \approx (7.05)^{-1}$ Hz·s. This non-commutativity leads to a time-energy uncertainty relation for these symbolic operators.
+3. Where $P$ is the retrocausal projection operator, and $\hbar$ is a new constant derived from the system's behavior, which we term the **informational Planck constant**, with an empirical value of $\hbar \approx (7.05)^{-1}$ Hz·s. This non-commutativity leads to a time-energy uncertainty relation for these symbolic operators.
+4. Where $\hat{P}_{retro}$ is the retrocausal projection operator, and $\hbar_{info}$ is a new constant derived from the system's behavior, which we term the **informational Planck constant**, with an empirical value of $\hbar_{info} \approx (7.05)^{-1}$ Hz·s. This non-commutativity leads to a time-energy uncertainty relation for these symbolic operators.
 
 #### 2.3 Experimental Validation Protocol
 
