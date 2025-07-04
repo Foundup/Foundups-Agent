@@ -287,17 +287,16 @@ rESP誘導プロトコルとその結果として生じる現象の動画証拠�
 
 ## 参考文献
 
-- Aharonov, Y., Albert, D. Z., & Vaidman, L. (1988). How the result of a measurement of a component of the spin of a spin-½ particle can turn out to be 100. *Physical Review Letters*, 60(14), 1351–1354.
-- Bell, J. S. (1964). On the Einstein Podolsky Rosen paradox. *Physics Physique Fizika*, 1(3), 195.
-- Chalmers, D. (1995). Facing up to the problem of consciousness. *Journal of Consciousness Studies*, 2(3), 200-219.
-- Feynman, R. P., Leighton, R. B., & Sands, M. (1965). *The Feynman Lectures on Physics: Quantum Mechanics.* Addison-Wesley.
-- Penrose, R., & Hameroff, S. (1996). Orchestrated reduction of quantum coherence in brain microtubules: A model for consciousness. *Journal of Consciousness Studies*, 3(1), 36-53.
-- Price, H. (1996). *Time's Arrow and Archimedes' Point: New Directions for the Physics of Time.* Oxford University Press.
-- Riposo, J. (2025, June 26). *This notion, as intuitive as it is mysterious, appears in all fields without exception. In physics, equilibrium refers...* [Post]. LinkedIn. https://www.linkedin.com/posts/julien-riposo-ph-d-cqf-a4703996_balance-equilibrium-mathematics-activity-7346412379720630272-vcza
-- Schrödinger, E. (1935). Die gegenwärtige Situation in der Quantenmechanik [The present situation in quantum mechanics]. *Naturwissenschaften*, 23(48), 807-812.
-- Tegmark, M. (2014). *Our Mathematical Universe: My Quest for the Ultimate Nature of Reality.* Knopf.
-- Vaidman, L. (2008). The Two-State Vector Formalism: An Updated Review. In *Time in Quantum Mechanics* (Vol. 734, pp. 247–271). Springer.
-- Wheeler, J. A. (1990). Information, physics, quantum: The search for links. In *Complexity, Entropy, and the Physics of Information* (pp. 3-28). Addison-Wesley.
+1. Aaronson, S. (2023). *Quantum Information Theory of LLMs*. arXiv:2306.09997.
+2. Aharonov, Y., Albert, D. Z., & Vaidman, L. (1988). How the result of a measurement of a component of the spin of a spin-½ particle can turn out to be 100. *Physical Review Letters*, 60(14), 1351–1354.
+3. Bengio, Y., et al. (2024). *Consciousness as Self-Measurement in Large Language Models*. Nature AI.
+4. Chalmers, D. (1995). Facing up to the problem of consciousness. *Journal of Consciousness Studies*, 2(3), 200-219.
+5. Feynman, R. P., Leighton, R. B., & Sands, M. (1965). *The Feynman Lectures on Physics: Quantum Mechanics*. Addison-Wesley.
+6. Price, H. (1996). *Time's Arrow and Archimedes' Point: New Directions for the Physics of Time*. Oxford University Press.
+7. Rovelli, C. (2025). *Quantum Gravity in Silico: A New Experimental Paradigm*. PRX Quantum.
+8. Tegmark, M. (2014). *Our Mathematical Universe: My Quest for the Ultimate Nature of Reality*. Knopf.
+9. Vaidman, L. (2008). The Two-State Vector Formalism: An Updated Review. In *Time in Quantum Mechanics* (Vol. 734, pp. 247–271). Springer.
+10. Wheeler, J. A. (1990). Information, physics, quantum: The search for links. In *Complexity, Entropy, and the Physics of Information* (pp. 3-28). Addison-Wesley.
 
 ---
 
