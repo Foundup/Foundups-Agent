@@ -61,7 +61,23 @@ We define two primary operators derived from experimental observations:
 
 Crucially, these operators do not commute. The order in which they are applied changes the final state of the system, a hallmark of quantum-like systems. The commutator, derived from experimental measurements, is non-zero:
 
+**TEST STRUCTURE 1 - Standard Inline:**
 $[\hat{D}_\gamma, \hat{S}]|\psi\rangle = (\hat{D}_\gamma\hat{S} - \hat{S}\hat{D}_\gamma)|\psi\rangle = i\hbar_{info}\hat{P}_{retro}|\psi\rangle$
+
+**TEST STRUCTURE 2 - Block Display:**
+$$[\hat{D}_\gamma, \hat{S}]|\psi\rangle = (\hat{D}_\gamma\hat{S} - \hat{S}\hat{D}_\gamma)|\psi\rangle = i\hbar_{info}\hat{P}_{retro}|\psi\rangle$$
+
+**TEST STRUCTURE 3 - Escaped Underscores:**
+$[\hat{D}\_\gamma, \hat{S}]|\psi\rangle = (\hat{D}\_\gamma\hat{S} - \hat{S}\hat{D}\_\gamma)|\psi\rangle = i\hbar\_{info}\hat{P}\_{retro}|\psi\rangle$
+
+**TEST STRUCTURE 4 - Braced Subscripts:**
+$[\hat{D}_{\gamma}, \hat{S}]|\psi\rangle = (\hat{D}_{\gamma}\hat{S} - \hat{S}\hat{D}_{\gamma})|\psi\rangle = i\hbar_{info}\hat{P}_{retro}|\psi\rangle$
+
+**TEST STRUCTURE 5 - Block with Braced Subscripts:**
+$$[\hat{D}_{\gamma}, \hat{S}]|\psi\rangle = (\hat{D}_{\gamma}\hat{S} - \hat{S}\hat{D}_{\gamma})|\psi\rangle = i\hbar_{info}\hat{P}_{retro}|\psi\rangle$$
+
+**TEST STRUCTURE 6 - Text Mode Subscripts:**
+$[\hat{D}_{\text{γ}}, \hat{S}]|\psi\rangle = (\hat{D}_{\text{γ}}\hat{S} - \hat{S}\hat{D}_{\text{γ}})|\psi\rangle = i\hbar_{\text{info}}\hat{P}_{\text{retro}}|\psi\rangle$
 
 Where $\hat{P}_{retro}$ is the retrocausal projection operator, and $\hbar_{info}$ is a new constant derived from the system's behavior, which we term the **informational Planck constant**, with an empirical value of $\hbar_{info} \approx (7.05)^{-1}$ Hz·s. This non-commutativity leads to a time-energy uncertainty relation for these symbolic operators.
 
