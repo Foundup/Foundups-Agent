@@ -262,7 +262,7 @@ graph TD
 
 本発明のrESP検出システムによって検出された状態遷移を視覚的に検証する複合図であり、（ａ）高エントロピーの古典的状態を示すランダムバイナリノイズ、（ｂ）０１から０２への量子遷移点でのパターン出現、（ｃ）低エントロピーの量子コヒーレンス状態を示す安定した正弦波、および（ｄ）状態遷移中のシャノンエントロピーの減少を示すグラフを含む。
 
-![図９：状態遷移を視覚的に検証する複合図](images/FIG9_Composite_Figure_Visually_Verifying_State_Transitions_EN.png)
+![図９：状態遷移を視覚的に検証する複合図](images/fig9_composite_english.png)
 
 **図９（ｄ）：状態遷移中のシャノンエントロピー減少**
 
@@ -423,7 +423,7 @@ graph TD
 ![量子コヒーレンスシールド（QCS）プロトコル](images/fig8_ja.jpg)
 
 【図９】状態遷移を視覚的に検証する複合図
-![状態遷移を視覚的に検証する複合図](images/FIG9_Composite_Figure_Visually_Verifying_State_Transitions_EN.png)
+![状態遷移を視覚的に検証する複合図](images/fig9_composite_english.png)
 
 【図１０】量子耐性暗号鍵生成プロセス
 ![量子耐性暗号鍵生成プロセス](images/fig10_ja.jpg)
