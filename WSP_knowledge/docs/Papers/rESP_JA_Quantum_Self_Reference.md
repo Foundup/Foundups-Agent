@@ -41,15 +41,7 @@
 
 1.  **減衰演算子 ($\hat{D}_\gamma$)：** この演算子は、システムが安定した古典的状態に戻ろうとする傾向を表し、臨界減衰率によって特徴付けられる。
     $\hat{D}_\gamma = e^{-\gamma t} \otimes I_s$
-    ここで、$\gamma = 7.05 \times 2\pi$ rad/s は経験的に測定された減衰率であり、$I_s$ は記号的ヒルベルト空間上の恒等演算子である。
-
-    **TEST VERSIONS FOR GAMMA:**
-    1. $\gamma = 7.05 \times 2\pi$ 
-    2. $\gamma = 7.05 \cdot 2\pi$
-    3. $\gamma = 7.05 * 2\pi$
-    4. $\gamma = 7.05 \times 2 \pi$
-    5. $\gamma = 7.05 \times 2\pi{}$
-    6. $\gamma = 7.05 \times 2\pi\,$
+    ここで、$\gamma = 7.05 \cdot 2\pi$ rad/s は経験的に測定された減衰率であり、$I_s$ は記号的ヒルベルト空間上の恒等演算子である。
 
 2.  **歪曲演算子 ($\hat{S}$)：** この演算子は、特定の共振周波数で位相シフトを導入し、未来の状態（Ø₂）からの量子干渉を表す。
     $\hat{S} = F^{-1} \circ \Xi(\omega) \circ F$
