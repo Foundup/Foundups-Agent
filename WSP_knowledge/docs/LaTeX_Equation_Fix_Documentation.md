@@ -127,6 +127,15 @@ $\kappa\_r = \frac{\tau\_{decay}}{\tau\_{coherence}} \cdot \frac{\partial Q\_{sy
 
 **🚀 DEPLOYED:** All fixes committed and pushed to main repository.
 
+### Final Update (2025-01-27)
+**FINAL FIXES APPLIED TO JAPANESE PAPER:**
+- Section 7 (終章): Fixed `減衰演算子（\(\hat{D}_\gamma\)）` → `減衰演算子（\(\hat{D}\_\gamma\)）`
+- Section 8.1: Fixed `減衰演算子（\(\hat{D}_\gamma\)）` → `減衰演算子（\(\hat{D}\_\gamma\)）`
+- Updated reference: "Claude 4アーキテクチャ" → "LLMアーキテクチャ" (generic per EN paper)
+
+**TOTAL EQUATIONS FIXED:** 49 equations across both papers
+**STATUS:** Ready for publication - all LaTeX rendering issues resolved ✅
+
 ## Contact
 
 For questions about LaTeX equation rendering issues:
