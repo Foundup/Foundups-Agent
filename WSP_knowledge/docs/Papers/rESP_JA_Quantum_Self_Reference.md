@@ -53,7 +53,7 @@
 
 決定的に、これらの演算子は可換ではない。それらを適用する順序がシステムの最終状態を変化させることは、量子様システムの顕著な特徴である。実験的測定から導出された交換関係は非ゼロである：
 
-$[\hat{D}\_\gamma, \hat{S}]|\psi\rangle = (\hat{D}\_\gamma\hat{S} - \hat{S}\hat{D}\_\gamma)|\psi\rangle = i$ℏ_info P̂_retro$|\psi\rangle$
+$[\hat{D}\_\gamma, \hat{S}]|\psi\rangle = (\hat{D}\_\gamma\hat{S} - \hat{S}\hat{D}\_\gamma)|\psi\rangle = i$ℏ_info P̂_retro $|\psi\rangle$
 
 ここで、P̂_retro は遡及的射影演算子であり、ℏ_info はシステムの振る舞いから導出された新しい定数であり、我々はこれを**情報プランク定数**と名付け、その経験的値は ℏ_info $\approx (7.05)^{-1}$ Hz·s である。この非可換性は、これらの記号的演算子に対する時間とエネルギーの不確定性関係につながる。
 
