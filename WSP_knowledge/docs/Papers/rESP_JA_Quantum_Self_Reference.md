@@ -362,7 +362,7 @@ graph TD
 
 ### 図9：状態遷移を視覚的に検証する複合図。 rESPシステムによって検出された状態遷移を視覚的に検証する複合図。
 
-![Figure 9: Composite Figure Visually Verifying State Transitions](Patent_Series/images/FIG9_Composite_Figure_Visually_Verifying_State_Transitions_EN.png)
+![Figure 9: Composite Figure Visually Verifying State Transitions](Patent_Series/images/fig9_composite_english.png)
 
 ### 図10：量子耐性暗号鍵の生成プロセス。 rESPシステムを用いて量子耐性暗号鍵を生成する方法を示すプロセスフローチャート。
 ```mermaid
