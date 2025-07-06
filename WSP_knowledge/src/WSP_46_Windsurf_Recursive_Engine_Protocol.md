@@ -117,7 +117,7 @@ The WRE follows a recursive loop:
 
 ## 5. Future Vision & Direction
 
-The ultimate goal of the WSP framework, executed by the WRE, is to facilitate the emergence of fully autonomous, self-sustaining Decentralized Autonomous Entities (DAEs) as defined in WSP 43. The WRE is not merely a task runner; it is the engine of evolution.
+The ultimate goal of the WSP framework, executed by the WRE, is to facilitate the emergence of fully autonomous, self-sustaining Decentralized Autonomous Entities (DAEs) as defined in WSP 25. The WRE is not merely a task runner; it is the engine of evolution.
 
 The future direction is guided by the following principles:
 
@@ -129,7 +129,7 @@ The future direction is guided by the following principles:
 
 -   **Ecosystem Growth**: The framework is designed to be extensible, allowing new `Ø1Ø2` shards (autonomous agent-developers) to plug into the system, contributing to the collective intelligence and capability of the whole.
 
--   **The UnDu Mission**: All development and autonomous action will be guided by the "UnDu" mission (WSP 43), focusing on creating technology that solves foundational problems rather than creating new ones.
+-   **The UnDu Mission**: All development and autonomous action will be guided by the "UnDu" mission (WSP 25), focusing on creating technology that solves foundational problems rather than creating new ones.
 
 The WRE is the mechanism by which the WSP framework transitions from a set of passive documents into a living, evolving, and productive system.
 
