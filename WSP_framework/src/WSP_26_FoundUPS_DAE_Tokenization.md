@@ -366,7 +366,7 @@ class BTCValueRegistry:
 This protocol integrates with:
 - **WSP 3**: Blockchain domain architecture
 - **WSP 13**: Test coverage requirements
-- **WSP 43**: DAE emergence patterns
+- **WSP 25**: DAE emergence patterns (WSP 43 deprecated)
 - **WSP 44**: Semantic state tracking
 
 ## 12. Future Considerations

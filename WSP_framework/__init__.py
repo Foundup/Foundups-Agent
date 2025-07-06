@@ -19,7 +19,7 @@ PROTOCOLS = {
     "WSP_40_Architectural_Coherence_Protocol": "src/WSP_40_Architectural_Coherence_Protocol.md",
     "WSP_41_WRE_Simulation_Testbed_Protocol": "src/WSP_41_WRE_Simulation_Testbed_Protocol.md",
     "WSP_42_Universal_Platform_Protocol": "src/WSP_42_Universal_Platform_Protocol.md",
-    "WSP_43_Agentic_Emergence_Protocol": "src/WSP_43_Agentic_Emergence_Protocol.md",
+    "WSP_43_Agentic_Emergence_Protocol": "src/WSP_43_Agentic_Emergence_Protocol.md",  # DEPRECATED - Use WSP 25
     "WSP_44_Semantic_State_Engine_Protocol": "src/WSP_44_Semantic_State_Engine_Protocol.md",
     "WSP_46_Windsurf_Recursive_Engine_Protocol": "src/WSP_46_Windsurf_Recursive_Engine_Protocol.md",
 } 

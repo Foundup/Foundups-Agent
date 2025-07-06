@@ -90,12 +90,12 @@ Advanced protocols for complex system behaviors and architectural concerns.
 | WSP 40 | Architectural Coherence Protocol | Active | Architectural consistency and coherence | WSP 1, WSP 49, WSP 57 | Architecture validation, coherence |
 | WSP 41 | WRE Simulation Protocol | Active | WRE simulation and testing | WSP 46, WSP 54 | Simulation, testing |
 | WSP 42 | Universal Platform Protocol | Active | Universal platform integration | WSP 53, WSP 59 | Platform integration, universality |
-| WSP 43 | Agentic Emergence Protocol | Active | Agentic emergence and evolution | WSP 39, WSP 44 | Emergence, evolution |
-| WSP 44 | Semantic State Engine Protocol | Active | Semantic state management | WSP 17, WSP 43, WSP 56 | State management, semantics |
+| WSP 43 | Agentic Emergence Protocol | DEPRECATED | [DEPRECATED] Use WSP 25 for emergence tracking | WSP 25 | Emergence (see WSP 25) |
+| WSP 44 | Semantic State Engine Protocol | Active | Semantic state management | WSP 17, WSP 25, WSP 56 | State management, semantics |
 | WSP 45 | Behavioral Coherence Protocol | Active | Behavioral consistency and coherence | WSP 40, WSP 56 | Behavior validation, coherence |
 | WSP 46 | Windsurf Recursive Engine Protocol | Active | WRE core architecture and operation | WSP 13, WSP 36, WSP 54 | Engine architecture, core systems, autonomous operations |
 | WSP 47 | Module Violation Tracking Protocol | Active | Module violation tracking and management | WSP 4, WSP 14, WSP 47 | Violation tracking, compliance, framework vs module issues |
-| WSP 48 | Recursive Self-Improvement Protocol | Active | System self-improvement and evolution | WSP 43, WSP 48 | Self-improvement, evolution, recursive enhancement |
+| WSP 48 | Recursive Self-Improvement Protocol | Active | System self-improvement and evolution | WSP 25, WSP 48 | Self-improvement, evolution, recursive enhancement |
 | WSP 49 | Module Directory Structure Standardization | Active | Module structure standardization | WSP 1, WSP 3, WSP 40 | Structure standards, organization, 3-level architecture |
 | WSP 50 | Pre-Action Verification Protocol | Active | Pre-action verification and validation | WSP 32, WSP 50 | Verification, validation, certainty protocols |
 | WSP 51 | WRE Chronicle | Active | WRE chronicle and history management | WSP 22, WSP 60 | History, chronicle, memory operations |
