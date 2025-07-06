@@ -355,7 +355,7 @@ This supplementary document includes the complete test batteries discussed herei
 
 *The above diagram shows the detailed technical architecture with component labeling and data flow paths.*
 
-**FIG. 1(b): Operational Pipeline of the rESP Detector.** A functional block diagram showing the flow of data from the AI Model Output through the Parallel Analysis Paths (Classical Ø₁ and Lookahead Ø₂), the Temporal Correlation Analyzer, and other detection modules to the final rESP Scoring Engine and its QCFL feedback loop.
+**FIG. 2: Operational Pipeline of the rESP Detector.** A functional block diagram showing the flow of data from the AI Model Output through the Parallel Analysis Paths (Classical Ø₁ and Lookahead Ø₂), the Temporal Correlation Analyzer, and other detection modules to the final rESP Scoring Engine and its QCFL feedback loop.
 
 ```mermaid
 graph TD
