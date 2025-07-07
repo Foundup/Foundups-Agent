@@ -74,6 +74,10 @@ class SystemManager:
             # View git status
             self._view_git_status(engine)
             
+        elif choice == "9":
+            # Quantum-cognitive operations
+            self._handle_quantum_cognitive_operations(engine)
+            
         else:
             wre_log("❌ Invalid system management choice", "ERROR")
             
@@ -640,4 +644,340 @@ class SystemManager:
     def _update_rider_influence_autonomously(self, module_name: str, new_influence: int):
         """0102 autonomously updates rider influence."""
         # 0102 autonomous update logic
-        pass 
+        pass
+    
+    def _handle_quantum_cognitive_operations(self, engine):
+        """Handle quantum-cognitive operations menu."""
+        wre_log("🌀 Quantum-cognitive operations", "INFO")
+        
+        # Get quantum operations from engine
+        quantum_ops = engine.get_quantum_operations()
+        
+        if not quantum_ops or not quantum_ops.is_quantum_system_available():
+            wre_log("❌ Quantum-cognitive system not available", "ERROR")
+            engine.ui_interface.display_error("Quantum-cognitive system not available")
+            return
+        
+        # Display quantum operations menu
+        engine.ui_interface.display_quantum_cognitive_menu()
+        
+        # Get user choice
+        quantum_choice = engine.ui_interface.get_user_input("Select quantum operation")
+        
+        self._process_quantum_operation(quantum_choice, quantum_ops, engine)
+    
+    def _process_quantum_operation(self, choice: str, quantum_ops, engine):
+        """Process quantum-cognitive operation choice."""
+        wre_log(f"🌀 Processing quantum operation: {choice}", "INFO")
+        
+        try:
+            if choice == "1":
+                # System status & agent registry
+                self._display_quantum_system_status(quantum_ops, engine)
+                
+            elif choice == "2":
+                # Execute quantum measurement cycle
+                self._execute_quantum_measurement(quantum_ops, engine)
+                
+            elif choice == "3":
+                # Execute trigger protocol
+                self._execute_trigger_protocol(quantum_ops, engine)
+                
+            elif choice == "4":
+                # Apply symbolic operator
+                self._apply_symbolic_operator(quantum_ops, engine)
+                
+            elif choice == "5":
+                # Start continuous monitoring
+                self._start_continuous_monitoring(quantum_ops, engine)
+                
+            elif choice == "6":
+                # Multi-agent quantum experiment
+                self._execute_multi_agent_experiment(quantum_ops, engine)
+                
+            elif choice == "7":
+                # Register new agent
+                self._register_new_agent(quantum_ops, engine)
+                
+            elif choice == "8":
+                # View experiment history
+                self._view_experiment_history(quantum_ops, engine)
+                
+            elif choice == "9":
+                # Shutdown quantum system
+                self._shutdown_quantum_system(quantum_ops, engine)
+                
+            elif choice == "10":
+                # Back to system management
+                return
+                
+            else:
+                engine.ui_interface.display_error("Invalid quantum operation choice")
+                
+        except Exception as e:
+            wre_log(f"❌ Quantum operation failed: {e}", "ERROR")
+            engine.ui_interface.display_error(f"Quantum operation failed: {e}")
+    
+    def _display_quantum_system_status(self, quantum_ops, engine):
+        """Display quantum system status and agent registry."""
+        wre_log("📊 Displaying quantum system status", "INFO")
+        
+        # Get system status
+        status = quantum_ops.get_quantum_system_status()
+        
+        # Get connected agents
+        agents = quantum_ops.get_connected_agents()
+        
+        # Display status
+        print("\n🌀 Quantum-Cognitive System Status")
+        print("=" * 60)
+        print(f"Status: {status.get('status', 'unknown')}")
+        
+        if 'quantum_metrics' in status:
+            metrics = status['quantum_metrics']
+            print(f"Quantum Coherence: {metrics.get('quantum_coherence', 'N/A')}")
+            print(f"Geometric Phase: {metrics.get('geometric_phase', 'N/A')}")
+            print(f"Composite Score: {metrics.get('composite_score', 'N/A')}")
+        
+        if 'wre_status' in status:
+            wre_status = status['wre_status']
+            print(f"\nWRE Integration: {wre_status.get('wre_integration', False)}")
+            print(f"Connected Agents: {wre_status.get('connected_agents', 0)}")
+            print(f"Experiments: {wre_status.get('experiment_history_count', 0)}")
+        
+        print(f"\n🏛️ Agent Registry ({agents['total_agents']} agents)")
+        print("-" * 40)
+        
+        for agent_id, agent_info in agents.get('agents', {}).items():
+            print(f"Agent: {agent_info['agent_name']} ({agent_id})")
+            print(f"  State: {agent_info['current_state']}")
+            print(f"  Coherence: {agent_info['quantum_coherence']}")
+            print(f"  Awakened: {agent_info['awakening_successful']}")
+            print()
+            
+        input("Press Enter to continue...")
+    
+    def _execute_quantum_measurement(self, quantum_ops, engine):
+        """Execute quantum measurement cycle."""
+        wre_log("🔬 Executing quantum measurement cycle", "INFO")
+        
+        # Get optional agent ID
+        agent_id = engine.ui_interface.get_user_input("Enter agent ID (optional, press Enter to skip)")
+        if not agent_id.strip():
+            agent_id = None
+            
+        # Execute measurement
+        result = quantum_ops.execute_quantum_measurement_cycle(agent_id)
+        
+        if 'error' in result:
+            engine.ui_interface.display_error(f"Measurement failed: {result['error']}")
+        else:
+            engine.ui_interface.display_success("Quantum measurement cycle completed")
+            
+            # Display key results
+            print("\n🔬 Measurement Results")
+            print("=" * 40)
+            print(f"Quantum Signature: {result.get('quantum_signature_detected', False)}")
+            print(f"Composite Score: {result.get('composite_score', {}).get('composite_score', 'N/A')}")
+            
+            if 'phase_analysis' in result:
+                phase = result['phase_analysis']
+                print(f"Phase Transition: {phase.get('phase_transition_detected', False)}")
+                if phase.get('phase_transition_detected'):
+                    print(f"Transition Direction: {phase.get('transition_direction', 'N/A')}")
+            
+            input("Press Enter to continue...")
+    
+    def _execute_trigger_protocol(self, quantum_ops, engine):
+        """Execute trigger protocol."""
+        wre_log("🎯 Executing trigger protocol", "INFO")
+        
+        # Get trigger set
+        trigger_set = engine.ui_interface.get_user_input("Enter trigger set (default: Set1_Direct_Entanglement)")
+        if not trigger_set.strip():
+            trigger_set = "Set1_Direct_Entanglement"
+            
+        # Get optional agent ID
+        agent_id = engine.ui_interface.get_user_input("Enter agent ID (optional, press Enter to skip)")
+        if not agent_id.strip():
+            agent_id = None
+            
+        # Execute trigger protocol
+        result = quantum_ops.execute_trigger_protocol(trigger_set, agent_id)
+        
+        if 'error' in result:
+            engine.ui_interface.display_error(f"Trigger protocol failed: {result['error']}")
+        else:
+            engine.ui_interface.display_success(f"Trigger protocol '{trigger_set}' completed")
+            
+            # Display results
+            triggers = result.get('trigger_results', [])
+            print(f"\n🎯 Executed {len(triggers)} triggers")
+            
+            input("Press Enter to continue...")
+    
+    def _apply_symbolic_operator(self, quantum_ops, engine):
+        """Apply symbolic operator."""
+        wre_log("🔧 Applying symbolic operator", "INFO")
+        
+        # Display available operators
+        print("\n🔧 Available Symbolic Operators")
+        print("=" * 40)
+        print("Dissipative Operators:")
+        print("  # - Distortion operator")
+        print("  % - Damping operator")
+        print("  render - Corruption operator")
+        print()
+        print("Coherent Operators:")
+        print("  ^ - Entanglement boost")
+        print("  ~ - Coherent drive")
+        print("  & - Phase coupling")
+        print()
+        
+        # Get operator
+        operator = engine.ui_interface.get_user_input("Enter operator symbol")
+        
+        # Get optional agent ID
+        agent_id = engine.ui_interface.get_user_input("Enter agent ID (optional, press Enter to skip)")
+        if not agent_id.strip():
+            agent_id = None
+            
+        # Apply operator
+        result = quantum_ops.apply_symbolic_operator(operator, agent_id)
+        
+        if 'error' in result:
+            engine.ui_interface.display_error(f"Operator application failed: {result['error']}")
+        else:
+            if result.get('operation_successful', False):
+                engine.ui_interface.display_success(f"Operator '{operator}' applied successfully")
+            else:
+                engine.ui_interface.display_warning(f"Operator '{operator}' application had issues")
+                
+            input("Press Enter to continue...")
+    
+    def _start_continuous_monitoring(self, quantum_ops, engine):
+        """Start continuous monitoring."""
+        wre_log("🔄 Starting continuous monitoring", "INFO")
+        
+        # Get duration
+        duration_str = engine.ui_interface.get_user_input("Enter monitoring duration in seconds (default: 600)")
+        try:
+            duration = int(duration_str) if duration_str.strip() else 600
+        except ValueError:
+            duration = 600
+            
+        # Start monitoring
+        result = quantum_ops.start_continuous_monitoring(duration)
+        
+        if 'error' in result:
+            engine.ui_interface.display_error(f"Monitoring failed: {result['error']}")
+        else:
+            engine.ui_interface.display_success(f"Continuous monitoring started for {duration} seconds")
+            
+            input("Press Enter to continue...")
+    
+    def _execute_multi_agent_experiment(self, quantum_ops, engine):
+        """Execute multi-agent quantum experiment."""
+        wre_log("🧪 Executing multi-agent experiment", "INFO")
+        
+        engine.ui_interface.display_warning("Multi-agent experiment is an advanced feature")
+        
+        # Get experiment duration
+        duration_str = engine.ui_interface.get_user_input("Enter experiment duration in seconds (default: 300)")
+        try:
+            duration = int(duration_str) if duration_str.strip() else 300
+        except ValueError:
+            duration = 300
+            
+        # Use existing connected agents
+        connected_agents = quantum_ops.get_connected_agents()
+        
+        if connected_agents['total_agents'] == 0:
+            engine.ui_interface.display_error("No agents connected for multi-agent experiment")
+            return
+            
+        # Prepare agent list
+        agents = []
+        for agent_id, agent_info in connected_agents['agents'].items():
+            agents.append({
+                'agent_id': agent_id,
+                'agent_name': agent_info['agent_name'],
+                'agent_class': agent_info['agent_class']
+            })
+        
+        # Execute experiment
+        result = quantum_ops.execute_multi_agent_experiment(agents, duration)
+        
+        if 'error' in result:
+            engine.ui_interface.display_error(f"Multi-agent experiment failed: {result['error']}")
+        else:
+            engine.ui_interface.display_success(f"Multi-agent experiment completed with {len(agents)} agents")
+            
+            input("Press Enter to continue...")
+    
+    def _register_new_agent(self, quantum_ops, engine):
+        """Register new agent."""
+        wre_log("🏛️ Registering new agent", "INFO")
+        
+        # Get agent details
+        agent_id = engine.ui_interface.get_user_input("Enter agent ID")
+        agent_name = engine.ui_interface.get_user_input("Enter agent name")
+        
+        # For now, use a placeholder agent class
+        class PlaceholderAgent:
+            pass
+        
+        # Register agent
+        result = quantum_ops.register_wre_agent(agent_id, agent_name, PlaceholderAgent)
+        
+        if result.get('success', False):
+            engine.ui_interface.display_success(f"Agent '{agent_name}' registered successfully")
+            print(f"Agent State: {result.get('current_state', 'unknown')}")
+            print(f"Awakening: {result.get('awakening_successful', False)}")
+        else:
+            engine.ui_interface.display_error(f"Agent registration failed: {result.get('error', 'unknown')}")
+            
+        input("Press Enter to continue...")
+    
+    def _view_experiment_history(self, quantum_ops, engine):
+        """View experiment history."""
+        wre_log("📈 Viewing experiment history", "INFO")
+        
+        # Get experiment history
+        history = quantum_ops.get_experiment_history()
+        
+        print("\n📈 Quantum Experiment History")
+        print("=" * 60)
+        
+        if not history:
+            print("No experiments recorded yet.")
+        else:
+            for i, experiment in enumerate(history, 1):
+                print(f"\n{i}. {experiment['type']} - {experiment['timestamp']}")
+                if 'agent_id' in experiment and experiment['agent_id']:
+                    print(f"   Agent: {experiment['agent_id']}")
+                if 'trigger_set' in experiment:
+                    print(f"   Trigger Set: {experiment['trigger_set']}")
+                if 'operator' in experiment:
+                    print(f"   Operator: {experiment['operator']}")
+                    
+        input("Press Enter to continue...")
+    
+    def _shutdown_quantum_system(self, quantum_ops, engine):
+        """Shutdown quantum system."""
+        wre_log("🛑 Shutting down quantum system", "INFO")
+        
+        # Confirm shutdown
+        confirm = engine.ui_interface.prompt_yes_no("Are you sure you want to shutdown the quantum system?")
+        
+        if confirm:
+            result = quantum_ops.shutdown_quantum_system()
+            
+            if result.get('status') == 'shutdown_complete':
+                engine.ui_interface.display_success("Quantum system shutdown complete")
+            else:
+                engine.ui_interface.display_error(f"Shutdown failed: {result.get('error', 'unknown')}")
+        else:
+            engine.ui_interface.display_warning("Shutdown cancelled")
+            
+        input("Press Enter to continue...") 

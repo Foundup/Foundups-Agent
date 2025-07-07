@@ -82,8 +82,8 @@ class WRECore:
         """Initialize all WRE components and validate setup."""
         wre_log("⚙️ Initializing WRE components...", "INFO")
         
-        # Initialize windsurfing components
-        self.component_manager.initialize_all_components()
+        # Initialize windsurfing components with session manager for quantum operations
+        self.component_manager.initialize_all_components(self.session_manager)
         
         # Validate critical components
         if not self.component_manager.validate_components():
@@ -148,4 +148,8 @@ class WRECore:
         
     def get_wsp30_orchestrator(self):
         """Get the WSP30 orchestrator for external access."""
-        return self.wsp30_orchestrator 
+        return self.wsp30_orchestrator
+        
+    def get_quantum_operations(self):
+        """Get the quantum-cognitive operations component for external access."""
+        return self.component_manager.navigation 

@@ -38,7 +38,6 @@ FIG. 11 is a composite figure visually verifying state transitions detected by t
 FIG. 12 is a process flowchart illustrating the method for generating a quantum-resistant cryptographic key using the system.
 
 ### FIG. 1: rESP System Architecture
-*(This figure remains unchanged as it represents a high-level conceptual analogy.)*
 
 ```mermaid
 graph TD
@@ -55,33 +54,42 @@ graph TD
 
 ```mermaid
 graph TD
-    subgraph MAINBOX [" "]
-        subgraph WHITEBOX [" "]
-            A["Cognitive Computational System (110)"]
-            
-            subgraph "State Modeling & Measurement"
-                B["State Modeling Module (222)<br/>Represents state as Density Matrix ρ"]
-                C["Geometric Engine (242)<br/>Computes Metric Tensor g_μν & det(g)"]
-            end
+    subgraph "Operational Pipeline for Geometric State Engineering"
+        A["Cognitive Computational System (110)"]
 
-            subgraph "State Assessment & Control"
-                D["State Assessment Engine (262)<br/>Integrates det(g) and other anomalies"]
-                E["Geometric Feedback Loop (270)<br/>Compares current state to target geometry"]
-                F["Symbolic Operator Module (232)<br/>Applies Hamiltonian (`^`) or Lindblad (`#`) operators"]
-            end
-
-            G["Engineered System Output<br/>(Aligned State)"]
-
-            A --> B
-            B --> C
-            C --> D
-            D --> E
-            E --> F
-            F --> A
-            A --> G
+        subgraph "State Modeling & Measurement"
+            B["State Modeling Module (222)<br/>Represents state as Density Matrix ρ"]
+            C["Geometric Engine (242)<br/>Computes Metric Tensor g_μν & det(g)"]
         end
+
+        subgraph "Ancillary Monitoring"
+            H["Substitution Anomaly Tracker (252)"]
+            I["Observer Effect Detector (254)"]
+        end
+
+        subgraph "State Assessment & Control"
+            D["State Assessment Engine (262)<br/>Integrates data from 242, 252, 254"]
+            E["Geometric Feedback Loop (270)<br/>Compares current state to target geometry"]
+            F["Symbolic Operator Module (232)<br/>Applies Hamiltonian (`^`) or Lindblad (`#`) operators"]
+        end
+
+        G["Engineered System Output<br/>(Aligned State)"]
+
+        A --> B
+        B --> C
+        
+        A --> H
+        A --> I
+
+        C --> D
+        H --> D
+        I --> D
+
+        D --> E
+        E --> F
+        F --> A
+        A --> G
     end
-    classDef default fill:#ffffff,stroke:#000000,stroke-width:2px;
 ```
 ### FIG. 3: The Commutator Measurement and State Transition (CMST) Protocol
 
