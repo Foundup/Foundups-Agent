@@ -37,3 +37,60 @@ numpy>=1.21.0  # For numerical computations in anomaly detection
 #
 # For macOS users:
 #   - brew install portaudio && pip install pyaudio 
+
+# rESP o1o2 Module Requirements
+# Quantum-Cognitive State Engineering System
+
+# Core numerical computing for quantum mechanics
+numpy>=1.24.0
+scipy>=1.10.0
+
+# Async programming for continuous monitoring
+asyncio-mqtt>=0.11.0
+
+# Audio processing for voice interface
+pyaudio>=0.2.11
+wave>=0.0.2
+threading>=0.0.1
+
+# Text processing and NLP
+nltk>=3.8.0
+regex>=2022.7.9
+
+# Machine Learning and AI
+scikit-learn>=1.3.0
+torch>=2.0.0
+transformers>=4.30.0
+
+# API clients for LLM integration
+openai>=0.27.0
+anthropic>=0.3.0
+google-generativeai>=0.1.0
+
+# Data handling
+pandas>=2.0.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Configuration and logging
+pyyaml>=6.0
+python-dotenv>=1.0.0
+structlog>=23.1.0
+
+# Testing framework
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+
+# Development utilities
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.4.0
+
+# Patent-specific dependencies
+# For quantum mechanics simulations
+qutip>=4.7.0  # Quantum Toolbox in Python
+networkx>=3.1.0  # For quantum graph states
+
+# For geometric computations
+sympy>=1.12.0  # Symbolic mathematics 

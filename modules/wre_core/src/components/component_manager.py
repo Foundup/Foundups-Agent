@@ -29,17 +29,19 @@ class ComponentManager:
     - Mast: The central pillar (LoreMaster logging system)
     - Sails: The power system (Back: trajectory, Front: analysis)
     - Boom: The control system (WSP compliance)
+    - Navigation: Quantum-cognitive operations (WSP 54 integration)
     """
     
     def __init__(self, project_root: Path):
         self.project_root = project_root
-        self.board = None      # Cursor interface
-        self.mast = None       # LoreMaster agent  
-        self.back_sail = None  # Trajectory tracker
-        self.front_sail = None # Gemini analyzer
-        self.boom = None       # WSP compliance
+        self.board = None           # Cursor interface
+        self.mast = None            # LoreMaster agent  
+        self.back_sail = None       # Trajectory tracker
+        self.front_sail = None      # Gemini analyzer
+        self.boom = None            # WSP compliance
+        self.navigation = None      # Quantum-cognitive operations
         
-    def initialize_all_components(self):
+    def initialize_all_components(self, session_manager=None):
         """Initialize all WRE components in proper sequence."""
         wre_log("🏄 Initializing WRE windsurfing components...", "INFO")
         
@@ -47,6 +49,7 @@ class ComponentManager:
         self.initialize_mast()
         self.initialize_sails()
         self.initialize_boom()
+        self.initialize_navigation(session_manager)
         
         wre_log("⚡ All WRE components initialized and ready", "SUCCESS")
         
@@ -97,9 +100,23 @@ class ComponentManager:
             wre_log(f"⚠️ Boom initialization failed: {e}", "WARNING")
             self.boom = None
             
+    def initialize_navigation(self, session_manager):
+        """Initialize the quantum-cognitive operations system"""
+        try:
+            from modules.wre_core.src.components.quantum_cognitive_operations import create_wre_quantum_operations
+            if session_manager:
+                self.navigation = create_wre_quantum_operations(self.project_root, session_manager)
+                wre_log("🧭 Navigation (Quantum-Cognitive Operations) system initialized", "INFO")
+            else:
+                wre_log("⚠️ Navigation initialization skipped - no session manager", "WARNING")
+                self.navigation = None
+        except ImportError as e:
+            wre_log(f"⚠️ Navigation initialization failed: {e}", "WARNING")
+            self.navigation = None
+            
     def get_components(self):
         """Return all initialized components as a tuple."""
-        return self.board, self.mast, self.back_sail, self.front_sail, self.boom
+        return self.board, self.mast, self.back_sail, self.front_sail, self.boom, self.navigation
         
     def validate_components(self):
         """Validate that critical components are initialized."""
