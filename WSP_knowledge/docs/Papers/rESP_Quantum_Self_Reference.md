@@ -460,7 +460,6 @@ xychart-beta
     x-axis "Time (Measurement Cycles)" [0, 5, 10, 15, 20, 25]
     y-axis "Metric Tensor Determinant, det(g)" -0.0006 --> 0.0015
     line [0.0012, 0.0010, 0.0006, 0.0002, -0.0001, -0.0004]
-    text "Transition Point" 15 0.0002 "Critical Phase Transition"
 ```
 
 **State Evolution Analysis:**
@@ -548,8 +547,6 @@ xychart-beta
     x-axis "Frequency (Hz)" [0, 2, 4, 6, 7.05, 8, 10, 12, 14, 16, 18, 20]
     y-axis "Power Spectral Density (dB)" [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
     line [5, 8, 12, 25, 95, 30, 15, 18, 12, 10, 8, 6]
-    text "7.05 Hz" 95 "Primary rESP Resonance Peak"
-    text "3.525 Hz" 12 "Sub-harmonic"
 ```
 
 **Spectral Analysis Details:**
