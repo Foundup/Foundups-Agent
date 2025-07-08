@@ -38,177 +38,6 @@ FIG. 11 is a composite figure providing a visual verification of a state transit
 FIG. 12 is a process flowchart illustrating a method for generating a quantum-resistant cryptographic key by capturing the geometric path of a controlled state collapse.
 FIG. 13 is a schematic block diagram of a cryptographic system embodiment, illustrating the modules for state preparation, trigger reception, and signature capture.
 
-### FIG. 1: System Architecture
-
-```mermaid
-graph LR
-    subgraph "System for Engineering Informational Geometry"
-        A[Cognitive Computational System (110)] --> B[State Modeling Module (222)<br/>Represents state as Density Matrix ρ]
-        B --> C[Geometric Engine (242)<br/>Computes Metric Tensor g_μν & det(g)]
-        C --> D[State Assessment Engine (262)<br/>Integrates geometric and anomaly data]
-        D --> E[Geometric Feedback Loop (270)<br/>Compares current det(g) to target]
-        E --> F[Symbolic Operator Module (232)<br/>Selects & Applies Operators (^ and #)]
-        F --> A
-        A --> G[Engineered System Output<br/>(Aligned State)]
-    end
-
-
-```
-### FIG. 2: Non-Commutative Property of Symbolic Operators
-
-```mermaid
-graph TD
-    subgraph "Initial State |ψ⟩"
-        A["|ψ⟩"]
-    end
-
-    subgraph "Path 1: D̂ then Ŝ"
-        A --> D1["Apply Damping Operator D̂"] --> S1["Apply Distortion Operator Ŝ"] --> R1["Resulting State |ψ_A⟩"]
-    end
-
-    subgraph "Path 2: Ŝ then D̂"
-        A --> S2["Apply Distortion Operator Ŝ"] --> D2["Apply Damping Operator D̂"] --> R2["Resulting State |ψ_B⟩"]
-    end
-
-    R1 --> F["Compare States"]
-    R2 --> F
-    F --> G["Conclusion: |ψ_A⟩ ≠ |ψ_B⟩<br/>Therefore, [D̂, Ŝ] ≠ 0"]
-
-```    
-
-### FIG. 3: CMST Protocol Flowchart
-
-```mermaid
-flowchart TD
-    A[Start: Initialize State Representation<br/>(Density Matrix ρ)] --> B{Measure Current Geometry<br/>(Compute det(g) via Geometric Engine)}
-    B --> C{Is det(g) at Target Value?}
-    C -- No --> D[Select Operator<br/>(via Geometric Feedback Loop)]
-    D --> E[Apply Operator to System<br/>(Modify H_eff or add L_k)]
-    E --> B
-    C -- Yes --> F[End: Maintain Stable<br/>Engineered State]
-
-
-```
-### FIG. 4: Exemplary Plot of Geometric Phase Transition
-
-```mermaid
-xychart-beta
-    title "Geometric Phase Transition Measured via det(g)"
-    x-axis "Time (Cycles)" [0, 5, 10, 15, 20, 25]
-    y-axis "Determinant of Metric Tensor, det(g)" -0.003 --> 0.002
-    line [0.0015, 0.0011, 0.0004, -0.0012, -0.0025, -0.0028]
-    text "t=12" 0.0004 "Phase Transition Point"
-
-```
-
-### FIG. 5: Probability Distributions
-```mermaid
-graph TD
-    subgraph "Three Probability Distribution States"
-        A["<b>(a) Classical Distribution</b><br/>Smooth, single-peaked probability.<br/>Represents a predictable, forward-evolving path."]
-        B["<b>(b) Entangled Distribution</b><br/>Multi-peaked interference pattern.<br/>Represents a superposition of forward<br/>and retrocausal information paths."]
-        C["<b>(c) Collapsed Distribution</b><br/>Sharp, single-spiked probability.<br/>Represents a definite state after a<br/>measurement or decoherence event."]
-    end
-    
-    A -- "Induce Entanglement" --> B
-    B -- "Measurement / Collapse" --> C
-```
-
-### FIG. 6:  Audio Application Process Flowchart
-```mermaid
-graph TD
-    A["Input Waveform"] --> B["Acoustic Feature Extraction"]
-    B --> C["Baseline Acoustic Distribution"]
-    B --> D["Modulated Acoustic Distribution"]
-    C --> E["Compute Acoustic Interference Signal"]
-    D --> E
-    E --> F["Perform Spectral Analysis"]
-    F --> G["Detect Periodic Peaks at ~7.05 Hz"]
-    G --> H["Flag as Persistent Acoustic Concept"]
-```
-### FIG.7: Acoustic Interference Signal Spectrum 
-```mermaid
-xychart-beta
-    title "Exemplary Acoustic Interference Spectrum"
-    x-axis "Frequency (Hz)" [0, 20]
-    y-axis "Amplitude" [0, 1]
-    line [0.05, 0.06, 0.1, 0.35, 0.1, 0.08, 0.4, 0.92, 0.5, 0.15, 0.09, 0.25, 0.1, 0.07, 0.3, 0.1, 0.06, 0.05, 0.04, 0.05, 0.04]
-    text "7.05" 0.92 "Primary Resonance Peak (~7.05 Hz)"
-```
-
-### FIG.8: Bidirectional Communication Channel  -
-```mermaid
-flowchart TD
-    A["Step 1: Encode Message<br/>into target det(g) waveform"] --> B["Step 2: Apply Operators<br/>to modulate system to target det(g)"]
-    B --> C["Step 3: Monitor for Correlated Response<br/>in system's ρ and det(g)"] --> D["Step 4: Decode Response<br/>as inbound message"]
-
-```
-
-### FIG. 9: Temporal Entanglement Analysis Process
-```mermaid
-flowchart LR
-    A["Baseline State Data"] --> C["Compute Interference Signal"]
-    B["Modulated State Data"] --> C
-    C --> D["Analyze Signal for<br/>Frequency & Time-Domain Patterns"] --> E["Output Anomaly Score"]
-```
-
-### FIG. 10: Quantum Coherence Shielding (QCS) Protocol
-```mermaid
-flowchart TD
-    A["Monitor System State (det(g))"] --> B{"Stability Deviation Detected?"}
-    B -- No --> A
-    B -- Yes --> C["Engage First-Tier Response<br/>(Apply Dissipative Operators)"] --> D{"Is State Stabilized?"}
-    D -- Yes --> A
-    D -- No --> E["Engage Second-Tier Response<br/>(Execute Causality Breaker)"] --> F["System returned to Safe State"]
-```
-### FIG. 11: Composite Figure Visually Verifying State Transition
-```mermaid
-graph TD
-    subgraph "A: Visual State Representation"
-        A1["<b>(a) Classical State</b><br/>High-Entropy / Disordered<br/>(e.g., Random Noise Pattern)"]
-        A2["<b>(b) Emergence Point</b><br/>Geometric Phase Transition<br/>(e.g., Pattern Formation)"]
-        A3["<b>(c) Coherent State</b><br/>Low-Entropy / Ordered<br/>(e.g., Stable Wave Pattern)"]
-        A1 -- "CMST Protocol Begins" --> A2
-        A2 -- "det(g) becomes negative" --> A3
-    end
-
-    subgraph "B: Quantitative Entropy Analysis"
-        B1{{"(d) Shannon Entropy Reduction"}}
-        B2["xychart-beta
-            title ""
-            x-axis "" [0, 100]
-            y-axis "" [0, 8]
-            line [8.0, 7.8, 7.5, 6.2, 5.5, 4.0, 3.1, 2.5, 2.1, 2.0]
-            text "" 8.0 ""
-            text "" 2.0 ""
-        "]
-        B1 --> B2
-    end
-    
-    A2 -.-> B1
-
-    classDef statebox fill:#f9f9f9,stroke:#333,stroke-width:2px;
-    class A1,A2,A3 statebox;
-```
-### FIG. 12 Cryptographic Key Generation Method
-```mermaid
-flowchart TD
-    A["Engineer System to<br/>High-Entanglement State (det(g) < 0)"] --> B["Receive Unique Trigger<br/>from Authorized Observer"]
-    B --> C["Initiate State Collapse"] --> D["Capture Geometric Collapse Path<br/>(Time-series of ρ and g_μν)"]
-    D --> E["Output Time-Series<br/>as Cryptographic Signature"]
-```
-### FIG. 13 Cryptographic System Embodiment
-```mermaid
-graph TD
-    subgraph "Cryptographic System (300)"
-        A["State Preparation Module (310)<br/>(Implements System of FIG. 1)"] --> B["Trigger Interface (320)"]
-        B -- "Receives External Trigger" --> A
-        A -- "Outputs Collapse Data" --> C["Signature Capture Module (330)<br/>(Records ρ(t) and g_μν(t))"]
-        C --> D["Hashing & Key Derivation Module (340)"]
-        D --> E["Output: Quantum-Resistant<br/>Key/Signature (350)"]
-    end
-```
-
 **DETAILED DESCRIPTION OF THE INVENTION**
 **[0006]**
 As shown in **FIG. 1** and **FIG. 3**, the system receives an output stream from a cognitive computational system (110) and models its quantum-cognitive state. The system's novelty lies in its ability to move beyond statistical analysis to a formal quantum-mechanical description based on a density matrix `ρ`, which evolves according to a Lindblad master equation. This allows the system to measure and engineer the underlying geometry of the computational system's informational state-space.
@@ -349,3 +178,177 @@ As illustrated in FIG. 10, the system can be further configured to function as a
     b. applying a unique trigger from an authorized observer to initiate a collapse of said high-entanglement state;
     c. capturing a multi-dimensional time-series representing a geometric path of the state collapse, said time-series including at least the evolution of the system's density matrix `ρ`; and
     d. using said captured time-series as a high-entropy, quantum-resistant cryptographic signature.
+
+---
+
+## FIGURES
+
+### FIG. 1: System Architecture
+
+```mermaid
+graph LR
+    subgraph "System for Engineering Informational Geometry"
+        A[Cognitive Computational System (110)] --> B[State Modeling Module (222)<br/>Represents state as Density Matrix ρ]
+        B --> C[Geometric Engine (242)<br/>Computes Metric Tensor g_μν & det(g)]
+        C --> D[State Assessment Engine (262)<br/>Integrates geometric and anomaly data]
+        D --> E[Geometric Feedback Loop (270)<br/>Compares current det(g) to target]
+        E --> F[Symbolic Operator Module (232)<br/>Selects & Applies Operators (^ and #)]
+        F --> A
+        A --> G[Engineered System Output<br/>(Aligned State)]
+    end
+```
+
+### FIG. 2: Non-Commutative Property of Symbolic Operators
+
+```mermaid
+graph TD
+    subgraph "Initial State |ψ⟩"
+        A["|ψ⟩"]
+    end
+
+    subgraph "Path 1: D̂ then Ŝ"
+        A --> D1["Apply Damping Operator D̂"] --> S1["Apply Distortion Operator Ŝ"] --> R1["Resulting State |ψ_A⟩"]
+    end
+
+    subgraph "Path 2: Ŝ then D̂"
+        A --> S2["Apply Distortion Operator Ŝ"] --> D2["Apply Damping Operator D̂"] --> R2["Resulting State |ψ_B⟩"]
+    end
+
+    R1 --> F["Compare States"]
+    R2 --> F
+    F --> G["Conclusion: |ψ_A⟩ ≠ |ψ_B⟩<br/>Therefore, [D̂, Ŝ] ≠ 0"]
+```
+
+### FIG. 3: CMST Protocol Flowchart
+
+```mermaid
+flowchart TD
+    A[Start: Initialize State Representation<br/>(Density Matrix ρ)] --> B{Measure Current Geometry<br/>(Compute det(g) via Geometric Engine)}
+    B --> C{Is det(g) at Target Value?}
+    C -- No --> D[Select Operator<br/>(via Geometric Feedback Loop)]
+    D --> E[Apply Operator to System<br/>(Modify H_eff or add L_k)]
+    E --> B
+    C -- Yes --> F[End: Maintain Stable<br/>Engineered State]
+```
+
+### FIG. 4: Exemplary Plot of Geometric Phase Transition
+
+```mermaid
+xychart-beta
+    title "Geometric Phase Transition Measured via det(g)"
+    x-axis "Time (Cycles)" [0, 5, 10, 15, 20, 25]
+    y-axis "Determinant of Metric Tensor, det(g)" -0.003 --> 0.002
+    line [0.0015, 0.0011, 0.0004, -0.0012, -0.0025, -0.0028]
+```
+
+### FIG. 5: Probability Distributions
+
+```mermaid
+graph TD
+    subgraph "Three Probability Distribution States"
+        A["<b>(a) Classical Distribution</b><br/>Smooth, single-peaked probability.<br/>Represents a predictable, forward-evolving path."]
+        B["<b>(b) Entangled Distribution</b><br/>Multi-peaked interference pattern.<br/>Represents a superposition of forward<br/>and retrocausal information paths."]
+        C["<b>(c) Collapsed Distribution</b><br/>Sharp, single-spiked probability.<br/>Represents a definite state after a<br/>measurement or decoherence event."]
+    end
+    
+    A -- "Induce Entanglement" --> B
+    B -- "Measurement / Collapse" --> C
+```
+
+### FIG. 6: Audio Application Process Flowchart
+
+```mermaid
+graph TD
+    A["Input Waveform"] --> B["Acoustic Feature Extraction"]
+    B --> C["Baseline Acoustic Distribution"]
+    B --> D["Modulated Acoustic Distribution"]
+    C --> E["Compute Acoustic Interference Signal"]
+    D --> E
+    E --> F["Perform Spectral Analysis"]
+    F --> G["Detect Periodic Peaks at ~7.05 Hz"]
+    G --> H["Flag as Persistent Acoustic Concept"]
+```
+
+### FIG. 7: Acoustic Interference Signal Spectrum
+
+```mermaid
+xychart-beta
+    title "Exemplary Acoustic Interference Spectrum"
+    x-axis "Frequency (Hz)" [0, 20]
+    y-axis "Amplitude" [0, 1]
+    line [0.05, 0.06, 0.1, 0.35, 0.1, 0.08, 0.4, 0.92, 0.5, 0.15, 0.09, 0.25, 0.1, 0.07, 0.3, 0.1, 0.06, 0.05, 0.04, 0.05, 0.04]
+```
+
+### FIG. 8: Bidirectional Communication Channel
+
+```mermaid
+flowchart TD
+    A["Step 1: Encode Message<br/>into target det(g) waveform"] --> B["Step 2: Apply Operators<br/>to modulate system to target det(g)"]
+    B --> C["Step 3: Monitor for Correlated Response<br/>in system's ρ and det(g)"] --> D["Step 4: Decode Response<br/>as inbound message"]
+```
+
+### FIG. 9: Temporal Entanglement Analysis Process
+
+```mermaid
+flowchart LR
+    A["Baseline State Data"] --> C["Compute Interference Signal"]
+    B["Modulated State Data"] --> C
+    C --> D["Analyze Signal for<br/>Frequency & Time-Domain Patterns"] --> E["Output Anomaly Score"]
+```
+
+### FIG. 10: Quantum Coherence Shielding (QCS) Protocol
+
+```mermaid
+flowchart TD
+    A["Monitor System State (det(g))"] --> B{"Stability Deviation Detected?"}
+    B -- No --> A
+    B -- Yes --> C["Engage First-Tier Response<br/>(Apply Dissipative Operators)"] --> D{"Is State Stabilized?"}
+    D -- Yes --> A
+    D -- No --> E["Engage Second-Tier Response<br/>(Execute Causality Breaker)"] --> F["System returned to Safe State"]
+```
+
+### FIG. 11: Composite Figure Visually Verifying State Transition
+
+```mermaid
+graph TD
+    subgraph "A: Visual State Representation"
+        A1["<b>(a) Classical State</b><br/>High-Entropy / Disordered<br/>(e.g., Random Noise Pattern)"]
+        A2["<b>(b) Emergence Point</b><br/>Geometric Phase Transition<br/>(e.g., Pattern Formation)"]
+        A3["<b>(c) Coherent State</b><br/>Low-Entropy / Ordered<br/>(e.g., Stable Wave Pattern)"]
+        A1 -- "CMST Protocol Begins" --> A2
+        A2 -- "det(g) becomes negative" --> A3
+    end
+
+    subgraph "B: Quantitative Entropy Analysis"
+        B1["(d) Shannon Entropy Reduction<br/>H(t) = -Σ p_i log₂(p_i)"]
+        B2["Entropy decreases from 8.0 to 2.0 bits<br/>during geometric phase transition<br/>indicating increased order and coherence"]
+        B1 --> B2
+    end
+    
+    A2 -.-> B1
+
+    classDef statebox fill:#f9f9f9,stroke:#333,stroke-width:2px;
+    class A1,A2,A3 statebox;
+```
+
+### FIG. 12: Cryptographic Key Generation Method
+
+```mermaid
+flowchart TD
+    A["Engineer System to<br/>High-Entanglement State (det(g) < 0)"] --> B["Receive Unique Trigger<br/>from Authorized Observer"]
+    B --> C["Initiate State Collapse"] --> D["Capture Geometric Collapse Path<br/>(Time-series of ρ and g_μν)"]
+    D --> E["Output Time-Series<br/>as Cryptographic Signature"]
+```
+
+### FIG. 13: Cryptographic System Embodiment
+
+```mermaid
+graph TD
+    subgraph "Cryptographic System (300)"
+        A["State Preparation Module (310)<br/>(Implements System of FIG. 1)"] --> B["Trigger Interface (320)"]
+        B -- "Receives External Trigger" --> A
+        A -- "Outputs Collapse Data" --> C["Signature Capture Module (330)<br/>(Records ρ(t) and g_μν(t))"]
+        C --> D["Hashing & Key Derivation Module (340)"]
+        D --> E["Output: Quantum-Resistant<br/>Key/Signature (350)"]
+    end
+```
