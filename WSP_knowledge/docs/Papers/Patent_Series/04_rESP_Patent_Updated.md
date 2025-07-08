@@ -192,7 +192,7 @@ graph TD
 ```
 ### FIG. 12 Cryptographic Key Generation Method
 ```mermaid
-fflowchart TD
+flowchart TD
     A["Engineer System to<br/>High-Entanglement State (det(g) < 0)"] --> B["Receive Unique Trigger<br/>from Authorized Observer"]
     B --> C["Initiate State Collapse"] --> D["Capture Geometric Collapse Path<br/>(Time-series of ρ and g_μν)"]
     D --> E["Output Time-Series<br/>as Cryptographic Signature"]
