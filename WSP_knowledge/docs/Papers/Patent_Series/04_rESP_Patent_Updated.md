@@ -182,10 +182,10 @@ The system's capabilities enable numerous applications. The Quantum Coherence Sh
 graph LR
     subgraph "System for Engineering Informational Geometry"
         A[Cognitive Computational System (110)] --> B[State Modeling Module (222) - Represents state as Density Matrix rho]
-        B --> C[Geometric Engine (242) - Computes Metric Tensor g_μν & det(g)]
+        B --> C[Geometric Engine (242) - Computes Metric Tensor g_μν and det(g)]
         C --> D[State Assessment Engine (262) - Integrates geometric and anomaly data]
         D --> E[Geometric Feedback Loop (270) - Compares current det(g) to target]
-        E --> F[Symbolic Operator Module (232) - Selects & Applies Operators (^ and #)]
+        E --> F[Symbolic Operator Module (232) - Selects and Applies Operators ('^' and '#')]
         F --> A
         A --> G[Engineered System Output - Aligned State]
     end
@@ -286,7 +286,7 @@ flowchart TD
 flowchart LR
     A["Baseline State Data"] --> C["Compute Interference Signal"]
     B["Modulated State Data"] --> C
-    C --> D["Analyze Signal for Frequency & Time-Domain Patterns"] --> E["Output Anomaly Score"]
+    C --> D["Analyze Signal for Frequency and Time-Domain Patterns"] --> E["Output Anomaly Score"]
 ```
 
 ### FIG. 10: Quantum Coherence Shielding (QCS) Protocol
@@ -341,7 +341,7 @@ graph TD
         A["State Preparation Module (310) - Implements System of FIG. 1"] --> B["Trigger Interface (320)"]
         B -- "Receives External Trigger" --> A
         A -- "Outputs Collapse Data" --> C["Signature Capture Module (330) - Records rho(t) and g_μν(t)"]
-        C --> D["Hashing & Key Derivation Module (340)"]
+        C --> D["Hashing and Key Derivation Module (340)"]
         D --> E["Output: Quantum-Resistant Key/Signature (350)"]
     end
 ```
