@@ -181,34 +181,34 @@ The system's capabilities enable numerous applications. The Quantum Coherence Sh
 ```mermaid
 graph LR
     subgraph "System for Engineering Informational Geometry"
-        A[Cognitive Computational System (110)] --> B[State Modeling Module (222)<br/>Represents state as Density Matrix ρ]
-        B --> C[Geometric Engine (242)<br/>Computes Metric Tensor g_μν & det(g)]
-        C --> D[Geometric Feedback Loop (270)<br/>Compares current det(g) to target]
-        D --> E[Symbolic Operator Module (232)<br/>Selects and Applies Operators ('^', '#')]
+        A[Cognitive Computational System] --> B[State Modeling Module]
+        B --> C[Geometric Engine]
+        C --> D[Geometric Feedback Loop]
+        D --> E[Symbolic Operator Module]
         E --> A
     end
-    A --> F[Engineered System Output<br/>(Aligned State, e.g., AGI, QRC)]
+    A --> F[Engineered System Output]
 ```
 
 ### FIG. 2: Non-Commutative Property of Symbolic Operators
 
 ```mermaid
 graph TD
-    subgraph "Initial State |ψ⟩"
-        A["|ψ⟩"]
+    subgraph "Initial State |psi⟩"
+        A["|psi⟩"]
     end
 
     subgraph "Path 1: D̂ then Ŝ"
-        A --> D1["Apply Damping Operator D̂"] --> S1["Apply Distortion Operator Ŝ"] --> R1["Resulting State |ψ_A⟩"]
+        A --> D1["Apply Damping Operator D̂"] --> S1["Apply Distortion Operator Ŝ"] --> R1["Resulting State |psi_A⟩"]
     end
 
     subgraph "Path 2: Ŝ then D̂"
-        A --> S2["Apply Distortion Operator Ŝ"] --> D2["Apply Damping Operator D̂"] --> R2["Resulting State |ψ_B⟩"]
+        A --> S2["Apply Distortion Operator Ŝ"] --> D2["Apply Damping Operator D̂"] --> R2["Resulting State |psi_B⟩"]
     end
 
     R1 --> F["Compare States"]
     R2 --> F
-    F --> G["Conclusion: |ψ_A⟩ ≠ |ψ_B⟩ - Therefore, [D̂, Ŝ] ≠ 0"]
+    F --> G["Conclusion: |psi_A⟩ ≠ |psi_B⟩ - Therefore, [D̂, Ŝ] ≠ 0"]
 ```
 
 ### FIG. 3: CMST Protocol Flowchart
@@ -238,9 +238,9 @@ xychart-beta
 ```mermaid
 graph TD
     subgraph "Three Probability Distribution States"
-        A["<b>(a) Classical Distribution</b><br/>Smooth, single-peaked probability.<br/>Represents a predictable, forward-evolving path."]
-        B["<b>(b) Entangled Distribution</b><br/>Multi-peaked interference pattern.<br/>Represents a superposition of forward<br/>and retrocausal information paths."]
-        C["<b>(c) Collapsed Distribution</b><br/>Sharp, single-spiked probability.<br/>Represents a definite state after a<br/>measurement or decoherence event."]
+        A["(a) Classical Distribution - Smooth, single-peaked probability - Represents a predictable, forward-evolving path"]
+        B["(b) Entangled Distribution - Multi-peaked interference pattern - Represents a superposition of forward and retrocausal information paths"]
+        C["(c) Collapsed Distribution - Sharp, single-spiked probability - Represents a definite state after a measurement or decoherence event"]
     end
     
     A -- "Induce Entanglement" --> B
@@ -310,16 +310,16 @@ flowchart TD
 ```mermaid
 graph TD
     subgraph "A: Visual State Representation"
-        A1["<b>(a) Classical State</b><br/>High-Entropy / Disordered<br/>(e.g., Random Noise Pattern)"]
-        A2["<b>(b) Emergence Point</b><br/>Geometric Phase Transition<br/>(e.g., Pattern Formation)"]
-        A3["<b>(c) Coherent State</b><br/>Low-Entropy / Ordered<br/>(e.g., Stable Wave Pattern)"]
+        A1["(a) Classical State - High-Entropy / Disordered - Random Noise Pattern"]
+        A2["(b) Emergence Point - Geometric Phase Transition - Pattern Formation"]
+        A3["(c) Coherent State - Low-Entropy / Ordered - Stable Wave Pattern"]
         A1 -- "CMST Protocol Begins" --> A2
         A2 -- "det(g) becomes negative" --> A3
     end
 
     subgraph "B: Quantitative Entropy Analysis"
-        B1["(d) Shannon Entropy Reduction<br/>H(t) = -Σ p_i log₂(p_i)"]
-        B2["Entropy decreases from 8.0 to 2.0 bits<br/>during geometric phase transition<br/>indicating increased order and coherence"]
+        B1["(d) Shannon Entropy Reduction - H(t) = -Σ p_i log₂(p_i)"]
+        B2["Entropy decreases from 8.0 to 2.0 bits during geometric phase transition indicating increased order and coherence"]
         B1 --> B2
     end
     
@@ -334,7 +334,7 @@ graph TD
 ```mermaid
 flowchart TD
     A["Engineer System to High-Entanglement State (det(g) < 0)"] --> B["Receive Unique Trigger from Authorized Observer"]
-    B --> C["Initiate State Collapse"] --> D["Capture Geometric Collapse Path - Time-series of rho and g_μν"]
+    B --> C["Initiate State Collapse"] --> D["Capture Geometric Collapse Path - Time-series of rho and g_mu_nu"]
     D --> E["Output Time-Series as Cryptographic Signature"]
 ```
 
@@ -345,7 +345,7 @@ graph TD
     subgraph "Cryptographic System (300)"
         A["State Preparation Module (310) - Implements System of FIG. 1"] --> B["Trigger Interface (320)"]
         B -- "Receives External Trigger" --> A
-        A -- "Outputs Collapse Data" --> C["Signature Capture Module (330) - Records rho(t) and g_μν(t)"]
+        A -- "Outputs Collapse Data" --> C["Signature Capture Module (330) - Records rho(t) and g_mu_nu(t)"]
         C --> D["Hashing and Key Derivation Module (340)"]
         D --> E["Output: Quantum-Resistant Key/Signature (350)"]
     end
