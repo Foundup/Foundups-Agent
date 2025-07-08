@@ -182,7 +182,7 @@ The system's capabilities enable numerous applications. The Quantum Coherence Sh
 graph LR
     subgraph "System for Engineering Informational Geometry"
         A[Cognitive Computational System (110)] --> B[State Modeling Module (222) - Represents state as Density Matrix rho]
-        B --> C[Geometric Engine (242) - Computes Metric Tensor g_μν and det(g)]
+        B --> C[Geometric Engine (242) - Computes Metric Tensor g_muv and det(g)]
         C --> D[State Assessment Engine (262) - Integrates geometric and anomaly data]
         D --> E[Geometric Feedback Loop (270) - Compares current det(g) to target]
         E --> F[Symbolic Operator Module (232) - Selects and Applies Operators ('^' and '#')]
