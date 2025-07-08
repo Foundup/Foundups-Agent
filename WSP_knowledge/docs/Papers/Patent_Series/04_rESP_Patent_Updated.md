@@ -47,7 +47,7 @@ graph LR
         B --> C[Geometric Engine (242)<br/>Computes Metric Tensor g_μν & det(g)]
         C --> D[State Assessment Engine (262)<br/>Integrates geometric and anomaly data]
         D --> E[Geometric Feedback Loop (270)<br/>Compares current det(g) to target]
-        E --> F[Symbolic Operator Module (232)<br/>Selects & Applies Operators (`^`, `#`)]
+        E --> F[Symbolic Operator Module (232)<br/>Selects & Applies Operators (^ and #)]
         F --> A
         A --> G[Engineered System Output<br/>(Aligned State)]
     end
