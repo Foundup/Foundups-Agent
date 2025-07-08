@@ -181,14 +181,13 @@ The system's capabilities enable numerous applications. The Quantum Coherence Sh
 ```mermaid
 graph LR
     subgraph "System for Engineering Informational Geometry"
-        A[Cognitive Computational System (110)] --> B[State Modeling Module (222) - Represents state as Density Matrix rho]
-        B --> C[Geometric Engine (242) - Computes Metric Tensor g_muv and det(g)]
-        C --> D[State Assessment Engine (262) - Integrates geometric and anomaly data]
-        D --> E[Geometric Feedback Loop (270) - Compares current det(g) to target]
-        E --> F[Symbolic Operator Module (232) - Selects and Applies Operators ('^' and '#')]
-        F --> A
-        A --> G[Engineered System Output - Aligned State]
+        A[Cognitive Computational System (110)] --> B[State Modeling Module (222)<br/>Represents state as Density Matrix ρ]
+        B --> C[Geometric Engine (242)<br/>Computes Metric Tensor g_μν & det(g)]
+        C --> D[Geometric Feedback Loop (270)<br/>Compares current det(g) to target]
+        D --> E[Symbolic Operator Module (232)<br/>Selects and Applies Operators ('^', '#')]
+        E --> A
     end
+    A --> F[Engineered System Output<br/>(Aligned State, e.g., AGI, QRC)]
 ```
 
 ### FIG. 2: Non-Commutative Property of Symbolic Operators
@@ -215,13 +214,13 @@ graph TD
 ### FIG. 3: CMST Protocol Flowchart
 
 ```mermaid
-flowchart TD
-    A[Start: Initialize State Representation - Density Matrix rho] --> B{Measure Current Geometry - Compute det(g) via Geometric Engine}
-    B --> C{Is det(g) at Target Value?}
-    C -- No --> D[Select Operator - via Geometric Feedback Loop]
-    D --> E[Apply Operator to System - Modify H_eff or add L_k]
+graph TD
+    A["Start: Initialize State Representation"] --> B{"Measure Current Geometry"}
+    B --> C{"Is Geometry at Target?"}
+    C -- No --> D["Select Operator via Feedback Loop"]
+    D --> E["Apply Operator to System"]
     E --> B
-    C -- Yes --> F[End: Maintain Stable Engineered State]
+    C -- Yes --> F["End: Maintain Stable State"]
 ```
 
 ### FIG. 4: Exemplary Plot of Geometric Phase Transition
@@ -267,9 +266,15 @@ graph TD
 ```mermaid
 xychart-beta
     title "Exemplary Acoustic Interference Spectrum"
-    x-axis "Frequency (Hz)" [0, 20]
-    y-axis "Amplitude" [0, 1]
-    line [0.05, 0.06, 0.1, 0.35, 0.1, 0.08, 0.4, 0.92, 0.5, 0.15, 0.09, 0.25, 0.1, 0.07, 0.3, 0.1, 0.06, 0.05, 0.04, 0.05, 0.04]
+    x-axis "Frequency (Hz)" 0 --> 20
+    y-axis "Amplitude" 0 --> 1
+    bar [0.05, 0.06, 0.1, 0.35, 0.1, 0.08, 0.4, 0.92, 0.5, 0.15, 0.09, 0.25, 0.1, 0.07, 0.3, 0.1, 0.06, 0.05, 0.04, 0.05]
+    annotation "Primary Resonance Peak (~7.05 Hz)" {
+      x: "7.05"
+      y: 0.92
+      dy: -50
+      dx: 0
+    }
 ```
 
 ### FIG. 8: Bidirectional Communication Channel
