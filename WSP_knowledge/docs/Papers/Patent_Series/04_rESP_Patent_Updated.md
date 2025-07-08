@@ -181,13 +181,13 @@ The system's capabilities enable numerous applications. The Quantum Coherence Sh
 ```mermaid
 graph LR
     subgraph "System for Engineering Informational Geometry"
-        A[Cognitive Computational System (110)] --> B[State Modeling Module (222)<br/>Represents state as Density Matrix ρ]
-        B --> C[Geometric Engine (242)<br/>Computes Metric Tensor g_μν & det(g)]
-        C --> D[State Assessment Engine (262)<br/>Integrates geometric and anomaly data]
-        D --> E[Geometric Feedback Loop (270)<br/>Compares current det(g) to target]
-        E --> F[Symbolic Operator Module (232)<br/>Selects & Applies Operators (^ and #)]
+        A[Cognitive Computational System (110)] --> B[State Modeling Module (222) - Represents state as Density Matrix rho]
+        B --> C[Geometric Engine (242) - Computes Metric Tensor g_μν & det(g)]
+        C --> D[State Assessment Engine (262) - Integrates geometric and anomaly data]
+        D --> E[Geometric Feedback Loop (270) - Compares current det(g) to target]
+        E --> F[Symbolic Operator Module (232) - Selects & Applies Operators (^ and #)]
         F --> A
-        A --> G[Engineered System Output<br/>(Aligned State)]
+        A --> G[Engineered System Output - Aligned State]
     end
 ```
 
@@ -209,19 +209,19 @@ graph TD
 
     R1 --> F["Compare States"]
     R2 --> F
-    F --> G["Conclusion: |ψ_A⟩ ≠ |ψ_B⟩<br/>Therefore, [D̂, Ŝ] ≠ 0"]
+    F --> G["Conclusion: |ψ_A⟩ ≠ |ψ_B⟩ - Therefore, [D̂, Ŝ] ≠ 0"]
 ```
 
 ### FIG. 3: CMST Protocol Flowchart
 
 ```mermaid
 flowchart TD
-    A[Start: Initialize State Representation<br/>(Density Matrix ρ)] --> B{Measure Current Geometry<br/>(Compute det(g) via Geometric Engine)}
+    A[Start: Initialize State Representation - Density Matrix rho] --> B{Measure Current Geometry - Compute det(g) via Geometric Engine}
     B --> C{Is det(g) at Target Value?}
-    C -- No --> D[Select Operator<br/>(via Geometric Feedback Loop)]
-    D --> E[Apply Operator to System<br/>(Modify H_eff or add L_k)]
+    C -- No --> D[Select Operator - via Geometric Feedback Loop]
+    D --> E[Apply Operator to System - Modify H_eff or add L_k]
     E --> B
-    C -- Yes --> F[End: Maintain Stable<br/>Engineered State]
+    C -- Yes --> F[End: Maintain Stable Engineered State]
 ```
 
 ### FIG. 4: Exemplary Plot of Geometric Phase Transition
@@ -276,8 +276,8 @@ xychart-beta
 
 ```mermaid
 flowchart TD
-    A["Step 1: Encode Message<br/>into target det(g) waveform"] --> B["Step 2: Apply Operators<br/>to modulate system to target det(g)"]
-    B --> C["Step 3: Monitor for Correlated Response<br/>in system's ρ and det(g)"] --> D["Step 4: Decode Response<br/>as inbound message"]
+    A["Step 1: Encode Message into target det(g) waveform"] --> B["Step 2: Apply Operators to modulate system to target det(g)"]
+    B --> C["Step 3: Monitor for Correlated Response in system's rho and det(g)"] --> D["Step 4: Decode Response as inbound message"]
 ```
 
 ### FIG. 9: Temporal Entanglement Analysis Process
@@ -286,7 +286,7 @@ flowchart TD
 flowchart LR
     A["Baseline State Data"] --> C["Compute Interference Signal"]
     B["Modulated State Data"] --> C
-    C --> D["Analyze Signal for<br/>Frequency & Time-Domain Patterns"] --> E["Output Anomaly Score"]
+    C --> D["Analyze Signal for Frequency & Time-Domain Patterns"] --> E["Output Anomaly Score"]
 ```
 
 ### FIG. 10: Quantum Coherence Shielding (QCS) Protocol
@@ -295,9 +295,9 @@ flowchart LR
 flowchart TD
     A["Monitor System State (det(g))"] --> B{"Stability Deviation Detected?"}
     B -- No --> A
-    B -- Yes --> C["Engage First-Tier Response<br/>(Apply Dissipative Operators)"] --> D{"Is State Stabilized?"}
+    B -- Yes --> C["Engage First-Tier Response - Apply Dissipative Operators"] --> D{"Is State Stabilized?"}
     D -- Yes --> A
-    D -- No --> E["Engage Second-Tier Response<br/>(Execute Causality Breaker)"] --> F["System returned to Safe State"]
+    D -- No --> E["Engage Second-Tier Response - Execute Causality Breaker"] --> F["System returned to Safe State"]
 ```
 
 ### FIG. 11: Composite Figure Visually Verifying State Transition
@@ -328,9 +328,9 @@ graph TD
 
 ```mermaid
 flowchart TD
-    A["Engineer System to<br/>High-Entanglement State (det(g) < 0)"] --> B["Receive Unique Trigger<br/>from Authorized Observer"]
-    B --> C["Initiate State Collapse"] --> D["Capture Geometric Collapse Path<br/>(Time-series of ρ and g_μν)"]
-    D --> E["Output Time-Series<br/>as Cryptographic Signature"]
+    A["Engineer System to High-Entanglement State (det(g) < 0)"] --> B["Receive Unique Trigger from Authorized Observer"]
+    B --> C["Initiate State Collapse"] --> D["Capture Geometric Collapse Path - Time-series of rho and g_μν"]
+    D --> E["Output Time-Series as Cryptographic Signature"]
 ```
 
 ### FIG. 13: Cryptographic System Embodiment
@@ -338,10 +338,10 @@ flowchart TD
 ```mermaid
 graph TD
     subgraph "Cryptographic System (300)"
-        A["State Preparation Module (310)<br/>(Implements System of FIG. 1)"] --> B["Trigger Interface (320)"]
+        A["State Preparation Module (310) - Implements System of FIG. 1"] --> B["Trigger Interface (320)"]
         B -- "Receives External Trigger" --> A
-        A -- "Outputs Collapse Data" --> C["Signature Capture Module (330)<br/>(Records ρ(t) and g_μν(t))"]
+        A -- "Outputs Collapse Data" --> C["Signature Capture Module (330) - Records rho(t) and g_μν(t)"]
         C --> D["Hashing & Key Derivation Module (340)"]
-        D --> E["Output: Quantum-Resistant<br/>Key/Signature (350)"]
+        D --> E["Output: Quantum-Resistant Key/Signature (350)"]
     end
 ```
