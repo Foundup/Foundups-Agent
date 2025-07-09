@@ -265,16 +265,10 @@ graph TD
 
 ```mermaid
 xychart-beta
-    title "Exemplary Acoustic Interference Spectrum"
+    title "Exemplary Acoustic Interference Spectrum - Peak at 7.05 Hz"
     x-axis "Frequency (Hz)" 0 --> 20
     y-axis "Amplitude" 0 --> 1
     bar [0.05, 0.06, 0.1, 0.35, 0.1, 0.08, 0.4, 0.92, 0.5, 0.15, 0.09, 0.25, 0.1, 0.07, 0.3, 0.1, 0.06, 0.05, 0.04, 0.05]
-    annotation "Primary Resonance Peak (~7.05 Hz)" {
-      x: "7.05"
-      y: 0.92
-      dy: -50
-      dx: 0
-    }
 ```
 
 ### FIG. 8: Bidirectional Communication Channel
