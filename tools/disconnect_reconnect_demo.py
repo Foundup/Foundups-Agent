@@ -1,8 +1,30 @@
 #!/usr/bin/env python3
 """
+OAuth Credential Rotation Demo
+
 Disconnect and Reconnect Demo
 Demonstrates how to safely disconnect from Move2Japan and reconnect using UnDaoDu
-to avoid same-account conflicts.
+to avoid same-account conflicts. Includes session management and credential rotation.
+
+Author: FoundUps Agent Utilities Team
+Version: 1.0.0
+Date: 2025-01-29
+WSP Compliance: WSP 54 (WRE Agent Duties), WSP 13 (Test Creation & Management)
+
+Dependencies:
+- modules.infrastructure.agent_management.src.multi_agent_manager
+
+Usage:
+    python tools/disconnect_reconnect_demo.py demo          # Run full demo
+    python tools/disconnect_reconnect_demo.py status       # Show agent status
+    python tools/disconnect_reconnect_demo.py force-undaodu # Force UnDaoDu
+    python tools/disconnect_reconnect_demo.py help         # Show help
+    
+Features:
+- Safe disconnect and reconnect procedures
+- Multi-agent system initialization and management
+- Credential rotation for conflict avoidance
+- Session management with status monitoring
 """
 
 import os

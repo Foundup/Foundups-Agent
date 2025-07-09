@@ -16,13 +16,13 @@ from typing import Optional
 from datetime import datetime
 
 from modules.wre_core.src.utils.logging_utils import wre_log
-from modules.wre_core.src.components.component_manager import ComponentManager
-from modules.wre_core.src.components.session_manager import SessionManager
+from modules.wre_core.src.components.core.component_manager import ComponentManager
+from modules.wre_core.src.components.core.session_manager import SessionManager
 from modules.wre_core.src.components.module_prioritizer import ModulePrioritizer
 from modules.wre_core.src.components.wsp30_orchestrator import WSP30Orchestrator
 from modules.wre_core.src.interfaces.ui_interface import UIInterface
-from modules.wre_core.src.components.menu_handler import MenuHandler
-from modules.wre_core.src.components.system_manager import SystemManager
+from modules.wre_core.src.components.interfaces.menu_handler import MenuHandler
+from modules.wre_core.src.components.system_ops.system_manager import SystemManager
 from modules.wre_core.src.components.module_analyzer import ModuleAnalyzer
 
 class WRECore:

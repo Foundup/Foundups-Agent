@@ -1,4 +1,29 @@
-# tools/wre/view_log.pyAdd commentMore actions
+"""
+WRE Chronicle Viewer
+
+Provides utilities for viewing WRE session chronicle logs with structured formatting
+and intelligent parsing of JSON log entries.
+
+Author: FoundUps Agent Utilities Team
+Version: 1.0.0
+Date: 2025-01-29
+WSP Compliance: WSP 46 (WRE Protocol), WSP 22 (Traceable Narrative)
+
+Dependencies:
+- tools.wre.logging_utils
+
+Usage:
+    python tools/wre/tools/view_log.py                    # View latest log
+    python tools/wre/tools/view_log.py path/to/log.jsonl # View specific log
+    python tools/wre/tools/view_log.py -n 50             # View last 50 entries
+    
+Features:
+- Automatic latest log discovery
+- JSON log parsing with error handling
+- Configurable number of entries to display
+- Robust handling of malformed log entries
+"""
+
 import json
 from pathlib import Path
 import sys

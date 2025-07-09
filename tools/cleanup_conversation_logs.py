@@ -1,6 +1,26 @@
 #!/usr/bin/env python3
 """
+Conversation Log Cleanup Utility
+
 Cleanup script for conversation logs - removes duplicates and organizes with new naming convention.
+Supports backup creation, duplicate detection, and structured file organization.
+
+Author: FoundUps Agent Utilities Team
+Version: 1.0.0
+Date: 2025-01-29
+WSP Compliance: WSP 13 (Test Creation & Management), WSP 22 (Traceable Narrative)
+
+Dependencies:
+- None (uses only standard library)
+
+Usage:
+    python tools/cleanup_conversation_logs.py
+    
+Features:
+- Automatic duplicate detection using content hashing
+- Safe backup creation before cleanup
+- Support for multiple conversation log formats
+- Structured file organization with size and timestamp info
 """
 
 import os

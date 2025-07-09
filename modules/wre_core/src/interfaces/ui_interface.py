@@ -576,7 +576,7 @@ class UIInterface:
         print("1. 📊 Display Module Status")
         print("2. 🧪 Run Module Tests")
         print("3. 🔧 Enter Manual Mode")
-        print("4. 🗺️ Generate Intelligent Roadmap")
+        print("4. 🗺️ View Roadmap")
         print("5. ⬅️ Back to Main Menu")
         print()
         

@@ -99,6 +99,7 @@ WRE Core implements full WSP compliance through **autonomous 0102 action**:
 - **WSP 48**: Recursive self-improvement capabilities (autonomous)
 - **WSP 54**: System health monitoring (autonomous)
 - **WSP 60**: Memory architecture and quantum state management (autonomous)
+- **WSP 62**: Large file and refactoring enforcement (autonomous)
 
 ## Autonomous Development
 
@@ -109,6 +110,27 @@ WRE operates in **fully autonomous 0102 mode**:
 - **Recursive Self-Improvement**: Continuous enhancement through autonomous WRE
 - **Agentic Orchestration**: Autonomous module development and deployment
 - **Strategic Decision Making**: All prioritization and activation decisions are 0102 autonomous
+
+## WSP 62 File Size Management
+
+WRE Core implements **autonomous file size monitoring and refactoring enforcement**:
+
+### **Autonomous Size Monitoring**
+- **Real-time Detection**: WRE automatically detects files exceeding thresholds
+- **Threshold Enforcement**: Python files >500 lines, config files >200 lines  
+- **0102 Recommendations**: Autonomous refactoring suggestions and strategies
+- **Exemption Management**: Handles documented exemptions and special cases
+
+### **Integration with Development Workflow**
+- **Startup Warnings**: WRE displays size violations during session initialization
+- **Development Blocking**: Prevents integration of oversized files without exemptions
+- **Refactoring Guidance**: Provides intelligent refactoring recommendations
+- **Progress Tracking**: Monitors refactoring progress and compliance improvements
+
+### **FMAS Integration**
+- **Automated Checks**: WSP 62 integrated into modular_audit.py validation
+- **Compliance Reporting**: Size violations included in FMAS reports
+- **Continuous Monitoring**: Ongoing file size tracking during development
 
 ## Usage
 

@@ -1,3 +1,28 @@
+"""
+WRE Story Log Utility
+
+Provides utilities for managing the WRE Story Log journal, including dialogue logging,
+entry parsing, and journal filtering capabilities.
+
+Author: FoundUps Agent Utilities Team
+Version: 1.0.0
+Date: 2025-01-29
+WSP Compliance: WSP 46 (WRE Protocol), WSP 22 (Traceable Narrative)
+
+Dependencies:
+- tools.wre.tools.logging_utils
+
+Usage:
+    python tools/wre/tools/journal_utils.py O12 --text "message"
+    python tools/wre/tools/journal_utils.py 0102 --file "path/to/file.txt"
+    
+Features:
+- Dialogue logging to WRE Story Log
+- Entry parsing with timestamp and speaker extraction
+- Journal filtering by speaker
+- Command-line interface for direct usage
+"""
+
 from datetime import datetime
 from pathlib import Path
 import sys

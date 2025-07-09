@@ -51,6 +51,32 @@ This directory contains the comprehensive test suite for the WRE Core module, fo
   - Confirms live system readiness and operational status.
   - Summarizes live test results and next steps.
 
+### 4. `test_coverage_utils.py`
+- **Purpose:** Tests coverage utility integration and context assessment for WRE core module development.
+- **How it works:**
+  - Tests coverage target calculation for different modules
+  - Validates context assessment functionality
+  - Verifies coverage utility integration with WRE core systems
+- **Usage:**
+  ```bash
+  python test_coverage_utils.py
+  ```
+- **Expected Output:**
+  - Coverage targets and context assessment results for various modules.
+
+### 5. `test_wsp_violations_integration.py`
+- **Purpose:** Validates WSP_MODULE_VIOLATIONS.md integration with WRE core orchestrator systems.
+- **How it works:**
+  - Tests direct file reading of WSP violations documentation
+  - Validates orchestrator function integration for module guidance
+  - Verifies violation tracking and resolution workflow
+- **Usage:**
+  ```bash
+  python test_wsp_violations_integration.py
+  ```
+- **Expected Output:**
+  - Confirms WSP violations integration and orchestrator functionality.
+
 ## WSP Compliance
 - All test scripts and coverage are maintained in accordance with WSP 4 (FMAS audit), WSP 5 (≥90% test coverage), and WSP 6 (full suite validation).
 - **Do not create redundant tests for menu, integration, or live system flows.** Use or extend the above scripts as needed.

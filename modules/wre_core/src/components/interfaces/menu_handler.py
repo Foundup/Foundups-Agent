@@ -16,7 +16,7 @@ import subprocess
 import sys
 
 from modules.wre_core.src.utils.logging_utils import wre_log
-from modules.wre_core.src.components.module_development_handler import ModuleDevelopmentHandler
+from modules.wre_core.src.components.module_development.module_development_coordinator import ModuleDevelopmentCoordinator
 
 class MenuHandler:
     """
@@ -33,7 +33,7 @@ class MenuHandler:
         self.project_root = project_root
         self.ui_interface = ui_interface
         self.session_manager = session_manager
-        self.module_dev_handler = ModuleDevelopmentHandler(project_root, session_manager)
+        self.module_dev_coordinator = ModuleDevelopmentCoordinator(project_root, session_manager)
         
     def handle_choice(self, choice: str, engine):
         """Handle main menu selection and route to appropriate handler."""
@@ -87,8 +87,8 @@ class MenuHandler:
                 wre_log(f"❌ Failed to launch main.py: {e}", "ERROR")
                 self.ui_interface.display_error(f"Failed to launch main.py: {e}")
         else:
-            # Use module development handler
-            self.module_dev_handler.handle_module_development(module_name, engine)
+            # Use module development coordinator
+            self.module_dev_coordinator.handle_module_development(module_name, engine)
             
     def _handle_wsp30_orchestration(self, engine):
         """Handle WSP_30 Agentic Module Build Orchestration."""
@@ -163,8 +163,8 @@ class MenuHandler:
         wre_log(f"🔧 Entering manual mode for: {module_name}", "INFO")
         self.session_manager.log_operation("manual_mode", {"module": module_name})
         
-        # Use module development handler for manual mode
-        self.module_dev_handler.enter_manual_mode(module_name, engine)
+        # Use module development coordinator for manual mode
+        self.module_dev_coordinator.manual_mode_manager.enter_manual_mode(module_name, engine)
         
     def _display_roadmap(self, engine):
         """Display development roadmap."""
@@ -240,7 +240,7 @@ class MenuHandler:
         path = self.ui_interface.get_user_input("Enter module path: ")
         
         # Create new module
-        self.module_dev_handler.create_new_module(module_name, domain, path)
+        self.module_dev_coordinator.create_new_module(module_name, domain, path)
         
         self.ui_interface.display_success(f"New module {module_name} created successfully")
         self.session_manager.log_achievement("new_module_created", f"Module {module_name} created")
