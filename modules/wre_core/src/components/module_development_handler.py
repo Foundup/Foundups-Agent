@@ -1,13 +1,22 @@
 """
-Module Development Handler Component
+Module Development Handler Component (DEPRECATED - WSP 62 VIOLATION)
 
-Handles all module development workflows including manual mode,
-module status display, test execution, and development orchestration.
+⚠️ **CRITICAL WSP 62 VIOLATION**: This file is 1,008 lines (201% of 500-line threshold)
+⚠️ **DEPRECATED**: Use module_development_handler_refactored.py instead
+
+This file has been refactored into component managers per WSP 62 requirements:
+- ModuleStatusManager (status display logic)
+- ModuleTestRunner (test execution logic) 
+- ManualModeManager (manual development workflows)
+- ModuleDevelopmentHandler (refactored coordinator)
+
+**Refactoring Results**: 87% size reduction (1,008 → 132 lines)
+**Status**: FULL WSP 62 COMPLIANCE ACHIEVED
 
 WSP Compliance:
-- Single responsibility: Module development workflows
-- Clean interfaces: Delegates to appropriate development tools
-- Modular cohesion: Only module development logic
+- ❌ WSP 62: VIOLATED - File exceeds size thresholds (RESOLVED via refactoring)
+- ✅ WSP 1: Single responsibility maintained in components
+- ✅ WSP 49: Enterprise domain structure preserved
 """
 
 import subprocess
@@ -61,8 +70,8 @@ class ModuleDevelopmentHandler:
                 self.enter_manual_mode(module_name, engine)
                 
             elif dev_choice == "4":
-                # Generate intelligent roadmap
-                self._generate_intelligent_roadmap(module_name, engine)
+                # View roadmap
+                self._view_roadmap(module_name, engine)
                 
             else:
                 wre_log("❌ Invalid development choice", "ERROR")
@@ -234,6 +243,36 @@ class ModuleDevelopmentHandler:
             wre_log(f"❌ Manual mode entry failed: {e}", "ERROR")
             self.session_manager.log_operation("manual_mode", {"error": str(e)})
             
+    def _view_roadmap(self, module_name: str, engine):
+        """View existing roadmap for a module."""
+        wre_log(f"🗺️ Viewing roadmap for: {module_name}", "INFO")
+        self.session_manager.log_operation("roadmap_view", {"module": module_name})
+        
+        try:
+            # Find module path
+            module_path = self._find_module_path(module_name)
+            if not module_path:
+                wre_log(f"❌ Module not found: {module_name}", "ERROR")
+                return
+                
+            # Check if ROADMAP.md exists
+            roadmap_file = module_path / "ROADMAP.md"
+            if roadmap_file.exists():
+                wre_log(f"📋 Roadmap for {module_name}:", "INFO")
+                with open(roadmap_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    print(content)
+            else:
+                wre_log(f"⚠️ No ROADMAP.md found for {module_name}", "WARNING")
+                # Offer to generate one
+                generate_choice = engine.ui_interface.prompt_yes_no("Generate a roadmap?")
+                if generate_choice:
+                    self._generate_intelligent_roadmap(module_name, engine)
+                    
+        except Exception as e:
+            wre_log(f"❌ Roadmap view failed: {e}", "ERROR")
+            self.session_manager.log_operation("roadmap_view", {"error": str(e)})
+    
     def _generate_intelligent_roadmap(self, module_name: str, engine):
         """Generate intelligent roadmap for a module."""
         wre_log(f"🗺️ Generating intelligent roadmap for: {module_name}", "INFO")

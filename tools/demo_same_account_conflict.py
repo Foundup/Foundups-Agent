@@ -1,7 +1,27 @@
 #!/usr/bin/env python3
 """
+Multi-Agent Same-Account Conflict Detection Demo
+
 Demonstration: Same-Account Conflict Detection
 Shows how the multi-agent system handles conflicts when user and agent are on the same account.
+Includes testing scenarios for safe agent selection and conflict resolution.
+
+Author: FoundUps Agent Utilities Team
+Version: 1.0.0
+Date: 2025-01-29
+WSP Compliance: WSP 54 (WRE Agent Duties), WSP 13 (Test Creation & Management)
+
+Dependencies:
+- modules.infrastructure.agent_management.src.multi_agent_manager
+
+Usage:
+    python tools/demo_same_account_conflict.py
+    
+Features:
+- Same-account conflict detection and prevention
+- Multi-agent coordination demonstration
+- Safe agent selection with automatic fallback
+- Comprehensive test scenarios for conflict resolution
 """
 
 import os

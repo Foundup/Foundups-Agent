@@ -155,6 +155,7 @@ WSP_framework/
 - **WSP 53**: Symbiotic environment integration
 - **WSP 54**: WRE agent duties specification
 - **WSP 57**: System-wide naming coherence
+- **WSP 62**: Large file and refactoring enforcement
 
 ---
 

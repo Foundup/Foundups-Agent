@@ -2,6 +2,12 @@
 """
 Foundups Modular Audit System (FMAS)
 
+# WSP Compliance Headers
+- **WSP 4**: FMAS Validation Protocol (Core functionality)
+- **WSP 62**: Large File and Refactoring Enforcement Protocol (Size checking)
+- **WSP 47**: Module Violation Tracking Protocol (Violation logging)
+- **WSP 22**: Traceable Narrative Protocol (Logging standards)
+
 This tool performs an audit of the module structure and test existence.
 This helps ensure that all modules follow the established standards.
 
@@ -12,12 +18,14 @@ Mode 1: Structure check only
 - Checks for the presence of the module.json dependency manifest
 - Reports any missing components as findings
 - NOW SUPPORTS: Enterprise Domain architecture (WSP 3)
+- NOW SUPPORTS: WSP 62 file size compliance checking
 
 Mode 2: Baseline comparison
 - Performs all Mode 1 checks
 - Additionally compares the module structure against a baseline
 - Reports added, modified, and removed modules and files
 - NOW SUPPORTS: Hierarchical domain structure comparison
+- NOW SUPPORTS: WSP 62 file size compliance checking
 """
 
 import argparse
@@ -315,6 +323,124 @@ def compute_file_hash(file_path):
         logging.error(f"Error computing hash for {file_path}: {str(e)}")
         return None
 
+def get_file_size_thresholds():
+    """
+    Get default WSP 62 file size thresholds.
+    
+    Returns:
+        dict: File extension to line threshold mapping
+    """
+    return {
+        '.py': 500,
+        '.js': 400,
+        '.ts': 400,
+        '.json': 200,
+        '.yaml': 200,
+        '.yml': 200,
+        '.toml': 200,
+        '.sh': 300,
+        '.ps1': 300,
+        '.md': 1000
+    }
+
+def count_file_lines(file_path):
+    """
+    Count the number of lines in a file.
+    
+    Args:
+        file_path: Path to the file
+        
+    Returns:
+        int: Number of lines in the file, or 0 if error
+    """
+    try:
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            return sum(1 for line in f)
+    except (IOError, OSError) as e:
+        logging.debug(f"Unable to count lines in file {file_path}: {e}")
+        return 0
+
+def check_exemption_file(module_path):
+    """
+    Check if a module has WSP 62 exemption configuration.
+    
+    Args:
+        module_path: Path to the module directory
+        
+    Returns:
+        set: Set of exempted file patterns
+    """
+    exemption_file = module_path / "wsp_62_exemptions.yaml"
+    if not exemption_file.exists():
+        return set()
+    
+    try:
+        import yaml
+        with open(exemption_file, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+            exemptions = config.get('exemptions', [])
+            return {item['file'] for item in exemptions if isinstance(item, dict) and 'file' in item}
+    except (ImportError, yaml.YAMLError, IOError, KeyError) as e:
+        logging.debug(f"Unable to load exemption file {exemption_file}: {e}")
+        return set()
+
+def audit_file_sizes(modules_root, enable_wsp_62=False):
+    """
+    Audit file sizes according to WSP 62 Large File and Refactoring Enforcement Protocol.
+    
+    Args:
+        modules_root: Path to the root directory containing the modules
+        enable_wsp_62: Whether to enable WSP 62 size checking
+        
+    Returns:
+        list: List of size violation findings
+    """
+    if not enable_wsp_62:
+        return []
+        
+    findings = []
+    thresholds = get_file_size_thresholds()
+    
+    modules_dir = modules_root if modules_root.name == "modules" else modules_root / "modules"
+    
+    if not modules_dir.exists():
+        return ["WSP 62: Modules directory does not exist"]
+    
+    modules = discover_modules_recursive(modules_dir)
+    
+    for module_path, module_name, domain_path in modules:
+        # Check for exemption configuration
+        exempted_files = check_exemption_file(module_path)
+        
+        # Check all files in the module
+        for file_path in module_path.glob('**/*'):
+            if not file_path.is_file() or file_path.name.startswith('.') or '__pycache__' in str(file_path):
+                continue
+                
+            # Check if file is exempted
+            relative_path = file_path.relative_to(module_path)
+            if str(relative_path) in exempted_files:
+                continue
+                
+            # Get threshold for this file type
+            file_extension = file_path.suffix.lower()
+            if file_extension not in thresholds:
+                continue
+                
+            threshold = thresholds[file_extension]
+            line_count = count_file_lines(file_path)
+            
+            if line_count > threshold:
+                severity = "CRITICAL" if line_count > threshold * 1.5 else "WARNING"
+                findings.append(f"WSP 62 {severity}: {domain_path}/{relative_path} "
+                              f"({line_count} lines > {threshold} threshold)")
+                              
+            elif line_count > threshold * 0.9:  # 90% threshold
+                findings.append(f"WSP 62 APPROACHING: {domain_path}/{relative_path} "
+                              f"({line_count} lines, {threshold} threshold)")
+    
+    return findings
+
 def audit_with_baseline_comparison(target_root, baseline_root):
     """
     Audit modules and compare with a baseline version, reporting changes.
@@ -507,6 +633,7 @@ def main():
     parser.add_argument("--quiet", "-q", action="store_true", help="Suppress most output")
     parser.add_argument("--mode", type=int, choices=[1, 2], default=1, help="Audit mode: 1=Structure audit, 2=Baseline comparison")
     parser.add_argument("--baseline", type=str, help="Path to the baseline directory for comparison (required for Mode 2)")
+    parser.add_argument("--wsp-62-size-check", action="store_true", help="Enable WSP 62 file size compliance checking")
     
     args = parser.parse_args()
 
@@ -526,6 +653,11 @@ def main():
         
         # Run the audit and get the findings
         findings, module_count = audit_all_modules(project_root)
+        
+        # Run WSP 62 size checking if enabled
+        if args.wsp_62_size_check:
+            size_findings = audit_file_sizes(project_root, enable_wsp_62=True)
+            findings.extend(size_findings)
         
         # Print the findings if there are any
         if findings:
@@ -571,6 +703,19 @@ def main():
         
         # Run the audit and get the findings
         audit_results = audit_with_baseline_comparison(project_root, baseline_root)
+        
+        # Run WSP 62 size checking if enabled
+        if args.wsp_62_size_check:
+            size_findings = audit_file_sizes(project_root, enable_wsp_62=True)
+            if size_findings:
+                logging.info("\nWSP 62 Size Compliance Findings:")
+                for finding in size_findings:
+                    if "CRITICAL" in finding:
+                        logging.error(f"- {finding}")
+                    elif "WARNING" in finding:
+                        logging.warning(f"- {finding}")
+                    else:
+                        logging.info(f"- {finding}")
         
         # Prepare summary
         error_count = len(audit_results[0])

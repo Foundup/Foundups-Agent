@@ -1,4 +1,28 @@
-# tools/wre/logging_utils.py
+"""
+WRE Logging Framework
+
+Core logging utilities for the Windsurf Recursive Engine (WRE), providing
+structured logging, session management, and console output sanitization.
+
+Author: FoundUps Agent Utilities Team
+Version: 1.0.0
+Date: 2025-01-29
+WSP Compliance: WSP 46 (WRE Protocol), WSP 22 (Traceable Narrative)
+
+Dependencies:
+- None (uses only standard library)
+
+Usage:
+    from tools.wre.tools.logging_utils import wre_log, sanitize_for_console
+    wre_log("Message", level="INFO", data={"key": "value"})
+    
+Features:
+- Structured JSONL logging to session chronicles
+- Session ID management and persistence
+- Console output sanitization for ASCII compatibility
+- Centralized logging for WRE operations
+"""
+
 import json
 from pathlib import Path
 from datetime import datetime
