@@ -23,7 +23,7 @@ project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from modules.wre_core.src.utils.logging_utils import wre_log
-from modules.wre_core.src.components.clean_state_manager import WSP2CleanStateManager
+from modules.wre_core.src.components.system_ops.wsp2_clean_state_manager import WSP2CleanStateManager
 
 
 class SessionManager:
