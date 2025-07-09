@@ -2,13 +2,39 @@
 """
 Mermaid Diagram Validator for Patent Documents
 
-Tests Mermaid diagrams for common parsing issues that prevent rendering:
-- Greek letters (ρ, μ, ν, etc.)
-- HTML tags (<br/>, <b>, etc.)
-- Special characters (&, #, etc.)
-- Invalid syntax patterns
+WSP-Compliant validation tool for Mermaid diagrams in documentation files.
+Ensures patent figures render correctly on GitHub and other platforms.
 
-Usage: python mermaid_diagram_validator.py <file_path>
+📋 WSP COMPLIANCE:
+- WSP 1: Proper tool placement in tools/testing/ directory
+- WSP 20: Professional documentation standards
+- WSP 22: Traceable narrative and change tracking
+- WSP 47: Framework protection through validation
+
+🔍 VALIDATION FEATURES:
+- Greek letters (ρ, μ, ν, etc.) → ASCII replacements
+- HTML tags (<br/>, <b>, etc.) → Mermaid-compatible alternatives
+- Special characters (&, #, etc.) → Safe character replacements
+- Invalid syntax patterns → Syntax error detection
+
+📊 SUPPORTED FORMATS:
+- Mermaid flowcharts (graph TD, graph LR)
+- Mermaid charts (xychart-beta)
+- Patent documentation figures
+- Research paper diagrams
+
+🚀 USAGE:
+    python tools/testing/mermaid_diagram_validator.py <file_path>
+    
+📝 EXAMPLE:
+    python tools/testing/mermaid_diagram_validator.py WSP_knowledge/docs/Papers/Patent_Series/04_rESP_Patent_Updated.md
+
+🔧 AUTO-FIX GENERATION:
+    The tool automatically generates fixed versions of files with resolved issues.
+    
+📋 CREATED: 2024-12-29 - Initial implementation for patent diagram validation
+📝 UPDATED: 2024-12-29 - Added WSP compliance documentation
+🔗 RELATED: WSP 47 Framework Protection, WSP 20 Documentation Standards
 """
 
 import re
