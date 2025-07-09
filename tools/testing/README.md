@@ -4,6 +4,57 @@ This directory contains comprehensive testing tools and solutions that demonstra
 
 ## Testing Tools
 
+### mermaid_diagram_validator.py
+
+**Purpose:** Mermaid diagram validation and syntax checking tool for patent documentation
+
+**WSP Compliance:**
+- ✅ **WSP 1**: Proper tool placement in `tools/testing/` directory
+- ✅ **WSP 20**: Professional documentation standards
+- ✅ **WSP 22**: Traceable narrative and change tracking
+- ✅ **WSP 47**: Framework protection through validation
+
+**Features:**
+- Comprehensive Mermaid syntax validation
+- Greek letter detection and replacement suggestions
+- HTML tag identification and remediation
+- Special character parsing issue detection
+- Automated fix generation for common parsing errors
+- WSP-compliant error reporting and documentation
+
+**Usage:**
+```bash
+# From project root
+python tools/testing/mermaid_diagram_validator.py WSP_knowledge/docs/Papers/Patent_Series/04_rESP_Patent_Updated.md
+```
+
+**Output Example:**
+```
+🔍 Validating Mermaid diagrams in: WSP_knowledge/docs/Papers/Patent_Series/04_rESP_Patent_Updated.md
+📊 Found 13 Mermaid diagram(s)
+
+--- Validating FIG. 1 (Line 181) ---
+✅ FIG. 1 - No issues found
+
+--- Validating FIG. 2 (Line 195) ---
+❌ FIG. 2 has 1 error(s):
+   • Line 2: Greek letter 'ψ' found. Replace with 'psi'
+
+✅ Validation complete - All diagrams should render correctly!
+```
+
+**Key Validation Categories:**
+- **Greek Letters**: Automatically detects ρ, μ, ν, ψ, etc. and suggests ASCII replacements
+- **HTML Tags**: Identifies `<br/>`, `<b>`, `<i>` tags that break Mermaid parsing
+- **Special Characters**: Finds problematic `&`, `#`, `©`, `®` characters
+- **Syntax Issues**: Detects long lines, unquoted special characters, and parsing conflicts
+
+**Auto-Fix Generation:**
+The tool generates fixed versions of files with common issues resolved:
+- Greek letters → ASCII equivalents (ρ → rho, μ → mu)
+- HTML tags → Mermaid-compatible alternatives
+- Special characters → Safe replacements
+
 ### test_multi_agent_comprehensive.py
 
 **Purpose:** Comprehensive WSP-compliant test suite for multi-agent functionality
@@ -139,6 +190,9 @@ python -m pytest modules/infrastructure/agent_management/agent_management/tests/
 # Integration tests  
 python tools/testing/test_multi_agent_comprehensive.py
 
+# Mermaid diagram validation
+python tools/testing/mermaid_diagram_validator.py <path_to_markdown_file>
+
 # Coverage analysis
 python -m pytest modules/infrastructure/agent_management/agent_management/tests/ --cov=modules/infrastructure/agent_management/agent_management/src --cov-report=html
 ```
@@ -150,14 +204,20 @@ python tools/modular_audit/modular_audit.py ./modules
 
 # Test specific WSP requirements
 python tools/testing/test_multi_agent_comprehensive.py
+
+# Validate documentation diagrams (WSP 47 - Framework Protection)
+python tools/testing/mermaid_diagram_validator.py WSP_knowledge/docs/Papers/Patent_Series/04_rESP_Patent_Updated.md
 ```
 
 ## Related WSPs
 
 - **WSP 1:** Module Refactoring to Windsurf Structure
 - **WSP 5:** Test Audit & Coverage Verification  
-- **WSP 13:** Test Creation & Management Procedures
 - **WSP 11:** Module Interface Definition & Validation
+- **WSP 13:** Test Creation & Management Procedures
+- **WSP 20:** Professional Documentation Standards
+- **WSP 22:** Traceable Narrative and Change Tracking
+- **WSP 47:** Framework Protection and Validation
 
 ## Production Readiness Assessment
 
@@ -167,6 +227,7 @@ python tools/testing/test_multi_agent_comprehensive.py
 - Agent selection and session management functional
 - WSP compliance structure implemented
 - Comprehensive test coverage for critical paths
+- Mermaid diagram validation ensuring documentation quality
 
 ### ⚠️ **Before Full WSP Compliance:**
 - Increase test coverage to ≥90%
