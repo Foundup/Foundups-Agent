@@ -22,7 +22,7 @@ project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from modules.wre_core.src.wre_core_poc import WRECorePOC
-from modules.wre_core.src.components.agentic_orchestrator.orchestration_context import OrchestrationTrigger
+from modules.wre_core.src.components.orchestration.agentic_orchestrator.orchestration_context import OrchestrationTrigger
 
 
 class TestWRECorePOCInitialization:

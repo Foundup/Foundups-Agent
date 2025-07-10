@@ -12,9 +12,9 @@ WSP Compliance:
 
 from pathlib import Path
 from modules.wre_core.src.utils.logging_utils import wre_log
-from modules.wre_core.src.components.module_status_manager import ModuleStatusManager
-from modules.wre_core.src.components.module_test_runner import ModuleTestRunner
-from modules.wre_core.src.components.manual_mode_manager import ManualModeManager
+from modules.wre_core.src.components.development.module_status_manager import ModuleStatusManager
+from modules.wre_core.src.components.development.module_test_runner import ModuleTestRunner
+from modules.wre_core.src.components.development.manual_mode_manager import ManualModeManager
 
 
 class ModuleDevelopmentHandler:
@@ -41,48 +41,66 @@ class ModuleDevelopmentHandler:
         self.manual_mode_manager = ManualModeManager(project_root)
         
     def handle_module_development(self, module_name: str, engine):
-        """Handle module development workflow."""
+        """Handle module development workflow with menu loop."""
         wre_log(f"🏗️ Handling module development for: {module_name}", "INFO")
         self.session_manager.log_operation("module_development", {"module": module_name})
         
-        try:
-            # Display module development menu
-            engine.ui_interface.display_module_development_menu()
-            
-            # Get user choice
-            dev_choice = engine.ui_interface.get_user_input("Select development option: ")
-            
-            # Route to appropriate component manager
-            if dev_choice == "1":
-                # Display module status - delegate to status manager
-                self.module_status_manager.display_module_status(module_name, self.session_manager)
+        while True:
+            try:
+                # Display module development menu
+                engine.ui_interface.display_module_development_menu()
                 
-            elif dev_choice == "2":
-                # Run module tests - delegate to test runner
-                module_path = self.module_status_manager.find_module_path(module_name)
-                if module_path:
-                    self.module_test_runner.run_module_tests(module_name, module_path, self.session_manager)
+                # Get user choice
+                dev_choice = engine.ui_interface.get_user_input("Select development option: ")
+                
+                # Route to appropriate component manager
+                if dev_choice == "1":
+                    # Display module status - delegate to status manager
+                    self.module_status_manager.display_module_status(module_name, self.session_manager)
+                    
+                elif dev_choice == "2":
+                    # Run module tests - delegate to test runner
+                    module_path = self.module_status_manager.find_module_path(module_name)
+                    if module_path:
+                        self.module_test_runner.run_module_tests(module_name, module_path, self.session_manager)
+                    else:
+                        wre_log(f"❌ Module not found: {module_name}", "ERROR")
+                    
+                elif dev_choice == "3":
+                    # Enter manual mode - delegate to manual mode manager
+                    # Pass engine with component managers attached
+                    engine.module_status_manager = self.module_status_manager
+                    engine.module_test_runner = self.module_test_runner
+                    self.manual_mode_manager.enter_manual_mode(module_name, engine, self.session_manager)
+                    
+                elif dev_choice == "4":
+                    # Generate roadmap - delegate to roadmap manager
+                    from modules.wre_core.src.components.development.roadmap_manager import parse_roadmap, add_new_objective
+                    module_path = self.module_status_manager.find_module_path(module_name)
+                    if module_path:
+                        self._handle_roadmap_generation(module_name, module_path, engine, self.session_manager)
+                    else:
+                        wre_log(f"❌ Module not found: {module_name}", "ERROR")
+                        
+                elif dev_choice == "5":
+                    # Back to Main Menu - exit the development loop
+                    wre_log("⬅️ Returning to Main Menu", "INFO")
+                    break
+                    
                 else:
-                    wre_log(f"❌ Module not found: {module_name}", "ERROR")
-                
-            elif dev_choice == "3":
-                # Enter manual mode - delegate to manual mode manager
-                # Pass engine with component managers attached
-                engine.module_status_manager = self.module_status_manager
-                engine.module_test_runner = self.module_test_runner
-                self.manual_mode_manager.enter_manual_mode(module_name, engine, self.session_manager)
-                
-            elif dev_choice == "4":
-                # View roadmap - placeholder for roadmap manager
-                wre_log("🗺️ Roadmap functionality - coming soon", "INFO")
-                # TODO: Implement ModuleRoadmapManager and delegate here
-                
-            else:
-                wre_log("❌ Invalid development choice", "ERROR")
-                
-        except Exception as e:
-            wre_log(f"❌ Module development failed: {e}", "ERROR")
-            self.session_manager.log_operation("module_development", {"error": str(e)})
+                    wre_log("❌ Invalid development choice", "ERROR")
+                    
+                # Add pause before redisplaying menu (except for option 5)
+                if dev_choice != "5":
+                    input("\nPress Enter to continue...")
+                    
+            except KeyboardInterrupt:
+                wre_log("⚠️ Module development interrupted by user", "WARNING")
+                break
+            except Exception as e:
+                wre_log(f"❌ Module development failed: {e}", "ERROR")
+                self.session_manager.log_operation("module_development", {"error": str(e)})
+                input("\nPress Enter to continue...")
             
     def get_component_managers(self) -> dict:
         """Get all component managers for integration."""
@@ -135,3 +153,37 @@ class ModuleDevelopmentHandler:
                             system_status["wsp_62_violations"] += len(status_info["size_violations"])
         
         return system_status 
+        
+    def _handle_roadmap_generation(self, module_name: str, module_path: Path, engine, session_manager):
+        """Handle roadmap generation for a module."""
+        wre_log(f"🗺️ Generating roadmap for: {module_name}", "INFO")
+        session_manager.log_operation("roadmap_generation", {"module": module_name})
+        
+        try:
+            from modules.wre_core.src.components.development.roadmap_manager import parse_roadmap
+            
+            # Check if module has ROADMAP.md
+            roadmap_file = module_path / "ROADMAP.md"
+            if roadmap_file.exists():
+                # Parse existing roadmap
+                objectives = parse_roadmap(module_path)
+                wre_log(f"📋 Found {len(objectives)} strategic objectives in roadmap", "INFO")
+                
+                # Display current roadmap content
+                try:
+                    content = roadmap_file.read_text(encoding='utf-8')
+                    wre_log(f"📖 Current roadmap content:", "INFO")
+                    wre_log(f"Path: {roadmap_file}", "INFO")
+                    wre_log(f"Preview: {content[:200]}...", "INFO")
+                except Exception as e:
+                    wre_log(f"⚠️ Could not read roadmap: {e}", "WARNING")
+                    
+            else:
+                wre_log(f"📝 No roadmap found for {module_name}", "INFO")
+                wre_log(f"💡 Consider creating ROADMAP.md in {module_path}", "INFO")
+                
+            session_manager.log_achievement("roadmap_generation", f"Generated roadmap for {module_name}")
+            
+        except Exception as e:
+            wre_log(f"❌ Roadmap generation failed: {e}", "ERROR")
+            session_manager.log_operation("roadmap_generation", {"error": str(e)})

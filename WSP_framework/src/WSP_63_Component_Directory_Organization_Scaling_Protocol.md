@@ -365,6 +365,173 @@ COMPONENT_LIFECYCLE_STAGES = {
 3. **Integrate with WRE**: Enhance WRE with component navigation tools
 4. **Continuous Improvement**: Refine based on 0102 feedback
 
+## 9. Testing Architecture Strategy (WSP 5 Integration)
+
+### 9.1. Subdirectory Testing Philosophy
+
+#### 9.1.1. Centralized Testing Approach (RECOMMENDED)
+```
+module/
+├── src/
+│   └── components/
+│       ├── core/           # Subdirectory components
+│       ├── interfaces/     # Subdirectory components  
+│       ├── system_ops/     # Subdirectory components
+│       ├── development/    # Subdirectory components
+│       └── orchestration/  # Subdirectory components
+└── tests/                  # CENTRALIZED test suite
+    ├── test_components.py  # Tests ALL subdirectory components
+    ├── test_core.py        # Optional: focused core tests
+    ├── test_interfaces.py  # Optional: focused interface tests
+    └── README.md           # Test architecture documentation
+```
+
+**Benefits:**
+- **WSP 5 Compliance**: Single test runner for ≥90% coverage across all subdirectories
+- **Integration Testing**: Tests component interactions across subdirectories
+- **Simplified CI/CD**: Single test execution point
+- **Coverage Reporting**: Unified coverage metrics for entire module
+
+#### 9.1.2. Distributed Testing Approach (ADVANCED)
+```
+module/
+├── src/
+│   └── components/
+│       ├── core/
+│       │   ├── engine_core.py
+│       │   └── tests/          # Subdirectory-specific tests
+│       │       └── test_core.py
+│       ├── interfaces/
+│       │   ├── menu_handler.py
+│       │   └── tests/          # Subdirectory-specific tests
+│       │       └── test_interfaces.py
+│       └── system_ops/
+│           ├── system_manager.py
+│           └── tests/          # Subdirectory-specific tests
+│               └── test_system_ops.py
+└── tests/                      # Integration tests only
+    ├── test_integration.py     # Cross-subdirectory integration
+    └── test_full_system.py     # End-to-end system tests
+```
+
+**When to Use:**
+- Modules with >50 components across subdirectories
+- Subdirectories with complex internal logic requiring extensive testing
+- Teams working independently on different subdirectories
+
+### 9.2. Testing Strategy Decision Matrix
+
+| Module Size | Component Count | Subdirectories | Testing Strategy |
+|-------------|-----------------|----------------|------------------|
+| **Small** | ≤20 components | 0-2 subdirs | Centralized only |
+| **Medium** | 21-50 components | 3-5 subdirs | Centralized + focused |
+| **Large** | 51-100 components | 6-8 subdirs | Distributed + integration |
+| **Enterprise** | >100 components | >8 subdirs | Full distributed |
+
+### 9.3. Implementation Recommendations
+
+#### 9.3.1. For Current WRE Core (IMPLEMENTED CORRECTLY)
+```python
+# tests/test_components.py - Centralized approach
+class TestWREComponentSubdirectories(unittest.TestCase):
+    """Test all subdirectory components from centralized location."""
+    
+    def test_core_components(self):
+        """Test core/ subdirectory components."""
+        from modules.wre_core.src.components.core.engine_core import WRECore
+        # Test core components...
+        
+    def test_development_components(self):
+        """Test development/ subdirectory components."""
+        from modules.wre_core.src.components.development.module_status_manager import ModuleStatusManager
+        # Test development components...
+```
+
+#### 9.3.2. WSP 5 Coverage Strategy
+```bash
+# Maintain ≥90% coverage across ALL subdirectories
+pytest modules/wre_core/tests/ --cov=modules/wre_core/src/components --cov-report=term-missing
+
+# Coverage includes:
+# ✅ components/core/
+# ✅ components/interfaces/  
+# ✅ components/system_ops/
+# ✅ components/development/
+# ✅ components/orchestration/
+```
+
+## 10. Enterprise Application Strategy
+
+### 10.1. WSP 63 Rollout Priority Matrix
+
+#### 10.1.1. Immediate Actions (Phase 1 - Critical)
+1. **🔴 modules/infrastructure/**: 18 modules - **CRITICAL RED threshold**
+   - Apply WSP 63 functional categorization:
+     - `core_services/` (auth, models, oauth)
+     - `management_agents/` (compliance, documentation, janitor, loremaster)
+     - `integration_services/` (api_gateway, blockchain, token_manager)
+     - `monitoring_services/` (audit_logger, testing_agent, scoring_agent)
+
+#### 10.1.2. Monitoring Actions (Phase 2 - Preventive)
+1. **🟡 modules/ai_intelligence/**: 7 modules - Monitor for growth
+2. **🟡 modules/platform_integration/**: 8 modules - Monitor for growth
+3. **🟡 modules/communication/**: 6 modules - Monitor for growth
+
+#### 10.1.3. Template Creation (Phase 3 - Standardization)
+```python
+# WSP 63 Enterprise Template
+WSP_63_ENTERPRISE_PATTERN = {
+    "trigger_threshold": 12,  # Start planning at YELLOW
+    "implementation_threshold": 17,  # Implement at RED
+    "max_subdirectory_size": 8,  # WSP 63 subdirectory limit
+    "testing_strategy": "centralized",  # Default approach
+    "documentation_required": ["README.md", "component_matrix.py"]
+}
+```
+
+### 10.2. WSP Documentation Updates Required
+
+#### 10.2.1. Core WSP Documents Needing Updates
+1. **WSP 49 (Module Directory Structure)**: Add WSP 63 subdirectory guidance
+2. **WSP 5 (Test Coverage)**: Add subdirectory testing strategies  
+3. **WSP 1 (Single Responsibility)**: Clarify component vs subdirectory responsibilities
+4. **WSP 22 (Traceable Narrative)**: Add component reorganization documentation standards
+
+## 11. Future Scaling Anticipation
+
+### 11.1. Growth Pattern Recognition
+```python
+def predict_wsp_63_needs(module_path):
+    """Predict when modules will need WSP 63 reorganization."""
+    current_size = count_components(module_path)
+    growth_rate = calculate_monthly_growth(module_path)
+    
+    months_to_yellow = (9 - current_size) / growth_rate  # 9 = YELLOW threshold
+    months_to_red = (17 - current_size) / growth_rate    # 17 = RED threshold
+    
+    return {
+        "current_status": get_threshold_status(current_size),
+        "yellow_warning_in": months_to_yellow,
+        "red_critical_in": months_to_red,
+        "recommended_action": get_recommended_action(current_size, growth_rate)
+    }
+```
+
+### 11.2. Recursive Application Strategy
+```
+Enterprise Level:
+modules/ → Apply WSP 63 when domains exceed thresholds
+
+Domain Level:  
+modules/infrastructure/ → Apply WSP 63 to organize agent categories
+
+Module Level:
+modules/infrastructure/agent_management/ → Apply WSP 63 to organize components
+
+Component Level:
+modules/infrastructure/agent_management/src/components/ → Current WRE pattern
+```
+
 ---
 
 **WSP 63 Status**: Ready for immediate implementation to resolve component directory scaling crisis.

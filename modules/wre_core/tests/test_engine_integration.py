@@ -19,7 +19,7 @@ from unittest.mock import Mock, patch, MagicMock
 project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from modules.wre_core.src.components.engine_core import WRECore
+from modules.wre_core.src.components.core.engine_core import WRECore
 
 class TestWREInitialization(unittest.TestCase):
     """Test WRE system initialization and component loading."""

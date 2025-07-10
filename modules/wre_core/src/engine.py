@@ -25,7 +25,7 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from modules.wre_core.src.components.engine_core import WRECore
+from modules.wre_core.src.components.core.engine_core import WRECore
 
 # Alias for backward compatibility
 WRE = WRECore

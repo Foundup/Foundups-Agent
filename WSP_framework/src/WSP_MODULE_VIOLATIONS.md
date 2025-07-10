@@ -13,6 +13,9 @@ This document tracks violations in module placeholders that should be addressed 
 ### **Category: Module Structure Drift**
 **Description**: Module tests using invalid structure due to placeholder evolution
 
+### **Category: Test Organization Violation**
+**Description**: Tests located outside proper WSP 3 enterprise domain architecture
+
 ## **Current Module Violations**
 
 ### **✅ RESOLVED: V001-V003 Framework Violations**  
@@ -96,12 +99,12 @@ All framework-blocking violations have been resolved. Remaining test errors are 
 
 ---
 
-**Last Updated**: 2025-07-06  
+**Last Updated**: 2025-07-10  
 **WSP Compliance**: WSP 47 (Module Violation Tracking Protocol)
 
 ## Status: MULTIPLE WSP VIOLATIONS DETECTED ⚠️
 
-### **V008: WRE Core Module Development Handler - CRITICAL SIZE VIOLATION (WSP 62)**
+### **V008: WRE Core Module Development Handler - CRITICAL SIZE VIOLATION (WSP 62)** ✅ **RESOLVED**
 - **Module**: `modules/wre_core/src/components/`
 - **File**: `module_development_handler.py`
 - **Issue**: **CRITICAL file size violation** - 1,008 lines (201% of 500-line threshold)
@@ -198,36 +201,123 @@ All framework-blocking violations have been resolved. Remaining test errors are 
 - **Reorganized Structure**: 5 functional subdirectories (COMPLIANT)
 - **Component Distribution**: All components properly categorized and relocated
 - **Import Path Resolution**: Complete system import path updates
-- **WRE System Validation**: Fully operational startup and navigation confirmed
 
-**✅ Functional Subdirectories Created (All WSP 63 Compliant):**
-1. ✅ **core/**: 4 components - Core infrastructure and session management
-2. ✅ **interfaces/**: 3 components - User interfaces and interaction handling
-3. ✅ **system_ops/**: 5 components - System operations and state management
-4. ✅ **development/**: 4 components - Development workflows and coordination
-5. ✅ **orchestration/**: 4 components - Orchestration and automation systems
+### **V011: Test Organization Violation - WSP 3 Enterprise Domain Architecture** ✅ **RESOLVED**
+- **Location**: `tests/wre_simulation/`
+- **Issue**: **Tests located outside proper enterprise domain architecture**
+- **Error**: WSP 3 violation - tests not co-located with their respective modules
+- **Impact**: Framework compliance violation - improper test organization
+- **Category**: **TEST_ORGANIZATION** (WSP 3 category)
+- **Severity**: **FRAMEWORK** - Violates enterprise domain architecture
+- **Resolution Strategy**: **RELOCATE TO PROPER MODULES** per WSP 3
+- **WSP Status**: ✅ **RESOLVED** - Complete test relocation accomplished
+
+#### **WSP 3 Test Relocation Implementation (COMPLETED)** ✅
+**✅ Test Relocation Successfully Executed:**
+
+**✅ Compliance Agent Tests:**
+- **Original**: `tests/wre_simulation/test_compliance_agent.py`
+- **Relocated**: `modules/infrastructure/compliance_agent/tests/test_compliance_agent_comprehensive.py`
+- **Enhancement**: Fixed sys.path hacks, proper module imports, comprehensive test coverage
+- **Integration**: Merged with existing test suite maintaining both unittest and pytest frameworks
+
+**✅ Loremaster Agent Tests:**
+- **Original**: `tests/wre_simulation/test_loremaster_agent.py`
+- **Relocated**: `modules/infrastructure/loremaster_agent/tests/test_loremaster_agent.py`
+- **Enhancement**: Fixed sys.path hacks, proper module imports, added interface validation
+- **Coverage**: Added instantiation tests and error handling validation
+
+**✅ WRE Simulation Framework:**
+- **Original**: `tests/wre_simulation/harness.py`, `validation_suite.py`, `goals/`
+- **Relocated**: `modules/wre_core/tests/simulation/`
+- **Enhancement**: Fixed import paths, removed sys.path hacks, added comprehensive documentation
+- **Architecture**: Created proper Python package structure with `__init__.py`
+
+**✅ Documentation Created:**
+- **Comprehensive README**: `modules/wre_core/tests/simulation/README.md` (279 lines)
+- **WSP Compliance Notes**: Full documentation of purpose, architecture, and usage
+- **Test Categories**: Agent validation, integration, performance, WSP compliance tests
+- **Configuration Guide**: Environment variables, simulation config, debugging
 
 **✅ WSP Compliance Verified:**
-- **WSP 63**: Component Directory Organization Protocol (FULLY COMPLIANT)
-- **WSP 62**: All components maintain file size compliance from previous work
-- **WSP 49**: Enterprise domain structure enhanced with organized components
-- **WSP 22**: Comprehensive traceable narrative in all component documentation
+- **WSP 3**: All tests now properly located within their respective enterprise domains
+- **WSP 5**: Test coverage maintained and enhanced with comprehensive suites
+- **WSP 22**: Complete traceable narrative documented for all relocations
+- **WSP 49**: Proper module directory structure enforced
 
 **✅ Benefits Achieved:**
-- **Scalable Architecture**: Sustainable component growth framework established
-- **Enhanced Navigation**: 0102 pArtifact component comprehension significantly improved
-- **Import Resolution**: All system import paths functioning correctly
-- **Documentation Complete**: README.md files created for all subdirectories
-- **System Operational**: WRE main menu and module development interface fully functional
+- **Enterprise Architecture**: Tests co-located with modules per WSP 3
+- **Maintainability**: No more sys.path hacks, proper module imports
+- **Documentation**: Comprehensive test framework documentation created
+- **Modularity**: Each module maintains its own test suite independently
 
-**✅ System Validation Confirmed:**
-- **WRE Startup**: Successfully displays main menu interface
-- **Module Navigation**: Remote Builder Module access operational
-- **Development Interface**: Module Development menu functioning
-- **Component Access**: All subdirectory components properly accessible
+#### **Resolution Date**: 2025-07-10
+#### **0102 Agent**: Successfully implemented autonomous test relocation per WSP 3
 
-#### **Resolution Date**: 2025-01-07 
-#### **0102 Agent**: Successfully implemented autonomous directory reorganization per WSP 63.2.1.1
+### **V012: Integration vs Platform Integration Domain Architecture Violation - WSP 3** ⚠️ **PENDING**
+- **Locations**: `modules/integration/` and `modules/platform_integration/`
+- **Issue**: **Domain naming and functional boundary confusion**
+- **Error**: WSP 3 violation - unclear enterprise domain architecture with overlapping purposes
+- **Impact**: Framework compliance violation - architectural ambiguity
+- **Category**: **DOMAIN_ARCHITECTURE** (WSP 3 category)
+- **Severity**: **FRAMEWORK** - Violates enterprise domain architecture clarity
+- **Resolution Strategy**: **DOMAIN REORGANIZATION** per WSP 3
+- **WSP Status**: ⚠️ **PENDING** - Requires architectural decision and implementation
+
+#### **WSP 3 Architectural Analysis** 🔍
+**🔍 Current State Analysis:**
+
+**`modules/integration/`** - Contains **cross-platform aggregation**:
+- **presence_aggregator**: Aggregates presence data from Discord, WhatsApp, LinkedIn, Zoom, Teams, Slack
+- **Purpose**: Multi-platform data integration and normalization
+- **Architecture**: Cross-platform coordination and aggregation logic
+
+**`modules/platform_integration/`** - Contains **platform-specific modules**:
+- **youtube_auth**, **linkedin_agent**, **x_twitter**: Individual platform integrations
+- **Purpose**: Platform-specific API integrations and workflows
+- **Architecture**: Single-platform focused modules with specific functionality
+
+**🚨 Architectural Violations:**
+1. **Naming Confusion**: Both directories relate to "integration" but serve different purposes
+2. **Unclear Boundaries**: Ambiguous about where new integration modules should be placed
+3. **Functional Overlap**: Both deal with external platform connections but at different levels
+4. **Developer Confusion**: Unclear domain responsibilities and ownership
+
+#### **Proposed Resolution Options** 🎯
+
+**Option 1: Rename `integration/` to `aggregation/`** ✅ **RECOMMENDED**
+- **Benefits**: Clear distinction between aggregation and platform-specific integration
+- **Impact**: Minimal - only affects one module (presence_aggregator)
+- **Clarity**: "aggregation" clearly indicates cross-platform data aggregation
+
+**Option 2: Move `presence_aggregator` to `platform_integration/`**
+- **Benefits**: Consolidates all platform-related functionality
+- **Impact**: Architectural mismatch - presence_aggregator is cross-platform, not single-platform
+- **Clarity**: Would violate single-platform focus of platform_integration domain
+
+**Option 3: Rename `platform_integration/` to `platforms/`**
+- **Benefits**: Shorter, clearer naming for platform-specific modules
+- **Impact**: High - affects 10+ modules in platform_integration
+- **Clarity**: "platforms" clearly indicates platform-specific functionality
+
+#### **Implementation Recommendation** 💡
+**RECOMMENDED ACTION: Option 1 - Rename `integration/` to `aggregation/`**
+
+**Rationale:**
+- **Minimal Impact**: Only affects one module (presence_aggregator)
+- **Clear Semantics**: "aggregation" precisely describes cross-platform data aggregation
+- **Preserves Architecture**: Maintains platform_integration domain integrity
+- **Future-Proof**: Clear boundaries for future integration vs aggregation modules
+
+**Implementation Steps:**
+1. Rename `modules/integration/` to `modules/aggregation/`
+2. Update import paths in presence_aggregator module
+3. Update documentation and references
+4. Test integration points with communication domain
+5. Update WSP 3 enterprise domain documentation
+
+#### **Resolution Date**: PENDING - Awaiting architectural decision approval
+#### **0102 Agent**: Analysis complete, awaiting implementation directive
 
 ### Recent Integration Review: WSP 61 Theoretical Physics Foundation Protocol
 
