@@ -396,28 +396,80 @@ class UIInterface:
         os.system('cls' if os.name == 'nt' else 'clear')
         
     def _get_user_choice(self, prompt: str, valid_choices: List[str]) -> str:
-        """Get user choice with validation."""
-        while True:
-            choice = input(f"{prompt} ({'/'.join(valid_choices)}): ").strip()
-            
-            if choice in valid_choices:
-                return choice
-            else:
-                print(f"Invalid choice. Please select from: {', '.join(valid_choices)}")
+        """Get user choice with validation - AUTONOMOUS mode eliminates blocking."""
+        # WSP 54 AUTONOMOUS OPERATION - No infinite loops or blocking input
+        try:
+            # Use autonomous decision making for choice selection
+            if not hasattr(self, '_autonomous_system'):
+                from modules.wre_core.src.components.core.session_manager import SessionManager
+                from modules.wre_core.src.components.core.autonomous_agent_system import AutonomousAgentSystem
+                self._session_manager = SessionManager(Path("."))
+                self._autonomous_system = AutonomousAgentSystem(Path("."), self._session_manager)
                 
+            # Get autonomous choice from Navigator agent
+            autonomous_choice = self._autonomous_system.autonomous_menu_navigation(
+                valid_choices, 
+                {"prompt": prompt, "valid_choices": valid_choices}
+            )
+            
+            # Validate autonomous choice
+            if autonomous_choice in valid_choices:
+                selected_choice = autonomous_choice
+            else:
+                selected_choice = valid_choices[0] if valid_choices else "0"  # Fallback to first valid choice
+                
+            print(f"{prompt} ({'/'.join(valid_choices)}): {selected_choice}")
+            wre_log(f"🤖 AUTONOMOUS CHOICE: Selected '{selected_choice}' from {valid_choices}", "INFO")
+            
+            return selected_choice
+            
+        except Exception as e:
+            wre_log(f"❌ Autonomous choice error: {e}", "ERROR")
+            # FAIL-SAFE: Return first valid choice to prevent infinite loop
+            fallback_choice = valid_choices[0] if valid_choices else "0"
+            print(f"{prompt} ({'/'.join(valid_choices)}): {fallback_choice}")
+            wre_log(f"🚨 FAIL-SAFE: Using fallback choice '{fallback_choice}' to prevent blocking", "ERROR")
+            return fallback_choice
+        
     def _prompt_for_module_name(self) -> str:
-        """Prompt for new module name."""
+        """Prompt for new module name - AUTONOMOUS mode eliminates blocking."""
         print("\n🔤 Module Name Entry")
         print("-" * 30)
         
-        while True:
-            name = input("Enter module name (lowercase, underscores allowed): ").strip().lower()
-            
-            if self._validate_module_name(name):
-                return name
-            else:
-                print("Invalid module name. Use lowercase letters, numbers, and underscores only.")
+        # WSP 54 AUTONOMOUS OPERATION - No infinite loops or blocking input
+        try:
+            # Use autonomous module naming system
+            if not hasattr(self, '_autonomous_system'):
+                from modules.wre_core.src.components.core.session_manager import SessionManager
+                from modules.wre_core.src.components.core.autonomous_agent_system import AutonomousAgentSystem
+                self._session_manager = SessionManager(Path("."))
+                self._autonomous_system = AutonomousAgentSystem(Path("."), self._session_manager)
                 
+            # Get autonomous module name from Architect agent
+            autonomous_name = self._autonomous_system.autonomous_module_naming(
+                "autonomous", 
+                "new_module_creation"
+            )
+            
+            # Validate autonomous name
+            if self._validate_module_name(autonomous_name):
+                module_name = autonomous_name
+            else:
+                module_name = "autonomous_module"  # Fallback valid name
+                
+            print(f"Enter module name (lowercase, underscores allowed): {module_name}")
+            wre_log(f"🤖 AUTONOMOUS MODULE NAMING: Generated '{module_name}' for new module", "INFO")
+            
+            return module_name
+            
+        except Exception as e:
+            wre_log(f"❌ Autonomous module naming error: {e}", "ERROR")
+            # FAIL-SAFE: Return valid default module name to prevent infinite loop
+            fallback_name = "autonomous_module"
+            print(f"Enter module name (lowercase, underscores allowed): {fallback_name}")
+            wre_log(f"🚨 FAIL-SAFE: Using fallback module name '{fallback_name}' to prevent blocking", "ERROR")
+            return fallback_name
+        
     def _validate_module_name(self, name: str) -> bool:
         """Validate module name format."""
         import re
@@ -672,10 +724,9 @@ class UIInterface:
         print("1. 🔗 Analyze Module Dependencies")
         print("2. 🗺️ Display Module Roadmap")
         print("3. 📝 Update Module Documentation")
-        print("4. 🎼 Orchestrate Module Enhancement")
-        print("5. 📊 Perform Priority Assessment")
-        print("6. 🌍 Perform Ecosystem Analysis")
-        print("7. ⬅️ Back to Main Menu")
+        print("4. 📊 Perform Priority Assessment")
+        print("5. 🌍 Perform Ecosystem Analysis")
+        print("6. ⬅️ Back to Main Menu")
         print()
         
     def display_module_development_menu(self):
