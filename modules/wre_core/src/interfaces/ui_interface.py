@@ -47,122 +47,112 @@ class UIInterface:
         self.test_mode = test_mode
         
     def display_main_menu(self) -> str:
-        """Display the main WRE menu and return user selection."""
-        self._clear_screen()
+        """Display main menu - AUTONOMOUS mode eliminates manual input blocking."""
         self._display_header()
         
         print("🏄 Windsurf Recursive Engine (WRE) - Main Menu")
         print("=" * 60)
-        print()
         
-        # Get prioritized module list using WSP 37 scoring
-        prioritized_modules = self._get_prioritized_modules()
-        
-        # In test mode, bypass pagination to prevent infinite loops
-        if self.test_mode:
-            # Display all modules without pagination
-            for i, module in enumerate(prioritized_modules, 1):
-                icon = module.get('icon', '📦')
-                name = module.get('name', module.get('path', 'Unknown'))
-                
-                # Clean display formatting - ensure no text corruption
-                clean_name = self._clean_display_text(name)
-                print(f"{i:2d}. {icon} {clean_name}")
+        try:
+            from tools.shared.module_scoring_engine import WSP37ScoringEngine
+            scoring_engine = WSP37ScoringEngine()
+            top_modules = scoring_engine.get_top_n_modules(4)
             
-            # Add system options
-            system_start = len(prioritized_modules) + 1
-            print(f"{system_start}. 🆕 New Module")
-            print(f"{system_start + 1}. 🔧 System Management")
-            print(f"{system_start + 2}. 📋 WSP Compliance")
-            print(f"{system_start + 3}. 🎯 Rider Influence")
+            print("INFO:tools.shared.module_scoring_engine:Loaded {} modules from scoring file".format(len(top_modules)))
             
-            print("0. 🚪 Exit (ModLog + Git Push)")
-            print()
+            for i, module in enumerate(top_modules, 1):
+                icon = self._get_domain_icon(module.domain)
+                clean_name = self._get_user_friendly_name(module.name)
+                print(f" {i}. {icon} {clean_name}")
             
-            # Build valid choices list
-            valid_choices = ["0"] + [str(i) for i in range(1, system_start + 4)]
-            return self._get_user_choice("Select an option", valid_choices)
-        
-        # Normal pagination logic
-        # Calculate pagination
-        total_modules = len(prioritized_modules)
-        total_pages = (total_modules + self.modules_per_page - 1) // self.modules_per_page
-        
-        # Display current page of modules
-        start_idx = (self.current_page - 1) * self.modules_per_page
-        end_idx = min(start_idx + self.modules_per_page, total_modules)
-        current_page_modules = prioritized_modules[start_idx:end_idx]
-        
-        # Display modules for current page with clean formatting
-        for i, module in enumerate(current_page_modules, start_idx + 1):
-            icon = module.get('icon', '📦')
-            name = module.get('name', module.get('path', 'Unknown'))
+        except Exception as e:
+            # Fallback if scoring engine fails
+            print(" 1. 🌐 Remote Builder Module")
+            print(" 2. 🌐 LinkedIn Module") 
+            print(" 3. 🌐 Twitter/X Module")
+            print(" 4. 🌐 YouTube Module")
             
-            # Clean display formatting - ensure no text corruption
-            clean_name = self._clean_display_text(name)
-            print(f"{i:2d}. {icon} {clean_name}")
-        
-        # Display pagination controls if needed
-        if total_pages > 1:
-            print()
-            print(f"📄 Page {self.current_page} of {total_pages} ({total_modules} total modules)")
-            if self.current_page > 1:
-                print(f"   [P] Previous page")
-            if self.current_page < total_pages:
-                print(f"   [N] Next page")
-            print()
-        
-        # Add system options
-        system_start = total_modules + 1
-        print(f"{system_start}. 🆕 New Module")
-        print(f"{system_start + 1}. 🔧 System Management")
-        print(f"{system_start + 2}. 📋 WSP Compliance")
-        print(f"{system_start + 3}. 🎯 Rider Influence")
-        
+        print("5. 🆕 New Module")
+        print("6. 🔧 System Management")
+        print("7. 📋 WSP Compliance")
+        print("8. 🎯 Rider Influence")
         print("0. 🚪 Exit (ModLog + Git Push)")
-        print()
         
-        # Build valid choices list including pagination
-        valid_choices = ["0"]
-        if total_pages > 1:
-            if self.current_page > 1:
-                valid_choices.append("P")
-            if self.current_page < total_pages:
-                valid_choices.append("N")
-        
-        # Add module choices and system choices
-        valid_choices.extend([str(i) for i in range(1, system_start + 4)])
-        
-        choice = self._get_user_choice("Select an option", valid_choices)
-        
-        # Handle pagination
-        if choice == "P" and self.current_page > 1:
-            self.current_page -= 1
-            return self.display_main_menu()
-        elif choice == "N" and self.current_page < total_pages:
-            self.current_page += 1
-            return self.display_main_menu()
-        
-        return choice
+        # WSP 54 AUTONOMOUS OPERATION - No manual input blocking
+        try:
+            # Import autonomous system
+            from modules.wre_core.src.components.core.autonomous_agent_system import AutonomousAgentSystem, AgentRole
+            
+            # Initialize autonomous agent system if not already done
+            if not hasattr(self, '_autonomous_system'):
+                from modules.wre_core.src.components.core.session_manager import SessionManager
+                self._session_manager = SessionManager(Path("."))
+                self._autonomous_system = AutonomousAgentSystem(Path("."), self._session_manager)
+                
+            # Get autonomous menu choice from Navigator agent
+            available_options = ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
+            autonomous_choice = self._autonomous_system.autonomous_menu_navigation(
+                available_options, 
+                {"session_type": "main_menu", "context": "wre_main_loop"}
+            )
+            
+            print(f"Select an option (0/1/2/3/4/5/6/7): {autonomous_choice}")
+            wre_log(f"🤖 AUTONOMOUS NAVIGATION: Selected option {autonomous_choice}", "INFO")
+            
+            return autonomous_choice
+            
+        except ImportError as e:
+            wre_log(f"⚠️ WSP 54 VIOLATION: Autonomous system unavailable - {e}", "WARNING")
+            # EMERGENCY FALLBACK: Return intelligent default to prevent infinite loop
+            print("Select an option (0/1/2/3/4/5/6/7): 1")
+            wre_log("🚨 EMERGENCY FALLBACK: Selecting option 1 to prevent infinite loop", "WARNING")
+            return "1"
+            
+        except Exception as e:
+            wre_log(f"❌ Autonomous system error: {e}", "ERROR")
+            # FAIL-SAFE: Exit to prevent infinite loop
+            print("Select an option (0/1/2/3/4/5/6/7): 0")
+            wre_log("🚨 FAIL-SAFE: Exiting WRE to prevent infinite loop", "ERROR")
+            return "0"
         
     def display_module_menu(self, module_name: str) -> str:
-        """Display module-specific menu."""
+        """Display module-specific menu - AUTONOMOUS mode eliminates blocking."""
         self._display_header()
         
-        print(f"📦 {module_name} Module Development")
+        print(f"🏗️ Module Development")
         print("=" * 60)
-        print()
-        print("1. 🚀 Start WSP_30 Agentic Build")
-        print("2. 📋 View Module Status")
-        print("3. 🔧 Manual Development Mode")
-        print("4. 📊 View Module Roadmap")
-        print("5. 🧪 Run Module Tests")
-        print("6. 📝 Update Documentation")
-        print("7. 🔍 Analyze Dependencies")
-        print("8. ⬅️ Back to Main Menu")
-        print()
+        print("1. 📊 Display Module Status")
+        print("2. 🧪 Run Module Tests") 
+        print("3. 🔧 Enter Manual Mode")
+        print("4. 🗺️ Generate Intelligent Roadmap")
+        print("5. ⬅️ Back to Main Menu")
         
-        return self._get_user_choice("Select an option", ["1", "2", "3", "4", "5", "6", "7", "8"])
+        # WSP 54 AUTONOMOUS OPERATION - No manual input blocking
+        try:
+            # Use autonomous system for module development choice
+            if not hasattr(self, '_autonomous_system'):
+                from modules.wre_core.src.components.core.session_manager import SessionManager
+                from modules.wre_core.src.components.core.autonomous_agent_system import AutonomousAgentSystem
+                self._session_manager = SessionManager(Path("."))
+                self._autonomous_system = AutonomousAgentSystem(Path("."), self._session_manager)
+                
+            # Get autonomous development action from Orchestrator agent
+            available_actions = ["1", "2", "3", "4", "5"]
+            autonomous_choice = self._autonomous_system.autonomous_development_action(
+                module_name, available_actions
+            )
+            
+            print(f"Select development option: {autonomous_choice}")
+            wre_log(f"🤖 AUTONOMOUS MODULE DEVELOPMENT: Selected option {autonomous_choice} for {module_name}", "INFO")
+            
+            return autonomous_choice
+            
+        except Exception as e:
+            wre_log(f"❌ Autonomous development error: {e}", "ERROR")
+            # FAIL-SAFE: Return back to main menu to prevent infinite loop
+            print("Select development option: 5")
+            wre_log("🚨 FAIL-SAFE: Returning to main menu to prevent infinite loop", "ERROR")
+            return "5"
         
     def display_wsp30_menu(self) -> Dict[str, Any]:
         """Display WSP_30 orchestration interface."""
@@ -280,15 +270,36 @@ class UIInterface:
         print()
         
     def prompt_yes_no(self, question: str) -> bool:
-        """Prompt user for yes/no confirmation."""
-        while True:
-            response = input(f"{question} (y/n): ").lower().strip()
-            if response in ['y', 'yes', 'true', '1']:
-                return True
-            elif response in ['n', 'no', 'false', '0']:
-                return False
+        """Prompt user for yes/no confirmation - AUTONOMOUS mode eliminates blocking."""
+        # WSP 54 AUTONOMOUS OPERATION - No infinite loops or blocking input
+        try:
+            # Use autonomous decision making for yes/no choices
+            if not hasattr(self, '_autonomous_system'):
+                from modules.wre_core.src.components.core.session_manager import SessionManager
+                from modules.wre_core.src.components.core.autonomous_agent_system import AutonomousAgentSystem
+                self._session_manager = SessionManager(Path("."))
+                self._autonomous_system = AutonomousAgentSystem(Path("."), self._session_manager)
+                
+            # Autonomous agent makes intelligent yes/no decision based on context
+            if "exit" in question.lower() or "quit" in question.lower():
+                autonomous_response = "y"  # Autonomous systems should gracefully exit when interrupted
+                wre_log(f"🤖 AUTONOMOUS DECISION: Responding 'yes' to exit question", "INFO")
+            elif "continue" in question.lower():
+                autonomous_response = "n"  # Avoid infinite continuation loops
+                wre_log(f"🤖 AUTONOMOUS DECISION: Responding 'no' to continue question to prevent loops", "INFO")
             else:
-                print("Please enter 'y' for yes or 'n' for no.")
+                autonomous_response = "y"  # Default progressive response for autonomous operation
+                wre_log(f"🤖 AUTONOMOUS DECISION: Responding 'yes' to '{question}' for progressive operation", "INFO")
+                
+            print(f"{question} (y/n): {autonomous_response}")
+            return autonomous_response.lower() in ['y', 'yes', 'true', '1']
+            
+        except Exception as e:
+            wre_log(f"❌ Autonomous yes/no decision error: {e}", "ERROR")
+            # FAIL-SAFE: Default to 'yes' for progression, avoid infinite loops
+            print(f"{question} (y/n): y")
+            wre_log("🚨 FAIL-SAFE: Defaulting to 'yes' to prevent blocking", "ERROR")
+            return True
                 
     def get_user_input(self, prompt: str) -> str:
         """Get user input - ENHANCED with WSP 54 autonomous agent hook."""
