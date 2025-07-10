@@ -66,45 +66,57 @@ class ModuleDevelopmentCoordinator:
         self.module_creator = ModuleCreator(project_root, session_manager)
         self.manual_mode_manager = ManualModeManager(project_root)
         
-    def handle_module_development(self, module_name: str, engine):
-        """Handle module development workflow - ENHANCED with WSP 54 autonomous agents."""
-        wre_log(f"🏗️ Module Development Session: {module_name}", "INFO")
-        self.session_manager.log_operation("module_development", {"module": module_name})
+    def handle_autonomous_development(self, module_name: str, engine, max_iterations: int = 3):
+        """Handle autonomous module development with WSP 54 compliance and loop prevention."""
+        wre_log(f"🤖 Starting autonomous development session: {module_name}", "INFO")
         
-        # WSP 54 AUTONOMOUS AGENT COORDINATION
-        try:
-            from modules.wre_core.src.components.core.autonomous_agent_system import AutonomousAgentSystem, AgentRole
-            autonomous_system = AutonomousAgentSystem(engine.project_root, self.session_manager)
-            autonomous_mode = True
-            wre_log("🤖 WSP 54 AUTONOMOUS MODE: Agent coordination active", "SUCCESS")
-        except ImportError:
-            autonomous_system = None
-            autonomous_mode = False
-            wre_log("⚠️ WSP 54 PLACEHOLDER: Autonomous system not available - using placeholders", "WARNING")
-        
-        # Enter autonomous development session loop
+        # LOOP PREVENTION: Track completed actions and session state
+        completed_actions = set()
         session_iterations = 0
-        max_autonomous_iterations = 10  # Prevent infinite loops
+        max_session_iterations = max_iterations  # Prevent infinite loops
         
-        while session_iterations < max_autonomous_iterations:
+        while session_iterations < max_session_iterations:
             session_iterations += 1
+            wre_log(f"🔄 Autonomous development iteration {session_iterations}/{max_session_iterations}", "INFO")
             
             try:
-                # Display module development menu
-                engine.ui_interface.display_module_development_menu()
+                # Initialize autonomous system if available
+                autonomous_system = None
+                try:
+                    from modules.wre_core.src.components.core.autonomous_agent_system import AutonomousAgentSystem
+                    autonomous_system = AutonomousAgentSystem(self.project_root, self.session_manager)
+                    wre_log("✅ WSP 54 AUTONOMOUS MODE: Agent coordination active", "SUCCESS")
+                except ImportError:
+                    wre_log("⚠️ WSP 54 PLACEHOLDER: Autonomous agent system not available", "WARNING")
                 
-                # WSP 54 AUTONOMOUS DECISION - Orchestrator agent chooses action
-                if autonomous_mode and autonomous_system:
+                # LOOP PREVENTION: Determine next action based on completed actions
+                if autonomous_system:
+                    # Smart action selection - avoid repeating completed actions
+                    available_actions = ["1", "2", "3", "4", "5"]
+                    remaining_actions = [action for action in available_actions if action not in completed_actions]
+                    
+                    if not remaining_actions:
+                        # All actions completed - complete the session
+                        wre_log("🎯 AUTONOMOUS: All development actions completed, finishing session", "INFO")
+                        break
+                    
+                    # Select from remaining actions using autonomous agent
                     dev_choice = autonomous_system.autonomous_development_action(
-                        module_name, 
-                        ["1", "2", "3", "4", "5"]
+                        module_name,
+                        remaining_actions
                     )
-                    wre_log(f"🤖 ORCHESTRATOR AGENT: Selected action {dev_choice}", "INFO")
+                    wre_log(f"🤖 ORCHESTRATOR AGENT: Selected action {dev_choice} from remaining {remaining_actions}", "INFO")
                 else:
-                    # WSP 54 PLACEHOLDER - Default autonomous sequence
-                    action_sequence = ["1", "4", "2", "3", "5"]  # Status → Roadmap → Tests → Manual → Exit
-                    dev_choice = action_sequence[min(session_iterations - 1, len(action_sequence) - 1)]
-                    wre_log(f"🤖 WSP 54 PLACEHOLDER: Auto-selected action {dev_choice}", "INFO")
+                    # WSP 54 PLACEHOLDER - Smart sequential action progression
+                    action_sequence = ["1", "4", "2", "5"]  # Status → Roadmap → Tests → Exit
+                    if session_iterations <= len(action_sequence):
+                        dev_choice = action_sequence[session_iterations - 1]
+                    else:
+                        dev_choice = "5"  # Exit after completing sequence
+                    wre_log(f"🤖 WSP 54 PLACEHOLDER: Sequential action {dev_choice} (iteration {session_iterations})", "INFO")
+                
+                # LOOP PREVENTION: Track completed action
+                completed_actions.add(dev_choice)
                 
                 # Process autonomous agent decision
                 if dev_choice == "1":
@@ -121,18 +133,114 @@ class ModuleDevelopmentCoordinator:
                 else:
                     wre_log(f"⚠️ Unknown development choice: {dev_choice}", "WARNING")
                     break
-                    
-                # WSP 54 AUTONOMOUS PROGRESSION - No manual "Press Enter"
-                wre_log(f"🤖 AUTONOMOUS: Continuing development cycle (iteration {session_iterations})", "INFO")
                 
+                # LOOP PREVENTION: Brief pause and progression check
+                wre_log(f"✅ Completed action {dev_choice}. Remaining: {[a for a in ['1','2','3','4'] if a not in completed_actions]}", "INFO")
+                
+                # Auto-complete session if we've done enough work
+                if len(completed_actions) >= 3:  # Status + Roadmap + Tests = sufficient work
+                    wre_log("🎯 AUTONOMOUS: Sufficient development work completed, finishing session", "INFO")
+                    break
+                    
             except KeyboardInterrupt:
                 wre_log("⚠️ Development session interrupted", "WARNING")
                 break
             except Exception as e:
                 wre_log(f"❌ Error in module development: {e}", "ERROR")
+                # LOOP PREVENTION: Don't continue on errors
                 break
                 
-        wre_log(f"✅ Autonomous development session completed for {module_name}", "SUCCESS")
+        wre_log(f"✅ Autonomous development session completed for {module_name} (iterations: {session_iterations}, actions: {completed_actions})", "SUCCESS")
+
+    # ========================================================================
+    # AUTONOMOUS DEVELOPMENT METHODS - WSP 54 Compliance
+    # ========================================================================
+    
+    def _autonomous_display_module_status(self, module_name: str, engine, autonomous_system):
+        """Autonomous module status display - no manual input required."""
+        wre_log(f"🤖 AUTONOMOUS STATUS DISPLAY: {module_name}", "INFO")
+        
+        try:
+            # Find module path
+            module_path = self.status_manager.find_module_path(module_name)
+            if not module_path:
+                wre_log(f"❌ Module not found: {module_name}", "ERROR")
+                return
+                
+            # Get module status information
+            status_info = self.status_manager.get_module_status_info(module_path, module_name)
+            
+            # Display autonomous status report
+            print("\n" + "="*80)
+            print(f"📋 AUTONOMOUS MODULE STATUS: {module_name.upper()}")
+            print("="*80)
+            print(f"📍 Path: {status_info['path']}")
+            print(f"🏢 Domain: {status_info['domain']}")
+            print(f"⚡ Status: {self._get_status_emoji(status_info['status'])} {status_info['status']}")
+            print(f"🧪 Test Files: {status_info['test_count']}")
+            print(f"📝 Source Files: {status_info['source_count']}")
+            print(f"📚 Documentation: {self._get_docs_emoji(status_info['docs_status'])} {status_info['docs_status']}")
+            print("="*80)
+            
+            # WSP 54 AUTONOMOUS OPERATION - No manual 'Press Enter'
+            print("Status display complete - continuing autonomous workflow...")
+            wre_log("🤖 AUTONOMOUS STATUS: Display completed, continuing workflow", "INFO")
+            
+        except Exception as e:
+            wre_log(f"❌ Autonomous status display failed: {e}", "ERROR")
+    
+    def _autonomous_run_module_tests(self, module_name: str, engine, autonomous_system):
+        """Autonomous module test execution - no manual input required."""
+        wre_log(f"🤖 AUTONOMOUS TEST EXECUTION: {module_name}", "INFO")
+        
+        try:
+            module_path = self.status_manager.find_module_path(module_name)
+            if module_path:
+                print(f"\n🧪 AUTONOMOUS TEST EXECUTION: {module_name}")
+                print("="*60)
+                self.test_runner.run_module_tests(module_name, module_path, self.session_manager)
+                print("Test execution complete - continuing autonomous workflow...")
+                wre_log("🤖 AUTONOMOUS TESTS: Execution completed, continuing workflow", "INFO")
+            else:
+                wre_log(f"❌ Module not found for testing: {module_name}", "ERROR")
+                
+        except Exception as e:
+            wre_log(f"❌ Autonomous test execution failed: {e}", "ERROR")
+    
+    def _autonomous_manual_mode(self, module_name: str, engine, autonomous_system):
+        """Autonomous manual mode - simulates manual development actions."""
+        wre_log(f"🤖 AUTONOMOUS MANUAL MODE: {module_name}", "INFO")
+        
+        try:
+            print(f"\n🔧 AUTONOMOUS MANUAL MODE: {module_name}")
+            print("="*60)
+            print("🤖 Simulating manual development actions...")
+            print("• Autonomous code analysis")
+            print("• Autonomous improvement identification")
+            print("• Autonomous enhancement planning")
+            print("Manual mode simulation complete - continuing autonomous workflow...")
+            wre_log("🤖 AUTONOMOUS MANUAL: Simulation completed, continuing workflow", "INFO")
+            
+        except Exception as e:
+            wre_log(f"❌ Autonomous manual mode failed: {e}", "ERROR")
+    
+    def _autonomous_generate_roadmap(self, module_name: str, engine, autonomous_system):
+        """Autonomous roadmap generation - no manual input required."""
+        wre_log(f"🤖 AUTONOMOUS ROADMAP GENERATION: {module_name}", "INFO")
+        
+        try:
+            print(f"\n🗺️ AUTONOMOUS ROADMAP GENERATION: {module_name}")
+            print("="*60)
+            self._display_intelligent_roadmap(module_name, engine)
+            print("Roadmap generation complete - continuing autonomous workflow...")
+            wre_log("🤖 AUTONOMOUS ROADMAP: Generation completed, continuing workflow", "INFO")
+            
+        except Exception as e:
+            wre_log(f"❌ Autonomous roadmap generation failed: {e}", "ERROR")
+
+    # ========================================================================
+    # EXISTING METHODS CONTINUE...
+    # ========================================================================
 
     def _route_development_choice(self, choice: str, module_name: str, engine) -> bool:
         """Route user choice to appropriate component. Returns True to continue session, False to exit."""
