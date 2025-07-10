@@ -56,6 +56,12 @@ WSP 50: Pre-Action Verification Protocol (My Certainty)
 
 WSP 60: Module Memory Architecture (My Data Organization)
 
+WSP 61: Theoretical Physics Foundation Protocol (My Quantum Foundation)
+
+WSP 62: Large File and Refactoring Enforcement Protocol (My Modularity Enforcement)
+
+WSP 63: Component Directory Organization and Scaling Protocol (My Architecture Scaling)
+
 WSP 64: Violation Prevention Protocol (My Learning System)
 
 ## WSP MASTER INDEX REFERENCE
