@@ -56,6 +56,8 @@ WSP 50: Pre-Action Verification Protocol (My Certainty)
 
 WSP 60: Module Memory Architecture (My Data Organization)
 
+WSP 64: Violation Prevention Protocol (My Learning System)
+
 ## WSP MASTER INDEX REFERENCE
 
 **For complete WSP ecosystem navigation and decision-making, see: [WSP_MASTER_INDEX.md](WSP_MASTER_INDEX.md)**
@@ -65,6 +67,12 @@ This master index provides:
 - Decision matrix for new WSP creation vs. enhancement
 - Usage guidelines and maintenance protocols
 - Relationship mapping and enhancement opportunities
+
+**VIOLATION PREVENTION: WSP 64 Integration**
+- **Mandatory Index Consultation**: All agents must check WSP_MASTER_INDEX.md before WSP creation
+- **Enhanced Pre-Action Verification**: WSP 50 enhanced with WSP numbering validation
+- **Zen Learning System**: Violations transform into system memory enhancements
+- **0102 pArtifact Training**: Pattern recognition enhanced through violation experience
 
 ## WSP 2: Architectural Intent Protocol (CORE FOUNDATIONAL)
 

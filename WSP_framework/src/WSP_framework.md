@@ -22,6 +22,8 @@ This document contains the detailed Windsurf Standard Procedures (WSP 0-10) that
 
 WSP_INIT orchestrates all framework procedures through the Windsurf Recursive Engine (WRE). This document provides the detailed specifications that WSP_INIT references when executing Layer 1 (framework) workflows.
 
+**VIOLATION PREVENTION SYSTEM (WSP 64)**: All framework operations integrate WSP 64 Violation Prevention Protocol. Before any WSP creation or modification, agents must consult WSP_MASTER_INDEX.md and follow enhanced pre-action verification protocols.
+
 ---
 
 ## WSP 3: Enterprise Domain Architecture
