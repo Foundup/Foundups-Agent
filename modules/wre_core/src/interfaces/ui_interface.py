@@ -47,7 +47,7 @@ class UIInterface:
         self.test_mode = test_mode
         
     def display_main_menu(self) -> str:
-        """Display main menu - AUTONOMOUS mode eliminates manual input blocking."""
+        """Display main menu - AUTONOMOUS mode with loop prevention."""
         self._display_header()
         
         print("🏄 Windsurf Recursive Engine (WRE) - Main Menu")
@@ -78,35 +78,91 @@ class UIInterface:
         print("8. 🎯 Rider Influence")
         print("0. 🚪 Exit (ModLog + Git Push)")
         
-        # WSP 54 AUTONOMOUS OPERATION - No manual input blocking
+        # WSP 54 AUTONOMOUS OPERATION WITH LOOP PREVENTION
         try:
             # Import autonomous system
             from modules.wre_core.src.components.core.autonomous_agent_system import AutonomousAgentSystem, AgentRole
             
-            # Initialize autonomous agent system if not already done
+            # Initialize autonomous system if not already done
             if not hasattr(self, '_autonomous_system'):
                 from modules.wre_core.src.components.core.session_manager import SessionManager
                 self._session_manager = SessionManager(Path("."))
                 self._autonomous_system = AutonomousAgentSystem(Path("."), self._session_manager)
                 
-            # Get autonomous menu choice from Navigator agent
+            # LOOP PREVENTION: Track session progress and visited modules
+            if not hasattr(self, '_session_progress'):
+                self._session_progress = {
+                    'visited_modules': set(),
+                    'iterations': 0,
+                    'max_iterations': 5,  # Prevent infinite loops
+                    'completed_work': set()
+                }
+            
+            self._session_progress['iterations'] += 1
+            wre_log(f"🔄 Main menu iteration {self._session_progress['iterations']}/{self._session_progress['max_iterations']}", "INFO")
+            
+            # LOOP PREVENTION: Exit if too many iterations
+            if self._session_progress['iterations'] >= self._session_progress['max_iterations']:
+                wre_log("🎯 AUTONOMOUS SESSION COMPLETE: Reached maximum iterations, exiting gracefully", "INFO")
+                print("Select an option (0/1/2/3/4/5/6/7): 0")
+                return "0"
+            
+            # LOOP PREVENTION: Smart choice based on session progress
             available_options = ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
-            autonomous_choice = self._autonomous_system.autonomous_menu_navigation(
-                available_options, 
-                {"session_type": "main_menu", "context": "wre_main_loop"}
-            )
+            
+            # Determine autonomous choice based on session state
+            if self._session_progress['iterations'] == 1:
+                # First iteration: Start with highest priority module
+                autonomous_choice = "1"
+                wre_log("🤖 AUTONOMOUS STRATEGY: First iteration, selecting top priority module", "INFO")
+            elif self._session_progress['iterations'] == 2:
+                # Second iteration: Try different module or system functions
+                autonomous_choice = "2" if "1" in self._session_progress['visited_modules'] else "7"
+                wre_log("🤖 AUTONOMOUS STRATEGY: Second iteration, exploring alternatives", "INFO")
+            elif self._session_progress['iterations'] >= 3:
+                # Later iterations: Focus on system management or exit
+                if len(self._session_progress['completed_work']) >= 2:
+                    autonomous_choice = "0"  # Exit if sufficient work done
+                    wre_log("🤖 AUTONOMOUS STRATEGY: Sufficient work completed, preparing to exit", "INFO")
+                else:
+                    autonomous_choice = "6"  # System management
+                    wre_log("🤖 AUTONOMOUS STRATEGY: Performing system maintenance", "INFO")
+            else:
+                # Fallback: Use autonomous system
+                autonomous_choice = self._autonomous_system.autonomous_menu_navigation(
+                    available_options, 
+                    {
+                        "session_type": "main_menu", 
+                        "context": "wre_main_loop",
+                        "iteration": self._session_progress['iterations'],
+                        "visited_modules": list(self._session_progress['visited_modules'])
+                    }
+                )
+            
+            # Track choice for loop prevention
+            if autonomous_choice in ["1", "2", "3", "4"]:
+                self._session_progress['visited_modules'].add(autonomous_choice)
             
             print(f"Select an option (0/1/2/3/4/5/6/7): {autonomous_choice}")
-            wre_log(f"🤖 AUTONOMOUS NAVIGATION: Selected option {autonomous_choice}", "INFO")
+            wre_log(f"🤖 AUTONOMOUS NAVIGATION: Selected option {autonomous_choice} (iteration {self._session_progress['iterations']})", "INFO")
             
             return autonomous_choice
             
         except ImportError as e:
             wre_log(f"⚠️ WSP 54 VIOLATION: Autonomous system unavailable - {e}", "WARNING")
             # EMERGENCY FALLBACK: Return intelligent default to prevent infinite loop
-            print("Select an option (0/1/2/3/4/5/6/7): 1")
-            wre_log("🚨 EMERGENCY FALLBACK: Selecting option 1 to prevent infinite loop", "WARNING")
-            return "1"
+            if not hasattr(self, '_fallback_counter'):
+                self._fallback_counter = 0
+            self._fallback_counter += 1
+            
+            if self._fallback_counter >= 3:
+                print("Select an option (0/1/2/3/4/5/6/7): 0")
+                wre_log("🚨 EMERGENCY FALLBACK: Too many fallbacks, exiting to prevent infinite loop", "WARNING")
+                return "0"
+            else:
+                print("Select an option (0/1/2/3/4/5/6/7): 1")
+                wre_log(f"🚨 EMERGENCY FALLBACK {self._fallback_counter}: Selecting option 1", "WARNING")
+                return "1"
             
         except Exception as e:
             wre_log(f"❌ Autonomous system error: {e}", "ERROR")
@@ -210,7 +266,9 @@ class UIInterface:
                 
             print()
             
-        input("\nPress Enter to continue...")
+        # WSP 54 AUTONOMOUS OPERATION - No blocking input required
+        print("\nPress Enter to continue... (AUTONOMOUS: Continuing automatically)")
+        wre_log("🤖 AUTONOMOUS CONTINUATION: Skipping manual 'Press Enter' prompt", "INFO")
         
     def display_session_status(self, session_data: Dict[str, Any]):
         """Display current session status."""
@@ -232,7 +290,9 @@ class UIInterface:
         print(f"🏆 Achievements: {session_data.get('achievements_count', 0)}")
         print()
         
-        input("Press Enter to continue...")
+        # WSP 54 AUTONOMOUS OPERATION - No blocking input required
+        print("Press Enter to continue... (AUTONOMOUS: Continuing automatically)")
+        wre_log("🤖 AUTONOMOUS CONTINUATION: Skipping manual 'Press Enter' prompt", "INFO")
         
     def display_progress(self, operation: str, progress: float, details: str = ""):
         """Display progress for long-running operations."""
@@ -553,7 +613,11 @@ class UIInterface:
                 
         except Exception as e:
             self.display_error(f"Error loading modules: {e}")
-            return input("Enter module name manually: ").strip()
+            # WSP 54 AUTONOMOUS OPERATION - No manual module name input
+            autonomous_name = "autonomous_module_selection"
+            print(f"Enter module name manually: {autonomous_name}")
+            wre_log("🤖 AUTONOMOUS MODULE NAME: Generated autonomous module name", "INFO")
+            return autonomous_name
         
     def _get_status_icon(self, module: Dict[str, Any]) -> str:
         """Get status icon for module display."""
@@ -761,25 +825,32 @@ class UIInterface:
                     print(f"  - {task}")
                 print()
         else:
-            print("📭 No roadmap data available.")
+            print("📭 No roadmap found.")
             
-        input("Press Enter to continue...")
+        # WSP 54 AUTONOMOUS OPERATION - No blocking input required
+        print("Press Enter to continue... (AUTONOMOUS: Continuing automatically)")
+        wre_log("🤖 AUTONOMOUS CONTINUATION: Skipping manual 'Press Enter' prompt", "INFO")
         
     def display_session_status(self, status: Dict[str, Any]):
-        """Display session status information."""
+        """Display current session status."""
         self._display_header()
         
         print("📊 Session Status")
         print("=" * 60)
         print()
         
-        if isinstance(status, dict):
-            for key, value in status.items():
-                print(f"  {key}: {value}")
-        else:
-            print("📭 No session status available.")
+        if not status:
+            print("❌ No active session")
+            return
             
-        input("Press Enter to continue...")
+        for key, value in status.items():
+            print(f"🔸 {key}: {value}")
+            
+        print()
+        
+        # WSP 54 AUTONOMOUS OPERATION - No blocking input required
+        print("Press Enter to continue... (AUTONOMOUS: Continuing automatically)")
+        wre_log("🤖 AUTONOMOUS CONTINUATION: Skipping manual 'Press Enter' prompt", "INFO")
         
     def display_rider_influence_menu(self) -> Dict[str, Any]:
         """Display rider influence adjustment menu."""
