@@ -6,8 +6,8 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from modules.wre_core.src.components import roadmap_manager
-from modules.wre_core.src.components.roadmap_manager import parse_roadmap, add_new_objective
+from modules.wre_core.src.components.development import roadmap_manager
+from modules.wre_core.src.components.development.roadmap_manager import parse_roadmap, add_new_objective
 
 @pytest.fixture
 def mock_roadmap_file(tmp_path):

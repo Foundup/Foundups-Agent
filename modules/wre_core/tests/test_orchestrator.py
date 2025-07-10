@@ -19,7 +19,7 @@ from unittest.mock import Mock, patch, MagicMock
 project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from modules.wre_core.src.components.orchestrator import (
+from modules.wre_core.src.components.orchestration.orchestrator import (
     check_agent_health,
     detect_wsp48_enhancement_opportunities,
     classify_enhancement_opportunity,
@@ -32,13 +32,13 @@ class TestOrchestratorAgentHealth(unittest.TestCase):
     
     def test_check_agent_health_all_operational(self):
         """Test agent health check when all agents are operational."""
-        with patch('modules.wre_core.src.components.orchestrator.JanitorAgent'), \
-             patch('modules.wre_core.src.components.orchestrator.LoremasterAgent'), \
-             patch('modules.wre_core.src.components.orchestrator.ChroniclerAgent'), \
-             patch('modules.wre_core.src.components.orchestrator.ComplianceAgent'), \
-             patch('modules.wre_core.src.components.orchestrator.TestingAgent'), \
-             patch('modules.wre_core.src.components.orchestrator.ScoringAgent'), \
-             patch('modules.wre_core.src.components.orchestrator.DocumentationAgent'):
+        with patch('modules.wre_core.src.components.orchestration.orchestrator.JanitorAgent'), \
+             patch('modules.wre_core.src.components.orchestration.orchestrator.LoremasterAgent'), \
+             patch('modules.wre_core.src.components.orchestration.orchestrator.ChroniclerAgent'), \
+             patch('modules.wre_core.src.components.orchestration.orchestrator.ComplianceAgent'), \
+             patch('modules.wre_core.src.components.orchestration.orchestrator.TestingAgent'), \
+             patch('modules.wre_core.src.components.orchestration.orchestrator.ScoringAgent'), \
+             patch('modules.wre_core.src.components.orchestration.orchestrator.DocumentationAgent'):
             
             agent_status = check_agent_health()
             
@@ -51,13 +51,13 @@ class TestOrchestratorAgentHealth(unittest.TestCase):
     
     def test_check_agent_health_partial_failure(self):
         """Test agent health check when some agents fail to initialize."""
-        with patch('modules.wre_core.src.components.orchestrator.JanitorAgent'), \
-             patch('modules.wre_core.src.components.orchestrator.LoremasterAgent'), \
-             patch('modules.wre_core.src.components.orchestrator.ChroniclerAgent'), \
-             patch('modules.wre_core.src.components.orchestrator.ComplianceAgent'), \
-             patch('modules.wre_core.src.components.orchestrator.TestingAgent', side_effect=Exception("Test failure")), \
-             patch('modules.wre_core.src.components.orchestrator.ScoringAgent', side_effect=Exception("Score failure")), \
-             patch('modules.wre_core.src.components.orchestrator.DocumentationAgent'):
+        with patch('modules.wre_core.src.components.orchestration.orchestrator.JanitorAgent'), \
+             patch('modules.wre_core.src.components.orchestration.orchestrator.LoremasterAgent'), \
+             patch('modules.wre_core.src.components.orchestration.orchestrator.ChroniclerAgent'), \
+             patch('modules.wre_core.src.components.orchestration.orchestrator.ComplianceAgent'), \
+             patch('modules.wre_core.src.components.orchestration.orchestrator.TestingAgent', side_effect=Exception("Test failure")), \
+             patch('modules.wre_core.src.components.orchestration.orchestrator.ScoringAgent', side_effect=Exception("Score failure")), \
+             patch('modules.wre_core.src.components.orchestration.orchestrator.DocumentationAgent'):
             
             agent_status = check_agent_health()
             
@@ -131,12 +131,12 @@ class TestWSP48EnhancementDetection(unittest.TestCase):
 class TestSystemHealthCheck(unittest.TestCase):
     """Test comprehensive system health check functionality."""
     
-    @patch('modules.wre_core.src.components.orchestrator.check_agent_health')
-    @patch('modules.wre_core.src.components.orchestrator.JanitorAgent')
-    @patch('modules.wre_core.src.components.orchestrator.LoremasterAgent')
-    @patch('modules.wre_core.src.components.orchestrator.ComplianceAgent')
-    @patch('modules.wre_core.src.components.orchestrator.TestingAgent')
-    @patch('modules.wre_core.src.components.orchestrator.ScoringAgent')
+    @patch('modules.wre_core.src.components.orchestration.orchestrator.check_agent_health')
+    @patch('modules.wre_core.src.components.orchestration.orchestrator.JanitorAgent')
+    @patch('modules.wre_core.src.components.orchestration.orchestrator.LoremasterAgent')
+    @patch('modules.wre_core.src.components.orchestration.orchestrator.ComplianceAgent')
+    @patch('modules.wre_core.src.components.orchestration.orchestrator.TestingAgent')
+    @patch('modules.wre_core.src.components.orchestration.orchestrator.ScoringAgent')
     def test_run_system_health_check_success(self, mock_scoring, mock_testing, 
                                            mock_compliance, mock_loremaster, 
                                            mock_janitor, mock_agent_health):

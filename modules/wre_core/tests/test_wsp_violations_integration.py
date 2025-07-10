@@ -53,7 +53,7 @@ def test_wsp_violations_integration():
     print("\n3. Testing orchestrator functions...")
     
     try:
-        from modules.wre_core.src.components.orchestrator import read_wsp_module_violations, get_module_development_guidance
+        from modules.wre_core.src.components.orchestration.orchestrator import read_wsp_module_violations, get_module_development_guidance
         
         violations_data = read_wsp_module_violations()
         

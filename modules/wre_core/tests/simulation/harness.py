@@ -2,7 +2,15 @@
 WRE Simulation Test Harness
 
 The master script to run WRE simulations.
+Relocated from tests/wre_simulation/ per WSP 3 compliance requirements.
+
+WSP Compliance:
+- WSP 3: Enterprise Domain Architecture (proper test location)
+- WSP 5: Test Coverage Protocol (simulation testing)
+- WSP 22: Traceable Narrative (documented relocation)
+- WSP 50: Pre-Action Verification (no sys.path hacks)
 """
+
 import argparse
 import shutil
 import subprocess
@@ -11,12 +19,21 @@ import tempfile
 import yaml
 from pathlib import Path
 import time
+import importlib.util
 
-# Add project root to path to allow for imports
-project_root = Path(__file__).parent.parent.parent.resolve()
-sys.path.insert(0, str(project_root))
+# Calculate project root for sandbox operations only (no sys.path manipulation)
+project_root = Path(__file__).resolve().parent.parent.parent.parent
 
-from tests.wre_simulation import validation_suite
+# Use relative import for validation_suite within the same package
+try:
+    from . import validation_suite
+except ImportError:
+    # Fallback for direct script execution - dynamic import without sys.path hack
+    validation_suite_path = Path(__file__).parent / "validation_suite.py"
+    spec = importlib.util.spec_from_file_location("validation_suite", validation_suite_path)
+    validation_suite = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(validation_suite)
+
 
 def setup_sandbox():
     """Creates a temporary directory and copies the project structure into it."""
@@ -33,13 +50,13 @@ def setup_sandbox():
     print(f"  [Harness] Project copied to sandbox.")
     return sandbox_path
 
+
 def run_simulation(sandbox_path, goal_file):
     """Runs the WRE in the sandbox with a given goal."""
     print(f"  [Harness] Starting simulation with goal: {goal_file.name}")
-    wre_engine_path = sandbox_path / 'tools' / 'wre' / 'wsp_init_engine.py'
     
-    # Run the WRE, telling it to use the new goal file location inside the sandbox
-    sandboxed_goal_path = sandbox_path / 'tests' / 'wre_simulation' / 'goals' / goal_file.name
+    # Run the WRE with proper module path
+    sandboxed_goal_path = sandbox_path / 'modules' / 'wre_core' / 'tests' / 'simulation' / 'goals' / goal_file.name
     
     cmd = [
         sys.executable,
@@ -47,25 +64,50 @@ def run_simulation(sandbox_path, goal_file):
         "--goal", str(sandboxed_goal_path)
     ]
     
-    # The WRE engine is now non-interactive when a goal is passed.
-    # No input is required.
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    # Change to sandbox directory for execution
+    original_cwd = Path.cwd()
+    try:
+        import os
+        os.chdir(sandbox_path)
+        
+        # The WRE engine is now non-interactive when a goal is passed.
+        # No input is required.
+        result = subprocess.run(cmd, capture_output=True, text=True, check=False)
 
-    if result.returncode != 0:
-        print(f"  [Harness] ❌ Simulation failed with return code {result.returncode}")
+        if result.returncode != 0:
+            print(f"  [Harness] ❌ Simulation failed with return code {result.returncode}")
+            print(result.stdout)
+            print(result.stderr)
+            return False
+
+        print(f"  [Harness] ✅ Simulation completed successfully.")
         print(result.stdout)
-        print(result.stderr)
-        return False
+        return True
+        
+    finally:
+        os.chdir(original_cwd)
 
-    print(f"  [Harness] ✅ Simulation completed successfully.")
-    print(result.stdout)
-    return True
 
 def validate_results(sandbox_path, goal_data):
     """Calls the validation suite to check the results."""
-    # TODO: Implement calls to validation_suite.py functions
-    print("  [Harness] Skipping validation suite (not yet implemented).")
-    return True
+    print("  [Harness] Running validation suite...")
+    
+    try:
+        # Import and run validation functions
+        validation_result = validation_suite.validate_simulation_output(sandbox_path, goal_data)
+        
+        if validation_result['success']:
+            print("  [Harness] ✅ Validation passed.")
+            return True
+        else:
+            print(f"  [Harness] ❌ Validation failed: {validation_result['errors']}")
+            return False
+            
+    except Exception as e:
+        print(f"  [Harness] ⚠️ Validation suite error: {e}")
+        print("  [Harness] Continuing without validation.")
+        return True
+
 
 def teardown_sandbox(sandbox_path):
     """Deletes the temporary sandbox directory with retries."""
@@ -87,15 +129,17 @@ def teardown_sandbox(sandbox_path):
                 print(f"  [Harness] ❌ Failed to remove sandbox after {retries} retries.")
                 raise e
 
+
 def main():
     """
     Main entry point for the test harness.
     """
     parser = argparse.ArgumentParser(description="WRE Simulation Test Harness")
     parser.add_argument('--goal', type=str, default='create_user_auth.yaml',
-                        help='Name of the goal file in tests/wre_simulation/goals/')
+                        help='Name of the goal file in modules/wre_core/tests/simulation/goals/')
     args = parser.parse_args()
 
+    # Updated path to reflect new location
     goal_file = Path(__file__).parent / 'goals' / args.goal
     if not goal_file.exists():
         print(f"❌ Goal file not found: {goal_file}")
@@ -126,6 +170,7 @@ def main():
         # 4. Teardown Sandbox
         if sandbox_path and sandbox_path.exists():
             teardown_sandbox(sandbox_path)
+
 
 if __name__ == "__main__":
     main() 

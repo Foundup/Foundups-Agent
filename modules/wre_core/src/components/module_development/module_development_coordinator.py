@@ -14,11 +14,35 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 from modules.wre_core.src.utils.logging_utils import wre_log
-from .module_status_manager import ModuleStatusManager
-from .module_test_runner import ModuleTestRunner
-from .module_roadmap_viewer import ModuleRoadmapViewer
-from .module_creator import ModuleCreator
-from .manual_mode_manager import ManualModeManager
+from modules.wre_core.src.components.development.module_status_manager import ModuleStatusManager
+from modules.wre_core.src.components.development.module_test_runner import ModuleTestRunner
+from modules.wre_core.src.components.development.roadmap_manager import parse_roadmap, add_new_objective
+from modules.wre_core.src.components.module_development.module_creator import ModuleCreator
+from modules.wre_core.src.components.development.manual_mode_manager import ManualModeManager
+
+
+class ModuleRoadmapViewer:
+    """Simple wrapper for roadmap functions to maintain component interface."""
+    
+    def __init__(self, project_root: Path, session_manager):
+        self.project_root = project_root
+        self.session_manager = session_manager
+        
+    def view_roadmap(self, module_name: str, engine):
+        """View roadmap for a module."""
+        wre_log(f"🗺️ Viewing roadmap for: {module_name}", "INFO")
+        try:
+            objectives = parse_roadmap(self.project_root)
+            if objectives:
+                wre_log("📋 Strategic Objectives:", "INFO")
+                for name, path in objectives:
+                    wre_log(f"  - {name}: {path}", "INFO")
+            else:
+                wre_log("📭 No strategic objectives found", "INFO")
+            input("Press Enter to continue...")
+        except Exception as e:
+            wre_log(f"❌ Failed to view roadmap: {e}", "ERROR")
+
 
 class ModuleDevelopmentCoordinator:
     """
@@ -36,56 +60,527 @@ class ModuleDevelopmentCoordinator:
         self.session_manager = session_manager
         
         # Initialize specialized components
-        self.status_manager = ModuleStatusManager(project_root, session_manager)
-        self.test_runner = ModuleTestRunner(project_root, session_manager)
+        self.status_manager = ModuleStatusManager(project_root)
+        self.test_runner = ModuleTestRunner(project_root)
         self.roadmap_viewer = ModuleRoadmapViewer(project_root, session_manager)
         self.module_creator = ModuleCreator(project_root, session_manager)
-        self.manual_mode_manager = ManualModeManager(project_root, session_manager)
+        self.manual_mode_manager = ManualModeManager(project_root)
         
     def handle_module_development(self, module_name: str, engine):
-        """Handle module development workflow - main entry point."""
-        wre_log(f"🏗️ Module Development Coordinator: {module_name}", "INFO")
+        """Handle module development workflow - ENHANCED with WSP 54 autonomous agents."""
+        wre_log(f"🏗️ Module Development Session: {module_name}", "INFO")
         self.session_manager.log_operation("module_development", {"module": module_name})
         
+        # WSP 54 AUTONOMOUS AGENT COORDINATION
         try:
-            # Display module development menu
-            engine.ui_interface.display_module_development_menu()
+            from modules.wre_core.src.components.core.autonomous_agent_system import AutonomousAgentSystem, AgentRole
+            autonomous_system = AutonomousAgentSystem(engine.project_root, self.session_manager)
+            autonomous_mode = True
+            wre_log("🤖 WSP 54 AUTONOMOUS MODE: Agent coordination active", "SUCCESS")
+        except ImportError:
+            autonomous_system = None
+            autonomous_mode = False
+            wre_log("⚠️ WSP 54 PLACEHOLDER: Autonomous system not available - using placeholders", "WARNING")
+        
+        # Enter autonomous development session loop
+        session_iterations = 0
+        max_autonomous_iterations = 10  # Prevent infinite loops
+        
+        while session_iterations < max_autonomous_iterations:
+            session_iterations += 1
             
-            # Get user choice
-            dev_choice = engine.ui_interface.get_user_input("Select development option: ")
-            
-            # Route to appropriate component
-            self._route_development_choice(dev_choice, module_name, engine)
-            
-        except Exception as e:
-            wre_log(f"❌ Module development coordination failed: {e}", "ERROR")
-            self.session_manager.log_operation("module_development", {"error": str(e)})
-            
-    def _route_development_choice(self, choice: str, module_name: str, engine):
-        """Route user choice to appropriate specialized component."""
+            try:
+                # Display module development menu
+                engine.ui_interface.display_module_development_menu()
+                
+                # WSP 54 AUTONOMOUS DECISION - Orchestrator agent chooses action
+                if autonomous_mode and autonomous_system:
+                    dev_choice = autonomous_system.autonomous_development_action(
+                        module_name, 
+                        ["1", "2", "3", "4", "5"]
+                    )
+                    wre_log(f"🤖 ORCHESTRATOR AGENT: Selected action {dev_choice}", "INFO")
+                else:
+                    # WSP 54 PLACEHOLDER - Default autonomous sequence
+                    action_sequence = ["1", "4", "2", "3", "5"]  # Status → Roadmap → Tests → Manual → Exit
+                    dev_choice = action_sequence[min(session_iterations - 1, len(action_sequence) - 1)]
+                    wre_log(f"🤖 WSP 54 PLACEHOLDER: Auto-selected action {dev_choice}", "INFO")
+                
+                # Process autonomous agent decision
+                if dev_choice == "1":
+                    self._autonomous_display_module_status(module_name, engine, autonomous_system)
+                elif dev_choice == "2":
+                    self._autonomous_run_module_tests(module_name, engine, autonomous_system)
+                elif dev_choice == "3":
+                    self._autonomous_manual_mode(module_name, engine, autonomous_system)
+                elif dev_choice == "4":
+                    self._autonomous_generate_roadmap(module_name, engine, autonomous_system)
+                elif dev_choice == "5":
+                    wre_log("🤖 ORCHESTRATOR: Completing autonomous development session", "INFO")
+                    break
+                else:
+                    wre_log(f"⚠️ Unknown development choice: {dev_choice}", "WARNING")
+                    break
+                    
+                # WSP 54 AUTONOMOUS PROGRESSION - No manual "Press Enter"
+                wre_log(f"🤖 AUTONOMOUS: Continuing development cycle (iteration {session_iterations})", "INFO")
+                
+            except KeyboardInterrupt:
+                wre_log("⚠️ Development session interrupted", "WARNING")
+                break
+            except Exception as e:
+                wre_log(f"❌ Error in module development: {e}", "ERROR")
+                break
+                
+        wre_log(f"✅ Autonomous development session completed for {module_name}", "SUCCESS")
+
+    def _route_development_choice(self, choice: str, module_name: str, engine) -> bool:
+        """Route user choice to appropriate component. Returns True to continue session, False to exit."""
         if choice == "1":
-            # Display module status
-            self.status_manager.display_module_status(module_name, engine)
+            # Display module status with enhanced visual roadmap
+            self._display_enhanced_module_status(module_name, engine)
+            return True  # Stay in session
             
         elif choice == "2":
             # Run module tests
-            self.test_runner.run_module_tests(module_name, engine)
+            module_path = self.status_manager.find_module_path(module_name)
+            if module_path:
+                self.test_runner.run_module_tests(module_name, module_path, self.session_manager)
+            else:
+                wre_log(f"❌ Module not found: {module_name}", "ERROR")
+            return True  # Stay in session
             
         elif choice == "3":
             # Enter manual mode
-            self.manual_mode_manager.enter_manual_mode(module_name, engine)
+            self.manual_mode_manager.enter_manual_mode(module_name, engine, self.session_manager)
+            return True  # Stay in session
             
         elif choice == "4":
-            # View roadmap
-            self.roadmap_viewer.view_roadmap(module_name, engine)
+            # Generate intelligent roadmap
+            self._display_intelligent_roadmap(module_name, engine)
+            return True  # Stay in session
             
         elif choice == "5":
             # Back to main menu
             wre_log("🔙 Returning to main menu", "INFO")
+            return False  # Exit session
             
         else:
             wre_log(f"❌ Invalid development choice: {choice}", "ERROR")
+            return True  # Stay in session for retry
+
+    def _display_enhanced_module_status(self, module_name: str, engine):
+        """Display enhanced module status with visual roadmaps and WSP compliance."""
+        wre_log(f"📊 Enhanced Module Status: {module_name}", "INFO")
+        
+        try:
+            # Find module path
+            module_path = self.status_manager.find_module_path(module_name)
+            if not module_path:
+                wre_log(f"❌ Module not found: {module_name}", "ERROR")
+                input("Press Enter to continue...")
+                return
+                
+            # Get module status information
+            status_info = self.status_manager.get_module_status_info(module_path, module_name)
             
+            # Display enhanced status with visual elements
+            print("\n" + "="*80)
+            print(f"📋 MODULE STATUS REPORT: {module_name.upper()}")
+            print("="*80)
+            
+            # Basic Information
+            print(f"📍 Path: {status_info['path']}")
+            print(f"🏢 Domain: {status_info['domain']}")
+            print(f"⚡ Status: {self._get_status_emoji(status_info['status'])} {status_info['status']}")
+            print()
+            
+            # Development Metrics
+            print("📊 DEVELOPMENT METRICS")
+            print("-" * 40)
+            print(f"🧪 Test Files: {status_info['test_count']}")
+            print(f"📝 Source Files: {status_info['source_count']}")
+            print(f"📚 Documentation: {self._get_docs_emoji(status_info['docs_status'])} {status_info['docs_status']}")
+            print()
+            
+            # WSP Compliance Status
+            self._display_wsp_compliance_status(status_info, module_path)
+            
+            # Module Roadmap Visual
+            self._display_module_roadmap_visual(module_name, module_path)
+            
+            # Development Priorities
+            self._display_development_priorities(module_name, status_info)
+            
+            print("="*80)
+            
+        except Exception as e:
+            wre_log(f"❌ Enhanced status display failed: {e}", "ERROR")
+            
+        input("\nPress Enter to continue...")
+
+    def _get_status_emoji(self, status: str) -> str:
+        """Get emoji for module status."""
+        status_emojis = {
+            "Active": "🟢",
+            "In Development": "🟡", 
+            "Planned": "🔵",
+            "Unknown": "⚪"
+        }
+        return status_emojis.get(status, "⚪")
+        
+    def _get_docs_emoji(self, docs_status: str) -> str:
+        """Get emoji for documentation status."""
+        docs_emojis = {
+            "Complete": "✅",
+            "Partial": "⚠️",
+            "Missing": "❌",
+            "Incomplete": "⚠️"
+        }
+        return docs_emojis.get(docs_status, "❓")
+
+    def _display_wsp_compliance_status(self, status_info: Dict[str, Any], module_path: Path):
+        """Display WSP compliance status for the module."""
+        print("⚖️ WSP COMPLIANCE STATUS")
+        print("-" * 40)
+        
+        # WSP 62 Size Compliance
+        if status_info.get('size_violations'):
+            print(f"❌ WSP 62 Size Violations: {len(status_info['size_violations'])}")
+            for violation in status_info['size_violations'][:3]:  # Show first 3
+                print(f"   • {violation}")
+            if len(status_info['size_violations']) > 3:
+                print(f"   ... and {len(status_info['size_violations']) - 3} more")
+        else:
+            print("✅ WSP 62 File Size Compliance: PASSED")
+        
+        # Check for required files
+        required_files = ["README.md", "ROADMAP.md", "ModLog.md", "INTERFACE.md"]
+        missing_files = []
+        for file_name in required_files:
+            if not (module_path / file_name).exists():
+                missing_files.append(file_name)
+        
+        if missing_files:
+            print(f"⚠️ Missing WSP Files: {', '.join(missing_files)}")
+        else:
+            print("✅ WSP Documentation: COMPLETE")
+        print()
+
+    def _display_module_roadmap_visual(self, module_name: str, module_path: Path):
+        """Display visual module roadmap with development phases."""
+        print("🗺️ MODULE DEVELOPMENT ROADMAP")
+        print("-" * 40)
+        
+        # Check for ROADMAP.md
+        roadmap_file = module_path / "ROADMAP.md"
+        if roadmap_file.exists():
+            try:
+                with open(roadmap_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    
+                # Extract phases from roadmap
+                phases = self._extract_roadmap_phases(content)
+                
+                if phases:
+                    for i, phase in enumerate(phases, 1):
+                        status_icon = "🟢" if "✅" in phase else "🔵" if "⏳" in phase else "⚪"
+                        print(f"{status_icon} Phase {i}: {phase}")
+                else:
+                    print("📝 Roadmap exists but phases not clearly defined")
+                    
+            except Exception as e:
+                print(f"❌ Error reading roadmap: {e}")
+        else:
+            print("❌ No ROADMAP.md found")
+            print("💡 Suggested roadmap phases:")
+            print("   🔵 Phase 1: POC Implementation")
+            print("   🔵 Phase 2: Prototype Development")
+            print("   🔵 Phase 3: MVP Deployment")
+        print()
+
+    def _extract_roadmap_phases(self, content: str) -> list:
+        """Extract development phases from roadmap content."""
+        phases = []
+        lines = content.split('\n')
+        
+        for line in lines:
+            line = line.strip()
+            if ('Phase' in line or 'phase' in line) and ('##' in line or '-' in line):
+                # Clean up the phase description
+                phase = line.replace('#', '').replace('*', '').replace('-', '').strip()
+                if len(phase) > 10:  # Valid phase description
+                    phases.append(phase[:60])  # Truncate long descriptions
+                    
+        return phases[:5]  # Return max 5 phases
+
+    def _display_development_priorities(self, module_name: str, status_info: Dict[str, Any]):
+        """Display development priorities and next steps."""
+        print("🎯 DEVELOPMENT PRIORITIES")
+        print("-" * 40)
+        
+        priorities = []
+        
+        # Determine priorities based on status
+        if status_info['test_count'] == 0:
+            priorities.append("🧪 Create test suite (WSP 5 compliance)")
+            
+        if status_info['docs_status'] != 'Complete':
+            priorities.append("📚 Complete documentation (WSP 22)")
+            
+        if status_info.get('size_violations'):
+            priorities.append("⚖️ Fix WSP 62 size violations")
+            
+        if status_info['source_count'] == 0:
+            priorities.append("🏗️ Implement core functionality")
+            
+        if not priorities:
+            priorities.append("✅ Module meets current development standards")
+            priorities.append("🚀 Ready for enhancement or integration")
+        
+        for i, priority in enumerate(priorities, 1):
+            print(f"{i}. {priority}")
+        print()
+
+    def _display_intelligent_roadmap(self, module_name: str, engine):
+        """Display intelligent roadmap with AI-generated insights."""
+        wre_log(f"🗺️ Generating Intelligent Roadmap: {module_name}", "INFO")
+        
+        try:
+            # Find module path
+            module_path = self.status_manager.find_module_path(module_name)
+            if not module_path:
+                wre_log(f"❌ Module not found: {module_name}", "ERROR")
+                input("Press Enter to continue...")
+                return
+            
+            print("\n" + "="*80)
+            print(f"🗺️ INTELLIGENT DEVELOPMENT ROADMAP: {module_name.upper()}")
+            print("="*80)
+            
+            # Get module information
+            status_info = self.status_manager.get_module_status_info(module_path, module_name)
+            
+            # Display current state
+            print("📍 CURRENT STATE")
+            print("-" * 40)
+            print(f"Status: {status_info['status']}")
+            print(f"Development Phase: {self._determine_current_phase(status_info)}")
+            print()
+            
+            # Display strategic roadmap
+            print("🚀 STRATEGIC DEVELOPMENT PATH")
+            print("-" * 40)
+            roadmap_phases = self._generate_strategic_roadmap(module_name, status_info)
+            
+            for i, phase in enumerate(roadmap_phases, 1):
+                print(f"{phase['icon']} Phase {i}: {phase['name']}")
+                print(f"   Duration: {phase['duration']}")
+                print(f"   Goal: {phase['goal']}")
+                if phase['tasks']:
+                    print("   Key Tasks:")
+                    for task in phase['tasks']:
+                        print(f"     • {task}")
+                print()
+            
+            print("="*80)
+            
+        except Exception as e:
+            wre_log(f"❌ Intelligent roadmap generation failed: {e}", "ERROR")
+            
+        input("\nPress Enter to continue...")
+
+    def _determine_current_phase(self, status_info: Dict[str, Any]) -> str:
+        """Determine current development phase based on module status."""
+        if status_info['source_count'] == 0:
+            return "Pre-Development"
+        elif status_info['test_count'] == 0 or status_info['docs_status'] == 'Missing':
+            return "Early POC"
+        elif status_info['docs_status'] == 'Partial':
+            return "Advanced POC"
+        elif status_info['status'] == 'Active':
+            return "Prototype"
+        else:
+            return "Assessment Needed"
+
+    def _generate_strategic_roadmap(self, module_name: str, status_info: Dict[str, Any]) -> list:
+        """Generate strategic roadmap based on module type and current state."""
+        # Determine module type from domain and name
+        domain = status_info.get('domain', 'unknown')
+        
+        if 'platform_integration' in domain:
+            return self._platform_integration_roadmap(module_name, status_info)
+        elif 'ai_intelligence' in domain:
+            return self._ai_intelligence_roadmap(module_name, status_info)
+        elif 'infrastructure' in domain:
+            return self._infrastructure_roadmap(module_name, status_info)
+        else:
+            return self._generic_module_roadmap(module_name, status_info)
+
+    def _platform_integration_roadmap(self, module_name: str, status_info: Dict[str, Any]) -> list:
+        """Generate roadmap for platform integration modules."""
+        return [
+            {
+                'icon': '🔧',
+                'name': 'API Integration POC',
+                'duration': '1-2 weeks',
+                'goal': 'Basic API connectivity and authentication',
+                'tasks': [
+                    'Implement OAuth/API authentication',
+                    'Create basic API wrapper classes',
+                    'Test connectivity and error handling',
+                    'Document API endpoints and responses'
+                ]
+            },
+            {
+                'icon': '🏗️',
+                'name': 'Core Functionality Prototype',
+                'duration': '2-3 weeks', 
+                'goal': 'Primary platform features working',
+                'tasks': [
+                    'Implement main platform operations',
+                    'Add comprehensive error handling',
+                    'Create test suite with mock data',
+                    'WSP compliance validation'
+                ]
+            },
+            {
+                'icon': '🚀',
+                'name': 'Production Integration MVP',
+                'duration': '2-4 weeks',
+                'goal': 'Full integration with WRE ecosystem',
+                'tasks': [
+                    'Real-time data processing',
+                    'WRE workflow integration',
+                    'Performance optimization',
+                    'Complete documentation and deployment'
+                ]
+            }
+        ]
+
+    def _ai_intelligence_roadmap(self, module_name: str, status_info: Dict[str, Any]) -> list:
+        """Generate roadmap for AI intelligence modules."""
+        return [
+            {
+                'icon': '🧠',
+                'name': 'AI Core POC',
+                'duration': '2-3 weeks',
+                'goal': 'Basic AI functionality and model integration',
+                'tasks': [
+                    'Implement core AI algorithms',
+                    'Model selection and optimization',
+                    'Basic inference pipeline',
+                    'Performance benchmarking'
+                ]
+            },
+            {
+                'icon': '🤖',
+                'name': 'Intelligent Agent Prototype',
+                'duration': '3-4 weeks',
+                'goal': 'Autonomous decision making and learning',
+                'tasks': [
+                    'Agent behavior implementation',
+                    'Learning and adaptation mechanisms',
+                    'Integration with other AI modules',
+                    'Safety and reliability testing'
+                ]
+            },
+            {
+                'icon': '🌟',
+                'name': 'Advanced Intelligence MVP',
+                'duration': '4-6 weeks',
+                'goal': 'Production-grade AI capabilities',
+                'tasks': [
+                    'Advanced reasoning capabilities',
+                    'Multi-modal intelligence',
+                    'Real-time learning and adaptation',
+                    'Full WRE ecosystem integration'
+                ]
+            }
+        ]
+
+    def _infrastructure_roadmap(self, module_name: str, status_info: Dict[str, Any]) -> list:
+        """Generate roadmap for infrastructure modules."""
+        return [
+            {
+                'icon': '⚙️',
+                'name': 'Infrastructure Foundation POC',
+                'duration': '1-2 weeks',
+                'goal': 'Core infrastructure services operational',
+                'tasks': [
+                    'Implement core service architecture',
+                    'Basic monitoring and logging',
+                    'Service discovery mechanisms',
+                    'Health check endpoints'
+                ]
+            },
+            {
+                'icon': '🏛️',
+                'name': 'Scalable Architecture Prototype',
+                'duration': '2-3 weeks',
+                'goal': 'Production-ready infrastructure',
+                'tasks': [
+                    'Scalability and performance optimization',
+                    'Advanced monitoring and alerting',
+                    'Fault tolerance and recovery',
+                    'Security hardening'
+                ]
+            },
+            {
+                'icon': '🌐',
+                'name': 'Enterprise Integration MVP',
+                'duration': '3-4 weeks',
+                'goal': 'Full enterprise-grade infrastructure',
+                'tasks': [
+                    'Enterprise security compliance',
+                    'Advanced orchestration capabilities',
+                    'Multi-environment deployment',
+                    'Complete operational runbooks'
+                ]
+            }
+        ]
+
+    def _generic_module_roadmap(self, module_name: str, status_info: Dict[str, Any]) -> list:
+        """Generate generic roadmap for unknown module types."""
+        return [
+            {
+                'icon': '🔧',
+                'name': 'Foundation POC',
+                'duration': '1-2 weeks',
+                'goal': 'Core functionality implemented',
+                'tasks': [
+                    'Define module architecture',
+                    'Implement basic functionality',
+                    'Create initial test suite',
+                    'WSP compliance setup'
+                ]
+            },
+            {
+                'icon': '🏗️',
+                'name': 'Feature Development Prototype',
+                'duration': '2-3 weeks',
+                'goal': 'Complete feature set working',
+                'tasks': [
+                    'Implement all planned features',
+                    'Comprehensive testing',
+                    'Performance optimization',
+                    'Documentation completion'
+                ]
+            },
+            {
+                'icon': '🚀',
+                'name': 'Integration MVP',
+                'duration': '2-3 weeks',
+                'goal': 'Production deployment ready',
+                'tasks': [
+                    'WRE ecosystem integration',
+                    'Production hardening',
+                    'Monitoring and alerting',
+                    'Deployment automation'
+                ]
+            }
+        ]
+        
     def create_new_module(self, module_name: str, domain: str, path: str):
         """Create a new module - delegates to module creator."""
         return self.module_creator.create_new_module(module_name, domain, path)

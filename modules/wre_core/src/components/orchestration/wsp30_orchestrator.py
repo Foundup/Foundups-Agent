@@ -249,11 +249,35 @@ class WSP30Orchestrator:
         print(f"\n💭 **Strategic Discussion for {module_path}:**")
         
         # Enhanced domain-aware questions
-        goal_input = input(f"\n🤖 0102: What is your ultimate goal for this module within the {domain} enterprise domain?\n💡 Context: {context['purpose']}\n🎯 Your Vision: ")
-        
-        problems_input = input(f"\n🤖 0102: What specific problems should this module solve that complement existing {domain} modules?\n🔗 Current Modules: {', '.join(existing_modules) if existing_modules else 'None - pioneering new domain'}\n🛠️ Problem Focus: ")
-        
-        success_input = input(f"\n🤖 0102: What success metrics define completion for this {domain} module?\n📊 Domain Standards: {context['focus']}\n📈 Success Criteria: ")
+        # WSP 54 AUTONOMOUS AGENT REPLACEMENT - Replace manual input with autonomous decisions
+        try:
+            from modules.wre_core.src.components.core.autonomous_agent_system import AutonomousAgentSystem, AgentRole
+            autonomous_system = AutonomousAgentSystem(self.project_root, self.session_manager)
+            
+            wre_log("🤖 WSP 54 AUTONOMOUS ORCHESTRATION: Agents generating module vision", "INFO")
+            
+            # Architect agent defines goals autonomously
+            goal_input = autonomous_system.autonomous_goal_definition(module_name, domain, context)
+            wre_log(f"🏗️ ARCHITECT AGENT GOAL: {goal_input[:100]}...", "INFO")
+            
+            # Analyst agent identifies problems autonomously  
+            problems_input = autonomous_system.autonomous_problem_identification(module_name, domain, existing_modules)
+            wre_log(f"🔍 ANALYST AGENT PROBLEMS: {problems_input[:100]}...", "INFO")
+            
+            # Analyst agent defines success metrics autonomously
+            success_input = autonomous_system.autonomous_success_metrics(module_name, domain, context)
+            wre_log(f"📊 ANALYST AGENT METRICS: {success_input[:100]}...", "INFO")
+            
+        except ImportError:
+            # WSP 54 PLACEHOLDER - Use intelligent defaults until autonomous system is available
+            wre_log("⚠️ WSP 54 PLACEHOLDER: Using intelligent defaults for orchestration", "WARNING")
+            wre_log("🤖 TODO: Autonomous agent system will handle vision generation", "INFO")
+            
+            goal_input = f"Create comprehensive {module_name} module with full {domain} integration, enterprise-grade security, real-time processing, and seamless WRE ecosystem compatibility for autonomous foundups deployment"
+            
+            problems_input = f"{module_name} solves critical {domain} challenges: integration complexity, performance bottlenecks, security vulnerabilities, scalability limitations, and maintenance overhead that currently blocks autonomous foundups operations"
+            
+            success_input = f"SUCCESS METRICS: 95%+ test coverage, <100ms response time, zero security vulnerabilities, complete WSP documentation, production deployment ready, measurable performance improvement, autonomous operation capability"
         
         # Store enhanced discussion context
         self.module_discussion_context = {

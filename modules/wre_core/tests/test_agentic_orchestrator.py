@@ -14,20 +14,20 @@ project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 # Import the modularized components
-from modules.wre_core.src.components.agentic_orchestrator.orchestration_context import (
+from modules.wre_core.src.components.orchestration.agentic_orchestrator.orchestration_context import (
     OrchestrationTrigger, AgentPriority, OrchestrationContext, AgentTask
 )
-from modules.wre_core.src.components.agentic_orchestrator.agent_task_registry import initialize_agent_tasks
-from modules.wre_core.src.components.agentic_orchestrator.agent_executor import AgentExecutor
-from modules.wre_core.src.components.agentic_orchestrator.recursive_orchestration import AgenticOrchestrator
-from modules.wre_core.src.components.agentic_orchestrator.entrypoints import orchestrate_wsp54_agents, get_orchestration_stats
+from modules.wre_core.src.components.orchestration.agentic_orchestrator.agent_task_registry import initialize_agent_tasks
+from modules.wre_core.src.components.orchestration.agentic_orchestrator.agent_executor import AgentExecutor
+from modules.wre_core.src.components.orchestration.agentic_orchestrator.recursive_orchestration import AgenticOrchestrator
+from modules.wre_core.src.components.orchestration.agentic_orchestrator.entrypoints import orchestrate_wsp54_agents, get_orchestration_stats
 from modules.infrastructure.agent_activation.src.agent_activation import AgentActivationModule
 
 # Patch agent activation in orchestrator tests to avoid real activation logic
 @pytest.fixture(autouse=True)
 def patch_agent_activation(monkeypatch):
     monkeypatch.setattr(
-        'modules.wre_core.src.components.agentic_orchestrator.recursive_orchestration.AgentActivationModule',
+        'modules.wre_core.src.components.orchestration.agentic_orchestrator.recursive_orchestration.AgentActivationModule',
         lambda *args, **kwargs: Mock(activate_wsp54_agents=Mock(return_value={"ComplianceAgent": True}))
     )
     yield
@@ -246,8 +246,8 @@ class TestRecursiveOrchestration:
     
     def setup_method(self):
         """Set up test fixtures."""
-        with patch('modules.wre_core.src.components.agentic_orchestrator.recursive_orchestration.check_agent_health'):
-            with patch('modules.wre_core.src.components.agentic_orchestrator.recursive_orchestration.activate_agents_01_to_0102'):
+        with patch('modules.wre_core.src.components.orchestration.agentic_orchestrator.recursive_orchestration.check_agent_health'):
+            with patch('modules.wre_core.src.components.orchestration.agentic_orchestrator.recursive_orchestration.activate_agents_01_to_0102'):
                 self.orchestrator = AgenticOrchestrator()
     
     def test_orchestrator_initialization(self):
@@ -360,7 +360,7 @@ class TestEntrypoints:
     @pytest.mark.asyncio
     async def test_orchestrate_wsp54_agents(self):
         """Test the main orchestration entrypoint."""
-        with patch('modules.wre_core.src.components.agentic_orchestrator.entrypoints.agentic_orchestrator') as mock_orchestrator:
+        with patch('modules.wre_core.src.components.orchestration.agentic_orchestrator.entrypoints.agentic_orchestrator') as mock_orchestrator:
             # Use AsyncMock for proper async function mocking
             mock_orchestrator.orchestrate_recursively = AsyncMock(return_value={
                 "orchestration_context": {"trigger": "module_build"},
@@ -425,15 +425,15 @@ class TestIntegration:
     def test_modular_imports(self):
         """Test that all modular components can be imported correctly."""
         # Test that all modules can be imported
-        from modules.wre_core.src.components.agentic_orchestrator import (
+        from modules.wre_core.src.components.orchestration.agentic_orchestrator import (
             orchestrate_wsp54_agents, get_orchestration_stats
         )
-        from modules.wre_core.src.components.agentic_orchestrator.orchestration_context import (
+        from modules.wre_core.src.components.orchestration.agentic_orchestrator.orchestration_context import (
             OrchestrationTrigger, AgentPriority, OrchestrationContext, AgentTask
         )
-        from modules.wre_core.src.components.agentic_orchestrator.agent_task_registry import initialize_agent_tasks
-        from modules.wre_core.src.components.agentic_orchestrator.agent_executor import AgentExecutor
-        from modules.wre_core.src.components.agentic_orchestrator.recursive_orchestration import AgenticOrchestrator
+        from modules.wre_core.src.components.orchestration.agentic_orchestrator.agent_task_registry import initialize_agent_tasks
+        from modules.wre_core.src.components.orchestration.agentic_orchestrator.agent_executor import AgentExecutor
+        from modules.wre_core.src.components.orchestration.agentic_orchestrator.recursive_orchestration import AgenticOrchestrator
         
         # Test that classes can be instantiated
         context = OrchestrationContext(trigger=OrchestrationTrigger.MODULE_BUILD)

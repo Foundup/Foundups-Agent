@@ -20,7 +20,7 @@ from datetime import datetime
 project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from modules.wre_core.src.components.session_manager import SessionManager
+from modules.wre_core.src.components.core.session_manager import SessionManager
 
 class TestSessionManager(unittest.TestCase):
     """Test SessionManager component functionality."""

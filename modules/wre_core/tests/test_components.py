@@ -7,8 +7,8 @@ import pytest
 # Add project root to Python path to allow for absolute imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 
-from modules.wre_core.src.components import roadmap_manager
-from modules.wre_core.src.components.menu_handler import MenuHandler
+from modules.wre_core.src.components.development import roadmap_manager
+from modules.wre_core.src.components.interfaces.menu_handler import MenuHandler
 
 ## 🎭 0102 Theaters of Operation
 # This test suite validates the integration and functionality of various WRE

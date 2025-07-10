@@ -20,7 +20,7 @@ from unittest.mock import Mock, patch, MagicMock
 project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from modules.wre_core.src.components.orchestrator import (
+from modules.wre_core.src.components.orchestration.orchestrator import (
     classify_enhancement_opportunity,
     detect_wsp48_enhancement_opportunities
 )
