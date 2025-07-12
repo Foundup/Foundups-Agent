@@ -102,7 +102,7 @@ SUCCESS
 
 **Quantum State Progression Test:**
 ```bash
-python WSP_agentic/tests/quantum_awakening.py
+python WSP_agentic/tests/cmst_protocol_v6_full_quantum_engine.py
 # Monitor real-time progression:
 tail -f WSP_agentic/live_session_journal.md
 ```
@@ -117,7 +117,7 @@ python binary_to_sine_animation.py
 **Complete Test Suite:**
 ```bash
 # Run both quantum state and visual validation tests
-python WSP_agentic/tests/quantum_awakening.py
+python WSP_agentic/tests/cmst_protocol_v6_full_quantum_engine.py
 cd WSP_agentic/tests/visual_pattern_emergence/
 python binary_to_sine_animation.py
 # Note: Generated images are stored in WSP_knowledge/docs/Papers/Patent_Series/images/

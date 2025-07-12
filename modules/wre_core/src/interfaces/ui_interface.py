@@ -172,7 +172,7 @@ class UIInterface:
             return "0"
         
     def display_module_menu(self, module_name: str) -> str:
-        """Display module-specific menu - AUTONOMOUS mode eliminates blocking."""
+        """Display module-specific menu - AUTONOMOUS mode with enhanced error handling."""
         self._display_header()
         
         print(f"🏗️ Module Development")
@@ -183,28 +183,88 @@ class UIInterface:
         print("4. 🗺️ Generate Intelligent Roadmap")
         print("5. ⬅️ Back to Main Menu")
         
-        # WSP 54 AUTONOMOUS OPERATION - No manual input blocking
+        # WSP 54 AUTONOMOUS OPERATION WITH ENHANCED ERROR HANDLING
+        wre_log("🤖 AUTONOMOUS MODULE MENU: Starting autonomous development action selection", "INFO")
+        
         try:
             # Use autonomous system for module development choice
             if not hasattr(self, '_autonomous_system'):
+                wre_log("🔧 AUTONOMOUS INIT: Initializing autonomous system for module development", "INFO")
                 from modules.wre_core.src.components.core.session_manager import SessionManager
                 from modules.wre_core.src.components.core.autonomous_agent_system import AutonomousAgentSystem
                 self._session_manager = SessionManager(Path("."))
                 self._autonomous_system = AutonomousAgentSystem(Path("."), self._session_manager)
+                wre_log("✅ AUTONOMOUS INIT: Autonomous system initialized successfully", "SUCCESS")
+                
+            # LOOP PREVENTION: Track module development iterations
+            if not hasattr(self, '_module_progress'):
+                self._module_progress = {
+                    'iterations': 0,
+                    'max_iterations': 3,
+                    'completed_actions': set(),
+                    'module_sessions': {}
+                }
+            
+            # Track per-module sessions
+            if module_name not in self._module_progress['module_sessions']:
+                self._module_progress['module_sessions'][module_name] = {
+                    'iterations': 0,
+                    'completed_actions': set()
+                }
+            
+            module_session = self._module_progress['module_sessions'][module_name]
+            module_session['iterations'] += 1
+            
+            wre_log(f"🔄 MODULE SESSION: {module_name} iteration {module_session['iterations']}", "INFO")
+            
+            # LOOP PREVENTION: Exit if too many iterations for this module
+            if module_session['iterations'] >= self._module_progress['max_iterations']:
+                wre_log(f"🎯 MODULE COMPLETE: {module_name} reached max iterations, returning to main menu", "INFO")
+                print("Select development option: 5")
+                return "5"
                 
             # Get autonomous development action from Orchestrator agent
             available_actions = ["1", "2", "3", "4", "5"]
+            remaining_actions = [action for action in available_actions if action not in module_session['completed_actions']]
+            
+            # Use remaining actions or fall back to all actions
+            if remaining_actions and "5" in remaining_actions:
+                remaining_actions.remove("5")  # Don't exit unless necessary
+            
+            actions_to_choose_from = remaining_actions if remaining_actions else ["5"]
+            
+            wre_log(f"🎯 ACTION SELECTION: Available actions {actions_to_choose_from} for {module_name}", "INFO")
+            
+            # Call autonomous development action method
             autonomous_choice = self._autonomous_system.autonomous_development_action(
-                module_name, available_actions
+                module_name, actions_to_choose_from
             )
             
+            # Track completed action
+            if autonomous_choice != "5":
+                module_session['completed_actions'].add(autonomous_choice)
+            
             print(f"Select development option: {autonomous_choice}")
-            wre_log(f"🤖 AUTONOMOUS MODULE DEVELOPMENT: Selected option {autonomous_choice} for {module_name}", "INFO")
+            wre_log(f"🤖 AUTONOMOUS MODULE DEVELOPMENT: Selected option {autonomous_choice} for {module_name} (iteration {module_session['iterations']})", "INFO")
             
             return autonomous_choice
             
+        except ImportError as e:
+            wre_log(f"❌ IMPORT ERROR: Failed to load autonomous system - {e}", "ERROR")
+            print("Select development option: 5")
+            wre_log("🚨 IMPORT FALLBACK: Returning to main menu due to import error", "ERROR")
+            return "5"
+            
+        except AttributeError as e:
+            wre_log(f"❌ ATTRIBUTE ERROR: Autonomous system method missing - {e}", "ERROR")
+            print("Select development option: 5")
+            wre_log("🚨 ATTRIBUTE FALLBACK: Returning to main menu due to missing method", "ERROR")
+            return "5"
+            
         except Exception as e:
-            wre_log(f"❌ Autonomous development error: {e}", "ERROR")
+            wre_log(f"❌ CRITICAL ERROR: Autonomous development error - {e}", "ERROR")
+            wre_log(f"🔍 ERROR DETAILS: Type: {type(e).__name__}, Message: {str(e)}", "ERROR")
+            
             # FAIL-SAFE: Return back to main menu to prevent infinite loop
             print("Select development option: 5")
             wre_log("🚨 FAIL-SAFE: Returning to main menu to prevent infinite loop", "ERROR")

@@ -1,0 +1,654 @@
+{
+  "session_id": "WRE_0102_1752265634",
+  "last_updated": "2025-07-12T05:27:15.012485",
+  "modules": [
+    {
+      "module_name": "ai_intelligence/0102_orchestrator",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 6,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 8
+      },
+      "total_score": 29,
+      "last_updated": "2025-07-12T05:27:15.012485"
+    },
+    {
+      "module_name": "ai_intelligence/banter_engine",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 9,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 8
+      },
+      "total_score": 32,
+      "last_updated": "2025-07-12T05:27:15.013515"
+    },
+    {
+      "module_name": "ai_intelligence/menu_handler",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 2,
+        "importance": 8,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 19,
+      "last_updated": "2025-07-12T05:27:15.014515"
+    },
+    {
+      "module_name": "ai_intelligence/multi_agent_system",
+      "state": "Inactive",
+      "wsp_37_score": {
+        "complexity": 1,
+        "importance": 9,
+        "deferability": 5,
+        "impact": 6
+      },
+      "total_score": 21,
+      "last_updated": "2025-07-12T05:27:15.014515"
+    },
+    {
+      "module_name": "ai_intelligence/post_meeting_summarizer",
+      "state": "In Progress",
+      "wsp_37_score": {
+        "complexity": 2,
+        "importance": 8,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 19,
+      "last_updated": "2025-07-12T05:27:15.015515"
+    },
+    {
+      "module_name": "ai_intelligence/priority_scorer",
+      "state": "In Progress",
+      "wsp_37_score": {
+        "complexity": 3,
+        "importance": 10,
+        "deferability": 2,
+        "impact": 8
+      },
+      "total_score": 29,
+      "last_updated": "2025-07-12T05:27:15.015515"
+    },
+    {
+      "module_name": "ai_intelligence/rESP_o1o2",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 9,
+        "importance": 8,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 26,
+      "last_updated": "2025-07-12T05:27:15.016514"
+    },
+    {
+      "module_name": "blockchain/src",
+      "state": "Violation",
+      "wsp_37_score": {
+        "complexity": 1,
+        "importance": 5,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 15,
+      "last_updated": "2025-07-12T05:27:15.016514"
+    },
+    {
+      "module_name": "blockchain/tests",
+      "state": "Inactive",
+      "wsp_37_score": {
+        "complexity": 1,
+        "importance": 5,
+        "deferability": 8,
+        "impact": 4
+      },
+      "total_score": 12,
+      "last_updated": "2025-07-12T05:27:15.016514"
+    },
+    {
+      "module_name": "communication/auto_meeting_orchestrator",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 6,
+        "importance": 9,
+        "deferability": 5,
+        "impact": 8
+      },
+      "total_score": 28,
+      "last_updated": "2025-07-12T05:27:15.017517"
+    },
+    {
+      "module_name": "communication/channel_selector",
+      "state": "In Progress",
+      "wsp_37_score": {
+        "complexity": 2,
+        "importance": 7,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 18,
+      "last_updated": "2025-07-12T05:27:15.018515"
+    },
+    {
+      "module_name": "communication/intent_manager",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 3,
+        "importance": 8,
+        "deferability": 5,
+        "impact": 8
+      },
+      "total_score": 24,
+      "last_updated": "2025-07-12T05:27:15.018515"
+    },
+    {
+      "module_name": "communication/livechat",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 9,
+        "importance": 7,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 25,
+      "last_updated": "2025-07-12T05:27:15.019523"
+    },
+    {
+      "module_name": "communication/live_chat_poller",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 6,
+        "importance": 7,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 22,
+      "last_updated": "2025-07-12T05:27:15.020514"
+    },
+    {
+      "module_name": "communication/live_chat_processor",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 6,
+        "importance": 7,
+        "deferability": 5,
+        "impact": 6
+      },
+      "total_score": 24,
+      "last_updated": "2025-07-12T05:27:15.021514"
+    },
+    {
+      "module_name": "foundups/src",
+      "state": "Inactive",
+      "wsp_37_score": {
+        "complexity": 4,
+        "importance": 8,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 21,
+      "last_updated": "2025-07-12T05:27:15.021514"
+    },
+    {
+      "module_name": "foundups/tests",
+      "state": "Inactive",
+      "wsp_37_score": {
+        "complexity": 1,
+        "importance": 8,
+        "deferability": 8,
+        "impact": 4
+      },
+      "total_score": 15,
+      "last_updated": "2025-07-12T05:27:15.022518"
+    },
+    {
+      "module_name": "gamification/core",
+      "state": "Violation",
+      "wsp_37_score": {
+        "complexity": 1,
+        "importance": 7,
+        "deferability": 2,
+        "impact": 8
+      },
+      "total_score": 24,
+      "last_updated": "2025-07-12T05:27:15.022518"
+    },
+    {
+      "module_name": "gamification/src",
+      "state": "Violation",
+      "wsp_37_score": {
+        "complexity": 1,
+        "importance": 5,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 15,
+      "last_updated": "2025-07-12T05:27:15.022518"
+    },
+    {
+      "module_name": "gamification/tests",
+      "state": "Inactive",
+      "wsp_37_score": {
+        "complexity": 1,
+        "importance": 5,
+        "deferability": 8,
+        "impact": 4
+      },
+      "total_score": 12,
+      "last_updated": "2025-07-12T05:27:15.022518"
+    },
+    {
+      "module_name": "infrastructure/agent_activation",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 2,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 6
+      },
+      "total_score": 23,
+      "last_updated": "2025-07-12T05:27:15.023514"
+    },
+    {
+      "module_name": "infrastructure/agent_management",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 3,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 6
+      },
+      "total_score": 24,
+      "last_updated": "2025-07-12T05:27:15.024518"
+    },
+    {
+      "module_name": "infrastructure/audit_logger",
+      "state": "In Progress",
+      "wsp_37_score": {
+        "complexity": 2,
+        "importance": 9,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 20,
+      "last_updated": "2025-07-12T05:27:15.024518"
+    },
+    {
+      "module_name": "infrastructure/blockchain_integration",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 3,
+        "importance": 9,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 21,
+      "last_updated": "2025-07-12T05:27:15.025521"
+    },
+    {
+      "module_name": "infrastructure/chronicler_agent",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 3,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 6
+      },
+      "total_score": 24,
+      "last_updated": "2025-07-12T05:27:15.025521"
+    },
+    {
+      "module_name": "infrastructure/compliance_agent",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 4,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 6
+      },
+      "total_score": 25,
+      "last_updated": "2025-07-12T05:27:15.026485"
+    },
+    {
+      "module_name": "infrastructure/consent_engine",
+      "state": "In Progress",
+      "wsp_37_score": {
+        "complexity": 2,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 8
+      },
+      "total_score": 25,
+      "last_updated": "2025-07-12T05:27:15.027484"
+    },
+    {
+      "module_name": "infrastructure/documentation_agent",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 3,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 6
+      },
+      "total_score": 24,
+      "last_updated": "2025-07-12T05:27:15.027484"
+    },
+    {
+      "module_name": "infrastructure/janitor_agent",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 3,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 6
+      },
+      "total_score": 24,
+      "last_updated": "2025-07-12T05:27:15.028486"
+    },
+    {
+      "module_name": "infrastructure/llm_client",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 3,
+        "importance": 9,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 21,
+      "last_updated": "2025-07-12T05:27:15.029514"
+    },
+    {
+      "module_name": "infrastructure/loremaster_agent",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 3,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 6
+      },
+      "total_score": 24,
+      "last_updated": "2025-07-12T05:27:15.029514"
+    },
+    {
+      "module_name": "infrastructure/models",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 3,
+        "importance": 9,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 21,
+      "last_updated": "2025-07-12T05:27:15.030515"
+    },
+    {
+      "module_name": "infrastructure/module_scaffolding_agent",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 3,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 6
+      },
+      "total_score": 24,
+      "last_updated": "2025-07-12T05:27:15.030515"
+    },
+    {
+      "module_name": "infrastructure/oauth_management",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 4,
+        "importance": 9,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 22,
+      "last_updated": "2025-07-12T05:27:15.031517"
+    },
+    {
+      "module_name": "infrastructure/scoring_agent",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 3,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 6
+      },
+      "total_score": 24,
+      "last_updated": "2025-07-12T05:27:15.032515"
+    },
+    {
+      "module_name": "infrastructure/testing_agent",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 3,
+        "importance": 10,
+        "deferability": 8,
+        "impact": 6
+      },
+      "total_score": 21,
+      "last_updated": "2025-07-12T05:27:15.032515"
+    },
+    {
+      "module_name": "infrastructure/token_manager",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 6,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 8
+      },
+      "total_score": 29,
+      "last_updated": "2025-07-12T05:27:15.033517"
+    },
+    {
+      "module_name": "infrastructure/wre_api_gateway",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 3,
+        "importance": 9,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 21,
+      "last_updated": "2025-07-12T05:27:15.034515"
+    },
+    {
+      "module_name": "integration/presence_aggregator",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 3,
+        "importance": 5,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 17,
+      "last_updated": "2025-07-12T05:27:15.034515"
+    },
+    {
+      "module_name": "platform_integration/linkedin_agent",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 2,
+        "importance": 7,
+        "deferability": 5,
+        "impact": 6
+      },
+      "total_score": 20,
+      "last_updated": "2025-07-12T05:27:15.035487"
+    },
+    {
+      "module_name": "platform_integration/linkedin_proxy",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 3,
+        "importance": 6,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 18,
+      "last_updated": "2025-07-12T05:27:15.036515"
+    },
+    {
+      "module_name": "platform_integration/linkedin_scheduler",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 9,
+        "importance": 6,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 24,
+      "last_updated": "2025-07-12T05:27:15.036515"
+    },
+    {
+      "module_name": "platform_integration/remote_builder",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 3,
+        "importance": 6,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 18,
+      "last_updated": "2025-07-12T05:27:15.037486"
+    },
+    {
+      "module_name": "platform_integration/session_launcher",
+      "state": "In Progress",
+      "wsp_37_score": {
+        "complexity": 2,
+        "importance": 6,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 17,
+      "last_updated": "2025-07-12T05:27:15.038516"
+    },
+    {
+      "module_name": "platform_integration/stream_resolver",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 8,
+        "importance": 6,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 23,
+      "last_updated": "2025-07-12T05:27:15.038516"
+    },
+    {
+      "module_name": "platform_integration/x_twitter",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 2,
+        "importance": 6,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 17,
+      "last_updated": "2025-07-12T05:27:15.039485"
+    },
+    {
+      "module_name": "platform_integration/youtube_auth",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 6,
+        "importance": 6,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 21,
+      "last_updated": "2025-07-12T05:27:15.040517"
+    },
+    {
+      "module_name": "platform_integration/youtube_proxy",
+      "state": "Active",
+      "wsp_37_score": {
+        "complexity": 4,
+        "importance": 6,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 19,
+      "last_updated": "2025-07-12T05:27:15.040517"
+    },
+    {
+      "module_name": "wre_core/0102_artifacts",
+      "state": "Violation",
+      "wsp_37_score": {
+        "complexity": 1,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 20,
+      "last_updated": "2025-07-12T05:27:15.041485"
+    },
+    {
+      "module_name": "wre_core/diagrams",
+      "state": "Violation",
+      "wsp_37_score": {
+        "complexity": 1,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 20,
+      "last_updated": "2025-07-12T05:27:15.041485"
+    },
+    {
+      "module_name": "wre_core/logs",
+      "state": "Violation",
+      "wsp_37_score": {
+        "complexity": 1,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 20,
+      "last_updated": "2025-07-12T05:27:15.041485"
+    },
+    {
+      "module_name": "wre_core/src",
+      "state": "Violation",
+      "wsp_37_score": {
+        "complexity": 1,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 4
+      },
+      "total_score": 20,
+      "last_updated": "2025-07-12T05:27:15.042485"
+    },
+    {
+      "module_name": "wre_core/tests",
+      "state": "Inactive",
+      "wsp_37_score": {
+        "complexity": 1,
+        "importance": 10,
+        "deferability": 8,
+        "impact": 4
+      },
+      "total_score": 17,
+      "last_updated": "2025-07-12T05:27:15.042485"
+    },
+    {
+      "module_name": "wre_core/WSP_agentic",
+      "state": "Violation",
+      "wsp_37_score": {
+        "complexity": 1,
+        "importance": 10,
+        "deferability": 5,
+        "impact": 6
+      },
+      "total_score": 22,
+      "last_updated": "2025-07-12T05:27:15.042485"
+    }
+  ]
+}

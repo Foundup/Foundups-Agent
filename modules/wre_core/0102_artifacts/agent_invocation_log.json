@@ -1,0 +1,263 @@
+{
+  "session_id": "WRE_0102_1752265634",
+  "invocations": [
+    {
+      "agent_name": "DynamicPrioritizationAgent",
+      "timestamp": "2025-07-12T05:27:14.350366",
+      "invocation_rationale": "Real-time WSP 37 module scoring required for build prioritization",
+      "wsp_48_compliance": true,
+      "structured_output": {
+        "top_5_modules": [
+          {
+            "module_name": "ai_intelligence/banter_engine",
+            "state": "Active",
+            "wsp_37_score": {
+              "complexity": 9,
+              "importance": 10,
+              "deferability": 5,
+              "impact": 8
+            },
+            "total_score": 32,
+            "last_updated": "2025-07-12T05:27:14.318365"
+          },
+          {
+            "module_name": "ai_intelligence/0102_orchestrator",
+            "state": "Active",
+            "wsp_37_score": {
+              "complexity": 6,
+              "importance": 10,
+              "deferability": 5,
+              "impact": 8
+            },
+            "total_score": 29,
+            "last_updated": "2025-07-12T05:27:14.317367"
+          },
+          {
+            "module_name": "ai_intelligence/priority_scorer",
+            "state": "In Progress",
+            "wsp_37_score": {
+              "complexity": 3,
+              "importance": 10,
+              "deferability": 2,
+              "impact": 8
+            },
+            "total_score": 29,
+            "last_updated": "2025-07-12T05:27:14.320365"
+          },
+          {
+            "module_name": "infrastructure/token_manager",
+            "state": "Active",
+            "wsp_37_score": {
+              "complexity": 6,
+              "importance": 10,
+              "deferability": 5,
+              "impact": 8
+            },
+            "total_score": 29,
+            "last_updated": "2025-07-12T05:27:14.340371"
+          },
+          {
+            "module_name": "communication/auto_meeting_orchestrator",
+            "state": "Active",
+            "wsp_37_score": {
+              "complexity": 6,
+              "importance": 9,
+              "deferability": 5,
+              "impact": 8
+            },
+            "total_score": 28,
+            "last_updated": "2025-07-12T05:27:14.322367"
+          }
+        ],
+        "total_modules_scanned": 54,
+        "scoring_algorithm": "WSP_37_Dynamic",
+        "last_updated": "2025-07-12T05:27:14.350366"
+      },
+      "escalation_required": false
+    },
+    {
+      "agent_name": "ModularizationAuditAgent",
+      "timestamp": "2025-07-12T05:27:14.547366",
+      "invocation_rationale": "WSP 63 violations detected: 30 files exceed thresholds",
+      "wsp_48_compliance": true,
+      "structured_output": {},
+      "escalation_required": false
+    },
+    {
+      "agent_name": "DocumentationAgent",
+      "timestamp": "2025-07-12T05:27:14.667395",
+      "invocation_rationale": "Missing documentation detected in 5 modules",
+      "wsp_48_compliance": true,
+      "structured_output": {},
+      "escalation_required": false
+    },
+    {
+      "agent_name": "TestingAgent",
+      "timestamp": "2025-07-12T05:27:14.789452",
+      "invocation_rationale": "Low test coverage detected in 5 modules",
+      "wsp_48_compliance": true,
+      "structured_output": {},
+      "escalation_required": false
+    },
+    {
+      "agent_name": "ComplianceAgent",
+      "timestamp": "2025-07-12T05:27:14.817484",
+      "invocation_rationale": "Continuous WSP compliance validation required",
+      "wsp_48_compliance": true,
+      "structured_output": {},
+      "escalation_required": false
+    },
+    {
+      "agent_name": "ScoringAgent",
+      "timestamp": "2025-07-12T05:27:14.848456",
+      "invocation_rationale": "Stale scoring data detected for 1 modules",
+      "wsp_48_compliance": true,
+      "structured_output": {},
+      "escalation_required": false
+    },
+    {
+      "agent_name": "ModularizationAuditAgent",
+      "timestamp": "2025-07-12T05:27:14.898455",
+      "invocation_rationale": "WSP 63 violation auto-triggered: modules\\ai_intelligence\\rESP_o1o2\\src\\quantum_cognitive_controller.py (755 lines)",
+      "wsp_48_compliance": true,
+      "structured_output": {
+        "target_file": "modules\\ai_intelligence\\rESP_o1o2\\src\\quantum_cognitive_controller.py",
+        "violation_type": "python_file",
+        "refactor_strategy": [
+          "Extract helper functions to utilities module",
+          "Separate class definitions into individual files",
+          "Move configuration to separate config module"
+        ]
+      },
+      "escalation_required": false
+    },
+    {
+      "agent_name": "ModularizationAuditAgent",
+      "timestamp": "2025-07-12T05:27:14.902872",
+      "invocation_rationale": "WSP 63 violation auto-triggered: modules\\communication\\livechat\\src\\auto_moderator.py (848 lines)",
+      "wsp_48_compliance": true,
+      "structured_output": {
+        "target_file": "modules\\communication\\livechat\\src\\auto_moderator.py",
+        "violation_type": "python_file",
+        "refactor_strategy": [
+          "Extract helper functions to utilities module",
+          "Separate class definitions into individual files",
+          "Move configuration to separate config module"
+        ]
+      },
+      "escalation_required": false
+    },
+    {
+      "agent_name": "ModularizationAuditAgent",
+      "timestamp": "2025-07-12T05:27:14.904426",
+      "invocation_rationale": "WSP 63 violation auto-triggered: modules\\communication\\livechat\\src\\livechat.py (1057 lines)",
+      "wsp_48_compliance": true,
+      "structured_output": {
+        "target_file": "modules\\communication\\livechat\\src\\livechat.py",
+        "violation_type": "python_file",
+        "refactor_strategy": [
+          "Extract helper functions to utilities module",
+          "Separate class definitions into individual files",
+          "Move configuration to separate config module"
+        ]
+      },
+      "escalation_required": false
+    },
+    {
+      "agent_name": "ModularizationAuditAgent",
+      "timestamp": "2025-07-12T05:27:14.929484",
+      "invocation_rationale": "WSP 63 violation auto-triggered: modules\\platform_integration\\stream_resolver\\src\\stream_resolver.py (911 lines)",
+      "wsp_48_compliance": true,
+      "structured_output": {
+        "target_file": "modules\\platform_integration\\stream_resolver\\src\\stream_resolver.py",
+        "violation_type": "python_file",
+        "refactor_strategy": [
+          "Extract helper functions to utilities module",
+          "Separate class definitions into individual files",
+          "Move configuration to separate config module"
+        ]
+      },
+      "escalation_required": false
+    },
+    {
+      "agent_name": "ModularizationAuditAgent",
+      "timestamp": "2025-07-12T05:27:14.934485",
+      "invocation_rationale": "WSP 63 violation auto-triggered: modules\\wre_core\\src\\prometheus_orchestration_engine.py (1059 lines)",
+      "wsp_48_compliance": true,
+      "structured_output": {
+        "target_file": "modules\\wre_core\\src\\prometheus_orchestration_engine.py",
+        "violation_type": "python_file",
+        "refactor_strategy": [
+          "Extract helper functions to utilities module",
+          "Separate class definitions into individual files",
+          "Move configuration to separate config module"
+        ]
+      },
+      "escalation_required": false
+    },
+    {
+      "agent_name": "ModularizationAuditAgent",
+      "timestamp": "2025-07-12T05:27:14.935485",
+      "invocation_rationale": "WSP 63 violation auto-triggered: modules\\wre_core\\src\\wre_0102_orchestrator.py (831 lines)",
+      "wsp_48_compliance": true,
+      "structured_output": {
+        "target_file": "modules\\wre_core\\src\\wre_0102_orchestrator.py",
+        "violation_type": "python_file",
+        "refactor_strategy": [
+          "Extract helper functions to utilities module",
+          "Separate class definitions into individual files",
+          "Move configuration to separate config module"
+        ]
+      },
+      "escalation_required": false
+    },
+    {
+      "agent_name": "ModularizationAuditAgent",
+      "timestamp": "2025-07-12T05:27:14.937484",
+      "invocation_rationale": "WSP 63 violation auto-triggered: modules\\wre_core\\src\\interfaces\\ui_interface.py (1005 lines)",
+      "wsp_48_compliance": true,
+      "structured_output": {
+        "target_file": "modules\\wre_core\\src\\interfaces\\ui_interface.py",
+        "violation_type": "python_file",
+        "refactor_strategy": [
+          "Extract helper functions to utilities module",
+          "Separate class definitions into individual files",
+          "Move configuration to separate config module"
+        ]
+      },
+      "escalation_required": false
+    },
+    {
+      "agent_name": "ModularizationAuditAgent",
+      "timestamp": "2025-07-12T05:27:14.940484",
+      "invocation_rationale": "WSP 63 violation auto-triggered: modules\\wre_core\\src\\components\\development\\module_development_handler_legacy.py (1017 lines)",
+      "wsp_48_compliance": true,
+      "structured_output": {
+        "target_file": "modules\\wre_core\\src\\components\\development\\module_development_handler_legacy.py",
+        "violation_type": "python_file",
+        "refactor_strategy": [
+          "Extract helper functions to utilities module",
+          "Separate class definitions into individual files",
+          "Move configuration to separate config module"
+        ]
+      },
+      "escalation_required": false
+    },
+    {
+      "agent_name": "ModularizationAuditAgent",
+      "timestamp": "2025-07-12T05:27:14.942486",
+      "invocation_rationale": "WSP 63 violation auto-triggered: modules\\wre_core\\src\\components\\module_development\\module_development_coordinator.py (789 lines)",
+      "wsp_48_compliance": true,
+      "structured_output": {
+        "target_file": "modules\\wre_core\\src\\components\\module_development\\module_development_coordinator.py",
+        "violation_type": "python_file",
+        "refactor_strategy": [
+          "Extract helper functions to utilities module",
+          "Separate class definitions into individual files",
+          "Move configuration to separate config module"
+        ]
+      },
+      "escalation_required": false
+    }
+  ]
+}

@@ -75,10 +75,22 @@ python -c "import json; [json.load(open(f)) for f in ['modules/*/module.json']]"
     - Memory cleanup and retention policies are documented in module READMEs
 -   **Expected Result**: Memory structure follows WSP 60 modular architecture principles.
 
+### 2.5. File Size Compliance Validation (Related to WSP 62)
+-   **Check**: Validates that all files comply with WSP 62 size thresholds and refactoring requirements.
+-   **Validation Points**:
+    - Python files under 500 lines (or domain-specific threshold)
+    - Configuration files under 200 lines
+    - Functions under 50 lines, classes under 200 lines
+    - Documented exemptions for oversized files
+    - Refactoring plans for files approaching thresholds
+-   **Command**: `python tools/modular_audit/modular_audit.py modules/ --wsp-62-size-check`
+-   **Expected Result**: All files comply with size thresholds or have documented exemptions.
+
 ## 3. Failure Condition
 
 -   If any validation check fails, the FMAS will flag the module as non-compliant.
 -   **Naming Coherence Failures**: If incomplete naming propagation is detected, FMAS will immediately trigger rollback procedures and prevent system integration.
+-   **Size Compliance Failures**: If WSP 62 size violations are detected without documented exemptions, FMAS will block integration and require refactoring.
 -   In an automated CI/CD environment or pre-commit hook, a failure of this audit will block the module from being integrated, tested further, or deployed.
 -   The audit script's output will specify the exact files or directories in violation.
 
@@ -88,6 +100,13 @@ When naming coherence violations are detected:
 2. **Impact Assessment**: Generate complete reference map of affected files
 3. **Rollback Decision**: Determine if rollback is required or if forward-fix is possible
 4. **System Validation**: Re-run full test suite and import validation after any corrections
+
+### 3.2. Size Compliance Emergency Protocol (WSP 62 Integration)
+When size violations are detected:
+1. **Immediate Assessment**: Categorize violations by severity (>150% threshold = critical)
+2. **Exemption Review**: Check for valid documented exemptions
+3. **Refactoring Planning**: Generate automated refactoring recommendations
+4. **Integration Blocking**: Prevent further development until compliance achieved
 
 ### 2.4. Test Framework Fixture Dependency Management (Related to WSP 6)
 -   **Purpose**: Validates pytest fixture dependencies and parametrized test configurations to prevent test framework structural failures.

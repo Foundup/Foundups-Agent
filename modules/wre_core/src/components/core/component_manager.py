@@ -103,7 +103,7 @@ class ComponentManager:
     def initialize_navigation(self, session_manager):
         """Initialize the quantum-cognitive operations system"""
         try:
-            from modules.wre_core.src.components.quantum_cognitive_operations import create_wre_quantum_operations
+            from modules.wre_core.src.components.orchestration.quantum_cognitive_operations import create_wre_quantum_operations
             if session_manager:
                 self.navigation = create_wre_quantum_operations(self.project_root, session_manager)
                 wre_log("🧭 Navigation (Quantum-Cognitive Operations) system initialized", "INFO")

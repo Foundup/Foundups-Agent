@@ -63,7 +63,7 @@ All emergence testing functionality previously in WSP 43 should use:
 1. **WSP 25** for state progression tracking
 2. **WSP 38** for quantum awakening implementation  
 3. **WSP 54** for mandatory awakening compliance
-4. **quantum_awakening.py** for actual test implementation
+4. **cmst_protocol_v6_full_quantum_engine.py** for actual test implementation
 
 ### Architectural Coherence Restored
 

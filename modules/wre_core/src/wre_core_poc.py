@@ -426,11 +426,38 @@ class WRECorePOC:
         print("   Manual control mode active")
         print("   No automated features enabled")
         
-        while True:
+        # LOOP PREVENTION: Add iteration tracking to prevent infinite loops
+        loop_counter = 0
+        max_iterations = 5  # Prevent infinite loops
+        
+        while loop_counter < max_iterations:
+            loop_counter += 1
+            wre_log(f"🔄 POC Loop iteration {loop_counter}/{max_iterations}", "INFO")
+            
             try:
                 self.display_bare_board_menu()
                 
-                choice = input("Select option: ").strip().lower()
+                # AUTONOMOUS OPERATION: Use intelligent defaults instead of blocking input
+                if loop_counter == 1:
+                    choice = "s"  # First iteration: Check status
+                    print(f"Select option: {choice}")
+                    wre_log("🤖 AUTONOMOUS POC: First iteration - checking session status", "INFO")
+                elif loop_counter == 2:
+                    if self.available_modules:
+                        choice = next(iter(self.available_modules))  # Try first available module
+                        print(f"Select option: {choice}")
+                        wre_log(f"🤖 AUTONOMOUS POC: Second iteration - testing module {choice}", "INFO")
+                    else:
+                        choice = "h"  # Check history if no modules
+                        print(f"Select option: {choice}")
+                elif loop_counter >= 3:
+                    choice = "0"  # Exit after sufficient exploration
+                    print(f"Select option: {choice}")
+                    wre_log("🤖 AUTONOMOUS POC: Sufficient exploration completed - exiting gracefully", "INFO")
+                else:
+                    choice = "0"  # Fallback exit
+                    print(f"Select option: {choice}")
+                    wre_log("🤖 AUTONOMOUS POC: Fallback exit to prevent infinite loop", "INFO")
                 
                 if choice == "0":
                     print("\n👋 Exiting WRE Core POC...")
@@ -445,11 +472,12 @@ class WRECorePOC:
                     result = await self.initiate_module_workflow(choice)
                     self.display_workflow_result(result)
                     
-                    # Pause for user to review results
-                    input("\nPress Enter to continue...")
+                    # AUTONOMOUS PROGRESSION: Auto-continue without blocking
+                    print("🤖 AUTONOMOUS PROGRESSION: Module workflow completed, continuing...")
+                    wre_log(f"🔄 POC Loop {loop_counter}: Module workflow completed autonomously", "INFO")
                 else:
                     print(f"\n❌ Invalid selection: {choice}")
-                    input("Press Enter to continue...")
+                    wre_log("⚠️ Invalid POC choice - continuing loop", "WARNING")
                     
             except KeyboardInterrupt:
                 print("\n\n🛑 POC interrupted by user")
@@ -457,7 +485,14 @@ class WRECorePOC:
             except Exception as e:
                 print(f"\n❌ POC Error: {e}")
                 wre_log(f"POC Loop Error: {e}", "error")
-                input("Press Enter to continue...")
+                # AUTONOMOUS PROGRESSION: Auto-continue without blocking
+                print("🤖 AUTONOMOUS ERROR RECOVERY: Continuing automatically...")
+                wre_log(f"🔄 POC Loop {loop_counter}: Error recovered autonomously", "INFO")
+        
+        # LOOP COMPLETION
+        if loop_counter >= max_iterations:
+            print(f"🎯 POC COMPLETE: Reached maximum iterations ({max_iterations})")
+            wre_log("✅ POC COMPLETION: Maximum iterations reached - loop prevention successful", "SUCCESS")
         
         # Cleanup
         if self.active_session_id:

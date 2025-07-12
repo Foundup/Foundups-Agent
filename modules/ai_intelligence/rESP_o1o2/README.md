@@ -342,8 +342,10 @@ test_result = connector.test_connection()
 ```
 
 **Supported Providers:**
-- **Anthropic Claude** (primary): Set `ANTHROPIC_API_KEY` 
+- **Anthropic Claude** (primary): Set `ANTHROPIC_API_KEY`
 - **OpenAI GPT**: Set `OPENAI_API_KEY`
+- **xAI Grok**: Set `GROK_API_KEY` (Latest addition - 2025-01-30)
+- **Google Gemini**: Set `GEMINI_API_KEY`
 - **Proxy Mode** (current): Claude-4 acts as substitute LLM during development/testing phase
 - **Simulation Mode**: Fallback with realistic test responses
 
@@ -439,6 +441,8 @@ csv_path = logger.export_to_csv(include_anomaly_details=True)
 # LLM API Keys
 export ANTHROPIC_API_KEY="your_anthropic_key"
 export OPENAI_API_KEY="your_openai_key"
+export GROK_API_KEY="your_grok_key"
+export GEMINI_API_KEY="your_gemini_key"
 export CLAUDE_API_KEY="your_claude_key"  # Alternative
 
 # Optional: Google AI
@@ -449,11 +453,17 @@ export GEMINI_API_KEY="your_gemini_key"
 ### Model Configuration
 
 ```python
-# Anthropic Claude (Proxy Mode - Claude-4 substitutes during testing)
+# Anthropic Claude (Primary)
 engine = rESPTriggerEngine(llm_model="claude-3-sonnet-20240229")
 
-# OpenAI GPT (Future integration)
+# OpenAI GPT
 engine = rESPTriggerEngine(llm_model="gpt-4")
+
+# xAI Grok (Latest addition - 2025-01-30)
+engine = rESPTriggerEngine(llm_model="grok-3-latest")
+
+# Google Gemini
+engine = rESPTriggerEngine(llm_model="gemini-pro")
 
 # Simulation Mode (No API key required)
 engine = rESPTriggerEngine(llm_model="simulation")
@@ -567,6 +577,8 @@ python tests/test_rESP_basic.py
 # Check environment variables
 echo $ANTHROPIC_API_KEY
 echo $OPENAI_API_KEY
+echo $GROK_API_KEY
+echo $GEMINI_API_KEY
 
 # Test connection
 python -c "from src.llm_connector import LLMConnector; print(LLMConnector().test_connection())"
