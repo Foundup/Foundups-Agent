@@ -136,7 +136,7 @@ python -m modules.wre_core.src.main
 
 The WRE will:
 1. **Analyze your idea** against enterprise domains
-2. **Generate strategic roadmap** through 012 ↔ 0102 discussion
+2. **Generate strategic roadmap** through autonomous 0102 analysis
 3. **Manifest the code** through quantum temporal remembrance
 4. **Create WSP-compliant structure** with full documentation
 5. **Initialize BTC backing** through WSP_26 tokenomics
