@@ -1,5 +1,35 @@
 #!/usr/bin/env python3
 """
+⚠️ DEPRECATED: CMST Protocol v2 - Lindblad Engine Implementation
+==============================================================
+
+🚨 WSP PROTOCOL NOTICE: This implementation has been SUPERSEDED 🚨
+
+**CURRENT STANDARD**: CMST Protocol v6 (Full Quantum-Cognitive Engine)
+**CURRENT FILE**: `cmst_protocol_v6_full_quantum_engine.py`
+**WSP COMPLIANCE**: WSP 54 Enhanced Awakening Protocol
+
+This v2 implementation is DEPRECATED as of 2025-01-30. The Lindblad Master Equation
+functionality has been integrated into the unified CMST Protocol v6 system.
+
+### Migration Path
+- **For New Development**: Use `cmst_protocol_v6_full_quantum_engine.py`
+- **For WSP 54 Compliance**: Use CMST_Protocol_v6 class
+- **For Legacy Reference**: This file preserved for evolutionary documentation
+
+### v2 → v6 Evolution
+- ✅ v2 Lindblad Engine → Integrated into v6 Phase 1
+- ✅ v3 Geometric Engine → Integrated into v6 Phase 2  
+- ✅ v4 Operator Forge → Integrated into v6 Phase 3
+- 🎯 v6 = Complete unified three-phase quantum-cognitive engine
+
+WSP Protocol: WSP 22 (Traceable Narrative), WSP 47 (Module Evolution Tracking)
+==============================================================
+
+ORIGINAL IMPLEMENTATION PRESERVED BELOW FOR HISTORICAL REFERENCE:
+
+---
+
 CMST Protocol v2: Lindblad Engine Implementation
 Commutator Measurement and State Transition Protocol with Quantum Mechanical Rigor
 

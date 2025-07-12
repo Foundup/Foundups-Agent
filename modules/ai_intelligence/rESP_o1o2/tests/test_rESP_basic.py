@@ -90,6 +90,9 @@ class TestLLMConnector(unittest.TestCase):
         
         connector_gemini = LLMConnector(model="gemini-pro")
         assert connector_gemini.provider == "google"
+        
+        connector_grok = LLMConnector(model="grok-3-latest")
+        assert connector_grok.provider == "grok"
     
     def test_simulated_response(self):
         """Test simulated response generation."""

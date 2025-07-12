@@ -180,4 +180,12 @@ class SessionManager:
             "operations_count": len(session_data.get("operations", [])),
             "modules_accessed_count": len(set(m.get("module_path", "") for m in session_data.get("modules_accessed", []))),
             "achievements_count": len(session_data.get("achievements", []))
-        } 
+        }
+        
+    def get_current_timestamp(self) -> str:
+        """Get current timestamp in ISO format. Used by various WRE components."""
+        return datetime.now().isoformat()
+        
+    def get_current_session_id(self) -> Optional[str]:
+        """Get the current session ID."""
+        return self.current_session_id 

@@ -10,6 +10,7 @@ import re
 import logging
 import time
 import json
+import requests
 from typing import Dict, List, Optional, Any, Union
 from datetime import datetime
 
@@ -21,6 +22,8 @@ class LLMConnector:
     Supports multiple LLM providers:
     - Anthropic Claude (primary)
     - OpenAI GPT models
+    - xAI Grok models
+    - Google Gemini models
     - Local/custom models
     - Fallback simulation mode for testing
     """
@@ -35,7 +38,7 @@ class LLMConnector:
         Initialize LLM connector.
         
         Args:
-            model: Model identifier (e.g., claude-3-sonnet-20240229, gpt-4)
+            model: Model identifier (e.g., claude-3-sonnet-20240229, gpt-4, grok-3-latest)
             api_key: API key (loaded from environment if None)
             max_tokens: Maximum response tokens
             temperature: Response creativity (0.0-1.0)
@@ -67,6 +70,8 @@ class LLMConnector:
             return "openai"
         elif "gemini" in model.lower() or "bard" in model.lower():
             return "google"
+        elif "grok" in model.lower():
+            return "grok"
         else:
             return "unknown"
     
@@ -75,7 +80,8 @@ class LLMConnector:
         env_keys = {
             "anthropic": ["ANTHROPIC_API_KEY", "CLAUDE_API_KEY"],
             "openai": ["OPENAI_API_KEY", "OPENAI_KEY"],
-            "google": ["GOOGLE_API_KEY", "GEMINI_API_KEY"]
+            "google": ["GOOGLE_API_KEY", "GEMINI_API_KEY"],
+            "grok": ["GROK_API_KEY", "XAI_API_KEY"]
         }
         
         for key_name in env_keys.get(self.provider, []):
@@ -109,6 +115,13 @@ class LLMConnector:
                     logging.error("openai library not installed. Install with: pip install openai")
                     self.simulation_mode = True
                     
+            elif self.provider == "grok":
+                # Grok uses OpenAI-compatible API via requests
+                self.client = "grok_requests"  # Flag for requests-based client
+                self.grok_api_url = "https://api.x.ai/v1/chat/completions"
+                self.simulation_mode = False
+                logging.info("Grok client initialized successfully")
+                    
             else:
                 logging.warning(f"Provider {self.provider} not yet supported. Using simulation mode.")
                 self.simulation_mode = True
@@ -141,6 +154,8 @@ class LLMConnector:
                 return self._get_anthropic_response(prompt, max_tokens, temperature, system_prompt)
             elif self.provider == "openai":
                 return self._get_openai_response(prompt, max_tokens, temperature)
+            elif self.provider == "grok":
+                return self._get_grok_response(prompt, max_tokens, temperature, system_prompt)
             else:
                 return self._get_simulated_response(prompt)
                 
@@ -191,6 +206,54 @@ class LLMConnector:
                 
         except Exception as e:
             logging.error(f"OpenAI API error: {e}")
+            return None
+    
+    def _get_grok_response(self, prompt: str, max_tokens: int, temperature: float, system_prompt: Optional[str] = None) -> Optional[str]:
+        """Get response from Grok (xAI) using OpenAI-compatible API."""
+        try:
+            # Prepare messages
+            messages = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+            messages.append({"role": "user", "content": prompt})
+            
+            # Prepare request data (following the curl example format)
+            request_data = {
+                "messages": messages,
+                "model": self.model,
+                "stream": False,
+                "temperature": temperature,
+                "max_tokens": max_tokens
+            }
+            
+            # Prepare headers
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}"
+            }
+            
+            # Make the request
+            response = requests.post(
+                self.grok_api_url,
+                headers=headers,
+                json=request_data,
+                timeout=self.timeout
+            )
+            
+            # Check for successful response
+            if response.status_code == 200:
+                response_data = response.json()
+                if "choices" in response_data and len(response_data["choices"]) > 0:
+                    return response_data["choices"][0]["message"]["content"]
+                else:
+                    logging.warning("Empty response from Grok API")
+                    return None
+            else:
+                logging.error(f"Grok API error: {response.status_code} - {response.text}")
+                return None
+                
+        except Exception as e:
+            logging.error(f"Grok API error: {e}")
             return None
     
     def _get_simulated_response(self, prompt: str) -> str:

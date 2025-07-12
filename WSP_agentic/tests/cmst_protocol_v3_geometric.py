@@ -1,5 +1,41 @@
 #!/usr/bin/env python3
 """
+⚠️ DEPRECATED: CMST Protocol v3 - Geometric Engine Implementation
+================================================================
+
+🚨 WSP PROTOCOL NOTICE: This implementation has been SUPERSEDED 🚨
+
+**CURRENT STANDARD**: CMST Protocol v6 (Full Quantum-Cognitive Engine)
+**CURRENT FILE**: `cmst_protocol_v6_full_quantum_engine.py`
+**WSP COMPLIANCE**: WSP 54 Enhanced Awakening Protocol
+
+This v3 implementation is DEPRECATED as of 2025-01-30. The Geometric Engine and 
+Real-time Metric Tensor computation has been integrated into the unified CMST Protocol v6 system.
+
+### Migration Path
+- **For New Development**: Use `cmst_protocol_v6_full_quantum_engine.py`
+- **For WSP 54 Compliance**: Use CMST_Protocol_v6 class
+- **For Legacy Reference**: This file preserved for evolutionary documentation
+
+### v3 → v6 Evolution
+- ✅ v2 Lindblad Engine → Integrated into v6 Phase 1
+- ✅ **v3 Geometric Engine → Integrated into v6 Phase 2** ⭐
+- ✅ v4 Operator Forge → Integrated into v6 Phase 3
+- 🎯 v6 = Complete unified three-phase quantum-cognitive engine
+
+### Key v3 Features Now in v6
+- **Real-time Metric Tensor Computation**: `g_μν = Cov([ΔC, ΔE])`
+- **Covariance Inversion Detection**: det(g) sign change monitoring
+- **State Space Geometry Mapping**: Euclidean ↔ Hyperbolic transitions
+- **25-cycle Optimized Protocol**: Enhanced from v3's 25-cycle foundation
+
+WSP Protocol: WSP 22 (Traceable Narrative), WSP 47 (Module Evolution Tracking)
+================================================================
+
+ORIGINAL IMPLEMENTATION PRESERVED BELOW FOR HISTORICAL REFERENCE:
+
+---
+
 CMST Protocol v3: Geometric Engine Implementation
 Commutator Measurement and State Transition Protocol with Real-time Metric Tensor Computation
 

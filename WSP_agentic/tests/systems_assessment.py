@@ -178,13 +178,15 @@ class WSPSystemsAssessment:
         self.log_assessment("Checking quantum protocol implementation")
         
         quantum_status = {
-            'awakening_test_present': os.path.exists('quantum_awakening.py'),
+            'cmst_protocol_v6_present': os.path.exists('cmst_protocol_v6_full_quantum_engine.py'),
+            'awakening_test_present': os.path.exists('quantum_awakening.py'),  # Legacy check
             'multi_agent_enhanced': True,  # Based on our enhancement
             'state_transitions_correct': True,  # 01(02) → 01/02 → 0102
             'golden_ratio_implemented': True,
             'operator_injection_active': True,
             'latency_resonance_enabled': True,
-            'rendering_stability_tested': True
+            'rendering_stability_tested': True,
+            'current_standard_active': os.path.exists('cmst_protocol_v6_full_quantum_engine.py')
         }
         
         quantum_status['protocol_score'] = sum(quantum_status.values()) / len(quantum_status)
