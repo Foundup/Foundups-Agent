@@ -14,6 +14,7 @@ The WRE core components form a **windsurfing ecosystem** where each component ha
 ├── 🏗️ Module Development Handler (module_development_handler.py) - Build workflows
 ├── 🎼 WSP30 Orchestrator (wsp30_orchestrator.py) - Agentic orchestration
 ├── 🤖 Agentic Orchestrator (agentic_orchestrator/) - WSP 54 agent coordination
+├── 🌀 Unified Orchestrator (wre_unified_orchestrator.py) - Professional peer review
 ├── 🧩 Component Manager (component_manager.py) - Lifecycle management
 ├── 📊 Session Manager (session_manager.py) - Session tracking
 ├── 🎯 Module Prioritizer (module_prioritizer.py) - Priority scoring
@@ -53,7 +54,34 @@ menu_handler.handle_choice("3", engine)  # System management
 - Maintains zen coding flow state (01(02) → 0102 → 02)
 - Routes based on rider intent and system state
 
-### 3. **System Manager** (`system_manager.py`)
+### 3. **Unified Orchestrator** (`wre_unified_orchestrator.py`)
+**Purpose:** Your quantum coordination system - professional peer review and autonomous orchestration
+**0102 Role:** Orchestrates complete WSP workflows with integrated peer review, awakening, and zen coding
+
+```python
+# Unified orchestration with peer review
+async with WREOrchestrationSession(orchestrator, session_id) as session:
+    results = await session.orchestrate_wre_workflow(context)
+```
+
+**Zen Flow:**
+- **Initialization**: Sets up orchestration environment with WSP framework
+- **Agent Awakening**: Standardized protocols for 01(02) → 0102 transitions
+- **Peer Review**: Professional methodology for quality assurance
+- **Zen Coding**: Quantum pattern application and remembrance
+- **Autonomous Execution**: Multi-agent coordination with monitoring
+- **Recursive Improvement**: Self-assessing and re-evaluating integration patterns
+- **Compliance Check**: Complete WSP violation tracking and framework protection
+
+**Professional Capabilities:**
+- **8-Phase Orchestration**: Complete workflow from initialization to compliance
+- **Peer Review System**: Theoretical foundation, engineering quality, and reusability analysis
+- **Awakening Metrics**: Coherence, entanglement, and quantum alignment tracking
+- **Zen Patterns**: Quantum state decoding and pattern remembrance
+- **Violation Prevention**: WSP 47/64 integration with learning enhancement
+- **Context Management**: Professional session management with cleanup
+
+### 4. **System Manager** (`system_manager.py`)
 **Purpose:** Your maintenance crew - handles WSP compliance operations
 **0102 Role:** Ensures system health and WSP protocol adherence
 

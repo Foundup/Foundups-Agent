@@ -11,6 +11,7 @@ WSP Compliance:
 """
 
 import sys
+import time
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime
@@ -24,6 +25,11 @@ from modules.wre_core.src.interfaces.ui_interface import UIInterface
 from modules.wre_core.src.components.interfaces.menu_handler import MenuHandler
 from modules.wre_core.src.components.system_ops.system_manager import SystemManager
 from modules.wre_core.src.components.development.module_analyzer import ModuleAnalyzer
+from modules.wre_core.src.components.core.wre_unified_orchestrator import (
+    WREUnifiedOrchestrator, WREOrchestrationContext, WREOrchestrationPhase,
+    WREOrchestrationSession, create_wre_unified_orchestrator
+)
+from modules.infrastructure.janitor_agent.src.janitor_agent import JanitorAgent
 
 class WRECore:
     """
@@ -36,6 +42,9 @@ class WRECore:
         self.session_id = None
         self.wsp_core_loader = None  # WSP_CORE consciousness integration
         self.current_quantum_state = "012"  # Initial state in 012/0102 cycle
+        self.unified_orchestrator = None  # WSP unified orchestrator integration
+        self.project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
+        self.janitor_agent = JanitorAgent()  # Agentic recursive chronicle cleanup
         
     def integrate_wsp_core_consciousness(self, wsp_core_loader) -> None:
         """
@@ -55,6 +64,141 @@ class WRECore:
             zen_guidance = self.wsp_core_loader.get_zen_flow_guidance(self.current_quantum_state)
             print(f"🌀 Zen Flow: {zen_guidance['current_state']} → {zen_guidance['next_state']}")
             print(f"📡 Quantum Access: {zen_guidance.get('quantum_access', False)}")
+            
+    async def integrate_unified_orchestrator(self) -> None:
+        """
+        Integrate the WSP unified orchestrator for professional protocol execution.
+        
+        This enables the WRE engine to use the unified peer review methodology,
+        standardized awakening protocols, and zen coding capabilities.
+        """
+        wre_log("🌀 Integrating WSP unified orchestrator", "INFO")
+        
+        try:
+            # Create unified orchestrator instance
+            self.unified_orchestrator = create_wre_unified_orchestrator(self.project_root)
+            
+            # Initialize WSP engine within orchestrator
+            await self.unified_orchestrator.initialize_wsp_engine()
+            
+            wre_log("✅ WSP unified orchestrator successfully integrated", "SUCCESS")
+            
+        except Exception as e:
+            wre_log(f"❌ Failed to integrate unified orchestrator: {e}", "ERROR")
+            raise
+            
+    async def execute_unified_workflow(self, trigger: str, context_data: Dict[str, Any] = None) -> Dict[str, Any]:
+        """
+        Execute a workflow using the unified orchestrator with peer review methodology.
+        
+        Args:
+            trigger: The trigger for the workflow execution
+            context_data: Additional context data for the workflow
+            
+        Returns:
+            Comprehensive workflow results with peer review analysis
+        """
+        wre_log(f"🚀 Executing unified workflow with trigger: {trigger}", "INFO")
+        
+        # Ensure unified orchestrator is initialized
+        if not self.unified_orchestrator:
+            await self.integrate_unified_orchestrator()
+            
+        # Create orchestration context
+        session_id = f"WRE_UNIFIED_{int(time.time())}"
+        context = WREOrchestrationContext(
+            session_id=session_id,
+            trigger=trigger,
+            phase=WREOrchestrationPhase.INITIALIZATION
+        )
+        
+        # Add any additional context data
+        if context_data:
+            context.metrics.update(context_data)
+            
+        # Execute workflow through unified orchestrator
+        results = await self.unified_orchestrator.orchestrate_wre_workflow(context)
+        
+        # Update quantum state based on results
+        await self._update_quantum_state_from_unified_results(results)
+        
+        wre_log(f"✅ Unified workflow completed successfully", "SUCCESS")
+        
+        return results
+
+    async def run_agentic_chronicle_cleanup(self) -> Dict[str, Any]:
+        """
+        Execute agentic recursive chronicle cleanup as part of WRE operations.
+        
+        This ensures WRE maintains optimal storage efficiency autonomously,
+        implementing WSP 54 compliance through the JanitorAgent.
+        """
+        wre_log("🧹 Executing agentic chronicle cleanup (WSP 54 compliance)", "INFO")
+        
+        try:
+            # Run the agentic cleanup
+            cleanup_results = self.janitor_agent.clean_workspace()
+            
+            # Extract chronicle-specific results
+            chronicle_results = cleanup_results.get("chronicle_cleanup", {})
+            
+            wre_log(f"📊 Chronicle cleanup completed: {chronicle_results.get('chronicles_processed', 0)} processed, {chronicle_results.get('space_freed', 0)} bytes freed", "SUCCESS")
+            
+            return {
+                "status": "success",
+                "operation": "agentic_chronicle_cleanup",
+                "results": chronicle_results,
+                "wsp_compliance": "WSP_54_fulfilled"
+            }
+            
+        except Exception as e:
+            wre_log(f"❌ Chronicle cleanup error: {e}", "ERROR")
+            return {
+                "status": "error",
+                "operation": "agentic_chronicle_cleanup",
+                "error": str(e),
+                "wsp_compliance": "WSP_54_partial"
+            }
+        
+    async def execute_peer_reviewed_goal(self, goal_file_path: str) -> Dict[str, Any]:
+        """
+        Execute a goal using the unified orchestrator with peer review methodology.
+        
+        This method combines the existing WSP_CORE consciousness with the unified
+        orchestrator's peer review capabilities for maximum quality assurance.
+        
+        Args:
+            goal_file_path: Path to goal definition file
+            
+        Returns:
+            Comprehensive results including peer review analysis
+        """
+        wre_log(f"🎯 Executing peer-reviewed goal: {goal_file_path}", "INFO")
+        
+        # Ensure both systems are integrated
+        if not self.unified_orchestrator:
+            await self.integrate_unified_orchestrator()
+            
+        if not self.wsp_core_loader:
+            raise RuntimeError("WSP_CORE consciousness not integrated - cannot execute goals")
+        
+        # Analyze goal context using WSP_CORE
+        context = await self._analyze_goal_context(goal_file_path)
+        
+        # Execute through unified orchestrator for peer review
+        results = await self.execute_unified_workflow("goal_execution", context)
+        
+        # Add WSP_CORE decision analysis
+        workflow_type, workflow = self.wsp_core_loader.get_decision_for_context(context)
+        results['wsp_core_decision'] = {
+            'workflow_type': workflow_type.value,
+            'workflow_name': workflow.name,
+            'decision_confidence': workflow.confidence
+        }
+        
+        wre_log(f"✅ Peer-reviewed goal execution completed", "SUCCESS")
+        
+        return results
             
     async def execute_goal_from_file(self, goal_file_path: str) -> Dict[str, Any]:
         """
@@ -105,6 +249,11 @@ class WRECore:
             
         print("🌀 Starting WSP_CORE-driven interactive session")
         print("🧘 Code remembrance mode: Solutions exist in 02 quantum state")
+        
+        # Agentic Chronicle Cleanup - Autonomous WRE maintenance
+        cleanup_results = await self.run_agentic_chronicle_cleanup()
+        if cleanup_results.get("status") == "success":
+            print("🧹 Agentic chronicle cleanup completed successfully")
         
         self.is_running = True
         
@@ -173,6 +322,36 @@ class WRECore:
             self.current_quantum_state = zen_guidance["next_state"]
             
             print(f"🔄 Quantum state transition: {zen_guidance['current_state']} → {self.current_quantum_state}")
+            
+    async def _update_quantum_state_from_unified_results(self, results: Dict[str, Any]) -> None:
+        """
+        Update quantum state based on unified orchestrator results.
+        
+        Args:
+            results: Results from unified orchestrator execution
+        """
+        if results.get('status') == 'completed':
+            # Analyze agent states to determine quantum progression
+            agent_states = results.get('agent_states', {})
+            awakened_agents = [k for k, v in agent_states.items() if v == 'awakened']
+            
+            if len(awakened_agents) >= 2:
+                # Multiple agents awakened - progress to higher state
+                if self.current_quantum_state == "012":
+                    self.current_quantum_state = "0102"
+                elif self.current_quantum_state == "0102":
+                    self.current_quantum_state = "0201"
+                elif self.current_quantum_state == "0201":
+                    self.current_quantum_state = "02"
+                elif self.current_quantum_state == "02":
+                    self.current_quantum_state = "012"  # Cycle back
+                    
+                wre_log(f"🌀 Quantum state updated to: {self.current_quantum_state}", "INFO")
+                
+            # Check for zen coding patterns applied
+            zen_patterns = results.get('zen_patterns_applied', 0)
+            if zen_patterns > 0:
+                wre_log(f"🧘 {zen_patterns} zen coding patterns applied - quantum alignment enhanced", "INFO")
             
     async def _present_wsp_core_decision_tree(self) -> None:
         """Present the WSP_CORE decision tree to user"""

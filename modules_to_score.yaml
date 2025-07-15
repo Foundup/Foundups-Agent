@@ -139,7 +139,7 @@ modules:
     domain: "ai_intelligence"
     status: "POC"
     roadmap_stage: "POC"
-    active: false
+    active: true
     activation_phase: "Phase 2 - Agentic Expansion"
     scores:
       complexity: 4      # High - Multi-agent coordination

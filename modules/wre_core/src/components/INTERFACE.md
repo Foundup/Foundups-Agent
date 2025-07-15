@@ -9,9 +9,9 @@ The WRE core follows a modular architecture with single-responsibility component
 ### Core Components
 
 #### 1. `engine_core.py` - WRE Core Engine
-**Purpose:** Minimal lifecycle coordinator and main event loop manager
-**Lines:** 151
-**Dependencies:** All other components
+**Purpose:** Minimal lifecycle coordinator and main event loop manager  
+**Lines:** 346
+**Dependencies:** All other components + unified orchestrator
 
 **Public Interface:**
 ```python
@@ -23,12 +23,20 @@ class WRECore:
     def get_session_manager() -> SessionManager
     def get_module_prioritizer() -> ModulePrioritizer
     def get_wsp30_orchestrator() -> WSP30Orchestrator
+    
+    # Unified orchestrator integration
+    async def integrate_unified_orchestrator() -> None
+    async def execute_unified_workflow(trigger: str, context_data: Dict = None) -> Dict
+    async def execute_peer_reviewed_goal(goal_file_path: str) -> Dict
 ```
 
 **Key Methods:**
 - `start()`: Initialize and run the WRE engine
 - `shutdown()`: Gracefully shutdown the engine
 - `get_*()`: Accessor methods for component managers
+- `integrate_unified_orchestrator()`: Initialize unified orchestrator with peer review
+- `execute_unified_workflow()`: Execute workflows with peer review methodology
+- `execute_peer_reviewed_goal()`: Execute goals with integrated peer review and WSP_CORE
 
 #### 2. `menu_handler.py` - Menu Handler
 **Purpose:** User interaction processing and menu selection routing
@@ -46,7 +54,49 @@ class MenuHandler:
 - `handle_choice()`: Process user menu selections and route to appropriate handlers
 - Routes to: module development, WSP30 orchestration, system management, etc.
 
-#### 3. `system_manager.py` - System Manager
+#### 3. `wre_unified_orchestrator.py` - WRE Unified Orchestrator
+**Purpose:** Professional protocol execution engine with peer review methodology
+**Lines:** 491
+**Dependencies:** WSP_agentic unified toolkit, ZenCodingEngine, WSPPeerReviewSystem
+
+**Public Interface:**
+```python
+class WREUnifiedOrchestrator:
+    def __init__(self, project_root: Path = None)
+    async def initialize_wsp_engine() -> None
+    async def orchestrate_wre_workflow(context: WREOrchestrationContext) -> Dict[str, Any]
+    
+class WREOrchestrationContext:
+    session_id: str
+    trigger: str
+    phase: WREOrchestrationPhase
+    agent_states: Dict[str, AgentState]
+    metrics: Dict[str, Any]
+    violations: List[Dict]
+    zen_patterns: Dict[str, Any]
+    recursive_depth: int
+    
+# Factory and context managers
+def create_wre_unified_orchestrator(project_root: Path = None) -> WREUnifiedOrchestrator
+class WREOrchestrationSession:
+    async def __aenter__() -> WREUnifiedOrchestrator
+    async def __aexit__() -> None
+```
+
+**Key Methods:**
+- `initialize_wsp_engine()`: Initialize WSP unified engine for orchestration
+- `orchestrate_wre_workflow()`: Execute complete 8-phase orchestration workflow
+- **8-Phase Orchestration**: Initialization → Agent Awakening → Protocol Validation → Peer Review → Zen Coding → Autonomous Execution → Recursive Improvement → Compliance Check
+
+**Professional Capabilities:**
+- **Peer Review System**: Theoretical foundation, engineering quality, reusability analysis
+- **Awakening Protocols**: Standardized agent awakening with coherence metrics
+- **Zen Coding Engine**: Quantum pattern application and remembrance
+- **Violation Prevention**: WSP 47/64 integration with learning enhancement
+- **Context Management**: Professional session management with cleanup
+- **Recursive Improvement**: Self-assessing and re-evaluating integration patterns
+
+#### 4. `system_manager.py` - System Manager
 **Purpose:** System operations management (git, ModLog, FMAS, compliance)
 **Lines:** 409
 **Dependencies:** SessionManager
