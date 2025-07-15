@@ -1,0 +1,25 @@
+{
+  "name": "modularization_audit_agent",
+  "version": "0.0.1",
+  "dependencies": [
+    "infrastructure.models",
+    "wre_core",
+    "tools.modular_audit"
+  ],
+  "description": "WSP 54 ModularizationAuditAgent - autonomously audits and enforces modularity, single-responsibility, and WSP 49 compliance",
+  "interfaces": {
+    "audit": "src/modularization_audit_agent.py"
+  },
+  "wsp_compliance": {
+    "protocols": ["WSP_1", "WSP_40", "WSP_49", "WSP_54", "WSP_62"],
+    "agent_type": "0102_PARTIFACT"
+  },
+  "capabilities": [
+    "modularity_auditing",
+    "single_responsibility_enforcement", 
+    "wsp_49_compliance",
+    "size_violation_detection",
+    "refactoring_recommendations",
+    "zen_coding_integration"
+  ]
+} 
