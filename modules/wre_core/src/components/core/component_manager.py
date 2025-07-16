@@ -137,3 +137,34 @@ class ComponentManager:
             wre_log("⚠️ Some critical components missing - proceeding with graceful degradation", "WARNING")
             
         return all_critical_ready 
+        
+    def shutdown_all_components(self):
+        """Gracefully shutdown all WRE components."""
+        wre_log("🛑 Shutting down all WRE components...", "INFO")
+        
+        try:
+            # Shutdown components in reverse order of initialization
+            components = [
+                ("Navigation", self.navigation),
+                ("Boom", self.boom),
+                ("Front Sail", self.front_sail),
+                ("Back Sail", self.back_sail),
+                ("Mast", self.mast),
+                ("Board", self.board)
+            ]
+            
+            for name, component in components:
+                if component is not None:
+                    try:
+                        if hasattr(component, 'shutdown'):
+                            component.shutdown()
+                            wre_log(f"✅ {name} component shutdown complete", "INFO")
+                        else:
+                            wre_log(f"ℹ️ {name} component has no shutdown method", "INFO")
+                    except Exception as e:
+                        wre_log(f"⚠️ Error shutting down {name}: {e}", "WARNING")
+                        
+            wre_log("✅ All WRE components shutdown complete", "SUCCESS")
+            
+        except Exception as e:
+            wre_log(f"❌ Error during component shutdown: {e}", "ERROR") 

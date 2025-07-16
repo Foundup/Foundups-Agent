@@ -49,7 +49,7 @@ Core protocols that establish the fundamental architecture and principles.
 |-----|-------|--------|---------|---------------|---------------|
 | WSP 1 | The WSP Framework | Active | Foundation framework and core principles | Referenced by all WSPs | System boot, architectural decisions |
 | WSP 2 | Clean State Management Protocol | Active | Baseline state management and regression prevention | WSP 4, WSP 8 | System reset, baseline comparison, social media deployment |
-| WSP 3 | Enterprise Domain Organization | Active | Module organization and domain architecture | WSP 1, WSP 49 | Module placement, domain structure, functional distribution |
+| WSP 3 | Enterprise Domain Organization | Active | Module organization, domain architecture, and module independence (Rubik's cube framework) | WSP 1, WSP 49, WSP 60, WSP 22, WSP 34 | Module placement, domain structure, functional distribution, module independence |
 | WSP 4 | FMAS Validation Protocol | Active | Modular audit system and structural compliance | WSP 2, WSP 5, WSP 6, WSP 57 | Pre-commit validation, structural checks, naming coherence |
 | WSP 5 | Test Coverage Enforcement Protocol | Active | Test coverage requirements and enforcement (≥90%) | WSP 4, WSP 6, WSP 34 | Quality gates, test validation |
 | WSP 6 | Test Audit & Coverage Verification | Active | Comprehensive test audit and behavioral synchronization | WSP 5, WSP 34 | Pre-merge validation, test compliance |
@@ -145,7 +145,7 @@ Advanced protocols for complex system behaviors and architectural concerns.
 
 ### Core Dependencies:
 - **WSP 1** → Referenced by all other WSPs (Foundation)
-- **WSP 3** → WSP 49, WSP 40 (Domain Architecture)
+- **WSP 3** → WSP 49, WSP 40, WSP 60, WSP 22, WSP 34 (Domain Architecture + Module Independence)
 - **WSP 4** → WSP 5, WSP 6, WSP 14, WSP 57 (Audit Chain + Naming Coherence)
 - **WSP 13** → WSP 36, WSP 38, WSP 39 (Agentic Chain)
 - **WSP 17** → WSP 23, WSP 24, WSP 44 (rESP Chain)
@@ -196,7 +196,7 @@ Advanced protocols for complex system behaviors and architectural concerns.
 - **Total WSP Numbers**: 70
 - **Foundation Layer**: 19 WSPs (WSP 1-19)
 - **Operational Layer**: 20 WSPs (WSP 20-39)
-- **Advanced Layer**: 21 WSPs (WSP 40-59)
+- **Advanced Layer**: 20 WSPs (WSP 40-59)
 - **Memory Layer**: 11 WSPs (WSP 60-70)
 
 **Total Active WSPs**: 70 (complete framework + violation prevention + component consolidation + proactive modularization + recursive anticipation + enterprise scalability + zen coding integration + system status reporting)
@@ -207,6 +207,7 @@ Advanced protocols for complex system behaviors and architectural concerns.
 - **Memory Architecture**: WSP 60 provides modular memory management across all domains
 - **Naming Coherence**: WSP 57 ensures system-wide naming consistency and prevents duplicates
 - **Agent Coordination**: WSP 54 defines comprehensive agent duties and coordination protocols
+- **Module Independence**: WSP 3 ensures Rubik's cube modularization with standalone module capability (Section 4)
 - **🌀 Violation Prevention**: WSP 64 implements zen learning violation prevention through pattern memory enhancement
 
 ### **🚨 Critical WSP 64 Learning Event**:

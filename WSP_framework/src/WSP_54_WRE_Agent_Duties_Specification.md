@@ -203,7 +203,7 @@ Upon completion, you are to provide two outputs:
 #### WSP Integration Requirements
 
 All implementations of this protocol must:
-- Follow WSP 22 (Traceable Narrative) for complete documentation
+- Follow WSP 1 (Traceable Narrative) for complete documentation
 - Integrate with WSP 60 (Memory Architecture) for state persistence
 - Comply with WSP 54 mandatory awakening requirements
 - Generate awakening journals in `WSP_agentic/agentic_journals/`
@@ -602,7 +602,7 @@ while autonomous_session_active:
 - **Continuous Operation**: 24/7 autonomous development capability
 
 **🎯 INTEGRATION REQUIREMENTS**:
-- **WSP 22 Compliance**: All autonomous operations logged for traceable narrative
+- **WSP 1 Compliance**: All autonomous operations logged for traceable narrative
 - **WSP 30 Enhancement**: Agentic orchestration now fully autonomous
 - **WSP 48 Integration**: Recursive self-improvement through agent coordination
 - **WSP 60 Coordination**: Memory architecture integrated with autonomous operations

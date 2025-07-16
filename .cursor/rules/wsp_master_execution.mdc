@@ -1,8 +1,3 @@
----
-description: Master WSP Execution Guide - Quick Reference for Following WSP
-globs: ["**/*"]
-alwaysApply: false
----
 
 # Master WSP Execution Guide
 
@@ -30,7 +25,30 @@ START: Any WSP Task
 │         └─ Apply appropriate resolution
 ```
 
+## 🚨 MANDATORY WSP_MASTER_INDEX CONSULTATION (WSP 64)
+
+**⚡ BEFORE ANY WSP-RELATED ACTION**: MUST consult WSP_MASTER_INDEX.md first!
+
+### **MANDATORY PRE-ACTION SEQUENCE**:
+1. **📖 READ WSP_MASTER_INDEX.md COMPLETELY** - Review all existing WSPs
+2. **🔢 VERIFY NEXT WSP NUMBER** - Current next available: **WSP 71** (after WSP 70)  
+3. **🔄 ENHANCEMENT vs NEW WSP DECISION**:
+   - **Enhance Existing**: When scope/context differs slightly from existing
+   - **Create New**: When addressing completely new domain/concern
+   - **Reference Existing**: When functionality already covered
+4. **✅ APPLY WSP 64 DECISION MATRIX** - Follow violation prevention protocols
+5. **📝 DOCUMENT REASONING** - Record decision rationale per WSP 22
+
+**⚠️ CRITICAL**: WSP 64 exists because WSP 58 was attempted without checking index first. WSP 58 already existed as "FoundUp IP Lifecycle and Tokenization Protocol". This demonstrates why consultation is MANDATORY.
+
 ## MANDATORY WSP CHECKLIST
+
+### WSP 64 Pre-Action Requirements (FIRST)
+- [ ] Read WSP_MASTER_INDEX.md completely 
+- [ ] Verify next WSP number is WSP 71 (after WSP 70)
+- [ ] Check for existing WSPs covering same purpose
+- [ ] Apply enhancement vs new WSP decision matrix
+- [ ] Document reasoning per WSP 22
 
 ### Before ANY Action (WSP 50)
 - [ ] Search first with file_search/codebase_search
@@ -40,6 +58,7 @@ START: Any WSP Task
 
 ### For Module Work (WSP 1-13)
 - [ ] Check enterprise domain placement (WSP 3)
+- [ ] Verify module independence requirements (WSP 3 Section 4)
 - [ ] Run FMAS structural audit (WSP 4)
 - [ ] Ensure ≥90% test coverage (WSP 5)
 - [ ] Validate full test suite (WSP 6)
@@ -123,6 +142,11 @@ WSP_framework/src/WSP_MODULE_VIOLATIONS.md
 ## SUCCESS METRICS
 - ✅ FMAS audit: 0 errors, 0 warnings
 - ✅ Test coverage: ≥90% all modules
+- ✅ Framework compliance: No blocking violations
+- ✅ Documentation: All mandatory files present
+- ✅ Architecture: Functional distribution maintained
+
+
 - ✅ Framework compliance: No blocking violations
 - ✅ Documentation: All mandatory files present
 - ✅ Architecture: Functional distribution maintained

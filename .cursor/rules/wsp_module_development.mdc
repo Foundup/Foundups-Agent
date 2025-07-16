@@ -1,8 +1,3 @@
----
-description: WSP Module Development Workflow and Compliance
-globs: ["modules/**/*"]
-alwaysApply: false
----
 
 # WSP Module Development Workflow
 
@@ -37,6 +32,52 @@ Required WSP protocols for compliance:
 - **WSP 22**: Documentation and ModLog
 - **WSP 49**: Module structure
 - **WSP 60**: Memory architecture
+
+### 4. Module Independence Requirements (WSP 3 Section 4)
+**Rubik's Cube Framework**: Every module must function as independent LEGO piece before main.py integration.
+
+#### **MANDATORY INDEPENDENCE CRITERIA**:
+- **Standalone Execution**: Module operates without external module dependencies
+- **Clean Initialization**: Module initializes using only own resources and configuration
+- **Graceful Degradation**: Handles missing external services without crashing
+- **Resource Management**: Module manages own memory, connections, and cleanup
+
+#### **STANDARDIZED INDEPENDENCE INTERFACE**:
+Every module MUST implement these methods:
+```python
+class ModuleCore:
+    def validate_independence(self) -> bool:
+        """Verify module can operate independently"""
+        
+    def run_standalone_test(self) -> bool:
+        """Execute core functionality in isolation"""
+        
+    def check_dependencies(self) -> List[str]:
+        """Return list of external dependencies"""
+        
+    def graceful_shutdown(self) -> bool:
+        """Clean shutdown without external coordination"""
+```
+
+#### **INTEGRATION INTERFACE STANDARDS**:
+- **Clean APIs**: Well-defined public interfaces documented in INTERFACE.md
+- **Event Systems**: Pub/sub patterns for loose coupling with other modules
+- **Configuration Injection**: External configuration injected, not hardcoded
+- **Error Boundaries**: Module failures don't cascade to other modules
+
+#### **INDEPENDENCE TESTING PROTOCOL**:
+```bash
+# Phase 1: Isolation Testing
+cd modules/<domain>/<module_name>/
+python -m pytest tests/ --standalone-mode
+python -m src.main --test-independence
+
+# Phase 2: Dependency Validation
+python tools/modular_audit/modular_audit.py --check-dependencies
+
+# Phase 3: Integration Simulation  
+python -m tests.integration_simulation
+```
 
 ## Development Workflow
 
@@ -129,6 +170,11 @@ Document in ROADMAP.md:
 ### ✅ Success Patterns
 - **Functional Distribution**: Spread platform features across domains
 - **WSP-Guided Development**: Follow protocols before coding
+- **Complete Documentation**: All mandatory files from start
+- **Proper Domain Placement**: Match function to enterprise domain
+- **Memory Architecture**: Plan data persistence from design phase
+
+
 - **Complete Documentation**: All mandatory files from start
 - **Proper Domain Placement**: Match function to enterprise domain
 - **Memory Architecture**: Plan data persistence from design phase
