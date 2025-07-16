@@ -17,7 +17,7 @@ from enum import Enum
 
 # WRE Integration imports
 try:
-    from modules.wre_core.src.components.orchestration.prometheus_orchestration_engine import PrometheusOrchestrationEngine
+    from modules.wre_core.src.prometheus_orchestration_engine import PrometheusOrchestrationEngine
     from modules.wre_core.src.components.module_development.module_development_coordinator import ModuleDevelopmentCoordinator
     from modules.wre_core.src.components.utils.wre_logger import wre_log
     WRE_AVAILABLE = True
@@ -163,7 +163,7 @@ class YouTubeProxy:
             if self.wre_enabled:
                 wre_log(f"YouTube service initialization failed: {e}", level="ERROR")
 
-    def find_active_livestream(self, channel_id: str) -> Tuple[Optional[str], Optional[str]]:
+    async def find_active_livestream(self, channel_id: str) -> Tuple[Optional[str], Optional[str]]:
         """
         Finds the active livestream for a given YouTube channel with WRE orchestration.
         This reconstructs the logic from the missing StreamResolver module.

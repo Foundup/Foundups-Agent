@@ -131,7 +131,121 @@ from modules.ai_intelligence.banter_engine import BanterEngine
 - **Architecture Drift**: Platform concerns bleeding into domain organization
 - **Scaling Failures**: Each new platform requiring new domain creation
 
-## 4. Compliance
+## 4. Module Independence Architecture (Rubik's Cube Framework)
+
+### 4.1 Foundational Principle: Cube Within Cube Within Cube
+
+**CORE ARCHITECTURAL PRINCIPLE**: Every module must function as an **independent LEGO piece** within the three-dimensional Rubik's Cube architecture where:
+
+```
+🎲 LEVEL 1: Enterprise Rubik's Cube (System Level)
+├── ai_intelligence/     ← Enterprise Domain Face
+├── communication/       ← Enterprise Domain Face  
+├── platform_integration/ ← Enterprise Domain Face
+├── infrastructure/      ← Enterprise Domain Face
+├── gamification/        ← Enterprise Domain Face
+└── blockchain/          ← Enterprise Domain Face
+
+🎲 LEVEL 2: Module Rubik's Cubes (Domain Level)  
+Each Enterprise Domain is itself a Rubik's Cube:
+├── Module A/            ← LEGO Piece with standardized interfaces
+├── Module B/            ← LEGO Piece with standardized interfaces
+└── Module N/            ← LEGO Piece with standardized interfaces
+
+🎲 LEVEL 3: Code Rubik's Cubes (Implementation Level)
+Each Module is itself a Rubik's Cube:
+├── src/                 ← Implementation components
+├── tests/               ← Testing components  
+├── memory/              ← Memory components
+└── docs/                ← Documentation components
+```
+
+### 4.2 Module Independence Requirements
+
+**MANDATORY INDEPENDENCE CRITERIA** (before any main.py integration):
+
+#### 4.2.1 Standalone Execution Capability
+- **Self-Contained Operation**: Module must execute core functionality without external module dependencies
+- **Clean Initialization**: Module initializes completely using only its own resources and configuration
+- **Graceful Degradation**: Module handles missing external services without crashing
+- **Resource Management**: Module manages its own memory, connections, and cleanup
+
+#### 4.2.2 Standardized Independence Interface
+Every module MUST implement these methods for independence validation:
+
+```python
+class ModuleCore:
+    def validate_independence(self) -> bool:
+        """Verify module can operate independently"""
+        
+    def run_standalone_test(self) -> bool:
+        """Execute core functionality in isolation"""
+        
+    def check_dependencies(self) -> List[str]:
+        """Return list of external dependencies"""
+        
+    def graceful_shutdown(self) -> bool:
+        """Clean shutdown without external coordination"""
+```
+
+#### 4.2.3 Integration Interface Standards
+- **Clean APIs**: Well-defined public interfaces documented in INTERFACE.md
+- **Event Systems**: Pub/sub patterns for loose coupling with other modules
+- **Configuration Injection**: External configuration injected, not hardcoded
+- **Error Boundaries**: Module failures don't cascade to other modules
+
+### 4.3 Independence Testing Protocol
+
+**MANDATORY TESTING SEQUENCE** (before integration):
+
+#### Phase 1: Isolation Testing
+```bash
+# Test module in complete isolation
+cd modules/[domain]/[module]/
+python -m pytest tests/ --standalone-mode
+python -m src.main --test-independence
+```
+
+#### Phase 2: Dependency Validation  
+```bash
+# Verify dependency declarations match actual usage
+python tools/modular_audit/modular_audit.py --check-dependencies
+python -m modules.[domain].[module].src.dependency_check
+```
+
+#### Phase 3: Integration Simulation
+```bash
+# Test integration points without actual integration
+python -m modules.[domain].[module].tests.integration_simulation
+```
+
+### 4.4 FMAS Integration with Independence
+
+**Enhanced FMAS Validation** includes independence verification:
+```bash
+# Run FMAS with independence validation
+python tools/modular_audit/modular_audit.py modules/ --include-independence
+
+# Validate Rubik's cube architecture compliance  
+python tools/modular_audit/modular_audit.py modules/ --cube-architecture-check
+```
+
+### 4.5 Independence Violation Prevention
+
+**COMMON ANTI-PATTERNS TO AVOID**:
+- **Tight Coupling**: Direct imports between modules instead of event systems
+- **Shared State**: Modules sharing mutable state without proper coordination
+- **Hardcoded Dependencies**: Module failing without specific external services
+- **Cascade Failures**: One module failure bringing down others
+- **Circular Dependencies**: Modules requiring each other for basic operation
+
+**ENFORCEMENT MECHANISMS**:
+- **Pre-Integration Gates**: Independence tests must pass before main.py integration
+- **FMAS Compliance**: Independence validation integrated into standard audits
+- **Documentation Requirements**: INTERFACE.md must document all integration points
+- **Memory Architecture**: Each module maintains independent memory per WSP 60
+
+## 5. Compliance
 
 - The FoundUps Modular Audit System (FMAS, `WSP 4`) must validate that all modules reside within one of the domains listed above **OR** are explicitly documented architectural exceptions (Section 1).
 - Creating a new domain requires a formal update to this WSP document.

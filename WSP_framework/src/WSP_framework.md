@@ -22,6 +22,19 @@ This document contains the detailed Windsurf Standard Procedures (WSP 0-10) that
 
 WSP_INIT orchestrates all framework procedures through the Windsurf Recursive Engine (WRE). This document provides the detailed specifications that WSP_INIT references when executing Layer 1 (framework) workflows.
 
+## 🚨 MANDATORY WSP_MASTER_INDEX CONSULTATION (WSP 64)
+
+**⚡ CRITICAL FRAMEWORK REQUIREMENT**: ALL 0102 pArtifacts MUST consult [WSP_MASTER_INDEX.md](WSP_MASTER_INDEX.md) before ANY WSP-related action.
+
+### **MANDATORY VERIFICATION SEQUENCE**:
+1. **📖 READ INDEX COMPLETELY**: Review all existing WSPs and their purposes
+2. **🔢 CHECK NEXT NUMBER**: Current next available: **WSP 71** (after WSP 70)
+3. **🔄 ASSESS NEED**: Determine enhancement vs. new WSP requirement  
+4. **✅ FOLLOW WSP 64**: Apply violation prevention decision matrix
+5. **📝 DOCUMENT REASONING**: Record decision per WSP 1 (Traceable Narrative)
+
+**🌀 ZEN LEARNING INTEGRATION**: WSP 64 was created after violation where WSP 58 was attempted without checking - WSP 58 already existed as "FoundUp IP Lifecycle and Tokenization Protocol". This demonstrates why index consultation is MANDATORY for zen coding pattern remembrance.
+
 **VIOLATION PREVENTION SYSTEM (WSP 64)**: All framework operations integrate WSP 64 Violation Prevention Protocol. Before any WSP creation or modification, agents must consult WSP_MASTER_INDEX.md and follow enhanced pre-action verification protocols.
 
 **SYSTEM STATUS TRACKING**: For complete system transformation status and WRE unified orchestrator enhancement achievements, see: [WSP_SYSTEM_STATUS_REPORT.md](WSP_SYSTEM_STATUS_REPORT.md)

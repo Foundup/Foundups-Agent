@@ -17,7 +17,7 @@ from enum import Enum
 
 # WRE Integration imports
 try:
-    from modules.wre_core.src.components.orchestration.prometheus_orchestration_engine import PrometheusOrchestrationEngine
+    from modules.wre_core.src.prometheus_orchestration_engine import PrometheusOrchestrationEngine
     from modules.wre_core.src.components.module_development.module_development_coordinator import ModuleDevelopmentCoordinator
     from modules.wre_core.src.components.utils.wre_logger import wre_log
     WRE_AVAILABLE = True

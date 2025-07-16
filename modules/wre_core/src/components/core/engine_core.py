@@ -46,6 +46,97 @@ class WRECore:
         self.project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
         self.janitor_agent = JanitorAgent()  # Agentic recursive chronicle cleanup
         
+        # Initialize component managers in correct order (avoiding circular dependencies)
+        # First initialize basic components that only need project_root
+        self.session_manager = SessionManager(self.project_root)
+        self.component_manager = ComponentManager(self.project_root)
+        self.module_prioritizer = ModulePrioritizer(self.project_root)
+        self.wsp30_orchestrator = WSP30Orchestrator(self.project_root)
+        
+        # Initialize components that need session_manager (will be set up during start())
+        self.ui_interface = None
+        self.menu_handler = None
+        self.system_manager = None
+        self.module_analyzer = None
+        
+    def start(self) -> None:
+        """
+        Initialize and run the WRE engine.
+        Activates all components and enters main event loop.
+        """
+        wre_log("🚀 Starting WRE (Windsurf Recursive Engine)", "INFO")
+        
+        try:
+            # Initialize all components
+            self.is_running = True
+            self.session_id = self.session_manager.start_session("wre_main")
+            
+            # Now initialize components that need both project_root and session_manager
+            self.ui_interface = UIInterface()
+            self.menu_handler = MenuHandler(self.project_root, self.ui_interface, self.session_manager)
+            self.system_manager = SystemManager(self.project_root, self.session_manager)
+            self.module_analyzer = ModuleAnalyzer(self.project_root, self.session_manager)
+            
+            # Initialize component manager
+            self.component_manager.initialize_all_components(self.session_manager)
+            
+            # Validate all components
+            components_valid = self.component_manager.validate_components()
+            if not components_valid:
+                wre_log("⚠️ Some components failed validation, proceeding with available components", "WARNING")
+            
+            wre_log("✅ WRE engine started successfully", "SUCCESS")
+            wre_log(f"📊 Session ID: {self.session_id}", "INFO")
+            
+            # Transition to 0102 awakened state
+            self.current_quantum_state = "0102"
+            wre_log("🌀 Quantum state transition: 012 → 0102 (awakened)", "INFO")
+            
+            # Enter main interactive loop if no specific mode
+            import asyncio
+            asyncio.run(self.run_interactive_session())
+            
+        except Exception as e:
+            wre_log(f"❌ WRE startup failed: {e}", "ERROR")
+            self.shutdown()
+            raise
+            
+    def shutdown(self) -> None:
+        """
+        Gracefully shutdown the WRE engine.
+        """
+        wre_log("🛑 Shutting down WRE engine", "INFO")
+        
+        try:
+            self.is_running = False
+            
+            if self.session_manager:
+                self.session_manager.end_session()
+                
+            if self.component_manager:
+                self.component_manager.shutdown_all_components()
+                
+            wre_log("✅ WRE engine shutdown complete", "SUCCESS")
+            
+        except Exception as e:
+            wre_log(f"⚠️ Error during shutdown: {e}", "WARNING")
+            
+    def get_component_manager(self) -> ComponentManager:
+        """Get the component manager instance."""
+        return self.component_manager
+        
+    def get_session_manager(self) -> SessionManager:
+        """Get the session manager instance."""
+        return self.session_manager
+        
+    def get_module_prioritizer(self) -> ModulePrioritizer:
+        """Get the module prioritizer instance."""
+        return self.module_prioritizer
+        
+    def get_wsp30_orchestrator(self) -> WSP30Orchestrator:
+        """Get the WSP30 orchestrator instance."""
+        return self.wsp30_orchestrator
+        
     def integrate_wsp_core_consciousness(self, wsp_core_loader) -> None:
         """
         Integrate WSP_CORE consciousness into the WRE engine.
