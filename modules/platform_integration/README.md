@@ -8,6 +8,36 @@
 
 ---
 
+## 🎲 **Block Architecture Integration (WSP Level 4)**
+
+**ENHANCEMENT**: The platform_integration domain modules organize into **four standalone blocks** that can run independently while integrating seamlessly with WRE:
+
+### **🎬 YouTube Block Components (This Domain)**
+**Standalone YouTube Engagement System** - 3 of 8 total block modules located here:
+- **[`youtube_proxy/`](youtube_proxy/README.md)** - 🎯 **Block Orchestration Hub** - Unified YouTube interface
+- **[`youtube_auth/`](youtube_auth/README.md)** - 🔐 OAuth credential management for YouTube APIs
+- **[`stream_resolver/`](stream_resolver/README.md)** - 🎥 Stream discovery and metadata management
+
+*Additional YouTube Block modules in other domains: communication/livechat, communication/live_chat_poller, communication/live_chat_processor, ai_intelligence/banter_engine, infrastructure/oauth_management*
+
+### **💼 LinkedIn Block Components (This Domain)**
+**Standalone Professional Networking System** - Complete 3-module block:
+- **[`linkedin_agent/`](linkedin_agent/README.md)** - 🎯 **Block Core** - Professional networking automation
+- **[`linkedin_proxy/`](linkedin_proxy/README.md)** - 🔗 LinkedIn API gateway and interface management
+- **[`linkedin_scheduler/`](linkedin_scheduler/README.md)** - 📅 Content scheduling and timing optimization
+
+### **🐦 X/Twitter Block Components (This Domain)**
+**Standalone Social Media Engagement System** - Complete 1-module block:
+- **[`x_twitter/`](x_twitter/README.md)** - 🎯 **Complete DAE** - Full autonomous communication node
+
+### **🔨 Remote Builder Block Components (This Domain)**
+**Standalone Remote Development System** - Complete 1-module block:
+- **[`remote_builder/`](remote_builder/README.md)** - 🎯 **Complete System** - Core remote development workflows and APIs
+
+**Block Independence Principle**: Each block can operate standalone while the domain provides shared platform integration expertise and patterns.
+
+---
+
 ## 🎯 Enterprise Architecture Philosophy
 
 This domain follows **enterprise-scale modular architecture** where:
