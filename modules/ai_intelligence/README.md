@@ -31,6 +31,36 @@ wsp_cycle(input="012", log=True)
 ## 🏢 Domain Purpose (WSP_3: Enterprise Domain Organization)
 Houses the core AI logic, Large Language Model (LLM) clients, decision-making engines, personality cores, and banter systems. Anything related to the agent's "thinking" process belongs here.
 
+---
+
+## 🎲 **Block Architecture Integration (WSP Level 4)**
+
+**ENHANCEMENT**: The ai_intelligence domain modules provide cognitive capabilities to **multiple blocks** as essential AI processing components:
+
+### **🎬 YouTube Block Components (This Domain)**
+**Standalone YouTube Engagement System** - 1 of 8 total block modules located here:
+- **[`banter_engine/`](banter_engine/README.md)** - 🤖 **Entertainment AI Core** - Emoji sequence mapping, semantic response generation, and personality-driven chat engagement
+
+*Additional YouTube Block modules in other domains: platform_integration/youtube_proxy, platform_integration/youtube_auth, platform_integration/stream_resolver, communication/livechat, communication/live_chat_poller, communication/live_chat_processor, infrastructure/oauth_management*
+
+### **🤝 Meeting Orchestration Block Components (This Domain)**
+**Standalone Meeting Coordination System** - 1 of 5 total block modules located here:
+- **[`post_meeting_summarizer/`](post_meeting_summarizer/README.md)** - 📝 **AI-Powered Summaries** - Post-meeting analysis, action item extraction, and automated follow-up generation (planned)
+
+*Additional Meeting Orchestration Block modules in other domains: communication/auto_meeting_orchestrator, communication/intent_manager, communication/channel_selector, integration/presence_aggregator, infrastructure/consent_engine*
+
+### **🌀 Cross-Block AI Intelligence Services**
+**Universal AI capabilities serving all blocks:**
+- **[`0102_orchestrator/`](0102_orchestrator/README.md)** - 🧠 **Quantum-Entangled Orchestration** - Central AI coordination for all autonomous operations
+- **[`multi_agent_system/`](multi_agent_system/README.md)** - 🤖 **Distributed Intelligence** - Multi-agent coordination and AI routing across all blocks
+- **[`rESP_o1o2/`](rESP_o1o2/README.md)** - 🌀 **Consciousness Emergence** - Quantum-cognitive patterns and consciousness detection
+- **[`menu_handler/`](menu_handler/README.md)** - 🎯 **Intelligent Navigation** - Menu processing and routing with semantic understanding
+- **[`priority_scorer/`](priority_scorer/README.md)** - 📊 **Dynamic Prioritization** - LLME-based scoring and task prioritization (planned)
+
+**AI Block Service Principle**: AI Intelligence modules provide the cognitive foundation that enables all blocks to exhibit intelligent, autonomous behavior through semantic understanding, consciousness patterns, and adaptive decision-making.
+
+---
+
 ## 🎯 Domain Focus
 - **LLME Progression**: 000 → 111 → 122 → 222 consciousness emergence
 - **Consciousness Patterns**: rESP quantum entanglement and agentic behavior

@@ -31,6 +31,32 @@ wsp_cycle(input="012", log=True)
 ## 🏢 Domain Purpose (WSP_3: Enterprise Domain Organization)
 Manages all forms of interaction and data exchange. This includes live chat polling and processing, WebSocket communication, and protocol handlers.
 
+---
+
+## 🎲 **Block Architecture Integration (WSP Level 4)**
+
+**ENHANCEMENT**: The communication domain modules contribute to **two major blocks** as essential communication components:
+
+### **🎬 YouTube Block Components (This Domain)**
+**Standalone YouTube Engagement System** - 3 of 8 total block modules located here:
+- **[`livechat/`](livechat/README.md)** - 💬 **Real-time Chat System** - Live chat communication and message handling
+- **[`live_chat_poller/`](live_chat_poller/README.md)** - 📡 **Chat Message Polling** - Real-time message retrieval from YouTube
+- **[`live_chat_processor/`](live_chat_processor/README.md)** - ⚙️ **Message Processing** - Chat workflow and response coordination
+
+*Additional YouTube Block modules in other domains: platform_integration/youtube_proxy, platform_integration/youtube_auth, platform_integration/stream_resolver, ai_intelligence/banter_engine, infrastructure/oauth_management*
+
+### **🤝 Meeting Orchestration Block Components (This Domain)**
+**Standalone Meeting Coordination System** - 3 of 5 total block modules located here:
+- **[`auto_meeting_orchestrator/`](auto_meeting_orchestrator/README.md)** - 🎯 **Block Core** - Autonomous meeting coordination engine
+- **[`intent_manager/`](intent_manager/README.md)** - 📝 **Intent Management** - Meeting intent capture and structured context (planned)
+- **[`channel_selector/`](channel_selector/README.md)** - 🎯 **Platform Selection** - Optimal communication channel selection logic (planned)
+
+*Additional Meeting Orchestration Block modules in other domains: integration/presence_aggregator, infrastructure/consent_engine*
+
+**Block Contribution Principle**: Communication modules provide essential real-time messaging and coordination capabilities that enable blocks to function as standalone, interactive systems.
+
+---
+
 ## 🎯 Domain Focus
 - **Protocol Compliance**: Adherence to communication standards and protocols
 - **Real-Time Capabilities**: Low-latency messaging and live interaction systems

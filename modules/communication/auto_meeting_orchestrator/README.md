@@ -2,10 +2,47 @@
 
 **Eliminates manual scheduling friction through cross-platform emergent meeting orchestration**
 
+---
+
+## 🎲 **Meeting Orchestration Block Core (WSP Level 4)**
+
+**BLOCK ARCHITECTURE ROLE**: This module serves as the **🎯 Core Engine** for the complete **Meeting Orchestration Block** - one of five standalone FoundUps Platform Blocks.
+
+### **🤝 Meeting Orchestration Block Overview**
+**Standalone Meeting Coordination System** - Complete 5-module block for autonomous meeting orchestration:
+
+#### **Block Components Coordinated by This Core:**
+- **🎯 [`auto_meeting_orchestrator/`](README.md)** - **THIS MODULE** - Core autonomous meeting coordination engine
+- **📊 [`integration/presence_aggregator/`](../../integration/presence_aggregator/README.md)** - Multi-platform presence detection and aggregation
+- **📝 [`intent_manager/`](../intent_manager/README.md)** - Meeting intent capture and structured context (planned)
+- **🎯 [`channel_selector/`](../channel_selector/README.md)** - Optimal communication platform selection logic (planned)
+- **✅ [`infrastructure/consent_engine/`](../../infrastructure/consent_engine/README.md)** - Meeting consent and approval workflows (planned)
+
+### **🔗 Block Independence & Integration**
+- **✅ Standalone Operation**: Meeting Orchestration Block functions completely independently of other blocks
+- **⚡ WRE Integration**: Seamless plugging into Windsurf Recursive Engine system  
+- **🔄 Hot-Swappable**: Block can be upgraded or replaced without affecting other blocks
+- **🎯 Complete Functionality**: Intent-driven coordination, presence aggregation, autonomous setup, anti-gaming protection
+
+**Block Status**: ✅ **POC COMPLETE** (85% complete, P2 priority for core collaboration)
+
+---
+
 [![WSP Compliant](https://img.shields.io/badge/WSP-Compliant-green.svg)](../../WSP_framework/src/WSP_1_The_WSP_Framework.md)
 [![Version](https://img.shields.io/badge/version-v0.0.1-blue.svg)](./ROADMAP.md)
 [![Phase](https://img.shields.io/badge/phase-PoC-orange.svg)](./ROADMAP.md)
 [![Domain](https://img.shields.io/badge/domain-communication-purple.svg)](../README.md)
+
+## 🧩 Communication LEGO Block Architecture
+The Autonomous Meeting Orchestrator operates as a **self-contained communication LEGO block** within the FoundUps Rubik's Cube module system. It exemplifies perfect modularity by handling all meeting orchestration independently while snapping seamlessly with presence detection, calendar management, and notification modules.
+
+**Communication LEGO Block Principles:**
+- **🎯 Meeting-Focused**: Laser-focused solely on meeting orchestration within communication domain
+- **🔌 Presence Integration**: Snaps cleanly with platform presence detection modules  
+- **⚡ Autonomous Orchestration**: Complete meeting coordination without external module dependencies
+- **🔗 Cross-Platform APIs**: Standard interfaces for calendar, notification, and presence modules
+- **🔄 Hot-Swappable Coordination**: Can be upgraded while maintaining integration with other modules
+- **🎭 Zero Duplication**: Orchestrates existing modules rather than duplicating their functionality
 
 ## 🎯 Vision
 
