@@ -3,7 +3,36 @@
 
 ## Pre-Development Analysis (MANDATORY)
 
-### 1. Agentic Modularity Question (FIRST STEP)
+### 0. WSP 50 Module Pre-Action Verification (FIRST STEP - MANDATORY)
+**🚨 CRITICAL: Before ANY module development work, follow WSP 50 verification:**
+
+#### **MANDATORY MODULE ASSESSMENT SEQUENCE**:
+```
+1. list_dir() - Check complete module structure
+2. read_file() - Read existing README.md, INTERFACE.md, and ModLog.md  
+3. codebase_search() - Search for existing implementations
+4. file_search() - Locate all related source files
+5. read_file() - Read existing source files COMPLETELY
+6. ONLY THEN determine enhancement vs. new development approach
+```
+
+**⚠️ CRITICAL: INTERFACE.md Reading (WSP 11 + WSP 32)**
+- **WSP 11 Requirement**: Every module MUST have INTERFACE.md with public API definitions
+- **WSP 32 Reading Flow**: INTERFACE.md provides method signatures, integration patterns, error conditions
+- **Pre-Coding Essential**: Understanding existing APIs prevents interface contract violations
+- **0102 Flow Optimization**: Rapid API comprehension enables informed enhancement decisions
+
+#### **REQUIRED MODULE VERIFICATION CHECKLIST**:
+- [ ] **Existing Implementation Check**: Search for similar functionality in module
+- [ ] **Architecture Analysis**: Read existing core files (engine, trigger, etc.)
+- [ ] **Integration Assessment**: Determine enhancement vs. replacement approach  
+- [ ] **WSP Compliance**: Verify approach follows WSP 47 (Module Evolution)
+- [ ] **Documentation Review**: Read existing README, INTERFACE, ModLog, ROADMAP
+- [ ] **Enhancement Strategy**: Plan integration with existing systems
+
+**⚠️ WSP VIOLATION PREVENTION**: This step prevents creating duplicate implementations without reading existing module architecture (rESP Module Violation case study in WSP Core Framework).
+
+### 1. Agentic Modularity Question (SECOND STEP)
 **"Should this be a module or be added to an existing module?"**
 
 **Decision Matrix**:
@@ -31,6 +60,7 @@ Required WSP protocols for compliance:
 - **WSP 12**: Dependency management
 - **WSP 22**: Documentation and ModLog
 - **WSP 49**: Module structure
+- **WSP 50**: Pre-Action Verification (COMPLETED in Step 0)
 - **WSP 60**: Memory architecture
 
 ### 4. Module Independence Requirements (WSP 3 Section 4)
@@ -156,6 +186,30 @@ Document in ROADMAP.md:
 - [ ] Full test suite passes (WSP 6)
 - [ ] Documentation complete and accurate
 - [ ] ModLog updated with all changes
+- [ ] Integration tested with dependent modules
+
+## Anti-Pattern Prevention
+
+### ❌ Architectural Violations
+- **Platform Consolidation**: Never create platform-specific domains
+- **Code-First Development**: Never write code before WSP analysis
+- **Incomplete Documentation**: Never skip mandatory documentation
+- **Domain Confusion**: Never place modules in wrong domains
+- **Memory Neglect**: Never skip memory architecture
+
+### ✅ Success Patterns
+- **Functional Distribution**: Spread platform features across domains
+- **WSP-Guided Development**: Follow protocols before coding
+- **Complete Documentation**: All mandatory files from start
+- **Proper Domain Placement**: Match function to enterprise domain
+- **Memory Architecture**: Plan data persistence from design phase
+
+
+- **Complete Documentation**: All mandatory files from start
+- **Proper Domain Placement**: Match function to enterprise domain
+- **Memory Architecture**: Plan data persistence from design phase
+
+
 - [ ] Integration tested with dependent modules
 
 ## Anti-Pattern Prevention
