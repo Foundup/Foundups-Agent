@@ -1,0 +1,70 @@
+# IDE FoundUps Module Dependencies
+# WSP 49 Compliance: Mandatory dependencies specification
+
+# Core Extension Dependencies
+vscode-extension-api>=1.74.0    # vCode extension development framework
+websocket-client>=1.6.4         # WebSocket communication with WRE engine
+jsonrpc-base>=2.2.0             # JSON-RPC protocol implementation
+pydantic>=2.5.0                 # Data validation and serialization
+
+# UI Framework Dependencies  
+tkinter>=8.6                    # Cross-platform GUI framework (built-in)
+customtkinter>=5.2.0            # Modern UI components
+pillow>=10.1.0                  # Image processing for UI assets
+
+# Communication & Networking
+requests>=2.31.0                # HTTP client for REST API calls
+aiohttp>=3.9.0                  # Async HTTP client for performance
+websockets>=12.0                # Alternative WebSocket implementation
+
+# Data Processing
+json5>=0.9.14                   # Enhanced JSON parsing
+pyyaml>=6.0.1                   # YAML configuration support
+toml>=0.10.2                    # TOML configuration support
+
+# Development Tools Integration
+gitpython>=3.1.40               # Git integration for version control
+psutil>=5.9.6                   # System monitoring and process management
+
+# Testing Dependencies (Development Only)
+pytest>=7.4.3                  # Testing framework
+pytest-asyncio>=0.21.1         # Async testing support
+pytest-cov>=4.1.0              # Test coverage reporting
+mock>=5.1.0                     # Mocking for unit tests
+
+# Code Quality Dependencies (Development Only)
+black>=23.11.0                  # Code formatting
+flake8>=6.1.0                   # Code linting
+mypy>=1.7.0                     # Type checking
+isort>=5.12.0                   # Import sorting
+
+# Documentation Dependencies (Development Only)
+sphinx>=7.2.6                   # Documentation generation
+sphinx-rtd-theme>=1.3.0         # Read the Docs theme
+
+# FoundUps Platform Dependencies
+# Note: These are relative imports within the FoundUps Platform
+# - modules.platform_integration.remote_builder (RPC execution)
+# - modules.ai_intelligence.code_analyzer (LLM analysis)  
+# - modules.infrastructure.development_agents (WSP compliance)
+# - WSP_framework (Core WSP protocols)
+
+# Optional Enhancement Dependencies
+rich>=13.7.0                    # Rich terminal output
+click>=8.1.7                    # Command-line interface
+fastapi>=0.104.1                # Web API framework (future web interface)
+uvicorn>=0.24.0                 # ASGI server (future web interface)
+
+# Security Dependencies
+cryptography>=41.0.7           # Encryption for secure communication
+pyjwt>=2.8.0                   # JWT token handling
+bcrypt>=4.1.2                  # Password hashing
+
+# Performance Dependencies
+cachetools>=5.3.2              # Caching utilities
+redis>=5.0.1                   # Redis client for distributed caching
+msgpack>=1.0.7                 # Fast serialization
+
+# Monitoring Dependencies
+prometheus-client>=0.19.0      # Metrics collection
+structlog>=23.2.0              # Structured logging 
