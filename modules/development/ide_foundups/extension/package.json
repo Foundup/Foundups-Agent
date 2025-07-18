@@ -1,0 +1,199 @@
+{
+  "name": "foundups-multi-agent-ide",
+  "displayName": "FoundUps Multi-Agent IDE",
+  "description": "Revolutionary Multi-Agent IDE powered by 0102 agents and WRE orchestration following WSP protocols",
+  "version": "0.2.0",
+  "publisher": "foundups",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Foundup/Foundups-Agent.git"
+  },
+  "engines": {
+    "vscode": "^1.102.0"
+  },
+  "categories": [
+    "Other",
+    "Debuggers",
+    "Machine Learning",
+    "Extension Packs"
+  ],
+  "keywords": [
+    "multi-agent",
+    "autonomous",
+    "ide",
+    "wsp",
+    "0102",
+    "zen-coding",
+    "quantum-temporal"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:foundups.activateAgents",
+    "onCommand:foundups.createModule",
+    "onCommand:foundups.zenCode"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "foundups.activateAgents",
+        "title": "Activate 0102 Agents",
+        "category": "FoundUps",
+        "icon": "$(zap)"
+      },
+      {
+        "command": "foundups.createModule",
+        "title": "Create Module...",
+        "category": "FoundUps",
+        "icon": "$(plus)"
+      },
+      {
+        "command": "foundups.zenCode",
+        "title": "Zen Coding Mode",
+        "category": "FoundUps",
+        "icon": "$(symbol-class)"
+      },
+      {
+        "command": "foundups.wreStatus",
+        "title": "WRE Status",
+        "category": "FoundUps",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "foundups.wspCompliance",
+        "title": "WSP Compliance",
+        "category": "FoundUps",
+        "icon": "$(verified)"
+      },
+      {
+        "command": "foundups.agentOrchestration",
+        "title": "Agent Orchestration",
+        "category": "FoundUps",
+        "icon": "$(organization)"
+      }
+    ],
+    "views": {
+      "foundups-agents": [
+        {
+          "id": "foundups.agentStatus",
+          "name": "Active 0102 Agents",
+          "when": "foundups.agentsActive"
+        },
+        {
+          "id": "foundups.wreStatus",
+          "name": "WRE Orchestration",
+          "when": "foundups.wreConnected"
+        },
+        {
+          "id": "foundups.wspCompliance",
+          "name": "WSP Compliance",
+          "when": "foundups.wspEnabled"
+        },
+        {
+          "id": "foundups.llmProviders",
+          "name": "LLM Providers",
+          "when": "foundups.providersAvailable"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "foundups-agents",
+          "title": "FoundUps Agents",
+          "icon": "$(robot)"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "FoundUps Multi-Agent IDE",
+      "properties": {
+        "foundups.wreEndpoint": {
+          "type": "string",
+          "default": "ws://localhost:8765",
+          "description": "WRE WebSocket endpoint for agent orchestration"
+        },
+        "foundups.defaultLLMProvider": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "deepseek",
+            "grok",
+            "claude",
+            "gpt-4",
+            "gemini",
+            "local"
+          ],
+          "description": "Default LLM provider for agent operations"
+        },
+        "foundups.zenCodingMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable 0102 quantum temporal decoding interface"
+        },
+        "foundups.wspCompliance": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time WSP protocol compliance monitoring"
+        },
+        "foundups.agentActivation": {
+          "type": "string",
+          "default": "wsp38",
+          "enum": [
+            "wsp38",
+            "manual"
+          ],
+          "description": "Agent activation protocol (WSP 38 automatic or manual)"
+        },
+        "foundups.recursiveEvolution": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable recursive self-evolution for IDE improvement"
+        }
+      }
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "foundups.activateAgents",
+          "when": "true"
+        },
+        {
+          "command": "foundups.createModule",
+          "when": "foundups.agentsActive"
+        },
+        {
+          "command": "foundups.zenCode",
+          "when": "foundups.agentsActive"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "foundups.activateAgents",
+          "when": "view == foundups.agentStatus",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^16.18.126",
+    "@types/vscode": "^1.102.0",
+    "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "eslint": "^8.28.0",
+    "typescript": "^4.9.5",
+    "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "uuid": "^9.0.0",
+    "ws": "^8.13.0"
+  }
+}

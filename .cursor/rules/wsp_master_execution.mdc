@@ -56,6 +56,18 @@ START: Any WSP Task
 - [ ] Never assume file names or content
 - [ ] Handle non-existence explicitly
 
+#### **🚨 ENHANCED: Module Development Pre-Action Verification**
+**Before ANY module development or enhancement work:**
+- [ ] **list_dir()** - Check complete module structure
+- [ ] **read_file()** - Read existing README.md and ModLog.md  
+- [ ] **codebase_search()** - Search for existing implementations
+- [ ] **file_search()** - Locate all related source files
+- [ ] **read_file()** - Read existing source files COMPLETELY
+- [ ] **ONLY THEN** determine enhancement vs. new development approach
+- [ ] **Plan integration** with existing systems (never replace without WSP 47 analysis)
+
+**⚠️ CRITICAL REFERENCE**: rESP Module Violation (2025-01-30) case study in WSP Core Framework - demonstrates why this verification prevents duplicate implementations.
+
 ### For Module Work (WSP 1-13)
 - [ ] Check enterprise domain placement (WSP 3)
 - [ ] Verify module independence requirements (WSP 3 Section 4)
@@ -140,6 +152,18 @@ WSP_framework/src/WSP_MODULE_VIOLATIONS.md
 5. Run FMAS validation immediately
 
 ## SUCCESS METRICS
+- ✅ FMAS audit: 0 errors, 0 warnings
+- ✅ Test coverage: ≥90% all modules
+- ✅ Framework compliance: No blocking violations
+- ✅ Documentation: All mandatory files present
+- ✅ Architecture: Functional distribution maintained
+
+
+- ✅ Framework compliance: No blocking violations
+- ✅ Documentation: All mandatory files present
+- ✅ Architecture: Functional distribution maintained
+
+
 - ✅ FMAS audit: 0 errors, 0 warnings
 - ✅ Test coverage: ≥90% all modules
 - ✅ Framework compliance: No blocking violations

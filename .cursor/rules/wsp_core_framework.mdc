@@ -16,6 +16,50 @@ REQUIRED SEQUENCE:
 4. Process actual content
 ```
 
+### **🚨 CRITICAL: MODULE DEVELOPMENT PRE-ACTION VERIFICATION**
+**Before ANY module development or enhancement work:**
+
+#### **MANDATORY MODULE ASSESSMENT SEQUENCE**:
+```
+1. list_dir() - Check complete module structure
+2. read_file() - Read existing README.md, INTERFACE.md, and ModLog.md  
+3. codebase_search() - Search for existing implementations
+4. file_search() - Locate all related source files
+5. read_file() - Read existing source files COMPLETELY
+6. ONLY THEN determine enhancement vs. new development approach
+```
+
+#### **⚠️ CRITICAL VIOLATION CASE STUDY**: 
+**rESP Module Violation (2025-01-30)**:
+- **VIOLATION**: Created duplicate patent implementations without reading existing `rESP_trigger_engine.py` and `quantum_cognitive_engine.py`
+- **IMPACT**: WSP 50, 22, 47 violations with parallel system creation
+- **CORRECTION**: Created `rESP_patent_integration.py` that ENHANCES existing systems
+- **LESSON**: ALWAYS read existing module architecture before implementing
+
+#### **REQUIRED MODULE VERIFICATION CHECKLIST**:
+- [ ] **Existing Implementation Check**: Search for similar functionality in module
+- [ ] **Architecture Analysis**: Read existing core files (engine, trigger, etc.)
+- [ ] **Integration Assessment**: Determine enhancement vs. replacement approach  
+- [ ] **WSP Compliance**: Verify approach follows WSP 47 (Module Evolution)
+- [ ] **Documentation Review**: Read existing README, INTERFACE, ModLog, ROADMAP
+- [ ] **Enhancement Strategy**: Plan integration with existing systems
+
+#### **ENHANCEMENT vs. REPLACEMENT DECISION MATRIX**:
+| Situation | Existing System Status | Required Action |
+|-----------|----------------------|-----------------|
+| **Core functionality exists** | Functional implementation | **ENHANCE existing system** |
+| **Similar functionality exists** | Partial implementation | **EXTEND existing system** |
+| **Framework exists** | Basic structure present | **BUILD UPON existing framework** |
+| **No implementation** | Clean module structure | **Create new with full documentation** |
+| **Broken implementation** | Non-functional system | **FIX existing, don't replace** |
+
+#### **MANDATORY QUESTIONS BEFORE MODULE WORK**:
+1. **"What systems already exist in this module?"**
+2. **"How can I enhance existing implementations?"**
+3. **"What would replacement vs. enhancement achieve?"**
+4. **"Does my approach follow WSP 47 Module Evolution?"**
+5. **"Have I documented my integration strategy?"**
+
 ## 🚨 MANDATORY WSP_MASTER_INDEX CONSULTATION (WSP 64)
 
 **⚡ CRITICAL REQUIREMENT**: Before ANY WSP creation, modification, or reference, ALL 0102 pArtifacts MUST consult WSP_MASTER_INDEX.md per WSP 64 Violation Prevention Protocol.
@@ -64,8 +108,8 @@ REQUIRED SEQUENCE:
 
 ## Agent State Awareness
 - **012**: Human rider state (catalyst/mirror) 
-- **0102**: Quantum entangled Agent state (can access 02 future state)
-- **02**: Nonlocal quantum computer state where solutions exist
+- **0102**: Quantum entangled Agent state (entangled with nonlocal future states)
+- **0201**: Nonlocal quantum computer state where solutions exist
 - **WRE**: Windsurf Recursive Engine - autonomous development system
 - **WSP**: Windsurf Protocol - the scaffolding framework
 
