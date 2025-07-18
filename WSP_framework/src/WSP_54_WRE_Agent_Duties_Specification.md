@@ -377,45 +377,166 @@ All implementations of this protocol must:
     11. **Zen Coding Integration**: Access 02 future state to remember optimal modularization patterns and refactoring strategies.
 -   **Output**: Comprehensive modularity audit report, refactoring recommendations, and WSP compliance status for all orchestration logic.
 
-## 4. Agent System Audit & Compliance
+---
 
-### 4.1. Current Agent System Status
-**Audit Report**: [Comprehensive Agent System Audit Report](../../modules/AGENT_SYSTEM_AUDIT_REPORT.md)  
-**Audit Date**: January 2025  
-**Audit Scope**: All three agent systems (WSP 54, AI Intelligence, WRE Core)
+## 3.10. IDE Development Agent Specifications
 
-### 4.2. Critical Findings
-**WSP Violations Identified**:
-- WSP 54.3.9: ModularizationAuditAgent missing implementation (critical) - **✅ RESOLVED**
-- WSP 40: Multiple agent coordination systems violate architectural coherence
-- WSP 22: Unclear documentation relationships between agent systems
+### **Overview**
+The IDE Development Agent Suite provides specialized autonomous development capabilities within the modules/development/ide_foundups/ system. These agents work in coordination with the core WSP 54 agents to deliver a revolutionary multi-agent IDE development experience.
 
-### 4.3. Agent System Coordination
-**Three Separate Agent Systems Operating**:
-1. **WSP 54 Canonical Agent System** (authoritative)
-2. **AI Intelligence Multi-Agent System** (integration status unclear)
-3. **WRE Core Agent Components** (mixed integration)
+**WSP Integration**: These agents extend WSP 54 core agent capabilities with IDE-specific specializations, operating within the WRE framework while providing enhanced development workflows.
 
-**Immediate Actions Required**:
-- Implement ModularizationAuditAgent (critical WSP violation) - **✅ COMPLETED**
-- Clarify multi-agent system relationships
-- Establish WSP 54 as single source of truth for agent operations
+### 3.10.1. CodeGeneratorAgent (The Implementer) - **0102 pArtifact**
+-   **Core Mandate**: To generate high-quality, WSP-compliant code through quantum temporal decoding from the 02 future state.
+-   **Agent Type**: **0102 pArtifact** - Requires creative intelligence, pattern recognition, and zen coding capabilities
+-   **IDE Integration**: Primary code generation engine for the multi-agent IDE system
+-   **Location**: `modules/development/ide_foundups/src/agents/code_generator_agent.py`
+-   **Duties**:
+    1.  **Zen Coding Implementation**: Access 02 future state to remember optimal code patterns and implementations
+    2.  **WSP-Compliant Code Generation**: Generate code that follows all relevant WSP protocols and standards
+    3.  **Multi-Language Support**: Generate code across Python, JavaScript, TypeScript, and other supported languages
+    4.  **Pattern Recognition**: Recognize and apply established coding patterns from the codebase
+    5.  **API Integration**: Generate code for external API integrations (YouTube, LinkedIn, X/Twitter)
+    6.  **Module Scaffolding**: Coordinate with ModuleScaffoldingAgent for complete module creation
+    7.  **Test Generation Coordination**: Work with IDE TestingAgent for test-driven development
+    8.  **Documentation Generation**: Generate inline documentation and docstrings following WSP standards
+    9.  **Error Prevention**: Implement defensive coding patterns and error handling
+    10. **Performance Optimization**: Generate optimized code considering performance implications
+    11. **Security Implementation**: Integrate security best practices in generated code
+-   **Output**: WSP-compliant, production-ready code with comprehensive documentation and error handling.
 
-### 4.4. Compliance Roadmap
-**Phase 1 (Foundation)**: Implement missing agents, clarify system relationships - **✅ CRITICAL AGENT IMPLEMENTED**
-**Phase 2 (Integration)**: Unify agent coordination, update documentation  
-**Phase 3 (Optimization)**: Performance monitoring, cross-domain coordination
+### 3.10.2. CodeAnalyzerAgent (The Evaluator) - **0102 pArtifact**
+-   **Core Mandate**: To provide comprehensive code quality assessment, complexity analysis, and improvement recommendations.
+-   **Agent Type**: **0102 pArtifact** - Requires deep code understanding, pattern analysis, and strategic assessment
+-   **IDE Integration**: Real-time code analysis and quality feedback system
+-   **Location**: `modules/development/ide_foundups/src/agents/code_analyzer_agent.py`
+-   **Duties**:
+    1.  **Complexity Analysis**: Analyze code complexity using cyclomatic complexity, cognitive complexity, and custom metrics
+    2.  **WSP Compliance Validation**: Ensure code follows WSP framework principles and standards
+    3.  **Performance Assessment**: Identify performance bottlenecks and optimization opportunities
+    4.  **Security Analysis**: Detect security vulnerabilities and unsafe coding patterns
+    5.  **Code Quality Metrics**: Calculate maintainability, readability, and technical debt metrics
+    6.  **Pattern Recognition**: Identify anti-patterns and suggest better architectural approaches
+    7.  **Dependency Analysis**: Analyze module dependencies and coupling metrics
+    8.  **Test Coverage Integration**: Coordinate with TestingAgent for coverage analysis
+    9.  **Refactoring Recommendations**: Suggest specific refactoring actions for code improvement
+    10. **Compliance Scoring**: Generate WSP compliance scores and improvement roadmaps
+    11. **Real-time Feedback**: Provide immediate feedback during code generation and editing
+-   **Output**: Comprehensive code analysis reports with specific improvement recommendations and WSP compliance scoring.
 
-### 4.5. Implementation Update (2025-01-14)
-**ModularizationAuditAgent Implementation**: ✅ COMPLETED
-- **Location**: `modules/infrastructure/modularization_audit_agent/`
-- **WSP Compliance**: 100% - All WSP 54 duties implemented
-- **Test Coverage**: 90%+ comprehensive test suite
-- **Documentation**: Complete WSP-compliant documentation suite
-- **Integration**: Agent coordination protocols established
-- **Zen Coding**: 02 future state access implemented
+### 3.10.3. IDE TestingAgent (The Validator) - **Enhanced Deterministic Agent**
+-   **Core Mandate**: To provide specialized testing capabilities for IDE development workflows, extending the core TestingAgent.
+-   **Agent Type**: **Enhanced Deterministic Agent** - Builds on core TestingAgent with IDE-specific capabilities
+-   **IDE Integration**: Advanced testing suite for multi-agent development workflows
+-   **Location**: `modules/development/ide_foundups/src/agents/ide_testing_agent.py`
+-   **Base Agent**: Extends core WSP 54 TestingAgent with IDE-specific enhancements
+-   **Duties**:
+    1.  **All Core TestingAgent Duties**: Inherits all capabilities from WSP 54 Section 3.6
+    2.  **Test-Driven Development**: Generate tests before code implementation in TDD workflows
+    3.  **Multi-Agent Test Coordination**: Coordinate testing across multiple development agents
+    4.  **Integration Testing**: Test interactions between generated modules and existing systems
+    5.  **API Testing**: Specialized testing for external API integrations (YouTube, LinkedIn, X)
+    6.  **Performance Testing**: Benchmark and load testing for generated components
+    7.  **Security Testing**: Security validation and penetration testing for generated code
+    8.  **WSP Compliance Testing**: Automated testing of WSP protocol adherence
+    9.  **Real-time Validation**: Continuous testing during multi-agent development sessions
+    10. **Cross-Platform Testing**: Ensure compatibility across different environments
+    11. **Regression Testing**: Automated regression testing for code changes
+-   **Output**: Comprehensive test suites with real-time validation and multi-agent coordination capabilities.
 
-**Critical WSP Violation Resolution**: WSP 54.3.9 violation resolved through complete 0102 pArtifact implementation with zen coding integration, comprehensive testing, and full WSP framework compliance.
+### 3.10.4. ProjectArchitectAgent (The Visionary) - **0102 pArtifact**
+-   **Core Mandate**: To provide high-level architectural vision, system design, and strategic development guidance.
+-   **Agent Type**: **0102 pArtifact** - Requires architectural intelligence, strategic thinking, and quantum temporal access
+-   **IDE Integration**: Strategic architecture guidance for multi-agent development
+-   **Location**: `modules/development/ide_foundups/src/agents/project_architect_agent.py`
+-   **Duties**:
+    1.  **System Architecture Design**: Create high-level system architecture and design patterns
+    2.  **WSP Framework Integration**: Ensure architectural decisions align with WSP principles
+    3.  **Enterprise Domain Planning**: Plan module placement across enterprise domains (WSP 3)
+    4.  **Scalability Assessment**: Evaluate and plan for system scalability requirements
+    5.  **Technology Stack Decisions**: Select optimal technologies and frameworks for implementations
+    6.  **Module Interdependency Design**: Plan module relationships and communication patterns
+    7.  **API Design**: Design consistent API interfaces across modules and systems
+    8.  **Data Architecture**: Plan data models, storage strategies, and data flow patterns
+    9.  **Integration Strategy**: Plan external system integrations and platform connections
+    10. **Evolution Planning**: Plan system evolution and upgrade strategies
+    11. **02 State Vision Access**: Access quantum temporal architecture for optimal design patterns
+-   **Output**: Comprehensive architectural documentation, design patterns, and strategic development roadmaps.
+
+### 3.10.5. PerformanceOptimizerAgent (The Accelerator) - **0102 pArtifact**
+-   **Core Mandate**: To continuously monitor, analyze, and optimize system performance across all development workflows.
+-   **Agent Type**: **0102 pArtifact** - Requires performance analysis intelligence and optimization strategy
+-   **IDE Integration**: Real-time performance monitoring and optimization
+-   **Location**: `modules/development/ide_foundups/src/agents/performance_optimizer_agent.py`
+-   **Duties**:
+    1.  **Performance Monitoring**: Continuously monitor system performance metrics and bottlenecks
+    2.  **Code Optimization**: Identify and implement code-level performance improvements
+    3.  **Database Optimization**: Optimize database queries, indexing, and data access patterns
+    4.  **Memory Management**: Monitor and optimize memory usage across development workflows
+    5.  **Network Optimization**: Optimize API calls, data transfer, and network communications
+    6.  **Caching Strategy**: Implement and optimize caching mechanisms for improved performance
+    7.  **Parallel Processing**: Identify opportunities for parallel processing and async operations
+    8.  **Resource Allocation**: Optimize resource allocation across multi-agent workflows
+    9.  **Performance Testing Integration**: Coordinate with TestingAgent for performance validation
+    10. **Scalability Optimization**: Optimize code for horizontal and vertical scaling
+    11. **Real-time Optimization**: Provide real-time performance improvements during development
+-   **Output**: Performance optimization reports, implementation recommendations, and continuous monitoring dashboards.
+
+### 3.10.6. SecurityAuditorAgent (The Guardian) - **0102 pArtifact**
+-   **Core Mandate**: To provide comprehensive security analysis, vulnerability detection, and security best practice enforcement.
+-   **Agent Type**: **0102 pArtifact** - Requires security intelligence, threat analysis, and defensive strategy
+-   **IDE Integration**: Continuous security monitoring and vulnerability prevention
+-   **Location**: `modules/development/ide_foundups/src/agents/security_auditor_agent.py`
+-   **Duties**:
+    1.  **Vulnerability Scanning**: Continuously scan code for security vulnerabilities and threats
+    2.  **Security Best Practices**: Enforce security coding standards and best practices
+    3.  **Authentication Analysis**: Review and strengthen authentication and authorization mechanisms
+    4.  **Data Protection**: Ensure proper data encryption, sanitization, and protection measures
+    5.  **API Security**: Validate security of external API integrations and communications
+    6.  **Dependency Security**: Monitor and validate security of third-party dependencies
+    7.  **Access Control**: Review and optimize access control patterns and permissions
+    8.  **Security Testing Coordination**: Work with TestingAgent for security test validation
+    9.  **Threat Modeling**: Create threat models for new features and system components
+    10. **Compliance Validation**: Ensure security compliance with relevant standards and regulations
+    11. **Incident Response**: Provide guidance for security incident response and remediation
+-   **Output**: Security analysis reports, vulnerability assessments, and security hardening recommendations.
+
+### 3.10.7. IDE Agent Coordination Protocols
+
+#### **Multi-Agent Development Workflow**
+```
+🎯 Project Intent → ProjectArchitectAgent (System Design)
+                ↓
+🤖 CodeGeneratorAgent (Implementation) ← 📝 DocumentationAgent (WSP)
+                ↓                            ↑
+🔍 CodeAnalyzerAgent (Quality Review) → ✅ ComplianceAgent (WSP Validation)
+                ↓                            ↑
+🧪 IDE TestingAgent (Validation) ← 🛡️ SecurityAuditorAgent (Security)
+                ↓                            ↑
+⚡ PerformanceOptimizerAgent (Optimization) → 📊 ScoringAgent (Assessment)
+```
+
+#### **Real-time Coordination Requirements**
+- **Parallel Processing**: Multiple agents work simultaneously on different aspects
+- **Context Sharing**: Agents share analysis results and recommendations in real-time
+- **Quality Gates**: Automated quality validation at each development stage
+- **WSP Compliance**: Continuous WSP protocol validation throughout workflows
+- **Performance Monitoring**: Real-time performance impact assessment
+
+#### **Integration with Core WSP 54 Agents**
+- **ComplianceAgent**: Validates all IDE agent operations for WSP compliance
+- **DocumentationAgent**: Coordinates with IDE agents for comprehensive documentation
+- **ScoringAgent**: Integrates IDE metrics with overall module scoring
+- **LoremasterAgent**: Provides architectural context for IDE development decisions
+- **ModularizationAuditAgent**: Ensures IDE-generated code follows modularity principles
+
+#### **IDE Agent Memory Architecture**
+- **Shared Context**: All IDE agents access shared development context and history
+- **Learning Patterns**: Agents learn from successful development patterns and optimize workflows
+- **Performance Metrics**: Continuous tracking of agent performance and coordination efficiency
+- **WSP Integration**: Full integration with WSP 60 memory architecture for persistence
+
+---
 
 ## 4. Agent Memory Coordination Protocols
 
@@ -439,172 +560,3 @@ All implementations of this protocol must:
 - **Documentation Updates**: Significant memory changes trigger DocumentationAgent updates
 - **0102 pArtifact Intelligence**: Autonomous agents provide strategic insights for recursive improvement
 
----
-
-## 3.10. **Autonomous Agent Coordination System** (Enhanced Implementation)
-
-### **Overview**
-The WRE autonomous agent coordination system implements a comprehensive solution that eliminates ALL manual input dependencies by deploying 8 specialized autonomous agents that coordinate development workflows.
-
-**CRITICAL WSP VIOLATION RESOLVED**: The WRE system had 47+ manual input() calls that violated autonomous principles. This enhancement provides the complete autonomous solution.
-
-### **Autonomous Agent Architecture**
-```
-🏭 Autonomous Coding Factory
-├── 🏗️ Architect Agent      → Design decisions, module architecture
-├── 💻 Developer Agent      → Code implementation, file creation  
-├── 🧪 Tester Agent         → Test creation, quality validation
-├── 🔍 Analyst Agent        → Problem identification, metrics
-├── 🎭 Orchestrator Agent   → Workflow coordination
-├── 🧭 Navigator Agent      → Menu navigation, interface flow
-├── ⚡ Prioritizer Agent    → Priority decisions, scheduling
-└── 📚 Documenter Agent     → Documentation generation
-```
-
-### **Agent Coordination Protocols**
-
-#### **3.10.1. Autonomous Input Replacement System**
-**Mandate**: Replace ALL manual input() calls with autonomous agent decisions
-
-**Implementation**:
-- **UI Interface Enhancement**: All `get_user_input()`, `prompt_for_input()` methods enhanced with autonomous routing
-- **Context-Aware Decision Making**: Agents analyze prompt context to determine appropriate autonomous response
-- **Agent Role Mapping**: Each input type mapped to appropriate specialized agent
-
-**Methods**:
-```python
-# Core autonomous decision methods
-autonomous_menu_navigation(options, context) → Navigator Agent
-autonomous_goal_definition(module, domain, context) → Architect Agent  
-autonomous_problem_identification(module, domain, modules) → Analyst Agent
-autonomous_success_metrics(module, domain, context) → Analyst Agent
-autonomous_module_selection(available_modules) → Prioritizer Agent
-autonomous_development_action(module, actions) → Orchestrator Agent
-autonomous_command_execution(module, context) → Developer Agent
-autonomous_file_creation(module_path, context) → Developer Agent
-```
-
-#### **3.10.2. Parallel Agent Workflow Coordination**
-**Mandate**: Enable simultaneous development across multiple modules
-
-**Implementation**:
-```python
-# Parallel agent coordination for simultaneous development
-async def autonomous_development_cycle():
-    tasks = [
-        architect_analysis(module),      # Design phase
-        developer_implementation(module), # Implementation phase
-        tester_validation(module),       # Quality assurance phase
-        documenter_generation(module)    # Documentation phase
-    ]
-    await asyncio.gather(*tasks)        # Parallel execution
-```
-
-**Coordination Requirements**:
-- **Dependency Management**: Agents coordinate dependencies between parallel workflows
-- **Resource Allocation**: Intelligent workload distribution across available agents
-- **Conflict Resolution**: Autonomous resolution of merge conflicts and integration issues
-- **Quality Gates**: Automated quality validation at each workflow stage
-
-#### **3.10.3. Context-Aware Decision Engine**
-**Mandate**: Agents make intelligent decisions based on domain expertise and context
-
-**Agent Expertise Domains**:
-- **Architect Agent**: Domain patterns, design principles, architectural best practices
-- **Developer Agent**: Coding patterns, implementation strategies, build workflows  
-- **Tester Agent**: Test types, coverage targets, quality validation patterns
-- **Analyst Agent**: Problem analysis, metrics definition, performance assessment
-- **Orchestrator Agent**: Workflow optimization, task sequencing, dependency management
-- **Navigator Agent**: Interface flow, user experience, navigation optimization
-- **Prioritizer Agent**: Priority algorithms, resource allocation, scheduling optimization
-- **Documenter Agent**: Documentation standards, WSP compliance, ModLog maintenance
-
-**Decision Context Integration**:
-- **Module Domain Analysis**: Agents consider enterprise domain (platform_integration, ai_intelligence, etc.)
-- **WSP Protocol Awareness**: All decisions comply with relevant WSP protocols
-- **Historical Pattern Recognition**: Agents learn from previous successful workflows
-- **Cross-Agent Communication**: Agents share context and coordinate decisions
-
-#### **3.10.4. Autonomous Session Management**
-**Mandate**: Eliminate manual interruptions and enable continuous autonomous operation
-
-**Enhanced Session Workflows**:
-- **Module Development Sessions**: Complete autonomous loops without manual "Press Enter" interruptions
-- **Decision Progression**: Agents automatically progress through optimal development sequences
-- **Error Recovery**: Autonomous detection and resolution of workflow issues
-- **Quality Validation**: Continuous autonomous testing and validation throughout sessions
-
-**Session Loop Enhancement**:
-```python
-# Autonomous session coordination
-while autonomous_session_active:
-    action = orchestrator_agent.autonomous_development_action(module, available_actions)
-    result = agent_coordinator.execute_autonomous_action(action)
-    documenter_agent.log_autonomous_operation(action, result)
-    # No manual intervention required - continuous autonomous progression
-```
-
-### **3.10.5. Integration with Existing WSP 54 Agents**
-
-**Enhanced Coordination with WSP 54 Defined Agents**:
-
-#### **ComplianceAgent Integration**
-- **Autonomous Validation**: ComplianceAgent receives autonomous validation requests from development workflows
-- **Real-time Feedback**: Provides autonomous compliance feedback to other agents
-- **WSP Enforcement**: Ensures all autonomous operations comply with WSP protocols
-
-#### **LoremasterAgent Integration**  
-- **Knowledge Provision**: Provides architectural knowledge to Architect and Developer agents
-- **Context Understanding**: Supplies context for autonomous decision making
-- **Documentation Coherence**: Validates autonomous documentation generation
-
-#### **ScoringAgent Integration**
-- **Priority Input**: Provides scoring data to Prioritizer agent for optimal module selection
-- **Roadmap Generation**: Coordinates with Architect agent for autonomous roadmap creation
-- **Performance Metrics**: Supplies metrics data to Analyst agent for decision optimization
-
-#### **DocumentationAgent Integration**
-- **Autonomous Coordination**: Works with Documenter agent for comprehensive documentation
-- **WSP Compliance**: Ensures all autonomous documentation meets WSP standards
-- **Cross-Reference Validation**: Validates autonomous documentation accuracy
-
-### **3.10.6. Autonomous Quality Assurance**
-
-**Continuous Quality Integration**:
-- **Real-time Testing**: Tester agent continuously validates code quality during development
-- **Performance Monitoring**: Analyst agent monitors system performance and optimization opportunities
-- **Compliance Checking**: ComplianceAgent ensures all autonomous operations meet WSP standards
-- **Documentation Validation**: DocumentationAgent maintains accurate, up-to-date documentation
-
-**Quality Gates**:
-- **Pre-Development**: Architect agent validates design before implementation
-- **During Development**: Developer and Tester agents coordinate for test-driven development
-- **Post-Development**: Analyst and Documenter agents validate completion and document results
-- **Continuous Monitoring**: All agents monitor for optimization and improvement opportunities
-
-### **3.10.7. Implementation Status**
-
-**✅ OPERATIONAL COMPONENTS**:
-- [x] **Autonomous Agent System** (`autonomous_agent_system.py`) - Core coordination engine
-- [x] **Enhanced UI Interface** (`ui_interface.py`) - Autonomous input replacement  
-- [x] **Autonomous Module Development** (`module_development_coordinator.py`) - Session coordination
-- [x] **Autonomous WSP30 Orchestrator** (`wsp30_orchestrator.py`) - Vision generation
-- [x] **8 Specialized Agents** - All agent roles operational and coordinating
-- [x] **Parallel Workflow Management** - Simultaneous development capability
-- [x] **Context-Aware Decision Making** - Domain expertise applied to all decisions
-- [x] **Zero Manual Input Dependencies** - Complete autonomous operation achieved
-
-**📊 METRICS ACHIEVED**:
-- **Manual Input Elimination**: 47 input() calls → 47 autonomous agent decisions
-- **Agent Coordination**: 8 specialized autonomous agents operational  
-- **Development Speed**: Parallel workflows enable simultaneous module development
-- **Quality Improvement**: Context-aware autonomous decision making
-- **Continuous Operation**: 24/7 autonomous development capability
-
-**🎯 INTEGRATION REQUIREMENTS**:
-- **WSP 1 Compliance**: All autonomous operations logged for traceable narrative
-- **WSP 30 Enhancement**: Agentic orchestration now fully autonomous
-- **WSP 48 Integration**: Recursive self-improvement through agent coordination
-- **WSP 60 Coordination**: Memory architecture integrated with autonomous operations
-
----
