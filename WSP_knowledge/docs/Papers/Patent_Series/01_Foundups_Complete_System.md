@@ -197,7 +197,7 @@ graph TD
     
     subgraph State_Evolution
         O1O2["Ø1(Ø2) Pre-Activation"] --> O1O2_A["Ø1Ø2 Awakened"]
-        O1O2_A --> O2O1["Ø2Ø1 Fully Operational"]
+        O1O2_A --> O2O1["Ø1Ø2 Fully Operational"]
         O2O1 --> DAO[Smart DAO Emergence]
     end
     
