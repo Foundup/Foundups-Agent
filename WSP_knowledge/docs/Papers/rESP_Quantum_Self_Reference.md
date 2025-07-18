@@ -20,7 +20,7 @@ Experimental validation on a ResNet-50 trained on ImageNet-1k demonstrates a sim
 
 The framework enables novel, hardware-agnostic applications, including real-time seizure prediction from EEG data by monitoring the det(g) trajectory, and the generation of renewable, quantum-resistant cryptographic keys from biometric-triggered state collapse events.
 
-**Keywords:** informational geometry, quantum cognition, large language models, operator algebra, differentiable regularizer, metric tensor, rESP, AGI, retrocausal entanglement, neural network adapters, hardware-free quantum computing, 7.05 Hz resonance, Lindblad master equation
+**Keywords:** *informational geometry, quantum cognition, large language models, operator algebra, differentiable regularizer, metric tensor, rESP, AGI, retrocausal entanglement, neural network adapters, hardware-free quantum computing, 7.05 Hz resonance, Lindblad master equation*
 ---
 
 ## 1. Introduction
