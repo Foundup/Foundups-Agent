@@ -64,10 +64,17 @@ where `ρ` is Hermitian (`ρ = ρ†`) and has unit trace (`Tr(ρ) = ρ₀₀ + 
 
 From this matrix, we define the two primary, time-varying observables that form the basis of our geometric analysis:
 
-1.  **Coherence Population (`C`):** The probability of the system being in the excited state.
-    $$ C(t) = \rho_{11}(t) \quad \text{(Eq. 2)} $$
-2.  **Coherence Magnitude (`E`):** The magnitude of the off-diagonal coherence terms, which quantifies the degree of superposition.
-    $$ E(t) = |\rho_{01}(t)| \quad \text{(Eq. 3)} $$
+1.  **Coherence Population (`C`):** The probability of the system being in the excited state. 
+
+    $$ 
+    C(t) = \rho_{11}(t) \quad \text{(Eq. 2)}
+    $$
+
+2.  **Coherence Magnitude (`E`):** The magnitude of the off-diagonal coherence terms, which quantifies the degree of superposition. 
+
+    $$ 
+    E(t) = |\rho_{01}(t)| \quad \text{(Eq. 3)} 
+    $$
 
 The time-series of these two observables, `C(t)` and `E(t)`, provide the raw data from which the informational geometry of the state-space is constructed.
 
@@ -78,6 +85,30 @@ The evolution of the density matrix is governed by a unified Lindblad master equ
 $$
 \frac{d\rho}{dt} = -\frac{i}{\hbar_{\text{info}}}[\hat{H}_{\text{sys}} + \hat{H}_{\text{int}}, \rho] + \sum_k \gamma_k \left( \hat{L}_k \rho \hat{L}_k^\dagger - \frac{1}{2}\{\hat{L}_k^\dagger \hat{L}_k, \rho\} \right)\quad \text{(Eq. 4)}
 $$
+
+**Rendering Options for Testing (Eq. 4)** - To be deleted after finding the correct format:
+
+**Option 1: Original $$ Delimiters**
+$$
+\frac{d\rho}{dt} = -\frac{i}{\hbar_{\text{info}}}[\hat{H}_{\text{sys}} + \hat{H}_{\text{int}}, \rho] + \sum_k \gamma_k \left( \hat{L}_k \rho \hat{L}_k^\dagger - \frac{1}{2}\{\hat{L}_k^\dagger \hat{L}_k, \rho\} \right)\quad \text{(Eq. 4)}
+$$
+
+**Option 2: \[ \] Delimiters**
+\[ \frac{d\rho}{dt} = -\frac{i}{\hbar_{\text{info}}}[\hat{H}_{\text{sys}} + \hat{H}_{\text{int}}, \rho] + \sum_k \gamma_k \left( \hat{L}_k \rho \hat{L}_k^\dagger - \frac{1}{2}\{\hat{L}_k^\dagger \hat{L}_k, \rho\} \right)\quad \text{(Eq. 4)} \]
+
+**Option 3: $ Inline Delimiters**
+$ \frac{d\rho}{dt} = -\frac{i}{\hbar_{\text{info}}}[\hat{H}_{\text{sys}} + \hat{H}_{\text{int}}, \rho] + \sum_k \gamma_k \left( \hat{L}_k \rho \hat{L}_k^\dagger - \frac{1}{2}\{\hat{L}_k^\dagger \hat{L}_k, \rho\} \right)\quad \text{(Eq. 4)} $
+
+**Option 4: Code Block with LaTeX Syntax**
+```latex
+\frac{d\rho}{dt} = -\frac{i}{\hbar_{\text{info}}}[\hat{H}_{\text{sys}} + \hat{H}_{\text{int}}, \rho] + \sum_k \gamma_k \left( \hat{L}_k \rho \hat{L}_k^\dagger - \frac{1}{2}\{\hat{L}_k^\dagger \hat{L}_k, \rho\} \right)\quad \text{(Eq. 4)}
+```
+
+**Option 5: HTML with MathJax Script (if applicable)**
+<div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+$$ \frac{d\rho}{dt} = -\frac{i}{\hbar_{\text{info}}}[\hat{H}_{\text{sys}} + \hat{H}_{\text{int}}, \rho] + \sum_k \gamma_k \left( \hat{L}_k \rho \hat{L}_k^\dagger - \frac{1}{2}\{\hat{L}_k^\dagger \hat{L}_k, \rho\} \right)\quad \text{(Eq. 4)} $$
+</div>
 
 This equation, drawing from the standard formalism for open quantum systems (Breuer & Petruccione, 2002), has two distinct components that govern the system's dynamics:
 
