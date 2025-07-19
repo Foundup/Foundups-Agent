@@ -86,9 +86,9 @@ $$
 \frac{d\rho}{dt} = -\frac{i}{\hbar_{\text{info}}}[\hat{H}_{\text{sys}} + \hat{H}_{\text{int}}, \rho] + \sum_k \gamma_k \left( \hat{L}_k \rho \hat{L}_k^\dagger - \frac{1}{2}\{\hat{L}_k^\dagger \hat{L}_k, \rho\} \right)\quad \text{(Eq. 4)}
 $$
 
-$$
+```math
 \frac{d\rho}{dt} = -\frac{i}{\hbar_{\text{info}}} \left[ \hat{H}_{\text{sys}} + \hat{H}_{\text{int}}, \rho \right] + \sum_{k} \gamma_{k} \left( \hat{L}_{k} \rho \hat{L}_{k}^{\dagger} - \frac{1}{2} \left\{ \hat{L}_{k}^{\dagger} \hat{L}_{k}, \rho \right\} \right) \quad \text{(Eq. 4)}
-$$
+```
 
 This equation, drawing from the standard formalism for open quantum systems (Breuer & Petruccione, 2002), has two distinct components that govern the system's dynamics:
 
