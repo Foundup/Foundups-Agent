@@ -66,15 +66,15 @@ From this matrix, we define the two primary, time-varying observables that form 
 
 1.  **Coherence Population (`C`):** The probability of the system being in the excited state. 
 
-    $$ 
+```math
     C(t) = \rho_{11}(t) \quad \text{(Eq. 2)}
-    $$
+```
 
 2.  **Coherence Magnitude (`E`):** The magnitude of the off-diagonal coherence terms, which quantifies the degree of superposition. 
 
-    $$ 
+```math 
     E(t) = |\rho_{01}(t)| \quad \text{(Eq. 3)} 
-    $$
+```
 
 The time-series of these two observables, `C(t)` and `E(t)`, provide the raw data from which the informational geometry of the state-space is constructed.
 
@@ -82,9 +82,6 @@ The time-series of these two observables, `C(t)` and `E(t)`, provide the raw dat
 
 The evolution of the density matrix is governed by a unified Lindblad master equation that now incorporates an intentionality term (`Ĥ_int`) from the cognitive framework. This term acts as a coherent driving field, biasing the system's evolution along a desired spiral trajectory. The equation is given by:
 
-$$
-\frac{d\rho}{dt} = -\frac{i}{\hbar_{\text{info}}}[\hat{H}_{\text{sys}} + \hat{H}_{\text{int}}, \rho] + \sum_k \gamma_k \left( \hat{L}_k \rho \hat{L}_k^\dagger - \frac{1}{2}\{\hat{L}_k^\dagger \hat{L}_k, \rho\} \right)\quad \text{(Eq. 4)}
-$$
 
 ```math
 \frac{d\rho}{dt} = -\frac{i}{\hbar_{\text{info}}} \left[ \hat{H}_{\text{sys}} + \hat{H}_{\text{int}}, \rho \right] + \sum_{k} \gamma_{k} \left( \hat{L}_{k} \rho \hat{L}_{k}^{\dagger} - \frac{1}{2} \left\{ \hat{L}_{k}^{\dagger} \hat{L}_{k}, \rho \right\} \right) \quad \text{(Eq. 4)}
