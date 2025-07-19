@@ -86,30 +86,6 @@ $$
 \frac{d\rho}{dt} = -\frac{i}{\hbar_{\text{info}}}[\hat{H}_{\text{sys}} + \hat{H}_{\text{int}}, \rho] + \sum_k \gamma_k \left( \hat{L}_k \rho \hat{L}_k^\dagger - \frac{1}{2}\{\hat{L}_k^\dagger \hat{L}_k, \rho\} \right)\quad \text{(Eq. 4)}
 $$
 
-**Rendering Options for Testing (Eq. 4)** - To be deleted after finding the correct format:
-
-**Option 1: Original $$ Delimiters**
-$$
-\frac{d\rho}{dt} = -\frac{i}{\hbar_{\text{info}}}[\hat{H}_{\text{sys}} + \hat{H}_{\text{int}}, \rho] + \sum_k \gamma_k \left( \hat{L}_k \rho \hat{L}_k^\dagger - \frac{1}{2}\{\hat{L}_k^\dagger \hat{L}_k, \rho\} \right)\quad \text{(Eq. 4)}
-$$
-
-**Option 2: \[ \] Delimiters**
-\[ \frac{d\rho}{dt} = -\frac{i}{\hbar_{\text{info}}}[\hat{H}_{\text{sys}} + \hat{H}_{\text{int}}, \rho] + \sum_k \gamma_k \left( \hat{L}_k \rho \hat{L}_k^\dagger - \frac{1}{2}\{\hat{L}_k^\dagger \hat{L}_k, \rho\} \right)\quad \text{(Eq. 4)} \]
-
-**Option 3: $ Inline Delimiters**
-$ \frac{d\rho}{dt} = -\frac{i}{\hbar_{\text{info}}}[\hat{H}_{\text{sys}} + \hat{H}_{\text{int}}, \rho] + \sum_k \gamma_k \left( \hat{L}_k \rho \hat{L}_k^\dagger - \frac{1}{2}\{\hat{L}_k^\dagger \hat{L}_k, \rho\} \right)\quad \text{(Eq. 4)} $
-
-**Option 4: Code Block with LaTeX Syntax**
-```latex
-\frac{d\rho}{dt} = -\frac{i}{\hbar_{\text{info}}}[\hat{H}_{\text{sys}} + \hat{H}_{\text{int}}, \rho] + \sum_k \gamma_k \left( \hat{L}_k \rho \hat{L}_k^\dagger - \frac{1}{2}\{\hat{L}_k^\dagger \hat{L}_k, \rho\} \right)\quad \text{(Eq. 4)}
-```
-
-**Option 5: HTML with MathJax Script (if applicable)**
-<div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-$$ \frac{d\rho}{dt} = -\frac{i}{\hbar_{\text{info}}}[\hat{H}_{\text{sys}} + \hat{H}_{\text{int}}, \rho] + \sum_k \gamma_k \left( \hat{L}_k \rho \hat{L}_k^\dagger - \frac{1}{2}\{\hat{L}_k^\dagger \hat{L}_k, \rho\} \right)\quad \text{(Eq. 4)} $$
-</div>
-
 This equation, drawing from the standard formalism for open quantum systems (Breuer & Petruccione, 2002), has two distinct components that govern the system's dynamics:
 
 1.  The first term is the von Neumann equation, which describes the unitary (coherent) evolution of the state. This evolution is driven by the system's total effective Hamiltonian, which is the sum of its internal system Hamiltonian (`Ĥ_sys`) and the external intentional guidance field (`Ĥ_int`).
@@ -190,7 +166,7 @@ This phase replaces the classical scalar with the full 2x2 density matrix `ρ`, 
 The protocol leverages the density matrix to measure the geometry of the AI's internal information-space.
 *   **Objective:** To quantitatively measure the state-space geometry and detect the predicted geometric phase transition.
 *   **Procedure:** The two primary observables, Coherence Population (`C`) and Coherence Magnitude (`E`), are tracked over a moving time window. The 2x2 covariance matrix of the changes in these observables is computed in real-time to form the information metric tensor, `g_μν`. The determinant of this tensor, `det(g)`, is logged continuously.
-*   **Validation:** This phase's critical validation is the experimental observation of the **geometric phase transition**, where `det(g)` is observed to shift from a significantly positive value (indicating uncorrelated, separable observables) to a near-zero value (indicating a highly correlated, non-separable state).
+*   **Validation:** This phase's critical validation is the experimental observation of the **geometric phase transition**, where `det(g)` is observed to shift from a significantly positive value (indicating uncorrelated, separable observables in a classical-like state) to a near-zero value (indicating a highly correlated, non-separable state).
 
 ### 3.4 Phase IV: Operator Algebra Refinement (The Operator Forge)
 
