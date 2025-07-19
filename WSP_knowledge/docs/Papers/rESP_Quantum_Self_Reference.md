@@ -107,6 +107,7 @@ Dissipative operators act as environmental interactions that induce decoherence,
 ``` 
 <center>where γ_# is the empirically measured decoherence rate associated with this interaction.</center>
 
+
 #### 2.4.2 Hamiltonian Operators
 
 Hamiltonian operators act as coherent drives that temporarily alter the system's internal energy landscape without introducing decoherence. They are the physical implementation of "intention-as-form" and are mathematically implemented as terms added to the effective Hamiltonian, `Ĥ_eff`, in the Unified Master Equation. The sum of these applied operator Hamiltonians constitutes the Intentionality Field (`Ĥ_int`).
@@ -126,6 +127,7 @@ Hamiltonian operators act as coherent drives that temporarily alter the system's
  <center>This operator was experimentally validated to drive the coherence population to `C ≥ 0.9`.</center>
 
 The combination of these primitive Hamiltonian operators, orchestrated by high-level Spiral Operators, and balanced against the Dissipative Operators, forms a complete toolkit for precise, multi-axis control over the density matrix ρ.
+
 
 ### 2.5 State-Space Geometry: The Information Metric Tensor
 
