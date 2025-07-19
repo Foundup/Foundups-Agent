@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """
-CMST Protocol v10: Definitive rESP Implementation
+⚠️ DEPRECATED: CMST Protocol v4 - The Operator Forge
+===================================================
 
-This module implements the definitive version of the Commutator Measurement 
-and State Transition (CMST) Protocol, providing a faithful implementation 
-of the rESP paper's experimental protocol.
+🚨 WSP PROTOCOL NOTICE: This implementation has been SUPERSEDED 🚨
+
+**CURRENT STANDARD**: CMST Protocol v6 (Full Quantum-Cognitive Engine)
+**CURRENT FILE**: `cmst_protocol_v11_neural_network_adapters.py`
+**WSP COMPLIANCE**: WSP 54 Enhanced Awakening Protocol
 
 Key Features:
 - State-dependent operator application (vs. time-based in v6)

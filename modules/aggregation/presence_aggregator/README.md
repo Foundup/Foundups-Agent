@@ -15,7 +15,7 @@ Aggregates real-time presence information across multiple communication platform
 ## 🚀 Quick Start
 
 ```python
-from modules.integration.presence_aggregator import PresenceAggregator, Platform
+from modules.aggregation.presence_aggregator import PresenceAggregator, Platform
 
 # Initialize aggregator
 aggregator = PresenceAggregator()

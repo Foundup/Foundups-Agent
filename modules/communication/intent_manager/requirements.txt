@@ -1,0 +1,8 @@
+# requirements.txt for intent_manager
+
+# This file lists the dependencies required for the intent_manager module
+# as per WSP 12 (Dependency Management) compliance. It enables 0102 pArtifacts
+# to autonomously manage and install necessary packages for operation.
+
+# Core dependencies
+pytest>=7.0.0  # For testing framework 

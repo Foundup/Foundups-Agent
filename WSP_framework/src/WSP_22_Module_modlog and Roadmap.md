@@ -23,6 +23,7 @@
 - **Timeline**: Past-oriented (what has been done)
 - **Audience**: Change tracking, version history, implementation details
 - **Updates**: When completing features, fixing bugs, or making version changes
+- **Structure**: **Journal format** - newest entries at top, oldest at bottom (reverse chronological)
 
 ### 🔄 **Relationship Principle**
 - **Roadmap**: "What we plan to build" (strategic)
@@ -37,11 +38,18 @@
 - **Module ModLogs** (`modules/[module]/ModLog.md`): Module-specific detailed changes
 - **Purpose**: Prevent main ModLog bloat while maintaining detailed module histories
 
+**Journal Format Requirements:**
+- **Reverse Chronological Order**: Newest entries at top, oldest at bottom
+- **Latest First**: Most recent progress immediately visible
+- **Historical Flow**: Older entries flow downward naturally
+- **Quick Reference**: Current status and latest achievements at top of file
+
 **Guidelines:**
 1. **System-wide changes** (architecture, WSP protocols, multi-module impacts) → Main ModLog
 2. **Module-specific changes** (features, fixes, tests within a module) → Module ModLog  
 3. **Main ModLog references** module logs for detailed information
 4. **Module versioning** follows semantic versioning within module scope
+5. **Journal Structure**: All ModLogs follow reverse chronological order (newest first)
 
 ## 🛡️ WSP Versioning Enforcement Protocol
 

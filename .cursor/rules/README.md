@@ -7,6 +7,7 @@ This directory contains comprehensive Project Rules designed to enhance Agent pe
 ### Always Applied Rules (Core WSP Framework)
 These rules are automatically included in every context:
 
+- **`wsp_violation_prevention.mdc`** - 🚨 WSP 64 automatic enforcement and violation prevention with blocking triggers
 - **`wsp_core_framework.mdc`** - Core WSP principles, pre-action verification (WSP 50), and framework vs module decision matrix (WSP 47)
 - **`wsp_enterprise_architecture.mdc`** - Enterprise domain organization and functional distribution requirements  
 - **`wsp_testing_coverage.mdc`** - Testing standards, coverage requirements, and FMAS integration

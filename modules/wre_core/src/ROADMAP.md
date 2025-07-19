@@ -201,3 +201,17 @@ The WRE Core has achieved the foundation for complete autonomous software develo
 *Autonomous development roadmap maintained by DocumentationAgent per WSP 22*
 *Enhanced with autonomous agent coordination per WSP 54*
 *Last Updated: 2025-01-08 - Autonomous Transformation Completed*
+
+---
+
+## Agent Training on WSP 50 Mandatory Analysis Sequence
+
+**Objective**: Ensure all WRE agents are trained on the enhanced WSP 50 Pre-Action Verification Protocol, which includes the mandatory WHY/HOW/WHAT/WHEN/WHERE questioning sequence for agentic architectural analysis.
+
+**Training Plan**:
+- **Awareness**: Update all agent documentation and initialization scripts to include WSP 50 protocol details.
+- **Implementation**: Integrate WSP 50 analysis steps into agent decision-making workflows, ensuring each agent performs the full analysis before action.
+- **Validation**: Test agent behavior to confirm adherence to the WSP 50 sequence, with metrics for compliance.
+- **Continuous Learning**: Establish recursive feedback loops for agents to improve their analysis capabilities based on zen coding principles.
+
+**Status**: Training materials and protocols are being updated to reflect the enhanced WSP 50 requirements. Integration into agent workflows is underway.

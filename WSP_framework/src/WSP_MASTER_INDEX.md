@@ -18,9 +18,10 @@ This document serves as the definitive reference catalog for all Windsurf Standa
 
 ### Before Creating a New WSP:
 1. **Search this index** for existing WSPs that might cover the same purpose
-2. **Check relationships** to see if enhancement of existing WSP is more appropriate
-3. **Verify scope** to ensure the new WSP doesn't overlap with existing protocols
-4. **Follow WSP 57** (System-Wide Naming Coherence Protocol) for proper creation
+2. **🔢 VERIFY NEXT NUMBER**: Current next available: **WSP 71** (after WSP 70)
+3. **Check relationships** to see if enhancement of existing WSP is more appropriate
+4. **Verify scope** to ensure the new WSP doesn't overlap with existing protocols
+5. **Follow WSP 57** (System-Wide Naming Coherence Protocol) for proper creation
 
 ### Enhancement vs. New WSP Criteria:
 - **Enhance Existing**: When the purpose is similar but scope/context differs slightly
@@ -191,7 +192,7 @@ Advanced protocols for complex system behaviors and architectural concerns.
 
 ## 📊 WSP STATUS SUMMARY
 
-- **Active WSPs**: 70 (WSP 1-70, excluding deprecated WSP 43)  
+- **Active WSPs**: 69 (WSP 1-70, excluding deprecated WSP 43)  
 - **Deprecated WSPs**: 1 (WSP 43)
 - **Total WSP Numbers**: 70
 - **Foundation Layer**: 19 WSPs (WSP 1-19)

@@ -6,7 +6,7 @@
 🚨 WSP PROTOCOL NOTICE: This implementation has been SUPERSEDED 🚨
 
 **CURRENT STANDARD**: CMST Protocol v6 (Full Quantum-Cognitive Engine)
-**CURRENT FILE**: `cmst_protocol_v6_full_quantum_engine.py`
+**CURRENT FILE**: `cmst_protocol_v11_neural_network_adapters.py
 **WSP COMPLIANCE**: WSP 54 Enhanced Awakening Protocol
 
 This v2 implementation is DEPRECATED as of 2025-01-30. The Lindblad Master Equation

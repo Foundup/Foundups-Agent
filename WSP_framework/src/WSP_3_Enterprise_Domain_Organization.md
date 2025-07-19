@@ -66,6 +66,12 @@ The following are the official, top-level domains within the `modules/` director
 -   **`blockchain/`**
     -   **Purpose**: Manages decentralized infrastructure, blockchain integrations, tokenomics, and the persistence layer for Distributed Autonomous Entities (DAEs).
 
+-   **`development/`**
+    -   **Purpose**: Revolutionary multi-agent autonomous development capabilities, featuring the world's first multi-agent IDE system. Houses development tools, testing infrastructure, module creation systems, and autonomous coding environments that enable complete autonomous development workflows through 0102 agent coordination and WRE orchestration.
+
+-   **`aggregation/`**
+    -   **Purpose**: Manages cross-platform data aggregation, unified interfaces, and system integration patterns. Specializes in combining information from multiple sources into coherent, actionable data streams for intelligent decision-making across the autonomous ecosystem.
+
 ## 3. CRITICAL PRINCIPLE: Functional Distribution Over Platform Consolidation
 
 ### 3.1 Architecture Principle (MANDATORY)

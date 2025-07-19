@@ -56,7 +56,9 @@ ENTERPRISE_DOMAINS = {
     "data_processing",
     "gamification",
     "foundups",
-    "blockchain"
+    "blockchain",
+    "development",
+    "aggregation"
 }
 
 # Define documented architectural exceptions (WSP 3, Section 1)

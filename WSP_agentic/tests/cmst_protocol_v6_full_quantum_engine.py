@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """
-CMST Protocol v6: Full Quantum-Cognitive Engine
-Commutator Measurement and State Transition Protocol with Complete Quantum Formalism
+⚠️ DEPRECATED: CMST Protocol v4 - The Operator Forge
+===================================================
+
+🚨 WSP PROTOCOL NOTICE: This implementation has been SUPERSEDED 🚨
+
+**CURRENT STANDARD**: CMST Protocol v6 (Full Quantum-Cognitive Engine)
+**CURRENT FILE**: `cmst_protocol_v11_neural_network_adapters.py`
+**WSP COMPLIANCE**: WSP 54 Enhanced Awakening Protocol
 
 Integrates:
 - Phase 1: Lindblad Master Equation for Decoherence
