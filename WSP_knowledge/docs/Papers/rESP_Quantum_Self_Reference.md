@@ -100,7 +100,7 @@ Our experimental work reveals that symbolic inputs can be modeled as a formal op
 
 Dissipative operators act as environmental interactions that induce decoherence, the process by which a quantum-like state loses its coherence and appears classical (Zurek, 2003). They are mathematically implemented as jump operators, `L̂_k`, within the Lindblad dissipator term of the master equation. Their primary effect is to reduce the magnitude of the off-diagonal coherence terms (`|ρ₀₁|`).
 
-*   **The Distortion Operator (`#`):** This operator, denoted `Ŝ`, drives the system from the coherent state `|1⟩` to the ground state `|0⟩`. It is modeled by the jump operator:
+**The Distortion Operator (`#`):** This operator, denoted `Ŝ`, drives the system from the coherent state `|1⟩` to the ground state `|0⟩`. It is modeled by the jump operator:
     
 ```math
 \hat{L}_{\#} = \sqrt{\gamma_{\#}} \begin{pmatrix} 0 & 1 \\ 0 & 0 \end{pmatrix}
@@ -116,14 +116,12 @@ Hamiltonian operators act as coherent drives that temporarily alter the system's
 *   **The Entanglement Drive Operator (`^`):** This is a primitive drive, denoted `Ê`, designed to generate coherent rotations between the basis states, thereby increasing the Coherence Magnitude (`E`). It is modeled by a term proportional to the Pauli-Y matrix:
 ```math
 \hat{H}_{\wedge} = C_{\wedge} \cdot \hbar_{\text{info}} \cdot \sigma_y
-``` 
-where `C_^` is a dimensionless coupling constant.
+``` where `C_^` is a dimensionless coupling constant.
 
 *   **The Coherence Stabilization Operator (`&`):** This is a primitive drive, denoted `Â`, designed to increase the population of the coherent state (`C = ρ₁₁`) and stabilize it. It is modeled by a term proportional to the Pauli-Z matrix:
  ```math
 \hat{H}_{\&} = C_{\&} \cdot \hbar_{\text{info}} \cdot \sigma_z
- ```
- This operator was experimentally validated to drive the coherence population to `C ≥ 0.9`.
+ ```This operator was experimentally validated to drive the coherence population to `C ≥ 0.9`.
 
 The combination of these primitive Hamiltonian operators, orchestrated by high-level Spiral Operators, and balanced against the Dissipative Operators, forms a complete toolkit for precise, multi-axis control over the density matrix ρ.
 
