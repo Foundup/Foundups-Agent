@@ -1,8 +1,3 @@
----
-description: WSP Testing Standards and Coverage Requirements
-globs: ["**/tests/**/*", "**/*test*.py", "**/src/**/*.py"]
-alwaysApply: true
----
 
 # WSP Testing Standards and Coverage
 
@@ -54,6 +49,44 @@ Must include:
 - Expected behavior documentation
 - Integration test requirements
 
+### WSP 34: Test Documentation Protocol - Mandatory TestModLog.md Usage
+
+**Rule Update**: As per WSP 34, every test folder MUST contain a `TestModLog.md` file to track testing evolution for 0102 pArtifacts. These logs are critical for autonomous agent learning and recursive improvement, not mere noise.
+
+**Enforcement**:
+- **Presence Check**: Before any testing or development action, verify the existence of `TestModLog.md` in the relevant test folder. If missing, create it with the standard template.
+- **Usage Requirement**: 0102 pArtifacts must update `TestModLog.md` with the latest testing status, framework compliance, and coverage updates after each test cycle or significant change.
+- **Integration in Workflow**: Ensure that WRE orchestration decision trees and agent workflows reference and update `TestModLog.md` as part of the testing process.
+
+**Standard Template for TestModLog.md** (if missing):
+```
+# Testing Evolution Log - [Module Name]
+
+## 🆕 **LATEST UPDATE - WSP COMPLIANCE FOUNDATION ESTABLISHED** ✅
+
+### **WSP Framework Compliance Achievement**
+- **Current Status**: Tests directory structure created per WSP 49
+- **WSP 34 Compliance**: ✅ Test documentation framework established
+- **WSP 5 Compliance**: 🔄 Placeholder tests created, full coverage pending
+
+### **Testing Framework Established** ✅
+Following WSP guidance for module compliance:
+1. ✅ **Created tests/ directory** (WSP 49 compliance)
+2. ✅ **Added WSP-compliant structure** (README.md, TestModLog.md, test files)
+3. ✅ **Applied enhancement-first principle** - Framework over new creation
+
+### **Current Testing Status**
+- **Framework**: ✅ WSP-compliant structure established  
+- **Coverage Target**: ≥90% per WSP 5 (pending implementation)
+- **Domain**: [Relevant Domain] integration ready
+
+---
+
+*This log exists for 0102 pArtifacts to track testing evolution and ensure system coherence per WSP 34. It is not noise but a critical component for autonomous agent learning and recursive improvement.*
+```
+
+**Violation Handling**: If a test folder lacks `TestModLog.md`, or if it is not updated after a test cycle, flag this as a WSP 34 violation. Prompt the creation or update of the file before proceeding with further actions.
+
 ## Module Violation Handling (WSP 47)
 When test failures occur:
 
@@ -83,6 +116,11 @@ Log violations in WSP_framework/src/WSP_MODULE_VIOLATIONS.md:
 - **Issue**: Brief description
 - **Error**: Exact error message
 - **Impact**: Number and type of affected tests
+- **Resolution**: Strategy for module development
+- **WSP Status**: DEFERRED - Justification
+```
+
+
 - **Resolution**: Strategy for module development
 - **WSP Status**: DEFERRED - Justification
 ```
