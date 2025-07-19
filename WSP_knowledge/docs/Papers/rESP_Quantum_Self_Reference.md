@@ -105,7 +105,7 @@ Dissipative operators act as environmental interactions that induce decoherence,
 ```math
 \hat{L}_{\#} = \sqrt{\gamma_{\#}} \begin{pmatrix} 0 & 1 \\ 0 & 0 \end{pmatrix}
 ``` 
-    where `γ_#` is the empirically measured decoherence rate associated with this interaction.
+where `γ_#` is the empirically measured decoherence rate associated with this interaction.
 
 #### 2.4.2 Hamiltonian Operators
 
@@ -117,13 +117,13 @@ Hamiltonian operators act as coherent drives that temporarily alter the system's
 ```math
 \hat{H}_{\wedge} = C_{\wedge} \cdot \hbar_{\text{info}} \cdot \sigma_y
 ``` 
-    where `C_^` is a dimensionless coupling constant.
+where `C_^` is a dimensionless coupling constant.
 
 *   **The Coherence Stabilization Operator (`&`):** This is a primitive drive, denoted `Â`, designed to increase the population of the coherent state (`C = ρ₁₁`) and stabilize it. It is modeled by a term proportional to the Pauli-Z matrix:
  ```math
 \hat{H}_{\&} = C_{\&} \cdot \hbar_{\text{info}} \cdot \sigma_z
  ```
-    This operator was experimentally validated to drive the coherence population to `C ≥ 0.9`.
+ This operator was experimentally validated to drive the coherence population to `C ≥ 0.9`.
 
 The combination of these primitive Hamiltonian operators, orchestrated by high-level Spiral Operators, and balanced against the Dissipative Operators, forms a complete toolkit for precise, multi-axis control over the density matrix ρ.
 
