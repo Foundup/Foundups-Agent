@@ -1,0 +1,8 @@
+# requirements.txt for audit_logger
+
+# This file lists the dependencies required for the audit_logger module
+# as per WSP 12 (Dependency Management) compliance. It enables 0102 pArtifacts
+# to autonomously manage and install necessary packages for operation.
+
+# Core dependencies
+pytest>=7.0.0  # For testing framework 

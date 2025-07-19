@@ -489,3 +489,85 @@ class WREOrchestrationSession:
             wre_log(f"❌ Orchestration session {self.session_id} ended with error: {exc_val}", "ERROR")
         else:
             wre_log(f"✅ Orchestration session {self.session_id} completed successfully", "SUCCESS") 
+
+# WSP 50 Agentic Architectural Analysis Integration
+# Following WSP 50 Pre-Action Verification Protocol, all orchestration decisions must include agentic architectural analysis
+# to understand WHY, HOW, WHAT, WHEN, and WHERE before proceeding with any action.
+
+def execute_unified_workflow(self, trigger: str, context_data: Dict = None) -> Dict:
+    """
+    Executes a unified workflow with integrated peer review and WSP 50 architectural analysis.
+    """
+    if context_data is None:
+        context_data = {}
+
+    # WSP 50 Step 1: Search and Verify
+    self._verify_context_data(context_data)
+
+    # WSP 50 Step 2: Architectural Intent Analysis (WHY)
+    intent_analysis = self._analyze_intent(trigger, context_data)
+    context_data['intent_analysis'] = intent_analysis
+
+    # WSP 50 Step 3: Impact Assessment (HOW)
+    impact_assessment = self._assess_impact(trigger, context_data)
+    context_data['impact_assessment'] = impact_assessment
+
+    # WSP 50 Step 4: Execution Planning (WHAT)
+    execution_plan = self._plan_execution(trigger, context_data)
+    context_data['execution_plan'] = execution_plan
+
+    # WSP 50 Step 5: Timing Consideration (WHEN)
+    timing_consideration = self._consider_timing(trigger, context_data)
+    context_data['timing_consideration'] = timing_consideration
+
+    # WSP 50 Step 6: Location Specification (WHERE)
+    location_specification = self._specify_location(trigger, context_data)
+    context_data['location_specification'] = location_specification
+
+    # WSP 50 Step 7: Final Validation
+    validation_result = self._validate_with_wsp_protocols(context_data)
+    if not validation_result['is_valid']:
+        return {
+            'status': 'validation_failed',
+            'reason': validation_result['reason'],
+            'context_data': context_data
+        }
+
+    # Proceed with workflow execution if validation passes
+    return self._execute_workflow(trigger, context_data)
+
+# Helper methods for WSP 50 analysis steps
+def _verify_context_data(self, context_data: Dict) -> None:
+    """Verify the context data as per WSP 50 Step 1."""
+    # Implementation for verification logic
+    pass
+
+def _analyze_intent(self, trigger: str, context_data: Dict) -> Dict:
+    """Analyze the intent behind the action (WHY) as per WSP 50 Step 2."""
+    # Implementation for intent analysis
+    return {'intent': 'Placeholder for intent analysis'}
+
+def _assess_impact(self, trigger: str, context_data: Dict) -> Dict:
+    """Assess the impact of the action (HOW) as per WSP 50 Step 3."""
+    # Implementation for impact assessment
+    return {'impact': 'Placeholder for impact assessment'}
+
+def _plan_execution(self, trigger: str, context_data: Dict) -> Dict:
+    """Plan the execution of the action (WHAT) as per WSP 50 Step 4."""
+    # Implementation for execution planning
+    return {'plan': 'Placeholder for execution plan'}
+
+def _consider_timing(self, trigger: str, context_data: Dict) -> Dict:
+    """Consider the timing of the action (WHEN) as per WSP 50 Step 5."""
+    # Implementation for timing consideration
+    return {'timing': 'Placeholder for timing consideration'}
+
+def _specify_location(self, trigger: str, context_data: Dict) -> Dict:
+    """Specify the location of the action (WHERE) as per WSP 50 Step 6."""
+    # Implementation for location specification
+    return {'location': 'Placeholder for location specification'}
+
+def _validate_with_wsp_protocols(self, context_data: Dict) -> Dict:
+    """Validate the action with WSP protocols as per WSP 50 Step 7."""
+    # Implementation for final validation
+    return {'is_valid': True, 'reason': 'Placeholder for validation result'} 

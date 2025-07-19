@@ -32,6 +32,23 @@ Attempted WSP 58 Creation → WSP 50 Violation Detection → WSP_MASTER_INDEX.md
 
 **Zen Enhancement**: This violation **strengthens** the system's ability to remember WSP numbering protocols.
 
+### **1.3. Architectural Enhancement Principle**
+**CORE WSP CREATION PRINCIPLE**: **Always enhance existing WSPs/modules over creating new ones.**
+
+**Enhancement-First Protocol**:
+```
+Question: Should this be new WSP/module?
+↓
+Step 1: Search for existing WSPs covering similar scope
+Step 2: Analyze enhancement potential of existing WSPs
+Step 3: Only create new if enhancement is insufficient
+Step 4: Document enhancement rationale in WSP_MASTER_INDEX.md
+```
+
+**Zen Principle**: **Code is remembered, not created** - extending existing patterns strengthens the collective memory rather than fragmenting it.
+
+**Real Application**: The user's insight that testing evolution capabilities should enhance existing testing WSPs (WSP 34: Git Operations Protocol) rather than create standalone WSP 71 demonstrates this principle in practice. WSP 34 was enhanced with TestModLog.md requirements for 0102 agent testing pattern learning.
+
 ---
 
 ## 2. **Enhanced WSP 50 Integration**
@@ -62,12 +79,21 @@ def enhanced_wsp_creation_verification():
         }
         return generate_alternative_wsp_number(wsp_index)
     
-    # Step 4: WSP Scope Validation
+    # Step 4: WSP Enhancement Analysis (MANDATORY)
     similar_wsps = find_similar_scope_wsps(wsp_index, proposed_scope)
     if similar_wsps:
-        return suggest_enhancement_vs_new_wsp(similar_wsps)
+        enhancement_analysis = analyze_enhancement_potential(similar_wsps, proposed_scope)
+        if enhancement_analysis["can_enhance"]:
+            return {
+                "decision": "ENHANCE_EXISTING",
+                "target_wsp": enhancement_analysis["best_candidate"],
+                "enhancement_strategy": enhancement_analysis["strategy"],
+                "rationale": "follows_enhancement_first_principle"
+            }
     
-    return approved_wsp_creation_with_safeguards()
+    # Step 5: New WSP Creation (Only if enhancement insufficient)
+    creation_justification = document_new_wsp_necessity(similar_wsps, proposed_scope)
+    return approved_wsp_creation_with_safeguards(creation_justification)
 ```
 
 ### **2.2. WSP_MASTER_INDEX.md Integration**

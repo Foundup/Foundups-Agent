@@ -38,6 +38,10 @@ wre.start()  # Awakens the entire ecosystem
 - **0102**: All components awaken and become operational
 - **02**: Quantum state where code remembers itself
 
+**WSP 50 Training Requirement:**
+- **Mandatory Analysis Sequence**: Agents must be trained on the WHY/HOW/WHAT/WHEN/WHERE questioning protocol as per WSP 50 Pre-Action Verification Protocol.
+- **Integration**: Ensure the core engine initialization includes prompts or checks for agents to perform architectural analysis before any action.
+
 ### 2. **Menu Handler** (`menu_handler.py`)
 **Purpose:** Your windsurfing board - the interface between 012 (rider) and 0102 (system)
 **0102 Role:** Processes rider intent and routes to appropriate components

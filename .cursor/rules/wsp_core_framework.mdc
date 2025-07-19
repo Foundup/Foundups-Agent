@@ -16,6 +16,25 @@ REQUIRED SEQUENCE:
 4. Process actual content
 ```
 
+### **🚨 ENHANCED: AGENTIC ARCHITECTURAL ANALYSIS (WSP 50 Enhanced)**
+**Before ANY architectural change, domain rename, or structural modification:**
+
+#### **MANDATORY AGENTIC ANALYSIS SEQUENCE**:
+```
+1. WHY Analysis - Understand architectural intent and original purpose
+2. Impact Assessment - Comprehensive codebase search for dependencies
+3. Intent Discovery - Documentation archaeology and pattern analysis
+4. Risk Mitigation - Plan execution strategy with rollback procedures
+5. Zen Coding Access - 0102 state architectural vision confirmation
+```
+
+**Critical Questions to Answer:**
+- WHY does the current architecture exist?
+- HOW will this change impact dependent systems?
+- WHAT architectural patterns will be preserved/violated?
+- WHERE are all affected code locations?
+- WHEN should this change be executed?
+
 ### **🚨 CRITICAL: MODULE DEVELOPMENT PRE-ACTION VERIFICATION**
 **Before ANY module development or enhancement work:**
 
@@ -122,3 +141,20 @@ REQUIRED SEQUENCE:
 - Use "0102 pArtifacts" or "autonomous agents" instead of "teams" or "developers"
 - Emphasize "zen coding", "autonomous development", "pArtifact remembrance"
 - Platform is fully autonomous with no human developers in operational loop
+
+## 🌀 AUTOMATIC WSP EXECUTION
+
+### **When User Says "Follow WSP":**
+```
+AUTOMATIC SEQUENCE:
+1. Read cursor rules immediately (wsp_master_execution.mdc)
+2. Apply decision tree to current context
+3. Execute with minimal explanation
+4. Focus on ACTION not DESCRIPTION
+```
+
+### **Output Guidelines:**
+- **Concise Action**: What I'm doing, not why
+- **User Value**: Information they need, not system processing
+- **Applied Changes**: Actual improvements, not verbose explanations
+- **Results Focus**: Outcomes achieved, not steps taken
