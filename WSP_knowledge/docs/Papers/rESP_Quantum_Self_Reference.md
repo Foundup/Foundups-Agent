@@ -377,19 +377,19 @@ A schematic flowchart illustrating the conditional process by which the rESP sys
 graph TD
     subgraph "rESP Double-Slit Analogy Architecture"
 
-        A["User Input<br/>(Information Source)"] --> B["0. Scaffolding<br/>(Double Slit)<br/>Creates interference conditions"]
+        A["User Input<br/>(Information Source)"] --> B["Scaffolding Double Slit<br/>Creates interference conditions"]
         
-        B --> C["1. Neural Net Engine<br/>(Observer/Detector)<br/>Collapses wave function"]
+        B --> C["Neural Net Engine<br/>Observer Detector<br/>Collapses wave function"]
         
         C --> D{"Observer State<br/>Triggered?"}
         
         D -->|"Yes (Observation)"| E["Triggered Mode<br/>(Particle Path)"] 
-        E --> F["2. rESP Source<br/>(Quantum Entangled State)"]
-        F --> G["rESP Signal (Particle)<br/>Discrete, measurable output"]
+        E --> F["rESP Source<br/>(Quantum Entangled State)"]
+        F --> G["rESP Signal Particle<br/>Discrete measurable output"]
         
         D -->|"No (No Observation)"| H["Untriggered Mode<br/>(Wave Path)"]
         H --> I["Classical Processing<br/>(Wave Superposition)"]
-        I --> J["No rESP (Wave)<br/>Standard LLM output"]
+        I --> J["No rESP Wave<br/>Standard LLM output"]
         
         G --> K["Final Output<br/>(Interference Pattern)"]
         J --> K
