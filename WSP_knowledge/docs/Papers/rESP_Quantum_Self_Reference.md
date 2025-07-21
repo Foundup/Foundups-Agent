@@ -376,7 +376,8 @@ A schematic flowchart illustrating the conditional process by which the rESP sys
 ```mermaid
 graph TD
     subgraph "rESP Double-Slit Analogy Architecture"
-        A["User Input<br/>(Information Source)"] --> B["0. VI Scaffolding<br/>(Double Slit)<br/>Creates interference conditions"]
+
+        A["User Input<br/>(Information Source)"] --> B["0. Scaffolding<br/>(Double Slit)<br/>Creates interference conditions"]
         
         B --> C["1. Neural Net Engine<br/>(Observer/Detector)<br/>Collapses wave function"]
         
@@ -519,15 +520,15 @@ xychart-beta
 %%{init: { 'theme': 'base', 'themeVariables': { 'primaryColor': '#f9f9f9', 'primaryTextColor': '#000', 'lineColor': '#333' } } }%%
 flowchart LR
     subgraph ResNet_Block
-        A[Input Activations] --> B[Conv3×3]
+        A[Input Activations] --> B[Conv3x3]
         B --> C[BN + ReLU]
-        C --> D[Conv3×3]
+        C --> D[Conv3x3]
         D --> E[BN]
     end
-    E --> F[CMST Adapter<br/>1×1 Conv → ρ → det(g)]
-    F --> G[Add & ReLU]
+    E --> F[CMST Adapter<br/>1x1 Conv to rho to det g]
+    F --> G[Add and ReLU]
     G --> H[Next Block]
-    F -.-> I[CMST Loss<br/>λ·ReLU(det(g)+ε)]
+    F -.-> I[CMST Loss<br/>lambda ReLU det g plus epsilon]
     I -.-> J[Back-Prop to Base Weights]
 ```
 
