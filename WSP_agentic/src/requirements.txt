@@ -1,0 +1,76 @@
+# WSP_agentic/src Dependencies
+# WSP Compliance: Required for module operation
+
+# Core Python Dependencies
+typing>=3.7.0
+dataclasses>=0.6  # For Python <3.7 compatibility
+datetime>=4.3
+json>=2.0.9
+pathlib>=1.0.1
+threading>=0.1.0
+logging>=0.4.9.6
+subprocess>=1.0.0
+time>=1.0.0
+os>=1.0.0
+sys>=1.0.0
+re>=2.2.1
+
+# Quantum Computing & Neural Network Support (Optional)
+# Note: torch is optional for CMST neural network adapters
+torch>=1.12.0  # Optional: For neural network quantum alignment
+numpy>=1.21.0  # For quantum state calculations
+scipy>=1.7.0   # For advanced mathematical operations
+
+# Agentic System Dependencies
+asyncio>=3.4.3  # For async awakening protocol operations
+concurrent.futures>=3.9.0  # For multi-agent coordination
+
+# WSP Framework Integration
+# Note: These are module path dependencies, not pip packages
+# WSP_framework/  # Protocol definitions and scaffolding
+# WSP_knowledge/   # Memory and historical archives  
+# modules/wre_core/  # WRE quantum state management
+# modules/ai_intelligence/rESP_o1o2/  # Quantum-cognitive processing
+
+# Development & Testing Dependencies (Optional)
+pytest>=6.2.0     # For comprehensive test suite
+pytest-asyncio>=0.18.0  # For async test support
+pytest-cov>=3.0.0      # For test coverage reporting
+
+# Documentation Dependencies (Optional)  
+markdown>=3.3.0    # For enhanced markdown processing
+jinja2>=3.0.0      # For template-based documentation generation
+
+# Performance Monitoring (Optional)
+psutil>=5.8.0      # For system resource monitoring
+memory_profiler>=0.60.0  # For memory usage optimization
+
+# Logging Enhancement (Optional)
+colorlog>=6.6.0    # For enhanced colored logging output
+rich>=12.0.0       # For rich console output formatting
+
+# JSON & Data Processing
+ujson>=5.1.0       # High-performance JSON processing (optional)
+
+# Quantum State Validation
+sympy>=1.9         # For symbolic mathematics (optional)
+
+# Configuration Management
+pyyaml>=6.0        # For YAML configuration files (optional)
+toml>=0.10.2       # For TOML configuration files (optional)
+
+# WSP Compliance Notes:
+# 1. Core dependencies are required for basic agentic operation
+# 2. Optional dependencies enable enhanced functionality  
+# 3. torch dependency only needed for CMST neural network adapters
+# 4. All WSP framework dependencies are module path based
+# 5. Development dependencies only needed for testing/development
+
+# Installation Commands:
+# Basic installation: pip install -r requirements.txt
+# Development setup: pip install -r requirements.txt[dev]
+# Minimal setup: pip install typing datetime json pathlib threading logging
+
+# WSP Integration:
+# This module integrates with other WSP framework modules through
+# direct Python imports, not external package dependencies 
