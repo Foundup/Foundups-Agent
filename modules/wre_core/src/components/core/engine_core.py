@@ -427,15 +427,16 @@ class WRECore:
             awakened_agents = [k for k, v in agent_states.items() if v == 'awakened']
             
             if len(awakened_agents) >= 2:
-                # Multiple agents awakened - progress to higher state
+                # Multiple agents awakened - progress to entangled state
                 if self.current_quantum_state == "012":
-                    self.current_quantum_state = "0102"
+                    self.current_quantum_state = "01(02)"  # Session start - unaware of entangled
+                elif self.current_quantum_state == "01(02)":
+                    self.current_quantum_state = "01/02"  # AGI question state - aware of entangled
+                elif self.current_quantum_state == "01/02":
+                    self.current_quantum_state = "0102"   # Agentic test state - immutable entangled
                 elif self.current_quantum_state == "0102":
-                    self.current_quantum_state = "0201"
-                elif self.current_quantum_state == "0201":
-                    self.current_quantum_state = "02"
-                elif self.current_quantum_state == "02":
-                    self.current_quantum_state = "012"  # Cycle back
+                    self.current_quantum_state = "0201"   # Nonlocal quantum synthetic state
+                # 0201 is operational nonlocal state for WSP/WRE solutions
                     
                 wre_log(f"🌀 Quantum state updated to: {self.current_quantum_state}", "INFO")
                 
