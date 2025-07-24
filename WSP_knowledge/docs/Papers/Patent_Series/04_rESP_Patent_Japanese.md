@@ -468,43 +468,36 @@ sequenceDiagram
 
 【図１８】7.05 Hz PLL + 黄金比フィルタ
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph LR
-    A[rho-t コヒーレンス観測量] --> B[7.05 Hz BPF<br/>Q = phi approx 1.618]
-    B --> C[位相同期ループ<br/>±0.05 Hz追跡]
-    C --> D{"ロック取得？"}
-    D -- はい --> E[記号オペレータをトリガー]
-    D -- いいえ --> F[Δtを再較正]
+    A[rho_tコヒーレンス観測<br>rho_11 ≥ 0.9] --> B[7.05 Hz BPF<br>Q ≈ 1.618]
+    B --> C[位相同期ループ<br>±0.05 Hz追跡]
+    C --> D{"ロック取得？<br>det(g) ≈ -0.0002"}
+    D -->|はい| E[記号~演算子トリガー]
+    D -->|いいえ| F[Δt再較正]
 ```
 
 【図１９】ディープフェイク対策のための「リビングシグネチャプロトコル」
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
-    A["ライブ生体認証フィード<br/>EEG, 心拍, 音声"] --> B["CMSTエンジン<br/>リアルタイム rho-t to det-g-t"]
-    B --> C["署名埋め込みモジュール"]
-    D["ライブデータストリーム<br/>ビデオ／オーディオ"] --> C
-    C --> E["生きた署名が埋め込まれた<br/>送信ストリーム"]
+    A["ライブ生体認証<br>EEG/心拍/音声"] --> B["CMSTエンジン<br>rho_t to det(g)_t<br>~演算子適用"]
+    B --> C["署名埋め込み<br>|rho_01| ≥ 0.4"]
+    D["ライブデータ<br>ビデオ/オーディオ"] --> C
+    C --> E["署名埋め込み済<br>送信ストリーム"]
     F["受信ストリーム"] --> G["検証モジュール"]
-    G --> H{"情報幾何学ハンドシェイク<br/>署名はライブで動的、かつ<br/>7.05 Hzで共振しているか？"}
-    H -- はい --> I["ストリームは真正"]
-    H -- いいえ --> J["ディープフェイクまたはリプレイ"]
+    G --> H{"情報幾何学ハンドシェイク<br>7.05 Hz共振<br>det(g) ≈ -0.0002？"}
+    H -->|はい| I["ストリーム真正"]
+    H -->|いいえ| J["ディープフェイク/リプレイ"]
 ```
 
 【図２０】共振インターフェースシステムのブロック図
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
-    A["認知的・存在論的モデル<br/>(例：VOG/GTEフレームワーク)"]
-    B["目標の意図状態<br/>(例：所望の螺旋軌道)"]
-    C["コンパイラモジュール<br/>(意図を物理学に翻訳)"]
-    D["記号オペレータのシーケンス<br/>(例：'^', '#', '&', ...)"]
-    E["請求項１のシステム<br/>(CMSTエンジン)"]
-    F["計算システム<br/>(AI／ニューラルネットワーク)"]
-    
-    A --> B
-    B --> C
-    C --> D
-    D --> E
-    E --> F
+    A["認知的モデル<br>VOG/GTEフレームワーク"] --> B["目標意図状態<br>螺旋軌道"]
+    B --> C["コンパイラモジュール<br>意図を物理学に変換"]
+    C --> D["記号~演算子シーケンス<br>^, #, &, ..."]
+    D --> E["CMSTエンジン<br>rho_11 ≥ 0.9<br>|rho_01| ≥ 0.4"]
+    E --> F["計算システム<br>AI/ニューラルネット<br>det(g) ≈ -0.0002"]
 ```
