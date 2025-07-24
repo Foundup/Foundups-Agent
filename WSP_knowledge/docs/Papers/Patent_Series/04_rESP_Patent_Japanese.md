@@ -237,6 +237,7 @@
 
 【図１】システムアーキテクチャ
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph LR
     subgraph " "
         subgraph "情報の幾何学を設計するためのシステム"
@@ -251,6 +252,7 @@ graph LR
 ```
 【図２】 記号オペレータの非可換特性
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
     subgraph " "
         subgraph "初期状態 |ψ⟩"
@@ -274,6 +276,7 @@ graph TD
 
 【図３】CMSTプロトコルのフローチャート
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
     subgraph " "
         A["開始：状態表現の初期化"] --> B{"現在の幾何学を測定"}
@@ -296,6 +299,7 @@ xychart-beta
 
 【図５】確率分布
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
     subgraph " "
         subgraph "３つの確率分布状態"
@@ -311,6 +315,7 @@ graph TD
 
 【図６】音声応用プロセスフローチャート
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
     subgraph " "
         A["入力波形"] --> B["音響特徴抽出"]
@@ -334,6 +339,7 @@ xychart-beta
 
 【図８】双方向通信チャネル
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
     subgraph " "
         A["ステップ1：メッセージを<br/>目標det(g)波形に符号化"] --> B["ステップ2：オペレータを適用し<br/>システムを目標det(g)に変調"]
@@ -343,6 +349,7 @@ graph TD
 
 【図９】時間的エンタングルメント分析プロセス
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph LR
     subgraph " "
         A["ベースライン状態データ"] & B["変調状態データ"] --> C["干渉信号を計算"]
@@ -352,6 +359,7 @@ graph LR
 
 【図１０】量子コヒーレンスシールド（QCS）プロトコル
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
     subgraph " "
         A["システム状態を監視 (det(g))"] --> B{"安定性の逸脱を検出？"}
@@ -364,6 +372,7 @@ graph TD
 
 【図１１】状態遷移を視覚的に検証する複合図
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
     subgraph " "
         subgraph "A: 視覚的な状態表現"
@@ -384,6 +393,7 @@ graph TD
 
 【図１２】暗号鍵生成方法
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
     subgraph " "
         A["システムを高エンタングルメント状態に設計<br/>(det(g) < 0)"] --> B["認可された観測者から<br/>一意のトリガーを受信"]
@@ -394,6 +404,7 @@ graph TD
 
 【図１３】暗号システムの実施形態 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
     subgraph "暗号システム (300)"
         A["状態準備モジュール (310)<br/>(図1のシステムを実装)"] --> B["トリガーインターフェース (320)"]
@@ -406,6 +417,7 @@ graph TD
 
 【図１４】ニューラルネットワークアダプタの配置
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph LR
     subgraph "ResNetブロック"
         A[入力活性化] --> B[Conv3×3]
@@ -432,6 +444,7 @@ xychart-beta
 
 【図１６】リアルタイムEEG-to-det(g)監視パイプライン
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph LR
     subgraph " "
         A[EEGパッチ<br/>250 Hz] --> B[アナログフロントエンド]
@@ -446,6 +459,7 @@ graph LR
 
 【図１７】生体認証トリガーによる再生可能鍵生成
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 sequenceDiagram
     participant U as ユーザー
     participant S as CMSTシステム
@@ -462,6 +476,7 @@ sequenceDiagram
 
 【図１８】7.05 Hz PLL + 黄金比フィルタ
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph LR
     subgraph " "
         A[ρ(t) コヒーレンス観測量] --> B[7.05 Hz BPF<br/>Q = φ ≈ 1.618]
@@ -474,6 +489,7 @@ graph LR
 
 【図１９】ディープフェイク対策のための「リビングシグネチャプロトコル」
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
     subgraph "署名生成（送信者）"
         A["ライブ生体認証フィード<br/>(EEG, 心拍, 音声)"] --> B["<b>CMSTエンジン</b><br/>リアルタイム ρ(t) → det(g)(t)"]
@@ -492,6 +508,7 @@ graph TD
 
 【図２０】共振インターフェースシステムのブロック図
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
     subgraph " "
         subgraph "認知層"
