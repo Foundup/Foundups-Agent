@@ -347,88 +347,89 @@ xychart-beta
 
 【図８】双方向通信チャネル
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
-    A["ステップ1：メッセージを<br/>目標det-g波形に符号化"] --> B["ステップ2：オペレータを適用し<br/>システムを目標det-gに変調"]
-    B --> C["ステップ3：システムのrhoおよびdet-gにおける<br/>相関応答を監視"] --> D["ステップ4：応答を<br/>受信メッセージとして復号"]
+    A["ステップ1：メッセージを<br>目標det-g波形に符号化<br>~演算子適用"] --> B["ステップ2：Pauli-Xオペレータ<br>1.2 * h_info * sigma_xで<br>システムを目標det-gに変調"]
+    B --> C["ステップ3：rho_11 ≥ 0.9 および<br>|rho_01| ≥ 0.4 を監視<br>det(g) ≈ -0.0002 確認"]
+    C --> D["ステップ4：応答を<br>受信メッセージとして復号"]
 ```
 
 【図９】時間的エンタングルメント分析プロセス
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph LR
-    A["ベースライン状態データ"] --> C["干渉信号を計算"]
-    B["変調状態データ"] --> C
-    C --> D["周波数および時間領域<br/>パターンの信号を分析"] --> E["異常スコアを出力"]
+    A["ベースライン状態<br>rho_11初期値"] --> C["干渉信号を計算<br>&演算子適用"]
+    B["変調状態<br>~演算子適用後"] --> C
+    C --> D["周波数・時間領域<br>パターン分析<br>|rho_01| ≥ 0.4"]
+    D --> E["異常スコア出力<br>det(g) ≈ -0.0002"]
 ```
 
 【図１０】量子コヒーレンスシールド（QCS）プロトコル
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
-    A["システム状態を監視 det-g"] --> B{"安定性の逸脱を検出？"}
-    B -- いいえ --> A
-    B -- はい --> C["第1層応答を実行<br/>散逸的オペレータを適用"] --> D{"状態は安定化したか？"}
-    D -- はい --> A
-    D -- いいえ --> E["第2層応答を実行<br/>因果性ブレーカーを作動"] --> F["システムは安全な状態に復帰"]
+    A["システム状態監視<br>det(g)トラッキング"] --> B{"det(g)逸脱検出？<br>rho_11 < 0.9"}
+    B -->|いいえ| A
+    B -->|はい| C["第1層応答<br>散逸的~演算子適用<br>1.2 * h_info * sigma_x"]
+    C --> D{"rho_11 ≥ 0.9？<br>det(g) ≈ -0.0002？"}
+    D -->|はい| A
+    D -->|いいえ| E["第2層応答<br>因果性ブレーカー起動<br>&演算子適用"]
+    E --> F["システム安全状態復帰<br>|rho_01| ≥ 0.4"]
 ```
 
 【図１１】状態遷移を視覚的に検証する複合図
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
-    A1["(a) 古典的状態<br/>高エントロピー／無秩序<br/>(例：ランダムノイズパターン)"]
-    A2["(b) 創発点<br/>幾何学的相転移<br/>(例：パターン形成)"]
-    A3["(c) コヒーレント状態<br/>低エントロピー／秩序<br/>(例：安定した波形パターン)"]
-    B1["(d) シャノンエントロピーの減少"]
-    
-    A1 --> A2
-    A2 --> A3
-    A2 -.-> B1
+    A1["(a) 古典的状態<br>高エントロピー<br>rho_11 ≈ 0.5"] --> A2["(b) 創発点<br>幾何学的相転移<br>~演算子適用"]
+    A2 --> A3["(c) コヒーレント状態<br>rho_11 ≥ 0.9<br>det(g) ≈ -0.0002"]
+    A2 --> B1["(d) シャノンエントロピー<br>減少曲線"]
 ```
 
 【図１２】暗号鍵生成方法
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
-    A["システムを高エンタングルメント状態に設計<br/>det-g < 0"] --> B["認可された観測者から<br/>一意のトリガーを受信"]
-    B --> C["状態収縮を開始"] --> D["幾何学的収縮経路を捕捉<br/>rhoおよびg-muvの時系列"]
-    D --> E["時系列を暗号署名として出力"]
+    A["高エンタングルメント状態<br>det(g) < 0<br>~演算子適用"] --> B["認可トリガー受信<br>&演算子準備"]
+    B --> C["状態収縮開始<br>|rho_01| ≥ 0.4"]
+    C --> D["幾何学的収縮経路捕捉<br>rho_t, g_muv_t"]
+    D --> E["暗号署名出力<br>det(g) ≈ -0.0002"]
 ```
 
 【図１３】暗号システムの実施形態 
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
-    A["状態準備モジュール 310<br/>図1のシステムを実装"] --> B["トリガーインターフェース 320"]
+    A["状態準備モジュール 310<br>CMSTエンジン実装<br>~演算子適用"] --> B["トリガーインターフェース 320"]
     B --> A
-    A --> C["署名捕捉モジュール 330<br/>rho-tおよびg-muv-tを記録"]
-    C --> D["ハッシュ化および鍵導出モジュール 340"]
-    D --> E["出力：量子耐性<br/>鍵／署名 350"]
+    A --> C["署名捕捉モジュール 330<br>rho_t, g_muv_t記録<br>|rho_01| ≥ 0.4"]
+    C --> D["ハッシュ化・鍵導出 340"]
+    D --> E["量子耐性鍵/署名 350<br>det(g) ≈ -0.0002"]
 ```
 
 【図１４】ニューラルネットワークアダプタの配置
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph LR
-    subgraph "ResNetブロック"
+    subgraph ResNetブロック
         A[入力活性化] --> B[Conv3×3]
         B --> C[BN + ReLU]
         C --> D[Conv3×3]
         D --> E[BN]
     end
-    E --> F[CMSTアダプタ<br/>1×1 Conv to rho to det-g]
+    E --> F[CMSTアダプタ<br>1×1 Conv to rho<br>det(g)計算]
     F --> G[加算 & ReLU]
     G --> H[次のブロック]
-    F -.-> I[CMST損失<br/>lambda ReLU det-g plus epsilon]
-    I -.-> J[ベースの重みに逆伝播]
+    F --> I[CMST損失<br>lambda * ReLU(det(g)) + epsilon]
+    I --> J[ベース重みへ逆伝播]
 ```
 
 【図１５】 7.05 Hzスペクトルロック
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 xychart-beta
-    title "黄金比重み付き共分散による7.05 Hzのロック"
-    x-axis "周波数 (Hz)" 6.5 --> 7.6
+    title "黄金比重み付き共分散による7.05 Hzのロック (det(g) ≈ -0.0002)"
+    x-axis "周波数 (Hz)" [6.5, 6.7, 6.9, 7.05, 7.3, 7.6]
     y-axis "正規化ゲイン" 0 --> 1
     line [0.05, 0.08, 0.20, 0.95, 0.30, 0.10]
     bar [0.02, 0.03, 0.10, 0.85, 0.12, 0.04]
@@ -436,34 +437,32 @@ xychart-beta
 
 【図１６】リアルタイムEEG-to-det(g)監視パイプライン
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph LR
-    subgraph " "
-        A[EEGパッチ<br/>250 Hz] --> B[アナログフロントエンド]
-        B --> C[状態モデリングモジュール<br/>rho-t]
-        C --> D[幾何学エンジン<br/>det-g]
-        D --> E{"det-g approaching 0?"}
-        E -->|はい| F[発作を予測<br/>2–5秒前に]
-        E -->|いいえ| G[監視を継続]
-        F --> H[プッシュ通知<br/>スマートフォン]
-    end
+    A[EEGパッチ<br>250 Hz] --> B[アナログフロントエンド]
+    B --> C[状態モデリング<br>rho_t生成<br>~演算子適用]
+    C --> D[幾何学エンジン<br>det(g)計算]
+    D --> E{"det(g) ≈ -0.0002？<br>|rho_01| ≥ 0.4"}
+    E -->|はい| F[発作予測<br>2–5秒前]
+    E -->|いいえ| G[監視継続]
+    F --> H[プッシュ通知<br>スマートフォン]
 ```
 
 【図１７】生体認証トリガーによる再生可能鍵生成
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 sequenceDiagram
     participant U as ユーザー
     participant S as CMSTシステム
     participant B as ブロックチェーンオラクル
     participant IPFS as IPFS
-    U->>S: 7.05 Hzの心拍トリガー
-    S->>S: rho-t to g-muv-t の収縮
-    S->>S: 幾何学的経路を記録
-    S->>S: det-g系列のハッシュ化
-    S->>IPFS: 生の経路を保存（プライベート）
-    S->>B: ハッシュを公開（パブリックビーコン）
-    B->>U: 署名ハンドルを返却
+    U->>S: 7.05 Hz心拍トリガー
+    S->>S: rho_t to g_muv_t収縮<br>~演算子適用
+    S->>S: 幾何学的経路記録<br>|rho_01| ≥ 0.4
+    S->>S: det(g) ≈ -0.0002ハッシュ化
+    S->>IPFS: 生の経路保存（プライベート）
+    S->>B: ハッシュ公開（パブリックビーコン）
+    B->>U: 署名ハンドル返却
 ```
 
 【図１８】7.05 Hz PLL + 黄金比フィルタ
