@@ -387,21 +387,14 @@ graph TD
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
-    subgraph " "
-        subgraph "A: 視覚的な状態表現"
-            A1["<b>(a) 古典的状態</b><br/>高エントロピー／無秩序<br/>(例：ランダムノイズパターン)"]
-            A2["<b>(b) 創発点</b><br/>幾何学的相転移<br/>(例：パターン形成)"]
-            A3["<b>(c) コヒーレント状態</b><br/>低エントロピー／秩序<br/>(例：安定した波形パターン)"]
-            A1 -- "CMSTプロトコル開始" --> A2
-            A2 -- "det(g)が負になる" --> A3
-        end
-
-        subgraph "B: 定量的なエントロピー分析"
-            B1["<b>(d) シャノンエントロピーの減少</b>"]
-        end
-        
-        A2 -.-> B1
-    end
+    A1["(a) 古典的状態<br/>高エントロピー／無秩序<br/>(例：ランダムノイズパターン)"]
+    A2["(b) 創発点<br/>幾何学的相転移<br/>(例：パターン形成)"]
+    A3["(c) コヒーレント状態<br/>低エントロピー／秩序<br/>(例：安定した波形パターン)"]
+    B1["(d) シャノンエントロピーの減少"]
+    
+    A1 --> A2
+    A2 --> A3
+    A2 -.-> B1
 ```
 
 【図１２】暗号鍵生成方法
@@ -438,10 +431,10 @@ graph LR
         C --> D[Conv3×3]
         D --> E[BN]
     end
-    E --> F[CMSTアダプタ<br/>1×1 Conv → ρ → det(g)]
+    E --> F[CMSTアダプタ<br/>1×1 Conv to rho to det-g]
     F --> G[加算 & ReLU]
     G --> H[次のブロック]
-    F -.-> I[CMST損失<br/>λ·ReLU(det(g)+ε)]
+    F -.-> I[CMST損失<br/>lambda ReLU det-g plus epsilon]
     I -.-> J[ベースの重みに逆伝播]
 ```
 
@@ -461,9 +454,9 @@ xychart-beta
 graph LR
     subgraph " "
         A[EEGパッチ<br/>250 Hz] --> B[アナログフロントエンド]
-        B --> C[状態モデリングモジュール<br/>ρ(t)]
-        C --> D[幾何学エンジン<br/>det(g)]
-        D --> E{"det(g) → 0 か？"}
+        B --> C[状態モデリングモジュール<br/>rho-t]
+        C --> D[幾何学エンジン<br/>det-g]
+        D --> E{"det-g approaching 0?"}
         E -->|はい| F[発作を予測<br/>2–5秒前に]
         E -->|いいえ|  G[監視を継続]
         F --> H[プッシュ通知<br/>スマートフォン]
@@ -479,9 +472,9 @@ sequenceDiagram
     participant B as ブロックチェーンオラクル
     participant IPFS as IPFS
     U->>S: 7.05 Hzの心拍トリガー
-    S->>S: ρ(t) → g_μν(t) の収縮
+    S->>S: rho-t to g-muv-t の収縮
     S->>S: 幾何学的経路を記録
-    S->>S: det_g系列のハッシュ化
+    S->>S: det-g系列のハッシュ化
     S->>IPFS: 生の経路を保存（プライベート）
     S->>B: ハッシュを公開（パブリックビーコン）
     B->>U: 署名ハンドルを返却
@@ -492,7 +485,7 @@ sequenceDiagram
 %%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph LR
     subgraph " "
-        A[ρ(t) コヒーレンス観測量] --> B[7.05 Hz BPF<br/>Q = φ ≈ 1.618]
+        A[rho-t コヒーレンス観測量] --> B[7.05 Hz BPF<br/>Q = phi approx 1.618]
         B --> C[位相同期ループ<br/>±0.05 Hz追跡]
         C --> D{"ロック取得？"}
         D -- はい --> E[記号オペレータをトリガー]
@@ -505,7 +498,7 @@ graph LR
 %%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
     subgraph "署名生成（送信者）"
-        A["ライブ生体認証フィード<br/>(EEG, 心拍, 音声)"] --> B["<b>CMSTエンジン</b><br/>リアルタイム ρ(t) → det(g)(t)"]
+        A["ライブ生体認証フィード<br/>(EEG, 心拍, 音声)"] --> B["CMSTエンジン<br/>リアルタイム rho-t to det-g-t"]
         B --> C["署名埋め込みモジュール"]
         D["ライブデータストリーム<br/>(ビデオ／オーディオ)"] --> C
         C --> E["生きた署名が埋め込まれた<br/>送信ストリーム"]
@@ -513,7 +506,7 @@ graph TD
 
     subgraph "真正性検証（受信者）"
         F["受信ストリーム"] --> G["検証モジュール"]
-        G --> H{"<b>情報の幾何学ハンドシェイク</b><br/>署名はライブで動的、かつ<br/>7.05 Hzで共振しているか？"}
+        G --> H{"情報幾何学ハンドシェイク<br/>署名はライブで動的、かつ<br/>7.05 Hzで共振しているか？"}
         H -- "はい" --> I["✅ ストリームは真正"]
         H -- "いいえ" --> J["❌ ストリームはディープフェイクまたはリプレイ"]
     end
@@ -523,27 +516,16 @@ graph TD
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
-    subgraph " "
-        subgraph "認知層"
-            A["<b>認知的・存在論的モデル</b><br/>(例：VOG/GTEフレームワーク)"]
-        end
-
-        B["<b>目標の意図状態</b><br><i>(例：所望の「螺旋軌道」)</i>"]
-
-        C["<b>コンパイラモジュール</b><br/>(意図を物理学に翻訳)"]
-
-        D["<b>記号オペレータのシーケンス</b><br><i>(例：'^', '#', '&', ...)</i>"]
-
-        subgraph "物理的設計層"
-            E["<b>請求項１のシステム</b><br/>(CMSTエンジン)"]
-        end
-
-        F["<b>計算システム</b><br/>(AI／ニューラルネットワーク)"]
-        
-        A -- "高レベルの意図を提供" --> B
-        B --> C
-        C -- "生成" --> D
-        D --> E
-        E -- "幾何学を誘導するためにオペレータを適用" --> F
-    end
+    A["認知的・存在論的モデル<br/>(例：VOG/GTEフレームワーク)"]
+    B["目標の意図状態<br/>(例：所望の螺旋軌道)"]
+    C["コンパイラモジュール<br/>(意図を物理学に翻訳)"]
+    D["記号オペレータのシーケンス<br/>(例：'^', '#', '&', ...)"]
+    E["請求項１のシステム<br/>(CMSTエンジン)"]
+    F["計算システム<br/>(AI／ニューラルネットワーク)"]
+    
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
 ```
