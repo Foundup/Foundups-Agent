@@ -314,31 +314,26 @@ xychart-beta
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
-    subgraph " "
-        subgraph "３つの確率分布状態"
-            A["(a) 古典的分布<br/>滑らかで単一ピークの確率<br/>予測可能な順方向の発展経路を表す"]
-            B["(b) エンタングルされた分布<br/>複数ピークの干渉パターン<br/>順方向および遡及的情報経路の重ね合わせ"]
-            C["(c) 収縮した分布<br/>鋭い単一スパイクの確率<br/>測定またはデコヒーレンス事象後の確定状態"]
-        end
-        
-        A -- "エンタングルメントの誘導" --> B
-        B -- "測定／収縮" --> C
-    end
+    A["(a) 古典的分布<br/>滑らかで単一ピークの確率<br/>予測可能な順方向の発展経路を表す"]
+    B["(b) エンタングルされた分布<br/>複数ピークの干渉パターン<br/>順方向および遡及的情報経路の重ね合わせ"]
+    C["(c) 収縮した分布<br/>鋭い単一スパイクの確率<br/>測定またはデコヒーレンス事象後の確定状態"]
+    
+    A --> B
+    B --> C
 ```
 
 【図６】音声応用プロセスフローチャート
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
-    subgraph " "
-        A["入力波形"] --> B["音響特徴抽出"]
-        B --> C["ベースライン音響分布"]
-        B --> D["変調音響分布"]
-        C & D --> E["音響干渉信号を計算"]
-        E --> F["スペクトル分析を実行"]
-        F --> G["約7.05 Hzの周期的ピークを検出"]
-        G --> H["持続的音響概念としてフラグ付け"]
-    end
+    A["入力波形"] --> B["音響特徴抽出"]
+    B --> C["ベースライン音響分布"]
+    B --> D["変調音響分布"]
+    C --> E["音響干渉信号を計算"]
+    D --> E
+    E --> F["スペクトル分析を実行"]
+    F --> G["約7.05 Hzの周期的ピークを検出"]
+    G --> H["持続的音響概念としてフラグ付け"]
 ```
 
 【図７】音響干渉信号スペクトル
@@ -354,33 +349,28 @@ xychart-beta
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
-    subgraph " "
-        A["ステップ1：メッセージを<br/>目標det(g)波形に符号化"] --> B["ステップ2：オペレータを適用し<br/>システムを目標det(g)に変調"]
-        B --> C["ステップ3：システムのρおよびdet(g)における<br/>相関応答を監視"] --> D["ステップ4：応答を<br/>受信メッセージとして復号"]
-    end
+    A["ステップ1：メッセージを<br/>目標det-g波形に符号化"] --> B["ステップ2：オペレータを適用し<br/>システムを目標det-gに変調"]
+    B --> C["ステップ3：システムのrhoおよびdet-gにおける<br/>相関応答を監視"] --> D["ステップ4：応答を<br/>受信メッセージとして復号"]
 ```
 
 【図９】時間的エンタングルメント分析プロセス
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph LR
-    subgraph " "
-        A["ベースライン状態データ"] & B["変調状態データ"] --> C["干渉信号を計算"]
-        C --> D["周波数および時間領域<br/>パターンの信号を分析"] --> E["異常スコアを出力"]
-    end
+    A["ベースライン状態データ"] --> C["干渉信号を計算"]
+    B["変調状態データ"] --> C
+    C --> D["周波数および時間領域<br/>パターンの信号を分析"] --> E["異常スコアを出力"]
 ```
 
 【図１０】量子コヒーレンスシールド（QCS）プロトコル
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
-    subgraph " "
-        A["システム状態を監視 (det(g))"] --> B{"安定性の逸脱を検出？"}
-        B -- いいえ --> A
-        B -- はい --> C["第1層応答を実行<br/>(散逸的オペレータを適用)"] --> D{"状態は安定化したか？"}
-        D -- はい --> A
-        D -- いいえ --> E["第2層応答を実行<br/>(因果性ブレーカーを作動)"] --> F["システムは安全な状態に復帰"]
-    end
+    A["システム状態を監視 det-g"] --> B{"安定性の逸脱を検出？"}
+    B -- いいえ --> A
+    B -- はい --> C["第1層応答を実行<br/>散逸的オペレータを適用"] --> D{"状態は安定化したか？"}
+    D -- はい --> A
+    D -- いいえ --> E["第2層応答を実行<br/>因果性ブレーカーを作動"] --> F["システムは安全な状態に復帰"]
 ```
 
 【図１１】状態遷移を視覚的に検証する複合図
@@ -401,24 +391,20 @@ graph TD
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
-    subgraph " "
-        A["システムを高エンタングルメント状態に設計<br/>(det(g) < 0)"] --> B["認可された観測者から<br/>一意のトリガーを受信"]
-        B --> C["状態収縮を開始"] --> D["幾何学的収縮経路を捕捉<br/>(ρおよびg_μνの時系列)"]
-        D --> E["時系列を暗号署名として出力"]
-    end
+    A["システムを高エンタングルメント状態に設計<br/>det-g < 0"] --> B["認可された観測者から<br/>一意のトリガーを受信"]
+    B --> C["状態収縮を開始"] --> D["幾何学的収縮経路を捕捉<br/>rhoおよびg-muvの時系列"]
+    D --> E["時系列を暗号署名として出力"]
 ```
 
 【図１３】暗号システムの実施形態 
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
-    subgraph "暗号システム (300)"
-        A["状態準備モジュール (310)<br/>(図1のシステムを実装)"] --> B["トリガーインターフェース (320)"]
-        B -- "外部トリガーを受信" --> A
-        A -- "収縮データを出力" --> C["署名捕捉モジュール (330)<br/>(ρ(t)およびg_μν(t)を記録)"]
-        C --> D["ハッシュ化および鍵導出モジュール (340)"]
-        D --> E["出力：量子耐性<br/>鍵／署名 (350)"]
-    end
+    A["状態準備モジュール 310<br/>図1のシステムを実装"] --> B["トリガーインターフェース 320"]
+    B --> A
+    A --> C["署名捕捉モジュール 330<br/>rho-tおよびg-muv-tを記録"]
+    C --> D["ハッシュ化および鍵導出モジュール 340"]
+    D --> E["出力：量子耐性<br/>鍵／署名 350"]
 ```
 
 【図１４】ニューラルネットワークアダプタの配置
@@ -458,7 +444,7 @@ graph LR
         C --> D[幾何学エンジン<br/>det-g]
         D --> E{"det-g approaching 0?"}
         E -->|はい| F[発作を予測<br/>2–5秒前に]
-        E -->|いいえ|  G[監視を継続]
+        E -->|いいえ| G[監視を継続]
         F --> H[プッシュ通知<br/>スマートフォン]
     end
 ```
@@ -484,32 +470,25 @@ sequenceDiagram
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph LR
-    subgraph " "
-        A[rho-t コヒーレンス観測量] --> B[7.05 Hz BPF<br/>Q = phi approx 1.618]
-        B --> C[位相同期ループ<br/>±0.05 Hz追跡]
-        C --> D{"ロック取得？"}
-        D -- はい --> E[記号オペレータをトリガー]
-        D -- いいえ  --> F[Δtを再較正]
-    end
+    A[rho-t コヒーレンス観測量] --> B[7.05 Hz BPF<br/>Q = phi approx 1.618]
+    B --> C[位相同期ループ<br/>±0.05 Hz追跡]
+    C --> D{"ロック取得？"}
+    D -- はい --> E[記号オペレータをトリガー]
+    D -- いいえ --> F[Δtを再較正]
 ```
 
 【図１９】ディープフェイク対策のための「リビングシグネチャプロトコル」
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
-    subgraph "署名生成（送信者）"
-        A["ライブ生体認証フィード<br/>(EEG, 心拍, 音声)"] --> B["CMSTエンジン<br/>リアルタイム rho-t to det-g-t"]
-        B --> C["署名埋め込みモジュール"]
-        D["ライブデータストリーム<br/>(ビデオ／オーディオ)"] --> C
-        C --> E["生きた署名が埋め込まれた<br/>送信ストリーム"]
-    end
-
-    subgraph "真正性検証（受信者）"
-        F["受信ストリーム"] --> G["検証モジュール"]
-        G --> H{"情報幾何学ハンドシェイク<br/>署名はライブで動的、かつ<br/>7.05 Hzで共振しているか？"}
-        H -- "はい" --> I["✅ ストリームは真正"]
-        H -- "いいえ" --> J["❌ ストリームはディープフェイクまたはリプレイ"]
-    end
+    A["ライブ生体認証フィード<br/>EEG, 心拍, 音声"] --> B["CMSTエンジン<br/>リアルタイム rho-t to det-g-t"]
+    B --> C["署名埋め込みモジュール"]
+    D["ライブデータストリーム<br/>ビデオ／オーディオ"] --> C
+    C --> E["生きた署名が埋め込まれた<br/>送信ストリーム"]
+    F["受信ストリーム"] --> G["検証モジュール"]
+    G --> H{"情報幾何学ハンドシェイク<br/>署名はライブで動的、かつ<br/>7.05 Hzで共振しているか？"}
+    H -- はい --> I["ストリームは真正"]
+    H -- いいえ --> J["ディープフェイクまたはリプレイ"]
 ```
 
 【図２０】共振インターフェースシステムのブロック図
