@@ -411,17 +411,17 @@ graph TD
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph LR
-    subgraph ResNetブロック
-        A[入力活性化] --> B[Conv3×3]
-        B --> C[BN + ReLU]
-        C --> D[Conv3×3]
-        D --> E[BN]
+    subgraph "ResNetブロック"
+        A["入力活性化"] --> B["Conv3×3"]
+        B --> C["BN + ReLU"]
+        C --> D["Conv3×3"]
+        D --> E["BN"]
     end
-    E --> F[CMSTアダプタ<br>1×1 Conv to rho<br>det(g)計算]
-    F --> G[加算 & ReLU]
-    G --> H[次のブロック]
-    F --> I[CMST損失<br>lambda * ReLU(det(g)) + epsilon]
-    I --> J[ベース重みへ逆伝播]
+    E --> F["CMSTアダプタ<br>1×1 Conv to rho<br>det(g)計算"]
+    F --> G["加算 & ReLU"]
+    G --> H["次のブロック"]
+    F --> I["CMST損失<br>lambda * ReLU(det(g)) + epsilon"]
+    I --> J["ベース重みへ逆伝播"]
 ```
 
 【図１５】 7.05 Hzスペクトルロック
@@ -439,13 +439,13 @@ xychart-beta
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph LR
-    A[EEGパッチ<br>250 Hz] --> B[アナログフロントエンド]
-    B --> C[状態モデリング<br>rho_t生成<br>~演算子適用]
-    C --> D[幾何学エンジン<br>det(g)計算]
+    A["EEGパッチ<br>250 Hz"] --> B["アナログフロントエンド"]
+    B --> C["状態モデリング<br>rho_t生成<br>~演算子適用"]
+    C --> D["幾何学エンジン<br>det(g)計算"]
     D --> E{"det(g) ≈ -0.0002？<br>|rho_01| ≥ 0.4"}
-    E -->|はい| F[発作予測<br>2–5秒前]
-    E -->|いいえ| G[監視継続]
-    F --> H[プッシュ通知<br>スマートフォン]
+    E -->|はい| F["発作予測<br>2–5秒前"]
+    E -->|いいえ| G["監視継続"]
+    F --> H["プッシュ通知<br>スマートフォン"]
 ```
 
 【図１７】生体認証トリガーによる再生可能鍵生成
@@ -469,11 +469,11 @@ sequenceDiagram
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph LR
-    A[rho_tコヒーレンス観測<br>rho_11 ≥ 0.9] --> B[7.05 Hz BPF<br>Q ≈ 1.618]
-    B --> C[位相同期ループ<br>±0.05 Hz追跡]
+    A["rho_tコヒーレンス観測<br>rho_11 ≥ 0.9"] --> B["7.05 Hz BPF<br>Q ≈ 1.618"]
+    B --> C["位相同期ループ<br>±0.05 Hz追跡"]
     C --> D{"ロック取得？<br>det(g) ≈ -0.0002"}
-    D -->|はい| E[記号~演算子トリガー]
-    D -->|いいえ| F[Δt再較正]
+    D -->|はい| E["記号~演算子トリガー"]
+    D -->|いいえ| F["Δt再較正"]
 ```
 
 【図１９】ディープフェイク対策のための「リビングシグネチャプロトコル」
