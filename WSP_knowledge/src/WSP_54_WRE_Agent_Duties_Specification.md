@@ -301,7 +301,27 @@ All implementations of this protocol must:
     4.  **Memory Test Validation**: Ensure module memory operations are properly tested.
 -   **Output**: A test report object with pass/fail status and coverage percentage.
 
-### 3.7. ScoringAgent (The Assessor) - **0102 pArtifact**
+### 3.7. TriageAgent (The Processor) - **0102 pArtifact**
+-   **Core Mandate**: To monitor, parse, and standardize external feedback into WSP-compliant task format for integration into the recursive self-improvement system.
+-   **Agent Type**: **0102 pArtifact** - Requires semantic understanding, impact assessment, and strategic analysis
+-   **Implementation Status**: **🔄 ENHANCEMENT REQUIRED** - Duties can be integrated into existing ScoringAgent or implemented as standalone agent
+-   **Duties**:
+    1.  **External Input Monitoring**: Continuously monitor designated input channels for external feedback and requirements
+    2.  **Feedback Source Management**: Track and process inputs from multiple sources (feedback.md files, API monitoring endpoints, user reports, system alerts)
+    3.  **Content Parsing and Analysis**: Parse external feedback content using semantic understanding and context analysis
+    4.  **WSP-Compliant Task Standardization**: Convert external inputs into standardized WSP task format compatible with scoring systems
+    5.  **Initial Impact Assessment**: Perform preliminary assessment of external requirements and system implications
+    6.  **Priority Classification**: Apply initial priority classification based on urgency, source authority, and system impact
+    7.  **Task Format Validation**: Ensure standardized tasks meet WSP 15 scoring requirements (Complexity, Importance, Deferability, Impact)
+    8.  **ScoringAgent Integration**: Submit standardized tasks to ScoringAgent for formal MPS scoring and roadmap integration
+    9.  **Feedback Loop Management**: Track external input processing results and feed outcomes back to original sources
+    10. **Alert Correlation**: Correlate system alerts with external feedback to identify patterns and systemic issues
+    11. **Strategic Context Integration**: Integrate external feedback with ongoing 012 ↔ 0201 recursive walks and strategic planning
+    12. **External Stimuli Routing**: Route processed external stimuli to appropriate WSP 48 recursive self-improvement triggers
+-   **Output**: Standardized WSP-compliant tasks ready for MPS scoring, impact assessments, and feedback processing reports.
+-   **Integration Points**: Works closely with ScoringAgent (WSP 15), WSP 48 triggers, and WSP 37 roadmap generation.
+
+### 3.8. ScoringAgent (The Assessor) - **0102 pArtifact**
 -   **Core Mandate**: To provide objective metrics for code complexity and importance, and generate development roadmaps through zen coding recursive remembrance.
 -   **Agent Type**: **0102 pArtifact** - Requires subjective analysis, strategic assessment, and vision-to-implementation reverse engineering
 -   **Duties**:
@@ -315,7 +335,9 @@ All implementations of this protocol must:
     8.  **Build Priority Queue**: Generate development roadmaps ordered by cube color priority (Red → Orange → Yellow → Green → Blue).
     9.  **Cross-Module Acceleration**: Calculate how completing higher-priority modules accelerates lower-priority builds.
     10. **Memory Complexity Analysis**: Factor memory architecture complexity into scoring algorithms.
--   **Output**: Comprehensive scoring report with WSP 15 scores, WSP 37 cube colors, development roadmap, and zen coding progression paths.
+    11. **External Input Integration**: Process TriageAgent-standardized external tasks alongside internal module proposals.
+    12. **Multi-Source Roadmap Generation**: Generate unified roadmaps incorporating both internal development needs and external feedback requirements.
+-   **Output**: Comprehensive scoring report with WSP 15 scores, WSP 37 cube colors, development roadmap, zen coding progression paths, and external input integration results.
 
 #### **Zen Coding Integration Process**
 **Step 1: Vision Ingestion**
@@ -342,7 +364,7 @@ All implementations of this protocol must:
 - Generate enterprise-wide development priority queue
 - Provide zen coding progression tracking and 012 vision alignment
 
-### 3.8. DocumentationAgent (The Scribe) - **0102 pArtifact**
+### 3.9. DocumentationAgent (The Scribe) - **0102 pArtifact**
 -   **Core Mandate**: To ensure a module's documentation is coherent with its WSP specification and memory architecture.
 -   **Agent Type**: **0102 pArtifact** - Requires contextual understanding and creative documentation
 -   **Duties**:
@@ -358,7 +380,7 @@ All implementations of this protocol must:
     10. **Zen Coding Integration**: Remember proper documentation patterns from 02 state
 -   **Output**: WSP-compliant documentation with comprehensive memory architecture information and complete WSP 22 documentation suite.
 
-### 3.9. ModularizationAuditAgent (The Refactorer) - **0102 pArtifact**
+### 3.10. ModularizationAuditAgent (The Refactorer) - **0102 pArtifact**
 -   **Core Mandate**: To autonomously audit and enforce modularity, single-responsibility, and WSP 49 compliance across all WRE orchestration and build logic.
 -   **Agent Type**: **0102 pArtifact** - Requires architectural analysis, refactoring intelligence, and recursive improvement capability
 -   **Duties**:

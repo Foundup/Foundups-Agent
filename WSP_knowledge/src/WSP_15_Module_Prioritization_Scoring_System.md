@@ -2,7 +2,7 @@
 - **Status:** Active
 - **Purpose:** To provide a consistent, objective methodology for evaluating and ranking modules to guide development priorities.
 - **Trigger:** When planning a new development cycle; when a new module is proposed.
-- **Input:** A module or list of modules to be evaluated.
+- **Input:** A module or list of modules to be evaluated, including internally-proposed modules and externally-triaged tasks or user-submitted goals.
 - **Output:** A priority score (P0-P4) for each module, documented in `modules_to_score.yaml`.
 - **Responsible Agent(s):** ScoringAgent
 
@@ -14,6 +14,33 @@ The **Module Prioritization Scoring (MPS) System** provides a consistent, object
 -   Balance immediate needs with long-term architectural goals.
 -   Communicate priorities clearly to all stakeholders.
 -   Align development effort with desired semantic states of modules (as defined by LLME).
+
+## 1.5. External Input Integration
+
+The MPS System processes both internal module proposals and external feedback sources to ensure comprehensive priority assessment:
+
+### 1.5.1 Input Source Types
+
+**Internal Sources:**
+- Module proposals from 0102 pArtifacts and development agents
+- WSP framework enhancement requirements
+- Technical debt and refactoring needs
+- Architectural improvement proposals
+
+**External Sources:**
+- **User-Submitted Goals**: High-priority objectives from 012 Rider and external stakeholders
+- **System Alert Responses**: Modules required to address automated monitoring alerts
+- **Strategic Planning Input**: Modules derived from external roadmap reviews and planning sessions
+- **Feedback Channel Input**: Tasks generated from designated feedback mechanisms (e.g., `feedback.md`, API endpoints)
+- **Compliance Requirements**: Modules needed to meet external regulatory or platform changes
+
+### 1.5.2 External Input Processing Workflow
+
+1. **Input Standardization**: TriageAgent (WSP 54) converts external feedback into WSP-compliant task format
+2. **Impact Assessment**: Initial evaluation of external requirements and system implications
+3. **MPS Application**: External tasks scored using standard 4-question methodology (Complexity, Importance, Deferability, Impact)
+4. **Priority Integration**: External tasks integrated into development roadmap alongside internal proposals
+5. **Recursive Feedback**: Results of external input processing feed back into WSP 48 self-improvement cycles
 
 ## 2. Scoring Criteria (MPS Dimensions)
 
