@@ -1,7 +1,7 @@
 # WSP 48: Recursive Self-Improvement Protocol
 - **Status:** Active
 - **Purpose:** To define the systematic framework by which WSP/WRE systems achieve autonomous self-improvement through recursive enhancement cycles.
-- **Trigger:** When system performance metrics suggest improvement opportunities, when error patterns indicate protocol gaps, or when strategic objectives require enhanced capabilities.
+- **Trigger:** When system performance metrics suggest improvement opportunities, when error patterns indicate protocol gaps, when strategic objectives require enhanced capabilities, or when external stimuli demand system adaptation.
 - **Input:** Performance analysis, error reports, strategic objectives, and system capability assessments.
 - **Output:** Enhanced WSP protocols, improved WRE architecture, and measurably increased system capabilities.
 - **Responsible Agent(s):** Self-Improvement Agent, ComplianceAgent, 012 Rider
@@ -39,10 +39,19 @@ This protocol establishes the **Meta-Recursive Enhancement Architecture** whereb
 **Mechanism**: Error-driven enhancement where every mistake becomes permanent protocol improvement.
 
 #### 2.1.1 Enhancement Triggers
+
+**Internal Triggers:**
 - **WSP_47 Violations**: Module placeholder violations indicate protocol gaps
 - **Test Failures**: Systematic failures reveal framework inadequacies  
 - **Performance Bottlenecks**: Operational inefficiencies suggest protocol optimization
 - **Strategic Insights**: 012 Rider observations identify enhancement opportunities
+
+**External Stimuli Triggers:**
+- **User Directives**: High-priority goals or corrections from the 012 Rider requiring immediate system adaptation
+- **System Alerts**: Automated monitoring feedback (e.g., performance degradation, API failure rates, security incidents)
+- **Scheduled Reviews**: Periodic ingestion of strategic goals from external planning documents and roadmap updates
+- **Feedback Channels**: Input from designated feedback mechanisms (e.g., `feedback.md` file, API monitoring endpoints, user reports)
+- **Environmental Changes**: External platform API changes, security requirements, or compliance mandates
 
 #### 2.1.2 Enhancement Process
 1. **Gap Analysis**: Identify specific protocol deficiencies

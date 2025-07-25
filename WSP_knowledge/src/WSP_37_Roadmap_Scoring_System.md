@@ -2,7 +2,7 @@
 - **Status:** Active
 - **Purpose:** To define the two separate, complementary scoring systems: the Agentic Layer (Semantic Score) and the Foundational Layer (LLME Score).
 - **Trigger:** When assessing a `.md` partifact or a software module.
-- **Input:** A target partifact or module.
+- **Input:** A target partifact or module, including external feedback and user-submitted goals processed through TriageAgent.
 - **Output:** A qualitative Semantic Score for partifacts, or a quantitative LLME Score for modules, which informs the MPS.
 - **Responsible Agent(s):** Ø1Ø2, ScoringAgent.
 
@@ -98,11 +98,12 @@ The **ScoringAgent** (WSP 54) serves as the primary executor of the WSP 37 roadm
 
 ### **Automated Roadmap Generation Process**
 
-#### **Phase 1: 012 Vision Integration**
-When 012 shares big vision with 0102 during recursive walks:
-1. **ScoringAgent** ingests high-level platform integration objectives
-2. Parses ecosystem goals and strategic priorities
-3. Identifies modules required for vision implementation
+#### **Phase 1: External Input Integration**
+Multi-source input processing for comprehensive roadmap generation:
+1. **012 Vision Integration**: ScoringAgent ingests high-level platform integration objectives from recursive walks
+2. **External Feedback Processing**: TriageAgent-standardized external feedback incorporated into vision analysis
+3. **Strategic Objective Parsing**: Combined ecosystem goals and external priorities identified
+4. **Module Requirement Analysis**: Complete module requirements derived from both internal vision and external demands
 
 #### **Phase 2: 0201 Recursive Remembrance** 
 ScoringAgent applies zen coding methodology:

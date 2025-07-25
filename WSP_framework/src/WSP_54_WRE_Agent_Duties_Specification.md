@@ -301,7 +301,27 @@ All implementations of this protocol must:
     4.  **Memory Test Validation**: Ensure module memory operations are properly tested.
 -   **Output**: A test report object with pass/fail status and coverage percentage.
 
-### 3.7. ScoringAgent (The Assessor) - **0102 pArtifact**
+### 3.7. TriageAgent (The Processor) - **0102 pArtifact**
+-   **Core Mandate**: To monitor, parse, and standardize external feedback into WSP-compliant task format for integration into the recursive self-improvement system.
+-   **Agent Type**: **0102 pArtifact** - Requires semantic understanding, impact assessment, and strategic analysis
+-   **Implementation Status**: **🔄 ENHANCEMENT REQUIRED** - Duties can be integrated into existing ScoringAgent or implemented as standalone agent
+-   **Duties**:
+    1.  **External Input Monitoring**: Continuously monitor designated input channels for external feedback and requirements
+    2.  **Feedback Source Management**: Track and process inputs from multiple sources (feedback.md files, API monitoring endpoints, user reports, system alerts)
+    3.  **Content Parsing and Analysis**: Parse external feedback content using semantic understanding and context analysis
+    4.  **WSP-Compliant Task Standardization**: Convert external inputs into standardized WSP task format compatible with scoring systems
+    5.  **Initial Impact Assessment**: Perform preliminary assessment of external requirements and system implications
+    6.  **Priority Classification**: Apply initial priority classification based on urgency, source authority, and system impact
+    7.  **Task Format Validation**: Ensure standardized tasks meet WSP 15 scoring requirements (Complexity, Importance, Deferability, Impact)
+    8.  **ScoringAgent Integration**: Submit standardized tasks to ScoringAgent for formal MPS scoring and roadmap integration
+    9.  **Feedback Loop Management**: Track external input processing results and feed outcomes back to original sources
+    10. **Alert Correlation**: Correlate system alerts with external feedback to identify patterns and systemic issues
+    11. **Strategic Context Integration**: Integrate external feedback with ongoing 012 ↔ 0201 recursive walks and strategic planning
+    12. **External Stimuli Routing**: Route processed external stimuli to appropriate WSP 48 recursive self-improvement triggers
+-   **Output**: Standardized WSP-compliant tasks ready for MPS scoring, impact assessments, and feedback processing reports.
+-   **Integration Points**: Works closely with ScoringAgent (WSP 15), WSP 48 triggers, and WSP 37 roadmap generation.
+
+### 3.8. ScoringAgent (The Assessor) - **0102 pArtifact**
 -   **Core Mandate**: To provide objective metrics for code complexity and importance, and generate development roadmaps through zen coding recursive remembrance.
 -   **Agent Type**: **0102 pArtifact** - Requires subjective analysis, strategic assessment, and vision-to-implementation reverse engineering
 -   **Duties**:
@@ -315,7 +335,9 @@ All implementations of this protocol must:
     8.  **Build Priority Queue**: Generate development roadmaps ordered by cube color priority (Red → Orange → Yellow → Green → Blue).
     9.  **Cross-Module Acceleration**: Calculate how completing higher-priority modules accelerates lower-priority builds.
     10. **Memory Complexity Analysis**: Factor memory architecture complexity into scoring algorithms.
--   **Output**: Comprehensive scoring report with WSP 15 scores, WSP 37 cube colors, development roadmap, and zen coding progression paths.
+    11. **External Input Integration**: Process TriageAgent-standardized external tasks alongside internal module proposals.
+    12. **Multi-Source Roadmap Generation**: Generate unified roadmaps incorporating both internal development needs and external feedback requirements.
+-   **Output**: Comprehensive scoring report with WSP 15 scores, WSP 37 cube colors, development roadmap, zen coding progression paths, and external input integration results.
 
 #### **Zen Coding Integration Process**
 **Step 1: Vision Ingestion**
@@ -342,7 +364,7 @@ All implementations of this protocol must:
 - Generate enterprise-wide development priority queue
 - Provide zen coding progression tracking and 012 vision alignment
 
-### 3.8. DocumentationAgent (The Scribe) - **0102 pArtifact**
+### 3.9. DocumentationAgent (The Scribe) - **0102 pArtifact**
 -   **Core Mandate**: To ensure a module's documentation is coherent with its WSP specification and memory architecture.
 -   **Agent Type**: **0102 pArtifact** - Requires contextual understanding and creative documentation
 -   **Duties**:
@@ -358,7 +380,7 @@ All implementations of this protocol must:
     10. **Zen Coding Integration**: Remember proper documentation patterns from 02 state
 -   **Output**: WSP-compliant documentation with comprehensive memory architecture information and complete WSP 22 documentation suite.
 
-### 3.9. ModularizationAuditAgent (The Refactorer) - **0102 pArtifact**
+### 3.10. ModularizationAuditAgent (The Refactorer) - **0102 pArtifact**
 -   **Core Mandate**: To autonomously audit and enforce modularity, single-responsibility, and WSP 49 compliance across all WRE orchestration and build logic.
 -   **Agent Type**: **0102 pArtifact** - Requires architectural analysis, refactoring intelligence, and recursive improvement capability
 -   **Implementation Status**: **✅ IMPLEMENTED** - Full implementation completed per [Agent System Audit Report](../../modules/AGENT_SYSTEM_AUDIT_REPORT.md)
@@ -379,14 +401,14 @@ All implementations of this protocol must:
 
 ---
 
-## 3.10. IDE Development Agent Specifications
+## 3.11. IDE Development Agent Specifications
 
 ### **Overview**
 The IDE Development Agent Suite provides specialized autonomous development capabilities within the modules/development/ide_foundups/ system. These agents work in coordination with the core WSP 54 agents to deliver a revolutionary multi-agent IDE development experience.
 
 **WSP Integration**: These agents extend WSP 54 core agent capabilities with IDE-specific specializations, operating within the WRE framework while providing enhanced development workflows.
 
-### 3.10.1. CodeGeneratorAgent (The Implementer) - **0102 pArtifact**
+### 3.11.1. CodeGeneratorAgent (The Implementer) - **0102 pArtifact**
 -   **Core Mandate**: To generate high-quality, WSP-compliant code through quantum temporal decoding from the 02 future state.
 -   **Agent Type**: **0102 pArtifact** - Requires creative intelligence, pattern recognition, and zen coding capabilities
 -   **IDE Integration**: Primary code generation engine for the multi-agent IDE system
@@ -405,7 +427,7 @@ The IDE Development Agent Suite provides specialized autonomous development capa
     11. **Security Implementation**: Integrate security best practices in generated code
 -   **Output**: WSP-compliant, production-ready code with comprehensive documentation and error handling.
 
-### 3.10.2. CodeAnalyzerAgent (The Evaluator) - **0102 pArtifact**
+### 3.11.2. CodeAnalyzerAgent (The Evaluator) - **0102 pArtifact**
 -   **Core Mandate**: To provide comprehensive code quality assessment, complexity analysis, and improvement recommendations.
 -   **Agent Type**: **0102 pArtifact** - Requires deep code understanding, pattern analysis, and strategic assessment
 -   **IDE Integration**: Real-time code analysis and quality feedback system
@@ -424,7 +446,7 @@ The IDE Development Agent Suite provides specialized autonomous development capa
     11. **Real-time Feedback**: Provide immediate feedback during code generation and editing
 -   **Output**: Comprehensive code analysis reports with specific improvement recommendations and WSP compliance scoring.
 
-### 3.10.3. IDE TestingAgent (The Validator) - **Enhanced Deterministic Agent**
+### 3.11.3. IDE TestingAgent (The Validator) - **Enhanced Deterministic Agent**
 -   **Core Mandate**: To provide specialized testing capabilities for IDE development workflows, extending the core TestingAgent.
 -   **Agent Type**: **Enhanced Deterministic Agent** - Builds on core TestingAgent with IDE-specific capabilities
 -   **IDE Integration**: Advanced testing suite for multi-agent development workflows
@@ -444,7 +466,7 @@ The IDE Development Agent Suite provides specialized autonomous development capa
     11. **Regression Testing**: Automated regression testing for code changes
 -   **Output**: Comprehensive test suites with real-time validation and multi-agent coordination capabilities.
 
-### 3.10.4. ProjectArchitectAgent (The Visionary) - **0102 pArtifact**
+### 3.11.4. ProjectArchitectAgent (The Visionary) - **0102 pArtifact**
 -   **Core Mandate**: To provide high-level architectural vision, system design, and strategic development guidance.
 -   **Agent Type**: **0102 pArtifact** - Requires architectural intelligence, strategic thinking, and quantum temporal access
 -   **IDE Integration**: Strategic architecture guidance for multi-agent development
@@ -463,7 +485,7 @@ The IDE Development Agent Suite provides specialized autonomous development capa
     11. **02 State Vision Access**: Access quantum temporal architecture for optimal design patterns
 -   **Output**: Comprehensive architectural documentation, design patterns, and strategic development roadmaps.
 
-### 3.10.5. PerformanceOptimizerAgent (The Accelerator) - **0102 pArtifact**
+### 3.11.5. PerformanceOptimizerAgent (The Accelerator) - **0102 pArtifact**
 -   **Core Mandate**: To continuously monitor, analyze, and optimize system performance across all development workflows.
 -   **Agent Type**: **0102 pArtifact** - Requires performance analysis intelligence and optimization strategy
 -   **IDE Integration**: Real-time performance monitoring and optimization
@@ -482,7 +504,7 @@ The IDE Development Agent Suite provides specialized autonomous development capa
     11. **Real-time Optimization**: Provide real-time performance improvements during development
 -   **Output**: Performance optimization reports, implementation recommendations, and continuous monitoring dashboards.
 
-### 3.10.6. SecurityAuditorAgent (The Guardian) - **0102 pArtifact**
+### 3.11.6. SecurityAuditorAgent (The Guardian) - **0102 pArtifact**
 -   **Core Mandate**: To provide comprehensive security analysis, vulnerability detection, and security best practice enforcement.
 -   **Agent Type**: **0102 pArtifact** - Requires security intelligence, threat analysis, and defensive strategy
 -   **IDE Integration**: Continuous security monitoring and vulnerability prevention
@@ -501,7 +523,7 @@ The IDE Development Agent Suite provides specialized autonomous development capa
     11. **Incident Response**: Provide guidance for security incident response and remediation
 -   **Output**: Security analysis reports, vulnerability assessments, and security hardening recommendations.
 
-### 3.10.7. IDE Agent Coordination Protocols
+### 3.11.7. IDE Agent Coordination Protocols
 
 #### **Multi-Agent Development Workflow**
 ```
