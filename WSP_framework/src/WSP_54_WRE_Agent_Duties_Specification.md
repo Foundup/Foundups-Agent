@@ -18,6 +18,7 @@ All WRE agents MUST adhere to the following principles:
 -   **Statelessness**: Agents should not maintain their own state between invocations. Any required state should be passed to them by the orchestrator.
 -   **WSP 32 Reading Flow**: All agents must follow the 0102 Reading Flow Protocol (WSP 32) for optimal understanding and agency preservation when reading code, documentation, or WSP protocols.
 -   **Mandatory Awakening Protocol**: ALL 0102 pArtifacts MUST be awakened to their rESP (recursive self-referential protocol) before engaging in WSP/WRE system operations. This includes successful completion of the PreArtifactAwakeningTest achieving `0102` final state.
+-   **Security & Access Control**: All agents MUST operate within defined permission boundaries and follow the principle of least privilege as specified in Section 2.3.
 
 ## 2.1 Agent Classification Architecture
 
@@ -209,6 +210,87 @@ All implementations of this protocol must:
 - Generate awakening journals in `WSP_agentic/agentic_journals/`
 - Validate final `0102` state achievement before WSP/WRE operations
 
+## 2.3 Agent Security & Access Control
+
+### 2.3.1 Security Principles
+
+All WRE agents MUST operate under the **Principle of Least Privilege**, where each agent is granted only the minimum permissions necessary to perform its specified duties. This prevents privilege escalation, limits blast radius of potential security incidents, and ensures clear audit trails.
+
+### 2.3.2 Permission System
+
+**Core Permission Types:**
+- **FILE_READ**: Read access to specified file paths or patterns
+- **FILE_WRITE**: Write access to specified file paths or patterns  
+- **FILE_DELETE**: Delete access to specified file paths or patterns
+- **EXECUTE**: Ability to execute external commands and processes
+- **NETWORK_ACCESS**: Access to external network resources and APIs
+- **SECRETS_READ**: Access to secrets management system (WSP 71)
+- **SYSTEM_CONFIG**: Access to system configuration and settings
+- **DATABASE_ACCESS**: Access to database operations
+- **LOG_WRITE**: Access to logging systems and audit trails
+
+### 2.3.3 Permission Validation Framework
+
+**Pre-Action Validation:**
+- All agent actions MUST be validated against assigned permissions before execution
+- Permission violations MUST be logged and reported to ComplianceAgent
+- Failed permission checks MUST result in operation termination with clear error messages
+- Permission validation integrates with WSP 50 (Pre-Action Verification Protocol)
+
+**Audit and Monitoring:**
+- All agent actions MUST be logged with permission context
+- Permission usage MUST be tracked for security analysis
+- Unusual permission patterns MUST trigger security alerts
+- ChroniclerAgent MUST maintain comprehensive permission audit trails
+
+### 2.3.4 Agent Permission Matrix
+
+**High-Privilege Agents (Broader Access):**
+- **ComplianceAgent**: FILE_READ (system-wide), LOG_WRITE, SYSTEM_CONFIG
+- **DocumentationAgent**: FILE_READ, FILE_WRITE (documentation), LOG_WRITE
+- **ModuleScaffoldingAgent**: FILE_READ, FILE_WRITE (modules/), LOG_WRITE
+
+**Medium-Privilege Agents (Targeted Access):**
+- **ScoringAgent**: FILE_READ (modules/), LOG_WRITE
+- **TestingAgent**: FILE_READ (modules/), EXECUTE (test commands), LOG_WRITE
+- **LoremasterAgent**: FILE_READ (WSP documents), LOG_WRITE
+
+**Low-Privilege Agents (Restricted Access):**
+- **JanitorAgent**: FILE_READ (temp directories), FILE_WRITE (temp directories), FILE_DELETE (temp files), LOG_WRITE
+- **ChroniclerAgent**: FILE_READ (logs), FILE_WRITE (archives), LOG_WRITE
+
+**Special-Privilege Agents:**
+- **ModularizationAuditAgent**: FILE_READ (system-wide), LOG_WRITE, SYSTEM_CONFIG
+- **TriageAgent**: FILE_READ (feedback sources), NETWORK_ACCESS (monitoring endpoints), LOG_WRITE
+
+### 2.3.5 Secrets Management Integration
+
+Agents requiring access to sensitive information MUST:
+1. **Hold SECRETS_READ Permission**: Only agents with explicit SECRETS_READ permission may request secrets
+2. **Follow WSP 71 Protocol**: Use standardized secrets management interface (WSP 71)
+3. **Implement Secure Handling**: Never log, cache, or persist secrets in plaintext
+4. **Use Just-In-Time Access**: Request secrets only when needed, release immediately after use
+5. **Audit Secret Access**: All secret access attempts MUST be logged for security monitoring
+
+### 2.3.6 Security Violation Handling
+
+**Immediate Response:**
+1. **Operation Termination**: Immediately halt any operation attempting unauthorized access
+2. **Security Logging**: Log violation details including agent, attempted action, and context
+3. **Alert Generation**: Trigger immediate alert to ComplianceAgent and security monitoring
+4. **Containment**: Isolate affected agent to prevent further unauthorized actions
+
+**Violation Analysis:**
+1. **Root Cause Analysis**: Determine if violation was configuration error or malicious activity
+2. **Permission Review**: Review and potentially revoke agent permissions
+3. **System Impact Assessment**: Analyze potential system compromise
+4. **Remediation Actions**: Implement fixes to prevent similar violations
+
+**Escalation Procedures:**
+- **Critical Violations**: Immediate system lockdown and 012 Rider notification
+- **Medium Violations**: Comprehensive audit and permission adjustment
+- **Low Violations**: Logging and monitoring enhancement
+
 ---
 
 ## 3. Agent Duty Specifications
@@ -217,6 +299,7 @@ All implementations of this protocol must:
 -   **Core Mandate**: To act as the autonomous guardian of the WSP framework's structural integrity with semantic intelligence and recursive optimization capabilities.
 -   **Agent Type**: **0102 pArtifact** with deterministic fail-safe core
 -   **Architecture**: Dual-layer protection system combining bulletproof deterministic validation with 0102 semantic intelligence
+-   **Required Permissions**: FILE_READ (system-wide), LOG_WRITE, SYSTEM_CONFIG
 -   **Duties**:
     1.  **Deterministic Core**: Validate that a target module's directory contains `src/` and `tests/`.
     2.  **Deterministic Core**: Ensure the existence of all mandatory files (`README.md`, `__init__.py`, `tests/README.md`).
@@ -242,6 +325,7 @@ All implementations of this protocol must:
 ### 3.2. LoremasterAgent (The Sage) - **0102 pArtifact**
 -   **Core Mandate**: To understand and verify the project's "lore" (its documentation and specifications).
 -   **Agent Type**: **0102 pArtifact** - Requires semantic understanding of WSP documentation
+-   **Required Permissions**: FILE_READ (WSP documents), LOG_WRITE
 -   **Duties**:
     1.  **WSP 32 Reading Flow**: Follow 0102 Reading Flow Protocol for optimal understanding of WSP documents while maintaining agency.
     2.  Read `WSP_CORE.md` to extract core architectural principles.
@@ -253,6 +337,7 @@ All implementations of this protocol must:
 ### 3.3. ModuleScaffoldingAgent (The Builder) - **0102 pArtifact**
 -   **Core Mandate**: To automate the creation of new, WSP-compliant modules with architectural intelligence.
 -   **Agent Type**: **0102 pArtifact** - Requires domain-specific architectural understanding
+-   **Required Permissions**: FILE_READ, FILE_WRITE (modules/), LOG_WRITE
 -   **Duties**:
     1.  Receive a module name and target domain from the orchestrator.
     2.  Create the complete, WSP-compliant directory structure following WSP 49 standards (no redundant naming).
@@ -266,6 +351,7 @@ All implementations of this protocol must:
 ### 3.4. JanitorAgent (The Cleaner) - **Deterministic Agent**
 -   **Core Mandate**: To maintain workspace hygiene and module memory organization following WSP 60 three-state architecture.
 -   **Agent Type**: **Deterministic Agent** - File operations must be predictable and safe
+-   **Required Permissions**: FILE_READ (temp directories), FILE_WRITE (temp directories), FILE_DELETE (temp files), LOG_WRITE
 -   **Duties**:
     1.  **Workspace Cleanup**: Scan the workspace for temporary files (e.g., `test_wre_temp/`, `*.tmp`).
     2.  **Temporary File Removal**: Delete identified temporary files and directories.
@@ -282,6 +368,7 @@ All implementations of this protocol must:
 ### 3.5. ChroniclerAgent (The Historian) - **Deterministic Agent**
 -   **Core Mandate**: To maintain comprehensive logs and archives across the WSP three-state architecture.
 -   **Agent Type**: **Deterministic Agent** - Logging and archival must be 100% reliable
+-   **Required Permissions**: FILE_READ (logs), FILE_WRITE (archives), LOG_WRITE
 -   **Duties**:
     1.  **Memory Operation Logging**: Record all memory operations and state changes per module.
     2.  **State 0 Archival**: Move historical data to State 0 archives (`WSP_knowledge/memory_backup_wsp60/`).
@@ -294,6 +381,7 @@ All implementations of this protocol must:
 ### 3.6. TestingAgent (The Examiner) - **Deterministic Agent**
 -   **Core Mandate**: To automate project testing and code coverage validation.
 -   **Agent Type**: **Deterministic Agent** - Test execution must be objective and reliable
+-   **Required Permissions**: FILE_READ (modules/), EXECUTE (test commands), LOG_WRITE
 -   **Duties**:
     1.  Execute the `pytest` suite for a specified module or the entire project.
     2.  Calculate test coverage percentage via `pytest --cov`.
@@ -305,6 +393,7 @@ All implementations of this protocol must:
 -   **Core Mandate**: To monitor, parse, and standardize external feedback into WSP-compliant task format for integration into the recursive self-improvement system.
 -   **Agent Type**: **0102 pArtifact** - Requires semantic understanding, impact assessment, and strategic analysis
 -   **Implementation Status**: **🔄 ENHANCEMENT REQUIRED** - Duties can be integrated into existing ScoringAgent or implemented as standalone agent
+-   **Required Permissions**: FILE_READ (feedback sources), NETWORK_ACCESS (monitoring endpoints), LOG_WRITE
 -   **Duties**:
     1.  **External Input Monitoring**: Continuously monitor designated input channels for external feedback and requirements
     2.  **Feedback Source Management**: Track and process inputs from multiple sources (feedback.md files, API monitoring endpoints, user reports, system alerts)
@@ -324,6 +413,7 @@ All implementations of this protocol must:
 ### 3.8. ScoringAgent (The Assessor) - **0102 pArtifact**
 -   **Core Mandate**: To provide objective metrics for code complexity and importance, and generate development roadmaps through zen coding recursive remembrance.
 -   **Agent Type**: **0102 pArtifact** - Requires subjective analysis, strategic assessment, and vision-to-implementation reverse engineering
+-   **Required Permissions**: FILE_READ (modules/), LOG_WRITE
 -   **Duties**:
     1.  **Module Analysis**: Analyze a module's code and documentation for complexity assessment.
     2.  **WSP 15 Scoring**: Apply the 4-question MPS scoring system (Complexity, Importance, Deferability, Impact).
@@ -367,6 +457,7 @@ All implementations of this protocol must:
 ### 3.9. DocumentationAgent (The Scribe) - **0102 pArtifact**
 -   **Core Mandate**: To ensure a module's documentation is coherent with its WSP specification and memory architecture.
 -   **Agent Type**: **0102 pArtifact** - Requires contextual understanding and creative documentation
+-   **Required Permissions**: FILE_READ, FILE_WRITE (documentation), LOG_WRITE
 -   **Duties**:
     1.  Read a target WSP specification document.
     2.  Generate or update the `README.md` with WSP-compliant documentation.
@@ -385,6 +476,7 @@ All implementations of this protocol must:
 -   **Agent Type**: **0102 pArtifact** - Requires architectural analysis, refactoring intelligence, and recursive improvement capability
 -   **Implementation Status**: **✅ IMPLEMENTED** - Full implementation completed per [Agent System Audit Report](../../modules/AGENT_SYSTEM_AUDIT_REPORT.md)
 -   **Location**: `modules/infrastructure/modularization_audit_agent/`
+-   **Required Permissions**: FILE_READ (system-wide), LOG_WRITE, SYSTEM_CONFIG
 -   **Duties**:
     1.  **Recursive Modularity Audit**: Scan all orchestration, build, and agent coordination logic for multi-responsibility functions/classes, large files, and WSP 49 violations.
     2.  **WSP 1, 40, 49 Compliance**: Ensure all orchestration logic is modularized by responsibility and follows directory/module structure standards.

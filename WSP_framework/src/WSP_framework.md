@@ -215,6 +215,49 @@ FMAS reports findings via standard logging messages. Pay attention to `WARNING` 
 - `[<module>] EXTRA: File not found anywhere in baseline`: New file not found in baseline
 - `[<module>] INTERFACE_MISSING: Required interface definition file not found`
 - `[<module>] DEPENDENCY_MANIFEST_MISSING: Required dependency file not found`
+- `[<module>] SECURITY_VULNERABILITY_HIGH: High-severity security vulnerability detected`
+- `[<module>] SECURITY_VULNERABILITY_MEDIUM: Medium-severity security vulnerability detected`
+- `[<module>] SECURITY_SCAN_FAILED: Security vulnerability scan failed to execute`
+
+### 4.4.1 Security Vulnerability Scanning
+
+**Purpose**: FMAS integrates automated security vulnerability scanning as a mandatory validation step to prevent deployment of modules with known security vulnerabilities.
+
+**Security Scan Tools**:
+- **Python Dependencies**: `pip-audit` for scanning known vulnerabilities in Python packages
+- **Node.js Dependencies**: `npm audit` for scanning Node.js package vulnerabilities  
+- **Code Analysis**: `bandit` for detecting common security anti-patterns in Python code
+- **Container Security**: `snyk` for comprehensive vulnerability scanning across languages
+
+**Security Validation Process**:
+1. **Dependency Vulnerability Scan**: Check all dependencies listed in `requirements.txt`, `package.json`, etc.
+2. **Static Code Analysis**: Scan source code for security anti-patterns and vulnerabilities
+3. **Configuration Review**: Validate security configurations and settings
+4. **Secret Detection**: Scan for accidentally committed secrets or credentials
+
+**Security Thresholds**:
+- **HIGH Severity**: FMAS audit FAILS, blocking integration until resolved
+- **MEDIUM Severity**: FMAS audit generates WARNING, requires explicit acknowledgment
+- **LOW Severity**: FMAS audit logs issue for tracking and future resolution
+
+**Security Scan Commands**:
+```bash
+# Python security scanning
+pip-audit --desc --format=json
+bandit -r modules/ --format=json
+
+# Node.js security scanning  
+npm audit --audit-level=moderate --json
+
+# Multi-language vulnerability scanning
+snyk test --json
+```
+
+**Security Integration Requirements**:
+- Security scans MUST be executed as part of every FMAS audit
+- High-severity vulnerabilities MUST block integration and deployment
+- Security scan results MUST be logged and tracked for audit purposes
+- Security failures MUST trigger immediate alerts to ComplianceAgent and security monitoring
 
 ### 4.5. Workflow Integration (When to Run FMAS)
 

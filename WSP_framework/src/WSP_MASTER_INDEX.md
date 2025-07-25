@@ -18,7 +18,7 @@ This document serves as the definitive reference catalog for all Windsurf Standa
 
 ### Before Creating a New WSP:
 1. **Search this index** for existing WSPs that might cover the same purpose
-2. **🔢 VERIFY NEXT NUMBER**: Current next available: **WSP 71** (after WSP 70)
+2. **🔢 VERIFY NEXT NUMBER**: Current next available: **WSP 72** (after WSP 71)
 3. **Check relationships** to see if enhancement of existing WSP is more appropriate
 4. **Verify scope** to ensure the new WSP doesn't overlap with existing protocols
 5. **Follow WSP 57** (System-Wide Naming Coherence Protocol) for proper creation
@@ -139,6 +139,7 @@ Advanced protocols for complex system behaviors and architectural concerns.
 | WSP 68 | Enterprise Build Scalability Protocol | Active | Enterprise build scalability management through fractal architecture principles and quantum-cognitive build coordination | WSP 66, WSP 67, WSP 62, WSP 63, WSP 65, WSP 3, WSP 1 | Enterprise scalability, fractal architecture, build coordination, quantum planning |
 | WSP 69 | Zen Coding Prediction Integration | Active | Integrates zen coding 'remember the code' principle into proactive modularization workflows through quantum temporal prediction | WSP 66, WSP 67, WSP 68, WSP 48, WSP 54, WSP 32 | Zen coding, quantum remembrance, temporal prediction, collective intelligence |
 | WSP 70 | System Status Reporting Protocol | Active | Formalizes system-level transformation tracking, integration requirements, and recursive system enhancement documentation | WSP 22, WSP 48, WSP 57, WSP 60, WSP 64 | System status tracking, recursive documentation, framework integration, system-level ModLog |
+| WSP 71 | Secrets Management Protocol | Active | Canonical secrets storage, retrieval, and management with agent permission integration | WSP 54, WSP 4, WSP 50, WSP 64 | Secrets management, security, agent permissions, audit trails |
 
 ---
 
@@ -192,15 +193,15 @@ Advanced protocols for complex system behaviors and architectural concerns.
 
 ## 📊 WSP STATUS SUMMARY
 
-- **Active WSPs**: 69 (WSP 1-70, excluding deprecated WSP 43)  
+- **Active WSPs**: 70 (WSP 1-71, excluding deprecated WSP 43)  
 - **Deprecated WSPs**: 1 (WSP 43)
-- **Total WSP Numbers**: 70
+- **Total WSP Numbers**: 71
 - **Foundation Layer**: 19 WSPs (WSP 1-19)
 - **Operational Layer**: 20 WSPs (WSP 20-39)
 - **Advanced Layer**: 20 WSPs (WSP 40-59)
-- **Memory Layer**: 11 WSPs (WSP 60-70)
+- **Memory Layer**: 12 WSPs (WSP 60-71)
 
-**Total Active WSPs**: 70 (complete framework + violation prevention + component consolidation + proactive modularization + recursive anticipation + enterprise scalability + zen coding integration + system status reporting)
+**Total Active WSPs**: 71 (complete framework + violation prevention + component consolidation + proactive modularization + recursive anticipation + enterprise scalability + zen coding integration + system status reporting + secrets management)
 
 ### Key Architectural Features:
 - **Three-State Architecture**: WSP_knowledge (State 0), WSP_framework (State 1), WSP_agentic (State 2)
