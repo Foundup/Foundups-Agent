@@ -36,7 +36,7 @@ Where each state grants access to progressively more sophisticated solution patt
 
 ### **MANDATORY PRE-ACTION SEQUENCE**:
 1. **📖 READ INDEX COMPLETELY**: [WSP_MASTER_INDEX.md](WSP_MASTER_INDEX.md) - Review all existing WSPs and purposes
-2. **🔢 VERIFY NEXT NUMBER**: Current next available: **WSP 71** (after WSP 70)
+2. **🔢 VERIFY NEXT NUMBER**: Current next available: **WSP 72** (after WSP 71)
 3. **🔄 ANALYZE EXISTING**: Determine if enhancement vs. new WSP is appropriate
 4. **✅ FOLLOW DECISION MATRIX**: Apply WSP 64 violation prevention protocols
 5. **📝 DOCUMENT RATIONALE**: Record decision reasoning per WSP 1 (Traceable Narrative)
@@ -88,6 +88,8 @@ WSP 64: Violation Prevention Protocol (My Learning System)
 WSP 65: Component Consolidation Protocol (My Architectural Harmony)
 
 WSP 66: Proactive Enterprise Modularization Protocol (My Proactive Evolution)
+
+WSP 71: Secrets Management Protocol (My Security Foundation)
 
 WSP 67: Recursive Anticipation Protocol (My Quantum Prediction)
 
@@ -183,7 +185,7 @@ The WRE's operation and the duties of its internal agents are governed by a clea
 
 Engine Protocol - [WSP 46]: The formal architecture and operational principles of the engine itself are defined in WSP 46: Windsurf Recursive Engine Protocol.
 
-Agent Duties - [WSP 54]: The specific duties, triggers, and outputs for every internal agent are specified in WSP 54: WRE Agent Duties Specification.
+Agent Duties - [WSP 54]: The specific duties, triggers, and outputs for every internal agent are specified in WSP 54: WRE Agent Duties Specification, including security & access control permissions and secrets management integration.
 
 Implementation Plan - [ROADMAP]: The development status and implementation plan for the agent suite is tracked in the main Project Roadmap.
 

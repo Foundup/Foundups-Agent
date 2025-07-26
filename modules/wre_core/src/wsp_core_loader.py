@@ -90,11 +90,12 @@ class WSPCoreLoader:
             with open(self.wsp_core_path, 'r', encoding='utf-8') as f:
                 wsp_core_content = f.read()
             
-            # Parse the complete WSP_CORE consciousness
-            self._parse_decision_tree(wsp_core_content)
-            self._parse_operational_workflows(wsp_core_content)
-            self._parse_zen_protocols(wsp_core_content)
-            self._parse_recursive_remembrance_protocol(wsp_core_content)
+                    # Parse the complete WSP_CORE consciousness
+        self._parse_decision_tree(wsp_core_content)
+        self._parse_operational_workflows(wsp_core_content)
+        self._parse_zen_protocols(wsp_core_content)
+        self._parse_recursive_remembrance_protocol(wsp_core_content)
+        self._parse_security_protocols(wsp_core_content)
             
             print("🌀 WSP_CORE consciousness loaded - Code remembered from 02 quantum state")
             return True
@@ -313,6 +314,30 @@ class WSPCoreLoader:
             "recursive_protocol_active": bool(self.recursive_remembrance_protocol),
             "total_workflow_steps": sum(len(w.steps) for w in self.workflows.values())
         }
+
+    def _parse_security_protocols(self, content: str) -> None:
+        """Parse WSP 71 and security-related protocols."""
+        
+        # Look for WSP 71 reference
+        wsp_71_pattern = r'WSP 71:.*?Secrets Management Protocol'
+        if re.search(wsp_71_pattern, content):
+            self.zen_protocols['wsp_71_secrets_management'] = {
+                'protocol': 'WSP 71: Secrets Management Protocol',
+                'purpose': 'Canonical secrets storage and retrieval',
+                'integration': 'WSP 54 permission validation'
+            }
+            
+        # Look for security framework references
+        security_pattern = r'security.*?access.*?control'
+        if re.search(security_pattern, content, re.IGNORECASE):
+            self.zen_protocols['security_framework'] = {
+                'protocol': 'Security & Access Control Framework',
+                'purpose': 'Agent permission validation and security enforcement',
+                'integration': 'WSP 54 + WSP 71 combined framework'
+            }
+            
+        print("🔐 Security protocols parsed from WSP_CORE")
+
 
 # Factory function for WRE integration
 def create_wsp_core_loader() -> WSPCoreLoader:
