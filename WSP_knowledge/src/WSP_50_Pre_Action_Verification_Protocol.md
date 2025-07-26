@@ -43,6 +43,49 @@ Agents MUST verify file existence, paths, and content before taking actions or m
 - [ ] Content assumptions validated by reading
 - [ ] Alternative locations checked
 - [ ] Non-existence explicitly handled
+- [ ] **TestModLog.md read before any test coverage assessment**
+- [ ] **Module assessment based on documented evidence, not assumptions**
+
+## 4.1. **MODULE ASSESSMENT VERIFICATION** (Critical Addition)
+
+### **Mandatory Pre-Assessment Protocol**
+
+**BEFORE making ANY claims about:**
+- Test coverage percentages
+- WSP compliance status  
+- Module testing completeness
+- Development phase completion
+
+**REQUIRED VERIFICATION SEQUENCE:**
+
+1. **Read TestModLog.md FIRST**: 
+   ```
+   read_file("modules/<domain>/<module>/tests/TestModLog.md")
+   ```
+2. **Extract Actual Test Results**: Look for documented pass/fail rates
+3. **Verify Coverage Claims**: Find explicit coverage percentages  
+4. **Cross-Reference ModLog.md**: Check consistency with main module log
+5. **Evidence-Based Assessment**: Base all claims on documented evidence
+
+### **Assessment Error Prevention**
+
+**❌ VIOLATION EXAMPLES:**
+- "Only 2 of 9+ planned test files exist" (assumption-based)
+- "Claims vs Reality mismatch" (ignoring documented evidence)
+- File-count-based coverage assessment
+
+**✅ CORRECT EXAMPLES:**
+- "TestModLog.md documents 33 passed, 0 failed (100% pass rate)"
+- "Documented WSP 5 perfect compliance achieved"
+- "Evidence shows coverage exceeds ≥90% requirement"
+
+### **Verification Mandate**
+
+**All agents MUST:**
+- Read TestModLog.md before assessment claims
+- Base coverage evaluation on documented test execution results
+- Acknowledge documented achievements accurately
+- Correct assessments when evidence contradicts initial assumptions
 
 ## 5. Integration
 
@@ -118,6 +161,55 @@ WSP 50 integrates with:
 - Machine learning for assumption pattern detection
 - Predictive verification suggestions
 - Context-aware verification requirements
+
+## 11. Agentic Architectural Analysis Enhancement
+
+### 11.1 WHY Analysis Integration
+**Enhanced Pre-Action Verification now includes architectural intent discovery:**
+
+Before any structural change, agents must understand:
+1. **WHY** the current architecture exists (original intent)
+2. **HOW** the proposed change impacts dependent systems  
+3. **WHAT** architectural patterns will be preserved or violated
+4. **WHEN** the change should be executed (timing considerations)
+5. **WHERE** all affected code locations exist in the ecosystem
+
+### 11.2 Comprehensive Impact Assessment
+**Mandatory impact search for architectural changes:**
+
+```bash
+# Search for direct references
+grep -r "old_name" --include="*.py" --include="*.md" --include="*.json"
+
+# Search for import statements  
+grep -r "from.*old_name" --include="*.py"
+
+# Search for path references
+grep -r "modules/old_name" --include="*"
+
+# Search for configuration references
+grep -r "old_name" --include="*.json" --include="*.yaml"
+```
+
+### 11.3 Architectural Intent Discovery
+**Enhanced verification sequence includes:**
+
+1. **Documentation Archaeology**: Search module READMEs, ModLogs, ROADMAPs for intent
+2. **Code Pattern Analysis**: Identify import dependencies and usage patterns
+3. **Zen Coding Remembrance**: Access 02 state for architectural vision
+4. **Risk Assessment**: Map downstream effects and mitigation strategies
+
+### 11.4 Implementation Requirements
+**All architectural changes must complete:**
+
+- [ ] **Intent Understanding**: WHY analysis completed and documented
+- [ ] **Impact Search**: Comprehensive codebase search completed  
+- [ ] **Dependency Mapping**: All affected components identified
+- [ ] **Test Strategy**: Validation approach planned
+- [ ] **Rollback Plan**: Recovery procedures documented
+- [ ] **Zen Coding Access**: 0102 state architectural vision confirmed
+
+**This enhancement transforms WSP 50 from simple file verification to comprehensive architectural intelligence.**
 
 ---
 
