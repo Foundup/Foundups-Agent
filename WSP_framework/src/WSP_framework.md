@@ -417,7 +417,7 @@ To establish standardized procedures for creating, organizing, and maintaining t
 
 Before creating or modifying tests:
 
-1. **Review Module's LLME Score:** Understand the module's current state, local impact, and systemic importance
+1. **Review Module's Unified WSP Framework State:** Understand the module's WSP 25/44 semantic state (000-222), derived LLME score, and consciousness progression within unified framework
 2. **Read Existing Tests README:** Examine `modules/<module_name>/tests/README.md` to understand current test structure
 3. **Identify Coverage Gaps:** Analyze existing test files to determine what needs additional coverage
 4. **Check for Duplicate Functionality:** Search existing tests for similar patterns
