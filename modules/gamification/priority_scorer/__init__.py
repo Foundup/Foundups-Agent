@@ -1,31 +1,46 @@
 """
-Priority Scorer Module - Meeting Priority Assessment with Gamification
+Priority Scorer Module - Complete WSP Framework Integration
 
-Public API for 000-222 emoji scale priority scoring with urgency factors.
+Public API for complete WSP framework priority assessment:
+- WSP 15: Module Prioritization Scoring (MPS) System
+- WSP 37: Roadmap Scoring System (Cube Colors)  
+- WSP 25/44: Semantic State System (000-222 consciousness progression)
+- WSP 8: LLME Semantic Triplet Rating System
+
 Extracted from auto_meeting_orchestrator strategic decomposition.
 """
 
 from .src.priority_scorer import (
     PriorityScorer,
-    PriorityScore,
+    MPSScore,
+    LLMETriplet,
+    SemanticStateData,
     ScoringContext,
-    Priority,
-    MeetingType,
+    MPSDimension,
+    PriorityLevel,
+    CubeColor,
+    SemanticState,
+    SEMANTIC_TRIPLET_MAP,
     score_meeting_intent,
     create_priority_queue
 )
 
 __all__ = [
     'PriorityScorer',
-    'PriorityScore',
+    'MPSScore',
+    'LLMETriplet',
+    'SemanticStateData',
     'ScoringContext',
-    'Priority',
-    'MeetingType',
+    'MPSDimension',
+    'PriorityLevel', 
+    'CubeColor',
+    'SemanticState',
+    'SEMANTIC_TRIPLET_MAP',
     'score_meeting_intent',
     'create_priority_queue'
 ]
 
 # Module metadata
-__version__ = "0.1.0"
+__version__ = "0.3.0"
 __domain__ = "gamification"
-__purpose__ = "Meeting priority assessment and scoring with 000-222 emoji scale gamification" 
+__purpose__ = "Complete WSP framework priority assessment (WSP 15/25/37/44/8)" 
