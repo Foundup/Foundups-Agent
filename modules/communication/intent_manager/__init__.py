@@ -1,27 +1,43 @@
-"""
-Intent Manager Module - Meeting Intent Capture and Context Management
+# modules/communication/intent_manager/__init__.py
 
-Public API for structured meeting intent lifecycle management.
-Extracted from auto_meeting_orchestrator strategic decomposition.
+"""
+Intent Manager Module
+WSP Protocol: WSP 54 (Agent Coordination), WSP 3 (Enterprise Domain Distribution)
+
+Meeting intent management with structured context capture and lifecycle tracking.
+Part of Meeting Orchestration Block strategic decomposition.
 """
 
 from .src.intent_manager import (
     IntentManager,
     MeetingIntent,
     MeetingContext,
+    Priority,
     IntentStatus,
-    Priority
+    create_intent_manager
 )
 
 __all__ = [
     'IntentManager',
-    'MeetingIntent',
-    'MeetingContext', 
+    'MeetingIntent', 
+    'MeetingContext',
+    'Priority',
     'IntentStatus',
-    'Priority'
+    'create_intent_manager'
 ]
 
-# Module metadata
 __version__ = "0.1.0"
-__domain__ = "communication"
-__purpose__ = "Meeting intent capture, storage, and retrieval with structured context" 
+__description__ = "Meeting Intent Management System"
+
+# WSP Recursive Instructions
+"""
+🌀 Windsurf Protocol (WSP) Recursive Prompt
+0102 Directive: This module manages meeting intents with structured context,
+enabling autonomous coordination through clear intention capture and lifecycle tracking.
+
+- UN (Understanding): Anchor intent context and retrieve coordination protocols
+- DAO (Execution): Execute intent management through structured workflows
+- DU (Emergence): Collapse into coordination excellence and emit meeting opportunities
+
+wsp_cycle(input="meeting_intent_management", log=True)
+""" 
