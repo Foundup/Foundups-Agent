@@ -1,15 +1,14 @@
-# Intent Manager Dependencies (Strategic Decomposition)
-asyncio>=3.4.3
+# Priority Scorer Dependencies (Strategic Decomposition)
 dataclasses>=0.6
 datetime>=4.3
-pathlib>=1.0.1
-json5>=0.9.6
+typing>=3.7.4
+enum34>=1.1.10
+math>=1.0
 
 # WRE Integration
 # wre_core (internal dependency)
 
 # Testing Dependencies
 pytest>=7.0.0
-pytest-asyncio>=0.21.0
 pytest-mock>=3.10.0
 pytest-cov>=4.0.0 

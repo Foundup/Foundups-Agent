@@ -1,413 +1,365 @@
 """
-Intent Manager - Meeting Intent Capture and Context Management
+WSP 54: Intent Manager Implementation
+=====================================
 
-Captures meeting intents through natural language and follows up with
-3 essential context questions for meeting orchestration.
+Meeting intent capture, storage, and retrieval with structured context.
+Extracted from auto_meeting_orchestrator PoC for strategic decomposition.
+
+WSP Integration:
+- WSP 3: Communication domain for meeting intent coordination
+- WSP 11: Clean interface definition for modular consumption
+- WSP 49: Standard module structure compliance
+- WSP 60: Module memory architecture for intent persistence
 """
 
-import asyncio
-import uuid
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, field
-from enum import Enum
+import json
 import logging
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Tuple, Any
+from dataclasses import dataclass, asdict
+from enum import Enum
+from pathlib import Path
+
+# WRE Integration
+try:
+    from ...wre_core.src.utils.wre_logger import wre_log
+except ImportError:
+    def wre_log(msg: str, level: str = "INFO"):
+        print(f"[{level}] {msg}")
 
 logger = logging.getLogger(__name__)
 
 
+class Priority(Enum):
+    """Meeting priority levels with scoring for urgency calculation"""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    URGENT = "urgent"
+    
+    def get_urgency_score(self) -> int:
+        """Get numeric urgency score for prioritization"""
+        priority_scores = {
+            Priority.LOW: 1,
+            Priority.MEDIUM: 2,
+            Priority.HIGH: 3,
+            Priority.URGENT: 4
+        }
+        return priority_scores[self]
+
+
 class IntentStatus(Enum):
-    """Meeting intent lifecycle status"""
-    CAPTURED = "captured"          # Initial intent detected
-    CONTEXT_GATHERING = "context_gathering"  # Asking context questions
-    READY = "ready"               # Ready for execution
-    SCHEDULED = "scheduled"       # Meeting scheduled
-    COMPLETED = "completed"       # Meeting completed
-    CANCELLED = "cancelled"       # Intent cancelled
+    """Intent lifecycle status"""
+    PENDING = "pending"
+    MONITORING = "monitoring"
+    TRIGGERED = "triggered"
+    ACCEPTED = "accepted"
+    DECLINED = "declined"
+    EXPIRED = "expired"
+    COMPLETED = "completed"
 
 
-class ContextQuestion(Enum):
-    """3 essential context questions for meeting orchestration"""
-    WHO = "who"        # Who should attend?
-    WHEN = "when"      # When should it happen?
-    PURPOSE = "purpose"  # What's the specific purpose/agenda?
+@dataclass
+class MeetingContext:
+    """Structured meeting context for enhanced intent clarity"""
+    purpose: str
+    expected_outcome: str
+    duration_minutes: int
+    priority: Priority
+    preferred_time_range: Optional[Tuple[datetime, datetime]] = None
+    agenda_items: Optional[List[str]] = None
+    meeting_type: str = "general"  # general, brainstorm, decision, update
+    
+    def calculate_urgency_factor(self) -> float:
+        """Calculate urgency based on context"""
+        base_urgency = self.priority.get_urgency_score() / 4.0
+        
+        # Increase urgency for shorter meetings (assume more focused)
+        if self.duration_minutes <= 15:
+            base_urgency *= 1.2
+        elif self.duration_minutes <= 30:
+            base_urgency *= 1.1
+            
+        # Increase urgency for decision meetings
+        if self.meeting_type == "decision":
+            base_urgency *= 1.15
+            
+        return min(base_urgency, 1.0)
 
 
 @dataclass
 class MeetingIntent:
-    """Meeting intent with context data"""
+    """Structured meeting intent with context and tracking"""
     intent_id: str
-    user_id: str
-    raw_text: str
-    detected_at: datetime
-    status: IntentStatus = IntentStatus.CAPTURED
+    requester_id: str
+    recipient_id: str
+    context: MeetingContext
+    created_at: datetime
+    status: IntentStatus = IntentStatus.PENDING
+    expires_at: Optional[datetime] = None
+    last_updated: Optional[datetime] = None
+    attempts: int = 0
     
-    # Context answers
-    context_answers: Dict[ContextQuestion, str] = field(default_factory=dict)
-    confidence_score: float = 0.0
+    def __post_init__(self):
+        if self.expires_at is None:
+            # Default expiration: 24 hours for urgent, 72 hours for others
+            hours = 24 if self.context.priority == Priority.URGENT else 72
+            self.expires_at = self.created_at + timedelta(hours=hours)
     
-    # Extracted entities
-    participants: List[str] = field(default_factory=list)
-    proposed_time: Optional[datetime] = None
-    duration: Optional[int] = None  # minutes
-    purpose: Optional[str] = None
-    platform: Optional[str] = None
+    def is_expired(self) -> bool:
+        """Check if intent has expired"""
+        return datetime.now() > self.expires_at
     
-    # Metadata
-    updated_at: datetime = field(default_factory=datetime.now)
-    processing_notes: List[str] = field(default_factory=list)
+    def get_priority_score(self) -> float:
+        """Get weighted priority score including urgency factors"""
+        base_score = self.context.priority.get_urgency_score()
+        urgency_factor = self.context.calculate_urgency_factor()
+        
+        # Time decay factor - more urgent as expiration approaches
+        time_remaining = (self.expires_at - datetime.now()).total_seconds()
+        total_duration = (self.expires_at - self.created_at).total_seconds()
+        time_pressure = 1.0 + (1.0 - time_remaining / total_duration) * 0.5
+        
+        return base_score * urgency_factor * time_pressure
 
 
 class IntentManager:
     """
-    Manages meeting intent capture and context gathering workflow.
+    Meeting intent capture, storage, and retrieval engine.
     
-    Follows 3-question pattern:
-    1. WHO should attend?
-    2. WHEN should it happen?
-    3. PURPOSE - what's the specific agenda?
+    Manages the full lifecycle of meeting intents with structured context,
+    priority scoring, and persistent storage using WSP 60 memory architecture.
     """
     
-    def __init__(self):
-        self.intents: Dict[str, MeetingIntent] = {}
-        self.context_handlers = []
-        self.intent_keywords = [
-            "meeting", "call", "chat", "sync", "standup",
-            "discuss", "review", "brainstorm", "catch up",
-            "demo", "presentation", "interview"
+    def __init__(self, storage_path: Optional[Path] = None):
+        self.storage_path = storage_path or Path("memory/intent_manager")
+        self.storage_path.mkdir(parents=True, exist_ok=True)
+        
+        self.active_intents: Dict[str, MeetingIntent] = {}
+        self.intent_history: List[MeetingIntent] = []
+        self.intent_counter = 0
+        
+        # Load existing intents from storage
+        self._load_intents_from_storage()
+        
+        wre_log("IntentManager initialized with persistent storage")
+    
+    async def create_intent(
+        self,
+        requester_id: str,
+        recipient_id: str,
+        context: MeetingContext
+    ) -> str:
+        """
+        Create a new meeting intent with structured context.
+        
+        Args:
+            requester_id: User requesting the meeting
+            recipient_id: Target meeting participant
+            context: Structured meeting context and details
+            
+        Returns:
+            Intent ID for tracking and reference
+        """
+        self.intent_counter += 1
+        intent_id = f"intent_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{self.intent_counter}"
+        
+        intent = MeetingIntent(
+            intent_id=intent_id,
+            requester_id=requester_id,
+            recipient_id=recipient_id,
+            context=context,
+            created_at=datetime.now()
+        )
+        
+        self.active_intents[intent_id] = intent
+        
+        # Persist to storage
+        await self._persist_intent(intent)
+        
+        wre_log(f"Meeting intent created: {intent_id}")
+        wre_log(f"Purpose: {context.purpose}")
+        wre_log(f"Priority: {context.priority.name}")
+        wre_log(f"Duration: {context.duration_minutes} minutes")
+        
+        return intent_id
+    
+    async def get_pending_intents(self, recipient_id: str) -> List[MeetingIntent]:
+        """
+        Get all pending intents for a recipient.
+        
+        Args:
+            recipient_id: User to get intents for
+            
+        Returns:
+            List of pending MeetingIntents sorted by priority
+        """
+        pending_intents = [
+            intent for intent in self.active_intents.values()
+            if intent.recipient_id == recipient_id 
+            and intent.status == IntentStatus.PENDING
+            and not intent.is_expired()
         ]
+        
+        # Sort by priority score (highest first)
+        pending_intents.sort(key=lambda i: i.get_priority_score(), reverse=True)
+        
+        wre_log(f"Retrieved {len(pending_intents)} pending intents for {recipient_id}")
+        return pending_intents
     
-    async def capture_intent(self, user_id: str, message: str) -> Optional[MeetingIntent]:
+    async def get_active_intents(self, user_id: str) -> List[MeetingIntent]:
         """
-        Analyze message for meeting intent and create MeetingIntent if detected.
+        Get all active intents involving a user (as requester or recipient).
         
         Args:
-            user_id: User who expressed the intent
-            message: Natural language message
+            user_id: User to get intents for
             
         Returns:
-            MeetingIntent if detected, None otherwise
+            List of active MeetingIntents
         """
-        try:
-            # Detect if message contains meeting intent
-            has_intent = await self._detect_meeting_intent(message)
-            if not has_intent:
-                return None
-            
-            # Create intent object
-            intent_id = str(uuid.uuid4())
-            intent = MeetingIntent(
-                intent_id=intent_id,
-                user_id=user_id,
-                raw_text=message,
-                detected_at=datetime.now(),
-                confidence_score=await self._calculate_confidence(message)
-            )
-            
-            # Extract initial entities
-            await self._extract_entities(intent)
-            
-            # Store intent
-            self.intents[intent_id] = intent
-            
-            # Start context gathering if not complete
-            await self._initiate_context_gathering(intent)
-            
-            logger.info(f"Intent captured: {intent_id} from {user_id}")
-            return intent
-            
-        except Exception as e:
-            logger.error(f"Error capturing intent: {e}")
-            return None
+        active_intents = [
+            intent for intent in self.active_intents.values()
+            if (intent.requester_id == user_id or intent.recipient_id == user_id)
+            and intent.status in [IntentStatus.PENDING, IntentStatus.MONITORING, IntentStatus.TRIGGERED]
+            and not intent.is_expired()
+        ]
+        
+        return active_intents
     
-    async def process_context_response(self, intent_id: str, response: str) -> Dict[str, Any]:
+    async def mark_intent_processed(self, intent_id: str, outcome: str, notes: Optional[str] = None):
         """
-        Process user response to context question.
+        Mark an intent as processed with outcome.
         
         Args:
-            intent_id: Meeting intent ID
-            response: User's response
-            
-        Returns:
-            Status update with next question or completion
+            intent_id: Intent to mark as processed
+            outcome: Result outcome (accepted, declined, completed, etc.)
+            notes: Optional processing notes
         """
-        if intent_id not in self.intents:
-            return {"error": "Intent not found"}
+        if intent_id not in self.active_intents:
+            raise ValueError(f"Intent {intent_id} not found")
         
-        intent = self.intents[intent_id]
+        intent = self.active_intents[intent_id]
         
-        try:
-            # Determine which context question this answers
-            next_question = await self._determine_context_question(intent, response)
-            
-            if next_question:
-                # Store the response and ask next question
-                question_type = await self._get_current_question_type(intent)
-                if question_type:
-                    intent.context_answers[question_type] = response
-                    await self._extract_context_entities(intent, question_type, response)
-                
-                return {
-                    "status": "needs_context",
-                    "next_question": next_question,
-                    "question_type": await self._get_next_question_type(intent)
-                }
-            else:
-                # All context gathered
-                await self._complete_context_gathering(intent)
-                return {
-                    "status": "ready",
-                    "message": "Intent ready for scheduling",
-                    "intent": intent
-                }
-                
-        except Exception as e:
-            logger.error(f"Error processing context response: {e}")
-            return {"error": str(e)}
-    
-    async def get_intent(self, intent_id: str) -> Optional[MeetingIntent]:
-        """Retrieve intent by ID"""
-        return self.intents.get(intent_id)
-    
-    async def get_user_intents(self, user_id: str, status: Optional[IntentStatus] = None) -> List[MeetingIntent]:
-        """Get all intents for a user, optionally filtered by status"""
-        intents = [intent for intent in self.intents.values() if intent.user_id == user_id]
-        
-        if status:
-            intents = [intent for intent in intents if intent.status == status]
-        
-        return sorted(intents, key=lambda x: x.detected_at, reverse=True)
-    
-    async def update_intent_status(self, intent_id: str, status: IntentStatus, note: str = None) -> bool:
-        """Update intent status with optional note"""
-        if intent_id not in self.intents:
-            return False
-        
-        intent = self.intents[intent_id]
-        intent.status = status
-        intent.updated_at = datetime.now()
-        
-        if note:
-            intent.processing_notes.append(f"{datetime.now()}: {note}")
-        
-        logger.info(f"Intent {intent_id} status updated to {status}")
-        return True
-    
-    async def get_ready_intents(self) -> List[MeetingIntent]:
-        """Get all intents ready for scheduling"""
-        return [intent for intent in self.intents.values() if intent.status == IntentStatus.READY]
-    
-    async def get_statistics(self) -> Dict[str, Any]:
-        """Get intent management statistics"""
-        total = len(self.intents)
-        by_status = {}
-        
-        for status in IntentStatus:
-            count = len([i for i in self.intents.values() if i.status == status])
-            by_status[status.value] = count
-        
-        avg_confidence = 0.0
-        if self.intents:
-            avg_confidence = sum(i.confidence_score for i in self.intents.values()) / total
-        
-        return {
-            "total_intents": total,
-            "by_status": by_status,
-            "average_confidence": round(avg_confidence, 2),
-            "ready_for_scheduling": by_status.get("ready", 0)
+        # Update status based on outcome
+        status_mapping = {
+            "accepted": IntentStatus.ACCEPTED,
+            "declined": IntentStatus.DECLINED,
+            "completed": IntentStatus.COMPLETED,
+            "expired": IntentStatus.EXPIRED
         }
+        
+        intent.status = status_mapping.get(outcome, IntentStatus.COMPLETED)
+        intent.last_updated = datetime.now()
+        
+        # Move to history if final status
+        if intent.status in [IntentStatus.ACCEPTED, IntentStatus.DECLINED, IntentStatus.COMPLETED, IntentStatus.EXPIRED]:
+            self.intent_history.append(intent)
+            del self.active_intents[intent_id]
+        
+        # Persist changes
+        await self._persist_intent(intent)
+        
+        wre_log(f"Intent {intent_id} marked as {outcome}")
     
-    # Private methods
+    async def update_intent_status(self, intent_id: str, status: IntentStatus):
+        """Update intent status during lifecycle management"""
+        if intent_id in self.active_intents:
+            self.active_intents[intent_id].status = status
+            self.active_intents[intent_id].last_updated = datetime.now()
+            await self._persist_intent(self.active_intents[intent_id])
     
-    async def _detect_meeting_intent(self, message: str) -> bool:
-        """Detect if message contains meeting intent using keywords"""
-        message_lower = message.lower()
+    async def cleanup_expired_intents(self):
+        """Clean up expired intents and move to history"""
+        expired_intents = []
         
-        # Check for meeting keywords
-        has_keywords = any(keyword in message_lower for keyword in self.intent_keywords)
+        for intent_id, intent in list(self.active_intents.items()):
+            if intent.is_expired():
+                intent.status = IntentStatus.EXPIRED
+                self.intent_history.append(intent)
+                expired_intents.append(intent_id)
+                del self.active_intents[intent_id]
         
-        # Check for action words + time/people indicators
-        action_words = ["let's", "can we", "should we", "want to", "need to", "schedule"]
-        time_indicators = ["today", "tomorrow", "next week", "monday", "afternoon"]
-        people_indicators = ["with", "team", "@", "everyone", "us"]
+        if expired_intents:
+            wre_log(f"Cleaned up {len(expired_intents)} expired intents")
         
-        has_action = any(action in message_lower for action in action_words)
-        has_time = any(time in message_lower for time in time_indicators)
-        has_people = any(people in message_lower for people in people_indicators)
-        
-        return has_keywords or (has_action and (has_time or has_people))
+        return len(expired_intents)
     
-    async def _calculate_confidence(self, message: str) -> float:
-        """Calculate confidence score for meeting intent detection"""
-        score = 0.0
-        message_lower = message.lower()
+    def get_intent_by_id(self, intent_id: str) -> Optional[MeetingIntent]:
+        """Get intent by ID from active intents or history"""
+        if intent_id in self.active_intents:
+            return self.active_intents[intent_id]
         
-        # Keyword matching
-        keyword_matches = sum(1 for keyword in self.intent_keywords if keyword in message_lower)
-        score += min(keyword_matches * 0.3, 0.6)
-        
-        # Specific patterns
-        if "let's schedule" in message_lower or "can we meet" in message_lower:
-            score += 0.4
-        
-        # Time mentions
-        if any(time in message_lower for time in ["today", "tomorrow", "next", "at", "pm", "am"]):
-            score += 0.2
-        
-        return min(score, 1.0)
-    
-    async def _extract_entities(self, intent: MeetingIntent) -> None:
-        """Extract initial entities from raw text"""
-        text = intent.raw_text.lower()
-        
-        # Extract potential participants (mentions)
-        if "@" in text:
-            mentions = [word for word in text.split() if word.startswith("@")]
-            intent.participants.extend([mention[1:] for mention in mentions])
-        
-        # Extract duration hints
-        if "hour" in text:
-            intent.duration = 60
-        elif "30 min" in text or "half hour" in text:
-            intent.duration = 30
-        elif "15 min" in text:
-            intent.duration = 15
-        
-        # Extract platform hints
-        platforms = ["zoom", "teams", "discord", "slack", "whatsapp"]
-        for platform in platforms:
-            if platform in text:
-                intent.platform = platform
-                break
-    
-    async def _initiate_context_gathering(self, intent: MeetingIntent) -> None:
-        """Start the 3-question context gathering process"""
-        intent.status = IntentStatus.CONTEXT_GATHERING
-        
-        # Notify context handlers about new intent needing context
-        for handler in self.context_handlers:
-            try:
-                await handler(intent, await self._get_first_context_question(intent))
-            except Exception as e:
-                logger.error(f"Error in context handler: {e}")
-    
-    async def _get_first_context_question(self, intent: MeetingIntent) -> str:
-        """Get the first context question based on what's already known"""
-        # Start with WHO if no participants identified
-        if not intent.participants:
-            return "Who should attend this meeting? (You can mention specific people or roles)"
-        
-        # Then WHEN if no time suggested
-        if not intent.proposed_time:
-            return "When would you like to schedule this? (e.g., 'tomorrow at 2pm', 'next Monday')"
-        
-        # Finally PURPOSE if not clear
-        if not intent.purpose:
-            return "What's the main purpose or agenda for this meeting?"
-        
-        # All context may already be present
-        return None
-    
-    async def _determine_context_question(self, intent: MeetingIntent, response: str) -> Optional[str]:
-        """Determine next context question based on current state"""
-        # Check what context is still needed
-        needed_context = []
-        
-        if not intent.context_answers.get(ContextQuestion.WHO) and not intent.participants:
-            needed_context.append((ContextQuestion.WHO, "Who should attend this meeting?"))
-        
-        if not intent.context_answers.get(ContextQuestion.WHEN) and not intent.proposed_time:
-            needed_context.append((ContextQuestion.WHEN, "When would you like to schedule this?"))
-        
-        if not intent.context_answers.get(ContextQuestion.PURPOSE) and not intent.purpose:
-            needed_context.append((ContextQuestion.PURPOSE, "What's the main purpose or agenda?"))
-        
-        if needed_context:
-            return needed_context[0][1]
+        for intent in self.intent_history:
+            if intent.intent_id == intent_id:
+                return intent
         
         return None
     
-    async def _get_current_question_type(self, intent: MeetingIntent) -> Optional[ContextQuestion]:
-        """Determine which question type we're currently asking"""
-        if not intent.context_answers.get(ContextQuestion.WHO):
-            return ContextQuestion.WHO
-        elif not intent.context_answers.get(ContextQuestion.WHEN):
-            return ContextQuestion.WHEN
-        elif not intent.context_answers.get(ContextQuestion.PURPOSE):
-            return ContextQuestion.PURPOSE
-        return None
+    # Private Methods
     
-    async def _get_next_question_type(self, intent: MeetingIntent) -> Optional[ContextQuestion]:
-        """Get the next question type that needs to be asked"""
-        return await self._get_current_question_type(intent)
-    
-    async def _extract_context_entities(self, intent: MeetingIntent, question_type: ContextQuestion, response: str) -> None:
-        """Extract entities from context responses"""
-        if question_type == ContextQuestion.WHO:
-            # Extract participants from WHO response
-            response_lower = response.lower()
-            if "@" in response:
-                mentions = [word[1:] for word in response.split() if word.startswith("@")]
-                intent.participants.extend(mentions)
+    async def _persist_intent(self, intent: MeetingIntent):
+        """Persist intent to storage using WSP 60 memory architecture"""
+        try:
+            intent_file = self.storage_path / f"{intent.intent_id}.json"
             
-            # Simple name detection (very basic)
-            names = [word for word in response.split() if word.istitle() and len(word) > 2]
-            intent.participants.extend(names)
-        
-        elif question_type == ContextQuestion.WHEN:
-            # Basic time extraction (would need proper NLP in production)
-            intent.proposed_time = datetime.now() + timedelta(days=1)  # Default tomorrow
+            # Convert to serializable format
+            intent_data = {
+                "intent_id": intent.intent_id,
+                "requester_id": intent.requester_id,
+                "recipient_id": intent.recipient_id,
+                "context": asdict(intent.context),
+                "created_at": intent.created_at.isoformat(),
+                "status": intent.status.value,
+                "expires_at": intent.expires_at.isoformat() if intent.expires_at else None,
+                "last_updated": intent.last_updated.isoformat() if intent.last_updated else None,
+                "attempts": intent.attempts
+            }
             
-        elif question_type == ContextQuestion.PURPOSE:
-            intent.purpose = response
+            with open(intent_file, 'w') as f:
+                json.dump(intent_data, f, indent=2)
+                
+        except Exception as e:
+            wre_log(f"Failed to persist intent {intent.intent_id}: {e}", "ERROR")
     
-    async def _complete_context_gathering(self, intent: MeetingIntent) -> None:
-        """Mark context gathering as complete and intent as ready"""
-        intent.status = IntentStatus.READY
-        intent.updated_at = datetime.now()
-        intent.processing_notes.append(f"{datetime.now()}: Context gathering completed")
-        
-        logger.info(f"Intent {intent.intent_id} ready for scheduling")
-    
-    async def add_context_handler(self, handler) -> None:
-        """Add handler for context gathering events"""
-        self.context_handlers.append(handler)
-
-
-# Demo/Testing utilities
-if __name__ == "__main__":
-    async def demo():
-        print("🎯 Intent Manager Demo")
-        print("=" * 50)
-        
-        manager = IntentManager()
-        
-        # Demo intent detection
-        test_messages = [
-            "Let's schedule a team meeting for tomorrow",
-            "Can we have a quick sync with the design team?",
-            "I want to review the project with @alice and @bob",
-            "This is just a regular message",  # Should not detect intent
-            "Need to brainstorm ideas for the campaign"
-        ]
-        
-        for msg in test_messages:
-            print(f"\nMessage: '{msg}'")
-            intent = await manager.capture_intent("demo_user", msg)
-            if intent:
-                print(f"✅ Intent detected (confidence: {intent.confidence_score:.2f})")
-                print(f"   Status: {intent.status}")
-                print(f"   Participants: {intent.participants}")
-            else:
-                print("❌ No intent detected")
-        
-        # Show statistics
-        stats = await manager.get_statistics()
-        print(f"\n📊 Statistics:")
-        print(f"   Total intents: {stats['total_intents']}")
-        print(f"   Average confidence: {stats['average_confidence']}")
-        print(f"   Ready for scheduling: {stats['ready_for_scheduling']}")
-        
-        print("\n✨ Demo completed!")
-    
-    asyncio.run(demo()) 
+    def _load_intents_from_storage(self):
+        """Load existing intents from storage on initialization"""
+        try:
+            for intent_file in self.storage_path.glob("*.json"):
+                with open(intent_file, 'r') as f:
+                    intent_data = json.load(f)
+                
+                # Reconstruct intent object
+                context_data = intent_data["context"]
+                context_data["priority"] = Priority(context_data["priority"])
+                
+                if context_data.get("preferred_time_range"):
+                    time_range = context_data["preferred_time_range"]
+                    context_data["preferred_time_range"] = (
+                        datetime.fromisoformat(time_range[0]),
+                        datetime.fromisoformat(time_range[1])
+                    )
+                
+                context = MeetingContext(**context_data)
+                
+                intent = MeetingIntent(
+                    intent_id=intent_data["intent_id"],
+                    requester_id=intent_data["requester_id"],
+                    recipient_id=intent_data["recipient_id"],
+                    context=context,
+                    created_at=datetime.fromisoformat(intent_data["created_at"]),
+                    status=IntentStatus(intent_data["status"]),
+                    expires_at=datetime.fromisoformat(intent_data["expires_at"]) if intent_data.get("expires_at") else None,
+                    last_updated=datetime.fromisoformat(intent_data["last_updated"]) if intent_data.get("last_updated") else None,
+                    attempts=intent_data.get("attempts", 0)
+                )
+                
+                # Load into appropriate collection based on status
+                if intent.status in [IntentStatus.PENDING, IntentStatus.MONITORING, IntentStatus.TRIGGERED]:
+                    self.active_intents[intent.intent_id] = intent
+                else:
+                    self.intent_history.append(intent)
+                    
+                self.intent_counter = max(self.intent_counter, int(intent.intent_id.split('_')[-1]))
+                    
+        except Exception as e:
+            wre_log(f"Error loading intents from storage: {e}", "WARNING") 
