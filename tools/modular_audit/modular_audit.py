@@ -3,22 +3,25 @@
 Foundups Modular Audit System (FMAS)
 
 # WSP Compliance Headers
-- **WSP 4**: FMAS Validation Protocol (Core functionality)
+- **WSP 4**: FMAS Validation Protocol (Core functionality + Security scanning)
 - **WSP 62**: Large File and Refactoring Enforcement Protocol (Size checking)
 - **WSP 47**: Module Violation Tracking Protocol (Violation logging)
 - **WSP 22**: Traceable Narrative Protocol (Logging standards)
+- **WSP 71**: Secrets Management Protocol (Secret detection scanning)
 
-This tool performs an audit of the module structure and test existence.
-This helps ensure that all modules follow the established standards.
+This tool performs an audit of the module structure, test existence, and security vulnerability scanning.
+This helps ensure that all modules follow the established standards and security requirements.
 
 Mode 1: Structure check only
 - Validates that each module has a src/ directory
 - Validates that each module has a tests/ directory
 - Checks for the presence of the module interface file
 - Checks for the presence of the module.json dependency manifest
+- Performs security vulnerability scanning (pip-audit, bandit, secret detection)
 - Reports any missing components as findings
 - NOW SUPPORTS: Enterprise Domain architecture (WSP 3)
 - NOW SUPPORTS: WSP 62 file size compliance checking
+- NOW SUPPORTS: WSP 4 security vulnerability scanning
 
 Mode 2: Baseline comparison
 - Performs all Mode 1 checks
@@ -26,6 +29,7 @@ Mode 2: Baseline comparison
 - Reports added, modified, and removed modules and files
 - NOW SUPPORTS: Hierarchical domain structure comparison
 - NOW SUPPORTS: WSP 62 file size compliance checking
+- NOW SUPPORTS: Comprehensive security vulnerability baseline comparison
 """
 
 import argparse
@@ -34,9 +38,12 @@ import logging
 import os
 import sys
 import hashlib
+import subprocess
+import re
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
-VERSION = "0.8.0"
+VERSION = "0.8.1"
 
 # Set up logging
 logging.basicConfig(
@@ -46,6 +53,44 @@ logging.basicConfig(
 
 # Define critical modules that should prompt warnings if modified
 CRITICAL_MODULES = {"core", "security", "auth", "config"}
+
+# Security scanning configuration (WSP 4 Section 4.4.1)
+SECURITY_SCAN_TOOLS = {
+    "pip_audit": {
+        "command": ["pip-audit", "--desc", "--format=json"],
+        "description": "Python dependency vulnerability scanning",
+        "required": True
+    },
+    "bandit": {
+        "command": ["bandit", "-r", ".", "-f", "json"],
+        "description": "Python code security analysis",
+        "required": True
+    },
+    "npm_audit": {
+        "command": ["npm", "audit", "--json"],
+        "description": "Node.js dependency vulnerability scanning",
+        "required": False  # Only if package.json exists
+    }
+}
+
+# Security severity thresholds (WSP 4)
+SECURITY_THRESHOLDS = {
+    "HIGH": "FAIL",      # Block integration
+    "MEDIUM": "WARNING", # Require acknowledgment  
+    "LOW": "LOG"         # Track for future resolution
+}
+
+# Secret detection patterns (WSP 71)
+SECRET_PATTERNS = [
+    r'(?i)(password|passwd|pwd)\s*[=:]\s*["\']?[^"\'\s]{8,}',
+    r'(?i)(api[_-]?key|apikey)\s*[=:]\s*["\']?[^"\'\s]{16,}',
+    r'(?i)(secret|token)\s*[=:]\s*["\']?[^"\'\s]{16,}',
+    r'(?i)(access[_-]?key)\s*[=:]\s*["\']?[^"\'\s]{16,}',
+    r'(?i)(private[_-]?key)\s*[=:]\s*["\']?[^"\'\s]{32,}',
+    r'-----BEGIN\s+(?:RSA\s+)?PRIVATE\s+KEY-----',
+    r'(?i)mongodb://[^/\s]+:[^@\s]+@',
+    r'(?i)postgres://[^/\s]+:[^@\s]+@'
+]
 
 # Define recognized Enterprise Domains (WSP 3)
 ENTERPRISE_DOMAINS = {
@@ -188,6 +233,219 @@ def discover_source_files(root_path):
     
     return module_files, flat_files
 
+def perform_security_scan(module_path: Path, domain_path: str) -> List[str]:
+    """
+    Perform security vulnerability scanning for a module (WSP 4 Section 4.4.1).
+    
+    Args:
+        module_path: Path to the module directory
+        domain_path: Domain path for reporting
+        
+    Returns:
+        List of security findings
+    """
+    findings = []
+    
+    # Check if we're in the module directory for scanning
+    original_cwd = os.getcwd()
+    
+    try:
+        os.chdir(module_path)
+        
+        # Python dependency vulnerability scanning (pip-audit)
+        if (module_path / "requirements.txt").exists():
+            pip_audit_findings = run_pip_audit()
+            findings.extend([f"SECURITY: {domain_path} - {finding}" for finding in pip_audit_findings])
+        
+        # Python code security analysis (bandit)
+        if (module_path / "src").exists():
+            bandit_findings = run_bandit()
+            findings.extend([f"SECURITY: {domain_path} - {finding}" for finding in bandit_findings])
+        
+        # Node.js dependency vulnerability scanning (npm audit)
+        if (module_path / "package.json").exists():
+            npm_audit_findings = run_npm_audit()
+            findings.extend([f"SECURITY: {domain_path} - {finding}" for finding in npm_audit_findings])
+            
+    except Exception as e:
+        findings.append(f"SECURITY_SCAN_FAILED: {domain_path} - Security scan failed: {str(e)}")
+    finally:
+        os.chdir(original_cwd)
+    
+    return findings
+
+def run_pip_audit() -> List[str]:
+    """Run pip-audit for Python dependency vulnerability scanning."""
+    findings = []
+    
+    try:
+        result = subprocess.run(
+            ["pip-audit", "--desc", "--format=json"],
+            capture_output=True,
+            text=True,
+            timeout=120
+        )
+        
+        if result.returncode == 0:
+            # Parse JSON output
+            if result.stdout.strip():
+                try:
+                    audit_data = json.loads(result.stdout)
+                    vulnerabilities = audit_data.get("vulnerabilities", [])
+                    
+                    for vuln in vulnerabilities:
+                        package = vuln.get("package", "unknown")
+                        severity = vuln.get("severity", "unknown").upper()
+                        description = vuln.get("description", "No description")
+                        
+                        if severity in SECURITY_THRESHOLDS:
+                            threshold = SECURITY_THRESHOLDS[severity]
+                            findings.append(f"SECURITY_VULNERABILITY_{severity}: {package} - {description[:100]}...")
+                            
+                            if threshold == "FAIL":
+                                findings.append(f"SECURITY_AUDIT_FAIL: High-severity vulnerability in {package} blocks integration")
+                                
+                except json.JSONDecodeError:
+                    findings.append("SECURITY_SCAN_ERROR: Failed to parse pip-audit JSON output")
+        else:
+            findings.append(f"SECURITY_SCAN_ERROR: pip-audit failed with code {result.returncode}")
+            
+    except subprocess.TimeoutExpired:
+        findings.append("SECURITY_SCAN_ERROR: pip-audit timed out")
+    except FileNotFoundError:
+        findings.append("SECURITY_SCAN_ERROR: pip-audit tool not found (install with 'pip install pip-audit')")
+    except Exception as e:
+        findings.append(f"SECURITY_SCAN_ERROR: pip-audit failed: {str(e)}")
+    
+    return findings
+
+def run_bandit() -> List[str]:
+    """Run bandit for Python code security analysis."""
+    findings = []
+    
+    try:
+        result = subprocess.run(
+            ["bandit", "-r", "src/", "-f", "json"],
+            capture_output=True,
+            text=True,
+            timeout=120
+        )
+        
+        # Bandit returns non-zero when issues are found, so check for JSON output
+        if result.stdout.strip():
+            try:
+                bandit_data = json.loads(result.stdout)
+                results = bandit_data.get("results", [])
+                
+                for issue in results:
+                    severity = issue.get("issue_severity", "unknown").upper()
+                    test_name = issue.get("test_name", "unknown")
+                    filename = issue.get("filename", "unknown")
+                    line_number = issue.get("line_number", 0)
+                    
+                    if severity in SECURITY_THRESHOLDS:
+                        threshold = SECURITY_THRESHOLDS[severity]
+                        findings.append(f"SECURITY_VULNERABILITY_{severity}: {test_name} in {filename}:{line_number}")
+                        
+                        if threshold == "FAIL":
+                            findings.append(f"SECURITY_AUDIT_FAIL: High-severity security issue in {filename}")
+                            
+            except json.JSONDecodeError:
+                findings.append("SECURITY_SCAN_ERROR: Failed to parse bandit JSON output")
+        
+    except subprocess.TimeoutExpired:
+        findings.append("SECURITY_SCAN_ERROR: bandit timed out")
+    except FileNotFoundError:
+        findings.append("SECURITY_SCAN_ERROR: bandit tool not found (install with 'pip install bandit')")
+    except Exception as e:
+        findings.append(f"SECURITY_SCAN_ERROR: bandit failed: {str(e)}")
+    
+    return findings
+
+def run_npm_audit() -> List[str]:
+    """Run npm audit for Node.js dependency vulnerability scanning."""
+    findings = []
+    
+    try:
+        result = subprocess.run(
+            ["npm", "audit", "--json"],
+            capture_output=True,
+            text=True,
+            timeout=120
+        )
+        
+        if result.stdout.strip():
+            try:
+                audit_data = json.loads(result.stdout)
+                vulnerabilities = audit_data.get("vulnerabilities", {})
+                
+                for package, vuln_info in vulnerabilities.items():
+                    severity = vuln_info.get("severity", "unknown").upper()
+                    
+                    if severity in SECURITY_THRESHOLDS:
+                        threshold = SECURITY_THRESHOLDS[severity]
+                        findings.append(f"SECURITY_VULNERABILITY_{severity}: npm package {package}")
+                        
+                        if threshold == "FAIL":
+                            findings.append(f"SECURITY_AUDIT_FAIL: High-severity vulnerability in npm package {package}")
+                            
+            except json.JSONDecodeError:
+                findings.append("SECURITY_SCAN_ERROR: Failed to parse npm audit JSON output")
+        
+    except subprocess.TimeoutExpired:
+        findings.append("SECURITY_SCAN_ERROR: npm audit timed out")
+    except FileNotFoundError:
+        findings.append("SECURITY_SCAN_ERROR: npm tool not found")
+    except Exception as e:
+        findings.append(f"SECURITY_SCAN_ERROR: npm audit failed: {str(e)}")
+    
+    return findings
+
+def scan_for_secrets(modules_dir: Path) -> List[str]:
+    """
+    Scan for accidentally committed secrets (WSP 71 compliance).
+    
+    Args:
+        modules_dir: Path to modules directory
+        
+    Returns:
+        List of secret detection findings
+    """
+    findings = []
+    
+    try:
+        # Compile secret patterns
+        compiled_patterns = [re.compile(pattern) for pattern in SECRET_PATTERNS]
+        
+        # Scan all Python, JavaScript, and configuration files
+        file_patterns = ["*.py", "*.js", "*.ts", "*.json", "*.yaml", "*.yml", "*.env", "*.conf", "*.config"]
+        
+        for pattern in file_patterns:
+            for file_path in modules_dir.rglob(pattern):
+                # Skip certain directories
+                if any(skip in str(file_path) for skip in ['.git', '__pycache__', 'node_modules', '.venv']):
+                    continue
+                    
+                try:
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        content = f.read()
+                        
+                    for line_num, line in enumerate(content.split('\n'), 1):
+                        for secret_pattern in compiled_patterns:
+                            if secret_pattern.search(line):
+                                relative_path = file_path.relative_to(modules_dir)
+                                findings.append(f"SECRET_DETECTED: Potential secret in {relative_path}:{line_num}")
+                                break  # Only report once per line
+                                
+                except Exception as e:
+                    # Skip files that can't be read
+                    continue
+                    
+    except Exception as e:
+        findings.append(f"SECRET_SCAN_ERROR: Secret scanning failed: {str(e)}")
+    
+    return findings
+
 def audit_all_modules(modules_root):
     """
     Audit all modules to ensure they follow the established structure.
@@ -248,6 +506,14 @@ def audit_all_modules(modules_root):
         requirements_txt = module_path / "requirements.txt"
         if not module_json.exists() and not requirements_txt.exists():
             findings.append(f"WARNING: Module '{domain_path}' is missing dependency manifest (module.json or requirements.txt)")
+        
+        # WSP 4 Section 4.4.1: Security vulnerability scanning
+        security_findings = perform_security_scan(module_path, domain_path)
+        findings.extend(security_findings)
+    
+    # WSP 71: Scan for secrets across all modules
+    secret_findings = scan_for_secrets(modules_dir)
+    findings.extend(secret_findings)
     
     return findings, module_count
 

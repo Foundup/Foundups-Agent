@@ -84,7 +84,15 @@ class ComplianceAgent:
             "WSP_12": "Dependency Management",
             "WSP_22": "Module ModLog and Roadmap Protocol",
             "WSP_49": "Module Directory Structure Standardization",
-            "WSP_54": "WRE Agent Duties Specification"
+            "WSP_54": "WRE Agent Duties Specification",
+            "WSP_71": "Secrets Management Protocol"
+        }
+        
+        # Security violation handling (WSP 4 + WSP 71)
+        self.security_thresholds = {
+            "HIGH": "CRITICAL_VIOLATION",
+            "MEDIUM": "WARNING_VIOLATION", 
+            "LOW": "INFO_VIOLATION"
         }
         
         # Performance metrics
@@ -843,6 +851,148 @@ def test_compliance_agent():
     print(f"System Score: {system_results['system_compliance_score']:.1%}")
     
     return agent
+
+    def handle_security_violation(self, violation_type: str, severity: str, module_path: str, details: str) -> Dict[str, Any]:
+        """
+        Handle security violations detected by FMAS or other security tools (WSP 4 + WSP 71).
+        
+        Args:
+            violation_type: Type of security violation (e.g., 'VULNERABILITY', 'SECRET_DETECTED')
+            severity: Severity level ('HIGH', 'MEDIUM', 'LOW')
+            module_path: Path to the affected module
+            details: Detailed description of the violation
+            
+        Returns:
+            Dict containing violation handling results
+        """
+        try:
+            # Determine action based on severity
+            action_required = self.security_thresholds.get(severity, "INFO_VIOLATION")
+            
+            violation_record = {
+                "violation_id": f"sec_{hash(f'{module_path}_{violation_type}_{details}') % 10000}",
+                "type": violation_type,
+                "severity": severity,
+                "module_path": module_path,
+                "details": details,
+                "action_required": action_required,
+                "timestamp": datetime.utcnow().isoformat(),
+                "handled_by": "ComplianceAgent"
+            }
+            
+            # Log violation based on severity
+            if severity == "HIGH":
+                if self.wre_enabled:
+                    wre_log(f"🚨 CRITICAL Security Violation: {violation_type} in {module_path}", "ERROR")
+                else:
+                    print(f"🚨 CRITICAL Security Violation: {violation_type} in {module_path}")
+                    
+                # High-severity violations may block integration
+                violation_record["integration_blocked"] = True
+                
+            elif severity == "MEDIUM":
+                if self.wre_enabled:
+                    wre_log(f"⚠️ Security Warning: {violation_type} in {module_path}", "WARNING")
+                else:
+                    print(f"⚠️ Security Warning: {violation_type} in {module_path}")
+                    
+                violation_record["requires_acknowledgment"] = True
+                
+            else:  # LOW severity
+                if self.wre_enabled:
+                    wre_log(f"ℹ️ Security Notice: {violation_type} in {module_path}", "INFO")
+                else:
+                    print(f"ℹ️ Security Notice: {violation_type} in {module_path}")
+            
+            # Store violation for tracking
+            if not hasattr(self, 'security_violations'):
+                self.security_violations = []
+            self.security_violations.append(violation_record)
+            
+            # Update compliance metrics
+            self.compliance_metrics['security_violations'] = self.compliance_metrics.get('security_violations', 0) + 1
+            
+            return {
+                "status": "handled",
+                "violation_id": violation_record["violation_id"],
+                "action_required": action_required,
+                "integration_blocked": violation_record.get("integration_blocked", False),
+                "requires_acknowledgment": violation_record.get("requires_acknowledgment", False)
+            }
+            
+        except Exception as e:
+            error_msg = f"Failed to handle security violation: {str(e)}"
+            if self.wre_enabled:
+                wre_log(error_msg, "ERROR")
+            return {"status": "error", "error": error_msg}
+    
+    def get_security_violations(self, module_path: str = None, severity: str = None) -> List[Dict[str, Any]]:
+        """
+        Get security violations, optionally filtered by module or severity.
+        
+        Args:
+            module_path: Filter by specific module path
+            severity: Filter by severity level
+            
+        Returns:
+            List of security violation records
+        """
+        if not hasattr(self, 'security_violations'):
+            return []
+            
+        violations = self.security_violations
+        
+        if module_path:
+            violations = [v for v in violations if v["module_path"] == module_path]
+            
+        if severity:
+            violations = [v for v in violations if v["severity"] == severity]
+            
+        return violations
+    
+    def generate_security_report(self) -> Dict[str, Any]:
+        """
+        Generate a comprehensive security compliance report.
+        
+        Returns:
+            Dict containing security compliance statistics and recommendations
+        """
+        if not hasattr(self, 'security_violations'):
+            return {
+                "total_violations": 0,
+                "severity_breakdown": {"HIGH": 0, "MEDIUM": 0, "LOW": 0},
+                "blocked_integrations": 0,
+                "recommendations": ["No security violations detected"]
+            }
+            
+        violations = self.security_violations
+        severity_counts = {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
+        blocked_count = 0
+        
+        for violation in violations:
+            severity = violation.get("severity", "LOW")
+            if severity in severity_counts:
+                severity_counts[severity] += 1
+                
+            if violation.get("integration_blocked", False):
+                blocked_count += 1
+        
+        # Generate recommendations
+        recommendations = []
+        if severity_counts["HIGH"] > 0:
+            recommendations.append(f"URGENT: Fix {severity_counts['HIGH']} high-severity security vulnerabilities")
+        if severity_counts["MEDIUM"] > 0:
+            recommendations.append(f"Review and address {severity_counts['MEDIUM']} medium-severity security warnings")
+        if blocked_count > 0:
+            recommendations.append(f"Integration blocked for {blocked_count} modules due to security violations")
+            
+        return {
+            "total_violations": len(violations),
+            "severity_breakdown": severity_counts,
+            "blocked_integrations": blocked_count,
+            "compliance_status": "NON_COMPLIANT" if severity_counts["HIGH"] > 0 else "COMPLIANT",
+            "recommendations": recommendations if recommendations else ["Security compliance maintained"]
+        }
 
 
 if __name__ == "__main__":
