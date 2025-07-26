@@ -43,6 +43,49 @@ Agents MUST verify file existence, paths, and content before taking actions or m
 - [ ] Content assumptions validated by reading
 - [ ] Alternative locations checked
 - [ ] Non-existence explicitly handled
+- [ ] **TestModLog.md read before any test coverage assessment**
+- [ ] **Module assessment based on documented evidence, not assumptions**
+
+## 4.1. **MODULE ASSESSMENT VERIFICATION** (Critical Addition)
+
+### **Mandatory Pre-Assessment Protocol**
+
+**BEFORE making ANY claims about:**
+- Test coverage percentages
+- WSP compliance status  
+- Module testing completeness
+- Development phase completion
+
+**REQUIRED VERIFICATION SEQUENCE:**
+
+1. **Read TestModLog.md FIRST**: 
+   ```
+   read_file("modules/<domain>/<module>/tests/TestModLog.md")
+   ```
+2. **Extract Actual Test Results**: Look for documented pass/fail rates
+3. **Verify Coverage Claims**: Find explicit coverage percentages  
+4. **Cross-Reference ModLog.md**: Check consistency with main module log
+5. **Evidence-Based Assessment**: Base all claims on documented evidence
+
+### **Assessment Error Prevention**
+
+**❌ VIOLATION EXAMPLES:**
+- "Only 2 of 9+ planned test files exist" (assumption-based)
+- "Claims vs Reality mismatch" (ignoring documented evidence)
+- File-count-based coverage assessment
+
+**✅ CORRECT EXAMPLES:**
+- "TestModLog.md documents 33 passed, 0 failed (100% pass rate)"
+- "Documented WSP 5 perfect compliance achieved"
+- "Evidence shows coverage exceeds ≥90% requirement"
+
+### **Verification Mandate**
+
+**All agents MUST:**
+- Read TestModLog.md before assessment claims
+- Base coverage evaluation on documented test execution results
+- Acknowledge documented achievements accurately
+- Correct assessments when evidence contradicts initial assumptions
 
 ## 5. Integration
 
