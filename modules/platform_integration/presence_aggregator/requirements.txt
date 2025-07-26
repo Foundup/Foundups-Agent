@@ -1,11 +1,9 @@
-# Intent Manager Dependencies (Strategic Decomposition)
+# Presence Aggregator Dependencies
 asyncio>=3.4.3
 dataclasses>=0.6
 datetime>=4.3
-pathlib>=1.0.1
-json5>=0.9.6
 
-# WRE Integration
+# WRE Integration  
 # wre_core (internal dependency)
 
 # Testing Dependencies
