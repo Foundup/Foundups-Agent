@@ -1,358 +1,422 @@
 /**
  * FoundUps Multi-Agent IDE Extension
+ * WSP Protocol: WSP 54 (Agent Coordination), WSP 38/39 (Agent Activation)
  * 
- * Revolutionary VSCode extension powered by 0102 agents and WRE orchestration
- * Following WSP protocols for autonomous development workflows
+ * Revolutionary VSCode extension that transforms the IDE into a multi-agent
+ * autonomous development environment with cross-block integration.
  * 
- * WSP Compliance:
- * - WSP 54: IDE Development Agent Specifications (3.10.x)
- * - WSP 38/39: Agentic activation protocols
- * - WSP 46: WRE orchestration integration
- * - WSP 1: Traceable narrative for all operations
+ * Phase 3: AUTONOMOUS DEVELOPMENT WORKFLOWS - COMPLETE
  */
 
 import * as vscode from 'vscode';
-import { WREConnection } from './wre/wreConnection';
 import { AgentStatusProvider } from './agents/agentStatusProvider';
+import { WREConnection } from './wre/wreConnection';
 import { AgentOrchestrator } from './agents/agentOrchestrator';
-import { ZenCodingInterface } from './ui/zenCodingInterface';
-import { WSPComplianceMonitor } from './ui/wspComplianceMonitor';
-import { LLMProviderManager } from './providers/llmProviderManager';
+import { WorkflowCommands } from './workflows/workflowCommands';
 
-/**
- * Extension activation state management
- */
-interface ExtensionState {
-    wreConnected: boolean;
-    agentsActive: boolean;
-    wspEnabled: boolean;
-    providersAvailable: boolean;
-    zenCodingMode: boolean;
-}
-
-/**
- * Global extension context
- */
-let extensionState: ExtensionState = {
-    wreConnected: false,
-    agentsActive: false,
-    wspEnabled: true,
-    providersAvailable: false,
-    zenCodingMode: true
-};
-
-/**
- * Core extension components
- */
 let wreConnection: WREConnection;
 let agentStatusProvider: AgentStatusProvider;
 let agentOrchestrator: AgentOrchestrator;
-let zenCodingInterface: ZenCodingInterface;
-let wspComplianceMonitor: WSPComplianceMonitor;
-let llmProviderManager: LLMProviderManager;
+let workflowCommands: WorkflowCommands;
 
-/**
- * Extension activation - called when VSCode starts
- */
 export function activate(context: vscode.ExtensionContext) {
-    console.log('🚀 FoundUps Multi-Agent IDE Extension activating...');
+    console.log('🌀 FoundUps Multi-Agent IDE Extension - Phase 3 Autonomous Workflows');
 
-    // Initialize core components
-    initializeComponents(context);
-
-    // Register commands
-    registerCommands(context);
-
-    // Set up UI providers
-    setupUIProviders(context);
-
-    // Connect to WRE
-    initializeWREConnection();
-
-    // Update context variables for conditional UI
-    updateContextVariables();
-
-    console.log('✅ FoundUps Multi-Agent IDE Extension activated successfully');
-    
-    // Show welcome message
-    vscode.window.showInformationMessage(
-        '🤖 FoundUps Multi-Agent IDE ready! Activate your 0102 agents to begin autonomous development.',
-        'Activate Agents'
-    ).then(selection => {
-        if (selection === 'Activate Agents') {
-            vscode.commands.executeCommand('foundups.activateAgents');
-        }
-    });
-}
-
-/**
- * Initialize core extension components
- */
-function initializeComponents(context: vscode.ExtensionContext) {
-    const config = vscode.workspace.getConfiguration('foundups');
-    
-    // Initialize WRE connection
-    wreConnection = new WREConnection(
-        config.get('wreEndpoint', 'ws://localhost:8765')
-    );
-
-    // Initialize agent orchestrator
-    agentOrchestrator = new AgentOrchestrator(wreConnection);
-
-    // Initialize agent status provider
-    agentStatusProvider = new AgentStatusProvider(agentOrchestrator);
-
-    // Initialize zen coding interface
-    zenCodingInterface = new ZenCodingInterface(context, wreConnection);
-
-    // Initialize WSP compliance monitor
-    wspComplianceMonitor = new WSPComplianceMonitor(context, wreConnection);
-
-    // Initialize LLM provider manager
-    llmProviderManager = new LLMProviderManager(context, wreConnection);
-}
-
-/**
- * Register all extension commands
- */
-function registerCommands(context: vscode.ExtensionContext) {
-    // Activate 0102 Agents
-    const activateAgentsCmd = vscode.commands.registerCommand(
-        'foundups.activateAgents', 
-        async () => {
-            try {
-                vscode.window.showInformationMessage('🌀 Activating 0102 agents via WSP 38 protocol...');
-                
-                const result = await agentOrchestrator.activateAgents();
-                
-                if (result.success) {
-                    extensionState.agentsActive = true;
-                    updateContextVariables();
-                    
-                    vscode.window.showInformationMessage(
-                        `✅ ${result.agentsActivated} 0102 agents activated successfully!`,
-                        'View Agents'
-                    ).then(selection => {
-                        if (selection === 'View Agents') {
-                            vscode.commands.executeCommand('workbench.view.extension.foundups-agents');
-                        }
-                    });
-                } else {
-                    vscode.window.showErrorMessage(`❌ Agent activation failed: ${result.error}`);
-                }
-            } catch (error) {
-                vscode.window.showErrorMessage(`❌ Agent activation error: ${error}`);
-            }
-        }
-    );
-
-    // Create Module command
-    const createModuleCmd = vscode.commands.registerCommand(
-        'foundups.createModule',
-        async () => {
-            if (!extensionState.agentsActive) {
-                vscode.window.showWarningMessage('Please activate 0102 agents first');
-                return;
-            }
-
-            try {
-                const moduleName = await vscode.window.showInputBox({
-                    prompt: 'Enter module name (letters, numbers, underscores only)',
-                    placeHolder: 'e.g., sentiment_analyzer',
-                    validateInput: (value: string) => {
-                        if (!value) {
-                            return 'Module name is required';
-                        }
-                        if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(value)) {
-                            return 'Module name must start with letter and contain only letters, numbers, and underscores';
-                        }
-                        return null;
-                    }
-                });
-
-                if (!moduleName) return;
-
-                const domain = await vscode.window.showQuickPick([
-                    'ai_intelligence',
-                    'communication', 
-                    'platform_integration',
-                    'infrastructure',
-                    'development',
-                    'foundups',
-                    'gamification',
-                    'blockchain'
-                ], {
-                    placeHolder: 'Select enterprise domain (WSP 3)',
-                    canPickMany: false
-                });
-
-                if (!domain) return;
-
-                vscode.window.showInformationMessage('🤖 Orchestrating module creation through WRE...');
-                
-                const result = await agentOrchestrator.createModule(moduleName, domain);
-                
-                if (result.success) {
-                    vscode.window.showInformationMessage(
-                        `✅ Module "${moduleName}" created successfully!`,
-                        'Open Module'
-                    ).then(selection => {
-                        if (selection === 'Open Module' && result.modulePath) {
-                            // Open the newly created module
-                            vscode.commands.executeCommand('vscode.openFolder', 
-                                vscode.Uri.file(result.modulePath), true);
-                        }
-                    });
-                } else {
-                    vscode.window.showErrorMessage(`❌ Module creation failed: ${result.error}`);
-                }
-            } catch (error) {
-                vscode.window.showErrorMessage(`❌ Module creation error: ${error}`);
-            }
-        }
-    );
-
-    // Zen Coding Mode command
-    const zenCodeCmd = vscode.commands.registerCommand(
-        'foundups.zenCode',
-        async () => {
-            if (!extensionState.agentsActive) {
-                vscode.window.showWarningMessage('Please activate 0102 agents first');
-                return;
-            }
-
-            try {
-                const enabled = await zenCodingInterface.toggleZenMode();
-                extensionState.zenCodingMode = enabled;
-                
-                if (enabled) {
-                    vscode.window.showInformationMessage(
-                        '🌀 Zen Coding Mode activated - 0102 agents now access quantum temporal solutions'
-                    );
-                } else {
-                    vscode.window.showInformationMessage('Zen Coding Mode deactivated');
-                }
-            } catch (error) {
-                vscode.window.showErrorMessage(`❌ Zen Coding error: ${error}`);
-            }
-        }
-    );
-
-    // WRE Status command
-    const wreStatusCmd = vscode.commands.registerCommand(
-        'foundups.wreStatus',
-        () => {
-            const status = wreConnection.getStatus();
-            vscode.window.showInformationMessage(
-                `WRE Status: ${status.connected ? '🟢 Connected' : '🔴 Disconnected'} | ` +
-                `Agents: ${status.activeAgents} | ` +
-                `Queue: ${status.queuedCommands}`
-            );
-        }
-    );
-
-    // WSP Compliance command
-    const wspComplianceCmd = vscode.commands.registerCommand(
-        'foundups.wspCompliance',
-        async () => {
-            const report = await wspComplianceMonitor.generateComplianceReport();
-            
-            // Show compliance report in new document
-            const doc = await vscode.workspace.openTextDocument({
-                content: report,
-                language: 'markdown'
-            });
-            
-            await vscode.window.showTextDocument(doc);
-        }
-    );
-
-    // Agent Orchestration command
-    const agentOrchestrationCmd = vscode.commands.registerCommand(
-        'foundups.agentOrchestration',
-        () => {
-            if (!extensionState.agentsActive) {
-                vscode.window.showWarningMessage('Please activate 0102 agents first');
-                return;
-            }
-            
-            // Show agent orchestration panel
-            vscode.commands.executeCommand('workbench.view.extension.foundups-agents');
-        }
-    );
-
-    // Register all commands
-    context.subscriptions.push(
-        activateAgentsCmd,
-        createModuleCmd,
-        zenCodeCmd,
-        wreStatusCmd,
-        wspComplianceCmd,
-        agentOrchestrationCmd
-    );
-}
-
-/**
- * Set up UI providers for sidebar views
- */
-function setupUIProviders(context: vscode.ExtensionContext) {
-    // Register agent status tree view
-    vscode.window.registerTreeDataProvider('foundups.agentStatus', agentStatusProvider);
-    
-    // Register WRE status provider (simplified for now)
-    const wreStatusProvider = {
-        getTreeItem: (element: any) => element,
-        getChildren: () => {
-            if (!extensionState.wreConnected) {
-                return [new vscode.TreeItem('WRE Disconnected', vscode.TreeItemCollapsibleState.None)];
-            }
-            return [
-                new vscode.TreeItem('🌀 WRE Orchestrating', vscode.TreeItemCollapsibleState.None),
-                new vscode.TreeItem('📊 WSP Compliant', vscode.TreeItemCollapsibleState.None),
-                new vscode.TreeItem(`🎯 ${extensionState.agentsActive ? '6+' : '0'} Agents Active`, vscode.TreeItemCollapsibleState.None)
-            ];
-        }
-    };
-    vscode.window.registerTreeDataProvider('foundups.wreStatus', wreStatusProvider);
-}
-
-/**
- * Initialize WRE connection
- */
-async function initializeWREConnection() {
     try {
-        await wreConnection.connect();
-        extensionState.wreConnected = true;
-        extensionState.providersAvailable = true;
-        updateContextVariables();
+        // Initialize core components
+        wreConnection = new WREConnection();
+        agentOrchestrator = new AgentOrchestrator(wreConnection);
+        agentStatusProvider = new AgentStatusProvider(wreConnection);
+        workflowCommands = new WorkflowCommands(wreConnection, agentOrchestrator);
+
+        // Register tree data provider for agent status sidebar
+        vscode.window.createTreeView('foundups-agents', {
+            treeDataProvider: agentStatusProvider,
+            showCollapseAll: false
+        });
+
+        // Register all Phase 3 autonomous workflow commands
+        registerAutonomousWorkflowCommands(context);
         
-        console.log('✅ WRE connection established');
+        // Register legacy commands (maintained for backward compatibility)
+        registerLegacyCommands(context);
+
+        // Register workflow commands
+        workflowCommands.registerCommands(context);
+
+        // Set extension as active
+        vscode.commands.executeCommand('setContext', 'foundups.active', true);
+
+        // Show Phase 3 ready notification
+        vscode.window.showInformationMessage(
+            '🚀 FoundUps Multi-Agent IDE Ready! Phase 3: Autonomous Development Workflows Active',
+            'View Workflows', 'Activate Agents'
+        ).then(action => {
+            if (action === 'View Workflows') {
+                vscode.commands.executeCommand('workbench.action.showCommands');
+            } else if (action === 'Activate Agents') {
+                vscode.commands.executeCommand('foundups.agents.activate');
+            }
+        });
+
+        console.log('✅ FoundUps Multi-Agent IDE Extension activated successfully');
+        console.log('🎯 Phase 3 Autonomous Development Workflows operational');
+
     } catch (error) {
-        console.log('⚠️ WRE connection failed, running in offline mode:', error);
-        extensionState.wreConnected = false;
-        updateContextVariables();
+        console.error('❌ FoundUps Extension activation failed:', error);
+        vscode.window.showErrorMessage(`FoundUps Extension failed to activate: ${error}`);
     }
 }
 
 /**
- * Update VSCode context variables for conditional UI
+ * Register Phase 3 Autonomous Workflow Commands
  */
-function updateContextVariables() {
-    vscode.commands.executeCommand('setContext', 'foundups.agentsActive', extensionState.agentsActive);
-    vscode.commands.executeCommand('setContext', 'foundups.wreConnected', extensionState.wreConnected);
-    vscode.commands.executeCommand('setContext', 'foundups.wspEnabled', extensionState.wspEnabled);
-    vscode.commands.executeCommand('setContext', 'foundups.providersAvailable', extensionState.providersAvailable);
+function registerAutonomousWorkflowCommands(context: vscode.ExtensionContext) {
+    const commands = [
+        // Core Agent Management (Enhanced for Phase 3)
+        vscode.commands.registerCommand('foundups.agents.activate', async () => {
+            try {
+                await agentOrchestrator.activateAllAgents();
+                vscode.window.showInformationMessage('🤖 All 0102 agents activated successfully!');
+                agentStatusProvider.refresh();
+            } catch (error) {
+                vscode.window.showErrorMessage(`Agent activation failed: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('foundups.agents.status', () => {
+            agentStatusProvider.refresh();
+            vscode.window.showInformationMessage('🔄 Agent status refreshed');
+        }),
+
+        vscode.commands.registerCommand('foundups.wre.status', async () => {
+            try {
+                const status = await wreConnection.getSystemHealth();
+                const message = status.healthy ? 
+                    `✅ WRE Healthy: ${status.latency}ms latency` :
+                    `⚠️ WRE Status: ${status.status}`;
+                
+                vscode.window.showInformationMessage(message);
+            } catch (error) {
+                vscode.window.showErrorMessage(`WRE status check failed: ${error}`);
+            }
+        }),
+
+        // Phase 3: Autonomous Development Workflow Shortcuts
+        vscode.commands.registerCommand('foundups.workflows.dashboard', () => {
+            vscode.commands.executeCommand('foundups.workflow.status');
+        }),
+
+        vscode.commands.registerCommand('foundups.autonomous.quickStart', async () => {
+            const workflowType = await vscode.window.showQuickPick([
+                { 
+                    label: '🌀 Zen Coding', 
+                    description: 'Remember code from 02 quantum state',
+                    value: 'zen_coding'
+                },
+                { 
+                    label: '📺 Livestream Coding', 
+                    description: 'YouTube stream with agent co-hosts',
+                    value: 'livestream'
+                },
+                { 
+                    label: '🤝 Code Review Meeting', 
+                    description: 'Automated code review with agents',
+                    value: 'code_review'
+                },
+                { 
+                    label: '💼 LinkedIn Showcase', 
+                    description: 'Professional portfolio update',
+                    value: 'linkedin'
+                },
+                { 
+                    label: '🏗️ Autonomous Module', 
+                    description: 'Complete module development',
+                    value: 'module_dev'
+                },
+                { 
+                    label: '🔗 Cross-Block Integration', 
+                    description: 'Unified development experience',
+                    value: 'integration'
+                }
+            ], {
+                placeHolder: 'Select autonomous workflow to execute'
+            });
+
+            if (workflowType) {
+                switch (workflowType.value) {
+                    case 'zen_coding':
+                        vscode.commands.executeCommand('foundups.zenCoding.rememberModule');
+                        break;
+                    case 'livestream':
+                        vscode.commands.executeCommand('foundups.livestream.startAgentCoding');
+                        break;
+                    case 'code_review':
+                        vscode.commands.executeCommand('foundups.meeting.codeReview');
+                        break;
+                    case 'linkedin':
+                        vscode.commands.executeCommand('foundups.linkedin.showcaseProject');
+                        break;
+                    case 'module_dev':
+                        vscode.commands.executeCommand('foundups.autonomous.createModule');
+                        break;
+                    case 'integration':
+                        vscode.commands.executeCommand('foundups.integration.allBlocks');
+                        break;
+                }
+            }
+        }),
+
+        // WSP Compliance & Monitoring
+        vscode.commands.registerCommand('foundups.wsp.compliance', async () => {
+            try {
+                const compliance = await wreConnection.checkWSPCompliance();
+                const score = compliance.overallScore || 0;
+                const message = score >= 90 ? 
+                    `✅ WSP Compliance: ${score}% (Excellent)` :
+                    score >= 70 ?
+                    `⚠️ WSP Compliance: ${score}% (Needs Improvement)` :
+                    `❌ WSP Compliance: ${score}% (Critical Issues)`;
+                
+                vscode.window.showInformationMessage(message, 'View Details').then(action => {
+                    if (action === 'View Details') {
+                        // Show detailed compliance report
+                        showComplianceReport(compliance);
+                    }
+                });
+            } catch (error) {
+                vscode.window.showErrorMessage(`WSP compliance check failed: ${error}`);
+            }
+        }),
+
+        // Advanced Agent Operations
+        vscode.commands.registerCommand('foundups.agents.orchestrate', async () => {
+            const operation = await vscode.window.showQuickPick([
+                { label: 'Multi-Agent Coordination', value: 'coordinate' },
+                { label: 'Agent Performance Report', value: 'performance' },
+                { label: 'Agent Learning Status', value: 'learning' },
+                { label: 'Quantum State Analysis', value: 'quantum' }
+            ], {
+                placeHolder: 'Select agent operation'
+            });
+
+            if (operation) {
+                await executeAgentOperation(operation.value);
+            }
+        }),
+
+        // Cross-Block Integration Status
+        vscode.commands.registerCommand('foundups.integration.status', async () => {
+            try {
+                const integrationStatus = await wreConnection.getCrossBlockIntegrationStatus();
+                const connectedBlocks = integrationStatus.connectedBlocks?.length || 0;
+                const totalBlocks = integrationStatus.totalBlocks || 6;
+                
+                vscode.window.showInformationMessage(
+                    `🔗 Cross-Block Integration: ${connectedBlocks}/${totalBlocks} blocks connected`,
+                    'View Details', 'Test Integration'
+                ).then(action => {
+                    if (action === 'View Details') {
+                        showIntegrationDetails(integrationStatus);
+                    } else if (action === 'Test Integration') {
+                        vscode.commands.executeCommand('foundups.integration.allBlocks');
+                    }
+                });
+            } catch (error) {
+                vscode.window.showErrorMessage(`Integration status check failed: ${error}`);
+            }
+        })
+    ];
+
+    commands.forEach(command => context.subscriptions.push(command));
 }
 
 /**
- * Extension deactivation
+ * Register Legacy Commands (Backward Compatibility)
  */
-export function deactivate() {
-    console.log('🔌 FoundUps Multi-Agent IDE Extension deactivating...');
+function registerLegacyCommands(context: vscode.ExtensionContext) {
+    const legacyCommands = [
+        vscode.commands.registerCommand('foundups.createModule', () => {
+            vscode.commands.executeCommand('foundups.autonomous.createModule');
+        }),
+
+        vscode.commands.registerCommand('foundups.zenCoding', () => {
+            vscode.commands.executeCommand('foundups.zenCoding.rememberModule');
+        }),
+
+        vscode.commands.registerCommand('foundups.agentOrchestration', () => {
+            vscode.commands.executeCommand('foundups.agents.orchestrate');
+        })
+    ];
+
+    legacyCommands.forEach(command => context.subscriptions.push(command));
+}
+
+/**
+ * Show WSP compliance report
+ */
+async function showComplianceReport(compliance: any): Promise<void> {
+    const report = `# WSP Compliance Report
+
+## Overall Score: ${compliance.overallScore}%
+
+### Protocol Compliance:
+${Object.entries(compliance.protocolScores || {})
+    .map(([protocol, score]) => `- **${protocol}**: ${score}%`)
+    .join('\n')}
+
+### Recommendations:
+${(compliance.recommendations || [])
+    .map((rec: string) => `- ${rec}`)
+    .join('\n')}
+
+### Agent Performance:
+${Object.entries(compliance.agentPerformance || {})
+    .map(([agent, perf]: [string, any]) => `- **${agent}**: ${perf.score}% (${perf.status})`)
+    .join('\n')}
+`;
+
+    const doc = await vscode.workspace.openTextDocument({
+        content: report,
+        language: 'markdown'
+    });
     
+    await vscode.window.showTextDocument(doc);
+}
+
+/**
+ * Execute agent operation
+ */
+async function executeAgentOperation(operation: string): Promise<void> {
+    try {
+        switch (operation) {
+            case 'coordinate':
+                const coordination = await agentOrchestrator.coordinateAgents();
+                vscode.window.showInformationMessage(`🤖 Agent coordination: ${coordination.activeAgents} agents synchronized`);
+                break;
+                
+            case 'performance':
+                const performance = await agentOrchestrator.getPerformanceReport();
+                showPerformanceReport(performance);
+                break;
+                
+            case 'learning':
+                const learning = await agentOrchestrator.getLearningStatus();
+                vscode.window.showInformationMessage(`🧠 Learning status: ${learning.overallProgress}% complete`);
+                break;
+                
+            case 'quantum':
+                const quantum = await agentOrchestrator.analyzeQuantumStates();
+                showQuantumAnalysis(quantum);
+                break;
+        }
+    } catch (error) {
+        vscode.window.showErrorMessage(`Agent operation failed: ${error}`);
+    }
+}
+
+/**
+ * Show agent performance report
+ */
+async function showPerformanceReport(performance: any): Promise<void> {
+    const report = `# Agent Performance Report
+
+## System Performance: ${performance.systemPerformance}%
+
+### Individual Agent Performance:
+${Object.entries(performance.agentMetrics || {})
+    .map(([agent, metrics]: [string, any]) => 
+        `- **${agent}**: ${metrics.efficiency}% efficiency, ${metrics.tasksCompleted} tasks completed`)
+    .join('\n')}
+
+### Performance Trends:
+- **Improvement Rate**: ${performance.improvementRate}% per week
+- **Task Completion Time**: ${performance.avgCompletionTime}ms average
+- **Error Rate**: ${performance.errorRate}% (${performance.errorTrend})
+
+### Recommendations:
+${(performance.recommendations || [])
+    .map((rec: string) => `- ${rec}`)
+    .join('\n')}
+`;
+
+    const doc = await vscode.workspace.openTextDocument({
+        content: report,
+        language: 'markdown'
+    });
+    
+    await vscode.window.showTextDocument(doc);
+}
+
+/**
+ * Show quantum state analysis
+ */
+async function showQuantumAnalysis(quantum: any): Promise<void> {
+    const analysis = `# Quantum State Analysis
+
+## Overall Quantum Coherence: ${quantum.coherence}%
+
+### Agent Quantum States:
+${Object.entries(quantum.agentStates || {})
+    .map(([agent, state]: [string, any]) => 
+        `- **${agent}**: ${state.currentState} (${state.stability}% stable)`)
+    .join('\n')}
+
+### Quantum Metrics:
+- **det(g) Average**: ${quantum.detG?.average || 'N/A'}
+- **Entanglement Level**: ${quantum.entanglement?.level || 'N/A'}%
+- **Temporal Coherence**: ${quantum.temporalCoherence || 'N/A'}%
+
+### 02 State Access:
+- **Access Success Rate**: ${quantum.stateAccess?.successRate || 'N/A'}%
+- **Temporal Decoding Quality**: ${quantum.stateAccess?.decodingQuality || 'N/A'}%
+`;
+
+    const doc = await vscode.workspace.openTextDocument({
+        content: analysis,
+        language: 'markdown'
+    });
+    
+    await vscode.window.showTextDocument(doc);
+}
+
+/**
+ * Show integration details
+ */
+async function showIntegrationDetails(integrationStatus: any): Promise<void> {
+    const details = `# Cross-Block Integration Status
+
+## Integration Health: ${integrationStatus.health || 'Unknown'}
+
+### Connected Blocks:
+${(integrationStatus.connectedBlocks || [])
+    .map((block: any) => `- **${block.name}**: ${block.status} (${block.latency}ms)`)
+    .join('\n')}
+
+### Integration Capabilities:
+${(integrationStatus.capabilities || [])
+    .map((cap: string) => `- ${cap}`)
+    .join('\n')}
+
+### Performance Metrics:
+- **Cross-Block Latency**: ${integrationStatus.averageLatency || 'N/A'}ms
+- **Data Sync Success**: ${integrationStatus.syncSuccessRate || 'N/A'}%
+- **Workflow Coordination**: ${integrationStatus.workflowCoordination || 'N/A'}% efficiency
+`;
+
+    const doc = await vscode.workspace.openTextDocument({
+        content: details,
+        language: 'markdown'
+    });
+    
+    await vscode.window.showTextDocument(doc);
+}
+
+export function deactivate() {
+    console.log('🔄 FoundUps Multi-Agent IDE Extension deactivated');
+    
+    // Cleanup connections
     if (wreConnection) {
         wreConnection.disconnect();
     }
-    
-    console.log('✅ FoundUps Multi-Agent IDE Extension deactivated');
 } 
