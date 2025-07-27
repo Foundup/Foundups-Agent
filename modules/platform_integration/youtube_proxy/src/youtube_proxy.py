@@ -235,31 +235,34 @@ class YouTubeProxy:
         """Interactive mode for standalone testing"""
         print("\n🎬 YouTube Proxy Interactive Mode")
         print("Available commands:")
-        print("  status     - Show current status")
-        print("  stream     - Show stream info")
-        print("  components - List active components")
-        print("  connect    - Connect to stream")
-        print("  quit       - Exit")
-        print("\nPress Ctrl+C or type 'quit' to exit\n")
+        print("  1. status     - Show current status")
+        print("  2. stream     - Show stream info")
+        print("  3. components - List active components")
+        print("  4. connect    - Connect to stream")
+        print("  5. quit       - Exit")
+        print("\nEnter command number (1-5) or command name:")
+        print("Press Ctrl+C or type '5' or 'quit' to exit\n")
         
         while True:
             try:
                 cmd = input("YouTubeProxy> ").strip().lower()
                 
-                if cmd == "quit":
-                    break
-                elif cmd == "status":
+                # Handle numbered inputs
+                if cmd == "1" or cmd == "status":
                     await self._show_status()
-                elif cmd == "stream":
+                elif cmd == "2" or cmd == "stream":
                     await self._show_stream_info()
-                elif cmd == "components":
+                elif cmd == "3" or cmd == "components":
                     await self._show_components()
-                elif cmd == "connect":
+                elif cmd == "4" or cmd == "connect":
                     await self.connect_to_active_stream()
+                elif cmd == "5" or cmd == "quit":
+                    break
                 elif cmd == "":
                     continue
                 else:
-                    print(f"Unknown command: {cmd}")
+                    print(f"❌ Unknown command: {cmd}")
+                    print("💡 Use numbers 1-5 or command names (status, stream, components, connect, quit)")
                     
             except EOFError:
                 break
