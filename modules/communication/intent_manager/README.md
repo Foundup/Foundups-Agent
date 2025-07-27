@@ -92,12 +92,30 @@ class Priority(Enum):
     URGENT = 10  # Emergency - Immediate response required
 ```
 
-### **Intent Status Lifecycle**
+### **Intent Status Lifecycle with Post-Meeting Feedback Integration**
 ```
 PENDING → MONITORING → PROMPTED → ACCEPTED/DECLINED → COMPLETED
-    ↓                      ↓            ↓
-EXPIRED ←─────────────────── ←─────────────
+    ↓                      ↓            ↓                ↓
+EXPIRED ←─────────────────── ←─────────────              ↓
+                                                   FEEDBACK_COLLECTED
+                                                         ↓
+                                            (WSP 25/44 Analysis & Learning)
+                                                         ↓
+                                               FOLLOW_UP_SCHEDULED ←─── (if applicable)
+                                                         ↓
+                                              (Priority Escalation Over Time)
+                                                         ↓
+                                                NEW_INTENT_CREATED ←─── (when priority ≥ 7.0)
+                                                         ↓
+                                              (Return to PENDING for new cycle)
 ```
+
+### **Enhanced Lifecycle with Feedback Intelligence** ✨
+- **COMPLETED** → Triggers **Post-Meeting Feedback System** for WSP 25/44 rating collection
+- **FEEDBACK_COLLECTED** → Analyzes responses and generates semantic triplets (000-222)
+- **FOLLOW_UP_SCHEDULED** → Creates agentic follow-up with increasing priority values
+- **NEW_INTENT_CREATED** → Automatically generates new intent when follow-up priority reaches threshold
+- **Learning Loop** → System learns from rejection patterns and adjusts future coordination
 
 ---
 
@@ -108,13 +126,18 @@ EXPIRED ←─────────────────── ←──�
 # Subscribe to intent events
 await manager.subscribe_to_events('intent_created', callback_function)
 await manager.subscribe_to_events('intent_completed', session_launcher_callback)
+
+# NEW: Post-meeting feedback integration
+await manager.subscribe_to_events('intent_completed', feedback_system.initiate_collection)
+await feedback_system.subscribe_to_feedback_events('follow_up_activated', manager.create_follow_up_intent)
 ```
 
 ### **Cross-Module Integration**
 - **Presence Aggregator**: Get intents requiring presence monitoring
-- **Priority Scorer**: Provide high-priority intents for scoring
+- **Priority Scorer**: Provide high-priority intents for scoring (enhanced with feedback history)
 - **Consent Engine**: Intent status updates from prompts/responses
 - **Session Launcher**: Completed intent information for meeting creation
+- **Post-Meeting Feedback**: ✨ **NEW** - WSP 25/44 feedback collection and agentic follow-up scheduling
 
 ---
 
