@@ -92,7 +92,14 @@ class Priority(Enum):
     URGENT = 10  # Emergency - Immediate response required
 ```
 
-### **Intent Status Lifecycle with Post-Meeting Feedback Integration**
+### **Intent Status Lifecycle**
+```
+PENDING → MONITORING → PROMPTED → ACCEPTED/DECLINED → COMPLETED
+    ↓                      ↓            ↓
+EXPIRED ←─────────────────── ←─────────────
+```
+
+### **Enhanced Lifecycle with Post-Meeting Feedback Integration** ✨
 ```
 PENDING → MONITORING → PROMPTED → ACCEPTED/DECLINED → COMPLETED
     ↓                      ↓            ↓                ↓
@@ -110,7 +117,8 @@ EXPIRED ←─────────────────── ←──�
                                               (Return to PENDING for new cycle)
 ```
 
-### **Enhanced Lifecycle with Feedback Intelligence** ✨
+**Revolutionary Enhancement**: The intent lifecycle now includes **intelligent feedback collection** and **agentic follow-up scheduling**:
+
 - **COMPLETED** → Triggers **Post-Meeting Feedback System** for WSP 25/44 rating collection
 - **FEEDBACK_COLLECTED** → Analyzes responses and generates semantic triplets (000-222)
 - **FOLLOW_UP_SCHEDULED** → Creates agentic follow-up with increasing priority values
