@@ -166,6 +166,151 @@ class LinkedInAgent:
         
         self.logger.info("🔧 Mock components initialized for standalone mode")
 
+    async def run_standalone(self):
+        """Run LinkedIn agent in standalone mode for testing"""
+        self.logger.info("🚀 Starting LinkedIn Agent in standalone mode...")
+        
+        try:
+            # Initialize components
+            await self._initialize_all_components()
+            
+            # Start interactive mode
+            await self._interactive_mode()
+            
+        except KeyboardInterrupt:
+            self.logger.info("🛑 Shutting down LinkedIn Agent...")
+            await self._cleanup()
+        except Exception as e:
+            self.logger.error(f"❌ Standalone execution failed: {e}")
+            raise
+    
+    async def _initialize_all_components(self):
+        """Initialize all cross-domain components"""
+        components = [
+            ('oauth_manager', self.oauth_manager),
+            ('banter_engine', self.banter_engine),
+            ('priority_scorer', self.priority_scorer)
+        ]
+        
+        for name, component in components:
+            try:
+                if hasattr(component, 'initialize'):
+                    await component.initialize()
+                self.logger.info(f"✅ {name} ready")
+            except Exception as e:
+                self.logger.warning(f"⚠️  {name} initialization failed: {e}")
+    
+    async def _interactive_mode(self):
+        """Interactive mode for standalone testing"""
+        print("\n💼 LinkedIn Agent Interactive Mode")
+        print("Available commands:")
+        print("  1. status     - Show current status")
+        print("  2. auth       - Test authentication")
+        print("  3. profile    - Show profile info")
+        print("  4. posts      - Show pending posts")
+        print("  5. generate   - Generate test content")
+        print("  6. quit       - Exit")
+        print("\nEnter command number (1-6) or command name:")
+        print("Press Ctrl+C or type '6' or 'quit' to exit\n")
+        
+        while True:
+            try:
+                cmd = input("LinkedInAgent> ").strip().lower()
+                
+                # Handle numbered inputs
+                if cmd == "1" or cmd == "status":
+                    await self._show_status()
+                elif cmd == "2" or cmd == "auth":
+                    await self._test_authentication()
+                elif cmd == "3" or cmd == "profile":
+                    await self._show_profile()
+                elif cmd == "4" or cmd == "posts":
+                    await self._show_posts()
+                elif cmd == "5" or cmd == "generate":
+                    await self._generate_content()
+                elif cmd == "6" or cmd == "quit":
+                    break
+                elif cmd == "":
+                    continue
+                else:
+                    print(f"❌ Unknown command: {cmd}")
+                    print("💡 Use numbers 1-6 or command names (status, auth, profile, posts, generate, quit)")
+                    
+            except EOFError:
+                break
+    
+    async def _show_status(self):
+        """Show current agent status"""
+        print(f"\n📊 LinkedIn Agent Status:")
+        print(f"  Authenticated: {'✅' if self.authenticated else '❌'}")
+        print(f"  Profile Loaded: {'✅' if self.profile else '❌'}")
+        print(f"  Pending Posts: {len(self.pending_posts)}")
+        print(f"  Pending Actions: {len(self.pending_actions)}")
+        print()
+    
+    async def _test_authentication(self):
+        """Test authentication flow"""
+        print(f"\n🔐 Testing Authentication...")
+        try:
+            success = await self.oauth_manager.authenticate()
+            if success:
+                self.authenticated = True
+                print("✅ Authentication successful")
+            else:
+                print("❌ Authentication failed")
+        except Exception as e:
+            print(f"❌ Authentication error: {e}")
+        print()
+    
+    async def _show_profile(self):
+        """Show profile information"""
+        if self.profile:
+            print(f"\n👤 LinkedIn Profile:")
+            print(f"  Name: {self.profile.name}")
+            print(f"  Title: {self.profile.title}")
+            print(f"  Company: {self.profile.company}")
+            print(f"  Connections: {self.profile.connections}")
+            print()
+        else:
+            print("No profile data available")
+    
+    async def _show_posts(self):
+        """Show pending posts"""
+        print(f"\n📝 Pending Posts ({len(self.pending_posts)}):")
+        for i, post in enumerate(self.pending_posts, 1):
+            print(f"  {i}. [{post.post_type.value}] {post.content[:50]}...")
+        if not self.pending_posts:
+            print("  No pending posts")
+        print()
+    
+    async def _generate_content(self):
+        """Generate test content"""
+        print(f"\n🤖 Generating Content...")
+        try:
+            content = await self.banter_engine.generate_content(
+                "FoundUps autonomous development update", 
+                "foundup_update"
+            )
+            print(f"Generated: {content}")
+            
+            # Create a test post
+            test_post = LinkedInPost(
+                content=content,
+                post_type=PostType.FOUNDUP_UPDATE,
+                hashtags=["foundups", "autonomous", "development"]
+            )
+            self.pending_posts.append(test_post)
+            print(f"✅ Added to pending posts")
+        except Exception as e:
+            print(f"❌ Content generation failed: {e}")
+        print()
+    
+    async def _cleanup(self):
+        """Cleanup resources"""
+        self.logger.info("🧹 Cleaning up LinkedIn Agent resources...")
+        # Add any cleanup logic here
+        pass
+
 
 def create_linkedin_agent(config: Optional[Dict[str, Any]] = None) -> LinkedInAgent:
     """
