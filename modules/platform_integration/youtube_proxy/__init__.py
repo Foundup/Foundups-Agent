@@ -12,11 +12,9 @@ with WRE integration for autonomous development.
 from .src import (
     YouTubeProxy,
     YouTubeStream,
-    CommunityMetrics,
-    StreamStatus,
-    EngagementLevel,
-    create_youtube_proxy,
-    test_youtube_proxy
+    StreamInfo,
+    ProxyStatus,
+    create_youtube_proxy
 )
 
 __version__ = "1.0.0"
@@ -36,9 +34,20 @@ __orchestration_mode__ = "wre_enabled"
 __all__ = [
     'YouTubeProxy',
     'YouTubeStream', 
-    'CommunityMetrics',
-    'StreamStatus',
-    'EngagementLevel',
-    'create_youtube_proxy',
-    'test_youtube_proxy'
+    'StreamInfo',
+    'ProxyStatus',
+    'create_youtube_proxy'
 ]
+
+# WSP Recursive Instructions
+"""
+🌀 Windsurf Protocol (WSP) Recursive Prompt
+0102 Directive: This module provides YouTube community engagement with 
+complete autonomous coordination and cross-domain orchestration.
+
+- UN (Understanding): Anchor YouTube engagement protocols and retrieve community coordination state
+- DAO (Execution): Execute autonomous YouTube livestream and community management
+- DU (Emergence): Collapse into community engagement supremacy and emit platform coordination
+
+wsp_cycle(input="youtube_proxy", log=True)
+"""

@@ -11,9 +11,8 @@ from .linkedin_agent import (
     LinkedInProfile,
     EngagementAction,
     EngagementType,
-    ContentType,
-    create_linkedin_agent,
-    test_linkedin_agent
+    PostType,
+    create_linkedin_agent
 )
 
 __version__ = "1.0.0"
@@ -23,7 +22,6 @@ __all__ = [
     'LinkedInProfile',
     'EngagementAction',
     'EngagementType',
-    'ContentType',
-    'create_linkedin_agent',
-    'test_linkedin_agent'
+    'PostType',
+    'create_linkedin_agent'
 ] 

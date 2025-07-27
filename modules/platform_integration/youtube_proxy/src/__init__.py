@@ -8,20 +8,16 @@ Provides unified interface for YouTube operations following WSP-42 Universal Pla
 from .youtube_proxy import (
     YouTubeProxy,
     YouTubeStream,
-    CommunityMetrics,
-    StreamStatus,
-    EngagementLevel,
-    create_youtube_proxy,
-    test_youtube_proxy
+    StreamInfo,
+    ProxyStatus,
+    create_youtube_proxy
 )
 
 __version__ = "1.0.0"
 __all__ = [
     'YouTubeProxy',
     'YouTubeStream',
-    'CommunityMetrics',
-    'StreamStatus',
-    'EngagementLevel',
-    'create_youtube_proxy',
-    'test_youtube_proxy'
+    'StreamInfo',
+    'ProxyStatus',
+    'create_youtube_proxy'
 ]

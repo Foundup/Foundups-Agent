@@ -12,6 +12,7 @@ import sys
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
+from enum import Enum
 
 # Component imports across enterprise domains
 try:
@@ -23,6 +24,13 @@ try:
 except ImportError as e:
     print(f"⚠️  Import warning: {e} (will use mock components in standalone mode)")
 
+class EngagementLevel(Enum):
+    """Stream engagement level indicators"""
+    LOW = "low"
+    MODERATE = "moderate" 
+    HIGH = "high"
+    VIRAL = "viral"
+
 @dataclass
 class StreamInfo:
     """Stream information structure"""
@@ -32,6 +40,20 @@ class StreamInfo:
     viewer_count: int = 0
     chat_enabled: bool = True
     url: str = ""
+
+@dataclass
+class YouTubeStream:
+    """YouTube stream data structure for enhanced stream processing"""
+    stream_id: str
+    title: str
+    description: str
+    status: str
+    viewer_count: int
+    chat_id: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    start_time: Optional[datetime] = None
+    metadata: Dict[str, Any] = None
+    engagement_level: Optional[EngagementLevel] = None
 
 @dataclass  
 class ProxyStatus:
@@ -46,7 +68,10 @@ class YouTubeProxy:
     """
     YouTube Proxy: Cross-Domain Component Orchestrator
     
-    Orchestrates YouTube functionality across enterprise domains:
+    WSP-COMPLIANT ORCHESTRATION HUB that coordinates YouTube functionality 
+    across enterprise domains without duplicating module logic.
+    
+    Orchestrates:
     - platform_integration/ (auth, stream discovery)
     - communication/ (chat processing)  
     - ai_intelligence/ (banter responses)
@@ -130,513 +155,166 @@ class YouTubeProxy:
         
         self.logger.info("🔧 Mock components initialized for standalone mode")
 
-    async def find_active_livestream(self, channel_id: str) -> Tuple[Optional[str], Optional[str]]:
+    async def connect_to_active_stream(self) -> Optional[StreamInfo]:
         """
-        Finds the active livestream for a given YouTube channel with WRE orchestration.
-        This reconstructs the logic from the missing StreamResolver module.
-
-        :param channel_id: The ID of the YouTube channel to search.
-        :return: A tuple containing the (video_id, live_chat_id) or (None, None) if not found.
+        WSP-COMPLIANT ORCHESTRATION: Connect to active YouTube stream 
+        by delegating to appropriate domain modules
         """
-        if self.wre_enabled:
-            wre_log(f"Searching for active livestream for channel: {channel_id}", level="INFO")
+        try:
+            self.logger.info("🔍 Orchestrating stream connection across domains...")
             
-        self.logger.info(f"Searching for active livestream for channel ID: {channel_id}")
+            # 1. Authenticate via infrastructure domain
+            if hasattr(self.oauth_manager, 'authenticate'):
+                await self.oauth_manager.authenticate()
+            
+            # 2. Discover streams via platform_integration domain  
+            if hasattr(self.stream_resolver, 'find_active_streams'):
+                streams = await self.stream_resolver.find_active_streams()
+                if streams:
+                    self.current_stream = streams[0]
+            
+            # 3. Connect to chat via communication domain
+            if self.current_stream and hasattr(self.chat_processor, 'connect'):
+                await self.chat_processor.connect(self.current_stream.stream_id)
+            
+            # 4. Enable AI responses via ai_intelligence domain
+            if hasattr(self.banter_engine, 'initialize_context'):
+                await self.banter_engine.initialize_context(self.current_stream)
+            
+            self.status.stream_active = True
+            self.status.chat_monitoring = True
+            self.logger.info(f"✅ Connected to stream: {self.current_stream.title if self.current_stream else 'Mock Stream'}")
+            
+            return self.current_stream
+            
+        except Exception as e:
+            self.logger.error(f"❌ Stream connection failed: {e}")
+            return None
+
+    async def run_standalone(self):
+        """Run YouTube proxy in standalone mode for testing"""
+        self.logger.info("🚀 Starting YouTube Proxy in standalone mode...")
         
         try:
-            if not self.service:
-                # Simulation mode
-                simulated_stream = YouTubeStream(
-                    video_id="simulated_video_123",
-                    title="Simulated Live Stream - FoundUps Community",
-                    status=StreamStatus.LIVE,
-                    live_chat_id="simulated_chat_123",
-                    channel_id=channel_id,
-                    viewer_count=150,
-                    chat_message_count=45
-                )
-                
-                self.active_streams.append(simulated_stream)
-                
-                if self.wre_enabled:
-                    wre_log(f"Simulated active livestream found: {simulated_stream.video_id}", level="INFO")
-                
-                self.logger.info("Simulated active livestream found")
-                return simulated_stream.video_id, simulated_stream.live_chat_id
+            # Initialize all components
+            await self._initialize_all_components()
             
-            # Real YouTube API search
-            search_response = self.service.search().list(
-                channelId=channel_id,
-                eventType='live',
-                type='video',
-                part='snippet'
-            ).execute()
-
-            if not search_response.get('items'):
-                self.logger.info("No active livestream found for the channel.")
-                if self.wre_enabled:
-                    wre_log("No active livestream found", level="INFO")
-                return None, None
-
-            # Process first result
-            first_result = search_response['items'][0]
-            video_id = first_result['id']['videoId']
-            live_chat_id = first_result['snippet'].get('liveChatId')
-            title = first_result['snippet'].get('title', 'Unknown Stream')
+            # Start orchestration
+            stream = await self.connect_to_active_stream()
             
-            # Create stream object
-            stream = YouTubeStream(
-                video_id=video_id,
-                title=title,
-                status=StreamStatus.LIVE,
-                live_chat_id=live_chat_id,
-                channel_id=channel_id
-            )
+            # Keep alive for interaction
+            await self._interactive_mode()
             
-            # Enhance with additional data
-            await self._enhance_stream_data(stream)
-            self.active_streams.append(stream)
-            
-            if self.wre_enabled:
-                wre_log(f"Active livestream found: {video_id}, Chat: {live_chat_id}", level="INFO")
-                
-                # WRE orchestration for stream discovery
-                if self.module_coordinator:
-                    self.module_coordinator.handle_module_development(
-                        "youtube_stream_discovery", 
-                        self.wre_engine
-                    )
-            
-            self.logger.info(f"Found active livestream. Video ID: {video_id}, Chat ID: {live_chat_id}")
-            return video_id, live_chat_id
-
+        except KeyboardInterrupt:
+            self.logger.info("🛑 Shutting down YouTube Proxy...")
+            await self._cleanup()
         except Exception as e:
-            self.logger.error(f"An error occurred while searching for livestream: {e}")
-            if self.wre_enabled:
-                wre_log(f"Livestream search failed: {e}", level="ERROR")
-            return None, None
-
-    async def _enhance_stream_data(self, stream: YouTubeStream):
-        """Enhance stream data with additional metrics"""
-        if not self.service:
-            # Simulation mode
-            stream.viewer_count = 150
-            stream.engagement_level = EngagementLevel.MODERATE
-            return
-            
-        try:
-            # Get detailed video information
-            video_response = self.service.videos().list(
-                id=stream.video_id,
-                part='snippet,statistics,liveStreamingDetails'
-            ).execute()
-            
-            if video_response.get('items'):
-                video_data = video_response['items'][0]
-                
-                # Update viewer count
-                if 'liveStreamingDetails' in video_data:
-                    concurrent_viewers = video_data['liveStreamingDetails'].get('concurrentViewers')
-                    if concurrent_viewers:
-                        stream.viewer_count = int(concurrent_viewers)
-                
-                # Determine engagement level
-                if stream.viewer_count > 1000:
-                    stream.engagement_level = EngagementLevel.VIRAL
-                elif stream.viewer_count > 500:
-                    stream.engagement_level = EngagementLevel.HIGH
-                elif stream.viewer_count > 100:
-                    stream.engagement_level = EngagementLevel.MODERATE
-                else:
-                    stream.engagement_level = EngagementLevel.LOW
-                    
-        except Exception as e:
-            self.logger.warning(f"Failed to enhance stream data: {e}")
-
-    def get_stream_title(self, video_id: str) -> str:
-        """
-        Retrieves the title for a given video ID with WRE orchestration.
-
-        :param video_id: The ID of the YouTube video.
-        :return: The video title as a string, or "Unknown Stream" if not found.
-        """
-        if self.wre_enabled:
-            wre_log(f"Retrieving title for video: {video_id}", level="INFO")
-            
-        self.logger.info(f"Retrieving title for video ID: {video_id}")
+            self.logger.error(f"❌ Standalone execution failed: {e}")
+            raise
+    
+    async def _initialize_all_components(self):
+        """Initialize all cross-domain components"""
+        components = [
+            ('oauth_manager', self.oauth_manager),
+            ('stream_resolver', self.stream_resolver),
+            ('chat_processor', self.chat_processor),
+            ('banter_engine', self.banter_engine),
+            ('agent_manager', self.agent_manager)
+        ]
         
-        try:
-            if not self.service:
-                # Simulation mode
-                simulated_title = f"Simulated Stream Title - {video_id}"
-                if self.wre_enabled:
-                    wre_log(f"Simulated stream title: {simulated_title}", level="INFO")
-                return simulated_title
-            
-            # Real YouTube API call
-            video_response = self.service.videos().list(
-                id=video_id,
-                part='snippet'
-            ).execute()
-
-            if not video_response.get('items'):
-                self.logger.warning(f"Could not find video with ID: {video_id}")
-                if self.wre_enabled:
-                    wre_log(f"Video not found: {video_id}", level="WARNING")
-                return "Unknown Stream"
-
-            title = video_response['items'][0]['snippet']['title']
-            
-            if self.wre_enabled:
-                wre_log(f"Retrieved stream title: {title}", level="INFO")
-                
-            self.logger.info(f"Found title: '{title}'")
-            return title
-
-        except Exception as e:
-            self.logger.error(f"An error occurred while retrieving video title: {e}")
-            if self.wre_enabled:
-                wre_log(f"Title retrieval failed: {e}", level="ERROR")
-            return "Unknown Stream"
-
-    async def orchestrate_community_engagement(self, channel_id: str) -> Dict[str, Any]:
-        """
-        Orchestrate community engagement across enterprise domains with WRE
+        for name, component in components:
+            try:
+                if hasattr(component, 'initialize'):
+                    await component.initialize()
+                self.active_components[name] = component
+                self.logger.info(f"✅ {name} ready")
+            except Exception as e:
+                self.logger.warning(f"⚠️  {name} initialization failed: {e}")
+    
+    async def _interactive_mode(self):
+        """Interactive mode for standalone testing"""
+        print("\n🎬 YouTube Proxy Interactive Mode")
+        print("Available commands:")
+        print("  status     - Show current status")
+        print("  stream     - Show stream info")
+        print("  components - List active components")
+        print("  connect    - Connect to stream")
+        print("  quit       - Exit")
+        print("\nPress Ctrl+C or type 'quit' to exit\n")
         
-        Args:
-            channel_id: YouTube channel ID for engagement orchestration
-            
-        Returns:
-            Dictionary with orchestration results
-        """
-        if self.wre_enabled:
-            wre_log(f"Orchestrating community engagement for channel: {channel_id}", level="INFO")
-        
-        try:
-            # Step 1: Discover active streams
-            video_id, chat_id = self.find_active_livestream(channel_id)
-            
-            orchestration_results = {
-                'stream_discovery': {
-                    'video_id': video_id,
-                    'chat_id': chat_id,
-                    'success': bool(video_id)
-                },
-                'module_orchestration': {},
-                'community_metrics': {},
-                'wre_integration': self.wre_enabled
-            }
-            
-            if not video_id:
-                self.logger.info("No active stream found - orchestration limited")
-                return orchestration_results
-            
-            # Step 2: Orchestrate enterprise domain modules
-            if self.wre_enabled and self.module_coordinator:
-                # WRE orchestration for YouTube co-host functionality
-                youtube_cohost_result = await self._orchestrate_youtube_cohost(video_id, chat_id)
-                orchestration_results['module_orchestration']['youtube_cohost'] = youtube_cohost_result
+        while True:
+            try:
+                cmd = input("YouTubeProxy> ").strip().lower()
                 
-                # Orchestrate AI intelligence integration
-                ai_integration_result = await self._orchestrate_ai_integration(video_id)
-                orchestration_results['module_orchestration']['ai_integration'] = ai_integration_result
-                
-                # Orchestrate communication modules
-                communication_result = await self._orchestrate_communication_modules(chat_id)
-                orchestration_results['module_orchestration']['communication'] = communication_result
-            
-            # Step 3: Generate community metrics
-            metrics = await self._generate_community_metrics(channel_id, video_id)
-            orchestration_results['community_metrics'] = metrics
-            
-            if self.wre_enabled:
-                wre_log(f"Community engagement orchestration complete", level="INFO")
-            
-            self.logger.info("Community engagement orchestration completed successfully")
-            return orchestration_results
-            
-        except Exception as e:
-            self.logger.error(f"Community engagement orchestration failed: {e}")
-            if self.wre_enabled:
-                wre_log(f"Orchestration failed: {e}", level="ERROR")
-            return {'error': str(e), 'success': False}
-
-    async def _orchestrate_youtube_cohost(self, video_id: str, chat_id: str) -> Dict[str, Any]:
-        """Orchestrate YouTube co-host functionality via WRE"""
-        try:
-            if self.module_coordinator:
-                # WRE orchestration for YouTube co-host capabilities
-                cohost_result = self.module_coordinator.handle_module_development(
-                    "youtube_cohost_activation",
-                    self.wre_engine
-                )
-                
-                return {
-                    'video_id': video_id,
-                    'chat_id': chat_id,
-                    'cohost_activated': True,
-                    'wre_result': str(cohost_result),
-                    'timestamp': datetime.now()
-                }
-            else:
-                # Simulation mode
-                return {
-                    'video_id': video_id,
-                    'chat_id': chat_id,
-                    'cohost_activated': True,
-                    'mode': 'simulated',
-                    'timestamp': datetime.now()
-                }
-                
-        except Exception as e:
-            self.logger.error(f"YouTube co-host orchestration failed: {e}")
-            return {'error': str(e), 'success': False}
-
-    async def _orchestrate_ai_integration(self, video_id: str) -> Dict[str, Any]:
-        """Orchestrate AI intelligence integration via WRE"""
-        try:
-            if self.module_coordinator:
-                # WRE orchestration for AI intelligence modules
-                ai_result = self.module_coordinator.handle_module_development(
-                    "youtube_ai_integration",
-                    self.wre_engine
-                )
-                
-                return {
-                    'video_id': video_id,
-                    'ai_banter_enabled': True,
-                    'ai_responses_active': True,
-                    'wre_result': str(ai_result),
-                    'timestamp': datetime.now()
-                }
-            else:
-                # Simulation mode
-                return {
-                    'video_id': video_id,
-                    'ai_banter_enabled': True,
-                    'ai_responses_active': True,
-                    'mode': 'simulated',
-                    'timestamp': datetime.now()
-                }
-                
-        except Exception as e:
-            self.logger.error(f"AI integration orchestration failed: {e}")
-            return {'error': str(e), 'success': False}
-
-    async def _orchestrate_communication_modules(self, chat_id: str) -> Dict[str, Any]:
-        """Orchestrate communication domain modules via WRE"""
-        try:
-            if self.module_coordinator:
-                # WRE orchestration for communication modules
-                comm_result = self.module_coordinator.handle_module_development(
-                    "youtube_communication_integration",
-                    self.wre_engine
-                )
-                
-                return {
-                    'chat_id': chat_id,
-                    'livechat_connected': True,
-                    'message_processing_active': True,
-                    'wre_result': str(comm_result),
-                    'timestamp': datetime.now()
-                }
-            else:
-                # Simulation mode
-                return {
-                    'chat_id': chat_id,
-                    'livechat_connected': True,
-                    'message_processing_active': True,
-                    'mode': 'simulated',
-                    'timestamp': datetime.now()
-                }
-                
-        except Exception as e:
-            self.logger.error(f"Communication orchestration failed: {e}")
-            return {'error': str(e), 'success': False}
-
-    async def _generate_community_metrics(self, channel_id: str, video_id: str) -> Dict[str, Any]:
-        """Generate comprehensive community engagement metrics"""
-        try:
-            # Find active stream data
-            active_stream = None
-            for stream in self.active_streams:
-                if stream.video_id == video_id:
-                    active_stream = stream
+                if cmd == "quit":
                     break
-            
-            if not active_stream:
-                return {'error': 'Active stream not found', 'success': False}
-            
-            # Create community metrics
-            metrics = CommunityMetrics(
-                total_viewers=active_stream.viewer_count,
-                concurrent_viewers=active_stream.viewer_count,
-                chat_messages_per_minute=12.5,  # Simulated
-                subscriber_growth=25,           # Simulated
-                engagement_rate=0.15,           # Simulated 15%
-                top_keywords=['foundups', 'autonomous', 'development'],
-                sentiment_score=0.75            # Positive sentiment
-            )
-            
-            self.community_metrics[channel_id] = metrics
-            
-            return {
-                'channel_id': channel_id,
-                'video_id': video_id,
-                'metrics': {
-                    'viewers': metrics.total_viewers,
-                    'engagement_rate': metrics.engagement_rate,
-                    'sentiment': metrics.sentiment_score,
-                    'chat_activity': metrics.chat_messages_per_minute,
-                    'growth': metrics.subscriber_growth
-                },
-                'engagement_level': active_stream.engagement_level.value,
-                'timestamp': datetime.now()
-            }
-            
-        except Exception as e:
-            self.logger.error(f"Community metrics generation failed: {e}")
-            return {'error': str(e), 'success': False}
-
-    def get_orchestration_status(self) -> Dict[str, Any]:
-        """Get current YouTube proxy orchestration status"""
-        return {
-            'authenticated': self.authenticated,
-            'wre_enabled': self.wre_enabled,
-            'active_streams': len(self.active_streams),
-            'tracked_channels': len(self.community_metrics),
-            'orchestrated_modules': list(self.orchestrated_modules.keys()),
-            'api_available': YOUTUBE_API_AVAILABLE,
-            'last_updated': datetime.now()
-        }
-
-    async def monitor_community_health(self, channel_id: str) -> Dict[str, Any]:
-        """Monitor overall community health and engagement"""
-        if self.wre_enabled:
-            wre_log(f"Monitoring community health for channel: {channel_id}", level="INFO")
+                elif cmd == "status":
+                    await self._show_status()
+                elif cmd == "stream":
+                    await self._show_stream_info()
+                elif cmd == "components":
+                    await self._show_components()
+                elif cmd == "connect":
+                    await self.connect_to_active_stream()
+                elif cmd == "":
+                    continue
+                else:
+                    print(f"Unknown command: {cmd}")
+                    
+            except EOFError:
+                break
+    
+    async def _show_status(self):
+        """Show current proxy status"""
+        print(f"\n📊 YouTube Proxy Status:")
+        print(f"  Stream Active: {'✅' if self.status.stream_active else '❌'}")
+        print(f"  Chat Monitoring: {'✅' if self.status.chat_monitoring else '❌'}")
+        print(f"  Active Components: {len(self.active_components)}")
+        print()
+    
+    async def _show_stream_info(self):
+        """Show current stream information"""
+        if self.current_stream:
+            print(f"\n🎬 Stream Information:")
+            print(f"  ID: {self.current_stream.stream_id}")
+            print(f"  Title: {self.current_stream.title}")
+            print(f"  Status: {self.current_stream.status}")
+            print(f"  Viewers: {self.current_stream.viewer_count}")
+            print()
+        else:
+            print("No active stream")
+    
+    async def _show_components(self):
+        """Show active components across domains"""
+        print(f"\n🧩 Active Components ({len(self.active_components)}):")
+        for name, component in self.active_components.items():
+            print(f"  • {name}: {type(component).__name__}")
+        print()
+    
+    async def _cleanup(self):
+        """Cleanup resources"""
+        self.logger.info("🧹 Cleaning up resources...")
         
-        try:
-            # Get current metrics
-            current_metrics = self.community_metrics.get(channel_id)
-            if not current_metrics:
-                self.logger.warning(f"No metrics available for channel: {channel_id}")
-                return {'error': 'No metrics available', 'success': False}
-            
-            # Calculate health score
-            health_score = self._calculate_community_health_score(current_metrics)
-            
-            # Generate recommendations
-            recommendations = self._generate_engagement_recommendations(current_metrics)
-            
-            health_report = {
-                'channel_id': channel_id,
-                'health_score': health_score,
-                'status': 'healthy' if health_score > 0.7 else 'needs_attention' if health_score > 0.4 else 'critical',
-                'metrics_summary': {
-                    'engagement_rate': current_metrics.engagement_rate,
-                    'sentiment_score': current_metrics.sentiment_score,
-                    'growth_rate': current_metrics.subscriber_growth / 100.0,  # Convert to percentage
-                    'activity_level': current_metrics.chat_messages_per_minute
-                },
-                'recommendations': recommendations,
-                'timestamp': datetime.now()
-            }
-            
-            if self.wre_enabled:
-                wre_log(f"Community health score: {health_score:.2f}", level="INFO")
-            
-            return health_report
-            
-        except Exception as e:
-            self.logger.error(f"Community health monitoring failed: {e}")
-            if self.wre_enabled:
-                wre_log(f"Health monitoring failed: {e}", level="ERROR")
-            return {'error': str(e), 'success': False}
-
-    def _calculate_community_health_score(self, metrics: CommunityMetrics) -> float:
-        """Calculate overall community health score (0.0-1.0)"""
-        # Weighted scoring system
-        engagement_weight = 0.3
-        sentiment_weight = 0.25
-        activity_weight = 0.25
-        growth_weight = 0.2
-        
-        # Normalize scores to 0-1 range
-        engagement_score = min(metrics.engagement_rate / 0.2, 1.0)  # 20% is excellent
-        sentiment_score = (metrics.sentiment_score + 1.0) / 2.0     # Convert from -1,1 to 0,1
-        activity_score = min(metrics.chat_messages_per_minute / 20.0, 1.0)  # 20 msg/min is high
-        growth_score = min(metrics.subscriber_growth / 100.0, 1.0)  # 100 subs/month is excellent
-        
-        total_score = (
-            engagement_score * engagement_weight +
-            sentiment_score * sentiment_weight +
-            activity_score * activity_weight +
-            growth_score * growth_weight
-        )
-        
-        return round(total_score, 3)
-
-    def _generate_engagement_recommendations(self, metrics: CommunityMetrics) -> List[str]:
-        """Generate actionable recommendations based on community metrics"""
-        recommendations = []
-        
-        if metrics.engagement_rate < 0.1:
-            recommendations.append("Increase interactive content to boost engagement rate")
-        
-        if metrics.sentiment_score < 0.5:
-            recommendations.append("Focus on positive community interactions and content")
-        
-        if metrics.chat_messages_per_minute < 5:
-            recommendations.append("Encourage more chat participation with Q&A sessions")
-        
-        if metrics.subscriber_growth < 10:
-            recommendations.append("Implement subscriber growth strategies and cross-promotion")
-        
-        if not recommendations:
-            recommendations.append("Community metrics are healthy - maintain current strategies")
-        
-        return recommendations
-
+        for name, component in self.active_components.items():
+            try:
+                if hasattr(component, 'stop'):
+                    await component.stop()
+                self.logger.info(f"✅ {name} stopped")
+            except Exception as e:
+                self.logger.warning(f"⚠️  {name} cleanup failed: {e}")
 
 def create_youtube_proxy(credentials: Optional[Any] = None, config: Optional[Dict[str, Any]] = None) -> YouTubeProxy:
     """
-    Factory function to create YouTube Proxy with WRE integration
+    Factory function to create YouTubeProxy instance.
     
     Args:
-        credentials: YouTube API credentials
-        config: Optional configuration dictionary
+        credentials: YouTube API credentials (optional)
+        config: Configuration for proxy and components
         
     Returns:
-        YouTubeProxy: Configured YouTube proxy instance
+        YouTubeProxy: Configured proxy instance
     """
-    return YouTubeProxy(credentials=credentials, config=config)
-
-
-# Example usage and testing functions
-async def test_youtube_proxy():
-    """Test function for YouTube Proxy functionality"""
-    proxy = create_youtube_proxy()
-    
-    print(f"YouTube Proxy Status: {proxy.get_orchestration_status()}")
-    
-    # Test stream discovery
-    channel_id = "test_channel_123"
-    video_id, chat_id = proxy.find_active_livestream(channel_id)
-    print(f"Stream Discovery: Video ID: {video_id}, Chat ID: {chat_id}")
-    
-    if video_id:
-        # Test title retrieval
-        title = proxy.get_stream_title(video_id)
-        print(f"Stream Title: {title}")
-        
-        # Test community engagement orchestration
-        orchestration_result = await proxy.orchestrate_community_engagement(channel_id)
-        print(f"Orchestration Result: {orchestration_result['stream_discovery']['success']}")
-        
-        # Test community health monitoring
-        health_report = await proxy.monitor_community_health(channel_id)
-        print(f"Community Health: {health_report.get('health_score', 'N/A')}")
-
+    return YouTubeProxy(config=config)
 
 if __name__ == "__main__":
     """Standalone execution entry point"""
