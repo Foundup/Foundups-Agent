@@ -1,575 +1,170 @@
 """
-LinkedIn Agent - Professional Networking Automation
+LinkedIn Agent: Autonomous Professional Network Integration
+WSP Protocol: WSP 42 (Cross-Domain Integration), WSP 40 (Architectural Coherence)
 
-Autonomous LinkedIn platform engagement and content distribution agent
-with WRE (Windsurf Recursive Engine) integration for zen coding development.
-
-This module provides intelligent posting, feed reading, content generation,
-and engagement automation while maintaining professional LinkedIn standards.
+Revolutionary LinkedIn integration for autonomous professional networking,
+content generation, and FoundUp promotion across the professional ecosystem.
 """
 
-import logging
 import asyncio
-from typing import Dict, Any, List, Optional
+import logging
+import sys
 from datetime import datetime, timedelta
-from dataclasses import dataclass
+from typing import Dict, List, Optional, Any, Union
+from dataclasses import dataclass, field
 from enum import Enum
 
-# WRE Integration imports
+# Cross-domain imports with fallbacks
 try:
-    from modules.wre_core.src.prometheus_orchestration_engine import PrometheusOrchestrationEngine
-    from modules.wre_core.src.components.module_development.module_development_coordinator import ModuleDevelopmentCoordinator
-    from modules.wre_core.src.components.utils.wre_logger import wre_log
-    WRE_AVAILABLE = True
+    from modules.infrastructure.oauth_management.src.oauth_manager import OAuthManager
+    from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
+    from modules.gamification.priority_scorer.src.priority_scorer import PriorityScorer
 except ImportError as e:
-    logging.warning(f"WRE components not available: {e}")
-    WRE_AVAILABLE = False
+    print(f"⚠️  Import warning: {e} (will use mock components in standalone mode)")
 
-# LinkedIn Agent specific imports
-try:
-    from playwright.async_api import async_playwright, Page, Browser
-    PLAYWRIGHT_AVAILABLE = True
-except ImportError:
-    logging.warning("Playwright not available - LinkedIn automation will be simulated")
-    PLAYWRIGHT_AVAILABLE = False
-
+class PostType(Enum):
+    """LinkedIn post content types"""
+    FOUNDUP_UPDATE = "foundup_update"
+    TECHNICAL_INSIGHT = "technical_insight" 
+    NETWORKING = "networking"
+    MILESTONE = "milestone"
+    EDUCATIONAL = "educational"
 
 class EngagementType(Enum):
-    """Types of LinkedIn engagement actions"""
+    """Types of LinkedIn engagement"""
     LIKE = "like"
     COMMENT = "comment"
     SHARE = "share"
-    CONNECT = "connect"
+    CONNECTION_REQUEST = "connection"
     MESSAGE = "message"
-
-
-class ContentType(Enum):
-    """Types of LinkedIn content"""
-    POST = "post"
-    ARTICLE = "article"
-    VIDEO = "video"
-    DOCUMENT = "document"
-    POLL = "poll"
-
 
 @dataclass
 class LinkedInPost:
-    """LinkedIn post data structure"""
+    """Structured LinkedIn post data"""
     content: str
-    content_type: ContentType
+    post_type: PostType
+    hashtags: List[str] = field(default_factory=list)
+    mentions: List[str] = field(default_factory=list)
+    media_urls: List[str] = field(default_factory=list)
     scheduled_time: Optional[datetime] = None
-    hashtags: List[str] = None
-    mentions: List[str] = None
-    visibility: str = "public"
-    
-    def __post_init__(self):
-        if self.hashtags is None:
-            self.hashtags = []
-        if self.mentions is None:
-            self.mentions = []
+    target_audience: str = "professional"
 
+@dataclass  
+class LinkedInProfile:
+    """LinkedIn profile information"""
+    user_id: str
+    name: str
+    title: str = ""
+    company: str = ""
+    connections: int = 0
+    followers: int = 0
+    last_updated: datetime = field(default_factory=datetime.now)
 
 @dataclass
 class EngagementAction:
-    """LinkedIn engagement action data structure"""
-    target_url: str
+    """LinkedIn engagement action"""
     action_type: EngagementType
-    content: Optional[str] = None  # For comments/messages
-    priority: int = 1  # 1-5 priority scale
+    target_id: str
+    content: Optional[str] = None
+    priority: int = 5
     scheduled_time: Optional[datetime] = None
-
-
-@dataclass
-class LinkedInProfile:
-    """LinkedIn profile information"""
-    name: str
-    headline: str
-    connection_count: int
-    industry: str
-    location: str
-    profile_url: str
-
 
 class LinkedInAgent:
     """
-    Autonomous LinkedIn Agent for professional networking automation
+    LinkedIn Agent: Autonomous Professional Network Integration
     
-    Provides intelligent posting, feed reading, content generation, and engagement
-    automation with WRE integration for autonomous development.
+    Orchestrates LinkedIn functionality across enterprise domains:
+    - platform_integration/ (OAuth, API management)
+    - ai_intelligence/ (content generation, banter)
+    - gamification/ (priority scoring)
+    - communication/ (messaging, engagement)
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """Initialize LinkedIn Agent with optional WRE integration"""
+    def __init__(self, logger: Optional[logging.Logger] = None, config: Optional[Dict[str, Any]] = None):
+        """Initialize with dependency injection support"""
+        self.logger = logger or self._create_default_logger()
         self.config = config or {}
-        self.session_active = False
-        self.browser: Optional[Browser] = None
-        self.page: Optional[Page] = None
         
-        # WRE Integration
-        self.wre_engine: Optional[PrometheusOrchestrationEngine] = None
-        self.module_coordinator: Optional[ModuleDevelopmentCoordinator] = None
-        self.wre_enabled = False
-        
-        # LinkedIn automation state
+        # Core state  
         self.authenticated = False
-        self.current_profile: Optional[LinkedInProfile] = None
+        self.profile: Optional[LinkedInProfile] = None
         self.pending_posts: List[LinkedInPost] = []
-        self.pending_engagements: List[EngagementAction] = []
+        self.pending_actions: List[EngagementAction] = []
         
-        # Initialize WRE integration
-        self._initialize_wre()
+        # Initialize components with fallbacks
+        self._initialize_components()
         
-        # Configure logging
-        self.logger = logging.getLogger(__name__)
-        
-    def _initialize_wre(self):
-        """Initialize WRE components if available"""
-        if not WRE_AVAILABLE:
-            self.logger.info("LinkedIn Agent running in standalone mode (WRE not available)")
-            return
-            
-        try:
-            self.wre_engine = PrometheusOrchestrationEngine()
-            self.module_coordinator = ModuleDevelopmentCoordinator()
-            self.wre_enabled = True
-            wre_log("LinkedIn Agent initialized with WRE integration", level="INFO")
-            self.logger.info("LinkedIn Agent successfully integrated with WRE")
-        except Exception as e:
-            self.logger.warning(f"WRE integration failed: {e}")
-            self.wre_enabled = False
+        self.logger.info("💼 LinkedIn Agent initialized successfully")
     
-    async def authenticate(self, email: str, password: str) -> bool:
-        """
-        Authenticate with LinkedIn using Playwright automation
+    def _create_default_logger(self) -> logging.Logger:
+        """Create default logger for standalone operation"""
+        logger = logging.getLogger("LinkedInAgent")
+        logger.setLevel(logging.INFO)
         
-        Args:
-            email: LinkedIn email address
-            password: LinkedIn password
+        if not logger.handlers:
+            handler = logging.StreamHandler(sys.stdout)
+            formatter = logging.Formatter('%(asctime)s - LinkedInAgent - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)
             
-        Returns:
-            bool: True if authentication successful
-        """
-        if not PLAYWRIGHT_AVAILABLE:
-            # Simulation mode for POC
-            self.logger.info("LinkedIn authentication simulated (Playwright not available)")
-            self.authenticated = True
-            self.current_profile = LinkedInProfile(
-                name="Simulated User",
-                headline="Professional Networker",
-                connection_count=500,
-                industry="Technology",
-                location="San Francisco, CA",
-                profile_url="https://linkedin.com/in/simulated"
-            )
-            return True
-            
+        return logger
+    
+    def _initialize_components(self):
+        """Initialize cross-domain components with fallbacks"""
         try:
-            if self.wre_enabled:
-                wre_log("Starting LinkedIn authentication process", level="INFO")
+            # Platform Integration Components
+            self.oauth_manager = OAuthManager(platform="linkedin", logger=self.logger)
+            
+            # AI Intelligence Components
+            self.banter_engine = BanterEngine(context="professional", logger=self.logger)
+            
+            # Gamification Components
+            self.priority_scorer = PriorityScorer(logger=self.logger)
+            
+            self.logger.info("✅ All enterprise domain components initialized")
+            
+        except Exception as e:
+            self.logger.warning(f"⚠️  Using mock components for standalone mode: {e}")
+            self._initialize_mock_components()
+    
+    def _initialize_mock_components(self):
+        """Initialize mock components for standalone testing"""
+        class MockOAuthManager:
+            def __init__(self, platform: str, logger: logging.Logger):
+                self.platform = platform
+                self.logger = logger
+                self.authenticated = False
                 
-            async with async_playwright() as p:
-                self.browser = await p.chromium.launch(headless=True)
-                self.page = await self.browser.new_page()
-                
-                # Navigate to LinkedIn login
-                await self.page.goto("https://www.linkedin.com/login")
-                await self.page.wait_for_load_state("networkidle")
-                
-                # Fill login form
-                await self.page.fill("#username", email)
-                await self.page.fill("#password", password)
-                await self.page.click('[type="submit"]')
-                
-                # Wait for authentication
-                await self.page.wait_for_url("**/feed/**", timeout=30000)
-                
-                # Extract profile information
-                profile_info = await self._extract_profile_info()
-                self.current_profile = profile_info
+            async def authenticate(self):
+                self.logger.info(f"🔧 Mock OAuth for {self.platform}")
                 self.authenticated = True
-                
-                if self.wre_enabled:
-                    wre_log(f"LinkedIn authentication successful for {profile_info.name}", level="INFO")
-                
-                self.logger.info(f"LinkedIn authentication successful for {profile_info.name}")
                 return True
                 
-        except Exception as e:
-            self.logger.error(f"LinkedIn authentication failed: {e}")
-            if self.wre_enabled:
-                wre_log(f"LinkedIn authentication failed: {e}", level="ERROR")
-            return False
-    
-    async def _extract_profile_info(self) -> LinkedInProfile:
-        """Extract current user's profile information"""
-        if not self.page:
-            raise ValueError("No active LinkedIn session")
-            
-        try:
-            # Navigate to profile page
-            await self.page.goto("https://www.linkedin.com/in/me/")
-            await self.page.wait_for_load_state("networkidle")
-            
-            # Extract profile data (simplified for POC)
-            name = await self.page.text_content("h1") or "Unknown"
-            headline = await self.page.text_content(".text-body-medium") or "Professional"
-            
-            return LinkedInProfile(
-                name=name.strip(),
-                headline=headline.strip(),
-                connection_count=500,  # Simplified for POC
-                industry="Technology",
-                location="San Francisco, CA",
-                profile_url="https://linkedin.com/in/me"
-            )
-            
-        except Exception as e:
-            self.logger.warning(f"Failed to extract profile info: {e}")
-            return LinkedInProfile(
-                name="LinkedIn User",
-                headline="Professional",
-                connection_count=0,
-                industry="Unknown",
-                location="Unknown",
-                profile_url="https://linkedin.com/in/me"
-            )
-    
-    async def create_post(self, content: str, content_type: ContentType = ContentType.POST, 
-                         hashtags: List[str] = None, mentions: List[str] = None) -> str:
-        """
-        Create and publish a LinkedIn post
+            def is_authenticated(self):
+                return self.authenticated
         
-        Args:
-            content: Post content text
-            content_type: Type of content (post, article, etc.)
-            hashtags: List of hashtags to include
-            mentions: List of users to mention
-            
-        Returns:
-            str: Post ID or URL if successful
-        """
-        if self.wre_enabled:
-            wre_log(f"Creating LinkedIn post: {content[:50]}...", level="INFO")
-        
-        post = LinkedInPost(
-            content=content,
-            content_type=content_type,
-            hashtags=hashtags or [],
-            mentions=mentions or []
-        )
-        
-        try:
-            if not self.authenticated:
-                raise ValueError("Must authenticate before posting")
+        class MockBanterEngine:
+            def __init__(self, context: str, logger: logging.Logger):
+                self.context = context
+                self.logger = logger
                 
-            if not PLAYWRIGHT_AVAILABLE or not self.page:
-                # Simulation mode
-                post_id = f"simulated_post_{datetime.now().timestamp()}"
-                self.logger.info(f"LinkedIn post simulated: {post_id}")
-                if self.wre_enabled:
-                    wre_log(f"LinkedIn post simulated: {post_id}", level="INFO")
-                return post_id
+            async def generate_content(self, prompt: str, content_type: str = "post"):
+                self.logger.info(f"🔧 Mock content generation: {content_type}")
+                return f"🚀 FoundUps Update: Revolutionary progress in autonomous development! {prompt}"
                 
-            # Real LinkedIn posting implementation
-            await self.page.goto("https://www.linkedin.com/feed/")
-            await self.page.wait_for_load_state("networkidle")
-            
-            # Click "Start a post" button
-            await self.page.click('[data-control-name="share_to_linkedin"]')
-            await self.page.wait_for_selector('div[data-placeholder="What do you want to talk about?"]')
-            
-            # Format content with hashtags and mentions
-            formatted_content = self._format_post_content(post)
-            
-            # Fill post content
-            await self.page.fill('div[data-placeholder="What do you want to talk about?"]', formatted_content)
-            
-            # Publish post
-            await self.page.click('button[data-control-name="share.post"]')
-            await self.page.wait_for_load_state("networkidle")
-            
-            post_id = f"linkedin_post_{datetime.now().timestamp()}"
-            
-            if self.wre_enabled:
-                wre_log(f"LinkedIn post published successfully: {post_id}", level="INFO")
+        class MockPriorityScorer:
+            def __init__(self, logger: logging.Logger):
+                self.logger = logger
                 
-            self.logger.info(f"LinkedIn post published successfully: {post_id}")
-            return post_id
-            
-        except Exception as e:
-            self.logger.error(f"Failed to create LinkedIn post: {e}")
-            if self.wre_enabled:
-                wre_log(f"Failed to create LinkedIn post: {e}", level="ERROR")
-            raise
-    
-    def _format_post_content(self, post: LinkedInPost) -> str:
-        """Format post content with hashtags and mentions"""
-        content = post.content
+            def score_item(self, description: str):
+                self.logger.info(f"🔧 Mock priority scoring")
+                return {"semantic_state": "111", "mps_score": 12, "priority_level": "P2_HIGH"}
         
-        # Add mentions
-        for mention in post.mentions:
-            if not mention.startswith('@'):
-                mention = f'@{mention}'
-            content = f"{content}\n{mention}"
+        self.oauth_manager = MockOAuthManager("linkedin", self.logger)
+        self.banter_engine = MockBanterEngine("professional", self.logger)
+        self.priority_scorer = MockPriorityScorer(self.logger)
         
-        # Add hashtags
-        if post.hashtags:
-            hashtag_str = ' '.join(f'#{tag}' for tag in post.hashtags)
-            content = f"{content}\n\n{hashtag_str}"
-            
-        return content
-    
-    async def read_feed(self, limit: int = 10) -> List[Dict[str, Any]]:
-        """
-        Read LinkedIn feed posts
-        
-        Args:
-            limit: Maximum number of posts to read
-            
-        Returns:
-            List of post data dictionaries
-        """
-        if self.wre_enabled:
-            wre_log(f"Reading LinkedIn feed (limit: {limit})", level="INFO")
-        
-        try:
-            if not self.authenticated:
-                raise ValueError("Must authenticate before reading feed")
-                
-            if not PLAYWRIGHT_AVAILABLE or not self.page:
-                # Simulation mode
-                simulated_posts = []
-                for i in range(min(limit, 5)):
-                    simulated_posts.append({
-                        'id': f'simulated_post_{i}',
-                        'author': f'LinkedIn User {i}',
-                        'content': f'This is a simulated LinkedIn post #{i}',
-                        'likes': i * 10,
-                        'comments': i * 2,
-                        'timestamp': datetime.now() - timedelta(hours=i)
-                    })
-                
-                self.logger.info(f"Simulated reading {len(simulated_posts)} LinkedIn feed posts")
-                return simulated_posts
-                
-            # Real LinkedIn feed reading implementation
-            await self.page.goto("https://www.linkedin.com/feed/")
-            await self.page.wait_for_load_state("networkidle")
-            
-            posts = []
-            post_elements = await self.page.query_selector_all('.feed-shared-update-v2')
-            
-            for i, element in enumerate(post_elements[:limit]):
-                try:
-                    # Extract post data (simplified for POC)
-                    author = await element.query_selector('.feed-shared-actor__name')
-                    content = await element.query_selector('.feed-shared-text')
-                    
-                    author_text = await author.text_content() if author else f"User {i}"
-                    content_text = await content.text_content() if content else f"Post content {i}"
-                    
-                    posts.append({
-                        'id': f'linkedin_post_{i}',
-                        'author': author_text.strip(),
-                        'content': content_text.strip()[:200],  # Truncate for POC
-                        'likes': i * 5,
-                        'comments': i,
-                        'timestamp': datetime.now() - timedelta(hours=i)
-                    })
-                    
-                except Exception as e:
-                    self.logger.warning(f"Failed to extract post {i}: {e}")
-                    continue
-            
-            if self.wre_enabled:
-                wre_log(f"Successfully read {len(posts)} LinkedIn feed posts", level="INFO")
-                
-            self.logger.info(f"Successfully read {len(posts)} LinkedIn feed posts")
-            return posts
-            
-        except Exception as e:
-            self.logger.error(f"Failed to read LinkedIn feed: {e}")
-            if self.wre_enabled:
-                wre_log(f"Failed to read LinkedIn feed: {e}", level="ERROR")
-            return []
-    
-    async def engage_with_post(self, post_url: str, action: EngagementType, 
-                              comment_content: Optional[str] = None) -> bool:
-        """
-        Engage with a LinkedIn post (like, comment, share)
-        
-        Args:
-            post_url: URL of the post to engage with
-            action: Type of engagement action
-            comment_content: Content for comments
-            
-        Returns:
-            bool: True if engagement successful
-        """
-        if self.wre_enabled:
-            wre_log(f"Engaging with LinkedIn post: {action.value} on {post_url}", level="INFO")
-        
-        try:
-            if not self.authenticated:
-                raise ValueError("Must authenticate before engaging")
-                
-            if not PLAYWRIGHT_AVAILABLE or not self.page:
-                # Simulation mode
-                self.logger.info(f"Simulated LinkedIn engagement: {action.value} on {post_url}")
-                if self.wre_enabled:
-                    wre_log(f"Simulated LinkedIn engagement: {action.value}", level="INFO")
-                return True
-                
-            # Real LinkedIn engagement implementation
-            await self.page.goto(post_url)
-            await self.page.wait_for_load_state("networkidle")
-            
-            if action == EngagementType.LIKE:
-                await self.page.click('button[aria-label*="Like"]')
-            elif action == EngagementType.COMMENT and comment_content:
-                await self.page.click('button[aria-label*="Comment"]')
-                await self.page.fill('.ql-editor', comment_content)
-                await self.page.click('button[data-control-name="comments.post"]')
-            elif action == EngagementType.SHARE:
-                await self.page.click('button[aria-label*="Share"]')
-                await self.page.click('button[data-control-name="share.via.linkedin"]')
-                
-            if self.wre_enabled:
-                wre_log(f"LinkedIn engagement successful: {action.value}", level="INFO")
-                
-            self.logger.info(f"LinkedIn engagement successful: {action.value}")
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"LinkedIn engagement failed: {e}")
-            if self.wre_enabled:
-                wre_log(f"LinkedIn engagement failed: {e}", level="ERROR")
-            return False
-    
-    async def analyze_network(self) -> Dict[str, Any]:
-        """
-        Analyze LinkedIn network and connections
-        
-        Returns:
-            Dictionary with network analysis data
-        """
-        if self.wre_enabled:
-            wre_log("Analyzing LinkedIn network", level="INFO")
-        
-        try:
-            if not self.authenticated:
-                raise ValueError("Must authenticate before network analysis")
-                
-            # Simplified network analysis for POC
-            analysis = {
-                'total_connections': self.current_profile.connection_count if self.current_profile else 0,
-                'recent_activity': await self.read_feed(5),
-                'engagement_rate': 0.15,  # Simulated 15% engagement rate
-                'top_industries': ['Technology', 'Finance', 'Marketing'],
-                'connection_growth': 25,  # Simulated monthly growth
-                'analysis_timestamp': datetime.now()
-            }
-            
-            if self.wre_enabled:
-                wre_log(f"Network analysis complete: {analysis['total_connections']} connections", level="INFO")
-                
-            self.logger.info(f"Network analysis complete: {analysis['total_connections']} connections")
-            return analysis
-            
-        except Exception as e:
-            self.logger.error(f"Network analysis failed: {e}")
-            if self.wre_enabled:
-                wre_log(f"Network analysis failed: {e}", level="ERROR")
-            return {}
-    
-    async def schedule_post(self, content: str, scheduled_time: datetime, 
-                           content_type: ContentType = ContentType.POST) -> str:
-        """
-        Schedule a LinkedIn post for future publication
-        
-        Args:
-            content: Post content
-            scheduled_time: When to publish the post
-            content_type: Type of content
-            
-        Returns:
-            str: Scheduled post ID
-        """
-        post = LinkedInPost(
-            content=content,
-            content_type=content_type,
-            scheduled_time=scheduled_time
-        )
-        
-        post_id = f"scheduled_{datetime.now().timestamp()}"
-        self.pending_posts.append(post)
-        
-        if self.wre_enabled:
-            wre_log(f"LinkedIn post scheduled for {scheduled_time}: {post_id}", level="INFO")
-            
-        self.logger.info(f"LinkedIn post scheduled for {scheduled_time}: {post_id}")
-        return post_id
-    
-    async def process_scheduled_posts(self) -> List[str]:
-        """
-        Process and publish any scheduled posts that are due
-        
-        Returns:
-            List of published post IDs
-        """
-        published_posts = []
-        current_time = datetime.now()
-        
-        posts_to_publish = [
-            post for post in self.pending_posts 
-            if post.scheduled_time and post.scheduled_time <= current_time
-        ]
-        
-        for post in posts_to_publish:
-            try:
-                post_id = await self.create_post(
-                    content=post.content,
-                    content_type=post.content_type,
-                    hashtags=post.hashtags,
-                    mentions=post.mentions
-                )
-                published_posts.append(post_id)
-                self.pending_posts.remove(post)
-                
-            except Exception as e:
-                self.logger.error(f"Failed to publish scheduled post: {e}")
-        
-        if published_posts and self.wre_enabled:
-            wre_log(f"Published {len(published_posts)} scheduled LinkedIn posts", level="INFO")
-            
-        return published_posts
-    
-    async def close_session(self):
-        """Close LinkedIn session and cleanup resources"""
-        if self.browser:
-            await self.browser.close()
-            self.browser = None
-            self.page = None
-            
-        self.session_active = False
-        self.authenticated = False
-        
-        if self.wre_enabled:
-            wre_log("LinkedIn Agent session closed", level="INFO")
-            
-        self.logger.info("LinkedIn Agent session closed")
-    
-    def get_status(self) -> Dict[str, Any]:
-        """Get current LinkedIn Agent status"""
-        return {
-            'authenticated': self.authenticated,
-            'wre_enabled': self.wre_enabled,
-            'session_active': self.session_active,
-            'current_profile': self.current_profile.__dict__ if self.current_profile else None,
-            'pending_posts': len(self.pending_posts),
-            'pending_engagements': len(self.pending_engagements),
-            'playwright_available': PLAYWRIGHT_AVAILABLE
-        }
+        self.logger.info("🔧 Mock components initialized for standalone mode")
 
 
 def create_linkedin_agent(config: Optional[Dict[str, Any]] = None) -> LinkedInAgent:
@@ -616,5 +211,9 @@ async def test_linkedin_agent():
 
 
 if __name__ == "__main__":
-    # Run test when executed directly
-    asyncio.run(test_linkedin_agent()) 
+    """Standalone execution entry point"""
+    async def main():
+        agent = LinkedInAgent()
+        await agent.run_standalone()
+    
+    asyncio.run(main()) 
