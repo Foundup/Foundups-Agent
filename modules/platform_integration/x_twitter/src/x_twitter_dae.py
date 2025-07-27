@@ -327,9 +327,12 @@ class XTwitterDAENode:
     WSP 26-29 compliance with full autonomous social engagement capabilities.
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None, logger: Optional[logging.Logger] = None):
         """Initialize X Twitter DAE Node with WRE integration"""
         self.config = config or {}
+        
+        # Configure logging first (before other initialization that uses it)
+        self.logger = logger or logging.getLogger(__name__)
         
         # DAE Identity per WSP-26
         self.dae_identity = DAEIdentity()
@@ -359,13 +362,10 @@ class XTwitterDAENode:
         self.autonomous_posts: List[AutonomousPost] = []
         self.active_entanglements: Dict[str, Any] = {}
         
-        # Initialize components
+        # Initialize components (logger is now available)
         self._initialize_wre()
         self._initialize_dae_protocols()
         
-        # Configure logging
-        self.logger = logging.getLogger(__name__)
-    
     def _initialize_wre(self):
         """Initialize WRE components if available"""
         if not WRE_AVAILABLE:
