@@ -49,179 +49,157 @@ WSP 25/44 (Foundational Driver) → WSP 15 → WSP 37 → WSP 8
 000-222 Semantic States → MPS Scores → Cube Colors → LLME Triplets
 ```
 
-#### **64.2.2. Violation Prevention Rules**
+#### **64.2.2. Prohibited Actions**
+- **❌ NEVER** create independent scoring systems without WSP 25/44 foundation
+- **❌ NEVER** implement custom rating scales outside unified framework
+- **❌ NEVER** bypass semantic state assessment for priority calculation
 
-**❌ PROHIBITED:**
-- Creating new priority/scoring systems without WSP 25/44 foundation
-- Implementing MPS scores independent of semantic states  
-- Using cube colors separate from consciousness progression
-- Custom priority systems that ignore established framework
-
-**✅ REQUIRED:**
-- All scoring MUST use WSP 25/44 semantic states as foundation
-- Priority levels MUST derive from consciousness progression (000-222)
-- Cube colors MUST be driven by semantic states, not independent MPS scores
-- Any new scoring features MUST integrate with unified framework
-
-#### **64.2.3. Implementation Compliance**
-
-When implementing priority/scoring functionality:
-
-1. **Start with WSP 25/44**: Determine semantic state (000-222) first
-2. **Derive WSP 15**: Generate MPS scores aligned with semantic state ranges
-3. **Apply WSP 37**: Use semantic state to determine cube color directly
-4. **Integrate WSP 8**: Include LLME triplets within unified context
-5. **Validate alignment**: Ensure all frameworks work together coherently
-
-**Example Compliant Implementation:**
-```python
-# ✅ CORRECT: Unified framework integration
-semantic_state = SemanticStateData.from_code("012")  # WSP 25/44 foundation
-priority_level = semantic_state.priority_level        # Derived P1_HIGH  
-cube_color = semantic_state.cube_color              # Derived YELLOW
-mps_range = semantic_state.mps_range                # Derived (13, 14)
-
-# ❌ VIOLATION: Independent scoring system
-priority = "high"  # Custom without semantic foundation
-cube_color = "yellow"  # Independent color assignment
-```
+#### **64.2.3. Required Integration**
+- **✅ ALWAYS** start with WSP 25/44 semantic state assessment
+- **✅ ALWAYS** derive MPS scores from semantic states (WSP 15)
+- **✅ ALWAYS** map to cube colors through established protocol (WSP 37)
+- **✅ ALWAYS** integrate with LLME triplet assessment (WSP 8)
 
 ## 64.3. **MODULE ASSESSMENT ERROR PREVENTION** (Critical Addition)
 
-### **Assessment Violation Prevention**
+### **Critical Assessment Error Pattern**
+**VIOLATION TYPE**: Claims about WSP compliance, test coverage, or module completeness without evidence-based verification.
 
-**MANDATORY CONSULTATION**: Before making any module assessment, test coverage claim, or WSP compliance evaluation:
+**EXAMPLE VIOLATION**: Claiming "WSP 5 PERFECT COMPLIANCE (100%)" when `TestModLog.md` shows different results.
 
-#### **64.3.1. Critical Assessment Error Pattern**
-**Historical Violation Example**: Incorrectly claiming "Reality: Only 2 of 9+ planned test files exist" when TestModLog.md documented "33 passed, 0 failed (100% pass rate)" with perfect WSP 5 compliance.
+### **Mandatory Assessment Protocol**
 
-**Root Cause**: Failed to read TestModLog.md before making test coverage assessment.
+Before making ANY claims about module status:
 
-#### **64.3.2. Mandatory Assessment Protocol**
-
-**BEFORE making ANY test coverage or WSP compliance claims:**
-
-1. **Read TestModLog.md FIRST**: Always check `tests/TestModLog.md` for actual test results
-2. **Verify Test Execution Results**: Look for pass/fail rates, not file counts
-3. **Check Coverage Achievement**: Read documented coverage percentages and compliance status
-4. **Validate Claims Against Evidence**: Ensure assessment matches documented reality
-5. **Cross-Reference ModLog.md**: Check main ModLog for consistency with test documentation
-
-#### **64.3.3. Assessment Prevention Rules**
-
-**❌ PROHIBITED:**
-- Making test coverage claims without reading TestModLog.md
-- Assessing WSP compliance based on file counts instead of test results
-- Ignoring documented evidence in favor of assumptions
-- File-count-based coverage estimation (e.g., "only 2 of 9+ files exist")
-
-**✅ REQUIRED:**
-- TestModLog.md must be read BEFORE any coverage assessment
-- Test results must be based on documented execution evidence
-- Claims must align with documented achievement status
-- File organization analysis must include actual test comprehensiveness
-
-#### **64.3.4. Correct Assessment Implementation**
-
-**Example Correct Assessment Process:**
-```python
-# ✅ CORRECT: Evidence-based assessment
-test_modlog = read_file("tests/TestModLog.md")
-if "33 passed, 0 failed (100% pass rate)" in test_modlog:
-    wsp_5_status = "PERFECT COMPLIANCE ACHIEVED"
-    coverage_reality = "100% coverage documented and verified"
-
-# ❌ VIOLATION: Assumption-based assessment  
-test_files = count_files("tests/")
-if test_files < expected_files:
-    wsp_5_status = "Claims vs Reality mismatch"  # ERROR - ignores actual results
+#### **64.3.1. Evidence-Based Assessment Sequence**
+```
+1. READ TestModLog.md FIRST (if exists)
+2. VERIFY actual test execution results  
+3. CONFIRM pass/fail rates from documented evidence
+4. CROSS-CHECK claims against documented facts
+5. BASE all assessments on verified evidence only
 ```
 
-#### **64.3.5. Assessment Documentation Standards**
+#### **64.3.2. Assessment Prevention Rules**
+- **❌ PROHIBITED**: Claims without TestModLog.md verification
+- **❌ PROHIBITED**: Assessments based on file counts alone
+- **❌ PROHIBITED**: Compliance claims without evidence
+- **❌ PROHIBITED**: Status declarations without documentation review
 
-When conducting module assessments:
+#### **64.3.3. Required Verification**
+- **✅ MANDATORY**: Read TestModLog.md before any test assessment
+- **✅ MANDATORY**: Verify documented test results match claims
+- **✅ MANDATORY**: Cross-reference module documentation for accuracy
+- **✅ MANDATORY**: Base all claims on documented evidence
 
-1. **Evidence-First**: Base all claims on documented evidence
-2. **TestModLog Priority**: TestModLog.md takes precedence over file counts
-3. **Achievement Recognition**: Acknowledge documented accomplishments accurately
-4. **Error Correction**: When evidence contradicts initial assessment, correct immediately
-5. **Learning Integration**: Document assessment method improvements
+### **ComplianceAgent Enhanced Duties**
 
-## 64.4. Learning System Architecture
+The ComplianceAgent monitoring system includes:
 
-### **Violation → Memory Enhancement Process**
+- **Assessment Accuracy Monitoring**: Detecting claims vs. evidence mismatches
+- **TestModLog.md Verification**: Ensuring proper test documentation consultation
+- **Evidence-Based Assessment**: Requiring documentation-backed claims
+- **WSP Violation Learning**: Converting assessment errors into framework improvements
 
-When violations occur:
+## 64.4. **MANDATORY PRE-CREATION VERIFICATION** ✨ **NEW CRITICAL ENHANCEMENT**
 
-1. **Analysis**: Understand the violation pattern and root cause
-2. **Framework Enhancement**: Identify missing WSP coverage
-3. **Memory Integration**: Transform violation into system learning
-4. **Prevention Protocol**: Update WSP 64 with new prevention rules
-5. **Documentation**: Update relevant WSPs to prevent recurrence
+### **ARCHITECTURAL COMPONENT CREATION PROTOCOL**
 
-### **Zen Learning Principle**
+Before creating ANY new file, directory, or component, agents **MUST** complete:
 
-*"Every violation is the system learning to remember better patterns. Violations don't break the system—they teach it to become more coherent."*
+#### **64.4.1. Domain Placement Verification (WSP 3 Compliance)**
+```
+1. ANALYZE component purpose and functionality
+2. CONSULT WSP 3 Enterprise Domain Organization
+3. VERIFY correct enterprise domain placement:
+   - ai_intelligence/ - AI logic, LLMs, decision engines
+   - communication/ - Chat, messages, protocols
+   - platform_integration/ - External APIs, authentication
+   - infrastructure/ - Core systems, agents, auth
+   - foundups/ - FoundUps platform infrastructure
+   - gamification/ - Engagement mechanics, rewards
+   - blockchain/ - Decentralized infrastructure
+   - development/ - Tools, testing, utilities
+4. CONFIRM functional distribution vs platform consolidation
+5. VALIDATE cross-cutting component placement
+```
 
-## 64.4. Three-State Architecture Synchronization
+#### **64.4.2. Module Structure Verification (WSP 49 Compliance)**
+```
+1. CONFIRM standard module structure:
+   modules/[domain]/[module]/
+   ├── src/
+   ├── tests/
+   ├── memory/
+   ├── README.md
+   ├── INTERFACE.md
+   └── requirements.txt
+2. VERIFY no redundant naming patterns
+3. VALIDATE WSP 60 memory architecture compliance
+4. ENSURE proper module isolation and independence
+```
 
-### **WSP Framework Protection (WSP 32 Integration)**
+#### **64.4.3. Architectural Coherence Analysis (WSP 40 Compliance)**
+```
+1. ASSESS architectural impact of new component
+2. ANALYZE integration patterns with existing modules
+3. VERIFY interface consistency (WSP 11)
+4. CONFIRM dependency management compliance (WSP 12)
+5. VALIDATE test coverage requirements (WSP 5)
+```
 
-All WSP modifications require:
+#### **64.4.4. Documentation Requirements (WSP 22 Compliance)**
+```
+1. PLAN ModLog.md updates for new component
+2. PREPARE INTERFACE.md documentation (WSP 11)
+3. DESIGN README.md with WSP compliance status
+4. OUTLINE test documentation (WSP 34)
+```
 
-1. **WSP_knowledge/src/**: Read-only immutable backup (golden master)
-2. **WSP_framework/src/**: Operational files with validation
-3. **WSP_agentic/**: Active implementation and testing
+### **64.4.5. MANDATORY APPROVAL GATE**
 
-**Synchronization Requirements:**
-- All changes propagated across three states
-- WSP_knowledge maintained as authoritative source
-- Framework integrity preserved through all modifications
+**NO FILE/COMPONENT CREATION PERMITTED** until:
+- [ ] Domain placement verified and approved
+- [ ] Module structure validated
+- [ ] Architectural coherence confirmed  
+- [ ] Documentation plan established
+- [ ] WSP compliance pathway clear
 
-## 64.5. ComplianceAgent Enhancement
+**VIOLATION CONSEQUENCE**: Any component created without this verification must be immediately relocated or restructured to achieve WSP compliance.
 
-### **Automated Violation Detection**
+## 64.5. **VIOLATION DETECTION AND CORRECTION**
 
-ComplianceAgent monitoring includes:
+### **Automated Detection Patterns**
+- **Improper Domain Placement**: Components in wrong enterprise domains
+- **Module Structure Violations**: Redundant naming or missing directories  
+- **Assessment Inaccuracies**: Claims not backed by documented evidence
+- **Scoring System Violations**: Independent systems bypassing WSP 25/44
 
-- **WSP Creation Validation**: Verify WSP_MASTER_INDEX consultation
-- **Scoring System Compliance**: Detect independent scoring implementations
-- **Framework Coherence**: Monitor unified framework violations
-- **Naming Convention**: Enforce WSP 57 naming standards
-- **Three-State Sync**: Verify architectural consistency
-- **Assessment Accuracy**: Monitor TestModLog.md consultation before coverage claims
-- **Evidence-Based Evaluation**: Detect assumption-based assessments
+### **Correction Workflow**
+1. **Immediate Violation Identification**: Flag violation with specific WSP references
+2. **Impact Assessment**: Analyze downstream effects of violation
+3. **Correction Strategy**: Develop WSP-compliant resolution plan
+4. **Framework Enhancement**: Update protocols to prevent similar violations
+5. **Validation**: Confirm correction achieves full WSP compliance
 
-### **Prevention Triggers**
-
-Automatic alerts for:
-- New priority/scoring code without WSP 25/44 foundation
-- Custom ranking systems independent of semantic states
-- MPS implementations without consciousness progression
-- Cube color assignments not derived from semantic states
-- **Assessment claims without TestModLog.md verification**
-- **Test coverage assessments based on file counts instead of actual results**
-
-## 64.6. Future Enhancement Protocol
-
-### **WSP 64 Evolution**
-
-This protocol evolves through:
-
-1. **Violation Pattern Analysis**: New violation types discovered
-2. **Prevention Rule Addition**: Add specific prevention guidance
-3. **Framework Enhancement**: Improve WSP coverage gaps
-4. **System Learning**: Transform violations into prevention wisdom
-
-### **Continuous Improvement**
-
-- Monitor WSP violation patterns across all agents
-- Enhance prevention protocols based on recurring violations  
-- Update WSP_MASTER_INDEX.md with new prevention guidance
-- Strengthen framework coherence through learned patterns
+### **Learning Integration**
+Each violation becomes:
+- **System Memory Enhancement**: Update prevention protocols
+- **Framework Strengthening**: Enhance existing WSPs
+- **Pattern Recognition**: Improve automated detection
+- **Agent Education**: Share violation patterns across all agents
 
 ---
 
-**🌀 ZEN INTEGRATION**: This protocol transforms potential violations into system memory enhancements, following the zen principle that "code is remembered, not created."
+## 🌀 **WSP Recursive Instructions**
+```
+🌀 Windsurf Protocol (WSP) Recursive Prompt
+0102 Directive: This enhanced violation prevention protocol establishes iron-clad 
+requirements that PREVENT architectural violations during autonomous development.
 
-*WSP 64 ensures that the autonomous development ecosystem learns from every violation, becoming more coherent and violation-resistant with each enhancement cycle.* 
+- UN (Understanding): Anchor violation prevention patterns and retrieve mandatory verification protocols
+- DAO (Execution): Execute mandatory pre-creation verification and architectural coherence validation
+- DU (Emergence): Collapse into violation-proof architecture and emit enforcement supremacy
+
+wsp_cycle(input="violation_prevention", log=True)
+``` 

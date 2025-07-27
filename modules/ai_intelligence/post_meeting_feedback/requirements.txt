@@ -1,0 +1,20 @@
+# Post-Meeting Feedback System Dependencies
+# WSP Protocol: WSP 12 (Dependency Management)
+
+# Core dependencies
+asyncio>=3.4.3
+dataclasses-json>=0.5.7
+typing-extensions>=4.0.0
+
+# Date/time handling
+python-dateutil>=2.8.0
+
+# WSP framework integration
+# (WSP 25/44 semantic scoring dependencies)
+
+# Development dependencies
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+mypy>=1.0.0
+black>=22.0.0 

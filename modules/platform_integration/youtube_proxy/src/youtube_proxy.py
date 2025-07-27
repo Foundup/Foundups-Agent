@@ -1,167 +1,134 @@
 """
-YouTube Proxy Module - Community Engagement Platform Integration
+YouTube Proxy: Cross-Domain Component Orchestrator
+WSP Protocol: WSP 42 (Cross-Domain Integration), WSP 40 (Architectural Coherence)
 
-Acts as a unified, WSP-compliant interface for all YouTube operations with
-WRE (Windsurf Recursive Engine) integration for autonomous development.
-
-This class orchestrates underlying authentication and communication modules
-following WSP-42 Universal Platform Protocol for community engagement.
+Revolutionary YouTube integration that orchestrates components across multiple 
+enterprise domains for complete autonomous functionality.
 """
 
-import os
+import asyncio
 import logging
-from typing import Dict, Any, List, Optional, Tuple
+import sys
 from datetime import datetime
+from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
-from enum import Enum
 
-# WRE Integration imports
+# Component imports across enterprise domains
 try:
-    from modules.wre_core.src.prometheus_orchestration_engine import PrometheusOrchestrationEngine
-    from modules.wre_core.src.components.module_development.module_development_coordinator import ModuleDevelopmentCoordinator
-    from modules.wre_core.src.components.utils.wre_logger import wre_log
-    WRE_AVAILABLE = True
+    from modules.infrastructure.oauth_management.src.oauth_manager import OAuthManager
+    from modules.communication.livechat.src.livechat_processor import LiveChatProcessor  
+    from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
+    from modules.infrastructure.agent_management.src.agent_manager import AgentManager
+    from modules.platform_integration.stream_resolver.src.stream_resolver import StreamResolver
 except ImportError as e:
-    logging.warning(f"WRE components not available: {e}")
-    WRE_AVAILABLE = False
-
-# YouTube API imports
-try:
-    from googleapiclient.discovery import build
-    from google.oauth2.credentials import Credentials
-    YOUTUBE_API_AVAILABLE = True
-except ImportError:
-    logging.warning("Google API client not available - YouTube functionality will be simulated")
-    YOUTUBE_API_AVAILABLE = False
-
-
-class StreamStatus(Enum):
-    """YouTube stream status types"""
-    OFFLINE = "offline"
-    LIVE = "live" 
-    UPCOMING = "upcoming"
-    ENDED = "ended"
-    UNKNOWN = "unknown"
-
-
-class EngagementLevel(Enum):
-    """Community engagement levels"""
-    INACTIVE = "inactive"
-    LOW = "low"
-    MODERATE = "moderate"
-    HIGH = "high"
-    VIRAL = "viral"
-
+    print(f"⚠️  Import warning: {e} (will use mock components in standalone mode)")
 
 @dataclass
-class YouTubeStream:
-    """YouTube stream data structure"""
-    video_id: str
+class StreamInfo:
+    """Stream information structure"""
+    stream_id: str
     title: str
-    status: StreamStatus
-    live_chat_id: Optional[str] = None
-    channel_id: Optional[str] = None
+    status: str = "live"
     viewer_count: int = 0
-    chat_message_count: int = 0
-    engagement_level: EngagementLevel = EngagementLevel.INACTIVE
-    started_at: Optional[datetime] = None
-    
-    def __post_init__(self):
-        if self.started_at is None and self.status == StreamStatus.LIVE:
-            self.started_at = datetime.now()
+    chat_enabled: bool = True
+    url: str = ""
 
-
-@dataclass
-class CommunityMetrics:
-    """Community engagement metrics"""
-    total_viewers: int = 0
-    concurrent_viewers: int = 0
-    chat_messages_per_minute: float = 0.0
-    subscriber_growth: int = 0
-    engagement_rate: float = 0.0
-    top_keywords: List[str] = None
-    sentiment_score: float = 0.0
-    
-    def __post_init__(self):
-        if self.top_keywords is None:
-            self.top_keywords = []
-
+@dataclass  
+class ProxyStatus:
+    """Proxy operational status"""
+    authenticated: bool = False
+    stream_active: bool = False
+    chat_monitoring: bool = False
+    agents_active: int = 0
+    last_activity: Optional[datetime] = None
 
 class YouTubeProxy:
     """
-    Acts as a unified, WSP-compliant interface for all YouTube operations.
-    This class orchestrates underlying authentication and communication modules
-    with WRE integration for autonomous community engagement.
-    """
-
-    def __init__(self, credentials: Optional[Any] = None, config: Optional[Dict[str, Any]] = None):
-        """
-        Initializes the YouTubeProxy with authenticated credentials and WRE integration.
-
-        :param credentials: An OAuth2 credentials object from google.oauth2.credentials.
-        :param config: Optional configuration dictionary
-        """
-        self.config = config or {}
-        self.credentials = credentials
-        self.service = None
-        
-        # WRE Integration
-        self.wre_engine: Optional[PrometheusOrchestrationEngine] = None
-        self.module_coordinator: Optional[ModuleDevelopmentCoordinator] = None
-        self.wre_enabled = False
-        
-        # YouTube proxy state
-        self.authenticated = False
-        self.active_streams: List[YouTubeStream] = []
-        self.community_metrics: Dict[str, CommunityMetrics] = {}
-        self.orchestrated_modules: Dict[str, Any] = {}
-        
-        # Initialize components
-        self._initialize_wre()
-        self._initialize_youtube_service()
-        
-        # Configure logging
-        self.logger = logging.getLogger(__name__)
-        
-    def _initialize_wre(self):
-        """Initialize WRE components if available"""
-        if not WRE_AVAILABLE:
-            self.logger.info("YouTube Proxy running without WRE integration")
-            return
-            
-        try:
-            self.wre_engine = PrometheusOrchestrationEngine()
-            self.module_coordinator = ModuleDevelopmentCoordinator()
-            self.wre_enabled = True
-            wre_log("YouTube Proxy initialized with WRE integration", level="INFO")
-            self.logger.info("YouTube Proxy successfully integrated with WRE")
-        except Exception as e:
-            self.logger.warning(f"WRE integration failed: {e}")
-            self.wre_enabled = False
+    YouTube Proxy: Cross-Domain Component Orchestrator
     
-    def _initialize_youtube_service(self):
-        """Initialize YouTube API service"""
-        if not self.credentials:
-            self.logger.info("YouTube Proxy initialized without credentials - simulation mode")
-            return
+    Orchestrates YouTube functionality across enterprise domains:
+    - platform_integration/ (auth, stream discovery)
+    - communication/ (chat processing)  
+    - ai_intelligence/ (banter responses)
+    - infrastructure/ (agent management)
+    """
+    
+    def __init__(self, logger: Optional[logging.Logger] = None, config: Optional[Dict[str, Any]] = None):
+        """Initialize with dependency injection support"""
+        self.logger = logger or self._create_default_logger()
+        self.config = config or {}
+        
+        # Core state
+        self.status = ProxyStatus()
+        self.current_stream: Optional[StreamInfo] = None
+        self.active_components: Dict[str, Any] = {}
+        
+        # Initialize components (with fallbacks for standalone mode)
+        self._initialize_components()
+        
+        self.logger.info("🎬 YouTube Proxy initialized successfully")
+    
+    def _create_default_logger(self) -> logging.Logger:
+        """Create default logger for standalone operation"""
+        logger = logging.getLogger("YouTubeProxy")
+        logger.setLevel(logging.INFO)
+        
+        if not logger.handlers:
+            handler = logging.StreamHandler(sys.stdout)
+            formatter = logging.Formatter('%(asctime)s - YouTubeProxy - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)
             
-        if not YOUTUBE_API_AVAILABLE:
-            self.logger.info("YouTube API not available - simulation mode")
-            return
-            
+        return logger
+    
+    def _initialize_components(self):
+        """Initialize cross-domain components with fallbacks"""
         try:
-            self.service = build('youtube', 'v3', credentials=self.credentials)
-            self.authenticated = True
+            # Platform Integration Components
+            self.oauth_manager = OAuthManager(platform="youtube", logger=self.logger)
+            self.stream_resolver = StreamResolver(logger=self.logger)
             
-            if self.wre_enabled:
-                wre_log("YouTube API service initialized successfully", level="INFO")
-                
-            self.logger.info("YouTubeProxy initialized successfully with API access.")
+            # Communication Components  
+            self.chat_processor = LiveChatProcessor(logger=self.logger)
+            
+            # AI Intelligence Components
+            self.banter_engine = BanterEngine(logger=self.logger)
+            
+            # Infrastructure Components
+            self.agent_manager = AgentManager(logger=self.logger)
+            
+            self.logger.info("✅ All enterprise domain components initialized")
             
         except Exception as e:
-            self.logger.error(f"Failed to initialize YouTube service: {e}")
-            if self.wre_enabled:
-                wre_log(f"YouTube service initialization failed: {e}", level="ERROR")
+            self.logger.warning(f"⚠️  Using mock components for standalone mode: {e}")
+            self._initialize_mock_components()
+    
+    def _initialize_mock_components(self):
+        """Initialize mock components for standalone testing"""
+        class MockComponent:
+            def __init__(self, name: str, logger: logging.Logger):
+                self.name = name
+                self.logger = logger
+                
+            async def initialize(self): 
+                self.logger.info(f"🔧 Mock {self.name} initialized")
+                return True
+                
+            async def start(self): 
+                self.logger.info(f"▶️  Mock {self.name} started")
+                return True
+                
+            async def stop(self): 
+                self.logger.info(f"⏹️  Mock {self.name} stopped")
+                return True
+        
+        self.oauth_manager = MockComponent("OAuthManager", self.logger)
+        self.stream_resolver = MockComponent("StreamResolver", self.logger)
+        self.chat_processor = MockComponent("LiveChatProcessor", self.logger)
+        self.banter_engine = MockComponent("BanterEngine", self.logger)
+        self.agent_manager = MockComponent("AgentManager", self.logger)
+        
+        self.logger.info("🔧 Mock components initialized for standalone mode")
 
     async def find_active_livestream(self, channel_id: str) -> Tuple[Optional[str], Optional[str]]:
         """
@@ -672,6 +639,9 @@ async def test_youtube_proxy():
 
 
 if __name__ == "__main__":
-    # Run test when executed directly
-    import asyncio
-    asyncio.run(test_youtube_proxy()) 
+    """Standalone execution entry point"""
+    async def main():
+        proxy = YouTubeProxy()
+        await proxy.run_standalone()
+    
+    asyncio.run(main()) 
