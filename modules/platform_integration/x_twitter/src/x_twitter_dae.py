@@ -881,5 +881,9 @@ async def test_x_twitter_dae():
 
 
 if __name__ == "__main__":
-    # Run test when executed directly
-    asyncio.run(test_x_twitter_dae()) 
+    """Standalone execution entry point"""
+    async def main():
+        dae = XTwitterDAENode()
+        await dae.run_standalone()
+    
+    asyncio.run(main()) 
