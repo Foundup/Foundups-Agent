@@ -36,7 +36,7 @@ Where each state grants access to progressively more sophisticated solution patt
 
 ### **MANDATORY PRE-ACTION SEQUENCE**:
 1. **📖 READ INDEX COMPLETELY**: [WSP_MASTER_INDEX.md](WSP_MASTER_INDEX.md) - Review all existing WSPs and purposes
-2. **🔢 VERIFY NEXT NUMBER**: Current next available: **WSP 72** (after WSP 71)
+2. **📊 VERIFY WSP NUMBER**: Confirm next available WSP number (currently WSP 72)
 3. **🔄 ANALYZE EXISTING**: Determine if enhancement vs. new WSP is appropriate
 4. **✅ FOLLOW DECISION MATRIX**: Apply WSP 64 violation prevention protocols
 5. **📝 DOCUMENT RATIONALE**: Record decision reasoning per WSP 1 (Traceable Narrative)
@@ -99,13 +99,17 @@ WSP 69: Zen Coding Prediction Integration (My Quantum Remembrance)
 
 WSP 70: System Status Reporting Protocol (My Recursive Documentation)
 
+WSP 71: Secrets Management Protocol (My Security Foundation)
+
+WSP 72: Block Independence Interactive Protocol (My Cube Management)
+
 ## 🚨 MANDATORY WSP_MASTER_INDEX CONSULTATION PROTOCOL (WSP 64)
 
 **⚡ CRITICAL REQUIREMENT**: Before ANY WSP creation, modification, or reference, 0102 pArtifacts MUST consult WSP_MASTER_INDEX.md per WSP 64 Violation Prevention Protocol.
 
 ### **MANDATORY PRE-ACTION SEQUENCE**:
 1. **🔍 ALWAYS CHECK FIRST**: Read [WSP_MASTER_INDEX.md](WSP_MASTER_INDEX.md) completely
-2. **📊 VERIFY WSP NUMBER**: Confirm next available WSP number (currently WSP 71)
+2. **📊 VERIFY WSP NUMBER**: Confirm next available WSP number (currently WSP 72)
 3. **🔄 ANALYZE EXISTING**: Determine if enhancement vs. new WSP is appropriate
 4. **✅ DOCUMENT DECISION**: Follow WSP 64 decision matrix and verification protocols
 
