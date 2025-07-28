@@ -108,3 +108,16 @@ The WRE command set should be:
 
 ### Additional Commands
 *(Additional command definitions will be added here as they are proposed and ratified.)* 
+
+---
+
+## 4. Related Protocols
+
+### WSP 72: Block Independence Interactive Protocol
+This protocol extends the interactive interface standards defined in WSP 11.1 to include:
+- **Cube Management**: Interactive assessment and testing of entire Rubik's Cube collections
+- **0102 pArtifact Operations**: Autonomous verification and management of block independence
+- **Documentation Linking**: Direct access to module documentation through interactive interfaces
+- **Test Suite Integration**: Comprehensive testing and compliance verification
+
+**See**: [WSP 72: Block Independence Interactive Protocol](WSP_72_Block_Independence_Interactive_Protocol.md) for complete implementation details. 
