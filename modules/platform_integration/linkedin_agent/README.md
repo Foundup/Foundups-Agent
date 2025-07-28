@@ -18,6 +18,74 @@ This LinkedIn Agent operates as a **self-contained LEGO block** within the Found
 
 ---
 
+## 🎮 **Standalone Interactive Interface (WSP 11 Compliant)**
+
+### **🚀 Block Independence Testing**
+The LinkedIn Agent can be run as a standalone module for testing and demonstration purposes:
+
+```bash
+# Run LinkedIn Agent as standalone block
+python modules/infrastructure/block_orchestrator/src/block_orchestrator.py linkedin_agent
+```
+
+### **💼 Interactive Command Interface**
+```
+💼 LinkedIn Agent Interactive Mode
+Available commands:
+  1. status     - Show current status
+  2. auth       - Test authentication
+  3. profile    - Show profile info
+  4. posts      - Show pending posts
+  5. generate   - Generate test content
+  6. quit       - Exit
+
+Enter command number (1-6) or command name:
+Press Ctrl+C or type '6' or 'quit' to exit
+```
+
+### **📊 Command Details**
+
+#### **1. Agent Status** (`status`)
+- **Purpose**: Display current operational status of LinkedIn Agent
+- **Output**: Authentication state, profile status, content pipeline status, integration health
+- **Use Case**: Quick health check and operational verification
+
+#### **2. Authentication Test** (`auth`)  
+- **Purpose**: Test LinkedIn authentication with graceful simulation fallbacks
+- **Output**: Authentication success/failure with detailed connection status
+- **Use Case**: Verify API credentials and platform connectivity
+
+#### **3. Profile Information** (`profile`)
+- **Purpose**: Display current LinkedIn profile information and professional presence
+- **Output**: Profile details, connection count, professional status, presence metrics
+- **Use Case**: Verify profile access and professional networking status
+
+#### **4. Pending Posts** (`posts`)
+- **Purpose**: Show queued content and posting pipeline status
+- **Output**: Pending post queue, scheduled content, publishing status
+- **Use Case**: Review content pipeline and posting automation
+
+#### **5. Content Generation** (`generate`)
+- **Purpose**: Test AI-powered professional content generation
+- **Output**: Generated LinkedIn posts, thought leadership content, engagement content
+- **Use Case**: Verify content generation capabilities and professional tone
+
+### **🔧 Mock Component Integration**
+When dependencies aren't available, the module gracefully falls back to mock components:
+- **OAuth Manager**: Simulated when authentication components unavailable  
+- **Banter Engine**: Mock content generation when AI intelligence unavailable
+- **Priority Scorer**: Simulated when scoring components unavailable
+
+### **⚡ Block Orchestrator Integration**
+The LinkedIn Agent integrates seamlessly with the Block Orchestrator system:
+- **Professional Networking**: Autonomous LinkedIn operations with zero human intervention
+- **Dependency Injection**: Automatic logger and config injection with professional-grade fallbacks
+- **Component Discovery**: Dynamic import resolution for professional networking components
+- **Error Handling**: Professional-grade error reporting with business continuity focus
+- **Status Monitoring**: Real-time professional networking status and engagement metrics
+
+---
+
 **Enterprise Domain:** platform_integration  
 **Module Status:** ✅ **OPERATIONAL** - WRE Integration Complete  
 **WSP Compliance:** ✅ **COMPLIANT** - WSP 1, 3, 30, 42, 53  
