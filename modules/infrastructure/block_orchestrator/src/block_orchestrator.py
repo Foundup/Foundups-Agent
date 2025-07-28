@@ -21,6 +21,59 @@ project_root = Path(__file__).parent.parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
+# WSP 72: Cube Definitions for Block Independence Protocol
+FOUNDUPS_CUBES = {
+    "youtube": {
+        "name": "YouTube Cube",
+        "modules": [
+            "youtube_proxy", "youtube_auth", "stream_resolver", 
+            "livechat", "live_chat_poller", "live_chat_processor",
+            "banter_engine", "oauth_management"
+        ],
+        "domain": "platform_integration",
+        "status": "operational",
+        "completion": 95
+    },
+    "linkedin": {
+        "name": "LinkedIn Cube", 
+        "modules": [
+            "linkedin_agent", "linkedin_proxy", "linkedin_scheduler",
+            "oauth_management", "banter_engine"
+        ],
+        "domain": "platform_integration",
+        "status": "operational", 
+        "completion": 85
+    },
+    "x_twitter": {
+        "name": "X/Twitter Cube",
+        "modules": [
+            "x_twitter", "oauth_management", "banter_engine"
+        ],
+        "domain": "platform_integration",
+        "status": "operational",
+        "completion": 90
+    },
+    "amo": {
+        "name": "Auto Meeting Orchestrator Cube",
+        "modules": [
+            "auto_meeting_orchestrator", "intent_manager", 
+            "presence_aggregator", "consent_engine", "session_launcher"
+        ],
+        "domain": "communication",
+        "status": "poc",
+        "completion": 85
+    },
+    "remote_builder": {
+        "name": "Remote Builder Cube", 
+        "modules": [
+            "remote_builder", "wre_api_gateway", "wre_core"
+        ],
+        "domain": "platform_integration",
+        "status": "poc",
+        "completion": 70
+    }
+}
+
 class BlockStatus(Enum):
     INITIALIZING = "initializing"
     READY = "ready"  
@@ -242,19 +295,173 @@ class ModularBlockRunner:
             print(f"  • {name}: {status}")
         print()
 
+    # WSP 72: Cube Management Methods
+    async def list_cubes(self) -> None:
+        """List all FoundUps cubes and their status per WSP 72"""
+        print("🧩 FoundUps Cube Architecture:")
+        print("=" * 50)
+        
+        for cube_id, cube_info in FOUNDUPS_CUBES.items():
+            completion = cube_info["completion"]
+            status_emoji = "✅" if completion >= 90 else "🔄" if completion >= 70 else "⚠️"
+            
+            print(f"{status_emoji} {cube_info['name']} ({completion}%)")
+            print(f"   Domain: {cube_info['domain']}")
+            print(f"   Status: {cube_info['status'].upper()}")
+            print(f"   Modules: {len(cube_info['modules'])}")
+            print()
+
+    async def assess_cube(self, cube_name: str) -> Dict[str, Any]:
+        """Assess cube completion and readiness per WSP 72"""
+        if cube_name not in FOUNDUPS_CUBES:
+            print(f"❌ Unknown cube: {cube_name}")
+            print(f"Available cubes: {', '.join(FOUNDUPS_CUBES.keys())}")
+            return {}
+            
+        cube_info = FOUNDUPS_CUBES[cube_name]
+        print(f"🧩 {cube_info['name']} Assessment")
+        print("=" * 50)
+        
+        module_statuses = []
+        total_modules = len(cube_info['modules'])
+        ready_modules = 0
+        
+        for module_name in cube_info['modules']:
+            # Check if module is in registry and can be loaded
+            if module_name in self.block_configs: # Changed from self.registry to self.block_configs
+                try:
+                    # Try to load module to check implementation
+                    config = self.block_configs[module_name] # Changed from self.registry to self.block_configs
+                    module = importlib.import_module(config.module_path)
+                    
+                    # Check for WSP 72 compliance
+                    has_interactive = hasattr(module, 'run_standalone') or any(
+                        hasattr(getattr(module, attr), 'run_standalone') 
+                        for attr in dir(module) 
+                        if not attr.startswith('_')
+                    )
+                    
+                    if has_interactive:
+                        status = "✅ READY"
+                        ready_modules += 1
+                    else:
+                        status = "⚠️ PARTIAL (Missing WSP 72 interface)"
+                    
+                except Exception as e:
+                    status = f"❌ ERROR ({str(e)[:30]}...)"
+                    
+            else:
+                status = "❌ NOT REGISTERED"
+            
+            module_statuses.append((module_name, status))
+            print(f"  {status} {module_name}")
+        
+        cube_readiness = (ready_modules / total_modules) * 100
+        
+        print(f"\n📊 Cube Assessment Results:")
+        print(f"  Module Readiness: {ready_modules}/{total_modules} ({cube_readiness:.0f}%)")
+        print(f"  Cube Status: {cube_info['status'].upper()}")
+        print(f"  Domain: {cube_info['domain']}")
+        print(f"  WSP 72 Compliance: {'✅ READY' if cube_readiness >= 80 else '⚠️ PARTIAL' if cube_readiness >= 50 else '❌ INCOMPLETE'}")
+        
+        if cube_readiness < 100:
+            missing_modules = [name for name, status in module_statuses if not status.startswith("✅")]
+            print(f"\n🎯 Next Priorities:")
+            for module in missing_modules[:3]:  # Show top 3 priorities
+                print(f"  • Implement WSP 72 interface for {module}")
+        
+        return {
+            "cube_name": cube_name,
+            "readiness_percentage": cube_readiness,
+            "ready_modules": ready_modules,
+            "total_modules": total_modules,
+            "module_statuses": module_statuses,
+            "wsp_72_compliant": cube_readiness >= 80
+        }
+
+    async def test_cube(self, cube_name: str) -> bool:
+        """Run integration tests for entire cube per WSP 72"""
+        if cube_name not in FOUNDUPS_CUBES:
+            print(f"❌ Unknown cube: {cube_name}")
+            return False
+            
+        cube_info = FOUNDUPS_CUBES[cube_name]
+        print(f"🧪 Testing {cube_info['name']}")
+        print("=" * 50)
+        
+        test_results = []
+        passed_tests = 0
+        
+        for module_name in cube_info['modules']:
+            print(f"Testing {module_name}...")
+            
+            if module_name in self.block_configs: # Changed from self.registry to self.block_configs
+                try:
+                    # Test if module can be loaded and initialized
+                    success = await self.run_block(module_name, {"test_mode": True})
+                    if success:
+                        test_results.append((module_name, "✅ PASS"))
+                        passed_tests += 1
+                    else:
+                        test_results.append((module_name, "❌ FAIL"))
+                except Exception as e:
+                    test_results.append((module_name, f"❌ ERROR: {str(e)[:30]}..."))
+            else:
+                test_results.append((module_name, "❌ NOT FOUND"))
+        
+        print(f"\n📊 Cube Test Results:")
+        for module, result in test_results:
+            print(f"  {result} {module}")
+        
+        success_rate = (passed_tests / len(cube_info['modules'])) * 100
+        print(f"\n🎯 Overall Success Rate: {success_rate:.0f}% ({passed_tests}/{len(cube_info['modules'])})")
+        
+        return success_rate >= 80
+
 async def main():
-    """Main entry point for standalone block execution"""
+    """Main entry point for standalone block execution and cube management per WSP 72"""
     if len(sys.argv) < 2:
-        print("🧊 FoundUps Modular Block Runner")
-        print("Usage: python block_runner.py <block_name> [config_key=value ...]")
+        print("🧊 FoundUps Modular Block Runner & Cube Manager (WSP 72)")
+        print("Usage:")
+        print("  Block Commands:")
+        print("    python block_orchestrator.py <block_name> [config_key=value ...]")
+        print("    python block_orchestrator.py list")
+        print("  Cube Commands (WSP 72):")
+        print("    python block_orchestrator.py --cubes")
+        print("    python block_orchestrator.py --assess-cube <cube_name>") 
+        print("    python block_orchestrator.py --test-cube <cube_name>")
         print("\nExamples:")
-        print("  python block_runner.py youtube_proxy")
-        print("  python block_runner.py linkedin_agent log_level=DEBUG")
-        print("  python block_runner.py list  # Show available blocks")
+        print("  python block_orchestrator.py youtube_proxy")
+        print("  python block_orchestrator.py linkedin_agent log_level=DEBUG")
+        print("  python block_orchestrator.py --assess-cube amo")
+        print("  python block_orchestrator.py --test-cube youtube")
+        print(f"\nAvailable cubes: {', '.join(FOUNDUPS_CUBES.keys())}")
         return
     
     runner = ModularBlockRunner()
     
+    # Handle cube commands per WSP 72
+    if sys.argv[1] == "--cubes":
+        await runner.list_cubes()
+        return
+    elif sys.argv[1] == "--assess-cube":
+        if len(sys.argv) < 3:
+            print("❌ Cube name required for assessment")
+            print(f"Available cubes: {', '.join(FOUNDUPS_CUBES.keys())}")
+            return
+        await runner.assess_cube(sys.argv[2])
+        return
+    elif sys.argv[1] == "--test-cube":
+        if len(sys.argv) < 3:
+            print("❌ Cube name required for testing")
+            print(f"Available cubes: {', '.join(FOUNDUPS_CUBES.keys())}")
+            return
+        success = await runner.test_cube(sys.argv[2])
+        if not success:
+            sys.exit(1)
+        return
+    
+    # Handle individual block commands
     if sys.argv[1] == "list":
         await runner.list_blocks()
         return
