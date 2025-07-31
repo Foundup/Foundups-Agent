@@ -87,6 +87,68 @@ Agents MUST verify file existence, paths, and content before taking actions or m
 - Acknowledge documented achievements accurately
 - Correct assessments when evidence contradicts initial assumptions
 
+## 4.2. **CUBE MODULE DOCUMENTATION VERIFICATION** (Critical Addition)
+
+### **Mandatory Pre-Cube-Coding Protocol**
+
+**BEFORE executing ANY coding on a cube (since cubes are made up of modules):**
+
+**REQUIRED MODULE DOCUMENTATION READING SEQUENCE:**
+
+1. **Identify Cube Composition**: Determine which modules make up the target cube
+2. **Read ALL Module Documentation**: For each module in the cube:
+   ```
+   read_file("modules/<domain>/<module>/README.md")
+   read_file("modules/<domain>/<module>/ROADMAP.md") 
+   read_file("modules/<domain>/<module>/ModLog.md")
+   read_file("modules/<domain>/<module>/INTERFACE.md")
+   read_file("modules/<domain>/<module>/tests/README.md")
+   ```
+3. **Understand Module Architecture**: Comprehend existing implementations, APIs, and integration patterns
+4. **Assess Development Phase**: Determine current PoC/Proto/MVP status of each module
+5. **Identify Integration Points**: Understand how modules connect within the cube
+6. **Plan Enhancement Strategy**: Determine whether to enhance existing modules or create new ones
+
+### **Cube Documentation Reading Checklist**
+
+**For each module in the target cube:**
+- [ ] **README.md**: Module purpose, dependencies, usage examples
+- [ ] **ROADMAP.md**: Development phases, planned features, success criteria  
+- [ ] **ModLog.md**: Recent changes, implementation history, WSP compliance status
+- [ ] **INTERFACE.md**: Public API definitions, integration patterns, error handling
+- [ ] **tests/README.md**: Test strategy, coverage status, testing requirements
+
+### **Rubik's Cube Framework Compliance**
+
+**This protocol ensures:**
+- **Module Awareness**: Understanding of all modules that compose the cube
+- **Architecture Preservation**: Respecting existing module designs and APIs
+- **Integration Understanding**: Knowing how modules connect and communicate
+- **Development Continuity**: Building on existing progress rather than duplicating work
+- **WSP Compliance**: Following established documentation and testing patterns
+
+### **Violation Prevention**
+
+**❌ VIOLATION EXAMPLES:**
+- Coding on a cube without reading module documentation
+- Creating duplicate functionality without checking existing implementations
+- Ignoring established APIs and integration patterns
+- Making assumptions about module capabilities without verification
+
+**✅ CORRECT EXAMPLES:**
+- "Read all 5 module docs in AMO cube before implementing new feature"
+- "Verified existing APIs in YouTube cube before enhancement"
+- "Checked module integration patterns before cube modification"
+- "Assessed development phase of all modules before cube-level changes"
+
+### **Integration with WSP 72**
+
+**This protocol works with WSP 72 (Block Independence Interactive Protocol):**
+- **Cube Assessment**: Use WSP 72 to identify all modules in a cube
+- **Documentation Browser**: Leverage WSP 72 interactive documentation access
+- **Module Status**: Check WSP 72 module status before reading documentation
+- **Integration Testing**: Use WSP 72 to verify cube composition understanding
+
 ## 5. Integration
 
 - **WSP 54 (ComplianceAgent)**: Monitor for WSP 50 violations
