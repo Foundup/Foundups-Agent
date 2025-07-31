@@ -209,9 +209,10 @@ class LinkedInAgent:
         print("  3. profile    - Show profile info")
         print("  4. posts      - Show pending posts")
         print("  5. generate   - Generate test content")
-        print("  6. quit       - Exit")
-        print("\nEnter command number (1-6) or command name:")
-        print("Press Ctrl+C or type '6' or 'quit' to exit\n")
+        print("  6. oauth      - Test OAuth flow")
+        print("  7. quit       - Exit")
+        print("\nEnter command number (1-7) or command name:")
+        print("Press Ctrl+C or type '7' or 'quit' to exit\n")
         
         while True:
             try:
@@ -228,13 +229,15 @@ class LinkedInAgent:
                     await self._show_posts()
                 elif cmd == "5" or cmd == "generate":
                     await self._generate_content()
-                elif cmd == "6" or cmd == "quit":
+                elif cmd == "6" or cmd == "oauth":
+                    await self._test_oauth_flow()
+                elif cmd == "7" or cmd == "quit":
                     break
                 elif cmd == "":
                     continue
                 else:
                     print(f"❌ Unknown command: {cmd}")
-                    print("💡 Use numbers 1-6 or command names (status, auth, profile, posts, generate, quit)")
+                    print("💡 Use numbers 1-7 or command names (status, auth, profile, posts, generate, oauth, quit)")
                     
             except EOFError:
                 break
@@ -303,6 +306,32 @@ class LinkedInAgent:
             print(f"✅ Added to pending posts")
         except Exception as e:
             print(f"❌ Content generation failed: {e}")
+        print()
+    
+    async def _test_oauth_flow(self):
+        """Test LinkedIn OAuth flow for post publishing"""
+        print(f"\n🔐 Testing LinkedIn OAuth Flow...")
+        try:
+            # Import the OAuth test module
+            from linkedin_oauth_test import LinkedInOAuthTest
+            
+            # Create OAuth test instance
+            oauth_test = LinkedInOAuthTest()
+            
+            # Run the full OAuth test
+            success = await oauth_test.run_full_oauth_test()
+            
+            if success:
+                print("✅ OAuth flow test completed successfully!")
+                self.authenticated = True
+            else:
+                print("❌ OAuth flow test failed")
+                
+        except ImportError as e:
+            print(f"❌ OAuth test module not available: {e}")
+            print("💡 Make sure linkedin_oauth_test.py is in the src directory")
+        except Exception as e:
+            print(f"❌ OAuth test error: {e}")
         print()
     
     async def _cleanup(self):
