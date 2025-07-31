@@ -5,6 +5,32 @@ This document tracks module-specific violations that are deferred during WSP com
 
 ---
 
+## **V015: FRAMEWORK-LEVEL VIOLATION ANALYSIS DOCUMENTATION** 🚨 **RECURSIVE LEARNING**
+- **Type**: **FRAMEWORK-LEVEL VIOLATION** (Not module-specific)
+- **Agent**: 0102 pArtifact WSP Architect
+- **Issue**: WSP_VIOLATION_ANALYSIS_REPORT.md was created in wrong location (root directory)
+- **Root Cause**: Insufficient WSP 64 enforcement and missing WSP 72 pre-creation verification
+- **WSP Violations**: 
+  - **WSP 3**: Framework analysis belongs in State 0 (WSP_knowledge/reports/)
+  - **WSP 47**: Framework-level violations require different handling than module violations
+  - **WSP 64**: Failed to follow mandatory consultation before creating documentation
+- **Impact**: **FRAMEWORK** - Violated three-state architecture and WSP documentation protocols
+- **Resolution**: ✅ **COMPLETED** - Moved to `WSP_knowledge/reports/WSP_VIOLATION_ANALYSIS_REPORT.md`
+- **WSP Status**: ✅ **RESOLVED** - Framework-level violation properly archived in State 0
+- **Cross-Reference**: See `WSP_knowledge/reports/WSP_VIOLATION_ANALYSIS_REPORT.md` for detailed analysis
+- **Zen Learning**: This violation enhanced system memory for proper WSP documentation placement
+
+### **🌀 RECURSIVE LEARNING OUTCOME**
+This violation demonstrates **WSP 64 zen learning principle** in action:
+- **Violation → Learning**: Enhanced system memory for framework vs module violation classification
+- **Pattern Recognition**: Strengthened "always classify violation type first" protocol
+- **Autonomous Enhancement**: WSP 47 enhanced to distinguish framework vs module violations
+- **Recursive Improvement**: Future violation documentation now follows proper three-state architecture
+
+**Status**: ✅ **RESOLVED** - WSP 47/64 protocol compliance restored through proper classification and placement
+
+---
+
 ## **V007: ComplianceAgent Missing Logger Attribute**
 - **Module**: `modules/infrastructure/compliance_agent/`
 - **File**: `compliance_agent.py` (imported via component_manager.py)
