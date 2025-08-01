@@ -149,6 +149,190 @@ Agents MUST verify file existence, paths, and content before taking actions or m
 - **Module Status**: Check WSP 72 module status before reading documentation
 - **Integration Testing**: Use WSP 72 to verify cube composition understanding
 
+## 4.3. **TEST FILE BLOAT PREVENTION PROTOCOL** (Critical Addition - LinkedIn Agent Learning Integration)
+
+### **Mandatory Pre-Test-File-Creation Protocol**
+
+**BEFORE creating ANY new test files in ANY module:**
+
+**CRITICAL WSP 40 VIOLATION PREVENTION**: Test file redundancy has been identified as a primary cause of architectural bloat. The LinkedIn Agent module cleanup revealed 43% test file redundancy (9 redundant files removed).
+
+**REQUIRED TEST FILE VERIFICATION SEQUENCE:**
+
+1. **Read Test Documentation FIRST**:
+   ```
+   read_file("modules/<domain>/<module>/tests/README.md")
+   read_file("modules/<domain>/<module>/tests/TestModLog.md")
+   ```
+
+2. **List Existing Test Files**:
+   ```
+   list_dir("modules/<domain>/<module>/tests/")
+   ```
+
+3. **Analyze Test Purpose Overlap**:
+   ```
+   # Search for similar test functionality
+   grep_search("test_<functionality>", include_pattern="test_*.py")
+   codebase_search("How is <functionality> currently tested?", target_directories=["modules/<domain>/<module>/tests/"])
+   ```
+
+4. **Validate Test File Necessity**:
+   - Can this functionality be added to an existing test file?
+   - Does this follow single responsibility principle (WSP 40)?
+   - Is this creating duplicate test coverage?
+
+5. **Pre-Creation Compliance Check**:
+   ```
+   python modules/<domain>/<module>/tests/wsp_test_validator.py --proposed-file="test_<name>.py" --purpose="<purpose>"
+   ```
+
+### **Test File Creation Decision Matrix**
+
+**✅ CREATE NEW TEST FILE IF:**
+- Functionality is genuinely new and unrelated to existing tests
+- Existing test files would exceed 500 lines with addition
+- Different test type (unit vs integration vs performance)
+- Module testing requirements explicitly demand separation
+
+**❌ DO NOT CREATE NEW TEST FILE IF:**
+- Similar functionality already exists in other test files
+- Purpose overlaps with existing test coverage
+- Would create architectural bloat (WSP 40 violation)
+- Can be consolidated into existing test modules
+
+**🔄 CONSOLIDATE INSTEAD IF:**
+- Multiple test files cover related functionality
+- Test file count exceeds optimal threshold (>15 files)
+- Purpose overlap detected between existing files
+
+### **Test File Bloat Detection Checklist**
+
+**For each proposed test file:**
+- [ ] **Purpose Uniqueness**: No existing test file covers this functionality
+- [ ] **Naming Convention**: Follows WSP naming standards (`test_<module>_<function>.py`)
+- [ ] **Single Responsibility**: Tests one specific module component or behavior
+- [ ] **Size Justification**: Cannot be reasonably added to existing test file
+- [ ] **Documentation Update**: README.md and TestModLog.md will be updated
+- [ ] **Compliance Verification**: WSP test validator execution completed
+
+### **Automatic Bloat Prevention**
+
+**Implemented Prevention Mechanisms:**
+
+1. **WSP Test Validator Integration**:
+   ```bash
+   # Mandatory execution before test file creation
+   python wsp_test_validator.py --check-bloat
+   ```
+
+2. **Purpose Overlap Detection**:
+   - Automated scanning of existing test file purposes
+   - Keyword overlap analysis for similar functionality
+   - Consolidation opportunity identification
+
+3. **Violation Recovery Protocol**:
+   - Immediate detection of redundant test files
+   - Automated consolidation recommendations
+   - WSP 40 compliance restoration procedures
+
+### **Learning from LinkedIn Agent Module**
+
+**Critical Lessons Integrated:**
+
+**❌ Violation Pattern Identified:**
+- OAuth troubleshooting created 9 redundant test files
+- Files included: `quick_diagnostic.py`, `fix_linkedin_app.py`, `test_token_exchange.py`, `exchange_code_manual.py`
+- Multiple scheduling files: 5 different scheduling test implementations
+- **Root Cause**: Lack of pre-action verification (WSP 50 violation)
+
+**✅ Solution Implemented:**
+- Consolidated 9 files → 2 essential files (test_oauth_manual.py, test_scheduling.py)
+- 43% reduction in test file count
+- WSP 40 compliance restored
+- Zero redundancy achieved
+
+**🛡️ Prevention Mechanisms:**
+- Mandatory test file validator (`wsp_test_validator.py`)
+- Enhanced README.md with bloat prevention protocols
+- TestModLog.md tracking for violation prevention
+- Cursor rules integration for system-wide enforcement
+
+### **Test File Lifecycle Management**
+
+**Creation Phase:**
+1. ✅ WSP 50 pre-action verification
+2. ✅ Test validator execution
+3. ✅ Purpose uniqueness confirmation
+4. ✅ Documentation update
+
+**Maintenance Phase:**
+1. 🔄 Regular bloat detection scans
+2. 🔄 Consolidation opportunity assessment
+3. 🔄 Purpose drift monitoring
+4. 🔄 WSP compliance validation
+
+**Evolution Phase:**
+1. 🚀 Test framework optimization
+2. 🚀 Modular test architecture enhancement
+3. 🚀 Coverage efficiency improvement
+4. 🚀 Automated bloat prevention
+
+### **Integration with Existing WSP Protocols**
+
+**WSP 40 (Architectural Coherence):**
+- Single responsibility principle for test files
+- Modular test architecture maintenance
+- Bloat prevention as architectural requirement
+
+**WSP 5 (Testing Standards):**
+- ≥90% coverage without redundant test files
+- Quality over quantity in test implementation
+- Efficient test suite maintenance
+
+**WSP 22 (ModLog and Roadmap):**
+- TestModLog.md tracking of test file evolution
+- Documentation of consolidation actions
+- Learning integration from violation patterns
+
+**WSP 64 (Violation Prevention):**
+- Automated detection of test file redundancy
+- Pre-creation validation requirements
+- Violation recovery protocols
+
+### **Success Metrics**
+
+**Bloat Prevention Effectiveness:**
+- 0% test file redundancy in new modules
+- <15 test files per module maximum
+- 100% pre-creation validation execution
+- Automated bloat detection coverage
+
+**Architectural Health:**
+- WSP 40 compliance: 100% single responsibility
+- Test suite efficiency: High coverage/file ratio
+- Maintenance overhead: Minimal
+- Documentation synchronization: Complete
+
+### **Implementation Requirements**
+
+**All agents MUST:**
+- Execute test file validator before creation
+- Read existing test documentation first
+- Verify purpose uniqueness before proceeding
+- Update TestModLog.md with rationale
+- Follow consolidation over creation principle
+
+**System Integration:**
+- Cursor rules enforce test bloat prevention
+- WRE integration for automated validation
+- ModLog tracking for continuous improvement
+- Framework protection against test architectural decay
+
+---
+
+**Implementation Note**: This protocol prevents the test file bloat patterns identified in the LinkedIn Agent module and ensures system-wide protection against architectural degradation through redundant test file creation.
+
 ## 5. Integration
 
 - **WSP 54 (ComplianceAgent)**: Monitor for WSP 50 violations
