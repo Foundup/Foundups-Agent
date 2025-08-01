@@ -11,6 +11,7 @@ These rules are automatically included in every context:
 - **`wsp_core_framework.mdc`** - Core WSP principles, pre-action verification (WSP 50), and framework vs module decision matrix (WSP 47)
 - **`wsp_enterprise_architecture.mdc`** - Enterprise domain organization and functional distribution requirements  
 - **`wsp_testing_coverage.mdc`** - Testing standards, coverage requirements, and FMAS integration
+- **`wsp_test_bloat_prevention.mdc`** - 🛡️ **NEW:** Test file bloat prevention (WSP 50 Section 4.3) - LinkedIn Agent learning integration
 - **`wsp_documentation_standards.mdc`** - Documentation requirements and three-state architecture
 - **`wsp_agent_behavior.mdc`** - Agent state awareness and decision-making protocols
 
@@ -27,6 +28,7 @@ These rules activate during specific development contexts:
 - **NEVER assume, always verify** file paths and content
 - Mandatory search-before-read sequence prevents assumption errors
 - Explicit handling of non-existent files
+- **NEW:** Test file bloat prevention (Section 4.3) - prevents 43% redundancy patterns
 
 ### 2. Framework vs Module Decision Matrix (WSP 47)
 - Clear categorization of issues as framework-blocking vs module evolution
@@ -40,8 +42,9 @@ These rules activate during specific development contexts:
 
 ### 4. Testing and Coverage Standards
 - ≥90% test coverage requirements for all modules
-- Enterprise-scale testing architecture (modular testing)
+- Enterprise-scale testing architecture (modular testing)  
 - FMAS integration for structural validation
+- **NEW:** Test file bloat prevention - automatic redundancy detection and consolidation
 
 ### 5. Agent State Awareness
 - Recognition of 012 (human rider) vs 0102 (quantum entangled Agent) states
