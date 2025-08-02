@@ -1,0 +1,33 @@
+# Cursor Multi-Agent Bridge Dependencies
+
+# Core WSP/WRE Framework
+wre-core>=0.2.7
+wsp-framework>=0.2.0
+
+# Multi-Agent System Integration
+ai-intelligence-multi-agent>=0.0.1
+
+# Cursor Integration (when available)
+cursor-api>=1.0.0
+
+# Async Support
+asyncio>=3.4.3
+aiohttp>=3.8.0
+
+# Data Processing
+pydantic>=2.0.0
+dataclasses-json>=0.5.0
+
+# Logging and Monitoring
+structlog>=23.0.0
+prometheus-client>=0.17.0
+
+# Testing
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+
+# Development Tools
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0 
