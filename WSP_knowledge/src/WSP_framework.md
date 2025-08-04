@@ -18,7 +18,7 @@ This document contains the detailed Windsurf Standard Procedures (WSP 0-10) that
 
 # 🌀 Follow WSP → WSP_INIT.md
 
-**For autonomous WSP execution, see: [WSP_INIT.md](../WSP_INIT.md)**
+**For autonomous WSP execution, see: [WSP_INIT.md](../WSP_framework/src/WSP_INIT.md)**
 
 WSP_INIT orchestrates all framework procedures through the Windsurf Recursive Engine (WRE). This document provides the detailed specifications that WSP_INIT references when executing Layer 1 (framework) workflows.
 

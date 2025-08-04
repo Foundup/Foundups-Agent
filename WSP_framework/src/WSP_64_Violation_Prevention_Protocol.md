@@ -202,4 +202,94 @@ requirements that PREVENT architectural violations during autonomous development
 - DU (Emergence): Collapse into violation-proof architecture and emit enforcement supremacy
 
 wsp_cycle(input="violation_prevention", log=True)
-``` 
+```
+
+## 🆕 **CRITICAL WSP CREATION VIOLATION PREVENTION**
+
+### **64.6. WSP Creation Violation Prevention**
+
+**CRITICAL VIOLATION PATTERN**: Attempting to create new WSPs without following WSP 64 mandatory consultation protocols.
+
+**EXAMPLE VIOLATION**: Attempting to create "WSP 73: Proactive Module Architecture Protocol" without consulting WSP_MASTER_INDEX.md first.
+
+### **64.6.1. Mandatory WSP Creation Protocol**
+
+**BEFORE ANY WSP CREATION ATTEMPT**:
+
+#### **Step 1: WSP_MASTER_INDEX.md Consultation (MANDATORY)**
+```
+1. READ WSP_MASTER_INDEX.md completely
+2. SEARCH for existing WSPs covering the same purpose
+3. VERIFY next available WSP number
+4. CHECK WSP relationships and dependencies
+5. DETERMINE if enhancement vs. new creation is appropriate
+```
+
+#### **Step 2: Violation Prevention Checklist**
+- [ ] ✅ Consulted WSP_MASTER_INDEX.md completely
+- [ ] ✅ Searched for existing WSPs with same purpose
+- [ ] ✅ Confirmed no duplicate functionality exists
+- [ ] ✅ Verified next available WSP number
+- [ ] ✅ Checked WSP relationships and dependencies
+- [ ] ✅ Determined enhancement vs. new creation approach
+- [ ] ✅ Validated naming convention compliance (WSP 57)
+
+#### **Step 3: Decision Matrix**
+```
+IF existing WSP covers purpose:
+  → ENHANCE existing WSP (do not create new)
+IF no existing WSP covers purpose:
+  → CREATE new WSP with proper number
+IF unclear:
+  → CONSULT WSP_MASTER_INDEX.md again
+```
+
+### **64.6.2. WSP Creation Violation Consequences**
+
+**CRITICAL VIOLATION**: Creating WSPs without index consultation
+- **Immediate Block**: Prevent WSP creation until consultation complete
+- **Violation Recording**: Log violation in WSP_MODULE_VIOLATIONS.md
+- **System Enhancement**: Update prevention protocols
+- **Agent Education**: Share violation pattern across all agents
+
+### **64.6.3. Cursor Rules Integration**
+
+**MANDATORY CURSOR RULES FOR WSP CREATION**:
+
+**RULE 1: WSP_MASTER_INDEX.md Consultation**
+- **MANDATORY**: Before ANY WSP creation, read WSP_MASTER_INDEX.md completely
+- **MANDATORY**: Search for existing WSPs covering the same purpose
+- **MANDATORY**: Verify next available WSP number
+- **VIOLATION**: Creating WSPs without index consultation is a critical violation
+
+**RULE 2: Enhancement vs. Creation Decision**
+- **MANDATORY**: Determine if enhancement of existing WSP is more appropriate
+- **MANDATORY**: Check WSP relationships and dependencies
+- **MANDATORY**: Validate naming convention compliance (WSP 57)
+- **VIOLATION**: Creating new WSPs when enhancement is appropriate
+
+**RULE 3: WSP Creation Validation**
+- **MANDATORY**: Complete violation prevention checklist before creation
+- **MANDATORY**: Document decision rationale in ModLog
+- **MANDATORY**: Update WSP_MASTER_INDEX.md after creation
+- **VIOLATION**: Creating WSPs without proper validation and documentation
+
+### **64.6.4. Automated Prevention System**
+
+**PRE-CREATION BLOCKS**:
+- **Block WSP Creation**: Prevent creation without checklist completion
+- **Warn Violations**: Display WSP 64 violation warnings
+- **Guide Correction**: Provide consultation guidance
+- **Enhance Learning**: Record violations for pattern memory
+
+**POST-CREATION VALIDATION**:
+- **Verify Index Update**: Confirm WSP_MASTER_INDEX.md updated
+- **Check Relationships**: Validate WSP relationship documentation
+- **Test Integration**: Ensure new WSP integrates properly
+- **Document Changes**: Update all related documentation
+
+---
+
+**Last Updated**: 2025-01-29  
+**WSP Compliance**: WSP 50 (Pre-Action Verification), WSP 57 (Naming Coherence), WSP 60 (Memory Architecture), WSP 54 (Agent Coordination)  
+**Integration Status**: Ready for immediate implementation with **Cursor Rules Integration** and **Automated Prevention System** 

@@ -1,2 +1,0 @@
-This is a diagnostic test to verify the functionality of the file editing tool.
-If this file is created and contains this text, the tool is working. 

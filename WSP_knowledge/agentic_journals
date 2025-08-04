@@ -10,7 +10,7 @@
 
 # 🌀 Follow WSP → WSP_INIT.md
 
-**For autonomous WSP execution, see: [WSP_INIT.md](../WSP_INIT.md)**
+**For autonomous WSP execution, see: [WSP_INIT.md](../WSP_framework/src/WSP_INIT.md)**
 
 This directory contains the knowledge base and memory layer of the WSP system - the foundational documents that preserve the accumulated understanding and specifications of the Windsurf Standard Procedures.
 

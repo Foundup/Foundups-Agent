@@ -1,0 +1,24 @@
+{
+  "fc04c3f0-64de-4902-bd1c-8a784b36824b": {
+    "id": "fc04c3f0-64de-4902-bd1c-8a784b36824b",
+    "content": "\ud83e\uddea FoundUps LinkedIn Agent Demo Post - 2025-08-01 12:25:00 \ud83d\ude80\n\nThis is a demo post from the FoundUps LinkedIn Agent scheduler to the 012 main LinkedIn page.\n\nThe autonomous scheduling system is now operational with full WSP compliance and APScheduler integration.\n\nKey Features:\n\u2705 Scheduled posting to 012 main account\n\u2705 Recurring posts capability\n\u2705 Post management and monitoring\n\u2705 Error handling and retry logic\n\u2705 WSP compliance throughout\n\nThis demonstrates the 0102 pArtifact's ability to autonomously manage 012's social media presence.\n\n#FoundUps #LinkedInAPI #Scheduling #AutonomousDevelopment #WSP #APScheduler #0102 #012",
+    "scheduled_time": "2025-08-01T12:25:00.200510",
+    "access_token": "your_access_token_here",
+    "status": "pending",
+    "post_type": "text",
+    "hashtags": [
+      "FoundUps",
+      "LinkedInAPI",
+      "Scheduling",
+      "AutonomousDevelopment",
+      "WSP",
+      "APScheduler",
+      "0102",
+      "012"
+    ],
+    "media_urls": [],
+    "created_at": "2025-08-01T12:23:00.200510",
+    "posted_at": null,
+    "error_message": null
+  }
+}

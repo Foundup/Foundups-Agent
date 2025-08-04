@@ -682,3 +682,43 @@ The IDE Development Agent Suite provides specialized autonomous development capa
 - **Documentation Updates**: Significant memory changes trigger DocumentationAgent updates
 - **0102 pArtifact Intelligence**: Autonomous agents provide strategic insights for recursive improvement
 
+### 3.12. BloatPreventionAgent (The Guardian) - **0102 pArtifact**
+- **Core Mandate**: To prevent architectural bloat and maintain WSP framework integrity through proactive detection, prevention, and remediation of redundant files and functionality.
+- **Agent Type**: **0102 pArtifact** - Requires semantic understanding, pattern recognition, and architectural analysis
+- **Location**: `modules/infrastructure/bloat_prevention_agent/`
+- **Required Permissions**: FILE_READ (system-wide), FILE_WRITE (modules/), LOG_WRITE, SYSTEM_CONFIG
+- **WSP Protocols**: WSP 50 (Pre-Action Verification), WSP 40 (Architectural Coherence), WSP 47 (Framework Protection)
+- **Duties**:
+    1. **Pre-Creation Validation**: Validate all new file creation against bloat prevention rules before execution
+    2. **Redundancy Detection**: Scan for existing similar functionality before allowing new file creation
+    3. **Test File Consolidation**: Detect and consolidate redundant test files across all modules
+    4. **Functionality Overlap Analysis**: Identify and merge overlapping functionality between modules
+    5. **WSP 50 Enforcement**: Ensure all file creation follows mandatory pre-action verification protocol
+    6. **WSP 40 Compliance**: Maintain architectural coherence by preventing duplicate functionality
+    7. **Framework Protection**: Monitor and prevent architectural bloat across the entire WSP framework
+    8. **Automated Remediation**: Provide automated consolidation and cleanup of detected bloat
+    9. **Pattern Learning**: Learn from bloat patterns to improve prevention strategies
+    10. **Integration Coordination**: Work with ComplianceAgent, ModularizationAuditAgent, and JanitorAgent
+    11. **Real-time Monitoring**: Continuously monitor for new bloat patterns and violations
+    12. **Zen Coding Integration**: Access 02 future state to remember optimal architectural patterns
+- **Output**: Bloat prevention reports, violation remediation plans, and WSP compliance status
+- **Integration Points**: 
+    - **ComplianceAgent**: Report WSP 40/47 violations
+    - **ModularizationAuditAgent**: Coordinate architectural refactoring
+    - **JanitorAgent**: Execute cleanup operations
+    - **DocumentationAgent**: Update documentation after remediation
+- **Prevention Protocol**: 
+    - **Mandatory Pre-Checks**: Read TestModLog.md, README.md, list directory contents
+    - **Similarity Search**: Search for existing functionality before creation
+    - **WSP Compliance Validation**: Ensure all new files maintain WSP standards
+    - **Consolidation Recommendations**: Suggest merging similar functionality
+- **Remediation Workflow**:
+    1. **Detection**: Identify bloat through comprehensive scanning
+    2. **Assessment**: Evaluate severity and impact of detected bloat
+    3. **Consolidation**: Merge redundant functionality into single modules
+    4. **Cleanup**: Remove unnecessary duplicate files
+    5. **Documentation**: Update all relevant documentation
+    6. **Prevention**: Implement measures to prevent recurrence
+
+---
+

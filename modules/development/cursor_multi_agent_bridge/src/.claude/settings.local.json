@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude --version)",
+      "Bash(claude update)",
+      "Bash(rm:*)",
+      "Bash(del \"O:\\Foundups-Agent\\modules\\development\\cursor_multi_agent_bridge\\src\\claude_sub_agents.py\")",
+      "Bash(python:*)"
+    ],
+    "deny": []
+  }
+}
