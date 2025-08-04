@@ -149,6 +149,82 @@ Agents MUST verify file existence, paths, and content before taking actions or m
 - **Module Status**: Check WSP 72 module status before reading documentation
 - **Integration Testing**: Use WSP 72 to verify cube composition understanding
 
+## 4.3. **BLOAT PREVENTION VERIFICATION** (Critical Addition)
+
+### **Mandatory Pre-File-Creation Protocol**
+
+**BEFORE creating ANY new files (especially test files, modules, or components):**
+
+**REQUIRED BLOAT PREVENTION SEQUENCE:**
+
+1. **Read Existing Documentation FIRST**:
+   ```
+   read_file("modules/<domain>/<module>/tests/TestModLog.md")
+   read_file("modules/<domain>/<module>/tests/README.md")
+   list_dir("modules/<domain>/<module>/tests/")
+   ```
+
+2. **Search for Existing Functionality**:
+   ```
+   codebase_search("similar functionality or purpose")
+   file_search("potential duplicate files")
+   grep_search("existing implementations")
+   ```
+
+3. **Validate Necessity**:
+   - Is this functionality already tested/implemented?
+   - Can this be added to an existing module?
+   - Does this follow single responsibility principle (WSP 40)?
+
+4. **Check WSP Compliance**:
+   - Does this maintain WSP 40 (architectural coherence)?
+   - Does this follow WSP 5 (testing standards)?
+   - Will this be documented per WSP 22 and WSP 34?
+
+5. **Run Bloat Prevention Validator** (if available):
+   ```
+   python wsp_test_validator.py  # For test files
+   python wsp_module_validator.py  # For modules
+   ```
+
+### **Bloat Prevention Checklist**
+
+**Before creating any new file:**
+- [ ] **TestModLog.md read** - Understand recent test evolution
+- [ ] **README.md read** - Understand current structure and purpose
+- [ ] **Directory listed** - Verify existing files and their functions
+- [ ] **Functionality searched** - Ensure no duplicates exist
+- [ ] **Necessity validated** - Confirm single responsibility principle
+- [ ] **WSP compliance checked** - Verify architectural coherence
+- [ ] **Validator run** - Execute automated bloat detection
+
+### **Bloat Prevention Rules**
+
+**🚨 CRITICAL VIOLATION PREVENTION:**
+- **NEVER create duplicate files** without explicit WSP violation justification
+- **ALWAYS consolidate** similar functionality into existing modules
+- **FOLLOW single responsibility** principle per WSP 40
+- **UPDATE documentation** immediately after any file changes
+- **RUN validators** before committing new files
+
+### **Violation Recovery Protocol**
+
+**If bloat is detected:**
+1. **STOP** all development immediately
+2. **ASSESS** the violation scope and impact
+3. **CONSOLIDATE** redundant functionality
+4. **DELETE** unnecessary duplicate files
+5. **UPDATE** documentation with lessons learned
+6. **PREVENT** future violations with better pre-checks
+
+### **Integration with WSP 47**
+
+**This protocol works with WSP 47 (Framework Protection Protocol):**
+- **Violation Detection**: WSP 47 identifies architectural violations
+- **Protection Enforcement**: WSP 47 prevents framework degradation
+- **Recovery Coordination**: WSP 47 guides violation remediation
+- **Prevention Learning**: WSP 47 captures lessons for future prevention
+
 ## 5. Integration
 
 - **WSP 54 (ComplianceAgent)**: Monitor for WSP 50 violations

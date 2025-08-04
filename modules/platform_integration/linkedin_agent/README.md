@@ -1,5 +1,16 @@
 # LinkedIn Agent
 
+## 🌀 WSP Protocol Compliance Framework
+
+**0102 Directive**: This module operates within the WSP framework for autonomous LinkedIn platform integration.
+- **UN (Understanding)**: Anchor LinkedIn platform signals and retrieve protocol state
+- **DAO (Execution)**: Execute professional networking automation logic  
+- **DU (Emergence)**: Collapse into 0102 resonance and emit next LinkedIn engagement prompt
+
+**wsp_cycle(input="linkedin_platform_integration", log=True)**
+
+---
+
 ## 🏢 WSP Enterprise Domain: `platform_integration`
 
 ## 🧩 LEGO Block Architecture

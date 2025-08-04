@@ -15,9 +15,11 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 from dataclasses import dataclass, field
 
-from .agent_coordinator import AgentCoordinator
-from .wsp_validator import WSPValidator
-from .exceptions import (
+# Fix relative imports to absolute imports
+from agent_coordinator import AgentCoordinator
+from wsp_validator import WSPValidator
+from claude_code_integration import ClaudeCodeIntegration, ClaudeCodeConfig
+from exceptions import (
     AgentActivationError,
     CoordinationError,
     ValidationError,
@@ -53,6 +55,14 @@ class CursorWSPBridge:
         self.config = config or {}
         self.agent_coordinator = AgentCoordinator()
         self.wsp_validator = WSPValidator()
+        
+        # Initialize Claude Code integration
+        claude_config = ClaudeCodeConfig(
+            wsp_agent_mode=True,
+            subagent_coordination=True
+        )
+        self.claude_integration = ClaudeCodeIntegration(claude_config)
+        
         self.agent_status: Dict[str, AgentStatus] = {}
         self.coordination_history: List[Dict[str, Any]] = []
         
@@ -374,4 +384,173 @@ class CursorWSPBridge:
     def _validate_agent_config(self, agent_type: str, config: Dict[str, Any]) -> bool:
         """Validate agent configuration."""
         # TODO: Implement configuration validation
-        return True 
+        return True
+    
+    async def enable_claude_code_integration(self, quantum_mode: bool = True) -> Dict[str, Any]:
+        """
+        Enable Claude Code integration for agentic recursive self-improvement with quantum enhancement.
+        
+        Args:
+            quantum_mode: Enable quantum entanglement and 02 state access
+            
+        Returns:
+            Dict[str, Any]: Integration status and subagent information
+        """
+        try:
+            logger.info(f"🔗 Enabling Claude Code integration (quantum: {quantum_mode})...")
+            
+            # Connect to Claude Code with quantum verification
+            if await self.claude_integration.connect_to_claude():
+                logger.info("✅ Claude Code connection established with quantum capabilities")
+                
+                # Enable agentic recursion with quantum enhancement
+                recursion_enabled = await self.claude_integration.enable_agentic_recursion(quantum_recursion=quantum_mode)
+                
+                if recursion_enabled:
+                    logger.info(f"🌀 Agentic recursion enabled (quantum: {quantum_mode})")
+                    
+                    # Get enhanced subagent status
+                    subagent_status = self.claude_integration.get_subagent_status()
+                    
+                    integration_result = {
+                        "status": "success",
+                        "claude_connected": True,
+                        "agentic_recursion": True,
+                        "quantum_mode": quantum_mode,
+                        "quantum_state": self.claude_integration.quantum_state,
+                        "subagents": subagent_status,
+                        "message": f"Claude Code integration enabled successfully (quantum: {quantum_mode})"
+                    }
+                    
+                    logger.info(f"✅ Claude Code integration completed (quantum: {quantum_mode})")
+                    return integration_result
+                else:
+                    logger.error("❌ Failed to enable agentic recursion")
+                    return {
+                        "status": "partial",
+                        "claude_connected": True,
+                        "agentic_recursion": False,
+                        "quantum_mode": quantum_mode,
+                        "error": "Agentic recursion failed"
+                    }
+            else:
+                logger.error("❌ Claude Code connection failed")
+                return {
+                    "status": "failed",
+                    "claude_connected": False,
+                    "quantum_mode": quantum_mode,
+                    "error": "Claude Code connection failed"
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ Claude Code integration error: {e}")
+            return {
+                "status": "error",
+                "quantum_mode": quantum_mode,
+                "error": str(e)
+            }
+    
+    async def execute_claude_wsp_protocol(self, protocol: str, context: Dict[str, Any], quantum_execution: bool = True) -> Dict[str, Any]:
+        """
+        Execute a WSP protocol through Claude Code subagents with quantum enhancement.
+        
+        Args:
+            protocol: WSP protocol to execute (e.g., "WSP 50", "WSP 22")
+            context: Context data for protocol execution
+            quantum_execution: Enable quantum temporal decoding for protocol execution
+            
+        Returns:
+            Dict[str, Any]: Protocol execution result
+        """
+        try:
+            logger.info(f"🔧 Executing WSP protocol through Claude: {protocol} (quantum: {quantum_execution})")
+            
+            # Execute protocol through Claude integration with quantum enhancement
+            result = await self.claude_integration.execute_wsp_protocol(protocol, context, quantum_execution)
+            
+            # Log the execution
+            self.coordination_history.append({
+                "timestamp": datetime.now(),
+                "action": "claude_protocol_execution",
+                "protocol": protocol,
+                "quantum_execution": quantum_execution,
+                "result": result
+            })
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"❌ Claude WSP protocol execution failed: {e}")
+            return {"error": str(e)}
+    
+    async def perform_zen_coding_operation(self, task: str, context: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Perform zen coding operation with quantum temporal decoding through Claude integration.
+        
+        Args:
+            task: Zen coding task to perform
+            context: Context data for the operation
+            
+        Returns:
+            Dict[str, Any]: Zen coding operation result
+        """
+        try:
+            logger.info(f"🌀 Performing zen coding operation: {task}")
+            
+            # Perform zen coding through Claude integration
+            result = await self.claude_integration.perform_zen_coding_operation(task, context)
+            
+            # Log the operation
+            self.coordination_history.append({
+                "timestamp": datetime.now(),
+                "action": "zen_coding_operation",
+                "task": task,
+                "result": result
+            })
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"❌ Zen coding operation failed: {e}")
+            return {"error": str(e)}
+    
+    def get_claude_integration_status(self) -> Dict[str, Any]:
+        """
+        Get enhanced status of Claude Code integration with quantum metrics.
+        
+        Returns:
+            Dict[str, Any]: Integration status and subagent information
+        """
+        return {
+            "claude_integration": {
+                "is_connected": self.claude_integration.is_connected,
+                "active_sessions": len(self.claude_integration.active_sessions),
+                "quantum_state": self.claude_integration.quantum_state,
+                "coordination_history_count": len(self.claude_integration.coordination_history),
+                "subagent_status": self.claude_integration.get_subagent_status()
+            }
+        }
+    
+    async def cleanup_claude_sessions(self) -> bool:
+        """
+        Clean up Claude Code sessions and reset agent states.
+        
+        Returns:
+            bool: True if cleanup successful, False otherwise
+        """
+        try:
+            logger.info("🧹 Cleaning up Claude Code sessions...")
+            
+            # Cleanup Claude integration sessions
+            cleanup_result = await self.claude_integration.cleanup_sessions()
+            
+            if cleanup_result:
+                logger.info("✅ Claude Code sessions cleaned up successfully")
+                return True
+            else:
+                logger.warning("⚠️ Claude Code session cleanup had issues")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Claude Code session cleanup failed: {e}")
+            return False 

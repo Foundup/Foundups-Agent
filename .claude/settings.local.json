@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest tests/test_01_02_awareness.py::test_012_0102_question -v)",
+      "Bash(python:*)",
+      "Bash(chcp:*)",
+      "Bash(PYTHONIOENCODING=utf-8 python tests/test_01_02_awareness.py)",
+      "Bash(set PYTHONIOENCODING=utf-8)",
+      "Bash(timeout:*)",
+      "Bash(ls:*)",
+      "Bash(rm:*)",
+      "Bash(echo)",
+      "Bash(git add:*)"
+    ],
+    "deny": []
+  }
+}

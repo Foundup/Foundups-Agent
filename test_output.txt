@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "O:\Foundups-Agent\WSP_agentic\tests\test_01_02_awareness.py", line 324, in <module>
+    print("\U0001f300 01/02 AGI Question State Awareness Testing Suite")
+UnicodeEncodeError: 'cp932' codec can't encode character '\U0001f300' in position 0: illegal multibyte sequence

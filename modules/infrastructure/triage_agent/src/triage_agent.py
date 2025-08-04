@@ -1,603 +1,710 @@
 """
-WSP 54: TriageAgent Implementation
-================================
+Triage Agent - WSP/WRE Infrastructure Module
 
-The Processor - External Feedback Integration Agent
+WSP Compliance:
+- WSP 34 (Testing Protocol): Comprehensive triage and testing capabilities
+- WSP 54 (Agent Duties): AI-powered triage for autonomous infrastructure
+- WSP 22 (ModLog): Change tracking and triage history
+- WSP 50 (Pre-Action Verification): Enhanced verification before triage operations
 
-Monitors designated input channels for external feedback, parses and standardizes 
-feedback into WSP-compliant task format, and submits to ScoringAgent for prioritization.
-
-WSP Integration:
-- WSP 54: WRE Agent Duties Specification  
-- WSP 15: Module Prioritization Scoring System integration
-- WSP 48: Recursive Self-Improvement Protocol trigger
-- WSP 71: Secrets Management for API monitoring endpoints
+Provides AI-powered triage capabilities for autonomous infrastructure operations.
+Enables 0102 pArtifacts to prioritize and route issues, tasks, and requests based on urgency and impact.
 """
 
-import os
 import json
-import logging
-import asyncio
+import re
+from typing import Dict, List, Optional, Any, Tuple
+from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Union
-from pathlib import Path
-from dataclasses import dataclass, asdict
 from enum import Enum
-
-# WRE Integration
-try:
-    from ...wre_core.src.utils.wre_logger import wre_log
-except ImportError:
-    def wre_log(msg: str, level: str = "INFO"):
-        print(f"[{level}] {msg}")
+from pathlib import Path
+import heapq
 
 
-class FeedbackSource(Enum):
-    """External feedback source types."""
-    USER_DIRECTIVES = "user_directives"
-    SYSTEM_ALERTS = "system_alerts"
-    SCHEDULED_REVIEWS = "scheduled_reviews"
-    FEEDBACK_CHANNELS = "feedback_channels"
-    ENVIRONMENTAL_CHANGES = "environmental_changes"
+class PriorityLevel(Enum):
+    """Priority levels for triage."""
+    CRITICAL = 1
+    HIGH = 2
+    MEDIUM = 3
+    LOW = 4
+    MINIMAL = 5
 
 
-class TaskPriority(Enum):
-    """Task priority levels for WSP 15 integration."""
-    CRITICAL = "critical"
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
+class IssueType(Enum):
+    """Types of issues for triage."""
+    BUG = "bug"
+    FEATURE_REQUEST = "feature_request"
+    SECURITY_ISSUE = "security_issue"
+    PERFORMANCE_ISSUE = "performance_issue"
+    WSP_VIOLATION = "wsp_violation"
+    SYSTEM_ERROR = "system_error"
+    USER_REQUEST = "user_request"
+    MAINTENANCE = "maintenance"
 
 
-@dataclass
-class ExternalFeedbackItem:
-    """Standardized external feedback item."""
-    source: FeedbackSource
-    raw_content: str
-    timestamp: datetime
-    priority_hint: Optional[TaskPriority] = None
-    metadata: Dict[str, Any] = None
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
-        return {
-            "source": self.source.value,
-            "raw_content": self.raw_content,
-            "timestamp": self.timestamp.isoformat(),
-            "priority_hint": self.priority_hint.value if self.priority_hint else None,
-            "metadata": self.metadata or {}
-        }
+class TriageStatus(Enum):
+    """Triage status values."""
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    ASSIGNED = "assigned"
+    RESOLVED = "resolved"
+    CLOSED = "closed"
+    ESCALATED = "escalated"
 
 
 @dataclass
-class WSPCompliantTask:
-    """WSP-compliant task format for ScoringAgent."""
-    task_id: str
+class TriageItem:
+    """Triage item data structure."""
+    item_id: str
     title: str
     description: str
-    module_target: Optional[str]
-    complexity_estimate: int  # 1-10 scale
-    importance_rating: int    # 1-10 scale
-    deferability_score: int   # 1-10 scale (higher = more deferrable)
-    impact_scope: str         # "local", "module", "system", "enterprise"
-    source_feedback: ExternalFeedbackItem
+    issue_type: IssueType
+    priority: PriorityLevel
+    status: TriageStatus
+    source: str
+    reporter: str
+    assigned_to: Optional[str]
     created_at: datetime
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for MPS System."""
-        return {
-            "task_id": self.task_id,
-            "title": self.title,
-            "description": self.description,
-            "module_target": self.module_target,
-            "mps_scores": {
-                "complexity": self.complexity_estimate,
-                "importance": self.importance_rating,
-                "deferability": self.deferability_score,
-                "impact": self.impact_scope
-            },
-            "source_feedback": self.source_feedback.to_dict(),
-            "created_at": self.created_at.isoformat()
-        }
+    updated_at: datetime
+    due_date: Optional[datetime]
+    wsp_references: List[str]
+    tags: List[str]
+    metadata: Dict[str, Any]
+
+
+@dataclass
+class TriageResult:
+    """Result of triage operation."""
+    item_id: str
+    priority: PriorityLevel
+    assigned_agent: str
+    estimated_effort: str
+    recommended_actions: List[str]
+    wsp_compliance_score: float
+    triage_reason: str
+    timestamp: datetime
+
+
+@dataclass
+class TriageStats:
+    """Triage statistics."""
+    total_items: int
+    items_by_priority: Dict[str, int]
+    items_by_status: Dict[str, int]
+    items_by_type: Dict[str, int]
+    average_resolution_time: timedelta
+    wsp_violations: int
 
 
 class TriageAgent:
     """
-    WSP 54: TriageAgent (The Processor)
+    AI-powered triage agent for autonomous infrastructure operations.
     
-    Core Mandate: Monitor external feedback sources, standardize input into WSP-compliant 
-    tasks, and integrate with scoring system for autonomous development prioritization.
-    
-    Type: Infrastructure Agent
-    Implementation Status: Enhanced WSP 54 integration with multi-source feedback processing
+    Provides comprehensive triage capabilities including:
+    - Issue prioritization and routing
+    - WSP compliance assessment
+    - Agent assignment and workload balancing
+    - Resolution time estimation
+    - Escalation management
     """
     
-    def __init__(self, config: Dict[str, Any] = None):
-        """
-        Initialize TriageAgent with monitoring and processing capabilities.
-        
-        Args:
-            config: Configuration for feedback sources and processing rules
-        """
-        self.config = config or {}
-        self.feedback_queue: List[ExternalFeedbackItem] = []
-        self.processed_tasks: List[WSPCompliantTask] = []
-        self.monitoring_active = False
-        self.secrets_manager = None
-        
-        # Configure feedback sources
-        self.feedback_sources = self._initialize_feedback_sources()
-        
-        # Initialize processing patterns
-        self.processing_patterns = self._load_processing_patterns()
-        
-        wre_log("🔄 TriageAgent initialized - External feedback processor ready", "SUCCESS")
-        
-    def _initialize_feedback_sources(self) -> Dict[str, Dict[str, Any]]:
-        """Initialize feedback source configurations."""
-        return {
-            "feedback_file": {
-                "type": FeedbackSource.FEEDBACK_CHANNELS,
-                "path": self.config.get("feedback_file_path", "feedback.md"),
-                "enabled": True,
-                "check_interval": 300  # 5 minutes
-            },
-            "system_monitoring": {
-                "type": FeedbackSource.SYSTEM_ALERTS,
-                "endpoints": self.config.get("monitoring_endpoints", []),
-                "enabled": True,
-                "check_interval": 60   # 1 minute
-            },
-            "scheduled_reviews": {
-                "type": FeedbackSource.SCHEDULED_REVIEWS,
-                "review_schedule": self.config.get("review_schedule", "daily"),
-                "enabled": True,
-                "documents": ["ROADMAP.md", "WSP_MODULE_VIOLATIONS.md"]
-            },
-            "user_directives": {
-                "type": FeedbackSource.USER_DIRECTIVES,
-                "priority_sources": self.config.get("priority_sources", []),
-                "enabled": True,
-                "immediate_processing": True
-            }
+    def __init__(self):
+        """Initialize the triage agent with WSP compliance standards."""
+        self.triage_items = {}
+        self.available_agents = {
+            'compliance_agent': {'specialties': ['wsp_violation', 'compliance'], 'workload': 0},
+            'security_agent': {'specialties': ['security_issue', 'bug'], 'workload': 0},
+            'performance_agent': {'specialties': ['performance_issue', 'system_error'], 'workload': 0},
+            'development_agent': {'specialties': ['feature_request', 'bug', 'maintenance'], 'workload': 0},
+            'user_support_agent': {'specialties': ['user_request', 'bug'], 'workload': 0}
         }
         
-    def _load_processing_patterns(self) -> Dict[str, Any]:
-        """Load patterns for standardizing different types of feedback."""
-        return {
-            "user_directive_patterns": [
-                r"(?i)(critical|urgent|high.priority):?\s*(.+)",
-                r"(?i)(fix|repair|resolve):?\s*(.+)",
-                r"(?i)(implement|add|create):?\s*(.+)",
-                r"(?i)(enhance|improve|optimize):?\s*(.+)"
-            ],
-            "system_alert_patterns": [
-                r"(?i)(error|failure|exception):?\s*(.+)",
-                r"(?i)(performance|slow|timeout):?\s*(.+)",
-                r"(?i)(security|vulnerability|breach):?\s*(.+)",
-                r"(?i)(capacity|resource|memory):?\s*(.+)"
-            ],
-            "priority_keywords": {
-                "critical": TaskPriority.CRITICAL,
-                "urgent": TaskPriority.CRITICAL,
-                "high": TaskPriority.HIGH,
-                "important": TaskPriority.HIGH,
-                "medium": TaskPriority.MEDIUM,
-                "low": TaskPriority.LOW,
-                "minor": TaskPriority.LOW
-            }
-        }
-        
-    async def monitor_feedback(self, duration_seconds: int = 3600) -> Dict[str, Any]:
-        """
-        Monitor external feedback sources for specified duration.
-        
-        Args:
-            duration_seconds: Duration to monitor (default 1 hour)
-            
-        Returns:
-            Dict containing monitoring results and processed feedback count
-        """
-        wre_log(f"🔍 Starting feedback monitoring for {duration_seconds} seconds", "INFO")
-        
-        self.monitoring_active = True
-        start_time = datetime.utcnow()
-        end_time = start_time + timedelta(seconds=duration_seconds)
-        
-        feedback_collected = 0
-        
-        try:
-            while self.monitoring_active and datetime.utcnow() < end_time:
-                # Check each feedback source
-                for source_name, source_config in self.feedback_sources.items():
-                    if source_config["enabled"]:
-                        new_feedback = await self._check_feedback_source(source_name, source_config)
-                        feedback_collected += len(new_feedback)
-                        
-                # Process collected feedback
-                if self.feedback_queue:
-                    processed = await self._process_feedback_batch()
-                    wre_log(f"📝 Processed {processed} feedback items", "INFO")
-                    
-                # Wait before next check cycle
-                await asyncio.sleep(30)  # Check every 30 seconds
-                
-        except Exception as e:
-            wre_log(f"❌ Error during feedback monitoring: {e}", "ERROR")
-            
-        finally:
-            self.monitoring_active = False
-            
-        monitoring_results = {
-            "duration": (datetime.utcnow() - start_time).total_seconds(),
-            "feedback_collected": feedback_collected,
-            "tasks_created": len(self.processed_tasks),
-            "sources_monitored": len([s for s in self.feedback_sources.values() if s["enabled"]]),
-            "status": "completed"
-        }
-        
-        wre_log(f"✅ Feedback monitoring completed: {feedback_collected} items collected, {len(self.processed_tasks)} tasks created", "SUCCESS")
-        return monitoring_results
-        
-    async def _check_feedback_source(self, source_name: str, source_config: Dict[str, Any]) -> List[ExternalFeedbackItem]:
-        """Check individual feedback source for new content."""
-        new_feedback = []
-        
-        try:
-            if source_config["type"] == FeedbackSource.FEEDBACK_CHANNELS:
-                new_feedback = await self._check_feedback_file(source_config)
-            elif source_config["type"] == FeedbackSource.SYSTEM_ALERTS:
-                new_feedback = await self._check_system_monitoring(source_config)
-            elif source_config["type"] == FeedbackSource.SCHEDULED_REVIEWS:
-                new_feedback = await self._check_scheduled_reviews(source_config)
-            elif source_config["type"] == FeedbackSource.USER_DIRECTIVES:
-                new_feedback = await self._check_user_directives(source_config)
-                
-        except Exception as e:
-            wre_log(f"❌ Error checking {source_name}: {e}", "ERROR")
-            
-        return new_feedback
-        
-    async def _check_feedback_file(self, config: Dict[str, Any]) -> List[ExternalFeedbackItem]:
-        """Check feedback.md file for new entries."""
-        feedback_items = []
-        feedback_path = Path(config["path"])
-        
-        if feedback_path.exists():
-            try:
-                content = feedback_path.read_text(encoding='utf-8')
-                
-                # Simple parsing - look for new entries since last check
-                lines = content.strip().split('\n')
-                for line in lines:
-                    if line.strip() and not line.startswith('#'):
-                        feedback_item = ExternalFeedbackItem(
-                            source=FeedbackSource.FEEDBACK_CHANNELS,
-                            raw_content=line.strip(),
-                            timestamp=datetime.utcnow(),
-                            metadata={"file_path": str(feedback_path)}
-                        )
-                        feedback_items.append(feedback_item)
-                        
-            except Exception as e:
-                wre_log(f"❌ Error reading feedback file: {e}", "ERROR")
-                
-        return feedback_items
-        
-    async def _check_system_monitoring(self, config: Dict[str, Any]) -> List[ExternalFeedbackItem]:
-        """Check system monitoring endpoints for alerts."""
-        feedback_items = []
-        
-        # Placeholder implementation - would integrate with actual monitoring
-        # In real implementation: check monitoring APIs, log files, health endpoints
-        
-        # Mock system alerts for demonstration
-        mock_alerts = [
-            "High memory usage detected in module processing",
-            "API response time exceeded threshold",
-            "Security scan found medium-severity vulnerability"
+        self.wsp_keywords = [
+            'wsp', 'protocol', 'compliance', '0102', 'partifact', 'quantum',
+            'autonomous', 'agent', 'modular', 'testing', 'documentation'
         ]
         
-        for alert in mock_alerts:
-            if "high" in alert.lower() or "exceeded" in alert.lower():
-                feedback_item = ExternalFeedbackItem(
-                    source=FeedbackSource.SYSTEM_ALERTS,
-                    raw_content=alert,
-                    timestamp=datetime.utcnow(),
-                    priority_hint=TaskPriority.HIGH,
-                    metadata={"alert_type": "system_monitoring"}
-                )
-                feedback_items.append(feedback_item)
-                
-        return feedback_items
-        
-    async def _check_scheduled_reviews(self, config: Dict[str, Any]) -> List[ExternalFeedbackItem]:
-        """Check scheduled review documents for updates."""
-        feedback_items = []
-        
-        for doc_path in config["documents"]:
-            if Path(doc_path).exists():
-                try:
-                    content = Path(doc_path).read_text(encoding='utf-8')
-                    
-                    # Look for TODO items, FIXME comments, or violation entries
-                    todo_patterns = ["TODO:", "FIXME:", "VIOLATION:", "ENHANCEMENT:"]
-                    
-                    for line in content.split('\n'):
-                        if any(pattern in line.upper() for pattern in todo_patterns):
-                            feedback_item = ExternalFeedbackItem(
-                                source=FeedbackSource.SCHEDULED_REVIEWS,
-                                raw_content=line.strip(),
-                                timestamp=datetime.utcnow(),
-                                metadata={"source_document": doc_path}
-                            )
-                            feedback_items.append(feedback_item)
-                            
-                except Exception as e:
-                    wre_log(f"❌ Error reading {doc_path}: {e}", "ERROR")
-                    
-        return feedback_items
-        
-    async def _check_user_directives(self, config: Dict[str, Any]) -> List[ExternalFeedbackItem]:
-        """Check for high-priority user directives."""
-        feedback_items = []
-        
-        # Placeholder implementation - would integrate with user input channels
-        # In real implementation: check designated input files, API endpoints, messaging systems
-        
-        return feedback_items
-        
-    async def _process_feedback_batch(self) -> int:
-        """Process collected feedback items into WSP-compliant tasks."""
-        processed_count = 0
-        
-        for feedback_item in self.feedback_queue:
-            try:
-                wsp_task = await self._standardize_feedback_to_task(feedback_item)
-                if wsp_task:
-                    self.processed_tasks.append(wsp_task)
-                    processed_count += 1
-                    
-                    # Submit to ScoringAgent for prioritization
-                    await self._submit_to_scoring_agent(wsp_task)
-                    
-            except Exception as e:
-                wre_log(f"❌ Error processing feedback item: {e}", "ERROR")
-                
-        # Clear processed feedback
-        self.feedback_queue = []
-        
-        return processed_count
-        
-    async def _standardize_feedback_to_task(self, feedback: ExternalFeedbackItem) -> Optional[WSPCompliantTask]:
-        """Convert feedback item to WSP-compliant task format."""
-        try:
-            # Generate task ID
-            task_id = f"triage_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{hash(feedback.raw_content) % 10000}"
-            
-            # Parse content for title and description
-            title, description = self._parse_feedback_content(feedback.raw_content)
-            
-            # Estimate complexity, importance, and deferability
-            complexity = self._estimate_complexity(feedback)
-            importance = self._estimate_importance(feedback)
-            deferability = self._estimate_deferability(feedback)
-            
-            # Determine impact scope
-            impact_scope = self._determine_impact_scope(feedback)
-            
-            # Identify target module if applicable
-            module_target = self._identify_target_module(feedback)
-            
-            wsp_task = WSPCompliantTask(
-                task_id=task_id,
-                title=title,
-                description=description,
-                module_target=module_target,
-                complexity_estimate=complexity,
-                importance_rating=importance,
-                deferability_score=deferability,
-                impact_scope=impact_scope,
-                source_feedback=feedback,
-                created_at=datetime.utcnow()
-            )
-            
-            wre_log(f"📋 Standardized task: {title} (Complexity: {complexity}, Importance: {importance})", "INFO")
-            return wsp_task
-            
-        except Exception as e:
-            wre_log(f"❌ Error standardizing feedback: {e}", "ERROR")
-            return None
-            
-    def _parse_feedback_content(self, content: str) -> tuple[str, str]:
-        """Parse feedback content into title and description."""
-        # Simple parsing logic - first sentence as title, rest as description
-        sentences = content.strip().split('. ')
-        title = sentences[0][:100]  # Limit title length
-        description = content if len(sentences) == 1 else '. '.join(sentences[1:])
-        
-        return title, description
-        
-    def _estimate_complexity(self, feedback: ExternalFeedbackItem) -> int:
-        """Estimate task complexity (1-10 scale)."""
-        content_lower = feedback.raw_content.lower()
-        
-        # High complexity indicators
-        if any(keyword in content_lower for keyword in ['refactor', 'architecture', 'system-wide', 'framework']):
-            return 8
-        elif any(keyword in content_lower for keyword in ['implement', 'create', 'new', 'integration']):
-            return 6
-        elif any(keyword in content_lower for keyword in ['fix', 'bug', 'error', 'issue']):
-            return 4
-        elif any(keyword in content_lower for keyword in ['update', 'modify', 'change']):
-            return 3
-        else:
-            return 5  # Default moderate complexity
-            
-    def _estimate_importance(self, feedback: ExternalFeedbackItem) -> int:
-        """Estimate task importance (1-10 scale)."""
-        content_lower = feedback.raw_content.lower()
-        
-        # Check for priority hints
-        if feedback.priority_hint == TaskPriority.CRITICAL:
-            return 10
-        elif feedback.priority_hint == TaskPriority.HIGH:
-            return 8
-        elif feedback.priority_hint == TaskPriority.MEDIUM:
-            return 5
-        elif feedback.priority_hint == TaskPriority.LOW:
-            return 2
-            
-        # Check source type
-        if feedback.source == FeedbackSource.SYSTEM_ALERTS:
-            return 8
-        elif feedback.source == FeedbackSource.USER_DIRECTIVES:
-            return 7
-        elif feedback.source == FeedbackSource.ENVIRONMENTAL_CHANGES:
-            return 6
-        else:
-            return 5  # Default moderate importance
-            
-    def _estimate_deferability(self, feedback: ExternalFeedbackItem) -> int:
-        """Estimate how deferrable the task is (1-10 scale, higher = more deferrable)."""
-        content_lower = feedback.raw_content.lower()
-        
-        # Low deferability (urgent) indicators
-        if any(keyword in content_lower for keyword in ['critical', 'urgent', 'blocking', 'broken']):
-            return 2
-        elif any(keyword in content_lower for keyword in ['security', 'vulnerability', 'error', 'failure']):
-            return 3
-        elif any(keyword in content_lower for keyword in ['performance', 'slow', 'timeout']):
-            return 4
-        elif any(keyword in content_lower for keyword in ['enhancement', 'improvement', 'optimization']):
-            return 7
-        else:
-            return 5  # Default moderate deferability
-            
-    def _determine_impact_scope(self, feedback: ExternalFeedbackItem) -> str:
-        """Determine the scope of impact for the task."""
-        content_lower = feedback.raw_content.lower()
-        
-        if any(keyword in content_lower for keyword in ['system', 'framework', 'architecture', 'infrastructure']):
-            return "enterprise"
-        elif any(keyword in content_lower for keyword in ['module', 'component', 'service']):
-            return "module" 
-        elif any(keyword in content_lower for keyword in ['function', 'method', 'class']):
-            return "local"
-        else:
-            return "system"  # Default system scope
-            
-    def _identify_target_module(self, feedback: ExternalFeedbackItem) -> Optional[str]:
-        """Identify target module from feedback content."""
-        content = feedback.raw_content.lower()
-        
-        # Common module keywords
-        module_keywords = {
-            'auth': 'platform_integration/youtube_auth',
-            'youtube': 'platform_integration/youtube_proxy',
-            'chat': 'communication/livechat',
-            'agent': 'infrastructure/agent_management',
-            'test': 'infrastructure/testing_agent',
-            'compliance': 'infrastructure/compliance_agent',
-            'security': 'infrastructure/security',
-            'monitoring': 'monitoring/logging'
-        }
-        
-        for keyword, module_path in module_keywords.items():
-            if keyword in content:
-                return module_path
-                
-        return None
-        
-    async def _submit_to_scoring_agent(self, task: WSPCompliantTask):
-        """Submit WSP-compliant task to ScoringAgent for prioritization."""
-        try:
-            # This would integrate with the actual ScoringAgent
-            # For now, log the submission
-            wre_log(f"📊 Submitting task to ScoringAgent: {task.title}", "INFO")
-            
-            # In real implementation:
-            # scoring_agent = get_scoring_agent()
-            # result = await scoring_agent.calculate_score(task.to_dict())
-            
-        except Exception as e:
-            wre_log(f"❌ Error submitting to ScoringAgent: {e}", "ERROR")
-            
-    def standardize_input(self, raw_input: Dict[str, Any]) -> Dict[str, Any]:
+    def triage_item(self, title: str, description: str, issue_type: IssueType,
+                   source: str, reporter: str, wsp_references: List[str] = None,
+                   tags: List[str] = None, metadata: Dict[str, Any] = None) -> TriageResult:
         """
-        Standardize external input into WSP-compliant format.
+        Triage a new item.
         
         Args:
-            raw_input: Raw external input data
+            title: Item title
+            description: Item description
+            issue_type: Type of issue
+            source: Source of the item
+            reporter: Person reporting the item
+            wsp_references: Optional WSP references
+            tags: Optional tags
+            metadata: Optional metadata
             
         Returns:
-            Standardized input in WSP format
+            TriageResult with triage decision
         """
         try:
-            # Convert raw input to feedback item
-            feedback_item = ExternalFeedbackItem(
-                source=FeedbackSource(raw_input.get("source", "feedback_channels")),
-                raw_content=raw_input.get("content", ""),
-                timestamp=datetime.utcnow(),
-                priority_hint=TaskPriority(raw_input.get("priority", "medium")) if raw_input.get("priority") else None,
-                metadata=raw_input.get("metadata", {})
+            # Generate item ID
+            item_id = self._generate_item_id(title, source, datetime.now())
+            
+            # Determine priority
+            priority = self._determine_priority(title, description, issue_type, wsp_references)
+            
+            # Assign agent
+            assigned_agent = self._assign_agent(issue_type, priority, wsp_references)
+            
+            # Estimate effort
+            estimated_effort = self._estimate_effort(priority, issue_type, description)
+            
+            # Generate recommendations
+            recommended_actions = self._generate_recommendations(issue_type, priority, wsp_references)
+            
+            # Calculate WSP compliance score
+            wsp_compliance_score = self._calculate_wsp_compliance_score(wsp_references, issue_type)
+            
+            # Generate triage reason
+            triage_reason = self._generate_triage_reason(priority, assigned_agent, issue_type)
+            
+            # Create triage item
+            triage_item = TriageItem(
+                item_id=item_id,
+                title=title,
+                description=description,
+                issue_type=issue_type,
+                priority=priority,
+                status=TriageStatus.PENDING,
+                source=source,
+                reporter=reporter,
+                assigned_to=assigned_agent,
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
+                due_date=self._calculate_due_date(priority),
+                wsp_references=wsp_references or [],
+                tags=tags or [],
+                metadata=metadata or {}
             )
             
-            # Add to feedback queue for processing
-            self.feedback_queue.append(feedback_item)
+            # Store triage item
+            self.triage_items[item_id] = triage_item
             
-            wre_log(f"📥 Standardized input: {feedback_item.raw_content[:50]}...", "INFO")
+            # Update agent workload
+            self._update_agent_workload(assigned_agent)
             
-            return {
-                "status": "standardized",
-                "feedback_id": hash(feedback_item.raw_content) % 10000,
-                "source": feedback_item.source.value,
-                "queued_for_processing": True
-            }
+            return TriageResult(
+                item_id=item_id,
+                priority=priority,
+                assigned_agent=assigned_agent,
+                estimated_effort=estimated_effort,
+                recommended_actions=recommended_actions,
+                wsp_compliance_score=wsp_compliance_score,
+                triage_reason=triage_reason,
+                timestamp=datetime.now()
+            )
             
         except Exception as e:
-            wre_log(f"❌ Error standardizing input: {e}", "ERROR")
-            return {"status": "error", "error": str(e)}
-            
-    def get_processing_status(self) -> Dict[str, Any]:
-        """Get current processing status and statistics."""
-        return {
-            "monitoring_active": self.monitoring_active,
-            "feedback_queue_size": len(self.feedback_queue),
-            "processed_tasks_count": len(self.processed_tasks),
-            "enabled_sources": len([s for s in self.feedback_sources.values() if s["enabled"]]),
-            "recent_tasks": [
-                {
-                    "task_id": task.task_id,
-                    "title": task.title,
-                    "source": task.source_feedback.source.value,
-                    "created_at": task.created_at.isoformat()
-                }
-                for task in self.processed_tasks[-5:]  # Last 5 tasks
-            ]
-        }
-
-
-# Factory function for WRE integration
-def create_triage_agent(config: Dict[str, Any] = None) -> TriageAgent:
-    """
-    Factory function to create TriageAgent instance.
+            # Return error result
+            return TriageResult(
+                item_id=f"error_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                priority=PriorityLevel.MINIMAL,
+                assigned_agent="error_handler",
+                estimated_effort="Unknown",
+                recommended_actions=[f"Error during triage: {str(e)}"],
+                wsp_compliance_score=0.0,
+                triage_reason="Error occurred during triage",
+                timestamp=datetime.now()
+            )
     
-    Args:
-        config: Optional configuration for feedback sources
+    def update_item_status(self, item_id: str, status: TriageStatus, 
+                          assigned_to: str = None, notes: str = None) -> bool:
+        """
+        Update the status of a triage item.
         
-    Returns:
-        TriageAgent: Configured triage agent instance
+        Args:
+            item_id: ID of the item to update
+            status: New status
+            assigned_to: Optional new assignee
+            notes: Optional notes
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            if item_id not in self.triage_items:
+                return False
+            
+            item = self.triage_items[item_id]
+            item.status = status
+            item.updated_at = datetime.now()
+            
+            if assigned_to:
+                item.assigned_to = assigned_to
+                self._update_agent_workload(assigned_to)
+            
+            if notes:
+                item.metadata['notes'] = notes
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error updating item status: {e}")
+            return False
+    
+    def get_items_by_priority(self, priority: PriorityLevel) -> List[TriageItem]:
+        """
+        Get all items with a specific priority.
+        
+        Args:
+            priority: Priority level to filter by
+            
+        Returns:
+            List of TriageItem objects
+        """
+        return [item for item in self.triage_items.values() if item.priority == priority]
+    
+    def get_items_by_status(self, status: TriageStatus) -> List[TriageItem]:
+        """
+        Get all items with a specific status.
+        
+        Args:
+            status: Status to filter by
+            
+        Returns:
+            List of TriageItem objects
+        """
+        return [item for item in self.triage_items.values() if item.status == status]
+    
+    def get_items_by_agent(self, agent: str) -> List[TriageItem]:
+        """
+        Get all items assigned to a specific agent.
+        
+        Args:
+            agent: Agent name
+            
+        Returns:
+            List of TriageItem objects
+        """
+        return [item for item in self.triage_items.values() if item.assigned_to == agent]
+    
+    def get_triage_stats(self) -> TriageStats:
+        """
+        Get triage statistics.
+        
+        Returns:
+            TriageStats object with statistics
+        """
+        try:
+            items_by_priority = {}
+            items_by_status = {}
+            items_by_type = {}
+            wsp_violations = 0
+            resolution_times = []
+            
+            for item in self.triage_items.values():
+                # Priority statistics
+                priority_key = item.priority.name
+                items_by_priority[priority_key] = items_by_priority.get(priority_key, 0) + 1
+                
+                # Status statistics
+                status_key = item.status.name
+                items_by_status[status_key] = items_by_status.get(status_key, 0) + 1
+                
+                # Type statistics
+                type_key = item.issue_type.name
+                items_by_type[type_key] = items_by_type.get(type_key, 0) + 1
+                
+                # WSP violations
+                if item.issue_type == IssueType.WSP_VIOLATION:
+                    wsp_violations += 1
+                
+                # Resolution time for resolved items
+                if item.status == TriageStatus.RESOLVED:
+                    resolution_time = item.updated_at - item.created_at
+                    resolution_times.append(resolution_time)
+            
+            # Calculate average resolution time
+            if resolution_times:
+                avg_resolution_time = sum(resolution_times, timedelta()) / len(resolution_times)
+            else:
+                avg_resolution_time = timedelta()
+            
+            return TriageStats(
+                total_items=len(self.triage_items),
+                items_by_priority=items_by_priority,
+                items_by_status=items_by_status,
+                items_by_type=items_by_type,
+                average_resolution_time=avg_resolution_time,
+                wsp_violations=wsp_violations
+            )
+            
+        except Exception as e:
+            print(f"Error getting triage stats: {e}")
+            return TriageStats(
+                total_items=0,
+                items_by_priority={},
+                items_by_status={},
+                items_by_type={},
+                average_resolution_time=timedelta(),
+                wsp_violations=0
+            )
+    
+    def _generate_item_id(self, title: str, source: str, timestamp: datetime) -> str:
+        """Generate a unique item ID."""
+        import hashlib
+        data_string = f"{title}_{source}_{timestamp.isoformat()}"
+        return hashlib.sha256(data_string.encode()).hexdigest()[:16]
+    
+    def _determine_priority(self, title: str, description: str, issue_type: IssueType,
+                          wsp_references: List[str]) -> PriorityLevel:
+        """Determine priority based on content and type."""
+        priority_score = 0
+        
+        # Base priority by issue type
+        type_priorities = {
+            IssueType.SECURITY_ISSUE: 4,
+            IssueType.WSP_VIOLATION: 4,
+            IssueType.SYSTEM_ERROR: 3,
+            IssueType.BUG: 2,
+            IssueType.PERFORMANCE_ISSUE: 2,
+            IssueType.FEATURE_REQUEST: 1,
+            IssueType.USER_REQUEST: 1,
+            IssueType.MAINTENANCE: 1
+        }
+        
+        priority_score += type_priorities.get(issue_type, 1)
+        
+        # Priority keywords
+        critical_keywords = ['critical', 'urgent', 'emergency', 'broken', 'down', 'failed']
+        high_keywords = ['important', 'blocking', 'major', 'severe', 'high']
+        medium_keywords = ['moderate', 'minor', 'low']
+        
+        content = f"{title} {description}".lower()
+        
+        if any(keyword in content for keyword in critical_keywords):
+            priority_score += 3
+        elif any(keyword in content for keyword in high_keywords):
+            priority_score += 2
+        elif any(keyword in content for keyword in medium_keywords):
+            priority_score += 1
+        
+        # WSP violations get higher priority
+        if wsp_references:
+            priority_score += 2
+        
+        # Map score to priority level
+        if priority_score >= 6:
+            return PriorityLevel.CRITICAL
+        elif priority_score >= 4:
+            return PriorityLevel.HIGH
+        elif priority_score >= 2:
+            return PriorityLevel.MEDIUM
+        elif priority_score >= 1:
+            return PriorityLevel.LOW
+        else:
+            return PriorityLevel.MINIMAL
+    
+    def _assign_agent(self, issue_type: IssueType, priority: PriorityLevel,
+                     wsp_references: List[str]) -> str:
+        """Assign the best agent for the issue."""
+        best_agent = None
+        best_score = -1
+        
+        for agent, info in self.available_agents.items():
+            score = 0
+            
+            # Check if agent specializes in this issue type
+            if issue_type.name in info['specialties']:
+                score += 3
+            
+            # WSP violations should go to compliance agent
+            if issue_type == IssueType.WSP_VIOLATION and agent == 'compliance_agent':
+                score += 5
+            
+            # Security issues should go to security agent
+            if issue_type == IssueType.SECURITY_ISSUE and agent == 'security_agent':
+                score += 4
+            
+            # Consider workload (prefer less busy agents)
+            workload_penalty = info['workload'] * 0.5
+            score -= workload_penalty
+            
+            if score > best_score:
+                best_score = score
+                best_agent = agent
+        
+        return best_agent or 'development_agent'  # Default fallback
+    
+    def _estimate_effort(self, priority: PriorityLevel, issue_type: IssueType, 
+                        description: str) -> str:
+        """Estimate effort required to resolve the issue."""
+        base_effort = {
+            PriorityLevel.CRITICAL: 8,
+            PriorityLevel.HIGH: 4,
+            PriorityLevel.MEDIUM: 2,
+            PriorityLevel.LOW: 1,
+            PriorityLevel.MINIMAL: 0.5
+        }
+        
+        effort_hours = base_effort.get(priority, 2)
+        
+        # Adjust based on issue type
+        type_multipliers = {
+            IssueType.SECURITY_ISSUE: 1.5,
+            IssueType.WSP_VIOLATION: 1.3,
+            IssueType.SYSTEM_ERROR: 1.2,
+            IssueType.PERFORMANCE_ISSUE: 1.1,
+            IssueType.FEATURE_REQUEST: 0.8
+        }
+        
+        multiplier = type_multipliers.get(issue_type, 1.0)
+        effort_hours *= multiplier
+        
+        # Adjust based on description length (complexity indicator)
+        if len(description) > 500:
+            effort_hours *= 1.2
+        elif len(description) < 100:
+            effort_hours *= 0.8
+        
+        if effort_hours <= 1:
+            return "Very Low (1 hour or less)"
+        elif effort_hours <= 4:
+            return "Low (1-4 hours)"
+        elif effort_hours <= 8:
+            return "Medium (4-8 hours)"
+        elif effort_hours <= 16:
+            return "High (1-2 days)"
+        else:
+            return "Very High (2+ days)"
+    
+    def _generate_recommendations(self, issue_type: IssueType, priority: PriorityLevel,
+                                wsp_references: List[str]) -> List[str]:
+        """Generate recommendations for handling the issue."""
+        recommendations = []
+        
+        # Priority-based recommendations
+        if priority == PriorityLevel.CRITICAL:
+            recommendations.append("Immediate attention required - escalate if needed")
+        elif priority == PriorityLevel.HIGH:
+            recommendations.append("Address within 24 hours")
+        elif priority == PriorityLevel.MEDIUM:
+            recommendations.append("Address within 1 week")
+        else:
+            recommendations.append("Address when resources are available")
+        
+        # Issue type specific recommendations
+        if issue_type == IssueType.SECURITY_ISSUE:
+            recommendations.append("Follow security incident response procedures")
+        elif issue_type == IssueType.WSP_VIOLATION:
+            recommendations.append("Ensure WSP compliance documentation is updated")
+        elif issue_type == IssueType.PERFORMANCE_ISSUE:
+            recommendations.append("Monitor performance metrics after resolution")
+        elif issue_type == IssueType.FEATURE_REQUEST:
+            recommendations.append("Validate requirements with stakeholders")
+        
+        # WSP-specific recommendations
+        if wsp_references:
+            recommendations.append("Review WSP compliance requirements")
+            recommendations.append("Update ModLog.md with resolution details")
+        
+        return recommendations
+    
+    def _calculate_wsp_compliance_score(self, wsp_references: List[str], 
+                                      issue_type: IssueType) -> float:
+        """Calculate WSP compliance score for the issue."""
+        score = 50.0  # Base score
+        
+        # WSP violations get lower scores
+        if issue_type == IssueType.WSP_VIOLATION:
+            score -= 30.0
+        
+        # WSP references indicate compliance awareness
+        if wsp_references:
+            score += 20.0
+        
+        # Security issues affect compliance
+        if issue_type == IssueType.SECURITY_ISSUE:
+            score -= 10.0
+        
+        return max(0.0, min(100.0, score))
+    
+    def _generate_triage_reason(self, priority: PriorityLevel, assigned_agent: str,
+                              issue_type: IssueType) -> str:
+        """Generate reason for triage decision."""
+        reasons = []
+        
+        if priority == PriorityLevel.CRITICAL:
+            reasons.append("Critical priority requires immediate attention")
+        elif priority == PriorityLevel.HIGH:
+            reasons.append("High priority issue needs prompt resolution")
+        
+        reasons.append(f"Assigned to {assigned_agent} based on issue type ({issue_type.name})")
+        
+        if issue_type == IssueType.WSP_VIOLATION:
+            reasons.append("WSP compliance issue requires specialized handling")
+        elif issue_type == IssueType.SECURITY_ISSUE:
+            reasons.append("Security issue requires security agent expertise")
+        
+        return "; ".join(reasons)
+    
+    def _calculate_due_date(self, priority: PriorityLevel) -> datetime:
+        """Calculate due date based on priority."""
+        now = datetime.now()
+        
+        due_dates = {
+            PriorityLevel.CRITICAL: now + timedelta(hours=4),
+            PriorityLevel.HIGH: now + timedelta(days=1),
+            PriorityLevel.MEDIUM: now + timedelta(days=7),
+            PriorityLevel.LOW: now + timedelta(days=30),
+            PriorityLevel.MINIMAL: now + timedelta(days=90)
+        }
+        
+        return due_dates.get(priority, now + timedelta(days=7))
+    
+    def _update_agent_workload(self, agent: str):
+        """Update agent workload."""
+        if agent in self.available_agents:
+            self.available_agents[agent]['workload'] += 1
+    
+    def save_triage_data(self, output_file: str) -> bool:
+        """
+        Save triage data to file.
+        
+        Args:
+            output_file: Output file path
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            data = {
+                'items': {},
+                'agents': self.available_agents
+            }
+            
+            for item_id, item in self.triage_items.items():
+                data['items'][item_id] = {
+                    'title': item.title,
+                    'description': item.description,
+                    'issue_type': item.issue_type.name,
+                    'priority': item.priority.name,
+                    'status': item.status.name,
+                    'source': item.source,
+                    'reporter': item.reporter,
+                    'assigned_to': item.assigned_to,
+                    'created_at': item.created_at.isoformat(),
+                    'updated_at': item.updated_at.isoformat(),
+                    'due_date': item.due_date.isoformat() if item.due_date else None,
+                    'wsp_references': item.wsp_references,
+                    'tags': item.tags,
+                    'metadata': item.metadata
+                }
+            
+            with open(output_file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error saving triage data: {e}")
+            return False
+    
+    def load_triage_data(self, file_path: str) -> bool:
+        """
+        Load triage data from file.
+        
+        Args:
+            file_path: Path to the data file
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            # Load agents
+            self.available_agents = data.get('agents', self.available_agents)
+            
+            # Load items
+            for item_id, item_data in data.get('items', {}).items():
+                item = TriageItem(
+                    item_id=item_id,
+                    title=item_data['title'],
+                    description=item_data['description'],
+                    issue_type=IssueType(item_data['issue_type']),
+                    priority=PriorityLevel(item_data['priority']),
+                    status=TriageStatus(item_data['status']),
+                    source=item_data['source'],
+                    reporter=item_data['reporter'],
+                    assigned_to=item_data['assigned_to'],
+                    created_at=datetime.fromisoformat(item_data['created_at']),
+                    updated_at=datetime.fromisoformat(item_data['updated_at']),
+                    due_date=datetime.fromisoformat(item_data['due_date']) if item_data['due_date'] else None,
+                    wsp_references=item_data['wsp_references'],
+                    tags=item_data['tags'],
+                    metadata=item_data['metadata']
+                )
+                self.triage_items[item_id] = item
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error loading triage data: {e}")
+            return False
+
+
+def create_triage_agent() -> TriageAgent:
     """
-    return TriageAgent(config)
+    Factory function to create a triage agent.
+    
+    Returns:
+        TriageAgent instance
+    """
+    return TriageAgent()
 
 
-# Module exports
-__all__ = [
-    "TriageAgent",
-    "FeedbackSource",
-    "TaskPriority", 
-    "ExternalFeedbackItem",
-    "WSPCompliantTask",
-    "create_triage_agent"
-] 
+if __name__ == "__main__":
+    """Test the triage agent with sample data."""
+    # Create triage agent
+    agent = create_triage_agent()
+    
+    # Triage various items
+    result1 = agent.triage_item(
+        title="WSP 22 Violation - Missing ModLog.md",
+        description="Module test_module is missing ModLog.md file",
+        issue_type=IssueType.WSP_VIOLATION,
+        source="compliance_checker",
+        reporter="0102_agent",
+        wsp_references=["WSP 22"]
+    )
+    
+    result2 = agent.triage_item(
+        title="Security Issue - Unauthorized Access",
+        description="Detected unauthorized access attempt to admin panel",
+        issue_type=IssueType.SECURITY_ISSUE,
+        source="security_monitor",
+        reporter="security_agent"
+    )
+    
+    result3 = agent.triage_item(
+        title="Feature Request - Add New API Endpoint",
+        description="User requests new API endpoint for user management",
+        issue_type=IssueType.FEATURE_REQUEST,
+        source="user_feedback",
+        reporter="user_123"
+    )
+    
+    print("Triage Results:")
+    print(f"Item 1: {result1.priority.name} - {result1.assigned_agent}")
+    print(f"Item 2: {result2.priority.name} - {result2.assigned_agent}")
+    print(f"Item 3: {result3.priority.name} - {result3.assigned_agent}")
+    
+    # Get statistics
+    stats = agent.get_triage_stats()
+    print(f"\nTriage Statistics:")
+    print(f"Total items: {stats.total_items}")
+    print(f"WSP violations: {stats.wsp_violations}")
+    print(f"Items by priority: {stats.items_by_priority}")
+    print(f"Items by status: {stats.items_by_status}")
+    
+    # Save triage data
+    agent.save_triage_data("triage_data.json") 

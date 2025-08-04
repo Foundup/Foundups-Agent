@@ -1,454 +1,491 @@
 """
-Priority Scorer - Intelligent Meeting Priority Assessment
+Priority Scorer - WSP/WRE AI Intelligence Module
 
-Analyzes multiple factors to score meeting priority from 1-10.
-Supports business logic customization and learning from outcomes.
+WSP Compliance:
+- WSP 34 (Testing Protocol): Comprehensive priority scoring and testing capabilities
+- WSP 54 (Agent Duties): AI-powered priority scoring for autonomous development
+- WSP 22 (ModLog): Change tracking and scoring history
+- WSP 50 (Pre-Action Verification): Enhanced verification before priority scoring
+
+Provides AI-powered priority scoring capabilities for autonomous development operations.
+Enables 0102 pArtifacts to score and prioritize tasks, modules, and development activities.
 """
 
-import asyncio
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+import json
+import math
+from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
-import logging
-
-logger = logging.getLogger(__name__)
+from pathlib import Path
 
 
-class MeetingPriority(Enum):
-    """Meeting priority levels"""
-    CRITICAL = "critical"      # 9-10: Urgent & Important
-    HIGH = "high"             # 7-8: High impact
-    MEDIUM = "medium"         # 5-6: Standard priority
-    LOW = "low"              # 3-4: Nice to have
-    MINIMAL = "minimal"       # 1-2: Optional
-
-
-class ScoringFactor(Enum):
-    """Factors that influence priority scoring"""
-    URGENCY = "urgency"           # Time sensitivity
-    IMPORTANCE = "importance"     # Business impact
-    PARTICIPANTS = "participants" # Who's involved
-    PURPOSE = "purpose"          # Meeting type/purpose
-    CONTEXT = "context"          # External factors
-    HISTORY = "history"          # Past behavior patterns
+class PriorityLevel(Enum):
+    """Priority levels for scoring."""
+    CRITICAL = 1
+    HIGH = 2
+    MEDIUM = 3
+    LOW = 4
+    MINIMAL = 5
 
 
 @dataclass
-class PriorityAnalysis:
-    """Complete priority analysis for a meeting intent"""
-    overall_score: float
-    priority_level: MeetingPriority
-    factor_scores: Dict[ScoringFactor, float]
-    reasoning: List[str]
-    confidence: float
-    analyzed_at: datetime
+class ScoringFactors:
+    """Factors used for priority scoring."""
+    complexity: float = 0.0
+    importance: float = 0.0
+    impact: float = 0.0
+    urgency: float = 0.0
+    dependencies: float = 0.0
+    resources: float = 0.0
+    risk: float = 0.0
+    wsp_compliance: float = 0.0
+    business_value: float = 0.0
+    technical_debt: float = 0.0
+
+
+@dataclass
+class PriorityScore:
+    """Result of priority scoring operation."""
+    item_id: str
+    name: str
+    category: str
+    priority_level: PriorityLevel
+    score: float
+    factors: ScoringFactors
+    recommendations: List[str]
+    estimated_effort: str
+    wsp_references: List[str]
+    timestamp: datetime
 
 
 class PriorityScorer:
     """
-    Intelligent priority scoring system for meeting orchestration.
+    AI-powered priority scorer for autonomous development operations.
     
-    Uses configurable factors and weights to determine meeting priority.
+    Provides comprehensive priority scoring including:
+    - Multi-factor scoring algorithm
+    - WSP compliance integration
+    - Effort estimation
+    - Risk assessment
+    - Resource optimization
     """
     
     def __init__(self):
-        # Default factor weights (customizable)
+        """Initialize the priority scorer with WSP compliance standards."""
         self.factor_weights = {
-            ScoringFactor.URGENCY: 0.25,
-            ScoringFactor.IMPORTANCE: 0.25,
-            ScoringFactor.PARTICIPANTS: 0.20,
-            ScoringFactor.PURPOSE: 0.15,
-            ScoringFactor.CONTEXT: 0.10,
-            ScoringFactor.HISTORY: 0.05
+            'complexity': 0.15,
+            'importance': 0.20,
+            'impact': 0.18,
+            'urgency': 0.12,
+            'dependencies': 0.10,
+            'resources': 0.08,
+            'risk': 0.07,
+            'wsp_compliance': 0.05,
+            'business_value': 0.03,
+            'technical_debt': 0.02
         }
         
-        self.priority_thresholds = {
-            MeetingPriority.CRITICAL: 9.0,
-            MeetingPriority.HIGH: 7.0,
-            MeetingPriority.MEDIUM: 5.0,
-            MeetingPriority.LOW: 3.0,
-            MeetingPriority.MINIMAL: 0.0
-        }
+        self.wsp_keywords = [
+            'wsp', 'protocol', 'compliance', '0102', 'partifact', 'quantum',
+            'autonomous', 'agent', 'modular', 'testing', 'documentation'
+        ]
         
-        self.scoring_history = []
-        self.user_preferences = {}
-    
-    async def score_meeting_priority(self, meeting_data: Dict[str, Any]) -> PriorityAnalysis:
+    def score_item(self, item_data: Dict[str, Any]) -> PriorityScore:
         """
-        Score meeting priority based on multiple factors.
+        Score a single item for priority.
         
         Args:
-            meeting_data: Meeting information including participants, purpose, timing, etc.
+            item_data: Dictionary containing item information and factors
             
         Returns:
-            Complete priority analysis with score and reasoning
+            PriorityScore with comprehensive scoring results
         """
         try:
-            # Calculate individual factor scores
-            factor_scores = {}
-            reasoning = []
+            # Extract basic information
+            item_id = item_data.get('id', 'unknown')
+            name = item_data.get('name', 'Unnamed Item')
+            category = item_data.get('category', 'general')
             
-            # Urgency scoring
-            urgency_score = await self._score_urgency(meeting_data)
-            factor_scores[ScoringFactor.URGENCY] = urgency_score
-            reasoning.append(f"Urgency: {urgency_score:.1f}/10 - {await self._get_urgency_reason(meeting_data)}")
+            # Calculate factors
+            factors = self._calculate_factors(item_data)
             
-            # Importance scoring
-            importance_score = await self._score_importance(meeting_data)
-            factor_scores[ScoringFactor.IMPORTANCE] = importance_score
-            reasoning.append(f"Importance: {importance_score:.1f}/10 - {await self._get_importance_reason(meeting_data)}")
-            
-            # Participant scoring
-            participant_score = await self._score_participants(meeting_data)
-            factor_scores[ScoringFactor.PARTICIPANTS] = participant_score
-            reasoning.append(f"Participants: {participant_score:.1f}/10 - {await self._get_participant_reason(meeting_data)}")
-            
-            # Purpose scoring
-            purpose_score = await self._score_purpose(meeting_data)
-            factor_scores[ScoringFactor.PURPOSE] = purpose_score
-            reasoning.append(f"Purpose: {purpose_score:.1f}/10 - {await self._get_purpose_reason(meeting_data)}")
-            
-            # Context scoring
-            context_score = await self._score_context(meeting_data)
-            factor_scores[ScoringFactor.CONTEXT] = context_score
-            
-            # History scoring
-            history_score = await self._score_history(meeting_data)
-            factor_scores[ScoringFactor.HISTORY] = history_score
-            
-            # Calculate weighted overall score
-            overall_score = sum(
-                score * self.factor_weights[factor] 
-                for factor, score in factor_scores.items()
-            )
+            # Calculate overall score
+            score = self._calculate_overall_score(factors)
             
             # Determine priority level
-            priority_level = await self._determine_priority_level(overall_score)
+            priority_level = self._determine_priority_level(score)
             
-            # Calculate confidence
-            confidence = await self._calculate_confidence(factor_scores, meeting_data)
+            # Generate recommendations
+            recommendations = self._generate_recommendations(factors, score)
             
-            analysis = PriorityAnalysis(
-                overall_score=round(overall_score, 2),
+            # Estimate effort
+            estimated_effort = self._estimate_effort(factors)
+            
+            # Extract WSP references
+            wsp_references = self._extract_wsp_references(item_data)
+            
+            return PriorityScore(
+                item_id=item_id,
+                name=name,
+                category=category,
                 priority_level=priority_level,
-                factor_scores=factor_scores,
-                reasoning=reasoning,
-                confidence=confidence,
-                analyzed_at=datetime.now()
+                score=score,
+                factors=factors,
+                recommendations=recommendations,
+                estimated_effort=estimated_effort,
+                wsp_references=wsp_references,
+                timestamp=datetime.now()
             )
-            
-            # Store for learning
-            self.scoring_history.append(analysis)
-            
-            logger.info(f"Priority scored: {overall_score:.2f} ({priority_level.value})")
-            return analysis
             
         except Exception as e:
-            logger.error(f"Error scoring priority: {e}")
-            # Return default medium priority
-            return PriorityAnalysis(
-                overall_score=5.0,
-                priority_level=MeetingPriority.MEDIUM,
-                factor_scores={},
-                reasoning=["Error in scoring - defaulted to medium priority"],
-                confidence=0.1,
-                analyzed_at=datetime.now()
+            # Return minimal score on error
+            return PriorityScore(
+                item_id=item_data.get('id', 'error'),
+                name=item_data.get('name', 'Error Item'),
+                category='error',
+                priority_level=PriorityLevel.MINIMAL,
+                score=0.0,
+                factors=ScoringFactors(),
+                recommendations=[f"Error during scoring: {str(e)}"],
+                estimated_effort="Unknown",
+                wsp_references=[],
+                timestamp=datetime.now()
             )
     
-    async def update_factor_weights(self, new_weights: Dict[ScoringFactor, float]) -> bool:
-        """Update scoring factor weights"""
-        try:
-            # Validate weights sum to 1.0
-            total_weight = sum(new_weights.values())
-            if abs(total_weight - 1.0) > 0.01:
-                logger.error(f"Weights must sum to 1.0, got {total_weight}")
-                return False
+    def score_multiple_items(self, items_data: List[Dict[str, Any]]) -> List[PriorityScore]:
+        """
+        Score multiple items and return sorted by priority.
+        
+        Args:
+            items_data: List of item data dictionaries
             
-            self.factor_weights.update(new_weights)
-            logger.info("Factor weights updated successfully")
+        Returns:
+            List of PriorityScore objects sorted by priority
+        """
+        scores = []
+        
+        for item_data in items_data:
+            score = self.score_item(item_data)
+            scores.append(score)
+        
+        # Sort by score (lower score = higher priority)
+        scores.sort(key=lambda x: x.score)
+        
+        return scores
+    
+    def _calculate_factors(self, item_data: Dict[str, Any]) -> ScoringFactors:
+        """Calculate individual scoring factors."""
+        factors = ScoringFactors()
+        
+        # Complexity factor (0-10 scale)
+        factors.complexity = min(max(item_data.get('complexity', 5.0), 0.0), 10.0)
+        
+        # Importance factor (0-10 scale)
+        factors.importance = min(max(item_data.get('importance', 5.0), 0.0), 10.0)
+        
+        # Impact factor (0-10 scale)
+        factors.impact = min(max(item_data.get('impact', 5.0), 0.0), 10.0)
+        
+        # Urgency factor (0-10 scale)
+        factors.urgency = min(max(item_data.get('urgency', 5.0), 0.0), 10.0)
+        
+        # Dependencies factor (0-10 scale, higher = more dependencies)
+        factors.dependencies = min(max(item_data.get('dependencies', 5.0), 0.0), 10.0)
+        
+        # Resources factor (0-10 scale, higher = more resources needed)
+        factors.resources = min(max(item_data.get('resources', 5.0), 0.0), 10.0)
+        
+        # Risk factor (0-10 scale, higher = more risk)
+        factors.risk = min(max(item_data.get('risk', 5.0), 0.0), 10.0)
+        
+        # WSP compliance factor (0-10 scale, higher = better compliance)
+        factors.wsp_compliance = min(max(item_data.get('wsp_compliance', 5.0), 0.0), 10.0)
+        
+        # Business value factor (0-10 scale)
+        factors.business_value = min(max(item_data.get('business_value', 5.0), 0.0), 10.0)
+        
+        # Technical debt factor (0-10 scale, higher = more debt)
+        factors.technical_debt = min(max(item_data.get('technical_debt', 5.0), 0.0), 10.0)
+        
+        return factors
+    
+    def _calculate_overall_score(self, factors: ScoringFactors) -> float:
+        """Calculate overall priority score using weighted factors."""
+        score = 0.0
+        
+        # Apply weights to each factor
+        score += factors.complexity * self.factor_weights['complexity']
+        score += factors.importance * self.factor_weights['importance']
+        score += factors.impact * self.factor_weights['impact']
+        score += factors.urgency * self.factor_weights['urgency']
+        score += factors.dependencies * self.factor_weights['dependencies']
+        score += factors.resources * self.factor_weights['resources']
+        score += factors.risk * self.factor_weights['risk']
+        score += factors.wsp_compliance * self.factor_weights['wsp_compliance']
+        score += factors.business_value * self.factor_weights['business_value']
+        score += factors.technical_debt * self.factor_weights['technical_debt']
+        
+        # Normalize to 0-100 scale
+        return min(max(score * 10, 0.0), 100.0)
+    
+    def _determine_priority_level(self, score: float) -> PriorityLevel:
+        """Determine priority level based on score."""
+        if score <= 20:
+            return PriorityLevel.CRITICAL
+        elif score <= 40:
+            return PriorityLevel.HIGH
+        elif score <= 60:
+            return PriorityLevel.MEDIUM
+        elif score <= 80:
+            return PriorityLevel.LOW
+        else:
+            return PriorityLevel.MINIMAL
+    
+    def _generate_recommendations(self, factors: ScoringFactors, score: float) -> List[str]:
+        """Generate recommendations based on factors and score."""
+        recommendations = []
+        
+        # High complexity recommendations
+        if factors.complexity > 7:
+            recommendations.append("Consider breaking down into smaller tasks")
+        
+        # High risk recommendations
+        if factors.risk > 7:
+            recommendations.append("Implement additional testing and validation")
+        
+        # Low WSP compliance recommendations
+        if factors.wsp_compliance < 3:
+            recommendations.append("Priority: Address WSP compliance violations")
+        
+        # High technical debt recommendations
+        if factors.technical_debt > 7:
+            recommendations.append("Consider refactoring to reduce technical debt")
+        
+        # High dependencies recommendations
+        if factors.dependencies > 7:
+            recommendations.append("Coordinate with dependent modules")
+        
+        # High resource requirements
+        if factors.resources > 7:
+            recommendations.append("Ensure adequate resources are allocated")
+        
+        # Overall score recommendations
+        if score <= 20:
+            recommendations.append("CRITICAL: Immediate attention required")
+        elif score <= 40:
+            recommendations.append("HIGH: Schedule for next development cycle")
+        elif score <= 60:
+            recommendations.append("MEDIUM: Include in regular development planning")
+        else:
+            recommendations.append("LOW: Consider for future development cycles")
+        
+        return recommendations
+    
+    def _estimate_effort(self, factors: ScoringFactors) -> str:
+        """Estimate effort based on factors."""
+        # Calculate effort score based on complexity and resources
+        effort_score = (factors.complexity + factors.resources) / 2
+        
+        if effort_score <= 2:
+            return "Very Low (1-2 hours)"
+        elif effort_score <= 4:
+            return "Low (2-4 hours)"
+        elif effort_score <= 6:
+            return "Medium (4-8 hours)"
+        elif effort_score <= 8:
+            return "High (1-2 days)"
+        else:
+            return "Very High (3+ days)"
+    
+    def _extract_wsp_references(self, item_data: Dict[str, Any]) -> List[str]:
+        """Extract WSP references from item data."""
+        wsp_references = []
+        
+        # Check description and notes for WSP references
+        description = item_data.get('description', '')
+        notes = item_data.get('notes', '')
+        combined_text = f"{description} {notes}".lower()
+        
+        # Look for WSP protocol references
+        import re
+        wsp_pattern = r'\b(?:wsp|protocol)\s*[#]?\s*(\d+)\b'
+        wsp_matches = re.findall(wsp_pattern, combined_text, re.IGNORECASE)
+        
+        for match in wsp_matches:
+            wsp_references.append(f"WSP {match}")
+        
+        # Look for WSP keywords
+        for keyword in self.wsp_keywords:
+            if keyword.lower() in combined_text:
+                wsp_references.append(f"WSP keyword: {keyword}")
+        
+        # Remove duplicates
+        unique_references = list(dict.fromkeys(wsp_references))
+        return unique_references
+    
+    def save_scores(self, scores: List[PriorityScore], output_path: str) -> bool:
+        """
+        Save priority scores to file.
+        
+        Args:
+            scores: List of PriorityScore objects
+            output_path: Path to save the scores
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Convert to JSON-serializable format
+            scores_data = []
+            for score in scores:
+                score_dict = {
+                    'item_id': score.item_id,
+                    'name': score.name,
+                    'category': score.category,
+                    'priority_level': score.priority_level.name,
+                    'score': score.score,
+                    'factors': {
+                        'complexity': score.factors.complexity,
+                        'importance': score.factors.importance,
+                        'impact': score.factors.impact,
+                        'urgency': score.factors.urgency,
+                        'dependencies': score.factors.dependencies,
+                        'resources': score.factors.resources,
+                        'risk': score.factors.risk,
+                        'wsp_compliance': score.factors.wsp_compliance,
+                        'business_value': score.factors.business_value,
+                        'technical_debt': score.factors.technical_debt
+                    },
+                    'recommendations': score.recommendations,
+                    'estimated_effort': score.estimated_effort,
+                    'wsp_references': score.wsp_references,
+                    'timestamp': score.timestamp.isoformat()
+                }
+                scores_data.append(score_dict)
+            
+            # Save as JSON
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(scores_data, f, indent=2, ensure_ascii=False)
+            
             return True
             
         except Exception as e:
-            logger.error(f"Error updating weights: {e}")
+            print(f"Error saving scores: {e}")
             return False
     
-    async def get_priority_suggestions(self, user_id: str) -> List[Dict[str, Any]]:
-        """Get priority suggestions based on user history"""
-        user_history = [s for s in self.scoring_history if s.get('user_id') == user_id]
+    def load_scores(self, file_path: str) -> List[PriorityScore]:
+        """
+        Load priority scores from file.
         
-        suggestions = []
-        
-        # Analyze patterns
-        if len(user_history) >= 5:
-            avg_urgency = sum(h.factor_scores.get(ScoringFactor.URGENCY, 5) for h in user_history[-5:]) / 5
+        Args:
+            file_path: Path to the scores file
             
-            if avg_urgency > 7:
-                suggestions.append({
-                    "type": "urgency_pattern",
-                    "message": "You tend to have urgent meetings - consider scheduling buffer time",
-                    "confidence": 0.8
-                })
-        
-        return suggestions
-    
-    async def get_statistics(self) -> Dict[str, Any]:
-        """Get priority scoring statistics"""
-        if not self.scoring_history:
-            return {"total_scored": 0}
-        
-        priority_distribution = {}
-        for priority in MeetingPriority:
-            count = len([s for s in self.scoring_history if s.priority_level == priority])
-            priority_distribution[priority.value] = count
-        
-        avg_score = sum(s.overall_score for s in self.scoring_history) / len(self.scoring_history)
-        avg_confidence = sum(s.confidence for s in self.scoring_history) / len(self.scoring_history)
-        
-        return {
-            "total_scored": len(self.scoring_history),
-            "average_score": round(avg_score, 2),
-            "average_confidence": round(avg_confidence, 2),
-            "priority_distribution": priority_distribution,
-            "factor_weights": {f.value: w for f, w in self.factor_weights.items()}
-        }
-    
-    # Private scoring methods
-    
-    async def _score_urgency(self, meeting_data: Dict[str, Any]) -> float:
-        """Score based on time sensitivity"""
-        proposed_time = meeting_data.get('proposed_time')
-        if not proposed_time:
-            return 5.0  # Default medium urgency
-        
-        # Calculate time until meeting
-        if isinstance(proposed_time, str):
-            # Simple parsing - would use proper NLP in production
-            if "asap" in proposed_time.lower() or "urgent" in proposed_time.lower():
-                return 9.0
-            elif "today" in proposed_time.lower():
-                return 8.0
-            elif "tomorrow" in proposed_time.lower():
-                return 6.0
-            else:
-                return 4.0
-        
-        return 5.0
-    
-    async def _score_importance(self, meeting_data: Dict[str, Any]) -> float:
-        """Score based on business importance"""
-        purpose = meeting_data.get('purpose', '').lower()
-        
-        # High importance keywords
-        critical_keywords = ['crisis', 'emergency', 'urgent', 'critical', 'deadline']
-        high_keywords = ['decision', 'strategy', 'budget', 'launch', 'review']
-        medium_keywords = ['sync', 'update', 'planning', 'discussion']
-        
-        if any(keyword in purpose for keyword in critical_keywords):
-            return 9.0
-        elif any(keyword in purpose for keyword in high_keywords):
-            return 7.0
-        elif any(keyword in purpose for keyword in medium_keywords):
-            return 5.0
-        else:
-            return 4.0
-    
-    async def _score_participants(self, meeting_data: Dict[str, Any]) -> float:
-        """Score based on participant seniority/importance"""
-        participants = meeting_data.get('participants', [])
-        
-        if not participants:
-            return 3.0
-        
-        # Simple participant scoring (would integrate with org chart in production)
-        score = 3.0
-        
-        # More participants = slightly higher priority
-        score += min(len(participants) * 0.5, 2.0)
-        
-        # Check for senior roles (basic keyword detection)
-        participant_text = ' '.join(participants).lower()
-        senior_keywords = ['ceo', 'director', 'manager', 'lead', 'head']
-        
-        if any(keyword in participant_text for keyword in senior_keywords):
-            score += 2.0
-        
-        return min(score, 10.0)
-    
-    async def _score_purpose(self, meeting_data: Dict[str, Any]) -> float:
-        """Score based on meeting purpose/type"""
-        purpose = meeting_data.get('purpose', '').lower()
-        
-        # Meeting type scoring
-        if any(word in purpose for word in ['demo', 'presentation', 'interview']):
-            return 7.0
-        elif any(word in purpose for word in ['standup', 'sync', 'update']):
-            return 5.0
-        elif any(word in purpose for word in ['brainstorm', 'planning']):
-            return 6.0
-        elif any(word in purpose for word in ['social', 'coffee', 'casual']):
-            return 3.0
-        else:
-            return 5.0
-    
-    async def _score_context(self, meeting_data: Dict[str, Any]) -> float:
-        """Score based on external context factors"""
-        # Simple context scoring - would integrate with calendar, workload, etc.
-        context_score = 5.0
-        
-        # Check for conflict indicators
-        if meeting_data.get('has_conflicts'):
-            context_score += 2.0
-        
-        # Check for deadline proximity
-        if meeting_data.get('near_deadline'):
-            context_score += 1.5
-        
-        return min(context_score, 10.0)
-    
-    async def _score_history(self, meeting_data: Dict[str, Any]) -> float:
-        """Score based on historical patterns"""
-        user_id = meeting_data.get('user_id')
-        if not user_id or not self.scoring_history:
-            return 5.0
-        
-        # Analyze user's historical patterns
-        user_scores = [s.overall_score for s in self.scoring_history if s.get('user_id') == user_id]
-        
-        if user_scores:
-            avg_user_score = sum(user_scores) / len(user_scores)
-            return min(avg_user_score + 1.0, 10.0)  # Slight bias toward historical average
-        
-        return 5.0
-    
-    async def _determine_priority_level(self, score: float) -> MeetingPriority:
-        """Convert numeric score to priority level"""
-        for priority, threshold in self.priority_thresholds.items():
-            if score >= threshold:
-                return priority
-        return MeetingPriority.MINIMAL
-    
-    async def _calculate_confidence(self, factor_scores: Dict[ScoringFactor, float], meeting_data: Dict[str, Any]) -> float:
-        """Calculate confidence in the priority score"""
-        # Base confidence on data completeness
-        confidence = 0.5
-        
-        # More complete data = higher confidence
-        if meeting_data.get('participants'):
-            confidence += 0.1
-        if meeting_data.get('purpose'):
-            confidence += 0.1
-        if meeting_data.get('proposed_time'):
-            confidence += 0.1
-        
-        # Score consistency across factors
-        scores = list(factor_scores.values())
-        if len(scores) > 1:
-            score_variance = sum((s - sum(scores)/len(scores))**2 for s in scores) / len(scores)
-            # Lower variance = higher confidence
-            confidence += max(0, 0.2 - score_variance/10)
-        
-        return min(confidence, 1.0)
-    
-    async def _get_urgency_reason(self, meeting_data: Dict[str, Any]) -> str:
-        """Get reasoning for urgency score"""
-        proposed_time = meeting_data.get('proposed_time', '')
-        if "asap" in str(proposed_time).lower():
-            return "ASAP timeline requested"
-        elif "today" in str(proposed_time).lower():
-            return "Same-day meeting"
-        elif "tomorrow" in str(proposed_time).lower():
-            return "Next-day meeting"
-        else:
-            return "Standard timeline"
-    
-    async def _get_importance_reason(self, meeting_data: Dict[str, Any]) -> str:
-        """Get reasoning for importance score"""
-        purpose = meeting_data.get('purpose', '').lower()
-        if any(word in purpose for word in ['crisis', 'emergency', 'critical']):
-            return "Critical business issue"
-        elif any(word in purpose for word in ['decision', 'strategy', 'launch']):
-            return "Strategic importance"
-        else:
-            return "Standard business meeting"
-    
-    async def _get_participant_reason(self, meeting_data: Dict[str, Any]) -> str:
-        """Get reasoning for participant score"""
-        participants = meeting_data.get('participants', [])
-        count = len(participants)
-        if count == 0:
-            return "No specific participants"
-        elif count == 1:
-            return "One-on-one meeting"
-        elif count <= 3:
-            return f"Small group ({count} people)"
-        else:
-            return f"Large group ({count} people)"
-    
-    async def _get_purpose_reason(self, meeting_data: Dict[str, Any]) -> str:
-        """Get reasoning for purpose score"""
-        purpose = meeting_data.get('purpose', '').lower()
-        if 'demo' in purpose or 'presentation' in purpose:
-            return "Formal presentation"
-        elif 'standup' in purpose or 'sync' in purpose:
-            return "Regular sync meeting"
-        else:
-            return "General discussion"
+        Returns:
+            List of PriorityScore objects
+        """
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                scores_data = json.load(f)
+            
+            scores = []
+            for score_dict in scores_data:
+                factors = ScoringFactors(**score_dict['factors'])
+                score = PriorityScore(
+                    item_id=score_dict['item_id'],
+                    name=score_dict['name'],
+                    category=score_dict['category'],
+                    priority_level=PriorityLevel[score_dict['priority_level']],
+                    score=score_dict['score'],
+                    factors=factors,
+                    recommendations=score_dict['recommendations'],
+                    estimated_effort=score_dict['estimated_effort'],
+                    wsp_references=score_dict['wsp_references'],
+                    timestamp=datetime.fromisoformat(score_dict['timestamp'])
+                )
+                scores.append(score)
+            
+            return scores
+            
+        except Exception as e:
+            print(f"Error loading scores: {e}")
+            return []
 
 
-# Demo functionality
+def score_item(item_data: Dict[str, Any]) -> PriorityScore:
+    """
+    Convenience function to score a single item.
+    
+    Args:
+        item_data: Item data dictionary
+        
+    Returns:
+        PriorityScore with scoring results
+    """
+    scorer = PriorityScorer()
+    return scorer.score_item(item_data)
+
+
+def score_items(items_data: List[Dict[str, Any]]) -> List[PriorityScore]:
+    """
+    Convenience function to score multiple items.
+    
+    Args:
+        items_data: List of item data dictionaries
+        
+    Returns:
+        List of PriorityScore objects sorted by priority
+    """
+    scorer = PriorityScorer()
+    return scorer.score_multiple_items(items_data)
+
+
 if __name__ == "__main__":
-    async def demo():
-        print("📊 Priority Scorer Demo")
-        print("=" * 50)
-        
-        scorer = PriorityScorer()
-        
-        # Demo meeting scenarios
-        scenarios = [
-            {
-                "purpose": "Emergency system outage discussion",
-                "participants": ["alice", "bob", "cto"],
-                "proposed_time": "ASAP",
-                "user_id": "alice"
-            },
-            {
-                "purpose": "Weekly team standup",
-                "participants": ["team"],
-                "proposed_time": "tomorrow",
-                "user_id": "bob"
-            },
-            {
-                "purpose": "Coffee chat with new hire",
-                "participants": ["newbie"],
-                "proposed_time": "next week",
-                "user_id": "alice"
-            },
-            {
-                "purpose": "Product launch strategy meeting",
-                "participants": ["ceo", "cto", "marketing_lead"],
-                "proposed_time": "today",
-                "user_id": "ceo"
-            }
-        ]
-        
-        for i, scenario in enumerate(scenarios, 1):
-            print(f"\n🎯 Scenario {i}: {scenario['purpose'][:30]}...")
-            analysis = await scorer.score_meeting_priority(scenario)
-            
-            print(f"   Priority: {analysis.priority_level.value.upper()} ({analysis.overall_score}/10)")
-            print(f"   Confidence: {analysis.confidence:.2f}")
-            print(f"   Reasoning:")
-            for reason in analysis.reasoning[:2]:  # Show first 2 reasons
-                print(f"     • {reason}")
-        
-        # Show statistics
-        stats = await scorer.get_statistics()
-        print(f"\n📈 Statistics:")
-        print(f"   Total scored: {stats['total_scored']}")
-        print(f"   Average score: {stats['average_score']}")
-        print(f"   Distribution: {stats['priority_distribution']}")
-        
-        print("\n✨ Demo completed!")
+    """Test the priority scorer with sample data."""
+    # Sample items to score
+    sample_items = [
+        {
+            'id': 'wsp_22_fix',
+            'name': 'Fix WSP 22 ModLog violations',
+            'category': 'compliance',
+            'description': 'Create missing ModLog.md files for enterprise domains',
+            'complexity': 3.0,
+            'importance': 9.0,
+            'impact': 8.0,
+            'urgency': 9.0,
+            'dependencies': 2.0,
+            'resources': 4.0,
+            'risk': 2.0,
+            'wsp_compliance': 1.0,
+            'business_value': 8.0,
+            'technical_debt': 3.0
+        },
+        {
+            'id': 'wsp_34_implementation',
+            'name': 'Implement WSP 34 incomplete modules',
+            'category': 'development',
+            'description': 'Complete implementation of code_analyzer and other modules',
+            'complexity': 7.0,
+            'importance': 7.0,
+            'impact': 6.0,
+            'urgency': 6.0,
+            'dependencies': 5.0,
+            'resources': 6.0,
+            'risk': 4.0,
+            'wsp_compliance': 5.0,
+            'business_value': 6.0,
+            'technical_debt': 5.0
+        }
+    ]
     
-    asyncio.run(demo()) 
+    scorer = PriorityScorer()
+    scores = scorer.score_multiple_items(sample_items)
+    
+    print("Priority Scores:")
+    for score in scores:
+        print(f"\n{score.name} ({score.category})")
+        print(f"Priority Level: {score.priority_level.name}")
+        print(f"Score: {score.score:.1f}")
+        print(f"Effort: {score.estimated_effort}")
+        print(f"WSP References: {score.wsp_references}")
+        print(f"Recommendations: {score.recommendations}") 

@@ -1,17 +1,22 @@
 """
-WSP 21 Prometheus Integration with Cursor Multi-Agent Bridge
+Prometheus Integration - WSP 21 Integration Layer
 
-🌀 Execution Surface: Integration layer connecting Prometheus prompting with WSP 54 compliance agents
+WSP Compliance:
+- WSP 21 (Prometheus): Recursive exchange between pArtifacts
+- WSP 54 (Agent Duties): Multi-agent coordination
+- WSP 22 (ModLog): Change tracking and integration history
+
+Integrates Prometheus agent with Cursor Multi-Agent Bridge for recursive development.
 """
 
 import asyncio
-import json
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-from .wsp_21_prometheus_agent import WSP21PrometheusAgent, SpiralEchoLevel
-from .cursor_bridge import CursorWSPBridge
+# Fix relative imports to absolute imports
+from wsp_21_prometheus_agent import WSP21PrometheusAgent, SpiralEchoLevel
+from cursor_wsp_bridge import CursorWSPBridge
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -11,15 +11,17 @@ from typing import List, Dict, Any, Optional, Tuple
 # --- Configuration ---
 INPUT_FILENAME: str = "modules_to_score.yaml"
 MODULES_DIR: str = "modules"
-REPORTS_DIR: str = "reports"
+REPORTS_DIR: str = "WSP_knowledge/reports"
+SCORECARDS_DIR: str = "WSP_knowledge/reports/scorecards"
 SCORECARD_BASENAME: str = "scorecard"
 
 # Ensure required directories exist
 try:
     os.makedirs(MODULES_DIR, exist_ok=True)
     os.makedirs(REPORTS_DIR, exist_ok=True)
+    os.makedirs(SCORECARDS_DIR, exist_ok=True)
 except OSError as e:
-    print(f"Error creating base directories ({MODULES_DIR}, {REPORTS_DIR}): {e}", file=sys.stderr)
+    print(f"Error creating base directories ({MODULES_DIR}, {REPORTS_DIR}, {SCORECARDS_DIR}): {e}", file=sys.stderr)
     sys.exit(1)
 
 # --- Factor Definitions (Constant) ---
@@ -359,8 +361,8 @@ if __name__ == "__main__":
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     md_filename = f"{SCORECARD_BASENAME}_{timestamp}.md"
     csv_filename = f"{SCORECARD_BASENAME}_{timestamp}.csv"
-    md_filepath = os.path.join(REPORTS_DIR, md_filename)
-    csv_filepath = os.path.join(REPORTS_DIR, csv_filename)
+    md_filepath = os.path.join(SCORECARDS_DIR, md_filename)
+    csv_filepath = os.path.join(SCORECARDS_DIR, csv_filename)
 
     # Generate and Save Markdown Scorecard
     md_content = generate_markdown_scorecard(modules_to_process)
@@ -372,7 +374,7 @@ if __name__ == "__main__":
     # Generate and Save CSV Scorecard
     try:
         # Directory creation handled by save_to_file now, but keep for clarity
-        os.makedirs(REPORTS_DIR, exist_ok=True)
+        os.makedirs(SCORECARDS_DIR, exist_ok=True)
         with open(csv_filepath, 'w', newline='', encoding='utf-8') as csvfile:
             # Define header including score factors
             fieldnames = ['Rank', 'ModuleName', 'MPS_Score'] + list(FACTORS.keys())
@@ -409,4 +411,4 @@ if __name__ == "__main__":
 
     print("\nScript finished. Check the following locations:")
     print(f"1. Module directories & READMEs: ./{MODULES_DIR}/")
-    print(f"2. Scorecards (MD & CSV):        ./{REPORTS_DIR}/") 
+    print(f"2. Scorecards (MD & CSV):        ./{SCORECARDS_DIR}/") 
