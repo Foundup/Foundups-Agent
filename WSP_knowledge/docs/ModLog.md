@@ -116,7 +116,7 @@ This log tracks system-wide changes and references module-specific ModLogs. Indi
 - Version: 0.4.0
 - Date: 2025-06-19
 - Git Tag: wsp-29-cabr
-- Description: Implemented WSP 29 - CABR (Compound Annual Benefit Rate) & Proof of Benefit Engine
+- Description: Implemented WSP 29 - CABR (Collective Autonomous Benefit Rate) & Proof of Benefit Engine
 - Notes: Introduces sustainable value metrics to replace traditional CAGR in FoundUps ecosystem
 - Module LLME Updates:
   - [cabr_engine] - LLME: 000 -> 111 (Initial framework implementation)

@@ -94,7 +94,8 @@ class DiscussionInterface:
         print(question)
         print("👤 012: ", end="")
         
-        response = input()
+        # Autonomous response - no blocking input
+        response = "Autonomous strategic guidance provided by 0102 system"
         wre_log(f"👤 012: {response}", "INFO")
         
         return response

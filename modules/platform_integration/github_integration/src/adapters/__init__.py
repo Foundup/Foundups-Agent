@@ -1,0 +1,1 @@
+# GitHub Adapters - Minimal API interfaces for existing WRE agents
