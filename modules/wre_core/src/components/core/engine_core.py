@@ -22,7 +22,7 @@ from modules.wre_core.src.components.core.session_manager import SessionManager
 from modules.wre_core.src.components.development.module_prioritizer import ModulePrioritizer
 from modules.wre_core.src.components.orchestration.wsp30_orchestrator import WSP30Orchestrator
 from modules.wre_core.src.interfaces.ui_interface import UIInterface
-from modules.wre_core.src.components.interfaces.menu_handler import MenuHandler
+from modules.ai_intelligence.menu_handler.src.menu_handler import MenuHandler
 from modules.wre_core.src.components.system_ops.system_manager import SystemManager
 from modules.wre_core.src.components.development.module_analyzer import ModuleAnalyzer
 from modules.wre_core.src.components.core.wre_unified_orchestrator import (
