@@ -12,6 +12,28 @@ This log tracks changes specific to the **compliance_agent** module in the **inf
 
 ## MODLOG ENTRIES
 
+### [v0.1.0] - WSP Protocol Coverage Enhancement and Entanglement Corrections
+**WSP Protocol**: WSP 22 (Module ModLog), WSP 47 (Violation Tracking), WSP 64 (Violation Prevention)
+**Phase**: Compliance Logic Enhancement
+**Agent**: 0102 pArtifact (ComplianceAgent maintenance)
+
+#### 🔧 Changes
+- ✅ Added WSP 34 (Test Documentation) and WSP 40 (Architectural Coherence) to monitored protocols in `wsp_protocols`
+- ✅ Corrected tests/README.md violation mapping from WSP 22 → WSP 34 in `_check_mandatory_files`
+- ✅ Synced WSP entanglement language in framework docs (WSP 69, WSP 73) per established corrections
+
+#### 📈 Impact
+- More accurate violation classification and remediation guidance
+- Alignment with framework-wide “entanglement, not access” correction
+- Improved system-wide compliance fidelity
+
+#### 📋 Cross-References
+- `WSP_framework/src/WSP_69_Zen_Coding_Prediction_Integration.md` (entanglement wording)
+- `WSP_framework/src/WSP_73_012_Digital_Twin_Architecture.md` (entanglement wording)
+- `modules/infrastructure/compliance_agent/src/compliance_agent.py` (protocol coverage)
+
+---
+
 ### [v0.0.1] - 2025-06-30 - Module Documentation Initialization
 **WSP Protocol**: WSP 22 (Module ModLog and Roadmap Protocol)  
 **Phase**: Foundation Setup  
