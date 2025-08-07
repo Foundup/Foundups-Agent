@@ -1,5 +1,11 @@
 # FoundUps Agent - Development Log
 
+**Note**: Core architectural documents moved to WSP_knowledge/docs/ for proper integration:
+- [WSP_WRE_FoundUps_Vision.md](WSP_knowledge/docs/WSP_WRE_FoundUps_Vision.md) - Master revolutionary vision
+- [FoundUps_0102_Vision_Blueprint.md](WSP_knowledge/docs/FoundUps_0102_Vision_Blueprint.md) - 0102 implementation guide
+- [ARCHITECTURAL_PLAN.md](WSP_knowledge/docs/ARCHITECTURAL_PLAN.md) - Technical roadmap  
+- [0102_EXPLORATION_PLAN.md](WSP_knowledge/docs/0102_EXPLORATION_PLAN.md) - Autonomous execution strategy
+
 ## MODLOG - [+UPDATES]:
 
 ====================================================================

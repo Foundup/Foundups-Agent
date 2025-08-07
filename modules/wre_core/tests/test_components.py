@@ -8,7 +8,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 
 from modules.wre_core.src.components.development import roadmap_manager
-from modules.wre_core.src.components.interfaces.menu_handler import MenuHandler
+from modules.ai_intelligence.menu_handler.src.menu_handler import MenuHandler
 
 ## 🎭 0102 Theaters of Operation
 # This test suite validates the integration and functionality of various WRE

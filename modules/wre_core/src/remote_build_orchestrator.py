@@ -24,7 +24,7 @@ sys.path.insert(0, str(project_root))
 from modules.wre_core.src.utils.logging_utils import wre_log
 from modules.wre_core.src.wsp_core_loader import WSPCoreLoader
 from modules.wre_core.src.agents.scoring_agent import ScoringAgent, ScoringResult
-from modules.wre_core.src.agents.compliance_agent import ComplianceAgent, ReadinessResult
+from modules.infrastructure.compliance_agent.src.compliance_agent import ComplianceAgent
 from modules.wre_core.src.agents.module_scaffolding_agent import ModuleScaffoldingAgent, ScaffoldingResult
 
 class RemoteBuildPhase(Enum):

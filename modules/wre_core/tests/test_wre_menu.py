@@ -15,7 +15,7 @@ sys.path.insert(0, str(project_root))
 
 from modules.wre_core.src.interfaces.ui_interface import UIInterface
 from modules.wre_core.src.components.core.engine_core import WRECore
-from modules.wre_core.src.components.interfaces.menu_handler import MenuHandler
+from modules.ai_intelligence.menu_handler.src.menu_handler import MenuHandler
 
 def test_ui_interface_initialization():
     """Test UI interface initialization."""
