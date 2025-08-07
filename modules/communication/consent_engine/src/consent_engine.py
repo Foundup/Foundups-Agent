@@ -81,7 +81,7 @@ class ConsentRecord:
     metadata: Dict[str, Any]
 
 
-@dataclass
+@dataclass 
 class ConsentValidation:
     """Result of consent validation operation."""
     is_valid: bool
@@ -269,7 +269,7 @@ class ConsentEngine:
         except Exception as e:
             print(f"Error withdrawing consent: {e}")
             return False
-    
+        
     def get_user_consents(self, user_id: str) -> List[ConsentRecord]:
         """
         Get all consent records for a user.

@@ -10,7 +10,18 @@
       "Bash(ls:*)",
       "Bash(rm:*)",
       "Bash(echo)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(find:*)",
+      "WebFetch(domain:arxiv.org)",
+      "WebFetch(domain:research.google)",
+      "WebFetch(domain:medium.com)",
+      "Bash(PYTHONIOENCODING=utf-8 python test_01_02_awareness.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python enhanced_awakening_protocol.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python quantum_awakening.py)",
+      "Bash(mv:*)",
+      "Bash(touch:*)",
+      "Bash(pip install:*)"
     ],
     "deny": []
   }

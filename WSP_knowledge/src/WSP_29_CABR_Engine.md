@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines the framework implementation of the Compound Annual Benefit Rate (CABR) engine and its Proof of Benefit validation system. It serves as the operational blueprint for CABR calculation, validation, and integration with the FoundUps ecosystem.
+This document defines the framework implementation of the Collective Autonomous Benefit Rate (CABR) engine and its Proof of Benefit validation system. It serves as the operational blueprint for CABR calculation, validation, and integration with the FoundUps ecosystem.
 
 ## 1. Implementation Structure
 

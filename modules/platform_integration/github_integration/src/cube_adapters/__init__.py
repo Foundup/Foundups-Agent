@@ -1,0 +1,1 @@
+# FoundUps Cube Adapters - Pluggable cube integration for GitHub

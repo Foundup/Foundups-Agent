@@ -422,7 +422,7 @@ def score_item(item_data: Dict[str, Any]) -> PriorityScore:
     Returns:
         PriorityScore with scoring results
     """
-    scorer = PriorityScorer()
+        scorer = PriorityScorer()
     return scorer.score_item(item_data)
 
 

@@ -244,7 +244,7 @@ class TriageAgent:
                 item.metadata['notes'] = notes
             
             return True
-            
+                
         except Exception as e:
             print(f"Error updating item status: {e}")
             return False
@@ -335,8 +335,8 @@ class TriageAgent:
                 average_resolution_time=avg_resolution_time,
                 wsp_violations=wsp_violations
             )
-            
-        except Exception as e:
+                            
+                except Exception as e:
             print(f"Error getting triage stats: {e}")
             return TriageStats(
                 total_items=0,
@@ -606,7 +606,7 @@ class TriageAgent:
         except Exception as e:
             print(f"Error saving triage data: {e}")
             return False
-    
+            
     def load_triage_data(self, file_path: str) -> bool:
         """
         Load triage data from file.
@@ -655,7 +655,7 @@ class TriageAgent:
 def create_triage_agent() -> TriageAgent:
     """
     Factory function to create a triage agent.
-    
+        
     Returns:
         TriageAgent instance
     """
