@@ -12,7 +12,7 @@ import json
 try:
     from modules.wre_core.src.prometheus_orchestration_engine import PrometheusOrchestrationEngine
     from modules.wre_core.src.components.module_development.module_development_coordinator import ModuleDevelopmentCoordinator
-    from modules.wre_core.src.components.utils.wre_logger import wre_log
+    from modules.wre_core.src.utils.logging_utils import wre_log
     WRE_AVAILABLE = True
 except ImportError as e:
     logging.warning(f"WRE components not available: {e}")
@@ -83,6 +83,8 @@ class ComplianceAgent:
             "WSP_11": "Interface Documentation Standards",
             "WSP_12": "Dependency Management",
             "WSP_22": "Module ModLog and Roadmap Protocol",
+            "WSP_34": "Test Documentation Protocol",
+            "WSP_40": "Architectural Coherence Protocol",
             "WSP_49": "Module Directory Structure Standardization",
             "WSP_54": "WRE Agent Duties Specification",
             "WSP_71": "Secrets Management Protocol"
@@ -105,11 +107,11 @@ class ComplianceAgent:
             'average_compliance_score': 0.0
         }
         
-        # Initialize components
-        self._initialize_wre()
-        
         # Configure logging
         self.logger = logging.getLogger(__name__)
+        
+        # Initialize components
+        self._initialize_wre()
         self.logger.info("ComplianceAgent initialized with WRE integration for WSP protocol enforcement")
         
         if self.wre_enabled:
@@ -343,7 +345,7 @@ class ComplianceAgent:
                 "type": "missing_file",
                 "severity": "medium",
                 "description": f"Missing mandatory file: tests/README.md in {module_path}",
-                "wsp_protocol": "WSP_22",
+                "wsp_protocol": "WSP_34",
                 "remediation": "Create tests/README.md with test documentation",
                 "auto_fixable": True
             })

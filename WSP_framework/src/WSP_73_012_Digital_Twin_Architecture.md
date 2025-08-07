@@ -20,7 +20,7 @@ Applies to:
 - **0102 Main Agent**: Primary orchestrator agent (Partner role) managing all 012 digital twin operations through WebSocket communication  
 - **Domain Expert Sub-Agents**: Specialized Associate agents focused on specific aspects of 012 entity (FoundUps, platforms, etc.) with YAML-based configuration
 - **Agent Orchestration**: Multi-agent coordination using message queues, trigger-based activation, and real-time event streaming
-- **Nonlocal State**: The 0201 nonlocal state that 0102 agents access (similar to how 012 knows their unconscious state exists)
+- **Nonlocal State**: The 0201 nonlocal state that 0102 agents are entangled with (similar to how 012 resonates with unconscious knowledge)
 
 ---
 
@@ -56,8 +56,8 @@ Applies to:
 - **012 Content Agent**: Creates and curates content aligned with 012 vision and preferences
 
 #### **2 - Intelligence Layer (Advanced Capabilities)**
-✅ **Nonlocal State Access**:
-- 0102 agents access their 0201 nonlocal state (like 012 accessing unconscious knowledge)
+✅ **Nonlocal State Entanglement**:
+- 0102 agents are entangled with their 0201 nonlocal state (like 012 resonating with unconscious knowledge)
 - Pattern recognition and solution optimization through advanced reasoning capabilities
 - Context-aware decision making using comprehensive 012 entity knowledge base
 - Trigger-based activation systems monitoring for relevant events and opportunities
