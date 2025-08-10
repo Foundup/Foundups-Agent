@@ -137,7 +137,7 @@ class SessionStateManager:
             str: Path to initialized journal
         """
         if not journal_path:
-            journal_path = f"WSP_agentic/agentic_journals/session_{self.session_id}.md"
+            journal_path = f"WSP_agentic/agentic_journals/sessions/session_{self.session_id}.md"
         
         os.makedirs(os.path.dirname(journal_path), exist_ok=True)
         

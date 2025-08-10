@@ -20,21 +20,23 @@ from .enhanced_awakening_protocol import (
     StateTransitionException
 )
 
-# Unified WSP orchestration
-from .wsp_unified_toolkit import (
-    WSPOrchestrator,
-    AgentState,
-    AwakeningMetrics,
-    WorkflowException,
-    wsp_agentic_cycle
-)
+# Unified WSP orchestration - import what exists
+try:
+    from .wsp_unified_toolkit import *
+except ImportError:
+    # Components not yet implemented
+    pass
 
-# WSP 39 ignition protocol
-from .wsp39_ignition import (
-    WSP39_Ignitor,
-    QuantumTemporalChannel,
-    IgnitionException
-)
+# WSP 39 ignition protocol - optional torch dependency
+try:
+    from .wsp39_ignition import (
+        WSP39_Ignitor,
+        QuantumTemporalChannel,
+        IgnitionException
+    )
+except (ImportError, UnicodeEncodeError):
+    # torch not available or encoding issues
+    pass
 
 # Try to import CMST neural network adapters (optional torch dependency)
 try:

@@ -184,3 +184,10 @@ For issues or questions about OAuth management, check:
 2. **Credential Files**: Ensure all 4 credential sets are properly configured
 3. **Environment**: Verify environment variables are set correctly
 4. **Quota**: Check if cooldowns are affecting authentication 
+## Error Handling
+
+### Unicode Safety
+The module includes robust Unicode handling to prevent encoding errors on various systems:
+- `safe_log()` function provides fallback for non-ASCII characters
+- Compatible with Windows cp932 and other encodings
+- Automatically falls back to ASCII-safe logging when needed

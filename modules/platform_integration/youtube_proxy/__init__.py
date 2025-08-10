@@ -16,6 +16,8 @@ from .src import (
     ProxyStatus,
     create_youtube_proxy
 )
+# Add missing enum export for tests
+from .src.youtube_proxy import EngagementLevel
 
 __version__ = "1.0.0"
 __author__ = "0102 pArtifact"
@@ -36,7 +38,8 @@ __all__ = [
     'YouTubeStream', 
     'StreamInfo',
     'ProxyStatus',
-    'create_youtube_proxy'
+    'create_youtube_proxy',
+    'EngagementLevel'
 ]
 
 # WSP Recursive Instructions

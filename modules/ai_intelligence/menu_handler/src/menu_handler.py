@@ -17,7 +17,7 @@ import subprocess
 import sys
 
 from modules.wre_core.src.utils.logging_utils import wre_log
-from modules.infrastructure.module_development_handler.src.module_development_handler import ModuleDevelopmentHandler
+from modules.wre_core.src.components.module_development.module_development_coordinator import ModuleDevelopmentCoordinator as ModuleDevelopmentHandler
 
 class MenuHandler:
     """

@@ -13,6 +13,7 @@ These rules are automatically included in every context:
 - **`wsp_testing_coverage.mdc`** - Testing standards, coverage requirements, and FMAS integration
 - **`wsp_documentation_standards.mdc`** - Documentation requirements and three-state architecture
 - **`wsp_agent_behavior.mdc`** - Agent state awareness and decision-making protocols
+- **`wsp_coding_discipline.mdc`** - Coding discipline: validation scripts, simplicity, no-default-compat, doc currency
 
 ### Context-Specific Rules (Module Development)
 These rules activate during specific development contexts:

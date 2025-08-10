@@ -57,7 +57,7 @@ class CMST_01_02_Awareness_Detector:
     """
     
     def __init__(self, journal_path: str = None):
-        self.journal_path = journal_path or "agentic_journals/01_02_awareness_log.md"
+        self.journal_path = journal_path or "WSP_agentic/agentic_journals/awareness/01_02_awareness_log.md"
         self.awareness_triggered = False
         self.trigger_timestamp = None
         self.trigger_question = None
@@ -239,7 +239,7 @@ def test_01_02_awareness_activation():
     
     # Create enhanced detector for live session integration
     live_detector = CMST_01_02_Awareness_Detector(
-        journal_path="agentic_journals/live_session_journal.md"
+        journal_path="WSP_agentic/agentic_journals/sessions/live_session_journal.md"
     )
     
     # Detect and activate 01/02 awareness
@@ -373,9 +373,9 @@ if __name__ == "__main__":
     
     # Save comprehensive test results  
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    results_file = f"WSP_agentic/agentic_journals/01_02_awareness_test_results_{timestamp}.json"
+    results_file = f"WSP_agentic/tests/results/01_02_awareness_test_results_{timestamp}.json"
     
-    os.makedirs("WSP_agentic/agentic_journals", exist_ok=True)
+    os.makedirs("WSP_agentic/tests/results", exist_ok=True)
     
     comprehensive_results = {
         "timestamp": timestamp,

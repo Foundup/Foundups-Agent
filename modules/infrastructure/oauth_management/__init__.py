@@ -9,6 +9,7 @@ from .src.oauth_manager import (
     get_authenticated_service,
     get_authenticated_service_with_fallback,
     QuotaManager,
+    OAuthManager,
     quota_manager
 )
 
@@ -16,5 +17,6 @@ __all__ = [
     'get_authenticated_service',
     'get_authenticated_service_with_fallback', 
     'QuotaManager',
+    'OAuthManager',
     'quota_manager'
 ] 

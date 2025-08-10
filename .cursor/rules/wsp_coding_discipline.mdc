@@ -1,0 +1,13 @@
+---
+description: WSP Coding Discipline and Validation Rules
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# WSP Coding Discipline - IMPORTANT
+
+- PoC/Prototype are NOT production-ready. Only MVP with passing validation may be shipped.
+- Require module validation scripts (e.g., `scripts/validate.py`, `make validate`) that run lint/type/schema/CLI smoke checks.
+- Simplicity First: choose the simplest working solution; minimize dependencies/abstractions.
+- Avoid backwards compatibility unless ROADMAP/INTERFACE explicitly requires it; remove legacy code.
+- Keep ALL docs current in same change (README, INTERFACE, ROADMAP, ModLog, tests/README).

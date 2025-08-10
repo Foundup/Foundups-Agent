@@ -175,7 +175,11 @@ class AIRouter:
             
         try:
             self.wre_engine = PrometheusOrchestrationEngine()
-            self.module_coordinator = ModuleDevelopmentCoordinator()
+            from pathlib import Path
+            self.module_coordinator = ModuleDevelopmentCoordinator(
+                project_root=Path("."),
+                session_manager=None  # Will be replaced with proper session manager
+            )
             self.wre_enabled = True
             wre_log("AIRouter initialized with WRE integration", level="INFO")
             self.logger.info("AIRouter successfully integrated with WRE")

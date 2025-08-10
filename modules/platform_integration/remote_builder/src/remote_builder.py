@@ -57,7 +57,11 @@ class RemoteBuilder:
         # Initialize WRE Integration
         try:
             self.wre_engine = PrometheusOrchestrationEngine()
-            self.module_coordinator = ModuleDevelopmentCoordinator()
+            from pathlib import Path
+            self.module_coordinator = ModuleDevelopmentCoordinator(
+                project_root=Path("."),
+                session_manager=None  # Will be replaced with proper session manager
+            )
             self.wre_available = True
             wre_log("🔗 RemoteBuilder: WRE Integration initialized", "SUCCESS")
         except Exception as e:

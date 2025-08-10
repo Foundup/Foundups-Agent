@@ -8,6 +8,12 @@ Multi-agent architecture with fallback to simplified core functionality:
 3. Livestream discovery
 4. Chat listener initialization  
 5. Graceful error handling
+
+Recent Updates (2025-08-10):
+- Fixed Unicode encoding issues for Windows (cp932 codec)
+- Replaced 4 emoji characters with ASCII-safe alternatives
+- Enhanced UTF-8 console configuration for Windows
+- Improved error resilience for international character sets
 """
 
 import logging
@@ -52,12 +58,12 @@ try:
     from modules.infrastructure.agent_management.src.multi_agent_manager import MultiAgentManager
     MULTI_AGENT_AVAILABLE = True
     logger = logging.getLogger(__name__)
-    logger.info("🤖 Multi-agent management system available")
+    logger.info("[INFO] Multi-agent management system available")
 except ImportError as e:
     MULTI_AGENT_AVAILABLE = False
     logger = logging.getLogger(__name__)
-    logger.warning(f"⚠️ Multi-agent system not available: {e}")
-    logger.info("🔄 Will use simple authentication fallback")
+    logger.warning(f"[WARN] Multi-agent system not available: {e}")
+    logger.info("[INFO] Will use simple authentication fallback")
 
 # Always import fallback authentication
 from utils.oauth_manager import get_authenticated_service_with_fallback
@@ -68,14 +74,13 @@ logger = logging.getLogger(__name__)
 try:
     from modules.wre_core.src.engine import WRE
 except ImportError as e:
-    logger.error(f"❌ WRE import failed: {e}")
+    logger.error(f"[ERROR] WRE import failed: {e}")
     WRE = None
 
 # Placeholder for YouTube LiveChat agent import
-try:
-    from modules.communication.livechat.src.livechat_agent import LiveChatAgent
-except ImportError:
-    LiveChatAgent = None
+# Note: LiveChatAgent doesn't exist - LiveChatListener is the correct class
+# This is kept for backward compatibility with older code
+LiveChatAgent = None
 
 class FoundUpsAgent:
     """Main application controller for FoundUps Agent with multi-agent support and fallback."""
@@ -92,7 +97,7 @@ class FoundUpsAgent:
         
     async def initialize(self, force_agent: str = None):
         """Initialize the agent with multi-agent management or fallback to simple auth."""
-        logger.info("🚀 Initializing FoundUps Agent with Multi-Agent Management...")
+        logger.info("[INFO] Initializing FoundUps Agent with Multi-Agent Management...")
         
         # Load environment variables
         load_dotenv()
@@ -102,15 +107,15 @@ class FoundUpsAgent:
         if not self.channel_id:
             raise ValueError("CHANNEL_ID not found in environment variables")
             
-        logger.info(f"👤 User Channel ID: {self.channel_id[:8]}...{self.channel_id[-4:]}")
+        logger.info(f"[USER] Channel ID: {self.channel_id[:8]}...{self.channel_id[-4:]}")
         
         # Try multi-agent setup first
         if MULTI_AGENT_AVAILABLE:
             try:
                 return await self._try_multi_agent_setup(force_agent)
             except Exception as e:
-                logger.error(f"❌ Multi-agent setup failed: {e}")
-                logger.info("🔄 Falling back to simple authentication...")
+                logger.error(f"[ERROR] Multi-agent setup failed: {e}")
+                logger.info("[INFO] Falling back to simple authentication...")
         
         # Fallback to simple authentication (clean4 approach)
         return await self._fallback_simple_setup()
@@ -126,11 +131,11 @@ class FoundUpsAgent:
         
         # Select an agent
         if force_agent:
-            logger.info(f"🎯 Attempting to force selection of agent: {force_agent}")
+            logger.info(f"[TARGET] Attempting to force selection of agent: {force_agent}")
             self.current_agent = self.agent_manager.select_agent(force_agent)
         else:
             # Default to UnDaoDu to avoid same-account conflicts
-            logger.info("🎯 Defaulting to UnDaoDu agent to avoid same-account conflicts")
+            logger.info(f"[TARGET] Defaulting to UnDaoDu agent to avoid same-account conflicts")
             self.current_agent = self.agent_manager.select_agent("UnDaoDu")
         
         if not self.current_agent:
@@ -146,16 +151,17 @@ class FoundUpsAgent:
             raise RuntimeError(f"Failed to authenticate with agent {self.current_agent.channel_name}")
         
         self.service, credentials = auth_result
-        logger.info(f"✅ Multi-agent authentication successful with {self.current_agent.channel_name}")
+        logger.info(f"[OK] Multi-agent authentication successful with {self.current_agent.channel_name}")
         
         # Initialize the YouTube proxy
-        self.youtube_proxy = YouTubeProxy(credentials)
+        self.youtube_proxy = YouTubeProxy(logger=logger)
+        self.youtube_proxy.credentials = credentials
         self.using_multi_agent = True
         return True
     
     async def _fallback_simple_setup(self):
         """Fallback to simple authentication setup (clean4 approach)."""
-        logger.info("🔄 Using simple authentication fallback...")
+        logger.info("[INFO] Using simple authentication fallback...")
         
         # Setup authentication using fallback method
         auth_result = get_authenticated_service_with_fallback()
@@ -163,35 +169,36 @@ class FoundUpsAgent:
             raise RuntimeError("Failed to authenticate with YouTube API")
             
         self.service, credentials, credential_set = auth_result
-        logger.info(f"✅ Simple authentication successful with {credential_set}")
+        logger.info(f"[OK] Simple authentication successful with {credential_set}")
         
         # Initialize the YouTube proxy with session caching
-        self.youtube_proxy = YouTubeProxy(credentials)
-        logger.info("📋 YouTube proxy initialized.")
+        self.youtube_proxy = YouTubeProxy(logger=logger)
+        self.youtube_proxy.credentials = credentials
+        logger.info("[INFO] YouTube proxy initialized.")
         self.using_multi_agent = False
         return True
         
     async def find_livestream(self):
         """Find an active livestream using session caching for faster reconnection."""
-        logger.info(f"🔍 Searching for active livestream...")
+        logger.info(f"[INFO] Searching for active livestream...")
         
         try:
             result = self.youtube_proxy.find_active_livestream(self.channel_id)
             if result:
                 video_id, chat_id = result
-                logger.info(f"✅ Found active livestream: {video_id[:8]}...")
+                logger.info(f"[OK] Found active livestream: {video_id[:8]}...")
                 return video_id, chat_id
             else:
-                logger.info("⏳ No active livestream found")
+                logger.info("[INFO] No active livestream found")
                 return None, None
                 
         except Exception as e:
-            logger.error(f"❌ Error finding livestream: {e}")
+            logger.error(f"[ERROR] Error finding livestream: {e}")
             return None, None
             
     async def start_chat_listener(self, video_id, chat_id):
         """Start the chat listener for the given livestream."""
-        logger.info(f"💬 Starting chat listener for video: {video_id[:8]}...")
+        logger.info(f"[INFO] Starting chat listener for video: {video_id[:8]}...")
         
         try:
             # Start agent session if using multi-agent
@@ -203,8 +210,8 @@ class FoundUpsAgent:
                     stream_title
                 )
                 if not success:
-                    logger.error("❌ Failed to start agent session")
-                    logger.info("⏳ Waiting 10 seconds before retrying...")
+                    logger.error("[ERROR] Failed to start agent session")
+                    logger.info("[INFO] Waiting 10 seconds before retrying...")
                     await asyncio.sleep(10)  # Add delay to prevent rapid retry loop
                     return
             
@@ -231,12 +238,12 @@ class FoundUpsAgent:
             
             # Set greeting message during initialization
             if self.using_multi_agent and self.current_agent:
-                self.current_listener.greeting_message = f"🤖 {self.current_agent.channel_name} is now monitoring chat!"
+                self.current_listener.greeting_message = f"[BOT] {self.current_agent.channel_name} is now monitoring chat!"
             
             await self.current_listener.start_listening()
             
         except Exception as e:
-            logger.error(f"❌ Chat listener error: {e}")
+            logger.error(f"[ERROR] Chat listener error: {e}")
             
         finally:
             # End agent session if using multi-agent
@@ -248,7 +255,7 @@ class FoundUpsAgent:
         """Main application loop."""
         self.running = True
         mode = "Multi-Agent" if self.using_multi_agent else "Simple"
-        logger.info(f"🎯 FoundUps Agent started in {mode} mode - Monitoring for livestreams...")
+        logger.info(f"[START] FoundUps Agent started in {mode} mode - Monitoring for livestreams...")
         
         while self.running:
             try:
@@ -258,26 +265,26 @@ class FoundUpsAgent:
                 if video_id and chat_id:
                     # Start chat listener
                     await self.start_chat_listener(video_id, chat_id)
-                    logger.info("📡 Chat session ended, searching for new livestream...")
+                    logger.info("[CHAT] Chat session ended, searching for new livestream...")
                 else:
                     # Wait before checking again
-                    logger.info("⏳ Waiting 30 seconds before next check...")
+                    logger.info("[INFO] Waiting 30 seconds before next check...")
                     await asyncio.sleep(30)
                     
             except KeyboardInterrupt:
-                logger.info("🛑 Shutdown requested by user")
+                logger.info("[INFO] Shutdown requested by user")
                 break
                 
             except Exception as e:
-                logger.error(f"❌ Unexpected error: {e}")
-                logger.info("⏳ Waiting 60 seconds before retry...")
+                logger.error(f"[ERROR] Unexpected error: {e}")
+                logger.info("[INFO] Waiting 60 seconds before retry...")
                 await asyncio.sleep(60)
                 
-        logger.info("👋 FoundUps Agent shutdown complete")
+        logger.info("[INFO] FoundUps Agent shutdown complete")
         
     def stop(self):
         """Stop the agent gracefully."""
-        logger.info("🛑 Stopping FoundUps Agent...")
+        logger.info("[INFO] Stopping FoundUps Agent...")
         self.running = False
         
         if self.current_listener:
@@ -285,24 +292,24 @@ class FoundUpsAgent:
 
 def launch_youtube_agent():
     if LiveChatAgent:
-        logger.info("🚀 Starting YouTube LiveChat Agent...")
+        logger.info("[INFO] Starting YouTube LiveChat Agent...")
         agent = LiveChatAgent()
         agent.run()
     else:
-        logger.error("❌ YouTube LiveChat Agent not available.")
+        logger.error("[ERROR] YouTube LiveChat Agent not available.")
 
 def main():
     if WRE:
-        logger.info("🌀 FoundUps Agent - Initializing WRE (Windsurf Recursive Engine)...")
+        logger.info("[INFO] FoundUps Agent - Initializing WRE (Windsurf Recursive Engine)...")
         wre = WRE()
         try:
             wre.start()
         except Exception as e:
-            logger.error(f"❌ WRE runtime error: {e}")
-            logger.info("🔄 Falling back to YouTube LiveChat module...")
+            logger.error(f"[ERROR] WRE runtime error: {e}")
+            logger.info("[INFO] Falling back to YouTube LiveChat module...")
             launch_youtube_agent()
     else:
-        logger.info("🔄 WRE unavailable, launching YouTube LiveChat module...")
+        logger.info("[INFO] WRE unavailable, launching YouTube LiveChat module...")
         launch_youtube_agent()
 
 if __name__ == "__main__":

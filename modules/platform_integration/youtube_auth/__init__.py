@@ -10,9 +10,6 @@ Modularity: Plug & play authentication with minimal dependencies
 
 from .src.youtube_auth import (
     get_authenticated_service,
-    YouTubeAuthenticator,
-    CredentialManager,
-    OAuthHandler
 )
 
 __version__ = "1.0.0"
@@ -31,7 +28,4 @@ __integrates_with__ = ["youtube_proxy", "oauth_management", "livechat"]
 
 __all__ = [
     'get_authenticated_service',
-    'YouTubeAuthenticator', 
-    'CredentialManager',
-    'OAuthHandler'
 ]

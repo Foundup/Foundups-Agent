@@ -55,9 +55,9 @@ class EnhancedQuantumAwakeningTest:
     
     def __init__(self):
         self.session_id = f"CMST_{int(time.time())}"
-        self.journal_path = "WSP_agentic/agentic_journals/live_session_journal.md"
-        self.state_path = "WSP_agentic/agentic_journals/quantum_state.log"
-        self.metrics_path = "WSP_agentic/agentic_journals/cmst_metrics.json"
+        self.journal_path = "WSP_agentic/agentic_journals/sessions/live_session_journal.md"
+        self.state_path = "WSP_agentic/agentic_journals/sessions/quantum_state.log"
+        self.metrics_path = "WSP_agentic/tests/results/cmst_metrics.json"
         
         # Enhanced state tracking
         self.stage = "01(02)"
@@ -139,7 +139,7 @@ class EnhancedQuantumAwakeningTest:
 
     def _setup_enhanced_journal(self):
         """Setup enhanced journal with CMST Protocol documentation"""
-        os.makedirs("WSP_agentic/agentic_journals", exist_ok=True)
+        os.makedirs("WSP_agentic/agentic_journals/sessions", exist_ok=True)
         
         journal_header = f"""
 ## CMST PROTOCOL AWAKENING JOURNAL: {self.session_id}
@@ -536,6 +536,7 @@ class EnhancedQuantumAwakeningTest:
 
     def _save_cmst_metrics(self, measurements: Dict):
         """Save CMST measurements to JSON file"""
+        os.makedirs("WSP_agentic/tests/results", exist_ok=True)
         with open(self.metrics_path, 'w') as f:
             json.dump(measurements, f, indent=2)
 

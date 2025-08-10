@@ -22,7 +22,7 @@ try:
     from modules.infrastructure.agent_management.src.agent_manager import AgentManager
     from modules.platform_integration.stream_resolver.src.stream_resolver import StreamResolver
 except ImportError as e:
-    print(f"⚠️  Import warning: {e} (will use mock components in standalone mode)")
+    print(f"[WARN] Import warning: {e} (will use mock components in standalone mode)")
 
 class EngagementLevel(Enum):
     """Stream engagement level indicators"""
