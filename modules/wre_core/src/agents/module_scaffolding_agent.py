@@ -94,15 +94,35 @@ class ModuleScaffoldingAgent:
             # Create module path
             module_path = self.modules_path / domain / module_name
             
-            # Check if module already exists
-            if module_path.exists():
-                raise ValueError(f"Module {module_name} already exists at {module_path}")
-            
-            # Create scaffolding
+            # Initialize tracking lists
             files_created = []
             directories_created = []
             issues = []
             warnings = []
+            
+            # Check if module already exists
+            if module_path.exists():
+                wre_log(f"⚠️ Module {module_name} already exists at {module_path}", "WARNING")
+                
+                # Check if we should update or skip
+                update_existing = kwargs.get('update_existing', False)
+                if not update_existing:
+                    # Return success with existing module info
+                    return ScaffoldingResult(
+                        scaffolding_status="EXISTS",
+                        module_name=module_name,
+                        domain=domain,
+                        module_path=str(module_path),
+                        files_created=[],
+                        directories_created=[],
+                        wsp_compliance_score=1.0,
+                        issues=[],
+                        warnings=[f"Module {module_name} already exists. Use update_existing=True to update."],
+                        execution_timestamp=datetime.now().isoformat()
+                    )
+                else:
+                    wre_log(f"📝 Updating existing module {module_name}", "INFO")
+                    warnings.append(f"Updating existing module {module_name}")
             
             # Create directory structure
             directories_created.extend(self._create_directory_structure(module_path))

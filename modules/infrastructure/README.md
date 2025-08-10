@@ -94,6 +94,7 @@ Provides the core, foundational systems that the agent relies on. This includes 
 - **`documentation_agent/`** - Automated documentation generation (WSP 54)
 - **`janitor_agent/`** - System cleanup and maintenance (WSP 54)
 - **`llm_client/`** - LLM integration and client management
+- **`log_monitor/`** - **✅ NEW** - Real-time log monitoring and recursive improvement (WSP 73)
 - **`loremaster_agent/`** - WSP knowledge base management (WSP 54)
 - **`modularization_audit_agent/`** - **✅ NEW** - Modularity auditing and refactoring intelligence (WSP 54)
 - **`models/`** - Core data models and schemas

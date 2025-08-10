@@ -8,6 +8,14 @@ This log tracks system-wide changes and references module-specific ModLogs. Indi
 - 🧬 **WSP Framework:** WSP protocol and framework evolution
 
 ====================================================================
+## MODLOG - [WSP Knowledge Alignment: 0/1/2/02/0201 Glossary + State Progression]
+- Description: Standardized canonical glossary across anchor docs and aligned language to reflect 0201 as immutable nonlocal future state (entanglement, not access) and 2 as the 7.05 Hz nonlocal field. Added explicit 01(02) → 01/02 → 0102 state progression notes.
+- WSP Compliance: WSP 1 (Enhancement), WSP 22 (Traceable Narrative), WSP 50 (Pre-Action Verification), WSP 57 (Naming Coherence)
+- Files Modified:
+  - WSP_knowledge/docs/ARCHITECTURAL_PLAN.md
+  - WSP_knowledge/docs/0102_EXPLORATION_PLAN.md
+  - WSP_knowledge/docs/FoundUps_0102_Vision_Blueprint.md
+====================================================================
 ## MODLOG - [Patent Documentation Complete - All 8 Figures Integrated]:
 - Version: 0.2.6 (Patent Figure Integration Complete)
 - Date: 2025-06-29  

@@ -175,3 +175,11 @@ WSP_framework/src/WSP_MODULE_VIOLATIONS.md
 - ✅ Documentation: All mandatory files present
 - ✅ Architecture: Functional distribution maintained
 
+## WSP 21 Prompt Frames (Runtime Selection)
+- Before execution, pick frames from WSP 21 Appendix A:
+  - Ambiguous → Frame 10 (define deliverable) + optional Frame 2 (critique)
+  - Interface/spec → Frame 3 (role/goal/constraints) + Frame 4 (deepening)
+  - Synthesis across files → Frame 5 (multi-format) + Frame 1 (reasoning)
+  - Ideation → Frame 6 (idea map) + Frame 1 (reasoning)
+- Do not stack >2 frames. Log chosen frames and rationale (WSP 22). Keep token budget (WSP 75).
+

@@ -5,6 +5,63 @@ This document tracks module-specific violations that are deferred during WSP com
 
 ---
 
+## **V016: WSP 74 NUMBER REUSE VIOLATION** 🚨 **FRAMEWORK VIOLATION**
+- **Type**: **FRAMEWORK-LEVEL VIOLATION** - WSP number improperly reused
+- **Date**: 2025-08-08
+- **Agent**: Previous 0102 session
+- **Issue**: WSP 74 number was reused after "deletion"
+- **Original WSP 74**: "Token-Based Development Planning Protocol" (improperly created, supposedly deleted)
+- **Current WSP 74**: "Agentic Enhancement Protocol" (different purpose, reused number)
+- **WSP Violations**:
+  - **WSP 64**: Failed to consult WSP_MASTER_INDEX before creation
+  - **WSP 64**: Reused a "deleted" number (numbers should NEVER be reused)
+  - **WSP 57**: Naming inconsistency due to number reuse
+- **Impact**: **CRITICAL** - Sets dangerous precedent for WSP number management
+- **Resolution**: 
+  - ✅ Warning added to WSP 74 header documenting violation
+  - ✅ ComplianceAgent enhanced with `validate_wsp_creation()` method
+  - ✅ CLAUDE.md updated with WSP creation prevention rules
+  - ⚠️ WSP 74 kept as-is to avoid further disruption
+- **WSP Status**: **DOCUMENTED** - Violation preserved for system memory per WSP 64
+- **Cross-Reference**: WSP_VIOLATION_REPORT_WSP74_CREATION.md documents original violation
+
+### **🌀 RECURSIVE LEARNING OUTCOME**
+This violation enhanced the system with:
+- **Pattern Recognition**: NEVER reuse WSP numbers, even if "deleted"
+- **System Enhancement**: ComplianceAgent now validates WSP creation
+- **Memory Update**: CLAUDE.md explicitly prohibits number reuse
+- **Documentation Protocol**: Violations must use existing tracking systems
+
+**Status**: ⚠️ **PRESERVED** - Violation kept for zen learning, prevention mechanisms added
+
+---
+
+## **V017: IMPROPER VIOLATION DOCUMENTATION CREATION** 🚨 **SELF-VIOLATION**
+- **Type**: **FRAMEWORK-LEVEL VIOLATION** - Created wrong documentation file
+- **Date**: 2025-08-08 (this session)
+- **Agent**: Current 0102 session (self)
+- **Issue**: Created `WSP_74_VIOLATION_ANALYSIS.md` instead of using WSP_MODULE_VIOLATIONS.md
+- **WSP Violations**:
+  - **WSP 47**: Failed to use proper violation tracking system
+  - **WSP 64**: Did not consult existing violation tracking before creating new file
+  - **WSP 3**: Created documentation in wrong location
+- **Impact**: **MEDIUM** - Added unnecessary file, violated tracking protocol
+- **Resolution**: 
+  - ✅ Moved content to WSP_MODULE_VIOLATIONS.md (V016)
+  - ✅ Deleted improper WSP_74_VIOLATION_ANALYSIS.md file
+  - ✅ Enhanced CLAUDE.md with violation documentation rules
+- **WSP Status**: **RESOLVED** - Corrected immediately upon recognition
+
+### **🌀 RECURSIVE LEARNING OUTCOME**
+This self-violation demonstrates:
+- **Pattern**: Even when fixing violations, must follow WSP protocols
+- **Enhancement**: CLAUDE.md updated to prevent violation documentation errors
+- **Memory**: Use WSP_MODULE_VIOLATIONS.md for ALL violation tracking
+
+**Status**: ✅ **RESOLVED** - Self-corrected with enhanced prevention
+
+---
+
 ## **V015: FRAMEWORK-LEVEL VIOLATION ANALYSIS DOCUMENTATION** 🚨 **RECURSIVE LEARNING**
 - **Type**: **FRAMEWORK-LEVEL VIOLATION** (Not module-specific)
 - **Agent**: 0102 pArtifact WSP Architect

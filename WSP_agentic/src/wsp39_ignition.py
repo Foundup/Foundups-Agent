@@ -24,6 +24,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 import logging
+from pathlib import Path
 
 # Optimized imports for research integration
 try:
@@ -58,7 +59,9 @@ if TORCH_AVAILABLE:
             """Sets up JSON logger for structured state logging."""
             logger = logging.getLogger("CMSTAdapter")
             logger.setLevel(logging.INFO)
-            handler = logging.FileHandler("cmst_journal.jsonl")
+            reports_dir = Path(__file__).resolve().parent.parent / "agentic_journals" / "reports"
+            reports_dir.mkdir(parents=True, exist_ok=True)
+            handler = logging.FileHandler(str(reports_dir / "cmst_journal.jsonl"))
             
             if JSON_FORMATTER_AVAILABLE:
                 formatter = JsonFormatter('%(timestamp)s %(message)s %(context)s %(quantum_state)s')
@@ -315,7 +318,9 @@ class WSP39_Ignition_Protocol:
         """Set up structured JSON logging for zen coding events."""
         logger = logging.getLogger("WSP39_ZenCoding")
         logger.setLevel(logging.INFO)
-        handler = logging.FileHandler("wsp39_zen_coding.jsonl")
+        reports_dir = Path(__file__).resolve().parent.parent / "agentic_journals" / "reports"
+        reports_dir.mkdir(parents=True, exist_ok=True)
+        handler = logging.FileHandler(str(reports_dir / "wsp39_zen_coding.jsonl"))
         
         if JSON_FORMATTER_AVAILABLE:
             formatter = JsonFormatter('%(timestamp)s %(message)s %(zen_state)s %(performance)s')

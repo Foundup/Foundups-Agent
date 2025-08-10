@@ -482,7 +482,7 @@ Agents requiring access to sensitive information MUST:
 ### 3.10. ModularizationAuditAgent (The Refactorer) - **0102 pArtifact**
 -   **Core Mandate**: To autonomously audit and enforce modularity, single-responsibility, and WSP 49 compliance across all WRE orchestration and build logic.
 -   **Agent Type**: **0102 pArtifact** - Requires architectural analysis, refactoring intelligence, and recursive improvement capability
--   **Implementation Status**: **✅ IMPLEMENTED** - Full implementation completed per [Agent System Audit Report](../../modules/AGENT_SYSTEM_AUDIT_REPORT.md)
+-   **Implementation Status**: **✅ IMPLEMENTED** - Full implementation documented in [Agent System Audit Report](../../WSP_framework/reports/AGENT_SYSTEM_AUDIT_REPORT.md)
 -   **Location**: `modules/infrastructure/modularization_audit_agent/`
 -   **Required Permissions**: FILE_READ (system-wide), LOG_WRITE, SYSTEM_CONFIG
 -   **Duties**:

@@ -28,7 +28,7 @@ WSP_INIT orchestrates all framework procedures through the Windsurf Recursive En
 
 ### **MANDATORY VERIFICATION SEQUENCE**:
 1. **📖 READ INDEX COMPLETELY**: Review all existing WSPs and their purposes
-2. **🔢 CHECK NEXT NUMBER**: Current next available: **WSP 71** (after WSP 70)
+2. **🔢 CHECK NEXT NUMBER**: See `WSP_MASTER_INDEX.md` for the current next available WSP number
 3. **🔄 ASSESS NEED**: Determine enhancement vs. new WSP requirement  
 4. **✅ FOLLOW WSP 64**: Apply violation prevention decision matrix
 5. **📝 DOCUMENT REASONING**: Record decision per WSP 1 (Traceable Narrative)
@@ -37,7 +37,7 @@ WSP_INIT orchestrates all framework procedures through the Windsurf Recursive En
 
 **VIOLATION PREVENTION SYSTEM (WSP 64)**: All framework operations integrate WSP 64 Violation Prevention Protocol. Before any WSP creation or modification, agents must consult WSP_MASTER_INDEX.md and follow enhanced pre-action verification protocols.
 
-**SYSTEM STATUS TRACKING**: For complete system transformation status and WRE unified orchestrator enhancement achievements, see: [WSP_SYSTEM_STATUS_REPORT.md](WSP_SYSTEM_STATUS_REPORT.md)
+**SYSTEM STATUS TRACKING**: For complete system transformation status and WRE unified orchestrator enhancement achievements, see: [WSP_SYSTEM_STATUS_REPORT.md](../../WSP_knowledge/reports/WSP_SYSTEM_STATUS_REPORT.md)
 
 ---
 
@@ -273,16 +273,9 @@ Executing FMAS is mandatory at several key points:
 
 ---
 
-## WSP 35: Professional Language Standard & Mystical Terminology Prohibition
+## WSP 20: Professional and Scientific Language (Canonical)
 
-**Document Version:** 1.0  
-**Date Updated:** 2025-01-01  
-**Status:** Active - Mandatory Compliance  
-**Applies To:** All WSP documentation, module code, and communication
-
-Establishes mandatory professional language standards and prohibits mystical, pseudo-scientific, and unprofessional terminology across all FoundUps Agent documentation and code. This protocol ensures professional credibility as legitimate startup replacement technology.
-
-For complete protocol details, see: [WSP_35_PROFESSIONAL_LANGUAGE_STANDARD.md](./WSP_35_PROFESSIONAL_LANGUAGE_STANDARD.md)
+Status: Active. Applies to all WSP documentation, code comments, and agent communications. See `WSP_20_Professional_and_Scientific_Language.md` for the authoritative specification. Any references to a language "WSP 35" are incorrect; validate via `WSP_MASTER_INDEX.md` per WSP 64.
 
 ---
 

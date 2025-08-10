@@ -1,0 +1,34 @@
+# LinkedIn Unified Module Dependencies
+# Consolidated requirements from linkedin_agent, linkedin_scheduler, linkedin_proxy
+
+# Core LinkedIn API integration
+requests>=2.31.0
+requests-oauthlib>=1.3.1
+
+# Authentication and security
+oauthlib>=3.2.2
+cryptography>=41.0.0
+
+# Content processing and optimization
+beautifulsoup4>=4.12.0
+markdown>=3.4.4
+html2text>=2020.1.16
+
+# Professional networking automation
+selenium>=4.15.0  # For web automation if needed
+webdriver-manager>=4.0.0
+
+# Scheduling and timing
+python-dateutil>=2.8.2
+pytz>=2023.3
+
+# Data handling and validation
+pydantic>=2.0.0
+
+# Development and testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.1
+python-dotenv>=1.0.0
+
+# Optional: Image processing for media posts
+Pillow>=10.0.0

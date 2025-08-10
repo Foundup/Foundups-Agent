@@ -2,6 +2,15 @@
 
 ## Chronological Change Log
 
+### WSP 49 Structure Alignment and Doc Promotion (No Data Loss)
+- WSP Protocol References: WSP 49 (Structure), WSP 11 (Interfaces), WSP 22 (Traceable Narrative), WSP 60 (Memory)
+- Action: Promoted canonical docs from `src/` to module root:
+  - Created/updated at root: `INTERFACE.md`, `ROADMAP.md`, `requirements.txt`, `memory/README.md`
+  - Ensured content parity and link corrections for root paths
+- Safety: Kept originals under `src/` temporarily; removal deferred until references are verified
+- Purpose: Root-level discovery for 0102 and ComplianceAgent; prevent doc drift; standardize per WSP 49
+- Next: After cross-reference validation, remove `src/INTERFACE.md`, `src/ROADMAP.md`, `src/requirements.txt` to avoid duplication
+
 ### Module Creation and Initial Setup
 **Date**: 2025-08-03  
 **WSP Protocol References**: WSP 48, WSP 22, WSP 34  

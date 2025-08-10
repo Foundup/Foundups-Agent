@@ -1,0 +1,114 @@
+{
+  "name": "claude-wre-integration",
+  "displayName": "Claude WRE Integration",
+  "description": "Run WRE (Windsurf Recursive Engine) as integrated skin for Claude Code",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "wre",
+    "windsurf",
+    "recursive",
+    "engine",
+    "autonomous",
+    "claude",
+    "foundups"
+  ],
+  "activationEvents": [
+    "onCommand:claude-wre.runWRE",
+    "onCommand:claude-wre.statusWRE",
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "claude-wre.runWRE",
+        "title": "Run WRE",
+        "icon": "$(rocket)",
+        "category": "WRE"
+      },
+      {
+        "command": "claude-wre.statusWRE", 
+        "title": "WRE Status",
+        "icon": "$(pulse)",
+        "category": "WRE"
+      },
+      {
+        "command": "claude-wre.stopWRE",
+        "title": "Stop WRE",
+        "icon": "$(stop)",
+        "category": "WRE"
+      },
+      {
+        "command": "claude-wre.configWRE",
+        "title": "Configure WRE",
+        "icon": "$(gear)",
+        "category": "WRE"
+      },
+      {
+        "command": "claude-wre.showDashboard",
+        "title": "Show Agent Dashboard",
+        "icon": "$(dashboard)",
+        "category": "WRE"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "claude-wre.runWRE",
+          "when": "true"
+        },
+        {
+          "command": "claude-wre.statusWRE",
+          "when": "true"
+        },
+        {
+          "command": "claude-wre.stopWRE",
+          "when": "claude-wre.active"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "claude-wre.runWRE",
+          "when": "true",
+          "group": "navigation@1"
+        }
+      ]
+    },
+    "statusBarItems": [
+      {
+        "id": "claude-wre.status",
+        "name": "WRE Status",
+        "text": "$(rocket) WRE",
+        "tooltip": "Click to run WRE",
+        "command": "claude-wre.runWRE",
+        "alignment": "right",
+        "priority": 100
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "18.x",
+    "@types/vscode": "^1.74.0",
+    "@types/ws": "^8.5.0",
+    "typescript": "^4.9.0"
+  },
+  "dependencies": {
+    "ws": "^8.14.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Foundups/Foundups-Agent.git"
+  },
+  "author": "Foundups.org",
+  "license": "MIT"
+}

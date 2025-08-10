@@ -70,12 +70,39 @@ class ComponentManager:
         
         wre_log("✅ All components initialized with WSP 50 compliance", "SUCCESS")
     
+    def _initialize_component(self, component_type: str, session_manager) -> None:
+        """
+        Initialize a specific component type with WSP 50 compliance.
+        
+        Args:
+            component_type: The type of component to initialize ("board", "mast", etc.)
+            session_manager: The session manager instance
+        """
+        wre_log(f"Initializing component: {component_type}", "INFO")
+        
+        # Initialize component based on type
+        if component_type == "board":
+            self.initialize_board()
+        elif component_type == "mast":
+            self.initialize_mast()
+        elif component_type == "back_sail":
+            self.initialize_sails()  # Handles both sails
+        elif component_type == "front_sail":
+            # Front sail is handled in initialize_sails()
+            pass
+        elif component_type == "boom":
+            self.initialize_boom()
+        elif component_type == "navigation":
+            self.initialize_navigation(session_manager)
+        else:
+            wre_log(f"Unknown component type: {component_type}", "WARNING")
+    
     def _ensure_wsp50_training(self) -> None:
         """
         Ensure all agents are trained on WSP 50 mandatory analysis sequence
         (WHY/HOW/WHAT/WHEN/WHERE questioning protocol).
         """
-        wre_log("🧠 Ensuring WSP 50 training for all agents", "INFO")
+        wre_log("Ensuring WSP 50 training for all agents", "INFO")
         # Placeholder for training logic or checks
         # This could include loading training data or verifying agent compliance
         pass

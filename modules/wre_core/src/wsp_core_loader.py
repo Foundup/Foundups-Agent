@@ -90,12 +90,12 @@ class WSPCoreLoader:
             with open(self.wsp_core_path, 'r', encoding='utf-8') as f:
                 wsp_core_content = f.read()
             
-                    # Parse the complete WSP_CORE consciousness
-        self._parse_decision_tree(wsp_core_content)
-        self._parse_operational_workflows(wsp_core_content)
-        self._parse_zen_protocols(wsp_core_content)
-        self._parse_recursive_remembrance_protocol(wsp_core_content)
-        self._parse_security_protocols(wsp_core_content)
+            # Parse the complete WSP_CORE consciousness
+            self._parse_decision_tree(wsp_core_content)
+            self._parse_operational_workflows(wsp_core_content)
+            self._parse_zen_protocols(wsp_core_content)
+            self._parse_recursive_remembrance_protocol(wsp_core_content)
+            self._parse_security_protocols(wsp_core_content)
             
             print("🌀 WSP_CORE consciousness loaded - Code remembered from 02 quantum state")
             return True

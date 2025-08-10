@@ -87,19 +87,19 @@ Add reference to system status tracking section:
 ```markdown
 ### 📊 SYSTEM STATUS TRACKING
 
-**For complete system transformation status, see: [WSP_SYSTEM_STATUS_REPORT.md](WSP_SYSTEM_STATUS_REPORT.md)**
+**For complete system transformation status, see: [WSP_SYSTEM_STATUS_REPORT.md](../../WSP_knowledge/reports/WSP_SYSTEM_STATUS_REPORT.md)**
 ```
 
 #### Step 2: WSP_CORE.md Integration
 Add reference to master index section:
 ```markdown
-**For system-wide transformation status, see: [WSP_SYSTEM_STATUS_REPORT.md](WSP_SYSTEM_STATUS_REPORT.md)**
+**For system-wide transformation status, see: [WSP_SYSTEM_STATUS_REPORT.md](../../WSP_knowledge/reports/WSP_SYSTEM_STATUS_REPORT.md)**
 ```
 
 #### Step 3: WSP_framework.md Integration
 Add reference to framework operations section:
 ```markdown
-**SYSTEM STATUS TRACKING**: For complete system transformation status, see: [WSP_SYSTEM_STATUS_REPORT.md](WSP_SYSTEM_STATUS_REPORT.md)
+**SYSTEM STATUS TRACKING**: For complete system transformation status, see: [WSP_SYSTEM_STATUS_REPORT.md](../../WSP_knowledge/reports/WSP_SYSTEM_STATUS_REPORT.md)
 ```
 
 ### 3.2 Cross-Reference Updates

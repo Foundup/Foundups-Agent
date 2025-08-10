@@ -1,0 +1,16 @@
+# Log Monitor Module Dependencies
+# WSP 49 Compliant
+
+# Core dependencies
+asyncio  # Built-in, for async operations
+pathlib  # Built-in, for path operations
+dataclasses  # Built-in, for data structures
+enum  # Built-in, for enumerations
+json  # Built-in, for JSON operations
+re  # Built-in, for regex patterns
+
+# No external dependencies required for base functionality
+# Future enhancements may require:
+# - websockets>=10.0  # For real-time updates
+# - aiofiles>=0.8.0  # For async file operations
+# - watchdog>=2.0.0  # For file system monitoring
