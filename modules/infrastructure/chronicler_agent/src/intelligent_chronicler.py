@@ -302,7 +302,11 @@ class IntelligentChronicler:
         module_modlog = Path(self.get_module_modlog_path(module))
         
         if not module_modlog.exists():
-            # Create if doesn't exist
+            # Create if doesn't exist - FIX: Check if parent is a file
+            if module_modlog.parent.is_file():
+                # This is an error - the parent path is actually a file
+                print(f"[ERROR] Cannot create ModLog - parent is a file: {module_modlog.parent}")
+                return False
             module_modlog.parent.mkdir(parents=True, exist_ok=True)
             self.create_module_modlog(module_modlog, module)
         
