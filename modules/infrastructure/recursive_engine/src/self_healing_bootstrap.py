@@ -189,9 +189,8 @@ def bootstrap_recursive_improvement():
         
         # Try to import and run the fixed agents
         try:
-            # Import the self-healed chronicler
-            sys.path.insert(0, 'modules/infrastructure/chronicler_agent/src/')
-            from intelligent_chronicler import IntelligentChronicler
+            # Import the self-healed chronicler - WSP-compliant path
+            from modules.infrastructure.chronicler_agent.src.intelligent_chronicler import IntelligentChronicler
             
             print("[TEST] IntelligentChronicler imported successfully")
             
@@ -199,9 +198,8 @@ def bootstrap_recursive_improvement():
             chronicler = IntelligentChronicler()
             print(f"[TEST] Chronicler state: {chronicler.state}")
             
-            # Import the self-healed improvement engine
-            sys.path.insert(0, 'modules/infrastructure/error_learning_agent/')
-            from recursive_improvement_engine import RecursiveImprovementEngine
+            # Import the self-healed improvement engine - WSP-compliant path
+            from modules.infrastructure.error_learning_agent.src.recursive_improvement_engine import RecursiveImprovementEngine
             
             print("[TEST] RecursiveImprovementEngine imported successfully")
             
