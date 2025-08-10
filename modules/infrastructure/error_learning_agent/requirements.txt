@@ -1,0 +1,22 @@
+# Error Learning Agent Module Dependencies
+# WSP 12: Dependency Management Protocol
+
+# Core dependencies
+pathlib2>=2.3.0  # Enhanced Path handling for cross-platform compatibility
+watchdog>=2.1.0  # File system monitoring for autonomous detection
+
+# Development dependencies  
+pytest>=6.0.0    # Testing framework
+pytest-cov>=2.10.0  # Coverage reporting
+unittest-xml-reporting>=3.0.0  # XML test reports
+
+# Optional dependencies for enhanced functionality
+numpy>=1.21.0    # Mathematical operations for pattern analysis
+scikit-learn>=1.0.0  # Machine learning for pattern recognition (optional)
+
+# System dependencies (usually available)
+# json - Built-in JSON handling
+# datetime - Built-in datetime operations  
+# threading - Built-in threading support
+# subprocess - Built-in process execution
+# importlib - Built-in dynamic imports

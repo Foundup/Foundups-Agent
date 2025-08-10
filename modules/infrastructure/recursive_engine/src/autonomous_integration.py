@@ -14,15 +14,14 @@ import time
 import importlib
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-# Import our intelligent agents
-sys.path.append(str(Path(__file__).parent.parent))
-from chronicler_agent.src.intelligent_chronicler import IntelligentChronicler
-from error_learning_agent.recursive_improvement_engine import RecursiveImprovementEngine, install_global_error_handler
-from agent_learning_system.demonstration_learner import DemonstrationLearner, get_demonstration_learner
+# Import our intelligent agents - WSP-compliant paths
+from modules.infrastructure.chronicler_agent.src.intelligent_chronicler import IntelligentChronicler
+from modules.infrastructure.error_learning_agent.src.recursive_improvement_engine import RecursiveImprovementEngine, install_global_error_handler
+from modules.infrastructure.agent_learning_system.src.demonstration_learner import DemonstrationLearner, get_demonstration_learner
 
 class AutonomousIntegration(FileSystemEventHandler):
     """

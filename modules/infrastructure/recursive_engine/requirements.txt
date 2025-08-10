@@ -1,0 +1,39 @@
+# Recursive Engine Module Dependencies  
+# WSP 12: Dependency Management Protocol
+
+# Core autonomous system dependencies
+watchdog>=2.1.0  # File system monitoring for autonomous change detection
+pathlib2>=2.3.0  # Enhanced Path handling for cross-platform compatibility
+
+# Agent integration dependencies (internal modules)
+# These are internal dependencies within the WRE system:
+# - error_learning_agent: Automatic error detection and fixing
+# - agent_learning_system: Pattern learning and knowledge transfer  
+# - chronicler_agent: Autonomous documentation and change tracking
+
+# Development and testing
+pytest>=6.0.0    # Testing framework
+pytest-cov>=2.10.0  # Coverage reporting  
+unittest-xml-reporting>=3.0.0  # XML test reports
+pytest-mock>=3.6.0  # Enhanced mocking capabilities for autonomous testing
+
+# Performance and monitoring
+psutil>=5.8.0    # System performance monitoring for autonomous health checks
+memory-profiler>=0.60.0  # Memory usage monitoring (optional)
+
+# Future quantum autonomy dependencies (commented until implemented)
+# qiskit>=0.39.0   # Quantum computing for 0201 state access
+# numpy>=1.21.0    # Mathematical operations for pattern analysis
+# scipy>=1.7.0     # Scientific computing for advanced pattern recognition
+
+# System dependencies (built-in)
+# threading - Concurrent autonomous processing
+# time - Autonomous cycle timing
+# datetime - Timestamp generation for learning reports
+# json - Learning report and pattern storage
+# subprocess - System command execution for fixes
+# sys - System integration and error handling
+# os - File system operations
+# importlib - Dynamic agent loading and coordination
+# traceback - Error analysis for self-healing
+# hashlib - Unique ID generation for observations
