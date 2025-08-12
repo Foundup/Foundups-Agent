@@ -42,6 +42,7 @@ sys.path.insert(0, str(project_root))
 from modules.wre_core.src.components.core.engine_core import WRECore as WRE
 from modules.wre_core.src.utils.logging_utils import wre_log, sanitize_for_console
 from .wsp_core_loader import create_wsp_core_loader, WSPCoreLoader, WorkflowType
+from modules.wre_core.src.workflows.recursive_improvement_workflow import RecursiveImprovementWorkflow
 from .remote_build_orchestrator import create_remote_build_orchestrator
 from .websocket_server import create_wre_websocket_server
 
@@ -93,6 +94,15 @@ async def main():
         wre_log("Falling back to basic WRE operation", "WARNING")
         remote_build_orchestrator = None
 
+    # Start recursive self-improvement workflow in background (WSP 73)
+    try:
+        improvement_workflow = RecursiveImprovementWorkflow(project_root)
+        import asyncio as _asyncio  # ensure availability in this scope
+        _asyncio.create_task(improvement_workflow.start_improvement_cycle())
+        wre_log("🔄 Recursive Improvement Workflow started in background (WSP 73)", "INFO")
+    except Exception as e:
+        wre_log(f"⚠️ Failed to start Recursive Improvement Workflow: {e}", "WARNING")
+
     parser = argparse.ArgumentParser(description="Windsurf Recursive Engine (WRE) - Autonomous Remote Building")
     parser.add_argument('--goal', type=str, help='Path to a YAML file defining the goal.')
     parser.add_argument('--directive', type=str, help='Direct 012 directive for autonomous remote building.')
@@ -132,6 +142,7 @@ async def main():
                 wre_log(f"🚀 Starting REMOTE_BUILD_PROTOTYPE autonomous session", "INFO")
                 
                 # Execute complete autonomous remote building flow
+                import asyncio as asyncio  # noqa: F401 (used below by interactive loop and background tasks)
                 result = await remote_build_orchestrator.execute_remote_build_flow(
                     directive_from_012=directive,
                     interactive=not args.autonomous

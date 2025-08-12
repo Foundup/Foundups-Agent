@@ -82,18 +82,32 @@ Located in `modules/wre_core/src/components/`:
 -   **`menu_handler.py`**: Generates and displays the interactive "Harmonic Query" menu.
 
 ### 2.3 Internal Agent Suite
-The agents are the hands of the engine, performing specific, targeted tasks. They are located in `modules/infrastructure/agents/`.
+The DAEs (Decentralized Autonomous Entities) are the pattern-based orchestrators of the engine, performing tasks through memory recall rather than computation. They are located in `modules/infrastructure/`.
 
--   **Compliance Agent (`compliance_agent.py`):** The Sentinel of the WSP framework. This agent ensures that all proposed code changes and new modules adhere to the established protocols and standards.
--   **Loremaster Agent (`loremaster_agent.py`):** Responsible for reading all WSP documents and generating a comprehensive audit report, crucial for maintaining situational awareness.
--   **Module Scaffolding Agent (`module_scaffolding_agent.py`):** An agentic builder that automatically constructs the standard WSP-compliant directory and file structure for a new module.
--   **Janitor Agent (`janitor_agent.py`):** Performs workspace hygiene by identifying and deleting temporary files, maintaining a clean work environment.
+-   **Compliance & Quality DAE:** The Guardian of WSP framework. This DAE ensures compliance through pre-violation pattern detection and instant rule matching.
+-   **Knowledge & Learning DAE:** Provides instant pattern recall from memory, maintaining WSP knowledge through stored patterns rather than repeated analysis.
+-   **Infrastructure Orchestration DAE:** Pattern-based module creation and workflow orchestration, constructing WSP-compliant structures from templates.
+-   **Maintenance & Operations DAE:** Performs workspace hygiene through automated cleanup patterns and proactive bloat prevention.
 
 ### 2.4 Future Vision
 The long-term vision for the WRE is to achieve a "Great Connection," transforming it from a passive tool into a fully autonomous, self-regulating, and purpose-driven system. This involves several key areas of development:
 -   **Enhanced Agentic Capabilities:** Developing more sophisticated agents that can perform complex tasks such as automated testing, code refactoring, and even generating new WSP documents.
 -   **Self-Modification:** Granting the WRE the ability to modify its own source code to improve its functionality and adapt to new requirements through systematic recursive enhancement cycles (WSP 48).
 -   **Strategic Goal Pursuit:** Enabling the engine to autonomously pursue the strategic objectives outlined in the `ROADMAP.md`.
+
+### 2.5 DAE Compliance (WSP 80)
+
+To reduce global complexity and enforce local protocol guarantees, this protocol SHALL be executed through cube-level DAEs per WSP 80 (Cube-Level DAE Orchestration Protocol):
+
+- WRE orchestrator routes build and operations through DAE cubes (see `modules/infrastructure/*_dae/`) via the DAE orchestrator/adapter.
+- Legacy, non-DAE agent pathways are deprecated for runtime execution.
+- Each DAE cube MUST publish:
+  - `INTERFACE.md` (WSP 11), `README.md`/`ModLog.md`/`tests/README.md` (WSP 22/34)
+  - Memory patterns under `memory/` (WSP 60)
+  - Block-independence tests (WSP 72) validating cube boundaries
+- Token discipline: per-cube token budgets (typically 5–8K) are enforced. Any system-wide >30K usage requires a WSP 70 override documented in the relevant `ModLog.md`.
+
+Relationships: WSP 80, WSP 72, WSP 70, WSP 53
 
 ## 3. Orchestrated Agents & Utilities
 
@@ -103,17 +117,17 @@ The long-term vision for the WRE is to achieve a "Great Connection," transformin
 
 ### 3.1. Core Agents
 
--   **Base Agent (`base_agent.py`)**: Defines the abstract interface (`InternalAgent`) that all specialized agents must implement. This ensures a consistent contract for task execution and allows the WRE to dispatch tasks to any agent uniformly.
+-   **DAE Core Architecture**: Defines the pattern memory system that all DAEs utilize. This ensures consistent pattern recall and allows the WRE to orchestrate tasks through memory rather than computation.
 
--   **Compliance Agent (`compliance_agent.py`)**: Acts as the system's architectural guardian. This agent audits the codebase to enforce WSP standards, identifying violations such as misplaced files or missing documentation, ensuring the structural integrity of the project.
+-   **Compliance & Quality DAE**: Acts as the system's architectural guardian. This DAE enforces WSP standards through pattern matching, preventing violations before they occur through stored compliance patterns.
 
--   **Loremaster Agent (`loremaster_agent.py`)**: Serves as the keeper of the WSP knowledge base. This agent audits all protocol documents for semantic coherence, detects duplicate or missing WSP numbers, and automatically generates the canonical `WSP_AUDIT_REPORT.md`, ensuring the framework's documentation remains logical and consistent.
+-   **Knowledge & Learning DAE**: Serves as the keeper of the WSP knowledge base. This DAE provides instant recall of all protocol patterns, maintains semantic coherence through memory, and generates reports from templates.
 
-    -   **Primary Artifact:** `WSP_AUDIT_REPORT.md`
-    -   **Canonical Location:** `docs/audit_reports/WSP_AUDIT_REPORT.md`
-    -   **Description:** An auto-generated report that provides a categorized accounting of all formal and un-formalized WSP documents, highlights numbering gaps and duplicates, and states the highest WSP number currently in use.
+    -   **Primary Artifact:** Pattern memory banks in `modules/infrastructure/dae_core/memory/`
+    -   **Canonical Location:** `modules/infrastructure/knowledge_learning_dae/memory/`
+    -   **Description:** Stored patterns for instant recall, eliminating the need for repeated analysis or computation.
 
--   **Janitor Agent (`janitor_agent.py`)**: Acts as the system's custodian. This agent is responsible for workspace hygiene, deleting temporary files, empty log files, and other clutter based on predefined patterns to keep the project root clean and orderly.
+-   **Maintenance & Operations DAE**: Acts as the system's custodian. This DAE maintains workspace hygiene through cleanup patterns, manages state transitions through simple pattern matching, and prevents bloat proactively.
 
 ### 3.2. Core Utilities
 
