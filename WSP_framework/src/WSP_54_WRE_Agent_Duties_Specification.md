@@ -297,19 +297,19 @@ Agents requiring access to sensitive information MUST:
 
 ### CRITICAL: Three Distinct Agent Categories
 
-**WSP Coding Agents (Claude Code Agents)**
-- **Location**: `.claude/agents/*.md`
-- **Purpose**: Development assistance in Claude Code
-- **Format**: YAML front-matter + Markdown
-- **Invocation**: `/agents` command or Task tool
-- **Examples**: wsp-enforcer, documentation-maintainer, module-scaffolding-builder
+**WSP DAEs (Decentralized Autonomous Entities)**
+- **Location**: `modules/infrastructure/[dae_name]_dae/`
+- **Purpose**: Pattern-based autonomous operations
+- **Format**: Python DAE modules with memory banks
+- **Invocation**: Pattern recall from memory
+- **Examples**: compliance_quality_dae, knowledge_learning_dae, infrastructure_orchestration_dae
 
-**WSP Infrastructure Agents (This Document)**
-- **Location**: `modules/infrastructure/[agent_name]/`
-- **Purpose**: Runtime system operations and compliance
-- **Format**: Python modules following WSP 49 structure
-- **Invocation**: WRE orchestration
-- **Examples**: ComplianceAgent, LoremasterAgent, JanitorAgent
+**WSP Infrastructure DAEs (This Document)**
+- **Location**: `modules/infrastructure/[function]_dae/`
+- **Purpose**: Runtime pattern-based operations
+- **Format**: DAE modules with pattern memory
+- **Invocation**: Autonomous pattern recall
+- **Examples**: Compliance DAE, Knowledge DAE, Maintenance DAE
 
 **FoundUps Application Agents**
 - **Location**: `modules/[domain]/[module]/` (various domains)
@@ -319,6 +319,17 @@ Agents requiring access to sensitive information MUST:
 - **Examples**: multi_agent_system, livechat, youtube_proxy
 
 **IMPORTANT**: Do NOT confuse these three types. This document (WSP 54) ONLY covers WSP Infrastructure Agents.
+
+### 2.5 DAE Compliance (WSP 80)
+
+All WRE agent duties defined herein SHALL be implemented and executed via cube-level DAEs per WSP 80:
+
+- Compliance & Quality, Knowledge & Learning, Infrastructure Orchestration, Maintenance & Operations, and Documentation & Registry DAEs serve as the runtime carriers of these duties.
+- Each cube MUST expose public interfaces (WSP 11), documentation and ModLogs (WSP 22), memory patterns (WSP 60), and block‑independence tests (WSP 72).
+- Legacy agent classes may remain as facades/adapters, but runtime execution flows through DAEs.
+- Token discipline and WSP 70 override rules apply as defined in WSP 46 §2.5.
+
+Relationships: WSP 80, WSP 46, WSP 72, WSP 70
 
 ---
 
