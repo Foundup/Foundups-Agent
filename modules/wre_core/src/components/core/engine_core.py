@@ -29,7 +29,8 @@ from modules.wre_core.src.components.core.wre_unified_orchestrator import (
     WREUnifiedOrchestrator, WREOrchestrationContext, WREOrchestrationPhase,
     WREOrchestrationSession, create_wre_unified_orchestrator
 )
-from modules.infrastructure.janitor_agent.src.janitor_agent import JanitorAgent
+# Migration to DAE: Using adapter for JanitorAgent (WSP 80 compliance)
+from modules.wre_core.src.adapters.agent_to_dae_adapter import JanitorAgent
 
 class WRECore:
     """

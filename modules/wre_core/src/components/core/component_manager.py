@@ -110,7 +110,8 @@ class ComponentManager:
     def initialize_board(self):
         """Initialize the Cursor interface (code execution)"""
         try:
-            from modules.infrastructure.module_scaffolding_agent.src.module_scaffolding_agent import ModuleScaffoldingAgent
+            # Migration to DAE: Using adapter for ModuleScaffoldingAgent
+            from modules.wre_core.src.adapters.agent_to_dae_adapter import ModuleScaffoldingAgent
             self.board = ModuleScaffoldingAgent()
             wre_log("🏄 Board (Cursor) interface initialized", "INFO")
         except ImportError as e:
@@ -120,7 +121,8 @@ class ComponentManager:
     def initialize_mast(self):
         """Initialize the LoreMaster (logging/observation)"""
         try:
-            from modules.infrastructure.loremaster_agent.src.loremaster_agent import LoremasterAgent
+            # Migration to DAE: Using adapter for LoremasterAgent
+            from modules.wre_core.src.adapters.agent_to_dae_adapter import LoremasterAgent
             self.mast = LoremasterAgent()
             wre_log("🗼 Mast (LoreMaster) system initialized", "INFO")
         except ImportError as e:
@@ -130,7 +132,8 @@ class ComponentManager:
     def initialize_sails(self):
         """Initialize both sails (trajectory and analysis)"""
         try:
-            from modules.infrastructure.chronicler_agent.src.chronicler_agent import ChroniclerAgent
+            # Migration to DAE: Using adapter for ChroniclerAgent
+            from modules.wre_core.src.adapters.agent_to_dae_adapter import ChroniclerAgent
             modlog_path = str(self.project_root / "docs" / "ModLog.md")
             self.back_sail = ChroniclerAgent(modlog_path_str=modlog_path)
             wre_log("⛵ Back Sail (Trajectory/ChroniclerAgent) initialized", "INFO")
@@ -147,7 +150,8 @@ class ComponentManager:
     def initialize_boom(self):
         """Initialize the WSP compliance system"""
         try:
-            from modules.infrastructure.compliance_agent.src.compliance_agent import ComplianceAgent
+            # Migration to DAE: Using adapter for ComplianceAgent
+            from modules.wre_core.src.adapters.agent_to_dae_adapter import ComplianceAgent
             self.boom = ComplianceAgent()
             wre_log("🎛️ Boom (WSP Compliance) system initialized", "INFO")
         except ImportError as e:

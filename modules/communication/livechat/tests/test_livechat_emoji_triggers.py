@@ -117,9 +117,9 @@ class TestLiveChatListenerEmojiTriggers(unittest.TestCase):
             "✊✊✊",
             "✋✋✋", 
             "🖐️🖐️🖐️",
-            "✊✋🖐️",
-            "✋🖐️✊",
-            "🖐️✊✋",
+            "✊✋🖐️",  # Valid sequence
+            "✊✋🖐",   # Valid sequence without variation selector
+            "🖐🖐🖐",  # Valid sequence without variation selector
             "Hello ✊✊✊ world",  # Embedded sequence
             "✊✊✊ at the start",
             "at the end ✋✋✋",

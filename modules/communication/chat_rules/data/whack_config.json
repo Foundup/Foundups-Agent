@@ -1,0 +1,79 @@
+{
+  "moderators": {
+    "mod123": {
+      "user_id": "mod123",
+      "display_name": "TestMod",
+      "total_points": 74,
+      "whacks_count": 4,
+      "maga_timeouts": 0,
+      "spam_caught": 0,
+      "members_helped": 0,
+      "raids_stopped": 0,
+      "gifts_given": 0,
+      "false_positives": 0,
+      "streak_days": 0,
+      "achievements": [],
+      "level": "ROOKIE"
+    },
+    "mod456": {
+      "user_id": "mod456",
+      "display_name": "SpamMod",
+      "total_points": 45,
+      "whacks_count": 7,
+      "maga_timeouts": 0,
+      "spam_caught": 0,
+      "members_helped": 0,
+      "raids_stopped": 0,
+      "gifts_given": 0,
+      "false_positives": 0,
+      "streak_days": 0,
+      "achievements": [],
+      "level": "ROOKIE"
+    },
+    "mod789": {
+      "user_id": "mod789",
+      "display_name": "EliteMod",
+      "total_points": 375,
+      "whacks_count": 1,
+      "maga_timeouts": 0,
+      "spam_caught": 0,
+      "members_helped": 0,
+      "raids_stopped": 0,
+      "gifts_given": 0,
+      "false_positives": 0,
+      "streak_days": 0,
+      "achievements": [],
+      "level": "BRONZE"
+    },
+    "SYSTEM": {
+      "user_id": "SYSTEM",
+      "display_name": "AutoMod",
+      "total_points": 5,
+      "whacks_count": 1,
+      "maga_timeouts": 0,
+      "spam_caught": 0,
+      "members_helped": 0,
+      "raids_stopped": 0,
+      "gifts_given": 0,
+      "false_positives": 0,
+      "streak_days": 0,
+      "achievements": [],
+      "level": "ROOKIE"
+    },
+    "UC-LSSlOZwpGIRIYihaz8zCw": {
+      "user_id": "UC-LSSlOZwpGIRIYihaz8zCw",
+      "display_name": "Move2Japan",
+      "total_points": 125,
+      "whacks_count": 38,
+      "maga_timeouts": 0,
+      "spam_caught": 0,
+      "members_helped": 0,
+      "raids_stopped": 0,
+      "gifts_given": 0,
+      "false_positives": 0,
+      "streak_days": 0,
+      "achievements": [],
+      "level": "BRONZE"
+    }
+  }
+}

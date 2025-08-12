@@ -227,6 +227,17 @@ Agents MUST verify file existence, paths, and content before taking actions or m
 
 ## 5. Integration
 
+## 4.4. **Destructive Change Verification (WSP 79)**
+
+When an action proposes deletion, consolidation, or major refactoring that can remove or alter module functionality, a WSP 79 SWOT analysis is REQUIRED as part of pre‑action verification:
+
+- [ ] WSP 79 SWOT completed for all impacted modules
+- [ ] Comparative feature matrix attached
+- [ ] Functionality preservation checklist satisfied (no loss)
+- [ ] Migration/rollback plans documented
+
+Proceed only when all checks are satisfied and artifacts are linked in the ModLog (WSP 22).
+
 - **WSP 54 (ComplianceAgent)**: Monitor for WSP 50 violations
 - **WSP 48 (WRE)**: Incorporate verification in enhancement cycles
 - **WSP 56 (Coherence)**: Prevent cross-state assumption errors

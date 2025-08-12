@@ -8,69 +8,94 @@ This module operates within the **communication** enterprise domain following WS
 - **WSP 3**: Communication domain enterprise organization  
 - **WSP 4**: FMAS audit compliance
 - **WSP 5**: ≥90% test coverage maintained
-- **WSP 22**: Module roadmap and ModLog maintenance
+- **WSP 22**: Module roadmap and ModLog maintenance (PoC→Prototype→MVP)
 - **WSP 60**: Module memory architecture compliance
 
 ---
 
-## 🚀 Development Roadmap
+## 🚀 Development Roadmap (WSP 22 Compliant)
 
-### 1️⃣ Proof of Concept (POC) - **Phase 0.x.x**
-**Duration**: Foundation establishment
+### 1️⃣ Proof of Concept (PoC) - **KISS Implementation**
+**Duration**: 1-2 weeks
+**Focus**: Demonstrate core concept with minimal viable functionality
 
-#### Core Implementation
-- ⏳ Implement core module functionality
-- ⏳ Create basic API interfaces per WSP 11
-- ⏳ Establish module memory architecture (WSP 60)
-- ⏳ Initialize test framework structure
+#### Core Commands (Simple Implementation)
+- ✅ Basic message polling from YouTube Live Chat
+- ✅ Simple command parsing (!whack, !score, !help)
+- ✅ Integration with existing whack_a_magat.py scoring
+- ⏳ Basic response generation (no AI yet)
+- ⏳ Simple timeout execution
 
-#### WSP Compliance Targets
-- ⏳ Pass FMAS audit (WSP 4) with 0 errors
-- ⏳ Achieve 85% test coverage (relaxed for POC)
-- ⏳ Document all interfaces per WSP 11
-- ⏳ Complete WSP 22 documentation suite
+#### Minimal Requirements
+- ⏳ One test file demonstrating command parsing
+- ⏳ Basic error handling (try/except)
+- ⏳ Console logging for debugging
+- ⏳ Manual testing with live stream
 
-#### Validation Criteria
-- ⏳ Core functionality operational
-- ⏳ Module memory structure established  
-- ⏳ Basic test coverage implemented
-- ⏳ WSP compliance foundation achieved
+#### Success Criteria
+- ⏳ Can parse "!whack @user" command
+- ⏳ Can timeout users via YouTube API
+- ⏳ Can display scores from existing system
+- ⏳ Runs without crashing for 10 minutes
 
-✅ **Goal:** Establish functional foundation with WSP compliance baseline.
+✅ **Goal:** Prove the concept works - commands trigger actions in chat.
 
-### 2️⃣ Prototype (Phase 1.x.x) - **Enhanced Integration**
-**Duration**: Feature completion and integration
+### 2️⃣ Prototype - **Enhanced Features & Integration**
+**Duration**: 3-4 weeks
+**Focus**: Add educational content and improve robustness
 
-#### Feature Development
-- 🔮 Full feature implementation with robustness
-- 🔮 Integration with other enterprise domain modules
-- 🔮 Performance optimization and scalability
-- 🔮 Advanced error handling and recovery
+#### Enhanced Command System
+- 🔮 Full command suite (!whack, !quiz, !fscale, !1933, !facts)
+- 🔮 Quiz system with 1933 historical parallels
+- 🔮 F-scale authoritarian personality test
+- 🔮 Educational fact delivery system
+- 🔮 Integration with BanterEngine for responses
 
-#### WSP Compliance Enhancement
-- 🔮 Achieve ≥90% test coverage (WSP 5)
-- 🔮 Complete interface documentation (WSP 11)
-- 🔮 Integration with WSP 54 agent coordination
-- 🔮 Memory architecture optimization (WSP 60)
+#### Content & Data
+- 🔮 1933 parallel database (JSON initially)
+- 🔮 Quiz question bank (fascism awareness)
+- 🔮 F-scale questionnaire implementation
+- 🔮 Historical fact repository
 
-✅ **Goal:** Production-ready module with full WSP compliance.
+#### Testing & Reliability
+- 🔮 70% test coverage minimum
+- 🔮 Error recovery mechanisms
+- 🔮 Rate limiting and spam protection
+- 🔮 Session persistence
 
-### 3️⃣ MVP (Phase 2.x.x) - **System Integration**
-**Duration**: Ecosystem integration and optimization
+✅ **Goal:** Functional educational game system with core features working.
 
-#### System Integration
-- 🔮 Full WRE ecosystem integration
-- 🔮 Advanced agent coordination protocols
-- 🔮 Cross-domain module interactions
-- 🔮 Performance monitoring and analytics
+### 3️⃣ MVP - **Production-Ready System**
+**Duration**: 4-6 weeks
+**Focus**: AI integration, scalability, and multi-platform support
 
-#### Advanced WSP Integration
-- 🔮 WSP 48 recursive self-improvement integration
-- 🔮 WSP 46 WRE orchestration compliance
-- 🔮 Three-state memory architecture mastery
-- 🔮 Quantum development readiness (0102 integration)
+#### AI Integration
+- 🔮 Gemini API for dynamic content generation
+- 🔮 AI-powered quiz question creation
+- 🔮 Intelligent response generation
+- 🔮 Content moderation assistance
 
-✅ **Goal:** Essential system component for autonomous FoundUps ecosystem.
+#### Platform Expansion
+- 🔮 Multi-platform support (YouTube, Twitch, Discord)
+- 🔮 Unified command interface across platforms
+- 🔮 Platform-specific optimizations
+- 🔮 Cross-platform leaderboards
+
+#### Production Features
+- 🔮 Real-time analytics dashboard
+- 🔮 Automated content updates
+- 🔮 A/B testing for educational effectiveness
+- 🔮 Community engagement metrics
+- 🔮 90%+ test coverage
+- 🔮 Full WSP compliance
+
+#### Advanced Educational Tools
+- 🔮 Interactive 1933 timeline comparisons
+- 🔮 Psychological profiling (F-scale analysis)
+- 🔮 Radicalization prevention mechanisms
+- 🔮 Counter-narrative generation
+
+✅ **Goal:** Production-ready anti-fascist educational game platform.
 
 ---
 

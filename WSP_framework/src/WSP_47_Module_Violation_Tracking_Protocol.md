@@ -134,6 +134,12 @@ When modules evolve interfaces or behavior:
 
 ## 8. Success Metrics
 
+### 7.5. Functionality Loss Resolution (WSP 79)
+- Perform WSP 79 SWOT analysis for all modules implicated in functionality‑loss violations
+- Create a comparative feature matrix and preservation checklist
+- Block deletion until preservation criteria are met and migration plans exist
+- Link artifacts in `WSP_MODULE_VIOLATIONS.md` and the module ModLog (WSP 22)
+
 ### 8.1. WSP Framework Health
 - **Zero P0 violations** blocking WSP protocol compliance
 - **Clean separation** between framework and module concerns

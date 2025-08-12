@@ -11,9 +11,11 @@ Integrates improvements from test coverage analysis:
 Following WSP 3: Enterprise Domain Architecture
 """
 
+import json
 import logging
 import random
 import time
+from pathlib import Path
 from typing import Optional, Dict, Tuple, List, Any
 from datetime import datetime, timedelta
 
@@ -63,12 +65,19 @@ config = BanterEngineConfig()
 class BanterEngine:
     """Enhanced BanterEngine with improved error handling and performance."""
     
-    def __init__(self):
-        """Initialize the enhanced BanterEngine."""
+    def __init__(self, banter_file_path=None, emoji_enabled=True):
+        """Initialize the enhanced BanterEngine.
+        
+        Args:
+            banter_file_path: Optional path to external banter JSON file
+            emoji_enabled: Flag to indicate if emoji usage is preferred
+        """
         try:
             # Use the imported SEQUENCE_MAP directly
             self.sequence_map_data = SEQUENCE_MAP
             self.logger = logging.getLogger(__name__)
+            self.banter_file_path = banter_file_path
+            self.emoji_enabled = emoji_enabled
             
             # Enhanced caching system
             self._response_cache = {}
@@ -83,6 +92,8 @@ class BanterEngine:
             
             # Store themes derived from tones with validation
             self._themes = {}
+            self._external_banter = {}
+            self._load_external_banter()  # Load external JSON if provided
             self._initialize_themes()
             self._populate_themed_responses()
             
@@ -95,6 +106,22 @@ class BanterEngine:
             self.logger.error(f"❌ Failed to initialize BanterEngine: {e}")
             raise BanterEngineError(f"Initialization failed: {e}")
 
+    def _load_external_banter(self):
+        """Load external banter data from JSON file if provided."""
+        if not self.banter_file_path:
+            return
+            
+        path = Path(self.banter_file_path)
+        if path.exists() and path.is_file():
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                if isinstance(data, dict):
+                    self._external_banter = data
+                    self.logger.info(f"Loaded external banter from {path}")
+            except Exception as e:
+                self.logger.warning(f"Failed to load external banter: {e}")
+    
     def _initialize_themes(self):
         """Initialize themes with proper validation."""
         try:
@@ -109,6 +136,11 @@ class BanterEngine:
             self._themes = {tone: [] for tone in tones}
             self._themes["default"] = []
             self._themes["greeting"] = []
+            
+            # Add themes from external banter if loaded
+            for theme in self._external_banter.keys():
+                if theme not in self._themes:
+                    self._themes[theme] = []
             
             self.logger.debug(f"Initialized {len(self._themes)} themes: {list(self._themes.keys())}")
             
@@ -136,9 +168,40 @@ class BanterEngine:
                 "Greetings! What brings you here? 🤗"
             ]
 
+            # Additional themed responses from banter_engine2
+            roast_responses = [
+                "You keep 📢yelling but never **say**🫥 a single *thought*🧠 worth hearing 🤡😂",
+                "Every 📝sentence you write is a tripwire for a new 🧨braincell detonation 🤯💀🤣",
+                "You chase 🦅freedom with the precision of a toddler and a 🔨hammer 🤪 LOL"
+            ]
+            
+            philosophy_responses = [
+                "UNs✊ still tweaking on *Truth™ Lite*",
+                "DAOs✋ chillin' in the middle like ✨balance with broadband✨",
+                "DUs🖐️? Already built a quantum farm with solar flare wifi 💫🌱"
+            ]
+            
+            rebuttal_responses = [
+                "That's... an opinion.",
+                "Interesting theory. Source: Trust me bro?",
+                "Did you stretch before reaching that conclusion?"
+            ]
+            
             # Validate and set default responses
             self._themes["default"] = self._validate_responses(default_responses)
             self._themes["greeting"] = self._validate_responses(greeting_responses)
+            self._themes["roast"] = self._validate_responses(roast_responses)
+            self._themes["philosophy"] = self._validate_responses(philosophy_responses)
+            self._themes["rebuttal"] = self._validate_responses(rebuttal_responses)
+            
+            # Add external banter responses if loaded
+            for theme, responses in self._external_banter.items():
+                if isinstance(responses, list):
+                    validated = self._validate_responses(responses)
+                    if theme in self._themes:
+                        self._themes[theme].extend(validated)
+                    else:
+                        self._themes[theme] = validated
             
             # Populate from sequence map with enhanced validation
             for seq, info in self.sequence_map_data.items():
