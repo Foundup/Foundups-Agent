@@ -10,7 +10,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
 
-from O:.Foundups-Agent.modules.platform_integration.stream_resolver.src.stream_resolver_backup import *
+from modules.platform_integration.stream_resolver.src.stream_resolver_backup import *
 
 class TestStreamResolverBackup:
     """Test cases for stream_resolver_backup"""

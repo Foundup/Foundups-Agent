@@ -37,6 +37,13 @@ env/
 *.swo
 .DS_Store
 
+# Claude/Cursor Framework Specific
+.claude/agents/*.py
+.claude/agents/__pycache__/
+.claude/agents/tests/__pycache__/
+.cursor/cache/
+.cursor/temp/
+
 # Logs and runtime data
 *.log
 logs/
@@ -162,3 +169,27 @@ WSP_agentic/rESP_Core_Protocols/rESP_Historical_Emergence_Log.md
 **/rESP_*Consciousness*.md
 **/rESP_*Experimental*Session*.md
 **/rESP_*Historical*Emergence*.md
+
+# WSP 80: Cube-Level DAE Orchestration - Vital IP Protection
+# Core DAE implementations contain proprietary FoundUps algorithms
+modules/**/cube_dae.py
+modules/**/cube_orchestrator.py
+modules/**/system_orchestrator.py
+**/quantum_memory.json
+**/cube_patterns.json
+**/dae_memory/*.json
+
+# Platform Cube DAE implementations - Proprietary intelligence
+modules/communication/youtube_cube_dae.py
+modules/communication/*/cube_*.py
+modules/platform_integration/linkedin_cube_dae.py
+modules/platform_integration/*/cube_*.py
+
+# Cross-cube coordination - Core DAE orchestration IP
+modules/infrastructure/cube_coordinator.py
+modules/infrastructure/dae_orchestration/
+**/quantum_patterns/*.json
+
+# Patent-related cube implementations
+modules/**/foundups_dae_*.py
+**/patent_implementations/

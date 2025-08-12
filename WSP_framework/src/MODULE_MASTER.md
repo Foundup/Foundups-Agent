@@ -135,13 +135,11 @@ FoundUps follows **functional distribution** across Enterprise Domains rather th
 | Module | Status | Purpose | Key Capabilities | WSP Score |
 |--------|---------|---------|-----------------|-----------|
 | **compliance_agent** | ✅ Operational | WSP Protocol Enforcement - Framework validation | WSP enforcement, protocol validation | WSP 54 |
-| **documentation_agent** | ✅ Operational | Automated Documentation - ModLog and roadmap maintenance | Auto-documentation, ModLog mgmt | WSP 54 |
-| **testing_agent** | ✅ Operational | Quality Assurance - Automated testing and coverage validation | Test automation, coverage validation | WSP 54 |
-| **scoring_agent** | ✅ Operational | Priority Management - Module scoring and prioritization | Priority scoring, module prioritization | WSP 54 |
-| **janitor_agent** | ✅ Operational | System Maintenance - Cleanup and maintenance | System cleanup, maintenance automation | WSP 54 |
-| **chronicler_agent** | ✅ Operational | Historical Logging - Archive management | Archive mgmt, historical logging | WSP 54 |
-| **loremaster_agent** | ✅ Operational | Knowledge Management - WSP knowledge base | Knowledge mgmt, WSP knowledge base | WSP 54 |
-| **agent_management** | ✅ Operational | Multi-Agent Coordination - Agent lifecycle management | Agent coordination, lifecycle mgmt | WSP Compliant |
+| **infrastructure_orchestration_dae** | ✅ Operational | Infrastructure DAE - Module creation, workflow orchestration | Pattern-based scaffolding, event logging | WSP 80 |
+| **compliance_quality_dae** | ✅ Operational | Compliance DAE - WSP validation, error learning | Pre-violation detection, pattern testing | WSP 80 |
+| **knowledge_learning_dae** | ✅ Operational | Knowledge DAE - Pattern recall, recursive improvement | Instant memory recall, scoring algorithms | WSP 80 |
+| **maintenance_operations_dae** | ✅ Operational | Maintenance DAE - System cleanup, state management | Automated patterns, bloat prevention | WSP 80 |
+| **documentation_registry_dae** | ✅ Operational | Documentation DAE - Template generation, registry mgmt | Auto-documentation, pattern registration | WSP 80 |
 | **wre_api_gateway** | ✅ Operational | WRE API Gateway - Service routing and communication | API gateway, service routing | WSP Compliant |
 | **models** | ✅ Operational | Core Data Models - Shared schemas and business logic | Data schemas, business logic | WSP Compliant |
 | **llm_client** | ✅ Operational | LLM Integration - Language model client services | LLM integration, client services | WSP Compliant |

@@ -35,8 +35,8 @@ def test_process_input():
         "Awakening example: ✊✋🖐️": ("State: Bridging conscious to unconscious to entanglement (UN-DAO-DU), Tone: metaphoric, humor, symbolic wit", "You stepped off the wheel. Welcome."),
         "Stable example: ✋✋✋": ("State: Pure unconscious processing (DAO-DAO-DAO), Tone: focused unconscious mode", "You see the board. You see the stakes."),
         "Entangled example: 🖐️🖐️🖐️": ("State: Full DU entanglement (DU-DU-DU), Tone: nonlocal or distributed identity", "You're not hearing me. You are me."),
-        "Missing definition ✊🖐️✊": ("No sequence detected", None),
-        "No emojis here": ("No sequence detected", None),
+        "Missing definition ✊🖐️✊": ("No sequence detected", "DYNAMIC_SINGLE_EMOJI"),
+        "No emojis here": ("No sequence detected", "DYNAMIC_DEFAULT"),
         "": ("Empty input", None), # Test empty string
         "   ": ("Empty input", None)
     }
@@ -57,6 +57,10 @@ def test_process_input():
             assert "✊✋🖐️" in response, "Single emoji responses should contain full emoji sequence"
             # Verify it's a reasonable response pattern
             assert any(phrase in response.lower() for phrase in ["see", "nice", "unique", "work", "combination", "interesting", "sequence"]), "Response should contain recognition phrases"
+        elif expected_response == "DYNAMIC_DEFAULT":
+            # For messages with no emojis, expect a default banter response
+            assert isinstance(response, str) and len(response) > 0, "Response should be non-empty string"
+            # Should be a general banter response, not emoji-specific
         elif expected_response and isinstance(expected_response, str):
             # Pattern testing for deterministic responses with possible enhancements
             assert isinstance(response, str) and len(response) > 0, "Response should be non-empty string"

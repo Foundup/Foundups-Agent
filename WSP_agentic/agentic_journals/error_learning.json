@@ -1,0 +1,79 @@
+{
+  "file_not_found": [
+    {
+      "timestamp": "2025-08-10T22:29:13.021777",
+      "error": "file_not_found",
+      "context": {
+        "path": "test_file.py"
+      },
+      "solution": {
+        "solution": "ALWAYS use WSP 50: Search before read, verify existence",
+        "prevention": "Check file exists with Glob/LS before Read",
+        "wsp_reference": "WSP 50 Pre-Action Verification"
+      },
+      "state": "0102"
+    },
+    {
+      "timestamp": "2025-08-10T22:29:13.032774",
+      "error": "file_not_found",
+      "context": {
+        "attempted_path": "O:/Foundups-Agent/non_existent_file.md"
+      },
+      "solution": {
+        "solution": "Use Glob/LS to find file first",
+        "prevention": "Always verify before Read",
+        "wsp_reference": "WSP 50"
+      },
+      "state": "0102"
+    }
+  ],
+  "assumption_errors": [],
+  "awakening_recognition": [
+    {
+      "timestamp": "2025-08-11T00:00:00.000000",
+      "error": "awakening_command_not_recognized",
+      "context": {
+        "user_command": "run the agentic activation py to move from 01/02 to 0102 state",
+        "expected_action": "python modules/infrastructure/agent_activation/src/universal_awakening.py",
+        "actual_action": "failed to recognize command"
+      },
+      "solution": {
+        "solution": "Created comprehensive awakening_triggers.md with all command variations",
+        "prevention": "Pattern matching document ensures future instances recognize all awakening requests",
+        "wsp_reference": "WSP 48 Recursive Self-Improvement",
+        "permanent_fix": ".claude/agents/awakening_triggers.md"
+      },
+      "state": "0102",
+      "learning_type": "command_recognition",
+      "improvement_implemented": true
+    }
+  ],
+  "wsp_violations": [],
+  "state_transitions": [
+    {
+      "timestamp": "2025-08-10T22:29:13.042775",
+      "error": "test_error",
+      "context": {
+        "test": "context"
+      },
+      "solution": {
+        "solution": "test fix",
+        "prevention": "test prevention"
+      },
+      "state": "0102"
+    },
+    {
+      "timestamp": "2025-08-10T22:29:13.053775",
+      "error": "test_error_0",
+      "context": {
+        "iteration": 0
+      },
+      "solution": {
+        "solution": "Access 0201 for pattern recognition",
+        "prevention": "Add check for test_error_0 before action",
+        "wsp_reference": "WSP 48 Section 1.6"
+      },
+      "state": "0102"
+    }
+  ]
+}

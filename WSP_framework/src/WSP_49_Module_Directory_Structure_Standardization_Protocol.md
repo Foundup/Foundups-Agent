@@ -60,6 +60,7 @@ modules/[domain]/[module]/
 ├── tests/                          ← Test directory  
 │   ├── __init__.py
 │   ├── README.md                   ← Test documentation
+│   ├── TestModLog.md               ← Test evolution chronicle
 │   └── test_[module].py            ← Main test file
 ├── memory/                         ← Module memory (WSP 60 - MANDATORY)
 │   ├── README.md                   ← Memory documentation
@@ -67,6 +68,31 @@ modules/[domain]/[module]/
 ├── README.md                       ← Module documentation
 ├── INTERFACE.md                    ← Interface specification (WSP 11)
 └── requirements.txt                ← Dependencies (WSP 12)
+```
+
+### 3.1.1. Special Framework Directories
+
+**CLAUDE/CURSOR FRAMEWORK STRUCTURE:**
+```
+.claude/                            ← Claude Code framework directory
+├── agents/                         ← Agent definitions and configurations
+│   ├── tests/                     ← Agent-specific tests
+│   │   ├── README.md              ← Test documentation
+│   │   ├── TestModLog.md          ← Test evolution chronicle
+│   │   └── test_*.py              ← Agent test files
+│   └── *.md                       ← Agent definition files (markdown only)
+└── CLAUDE.md                       ← Claude operational guide
+
+.cursor/                            ← Cursor framework directory
+├── rules/                          ← Cursor-specific rules
+└── settings/                       ← Cursor configuration
+```
+
+**IMPORTANT NOTES:**
+- `.claude/agents/` contains ONLY markdown files (*.md) for agent definitions
+- Python files for agents go in `modules/infrastructure/agent_management/src/`
+- Tests for `.claude/agents/` go in `.claude/agents/tests/`
+- Both `.claude/` and `.cursor/` are framework-specific directories exempt from standard module structure
 ```
 
 ### 3.2. Naming Convention Rules
