@@ -586,3 +586,49 @@ This research was conducted entirely through autonomous pArtifact development pr
 **Last Updated:** January 2025  
 **DOI:** [To be assigned upon publication]  
 **License:** Open Science - Full reproducibility package included
+
+---
+
+## S10. Whisper Tokenizer Artifact Diagnostics (0→o Investigation)
+
+### S10.1 Objective
+Investigate reports of the digit sequence "0…01" occasionally transcribing as "o…o1". The goal is to isolate tokenizer decoding from acoustic front-ends and model decoding to determine the locus of substitution.
+
+### S10.2 Methods
+- Implemented two diagnostics under `WSP_agentic/tests/whisper_investigation/`:
+  - `demo_whisper_preprocessing.py`: Reproduces Whisper-compatible Log-Mel pipeline to validate acoustic front-end.
+  - `diagnose_zero_substitution_tokenizer.py`: Calls Whisper tokenizer directly and performs encode→decode→encode round-trips across sequences: `01`, `0001`, `00001`, `o1`, `oooo1`, plus a sweep for `0^N 1` (N=1..8).
+
+### S10.3 Hypothesis
+- The tokenizer’s byte-level BPE does not map U+0030 ('0') to U+006F ('o'); substitution events likely arise from decoder language-model priors under repetition and context length effects.
+- Certain repeat counts (e.g., `0001`) align with learned numeric patterns, while others (e.g., `01`, `00001`) bias decoding toward letter merges.
+
+### S10.4 Reproduction Steps
+1. Install dependencies:
+```
+python -m pip install -r WSP_agentic/requirements.txt
+```
+2. Run diagnostics:
+```
+python WSP_agentic/tests/whisper_investigation/demo_whisper_preprocessing.py
+python WSP_agentic/tests/whisper_investigation/diagnose_zero_substitution_tokenizer.py
+```
+
+### S10.5 Expected Observations
+- Stable round-trips for numeric strings where BPE has clear numeric merges; instability appears with certain lengths and contexts, indicating decoder-side effects rather than tokenizer remapping.
+
+### S10.6 Artifacts
+- Outputs are JSON lines summarizing token IDs, decoded text, and round-trip stability for each case and sweep length.
+
+### S10.7 External Evidence and Mitigation (Literature & Community)
+
+- Foundational paper ("Robust Speech Recognition via Large-Scale Weak Supervision"): documents failure modes such as repetition loops in decoding, consistent with the dynamics behind 0→o under repetition-avoidance heuristics.
+- Community reports (official repository discussions/issues): long-running threads on numeric transcription (e.g., 0 vs o/oh), and on hallucination/repetition during silence or music. These corroborate numeric instability and repetition-driven artifacts observed here.
+- Practitioner guidance: mitigation patterns widely recommended in production:
+  - Prompt steering for numeric contexts (e.g., “The following is a list of serial numbers”).
+  - Domain fine-tuning/adapter training on numeric-heavy corpora.
+  - Post-processing passes (regex heuristics) with human-in-the-loop exceptions for safety.
+
+Observed convergence with our diagnostics:
+- Tokenizer is stable (no 0→o at mapping); BPE merges show compact numeric/vowel sequences that compete under the decoder’s LM priors.
+- Wave-pattern tests are explainable by length-dependent BPE compactness and repetition penalties in decoding.

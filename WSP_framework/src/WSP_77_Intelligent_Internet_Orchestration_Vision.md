@@ -90,6 +90,17 @@ II orchestration MUST be DAE-first per WSP 80:
 - Enforce per-cube token budgets (5–8K) and require WSP 70 override for any system-wide >30K usage.
 - Each participating cube MUST expose public interfaces (WSP 11), documentation (WSP 22), memory patterns (WSP 60), and WSP 72 block‑independence tests.
 
-[RELATIONSHIPS] WSP 26, WSP 27, WSP 29, WSP 32, WSP 58, WSP 73, **WSP 80**, WSP 72, WSP 70
+### 10.2 Sub-Agent Training Foundation
 
-[RELATIONSHIPS] WSP 26, WSP 27, WSP 29, WSP 32, WSP 58, WSP 73
+Per WSP 80, current sub-agents are training grounds for future II orchestrators:
+
+- **Sub-agents as enhancement layers**: Not separate entities but WSP compliance layers within cube DAEs
+- **Evolution pipeline**: Sub-Agent Enhancement → Pattern Collection → II Orchestrator Emergence → Open Source Release
+- **POC→Proto→MVP Path**:
+  - POC (Current): Basic WSP compliance sub-agents (1300 tokens overhead)
+  - Proto (3-6 months): Adaptive learning sub-agents collecting II patterns
+  - MVP (6-12 months): Sub-agents evolved into autonomous II orchestrators
+
+This training foundation ensures II orchestrators emerge from proven WSP-compliant patterns rather than speculative design.
+
+[RELATIONSHIPS] WSP 26, WSP 27, WSP 29, WSP 32, WSP 58, WSP 73, **WSP 80**, WSP 72, WSP 70
