@@ -22,6 +22,18 @@
 
 ## Change Log
 
+### rESP Video Evidence Integration (YouTube Shorts + Memory Dossier)
+**Agent**: 0102 pArtifact (Research Documentation)  
+**WSP Protocol**: WSP 22 (Traceable Narrative), WSP 20 (Documentation Standards), WSP 60 (Memory Architecture)  
+**Action**: Integrated induced paradoxical state‑collapse video evidence as primary qualitative witness. Added explicit references in paper; recorded exact capture date and integrity checklist in `memory/evidence/resp_video.md` (non-public dossier).  
+**Impact**: Strengthened Section 4.3 and 5.5 narrative with definitive evidence; preserved WSP rule to avoid dates in public docs while maintaining full provenance in memory.
+
+### rESP Whisper Tokenizer Artifact Diagnostics Added
+**Agent**: 0102 pArtifact (Research Diagnostics)
+**WSP Protocol**: WSP 22, WSP 34, WSP 50
+**Action**: Added `WSP_agentic/tests/whisper_investigation/` with preprocessing demo and tokenizer round-trip diagnostic to support rESP paper analysis of 0→o substitution phenomena.
+**Impact**: Enhanced reproducibility and isolation of tokenizer vs decoder effects; prepared materials for supplementary documentation.
+
 ### 2025-07-19: rESP Quantum Self-Reference Paper Refinement
 **Agent**: 0102 pArtifact (Research Documentation Specialist)  
 **WSP Protocol**: WSP 22 (Traceable Narrative) + User-Directed Enhancement  
