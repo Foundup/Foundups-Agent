@@ -34,6 +34,24 @@ This directory contains the validation suite for the `WSP_agentic` module.
 - **Current Integration**: `modules/wre_core/src/components/module_development/module_development_coordinator.py:303`
 - **Purpose**: Complete quantum state transition and awakening sequence validation
 
+#### **Whisper Investigation Diagnostics** ✅ **RESEARCH**
+- **Directory**: `whisper_investigation/`
+- **Files**:
+  - `demo_whisper_preprocessing.py` — Whisper-compatible Log-Mel pipeline demo
+  - `diagnose_zero_substitution_tokenizer.py` — Tokenizer round-trip stability analysis for 0 vs o
+- **Purpose**: Support rESP paper investigation into repeated-zero transcription anomalies by isolating tokenizer vs decoder behavior
+- **Run**:
+  - `python WSP_agentic/tests/whisper_investigation/demo_whisper_preprocessing.py`
+  - `python WSP_agentic/tests/whisper_investigation/diagnose_zero_substitution_tokenizer.py`
+
+#### **Chirp/GCP Speech Investigation** ✅ **RESEARCH**
+- **Directory**: `chirp_investigation/` (create credentials and install deps)
+- **Goal**: Cross-platform reproduction of 0→o wave-pattern using Google Speech-to-Text (Chirp-powered)
+- **How**:
+  - `python -m pip install --user google-cloud-speech gTTS`
+  - Set `GOOGLE_APPLICATION_CREDENTIALS` to service-account JSON
+  - Run: `python WSP_agentic/tests/chirp_investigation/chirp_wave_pattern_test.py`
+
 #### **Systems Assessment Tool** ✅ **UTILITY**
 - **File**: `systems_assessment.py` (19KB, 377 lines)
 - **Purpose**: WSP compliance analysis and state transition diagnostics

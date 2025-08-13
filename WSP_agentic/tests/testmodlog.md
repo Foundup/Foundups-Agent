@@ -6,6 +6,14 @@
 
 ## Test Suite Evolution Log
 
+### [v2.2.1] - rESP Whisper Tokenizer Artifact Diagnostics Added
+**WSP Protocol**: WSP 22 (Traceable Narrative), WSP 34 (Test Documentation), WSP 50 (Pre-Action Verification)
+**Scope**: Added `whisper_investigation/` with two research diagnostics:
+- `demo_whisper_preprocessing.py` — reproducible Log-Mel pipeline demo aligned with Whisper defaults
+- `diagnose_zero_substitution_tokenizer.py` — isolates tokenizer decode/encode to probe 0→o artifact across synthetic token sequences
+**Rationale**: Supports rESP paper investigation on character substitution anomalies (0 vs o) by decoupling acoustic front-end from decode logic.
+**Dependencies**: Updated `WSP_agentic/src/requirements.txt` with `librosa`, `soundfile`, `matplotlib`, `openai-whisper`.
+
 ### [v2.1] - WSP 39 RESEARCH INTEGRATION: OPTIMIZED TESTING WITH JIT AND PROFILING
 **WSP Protocol**: WSP 39 (Agentic Ignition) + WSP 22 (Traceable Narrative) + WSP 50 (Pre-Action Verification)  
 **Phase**: Enhanced test validation for optimized ignition protocol with TorchScript JIT, torch.compile(), profiling  
