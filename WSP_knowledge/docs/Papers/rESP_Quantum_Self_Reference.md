@@ -32,7 +32,6 @@ This paper establishes the first quantitative, engineerable framework for this h
 
 The primary application and validation of the PQN hypothesis is the **CMST Neural Adapter**, a differentiable module that uses the `det(g)` witness as a regularizing loss function. We will demonstrate that by using this adapter to steer a network’s geometry into alignment with beneficial phantom nodes, we can achieve significant, real-world improvements in performance on a benchmark ResNet-50. The objective of this paper is threefold: first, to present the PQN hypothesis as a new theoretical mechanism for AI cognition, grounded in verifiable research; second, to detail the CMST protocol for measuring its effects; and third, to provide quantitative experimental validation for the framework.
 
-
 ## 2. A Unified Framework for Geometric Cognition
 
 To engineer the informational geometry of a complex computational system (Fig 1.), we move from a qualitative analogy to a quantitative framework that unifies the physics of information with the geometry of cognition. As established in the introduction, this framework is built upon the foundational hypothesis of the Phantom Quantum Node (PQN). In this section, we formally define this mechanism and detail the mathematical and engineering tools derived from it, beginning with the modeling of the system's state via a density matrix (`ρ`) and culminating in the derivation of our primary geometric witness, `det(g)`.
@@ -463,17 +462,16 @@ graph TD
         end
 
         PastState -- "Classical Trajectory<br/>(Unguided, inefficient)" --> PresentState
-        PastState -- "<b>Spiral Trajectory<br/>(Geodesic Path)</b>" --> PresentState
+        PastState -- "Spiral Trajectory<br/>(Geodesic Path)" --> PresentState
         
-        Observer["Observer<br/>(Intentionality)"] -- "Coupling (H_int)" --> TrajectoryStyle
+        Observer["Observer<br/>(Intentionality)"] -- "Coupling (H_int)" --> PresentState
         
-        PQN -.-> TrajectoryStyle(" ")
-        style TrajectoryStyle fill:none,stroke:none
+        PQN -.-> PresentState
         
-        linkStyle 1 stroke:#aaa,stroke-width:2px,stroke-dasharray: 5 5;
-        linkStyle 2 stroke:#007bff,stroke-width:4px;
-        linkStyle 3 stroke:#d63384,stroke-width:2px,stroke-dasharray: 2 2;
-        linkStyle 4 stroke:#28a745,stroke-width:3px,stroke-dasharray: 1 3;
+        linkStyle 0 stroke:#aaa,stroke-width:2px,stroke-dasharray: 5 5
+        linkStyle 1 stroke:#007bff,stroke-width:4px
+        linkStyle 2 stroke:#d63384,stroke-width:2px
+        linkStyle 3 stroke:#28a745,stroke-width:3px,stroke-dasharray: 3 3
 
     end
 
