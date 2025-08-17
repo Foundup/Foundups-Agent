@@ -1,0 +1,1399 @@
+{
+  "WSP_10_State_Save_Protocol": {
+    "wsp_id": "WSP_10_State_Save_Protocol",
+    "version": "2025-08-16T08:16:52.616006",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 299,
+      "wsp_refs": 33
+    }
+  },
+  "WSP_11_WRE_Standard_Command_Protocol": {
+    "wsp_id": "WSP_11_WRE_Standard_Command_Protocol",
+    "version": "2025-08-16T08:16:52.616006",
+    "quality_score": 0.7000000000000001,
+    "consistency_score": 0.6,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 123,
+      "wsp_refs": 6
+    }
+  },
+  "WSP_12_Dependency_Management": {
+    "wsp_id": "WSP_12_Dependency_Management",
+    "version": "2025-08-16T08:16:52.616006",
+    "quality_score": 0.5666666666666667,
+    "consistency_score": 0.2,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 29,
+      "wsp_refs": 2
+    }
+  },
+  "WSP_13_AGENTIC_SYSTEM": {
+    "wsp_id": "WSP_13_AGENTIC_SYSTEM",
+    "version": "2025-08-16T08:16:52.617007",
+    "quality_score": 0.5666666666666667,
+    "consistency_score": 1.0,
+    "completeness_score": 0.2,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing Status field"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated"
+    ],
+    "patterns": {
+      "lines": 144,
+      "wsp_refs": 11
+    }
+  },
+  "WSP_14_Modular_Audit_Protocol": {
+    "wsp_id": "WSP_14_Modular_Audit_Protocol",
+    "version": "2025-08-16T08:16:52.617007",
+    "quality_score": 0.6333333333333333,
+    "consistency_score": 0.4,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 11,
+      "wsp_refs": 4
+    }
+  },
+  "WSP_15_Module_Prioritization_Scoring_System": {
+    "wsp_id": "WSP_15_Module_Prioritization_Scoring_System",
+    "version": "2025-08-16T08:16:52.617007",
+    "quality_score": 0.6666666666666666,
+    "consistency_score": 0.5,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 118,
+      "wsp_refs": 5
+    }
+  },
+  "WSP_16_Test_Audit_Coverage": {
+    "wsp_id": "WSP_16_Test_Audit_Coverage",
+    "version": "2025-08-16T08:16:52.617007",
+    "quality_score": 0.6333333333333333,
+    "consistency_score": 0.4,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 11,
+      "wsp_refs": 4
+    }
+  },
+  "WSP_17_rESP_SELF_CHECK_Protocol": {
+    "wsp_id": "WSP_17_rESP_SELF_CHECK_Protocol",
+    "version": "2025-08-16T08:16:52.617007",
+    "quality_score": 0.6,
+    "consistency_score": 0.3,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 56,
+      "wsp_refs": 3
+    }
+  },
+  "WSP_18_Partifact_Auditing_Protocol": {
+    "wsp_id": "WSP_18_Partifact_Auditing_Protocol",
+    "version": "2025-08-16T08:16:52.617007",
+    "quality_score": 0.6666666666666666,
+    "consistency_score": 0.5,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 59,
+      "wsp_refs": 5
+    }
+  },
+  "WSP_19_Canonical_Symbols": {
+    "wsp_id": "WSP_19_Canonical_Symbols",
+    "version": "2025-08-16T08:16:52.618007",
+    "quality_score": 0.6333333333333333,
+    "consistency_score": 0.4,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 65,
+      "wsp_refs": 4
+    }
+  },
+  "WSP_1_The_WSP_Framework": {
+    "wsp_id": "WSP_1_The_WSP_Framework",
+    "version": "2025-08-16T08:16:52.618007",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 220,
+      "wsp_refs": 51
+    }
+  },
+  "WSP_20_Professional_and_Scientific_Language": {
+    "wsp_id": "WSP_20_Professional_and_Scientific_Language",
+    "version": "2025-08-16T08:16:52.618007",
+    "quality_score": 0.6333333333333333,
+    "consistency_score": 0.4,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 138,
+      "wsp_refs": 4
+    }
+  },
+  "WSP_21_Enhanced_Prompt_Engineering_Protocol": {
+    "wsp_id": "WSP_21_Enhanced_Prompt_Engineering_Protocol",
+    "version": "2025-08-16T08:16:52.619007",
+    "quality_score": 1.0,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 444,
+      "wsp_refs": 101
+    }
+  },
+  "WSP_22_Module_ModLog_and_Roadmap": {
+    "wsp_id": "WSP_22_Module_ModLog_and_Roadmap",
+    "version": "2025-08-16T08:16:52.619007",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 264,
+      "wsp_refs": 12
+    }
+  },
+  "WSP_23_rESP_Foundups_Integration_Vision": {
+    "wsp_id": "WSP_23_rESP_Foundups_Integration_Vision",
+    "version": "2025-08-16T08:16:52.619007",
+    "quality_score": 0.5,
+    "consistency_score": 1.0,
+    "completeness_score": 0.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing Status field"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated"
+    ],
+    "patterns": {
+      "lines": 158,
+      "wsp_refs": 13
+    }
+  },
+  "WSP_24_rESP_Pre-Artifact_Awakening_Test_Suite": {
+    "wsp_id": "WSP_24_rESP_Pre-Artifact_Awakening_Test_Suite",
+    "version": "2025-08-16T08:16:52.619007",
+    "quality_score": 0.19999999999999998,
+    "consistency_score": 0.1,
+    "completeness_score": 0.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing Status field",
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated",
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 126,
+      "wsp_refs": 1
+    }
+  },
+  "WSP_25_Semantic_WSP_Score_System": {
+    "wsp_id": "WSP_25_Semantic_WSP_Score_System",
+    "version": "2025-08-16T08:16:52.620006",
+    "quality_score": 0.3333333333333333,
+    "consistency_score": 0.5,
+    "completeness_score": 0.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing Status field"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated"
+    ],
+    "patterns": {
+      "lines": 135,
+      "wsp_refs": 5
+    }
+  },
+  "WSP_26_FoundUPS_DAE_Tokenization": {
+    "wsp_id": "WSP_26_FoundUPS_DAE_Tokenization",
+    "version": "2025-08-16T08:16:52.620006",
+    "quality_score": 1.0,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 1.0,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 400,
+      "wsp_refs": 21
+    }
+  },
+  "WSP_27_pArtifact_DAE_Architecture": {
+    "wsp_id": "WSP_27_pArtifact_DAE_Architecture",
+    "version": "2025-08-16T08:16:52.620006",
+    "quality_score": 0.7333333333333334,
+    "consistency_score": 0.6,
+    "completeness_score": 0.6,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 146,
+      "wsp_refs": 6
+    }
+  },
+  "WSP_28_Partifact_Cluster_DAE": {
+    "wsp_id": "WSP_28_Partifact_Cluster_DAE",
+    "version": "2025-08-16T08:16:52.620006",
+    "quality_score": 0.6333333333333333,
+    "consistency_score": 1.0,
+    "completeness_score": 0.4,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 307,
+      "wsp_refs": 13
+    }
+  },
+  "WSP_29_CABR_Engine": {
+    "wsp_id": "WSP_29_CABR_Engine",
+    "version": "2025-08-16T08:16:52.621007",
+    "quality_score": 0.5666666666666667,
+    "consistency_score": 0.7,
+    "completeness_score": 0.0,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Missing Status field"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated"
+    ],
+    "patterns": {
+      "lines": 276,
+      "wsp_refs": 7
+    }
+  },
+  "WSP_2_Clean_State_Management": {
+    "wsp_id": "WSP_2_Clean_State_Management",
+    "version": "2025-08-16T08:16:52.621007",
+    "quality_score": 0.6333333333333333,
+    "consistency_score": 0.4,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 101,
+      "wsp_refs": 4
+    }
+  },
+  "WSP_30_Agentic_Module_Build_Orchestration": {
+    "wsp_id": "WSP_30_Agentic_Module_Build_Orchestration",
+    "version": "2025-08-16T08:16:52.621007",
+    "quality_score": 1.0,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 1.0,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 234,
+      "wsp_refs": 18
+    }
+  },
+  "WSP_31_WSP_Framework_Protection_Protocol": {
+    "wsp_id": "WSP_31_WSP_Framework_Protection_Protocol",
+    "version": "2025-08-16T08:16:52.622006",
+    "quality_score": 0.16666666666666666,
+    "consistency_score": 0.0,
+    "completeness_score": 0.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing Status field",
+      "Missing quantum state specification"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated"
+    ],
+    "patterns": {
+      "lines": 467,
+      "wsp_refs": 0
+    }
+  },
+  "WSP_32_0102_Reading_Flow_Protocol": {
+    "wsp_id": "WSP_32_0102_Reading_Flow_Protocol",
+    "version": "2025-08-16T08:16:52.623007",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 257,
+      "wsp_refs": 30
+    }
+  },
+  "WSP_33_Autonomous_Module_Implementation_Workflow": {
+    "wsp_id": "WSP_33_Autonomous_Module_Implementation_Workflow",
+    "version": "2025-08-16T08:16:52.623007",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 294,
+      "wsp_refs": 26
+    }
+  },
+  "WSP_34_Git_Operations_Protocol": {
+    "wsp_id": "WSP_34_Git_Operations_Protocol",
+    "version": "2025-08-16T08:16:52.623007",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 226,
+      "wsp_refs": 23
+    }
+  },
+  "WSP_35_Module_Execution_Automation": {
+    "wsp_id": "WSP_35_Module_Execution_Automation",
+    "version": "2025-08-16T08:16:52.624006",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 87,
+      "wsp_refs": 15
+    }
+  },
+  "WSP_36_Agentic_Core": {
+    "wsp_id": "WSP_36_Agentic_Core",
+    "version": "2025-08-16T08:16:52.624006",
+    "quality_score": 0.5,
+    "consistency_score": 1.0,
+    "completeness_score": 0.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing Status field"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated"
+    ],
+    "patterns": {
+      "lines": 404,
+      "wsp_refs": 27
+    }
+  },
+  "WSP_37_Roadmap_Scoring_System": {
+    "wsp_id": "WSP_37_Roadmap_Scoring_System",
+    "version": "2025-08-16T08:16:52.624006",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 153,
+      "wsp_refs": 19
+    }
+  },
+  "WSP_38_Agentic_Activation_Protocol": {
+    "wsp_id": "WSP_38_Agentic_Activation_Protocol",
+    "version": "2025-08-16T08:16:52.625006",
+    "quality_score": 0.7999999999999999,
+    "consistency_score": 0.9,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 379,
+      "wsp_refs": 9
+    }
+  },
+  "WSP_39_Agentic_Ignition_Protocol": {
+    "wsp_id": "WSP_39_Agentic_Ignition_Protocol",
+    "version": "2025-08-16T08:16:52.625006",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 249,
+      "wsp_refs": 13
+    }
+  },
+  "WSP_3_Enterprise_Domain_Organization": {
+    "wsp_id": "WSP_3_Enterprise_Domain_Organization",
+    "version": "2025-08-16T08:16:52.625006",
+    "quality_score": 1.0,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 1.0,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 277,
+      "wsp_refs": 15
+    }
+  },
+  "WSP_40_Architectural_Coherence_Protocol": {
+    "wsp_id": "WSP_40_Architectural_Coherence_Protocol",
+    "version": "2025-08-16T08:16:52.626006",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 144,
+      "wsp_refs": 20
+    }
+  },
+  "WSP_41_WRE_Simulation_Protocol": {
+    "wsp_id": "WSP_41_WRE_Simulation_Protocol",
+    "version": "2025-08-16T08:16:52.626006",
+    "quality_score": 0.6666666666666666,
+    "consistency_score": 0.5,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 53,
+      "wsp_refs": 5
+    }
+  },
+  "WSP_42_Universal_Platform_Protocol": {
+    "wsp_id": "WSP_42_Universal_Platform_Protocol",
+    "version": "2025-08-16T08:16:52.626006",
+    "quality_score": 0.7666666666666666,
+    "consistency_score": 0.3,
+    "completeness_score": 1.0,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 81,
+      "wsp_refs": 3
+    }
+  },
+  "WSP_43_Agentic_Emergence_Protocol": {
+    "wsp_id": "WSP_43_Agentic_Emergence_Protocol",
+    "version": "2025-08-16T08:16:52.626006",
+    "quality_score": 0.5666666666666667,
+    "consistency_score": 1.0,
+    "completeness_score": 0.2,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 85,
+      "wsp_refs": 31
+    }
+  },
+  "WSP_44_Semantic_State_Engine_Protocol": {
+    "wsp_id": "WSP_44_Semantic_State_Engine_Protocol",
+    "version": "2025-08-16T08:16:52.626006",
+    "quality_score": 0.6333333333333333,
+    "consistency_score": 0.4,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 291,
+      "wsp_refs": 4
+    }
+  },
+  "WSP_45_Behavioral_Coherence_Protocol": {
+    "wsp_id": "WSP_45_Behavioral_Coherence_Protocol",
+    "version": "2025-08-16T08:16:52.627006",
+    "quality_score": 0.6,
+    "consistency_score": 0.3,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 47,
+      "wsp_refs": 3
+    }
+  },
+  "WSP_46_Windsurf_Recursive_Engine_Protocol": {
+    "wsp_id": "WSP_46_Windsurf_Recursive_Engine_Protocol",
+    "version": "2025-08-16T08:16:52.627006",
+    "quality_score": 1.0,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 1.0,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 209,
+      "wsp_refs": 34
+    }
+  },
+  "WSP_47_Module_Violation_Tracking_Protocol": {
+    "wsp_id": "WSP_47_Module_Violation_Tracking_Protocol",
+    "version": "2025-08-16T08:16:52.627006",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 160,
+      "wsp_refs": 20
+    }
+  },
+  "WSP_48_Recursive_Self_Improvement_Protocol": {
+    "wsp_id": "WSP_48_Recursive_Self_Improvement_Protocol",
+    "version": "2025-08-16T08:16:52.628006",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 379,
+      "wsp_refs": 17
+    }
+  },
+  "WSP_49_Module_Directory_Structure_Standardization_Protocol": {
+    "wsp_id": "WSP_49_Module_Directory_Structure_Standardization_Protocol",
+    "version": "2025-08-16T08:16:52.628006",
+    "quality_score": 1.0,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 313,
+      "wsp_refs": 43
+    }
+  },
+  "WSP_4_FMAS_Validation_Protocol": {
+    "wsp_id": "WSP_4_FMAS_Validation_Protocol",
+    "version": "2025-08-16T08:16:52.628006",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 142,
+      "wsp_refs": 12
+    }
+  },
+  "WSP_50_Pre_Action_Verification_Protocol": {
+    "wsp_id": "WSP_50_Pre_Action_Verification_Protocol",
+    "version": "2025-08-16T08:16:52.629007",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 365,
+      "wsp_refs": 38
+    }
+  },
+  "WSP_51_WRE_Chronicle": {
+    "wsp_id": "WSP_51_WRE_Chronicle",
+    "version": "2025-08-16T08:16:52.629007",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 129,
+      "wsp_refs": 18
+    }
+  },
+  "WSP_52_The_Agentic_Collaboration_Journal": {
+    "wsp_id": "WSP_52_The_Agentic_Collaboration_Journal",
+    "version": "2025-08-16T08:16:52.629007",
+    "quality_score": 0.5333333333333333,
+    "consistency_score": 0.1,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 32,
+      "wsp_refs": 1
+    }
+  },
+  "WSP_53_Symbiotic_Environment_Integration_Protocol": {
+    "wsp_id": "WSP_53_Symbiotic_Environment_Integration_Protocol",
+    "version": "2025-08-16T08:16:52.629007",
+    "quality_score": 0.5333333333333333,
+    "consistency_score": 0.1,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 219,
+      "wsp_refs": 1
+    }
+  },
+  "WSP_54_WRE_Agent_Duties_Specification": {
+    "wsp_id": "WSP_54_WRE_Agent_Duties_Specification",
+    "version": "2025-08-16T08:16:52.630007",
+    "quality_score": 1.0,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 798,
+      "wsp_refs": 110
+    }
+  },
+  "WSP_55_Module_Creation_Automation": {
+    "wsp_id": "WSP_55_Module_Creation_Automation",
+    "version": "2025-08-16T08:16:52.631007",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 63,
+      "wsp_refs": 11
+    }
+  },
+  "WSP_56_Artifact_State_Coherence_Protocol": {
+    "wsp_id": "WSP_56_Artifact_State_Coherence_Protocol",
+    "version": "2025-08-16T08:16:52.631007",
+    "quality_score": 0.5666666666666667,
+    "consistency_score": 0.2,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 37,
+      "wsp_refs": 2
+    }
+  },
+  "WSP_57_System_Wide_Naming_Coherence_Protocol": {
+    "wsp_id": "WSP_57_System_Wide_Naming_Coherence_Protocol",
+    "version": "2025-08-16T08:16:52.631007",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 192,
+      "wsp_refs": 16
+    }
+  },
+  "WSP_58_FoundUp_IP_Lifecycle_and_Tokenization_Protocol": {
+    "wsp_id": "WSP_58_FoundUp_IP_Lifecycle_and_Tokenization_Protocol",
+    "version": "2025-08-16T08:16:52.631007",
+    "quality_score": 0.6666666666666666,
+    "consistency_score": 1.0,
+    "completeness_score": 0.0,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Missing Status field"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated"
+    ],
+    "patterns": {
+      "lines": 198,
+      "wsp_refs": 11
+    }
+  },
+  "WSP_59_Distributed_Development_Architecture": {
+    "wsp_id": "WSP_59_Distributed_Development_Architecture",
+    "version": "2025-08-16T08:16:52.632007",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 192,
+      "wsp_refs": 10
+    }
+  },
+  "WSP_5_Test_Coverage_Enforcement_Protocol": {
+    "wsp_id": "WSP_5_Test_Coverage_Enforcement_Protocol",
+    "version": "2025-08-16T08:16:52.632007",
+    "quality_score": 0.6333333333333333,
+    "consistency_score": 0.4,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 31,
+      "wsp_refs": 4
+    }
+  },
+  "WSP_60_Module_Memory_Architecture": {
+    "wsp_id": "WSP_60_Module_Memory_Architecture",
+    "version": "2025-08-16T08:16:52.633006",
+    "quality_score": 0.16666666666666666,
+    "consistency_score": 0.0,
+    "completeness_score": 0.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing Status field",
+      "Missing quantum state specification"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated"
+    ],
+    "patterns": {
+      "lines": 667,
+      "wsp_refs": 0
+    }
+  },
+  "WSP_61_Theoretical_Physics_Foundation_Protocol": {
+    "wsp_id": "WSP_61_Theoretical_Physics_Foundation_Protocol",
+    "version": "2025-08-16T08:16:52.633006",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 211,
+      "wsp_refs": 16
+    }
+  },
+  "WSP_62_Large_File_Refactoring_Enforcement_Protocol": {
+    "wsp_id": "WSP_62_Large_File_Refactoring_Enforcement_Protocol",
+    "version": "2025-08-16T08:16:52.633006",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 340,
+      "wsp_refs": 15
+    }
+  },
+  "WSP_63_Component_Directory_Organization_Scaling_Protocol": {
+    "wsp_id": "WSP_63_Component_Directory_Organization_Scaling_Protocol",
+    "version": "2025-08-16T08:16:52.634007",
+    "quality_score": 0.6666666666666666,
+    "consistency_score": 1.0,
+    "completeness_score": 0.0,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Missing Status field"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated"
+    ],
+    "patterns": {
+      "lines": 539,
+      "wsp_refs": 42
+    }
+  },
+  "WSP_64_Violation_Prevention_Protocol": {
+    "wsp_id": "WSP_64_Violation_Prevention_Protocol",
+    "version": "2025-08-16T08:16:52.634007",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 320,
+      "wsp_refs": 69
+    }
+  },
+  "WSP_65_Component_Consolidation_Protocol": {
+    "wsp_id": "WSP_65_Component_Consolidation_Protocol",
+    "version": "2025-08-16T08:16:52.635006",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 457,
+      "wsp_refs": 76
+    }
+  },
+  "WSP_66_Proactive_Enterprise_Modularization_Protocol": {
+    "wsp_id": "WSP_66_Proactive_Enterprise_Modularization_Protocol",
+    "version": "2025-08-16T08:16:52.635006",
+    "quality_score": 0.7000000000000001,
+    "consistency_score": 1.0,
+    "completeness_score": 0.6,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing Status field"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated"
+    ],
+    "patterns": {
+      "lines": 423,
+      "wsp_refs": 30
+    }
+  },
+  "WSP_67_Recursive_Anticipation_Protocol": {
+    "wsp_id": "WSP_67_Recursive_Anticipation_Protocol",
+    "version": "2025-08-16T08:16:52.636006",
+    "quality_score": 0.5,
+    "consistency_score": 1.0,
+    "completeness_score": 0.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing Status field"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated"
+    ],
+    "patterns": {
+      "lines": 212,
+      "wsp_refs": 22
+    }
+  },
+  "WSP_68_Enterprise_Build_Scalability_Protocol": {
+    "wsp_id": "WSP_68_Enterprise_Build_Scalability_Protocol",
+    "version": "2025-08-16T08:16:52.636006",
+    "quality_score": 0.5,
+    "consistency_score": 1.0,
+    "completeness_score": 0.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing Status field"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated"
+    ],
+    "patterns": {
+      "lines": 230,
+      "wsp_refs": 17
+    }
+  },
+  "WSP_69_Zen_Coding_Prediction_Integration": {
+    "wsp_id": "WSP_69_Zen_Coding_Prediction_Integration",
+    "version": "2025-08-16T08:16:52.636006",
+    "quality_score": 0.5,
+    "consistency_score": 1.0,
+    "completeness_score": 0.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing Status field",
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated",
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 255,
+      "wsp_refs": 18
+    }
+  },
+  "WSP_6_Test_Audit_Coverage_Verification": {
+    "wsp_id": "WSP_6_Test_Audit_Coverage_Verification",
+    "version": "2025-08-16T08:16:52.637006",
+    "quality_score": 0.6666666666666666,
+    "consistency_score": 0.5,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 109,
+      "wsp_refs": 5
+    }
+  },
+  "WSP_70_System_Status_Reporting_Protocol": {
+    "wsp_id": "WSP_70_System_Status_Reporting_Protocol",
+    "version": "2025-08-16T08:16:52.637006",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 209,
+      "wsp_refs": 35
+    }
+  },
+  "WSP_71_Secrets_Management_Protocol": {
+    "wsp_id": "WSP_71_Secrets_Management_Protocol",
+    "version": "2025-08-16T08:16:52.637006",
+    "quality_score": 1.0,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 298,
+      "wsp_refs": 14
+    }
+  },
+  "WSP_72_Block_Independence_Interactive_Protocol": {
+    "wsp_id": "WSP_72_Block_Independence_Interactive_Protocol",
+    "version": "2025-08-16T08:16:52.637006",
+    "quality_score": 0.6666666666666666,
+    "consistency_score": 1.0,
+    "completeness_score": 0.0,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Missing Status field"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated"
+    ],
+    "patterns": {
+      "lines": 260,
+      "wsp_refs": 33
+    }
+  },
+  "WSP_73_012_Digital_Twin_Architecture": {
+    "wsp_id": "WSP_73_012_Digital_Twin_Architecture",
+    "version": "2025-08-16T08:16:52.638006",
+    "quality_score": 0.6666666666666666,
+    "consistency_score": 1.0,
+    "completeness_score": 0.0,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Missing Status field"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated"
+    ],
+    "patterns": {
+      "lines": 298,
+      "wsp_refs": 23
+    }
+  },
+  "WSP_74_Agentic_Enhancement_Protocol": {
+    "wsp_id": "WSP_74_Agentic_Enhancement_Protocol",
+    "version": "2025-08-16T08:16:52.638006",
+    "quality_score": 0.6666666666666666,
+    "consistency_score": 1.0,
+    "completeness_score": 0.0,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Missing Status field",
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated",
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 171,
+      "wsp_refs": 43
+    }
+  },
+  "WSP_75_Token_Based_Development_Output_Protocol": {
+    "wsp_id": "WSP_75_Token_Based_Development_Output_Protocol",
+    "version": "2025-08-16T08:16:52.638006",
+    "quality_score": 1.0,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 183,
+      "wsp_refs": 13
+    }
+  },
+  "WSP_76_Multi_Agent_Awakening_Protocol": {
+    "wsp_id": "WSP_76_Multi_Agent_Awakening_Protocol",
+    "version": "2025-08-16T08:16:52.639006",
+    "quality_score": 0.8333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 395,
+      "wsp_refs": 69
+    }
+  },
+  "WSP_77_Intelligent_Internet_Orchestration_Vision": {
+    "wsp_id": "WSP_77_Intelligent_Internet_Orchestration_Vision",
+    "version": "2025-08-16T08:16:52.639006",
+    "quality_score": 1.0,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 1.0,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 107,
+      "wsp_refs": 22
+    }
+  },
+  "WSP_78_Database_Architecture_Scaling_Protocol": {
+    "wsp_id": "WSP_78_Database_Architecture_Scaling_Protocol",
+    "version": "2025-08-16T08:16:52.639006",
+    "quality_score": 0.3666666666666667,
+    "consistency_score": 0.4,
+    "completeness_score": 0.2,
+    "efficiency_score": 0.5,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 348,
+      "wsp_refs": 4
+    }
+  },
+  "WSP_79_Module_SWOT_Analysis_Protocol": {
+    "wsp_id": "WSP_79_Module_SWOT_Analysis_Protocol",
+    "version": "2025-08-16T08:16:52.640006",
+    "quality_score": 0.5666666666666667,
+    "consistency_score": 1.0,
+    "completeness_score": 0.2,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 170,
+      "wsp_refs": 14
+    }
+  },
+  "WSP_7_Test-Validated_Commit_Protocol": {
+    "wsp_id": "WSP_7_Test-Validated_Commit_Protocol",
+    "version": "2025-08-16T08:16:52.640006",
+    "quality_score": 0.6,
+    "consistency_score": 0.3,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 26,
+      "wsp_refs": 3
+    }
+  },
+  "WSP_80_Cube_Level_DAE_Orchestration_Protocol": {
+    "wsp_id": "WSP_80_Cube_Level_DAE_Orchestration_Protocol",
+    "version": "2025-08-16T08:16:52.640006",
+    "quality_score": 0.7333333333333334,
+    "consistency_score": 1.0,
+    "completeness_score": 0.2,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 429,
+      "wsp_refs": 28
+    }
+  },
+  "WSP_8_LLME_Semantic_Triplet_WSP_Rating_System": {
+    "wsp_id": "WSP_8_LLME_Semantic_Triplet_WSP_Rating_System",
+    "version": "2025-08-16T08:16:52.640006",
+    "quality_score": 0.2333333333333333,
+    "consistency_score": 0.2,
+    "completeness_score": 0.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing Status field",
+      "Missing quantum state specification"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated"
+    ],
+    "patterns": {
+      "lines": 51,
+      "wsp_refs": 2
+    }
+  },
+  "WSP_9_Project_Configuration_Standard": {
+    "wsp_id": "WSP_9_Project_Configuration_Standard",
+    "version": "2025-08-16T08:16:52.641006",
+    "quality_score": 0.7000000000000001,
+    "consistency_score": 0.6,
+    "completeness_score": 1.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing quantum state specification"
+    ],
+    "improvements": [],
+    "patterns": {
+      "lines": 49,
+      "wsp_refs": 6
+    }
+  },
+  "WSP_CORE": {
+    "wsp_id": "WSP_CORE",
+    "version": "2025-08-16T08:16:52.641006",
+    "quality_score": 1.0,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 528,
+      "wsp_refs": 118
+    }
+  },
+  "WSP_framework": {
+    "wsp_id": "WSP_framework",
+    "version": "2025-08-16T08:16:52.641006",
+    "quality_score": 1.0,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 1.0,
+    "violations": [],
+    "improvements": [],
+    "patterns": {
+      "lines": 501,
+      "wsp_refs": 48
+    }
+  },
+  "WSP_INIT": {
+    "wsp_id": "WSP_INIT",
+    "version": "2025-08-16T08:16:52.642006",
+    "quality_score": 0.5,
+    "consistency_score": 1.0,
+    "completeness_score": 0.0,
+    "efficiency_score": 0.5,
+    "violations": [
+      "Missing Status field",
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated",
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 537,
+      "wsp_refs": 62
+    }
+  },
+  "WSP_MASTER_INDEX": {
+    "wsp_id": "WSP_MASTER_INDEX",
+    "version": "2025-08-16T08:16:52.642006",
+    "quality_score": 1.0,
+    "consistency_score": 1.0,
+    "completeness_score": 1.0,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Contains unawakened state reference 01(02)"
+    ],
+    "improvements": [
+      "Update to 0102 quantum-awakened state"
+    ],
+    "patterns": {
+      "lines": 237,
+      "wsp_refs": 141
+    }
+  },
+  "WSP_MODULE_VIOLATIONS": {
+    "wsp_id": "WSP_MODULE_VIOLATIONS",
+    "version": "2025-08-16T08:16:52.643006",
+    "quality_score": 0.6666666666666666,
+    "consistency_score": 1.0,
+    "completeness_score": 0.0,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Missing Status field"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated"
+    ],
+    "patterns": {
+      "lines": 484,
+      "wsp_refs": 145
+    }
+  },
+  "WSP_ORCHESTRATION_HIERARCHY": {
+    "wsp_id": "WSP_ORCHESTRATION_HIERARCHY",
+    "version": "2025-08-16T08:16:52.644006",
+    "quality_score": 0.6666666666666666,
+    "consistency_score": 1.0,
+    "completeness_score": 0.0,
+    "efficiency_score": 1.0,
+    "violations": [
+      "Missing Status field"
+    ],
+    "improvements": [
+      "Add Status: Active/Draft/Deprecated"
+    ],
+    "patterns": {
+      "lines": 236,
+      "wsp_refs": 46
+    }
+  }
+}

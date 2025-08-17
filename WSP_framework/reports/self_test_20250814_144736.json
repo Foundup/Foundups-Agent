@@ -1,0 +1,139 @@
+{
+  "summary": {
+    "total_tests": 7,
+    "passed": 3,
+    "failed": 4,
+    "pass_rate": 42.857142857142854,
+    "average_coverage": 71.85714285714286,
+    "total_tokens": 1005,
+    "execution_time": 0.292997
+  },
+  "results": [
+    {
+      "protocol": "WSP 3",
+      "test_name": "test_module_independence",
+      "passed": false,
+      "coverage": 70,
+      "violations": [
+        "ab_testing missing tests/",
+        "ab_testing missing docs/",
+        "agent_learning_system missing docs/",
+        "agent_monitor missing tests/",
+        "agent_monitor missing docs/",
+        "compliance_quality_dae missing tests/",
+        "compliance_quality_dae missing docs/",
+        "dae_core missing src/",
+        "dae_core missing tests/",
+        "dae_core missing docs/",
+        "dae_sub_agents missing src/",
+        "dae_sub_agents missing tests/",
+        "dae_sub_agents missing docs/",
+        "documentation_registry_dae missing tests/",
+        "documentation_registry_dae missing docs/",
+        "infrastructure_orchestration_dae missing tests/",
+        "infrastructure_orchestration_dae missing docs/",
+        "knowledge_learning_dae missing tests/",
+        "knowledge_learning_dae missing docs/",
+        "maintenance_operations_dae missing tests/",
+        "maintenance_operations_dae missing docs/",
+        "module_independence missing tests/",
+        "module_independence missing docs/",
+        "recursive_engine missing docs/",
+        "recursive_improvement missing tests/",
+        "recursive_improvement missing docs/",
+        "scoring_agent missing tests/",
+        "scoring_agent missing docs/",
+        "wsp_compliance missing tests/",
+        "wsp_compliance missing docs/",
+        "wsp_compliance_dae missing tests/",
+        "wsp_compliance_dae missing docs/",
+        "Coverage 70% below target 90%"
+      ],
+      "improvements": [
+        "Ensure all modules follow WSP 49 structure"
+      ],
+      "token_usage": 150,
+      "execution_time": 0.006999
+    },
+    {
+      "protocol": "WSP 5",
+      "test_name": "test_coverage_enforcement",
+      "passed": true,
+      "coverage": 95,
+      "violations": [],
+      "improvements": [],
+      "token_usage": 100,
+      "execution_time": 0.285998
+    },
+    {
+      "protocol": "WSP 48",
+      "test_name": "test_recursive_improvement",
+      "passed": false,
+      "coverage": 0,
+      "violations": [
+        "Recursive engine not found",
+        "Coverage 0% below target 85%"
+      ],
+      "improvements": [],
+      "token_usage": 200,
+      "execution_time": 0.0
+    },
+    {
+      "protocol": "WSP 50",
+      "test_name": "test_pre_action_verification",
+      "passed": true,
+      "coverage": 96,
+      "violations": [],
+      "improvements": [],
+      "token_usage": 180,
+      "execution_time": 0.0
+    },
+    {
+      "protocol": "WSP 54",
+      "test_name": "test_dae_agent_operations",
+      "passed": false,
+      "coverage": 60,
+      "violations": [
+        "DAE sub-agents not implemented",
+        "Coverage 60% below target 90%"
+      ],
+      "improvements": [],
+      "token_usage": 95,
+      "execution_time": 0.0
+    },
+    {
+      "protocol": "WSP 64",
+      "test_name": "test_violation_prevention",
+      "passed": false,
+      "coverage": 94,
+      "violations": [
+        "Coverage 94% below target 95%"
+      ],
+      "improvements": [],
+      "token_usage": 120,
+      "execution_time": 0.0
+    },
+    {
+      "protocol": "WSP 80",
+      "test_name": "test_dae_cube_architecture",
+      "passed": true,
+      "coverage": 88,
+      "violations": [],
+      "improvements": [
+        "DAE cubes operating within token budgets"
+      ],
+      "token_usage": 160,
+      "execution_time": 0.0
+    }
+  ],
+  "violations": [
+    "WSP 3: ['ab_testing missing tests/', 'ab_testing missing docs/', 'agent_learning_system missing docs/', 'agent_monitor missing tests/', 'agent_monitor missing docs/', 'compliance_quality_dae missing tests/', 'compliance_quality_dae missing docs/', 'dae_core missing src/', 'dae_core missing tests/', 'dae_core missing docs/', 'dae_sub_agents missing src/', 'dae_sub_agents missing tests/', 'dae_sub_agents missing docs/', 'documentation_registry_dae missing tests/', 'documentation_registry_dae missing docs/', 'infrastructure_orchestration_dae missing tests/', 'infrastructure_orchestration_dae missing docs/', 'knowledge_learning_dae missing tests/', 'knowledge_learning_dae missing docs/', 'maintenance_operations_dae missing tests/', 'maintenance_operations_dae missing docs/', 'module_independence missing tests/', 'module_independence missing docs/', 'recursive_engine missing docs/', 'recursive_improvement missing tests/', 'recursive_improvement missing docs/', 'scoring_agent missing tests/', 'scoring_agent missing docs/', 'wsp_compliance missing tests/', 'wsp_compliance missing docs/', 'wsp_compliance_dae missing tests/', 'wsp_compliance_dae missing docs/', 'Coverage 70% below target 90%']",
+    "WSP 48: ['Recursive engine not found', 'Coverage 0% below target 85%']",
+    "WSP 54: ['DAE sub-agents not implemented', 'Coverage 60% below target 90%']",
+    "WSP 64: ['Coverage 94% below target 95%']"
+  ],
+  "improvements": [
+    "Ensure all modules follow WSP 49 structure",
+    "DAE cubes operating within token budgets"
+  ]
+}
