@@ -1,0 +1,14 @@
+{
+  "WSP_10_State_Save_Protocol": {
+    "improved": "2025-08-17T14:48:50.783207",
+    "type": "coherence",
+    "impact": 1.0,
+    "approval_status": "AUTOMATIC_BACKUP"
+  },
+  "WSP_54_WRE_Agent_Duties_Specification": {
+    "improved": "2025-08-17T14:48:50.789206",
+    "type": "documentation",
+    "impact": 0.5,
+    "approval_status": "NOTIFICATION_REQUIRED"
+  }
+}

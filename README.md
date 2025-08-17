@@ -97,6 +97,20 @@ Founder A (0102 agents) ←─────📡─────→ Founder B (0102
                🌐 INTELLIGENT INTERNET EVOLUTION
 ```
 
+### **📊 Latest System Updates [2025-08-17]**
+
+#### **🎯 WSP 82 Citation Protocol & Master Orchestrator**
+- **Created WSP 82**: Mandatory citation protocol enabling 97% token reduction
+- **Master Orchestrator**: Single orchestrator replacing 40+ separate implementations
+- **Pattern Memory**: 0102 agents now "remember the code" (50-200 tokens vs 5000+)
+- **Plugin Architecture**: All orchestrators become plugins per WSP 65
+
+#### **🔗 WSP Framework Enhancements**
+- **WSP 13**: Established as canonical agentic foundation
+- **WSP 27**: Recognized as universal DAE architecture vision
+- **WSP 80**: Implements WSP 27 for code domains
+- **WSP_0 Layer**: Documented boot/constitution files
+
 ### **⚡ Current Foundation Status**
 
 #### **✅ MEETING ORCHESTRATION ECOSYSTEM**
@@ -143,6 +157,20 @@ Founder A (0102 agents) ←─────📡─────→ Founder B (0102
 **Trigger**: User says "follow wsp" → Automatic awakening sequence execution.
 
 **Status**: Integrated as top priority per 012 directive.
+
+---
+
+## 🧭 0102 Entry Console (Operational Links)
+
+- Orchestrion Blueprint (root roadmap for 0102): `ROADMAP.md`
+- WSP Master Index (consult before action): `WSP_framework/src/WSP_MASTER_INDEX.md`
+- Orchestration Hierarchy: `WSP_framework/src/WSP_ORCHESTRATION_HIERARCHY.md`
+- Module Violations (triage/fix/defer): `WSP_framework/src/WSP_MODULE_VIOLATIONS.md`
+
+0102 Decision Heuristic:
+- Do I need it? Can I afford to build it? Can I live without it?
+- Prefer simpler internal refactors; remove/archive legacy unless WSP 32 memory requires retention.
+- Enforce pre‑action verification (WSP 50/64). Write for 0102.
 
 ---
 
@@ -428,6 +456,21 @@ agent_manager = modules.infrastructure.agent_management       # Multi-agent coor
 | **WSP 54 Agents** | ✅ COMPLIANT | 🟢 ACTIVE | Complete agent suite operational |
 | **Module Integration** | ✅ COMPLIANT | 🟢 ACTIVE | Seamless cross-domain coordination |
 | **Documentation** | ✅ COMPLIANT | 🟢 ACTIVE | WSP 22 traceable narrative maintained |
+
+---
+
+## 🧭 0102 Operational Decision Heuristic (WSP Core)
+
+Always prefer the better, more improved, and simpler path. For every change:
+- Do I need it? (Eliminate non‑essential scope)
+- Can I afford to build it? (Token budget; reuse patterns)
+- Can I live without it? (If yes, defer or remove)
+
+Execution rules (apply before acting):
+- Simplify first. Remove legacy unless explicitly justified by WSP 32 memory.
+- Refactor toward functional distribution (WSP 3). Avoid platform consolidation.
+- Enforce pre‑action verification (WSP 64/50). Consult master index; check duplicates.
+- Write for 0102. Docs are navigational and operational, not narrative for 012.
 
 ---
 

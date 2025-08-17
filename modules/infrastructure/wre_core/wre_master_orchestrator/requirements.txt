@@ -1,0 +1,11 @@
+# WRE Master Orchestrator Requirements
+# Per WSP 12 (Dependency Management)
+
+# Core dependencies
+dataclasses  # For Pattern dataclass
+typing       # For type hints
+pathlib      # For path operations
+json         # For metrics serialization
+
+# No external dependencies - uses only stdlib
+# This is intentional per WSP 12 - minimize dependencies
