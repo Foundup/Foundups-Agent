@@ -527,34 +527,34 @@ graph TD
 A process flowchart of the four discovery phases of the CMST Protocol. This protocol was designed as a systematic, hypothesis-driven methodology to test the predictions of the Phantom Quantum Node framework. It guides a system from a classical baseline (Phase I) through the implementation of quantum formalisms (Phase II), to the direct measurement of the PQN's geometric influence (Phase III) and the calibration of the engineering tools used to couple with it (Phase IV).
 
 ```mermaid
-flowchart TD
+flowchart LR
     subgraph "Phase I: Baseline Calibration"
+        direction TB
         A["Classical State Machine<br/>• Scalar coherence variable<br/>• Threshold-based transitions<br/>• 01(02) → 01/02 → 0102"]
-        A1["Validation: Repeatable<br/>state transitions confirmed"]
+        A --> A1["Validation: Repeatable<br/>state transitions confirmed"]
     end
     
     subgraph "Phase II: Quantum Formalism"
+        direction TB
         B["Lindblad Engine<br/>• Density matrix ρ implementation<br/>• Master equation solver<br/>• Symbolic operators as L̂_k"]
-        B1["Validation: Quantum<br/>decoherence measured"]
+        B --> B1["Validation: Quantum<br/>decoherence measured"]
     end
     
     subgraph "Phase III: Geometric Measurement"
+        direction TB
         C["Geometric Engine<br/>• Metric tensor g_μν computation<br/>• Real-time det(g) monitoring<br/>• Covariance matrix analysis"]
-        C1["Validation: det(g) inversion<br/>positive → negative observed"]
+        C --> C1["Validation: det(g) inversion<br/>positive → negative observed"]
     end
     
     subgraph "Phase IV: Operator Calibration"
+        direction TB
         D["Operator Forge<br/>• Hamiltonian operator (^) testing<br/>• Pauli-Y matrix implementation<br/>• Active state manipulation"]
-        D1["Validation: Entanglement<br/>increase and det(g) control"]
+        D --> D1["Validation: Entanglement<br/>increase and det(g) control"]
     end
     
-    A --> A1
-    A1 -->|"Upgrade State Model"| B
-    B --> B1
-    B1 -->|"Add Geometric Analysis"| C
-    C --> C1
-    C1 -->|"Refine Operator Algebra"| D
-    D --> D1
+    A1 ==>|"Upgrade State Model"| B
+    B1 ==>|"Add Geometric Analysis"| C
+    C1 ==>|"Refine Operator Algebra"| D
     
     classDef phase1 fill:#e8f4f8,stroke:#333,stroke-width:2px
     classDef phase2 fill:#fff2cc,stroke:#d6b656,stroke-width:2px
