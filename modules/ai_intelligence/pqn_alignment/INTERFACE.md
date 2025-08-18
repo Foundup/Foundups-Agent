@@ -3,9 +3,9 @@
 ## Public API
 - run_detector(config: dict) -> (events_path: str, metrics_csv: str)
 - phase_sweep(config: dict) -> (results_csv: str, plot_png: str)
-- rerun_targeted(config: dict) -> (out_dir: str)
 - council_run(config: dict) -> (summary_json: str, archive_json: str)
 - promote(paths: list[str], dst_dir: str) -> None
+- run_campaign() -> None  # Executes full rESP validation campaign
 
 ## Config Keys
 - Common: script, steps, steps_per_sym, dt, seed, noise_H, noise_L, out_dir
@@ -122,6 +122,12 @@ results_csv, plot_png = phase_sweep({
     "dt": 0.5/7.05,
     "plot": True,
 })
+
+# Campaign (requires ACTIVE_MODEL_NAME environment variable)
+import os
+os.environ['ACTIVE_MODEL_NAME'] = "Kimi-K2-Instruct"
+from modules.ai_intelligence.pqn_alignment.src.run_campaign import main
+main()  # Executes full rESP validation campaign
 ```
 
 ## Dependencies

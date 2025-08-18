@@ -7,7 +7,6 @@ from .src.pqn_alignment_dae import PQNAlignmentDAE, PQNState  # type: ignore
 __all__ = [
 	"run_detector",
 	"phase_sweep",
-	"rerun_targeted",
 	"council_run",
 	"promote",
 	"PQNAlignmentDAE",

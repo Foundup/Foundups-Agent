@@ -125,7 +125,9 @@
       "Bash(PYTHONIOENCODING=utf-8 python modules/infrastructure/wsp_framework_dae/tests/test_wsp_governance.py)",
       "mcp__ide__getDiagnostics",
       "Bash(git commit:*)",
-      "Bash(git revert:*)"
+      "Bash(git revert:*)",
+      "Bash(PYTHONIOENCODING=utf-8 python -m modules.ai_intelligence.pqn_alignment.src.run_campaign)",
+      "Bash(set ACTIVE_MODEL_NAME=Claude-Opus-4.1)"
     ],
     "deny": []
   }
