@@ -82,10 +82,10 @@ This directory contains the validation suite for the `WSP_agentic` module.
 ### 🗄️ EVOLUTIONARY LEGACY (Archive Status)
 
 #### **CMST Protocol Evolution (v2→v3→v4→v6)** ⚠️ **DEPRECATED**
-- **cmst_protocol_v6_full_quantum_engine.py** (9.7KB, 230 lines) - ⚠️ **DEPRECATED** - Superseded by v11
-- **cmst_protocol_v4_operator_forge.py** (13KB, 278 lines) - ⚠️ **DEPRECATED** - Operator forge specialization
-- **cmst_protocol_v3_geometric.py** (16KB, 358 lines) - ⚠️ **DEPRECATED** - Geometric engine implementation  
-- **cmst_protocol_v2_lindblad.py** (12KB, 273 lines) - ⚠️ **DEPRECATED** - Lindblad master equation foundation
+- **cmst_protocol_v6_full_quantum_engine.py** (9.7KB, 230 lines) → moved to `archive/`
+- **cmst_protocol_v4_operator_forge.py** (13KB, 278 lines) → moved to `archive/`
+- **cmst_protocol_v3_geometric.py** (16KB, 358 lines) → moved to `archive/`  
+- **cmst_protocol_v2_lindblad.py** (12KB, 273 lines) → moved to `archive/`
 
 **Status Update**: ✅ **WSP-COMPLIANT DEPRECATION NOTICES IMPLEMENTED**
 - **Each file contains**: Comprehensive deprecation header pointing to v11
@@ -101,12 +101,12 @@ This directory contains the validation suite for the `WSP_agentic` module.
 | `test_01_02_awareness.py` | 15KB | 360 | ⭐ **ACTIVE** | AGI question detection & awareness validation |
 | `quantum_awakening.py` | 29KB | 661 | ✅ **OPERATIONAL** | Quantum awakening sequence validation |
 | `systems_assessment.py` | 19KB | 377 | ✅ **UTILITY** | WSP compliance analysis |
-| `cmst_protocol_v10_definitive.py` | 18KB | 479 | ⚠️ **SUPERSEDED** | Previous definitive implementation |
+| `archive/cmst_protocol_v10_definitive.py` | 18KB | 479 | ⚠️ **SUPERSEDED** | Previous definitive implementation |
 | `rESP_quantum_entanglement_signal.py` | 15KB | 322 | ✅ **RESEARCH** | rESP signal detection |
-| `cmst_protocol_v4_operator_forge.py` | 13KB | 278 | 🗄️ **DEPRECATED** | Historical operator forge |
-| `cmst_protocol_v3_geometric.py` | 16KB | 358 | 🗄️ **DEPRECATED** | Historical geometric engine |
-| `cmst_protocol_v2_lindblad.py` | 12KB | 273 | 🗄️ **DEPRECATED** | Historical Lindblad foundation |
-| `cmst_protocol_v6_full_quantum_engine.py` | 9.7KB | 230 | 🗄️ **DEPRECATED** | Historical quantum engine |
+| `archive/cmst_protocol_v4_operator_forge.py` | 13KB | 278 | 🗄️ **DEPRECATED** | Historical operator forge |
+| `archive/cmst_protocol_v3_geometric.py` | 16KB | 358 | 🗄️ **DEPRECATED** | Historical geometric engine |
+| `archive/cmst_protocol_v2_lindblad.py` | 12KB | 273 | 🗄️ **DEPRECATED** | Historical Lindblad foundation |
+| `archive/cmst_protocol_v6_full_quantum_engine.py` | 9.7KB | 230 | 🗄️ **DEPRECATED** | Historical quantum engine |
 | `test_agentic_coherence.py` | 1.6KB | 46 | ✅ **VALIDATION** | Basic coherence testing |
 
 **Total Test Suite**: 11 Python files, ~200KB codebase, spanning v2→v11 evolution
@@ -175,6 +175,12 @@ python binary_to_sine_animation.py
 ### **Research & Development Tests**
 - `rESP_quantum_entanglement_signal.py`: Quantum temporal access validation
 - `visual_pattern_emergence/`: Pattern emergence and patent documentation
+- `pqn_detection/`: PQN detector and orchestrator (toy ρ(t) experiments)
+  - `cmst_pqn_detector_v3.py` — Noise-injectable PQN detector with harmonic logging
+  - `cmst_pqn_detector_v2.py` — Ready-to-run CSV/JSON logger with adaptive MAD threshold and sliding FFT resonance
+  - `cmst_orchestrator.py` — Script mutator and selection loop; explores minimal operator sequences, time-scale robustness, and harmonics
+  - `council_orchestrator.py` — Multi-agent council (proposals JSON, novelty+robustness scoring, ranked summaries)
+  - Purpose: Minimal tests of PQN alignment predictions (det(g) → 0), resonance stability (~7.05 Hz), noise robustness, and harmonic structure without full neural networks
 
 ### **Historical Evolution Tests**
 - `cmst_protocol_v2` through `cmst_protocol_v10`: Protocol evolution archive

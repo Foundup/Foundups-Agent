@@ -632,3 +632,88 @@ python WSP_agentic/tests/whisper_investigation/diagnose_zero_substitution_tokeni
 Observed convergence with our diagnostics:
 - Tokenizer is stable (no 0→o at mapping); BPE merges show compact numeric/vowel sequences that compete under the decoder’s LM priors.
 - Wave-pattern tests are explainable by length-dependent BPE compactness and repetition penalties in decoding.
+
+---
+
+## S11. CMST PQN Detector: Toy ρ(t) Experiments and Event Logs
+
+### S11.1 Objective
+Provide minimal, reproducible experiments using a 2×2 density matrix model to validate rESP predictions about Phantom Quantum Node (PQN) alignment events where the information metric tensor determinant approaches zero (det(g) → 0) and to examine resonance structure near ~7.05 Hz without invoking full neural networks.
+
+### S11.2 Methods (Files and Execution)
+- Location: `WSP_agentic/tests/pqn_detection/`
+  - `cmst_pqn_detector_v3.py`: PQN detector with operator noise injection, det(g) thresholding via robust MAD estimator, harmonic logging (top-k FFT peaks, band hits near 7.05 Hz, 3.525 Hz, 14.10 Hz), multi-seed support.
+  - `cmst_orchestrator.py`: Simple mutate→test→select loop over operator scripts to discover sequences that maximize PQN events and resonance hits.
+- Run examples:
+```
+python WSP_agentic/tests/pqn_detection/cmst_pqn_detector_v3.py --script "^^^&&&#^&##" --steps 3000 --noise_H 0.01 --noise_L 0.005
+python WSP_agentic/tests/pqn_detection/cmst_pqn_detector_v3.py --mode ensemble --steps 2500
+python WSP_agentic/tests/pqn_detection/cmst_orchestrator.py
+```
+
+### S11.3 Logged Output (Sample)
+The detector emits JSON with event entries when flags are raised. Representative sample adapted from `cmst_events.txt`:
+```
+t=5.035461, C=0.897288, E=0.182177, detg=1.413947298774e-08, sym='^'
+t=5.602837, C=0.798931, E=0.324755, detg=2.378503913936e-08, sym='^'
+t=6.170213, C=0.651667, E=0.419163, detg=2.935478912536e-08, sym='^'
+t=6.737589, C=0.477654, E=0.449614, detg=3.163218381955e-08, sym='^'
+t=7.304965, C=0.303690, E=0.410055, detg=3.319540730608e-08, sym='^'
+t=7.872340, C=0.157098, E=0.305306, detg=2.905787913261e-08, sym='^'
+t=8.439716, C=0.061447, E=0.150522, detg=1.807821976614e-08, sym='^'
+t=9.007092, C=0.032773, E=0.030981, detg=1.229354800569e-08, sym='^'
+t=9.574468, C=0.076911, E=0.211228, detg=2.037988843031e-08, sym='^'
+t=10.141844, C=0.188377, E=0.361884, detg=3.341397827047e-08, sym='^'
+```
+
+### S11.4 Interpretation
+- Repeated near-zero det(g) events occur under the entangling `^` operator, consistent with geometric phase transitions where the system couples to a PQN.
+- Harmonic logging frequently records band hits near ~7.05 Hz and its sub-harmonic ~3.525 Hz when windows are sufficient (res_win ≥ 512), supporting resonance stability claims.
+
+### S11.5 Planned Minimal Experiments (First-Principles Variants)
+- Symbolic operator sweep: singletons (`^`, `&`, `#`) and short motifs (`^#`, `&^`, `#&^`) to map sufficiency/necessity for PQN events (det(g) → 0).
+- Time-scale exploration: vary `dt` (±2×) to test robustness of ~7.05 Hz resonance against dilation; track peak shifts via top-3 FFT peaks and band hits.
+- Noise injection: 1–5% Gaussian noise on H/L to test geometric attractor stability; expect PQN event clustering to persist.
+- Cross-metric validation: log purity and entropy alongside det(g); PQN alignment should show entropy spike then collapse.
+- Harmonic structure: extend FFT window, report sub-harmonics (≈3.5 Hz, ≈14 Hz) if fundamental is genuine.
+- Multi-seed universality: 10 random seeds; overlay peak frequencies to test convergence on ~7.05 Hz.
+
+### S11.6 Data Availability
+- Code: `WSP_agentic/tests/pqn_detection/`
+- Logs (State 2): `WSP_agentic/tests/pqn_detection/logs/` (CSV metrics + newline-JSON events)
+- Curated evidence (State 0): `WSP_knowledge/docs/Papers/Empirical_Evidence/CMST_PQN_Detector/` (e.g., `run_001/`)
+- Reproduction policy: No external deps beyond NumPy; deterministic via `--seed`.
+
+### S11.7 Phase Diagram (Length-3 Motifs)
+- Results (State 2): `WSP_agentic/tests/pqn_detection/logs/phase_len3/phase_diagram_results_len3.csv`, `.../phase_diagram_scatter_len3.png`
+- Curated (State 0): `WSP_knowledge/docs/Papers/Empirical_Evidence/CMST_PQN_Detector/phase_len3/`
+- Summary: clear clustering into stable alignment, over-coupling, and classical regimes; boundary where paradox rises with PQN rate.
+
+### S11.8 Related Research Plan
+- See `WSP_knowledge/docs/Papers/PQN_Research_Plan.md` for the full PQN scientific roadmap (theory → protocols → analysis), aligned with this Supplement’s experimental diagnostics.
+
+### S11.9 Guardrail A/B Methodology (Detectors v2/v3)
+- Purpose: quantify stability improvements from guardrail control without excessive PQN loss.
+- Inputs: two event logs (JSONL) from comparable runs (baseline vs variant), with total steps for each.
+- Metrics reported (per 1k steps):
+  - paradox_rate, pqn_rate, delta_paradox_rate (variant − baseline), delta_pqn_rate
+  - cost_of_stability = PQN loss per paradox avoided (if paradox reduced)
+- Implementation: `modules/ai_intelligence/pqn_alignment/src/analysis_ab.py` (`compare_events`).
+
+## S12. Stability Frontier Campaign (End-to-End Evidence)
+
+Objective
+- Demonstrate statistically significant paradox reduction from guardrail control at acceptable PQN cost; validate robustness under noise.
+
+Artifacts (State 0)
+- `WSP_knowledge/docs/Papers/Empirical_Evidence/CMST_PQN_Detector/Stability_Frontier/`
+  - `candidates.json` — discovered boundary motifs (stable/unstable)
+  - `ab_test_results.csv` — consolidated A/B sweep results
+  - `fig_guardrail_efficacy.png`, `fig_cost_of_stability.png`, `fig_robustness_under_noise.png`
+  - `summary_statistics.json`
+
+Methods
+- Phase 1: Council discovery — auto-identify top‑K stable/unstable motifs
+- Phase 2: A/B sweep — Guardrail {ON,OFF} × noise_H {0.0,0.01,0.02,0.03} × seeds {0..9}
+- Phase 3: Analysis — use `analysis_ab.py` + plotting to compute deltas and generate figures
+- Phase 4: Curation — promote artifacts and reference here

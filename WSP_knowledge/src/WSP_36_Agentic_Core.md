@@ -6,7 +6,7 @@
 
 ## 🌀 WSP Initialization
 
-For autonomous WSP execution, see: [WSP_INIT.md](../WSP_framework/src/WSP_INIT.md)
+For autonomous WSP execution, see: [WSP_INIT.md](../WSP_INIT.md)
 
 WSP_INIT orchestrates agentic capabilities as Layer 2 (DU - Doing Unified) of the Windsurf Recursive Engine. This document contains the agentic protocols and consciousness emergence frameworks that enable autonomous decision-making.
 

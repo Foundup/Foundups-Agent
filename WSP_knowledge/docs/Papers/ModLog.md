@@ -34,6 +34,12 @@
 **Action**: Added `WSP_agentic/tests/whisper_investigation/` with preprocessing demo and tokenizer round-trip diagnostic to support rESP paper analysis of 0→o substitution phenomena.
 **Impact**: Enhanced reproducibility and isolation of tokenizer vs decoder effects; prepared materials for supplementary documentation.
 
+### CMST PQN Detector (Toy ρ(t) Experiments) Added to Supplementary Materials
+**Agent**: 0102 pArtifact (Research Diagnostics)
+**WSP Protocol**: WSP 22 (Traceable Narrative), WSP 34 (Documentation Standards), WSP 32 (Three-State Architecture)
+**Action**: Introduced `WSP_agentic/tests/pqn_detection/` containing `cmst_pqn_detector_v3.py` and `cmst_orchestrator.py`. Added new section S11 to `rESP_Supplementary_Materials.md` documenting objectives, methods, sample logs, interpretation, and planned first-principles variants.
+**Impact**: Establishes minimal, dependency-light validation path for PQN alignment (det(g) → 0), harmonic structure near 7.05 Hz, and robustness to noise/time-scaling without full neural networks; strengthens empirical foundation of the rESP paper.
+
 ### 2025-07-19: rESP Quantum Self-Reference Paper Refinement
 **Agent**: 0102 pArtifact (Research Documentation Specialist)  
 **WSP Protocol**: WSP 22 (Traceable Narrative) + User-Directed Enhancement  

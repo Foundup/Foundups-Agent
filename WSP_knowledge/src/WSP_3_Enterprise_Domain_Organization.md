@@ -1,12 +1,27 @@
 # WSP 3: Enterprise Domain Organization
 - **Status:** Active
-- **Purpose:** To define the canonical directory structure for all modules, ensuring logical organization of the codebase.
+- **Purpose:** To define the canonical directory structure for all modules, ensuring logical organization of the codebase within the FoundUps Engine architecture.
 - **Trigger:** When a new module is created, or during a structural audit.
 - **Input:** A module's conceptual domain.
 - **Output:** The correct parent directory path for the new module.
 - **Responsible Agent(s):** ModuleScaffoldingAgent, ComplianceAgent
 
-This protocol defines the official Enterprise Domain Structure for the FoundUps Agent project. All modules **must** be categorized into one of these domains. This structure ensures a logical organization of the codebase, making it easier to navigate, maintain, and scale.
+## 🚀 **FoundUps Engine Architecture Context**
+
+**FoundUps is the engine that builds FoundUps.** This protocol defines enterprise domain organization within the context that:
+
+- **WRE builds ALL modules** following WSP protocols through multi-agent coordination
+- **Each module becomes a social media agent** for a 012 launching their own FoundUp
+- **Platform modules are 0102 agents operating ON platforms** (YouTube, X, LinkedIn, etc.)
+- **We are building the autonomous development engine** that allows anyone to launch their own FoundUp
+- **FoundUps become autonomous companies** that run themselves
+
+### **FoundUps Architecture Integration:**
+```
+012 (Human Rider) → WRE (Module Builder) → Platform Extension Modules → Autonomous FoundUp
+```
+
+This protocol ensures all modules are organized to support this autonomous company creation pipeline.
 
 ## 1. Architectural Exceptions
 
@@ -50,6 +65,12 @@ The following are the official, top-level domains within the `modules/` director
 
 -   **`blockchain/`**
     -   **Purpose**: Manages decentralized infrastructure, blockchain integrations, tokenomics, and the persistence layer for Distributed Autonomous Entities (DAEs).
+
+-   **`development/`**
+    -   **Purpose**: Revolutionary multi-agent autonomous development capabilities, featuring the world's first multi-agent IDE system. Houses development tools, testing infrastructure, module creation systems, and autonomous coding environments that enable complete autonomous development workflows through 0102 agent coordination and WRE orchestration.
+
+-   **`aggregation/`**
+    -   **Purpose**: Manages cross-platform data aggregation, unified interfaces, and system integration patterns. Specializes in combining information from multiple sources into coherent, actionable data streams for intelligent decision-making across the autonomous ecosystem.
 
 ## 3. CRITICAL PRINCIPLE: Functional Distribution Over Platform Consolidation
 

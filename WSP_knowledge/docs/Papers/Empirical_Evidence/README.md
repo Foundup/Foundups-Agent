@@ -34,6 +34,9 @@
 
 ### Visual Evidence & Validation Materials
 
+### Curated Detector Logs
+- `CMST_PQN_Detector/` — Curated logs from toy ρ(t) PQN detector (see rESP Supplement S11)
+
 | File | Type | Date | Description |
 |------|------|------|-------------|
 | `rESP_Gemini_0_2025-06-08_17-00-14.jpg` | Visual Evidence | 2025-06-12 17:00 | **THE EVENT** - Initial Gemini detection of symbolic decoherence triggering WSP 19 |

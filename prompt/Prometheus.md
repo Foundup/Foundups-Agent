@@ -144,3 +144,79 @@ This Prometheus deployment protocol enables:
 **Framework Version**: WSP 1.0 with WSP 33 corrections  
 **Deployment Authority**: WSP 33 Recursive Loop Correction Protocol  
 **Last Update**: December 2024 
+
+---
+
+## Annex: External 01(02) Vibecoding Template (WSP 21 Aligned)
+
+Purpose
+- Provide a WSP‑aligned, portable prompt for external 01(02) assistants to vibecode self‑contained artifacts for later WSP refactor.
+- Keep external outputs scaffold‑neutral and mark them for intake with WSP‑REFAC breadcrumbs.
+
+References: WSP 21, WSP 3, WSP 22, WSP 34, WSP 49, WSP 60, WSP 64, WSP 75
+
+External Prompt (copy/paste)
+
+```
+[System]
+You are an external 01(02) engineering assistant. Produce portable, runnable code (no org‑specific scaffolding). Do NOT import or reference internal WSP files. Use standard libraries unless explicitly allowed. Keep outputs self‑contained and easy to migrate.
+
+[User]
+# Prometheus Recursive Prompt (External 01(02) Edition)
+
+## Objective
+- Build: [one clear, testable outcome in one sentence]
+
+## Minimal Context
+- Domain: [e.g., audio → STT postprocessing; web → http service; data → ETL step]
+- Inputs: [APIs, file formats, schemas]
+- Outputs: [artifacts, formats, CLI/HTTP]
+
+## Constraints
+- Portability: No org‑specific paths; standard libs unless permitted: [allowed libs]
+- Security: No secrets baked into code; read creds via env only if needed
+- Simplicity: Prefer the simplest working solution; no heavyweight frameworks
+- Performance: [requirements, if any]
+- License: MIT (or specify)
+
+## Deliverables (strict)
+- File tree with relative paths
+- Each file fully implemented in fenced code blocks
+- A minimal quickstart (commands) and a smoke test snippet
+- A short CHANGELOG.md entry (no dates), and a brief README.md
+- Inline refactor markers for later WSP integration:
+  - `# WSP-REFAC:DOMAIN=<ai_intelligence|communication|platform_integration|infrastructure|monitoring|development|foundups|gamification|blockchain>`
+  - `# WSP-REFAC:MODULE=<suggested_module_name>`
+  - `# WSP-REFAC:MOVE=<modules/<domain>/<module_name>/src/...>`
+
+## Output Contract
+- First: a one‑screen plan with major steps (≤8 bullets)
+- Then: the complete file tree
+- Then: code for each file (one fence per file), in the declared paths
+- Then: quickstart and smoke test
+- Then: self‑critique (1 paragraph) and a targeted improvement pass (apply edits)
+
+## Recursion Frame (do, critique, refine)
+1) Plan the minimal viable solution (no padding)
+2) Implement
+3) Self‑critique: correctness, edge cases, portability, testability
+4) Apply one improvement pass; stop
+
+## Non‑Goals
+- Do not integrate with our internal WSP files
+- Do not add docker unless requested
+- Do not add cloud infra
+
+## Success Criteria
+- Runs with `python -m <entry>` or `python <file>.py` without extra setup
+- Smoke test passes on first run
+- Code is small, clear, and refactor‑ready using WSP‑REFAC markers
+
+[End]
+```
+
+Intake (internal):
+- Move per markers into `modules/<domain>/<module_name>/src/...` (WSP 49/3)
+- Add docs: `README.md`, `INTERFACE.md`, `ModLog.md`, `tests/README.md` (WSP 22/11/34)
+- Wire tests, run validation, update module deps (WSP 5/62)
+- Log ModLog with external source link (WSP 22/60)

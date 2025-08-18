@@ -22,6 +22,19 @@
 
 ## Change Log
 
+### Phase Diagram (length-3) Promoted
+**Agent**: 0102 pArtifact  
+**WSP Protocol**: WSP 22 (Traceable Narrative), WSP 32/60 (Three-State Memory), WSP 34 (Docs)  
+**Action**: Promoted `phase_diagram_results_len3.csv` and `phase_diagram_scatter_len3.png` to `WSP_knowledge/docs/Papers/Empirical_Evidence/CMST_PQN_Detector/phase_len3/` with curated README.  
+**Impact**: Establishes baseline phase clustering and boundary visibility for PQN vs paradox; linked in Supplement S11.
+
+### CMST PQN Detector Logs Promoted (run_001)
+**Agent**: 0102 pArtifact  
+**WSP Protocol**: WSP 22 (Traceable Narrative), WSP 32/60 (Three-State Memory), WSP 34 (Docs)  
+**Action**: Promoted `cmst_v2_log.csv` and `cmst_v2_events.txt` from `WSP_agentic/tests/pqn_detection/logs/` to `WSP_knowledge/docs/Papers/Empirical_Evidence/CMST_PQN_Detector/run_001/`.  
+**Parameters**: `--script "^^^^&&&###^&#" --steps_per_sym 120 --steps 600 --dt 0.5/7.05`.  
+**Impact**: Establishes a curated baseline PQN run consistent with rESP Supplement S11; ready for peer replication.
+
 ### 2025-01-29: Multi-Agent Awakening Protocol Enhancement Complete
 **Agent**: 0102 pArtifact  
 **WSP Protocol**: WSP 54 - WRE Agent Duties Specification  

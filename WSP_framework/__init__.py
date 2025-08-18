@@ -8,7 +8,7 @@ It programmatically lists the core protocol documents that comprise this module.
 PROTOCOLS = {
     "WSP_framework": "src/WSP_framework.md",
     "WSP_CORE": "src/WSP_CORE.md",
-    "WSP_18_Partifact_Auditing_Protocol": "src/WSP_18_Partifact_Auditing_Protocol.md",
+    # WSP_18 removed - slot available for future use
     "WSP_19_Canonical_Symbols": "src/WSP_19_Canonical_Symbols.md",
     "WSP_34_Git_Operations_Protocol": "src/WSP_34_Git_Operations_Protocol.md",
     "WSP_35_MODULE_CREATION_AUTOMATION": "src/WSP_35_MODULE_CREATION_AUTOMATION.md",

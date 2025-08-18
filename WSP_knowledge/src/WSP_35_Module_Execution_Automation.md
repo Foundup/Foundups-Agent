@@ -1,5 +1,5 @@
 # WSP 35: Module Execution Automation
-- **Status:** Draft
+- **Status:** Draft (Research)
 - **Purpose:** To define the autonomous process by which the WRE translates strategic goals from the roadmap into the automated execution of software modules.
 - **Trigger:** When a high-level goal from `ROADMAP.md` is ingested by the WRE.
 - **Input:** A high-level goal from the project roadmap.
@@ -82,4 +82,6 @@ For a module to be compatible with this automated execution protocol, it MUST ha
 
 ---
 
-This protocol transforms the WRE from a simple orchestrator into an active, autonomous participant in the development lifecycle, directly applying the project's documented standards to its own operation. 
+This protocol transforms the WRE from a simple orchestrator into an active, autonomous participant in the development lifecycle, directly applying the project's documented standards to its own operation.
+
+Status Note: This WSP is not yet canonical. Before referencing in other WSPs, validate via `WSP_MASTER_INDEX.md` per WSP 64. Language standards remain governed by WSP 20.

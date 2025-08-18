@@ -47,7 +47,7 @@ class WSPSystemIntegration:
     def __init__(self):
         self.timestamp_files = [
             "WSP_framework/WSP_19_Canonical_Symbols.md",
-            "WSP_framework/WSP_18_Partifact_Auditing_Protocol.md", 
+            # WSP_18 removed - slot available 
             "docs/audit_reports/clean_v5_audit_report.md",
             "docs/Papers/Empirical_Evidence/README.md"
         ]

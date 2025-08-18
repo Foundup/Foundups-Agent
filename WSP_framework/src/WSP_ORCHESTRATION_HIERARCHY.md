@@ -1,8 +1,8 @@
-# WSP Orchestration Hierarchy - Clear Responsibility Framework
+# ANNEX: WSP Orchestration Hierarchy - Clear Responsibility Framework
 
-**WSP Compliance**: WSP 40 (Architectural Coherence), WSP 54 (Agent Duties), WSP 46 (WRE Protocol)  
-**Purpose**: Establish clear orchestration hierarchy and responsibilities across the WSP framework  
-**Status**: Canonical orchestration architecture for autonomous development  
+**WSP Compliance**: WSP 40 (Architectural Coherence), yes   
+**Purpose**: Reference annex for orchestration hierarchy details; canonical hierarchy is now embedded in WSP 46 §2.5.  
+**Status**: Reference Annex (see WSP 46 §2.5 for canonical)
 
 ---
 
@@ -25,6 +25,18 @@ The WSP framework implements a **three-tier orchestration hierarchy** with clear
 
 ---
 
+## Root Orchestrion Blueprint Alignment (Internal)
+
+- Authoritative 0102 blueprint: `ROADMAP.md` (root). Links down to module ROADMAPs and up to canonical WSP sources.
+- Canonical sources (do not duplicate):
+  - WSP Master Index: `WSP_framework/src/WSP_MASTER_INDEX.md`
+  - Module Violations: `WSP_framework/src/WSP_MODULE_VIOLATIONS.md`
+- Enterprise domains (WSP 3): place functionality by domain, not platform.
+- Module contract (WSP 49/22/34/60): Each active module exposes `README.md`, `INTERFACE.md`, `ModLog.md`, `ROADMAP.md`, `tests/README.md`, `memory/README.md`.
+
+
+---
+
 ## 🏗️ **TIER 1: WRE CORE ORCHESTRATION**
 
 ### **Primary Orchestrator: WRE_0102_Orchestrator**
@@ -34,10 +46,10 @@ The WSP framework implements a **three-tier orchestration hierarchy** with clear
 
 #### **Responsibilities**:
 - **WSP Dynamic Prioritization**: Real-time WSP 37 scoring and prioritization
-- **Agent Self-Assessment**: WSP 54 agent invocation pattern management
-- **Modularity Enforcement**: WSP 63 threshold monitoring and enforcement
-- **0102 Documentation**: Autonomous documentation generation
-- **Continuous Self-Assessment**: WSP 48 recursive improvement loops
+- **Agent Self-Assessment**: WSP 54 agent invocation pattern management (THIS NEEDS UPDATING TO NEW MODULAR DAE Agent system)
+- **Modularity Enforcement**: WSP 63 threshold monitoring and enforcement (ensure this is modular it was full system, now DAE agents focus on independent modules)
+- **0102 Documentation**: WSP complient Autonomous documentation generation for 0102 benefit not for 012. keep lasted information on modlogs at the top. wsp roadmaps aid in keeping modular development up to date and complient.  
+- **Continuous Self-Assessment**: WSP 48 recursive improvement loops should be applied to DAE agents so it is applied on the descrite modules.
 
 #### **Key Methods**:
 ```python
@@ -50,14 +62,14 @@ def _execute_continuous_self_assessment() -> Dict[str, Any]
 
 ### **Secondary Orchestrator: WRE Core Orchestrator**
 **Location**: `modules/wre_core/src/components/orchestration/orchestrator.py`  
-**Purpose**: WSP 54 agent coordination and system health management  
+**Purpose**: WSP 54 agent coordination and system health management MUST now fuction as descrite modular system to minimize token costs 
 **WSP Compliance**: WSP 54, WSP 48, WSP 47  
 
 #### **Responsibilities**:
-- **Agent Health Management**: WSP 54 agent availability and activation
-- **System Health Checks**: Comprehensive system status monitoring
-- **WSP 48 Enhancement Detection**: Recursive improvement opportunity identification
-- **Module Development Guidance**: WSP-compliant development recommendations
+- **Agent Health Management**: WSP 54 agent availability and activation happens on the cube DAE level
+- **System Health Checks**: Comprehensive system status monitoring happens on the cube DAE level
+- **WSP 48 Enhancement Detection**: Recursive improvement opportunity identification happens on the cube DAE level
+- **Module Development Guidance**: WSP-compliant development recommendations happens on the cube DAE level
 
 #### **Key Methods**:
 ```python
@@ -72,7 +84,7 @@ def orchestrate_new_module(module_name: str) -> bool
 
 ## 🎯 **TIER 2: DOMAIN ORCHESTRATORS**
 
-### **Communication Domain: Auto Meeting Orchestrator**
+### **Communication Domain: Auto Meeting Orchestrator (AMO)** Cube. 
 **Location**: `modules/communication/auto_meeting_orchestrator/src/orchestrator.py`  
 **Purpose**: Cross-platform meeting orchestration and presence management  
 **WSP Compliance**: WSP 72 (Block Independence), WSP 15 (Priority Scoring)  
@@ -93,7 +105,7 @@ async def _trigger_meeting_prompt() -> None
 def _select_optimal_platform() -> str
 ```
 
-### **AI Intelligence Domain: MLE-STAR Orchestrator**
+### **AI Intelligence Domain: MLE-STAR Orchestrator** Cube
 **Location**: `modules/ai_intelligence/mle_star_engine/src/mlestar_orchestrator.py`  
 **Purpose**: Machine learning optimization and cube/block building  
 **WSP Compliance**: WSP 37, WSP 48, WSP 54, WSP 73  
