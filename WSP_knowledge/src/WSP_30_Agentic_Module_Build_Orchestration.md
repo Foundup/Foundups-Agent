@@ -48,6 +48,13 @@ This protocol defines the intelligent orchestration process where 0102 analyzes 
    - Identify LLME progression paths (000 → 111 → 122 → 222)
    - Map proof of concept → prototype → MVP pathways
 
+6. **Token-Based Resource Analysis** (Enhanced Claude Code Integration)
+   - **Token Budget Assessment**: Analyze available token resources for development work
+   - **Task Complexity Estimation**: Calculate token costs for each module/feature
+   - **Sprint Feasibility Analysis**: Determine if work fits within token constraints
+   - **Resource Optimization**: Maximize development efficiency per token invested
+   - **MVP Token Threshold**: Identify minimum token investment for monetization readiness
+
 ### Phase 2: Build Strategy Orchestration (0102 Planning)
 **Process:**
 1. **Enterprise Domain Classification** (References WSP_3: Enterprise Domain Organization)
@@ -98,6 +105,13 @@ This protocol defines the intelligent orchestration process where 0102 analyzes 
    - Automated violation detection and logging
    - Self-correcting development protocols
 
+4. **Token-Aware Sprint Planning** (Enhanced Resource Management)
+   - **Sprint Feasibility**: "Can this work be completed within available tokens?"
+   - **Task Decomposition**: Break large tasks into token-appropriate chunks
+   - **Resource Allocation**: Prioritize work by token efficiency and ROI
+   - **MVP Focus**: Direct token investment toward monetization-ready features
+   - **Quality Gates**: Reserve tokens for testing, validation, and documentation
+
 ## 3. Integration Points
 
 ### WSP Protocol References:
@@ -108,7 +122,7 @@ This protocol defines the intelligent orchestration process where 0102 analyzes 
 - **WSP_6**: Comprehensive test audit protocols
 - **WSP_9**: LLME scoring and stage progression
 - **WSP_22**: ModLog management during builds
-- **WSP_35**: Module execution automation
+- **WSP_35**: [Removed – no canonical WSP 35 in framework; see WSP 20 for language standard and WSP 35 references should be validated via Master Index]
 - **WSP_37**: Scoring system for roadmap generation
 - **WSP_46**: WRE orchestration protocols
 - **WSP_47**: Module violation tracking
@@ -118,12 +132,13 @@ This protocol defines the intelligent orchestration process where 0102 analyzes 
 - **WSP_57**: System-wide naming coherence
 
 ### Agent Coordination (WSP_54):
-- **ModuleScaffoldingAgent**: Creates initial module structures
-- **ComplianceAgent**: Ensures WSP adherence throughout build
-- **TestingAgent**: Manages test strategy and coverage
-- **ScoringAgent**: Calculates and updates MPS/LLME scores
-- **ChroniclerAgent**: Documents build progress in ModLogs
-- **DocumentationAgent**: Maintains README and interface docs
+- **ModuleScaffoldingAgent**: Creates initial module structures with token-aware templates
+- **ComplianceAgent**: Ensures WSP adherence throughout build with token budget validation
+- **TestingAgent**: Manages test strategy and coverage within token constraints
+- **ScoringAgent**: Calculates MPS/LLME scores including token efficiency metrics
+- **ChroniclerAgent**: Documents build progress with token usage tracking
+- **DocumentationAgent**: Maintains README and interface docs with token-optimized content
+- **TokenPlanningAgent**: Validates sprint feasibility and manages resource allocation
 
 ## 4. Execution Flow
 

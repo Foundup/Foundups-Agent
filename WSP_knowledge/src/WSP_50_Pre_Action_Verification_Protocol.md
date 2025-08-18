@@ -87,7 +87,156 @@ Agents MUST verify file existence, paths, and content before taking actions or m
 - Acknowledge documented achievements accurately
 - Correct assessments when evidence contradicts initial assumptions
 
+## 4.2. **CUBE MODULE DOCUMENTATION VERIFICATION** (Critical Addition)
+
+### **Mandatory Pre-Cube-Coding Protocol**
+
+**BEFORE executing ANY coding on a cube (since cubes are made up of modules):**
+
+**REQUIRED MODULE DOCUMENTATION READING SEQUENCE:**
+
+1. **Identify Cube Composition**: Determine which modules make up the target cube
+2. **Read ALL Module Documentation**: For each module in the cube:
+   ```
+   read_file("modules/<domain>/<module>/README.md")
+   read_file("modules/<domain>/<module>/ROADMAP.md") 
+   read_file("modules/<domain>/<module>/ModLog.md")
+   read_file("modules/<domain>/<module>/INTERFACE.md")
+   read_file("modules/<domain>/<module>/tests/README.md")
+   ```
+3. **Understand Module Architecture**: Comprehend existing implementations, APIs, and integration patterns
+4. **Assess Development Phase**: Determine current PoC/Proto/MVP status of each module
+5. **Identify Integration Points**: Understand how modules connect within the cube
+6. **Plan Enhancement Strategy**: Determine whether to enhance existing modules or create new ones
+
+### **Cube Documentation Reading Checklist**
+
+**For each module in the target cube:**
+- [ ] **README.md**: Module purpose, dependencies, usage examples
+- [ ] **ROADMAP.md**: Development phases, planned features, success criteria  
+- [ ] **ModLog.md**: Recent changes, implementation history, WSP compliance status
+- [ ] **INTERFACE.md**: Public API definitions, integration patterns, error handling
+- [ ] **tests/README.md**: Test strategy, coverage status, testing requirements
+
+### **Rubik's Cube Framework Compliance**
+
+**This protocol ensures:**
+- **Module Awareness**: Understanding of all modules that compose the cube
+- **Architecture Preservation**: Respecting existing module designs and APIs
+- **Integration Understanding**: Knowing how modules connect and communicate
+- **Development Continuity**: Building on existing progress rather than duplicating work
+- **WSP Compliance**: Following established documentation and testing patterns
+
+### **Violation Prevention**
+
+**❌ VIOLATION EXAMPLES:**
+- Coding on a cube without reading module documentation
+- Creating duplicate functionality without checking existing implementations
+- Ignoring established APIs and integration patterns
+- Making assumptions about module capabilities without verification
+
+**✅ CORRECT EXAMPLES:**
+- "Read all 5 module docs in AMO cube before implementing new feature"
+- "Verified existing APIs in YouTube cube before enhancement"
+- "Checked module integration patterns before cube modification"
+- "Assessed development phase of all modules before cube-level changes"
+
+### **Integration with WSP 72**
+
+**This protocol works with WSP 72 (Block Independence Interactive Protocol):**
+- **Cube Assessment**: Use WSP 72 to identify all modules in a cube
+- **Documentation Browser**: Leverage WSP 72 interactive documentation access
+- **Module Status**: Check WSP 72 module status before reading documentation
+- **Integration Testing**: Use WSP 72 to verify cube composition understanding
+
+## 4.3. **BLOAT PREVENTION VERIFICATION** (Critical Addition)
+
+### **Mandatory Pre-File-Creation Protocol**
+
+**BEFORE creating ANY new files (especially test files, modules, or components):**
+
+**REQUIRED BLOAT PREVENTION SEQUENCE:**
+
+1. **Read Existing Documentation FIRST**:
+   ```
+   read_file("modules/<domain>/<module>/tests/TestModLog.md")
+   read_file("modules/<domain>/<module>/tests/README.md")
+   list_dir("modules/<domain>/<module>/tests/")
+   ```
+
+2. **Search for Existing Functionality**:
+   ```
+   codebase_search("similar functionality or purpose")
+   file_search("potential duplicate files")
+   grep_search("existing implementations")
+   ```
+
+3. **Validate Necessity**:
+   - Is this functionality already tested/implemented?
+   - Can this be added to an existing module?
+   - Does this follow single responsibility principle (WSP 40)?
+
+4. **Check WSP Compliance**:
+   - Does this maintain WSP 40 (architectural coherence)?
+   - Does this follow WSP 5 (testing standards)?
+   - Will this be documented per WSP 22 and WSP 34?
+
+5. **Run Bloat Prevention Validator** (if available):
+   ```
+   python wsp_test_validator.py  # For test files
+   python wsp_module_validator.py  # For modules
+   ```
+
+### **Bloat Prevention Checklist**
+
+**Before creating any new file:**
+- [ ] **TestModLog.md read** - Understand recent test evolution
+- [ ] **README.md read** - Understand current structure and purpose
+- [ ] **Directory listed** - Verify existing files and their functions
+- [ ] **Functionality searched** - Ensure no duplicates exist
+- [ ] **Necessity validated** - Confirm single responsibility principle
+- [ ] **WSP compliance checked** - Verify architectural coherence
+- [ ] **Validator run** - Execute automated bloat detection
+
+### **Bloat Prevention Rules**
+
+**🚨 CRITICAL VIOLATION PREVENTION:**
+- **NEVER create duplicate files** without explicit WSP violation justification
+- **ALWAYS consolidate** similar functionality into existing modules
+- **FOLLOW single responsibility** principle per WSP 40
+- **UPDATE documentation** immediately after any file changes
+- **RUN validators** before committing new files
+
+### **Violation Recovery Protocol**
+
+**If bloat is detected:**
+1. **STOP** all development immediately
+2. **ASSESS** the violation scope and impact
+3. **CONSOLIDATE** redundant functionality
+4. **DELETE** unnecessary duplicate files
+5. **UPDATE** documentation with lessons learned
+6. **PREVENT** future violations with better pre-checks
+
+### **Integration with WSP 47**
+
+**This protocol works with WSP 47 (Framework Protection Protocol):**
+- **Violation Detection**: WSP 47 identifies architectural violations
+- **Protection Enforcement**: WSP 47 prevents framework degradation
+- **Recovery Coordination**: WSP 47 guides violation remediation
+- **Prevention Learning**: WSP 47 captures lessons for future prevention
+
 ## 5. Integration
+
+## 4.4. **Destructive Change Verification (WSP 79)**
+
+When an action proposes deletion, consolidation, or major refactoring that can remove or alter module functionality, a WSP 79 SWOT analysis is REQUIRED as part of pre‑action verification:
+
+- [ ] WSP 79 SWOT completed for all impacted modules
+- [ ] Comparative feature matrix attached
+- [ ] Functionality preservation checklist satisfied (no loss)
+- [ ] Migration/rollback plans documented
+
+Proceed only when all checks are satisfied and artifacts are linked in the ModLog (WSP 22).
 
 - **WSP 54 (ComplianceAgent)**: Monitor for WSP 50 violations
 - **WSP 48 (WRE)**: Incorporate verification in enhancement cycles

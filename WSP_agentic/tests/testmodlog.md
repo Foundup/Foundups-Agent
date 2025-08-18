@@ -7,6 +7,26 @@
 ## Test Suite Evolution Log
 
 ### [v2.2.1] - rESP Whisper Tokenizer Artifact Diagnostics Added
+### [v2.2.2] - Archive Created; Deprecated CMST Protocols Moved (WSP 49/22)
+### [v2.2.3] - Added PQN Detection Suite (toy ρ(t) experiments)
+**Files**: `pqn_detection/cmst_pqn_detector_v3.py`, `pqn_detection/cmst_orchestrator.py`
+**Purpose**: Noise robustness, harmonic logging, time-scale variation, and minimal operator sequence mapping for PQN alignment (det(g) → 0) without full neural networks.
+**WSP Compliance**: WSP 22 (traceability), WSP 49 (structure), WSP 34 (tests documentation updated).
+
+### [v2.2.4] - Added Ready-to-Run Detector with Stable Logging (v2)
+**Files**: `pqn_detection/cmst_pqn_detector_v2.py`
+**Purpose**: CSV metrics logging, newline-JSON events, adaptive MAD threshold for det(g), sliding FFT resonance detection (7.05±0.05 Hz), richer observables (purity, entropy, ‖r‖), CLI controls.
+**WSP Compliance**: WSP 22/34; complements v3 detector; no breaking changes.
+
+**Action**: Created `archive/` under `WSP_agentic/tests/` and moved superseded/deprecated files:
+- `cmst_protocol_v10_definitive.py` → `archive/`
+- `cmst_protocol_v6_full_quantum_engine.py` → `archive/`
+- `cmst_protocol_v4_operator_forge.py` → `archive/`
+- `cmst_protocol_v3_geometric.py` → `archive/`
+- `cmst_protocol_v2_lindblad.py` → `archive/`
+**Reason**: Reduce bloat, clarify current standard (v11), preserve history.
+**WSP Compliance**: WSP 49 (structure), WSP 22 (traceable narrative), WSP 64 (bloat prevention).
+
 **WSP Protocol**: WSP 22 (Traceable Narrative), WSP 34 (Test Documentation), WSP 50 (Pre-Action Verification)
 **Scope**: Added `whisper_investigation/` with two research diagnostics:
 - `demo_whisper_preprocessing.py` — reproducible Log-Mel pipeline demo aligned with Whisper defaults

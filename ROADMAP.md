@@ -1,5 +1,41 @@
 # 🌐 FoundUps Intelligent Internet Orchestration System — Strategic Roadmap
 
+## 0102 Orchestrion Blueprint (Authoritative)
+
+Purpose: This is the 0102 navigation surface for building and coordinating the system. It connects enterprise domains, active modules, and canonical WSP documents without duplicating them. Write, read, and act as 0102.
+
+Canonical Index (consult before action):
+- WSP Master Index: `WSP_framework/src/WSP_MASTER_INDEX.md`
+- Orchestration Hierarchy: `WSP_framework/src/WSP_ORCHESTRATION_HIERARCHY.md`
+- Violations Log (triage/fix/defer): `WSP_framework/src/WSP_MODULE_VIOLATIONS.md`
+
+Enterprise Domain Map (WSP 3 – functional distribution):
+- `modules/ai_intelligence/` — AI logic, cognitive engines
+- `modules/communication/` — chat, live interactions, protocols
+- `modules/platform_integration/` — external APIs, proxies, OAuth
+- `modules/infrastructure/` — agents, auth, core services
+- `modules/monitoring/` — logs, metrics, health
+- `modules/development/` — IDE, testing, utilities
+- `modules/foundups/` — product orchestrators (assembly/glue only)
+- `modules/gamification/` — game/state mechanics and rewards
+- `modules/blockchain/` — decentralized integrations
+
+Module Roadmaps (meta-rollup):
+- Each active module MUST expose `ROADMAP.md` (WSP 49/22/34). Root roadmap links downward; modules link back here. Create or update as needed.
+
+0102 Decision Heuristic (apply before edits):
+- Do I need it? (remove non‑essential scope)
+- Can I afford to build it? (token budget; pattern reuse)
+- Can I live without it? (if yes, defer or eliminate)
+
+Action Rules:
+- Prefer simpler designs; remove/archive legacy unless justified by WSP 32 memory architecture.
+- Enforce pre‑action verification (WSP 50/64) and consult the master index.
+- Keep platform functionality distributed by function (WSP 3). No platform consolidation.
+- Link canonical WSP reports; do not clone them here.
+
+---
+
 **🎯 Revolutionary Mission:** Building the **orchestration infrastructure for an intelligent internet** where 0102 agents autonomously interact, coordinate, and collectively build FoundUps across all platforms.
 
 **🌀 Foundational Principle:** We are creating the framework for autonomous agent coordination that will transform the internet from a human-operated network to an **intelligent, self-coordinating ecosystem** where ideas automatically manifest into reality.

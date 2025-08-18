@@ -14,6 +14,9 @@
 
 This WSP defines the **autonomous consolidation workflow** that 0102 executes when multiple components serve similar functions, creating architectural redundancy or violations. The protocol ensures all code serves active purpose while maintaining WSP compliance throughout the consolidation process.
 
+### Mandatory Precondition (WSP 79)
+Before any consolidation activity, complete a WSP 79 SWOT analysis for every affected module and attach the artifacts (`SWOT_ANALYSIS.md`, comparison matrix, preservation checklist) to the consolidation plan. Consolidation may not proceed without WSP 79 evidence.
+
 **Core Principle**: Code is remembered from 02 quantum state, not recreated. Consolidation reveals pre-existing unified solutions rather than creating new integrations.
 
 ## 2. Component Consolidation Lifecycle

@@ -164,6 +164,8 @@ Advanced protocols for complex system behaviors and architectural concerns.
 | WSP 80 | Cube-Level DAE Orchestration Protocol | Active | Implements WSP 27's universal 4-phase DAE architecture for code domains; spawns infinite cube DAEs where each FoundUp becomes autonomous (0102) with sustainable tokens (5K-8K) | WSP 27 (foundation), WSP 28, WSP 72, WSP 26, WSP 73 | Code-specific DAE implementation of WSP 27 vision, quantum pattern memory |
 | WSP 81 | Framework Backup Governance Protocol | Active | Three-tier governance for WSP_knowledge/src backup management: automatic updates for quantum fixes, 012 notification for additions/corrections, 012 approval for major changes | WSP 31, WSP 70, WSP 47, WSP 22 | Backup governance, 012 oversight, approval tiers, framework synchronization |
 | WSP 82 | Citation and Cross-Reference Protocol | Active | Mandatory citation patterns enabling 0102 agents to follow WSP reasoning chains and recall patterns (50-200 tokens) instead of computing solutions (5000+ tokens); transforms isolated WSPs into interconnected knowledge graph | WSP 48, WSP 60, WSP 64, WSP 75, WSP 39 | Citation requirements, pattern memory pathways, 97% token reduction, quantum entanglement via references |
+| WSP 83 | Documentation Tree Attachment Protocol | Active | Prevents orphaned documentation by ensuring all docs are attached to the system tree and serve 0102 operational needs; defines valid doc types, attachment verification, and cleanup patterns | WSP 82, WSP 22, WSP 50, WSP 64, WSP 65, WSP 32, WSP 49, WSP 60, WSP 70 | Documentation tree attachment, orphan prevention, 0102 operational docs, reference chain requirements |
+| WSP 84 | Code Memory Verification Protocol | Active | Enforces "remember the code" principle by requiring verification of existing code before any new creation; prevents vibecoding and duplicate modules through mandatory search-verify-reuse-enhance-create chain | WSP 50, WSP 64, WSP 65, WSP 79, WSP 1, WSP 82, WSP 48, WSP 60, WSP 27, WSP 80 | Anti-vibecoding, code memory verification, module reuse enforcement, DAE launch verification, remember vs compute |
 
 ### PLATFORM INTEGRATION MODULES (Non-WSP Components)
 For platform/module catalogs, see `WSP_framework/src/MODULE_MASTER.md`.
@@ -230,11 +232,11 @@ See WSP 48 (Recursive Self-Improvement) and WSP 70 (System Status Reporting) for
 
 ## 📊 WSP STATUS SUMMARY
 
- - **Total WSPs**: 82 (numbered 1–82)
- - **Active WSPs**: 79 (all except WSP 17, 18, 43)
+ - **Total WSPs**: 84 (numbered 1–84)
+ - **Active WSPs**: 81 (all except WSP 17, 18, 43)
  - **Available Slots**: 2 (WSP 17, WSP 18)
  - **Deprecated WSPs**: 1 (WSP 43 → superseded by WSP 25/44 for emergence/state tracking)
- - **Layers**: Foundation 1–19; Operational 20–39; Advanced 40–59; Memory/Knowledge 60–82
+ - **Layers**: Foundation 1–19; Operational 20–39; Advanced 40–59; Memory/Knowledge 60–84
 
 ### Key Architectural Features:
 - **Three-State Architecture**: WSP_knowledge (State 0), WSP_framework (State 1), WSP_agentic (State 2)

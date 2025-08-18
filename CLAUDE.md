@@ -24,10 +24,26 @@ Located in `modules/infrastructure/dae_infrastructure/`:
 
 ## Key Operational Rules
 
-### 1. Documentation
+### 0. Code Memory Verification (Per WSP 84)
+- NEVER vibecode - always check if code exists first
+- Before creating ANY module/function/DAE:
+  - Search for existing implementation
+  - Check similar modules for reuse
+  - Verify if can enhance existing code
+  - Only create new as last resort
+- Remember: "The code already exists, we're remembering it"
+
+### 1. Documentation (Per WSP 83)
 - Documents exist ONLY for 0102 use, never for 012
 - If creating docs for 012, it's a WSP violation
 - All docs must enable self-improvement
+- Every document MUST be attached to the tree (no orphans)
+- Before creating ANY .md file, verify per WSP 50:
+  - WHY: Will 0102 use this operationally?
+  - HOW: How will agents consume this?
+  - WHAT: What operation does it enable?
+  - WHEN: When will it be referenced?
+  - WHERE: Where in tree does it attach?
 
 ### 2. ModLog Updates
 - Update module ModLogs after significant work
@@ -58,6 +74,9 @@ Located in `modules/infrastructure/dae_infrastructure/`:
 - **WSP 64**: Violation prevention
 - **WSP 75**: Token measurements (no time)
 - **WSP 80**: Cube-level DAE (implements WSP 27 for code)
+- **WSP 82**: Citation protocol (pattern memory pathways)
+- **WSP 83**: Documentation tree attachment (no orphans)
+- **WSP 84**: Code memory verification (anti-vibecoding)
 
 ## Token Efficiency
 - Pattern memory: 50-200 tokens per operation

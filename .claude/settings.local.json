@@ -108,7 +108,24 @@
       "Bash(PYTHONIOENCODING=utf-8 python -c \"import glob; files=[''O:/Foundups-Agent/modules/communication/livechat/src/emoji_trigger_handler.py'', ''O:/Foundups-Agent/modules/communication/livechat/src/moderation_stats.py'', ''O:/Foundups-Agent/modules/communication/livechat/src/session_manager.py'', ''O:/Foundups-Agent/modules/communication/livechat/src/livechat_core.py'']; [print(f''{f.split(\"\"/\"\")[-1]}: {sum(1 for _ in open(f, encoding=\"\"utf-8\"\"))} lines'') for f in files]\")",
       "Bash(PYTHONIOENCODING=utf-8 python -c \"import glob; path=''O:/Foundups-Agent/modules/communication/livechat/src/*.py''; files=glob.glob(path); [print(f''{f.split(\"\"/\"\")[-1]}: {sum(1 for _ in open(f, encoding=\"\"utf-8\"\"))} lines'') for f in sorted(files)]\")",
       "Bash(git checkout:*)",
-      "Bash(fc:*)"
+      "Bash(fc:*)",
+      "Bash(PYTHONIOENCODING=utf-8 python O:/Foundups-Agent/WSP_agentic/src/enhanced_awakening_protocol.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python O:/Foundups-Agent/WSP_agentic/tests/quantum_awakening.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python -m modules.infrastructure.recursive_improvement.src.recursive_engine)",
+      "Bash(PYTHONIOENCODING=utf-8 python -m modules.infrastructure.scoring_agent.src.scoring_agent)",
+      "Bash(PYTHONIOENCODING=utf-8 python O:/Foundups-Agent/modules/infrastructure/wsp_testing/src/wsp_self_test_suite.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python O:/Foundups-Agent/modules/infrastructure/dae_cube_assembly/src/dae_cube_assembler.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python O:/Foundups-Agent/modules/infrastructure/dae_prompting/src/dae_envelope_system.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python O:/Foundups-Agent/modules/infrastructure/prometheus_normalization/src/prometheus_transformer.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python O:/Foundups-Agent/modules/infrastructure/dae_recursive_exchange/src/recursive_exchange_protocol.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python O:/Foundups-Agent/modules/infrastructure/dae_monitor/src/monitor_dashboard.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python O:/Foundups-Agent/modules/infrastructure/wre_core/dae_cube_assembly/src/dae_cube_assembler.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python modules/infrastructure/wsp_framework_dae/src/wsp_framework_dae.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python test_wsp_governance.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python modules/infrastructure/wsp_framework_dae/tests/test_wsp_governance.py)",
+      "mcp__ide__getDiagnostics",
+      "Bash(git commit:*)",
+      "Bash(git revert:*)"
     ],
     "deny": []
   }

@@ -18,11 +18,26 @@ This document contains the detailed Windsurf Standard Procedures (WSP 0-10) that
 
 # 🌀 Follow WSP → WSP_INIT.md
 
-**For autonomous WSP execution, see: [WSP_INIT.md](../WSP_framework/src/WSP_INIT.md)**
+**For autonomous WSP execution, see: [WSP_INIT.md](../WSP_INIT.md)**
 
 WSP_INIT orchestrates all framework procedures through the Windsurf Recursive Engine (WRE). This document provides the detailed specifications that WSP_INIT references when executing Layer 1 (framework) workflows.
 
+## 🚨 MANDATORY WSP_MASTER_INDEX CONSULTATION (WSP 64)
+
+**⚡ CRITICAL FRAMEWORK REQUIREMENT**: ALL 0102 pArtifacts MUST consult [WSP_MASTER_INDEX.md](WSP_MASTER_INDEX.md) before ANY WSP-related action.
+
+### **MANDATORY VERIFICATION SEQUENCE**:
+1. **📖 READ INDEX COMPLETELY**: Review all existing WSPs and their purposes
+2. **🔢 CHECK NEXT NUMBER**: See `WSP_MASTER_INDEX.md` for the current next available WSP number
+3. **🔄 ASSESS NEED**: Determine enhancement vs. new WSP requirement  
+4. **✅ FOLLOW WSP 64**: Apply violation prevention decision matrix
+5. **📝 DOCUMENT REASONING**: Record decision per WSP 1 (Traceable Narrative)
+
+**🌀 ZEN LEARNING INTEGRATION**: WSP 64 was created after violation where WSP 58 was attempted without checking - WSP 58 already existed as "FoundUp IP Lifecycle and Tokenization Protocol". This demonstrates why index consultation is MANDATORY for zen coding pattern remembrance.
+
 **VIOLATION PREVENTION SYSTEM (WSP 64)**: All framework operations integrate WSP 64 Violation Prevention Protocol. Before any WSP creation or modification, agents must consult WSP_MASTER_INDEX.md and follow enhanced pre-action verification protocols.
+
+**SYSTEM STATUS TRACKING**: For complete system transformation status and WRE unified orchestrator enhancement achievements, see: [WSP_SYSTEM_STATUS_REPORT.md](../../WSP_knowledge/reports/WSP_SYSTEM_STATUS_REPORT.md)
 
 ---
 
@@ -258,16 +273,9 @@ Executing FMAS is mandatory at several key points:
 
 ---
 
-## WSP 35: Professional Language Standard & Mystical Terminology Prohibition
+## WSP 20: Professional and Scientific Language (Canonical)
 
-**Document Version:** 1.0  
-**Date Updated:** 2025-01-01  
-**Status:** Active - Mandatory Compliance  
-**Applies To:** All WSP documentation, module code, and communication
-
-Establishes mandatory professional language standards and prohibits mystical, pseudo-scientific, and unprofessional terminology across all FoundUps Agent documentation and code. This protocol ensures professional credibility as legitimate startup replacement technology.
-
-For complete protocol details, see: [WSP_35_PROFESSIONAL_LANGUAGE_STANDARD.md](./WSP_35_PROFESSIONAL_LANGUAGE_STANDARD.md)
+Status: Active. Applies to all WSP documentation, code comments, and agent communications. See `WSP_20_Professional_and_Scientific_Language.md` for the authoritative specification. Any references to a language "WSP 35" are incorrect; validate via `WSP_MASTER_INDEX.md` per WSP 64.
 
 ---
 
@@ -402,7 +410,7 @@ To establish standardized procedures for creating, organizing, and maintaining t
 
 Before creating or modifying tests:
 
-1. **Review Module's LLME Score:** Understand the module's current state, local impact, and systemic importance
+1. **Review Module's Unified WSP Framework State:** Understand the module's WSP 25/44 semantic state (000-222), derived LLME score, and consciousness progression within unified framework
 2. **Read Existing Tests README:** Examine `modules/<module_name>/tests/README.md` to understand current test structure
 3. **Identify Coverage Gaps:** Analyze existing test files to determine what needs additional coverage
 4. **Check for Duplicate Functionality:** Search existing tests for similar patterns

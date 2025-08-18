@@ -58,22 +58,27 @@
 ## Modular ModLog Architecture
 
 **System Structure:**
-- **Main ModLog** (`docs/ModLog.md`): System-wide changes and module references
+- **Root ModLog** (`/ModLog.md`): System-wide changes ONLY - updated when pushing to git
 - **Module ModLogs** (`modules/[module]/ModLog.md`): Module-specific detailed changes
+- **Test ModLogs** (`modules/[module]/tests/TestModLog.md`): Test-specific changes and results
+- **Cube ModLogs** (Per WSP 80): Each cube DAE maintains its own ModLog for cube-level operations
 - **Purpose**: Prevent main ModLog bloat while maintaining detailed module histories
 
-**Journal Format Requirements:**
+**Journal Format Requirements (CRITICAL):**
 - **Reverse Chronological Order**: Newest entries at top, oldest at bottom
-- **Latest First**: Most recent progress immediately visible
+- **Latest First**: Most recent progress immediately visible  
 - **Historical Flow**: Older entries flow downward naturally
 - **Quick Reference**: Current status and latest achievements at top of file
+- **Rationale**: When ModLog becomes large (1000+ lines), newest work is immediately visible without scrolling
 
 **Guidelines:**
-1. **System-wide changes** (architecture, WSP protocols, multi-module impacts) → Main ModLog
-2. **Module-specific changes** (features, fixes, tests within a module) → Module ModLog  
-3. **Main ModLog references** module logs for detailed information
-4. **Module versioning** follows semantic versioning within module scope
-5. **Journal Structure**: All ModLogs follow reverse chronological order (newest first)
+1. **System-wide changes** (architecture, WSP protocols, multi-module impacts) → Root ModLog (on git push)
+2. **Module-specific changes** (features, fixes within a module) → Module ModLog  
+3. **Test changes** (new tests, test fixes, coverage improvements) → Test ModLog
+4. **Cube operations** (Per WSP 80 cube DAE activities) → Cube ModLog
+5. **Root ModLog references** module logs for detailed information, never duplicates content
+6. **Module versioning** follows semantic versioning within module scope
+7. **Journal Structure**: ALL ModLogs follow reverse chronological order (newest first)
 
 ## 🛡️ WSP Versioning Enforcement Protocol
 
@@ -229,7 +234,6 @@ This log tracks module changes, updates, and versioning for FoundUps Agent under
 ====================================================================
 ## MODLOG - [+UPDATES]:
 - Version: [X.Y.Z]
-- Date: [YYYY-MM-DD]
 - Git Tag: [Associated tag, e.g., vX.Y.Z or clean-vX]
 - Description: [Brief description of changes in this version/log entry]
 - Notes: [Additional context or considerations]
@@ -241,6 +245,11 @@ This log tracks module changes, updates, and versioning for FoundUps Agent under
   - ...
 ====================================================================
 ```
+
+### No Temporal Markers (WSP 22 Policy)
+- Do not use dates or times in ModLogs or documentation.
+- Use reverse chronological order (newest at top) and WSP references for context.
+- When needed, cite session context or sequence without temporal units.
 
 ## Version Guide Template
 

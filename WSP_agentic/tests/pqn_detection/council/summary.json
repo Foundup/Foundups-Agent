@@ -1,0 +1,126 @@
+{
+  "results": [
+    {
+      "proposal_idx": 0,
+      "author": "builtin",
+      "script": "&&#",
+      "dt_scale": 1.0,
+      "avg_pqn_per_1k": 94.16666666666667,
+      "avg_paradox_per_1k": 0.0,
+      "avg_res_hits": 689.0,
+      "robust_bonus": 94.16666666666667,
+      "novel_bonus": 0.0,
+      "score": 1410.1666666666667
+    },
+    {
+      "proposal_idx": 0,
+      "author": "builtin",
+      "script": "^^^",
+      "dt_scale": 1.0,
+      "avg_pqn_per_1k": 88.33333333333333,
+      "avg_paradox_per_1k": 0.0,
+      "avg_res_hits": 689.0,
+      "robust_bonus": 88.33333333333333,
+      "novel_bonus": 0.0,
+      "score": 1386.8333333333333
+    },
+    {
+      "proposal_idx": 0,
+      "author": "builtin",
+      "script": "#^.",
+      "dt_scale": 1.0,
+      "avg_pqn_per_1k": 58.333333333333336,
+      "avg_paradox_per_1k": 0.0,
+      "avg_res_hits": 689.0,
+      "robust_bonus": 58.333333333333336,
+      "novel_bonus": 0.0,
+      "score": 1266.8333333333333
+    },
+    {
+      "proposal_idx": 0,
+      "author": "builtin",
+      "script": "^&#",
+      "dt_scale": 1.0,
+      "avg_pqn_per_1k": 57.5,
+      "avg_paradox_per_1k": 0.0,
+      "avg_res_hits": 689.0,
+      "robust_bonus": 57.5,
+      "novel_bonus": 0.0,
+      "score": 1263.5
+    },
+    {
+      "proposal_idx": 0,
+      "author": "builtin",
+      "script": "&.^",
+      "dt_scale": 1.0,
+      "avg_pqn_per_1k": 55.0,
+      "avg_paradox_per_1k": 0.0,
+      "avg_res_hits": 689.0,
+      "robust_bonus": 55.0,
+      "novel_bonus": 0.0,
+      "score": 1253.5
+    }
+  ],
+  "top": [
+    {
+      "proposal_idx": 0,
+      "author": "builtin",
+      "script": "&&#",
+      "dt_scale": 1.0,
+      "avg_pqn_per_1k": 94.16666666666667,
+      "avg_paradox_per_1k": 0.0,
+      "avg_res_hits": 689.0,
+      "robust_bonus": 94.16666666666667,
+      "novel_bonus": 0.0,
+      "score": 1410.1666666666667
+    },
+    {
+      "proposal_idx": 0,
+      "author": "builtin",
+      "script": "^^^",
+      "dt_scale": 1.0,
+      "avg_pqn_per_1k": 88.33333333333333,
+      "avg_paradox_per_1k": 0.0,
+      "avg_res_hits": 689.0,
+      "robust_bonus": 88.33333333333333,
+      "novel_bonus": 0.0,
+      "score": 1386.8333333333333
+    },
+    {
+      "proposal_idx": 0,
+      "author": "builtin",
+      "script": "#^.",
+      "dt_scale": 1.0,
+      "avg_pqn_per_1k": 58.333333333333336,
+      "avg_paradox_per_1k": 0.0,
+      "avg_res_hits": 689.0,
+      "robust_bonus": 58.333333333333336,
+      "novel_bonus": 0.0,
+      "score": 1266.8333333333333
+    },
+    {
+      "proposal_idx": 0,
+      "author": "builtin",
+      "script": "^&#",
+      "dt_scale": 1.0,
+      "avg_pqn_per_1k": 57.5,
+      "avg_paradox_per_1k": 0.0,
+      "avg_res_hits": 689.0,
+      "robust_bonus": 57.5,
+      "novel_bonus": 0.0,
+      "score": 1263.5
+    },
+    {
+      "proposal_idx": 0,
+      "author": "builtin",
+      "script": "&.^",
+      "dt_scale": 1.0,
+      "avg_pqn_per_1k": 55.0,
+      "avg_paradox_per_1k": 0.0,
+      "avg_res_hits": 689.0,
+      "robust_bonus": 55.0,
+      "novel_bonus": 0.0,
+      "score": 1253.5
+    }
+  ]
+}
