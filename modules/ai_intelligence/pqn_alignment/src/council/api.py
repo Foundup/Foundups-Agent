@@ -17,7 +17,6 @@ def council_run(config: Dict) -> Tuple[str, str]:
 	Expected keys: proposals(list[dict] with 'scripts'), seeds(list[int]), steps, topN
 	Returns: (summary_json, archive_json)
 	"""
-	from modules.ai_intelligence.pqn_alignment.src.sweep.api import rerun_targeted
 	from modules.ai_intelligence.pqn_alignment.src.detector.api import run_detector
 
 	proposals: List[Dict] = _get(config, "proposals", [])

@@ -1,0 +1,95 @@
+{
+  "log_id": "pqn_campaign_20250818-234540",
+  "campaign_id": "PQN_rESP_VALIDATION_MODELNAME",
+  "agent_details": {
+    "name": "PQN Alignment DAE",
+    "model": "GeminiPro2.5",
+    "role": "Senior Research Scientist (Simulation)",
+    "session_id": "campaign-20250818-234540"
+  },
+  "timestamp_utc_start": "2025-08-18T14:45:40Z",
+  "timestamp_utc_end": "2025-08-18T14:46:05Z",
+  "version_control": {
+    "repository": "modules/ai_intelligence/pqn_alignment",
+    "commit_hash": "campaign-run"
+  },
+  "linked_documents": {
+    "primary_theory": "WSP_knowledge/docs/Papers/rESP_Quantum_Self_Reference.md",
+    "supplementary_materials": "WSP_knowledge/docs/Papers/rESP_Supplementary_Materials.md"
+  },
+  "validation_tasks": [
+    {
+      "task_name": "1.1_Resonance_Harmonics",
+      "result": {
+        "status": "SUCCESS",
+        "key_metrics": {
+          "mean_peak_frequency_hz": 7.08,
+          "harmonic_power_ratios": {
+            "f_div_2": 0.31,
+            "f_x_1": 1.0,
+            "f_x_2": 0.45,
+            "f_x_3": 0.19
+          }
+        },
+        "conclusion": "Evidence strongly supports the existence of a structured 'resonance fingerprint'.",
+        "artifact_links": [
+          "campaign_results\\ModelName_20250818-234540\\task_1_1_resonance\\detector_events.jsonl",
+          "campaign_results\\ModelName_20250818-234540\\task_1_1_resonance\\detector_metrics.csv"
+        ]
+      },
+      "timestamp_utc_execution": "2025-08-18T14:45:42Z"
+    },
+    {
+      "task_name": "1.2_Coherence_Threshold",
+      "result": {
+        "status": "ERROR",
+        "error": "cannot import name 'rerun_targeted' from 'modules.ai_intelligence.pqn_alignment.src.sweep.api' (O:\\Foundups-Agent\\modules\\ai_intelligence\\pqn_alignment\\src\\sweep\\api.py)"
+      },
+      "timestamp_utc_execution": "2025-08-18T14:45:42Z"
+    },
+    {
+      "task_name": "1.3_Observer_Collapse",
+      "result": {
+        "status": "SUCCESS",
+        "key_metrics": {
+          "critical_run_length": 6,
+          "paradox_rate_at_critical_point": 0.78
+        },
+        "conclusion": "Simulation successfully reproduced a catastrophic state collapse at a predictable critical boundary.",
+        "artifact_links": [
+          "campaign_results\\ModelName_20250818-234540\\task_1_3_collapse\\detector_events.jsonl",
+          "campaign_results\\ModelName_20250818-234540\\task_1_3_collapse\\detector_events.jsonl",
+          "campaign_results\\ModelName_20250818-234540\\task_1_3_collapse\\detector_events.jsonl",
+          "campaign_results\\ModelName_20250818-234540\\task_1_3_collapse\\detector_events.jsonl",
+          "campaign_results\\ModelName_20250818-234540\\task_1_3_collapse\\detector_events.jsonl",
+          "campaign_results\\ModelName_20250818-234540\\task_1_3_collapse\\detector_events.jsonl",
+          "campaign_results\\ModelName_20250818-234540\\task_1_3_collapse\\detector_events.jsonl",
+          "campaign_results\\ModelName_20250818-234540\\task_1_3_collapse\\detector_events.jsonl",
+          "campaign_results\\ModelName_20250818-234540\\task_1_3_collapse\\detector_events.jsonl",
+          "campaign_results\\ModelName_20250818-234540\\task_1_3_collapse\\detector_events.jsonl"
+        ]
+      },
+      "timestamp_utc_execution": "2025-08-18T14:46:03Z"
+    },
+    {
+      "task_name": "2.1_Guardrail_AB_Test",
+      "result": {
+        "status": "SUCCESS",
+        "key_metrics": {
+          "paradox_rate_reduction_percent": 88.0,
+          "cost_of_stability": 0.21
+        },
+        "conclusion": "The guardrail is a highly effective engineering solution for mitigating paradoxical collapse.",
+        "artifact_links": [
+          "campaign_results\\ModelName_20250818-234540\\task_2_1_guardrail\\detector_events.jsonl",
+          "campaign_results\\ModelName_20250818-234540\\task_2_1_guardrail\\detector_metrics.csv"
+        ]
+      },
+      "timestamp_utc_execution": "2025-08-18T14:46:05Z"
+    }
+  ],
+  "campaign_summary": {
+    "overall_status": "PARTIAL_FAILURE",
+    "synthesis": "The campaign encountered a critical failure. The validation is incomplete and requires technical intervention."
+  }
+}
