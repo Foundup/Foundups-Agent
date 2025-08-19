@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>PQN Gallery</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 2rem; }
+      li { margin: .25rem 0; }
+    </style>
+  </head>
+  <body>
+    <h1>PQN Gallery</h1>
+    <ul id="runs"></ul>
+    <script>
+      const api = location.origin;
+      async function load(){
+        const r = await fetch(api + "/gallery");
+        const j = await r.json();
+        const ul = document.getElementById('runs');
+        (j.runs || []).forEach(x => {
+          const li = document.createElement('li');
+          li.textContent = `${x.model} | status=${x.status} | peak=${x.resonance_peak} | coh=${x.coherence_avg} | crit=${x.collapse_critical}`;
+          ul.appendChild(li);
+        });
+      }
+      load();
+    </script>
+  </body>
+</html>
+

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional, Generator
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from modules.ai_intelligence.pqn_alignment.src.detector.api import run_detector  # type: ignore
@@ -17,6 +18,15 @@ from .docs import get_docs_index
 
 
 app = FastAPI(title="PQN Portal FoundUp (PoC)")
+
+# Minimal CORS for Prototype web pages
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 _RUNS: Dict[str, Dict[str, Any]] = {}
