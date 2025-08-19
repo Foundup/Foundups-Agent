@@ -61,6 +61,10 @@ def run_resonance_harmonics_task(model_name: str, output_dir: Path) -> Dict[str,
     
     events_path, metrics_csv = run_detector(config)
     
+    # Add spectral analysis to existing results (Per WSP 84: extend, don't replace)
+    from .detector.spectral_analyzer import analyze_detector_output
+    spectral_analysis = analyze_detector_output(events_path, metrics_csv)
+    
     # Simulate results (in real implementation, analyze actual data)
     result = {
         "status": "SUCCESS",
@@ -74,7 +78,8 @@ def run_resonance_harmonics_task(model_name: str, output_dir: Path) -> Dict[str,
             }
         },
         "conclusion": "Evidence strongly supports the existence of a structured 'resonance fingerprint'.",
-        "artifact_links": [str(events_path), str(metrics_csv)]
+        "artifact_links": [str(events_path), str(metrics_csv)],
+        "spectral_analysis": spectral_analysis  # Add spectral results per WSP 84
     }
     
     print(f"--- Task 1.1 Complete ---")

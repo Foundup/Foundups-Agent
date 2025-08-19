@@ -16,6 +16,8 @@ def run_detector(config: Dict) -> Tuple[str, str]:
 	Run the PQN detector with the given config.
 	Expected keys: script, steps, steps_per_sym, dt, out_dir (optional)
 	Returns: (events_path, metrics_csv)
+	
+	Per WSP 84: Uses existing cmst_pqn_detector_v2, doesn't recreate
 	"""
 	# Resolve paths
 	out_dir = _get(config, "out_dir", os.path.join("WSP_agentic","tests","pqn_detection","logs"))
@@ -44,3 +46,22 @@ def run_detector(config: Dict) -> Tuple[str, str]:
 		seed=int(_get(config, "seed", 0)),
 	)
 	return events_path, metrics_csv
+
+
+def run_detector_with_spectral_analysis(config: Dict) -> Dict:
+	"""
+	Run detector and add spectral analysis of results.
+	Per WSP 84: Extends existing detector, doesn't replace.
+	"""
+	# Run existing detector
+	events_path, metrics_csv = run_detector(config)
+	
+	# Analyze the output for spectral properties
+	from .spectral_analyzer import analyze_detector_output
+	spectral_results = analyze_detector_output(events_path, metrics_csv)
+	
+	return {
+		"events_path": events_path,
+		"metrics_csv": metrics_csv,
+		"spectral_analysis": spectral_results
+	}
