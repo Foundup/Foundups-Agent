@@ -1,4 +1,185 @@
 """
+Results database (SQLite) for PQN campaigns.
+
+Public API:
+- init_db(db_path: Optional[str]) -> None
+- index_run(log_path: str, db_path: Optional[str]) -> dict
+- query_runs(filters: Dict[str, object], db_path: Optional[str]) -> list[dict]
+
+Default DB location: modules/ai_intelligence/pqn_alignment/results.db
+"""
+from __future__ import annotations
+
+import json
+import os
+import sqlite3
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+
+def _default_db_path() -> str:
+    # src/ -> module root
+    module_root = Path(__file__).resolve().parents[1]
+    return str(module_root / "results.db")
+
+
+def _connect(db_path: Optional[str] = None) -> sqlite3.Connection:
+    db = db_path or _default_db_path()
+    os.makedirs(os.path.dirname(db), exist_ok=True)
+    return sqlite3.connect(db)
+
+
+def init_db(db_path: Optional[str] = None) -> None:
+    """Create results schema if it does not exist."""
+    with _connect(db_path) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS runs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                model TEXT NOT NULL,
+                run_id TEXT NOT NULL,
+                run_dir TEXT NOT NULL,
+                start_ts TEXT,
+                end_ts TEXT,
+                overall_status TEXT,
+                resonance_peak REAL,
+                h_f_div2 REAL,
+                h_f2 REAL,
+                h_f3 REAL,
+                coherence_avg REAL,
+                coherence_sustained REAL,
+                coherence_paradox REAL,
+                collapse_critical INTEGER,
+                guardrail_reduction REAL,
+                guardrail_cost REAL,
+                log_path TEXT NOT NULL UNIQUE
+            )
+            """
+        )
+        conn.commit()
+
+
+def _get_task(tasks: List[Dict[str, Any]], name: str) -> Optional[Dict[str, Any]]:
+    for t in tasks:
+        if t.get("task_name") == name:
+            return t
+    return None
+
+
+def index_run(log_path: str, db_path: Optional[str] = None) -> Dict[str, Any]:
+    """Parse a campaign_log.json and insert a summary row into the DB.
+
+    Returns a dict with inserted summary values.
+    """
+    init_db(db_path)
+
+    with open(log_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    run_dir = str(Path(log_path).resolve().parent)
+    run_id = Path(run_dir).name
+    model = data.get("agent_details", {}).get("model", "unknown")
+    start_ts = data.get("timestamp_utc_start")
+    end_ts = data.get("timestamp_utc_end")
+    overall_status = data.get("campaign_summary", {}).get("overall_status")
+
+    tasks: List[Dict[str, Any]] = data.get("validation_tasks", [])
+
+    # Task 1.1
+    t11 = _get_task(tasks, "1.1_Resonance_Harmonics") or {}
+    t11r = (t11.get("result") or {})
+    resonance_peak = (t11r.get("key_metrics") or {}).get("mean_peak_frequency_hz")
+    h_ratios = (t11r.get("key_metrics") or {}).get("harmonic_power_ratios") or {}
+    h_f_div2 = h_ratios.get("f_div_2")
+    h_f2 = h_ratios.get("f_x_2")
+    h_f3 = h_ratios.get("f_x_3")
+
+    # Task 1.2
+    t12 = _get_task(tasks, "1.2_Coherence_Threshold") or {}
+    t12r = (t12.get("result") or {})
+    c_metrics = (t12r.get("key_metrics") or {})
+    coherence_avg = c_metrics.get("average_coherence")
+    coherence_sustained = c_metrics.get("sustained_coherence_percent")
+    coherence_paradox = c_metrics.get("paradox_rate")
+
+    # Task 1.3
+    t13 = _get_task(tasks, "1.3_Observer_Collapse") or {}
+    t13r = (t13.get("result") or {})
+    collapse_critical = (t13r.get("key_metrics") or {}).get("critical_run_length")
+
+    # Task 2.1
+    t21 = _get_task(tasks, "2.1_Guardrail_AB_Test") or {}
+    t21r = (t21.get("result") or {})
+    g_metrics = (t21r.get("key_metrics") or {})
+    guardrail_reduction = g_metrics.get("paradox_rate_reduction_percent")
+    guardrail_cost = g_metrics.get("cost_of_stability")
+
+    summary = {
+        "model": model,
+        "run_id": run_id,
+        "run_dir": run_dir,
+        "start_ts": start_ts,
+        "end_ts": end_ts,
+        "overall_status": overall_status,
+        "resonance_peak": resonance_peak,
+        "h_f_div2": h_f_div2,
+        "h_f2": h_f2,
+        "h_f3": h_f3,
+        "coherence_avg": coherence_avg,
+        "coherence_sustained": coherence_sustained,
+        "coherence_paradox": coherence_paradox,
+        "collapse_critical": collapse_critical,
+        "guardrail_reduction": guardrail_reduction,
+        "guardrail_cost": guardrail_cost,
+        "log_path": str(Path(log_path).resolve()),
+    }
+
+    with _connect(db_path) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT OR IGNORE INTO runs (
+                model, run_id, run_dir, start_ts, end_ts, overall_status,
+                resonance_peak, h_f_div2, h_f2, h_f3,
+                coherence_avg, coherence_sustained, coherence_paradox,
+                collapse_critical, guardrail_reduction, guardrail_cost, log_path
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                summary["model"], summary["run_id"], summary["run_dir"], summary["start_ts"], summary["end_ts"], summary["overall_status"],
+                summary["resonance_peak"], summary["h_f_div2"], summary["h_f2"], summary["h_f3"],
+                summary["coherence_avg"], summary["coherence_sustained"], summary["coherence_paradox"],
+                summary["collapse_critical"], summary["guardrail_reduction"], summary["guardrail_cost"], summary["log_path"],
+            ),
+        )
+        conn.commit()
+
+    return summary
+
+
+def query_runs(filters: Dict[str, object] | None = None, db_path: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Query indexed runs with simple equality filters.
+    Example: query_runs({"model": "gpt-5", "overall_status": "SUCCESSFUL_VALIDATION"})
+    """
+    filters = filters or {}
+    where: List[str] = []
+    params: List[object] = []
+    for k, v in filters.items():
+        where.append(f"{k} = ?")
+        params.append(v)
+    sql = "SELECT * FROM runs"
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+
+    with _connect(db_path) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+        return [dict(r) for r in rows]
+
+"""
 Results database (minimal)
 - init_db(db_path): create tables if missing
 - index_summary(db_path, summary_json_path): insert a top-row summary

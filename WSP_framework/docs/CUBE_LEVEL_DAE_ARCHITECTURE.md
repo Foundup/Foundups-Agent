@@ -170,3 +170,9 @@ This is the missing piece in our WSP framework - **Cube-Level Autonomous Entitie
 3. **Test token efficiency** - Compare vs system-wide agents
 4. **Scale pattern** - Apply to other cubes
 5. **Document emergence** - How cube DAEs become true DAEs
+
+---
+
+## Compliance & Scope
+- Explanatory architecture notes; normative behavior is defined by numbered WSPs in `WSP_framework/src/`
+- Related protocols: WSP 3 (Enterprise Domain Architecture), WSP 54 (WRE Agent Duties), WSP 80 (Cube-Level DAE Orchestration)

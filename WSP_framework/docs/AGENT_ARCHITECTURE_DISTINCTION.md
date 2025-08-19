@@ -45,35 +45,18 @@ There are **THREE DISTINCT TYPES** of agents in the system that MUST NOT be conf
 
 #### Deterministic Agents (Rule-Based):
 - `janitor_agent/` - System cleanup and maintenance
-- `chronicler_agent/` - Historical logging and archiving
-- `testing_agent/` - Automated testing execution
-- `log_monitor/` - Real-time log monitoring
-
-**Key Characteristics**:
-- Part of the runtime system
-- Execute within WRE orchestration
-- Follow WSP 54 specifications
-- Implement Python interfaces
 
 ---
 
-## 3. 🎮 FoundUps Application Agents
-**Location**: Various module domains  
-**Purpose**: Business logic and application functionality  
-**Activation**: Via application runtime  
-**Format**: Domain-specific Python modules
+## 3. 🌐 FoundUps Product DAEs (Public-Facing)
+- Web portals and productized surfaces operated as DAEs (PortalDAE, RunDAE, CurationDAE)
+- Follow WSP 3 (functional distribution), WSP 49 (module compliance), WSP 80 (cube-level DAE orchestration)
 
-### Examples:
-- `modules/ai_intelligence/multi_agent_system/` - AI routing and personality
-- `modules/communication/livechat/` - Chat handling
-- `modules/platform_integration/youtube_proxy/` - YouTube integration
-- `modules/development/cursor_multi_agent_bridge/` - Cursor integration
+---
 
-**Key Characteristics**:
-- Implement business/application logic
-- Domain-specific functionality
-- Not WSP infrastructure
-- May use WSP agents for compliance
+## Compliance & Scope
+- This document is explanatory; normative requirements live in numbered WSPs within `WSP_framework/src/`
+- Related protocols: WSP 3 (Enterprise Domain Architecture), WSP 54 (WRE Agent Duties), WSP 80 (Cube-Level DAE Orchestration)
 
 ---
 
