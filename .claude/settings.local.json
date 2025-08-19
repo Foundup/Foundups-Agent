@@ -127,7 +127,8 @@
       "Bash(git commit:*)",
       "Bash(git revert:*)",
       "Bash(PYTHONIOENCODING=utf-8 python -m modules.ai_intelligence.pqn_alignment.src.run_campaign)",
-      "Bash(set ACTIVE_MODEL_NAME=Claude-Opus-4.1)"
+      "Bash(set ACTIVE_MODEL_NAME=Claude-Opus-4.1)",
+      "Bash(PYTHONIOENCODING=utf-8 python wsp_verification.py)"
     ],
     "deny": []
   }
