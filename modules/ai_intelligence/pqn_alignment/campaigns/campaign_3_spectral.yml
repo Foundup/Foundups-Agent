@@ -1,0 +1,56 @@
+# Campaign 3: Spectral Analysis Extension
+# Per WSP 84: Uses existing detector, doesn't recreate
+# Per WSP 3: Modular extension of existing campaigns
+
+campaign:
+  name: "Spectral Bias Analysis"
+  id: "campaign_3_spectral"
+  description: "Analyze existing PQN detection results for spectral bias violations"
+  extends: "campaign_1_validation"  # Builds on existing campaign
+  
+# Uses existing models from campaign runner
+models:
+  - use_existing: true  # Per WSP 84
+
+tasks:
+  # Extend existing Task 1.1 with spectral analysis
+  - id: "1.1_extended"
+    name: "resonance_with_spectral"
+    base_task: "run_resonance_harmonics_task"  # Use existing
+    extensions:
+      - spectral_analyzer  # Add our analyzer to existing results
+    config:
+      # Uses existing config from run_campaign.py
+      use_existing: true
+      
+  # Analyze existing harmonics for entrainment  
+  - id: "3.1"
+    name: "entrainment_analysis"
+    description: "Analyze existing resonance data for entrainment patterns"
+    analyzer: "spectral_analyzer.analyze_detector_output"
+    input: "task_1_1_resonance/detector_events.jsonl"  # Use existing output
+    
+  # Check spectral bias violations in existing data
+  - id: "3.2"  
+    name: "bias_violation_check"
+    description: "Check if existing 7.05 Hz detections violate spectral bias"
+    analyzer: "spectral_analyzer._check_bias_violation"
+    input: "task_1_1_resonance/detector_events.jsonl"
+
+analysis:
+  # Analyze existing detector outputs
+  use_existing_artifacts: true
+  
+  # Additional analysis on top of existing
+  extensions:
+    - spectral_profile_from_harmonics
+    - entrainment_score_from_events
+    - bias_violation_detection
+    
+output:
+  # Append to existing campaign results
+  append_to_existing: true
+  additional_metrics:
+    - spectral_slope
+    - entrainment_score  
+    - bias_violation_significance
