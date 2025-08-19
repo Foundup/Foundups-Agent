@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>PQN Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 2rem; }
+      pre { background: #f5f5f5; padding: 1rem; border-radius: 6px; max-height: 50vh; overflow: auto; }
+      button { padding: .5rem 1rem; }
+    </style>
+  </head>
+  <body>
+    <h1>PQN Demo</h1>
+    <button id="start">Start Demo</button>
+    <pre id="log"></pre>
+    <script>
+      const api = location.origin;
+      async function start(){
+        const r = await fetch(api + "/runs/demo", { method: "POST" });
+        const j = await r.json();
+        const id = j.run_id;
+        const es = new EventSource(api + "/runs/" + id + "/stream");
+        const log = document.getElementById('log');
+        es.addEventListener('metric', (ev)=>{ log.textContent += "metric " + ev.data + "\n"; });
+        es.addEventListener('done', ()=>{ log.textContent += "done\n"; es.close();});
+        es.onmessage = (ev)=>{ log.textContent += ev.data + "\n"; };
+      }
+      document.getElementById('start').onclick = start;
+    </script>
+  </body>
+</html>
+
