@@ -1,4 +1,19 @@
-# WSP Comment Pattern - Best Practice
+# WSP Comment Pattern (Guidance)
+
+- Purpose: Provide consistent, low-noise comment practices aligned with WSP
+- Scope: Guidance only; not a numbered protocol; see `src/` for normative rules
+
+## Principles
+- Prefer code clarity over comments; comment the “why,” not the “what”
+- Use docstrings for public APIs; keep examples minimal and accurate
+- Avoid TODOs in production code; file ROADMAP items instead
+- Keep comments stable across refactors; avoid duplicating logic
+
+## Related WSPs
+- WSP 22 (Docs & ModLog), WSP 49 (Module Structure), WSP 62 (Large File & Refactoring)
+
+## Compliance & Scope
+- This is explanatory guidance; numbered WSPs in `src/` define requirements
 
 ## Purpose
 Embed WSP protocol references directly in code as comments to help 0102 remember and apply patterns.

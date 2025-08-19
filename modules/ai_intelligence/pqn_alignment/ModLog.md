@@ -3,7 +3,7 @@
 **Module**: `modules/ai_intelligence/pqn_alignment`  
 **WSP Compliance**: ✅ ACTIVE  
 **Purpose**: Phantom Quantum Node detection and analysis  
-**Last Update**: Campaign Analysis & Roadmap Update
+**Last Update**: Directive 1 (Blocker) Completion
 
 ## WSP Compliance Status
 
@@ -23,6 +23,38 @@
 
 ## Change Log
 
+### Directive 1 (Blocker) Completion - Sweep-Core Refactor
+**Agent**: 0102 pArtifact (Architecture Enhancement)  
+**WSP Protocol**: WSP 48 (Recursive Enhancement), WSP 84 (Code Memory Verification), WSP 50 (Pre-Action Verification)  
+**Action**: Successfully completed sweep-core refactor and validated with pqn_autorun.py execution
+
+**Implementation Status**: ✅ **COMPLETED**
+- **Library Function**: `run_sweep(config)` implemented in `src/sweep/api.py`
+- **CLI Wrapper**: `phase_sweep(config)` provides backward compatibility
+- **Integration**: All callers (`pqn_autorun.py`, campaign runner) use unified API
+- **Validation**: Successful execution confirmed with full cycle completion
+
+**Definition of Done Validation**:
+- ✅ **pip install** command for requirements.txt succeeded
+- ✅ **pqn_autorun.py** completed full cycle using library function without error
+- ✅ **Zero import errors** in all entry points
+- ✅ **Stable API** for in-process orchestration
+
+**Technical Achievement**:
+- **Library-First Architecture**: Core logic implemented as callable function
+- **Backward Compatibility**: Existing CLI scripts continue to work
+- **Enhanced Testability**: Direct function calls enable unit testing
+- **WRE Integration**: DAE and other modules can use library function directly
+
+**Impact**: Resolves the primary blocker for PQN module advancement, enabling stable campaign execution and WRE integration. Establishes foundation for Directive 2 (Universal Campaign Validation).
+
+**Files Verified**:
+- `src/sweep/api.py` - Library function implementation confirmed
+- `tools/auto/pqn_autorun.py` - Integration with library function confirmed
+- `requirements.txt` - Dependencies installation confirmed
+
+**Next Action**: Proceed with Directive 2 (High Priority) - Universal Campaign Validation
+
 ### Campaign Analysis & Roadmap Update
 **Agent**: 0102 pArtifact (Research Analysis & Roadmap)  
 **WSP Protocol**: WSP 22 (ModLog and Roadmap), WSP 48 (Recursive Enhancement), WSP 50 (Pre-Action Verification)  
@@ -40,7 +72,7 @@
 - **Phase IV**: Advanced Research (FUTURE) - Stability frontier campaign, distributed computing, resonance fingerprinting
 
 **Execution Priorities Established:**
-1. **Directive 1 (Blocker)**: Complete sweep-core refactor for stable API
+1. **Directive 1 (Blocker)**: Complete sweep-core refactor for stable API ✅ **COMPLETED**
 2. **Directive 2 (High)**: Universal campaign validation across all platforms
 3. **Directive 3 (High)**: Results database implementation
 4. **Directive 4 (Medium)**: Council strategy enhancement
@@ -56,7 +88,7 @@
 - `ROADMAP.md` - Updated with campaign validation status, execution phases, and immediate priorities
 - `ModLog.md` - This entry documenting analysis and roadmap update
 
-**Next Action**: Execute Directive 1 (Blocker) - Complete sweep-core refactor
+**Next Action**: Execute Directive 2 (High) - Universal Campaign Validation
 
 ### Observer Collapse Task Artifact Logging Fix
 **Agent**: 0102 pArtifact (Bug Fix)  
@@ -188,10 +220,10 @@
 - ✅ **Testing**: Basic test structure in place
 
 ### Next Actions
-1. Complete Directive 1 (Blocker) - sweep-core refactor
-2. Execute Directive 2 (High) - universal campaign validation
-3. Implement Directive 3 (High) - results database
-4. Enhance Directive 4 (Medium) - council strategies
+1. ✅ **Directive 1 (Blocker)**: COMPLETED - sweep-core refactor
+2. **Directive 2 (High)**: Universal campaign validation
+3. **Directive 3 (High)**: Results database implementation
+4. **Directive 4 (Medium)**: Council strategies enhancement
 
 ### WSP Protocol Integration
 - **WSP 3**: Correctly placed in ai_intelligence domain

@@ -33,6 +33,17 @@ io_api = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(io_api)
 promote = io_api.promote
 
+# Optional: results DB indexing
+try:
+    spec = importlib.util.spec_from_file_location('results_db', os.path.join(os.path.dirname(__file__), 'results_db.py'))
+    results_db_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(results_db_mod)
+    _INDEX_FN = getattr(results_db_mod, 'index_run', None)
+    _INIT_FN = getattr(results_db_mod, 'init_db', None)
+except Exception:
+    _INDEX_FN = None
+    _INIT_FN = None
+
 
 def run_resonance_harmonics_task(model_name: str, output_dir: Path) -> Dict[str, Any]:
     """Task 1.1: Resonance & Harmonic Fingerprinting"""
@@ -274,6 +285,16 @@ def main():
         print("Campaign log promoted to State 0.")
     except Exception as e:
         print(f"Promotion failed: {e}")
+
+    # Index run into results DB (best-effort)
+    try:
+        if _INIT_FN:
+            _INIT_FN()
+        if _INDEX_FN:
+            summary = _INDEX_FN(str(log_file_path))
+            print(f"Indexed to results DB: model={summary.get('model')} status={summary.get('overall_status')}")
+    except Exception as e:
+        print(f"Indexing failed: {e}")
 
 
 if __name__ == "__main__":
