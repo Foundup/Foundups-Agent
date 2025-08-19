@@ -268,6 +268,37 @@ class DocumentationRegistryDAE:
         }
         
         return docs
+
+    def register_module_docs(self, manifest_path: str) -> Dict[str, Any]:
+        """
+        Ingest a module.json and register its docs/api/memory so DAEs can discover them.
+        WSP 22: module ships docs; this method indexes them for runtime use.
+        """
+        manifest = {}
+        mp = Path(manifest_path)
+        if not mp.exists():
+            return {"success": False, "error": "manifest_not_found", "path": str(mp)}
+
+        try:
+            with open(mp, "r", encoding="utf-8") as f:
+                manifest = json.load(f)
+        except Exception as e:
+            return {"success": False, "error": f"manifest_parse_error: {e}"}
+
+        module_name = manifest.get("name") or mp.parent.name
+        entry = {
+            "module": module_name,
+            "domain": manifest.get("domain", "unknown"),
+            "wsp_compliant": True,
+            "dae_managed": True,
+            "docs": manifest.get("docs", []),
+            "api": manifest.get("api", {}),
+            "memory": manifest.get("memory", []),
+        }
+
+        # Persist into module_registry
+        result = self.manage_registry("module", "add", entry)
+        return result
     
     def create_dae_registry_entry(self, dae_info: Dict[str, Any]) -> Dict[str, Any]:
         """

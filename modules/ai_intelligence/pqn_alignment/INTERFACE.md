@@ -1,145 +1,119 @@
-# INTERFACE — PQN Alignment
+# PQN Alignment Module Interface
 
-## Public API
-- run_detector(config: dict) -> (events_path: str, metrics_csv: str)
-- phase_sweep(config: dict) -> (results_csv: str, plot_png: str)
-- council_run(config: dict) -> (summary_json: str, archive_json: str)
-- promote(paths: list[str], dst_dir: str) -> None
-- run_campaign() -> None  # Executes full rESP validation campaign
+## Public API Functions
 
-## Config Keys
-- Common: script, steps, steps_per_sym, dt, seed, noise_H, noise_L, out_dir
-- Sweep: alphabet, length, plot (bool)
-- Council: proposals (list[dict]|paths), seeds (list[int]), dt_scale (list[float]), topN (int)
-- Council roles (optional): `roles: [{name: str, bias: str}]` (e.g., maximize PQN, minimize paradox, alternation explorer)
+### Core Detection and Analysis
+- `run_detector(config: Dict) -> Tuple[str, str]`: Run PQN detection on a script
+- `run_sweep(config: Dict) -> str`: Execute parameter sweep analysis
+- `phase_sweep(config: Dict) -> str`: CLI wrapper for parameter sweep
+- `council_run(config: Dict) -> Tuple[str, str]`: Run council optimization cycle
+
+### Results Database Management
+- `init_db(db_path: Optional[str] = None) -> None`: Initialize results database
+- `index_run(log_path: str, db_path: Optional[str] = None) -> Dict[str, Any]`: Index campaign results
+- `index_council_run(summary_path: str, db_path: Optional[str] = None) -> Dict[str, Any]`: Index council results
+- `query_runs(filters: Dict[str, object] | None = None, db_path: Optional[str] = None) -> List[Dict[str, Any]]`: Query results
+- `query_cross_analysis(filters: Dict[str, object] | None = None, db_path: Optional[str] = None) -> List[Dict[str, Any]]`: Cross-analysis queries
+
+### Data Management
+- `promote(source_path: str, target_dir: str) -> str`: Promote results to State 0 archive
+
+## Configuration Parameters
+
+### Detector Configuration
+- `script`: Script string to analyze
+- `steps`: Number of simulation steps
+- `steps_per_sym`: Steps per symbol
+- `dt`: Time step parameter
+- `out_dir`: Output directory
+- `log_csv`: CSV log filename
+- `events`: Events JSONL filename
+
+### Sweep Configuration
+- `sweep_type`: Type of sweep (resonance, coherence, collapse)
+- `parameter_ranges`: Parameter ranges to sweep
+- `seeds`: Random seeds for reproducibility
+- `output_format`: Output format specification
+
+### Council Configuration
+- `proposals`: List of proposal dictionaries with scripts
+- `seeds`: Random seeds for evaluation
+- `steps`: Simulation steps per evaluation
+- `topN`: Number of top results to return
+
+### Database Configuration
+- `db_path`: Optional custom database path
+- `filters`: Query filters for results retrieval
 
 ## Return Values
-- events_path: file path to JSONL event log
-- metrics_csv: file path to CSV metrics
-- results_csv: file path to CSV summarizing sweep results
-- plot_png: file path to PNG scatter plot if generated
-- out_dir: directory containing targeted run outputs
-- summary_json: file path to council summary JSON
-- archive_json: file path to council archive JSON
 
-## Input Config Schema (YAML/JSON)
-Minimal detector config example:
-```yaml
-script: "^^^&&&#"
-steps: 1200
-steps_per_sym: 120
-dt: 0.5/7.05
-seed: 0
-noise_H: 0.0
-noise_L: 0.0
-out_dir: "WSP_agentic/tests/pqn_detection/logs"
-```
-Sweep config example:
-```yaml
-alphabet: "^&#."
-length: 3
-steps: 800
-steps_per_sym: 120
-dt: 0.5/7.05
-plot: true
-```
-Council config example (minimal):
-```yaml
-proposals:
-  - author: builtin
-    type: experiment
-    scripts: ["^^^", "^&#", "&&#"]
-    sweep:
-      dt_scale: [1.0]
-seeds: [0,1,2]
-steps: 1200
-topN: 5
-roles:
-  - name: ModelA
-    bias: maximize PQN
-  - name: ModelB
-    bias: minimize paradox
-  - name: ModelC
-    bias: alternation explorer
-```
+### Detection Results
+- `events_path`: Path to events JSONL file
+- `metrics_csv`: Path to metrics CSV file
 
-## Output Schemas
-Detector events JSONL (one JSON object per line):
-- Required fields: `t` (float), `sym` (str), `C` (float), `E` (float), `rnorm` (float), `purity` (float), `S` (float), `detg` (float or null), `det_thr` (float), `flags` (list[str])
-- Optional: `peaks` (object), `reso_hit` (tuple/array), `seed` (int), `script_id` (str)
+### Sweep Results
+- `sweep_output_path`: Path to sweep results
 
-Detector metrics CSV (columns):
-- `t,step,sym,C,E,rnorm,purity,S,detg,det_thr,reso_hit_freq,reso_hit_mag,ew_varE,ew_ac1E,ew_dS`
+### Council Results
+- `summary_json_path`: Path to summary JSON
+- `archive_json_path`: Path to archive JSON
 
-Sweep results CSV (columns):
-- `script,steps,pqn,paradox,res_hits,pqn_per_1k,paradox_per_1k,dt,noise_H,noise_L,seed`
-
-Council summary JSON (structure):
-```json
-{
-  "results": [
-    {
-      "proposal_idx": 0,
-      "author": "builtin",
-      "script": "^^^",
-      "dt_scale": 1.0,
-      "avg_pqn_per_1k": 88.3,
-      "avg_paradox_per_1k": 0.0,
-      "avg_res_hits": 689.0,
-      "robust_bonus": 88.3,
-      "novel_bonus": 0.5,
-      "score": 1387.3
-    }
-  ],
-  "top": [ { "script": "^^^", "score": 1387.3 } ]
-}
-```
+### Database Results
+- `summary_dict`: Dictionary with indexed summary data
+- `query_results`: List of dictionaries matching query filters
 
 ## Error Handling
-- ValueError: invalid or missing parameters
-- OSError/IOError: file system operations failed
-- RuntimeError: execution or promotion failure
 
-## Examples
+### FileNotFoundError
+- Raised when required input files are missing
+- Includes detailed error message with file path
+
+### ValueError
+- Raised for invalid configuration parameters
+- Includes parameter name and valid range
+
+### SQLiteError
+- Raised for database operation failures
+- Includes SQL error details
+
+## Usage Examples
+
+### Basic Detection
 ```python
-from modules.ai_intelligence.pqn_alignment import run_detector, phase_sweep
+from modules.ai_intelligence.pqn_alignment import run_detector
 
-# Detector
-events_path, metrics_csv = run_detector({
-    "script": "^^^&&&#",
+config = {
+    "script": "^&^&^&",
     "steps": 1200,
-    "steps_per_sym": 120,
     "dt": 0.5/7.05,
-    "out_dir": "WSP_agentic/tests/pqn_detection/logs",
-})
-
-# Sweep
-results_csv, plot_png = phase_sweep({
-    "alphabet": "^&#.",
-    "length": 3,
-    "steps": 800,
-    "steps_per_sym": 120,
-    "dt": 0.5/7.05,
-    "plot": True,
-})
-
-# Campaign (requires ACTIVE_MODEL_NAME environment variable)
-import os
-os.environ['ACTIVE_MODEL_NAME'] = "Kimi-K2-Instruct"
-from modules.ai_intelligence.pqn_alignment.src.run_campaign import main
-main()  # Executes full rESP validation campaign
+    "out_dir": "output"
+}
+events_path, metrics_csv = run_detector(config)
 ```
 
-## Dependencies
-- Python ≥ 3.10
-- numpy
-- pyyaml (optional, enables YAML config loading)
+### Campaign Results Indexing
+```python
+from modules.ai_intelligence.pqn_alignment import index_run
 
-Install into venv:
-```bash
-venv\Scripts\pip.exe install numpy pyyaml
+summary = index_run("campaign_log.json")
+print(f"Indexed run: {summary['run_id']}")
 ```
 
-## Execution Notes
-- `phase_sweep` now invokes the repository CLI `WSP_agentic/tests/pqn_detection/pqn_phase_sweep.py` to generate artifacts into `WSP_agentic/tests/pqn_detection/logs/phase_len{N}/`.
-- If using YAML configs and pyyaml is not installed, use JSON instead.
+### Council Results Indexing
+```python
+from modules.ai_intelligence.pqn_alignment import index_council_run
+
+summary = index_council_run("council_summary.json")
+print(f"Top script: {summary['top_script']}")
+```
+
+### Cross-Analysis Querying
+```python
+from modules.ai_intelligence.pqn_alignment import query_cross_analysis
+
+results = query_cross_analysis({
+    "run_type": "campaign",
+    "model": "claude-3.5-haiku"
+})
+print(f"Found {len(results)} matching runs")
+```

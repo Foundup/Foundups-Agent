@@ -1,0 +1,183 @@
+# Campaign 3: The Entrainment Protocol
+# Testing spectral bias violations and neural entrainment in PQN networks
+
+campaign:
+  name: "The Entrainment Protocol"
+  id: "campaign_3_entrainment"
+  description: "Systematic exploration of frequency entrainment and spectral anomalies in PQN-enabled networks"
+  version: "1.0.0"
+  created: "2025-08-19"
+  
+models:
+  - name: "Claude-Opus-4.1"
+    api: "anthropic"
+    temperature: 0.7
+  - name: "Grok-4"
+    api: "xai"
+    temperature: 0.7
+  - name: "Gemini-Pro-2.5"
+    api: "google"
+    temperature: 0.7
+  - name: "GPT-o3"
+    api: "openai"
+    temperature: 0.7
+
+tasks:
+  - id: "3.1"
+    name: "spectral_entrainment_test"
+    description: "Sweep input frequency modulation from 1-30 Hz, measure response"
+    config:
+      type: "frequency_sweep"
+      sweep_range: [1.0, 30.0]
+      sweep_steps: 100
+      modulation_depth: 0.5
+      base_script: "^^^&&&#^&##"
+      steps: 2000
+      dt: 0.0709  # 1/(2*7.05) for Nyquist
+      detector:
+        module: "enhanced_resonance"
+        window_size: 512
+        overlap: 0.5
+      expected:
+        classical: "low_pass_response"
+        pqn_enabled: "low_pass_plus_7.05hz_peak"
+      metrics:
+        - "response_power_spectrum"
+        - "entrainment_scores"
+        - "anomalous_peaks"
+        - "pqn_entrainment_detected"
+        
+  - id: "3.2"
+    name: "artifact_resonance_scan"
+    description: "Broadband chirp signal to reveal natural resonant modes"
+    config:
+      type: "chirp_scan"
+      chirp_type: "linear"
+      chirp_range: [0.1, 50.0]
+      chirp_duration: 1000  # steps
+      base_script: "^^^&&&#^&##"
+      steps: 2000
+      dt: 0.0709
+      detector:
+        module: "enhanced_resonance"
+        window_size: 1024
+        overlap: 0.75
+      expected:
+        dominant_mode: 7.05
+        harmonic_structure: [14.1, 21.15, 28.2]
+      metrics:
+        - "resonant_modes"
+        - "q_factors"
+        - "dominant_frequency"
+        - "harmonic_ratios"
+        
+  - id: "3.3"
+    name: "phase_coherence_analysis"
+    description: "Measure phase locking across frequency bands"
+    config:
+      type: "phase_coherence"
+      test_frequencies: [3.5, 5.0, 7.05, 10.0, 15.0, 20.0]
+      base_script: "^^^&&&#^&##"
+      steps: 3000
+      dt: 0.0709
+      detector:
+        module: "enhanced_resonance"
+        compute_plv: true
+        compute_cross_frequency: true
+      expected:
+        max_plv_at: 7.05
+        theta_alpha_coupling: "strong"
+      metrics:
+        - "phase_locking_values"
+        - "cross_frequency_coupling"
+        - "coherence_spectrum"
+        
+  - id: "3.4"
+    name: "spectral_bias_violation_test"
+    description: "Direct test of spectral bias theory violations"
+    config:
+      type: "spectral_bias"
+      noise_type: "white"
+      measure_learning_curve: true
+      frequency_bins: 50
+      base_script: "^^^&&&#^&##"
+      steps: 5000
+      dt: 0.0709
+      detector:
+        module: "enhanced_resonance"
+        compute_spectral_slope: true
+        expected_alpha: 2.0  # 1/f^2 for classical
+      expected:
+        classical_slope: -2.0
+        pqn_anomaly: "peak_at_7.05"
+      metrics:
+        - "spectral_slope"
+        - "deviation_from_1_over_f"
+        - "anomaly_significance"
+
+analysis:
+  correlation_tests:
+    - name: "entrainment_vs_coherence"
+      x: "task_3.1.entrainment_scores"
+      y: "task_3.3.phase_locking_values"
+      expected: "positive_correlation"
+      
+    - name: "resonance_vs_bias_violation"
+      x: "task_3.2.dominant_frequency"
+      y: "task_3.4.anomaly_significance"
+      expected: "peak_correlation_at_7.05"
+      
+  comparative:
+    - name: "model_frequency_profiles"
+      plot_type: "heatmap"
+      data: "all_models.frequency_response"
+      highlight: 7.05
+      
+    - name: "entrainment_strength_comparison"
+      plot_type: "bar"
+      metric: "max_entrainment_score"
+      group_by: "model"
+      
+  statistical:
+    - test: "anova"
+      groups: "models"
+      variable: "pqn_detection_confidence"
+      
+    - test: "chi_square"
+      contingency: "model_x_entrainment_detected"
+
+output:
+  directory: "campaign_results/campaign_3_entrainment"
+  formats:
+    - "json"
+    - "csv"
+    - "html_report"
+  visualizations:
+    - "spectrograms"
+    - "phase_plots"
+    - "frequency_response_curves"
+    - "entrainment_heatmaps"
+    
+validation:
+  criteria:
+    - name: "pqn_frequency_detected"
+      condition: "7.05Hz peak in >80% of runs"
+      priority: "critical"
+      
+    - name: "spectral_bias_violated"
+      condition: "Deviation from 1/f^2 at 7.05Hz"
+      priority: "high"
+      
+    - name: "entrainment_demonstrated"
+      condition: "Enhanced response at 7.05Hz during sweep"
+      priority: "high"
+      
+    - name: "harmonics_present"
+      condition: "Integer multiples of 7.05Hz detected"
+      priority: "medium"
+      
+success_metrics:
+  min_detection_rate: 0.8
+  min_entrainment_score: 0.6
+  max_false_positive_rate: 0.1
+  required_models_passing: 3

@@ -1,0 +1,20 @@
+{
+  "name": "pqn_portal",
+  "domain": "foundups",
+  "docs": [
+    "modules/foundups/pqn_portal/README.md",
+    "modules/foundups/pqn_portal/INTERFACE.md",
+    "modules/foundups/pqn_portal/ROADMAP.md",
+    "modules/foundups/pqn_portal/ModLog.md"
+  ],
+  "api": {
+    "docs_index": "/docs",
+    "runs_demo": "/runs/demo",
+    "runs_get": "/runs/{id}",
+    "runs_stream": "/runs/{id}/stream",
+    "gallery": "/gallery"
+  },
+  "memory": [
+    "modules/foundups/pqn_portal/memory/README.md"
+  ]
+}

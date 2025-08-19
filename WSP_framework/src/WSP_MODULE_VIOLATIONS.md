@@ -5,6 +5,37 @@ This document tracks module-specific violations that are deferred during WSP com
 
 ---
 
+## **V020: PQN RESULTS DATABASE DUPLICATE CODE VIOLATION** ✅ **RESOLVED**
+- **Type**: **MODULE-LEVEL VIOLATION** - Duplicate implementation code in results_db.py
+- **Module**: `modules/ai_intelligence/pqn_alignment/`
+- **File**: `src/results_db.py:180-275`
+- **Issue**: Legacy implementation code (lines 180-275) duplicated functionality from main implementation
+- **Impact**: **MEDIUM** - Code confusion, maintenance complexity
+- **Resolution**: ✅ **COMPLETED** - Merged complementary functionality into unified database
+- **WSP Status**: **RESOLVED** - Enhanced PQN research capabilities through unified data model
+
+**Resolution Details**:
+- **Duplicate Code Cleanup**: Removed legacy implementation (lines 180-275)
+- **Schema Enhancement**: Added council-specific fields (steps, dt, noise_H, noise_L, top_script, top_score, run_type)
+- **Unified Indexing**: Created index_council_run() function for council results integration
+- **Cross-Analysis**: Added query_cross_analysis() function for comparative research
+- **API Enhancement**: Updated public API with new functions
+
+**Technical Achievement**:
+- **Unified Data Model**: Single database schema serving both campaign validation and council optimization
+- **Enhanced Research Capabilities**: Cross-analysis between campaign claims and council discoveries
+- **Parameter Correlation**: Track execution parameters for research continuity
+- **WSP Compliance**: Maintains systematic data management per WSP 22
+
+**Files Modified**:
+- `src/results_db.py` - Merged functionality, enhanced schema
+- `__init__.py` - Updated public API
+- `INTERFACE.md` - Enhanced documentation
+
+**Cross-Reference**: See PQN Alignment ModLog.md for detailed implementation entry
+
+---
+
 ## **V019: MODULE DUPLICATION VIOLATIONS** 🚨 **ARCHITECTURAL COHERENCE**
 - **Type**: **MODULE-LEVEL VIOLATION** - Duplicate files violating WSP 40 architectural coherence
 - **Session**: Current (no temporal markers)
