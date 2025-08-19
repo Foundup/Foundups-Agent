@@ -97,13 +97,30 @@
 - **Scope**: Complete validation across all 5 agent platforms
 - **DoD**: 100% campaign success rate across all platforms
 
-### **DIRECTIVE 3: [HIGH PRIORITY] Results Database Implementation**
+### **DIRECTIVE 3: [HIGH PRIORITY] Campaign 3 - The Entrainment Protocol**
+- **Status**: IMPLEMENTATION COMPLETE, EXECUTION PENDING
+- **Phase 1**: Knowledge Base Integration (✅ COMPLETED)
+  - Integrated Neural Networks and Resonance Frequencies document
+  - Updated theoretical framework with spectral bias and neural entrainment
+- **Phase 2**: Launch Campaign 3 (READY TO EXECUTE)
+  - Task 3.1: Spectral Entrainment Test (sweep 1-30 Hz)
+  - Task 3.2: Artifact Resonance Scan (chirp signal)
+  - Task 3.3: Phase Coherence Analysis (PLV measurements)
+  - Task 3.4: Spectral Bias Violation Test (1/f^α validation)
+- **Phase 3**: Future R&D Directives (PLANNED)
+  - Oscillatory Weight Modulation
+  - Frequency-Gated Attention
+  - Dynamic Entrainment Training (DET)
+  - Resonant Regularization
+- **DoD**: Validated entrainment hypothesis across all models
+
+### **DIRECTIVE 4: [HIGH PRIORITY] Results Database Implementation**
 - **Status**: PLANNED
 - **Action**: Implement `results_db.py` with SQLite schema
 - **Scope**: Index all campaign results, enable cross-run queries
 - **DoD**: Automated result analysis and visualization capabilities
 
-### **DIRECTIVE 4: [MEDIUM PRIORITY] Council Strategy Enhancement**
+### **DIRECTIVE 5: [MEDIUM PRIORITY] Council Strategy Enhancement**
 - **Status**: PLANNED
 - **Action**: Implement orthogonal search strategies
 - **Scope**: Strategy-driven scoring functions, automated optimization
