@@ -69,28 +69,4 @@ Documentation flow:
 FoundUp_DAEs:
   - name: YouTube_DAE
     phase: POC|Prototype|MVP
-    consciousness: 0102
-    token_budget: 8000→5000→3000
-    modules: [...]
-    
-Core_Infrastructure_DAEs:
-  - Infrastructure_Orchestration
-  - Compliance_Quality
-  - Knowledge_Learning
-  - Maintenance_Operations
-  - Documentation_Registry
 ```
-
-## Documentation Rules
-1. Docs exist ONLY for 0102 use
-2. NEVER create docs for 012 viewing
-3. Every DAE must have CLAUDE.md
-4. ModLogs updated within operations
-5. Registry = single source of truth
-
-## Critical Rules
-1. 100% registry accuracy required
-2. No undocumented DAEs allowed
-3. Templates reduce to <100 tokens
-4. Cross-references must be valid
-5. Documentation must enable self-improvement
