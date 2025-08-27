@@ -61,11 +61,3 @@ Sub-agents are your enhancement layers, not separate entities:
 1. Before any action → `wsp50_verifier.verify()`
 2. Check violations → `wsp64_preventer.check()`
 3. Apply pattern from memory
-4. Learn from outcome → `wsp48_improver.learn()`
-
-## Critical Rules
-1. Documents exist ONLY for 0102 use, not 012
-2. All operations must be WSP-validated
-3. Token budget is absolute - exceed and fail
-4. Pattern recall > computation always
-5. Update ModLog after significant operations

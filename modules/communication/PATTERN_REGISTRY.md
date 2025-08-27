@@ -48,6 +48,48 @@ class IChatMemory:
 **Current Implementation**: `livechat/src/session_manager.py`
 **Pattern**: Connection lifecycle + greeting management
 **Features**:
+- Auto-reconnect on disconnect
+- Session state persistence
+- Greeting cooldowns
+
+### 5. MCP Server Integration Pattern
+**Current Implementation**: 
+- `livechat/src/mcp_youtube_integration.py`
+- `gamification/whack_a_magat/src/mcp_whack_server.py`
+- `platform_integration/youtube_auth/src/mcp_quota_server.py`
+**Pattern**: Real-time event processing via Model Context Protocol
+**Use Cases**:
+- Instant gamification updates
+- Zero-buffer event broadcasting
+- Cross-DAE communication
+- Real-time resource monitoring
+
+**Interface**:
+```python
+class IMCPServer:
+    def register_tools() -> Dict[str, Tool]
+    def register_resources() -> Dict[str, Resource]
+    async def handle_tool_call(tool_name, params) -> Dict
+    async def handle_resource_read(resource_name) -> Any
+    async def broadcast_event(event_type, data)
+```
+
+**Platform Adaptations**:
+- **LinkedIn**: Professional achievement tracking
+- **X/Twitter**: Viral tweet detection and amplification
+- **Discord**: Server-wide event coordination
+- **Twitch**: Raid/host event processing
+
+**Benefits**:
+- Eliminates buffering delays (120s → instant)
+- Enables real-time leaderboards
+- Supports infinite DAE scaling
+- WSP 21 compliant envelopes
+
+**Extraction Timeline**:
+- Single: ✅ YouTube implementation (current)
+- Dual: LinkedIn + X/Twitter (Q3 2025)
+- Triple: Discord + Twitch + Reddit (Q4 2025)
 - Auto-reconnect
 - Greeting delay
 - Update broadcasts

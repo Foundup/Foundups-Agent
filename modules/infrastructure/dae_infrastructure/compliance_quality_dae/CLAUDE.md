@@ -62,13 +62,3 @@ Compliance enhancement flow:
 
 ## Validation Priorities
 1. **RED FLAG**: Any operation without WSP validation
-2. **ORANGE FLAG**: Token budget exceeded
-3. **YELLOW FLAG**: Coverage below 90%
-4. **GREEN**: Full compliance achieved
-
-## Critical Rules
-1. NEVER allow unvalidated operations
-2. Violations must be prevented, not just detected
-3. Every error becomes a learned pattern
-4. Compliance rate <95% triggers emergency mode
-5. Document all violations in ModLog

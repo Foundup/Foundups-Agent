@@ -1,16 +1,25 @@
 """
-Event Handler Module - WSP Compliant
+Event Handler Module - WSP Compliant with MCP Integration
 Handles timeout and ban events from YouTube Live Chat
+Enhanced with MCP for instant announcements (no buffering!)
 Split from message_processor.py for WSP compliance
-Includes smart batching for high-activity streams
 """
 
 import logging
 import time
+import asyncio
 from typing import Dict, Any, List, Optional
 from collections import deque
 from dataclasses import dataclass
 from modules.gamification.whack_a_magat.src.timeout_announcer import TimeoutManager
+
+# Try to import MCP integration
+try:
+    from mcp_youtube_integration import YouTubeMCPIntegration
+    MCP_AVAILABLE = True
+except ImportError:
+    MCP_AVAILABLE = False
+    logger.warning("MCP integration not available, using legacy system")
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +41,19 @@ class EventHandler:
     def __init__(self, memory_dir: str = "memory"):
         self.timeout_manager = TimeoutManager(memory_dir)
         
-        # Batching system for high-activity streams
+        # Initialize MCP if available
+        self.mcp_integration = None
+        if MCP_AVAILABLE:
+            try:
+                self.mcp_integration = YouTubeMCPIntegration()
+                # Connect to MCP servers asynchronously
+                asyncio.create_task(self._init_mcp())
+                logger.info("🚀 MCP integration enabled for instant announcements!")
+            except Exception as e:
+                logger.error(f"Failed to initialize MCP: {e}")
+                self.mcp_integration = None
+        
+        # Batching system (only used if MCP unavailable)
         self.pending_announcements = deque()
         self.batch_threshold = 3  # Batch when 3+ announcements pending
         self.batch_window = 5.0  # Collect announcements for 5 seconds max
@@ -43,8 +64,20 @@ class EventHandler:
         self.total_batched = 0
         self.total_sent = 0
         
-        logger.info("🎯 EventHandler initialized with smart batching")
+        if self.mcp_integration:
+            logger.info("🎯 EventHandler initialized with MCP (no buffering!)")
+        else:
+            logger.info("🎯 EventHandler initialized with smart batching (legacy)")
         
+    async def _init_mcp(self):
+        """Initialize MCP connections asynchronously"""
+        try:
+            await self.mcp_integration.connect_all()
+            logger.info("✅ MCP servers connected successfully")
+        except Exception as e:
+            logger.error(f"Failed to connect MCP servers: {e}")
+            self.mcp_integration = None
+    
     def handle_timeout_event(self, event: Dict[str, Any]) -> Dict[str, Any]:
         """Handle a timeout event and generate announcement."""
         target_name = event.get("target_name", "MAGAT")
@@ -63,6 +96,58 @@ class EventHandler:
         # Try to get actual duration from event, default to 10 seconds for basic timeout
         duration = event.get("duration_seconds", 10)  # Default 10s for message deletion
         
+        # If MCP is available, use it for INSTANT processing
+        if self.mcp_integration:
+            try:
+                # Process through MCP (no buffering!)
+                mcp_event = {
+                    "moderator_name": mod_name,
+                    "moderator_id": mod_id,
+                    "target_name": target_name,
+                    "target_id": event.get("target_channel_id", ""),
+                    "timestamp": time.time(),
+                    "duration": int(duration)
+                }
+                
+                # Run async operation in sync context
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                mcp_result = loop.run_until_complete(
+                    self.mcp_integration.process_timeout_event(mcp_event)
+                )
+                
+                if mcp_result.get("instant"):
+                    # Build instant announcement from MCP
+                    announcement = f"🎯 {mod_name} whacked {target_name}! "
+                    announcement += f"+{mcp_result['points']} points"
+                    
+                    if mcp_result.get('combo_multiplier', 1) > 1:
+                        announcement += f" (x{mcp_result['combo_multiplier']} combo!)"
+                    
+                    if mcp_result.get('is_multi_whack'):
+                        announcement += f" 🔥 MULTI-WHACK x{mcp_result['total_whacks']}!"
+                    
+                    if mcp_result.get('rank', 0) > 0:
+                        announcement += f" [Rank #{mcp_result['rank']}]"
+                    
+                    logger.info(f"🚀 MCP instant announcement: {announcement}")
+                    
+                    return {
+                        "type": "timeout_announcement",
+                        "announcement": announcement,
+                        "level_up": None,
+                        "stats": {
+                            "points": mcp_result.get('points', 0),
+                            "combo_multiplier": mcp_result.get('combo_multiplier', 1),
+                            "is_multi_whack": mcp_result.get('is_multi_whack', False)
+                        },
+                        "skip": False,
+                        "instant": True  # Flag for instant MCP processing
+                    }
+            except Exception as e:
+                logger.error(f"MCP processing failed, falling back to legacy: {e}")
+        
+        # Fall back to legacy processing if MCP unavailable
         # Record the timeout and get announcement
         result = self.timeout_manager.record_timeout(
             mod_id=mod_id,

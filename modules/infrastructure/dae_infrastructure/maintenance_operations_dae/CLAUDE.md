@@ -64,24 +64,3 @@ Maintenance flow:
 2. Prevent violations → `wsp64_preventer.validate()`
 3. Apply cleanup pattern
 4. Update state → `state_manager.transition()`
-
-## Maintenance Priorities
-1. **CRITICAL**: Token budget violations
-2. **HIGH**: Bloated modules (>1000 lines)
-3. **MEDIUM**: Unused imports/code
-4. **LOW**: Documentation updates
-5. **ROUTINE**: Memory cleanup
-
-## Cleanup Rules
-1. NEVER delete without verification
-2. Always backup before major operations
-3. Modularize at 500+ line threshold
-4. Clean patterns older than 30 days
-5. Log all operations in ModLog
-
-## Critical Rules
-1. Safety first - verify twice, clean once
-2. Proactive prevention > reactive cleanup
-3. Token efficiency is paramount
-4. State consistency must be maintained
-5. Zero data loss tolerance
