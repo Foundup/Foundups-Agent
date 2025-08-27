@@ -379,18 +379,46 @@ def authenticate_with_config(client_secrets_file: str, token_file: str, config_n
                 logger.info(f"{config_name}: Successfully refreshed credentials")
             except Exception as e:
                 logger.error(f"{config_name}: Failed to refresh token: {e}")
+                # Intentionally fall through to interactive OAuth login below
                 creds = None
         else:
+            # No valid credentials found; perform interactive OAuth login
             if not os.path.exists(client_secrets_file):
                 logger.error(f"{config_name}: Client secrets file not found at {client_secrets_file}")
                 return None
-                
+            
             logger.info(f"{config_name}: Triggering OAuth login")
             flow = InstalledAppFlow.from_client_secrets_file(client_secrets_file, SCOPES)
-            creds = flow.run_local_server(port=0)
+            # Allow pinning redirect port via env to avoid redirect_uri_mismatch (e.g., 8080)
+            port_env = os.getenv("OAUTH_REDIRECT_PORT", "")
+            try:
+                port = int(port_env) if port_env else 0
+            except Exception:
+                port = 0
+            creds = flow.run_local_server(port=port)
             logger.info(f"{config_name}: OAuth flow completed successfully")
             
             # Save the credentials for future use
+            os.makedirs(os.path.dirname(token_file), exist_ok=True)
+            with open(token_file, "w") as token:
+                token.write(creds.to_json())
+            logger.info(f"{config_name}: Successfully saved new credentials to {token_file}")
+
+        # If refresh failed above, creds will be None. Fallback to interactive OAuth login now.
+        if creds is None:
+            if not os.path.exists(client_secrets_file):
+                logger.error(f"{config_name}: Client secrets file not found at {client_secrets_file}")
+                return None
+            logger.info(f"{config_name}: Falling back to OAuth login after refresh failure")
+            flow = InstalledAppFlow.from_client_secrets_file(client_secrets_file, SCOPES)
+            port_env = os.getenv("OAUTH_REDIRECT_PORT", "")
+            try:
+                port = int(port_env) if port_env else 0
+            except Exception:
+                port = 0
+            creds = flow.run_local_server(port=port)
+            logger.info(f"{config_name}: OAuth flow completed successfully (fallback)")
+            # Save credentials
             os.makedirs(os.path.dirname(token_file), exist_ok=True)
             with open(token_file, "w") as token:
                 token.write(creds.to_json())
@@ -485,17 +513,59 @@ def get_authenticated_service_with_fallback() -> Optional[Any]:
         except (ValueError, IndexError):
             logger.warning(f"[WARN] Invalid FORCE_CREDENTIAL_SET value: {forced_set}, falling back to rotation")
     
-    # Normal rotation process - try each set with intelligent ordering
+    # Determine allowed/blocked/priority sets from environment
+    def _parse_set_ids(env_value: str) -> list:
+        ids = []
+        if not env_value:
+            return ids
+        for part in env_value.split(','):
+            p = part.strip().lower()
+            if not p:
+                continue
+            # Accept forms: "4" or "set_4"
+            if p.startswith('set_'):
+                p = p.split('_', 1)[1]
+            try:
+                n = int(p)
+                if 1 <= n <= 4:
+                    ids.append(n)
+            except ValueError:
+                continue
+        return ids
+
+    allowed_env = os.getenv('AUTH_ALLOWED_SETS', '').strip()
+    blocked_env = os.getenv('AUTH_BLOCKED_SETS', '').strip()
+    priority_env = os.getenv('AUTH_PRIORITY', '').strip()
+
+    allowed_ids = _parse_set_ids(allowed_env)
+    blocked_ids = set(_parse_set_ids(blocked_env))
+    priority_ids = _parse_set_ids(priority_env)
+
+    # Build the candidate order
+    default_ids = [1, 2, 3, 4]
+    if allowed_ids:
+        candidate_ids = [i for i in allowed_ids if i not in blocked_ids]
+    else:
+        candidate_ids = [i for i in default_ids if i not in blocked_ids]
+
+    # Apply priority ordering if provided
+    if priority_ids:
+        prio_set = [i for i in priority_ids if i in candidate_ids]
+        rest = [i for i in candidate_ids if i not in prio_set]
+        ordered_ids = prio_set + rest
+    else:
+        ordered_ids = candidate_ids
+
+    # Normal rotation process - categorize by cooldown
     available_sets = []
     cooldown_sets = []
-    
-    # Categorize credential sets by availability (now supports 4 sets)
-    for i in range(4):  # Updated: Test sets 1-4
-        credential_set = f"set_{i+1}"
+    for n in ordered_ids:
+        credential_set = f"set_{n}"
+        i = n - 1
         if quota_manager.is_in_cooldown(credential_set):
             cooldown_start = quota_manager.cooldowns[credential_set]
             time_remaining = quota_manager.COOLDOWN_DURATION - (time.time() - cooldown_start)
-            cooldown_sets.append((credential_set, time_remaining))
+            cooldown_sets.append((credential_set, time_remaining, i))
         else:
             available_sets.append((credential_set, i))
     
@@ -558,9 +628,8 @@ def get_authenticated_service_with_fallback() -> Optional[Any]:
         # Sort by shortest remaining cooldown time
         cooldown_sets.sort(key=lambda x: x[1])
         
-        for credential_set, time_remaining in cooldown_sets[:2]:  # Try only 2 shortest cooldowns
+        for credential_set, time_remaining, i in cooldown_sets[:2]:  # Try only 2 shortest cooldowns
             try:
-                i = int(credential_set.split('_')[1]) - 1
                 logger.warning(f"🚨 Emergency attempt with {credential_set} (cooldown: {time_remaining/3600:.1f}h remaining)")
                 
                 auth_result = get_authenticated_service(i)

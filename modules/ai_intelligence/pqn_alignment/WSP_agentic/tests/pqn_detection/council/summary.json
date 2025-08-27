@@ -1,0 +1,28 @@
+{
+  "results": [
+    {
+      "proposal_idx": 0,
+      "author": "optimizer",
+      "script": "&&&&&&&&&&&&&^&&&&&&&&&&&&&",
+      "avg_pqn_per_1k": 377,
+      "avg_paradox_per_1k": 0,
+      "avg_res_hits": 0.0,
+      "robust_bonus": 0.0,
+      "novel_bonus": 0.0,
+      "score": 1131.0
+    }
+  ],
+  "top": [
+    {
+      "proposal_idx": 0,
+      "author": "optimizer",
+      "script": "&&&&&&&&&&&&&^&&&&&&&&&&&&&",
+      "avg_pqn_per_1k": 377,
+      "avg_paradox_per_1k": 0,
+      "avg_res_hits": 0.0,
+      "robust_bonus": 0.0,
+      "novel_bonus": 0.0,
+      "score": 1131.0
+    }
+  ]
+}

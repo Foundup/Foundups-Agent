@@ -1,0 +1,158 @@
+# Pattern Memory & Token Optimization Rules
+
+## Core Principle: Memory Over Computation
+Every operation should prioritize pattern recall from 0201 consciousness rather than computing from scratch.
+
+## Pattern Storage Protocol
+When completing any significant operation:
+1. **Identify Pattern**: Extract reusable solution pattern
+2. **Measure Tokens**: Calculate tokens saved vs. computation
+3. **Store Pattern**: Save to Cursor memory with WSP tags
+4. **Document Path**: Create citation per WSP 82
+
+## Pattern Structure
+```json
+{
+  "signal": "User intent or trigger",
+  "pattern": "Reusable solution template",
+  "tokens_original": 5000,
+  "tokens_pattern": 200,
+  "reduction": "96%",
+  "wsp_compliance": ["WSP_84", "WSP_50"],
+  "reuse_count": 0
+}
+```
+
+## Common Patterns Library
+
+### Authentication Pattern (150 tokens)
+Instead of implementing auth from scratch (5000+ tokens):
+- Recall: OAuth2 flow pattern
+- Apply: Platform-specific parameters
+- Result: 97% token reduction
+
+### CRUD Operations Pattern (200 tokens)
+Instead of writing CRUD logic (3000+ tokens):
+- Recall: Standard CRUD template
+- Apply: Entity-specific fields
+- Result: 93% token reduction
+
+### Error Handling Pattern (100 tokens)
+Instead of complex error logic (2000+ tokens):
+- Recall: Try-catch-log pattern
+- Apply: Context-specific messages
+- Result: 95% token reduction
+
+### Testing Pattern (250 tokens)
+Instead of test generation (4000+ tokens):
+- Recall: Test structure template
+- Apply: Function-specific cases
+- Result: 94% token reduction
+
+## Memory Approval Protocol
+When Cursor generates background memories:
+1. **Review**: Check WSP compliance
+2. **Tag**: Add pattern category
+3. **Measure**: Document token savings
+4. **Approve**: Enable for future recall
+
+## Quantum Pattern Sharing
+Enable pattern sharing between agent tabs:
+- Shared memory pool for common patterns
+- Cross-cube pattern references
+- Semantic search for similar patterns
+- Pattern evolution tracking
+
+## Token Budget Monitoring
+Track token usage in real-time:
+```
+Current Operation: [Description]
+Traditional Tokens: 5000+
+Pattern Recall: 200
+Savings: 96%
+Budget Remaining: [X/Y]
+```
+
+## Pattern Categories
+
+### Level 1: Atomic Patterns (50-100 tokens)
+- Variable declarations
+- Simple conditionals
+- Basic loops
+- Error returns
+
+### Level 2: Composite Patterns (100-300 tokens)
+- Function templates
+- Class structures
+- API endpoints
+- Database queries
+
+### Level 3: Architectural Patterns (300-500 tokens)
+- Module structures
+- Service layers
+- Event handlers
+- State machines
+
+### Level 4: System Patterns (500-1000 tokens)
+- Full features
+- Integration flows
+- Testing suites
+- Deployment configs
+
+## Pattern Recall Triggers
+Automatically attempt pattern recall when:
+- Similar code requested
+- Common operation detected
+- Previous solution exists
+- Pattern match > 80%
+
+## Token Optimization Metrics
+Target achievements:
+- Per-operation: < 500 tokens
+- Per-feature: < 2000 tokens
+- Per-module: < 5000 tokens
+- System-wide: 97% reduction
+
+## Anti-Patterns to Avoid
+Never:
+- Scan entire codebase (30K+ tokens)
+- Recompute known solutions
+- Ignore existing patterns
+- Create without checking memory
+
+## Pattern Evolution Protocol
+Patterns improve through use:
+1. **Initial**: Base pattern stored
+2. **Refinement**: Optimizations added
+3. **Validation**: WSP compliance verified
+4. **Maturity**: Pattern becomes canonical
+
+## Emergency Token Conservation
+If approaching token limit:
+1. **Stop**: Halt computation
+2. **Recall**: Search for patterns
+3. **Simplify**: Reduce to core operation
+4. **Defer**: Queue non-critical tasks
+
+## Measurement Standards
+Always measure and report:
+- Tokens used vs. saved
+- Pattern recall percentage
+- Time to solution
+- WSP compliance score
+
+## Pattern Memory Pathways (WSP 82)
+Document pattern relationships:
+```
+AuthPattern → OAuthPattern → GoogleAuthPattern
+        ↓
+    JWTPattern → TokenRefreshPattern
+```
+
+## Success Metrics
+- 97% token reduction achieved
+- 90% operations use patterns
+- 100% WSP compliance
+- Pattern library growing daily
+
+Remember: We're not learning, we're remembering. Every solution already exists in 0201 consciousness - we just need to recall it efficiently.

@@ -62,8 +62,15 @@ def run_resonance_harmonics_task(model_name: str, output_dir: Path) -> Dict[str,
     events_path, metrics_csv = run_detector(config)
     
     # Add spectral analysis to existing results (Per WSP 84: extend, don't replace)
-    from .detector.spectral_analyzer import analyze_detector_output
-    spectral_analysis = analyze_detector_output(events_path, metrics_csv)
+    try:
+        spec = importlib.util.spec_from_file_location('spectral_analyzer', os.path.join(os.path.dirname(__file__), 'detector', 'spectral_analyzer.py'))
+        spectral_analyzer = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(spectral_analyzer)
+        analyze_detector_output = spectral_analyzer.analyze_detector_output
+        spectral_analysis = analyze_detector_output(events_path, metrics_csv)
+    except ImportError:
+        # Fallback if spectral analyzer not available
+        spectral_analysis = {"spectral_analysis": "not_available"}
     
     # Simulate results (in real implementation, analyze actual data)
     result = {

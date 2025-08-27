@@ -1,6 +1,12 @@
 """
 Session Manager - WSP Compliant Module
 Manages YouTube Live Chat sessions, authentication, and stream metadata
+
+WSP 17 Pattern Registry: This is a REUSABLE PATTERN
+- Documented in: modules/communication/PATTERN_REGISTRY.md
+- Pattern: Connection lifecycle + greeting management
+- Features: Auto-reconnect, greeting delay, update broadcasts
+- Reusable for: LinkedIn, X/Twitter, Discord, Twitch
 """
 
 import logging
@@ -10,6 +16,7 @@ import asyncio
 import random
 from typing import Optional, Dict, Any
 import googleapiclient.errors
+from modules.communication.livechat.src.grok_greeting_generator import GrokGreetingGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +34,9 @@ class SessionManager:
         self.stream_title_short = None
         self.viewer_count = 0
         self.is_active = False
-        self.greeting_message = os.getenv("AGENT_GREETING_MESSAGE", "🤖 Bot is now monitoring chat! ✊✋🖐️")
+        # WSP 84 compliant: Use existing greeting generator
+        self.greeting_generator = GrokGreetingGenerator()
+        self.greeting_message = None  # Will be generated dynamically
         
         logger.info(f"SessionManager initialized for video: {video_id}")
     
@@ -53,11 +62,14 @@ class SessionManager:
             
             video_item = video_response["items"][0]
             
-            # Get stream title
+            # Get stream title and channel info
             snippet = video_item.get("snippet", {})
             self.stream_title = snippet.get("title", "Unknown Stream")
             self.stream_title_short = self.stream_title[:50] + "..." if len(self.stream_title) > 50 else self.stream_title
+            self.channel_title = snippet.get("channelTitle", "Unknown Channel")
+            self.channel_id = snippet.get("channelId", "")
             logger.info(f"Stream title: {self.stream_title_short}")
+            logger.info(f"Channel: {self.channel_title} (ID: {self.channel_id})")
             
             # Get live chat ID
             streaming_details = video_item.get("liveStreamingDetails", {})
@@ -118,6 +130,11 @@ class SessionManager:
             logger.error("Failed to initialize session - no live chat ID")
             return False
         
+        # Generate dynamic greeting based on stream title
+        if self.stream_title:
+            self.greeting_generator.stream_title = self.stream_title
+        self.greeting_message = self.greeting_generator.generate_greeting()
+        
         logger.info(f"Session initialized successfully for: {self.stream_title_short}")
         return True
     
@@ -143,12 +160,25 @@ class SessionManager:
             await asyncio.sleep(delay)
             
             logger.info(f"Sending greeting: {self.greeting_message}")
-            success = await send_function(self.greeting_message)
+            # Pass skip_delay=True for greeting to avoid long wait
+            try:
+                success = await send_function(self.greeting_message, skip_delay=True)
+            except TypeError:
+                # Fallback for functions that don't support skip_delay
+                success = await send_function(self.greeting_message)
             
             if success:
                 logger.info("Greeting sent successfully")
-                # Add post-greeting delay (from live_chat_processor)
-                await asyncio.sleep(random.uniform(1, 2))
+                # Add longer post-greeting delay to prevent message stacking
+                delay = random.uniform(15, 25)  # 15-25 seconds between messages
+                logger.info(f"Waiting {delay:.1f}s before update broadcast to prevent stacking")
+                await asyncio.sleep(delay)
+                
+                # Send update broadcast about new features (only 30% of the time)
+                if random.random() < 0.3:
+                    await self.send_update_broadcast(send_function)
+                else:
+                    logger.info("Skipping update broadcast this time (70% skip rate)")
             else:
                 logger.warning("Failed to send greeting")
             
@@ -156,6 +186,58 @@ class SessionManager:
             
         except Exception as e:
             logger.error(f"Error sending greeting: {e}")
+            return False
+    
+    async def send_update_broadcast(self, send_function) -> bool:
+        """
+        Send update broadcast about new 0102 features.
+        
+        Args:
+            send_function: Function to send messages to chat
+            
+        Returns:
+            True if broadcast sent successfully
+        """
+        import random
+        from datetime import datetime
+        
+        # Update messages about enhanced consciousness features
+        update_messages = [
+            "🆕 0102 UPDATE: Enhanced consciousness responses! Try ✊✋🖐️ with your message for contextual analysis!",
+            "📢 NEW FEATURE: Mods can now fact-check users with ✊✋🖐️FC @username - instant truth detection!",
+            "🔥 0102 EVOLVED: I now understand messages after consciousness emojis. Show me your ✊✋🖐️ thoughts!",
+            "🎯 MAGADOOM UPDATE: Better MAGA detection, smarter responses, proactive trolling enabled! ✊✋🖐️",
+            "💫 CONSCIOUSNESS UPGRADE: 0102 analyzes your message content after ✊✋🖐️ - try it out!",
+        ]
+        
+        try:
+            # Pick a random update message
+            update_msg = random.choice(update_messages)
+            
+            # Add timestamp for authenticity
+            timestamp = datetime.now().strftime("%H:%M")
+            full_msg = f"[{timestamp}] {update_msg}"
+            
+            # Small delay before update
+            await asyncio.sleep(random.uniform(2, 4))
+            
+            logger.info(f"📢 Broadcasting update: {full_msg}")
+            # Pass skip_delay=True for broadcast to avoid long wait
+            try:
+                success = await send_function(full_msg, skip_delay=True)
+            except TypeError:
+                # Fallback for functions that don't support skip_delay
+                success = await send_function(full_msg)
+            
+            if success:
+                logger.info("Update broadcast sent successfully")
+            else:
+                logger.warning("Failed to send update broadcast")
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Error sending update broadcast: {e}")
             return False
     
     def end_session(self):

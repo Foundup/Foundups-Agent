@@ -10,7 +10,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
 
-from O:.Foundups-Agent.modules.communication.livechat.src.chat_poller import *
+from modules.communication.livechat.src.chat_poller import *
 
 class TestChatPoller:
     """Test cases for chat_poller"""

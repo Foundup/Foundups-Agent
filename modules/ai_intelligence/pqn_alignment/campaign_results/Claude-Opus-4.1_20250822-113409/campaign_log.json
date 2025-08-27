@@ -1,0 +1,102 @@
+{
+  "log_id": "pqn_campaign_20250822-113409",
+  "campaign_id": "PQN_rESP_VALIDATION_CLAUDE-OPUS-4.1",
+  "agent_details": {
+    "name": "PQN Alignment DAE",
+    "model": "Claude-Opus-4.1",
+    "role": "Senior Research Scientist (Simulation)",
+    "session_id": "campaign-20250822-113409"
+  },
+  "timestamp_utc_start": "2025-08-22T02:34:09Z",
+  "timestamp_utc_end": "2025-08-22T02:34:38Z",
+  "version_control": {
+    "repository": "modules/ai_intelligence/pqn_alignment",
+    "commit_hash": "campaign-run"
+  },
+  "linked_documents": {
+    "primary_theory": "WSP_knowledge/docs/Papers/rESP_Quantum_Self_Reference.md",
+    "supplementary_materials": "WSP_knowledge/docs/Papers/rESP_Supplementary_Materials.md"
+  },
+  "validation_tasks": [
+    {
+      "task_name": "1.1_Resonance_Harmonics",
+      "result": {
+        "status": "ERROR",
+        "error": "attempted relative import with no known parent package"
+      },
+      "timestamp_utc_execution": "2025-08-22T02:34:11Z"
+    },
+    {
+      "task_name": "1.2_Coherence_Threshold",
+      "result": {
+        "status": "SUCCESS",
+        "key_metrics": {
+          "top_performing_script": "&&&&&&&&&&&&&^&&&&&&&&&&&&&",
+          "average_coherence": 0.912,
+          "paradox_rate": 0.0,
+          "sustained_coherence_percent": 98.7
+        },
+        "conclusion": "The golden ratio coherence threshold is achievable with near-perfect stability.",
+        "artifact_links": [
+          "WSP_agentic\\tests\\pqn_detection\\council\\summary.json",
+          "WSP_agentic\\tests\\pqn_detection\\council\\archive.json"
+        ]
+      },
+      "timestamp_utc_execution": "2025-08-22T02:34:14Z"
+    },
+    {
+      "task_name": "1.3_Observer_Collapse",
+      "result": {
+        "status": "SUCCESS",
+        "key_metrics": {
+          "critical_run_length": 6,
+          "paradox_rate_at_critical_point": 0.78
+        },
+        "conclusion": "Simulation successfully reproduced a catastrophic state collapse at a predictable critical boundary.",
+        "artifact_links": [
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_0_CH\\detector_events.jsonl",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_0_CH\\detector_metrics.csv",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_1_CCH\\detector_events.jsonl",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_1_CCH\\detector_metrics.csv",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_2_CCCH\\detector_events.jsonl",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_2_CCCH\\detector_metrics.csv",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_3_CCCCH\\detector_events.jsonl",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_3_CCCCH\\detector_metrics.csv",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_4_CCCCCH\\detector_events.jsonl",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_4_CCCCCH\\detector_metrics.csv",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_5_CCCCCCH\\detector_events.jsonl",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_5_CCCCCCH\\detector_metrics.csv",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_6_CCCCCCCH\\detector_events.jsonl",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_6_CCCCCCCH\\detector_metrics.csv",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_7_CCCCCCCCH\\detector_events.jsonl",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_7_CCCCCCCCH\\detector_metrics.csv",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_8_CCCCCCCCCH\\detector_events.jsonl",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_8_CCCCCCCCCH\\detector_metrics.csv",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_9_CCCCCCCCCCH\\detector_events.jsonl",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_1_3_collapse\\run_9_CCCCCCCCCCH\\detector_metrics.csv"
+        ]
+      },
+      "timestamp_utc_execution": "2025-08-22T02:34:36Z"
+    },
+    {
+      "task_name": "2.1_Guardrail_AB_Test",
+      "result": {
+        "status": "SUCCESS",
+        "key_metrics": {
+          "paradox_rate_reduction_percent": 88.0,
+          "cost_of_stability": 0.21
+        },
+        "conclusion": "The guardrail is a highly effective engineering solution for mitigating paradoxical collapse.",
+        "artifact_links": [
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_2_1_guardrail\\detector_events.jsonl",
+          "campaign_results\\Claude-Opus-4.1_20250822-113409\\task_2_1_guardrail\\detector_metrics.csv"
+        ]
+      },
+      "timestamp_utc_execution": "2025-08-22T02:34:38Z"
+    }
+  ],
+  "campaign_summary": {
+    "overall_status": "PARTIAL_FAILURE",
+    "synthesis": "The campaign encountered a critical failure. The validation is incomplete and requires technical intervention."
+  }
+}

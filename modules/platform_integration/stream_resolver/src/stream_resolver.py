@@ -17,7 +17,7 @@ from typing import Optional, Tuple, Dict, Any
 import googleapiclient.errors
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import Resource
-from modules.infrastructure.oauth_management.src.oauth_manager import get_authenticated_service_with_fallback, get_authenticated_service
+from utils.oauth_manager import get_authenticated_service_with_fallback, get_authenticated_service
 from utils.env_loader import get_env_variable
 import time
 import random
@@ -47,7 +47,7 @@ class StreamResolverConfig:
     def __init__(self):
         # Dynamic rate limiting constants
         self.MIN_DELAY = 5.0  # Minimum delay in seconds (high activity)
-        self.MAX_DELAY = 60.0  # Maximum delay in seconds (low activity)
+        self.MAX_DELAY = 1800.0  # Maximum delay in seconds (30 minutes for idle)
         self.MAX_RETRIES = 3  # maximum number of retries for quota errors
         self.QUOTA_ERROR_DELAY = 30.0  # Fixed delay for quota errors
         self.JITTER_FACTOR = 0.2  # Random jitter factor (±20%)
@@ -142,6 +142,7 @@ def calculate_enhanced_delay(
 ) -> float:
     """
     Enhanced delay calculation with exponential backoff and circuit breaker awareness.
+    Intelligently scales from 5 seconds to 30 minutes based on activity.
     
     Args:
         active_users: Number of active users in chat (0 if unknown)
@@ -155,41 +156,60 @@ def calculate_enhanced_delay(
     if FORCE_DEV_DELAY:
         return 1.0  # Force 1 second delay for fast testing
 
-    # Base delay calculation
-    if active_users > 1000:  # High activity
+    # Progressive delay calculation based on consecutive failures
+    # This creates intelligent throttling that scales to 30 minutes
+    if consecutive_failures == 0:
+        # First check - quick 5 second delay
         base_delay = MIN_DELAY
-    elif active_users > 100:  # Medium activity
-        base_delay = MIN_DELAY * 2
-    elif active_users > 10:  # Low activity
-        base_delay = MIN_DELAY * 4
-    else:  # Very low activity
-        base_delay = MAX_DELAY
+    elif consecutive_failures <= 5:
+        # First 5 failures: 5s -> 10s -> 20s -> 30s -> 45s -> 60s
+        base_delay = MIN_DELAY * (1.5 ** consecutive_failures)
+    elif consecutive_failures <= 10:
+        # Next 5 failures: 90s -> 120s -> 180s -> 240s -> 300s (5 min)
+        base_delay = 60 + (30 * (consecutive_failures - 5))
+    elif consecutive_failures <= 15:
+        # Next 5 failures: 360s -> 480s -> 600s -> 900s -> 1200s (20 min)
+        base_delay = 300 + ((consecutive_failures - 10) * 180)
+    else:
+        # After 15 failures: scale up to 30 minutes (1800s)
+        base_delay = min(1200 + ((consecutive_failures - 15) * 120), MAX_DELAY)
 
-    # Apply exponential backoff for retries
+    # If we have active users (stream is live), override with activity-based delay
+    if active_users > 0:
+        if active_users > 1000:  # High activity
+            base_delay = MIN_DELAY
+        elif active_users > 100:  # Medium activity
+            base_delay = MIN_DELAY * 2
+        elif active_users > 10:  # Low activity
+            base_delay = MIN_DELAY * 4
+        else:  # Very low activity but stream exists
+            base_delay = 30  # Check every 30 seconds when stream is quiet
+
+    # Apply exponential backoff for API errors/retries
     if retry_count > 0:
         backoff_multiplier = config.EXPONENTIAL_BACKOFF_BASE ** retry_count
         base_delay *= backoff_multiplier
         base_delay = min(base_delay, config.MAX_BACKOFF_DELAY)
 
-    # Increase delay based on consecutive failures
-    if consecutive_failures > 0:
-        failure_multiplier = 1 + (consecutive_failures * 0.5)  # 50% increase per failure
-        base_delay *= failure_multiplier
-        base_delay = min(base_delay, MAX_DELAY * 2)  # Cap at 2x MAX_DELAY
-
-    # Smooth transitions using previous delay
-    if previous_delay is not None:
+    # Smooth transitions using previous delay to prevent jarring changes
+    if previous_delay is not None and previous_delay > 0:
+        # Weighted average: 70% previous, 30% new for smooth transitions
         smoothing_factor = 0.3
-        base_delay = (base_delay * smoothing_factor) + (previous_delay * (1 - smoothing_factor))
+        base_delay = (base_delay * smoothing_factor) + (previous_delay * 0.7)
 
-    # Add random jitter for human-like behavior
+    # Add random jitter for human-like behavior (prevents synchronized requests)
     jitter = base_delay * JITTER_FACTOR
     delay = base_delay + random.uniform(-jitter, jitter)
     
     # Ensure delay stays within bounds
     delay = max(MIN_DELAY, min(delay, MAX_DELAY))
     
-    logger.debug(f"Enhanced delay: {delay:.1f}s (base: {base_delay:.1f}s, users: {active_users}, failures: {consecutive_failures}, retry: {retry_count})")
+    # Log the delay calculation for transparency
+    if delay >= 60:
+        logger.info(f"⏰ Intelligent throttle: {delay/60:.1f} minutes (failures: {consecutive_failures}, retry: {retry_count})")
+    else:
+        logger.debug(f"⏰ Delay: {delay:.1f}s (failures: {consecutive_failures}, retry: {retry_count})")
+    
     return delay
 
 def mask_sensitive_id(id_str: str, id_type: str = "default") -> str:
@@ -269,7 +289,7 @@ def check_video_details_enhanced(
         A dictionary containing the video details if found, None otherwise
     """
     # Input validation
-    if not video_id or not isinstance(video_id, (str,)):
+    if not video_id or not isinstance(video_id, str):
         logger.error("Invalid video ID provided")
         return None
     
@@ -333,7 +353,8 @@ def check_video_details_enhanced(
         return None
         
     except googleapiclient.errors.HttpError as e:
-        if e.resp.status == 403 and "quotaExceeded" in str(e):
+        error_content = e.content.decode() if hasattr(e, 'content') and e.content else str(e)
+        if e.resp.status == 403 and "quotaExceeded" in error_content:
             logger.info(f"Quota exceeded error: {str(e)}")
             if retry_count < MAX_RETRIES:
                 logger.warning(f"Quota exceeded (attempt {retry_count + 1}/{MAX_RETRIES})")
@@ -343,7 +364,8 @@ def check_video_details_enhanced(
                     fallback_key = get_env_variable("YOUTUBE_API_KEY2")
                     if fallback_key:
                         # Build a minimal fallback response shape expected by tests
-                        return {"items": [{"id": video_id, "snippet": {"title": "Fallback Video"}}]}
+                        # Return single video data, not items array
+                        return {"id": video_id, "snippet": {"title": "Fallback Video"}}
                 except Exception:
                     pass
                 return None
@@ -432,7 +454,7 @@ def search_livestreams_enhanced(
                 logger.info(f"Found {event_type} stream: {title} (ID: {mask_sensitive_id(video_id, 'video')}, Published: {published_at})")
                 
                 # Additional validation - check if the stream is actually live/upcoming
-                video_details = check_video_details_enhanced(youtube_client, video_id)
+                video_details = check_video_details(youtube_client, video_id)
                 if video_details and "liveStreamingDetails" in video_details:
                     return video_id
                 else:
@@ -443,7 +465,8 @@ def search_livestreams_enhanced(
         return None
         
     except HttpError as e:
-        if "quotaExceeded" in str(e) and retry_count < MAX_RETRIES:
+        error_content = e.content.decode() if hasattr(e, 'content') and e.content else str(e)
+        if "quotaExceeded" in error_content and retry_count < MAX_RETRIES:
             logger.warning(f"Quota exceeded for {event_type} search (attempt {retry_count + 1}/{MAX_RETRIES})")
             # Backoff only; tests expect raising when at max, not rotation here
             quota_delay = QUOTA_ERROR_DELAY * (config.EXPONENTIAL_BACKOFF_BASE ** retry_count)
@@ -455,7 +478,7 @@ def search_livestreams_enhanced(
                 logger.info("Operation interrupted by user")
                 return None
             return search_livestreams_enhanced(youtube_client, event_type, retry_count + 1, quota_delay, consecutive_failures)
-        elif "quotaExceeded" in str(e) and retry_count >= MAX_RETRIES:
+        elif "quotaExceeded" in error_content and retry_count >= MAX_RETRIES:
             logger.error(f"Max retries ({MAX_RETRIES}) reached for quota errors")
             raise QuotaExceededError("Quota exceeded after maximum retries")
         else:
@@ -496,7 +519,7 @@ def get_active_livestream_video_id_enhanced(
         logger.info(f"Using override video ID from environment: {mask_sensitive_id(env_video_id, 'video')}")
         
         try:
-            video_details = check_video_details_enhanced(youtube_client, env_video_id)
+            video_details = check_video_details(youtube_client, env_video_id)
             if video_details and "liveStreamingDetails" in video_details:
                 live_chat_id = video_details["liveStreamingDetails"].get("activeLiveChatId")
                 if live_chat_id:
@@ -522,7 +545,7 @@ def get_active_livestream_video_id_enhanced(
             # Search for active livestream first (higher priority)
             logger.debug(f"Search attempt {search_attempts}/{max_search_attempts}")
             
-            video_id = search_livestreams_enhanced(
+            video_id = search_livestreams(
                 youtube_client, 
                 event_type="live", 
                 previous_delay=previous_delay, 
@@ -530,7 +553,7 @@ def get_active_livestream_video_id_enhanced(
             )
             
             if video_id:
-                video_details = check_video_details_enhanced(youtube_client, video_id)
+                video_details = check_video_details(youtube_client, video_id)
                 if video_details and "liveStreamingDetails" in video_details:
                     live_chat_id = video_details["liveStreamingDetails"].get("activeLiveChatId")
                     if live_chat_id:
@@ -540,7 +563,7 @@ def get_active_livestream_video_id_enhanced(
                         logger.debug("Active livestream found but no chat ID available")
 
             # If no active livestream, check for upcoming streams
-            video_id = search_livestreams_enhanced(
+            video_id = search_livestreams(
                 youtube_client, 
                 event_type="upcoming", 
                 previous_delay=previous_delay, 
@@ -548,7 +571,7 @@ def get_active_livestream_video_id_enhanced(
             )
             
             if video_id:
-                video_details = check_video_details_enhanced(youtube_client, video_id)
+                video_details = check_video_details(youtube_client, video_id)
                 if video_details and "liveStreamingDetails" in video_details:
                     live_chat_id = video_details["liveStreamingDetails"].get("activeLiveChatId")
                     if live_chat_id:
@@ -872,7 +895,7 @@ if __name__ == '__main__':
         
         service = get_authenticated_service_with_fallback()
         if service:
-            result = get_active_livestream_video_id_enhanced(service, test_channel_id)
+            result = get_active_livestream_video_id(service, test_channel_id)
             if result:
                 video_id, chat_id = result
                 print(f"Success! Found livestream: {mask_sensitive_id(video_id, 'video')}")

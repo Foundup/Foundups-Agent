@@ -17,13 +17,21 @@ logger = logging.getLogger(__name__)
 class ChatPoller:
     """Handles polling YouTube Live Chat API for new messages."""
     
-    def __init__(self, youtube_service, live_chat_id):
+    def __init__(self, youtube_service, live_chat_id, channel_name=None, channel_id=None):
         self.youtube = youtube_service
         self.live_chat_id = live_chat_id
+        self.channel_name = channel_name or "StreamOwner"
+        self.channel_id = channel_id or "owner"
         self.next_page_token = None
         self.poll_interval_ms = 10000  # Default: 10 seconds
         self.error_backoff_seconds = 5  # Initial backoff for errors
         self.max_backoff_seconds = 60  # Maximum backoff time
+        self.first_poll = True  # Track if this is the first poll
+        self.connection_time = None  # Track when we connected
+        
+        # Deduplication tracking - prevent counting same timeout multiple times
+        self.seen_event_ids = set()  # Track event IDs we've already processed
+        self.event_dedup_window = {}  # Track recent events by key for deduplication
         
     async def poll_messages(self, viewer_count: int = 100) -> List[Dict[str, Any]]:
         """
@@ -46,9 +54,136 @@ class ChatPoller:
             # Reset error backoff on success
             self.error_backoff_seconds = 5
             
-            messages = response.get("items", [])
+            items = response.get("items", [])
+            messages = []
+            
+            for item in items:
+                if "snippet" in item:
+                    snippet = item["snippet"]
+                    author = item.get("authorDetails", {})
+                    event_type = snippet.get("type")
+                    
+                    # Handle moderation events (bans/timeouts)
+                    if event_type == "messageDeletedEvent":
+                        deleted_details = snippet.get("messageDeletedDetails", {})
+                        # authorDetails should contain the moderator who deleted the message
+                        moderator_name = author.get("displayName", self.channel_name) if author else self.channel_name
+                        moderator_id = author.get("channelId", self.channel_id) if author else self.channel_id
+                        # The deleted message text contains the target info
+                        deleted_text = deleted_details.get("deletedMessageText", "")
+                        target_name = "MAGAT"  # We don't know who was deleted from this event
+                        published_at = snippet.get("publishedAt", "")
+                        
+                        # Skip old events on first poll (historical data)
+                        if self.first_poll:
+                            logger.debug(f"⏭️ Skipping historical timeout: {target_name}")
+                        else:
+                            logger.info(f"🔨 TIMEOUT EVENT DETECTED! Target: {target_name} by {moderator_name}")
+                            messages.append({
+                                "type": "timeout_event",
+                                "deleted_text": deleted_text,
+                                "target_name": target_name,
+                                "target_channel_id": "",  # We don't know the target's channel ID
+                                # Use the moderator info from authorDetails
+                                "moderator_name": moderator_name,  
+                                "moderator_id": moderator_id,
+                                "duration_seconds": 10,  # Message deletion is typically 10s timeout
+                                "published_at": published_at,
+                                "is_live": True  # This is a live timeout
+                            })
+                    elif event_type == "userBannedEvent":
+                        ban_details = snippet.get("userBannedDetails", {})
+                        banned_user = ban_details.get("bannedUserDetails", {})
+                        target_name = banned_user.get("displayName", "MAGAT")
+                        published_at = snippet.get("publishedAt", "")
+                        
+                        # Create deduplication key
+                        event_id = item.get("id", "")
+                        mod_id = author.get("channelId", self.channel_id) if author else self.channel_id
+                        mod_name = author.get("displayName", self.channel_name) if author else self.channel_name
+                        target_id = banned_user.get("channelId", "")
+                        dedup_key = f"{mod_id}:{target_id}:{published_at}"
+                        
+                        # Skip if we've already processed this exact event
+                        if event_id and event_id in self.seen_event_ids:
+                            logger.debug(f"⏭️ Skipping duplicate ban event ID: {event_id}")
+                            continue
+                        
+                        # Skip if we've seen this EXACT mod/target/time combo recently (within 0.5 seconds)
+                        # This prevents true duplicates but allows rapid-fire timeouts on same target
+                        current_time = time.time()
+                        if dedup_key in self.event_dedup_window:
+                            if current_time - self.event_dedup_window[dedup_key] < 0.5:
+                                logger.debug(f"⏭️ Skipping duplicate ban: {mod_name} → {target_name} (exact same timestamp)")
+                                continue
+                            else:
+                                # Same target but different time - this is a multi-whack!
+                                logger.info(f"🔥 RAPID TIMEOUT: {mod_name} → {target_name} again!")
+                        
+                        # Mark as seen
+                        if event_id:
+                            self.seen_event_ids.add(event_id)
+                        self.event_dedup_window[dedup_key] = current_time
+                        
+                        # Clean old dedup entries (older than 60 seconds)
+                        self.event_dedup_window = {k: v for k, v in self.event_dedup_window.items() 
+                                                  if current_time - v < 60}
+                        
+                        # Skip old events on first poll (historical data)
+                        if self.first_poll:
+                            logger.debug(f"⏭️ Skipping historical ban: {target_name}")
+                        else:
+                            # Log the ban with clear details
+                            duration = ban_details.get("banDurationSeconds", 0)
+                            is_perm = ban_details.get("banType") == "permanent"
+                            ban_type = "PERMABAN" if is_perm else f"{duration}s timeout"
+                            logger.info(f"🎯 FRAG: {mod_name} → {target_name} ({ban_type})")
+                            
+                            # Track unique targets for multi-whack detection
+                            if not hasattr(self, 'recent_targets'):
+                                self.recent_targets = {}
+                            
+                            mod_targets_key = f"{mod_id}:{current_time//10}"  # Group by 10-second windows
+                            if mod_targets_key not in self.recent_targets:
+                                self.recent_targets[mod_targets_key] = set()
+                            self.recent_targets[mod_targets_key].add(target_name)
+                            
+                            # Log if this is part of a multi-whack
+                            target_count = len(self.recent_targets[mod_targets_key])
+                            if target_count > 1:
+                                logger.info(f"🔥 MULTI-WHACK: {mod_name} has {target_count} frags in 10s!")
+                            
+                            # Debug: Show all frags in this window
+                            logger.debug(f"📊 {mod_name}'s 10s window: {self.recent_targets[mod_targets_key]}")
+                            messages.append({
+                                "type": "ban_event",
+                                "target_name": target_name,
+                                "target_channel_id": target_id,
+                                # Use the deduplicated moderator info
+                                "moderator_name": mod_name,
+                                "moderator_id": mod_id,
+                                "is_permanent": ban_details.get("banType") == "permanent",  
+                                "duration_seconds": ban_details.get("banDurationSeconds", 0),
+                                "published_at": published_at,
+                                "is_live": True  # This is a live ban
+                            })
+                    else:
+                        # Regular chat message - skip historical messages on first poll
+                        if self.first_poll:
+                            logger.debug(f"⏭️ Skipping historical message on first poll")
+                        else:
+                            # Return full item for processing
+                            messages.append(item)
+            
+            # After first poll, mark as no longer first
+            if self.first_poll:
+                self.first_poll = False
+                self.connection_time = time.time()
+                if messages:
+                    logger.info(f"📊 Ignoring {len(messages)} historical events from before connection")
+            
             if messages:
-                logger.debug(f"📨 Received {len(messages)} new messages")
+                logger.debug(f"📨 Received {len(messages)} new items")
             else:
                 logger.debug("📭 No new messages")
                 
@@ -64,11 +199,17 @@ class ChatPoller:
     
     async def _make_api_call(self) -> Dict[str, Any]:
         """Make the actual API call to get chat messages."""
-        return self.youtube.liveChatMessages().list(
-            liveChatId=self.live_chat_id,
-            part="snippet,authorDetails",
-            pageToken=self.next_page_token
-        ).execute()
+        # Run the synchronous API call in a thread to avoid blocking
+        import asyncio
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None,
+            lambda: self.youtube.liveChatMessages().list(
+                liveChatId=self.live_chat_id,
+                part="snippet,authorDetails",
+                pageToken=self.next_page_token
+            ).execute()
+        )
     
     def _update_polling_interval(self, response: Dict[str, Any], viewer_count: int):
         """Update polling interval based on server response and viewer count."""

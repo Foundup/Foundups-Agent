@@ -10,7 +10,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
 
-from O:.Foundups-Agent.modules.communication.livechat.src.llm_bypass_engine import *
+from modules.communication.livechat.src.llm_bypass_engine import *
 
 class TestLlmBypassEngine:
     """Test cases for llm_bypass_engine"""

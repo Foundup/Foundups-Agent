@@ -49,6 +49,8 @@ patterns = {
 
 ## WSP Compliance
 Documentation protocols:
+- WSP 17: Pattern registry (check PATTERN_REGISTRY.md before patterns)
+- WSP 84: Code memory verification (anti-vibecoding)
 - WSP 22: ModLog and roadmap
 - WSP 57: Naming coherence
 - WSP 49: Module structure

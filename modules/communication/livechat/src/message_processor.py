@@ -3,28 +3,81 @@ Message Processor Component
 
 Handles message processing, emoji detection, and response generation.
 Separated from the main LiveChatListener for better maintainability.
+
+WSP 17 Pattern Registry: This is a REUSABLE PATTERN
+- Documented in: modules/communication/PATTERN_REGISTRY.md
+- Pattern: Multi-stage message processing pipeline
+- Stages: Rate limit → Command detection → Consciousness → Response generation → Throttle
+- Reusable for: LinkedIn, X/Twitter, Discord, Twitch
 """
 
 import logging
 import time
 import os
+import re
 from typing import Dict, Any, Optional, List, Tuple
 from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
 from modules.communication.livechat.src.llm_bypass_engine import LLMBypassEngine
 from modules.ai_intelligence.banter_engine.src.emoji_sequence_map import EMOJI_TO_NUMBER as EMOJI_TO_NUM
+from modules.communication.livechat.src.grok_integration import GrokIntegration
+from modules.communication.livechat.src.consciousness_handler import ConsciousnessHandler
+from modules.ai_intelligence.banter_engine.src.agentic_sentiment_0102 import AgenticSentiment0102
+from modules.communication.livechat.src.event_handler import EventHandler
+from modules.communication.livechat.src.command_handler import CommandHandler
+from modules.communication.livechat.src.grok_greeting_generator import GrokGreetingGenerator
+from modules.gamification.whack_a_magat.src.self_improvement import MAGADOOMSelfImprovement
+from modules.communication.livechat.src.agentic_chat_engine import AgenticChatEngine
 
 logger = logging.getLogger(__name__)
 
 class MessageProcessor:
     """Handles processing of chat messages and generating responses."""
     
-    def __init__(self):
+    def __init__(self, youtube_service=None, memory_manager=None):
+        self.youtube_service = youtube_service
+        self.memory_manager = memory_manager  # WSP-compliant hybrid storage
         self.banter_engine = BanterEngine()
         self.llm_bypass_engine = LLMBypassEngine()
         self.trigger_emojis = ["✊", "✋", "🖐️"]  # Configurable emoji trigger set
         self.last_trigger_time = {}  # Track last trigger time per user
         self.trigger_cooldown = 60  # Cooldown period in seconds
         self.memory_dir = "memory"
+        # Consciousness response mode: 'mod_only' or 'everyone' (default: mod_only)
+        self.consciousness_mode = 'mod_only'
+        # Initialize handlers (WSP-compliant separation)
+        self.event_handler = EventHandler(self.memory_dir)
+        self.command_handler = CommandHandler(self.event_handler.get_timeout_manager(), self)
+        # WSP 84 compliant: Use existing modules, not duplicate code
+        self.greeting_generator = GrokGreetingGenerator()
+        self.self_improvement = MAGADOOMSelfImprovement()
+        
+        # Initialize Grok and consciousness handlers FIRST
+        # Try to get LLMConnector for Grok, otherwise use simple fact checker
+        try:
+            from modules.ai_intelligence.rESP_o1o2.src.llm_connector import LLMConnector
+            # Check for Grok/xAI API key
+            if os.environ.get("GROK_API_KEY") or os.environ.get("XAI_API_KEY"):
+                # Use Grok 3 - latest flagship model with enhanced consciousness capabilities
+                llm_connector = LLMConnector(model="grok-3")  
+                self.grok = GrokIntegration(llm_connector)
+                logger.info("✅ Grok 3 LLM integration initialized - 0102 consciousness online!")
+            else:
+                logger.warning("No Grok API key found, using SimpleFactChecker fallback")
+                from modules.communication.livechat.src.simple_fact_checker import SimpleFactChecker
+                self.simple_fact_checker = SimpleFactChecker(self.memory_dir)
+                self.grok = None
+        except Exception as e:
+            logger.warning(f"Could not initialize Grok LLM: {e}, using SimpleFactChecker")
+            # Fallback to simple fact checker
+            from modules.communication.livechat.src.simple_fact_checker import SimpleFactChecker
+            self.simple_fact_checker = SimpleFactChecker(self.memory_dir)
+            self.grok = None
+            
+        self.sentiment_engine = AgenticSentiment0102()
+        self.consciousness = ConsciousnessHandler(self.sentiment_engine, self.grok)
+        
+        # Now initialize agentic engine with consciousness handler and memory manager
+        self.agentic_engine = AgenticChatEngine(self.memory_dir, self.consciousness, memory_manager)
         
         # Ensure memory directory exists
         os.makedirs(self.memory_dir, exist_ok=True)
@@ -40,6 +93,26 @@ class MessageProcessor:
         Returns:
             Processed message data with additional metadata
         """
+        # Handle timeout/ban events
+        if message.get("type") == "timeout_event":
+            return self._handle_timeout_event(message)
+        elif message.get("type") == "ban_event":
+            return self._handle_ban_event(message)
+        
+        # Debug: Log message structure
+        if isinstance(message, dict) and "snippet" in message:
+            snippet = message.get("snippet", {})
+            text = snippet.get("displayMessage", "")
+            if text and text.startswith('/'):
+                logger.info(f"🎮 Processing slash command message: {text}")
+        
+        # Handle regular messages - check if it's a raw YouTube API message
+        if "snippet" in message and "authorDetails" in message:
+            # This is a raw YouTube API message, process it
+            pass
+        elif message.get("type") != "message":
+            return {"skip": True}
+        
         try:
             snippet = message.get("snippet", {})
             author_details = message.get("authorDetails", {})
@@ -51,9 +124,32 @@ class MessageProcessor:
             author_id = author_details.get("channelId", "")
             published_at = snippet.get("publishedAt", "")
             
+            # CRITICAL: Never respond to self (prevent infinite loops)
+            BOT_CHANNEL_IDS = [
+                "UCfHM9Fw9HD-NwiS0seD_oIA",  # UnDaoDu bot account
+                # Add other bot account IDs here if using multiple
+            ]
+            
+            if author_id in BOT_CHANNEL_IDS:
+                logger.debug(f"🤖 Ignoring self-message from {author_name}")
+                return {"skip": True, "reason": "self-message"}
+            
             # Check for emoji triggers
             has_trigger = self._check_trigger_patterns(message_text)
             is_rate_limited = self._is_rate_limited(author_id) if has_trigger else False
+            
+            # Check for consciousness commands
+            has_consciousness = self.consciousness.has_consciousness_emojis(message_text)
+            
+            # Check for fact-check commands
+            has_factcheck = self._check_factcheck_command(message_text)
+            
+            # Check for whack commands (score, level, rank, etc)
+            has_whack_command = self._check_whack_command(message_text)
+            
+            # Check for MAGA content (WSP: use existing detector)
+            maga_response = self.greeting_generator.get_response_to_maga(message_text)
+            has_maga = maga_response is not None
             
             processed_message = {
                 "message_id": message_id,
@@ -63,6 +159,13 @@ class MessageProcessor:
                 "published_at": published_at,
                 "has_trigger": has_trigger,
                 "is_rate_limited": is_rate_limited,
+                "has_consciousness": has_consciousness,
+                "has_factcheck": has_factcheck,
+                "has_whack_command": has_whack_command,
+                "has_maga": has_maga,
+                "is_moderator": author_details.get("isChatModerator", False),
+                "is_owner": author_details.get("isChatOwner", False),
+                "live_chat_id": snippet.get("liveChatId"),  # Add for MAGADOOM timeouts
                 "raw_message": message
             }
             
@@ -120,36 +223,126 @@ class MessageProcessor:
         Returns:
             Response text or None if no response should be generated
         """
-        if not processed_message.get("has_trigger"):
-            return None
-        
-        if processed_message.get("is_rate_limited"):
-            logger.debug(f"⏳ User {processed_message['author_name']} is rate limited")
-            return None
-        
         message_text = processed_message.get("text", "")
         author_name = processed_message.get("author_name", "Unknown")
         author_id = processed_message.get("author_id", "")
+        is_mod = processed_message.get("is_moderator", False)
+        is_owner = processed_message.get("is_owner", False)
+        
+        # Determine role
+        role = 'OWNER' if is_owner else 'MOD' if is_mod else 'USER'
+        
+        # WSP 48: Self-improvement through observation
+        if role in ['MOD', 'OWNER']:
+            # Learn from mod/owner patterns
+            self.self_improvement.observe_command(message_text, 1.0)
         
         try:
-            # Update trigger time for rate limiting
-            self._update_trigger_time(author_id)
+            # Priority 1: AGENTIC consciousness response (mod/owner only by default)
+            if processed_message.get("has_consciousness"):
+                logger.info(f"🔍 CONSCIOUSNESS TRIGGER ✊✋🖐 from {author_name} | Role: {role} | Is Owner: {is_owner} | Is Mod: {is_mod}")
+                # Check if user has permission based on mode
+                can_use_consciousness = (
+                    self.consciousness_mode == 'everyone' or 
+                    role in ['MOD', 'OWNER']
+                )
+                logger.info(f"   Can use consciousness: {can_use_consciousness} (mode: {self.consciousness_mode})")
+                
+                if can_use_consciousness:
+                    # Generate agentic response based on chat history
+                    agentic_response = self.agentic_engine.generate_agentic_response(
+                        author_name, message_text, role
+                    )
+                    
+                    if agentic_response:
+                        logger.info(f"🤖 Agentic ✊✋🖐️ response for {author_name} (mode: {self.consciousness_mode})")
+                        # Mark this as a consciousness response in processed data
+                        processed_message["response_type"] = "consciousness"
+                        # If it's a mod, make sure we @ them
+                        if role in ['MOD', 'OWNER'] and not agentic_response.startswith('@'):
+                            agentic_response = f"@{author_name} {agentic_response}"
+                        return agentic_response
+                    else:
+                        logger.warning(f"⚠️ No agentic response generated for {author_name}'s consciousness trigger")
+                else:
+                    logger.debug(f"✊✋🖐️ ignored from {author_name} - consciousness mode is {self.consciousness_mode}")
+                
+                # Fallback to consciousness handler for special commands (still respects mode)
+                if can_use_consciousness and role in ['MOD', 'OWNER']:
+                    response = self.consciousness.process_consciousness_command(
+                        message_text, author_id, author_name, role
+                    )
+                    if response:
+                        logger.info(f"✊✋🖐 Consciousness command response for {author_name}")
+                        # Mark this as a consciousness response
+                        processed_message["response_type"] = "consciousness"
+                        return response
             
-            # Try banter engine first
-            response = await self._generate_banter_response(message_text, author_name)
+            # Priority 2: Handle fact-check commands
+            if processed_message.get("has_factcheck"):
+                response = await self._handle_factcheck(message_text, author_name, role)
+                if response:
+                    logger.info(f"🔍 Fact-check response for {author_name}")
+                    return response
             
-            if response:
-                logger.info(f"🎭 Generated banter response for {author_name}")
-                return response
+            # Priority 3: Handle whack commands (score, level, rank)
+            if processed_message.get("has_whack_command"):
+                response = self._handle_whack_command(message_text, author_name, author_id, role)
+                if response:
+                    logger.info(f"🎮 Whack command response for {author_name}")
+                    return response
             
-            # Fallback to LLM bypass engine
-            response = await self._generate_fallback_response(message_text, author_name)
+            # Priority 4: Handle MAGA content - just respond with witty comebacks
+            # Bot doesn't execute timeouts, only announces them when mods/owner do them
+            if processed_message.get("has_maga"):
+                response = self.greeting_generator.get_response_to_maga(processed_message.get("text", ""))
+                if response:
+                    # Personalize with username
+                    response = f"@{author_name} {response}"
+                    logger.info(f"🎯 MAGA troll response for {author_name}")
+                    return response
             
-            if response:
-                logger.info(f"🔄 Generated fallback response for {author_name}")
-                return response
+            # Priority 4: Handle regular emoji triggers
+            if processed_message.get("has_trigger"):
+                if processed_message.get("is_rate_limited"):
+                    logger.debug(f"⏳ User {author_name} is rate limited")
+                    return None
+                
+                # Update trigger time for rate limiting
+                self._update_trigger_time(author_id)
+                
+                # Try banter engine first
+                response = await self._generate_banter_response(message_text, author_name)
+                
+                if response:
+                    logger.info(f"🎭 Generated banter response for {author_name}")
+                    return response
+                
+                # Fallback to LLM bypass engine
+                response = await self._generate_fallback_response(message_text, author_name)
+                
+                if response:
+                    logger.info(f"🔄 Generated fallback response for {author_name}")
+                    return response
             
-            logger.warning(f"⚠️ No response generated for {author_name}")
+            # Priority 6: Proactive engagement (REDUCED - too spammy)
+            # Only engage proactively with mods/owner or if directly mentioned
+            import random
+            if role in ['MOD', 'OWNER'] and random.random() < 0.3:  # 30% chance for mods/owner
+                if self.agentic_engine.should_engage(message_text, author_name, role):
+                    proactive_response = self.agentic_engine.generate_agentic_response(
+                        author_name, message_text, role
+                    )
+                    if proactive_response:
+                        logger.info(f"💬 Proactive engagement with {author_name}")
+                        return proactive_response
+            
+            # Priority 7: Check for top whacker greeting (only if no other response)
+            whacker_greeting = self.greeting_generator.generate_whacker_greeting(author_name, author_id, role)
+            if whacker_greeting:
+                logger.info(f"🏆 Greeting top whacker {author_name}")
+                return whacker_greeting
+            
             return None
             
         except Exception as e:
@@ -233,12 +426,62 @@ class MessageProcessor:
             user_file = os.path.join(self.memory_dir, f"{safe_author_name}.txt")
             
             with open(user_file, "a", encoding="utf-8") as f:
-                f.write(f"[{published_at}] {author_name}: {message_text}\n")
+                # Store author name and message (no timestamp needed)
+                f.write(f"{author_name}: {message_text}\n")
             
             logger.debug(f"📝 Logged message to {user_file}")
             
         except Exception as e:
             logger.error(f"❌ Error logging message to file: {e}")
+    
+    def _check_factcheck_command(self, text: str) -> bool:
+        """Check if message contains fact-check command."""
+        pattern = r'(?:factcheck|fc)\s+@[\w\s]+'
+        return bool(re.search(pattern, text.lower()))
+    
+    def _check_whack_command(self, text: str) -> bool:
+        """Check if message contains whack gamification commands."""
+        commands = [
+            '/score', '/level', '/rank', '/stats', '/leaderboard', '/frags', '/whacks', 
+            '/help', '/quiz', '/answer', '/facts', '/fscale', '/rate', '/sprees', '/toggle'
+        ]
+        text_lower = text.lower().strip()
+        has_command = any(text_lower.startswith(cmd) for cmd in commands)
+        if has_command:
+            logger.info(f"🎮 Detected whack command: {text_lower}")
+        return has_command
+    
+    async def _handle_factcheck(self, text: str, requester: str, role: str) -> Optional[str]:
+        """Handle fact-check commands."""
+        # Extract target username
+        pattern = r'(?:factcheck|fc)\s+@([\w\s]+?)(?:\s|$)'
+        match = re.search(pattern, text.lower())
+        
+        if match:
+            target = match.group(1).strip()
+            # Extract emoji sequence if present
+            emoji_seq = self.consciousness.extract_emoji_sequence(text)
+            
+            # Try Grok first, then fallback to simple fact checker
+            if self.grok:
+                return self.grok.fact_check(target, role, emoji_seq)
+            elif hasattr(self, 'simple_fact_checker'):
+                return self.simple_fact_checker.fact_check(target, requester, role, emoji_seq)
+            else:
+                return f"@{requester} Fact-checking temporarily unavailable"
+        return None
+    
+    def _handle_whack_command(self, text: str, username: str, user_id: str, role: str) -> Optional[str]:
+        """Delegate whack command handling to CommandHandler."""
+        return self.command_handler.handle_whack_command(text, username, user_id, role)
+    
+    def _handle_timeout_event(self, event: Dict[str, Any]) -> Dict[str, Any]:
+        """Delegate timeout event handling to EventHandler."""
+        return self.event_handler.handle_timeout_event(event)
+    
+    def _handle_ban_event(self, event: Dict[str, Any]) -> Dict[str, Any]:
+        """Delegate ban event handling to EventHandler."""
+        return self.event_handler.handle_ban_event(event)
     
     def get_processing_stats(self) -> Dict[str, Any]:
         """Get processing statistics."""
@@ -246,5 +489,7 @@ class MessageProcessor:
             "trigger_cooldown": self.trigger_cooldown,
             "active_users": len(self.last_trigger_time),
             "trigger_emojis": self.trigger_emojis,
-            "memory_dir": self.memory_dir
+            "memory_dir": self.memory_dir,
+            "grok_enabled": self.grok is not None,
+            "consciousness_enabled": self.consciousness is not None
         } 

@@ -77,7 +77,7 @@ Core protocols that establish the fundamental architecture and principles.
 | WSP 14 | Modular Audit Protocol | Active | Module auditing and compliance checking | WSP 4, WSP 47 | Compliance checking, audit processes |
 | WSP 15 | Module Prioritization Scoring System | Active | MPS 4-question methodology derived from WSP 25/44 semantic state foundation | WSP 25, WSP 8, WSP 37 | Priority assessment within unified consciousness framework |
 | WSP 16 | Test Audit Coverage | Deprecated → Superseded by WSP 6 | Historical reference only; use WSP 6 for comprehensive test audit | WSP 5, WSP 6 | Do not use for new workflows |
-| WSP 17 | [AVAILABLE SLOT] | Available | This WSP number is available for future use | - | - |
+| WSP 17 | Pattern Registry Protocol | Active | Extension of WSP 84 preventing pattern duplication across modules through mandatory pattern registries | WSP 84, WSP 50 | Pattern discovery, architectural memory |
 | WSP 18 | [AVAILABLE SLOT] | Available | This WSP number is available for future use | - | - |
 | WSP 19 | Canonical Symbols | Active | Symbol and terminology standardization | WSP 20, WSP 57 | Language standards, terminology |
 
@@ -233,8 +233,8 @@ See WSP 48 (Recursive Self-Improvement) and WSP 70 (System Status Reporting) for
 ## 📊 WSP STATUS SUMMARY
 
  - **Total WSPs**: 84 (numbered 1–84)
- - **Active WSPs**: 81 (all except WSP 17, 18, 43)
- - **Available Slots**: 2 (WSP 17, WSP 18)
+ - **Active WSPs**: 82 (all except WSP 18, 43)
+ - **Available Slots**: 1 (WSP 18)
  - **Deprecated WSPs**: 1 (WSP 43 → superseded by WSP 25/44 for emergence/state tracking)
  - **Layers**: Foundation 1–19; Operational 20–39; Advanced 40–59; Memory/Knowledge 60–84
 

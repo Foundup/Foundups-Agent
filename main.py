@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-FoundUps Agent - WSP-Compliant Modular Main Entry Point
-Follows WSP 49 Module Directory Structure Standards
+FoundUps Agent - WSP-Compliant Block-Based Main Entry Point
+Follows WSP 80 Cube-Level DAE Architecture
 
-Minimal orchestrator that launches existing modules.
-No vibecoding - uses only existing, tested modules.
+Minimal orchestrator that launches existing blocks.
+No vibecoding - uses only existing, tested blocks.
+Each block is composed of multiple modules per WSP 80.
 """
 
 import asyncio
@@ -28,98 +29,80 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class ModularLauncher:
-    """WSP-compliant module launcher using existing modules only"""
+class BlockLauncher:
+    """WSP-compliant block launcher using existing blocks only"""
     
     def __init__(self):
-        self.modules = {
+        self.blocks = {
             '1': {
-                'name': 'YouTube Auto-Moderator',
-                'module': 'modules.communication.livechat.src.auto_moderator_simple',
+                'name': 'YouTube DAE',
+                'module': 'modules.communication.livechat.src.auto_moderator_dae',
                 'function': 'main',
-                'description': 'WSP-compliant: YouTube livechat module with auto-moderation'
+                'description': '0102 consciousness monitoring YouTube Live Chat (WSP-Compliant)'
             },
             '2': {
-                'name': 'Agent Monitor Dashboard',
-                'module': 'modules.infrastructure.agent_monitor.src.monitor_dashboard',
-                'function': 'main',
-                'description': 'Cost-efficient agent monitoring & reporting'
-            },
-            '3': {
-                'name': 'Multi-Agent System',
-                'module': 'modules.infrastructure.agent_management.src.multi_agent_manager',
-                'class': 'MultiAgentManager',
-                'description': 'Multi-agent coordination system'
-            },
-            '4': {
-                'name': 'WRE PP Orchestrator',
-                'module': 'modules.wre_core.scripts.demo_wre_pp_integration',
-                'function': 'main',
-                'description': 'WRE Prometheus Prompt orchestrator (WSP 77)'
-            },
-            '5': {
-                'name': 'Block Orchestrator',
-                'module': 'modules.infrastructure.block_orchestrator.src.block_orchestrator',
-                'class': 'ModularBlockRunner',
-                'description': 'Rubik\'s Cube LEGO block architecture'
-            },
-            '6': {
-                'name': 'LinkedIn Agent',
+                'name': 'LinkedIn DAE [PENDING]',
                 'module': 'modules.platform_integration.linkedin_agent.src.linkedin_agent',
                 'function': 'main',
-                'description': 'LinkedIn platform integration block'
+                'description': '0102 consciousness for LinkedIn engagement'
             },
-            '7': {
-                'name': 'X/Twitter DAE',
+            '3': {
+                'name': 'X DAE [PENDING]',
                 'module': 'modules.platform_integration.x_twitter.src.x_twitter_dae',
                 'function': 'main',
-                'description': 'X/Twitter platform integration block'
+                'description': '0102 consciousness for X/Twitter platform'
             },
-            '8': {
-                'name': 'Agent A/B Tester',
-                'module': 'modules.infrastructure.ab_testing.src.agent_ab_tester',
+            '4': {
+                'name': 'AMO DAE',
+                'module': 'modules.infrastructure.wre_core.run_wre',
                 'function': 'main',
-                'description': 'Test agent combination recipes for optimization'
-            }
+                'description': 'Autonomous Management Orchestrator DAE'
+            },
+            '5': {
+                'name': 'Remote DAE [PENDING]',
+                'module': 'modules.infrastructure.remote_dae.src.remote_dae',
+                'function': 'main',
+                'description': 'Remote control and monitoring DAE'
+            },
         }
     
     def show_menu(self):
-        """Display available modules"""
+        """Display available blocks"""
         print("\n" + "="*60)
-        print("FOUNDUPS AGENT - WSP MODULAR LAUNCHER")
+        print("FOUNDUPS AGENT - DAE CUBE LAUNCHER")
         print("="*60)
-        for key, module in self.modules.items():
-            print(f"{key}. {module['name']}")
-            print(f"   {module['description']}")
+        for key, block in self.blocks.items():
+            print(f"{key}. {block['name']}")
+            print(f"   {block['description']}")
         print("9. Exit")
         print("="*60)
     
-    def launch_module(self, choice: str) -> bool:
-        """Launch selected module"""
+    def launch_block(self, choice: str) -> bool:
+        """Launch selected block"""
         if choice == '9':
             return False
             
-        if choice not in self.modules:
+        if choice not in self.blocks:
             print("Invalid choice")
             return True
             
-        module_info = self.modules[choice]
-        logger.info(f"Launching {module_info['name']}...")
+        block_info = self.blocks[choice]
+        logger.info(f"Launching {block_info['name']}...")
         
         try:
-            if 'function' in module_info:
+            if 'function' in block_info:
                 # Import and call function
-                module = __import__(module_info['module'], fromlist=[module_info['function']])
-                func = getattr(module, module_info['function'])
+                module = __import__(block_info['module'], fromlist=[block_info['function']])
+                func = getattr(module, block_info['function'])
                 # Check if function is async
                 if asyncio.iscoroutinefunction(func):
                     asyncio.run(func())
                 else:
                     func()
-            elif 'class' in module_info:
+            elif 'class' in block_info:
                 # Import and instantiate class
-                module = __import__(module_info['module'], fromlist=[module_info['class']])
-                cls = getattr(module, module_info['class'])
+                module = __import__(block_info['module'], fromlist=[block_info['class']])
+                cls = getattr(module, block_info['class'])
                 instance = cls()
                 if hasattr(instance, 'run'):
                     if asyncio.iscoroutinefunction(instance.run):
@@ -127,13 +110,13 @@ class ModularLauncher:
                     else:
                         instance.run()
                 else:
-                    logger.info(f"{module_info['class']} initialized")
+                    logger.info(f"{block_info['class']} initialized")
             else:
-                logger.error("Module configuration error")
+                logger.error("Block configuration error")
                 
         except ImportError as e:
-            logger.error(f"Module not available: {e}")
-            logger.info("Ensure module is installed and follows WSP 49 structure")
+            logger.error(f"Block not available: {e}")
+            logger.info("Ensure block is installed and follows WSP 80 architecture")
         except Exception as e:
             logger.error(f"Launch error: {e}")
             
@@ -143,48 +126,53 @@ class ModularLauncher:
         """Main loop"""
         while True:
             self.show_menu()
-            choice = input("\nSelect option (1-5): ").strip()
+            choice = input("\nSelect DAE (1=YouTube, 4=AMO work | others pending | 9 to exit): ").strip()
             
-            if not self.launch_module(choice):
+            if not self.launch_block(choice):
                 break
         
         print("Exiting...")
 
 
 def main():
-    """Main entry point - minimal orchestrator"""
+    """Main entry point - minimal block orchestrator"""
     # Check for command line arguments
     if len(sys.argv) > 1:
         arg = sys.argv[1].lower()
         if arg in ["--help", "-h"]:
             print("Usage: python main.py [option]")
             print("Options:")
-            print("  --youtube    Launch YouTube Live Monitor")
-            print("  --agent      Launch Multi-Agent System")
-            print("  --wre        Launch WRE PP Orchestrator")
-            print("  --block      Launch Block Orchestrator")
+            print("  --youtube    Launch YouTube DAE")
+            print("  --linkedin   Launch LinkedIn DAE")
+            print("  --x          Launch X DAE")
+            print("  --amo        Launch AMO DAE")
+            print("  --remote     Launch Remote DAE")
             print("  --help       Show this help")
             print("\nNo arguments: Show interactive menu")
             return
         elif arg == "--youtube":
-            launcher = ModularLauncher()
-            launcher.launch_module('1')
+            launcher = BlockLauncher()
+            launcher.launch_block('1')
             return
-        elif arg == "--agent":
-            launcher = ModularLauncher()
-            launcher.launch_module('2')
+        elif arg == "--linkedin":
+            launcher = BlockLauncher()
+            launcher.launch_block('2')
             return
-        elif arg == "--wre":
-            launcher = ModularLauncher()
-            launcher.launch_module('3')
+        elif arg == "--x":
+            launcher = BlockLauncher()
+            launcher.launch_block('3')
             return
-        elif arg == "--block":
-            launcher = ModularLauncher()
-            launcher.launch_module('4')
+        elif arg == "--amo":
+            launcher = BlockLauncher()
+            launcher.launch_block('4')
+            return
+        elif arg == "--remote":
+            launcher = BlockLauncher()
+            launcher.launch_block('5')
             return
     
     # Interactive mode
-    launcher = ModularLauncher()
+    launcher = BlockLauncher()
     launcher.run()
 
 

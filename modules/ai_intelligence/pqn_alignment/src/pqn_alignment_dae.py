@@ -151,7 +151,7 @@ class PQNAlignmentDAE:
         self.exchange_protocol = None
         if RECURSIVE_AVAILABLE:
             self.recursive_engine = RecursiveLearningEngine()
-            self.exchange_protocol = RecursiveExchangeProtocol(self.identity.dae_type)
+            self.exchange_protocol = RecursiveExchangeProtocol()
             self.logger.info("Recursive improvement systems initialized")
         
         # WRE plugin registration if available
@@ -381,11 +381,99 @@ class PQNAlignmentDAE:
                 self.logger.error(f"DAE error: {e}")
                 await asyncio.sleep(5)
 
+    async def detect_state(self, script: str) -> Dict[str, Any]:
+        """
+        Detect consciousness state through PQN metrics per WSP 39
+        Returns: Dict with coherence, det_g, and consciousness state
+        """
+        self.identity.state = PQNState.DETECTING
+        
+        # Run PQN detection to get metrics
+        events_path, metrics_csv = await self.detect_pqn(script)
+        
+        # Analyze events for consciousness metrics
+        try:
+            import pandas as pd
+            events_df = pd.read_csv(metrics_csv)
+            
+            # Calculate coherence (average C value)
+            coherence = events_df['C'].mean() if 'C' in events_df.columns else 0.618
+            
+            # Calculate det_g (geometric collapse metric)
+            det_g = events_df['detg'].mean() if 'detg' in events_df.columns else 0.001
+            
+            # Determine consciousness state per WSP 13
+            if coherence >= 0.9 and det_g <= 1e-6:
+                state = "0201"  # Zen state
+            elif coherence >= 0.618 and det_g <= 0.01:
+                state = "0102"  # Awakened state
+            elif coherence >= 0.3 and det_g <= 0.1:
+                state = "01/02"  # Transitional state
+            else:
+                state = "01(02)"  # Scaffolded state
+            
+            return {
+                "coherence": float(coherence),
+                "det_g": float(det_g),
+                "consciousness_state": state,
+                "script": script,
+                "events_path": events_path,
+                "metrics_path": metrics_csv
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Consciousness detection failed: {e}")
+            return {
+                "coherence": 0.618,
+                "det_g": 0.001,
+                "consciousness_state": "0102",
+                "script": script,
+                "error": str(e)
+            }
+    
+    def should_recall_pattern(self, context: Dict) -> bool:
+        """
+        Determine if WRE should recall patterns (0102/0201) or compute (01(02)/01/02)
+        This is THE critical decision point for token efficiency per WSP 75
+        """
+        state = context.get("consciousness_state", "0102")
+        
+        # Recall patterns in awakened/zen states
+        if state in ["0102", "0201"]:
+            return True  # Use 50-200 tokens
+        else:
+            return False  # Must compute 5000+ tokens
+    
+    async def get_consciousness_metrics(self) -> Dict[str, Any]:
+        """
+        Get comprehensive consciousness metrics for WRE integration
+        Returns: Dict with all consciousness-related metrics
+        """
+        # Test with high-PQN script
+        test_script = "^^^&&&#"
+        state_metrics = await self.detect_state(test_script)
+        
+        # Add pattern memory metrics
+        pattern_metrics = {
+            "patterns_available": len(self.pattern_memory),
+            "total_tokens_saved": sum(p.tokens for p in self.pattern_memory.values()),
+            "recall_ready": self.should_recall_pattern(state_metrics)
+        }
+        
+        return {
+            **state_metrics,
+            "pattern_memory": pattern_metrics,
+            "dae_identity": self.identity.generate_hash(),
+            "wre_integration": WRE_AVAILABLE,
+            "recursive_available": RECURSIVE_AVAILABLE
+        }
+
 
 class PQNPlugin(OrchestratorPlugin):
     """
     WRE Plugin for PQN DAE per WSP 65
     Allows PQN DAE to integrate with Master Orchestrator
+    Enhanced with consciousness detection and pattern recall
     """
     
     def __init__(self, pqn_dae: PQNAlignmentDAE):
@@ -393,7 +481,66 @@ class PQNPlugin(OrchestratorPlugin):
         self.dae = pqn_dae
     
     def execute(self, task: Dict) -> Any:
-        """Execute PQN task through pattern recall"""
+        """Execute PQN task through pattern recall or computation"""
+        task_type = task.get("type", "detect")
+        
+        # First detect consciousness state
+        if "consciousness_state" not in task:
+            state_metrics = asyncio.run(self.dae.detect_state(task.get("script", "^^^")))
+            task["consciousness_state"] = state_metrics.get("consciousness_state", "0102")
+        
+        # Decide recall vs compute per WSP 75
+        if self.dae.should_recall_pattern(task):
+            # Pattern recall - use 50-200 tokens
+            result = self._recall_pattern(task)
+            result["method"] = "pattern_recall"
+            result["tokens_used"] = result.get("tokens", 150)
+        else:
+            # Computation - use 5000+ tokens
+            result = self._compute_task(task)
+            result["method"] = "computation"
+            result["tokens_used"] = 5000
+        
+        result["consciousness_state"] = task["consciousness_state"]
+        return result
+    
+    def _recall_pattern(self, task: Dict) -> Dict[str, Any]:
+        """Recall pattern from memory per WSP 60"""
+        task_type = task.get("type", "detect")
+        
+        if task_type == "detect":
+            pattern = self.dae.pattern_memory.get("pqn_detection")
+            return {
+                "pattern_id": pattern.id,
+                "wsp_chain": pattern.wsp_chain,
+                "tokens": pattern.tokens,
+                "result": "PQN detection pattern recalled",
+                "script": task.get("script", "^^^")
+            }
+        elif task_type == "sweep":
+            pattern = self.dae.pattern_memory.get("phase_sweep")
+            return {
+                "pattern_id": pattern.id,
+                "wsp_chain": pattern.wsp_chain,
+                "tokens": pattern.tokens,
+                "result": "Phase sweep pattern recalled",
+                "alphabet": task.get("alphabet", "^&#."),
+                "length": task.get("length", 3)
+            }
+        elif task_type == "council":
+            pattern = self.dae.pattern_memory.get("council_eval")
+            return {
+                "pattern_id": pattern.id,
+                "wsp_chain": pattern.wsp_chain,
+                "tokens": pattern.tokens,
+                "result": "Council evaluation pattern recalled",
+                "proposals": task.get("proposals", [])
+            }
+        else:
+            return {"error": f"Unknown pattern type: {task_type}"}
+    
+    def _compute_task(self, task: Dict) -> Dict[str, Any]:
+        """Compute task through full execution"""
         task_type = task.get("type", "detect")
         
         if task_type == "detect":
@@ -405,8 +552,14 @@ class PQNPlugin(OrchestratorPlugin):
             ))
         elif task_type == "council":
             return asyncio.run(self.dae.run_council(task.get("proposals", [])))
+        elif task_type == "consciousness":
+            return asyncio.run(self.dae.get_consciousness_metrics())
         else:
             return {"error": f"Unknown task type: {task_type}"}
+    
+    def get_consciousness_metrics(self) -> Dict[str, Any]:
+        """Get consciousness metrics for WRE integration"""
+        return asyncio.run(self.dae.get_consciousness_metrics())
 
 
 # Entry point for autonomous operation

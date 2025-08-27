@@ -53,6 +53,8 @@ def remember_solution(problem):
 
 ## WSP Compliance
 Knowledge protocols:
+- WSP 17: Pattern registry (check PATTERN_REGISTRY.md before patterns)
+- WSP 84: Code memory verification (anti-vibecoding)
 - WSP 60: Memory architecture
 - WSP 48: Recursive improvement
 - WSP 37: Roadmap scoring

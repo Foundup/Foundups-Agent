@@ -48,6 +48,8 @@ result = apply_pattern(pattern, context)  # 50-200 tokens
 
 ## WSP Compliance
 Mandatory protocols:
+- WSP 17: Pattern registry (check PATTERN_REGISTRY.md before patterns)
+- WSP 84: Code memory verification (anti-vibecoding)
 - WSP 80: Cube-level DAE orchestration
 - WSP 54: DAE operations specification
 - WSP 48: Recursive self-improvement

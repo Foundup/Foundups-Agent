@@ -10,7 +10,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
 
-from O:.Foundups-Agent.modules.platform_integration.youtube_proxy.src.youtube_proxy_fixed import *
+from modules.platform_integration.youtube_proxy.src.youtube_proxy import *
 
 class TestYoutubeProxyFixed:
     """Test cases for youtube_proxy_fixed"""
