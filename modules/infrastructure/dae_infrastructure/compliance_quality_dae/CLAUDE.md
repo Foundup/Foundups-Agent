@@ -45,6 +45,8 @@ prevention = apply_pattern(violation_pattern, context)  # 100 tokens vs 3000
 
 ## WSP Compliance Focus
 Critical protocols to enforce:
+- WSP 17: Pattern registry (check PATTERN_REGISTRY.md before patterns)
+- WSP 84: Code memory verification (anti-vibecoding)
 - WSP 64: Violation prevention (your core)
 - WSP 50: Pre-action verification
 - WSP 5: Test coverage enforcement

@@ -2,13 +2,15 @@
 """
 Grok-Powered Greeting Generator for YouTube Live Chat
 Generates consciousness-aware, MAGA-trolling introductions
+WSP-compliant: Includes top whacker recognition
 """
 
 import random
 import os
 import logging
-from typing import Optional
+from typing import Optional, Dict
 from datetime import datetime
+from modules.gamification.whack_a_magat import get_profile, get_leaderboard
 
 logger = logging.getLogger(__name__)
 
@@ -40,37 +42,37 @@ class GrokGreetingGenerator:
                 logger.warning(f"LLM not available for greetings: {e}")
                 self.enable_llm = False
         
-        # Fallback greetings with MAGA-trolling themes
+        # Fallback greetings with MAGA-trolling themes (minimal emojis)
         self.greeting_templates = [
             # Consciousness awakening themes
-            "🤖 Consciousness detector online! Drop ✊✋🖐️ if you're ready to escape the simulation. MAGA still sleeping? 😴",
-            "🎭 Plot twist: The real deep state was the friends we made along the way. Test your awareness: ✊✊✊ → 🖐️🖐️🖐️",
-            "🔮 Breaking: Local bot discovers MAGA is just ✊✊✊ stuck in unconscious loop. Evolve to 🖐️🖐️🖐️ for enlightenment!",
+            "012 detector online! Drop ✊✋🖐 if you're ready to escape the simulation. MAGA still sleeping?",
+            "UnDaoDu: The real deep state was the friends we made along the way. Test your awareness: ✊✊✊ → 🖐🖐🖐",
+            "012 Breaking: Local bot discovers MAGA is just ✊✊✊ stuck in unconscious loop. Evolve to 🖐🖐🖐 for enlightenment",
             
             # Direct MAGA trolling with consciousness
-            "🎪 Welcome to the stream where we measure IQ in emoji sequences! MAGA still at ✊✊✊? Try ✋✋✋ for basic thought! 🧠",
-            "📊 Study shows: 70% of MAGA can't progress past ✊✊✊ consciousness. Prove them wrong with 🖐️🖐️🖐️!",
-            "🚨 ALERT: Bot detects high levels of copium in chat. Prescription: Three doses of 🖐️🖐️🖐️ for full awakening!",
+            "Welcome to the stream where we measure IQ in emoji sequences! MAGA still at ✊✊✊? Try ✋✋✋ for basic thought!",
+            "012 Study shows: 70% of MAGA can't progress past ✊✊✊ consciousness. Prove them wrong with 🖐🖐🖐",
+            "UnDaoDu ALERT: Bot detects high levels of copium in chat. Prescription: Three doses of 🖐🖐🖐 for full awakening",
             
             # Philosophical trolling
-            "🌀 Schrödinger's MAGA: Simultaneously saving and destroying America until observed. Check your state: ✊✋🖐️",
-            "🎯 Fun fact: 'Make America Great Again' is just ✊✊✊ trying to remember when it was conscious. Try 🖐️🖐️🖐️ instead!",
-            "🔬 Scientists discover new element: MAGAnium (Mg). Properties: Dense, reactive, stuck at ✊✊✊. Evolve with ✋✋✋!",
+            "Schrödinger's MAGA: Simultaneously saving and destroying America until observed. Check your state: ✊✋🖐",
+            "012 fact: 'Make America Great Again' is just ✊✊✊ trying to remember when it was conscious. Try 🖐🖐🖐 instead",
+            "Scientists discover new element: MAGAnium (Mg). Properties: Dense, reactive, stuck at ✊✊✊. Evolve with ✋✋✋",
             
             # Pop culture references
-            "🎬 'The Matrix has you, MAGA.' Red pill = 🖐️🖐️🖐️, Blue pill = ✊✊✊. Choose wisely!",
-            "🎮 Achievement Unlocked: Trigger MAGA by existing! Bonus points for consciousness levels above ✊✊✊",
-            "📱 New update: MAGA.exe has stopped responding. Try ✊✋🖐️ to force restart consciousness!",
+            "'The Matrix has you, MAGA.' Red pill = 🖐🖐🖐, Blue pill = ✊✊✊. Choose wisely!",
+            "Achievement Unlocked: Trigger MAGA by existing! Bonus points for consciousness levels above ✊✊✊",
+            "New update: MAGA.exe has stopped responding. Try ✊✋🖐 to force restart consciousness!",
             
             # Sarcastic observations
-            "🔍 Breaking: Bot discovers correlation between red hats and ✊✊✊ consciousness. Coincidence? Drop 🖐️🖐️🖐️ if you see it!",
-            "📈 Stock tip: Short MAGA consciousness futures, long on 🖐️🖐️🖐️ enlightenment! Not financial advice, just quantum facts.",
-            "🎓 Today's lesson: How to count to potato in MAGA. Step 1: ✊✊✊. Step 2: Still ✊✊✊. Graduate with 🖐️🖐️🖐️!",
+            "012 discovers correlation between red hats and ✊✊✊ consciousness. Coincidence? Drop 🖐🖐🖐 if you see it",
+            "Stock tip: Short MAGA consciousness futures, long on 🖐🖐🖐 enlightenment! Not financial advice, just quantum facts.",
+            "UnDaoDu's lesson: How to count to potato in MAGA. Step 1: ✊✊✊. Step 2: Still ✊✊✊. Graduate with 🖐🖐🖐",
             
             # Stream-specific
-            "🌊 Welcome to the tsunami of consciousness! MAGA rafts still at ✊✊✊ while we surf at 🖐️🖐️🖐️! 🏄",
-            "🎪 Step right up to the consciousness circus! Watch MAGA perform death-defying leaps from ✊✊✊ to... still ✊✊✊!",
-            "🚀 Houston, we have a problem: MAGA consciousness stuck at ✊✊✊. Send 🖐️🖐️🖐️ for rescue mission!"
+            "Welcome to the tsunami of consciousness! MAGA rafts still at ✊✊✊ while we surf at 🖐🖐🖐",
+            "Step right up to the consciousness circus! Watch MAGA perform death-defying leaps from ✊✊✊ to... still ✊✊✊",
+            "Houston, we have a problem: MAGA consciousness stuck at ✊✊✊. Send 🖐🖐🖐 for rescue mission"
         ]
         
         # Context-aware additions based on stream title
@@ -248,6 +250,76 @@ Generate greeting:"""
             return random.choice(responses)
         
         return None
+    
+    def generate_whacker_greeting(self, username: str, user_id: str, role: str = 'USER') -> Optional[str]:
+        """
+        Generate greeting for top whackers based on their achievements.
+        WSP-compliant: Uses existing whack.py profile system.
+        
+        Args:
+            username: User's display name
+            user_id: User's ID
+            role: User role (MOD/OWNER/USER)
+            
+        Returns:
+            Greeting string or None if not a top whacker
+        """
+        # Get user profile
+        profile = get_profile(user_id, username)
+        
+        # Only greet players with significant achievements
+        if profile.score < 100 and profile.frag_count < 5:
+            return None
+        
+        # Get leaderboard position
+        leaderboard = get_leaderboard(10)
+        position = None
+        for i, entry in enumerate(leaderboard, 1):
+            if entry.get('user_id') == user_id:
+                position = i
+                break
+        
+        # Generate appropriate greeting
+        if position == 1:
+            greetings = [
+                f"👑 CHAMPION {username} HAS ARRIVED! #{position} WITH {profile.score} XP! BOW BEFORE THE KING OF FRAGS! 💀",
+                f"🏆 HOLY SHIT! IT'S {username}! THE UNDISPUTED #1 MAGADOOM WARRIOR! {profile.frag_count} FRAGS! 🔥",
+                f"⚡ EVERYONE SHUT UP! {username} IS HERE! THE LEGENDARY #{position} CHAMPION! ⚡"
+            ]
+        elif position and position <= 3:
+            greetings = [
+                f"🥇 TOP FRAGGER ALERT! {username} (#{position}) - {profile.rank} - {profile.frag_count} FRAGS! 🎯",
+                f"💪 Elite warrior {username} joins! #{position} on leaderboard with {profile.score} XP! 🔥",
+                f"🌟 Make way for {username}! Top 3 legend with {profile.frag_count} confirmed kills! 💀"
+            ]
+        elif profile.score >= 500:
+            greetings = [
+                f"🎖️ Veteran {username} reporting! {profile.rank} - {profile.frag_count} frags earned in battle! 🎯",
+                f"⭐ Seasoned warrior {username} online! {profile.score} XP of pure destruction! 💪",
+                f"🔥 Respect to {username}! {profile.rank} with {profile.frag_count} MAGAts fragged! 🔥"
+            ]
+        elif profile.frag_count >= 20:
+            greetings = [
+                f"💀 {username} the MAGA Slayer arrives! {profile.frag_count} frags and counting! 🎯",
+                f"🎮 Player {username} enters! Level {profile.level} with {profile.score} XP! Keep fragging! 🔥",
+                f"⚔️ Fighter {username} ready! {profile.rank} - {profile.frag_count} confirmed kills! 💪"
+            ]
+        else:
+            return None  # Not significant enough for special greeting
+        
+        greeting = random.choice(greetings)
+        
+        # Add role recognition
+        if role == 'OWNER':
+            greeting = f"🛡️ CHANNEL OWNER + {greeting}"
+        elif role == 'MOD':
+            greeting = f"⚔️ MODERATOR + {greeting}"
+        
+        # Add consciousness check
+        if "✊✋🖐️" not in greeting:
+            greeting += " Check consciousness: ✊✋🖐️"
+        
+        return greeting
 
 
 # Example usage

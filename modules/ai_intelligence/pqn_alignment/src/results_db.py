@@ -16,7 +16,7 @@ import os
 import sqlite3
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def _default_db_path() -> str:
@@ -214,7 +214,7 @@ def index_council_run(summary_path: str, db_path: Optional[str] = None) -> Dict[
         noise_L = float(row.get("noise_L", 0.0)) if "noise_L" in row else None
     
     run_id = os.path.basename(os.path.dirname(summary_path)) or "council_run"
-    timestamp = datetime.utcnow().isoformat(timespec="seconds")
+    timestamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
     
     summary = {
         "model": None,
@@ -265,6 +265,10 @@ def index_council_run(summary_path: str, db_path: Optional[str] = None) -> Dict[
             ),
         )
         conn.commit()
+        
+        # Get the row ID of the inserted record
+        row_id = cur.lastrowid
+        summary["row_id"] = row_id
     
     return summary
 
@@ -291,14 +295,173 @@ def query_runs(filters: Dict[str, object] | None = None, db_path: Optional[str] 
         return [dict(r) for r in rows]
 
 
+def index_summary(db_path: str, summary_path: str) -> int:
+    """Index council summary (alias for backward compatibility).
+    
+    Note: Parameter order is (db_path, summary_path) for backward compatibility,
+    but index_council_run expects (summary_path, db_path).
+    """
+    result = index_council_run(summary_path, db_path)
+    return result.get("row_id", 1)  # Return 1 as default if row_id not found
+
+
 def query_cross_analysis(filters: Dict[str, object] | None = None, db_path: Optional[str] = None) -> List[Dict[str, Any]]:
     """Query across campaign and council results for comparative analysis.
     
-    Example: query_cross_analysis({
-        "run_type": "campaign",
-        "resonance_peak": {"min": 7.0, "max": 7.1}
-    })
+    Enhanced querying with range filters and complex analysis capabilities.
+    
+    Examples:
+    - query_cross_analysis({"run_type": "campaign", "resonance_peak": {"min": 7.0, "max": 7.1}})
+    - query_cross_analysis({"model": "claude-3.5-haiku", "coherence_avg": {"min": 0.6}})
+    - query_cross_analysis({"run_type": "council", "top_score": {"min": 1000}})
     """
-    # Enhanced querying for cross-analysis
-    # TODO: Implement range queries and complex filters
-    return query_runs(filters, db_path)
+    filters = filters or {}
+    where: List[str] = []
+    params: List[object] = []
+    
+    for k, v in filters.items():
+        if isinstance(v, dict) and ("min" in v or "max" in v):
+            # Range query
+            range_conditions = []
+            if "min" in v:
+                range_conditions.append(f"{k} >= ?")
+                params.append(v["min"])
+            if "max" in v:
+                range_conditions.append(f"{k} <= ?")
+                params.append(v["max"])
+            if range_conditions:
+                where.append(f"({' AND '.join(range_conditions)})")
+        else:
+            # Equality query
+            where.append(f"{k} = ?")
+            params.append(v)
+    
+    sql = "SELECT * FROM runs"
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    
+    # Add ordering for meaningful analysis
+    sql += " ORDER BY start_ts DESC"
+    
+    with _connect(db_path) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+        results = [dict(r) for r in rows]
+    
+    # Add computed metrics for cross-analysis
+    for result in results:
+        # Calculate derived metrics
+        if result.get("resonance_peak") and result.get("coherence_avg"):
+            result["pqn_coherence_ratio"] = result["resonance_peak"] / result["coherence_avg"]
+        
+        if result.get("guardrail_reduction") and result.get("guardrail_cost"):
+            result["guardrail_efficiency"] = result["guardrail_reduction"] / (result["guardrail_cost"] + 0.01)
+        
+        # Add analysis flags
+        result["high_coherence"] = result.get("coherence_avg", 0) > 0.618
+        result["strong_resonance"] = result.get("resonance_peak", 0) > 7.0
+        result["effective_guardrail"] = result.get("guardrail_reduction", 0) > 50.0
+    
+    return results
+
+
+def analyze_cross_model_performance(db_path: Optional[str] = None) -> Dict[str, Any]:
+    """Analyze performance across different models for comparative research.
+    
+    Returns comprehensive analysis of model performance in PQN detection.
+    """
+    init_db(db_path)
+    
+    with _connect(db_path) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        
+        # Get all campaign runs
+        cur.execute("""
+            SELECT model, 
+                   AVG(resonance_peak) as avg_resonance,
+                   AVG(coherence_avg) as avg_coherence,
+                   AVG(guardrail_reduction) as avg_guardrail_reduction,
+                   COUNT(*) as total_runs,
+                   SUM(CASE WHEN overall_status = 'SUCCESSFUL_VALIDATION' THEN 1 ELSE 0 END) as successful_runs
+            FROM runs 
+            WHERE run_type = 'campaign' AND model IS NOT NULL
+            GROUP BY model
+        """)
+        
+        model_performance = [dict(row) for row in cur.fetchall()]
+        
+        # Get council optimization results
+        cur.execute("""
+            SELECT AVG(top_score) as avg_council_score,
+                   MAX(top_score) as max_council_score,
+                   COUNT(*) as council_runs
+            FROM runs 
+            WHERE run_type = 'council'
+        """)
+        
+        council_stats = dict(cur.fetchone())
+        
+        # Calculate success rates
+        for model in model_performance:
+            model["success_rate"] = model["successful_runs"] / model["total_runs"] if model["total_runs"] > 0 else 0
+        
+        # Find best performing model
+        best_model = max(model_performance, key=lambda x: x.get("success_rate", 0))
+        
+        return {
+            "model_performance": model_performance,
+            "council_optimization": council_stats,
+            "best_model": best_model,
+            "analysis_timestamp": datetime.now(timezone.utc).isoformat(),
+            "total_campaign_runs": sum(m["total_runs"] for m in model_performance),
+            "total_council_runs": council_stats.get("council_runs", 0)
+        }
+
+
+def correlate_campaign_council_results(db_path: Optional[str] = None) -> Dict[str, Any]:
+    """Correlate campaign validation results with council optimization outcomes.
+    
+    Analyzes relationships between validation success and optimization performance.
+    """
+    init_db(db_path)
+    
+    with _connect(db_path) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        
+        # Get campaign results with corresponding council results
+        cur.execute("""
+            SELECT c.model,
+                   c.resonance_peak,
+                   c.coherence_avg,
+                   c.guardrail_reduction,
+                   c.overall_status,
+                   co.top_score,
+                   co.top_script
+            FROM runs c
+            LEFT JOIN runs co ON c.model = co.model AND co.run_type = 'council'
+            WHERE c.run_type = 'campaign'
+            ORDER BY c.start_ts DESC
+        """)
+        
+        correlations = [dict(row) for row in cur.fetchall()]
+        
+        # Calculate correlation metrics
+        successful_campaigns = [r for r in correlations if r.get("overall_status") == "SUCCESSFUL_VALIDATION"]
+        failed_campaigns = [r for r in correlations if r.get("overall_status") != "SUCCESSFUL_VALIDATION"]
+        
+        avg_council_score_successful = sum(r.get("top_score", 0) for r in successful_campaigns) / len(successful_campaigns) if successful_campaigns else 0
+        avg_council_score_failed = sum(r.get("top_score", 0) for r in failed_campaigns) / len(failed_campaigns) if failed_campaigns else 0
+        
+        return {
+            "correlations": correlations,
+            "successful_campaigns": len(successful_campaigns),
+            "failed_campaigns": len(failed_campaigns),
+            "avg_council_score_successful": avg_council_score_successful,
+            "avg_council_score_failed": avg_council_score_failed,
+            "correlation_insight": "Higher council scores correlate with successful campaign validation" if avg_council_score_successful > avg_council_score_failed else "No clear correlation found",
+            "analysis_timestamp": datetime.now(timezone.utc).isoformat()
+        }

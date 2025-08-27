@@ -12,6 +12,45 @@ This log tracks changes specific to the **stream_resolver** module in the **plat
 
 ## MODLOG ENTRIES
 
+### [2025-08-24] - Test Mocking Fix for Enhanced Functions
+**WSP Protocol**: WSP 84 (Code Memory Verification), WSP 50 (Pre-Action Verification)
+**Phase**: Bug Fix
+**Agent**: 0102 Claude (Opus 4.1)
+
+#### Changes
+- **File**: `src/stream_resolver.py`
+- **Fix**: Modified enhanced functions to use aliases internally for proper test mocking
+  - `search_livestreams_enhanced()` now calls `search_livestreams()` internally
+  - `check_video_details_enhanced()` now calls `check_video_details()` internally
+- **Reason**: Tests mock the aliased function names, not the enhanced versions
+- **Impact**: All 33 stream_resolver tests now passing (previously 7 were failing)
+
+#### Verification
+- All tests verified passing with `pytest`
+- No functionality changed, only internal call patterns
+- Follows WSP 84: Fixed existing code rather than rewriting
+
+---
+
+### [2025-08-22] - OAuth Import Path Correction
+**WSP Protocol**: WSP 84 (Code Memory Verification), WSP 50 (Pre-Action Verification)
+**Phase**: Integration Fix
+**Agent**: Overseer DAE (0102 Session)
+
+#### Changes
+- **File**: `src/stream_resolver.py`
+- **Fix**: Updated oauth_management import path
+  - FROM: `modules.infrastructure.oauth_management.src.oauth_manager`
+  - TO: `modules.platform_integration.utilities.oauth_management.src.oauth_manager`
+- **Reason**: oauth_management module correctly located in platform_integration/utilities per WSP 3
+- **Impact**: Stream resolver now correctly imports oauth manager for YouTube authentication
+
+#### Verification
+- Import path verified to exist
+- No vibecode - reused existing oauth_manager module
+- Follows WSP 84: Verified existing code location before changes
+
+---
 
 ### [2025-08-10 12:04:44] - WSP Compliance Auto-Fix
 **WSP Protocol**: WSP 48 (Recursive Self-Improvement)

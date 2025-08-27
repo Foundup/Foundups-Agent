@@ -154,8 +154,11 @@ def test_harmonic_detection_smoke():
     import sys
     import os
     
-    # Add path for import
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../WSP_agentic/tests/pqn_detection"))
+    # Add path for import - navigate from tests/ up to module root, then to project root
+    module_root = os.path.dirname(os.path.dirname(__file__))  # pqn_alignment root
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(module_root)))  # project root
+    pqn_detection_path = os.path.join(project_root, "WSP_agentic", "tests", "pqn_detection")
+    sys.path.insert(0, pqn_detection_path)
     
     from cmst_pqn_detector_v2 import ResonanceDetector
     

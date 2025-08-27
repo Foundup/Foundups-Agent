@@ -12,12 +12,13 @@ from typing import Dict, Any, Optional, List
 import googleapiclient.errors
 
 # Import WSP-compliant modules
-from modules.communication.livechat.src.emoji_trigger_handler import EmojiTriggerHandler
 from modules.communication.livechat.src.moderation_stats import ModerationStats
 from modules.communication.livechat.src.session_manager import SessionManager
 from modules.communication.livechat.src.message_processor import MessageProcessor
 from modules.communication.livechat.src.chat_sender import ChatSender
 from modules.communication.livechat.src.chat_poller import ChatPoller
+from modules.infrastructure.system_health_monitor.src.system_health_analyzer import SystemHealthAnalyzer
+from modules.communication.livechat.src.chat_memory_manager import ChatMemoryManager
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,8 @@ class LiveChatCore:
     Uses modular components for functionality.
     """
     
-    def __init__(self, youtube_service, video_id: str, live_chat_id: Optional[str] = None):
+    def __init__(self, youtube_service, video_id: str, live_chat_id: Optional[str] = None, 
+                 channel_name: str = None, channel_id: str = None):
         """
         Initialize LiveChatCore with modular components.
         
@@ -38,22 +40,34 @@ class LiveChatCore:
             youtube_service: Authenticated YouTube service
             video_id: YouTube video/stream ID
             live_chat_id: Optional pre-fetched chat ID
+            channel_name: Name of the channel owner
+            channel_id: Channel ID of the owner
         """
         self.youtube = youtube_service
         self.video_id = video_id
         self.live_chat_id = live_chat_id
+        self.channel_name = channel_name or "StreamOwner"
+        self.channel_id = channel_id or "owner"
         self.next_page_token = None
         self.is_running = False
         self.memory_dir = "memory"
         self.processed_message_ids = set()
+        self.recent_command_cache = {}  # Cache to prevent duplicate command responses
+        self.message_timestamps = []  # Track message times for activity monitoring
+        
+        # WSP-compliant hybrid memory manager (initialize first)
+        self.memory_manager = ChatMemoryManager(self.memory_dir)
         
         # Initialize modular components
         self.session_manager = SessionManager(youtube_service, video_id)
-        self.emoji_handler = EmojiTriggerHandler()
         self.mod_stats = ModerationStats(self.memory_dir)
-        self.message_processor = MessageProcessor()
-        self.chat_sender = ChatSender(youtube_service)
-        self.chat_poller = ChatPoller(youtube_service)
+        self.message_processor = MessageProcessor(youtube_service, self.memory_manager)  # Pass memory manager
+        self.chat_sender = ChatSender(youtube_service, live_chat_id)
+        self.chat_poller = ChatPoller(youtube_service, live_chat_id, self.channel_name, self.channel_id)
+        
+        # Health monitoring for duplicate detection and error tracking
+        self.health_analyzer = SystemHealthAnalyzer()
+        self.recent_messages_sent = []  # Track sent messages
         
         # Ensure memory directory exists
         os.makedirs(self.memory_dir, exist_ok=True)
@@ -71,10 +85,16 @@ class LiveChatCore:
             logger.error("Failed to initialize session")
             return False
         
-        # Get chat ID from session manager
+        # Get chat ID and channel info from session manager
         self.live_chat_id = self.session_manager.live_chat_id
+        self.channel_name = getattr(self.session_manager, 'channel_title', self.channel_name)
+        self.channel_id = getattr(self.session_manager, 'channel_id', self.channel_id)
+        
+        # Update components with new info
         self.chat_sender.live_chat_id = self.live_chat_id
         self.chat_poller.live_chat_id = self.live_chat_id
+        self.chat_poller.channel_name = self.channel_name
+        self.chat_poller.channel_id = self.channel_id
         
         # Send greeting
         await self.session_manager.send_greeting(self.send_chat_message)
@@ -82,21 +102,55 @@ class LiveChatCore:
         logger.info("LiveChatCore initialized successfully")
         return True
     
-    async def send_chat_message(self, message_text: str) -> bool:
+    async def send_chat_message(self, message_text: str, skip_delay: bool = False, response_type: str = 'general') -> bool:
         """
-        Send a message to the live chat.
+        Send a message to the live chat with duplicate detection.
         
         Args:
             message_text: Message to send
+            skip_delay: Whether to skip delay
+            response_type: Type of response for priority handling
             
         Returns:
             True if message sent successfully
         """
         if not self.live_chat_id:
             logger.error("Cannot send message - no live chat ID")
+            self.health_analyzer.analyze_message("ERROR: Cannot send message - no live chat ID")
             return False
         
-        return await self.chat_sender.send_message(self.live_chat_id, message_text)
+        # Check for duplicate messages
+        issues = self.health_analyzer.analyze_message(f"SENDING: {message_text}")
+        if issues:
+            for issue in issues:
+                if issue.issue_type == 'duplicate' and issue.severity in ['high', 'critical']:
+                    logger.warning(f"⚠️ Duplicate message detected, skipping: {message_text[:50]}...")
+                    # Integrate with self-improvement
+                    if hasattr(self.message_processor, 'self_improvement'):
+                        self.message_processor.self_improvement.observe_system_issue(
+                            issue.issue_type, issue.severity, issue.context
+                        )
+                    return False
+        
+        # Track message for duplicate detection
+        self.recent_messages_sent.append({
+            'message': message_text,
+            'timestamp': time.time()
+        })
+        
+        # Limit recent messages cache
+        if len(self.recent_messages_sent) > 100:
+            self.recent_messages_sent = self.recent_messages_sent[-100:]
+        
+        # Send message
+        start_time = time.time()
+        success = await self.chat_sender.send_message(message_text, skip_delay=skip_delay, response_type=response_type)
+        duration_ms = (time.time() - start_time) * 1000
+        
+        # Track operation performance
+        self.health_analyzer.track_operation('send_message', duration_ms)
+        
+        return success
     
     async def poll_messages(self) -> tuple:
         """
@@ -106,15 +160,13 @@ class LiveChatCore:
             Tuple of (messages list, poll interval in ms)
         """
         try:
-            response = await self.chat_poller.poll_once(
-                self.live_chat_id,
-                self.next_page_token
+            messages = await self.chat_poller.poll_messages(
+                viewer_count=self.session_manager.viewer_count
             )
             
-            if response:
-                messages = response.get("items", [])
-                self.next_page_token = response.get("nextPageToken")
-                poll_interval = response.get("pollingIntervalMillis", 5000)
+            # ChatPoller returns messages directly
+            if messages:
+                poll_interval = self.chat_poller.poll_interval_ms
                 return messages, poll_interval
             
             return [], 5000
@@ -128,10 +180,19 @@ class LiveChatCore:
         Process a single chat message.
         
         Args:
-            message: Message data from YouTube API
+            message: Message data from YouTube API or ban_event
         """
         try:
-            # Extract message details
+            # Check if this is a ban/timeout event from chat_poller
+            if message.get("type") == "ban_event":
+                await self.process_ban_event(message)
+                return
+            elif message.get("type") == "timeout_event":
+                # Timeout events are also ban events for processing
+                await self.process_ban_event(message)
+                return
+                
+            # Extract message details for regular messages
             message_id = message.get("id", "")
             
             # Skip if already processed
@@ -153,26 +214,90 @@ class LiveChatCore:
             # Log the message
             logger.debug(f"[{author_name}]: {display_message}")
             
+            # Track message timestamp for activity monitoring
+            self.message_timestamps.append(time.time())
+            # Clean old timestamps (keep last hour)
+            cutoff = time.time() - 3600
+            self.message_timestamps = [ts for ts in self.message_timestamps if ts > cutoff]
+            
             # Update stats
             self.mod_stats.record_message()
             
-            # Skip moderation for mods/owners
-            if is_moderator or is_owner:
-                logger.debug(f"Skipping moderation for mod/owner: {author_name}")
-            else:
-                # Check for violations (implement as needed)
-                pass
+            # Process message through enhanced processor
+            processed = self.message_processor.process_message(message)
             
-            # Check for emoji triggers
-            if self.emoji_handler.check_trigger_patterns(display_message):
-                response = await self.emoji_handler.handle_emoji_trigger(
-                    author_name,
-                    author_id,
-                    display_message
-                )
+            # Log ALL messages and their processing result
+            logger.info(f"📨 [{author_name}] ({author_id}): {display_message[:100]}")
+            if processed.get("has_consciousness"):
+                logger.info(f"✨ CONSCIOUSNESS DETECTED from {author_name}!")
+            if processed.get("has_whack_command"):
+                logger.info(f"🎮 WHACK COMMAND DETECTED from {author_name}!")
+            
+            # Debug log for slash commands
+            if display_message and display_message.startswith('/'):
+                logger.info(f"🔍 SLASH COMMAND DETECTED: '{display_message}' from {author_name}")
                 
-                if response:
-                    await self.send_chat_message(response)
+                # Check for duplicate command within 5 seconds
+                cache_key = f"{author_id}:{display_message}"
+                current_time = time.time()
+                
+                if cache_key in self.recent_command_cache:
+                    last_time = self.recent_command_cache[cache_key]
+                    if current_time - last_time < 5:  # 5 second window
+                        logger.info(f"⏭️ Skipping duplicate command from {author_name}")
+                        return
+                
+                self.recent_command_cache[cache_key] = current_time
+                
+                # Clean old cache entries
+                self.recent_command_cache = {
+                    k: v for k, v in self.recent_command_cache.items() 
+                    if current_time - v < 10
+                }
+            
+            # Check if it's a timeout/ban announcement - HIGH PRIORITY, NO DELAYS
+            if processed.get("type") in ["timeout_announcement", "ban_announcement"]:
+                # Send announcements immediately with skip_delay=True
+                if processed.get("announcement"):
+                    # Priority message - skip all delays
+                    success = await self.chat_sender.send_message(
+                        processed["announcement"], 
+                        response_type="timeout_announcement"  # Mark as priority
+                    )
+                    logger.info(f"⚡🎮 Sent timeout announcement IMMEDIATELY: {processed['announcement'][:50]}...")
+                if processed.get("level_up"):
+                    await asyncio.sleep(0.5)  # Minimal delay between messages
+                    success = await self.chat_sender.send_message(
+                        processed["level_up"], 
+                        response_type="timeout_announcement"  # Mark as priority
+                    )
+                    logger.info(f"⚡🏆 Sent level up IMMEDIATELY: {processed['level_up']}")
+                return  # Skip normal processing for events
+            
+            # Skip if marked to skip
+            if processed.get("skip"):
+                return
+            
+            # Generate response if needed
+            response = await self.message_processor.generate_response(processed)
+            
+            if response:
+                logger.info(f"📤 Generated response for {author_name}: {response[:100]}")
+                # Check if this is a consciousness response
+                response_type = processed.get("response_type", "general")
+                # Send response with proper throttling (consciousness bypasses delays)
+                if response_type == "consciousness":
+                    logger.info(f"⚡ Sending consciousness response immediately")
+                    # Pass response_type to chat_sender for proper handling
+                    success = await self.chat_sender.send_message(response, response_type="consciousness")
+                else:
+                    success = await self.send_chat_message(response)
+                if success:
+                    logger.info(f"💬 Sent response to {author_name}")
+            else:
+                # Debug: log why no response
+                if display_message.startswith('/'):
+                    logger.debug(f"🔍 Command check: '{display_message}' from {author_name}")
             
             # Log to user file
             self._log_to_user_file(message)
@@ -180,9 +305,52 @@ class LiveChatCore:
         except Exception as e:
             logger.error(f"Error processing message: {e}")
     
+    async def process_ban_event(self, ban_event: Dict[str, Any]) -> None:
+        """
+        Process a ban/timeout event and send announcement.
+        
+        Args:
+            ban_event: Ban event data from chat_poller
+        """
+        try:
+            logger.info(f"🎯 Processing ban/timeout event: {ban_event.get('type')} - {ban_event.get('target_name')}")
+            
+            # Process through message processor to get announcement
+            processed = self.message_processor.process_message(ban_event)
+            
+            # Check if this was queued for batching
+            if processed.get("queued"):
+                logger.info(f"📦 Event queued for batching (pending: {self.message_processor.event_handler.get_pending_count()})")
+                return
+            
+            # Check if we should skip (already part of a batch)
+            if processed.get("skip") and not processed.get("announcement"):
+                logger.info("⏭️ Skipping - part of batch")
+                return
+            
+            logger.info(f"📝 Processed result: announcement={bool(processed.get('announcement'))}, is_batched={processed.get('is_batched', False)}")
+            
+            # Send announcements
+            if processed.get("announcement"):
+                if processed.get("is_batched"):
+                    logger.info(f"🎯 Sending BATCHED announcement: {processed['announcement'][:50]}...")
+                else:
+                    logger.info(f"🎮 Sending timeout announcement: {processed['announcement'][:50]}...")
+                await self.send_chat_message(processed["announcement"], response_type="timeout_announcement")
+            else:
+                logger.warning("⚠️ No announcement generated for timeout event")
+            
+            if processed.get("level_up"):
+                await asyncio.sleep(1)  # Small delay between messages
+                logger.info(f"🏆 Sending level up: {processed['level_up']}")
+                await self.send_chat_message(processed["level_up"])
+                
+        except Exception as e:
+            logger.error(f"Error processing ban event: {e}")
+    
     def _log_to_user_file(self, message: Dict[str, Any]) -> None:
         """
-        Log message to user-specific file.
+        Log message using hybrid memory manager.
         
         Args:
             message: Message data
@@ -193,20 +361,17 @@ class LiveChatCore:
             
             author_name = author_details.get("displayName", "Unknown")
             display_message = snippet.get("displayMessage", "")
-            published_at = snippet.get("publishedAt", "")
+            is_moderator = author_details.get("isChatModerator", False)
+            is_owner = author_details.get("isChatOwner", False)
             
-            # Create safe filename
-            safe_name = "".join(c for c in author_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
-            if not safe_name:
-                safe_name = "Unknown"
+            # Determine role
+            role = 'OWNER' if is_owner else 'MOD' if is_moderator else 'USER'
             
-            # Write to user file
-            user_file = os.path.join(self.memory_dir, f"{safe_name}.txt")
-            with open(user_file, "a", encoding="utf-8") as f:
-                f.write(f"[{published_at}] {author_name}: {display_message}\n")
+            # Use hybrid memory manager (smart storage based on importance)
+            self.memory_manager.store_message(author_name, display_message, role)
             
         except Exception as e:
-            logger.error(f"Error logging to user file: {e}")
+            logger.error(f"Error logging message: {e}")
     
     async def process_message_batch(self, messages: List[Dict[str, Any]]) -> None:
         """
@@ -219,18 +384,71 @@ class LiveChatCore:
             await self.process_message(message)
     
     async def run_polling_loop(self) -> None:
-        """Run the main polling loop."""
+        """Run the main polling loop with health monitoring and proactive trolling."""
         poll_interval_ms = 5000
+        last_health_check = time.time()
+        last_troll = time.time()
+        health_check_interval = 60  # Check health every minute
+        # Dynamic troll interval based on chat activity
+        base_troll_interval = 600  # Base: 10 minutes for quiet chat
+        troll_interval = base_troll_interval
         
         while self.is_running:
             try:
+                # Periodic health check
+                if time.time() - last_health_check > health_check_interval:
+                    health_report = self.health_analyzer.get_health_report()
+                    if health_report['health_score'] < 80:
+                        logger.warning(f"⚠️ System health degraded: {health_report['health_score']:.1f}/100")
+                        for recommendation in health_report['recommendations']:
+                            logger.info(f"💡 Health recommendation: {recommendation}")
+                    last_health_check = time.time()
+                
+                # Periodic MAGA trolling - ONLY if chat is active
+                # Count recent messages to determine chat activity
+                recent_msg_count = len([ts for ts in getattr(self, 'message_timestamps', []) 
+                                       if time.time() - ts < 300])  # Messages in last 5 min
+                
+                # Adjust troll interval based on activity
+                if recent_msg_count == 0:
+                    # Dead chat: no proactive messages
+                    troll_interval = float('inf')  # Never troll in dead chat
+                elif recent_msg_count < 5:
+                    # Very quiet: rare trolling
+                    troll_interval = 1200  # 20 minutes
+                elif recent_msg_count < 20:
+                    # Moderate activity: occasional trolling
+                    troll_interval = 600  # 10 minutes
+                else:
+                    # Active chat: more frequent engagement
+                    troll_interval = 300  # 5 minutes
+                
+                if time.time() - last_troll > troll_interval and troll_interval != float('inf'):
+                    if hasattr(self.message_processor, 'agentic_engine'):
+                        troll_msg = self.message_processor.agentic_engine.generate_proactive_troll()
+                        await self.send_chat_message(troll_msg)
+                        logger.info(f"🎯 Sent proactive troll (activity: {recent_msg_count} msgs): {troll_msg[:50]}...")
+                    last_troll = time.time()
+                
                 # Poll for messages
+                logger.info(f"🔄 Polling for messages...")
                 messages, poll_interval_ms = await self.poll_messages()
                 
                 # Process messages
                 if messages:
                     logger.info(f"Processing {len(messages)} messages")
                     await self.process_message_batch(messages)
+                
+                # Check for pending batched announcements
+                if hasattr(self.message_processor, 'event_handler'):
+                    pending_count = self.message_processor.event_handler.get_pending_count()
+                    if pending_count > 0:
+                        logger.info(f"📦 Checking {pending_count} pending announcements...")
+                        # Force flush if we have old pending announcements
+                        flushed = self.message_processor.event_handler.force_flush()
+                        if flushed:
+                            logger.info(f"💥 Flushing batched announcement: {flushed[:50]}...")
+                            await self.send_chat_message(flushed, response_type="timeout_announcement")
                 
                 # Update viewer count periodically
                 if time.time() % 60 < 1:  # Every minute
@@ -280,7 +498,6 @@ class LiveChatCore:
         # Save stats
         logger.info("Final stats:")
         logger.info(self.mod_stats.get_moderation_stats())
-        logger.info(self.emoji_handler.get_stats())
     
     # Convenience methods for compatibility
     
@@ -314,4 +531,5 @@ class LiveChatCore:
     
     def configure_emoji_triggers(self, **kwargs) -> Dict[str, Any]:
         """Configure emoji trigger settings."""
-        return self.emoji_handler.configure(**kwargs)
+        # Now handled by message_processor's consciousness handler
+        return {"status": "configured", "settings": kwargs}

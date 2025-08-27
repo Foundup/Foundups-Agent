@@ -27,6 +27,11 @@ class ModerationStats:
         self.total_violations = 0
         self.total_timeouts = 0
         
+        # Duke Nukem/Quake announcer for timeouts
+        self.kill_streaks = {}  # mod_id -> streak count
+        self.last_kill_time = {}  # mod_id -> timestamp
+        self.streak_window = 15  # seconds to maintain streak
+        
         # Ensure memory directory exists
         os.makedirs(memory_dir, exist_ok=True)
         
@@ -91,19 +96,77 @@ class ModerationStats:
         logger.info(f"Recorded violation for {username}: {violation_type}")
         self.save_stats()
     
-    def record_timeout(self, user_id: str, username: str, duration: int, reason: str):
+    def record_timeout(self, user_id: str, username: str, duration: int, reason: str, mod_id: str = None, mod_name: str = None) -> Optional[str]:
         """
-        Record that a user was timed out.
+        Record that a user was timed out and generate Duke Nukem announcement.
         
         Args:
             user_id: The user's ID
             username: The user's display name
             duration: Timeout duration in seconds
             reason: Reason for the timeout
+            mod_id: Moderator's ID (for streak tracking)
+            mod_name: Moderator's name (for announcements)
+            
+        Returns:
+            Duke Nukem/Quake style announcement if streak achieved
         """
         self.record_violation(user_id, username, "timeout", f"Duration: {duration}s, Reason: {reason}")
         self.total_timeouts += 1
         self.save_stats()
+        
+        # Generate Duke Nukem announcement if mod info provided
+        if mod_id and mod_name:
+            return self._get_timeout_announcement(mod_id, mod_name, username)
+        return None
+    
+    def _get_timeout_announcement(self, mod_id: str, mod_name: str, target_name: str) -> Optional[str]:
+        """Generate Duke Nukem/Quake style timeout announcement."""
+        import time
+        current_time = time.time()
+        
+        # Check if streak is still active
+        if mod_id in self.last_kill_time:
+            if current_time - self.last_kill_time[mod_id] > self.streak_window:
+                # Streak expired, reset
+                self.kill_streaks[mod_id] = 0
+        
+        # Increment streak
+        self.kill_streaks[mod_id] = self.kill_streaks.get(mod_id, 0) + 1
+        self.last_kill_time[mod_id] = current_time
+        
+        streak = self.kill_streaks[mod_id]
+        
+        # Streak announcements
+        streak_messages = {
+            2: f"💀 {mod_name} DOUBLE KILL! {target_name} terminated!",
+            3: f"🔥 {mod_name} TRIPLE KILL! {target_name} fragged!",
+            4: f"⚡ {mod_name} DOMINATING! {target_name} destroyed!",
+            5: f"💥 {mod_name} RAMPAGE! {target_name} obliterated!",
+            6: f"🌟 {mod_name} UNSTOPPABLE! {target_name} annihilated!",
+            7: f"⭐ {mod_name} GODLIKE! {target_name} vaporized!",
+            8: f"🎯 {mod_name} WICKED SICK! {target_name} eviscerated!",
+            10: f"☠️ {mod_name} HOLY SH*T! {target_name} decimated!",
+            15: f"🏆 {mod_name} FLAWLESS VICTORY! {target_name} eliminated!"
+        }
+        
+        # Get announcement for current streak
+        if streak in streak_messages:
+            return streak_messages[streak]
+        elif streak > 15:
+            return f"🎮 {mod_name} LEGENDARY {streak} KILL STREAK! {target_name} deleted!"
+        
+        # First kill (no streak yet)
+        if streak == 1:
+            import random
+            first_kill = [
+                f"🎯 {mod_name} scores first blood! {target_name} timed out!",
+                f"💥 {mod_name} opens the frag fest! {target_name} eliminated!",
+                f"⚔️ {mod_name} draws first blood! {target_name} pwned!"
+            ]
+            return random.choice(first_kill)
+        
+        return None
     
     def get_moderation_stats(self) -> Dict[str, Any]:
         """

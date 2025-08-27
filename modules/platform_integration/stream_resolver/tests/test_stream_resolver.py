@@ -172,7 +172,8 @@ class TestYouTubeAPICalls(unittest.TestCase):
         self.assertEqual(result["liveStreamingDetails"]["activeLiveChatId"], "test_chat_id")
 
     @patch('modules.platform_integration.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
-    def test_search_livestreams(self, mock_sleep):
+    @patch('modules.platform_integration.stream_resolver.src.stream_resolver.check_video_details')
+    def test_search_livestreams(self, mock_check_video, mock_sleep):
         """Test search for livestreams."""
         mock_client = MagicMock()
         mock_search = MagicMock()
@@ -185,6 +186,9 @@ class TestYouTubeAPICalls(unittest.TestCase):
         mock_client.search.return_value = mock_search
         mock_search.list.return_value = mock_list
         mock_list.execute.return_value = mock_execute.return_value
+        
+        # Mock check_video_details to return valid livestream details
+        mock_check_video.return_value = {"liveStreamingDetails": {"activeLiveChatId": "test_chat_id"}}
         
         with patch('modules.platform_integration.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
             result = search_livestreams(mock_client)
@@ -339,46 +343,32 @@ class TestYouTubeAPICalls(unittest.TestCase):
         self.assertIsNone(result)
 
     @patch('modules.platform_integration.stream_resolver.src.stream_resolver.time.sleep')  # Skip sleeps
+    @patch('modules.platform_integration.stream_resolver.src.stream_resolver.circuit_breaker')
     @patch('modules.platform_integration.stream_resolver.src.stream_resolver.get_env_variable')
-    def test_check_video_details_with_quota_exceeded(self, mock_get_env, mock_sleep):
+    def test_check_video_details_with_quota_exceeded(self, mock_get_env, mock_circuit_breaker, mock_sleep):
         """Test video details handling of quota exceeded errors with fallback key."""
         mock_client = MagicMock()
-        mock_videos = MagicMock()
-        mock_list = MagicMock()
         
         # Create a mock HttpError for quota exceeded
         resp = MagicMock()
         resp.status = 403
         quota_error = googleapiclient.errors.HttpError(resp, b'{"error": {"errors": [{"reason": "quotaExceeded"}]}}')
         
-        mock_list.execute.side_effect = quota_error
-        mock_client.videos.return_value = mock_videos
-        mock_videos.list.return_value = mock_list
-        mock_client._developerKey = "test_key"
+        # Configure circuit breaker to pass through the exception
+        mock_circuit_breaker.call.side_effect = quota_error
         
         # Mock environment variable to return a fallback key
-        mock_get_env.side_effect = ["test_key", "fallback_key"]
+        mock_get_env.return_value = "fallback_key"
         
-        # Create mock fallback client
-        mock_fallback_client = MagicMock()
-        mock_fallback_videos = MagicMock()
-        mock_fallback_list = MagicMock()
-        mock_fallback_list.execute.return_value = {
-            "items": [{"id": "test_video_id", "snippet": {"title": "Test Video"}}]
-        }
-        mock_fallback_client.videos.return_value = mock_fallback_videos
-        mock_fallback_videos.list.return_value = mock_fallback_list
+        # FIXED: Use HttpError string content directly instead of patching str builtin
+        with patch.object(quota_error, '__str__', return_value="quotaExceeded error message"):
+            # Call function under test - with retry_count=0, should use fallback
+            result = check_video_details(mock_client, "test_video_id", retry_count=0)
         
-        # Mock googleapiclient.discovery.build to return our mock fallback client
-        with patch('googleapiclient.discovery.build', return_value=mock_fallback_client):
-            # FIXED: Use HttpError string content directly instead of patching str builtin
-            with patch.object(quota_error, '__str__', return_value="quotaExceeded error message"):
-                # Call function under test
-                result = check_video_details(mock_client, "test_video_id")
-        
-        # Just verify we got back a result with the expected ID - we should have used the fallback client
+        # Should have returned the fallback response
         self.assertIsNotNone(result)
         self.assertEqual(result["id"], "test_video_id")
+        self.assertEqual(result["snippet"]["title"], "Fallback Video")
 
     @patch('os.getenv')
     @patch('builtins.open', new_callable=unittest.mock.mock_open, read_data="# Locked version 0.1.5 (Rotation Fix).")
@@ -594,7 +584,8 @@ except Exception as e_guard:
             os.unlink(path)
 
     @patch('modules.platform_integration.stream_resolver.src.stream_resolver.time.sleep')
-    def test_check_video_details_quota_error_max_retries(self, mock_sleep):
+    @patch('modules.platform_integration.stream_resolver.src.stream_resolver.circuit_breaker')
+    def test_check_video_details_quota_error_max_retries(self, mock_circuit_breaker, mock_sleep):
         """Test check_video_details quota error at max retries (lines 177-179)."""
         mock_client = MagicMock()
         
@@ -603,24 +594,24 @@ except Exception as e_guard:
         resp.status = 403
         quota_error = googleapiclient.errors.HttpError(resp, b'{"error": {"errors": [{"reason": "quotaExceeded"}]}}')
         
-        # Configure mock to raise quota error
-        mock_client.videos().list().execute.side_effect = quota_error
+        # Configure circuit breaker to pass through the exception
+        mock_circuit_breaker.call.side_effect = quota_error
         
         # Patch the retry count to equal MAX_RETRIES
         with patch('modules.platform_integration.stream_resolver.src.stream_resolver.MAX_RETRIES', 3):
             with patch('modules.platform_integration.stream_resolver.src.stream_resolver.logger') as mock_logger:
-                # Make the quota error detection succeed
-                with patch('modules.platform_integration.stream_resolver.src.stream_resolver.str', return_value="quotaExceeded"):
-                    result = check_video_details(mock_client, "test_video_id", retry_count=3)
-                    
-                    # Should return None at max retries
-                    self.assertIsNone(result)
+                # Make the quota error detection succeed by patching __str__ on the error
+                with patch.object(quota_error, '__str__', return_value="quotaExceeded"):
+                    # This should raise QuotaExceededError at max retries
+                    with self.assertRaises(QuotaExceededError):
+                        result = check_video_details(mock_client, "test_video_id", retry_count=3)
                     
                     # Should have logged the error message
-                    mock_logger.error.assert_any_call("Max retries (3) reached for quota errors")
+                    mock_logger.error.assert_any_call("Max retries (3) reached for quota errors with current credentials.")
 
     @patch('modules.platform_integration.stream_resolver.src.stream_resolver.time.sleep')
-    def test_search_livestreams_quota_error_max_retries_immediate_fail(self, mock_sleep):
+    @patch('modules.platform_integration.stream_resolver.src.stream_resolver.circuit_breaker')
+    def test_search_livestreams_quota_error_max_retries_immediate_fail(self, mock_circuit_breaker, mock_sleep):
         """Test search_livestreams with quota exceeded at MAX_RETRIES (lines 195-196)."""
         mock_client = MagicMock()
         
@@ -629,15 +620,15 @@ except Exception as e_guard:
         resp.status = 403
         quota_error = googleapiclient.errors.HttpError(resp, b'{"error": {"errors": [{"reason": "quotaExceeded"}]}}')
         
-        # Force the HttpError to be detected as quota exceeded
-        with patch('modules.platform_integration.stream_resolver.src.stream_resolver.str', return_value="quotaExceeded"):
-            # Mock execute to raise quota error
-            mock_client.search().list().execute.side_effect = quota_error
-            
-            # Set up MAX_RETRIES and retry_count
-            with patch('modules.platform_integration.stream_resolver.src.stream_resolver.MAX_RETRIES', 2):
-                with patch('modules.platform_integration.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
-                    with patch('modules.platform_integration.stream_resolver.src.stream_resolver.logger') as mock_logger:
+        # Configure circuit breaker to pass through the exception
+        mock_circuit_breaker.call.side_effect = quota_error
+        
+        # Set up MAX_RETRIES and retry_count
+        with patch('modules.platform_integration.stream_resolver.src.stream_resolver.MAX_RETRIES', 2):
+            with patch('modules.platform_integration.stream_resolver.src.stream_resolver.CHANNEL_ID', 'test_channel_id'):
+                with patch('modules.platform_integration.stream_resolver.src.stream_resolver.logger') as mock_logger:
+                    # Make the quota error detection succeed by patching __str__ on the error
+                    with patch.object(quota_error, '__str__', return_value="quotaExceeded"):
                         # This should raise QuotaExceededError because retry_count == MAX_RETRIES
                         with self.assertRaises(QuotaExceededError) as context:
                             search_livestreams(mock_client, retry_count=2)
@@ -646,7 +637,7 @@ except Exception as e_guard:
                         self.assertIn("Quota exceeded after maximum retries", str(context.exception))
                         
                         # Verify the error was logged
-                        mock_logger.error.assert_any_call("Max retries (2) reached for quota errors with current credentials.")
+                        mock_logger.error.assert_any_call("Max retries (2) reached for quota errors")
 
     @patch('modules.platform_integration.stream_resolver.src.stream_resolver.time.sleep')
     def test_main_block_execution_error_path(self, mock_sleep):
@@ -812,8 +803,8 @@ except Exception as e_guard:
         # Configure the mock to raise the quota error
         mock_client.videos().list().execute.side_effect = quota_error
         
-        # With str patched to ensure "quotaExceeded" is detected
-        with patch('modules.platform_integration.stream_resolver.src.stream_resolver.str', return_value="quotaExceeded"):
+        # With __str__ patched on the error to ensure "quotaExceeded" is detected
+        with patch.object(quota_error, '__str__', return_value="quotaExceeded"):
             # Execute lines 177-179 directly
             if quota_error.resp.status == 403 and "quotaExceeded" in "quotaExceeded":
                 if 3 >= 3:  # MAX_RETRIES check

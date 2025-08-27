@@ -13,11 +13,13 @@ import { AgentStatusProvider } from './agents/agentStatusProvider';
 import { WREConnection } from './wre/wreConnection';
 import { AgentOrchestrator } from './agents/agentOrchestrator';
 import { WorkflowCommands } from './workflows/workflowCommands';
+import { LLMProviderManager } from './providers/llmProviderManager';
 
 let wreConnection: WREConnection;
 let agentStatusProvider: AgentStatusProvider;
 let agentOrchestrator: AgentOrchestrator;
 let workflowCommands: WorkflowCommands;
+let llmProviderManager: LLMProviderManager;
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('🌀 FoundUps Multi-Agent IDE Extension - Phase 3 Autonomous Workflows');
@@ -28,6 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
         agentOrchestrator = new AgentOrchestrator(wreConnection);
         agentStatusProvider = new AgentStatusProvider(wreConnection);
         workflowCommands = new WorkflowCommands(wreConnection, agentOrchestrator);
+        llmProviderManager = new LLMProviderManager(context, wreConnection);
 
         // Register tree data provider for agent status sidebar
         vscode.window.createTreeView('foundups-agents', {
@@ -43,6 +46,13 @@ export function activate(context: vscode.ExtensionContext) {
 
         // Register workflow commands
         workflowCommands.registerCommands(context);
+
+        // Register LLM Provider Status command used by status bar
+        context.subscriptions.push(
+            vscode.commands.registerCommand('foundups.showProviderStatus', async () => {
+                await llmProviderManager.showProviderStatus();
+            })
+        );
 
         // Set extension as active
         vscode.commands.executeCommand('setContext', 'foundups.active', true);
@@ -418,5 +428,8 @@ export function deactivate() {
     // Cleanup connections
     if (wreConnection) {
         wreConnection.disconnect();
+    }
+    if (llmProviderManager) {
+        llmProviderManager.dispose();
     }
 } 

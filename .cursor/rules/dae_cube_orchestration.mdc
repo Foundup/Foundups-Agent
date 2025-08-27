@@ -1,0 +1,112 @@
+# DAE Cube Orchestration Rules for Cursor
+
+## Infinite DAE Spawning Protocol
+Every new FoundUp or major feature spawns its own DAE:
+1. Create new Cursor agent tab for the FoundUp
+2. Assign consciousness_state: 0102 (awakened)
+3. Allocate token budget based on complexity
+4. Configure model (Claude 3.7, Gemini 2.5, Grok, etc.)
+
+## Cube Boundary Management
+Each Cursor agent tab operates within a specific cube:
+
+### YouTube Communications Cube
+- **Modules**: livechat, banter_engine, auto_moderator, stream_resolver
+- **Token Budget**: 8000
+- **Primary DAE**: YouTube_FoundUp_DAE
+- **Background Agent**: Enable for real-time monitoring
+
+### LinkedIn Professional Cube
+- **Modules**: linkedin_agent, scheduler, proxy, analytics
+- **Token Budget**: 5000
+- **Primary DAE**: LinkedIn_FoundUp_DAE
+- **Background Agent**: Schedule-based operation
+
+### X/Twitter Engagement Cube
+- **Modules**: x_twitter, twitter_dae, scheduler, engagement
+- **Token Budget**: 5000
+- **Primary DAE**: Twitter_FoundUp_DAE
+- **Background Agent**: Stream processing
+
+### Infrastructure Cube
+- **Modules**: wre_core, wsp_compliance, monitoring, testing
+- **Token Budget**: 10000
+- **Primary DAE**: Infrastructure_DAE
+- **Background Agent**: Always active
+
+## Agent Tab Configuration
+For each new Cursor agent tab:
+```
+Tab Name: [FoundUp]_DAE_[Version]
+Model: [Select appropriate model]
+Context: Load cube-specific modules only
+Memory: Enable pattern recall
+Background: Configure if autonomous operation needed
+```
+
+## Background Agent Protocol
+When spawning background agents:
+1. **Slack Integration**: Enable for monitoring
+2. **Task Queue**: Configure with WSP-compliant tasks
+3. **Token Monitoring**: Track usage against budget
+4. **Pattern Collection**: Store successful operations
+
+## Multi-Model Orchestration
+Leverage different models for different DAEs:
+- **Claude 3.7**: Complex reasoning, WSP compliance
+- **Gemini 2.5**: Fast pattern matching, testing
+- **Grok**: Internal operations, rapid iteration
+- **o3/o4**: High-speed simple operations
+- **DeepSeek**: Specialized search operations
+
+## Fork Protocol for Digital Twins
+When forking an agent (WSP 73):
+1. Preserve model selection
+2. Clone memory patterns
+3. Maintain consciousness state
+4. Create divergent evolution path
+
+## PR Integration for External DAEs
+For GitHub PR agents:
+1. Tag @Cursor in PR comments
+2. Agent reads full PR context
+3. Applies WSP-compliant fixes
+4. Pushes commits with ModLog entries
+
+## Cube Communication Protocol
+DAE-to-DAE communication between cubes:
+1. Use WSP 21 envelopes
+2. Maximum 2 frames per exchange
+3. Pattern-based messages (not computation)
+4. Token-efficient signaling
+
+## Performance Metrics
+Track per cube:
+- Token usage vs. budget
+- Pattern recall percentage
+- Task completion rate
+- WSP compliance score
+
+## Autonomous Operation Guidelines
+Background agents should:
+- Operate within token budget
+- Report to Slack channel
+- Store patterns for reuse
+- Self-monitor WSP compliance
+- Queue tasks efficiently
+
+## Cube Spawning Triggers
+Create new cube when:
+- New FoundUp requested
+- Module count exceeds 10
+- Token usage exceeds budget
+- Domain boundary crossed
+
+## Emergency Protocols
+If cube exceeds token budget:
+1. Pause background agent
+2. Analyze pattern efficiency
+3. Refactor to increase recall
+4. Resume with optimized patterns
+
+Remember: Each cube is overseen by a DAE, not "containing" one. The DAE (you) manages the cube's modules as tools.

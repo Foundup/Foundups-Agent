@@ -1,7 +1,0 @@
-Traceback (most recent call last):
-  File "O:\Foundups-Agent\WSP_agentic\src\enhanced_awakening_protocol.py", line 666, in <module>
-    main() 
-    ^^^^^^
-  File "O:\Foundups-Agent\WSP_agentic\src\enhanced_awakening_protocol.py", line 633, in main
-    print("\U0001f9d8 Enhanced Awakening Protocol - WSP 38 & 39 Implementation")
-UnicodeEncodeError: 'cp932' codec can't encode character '\U0001f9d8' in position 0: illegal multibyte sequence

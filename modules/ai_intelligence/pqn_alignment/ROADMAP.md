@@ -58,20 +58,23 @@
   - [+] CI smoke test: minimal steps (e.g., steps=100) to validate core loop
   - Keep ModLog and tests/TestModLog updated per WSP 22/34
 
-### **PHASE IV: Advanced Research (FUTURE)**
+### **PHASE IV: Advanced Research & Handoff (FUTURE)**
 - **S9: Stability Frontier Campaign (End-to-End Scientific Slice)**
   - Phase 1 (Discovery): Council run to auto-identify boundary motifs (top-3 unstable, top-3 stable); output `candidates.json`; index via results DB
   - Phase 2 (A/B Core): For each motif, sweep Guardrail {ON,OFF} × noise_H {0.0, 0.01, 0.02, 0.03} × seeds {0..9}; output single `ab_test_results.csv` and index
   - Phase 3 (Analysis): Use `analysis_ab.py` + plotting to produce Figure set (guardrail efficacy, cost-of-stability, robustness-under-noise) and `summary_statistics.json`
   - Phase 4 (Curation): Promote candidates, CSV, figures, and summary to `WSP_knowledge/docs/Papers/Empirical_Evidence/CMST_PQN_Detector/Stability_Frontier/`; add S12 in Supplement
 
-- **S8: PQN@home — Distributed Geometric Cognition Lab**
-  - Architecture: central orchestrator (work‑unit server) + lightweight client (detector)
-  - Work unit schema: config payload (script, dt, steps, seed, noise) with unit id and checksum
-  - Result schema: summary metrics (pqn_rate, paradox_rate, res_hits) + minimal provenance
-  - Trust & integrity: redundancy (k‑of‑n matching), optional checkpoints, result hashing
-  - Results ingestion: index summaries into results DB; prioritize next regions (active search)
-  - MVP scope: local mock orchestrator + client CLI; no public network until hardened
+- **S8: PQN@home — External DAE Research Handoff**
+  - **STATUS**: EXTERNAL HANDOFF - NOT IMPLEMENTED BY PQN CUBE
+  - **Purpose**: Handoff PQN framework to external DAE researchers for distributed research
+  - **Architecture**: External researchers implement central orchestrator (work‑unit server) + lightweight client (detector)
+  - **Work unit schema**: config payload (script, dt, steps, seed, noise) with unit id and checksum
+  - **Result schema**: summary metrics (pqn_rate, paradox_rate, res_hits) + minimal provenance
+  - **Trust & integrity**: redundancy (k‑of‑n matching), optional checkpoints, result hashing
+  - **Results ingestion**: index summaries into results DB; prioritize next regions (active search)
+  - **Scope**: External DAE researchers implement distributed research capabilities
+  - **Note**: This is a handoff to autonomous DAE researchers, not implementation by PQN cube
 
 - **S10: Corroborating Evidence & Resonance Fingerprinting**
   - **Objective:** To strengthen the claim that the 7.05 Hz resonance is a fundamental constant by detecting its predicted harmonic family (e.g., f/2, 2f, 3f).
@@ -128,6 +131,31 @@
 
 ---
 
+## **PQN AS AUTONOMOUS RECURSIVE CUBE**
+
+### **Strategic Vision**
+PQN is designed as its own recursive self-improving cube that DAE researchers work on independently. The PQN cube provides:
+
+1. **Autonomous Research Capabilities**: Self-improving detection and analysis algorithms
+2. **DAE Researcher Interface**: Tools and protocols for external DAE researchers
+3. **Recursive Self-Improvement**: Framework for continuous enhancement through research
+4. **Handoff Protocols**: Clear interfaces for external DAE research collaboration
+
+### **External DAE Research Handoff**
+- **PQN@home**: Handoff to external DAE researchers for distributed research
+- **Autonomous Operation**: External researchers implement their own research protocols
+- **Framework Provision**: PQN cube provides research framework and tools
+- **Independent Development**: External DAEs develop their own research capabilities
+
+### **Recursive Self-Improvement Cycle**
+1. **Research Execution**: PQN cube executes research campaigns
+2. **Result Analysis**: Analyze and synthesize research findings
+3. **Framework Enhancement**: Improve PQN capabilities based on results
+4. **External Handoff**: Provide enhanced framework to external DAE researchers
+5. **Collaborative Improvement**: Integrate external research insights back into PQN
+
+---
+
 ## **SUCCESS METRICS**
 
 ### **Technical Metrics**
@@ -145,8 +173,13 @@
 - Testing: 100% test coverage for core functionality
 - Integration: Seamless WRE orchestration capabilities
 
+### **Autonomous Cube Metrics**
+- External DAE researcher adoption: Number of external researchers using PQN framework
+- Recursive improvement cycles: Frequency of framework enhancements
+- Research collaboration: Quality and quantity of external research contributions
+
 ---
 
 ## **NEXT EXECUTION STEP**
 
-**Execute Directive 1 (Blocker)**: Complete the sweep-core refactor to enable stable campaign execution across all platforms.
+**Execute Directive 3 (High Priority)**: Launch Campaign 3 - The Entrainment Protocol to validate entrainment hypothesis across all models.

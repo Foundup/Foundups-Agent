@@ -50,6 +50,8 @@ patterns = {
 
 ## WSP Compliance
 Operations protocols:
+- WSP 17: Pattern registry (check PATTERN_REGISTRY.md before patterns)
+- WSP 84: Code memory verification (anti-vibecoding)
 - WSP 65: Component consolidation
 - WSP 50: Pre-action verification
 - WSP 64: Violation prevention

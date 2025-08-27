@@ -2,6 +2,33 @@
 
 ## Chronological Change Log
 
+### [2025-08-28] - Whack-a-MAGAT Enhancements
+**Date**: 2025-08-28
+**WSP Protocol References**: WSP 22, 48, 84
+**Impact Analysis**: Critical enhancements to timeout gamification
+**Enhancement Tracking**: Improved combo system and anti-gaming protection
+
+#### 🎮 Changes to whack_a_magat Module
+1. **timeout_announcer.py Enhancements**:
+   - Fixed multi-whack detection with proper timestamp tracking
+   - Added anti-gaming protection (same target doesn't count)
+   - Enhanced combo multiplier system (x2-x5 for consecutive different targets)
+   - Removed daily cap on points per user request
+   
+2. **whack.py Updates**:
+   - Removed daily cap enforcement
+   - Better point calculation for combos
+   
+3. **Smart Batching Integration**:
+   - Works with event_handler.py batching system
+   - Prevents announcement lag during high activity
+
+#### Testing
+- Multi-whack detection verified with 10-second window
+- Anti-gaming protection tested and working
+- Combo multipliers calculating correctly
+- Daily cap removal confirmed
+
 ### Module Creation and Initial Setup
 **Date**: 2025-08-03  
 **WSP Protocol References**: WSP 48, WSP 34, WSP 22  

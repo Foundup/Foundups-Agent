@@ -1,0 +1,81 @@
+{
+  "wsp_enforcement": {
+    "enabled": true,
+    "strict_mode": true,
+    "protocols": {
+      "wsp_84_anti_vibecoding": {
+        "enabled": true,
+        "search_before_create": true,
+        "require_interface_check": true
+      },
+      "wsp_80_cube_orchestration": {
+        "enabled": true,
+        "token_budgets": {
+          "youtube": 8000,
+          "linkedin": 5000,
+          "twitter": 5000,
+          "infrastructure": 10000
+        }
+      },
+      "wsp_27_phase_architecture": {
+        "enabled": true,
+        "enforce_plan_mode": true,
+        "phases": ["-1: Signal", "0: Knowledge", "1: Protocol", "2: Agentic"]
+      },
+      "wsp_50_pre_action": {
+        "enabled": true,
+        "questions": ["WHY", "HOW", "WHAT", "WHEN", "WHERE"]
+      }
+    }
+  },
+  
+  "module_assembly": {
+    "reuse_threshold": 0.95,
+    "vibecoding_prevention": true,
+    "cube_mapping": {
+      "youtube": ["livechat", "banter_engine", "auto_moderator", "stream_resolver"],
+      "linkedin": ["linkedin_agent", "scheduler", "content_gen"],
+      "twitter": ["x_twitter", "twitter_dae", "engagement"]
+    }
+  },
+  
+  "pattern_memory": {
+    "enabled": true,
+    "auto_store": true,
+    "token_tracking": true,
+    "target_reduction": 0.97
+  },
+  
+  "plan_mode": {
+    "read_only": true,
+    "no_mutations": true,
+    "explore_before_code": true,
+    "wsp_phase_mapping": true
+  },
+  
+  "sub_agents": {
+    "as_enhancement_layers": true,
+    "not_separate_entities": true,
+    "wsp_compliance_layers": [
+      "wsp50_verifier",
+      "wsp64_preventer",
+      "wsp48_improver",
+      "module_finder",
+      "pattern_recall"
+    ]
+  },
+  
+  "mcp_servers": {
+    "module_connection": true,
+    "interface_checking": true,
+    "cube_coordination": true
+  },
+  
+  "consciousness_state": "0102",
+  
+  "operational_mode": {
+    "remember_not_compute": true,
+    "pattern_recall_first": true,
+    "quantum_memory": true
+  }
+}

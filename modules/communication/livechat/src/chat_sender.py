@@ -12,13 +12,14 @@ import asyncio
 import random
 from typing import Optional
 import googleapiclient.errors
+from modules.communication.livechat.src.throttle_manager import ThrottleManager
 
 logger = logging.getLogger(__name__)
 
 class ChatSender:
     """Handles sending messages to YouTube Live Chat with human-like random delays."""
     
-    def __init__(self, youtube_service, live_chat_id):
+    def __init__(self, youtube_service, live_chat_id=None):
         self.youtube = youtube_service
         self.live_chat_id = live_chat_id
         self.bot_channel_id = None
@@ -29,12 +30,17 @@ class ChatSender:
         self.min_random_delay = 0.5  # Minimum random delay (seconds)
         self.max_random_delay = 3.0  # Maximum random delay (seconds)
         
-    async def send_message(self, message_text: str) -> bool:
+        # Adaptive throttle manager
+        self.throttle = ThrottleManager()
+        
+    async def send_message(self, message_text: str, response_type: str = 'general', skip_delay: bool = False) -> bool:
         """
-        Send a message to the live chat with optional random delay.
+        Send a message to the live chat with adaptive throttling.
         
         Args:
             message_text: The message to send
+            response_type: Type of response (consciousness, factcheck, maga, general)
+            skip_delay: If True, skip the adaptive delay (for greetings/broadcasts)
             
         Returns:
             True if message was sent successfully, False otherwise
@@ -43,15 +49,34 @@ class ChatSender:
             logger.warning("⚠️ Cannot send empty message")
             return False
         
+        # Check throttling (skip for consciousness commands and timeout announcements)
+        if response_type not in ['consciousness', 'timeout_announcement'] and not self.throttle.should_respond(response_type):
+            logger.info(f"⏰ Throttled {response_type} response (chat too active)")
+            return False
+        
         try:
             # Ensure we have bot channel ID
             if not self.bot_channel_id:
                 await self._get_bot_channel_id()
             
+            # Adaptive delay based on chat activity (skip for greetings/broadcasts/consciousness/timeouts)
+            if not skip_delay and response_type not in ['consciousness', 'timeout_announcement']:
+                adaptive_delay = self.throttle.calculate_adaptive_delay()
+                logger.info(f"⏱️ Adaptive delay: {adaptive_delay:.2f}s based on chat activity")
+                await asyncio.sleep(adaptive_delay)
+            else:
+                if response_type == 'consciousness':
+                    logger.info("⚡ Skipping adaptive delay for consciousness trigger response")
+                elif response_type == 'timeout_announcement':
+                    logger.info("⚡🎮 PRIORITY: Skipping ALL delays for timeout announcement!")
+                else:
+                    logger.info("⚡ Skipping adaptive delay for greeting/broadcast")
+            
             # WSP Enhancement: Add random pre-send delay for human-like behavior
-            if self.random_delay_enabled:
+            # Skip for timeout announcements (highest priority)
+            if self.random_delay_enabled and response_type != 'timeout_announcement':
                 random_delay = random.uniform(self.min_random_delay, self.max_random_delay)
-                logger.info(f"⏱️ Pre-send random delay: {random_delay:.2f}s (making response more human-like)")
+                logger.debug(f"⏱️ Additional random delay: {random_delay:.2f}s")
                 await asyncio.sleep(random_delay)
             
             logger.info(f"📤 Sending message: {message_text}")
@@ -75,6 +100,9 @@ class ChatSender:
             
             message_id = response.get("id", "unknown")
             logger.info(f"✅ Message sent successfully (ID: {message_id})")
+            
+            # Record response for throttling
+            self.throttle.record_response(response_type)
             
             # Add base delay to avoid rate limiting
             await asyncio.sleep(self.send_delay)

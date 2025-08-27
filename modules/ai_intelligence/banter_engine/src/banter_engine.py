@@ -9,12 +9,19 @@ Integrates improvements from test coverage analysis:
 - Better logging and monitoring
 
 Following WSP 3: Enterprise Domain Architecture
+
+WSP 17 Pattern Registry: This is a REUSABLE PATTERN
+- Documented in: modules/ai_intelligence/PATTERN_REGISTRY.md
+- Pattern: State-based response generation with themes
+- Use Cases: Contextual responses, personality systems
+- Reusable for: LinkedIn professional responses, X/Twitter witty replies, Discord gaming banter
 """
 
 import json
 import logging
 import random
 import time
+import os
 from pathlib import Path
 from typing import Optional, Dict, Tuple, List, Any
 from datetime import datetime, timedelta
@@ -23,6 +30,14 @@ from datetime import datetime, timedelta
 from .sequence_responses import SEQUENCE_MAP
 # Import the emoji action map
 from .emoji_sequence_map import get_emoji_sequence
+
+# Import LLM connector for GPT-3/AI responses
+try:
+    from modules.ai_intelligence.rESP_o1o2.src.llm_connector import LLMConnector
+    LLM_AVAILABLE = True
+except ImportError:
+    LLM_AVAILABLE = False
+    logging.info("LLM connector not available, using predefined responses only")
 
 class BanterEngineError(Exception):
     """Base exception for Banter Engine errors."""
@@ -88,6 +103,34 @@ class BanterEngine:
             # Performance tracking
             self._total_requests = 0
             self._successful_responses = 0
+            
+            # Initialize LLM connector if available and API key exists
+            self.llm_connector = None
+            self.use_llm = False
+            if LLM_AVAILABLE:
+                # Check for API keys in environment
+                if os.getenv("OPENAI_API_KEY"):
+                    try:
+                        self.llm_connector = LLMConnector(
+                            model="gpt-3.5-turbo",  # Can be changed to gpt-4
+                            max_tokens=150,
+                            temperature=0.8
+                        )
+                        self.use_llm = True
+                        self.logger.info("✅ GPT-3.5 Turbo initialized for BanterEngine")
+                    except Exception as e:
+                        self.logger.warning(f"Failed to initialize GPT: {e}")
+                elif os.getenv("CLAUDE_API_KEY"):
+                    try:
+                        self.llm_connector = LLMConnector(
+                            model="claude-3-sonnet-20240229",
+                            max_tokens=150,
+                            temperature=0.8
+                        )
+                        self.use_llm = True
+                        self.logger.info("✅ Claude initialized for BanterEngine")
+                    except Exception as e:
+                        self.logger.warning(f"Failed to initialize Claude: {e}")
             self._failed_responses = 0
             
             # Store themes derived from tones with validation
@@ -449,10 +492,7 @@ class BanterEngine:
                     response = self._validate_response(response)
                     if not response:
                         response = self.get_random_banter_enhanced(theme=tone)
-                    else:
-                        # Append emoji sequence based on tone (action-tag)
-                        action_tag_emojis = get_emoji_sequence(tone)
-                        response = f"{response} {action_tag_emojis}".strip()
+                    # Don't append emojis - agentic_sentiment_0102 adds signature
                 
                 # Cache the result
                 self._cache_response(cache_key, result_str) # Consider caching (result_str, response) tuple
@@ -520,7 +560,29 @@ class BanterEngine:
                 responses = self._themes.get("default", [])
             
             selected_response = None
-            if responses:
+            
+            # Try LLM first if available
+            if self.use_llm and self.llm_connector:
+                try:
+                    # Create a prompt based on the theme
+                    system_prompt = f"You are a witty chat bot responding to emoji triggers. Theme: {theme}. Keep responses short and playful."
+                    prompt = f"Generate a short, witty response for someone using emojis to communicate. Theme: {theme}"
+                    
+                    llm_response = self.llm_connector.get_response(
+                        prompt=prompt,
+                        system_prompt=system_prompt,
+                        max_tokens=50,
+                        temperature=0.8
+                    )
+                    
+                    if llm_response:
+                        selected_response = llm_response
+                        self.logger.info(f"🤖 Using LLM response for theme '{theme}'")
+                except Exception as e:
+                    self.logger.warning(f"LLM response failed, falling back to predefined: {e}")
+            
+            # Fallback to predefined responses if LLM not used or failed
+            if not selected_response and responses:
                 # Select random response with validation
                 selected_response_candidate = random.choice(responses)
                 validated_response_candidate = self._validate_response(selected_response_candidate)
@@ -541,15 +603,13 @@ class BanterEngine:
                 self.logger.warning(f"No valid responses found for theme '{theme}' or default, using ultimate fallback.")
                 # final_response remains the ultimate fallback
             
-            # Append emoji sequence based on the theme (action-tag)
-            action_tag_emojis = get_emoji_sequence(theme)
-            return f"{final_response} {action_tag_emojis}".strip()
+            # Don't append emojis - agentic_sentiment_0102 adds signature
+            return final_response.strip()
             
         except Exception as e:
             self.logger.error(f"Error generating random banter for theme '{theme}': {e}")
-            # Return ultimate fallback with default emoji sequence on error
-            action_tag_emojis = get_emoji_sequence("default")
-            return f"{final_response} {action_tag_emojis}".strip()
+            # Return ultimate fallback without emojis
+            return final_response.strip()
 
     def get_performance_stats(self) -> Dict[str, Any]:
         """Get performance statistics."""

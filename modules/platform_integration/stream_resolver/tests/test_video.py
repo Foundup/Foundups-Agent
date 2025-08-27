@@ -1,6 +1,6 @@
 import logging
 from utils.logging_config import setup_logging
-from modules.infrastructure.oauth_management.src.oauth_manager import get_authenticated_service
+from modules.platform_integration.youtube_auth.src.youtube_auth import get_authenticated_service
 from modules.platform_integration.stream_resolver.src.stream_resolver import check_video_details
 from utils.env_loader import get_env_variable
 

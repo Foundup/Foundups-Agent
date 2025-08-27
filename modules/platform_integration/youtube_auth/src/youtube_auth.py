@@ -6,15 +6,19 @@ import google_auth_oauthlib.flow
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 from googleapiclient.errors import HttpError
+from modules.platform_integration.youtube_auth.src.quota_monitor import QuotaMonitor
 
 logger = logging.getLogger(__name__)
+
+# Initialize quota monitor
+quota_monitor = QuotaMonitor()
 
 # Load environment variables once when the module is imported
 load_dotenv()
 
 def get_credentials_for_index(index):
     """
-    Get credentials for a specific index (1-4).
+    Get credentials for a specific index (1-5).
     Returns tuple of (client_secrets_file, token_file) or None if not found.
     """
     client_secrets = os.getenv(f'GOOGLE_CLIENT_SECRETS_FILE_{index}')
@@ -33,7 +37,7 @@ def get_authenticated_service(token_index=None):
     """
     Authenticates the user using OAuth 2.0 and returns a YouTube API service object.
     Handles token loading, refreshing, and the initial authorization flow.
-    Implements multi-client OAuth fallback for quota management.
+    Implements multi-client OAuth fallback for quota management with auto-rotation.
     
     Args:
         token_index: Optional specific token index to use (0-3). If None, tries all.
@@ -50,15 +54,43 @@ def get_authenticated_service(token_index=None):
         logger.error("YouTube scopes is empty in .env file.")
         raise ValueError("YOUTUBE_SCOPES must be defined in .env")
 
+    # Track quota-exhausted sets persistently
+    if not hasattr(get_authenticated_service, 'exhausted_sets'):
+        get_authenticated_service.exhausted_sets = set()
+    if not hasattr(get_authenticated_service, 'last_reset'):
+        import time
+        get_authenticated_service.last_reset = time.time()
+    
+    # Reset exhausted sets daily (quotas reset at midnight PT)
+    import time
+    current_time = time.time()
+    if current_time - get_authenticated_service.last_reset > 86400:  # 24 hours
+        logger.info("🔄 Daily reset: Clearing exhausted credential sets")
+        get_authenticated_service.exhausted_sets.clear()
+        get_authenticated_service.last_reset = current_time
+
     # Determine which credential sets to try
     if token_index is not None:
         # Use specific token index (convert from 0-based to 1-based)
         indices_to_try = [token_index + 1]
         logger.info(f"🎯 Using specific credential set {token_index + 1}")
     else:
-        # Try all credential sets in sequence
-        indices_to_try = range(1, 5)
-        logger.info("🔄 Trying all credential sets in sequence")
+        # Auto-rotation: Skip known exhausted sets
+        # ALL 7 SETS NOW WORKING!
+        # Set 1: foundups-bot, Set 2: foundups-agent2, Set 3: foundups-agent3 (NEW!)
+        # Set 4: foundups-agent4, Set 5: foundupsagent5
+        # Set 6: foundups-agent6, Set 7: foundups-agent7
+        all_sets = [1, 2, 3, 7, 5, 4, 6]  # All sets operational - 70,000 units/day!
+        available_sets = [s for s in all_sets if s not in get_authenticated_service.exhausted_sets]
+        
+        if not available_sets:
+            # All exhausted - try all again (quotas might have reset)
+            logger.warning("⚠️ All credential sets exhausted, retrying all...")
+            get_authenticated_service.exhausted_sets.clear()
+            available_sets = all_sets
+        
+        indices_to_try = available_sets
+        logger.info(f"🔄 Auto-rotating through sets: {indices_to_try} (Exhausted: {get_authenticated_service.exhausted_sets})")
     
     for index in indices_to_try:
         logger.info(f"🔑 Attempting authentication with credential set {index}")
@@ -130,20 +162,31 @@ def get_authenticated_service(token_index=None):
             # Test the service with a lightweight call to ensure it's working
             try:
                 test_response = youtube_service.channels().list(part='snippet', mine=True).execute()
+                # Track the quota usage for this test call
+                quota_monitor.track_api_call(index, 'channels.list')
+                
                 if test_response.get('items'):
                     logger.info(f"✅ Service validation successful for set {index}")
+                    # Store the active set for tracking
+                    youtube_service._credential_set = index
                     return youtube_service
                 else:
                     logger.warning(f"⚠️ Service built but no channel data returned for set {index}")
                     continue
             except Exception as test_e:
-                logger.warning(f"⚠️ Service built but validation failed for set {index}: {test_e}")
-                # Still return the service as it might work for other operations
-                return youtube_service
+                if 'quotaExceeded' in str(test_e):
+                    logger.warning(f"📊 Validation failed due to quota for set {index}, marking as exhausted...")
+                    get_authenticated_service.exhausted_sets.add(index)
+                    continue  # Try next set
+                else:
+                    logger.warning(f"⚠️ Service built but validation failed for set {index}: {test_e}")
+                    # Still return the service as it might work for other operations
+                    return youtube_service
                 
         except HttpError as e:
             if 'quotaExceeded' in str(e) or 'quota' in str(e).lower():
-                logger.warning(f"📊 Quota exceeded for credential set {index}, trying next set...")
+                logger.warning(f"📊 Quota exceeded for credential set {index}, marking as exhausted...")
+                get_authenticated_service.exhausted_sets.add(index)
                 continue
             else:
                 logger.error(f"❌ HTTP error building YouTube service with set {index}: {e}")

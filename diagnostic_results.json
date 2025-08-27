@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-08-27T04:04:12.465800",
+  "tests": {
+    "consciousness": {
+      "consciousness_responses": 9,
+      "consciousness_blocked": 1,
+      "mode": "everyone"
+    },
+    "magadoom": {
+      "timeouts_processed": 3,
+      "announcements": 3,
+      "owner_xp": 452,
+      "mod_xp": 230
+    },
+    "commands": {
+      "commands_tested": 8,
+      "successful": 8
+    },
+    "protection": {
+      "spam_blocked": 0,
+      "troll_responses": 2
+    },
+    "grok": {
+      "grok_status": "operational",
+      "model": "grok-3"
+    }
+  }
+}

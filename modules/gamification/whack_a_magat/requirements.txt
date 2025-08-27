@@ -1,0 +1,1 @@
+# No external Python packages required; stdlib only for PoC→PoV
