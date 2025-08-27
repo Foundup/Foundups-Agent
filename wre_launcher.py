@@ -17,6 +17,9 @@ if os.name == 'nt':  # Windows
 # Add project root to path
 project_root = Path(__file__).resolve().parent
 sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / 'modules'))
+sys.path.insert(0, str(project_root / 'modules' / 'wre_core'))
+sys.path.insert(0, str(project_root / 'modules' / 'wre_core' / 'src'))
 
 def safe_log(message, level="INFO"):
     """Safe logging without Unicode characters"""
