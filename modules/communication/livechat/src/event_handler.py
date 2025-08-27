@@ -8,20 +8,22 @@ Split from message_processor.py for WSP compliance
 import logging
 import time
 import asyncio
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, List, Optional
 from collections import deque
 from dataclasses import dataclass
 from modules.gamification.whack_a_magat.src.timeout_announcer import TimeoutManager
 
+logger = logging.getLogger(__name__)
+
 # Try to import MCP integration
 try:
-    from mcp_youtube_integration import YouTubeMCPIntegration
+    from .mcp_youtube_integration import YouTubeMCPIntegration
     MCP_AVAILABLE = True
 except ImportError:
     MCP_AVAILABLE = False
     logger.warning("MCP integration not available, using legacy system")
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -41,13 +43,17 @@ class EventHandler:
     def __init__(self, memory_dir: str = "memory"):
         self.timeout_manager = TimeoutManager(memory_dir)
         
+        # Thread pool for async MCP operations
+        self.executor = ThreadPoolExecutor(max_workers=2)
+        self.mcp_loop = None
+        self.mcp_thread = None
+        
         # Initialize MCP if available
         self.mcp_integration = None
         if MCP_AVAILABLE:
             try:
-                self.mcp_integration = YouTubeMCPIntegration()
-                # Connect to MCP servers asynchronously
-                asyncio.create_task(self._init_mcp())
+                # Create MCP integration in separate thread with its own event loop
+                self._init_mcp_thread()
                 logger.info("🚀 MCP integration enabled for instant announcements!")
             except Exception as e:
                 logger.error(f"Failed to initialize MCP: {e}")
@@ -69,7 +75,30 @@ class EventHandler:
         else:
             logger.info("🎯 EventHandler initialized with smart batching (legacy)")
         
-    async def _init_mcp(self):
+    def _init_mcp_thread(self):
+        """Initialize MCP in a separate thread with its own event loop"""
+        def run_mcp_loop():
+            # Create new event loop for this thread
+            self.mcp_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.mcp_loop)
+            
+            # Initialize MCP integration
+            self.mcp_integration = YouTubeMCPIntegration()
+            
+            # Connect to MCP servers
+            self.mcp_loop.run_until_complete(self._init_mcp_async())
+            
+            # Keep loop running for future async calls
+            self.mcp_loop.run_forever()
+        
+        # Start MCP thread
+        self.mcp_thread = threading.Thread(target=run_mcp_loop, daemon=True)
+        self.mcp_thread.start()
+        
+        # Wait a moment for initialization
+        time.sleep(1)
+    
+    async def _init_mcp_async(self):
         """Initialize MCP connections asynchronously"""
         try:
             await self.mcp_integration.connect_all()
@@ -77,6 +106,28 @@ class EventHandler:
         except Exception as e:
             logger.error(f"Failed to connect MCP servers: {e}")
             self.mcp_integration = None
+    
+    def _call_mcp_async(self, coro):
+        """Call an async MCP function from sync context"""
+        if self.mcp_loop and self.mcp_integration:
+            # Schedule coroutine on MCP event loop
+            future = asyncio.run_coroutine_threadsafe(coro, self.mcp_loop)
+            try:
+                # Wait for result with timeout
+                return future.result(timeout=2.0)
+            except Exception as e:
+                logger.error(f"MCP async call failed: {e}")
+                return None
+        return None
+    
+    def cleanup(self):
+        """Cleanup MCP thread and resources"""
+        if self.mcp_loop:
+            self.mcp_loop.call_soon_threadsafe(self.mcp_loop.stop)
+        if self.mcp_thread:
+            self.mcp_thread.join(timeout=2)
+        if self.executor:
+            self.executor.shutdown(wait=False)
     
     def handle_timeout_event(self, event: Dict[str, Any]) -> Dict[str, Any]:
         """Handle a timeout event and generate announcement."""
@@ -109,14 +160,12 @@ class EventHandler:
                     "duration": int(duration)
                 }
                 
-                # Run async operation in sync context
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                mcp_result = loop.run_until_complete(
+                # Call MCP async function using thread-safe method
+                mcp_result = self._call_mcp_async(
                     self.mcp_integration.process_timeout_event(mcp_event)
                 )
                 
-                if mcp_result.get("instant"):
+                if mcp_result and mcp_result.get("instant"):
                     # Build instant announcement from MCP
                     announcement = f"🎯 {mod_name} whacked {target_name}! "
                     announcement += f"+{mcp_result['points']} points"
