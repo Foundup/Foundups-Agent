@@ -126,6 +126,7 @@ class AutoModeratorDAE:
         Phase 2: Autonomous chat monitoring and moderation.
         
         This is the main execution loop with intelligent throttling.
+        Returns when stream ends/becomes inactive for seamless switching.
         """
         # Import the intelligent delay calculator and trigger
         from modules.platform_integration.stream_resolver.src.stream_resolver import calculate_enhanced_delay
@@ -139,6 +140,7 @@ class AutoModeratorDAE:
         retry_count = 0
         consecutive_failures = 0
         previous_delay = None
+        quick_check_mode = False  # Flag for rapid checking after stream end
         
         while True:
             # Check for manual trigger
@@ -148,29 +150,42 @@ class AutoModeratorDAE:
                 previous_delay = None
                 trigger.reset()
             
+            # Force fresh search if in quick check mode (after stream ended)
+            if quick_check_mode:
+                # Clear any cached data to ensure we find NEW streams
+                if self.stream_resolver:
+                    self.stream_resolver.clear_cache()
+                    logger.info("🔍 Quick check mode - cleared cache, searching for NEW stream")
+            
             result = self.find_livestream()
             if result:
                 # Reset counters on success
                 retry_count = 0
                 consecutive_failures = 0
+                quick_check_mode = False  # Reset quick mode
                 break
             
             # Calculate intelligent delay based on retries and failures
             # Use trigger-aware delay for better idle behavior
-            delay = create_intelligent_delay(
-                consecutive_failures=consecutive_failures,
-                previous_delay=previous_delay,
-                has_trigger=True  # We have trigger capability
-            )
-            
-            # Show different messages based on delay length
-            if delay < 60:
-                logger.info(f"📺 No stream found. Checking again in {delay:.0f} seconds...")
-            elif delay < 300:
-                logger.info(f"⏳ No stream found. Waiting {delay/60:.1f} minutes (quota conservation mode)...")
+            if quick_check_mode:
+                # After stream ends, check more frequently for new stream
+                delay = min(15, 5 * (consecutive_failures + 1))  # 5s, 10s, 15s, 15s...
+                logger.info(f"⚡ Quick check mode: Checking again in {delay}s for new stream")
             else:
-                logger.info(f"💤 Idle mode: {delay/60:.1f} minutes (or until triggered)")
-                logger.info(f"💡 Tip: echo TRIGGER > stream_trigger.txt to check immediately")
+                delay = create_intelligent_delay(
+                    consecutive_failures=consecutive_failures,
+                    previous_delay=previous_delay,
+                    has_trigger=True  # We have trigger capability
+                )
+                
+                # Show different messages based on delay length
+                if delay < 60:
+                    logger.info(f"📺 No stream found. Checking again in {delay:.0f} seconds...")
+                elif delay < 300:
+                    logger.info(f"⏳ No stream found. Waiting {delay/60:.1f} minutes (quota conservation mode)...")
+                else:
+                    logger.info(f"💤 Idle mode: {delay/60:.1f} minutes (or until triggered)")
+                    logger.info(f"💡 Tip: echo TRIGGER > stream_trigger.txt to check immediately")
             
             # Wait with intelligent delay, but check for triggers every 5 seconds
             elapsed = 0
@@ -233,20 +248,57 @@ class AutoModeratorDAE:
             logger.error("Failed to connect to YouTube")
             return
         
-        # Phase 2: Monitor autonomously - loop forever
+        # Phase 2: Monitor autonomously - loop forever looking for streams
+        consecutive_failures = 0
+        stream_ended_normally = False
+        
         while True:
             try:
                 await self.monitor_chat()
-                # If monitor_chat returns, stream ended - look for new one
-                logger.info("🔄 Stream ended. Looking for new stream...")
-                await asyncio.sleep(10)  # Brief pause before looking again
+                # If monitor_chat returns normally, stream ended - look for new one
+                stream_ended_normally = True
+                logger.info("🔄 Stream ended or became inactive - seamless switching engaged")
+                logger.info("⚡ Immediately searching for new stream (agentic mode)...")
+                
+                # Reset the LiveChat instance for fresh connection
+                if self.livechat:
+                    self.livechat.stop_listening()
+                    self.livechat = None
+                
+                # Clear cached stream info to force fresh search
+                if self.stream_resolver:
+                    # Use the proper clear_cache method
+                    self.stream_resolver.clear_cache()
+                    logger.info("🔄 Stream ended - cleared all caches for fresh search")
+                
+                # Quick transition - only wait 5 seconds before looking for new stream
+                await asyncio.sleep(5)
+                consecutive_failures = 0  # Reset failure counter on clean exit
+                
+                # Set quick check mode for the next monitor_chat call
+                # This will make it check more frequently after a stream ends
+                logger.info("🎯 Entering quick-check mode for seamless stream detection")
+                
             except KeyboardInterrupt:
                 logger.info("⏹️ Stopped by user")
                 break
             except Exception as e:
-                logger.error(f"Error in monitoring loop: {e}")
-                logger.info("🔄 Restarting in 30 seconds...")
-                await asyncio.sleep(30)
+                consecutive_failures += 1
+                logger.error(f"Error in monitoring loop (attempt #{consecutive_failures}): {e}")
+                
+                # Exponential backoff for retries
+                wait_time = min(30 * (2 ** consecutive_failures), 600)  # Max 10 minutes
+                logger.info(f"🔄 Restarting in {wait_time} seconds...")
+                await asyncio.sleep(wait_time)
+                
+                # After too many failures, do a full reconnect
+                if consecutive_failures >= 5:
+                    logger.warning("🔄 Too many failures - attempting full reconnection")
+                    self.service = None  # Force re-authentication
+                    consecutive_failures = 0
+                    # Also reset stream resolver cache
+                    if self.stream_resolver:
+                        self.stream_resolver.clear_cache()
     
     def get_status(self) -> dict:
         """Get current DAE status."""

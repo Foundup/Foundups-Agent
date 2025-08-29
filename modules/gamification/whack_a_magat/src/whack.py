@@ -18,6 +18,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
+import logging
+
+logger = logging.getLogger(__name__)
 from math import floor
 from typing import Dict, List, Optional, Tuple
 import sqlite3
@@ -38,10 +41,16 @@ class BehaviorTier(Enum):
 class UserProfile:
     user_id: str
     username: str = "Unknown"  # Display name for leaderboard
-    score: int = 0  # Total XP from frags
-    rank: str = "Grunt"  # Quake-style rank
+    score: int = 0  # Total all-time XP
+    monthly_score: int = 0  # Monthly XP (resets each month)
+    current_month: str = ""  # Format: "2025-01" for tracking month
+    rank: str = "Grunt"  # Quake-style rank (based on monthly_score)
     level: int = 1
-    frag_count: int = 0  # Total timeout/ban count
+    frag_count: int = 0  # Total all-time whacks (never resets)
+    monthly_frag_count: int = 0  # Monthly whacks (resets each month)
+    session_whacks: int = 0  # Session whacks (resets when stream ends)
+    session_score: int = 0  # Session XP (resets when stream ends)
+    session_start: str = ""  # Session start timestamp
 
 
 @dataclass
@@ -80,9 +89,12 @@ class ProfilesRepo:
                 user_id TEXT PRIMARY KEY,
                 username TEXT DEFAULT 'Unknown',
                 score INTEGER DEFAULT 0,
+                monthly_score INTEGER DEFAULT 0,
+                current_month TEXT DEFAULT '',
                 rank TEXT DEFAULT 'Grunt',
                 level INTEGER DEFAULT 1,
                 frag_count INTEGER DEFAULT 0,
+                monthly_frag_count INTEGER DEFAULT 0,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -101,14 +113,33 @@ class ProfilesRepo:
         cursor.execute("PRAGMA table_info(profiles)")
         columns = [col[1] for col in cursor.fetchall()]
         
+        # Add missing columns for existing databases
         if 'frag_count' not in columns:
             cursor.execute("ALTER TABLE profiles ADD COLUMN frag_count INTEGER DEFAULT 0")
             conn.commit()
         if 'username' not in columns:
             cursor.execute("ALTER TABLE profiles ADD COLUMN username TEXT DEFAULT 'Unknown'")
             conn.commit()
+        if 'monthly_score' not in columns:
+            cursor.execute("ALTER TABLE profiles ADD COLUMN monthly_score INTEGER DEFAULT 0")
+            conn.commit()
+        if 'current_month' not in columns:
+            cursor.execute("ALTER TABLE profiles ADD COLUMN current_month TEXT DEFAULT ''")
+            conn.commit()
+        if 'monthly_frag_count' not in columns:
+            cursor.execute("ALTER TABLE profiles ADD COLUMN monthly_frag_count INTEGER DEFAULT 0")
+            conn.commit()
+        if 'session_whacks' not in columns:
+            cursor.execute("ALTER TABLE profiles ADD COLUMN session_whacks INTEGER DEFAULT 0")
+            conn.commit()
+        if 'session_score' not in columns:
+            cursor.execute("ALTER TABLE profiles ADD COLUMN session_score INTEGER DEFAULT 0")
+            conn.commit()
+        if 'session_start' not in columns:
+            cursor.execute("ALTER TABLE profiles ADD COLUMN session_start TEXT DEFAULT ''")
+            conn.commit()
         
-        cursor.execute("SELECT user_id, score, rank, level, frag_count, username FROM profiles")
+        cursor.execute("SELECT user_id, score, rank, level, frag_count, username, monthly_score, current_month, monthly_frag_count FROM profiles")
         for row in cursor.fetchall():
             self._profiles[row[0]] = UserProfile(
                 user_id=row[0],
@@ -116,22 +147,46 @@ class ProfilesRepo:
                 rank=row[2],
                 level=row[3],
                 frag_count=row[4] if len(row) > 4 else 0,
-                username=row[5] if len(row) > 5 else "Unknown"
+                username=row[5] if len(row) > 5 else "Unknown",
+                monthly_score=row[6] if len(row) > 6 else 0,
+                current_month=row[7] if len(row) > 7 else "",
+                monthly_frag_count=row[8] if len(row) > 8 else 0
             )
         conn.close()
 
     def get_or_create(self, user_id: str, username: str = "Unknown") -> UserProfile:
+        from datetime import datetime
+        current_month = datetime.now().strftime("%Y-%m")
+        
         profile = self._profiles.get(user_id)
+        needs_save = False
+        
         if profile is None:
-            profile = UserProfile(user_id=user_id, username=username)
+            # Create new profile with current month
+            profile = UserProfile(
+                user_id=user_id, 
+                username=username,
+                current_month=current_month
+            )
             self._profiles[user_id] = profile
-            if self.persist:
-                self._save_to_db(profile)
-        elif profile.username == "Unknown" and username != "Unknown":
+            needs_save = True
+        else:
+            # Check for month change and reset monthly stats
+            if profile.current_month != current_month:
+                logger.info(f"🗓️ New month! Resetting monthly stats for {username}")
+                profile.current_month = current_month
+                profile.monthly_score = 0
+                profile.monthly_frag_count = 0
+                needs_save = True
+                
             # Update username if we have a better one
-            profile.username = username
-            if self.persist:
-                self._save_to_db(profile)
+            if profile.username == "Unknown" and username != "Unknown":
+                profile.username = username
+                needs_save = True
+                
+        if needs_save and self.persist:
+            self._save_to_db(profile)
+            
         return profile
 
     def save(self, profile: UserProfile) -> None:
@@ -146,30 +201,69 @@ class ProfilesRepo:
             
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        cursor.execute("""
-            INSERT OR REPLACE INTO profiles (user_id, username, score, rank, level, frag_count, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-        """, (profile.user_id, profile.username, profile.score, profile.rank, profile.level, profile.frag_count))
+        
+        # Check if session columns exist
+        cursor.execute("PRAGMA table_info(profiles)")
+        columns = [col[1] for col in cursor.fetchall()]
+        
+        if 'session_whacks' in columns:
+            # New schema with session tracking
+            cursor.execute("""
+                INSERT OR REPLACE INTO profiles (user_id, username, score, monthly_score, current_month, 
+                                                rank, level, frag_count, monthly_frag_count,
+                                                session_whacks, session_score, session_start, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            """, (profile.user_id, profile.username, profile.score, profile.monthly_score, 
+                  profile.current_month, profile.rank, profile.level, profile.frag_count, 
+                  profile.monthly_frag_count, profile.session_whacks, profile.session_score,
+                  profile.session_start))
+        else:
+            # Old schema without session tracking
+            cursor.execute("""
+                INSERT OR REPLACE INTO profiles (user_id, username, score, monthly_score, current_month, 
+                                                rank, level, frag_count, monthly_frag_count, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            """, (profile.user_id, profile.username, profile.score, profile.monthly_score, 
+                  profile.current_month, profile.rank, profile.level, profile.frag_count, 
+                  profile.monthly_frag_count))
+        
         conn.commit()
         conn.close()
 
-    def get_leaderboard(self, limit: int = 10) -> List[Dict]:
-        """Get top players by score."""
-        sorted_profiles = sorted(
-            self._profiles.values(),
-            key=lambda p: p.score,
-            reverse=True
-        )[:limit]
+    def get_leaderboard(self, limit: int = 10, monthly: bool = True) -> List[Dict]:
+        """Get top players by monthly or all-time score."""
+        # Filter out test users (exclude test_user_* entries)
+        real_profiles = [
+            p for p in self._profiles.values() 
+            if not p.user_id.startswith('test_user')
+        ]
+        
+        if monthly:
+            # Sort by monthly score for current month leaderboard
+            sorted_profiles = sorted(
+                real_profiles,
+                key=lambda p: p.monthly_score,
+                reverse=True
+            )[:limit]
+        else:
+            # Sort by all-time score
+            sorted_profiles = sorted(
+                real_profiles,
+                key=lambda p: p.score,
+                reverse=True
+            )[:limit]
         
         return [
             {
                 'position': i + 1,
                 'user_id': p.user_id,
                 'username': p.username,
-                'score': p.score,
+                'score': p.monthly_score if monthly else p.score,  # Show monthly or all-time
+                'all_time_score': p.score,  # Always include all-time
                 'rank': p.rank,
                 'level': p.level,
-                'frag_count': p.frag_count
+                'frag_count': p.monthly_frag_count if monthly else p.frag_count,  # Monthly or all-time whacks
+                'all_time_whacks': p.frag_count  # Always include all-time whacks
             }
             for i, p in enumerate(sorted_profiles)
         ]
@@ -234,35 +328,36 @@ _actions_repo = ActionsRepo()
 
 
 def _update_rank_and_level(profile: UserProfile) -> None:
-    """Update rank and level from score - MAGADOOM style."""
-    score = profile.score
+    """Update rank and level from MONTHLY score - MAGADOOM style."""
+    # Rank based on MONTHLY score (resets each month for fair competition)
+    score = profile.monthly_score
     
-    # Simple level calculation (100 XP per level)
-    profile.level = 1 + (score // 100)
+    # Level based on ALL-TIME score (never resets, shows veteran status)
+    profile.level = 1 + (profile.score // 100)
     
-    # MAGADOOM epic ranks - MAGA troll fragging themed
+    # MAGADOOM RANKS - Pure DOOM/FPS style (NO old terminology!)
     if score < 100:
-        profile.rank = "COVFEFE CADET"  # Just learning to frag MAGAts
+        profile.rank = "GRUNT"  # Fresh meat, just spawned
     elif score < 300:
-        profile.rank = "QANON QUASHER"  # Starting to silence the conspiracy nuts
+        profile.rank = "MARINE"  # Learning to RIP AND TEAR
     elif score < 600:
-        profile.rank = "MAGA MAULER"  # Tearing through red hats
+        profile.rank = "WARRIOR"  # Getting those FRAGS
     elif score < 1000:
-        profile.rank = "TROLL TERMINATOR"  # No mercy for trolls
+        profile.rank = "SLAYER"  # DOOM music intensifies
     elif score < 1500:
-        profile.rank = "REDHAT RIPPER"  # Shredding the MAGA brigade
+        profile.rank = "HUNTER"  # Stalking demons
     elif score < 2500:
-        profile.rank = "COUP CRUSHER"  # Stomping insurrectionists
+        profile.rank = "CHAMPION"  # Arena champion
     elif score < 5000:
-        profile.rank = "PATRIOT PULVERIZER"  # Demolishing fake patriots
+        profile.rank = "MASTER"  # Master of the arena
     elif score < 10000:
-        profile.rank = "FASCIST FRAGGER"  # Ultimate anti-fascist warrior
+        profile.rank = "ELITE"  # Elite demon hunter
     elif score < 20000:
-        profile.rank = "ORANGE OBLITERATOR"  # The ultimate Trump troll destroyer
+        profile.rank = "GODLIKE"  # Ascending to godhood
     elif score < 50000:
-        profile.rank = "MAGA DOOMSLAYER"  # Rip and tear through the cult
+        profile.rank = "LEGENDARY"  # Stuff of legends
     else:
-        profile.rank = "DEMOCRACY DEFENDER"  # Eternal guardian against tyranny
+        profile.rank = "DOOM SLAYER"  # THE ONLY ONE THEY FEAR
 
 
 def get_profile(user_id: str, username: str = "Unknown") -> UserProfile:
@@ -279,25 +374,25 @@ def compute_points(duration_sec: int, repeat_on_same_target: int) -> int:
     - 2 repeats → 30%
     - 3+ repeats → 10%
     """
-    # Base points for YouTube's exact timeout durations
+    # Base points for YouTube's exact timeout durations (MORE REWARDING!)
     base = 0
     if duration_sec == 10:
-        base = 1  # 10 seconds: 1 point (minimal, but not zero)
+        base = 5  # 10 seconds: 5 points (quick slap)
     elif duration_sec < 10:
         base = 0  # Less than 10 seconds: Anti-farming protection
     elif duration_sec == 60:
-        base = 1  # 1 minute: 1 point
+        base = 10  # 1 minute: 10 points (standard whack)
     elif duration_sec == 300:
-        base = 5  # 5 minutes: 5 points
+        base = 25  # 5 minutes: 25 points (solid hit)
     elif duration_sec == 600:
-        base = 10  # 10 minutes: 10 points  
+        base = 50  # 10 minutes: 50 points (major whack)
     elif duration_sec == 1800:
-        base = 30  # 30 minutes: 30 points
+        base = 100  # 30 minutes: 100 points (devastating)
     elif duration_sec >= 86400:
-        base = 144  # 24 hours (permanent): 144 points (1 day = 144 * 10min blocks)
+        base = 500  # 24 hours (permanent): 500 points (OBLITERATION)
     else:
         # Fallback for any custom durations
-        base = max(1, duration_sec // 60)  # 1 point per minute
+        base = max(10, duration_sec // 6)  # More generous points
 
     # Diminishing returns factor
     if repeat_on_same_target <= 0:
@@ -363,6 +458,13 @@ def apply_whack(moderator_id: str, target_id: str, duration_sec: int, now: datet
     
     # Get profile and increment frag count
     profile = _profiles_repo.get_or_create(moderator_id, moderator_name)
+    
+    # Check if this is a new session (empty session_start or new stream)
+    current_session = now.isoformat()
+    if not profile.session_start:
+        profile.session_start = current_session
+        profile.session_whacks = 0
+        profile.session_score = 0
 
     action = TimeoutAction(
         moderator_id=moderator_id,
@@ -373,22 +475,30 @@ def apply_whack(moderator_id: str, target_id: str, duration_sec: int, now: datet
     )
     _actions_repo.add(action)
 
-    # Update moderator profile
-    profile.score += awarded_points
-    profile.frag_count += 1  # Increment frag count
-    _update_rank_and_level(profile)
+    # Update moderator profile - ALL THREE: session, monthly and all-time!
+    profile.score += awarded_points  # All-time score
+    profile.monthly_score += awarded_points  # Monthly score (for leaderboard)
+    profile.session_score += awarded_points  # Session score
+    profile.frag_count += 1  # All-time whack count
+    profile.monthly_frag_count += 1  # Monthly whack count
+    profile.session_whacks += 1  # Session whack count
+    _update_rank_and_level(profile)  # Rank based on monthly, level based on all-time
     _profiles_repo.save(profile)
 
     return action
 
 
-def get_leaderboard(limit: int = 10) -> List[Dict]:
-    """Get the top players by score.
+def get_leaderboard(limit: int = 10, monthly: bool = True) -> List[Dict]:
+    """Get the top players by monthly or all-time score.
+    
+    Args:
+        limit: Maximum number of players to return
+        monthly: If True, returns monthly leaderboard. If False, returns all-time.
     
     Returns:
-        List of player dicts with position, user_id, score, rank, level
+        List of player dicts with position, user_id, scores, rank, level, whack counts
     """
-    return _profiles_repo.get_leaderboard(limit)
+    return _profiles_repo.get_leaderboard(limit, monthly)
 
 
 def get_user_position(user_id: str) -> Tuple[int, int]:
@@ -398,6 +508,47 @@ def get_user_position(user_id: str) -> Tuple[int, int]:
         Tuple of (position, total_players)
     """
     return _profiles_repo.get_user_position(user_id)
+
+
+def reset_all_sessions():
+    """Reset session stats for all moderators (called when stream ends)."""
+    logger.info("🔄 Resetting session stats for all moderators")
+    for profile in _profiles_repo._profiles.values():
+        if profile.session_whacks > 0:
+            logger.info(f"  {profile.username}: {profile.session_whacks} whacks, {profile.session_score} XP")
+        profile.session_whacks = 0
+        profile.session_score = 0
+        profile.session_start = ""
+        _profiles_repo.save(profile)
+
+
+def get_session_leaderboard(limit: int = 10) -> List[Dict]:
+    """Get current session leaderboard."""
+    # Filter out test users and only include those with session activity
+    active_profiles = [
+        p for p in _profiles_repo._profiles.values() 
+        if not p.user_id.startswith('test_user') and p.session_whacks > 0
+    ]
+    
+    # Sort by session score
+    sorted_profiles = sorted(
+        active_profiles,
+        key=lambda p: p.session_score,
+        reverse=True
+    )[:limit]
+    
+    return [
+        {
+            'position': i + 1,
+            'user_id': p.user_id,
+            'username': p.username,
+            'session_score': p.session_score,
+            'session_whacks': p.session_whacks,
+            'rank': p.rank,
+            'level': p.level
+        }
+        for i, p in enumerate(sorted_profiles)
+    ]
 
 
 # Testing helpers (not exported via public API)

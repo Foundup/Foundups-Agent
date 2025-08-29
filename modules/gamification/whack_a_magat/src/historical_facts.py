@@ -1,196 +1,201 @@
 """
-Historical Facts Provider for Anti-Fascist Education
-WSP-Compliant implementation
+Historical Facts: 1933 Nazi Germany → 2025 MAGA America Parallels
+Educational content comparing the rise of fascism then and now
+WSP-Compliant: Facts for stream education
 """
 
 import random
 from typing import List, Dict, Optional
 from datetime import datetime
 
-class HistoricalFactsProvider:
-    """
-    Provides historical parallels between 1933 and modern times
-    Educational content about fascism and authoritarianism
-    """
+class HistoricalFacts:
+    """Provides educational facts comparing 1933 Nazi rise to 2025 MAGA movement"""
     
     def __init__(self):
-        self._load_facts()
-    
-    def _load_facts(self):
-        """Load historical facts and parallels"""
-        self.facts = [
+        # Powerful historical parallels between 1933 and 2025
+        self.parallels = [
             {
-                "year": "1933",
-                "event": "Hitler appointed Chancellor with only 33% support",
-                "modern": "2016: Trump won with minority popular vote",
-                "category": "electoral"
+                "1933": "Hitler blamed Germany's problems on Jews, communists, and 'enemies within'",
+                "2025": "Trump blames America's problems on immigrants, 'radical left', and 'deep state'",
+                "category": "Scapegoating"
             },
             {
-                "year": "1933",
-                "event": "Enabling Act gave Hitler dictatorial powers",
-                "modern": "2025: Project 2025 seeks similar executive expansion",
-                "category": "power_grab"
+                "1933": "Reichstag Fire used to suspend civil liberties and attack political opponents",
+                "2025": "January 6th used to claim victimhood while attacking democratic institutions",
+                "category": "False Flags"
             },
             {
-                "year": "1933",
-                "event": "Jews blamed for Germany's problems",
-                "modern": "Today: Immigrants scapegoated for economic issues",
-                "category": "scapegoating"
+                "1933": "Hitler called press 'Lügenpresse' (lying press) to discredit criticism",
+                "2025": "Trump calls media 'fake news' and 'enemy of the people'",
+                "category": "Media Attacks"
             },
             {
-                "year": "1933",
-                "event": "'Lügenpresse' (lying press) propaganda",
-                "modern": "Today: 'Fake news' attacks on media",
-                "category": "propaganda"
+                "1933": "SA brownshirts intimidated voters and attacked opponents",
+                "2025": "Proud Boys and militias intimidate voters and threaten violence",
+                "category": "Paramilitary Groups"
             },
             {
-                "year": "1933",
-                "event": "Book burnings at universities",
-                "modern": "Today: Book bans in schools and libraries",
-                "category": "censorship"
+                "1933": "Book burnings to eliminate 'un-German' ideas and LGBTQ research",
+                "2025": "Book bans targeting LGBTQ content and critical race theory",
+                "category": "Censorship"
             },
             {
-                "year": "1933",
-                "event": "SA Brownshirts used street violence",
-                "modern": "Today: Proud Boys and militia intimidation",
-                "category": "violence"
+                "1933": "Enabling Act gave Hitler power to bypass parliament",
+                "2025": "Project 2025 plans to expand executive power and purge civil service",
+                "category": "Power Consolidation"
             },
             {
-                "year": "1933",
-                "event": "Reichstag Fire used to suspend civil liberties",
-                "modern": "2001: 9/11 used to pass Patriot Act",
-                "category": "emergency_powers"
+                "1933": "Jews stripped of citizenship with Nuremberg Laws",
+                "2025": "Plans to end birthright citizenship and mass deportations",
+                "category": "Citizenship Attacks"
             },
             {
-                "year": "1933",
-                "event": "Trade unions banned and leaders arrested",
-                "modern": "Today: Union-busting and right-to-work laws",
-                "category": "labor"
+                "1933": "Hitler promised to 'make Germany great again' after WWI humiliation",
+                "2025": "MAGA promises to restore mythical past American greatness",
+                "category": "False Nostalgia"
             },
             {
-                "year": "1933",
-                "event": "Gleichschaltung - forced coordination of society",
-                "modern": "Today: Culture war to control institutions",
-                "category": "control"
+                "1933": "Nazi rallies with theatrical staging and cult of personality",
+                "2025": "Trump rallies with identical staging and messianic worship",
+                "category": "Cult of Personality"
             },
             {
-                "year": "1934",
-                "event": "Night of Long Knives - purge of SA leadership",
-                "modern": "Today: Loyalty tests and purges in government",
-                "category": "purges"
+                "1933": "Courts packed with Nazi loyalists to rubber-stamp policies",
+                "2025": "Supreme Court packed with ideologues overturning precedents",
+                "category": "Judicial Capture"
             },
             {
-                "year": "1935",
-                "event": "Nuremberg Laws stripped Jews of citizenship",
-                "modern": "Today: Attempts to end birthright citizenship",
-                "category": "citizenship"
+                "1933": "Trade unions banned and replaced with state-controlled organizations",
+                "2025": "Attacks on unions while promoting corporate authoritarianism",
+                "category": "Labor Suppression"
             },
             {
-                "year": "1938",
-                "event": "Kristallnacht - coordinated violence against Jews",
-                "modern": "2017: Charlottesville 'Unite the Right' rally",
-                "category": "violence"
+                "1933": "Concentration camps for political prisoners started immediately",
+                "2025": "ICE detention camps and plans for mass internment facilities",
+                "category": "Detention Systems"
+            },
+            {
+                "1933": "Nazi ideology taught in schools as 'racial science'",
+                "2025": "PragerU propaganda and whitewashed history in schools",
+                "category": "Education Control"
+            },
+            {
+                "1933": "'Germany First' isolationism while secretly planning expansion",
+                "2025": "'America First' isolationism while threatening allies",
+                "category": "Isolationism"
+            },
+            {
+                "1933": "Gleichschaltung - coordination of all aspects of society under Nazi control",
+                "2025": "Project 2025's plan to control all federal agencies",
+                "category": "Total Control"
+            },
+            {
+                "1933": "Hitler never won majority vote but seized power through legal manipulation",
+                "2025": "Trump lost popular vote twice but uses Electoral College and gerrymandering",
+                "category": "Minority Rule"
+            },
+            {
+                "1933": "Nazis burned Institut für Sexualwissenschaft, erasing trans research",
+                "2025": "Anti-trans legislation and elimination of gender-affirming care",
+                "category": "LGBTQ Persecution"
+            },
+            {
+                "1933": "'Blood and Soil' mythology of racial purity",
+                "2025": "'Great Replacement' conspiracy theory and white nationalism",
+                "category": "Racial Mythology"
+            },
+            {
+                "1933": "Gestapo secret police monitoring citizens",
+                "2025": "Surveillance state expansion and targeting of activists",
+                "category": "Police State"
+            },
+            {
+                "1933": "Concordat with Catholic Church for religious cover",
+                "2025": "Christian Nationalism providing religious cover for fascism",
+                "category": "Religious Exploitation"
             }
         ]
         
-        self.warning_signs = [
-            "📍 Powerful and continuing nationalism",
-            "📍 Disdain for human rights",
-            "📍 Identification of enemies as unifying cause",
-            "📍 Supremacy of military",
-            "📍 Rampant sexism",
-            "📍 Controlled mass media",
-            "📍 Obsession with national security",
-            "📍 Religion and government intertwined",
-            "📍 Corporate power protected",
-            "📍 Labor power suppressed",
-            "📍 Disdain for intellectuals and arts",
-            "📍 Obsession with crime and punishment",
-            "📍 Rampant cronyism and corruption",
-            "📍 Fraudulent elections"
+        # Quick zingers for chat
+        self.quick_facts = [
+            "1933: Hitler never won a majority. 2025: Neither did Trump.",
+            "1933: Lügenpresse. 2025: Fake News. Same fascist playbook.",
+            "1933: Brownshirts. 2025: Proud Boys. Different uniforms, same violence.",
+            "1933: Reichstag Fire false flag. 2025: January 6th 'tourist visit'.",
+            "1933: Book burnings. 2025: Book bans. History rhymes.",
+            "1933: Jews blamed for everything. 2025: Immigrants blamed for everything.",
+            "1933: Make Germany Great Again. 2025: MAGA. Coincidence?",
+            "1933: Enabling Act. 2025: Project 2025. Democracy dies by design.",
+            "1933: Concentration camps. 2025: ICE detention centers. It starts slowly.",
+            "1933: Courts packed with loyalists. 2025: Supreme Court 6-3. Check.",
+            "1933: Hitler youth indoctrination. 2025: PragerU in schools.",
+            "1933: Night of Long Knives coming. 2025: 'Retribution' promised.",
+            "1933: Democratic parties banned. 2025: 'Enemy within' rhetoric.",
+            "1933: Press credentials revoked. 2025: Press kicked out of briefings.",
+            "1933: Oath to Hitler personally. 2025: Loyalty pledges to Trump.",
+            "Those who don't learn from 1933 are doomed to repeat it in 2025.",
+            "1933: They came for the communists. 2025: They're coming for 'antifa'.",
+            "1933: Burned trans research. 2025: Banning trans existence.",
+            "1933: Germany First. 2025: America First. Fascism is always 'first'.",
+            "1933: Emergency powers never ended. 2025: 'Only I can fix it'."
         ]
         
-        self.quotes = [
-            {
-                "quote": "When fascism comes to America, it will be wrapped in the flag and carrying a cross.",
-                "author": "Attributed to Sinclair Lewis",
-                "year": "1935"
-            },
-            {
-                "quote": "Those who cannot remember the past are condemned to repeat it.",
-                "author": "George Santayana",
-                "year": "1905"
-            },
-            {
-                "quote": "First they came for the socialists, and I did not speak out—because I was not a socialist...",
-                "author": "Martin Niemöller",
-                "year": "1946"
-            },
-            {
-                "quote": "The ideal subject of totalitarian rule is not the convinced Nazi or Communist, but people for whom the distinction between fact and fiction, true and false, no longer exists.",
-                "author": "Hannah Arendt",
-                "year": "1951"
-            },
-            {
-                "quote": "Fascism should more appropriately be called Corporatism because it is a merger of state and corporate power.",
-                "author": "Attributed to Benito Mussolini",
-                "year": "1930s"
-            }
+        # Warnings that proved prophetic
+        self.warnings = [
+            "They thought Hitler was a clown who could be controlled. They were wrong.",
+            "German conservatives thought they could use Hitler. He used them.",
+            "By the time Germans realized, it was too late to stop it peacefully.",
+            "The courts won't save you when they're packed with fascists.",
+            "Fascism arrives as your friend, with a flag and a cross.",
+            "First they came for the trans kids, and I said nothing...",
+            "A failed coup without consequences is just practice.",
+            "When someone tells you they'll be a dictator, believe them.",
+            "Democratic institutions are only as strong as those defending them.",
+            "The time to stop fascism is BEFORE it takes power."
         ]
     
-    def get_random_fact(self) -> str:
+    def get_random_parallel(self) -> Dict:
         """Get a random historical parallel"""
-        fact = random.choice(self.facts)
-        
-        message = f"📜 **HISTORICAL PARALLEL**\n"
-        message += f"{fact['year']}: {fact['event']}\n"
-        message += f"→ {fact['modern']}\n\n"
-        message += "Those who don't learn from history are doomed to repeat it."
-        
-        return message
+        return random.choice(self.parallels)
     
-    def get_fact_by_category(self, category: str) -> Optional[str]:
+    def get_quick_fact(self) -> str:
+        """Get a quick fact for chat"""
+        return random.choice(self.quick_facts)
+    
+    def get_warning(self) -> str:
+        """Get a historical warning"""
+        return random.choice(self.warnings)
+    
+    def format_parallel_for_chat(self, parallel: Dict) -> str:
+        """Format a parallel for chat display"""
+        return f"📚 [{parallel['category']}] 1933: {parallel['1933']} → 2025: {parallel['2025']}"
+    
+    def get_fact_by_category(self, category: str) -> Optional[Dict]:
         """Get a fact from specific category"""
-        category_facts = [f for f in self.facts if f['category'] == category]
-        
-        if not category_facts:
-            return None
-        
-        fact = random.choice(category_facts)
-        
-        message = f"📜 **{category.upper().replace('_', ' ')}**\n"
-        message += f"{fact['year']}: {fact['event']}\n"
-        message += f"→ {fact['modern']}"
-        
-        return message
+        facts = [p for p in self.parallels if p['category'].lower() == category.lower()]
+        return random.choice(facts) if facts else None
     
-    def get_warning_signs(self, count: int = 3) -> str:
-        """Get random warning signs of fascism"""
-        signs = random.sample(self.warning_signs, min(count, len(self.warning_signs)))
-        
-        message = "⚠️ **WARNING SIGNS OF FASCISM**\n"
-        for sign in signs:
-            message += f"{sign}\n"
-        
-        return message
-    
-    def get_quote(self) -> str:
-        """Get a random anti-fascist quote"""
-        quote_data = random.choice(self.quotes)
-        
-        message = f"💭 **WISDOM FROM HISTORY**\n"
-        message += f'"{quote_data["quote"]}"\n'
-        message += f"— {quote_data['author']} ({quote_data['year']})"
-        
-        return message
-    
-    def get_timeline(self, start_year: str = "1933", end_year: str = "1939") -> str:
-        """Get timeline of events"""
-        timeline_facts = [f for f in self.facts if start_year <= f['year'] <= end_year]
-        timeline_facts.sort(key=lambda x: x['year'])
-        
-        message = f"📅 **TIMELINE {start_year}-{end_year}**\n"
-        for fact in timeline_facts[:5]:  # Limit to 5 for readability
-            message += f"{fact['year']}: {fact['event']}\n"
-        
-        return message
+    def get_categories(self) -> List[str]:
+        """Get list of all categories"""
+        return list(set(p['category'] for p in self.parallels))
+
+
+# Module-level instance for easy access
+_facts = HistoricalFacts()
+
+def get_random_fact() -> str:
+    """Get a random quick fact"""
+    return _facts.get_quick_fact()
+
+def get_parallel() -> str:
+    """Get a formatted historical parallel"""
+    parallel = _facts.get_random_parallel()
+    return _facts.format_parallel_for_chat(parallel)
+
+def get_warning() -> str:
+    """Get a historical warning"""
+    return _facts.get_warning()
+
+def get_categories() -> List[str]:
+    """Get available categories"""
+    return _facts.get_categories()

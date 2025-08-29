@@ -24,7 +24,7 @@ from .src.quiz_engine import (
 )
 
 # Historical facts provider
-from .src.historical_facts import HistoricalFactsProvider
+from .src.historical_facts import HistoricalFacts, get_random_fact, get_parallel, get_warning
 
 # Game commands system - commented out due to circular dependencies
 # from .src.game_commands import GameCommandSystem, CommandType, CommandContext
@@ -49,7 +49,10 @@ __all__ = [
     "QuizQuestion",
     "FScaleQuestion",
     "QuizSession",
-    "HistoricalFactsProvider"
+    "HistoricalFacts",
+    "get_random_fact",
+    "get_parallel",
+    "get_warning"
 ]
 
 

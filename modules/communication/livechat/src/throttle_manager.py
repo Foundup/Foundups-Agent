@@ -72,23 +72,23 @@ class ThrottleManager:
         # Fast chat = SHORTER delays (keep up with activity)
         
         if messages_per_minute == 0:
-            # Dead chat: very long delay to avoid spam
-            delay = 120  # 2 minutes
+            # Dead chat: reduced delay for better responsiveness (was 120)
+            delay = 15  # 15 seconds max for dead chat
         elif messages_per_minute < 2:
-            # Very quiet chat: long delay
-            delay = 60  # 1 minute
+            # Very quiet chat: moderate delay (was 60)
+            delay = 10  # 10 seconds
         elif messages_per_minute < 5:
-            # Quiet chat: moderate delay
-            delay = 30  # 30 seconds
-        elif messages_per_minute < 10:
-            # Moderate activity: standard delay
-            delay = 15  # 15 seconds
-        elif messages_per_minute < 20:
-            # Active chat: quick responses
+            # Quiet chat: reasonable delay (was 30)
             delay = 8  # 8 seconds
-        elif messages_per_minute < 50:
-            # Busy chat: rapid responses
+        elif messages_per_minute < 10:
+            # Moderate activity: quick response (was 15)
             delay = 5  # 5 seconds
+        elif messages_per_minute < 20:
+            # Active chat: faster responses (was 8)
+            delay = 3  # 3 seconds
+        elif messages_per_minute < 50:
+            # Busy chat: rapid responses (was 5)
+            delay = 2  # 2 seconds
         else:
             # Very busy: minimum delay
             delay = self.min_response_delay  # 2 seconds

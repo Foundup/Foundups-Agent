@@ -8,10 +8,11 @@ import logging
 from typing import Optional, Dict, Any
 from modules.gamification.whack_a_magat import (
     get_profile, get_leaderboard, get_user_position,
-    QuizEngine, HistoricalFactsProvider
+    QuizEngine
 )
 from modules.gamification.whack_a_magat.src.spree_tracker import get_active_sprees
 from modules.gamification.whack_a_magat.src.self_improvement import observe_command
+from modules.gamification.whack_a_magat.src.historical_facts import get_random_fact, get_parallel, get_warning
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ class CommandHandler:
         
         # Initialize quiz and RPG systems
         self.quiz_engine = QuizEngine()
-        self.facts_provider = HistoricalFactsProvider()
+        # No need for facts provider instance - using module functions directly
         self.rpg_commands = None  # RPGCommands requires database, initialize on demand
         
         # Track active quiz sessions
@@ -36,7 +37,14 @@ class CommandHandler:
         text_lower = text.lower().strip()
         logger.info(f"🎮 Processing whack command: '{text_lower}' from {username} (role: {role}, id: {user_id})")
         
+        # Special logging for /quiz debugging
+        if 'quiz' in text_lower:
+            logger.warning(f"🧠🧠🧠 QUIZ COMMAND DETECTED: '{text_lower}'")
+        
         try:
+            # Debug: Log all commands at entry
+            logger.info(f"🔍 ENTERING TRY BLOCK with command: '{text_lower[:30]}'")
+            
             # Get user profile (creates if doesn't exist)
             profile = get_profile(user_id, username)
             logger.debug(f"📊 Profile for {username}: Score={profile.score}, Rank={profile.rank}, Level={profile.level}")
@@ -44,7 +52,7 @@ class CommandHandler:
             if text_lower.startswith('/score') or text_lower.startswith('/stats'):
                 # Score shows XP, level name/title, level number, and frag count
                 observe_command('/score', 0.0)  # Track for self-improvement
-                return f"@{username} 💀 MAGADOOM | {profile.score} XP | {profile.rank} | LVL {profile.level} | {profile.frag_count} FRAGS 🔥"
+                return f"@{username} 💀 MAGADOOM | {profile.score} XP | {profile.rank} | LVL {profile.level} | {profile.frag_count} WHACKS! RIP AND TEAR! 🔥"
             
             # REMOVED: /level - redundant with /score
             
@@ -53,7 +61,7 @@ class CommandHandler:
                 position, total_players = get_user_position(user_id)
                 
                 if position == 0:
-                    return f"@{username} 🏆 MAGADOOM Leaderboard: Unranked | Start fragging to climb the ranks!"
+                    return f"@{username} 🏆 MAGADOOM Leaderboard: Unranked | Start WHACKING MAGAts to climb the ranks!"
                 else:
                     # Add special flair for top positions
                     position_str = f"#{position}"
@@ -67,18 +75,20 @@ class CommandHandler:
                     return f"@{username} 🏆 MAGADOOM Ranking: {position_str} of {total_players} players | {profile.score} XP"
             
             elif text_lower.startswith('/frags') or text_lower.startswith('/whacks'):
-                # Show total frags/whacks (same as score but focused on frags)
-                return f"@{username} 🎯 MAGADOOM | {profile.frag_count} FRAGS | {profile.score} XP | {profile.rank} 💀"
+                # Show total frags/whacks (same as score but focused on whacks)
+                return f"@{username} 🎯 MAGADOOM | {profile.frag_count} WHACKS! | {profile.score} XP | {profile.rank} 💀 RIP AND TEAR!"
             
             elif text_lower.startswith('/leaderboard'):
-                # Get top 10 players
-                leaderboard = get_leaderboard(10)
+                # Get MONTHLY leaderboard (current competition)
+                from datetime import datetime
+                current_month = datetime.now().strftime("%B %Y")  # e.g., "January 2025"
+                leaderboard = get_leaderboard(10, monthly=True)  # Get monthly scores
                 
                 if not leaderboard:
-                    return f"@{username} 🏆 MAGADOOM Leaderboard empty! Start fragging to claim #1!"
+                    return f"@{username} 🏆 MAGADOOM {current_month} Leaderboard empty! Start WHACKING to claim #1! 💀"
                 
-                # Build leaderboard display (vertical format, top 3 players)
-                lines = [f"@{username} 🏆 MAGADOOM TOP FRAGGERS:"]
+                # Build leaderboard display
+                lines = [f"@{username} 🏆 MAGADOOM {current_month.upper()} TOP WHACKERS:"]
                 
                 # Show top 3 to keep message size reasonable
                 for entry in leaderboard[:3]:
@@ -96,8 +106,11 @@ class CommandHandler:
                     if display_name == 'Unknown':
                         display_name = entry['user_id'][:12]
                     
-                    # Format: 🥇 Player [RANK] 500xp (8 frags)
-                    lines.append(f"{icon} {display_name} [{entry['rank']}] {entry['score']}xp ({entry.get('frag_count', 0)} frags)")
+                    # Show monthly score, rank, and ALL-TIME whacks
+                    # Format: 🥇 Player [RANK] 500xp (8 whacks this month | 120 all-time)
+                    all_time = entry.get('all_time_whacks', 0)
+                    monthly = entry.get('frag_count', 0)
+                    lines.append(f"{icon} {display_name} [{entry['rank']}] {entry['score']}xp ({monthly} whacks | {all_time} all-time)")
                 
                 # Join with newlines for vertical display
                 return "\n".join(lines)
@@ -107,16 +120,16 @@ class CommandHandler:
                 active_sprees = get_active_sprees()
                 
                 if not active_sprees:
-                    return f"@{username} 🔥 No active killing sprees! Start fragging to begin one!"
+                    return f"@{username} 🔥 No active WHACKING sprees! Start timing out MAGAts to begin one! 💀"
                 
                 # Build spree display
                 lines = [f"@{username} 🔥 ACTIVE KILLING SPREES:"]
                 for spree in active_sprees[:3]:  # Show top 3 active sprees
                     level = spree.get('spree_level', '')
                     if level:
-                        lines.append(f"⚡ {spree['mod_name']}: {level} ({spree['frag_count']} frags)")
+                        lines.append(f"⚡ {spree['mod_name']}: {level} ({spree['frag_count']} WHACKS!)")
                     else:
-                        lines.append(f"🎯 {spree['mod_name']}: {spree['frag_count']} frags ({spree['time_remaining']:.0f}s left)")
+                        lines.append(f"🎯 {spree['mod_name']}: {spree['frag_count']} WHACKS! ({spree['time_remaining']:.0f}s left)")
                 
                 return "\n".join(lines)
             
@@ -136,17 +149,131 @@ class CommandHandler:
                 else:
                     return f"@{username} Toggle command not available"
             
-            elif text_lower.startswith('/help'):
-                help_msg = f"@{username} 💀 MAGADOOM: /score /rank /whacks /leaderboard /sprees /help"
+            elif text_lower.startswith('/quiz'):
+                logger.warning(f"🧠🔴🧠 REACHED /QUIZ ELIF BLOCK from {username}")
+                logger.warning(f"🧠🔴🧠 Text: '{text_lower}' | User: {username} | ID: {user_id}")
+                logger.info(f"🧠 Processing /quiz command from {username}")
+                # Political appointment quiz - educate about fascism
+                observe_command('/quiz', 0.0)
+                
+                # Check if requesting leaderboard
+                if 'leaderboard' in text_lower or 'scores' in text_lower:
+                    logger.info(f"🧠 Showing quiz leaderboard to {username}")
+                    # Show quiz leaderboard
+                    leaderboard_response = self._format_quiz_leaderboard(username)
+                    logger.info(f"🧠 LEADERBOARD RESPONSE: {leaderboard_response}")
+                    return leaderboard_response
+                
+                # Start or answer quiz
+                try:
+                    logger.info(f"🧠 CHECKING quiz_engine attribute...")
+                    if hasattr(self, 'quiz_engine') and self.quiz_engine:
+                        logger.info(f"🧠 Quiz engine EXISTS! Starting quiz for {username} with args: '{text[5:].strip()}'")
+                        result = self.quiz_engine.handle_quiz_command(user_id, username, text[5:].strip())
+                        logger.info(f"🧠 Quiz result for {username}: {result[:100] if result else 'NONE'}...")
+                        if result:
+                            response = f"@{username} {result}"
+                            logger.warning(f"🧠✅ RETURNING QUIZ RESPONSE: {response[:100]}...")
+                            return response
+                        else:
+                            logger.error(f"🧠❌ Quiz engine returned NONE/empty result!")
+                            return f"@{username} 🧠 Quiz system starting up. Try again!"
+                    else:
+                        logger.warning("🧠 Quiz engine NOT initialized, creating new instance...")
+                        # Initialize quiz engine if needed
+                        from modules.gamification.whack_a_magat.src.quiz_engine import QuizEngine
+                        self.quiz_engine = QuizEngine()
+                        logger.info("🧠 Quiz engine initialized successfully")
+                        # Try again now that it's initialized
+                        result = self.quiz_engine.handle_quiz_command(user_id, username, text[5:].strip())
+                        logger.info(f"🧠 NEW ENGINE result: {result[:100] if result else 'NONE'}...")
+                        if result:
+                            response = f"@{username} {result}"
+                            logger.warning(f"🧠✅ RETURNING NEW ENGINE RESPONSE: {response[:100]}...")
+                            return response
+                        else:
+                            logger.error(f"🧠❌ New quiz engine returned NONE/empty!")
+                            return f"@{username} 🧠 Quiz initializing. Please try again!"
+                except Exception as e:
+                    logger.error(f"🧠❌ EXCEPTION in quiz command: {e}", exc_info=True)
+                    return f"@{username} 🧠 Quiz error occurred. Please try again."
+            
+            elif text_lower.startswith('/facts'):
+                # Educational 1933 → 2025 parallels
+                observe_command('/facts', 0.0)
+                fact_type = text_lower[6:].strip() if len(text_lower) > 6 else ""
+                
+                if fact_type == "parallel":
+                    return f"@{username} {get_parallel()}"
+                elif fact_type == "warning":
+                    return f"@{username} ⚠️ {get_warning()}"
+                else:
+                    return f"@{username} 📚 {get_random_fact()}"
+            
+            elif text_lower.startswith('/session'):
+                # Session stats (moderators only)
                 if role in ['MOD', 'OWNER']:
-                    help_msg += " | MOD: /toggle"
+                    observe_command('/session', 0.0)
+                    # Import here to avoid circular dependencies
+                    from modules.gamification.whack_a_magat.src.whack import get_session_leaderboard
+                    session_leaders = get_session_leaderboard(limit=5)
+                    
+                    if not session_leaders:
+                        return f"@{username} 📊 No session activity yet. Start whacking!"
+                    
+                    response = f"@{username} 🔥 SESSION LEADERS:\n"
+                    for entry in session_leaders:
+                        response += f"#{entry['position']} {entry['username']} - {entry['session_score']} XP ({entry['session_whacks']} whacks)\n"
+                    
+                    # Add personal session stats
+                    if profile.session_whacks > 0:
+                        response += f"\nYour session: {profile.session_score} XP ({profile.session_whacks} whacks)"
+                    
+                    return response
+                else:
+                    return f"@{username} 🚫 /session is for moderators only"
+            
+            elif text_lower.startswith('/help'):
+                help_msg = f"@{username} 💀 MAGADOOM: /score /rank /whacks /leaderboard /sprees /quiz /facts /help"
+                if role in ['MOD', 'OWNER']:
+                    help_msg += " | MOD: /toggle /session"
                 return help_msg
             
-            # REMOVED: Quiz, facts, rating systems - not MAGADOOM themed
-            # Pure fragging focus: timeouts = frags = XP = glory
+            # Educational facts about fascism are PART of MAGADOOM - fighting MAGA requires education!
             
         except Exception as e:
             logger.error(f"Error handling whack command: {e}")
-            return f"@{username} Error processing command. Try /help"
+            # Don't suggest /help if the error was FROM /help
+            if text_lower == '/help':
+                # Return basic help even if there was an error
+                return f"@{username} 💀 MAGADOOM Commands: /score /rank /leaderboard (error occurred, some features may not work)"
+            else:
+                return f"@{username} Error processing command. Try /help"
         
         return None
+    
+    def _format_quiz_leaderboard(self, username: str) -> str:
+        """Format quiz leaderboard"""
+        if not hasattr(self, 'quiz_engine'):
+            from modules.gamification.whack_a_magat.src.quiz_engine import QuizEngine
+            self.quiz_engine = QuizEngine()
+        
+        # Get quiz scores from sessions
+        scores = []
+        for user_id, session in self.quiz_engine.sessions.items():
+            if hasattr(session, 'score') and session.score > 0:
+                scores.append((user_id, session.score))
+        
+        if not scores:
+            return f"@{username} No quiz scores yet! Use /quiz to start!"
+        
+        scores.sort(key=lambda x: x[1], reverse=True)
+        top_5 = scores[:5]
+        
+        result = f"@{username} 🧠 QUIZ LEADERS: "
+        medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"]
+        
+        for i, (user_id, score) in enumerate(top_5):
+            result += f"{medals[i]}{user_id[:8]}:{score}pts "
+        
+        return result.strip()

@@ -14,6 +14,7 @@ from typing import Dict, Any, List, Optional
 from collections import deque
 from dataclasses import dataclass
 from modules.gamification.whack_a_magat.src.timeout_announcer import TimeoutManager
+from modules.gamification.whack_a_magat.src.status_announcer import StatusAnnouncer
 
 logger = logging.getLogger(__name__)
 
@@ -122,6 +123,14 @@ class EventHandler:
     
     def cleanup(self):
         """Cleanup MCP thread and resources"""
+        # Reset session stats when stream ends
+        try:
+            from modules.gamification.whack_a_magat.src.whack import reset_all_sessions
+            reset_all_sessions()
+            logger.info("✅ Session stats reset for all moderators")
+        except Exception as e:
+            logger.error(f"Error resetting session stats: {e}")
+        
         if self.mcp_loop:
             self.mcp_loop.call_soon_threadsafe(self.mcp_loop.stop)
         if self.mcp_thread:
@@ -134,6 +143,23 @@ class EventHandler:
         target_name = event.get("target_name", "MAGAT")
         deleted_text = event.get("deleted_text", "")
         published_at = event.get("published_at", "")
+        
+        # CRITICAL: Filter out old buffered timeout events (>5 minutes old)
+        if published_at:
+            from datetime import datetime, timezone
+            try:
+                # Parse YouTube timestamp
+                event_time = datetime.fromisoformat(published_at.replace('Z', '+00:00'))
+                current_time = datetime.now(timezone.utc)
+                age_seconds = (current_time - event_time).total_seconds()
+                
+                # Skip events older than 5 minutes (300 seconds)
+                if age_seconds > 300:
+                    logger.info(f"⏰ Skipping old buffered timeout event for {target_name} ({int(age_seconds)}s old)")
+                    return {"skip": True, "reason": "old_buffered_timeout"}
+            except Exception as e:
+                logger.debug(f"Could not parse event timestamp: {e}")
+                # Continue processing if we can't parse timestamp
         
         # Get moderator info from event
         mod_id = event.get("moderator_id", "owner")
@@ -156,7 +182,7 @@ class EventHandler:
                     "moderator_id": mod_id,
                     "target_name": target_name,
                     "target_id": event.get("target_channel_id", ""),
-                    "timestamp": time.time(),
+                    "timestamp": event.get("published_at"),  # Pass the actual YouTube event timestamp!
                     "duration": int(duration)
                 }
                 
@@ -166,25 +192,32 @@ class EventHandler:
                 )
                 
                 if mcp_result and mcp_result.get("instant"):
-                    # Build instant announcement from MCP
-                    announcement = f"🎯 {mod_name} whacked {target_name}! "
-                    announcement += f"+{mcp_result['points']} points"
+                    # Use the announcement from MCP (it should come from timeout_announcer)
+                    announcement = mcp_result.get('announcement')
                     
-                    if mcp_result.get('combo_multiplier', 1) > 1:
-                        announcement += f" (x{mcp_result['combo_multiplier']} combo!)"
-                    
-                    if mcp_result.get('is_multi_whack'):
-                        announcement += f" 🔥 MULTI-WHACK x{mcp_result['total_whacks']}!"
-                    
-                    if mcp_result.get('rank', 0) > 0:
-                        announcement += f" [Rank #{mcp_result['rank']}]"
+                    # If no announcement from MCP, build a basic one
+                    if not announcement:
+                        announcement = f"🎯 {mod_name} whacked {target_name}! "
+                        announcement += f"+{mcp_result['points']} points"
+                        
+                        if mcp_result.get('combo_multiplier', 1) > 1:
+                            announcement += f" (x{mcp_result['combo_multiplier']} combo!)"
+                        
+                        if mcp_result.get('is_multi_whack'):
+                            announcement += f" 🔥 MULTI-WHACK x{mcp_result['total_whacks']}!"
+                        
+                        rank = mcp_result.get('rank')
+                        if rank and isinstance(rank, (int, float)) and rank > 0:
+                            announcement += f" [Rank #{rank}]"
+                        elif rank and isinstance(rank, str):
+                            announcement += f" [{rank}]"
                     
                     logger.info(f"🚀 MCP instant announcement: {announcement}")
                     
                     return {
                         "type": "timeout_announcement",
                         "announcement": announcement,
-                        "level_up": None,
+                        "level_up": mcp_result.get('level_up'),
                         "stats": {
                             "points": mcp_result.get('points', 0),
                             "combo_multiplier": mcp_result.get('combo_multiplier', 1),
@@ -254,6 +287,24 @@ class EventHandler:
         """Handle a ban event and generate announcement."""
         target_name = event.get("target_name", "MAGAT")
         is_permanent = event.get("is_permanent", False)
+        published_at = event.get("published_at", "")
+        
+        # CRITICAL: Filter out old buffered ban events (>5 minutes old)
+        if published_at:
+            from datetime import datetime, timezone
+            try:
+                # Parse YouTube timestamp
+                event_time = datetime.fromisoformat(published_at.replace('Z', '+00:00'))
+                current_time = datetime.now(timezone.utc)
+                age_seconds = (current_time - event_time).total_seconds()
+                
+                # Skip events older than 5 minutes (300 seconds)
+                if age_seconds > 300:
+                    logger.info(f"⏰ Skipping old buffered ban event for {target_name} ({int(age_seconds)}s old)")
+                    return {"skip": True, "reason": "old_buffered_ban"}
+            except Exception as e:
+                logger.debug(f"Could not parse event timestamp: {e}")
+                # Continue processing if we can't parse timestamp
         duration = event.get("duration_seconds", 0)
         published_at = event.get("published_at", "")
         
