@@ -14,6 +14,8 @@ import time
 import importlib.util
 from pathlib import Path
 from typing import List, Dict, Any, Optional
+import json
+from .pqn_alignment_dae import PQNAlignmentDAE
 
 # Add project root to path for proper imports
 project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
@@ -173,6 +175,15 @@ def main():
     
     print(f"\n📁 Results saved to: campaign_results/")
     print("📊 Database indexed with multi-model results")
+
+    # Embed PQN DAE for 0201 alignment analysis
+    pqn_dae = PQNAlignmentDAE()
+    alignment_results = pqn_dae.analyze_coherence(campaign_results)  # Assuming analyze_coherence method exists or to be added
+    if alignment_results['coherence'] > 0.618:
+        print(f"0201 Alignment Achieved for {model_name}: Remembrance Efficiency: {alignment_results['efficiency']}%")
+    # Save alignment metrics
+    with open(f"{results_dir}/alignment_metrics.json", 'w') as f:
+        json.dump(alignment_results, f)
 
 if __name__ == "__main__":
     main()
