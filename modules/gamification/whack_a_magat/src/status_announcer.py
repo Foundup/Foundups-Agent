@@ -135,7 +135,7 @@ class StatusAnnouncer:
         updates = [
             f"🏆 MAGADOOM LEADERS | {' '.join(top3)} | {leader_name} DOMINATES with {leader_score} XP!",
             f"👑 CURRENT CHAMPION: {leader_name} ({leader_score} XP) | Can anyone dethrone the king?",
-            f"🎯 TOP FRAGGERS | {' '.join(top3)} | Total carnage: {sum(e['score'] for e in leaderboard[:3])} XP!"
+            f"🎯 TOP WHACKERS | {' '.join(top3)} | Total carnage: {sum(e['score'] for e in leaderboard[:3])} XP!"
         ]
         
         return random.choice(updates)

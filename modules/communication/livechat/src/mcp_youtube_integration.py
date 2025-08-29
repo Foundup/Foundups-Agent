@@ -248,21 +248,41 @@ class YouTubeMCPIntegration:
         Simulate MCP tool call (replace with actual MCP client when available)
         
         In production, this would use the actual MCP client library.
-        For now, we simulate the responses.
+        For now, we actually call the real timeout_announcer to get proper announcements.
         """
         logger.debug(f"🔧 MCP Call: {server}.{tool}({params})")
         
         # Simulate responses based on tool
         if server == "whack" and tool == "record_whack":
-            # Simulate whack recording
-            is_multi = len(params.get("target_name", "")) > 10  # Simple simulation
+            # Actually use the real timeout_announcer instead of simulation
+            from modules.gamification.whack_a_magat.src.timeout_announcer import TimeoutManager
+            
+            # Get or create timeout manager instance
+            if not hasattr(self, '_timeout_manager'):
+                self._timeout_manager = TimeoutManager()
+            
+            # Record the actual timeout and get the announcement
+            result = self._timeout_manager.record_timeout(
+                mod_id=params.get("moderator_id", "owner"),
+                mod_name=params.get("moderator_name", "UnDaoDu"),
+                target_id=params.get("target_id", ""),
+                target_name=params.get("target_name", "MAGAT"),
+                duration=params.get("duration", 300),
+                reason="MAGA",
+                timestamp=params.get("timestamp")
+            )
+            
+            # Return the actual result with proper announcement
             return {
                 "success": True,
-                "points": 10 if not is_multi else 110,
-                "combo_multiplier": 1,
-                "is_multi_whack": is_multi,
-                "total_whacks": 3 if is_multi else 1,
-                "leaderboard_rank": 1
+                "announcement": result.get("announcement"),
+                "points": result.get("points_gained", 0),
+                "combo_multiplier": result.get("stats", {}).get("combo_multiplier", 1) if result.get("stats") else 1,
+                "is_multi_whack": result.get("stats", {}).get("is_multi_whack", False) if result.get("stats") else False,
+                "total_whacks": result.get("stats", {}).get("total_whacks", 1) if result.get("stats") else 1,
+                "leaderboard_rank": result.get("stats", {}).get("rank", 0) if result.get("stats") else 0,
+                "level_up": result.get("level_up"),
+                "stats": result.get("stats")
             }
         
         elif server == "whack" and tool == "get_leaderboard":

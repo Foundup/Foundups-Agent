@@ -42,8 +42,9 @@ class MessageProcessor:
         self.last_trigger_time = {}  # Track last trigger time per user
         self.trigger_cooldown = 60  # Cooldown period in seconds
         self.memory_dir = "memory"
-        # Consciousness response mode: 'mod_only' or 'everyone' (default: mod_only)
-        self.consciousness_mode = 'mod_only'
+        # Consciousness response mode: 'mod_only' or 'everyone' (default: everyone)
+        # Changed to 'everyone' so bot trolls ALL users showing ✊✊✊ consciousness!
+        self.consciousness_mode = 'everyone'
         # Initialize handlers (WSP-compliant separation)
         self.event_handler = EventHandler(self.memory_dir)
         self.command_handler = CommandHandler(self.event_handler.get_timeout_manager(), self)
@@ -78,6 +79,11 @@ class MessageProcessor:
         
         # Now initialize agentic engine with consciousness handler and memory manager
         self.agentic_engine = AgenticChatEngine(self.memory_dir, self.consciousness, memory_manager)
+        
+        # Stream session tracking for announcements (once per stream)
+        self.announced_joins = set()  # Set of user_ids who have been greeted this stream
+        self.proactive_engaged = set()  # Set of user_ids we've proactively engaged with
+        self.stream_start_time = time.time()  # Reset when stream restarts
         
         # Ensure memory directory exists
         os.makedirs(self.memory_dir, exist_ok=True)
@@ -123,6 +129,28 @@ class MessageProcessor:
             author_name = author_details.get("displayName", "Unknown")
             author_id = author_details.get("channelId", "")
             published_at = snippet.get("publishedAt", "")
+            
+            # CRITICAL: Filter out old buffered events (>5 minutes old)
+            if published_at:
+                from datetime import datetime, timezone
+                try:
+                    # Parse YouTube timestamp
+                    msg_time = datetime.fromisoformat(published_at.replace('Z', '+00:00'))
+                    current_time = datetime.now(timezone.utc)
+                    age_seconds = (current_time - msg_time).total_seconds()
+                    
+                    # Skip messages older than 5 minutes (300 seconds) EXCEPT slash commands
+                    # Slash commands should always be processed even if delayed
+                    if age_seconds > 300:
+                        # Always process slash commands regardless of age
+                        if message_text and message_text.strip().startswith('/'):
+                            logger.info(f"⏰ Processing old slash command from {author_name} ({int(age_seconds)}s old): {message_text}")
+                        else:
+                            logger.debug(f"⏰ Skipping old buffered message from {author_name} ({int(age_seconds)}s old)")
+                            return {"skip": True, "reason": "old_buffered_event"}
+                except Exception as e:
+                    logger.debug(f"Could not parse timestamp: {e}")
+                    # Continue processing if we can't parse timestamp
             
             # CRITICAL: Never respond to self (prevent infinite loops)
             BOT_CHANNEL_IDS = [
@@ -287,20 +315,32 @@ class MessageProcessor:
             
             # Priority 3: Handle whack commands (score, level, rank)
             if processed_message.get("has_whack_command"):
+                logger.info(f"🎮 Calling handle_whack_command for: '{message_text}' from {author_name}")
+                # Extra debug for /quiz
+                if '/quiz' in message_text.lower():
+                    logger.warning(f"🧠🎮 QUIZ DETECTED IN MESSAGE_PROCESSOR! Sending to handle_whack_command")
                 response = self._handle_whack_command(message_text, author_name, author_id, role)
                 if response:
-                    logger.info(f"🎮 Whack command response for {author_name}")
+                    logger.info(f"🎮 Whack command response for {author_name}: {response[:100]}")
+                    logger.warning(f"🎮✅ MESSAGE_PROCESSOR RETURNING: {response[:100]}")
                     return response
+                else:
+                    logger.error(f"🎮❌ No response from handle_whack_command for '{message_text}'")
             
             # Priority 4: Handle MAGA content - just respond with witty comebacks
             # Bot doesn't execute timeouts, only announces them when mods/owner do them
             if processed_message.get("has_maga"):
                 response = self.greeting_generator.get_response_to_maga(processed_message.get("text", ""))
                 if response:
-                    # Personalize with username
-                    response = f"@{author_name} {response}"
-                    logger.info(f"🎯 MAGA troll response for {author_name}")
-                    return response
+                    # Only send if we can @mention properly
+                    if self._is_valid_mention(author_name):
+                        # Personalize with username
+                        response = f"@{author_name} {response}"
+                        logger.info(f"🎯 MAGA troll response for @{author_name}")
+                        return response
+                    else:
+                        logger.debug(f"⚠️ DELETING MAGA response - cannot @mention '{author_name}'")
+                        return None  # Explicitly return None - no message sent
             
             # Priority 4: Handle regular emoji triggers
             if processed_message.get("has_trigger"):
@@ -326,22 +366,44 @@ class MessageProcessor:
                     return response
             
             # Priority 6: Proactive engagement (REDUCED - too spammy)
-            # Only engage proactively with mods/owner or if directly mentioned
+            # Only engage proactively with mods/owner ONCE per stream
             import random
-            if role in ['MOD', 'OWNER'] and random.random() < 0.3:  # 30% chance for mods/owner
-                if self.agentic_engine.should_engage(message_text, author_name, role):
-                    proactive_response = self.agentic_engine.generate_agentic_response(
-                        author_name, message_text, role
-                    )
-                    if proactive_response:
-                        logger.info(f"💬 Proactive engagement with {author_name}")
-                        return proactive_response
+            if role in ['MOD', 'OWNER'] and author_id not in self.proactive_engaged:
+                if random.random() < 0.3:  # 30% chance for mods/owner
+                    if self.agentic_engine.should_engage(message_text, author_name, role):
+                        proactive_response = self.agentic_engine.generate_agentic_response(
+                            author_name, message_text, role
+                        )
+                        if proactive_response:
+                            # CRITICAL: Validate the ENTIRE response can be sent properly
+                            # Check if response contains @mentions that might fail
+                            if '@' in proactive_response:
+                                # Extract username from @mention in response
+                                import re
+                                mention_match = re.search(r'@(\S+)', proactive_response)
+                                if mention_match:
+                                    mentioned_user = mention_match.group(1)
+                                    if not self._is_valid_mention(mentioned_user):
+                                        logger.warning(f"⚠️ DELETING proactive response - cannot @mention '{mentioned_user}' in response")
+                                        self.proactive_engaged.add(author_id)
+                                        return None
+                            
+                            # Response is valid, send it
+                            self.proactive_engaged.add(author_id)
+                            logger.info(f"💬 Proactive engagement with {author_name} (once per stream)")
+                            return proactive_response
+                        else:
+                            logger.debug(f"No proactive response generated for {author_name}")
             
-            # Priority 7: Check for top whacker greeting (only if no other response)
-            whacker_greeting = self.greeting_generator.generate_whacker_greeting(author_name, author_id, role)
-            if whacker_greeting:
-                logger.info(f"🏆 Greeting top whacker {author_name}")
-                return whacker_greeting
+            # Priority 7: Check for top whacker greeting (only ONCE per stream session)
+            # These greetings don't use @mentions, they announce the player by name
+            if author_id not in self.announced_joins:  # Only announce if not already announced this stream
+                whacker_greeting = self.greeting_generator.generate_whacker_greeting(author_name, author_id, role)
+                if whacker_greeting:
+                    self.announced_joins.add(author_id)  # Mark as announced
+                    logger.info(f"🏆 Greeting top whacker {author_name} (first time this stream)")
+                    # Join greetings don't need @mentions - they're announcements about the user
+                    return whacker_greeting
             
             return None
             
@@ -401,10 +463,43 @@ class MessageProcessor:
                 return True
         return False
     
+    def _is_valid_mention(self, username: str) -> bool:
+        """
+        Check if username can be properly @mentioned on YouTube.
+        YouTube requires usernames to be at least 3 chars and not contain certain characters.
+        """
+        if not username:
+            return False
+        
+        # Username too short - single character usernames don't work
+        # But 2-letter usernames like "JS" ARE valid on YouTube
+        if len(username) < 2:
+            logger.debug(f"Username '{username}' too short for @mention")
+            return False
+            
+        # Contains spaces or special chars that break mentions
+        invalid_chars = [' ', '\n', '\t', '@', '#', '$', '%', '^', '&', '*']
+        if any(char in username for char in invalid_chars):
+            logger.debug(f"Username '{username}' contains invalid chars for @mention")
+            return False
+            
+        # Looks like a display name instead of handle (e.g., "John Smith" vs "JohnSmith123")
+        if username.count(' ') > 0:
+            logger.debug(f"Username '{username}' appears to be display name, not handle")
+            return False
+            
+        return True
+    
     def _update_trigger_time(self, user_id: str):
         """Update the last trigger time for a user."""
         self.last_trigger_time[user_id] = time.time()
         logger.debug(f"⏰ Updated trigger time for user {user_id}")
+    
+    def reset_stream_session(self):
+        """Reset the stream session tracking (call when stream restarts)."""
+        self.announced_joins.clear()
+        self.stream_start_time = time.time()
+        logger.info("🔄 Stream session reset - join announcements cleared")
     
     def log_message_to_file(self, processed_message: Dict[str, Any]):
         """
@@ -443,12 +538,16 @@ class MessageProcessor:
         """Check if message contains whack gamification commands."""
         commands = [
             '/score', '/level', '/rank', '/stats', '/leaderboard', '/frags', '/whacks', 
-            '/help', '/quiz', '/answer', '/facts', '/fscale', '/rate', '/sprees', '/toggle'
+            '/help', '/quiz', '/answer', '/facts', '/fscale', '/rate', '/sprees', '/toggle', '/top'
         ]
         text_lower = text.lower().strip()
         has_command = any(text_lower.startswith(cmd) for cmd in commands)
         if has_command:
             logger.info(f"🎮 Detected whack command: {text_lower}")
+        else:
+            # Log if it looks like a command but isn't recognized
+            if text_lower.startswith('/'):
+                logger.debug(f"🔍 Slash message not a whack command: {text_lower}")
         return has_command
     
     async def _handle_factcheck(self, text: str, requester: str, role: str) -> Optional[str]:

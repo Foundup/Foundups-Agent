@@ -268,7 +268,9 @@ Generate greeting:"""
         profile = get_profile(user_id, username)
         
         # Only greet players with significant achievements
-        if profile.score < 100 and profile.frag_count < 5:
+        # Use proper MAGADOOM terminology - it's whacks, not frags!
+        whack_count = getattr(profile, 'whack_count', getattr(profile, 'frag_count', 0))
+        if profile.score < 100 and whack_count < 5:
             return None
         
         # Get leaderboard position
@@ -282,38 +284,41 @@ Generate greeting:"""
         # Generate appropriate greeting
         if position == 1:
             greetings = [
-                f"👑 CHAMPION {username} HAS ARRIVED! #{position} WITH {profile.score} XP! BOW BEFORE THE KING OF FRAGS! 💀",
-                f"🏆 HOLY SHIT! IT'S {username}! THE UNDISPUTED #1 MAGADOOM WARRIOR! {profile.frag_count} FRAGS! 🔥",
+                f"👑 CHAMPION {username} HAS ARRIVED! #{position} WITH {profile.score} XP! BOW BEFORE THE KING OF WHACKS! 💀",
+                f"🏆 HOLY SHIT! IT'S {username}! THE UNDISPUTED #1 MAGADOOM WARRIOR! {whack_count} WHACKS! 🔥",
                 f"⚡ EVERYONE SHUT UP! {username} IS HERE! THE LEGENDARY #{position} CHAMPION! ⚡"
             ]
         elif position and position <= 3:
             greetings = [
-                f"🥇 TOP FRAGGER ALERT! {username} (#{position}) - {profile.rank} - {profile.frag_count} FRAGS! 🎯",
+                f"🥇 TOP WHACKER ALERT! {username} (#{position}) - {profile.rank} - {whack_count} WHACKS! 🎯",
                 f"💪 Elite warrior {username} joins! #{position} on leaderboard with {profile.score} XP! 🔥",
-                f"🌟 Make way for {username}! Top 3 legend with {profile.frag_count} confirmed kills! 💀"
+                f"🌟 Make way for {username}! Top 3 legend with {whack_count} confirmed whacks! 💀"
             ]
         elif profile.score >= 500:
             greetings = [
-                f"🎖️ Veteran {username} reporting! {profile.rank} - {profile.frag_count} frags earned in battle! 🎯",
+                f"🎖️ Veteran {username} reporting! {profile.rank} - {whack_count} whacks earned in battle! 🎯",
                 f"⭐ Seasoned warrior {username} online! {profile.score} XP of pure destruction! 💪",
-                f"🔥 Respect to {username}! {profile.rank} with {profile.frag_count} MAGAts fragged! 🔥"
+                f"🔥 Respect to {username}! {profile.rank} with {whack_count} MAGAts whacked! 🔥"
             ]
-        elif profile.frag_count >= 20:
+        elif whack_count >= 20:
             greetings = [
-                f"💀 {username} the MAGA Slayer arrives! {profile.frag_count} frags and counting! 🎯",
-                f"🎮 Player {username} enters! Level {profile.level} with {profile.score} XP! Keep fragging! 🔥",
-                f"⚔️ Fighter {username} ready! {profile.rank} - {profile.frag_count} confirmed kills! 💪"
+                f"💀 {username} the MAGA Slayer arrives! {whack_count} whacks and counting! 🎯",
+                f"🎮 Player {username} enters! Level {profile.level} with {profile.score} XP! Keep whacking! 🔥",
+                f"⚔️ Fighter {username} ready! {profile.rank} - {whack_count} confirmed whacks! 💪"
             ]
         else:
             return None  # Not significant enough for special greeting
         
         greeting = random.choice(greetings)
         
-        # Add role recognition
+        # ENFORCE MAGADOOM TERMINOLOGY - no kills, frags, or old terms!
+        from modules.gamification.whack_a_magat.src.terminology_enforcer import enforce_terminology
+        greeting = enforce_terminology(greeting)
+        
+        # Only add OWNER prefix, skip MOD prefix (too spammy)
         if role == 'OWNER':
             greeting = f"🛡️ CHANNEL OWNER + {greeting}"
-        elif role == 'MOD':
-            greeting = f"⚔️ MODERATOR + {greeting}"
+        # No MOD prefix - they're already announced as top whackers
         
         # Add consciousness check
         if "✊✋🖐️" not in greeting:

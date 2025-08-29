@@ -49,6 +49,22 @@ class ChatSender:
             logger.warning("⚠️ Cannot send empty message")
             return False
         
+        # CRITICAL: Validate all @mentions in the message before sending
+        # If we can't @mention properly, don't send the message at all
+        if '@' in message_text:
+            import re
+            # Find all @mentions in the message
+            # This regex extracts usernames stopping at punctuation or whitespace
+            mentions = re.findall(r'@([A-Za-z0-9_-]+)', message_text)
+            for username in mentions:
+                # Check if username can be properly mentioned
+                if not self._is_valid_mention(username):
+                    logger.warning(f"🚫 BLOCKING message - cannot @mention '{username}': {message_text[:100]}...")
+                    return False  # Don't send if ANY mention is invalid
+            
+            # All mentions are valid, proceed with sending
+            logger.debug(f"✅ All @mentions validated in message")
+        
         # Check throttling (skip for consciousness commands and timeout announcements)
         if response_type not in ['consciousness', 'timeout_announcement'] and not self.throttle.should_respond(response_type):
             logger.info(f"⏰ Throttled {response_type} response (chat too active)")
@@ -200,6 +216,34 @@ class ChatSender:
         self.youtube = new_service
         self.bot_channel_id = None  # Reset channel ID to refetch with new service
         logger.info("🔄 YouTube service updated")
+    
+    def _is_valid_mention(self, username: str) -> bool:
+        """
+        Check if username can be properly @mentioned on YouTube.
+        YouTube needs usernames to be at least 2 chars and not contain certain characters.
+        """
+        if not username:
+            return False
+        
+        # Username too short - single character usernames don't work
+        # But 2-letter usernames like "JS" ARE valid on YouTube
+        if len(username) < 2:
+            logger.debug(f"Username '{username}' too short for @mention")
+            return False
+            
+        # Contains spaces or special chars that break mentions
+        invalid_chars = [' ', '\n', '\t', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', ':', ';', '"', "'", ',', '.', '!', '?']
+        if any(char in username for char in invalid_chars):
+            logger.debug(f"Username '{username}' contains invalid chars for @mention")
+            return False
+            
+        # Check if it looks like it might be part of the message text, not a real username
+        # For example: "@mentioned" at the end of "You've been @mentioned" 
+        if username.lower() in ['mentioned', 'everyone', 'here', 'all']:
+            logger.debug(f"Username '{username}' appears to be a common word, not a real username")
+            return False
+            
+        return True
     
     def get_sender_stats(self) -> dict:
         """Get sender statistics and status."""

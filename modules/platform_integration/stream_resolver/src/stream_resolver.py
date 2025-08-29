@@ -446,6 +446,8 @@ def search_livestreams_enhanced(
         
         items = response.get("items", [])
         if items:
+            # Collect all valid streams with their details
+            valid_streams = []
             for item in items:
                 video_id = item["id"]["videoId"]
                 title = item["snippet"]["title"]
@@ -456,10 +458,39 @@ def search_livestreams_enhanced(
                 # Additional validation - check if the stream is actually live/upcoming
                 video_details = check_video_details(youtube_client, video_id)
                 if video_details and "liveStreamingDetails" in video_details:
-                    return video_id
+                    streaming_details = video_details["liveStreamingDetails"]
+                    
+                    # Get the actual start time for sorting
+                    actual_start = streaming_details.get("actualStartTime")
+                    scheduled_start = streaming_details.get("scheduledStartTime")
+                    
+                    # Prefer actualStartTime over scheduledStartTime
+                    start_time = actual_start or scheduled_start
+                    
+                    valid_streams.append({
+                        "video_id": video_id,
+                        "title": title,
+                        "published_at": published_at,
+                        "start_time": start_time,
+                        "is_live": bool(actual_start)  # True if actually started
+                    })
                 else:
                     logger.debug(f"Stream {mask_sensitive_id(video_id, 'video')} has no live streaming details, skipping")
-                    continue
+            
+            # If we have valid streams, return the most recent one
+            if valid_streams:
+                # Sort by start_time (newest first) and prefer actually live streams
+                valid_streams.sort(key=lambda x: (x["is_live"], x["start_time"] or ""), reverse=True)
+                
+                chosen = valid_streams[0]
+                logger.info(f"✅ Selected NEWEST stream: {chosen['title']} (Started: {chosen['start_time']})")
+                
+                # Log other streams that were not selected
+                if len(valid_streams) > 1:
+                    for stream in valid_streams[1:]:
+                        logger.info(f"   Skipped older stream: {stream['title']} (Started: {stream['start_time']})")
+                
+                return chosen["video_id"]
                     
         logger.info(f"No {event_type} livestream found")
         return None
@@ -511,7 +542,11 @@ def get_active_livestream_video_id_enhanced(
     if not validate_api_client(youtube_client):
         raise APIClientError("Invalid API client provided")
     
-    logger.debug(f"Looking for active/upcoming livestream for channel {mask_sensitive_id(channel_id, 'channel')}")
+    logger.info("="*60)
+    logger.info(f"🔍 STREAM SEARCH INITIATED (Enhanced)")
+    logger.info(f"   Channel ID: {channel_id}")
+    logger.info(f"   Credential Set: {getattr(youtube_client, '_credential_set', 'Unknown')}")
+    logger.info("="*60)
     
     # Check for environment override with enhanced validation
     env_video_id = get_env_variable("YOUTUBE_VIDEO_ID", default=None)
@@ -627,6 +662,23 @@ class StreamResolver:
     def _ensure_memory_dir(self):
         """Ensure memory directory exists for session caching."""
         os.makedirs("memory", exist_ok=True)
+    
+    def clear_cache(self):
+        """Clear all cached stream data for fresh lookup."""
+        import os
+        # Clear in-memory cache
+        self._cache = {}
+        self._last_stream_check = {}
+        
+        # Clear session cache file
+        if os.path.exists(self.session_cache_file):
+            try:
+                os.remove(self.session_cache_file)
+                self.logger.info("🗑️ Cleared session cache file for fresh search")
+            except Exception as e:
+                self.logger.warning(f"Could not clear session cache: {e}")
+        
+        self.logger.info("🧹 All caches cleared - will perform fresh stream search")
     
     def _load_session_cache(self):
         """Load cached session data from previous runs."""
@@ -805,12 +857,17 @@ class StreamResolver:
         
         # PRIORITY 4: Search for active livestream with circuit breaker protection
         try:
-            logger.info("🔍 Cache failed, searching for active livestream...")
+            logger.info("="*60)
+            logger.info("🔍 ACTIVE STREAM SEARCH STARTING")
+            logger.info(f"   Target Channel: {search_channel_id}")
+            logger.info(f"   Using Service: {getattr(self.youtube, '_credential_set', 'Unknown')}")
+            logger.info("="*60)
             
             # Try with current service first
             try:
+                # Use the enhanced version for better logging
                 result = circuit_breaker.call(
-                    get_active_livestream_video_id, 
+                    get_active_livestream_video_id_enhanced, 
                     self.youtube, 
                     search_channel_id
                 )

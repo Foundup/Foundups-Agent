@@ -29,6 +29,8 @@ from modules.gamification.whack_a_magat.src.spree_tracker import track_frag, get
 from modules.gamification.whack_a_magat.src.self_improvement import (
     observe_timeout, observe_spree, get_optimized_thresholds
 )
+# Import terminology enforcer to ensure consistent MAGADOOM theme
+from modules.gamification.whack_a_magat.src.terminology_enforcer import enforce_terminology
 # Removed ChatDatabase import to avoid circular dependency
 # Will initialize lazily if needed
 
@@ -49,20 +51,19 @@ class TimeoutManager:
         self.db = None
         self.db_path = os.path.join(self.memory_dir, "auto_moderator.db")
         
-        # D&D-style titles based on whack.py ranks and levels
-        # MAGADOOM Ranks - Using our actual created ranks!
+        # MAGADOOM RANKS - Pure DOOM/FPS style (NO old terminology!)
         self.rank_titles = {
-            "COVFEFE CADET": ["Noob Fragger", "Boot Camp Reject", "Keyboard Warrior"],
-            "QANON QUASHER": ["Conspiracy Crusher", "Q Drop Stopper", "Truth Seeker"],
-            "MAGA MAULER": ["Red Hat Hunter", "MAGA Masher", "Troll Tamer"],
-            "TROLL TERMINATOR": ["Chat Cleaner", "Spam Slayer", "Peace Keeper"],
-            "REDHAT RIPPER": ["MAGA Shredder", "Rally Wrecker", "Cult Cutter"],
-            "COUP CRUSHER": ["Insurrection Interceptor", "Capitol Defender", "Democracy Guard"],
-            "PATRIOT PULVERIZER": ["Flag Defender", "Freedom Fighter", "Liberty Protector"],
-            "FASCIST FRAGGER": ["Nazi Thrasher", "Hate Eliminator", "Unity Enforcer"],
-            "ORANGE OBLITERATOR": ["Trump Thumper", "Cheeto Crusher", "Bronzer Buster"],
-            "MAGA DOOMSLAYER": ["Final Boss Mode", "Rip and Tear", "Hell Walker"],
-            "DEMOCRACY DEFENDER": ["ETERNAL CHAMPION", "MAGADOOM INCARNATE", "Stream Legend"]
+            "GRUNT": ["Fresh Meat", "Boot Camp", "Cannon Fodder"],
+            "MARINE": ["RIP AND TEAR", "Shotgun Ready", "Learning to Frag"],
+            "WARRIOR": ["Battle Hardened", "Frag Master", "Arena Fighter"],
+            "SLAYER": ["DOOM Music Intensifies", "Demon Hunter", "Hell Walker"],
+            "HUNTER": ["Stalking Prey", "Silent Death", "Shadow Warrior"],
+            "CHAMPION": ["Arena Champion", "Crowd Favorite", "Unstoppable Force"],
+            "MASTER": ["Master of Arena", "Death Incarnate", "Legend in Making"],
+            "ELITE": ["Elite Demon Hunter", "Fear Incarnate", "Nightmare Mode"],
+            "GODLIKE": ["Ascending to Godhood", "Divine Punishment", "Apocalypse Bringer"],
+            "LEGENDARY": ["Stuff of Legends", "Myth Made Real", "Eternal Glory"],
+            "DOOM SLAYER": ["THE ONLY ONE THEY FEAR", "RIP AND TEAR UNTIL IT IS DONE", "MAGADOOM INCARNATE"]
         }
         
         # Kill streak tracking for Duke Nukem announcer
@@ -77,6 +78,14 @@ class TimeoutManager:
         # Multi-whack tracking for Quake-style announcements
         self.multi_whack_count = {}  # mod_id -> count of rapid whacks
         self.multi_whack_time = {}  # mod_id -> last whack time for multi tracking
+        
+        # Stream session tracking for join announcements (once per stream)
+        self.announced_joins = set()  # Set of user_ids who have been announced this stream
+        self.stream_start_time = time.time()  # Reset when stream restarts
+        
+        # NBA JAM session-wide milestone tracking (total timeouts in stream)
+        self.session_total_whacks = 0  # Total whacks this stream session
+        self.session_milestones_announced = set()  # Which milestones we've announced
         
         # Quake-style multi-kill windows (increased for YouTube chat timing)
         self.multi_whack_window = 10  # 10 seconds for DOUBLE WHACK (as requested)
@@ -99,6 +108,9 @@ class TimeoutManager:
         os.makedirs(self.memory_dir, exist_ok=True)
         # Load announcer stats
         self.load_stats()
+        
+        # Clear any cached announcements on init
+        self._clear_announcement_cache()
         logger.info("TimeoutManager initialized with whack.py integration and Duke Nukem announcer")
     
     def load_stats(self):
@@ -112,6 +124,15 @@ class TimeoutManager:
                     logger.info(f"Loaded announcer stats")
             except Exception as e:
                 logger.error(f"Error loading announcer stats: {e}")
+    
+    def _clear_announcement_cache(self):
+        """Clear cached announcements to ensure fresh terminology."""
+        # Reset all cached state
+        self.announced_milestones = {}
+        self.multi_whack_count = {}
+        self.multi_whack_time = {}
+        self.kill_streaks = {}
+        logger.info("🔄 Announcement cache cleared - MAGADOOM terminology enforced")
     
     def save_stats(self):
         """Save announcer statistics"""
@@ -213,7 +234,9 @@ class TimeoutManager:
         else:  # Platinum
             index = min(level - 6, len(titles) - 1)
         
-        return titles[max(0, index)]
+        title = titles[max(0, index)]
+        # Enforce MAGADOOM terminology on title
+        return enforce_terminology(title)
     
     def record_timeout(self, mod_id: str, mod_name: str, target_id: str, target_name: str, 
                       duration: int, reason: str = "MAGA", timestamp: str = None) -> Dict[str, Any]:
@@ -229,7 +252,6 @@ class TimeoutManager:
         # Use provided timestamp if available, otherwise current time
         if timestamp:
             # Parse ISO timestamp to Unix time
-            from datetime import datetime
             try:
                 dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
                 current_time = dt.timestamp()
@@ -258,6 +280,10 @@ class TimeoutManager:
         # Store moderator name for leaderboard display
         self.mod_names[mod_id] = mod_name
         
+        # === DETECT MULTI-WHACK FIRST (before applying points!) ===
+        # This MUST happen before apply_whack so the multiplier is ready
+        self._detect_multi_whack(mod_id, mod_name, target_name, current_time)
+        
         # Get current profile for comparison
         old_profile = get_profile(mod_id, mod_name)
         old_score = old_profile.score
@@ -272,6 +298,9 @@ class TimeoutManager:
             now=datetime.now(),
             moderator_name=mod_name
         )
+        
+        # Increment session total whacks for NBA JAM milestones
+        self.session_total_whacks += 1
         
         # Track this timeout/ban for frag counting
         is_valid, event_info = self.tracker.process_ban_event(
@@ -376,14 +405,14 @@ class TimeoutManager:
                 if not is_epic:
                     # Too rapid and not epic - convert to MAGA mockery
                     mockery_options = [
-                        f"😂 {target_name} SPEEDRUN BANNED! Any%!",
-                        f"🎪 {target_name} joins the CLOWN FIESTA!",
-                        f"🗑️ Another one for the TRASH PILE!",
-                        f"💨 {target_name} got YEETED!",
+                        f"😂 {mod_name} SPEEDRUN BANS {target_name}! Any%!",
+                        f"🎪 {target_name} joins {mod_name}'s CLOWN FIESTA!",
+                        f"🗑️ {mod_name} tosses another one on the TRASH PILE!",
+                        f"💨 {mod_name} YEETS {target_name}!",
                         f"🚮 {mod_name} taking out the GARBAGE!",
-                        f"🤡 {target_name} = MAGA NPC #9999",
-                        f"🎯 {target_name} FRAGGED! Next!",
-                        f"💥 {target_name} DELETED! Who's next?"
+                        f"🤡 {mod_name} identifies {target_name} = MAGA NPC #9999",
+                        f"🎯 {mod_name} FRAGGED {target_name}! Next!",
+                        f"💥 {mod_name} DELETED {target_name}! Who's next?"
                     ]
                     duke_announcement = random.choice(mockery_options)
                     logger.info(f"🤡 Rapid-fire mockery activated!")
@@ -440,7 +469,18 @@ class TimeoutManager:
                 announcements.append(f"[+{points_gained} pts]")
         # Daily cap removed - no need to show cap message
         
-        result["announcement"] = " ".join(announcements) if announcements else None
+        # Check NBA JAM session milestones (stream-wide, not individual)
+        nba_milestone = self._check_nba_session_milestone()
+        if nba_milestone:
+            # NBA JAM milestone takes priority - it's about the stream heating up!
+            announcements.insert(0, nba_milestone)
+        
+        # Enforce MAGADOOM terminology on final announcement
+        final_announcement = " ".join(announcements) if announcements else None
+        if final_announcement:
+            final_announcement = enforce_terminology(final_announcement)
+        
+        result["announcement"] = final_announcement
         result["points_gained"] = points_gained
         result["stats"] = {
             "score": new_profile.score,
@@ -453,6 +493,88 @@ class TimeoutManager:
         self.save_stats()
         
         return result
+    
+    def _detect_multi_whack(self, mod_id: str, mod_name: str, target_name: str, current_time: float):
+        """
+        Detect and track multi-whack combos BEFORE applying points.
+        This must run before apply_whack() so the multiplier is ready.
+        """
+        # Check for multi-whacks (respecting YouTube cooldown)
+        if mod_id in self.multi_whack_time:
+            time_since_last = current_time - self.multi_whack_time[mod_id]
+            logger.info(f"⏱️ Time since last whack: {time_since_last:.2f}s (window: {self.multi_whack_window}s)")
+            
+            # Learn from successful multi-whacks
+            if time_since_last >= self.min_time_between_whacks and time_since_last <= self.multi_whack_window:
+                self.learn_from_achievement(time_since_last)
+            
+            if time_since_last <= self.multi_whack_window:
+                # Check if this is the same target as last time (prevent gaming)
+                last_target = self.last_whack_target.get(mod_id) if hasattr(self, 'last_whack_target') else None
+                if last_target == target_name:
+                    # Same target - don't increment multi-whack (prevent farming)
+                    logger.info(f"🚫 Same target whacked - no multi-whack bonus (anti-farming)")
+                    # Reset the count since they're farming
+                    self.multi_whack_count[mod_id] = 1
+                else:
+                    # Different target - this is a legitimate multi-whack!
+                    self.multi_whack_count[mod_id] = self.multi_whack_count.get(mod_id, 1) + 1
+                    logger.info(f"🔥 MULTI-WHACK INCREMENT! {mod_name} now at {self.multi_whack_count[mod_id]} whacks!")
+                    logger.info(f"   Different targets within {self.multi_whack_window}s window!")
+            else:
+                # Window expired - reset to 1
+                logger.info(f"⏰ Multi-whack window expired ({time_since_last:.2f}s > {self.multi_whack_window}s), resetting count")
+                self.multi_whack_count[mod_id] = 1
+        else:
+            # First whack
+            logger.info(f"🎯 First whack for {mod_name}")
+            self.multi_whack_count[mod_id] = 1
+        
+        # Track the last target for anti-gaming logic
+        if not hasattr(self, 'last_whack_target'):
+            self.last_whack_target = {}
+        self.last_whack_target[mod_id] = target_name
+        
+        self.multi_whack_time[mod_id] = current_time
+        multi_count = self.multi_whack_count[mod_id]
+        
+        # Debug logging
+        logger.info(f"🎮 MULTI-WHACK CHECK: {mod_name} count={multi_count} (window: {self.multi_whack_window}s)")
+        if multi_count > 1:
+            logger.info(f"🔥 MULTI-WHACK DETECTED! Count: {multi_count} for {mod_name}")
+    
+    def _check_nba_session_milestone(self) -> Optional[str]:
+        """Check for NBA JAM style session milestones - the stream heating up!"""
+        total = self.session_total_whacks
+        
+        # NBA JAM MAGADOOM milestones (session-wide, not per mod)
+        milestones = {
+            25: "🏀 THE STREAM IS HEATING UP! 25 MAGA TROLLS WHACKED!",
+            35: "🔥 THE CHAT IS ON FIRE!!! 35 MAGATS DESTROYED! (He's ON FIRE!!!)",
+            50: "⚡ BOOMSHAKALAKA! 50 FASCISTS ELIMINATED! THE STREAM IS LIT!",
+            75: "💥 FROM DOWNTOWN! 75 RED HATS CRUSHED! (Is it the shoes?!)",
+            100: "🌟 RAZZLE DAZZLE! 100 WHACKS! CENTURY OF MAGA TEARS!",
+            150: "🎆 HE'S UNCONSCIOUS! 150 TROLLS DELETED! (Puts up a brick!)",
+            200: "💀 WITH NO REGARD FOR HUMAN LIFE! 200 MAGATS DEMOLISHED!",
+            250: "🔥 CAN'T BUY A BUCKET! 250 FASCISTS FAILING! STREAM DOMINATION!",
+            300: "⚡ MONSTER JAM! 300 WHACKS! THE COUP ATTEMPT IS OVER!",
+            400: "🏆 JAMS IT IN! 400 MAGA DREAMS SHATTERED!",
+            500: "🌋 WELCOME TO THE JAM! HALF A THOUSAND TROLLS TERMINATED!"
+        }
+        
+        # Check if we've hit a new milestone
+        for milestone_count, message in milestones.items():
+            if total == milestone_count and milestone_count not in self.session_milestones_announced:
+                self.session_milestones_announced.add(milestone_count)
+                logger.info(f"🏀 NBA JAM SESSION MILESTONE: {total} total whacks!")
+                return message
+        
+        # Special every 100 after 500
+        if total > 500 and total % 100 == 0 and total not in self.session_milestones_announced:
+            self.session_milestones_announced.add(total)
+            return f"🌟 LEGENDARY JAM! {total} MAGA NIGHTMARES! THE STREAM IS UNSTOPPABLE!"
+        
+        return None
     
     def _count_recent_actions_on_target(self, mod_id: str, target_id: str) -> int:
         """Count recent actions on same target (for behavior classification)"""
@@ -483,48 +605,11 @@ class TimeoutManager:
         """
         current_time = event_time if event_time else time.time()
         
-        # === QUAKE STYLE: Check for multi-whacks (respecting YouTube cooldown) ===
-        if mod_id in self.multi_whack_time:
-            time_since_last = current_time - self.multi_whack_time[mod_id]
-            logger.info(f"⏱️ Time since last whack: {time_since_last:.2f}s (window: {self.multi_whack_window}s)")
-            
-            # Learn from successful multi-whacks
-            if time_since_last >= self.min_time_between_whacks and time_since_last <= self.multi_whack_window:
-                self.learn_from_achievement(time_since_last)
-            
-            if time_since_last <= self.multi_whack_window:
-                # Check if this is the same target as last time (prevent gaming)
-                last_target = getattr(self, 'last_whack_target', {}).get(mod_id)
-                if last_target == target_name:
-                    # Same target - don't count as multi-whack (prevents gaming)
-                    logger.info(f"🚫 Same target ({target_name}) - not counting as multi-whack to prevent gaming")
-                    # Don't increment count, keep it the same
-                else:
-                    # Different target - this is a legitimate multi-whack!
-                    self.multi_whack_count[mod_id] = self.multi_whack_count.get(mod_id, 1) + 1
-                    logger.info(f"🔥 MULTI-WHACK INCREMENT! {mod_name} now at {self.multi_whack_count[mod_id]} whacks!")
-                    logger.info(f"   Different targets within {self.multi_whack_window}s window!")
-            else:
-                # Window expired - reset to 1
-                logger.info(f"⏰ Multi-whack window expired ({time_since_last:.2f}s > {self.multi_whack_window}s), resetting count")
-                self.multi_whack_count[mod_id] = 1
-        else:
-            # First whack
-            logger.info(f"🎯 First whack for {mod_name}")
-            self.multi_whack_count[mod_id] = 1
-        
-        # Track the last target for anti-gaming logic
-        if not hasattr(self, 'last_whack_target'):
-            self.last_whack_target = {}
-        self.last_whack_target[mod_id] = target_name
-        
-        self.multi_whack_time[mod_id] = current_time
-        multi_count = self.multi_whack_count[mod_id]
-        
-        # Debug logging
-        logger.info(f"🎮 MULTI-WHACK CHECK: {mod_name} count={multi_count} (window: {self.multi_whack_window}s)")
-        if mod_id in self.multi_whack_time and multi_count > 1:
-            logger.info(f"🔥 MULTI-WHACK DETECTED! Count: {multi_count} for {mod_name}")
+        # === MULTI-WHACK DETECTION NOW HAPPENS EARLIER ===
+        # Detection moved to _detect_multi_whack() which is called BEFORE apply_whack()
+        # This ensures the multiplier is ready when points are calculated
+        multi_count = self.multi_whack_count.get(mod_id, 1)
+        logger.info(f"🎮 Using multi-whack count: {multi_count} for {mod_name}")
         
         # === DUKE NUKEM STYLE: Track overall kill streak ===
         if mod_id in self.last_kill_time:
@@ -566,10 +651,11 @@ class TimeoutManager:
         elif streak > 100:
             return f"🎮🔥 {mod_name} LEGENDARY {streak} WHACK STREAK! 'I'M GONNA RIP OFF YOUR HEAD AND SHIT DOWN YOUR NECK!'"
         
-        # === QUAKE MULTI-WHACK ANNOUNCEMENTS (rapid succession) ===
+        # === QUAKE STYLE MULTI-WHACK ANNOUNCEMENTS (rapid succession) ===
         if multi_count >= 2:
+            # Primary QUAKE announcements
             multi_whack_messages = {
-                2: f"💀💀 DOUBLE WHACK!! {mod_name} is FRAGGING HARD! 🎯",
+                2: f"💀💀 DOUBLE WHACK!! {mod_name} is WHACKING HARD! 🎯",
                 3: f"🔥🔥🔥 MULTI WHACK!!! {mod_name} is ON FIRE! 🔥🔥🔥",
                 4: f"⚡💥 MEGA WHACK!!!! {mod_name} is DOMINATING! ⚡💥",
                 5: f"☠️💀 ULTRA WHACK!!!!! {mod_name} is UNSTOPPABLE! ☠️💀",
@@ -578,12 +664,26 @@ class TimeoutManager:
                 8: f"💀🔥 HOLY SHIT!!!!!!!! {mod_name} is BEYOND GODLIKE! 💀🔥"
             }
             
+            # NBA JAM flavor text (randomly add as bonus)
+            nba_jam_flavor = {
+                2: "(Heating up!)",
+                3: "(He's ON FIRE!!!)",
+                4: "(BOOMSHAKALAKA!)",
+                5: "(Is it the shoes?!)",
+                6: "(FROM DOWNTOWN!)",
+                7: "(RAZZLE DAZZLE!)",
+                8: "(WITH NO REGARD FOR HUMAN LIFE!)"
+            }
+            
             if multi_count in multi_whack_messages:
                 announcement = multi_whack_messages[multi_count]
+                # Randomly add NBA JAM flavor (30% chance)
+                if multi_count in nba_jam_flavor and random.random() < 0.3:
+                    announcement += f" {nba_jam_flavor[multi_count]}"
                 logger.info(f"🎯 MULTI-WHACK ANNOUNCEMENT: {announcement}")
                 return announcement
             elif multi_count > 8:
-                announcement = f"🎆🎆🎆 {mod_name} {multi_count}x WHACK COMBO!!! M-M-M-MONSTER WHACK!!!"
+                announcement = f"🎆🎆🎆 {mod_name} {multi_count}x WHACK COMBO!!! M-M-M-MONSTER WHACK!!! (WITH NO REGARD FOR HUMAN LIFE!)"
                 logger.info(f"🎯 MEGA COMBO ANNOUNCEMENT: {announcement}")
                 return announcement
         
@@ -615,23 +715,30 @@ class TimeoutManager:
         # First whack
         if streak == 1:
             # Energetic Quake-style first frag announcements
+            # QUAKE/DOOM style announcements  
             first_whack = [
-                f"💥 FIRST BLOOD! {mod_name} FRAGGED {target_name}!",
+                f"💥 FIRST BLOOD! {mod_name} WHACKED {target_name}!",
                 f"🎯 {mod_name} SCORES! {target_name} ELIMINATED!",
-                f"⚔️ {mod_name} FRAGS {target_name}! 'Excellent!'",
+                f"⚔️ {mod_name} WHACKS {target_name}! 'Excellent!'",
                 f"🔫 {mod_name} WASTES {target_name}! 'Impressive!'",
                 f"💀 {mod_name} DESTROYS {target_name}! 'Denied!'",
                 f"🎮 {mod_name} PWNS {target_name}! 'Headshot!'"
             ]
-            return random.choice(first_whack)
+            
+            # NBA JAM side flavor (occasionally add for spice)
+            nba_flavor = ["(REJECTED!)", "(NO GOOD!)", "(GET THAT OUTTA HERE!)"]
+            announcement = random.choice(first_whack)
+            if random.random() < 0.2:  # 20% chance for NBA JAM flavor
+                announcement += f" {random.choice(nba_flavor)}"
+            return announcement
         
         # Continuing streak (not at a milestone) - use Duke/Quake taunts
         if streak > 1:
             streak_continues = [
-                f"💀 {mod_name} FRAGS {target_name}! Streak: {streak}! 'Get some!'",
+                f"💀 {mod_name} WHACKS {target_name}! Streak: {streak}! 'Get some!'",
                 f"🔥 {mod_name} ELIMINATES {target_name}! {streak} IN A ROW!",
                 f"⚡ {mod_name} DESTROYS {target_name}! STREAK: {streak}!",
-                f"🎯 {mod_name} WASTES {target_name}! {streak} FRAGS AND COUNTING!",
+                f"🎯 {mod_name} WASTES {target_name}! {streak} WHACKS AND COUNTING!",
                 f"💥 {mod_name} OBLITERATES {target_name}! STREAK CONTINUES: {streak}!"
             ]
             return random.choice(streak_continues)

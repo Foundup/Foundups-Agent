@@ -206,7 +206,13 @@ class AgenticChatEngine:
         # Get appropriate response template
         if user_type in self.contextual_responses:
             templates = self.contextual_responses[user_type]
+            # Format with username but ensure it starts with @username for proper mention
             response = random.choice(templates).format(username=username)
+            
+            # CRITICAL: Ensure response starts with @username for valid mention
+            if not response.startswith(f"@{username}"):
+                response = f"@{username} {response}"
+            
             return response
         
         return None
@@ -368,6 +374,25 @@ class AgenticChatEngine:
         message_lower = message.lower()
         return any(re.search(pattern, message_lower) for pattern in maga_patterns)
     
+    def _is_valid_mention(self, username: str) -> bool:
+        """
+        Check if username can be properly @mentioned on YouTube.
+        YouTube requires usernames to be at least 3 chars and not contain certain characters.
+        """
+        if not username:
+            return False
+        
+        # Username too short (YouTube needs at least 3 chars for mentions)
+        if len(username) < 3:
+            return False
+            
+        # Contains spaces or special chars that break mentions
+        invalid_chars = [' ', '\n', '\t', '@', '#', '$', '%', '^', '&', '*']
+        if any(char in username for char in invalid_chars):
+            return False
+            
+        return True
+    
     def generate_agentic_response(self, username: str, message: str, role: str) -> Optional[str]:
         """
         Main method to generate agentic responses.
@@ -375,6 +400,12 @@ class AgenticChatEngine:
         Returns:
             Response string or None
         """
+        # Check if we can @mention this user (but don't block ALL responses)
+        # Only skip if username is completely invalid (empty or single char)
+        if not username or len(username) < 2:
+            logger.debug(f"⚠️ Cannot @mention '{username}' - username too short")
+            return None
+        
         # Get user context
         context = self.get_user_context(username)
         

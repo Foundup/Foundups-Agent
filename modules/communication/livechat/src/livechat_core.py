@@ -232,6 +232,7 @@ class LiveChatCore:
                 logger.info(f"✨ CONSCIOUSNESS DETECTED from {author_name}!")
             if processed.get("has_whack_command"):
                 logger.info(f"🎮 WHACK COMMAND DETECTED from {author_name}!")
+                logger.info(f"🔍 DEBUG: Whack command message text: '{display_message}'")
             
             # Debug log for slash commands
             if display_message and display_message.startswith('/'):
@@ -283,10 +284,15 @@ class LiveChatCore:
             
             if response:
                 logger.info(f"📤 Generated response for {author_name}: {response[:100]}")
-                # Check if this is a consciousness response
+                # Check if this is a consciousness response or slash command
                 response_type = processed.get("response_type", "general")
-                # Send response with proper throttling (consciousness bypasses delays)
-                if response_type == "consciousness":
+                
+                # SLASH COMMANDS should respond immediately - no delays!
+                if processed.get("has_whack_command") or display_message.startswith('/'):
+                    logger.info(f"⚡ Sending slash command response immediately")
+                    # Bypass delays for commands
+                    success = await self.chat_sender.send_message(response, response_type="command", skip_delay=True)
+                elif response_type == "consciousness":
                     logger.info(f"⚡ Sending consciousness response immediately")
                     # Pass response_type to chat_sender for proper handling
                     success = await self.chat_sender.send_message(response, response_type="consciousness")
@@ -297,7 +303,8 @@ class LiveChatCore:
             else:
                 # Debug: log why no response
                 if display_message.startswith('/'):
-                    logger.debug(f"🔍 Command check: '{display_message}' from {author_name}")
+                    logger.warning(f"⚠️ NO RESPONSE for command: '{display_message}' from {author_name}")
+                    logger.warning(f"⚠️ Processed flags: has_whack={processed.get('has_whack_command')}, has_trigger={processed.get('has_trigger')}")
             
             # Log to user file
             self._log_to_user_file(message)
@@ -388,7 +395,13 @@ class LiveChatCore:
         poll_interval_ms = 5000
         last_health_check = time.time()
         last_troll = time.time()
+        last_stream_check = time.time()  # Track last stream validation
+        last_activity = time.time()  # Track last meaningful chat activity
         health_check_interval = 60  # Check health every minute
+        stream_check_interval = 120  # Check if stream is still live every 2 minutes (more responsive)
+        inactivity_timeout = 180  # Consider stream inactive after 3 minutes of no messages
+        consecutive_poll_errors = 0  # Track consecutive polling errors
+        consecutive_empty_polls = 0  # Track polls with no messages
         # Dynamic troll interval based on chat activity
         base_troll_interval = 600  # Base: 10 minutes for quiet chat
         troll_interval = base_troll_interval
@@ -430,9 +443,129 @@ class LiveChatCore:
                         logger.info(f"🎯 Sent proactive troll (activity: {recent_msg_count} msgs): {troll_msg[:50]}...")
                     last_troll = time.time()
                 
+                # Periodic stream health check - detect if stream ended
+                if time.time() - last_stream_check > stream_check_interval:
+                    logger.info("🔍 Checking if stream is still live...")
+                    try:
+                        # Try to get stream status
+                        response = self.youtube.videos().list(
+                            part="liveStreamingDetails,snippet",
+                            id=self.video_id
+                        ).execute()
+                        
+                        items = response.get('items', [])
+                        if not items:
+                            logger.warning("⚠️ Stream not found - may have ended")
+                            consecutive_poll_errors = 5  # Trigger exit
+                        else:
+                            live_details = items[0].get('liveStreamingDetails', {})
+                            actual_end_time = live_details.get('actualEndTime')
+                            if actual_end_time:
+                                logger.warning(f"⚠️ Stream has ended at {actual_end_time}")
+                                logger.info("🔚 Exiting polling loop - stream ended")
+                                self.is_running = False
+                                break
+                            else:
+                                logger.info("✅ Stream is still live")
+                                consecutive_poll_errors = 0  # Reset error counter
+                    except Exception as e:
+                        logger.warning(f"⚠️ Error checking stream status: {e}")
+                    
+                    last_stream_check = time.time()
+                
                 # Poll for messages
                 logger.info(f"🔄 Polling for messages...")
-                messages, poll_interval_ms = await self.poll_messages()
+                try:
+                    messages, poll_interval_ms = await self.poll_messages()
+                    # Only reset error counter if we actually got a successful API response
+                    # Empty messages list is OK (quiet chat), but API errors are not
+                    consecutive_poll_errors = 0
+                    
+                    # Track activity for agentic stream switching
+                    if messages:
+                        last_activity = time.time()
+                        consecutive_empty_polls = 0
+                        logger.debug(f"📬 Got {len(messages)} messages - chat is active")
+                    else:
+                        consecutive_empty_polls += 1
+                        time_since_activity = time.time() - last_activity
+                        
+                        # Agentic detection: Stream might be inactive/ended
+                        if time_since_activity > inactivity_timeout:
+                            logger.warning(f"⚠️ No chat activity for {time_since_activity:.0f}s - checking stream status")
+                            
+                            # Quick stream validation
+                            try:
+                                response = self.youtube.videos().list(
+                                    part="liveStreamingDetails,snippet",
+                                    id=self.video_id
+                                ).execute()
+                                
+                                items = response.get('items', [])
+                                if not items:
+                                    logger.warning("🔚 Stream disappeared - likely ended")
+                                    self.is_running = False
+                                    break
+                                    
+                                live_details = items[0].get('liveStreamingDetails', {})
+                                actual_end_time = live_details.get('actualEndTime')
+                                if actual_end_time:
+                                    logger.info(f"🔚 Stream confirmed ended at {actual_end_time}")
+                                    self.is_running = False
+                                    break
+                                    
+                                # Stream exists but no chat activity
+                                if consecutive_empty_polls > 20:  # ~100 seconds of no activity
+                                    logger.warning("💤 Stream appears inactive - may be dead or viewers left")
+                                    # Signal to auto_moderator to check for new streams
+                                    self.is_running = False
+                                    break
+                                    
+                            except Exception as e:
+                                logger.warning(f"⚠️ Could not verify stream: {e}")
+                                if consecutive_empty_polls > 30:  # Give up after ~150 seconds
+                                    logger.info("🔄 Assuming stream ended due to prolonged inactivity")
+                                    self.is_running = False
+                                    break
+                except googleapiclient.errors.HttpError as e:
+                    error_details = str(e)
+                    consecutive_poll_errors += 1
+                    
+                    # Check if it's a "live chat ended" error
+                    if "liveChatEnded" in error_details or "forbidden" in error_details.lower():
+                        logger.warning(f"🔚 Live chat has ended: {e}")
+                        self.is_running = False
+                        break
+                    elif "notFound" in error_details:
+                        logger.warning(f"🔚 Live chat not found - stream may have ended: {e}")
+                        self.is_running = False
+                        break
+                    else:
+                        logger.error(f"❌ Polling error #{consecutive_poll_errors}: {e}")
+                        # Only exit after many consecutive API errors (not just quiet chat)
+                        if consecutive_poll_errors >= 10:
+                            logger.warning("🔚 Too many API errors - checking if stream ended")
+                            # Do one final check before giving up
+                            try:
+                                response = self.youtube.videos().list(
+                                    part="liveStreamingDetails",
+                                    id=self.video_id
+                                ).execute()
+                                items = response.get('items', [])
+                                if not items or items[0].get('liveStreamingDetails', {}).get('actualEndTime'):
+                                    logger.warning("🔚 Confirmed: Stream has ended")
+                                    self.is_running = False
+                                    break
+                            except:
+                                pass
+                    
+                    messages = []
+                    poll_interval_ms = 5000
+                except Exception as e:
+                    # Other non-API errors
+                    logger.error(f"❌ Unexpected error polling: {e}")
+                    messages = []
+                    poll_interval_ms = 5000
                 
                 # Process messages
                 if messages:

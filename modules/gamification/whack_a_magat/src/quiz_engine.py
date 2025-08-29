@@ -89,8 +89,50 @@ class QuizEngine:
     
     def _load_questions(self):
         """Load quiz questions and F-scale items"""
-        # Educational quiz questions about fascism
+        # Educational quiz questions about fascism and Trump appointments
         self.quiz_questions = [
+            # Trump 2025 Cabinet vs Nazi 1933 Parallels
+            QuizQuestion(
+                question="Which Fox News host with zero experience is Trump's Defense Secretary pick?",
+                options=["Pete Hegseth", "Tucker Carlson", "Sean Hannity", "Jesse Watters"],
+                correct_index=0,
+                explanation="Pete Hegseth defended war criminals. 1933: Werner von Blomberg purged Jewish officers.",
+                category="trump_appointments",
+                difficulty=2
+            ),
+            QuizQuestion(
+                question="Who is Trump's AG pick that was investigated for sex trafficking?",
+                options=["Jim Jordan", "Matt Gaetz", "Josh Hawley", "Ted Cruz"],
+                correct_index=1,
+                explanation="Matt Gaetz under federal investigation. 1933: Wilhelm Frick ignored SA violence.",
+                category="trump_appointments",
+                difficulty=2
+            ),
+            QuizQuestion(
+                question="Which Putin sympathizer with zero intelligence experience is DNI pick?",
+                options=["Tulsi Gabbard", "Marjorie Taylor Greene", "Lauren Boebert", "Kari Lake"],
+                correct_index=0,
+                explanation="Tulsi Gabbard parrots Russian propaganda. 1933: Ribbentrop loved authoritarians.",
+                category="trump_appointments",
+                difficulty=2
+            ),
+            QuizQuestion(
+                question="Which billionaire got a made-up department to slash regulations?",
+                options=["Jeff Bezos", "Bill Gates", "Elon Musk", "Mark Zuckerberg"],
+                correct_index=2,
+                explanation="Elon Musk's DOGE. 1933: Industrialists like Krupp got special treatment.",
+                category="trump_appointments",
+                difficulty=1
+            ),
+            QuizQuestion(
+                question="Who is the brain-worm infected anti-vaxxer picked for HHS?",
+                options=["Dr. Oz", "RFK Jr", "Rand Paul", "Scott Atlas"],
+                correct_index=1,
+                explanation="RFK Jr promotes health conspiracies. 1933: Nazis promoted racial pseudoscience.",
+                category="trump_appointments",
+                difficulty=2
+            ),
+            # Historical parallels
             QuizQuestion(
                 question="In 1933, the Reichstag Fire was used to suspend civil liberties. What 2001 event had similar effects in the US?",
                 options=["9/11 attacks", "Dot-com crash", "Enron scandal", "Florida recount"],
@@ -98,6 +140,189 @@ class QuizEngine:
                 explanation="Both events were used to expand government power and restrict civil liberties through emergency measures.",
                 category="historical_parallels",
                 difficulty=2
+            ),
+            # Nazi Nickname Parallels - Who would they be in 1933?
+            QuizQuestion(
+                question="Pete Hegseth (Fox News warrior wannabe) would be which Nazi in 1933?",
+                options=[
+                    "Werner von Blomberg - The 'Rubber Lion' bootlicker general",
+                    "Hermann Göring - The morphine addict",
+                    "Rudolf Hess - The crazy deputy",
+                    "Martin Bormann - The shadow manipulator"
+                ],
+                correct_index=0,
+                explanation="Both are military bootlickers with no real combat command experience who defend war crimes.",
+                category="nazi_parallels",
+                difficulty=2
+            ),
+            QuizQuestion(
+                question="Matt Gaetz (sex trafficker) is the 2025 version of which Nazi?",
+                options=[
+                    "Ernst Röhm - The violent gay SA leader",
+                    "Julius Streicher - The perverted pornographer propagandist",
+                    "Reinhard Heydrich - The Butcher of Prague",
+                    "Wilhelm Frick - The bureaucratic enabler"
+                ],
+                correct_index=1,
+                explanation="Both are sexual degenerates who use their position for perversion and propaganda.",
+                category="nazi_parallels",
+                difficulty=2
+            ),
+            QuizQuestion(
+                question="Elon Musk would be which Nazi industrialist bootlicker?",
+                options=[
+                    "Fritz Thyssen - The steel magnate who funded Hitler",
+                    "Gustav Krupp - The weapons manufacturer",
+                    "Hugo Boss - The uniform designer",
+                    "Ferdinand Porsche - The Volkswagen creator"
+                ],
+                correct_index=0,
+                explanation="Both are wealthy industrialists who platform fascists thinking they can control them.",
+                category="nazi_parallels",
+                difficulty=2
+            ),
+            QuizQuestion(
+                question="Tulsi Gabbard (Putin's puppet) is most like which Nazi foreign minister?",
+                options=[
+                    "Joachim von Ribbentrop - The champagne salesman turned diplomat",
+                    "Alfred Rosenberg - The racial theorist",
+                    "Joseph Goebbels - The propaganda minister",
+                    "Heinrich Himmler - The SS leader"
+                ],
+                correct_index=0,
+                explanation="Both are unqualified foreign policy disasters who love enemy dictators.",
+                category="nazi_parallels",
+                difficulty=2
+            ),
+            QuizQuestion(
+                question="RFK Jr (brain worm conspiracy theorist) matches which Nazi quack?",
+                options=[
+                    "Dr. Theodor Morell - Hitler's quack doctor pushing meth",
+                    "Dr. Josef Mengele - The Angel of Death",
+                    "Dr. Karl Brandt - The euthanasia program leader",
+                    "Julius Streicher - The conspiracy theory publisher"
+                ],
+                correct_index=0,
+                explanation="Both are medical quacks pushing dangerous pseudoscience and conspiracy theories.",
+                category="nazi_parallels",
+                difficulty=2
+            ),
+            QuizQuestion(
+                question="Stephen Miller (the dead-eyed immigration ghoul) is which Nazi?",
+                options=[
+                    "Adolf Eichmann - The bureaucrat of death",
+                    "Heinrich Himmler - The SS architect",
+                    "Reinhard Heydrich - The Final Solution planner",
+                    "All of the above"
+                ],
+                correct_index=3,
+                explanation="Miller combines the worst of all Nazi deportation architects.",
+                category="nazi_parallels",
+                difficulty=1
+            ),
+            QuizQuestion(
+                question="JD Vance said 'Trump is America's Hitler' then became VP. Who's his 1933 parallel?",
+                options=[
+                    "Franz von Papen - Thought he could control Hitler as VP",
+                    "Hermann Göring - The opportunist",
+                    "Rudolf Hess - The true believer",
+                    "Martin Bormann - The backstabber"
+                ],
+                correct_index=0,
+                explanation="Both thought they were smarter than the fascist leader and could control them.",
+                category="nazi_parallels",
+                difficulty=2
+            ),
+            QuizQuestion(
+                question="Elon Musk (Space Karen) is running DOGE. His Nazi parallel?",
+                options=[
+                    "Albert Speer - Hitler's architect & armaments minister",
+                    "Fritz Thyssen - Industrial magnate who funded Hitler",
+                    "Both - tech-obsessed enabler AND wealthy fool",
+                    "Wernher von Braun - The rocket scientist"
+                ],
+                correct_index=2,
+                explanation="Musk combines Speer's tech obsession with Thyssen's wealthy idiocy.",
+                category="nazi_parallels",
+                difficulty=2
+            ),
+            QuizQuestion(
+                question="Kash Patel (QAnon FBI nominee) with enemy lists is which Nazi?",
+                options=[
+                    "Reinhard Heydrich - The Hangman with death lists",
+                    "Heinrich Müller - Gestapo chief",
+                    "Roland Freisler - The screaming judge",
+                    "Wilhelm Frick - Interior minister"
+                ],
+                correct_index=0,
+                explanation="Both are vindictive intelligence chiefs obsessed with enemy lists.",
+                category="nazi_parallels",
+                difficulty=2
+            ),
+            QuizQuestion(
+                question="Tom Homan (Trump's 'Border Czar') promising mass deportation is?",
+                options=[
+                    "Adolf Eichmann - Organized deportation logistics",
+                    "Heinrich Himmler - Built the camps",
+                    "Reinhard Heydrich - Planned the operations",
+                    "Hermann Göring - Gave the orders"
+                ],
+                correct_index=0,
+                explanation="Both are bureaucratic architects of mass deportation operations.",
+                category="nazi_parallels",
+                difficulty=1
+            ),
+            QuizQuestion(
+                question="Vivek Ramaswamy co-leading DOGE to gut government is?",
+                options=[
+                    "Martin Bormann - The Brown Eminence",
+                    "Rudolf Hess - The deputy",
+                    "Robert Ley - The labor destroyer",
+                    "Alfred Rosenberg - The philosopher"
+                ],
+                correct_index=0,
+                explanation="Both are ambitious bureaucrats destroying government from within.",
+                category="nazi_parallels",
+                difficulty=3
+            ),
+            QuizQuestion(
+                question="Marco Rubio (Little Marco) as Secretary of State is?",
+                options=[
+                    "Constantin von Neurath - Conservative fig leaf",
+                    "Joachim von Ribbentrop - The champagne salesman",
+                    "Franz von Papen - The enabler",
+                    "Wilhelm Keitel - The yes-man"
+                ],
+                correct_index=0,
+                explanation="Both are establishment conservatives who legitimize extremism.",
+                category="nazi_parallels",
+                difficulty=2
+            ),
+            QuizQuestion(
+                question="Kristi Noem (puppy killer) running DHS/ICE camps is?",
+                options=[
+                    "Ilse Koch - The Beast of Buchenwald",
+                    "Heinrich Himmler - The SS architect",
+                    "Irma Grese - The Beautiful Beast",
+                    "Rudolf Höss - Auschwitz commandant"
+                ],
+                correct_index=1,
+                explanation="Both oversee internal security apparatus and detention camps.",
+                category="nazi_parallels",
+                difficulty=2
+            ),
+            QuizQuestion(
+                question="Trump's nickname in Nazi Germany would be?",
+                options=[
+                    "Der Orangeführer - The Orange Leader",
+                    "Der Große Lügner - The Big Liar",
+                    "Der Goldene Idiot - The Golden Idiot",
+                    "All of the above"
+                ],
+                correct_index=3,
+                explanation="Trump embodies multiple Nazi leader failures: narcissism, lies, and stupidity.",
+                category="nazi_parallels",
+                difficulty=1
             ),
             QuizQuestion(
                 question="The Nazi SA (Brownshirts) used street violence to intimidate opponents. Which modern group uses similar tactics?",
@@ -213,7 +438,7 @@ class QuizEngine:
             started_at=datetime.now()
         )
         
-        message = f"📚 **FASCISM AWARENESS QUIZ**\n"
+        message = f"📚 FASCISM AWARENESS QUIZ\n"
         message += f"Difficulty: {'⭐' * question.difficulty}\n"
         message += f"Category: {question.category.replace('_', ' ').title()}\n\n"
         message += f"Question: {question.question}\n\n"
@@ -242,10 +467,10 @@ class QuizEngine:
         
         if is_correct:
             session.score += question.difficulty
-            message = f"✅ **CORRECT!** (+{question.difficulty} points)\n"
+            message = f"✅ CORRECT! (+{question.difficulty} points)\n"
         else:
             correct_option = question.options[question.correct_index]
-            message = f"❌ **INCORRECT!** The answer was: {correct_option}\n"
+            message = f"❌ INCORRECT! The answer was: {correct_option}\n"
         
         message += f"\n📖 {question.explanation}\n"
         message += f"\nYour session score: {session.score} points"
@@ -271,7 +496,7 @@ class QuizEngine:
         
         self.sessions[user_id].current_fscale = question
         
-        message = f"📊 **F-SCALE AUTHORITARIAN TEST**\n"
+        message = f"📊 F-SCALE AUTHORITARIAN TEST\n"
         message += f"Rate your agreement (1-5):\n"
         message += f'"{question.question}"\n\n'
         message += "1 = Strongly Disagree\n"
@@ -282,6 +507,30 @@ class QuizEngine:
         message += "Reply with !rate [1-5]"
         
         return question, message
+    
+    def handle_quiz_command(self, user_id: str, username: str, args: str) -> str:
+        """Handle quiz commands and answers"""
+        if not args:
+            # Start a new quiz
+            question, message = self.start_quiz(user_id)
+            return message
+        
+        # Check if it's an answer (number)
+        try:
+            answer_index = int(args) - 1  # Convert to 0-based
+            is_correct, message = self.answer_quiz(user_id, answer_index)
+            
+            # Add bonus for correct answer
+            if is_correct:
+                # Award quiz points (could integrate with whack.py later)
+                if user_id not in self.sessions:
+                    self.sessions[user_id] = QuizSession(user_id=user_id, score=0)
+                self.sessions[user_id].score += 5
+                message += f" (Total quiz score: {self.sessions[user_id].score})"
+            
+            return message
+        except (ValueError, IndexError):
+            return "Invalid answer! Use /quiz to get a question, then reply with 1, 2, 3, or 4"
     
     def rate_fscale(self, user_id: str, rating: int) -> str:
         """Process F-scale rating (1-5)"""
@@ -331,18 +580,18 @@ class QuizEngine:
             """, (user_id,))
             fscale_data = cursor.fetchone()
         
-        message = f"📊 **EDUCATIONAL STATS**\n"
+        message = f"📊 EDUCATIONAL STATS\n"
         
         if quiz_data:
             accuracy = (quiz_data[0] / (quiz_data[1] * quiz_data[2] or 1)) * 100
-            message += f"\n**Quiz Performance:**\n"
+            message += f"\nQuiz Performance:\n"
             message += f"• Total Score: {quiz_data[0]} points\n"
             message += f"• Questions Answered: {quiz_data[1]}\n"
             message += f"• Accuracy: {accuracy:.1f}%\n"
         
         if fscale_data and fscale_data[1] > 0:
             auth_score = fscale_data[0] / fscale_data[1]
-            message += f"\n**F-Scale Results:**\n"
+            message += f"\nF-Scale Results:\n"
             message += f"• Authoritarian Score: {auth_score:.2f}/5.0\n"
             message += f"• Questions Answered: {fscale_data[1]}\n"
             
