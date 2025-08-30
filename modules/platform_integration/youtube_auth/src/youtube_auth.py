@@ -76,11 +76,12 @@ def get_authenticated_service(token_index=None):
         logger.info(f"🎯 Using specific credential set {token_index + 1}")
     else:
         # Auto-rotation: Skip known exhausted sets
-        # ALL 7 SETS NOW WORKING!
-        # Set 1: foundups-bot, Set 2: foundups-agent2, Set 3: foundups-agent3 (NEW!)
+        # ALL 10 SETS NOW AVAILABLE!
+        # Set 1: foundups-bot, Set 2: foundups-agent2, Set 3: foundups-agent3
         # Set 4: foundups-agent4, Set 5: foundupsagent5
         # Set 6: foundups-agent6, Set 7: foundups-agent7
-        all_sets = [1, 2, 3, 7, 5, 4, 6]  # All sets operational - 70,000 units/day!
+        # Set 8: foundups-agent8 (NEW!), Set 9: foundups-agent9 (NEW!), Set 10: foundups-agent10 (NEW!)
+        all_sets = [8, 9, 10, 3, 7, 5, 4, 6, 1, 2]  # Prioritize new sets first - 100,000 units/day potential!
         available_sets = [s for s in all_sets if s not in get_authenticated_service.exhausted_sets]
         
         if not available_sets:
@@ -179,9 +180,15 @@ def get_authenticated_service(token_index=None):
                     get_authenticated_service.exhausted_sets.add(index)
                     continue  # Try next set
                 else:
-                    logger.warning(f"⚠️ Service built but validation failed for set {index}: {test_e}")
-                    # Still return the service as it might work for other operations
-                    return youtube_service
+                    # Log full error details for debugging
+                    error_msg = str(test_e)
+                    if error_msg == str(index):
+                        # This is the weird case where just the number is returned
+                        logger.warning(f"⚠️ Service built but validation returned credential set number {index} as error")
+                    else:
+                        logger.warning(f"⚠️ Service built but validation failed for set {index}: {test_e}")
+                    # Continue to next credential set instead of returning
+                    continue
                 
         except HttpError as e:
             if 'quotaExceeded' in str(e) or 'quota' in str(e).lower():
@@ -199,6 +206,79 @@ def get_authenticated_service(token_index=None):
     error_msg = f"💥 All credential sets failed to authenticate (tried {len(indices_to_try)} sets)"
     logger.critical(error_msg)
     raise Exception("Could not authenticate with any Google credential set.")
+
+# YouTube Comment API Extensions (Per WSP 84 - Enhance existing module)
+def list_video_comments(youtube_service, video_id: str, max_results: int = 100):
+    """
+    List all comment threads for a video.
+    Cost: 1 unit per call (returns up to 100 comments)
+    """
+    try:
+        request = youtube_service.commentThreads().list(
+            part="snippet,replies",
+            videoId=video_id,
+            maxResults=max_results,
+            order="relevance"  # or "time" for newest first
+        )
+        response = request.execute()
+        return response.get('items', [])
+    except Exception as e:
+        logger.error(f"Error fetching comments for video {video_id}: {e}")
+        return []
+
+def like_comment(youtube_service, comment_id: str):
+    """
+    Like a YouTube comment.
+    Note: YouTube API doesn't have a direct 'like comment' endpoint.
+    We can only rate comments as 'none' or 'spam'.
+    For liking, we need to use the video rating system.
+    """
+    logger.warning("YouTube API doesn't support liking individual comments directly")
+    return False
+
+def reply_to_comment(youtube_service, parent_id: str, text: str):
+    """
+    Reply to a YouTube comment.
+    Cost: 50 units per call
+    """
+    try:
+        request = youtube_service.comments().insert(
+            part="snippet",
+            body={
+                "snippet": {
+                    "parentId": parent_id,
+                    "textOriginal": text
+                }
+            }
+        )
+        response = request.execute()
+        logger.info(f"✅ Posted reply to comment {parent_id}")
+        return response
+    except Exception as e:
+        logger.error(f"❌ Error replying to comment {parent_id}: {e}")
+        return None
+
+def get_latest_video_id(youtube_service, channel_id: str):
+    """
+    Get the latest video ID from a channel.
+    Cost: 1 unit
+    """
+    try:
+        request = youtube_service.search().list(
+            part="id",
+            channelId=channel_id,
+            maxResults=1,
+            order="date",
+            type="video"
+        )
+        response = request.execute()
+        items = response.get('items', [])
+        if items:
+            return items[0]['id']['videoId']
+        return None
+    except Exception as e:
+        logger.error(f"Error fetching latest video: {e}")
+        return None
 
 # Example usage (for testing purposes, typically called from main.py)
 if __name__ == '__main__':

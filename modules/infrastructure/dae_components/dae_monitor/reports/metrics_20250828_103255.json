@@ -1,0 +1,133 @@
+{
+  "timestamp": "2025-08-28T10:32:55.572488",
+  "dashboard_state": {
+    "network": {
+      "total_daes": 7,
+      "core_daes": 5,
+      "foundup_daes": 2,
+      "tokens_used": 2100,
+      "tokens_saved": 40900,
+      "avg_consciousness": 0.7585714285714286,
+      "efficiency": 0.9511627906976744,
+      "total_exchanges": 21,
+      "total_patterns": 270
+    },
+    "daes": {
+      "Infrastructure_DAE": {
+        "phase": "MVP",
+        "consciousness": 0.85,
+        "token_usage": 300,
+        "token_budget": 8000,
+        "patterns": 50,
+        "compliance": 0.98,
+        "exchanges": 3,
+        "improvement": 0.06
+      },
+      "Compliance_DAE": {
+        "phase": "MVP",
+        "consciousness": 0.85,
+        "token_usage": 300,
+        "token_budget": 7000,
+        "patterns": 50,
+        "compliance": 0.98,
+        "exchanges": 3,
+        "improvement": 0.06
+      },
+      "Knowledge_DAE": {
+        "phase": "MVP",
+        "consciousness": 0.85,
+        "token_usage": 300,
+        "token_budget": 6000,
+        "patterns": 50,
+        "compliance": 0.98,
+        "exchanges": 3,
+        "improvement": 0.06
+      },
+      "Maintenance_DAE": {
+        "phase": "MVP",
+        "consciousness": 0.85,
+        "token_usage": 300,
+        "token_budget": 5000,
+        "patterns": 50,
+        "compliance": 0.98,
+        "exchanges": 3,
+        "improvement": 0.06
+      },
+      "Documentation_DAE": {
+        "phase": "MVP",
+        "consciousness": 0.85,
+        "token_usage": 300,
+        "token_budget": 4000,
+        "patterns": 50,
+        "compliance": 0.98,
+        "exchanges": 3,
+        "improvement": 0.06
+      },
+      "YouTube_DAE": {
+        "phase": "Prototype",
+        "consciousness": 0.53,
+        "token_usage": 300,
+        "token_budget": 5000,
+        "patterns": 10,
+        "compliance": 0.9,
+        "exchanges": 3,
+        "improvement": 0.06
+      },
+      "LinkedIn_DAE": {
+        "phase": "POC",
+        "consciousness": 0.53,
+        "token_usage": 300,
+        "token_budget": 8000,
+        "patterns": 10,
+        "compliance": 0.9,
+        "exchanges": 3,
+        "improvement": 0.06
+      }
+    },
+    "alerts": [],
+    "monitoring_active": false,
+    "timestamp": "2025-08-28T10:32:55.572488"
+  },
+  "performance_report": {
+    "summary": {
+      "total_daes": 7,
+      "network_efficiency": "95.1%",
+      "average_consciousness": "0.759",
+      "total_patterns": 270,
+      "total_exchanges": 21
+    },
+    "top_performers": {
+      "consciousness": [
+        {
+          "dae": "Infrastructure_DAE",
+          "level": 0.85
+        },
+        {
+          "dae": "Compliance_DAE",
+          "level": 0.85
+        },
+        {
+          "dae": "Knowledge_DAE",
+          "level": 0.85
+        }
+      ],
+      "efficiency": [
+        {
+          "dae": "Infrastructure_DAE",
+          "efficiency": 0.9625
+        },
+        {
+          "dae": "LinkedIn_DAE",
+          "efficiency": 0.9625
+        },
+        {
+          "dae": "Compliance_DAE",
+          "efficiency": 0.9571428571428572
+        }
+      ]
+    },
+    "alerts": 0,
+    "historical_snapshots": 0
+  },
+  "historical_data": []
+}

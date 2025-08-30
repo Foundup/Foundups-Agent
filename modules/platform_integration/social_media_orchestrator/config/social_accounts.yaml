@@ -1,0 +1,156 @@
+# Social Media Multi-Account Configuration
+# WSP-Compliant Architecture for Enterprise Scaling
+
+accounts:
+  linkedin:
+    foundups_company:
+      id: "104834798"
+      type: "company"
+      name: "FoundUps Main Company Page"
+      credentials_key: "LINKEDIN_FOUNDUPS"
+      posting_rules:
+        - event_type: "youtube_live"
+        - event_type: "product_launch"
+        - event_type: "announcement"
+      anti_detection:
+        typing_speed: "normal"
+        profile_dir: "data/chrome_profiles/linkedin_foundups"
+      
+    development_updates:
+      id: "1263645"
+      type: "company"
+      name: "Development Updates Page"
+      credentials_key: "LINKEDIN_DEV"
+      posting_rules:
+        - event_type: "git_push"
+        - event_type: "wsp_update"
+        - event_type: "dae_deployment"
+        - event_type: "code_milestone"
+      anti_detection:
+        typing_speed: "fast"
+        profile_dir: "data/chrome_profiles/linkedin_dev"
+    
+  x_twitter:
+    foundups:
+      username: "FoundUps"
+      display_name: "FoundUps Official"
+      credentials_key: "X_FOUNDUPS"
+      posting_rules:
+        - event_type: "youtube_live"
+        - event_type: "announcement"
+        - event_type: "product_launch"
+      anti_detection:
+        typing_speed: "normal"
+        profile_dir: "data/chrome_profiles/x_foundups"
+    
+    geozeai:
+      username: "GeozeAi"
+      display_name: "GeozeAi (Move2Japan)"
+      credentials_key: "X_GEOZEAI"  
+      posting_rules:
+        - event_type: "youtube_live"
+        - event_type: "ai_updates"
+        - event_type: "tech_insights"
+      anti_detection:
+        typing_speed: "normal"
+        profile_dir: "data/chrome_profiles/x_geozeai"
+
+# Event routing rules - which accounts post for which events
+event_routing:
+  youtube_live:
+    linkedin: 
+      - "foundups_company"
+    x_twitter: 
+      - "foundups"
+      # - "geozeai"  # Uncomment to also post from GeozeAi
+    
+  git_push:
+    linkedin: 
+      - "development_updates"
+    
+  wsp_update:
+    linkedin: 
+      - "development_updates"
+    x_twitter: 
+      - "foundups"
+  
+  code_milestone:
+    linkedin:
+      - "development_updates"
+      - "foundups_company"
+    x_twitter:
+      - "foundups"
+
+# Content adaptation rules
+content_adaptation:
+  linkedin:
+    foundups_company:
+      add_hashtags: ["#FoundUps", "#Innovation", "#TechStartup", "#LiveStreaming"]
+      tone: "professional"
+      include_cta: true
+      
+    development_updates:
+      add_hashtags: ["#WSPCompliant", "#RecursiveImprovement", "#OpenSource", "#AgenticSystems"]
+      tone: "technical"
+      include_metrics: true
+      
+  x_twitter:
+    foundups:
+      max_length: 280
+      add_emojis: true
+      thread_if_long: true
+      
+    geozeai:
+      max_length: 280
+      personality: "casual_tech"
+      include_media: true
+
+# Rate limiting per account
+rate_limits:
+  linkedin:
+    foundups_company:
+      posts_per_hour: 2
+      posts_per_day: 10
+      
+    development_updates:
+      posts_per_hour: 5
+      posts_per_day: 20
+      
+  x_twitter:
+    foundups:
+      posts_per_hour: 3
+      posts_per_day: 15
+      
+    geozeai:
+      posts_per_hour: 3
+      posts_per_day: 15
+
+# Scheduling preferences
+scheduling:
+  linkedin:
+    foundups_company:
+      preferred_times: ["09:00", "12:00", "17:00"]
+      timezone: "America/New_York"
+      
+    development_updates:
+      preferred_times: ["10:00", "14:00", "16:00"]
+      timezone: "America/New_York"
+      
+  x_twitter:
+    foundups:
+      preferred_times: ["08:00", "13:00", "19:00"]
+      timezone: "America/New_York"
+      
+    geozeai:
+      preferred_times: ["22:00", "06:00", "14:00"]  # Japan-friendly times
+      timezone: "Asia/Tokyo"
+
+# Feature flags
+features:
+  multi_account_enabled: true
+  auto_retry_on_failure: true
+  rate_limit_enforcement: true
+  content_adaptation: true
+  parallel_posting: true
+  metrics_tracking: true
+  engagement_learning: false  # Future feature

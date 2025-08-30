@@ -1,0 +1,124 @@
+{
+  "timestamp": "2025-08-30T13:10:00.553941",
+  "channel_id": "UC-LSSlOZwpGIRIYihaz8zCw",
+  "channel_name": "Move2Japan",
+  "api_tests": {},
+  "capabilities": {
+    "list_comments": {
+      "status": "SUPPORTED",
+      "method": "commentThreads.list",
+      "quota_cost": "1 unit per call",
+      "max_results": "100 comments per call",
+      "capabilities": [
+        "Fetch comment text and metadata",
+        "Get author information",
+        "Get like counts on comments",
+        "Get reply threads",
+        "Filter by relevance or time"
+      ],
+      "limitations": [
+        "Cannot see private comments",
+        "Cannot access deleted comments",
+        "Rate limited by quota"
+      ]
+    },
+    "like_comments": {
+      "status": "NOT SUPPORTED",
+      "method": "N/A - No API endpoint exists",
+      "reason": "YouTube Data API v3 does not provide comment liking functionality",
+      "evidence": "Confirmed in our youtube_auth.py - like_comment() returns False",
+      "alternatives": [
+        "Can rate videos (videos.rate endpoint)",
+        "Cannot interact with individual comment likes via API",
+        "Must use YouTube web interface for comment likes"
+      ]
+    },
+    "heart_comments": {
+      "status": "NOT SUPPORTED",
+      "method": "N/A - No API endpoint exists",
+      "reason": "Creator heart/pin functionality not exposed in API",
+      "evidence": "No heart/creator-like endpoint in YouTube Data API v3 documentation",
+      "alternatives": [
+        "Must be done manually through YouTube Studio",
+        "No programmatic way to heart comments as channel owner"
+      ]
+    },
+    "reply_to_comments": {
+      "status": "SUPPORTED",
+      "method": "comments.insert",
+      "quota_cost": "50 units per call",
+      "requirements": [
+        "Authenticated user with write permissions",
+        "Valid parent comment ID",
+        "Text content for reply"
+      ],
+      "capabilities": [
+        "Post replies to any comment thread",
+        "Reply to your own or others comments",
+        "Support for text formatting in replies"
+      ],
+      "limitations": [
+        "High quota cost (50 units per reply)",
+        "Must have proper OAuth scopes",
+        "Subject to YouTube community guidelines"
+      ]
+    },
+    "moderate_comments": {
+      "status": "LIMITED SUPPORT",
+      "method": "comments.setModerationStatus",
+      "restrictions": "Only works on your own channel videos",
+      "capabilities": [
+        "Approve/reject comments on your videos",
+        "Mark comments as spam",
+        "Publish held-for-review comments"
+      ],
+      "limitations": [
+        "Cannot moderate others' channels",
+        "Cannot moderate comments on videos you don't own",
+        "Limited to basic moderation actions"
+      ]
+    }
+  },
+  "scenarios": {
+    "find_videos_with_comments": {
+      "description": "Find Move2Japan videos that have existing comments",
+      "api_calls_needed": [
+        "1. search.list (channelId filter) - 100 units",
+        "2. videos.list (get statistics) - 1 unit per video",
+        "3. commentThreads.list (get comments) - 1 unit per video with comments"
+      ],
+      "estimated_quota": "150-200 units for 20 recent videos",
+      "feasibility": "HIGH - Well supported by API"
+    },
+    "like_existing_comments": {
+      "description": "Like comments on Move2Japan videos",
+      "api_calls_needed": [
+        "NONE - Not supported by API"
+      ],
+      "feasibility": "IMPOSSIBLE - API limitation",
+      "workaround": "Manual interaction through YouTube web interface only"
+    },
+    "reply_to_comments": {
+      "description": "Reply to existing comments on Move2Japan videos",
+      "api_calls_needed": [
+        "1. commentThreads.list (find comments) - 1 unit",
+        "2. comments.insert (post reply) - 50 units per reply"
+      ],
+      "estimated_quota": "51+ units per reply",
+      "feasibility": "HIGH - Fully supported",
+      "considerations": [
+        "High quota cost",
+        "Need appropriate OAuth scopes",
+        "Must follow community guidelines"
+      ]
+    },
+    "heart_comments_as_creator": {
+      "description": "Heart/pin comments as channel owner",
+      "api_calls_needed": [
+        "NONE - Not supported by API"
+      ],
+      "feasibility": "IMPOSSIBLE - API limitation",
+      "workaround": "Must use YouTube Studio interface"
+    }
+  }
+}

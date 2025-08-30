@@ -27,6 +27,12 @@ from modules.communication.livechat.src.command_handler import CommandHandler
 from modules.communication.livechat.src.grok_greeting_generator import GrokGreetingGenerator
 from modules.gamification.whack_a_magat.src.self_improvement import MAGADOOMSelfImprovement
 from modules.communication.livechat.src.agentic_chat_engine import AgenticChatEngine
+try:
+    from modules.communication.livechat.src.emoji_response_limiter import EmojiResponseLimiter
+    from modules.communication.livechat.src.agentic_self_improvement import AgenticSelfImprovement
+except ImportError:
+    EmojiResponseLimiter = None
+    AgenticSelfImprovement = None
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +57,10 @@ class MessageProcessor:
         # WSP 84 compliant: Use existing modules, not duplicate code
         self.greeting_generator = GrokGreetingGenerator()
         self.self_improvement = MAGADOOMSelfImprovement()
+        
+        # NEW: Intelligent throttling systems
+        self.emoji_limiter = EmojiResponseLimiter() if EmojiResponseLimiter else None
+        self.agentic_improvement = AgenticSelfImprovement() if AgenticSelfImprovement else None
         
         # Initialize Grok and consciousness handlers FIRST
         # Try to get LLMConnector for Grok, otherwise use simple fact checker
@@ -166,8 +176,28 @@ class MessageProcessor:
             has_trigger = self._check_trigger_patterns(message_text)
             is_rate_limited = self._is_rate_limited(author_id) if has_trigger else False
             
-            # Check for consciousness commands
-            has_consciousness = self.consciousness.has_consciousness_emojis(message_text)
+            # Check for consciousness commands with rate limiting
+            has_consciousness = False
+            if self.consciousness.has_consciousness_emojis(message_text):
+                # Check rate limits if emoji limiter is available
+                if self.emoji_limiter:
+                    should_respond, reason = self.emoji_limiter.should_respond_to_emoji(
+                        author_id, author_name
+                    )
+                    if should_respond:
+                        has_consciousness = True
+                        # Record that we'll respond
+                        self.emoji_limiter.record_emoji_response(author_id, author_name)
+                    else:
+                        logger.info(f"🚫 Emoji response blocked for {author_name}: {reason}")
+                        # Learn from this
+                        if self.agentic_improvement:
+                            self.agentic_improvement.learn_user_pattern(
+                                author_id, f'emoji_blocked_{reason}', False
+                            )
+                else:
+                    # No limiter, allow response
+                    has_consciousness = True
             
             # Check for fact-check commands
             has_factcheck = self._check_factcheck_command(message_text)

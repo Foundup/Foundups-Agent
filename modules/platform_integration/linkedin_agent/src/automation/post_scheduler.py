@@ -262,6 +262,19 @@ class LinkedInPostScheduler:
         self.logger.info(f"📅 Scheduled post {post_id} for {scheduled_time}")
         return post_id
     
+    def get_pending_posts(self) -> List[ScheduledPost]:
+        """
+        Get all pending scheduled posts
+        
+        Returns:
+            List of pending posts
+        """
+        pending = []
+        for post in self.scheduled_posts.values():
+            if post.status == "pending":
+                pending.append(post)
+        return sorted(pending, key=lambda p: p.scheduled_time)
+    
     def schedule_recurring_post(
         self,
         content: str,
