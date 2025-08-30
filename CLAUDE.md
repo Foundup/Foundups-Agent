@@ -49,6 +49,18 @@ Located in `modules/infrastructure/dae_infrastructure/`:
   - Mark extraction timeline (single→dual→triple)
 - Remember: "The code already exists, we're remembering it"
 
+### 0.5 ROOT DIRECTORY PROTECTION (WSP 85 - Anti-Pollution Protocol)
+- NEVER create files in root directory except when explicitly required
+- Root files violating WSP: scripts, logs, temporary files, test files
+- ALL files must go in appropriate module directories:
+  - Scripts → modules/*/scripts/ or tools/
+  - Tests → modules/*/tests/
+  - Logs → logs/ directory ONLY
+  - OAuth/auth scripts → modules/platform_integration/youtube_auth/scripts/
+- Before creating ANY file in root, ask: "Does this belong in a module?"
+- If unsure, DON'T CREATE IT - use existing module structure
+- Root is sacred - keep it clean
+
 ### 1. Documentation (Per WSP 83)
 - Documents exist ONLY for 0102 use, never for 012
 - If creating docs for 012, it's a WSP violation
@@ -123,3 +135,4 @@ WSP 27 defines the universal 4-phase DAE pattern that applies to ALL autonomous 
 
 All DAEs follow: -1:Signal → 0:Knowledge → 1:Protocol → 2:Agentic
 WSP 80 implements this pattern specifically for code domains.
+- Always follow WSP. No vibecoding. Research, read wsp docs, ask does the code exist check modules

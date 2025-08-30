@@ -1,0 +1,4 @@
+# requirements.txt - Dependencies for recursive_improvement module
+
+# Standard library only at POC stage
+# Future: pytest, pytest-xdist for parallel testing

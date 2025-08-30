@@ -19,6 +19,10 @@ from modules.communication.livechat.src.chat_sender import ChatSender
 from modules.communication.livechat.src.chat_poller import ChatPoller
 from modules.infrastructure.system_health_monitor.src.system_health_analyzer import SystemHealthAnalyzer
 from modules.communication.livechat.src.chat_memory_manager import ChatMemoryManager
+try:
+    from modules.communication.livechat.src.quota_aware_poller import QuotaAwarePoller
+except ImportError:
+    QuotaAwarePoller = None
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +73,14 @@ class LiveChatCore:
         self.health_analyzer = SystemHealthAnalyzer()
         self.recent_messages_sent = []  # Track sent messages
         
+        # NEW: Quota-aware polling
+        try:
+            # Get credential set number from service
+            cred_set = getattr(youtube_service, 'credential_set', 1)
+            self.quota_poller = QuotaAwarePoller(cred_set) if QuotaAwarePoller else None
+        except:
+            self.quota_poller = None
+        
         # Ensure memory directory exists
         os.makedirs(self.memory_dir, exist_ok=True)
         logger.info(f"LiveChatCore initialized for video: {video_id}")
@@ -98,6 +110,9 @@ class LiveChatCore:
         
         # Send greeting
         await self.session_manager.send_greeting(self.send_chat_message)
+        
+        # Post to LinkedIn when stream goes live
+        await self._post_stream_to_linkedin()
         
         logger.info("LiveChatCore initialized successfully")
         return True
@@ -393,6 +408,12 @@ class LiveChatCore:
     async def run_polling_loop(self) -> None:
         """Run the main polling loop with health monitoring and proactive trolling."""
         poll_interval_ms = 5000
+        
+        # Check quota status at start
+        if self.quota_poller:
+            status = self.quota_poller.get_quota_status()
+            logger.warning(f"📊 QUOTA STATUS: {status['status']} - {status['units_used']}/{10000} units used ({status['percentage_used']:.1%})")
+            logger.info(f"💡 Recommendation: {status['recommendation']}")
         last_health_check = time.time()
         last_troll = time.time()
         last_stream_check = time.time()  # Track last stream validation
@@ -473,10 +494,30 @@ class LiveChatCore:
                     
                     last_stream_check = time.time()
                 
+                # Check quota before polling
+                if self.quota_poller:
+                    should_poll, wait_time = self.quota_poller.should_poll()
+                    if not should_poll:
+                        logger.critical("🚨 QUOTA EXHAUSTED - Stopping polling")
+                        self.is_running = False
+                        break
+                    
+                    # Override poll interval with quota-aware interval
+                    if wait_time:
+                        poll_interval_ms = int(wait_time * 1000)
+                        logger.info(f"⏱️ Quota-aware interval: {wait_time:.1f}s")
+                
                 # Poll for messages
                 logger.info(f"🔄 Polling for messages...")
                 try:
-                    messages, poll_interval_ms = await self.poll_messages()
+                    messages, original_interval = await self.poll_messages()
+                    
+                    # Let quota poller know about activity
+                    if self.quota_poller:
+                        poll_interval_ms = int(self.quota_poller.calculate_optimal_interval(
+                            messages_received=len(messages),
+                            stream_active=self.is_running
+                        ) * 1000)
                     # Only reset error counter if we actually got a successful API response
                     # Empty messages list is OK (quiet chat), but API errors are not
                     consecutive_poll_errors = 0
@@ -666,3 +707,111 @@ class LiveChatCore:
         """Configure emoji trigger settings."""
         # Now handled by message_processor's consciousness handler
         return {"status": "configured", "settings": kwargs}
+    
+    async def _post_stream_to_linkedin(self) -> None:
+        """
+        Post to social media platforms when a YouTube stream goes live.
+        Uses browser automation with anti-detection for both LinkedIn and X.
+        """
+        try:
+            # Get stream URL and title
+            stream_url = f"https://www.youtube.com/watch?v={self.video_id}"
+            
+            # Get stream title from session manager
+            stream_title = getattr(self.session_manager, 'stream_title', None)
+            
+            # Include stream title in content
+            if stream_title:
+                content = f"""@UnDaoDu going live!
+
+{stream_title}
+
+{stream_url}"""
+            else:
+                # Fallback if no title available
+                content = f"""@UnDaoDu going live!
+
+{stream_url}"""
+            
+            logger.info(f"[SOCIAL] Posting stream to social media platforms...")
+            logger.info(f"[SOCIAL] Stream title: {stream_title}")
+            logger.info(f"[SOCIAL] Full content to post:")
+            for line in content.split('\n'):
+                logger.info(f"  {line}")
+            
+            # Use browser automation with anti-detection for both platforms
+            # This runs in parallel threads for speed
+            
+            # Post to LinkedIn using anti-detection browser automation
+            if os.getenv('LINKEDIN_EMAIL') and os.getenv('LINKEDIN_PASSWORD'):
+                try:
+                    logger.info("[LINKEDIN] Using anti-detection browser automation...")
+                    from modules.platform_integration.linkedin_agent.src.anti_detection_poster import AntiDetectionLinkedIn
+                    
+                    # Run in thread to not block async
+                    import threading
+                    def post_to_linkedin():
+                        try:
+                            logger.info("[THREAD] LinkedIn posting thread started")
+                            linkedin_poster = AntiDetectionLinkedIn()
+                            result = linkedin_poster.post_to_company_page(content)
+                            if result:
+                                logger.info("[OK] Posted to LinkedIn company page!")
+                                print("[OK] Posted to LinkedIn company page!")
+                            else:
+                                logger.warning("[FAIL] LinkedIn posting failed")
+                                print("[FAIL] LinkedIn posting failed")
+                        except Exception as e:
+                            logger.error(f"[ERROR] LinkedIn error: {e}")
+                            print(f"[ERROR] LinkedIn error: {e}")
+                            import traceback
+                            traceback.print_exc()
+                    
+                    linkedin_thread = threading.Thread(target=post_to_linkedin, daemon=False)
+                    linkedin_thread.start()
+                    logger.info("[THREAD] LinkedIn thread launched")
+                    
+                except Exception as e:
+                    logger.error(f"[ERROR] LinkedIn module error: {e}")
+            else:
+                logger.info("[INFO] LinkedIn credentials not configured")
+            
+            # Post to X/Twitter using anti-detection browser automation
+            if os.getenv('X_Acc1') and os.getenv('x_Acc_pass'):
+                try:
+                    logger.info("[X/TWITTER] Using anti-detection browser automation...")
+                    from modules.platform_integration.x_twitter.src.x_anti_detection_poster import AntiDetectionX
+                    
+                    # Run in thread to not block async
+                    import threading
+                    def post_to_x():
+                        try:
+                            logger.info("[THREAD] X/Twitter posting thread started")
+                            x_poster = AntiDetectionX()
+                            result = x_poster.post_to_x(content)
+                            if result:
+                                logger.info("[OK] Posted to X/Twitter!")
+                                print("[OK] Posted to X/Twitter!")
+                            else:
+                                logger.warning("[FAIL] X/Twitter posting failed")
+                                print("[FAIL] X/Twitter posting failed")
+                        except Exception as e:
+                            logger.error(f"[ERROR] X/Twitter error: {e}")
+                            print(f"[ERROR] X/Twitter error: {e}")
+                            import traceback
+                            traceback.print_exc()
+                    
+                    x_thread = threading.Thread(target=post_to_x, daemon=False)
+                    x_thread.start()
+                    logger.info("[THREAD] X thread launched")
+                    
+                except ImportError:
+                    logger.warning("[WARNING] X anti-detection module not yet implemented")
+                except Exception as e:
+                    logger.error(f"[ERROR] X/Twitter module error: {e}")
+            else:
+                logger.info("[INFO] X/Twitter credentials not configured")
+                    
+        except Exception as e:
+            logger.error(f"[ERROR] Error posting to social media: {e}")
+            # Don't fail the stream initialization if posting fails

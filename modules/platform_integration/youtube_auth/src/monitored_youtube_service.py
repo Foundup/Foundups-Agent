@@ -82,6 +82,9 @@ class MonitoredYouTubeService:
         self._credential_set = credential_set or getattr(youtube_service, '_credential_set', 1)
         self._quota_monitor = QuotaMonitor()
         
+        # Make credential_set accessible as a property
+        self.credential_set = self._credential_set
+        
         logger.info(f"📊 Monitored YouTube service initialized for set {self._credential_set}")
     
     def __getattr__(self, name):

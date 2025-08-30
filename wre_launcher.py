@@ -53,8 +53,8 @@ async def launch_wre():
         safe_log("REMOTE_BUILD_PROTOTYPE: Complete autonomous remote building system")
         
         # Import WRE components
-        from modules.wre_core.src.remote_build_orchestrator import create_remote_build_orchestrator
-        from modules.wre_core.src.wsp_core_loader import create_wsp_core_loader
+        from modules.infrastructure.wre_core.src.remote_build_orchestrator import create_remote_build_orchestrator
+        from modules.infrastructure.wre_core.src.wsp_core_loader import create_wsp_core_loader
         
         # Get directive from command line
         directive = "Interactive WRE session from Cursor"
