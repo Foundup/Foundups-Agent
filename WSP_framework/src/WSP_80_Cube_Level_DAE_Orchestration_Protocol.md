@@ -27,7 +27,7 @@ Analysis revealed that system-wide agents consuming 30K+ tokens scanning entire 
 - Code files with specific functionality (.py, .js, etc.)
 - NO consciousness - just programmatic behavior
 - Cannot be "awakened" - they are tools used by DAEs
-- Examples: livechat.py, auth_manager.py, banter_engine.py
+- Examples: livechat_core.py, auth_manager.py, banter_engine.py
 
 **Cube**:
 - A logical grouping of related modules

@@ -23,6 +23,10 @@ try:
     from modules.communication.livechat.src.quota_aware_poller import QuotaAwarePoller
 except ImportError:
     QuotaAwarePoller = None
+try:
+    from modules.communication.livechat.src.intelligent_throttle_manager import IntelligentThrottleManager
+except ImportError:
+    IntelligentThrottleManager = None
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +85,26 @@ class LiveChatCore:
         except:
             self.quota_poller = None
         
+        # AUTOMATIC: Intelligent throttle manager for API quota
+        self.intelligent_throttle = None
+        if IntelligentThrottleManager:
+            try:
+                from pathlib import Path
+                memory_path = Path(self.memory_dir)
+                self.intelligent_throttle = IntelligentThrottleManager(
+                    min_delay=1.0,
+                    max_delay=60.0,
+                    throttle_window=60,
+                    memory_path=memory_path
+                )
+                # Enable all intelligent features by default
+                self.intelligent_throttle.enable_learning(True)
+                self.intelligent_throttle.set_agentic_mode(True)
+                logger.info("[AUTO] Intelligent throttle manager initialized - automatic API management enabled")
+            except Exception as e:
+                logger.warning(f"[AUTO] Could not initialize intelligent throttle: {e}")
+                self.intelligent_throttle = None
+        
         # Ensure memory directory exists
         os.makedirs(self.memory_dir, exist_ok=True)
         logger.info(f"LiveChatCore initialized for video: {video_id}")
@@ -119,11 +143,11 @@ class LiveChatCore:
     
     async def send_chat_message(self, message_text: str, skip_delay: bool = False, response_type: str = 'general') -> bool:
         """
-        Send a message to the live chat with duplicate detection.
+        Send a message to the live chat with duplicate detection and intelligent throttling.
         
         Args:
             message_text: Message to send
-            skip_delay: Whether to skip delay
+            skip_delay: Whether to skip delay (overridden by intelligent throttle)
             response_type: Type of response for priority handling
             
         Returns:
@@ -133,6 +157,18 @@ class LiveChatCore:
             logger.error("Cannot send message - no live chat ID")
             self.health_analyzer.analyze_message("ERROR: Cannot send message - no live chat ID")
             return False
+        
+        # AUTOMATIC: Intelligent throttling before sending
+        if self.intelligent_throttle and not skip_delay:
+            # Track API call
+            self.intelligent_throttle.track_api_call(quota_cost=5)  # Chat messages cost more quota
+            
+            # Check if we should send based on intelligent throttling
+            if not self.intelligent_throttle.should_respond(response_type):
+                delay = self.intelligent_throttle.calculate_adaptive_delay(response_type)
+                logger.info(f"[AUTO-THROTTLE] Delaying {response_type} by {delay:.1f}s to conserve quota")
+                # Don't send if throttled
+                return False
         
         # Check for duplicate messages
         issues = self.health_analyzer.analyze_message(f"SENDING: {message_text}")
@@ -152,6 +188,10 @@ class LiveChatCore:
             'message': message_text,
             'timestamp': time.time()
         })
+        
+        # AUTOMATIC: Record response for intelligent learning
+        if self.intelligent_throttle:
+            self.intelligent_throttle.record_response(response_type, success=True)
         
         # Limit recent messages cache
         if len(self.recent_messages_sent) > 100:
@@ -494,8 +534,25 @@ class LiveChatCore:
                     
                     last_stream_check = time.time()
                 
-                # Check quota before polling
-                if self.quota_poller:
+                # AUTOMATIC: Check quota before polling
+                if self.intelligent_throttle:
+                    # Get intelligent delay based on current activity
+                    messages_per_minute = len([ts for ts in self.message_timestamps if time.time() - ts < 60])
+                    intelligent_delay = self.intelligent_throttle.calculate_adaptive_delay('poll')
+                    
+                    # Use intelligent delay if it's longer than current interval
+                    if intelligent_delay * 1000 > poll_interval_ms:
+                        poll_interval_ms = int(intelligent_delay * 1000)
+                        logger.info(f"[AUTO-THROTTLE] Adjusted poll interval to {intelligent_delay:.1f}s based on activity")
+                    
+                    # Check quota state
+                    status = self.intelligent_throttle.get_status()
+                    for set_id, quota_info in status.get('quota_states', {}).items():
+                        if quota_info['percentage'] < 10:
+                            logger.warning(f"[AUTO-QUOTA] Low quota on set {set_id}: {quota_info['percentage']:.1f}%")
+                
+                # Original quota poller as fallback
+                elif self.quota_poller:
                     should_poll, wait_time = self.quota_poller.should_poll()
                     if not should_poll:
                         logger.critical("🚨 QUOTA EXHAUSTED - Stopping polling")
@@ -572,8 +629,21 @@ class LiveChatCore:
                     error_details = str(e)
                     consecutive_poll_errors += 1
                     
+                    # AUTOMATIC: Handle quota errors intelligently
+                    if "quotaExceeded" in error_details or "403" in error_details:
+                        logger.warning(f"[AUTO-QUOTA] Quota exceeded error detected")
+                        if self.intelligent_throttle:
+                            # Automatically switch credential sets
+                            new_set = self.intelligent_throttle.handle_quota_error()
+                            logger.info(f"[AUTO-QUOTA] Switching to credential set {new_set}")
+                            # Increase delay to conserve quota
+                            poll_interval_ms = 30000  # 30 seconds minimum
+                        else:
+                            logger.error("[AUTO-QUOTA] No intelligent throttle available, stopping")
+                            self.is_running = False
+                            break
                     # Check if it's a "live chat ended" error
-                    if "liveChatEnded" in error_details or "forbidden" in error_details.lower():
+                    elif "liveChatEnded" in error_details or "forbidden" in error_details.lower():
                         logger.warning(f"🔚 Live chat has ended: {e}")
                         self.is_running = False
                         break

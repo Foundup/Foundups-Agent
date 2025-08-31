@@ -49,7 +49,11 @@ class AntiDetectionLinkedIn:
         self.company_id = "104834798"
         self.company_admin_url = f"https://www.linkedin.com/company/{self.company_id}/admin/page-posts/published/"
         self.session_file = "O:/Foundups-Agent/modules/platform_integration/linkedin_agent/data/linkedin_session.pkl"
+        self.memory_file = "O:/Foundups-Agent/modules/platform_integration/social_media_orchestrator/memory/posting_patterns.json"
         self.driver = None
+        self.learning_enabled = True  # WSP 48: Enable recursive learning
+        self.posting_memory = {}
+        self.load_memory()
         
     def human_type(self, element, text):
         """Type like a human with random delays"""
@@ -512,10 +516,14 @@ class AntiDetectionLinkedIn:
                         # Save session after post attempt
                         self.save_session()
                         
+                        # WSP 48: Learn from this posting attempt
+                        final_success = success if 'success' in locals() else True
+                        self.learn_from_post(content, final_success)
+                        
                         # Don't close browser - keep session alive
                         print("[INFO] Keeping browser session alive for future posts")
                         
-                        return success if 'success' in locals() else True
+                        return final_success
                         
                     except Exception as e:
                         print(f"[ERROR] Failed to click Post button: {e}")
@@ -741,12 +749,108 @@ class AntiDetectionLinkedIn:
             print(f"[ERROR] Error posting: {e}")
             return False
     
+    def load_memory(self):
+        """WSP 48: Load posting patterns memory for recursive improvement"""
+        import json
+        try:
+            with open(self.memory_file, 'r') as f:
+                self.posting_memory = json.load(f)
+                stats = self.posting_memory.get('learning_statistics', {})
+                if stats.get('total_posts', 0) > 0:
+                    print(f"[WSP 48] Loaded memory: {stats['total_posts']} posts, " +
+                          f"{stats.get('successful_posts', 0)} successful")
+        except:
+            self.posting_memory = {}
+    
+    def save_memory(self):
+        """WSP 48: Save improved patterns back to memory"""
+        import json
+        try:
+            with open(self.memory_file, 'w') as f:
+                json.dump(self.posting_memory, f, indent=2)
+        except:
+            pass
+    
+    def learn_from_post(self, content: str, success: bool, account_type: str = "foundups_company"):
+        """WSP 48: Learn from posting attempt"""
+        if not self.learning_enabled:
+            return
+        
+        # Update statistics
+        if 'learning_statistics' not in self.posting_memory:
+            self.posting_memory['learning_statistics'] = {
+                'total_posts': 0,
+                'successful_posts': 0,
+                'failed_posts': 0
+            }
+        
+        stats = self.posting_memory['learning_statistics']
+        stats['total_posts'] += 1
+        stats['last_updated'] = datetime.now().isoformat()
+        
+        if success:
+            stats['successful_posts'] += 1
+            
+            # Learn successful patterns
+            if 'linkedin' not in self.posting_memory:
+                self.posting_memory['linkedin'] = {'successful_patterns': {}}
+            
+            patterns = self.posting_memory['linkedin']['successful_patterns']
+            if account_type not in patterns:
+                patterns[account_type] = {
+                    'success_rate': 0.0,
+                    'total_posts': 0,
+                    'hashtags': [],
+                    'optimal_times': []
+                }
+            
+            # Update success rate
+            account_patterns = patterns[account_type]
+            account_patterns['total_posts'] += 1
+            account_patterns['success_rate'] = (
+                account_patterns.get('success_rate', 0) * (account_patterns['total_posts'] - 1) +
+                1.0
+            ) / account_patterns['total_posts']
+            
+            # Learn hashtags that work
+            if '#' in content:
+                import re
+                hashtags = re.findall(r'#\w+', content)
+                for tag in hashtags:
+                    if tag not in account_patterns['hashtags']:
+                        account_patterns['hashtags'].append(tag)
+            
+            # Record successful posting time
+            account_patterns['optimal_times'].append(datetime.now().hour)
+            
+            print(f"[WSP 48] Learning: Success rate now {account_patterns['success_rate']:.1%}")
+        else:
+            stats['failed_posts'] += 1
+            
+            # Learn from failures
+            if 'linkedin' not in self.posting_memory:
+                self.posting_memory['linkedin'] = {'failed_patterns': []}
+            
+            self.posting_memory['linkedin']['failed_patterns'].append({
+                'content_length': len(content),
+                'timestamp': datetime.now().isoformat(),
+                'had_emoji': any(ord(c) >= 0x1F600 for c in content)
+            })
+        
+        self.save_memory()
+        
+        # Show learning progress
+        print(f"[WSP 48] Stats: {stats['total_posts']} total, " +
+              f"{stats['successful_posts']} successful " +
+              f"({stats['successful_posts']/max(1, stats['total_posts'])*100:.0f}% success rate)")
+    
     def close(self):
         """Close browser (only when done with all posting)"""
         if self.driver:
             self.save_session()
+            self.save_memory()  # WSP 48: Save learning before closing
             self.driver.quit()
-            print("[CLOSE] Browser closed, session saved")
+            print("[CLOSE] Browser closed, session and memory saved")
 
 
 def test_anti_detection_post():

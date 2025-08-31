@@ -157,7 +157,7 @@ CREATE TABLE profiles (
 2. `youtube_monitor.py` (249 lines) - Unused standalone
 3. `youtube_cube_monitor.py` (226 lines) - Unused POC
 4. `youtube_cube_dae_poc.py` - Broken POC
-5. `livechat.py` (125 lines) - Legacy wrapper
+5. ~~`livechat.py`~~ (125 lines) - Legacy wrapper (now removed)
 6. `test_auto_moderator.py` - Stub tests
 7. `test_livechat_auto_moderation.py` - Stub tests
 

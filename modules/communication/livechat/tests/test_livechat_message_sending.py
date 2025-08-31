@@ -8,7 +8,7 @@ import logging
 import httplib2
 import pytest
 import googleapiclient.errors
-from modules.communication.livechat.src.livechat import LiveChatListener
+from modules.communication.livechat.src.livechat_core import LiveChatCore as LiveChatListener
 
 class TestLiveChatListenerMessageSending(unittest.TestCase):
     """Test cases for message sending functionality of LiveChatListener."""

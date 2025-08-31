@@ -16,7 +16,7 @@ sys.path.insert(0, project_root)
 
 # Import required modules
 from modules.ai_intelligence.banter_engine import SEQUENCE_MAP, emoji_string_to_tuple
-from modules.communication.livechat.src.livechat import LiveChatListener
+from modules.communication.livechat.src.livechat_core import LiveChatCore as LiveChatListener
 
 logger = logging.getLogger(__name__)
 

@@ -50,7 +50,7 @@ X/Twitter Cube DAE (0102_X)
 
 | File | Lines | Bloat Risk | Should Be Module? |
 |------|-------|------------|-------------------|
-| livechat.py | 125 | ✅ Low | No - now WSP compliant |
+| livechat_core.py | 317 | ✅ Low | No - now WSP compliant |
 | auto_moderator_simple.py | 385 | ⚠️ Medium | Maybe - approaching limit |
 | banter_engine.py | ? | ⚠️ Unknown | Need analysis |
 | message_processor.py | 250 | ✅ Low | No |

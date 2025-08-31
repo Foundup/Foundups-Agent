@@ -67,6 +67,8 @@ event_routing:
   git_push:
     linkedin: 
       - "development_updates"
+    x_twitter:
+      - "foundups"
     
   wsp_update:
     linkedin: 

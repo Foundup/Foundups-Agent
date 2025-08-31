@@ -64,8 +64,8 @@ class AccountCredentialManager:
         
         # X/Twitter accounts
         self.credentials['X_FOUNDUPS'] = {
-            'username': os.getenv('X_FOUNDUPS_USER', 'FoundUps'),
-            'password': os.getenv('X_FOUNDUPS_PASS', os.getenv('x_Acc_pass'))
+            'username': os.getenv('X_Acc2', 'foundups'),  # Use X_Acc2 for FoundUps
+            'password': os.getenv('x_Acc_pass')
         }
         
         self.credentials['X_GEOZEAI'] = {

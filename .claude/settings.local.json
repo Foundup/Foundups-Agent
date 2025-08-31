@@ -1,12 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(PYTHONIOENCODING=utf-8 python modulesplatform_integrationlinkedin_agenttestsdebug_linkedin_post_issue.py)",
-      "Bash(PYTHONIOENCODING=utf-8 python modules/platform_integration/linkedin_agent/tests/debug_linkedin_post_issue.py)",
-      "Bash(PYTHONIOENCODING=utf-8 python modules/platform_integration/x_twitter/tests/debug_x_post.py)",
-      "WebSearch",
-      "Bash(PYTHONIOENCODING=utf-8 python modules/platform_integration/x_twitter/tests/map_x_buttons.py)",
-      "Bash(python:*)"
+      "Bash(timeout:*)",
+      "Bash(python:*)",
+      "Bash(set PYTHONIOENCODING=utf-8)"
     ],
     "deny": [],
     "ask": []

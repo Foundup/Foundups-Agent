@@ -14,7 +14,7 @@ import pytest
 import googleapiclient.errors
 from googleapiclient.errors import HttpError
 import httplib2
-from modules.communication.livechat.src.livechat import LiveChatListener
+from modules.communication.livechat.src.livechat_core import LiveChatCore as LiveChatListener
 from modules.ai_intelligence.banter_engine import BanterEngine
 
 class TestLiveChatListenerLogging(unittest.TestCase):
