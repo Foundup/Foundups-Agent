@@ -287,7 +287,7 @@ Canonical entrypoints (reuse only):
 
 - YouTube
   - `modules/platform_integration/youtube_proxy/src/youtube_proxy.py` → livestream discovery (`find_active_livestream`)
-  - `modules/communication/livechat/src/livechat.py` → `LiveChatListener.send_chat_message`
+  - `modules/communication/livechat/src/livechat_core.py` → `LiveChatCore.send_message`
   - `modules/communication/livechat/src/chat_sender.py` → human-like `send_message`
 - LinkedIn
   - `modules/platform_integration/linkedin_scheduler/src/linkedin_scheduler.py` → `create_text_post`, `create_article_post`, `PostQueue.process_pending_posts`

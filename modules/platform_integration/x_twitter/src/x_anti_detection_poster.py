@@ -3,14 +3,16 @@
 X/Twitter Anti-Detection Posting System
 Posts to X using browser automation with human-like behavior
 Uses same approach as LinkedIn for consistency
+WSP 48: Includes recursive learning for self-improvement
 """
 
 import os
+import json
 import time
 import random
 import pickle
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 
 try:
@@ -49,7 +51,11 @@ class AntiDetectionX:
         self.password = os.getenv('x_Acc_pass')
         self.compose_url = "https://x.com/compose/post"
         self.session_file = "O:/Foundups-Agent/modules/platform_integration/x_twitter/data/x_session.pkl"
+        self.memory_file = "O:/Foundups-Agent/modules/platform_integration/social_media_orchestrator/memory/posting_patterns.json"
         self.driver = None
+        
+        # WSP 48: Load pattern memory for recursive learning
+        self.memory = self.load_memory()
         
     def human_type(self, element, text):
         """Type like a human with random delays"""
@@ -76,6 +82,119 @@ class AntiDetectionX:
                 action.perform()
             except:
                 pass  # Ignore mouse movement errors
+    
+    def load_memory(self) -> Dict[str, Any]:
+        """WSP 48: Load posting patterns memory for recursive improvement"""
+        try:
+            if os.path.exists(self.memory_file):
+                with open(self.memory_file, 'r') as f:
+                    return json.load(f)
+        except Exception as e:
+            print(f"[WSP48] Could not load memory: {e}")
+        
+        # Return default structure
+        return {
+            "x_twitter": {
+                "successful_patterns": {},
+                "failed_patterns": [],
+                "optimal_posting_times": [],
+                "character_limits": {"post": 280, "thread": 25},
+                "mention_handling": {}
+            },
+            "learning_statistics": {
+                "total_posts": 0,
+                "successful_posts": 0,
+                "failed_posts": 0
+            }
+        }
+    
+    def save_memory(self):
+        """WSP 48: Save improved patterns back to memory"""
+        try:
+            os.makedirs(os.path.dirname(self.memory_file), exist_ok=True)
+            with open(self.memory_file, 'w') as f:
+                json.dump(self.memory, f, indent=2)
+        except Exception as e:
+            print(f"[WSP48] Could not save memory: {e}")
+    
+    def learn_from_post(self, content: str, success: bool):
+        """WSP 48: Learn from posting attempt for recursive improvement"""
+        # Update statistics
+        self.memory["learning_statistics"]["total_posts"] += 1
+        
+        if success:
+            self.memory["learning_statistics"]["successful_posts"] += 1
+            
+            # Learn successful patterns
+            patterns = self.memory.get("x_twitter", {}).get("successful_patterns", {})
+            
+            # Track character-by-character typing success for @mentions
+            if "@" in content:
+                mention_patterns = self.memory["x_twitter"].get("mention_handling", {})
+                mention_patterns["character_by_character"] = {
+                    "works": True,
+                    "method": "slow typing preserves @mentions",
+                    "last_success": datetime.now().isoformat()
+                }
+                self.memory["x_twitter"]["mention_handling"] = mention_patterns
+            
+            # Track successful posting times
+            current_hour = datetime.now().hour
+            optimal_times = self.memory["x_twitter"].get("optimal_posting_times", [])
+            if current_hour not in optimal_times:
+                optimal_times.append(current_hour)
+                self.memory["x_twitter"]["optimal_posting_times"] = optimal_times
+            
+            # Track content patterns that work
+            if "stream_announcements" not in patterns:
+                patterns["stream_announcements"] = {
+                    "format": "@mention + content + URL",
+                    "success_rate": 1.0,
+                    "total_posts": 1,
+                    "character_typing": "required for @mentions"
+                }
+            else:
+                # Update success rate
+                pattern = patterns["stream_announcements"]
+                total = pattern.get("total_posts", 0) + 1
+                success_count = int(pattern.get("success_rate", 0) * pattern.get("total_posts", 0)) + 1
+                pattern["success_rate"] = success_count / total
+                pattern["total_posts"] = total
+            
+            self.memory["x_twitter"]["successful_patterns"] = patterns
+            
+        else:
+            self.memory["learning_statistics"]["failed_posts"] += 1
+            
+            # Learn from failures
+            failed_patterns = self.memory["x_twitter"].get("failed_patterns", [])
+            failed_patterns.append({
+                "content_preview": content[:100],
+                "timestamp": datetime.now().isoformat(),
+                "possible_issues": ["login required", "rate limit", "UI change"]
+            })
+            # Keep only last 10 failures for analysis
+            self.memory["x_twitter"]["failed_patterns"] = failed_patterns[-10:]
+        
+        # Calculate and show learning progress
+        stats = self.memory["learning_statistics"]
+        success_rate = stats["successful_posts"] / max(stats["total_posts"], 1)
+        
+        print(f"[WSP48] Learning Statistics:")
+        print(f"   Total X posts: {stats['total_posts']}")
+        print(f"   Success rate: {success_rate:.1%}")
+        print(f"   Patterns learned: {len(self.memory['x_twitter'].get('successful_patterns', {}))}")
+        
+        # Save improved memory
+        self.save_memory()
+        
+        # WSP 48: Self-improvement message
+        if success_rate > 0.8:
+            print("[WSP48] ✓ System performing well - patterns stabilized")
+        elif success_rate > 0.5:
+            print("[WSP48] ↑ System improving - learning from patterns")
+        else:
+            print("[WSP48] ⚠ System adapting - analyzing failures")
     
     def setup_driver(self, use_existing_session=True):
         """Setup Chrome with anti-detection measures"""
@@ -560,6 +679,9 @@ class AntiDetectionX:
                         print("[SUCCESS] ✓✓✓ Posted and verified on X/Twitter!")
                     else:
                         print("[WARNING] Post may be processing or saved as draft")
+                    
+                    # WSP 48: Learn from this posting attempt
+                    self.learn_from_post(content, success)
                     
                     # Save session after successful post
                     self.save_session()

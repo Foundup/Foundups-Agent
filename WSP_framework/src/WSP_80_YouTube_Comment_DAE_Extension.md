@@ -8,7 +8,7 @@ This document expands WSP 80 with detailed YouTube Comment Responder DAE specifi
 ### 1.1 Current YouTube Cube Modules (Live Chat Focus)
 ```python
 YOUTUBE_LIVECHAT_MODULES = [
-    "livechat_core.py",           # Core orchestrator
+    "livechat_core.py",           # Core orchestrator (renamed from livechat.py)
     "message_processor.py",        # Message pipeline
     "auto_moderator_dae.py",       # Autonomous decisions
     "chat_sender.py",              # Message delivery
@@ -245,6 +245,7 @@ from modules.communication.livechat.src.chat_memory_manager import ChatMemoryMan
 from modules.communication.livechat.src.throttle_manager import ThrottleManager
 from modules.communication.livechat.src.message_processor import MessageProcessor
 from modules.communication.livechat.src.quota_aware_poller import QuotaAwarePoller
+from modules.communication.livechat.src.livechat_core import LiveChatCore
 
 class CommentResponderDAE:
     def __init__(self):
@@ -253,6 +254,7 @@ class CommentResponderDAE:
         self.throttle = ThrottleManager()  # Same throttling logic
         self.processor = MessageProcessor()  # Adapt for comments
         self.quota_poller = QuotaAwarePoller()  # Same quota logic
+        # Can extend LiveChatCore patterns for comment handling
 ```
 
 ## 5. Implementation Roadmap

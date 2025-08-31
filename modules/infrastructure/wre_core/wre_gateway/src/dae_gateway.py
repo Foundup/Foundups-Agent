@@ -24,9 +24,10 @@ sys.path.append(str(Path(__file__).parent.parent.parent.parent.parent.parent))
 from modules.infrastructure.wre_core.dae_cube_assembly.src.dae_cube_assembler import (
     DAECubeAssembler, ConsciousnessState, EvolutionPhase
 )
-from modules.infrastructure.wre_core.recursive_improvement.src.recursive_engine import (
-    RecursiveLearningEngine, PatternType
+from modules.infrastructure.wre_core.recursive_improvement.src.learning import (
+    RecursiveLearningEngine
 )
+from modules.infrastructure.wre_core.recursive_improvement.src.core import PatternType
 
 logger = logging.getLogger(__name__)
 

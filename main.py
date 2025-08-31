@@ -15,6 +15,7 @@ import sys
 import subprocess
 from typing import Optional, Dict, List
 from datetime import datetime
+from modules.infrastructure.wre_core.wre_gateway.src.dae_gateway import DAEGateway
 
 # Windows UTF-8 fix
 if os.name == 'nt':
@@ -86,7 +87,7 @@ class BlockLauncher:
         print("="*60)
     
     def launch_block(self, choice: str) -> bool:
-        """Launch selected block"""
+        """Launch selected block with optional WRE integration"""
         if choice == '9':
             return False
             
@@ -97,31 +98,41 @@ class BlockLauncher:
         block_info = self.blocks[choice]
         logger.info(f"Launching {block_info['name']}...")
         
+        use_wre = input(f"Launch {block_info['name']} with WRE integration? (y/n): ").strip().lower() == 'y'
+        
         try:
-            if 'function' in block_info:
-                # Import and call function
-                module = __import__(block_info['module'], fromlist=[block_info['function']])
-                func = getattr(module, block_info['function'])
-                # Check if function is async
-                if asyncio.iscoroutinefunction(func):
-                    asyncio.run(func())
-                else:
-                    func()
-            elif 'class' in block_info:
-                # Import and instantiate class
-                module = __import__(block_info['module'], fromlist=[block_info['class']])
-                cls = getattr(module, block_info['class'])
-                instance = cls()
-                if hasattr(instance, 'run'):
-                    if asyncio.iscoroutinefunction(instance.run):
-                        asyncio.run(instance.run())
-                    else:
-                        instance.run()
-                else:
-                    logger.info(f"{block_info['class']} initialized")
+            if use_wre and choice == '1':  # WRE for YT DAE
+                gateway = DAEGateway()
+                # route_to_dae is async, so we need to run it properly
+                result = asyncio.run(gateway.route_to_dae('youtube_dae', {'objective': 'launch_yt_dae'}))
+                logger.info(f"WRE integration result: {result}")
             else:
-                logger.error("Block configuration error")
+                if 'function' in block_info:
+                    # Import and call function
+                    module = __import__(block_info['module'], fromlist=[block_info['function']])
+                    func = getattr(module, block_info['function'])
+                    # Check if function is async
+                    if asyncio.iscoroutinefunction(func):
+                        asyncio.run(func())
+                    else:
+                        func()
+                elif 'class' in block_info:
+                    # Import and instantiate class
+                    module = __import__(block_info['module'], fromlist=[block_info['class']])
+                    cls = getattr(module, block_info['class'])
+                    instance = cls()
+                    if hasattr(instance, 'run'):
+                        if asyncio.iscoroutinefunction(instance.run):
+                            asyncio.run(instance.run())
+                        else:
+                            instance.run()
+                    else:
+                        logger.info(f"{block_info['class']} initialized")
+                else:
+                    logger.error("Block configuration error")
                 
+            return True
+            
         except ImportError as e:
             logger.error(f"Block not available: {e}")
             logger.info("Ensure block is installed and follows WSP 80 architecture")
@@ -142,11 +153,38 @@ class BlockLauncher:
         print("Exiting...")
 
 
+def load_commit_memory():
+    """Load commit pattern memory for WSP 48 recursive improvement"""
+    memory_file = "modules/infrastructure/wre_core/git_commit_memory.json"
+    try:
+        import json
+        with open(memory_file, 'r') as f:
+            return json.load(f)
+    except:
+        # Return default if file doesn't exist
+        return {
+            "patterns": {},
+            "learned_messages": [],
+            "statistics": {"total_commits": 0}
+        }
+
+def save_commit_memory(memory):
+    """Save improved patterns back to memory (WSP 48)"""
+    memory_file = "modules/infrastructure/wre_core/git_commit_memory.json"
+    try:
+        import json
+        with open(memory_file, 'w') as f:
+            json.dump(memory, f, indent=2)
+    except:
+        pass
+
 def generate_smart_commit_message(files):
     """
-    Generate intelligent commit message based on changed files.
-    Analyzes file patterns to create meaningful messages.
+    Generate intelligent commit message with WSP 48 self-improvement.
+    Learns from patterns and improves over time.
     """
+    # Load pattern memory (WSP 48)
+    memory = load_commit_memory()
     # Parse file status
     modified_files = []
     new_files = []
@@ -171,6 +209,7 @@ def generate_smart_commit_message(files):
     # Analyze patterns in changed files
     modules_changed = set()
     features = []
+    detected_patterns = []  # WSP 48: Track which patterns we detect
     
     for f in modified_files + new_files:
         # Check for module changes
@@ -180,6 +219,13 @@ def generate_smart_commit_message(files):
                 module_type = parts[1]  # e.g., 'platform_integration'
                 module_name = parts[2]  # e.g., 'social_media_orchestrator'
                 modules_changed.add(f"{module_type}/{module_name}")
+                
+                # WSP 48: Check against learned patterns
+                for pattern_key, pattern_data in memory.get('patterns', {}).items():
+                    if any(keyword in f.lower() for keyword in pattern_data.get('keywords', [])):
+                        detected_patterns.append(pattern_key)
+                        # Use learned features from successful commits
+                        features.extend(pattern_data.get('common_features', []))
         
         # Detect specific features
         if 'social_media' in f.lower() or 'orchestrator' in f.lower():
@@ -286,16 +332,33 @@ def git_push_and_post():
         print("\nProceed? (y/n/edit): ", end="")
         response = input().strip().lower()
         
+        # WSP 48: Track user behavior for learning
+        memory = load_commit_memory()
+        memory['statistics']['total_commits'] = memory.get('statistics', {}).get('total_commits', 0) + 1
+        
         if response == 'n':
             print("Cancelled")
             return
         elif response == 'edit':
+            memory['statistics']['user_edits'] = memory.get('statistics', {}).get('user_edits', 0) + 1
             print("Enter new commit message:")
             custom_message = input("> ").strip()
             if custom_message:
+                # WSP 48: Learn from user's preferred message style
+                memory.setdefault('learned_messages', []).append({
+                    'original': commit_message,
+                    'edited': custom_message,
+                    'files': len(files),
+                    'timestamp': datetime.now().isoformat()
+                })
                 commit_message = custom_message
             else:
                 print("Using auto-generated message")
+        else:
+            # User accepted auto-generated message
+            memory['statistics']['auto_accepted'] = memory.get('statistics', {}).get('auto_accepted', 0) + 1
+        
+        save_commit_memory(memory)
         
         # Execute git commands
         print("\n[1/4] Adding files...")
@@ -344,13 +407,28 @@ def git_push_and_post():
                 router = SocialMediaEventRouter()
                 results = asyncio.run(router.handle_event('git_push', event_data))
                 
-                # Show results
+                # Show results and learn from them (WSP 48)
                 print("\nSocial Media Posting Results:")
+                success_count = 0
                 for account, result in results.items():
                     if isinstance(result, dict) and result.get('success'):
                         print(f"  [OK] {account}")
+                        success_count += 1
                     else:
                         print(f"  [FAIL] {account}: {result.get('error', 'Unknown error')}")
+                
+                # WSP 48: Update success statistics for learning
+                memory = load_commit_memory()
+                if success_count > 0:
+                    memory['statistics']['successful_posts'] = memory.get('statistics', {}).get('successful_posts', 0) + success_count
+                else:
+                    memory['statistics']['failed_posts'] = memory.get('statistics', {}).get('failed_posts', 0) + 1
+                save_commit_memory(memory)
+                
+                # Show learning stats
+                print(f"\n[WSP 48] Learning Stats: {memory['statistics']['total_commits']} commits, " +
+                      f"{memory['statistics'].get('auto_accepted', 0)} auto-accepted, " +
+                      f"{memory['statistics'].get('user_edits', 0)} edited")
                 
             except ImportError:
                 print("[WARNING] Social media orchestrator not available")

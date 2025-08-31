@@ -12,7 +12,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from modules.ai_intelligence.banter_engine import BanterEngine
 from modules.communication.livechat.src.llm_bypass_engine import LLMBypassEngine
-from modules.communication.livechat.src.livechat import LiveChatListener
+from modules.communication.livechat.src.livechat_core import LiveChatCore as LiveChatListener
 
 def test_emoji_sequences():
     """Test all supported emoji sequences (0-1-2 system)"""

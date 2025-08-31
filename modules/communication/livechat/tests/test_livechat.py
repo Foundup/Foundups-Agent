@@ -10,7 +10,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
 
-from modules.communication.livechat.src.livechat import *
+from modules.communication.livechat.src.livechat_core import LiveChatCore as LiveChatListener
 
 class TestLivechat:
     """Test cases for livechat"""

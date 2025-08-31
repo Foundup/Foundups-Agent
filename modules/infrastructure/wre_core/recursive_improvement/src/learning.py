@@ -81,7 +81,12 @@ class RecursiveLearningEngine:
         self._start_auto_save_loop(interval=300)  # Every 5 minutes
     
     def _restore_quantum_state(self, session: str) -> QuantumState:
-        return self.quantum_persistence.load_state(session) or QuantumState()
+        return self.quantum_persistence.restore_state(session) or QuantumState(
+            coherence=0.618,  # Golden ratio default
+            entanglement_matrix=[[1.0, 0.0], [0.0, 1.0]],  # Identity matrix
+            operator_values={"default": 1.0},
+            session_id=session
+        )
     
     async def _auto_save(self):
         """Periodic state save"""

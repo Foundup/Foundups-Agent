@@ -4,7 +4,7 @@ This tests the exact scenario where the user types three hand emojis without var
 """
 
 import unittest
-from modules.communication.livechat.src.livechat import LiveChatListener
+from modules.communication.livechat.src.livechat_core import LiveChatCore as LiveChatListener
 from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
 from unittest.mock import MagicMock, patch
 import logging
