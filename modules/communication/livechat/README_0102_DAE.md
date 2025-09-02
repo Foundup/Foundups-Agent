@@ -80,8 +80,8 @@ graph TB
 |-----------|----------|---------|---------------|
 | **Banter Engine** | `modules/ai_intelligence/banter_engine/src/banter_engine.py` | AI responses | Entertainment, personality |
 | **LLM Bypass** | `modules/communication/livechat/src/llm_bypass_engine.py` | Fallback responses | When banter fails |
-| **Grok Integration** | `modules/communication/livechat/src/grok_integration.py` | Grok 3 API | Advanced consciousness |
-| **Greeting Generator** | `modules/communication/livechat/src/grok_greeting_generator.py` | Dynamic greetings | Top whacker detection |
+| **Grok Integration** | `modules/communication/livechat/src/llm_integration.py` | Grok 3 API | Advanced consciousness |
+| **Greeting Generator** | `modules/communication/livechat/src/greeting_generator.py` | Dynamic greetings | Top whacker detection |
 | **Agentic Chat** | `modules/communication/livechat/src/agentic_chat_engine.py` | Proactive engagement | Context-aware responses |
 | **Sentiment 0102** | `modules/ai_intelligence/banter_engine/src/agentic_sentiment_0102.py` | Consciousness detector | Quantum state analysis |
 
@@ -115,7 +115,7 @@ stream_resolver.py:
 ```python
 livechat_core.py → session_manager.py:
   - Get stream title
-  - Generate greeting (grok_greeting_generator.py)
+  - Generate greeting (greeting_generator.py)
   - Check top 3 whackers (whack.py:get_leaderboard)
   - Send greeting if top whacker joins
 ```
@@ -140,14 +140,14 @@ message_processor.py:process_message():
   
   elif consciousness_trigger (✊✋🖐️):
     → consciousness_handler.py → Check mod/owner
-    → grok_integration.py → Generate 0102 response
+    → llm_integration.py → Generate 0102 response
   
   elif whack_command (/score, /rank, etc):
     → command_handler.py → whack.py:get_profile()
     → Return stats to user
   
   elif maga_content:
-    → grok_greeting_generator.py:get_response_to_maga()
+    → greeting_generator.py:get_response_to_maga()
     → Send witty comeback (no timeout execution!)
 ```
 
@@ -348,7 +348,7 @@ O:/Foundups-Agent/
 |---------|----------|
 | Creating new timeout handler | Use existing timeout_announcer.py |
 | Adding test files to root | Move to modules/*/tests/ |
-| Creating new greeting system | Use grok_greeting_generator.py |
+| Creating new greeting system | Use greeting_generator.py |
 | Building new XP tracker | Use whack.py |
 | Making new command parser | Use command_handler.py |
 | Creating docs in root | Move to modules/*/docs/ |

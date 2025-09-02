@@ -9,6 +9,7 @@ Orchestrates all chat moderation components following DAE architecture.
 import asyncio
 import logging
 import os
+import time
 from typing import Optional
 from modules.platform_integration.youtube_auth.src.youtube_auth import get_authenticated_service
 from modules.platform_integration.youtube_auth.src.monitored_youtube_service import create_monitored_service
@@ -40,6 +41,17 @@ class AutoModeratorDAE:
         self.credential_set = None
         self.livechat = None
         self.stream_resolver = None
+        self._last_stream_id = None
+        self.transition_start = None
+        
+        # WRE Monitor for tracking performance
+        try:
+            from modules.infrastructure.wre_core.wre_monitor import get_monitor
+            self.wre_monitor = get_monitor()
+            logger.info("[0102] WRE Monitor attached to DAE")
+        except Exception as e:
+            logger.debug(f"WRE Monitor not available: {e}")
+            self.wre_monitor = None
         
         logger.info("✅ Auto Moderator DAE initialized")
     
@@ -212,6 +224,14 @@ class AutoModeratorDAE:
         
         video_id, live_chat_id = result
         
+        # WRE Monitor: Track stream transition completion
+        if self.wre_monitor:
+            if self._last_stream_id and self.transition_start:
+                transition_time = time.time() - self.transition_start
+                self.wre_monitor.track_stream_transition(self._last_stream_id, video_id, transition_time)
+            self._last_stream_id = video_id
+            self.transition_start = time.time()
+        
         # Create LiveChatCore instance
         self.livechat = LiveChatCore(
             youtube_service=self.service,
@@ -259,6 +279,10 @@ class AutoModeratorDAE:
                 stream_ended_normally = True
                 logger.info("🔄 Stream ended or became inactive - seamless switching engaged")
                 logger.info("⚡ Immediately searching for new stream (agentic mode)...")
+                
+                # WRE Monitor: Mark transition start
+                if self.wre_monitor:
+                    self.transition_start = time.time()
                 
                 # Reset the LiveChat instance for fresh connection
                 if self.livechat:

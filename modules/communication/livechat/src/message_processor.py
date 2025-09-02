@@ -19,12 +19,12 @@ from typing import Dict, Any, Optional, List, Tuple
 from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
 from modules.communication.livechat.src.llm_bypass_engine import LLMBypassEngine
 from modules.ai_intelligence.banter_engine.src.emoji_sequence_map import EMOJI_TO_NUMBER as EMOJI_TO_NUM
-from modules.communication.livechat.src.grok_integration import GrokIntegration
+from modules.communication.livechat.src.llm_integration import GrokIntegration
 from modules.communication.livechat.src.consciousness_handler import ConsciousnessHandler
 from modules.ai_intelligence.banter_engine.src.agentic_sentiment_0102 import AgenticSentiment0102
 from modules.communication.livechat.src.event_handler import EventHandler
 from modules.communication.livechat.src.command_handler import CommandHandler
-from modules.communication.livechat.src.grok_greeting_generator import GrokGreetingGenerator
+from modules.communication.livechat.src.greeting_generator import GrokGreetingGenerator
 from modules.gamification.whack_a_magat.src.self_improvement import MAGADOOMSelfImprovement
 from modules.communication.livechat.src.agentic_chat_engine import AgenticChatEngine
 try:

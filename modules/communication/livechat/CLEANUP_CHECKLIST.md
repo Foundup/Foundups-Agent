@@ -19,14 +19,14 @@ Successfully migrated from monolithic `auto_moderator_simple.py` (1922 lines) to
 
 ### Refactored Modules
 - `consciousness_handler.py` - Advanced emoji processing (176 lines)
-- `grok_integration.py` - Fact-checking & creative responses (219 lines)
+- `llm_integration.py` - Fact-checking & creative responses (219 lines)
 - `throttle_manager.py` - Adaptive response delays (154 lines)
 - `chat_database.py` - Database operations (268 lines)
 - `auto_moderator_dae.py` - Migration wrapper (161 lines)
 
 ### Utilities
 - `llm_bypass_engine.py` - LLM bypass functionality (223 lines)
-- `grok_greeting_generator.py` - Greeting generation (290 lines)
+- `greeting_generator.py` - Greeting generation (290 lines)
 
 ## Files to Archive 📦
 After testing confirms feature parity:

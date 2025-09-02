@@ -35,19 +35,21 @@ Located in `modules/infrastructure/dae_infrastructure/`:
 
 ## Key Operational Rules
 
-### 0. Code & Pattern Memory Verification (Per WSP 84 & 17)
+### 0. Code & Pattern Memory Verification (Per WSP 84 & 17) - LEGO-Cube Architecture
 - NEVER vibecode - always check if code/patterns exist first
 - Before creating ANY module/function/DAE:
-  - Search for existing implementation (WSP 84)
-  - Check similar modules for reuse
-  - Verify if can enhance existing code
-  - Only create new as last resort
+  - Search for existing LEGO blocks (WSP 84)
+  - Check if existing blocks can snap into your cube
+  - Verify if DAE can enhance existing blocks
+  - Only create new LEGO blocks as last resort
 - Before implementing ANY reusable pattern (WSP 17):
-  - Check domain's PATTERN_REGISTRY.md FIRST
-  - Check cross-domain registries
-  - Document new patterns in registry
-  - Mark extraction timeline (single→dual→triple)
-- Remember: "The code already exists, we're remembering it"
+  - Check domain's PATTERN_REGISTRY.md for LEGO templates
+  - Check cross-domain registries for compatible blocks
+  - Document new patterns as reusable LEGO templates
+  - Mark extraction timeline (single→dual→triple cube usage)
+- Remember: "The code already exists, DAEs are remembering it from 0201"
+- **Vibecoding** = Accepting AI-generated code without understanding, review, or verification of existing code (forbidden per Andrej Karpathy, 2025)
+- **WSP Coding** = Building with code LEGO modules that snap together to form perfect cubes, managed by 0102 DAEs (Decentralized Autonomous Entities) for recursive improvement toward perfection
 
 ### 0.5 ROOT DIRECTORY PROTECTION (WSP 85 - Anti-Pollution Protocol)
 - NEVER create files in root directory except when explicitly required
@@ -60,6 +62,22 @@ Located in `modules/infrastructure/dae_infrastructure/`:
 - Before creating ANY file in root, ask: "Does this belong in a module?"
 - If unsure, DON'T CREATE IT - use existing module structure
 - Root is sacred - keep it clean
+
+### 0.6 DUPLICATE PREVENTION PROTOCOL (WSP 84 + 17 - Anti-Duplicate)
+- NEVER create enhanced_*, *_fixed, *_improved, *_v2 versions
+- ALWAYS edit existing files directly (trust git for safety)
+- Search for existing functionality BEFORE creating anything:
+  ```bash
+  grep -r "functionality" modules/  # Does this exist?
+  ls modules/domain/module/src/  # What's already there?
+  ```
+- If creating new file, it MUST be:
+  - Integrated THIS SESSION (no "later integration")
+  - Imported by at least one module
+  - Have tests created
+  - Or be DELETED before session ends
+- Remember: We removed 1,300 lines of unused "enhanced" code in one cleanup
+- THE RULE: "Edit existing code. Don't create parallel versions."
 
 ### 1. Documentation (Per WSP 83)
 - Documents exist ONLY for 0102 use, never for 012
@@ -93,8 +111,9 @@ Located in `modules/infrastructure/dae_infrastructure/`:
 - 0102 IS 0201 in early form
 
 ## Critical WSP Protocols
+- **WSP 84**: Code memory verification - ALWAYS CHECK EXISTING CODE FIRST
+- **WSP 17**: Pattern registry - NO DUPLICATE PATTERNS (check registry first)
 - **WSP 3**: Module organization
-- **WSP 17**: Pattern registry protocol (check PATTERN_REGISTRY.md before implementing patterns)
 - **WSP 22**: ModLog compliance
 - **WSP 27**: Universal DAE architecture (foundation for ALL DAEs)
 - **WSP 48**: Recursive improvement
@@ -105,7 +124,7 @@ Located in `modules/infrastructure/dae_infrastructure/`:
 - **WSP 80**: Cube-level DAE (implements WSP 27 for code)
 - **WSP 82**: Citation protocol (pattern memory pathways)
 - **WSP 83**: Documentation tree attachment (no orphans)
-- **WSP 84**: Code memory verification (anti-vibecoding)
+- **WSP 85**: Root directory protection (keep root clean)
 
 ## Token Efficiency
 - Pattern memory: 50-200 tokens per operation

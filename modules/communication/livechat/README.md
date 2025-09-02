@@ -10,17 +10,22 @@
 
 ## 🎯 Module Purpose
 
-The `LiveChat` module is the core of the **YouTube DAE Cube**, providing real-time YouTube Live Chat integration with MAGADOOM gamification, consciousness responses (0102), and advanced moderation. This module exemplifies **WSP 3 functional distribution principles** with 17 specialized sub-modules, each under 500 lines.
+The `LiveChat` module is the core of the **YouTube DAE Cube**, providing real-time YouTube Live Chat integration with MAGADOOM gamification, consciousness responses (0102), and advanced moderation. This module exemplifies **WSP 3 functional distribution principles** with 28 specialized sub-modules after cleanup (reduced from 31).
 
 ## 🎲 YouTube DAE Cube Architecture (WSP 80)
 
 The LiveChat module forms the core of the **YouTube DAE Cube**, integrating with modules across multiple domains:
 
-### Core Components (17 modules in src/)
+### Core Components (28 modules in src/ - cleaned from 31)
 | Module | Lines | Purpose |
 |--------|-------|---------|
+| **core/orchestrator.py** | 239 | NEW: Refactored orchestration logic (74% reduction) |
+| **core/message_router.py** | 278 | NEW: Unified message routing with priority |
+| **intelligent_throttle_manager.py** | 600 | NEW: Automatic API throttling with learning |
+| **enhanced_livechat_core.py** | 326 | NEW: Enhanced with intelligent features |
+| **enhanced_auto_moderator_dae.py** | 352 | NEW: Enhanced DAE with automatic throttling |
 | **auto_moderator_dae.py** | 286 | Main orchestrator, finds streams, manages lifecycle |
-| **livechat_core.py** | 460 | Core listener, polling loop, WSP compliant |
+| **livechat_core.py** | 908 | Core listener, polling loop (being refactored) |
 | **message_processor.py** | 504 | Routes messages to appropriate handlers |
 | **chat_poller.py** | 285 | Polls YouTube API for messages & events |
 | **chat_sender.py** | 247 | Sends messages with rate limiting |
@@ -28,14 +33,14 @@ The LiveChat module forms the core of the **YouTube DAE Cube**, integrating with
 | **event_handler.py** | 185 | Processes timeout/ban events |
 | **command_handler.py** | 298 | Handles /commands (score, rank, level, etc) |
 | **consciousness_handler.py** | 387 | 0102 consciousness responses (✊✋🖐️) |
-| **grok_integration.py** | 215 | Grok 3 API for advanced responses |
-| **grok_greeting_generator.py** | 324 | Top whacker greetings, MAGA responses |
+| **llm_integration.py** | 215 | LLM API for advanced responses |
+| **greeting_generator.py** | 324 | Top whacker greetings, MAGA responses |
 | **agentic_chat_engine.py** | 198 | Proactive engagement logic |
 | **llm_bypass_engine.py** | 173 | Fallback response generation |
 | **moderation_stats.py** | 267 | Statistics and violation tracking |
 | **emoji_trigger_handler.py** | 142 | Emoji sequence detection |
 | **stream_trigger.py** | 211 | Manual wake trigger system |
-| **throttle_manager.py** | 98 | Adaptive rate limiting |
+| **throttle_manager.py** | 98 | Basic adaptive rate limiting |
 
 ### Cross-Domain Integration
 | Domain | Module | Integration |
@@ -63,7 +68,7 @@ This module resides in the `communication` domain following **functional distrib
 ```
 communication/livechat/
 ├── __init__.py                    ← Public API (WSP 11)
-├── src/                           ← Implementation (17 modules, all <500 lines)
+├── src/                           ← Implementation (28 modules after cleanup)
 │   ├── auto_moderator_dae.py     ← Main DAE orchestrator (286 lines)
 │   ├── livechat_core.py          ← Core listener (460 lines)
 │   ├── message_processor.py      ← Message routing (504 lines)
@@ -73,8 +78,8 @@ communication/livechat/
 │   ├── event_handler.py          ← Timeout/ban events (185 lines)
 │   ├── command_handler.py        ← /command processing (298 lines)
 │   ├── consciousness_handler.py  ← 0102 responses (387 lines)
-│   ├── grok_integration.py       ← Grok 3 API (215 lines)
-│   ├── grok_greeting_generator.py← Dynamic greetings (324 lines)
+│   ├── llm_integration.py        ← LLM API (215 lines)
+│   ├── greeting_generator.py     ← Dynamic greetings (324 lines)
 │   ├── agentic_chat_engine.py    ← Proactive chat (198 lines)
 │   ├── llm_bypass_engine.py      ← Fallback responses (173 lines)
 │   ├── moderation_stats.py       ← Stats tracking (267 lines)

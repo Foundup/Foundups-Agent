@@ -163,7 +163,17 @@ class ChatMemoryManager:
             return {'username': author_name, 'error': str(e)}
     
     def _calculate_importance(self, stats: Dict[str, Any], message_text: str) -> int:
-        """Calculate user importance score for storage decisions."""
+        """Calculate user importance score for storage decisions.
+        
+        Note: XP calculation pattern preserved from removed chat_database.py:
+        - 10s timeout: 5 XP
+        - 60s timeout: 10 XP
+        - 600s timeout: 20 XP
+        - 1800s timeout: 30 XP
+        - 86400s timeout: 50 XP
+        - Prestige levels: Novice(0-100) → Apprentice(100-500) → Journeyman(500-1000) →
+                         Expert(1000-2000) → Master(2000-5000) → Grandmaster(5000+)
+        """
         score = 0
         
         # Role-based importance

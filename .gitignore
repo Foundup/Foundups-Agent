@@ -48,6 +48,14 @@ env/
 *.log
 logs/
 02_log/
+
+# Chrome profile data (browser automation)
+**/chrome_profile/
+**/data/chrome_profile/
+**/*chrome_profile*/
+*.pma
+nul
+NUL
 02_logs/
 DevLog.md
 foundups_agent.log

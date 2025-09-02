@@ -34,6 +34,9 @@ The tests have been refactored into smaller, focused test files to improve maint
 
 | Test File | Description |
 |-----------|-------------|
+| **test_orchestrator.py** | NEW: Tests for refactored LiveChatOrchestrator (4 tests) - verifies component initialization, delegation, status reporting, and size compliance |
+| **test_message_router.py** | NEW: Tests for unified MessageRouter (10 tests) - verifies priority ordering, handler registration, routing logic, and error handling |
+| **test_livechat_facade.py** | NEW: Tests facade pattern and backward compatibility (4 tests) - ensures all public methods remain accessible |
 | test_livechat_initialization.py | Tests for LiveChatListener initialization, parameter handling, session setup, ID handling, and greeting messages |
 | test_livechat_message_polling.py | Tests for polling messages from YouTube API, error handling, rate limiting, and chat cycles |
 | test_livechat_message_processing.py | Tests for message processing, metadata extraction, author role detection, trigger pattern detection, log entry creation, and file logging |

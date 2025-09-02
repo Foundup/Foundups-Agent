@@ -57,7 +57,7 @@ class LinkedInLLMManager:
         """Initialize LLM connector"""
         try:
             if self.llm_provider == "grok":
-                from modules.communication.livechat.src.grok_integration import GrokIntegration
+                from modules.communication.livechat.src.llm_integration import GrokIntegration
                 from modules.ai_intelligence.rESP_o1o2.src.llm_connector import LLMConnector
                 
                 api_key = os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY")

@@ -269,12 +269,18 @@ class AntiDetectionLinkedIn:
         print("="*60)
         print("[CONTENT] Post content:")
         print("-"*40)
-        print(content)
+        # Handle encoding for Windows console
+        try:
+            print(content)
+        except UnicodeEncodeError:
+            # Fallback for Windows console that can't display emojis
+            safe_content = content.encode('ascii', 'replace').decode('ascii')
+            print(safe_content)
         print("-"*40)
         
         # Verify YouTube link is present
         if "youtube.com/watch" in content:
-            print("[VERIFY] ✓ YouTube link found in content")
+            print("[VERIFY] YouTube link found in content")
         else:
             print("[WARNING] No YouTube link in content!")
         
@@ -283,7 +289,7 @@ class AntiDetectionLinkedIn:
         if len(lines) > 2:
             potential_title = lines[2].strip()
             if potential_title and not potential_title.startswith('http'):
-                print(f"[VERIFY] ✓ Stream title found: {potential_title[:50]}...")
+                print(f"[VERIFY] Stream title found: {potential_title[:50]}...")
             else:
                 print("[WARNING] No stream title found between greeting and link")
         
@@ -426,12 +432,12 @@ class AntiDetectionLinkedIn:
                             action.click()
                             action.perform()
                             clicked = True
-                            print("[CLICK] ✓ Post button clicked with ActionChains")
+                            print("[CLICK] Post button clicked with ActionChains")
                         except Exception as e:
                             print(f"[FALLBACK] ActionChains failed: {e}")
                             self.driver.execute_script("arguments[0].click();", post_button)
                             clicked = True
-                            print("[CLICK] ✓ Post button clicked with JavaScript")
+                            print("[CLICK] Post button clicked with JavaScript")
                         
                         if not clicked:
                             print("[ERROR] Could not click Post button!")
@@ -450,7 +456,7 @@ class AntiDetectionLinkedIn:
                         success = False
                         
                         if "share" not in current_url:
-                            print("[SUCCESS] ✓ Posted and redirected from share page!")
+                            print("[SUCCESS] Posted and redirected from share page!")
                             success = True
                         else:
                             # Still on share page - check for other indicators
@@ -461,7 +467,7 @@ class AntiDetectionLinkedIn:
                                 text_area = self.driver.find_element(By.XPATH, "//div[@role='textbox']")
                                 text_content = text_area.text.strip()
                                 if not text_content or text_content == "What do you want to talk about?":
-                                    print("[SUCCESS] ✓ Text area cleared - post likely sent!")
+                                    print("[SUCCESS] Text area cleared - post likely sent!")
                                     success = True
                                 else:
                                     print(f"[WARNING] Text still in editor: {text_content[:50]}...")
@@ -472,7 +478,7 @@ class AntiDetectionLinkedIn:
                             try:
                                 success_msgs = self.driver.find_elements(By.XPATH, "//div[contains(@class, 'artdeco-toast-item--success')]")
                                 if success_msgs:
-                                    print("[SUCCESS] ✓ Success notification found!")
+                                    print("[SUCCESS] Success notification found!")
                                     success = True
                             except:
                                 pass
@@ -483,7 +489,7 @@ class AntiDetectionLinkedIn:
                                 time.sleep(5)
                                 current_url = self.driver.current_url
                                 if "share" not in current_url:
-                                    print("[SUCCESS] ✓ Posted after extended delay")
+                                    print("[SUCCESS] Posted after extended delay")
                                     success = True
                                 else:
                                     print("[INFO] Post may be saved as draft - check LinkedIn manually")
@@ -500,12 +506,12 @@ class AntiDetectionLinkedIn:
                             posts = self.driver.find_elements(By.XPATH, f"//span[contains(text(), '@UnDaoDu')]")
                             
                             if posts:
-                                print(f"[FEED] ✓✓✓ Found {len(posts)} @UnDaoDu posts on feed")
+                                print(f"[FEED] Found {len(posts)} @UnDaoDu posts on feed")
                                 # Check the first one (most recent)
                                 try:
                                     recent_post = posts[0].text
                                     if 'going live' in recent_post.lower():
-                                        print(f"[VERIFIED] ✓✓✓ Live stream post confirmed on feed!")
+                                        print(f"[VERIFIED] Live stream post confirmed on feed!")
                                         print(f"   Post preview: {recent_post[:100]}...")
                                         success = True
                                 except:
@@ -700,7 +706,7 @@ class AntiDetectionLinkedIn:
                             print(f"[POST-CLICK URL] {current_url}")
                             
                             if "share" not in current_url:
-                                print("[OK] ✓ Posted successfully - redirected from share page!")
+                                print("[OK] Posted successfully - redirected from share page!")
                             else:
                                 # Still on share page, wait a bit more
                                 print("[INFO] Still on share page, waiting for redirect...")
@@ -868,7 +874,13 @@ https://www.youtube.com/watch?v=Edka5TBGLuA"""
     
     print("[CONTENT] Content to post:")
     print("-"*50)
-    print(content)
+    # Handle encoding for Windows console
+    try:
+        print(content)
+    except UnicodeEncodeError:
+        # Fallback for Windows console that can't display emojis
+        safe_content = content.encode('ascii', 'replace').decode('ascii')
+        print(safe_content)
     print("-"*50)
     
     # Post with anti-detection

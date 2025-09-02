@@ -14,7 +14,7 @@ All files are now under 500 lines:
 | livechat.py | 125 | ✅ WSP COMPLIANT (was 1057) |
 | livechat_core.py | 317 | ✅ WSP COMPLIANT (new) |
 | auto_moderator_simple.py | 385 | ✅ WSP COMPLIANT |
-| grok_greeting_generator.py | 290 | ✅ WSP COMPLIANT |
+| greeting_generator.py | 290 | ✅ WSP COMPLIANT |
 | message_processor.py | 250 | ✅ WSP COMPLIANT |
 | youtube_monitor.py | 249 | ✅ WSP COMPLIANT |
 | moderation_stats.py | 240 | ✅ WSP COMPLIANT (new) |
@@ -81,7 +81,7 @@ YouTube Communications Cube
 ├── Processing Blocks
 │   ├── message_processor.py
 │   ├── emoji_trigger_handler.py
-│   └── grok_greeting_generator.py
+│   └── greeting_generator.py
 ├── Communication Blocks
 │   ├── chat_poller.py
 │   ├── chat_sender.py

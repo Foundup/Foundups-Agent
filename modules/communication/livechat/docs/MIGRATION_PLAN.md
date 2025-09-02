@@ -41,7 +41,7 @@ Disadvantages:
 ✅ Message processing → `message_processor.py` (250 lines)
 ✅ Chat polling → `chat_poller.py` (113 lines)
 ✅ Message sending → `chat_sender.py` (185 lines)
-✅ Context detection → `grok_greeting_generator.py` (290 lines)
+✅ Context detection → `greeting_generator.py` (290 lines)
 ✅ LLM fallback → `llm_bypass_engine.py` (223 lines)
 ✅ YouTube monitoring → `youtube_monitor.py` (249 lines)
 
