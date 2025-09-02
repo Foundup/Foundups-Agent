@@ -14,7 +14,7 @@ This document helps 0102 remember all module components and paths.
 - `chat_sender.py` - Sends messages to YouTube chat (handles markdown removal)
 - `throttle_manager.py` - Rate limiting and quota management
 - `agentic_chat_engine.py` - AI response generation
-- `grok_greeting_generator.py` - Stream greeting generation
+- `greeting_generator.py` - Stream greeting generation
 - `mcp_youtube_integration.py` - Model Context Protocol integration
 
 ### Key Features

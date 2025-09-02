@@ -114,10 +114,10 @@
     ]
   },
   "statistics": {
-    "total_commits": 1,
+    "total_commits": 3,
     "successful_posts": 0,
     "failed_posts": 0,
     "user_edits": 0,
-    "auto_accepted": 1
+    "auto_accepted": 3
   }
 }

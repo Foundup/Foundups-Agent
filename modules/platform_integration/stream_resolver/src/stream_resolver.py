@@ -24,6 +24,13 @@ import random
 from datetime import datetime, timedelta
 import json
 
+# Import intelligent quota testing
+try:
+    from modules.platform_integration.youtube_auth.src.quota_tester import QuotaTester, get_best_credential_set
+except ImportError:
+    QuotaTester = None
+    get_best_credential_set = None
+
 # Get a logger instance specific to this module
 logger = logging.getLogger(__name__)
 
@@ -653,11 +660,16 @@ search_livestreams = search_livestreams_enhanced
 get_active_livestream_video_id = get_active_livestream_video_id_enhanced
 
 class StreamResolver:
-    def __init__(self, youtube_service):
+    def __init__(self, youtube_service, use_intelligent_sorting=True):
         self.youtube = youtube_service
         self.logger = logging.getLogger(__name__)
         self.session_cache_file = "memory/session_cache.json"
         self._ensure_memory_dir()
+        self.use_intelligent_sorting = use_intelligent_sorting
+        self._quota_tester = QuotaTester() if QuotaTester and use_intelligent_sorting else None
+        self._tested_credentials = set()
+        self._cache = {}
+        self._last_stream_check = {}
     
     def _ensure_memory_dir(self):
         """Ensure memory directory exists for session caching."""
@@ -679,6 +691,54 @@ class StreamResolver:
                 self.logger.warning(f"Could not clear session cache: {e}")
         
         self.logger.info("🧹 All caches cleared - will perform fresh stream search")
+    
+    def get_best_available_service(self):
+        """
+        Get the best available YouTube service with quota.
+        Uses intelligent testing to find credentials with remaining quota.
+        
+        Returns:
+            tuple: (service, credential_set) or (None, None) if all exhausted
+        """
+        if not self.use_intelligent_sorting or not self._quota_tester:
+            # Fall back to normal rotation
+            return self.youtube, getattr(self.youtube, '_credential_set', 0)
+        
+        self.logger.info("🔍 Testing credentials for available quota...")
+        
+        # Get recommended order from quota tester
+        recommended = self._quota_tester.get_recommended_order()
+        
+        if not recommended:
+            self.logger.error("❌ No credentials with available quota!")
+            return None, None
+        
+        # Try credentials in recommended order
+        for cred_set in recommended:
+            if cred_set in self._tested_credentials:
+                continue  # Skip already tested in this session
+                
+            try:
+                self.logger.info(f"Testing credential set {cred_set}...")
+                from modules.platform_integration.youtube_auth.src.youtube_auth import get_authenticated_service
+                
+                service, actual_set = get_authenticated_service(
+                    force_credential_set=cred_set,
+                    skip_validation=False
+                )
+                
+                if service:
+                    self.logger.info(f"✅ Using credential set {cred_set} with available quota")
+                    self._tested_credentials.add(cred_set)
+                    return service, cred_set
+                    
+            except Exception as e:
+                self.logger.warning(f"Failed to use credential set {cred_set}: {e}")
+                self._tested_credentials.add(cred_set)
+                continue
+        
+        self.logger.error("❌ All recommended credentials failed")
+        return None, None
     
     def _load_session_cache(self):
         """Load cached session data from previous runs."""

@@ -27,7 +27,7 @@ try:
     from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
     from modules.gamification.priority_scorer.src.priority_scorer import PriorityScorer
 except ImportError as e:
-    print(f"⚠️  Import warning: {e} (will use mock components in standalone mode)")
+    print(f"[WARNING] Import warning: {e} (will use mock components in standalone mode)")
 
 class PostType(Enum):
     """LinkedIn post content types"""

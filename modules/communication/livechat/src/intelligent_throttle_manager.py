@@ -299,10 +299,32 @@ class IntelligentThrottleManager:
                 quota_cost,
                 optimal_delay
             )
+            
+            # WRE Monitor: Track pattern learning
+            try:
+                from modules.infrastructure.wre_core.wre_monitor import get_monitor
+                monitor = get_monitor()
+                if monitor:
+                    monitor.track_pattern_learned('quota_usage', {
+                        'messages_per_min': messages_per_minute,
+                        'api_calls_per_min': api_calls_per_minute,
+                        'optimal_delay': optimal_delay
+                    })
+            except:
+                pass  # WRE monitor not available
     
     def handle_quota_error(self, credential_set: int = 0):
         """Handle a 403 quota exceeded error"""
         now = time.time()
+        
+        # WRE Monitor: Track quota error
+        try:
+            from modules.infrastructure.wre_core.wre_monitor import get_monitor
+            monitor = get_monitor()
+            if monitor:
+                monitor.track_error('quota_exceeded', f'Credential set {credential_set}', 'Switching credential sets')
+        except:
+            pass
         
         if credential_set not in self.quota_states:
             self.quota_states[credential_set] = QuotaState(credential_set=credential_set)

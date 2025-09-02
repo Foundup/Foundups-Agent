@@ -20,7 +20,7 @@ Migrate from `auto_moderator_simple.py` (1922 lines, WSP violation) to enhanced 
 ```python
 # In livechat_core.py __init__:
 from modules.communication.livechat.src.consciousness_handler import ConsciousnessHandler
-self.consciousness_handler = ConsciousnessHandler(sentiment_engine, grok_integration)
+self.consciousness_handler = ConsciousnessHandler(sentiment_engine, llm_integration)
 
 # In process_message:
 if self.consciousness_handler.detect_consciousness_command(display_message):
@@ -34,7 +34,7 @@ if self.consciousness_handler.detect_consciousness_command(display_message):
 
 ```python
 # In livechat_core.py __init__:
-from modules.communication.livechat.src.grok_integration import GrokIntegration
+from modules.communication.livechat.src.llm_integration import GrokIntegration
 self.grok = GrokIntegration()
 
 # In message_processor.py:
@@ -124,7 +124,7 @@ def calculate_user_level(self, user_id: str) -> int:
 
 ### Modular Components (WSP-Compliant)
 - `consciousness_handler.py` - Advanced emoji processing
-- `grok_integration.py` - Fact-checking & creative responses
+- `llm_integration.py` - Fact-checking & creative responses
 - `throttle_manager.py` - Adaptive response delays
 - `chat_database.py` - Database operations
 - `message_processor.py` - Message processing pipeline
@@ -135,7 +135,7 @@ def calculate_user_level(self, user_id: str) -> int:
 
 ### Utilities
 - `llm_bypass_engine.py` - LLM bypass functionality
-- `grok_greeting_generator.py` - Greeting generation
+- `greeting_generator.py` - Greeting generation
 
 ### Files to Deprecate
 - `auto_moderator_simple.py` - Monolithic violation (1922 lines)

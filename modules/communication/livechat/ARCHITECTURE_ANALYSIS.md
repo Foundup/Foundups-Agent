@@ -52,14 +52,14 @@ WSP-Compliant Analysis per WSP 22, 3, 84
 
 #### New Refactored Modules (Created Today)
 1. **consciousness_handler.py** (176 lines) - Advanced emoji consciousness
-2. **grok_integration.py** (219 lines) - Grok API integration
+2. **llm_integration.py** (219 lines) - LLM API integration
 3. **throttle_manager.py** (154 lines) - Adaptive response throttling
 4. **chat_database.py** (268 lines) - Database operations
 5. **auto_moderator_dae.py** (161 lines) - DAE orchestrator
 
 #### Other Modules
 1. **llm_bypass_engine.py** (223 lines) - LLM bypass functionality
-2. **grok_greeting_generator.py** (290 lines) - Generates greetings
+2. **greeting_generator.py** (290 lines) - Generates greetings
 3. **youtube_cube_monitor.py** (226 lines) - Cube monitoring (DAE related?)
 4. ~~**livechat.py**~~ - Removed (was extending LiveChatCore)
 
@@ -88,7 +88,7 @@ WSP-Compliant Analysis per WSP 22, 3, 84
 
 ### Components to Integrate
 1. **consciousness_handler.py** - Replace emoji_trigger_handler
-2. **grok_integration.py** - Add to message_processor
+2. **llm_integration.py** - Add to message_processor
 3. **throttle_manager.py** - Add to chat_sender
 4. **chat_database.py** - Enhance moderation_stats
 

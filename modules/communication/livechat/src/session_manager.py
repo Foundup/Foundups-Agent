@@ -16,7 +16,7 @@ import asyncio
 import random
 from typing import Optional, Dict, Any
 import googleapiclient.errors
-from modules.communication.livechat.src.grok_greeting_generator import GrokGreetingGenerator
+from modules.communication.livechat.src.greeting_generator import GrokGreetingGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -161,11 +161,19 @@ class SessionManager:
             
             logger.info(f"Sending greeting: {self.greeting_message}")
             # Pass skip_delay=True for greeting to avoid long wait
+            success = False  # Initialize to False in case of exception
             try:
                 success = await send_function(self.greeting_message, skip_delay=True)
             except TypeError:
                 # Fallback for functions that don't support skip_delay
-                success = await send_function(self.greeting_message)
+                try:
+                    success = await send_function(self.greeting_message)
+                except Exception as e:
+                    logger.error(f"Error in fallback send: {e}")
+                    success = False
+            except Exception as e:
+                logger.error(f"Error in send with skip_delay: {e}")
+                success = False
             
             if success:
                 logger.info("Greeting sent successfully")
@@ -223,11 +231,19 @@ class SessionManager:
             
             logger.info(f"📢 Broadcasting update: {full_msg}")
             # Pass skip_delay=True for broadcast to avoid long wait
+            success = False  # Initialize to False in case of exception
             try:
                 success = await send_function(full_msg, skip_delay=True)
             except TypeError:
                 # Fallback for functions that don't support skip_delay
-                success = await send_function(full_msg)
+                try:
+                    success = await send_function(full_msg)
+                except Exception as e:
+                    logger.error(f"Error in fallback send: {e}")
+                    success = False
+            except Exception as e:
+                logger.error(f"Error in send with skip_delay: {e}")
+                success = False
             
             if success:
                 logger.info("Update broadcast sent successfully")

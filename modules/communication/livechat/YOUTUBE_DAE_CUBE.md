@@ -82,7 +82,7 @@ modules/gamification/
 
 #### 6. **Enhancement Modules**
 - `llm_bypass_engine.py` (223 lines) - Fallback response generation
-- `grok_integration.py` (219 lines) - Grok AI integration
+- `llm_integration.py` (219 lines) - Grok AI integration
 - `consciousness_handler.py` (176 lines) - Special emoji sequences
 - `emoji_trigger_handler.py` (185 lines) - Emoji detection (✊✋🖐)
 - `throttle_manager.py` (154 lines) - Rate limiting (60s cooldown)

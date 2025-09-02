@@ -50,7 +50,8 @@ class AntiDetectionX:
         self.username = os.getenv('X_Acc1', 'geozeai')  # Default to first account
         self.password = os.getenv('x_Acc_pass')
         self.compose_url = "https://x.com/compose/post"
-        self.session_file = "O:/Foundups-Agent/modules/platform_integration/x_twitter/data/x_session.pkl"
+        self.data_dir = "O:/Foundups-Agent/modules/platform_integration/x_twitter/data"
+        self.session_file = os.path.join(self.data_dir, "x_session.pkl")
         self.memory_file = "O:/Foundups-Agent/modules/platform_integration/social_media_orchestrator/memory/posting_patterns.json"
         self.driver = None
         
@@ -402,11 +403,42 @@ class AntiDetectionX:
             self.driver.refresh()
             time.sleep(random.uniform(2, 4))
     
-    def post_to_x(self, content: str):
+    def post_to_x(self, content: str, video_id: str = None):
         """Post to X using compose URL with anti-detection"""
         
         print("\n[POST] Posting to X/Twitter (Anti-Detection Mode)")
         print("="*60)
+        
+        # Check for duplicate posts if video_id provided
+        if video_id:
+            post_tracking_file = os.path.join(self.data_dir, 'posted_videos.json')
+            posted_videos = {}
+            
+            # Load existing posts
+            if os.path.exists(post_tracking_file):
+                try:
+                    with open(post_tracking_file, 'r') as f:
+                        posted_videos = json.load(f)
+                except:
+                    posted_videos = {}
+            
+            # Check if we posted this video recently
+            if video_id in posted_videos:
+                last_post_timestamp = posted_videos[video_id].get('timestamp', None)
+                if last_post_timestamp:
+                    # Handle both ISO string and Unix timestamp formats
+                    if isinstance(last_post_timestamp, str):
+                        # Parse ISO format timestamp
+                        from datetime import datetime
+                        last_post_dt = datetime.fromisoformat(last_post_timestamp.replace('Z', '+00:00'))
+                        last_post_time = last_post_dt.timestamp()
+                    else:
+                        last_post_time = float(last_post_timestamp)
+                    
+                    hours_since_post = (time.time() - last_post_time) / 3600
+                    if hours_since_post < 4:
+                        print(f"[SKIP] Already posted {hours_since_post:.1f} hours ago for video {video_id}")
+                        return False
         
         # Setup driver if not already
         if not self.driver:
@@ -682,6 +714,27 @@ class AntiDetectionX:
                     
                     # WSP 48: Learn from this posting attempt
                     self.learn_from_post(content, success)
+                    
+                    # Save successful post to prevent duplicates
+                    if success and video_id:
+                        post_tracking_file = os.path.join(self.data_dir, 'posted_videos.json')
+                        try:
+                            if os.path.exists(post_tracking_file):
+                                with open(post_tracking_file, 'r') as f:
+                                    posted_videos = json.load(f)
+                            else:
+                                posted_videos = {}
+                            
+                            posted_videos[video_id] = {
+                                'timestamp': time.time(),  # Use Unix timestamp for easier comparison
+                                'content': content[:100]  # Store first 100 chars for reference
+                            }
+                            
+                            with open(post_tracking_file, 'w') as f:
+                                json.dump(posted_videos, f, indent=2)
+                            print(f"[TRACK] Saved post for video {video_id} to prevent duplicates")
+                        except Exception as e:
+                            print(f"[WARNING] Could not save post tracking: {e}")
                     
                     # Save session after successful post
                     self.save_session()

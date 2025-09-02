@@ -57,7 +57,7 @@ grep "ChatDatabaseBridge" → Only in documentation
 2. ✅ `chat_poller.py` - Polls YouTube API
 3. ✅ `message_processor.py` - Processes messages
 4. ✅ `emoji_trigger_handler.py` - Handles ✊✋🖐️
-5. ✅ `grok_greeting_generator.py` - Context-aware responses
+5. ✅ `greeting_generator.py` - Context-aware responses
 6. ✅ All other modules in livechat/src/
 
 ## Conclusion

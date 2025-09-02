@@ -30,7 +30,7 @@ The YouTube communications module has multiple critical WSP violations that requ
 |------|-------|--------|---------|
 | livechat.py | 1057 | ❌ VIOLATION | Monolithic class with all functionality |
 | auto_moderator_simple.py | 385 | ✅ OK | Simple bot with mod immunity |
-| grok_greeting_generator.py | 290 | ✅ OK | Context-aware MAGA detection |
+| greeting_generator.py | 290 | ✅ OK | Context-aware MAGA detection |
 | message_processor.py | 250 | ✅ OK | Message processing component |
 | youtube_monitor.py | 249 | ✅ OK | YouTube monitoring |
 | chat_database_bridge.py | 245 | ⚠️ ISSUE | Cross-module dependency |
@@ -77,7 +77,7 @@ The YouTube communications module has multiple critical WSP violations that requ
 - **message_processor.py** - Message handling logic
 - **chat_poller.py** - YouTube API polling
 - **chat_sender.py** - Sending messages
-- **grok_greeting_generator.py** - Context-aware responses
+- **greeting_generator.py** - Context-aware responses
 - **llm_bypass_engine.py** - Fallback response generation
 - **youtube_monitor.py** - Stream monitoring
 

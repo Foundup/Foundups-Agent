@@ -200,7 +200,7 @@ modules/
 
 All functionality uses **existing modules**:
 - Timeout tracking: `whack.py` + `timeout_announcer.py`
-- Consciousness: `consciousness_handler.py` + `grok_integration.py`
+- Consciousness: `consciousness_handler.py` + `llm_integration.py`
 - Commands: `command_handler.py` + `whack.py`
 - Throttling: `stream_resolver.py` + `stream_trigger.py`
 

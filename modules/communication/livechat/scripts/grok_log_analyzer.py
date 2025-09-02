@@ -166,7 +166,7 @@ class GrokLogAnalyzer:
         if 'love maga' in ' '.join(lines).lower() and len(timeouts_issued) == 0:
             analysis["issues"].append("❌ 'love maga' detected but no timeout issued")
             analysis["recommendations"].append(
-                "🔧 FIX: MAGA trigger list may need updating. Check grok_greeting_generator.py"
+                "🔧 FIX: MAGA trigger list may need updating. Check greeting_generator.py"
             )
         
         # 8. Check for livestream issues

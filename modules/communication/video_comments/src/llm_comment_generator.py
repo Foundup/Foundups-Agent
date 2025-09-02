@@ -45,7 +45,7 @@ class LLMCommentGenerator:
         try:
             if self.provider == "grok":
                 # Import existing Grok integration
-                from modules.communication.livechat.src.grok_integration import GrokIntegration
+                from modules.communication.livechat.src.llm_integration import GrokIntegration
                 from modules.ai_intelligence.rESP_o1o2.src.llm_connector import LLMConnector
                 
                 # Initialize Grok

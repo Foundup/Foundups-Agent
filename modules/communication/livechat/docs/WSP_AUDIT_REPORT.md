@@ -5,7 +5,7 @@
 ### 1. ❌ DUPLICATE CODE: `mod_interaction_engine.py`
 **Violation**: WSP 84 - Created new code when existing code exists
 **Existing Alternatives**:
-- `grok_greeting_generator.py` - Already handles greetings (290 lines, WSP compliant)
+- `greeting_generator.py` - Already handles greetings (290 lines, WSP compliant)
 - `self_improvement.py` - Already handles pattern learning (246 lines, WSP compliant)
 - `auto_moderator.db` - Already has tables for users, timeouts, mod_stats
 
@@ -25,8 +25,8 @@ These are properly located:
 
 ### For Greetings (Instead of mod_interaction_engine.py):
 ```python
-# USE: grok_greeting_generator.py
-from modules.communication.livechat.src.grok_greeting_generator import GrokGreetingGenerator
+# USE: greeting_generator.py
+from modules.communication.livechat.src.greeting_generator import GrokGreetingGenerator
 
 # Already has:
 - generate_greeting() - Dynamic greetings
@@ -66,7 +66,7 @@ rm quiz_data.db
 Replace mod_interaction_engine with existing modules:
 
 ```python
-from modules.communication.livechat.src.grok_greeting_generator import GrokGreetingGenerator
+from modules.communication.livechat.src.greeting_generator import GrokGreetingGenerator
 from modules.gamification.whack_a_magat.src.self_improvement import MAGADOOMSelfImprovement
 
 class MessageProcessor:
@@ -78,7 +78,7 @@ class MessageProcessor:
 ```
 
 ### Step 3: Integrate Top Whacker Greetings
-Add to grok_greeting_generator.py:
+Add to greeting_generator.py:
 ```python
 def generate_whacker_greeting(self, username: str, profile: UserProfile) -> str:
     """Generate greeting for top whackers using existing profile data"""
@@ -115,6 +115,6 @@ def generate_whacker_greeting(self, username: str, profile: UserProfile) -> str:
 1. ✅ Delete `mod_interaction_engine.py`
 2. ✅ Delete root `quiz_data.db`
 3. ✅ Update `message_processor.py` to use existing modules
-4. ✅ Add top whacker support to `grok_greeting_generator.py`
+4. ✅ Add top whacker support to `greeting_generator.py`
 5. ✅ Use `self_improvement.py` for all learning
 6. ✅ Use `auto_moderator.db` for user tracking

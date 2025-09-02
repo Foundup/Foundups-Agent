@@ -107,6 +107,16 @@ class LiveChatCore:
         
         # Ensure memory directory exists
         os.makedirs(self.memory_dir, exist_ok=True)
+        
+        # AUTOMATIC: Initialize WRE monitor for continuous improvement
+        try:
+            from modules.infrastructure.wre_core.wre_monitor import get_monitor
+            self.wre_monitor = get_monitor()
+            logger.info("[0102] WRE Monitor attached - Continuous improvement active")
+        except Exception as e:
+            logger.debug(f"WRE Monitor not available: {e}")
+            self.wre_monitor = None
+        
         logger.info(f"LiveChatCore initialized for video: {video_id}")
     
     async def initialize(self) -> bool:
@@ -163,6 +173,10 @@ class LiveChatCore:
             # Track API call
             self.intelligent_throttle.track_api_call(quota_cost=5)  # Chat messages cost more quota
             
+            # WRE Monitor: Track API call
+            if self.wre_monitor:
+                self.wre_monitor.track_api_call('liveChatMessages.insert', 5, True)
+            
             # Check if we should send based on intelligent throttling
             if not self.intelligent_throttle.should_respond(response_type):
                 delay = self.intelligent_throttle.calculate_adaptive_delay(response_type)
@@ -192,6 +206,10 @@ class LiveChatCore:
         # AUTOMATIC: Record response for intelligent learning
         if self.intelligent_throttle:
             self.intelligent_throttle.record_response(response_type, success=True)
+            
+            # WRE Monitor: Track successful response
+            if self.wre_monitor and success:
+                self.wre_monitor.messages_processed += 1
         
         # Limit recent messages cache
         if len(self.recent_messages_sent) > 100:
@@ -277,6 +295,10 @@ class LiveChatCore:
             
             # Update stats
             self.mod_stats.record_message()
+            
+            # WRE Monitor: Track message processing
+            if self.wre_monitor:
+                self.wre_monitor.messages_processed += 1
             
             # Process message through enhanced processor
             processed = self.message_processor.process_message(message)
@@ -858,7 +880,7 @@ class LiveChatCore:
                         try:
                             logger.info("[THREAD] X/Twitter posting thread started")
                             x_poster = AntiDetectionX()
-                            result = x_poster.post_to_x(content)
+                            result = x_poster.post_to_x(content, video_id=self.video_id)
                             if result:
                                 logger.info("[OK] Posted to X/Twitter!")
                                 print("[OK] Posted to X/Twitter!")
