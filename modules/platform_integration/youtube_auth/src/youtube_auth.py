@@ -75,13 +75,9 @@ def get_authenticated_service(token_index=None):
         indices_to_try = [token_index + 1]
         logger.info(f"🎯 Using specific credential set {token_index + 1}")
     else:
-        # Auto-rotation: Skip known exhausted sets
-        # ALL 10 SETS NOW AVAILABLE!
-        # Set 1: foundups-bot, Set 2: foundups-agent2, Set 3: foundups-agent3
-        # Set 4: foundups-agent4, Set 5: foundupsagent5
-        # Set 6: foundups-agent6, Set 7: foundups-agent7
-        # Set 8: foundups-agent8 (NEW!), Set 9: foundups-agent9 (NEW!), Set 10: foundups-agent10 (NEW!)
-        all_sets = [8, 9, 10, 3, 7, 5, 4, 6, 1, 2]  # Prioritize new sets first - 100,000 units/day potential!
+        # Auto-rotation: Only use available credential sets (dynamic detection)
+        from modules.platform_integration.youtube_auth.src.quota_monitor import get_available_credential_sets
+        all_sets = get_available_credential_sets()  # Only configured sets (1, 10)
         available_sets = [s for s in all_sets if s not in get_authenticated_service.exhausted_sets]
         
         if not available_sets:
@@ -97,7 +93,8 @@ def get_authenticated_service(token_index=None):
         logger.info(f"🔑 Attempting authentication with credential set {index}")
         creds_data = get_credentials_for_index(index)
         if not creds_data:
-            logger.warning(f"⚠️ No credential data found for set {index}")
+            # This should not happen with dynamic detection, but log it as debug instead of warning
+            logger.debug(f"🔍 Credential set {index} not configured or files missing")
             continue
             
         client_secrets_file, token_file = creds_data
