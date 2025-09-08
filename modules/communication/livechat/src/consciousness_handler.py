@@ -7,7 +7,17 @@ Handles all consciousness-related emoji sequence processing and responses.
 
 import logging
 import re
+import os
+import sys
 from typing import Dict, Optional, Tuple
+
+# Import activity control system
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
+try:
+    from modules.infrastructure.activity_control.src.activity_control import is_enabled
+except ImportError:
+    # Fallback for testing - default to enabled
+    def is_enabled(activity): return True
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +139,11 @@ class ConsciousnessHandler:
         Returns:
             Response string or None
         """
+        # Check if consciousness pattern recognition is enabled
+        if not is_enabled("livechat.consciousness.pattern_recognition"):
+            logger.debug("Consciousness pattern recognition is disabled by activity control")
+            return None
+            
         emoji_sequence = self.extract_emoji_sequence(text)
         if not emoji_sequence:
             return None

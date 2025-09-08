@@ -1,0 +1,159 @@
+{
+  "global": {
+    "enabled": true,
+    "testing_mode": false,
+    "debug_mode": false,
+    "emergency_silence": false
+  },
+  "livechat": {
+    "enabled": true,
+    "magadoom": {
+      "enabled": true,
+      "announcements": true,
+      "level_notifications": true,
+      "leaderboard_updates": true,
+      "spree_announcements": true,
+      "rank_promotions": true,
+      "achievement_notifications": true
+    },
+    "consciousness": {
+      "enabled": true,
+      "emoji_triggers": true,
+      "automatic_responses": true,
+      "pattern_recognition": true,
+      "learning_updates": true
+    },
+    "chat": {
+      "enabled": true,
+      "command_processing": true,
+      "greeting_generation": true,
+      "status_announcements": true,
+      "automatic_moderation": true
+    }
+  },
+  "ai": {
+    "enabled": true,
+    "banter_engine": {
+      "enabled": true,
+      "auto_responses": true,
+      "pattern_learning": true,
+      "emoji_processing": true
+    },
+    "learning": {
+      "enabled": true,
+      "pattern_updates": true,
+      "model_training": true,
+      "feedback_processing": true
+    }
+  },
+  "platform": {
+    "enabled": true,
+    "api": {
+      "enabled": true,
+      "youtube_polling": true,
+      "youtube_posting": true,
+      "social_media_posting": true,
+      "stream_monitoring": true,
+      "quota_monitoring": true
+    },
+    "oauth": {
+      "enabled": true,
+      "credential_rotation": true,
+      "quota_management": true,
+      "health_checks": true
+    }
+  },
+  "infrastructure": {
+    "enabled": true,
+    "background": {
+      "enabled": true,
+      "cleanup_tasks": true,
+      "monitoring": true,
+      "health_checks": true,
+      "log_rotation": true
+    },
+    "wre": {
+      "enabled": true,
+      "recursive_improvement": true,
+      "pattern_optimization": true,
+      "memory_management": true
+    }
+  },
+  "gamification": {
+    "enabled": true,
+    "whack_a_magat": {
+      "enabled": true,
+      "announcements": true,
+      "scoring": true,
+      "leaderboards": true
+    }
+  },
+  "presets": {
+    "silent_testing": {
+      "description": "Complete silence - all automated activities disabled",
+      "overrides": {
+        "livechat.magadoom.announcements": false,
+        "livechat.magadoom.level_notifications": false,
+        "livechat.consciousness.automatic_responses": false,
+        "livechat.chat.status_announcements": false,
+        "platform.api.social_media_posting": false,
+        "ai.banter_engine.auto_responses": false,
+        "gamification.whack_a_magat.announcements": false
+      }
+    },
+    "api_testing": {
+      "description": "API testing only - no chat or announcement noise",
+      "overrides": {
+        "livechat.magadoom.enabled": false,
+        "livechat.consciousness.automatic_responses": false,
+        "livechat.chat.status_announcements": false,
+        "ai.banter_engine.auto_responses": false
+      }
+    },
+    "magadoom_off": {
+      "description": "Disable all MagaDoom gamification activities",
+      "overrides": {
+        "livechat.magadoom.enabled": false,
+        "gamification.whack_a_magat.enabled": false
+      }
+    },
+    "consciousness_off": {
+      "description": "Disable 0102 consciousness triggers and responses",
+      "overrides": {
+        "livechat.consciousness.enabled": false,
+        "ai.banter_engine.auto_responses": false
+      }
+    },
+    "emergency_silence": {
+      "description": "Emergency preset - disable all noisy activities immediately",
+      "overrides": {
+        "livechat.magadoom.announcements": false,
+        "livechat.consciousness.automatic_responses": false,
+        "livechat.chat.status_announcements": false,
+        "platform.api.social_media_posting": false,
+        "ai.banter_engine.auto_responses": false,
+        "infrastructure.background.monitoring": false
+      }
+    }
+  },
+  "_metadata": {
+    "last_updated": "2025-09-06T17:47:29.151550",
+    "version": "1.0.0",
+    "registered_activities": [
+      "ai.banter_engine.auto_responses",
+      "ai.learning.pattern_updates",
+      "gamification.whack_a_magat.announcements",
+      "gamification.whack_a_magat.enabled",
+      "livechat.chat.status_announcements",
+      "livechat.consciousness.automatic_responses",
+      "livechat.consciousness.emoji_triggers",
+      "livechat.consciousness.enabled",
+      "livechat.magadoom.announcements",
+      "livechat.magadoom.enabled",
+      "livechat.magadoom.level_notifications",
+      "platform.api.social_media_posting",
+      "platform.api.stream_monitoring",
+      "platform.api.youtube_posting"
+    ]
+  }
+}

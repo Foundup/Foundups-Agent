@@ -106,13 +106,12 @@ class LLMConnector:
                     
             elif self.provider == "openai":
                 try:
-                    import openai
-                    openai.api_key = self.api_key
-                    self.client = openai
+                    from openai import OpenAI
+                    self.client = OpenAI(api_key=self.api_key)
                     self.simulation_mode = False
-                    logging.info("OpenAI client initialized successfully")
+                    logging.info("OpenAI v1.0+ client initialized successfully")
                 except ImportError:
-                    logging.error("openai library not installed. Install with: pip install openai")
+                    logging.error("openai library not installed. Install with: pip install openai>=1.0")
                     self.simulation_mode = True
                     
             elif self.provider == "grok":
@@ -188,9 +187,9 @@ class LLMConnector:
             return None
     
     def _get_openai_response(self, prompt: str, max_tokens: int, temperature: float) -> Optional[str]:
-        """Get response from OpenAI GPT."""
+        """Get response from OpenAI GPT using v1.0+ API."""
         try:
-            response = self.client.ChatCompletion.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=max_tokens,

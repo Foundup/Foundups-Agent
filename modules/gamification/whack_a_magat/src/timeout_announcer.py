@@ -15,9 +15,18 @@ import os
 import time
 import random
 import sqlite3
+import sys
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
 from collections import defaultdict
+
+# Import activity control system
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
+try:
+    from modules.infrastructure.activity_control.src.activity_control import is_enabled
+except ImportError:
+    # Fallback for testing - default to enabled
+    def is_enabled(activity): return True
 
 # Import whack gamification from same module
 from modules.gamification.whack_a_magat.src.whack import apply_whack, get_profile, classify_behavior, BehaviorTier
@@ -365,11 +374,13 @@ class TimeoutManager:
         
         # Check for rank/level up
         if new_profile.rank != old_rank or new_profile.level != old_level:
-            new_title = self.get_title_for_profile(new_profile)
-            if new_profile.rank != old_rank:
-                result["level_up"] = f"🏆 {mod_name} RANKED UP to {new_profile.rank}! Now: {new_title}!"
-            else:
-                result["level_up"] = f"🎉 {mod_name} LEVELED UP to {new_title}! (Level {new_profile.level})"
+            # Check if level notifications are enabled
+            if is_enabled("gamification.whack_a_magat.level_notifications"):
+                new_title = self.get_title_for_profile(new_profile)
+                if new_profile.rank != old_rank:
+                    result["level_up"] = f"🏆 {mod_name} RANKED UP to {new_profile.rank}! Now: {new_title}!"
+                else:
+                    result["level_up"] = f"🎉 {mod_name} LEVELED UP to {new_title}! (Level {new_profile.level})"
         
         # Classify behavior for flavor text
         recent_actions = self._count_recent_actions_on_target(mod_id, target_id)
@@ -386,7 +397,10 @@ class TimeoutManager:
         streak = self.kill_streaks.get(mod_id, 0)
         
         # Generate Quake/Duke Nukem announcement (pass the event timestamp for accurate multi-whack detection)
-        duke_announcement = self._get_timeout_announcement(mod_id, mod_name, target_name, current_time)
+        # Check if MagaDoom announcements are enabled
+        duke_announcement = None
+        if is_enabled("gamification.whack_a_magat.announcements"):
+            duke_announcement = self._get_timeout_announcement(mod_id, mod_name, target_name, current_time)
         
         # Get multi-count for anti-spam logic
         multi_count = self.multi_whack_count.get(mod_id, 1)

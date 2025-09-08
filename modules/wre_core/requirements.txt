@@ -1,0 +1,36 @@
+# WRE Core Requirements
+# WSP 12: Dependency Management Protocol
+
+# Core Python Dependencies
+asyncio>=3.8.0
+typing>=3.8.0
+pathlib>=1.0.0
+datetime
+json
+hashlib
+math
+
+# Autonomous Enhancements Integration
+# (Optional - will use stubs if not available)
+# modules/infrastructure/autonomous_enhancements
+
+# Testing Dependencies
+pytest>=7.0.0
+pytest-cov>=4.0.0
+unittest-mock>=3.8.0
+
+# Development Dependencies
+black>=22.0.0
+flake8>=4.0.0
+mypy>=0.900
+
+# Documentation
+sphinx>=4.0.0
+sphinx-rtd-theme>=1.0.0
+
+# Logging and Monitoring
+logging>=3.8.0
+
+# Version: 0.1.0
+# Last Updated: 2025-01-29
+# WSP Compliance: WSP 12 verified

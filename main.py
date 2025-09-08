@@ -13,9 +13,9 @@ import logging
 import os
 import sys
 import subprocess
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
 from datetime import datetime
-from modules.infrastructure.wre_core.wre_gateway.src.dae_gateway import DAEGateway
+from modules.wre_core.wre_gateway.src.dae_gateway import DAEGateway
 
 # Windows UTF-8 fix
 if os.name == 'nt':
@@ -31,9 +31,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# WSP 69: Autonomous Enhancements Integration (Optional - no breaking changes)
+try:
+    from modules.infrastructure.autonomous_enhancements.src.autonomous_enhancements import autonomous_enhancements
+    AUTONOMOUS_ENHANCEMENTS_AVAILABLE = True
+    print("🤖 Autonomous enhancements loaded (WSP 69)")
+except ImportError as e:
+    AUTONOMOUS_ENHANCEMENTS_AVAILABLE = False
+    print(f"Autonomous enhancements not available: {e}")
+
 
 class BlockLauncher:
-    """WSP-compliant block launcher using existing blocks only"""
+    """WSP-compliant block launcher using existing blocks only
+
+    Enhanced with WSP 69 autonomous capabilities:
+    - AIRE: Autonomous Intent Resolution Engine
+    - QRPE: Quantum Resonance Pattern Engine
+    - Optional enhancements that don't break existing functionality
+    """
     
     def __init__(self):
         self.blocks = {
@@ -63,7 +78,7 @@ class BlockLauncher:
             },
             '4': {
                 'name': 'AMO DAE',
-                'module': 'modules.infrastructure.wre_core.run_wre',
+                'module': 'modules.wre_core.src.run_wre',
                 'function': 'main',
                 'description': 'Autonomous Management Orchestrator DAE'
             },
@@ -96,7 +111,7 @@ class BlockLauncher:
             return True
             
         block_info = self.blocks[choice]
-        logger.info(f"Launching {block_info['name']}...")
+        print(f"🚀 Launching {block_info['name']}...")
         
         use_wre = input(f"Launch {block_info['name']} with WRE integration? (y/n): ").strip().lower() == 'y'
         
@@ -105,7 +120,7 @@ class BlockLauncher:
                 gateway = DAEGateway()
                 # route_to_dae is async, so we need to run it properly
                 result = asyncio.run(gateway.route_to_dae('youtube_dae', {'objective': 'launch_yt_dae'}))
-                logger.info(f"WRE integration result: {result}")
+                print(f"🔗 WRE integration result: {result}")
             else:
                 if 'function' in block_info:
                     # Import and call function
@@ -127,30 +142,154 @@ class BlockLauncher:
                         else:
                             instance.run()
                     else:
-                        logger.info(f"{block_info['class']} initialized")
+                        print(f"✅ {block_info['class']} initialized")
                 else:
-                    logger.error("Block configuration error")
+                    print("❌ Block configuration error")
                 
             return True
             
         except ImportError as e:
-            logger.error(f"Block not available: {e}")
-            logger.info("Ensure block is installed and follows WSP 80 architecture")
+            print(f"❌ Block not available: {e}")
+            print("💡 Ensure block is installed and follows WSP 80 architecture")
         except Exception as e:
-            logger.error(f"Launch error: {e}")
+            print(f"❌ Launch error: {e}")
             
         return True
     
+    def get_context_for_autonomous_enhancement(self) -> Dict[str, Any]:
+        """
+        Gather system context for autonomous enhancement (WSP 69)
+
+        Returns:
+            Context dictionary for AIRE/QPO decision making
+        """
+        context = {
+            'timestamp': datetime.now().isoformat(),
+            'day_of_week': datetime.now().strftime('%A'),
+            'hour': datetime.now().hour,
+            'system_status': 'operational'
+        }
+
+        # Add time-based context for better intent resolution
+        hour = context['hour']
+        if 6 <= hour < 12:
+            context['time_context'] = 'morning'
+        elif 12 <= hour < 18:
+            context['time_context'] = 'afternoon'
+        elif 18 <= hour < 22:
+            context['time_context'] = 'evening'
+        else:
+            context['time_context'] = 'night'
+
+        # Add available blocks context
+        context['available_blocks'] = list(self.blocks.keys())
+        context['total_blocks'] = len(self.blocks)
+
+        return context
+
+    def get_autonomous_recommendation(self, context: Dict[str, Any]) -> Optional[str]:
+        """
+        Get autonomous block recommendation using AIRE (WSP 69)
+
+        Args:
+            context: System context for decision making
+
+        Returns:
+            Recommended block choice or None
+        """
+        if not AUTONOMOUS_ENHANCEMENTS_AVAILABLE:
+            return None
+
+        try:
+            # Use AIRE for autonomous intent resolution
+            recommendation = autonomous_enhancements.aire.resolve_intent(context)
+
+            if recommendation and recommendation in self.blocks:
+                print(f"🤖 AIRE Recommendation: Block {recommendation} "
+                      f"({self.blocks[recommendation]['description'][:50]}...)")
+                return recommendation
+            else:
+                print("🤖 AIRE: No confident recommendation available")
+                return None
+
+        except Exception as e:
+            print(f"⚠️ AIRE recommendation failed: {e}")
+            return None
+
+    def learn_from_decision(self, context: Dict[str, Any], choice: str, outcome: Dict[str, Any]):
+        """
+        Learn from decision outcomes using QRPE (WSP 48 recursive improvement)
+
+        Args:
+            context: Decision context
+            choice: Block choice made
+            outcome: Decision outcome
+        """
+        if not AUTONOMOUS_ENHANCEMENTS_AVAILABLE:
+            return
+
+        try:
+            # Use QRPE to learn from this decision
+            autonomous_enhancements.learn_from_decision(context, choice, outcome)
+            print(f"🧠 Learned from decision: Block {choice}")
+
+        except Exception as e:
+            print(f"⚠️ Learning from decision failed: {e}")
+
     def run(self):
-        """Main loop"""
+        """Main loop with autonomous enhancement options"""
         while True:
             self.show_menu()
-            choice = input("\nSelect option (0=Git Push, 1=YouTube, 4=AMO | others pending | 9=exit): ").strip()
-            
-            if not self.launch_block(choice):
+
+            # Get context for autonomous enhancement
+            context = self.get_context_for_autonomous_enhancement()
+
+            # Try autonomous recommendation (WSP 69)
+            autonomous_choice = self.get_autonomous_recommendation(context)
+
+            if autonomous_choice:
+                # Offer autonomous recommendation
+                use_autonomous = input(f"\n🤖 Autonomous recommendation: Block {autonomous_choice} "
+                                     f"({self.blocks[autonomous_choice]['name']})\n"
+                                     "Use autonomous choice? (y/n/manual): ").strip().lower()
+
+                if use_autonomous == 'y':
+                    choice = autonomous_choice
+                    print(f"✅ Using autonomous recommendation: {choice}")
+                elif use_autonomous == 'manual':
+                    choice = input("Manual selection: ").strip()
+                else:
+                    choice = input("\nSelect option (0=Git Push, 1=YouTube, 4=AMO | others pending | 9=exit): ").strip()
+            else:
+                # Standard manual selection
+                choice = input("\nSelect option (0=Git Push, 1=YouTube, 4=AMO | others pending | 9=exit): ").strip()
+
+            # Launch selected block
+            success = self.launch_block(choice)
+
+            # Learn from the decision outcome (WSP 48)
+            if success:
+                outcome = {'success': True, 'block': choice}
+                self.learn_from_decision(context, choice, outcome)
+            else:
+                outcome = {'success': False, 'block': choice, 'error': 'launch_failed'}
+                self.learn_from_decision(context, choice, outcome)
+
+            if not success and choice == '9':  # Exit condition
                 break
-        
+
         print("Exiting...")
+
+        # Show autonomous enhancement statistics on exit
+        if AUTONOMOUS_ENHANCEMENTS_AVAILABLE:
+            try:
+                stats = autonomous_enhancements.get_system_status()
+                print("\n🤖 Autonomous Enhancement Session Summary:")
+                print(f"   AIRE Decisions: {stats['algorithms']['aire']['decisions_made']}")
+                print(f"   QRPE Patterns: {stats['algorithms']['qrpe']['patterns_learned']}")
+                print(f"   Quantum Coherence: {stats['coherence']:.1f}")
+            except Exception as e:
+                print(f"Warning: Could not retrieve enhancement stats: {e}")
 
 
 def load_commit_memory():
@@ -351,6 +490,25 @@ def git_push_and_post():
                     'files': len(files),
                     'timestamp': datetime.now().isoformat()
                 })
+
+                # WSP 69: QRPE learning from user preference
+                if AUTONOMOUS_ENHANCEMENTS_AVAILABLE:
+                    context = {
+                        'action': 'commit_message_edit',
+                        'original_length': len(commit_message),
+                        'edited_length': len(custom_message),
+                        'files_changed': len(files),
+                        'user_preference': 'custom_edit'
+                    }
+                    try:
+                        autonomous_enhancements.qrpe.learn_pattern(context, {
+                            'decision': 'edit_commit_message',
+                            'outcome': 'user_satisfaction',
+                            'pattern': 'custom_message_preferred'
+                        })
+                    except Exception as e:
+                        print(f"⚠️ QRPE learning failed: {e}")
+
                 commit_message = custom_message
             else:
                 print("Using auto-generated message")
@@ -448,7 +606,7 @@ def git_push_and_post():
 
 
 def main():
-    """Main entry point - minimal block orchestrator"""
+    """Main entry point - minimal block orchestrator with autonomous enhancements"""
     # Check for command line arguments
     if len(sys.argv) > 1:
         arg = sys.argv[1].lower()
@@ -461,6 +619,8 @@ def main():
             print("  --x          Launch X DAE")
             print("  --amo        Launch AMO DAE")
             print("  --remote     Launch Remote DAE")
+            print("  --autonomous Run with autonomous enhancements (WSP 69)")
+            print("  --stats      Show autonomous enhancement statistics")
             print("  --help       Show this help")
             print("\nNo arguments: Show interactive menu")
             return
@@ -487,7 +647,22 @@ def main():
             launcher = BlockLauncher()
             launcher.launch_block('5')
             return
-    
+        elif arg == "--stats":
+            if AUTONOMOUS_ENHANCEMENTS_AVAILABLE:
+                try:
+                    stats = autonomous_enhancements.get_system_status()
+                    print("🤖 Autonomous Enhancement Statistics:")
+                    print(f"  Quantum State: {stats['quantum_state']}")
+                    print(f"  Coherence: {stats['coherence']}")
+                    print(f"  QRPE Patterns: {stats['algorithms']['qrpe']['patterns_learned']}")
+                    print(f"  AIRE Decisions: {stats['algorithms']['aire']['decisions_made']}")
+                    print(f"  Tokens Saved: {stats['algorithms']['qrpe']['tokens_used']}")
+                except Exception as e:
+                    print(f"Could not retrieve stats: {e}")
+            else:
+                print("Autonomous enhancements not available")
+            return
+
     # Interactive mode
     launcher = BlockLauncher()
     launcher.run()

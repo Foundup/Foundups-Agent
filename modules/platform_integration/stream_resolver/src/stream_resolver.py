@@ -17,7 +17,7 @@ from typing import Optional, Tuple, Dict, Any
 import googleapiclient.errors
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import Resource
-from utils.oauth_manager import get_authenticated_service_with_fallback, get_authenticated_service
+from modules.platform_integration.youtube_auth.src.youtube_auth import get_authenticated_service
 from utils.env_loader import get_env_variable
 import time
 import random
@@ -825,7 +825,7 @@ class StreamResolver:
                 if hasattr(e, 'resp') and hasattr(e.resp, 'status') and e.resp.status == 403 and "quotaExceeded" in str(e):
                     self.logger.warning("🔄 Quota exceeded verifying cached stream, trying credential rotation...")
                     # Try with credential rotation
-                    fallback_result = get_authenticated_service_with_fallback()
+                    fallback_result = get_authenticated_service()
                     if fallback_result:
                         fallback_service, fallback_creds, credential_set = fallback_result
                         self.logger.info(f"✅ Rotated to credential {credential_set} for cached stream verification")
@@ -945,7 +945,7 @@ class StreamResolver:
             except QuotaExceededError:
                 self.logger.warning("🔄 Quota exceeded during stream search, trying credential rotation...")
                 # Try with credential rotation
-                fallback_result = get_authenticated_service_with_fallback()
+                fallback_result = get_authenticated_service()
                 if fallback_result:
                     fallback_service, fallback_creds, credential_set = fallback_result
                     self.logger.info(f"✅ Rotated to credential {credential_set} for stream search")
@@ -1010,7 +1010,7 @@ if __name__ == '__main__':
         
         print(f"Testing with channel: {mask_sensitive_id(test_channel_id, 'channel')}")
         
-        service = get_authenticated_service_with_fallback()
+        service = get_authenticated_service()
         if service:
             result = get_active_livestream_video_id(service, test_channel_id)
             if result:

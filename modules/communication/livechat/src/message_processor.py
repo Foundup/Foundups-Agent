@@ -24,6 +24,7 @@ from modules.communication.livechat.src.consciousness_handler import Consciousne
 from modules.ai_intelligence.banter_engine.src.agentic_sentiment_0102 import AgenticSentiment0102
 from modules.communication.livechat.src.event_handler import EventHandler
 from modules.communication.livechat.src.command_handler import CommandHandler
+from modules.communication.livechat.src.moderation_stats import ModerationStats  # WSP 84: Enhanced with MAGADOOM
 from modules.communication.livechat.src.greeting_generator import GrokGreetingGenerator
 from modules.gamification.whack_a_magat.src.self_improvement import MAGADOOMSelfImprovement
 from modules.communication.livechat.src.agentic_chat_engine import AgenticChatEngine
@@ -54,6 +55,8 @@ class MessageProcessor:
         # Initialize handlers (WSP-compliant separation)
         self.event_handler = EventHandler(self.memory_dir)
         self.command_handler = CommandHandler(self.event_handler.get_timeout_manager(), self)
+        # WSP 84 Enhancement: Initialize enhanced ModerationStats with MAGADOOM gaming
+        self.moderation_stats = ModerationStats(self.memory_dir)
         # WSP 84 compliant: Use existing modules, not duplicate code
         self.greeting_generator = GrokGreetingGenerator()
         self.self_improvement = MAGADOOMSelfImprovement()
@@ -565,19 +568,30 @@ class MessageProcessor:
         return bool(re.search(pattern, text.lower()))
     
     def _check_whack_command(self, text: str) -> bool:
-        """Check if message contains whack gamification commands."""
-        commands = [
-            '/score', '/level', '/rank', '/stats', '/leaderboard', '/frags', '/whacks', 
-            '/help', '/quiz', '/answer', '/facts', '/fscale', '/rate', '/sprees', '/toggle', '/top'
-        ]
+        """
+        WSP 84 Enhanced: Check if message contains gaming or other commands.
+        Routes gaming commands to enhanced ModerationStats, others to CommandHandler.
+        """
+        # WSP 84: Use enhanced ModerationStats for gaming command detection
+        is_gaming = self.moderation_stats.is_gaming_command(text)
+        
+        # Also check for non-gaming commands (PQN, toggle, etc.)
+        other_commands = ['/toggle', '/pqn', '/answer']  # Commands that stay in CommandHandler
         text_lower = text.lower().strip()
-        has_command = any(text_lower.startswith(cmd) for cmd in commands)
+        has_other = any(text_lower.startswith(cmd) for cmd in other_commands)
+        
+        has_command = is_gaming or has_other
+        
         if has_command:
-            logger.info(f"🎮 Detected whack command: {text_lower}")
+            if is_gaming:
+                logger.info(f"🎮 Detected MAGADOOM gaming command: {text_lower}")
+            else:
+                logger.info(f"⚙️ Detected other command: {text_lower}")
         else:
             # Log if it looks like a command but isn't recognized
             if text_lower.startswith('/'):
-                logger.debug(f"🔍 Slash message not a whack command: {text_lower}")
+                logger.debug(f"🔍 Slash message not recognized: {text_lower}")
+        
         return has_command
     
     async def _handle_factcheck(self, text: str, requester: str, role: str) -> Optional[str]:
@@ -601,8 +615,19 @@ class MessageProcessor:
         return None
     
     def _handle_whack_command(self, text: str, username: str, user_id: str, role: str) -> Optional[str]:
-        """Delegate whack command handling to CommandHandler."""
-        return self.command_handler.handle_whack_command(text, username, user_id, role)
+        """
+        WSP 84 Enhanced: Route commands to appropriate handlers.
+        Gaming commands → Enhanced ModerationStats
+        Other commands (PQN, etc.) → CommandHandler
+        """
+        # WSP 84: Route gaming commands to enhanced ModerationStats
+        if self.moderation_stats.is_gaming_command(text):
+            logger.info(f"🎮 Routing MAGADOOM command to enhanced ModerationStats: {text}")
+            return self.moderation_stats.handle_gaming_command(text, username, user_id, role)
+        else:
+            # Route non-gaming commands (PQN, toggle, etc.) to original CommandHandler
+            logger.info(f"⚙️ Routing non-gaming command to CommandHandler: {text}")
+            return self.command_handler.handle_whack_command(text, username, user_id, role)
     
     def _handle_timeout_event(self, event: Dict[str, Any]) -> Dict[str, Any]:
         """Delegate timeout event handling to EventHandler."""

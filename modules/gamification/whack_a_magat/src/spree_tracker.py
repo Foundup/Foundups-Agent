@@ -12,10 +12,20 @@ Inspired by Unreal Tournament killing sprees:
 """
 
 import time
+import os
+import sys
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 import logging
+
+# Import activity control system
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
+try:
+    from modules.infrastructure.activity_control.src.activity_control import is_enabled
+except ImportError:
+    # Fallback for testing - default to enabled
+    def is_enabled(activity): return True
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +121,11 @@ class SpreeTracker:
                 if new_level and new_level != old_level:
                     logger.info(f"🔥 {mod_name} achieved {new_level}! ({spree.frag_count} frags)")
                     
+                    # Check if spree announcements are enabled
+                    announcement = None
+                    if is_enabled("gamification.whack_a_magat.spree_announcements"):
+                        announcement = self._generate_announcement(mod_name, new_level, spree.frag_count)
+                    
                     return {
                         "type": "spree_milestone",
                         "mod_id": mod_id,
@@ -118,7 +133,7 @@ class SpreeTracker:
                         "spree_level": new_level,
                         "frag_count": spree.frag_count,
                         "bonus_xp": bonus_xp,
-                        "announcement": self._generate_announcement(mod_name, new_level, spree.frag_count)
+                        "announcement": announcement
                     }
             else:
                 # Spree ended, archive it

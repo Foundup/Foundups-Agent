@@ -1,0 +1,15 @@
+# Autonomous Enhancements Requirements
+# WSP 12: Dependency Management
+
+# Core dependencies (PoC Phase)
+# Note: Using only standard library for maximum compatibility
+
+# Future dependencies (Prototype Phase - uncomment when needed)
+# scikit-learn>=1.3.0  # For ML-enhanced QRPE
+# numpy>=1.24.0       # For advanced matrix operations
+# torch>=2.0.0        # For quantum tensor operations
+# transformers>=4.0.0 # For advanced AI models
+
+# Development dependencies
+# pytest>=7.0.0        # For testing
+# pytest-cov>=4.0.0    # For coverage reporting

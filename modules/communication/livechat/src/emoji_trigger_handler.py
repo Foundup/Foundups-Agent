@@ -6,9 +6,19 @@ Handles emoji detection and response generation for ✊✋🖐️ triggers
 import logging
 import time
 import random
+import os
+import sys
 from typing import Dict, Optional, Any
 from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
 from modules.communication.livechat.src.llm_bypass_engine import LLMBypassEngine
+
+# Import activity control system
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
+try:
+    from modules.infrastructure.activity_control.src.activity_control import is_enabled
+except ImportError:
+    # Fallback for testing - default to enabled
+    def is_enabled(activity): return True
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +127,11 @@ class EmojiTriggerHandler:
         Returns:
             Response message or None if rate limited
         """
+        # Check if emoji triggers are enabled
+        if not is_enabled("livechat.consciousness.emoji_triggers"):
+            logger.debug("Emoji triggers are disabled by activity control")
+            return None
+            
         # Check if user is rate limited
         if self.is_rate_limited(author_id):
             return None
