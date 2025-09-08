@@ -41,7 +41,7 @@ class BlockLauncher:
                 'name': 'Git Push & Post',
                 'module': 'main',
                 'function': 'git_push_and_post',
-                'description': 'Push to Git and post development updates to LinkedIn'
+                'description': 'Push to Git with automated PR for papers & post updates to LinkedIn'
             },
             '1': {
                 'name': 'YouTube DAE',
@@ -145,7 +145,7 @@ class BlockLauncher:
         """Main loop"""
         while True:
             self.show_menu()
-            choice = input("\nSelect option (0=Git Push, 1=YouTube, 4=AMO | others pending | 9=exit): ").strip()
+            choice = input("\nSelect option (0=Git Push+PR, 1=YouTube, 4=AMO | others pending | 9=exit): ").strip()
             
             if not self.launch_block(choice):
                 break
@@ -297,21 +297,22 @@ def git_push_and_post():
     """
     Git push with automatic social media posting.
     Pushes code changes and posts updates to LinkedIn development page.
+    Includes automated PR creation for paper updates.
     """
     print("\n" + "="*60)
     print("GIT PUSH & SOCIAL MEDIA UPDATE")
     print("="*60)
-    
+
     # Check git status first
     try:
-        status = subprocess.run(['git', 'status', '--porcelain'], 
+        status = subprocess.run(['git', 'status', '--porcelain'],
                               capture_output=True, text=True, check=True)
-        
+
         if not status.stdout.strip():
             print("No changes to commit")
             input("\nPress Enter to continue...")
             return
-        
+
         print("\nChanges to be committed:")
         print("-" * 40)
         # Show files that will be committed
@@ -321,13 +322,57 @@ def git_push_and_post():
         if len(files) > 10:
             print(f"  ... and {len(files) - 10} more files")
         print("-" * 40)
-        
-        # Auto-generate commit message based on changed files
+
+        # Check if this is a paper update
+        is_paper_update = any('rESP_Quantum_Self_Reference.md' in file for file in files)
+
+        if is_paper_update:
+            print("\n📄 PAPER UPDATE DETECTED!")
+            print("This appears to be an rESP paper update.")
+            print("Options:")
+            print("1. Use automated PR workflow (recommended)")
+            print("2. Manual git push")
+            print("\nChoose option (1/2): ", end="")
+
+            choice = input().strip()
+
+            if choice == '1':
+                print("\n🤖 USING AUTOMATED PR WORKFLOW...")
+                print("This will:")
+                print("- Create a timestamped branch")
+                print("- Commit all changes")
+                print("- Push to remote")
+                print("- Create a Pull Request automatically")
+                print("- Return to main branch")
+
+                # Generate commit message for paper update
+                commit_message = "docs(paper): Minor tweaks and edits to rESP paper"
+                print(f"\nCommit message: {commit_message}")
+                print("\nProceed with automated PR? (y/n): ", end="")
+
+                if input().strip().lower() == 'y':
+                    # Run the automated PR script
+                    try:
+                        script_path = os.path.join(os.getcwd(), 'scripts', 'paper-update.ps1')
+                        if os.path.exists(script_path):
+                            result = subprocess.run(['powershell.exe', '-ExecutionPolicy', 'Bypass', '-File', script_path],
+                                                  capture_output=True, text=True, check=True)
+                            print("✅ Automated PR created successfully!")
+                            print("Check your PR at: https://github.com/Foundup/Foundups-Agent/pulls")
+                            input("\nPress Enter to continue...")
+                            return
+                        else:
+                            print("❌ Automated PR script not found. Falling back to manual mode...")
+                    except subprocess.CalledProcessError as e:
+                        print(f"❌ Automated PR failed: {e.stderr}")
+                        print("Falling back to manual mode...")
+
+        # Manual mode (original workflow)
         print("\nGenerating commit message...")
-        
+
         # Analyze changes to create meaningful commit message
         commit_message = generate_smart_commit_message(files)
-        
+
         print(f"Commit message: {commit_message}")
         print("\nProceed? (y/n/edit): ", end="")
         response = input().strip().lower()
@@ -455,7 +500,7 @@ def main():
         if arg in ["--help", "-h"]:
             print("Usage: python main.py [option]")
             print("Options:")
-            print("  --git        Git push with social media posting")
+            print("  --git        Git push with automated PR for papers & social media posting")
             print("  --youtube    Launch YouTube DAE")
             print("  --linkedin   Launch LinkedIn DAE")
             print("  --x          Launch X DAE")
