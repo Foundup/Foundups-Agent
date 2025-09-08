@@ -1,21 +1,56 @@
 """
-Moderation Statistics Tracker - WSP Compliant Module
-Tracks moderation events, violations, and provides analytics
+Moderation Statistics Tracker - WSP 84 Enhanced with MAGADOOM Gaming
+WSP 84 Compliant: Absorbs MAGADOOM gaming functionality into existing module
+Tracks moderation events, violations, gaming stats, and provides analytics
+
+Enhanced to include:
+- Gaming commands (/whacks, /leaderboard, /quiz, /session)
+- Activity control (/magadoom_off, /magadoom_on) 
+- Gaming profile integration
+- Quiz engine integration
 """
 
 import logging
 import json
 import os
+import sys
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 from collections import defaultdict
 
+# Initialize logger first
 logger = logging.getLogger(__name__)
+
+# WSP 84 Enhancement: Import gaming functionality to absorb
+try:
+    from modules.gamification.whack_a_magat import (
+        get_profile, get_leaderboard, get_user_position,
+        QuizEngine
+    )
+    from modules.gamification.whack_a_magat.src.spree_tracker import get_active_sprees
+    from modules.gamification.whack_a_magat.src.self_improvement import observe_command
+    from modules.gamification.whack_a_magat.src.historical_facts import get_random_fact, get_parallel, get_warning
+    from modules.gamification.whack_a_magat.src.whack import get_session_leaderboard
+    GAMING_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"Gaming modules not available: {e}")
+    GAMING_AVAILABLE = False
+
+# Activity control integration - fix import path
+try:
+    sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
+    from modules.infrastructure.activity_control.src.activity_control import controller
+    ACTIVITY_CONTROL_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"Activity control not available: {e}")
+    ACTIVITY_CONTROL_AVAILABLE = False
 
 class ModerationStats:
     """
-    Tracks moderation statistics and violations.
-    Separated from LiveChatListener for WSP compliance.
+    WSP 84 Enhanced: Moderation Statistics + MAGADOOM Gaming Integration
+    
+    Tracks moderation statistics, violations, and gaming functionality.
+    Absorbs MAGADOOM commands from command_handler.py per WSP 84 principles.
     """
     
     def __init__(self, memory_dir: str = "memory"):
@@ -27,17 +62,22 @@ class ModerationStats:
         self.total_violations = 0
         self.total_timeouts = 0
         
-        # Duke Nukem/Quake announcer for timeouts
+        # Duke Nukem/Quake announcer for timeouts (existing gaming infrastructure)
         self.kill_streaks = {}  # mod_id -> streak count
         self.last_kill_time = {}  # mod_id -> timestamp
         self.streak_window = 15  # seconds to maintain streak
+        
+        # WSP 84 Enhancement: MAGADOOM Gaming Integration
+        self.quiz_engine = None  # Lazy initialization
+        self.gaming_enabled = GAMING_AVAILABLE
+        self.activity_control_enabled = ACTIVITY_CONTROL_AVAILABLE
         
         # Ensure memory directory exists
         os.makedirs(memory_dir, exist_ok=True)
         
         # Load existing stats if available
         self.load_stats()
-        logger.info("ModerationStats initialized")
+        logger.info("ModerationStats initialized with MAGADOOM gaming integration")
     
     def load_stats(self):
         """Load stats from persistent storage."""
@@ -301,3 +341,187 @@ class ModerationStats:
             if phrase in text_lower:
                 return phrase
         return None
+    
+    # WSP 84 Enhancement: MAGADOOM Gaming Command Integration
+    # Absorbs gaming functionality from command_handler.py
+    
+    def handle_gaming_command(self, text: str, username: str, user_id: str, role: str) -> Optional[str]:
+        """
+        WSP 84 Enhancement: Handle MAGADOOM gaming commands.
+        Absorbed from command_handler.py per WSP 84 principles.
+        
+        Args:
+            text: Command text
+            username: User's display name
+            user_id: User's ID  
+            role: User's role (USER/MOD/OWNER)
+            
+        Returns:
+            Gaming command response or None if not a gaming command
+        """
+        if not self.gaming_enabled:
+            return None
+            
+        text_lower = text.lower().strip()
+        logger.info(f"🎮 Processing MAGADOOM command: '{text_lower}' from {username} (role: {role})")
+        
+        try:
+            # Get user profile for gaming commands
+            profile = get_profile(user_id, username)
+            
+            if text_lower.startswith('/score') or text_lower.startswith('/rank'):
+                # Show user's score and rank
+                return f"@{username} 💀 MAGADOOM | {profile.rank} | {profile.score} XP | {profile.frag_count} FRAGS | RIP AND TEAR!"
+            
+            elif text_lower.startswith('/frags') or text_lower.startswith('/whacks'):
+                # Show total frags/whacks (same as score but focused on whacks)
+                return f"@{username} 🎯 MAGADOOM | {profile.frag_count} WHACKS! | {profile.score} XP | {profile.rank} 💀 RIP AND TEAR!"
+            
+            elif text_lower.startswith('/leaderboard'):
+                # Show leaderboard with enhanced formatting
+                leaderboard = get_leaderboard(limit=5)
+                if not leaderboard:
+                    return f"@{username} 📊 Leaderboard empty. Be the first to score!"
+                
+                response = f"@{username} 🏆 MAGADOOM LEADERBOARD:\n"
+                rank_icons = {1: "🥇", 2: "🥈", 3: "🥉"}
+                
+                for i, entry in enumerate(leaderboard, 1):
+                    icon = rank_icons.get(i, f"#{i}")
+                    display_name = entry.get('username', 'Unknown')[:15]
+                    
+                    # Show monthly score, rank, and ALL-TIME whacks
+                    all_time = entry.get('all_time_whacks', 0)
+                    monthly = entry.get('frag_count', 0)
+                    response += f"{icon} {display_name} [{entry['rank']}] {entry['score']}xp ({monthly} whacks | {all_time} all-time)\n"
+                
+                return response.rstrip()
+            
+            elif text_lower.startswith('/sprees'):
+                # Show active sprees
+                sprees = get_active_sprees()
+                if not sprees:
+                    return f"@{username} ⚡ No active sprees. Start a rampage!"
+                
+                response = f"@{username} 🔥 ACTIVE SPREES:\n"
+                for spree in sprees[:5]:
+                    response += f"🌟 {spree['username']}: {spree['type']} ({spree['count']} streak)\n"
+                return response.rstrip()
+            
+            elif text_lower.startswith('/quiz'):
+                # Handle quiz functionality
+                return self._handle_quiz_command(username, user_id, role)
+            
+            elif text_lower.startswith('/facts'):
+                # Educational facts about fascism
+                fact = get_random_fact()
+                return f"@{username} 📚 ANTI-FASCIST FACT: {fact}"
+            
+            elif text_lower.startswith('/session') and role in ['MOD', 'OWNER']:
+                # Show session leaderboard
+                session_leaders = get_session_leaderboard(limit=5)
+                if not session_leaders:
+                    return f"@{username} 📊 No session activity yet. Start whacking!"
+                
+                response = f"@{username} 🔥 SESSION LEADERS:\n"
+                for entry in session_leaders:
+                    response += f"#{entry['position']} {entry['username']} - {entry['session_score']} XP ({entry['session_whacks']} whacks)\n"
+                
+                # Add personal session stats
+                if profile.session_whacks > 0:
+                    response += f"\nYour session: {profile.session_score} XP ({profile.session_whacks} whacks)"
+                
+                return response.rstrip()
+            
+            # Activity Control Commands (MOD/OWNER only)
+            elif text_lower.startswith('/magadoom_off') and role in ['MOD', 'OWNER']:
+                if self.activity_control_enabled:
+                    apply_preset('magadoom_off')
+                    logger.info(f"🔇 {username} turned off MagaDoom activities")
+                    return f"@{username} ⚡ MagaDoom activities disabled (announcements, levels)"
+                else:
+                    return f"@{username} ⚡ Activity control not available"
+            
+            elif text_lower.startswith('/magadoom_on') and role in ['MOD', 'OWNER']:
+                if self.activity_control_enabled:
+                    restore_normal()
+                    logger.info(f"🔊 {username} restored MagaDoom activities")
+                    return f"@{username} ⚡ MagaDoom activities enabled"
+                else:
+                    return f"@{username} ⚡ Activity control not available"
+            
+            elif text_lower.startswith('/activity_status') and role in ['MOD', 'OWNER']:
+                if self.activity_control_enabled:
+                    controller = ActivityController()
+                    status = controller.get_status()
+                    magadoom = "✅" if status['modules']['livechat']['magadoom_announcements'] else "❌"
+                    consciousness = "✅" if status['modules']['livechat']['consciousness_triggers'] else "❌"
+                    return f"@{username} ⚡ Status: MagaDoom {magadoom} | 0102 {consciousness}"
+                else:
+                    return f"@{username} ⚡ Activity control not available"
+            
+            elif text_lower.startswith('/help'):
+                # MAGADOOM help
+                help_msg = f"@{username} 💀 MAGADOOM: /score /rank /whacks /leaderboard /sprees /quiz /facts /help"
+                if role in ['MOD', 'OWNER']:
+                    help_msg += " | MOD: /session /magadoom_off /magadoom_on /activity_status"
+                return help_msg
+            
+        except Exception as e:
+            logger.error(f"Error handling MAGADOOM command: {e}")
+            if text_lower != '/help':
+                return f"@{username} ⚠️ Gaming system error. Try /help for commands."
+        
+        return None  # Not a gaming command or error occurred
+    
+    def _handle_quiz_command(self, username: str, user_id: str, role: str) -> Optional[str]:
+        """Handle quiz command functionality."""
+        try:
+            # Initialize quiz engine if needed
+            if not self.quiz_engine:
+                self.quiz_engine = QuizEngine()
+                logger.info("🧠 Quiz engine initialized in ModerationStats")
+            
+            question_data = self.quiz_engine.get_question()
+            if not question_data:
+                return f"@{username} 🧠 Quiz system unavailable. Try again later."
+            
+            # Format question for chat (remove markdown for YouTube compatibility)
+            question = question_data['question'].replace('**', '').replace('*', '')
+            options = question_data['options']
+            
+            # Create formatted response
+            response = f"@{username} 🧠 QUIZ: {question}\n"
+            for i, option in enumerate(options, 1):
+                clean_option = option.replace('**', '').replace('*', '')
+                response += f"{i}. {clean_option}\n"
+            
+            response += "Reply with the number (1-4)"
+            logger.info(f"🧠 Generated quiz for {username}: {question[:50]}...")
+            return response.rstrip()
+            
+        except Exception as e:
+            logger.error(f"Quiz generation error: {e}")
+            return f"@{username} 🧠 Quiz system error. Educational content temporarily unavailable."
+    
+    def is_gaming_command(self, text: str) -> bool:
+        """
+        Check if text is a MAGADOOM gaming command.
+        
+        Args:
+            text: Text to check
+            
+        Returns:
+            True if it's a gaming command
+        """
+        if not self.gaming_enabled:
+            return False
+            
+        gaming_commands = [
+            '/score', '/rank', '/frags', '/whacks', '/leaderboard', 
+            '/sprees', '/quiz', '/facts', '/session', '/help',
+            '/magadoom_off', '/magadoom_on', '/activity_status'
+        ]
+        
+        text_lower = text.lower().strip()
+        return any(text_lower.startswith(cmd) for cmd in gaming_commands)

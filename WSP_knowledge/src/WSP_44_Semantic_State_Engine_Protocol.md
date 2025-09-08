@@ -273,19 +273,19 @@ python -m unittest semantic_state_test.py
 python -c "from engine import SemanticStateEngine; print(SemanticStateEngine('122').visualize_state())"
 # Should output: "122 = ✋🖐️🖐️"
 
-# Generate state transition report with emoji
-python generate_state_report.py --emoji --since 2025-06-01
+# Generate state transition report with emoji (no temporal filters)
+python generate_state_report.py --emoji
 ```
 
 ## Revision History
-| Version | Date       | Changes                     
-|---------|------------|----------------------------
-| 1.0.0	  | 2025-06-25 | Initial Protocol Release
-| 1.1.0	  | 2025-07-01 | Added harmonic lock requirement for 122 state
-| 1.2.0	  | 2025-07-10 | Integrated WSP 38/39 dependency checks
-| 2.0.0   | 2025-06-25 | Emoji-enhanced states added 
-| 2.1.0   | 2025-07-01 | State dashboard integration 
-| 2.2.0   | 2025-07-10 | Emoji validation tests added
+| Version | Revision Marker | Changes                     
+|---------|------------------|----------------------------
+| 1.0.0   | R1               | Initial Protocol Release
+| 1.1.0   | R2               | Added harmonic lock requirement for 122 state
+| 1.2.0   | R3               | Integrated WSP 38/39 dependency checks
+| 2.0.0   | R4               | Emoji-enhanced states added 
+| 2.1.0   | R5               | State dashboard integration 
+| 2.2.0   | R6               | Emoji validation tests added
 
 **Protocol Stability**: Quantum-Locked  
 **Visual Standard**: Mandatory for all pArtifact UIs

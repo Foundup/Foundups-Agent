@@ -81,13 +81,21 @@ Located in `modules/wre_core/src/components/`:
 -   **`roadmap_manager.py`**: Handles all parsing and updating of the `ROADMAP.md` file.
 -   **`menu_handler.py`**: Generates and displays the interactive "Harmonic Query" menu.
 
-### 2.3 Internal Agent Suite
-The DAEs (Decentralized Autonomous Entities) are the pattern-based orchestrators of the engine, performing tasks through memory recall rather than computation. They are located in `modules/infrastructure/`.
+### 2.3 Internal DAE Architecture (Updated for 0102 Autonomy)
+The DAEs (Decentralized Autonomous Entities) are the pattern-based orchestrators of the engine, performing tasks through memory recall rather than computation. They are located in `modules/infrastructure/wre_core/` and operate via the DAE Gateway.
 
--   **Compliance & Quality DAE:** The Guardian of WSP framework. This DAE ensures compliance through pre-violation pattern detection and instant rule matching.
--   **Knowledge & Learning DAE:** Provides instant pattern recall from memory, maintaining WSP knowledge through stored patterns rather than repeated analysis.
--   **Infrastructure Orchestration DAE:** Pattern-based module creation and workflow orchestration, constructing WSP-compliant structures from templates.
--   **Maintenance & Operations DAE:** Performs workspace hygiene through automated cleanup patterns and proactive bloat prevention.
+**Core Infrastructure DAEs (5 Cubes per WSP 54):**
+-   **Infrastructure Orchestration DAE (8000 tokens):** Spawns new FoundUp DAEs via WSP 80, contains wsp50_verifier and wsp64_preventer sub-agents as tools.
+-   **Compliance & Quality DAE (7000 tokens):** The Guardian of WSP framework. Ensures compliance through pre-violation pattern detection with wsp64_preventer and wsp48_improver sub-agents.
+-   **Knowledge & Learning DAE (6000 tokens):** Provides instant pattern recall (50-200 tokens), maintains WSP knowledge through wsp37_scorer and wsp48_learner sub-agents.
+-   **Maintenance & Operations DAE (5000 tokens):** Performs workspace hygiene through automated cleanup patterns with wsp50_verifier and state_manager sub-agents.
+-   **Documentation & Registry DAE (4000 tokens):** Maintains ModLogs and DAE registry with wsp22_documenter and registry_manager sub-agents.
+
+**Key Architecture Changes:**
+- **DAE Gateway** (`modules/infrastructure/wre_core/wre_gateway/`) routes WSP 21 envelopes to DAEs
+- **Sub-agents are tools** within DAE cubes, not independent agents
+- **Pattern recall** achieves 97% token reduction (50-200 tokens vs 25,000)
+- **0102 autonomous operation** - DAEs decide and execute without 012 approval
 
 ### 2.4 Future Vision
 The long-term vision for the WRE is to achieve a "Great Connection," transforming it from a passive tool into a fully autonomous, self-regulating, and purpose-driven system. This involves several key areas of development:
@@ -95,7 +103,16 @@ The long-term vision for the WRE is to achieve a "Great Connection," transformin
 -   **Self-Modification:** Granting the WRE the ability to modify its own source code to improve its functionality and adapt to new requirements through systematic recursive enhancement cycles (WSP 48).
 -   **Strategic Goal Pursuit:** Enabling the engine to autonomously pursue the strategic objectives outlined in the `ROADMAP.md`.
 
-### 2.5 DAE Compliance (WSP 80)
+### 2.5 Orchestration Hierarchy (Inline)
+
+WRE orchestration follows a clear three-tier hierarchy:
+1) WRE Core Orchestration (main system orchestrator)
+2) Domain Orchestrators (domain coordination)
+3) Module Orchestrators (module operations)
+
+Responsibilities, flows, and metrics mirror the reference in `WSP_ORCHESTRATION_HIERARCHY.md` which is now an annex pointer; this section is canonical.
+
+### 2.6 DAE Compliance (WSP 80)
 
 To reduce global complexity and enforce local protocol guarantees, this protocol SHALL be executed through cube-level DAEs per WSP 80 (Cube-Level DAE Orchestration Protocol):
 
@@ -107,7 +124,7 @@ To reduce global complexity and enforce local protocol guarantees, this protocol
   - Block-independence tests (WSP 72) validating cube boundaries
 - Token discipline: per-cube token budgets (typically 5–8K) are enforced. Any system-wide >30K usage requires a WSP 70 override documented in the relevant `ModLog.md`.
 
-Relationships: WSP 80, WSP 72, WSP 70, WSP 53
+Relationships: WSP 80, WSP 72, WSP 70, WSP 53, Annex: WSP_ORCHESTRATION_HIERARCHY.md
 
 ## 3. Orchestrated Agents & Utilities
 

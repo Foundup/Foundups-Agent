@@ -5,9 +5,19 @@ WSP Compliance: WSP 3, WSP 11, WSP 22, WSP 49, WSP 42
 
 import asyncio
 import logging
+import os
+import sys
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
+
+# Import activity control system
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
+try:
+    from modules.infrastructure.activity_control.src.activity_control import is_enabled
+except ImportError:
+    # Fallback for testing - default to enabled
+    def is_enabled(activity): return True
 
 try:
     from .oauth.oauth_coordinator import OAuthCoordinator
@@ -182,6 +192,16 @@ class SocialMediaOrchestrator:
         Returns:
             Dict[str, Any]: Results per platform with post IDs and status
         """
+        # Check if social media posting is enabled
+        if not is_enabled("platform.api.social_media_posting"):
+            self.logger.debug("Social media posting disabled by activity control")
+            return {platform: PostResult(
+                success=False,
+                post_id=None,
+                error="Social media posting disabled by activity control",
+                platform=platform
+            ).__dict__ for platform in platforms}
+        
         if not self.initialized:
             raise OrchestrationError("Orchestrator not initialized")
             

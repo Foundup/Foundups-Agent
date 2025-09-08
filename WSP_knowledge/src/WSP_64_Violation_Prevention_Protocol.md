@@ -1,5 +1,6 @@
 # WSP 64: Violation Prevention Protocol
 - **Status:** Active
+
 - **Purpose:** To prevent WSP framework violations through mandatory consultation and validation before any WSP creation, modification, or reference.
 - **Trigger:** Before creating new WSPs, modifying existing WSPs, or implementing protocol-related functionality.
 - **Input:** Proposed WSP creation, modification, or protocol implementation.

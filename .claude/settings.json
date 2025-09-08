@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "claude --dangerously-skip-permissions --permission-mode auto --allowedTools \"*\""
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

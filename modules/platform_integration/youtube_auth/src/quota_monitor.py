@@ -429,3 +429,25 @@ if __name__ == "__main__":
     # Estimate remaining operations
     remaining = monitor.estimate_operations_remaining(1, 'liveChatMessages.list')
     print(f"Set 1 can do {remaining} more liveChatMessages.list calls")
+
+
+def get_available_credential_sets():
+    """
+    Dynamically detect available credential sets from .env configuration.
+    Returns list of set numbers that have both client secrets and token files configured.
+    """
+    from dotenv import load_dotenv
+    load_dotenv()
+    
+    available_sets = []
+    for i in range(1, 11):  # Check all possible sets 1-10
+        client_secrets = os.getenv(f'GOOGLE_CLIENT_SECRETS_FILE_{i}')
+        token_file = os.getenv(f'OAUTH_TOKEN_FILE_{i}')
+        
+        if client_secrets and token_file:
+            # Verify files actually exist
+            if os.path.exists(client_secrets):
+                available_sets.append(i)
+    
+    logger.debug(f"Available credential sets detected: {available_sets}")
+    return available_sets

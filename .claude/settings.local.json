@@ -1,17 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(timeout:*)",
-      "Bash(python:*)",
-      "Bash(set PYTHONIOENCODING=utf-8)",
+      "Bash(PYTHONIOENCODING=utf-8 python:*)",
+      "Bash(cat:*)",
       "Bash(find:*)",
-      "WebSearch",
-      "Bash(grep:*)",
-      "Bash(wmic process:*)",
-      "Bash(taskkill:*)",
-      "Bash(tasklist)",
-      "Bash(git reset:*)",
-      "Bash(git rm:*)"
+      "Bash(pip install:*)",
+      "Bash(/bashes)",
+      "Bash(python:*)",
+      "WebFetch(domain:192.168.3.2)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

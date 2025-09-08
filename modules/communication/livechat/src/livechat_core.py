@@ -832,9 +832,11 @@ class LiveChatCore:
                 logger.info(f"  {line}")
             
             # Use browser automation with anti-detection for both platforms
-            # This runs in parallel threads for speed
+            # SEQUENTIAL POSTING: LinkedIn first, then X after completion to prevent browser conflicts
             
-            # Post to LinkedIn using anti-detection browser automation
+            linkedin_success = False
+            
+            # Post to LinkedIn first using anti-detection browser automation
             if os.getenv('LINKEDIN_EMAIL') and os.getenv('LINKEDIN_PASSWORD'):
                 try:
                     logger.info("[LINKEDIN] Using anti-detection browser automation...")
@@ -842,7 +844,12 @@ class LiveChatCore:
                     
                     # Run in thread to not block async
                     import threading
+                    import time
+                    
+                    linkedin_completed = threading.Event()
+                    
                     def post_to_linkedin():
+                        nonlocal linkedin_success
                         try:
                             logger.info("[THREAD] LinkedIn posting thread started")
                             linkedin_poster = AntiDetectionLinkedIn()
@@ -850,6 +857,7 @@ class LiveChatCore:
                             if result:
                                 logger.info("[OK] Posted to LinkedIn company page!")
                                 print("[OK] Posted to LinkedIn company page!")
+                                linkedin_success = True
                             else:
                                 logger.warning("[FAIL] LinkedIn posting failed")
                                 print("[FAIL] LinkedIn posting failed")
@@ -858,27 +866,36 @@ class LiveChatCore:
                             print(f"[ERROR] LinkedIn error: {e}")
                             import traceback
                             traceback.print_exc()
+                        finally:
+                            linkedin_completed.set()  # Signal completion regardless of success/failure
                     
                     linkedin_thread = threading.Thread(target=post_to_linkedin, daemon=False)
                     linkedin_thread.start()
-                    logger.info("[THREAD] LinkedIn thread launched")
+                    logger.info("[THREAD] LinkedIn thread launched - waiting for completion...")
+                    
+                    # Wait for LinkedIn to complete (with timeout)
+                    linkedin_completed.wait(timeout=120)  # 2 minute timeout
+                    logger.info(f"[SEQUENTIAL] LinkedIn completed - Success: {linkedin_success}")
+                    
+                    # Add small delay to ensure browser cleanup
+                    time.sleep(5)
                     
                 except Exception as e:
                     logger.error(f"[ERROR] LinkedIn module error: {e}")
             else:
                 logger.info("[INFO] LinkedIn credentials not configured")
             
-            # Post to X/Twitter using anti-detection browser automation
+            # Post to X/Twitter AFTER LinkedIn completes - prevents browser conflicts
             if os.getenv('X_Acc1') and os.getenv('x_Acc_pass'):
                 try:
-                    logger.info("[X/TWITTER] Using anti-detection browser automation...")
+                    logger.info("[X/TWITTER] Starting AFTER LinkedIn completion - anti-detection browser automation...")
                     from modules.platform_integration.x_twitter.src.x_anti_detection_poster import AntiDetectionX
                     
                     # Run in thread to not block async
                     import threading
                     def post_to_x():
                         try:
-                            logger.info("[THREAD] X/Twitter posting thread started")
+                            logger.info("[THREAD] X/Twitter posting thread started AFTER LinkedIn")
                             x_poster = AntiDetectionX()
                             result = x_poster.post_to_x(content, video_id=self.video_id)
                             if result:
@@ -895,7 +912,7 @@ class LiveChatCore:
                     
                     x_thread = threading.Thread(target=post_to_x, daemon=False)
                     x_thread.start()
-                    logger.info("[THREAD] X thread launched")
+                    logger.info("[THREAD] X thread launched AFTER LinkedIn completion")
                     
                 except ImportError:
                     logger.warning("[WARNING] X anti-detection module not yet implemented")

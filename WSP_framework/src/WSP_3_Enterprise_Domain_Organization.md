@@ -26,10 +26,10 @@ This protocol ensures all modules are organized to support this autonomous compa
 ## 1. Architectural Exceptions
 
 ### 1.1 WRE Core Engine Exception
-**Location**: `modules/wre_core/` (top-level, not in a domain)  
-**Rationale**: The Windsurf Recursive Engine (WRE) serves as the central nervous system for all autonomous operations and has special architectural status that transcends domain boundaries.  
-**Documentation**: See WSP 46: Windsurf Recursive Engine Protocol for detailed justification.  
-**Command Reference**: `python -m modules.wre_core.src.main`  
+**Location**: `modules/wre_core/` (top-level, not in a domain)
+**Rationale**: The Windsurf Recursive Engine (WRE) serves as the central nervous system for all autonomous operations and has special architectural status that transcends domain boundaries.
+**Documentation**: See WSP 46: Windsurf Recursive Engine Protocol for detailed justification.
+**Command Reference**: `python -m modules.wre_core.src.main`
 
 This exception is **intentional architectural design** where:
 - **WRE Core Engine**: `modules/wre_core/` (special top-level status for system autonomy)

@@ -5,6 +5,8 @@ Split from message_processor.py for WSP compliance
 """
 
 import logging
+import os
+import sys
 from typing import Optional, Dict, Any
 from modules.gamification.whack_a_magat import (
     get_profile, get_leaderboard, get_user_position,
@@ -13,6 +15,20 @@ from modules.gamification.whack_a_magat import (
 from modules.gamification.whack_a_magat.src.spree_tracker import get_active_sprees
 from modules.gamification.whack_a_magat.src.self_improvement import observe_command
 from modules.gamification.whack_a_magat.src.historical_facts import get_random_fact, get_parallel, get_warning
+
+# Import activity control system
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
+try:
+    from modules.infrastructure.activity_control.src.activity_control import (
+        controller, apply_preset, restore_normal, get_status, list_presets
+    )
+except ImportError:
+    # Fallback for testing - create minimal implementation
+    def apply_preset(preset): pass
+    def restore_normal(): pass
+    def get_status(): return {}
+    def list_presets(): return {}
+    controller = None
 
 logger = logging.getLogger(__name__)
 
@@ -233,10 +249,76 @@ class CommandHandler:
                 else:
                     return f"@{username} 🚫 /session is for moderators only"
             
+            # Activity Control Commands (MOD/OWNER only)
+            elif text_lower.startswith('/magadoom_off') and role in ['MOD', 'OWNER']:
+                apply_preset('magadoom_off')
+                logger.info(f"🔇 {username} turned off MagaDoom activities")
+                return f"@{username} ⚡ MagaDoom activities disabled (announcements, levels)"
+                
+            elif text_lower.startswith('/magadoom_on') and role in ['MOD', 'OWNER']:
+                restore_normal()
+                logger.info(f"🔊 {username} restored MagaDoom activities")
+                return f"@{username} ⚡ MagaDoom activities enabled"
+                
+            elif text_lower.startswith('/0102') and 'off' in text_lower and role in ['MOD', 'OWNER']:
+                apply_preset('consciousness_off')
+                logger.info(f"🔇 {username} turned off 0102 consciousness")
+                return f"@{username} ⚡ 0102 consciousness disabled (emoji triggers, auto responses)"
+                
+            elif text_lower.startswith('/0102') and 'on' in text_lower and role in ['MOD', 'OWNER']:
+                restore_normal()
+                logger.info(f"🔊 {username} restored 0102 consciousness")
+                return f"@{username} ⚡ 0102 consciousness enabled"
+                
+            elif text_lower.startswith('/consciousness_off') and role in ['MOD', 'OWNER']:
+                apply_preset('consciousness_off')
+                logger.info(f"🔇 {username} turned off 0102 consciousness")
+                return f"@{username} ⚡ 0102 consciousness disabled (emoji triggers, auto responses)"
+                
+            elif text_lower.startswith('/consciousness_on') and role in ['MOD', 'OWNER']:
+                restore_normal()
+                logger.info(f"🔊 {username} restored 0102 consciousness")
+                return f"@{username} ⚡ 0102 consciousness enabled"
+                
+            elif text_lower.startswith('/silent_mode') and role in ['MOD', 'OWNER']:
+                apply_preset('silent_testing')
+                logger.info(f"🔇 {username} enabled silent mode")
+                return f"@{username} ⚡ Silent mode enabled - all automated activities disabled"
+                
+            elif text_lower.startswith('/normal_mode') and role in ['MOD', 'OWNER']:
+                restore_normal()
+                logger.info(f"🔊 {username} restored normal mode")
+                return f"@{username} ⚡ Normal mode restored - all activities enabled"
+                
+            elif text_lower.startswith('/switches') and role in ['MOD', 'OWNER']:
+                # Unified switch control and status display
+                if controller:
+                    status = controller.get_status()
+                    magadoom = "✅" if status['modules']['livechat']['magadoom_announcements'] else "❌"
+                    consciousness = "✅" if status['modules']['livechat']['consciousness_triggers'] else "❌"
+                    
+                    response = f"@{username} ⚡ ACTIVITY SWITCHES:\n"
+                    response += f"🎮 MagaDoom: {magadoom} (/magadoom_on /magadoom_off)\n"
+                    response += f"🤖 0102 Consciousness: {consciousness} (/0102 on /0102 off)\n"
+                    response += f"🔇 Emergency: /silent_mode /normal_mode\n"
+                    response += f"💬 Chat Mode: /toggle (consciousness response mode)"
+                    return response
+                else:
+                    return f"@{username} ⚡ Activity control not available"
+                    
+            elif text_lower.startswith('/activity_status') and role in ['MOD', 'OWNER']:
+                if controller:
+                    status = controller.get_status()
+                    magadoom = "✅" if status['modules']['livechat']['magadoom_announcements'] else "❌"
+                    consciousness = "✅" if status['modules']['livechat']['consciousness_triggers'] else "❌"
+                    return f"@{username} ⚡ Status: MagaDoom {magadoom} | 0102 {consciousness}"
+                else:
+                    return f"@{username} ⚡ Activity control not available"
+            
             elif text_lower.startswith('/help'):
                 help_msg = f"@{username} 💀 MAGADOOM: /score /rank /whacks /leaderboard /sprees /quiz /facts /help"
                 if role in ['MOD', 'OWNER']:
-                    help_msg += " | MOD: /toggle /session"
+                    help_msg += " | MOD: /switches /toggle /session /0102 off /0102 on /magadoom_off /silent_mode /normal_mode"
                 return help_msg
             
             # Educational facts about fascism are PART of MAGADOOM - fighting MAGA requires education!

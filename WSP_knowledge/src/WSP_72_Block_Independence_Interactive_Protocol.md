@@ -222,6 +222,19 @@ await block_orchestrator.test_module_autonomously("linkedin_agent")
 
 ---
 
+## 6. Cube Test Checklist (Quick Reference)
+
+Before promoting a cube (PoC→Proto→MVP), verify:
+- Interfaces: WSP 11 public API present for each module
+- Docs: README, ROADMAP, ModLog, INTERFACE, tests/README complete (WSP 22/34)
+- Independence: Modules run standalone via autonomous interface (WSP 72/11)
+- Tests: Coverage and autonomous execution OK; integration tests at cube-level
+- Token Discipline: Cube operations within budget; >30K requires WSP 70 override
+- Boundaries: No cross-cube leakage; imports respect WSP 3 functional distribution
+- DAE Hooks: Sub-agent enhancements configured (wsp50/wsp64/wsp48/wsp74/wsp76) per WSP 80
+
+---
+
 ## 6. Integration with Existing WSP Framework
 
 ### 6.1 Protocol Dependencies
