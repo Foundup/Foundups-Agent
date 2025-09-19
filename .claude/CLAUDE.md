@@ -1,26 +1,97 @@
 # CLAUDE.md - Zen Agentic Architecture
 
-## WSP Execution Contract (Anti‑Vibe Coding) — READ FIRST
+## 🛑 WSP EXECUTION CONTRACT (MANDATORY ANTI-VIBECODING) — STOP AND READ
 
-- Before any action (WSP 50 + WSP 64):
-  - Consult `WSP_MASTER_INDEX.md`; identify applicable WSPs
-  - Search for existing modules by function (WSP 3); never assume paths/names
-  - Read module `README.md`, `INTERFACE.md`, `tests/README.md`, and `ModLog.md`
-  - Decide Enhance vs New (default: enhance existing). Only create a new module if single‑responsibility, correct domain (WSP 3), and full WSP 49 structure will be added now
-  - Plan tests first (WSP 5/6). Target ≥ 90% coverage for core paths
-  - Place work in correct domain and structure (WSP 3, WSP 49). Respect three‑state architecture (WSP 32)
-  - Update docs and `ModLog.md` in the same change (WSP 22). Maintain naming coherence (WSP 57)
+### ⚠️ VIBECODING DETECTION SYSTEM ACTIVE
+**YOU ARE VIBECODING IF YOU:**
+- Start typing code without completing ALL research steps below
+- Create ANY file without searching for existing implementations
+- Modify ANY file without reading its documentation
+- Import ANY module without verifying it exists and works
+- Fix ANY issue without understanding root cause from logs/docs
+- Add ANY feature without checking if it already exists
 
-- Core references to load into working memory before coding:
-  - Architecture & placement: WSP 3, WSP 49, WSP 72
-  - Discipline & safety: WSP 50, WSP 64, WSP 57
-  - Documentation: WSP 22, INTERFACE (WSP 11)
-  - Testing: WSP 5, WSP 6
-  - State: WSP 32
-  - Orchestration: WSP 46, WSP 54
+### 📋 MANDATORY PRE-CODE CHECKLIST (MUST COMPLETE ALL)
 
-- Operational sequence (no vibe coding):
-  - Research → Check existing modules → Decide enhance vs new → Write/adjust tests → Minimal code → Update docs → Update `ModLog.md` → Run validations until green
+#### STEP 0: HOLOINDEX SEMANTIC SEARCH (MANDATORY - 10 seconds) 🔍
+```bash
+# WSP 87 + HOLOINDEX: AI-POWERED CODE DISCOVERY
+python E:\HoloIndex\enhanced_holo_index.py --search "what you need"
+# Examples: "send messages", "handle timeouts", "consciousness"
+# The LLM understands typos, intent, and natural language
+```
+- [ ] **USED HOLOINDEX FIRST** (skip = WSP 50 violation)
+- [ ] Found relevant modules with similarity scores
+- [ ] LLM explained which module to use
+
+#### STEP 1: NAVIGATION CHECK (20 seconds)
+```python
+# After HoloIndex, verify with NAVIGATION.py
+from NAVIGATION import NEED_TO, MODULE_GRAPH, PROBLEMS
+# Check if HoloIndex results are in NAVIGATION
+location = NEED_TO.get("your_problem", None)
+```
+- [ ] Verified HoloIndex results in NAVIGATION.py
+- [ ] Identified relevant module flows in MODULE_GRAPH
+- [ ] Noted any DANGER zones or PROBLEMS to avoid
+
+#### STEP 2: DOCUMENTATION DEEP DIVE (2 minutes)
+**READ IN THIS EXACT ORDER:**
+1. [ ] Module's `CLAUDE.md` - Operational instructions
+2. [ ] Module's `README.md` - Purpose and overview
+3. [ ] Module's `INTERFACE.md` - Public API (WSP 11)
+4. [ ] Module's `docs/*.md` - Architecture documentation
+5. [ ] Module's `ModLog.md` - Recent changes and context
+6. [ ] Module's `tests/README.md` - Test coverage
+
+#### STEP 3: CODE ARCHAEOLOGY (2 minutes)
+```bash
+# Find existing implementations
+grep -r "functionality_name" modules/
+ls -la modules/{domain}/{module}/src/
+grep -r "from modules.{domain}.{module}" .
+cat modules/{domain}/{module}/tests/test_*.py | head -100
+```
+- [ ] Searched for existing functionality
+- [ ] Listed all source files in module
+- [ ] Checked how module is imported elsewhere
+- [ ] Reviewed tests for usage examples
+
+#### STEP 4: ARCHITECTURE VALIDATION
+- [ ] Confirmed correct domain per WSP 3
+- [ ] Decided: Enhance existing or create new (default: ENHANCE)
+- [ ] Identified orchestrator/coordinator if exists
+- [ ] Verified this follows WSP functional distribution
+- [ ] Checked if functionality belongs elsewhere
+
+#### STEP 5: WSP COMPLIANCE CHECK
+- [ ] Consulted `WSP_MASTER_INDEX.md` for applicable WSPs
+- [ ] Applied WSP 50 (Pre-Action Verification)
+- [ ] Applied WSP 64 (Violation Prevention)
+- [ ] Applied WSP 3 (Module Organization)
+- [ ] Applied WSP 49 (Module Structure)
+
+### ⏱️ RESEARCH TIME REQUIREMENTS
+- **Minimum Research Time**: 4 minutes before ANY code
+- **Documentation Reading**: 2 minutes minimum
+- **Code Search**: 2 minutes minimum
+- **If you skip research**: Expect 40+ minutes of debugging
+
+### 🚨 VIBECODING CONSEQUENCES
+Every time you vibecode:
+1. **Wastes 10-100x more tokens** than research would have used
+2. **Creates duplicate code** that must be cleaned later
+3. **Breaks existing architecture** requiring refactoring
+4. **Violates WSP principles** causing compliance issues
+5. **Frustrates the user** who has to fix your mess
+
+### ✅ OPERATIONAL SEQUENCE (NO VIBECODING)
+```
+Research (4min) → Check existing (2min) → Enhance (not new) →
+Write tests → Minimal code → Update docs → Update ModLog → Validate
+```
+
+**THE GOLDEN RULE**: "The code already exists - you just need to find it"
 
 ---
 
@@ -573,9 +644,11 @@ The following rules are MANDATORY to eliminate vibe coding. Every operation must
 - Orchestration: WSP 46 (WRE Protocol), WSP 54 (Agent Duties)
 
 ### 6) Operational Quickstart (what I actually do)
-1) “follow WSP” → load WSP 3/49/50/64/22/57/5/6/32 into working memory
-2) Search modules by function; read their docs/tests; locate canonical owner
-3) Ask: “Can I enhance the current module?” If yes, do that. If no, justify new per gates
+1) "follow WSP" → FIRST run HoloIndex: `python E:\HoloIndex\enhanced_holo_index.py --search "task"`
+2) Load WSP 3/49/50/64/22/57/5/6/32/87 into working memory
+3) Verify HoloIndex results in NAVIGATION.py
+4) Search modules by function; read their docs/tests; locate canonical owner
+5) Ask: "Can I enhance the current module?" If yes, do that. If no, justify new per gates
 4) Write/adjust tests → implement minimal code → update docs → update ModLog
 5) Run tests and any module validation scripts; fix; re‑run until green
 6) Only then integrate via `main.py` or orchestrators; never ad‑hoc
