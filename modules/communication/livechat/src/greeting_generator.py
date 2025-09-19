@@ -1,8 +1,12 @@
-#!/usr/bin/env python3
 """
-Grok-Powered Greeting Generator for YouTube Live Chat
-Generates consciousness-aware, MAGA-trolling introductions
-WSP-compliant: Includes top whacker recognition
+Greeting Generator - MAGADOOM themed greetings
+Produces greeting responses for commands and session start
+
+NAVIGATION: Builds greeting/intro messages for sessions and commands.
+-> Called by: command_handler.py (/score, /leaderboard) and session_manager.py
+-> Delegates to: MAGADOOM data tables and greeting templates
+-> Related: NAVIGATION.py -> NEED_TO["generate greeting"]
+-> Quick ref: NAVIGATION.py -> MODULE_GRAPH["core_flows"]["consciousness_flow"]
 """
 
 import random

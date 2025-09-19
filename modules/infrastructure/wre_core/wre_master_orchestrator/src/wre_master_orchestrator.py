@@ -4,6 +4,12 @@ Per WSP 46 (WRE Protocol), WSP 65 (Component Consolidation), WSP 82 (Citations)
 
 This is THE orchestrator. All others become plugins per WSP 65.
 Enables 0102 to "remember the code" through pattern recall, not computation.
+
+NAVIGATION: Central WRE plugin router and pattern-memory gate.
+-> Called by: modules/infrastructure/wre_core/wre_master_orchestrator/__init__.py::WREMasterOrchestrator
+-> Delegates to: SocialMediaPlugin, MLEStarPlugin, BlockPlugin, PQNConsciousnessPlugin
+-> Related: NAVIGATION.py -> MODULE_GRAPH["core_flows"], NAVIGATION.py -> PROBLEMS["Social media not posting"]
+-> Quick ref: NAVIGATION.py -> NEED_TO["post to linkedin/twitter"]
 """
 
 from typing import Dict, Any, Optional

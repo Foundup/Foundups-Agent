@@ -7,19 +7,34 @@ Classification: Social Media Orchestration
 WSP Compliance: WSP 3, WSP 11, WSP 22, WSP 49
 """
 
-from .src.social_media_orchestrator import SocialMediaOrchestrator
-from .src.oauth_coordinator import OAuthCoordinator
-from .src.content_orchestrator import ContentOrchestrator
-from .src.scheduling_engine import SchedulingEngine
-from .src.platform_adapters import TwitterAdapter, LinkedInAdapter
+# Import actual existing modules
+try:
+    from .src.social_media_orchestrator import SocialMediaOrchestrator
+except ImportError:
+    SocialMediaOrchestrator = None
+
+try:
+    from .src.simple_posting_orchestrator import SimplePostingOrchestrator, Platform
+except ImportError:
+    SimplePostingOrchestrator = None
+    Platform = None
+
+try:
+    from .src.multi_account_manager import SocialMediaEventRouter
+except ImportError:
+    SocialMediaEventRouter = None
+
+try:
+    from .src.unified_posting_interface import UnifiedPostingInterface
+except ImportError:
+    UnifiedPostingInterface = None
 
 __all__ = [
     'SocialMediaOrchestrator',
-    'OAuthCoordinator', 
-    'ContentOrchestrator',
-    'SchedulingEngine',
-    'TwitterAdapter',
-    'LinkedInAdapter'
+    'SimplePostingOrchestrator',
+    'Platform',
+    'SocialMediaEventRouter',
+    'UnifiedPostingInterface'
 ]
 
 __version__ = "1.0.0"

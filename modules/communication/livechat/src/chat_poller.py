@@ -3,6 +3,12 @@ Chat Poller Component
 
 Handles YouTube Live Chat API polling and message retrieval.
 Separated from the main LiveChatListener for better maintainability.
+
+NAVIGATION: Pulls chat batches for LiveChatCore.
+-> Called by: livechat_core.py::ChatPoller usage
+-> Delegates to: MessageProcessor (via LiveChatCore), QuotaAwarePoller
+-> Related: NAVIGATION.py -> MODULE_GRAPH["core_flows"]["message_processing_flow"]
+-> Quick ref: NAVIGATION.py -> NEED_TO["poll chat messages"]
 """
 
 import logging

@@ -15,13 +15,13 @@ try:
     from .scheduling.scheduling_engine import SchedulingEngine
     from .platform_adapters.twitter_adapter import TwitterAdapter
     from .platform_adapters.linkedin_adapter import LinkedInAdapter
-except ImportError:
-    # Fallback for direct execution
-    from oauth.oauth_coordinator import OAuthCoordinator
-    from content.content_orchestrator import ContentOrchestrator  
-    from scheduling.scheduling_engine import SchedulingEngine
-    from platform_adapters.twitter_adapter import TwitterAdapter
-    from platform_adapters.linkedin_adapter import LinkedInAdapter
+except ImportError as e:
+    # Module import failed, skip these modules
+    OAuthCoordinator = None
+    ContentOrchestrator = None
+    SchedulingEngine = None
+    TwitterAdapter = None
+    LinkedInAdapter = None
 
 
 class OrchestrationError(Exception):

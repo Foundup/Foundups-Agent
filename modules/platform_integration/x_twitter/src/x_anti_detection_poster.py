@@ -760,6 +760,26 @@ class AntiDetectionX:
             
         except Exception as e:
             print(f"[ERROR] Error posting: {e}")
+
+            # Check if this is a cancellation/duplicate attempt
+            error_msg = str(e).lower()
+            if any(indicator in error_msg for indicator in ["window already closed", "target window already closed", "no such window", "session not created"]):
+                print("[DUPLICATE] User likely cancelled because post was already made!")
+
+                # Import safety monitor and auto-fix
+                try:
+                    from modules.platform_integration.social_media_orchestrator.src.post_safety_monitor import detect_and_fix_duplicate
+
+                    # Extract video ID from content if it's a YouTube link
+                    import re
+                    video_id_match = re.search(r'youtube\.com/watch\?v=([a-zA-Z0-9_-]+)', content)
+                    if video_id_match:
+                        video_id = video_id_match.group(1)
+                        print(f"[AUTO-FIX] Marking video {video_id} as already posted to X/Twitter")
+                        detect_and_fix_duplicate(video_id, 'x_twitter', str(e))
+                except Exception as fix_error:
+                    print(f"[WARNING] Could not auto-fix duplicate: {fix_error}")
+
             return False
     
     def close(self):

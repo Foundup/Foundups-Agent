@@ -2,6 +2,34 @@
 
 ## Chronological Change Log
 
+### [2025-09-16] - WSP 3 & 49 Compliance Cleanup
+**Date**: 2025-09-16
+**WSP Protocol References**: WSP 3 (Domain Organization), WSP 49 (Module Structure), WSP 85 (Root Protection)
+**Impact Analysis**: Structural cleanup - no functional changes
+**Enhancement Tracking**: Removed duplicate vibecoded files
+
+#### 📁 Structural Changes
+1. **Archived Duplicate Files**:
+   - Found identical copies of all whack_a_magat files in `modules/gamification/src/`
+   - These were vibecoded duplicates (same timestamps, same content)
+   - Archived to `_archived_duplicates_per_wsp3/` with documentation
+   - Kept `modules/gamification/src/__init__.py` which properly imports from whack_a_magat
+
+2. **WSP Compliance**:
+   - Per WSP 3: Module-specific files belong in `modules/gamification/whack_a_magat/src/`
+   - Per WSP 49: No root src/ directory at domain level
+   - All imports already use correct path: `from modules.gamification.whack_a_magat.src.*`
+
+3. **Files Archived**:
+   - historical_facts.py, mcp_whack_server.py, quiz_engine.py
+   - self_improvement.py, spree_tracker.py, status_announcer.py
+   - terminology_enforcer.py, timeout_announcer.py, timeout_tracker.py, whack.py
+
+#### Testing
+- All imports verified working
+- No code changes needed - all code already using correct paths
+- YouTube DAE imports functioning correctly
+
 ### [2025-08-28] - Whack-a-MAGAT Enhancements
 **Date**: 2025-08-28
 **WSP Protocol References**: WSP 22, 48, 84

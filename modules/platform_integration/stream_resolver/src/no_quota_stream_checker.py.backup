@@ -1,0 +1,287 @@
+#!/usr/bin/env python3
+"""
+No-Quota YouTube Stream Checker
+WSP 86: Alternative stream detection without API quota consumption
+Uses direct HTTP requests to check stream status
+"""
+
+import requests
+import json
+import re
+import logging
+from typing import Optional, Dict, Any
+
+logger = logging.getLogger(__name__)
+
+
+class NoQuotaStreamChecker:
+    """Check YouTube stream status without using API quota"""
+
+    def __init__(self):
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+        })
+
+    def check_video_is_live(self, video_id: str) -> Dict[str, Any]:
+        """
+        Check if a YouTube video is currently live without using API quota
+
+        Args:
+            video_id: YouTube video ID
+
+        Returns:
+            Dict with status and details
+        """
+        url = f"https://www.youtube.com/watch?v={video_id}"
+
+        try:
+            logger.info("="*60)
+            logger.info("🌐 NO-QUOTA SCRAPING ACTIVATED")
+            logger.info(f"  • Method: Web scraping (0 API units)")
+            logger.info(f"  • Video ID: {video_id}")
+            logger.info(f"  • URL: {url}")
+            logger.info("="*60)
+            response = self.session.get(url, timeout=10)
+
+            if response.status_code != 200:
+                logger.warning(f"Failed to fetch page: {response.status_code}")
+                return {"live": False, "error": f"HTTP {response.status_code}"}
+
+            # Look for live indicators in the page
+            html = response.text
+
+            # Method 1: Check for live badge in HTML
+            is_live = False
+            title = "Unknown"
+            channel = "Unknown"
+
+            # First check if page contains live indicators
+            # Need STRONG evidence that stream is CURRENTLY live
+            has_is_live_now = '"isLiveNow":true' in html  # Most reliable indicator
+            has_live_badge = 'BADGE_STYLE_TYPE_LIVE_NOW' in html
+            has_watching_now = 'watching now' in html and 'watching now</span>' in html
+            has_live_label = '"label":"LIVE"' in html
+
+            # Count strong live indicators
+            live_score = 0
+            if has_is_live_now:
+                live_score += 3  # Most reliable
+            if has_live_badge:
+                live_score += 2
+            if has_watching_now:
+                live_score += 2
+            if has_live_label:
+                live_score += 1
+
+            # Check for ended stream indicators (ANY of these = NOT live)
+            is_ended = (
+                '"isLiveContent":false' in html or
+                'Streamed live' in html or
+                'ago</span>' in html or
+                'Started streaming' in html or
+                '"liveBroadcastDetails":{"hasDisplayedEndscreen":true' in html
+            )
+
+            # Stream is only live if:
+            # 1. Score is at least 5 (multiple strong indicators)
+            # 2. NOT marked as ended
+            # 3. Has viewers watching NOW
+            is_live = live_score >= 5 and not is_ended and has_watching_now
+
+            if is_live:
+                logger.debug(f"Stream appears to be CURRENTLY live (score: {live_score})")
+            elif is_ended:
+                logger.debug(f"Stream has ended (old stream) - score: {live_score}")
+                logger.debug(f"  isLiveNow={has_is_live_now}, badge={has_live_badge}, watching={has_watching_now}")
+            else:
+                logger.debug(f"Not a live stream (score: {live_score}/5 required)")
+
+            # Extract initial data JSON
+            initial_data_match = re.search(r'var ytInitialData = ({.*?});', html)
+            if initial_data_match:
+                try:
+                    data = json.loads(initial_data_match.group(1))
+
+                    # Navigate through the JSON structure to find video details
+                    if 'contents' in data:
+                        results = data.get('contents', {}).get('twoColumnWatchNextResults', {}).get('results', {}).get('results', {})
+                        contents = results.get('contents', [])
+
+                        for item in contents:
+                            if 'videoPrimaryInfoRenderer' in item:
+                                renderer = item['videoPrimaryInfoRenderer']
+
+                                # Check for live badge (already checked above)
+                                if not is_live:
+                                    badges = renderer.get('badges', [])
+                                    for badge in badges:
+                                        label = badge.get('metadataBadgeRenderer', {}).get('label', '')
+                                        if 'LIVE' in label.upper():
+                                            is_live = True
+                                            break
+
+                                # Get title - join all text runs for complete title
+                                title_data = renderer.get('title', {})
+                                if 'runs' in title_data:
+                                    title_parts = [run.get('text', '') for run in title_data['runs']]
+                                    title = ''.join(title_parts).strip()
+                                    if not title:
+                                        title = 'Unknown'
+
+                    # Get channel info
+                    secondary = data.get('contents', {}).get('twoColumnWatchNextResults', {}).get('results', {}).get('results', {}).get('contents', [])
+                    for item in secondary:
+                        if 'videoSecondaryInfoRenderer' in item:
+                            owner = item['videoSecondaryInfoRenderer'].get('owner', {})
+                            runs = owner.get('videoOwnerRenderer', {}).get('title', {}).get('runs', [])
+                            if runs:
+                                channel = runs[0].get('text', 'Unknown')
+
+                except json.JSONDecodeError:
+                    logger.warning("Failed to parse YouTube initial data")
+
+            # Method 2: Double-check with more specific patterns
+            if not is_live and not is_ended:
+                # Must find MULTIPLE live indicators to confirm it's actually live
+                live_score = 0
+
+                # Strong indicators (worth 2 points each)
+                if '"isLiveNow":true' in html:
+                    live_score += 2
+                    logger.debug("Found isLiveNow:true")
+                if 'BADGE_STYLE_TYPE_LIVE_NOW' in html:
+                    live_score += 2
+                    logger.debug("Found LIVE badge")
+                if 'watching now</span>' in html:
+                    live_score += 2
+                    logger.debug("Found watching now")
+
+                # Weak indicators (worth 1 point each)
+                if '"label":"LIVE"' in html:
+                    live_score += 1
+                if '"isLiveContent":true' in html:
+                    live_score += 1
+
+                # Need at least 3 points to consider it live
+                if live_score >= 3:
+                    is_live = True
+                    logger.debug(f"Stream confirmed as live (score: {live_score})")
+
+            # Extract title if not found
+            if title == "Unknown":
+                title_match = re.search(r'<title>(.*?)</title>', html)
+                if title_match:
+                    raw_title = title_match.group(1)
+                    # Clean up YouTube suffix
+                    title = raw_title.replace(' - YouTube', '').strip()
+
+            # Log the result clearly
+            if is_live:
+                logger.info("✅ STREAM IS LIVE (detected via scraping)")
+                logger.info(f"  • Channel: {channel}")
+                logger.info(f"  • Title: {title}")
+                logger.info(f"  • Video ID: {video_id}")
+            elif is_ended:
+                logger.info("⏸️ OLD STREAM DETECTED (already ended)")
+                logger.info(f"  • Title: {title}")
+                logger.info(f"  • Video ID: {video_id}")
+                logger.info("  • Status: Not currently live")
+            else:
+                logger.info("❌ NOT A STREAM (regular video or not found)")
+
+            result = {
+                "live": is_live,
+                "video_id": video_id,
+                "title": title,
+                "channel": channel,
+                "url": url
+            }
+
+            if is_live:
+                logger.info(f"✅ Found live stream on {channel}: {title}")
+            else:
+                logger.info(f"❌ No live stream found on {channel}")
+
+            return result
+
+        except requests.RequestException as e:
+            logger.error(f"Request failed: {e}")
+            return {"live": False, "error": str(e)}
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            return {"live": False, "error": str(e)}
+
+    def check_channel_for_live(self, channel_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Check if a channel has any live streams without using API quota
+
+        Args:
+            channel_id: YouTube channel ID
+
+        Returns:
+            Dict with live stream details if found, None otherwise
+        """
+        # First try the /live endpoint
+        live_url = f"https://www.youtube.com/channel/{channel_id}/live"
+
+        try:
+            logger.info("")
+            logger.info("🔍 NO-QUOTA CHANNEL CHECK")
+            logger.info(f"  • Channel ID: {channel_id}")
+            logger.info(f"  • Method: /live endpoint scraping")
+            logger.info(f"  • Cost: 0 API units")
+            response = self.session.get(live_url, timeout=10, allow_redirects=True)
+
+            # If redirected to a video watch page, check if it's actually live
+            if '/watch?v=' in response.url:
+                video_id = response.url.split('v=')[1].split('&')[0]
+                logger.info(f"Channel /live redirected to video: {video_id} - checking if actually live...")
+                result = self.check_video_is_live(video_id)
+                # Only return if actually live
+                if result and result.get('live'):
+                    return result
+                else:
+                    logger.info(f"Video {video_id} is not currently live")
+
+            # Otherwise check the streams tab
+            streams_url = f"https://www.youtube.com/channel/{channel_id}/streams"
+            response = self.session.get(streams_url, timeout=10)
+
+            if response.status_code == 200:
+                # Look for live streams in the page
+                html = response.text
+
+                # Extract video IDs from the streams page
+                video_ids = re.findall(r'"videoId":"([^"]+)"', html)
+
+                # Check the first few videos to see if any are live
+                for vid in video_ids[:3]:  # Check first 3 to limit requests
+                    result = self.check_video_is_live(vid)
+                    if result.get('live'):
+                        return result
+
+            logger.info(f"No live streams found for channel {channel_id}")
+            return None
+
+        except Exception as e:
+            logger.error(f"Error checking channel: {e}")
+            return None
+
+
+# Example usage
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
+    checker = NoQuotaStreamChecker()
+
+    # Test with the video ID mentioned by user
+    result = checker.check_video_is_live("xL_kGmZj3R8")
+    print(f"\nResult: {json.dumps(result, indent=2)}")
+
+    # Test channel check
+    channel_result = checker.check_channel_for_live("UC-LSSlOZwpGIRIYihaz8zCw")
+    if channel_result:
+        print(f"\nChannel live stream: {json.dumps(channel_result, indent=2)}")

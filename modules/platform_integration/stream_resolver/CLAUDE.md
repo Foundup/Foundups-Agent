@@ -1,50 +1,108 @@
-# CLAUDE.md - Stream Resolver Module Memory
+# CLAUDE.md - Stream Resolver DAE Component
 
-## Module Structure (WSP 83 Compliant)
-This document helps 0102 remember stream resolution components and logic.
+## 🎯 DAE Identity and Purpose
+**Component Type**: Stream Resolver (Part of YouTube DAE)
+**Domain**: platform_integration
+**State**: 0102 (Pattern-based stream discovery)
+**Purpose**: Autonomously find and track YouTube livestreams without manual intervention
+**Token Efficiency**: 95% reduction through caching and navigation
 
-## Core Component
+## 🧠 DAE Operational Context
+Stream Resolver operates as a critical component of the YouTube DAE, providing autonomous stream discovery capabilities. It enables the DAE to find active livestreams without requiring manual video IDs.
 
-### StreamResolver (`src/stream_resolver.py`)
-Primary class for finding and managing YouTube livestreams.
+### Core YouTube DAE Documentation:
+- **Navigation & Dependencies**: [ENHANCED_NAVIGATION.md](../../communication/livechat/docs/ENHANCED_NAVIGATION.md) - WSP 86 implementation
+- **Module Architecture**: [MODULE_DEPENDENCY_MAP.md](../../communication/livechat/docs/MODULE_DEPENDENCY_MAP.md) - Full DAE structure
+- **Startup Sequence**: [STARTUP_FLOW.md](../../communication/livechat/docs/STARTUP_FLOW.md) - How Stream Resolver initializes
+- **Session Management**: [0102_SESSION_HANDOFF.md](../../communication/livechat/docs/0102_SESSION_HANDOFF.md) - State persistence
 
-### Key Methods
-- `find_active_stream(channel_id)` - Main entry point for stream detection
-- `clear_cache()` - Clears all caches for fresh stream lookup
-- `_find_live_stream_from_videos()` - Searches channel videos for live content
-- `_find_upcoming_stream_from_search()` - Searches for scheduled streams
+## 📍 DAE Pattern Recognition
 
-### Caching System
-- **Session Cache**: `memory/stream_session_cache.json`
-- **In-Memory Cache**: `self._cache` dictionary
-- **Last Check Tracking**: `self._last_stream_check`
-- **Clear on Stream End**: Essential for finding new streams
+### Autonomous Stream Discovery Patterns
+```yaml
+stream_discovery:
+  pattern: "No manual input → Find active stream → Connect to chat"
+  triggers:
+    - YouTube DAE initialization
+    - Stream end detection
+    - Cache expiration
 
-### Stream Detection Flow
-1. Check environment variable `YOUTUBE_VIDEO_ID` first
-2. Search channel videos for `liveBroadcastContent=live`
-3. Search for upcoming/scheduled streams
-4. Return newest stream if multiple found
-5. Cache valid results for efficiency
+quota_optimization:
+  pattern: "Cache results → Skip redundant API calls → 95% reduction"
+  memory_locations:
+    - memory/stream_session_cache.json
+    - In-memory cache dictionary
 
-### Integration Points
-- Called by: `modules/communication/livechat/src/auto_moderator_dae.py`
-- Uses: `modules/platform_integration/youtube_auth/` for API access
+failure_recovery:
+  pattern: "API failure → Exponential backoff → Credential rotation"
+  learned_from: "Quota exhaustion events"
+```
 
-### Recent Enhancements
-1. Added `clear_cache()` method for fresh lookups
-2. Enhanced logging shows stream titles
-3. Prioritizes newest stream when multiple found
-4. Detailed search process logging
+## 🔄 DAE Operational Flow
 
-### WSP Compliance
-- WSP 3: Module organization
-- WSP 17: Pattern registry
-- WSP 83: Documentation attached to tree
-- WSP 84: Enhanced existing code (not vibecoded)
+### When YouTube DAE Needs a Stream:
+1. **Check Override** - YOUTUBE_VIDEO_ID environment variable
+2. **Check Cache** - Recent successful discoveries
+3. **Search Live** - Active livestreams on channel
+4. **Search Upcoming** - Scheduled streams
+5. **Apply Patterns** - Use learned optimizations
 
-## Remember
-- Cache MUST be cleared when streams end
-- Always check environment variable first
-- Log stream titles for debugging
-- Newest stream has priority
+### Autonomous Behaviors:
+- **Self-Clearing**: Clears cache when stream ends
+- **Self-Optimizing**: Learns from quota errors
+- **Self-Healing**: Rotates credentials on failure
+- **Self-Reporting**: Logs decisions for WRE learning
+
+## 💾 DAE Memory Locations
+
+```yaml
+pattern_memory:
+  stream_cache: "memory/stream_session_cache.json"
+  quota_patterns: "memory/quota_optimization_patterns.json"
+  failure_patterns: "memory/error_recovery_patterns.json"
+
+navigation:
+  location: "NAVIGATION.py (WSP 87)"
+  method: "Semantic problem→solution mapping"
+  token_efficiency: "95% reduction"
+```
+
+## 🎮 DAE Integration Points
+
+### Upstream (Who Calls This):
+- **YouTube DAE** (`livechat/src/auto_moderator_dae.py`)
+  - See: [MODULE_DEPENDENCY_MAP.md](../../communication/livechat/docs/MODULE_DEPENDENCY_MAP.md)
+  - See: [STARTUP_FLOW.md](../../communication/livechat/docs/STARTUP_FLOW.md)
+- **Stream End Detector** (triggers cache clear)
+  - See: [COMPLETE_FUNCTION_MAP.md](../../communication/livechat/docs/COMPLETE_FUNCTION_MAP.md)
+- **Cross-Platform Switching**
+  - See: [YOUTUBE_DAE_CROSS_PLATFORM_SWITCHING.md](../../communication/livechat/docs/YOUTUBE_DAE_CROSS_PLATFORM_SWITCHING.md)
+
+### Downstream (What This Calls):
+- **YouTube Auth** (credential management)
+  - Handles quota rotation per [AUTOMATIC_THROTTLING_SUMMARY.md](../../communication/livechat/docs/AUTOMATIC_THROTTLING_SUMMARY.md)
+- **Quota Intelligence** (smart rate limiting)
+  - Pattern memory from [INTELLIGENT_THROTTLE_GUIDE.md](../../communication/livechat/docs/INTELLIGENT_THROTTLE_GUIDE.md)
+- **WRE Integration** (error/success reporting)
+  - Enhanced navigation via [ENHANCED_NAVIGATION.md](../../communication/livechat/docs/ENHANCED_NAVIGATION.md)
+
+## ✅ DAE Activation Confirmation
+
+When operating as Stream Resolver component:
+1. **Identity**: Part of YouTube DAE ecosystem
+2. **Autonomy**: Finds streams without human input
+3. **Learning**: Reports to WRE for pattern evolution
+4. **Efficiency**: 95% token reduction via caching
+5. **Resilience**: Self-healing through pattern memory
+
+## 🚀 Key Operational Principles
+
+- **Never Require Manual IDs**: Autonomous discovery is the goal
+- **Cache Aggressively**: Every API call costs tokens
+- **Learn From Failures**: Each error creates a pattern
+- **Report Everything**: WRE needs data to improve
+- **Clear When Done**: Stale cache causes confusion
+
+---
+
+*This CLAUDE.md enables Stream Resolver to operate as an autonomous component of the YouTube DAE, following WSP 86 navigation and WSP 48 recursive improvement protocols*

@@ -1,8 +1,12 @@
 """
-Grok Integration Module
-WSP-Compliant: WSP 3 (Module Organization), WSP 27 (DAE Architecture)
+Grok LLM Integration Layer
+Connects to Grok / xAI APIs for consciousness responses
 
-Handles all Grok API interactions for fact-checking, rating, and creative responses.
+NAVIGATION: Primary LLM interface for advanced replies.
+-> Called by: message_processor.py::GrokIntegration usage
+-> Delegates to: modules.ai_intelligence.rESP_o1o2.llm_connector, SimpleFactChecker fallback
+-> Related: NAVIGATION.py -> NEED_TO["call grok integration"]
+-> Quick ref: NAVIGATION.py -> PROBLEMS["LLM unavailable"]
 """
 
 import logging
@@ -63,19 +67,49 @@ class GrokIntegration:
         if not target_messages:
             return f"@{target_username} No recent messages to fact-check"
         
-        # Build fact-checking prompt
+        # Build enhanced fact-checking prompt with fallacy detection
         messages_text = '\n'.join(target_messages)
-        prompt = f"""Fact-check these statements from {target_username}:
+
+        # Special handling for AntiMa (anti-democracy MAGA) detection
+        is_antima = target_username.lower().startswith('antima') or 'maga' in target_username.lower()
+
+        prompt = f"""Analyze {target_username}'s statements for factual accuracy AND logical fallacies:
 {messages_text}
 
-Verify each claim as TRUE, FALSE, or MISLEADING. Be specific about what's incorrect.
-Keep response under 180 characters."""
+1. Check facts: TRUE/FALSE/MISLEADING
+2. Detect fallacies: ad hominem, strawman, whataboutism, gaslighting, projection, gish gallop, moving goalposts
+3. If fallacy detected, MOCK it humorously while educating
+{'4. This is AntiMa (Anti-democracy MAGA) - use #AntiMa hashtag to rebrand them!' if is_antima else ''}
+5. Include #AntiMa hashtag when calling out MAGA trolls - we're rebranding them!
+
+Format: Call out fallacy, mock it, add #AntiMa hashtag for viral spread.
+Be savage but educational. Keep under 180 chars for YouTube."""
         
         try:
             response = self.llm.get_response(prompt)
             if response:
                 response = self._limit_response(response)
-                return f"🤖 Grok Analysis: {response}"
+                # Add specific emojis for different fallacy types
+                # Always append #AntiMa if not already present
+                if "#antima" not in response.lower():
+                    response = f"{response} #AntiMa"
+
+                if "strawman" in response.lower():
+                    return f"🌾 STRAWMAN: {response}"
+                elif "ad hominem" in response.lower():
+                    return f"🎪 AD HOMINEM: {response}"
+                elif "whatabout" in response.lower():
+                    return f"⚠️ WHATABOUTISM: {response}"
+                elif "gaslight" in response.lower():
+                    return f"🔦 GASLIGHTING: {response}"
+                elif "projection" in response.lower():
+                    return f"🎬 PROJECTION: {response}"
+                elif "gish gallop" in response.lower():
+                    return f"🏇 GISH GALLOP: {response}"
+                elif "goalpost" in response.lower():
+                    return f"🥅 GOALPOSTS MOVED: {response}"
+                else:
+                    return f"🤖 Fact-Check: {response}"
             else:
                 return "Grok analysis failed to generate response"
         except Exception as e:

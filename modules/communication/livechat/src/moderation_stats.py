@@ -1,6 +1,12 @@
 """
-Moderation Statistics Tracker - WSP Compliant Module
-Tracks moderation events, violations, and provides analytics
+Moderation Statistics Module
+Tracks moderation events and produces analytics
+
+NAVIGATION: Records moderation metrics for LiveChat dashboards.
+-> Called by: livechat_core.py and event_handler.py
+-> Delegates to: module memory under communication/livechat/memory
+-> Related: NAVIGATION.py -> NEED_TO["analyze moderation stats"]
+-> Quick ref: NAVIGATION.py -> DATABASES["memory_files"]
 """
 
 import logging

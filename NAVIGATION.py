@@ -59,6 +59,11 @@ NEED_TO = {
     "route wre plugins": "modules.infrastructure.wre_core.wre_master_orchestrator.src.wre_master_orchestrator.WREMasterOrchestrator.execute()",
     "recall pattern memory": "modules.infrastructure.wre_core.wre_master_orchestrator.src.wre_master_orchestrator.PatternMemory.get()",
 
+    # Git and Social Media Integration
+    "git push and post": "main.py --git (Push to Git and post to LinkedIn/Twitter)",
+    "git linkedin bridge": "modules.platform_integration.linkedin_agent.src.git_linkedin_bridge.GitLinkedInBridge",
+    "post to linkedin": "modules.platform_integration.social_media_orchestrator.src.simple_posting_orchestrator.handle_stream_detected()",
+
     # Navigation Operations
     "run navigation audit": "NAVIGATION_COVERAGE.md -> update and commit",
     "validate navigation schema": "python -m tests.navigation.test_navigation_schema",

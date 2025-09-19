@@ -1,0 +1,4 @@
+# Requirements for OpenAI Integration Module
+openai
+dotenv
+

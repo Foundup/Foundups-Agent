@@ -1,10 +1,13 @@
 """
-Chat Sender Component
+Chat Sender
 
-Handles sending messages to YouTube Live Chat.
-Separated from the main LiveChatListener for better maintainability.
+Sends messages to YouTube Live Chat with rate limiting and duplication checks.
 
-WSP Enhancement: Added random response delays for human-like behavior (v1.1)
+NAVIGATION: Outputs responses to chat with throttle safeguards.
+-> Called by: livechat_core.py::send_chat_message / MessageProcessor pipeline
+-> Delegates to: YouTube liveChatMessages.insert API, IntelligentThrottleManager
+-> Related: NAVIGATION.py -> PROBLEMS["Chat messages not sending"]
+-> Quick ref: NAVIGATION.py -> NEED_TO["send throttled chat reply"]
 """
 
 import logging
@@ -12,7 +15,6 @@ import asyncio
 import random
 from typing import Optional
 import googleapiclient.errors
-from modules.communication.livechat.src.throttle_manager import ThrottleManager
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +31,9 @@ class ChatSender:
         self.random_delay_enabled = True
         self.min_random_delay = 0.5  # Minimum random delay (seconds)
         self.max_random_delay = 3.0  # Maximum random delay (seconds)
-        
-        # Adaptive throttle manager
-        self.throttle = ThrottleManager()
+
+        # NOTE: Throttling is handled centrally by livechat_core.py's IntelligentThrottleManager
+        # This class should NOT do its own throttling to avoid duplicate logic
         
     async def send_message(self, message_text: str, response_type: str = 'general', skip_delay: bool = False) -> bool:
         """
@@ -65,28 +67,23 @@ class ChatSender:
             # All mentions are valid, proceed with sending
             logger.debug(f"✅ All @mentions validated in message")
         
-        # Check throttling (skip for consciousness commands and timeout announcements)
-        if response_type not in ['consciousness', 'timeout_announcement'] and not self.throttle.should_respond(response_type):
-            logger.info(f"⏰ Throttled {response_type} response (chat too active)")
-            return False
+        # NOTE: Throttling is handled by livechat_core.py before calling this method
+        # We do NOT throttle here to avoid duplicate throttling logic
         
         try:
             # Ensure we have bot channel ID
             if not self.bot_channel_id:
                 await self._get_bot_channel_id()
             
-            # Adaptive delay based on chat activity (skip for greetings/broadcasts/consciousness/timeouts)
-            if not skip_delay and response_type not in ['consciousness', 'timeout_announcement']:
-                adaptive_delay = self.throttle.calculate_adaptive_delay()
-                logger.info(f"⏱️ Adaptive delay: {adaptive_delay:.2f}s based on chat activity")
-                await asyncio.sleep(adaptive_delay)
-            else:
+            # NOTE: Adaptive delays are handled by livechat_core.py's IntelligentThrottleManager
+            # Skip delay only for explicit priority messages
+            if skip_delay:
                 if response_type == 'consciousness':
-                    logger.info("⚡ Skipping adaptive delay for consciousness trigger response")
+                    logger.info("⚡ Skipping delay for consciousness trigger response")
                 elif response_type == 'timeout_announcement':
-                    logger.info("⚡🎮 PRIORITY: Skipping ALL delays for timeout announcement!")
+                    logger.info("⚡🎮 PRIORITY: Skipping delay for timeout announcement!")
                 else:
-                    logger.info("⚡ Skipping adaptive delay for greeting/broadcast")
+                    logger.info("⚡ Skipping delay as requested")
             
             # WSP Enhancement: Add random pre-send delay for human-like behavior
             # Skip for timeout announcements (highest priority)
@@ -116,9 +113,8 @@ class ChatSender:
             
             message_id = response.get("id", "unknown")
             logger.info(f"✅ Message sent successfully (ID: {message_id})")
-            
-            # Record response for throttling
-            self.throttle.record_response(response_type)
+
+            # NOTE: Response recording is handled by livechat_core.py's IntelligentThrottleManager
             
             # Add base delay to avoid rate limiting
             await asyncio.sleep(self.send_delay)

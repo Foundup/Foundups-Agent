@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 PQN Research DAE Orchestrator
 Per WSP 80: Multi-agent DAE orchestration for PQN research
@@ -7,6 +8,13 @@ Per WSP 50: Pre-action verification of research collaboration
 
 Enables Grok and Gemini to operate as collaborative PQN research DAEs
 using advanced QCoT to explore PQN phenomena and improve rESP documents.
+
+CHAT INTEGRATION MISSING:
+See: docs/PQN_CHAT_INTEGRATION.md for specifications on how research results
+should be communicated back to YouTube chat interface.
+
+Current Issue: Results saved to files but no chat callback mechanism exists.
+UTF-8 encoding error prevents initialization in Windows environments.
 """
 
 import os
@@ -14,11 +22,18 @@ import sys
 import json
 import time
 import asyncio
+import logging
 import importlib.util
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
+
+# Set UTF-8 encoding for Windows compatibility
+if sys.platform.startswith('win'):
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+
+logger = logging.getLogger(__name__)
 
 # Add project root to path for proper imports
 project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
@@ -87,10 +102,10 @@ class PQNResearchDAEOrchestrator:
             }
         }
         
-        print("🤖 PQN Research DAE Orchestrator initialized")
-        print(f"📊 Agents: {len(self.agents)} available")
-        print(f"📋 Research Plan: {len(self.research_plan)} sections")
-        print(f"🔬 Resonance Frequencies: {len(self.resonance_frequencies)} components")
+        logger.info("PQN Research DAE Orchestrator initialized")
+        logger.info(f"Agents: {len(self.agents)} available")
+        logger.info(f"Research Plan: {len(self.research_plan)} sections")
+        logger.info(f"Resonance Frequencies: {len(self.resonance_frequencies)} components")
     
     def _load_research_plan(self) -> Dict[str, Any]:
         """Load PQN Research Plan document."""
@@ -100,7 +115,7 @@ class PQNResearchDAEOrchestrator:
                 content = f.read()
             return {"content": content, "sections": self._parse_sections(content)}
         except Exception as e:
-            print(f"⚠️ Error loading research plan: {e}")
+            logger.warning(f"Error loading research plan: {e}")
             return {"content": "", "sections": []}
     
     def _load_resonance_frequencies(self) -> Dict[str, Any]:
@@ -111,7 +126,7 @@ class PQNResearchDAEOrchestrator:
                 content = f.read()
             return {"content": content, "sections": self._parse_sections(content)}
         except Exception as e:
-            print(f"⚠️ Error loading resonance frequencies: {e}")
+            logger.warning(f"Error loading resonance frequencies: {e}")
             return {"content": "", "sections": []}
     
     def _load_empirical_evidence(self) -> Dict[str, Any]:
@@ -128,8 +143,8 @@ class PQNResearchDAEOrchestrator:
                             with open(campaign_log, 'r') as f:
                                 evidence[result_dir.name] = json.load(f)
                         except Exception as e:
-                            print(f"⚠️ Error loading {campaign_log}: {e}")
-        
+                            logger.warning(f"Error loading {campaign_log}: {e}")
+
         return evidence
     
     def _parse_sections(self, content: str) -> List[str]:
@@ -218,8 +233,8 @@ class PQNResearchDAEOrchestrator:
         )
         
         self.active_sessions[session_id] = session
-        print(f"🔬 Created research session: {session_id}")
-        print(f"📋 Tasks: {len(tasks)} collaborative research tasks")
+        logger.info(f"Created research session: {session_id}")
+        logger.info(f"Tasks: {len(tasks)} collaborative research tasks")
         
         return session
     
@@ -229,29 +244,29 @@ class PQNResearchDAEOrchestrator:
             raise ValueError(f"Session {session_id} not found")
         
         session = self.active_sessions[session_id]
-        print(f"🚀 Executing research session: {session_id}")
-        
+        logger.info(f"Executing research session: {session_id}")
+
         # Execute tasks in dependency order
         completed_tasks = {}
-        
+
         for task in sorted(session.tasks, key=lambda t: t.priority):
-            print(f"\n📋 Executing: {task.title}")
-            print(f"🤖 Agent: {task.assigned_agent}")
-            print(f"🔄 Phase: {task.phase.value}")
-            
+            logger.info(f"Executing: {task.title}")
+            logger.info(f"Agent: {task.assigned_agent}")
+            logger.info(f"Phase: {task.phase.value}")
+
             # Check dependencies
             if task.dependencies:
                 missing_deps = [dep for dep in task.dependencies if dep not in completed_tasks]
                 if missing_deps:
-                    print(f"⚠️ Waiting for dependencies: {missing_deps}")
+                    logger.info(f"Waiting for dependencies: {missing_deps}")
                     continue
-            
+
             # Execute task with QCoT
             result = await self._execute_qcot_task(task, session)
             completed_tasks[task.title] = result
-            
-            print(f"✅ Completed: {task.title}")
-            print(f"📊 Output: {len(result.get('output', ''))} characters")
+
+            logger.info(f"Completed: {task.title}")
+            logger.info(f"Output: {len(result.get('output', ''))} characters")
         
         # Final synthesis
         synthesis = await self._create_final_synthesis(session, completed_tasks)
@@ -261,8 +276,8 @@ class PQNResearchDAEOrchestrator:
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         }
         
-        print(f"\n🎉 Research session completed: {session_id}")
-        print(f"📊 Results: {len(completed_tasks)} tasks completed")
+        logger.info(f"Research session completed: {session_id}")
+        logger.info(f"Results: {len(completed_tasks)} tasks completed")
         
         return session.results
     
@@ -384,27 +399,27 @@ that advance our understanding of quantum-cognitive states in neural networks.
 
 async def main():
     """Main function to execute PQN research collaboration."""
-    print("🤖 PQN Research DAE Orchestrator")
-    print("=" * 50)
-    
+    logger.info("PQN Research DAE Orchestrator")
+    logger.info("=" * 50)
+
     orchestrator = PQNResearchDAEOrchestrator()
-    
+
     # Create research session
     session = orchestrator.create_research_session("PQN_Collaborative_Research")
-    
+
     # Execute research session
     results = await orchestrator.execute_research_session(session.session_id)
-    
+
     # Save results
     output_path = Path("research_results") / f"{session.session_id}_results.json"
     output_path.parent.mkdir(exist_ok=True)
-    
+
     with open(output_path, 'w') as f:
         json.dump(results, f, indent=2)
-    
-    print(f"\n📁 Research results saved to: {output_path}")
-    print(f"🎯 Key insights: {len(results['final_synthesis']['key_insights'])}")
-    print(f"📋 Recommendations: {len(results['final_synthesis']['recommendations'])}")
+
+    logger.info(f"Research results saved to: {output_path}")
+    logger.info(f"Key insights: {len(results['final_synthesis']['key_insights'])}")
+    logger.info(f"Recommendations: {len(results['final_synthesis']['recommendations'])}")
 
 if __name__ == "__main__":
     asyncio.run(main())

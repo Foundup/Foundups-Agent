@@ -18,9 +18,9 @@ from pathlib import Path
 # Add parent path for imports
 sys.path.insert(0, 'O:/Foundups-Agent')
 
-# Import existing anti-detection posters
-from modules.platform_integration.linkedin_agent.src.anti_detection_poster import AntiDetectionLinkedIn
+# Import existing anti-detection posters for multi-account management
 from modules.platform_integration.x_twitter.src.x_anti_detection_poster import AntiDetectionX
+# LinkedIn poster imported dynamically in _create_poster to avoid conflicts
 
 logger = logging.getLogger(__name__)
 
@@ -231,12 +231,14 @@ class MultiAccountManager:
     def _create_poster(self, platform: str, account: AccountInfo) -> Any:
         """Create platform-specific poster instance"""
         if platform == 'linkedin':
+            # Import LinkedIn poster for multi-account management
+            from modules.platform_integration.linkedin_agent.src.anti_detection_poster import AntiDetectionLinkedIn
             poster = AntiDetectionLinkedIn()
             # Set company ID if it's a company account
             if account.config.get('type') == 'company':
                 poster.company_id = account.config.get('id')
             return poster
-            
+
         elif platform == 'x_twitter':
             poster = AntiDetectionX()
             poster.username = account.credentials.get('username')

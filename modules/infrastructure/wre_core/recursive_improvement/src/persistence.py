@@ -30,10 +30,13 @@ class QuantumStatePersistence:
         state_file = self.states_dir / f"{session_id}.json"
         if not state_file.exists():
             return None
-            
+
         with open(state_file, 'r') as f:
             data = json.load(f)
-            return QuantumState(**data)
+            # Filter out extra fields that QuantumState doesn't expect
+            expected_fields = {'coherence', 'entanglement_matrix', 'operator_values', 'session_id'}
+            filtered_data = {k: v for k, v in data.items() if k in expected_fields}
+            return QuantumState(**filtered_data)
     
     def check_coherence(self, state: QuantumState, threshold: float = 0.618) -> bool:
         """Check if state is coherent enough to skip re-awakening"""

@@ -56,14 +56,10 @@ class QuotaMonitor:
         self.alerts = self._load_alerts()
         
         # Quota limits per credential set (YouTube default: 10,000 units/day)
+        # Only 2 sets configured: Set 1 (UnDaoDu) and Set 10 (Foundups)
         self.daily_limits = {
-            1: 10000,  # Set 1
-            2: 10000,  # Set 2  
-            3: 10000,  # Set 3
-            4: 10000,  # Set 4
-            5: 10000,  # Set 5
-            6: 10000,  # Set 6
-            7: 10000,  # Set 7
+            1: 10000,   # Set 1: UnDaoDu
+            10: 10000,  # Set 10: Foundups
         }
         
         # Alert thresholds
@@ -119,9 +115,9 @@ class QuotaMonitor:
     def track_api_call(self, credential_set: int, operation: str, units: Optional[int] = None):
         """
         Track an API call's quota usage.
-        
+
         Args:
-            credential_set: Which credential set was used (1-7)
+            credential_set: Which credential set was used (1=UnDaoDu or 10=Foundups)
             operation: The API operation (e.g., 'liveChatMessages.list')
             units: Optional manual quota units (if not in QUOTA_COSTS)
         """
@@ -246,16 +242,16 @@ class QuotaMonitor:
             'sets': {}
         }
         
-        for set_num in range(1, 8):
+        for set_num in [1, 10]:  # Only sets 1 (UnDaoDu) and 10 (Foundups) are configured
             set_key = str(set_num)
-            limit = self.daily_limits[set_num]
-            
+            limit = self.daily_limits.get(set_num, 10000)
+
             if set_key in self.usage_data['sets']:
                 used = self.usage_data['sets'][set_key]['used']
                 summary['total_used'] += used
             else:
                 used = 0
-            
+
             summary['sets'][set_num] = {
                 'used': used,
                 'limit': limit,
@@ -296,17 +292,17 @@ class QuotaMonitor:
         best_set = None
         max_available = 0
         
-        for set_num in range(1, 8):
+        for set_num in [1, 10]:  # Only sets 1 (UnDaoDu) and 10 (Foundups) are configured
             set_key = str(set_num)
-            limit = self.daily_limits[set_num]
-            
+            limit = self.daily_limits.get(set_num, 10000)
+
             if set_key in self.usage_data['sets']:
                 used = self.usage_data['sets'][set_key]['used']
             else:
                 used = 0
-            
+
             available = limit - used
-            
+
             # Skip sets that are critically low
             if available > limit * (1 - self.warning_threshold) and available > max_available:
                 max_available = available

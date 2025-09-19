@@ -64,7 +64,7 @@ class SystemHealthAnalyzer:
         # Duplicate detection
         self.message_cache = deque(maxlen=100)  # Last 100 messages
         self.duplicate_window = 5  # seconds
-        self.duplicate_threshold = 3  # same message 3+ times = issue
+        self.duplicate_threshold = 2  # same message 2+ times = issue (prevent duplicates)
         
         # Error tracking
         self.error_patterns = {
@@ -92,7 +92,7 @@ class SystemHealthAnalyzer:
         
         # Health thresholds
         self.thresholds = {
-            'max_duplicates': 3,
+            'max_duplicates': 2,
             'error_rate': 0.1,  # 10% error rate
             'response_time_ms': 2000,
             'api_calls_per_minute': 60,

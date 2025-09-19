@@ -3,6 +3,12 @@ Consciousness Handler Module
 WSP-Compliant: WSP 3 (Module Organization), WSP 27 (DAE Architecture)
 
 Handles all consciousness-related emoji sequence processing and responses.
+
+NAVIGATION: Detects and processes ✊✋🖐 consciousness triggers.
+→ Called by: message_processor.py::process_message()
+→ Delegates to: llm_integration.py, chat_sender.py
+→ Related: NAVIGATION.py → PROBLEMS["Consciousness trigger not working"]
+→ Quick ref: NAVIGATION.py → NEED_TO["handle consciousness trigger"]
 """
 
 import logging
@@ -18,19 +24,89 @@ class ConsciousnessHandler:
     def __init__(self, sentiment_engine, grok_integration=None):
         """
         Initialize consciousness handler.
-        
+
         Args:
             sentiment_engine: AgenticSentiment0102 instance
             grok_integration: Optional GrokIntegration instance for advanced responses
         """
         self.sentiment_engine = sentiment_engine
         self.grok = grok_integration
-        
+
         # Emoji patterns with skin tone support
         self.fist_pattern = r'✊[\U0001F3FB-\U0001F3FF]?'
         self.hand_pattern = r'✋[\U0001F3FB-\U0001F3FF]?'
         self.open_pattern = r'🖐️?[\U0001F3FB-\U0001F3FF]?'
+
+        # HoloIndex path
+        self.holoindex_available = False
+        try:
+            import os
+            holo_path = r"E:\HoloIndex\enhanced_holo_index.py"
+            if os.path.exists(holo_path):
+                self.holoindex_path = holo_path
+                self.holoindex_available = True
+                logger.info("✅ HoloIndex integration enabled for chat commands")
+        except:
+            logger.warning("⚠️ HoloIndex not available for chat commands")
         
+    def search_with_holoindex(self, query: str, username: str, role: str) -> str:
+        """
+        Search code using HoloIndex semantic search.
+
+        Args:
+            query: Search query
+            username: Username requesting search
+            role: User role (for permission checks if needed)
+
+        Returns:
+            Search results formatted for chat
+        """
+        if not self.holoindex_available:
+            return f"@{username} 🔍 HoloIndex not available. Install at E:\\HoloIndex"
+
+        try:
+            import subprocess
+            import re
+
+            # Run HoloIndex search
+            result = subprocess.run(
+                ['python', self.holoindex_path, '--search', query, '--no-llm'],  # Fast mode for chat
+                capture_output=True,
+                text=True,
+                encoding='utf-8',
+                timeout=5  # Quick timeout for chat responsiveness
+            )
+
+            if result.returncode == 0:
+                # Parse top results
+                matches = re.findall(r'\[(-?\d+\.?\d*)%\] (.+?)\n\s+-> (.+)', result.stdout)
+
+                if matches and len(matches) > 0:
+                    # Format top 3 results for chat
+                    top_match = matches[0]
+                    confidence = float(top_match[0])
+
+                    if confidence > 50:
+                        # High confidence - found it!
+                        response = f"@{username} 🎯 Found: {top_match[1]} ({confidence:.0f}% match) → {top_match[2][:60]}"
+                    else:
+                        # Low confidence - show options
+                        response = f"@{username} 🔍 Possible matches for '{query}': "
+                        for match in matches[:2]:
+                            response += f"[{match[0]}%] {match[1][:30]}... "
+
+                    return response[:400]  # YouTube comment length limit
+                else:
+                    return f"@{username} 🔍 No code found for '{query}'. Try different keywords?"
+            else:
+                return f"@{username} ❌ Search failed. Try simpler keywords?"
+
+        except subprocess.TimeoutExpired:
+            return f"@{username} ⏱️ Search timed out. Try a simpler query?"
+        except Exception as e:
+            logger.error(f"HoloIndex search error: {e}")
+            return f"@{username} ❌ Search error. Try again later?"
+
     def extract_emoji_sequence(self, text: str) -> str:
         """
         Extract and normalize emoji sequence from text.
@@ -96,19 +172,21 @@ class ConsciousnessHandler:
     def determine_command_type(self, text: str) -> str:
         """
         Determine the type of consciousness command.
-        
+
         Args:
             text: Message text
-            
+
         Returns:
-            Command type: 'factcheck', 'rate', 'targeted', 'creative', or 'basic'
+            Command type: 'factcheck', 'rate', 'holoindex', 'targeted', 'creative', or 'basic'
         """
         text_lower = text.lower()
-        
+
         if "factcheck" in text_lower or " fc" in text_lower or text_lower.endswith(" fc"):
             return 'factcheck'
         elif "rate" in text_lower:
             return 'rate'
+        elif "holoindex" in text_lower or "search code" in text_lower or "find code" in text_lower:
+            return 'holoindex'
         elif '@' in text:
             return 'targeted'
         elif self.extract_creative_request(text):
@@ -137,7 +215,24 @@ class ConsciousnessHandler:
         target_user = self.extract_target_user(text)
         
         # Route to appropriate handler
-        if command_type == 'factcheck' and self.grok:
+        if command_type == 'holoindex':
+            # Check role restriction - MOD/OWNER only for security
+            if role not in ['MOD', 'OWNER']:
+                return f"@{username} 🔒 HoloIndex search is restricted to mods/owners only"
+
+            # Extract search query from the message
+            query = self.extract_creative_request(text)
+            if query:
+                # Clean up the query
+                query = query.replace("holoindex", "").replace("search code", "").replace("find code", "").strip()
+                if query:
+                    return self.search_with_holoindex(query, username, role)
+                else:
+                    return f"@{username} 🔍 HoloIndex: What code should I search for? Example: ✊✋🖐 holoindex send messages"
+            else:
+                return f"@{username} 🔍 Use: ✊✋🖐 holoindex [what you're looking for]"
+
+        elif command_type == 'factcheck' and self.grok:
             if role in ['MOD', 'OWNER']:
                 return self.grok.fact_check(target_user, role, emoji_sequence)
             else:
@@ -155,12 +250,17 @@ class ConsciousnessHandler:
             else:
                 return f"Only mods/owners can trigger targeted responses"
         
-        elif command_type == 'creative' and self.grok:
+        elif command_type == 'creative':
             if role in ['MOD', 'OWNER']:
-                request = self.extract_creative_request(text)
-                return self.grok.creative_response(emoji_sequence, request, username)
-        
-        # Default to sentiment engine response
+                if self.grok:
+                    request = self.extract_creative_request(text)
+                    return self.grok.creative_response(emoji_sequence, request, username)
+                else:
+                    return f"@{username} Creative mode requires Grok integration"
+            else:
+                return f"@{username} Only mods/owners can request creative content"
+
+        # Default to sentiment engine response (basic consciousness)
         user_state = self.sentiment_engine.perceive_user_state(user_id, text)
         if user_state.emoji_repr:
             if target_user:

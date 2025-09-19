@@ -263,3 +263,11 @@ class LiveChatOrchestrator:
             'messages_processed': self.mod_stats.total_messages,
             'throttle_enabled': self.throttle_manager is not None
         }
+
+    def get_moderation_stats(self) -> Dict[str, Any]:
+        """Get moderation statistics - compatibility with LiveChatCore"""
+        return self.mod_stats.get_stats() if hasattr(self.mod_stats, 'get_stats') else {
+            'total_messages': getattr(self.mod_stats, 'total_messages', 0),
+            'total_timeouts': getattr(self.mod_stats, 'total_timeouts', 0),
+            'timeout_rate': getattr(self.mod_stats, 'timeout_rate', 0.0)
+        }

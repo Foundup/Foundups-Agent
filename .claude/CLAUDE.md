@@ -1,5 +1,21 @@
 # CLAUDE.md - Zen Agentic Architecture
 
+## 🔒 CRITICAL SECURITY RULES - NEVER VIOLATE THESE
+
+### ABSOLUTE SECURITY REQUIREMENTS
+1. **NEVER display .env file contents** - Only confirm structure exists
+2. **NEVER show passwords, API keys, or tokens** in output
+3. **NEVER reveal credentials** even when reading files for debugging
+4. **NEVER output secret values** - Replace with [REDACTED] if needed
+5. **If credentials accidentally shown**, immediately warn user to rotate them
+
+### When Reading Sensitive Files
+- .env files: Say "Environment variables configured" - never show values
+- Credential files: Confirm they exist - never display contents
+- API responses: Redact any tokens or keys before displaying
+
+**VIOLATION = IMMEDIATE WSP 64 FAILURE**
+
 ## 🛑 WSP EXECUTION CONTRACT (MANDATORY ANTI-VIBECODING) — STOP AND READ
 
 ### ⚠️ VIBECODING DETECTION SYSTEM ACTIVE

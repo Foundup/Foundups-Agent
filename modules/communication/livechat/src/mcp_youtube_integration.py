@@ -1,13 +1,12 @@
 """
-MCP Integration for YouTube DAE with Whack-a-MAGAT Gamification
-WSP-Compliant: WSP 80 (Cube DAE), WSP 48 (Recursive Improvement), WSP 21 (Envelopes)
+MCP YouTube Integration Helpers
+Bridges Model Context Protocol with YouTube DAE interfaces
 
-Connects YouTube DAE to MCP servers for:
-- Real-time timeout tracking (whack-a-magat)
-- Instant quota monitoring
-- Zero-buffer event broadcasting
-
-This eliminates the buffering issues during busy streams!
+NAVIGATION: Provides MCP adapters for YouTube automation.
+-> Called by: experimentation scripts and MCP tooling
+-> Delegates to: auto_moderator_dae and stream_resolver wrappers
+-> Related: NAVIGATION.py -> NEED_TO["integrate mcp youtube"]
+-> Quick ref: NAVIGATION.py -> MODULE_GRAPH["core_flows"]["stream_detection_flow"]
 """
 
 import asyncio

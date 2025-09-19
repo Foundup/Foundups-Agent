@@ -69,9 +69,12 @@ def get_env_variable(key: str, default: Optional[str] = None) -> Optional[str]:
     value = os.getenv(key)
     if value is not None:
         return value
-        
+
     if default is not None:
         return default
-        
-    logger.warning(f"Environment variable '{key}' not found and no default provided")
+
+    # Only warn if no default was provided (indicates it's truly required)
+    # Skip warning for optional variables like YOUTUBE_VIDEO_ID
+    if key not in ["YOUTUBE_VIDEO_ID", "YOUTUBE_CHANNEL_ID"]:
+        logger.warning(f"Environment variable '{key}' not found and no default provided")
     return None 

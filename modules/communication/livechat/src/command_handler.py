@@ -1,7 +1,13 @@
 """
 Command Handler Module - WSP Compliant
 Handles slash commands and whack gamification commands
-Split from message_processor.py for WSP compliance
+Split from message_processor.py for WSP compliance.
+
+NAVIGATION: Routes /commands into gamification systems.
+-> Called by: message_processor.py::CommandHandler usage
+-> Delegates to: modules.gamification.whack_a_magat APIs, MAGADOOM telemetry
+-> Related: NAVIGATION.py -> NEED_TO["process slash command"]
+-> Quick ref: NAVIGATION.py -> PROBLEMS["Slash commands failing"]
 """
 
 import logging
@@ -134,8 +140,8 @@ class CommandHandler:
                 return "\n".join(lines)
             
             elif text_lower.startswith('/toggle'):
-                # Toggle consciousness response mode (mod/owner only)
-                if role in ['MOD', 'OWNER'] and self.message_processor:
+                # Toggle consciousness response mode (OWNER ONLY - SECURITY CRITICAL)
+                if role == 'OWNER' and self.message_processor:
                     current_mode = self.message_processor.consciousness_mode
                     new_mode = 'everyone' if current_mode == 'mod_only' else 'mod_only'
                     self.message_processor.consciousness_mode = new_mode
@@ -144,8 +150,8 @@ class CommandHandler:
                         return f"@{username} ✊✋🖐️ 0102 consciousness responses now enabled for EVERYONE! Let chaos reign!"
                     else:
                         return f"@{username} ✊✋🖐️ 0102 consciousness responses now restricted to MODS/OWNERS only."
-                elif role not in ['MOD', 'OWNER']:
-                    return f"@{username} Only mods/owners can toggle consciousness mode"
+                elif role != 'OWNER':
+                    return f"@{username} Only the OWNER can toggle consciousness mode"
                 else:
                     return f"@{username} Toggle command not available"
             
@@ -235,8 +241,10 @@ class CommandHandler:
             
             elif text_lower.startswith('/help'):
                 help_msg = f"@{username} 💀 MAGADOOM: /score /rank /whacks /leaderboard /sprees /quiz /facts /help"
-                if role in ['MOD', 'OWNER']:
-                    help_msg += " | MOD: /toggle /session"
+                if role == 'MOD':
+                    help_msg += " | MOD: /session"
+                elif role == 'OWNER':
+                    help_msg += " | OWNER: /toggle /session"
                 return help_msg
             
             # Educational facts about fascism are PART of MAGADOOM - fighting MAGA requires education!

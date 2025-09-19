@@ -6,20 +6,21 @@ This document helps 0102 remember YouTube authentication and quota management.
 ## Core Components
 
 ### YouTubeAuthManager (`src/youtube_auth.py`)
-Manages 10 credential sets with automatic rotation and quota tracking.
+Manages 2 credential sets (UnDaoDu and Foundups) with automatic rotation and quota tracking.
 
 ### Key Features
-- **10 Credential Sets**: oauth_token1.json through oauth_token10.json
-- **Automatic Rotation**: Switches to next set when quota exceeded
+- **2 Credential Sets**: Set 1 (UnDaoDu) and Set 10 (Foundups)
+- **Automatic Rotation**: Switches between the 2 sets when quota exceeded
 - **Quota Tracking**: `memory/quota_usage.json`
 - **Daily Reset**: 10,000 units per set per day (PST)
 - **Exhaustion Tracking**: Marks sets as exhausted until reset
 
 ### Credential Management
 ```python
-# Rotation order (randomized daily)
-sets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-random.shuffle(sets)
+# Only 2 credential sets configured:
+# Set 1: UnDaoDu (oauth_token.json)
+# Set 10: Foundups (oauth_token10.json)
+sets = [1, 10]
 ```
 
 ### Quota Costs
@@ -33,10 +34,9 @@ random.shuffle(sets)
 Wraps YouTube API service to track quota usage per operation.
 
 ### Authorization Scripts (`scripts/`)
-- `authorize_set8.py` - Authorize credential set 8
-- `authorize_set9.py` - Authorize credential set 9
-- `authorize_set10.py` - Authorize credential set 10
-- `authorize_sets_8_9_10.py` - Batch authorization
+- `authorize_set1.py` - Authorize credential set 1 (UnDaoDu)
+- `authorize_set10.py` - Authorize credential set 10 (Foundups)
+- `authorize_all_sets.py` - Batch authorization for both sets
 
 ### Integration Points
 - Used by: All YouTube-facing modules
@@ -44,10 +44,11 @@ Wraps YouTube API service to track quota usage per operation.
 - Credentials: `credentials/oauth_token*.json`
 
 ### Recent Issues Fixed
-1. Sets 8, 9, 10 now properly authorized
-2. Quota tracking accurate across all operations
-3. Automatic exhaustion detection and rotation
+1. Reduced from 10 sets to 2 active sets (1=UnDaoDu, 10=Foundups)
+2. Quota tracking accurate across both sets
+3. Automatic exhaustion detection and rotation between the 2 sets
 4. Credential refresh on expiry
+5. Set 1 token expired - needs re-authorization
 
 ### WSP Compliance
 - WSP 3: Module organization

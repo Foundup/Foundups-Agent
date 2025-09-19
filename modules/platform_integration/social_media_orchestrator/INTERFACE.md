@@ -14,6 +14,9 @@
 - `SchedulingEngine`: Advanced scheduling with platform-specific optimizations
 - `TwitterAdapter`: Twitter/X platform-specific adapter
 - `LinkedInAdapter`: LinkedIn platform-specific adapter
+- `AutonomousActionScheduler`: Natural language understanding for 0102 commands
+- `HumanSchedulingInterface`: Human (012) interface for scheduled posts
+- `SimplePostingOrchestrator`: Sequential posting with anti-detection
 
 ### Primary Methods
 
@@ -202,6 +205,41 @@ print(f"Twitter rate limit: {twitter_status['rate_limit']}")
 # Test Twitter hello world (test mode)
 await orchestrator.test_platform_hello_world('twitter')
 
-# Test LinkedIn hello world (test mode) 
+# Test LinkedIn hello world (test mode)
 await orchestrator.test_platform_hello_world('linkedin')
+```
+
+### Natural Language Scheduling (0102 Mode)
+```python
+from modules.platform_integration.social_media_orchestrator.src.autonomous_action_scheduler import AutonomousActionScheduler
+
+# Initialize 0102 scheduler
+scheduler = AutonomousActionScheduler()
+
+# Understand natural language commands
+action = scheduler.understand_command(
+    "Post 'Going live soon!' to LinkedIn in 30 minutes",
+    context={'stream_title': 'AI Development'}
+)
+
+# Execute pending actions
+results = await scheduler.execute_pending_actions()
+```
+
+### Human Scheduling Interface (012 Mode)
+```python
+from modules.platform_integration.social_media_orchestrator.src.human_scheduling_interface import HumanSchedulingInterface
+
+# Initialize human scheduler
+human_scheduler = HumanSchedulingInterface()
+
+# Schedule a post
+post_id = human_scheduler.schedule_post(
+    content="Stream starting soon!",
+    platforms=[Platform.LINKEDIN, Platform.X_TWITTER],
+    scheduled_time=datetime.now() + timedelta(hours=2)
+)
+
+# Execute scheduled posts
+results = await human_scheduler.execute_scheduled_posts()
 ```

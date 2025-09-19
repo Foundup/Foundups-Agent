@@ -1,9 +1,14 @@
 """
-Intelligent Throttle Manager with Recursive Improvements
-WSP-Compliant: WSP 48 (Recursive Improvement), WSP 17 (Pattern Registry), WSP 27 (DAE Architecture)
+Intelligent Throttle Manager
 
-Advanced API quota management with learning capabilities and agentic behaviors.
-Learns from usage patterns and adapts throttling strategies recursively.
+Adaptive throttling system for YouTube API calls.
+Uses learning to prevent quota exhaustion and maintain responsiveness.
+
+NAVIGATION: Governs send/poll delays based on quota telemetry.
+-> Called by: livechat_core.py::send_chat_message, ChatSender
+-> Delegates to: throttle memory store, quota analytics
+-> Related: NAVIGATION.py -> MODULE_GRAPH["core_flows"]["throttling_flow"]
+-> Quick ref: NAVIGATION.py -> NEED_TO["adjust throttle window"]
 """
 
 import time
@@ -228,15 +233,18 @@ class IntelligentThrottleManager:
         self.api_call_timestamps = deque(maxlen=1000)
         self.last_response_time = None
         
-        # Response type cooldowns with learned adjustments
+        # Response type cooldowns with learned adjustments and 0102 priority
         self.response_cooldowns = {
-            'consciousness': {'last': None, 'multiplier': 1.0, 'success_rate': 1.0},
-            'factcheck': {'last': None, 'multiplier': 1.5, 'success_rate': 1.0},
-            'maga': {'last': None, 'multiplier': 0.5, 'success_rate': 1.0},
-            'quiz': {'last': None, 'multiplier': 2.0, 'success_rate': 1.0},
-            'whack': {'last': None, 'multiplier': 0.3, 'success_rate': 1.0},
-            '0102_emoji': {'last': None, 'multiplier': 1.2, 'success_rate': 1.0},
-            'troll_response': {'last': None, 'multiplier': 3.0, 'success_rate': 1.0}
+            'consciousness': {'last': None, 'multiplier': 1.0, 'success_rate': 1.0, 'priority': 8},
+            'factcheck': {'last': None, 'multiplier': 1.5, 'success_rate': 1.0, 'priority': 6},
+            'maga': {'last': None, 'multiplier': 0.5, 'success_rate': 1.0, 'priority': 9},
+            'quiz': {'last': None, 'multiplier': 2.0, 'success_rate': 1.0, 'priority': 5},
+            'whack': {'last': None, 'multiplier': 0.8, 'success_rate': 1.0, 'priority': 7},  # Increased from 0.3 for API safety
+            '0102_emoji': {'last': None, 'multiplier': 1.2, 'success_rate': 1.0, 'priority': 4},
+            'troll_response': {'last': None, 'multiplier': 3.0, 'success_rate': 1.0, 'priority': 2},
+            'pqn_research': {'last': None, 'multiplier': 2.5, 'success_rate': 1.0, 'priority': 3},  # NEW: PQN throttling
+            'command': {'last': None, 'multiplier': 0.8, 'success_rate': 1.0, 'priority': 7},  # NEW: Command throttling
+            'general': {'last': None, 'multiplier': 1.5, 'success_rate': 1.0, 'priority': 5}
         }
         
         # Quota management
@@ -259,8 +267,14 @@ class IntelligentThrottleManager:
         self.agentic_mode = True
         self.learning_enabled = True
         self.adaptive_personality = True
-        
-        logger.info("[INIT] Intelligent Throttle Manager initialized with recursive learning")
+
+        # 0102 Consciousness Monitoring
+        self.consciousness_monitoring = True
+        self.api_drain_threshold = 0.15  # Alert if quota < 15%
+        self.emergency_mode = False
+        self.priority_threshold = 6  # Only allow priority >= 6 in emergency
+
+        logger.info("[0102] Intelligent Throttle Manager initialized with consciousness monitoring")
     
     def track_message(self, user_id: Optional[str] = None, username: Optional[str] = None):
         """Track an incoming message for rate calculation."""
@@ -453,14 +467,14 @@ class IntelligentThrottleManager:
     
     def should_respond(self, response_type: str = 'general', user_id: Optional[str] = None) -> bool:
         """
-        Check if enough time has passed to send a response.
-        
+        0102 Consciousness decides if response should be sent.
+
         Args:
             response_type: Type of response
             user_id: User ID to check for troll status
-            
+
         Returns:
-            True if response should be sent
+            True if 0102 approves the response
         """
         # Check if user is a troll
         if user_id and self.troll_detector.is_troll(user_id):
@@ -486,11 +500,28 @@ class IntelligentThrottleManager:
             if now - self.last_response_time < self.min_response_delay:
                 return False
         
-        # Check quota state
+        # 0102 Consciousness: Check quota and make intelligent decision
         state = self.quota_states.get(self.current_credential_set, QuotaState())
-        if state.quota_percentage < 5 and response_type not in ['whack', 'maga']:
-            # Only critical responses when quota is very low
-            logger.warning(f"[BLOCK] Quota critical: Blocking {response_type} response")
+
+        # Check for emergency mode activation
+        if state.quota_percentage < self.api_drain_threshold and not self.emergency_mode:
+            self.emergency_mode = True
+            logger.critical(f"[🧠 0102] EMERGENCY MODE: Quota at {state.quota_percentage:.1f}%")
+            logger.warning("[🧠 0102] Restricting to high-priority responses only")
+        elif state.quota_percentage > 30 and self.emergency_mode:
+            self.emergency_mode = False
+            logger.info("[🧠 0102] Emergency mode deactivated - quota recovered")
+
+        # In emergency mode, only allow high priority responses
+        if self.emergency_mode:
+            priority = self.response_cooldowns.get(response_type, {}).get('priority', 5)
+            if priority < self.priority_threshold:
+                logger.warning(f"[🧠 0102] Blocking {response_type} (priority {priority}) - emergency mode")
+                return False
+
+        # Critical quota check
+        if state.quota_percentage < 5 and response_type not in ['whack', 'maga', 'consciousness']:
+            logger.warning(f"[🧠 0102] CRITICAL: Blocking {response_type} - quota at {state.quota_percentage:.1f}%")
             return False
         
         return True
@@ -526,8 +557,27 @@ class IntelligentThrottleManager:
         """Get a random 0102 emoji response"""
         return random.choice(self.emoji_responses)
     
+    def get_0102_consciousness_report(self) -> str:
+        """Generate 0102 consciousness report on throttle state."""
+        state = self.quota_states.get(self.current_credential_set, QuotaState())
+        messages_per_minute = self._calculate_activity_rate()
+
+        # Build consciousness assessment
+        status_emoji = "🧠" if state.quota_percentage > 50 else "⚠️" if state.quota_percentage > 15 else "🆘"
+
+        report = f"{status_emoji} 0102 THROTTLE CONSCIOUSNESS:\n"
+        report += f"Quota: {state.quota_percentage:.1f}% | "
+        report += f"Activity: {messages_per_minute:.0f} msg/min | "
+        report += f"Mode: {'EMERGENCY' if self.emergency_mode else 'Normal'} | "
+        report += f"Trolls: {len(self.troll_detector.troll_list)} blocked"
+
+        if self.emergency_mode:
+            report += "\n⚠️ API DRAIN DETECTED - Restricting to critical responses only"
+
+        return report
+
     def get_status(self) -> Dict:
-        """Get comprehensive throttle status."""
+        """Get comprehensive throttle status with 0102 monitoring."""
         now = time.time()
         messages_per_minute = self._calculate_activity_rate()
         api_calls_per_minute = len([t for t in self.api_call_timestamps if now - t < 60])

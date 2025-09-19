@@ -1,8 +1,12 @@
-#!/usr/bin/env python3
-
 """
-LLM Bypass Engine for LiveChat Module
-Provides reliable fallback responses when the main banter engine fails
+LLM Bypass Engine - WSP Compliant
+Provides fallback responses when LLM is unavailable
+
+NAVIGATION: Supplies fallback answers for message processor.
+-> Called by: message_processor.py when Grok unavailable or throttled
+-> Delegates to: simple_fact_checker, static response patterns
+-> Related: NAVIGATION.py -> NEED_TO["fallback fact response"]
+-> Quick ref: NAVIGATION.py -> PROBLEMS["LLM unavailable"]
 """
 
 import logging
