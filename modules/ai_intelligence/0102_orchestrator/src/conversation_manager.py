@@ -7,7 +7,7 @@ Future versions will include voice interface capabilities.
 
 import logging
 from typing import Dict, List, Any
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -25,6 +25,14 @@ class Intent(Enum):
     GREETING = "greeting"
     UNKNOWN = "unknown"
 
+
+@dataclass
+class EntityExtraction:
+    """Extracted entities from user input"""
+    recipients: List[str] = field(default_factory=list)
+    purpose: str = ""
+    duration: int = 30
+    time_preference: str = ""
 
 @dataclass
 class ParsedIntent:

@@ -1,11 +1,12 @@
 """
-Stream Trigger Module
-WSP-Compliant: Provides trigger mechanisms to wake up the bot
+Stream Trigger Utilities
+Manual trigger and intelligent delay helpers for stream monitoring
 
-This module provides multiple ways to trigger the bot to check for streams immediately:
-1. File trigger - touch/modify a trigger file
-2. API endpoint (future)
-3. Discord/Telegram webhook (future)
+NAVIGATION: Handles manual trigger workflows and delay tuning.
+-> Called by: auto_moderator_dae.py when restarting streams
+-> Delegates to: create_intelligent_delay, StreamTrigger
+-> Related: NAVIGATION.py -> NEED_TO["trigger stream handshake"]
+-> Quick ref: NAVIGATION.py -> MODULE_GRAPH["core_flows"]["stream_detection_flow"]
 """
 
 import os
@@ -109,7 +110,7 @@ def create_intelligent_delay(
     consecutive_failures: int,
     previous_delay: float = None,
     has_trigger: bool = False,
-    min_delay: float = 5.0,
+    min_delay: float = 30.0,
     max_delay: float = 1800.0  # 30 minutes
 ) -> float:
     """

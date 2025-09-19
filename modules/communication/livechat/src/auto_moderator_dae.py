@@ -1,9 +1,15 @@
-"""
+﻿"""
 Auto Moderator DAE (Domain Autonomous Entity)
 WSP-Compliant: WSP 27 (Universal DAE Architecture), WSP 3 (Module Organization)
 
 This is the WSP-compliant version using livechat_core.
 Orchestrates all chat moderation components following DAE architecture.
+
+NAVIGATION: YouTube DAE lifecycle orchestrator.
+-> Called by: main.py::monitor_youtube
+-> Delegates to: StreamResolver, LiveChatCore, youtube_auth credential handlers
+-> Related: NAVIGATION.py -> MODULE_GRAPH["core_flows"]["stream_detection_flow"]
+-> Quick ref: NAVIGATION.py -> NEED_TO["boot auto moderator dae"]
 """
 
 import asyncio
@@ -44,57 +50,41 @@ class AutoModeratorDAE:
         self._last_stream_id = None
         self.transition_start = None
         
-        # WRE Monitor for tracking performance
+        # WRE Integration for recursive learning
         try:
-            from modules.infrastructure.wre_core.wre_monitor import get_monitor
-            self.wre_monitor = get_monitor()
-            logger.info("[0102] WRE Monitor attached to DAE")
+            from modules.infrastructure.wre_core.recursive_improvement.src.wre_integration import (
+                record_error, record_success, get_optimized_approach
+            )
+            self.wre_record_error = record_error
+            self.wre_record_success = record_success
+            self.wre_get_optimized = get_optimized_approach
+            logger.info("[0102] WRE Recursive Learning connected to DAE")
         except Exception as e:
-            logger.debug(f"WRE Monitor not available: {e}")
-            self.wre_monitor = None
+            logger.debug(f"WRE Integration not available: {e}")
+            self.wre_record_error = None
+            self.wre_record_success = None
+            self.wre_get_optimized = None
         
         logger.info("✅ Auto Moderator DAE initialized")
     
     def connect(self) -> bool:
         """
-        Phase -1/0: Connect to YouTube and authenticate.
-        
+        Phase -1/0: Connect to YouTube - NO-QUOTA mode by default.
+        Only use API tokens when we actually find a stream.
+
         Returns:
             Success status
         """
-        logger.info("🔌 Connecting to YouTube...")
-        
-        # Get authenticated YouTube service
-        service = get_authenticated_service()
-        if not service:
-            logger.error("❌ Failed to authenticate with YouTube")
-            return False
-        
-        # Wrap with monitoring to track quota
-        self.service = create_monitored_service(service)
-        self.credential_set = getattr(service, '_credential_set', "Unknown")
-        logger.info(f"✅ Authenticated with credential set {self.credential_set} (quota monitoring enabled)")
-        
-        # Get channel info
-        try:
-            response = self.service.channels().list(
-                part='snippet',
-                mine=True
-            ).execute()
-            
-            if response.get('items'):
-                channel = response['items'][0]
-                channel_id = channel['id']
-                channel_name = channel['snippet']['title']
-                logger.info(f"✅ Connected as: {channel_name}")
-                return True
-            else:
-                logger.error("❌ No channel found for authenticated user")
-                return False
-                
-        except Exception as e:
-            logger.error(f"❌ Failed to get channel info: {e}")
-            return False
+        logger.info("🔌 Starting in NO-QUOTA mode to preserve API tokens...")
+
+        # Default to NO-QUOTA mode for stream searching
+        # We'll only authenticate when we actually find a stream
+        self.service = None
+        self.credential_set = "NO-QUOTA"
+        logger.info("🌐 Using NO-QUOTA web scraping for stream discovery")
+        logger.info("💡 API tokens will only be used when active stream is found")
+
+        return True
     
     def find_livestream(self) -> Optional[tuple]:
         """
@@ -125,9 +115,16 @@ class AutoModeratorDAE:
             logger.info(f"🔎 Checking channel: {channel_id[:12]}...")
             result = self.stream_resolver.resolve_stream(channel_id)
             
-            if result and result[0] and result[1]:
-                video_id, live_chat_id = result
-                logger.info(f"✅ Found stream on channel {channel_id[:12]}... with video ID: {video_id}")
+            if result and result[0]:  # Accept stream even without chat_id
+                video_id = result[0]
+                live_chat_id = result[1] if len(result) > 1 else None
+
+                if not live_chat_id:
+                    logger.info(f"⚠️ Found stream but chat_id not available (likely quota exhausted)")
+                    logger.info(f"✅ Accepting stream anyway - video ID: {video_id}")
+                else:
+                    logger.info(f"✅ Found stream on channel {channel_id[:12]}... with video ID: {video_id}")
+
                 return video_id, live_chat_id
         
         logger.info(f"❌ No active livestream found on {len(channels_to_check)} channel(s)")
@@ -181,7 +178,7 @@ class AutoModeratorDAE:
             # Use trigger-aware delay for better idle behavior
             if quick_check_mode:
                 # After stream ends, check more frequently for new stream
-                delay = min(15, 5 * (consecutive_failures + 1))  # 5s, 10s, 15s, 15s...
+                delay = min(60, 30 * (consecutive_failures + 1))  # 5s, 10s, 15s, 15s...
                 logger.info(f"⚡ Quick check mode: Checking again in {delay}s for new stream")
             else:
                 delay = create_intelligent_delay(
@@ -223,27 +220,56 @@ class AutoModeratorDAE:
             previous_delay = delay
         
         video_id, live_chat_id = result
-        
+
+        # Now that we found a stream, try to authenticate for full functionality
+        # Authenticate FIRST, then get chat_id with API
+        if not self.service and video_id:
+            logger.info("🔐 Stream found! Attempting authentication for chat interaction...")
+            try:
+                service = get_authenticated_service()
+                if service:
+                    self.service = create_monitored_service(service)
+                    self.credential_set = getattr(service, '_credential_set', "Unknown")
+                    logger.info(f"✅ Authenticated with credential set {self.credential_set}")
+
+                    # Now try to get the chat_id with authenticated service
+                    if not live_chat_id:
+                        logger.info("🔍 Getting chat ID with authenticated service...")
+                        self.stream_resolver = StreamResolver(self.service)
+                        auth_result = self.stream_resolver.resolve_stream(os.getenv('CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'))
+                        if auth_result and len(auth_result) > 1:
+                            live_chat_id = auth_result[1]
+                            logger.info(f"✅ Got chat ID with API: {live_chat_id[:20]}...")
+                        else:
+                            logger.warning("⚠️ Could not get chat ID even with API")
+            except Exception as e:
+                logger.warning(f"⚠️ Authentication failed: {e}")
+                logger.info("🌐 Continuing in NO-QUOTA mode (view-only)")
+
         # WRE Monitor: Track stream transition completion
-        if self.wre_monitor:
+        if hasattr(self, 'wre_monitor') and self.wre_monitor:
             if self._last_stream_id and self.transition_start:
                 transition_time = time.time() - self.transition_start
                 self.wre_monitor.track_stream_transition(self._last_stream_id, video_id, transition_time)
             self._last_stream_id = video_id
             self.transition_start = time.time()
-        
+
         # Create LiveChatCore instance
         self.livechat = LiveChatCore(
             youtube_service=self.service,
             video_id=video_id,
             live_chat_id=live_chat_id
         )
-        
+
+        # Initialize LiveChatCore (THIS TRIGGERS SOCIAL MEDIA POSTS!)
+        logger.info("🚀 Initializing LiveChatCore (includes social media posting)...")
+        await self.livechat.initialize()
+
         # Start monitoring
         logger.info("="*60)
         logger.info("👁️ MONITORING CHAT - WSP-COMPLIANT ARCHITECTURE")
         logger.info("="*60)
-        
+
         try:
             await self.livechat.start_listening()
         except KeyboardInterrupt:
@@ -279,21 +305,30 @@ class AutoModeratorDAE:
                 stream_ended_normally = True
                 logger.info("🔄 Stream ended or became inactive - seamless switching engaged")
                 logger.info("⚡ Immediately searching for new stream (agentic mode)...")
-                
+
+                # IMPORTANT: Release API credentials to go back to NO-QUOTA mode
+                # This prevents wasting tokens while searching for new streams
+                if self.service:
+                    logger.info("🔒 Releasing API credentials - switching back to NO-QUOTA mode")
+                    self.service = None
+                    self.credential_set = "NO-QUOTA"
+
                 # WRE Monitor: Mark transition start
-                if self.wre_monitor:
+                if hasattr(self, 'wre_monitor') and self.wre_monitor:
                     self.transition_start = time.time()
-                
+
                 # Reset the LiveChat instance for fresh connection
                 if self.livechat:
                     self.livechat.stop_listening()
                     self.livechat = None
-                
+
                 # Clear cached stream info to force fresh search
                 if self.stream_resolver:
+                    # Force stream resolver to use NO-QUOTA mode
+                    self.stream_resolver.youtube = None
                     # Use the proper clear_cache method
                     self.stream_resolver.clear_cache()
-                    logger.info("🔄 Stream ended - cleared all caches for fresh search")
+                    logger.info("🔄 Stream ended - cleared all caches for fresh NO-QUOTA search")
                 
                 # Quick transition - only wait 5 seconds before looking for new stream
                 await asyncio.sleep(5)

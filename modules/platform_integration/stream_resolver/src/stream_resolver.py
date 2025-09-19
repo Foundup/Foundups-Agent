@@ -23,6 +23,7 @@ import time
 import random
 from datetime import datetime, timedelta
 import json
+import asyncio
 
 # Import intelligent quota testing
 try:
@@ -50,11 +51,12 @@ class APIClientError(Exception):
 # Enhanced configuration with better defaults
 class StreamResolverConfig:
     """Configuration class for stream resolver settings."""
-    
+
     def __init__(self):
         # Dynamic rate limiting constants
         self.MIN_DELAY = 5.0  # Minimum delay in seconds (high activity)
         self.MAX_DELAY = 1800.0  # Maximum delay in seconds (30 minutes for idle)
+        self.CHECK_INTERVAL = 1800.0  # Check every 30 minutes when no stream
         self.MAX_RETRIES = 3  # maximum number of retries for quota errors
         self.QUOTA_ERROR_DELAY = 30.0  # Fixed delay for quota errors
         self.JITTER_FACTOR = 0.2  # Random jitter factor (±20%)
@@ -559,7 +561,7 @@ def get_active_livestream_video_id_enhanced(
     env_video_id = get_env_variable("YOUTUBE_VIDEO_ID", default=None)
     if env_video_id:
         logger.info(f"Using override video ID from environment: {mask_sensitive_id(env_video_id, 'video')}")
-        
+
         try:
             video_details = check_video_details(youtube_client, env_video_id)
             if video_details and "liveStreamingDetails" in video_details:
@@ -573,6 +575,9 @@ def get_active_livestream_video_id_enhanced(
                 logger.warning("Override video has no live streaming details")
         except Exception as e:
             logger.error(f"Error checking override video: {e}")
+    else:
+        # No override provided, will use stream resolver to find stream
+        logger.info("No YOUTUBE_VIDEO_ID override provided, using stream resolver to find active streams")
     
     # Enhanced search with failure tracking
     consecutive_failures = 0
@@ -670,6 +675,16 @@ class StreamResolver:
         self._tested_credentials = set()
         self._cache = {}
         self._last_stream_check = {}
+
+        # Initialize NO-QUOTA checker if no service available
+        self.no_quota_checker = None
+        if not self.youtube:
+            try:
+                from .no_quota_stream_checker import NoQuotaStreamChecker
+                self.no_quota_checker = NoQuotaStreamChecker()
+                self.logger.info("🌐 NO-QUOTA mode initialized - using web scraping")
+            except ImportError:
+                self.logger.warning("NoQuotaStreamChecker not available")
     
     def _ensure_memory_dir(self):
         """Ensure memory directory exists for session caching."""
@@ -873,6 +888,10 @@ class StreamResolver:
                 
         except Exception as e:
             self.logger.warning(f"Failed to verify cached stream: {e}")
+            # Clear cache on verification failure in NO-QUOTA mode
+            if not self.youtube:
+                self.logger.info("🔄 Clearing cache after verification failure")
+                self.clear_cache()
             return None, None
     
     def resolve_stream(self, channel_id=None):
@@ -915,14 +934,49 @@ class StreamResolver:
             self.logger.error("❌ No channel ID provided and none configured")
             return None
         
-        # PRIORITY 4: Search for active livestream with circuit breaker protection
+        # PRIORITY 4: Check if we can use NO-QUOTA mode
+        if not self.youtube and self.no_quota_checker:
+            logger.info("="*60)
+            logger.info("🌐 NO-QUOTA STREAM SEARCH")
+            logger.info(f"   Using web scraping (0 API units)")
+            logger.info(f"   Channel: {search_channel_id}")
+            logger.info("="*60)
+
+            # For NO-QUOTA mode, we need to check known video IDs
+            # Check environment variable or use a fallback method
+            env_video_id = get_env_variable("YOUTUBE_VIDEO_ID", default=None)
+            if env_video_id:
+                logger.info(f"Checking video from env: {env_video_id}")
+                result = self.no_quota_checker.check_video_is_live(env_video_id)
+                if result.get("live"):
+                    logger.info("✅ STREAM IS LIVE (via NO-QUOTA scraping)")
+                    # Trigger social media posting with duplicate check
+                    self._trigger_social_media_post(env_video_id, result.get('title', 'Live Stream'))
+                    # Return video_id but no chat_id in NO-QUOTA mode
+                    return env_video_id, None
+
+            # Try to search the channel for live streams
+            logger.info(f"🔍 Searching channel {search_channel_id} for live streams...")
+            result = self.no_quota_checker.check_channel_for_live(search_channel_id)
+            if result and result.get("live"):
+                video_id = result.get("video_id")
+                if video_id:
+                    logger.info(f"✅ Found live stream via NO-QUOTA channel search: {video_id}")
+                    # Trigger social media posting with duplicate check
+                    self._trigger_social_media_post(video_id, result.get('title', 'Live Stream'))
+                    return video_id, None
+
+            logger.info("❌ No live stream found on channel in NO-QUOTA mode")
+            return None
+
+        # PRIORITY 5: Search for active livestream with circuit breaker protection
         try:
             logger.info("="*60)
             logger.info("🔍 ACTIVE STREAM SEARCH STARTING")
             logger.info(f"   Target Channel: {search_channel_id}")
             logger.info(f"   Using Service: {getattr(self.youtube, '_credential_set', 'Unknown')}")
             logger.info("="*60)
-            
+
             # Try with current service first
             try:
                 # Use the enhanced version for better logging
@@ -934,6 +988,9 @@ class StreamResolver:
                 
                 if result:
                     video_id, chat_id = result
+                    # Trigger social media posting with duplicate check
+                    stream_title = self._get_stream_title(video_id)
+                    self._trigger_social_media_post(video_id, stream_title)
                     # Save successful connection to cache for future instant access
                     self._save_session_cache(video_id, chat_id)
                     self.logger.info(f"✅ Found and cached new livestream for future instant access")
@@ -987,6 +1044,61 @@ class StreamResolver:
             return None
         except Exception as e:
             self.logger.error(f"❌ Unexpected error during stream resolution: {e}")
+            return None
+
+    def _trigger_social_media_post(self, video_id: str, stream_title: str = None) -> None:
+        """
+        Trigger social media posting when stream is detected.
+        Delegates to social_media_orchestrator per WSP 3 (Module Organization).
+
+        NAVIGATION: Stream detection triggers social posting here
+        → Calls: simple_posting_orchestrator.handle_stream_detected()
+        → Database: Checks magadoom_scores.db for duplicates
+        → Platforms: LinkedIn posts first, then X/Twitter
+        → Quick ref: NAVIGATION.py → MODULE_GRAPH['core_flows']['stream_detection_flow']
+
+        Args:
+            video_id: The YouTube video ID of the detected stream
+            stream_title: Title of the stream (if available)
+        """
+        try:
+            # WSP 3 Compliant: Delegate to social media orchestrator
+            from modules.platform_integration.social_media_orchestrator.src.simple_posting_orchestrator import handle_stream_detected
+
+            # Get title if not provided
+            final_title = stream_title or self._get_stream_title(video_id) or "Live Stream"
+
+            # Call orchestrator's stream detection handler (runs in background)
+            handle_stream_detected(video_id, final_title)
+            self.logger.info(f"[STREAM] Triggered social media posting for video {video_id}")
+
+        except ImportError:
+            self.logger.warning("[STREAM] Social media orchestrator not available")
+        except Exception as e:
+            self.logger.error(f"[STREAM] Failed to trigger social media posting: {e}")
+
+    def _get_stream_title(self, video_id: str) -> Optional[str]:
+        """
+        Get the title of a YouTube stream from its video ID.
+
+        Args:
+            video_id: The YouTube video ID
+
+        Returns:
+            Stream title if available, None otherwise
+        """
+        try:
+            if self.youtube:
+                response = self.youtube.videos().list(
+                    part="snippet",
+                    id=video_id
+                ).execute()
+
+                if response.get("items"):
+                    return response["items"][0]["snippet"].get("title")
+            return None
+        except Exception as e:
+            self.logger.debug(f"Could not get stream title: {e}")
             return None
 
 # Example usage block with enhanced error handling

@@ -7,6 +7,12 @@ WSP 17 Pattern Registry: This is a REUSABLE PATTERN
 - Pattern: Connection lifecycle + greeting management
 - Features: Auto-reconnect, greeting delay, update broadcasts
 - Reusable for: LinkedIn, X/Twitter, Discord, Twitch
+
+NAVIGATION: Maintains YouTube chat session state and credentials.
+→ Called by: livechat_core.py::LiveChatCore
+→ Delegates to: youtube_auth credential managers, greeting_generator.py
+→ Related: NAVIGATION.py → PROBLEMS["Stream session lost"]
+→ Quick ref: NAVIGATION.py → DATABASES["youtube_sessions"]
 """
 
 import logging
@@ -47,9 +53,18 @@ class SessionManager:
         Returns:
             Live chat ID if found, None otherwise
         """
+        # Handle NO-QUOTA mode - no YouTube service available
+        if not self.youtube:
+            logger.info("NO-QUOTA mode: Cannot fetch chat ID without API service")
+            self.stream_title = "Live Stream (NO-QUOTA Mode)"
+            self.stream_title_short = "Live Stream"
+            self.channel_title = "Move2Japan"
+            self.is_active = True  # Mark as active for view-only monitoring
+            return None
+
         try:
             logger.info(f"Fetching live chat ID for video: {self.video_id}")
-            
+
             # Get video details
             video_response = self.youtube.videos().list(
                 part="liveStreamingDetails,snippet",
@@ -126,9 +141,14 @@ class SessionManager:
         logger.info("Initializing chat session...")
         
         # Get live chat ID
-        if not self.get_live_chat_id():
-            logger.error("Failed to initialize session - no live chat ID")
+        chat_id = self.get_live_chat_id()
+        if not chat_id and self.youtube:
+            # Only fail if we have YouTube service but no chat ID
+            logger.error("Failed to initialize session - no live chat ID despite having API")
             return False
+        elif not chat_id:
+            # NO-QUOTA mode - continue without chat ID
+            logger.info("NO-QUOTA mode: Continuing without chat ID for social media posting")
         
         # Generate dynamic greeting based on stream title
         if self.stream_title:

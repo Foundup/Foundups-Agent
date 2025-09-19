@@ -1,6 +1,12 @@
 """
-Simple Fact Checker for MAGADOOM
-WSP-Compliant: Works without external LLM dependencies
+Simple Fact Checker
+Fallback fact checking when GROK API unavailable
+
+NAVIGATION: Provides lightweight fact responses for message processor.
+-> Called by: llm_integration.py and message_processor.py fallback path
+-> Delegates to: local fact datasets in module memory
+-> Related: NAVIGATION.py -> NEED_TO["fallback fact response"]
+-> Quick ref: NAVIGATION.py -> PROBLEMS["LLM unavailable"]
 """
 
 import logging

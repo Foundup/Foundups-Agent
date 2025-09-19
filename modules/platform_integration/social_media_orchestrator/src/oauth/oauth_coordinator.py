@@ -8,7 +8,10 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
 import json
 import os
-from cryptography.fernet import Fernet
+try:
+    from cryptography.fernet import Fernet
+except ImportError:
+    Fernet = None  # Will use mock encryption in dev mode
 
 
 class OAuthCoordinator:
@@ -32,7 +35,7 @@ class OAuthCoordinator:
         # Setup secure storage
         self.storage_path = config.get('storage_path', './oauth_tokens')
         self.encryption_key = self._get_or_create_encryption_key()
-        self.cipher = Fernet(self.encryption_key)
+        self.cipher = Fernet(self.encryption_key) if Fernet else None
         
         # In-memory token cache
         self._token_cache = {}
@@ -49,7 +52,7 @@ class OAuthCoordinator:
             with open(key_file, 'rb') as f:
                 return f.read()
         else:
-            key = Fernet.generate_key()
+            key = Fernet.generate_key() if Fernet else b'mock_key_for_dev_mode'
             with open(key_file, 'wb') as f:
                 f.write(key)
             os.chmod(key_file, 0o600)  # Restrict access

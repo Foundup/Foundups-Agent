@@ -1,0 +1,32 @@
+{
+  "channel": {
+    "channel": "@MOVE2JAPAN",
+    "live_url_tested": "https://www.youtube.com/@MOVE2JAPAN/live",
+    "checks": {
+      "status_code": 200,
+      "final_url": "https://www.youtube.com/@MOVE2JAPAN/live",
+      "indicators": {
+        "isLiveNow": true,
+        "LIVE_badge": false,
+        "watching_now": false,
+        "LIVE_text": false,
+        "liveStreamability": true
+      }
+    },
+    "video_found": "vAkosSG-zp0",
+    "is_live": true,
+    "title": "Fact #MAGA Kirk called for public executions! #EpsteinFiles #PoliceState Move2Japan is live!"
+  },
+  "video": {
+    "video_id": "vAkosSG-zp0",
+    "url": "https://www.youtube.com/watch?v=vAkosSG-zp0",
+    "is_live": true,
+    "indicators": {
+      "isLiveNow": true,
+      "watching_now": false,
+      "liveStreamability": true,
+      "LIVE_badge": false
+    },
+    "title": "Fact #MAGA Kirk called for public executions! #EpsteinFiles #PoliceState Move2Japan is live!"
+  }
+}

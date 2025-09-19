@@ -1,8 +1,13 @@
-#!/usr/bin/env python3
 """
 Agentic Chat Engine - WSP Compliant
 Makes the bot more engaged, contextual, and proactive
 Trolls MAGAts, responds to consciousness triggers agentically
+
+NAVIGATION: Drives proactive engagement responses.
+-> Called by: message_processor.py::AgenticChatEngine usage
+-> Delegates to: consciousness_handler, banter_engine, memory manager
+-> Related: NAVIGATION.py -> NEED_TO["drive agentic engagement"]
+-> Quick ref: NAVIGATION.py -> MODULE_GRAPH["core_flows"]["consciousness_flow"]
 """
 
 import logging

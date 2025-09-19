@@ -9,9 +9,17 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.date import DateTrigger
-import pytz
+try:
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+    from apscheduler.triggers.date import DateTrigger
+except ImportError:
+    AsyncIOScheduler = None
+    DateTrigger = None
+
+try:
+    import pytz
+except ImportError:
+    pytz = None
 
 
 @dataclass

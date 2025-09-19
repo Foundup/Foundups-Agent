@@ -1,6 +1,14 @@
 """
 LiveChat Core - WSP Compliant Module (<500 lines)
 Core YouTube Live Chat listener using modular components
+
+NAVIGATION: This is the central coordinator for YouTube chat
+→ Called by: auto_moderator_dae.py (line 252)
+→ Delegates to: message_processor.py, chat_poller.py, chat_sender.py
+→ For social media: See stream_resolver → simple_posting_orchestrator
+→ For consciousness: See message_processor → consciousness_handler
+→ For throttling: See intelligent_throttle_manager.py
+→ Quick ref: NAVIGATION.py → MODULE_GRAPH['core_flows']['message_processing_flow']
 """
 
 import logging
@@ -28,6 +36,15 @@ try:
 except ImportError:
     IntelligentThrottleManager = None
 
+# WRE Integration for recursive learning
+try:
+    from modules.infrastructure.wre_core.recursive_improvement.src.wre_integration import (
+        record_error, record_success
+    )
+except ImportError:
+    record_error = None
+    record_success = None
+
 logger = logging.getLogger(__name__)
 
 MAX_RETRIES = 3
@@ -39,17 +56,19 @@ class LiveChatCore:
     Uses modular components for functionality.
     """
     
-    def __init__(self, youtube_service, video_id: str, live_chat_id: Optional[str] = None, 
-                 channel_name: str = None, channel_id: str = None):
+    def __init__(self, youtube_service, video_id: str, live_chat_id: Optional[str] = None,
+                 channel_name: str = None, channel_id: str = None,
+                 message_router = None):
         """
         Initialize LiveChatCore with modular components.
-        
+
         Args:
             youtube_service: Authenticated YouTube service
             video_id: YouTube video/stream ID
             live_chat_id: Optional pre-fetched chat ID
             channel_name: Name of the channel owner
             channel_id: Channel ID of the owner
+            message_router: Optional orchestrator message router for centralized processing
         """
         self.youtube = youtube_service
         self.video_id = video_id
@@ -62,7 +81,11 @@ class LiveChatCore:
         self.processed_message_ids = set()
         self.recent_command_cache = {}  # Cache to prevent duplicate command responses
         self.message_timestamps = []  # Track message times for activity monitoring
-        
+
+        # Orchestrator integration (surgical migration)
+        self.message_router = message_router
+        self.router_mode = message_router is not None
+
         # WSP-compliant hybrid memory manager (initialize first)
         self.memory_manager = ChatMemoryManager(self.memory_dir)
         
@@ -122,14 +145,19 @@ class LiveChatCore:
     async def initialize(self) -> bool:
         """
         Initialize the chat session.
-        
+
         Returns:
             True if initialization successful
         """
-        # Initialize session
-        if not await self.session_manager.initialize_session():
-            logger.error("Failed to initialize session")
+        # Initialize session - in NO-QUOTA mode this might return False but we continue
+        session_initialized = await self.session_manager.initialize_session()
+        if not session_initialized and self.youtube:
+            # Only fail if we have API service but still can't initialize
+            logger.error("Failed to initialize session despite having API service")
             return False
+        elif not session_initialized:
+            # NO-QUOTA mode - continue for social media posting
+            logger.info("NO-QUOTA mode: Continuing for social media announcements only")
         
         # Get chat ID and channel info from session manager
         self.live_chat_id = self.session_manager.live_chat_id
@@ -144,11 +172,14 @@ class LiveChatCore:
         
         # Send greeting
         await self.session_manager.send_greeting(self.send_chat_message)
-        
-        # Post to LinkedIn when stream goes live
-        await self._post_stream_to_linkedin()
+
+        # NOTE: Social media posting moved to stream_resolver for better architecture
+        # Posting happens when stream is DETECTED, not when chat is initialized
         
         logger.info("LiveChatCore initialized successfully")
+        # Record successful initialization
+        if record_success:
+            record_success('livechat_initialization', {'video_id': self.video_id}, tokens_used=50)
         return True
     
     async def send_chat_message(self, message_text: str, skip_delay: bool = False, response_type: str = 'general') -> bool:
@@ -203,26 +234,26 @@ class LiveChatCore:
             'timestamp': time.time()
         })
         
-        # AUTOMATIC: Record response for intelligent learning
-        if self.intelligent_throttle:
-            self.intelligent_throttle.record_response(response_type, success=True)
-            
-            # WRE Monitor: Track successful response
-            if self.wre_monitor and success:
-                self.wre_monitor.messages_processed += 1
-        
-        # Limit recent messages cache
-        if len(self.recent_messages_sent) > 100:
-            self.recent_messages_sent = self.recent_messages_sent[-100:]
-        
-        # Send message
+        # Send message FIRST (before recording success)
         start_time = time.time()
         success = await self.chat_sender.send_message(message_text, skip_delay=skip_delay, response_type=response_type)
         duration_ms = (time.time() - start_time) * 1000
-        
+
         # Track operation performance
         self.health_analyzer.track_operation('send_message', duration_ms)
-        
+
+        # AUTOMATIC: Record response for intelligent learning (AFTER we have success value)
+        if self.intelligent_throttle:
+            self.intelligent_throttle.record_response(response_type, success=success)
+
+            # WRE Monitor: Track successful response
+            if self.wre_monitor and success:
+                self.wre_monitor.messages_processed += 1
+
+        # Limit recent messages cache
+        if len(self.recent_messages_sent) > 100:
+            self.recent_messages_sent = self.recent_messages_sent[-100:]
+
         return success
     
     async def poll_messages(self) -> tuple:
@@ -300,8 +331,30 @@ class LiveChatCore:
             if self.wre_monitor:
                 self.wre_monitor.messages_processed += 1
             
-            # Process message through enhanced processor
-            processed = self.message_processor.process_message(message)
+            # Process message through orchestrator router or legacy processor
+            if self.router_mode and self.message_router:
+                try:
+                    # Use orchestrator's centralized message router
+                    router_response = self.message_router.route_message(message)
+                    if router_response:
+                        # Convert router response to legacy format for compatibility
+                        processed = {
+                            "response": router_response.get("response"),
+                            "response_type": router_response.get("response_type", "general"),
+                            "has_consciousness": False,  # Router handles this internally
+                            "has_whack_command": True if router_response.get("response") else False
+                        }
+                        logger.debug(f"🔄 Router processed message from {author_name}")
+                    else:
+                        # Router returned no response, use empty processed
+                        processed = {}
+                except Exception as e:
+                    # Router failed, fallback to legacy processing
+                    logger.warning(f"🔄 Router failed for {author_name}, falling back: {e}")
+                    processed = self.message_processor.process_message(message)
+            else:
+                # Legacy processing mode
+                processed = self.message_processor.process_message(message)
             
             # Log ALL messages and their processing result
             logger.info(f"📨 [{author_name}] ({author_id}): {display_message[:100]}")
@@ -337,19 +390,22 @@ class LiveChatCore:
             if processed.get("type") in ["timeout_announcement", "ban_announcement"]:
                 # Send announcements immediately with skip_delay=True
                 if processed.get("announcement"):
-                    # Priority message - skip all delays
-                    success = await self.chat_sender.send_message(
-                        processed["announcement"], 
+                    # Use centralized send_chat_message for ALL chat
+                    success = await self.send_chat_message(
+                        processed["announcement"],
+                        skip_delay=True,  # Priority message
                         response_type="timeout_announcement"  # Mark as priority
                     )
-                    logger.info(f"⚡🎮 Sent timeout announcement IMMEDIATELY: {processed['announcement'][:50]}...")
+                    logger.info(f"⚡🎮 Sent timeout announcement: {processed['announcement'][:50]}...")
                 if processed.get("level_up"):
                     await asyncio.sleep(0.5)  # Minimal delay between messages
-                    success = await self.chat_sender.send_message(
-                        processed["level_up"], 
+                    # Use centralized send_chat_message for ALL chat
+                    success = await self.send_chat_message(
+                        processed["level_up"],
+                        skip_delay=True,  # Priority message
                         response_type="timeout_announcement"  # Mark as priority
                     )
-                    logger.info(f"⚡🏆 Sent level up IMMEDIATELY: {processed['level_up']}")
+                    logger.info(f"⚡🏆 Sent level up: {processed['level_up']}")
                 return  # Skip normal processing for events
             
             # Skip if marked to skip
@@ -364,17 +420,19 @@ class LiveChatCore:
                 # Check if this is a consciousness response or slash command
                 response_type = processed.get("response_type", "general")
                 
-                # SLASH COMMANDS should respond immediately - no delays!
+                # SLASH COMMANDS go through intelligent throttling
                 if processed.get("has_whack_command") or display_message.startswith('/'):
-                    logger.info(f"⚡ Sending slash command response immediately")
-                    # Bypass delays for commands
-                    success = await self.chat_sender.send_message(response, response_type="command", skip_delay=True)
+                    logger.info(f"🎮 Sending slash command response (throttled)")
+                    # Commands use intelligent throttle with 'whack' priority
+                    success = await self.send_chat_message(response, response_type="whack")
                 elif response_type == "consciousness":
-                    logger.info(f"⚡ Sending consciousness response immediately")
-                    # Pass response_type to chat_sender for proper handling
-                    success = await self.chat_sender.send_message(response, response_type="consciousness")
+                    logger.info(f"🧠 Sending consciousness response (throttled)")
+                    # Consciousness responses use intelligent throttle
+                    success = await self.send_chat_message(response, response_type="consciousness")
                 else:
-                    success = await self.send_chat_message(response)
+                    # All other responses go through throttle with proper type
+                    actual_type = response_type if response_type != "general" else "maga" if "maga" in response.lower() else "general"
+                    success = await self.send_chat_message(response, response_type=actual_type)
                 if success:
                     logger.info(f"💬 Sent response to {author_name}")
             else:
@@ -524,6 +582,9 @@ class LiveChatCore:
                         troll_msg = self.message_processor.agentic_engine.generate_proactive_troll()
                         await self.send_chat_message(troll_msg)
                         logger.info(f"🎯 Sent proactive troll (activity: {recent_msg_count} msgs): {troll_msg[:50]}...")
+                        # Record success pattern for WRE
+                        if record_success:
+                            record_success('proactive_troll', {'activity': recent_msg_count, 'msg': troll_msg[:50]}, tokens_used=50)
                     last_troll = time.time()
                 
                 # Periodic stream health check - detect if stream ended
@@ -800,110 +861,14 @@ class LiveChatCore:
         # Now handled by message_processor's consciousness handler
         return {"status": "configured", "settings": kwargs}
     
-    async def _post_stream_to_linkedin(self) -> None:
+    async def _post_stream_to_linkedin_deprecated(self) -> None:
         """
-        Post to social media platforms when a YouTube stream goes live.
-        Uses browser automation with anti-detection for both LinkedIn and X.
+        DEPRECATED: Moved to stream_resolver for better architecture.
+        Social media posting should happen when stream is DETECTED,
+        not when chat module is initialized.
         """
-        try:
-            # Get stream URL and title
-            stream_url = f"https://www.youtube.com/watch?v={self.video_id}"
-            
-            # Get stream title from session manager
-            stream_title = getattr(self.session_manager, 'stream_title', None)
-            
-            # Include stream title in content
-            if stream_title:
-                content = f"""@UnDaoDu going live!
+        # This method is kept for reference but not called
+        logger.warning("[DEPRECATED] Social media posting moved to stream_resolver")
+        return
 
-{stream_title}
-
-{stream_url}"""
-            else:
-                # Fallback if no title available
-                content = f"""@UnDaoDu going live!
-
-{stream_url}"""
-            
-            logger.info(f"[SOCIAL] Posting stream to social media platforms...")
-            logger.info(f"[SOCIAL] Stream title: {stream_title}")
-            logger.info(f"[SOCIAL] Full content to post:")
-            for line in content.split('\n'):
-                logger.info(f"  {line}")
-            
-            # Use browser automation with anti-detection for both platforms
-            # This runs in parallel threads for speed
-            
-            # Post to LinkedIn using anti-detection browser automation
-            if os.getenv('LINKEDIN_EMAIL') and os.getenv('LINKEDIN_PASSWORD'):
-                try:
-                    logger.info("[LINKEDIN] Using anti-detection browser automation...")
-                    from modules.platform_integration.linkedin_agent.src.anti_detection_poster import AntiDetectionLinkedIn
-                    
-                    # Run in thread to not block async
-                    import threading
-                    def post_to_linkedin():
-                        try:
-                            logger.info("[THREAD] LinkedIn posting thread started")
-                            linkedin_poster = AntiDetectionLinkedIn()
-                            result = linkedin_poster.post_to_company_page(content)
-                            if result:
-                                logger.info("[OK] Posted to LinkedIn company page!")
-                                print("[OK] Posted to LinkedIn company page!")
-                            else:
-                                logger.warning("[FAIL] LinkedIn posting failed")
-                                print("[FAIL] LinkedIn posting failed")
-                        except Exception as e:
-                            logger.error(f"[ERROR] LinkedIn error: {e}")
-                            print(f"[ERROR] LinkedIn error: {e}")
-                            import traceback
-                            traceback.print_exc()
-                    
-                    linkedin_thread = threading.Thread(target=post_to_linkedin, daemon=False)
-                    linkedin_thread.start()
-                    logger.info("[THREAD] LinkedIn thread launched")
-                    
-                except Exception as e:
-                    logger.error(f"[ERROR] LinkedIn module error: {e}")
-            else:
-                logger.info("[INFO] LinkedIn credentials not configured")
-            
-            # Post to X/Twitter using anti-detection browser automation
-            if os.getenv('X_Acc1') and os.getenv('x_Acc_pass'):
-                try:
-                    logger.info("[X/TWITTER] Using anti-detection browser automation...")
-                    from modules.platform_integration.x_twitter.src.x_anti_detection_poster import AntiDetectionX
-                    
-                    # Run in thread to not block async
-                    import threading
-                    def post_to_x():
-                        try:
-                            logger.info("[THREAD] X/Twitter posting thread started")
-                            x_poster = AntiDetectionX()
-                            result = x_poster.post_to_x(content, video_id=self.video_id)
-                            if result:
-                                logger.info("[OK] Posted to X/Twitter!")
-                                print("[OK] Posted to X/Twitter!")
-                            else:
-                                logger.warning("[FAIL] X/Twitter posting failed")
-                                print("[FAIL] X/Twitter posting failed")
-                        except Exception as e:
-                            logger.error(f"[ERROR] X/Twitter error: {e}")
-                            print(f"[ERROR] X/Twitter error: {e}")
-                            import traceback
-                            traceback.print_exc()
-                    
-                    x_thread = threading.Thread(target=post_to_x, daemon=False)
-                    x_thread.start()
-                    logger.info("[THREAD] X thread launched")
-                    
-                except ImportError:
-                    logger.warning("[WARNING] X anti-detection module not yet implemented")
-                except Exception as e:
-                    logger.error(f"[ERROR] X/Twitter module error: {e}")
-            else:
-                logger.info("[INFO] X/Twitter credentials not configured")
-                    
-        except Exception as e:
-            logger.error(f"[ERROR] Error posting to social media: {e}")
-            # Don't fail the stream initialization if posting fails
+    # Social media posting has been moved to stream_resolver module per WSP architecture

@@ -1,0 +1,11 @@
+# Consciousness Engine Requirements
+# WSP 38, 39, 61
+
+# Core dependencies
+numpy>=1.21.0
+torch>=2.0.0  # For CMST Protocol v11 neural network adapters
+scipy>=1.7.0  # For quantum state calculations
+
+# Optional for advanced features
+# qiskit>=0.39.0  # For quantum circuit simulation (future)
+# pennylane>=0.28.0  # For quantum machine learning (future)

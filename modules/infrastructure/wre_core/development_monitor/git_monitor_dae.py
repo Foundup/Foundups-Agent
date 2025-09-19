@@ -15,7 +15,7 @@ from typing import Dict, List, Optional
 
 # Add parent paths for imports
 sys.path.insert(0, 'O:/Foundups-Agent')
-from modules.platform_integration.linkedin_agent.src.anti_detection_poster import AntiDetectionLinkedIn
+# Removed direct LinkedIn import - now using unified interface
 
 class DevelopmentMonitorDAE:
     """
@@ -40,7 +40,7 @@ class DevelopmentMonitorDAE:
     
     def __init__(self):
         """Initialize Development Monitor DAE per WSP protocols"""
-        self.linkedin_poster = AntiDetectionLinkedIn()
+        # Use unified LinkedIn interface instead of direct poster
         self.memory_dir = "modules/infrastructure/wre_core/development_monitor/memory"
         self.posted_commits_file = f"{self.memory_dir}/posted_commits.json"
         self.posted_commits = self._load_memory()
@@ -308,8 +308,17 @@ class DevelopmentMonitorDAE:
             print(content)
             print("-" * 40)
             
-            # Post to LinkedIn
-            success = self.linkedin_poster.post_to_company_page(content)
+            # Post to LinkedIn via unified interface
+            import asyncio
+            from modules.platform_integration.social_media_orchestrator.src.unified_linkedin_interface import post_development_update
+
+            # Create unique update ID for duplicate detection
+            commit_hashes = [commit['hash'] for commit in new_commits]
+            update_id = f"dev_update_{hash('|'.join(sorted(commit_hashes)))}"
+
+            # Post via unified interface
+            result = asyncio.run(post_development_update(content, update_id))
+            success = result.success
             
             if success:
                 # Update memory

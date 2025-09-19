@@ -3,6 +3,12 @@ Event Handler Module - WSP Compliant with MCP Integration
 Handles timeout and ban events from YouTube Live Chat
 Enhanced with MCP for instant announcements (no buffering!)
 Split from message_processor.py for WSP compliance
+
+NAVIGATION: Processes YouTube chat events (timeouts, bans, memberships).
+→ Called by: message_processor.py::process_message()
+→ Delegates to: timeout_announcer.py, chat_sender.py
+→ Related: NAVIGATION.py → MODULE_GRAPH["core_flows"]["message_processing_flow"]
+→ Quick ref: NAVIGATION.py → NEED_TO["handle timeout"]
 """
 
 import logging

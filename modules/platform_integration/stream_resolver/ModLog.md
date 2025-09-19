@@ -12,6 +12,74 @@ This log tracks changes specific to the **stream_resolver** module in the **plat
 
 ## MODLOG ENTRIES
 
+### WSP 3 Architectural Refactoring - Social Media Posting Delegation
+**WSP Protocol**: WSP 3 (Module Organization), WSP 72 (Block Independence)
+**Phase**: Major Refactoring
+**Agent**: 0102 Claude
+
+#### Changes
+- **File**: `src/stream_resolver.py`
+- **Refactoring**: Removed social media posting logic from stream resolver
+  - Reduced `_trigger_social_media_post()` from 67 lines to 10 lines
+  - Now delegates to `social_media_orchestrator.handle_stream_detected()`
+  - Removed threading, duplicate checking, and posting logic
+  - Stream resolver now ONLY finds streams (single responsibility)
+- **Reason**: WSP 3 violation - module had multiple responsibilities
+- **Impact**: Cleaner architecture, better separation of concerns
+
+#### Architecture
+- **Before**: stream_resolver contained posting logic (wrong domain)
+- **After**: stream_resolver calls orchestrator (proper delegation)
+- **Benefits**: Easier testing, maintenance, and follows WSP principles
+
+---
+
+### [2025-09-17 17:16] - Strict Live Stream Detection to Prevent False Positives
+**WSP Protocol**: WSP 84 (Code Memory), WSP 50 (Pre-Action Verification)
+**Phase**: Critical Fix
+**Agent**: 0102 Claude
+
+#### Changes
+- **File**: `src/no_quota_stream_checker.py`
+- **Fix**: Made live detection much stricter to prevent false positives
+  - Now requires score of 5+ (multiple strong indicators)
+  - Must have `isLiveNow:true` (3 points - most reliable)
+  - Must have LIVE badge (2 points)
+  - Must have "watching now" viewers (2 points)
+  - Added more ended stream indicators
+  - Added debug logging to show detection scores
+- **Reason**: System was detecting old streams as live (PGCjwihGXt0)
+- **Impact**: Prevents false positives and unnecessary social media posting attempts
+
+#### Verification
+- Tested with PGCjwihGXt0 - now correctly detected as OLD (score: 1/5)
+- System no longer attempts to post old streams
+- Continues monitoring properly for actual live streams
+
+---
+
+### [2025-09-17] - Enhanced NO-QUOTA Old Stream Detection
+**WSP Protocol**: WSP 84 (Code Memory Verification), WSP 86 (Navigation)
+**Phase**: Enhancement
+**Agent**: 0102 Claude
+
+#### Changes
+- **File**: `src/no_quota_stream_checker.py`
+- **Enhancement**: Improved detection to differentiate live vs old streams
+  - Added detection for "Streamed live" and "ago" indicators for ended streams
+  - Requires multiple live indicators to confirm stream is actually live
+  - Added scoring system for live verification (needs 3+ points)
+  - Clear logging: "⏸️ OLD STREAM DETECTED" vs "✅ STREAM IS LIVE"
+- **Reason**: System was detecting old streams as live, causing unnecessary processing
+- **Impact**: Prevents false positives, preserves API tokens, avoids duplicate posting attempts
+
+#### Verification
+- Tested with known old stream (qL_Bnq1okWw) - correctly detected as OLD
+- System now rejects old streams instead of accepting them
+- NO-QUOTA mode properly preserves API tokens
+
+---
+
 ### [2025-08-24] - Test Mocking Fix for Enhanced Functions
 **WSP Protocol**: WSP 84 (Code Memory Verification), WSP 50 (Pre-Action Verification)
 **Phase**: Bug Fix

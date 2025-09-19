@@ -20,7 +20,7 @@ from enum import Enum
 
 # Import 0102 components
 from .conversation_manager import ConversationManager, Intent, EntityExtraction
-from .notification_engine import NotificationEngine, NotificationChannel, Priority
+from .notification_engine import NotificationEngine, NotificationChannel, NotificationPriority as Priority
 from .session_controller import SessionController, LaunchRequest
 from .personality_engine import PersonalityEngine, PersonalityMode, ResponseContext, EmotionalTone
 from .learning_engine import LearningEngine

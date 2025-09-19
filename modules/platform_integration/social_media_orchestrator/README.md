@@ -13,6 +13,9 @@ Unified orchestration layer for social media platforms (X/Twitter and LinkedIn) 
 - **Unified OAuth Management**: Single coordinator for all platform authentication
 - **Cross-Platform Content Distribution**: Consistent content formatting across platforms
 - **Intelligent Scheduling**: Advanced scheduling engine with platform-specific optimizations
+- **Natural Language Understanding**: 0102 understands commands like "post in 2 hours" (NEW)
+- **Human Scheduling Interface**: 012 can schedule posts for future execution (NEW)
+- **Anti-Detection Posting**: Browser automation with human-like behavior
 - **Platform Adapters**: Clean abstraction layer for platform-specific implementations
 - **WSP Compliance**: Full adherence to WSP standards for modular architecture
 
@@ -24,6 +27,9 @@ Unified orchestration layer for social media platforms (X/Twitter and LinkedIn) 
 - `ContentOrchestrator`: Content generation and formatting
 - `SchedulingEngine`: Advanced post scheduling
 - `TwitterAdapter`/`LinkedInAdapter`: Platform-specific implementations
+- `AutonomousActionScheduler`: Natural language command understanding (0102)
+- `HumanSchedulingInterface`: Human-friendly scheduling interface (012)
+- `SimplePostingOrchestrator`: Sequential anti-detection posting
 
 ### Integration Points
 - X/Twitter module: `modules/platform_integration/x_twitter/`

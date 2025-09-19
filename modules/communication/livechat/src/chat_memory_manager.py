@@ -1,14 +1,12 @@
 """
-Chat Memory Manager - WSP Compliant Hybrid Storage Pattern
-WSP-Compliant: WSP 3 (Module Organization), WSP 17 (Pattern Registry)
+Chat Memory Manager - WSP 60 Compliant
+Hybrid memory storage for live chat context and history
 
-Manages hybrid chat memory with smart disk persistence based on user importance.
-
-WSP 17 Pattern Registry: This is a REUSABLE PATTERN
-- Documented in: modules/communication/PATTERN_REGISTRY.md
-- Pattern: In-memory buffer + smart disk persistence
-- Use Cases: Chat history storage, user context tracking, message deduplication
-- Reusable for: LinkedIn, X/Twitter, Discord, Twitch
+NAVIGATION: Persists chat memory for processors and analytics.
+-> Called by: livechat_core.py, message_processor.py, agentic_chat_engine.py
+-> Delegates to: module memory files under modules/communication/livechat/memory
+-> Related: NAVIGATION.py -> NEED_TO["manage chat memory"]
+-> Quick ref: NAVIGATION.py -> DATABASES["memory_files"]
 """
 
 import logging

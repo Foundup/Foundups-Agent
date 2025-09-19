@@ -1,7 +1,12 @@
 """
-Quota-Aware Polling Strategy - WSP Compliant
-Intelligently adjusts polling rate based on quota usage and chat activity
-CRITICAL: Prevents quota exhaustion
+Quota Aware Poller
+Adjusts polling cadence based on credential set and quota usage
+
+NAVIGATION: Tunes polling cadence using credential awareness.
+-> Called by: livechat_core.ChatPoller when credential_set detected
+-> Delegates to: youtube_auth credential metadata and throttle manager
+-> Related: NAVIGATION.py -> NEED_TO["adjust quota polling"]
+-> Quick ref: NAVIGATION.py -> MODULE_GRAPH["core_flows"]["throttling_flow"]
 """
 
 import time

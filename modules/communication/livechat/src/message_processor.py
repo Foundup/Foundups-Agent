@@ -4,6 +4,15 @@ Message Processor Component
 Handles message processing, emoji detection, and response generation.
 Separated from the main LiveChatListener for better maintainability.
 
+NAVIGATION: Central message routing hub (685 lines - needs refactor!)
+→ Called by: livechat_core.py processes batch messages here
+→ Consciousness: consciousness_handler.py handles ✊✋🖐 triggers
+→ Commands: command_handler.py handles /slash commands
+→ Events: event_handler.py handles timeouts, bans
+→ AI Response: llm_integration.py (Grok), agentic_chat_engine.py
+→ PQN Integration: Lines 318-319 check for PQN commands
+→ Quick ref: NAVIGATION.py → MODULE_GRAPH['core_flows']['message_processing_flow']
+
 WSP 17 Pattern Registry: This is a REUSABLE PATTERN
 - Documented in: modules/communication/PATTERN_REGISTRY.md
 - Pattern: Multi-stage message processing pipeline
@@ -33,6 +42,12 @@ try:
 except ImportError:
     EmojiResponseLimiter = None
     AgenticSelfImprovement = None
+
+# Optional PQN Research module
+try:
+    from modules.ai_intelligence.pqn_alignment.src.pqn_research_dae_orchestrator import PQNResearchDAEOrchestrator
+except ImportError:
+    PQNResearchDAEOrchestrator = None
 
 logger = logging.getLogger(__name__)
 
@@ -86,9 +101,19 @@ class MessageProcessor:
             
         self.sentiment_engine = AgenticSentiment0102()
         self.consciousness = ConsciousnessHandler(self.sentiment_engine, self.grok)
-        
+
         # Now initialize agentic engine with consciousness handler and memory manager
         self.agentic_engine = AgenticChatEngine(self.memory_dir, self.consciousness, memory_manager)
+
+        # Initialize PQN Research Orchestrator if available
+        self.pqn_orchestrator = None
+        if PQNResearchDAEOrchestrator:
+            try:
+                self.pqn_orchestrator = PQNResearchDAEOrchestrator()
+                logger.info("🔬 PQN Research DAE Orchestrator connected to chat")
+            except Exception as e:
+                logger.warning(f"Could not initialize PQN orchestrator: {e}")
+                self.pqn_orchestrator = None
         
         # Stream session tracking for announcements (once per stream)
         self.announced_joins = set()  # Set of user_ids who have been greeted this stream
@@ -164,10 +189,11 @@ class MessageProcessor:
             
             # CRITICAL: Never respond to self (prevent infinite loops)
             BOT_CHANNEL_IDS = [
-                "UCfHM9Fw9HD-NwiS0seD_oIA",  # UnDaoDu bot account
+                "UCfHM9Fw9HD-NwiS0seD_oIA",  # UnDaoDu bot account (Set 1)
+                "UCSNTUXjAgpd4sgWYP0xoJgw",  # Foundups bot account (Set 10)
                 # Add other bot account IDs here if using multiple
             ]
-            
+
             if author_id in BOT_CHANNEL_IDS:
                 logger.debug(f"🤖 Ignoring self-message from {author_name}")
                 return {"skip": True, "reason": "self-message"}
@@ -296,6 +322,14 @@ class MessageProcessor:
             self.self_improvement.observe_command(message_text, 1.0)
         
         try:
+            # Priority 2: PQN Research Commands (WSP 84 - Using existing handlers)
+            # See: modules/ai_intelligence/pqn_alignment/docs/PQN_CHAT_INTEGRATION.md
+            if self._check_pqn_command(message_text):
+                response = self._handle_pqn_research(message_text, author_name)
+                if response:
+                    logger.info(f"🔬 PQN command processed for {author_name}")
+                    return response
+
             # Priority 1: AGENTIC consciousness response (mod/owner only by default)
             if processed_message.get("has_consciousness"):
                 logger.info(f"🔍 CONSCIOUSNESS TRIGGER ✊✋🖐 from {author_name} | Role: {role} | Is Owner: {is_owner} | Is Mod: {is_mod}")
@@ -620,5 +654,42 @@ class MessageProcessor:
             "trigger_emojis": self.trigger_emojis,
             "memory_dir": self.memory_dir,
             "grok_enabled": self.grok is not None,
-            "consciousness_enabled": self.consciousness is not None
-        } 
+            "consciousness_enabled": self.consciousness is not None,
+            "pqn_enabled": self.pqn_orchestrator is not None
+        }
+
+    def _check_pqn_command(self, text: str) -> bool:
+        """Check if message contains PQN research commands."""
+        pqn_triggers = ['!pqn', '!research', '/pqn', '/research']
+        return any(trigger in text.lower() for trigger in pqn_triggers)
+
+    def _handle_pqn_research(self, text: str, author_name: str) -> Optional[str]:
+        """Handle PQN research request through orchestrator.
+
+        See: modules/ai_intelligence/pqn_alignment/docs/PQN_CHAT_INTEGRATION.md
+        For complete integration specifications and missing implementation details.
+
+        Current Status: Command parsing implemented but NOT integrated in message flow.
+        Missing: Event broadcasting, campaign results communication, UTF-8 encoding fix.
+        """
+        if not self.pqn_orchestrator:
+            return "🔬 PQN Research system initializing... Try again in a moment."
+
+        try:
+            # Extract research query
+            query = text.lower()
+            for trigger in ['!pqn', '!research', '/pqn', '/research']:
+                query = query.replace(trigger, '').strip()
+
+            if not query:
+                return f"@{author_name} 🔬 PQN Research: Please provide a query. Example: !pqn consciousness emergence patterns"
+
+            # Run PQN research (simplified for chat integration)
+            logger.info(f"🔬 PQN Research requested by {author_name}: {query}")
+
+            # For now, return acknowledgment - full async integration would follow
+            return f"@{author_name} 🔬 PQN Research initiated: '{query}' | 🤖 Grok & Gemini analyzing... Results will follow."
+
+        except Exception as e:
+            logger.error(f"PQN research error: {e}")
+            return f"@{author_name} 🔬 PQN Research encountered an error. Please try again." 

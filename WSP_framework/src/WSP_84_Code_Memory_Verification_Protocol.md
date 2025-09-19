@@ -145,9 +145,78 @@ def create_module_decision():
         assert will_be_imported_this_session == True
         assert has_test_file == True
         assert integrated_immediately == True
-        
+
         if not all_conditions_met:
             DELETE_FILE_NOW()  # No "later integration"
+```
+
+## 2.6 Module Evolution Protocol (In-Place Updates)
+
+### Why Modules Must Evolve, Not Reproduce
+
+**THE PROBLEM**: Creating `enhanced_`, `intelligent_`, or `improved_` versions:
+1. **Breaks Module Identity**: Module loses its history and git blame
+2. **Creates Orphans**: Old module remains, causing confusion
+3. **Splits Dependencies**: Some code uses old, some uses new
+4. **Violates WSP 3**: Functional distribution becomes unclear
+5. **Wastes Tokens**: Recreating instead of updating wastes resources
+
+### The Evolution Process
+
+When enhancing a module:
+
+```python
+def evolve_module(module_path):
+    """
+    WSP 84: Modules evolve in place, they don't reproduce
+    """
+    # Step 1: READ the existing module completely
+    current_code = read_module(module_path)
+
+    # Step 2: UNDERSTAND its current architecture
+    architecture = analyze_structure(current_code)
+
+    # Step 3: PLAN the enhancement as evolution
+    evolution_plan = plan_enhancements(architecture)
+
+    # Step 4: UPDATE the existing file directly
+    update_in_place(module_path, evolution_plan)
+
+    # Step 5: DOCUMENT changes in ModLog
+    update_modlog(module_path, evolution_plan)
+
+    # Step 6: TEST to ensure backward compatibility
+    run_tests(module_path)
+```
+
+### Real Example: The Throttle Manager Case
+
+**What Happened (VIOLATION)**:
+```python
+# Created NEW files violating both WSP 84 and WSP 62:
+intelligent_throttle_manager.py (627 lines)  # Too big + duplicate
+enhanced_livechat_core.py                    # Duplicate
+enhanced_auto_moderator_dae.py               # Duplicate
+```
+
+**What Should Have Happened**:
+```python
+# OPTION 1: Evolve existing throttle_manager.py
+class ThrottleManager:
+    # Original methods preserved
+    # NEW: Recursive learning added
+    def learn_from_usage(self): ...
+    # NEW: Quota management added
+    def track_quota(self): ...
+    # NEW: Troll detection added
+    def detect_trolls(self): ...
+
+# OPTION 2: If size exceeds WSP 62 limits, modularize:
+modules/communication/livechat/src/throttling/
+├── __init__.py      # Main ThrottleManager (300 lines)
+├── learning.py      # RecursiveQuotaLearner (200 lines)
+├── quota.py         # QuotaState management (150 lines)
+└── troll.py         # TrollDetector class (150 lines)
 ```
 
 ## 3. DAE Launch Verification Protocol

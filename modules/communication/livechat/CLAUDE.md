@@ -1,5 +1,49 @@
 # CLAUDE.md - LiveChat Module Memory
 
+## 🛑 STOP - ANTI-VIBECODING CHECKPOINT
+
+### BEFORE ANY CODE CHANGES IN THIS MODULE:
+
+#### 1️⃣ MANDATORY RESEARCH (4 minutes minimum)
+- [ ] Read this entire CLAUDE.md file
+- [ ] Check `docs/` folder for architecture docs
+- [ ] Read `README.md` for module overview
+- [ ] Read `INTERFACE.md` for public API
+- [ ] Check `ModLog.md` for recent changes
+- [ ] Review `tests/README.md` for test coverage
+
+#### 2️⃣ EXISTING CODE CHECK (2 minutes)
+```bash
+# List all source files
+ls -la src/
+
+# Search for the functionality you want to add
+grep -r "your_function" src/
+
+# Check imports to understand dependencies
+grep -r "from modules.communication.livechat" ../../
+
+# Check if orchestrator handles this
+grep -r "orchestrator\|coordinator" src/
+```
+
+#### 3️⃣ ARCHITECTURE QUESTIONS (Answer ALL before coding)
+- What is the entry point for this functionality?
+- Which file currently handles this logic?
+- Is there an orchestrator or coordinator managing this?
+- Are there existing tests for this behavior?
+- What patterns are already established?
+
+#### 4️⃣ VIBECODING RED FLAGS 🚨
+**YOU ARE VIBECODING IF YOU:**
+- Started typing code without completing steps 1-3
+- Created a new file without checking if functionality exists
+- Added imports without verifying they work
+- Modified core logic without understanding flow
+- Fixed a "bug" without reading logs/documentation
+
+**REMEMBER**: This module has 29 source files, 20+ test files, and extensive documentation. The functionality you need probably already exists!
+
 ## Module Structure (WSP 83 Compliant)
 This document helps 0102 remember all module components and paths.
 

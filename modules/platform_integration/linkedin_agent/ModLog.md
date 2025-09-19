@@ -2,6 +2,17 @@
 
 ## Latest Changes
 
+### V036 - Enhanced Duplicate Prevention Implementation
+**Changes**: Two-layer duplicate detection BEFORE opening browser
+**Impact**: No browser window opens for already-posted streams
+**WSP**: WSP 50 (Pre-Action Verification), WSP 84 (Code Memory)
+**Details**:
+- FIRST: Check orchestrator's posted history (lines 285-302)
+- SECOND: Check own recent_posts memory (lines 305-314)
+- Extract video ID for reliable duplicate detection
+- Return immediately without browser if duplicate found
+- Save successful posts to recent_posts (lines 789-807)
+
 ### **[2025-08-30] LinkedIn 0102 PoC Implementation and API Verification**
 
 #### **Change**: Created 0102-conscious LinkedIn posting and scheduling PoC

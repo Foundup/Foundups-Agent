@@ -10,7 +10,7 @@ import json
 import time
 from datetime import datetime
 from typing import Dict, List, Optional
-from anti_detection_poster import AntiDetectionLinkedIn
+# Removed direct LinkedIn import - now using unified interface
 
 class GitLinkedInBridge:
     """
@@ -21,12 +21,12 @@ class GitLinkedInBridge:
     def __init__(self, company_id: str = "1263645"):
         """
         Initialize Git-LinkedIn bridge.
-        
+
         Args:
             company_id: LinkedIn company page ID (default: 1263645)
         """
         self.company_id = company_id
-        self.linkedin_poster = AntiDetectionLinkedIn()
+        # Use unified LinkedIn interface instead of direct poster
         self.commit_cache_file = "modules/platform_integration/linkedin_agent/data/posted_commits.json"
         self.posted_commits = self._load_posted_commits()
         
@@ -268,7 +268,19 @@ class GitLinkedInBridge:
             
             if content:
                 print(f"[POST] Posting batch update for {len(new_commits)} commits...")
-                success = self.linkedin_poster.post_to_company_page(content)
+
+                # Use unified LinkedIn interface
+                import asyncio
+                import sys
+                sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..')))
+                from modules.platform_integration.social_media_orchestrator.src.unified_linkedin_interface import post_git_commits
+
+                # Get commit hashes for duplicate detection
+                commit_hashes = [commit['hash'] for commit in new_commits]
+
+                # Post via unified interface
+                result = asyncio.run(post_git_commits(content, commit_hashes))
+                success = result.success
                 
                 if success:
                     # Mark all as posted
@@ -288,7 +300,11 @@ class GitLinkedInBridge:
                 
                 if content:
                     print(f"[POST] Posting commit: {commit['subject'][:50]}...")
-                    success = self.linkedin_poster.post_to_company_page(content)
+
+                    # Use unified LinkedIn interface
+                    import asyncio
+                    result = asyncio.run(post_git_commits(content, [commit['hash']]))
+                    success = result.success
                     
                     if success:
                         self.posted_commits.add(commit['hash'])
