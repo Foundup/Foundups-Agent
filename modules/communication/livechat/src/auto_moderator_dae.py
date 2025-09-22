@@ -111,23 +111,26 @@ class AutoModeratorDAE:
         
         # Try each channel
         for i, channel_id in enumerate(channels_to_check, 1):
-            logger.info(f"🔎 [{i}/{len(channels_to_check)}] Checking channel: {channel_id[:12]}...")
+            channel_name = self.stream_resolver._get_channel_display_name(channel_id)
+            logger.info(f"🔎 [{i}/{len(channels_to_check)}] Checking {channel_name}: {channel_id[:12]}...")
             try:
                 result = self.stream_resolver.resolve_stream(channel_id)
-                logger.info(f"🔎 [{i}/{len(channels_to_check)}] Channel {channel_id[:12]}... result: {'FOUND' if result and result[0] else 'NONE'}")
+                status = 'FOUND 🎉' if result and result[0] else 'NONE ❌'
+                logger.info(f"🔎 [{i}/{len(channels_to_check)}] {channel_name}... result: {status}")
             except Exception as e:
-                logger.error(f"🔎 [{i}/{len(channels_to_check)}] Channel {channel_id[:12]}... ERROR: {e}")
+                logger.error(f"🔎 [{i}/{len(channels_to_check)}] {channel_name}... ERROR: {e}")
                 result = None
             
             if result and result[0]:  # Accept stream even without chat_id
                 video_id = result[0]
                 live_chat_id = result[1] if len(result) > 1 else None
 
+                channel_name = self.stream_resolver._get_channel_display_name(channel_id)
                 if not live_chat_id:
-                    logger.info(f"⚠️ Found stream but chat_id not available (likely quota exhausted)")
-                    logger.info(f"✅ Accepting stream anyway - video ID: {video_id}")
+                    logger.info(f"⚠️ Found stream on {channel_name} but chat_id not available (likely quota exhausted)")
+                    logger.info(f"✅ Accepting stream anyway - video ID: {video_id} 🎉")
                 else:
-                    logger.info(f"✅ Found stream on channel {channel_id[:12]}... with video ID: {video_id}")
+                    logger.info(f"✅ Found stream on {channel_name} with video ID: {video_id} 🎉")
 
                 return video_id, live_chat_id
         

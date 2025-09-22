@@ -320,8 +320,9 @@ class NoQuotaStreamChecker:
 
         # Map channel IDs to handles
         channel_handle_map = {
-            'UC-LSSlOZwpGIRIYihaz8zCw': '@MOVE2JAPAN',  # MOVE2JAPAN (primary)
-            'UCSNTUXjAgpd4sgWYP0xoJgw': '@Foundups'  # Foundups
+            'UC-LSSlOZwpGIRIYihaz8zCw': '@UnDaoDu',     # UnDaoDu
+            'UCSNTUXjAgpd4sgWYP0xoJgw': '@Foundups',    # FoundUps
+            'UCklMTNnu5POwRmQsg5JJumA': '@MOVE2JAPAN'   # Move2Japan
         }
 
         # If we have a handle for this channel ID, try the channel page

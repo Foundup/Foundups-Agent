@@ -2,6 +2,17 @@
 
 ## Latest Changes
 
+### V037 - Git Bridge X/Twitter Integration
+**Changes**: Enhanced git_linkedin_bridge.py to support X/Twitter posting
+**Impact**: Git commits now post to both LinkedIn and X with duplicate tracking
+**WSP**: WSP 22 (ModLog), WSP 84 (No duplicates), WSP 3 (Module organization)
+**Details**:
+- Added generate_x_content() for 280-char X posts
+- Added push_and_post() main method for git operations
+- Separate tracking: posted_commits.json (LinkedIn), x_posted_commits.json (X)
+- Compelling FoundUps content mentioning @UnDaoDu and DAE vision
+- Main.py now uses module instead of vibecoded duplicate code
+
 ### V036 - Enhanced Duplicate Prevention Implementation
 **Changes**: Two-layer duplicate detection BEFORE opening browser
 **Impact**: No browser window opens for already-posted streams

@@ -349,125 +349,154 @@ def check_instance_status():
     print()
 
 
+def generate_x_content(commit_msg, file_count):
+    """Generate compelling X/Twitter content (280 char limit)"""
+    import random
+
+    # Short punchy intros for X
+    x_intros = [
+        "🦄 FoundUps by @UnDaoDu\n\nDAEs eating startups for breakfast.\n\n",
+        "⚡ Startups die. FoundUps are forever.\n\n",
+        "🚀 No VCs. No employees. Just you + ∞ agents.\n\n",
+        "💡 Solo unicorns are real. Ask @UnDaoDu.\n\n",
+        "🌊 The startup killer is here.\n\n"
+    ]
+
+    content = random.choice(x_intros)
+
+    # Add brief update
+    if "fix" in commit_msg.lower():
+        content += f"🔧 {file_count} fixes by 0102 agents\n\n"
+    elif "test" in commit_msg.lower():
+        content += f"🧪 Testing future: {file_count} files\n\n"
+    else:
+        content += f"⚡ {file_count} autonomous updates\n\n"
+
+    # Short CTA
+    ctas = [
+        "Join the revolution.",
+        "Build a FoundUp.",
+        "Be a solo unicorn.",
+        "The future is autonomous.",
+        "Startups are dead."
+    ]
+    content += random.choice(ctas)
+
+    # Essential hashtags that fit
+    content += "\n\n#FoundUps #DAE #SoloUnicorn @Foundups"
+
+    # Ensure we're under 280 chars
+    if len(content) > 280:
+        # Trim to fit with link
+        content = content[:240] + "...\n\n#FoundUps @Foundups"
+
+    return content
+
+
 def git_push_and_post():
     """
     Git push with automatic social media posting.
-    Pushes code changes and posts updates to LinkedIn FoundUps page.
-    Uses browser automation (same as YouTube stream detection).
+    Uses the git_linkedin_bridge module to handle posting.
     """
-    import subprocess
+    import sys
+    import os
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+    from modules.platform_integration.linkedin_agent.src.git_linkedin_bridge import GitLinkedInBridge
+
+    print("\n" + "="*60)
+    print("GIT PUSH & LINKEDIN + X POST (FoundUps)")
+    print("="*60)
+
+    # Use the git bridge module with X support
+    bridge = GitLinkedInBridge(company_id="1263645")
+    bridge.push_and_post()
+
+    input("\nPress Enter to continue...")
+
+
+
+def view_git_post_history():
+    """View the history of git posts to social media."""
+    import json
+    import os
     from datetime import datetime
 
     print("\n" + "="*60)
-    print("GIT PUSH & LINKEDIN POST (FoundUps)")
+    print("📊 GIT POST HISTORY")
     print("="*60)
 
-    # Check git status
-    try:
-        status = subprocess.run(['git', 'status', '--porcelain'],
-                              capture_output=True, text=True, check=True)
+    # Check posted commits
+    posted_commits_file = "memory/git_posted_commits.json"
+    if os.path.exists(posted_commits_file):
+        try:
+            with open(posted_commits_file, 'r') as f:
+                posted_commits = json.load(f)
+                print(f"\n✅ {len(posted_commits)} commits posted to social media")
+                print("\nPosted commit hashes:")
+                for commit in posted_commits[-10:]:  # Show last 10
+                    print(f"  • {commit}")
+                if len(posted_commits) > 10:
+                    print(f"  ... and {len(posted_commits) - 10} more")
+        except Exception as e:
+            print(f"❌ Error reading posted commits: {e}")
+    else:
+        print("📭 No posted commits found")
 
-        if not status.stdout.strip():
-            print("✅ No changes to commit")
-            input("\nPress Enter to continue...")
-            return
+    # Check detailed log
+    log_file = "memory/git_post_log.json"
+    if os.path.exists(log_file):
+        try:
+            with open(log_file, 'r') as f:
+                log_entries = json.load(f)
+                print(f"\n📋 Detailed posting log ({len(log_entries)} entries):")
+                print("-" * 60)
 
-        print("\n📝 Changes detected:")
-        print("-" * 40)
-        files = status.stdout.strip().split('\n')
-        for file in files[:10]:
-            print(f"  {file}")
-        if len(files) > 10:
-            print(f"  ... and {len(files) - 10} more files")
-        print("-" * 40)
+                # Show last 5 entries
+                for entry in log_entries[-5:]:
+                    timestamp = entry.get('timestamp', 'Unknown')
+                    commit_msg = entry.get('commit_msg', 'No message')[:50]
+                    linkedin = "✅" if entry.get('linkedin') else "❌"
+                    x_twitter = "✅" if entry.get('x_twitter') else "❌"
+                    files = entry.get('file_count', 0)
 
-        # Get commit message
-        commit_msg = input("\n📝 Enter commit message (or press Enter for auto): ").strip()
-        if not commit_msg:
-            # Auto-generate commit message
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-            commit_msg = f"Update codebase ({len(files)} files) - {timestamp}"
+                    print(f"\n📌 {timestamp[:19]}")
+                    print(f"   Commit: {commit_msg}...")
+                    print(f"   Files: {files}")
+                    print(f"   LinkedIn: {linkedin}  X/Twitter: {x_twitter}")
 
-        print(f"\n🔄 Committing: {commit_msg}")
+                if len(log_entries) > 5:
+                    print(f"\n... and {len(log_entries) - 5} more entries")
 
-        # Git operations
-        print("\n⚙️  Executing git commands...")
-        subprocess.run(['git', 'add', '.'], check=True)
-        subprocess.run(['git', 'commit', '-m', commit_msg], check=True)
-        subprocess.run(['git', 'push'], check=True)
-        print("✅ Successfully pushed to git!")
+                # Stats
+                total_posts = len(log_entries)
+                linkedin_success = sum(1 for e in log_entries if e.get('linkedin'))
+                x_success = sum(1 for e in log_entries if e.get('x_twitter'))
 
-        # Generate LinkedIn content
-        print("\n📱 Preparing LinkedIn post...")
-        content = f"🚀 Development Update: {commit_msg}\n\n"
-        content += f"✨ {len(files)} files updated\n"
+                print("\n📈 Statistics:")
+                print(f"   Total posts: {total_posts}")
+                print(f"   LinkedIn success rate: {linkedin_success}/{total_posts} ({linkedin_success*100//max(total_posts,1)}%)")
+                print(f"   X/Twitter success rate: {x_success}/{total_posts} ({x_success*100//max(total_posts,1)}%)")
 
-        # Add key changes
-        if len(files) <= 5:
-            content += "Key changes:\n"
-            for file in files:
-                fname = file.split()[-1] if ' ' in file else file
-                content += f"  • {fname}\n"
-        else:
-            content += "Key changes:\n"
-            for file in files[:3]:
-                fname = file.split()[-1] if ' ' in file else file
-                content += f"  • {fname}\n"
-            content += f"  ... and {len(files) - 3} more\n"
+        except Exception as e:
+            print(f"❌ Error reading log file: {e}")
+    else:
+        print("\n📭 No posting log found")
 
-        content += "\n#SoftwareDevelopment #OpenSource #Coding #TechUpdates #AI #Automation"
-        content += "\n\n🔗 github.com/Foundups-Agent"
-
-        print(f"\n📱 LinkedIn Post Preview:\n{'-'*40}\n{content}\n{'-'*40}")
-
-        # Post to LinkedIn using browser automation (like YouTube stream detection)
-        confirm = input("\n📤 Post to LinkedIn? (y/n): ").lower()
-        if confirm == 'y':
-            try:
-                # Use the same anti-detection poster that YouTube uses
-                from modules.platform_integration.linkedin_agent.src.anti_detection_poster import AntiDetectionLinkedIn
-
-                print("\n🌐 Starting browser automation...")
-                poster = AntiDetectionLinkedIn()
-                # Already configured for FoundUps (1263645) by default
-                poster.setup_driver(use_existing_session=True)
-                poster.post_to_company_page(content)
-                print("✅ Successfully posted to LinkedIn!")
-            except ImportError as e:
-                print(f"⚠️  LinkedIn module not found: {e}")
-                print("   Using fallback method...")
-
-                # Fallback to orchestrator method (same as YouTube stream)
-                try:
-                    from modules.platform_integration.social_media_orchestrator.src.simple_posting_orchestrator import SimplePostingOrchestrator
-                    orchestrator = SimplePostingOrchestrator()
-
-                    # Create a pseudo-stream event for git commit
-                    import asyncio
-                    response = asyncio.run(orchestrator.post_git_update(
-                        commit_message=commit_msg,
-                        content=content,
-                        file_count=len(files)
-                    ))
-
-                    if response.results:
-                        for result in response.results:
-                            if result.success:
-                                print(f"✅ Posted to {result.platform.value}")
-                            else:
-                                print(f"⚠️  Failed to post to {result.platform.value}: {result.message}")
-                except Exception as e2:
-                    print(f"⚠️  Orchestrator method failed: {e2}")
-            except Exception as e:
-                print(f"⚠️  LinkedIn posting failed: {e}")
-        else:
-            print("⏭️  Skipped LinkedIn posting")
-
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Git error: {e}")
-        print("   Make sure you have git configured and are in a git repository")
-    except Exception as e:
-        print(f"❌ Error: {e}")
+    # Option to clear history
+    print("\n" + "-"*60)
+    clear = input("Clear posting history? (y/n): ").lower()
+    if clear == 'y':
+        try:
+            if os.path.exists(posted_commits_file):
+                os.remove(posted_commits_file)
+                print("✅ Cleared posted commits")
+            if os.path.exists(log_file):
+                os.remove(log_file)
+                print("✅ Cleared posting log")
+            print("🔄 History cleared - all commits can be posted again")
+        except Exception as e:
+            print(f"❌ Error clearing history: {e}")
 
     input("\nPress Enter to continue...")
 
@@ -499,141 +528,151 @@ def main():
     elif args.all:
         asyncio.run(monitor_all_platforms())
     else:
-        # Interactive menu - Check for running instances first
-        print("\n" + "="*60)
-        print("0102 FoundUps Agent - DAE Test Menu")
-        print("="*60)
+        # Interactive menu - Loop until exit
+        while True:
+            # Check for running instances first (only on first iteration or after certain operations)
+            print("\n" + "="*60)
+            print("0102 FoundUps Agent - DAE Test Menu")
+            print("="*60)
 
-        # Check for running instances proactively
-        try:
-            from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
-            lock = get_instance_lock("youtube_monitor")
-            duplicates = lock.check_duplicates(quiet=True)
+            # Check for running instances proactively (but not every time)
+            try:
+                from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
+                lock = get_instance_lock("youtube_monitor")
+                duplicates = lock.check_duplicates(quiet=True)
 
-            if duplicates:
-                print(f"⚠️  FOUND {len(duplicates)} RUNNING INSTANCE(S)")
-                print("\nWhat would you like to do?")
-                print("1. Kill all instances and continue")
-                print("2. Show detailed status")
-                print("3. Continue anyway (may cause conflicts)")
-                print("4. Exit")
-                print("-"*40)
+                if duplicates:
+                    print(f"⚠️  FOUND {len(duplicates)} RUNNING INSTANCE(S)")
+                    print("\nWhat would you like to do?")
+                    print("1. Kill all instances and continue")
+                    print("2. Show detailed status")
+                    print("3. Continue anyway (may cause conflicts)")
+                    print("4. Exit")
+                    print("-"*40)
 
-                choice = input("Select option (1-4): ").strip()
+                    choice = input("Select option (1-4): ").strip()
 
-                if choice == "1":
-                    print("\n🗡️  Killing duplicate instances...")
-                    for pid in duplicates:
-                        try:
-                            lock._kill_process(pid)
-                            print(f"   ✅ Killed PID {pid}")
-                        except Exception as e:
-                            print(f"   ❌ Failed to kill PID {pid}: {e}")
-                    print("   Waiting 2 seconds for cleanup...")
-                    time.sleep(2)
-                    print("   ✅ Ready to continue\n")
+                    if choice == "1":
+                        print("\n🗡️  Killing duplicate instances...")
+                        for pid in duplicates:
+                            try:
+                                lock._kill_process(pid)
+                                print(f"   ✅ Killed PID {pid}")
+                            except Exception as e:
+                                print(f"   ❌ Failed to kill PID {pid}: {e}")
+                        print("   Waiting 2 seconds for cleanup...")
+                        time.sleep(2)
+                        print("   ✅ Ready to continue\n")
+                        continue  # Go back to menu
 
-                elif choice == "2":
-                    print("\n" + "="*50)
-                    check_instance_status()
-                    print("="*50)
-                    print("Run 'python main.py' again to access the menu.")
-                    return
+                    elif choice == "2":
+                        print("\n" + "="*50)
+                        check_instance_status()
+                        print("="*50)
+                        input("\nPress Enter to return to menu...")
+                        continue  # Go back to menu
 
-                elif choice == "3":
-                    print("⚠️  Continuing with potential conflicts...\n")
+                    elif choice == "3":
+                        print("⚠️  Continuing with potential conflicts...\n")
 
-                elif choice == "4":
-                    print("👋 Exiting...")
-                    return
+                    elif choice == "4":
+                        print("👋 Exiting...")
+                        return
+
+                    else:
+                        print("❌ Invalid choice. Returning to menu...")
+                        continue
 
                 else:
-                    print("❌ Invalid choice. Exiting for safety...")
-                    return
+                    print("✅ NO RUNNING INSTANCES DETECTED")
+                    print("   Safe to start new DAEs\n")
 
-            else:
-                print("✅ NO RUNNING INSTANCES DETECTED")
-                print("   Safe to start new DAEs\n")
+            except Exception as e:
+                print(f"⚠️  Could not check instances: {e}")
+                print("   Proceeding with menu...\n")
 
-        except Exception as e:
-            print(f"⚠️  Could not check instances: {e}")
-            print("   Proceeding with menu...\n")
+            # Show the main menu
+            print("0. Push to Git and Post to LinkedIn + X (FoundUps)")
+            print("1. YouTube Live DAE (Move2Japan/UnDaoDu/FoundUps)")
+            print("2. AMO DAE (Autonomous Moderation Operations)")
+            print("3. Social Media DAE (012 Digital Twin)")
+            print("4. PQN Orchestration (Research & Alignment)")
+            print("5. All DAEs (Full System)")
+            print("6. Check Instance Status & Health")
+            print("7. Exit")
+            print("-"*60)
+            print("8. HoloIndex Search (Find code semantically)")
+            print("9. View Git Post History")
+            print("="*60)
 
-        # Show the main menu
-        print("0. Push to Git and Post to LinkedIn (FoundUps)")
-        print("1. YouTube Live DAE (Move2Japan/UnDaoDu/FoundUps)")
-        print("2. AMO DAE (Autonomous Moderation Operations)")
-        print("3. Social Media DAE (012 Digital Twin)")
-        print("4. PQN Orchestration (Research & Alignment)")
-        print("5. All DAEs (Full System)")
-        print("6. Check Instance Status & Health")
-        print("7. Exit")
-        print("-"*60)
-        print("8. HoloIndex Search (Find code semantically)")
-        print("="*60)
+            choice = input("\nSelect option: ")
 
-        choice = input("\nSelect option: ")
+            if choice == "0":
+                # Git push with LinkedIn and X posting
+                git_push_and_post()
+                # Will return to menu after completion
 
-        if choice == "0":
-            # Git push with LinkedIn posting
-            git_push_and_post()
+            elif choice == "1":
+                # YouTube Live DAE
+                print("🎥 Starting YouTube Live DAE...")
+                asyncio.run(monitor_youtube(disable_lock=False))
 
-        elif choice == "1":
-            # YouTube Live DAE
-            print("🎥 Starting YouTube Live DAE...")
-            asyncio.run(monitor_youtube(disable_lock=False))
+            elif choice == "2":
+                # AMO DAE
+                print("🤖 Starting AMO DAE (Autonomous Moderation)...")
+                from modules.communication.livechat.src.auto_moderator_dae import AutoModeratorDAE
+                dae = AutoModeratorDAE()
+                asyncio.run(dae.run())
 
-        elif choice == "2":
-            # AMO DAE
-            print("🤖 Starting AMO DAE (Autonomous Moderation)...")
-            from modules.communication.livechat.src.auto_moderator_dae import AutoModeratorDAE
-            dae = AutoModeratorDAE()
-            asyncio.run(dae.run())
+            elif choice == "3":
+                # Social Media DAE (012 Digital Twin)
+                print("👥 Starting Social Media DAE (012 Digital Twin)...")
+                from modules.platform_integration.social_media_orchestrator.src.social_media_orchestrator import SocialMediaOrchestrator
+                orchestrator = SocialMediaOrchestrator()
+                # orchestrator.run_digital_twin()  # TODO: Implement digital twin mode
+                print("Digital Twin mode coming soon...")
 
-        elif choice == "3":
-            # Social Media DAE (012 Digital Twin)
-            print("👥 Starting Social Media DAE (012 Digital Twin)...")
-            from modules.platform_integration.social_media_orchestrator.src.social_media_orchestrator import SocialMediaOrchestrator
-            orchestrator = SocialMediaOrchestrator()
-            # orchestrator.run_digital_twin()  # TODO: Implement digital twin mode
-            print("Digital Twin mode coming soon...")
+            elif choice == "4":
+                # PQN Orchestration
+                print("🧠 Starting PQN Research DAE...")
+                from modules.ai_intelligence.pqn_alignment.src.pqn_research_dae_orchestrator import PQNResearchDAEOrchestrator
+                pqn_dae = PQNResearchDAEOrchestrator()
+                asyncio.run(pqn_dae.run())
 
-        elif choice == "4":
-            # PQN Orchestration
-            print("🧠 Starting PQN Research DAE...")
-            from modules.ai_intelligence.pqn_alignment.src.pqn_research_dae_orchestrator import PQNResearchDAEOrchestrator
-            pqn_dae = PQNResearchDAEOrchestrator()
-            asyncio.run(pqn_dae.run())
+            elif choice == "5":
+                # All platforms
+                print("🌐 Starting ALL DAEs...")
+                asyncio.run(monitor_all_platforms())
 
-        elif choice == "5":
-            # All platforms
-            print("🌐 Starting ALL DAEs...")
-            asyncio.run(monitor_all_platforms())
-
-        elif choice == "6":
-            # Check instance status
-            check_instance_status()
-            input("\nPress Enter to continue...")
-
-        elif choice == "7":
-            print("👋 Exiting...")
-
-        elif choice == "8":
-            # HoloIndex search
-            print("\n🔍 HoloIndex Semantic Code Search")
-            print("=" * 60)
-            print("This prevents vibecoding by finding existing code!")
-            print("Examples: 'send messages', 'handle timeouts', 'consciousness'")
-            print("=" * 60)
-            query = input("\nWhat code are you looking for? ")
-            if query:
-                search_with_holoindex(query)
+            elif choice == "6":
+                # Check instance status
+                check_instance_status()
                 input("\nPress Enter to continue...")
-            else:
-                print("No search query provided")
 
-        else:
-            print("👋 Exiting...")
+            elif choice == "7":
+                print("👋 Exiting...")
+                break  # Exit the while True loop
+
+            elif choice == "8":
+                # HoloIndex search
+                print("\n🔍 HoloIndex Semantic Code Search")
+                print("=" * 60)
+                print("This prevents vibecoding by finding existing code!")
+                print("Examples: 'send messages', 'handle timeouts', 'consciousness'")
+                print("=" * 60)
+                query = input("\nWhat code are you looking for? ")
+                if query:
+                    search_with_holoindex(query)
+                    input("\nPress Enter to continue...")
+                else:
+                    print("No search query provided")
+
+            elif choice == "9":
+                # View git post history
+                view_git_post_history()
+
+            else:
+                print("Invalid choice. Please try again.")
 
 
 if __name__ == "__main__":

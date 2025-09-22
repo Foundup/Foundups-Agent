@@ -701,12 +701,11 @@ class StreamResolver:
         os.makedirs("memory", exist_ok=True)
 
     def _get_channel_display_name(self, channel_id: str) -> str:
-        """Get human-readable channel name for logging"""
+        """Get human-readable channel name for logging with visual indicators"""
         channel_map = {
-            'UC-LSSlOZwpGIRIYihaz8zCw': 'UnDaoDu',
-            'UCSNTUXjAgpd4sgWYP0xoJgw': 'FoundUps',
-            'UCklMTNnu5POwRmQsg5JJumA': 'Move2Japan',
-            'UC-LSSlOZwpGIRIYihaz8zCw': 'UnDaoDu'  # Handle both formats
+            'UC-LSSlOZwpGIRIYihaz8zCw': 'UnDaoDu 🧘',      # Meditation emoji for mindfulness/spirituality
+            'UCSNTUXjAgpd4sgWYP0xoJgw': 'FoundUps 🐕',     # Dog emoji for loyalty/persistence
+            'UCklMTNnu5POwRmQsg5JJumA': 'Move2Japan 🍣'   # Sushi emoji for Japan
         }
         return channel_map.get(channel_id, f"Channel-{channel_id[:8]}")
 
@@ -1018,7 +1017,7 @@ class StreamResolver:
                 should_log = (attempt % 10 == 1 or attempt <= 5)
                 if should_log:
                     channel_name = self._get_channel_display_name(current_channel_id)
-                    logger.info(f"🔄 NO-QUOTA rotation - attempt #{attempt}, checking {channel_name}")
+                    logger.info(f"🔄 NO-QUOTA rotation - attempt #{attempt}, checking {channel_name} 🔍")
 
                 # PRIORITY 4a: Check environment variable for known video ID (only if it matches current channel)
                 env_video_id = get_env_variable("YOUTUBE_VIDEO_ID", default=None)
@@ -1046,7 +1045,7 @@ class StreamResolver:
                 if result and result.get("live"):
                     video_id = result.get("video_id")
                     if video_id:
-                        logger.info(f"✅ Found live stream on {channel_name}: {video_id}")
+                        logger.info(f"✅ Found live stream on {channel_name}: {video_id} 🎉")
                         # Record stream start in database (WSP 78)
                         if self.db:
                             self.db.record_stream_start(current_channel_id, video_id, result.get('title', 'Live Stream'))

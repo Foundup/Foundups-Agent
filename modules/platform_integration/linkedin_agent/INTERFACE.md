@@ -18,41 +18,68 @@
 
 ### **Primary Classes**
 
+#### `GitLinkedInBridge`
+**Purpose:** Bridge between Git commits and LinkedIn/X posting
+**Responsibility:** Automatic social media posting when pushing code
+
+```python
+class GitLinkedInBridge:
+    def __init__(self, company_id: str = "1263645")
+
+    # Git Integration
+    def get_recent_commits(self, count: int = 5) -> List[Dict]
+    def get_changed_files(self, commit_hash: str) -> List[str]
+
+    # Content Generation
+    def generate_linkedin_content(self, commits: List[Dict]) -> str
+    def generate_x_content(self, commit_msg: str, file_count: int) -> str
+
+    # Posting Operations
+    def push_and_post(self) -> bool  # Main method: git push + social posting
+    def post_recent_commits(self, count: int = 1, batch: bool = False) -> bool
+
+    # Tracking and History
+    def _load_posted_commits(self) -> set
+    def _save_posted_commits(self)
+    def _load_x_posted_commits(self) -> set
+    def _save_x_posted_commits(self)
+```
+
 #### `LinkedInAgent`
-**Purpose:** Core autonomous LinkedIn automation engine  
+**Purpose:** Core autonomous LinkedIn automation engine
 **Responsibility:** Professional networking automation with WRE integration
 
 ```python
 class LinkedInAgent:
     def __init__(self, config: Dict[str, Any] = None)
-    
+
     # Authentication and Session Management
     async def authenticate(self, email: str, password: str) -> bool
     async def logout(self) -> bool
     def is_authenticated(self) -> bool
-    
+
     # Content Creation and Management
     async def create_post(self, post: LinkedInPost) -> str
     async def schedule_post(self, post: LinkedInPost, schedule_time: datetime) -> str
     async def delete_post(self, post_id: str) -> bool
-    
+
     # Feed Reading and Analysis
     async def read_feed(self, limit: int = 10) -> List[Dict[str, Any]]
     async def search_posts(self, query: str, limit: int = 10) -> List[Dict[str, Any]]
-    
+
     # Network Engagement
     async def engage_with_post(self, action: EngagementAction) -> bool
     async def send_connection_request(self, profile_url: str, message: str = None) -> bool
     async def send_message(self, recipient_id: str, message: str) -> bool
-    
+
     # Profile Management
     async def get_profile_info(self, profile_url: str = None) -> LinkedInProfile
     async def update_profile_status(self, status: str) -> bool
-    
+
     # Analytics and Monitoring
     async def get_engagement_stats(self, days: int = 7) -> Dict[str, Any]
     async def analyze_network_growth(self) -> Dict[str, Any]
-    
+
     # WRE Integration
     async def test_linkedin_agent(self) -> bool
     def get_wre_status(self) -> Dict[str, Any]

@@ -17,10 +17,11 @@
 - Created tests/holo_index/ scaffolding (TESTModLog, FMAS plan reference, pytest stub).
 - Preparing Qwen advisor coverage to align with execution plan WSP_35_HoloIndex_Qwen_Advisor_Plan.md.
 - Placeholder advisor test (	ests/holo_index/test_qwen_advisor_stub.py) marks suite for discovery.
-- Tagged PQN cube metadata and added FMAS reminders; expand tests once advisor inference lands.\n- Added advisor rating/acknowledgement hooks with reward telemetry.
+- Tagged PQN cube metadata, FMAS reminders, onboarding banner, and reward telemetry scaffolding; expand tests once advisor inference lands.
 - Scaffolded holo_index/qwen_advisor/ package (config, prompts, cache, telemetry) ready for test integration.
 
 ### Next Actions
 - Populate WSP_framework/docs/testing/HOLOINDEX_QWEN_ADVISOR_FMAS_PLAN.md with concrete cases during implementation.
 - Replace stub with real advisor tests (prompt, cache, CLI flag, telemetry).
 - Record test execution results in this TESTModLog and root ModLog once features land.
+

@@ -12,6 +12,71 @@ This log tracks changes specific to the **stream_resolver** module in the **plat
 
 ## MODLOG ENTRIES
 
+### Added Visual Channel Indicators to Stream Resolver Logs
+**WSP Protocol**: WSP 48 (Recursive Self-Improvement), WSP 27 (DAE Architecture)
+**Phase**: User Experience Enhancement
+**Agent**: 0102 Claude
+
+#### Changes
+- **Files**: `src/stream_resolver.py`, `src/auto_moderator_dae.py`
+- **Enhancement**: Added visual emoji indicators for channel identification in logs
+  - Move2Japan: `🍣` (Sushi emoji for Japan)
+  - UnDaoDu: `🧘` (Meditation for mindfulness/spirituality)
+  - FoundUps: `🐕` (Dog for loyalty/persistence)
+- **Updated Methods**:
+  - `_get_channel_display_name()` now returns names with emojis
+  - Rotation logs: `"🔄 NO-QUOTA rotation - attempt #1, checking Move2Japan 🍣 🔍"`
+  - Success logs: `"✅ Found live stream on FoundUps 🐕: VIDEO_ID 🎉"`
+  - Channel check logs: `"🔎 [1/3] Checking UnDaoDu 🧘: UC-LSSlOZwpG..."`
+- **Benefit**: Much easier to distinguish channels in log streams during debugging
+
+#### WSP Compliance
+- **WSP 48**: Improved debugging and monitoring capabilities
+- **WSP 27**: Enhanced DAE operational visibility
+- **WSP 84**: Made existing logging more user-friendly
+
+#### Verification
+- Logs now clearly show which channel is being checked with visual indicators
+- Rotation pattern is easy to follow: 🍣 → 🧘 → 🐕 → repeat
+- Success/failure messages include appropriate celebration/failure emojis
+
+---
+
+### Fixed Channel Handle Mapping Bug in NO-QUOTA Stream Checker
+**WSP Protocol**: WSP 48 (Recursive Self-Improvement), WSP 84 (Code Memory)
+**Phase**: Critical Bug Fix
+**Agent**: 0102 Claude
+
+#### Changes
+- **File**: `src/no_quota_stream_checker.py`
+- **Critical Bug**: Channel handle mapping was completely wrong
+  - UnDaoDu (UC-LSSlOZwpGIRIYihaz8zCw) was incorrectly mapped to @MOVE2JAPAN
+  - Move2Japan (UCklMTNnu5POwRmQsg5JJumA) was missing from mapping
+  - FoundUps mapping was correct but incomplete
+- **Fix**: Corrected channel handle mappings:
+  ```python
+  channel_handle_map = {
+      'UC-LSSlOZwpGIRIYihaz8zCw': '@UnDaoDu',     # UnDaoDu
+      'UCSNTUXjAgpd4sgWYP0xoJgw': '@Foundups',    # FoundUps
+      'UCklMTNnu5POwRmQsg5JJumA': '@MOVE2JAPAN'   # Move2Japan
+  }
+  ```
+- **Impact**: NO-QUOTA stream checking now correctly checks the right channels instead of checking Move2Japan for all channels
+- **Root Cause**: Copy-paste error in channel mapping that went undetected
+
+#### WSP Compliance
+- **WSP 48**: Fixed critical bug preventing proper multi-channel monitoring
+- **WSP 84**: Corrected existing code that had wrong channel mappings
+- **WSP 27**: DAE architecture now properly monitors all intended channels
+
+#### Verification
+- UnDaoDu streams will be checked on @UnDaoDu handle
+- FoundUps streams will be checked on @Foundups handle
+- Move2Japan streams will be checked on @MOVE2JAPAN handle
+- No more cross-channel checking errors
+
+---
+
 ### Multi-Channel Rotation in NO-QUOTA Idle Mode
 **WSP Protocol**: WSP 48 (Recursive Self-Improvement), WSP 27 (DAE Architecture), WSP 84 (Code Memory)
 **Phase**: Load Distribution Enhancement
