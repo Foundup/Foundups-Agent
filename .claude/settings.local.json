@@ -34,7 +34,22 @@
       "Bash(pip install:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(taskkill:*)",
+      "Bash(PYTHONIOENCODING=utf-8 python modules/communication/livechat/tests/test_fact_check_priority.py)",
+      "Read(//e/HoloIndex/**)",
+      "Bash(del:*)",
+      "Bash(where:*)",
+      "Bash(ollama:*)",
+      "Bash(E:)",
+      "Bash(git clone:*)",
+      "Bash(\"venv\\Scripts\\pip.exe\" install --upgrade pip pyautogui pillow opencv-python numpy requests)",
+      "Bash(\"E:\\0102_Digital_Twin\\venv\\Scripts\\pip.exe\" install pyautogui pillow opencv-python numpy requests)",
+      "Bash(\"E:\\0102_Digital_Twin\\venv\\Scripts\\python.exe\" \"E:\\0102_Digital_Twin\\test_vision.py\")",
+      "Bash(tasklist:*)",
+      "Bash(wmic:*)",
+      "Bash(PYTHONIOENCODING=utf-8 python test_git_post.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python test_git_post_auto.py)"
     ],
     "deny": [],
     "ask": []

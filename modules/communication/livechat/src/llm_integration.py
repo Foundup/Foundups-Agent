@@ -70,20 +70,26 @@ class GrokIntegration:
         # Build enhanced fact-checking prompt with fallacy detection
         messages_text = '\n'.join(target_messages)
 
-        # Special handling for AntiMa (anti-democracy MAGA) detection
-        is_antima = target_username.lower().startswith('antima') or 'maga' in target_username.lower()
+        # Special handling for MAGA users - WE are AntiMa (Anti-MAGA)
+        is_maga = 'maga' in target_username.lower() or 'trump' in target_username.lower() or 'patriot' in target_username.lower()
 
-        prompt = f"""Analyze {target_username}'s statements for factual accuracy AND logical fallacies:
+        prompt = f"""Analyze {target_username}'s statements and DESTROY them with mockery:
 {messages_text}
 
-1. Check facts: TRUE/FALSE/MISLEADING
-2. Detect fallacies: ad hominem, strawman, whataboutism, gaslighting, projection, gish gallop, moving goalposts
-3. If fallacy detected, MOCK it humorously while educating
-{'4. This is AntiMa (Anti-democracy MAGA) - use #AntiMa hashtag to rebrand them!' if is_antima else ''}
-5. Include #AntiMa hashtag when calling out MAGA trolls - we're rebranding them!
+1. Detect fallacies: ad hominem, strawman, whataboutism, gaslighting, projection, gish gallop, moving goalposts
+2. BRUTALLY mock them - be savage, trolly, and cutting
+3. Make them look stupid and pathetic
+{'4. This is a MAGA troll - DESTROY THEM! We are AntiMa!' if is_maga else ''}
+5. Sign with #AntiMa to show we are the resistance against MAGA fascism
 
-Format: Call out fallacy, mock it, add #AntiMa hashtag for viral spread.
-Be savage but educational. Keep under 180 chars for YouTube."""
+Examples of trolly AntiMa responses against MAGA:
+- "@MAGApatriot Nice strawman bro, Fox News build that for you? #AntiMa"
+- "@TrumpWon Whataboutism again? Your one neuron is lonely #AntiMa"
+- "@PatriotEagle Facts hurt your feelings? Cry harder snowflake #AntiMa"
+- "@StopTheSteal Projecting harder than IMAX! #AntiMa"
+- "@Truth_Warrior We have receipts. Your lies are weak #AntiMa"
+
+Be VICIOUS. We are AntiMa, the anti-MAGA resistance. Under 180 chars."""
         
         try:
             response = self.llm.get_response(prompt)
@@ -94,22 +100,23 @@ Be savage but educational. Keep under 180 chars for YouTube."""
                 if "#antima" not in response.lower():
                     response = f"{response} #AntiMa"
 
+                # Add cutting prefixes for each fallacy type
                 if "strawman" in response.lower():
-                    return f"🌾 STRAWMAN: {response}"
+                    return f"🌾 @{target_username} {response}"
                 elif "ad hominem" in response.lower():
-                    return f"🎪 AD HOMINEM: {response}"
+                    return f"🤡 @{target_username} {response}"
                 elif "whatabout" in response.lower():
-                    return f"⚠️ WHATABOUTISM: {response}"
+                    return f"🔄 @{target_username} {response}"
                 elif "gaslight" in response.lower():
-                    return f"🔦 GASLIGHTING: {response}"
+                    return f"🕯️ @{target_username} {response}"
                 elif "projection" in response.lower():
-                    return f"🎬 PROJECTION: {response}"
+                    return f"🎬 @{target_username} {response}"
                 elif "gish gallop" in response.lower():
-                    return f"🏇 GISH GALLOP: {response}"
+                    return f"🏇 @{target_username} {response}"
                 elif "goalpost" in response.lower():
-                    return f"🥅 GOALPOSTS MOVED: {response}"
+                    return f"🥅 @{target_username} {response}"
                 else:
-                    return f"🤖 Fact-Check: {response}"
+                    return f"💀 @{target_username} {response}"
             else:
                 return "Grok analysis failed to generate response"
         except Exception as e:

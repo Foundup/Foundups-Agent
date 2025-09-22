@@ -13,7 +13,9 @@
 This protocol defines the **LLME (Lifecycle, Legacy, Maintainability, Ecosystem Impact) Semantic Triplet Rating System**. It is a qualitative framework used to assess the state, impact, and importance of a software module or agentic component.
 
 
-This system is a complementary part of the **WSP 5: Module Prioritization Scoring (MPS) System**. The LLME score provides the qualitative context, while the MPS provides the quantitative ranking for prioritization.
+This system is a complementary part of **WSP 37: Roadmap Scoring System** and **WSP 15: Module Prioritization Scoring (MPS)**. WSP 37 contains the canonical LLME definition and scoring workflow that 0102 and the roadmap engines must follow, while this document remains the quick-reference crib sheet for 012 briefs and fast decision checks.
+
+Pair LLME scoring with the **WSP Module Placement Decision Matrix** and WSP 3 series when determining ownership so that rating, placement, and action stay entangled.
 
 
 ## 2. The Triplet Rating (A-B-C)

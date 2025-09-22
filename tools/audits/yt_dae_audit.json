@@ -1,0 +1,283 @@
+{
+  "auto_moderator_dae.py": {
+    "module": "auto_moderator_dae.py",
+    "path": "modules\\communication\\livechat\\src\\auto_moderator_dae.py",
+    "lines": 400,
+    "nav_present": true,
+    "docstring_present": false,
+    "todo_count": 0,
+    "class_enhanced": true,
+    "warnings": [
+      "Module under 500 lines; WSP 87 prefers larger cohesive files.",
+      "Avoid duplicate/enhanced module definitions; evolve existing code."
+    ],
+    "recommendation": "refactor",
+    "mtime": "2025-09-19T21:44:50.629461"
+  },
+  "livechat_core.py": {
+    "module": "livechat_core.py",
+    "path": "modules\\communication\\livechat\\src\\livechat_core.py",
+    "lines": 874,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": false,
+    "warnings": [],
+    "recommendation": "retain",
+    "mtime": "2025-09-19T18:08:47.898654"
+  },
+  "message_processor.py": {
+    "module": "message_processor.py",
+    "path": "modules\\communication\\livechat\\src\\message_processor.py",
+    "lines": 695,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": false,
+    "warnings": [],
+    "recommendation": "retain",
+    "mtime": "2025-09-19T18:09:19.111663"
+  },
+  "chat_poller.py": {
+    "module": "chat_poller.py",
+    "path": "modules\\communication\\livechat\\src\\chat_poller.py",
+    "lines": 260,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": false,
+    "warnings": [
+      "Module under 500 lines; WSP 87 prefers larger cohesive files."
+    ],
+    "recommendation": "enhance",
+    "mtime": "2025-09-19T21:45:49.997174"
+  },
+  "chat_sender.py": {
+    "module": "chat_sender.py",
+    "path": "modules\\communication\\livechat\\src\\chat_sender.py",
+    "lines": 253,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": false,
+    "warnings": [
+      "Module under 500 lines; WSP 87 prefers larger cohesive files."
+    ],
+    "recommendation": "enhance",
+    "mtime": "2025-09-19T21:45:49.997174"
+  },
+  "session_manager.py": {
+    "module": "session_manager.py",
+    "path": "modules\\communication\\livechat\\src\\session_manager.py",
+    "lines": 328,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": true,
+    "warnings": [
+      "Module under 500 lines; WSP 87 prefers larger cohesive files.",
+      "Avoid duplicate/enhanced module definitions; evolve existing code."
+    ],
+    "recommendation": "refactor",
+    "mtime": "2025-09-19T21:54:15.343303"
+  },
+  "command_handler.py": {
+    "module": "command_handler.py",
+    "path": "modules\\communication\\livechat\\src\\command_handler.py",
+    "lines": 287,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": false,
+    "warnings": [
+      "Module under 500 lines; WSP 87 prefers larger cohesive files."
+    ],
+    "recommendation": "enhance",
+    "mtime": "2025-09-19T21:45:49.998174"
+  },
+  "event_handler.py": {
+    "module": "event_handler.py",
+    "path": "modules\\communication\\livechat\\src\\event_handler.py",
+    "lines": 492,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": true,
+    "warnings": [
+      "Module under 500 lines; WSP 87 prefers larger cohesive files.",
+      "Avoid duplicate/enhanced module definitions; evolve existing code."
+    ],
+    "recommendation": "refactor",
+    "mtime": "2025-09-19T21:53:58.513278"
+  },
+  "consciousness_handler.py": {
+    "module": "consciousness_handler.py",
+    "path": "modules\\communication\\livechat\\src\\consciousness_handler.py",
+    "lines": 276,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": true,
+    "warnings": [
+      "Module under 500 lines; WSP 87 prefers larger cohesive files.",
+      "Avoid duplicate/enhanced module definitions; evolve existing code."
+    ],
+    "recommendation": "refactor",
+    "mtime": "2025-09-20T00:02:28.798276"
+  },
+  "agentic_chat_engine.py": {
+    "module": "agentic_chat_engine.py",
+    "path": "modules\\communication\\livechat\\src\\agentic_chat_engine.py",
+    "lines": 484,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": false,
+    "warnings": [
+      "Module under 500 lines; WSP 87 prefers larger cohesive files."
+    ],
+    "recommendation": "enhance",
+    "mtime": "2025-09-19T22:04:13.416961"
+  },
+  "chat_memory_manager.py": {
+    "module": "chat_memory_manager.py",
+    "path": "modules\\communication\\livechat\\src\\chat_memory_manager.py",
+    "lines": 322,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": false,
+    "warnings": [
+      "Module under 500 lines; WSP 87 prefers larger cohesive files."
+    ],
+    "recommendation": "enhance",
+    "mtime": "2025-09-19T22:04:13.417965"
+  },
+  "greeting_generator.py": {
+    "module": "greeting_generator.py",
+    "path": "modules\\communication\\livechat\\src\\greeting_generator.py",
+    "lines": 371,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": false,
+    "warnings": [
+      "Module under 500 lines; WSP 87 prefers larger cohesive files."
+    ],
+    "recommendation": "enhance",
+    "mtime": "2025-09-19T22:04:13.418962"
+  },
+  "llm_bypass_engine.py": {
+    "module": "llm_bypass_engine.py",
+    "path": "modules\\communication\\livechat\\src\\llm_bypass_engine.py",
+    "lines": 227,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": false,
+    "warnings": [
+      "Module under 500 lines; WSP 87 prefers larger cohesive files."
+    ],
+    "recommendation": "enhance",
+    "mtime": "2025-09-19T22:04:13.418962"
+  },
+  "llm_integration.py": {
+    "module": "llm_integration.py",
+    "path": "modules\\communication\\livechat\\src\\llm_integration.py",
+    "lines": 253,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": false,
+    "warnings": [
+      "Module under 500 lines; WSP 87 prefers larger cohesive files."
+    ],
+    "recommendation": "enhance",
+    "mtime": "2025-09-20T00:16:56.196210"
+  },
+  "moderation_stats.py": {
+    "module": "moderation_stats.py",
+    "path": "modules\\communication\\livechat\\src\\moderation_stats.py",
+    "lines": 309,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": false,
+    "warnings": [
+      "Module under 500 lines; WSP 87 prefers larger cohesive files."
+    ],
+    "recommendation": "enhance",
+    "mtime": "2025-09-19T22:04:13.419964"
+  },
+  "quota_aware_poller.py": {
+    "module": "quota_aware_poller.py",
+    "path": "modules\\communication\\livechat\\src\\quota_aware_poller.py",
+    "lines": 223,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": false,
+    "warnings": [
+      "Module under 500 lines; WSP 87 prefers larger cohesive files."
+    ],
+    "recommendation": "enhance",
+    "mtime": "2025-09-19T22:04:13.420962"
+  },
+  "simple_fact_checker.py": {
+    "module": "simple_fact_checker.py",
+    "path": "modules\\communication\\livechat\\src\\simple_fact_checker.py",
+    "lines": 172,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": false,
+    "warnings": [
+      "Module under 500 lines; WSP 87 prefers larger cohesive files."
+    ],
+    "recommendation": "enhance",
+    "mtime": "2025-09-19T22:04:13.420962"
+  },
+  "stream_trigger.py": {
+    "module": "stream_trigger.py",
+    "path": "modules\\communication\\livechat\\src\\stream_trigger.py",
+    "lines": 190,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": false,
+    "warnings": [
+      "Module under 500 lines; WSP 87 prefers larger cohesive files."
+    ],
+    "recommendation": "enhance",
+    "mtime": "2025-09-19T22:04:13.421963"
+  },
+  "intelligent_throttle_manager.py": {
+    "module": "intelligent_throttle_manager.py",
+    "path": "modules\\communication\\livechat\\src\\intelligent_throttle_manager.py",
+    "lines": 633,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": true,
+    "warnings": [
+      "Avoid duplicate/enhanced module definitions; evolve existing code."
+    ],
+    "recommendation": "refactor",
+    "mtime": "2025-09-19T21:45:49.998174"
+  },
+  "mcp_youtube_integration.py": {
+    "module": "mcp_youtube_integration.py",
+    "path": "modules\\communication\\livechat\\src\\mcp_youtube_integration.py",
+    "lines": 491,
+    "nav_present": true,
+    "docstring_present": true,
+    "todo_count": 0,
+    "class_enhanced": true,
+    "warnings": [
+      "Module under 500 lines; WSP 87 prefers larger cohesive files.",
+      "Avoid duplicate/enhanced module definitions; evolve existing code."
+    ],
+    "recommendation": "refactor",
+    "mtime": "2025-09-19T22:04:13.421963"
+  }
+}

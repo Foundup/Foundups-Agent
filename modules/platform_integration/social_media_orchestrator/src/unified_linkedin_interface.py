@@ -37,8 +37,9 @@ class LinkedInContentType(Enum):
 
 class LinkedInCompanyPage(Enum):
     """Supported LinkedIn company pages"""
-    FOUNDUPS = "104834798"  # Main FoundUps page
-    DEVELOPMENT = "1263645"  # Development updates page
+    FOUNDUPS = "1263645"     # FoundUps main page
+    MOVE2JAPAN = "104834798" # Move2Japan page (same as FoundUps for streams)
+    UNDAODU = "68706058"     # UnDaoDu page
 
 @dataclass
 class LinkedInPostRequest:
@@ -209,40 +210,32 @@ class UnifiedLinkedInInterface:
 
             try:
                 with _POSTER_LOCK:
-                    # Import LinkedIn Scheduler
-                    from modules.platform_integration.linkedin_scheduler.src.linkedin_scheduler import LinkedInScheduler
+                    # Import AntiDetectionLinkedIn for browser automation (NOT API)
+                    from modules.platform_integration.linkedin_agent.src.anti_detection_poster import AntiDetectionLinkedIn
 
                     # Create or reuse global poster instance
                     if not _GLOBAL_LINKEDIN_POSTER:
-                        logger.info("[UNIFIED LINKEDIN] Creating LinkedIn Scheduler instance")
-                        _GLOBAL_LINKEDIN_POSTER = LinkedInScheduler()
-                        logger.info("[UNIFIED LINKEDIN] LinkedIn Scheduler created")
+                        logger.info("[UNIFIED LINKEDIN] Creating AntiDetection browser poster (NO API)")
+                        _GLOBAL_LINKEDIN_POSTER = AntiDetectionLinkedIn()
+                        logger.info("[UNIFIED LINKEDIN] AntiDetection browser poster created")
                     else:
-                        logger.info("[UNIFIED LINKEDIN] Reusing existing LinkedIn Scheduler")
-
-                    # Assume a default profile ID for now; in a real scenario, this would be dynamically set
-                    profile_id = "urn:li:person:default"
-                    if profile_id not in _GLOBAL_LINKEDIN_POSTER.authenticated_profiles:
-                        # This would normally be handled through OAuth flow, but for simplicity, we'll assume it's already authenticated
-                        logger.info("[UNIFIED LINKEDIN] Assuming default profile is authenticated")
-                        _GLOBAL_LINKEDIN_POSTER.authenticated_profiles.add(profile_id)
+                        logger.info("[UNIFIED LINKEDIN] Reusing existing browser poster")
 
                     try:
-                        # Perform the actual post using API
-                        result = _GLOBAL_LINKEDIN_POSTER.create_text_post(
-                            profile_id=profile_id,
-                            content=request.content,
-                            visibility="PUBLIC"
+                        # Use browser automation to post (NOT API)
+                        # AntiDetectionLinkedIn.post_to_company_page() returns True/False
+                        success = _GLOBAL_LINKEDIN_POSTER.post_to_company_page(
+                            content=request.content
                         )
-                        success = result.get('success', False)
+
                         if success:
-                            logger.info(f"[UNIFIED LINKEDIN] ✅ Post successful to page {request.company_page.value}")
+                            logger.info(f"[UNIFIED LINKEDIN] ✅ Browser post successful to page {request.company_page.value}")
                         else:
-                            error_message = "LinkedIn Scheduler post failed"
-                            logger.warning(f"[UNIFIED LINKEDIN] ❌ Post failed: {error_message}")
+                            error_message = "Browser automation post failed"
+                            logger.warning(f"[UNIFIED LINKEDIN] ❌ Browser post failed: {error_message}")
                     except Exception as e:
                         error_message = str(e)
-                        logger.error(f"[UNIFIED LINKEDIN] Exception during posting with Scheduler: {e}")
+                        logger.error(f"[UNIFIED LINKEDIN] Exception during browser posting: {e}")
 
             except Exception as e:
                 error_message = str(e)
@@ -309,14 +302,15 @@ class UnifiedLinkedInInterface:
 unified_linkedin = UnifiedLinkedInInterface()
 
 # Convenience functions for common use cases
-async def post_stream_notification(stream_title: str, stream_url: str, video_id: str) -> LinkedInPostResult:
-    """Post a stream notification to LinkedIn (FoundUps page)"""
+async def post_stream_notification(stream_title: str, stream_url: str, video_id: str,
+                                 company_page: LinkedInCompanyPage = LinkedInCompanyPage.FOUNDUPS) -> LinkedInPostResult:
+    """Post a stream notification to LinkedIn"""
     content = f"🔴 LIVE: {stream_title}\n\nWatch: {stream_url}\n\n#LiveStream #AI #Technology"
 
     request = LinkedInPostRequest(
         content=content,
         content_type=LinkedInContentType.STREAM_NOTIFICATION,
-        company_page=LinkedInCompanyPage.FOUNDUPS,
+        company_page=company_page,
         duplicate_check_key=video_id
     )
 

@@ -33,8 +33,8 @@ Git Push → Multi-Account Manager → Account Routing → LinkedIn Agent (Accou
 ## Account Configuration
 
 ### Multi-Account Manager Handles:
-- **LinkedIn FoundUps Company** (104834798) - Main company posts
-- **LinkedIn Development** (1263645) - Development updates
+- **LinkedIn FoundUps Company** (1263645) - Main company posts
+- **LinkedIn Move2Japan** (104834798) - Move2Japan posts
 - **X/Twitter GeozeAi** - Technical content
 - **X/Twitter FoundUps** - Company content
 

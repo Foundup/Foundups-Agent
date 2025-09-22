@@ -252,8 +252,8 @@ schedule_id = await orchestrator.schedule_content(
   - Content adaptation per account (hashtags, tone, formatting)
   - Rate limiting and scheduling preferences per account
 - **Integration Points**:
-  - YouTube LiveChat DAE → posts to FoundUps company page (104834798)
-  - Git push from main.py → posts to Development Updates page (1263645)
+  - YouTube LiveChat DAE → posts to FoundUps company page (1263645)
+  - Git push from main.py → posts to FoundUps page (1263645)
   - Future: Remote DAE, WRE monitoring, etc.
 - **Testing**: Test with `python modules/platform_integration/social_media_orchestrator/tests/test_git_push_posting.py`
 

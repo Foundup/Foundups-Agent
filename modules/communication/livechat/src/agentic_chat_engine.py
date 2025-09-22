@@ -332,14 +332,18 @@ class AgenticChatEngine:
         if emoji_sequence == '✊✊✊':
             return f"@{requester} Using ✊✊✊ to fact-check? That's like asking MAGA for truth! Try ✊✋🖐️"
         
+        # Check for analysis errors
+        if 'error' in target_context:
+            return f"@{requester} FACT CHECK ERROR: Could not analyze {target} - {target_context['error']}"
+
         # Check target's message history
-        if target_context['message_count'] == 0:
+        if target_context.get('message_count', 0) == 0:
             return f"@{target} FACT CHECK by {requester}: No data found. Ghost user or fresh account? Sus! ✊✋🖐️"
         elif target_context.get('consciousness_level') == 'needs_help':
             responses = [
                 f"@{target} FACT CHECK: Multiple ✊✊✊ patterns detected. Truth rating: 0/10. Prescription: Reality! (via {requester})",
                 f"@{target} FACT CHECK: Heavy MAGA contamination found. Consciousness stuck at ✊✊✊. Upgrade required! (requested by {requester})",
-                f"@{target} ANALYSIS: {target_context['message_count']} messages, 0% truth detected. Classic ✊✊✊ syndrome! (FC by {requester})"
+                f"@{target} ANALYSIS: {target_context.get('message_count', 0)} messages, 0% truth detected. Classic ✊✊✊ syndrome! (FC by {requester})"
             ]
             return random.choice(responses)
         elif target_context.get('consciousness_level') == 'aware':
@@ -429,17 +433,27 @@ class AgenticChatEngine:
                 if message_after:
                     message_after_lower = message_after.lower()
                     
-                    # Check for fact-check command: "FC @name" or "fc @name" or "factcheck @name"
-                    if (message_after_lower.startswith('fc ') or 
+                    # Check for fact-check command: "FC @name" or "fc @name" or "factcheck @name" or "@name fc"
+                    # Pattern handles: "fc @user", "@user fc", "factcheck @user", "@user factcheck"
+                    if (message_after_lower.startswith('fc ') or
                         message_after_lower.startswith('factcheck ') or
+                        message_after_lower.endswith(' fc') or
+                        message_after_lower.endswith(' factcheck') or
                         ' fc @' in message_after_lower or
-                        'fc@' in message_after_lower):
+                        ' fc' == message_after_lower or  # Just "fc" alone
+                        'fc@' in message_after_lower or
+                        '@' in message_after_lower and ' fc' in message_after_lower):  # "@user fc" anywhere
                         
                         # Use existing target extraction or extract from FC command
                         target = self.consciousness.extract_target_user(message_after)
                         if not target:
-                            # Manual extraction for FC command
-                            fc_match = re.search(r'(?:fc|factcheck)\s*@?(\S+)', message_after, re.IGNORECASE)
+                            # Manual extraction for FC command - handles both "@user fc" and "fc @user"
+                            # Pattern 1: "@username fc" or "@username factcheck"
+                            fc_match = re.search(r'@(\S+)\s+(?:fc|factcheck)', message_after, re.IGNORECASE)
+                            if not fc_match:
+                                # Pattern 2: "fc @username" or "factcheck @username"
+                                fc_match = re.search(r'(?:fc|factcheck)\s+@?(\S+)', message_after, re.IGNORECASE)
+
                             if fc_match:
                                 target = fc_match.group(1).lstrip('@')
                         

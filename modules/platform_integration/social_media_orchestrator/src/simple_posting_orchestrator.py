@@ -25,6 +25,48 @@ from enum import Enum
 import threading
 
 logger = logging.getLogger(__name__)
+
+# Global lock for thread-safe browser operations (X/Twitter)
+_POSTER_LOCK = threading.Lock()
+_GLOBAL_X_POSTER = None  # Global singleton for X/Twitter browser
+
+
+class Platform(Enum):
+    """Supported social media platforms"""
+    LINKEDIN = "linkedin"
+    X_TWITTER = "x_twitter"
+
+
+@dataclass
+class PostResult:
+    """Result of a single platform post"""
+    success: bool
+    platform: Platform
+    message: str
+    timestamp: datetime
+    url: Optional[str] = None
+
+
+@dataclass
+class PostResponse:
+    """Response containing results from all platforms"""
+    request_id: str
+    results: List[PostResult]
+    timestamp: datetime = None
+
+    def __post_init__(self):
+        if self.timestamp is None:
+            self.timestamp = datetime.now()
+
+
+class SimplePostingOrchestrator:
+    """
+    Simple orchestrator for posting to social media platforms.
+    Handles duplicate prevention and sequential posting.
+    """
+
+    def __init__(self):
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.request_counter = 0
         self.posted_streams = self._load_posted_history()
         self.posting_in_progress = set()  # Prevent concurrent posting of same stream
@@ -63,7 +105,8 @@ logger = logging.getLogger(__name__)
             self.logger.debug(f"[CLEANUP] Error during cleanup: {e}")
     
     async def post_stream_notification(self, stream_title: str, stream_url: str,
-                                     platforms: Optional[List[Platform]] = None) -> PostResponse:
+                                     platforms: Optional[List[Platform]] = None,
+                                     linkedin_page: str = None) -> PostResponse:
         """
         Post stream notification to social media platforms.
 
@@ -564,9 +607,11 @@ logger = logging.getLogger(__name__)
                 video_id = video_match.group(1)
 
             if video_id:
-                # Extract title from content
+                # Extract title from content - it's the actual stream title, not the first line
+                # Content format is: @UnDaoDu going live!\n\n{stream_title}\n\n{url}
                 lines = content.split('\n')
-                title = lines[0] if lines else "Live Stream"
+                # The actual stream title is on the third line (index 2) after two newlines
+                title = lines[2] if len(lines) > 2 else stream_title  # Use passed stream_title as fallback
                 if title.startswith("🔴 LIVE: "):
                     title = title[9:]  # Remove prefix
 
@@ -576,7 +621,20 @@ logger = logging.getLogger(__name__)
 
                 # Use specialized stream notification function
                 self.logger.info(f"[LINKEDIN] Using unified interface for stream: {video_id}")
-                result = await post_stream_notification(title, stream_url, video_id)
+
+                # Determine which LinkedIn page to use
+                from modules.platform_integration.social_media_orchestrator.src.unified_linkedin_interface import LinkedInCompanyPage
+                linkedin_page_enum = LinkedInCompanyPage.FOUNDUPS  # Default
+
+                if linkedin_page:
+                    # Convert page ID string to enum
+                    for page in LinkedInCompanyPage:
+                        if page.value == linkedin_page:
+                            linkedin_page_enum = page
+                            break
+
+                self.logger.info(f"[LINKEDIN] Posting to page: {linkedin_page_enum.name}")
+                result = await post_stream_notification(title, stream_url, video_id, linkedin_page_enum)
             else:
                 # Fallback to general posting
                 self.logger.info("[LINKEDIN] Using unified interface for general content")
@@ -729,7 +787,7 @@ async def post_stream_notification(stream_title: str, stream_url: str) -> PostRe
     return await orchestrator.post_stream_notification(stream_title, stream_url)
 
 
-def handle_stream_detected(video_id: str, stream_title: str = None) -> None:
+def handle_stream_detected(video_id: str, stream_title: str = None, linkedin_page: str = None) -> None:
     """
     Handle stream detection from stream_resolver - runs posting in background.
     This is the WSP 3 compliant entry point for stream detection events.
@@ -737,6 +795,7 @@ def handle_stream_detected(video_id: str, stream_title: str = None) -> None:
     Args:
         video_id: YouTube video ID of detected stream
         stream_title: Optional title of stream
+        linkedin_page: LinkedIn company page ID to post to (determines routing)
     """
     import threading
     import asyncio
@@ -761,7 +820,8 @@ def handle_stream_detected(video_id: str, stream_title: str = None) -> None:
             response = asyncio.run(orchestrator.post_stream_notification(
                 stream_title=final_title,
                 stream_url=stream_url,
-                platforms=[Platform.LINKEDIN, Platform.X_TWITTER]
+                platforms=[Platform.LINKEDIN, Platform.X_TWITTER],
+                linkedin_page=linkedin_page
             ))
 
             # Log results

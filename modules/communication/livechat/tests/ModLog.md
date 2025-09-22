@@ -3,6 +3,13 @@
 ## Test Coverage Summary
 Tests for the YouTube LiveChat monitoring DAE system.
 
+## Idle System Behavior Tests
+- `test_idle_system_behavior.py` - Tests idle loop when no stream is active
+  - Verifies NO-QUOTA mode is activated by default
+  - Tests intelligent delay calculation progression
+  - Ensures proper idle mode messages are displayed
+  - Validates web scraping fallback when API unavailable
+
 ## NO-QUOTA Mode Tests
 - `test_stream_detection_no_chatid.py` - Verifies stream detection works without chat_id
   - Tests that streams are accepted even when chat_id is None

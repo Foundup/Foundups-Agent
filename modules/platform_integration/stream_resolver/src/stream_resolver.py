@@ -32,6 +32,13 @@ except ImportError:
     QuotaTester = None
     get_best_credential_set = None
 
+# Import database for pattern learning (WSP 78)
+try:
+    from modules.platform_integration.stream_resolver.src.stream_db import StreamResolverDB
+except ImportError:
+    StreamResolverDB = None
+    logger.warning("Stream database not available - using legacy JSON storage")
+
 # Get a logger instance specific to this module
 logger = logging.getLogger(__name__)
 
@@ -676,6 +683,9 @@ class StreamResolver:
         self._cache = {}
         self._last_stream_check = {}
 
+        # Initialize database for pattern learning (WSP 78)
+        self.db = StreamResolverDB() if StreamResolverDB else None
+
         # Initialize NO-QUOTA checker if no service available
         self.no_quota_checker = None
         if not self.youtube:
@@ -689,6 +699,31 @@ class StreamResolver:
     def _ensure_memory_dir(self):
         """Ensure memory directory exists for session caching."""
         os.makedirs("memory", exist_ok=True)
+
+    def _get_channel_display_name(self, channel_id: str) -> str:
+        """Get human-readable channel name for logging"""
+        channel_map = {
+            'UC-LSSlOZwpGIRIYihaz8zCw': 'UnDaoDu',
+            'UCSNTUXjAgpd4sgWYP0xoJgw': 'FoundUps',
+            'UCklMTNnu5POwRmQsg5JJumA': 'Move2Japan',
+            'UC-LSSlOZwpGIRIYihaz8zCw': 'UnDaoDu'  # Handle both formats
+        }
+        return channel_map.get(channel_id, f"Channel-{channel_id[:8]}")
+
+    def _get_linkedin_page_for_channel(self, channel_id: str) -> str:
+        """Determine which LinkedIn page to post to based on YouTube channel"""
+        from modules.platform_integration.social_media_orchestrator.src.unified_linkedin_interface import LinkedInCompanyPage
+
+        # Map YouTube channels to LinkedIn pages
+        linkedin_routing = {
+            'UC-LSSlOZwpGIRIYihaz8zCw': LinkedInCompanyPage.UNDAODU,     # UnDaoDu YT → UnDaoDu LN (68706058)
+            'UCSNTUXjAgpd4sgWYP0xoJgw': LinkedInCompanyPage.FOUNDUPS,   # FoundUps YT → FoundUps LN (1263645)
+            'UCklMTNnu5POwRmQsg5JJumA': LinkedInCompanyPage.MOVE2JAPAN, # Move2Japan YT → Move2Japan LN (104834798)
+        }
+
+        # Default to FoundUps page if channel not recognized
+        page = linkedin_routing.get(channel_id, LinkedInCompanyPage.FOUNDUPS)
+        return page.value  # Return the page ID string
     
     def clear_cache(self):
         """Clear all cached stream data for fresh lookup."""
@@ -897,14 +932,18 @@ class StreamResolver:
     def resolve_stream(self, channel_id=None):
         """
         Main method to resolve active livestream with intelligent cache-first approach.
-        
+
         Args:
             channel_id: Optional channel ID to search (uses config default if not provided)
-            
+
         Returns:
             Tuple of (video_id, chat_id) if found, None otherwise
         """
         global circuit_breaker
+
+        # Record check attempt start (WSP 78)
+        check_start_time = datetime.now()
+        search_channel_id = channel_id or CHANNEL_ID
         
         # PRIORITY 1: Try cached stream first for instant reconnection
         cache = self._load_session_cache()
@@ -934,48 +973,110 @@ class StreamResolver:
             self.logger.error("❌ No channel ID provided and none configured")
             return None
         
-        # PRIORITY 4: Check if we can use NO-QUOTA mode
-        if not self.youtube and self.no_quota_checker:
+        # PRIORITY 4: NO-QUOTA mode - persistent idle loop (prioritize to conserve API quota)
+        if self.no_quota_checker:
             logger.info("="*60)
-            logger.info("🌐 NO-QUOTA STREAM SEARCH")
+            logger.info("🌐 NO-QUOTA STREAM SEARCH (MULTI-CHANNEL ROTATION)")
             logger.info(f"   Using web scraping (0 API units)")
-            logger.info(f"   Channel: {search_channel_id}")
+
+            # Get all channels to rotate through in idle mode
+            channels_to_rotate = [
+                os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UCklMTNnu5POwRmQsg5JJumA'),  # Move2Japan first
+                os.getenv('CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),         # UnDaoDu second
+                os.getenv('CHANNEL_ID2', 'UCSNTUXjAgpd4sgWYP0xoJgw'),       # FoundUps last
+            ]
+            channels_to_rotate = [ch for ch in channels_to_rotate if ch]  # Filter None values
+
+            if channel_id:
+                # Specific channel requested - just check that one
+                logger.info(f"   Channel: {search_channel_id} ({self._get_channel_display_name(search_channel_id)})")
+                logger.info(f"   Mode: Single channel search")
+                channels_to_check = [search_channel_id]
+            else:
+                # No specific channel - rotate through all channels
+                logger.info(f"   Rotating through {len(channels_to_rotate)} channels:")
+                for i, ch in enumerate(channels_to_rotate, 1):
+                    logger.info(f"     {i}. {self._get_channel_display_name(ch)} ({ch[:12]}...)")
+                logger.info(f"   Mode: Multi-channel rotation until stream found")
+                channels_to_check = channels_to_rotate
+
             logger.info("="*60)
 
-            # For NO-QUOTA mode, we need to check known video IDs
-            # Check environment variable or use a fallback method
-            env_video_id = get_env_variable("YOUTUBE_VIDEO_ID", default=None)
-            if env_video_id:
-                logger.info(f"Checking video from env: {env_video_id}")
-                result = self.no_quota_checker.check_video_is_live(env_video_id)
-                if result.get("live"):
-                    logger.info("✅ STREAM IS LIVE (via NO-QUOTA scraping)")
-                    # Trigger social media posting with duplicate check
-                    self._trigger_social_media_post(env_video_id, result.get('title', 'Live Stream'))
-                    # Return video_id but no chat_id in NO-QUOTA mode
-                    return env_video_id, None
+            # NO-QUOTA mode: Multi-channel rotation loop
+            attempt = 0
+            channel_index = 0
+            base_delay = 2.0  # Start with 2 second delay
 
-            # Try to search the channel for live streams
-            logger.info(f"🔍 Searching channel {search_channel_id} for live streams...")
-            result = self.no_quota_checker.check_channel_for_live(search_channel_id)
-            if result and result.get("live"):
-                video_id = result.get("video_id")
-                if video_id:
-                    logger.info(f"✅ Found live stream via NO-QUOTA channel search: {video_id}")
-                    # Trigger social media posting with duplicate check
-                    self._trigger_social_media_post(video_id, result.get('title', 'Live Stream'))
-                    return video_id, None
+            while True:  # Infinite loop until stream is found
+                attempt += 1
 
-            logger.info("❌ No live stream found on channel in NO-QUOTA mode")
+                # Select channel to check (rotate through list)
+                current_channel_id = channels_to_check[channel_index % len(channels_to_check)]
+                channel_index += 1
+
+                # Only log every 10th attempt to reduce log spam in idle mode
+                should_log = (attempt % 10 == 1 or attempt <= 5)
+                if should_log:
+                    channel_name = self._get_channel_display_name(current_channel_id)
+                    logger.info(f"🔄 NO-QUOTA rotation - attempt #{attempt}, checking {channel_name}")
+
+                # PRIORITY 4a: Check environment variable for known video ID (only if it matches current channel)
+                env_video_id = get_env_variable("YOUTUBE_VIDEO_ID", default=None)
+                if env_video_id:
+                    if should_log:
+                        logger.info(f"📺 Checking specific video from env: {env_video_id}")
+                    result = self.no_quota_checker.check_video_is_live(env_video_id)
+                    if result.get("live"):
+                        logger.info("✅ STREAM IS LIVE (via NO-QUOTA video check)")
+                        # Record stream start in database (WSP 78)
+                        if self.db:
+                            self.db.record_stream_start(current_channel_id, env_video_id, result.get('title', 'Live Stream'))
+                        # Trigger social media posting with duplicate check
+                        self._trigger_social_media_post(env_video_id, result.get('title', 'Live Stream'), current_channel_id)
+                        # Return video_id but no chat_id in NO-QUOTA mode
+                        return env_video_id, None
+                    if should_log:
+                        logger.info("❌ Specified video not live")
+
+                # PRIORITY 4b: Search the current channel for live streams
+                channel_name = self._get_channel_display_name(current_channel_id)
+                if should_log:
+                    logger.info(f"🔍 Searching {channel_name} ({current_channel_id[:12]}...) for live streams...")
+                result = self.no_quota_checker.check_channel_for_live(current_channel_id, channel_name)
+                if result and result.get("live"):
+                    video_id = result.get("video_id")
+                    if video_id:
+                        logger.info(f"✅ Found live stream on {channel_name}: {video_id}")
+                        # Record stream start in database (WSP 78)
+                        if self.db:
+                            self.db.record_stream_start(current_channel_id, video_id, result.get('title', 'Live Stream'))
+                        # Trigger social media posting with duplicate check
+                        self._trigger_social_media_post(video_id, result.get('title', 'Live Stream'), current_channel_id)
+                        return video_id, None
+
+                # Calculate delay with intelligent backoff (but cap it for idle mode)
+                # Use exponential backoff but don't go beyond 60 seconds for responsiveness
+                delay = min(base_delay * (2 ** min(attempt - 1, 4)), 60.0)  # Max 60s delay
+                if should_log:
+                    logger.info(f"⏳ No stream found, waiting {delay:.1f}s before next channel...")
+                time.sleep(delay)
+
+            # If we reach here, NO-QUOTA mode completed without finding a stream
+            logger.info("🏁 NO-QUOTA idle checking completed - no streams found")
             return None
 
-        # PRIORITY 5: Search for active livestream with circuit breaker protection
+        else:
+            # NO-QUOTA mode not available
+            logger.info("⚠️ NO-QUOTA mode not available, falling back to API mode")
+
+        # PRIORITY 5: Fallback to API mode if NO-QUOTA is not available
+        logger.info("="*60)
+        logger.info("🔍 FALLBACK: API STREAM SEARCH STARTING")
+        logger.info(f"   Target Channel: {search_channel_id} ({self._get_channel_display_name(search_channel_id)})")
+        logger.info(f"   Using Service: {getattr(self.youtube, '_credential_set', 'Unknown') if self.youtube else 'None'}")
+        logger.info("="*60)
+
         try:
-            logger.info("="*60)
-            logger.info("🔍 ACTIVE STREAM SEARCH STARTING")
-            logger.info(f"   Target Channel: {search_channel_id}")
-            logger.info(f"   Using Service: {getattr(self.youtube, '_credential_set', 'Unknown')}")
-            logger.info("="*60)
 
             # Try with current service first
             try:
@@ -988,8 +1089,11 @@ class StreamResolver:
                 
                 if result:
                     video_id, chat_id = result
-                    # Trigger social media posting with duplicate check
+                    # Record stream start in database (WSP 78)
                     stream_title = self._get_stream_title(video_id)
+                    if self.db:
+                        self.db.record_stream_start(search_channel_id, video_id, stream_title)
+                    # Trigger social media posting with duplicate check
                     self._trigger_social_media_post(video_id, stream_title)
                     # Save successful connection to cache for future instant access
                     self._save_session_cache(video_id, chat_id)
@@ -1046,7 +1150,7 @@ class StreamResolver:
             self.logger.error(f"❌ Unexpected error during stream resolution: {e}")
             return None
 
-    def _trigger_social_media_post(self, video_id: str, stream_title: str = None) -> None:
+    def _trigger_social_media_post(self, video_id: str, stream_title: str = None, channel_id: str = None) -> None:
         """
         Trigger social media posting when stream is detected.
         Delegates to social_media_orchestrator per WSP 3 (Module Organization).
@@ -1055,11 +1159,13 @@ class StreamResolver:
         → Calls: simple_posting_orchestrator.handle_stream_detected()
         → Database: Checks magadoom_scores.db for duplicates
         → Platforms: LinkedIn posts first, then X/Twitter
+        → LinkedIn Page: Determined by channel (FoundUps→FoundUps, Move2Japan→FoundUps, UnDaoDu→UnDaoDu)
         → Quick ref: NAVIGATION.py → MODULE_GRAPH['core_flows']['stream_detection_flow']
 
         Args:
             video_id: The YouTube video ID of the detected stream
             stream_title: Title of the stream (if available)
+            channel_id: YouTube channel ID to determine LinkedIn page routing
         """
         try:
             # WSP 3 Compliant: Delegate to social media orchestrator
@@ -1068,9 +1174,12 @@ class StreamResolver:
             # Get title if not provided
             final_title = stream_title or self._get_stream_title(video_id) or "Live Stream"
 
+            # Determine LinkedIn page based on channel
+            linkedin_page = self._get_linkedin_page_for_channel(channel_id)
+
             # Call orchestrator's stream detection handler (runs in background)
-            handle_stream_detected(video_id, final_title)
-            self.logger.info(f"[STREAM] Triggered social media posting for video {video_id}")
+            handle_stream_detected(video_id, final_title, linkedin_page)
+            self.logger.info(f"[STREAM] Triggered social media posting for video {video_id} → {linkedin_page}")
 
         except ImportError:
             self.logger.warning("[STREAM] Social media orchestrator not available")
