@@ -494,11 +494,32 @@ class GitLinkedInBridge:
                 print(f"  ... and {len(files) - 10} more files")
             print("-" * 40)
 
-            # Get commit message
-            commit_msg = input("\n📝 Enter commit message (or press Enter for auto): ").strip()
+            # Get commit message (handle both interactive and auto mode)
+            if hasattr(self, 'auto_mode') and self.auto_mode:
+                commit_msg = ""
+                print("🤖 Auto mode - generating message...")
+            else:
+                try:
+                    commit_msg = input("\n📝 Enter commit message (or press Enter for auto): ").strip()
+                except EOFError:
+                    # Running in non-interactive mode
+                    commit_msg = ""
+                    print("🤖 Non-interactive mode - generating message...")
+
             if not commit_msg:
-                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-                commit_msg = f"Update codebase ({len(files)} files) - {timestamp}"
+                # Generate compelling FoundUps message
+                import random
+                templates = [
+                    "🚀 FoundUps: Building solo unicorns without VCs",
+                    "🦄 DAEs eating startups for breakfast - the FoundUps revolution",
+                    "💎 Programmatic equity for founders, by @UnDaoDu",
+                    "🔥 No employees, no VCs, just pure founder power",
+                    "⚡ The future: DAOs evolved to DAEs, startups evolved to FoundUps",
+                    "🌟 From DAO to DAE - @UnDaoDu's vision becomes reality",
+                    "🚀 Solo unicorns rising - FoundUps ecosystem expanding",
+                    "💪 Founders keep 100% - the FoundUps way by @UnDaoDu"
+                ]
+                commit_msg = random.choice(templates)
 
             print(f"\n🔄 Committing: {commit_msg}")
 
@@ -575,7 +596,7 @@ class GitLinkedInBridge:
                     from modules.platform_integration.x_twitter.src.x_anti_detection_poster import AntiDetectionX
 
                     print("\n🐦 Posting to X/Twitter @Foundups...")
-                    x_poster = AntiDetectionX()
+                    x_poster = AntiDetectionX(use_foundups=True)  # Use FoundUps account
                     x_poster.setup_driver(use_existing_session=True)
                     x_poster.post_to_x(x_content)
                     print("✅ Successfully posted to X!")

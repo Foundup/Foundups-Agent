@@ -44,10 +44,15 @@ class AntiDetectionX:
     Uses compose URL for direct posting
     """
     
-    def __init__(self):
+    def __init__(self, use_foundups=True):
         load_dotenv()
         # Support multiple X accounts
-        self.username = os.getenv('X_Acc1', 'geozeai')  # Default to first account
+        # For git posting, use FoundUps account (X_Acc2)
+        # For YouTube streams, can use Move2Japan (X_Acc1)
+        if use_foundups:
+            self.username = os.getenv('X_Acc2', 'Foundups')  # FoundUps account
+        else:
+            self.username = os.getenv('X_Acc1', 'geozeai')  # Move2Japan account
         self.password = os.getenv('x_Acc_pass')
         self.compose_url = "https://x.com/compose/post"
         self.data_dir = "O:/Foundups-Agent/modules/platform_integration/x_twitter/data"

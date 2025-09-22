@@ -2,6 +2,22 @@
 
 ## Latest Changes
 
+### **V025 - Fixed FoundUps Account Selection for Git Posts**
+
+#### **Change**: Fixed X poster to use correct FoundUps account (X_Acc2) for git posts
+- **Status**: ✅ COMPLETED
+- **WSP Protocols**: WSP 22 (ModLog), WSP 50 (Pre-action verification)
+- **Impact**: HIGH - Git posts now correctly go to @Foundups instead of @geozeAI
+
+#### **Details**:
+- **Problem**: X posts from git were going to Move2Japan account (@geozeAI) instead of FoundUps (@Foundups)
+- **Root Cause**: AntiDetectionX was hardcoded to use X_Acc1 (Move2Japan account)
+- **Solution**: Added use_foundups parameter to AntiDetectionX constructor
+  - When use_foundups=True: uses X_Acc2 (FoundUps account)
+  - When use_foundups=False: uses X_Acc1 (Move2Japan account)
+- **Integration**: git_linkedin_bridge.py now passes use_foundups=True
+- **Compatibility**: Maintains backward compatibility for YouTube streaming scenarios
+
 ### **WSP 11 Interface Consistency + Critical Attribute Fix**
 
 #### **Change**: Interactive Interface Implementation + DAEIdentity AttributeError Resolution

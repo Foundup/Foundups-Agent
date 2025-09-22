@@ -305,6 +305,7 @@ class HoloIndex:
         print(f"[PERF] Dual search completed in {elapsed:.1f}ms")
 
         cube_tags = sorted({hit.get('cube') for hit in code_hits + wsp_hits if hit.get('cube')})
+        fmas_hint = self._should_show_fmas_hint(query, code_hits)
 
         return {
             "query": query,
@@ -313,6 +314,9 @@ class HoloIndex:
             "warnings": warnings,
             "reminders": reminders,
             "cubes": cube_tags,
+            "warnings_count": len(warnings),
+            "reminders_count": len(reminders),
+            "fmas_hint": fmas_hint,
             "elapsed_ms": f"{elapsed:.1f}"
         }
 
@@ -469,8 +473,7 @@ class HoloIndex:
         for reminder in reminders:
             print(f"  - {reminder}")
 
-        query_lower = result.get('query', '').lower()
-        fmas_hint_needed = ('test' in query_lower) or any('test' in (hit.get('need', '').lower()) for hit in result.get('code', []))
+        fmas_hint_needed = bool(result.get('fmas_hint'))
         if fmas_hint_needed:
             print('\n[REF] Review FMAS plan: WSP_framework/docs/testing/HOLOINDEX_QWEN_ADVISOR_FMAS_PLAN.md')
 
@@ -489,6 +492,17 @@ class HoloIndex:
         elif advisor_error:
             print("\n[ADVISOR] Qwen Guidance:")
             print(f"  {advisor_error}")
+
+    def _should_show_fmas_hint(self, query: str, code_hits: List[Dict[str, Any]]) -> bool:
+        query_lower = query.lower()
+        if "test" in query_lower:
+            return True
+        for hit in code_hits:
+            need = (hit.get("need") or "").lower()
+            if "test" in need:
+                return True
+        return False
+
 
 # -------------------- CLI Entry Point -------------------- #
 
