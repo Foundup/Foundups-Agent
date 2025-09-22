@@ -1,0 +1,5 @@
+# Idle Automation Module Dependencies
+# WSP 12: Dependencies must be explicitly declared
+
+# No additional dependencies required
+# Uses only standard library and existing project modules

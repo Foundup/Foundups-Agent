@@ -99,21 +99,25 @@ class AutoModeratorDAE:
         if not self.stream_resolver:
             self.stream_resolver = StreamResolver(self.service)
         
-        # List of channels to check - you can add more channels here
+        # List of channels to check - FoundUps, Move2Japan, and UnDaoDu (WSP 3: Multi-channel support)
         channels_to_check = [
-            os.getenv('CHANNEL_ID', 'UCklMTNnu5POwRmQsg5JJumA'),  # Move2Japan main
-            # Add backup channels here if needed:
-            # os.getenv('BACKUP_CHANNEL_ID'),  # Backup channel
-            # 'UC_ANOTHER_CHANNEL_ID',  # Another channel you want to monitor
+            os.getenv('CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),   # UnDaoDu main channel
+            os.getenv('CHANNEL_ID2', 'UCSNTUXjAgpd4sgWYP0xoJgw'),  # FoundUps channel
+            os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UCklMTNnu5POwRmQsg5JJumA'),  # Move2Japan channel
         ]
         
         # Filter out None values
         channels_to_check = [ch for ch in channels_to_check if ch]
         
         # Try each channel
-        for channel_id in channels_to_check:
-            logger.info(f"🔎 Checking channel: {channel_id[:12]}...")
-            result = self.stream_resolver.resolve_stream(channel_id)
+        for i, channel_id in enumerate(channels_to_check, 1):
+            logger.info(f"🔎 [{i}/{len(channels_to_check)}] Checking channel: {channel_id[:12]}...")
+            try:
+                result = self.stream_resolver.resolve_stream(channel_id)
+                logger.info(f"🔎 [{i}/{len(channels_to_check)}] Channel {channel_id[:12]}... result: {'FOUND' if result and result[0] else 'NONE'}")
+            except Exception as e:
+                logger.error(f"🔎 [{i}/{len(channels_to_check)}] Channel {channel_id[:12]}... ERROR: {e}")
+                result = None
             
             if result and result[0]:  # Accept stream even without chat_id
                 video_id = result[0]
@@ -330,10 +334,25 @@ class AutoModeratorDAE:
                     self.stream_resolver.clear_cache()
                     logger.info("🔄 Stream ended - cleared all caches for fresh NO-QUOTA search")
                 
+                # Execute idle automation tasks before waiting
+                # WSP 35: Module Execution Automation during idle periods
+                try:
+                    from modules.infrastructure.idle_automation.src.idle_automation_dae import run_idle_automation
+                    logger.info("🤖 Executing idle automation tasks...")
+                    idle_result = await run_idle_automation()
+                    if idle_result.get("overall_success"):
+                        logger.info(f"✅ Idle automation completed successfully ({idle_result.get('duration', 0):.1f}s)")
+                    else:
+                        logger.info(f"⚠️ Idle automation completed with issues ({idle_result.get('duration', 0):.1f}s)")
+                except ImportError:
+                    logger.debug("Idle automation module not available - skipping")
+                except Exception as e:
+                    logger.warning(f"Idle automation failed: {e}")
+
                 # Quick transition - only wait 5 seconds before looking for new stream
                 await asyncio.sleep(5)
                 consecutive_failures = 0  # Reset failure counter on clean exit
-                
+
                 # Set quick check mode for the next monitor_chat call
                 # This will make it check more frequently after a stream ends
                 logger.info("🎯 Entering quick-check mode for seamless stream detection")

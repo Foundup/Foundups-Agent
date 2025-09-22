@@ -290,7 +290,8 @@ Generate greeting:"""
             greetings = [
                 f"👑 CHAMPION {username} HAS ARRIVED! #{position} WITH {profile.score} XP! BOW BEFORE THE KING OF WHACKS! 💀",
                 f"🏆 HOLY SHIT! IT'S {username}! THE UNDISPUTED #1 MAGADOOM WARRIOR! {whack_count} WHACKS! 🔥",
-                f"⚡ EVERYONE SHUT UP! {username} IS HERE! THE LEGENDARY #{position} CHAMPION! ⚡"
+                f"⚡ EVERYONE SHUT UP! {username} IS HERE! THE LEGENDARY #{position} MAGADOOM CHAMPION! ⚡",
+                f"🔥 ALL HAIL {username}! THE LEGENDARY ANTIMA CHAMPION! #{position} WITH {whack_count} WHACKS! 🔥"
             ]
         elif position and position <= 3:
             greetings = [

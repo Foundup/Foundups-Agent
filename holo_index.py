@@ -13,7 +13,20 @@ import re
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import asdict
+
+try:
+    from holo_index.qwen_advisor.advisor import AdvisorContext, QwenAdvisor
+    from holo_index.qwen_advisor.config import QwenAdvisorConfig
+    from holo_index.qwen_advisor.telemetry import record_advisor_event
+    ADVISOR_AVAILABLE = True
+except Exception:
+    ADVISOR_AVAILABLE = False
+    AdvisorContext = None  # type: ignore
+    QwenAdvisor = None  # type: ignore
+    QwenAdvisorConfig = None  # type: ignore
+    record_advisor_event = None  # type: ignore
 
 # SSD locations (Phase 1 requirement)
 os.environ.setdefault('CHROMADB_DATA_PATH', 'E:/HoloIndex/vectors')
@@ -71,8 +84,31 @@ WSP_HINTS: Dict[str, str] = {
     "WSP 87": "Consult navigation assets before writing new code.",
 }
 
-DEFAULT_WSP_PATHS = [Path("WSP_framework/src"), Path("WSP_knowledge/docs")]
+DEFAULT_WSP_PATHS = [Path("WSP_framework/src"), Path("WSP_framework/docs"), Path("WSP_knowledge/docs"), Path("WSP_framework/docs/testing")]
 
+def print_onboarding(args, advisor_available: bool, run_number: str) -> None:
+    if os.getenv('HOLOINDEX_SKIP_ONBOARDING') == '1':
+        return
+    print()
+    print(f'[0102] HoloIndex Quickstart (Run {run_number})')
+    print('  - Refresh indexes with `python holo_index.py --index-all` at the start of a session.')
+    if args.search:
+        print(f"  - Running search for: {args.search}")
+    else:
+        print('  - Use --search "keyword" to surface NAVIGATION NEED_TO entries alongside WSP guidance.')
+    print('  - Add --llm-advisor to receive compliance reminders and TODO checklists.')
+    if args.llm_advisor and not advisor_available:
+        print('    (Advisor package unavailable in this environment; review install instructions)')
+    print('  - Log outcomes in ModLogs/TESTModLogs (WSP 22) and consult FMAS before coding.')
+    print('  - Example queries:')
+    print('      python holo_index.py --search "pqn cube" --llm-advisor --limit 5')
+    print('      python holo_index.py --search "unit test plan" --llm-advisor')
+    print('      python holo_index.py --search "navigation schema" --limit 3')
+    print('  - Documentation: WSP_35_HoloIndex_Qwen_Advisor_Plan.md | docs/QWEN_ADVISOR_OVERVIEW.md | tests/holo_index/TESTModLog.md')
+    if getattr(args, 'llm_advisor', False):
+        print('  - Provide --advisor-rating useful|needs_more to log feedback and earn points.')
+        print('  - Use --ack-reminders after acting on advisor TODOs to capture completion.')
+    print('  - Session points summary appears after each run (WSP reward telemetry).')
 # -------------------- HoloIndex Implementation -------------------- #
 
 class HoloIndex:
@@ -103,6 +139,14 @@ class HoloIndex:
 
         self._load_wsp_summary()
         self._load_navigation()
+
+    def _infer_cube_tag(self, *values: Any) -> Optional[str]:
+        text = ' '.join(v for v in values if isinstance(v, str)).lower()
+        if not text:
+            return None
+        if 'pqn' in text or 'phantom quantum' in text:
+            return 'pqn'
+        return None
 
     # --------- Collection Helpers --------- #
 
@@ -163,11 +207,15 @@ class HoloIndex:
             ids.append(f"code_{i}")
             embeddings.append(self.model.encode(need).tolist())
             documents.append(location)
-            metadatas.append({
+            cube = self._infer_cube_tag(need, location)
+            meta = {
                 "need": need,
                 "type": "code",
                 "source": "NAVIGATION.py"
-            })
+            }
+            if cube:
+                meta["cube"] = cube
+            metadatas.append(meta)
 
         self.code_collection.add(ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas)
         print("[OK] Code index refreshed on SSD")
@@ -202,6 +250,7 @@ class HoloIndex:
             ids.append(f"wsp_{idx}")
             embeddings.append(self.model.encode(doc_payload).tolist())
             documents.append(doc_payload)
+            cube = self._infer_cube_tag(title, summary, str(file_path))
             metadata = {
                 "wsp": wsp_id,
                 "title": title,
@@ -209,6 +258,8 @@ class HoloIndex:
                 "summary": summary,
                 "type": "wsp"
             }
+            if cube:
+                metadata["cube"] = cube
             metadatas.append(metadata)
             summary_cache[wsp_id] = {
                 "title": title,
@@ -253,12 +304,15 @@ class HoloIndex:
         elapsed = (time.time() - start_time) * 1000
         print(f"[PERF] Dual search completed in {elapsed:.1f}ms")
 
+        cube_tags = sorted({hit.get('cube') for hit in code_hits + wsp_hits if hit.get('cube')})
+
         return {
             "query": query,
             "code": code_hits,
             "wsps": wsp_hits,
             "warnings": warnings,
             "reminders": reminders,
+            "cubes": cube_tags,
             "elapsed_ms": f"{elapsed:.1f}"
         }
 
@@ -280,7 +334,8 @@ class HoloIndex:
                 formatted.append({
                     "need": meta.get('need'),
                     "location": doc,
-                    "similarity": f"{similarity*100:.1f}%"
+                    "similarity": f"{similarity*100:.1f}%",
+                    "cube": meta.get('cube')
                 })
             else:
                 formatted.append({
@@ -288,7 +343,8 @@ class HoloIndex:
                     "title": meta.get('title'),
                     "summary": meta.get('summary'),
                     "path": meta.get('path'),
-                    "similarity": f"{similarity*100:.1f}%"
+                    "similarity": f"{similarity*100:.1f}%",
+                    "cube": meta.get('cube')
                 })
         return formatted
 
@@ -387,6 +443,8 @@ class HoloIndex:
         for idx, hit in enumerate(code_hits, start=1):
             print(f"  {idx}. [{hit['similarity']}] {hit['need']}")
             print(f"     -> {hit['location']}")
+            if hit.get('cube'):
+                print(f"     cube: {hit['cube']}")
 
         print("\n[WSP] WSP Guidance:")
         if not wsp_hits:
@@ -396,6 +454,8 @@ class HoloIndex:
             if hit.get('summary'):
                 print(f"     " + hit['summary'][:120] + ('...' if len(hit['summary']) > 120 else ''))
             print(f"     -> {hit['path']}")
+            if hit.get('cube'):
+                print(f"     cube: {hit['cube']}")
 
         print("\n[WARN] Warnings:")
         if not warnings:
@@ -408,6 +468,27 @@ class HoloIndex:
             print("  (no additional reminders)")
         for reminder in reminders:
             print(f"  - {reminder}")
+
+        query_lower = result.get('query', '').lower()
+        fmas_hint_needed = ('test' in query_lower) or any('test' in (hit.get('need', '').lower()) for hit in result.get('code', []))
+        if fmas_hint_needed:
+            print('\n[REF] Review FMAS plan: WSP_framework/docs/testing/HOLOINDEX_QWEN_ADVISOR_FMAS_PLAN.md')
+
+        advisor_info = result.get('advisor')
+        advisor_error = result.get('advisor_error')
+        if advisor_info:
+            print("\n[ADVISOR] Qwen Guidance:")
+            print(f"  Guidance: {advisor_info.get('guidance')}")
+            for reminder in advisor_info.get('reminders', []):
+                print(f"  Reminder: {reminder}")
+            todos = advisor_info.get('todos', [])
+            if todos:
+                print("  TODOs:")
+                for item in todos:
+                    print(f"    - {item}")
+        elif advisor_error:
+            print("\n[ADVISOR] Qwen Guidance:")
+            print(f"  {advisor_error}")
 
 # -------------------- CLI Entry Point -------------------- #
 
@@ -423,21 +504,109 @@ def main() -> None:
     parser.add_argument('--benchmark', action='store_true', help='Benchmark SSD performance')
     parser.add_argument('--ssd', type=str, default='E:/HoloIndex', help='SSD base path (default: E:/HoloIndex)')
 
+    parser.add_argument('--llm-advisor', action='store_true', help='Augment search results with Qwen advisor guidance')
+    parser.add_argument('--advisor-rating', choices=['useful', 'needs_more'], help='Provide feedback on advisor output')
+    parser.add_argument('--ack-reminders', action='store_true', help='Confirm advisor reminders were acted on')
+
     args = parser.parse_args()
+
+    run_number = os.getenv('HOLOINDEX_RUN', '1')
+
+    reward_variant = os.getenv('HOLO_REWARD_VARIANT', 'A').upper()
+    reward_events: List[Tuple[str, int, str]] = []
+    session_points = 0
+    telemetry_path: Optional[Path] = None
+
+    def add_reward_event(event: str, points: int, note: str, extra: Optional[Dict[str, Any]] = None) -> None:
+        nonlocal session_points, reward_events, telemetry_path
+        session_points += points
+        reward_events.append((event, points, note))
+        if ADVISOR_AVAILABLE and record_advisor_event and telemetry_path and extra:
+            payload = {'event': event, 'points': points, 'reward_variant': reward_variant}
+            payload.update(extra)
+            try:
+                record_advisor_event(telemetry_path, payload)
+            except Exception:
+                pass
+
+    print_onboarding(args, ADVISOR_AVAILABLE, run_number)
+    advisor = None
+    if args.llm_advisor:
+        if not ADVISOR_AVAILABLE:
+            print('[WARN] Qwen advisor package unavailable; continuing without advisor output.')
+        else:
+            advisor = QwenAdvisor()
+
+    if advisor is not None:
+        telemetry_path = advisor.config.telemetry_path
+    elif ADVISOR_AVAILABLE and QwenAdvisorConfig is not None:
+        try:
+            telemetry_path = QwenAdvisorConfig.from_env().telemetry_path
+        except Exception:
+            telemetry_path = None
+
     holo = HoloIndex(ssd_path=args.ssd)
 
     index_code = args.index_code or args.index or args.index_all
     index_wsp = args.index_wsp or args.index or args.index_all
 
+    indexing_awarded = False
     if index_code:
         holo.index_code_entries()
+        indexing_awarded = True
     if index_wsp:
         wsp_dirs = [Path(p) for p in args.wsp_path] if args.wsp_path else None
         holo.index_wsp_entries(paths=wsp_dirs)
+        indexing_awarded = True
+    if indexing_awarded:
+        add_reward_event('index_refresh', 5, 'Refreshed indexes', {'query': args.search or ''})
 
+    last_query = args.search or ''
+    search_results = None
     if args.search:
         results = holo.search(args.search, limit=args.limit)
+        if args.llm_advisor:
+            if advisor is None:
+                results['advisor_error'] = 'Qwen advisor unavailable in this environment.'
+            else:
+                try:
+                    context = AdvisorContext(query=args.search, code_hits=results.get('code', []), wsp_hits=results.get('wsps', []))
+                    advisor_output = advisor.generate_guidance(context)
+                    results['advisor'] = asdict(advisor_output)
+                except Exception as exc:  # pragma: no cover - safety guard
+                    results['advisor_error'] = f'Advisor failed: {exc}'
         holo.display_results(results)
+        search_results = results
+        if args.llm_advisor and results.get('advisor'):
+            add_reward_event('advisor_usage', 3, 'Consulted Qwen advisor guidance', {'query': last_query})
+
+    rating = getattr(args, 'advisor_rating', None)
+    if rating:
+        if not args.llm_advisor:
+            print('[WARN] --advisor-rating ignored without --llm-advisor')
+        elif advisor is None or not (search_results and search_results.get('advisor')):
+            print('[WARN] --advisor-rating ignored because advisor guidance was unavailable')
+        else:
+            rating_points = 5 if rating == 'useful' else 2
+            add_reward_event('advisor_rating', rating_points, f'Advisor rating: {rating}', {
+                'query': last_query,
+                'rating': rating
+            })
+
+    if args.ack_reminders:
+        if not (search_results and (search_results.get('advisor') or search_results.get('advisor_error'))):
+            print('[WARN] --ack-reminders ignored because advisor guidance was unavailable')
+        else:
+            add_reward_event('ack_reminders', 1, 'Advisor reminders acknowledged', {
+                'query': last_query
+            })
+
+    if reward_events:
+        print("\n[POINTS] Session Summary:")
+        for event, points, note in reward_events:
+            sign = '+' if points >= 0 else ''
+            print(f'  {sign}{points} {note}')
+        print(f'  Total: {session_points} pts (variant {reward_variant})')
 
     if args.benchmark:
         holo.benchmark_ssd()
@@ -449,6 +618,7 @@ def main() -> None:
         print("  python holo_index.py --index-wsp             # Index WSP docs")
         print("  python holo_index.py --search 'query'        # Search code + WSP guidance")
         print("  python holo_index.py --search 'query' --limit 3")
+        print("  python holo_index.py --search 'query' --llm-advisor  # Add Qwen advisor guidance")
         print("  python holo_index.py --benchmark             # Test SSD performance")
 
 if __name__ == "__main__":

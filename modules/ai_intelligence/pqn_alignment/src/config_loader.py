@@ -83,8 +83,13 @@ class ConfigLoader:
         }
     }
     
-    def __init__(self, config_dir: Optional[str] = None):
-        """Initialize with optional config directory."""
+    def __init__(self, config_dir: Optional[str] = None, yaml_only: bool = True):
+        """Initialize with optional config directory and WSP 12 compliance mode.
+        
+        Args:
+            config_dir: Optional config directory path
+            yaml_only: If True, enforce WSP 12 YAML-only policy (default: True)
+        """
         if config_dir:
             self.config_dir = Path(config_dir)
         else:
@@ -92,6 +97,7 @@ class ConfigLoader:
             self.config_dir = Path(__file__).parent.parent / "config"
         
         self.config_dir.mkdir(exist_ok=True)
+        self.yaml_only = yaml_only  # WSP 12 compliance
     
     def load_detector_config(self, path: Optional[str] = None) -> DetectorConfig:
         """Load detector configuration from file or defaults."""
@@ -132,7 +138,11 @@ class ConfigLoader:
         if not file_path.exists():
             raise FileNotFoundError(f"Config file not found: {path}")
         
-        with open(file_path, 'r') as f:
+        # WSP 12 compliance check
+        if self.yaml_only and file_path.suffix not in ['.yaml', '.yml']:
+            raise ValueError(f"WSP 12: Only YAML configs allowed, got: {file_path.suffix}")
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
             if file_path.suffix in ['.yaml', '.yml']:
                 return yaml.safe_load(f)
             elif file_path.suffix == '.json':
@@ -207,6 +217,43 @@ OUTPUT_SCHEMAS = {
         }
     }
 }
+
+
+# Backward compatibility function (replaces config.py)
+def load_config(path: str) -> Dict[str, Any]:
+    """
+    Simple YAML config loader for backward compatibility.
+    Replaces the functionality from config.py with WSP 12 compliance.
+    
+    Args:
+        path: Path to YAML config file
+        
+    Returns:
+        Dict containing configuration data
+        
+    Raises:
+        ValueError: If path is empty or file is not YAML
+        FileNotFoundError: If config file not found
+        ImportError: If PyYAML not available
+    """
+    if not path:
+        raise ValueError("path is required")
+    
+    if not path.endswith(('.yaml', '.yml')):
+        raise ValueError("WSP 12: Only YAML configs allowed")
+    
+    try:
+        import yaml
+    except ImportError as exc:
+        raise ImportError("pyyaml is required for configuration loading. Install pyyaml.") from exc
+    
+    with open(path, "r", encoding="utf-8") as f:
+        data = f.read()
+    
+    obj = yaml.safe_load(data)
+    if isinstance(obj, dict):
+        return obj
+    raise ValueError("YAML config must define a mapping/dict at the root")
 
 
 def validate_output(data: Dict, schema_name: str) -> bool:

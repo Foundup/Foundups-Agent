@@ -270,6 +270,14 @@ class IntelligentThrottleManager:
 
         # 0102 Consciousness Monitoring
         self.consciousness_monitoring = True
+
+        # Moderator Throttling System (WSP 84) - User-Centric with Database
+        self.moderator_recent_commands = defaultdict(list)  # user_id -> list of (timestamp, command_text) in last 5 min
+        self.moderator_command_limits = {
+            'window_seconds': 300,  # 5 minutes
+            'max_commands': 3,       # 3 commands per 5 minutes
+            'cooldown_seconds': 60   # 1 minute between identical commands
+        }
         self.api_drain_threshold = 0.15  # Alert if quota < 15%
         self.emergency_mode = False
         self.priority_threshold = 6  # Only allow priority >= 6 in emergency
@@ -287,6 +295,81 @@ class IntelligentThrottleManager:
                 return {'is_troll': True, 'response': response}
         
         return {'is_troll': False}
+
+    def check_moderator_command_allowed(self, user_id: str, username: str, role: str, command_text: str) -> Tuple[bool, Optional[str]]:
+        """
+        Check if a moderator's command is allowed (rate limits, repeats, etc.).
+
+        Args:
+            user_id: Moderator's user ID
+            username: Moderator's username
+            role: User's role (MOD, OWNER, etc.)
+            command_text: The full command text
+
+        Returns:
+            (allowed, response_message) - allowed=True if command can proceed, response_message if blocked/trolled
+        """
+        # Only apply to moderators (not owners)
+        if role not in ['MOD']:
+            return True, None
+
+        now = time.time()
+        limits = self.moderator_command_limits
+
+        # Get recent commands for this user
+        recent_cmds = self.moderator_recent_commands[user_id]
+
+        # Clean old commands (older than window)
+        recent_cmds[:] = [(ts, cmd) for ts, cmd in recent_cmds if now - ts < limits['window_seconds']]
+
+        # Check rate limit (3 commands per 5 minutes)
+        if len(recent_cmds) >= limits['max_commands']:
+            return False, f"@{username} 🕐 Rate limit: 3 commands per 5 minutes. Chill out! Next command allowed in {int(limits['window_seconds'] - (now - recent_cmds[0][0]))}s"
+
+        # Check for repeated commands (same command within 60 seconds)
+        normalized_cmd = command_text.lower().strip()
+        for ts, prev_cmd in recent_cmds:
+            if (now - ts < limits['cooldown_seconds'] and
+                prev_cmd.lower().strip() == normalized_cmd):
+                # Troll for repeated questions
+                troll_responses = [
+                    f"@{username} I'm not your bitch... chill out! Same question again? 🤖💅",
+                    f"@{username} Did I stutter? I already answered that. Take a breather! 😤",
+                    f"@{username} Groundhog Day much? Same command twice in a minute? 🙄",
+                    f"@{username} Copy-paste error? I see you repeating yourself... 🐵"
+                ]
+                import random
+                return False, random.choice(troll_responses)
+
+        return True, None
+
+    def record_moderator_command(self, user_id: str, username: str, role: str, command_text: str) -> None:
+        """
+        Record a moderator command for rate limiting and repeat detection.
+
+        Args:
+            user_id: Moderator's user ID
+            username: Moderator's username
+            role: User's role
+            command_text: The full command text
+        """
+        # Only track moderators (not owners)
+        if role not in ['MOD']:
+            return
+
+        now = time.time()
+
+        # Add to recent commands (will be cleaned up by check method)
+        self.moderator_recent_commands[user_id].append((now, command_text))
+
+        # Keep only recent commands (automatic cleanup happens in check method)
+        limits = self.moderator_command_limits
+        self.moderator_recent_commands[user_id] = [
+            (ts, cmd) for ts, cmd in self.moderator_recent_commands[user_id]
+            if now - ts < limits['window_seconds']
+        ]
+
+        logger.debug(f"[MOD TRACK] Recorded command from {username}: {command_text[:50]}...")
     
     def track_api_call(self, quota_cost: int = 1, credential_set: int = 0):
         """Track an API call and quota usage"""
@@ -573,6 +656,11 @@ class IntelligentThrottleManager:
 
         if self.emergency_mode:
             report += "\n⚠️ API DRAIN DETECTED - Restricting to critical responses only"
+
+        # Add moderator throttling status
+        tracked_mods = len([cmds for cmds in self.moderator_recent_commands.values() if cmds])
+        if tracked_mods > 0:
+            report += f"\n👮 MOD TRACK: {tracked_mods} moderators being rate-limited"
 
         return report
 

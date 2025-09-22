@@ -50,7 +50,7 @@ from NAVIGATION import NEED_TO, MODULE_GRAPH, PROBLEMS
 - HoloIndex found potential matches - are they in NAVIGATION.py?
 - Does solution already exist in NAVIGATION.py?
 - Follow the MODULE_GRAPH to understand flow
-- Record the lookup in NAVIGATION_COVERAGE.md when you confirm a NEED_TO entry
+- Record the lookup in WSP_framework/reports/NAVIGATION/NAVIGATION_COVERAGE.md when you confirm a NEED_TO entry
 
 #### 2. CODE SEARCH (1 minute)
 ```bash

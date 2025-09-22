@@ -175,15 +175,16 @@ class ChatMemoryManager:
         score = 0
         
         # Role-based importance
-        if stats['role'] in self.important_roles:
+        if stats.get('role', 'USER') in self.important_roles:
             score += 10
         
         # Message frequency
-        if stats['message_count'] > 20:
+        message_count = stats.get('message_count', 0)
+        if message_count > 20:
             score += 5
-        elif stats['message_count'] > 10:
+        elif message_count > 10:
             score += 3
-        elif stats['message_count'] > 5:
+        elif message_count > 5:
             score += 1
         
         # Consciousness emoji triggers
@@ -201,9 +202,9 @@ class ChatMemoryManager:
     def _should_persist(self, stats: Dict[str, Any]) -> bool:
         """Determine if user messages should be persisted to disk."""
         return (
-            stats['role'] in self.important_roles or 
-            stats['importance_score'] >= self.importance_threshold or
-            stats['consciousness_triggers'] > 0
+            stats.get('role', 'USER') in self.important_roles or
+            stats.get('importance_score', 0) >= self.importance_threshold or
+            stats.get('consciousness_triggers', 0) > 0
         )
     
     def _persist_to_disk(self, author_name: str, message_text: str) -> None:
@@ -279,12 +280,19 @@ class ChatMemoryManager:
         consciousness_count = 0
         
         for msg in recent_messages[-10:]:  # Check last 10 messages
-            text_lower = msg['text'].lower()
-            
+            if not isinstance(msg, dict) or 'text' not in msg:
+                continue  # Skip malformed messages
+
+            text = msg.get('text', '')
+            if not isinstance(text, str):
+                continue  # Skip non-string messages
+
+            text_lower = text.lower()
+
             if any(keyword in text_lower for keyword in maga_keywords):
                 maga_count += 1
-            
-            if any(emoji in msg['text'] for emoji in consciousness_emojis):
+
+            if any(emoji in text for emoji in consciousness_emojis):
                 consciousness_count += 1
         
         # Determine level based on patterns

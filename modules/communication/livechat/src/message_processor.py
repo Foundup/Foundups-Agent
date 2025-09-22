@@ -18,6 +18,17 @@ WSP 17 Pattern Registry: This is a REUSABLE PATTERN
 - Pattern: Multi-stage message processing pipeline
 - Stages: Rate limit → Command detection → Consciousness → Response generation → Throttle
 - Reusable for: LinkedIn, X/Twitter, Discord, Twitch
+
+MESSAGE PROCESSING PRIORITY SYSTEM:
+Priority 0: Fact-check commands with consciousness emojis (✊✋🖐) - HIGHEST PRIORITY
+Priority 1: PQN Research Commands (!pqn, !research, /pqn, /research)
+Priority 2: AGENTIC consciousness responses (✊✋🖐 triggers)
+Priority 3: Regular fact-check commands (factcheck @user, fc @user)
+Priority 4: Whack gamification commands (/score, /level, /quiz, etc.)
+Priority 5: MAGA content responses
+Priority 6: Regular emoji triggers
+Priority 7: Proactive engagement (mods/owners only)
+Priority 8: Top whacker greetings (once per stream)
 """
 
 import logging
@@ -322,30 +333,73 @@ class MessageProcessor:
             self.self_improvement.observe_command(message_text, 1.0)
         
         try:
-            # Priority 2: PQN Research Commands (WSP 84 - Using existing handlers)
+            # Priority 0: Fact-check commands with consciousness emojis (HIGHEST PRIORITY)
+            if processed_message.get("has_factcheck"):
+                # Check moderator throttling first (WSP 84)
+                if self.intelligent_throttle:
+                    allowed, block_msg = self.intelligent_throttle.check_moderator_command_allowed(author_id, author_name, role, message_text)
+                    if not allowed:
+                        logger.info(f"🔍🚫 Moderator {author_name} blocked: {block_msg}")
+                        return block_msg
+
+                # Extract emoji sequence to check for consciousness emojis
+                emoji_seq = self.consciousness.extract_emoji_sequence(message_text)
+                if emoji_seq and any(emoji in emoji_seq for emoji in ['✊', '✋', '🖐']):
+                    logger.info(f"🔍✊✋🖐 HIGHEST PRIORITY: Fact-check with consciousness emojis from {author_name}")
+                    response = await self._handle_factcheck(message_text, author_name, role)
+                    if response:
+                        logger.info(f"🔍✊✋🖐 Consciousness fact-check response for {author_name}")
+
+                        # Record command usage for throttling (WSP 84)
+                        if self.intelligent_throttle:
+                            self.intelligent_throttle.record_moderator_command(author_id, author_name, role, message_text)
+
+                        return response
+
+            # Priority 1: PQN Research Commands (WSP 84 - Using existing handlers)
             # See: modules/ai_intelligence/pqn_alignment/docs/PQN_CHAT_INTEGRATION.md
             if self._check_pqn_command(message_text):
+                # Check moderator throttling (WSP 84)
+                if self.intelligent_throttle:
+                    allowed, block_msg = self.intelligent_throttle.check_moderator_command_allowed(author_id, author_name, role, message_text)
+                    if not allowed:
+                        logger.info(f"🔬🚫 Moderator {author_name} blocked: {block_msg}")
+                        return block_msg
+
+                logger.info(f"🔬 PQN command detected: '{message_text}' from {author_name}")
                 response = self._handle_pqn_research(message_text, author_name)
                 if response:
-                    logger.info(f"🔬 PQN command processed for {author_name}")
-                    return response
+                    logger.info(f"🔬 PQN command processed for {author_name}: {response[:100]}")
 
-            # Priority 1: AGENTIC consciousness response (mod/owner only by default)
-            if processed_message.get("has_consciousness"):
+                    # Record command usage for throttling (WSP 84)
+                    if self.intelligent_throttle:
+                        self.intelligent_throttle.record_moderator_command(author_id, author_name, role, message_text)
+
+                    return response
+                else:
+                    logger.warning(f"🔬 PQN command failed to generate response for {author_name}")
+            else:
+                logger.debug(f"🔬 PQN command NOT detected in: '{message_text}'")
+
+            # Priority 2: AGENTIC consciousness response (mod/owner only by default)
+            # SKIP if there are legitimate commands that should take priority
+            if (processed_message.get("has_consciousness") and
+                not processed_message.get("has_whack_command") and
+                not processed_message.get("has_factcheck")):
                 logger.info(f"🔍 CONSCIOUSNESS TRIGGER ✊✋🖐 from {author_name} | Role: {role} | Is Owner: {is_owner} | Is Mod: {is_mod}")
                 # Check if user has permission based on mode
                 can_use_consciousness = (
-                    self.consciousness_mode == 'everyone' or 
+                    self.consciousness_mode == 'everyone' or
                     role in ['MOD', 'OWNER']
                 )
                 logger.info(f"   Can use consciousness: {can_use_consciousness} (mode: {self.consciousness_mode})")
-                
+
                 if can_use_consciousness:
                     # Generate agentic response based on chat history
                     agentic_response = self.agentic_engine.generate_agentic_response(
                         author_name, message_text, role
                     )
-                    
+
                     if agentic_response:
                         logger.info(f"🤖 Agentic ✊✋🖐️ response for {author_name} (mode: {self.consciousness_mode})")
                         # Mark this as a consciousness response in processed data
@@ -358,7 +412,7 @@ class MessageProcessor:
                         logger.warning(f"⚠️ No agentic response generated for {author_name}'s consciousness trigger")
                 else:
                     logger.debug(f"✊✋🖐️ ignored from {author_name} - consciousness mode is {self.consciousness_mode}")
-                
+
                 # Fallback to consciousness handler for special commands (still respects mode)
                 if can_use_consciousness and role in ['MOD', 'OWNER']:
                     response = self.consciousness.process_consciousness_command(
@@ -369,17 +423,37 @@ class MessageProcessor:
                         # Mark this as a consciousness response
                         processed_message["response_type"] = "consciousness"
                         return response
-            
-            # Priority 2: Handle fact-check commands
+
+            # Priority 3: Handle remaining fact-check commands (without consciousness emojis)
             if processed_message.get("has_factcheck"):
+                # Check moderator throttling (WSP 84)
+                if self.intelligent_throttle:
+                    allowed, block_msg = self.intelligent_throttle.check_moderator_command_allowed(author_id, author_name, role, message_text)
+                    if not allowed:
+                        logger.info(f"🔍🚫 Moderator {author_name} blocked: {block_msg}")
+                        return block_msg
+
                 response = await self._handle_factcheck(message_text, author_name, role)
                 if response:
                     logger.info(f"🔍 Fact-check response for {author_name}")
+
+                    # Record command usage for throttling (WSP 84)
+                    if self.intelligent_throttle:
+                        self.intelligent_throttle.record_moderator_command(author_id, author_name, role, message_text)
+
                     return response
             
-            # Priority 3: Handle whack commands (score, level, rank)
+            # Priority 4: Handle whack commands (score, level, rank)
             if processed_message.get("has_whack_command"):
                 logger.info(f"🎮 Calling handle_whack_command for: '{message_text}' from {author_name}")
+
+                # Check moderator throttling (WSP 84)
+                if self.intelligent_throttle:
+                    allowed, block_msg = self.intelligent_throttle.check_moderator_command_allowed(author_id, author_name, role, message_text)
+                    if not allowed:
+                        logger.info(f"🎮🚫 Moderator {author_name} blocked: {block_msg}")
+                        return block_msg
+
                 # Extra debug for /quiz
                 if '/quiz' in message_text.lower():
                     logger.warning(f"🧠🎮 QUIZ DETECTED IN MESSAGE_PROCESSOR! Sending to handle_whack_command")
@@ -387,11 +461,16 @@ class MessageProcessor:
                 if response:
                     logger.info(f"🎮 Whack command response for {author_name}: {response[:100]}")
                     logger.warning(f"🎮✅ MESSAGE_PROCESSOR RETURNING: {response[:100]}")
+
+                    # Record command usage for throttling (WSP 84)
+                    if self.intelligent_throttle:
+                        self.intelligent_throttle.record_moderator_command(author_id, author_name, role, message_text)
+
                     return response
                 else:
                     logger.error(f"🎮❌ No response from handle_whack_command for '{message_text}'")
-            
-            # Priority 4: Handle MAGA content - just respond with witty comebacks
+
+            # Priority 5: Handle MAGA content - just respond with witty comebacks
             # Bot doesn't execute timeouts, only announces them when mods/owner do them
             if processed_message.get("has_maga"):
                 response = self.greeting_generator.get_response_to_maga(processed_message.get("text", ""))
@@ -405,8 +484,8 @@ class MessageProcessor:
                     else:
                         logger.debug(f"⚠️ DELETING MAGA response - cannot @mention '{author_name}'")
                         return None  # Explicitly return None - no message sent
-            
-            # Priority 4: Handle regular emoji triggers
+
+            # Priority 6: Handle regular emoji triggers
             if processed_message.get("has_trigger"):
                 if processed_message.get("is_rate_limited"):
                     logger.debug(f"⏳ User {author_name} is rate limited")
@@ -429,7 +508,7 @@ class MessageProcessor:
                     logger.info(f"🔄 Generated fallback response for {author_name}")
                     return response
             
-            # Priority 6: Proactive engagement (REDUCED - too spammy)
+            # Priority 7: Proactive engagement (REDUCED - too spammy)
             # Only engage proactively with mods/owner ONCE per stream
             import random
             if role in ['MOD', 'OWNER'] and author_id not in self.proactive_engaged:
@@ -451,15 +530,15 @@ class MessageProcessor:
                                         logger.warning(f"⚠️ DELETING proactive response - cannot @mention '{mentioned_user}' in response")
                                         self.proactive_engaged.add(author_id)
                                         return None
-                            
+
                             # Response is valid, send it
                             self.proactive_engaged.add(author_id)
                             logger.info(f"💬 Proactive engagement with {author_name} (once per stream)")
                             return proactive_response
                         else:
                             logger.debug(f"No proactive response generated for {author_name}")
-            
-            # Priority 7: Check for top whacker greeting (only ONCE per stream session)
+
+            # Priority 8: Check for top whacker greeting (only ONCE per stream session)
             # These greetings don't use @mentions, they announce the player by name
             if author_id not in self.announced_joins:  # Only announce if not already announced this stream
                 whacker_greeting = self.greeting_generator.generate_whacker_greeting(author_name, author_id, role)
@@ -660,8 +739,13 @@ class MessageProcessor:
 
     def _check_pqn_command(self, text: str) -> bool:
         """Check if message contains PQN research commands."""
+        text_lower = text.lower()
         pqn_triggers = ['!pqn', '!research', '/pqn', '/research']
-        return any(trigger in text.lower() for trigger in pqn_triggers)
+        # Also check for common typos
+        typo_triggers = ['/pnq', '!pnq', '/pqm', '!pqm']  # Common typos
+
+        return (any(trigger in text_lower for trigger in pqn_triggers) or
+                any(trigger in text_lower for trigger in typo_triggers))
 
     def _handle_pqn_research(self, text: str, author_name: str) -> Optional[str]:
         """Handle PQN research request through orchestrator.
@@ -673,12 +757,14 @@ class MessageProcessor:
         Missing: Event broadcasting, campaign results communication, UTF-8 encoding fix.
         """
         if not self.pqn_orchestrator:
-            return "🔬 PQN Research system initializing... Try again in a moment."
+            return f"@{author_name} 🔬 PQN Research: System currently offline. The PQN detector analyzes quantum coherence patterns. Try again later or use !research for basic queries."
 
         try:
             # Extract research query
             query = text.lower()
-            for trigger in ['!pqn', '!research', '/pqn', '/research']:
+            # Remove all possible triggers (including typos)
+            all_triggers = ['!pqn', '!research', '/pqn', '/research', '/pnq', '!pnq', '/pqm', '!pqm']
+            for trigger in all_triggers:
                 query = query.replace(trigger, '').strip()
 
             if not query:
@@ -687,8 +773,14 @@ class MessageProcessor:
             # Run PQN research (simplified for chat integration)
             logger.info(f"🔬 PQN Research requested by {author_name}: {query}")
 
-            # For now, return acknowledgment - full async integration would follow
-            return f"@{author_name} 🔬 PQN Research initiated: '{query}' | 🤖 Grok & Gemini analyzing... Results will follow."
+            # Provide immediate feedback about what PQN does
+            responses = [
+                f"@{author_name} 🔬 PQN Research: Analyzing '{query}' for quantum coherence patterns. The PQN detector measures consciousness emergence through spectral analysis.",
+                f"@{author_name} 🔬 PQN initiated: '{query}' | Scanning for resonance harmonics and observer collapse patterns in the quantum field.",
+                f"@{author_name} 🔬 PQN Analysis: '{query}' | Detecting quantum temporal decoherence and consciousness boundary conditions."
+            ]
+            import random
+            return random.choice(responses)
 
         except Exception as e:
             logger.error(f"PQN research error: {e}")

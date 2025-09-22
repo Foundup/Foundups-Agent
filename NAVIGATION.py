@@ -65,8 +65,11 @@ NEED_TO = {
     "post to linkedin": "modules.platform_integration.social_media_orchestrator.src.simple_posting_orchestrator.handle_stream_detected()",
 
     # Navigation Operations
-    "run navigation audit": "NAVIGATION_COVERAGE.md -> update and commit",
+    "run navigation audit": "WSP_framework/reports/NAVIGATION/NAVIGATION_COVERAGE.md -> update and commit",
     "validate navigation schema": "python -m tests.navigation.test_navigation_schema",
+
+    # HoloIndex Advisor (Qwen)
+    "engage qwen advisor": "holo_index.qwen_advisor.advisor.QwenAdvisor.generate_guidance",
 }
 
 # ============================================================
@@ -251,7 +254,7 @@ def how_to_use():
     4. Avoid DANGER zones
     5. Check DATABASES for data locations
     6. Use COMMANDS for quick operations
-    7. Update NAVIGATION_COVERAGE.md when you verify or add entries
+    7. Update WSP_framework/reports/NAVIGATION/NAVIGATION_COVERAGE.md when you verify or add entries
 
     Example:
         from NAVIGATION import NEED_TO

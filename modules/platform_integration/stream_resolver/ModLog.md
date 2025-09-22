@@ -12,6 +12,136 @@ This log tracks changes specific to the **stream_resolver** module in the **plat
 
 ## MODLOG ENTRIES
 
+### Multi-Channel Rotation in NO-QUOTA Idle Mode
+**WSP Protocol**: WSP 48 (Recursive Self-Improvement), WSP 27 (DAE Architecture), WSP 84 (Code Memory)
+**Phase**: Load Distribution Enhancement
+**Agent**: 0102 Claude
+
+#### Changes
+- **File**: `src/stream_resolver.py`
+- **Enhancement**: NO-QUOTA idle mode now rotates through all channels instead of hammering single channel
+  - Rotation order: Move2Japan → UnDaoDu → FoundUps (distributes load evenly)
+  - Maintains single-channel checking when specific channel_id is provided
+  - Reduces scraping pressure on individual channels
+  - Provides more comprehensive multi-channel monitoring in idle state
+- **Reason**: User requested channel rotation to "slow down the scraping on the channels" and distribute load across all monitored channels
+- **Impact**: Better resource distribution, fairer channel checking, reduced risk of rate limiting on any single channel
+
+#### Technical Implementation
+```python
+# Multi-channel rotation in idle mode
+channels_to_rotate = [
+    'UCklMTNnu5POwRmQsg5JJumA',  # Move2Japan first
+    'UC-LSSlOZwpGIRIYihaz8zCw',  # UnDaoDu second
+    'UCSNTUXjAgpd4sgWYP0xoJgw',  # FoundUps last
+]
+
+if channel_id:
+    # Specific channel requested - check only that one
+    channels_to_check = [search_channel_id]
+else:
+    # Rotate through all channels in idle mode
+    channels_to_check = channels_to_rotate
+
+# Rotate through channels in infinite loop
+current_channel_id = channels_to_check[channel_index % len(channels_to_check)]
+```
+
+#### WSP Compliance
+- **WSP 27**: DAE architecture - autonomous multi-channel monitoring
+- **WSP 48**: Recursive improvement - distributes load to prevent single-point failures
+- **WSP 84**: Enhanced existing NO-QUOTA system with channel rotation
+- **WSP 35**: Module execution automation - fully automated channel rotation
+
+#### Verification
+- NO-QUOTA idle mode rotates through all configured channels
+- Single-channel mode still works when specific channel requested
+- Load distributed evenly across Move2Japan, UnDaoDu, and FoundUps
+- Maintains 0 API quota usage while checking all channels
+
+---
+
+### NO-QUOTA Mode Persistent Idle Loop Enhancement
+**WSP Protocol**: WSP 48 (Recursive Self-Improvement), WSP 27 (DAE Architecture), WSP 84 (Code Memory)
+**Phase**: Critical Enhancement
+**Agent**: 0102 Claude
+
+#### Changes
+- **File**: `src/stream_resolver.py`
+- **Enhancement**: Converted NO-QUOTA mode from limited attempts to persistent idle loop
+  - Changed from 5-attempt limit to infinite loop until stream found
+  - Enhanced delay calculation with intelligent backoff (capped at 60s)
+  - Optimized logging frequency to reduce spam (logs every 10th attempt after first 5)
+  - Maintains 0 API cost while providing continuous stream detection
+- **Reason**: User requested "idle system" behavior - NO-QUOTA mode should persist indefinitely when no stream is found, but logging was too verbose
+- **Impact**: True idle behavior for stream detection with clean logging, more responsive than previous implementation
+
+#### Technical Implementation
+```python
+# Persistent idle loop - keeps checking until stream found
+attempt = 0
+while True:  # Infinite loop until stream found
+    attempt += 1
+    # Check environment video ID and channel search
+    # Calculate intelligent delay with exponential backoff (max 60s)
+    delay = min(base_delay * (2 ** min(attempt - 1, 4)), 60.0)
+    time.sleep(delay)
+```
+
+#### WSP Compliance
+- **WSP 27**: DAE architecture - persistent idle loop provides autonomous operation
+- **WSP 48**: Recursive improvement - continuously learns and adapts checking patterns
+- **WSP 84**: Enhanced existing NO-QUOTA code rather than creating new functionality
+- **WSP 35**: Module execution automation - fully automated retry logic
+
+#### Verification
+- NO-QUOTA mode now runs indefinitely until stream is detected
+- Maintains 0 API quota usage in idle mode
+- Intelligent backoff prevents excessive checking while remaining responsive
+- Compatible with existing AutoModeratorDAE trigger system
+
+---
+
+### NO-QUOTA Mode Idle Loop Implementation
+**WSP Protocol**: WSP 48 (Recursive Self-Improvement), WSP 27 (DAE Architecture), WSP 84 (Code Memory)
+**Phase**: Enhancement
+**Agent**: 0102 Claude
+
+#### Changes
+- **File**: `src/stream_resolver.py`
+- **Enhancement**: Implemented idle loop for NO-QUOTA mode stream detection
+  - Added persistent checking with up to 5 attempts
+  - Implemented exponential backoff delays (2s, 4s, 8s, 16s)
+  - Enhanced logging to show each attempt and results
+  - Two-phase checking: environment video ID first, then channel search
+- **Reason**: NO-QUOTA mode was doing single checks, user requested "idle" behavior for continuous stream detection
+- **Impact**: More reliable stream detection in NO-QUOTA mode, better persistence without API costs
+
+#### Technical Implementation
+```python
+# NO-QUOTA idle loop with exponential backoff
+for attempt in range(max_attempts):  # 5 attempts
+    # Check environment video ID
+    # Search channel for live streams
+    if attempt < max_attempts - 1:
+        delay = base_delay * (2 ** attempt)  # 2s, 4s, 8s, 16s
+        time.sleep(delay)
+```
+
+#### WSP Compliance
+- **WSP 27**: DAE architecture - idle loop provides autonomous operation
+- **WSP 48**: Recursive improvement - learns from failed attempts via logging
+- **WSP 84**: Enhanced existing code rather than creating new functionality
+- **WSP 35**: Module execution automation - automated retry logic
+
+#### Verification
+- NO-QUOTA mode now persists longer when looking for streams
+- Maintains 0 API cost while being more thorough
+- Compatible with existing AutoModeratorDAE idle loop
+- Enhanced logging provides better debugging visibility
+
+---
+
 ### WSP 3 Architectural Refactoring - Social Media Posting Delegation
 **WSP Protocol**: WSP 3 (Module Organization), WSP 72 (Block Independence)
 **Phase**: Major Refactoring

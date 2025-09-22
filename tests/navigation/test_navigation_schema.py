@@ -21,7 +21,7 @@ def test_module_graph_contains_wre_flow():
 
 
 def test_coverage_table_tracks_need_to_entries():
-    coverage_path = Path("NAVIGATION_COVERAGE.md")
+    coverage_path = Path("WSP_framework/reports/NAVIGATION/NAVIGATION_COVERAGE.md")
     assert coverage_path.exists(), "Coverage table missing"
     lines = [line for line in coverage_path.read_text(encoding="utf-8").splitlines() if line.startswith("|")]
     # Skip header divider lines
