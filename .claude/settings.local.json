@@ -53,7 +53,11 @@
       "Bash(PYTHONIOENCODING=utf-8 python test_compelling_post.py)",
       "Bash(PYTHONIOENCODING=utf-8 python main.py)",
       "Bash(PYTHONIOENCODING=utf-8 python test_x_content.py)",
-      "Bash(PYTHONIOENCODING=utf-8 python test_git_history_auto.py)"
+      "Bash(PYTHONIOENCODING=utf-8 python test_git_history_auto.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python test_x_foundups.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python test_x_foundups_mock.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python modules/platform_integration/x_twitter/tests/test_x_foundups_mock.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python modules/platform_integration/linkedin_agent/scripts/test_git_post_auto.py)"
     ],
     "deny": [],
     "ask": []
