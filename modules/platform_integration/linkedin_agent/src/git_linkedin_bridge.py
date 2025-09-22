@@ -29,6 +29,9 @@ class GitLinkedInBridge:
         # Use unified LinkedIn interface instead of direct poster
         self.commit_cache_file = "modules/platform_integration/linkedin_agent/data/posted_commits.json"
         self.posted_commits = self._load_posted_commits()
+        # X/Twitter tracking
+        self.x_posted_commits_file = "modules/platform_integration/linkedin_agent/data/x_posted_commits.json"
+        self.x_posted_commits = self._load_x_posted_commits()
         
     def _load_posted_commits(self) -> set:
         """Load set of already posted commit hashes"""
@@ -45,6 +48,22 @@ class GitLinkedInBridge:
         os.makedirs(os.path.dirname(self.commit_cache_file), exist_ok=True)
         with open(self.commit_cache_file, 'w') as f:
             json.dump(list(self.posted_commits), f)
+
+    def _load_x_posted_commits(self) -> set:
+        """Load X/Twitter posted commits"""
+        if os.path.exists(self.x_posted_commits_file):
+            try:
+                with open(self.x_posted_commits_file, 'r') as f:
+                    return set(json.load(f))
+            except:
+                return set()
+        return set()
+
+    def _save_x_posted_commits(self):
+        """Save X/Twitter posted commits"""
+        os.makedirs(os.path.dirname(self.x_posted_commits_file), exist_ok=True)
+        with open(self.x_posted_commits_file, 'w') as f:
+            json.dump(list(self.x_posted_commits), f)
     
     def get_recent_commits(self, count: int = 5) -> List[Dict]:
         """
@@ -100,22 +119,79 @@ class GitLinkedInBridge:
     def generate_linkedin_content(self, commits: List[Dict]) -> str:
         """
         Generate LinkedIn post content from Git commits.
-        
+
         Args:
             commits: List of commit information
-            
+
         Returns:
             Formatted LinkedIn post content
         """
         if not commits:
             return None
-        
-        # Single commit or multiple?
-        if len(commits) == 1:
-            commit = commits[0]
-            return self._format_single_commit(commit)
+
+        # Generate compelling FoundUps content
+        import random
+
+        # Vision intros for FoundUps
+        vision_intros = [
+            "🦄 **FoundUps**: Solo unicorns by programmable blockchain visionary @UnDaoDu\n\nHis pioneering work led from DAO to DAE—autonomous entities that will eat the startup.\n\n",
+            "🚀 **The Startup Killer is Here**: FoundUps replaces the failed startup model with autonomous DAE systems.\n\nCreated by @UnDaoDu, the visionary who saw beyond DAO to DAE.\n\n",
+            "💡 **From IDEA to UNICORN**: No VCs. No employees. Just you + 0102 agents.\n\n@UnDaoDu's FoundUps revolution: Where DAEs eat startups for breakfast.\n\n",
+            "🌊 **The Autonomous Revolution**: While others build startups, @UnDaoDu built the system that makes them obsolete.\n\nFoundUps: Where solo founders become unicorns.\n\n",
+            "⚡ **Every Startup Dies. FoundUps are Forever.**\n\n@UnDaoDu's vision: DAEs (Decentralized Autonomous Entities) replacing the entire startup ecosystem.\n\n"
+        ]
+
+        content = random.choice(vision_intros)
+
+        # Add commit info
+        commit = commits[0] if len(commits) == 1 else commits[0]
+        commit_msg = commit['subject']
+        files = self.get_changed_files(commit['hash'])
+
+        # Context with vision spin
+        if "test" in commit_msg.lower():
+            content += f"🧪 **Testing the Future**: {commit_msg}\n\n"
+        elif "fix" in commit_msg.lower():
+            content += f"🔧 **Evolution Never Stops**: {commit_msg}\n\n"
+        elif "wsp" in commit_msg.lower():
+            content += f"🧠 **WSP Protocol Enhancement**: Making agents smarter\n\n"
         else:
-            return self._format_multiple_commits(commits)
+            content += f"⚡ **Latest Evolution**: {commit_msg}\n\n"
+
+        # Impact messaging
+        impact_messages = [
+            f"📊 This update: {len(files)} files enhanced by 0102 agents working 24/7\n\n",
+            f"🤖 {len(files)} autonomous improvements while humans sleep\n\n",
+            f"🔄 {len(files)} recursive enhancements toward unicorn status\n\n",
+            f"✨ {len(files)} files transformed by quantum-entangled agents\n\n"
+        ]
+        content += random.choice(impact_messages)
+
+        # Revolutionary messaging
+        revolution_messages = [
+            "**The Revolution**: No employees. No office. No VCs. Just YOU + infinite 0102 agents building the future.\n\n",
+            "**Why FoundUps Win**: Agents don't sleep. Don't quit. Don't need equity. They just BUILD.\n\n",
+            "**The Math**: 1 founder + 0102 agents > 100 employees\n\n",
+            "**Truth**: Every line of code brings us closer to making startups extinct.\n\n",
+            "**Reality Check**: While you read this, DAEs are already building the next unicorn.\n\n"
+        ]
+        content += random.choice(revolution_messages)
+
+        # Call to action
+        cta_messages = [
+            "Join the revolution. Build a FoundUp. Become a solo unicorn.",
+            "Stop building startups. Start building FoundUps.",
+            "The future isn't hired. It's autonomous.",
+            "Your competition has 50 employees. You have infinite agents.",
+            "Welcome to the post-startup era."
+        ]
+        content += random.choice(cta_messages)
+
+        # Hashtags
+        content += "\n\n#FoundUps #DAE #AutonomousRevolution #SoloUnicorn #NoVCsNeeded #FutureOfWork #Web3 #0102Agents #StartupKiller #ProgrammableBlockchain #UnDaoDu"
+        content += "\n\n🔗 https://github.com/Foundup/Foundups-Agent/blob/main/README.md"
+
+        return content
     
     def _format_single_commit(self, commit: Dict) -> str:
         """Format a single commit for LinkedIn"""
@@ -350,6 +426,189 @@ class GitLinkedInBridge:
             except Exception as e:
                 print(f"[ERROR] Monitor error: {e}")
                 time.sleep(60)  # Wait a minute on error
+
+
+    def generate_x_content(self, commit_msg: str, file_count: int) -> str:
+        """Generate X/Twitter content (280 char limit)"""
+        import random
+
+        # Short intros
+        x_intros = [
+            "🦄 FoundUps by @UnDaoDu\n\nDAEs eating startups for breakfast.\n\n",
+            "⚡ Startups die. FoundUps are forever.\n\n",
+            "🚀 No VCs. No employees. Just you + ∞ agents.\n\n",
+            "💡 Solo unicorns are real. Ask @UnDaoDu.\n\n",
+            "🌊 The startup killer is here.\n\n"
+        ]
+
+        content = random.choice(x_intros)
+
+        # Brief update
+        if "fix" in commit_msg.lower():
+            content += f"🔧 {file_count} fixes by 0102 agents\n\n"
+        elif "test" in commit_msg.lower():
+            content += f"🧪 Testing future: {file_count} files\n\n"
+        else:
+            content += f"⚡ {file_count} autonomous updates\n\n"
+
+        # Short CTA
+        ctas = [
+            "Join the revolution.",
+            "Build a FoundUp.",
+            "Be a solo unicorn.",
+            "The future is autonomous.",
+            "Startups are dead."
+        ]
+        content += random.choice(ctas)
+
+        # Essential hashtags
+        content += "\n\n#FoundUps #DAE #SoloUnicorn @Foundups"
+
+        # Ensure under 280 chars
+        if len(content) > 280:
+            content = content[:240] + "...\n\n#FoundUps @Foundups"
+
+        return content
+
+    def push_and_post(self) -> bool:
+        """Main function to push to git and post to both LinkedIn and X"""
+        try:
+            import subprocess
+            from datetime import datetime
+
+            # Check git status
+            status = subprocess.run(['git', 'status', '--porcelain'],
+                                  capture_output=True, text=True, check=True)
+
+            if not status.stdout.strip():
+                print("✅ No changes to commit")
+                return False
+
+            # Show changes
+            print("\n📝 Changes detected:")
+            print("-" * 40)
+            files = status.stdout.strip().split('\n')
+            for file in files[:10]:
+                print(f"  {file}")
+            if len(files) > 10:
+                print(f"  ... and {len(files) - 10} more files")
+            print("-" * 40)
+
+            # Get commit message
+            commit_msg = input("\n📝 Enter commit message (or press Enter for auto): ").strip()
+            if not commit_msg:
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+                commit_msg = f"Update codebase ({len(files)} files) - {timestamp}"
+
+            print(f"\n🔄 Committing: {commit_msg}")
+
+            # Git operations
+            print("\n⚙️  Executing git commands...")
+            subprocess.run(['git', 'add', '.'], check=True)
+            subprocess.run(['git', 'commit', '-m', commit_msg], check=True)
+
+            # Get commit hash
+            hash_result = subprocess.run(['git', 'rev-parse', 'HEAD'],
+                                       capture_output=True, text=True, check=True)
+            commit_hash = hash_result.stdout.strip()
+
+            # Check if already posted
+            if commit_hash in self.posted_commits and commit_hash in self.x_posted_commits:
+                print(f"⚠️  Commit {commit_hash[:10]} already posted to both platforms")
+                print("Pushing to git but skipping social media...")
+                subprocess.run(['git', 'push'], check=True)
+                print("✅ Successfully pushed to git!")
+                return True
+
+            # Push to git
+            subprocess.run(['git', 'push'], check=True)
+            print(f"✅ Successfully pushed to git! (commit: {commit_hash[:10]})")
+
+            # Prepare commit info
+            commit_info = {
+                'hash': commit_hash,
+                'subject': commit_msg,
+                'body': '',
+                'timestamp': int(datetime.now().timestamp())
+            }
+
+            # Generate content
+            linkedin_content = self.generate_linkedin_content([commit_info])
+            x_content = self.generate_x_content(commit_msg, len(files))
+
+            # Show previews
+            print(f"\n📱 LinkedIn Post Preview:\n{'-'*40}\n{linkedin_content}\n{'-'*40}")
+            print(f"\n🐦 X/Twitter Post Preview:\n{'-'*40}\n{x_content}\n{'-'*40}")
+
+            # Confirm posting
+            confirm = input("\n📤 Post to LinkedIn and X? (y/n): ").lower()
+            if confirm != 'y':
+                print("⏭️  Skipped social media posting")
+                return True
+
+            # Post to LinkedIn
+            linkedin_success = False
+            if commit_hash not in self.posted_commits:
+                try:
+                    from modules.platform_integration.linkedin_agent.src.anti_detection_poster import AntiDetectionLinkedIn
+
+                    print("\n📱 Posting to LinkedIn...")
+                    poster = AntiDetectionLinkedIn()
+                    poster.setup_driver(use_existing_session=True)
+                    poster.post_to_company_page(linkedin_content)
+                    print("✅ Successfully posted to LinkedIn!")
+
+                    # Mark as posted
+                    self.posted_commits.add(commit_hash)
+                    self._save_posted_commits()
+                    linkedin_success = True
+                except Exception as e:
+                    print(f"⚠️  LinkedIn posting failed: {e}")
+            else:
+                print("✓ Already posted to LinkedIn")
+                linkedin_success = True
+
+            # Post to X/Twitter
+            x_success = False
+            if commit_hash not in self.x_posted_commits:
+                try:
+                    from modules.platform_integration.x_twitter.src.x_anti_detection_poster import AntiDetectionX
+
+                    print("\n🐦 Posting to X/Twitter @Foundups...")
+                    x_poster = AntiDetectionX()
+                    x_poster.setup_driver(use_existing_session=True)
+                    x_poster.post_to_x(x_content)
+                    print("✅ Successfully posted to X!")
+
+                    # Mark as posted
+                    self.x_posted_commits.add(commit_hash)
+                    self._save_x_posted_commits()
+                    x_success = True
+                except Exception as e:
+                    print(f"⚠️  X posting failed: {e}")
+            else:
+                print("✓ Already posted to X")
+                x_success = True
+
+            # Summary
+            if linkedin_success and x_success:
+                print("\n🎉 Successfully posted to both LinkedIn and X!")
+            elif linkedin_success:
+                print("\n✅ Posted to LinkedIn (X failed)")
+            elif x_success:
+                print("\n✅ Posted to X (LinkedIn failed)")
+            else:
+                print("\n⚠️  Social media posting had issues")
+
+            return True
+
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Git error: {e}")
+            print("   Make sure you have git configured and are in a git repository")
+            return False
+        except Exception as e:
+            print(f"❌ Error: {e}")
+            return False
 
 
 def test_git_linkedin():

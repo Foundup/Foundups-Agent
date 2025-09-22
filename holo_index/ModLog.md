@@ -9,3 +9,4 @@
 - Added cube metadata tagging for PQN assets to improve HoloIndex clustering.
 - Display advisor FMAS hint and cube labels in CLI results.\n- Introduced reward telemetry hooks (rating, acknowledgements) and session point summary.\n- Introduced 0102 onboarding banner with quickstart tips in holo_index.py.
 - Extended advisor telemetry payload with cube tags for future ratings.
+

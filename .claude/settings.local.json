@@ -49,7 +49,11 @@
       "Bash(tasklist:*)",
       "Bash(wmic:*)",
       "Bash(PYTHONIOENCODING=utf-8 python test_git_post.py)",
-      "Bash(PYTHONIOENCODING=utf-8 python test_git_post_auto.py)"
+      "Bash(PYTHONIOENCODING=utf-8 python test_git_post_auto.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python test_compelling_post.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python main.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python test_x_content.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python test_git_history_auto.py)"
     ],
     "deny": [],
     "ask": []
