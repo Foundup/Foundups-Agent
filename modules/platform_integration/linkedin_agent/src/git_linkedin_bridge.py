@@ -561,8 +561,17 @@ class GitLinkedInBridge:
             print(f"\n📱 LinkedIn Post Preview:\n{'-'*40}\n{linkedin_content}\n{'-'*40}")
             print(f"\n🐦 X/Twitter Post Preview:\n{'-'*40}\n{x_content}\n{'-'*40}")
 
-            # Confirm posting
-            confirm = input("\n📤 Post to LinkedIn and X? (y/n): ").lower()
+            # Confirm posting (handle auto mode)
+            if hasattr(self, 'auto_mode') and self.auto_mode:
+                confirm = 'y'
+                print("\n📤 Auto-posting to LinkedIn and X...")
+            else:
+                try:
+                    confirm = input("\n📤 Post to LinkedIn and X? (y/n): ").lower()
+                except EOFError:
+                    confirm = 'y'
+                    print("\n📤 Non-interactive mode - auto-posting...")
+
             if confirm != 'y':
                 print("⏭️  Skipped social media posting")
                 return True
