@@ -150,6 +150,10 @@ def _record_thought_to_memory(results, query, advisor, add_reward_event):
 # Function body removed during refactoring - see IntelligentSubroutineEngine
 
 
+def _perform_health_checks_and_rewards(results, last_query, add_reward_event):
+    """Stub function for health checks and rewards - TODO: implement properly"""
+    return None
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="HoloIndex - Semantic Navigation with WSP guardrails")
     parser.add_argument('--index', action='store_true', help='Index code + WSP (backward compatible shorthand)')
@@ -164,12 +168,18 @@ def main() -> None:
 
     parser.add_argument('--llm-advisor', action='store_true', help='Force enable Qwen advisor guidance')
     parser.add_argument('--init-dae', type=str, nargs='?', const='auto', help='Initialize DAE context (auto-detect or specify DAE focus)')
+    parser.add_argument('--wsp88', action='store_true', help='Run WSP 88 orphan analysis')
     parser.add_argument('--audit-docs', action='store_true', help='Audit documentation completeness for HoloIndex files')
     parser.add_argument('--check-module', type=str, help='Check if a module exists (WSP compliance - use before code generation)')
     parser.add_argument('--verbose', action='store_true', help='Show detailed output including low-priority information')
     parser.add_argument('--no-advisor', action='store_true', help='Disable advisor (opt-out for 0102 agents)')
     parser.add_argument('--advisor-rating', choices=['useful', 'needs_more'], help='Provide feedback on advisor output')
     parser.add_argument('--ack-reminders', action='store_true', help='Confirm advisor reminders were acted on')
+
+    # Autonomous HoloDAE commands
+    parser.add_argument('--start-holodae', action='store_true', help='Start autonomous HoloDAE monitoring (like YouTube DAE)')
+    parser.add_argument('--stop-holodae', action='store_true', help='Stop autonomous HoloDAE monitoring')
+    parser.add_argument('--holodae-status', action='store_true', help='Show HoloDAE status and activity')
 
     args = parser.parse_args()
 
@@ -343,6 +353,43 @@ def main() -> None:
             traceback.print_exc()
 
         return  # Exit after DAE initialization
+
+    # Handle WSP 88 orphan analysis requests
+    if args.wsp88:
+        print("🔍 WSP 88 ORPHAN ANALYSIS - Intelligent Connection System")
+        print("=" * 65)
+        print("Analyzing HoloIndex for orphaned files and connection opportunities...")
+        print("This follows first principles: Connect rather than delete, enhance rather than remove")
+        print()
+
+        try:
+            from holo_index.monitoring.wsp88_orphan_analyzer import WSP88OrphanAnalyzer
+            analyzer = WSP88OrphanAnalyzer()
+
+            # Run comprehensive analysis
+            results = analyzer.analyze_holoindex_orphans()
+            report = analyzer.generate_holodae_report()
+
+            print(report)
+
+            # Show top connection suggestions
+            suggestions = analyzer.get_connection_suggestions()
+            if suggestions:
+                print("\n[HOLODAE-RECOMMENDATIONS] Top Connection Opportunities:")
+                print("-" * 60)
+                for i, suggestion in enumerate(suggestions[:10], 1):
+                    print(f"{i:2d}. {suggestion}")
+
+            print("\n[SUCCESS] WSP 88 Analysis Complete")
+            print("Focus on CONNECTION opportunities - HoloDAE recommends keeping all utilities")
+            print("=" * 65)
+
+        except Exception as e:
+            print(f"❌ WSP 88 analysis failed: {e}")
+            import traceback
+            traceback.print_exc()
+
+        return  # Exit after WSP 88 analysis
 
     # Handle documentation audit requests
     if args.audit_docs:
@@ -518,6 +565,25 @@ def main() -> None:
 
         results = holo.search(args.search, limit=args.limit)
 
+        # HoloDAE: Automatic Context-Driven Analysis
+        print(f"\n[HOLODAE] Processing HoloIndex request: '{args.search}'")
+        try:
+            from holo_index.qwen_advisor.autonomous_holodae import autonomous_holodae
+
+            # Use the global HoloDAE instance to handle the request
+            holodae_report = autonomous_holodae.handle_holoindex_request(args.search, results)
+
+            # Print the detailed HoloDAE analysis
+            for line in holodae_report.split('\n'):
+                if line.strip():
+                    print(line)
+
+
+        except Exception as e:
+            print(f"[HOLODAE-ERROR] Context analysis failed: {e}")
+
+        print()  # Add spacing before search results
+
         # Set query context with search results for module detection
         throttler.set_query_context(args.search, results)
 
@@ -624,8 +690,8 @@ def main() -> None:
                         if 'WSP 87' in violation or 'WSP 49' in violation:
                             health_notices.append(violation)
 
-                if health_notices:
-                    results['health_notices'] = health_notices
+                    if health_notices:
+                        results['health_notices'] = health_notices
 
             except Exception as exc:  # pragma: no cover - safety guard
                 results['advisor_error'] = f'Advisor failed: {exc}'
@@ -691,10 +757,44 @@ def main() -> None:
             print(f'  {sign}{points} {note}')
         print(f'  Total: {session_points} pts (variant {reward_variant})')
 
+    # HoloDAE Commands
+    if args.start_holodae:
+        print("[HOLODAE] Starting Autonomous HoloDAE monitoring...")
+        try:
+            from holo_index.qwen_advisor.autonomous_holodae import start_holodae
+            start_holodae()
+            print("[HOLODAE] Monitoring started successfully")
+        except ImportError as e:
+            print(f"[HOLODAE-ERROR] Failed to start: {e}")
+
+    elif args.stop_holodae:
+        print("[HOLODAE] Stopping Autonomous HoloDAE monitoring...")
+        try:
+            from holo_index.qwen_advisor.autonomous_holodae import stop_holodae
+            stop_holodae()
+            print("[HOLODAE] Monitoring stopped")
+        except ImportError as e:
+            print(f"[HOLODAE-ERROR] Failed to stop: {e}")
+
+    elif args.holodae_status:
+        print("[HOLODAE] Status Report:")
+        try:
+            from holo_index.qwen_advisor.autonomous_holodae import get_holodae_status
+            status = get_holodae_status()
+            print(f"  Active: {'Yes' if status['active'] else 'No'}")
+            print(f"  Uptime: {status['uptime_minutes']} minutes")
+            print(f"  Files Watched: {status['files_watched']}")
+            print(f"  Current Module: {status.get('current_module', 'None')}")
+            print(f"  Task Pattern: {status['task_pattern']}")
+            print(f"  Session Actions: {status['session_actions']}")
+            print(f"  Last Activity: {status['last_activity']}")
+        except ImportError as e:
+            print(f"[HOLODAE-ERROR] Failed to get status: {e}")
+
     if args.benchmark:
         holo.benchmark_ssd()
 
-    if not any([index_code, index_wsp, args.search, args.benchmark]):
+    if not any([index_code, index_wsp, args.search, args.benchmark, args.start_holodae, args.stop_holodae, args.holodae_status]):
         print("\n[USAGE] Usage:")
         print("  python holo_index.py --index-all             # Index NAVIGATION + WSP")
         print("  python holo_index.py --index-code            # Index NAVIGATION only")
@@ -703,6 +803,8 @@ def main() -> None:
         print("  python holo_index.py --search 'query'        # Search code + WSP guidance")
         print("  python holo_index.py --search 'query' --limit 3")
         print("  python holo_index.py --search 'query' --llm-advisor  # Add Qwen advisor guidance")
+        print("  python holo_index.py --start-holodae         # Start autonomous HoloDAE monitoring")
+        print("  python holo_index.py --holodae-status        # Check HoloDAE status")
         print("  python holo_index.py --benchmark             # Test SSD performance")
 
 if __name__ == "__main__":

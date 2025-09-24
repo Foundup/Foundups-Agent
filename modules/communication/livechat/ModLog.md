@@ -12,6 +12,116 @@ This log tracks changes specific to the **livechat** module in the **communicati
 
 ## MODLOG ENTRIES
 
+### Command Discovery System & Complete Documentation
+**Date**: 2025-09-24
+**WSP Protocol**: WSP 48 (Recursive Self-Improvement), WSP 87 (HoloIndex), WSP 22 (Documentation)
+**Phase**: Major Discovery & Documentation
+**Agent**: 0102 Claude
+
+#### Problem Solved
+- **Issue**: Many commands undocumented (found /pnq, factcheck, etc.)
+- **Impact**: "Unknown command" errors, features hidden from users
+- **Discovery**: 37 total command patterns vs 12 originally documented
+
+#### Solution Implemented
+- **Created**: `docs/COMMAND_REFERENCE.md` - Complete command documentation
+- **Built**: `holo_index/adaptive_learning/discovery_feeder.py` - Self-learning system
+- **Added**: Unicode-safe JSON handling for emoji commands
+- **Result**: All commands now discoverable and documented
+
+#### Key Discoveries
+- **Hidden Commands**: `/pnq` (typo for `/pqn`), `factcheck @user`, `✊✋🖐` triggers
+- **Deprecated Commands**: `/level`, `/answer`, `/top` with helpful redirects
+- **Special Patterns**: Non-slash commands, reverse order patterns
+- **Typo Tolerance**: System handles common typos automatically
+
+#### Technical Changes
+- Added discovery feeder to HoloIndex for recursive learning
+- Created comprehensive command registry (37 patterns)
+- Documented complete command flow and throttling
+- Fixed deprecated command handlers with helpful messages
+
+#### WSP Compliance
+- **WSP 48**: Recursive self-improvement through discovery system
+- **WSP 87**: Enhanced HoloIndex with discovered patterns
+- **WSP 22**: Complete documentation in `docs/COMMAND_REFERENCE.md`
+
+#### API Cost Analysis
+- Local commands (MAGADOOM): 0 tokens, light throttling
+- PQN Research: 100+ tokens, heavy throttling
+- Consciousness: Highest cost, maximum throttling
+- All commands go through intelligent_throttle_manager.py
+
+### Fixed Multi-Stream Detection and Social Media Triggering
+**Date**: 2025-09-24
+**WSP Protocol**: WSP 3 (Module Organization), WSP 84 (Code Memory), WSP 50 (Pre-Action)
+**Phase**: Bug Fix & Enhancement
+**Agent**: 0102 Claude
+
+#### Problem Solved
+- **Issue**: `find_livestream()` returned first stream found, ignoring others
+- **Impact**: Only 1 of 3 concurrent streams would get social media posts
+- **Root Cause**: Early return on first stream detection
+
+#### Solution Implemented
+- **File**: `modules/communication/livechat/src/auto_moderator_dae.py`
+- **Method**: `find_livestream()` (lines 112-167)
+- **Fix**: Now detects ALL streams and triggers social media for each
+- **Behavior**:
+  - Checks all 3 channels (UnDaoDu, FoundUps, Move2Japan)
+  - Triggers social media posting for EVERY stream found
+  - Returns first stream for monitoring (backward compatibility)
+  - Logs all detected streams clearly
+
+#### Technical Changes
+- Added `found_streams` list to collect all active streams
+- Added social media trigger call for each detected stream
+- Added comprehensive logging of multi-stream detection
+- Maintains backward compatibility by monitoring first stream
+
+#### WSP Compliance
+- **WSP 3**: Properly delegates to social_media_orchestrator
+- **WSP 84**: Enhanced existing code rather than creating new
+- **WSP 50**: Used HoloIndex to understand the architecture
+
+### Enhanced Multi-Stream Throttle Management
+**Date**: 2025-09-24
+**WSP Protocol**: WSP 50 (Pre-Action), WSP 84 (Code Memory), WSP 48 (Recursive Learning)
+**Phase**: Feature Enhancement
+**Agent**: 0102 Claude
+
+#### Multi-Stream Support Added
+- **Added**: Per-stream message tracking with channel IDs
+- **Added**: Stream priority system (0-10 scale)
+- **Added**: Multi-stream delay calculation with scaling factors
+- **Added**: Automatic inactive stream cleanup (5min timeout)
+- **Enhanced**: Concurrent stream handling for 2-3+ streams
+
+#### Technical Implementation
+- **File**: `modules/communication/livechat/src/intelligent_throttle_manager.py`
+- **New Data Structures**:
+  - `stream_message_timestamps`: Per-stream message tracking
+  - `stream_priorities`: Channel priority mapping
+  - `active_streams`: Set of currently active channels
+- **New Methods**:
+  - `set_stream_priority()`: Assign priority to specific streams
+  - `get_stream_activity_level()`: Calculate per-stream message rate
+  - `calculate_multi_stream_delay()`: Multi-stream aware throttling
+  - `cleanup_inactive_streams()`: Remove stale stream data
+
+#### Throttling Strategy
+- 1 stream: Normal delay
+- 2 streams: 1.5x delay multiplier
+- 3 streams: 2.0x delay multiplier
+- 4+ streams: 3.0x delay with warning
+- Priority adjustment: Up to 50% reduction for high-priority streams
+
+#### WSP Compliance
+- **WSP 50**: Used HoloIndex to find throttle manager
+- **WSP 84**: Enhanced existing manager rather than creating new
+- **WSP 48**: Maintains recursive learning capabilities
+- **WSP 22**: ModLog updated with changes
+
 ### Fixed Fact-Check Pattern Recognition for @username fc Format
 **WSP Protocol**: WSP 87 (Navigation), WSP 50 (Pre-Action Verification), WSP 84 (Code Memory)
 **Phase**: Bug Fix

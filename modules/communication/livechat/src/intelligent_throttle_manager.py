@@ -202,19 +202,20 @@ class IntelligentThrottleManager:
     """
     Enhanced throttle manager with recursive learning and intelligent quota management.
     Incorporates WSP 48 recursive improvements and agentic behaviors.
+    Now supports multiple concurrent streams with per-stream tracking.
     """
-    
-    def __init__(self, 
+
+    def __init__(self,
                  min_delay: float = 1.0,
                  max_delay: float = 60.0,
                  throttle_window: int = 60,
                  memory_path: Optional[Path] = None):
         """
         Initialize intelligent throttle manager.
-        
+
         Args:
             min_delay: Minimum seconds between responses
-            max_delay: Maximum seconds between responses  
+            max_delay: Maximum seconds between responses
             throttle_window: Window in seconds for tracking message rate
             memory_path: Path for storing learned patterns
         """
@@ -222,13 +223,20 @@ class IntelligentThrottleManager:
         self.min_response_delay = min_delay
         self.max_response_delay = max_delay
         self.throttle_window = throttle_window
-        
+
         # Memory path for recursive learning
         if memory_path is None:
             memory_path = Path("modules/communication/livechat/memory")
         self.memory_path = memory_path
-        
-        # Tracking
+
+        # Multi-stream tracking (channel_id -> timestamps)
+        self.stream_message_timestamps = defaultdict(lambda: deque(maxlen=1000))
+        self.stream_api_timestamps = defaultdict(lambda: deque(maxlen=1000))
+        self.stream_last_response = {}  # channel_id -> last response time
+        self.stream_priorities = {}  # channel_id -> priority (0-10)
+        self.active_streams = set()  # Currently active stream channel IDs
+
+        # Global tracking (backward compatibility)
         self.message_timestamps = deque(maxlen=1000)
         self.api_call_timestamps = deque(maxlen=1000)
         self.last_response_time = None
@@ -284,16 +292,31 @@ class IntelligentThrottleManager:
 
         logger.info("[0102] Intelligent Throttle Manager initialized with consciousness monitoring")
     
-    def track_message(self, user_id: Optional[str] = None, username: Optional[str] = None):
-        """Track an incoming message for rate calculation."""
-        self.message_timestamps.append(time.time())
-        
+    def track_message(self, user_id: Optional[str] = None, username: Optional[str] = None,
+                     channel_id: Optional[str] = None):
+        """Track an incoming message for rate calculation.
+
+        Args:
+            user_id: User who sent the message
+            username: Username of the sender
+            channel_id: Channel/stream ID for multi-stream tracking
+        """
+        current_time = time.time()
+
+        # Global tracking (for backward compatibility)
+        self.message_timestamps.append(current_time)
+
+        # Per-stream tracking if channel provided
+        if channel_id:
+            self.stream_message_timestamps[channel_id].append(current_time)
+            self.active_streams.add(channel_id)
+
         # Check for troll behavior if user info provided
         if user_id and username:
             is_troll, response = self.troll_detector.track_trigger(user_id, username)
             if is_troll:
                 return {'is_troll': True, 'response': response}
-        
+
         return {'is_troll': False}
 
     def check_moderator_command_allowed(self, user_id: str, username: str, role: str, command_text: str) -> Tuple[bool, Optional[str]]:
@@ -342,6 +365,123 @@ class IntelligentThrottleManager:
                 return False, random.choice(troll_responses)
 
         return True, None
+
+    def set_stream_priority(self, channel_id: str, priority: int) -> None:
+        """Set priority for a specific stream (0-10, higher = more important).
+
+        Args:
+            channel_id: Channel/stream ID
+            priority: Priority level (0-10)
+        """
+        self.stream_priorities[channel_id] = max(0, min(10, priority))
+        logger.info(f"[PRIORITY] Stream {channel_id} set to priority {priority}")
+
+    def get_stream_activity_level(self, channel_id: str) -> float:
+        """Calculate messages per minute for a specific stream.
+
+        Args:
+            channel_id: Channel/stream ID
+
+        Returns:
+            Messages per minute for the stream
+        """
+        if channel_id not in self.stream_message_timestamps:
+            return 0.0
+
+        timestamps = self.stream_message_timestamps[channel_id]
+        if not timestamps:
+            return 0.0
+
+        current_time = time.time()
+        recent_messages = [t for t in timestamps if current_time - t <= self.throttle_window]
+
+        if not recent_messages:
+            return 0.0
+
+        time_range = max(self.throttle_window, current_time - min(recent_messages))
+        return (len(recent_messages) / time_range) * 60
+
+    def calculate_multi_stream_delay(self, response_type: str = 'general',
+                                   channel_id: Optional[str] = None) -> float:
+        """Calculate delay considering multiple active streams.
+
+        Args:
+            response_type: Type of response being sent
+            channel_id: Channel/stream ID for specific stream
+
+        Returns:
+            Calculated delay in seconds considering all active streams
+        """
+        # Get base delay from single-stream calculation
+        base_delay = self.calculate_adaptive_delay(response_type)
+
+        # Count active streams
+        active_count = len(self.active_streams)
+
+        if active_count <= 1:
+            # Single stream, use normal delay
+            return base_delay
+
+        # Multi-stream adjustment
+        if active_count == 2:
+            # Two streams: increase delay by 50%
+            multi_factor = 1.5
+        elif active_count == 3:
+            # Three streams: double the delay
+            multi_factor = 2.0
+        else:
+            # More than 3: triple the delay and warn
+            multi_factor = 3.0
+            logger.warning(f"[THROTTLE] {active_count} concurrent streams - heavy throttling applied")
+
+        # Priority adjustment if channel specified
+        if channel_id and channel_id in self.stream_priorities:
+            priority = self.stream_priorities[channel_id]
+            # High priority streams get less delay
+            priority_factor = 1.0 - (priority / 10 * 0.5)  # Up to 50% reduction for priority 10
+            multi_factor *= priority_factor
+
+        adjusted_delay = base_delay * multi_factor
+
+        # Log multi-stream throttling
+        if active_count > 1:
+            logger.info(f"[MULTI-STREAM] {active_count} active streams, "
+                       f"delay adjusted from {base_delay:.1f}s to {adjusted_delay:.1f}s")
+
+        return min(adjusted_delay, self.max_response_delay)
+
+    def cleanup_inactive_streams(self, timeout_seconds: int = 300) -> None:
+        """Remove streams with no recent activity.
+
+        Args:
+            timeout_seconds: Consider stream inactive after this many seconds
+        """
+        current_time = time.time()
+        inactive_streams = []
+
+        for channel_id in list(self.active_streams):
+            if channel_id in self.stream_message_timestamps:
+                timestamps = self.stream_message_timestamps[channel_id]
+                if timestamps:
+                    last_message = max(timestamps)
+                    if current_time - last_message > timeout_seconds:
+                        inactive_streams.append(channel_id)
+                else:
+                    inactive_streams.append(channel_id)
+            else:
+                inactive_streams.append(channel_id)
+
+        for channel_id in inactive_streams:
+            self.active_streams.discard(channel_id)
+            if channel_id in self.stream_message_timestamps:
+                del self.stream_message_timestamps[channel_id]
+            if channel_id in self.stream_api_timestamps:
+                del self.stream_api_timestamps[channel_id]
+            if channel_id in self.stream_last_response:
+                del self.stream_last_response[channel_id]
+            if channel_id in self.stream_priorities:
+                del self.stream_priorities[channel_id]
+            logger.info(f"[CLEANUP] Removed inactive stream {channel_id}")
 
     def record_moderator_command(self, user_id: str, username: str, role: str, command_text: str) -> None:
         """
@@ -440,21 +580,43 @@ class IntelligentThrottleManager:
     
     def _switch_credential_set(self) -> int:
         """Intelligently switch to a different credential set"""
+        # Get available credential sets dynamically (sets 1 and 10)
+        from modules.platform_integration.youtube_auth.src.quota_monitor import get_available_credential_sets
+        available_sets = get_available_credential_sets()
+
         # Find the set with most remaining quota
-        best_set = 0
+        best_set = None
         best_quota = 0
-        
-        for set_id, state in self.quota_states.items():
-            if state.remaining_quota > best_quota:
+
+        for set_id in available_sets:
+            if set_id not in self.quota_states:
+                # New set not yet tracked - likely has quota
+                best_set = set_id
+                best_quota = 10000  # Assume full quota
+                break
+
+            state = self.quota_states[set_id]
+            if not state.exhausted and state.remaining_quota > best_quota:
                 best_quota = state.remaining_quota
                 best_set = set_id
-        
-        # Try next set if no good options
-        if best_quota < 100:
-            best_set = (self.current_credential_set + 1) % 3  # Assumes 3 sets
-        
+
+        # If no good options, try the next set in rotation
+        if best_set is None or best_quota < 100:
+            current_idx = available_sets.index(self.current_credential_set) if self.current_credential_set in available_sets else 0
+            next_idx = (current_idx + 1) % len(available_sets)
+            best_set = available_sets[next_idx] if available_sets else 0
+
         self.current_credential_set = best_set
         logger.info(f"[SWITCH] Switched to credential set {best_set} (quota: {best_quota})")
+
+        # If all sets exhausted, log critical warning
+        all_exhausted = all(
+            self.quota_states.get(set_id, QuotaState(set_id)).exhausted
+            for set_id in available_sets
+        )
+        if all_exhausted:
+            logger.critical("🚨 ALL CREDENTIAL SETS EXHAUSTED - Will fall back to no-auth mode")
+
         return best_set
     
     def _calculate_activity_rate(self) -> float:

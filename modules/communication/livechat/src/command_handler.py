@@ -246,7 +246,20 @@ class CommandHandler:
                 elif role == 'OWNER':
                     help_msg += " | OWNER: /toggle /session"
                 return help_msg
-            
+
+            # Handle deprecated/removed commands with helpful messages
+            elif text_lower.startswith('/level'):
+                return f"@{username} ℹ️ /level merged into /score - use /score to see your level!"
+
+            elif text_lower.startswith('/answer'):
+                return f"@{username} ℹ️ Use /quiz [your answer] to answer quiz questions!"
+
+            elif text_lower.startswith('/top'):
+                return f"@{username} ℹ️ Use /leaderboard to see top players!"
+
+            elif text_lower.startswith('/fscale') or text_lower.startswith('/rate'):
+                return f"@{username} ℹ️ Command coming soon! Use /facts for fascism info."
+
             # Educational facts about fascism are PART of MAGADOOM - fighting MAGA requires education!
             
         except Exception as e:

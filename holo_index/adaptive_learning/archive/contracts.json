@@ -1,0 +1,27 @@
+{
+  "active_contracts": [
+    {
+      "contract_id": "contract_20250924_233322_146",
+      "task_description": "Fix WSP 49 violations in ai_intelligence module",
+      "assigned_agent": "module_creation_agent",
+      "estimated_minutes": 15,
+      "priority": "high",
+      "dependencies": [],
+      "deliverables": [],
+      "created_at": "2025-09-24T23:33:22.870866",
+      "deadline": "2025-09-24T23:48:22.870866"
+    },
+    {
+      "contract_id": "contract_20250924_233322_343",
+      "task_description": "Add unit tests for new AI intelligence features",
+      "assigned_agent": "testing_agent",
+      "estimated_minutes": 20,
+      "priority": "medium",
+      "dependencies": [],
+      "deliverables": [],
+      "created_at": "2025-09-24T23:33:22.871867",
+      "deadline": null
+    }
+  ],
+  "completed_contracts": []
+}

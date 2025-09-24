@@ -12,6 +12,23 @@
 
 The `LiveChat` module is the core of the **YouTube DAE Cube**, providing real-time YouTube Live Chat integration with MAGADOOM gamification, consciousness responses (0102), and advanced moderation. This module exemplifies **WSP 3 functional distribution principles** with 28 specialized sub-modules after cleanup (reduced from 31).
 
+### 📋 Command System Overview
+The module supports **37 distinct command patterns** including:
+- **17 active slash commands** (MAGADOOM gamification)
+- **8 PQN research commands** (including typo variants like `/pnq`)
+- **4 factcheck patterns** (including `fc @user`)
+- **5 deprecated commands** with helpful redirects
+- **3 consciousness triggers** (`✊✋🖐` patterns)
+
+**See `docs/COMMAND_REFERENCE.md` for complete documentation.**
+
+### 💰 API Token Management
+All commands go through `intelligent_throttle_manager.py`:
+- **Local commands** (MAGADOOM): No API cost, light throttling
+- **PQN Research**: 100+ Grok tokens, heavy throttling
+- **Consciousness**: Highest cost, maximum throttling
+- **YouTube API**: 5 units per poll, 200 units per send (10K daily quota)
+
 ## 🎲 YouTube DAE Cube Architecture (WSP 80)
 
 The LiveChat module forms the core of the **YouTube DAE Cube**, integrating with modules across multiple domains:
@@ -90,6 +107,7 @@ communication/livechat/
 │   ├── integration/               ← Integration tests
 │   └── test_*.py                  ← Unit tests
 ├── docs/                          ← Documentation
+│   ├── COMMAND_REFERENCE.md      ← Complete command documentation (37 patterns)
 │   ├── README_0102_DAE.md        ← CRITICAL: System architecture
 │   ├── BOT_FLOW_COT.md          ← Chain of thought diagrams
 │   └── TRIGGER_INSTRUCTIONS.md   ← Trigger usage

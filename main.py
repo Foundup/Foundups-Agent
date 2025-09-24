@@ -253,15 +253,41 @@ def search_with_holoindex(query: str):
         return None
 
 
+def run_holodae():
+    """Run HoloDAE (Code Intelligence & Monitoring)."""
+    print("[HOLODAE] Starting HoloDAE - Code Intelligence & Monitoring System...")
+    try:
+        from holo_index.qwen_advisor.autonomous_holodae import AutonomousHoloDAE
+
+        holodae = AutonomousHoloDAE()
+        holodae.start_autonomous_monitoring()
+
+        print("[HOLODAE] Autonomous monitoring active. Press Ctrl+C to stop.")
+
+        # Keep the process running
+        try:
+            while holodae.active:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("[HOLODAE] Stopping autonomous monitoring...")
+            holodae.stop_autonomous_monitoring()
+            print("[HOLODAE] HoloDAE stopped successfully")
+
+    except Exception as e:
+        print(f"[HOLODAE-ERROR] Failed to start: {e}")
+        import traceback
+        traceback.print_exc()
+
+
 def run_amo_dae():
     """Run AMO DAE (Autonomous Moderation Operations)."""
-    print("🤖 Starting AMO DAE (Autonomous Moderation Operations)...")
+    print("[AMO] Starting AMO DAE (Autonomous Moderation Operations)...")
     try:
         from modules.communication.livechat.src.auto_moderator_dae import AutoModeratorDAE
         dae = AutoModeratorDAE()
         asyncio.run(dae.run())
     except Exception as e:
-        print(f"❌ AMO DAE failed: {e}")
+        print(f"[AMO-ERROR] AMO DAE failed: {e}")
         import traceback
         traceback.print_exc()
 
@@ -509,6 +535,7 @@ def main():
     """Main entry point with command line arguments."""
     parser = argparse.ArgumentParser(description='0102 FoundUps Agent')
     parser.add_argument('--youtube', action='store_true', help='Monitor YouTube only')
+    parser.add_argument('--holodae', '--holo', action='store_true', help='Run HoloDAE (Code Intelligence & Monitoring)')
     parser.add_argument('--amo', action='store_true', help='Run AMO DAE (Autonomous Moderation Operations)')
     parser.add_argument('--smd', action='store_true', help='Run Social Media DAE (012 Digital Twin)')
     parser.add_argument('--pqn', action='store_true', help='Run PQN Orchestration (Research & Alignment)')
@@ -523,6 +550,8 @@ def main():
         return
     elif args.youtube:
         asyncio.run(monitor_youtube(disable_lock=args.no_lock))
+    elif args.holodae:
+        run_holodae()
     elif args.amo:
         run_amo_dae()
     elif args.smd:
@@ -596,17 +625,18 @@ def main():
                 print("   Proceeding with menu...\n")
 
             # Show the main menu
-            print("0. Push to Git and Post to LinkedIn + X (FoundUps)")
-            print("1. YouTube Live DAE (Move2Japan/UnDaoDu/FoundUps)")
-            print("2. AMO DAE (Autonomous Moderation Operations)")
-            print("3. Social Media DAE (012 Digital Twin)")
-            print("4. PQN Orchestration (Research & Alignment)")
-            print("5. All DAEs (Full System)")
-            print("6. Check Instance Status & Health")
-            print("7. Exit")
+            print("0. 🚀 Push to Git and Post to LinkedIn + X (FoundUps)")
+            print("1. 📺 YouTube Live DAE (Move2Japan/UnDaoDu/FoundUps)")
+            print("2. 🧠 HoloDAE (Code Intelligence & Monitoring)")
+            print("3. 🔨 AMO DAE (Autonomous Moderation Operations)")
+            print("4. 📢 Social Media DAE (012 Digital Twin)")
+            print("5. 🧬 PQN Orchestration (Research & Alignment)")
+            print("6. 🌐 All DAEs (Full System)")
+            print("7. 💚 Check Instance Status & Health")
+            print("8. ❌ Exit")
             print("-"*60)
-            print("8. HoloIndex Search (Find code semantically)")
-            print("9. View Git Post History")
+            print("9. 🔍 HoloIndex Search (Find code semantically)")
+            print("10. 📋 View Git Post History")
             print("="*60)
 
             choice = input("\nSelect option: ")
@@ -622,44 +652,136 @@ def main():
                 asyncio.run(monitor_youtube(disable_lock=False))
 
             elif choice == "2":
+                # HoloDAE - Code Intelligence & Monitoring
+                print("🧠 Starting HoloDAE - Code Intelligence & Monitoring System...")
+                try:
+                    # Import and initialize HoloDAE with detailed logging
+                    from holo_index.qwen_advisor.autonomous_holodae import start_holodae_monitoring
+
+                    # Start HoloDAE with full initialization sequence
+                    holodae_instance = start_holodae_monitoring()
+
+                    # Show operational menu
+                    from holo_index.qwen_advisor.autonomous_holodae import show_holodae_menu
+
+                    while True:
+                        choice = show_holodae_menu()
+
+                        if choice in ["0", "99"]:
+                            print("🧠 HoloDAE monitoring paused. Returning to main menu...")
+                            break
+                        elif choice == "1":
+                            print("📊 Running semantic code search...")
+                            # Could integrate with HoloIndex CLI
+                            print("Use: python holo_index.py --search 'your query'")
+                        elif choice == "2":
+                            print("🔍 Running dual search (code + WSP)...")
+                            # Could integrate with HoloIndex CLI
+                            print("Use: python holo_index.py --search 'your query'")
+                        elif choice == "3":
+                            print("✅ Running module existence check...")
+                            # Could integrate with HoloIndex CLI
+                            print("Use: python holo_index.py --check-module 'module_name'")
+                        elif choice == "4":
+                            print("🎲 Running DAE cube organizer...")
+                            # Could integrate with HoloIndex CLI
+                            print("Use: python holo_index.py --init-dae 'DAE_name'")
+                        elif choice == "5":
+                            print("📈 Running index management...")
+                            # Could integrate with HoloIndex CLI
+                            print("Use: python holo_index.py --index-all")
+                        elif choice in ["6", "7", "8", "9", "10", "11", "12", "13"]:
+                            print("🧠 Running HoloDAE intelligence analysis...")
+                            # These would trigger HoloDAE analysis functions
+                            print("Use HoloIndex search to trigger automatic analysis")
+                        elif choice == "14":
+                            print("🕵️ Running WSP 88 orphan analysis...")
+                            # Could integrate with HoloIndex CLI
+                            print("Use: python holo_index.py --wsp88")
+                        elif choice == "16":
+                            print("🚀 Launching HoloDAE Autonomous Monitor...")
+                            try:
+                                # Start autonomous monitoring mode
+                                holodae_instance.start_autonomous_monitoring()
+                                print("👁️ HoloDAE autonomous monitoring started!")
+                                print("Monitoring codebase for changes, violations, and intelligence opportunities...")
+                                print("Press Ctrl+C to stop monitoring and return to menu")
+                                # This would block here until interrupted
+                            except Exception as e:
+                                print(f"❌ Failed to launch monitor: {e}")
+                        elif choice in ["15", "17", "18"]:
+                            print("📋 Running WSP compliance functions...")
+                            # These would trigger compliance checking
+                            print("Use HoloIndex search to trigger compliance analysis")
+                        elif choice in ["19", "20", "21", "22", "23"]:
+                            print("🤖 Running AI advisor functions...")
+                            # Could integrate with HoloIndex CLI
+                            print("Use: python holo_index.py --search 'query' --llm-advisor")
+                        elif choice == "24":
+                            print("📺 Launching YouTube Live DAE...")
+                            # Would need to navigate to option 1
+                            print("Please select option 1 from main menu for YouTube DAE")
+                        elif choice == "25":
+                            print("🧠 Starting autonomous HoloDAE monitoring...")
+                            run_holodae()
+                            break  # Exit menu after starting monitoring
+                        elif choice in ["26", "27", "28", "29", "30"]:
+                            print("🎲 This DAE operation requires main menu selection...")
+                            # Would need to navigate to appropriate main menu option
+                            print("Please return to main menu and select the appropriate DAE")
+                        elif choice in ["31", "32", "33", "34", "35"]:
+                            print("⚙️ Running administrative functions...")
+                            # These would trigger admin functions
+                            print("Administrative functions available through main menu")
+                        else:
+                            print("❌ Invalid choice. Please select 0-35.")
+
+                        input("\nPress Enter to continue...")
+
+                except Exception as e:
+                    print(f"❌ HoloDAE menu failed to load: {e}")
+                    import traceback
+                    traceback.print_exc()
+
+            elif choice == "3":
                 # AMO DAE
-                print("🤖 Starting AMO DAE (Autonomous Moderation)...")
+                print("[AMO] Starting AMO DAE (Autonomous Moderation)...")
                 from modules.communication.livechat.src.auto_moderator_dae import AutoModeratorDAE
                 dae = AutoModeratorDAE()
                 asyncio.run(dae.run())
 
-            elif choice == "3":
+            elif choice == "4":
                 # Social Media DAE (012 Digital Twin)
-                print("👥 Starting Social Media DAE (012 Digital Twin)...")
+                print("[SMD] Starting Social Media DAE (012 Digital Twin)...")
                 from modules.platform_integration.social_media_orchestrator.src.social_media_orchestrator import SocialMediaOrchestrator
                 orchestrator = SocialMediaOrchestrator()
                 # orchestrator.run_digital_twin()  # TODO: Implement digital twin mode
                 print("Digital Twin mode coming soon...")
 
-            elif choice == "4":
+            elif choice == "5":
                 # PQN Orchestration
                 print("🧠 Starting PQN Research DAE...")
                 from modules.ai_intelligence.pqn_alignment.src.pqn_research_dae_orchestrator import PQNResearchDAEOrchestrator
                 pqn_dae = PQNResearchDAEOrchestrator()
                 asyncio.run(pqn_dae.run())
 
-            elif choice == "5":
+            elif choice == "6":
                 # All platforms
-                print("🌐 Starting ALL DAEs...")
+                print("[ALL] Starting ALL DAEs...")
                 asyncio.run(monitor_all_platforms())
 
-            elif choice == "6":
+            elif choice == "7":
                 # Check instance status
                 check_instance_status()
                 input("\nPress Enter to continue...")
 
-            elif choice == "7":
-                print("👋 Exiting...")
+            elif choice == "8":
+                print("[EXIT] Exiting...")
                 break  # Exit the while True loop
 
-            elif choice == "8":
+            elif choice == "9":
                 # HoloIndex search
-                print("\n🔍 HoloIndex Semantic Code Search")
+                print("\n[HOLOINDEX] Semantic Code Search")
                 print("=" * 60)
                 print("This prevents vibecoding by finding existing code!")
                 print("Examples: 'send messages', 'handle timeouts', 'consciousness'")
@@ -671,7 +793,7 @@ def main():
                 else:
                     print("No search query provided")
 
-            elif choice == "9":
+            elif choice == "10":
                 # View git post history
                 view_git_post_history()
 

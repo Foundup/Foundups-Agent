@@ -20,6 +20,7 @@ from .vector_search_optimizer import VectorSearchOptimizer, OptimizedSearchResul
 from .llm_response_optimizer import LLMResponseOptimizer, OptimizedResponse
 from .memory_architecture_evolution import MemoryArchitectureEvolution, MemoryOptimizationResult
 from .adaptive_learning_orchestrator import AdaptiveLearningOrchestrator
+from .breadcrumb_tracer import get_tracer, BreadcrumbTracer, create_contract, signal_ready
 
 __all__ = [
     'AdaptiveQueryProcessor',
@@ -30,7 +31,11 @@ __all__ = [
     'OptimizedResponse',
     'MemoryArchitectureEvolution',
     'MemoryOptimizationResult',
-    'AdaptiveLearningOrchestrator'
+    'AdaptiveLearningOrchestrator',
+    'BreadcrumbTracer',
+    'get_tracer',
+    'create_contract',
+    'signal_ready'
 ]
 
 __version__ = "3.0.0"

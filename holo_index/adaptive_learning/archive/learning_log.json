@@ -1,0 +1,59 @@
+{
+  "events": [
+    {
+      "timestamp": "2025-09-24T22:24:17.426650",
+      "primary": "/pnq",
+      "variants": [
+        "/pqn",
+        "!pnq",
+        "/pqm"
+      ],
+      "type": "command_discovery"
+    },
+    {
+      "timestamp": "2025-09-24T22:24:17.443614",
+      "primary": "factcheck",
+      "variants": [
+        "fc",
+        "@user fc",
+        "fc @user"
+      ],
+      "type": "command_discovery"
+    },
+    {
+      "timestamp": "2025-09-24T22:24:17.460617",
+      "primary": "✊✋🖐",
+      "variants": [
+        "consciousness",
+        "0102 trigger"
+      ],
+      "type": "command_discovery"
+    },
+    {
+      "timestamp": "2025-09-24T22:24:17.477613",
+      "primary": "pqn",
+      "variants": [
+        "pnq"
+      ],
+      "type": "command_discovery"
+    },
+    {
+      "timestamp": "2025-09-24T22:24:17.493643",
+      "primary": "research",
+      "variants": [
+        "reserach"
+      ],
+      "type": "command_discovery"
+    },
+    {
+      "timestamp": "2025-09-24T23:25:58.344743",
+      "primary": "help command livechat",
+      "variants": [],
+      "type": "command_discovery"
+    }
+  ],
+  "statistics": {
+    "total_discoveries": 6,
+    "total_variants": 10
+  }
+}

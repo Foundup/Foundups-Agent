@@ -77,6 +77,17 @@ class QwenAdvisor:
 
         # Step 1: WSP Master Analysis - Comprehensive protocol guidance
         wsp_analysis = self.wsp_master.analyze_query(context.query, context.code_hits)
+
+        # Check for Unicode/emojis preventive warnings (WSP 20)
+        unicode_check = None
+        if "code" in context.query.lower() or "implement" in context.query.lower() or "python" in context.query.lower():
+            unicode_check = self.wsp_master.check_unicode_violation(context.query, "query")
+            if unicode_check["preventive_warning"]:
+                # Add WSP 20 reference for Unicode guidance (not a violation, just prevention)
+                if "WSP_20" not in wsp_analysis.suggested_wsps:
+                    wsp_analysis.suggested_wsps.append("WSP_20")
+                    wsp_analysis.wsp_relevance["WSP_20"] = 0.7  # Lower priority since it's preventive
+
         logger.debug("WSP Master analysis completed: intent=%s, risk=%s",
                     wsp_analysis.intent_category, wsp_analysis.risk_level)
 
@@ -103,10 +114,22 @@ class QwenAdvisor:
         # Step 4: Pattern Coach - Behavioral coaching
         # Note: Pattern coach is handled at CLI level for now, but could be integrated here
 
+        # Add Unicode preventive warning if detected
+        if unicode_check and unicode_check["preventive_warning"]:
+            todos.insert(0, "WSP 20 PREVENTION: Avoid Unicode/emojis in future code - use ASCII alternatives like [OK], [ERROR], [TARGET]")
+
         # Combine all guidance sources
         guidance = self._synthesize_guidance(llm_analysis, wsp_analysis, rules_guidance)
         todos = self._synthesize_todos(llm_analysis, wsp_analysis, rules_guidance)
         reminders = self._synthesize_reminders(wsp_analysis, rules_guidance)
+
+        # Add Unicode preventive warning to guidance if detected
+        if unicode_check and unicode_check["preventive_warning"]:
+            preventive_warning = f"\\n\\n{unicode_check['recommendation']}"
+            if guidance:
+                guidance += preventive_warning
+            else:
+                guidance = unicode_check['recommendation']
 
         # Add test-specific guidance
         query_lower = context.query.lower()

@@ -203,40 +203,108 @@ class AntiDetectionX:
             print("[WSP48] ⚠ System adapting - analyzing failures")
     
     def setup_driver(self, use_existing_session=True):
-        """Setup Chrome with anti-detection measures"""
-        
-        chrome_options = Options()
-        
-        # Anti-detection flags
-        chrome_options.add_argument('--disable-blink-features=AutomationControlled')
-        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        chrome_options.add_experimental_option('useAutomationExtension', False)
-        
-        # More human-like settings
-        chrome_options.add_argument('--disable-web-security')
-        chrome_options.add_argument('--disable-features=IsolateOrigins,site-per-process')
-        chrome_options.add_argument('--window-size=1920,1080')
-        chrome_options.add_argument('--start-maximized')
-        
-        # User agent to appear as regular Chrome
-        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
-        
-        # Use profile to maintain session
-        if use_existing_session:
-            profile_dir = "O:/Foundups-Agent/modules/platform_integration/x_twitter/data/chrome_profile"
-            os.makedirs(profile_dir, exist_ok=True)
-            chrome_options.add_argument(f'--user-data-dir={profile_dir}')
-            chrome_options.add_argument('--profile-directory=Default')
-        
-        print("[INFO] Starting Chrome with anti-detection measures...")
-        self.driver = webdriver.Chrome(options=chrome_options)
-        
+        """Setup browser with anti-detection measures - Edge for FoundUps, Chrome for GeozeAi"""
+
+        # Determine if we're using FoundUps or GeozeAi account
+        use_foundups = self.username == os.getenv('X_Acc2', 'Foundups')
+
+        if use_foundups:
+            # Use Edge for FoundUps account
+            try:
+                from selenium.webdriver.edge.options import Options as EdgeOptions
+                from selenium.webdriver.edge.service import Service as EdgeService
+
+                edge_options = EdgeOptions()
+
+                # Anti-detection flags (similar to Chrome)
+                edge_options.add_argument('--disable-blink-features=AutomationControlled')
+                edge_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+                edge_options.add_experimental_option('useAutomationExtension', False)
+
+                # More human-like settings
+                edge_options.add_argument('--disable-web-security')
+                edge_options.add_argument('--disable-features=IsolateOrigins,site-per-process')
+                edge_options.add_argument('--window-size=1920,1080')
+                edge_options.add_argument('--start-maximized')
+
+                # User agent to appear as regular Edge
+                edge_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0')
+
+                # Use profile to maintain session
+                if use_existing_session:
+                    profile_dir = "O:/Foundups-Agent/modules/platform_integration/x_twitter/data/edge_profile_foundups"
+                    os.makedirs(profile_dir, exist_ok=True)
+                    edge_options.add_argument(f'--user-data-dir={profile_dir}')
+                    edge_options.add_argument('--profile-directory=Default')
+
+                print("[INFO] Starting Edge for @Foundups with anti-detection measures...")
+                # Try to find Edge driver
+                try:
+                    self.driver = webdriver.Edge(options=edge_options)
+                except:
+                    # If Edge driver not found, try with webdriver-manager
+                    from webdriver_manager.microsoft import EdgeChromiumDriverManager
+                    edge_service = EdgeService(EdgeChromiumDriverManager().install())
+                    self.driver = webdriver.Edge(service=edge_service, options=edge_options)
+
+            except ImportError:
+                print("[WARNING] Edge WebDriver not available for FoundUps, falling back to Chrome")
+                print("[INFO] Install with: pip install selenium webdriver-manager")
+                # Fallback to Chrome if Edge not available
+                from selenium.webdriver.chrome.options import Options
+                chrome_options = Options()
+                chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+                chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+                chrome_options.add_experimental_option('useAutomationExtension', False)
+                chrome_options.add_argument('--disable-web-security')
+                chrome_options.add_argument('--disable-features=IsolateOrigins,site-per-process')
+                chrome_options.add_argument('--window-size=1920,1080')
+                chrome_options.add_argument('--start-maximized')
+                chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+
+                if use_existing_session:
+                    profile_dir = "O:/Foundups-Agent/modules/platform_integration/x_twitter/data/chrome_profile_foundups"
+                    os.makedirs(profile_dir, exist_ok=True)
+                    chrome_options.add_argument(f'--user-data-dir={profile_dir}')
+                    chrome_options.add_argument('--profile-directory=Default')
+
+                print("[INFO] Starting Chrome (Edge fallback) for @Foundups...")
+                self.driver = webdriver.Chrome(options=chrome_options)
+        else:
+            # Use Chrome for GeozeAi/Move2Japan account
+            from selenium.webdriver.chrome.options import Options
+            chrome_options = Options()
+
+            # Anti-detection flags
+            chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+            chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            chrome_options.add_experimental_option('useAutomationExtension', False)
+
+            # More human-like settings
+            chrome_options.add_argument('--disable-web-security')
+            chrome_options.add_argument('--disable-features=IsolateOrigins,site-per-process')
+            chrome_options.add_argument('--window-size=1920,1080')
+            chrome_options.add_argument('--start-maximized')
+
+            # User agent to appear as regular Chrome
+            chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+
+            # Use profile to maintain session
+            if use_existing_session:
+                profile_dir = "O:/Foundups-Agent/modules/platform_integration/x_twitter/data/chrome_profile_geozai"
+                os.makedirs(profile_dir, exist_ok=True)
+                chrome_options.add_argument(f'--user-data-dir={profile_dir}')
+                chrome_options.add_argument('--profile-directory=Default')
+
+            print("[INFO] Starting Chrome for @GeozeAi with anti-detection measures...")
+            self.driver = webdriver.Chrome(options=chrome_options)
+
         # Override navigator.webdriver flag
         self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-        
+
         # Random initial delay
         time.sleep(random.uniform(2, 4))
-        
+
         return self.driver
     
     def is_logged_in(self) -> bool:
@@ -527,18 +595,48 @@ class AntiDetectionX:
                 
                 # Type content with human-like speed - character by character preserves @mentions
                 print("[TYPE] Typing post content character by character...")
-                
+
+                # Sanitize content for ChromeDriver BMP limitation
+                def sanitize_for_chromedriver(text):
+                    """Remove characters outside BMP that ChromeDriver can't handle"""
+                    # Keep only characters in the Basic Multilingual Plane (U+0000 to U+FFFF)
+                    sanitized = ''
+                    for char in text:
+                        if ord(char) <= 0xFFFF:
+                            sanitized += char
+                        else:
+                            # Replace problematic emojis with text equivalents
+                            if char == '🚀':
+                                sanitized += '[rocket]'
+                            elif char == '🦄':
+                                sanitized += '[unicorn]'
+                            elif char == '💎':
+                                sanitized += '[gem]'
+                            elif char == '🔥':
+                                sanitized += '[fire]'
+                            elif char == '⚡':
+                                sanitized += '[lightning]'
+                            else:
+                                # Skip other non-BMP characters
+                                pass
+                    return sanitized
+
                 # Use slower, more reliable typing method
                 try:
                     # Click again to ensure focus
                     text_area.click()
                     time.sleep(0.5)
-                    
+
+                    # Sanitize content first
+                    safe_content = sanitize_for_chromedriver(content)
+                    if safe_content != content:
+                        print("[SANITIZE] Removed non-BMP characters for ChromeDriver compatibility")
+
                     # Type character by character - this method preserves @mentions correctly
-                    for char in content:
+                    for char in safe_content:
                         text_area.send_keys(char)
                         time.sleep(random.uniform(0.03, 0.08))  # Human-like speed that works
-                    
+
                     print("[OK] Content typed successfully")
                     
                 except Exception as e:

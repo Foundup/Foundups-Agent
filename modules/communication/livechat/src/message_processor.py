@@ -680,8 +680,10 @@ class MessageProcessor:
     def _check_whack_command(self, text: str) -> bool:
         """Check if message contains whack gamification commands."""
         commands = [
-            '/score', '/level', '/rank', '/stats', '/leaderboard', '/frags', '/whacks', 
-            '/help', '/quiz', '/answer', '/facts', '/fscale', '/rate', '/sprees', '/toggle', '/top'
+            '/score', '/rank', '/stats', '/leaderboard', '/frags', '/whacks',
+            '/help', '/quiz', '/facts', '/sprees', '/toggle', '/session',
+            # Deprecated but handled with helpful messages:
+            '/level', '/answer', '/top', '/fscale', '/rate'
         ]
         text_lower = text.lower().strip()
         has_command = any(text_lower.startswith(cmd) for cmd in commands)

@@ -770,19 +770,48 @@ class StreamResolver:
         return exp_delay
 
     def _get_linkedin_page_for_channel(self, channel_id: str) -> str:
-        """Determine which LinkedIn page to post to based on YouTube channel"""
+        """Determine which LinkedIn page to post to based on YouTube channel.
+        Uses configuration file for expandability."""
+        import json
+        import os
+
+        # Load configuration file
+        config_path = os.path.join(
+            os.path.dirname(__file__),
+            '../../social_media_orchestrator/config/channel_routing.json'
+        )
+
+        try:
+            if os.path.exists(config_path):
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+
+                # Get channel-specific routing
+                channel_config = config.get('channel_routing', {}).get(channel_id)
+                if channel_config and channel_config.get('enabled', True):
+                    linkedin_page = channel_config.get('linkedin_page_id')
+                    if linkedin_page:
+                        self.logger.info(f"[ROUTING] Channel {channel_id} → LinkedIn {linkedin_page} ({channel_config.get('name')})")
+                        return linkedin_page
+
+                # Fall back to default routing
+                default = config.get('default_routing', {})
+                linkedin_page = default.get('linkedin_page_id', '1263645')
+                self.logger.info(f"[ROUTING] Using default LinkedIn page: {linkedin_page}")
+                return linkedin_page
+
+        except Exception as e:
+            self.logger.warning(f"[ROUTING] Error loading config: {e}, using hardcoded defaults")
+
+        # Fallback hardcoded routing if config fails
         from modules.platform_integration.social_media_orchestrator.src.unified_linkedin_interface import LinkedInCompanyPage
-
-        # Map YouTube channels to LinkedIn pages
         linkedin_routing = {
-            'UC-LSSlOZwpGIRIYihaz8zCw': LinkedInCompanyPage.UNDAODU,     # UnDaoDu YT → UnDaoDu LN (68706058)
-            'UCSNTUXjAgpd4sgWYP0xoJgw': LinkedInCompanyPage.FOUNDUPS,   # FoundUps YT → FoundUps LN (1263645)
-            'UCklMTNnu5POwRmQsg5JJumA': LinkedInCompanyPage.MOVE2JAPAN, # Move2Japan YT → Move2Japan LN (104834798)
+            'UC-LSSlOZwpGIRIYihaz8zCw': LinkedInCompanyPage.UNDAODU,     # UnDaoDu
+            'UCSNTUXjAgpd4sgWYP0xoJgw': LinkedInCompanyPage.FOUNDUPS,   # FoundUps
+            'UCklMTNnu5POwRmQsg5JJumA': LinkedInCompanyPage.MOVE2JAPAN, # Move2Japan
         }
-
-        # Default to FoundUps page if channel not recognized
         page = linkedin_routing.get(channel_id, LinkedInCompanyPage.FOUNDUPS)
-        return page.value  # Return the page ID string
+        return page.value
     
     def clear_cache(self):
         """Clear all cached stream data for fresh lookup."""
@@ -1104,9 +1133,13 @@ class StreamResolver:
                         logger.info("✅ STREAM IS LIVE (via NO-QUOTA video check)")
                         # Record stream start in database (WSP 78)
                         if self.db:
-                            self.db.record_stream_start(current_channel_id, env_video_id, result.get('title', 'Live Stream'))
-                            # Trigger pattern learning from historical data
-                            self.db.analyze_and_update_patterns(current_channel_id)
+                            try:
+                                self.db.record_stream_start(current_channel_id, env_video_id, result.get('title', 'Live Stream'))
+                                # Trigger pattern learning from historical data
+                                self.db.analyze_and_update_patterns(current_channel_id)
+                            except Exception as db_err:
+                                logger.warning(f"Database error (non-critical): {db_err}")
+                                # Continue execution - database errors shouldn't prevent stream detection
                         # Trigger social media posting with duplicate check
                         self._trigger_social_media_post(env_video_id, result.get('title', 'Live Stream'), current_channel_id)
                         # Return video_id but no chat_id in NO-QUOTA mode
@@ -1133,9 +1166,13 @@ class StreamResolver:
                         logger.info(f"✅ Found live stream on {channel_name}: {video_id} 🎉")
                         # Record stream start in database (WSP 78)
                         if self.db:
-                            self.db.record_stream_start(current_channel_id, video_id, result.get('title', 'Live Stream'))
-                            # Trigger pattern learning from historical data
-                            self.db.analyze_and_update_patterns(current_channel_id)
+                            try:
+                                self.db.record_stream_start(current_channel_id, video_id, result.get('title', 'Live Stream'))
+                                # Trigger pattern learning from historical data
+                                self.db.analyze_and_update_patterns(current_channel_id)
+                            except Exception as db_err:
+                                logger.warning(f"Database error (non-critical): {db_err}")
+                                # Continue execution - database errors shouldn't prevent stream detection
                         # Trigger social media posting with duplicate check
                         self._trigger_social_media_post(video_id, result.get('title', 'Live Stream'), current_channel_id)
                         return video_id, None

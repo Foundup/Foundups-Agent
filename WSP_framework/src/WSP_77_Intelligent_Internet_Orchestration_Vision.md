@@ -103,4 +103,4 @@ Per WSP 80, current sub-agents are training grounds for future II orchestrators:
 
 This training foundation ensures II orchestrators emerge from proven WSP-compliant patterns rather than speculative design.
 
-[RELATIONSHIPS] WSP 26, WSP 27, WSP 29, WSP 32, WSP 58, WSP 73, **WSP 80**, WSP 72, WSP 70
+[RELATIONSHIPS] WSP 26, WSP 27, WSP 29, WSP 32, WSP 54, WSP 58, WSP 73, **WSP 80**, WSP 72, WSP 70

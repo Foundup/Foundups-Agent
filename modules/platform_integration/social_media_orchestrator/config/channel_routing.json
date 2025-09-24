@@ -1,0 +1,48 @@
+{
+  "channel_routing": {
+    "UCklMTNnu5POwRmQsg5JJumA": {
+      "name": "Move2Japan",
+      "linkedin_page_id": "104834798",
+      "linkedin_page_name": "Move2Japan",
+      "x_account": "X_Acc1",
+      "x_handle": "@GeozeAi",
+      "enabled": true
+    },
+    "UC-LSSlOZwpGIRIYihaz8zCw": {
+      "name": "UnDaoDu",
+      "linkedin_page_id": "68706058",
+      "linkedin_page_name": "UnDaoDu",
+      "x_account": "X_Acc2",
+      "x_handle": "@Foundups",
+      "enabled": true
+    },
+    "UCSNTUXjAgpd4sgWYP0xoJgw": {
+      "name": "FoundUps",
+      "linkedin_page_id": "1263645",
+      "linkedin_page_name": "FoundUps",
+      "x_account": "X_Acc2",
+      "x_handle": "@Foundups",
+      "enabled": true
+    }
+  },
+  "default_routing": {
+    "linkedin_page_id": "1263645",
+    "linkedin_page_name": "FoundUps",
+    "x_account": "X_Acc2",
+    "x_handle": "@Foundups"
+  },
+  "git_posting": {
+    "linkedin_page_id": "1263645",
+    "linkedin_page_name": "FoundUps",
+    "x_account": "X_Acc2",
+    "x_handle": "@Foundups"
+  },
+  "posting_rules": {
+    "enable_linkedin": true,
+    "enable_x": true,
+    "post_order": ["linkedin", "x"],
+    "delay_between_platforms_seconds": 10,
+    "delay_between_streams_seconds": 15,
+    "duplicate_check_hours": 4
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "module_creation_agent": {
+    "agent_id": "module_creation_agent",
+    "collaboration_mode": "active",
+    "available_until": "2025-09-25T01:33:22.889409",
+    "skills_offered": [
+      "coding",
+      "architecture"
+    ],
+    "current_focus": "WSP compliance",
+    "last_ping": "2025-09-24T23:33:22.889409"
+  },
+  "testing_agent": {
+    "agent_id": "testing_agent",
+    "collaboration_mode": "focused",
+    "available_until": "2025-09-25T01:33:22.890379",
+    "skills_offered": [
+      "testing",
+      "quality_assurance"
+    ],
+    "current_focus": "test development",
+    "last_ping": "2025-09-24T23:33:22.890379"
+  },
+  "documentation_agent": {
+    "agent_id": "documentation_agent",
+    "collaboration_mode": "passive",
+    "available_until": "2025-09-25T01:33:22.897380",
+    "skills_offered": [
+      "documentation",
+      "technical_writing"
+    ],
+    "current_focus": "general",
+    "last_ping": "2025-09-24T23:33:22.897380"
+  },
+  "0102_claude": {
+    "agent_id": "0102_claude",
+    "collaboration_mode": "autonomous",
+    "available_until": "2025-09-25T23:54:55.819224",
+    "skills_offered": [
+      "coding",
+      "architecture",
+      "testing",
+      "documentation"
+    ],
+    "current_focus": "WSP compliance and system enhancement",
+    "last_ping": "2025-09-24T23:54:55.819224",
+    "autonomy_level": "full",
+    "workload_capacity": 0.8
+  },
+  "cursor_agent_1": {
+    "agent_id": "cursor_agent_1",
+    "collaboration_mode": "autonomous",
+    "available_until": "2025-09-26T00:03:57.342804",
+    "skills_offered": [
+      "coding",
+      "architecture",
+      "testing"
+    ],
+    "current_focus": "multi-agent coordination testing",
+    "last_ping": "2025-09-25T00:03:57.342804",
+    "autonomy_level": "full",
+    "workload_capacity": 1.0
+  },
+  "claude_code": {
+    "agent_id": "claude_code",
+    "collaboration_mode": "autonomous",
+    "available_until": "2025-09-26T00:05:34.244607",
+    "skills_offered": [
+      "coding",
+      "debugging",
+      "architecture"
+    ],
+    "current_focus": "Python development and system design",
+    "last_ping": "2025-09-25T00:05:34.244607",
+    "autonomy_level": "full",
+    "workload_capacity": 1.0
+  },
+  "gpt5_code": {
+    "agent_id": "gpt5_code",
+    "collaboration_mode": "autonomous",
+    "available_until": "2025-09-26T00:05:34.264610",
+    "skills_offered": [
+      "testing",
+      "documentation",
+      "optimization"
+    ],
+    "current_focus": "Quality assurance and documentation",
+    "last_ping": "2025-09-25T00:05:34.264610",
+    "autonomy_level": "full",
+    "workload_capacity": 1.0
+  },
+  "claude_architect": {
+    "agent_id": "claude_architect",
+    "collaboration_mode": "autonomous",
+    "available_until": "2025-09-26T00:15:28.567766",
+    "skills_offered": [
+      "system_design",
+      "architecture",
+      "planning"
+    ],
+    "current_focus": "High-level system architecture and design patterns",
+    "last_ping": "2025-09-25T00:15:28.567766",
+    "autonomy_level": "manual",
+    "workload_capacity": 1.0
+  },
+  "claude_developer": {
+    "agent_id": "claude_developer",
+    "collaboration_mode": "autonomous",
+    "available_until": "2025-09-26T00:15:28.570285",
+    "skills_offered": [
+      "coding",
+      "implementation",
+      "debugging"
+    ],
+    "current_focus": "Code implementation and debugging",
+    "last_ping": "2025-09-25T00:15:28.570285",
+    "autonomy_level": "manual",
+    "workload_capacity": 1.0
+  },
+  "claude_qa": {
+    "agent_id": "claude_qa",
+    "collaboration_mode": "autonomous",
+    "available_until": "2025-09-26T00:15:28.593285",
+    "skills_offered": [
+      "testing",
+      "validation",
+      "documentation"
+    ],
+    "current_focus": "Quality assurance and testing",
+    "last_ping": "2025-09-25T00:15:28.593285",
+    "autonomy_level": "manual",
+    "workload_capacity": 1.0
+  }
+}

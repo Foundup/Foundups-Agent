@@ -1,7 +1,7 @@
-# Qwen Advisor - AI Intelligence System
+# Qwen Advisor - AI Intelligence System (HoloDAE Foundation)
 
 ## Overview
-The Qwen Advisor provides intelligent AI-powered guidance for HoloIndex searches, combining multiple intelligence sources to deliver comprehensive WSP compliance coaching.
+The Qwen Advisor provides intelligent AI-powered guidance for HoloIndex searches, combining multiple intelligence sources to deliver comprehensive WSP compliance coaching. This folder now includes **HoloDAE** - the autonomous intelligence foundation (the "green LEGO baseboard") that automatically monitors and enhances all HoloIndex operations.
 
 ## Purpose
 Transform HoloIndex from keyword search to **intelligent AI assistant** that:
@@ -48,10 +48,16 @@ Combines all intelligence sources:
 #### 6. **vibecoding_assessor.py** - Anti-Vibecoding System
 - Tracks code creation patterns
 - Calculates vibecoding scores
-- Provides improvement recommendations
-- Pattern-based detection (deprecated for time-based)
 
-#### 7. **agent_detection.py** - Environment Detection
+#### 7. **autonomous_holodae.py** - HoloDAE Foundation Intelligence 🏗️
+- **The Green LEGO Baseboard** - foundational intelligence layer
+- Autonomous monitoring like YouTube DAE
+- Request-driven analysis triggered by HoloIndex searches
+- Real-time health checks and dependency audits
+- Continuous operation with idle status logging
+- Pattern detection for migrations and refactoring opportunities
+
+#### 8. **agent_detection.py** - Environment Detection
 - Detects if running as 0102 agent
 - Auto-enables advisor for agents
 - Environment-aware configuration

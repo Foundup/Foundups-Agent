@@ -200,7 +200,7 @@ class HumanSchedulingInterface:
                         )
 
                     # Update post status
-                    if response.all_successful():
+                    if response.failure_count == 0:
                         post.status = "posted"
                         post.posted_at = datetime.now()
                         logger.info(f"[012 SCHEDULER] Successfully posted {post_id}")
@@ -344,7 +344,7 @@ def main():
         print("🚀 Executing pending posts...")
         results = asyncio.run(scheduler.execute_scheduled_posts())
         for post_id, response in results:
-            print(f"   {post_id}: {'✅' if response.all_successful() else '❌'}")
+            print(f"   {post_id}: {'✅' if response.failure_count == 0 else '❌'}")
 
 if __name__ == "__main__":
     main()

@@ -58,22 +58,61 @@
 ## Modular ModLog Architecture
 
 **System Structure:**
-- **Main ModLog** (`docs/ModLog.md`): System-wide changes and module references
+- **Root ModLog** (`/ModLog.md`): System-wide changes ONLY - updated when pushing to git
 - **Module ModLogs** (`modules/[module]/ModLog.md`): Module-specific detailed changes
+- **Test ModLogs** (`modules/[module]/tests/TestModLog.md`): Test-specific changes and results
+- **Cube ModLogs** (Per WSP 80): Each cube DAE maintains its own ModLog for cube-level operations
 - **Purpose**: Prevent main ModLog bloat while maintaining detailed module histories
 
-**Journal Format Requirements:**
+**Journal Format Requirements (CRITICAL):**
 - **Reverse Chronological Order**: Newest entries at top, oldest at bottom
 - **Latest First**: Most recent progress immediately visible
 - **Historical Flow**: Older entries flow downward naturally
 - **Quick Reference**: Current status and latest achievements at top of file
+- **Rationale**: When ModLog becomes large (1000+ lines), newest work is immediately visible without scrolling
 
 **Guidelines:**
-1. **System-wide changes** (architecture, WSP protocols, multi-module impacts) → Main ModLog
-2. **Module-specific changes** (features, fixes, tests within a module) → Module ModLog  
-3. **Main ModLog references** module logs for detailed information
-4. **Module versioning** follows semantic versioning within module scope
-5. **Journal Structure**: All ModLogs follow reverse chronological order (newest first)
+1. **System-wide changes** (architecture, WSP protocols, multi-module impacts) → Root ModLog (on git push)
+2. **Module-specific changes** (features, fixes within a module) → Module ModLog
+3. **Test changes** (new tests, test fixes, coverage improvements) → Test ModLog
+4. **Cube operations** (Per WSP 80 cube DAE activities) → Cube ModLog
+5. **Root ModLog references** module logs for detailed information, never duplicates content
+6. **Module versioning** follows semantic versioning within module scope
+7. **Journal Structure**: ALL ModLogs follow reverse chronological order (newest first)
+
+### 🔍 **CLARIFICATION: System-wide vs Module-specific Changes**
+
+#### **✅ SYSTEM-WIDE Changes (Root ModLog.md)**
+**Definition**: Changes that affect the entire system architecture, multiple modules, or foundational protocols
+**Examples**:
+- WSP protocol updates/modifications
+- Database architecture changes (like WSP 78 migrations)
+- Cross-module architectural decisions
+- New module domain creation (ai_intelligence, platform_integration, etc.)
+- Framework-level security or performance changes
+- Git repository structure changes
+
+**Format**: High-level summary with references to module ModLogs
+```
+## [Date] - System-Wide Change Description
+**Module Changes**: See `modules/[module]/ModLog.md` for implementation details
+```
+
+#### **✅ MODULE-SPECIFIC Changes (modules/[module]/ModLog.md)**
+**Definition**: Changes within a single module's scope
+**Examples**:
+- New features in a module
+- Bug fixes within a module
+- Refactoring within a module
+- Documentation updates for a module
+- Test additions for a module
+
+**Format**: Detailed implementation notes, version changes, technical details
+
+#### **❓ GRAY AREA: Cross-Module Changes**
+**Multi-module features**: If a feature spans multiple modules but doesn't change system architecture, document in each affected module's ModLog with cross-references
+
+**Database migrations**: System-wide if they change the database schema globally (Root ModLog), module-specific if they only affect one module's data (Module ModLog)
 
 ## 🛡️ WSP Versioning Enforcement Protocol
 

@@ -80,7 +80,7 @@ class PatternCoach:
         )
 
         if not coaching_needed:
-            return None
+        return None
 
         # Generate contextual coaching
         coaching = self._generate_contextual_coaching(
@@ -160,7 +160,7 @@ class PatternCoach:
         """Determine if coaching should be provided."""
         # Always coach on high-risk patterns
         if risk_patterns:
-            return True
+                return True
 
         # Coach on health context when user is actively working on problematic files
         if health_context.get('working_on_problematic_file'):

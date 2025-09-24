@@ -28,7 +28,8 @@ logger = logging.getLogger(__name__)
 
 # Global lock for thread-safe browser operations (X/Twitter)
 _POSTER_LOCK = threading.Lock()
-_GLOBAL_X_POSTER = None  # Global singleton for X/Twitter browser
+_GLOBAL_X_POSTER_FOUNDUPS = None  # Global singleton for @Foundups X account
+_GLOBAL_X_POSTER_GEOZAI = None    # Global singleton for @GeozeAi X account
 
 
 class Platform(Enum):
@@ -72,6 +73,7 @@ class SimplePostingOrchestrator:
         self.request_counter = 0
         self.posted_streams = self._load_posted_history()
         self.posting_in_progress = set()  # Prevent concurrent posting of same stream
+        self.channel_config = self._load_channel_configuration()
 
         # SINGLETON POSTER INSTANCES - Reuse same browser sessions
         self._linkedin_poster = None
@@ -80,6 +82,48 @@ class SimplePostingOrchestrator:
         # Register cleanup on exit
         import atexit
         atexit.register(self._cleanup_browsers)
+
+    def _load_channel_configuration(self) -> Dict[str, Any]:
+        """Load channel routing configuration from JSON file"""
+        import json
+        config_path = os.path.join(
+            os.path.dirname(__file__),
+            '../config/channel_routing.json'
+        )
+
+        try:
+            if os.path.exists(config_path):
+                with open(config_path, 'r') as f:
+                    return json.load(f)
+            else:
+                self.logger.warning(f"[CONFIG] Channel routing config not found at {config_path}")
+        except Exception as e:
+            self.logger.error(f"[CONFIG] Error loading channel configuration: {e}")
+
+        # Return default configuration if file not found
+        return {
+            "channel_routing": {},
+            "default_routing": {
+                "linkedin_page_id": "1263645",
+                "x_account": "X_Acc2"
+            }
+        }
+
+    def _get_x_account_for_linkedin_page(self, linkedin_page: str) -> bool:
+        """Determine if we should use FoundUps X account based on LinkedIn page.
+
+        Returns:
+            True to use FoundUps account (X_Acc2), False to use GeozeAi (X_Acc1)
+        """
+        # Find the channel routing that matches this LinkedIn page
+        for channel_id, config in self.channel_config.get('channel_routing', {}).items():
+            if config.get('linkedin_page_id') == linkedin_page:
+                x_account = config.get('x_account', 'X_Acc2')
+                # Return True for FoundUps (X_Acc2), False for GeozeAi (X_Acc1)
+                return x_account == 'X_Acc2'
+
+        # Default to FoundUps account
+        return True
 
     def _cleanup_browsers(self):
         """Clean up browser instances on exit"""
@@ -95,14 +139,23 @@ class SimplePostingOrchestrator:
                         pass  # Browser already closed
                 _GLOBAL_LINKEDIN_POSTER = None
 
-            if _GLOBAL_X_POSTER and hasattr(_GLOBAL_X_POSTER, 'driver'):
-                if _GLOBAL_X_POSTER.driver:
+            if _GLOBAL_X_POSTER_FOUNDUPS and hasattr(_GLOBAL_X_POSTER_FOUNDUPS, 'driver'):
+                if _GLOBAL_X_POSTER_FOUNDUPS.driver:
                     try:
-                        _GLOBAL_X_POSTER.driver.quit()
-                        self.logger.info("[CLEANUP] X browser closed")
+                        _GLOBAL_X_POSTER_FOUNDUPS.driver.quit()
+                        self.logger.info("[CLEANUP] FoundUps X browser closed")
                     except:
                         pass  # Browser already closed
-                _GLOBAL_X_POSTER = None
+                _GLOBAL_X_POSTER_FOUNDUPS = None
+
+            if _GLOBAL_X_POSTER_GEOZAI and hasattr(_GLOBAL_X_POSTER_GEOZAI, 'driver'):
+                if _GLOBAL_X_POSTER_GEOZAI.driver:
+                    try:
+                        _GLOBAL_X_POSTER_GEOZAI.driver.quit()
+                        self.logger.info("[CLEANUP] GeozeAi X browser closed")
+                    except:
+                        pass  # Browser already closed
+                _GLOBAL_X_POSTER_GEOZAI = None
         except Exception as e:
             self.logger.debug(f"[CLEANUP] Error during cleanup: {e}")
     
@@ -133,7 +186,7 @@ class SimplePostingOrchestrator:
         logger.info(f"[ORCHESTRATOR] 🎯 SOCIAL MEDIA POSTING REQUEST")
         logger.info(f"[ORCHESTRATOR] 📺 Stream: {stream_title}")
         logger.info(f"[ORCHESTRATOR] 🔗 URL: {stream_url}")
-        logger.info(f"[ORCHESTRATOR] 🆔 Video ID: {video_id}")
+        logger.info(f"[ORCHESTRATOR] �E Video ID: {video_id}")
         logger.info("="*80)
 
         # Check which platforms have already posted (per-platform duplicate prevention)
@@ -147,18 +200,18 @@ class SimplePostingOrchestrator:
             for platform in platforms:
                 if platform.value in previously_posted:
                     platforms_already_posted.append(platform)
-                    logger.info(f"[ORCHESTRATOR] ✓ {platform.value} already posted at {posted_info['timestamp']}")
+                    logger.info(f"[ORCHESTRATOR] ✁E{platform.value} already posted at {posted_info['timestamp']}")
                 else:
                     platforms_to_post.append(platform)
                     logger.info(f"[ORCHESTRATOR] 📱 {platform.value} not yet posted - will attempt")
         else:
             # New stream - post to all platforms
             platforms_to_post = platforms
-            logger.info(f"[ORCHESTRATOR] ✅ NEW STREAM - Will post to all platforms")
+            logger.info(f"[ORCHESTRATOR] ✁ENEW STREAM - Will post to all platforms")
 
         # If all platforms already posted, return early
         if not platforms_to_post:
-            logger.warning(f"[ORCHESTRATOR] 🛡️ ALL PLATFORMS ALREADY POSTED")
+            logger.warning(f"[ORCHESTRATOR] 🛡�E�EALL PLATFORMS ALREADY POSTED")
             return PostResponse(
                 request_id=request_id,
                 results=[
@@ -193,10 +246,10 @@ class SimplePostingOrchestrator:
         # Mark as in progress
         self.posting_in_progress.add(video_id)
 
-        logger.info(f"[ORCHESTRATOR] ✅ PROCEEDING WITH POST")
+        logger.info(f"[ORCHESTRATOR] ✁EPROCEEDING WITH POST")
         logger.info(f"[ORCHESTRATOR] 🚀 POSTING TO: {[p.value for p in platforms_to_post]}")
         if platforms_already_posted:
-            logger.info(f"[ORCHESTRATOR] ⏭️ SKIPPING: {[p.value for p in platforms_already_posted]} (already posted)")
+            logger.info(f"[ORCHESTRATOR] ⏭�E�ESKIPPING: {[p.value for p in platforms_already_posted]} (already posted)")
 
         # Determine channel handle based on LinkedIn page
         channel_handle = "@UnDaoDu"  # Default
@@ -257,7 +310,7 @@ class SimplePostingOrchestrator:
 
                 if result.success:
                     self.logger.info("="*80)
-                    self.logger.info("[ORCHESTRATOR] ✅ LINKEDIN POSTED SUCCESSFULLY")
+                    self.logger.info("[ORCHESTRATOR] ✁ELINKEDIN POSTED SUCCESSFULLY")
                     self.logger.info(f"[ORCHESTRATOR] ⏰ Completed at: {datetime.now().strftime('%H:%M:%S')}")
                     self.logger.info("="*80)
 
@@ -281,10 +334,10 @@ class SimplePostingOrchestrator:
                         for i in range(10, 0, -1):
                             self.logger.info(f"[ORCHESTRATOR] ⏳ Cleanup countdown: {i} seconds remaining...")
                             await asyncio.sleep(1)
-                        self.logger.info("[ORCHESTRATOR] ✅ Browser cleanup complete - ready for X")
+                        self.logger.info("[ORCHESTRATOR] ✁EBrowser cleanup complete - ready for X")
                 else:
                     self.logger.warning("="*80)
-                    self.logger.warning("[ORCHESTRATOR] ❌ LINKEDIN FAILED - X WILL BE SKIPPED")
+                    self.logger.warning("[ORCHESTRATOR] ❁ELINKEDIN FAILED - X WILL BE SKIPPED")
                     self.logger.warning(f"[ORCHESTRATOR] ⏰ Failed at: {datetime.now().strftime('%H:%M:%S')}")
                     self.logger.warning(f"[ORCHESTRATOR] 📝 Reason: {result.message}")
                     self.logger.warning("="*80)
@@ -293,7 +346,7 @@ class SimplePostingOrchestrator:
                 # CRITICAL: Only post to X if LinkedIn was successful
                 if not linkedin_posted_successfully:
                     self.logger.warning("="*80)
-                    self.logger.warning("[ORCHESTRATOR] ⏭️ SKIPPING X/TWITTER")
+                    self.logger.warning("[ORCHESTRATOR] ⏭�E�ESKIPPING X/TWITTER")
                     self.logger.warning("[ORCHESTRATOR] 📝 Reason: LinkedIn posting failed")
                     self.logger.warning(f"[ORCHESTRATOR] ⏰ Time: {datetime.now().strftime('%H:%M:%S')}")
                     self.logger.warning("="*80)
@@ -306,7 +359,7 @@ class SimplePostingOrchestrator:
                 else:
                     self.logger.info("="*80)
                     self.logger.info("[ORCHESTRATOR] 🐦 STARTING X/TWITTER POSTING SEQUENCE")
-                    self.logger.info("[ORCHESTRATOR] ✅ Prerequisite: LinkedIn posted successfully")
+                    self.logger.info("[ORCHESTRATOR] ✁EPrerequisite: LinkedIn posted successfully")
                     self.logger.info(f"[ORCHESTRATOR] ⏰ Time: {datetime.now().strftime('%H:%M:%S')}")
                     self.logger.info("="*80)
 
@@ -315,7 +368,7 @@ class SimplePostingOrchestrator:
 
                     if result.success:
                         self.logger.info("="*80)
-                        self.logger.info("[ORCHESTRATOR] ✅ X/TWITTER POSTED SUCCESSFULLY")
+                        self.logger.info("[ORCHESTRATOR] ✁EX/TWITTER POSTED SUCCESSFULLY")
                         self.logger.info(f"[ORCHESTRATOR] ⏰ Completed at: {datetime.now().strftime('%H:%M:%S')}")
                         self.logger.info("="*80)
 
@@ -334,7 +387,7 @@ class SimplePostingOrchestrator:
                             self.logger.info(f"[ORCHESTRATOR] 💾 Saved X/Twitter post to history immediately")
                     else:
                         self.logger.warning("="*80)
-                        self.logger.warning("[ORCHESTRATOR] ❌ X/TWITTER POSTING FAILED")
+                        self.logger.warning("[ORCHESTRATOR] ❁EX/TWITTER POSTING FAILED")
                         self.logger.warning(f"[ORCHESTRATOR] 📝 Reason: {result.message}")
                         self.logger.warning(f"[ORCHESTRATOR] ⏰ Failed at: {datetime.now().strftime('%H:%M:%S')}")
                         self.logger.warning("="*80)
@@ -402,7 +455,7 @@ class SimplePostingOrchestrator:
                 for channel_id, channel_name in channels:
                     live_info = scraper.check_channel_for_live(channel_id)
                     if live_info:
-                        self.logger.info(f"[VERIFICATION] ✅ {channel_name} is LIVE")
+                        self.logger.info(f"[VERIFICATION] ✁E{channel_name} is LIVE")
                         return True
 
                 self.logger.info("[VERIFICATION] 📭 No channels are live")
@@ -427,6 +480,11 @@ class SimplePostingOrchestrator:
         Returns:
             Dictionary with posting status for each platform
         """
+        self.logger.info("="*60)
+        self.logger.info("🔍 DUPLICATE PREVENTION CHECK INITIATED")
+        self.logger.info(f"📹 Video ID: {video_id}")
+        self.logger.info("="*60)
+
         result = {
             'video_id': video_id,
             'already_posted': False,
@@ -434,17 +492,61 @@ class SimplePostingOrchestrator:
             'timestamp': None
         }
 
+        # Check in-memory cache first
+        self.logger.info("📂 Checking in-memory cache...")
         if video_id in self.posted_streams:
             posted_info = self.posted_streams[video_id]
             result['already_posted'] = True
             result['platforms_posted'] = posted_info.get('platforms_posted', [])
             result['timestamp'] = posted_info.get('timestamp')
 
-            self.logger.info(f"[CHECK] Video {video_id} already posted to: {result['platforms_posted']}")
+            self.logger.info("✅ FOUND IN MEMORY CACHE:")
+            self.logger.info(f"   • Platforms posted: {result['platforms_posted']}")
+            self.logger.info(f"   • Posted at: {result['timestamp']}")
+            self.logger.info("🚫 DUPLICATE PREVENTION ACTIVE - Will skip these platforms")
         else:
-            self.logger.info(f"[CHECK] Video {video_id} has NOT been posted yet")
+            self.logger.info("❌ NOT in memory cache")
 
+            # Check database as backup
+            self.logger.info("🗄️ Checking database...")
+            if self._check_database_for_post(video_id):
+                self.logger.info("✅ FOUND IN DATABASE - Loading to memory")
+                # Reload and check again
+                self.posted_streams = self._load_posted_history()
+                if video_id in self.posted_streams:
+                    posted_info = self.posted_streams[video_id]
+                    result['already_posted'] = True
+                    result['platforms_posted'] = posted_info.get('platforms_posted', [])
+                    result['timestamp'] = posted_info.get('timestamp')
+                    self.logger.info(f"   • Platforms posted: {result['platforms_posted']}")
+                    self.logger.info("🚫 DUPLICATE PREVENTION ACTIVE")
+            else:
+                self.logger.info("❌ NOT in database")
+                self.logger.info("✅ NEW VIDEO - OK to post to all platforms")
+
+        self.logger.info("="*60)
         return result
+
+    def _check_database_for_post(self, video_id: str) -> bool:
+        """Check if video exists in database"""
+        import sqlite3
+        import os
+
+        module_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        db_path = os.path.join(
+            module_root,
+            "gamification", "whack_a_magat", "data", "magadoom_scores.db"
+        )
+
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            cursor.execute("SELECT video_id FROM social_posts WHERE video_id = ?", (video_id,))
+            result = cursor.fetchone()
+            conn.close()
+            return result is not None
+        except:
+            return False
 
     async def verify_live_status_manually(self) -> bool:
         """
@@ -597,7 +699,7 @@ class SimplePostingOrchestrator:
             self.logger.info("="*60)
 
             if not (os.getenv('LINKEDIN_EMAIL') and os.getenv('LINKEDIN_PASSWORD')):
-                self.logger.warning("[LINKEDIN] ❌ LinkedIn credentials not configured")
+                self.logger.warning("[LINKEDIN] ❁ELinkedIn credentials not configured")
                 return PostResult(
                     success=False,
                     platform=Platform.LINKEDIN,
@@ -605,81 +707,103 @@ class SimplePostingOrchestrator:
                     timestamp=datetime.now()
                 )
 
-            self.logger.info("[LINKEDIN] ✅ Credentials found")
+            self.logger.info("[LINKEDIN] ✁ECredentials found")
             self.logger.info(f"[LINKEDIN] 📝 Content length: {len(content)} chars")
             self.logger.info("[LINKEDIN] 🚀 Starting anti-detection poster...")
 
-            # Use unified LinkedIn interface (WSP 3 compliant)
-            from modules.platform_integration.social_media_orchestrator.src.unified_linkedin_interface import post_stream_notification, post_general_content
+            # Try unified LinkedIn interface first (WSP 3 compliant)
+            try:
+                from modules.platform_integration.social_media_orchestrator.src.unified_linkedin_interface import post_stream_notification, post_general_content
 
-            # Extract video ID for duplicate prevention
-            video_id = None
-            import re
-            video_match = re.search(r'youtube\.com/watch\?v=([a-zA-Z0-9_-]+)', content)
-            if video_match:
-                video_id = video_match.group(1)
+                # Extract video ID for duplicate prevention
+                video_id = None
+                import re
+                video_match = re.search(r'youtube\.com/watch\?v=([a-zA-Z0-9_-]+)', content)
+                if video_match:
+                    video_id = video_match.group(1)
 
-            if video_id:
-                # Extract title from content - it's the actual stream title, not the first line
-                # Content format is: @UnDaoDu going live!\n\n{stream_title}\n\n{url}
-                lines = content.split('\n')
-                # The actual stream title is on the third line (index 2) after two newlines
-                title = lines[2] if len(lines) > 2 else "Live Stream"  # Use default as fallback
-                if title.startswith("🔴 LIVE: "):
-                    title = title[9:]  # Remove prefix
+                self.logger.info("[LINKEDIN] 🔄 Attempting API-based posting...")
+                # Try API posting first
+                if video_id and linkedin_page:
+                    result = await post_stream_notification(content, linkedin_page)
+                else:
+                    result = await post_general_content(content)
 
-                # Extract URL
-                url_match = re.search(r'https://[^\s]+', content)
-                stream_url = url_match.group(0) if url_match else f"https://www.youtube.com/watch?v={video_id}"
+                if result.get('success'):
+                    self.logger.info("[LINKEDIN] ✁EAPI posting successful")
+                    return PostResult(
+                        success=True,
+                        platform=Platform.LINKEDIN,
+                        message=f"Posted via API: {result.get('message', 'Success')}",
+                        timestamp=datetime.now(),
+                        url=result.get('url')
+                    )
+                else:
+                    self.logger.warning(f"[LINKEDIN] ⚠�E�EAPI posting failed: {result.get('error', 'Unknown error')}")
+                    # Fall back to URL sharing
+                    self.logger.info("[LINKEDIN] 🔄 Falling back to URL sharing method...")
+                    return await self._linkedin_url_share_fallback(content)
 
-                # Use specialized stream notification function
-                self.logger.info(f"[LINKEDIN] Using unified interface for stream: {video_id}")
+            except Exception as api_error:
+                self.logger.warning(f"[LINKEDIN] ⚠�E�EAPI posting unavailable ({api_error}), using URL sharing fallback")
+                self.logger.info("[LINKEDIN] 🔄 Using LinkedIn Share URL method...")
 
-                # Determine which LinkedIn page to use
-                from modules.platform_integration.social_media_orchestrator.src.unified_linkedin_interface import LinkedInCompanyPage
-                linkedin_page_enum = LinkedInCompanyPage.FOUNDUPS  # Default
+                # Fallback: Use LinkedIn Share URL (Solution 4 from SOLUTION_GUIDE.md)
+                return await self._linkedin_url_share_fallback(content)
 
-                if linkedin_page:
-                    # Convert page ID string to enum
-                    for page in LinkedInCompanyPage:
-                        if page.value == linkedin_page:
-                            linkedin_page_enum = page
-                            break
-
-                self.logger.info(f"[LINKEDIN] Posting to page: {linkedin_page_enum.name}")
-                result = await post_stream_notification(title, stream_url, video_id, linkedin_page_enum)
-            else:
-                # Fallback to general posting
-                self.logger.info("[LINKEDIN] Using unified interface for general content")
-                result = await post_general_content(content)
-
-            # Convert to orchestrator's PostResult format
-            if result.success:
-                self.logger.info("[LINKEDIN] ✅ LinkedIn posting successful (unified)")
-                return PostResult(
-                    success=True,
-                    platform=Platform.LINKEDIN,
-                    message="Posted successfully via unified interface",
-                    timestamp=result.timestamp
-                )
-            else:
-                self.logger.warning(f"[ORCHESTRATOR] ❌ LinkedIn posting failed (unified): {result.message}")
-                return PostResult(
-                    success=False,
-                    platform=Platform.LINKEDIN,
-                    message=result.message,
-                    timestamp=result.timestamp
-                )
-            
         except Exception as e:
-            self.logger.error(f"[ORCHESTRATOR] LinkedIn error: {e}")
+            self.logger.error(f"[LINKEDIN] ❌ LinkedIn posting failed: {e}")
             return PostResult(
                 success=False,
                 platform=Platform.LINKEDIN,
-                message=str(e),
+                message=f"LinkedIn posting failed: {e}",
                 timestamp=datetime.now()
             )
-    
+
+    async def _linkedin_url_share_fallback(self, content: str) -> PostResult:
+        """Fallback LinkedIn posting using share URL (no API required)"""
+        try:
+            import webbrowser
+            import urllib.parse
+
+            self.logger.info("[LINKEDIN] 🌐 Opening LinkedIn share URL in browser...")
+
+            # Clean up content for URL
+            clean_content = content.replace('\n', ' ').strip()
+            if len(clean_content) > 200:  # LinkedIn URL limit
+                clean_content = clean_content[:197] + "..."
+
+            # Create LinkedIn share URL
+            share_url = "https://www.linkedin.com/sharing/share-offsite/"
+            params = {
+                'url': 'https://www.youtube.com/@UnDaoDu/live',  # Generic URL
+                'title': '0102 Live Stream',
+                'summary': clean_content
+            }
+
+            full_url = share_url + '?' + urllib.parse.urlencode(params)
+            webbrowser.open(full_url)
+
+            self.logger.info("[LINKEDIN] ✅ LinkedIn share URL opened in browser")
+            self.logger.info("[LINKEDIN] 📋 Content ready for manual posting")
+
+            return PostResult(
+                success=True,
+                platform=Platform.LINKEDIN,
+                message="LinkedIn share URL opened in browser (manual posting required)",
+                timestamp=datetime.now(),
+                url=full_url
+            )
+
+        except Exception as e:
+            self.logger.error(f"[LINKEDIN] ❌ URL sharing failed: {e}")
+            return PostResult(
+                success=False,
+                platform=Platform.LINKEDIN,
+                message=f"URL sharing failed: {e}",
+                timestamp=datetime.now()
+            )
+
     async def _post_to_x_twitter(self, content: str, linkedin_page: str = None) -> PostResult:
         """Post to X/Twitter using existing anti-detection poster"""
         try:
@@ -688,7 +812,7 @@ class SimplePostingOrchestrator:
             self.logger.info("="*60)
 
             if not (os.getenv('X_Acc1') and os.getenv('x_Acc_pass')):
-                self.logger.warning("[X/TWITTER] ❌ X/Twitter credentials not configured")
+                self.logger.warning("[X/TWITTER] ❁EX/Twitter credentials not configured")
                 return PostResult(
                     success=False,
                     platform=Platform.X_TWITTER,
@@ -696,7 +820,7 @@ class SimplePostingOrchestrator:
                     timestamp=datetime.now()
                 )
 
-            self.logger.info("[X/TWITTER] ✅ Credentials found")
+            self.logger.info("[X/TWITTER] ✁ECredentials found")
             self.logger.info(f"[X/TWITTER] 📝 Content length: {len(content)} chars")
             self.logger.info("[X/TWITTER] 🚀 Starting anti-detection poster...")
             
@@ -712,67 +836,60 @@ class SimplePostingOrchestrator:
             
             def post_to_x():
                 nonlocal x_success, error_message
-                global _GLOBAL_X_POSTER
+                global _GLOBAL_X_POSTER_FOUNDUPS, _GLOBAL_X_POSTER_GEOZAI
 
                 try:
                     # Use global singleton with thread-safe lock
                     with _POSTER_LOCK:
                         # Check if browser was manually closed
                         browser_closed = False
-                        if _GLOBAL_X_POSTER:
+                        # Check if either browser instance was closed manually
+                        if _GLOBAL_X_POSTER_FOUNDUPS:
                             try:
-                                # Try to access the browser to see if it's still alive
-                                if _GLOBAL_X_POSTER.driver:
-                                    _ = _GLOBAL_X_POSTER.driver.current_url
-                            except Exception as e:
-                                self.logger.warning("[X THREAD] ⚠️ Browser was manually closed")
-                                self.logger.info("[X THREAD] 🔄 Will create new instance")
-                                browser_closed = True
-                                _GLOBAL_X_POSTER = None
+                                _ = _GLOBAL_X_POSTER_FOUNDUPS.driver.current_url
+                            except:
+                                _GLOBAL_X_POSTER_FOUNDUPS = None
+                        if _GLOBAL_X_POSTER_GEOZAI:
+                            try:
+                                _ = _GLOBAL_X_POSTER_GEOZAI.driver.current_url
+                            except:
+                                _GLOBAL_X_POSTER_GEOZAI = None
 
-                        # Determine which X account to use based on channel
-                        # Move2Japan (104834798) uses GeozeAi (X_Acc1)
-                        # FoundUps (1263645) and UnDaoDu (68706058) use Foundups (X_Acc2)
-                        use_foundups = linkedin_page != "104834798"  # Use Foundups unless it's Move2Japan
+                        # Determine which X account to use based on channel configuration
+                        use_foundups = self._get_x_account_for_linkedin_page(linkedin_page)
 
-                        # Check if we need to switch accounts
-                        need_new_instance = False
-                        if _GLOBAL_X_POSTER is not None:
-                            # Check if current instance is using the right account
-                            current_is_foundups = _GLOBAL_X_POSTER.username == os.getenv('X_Acc2', 'Foundups')
-                            if current_is_foundups != use_foundups:
-                                self.logger.info("[X THREAD] ⚠️ Account switch needed - closing current browser")
-                                try:
-                                    _GLOBAL_X_POSTER.driver.quit()
-                                except:
-                                    pass
-                                _GLOBAL_X_POSTER = None
-                                need_new_instance = True
+                        if use_foundups:
+                            # Use FoundUps account (@Foundups)
+                            self.logger.info("[X THREAD] 🐕 Using FoundUps X account (@Foundups)")
 
-                        # REUSE GLOBAL SINGLETON INSTANCE - Only ONE browser window
-                        if _GLOBAL_X_POSTER is None:
-                            if browser_closed:
-                                self.logger.info("[X THREAD] 🔄 Recreating X poster after manual close...")
-                            elif need_new_instance:
-                                self.logger.info("[X THREAD] 🔄 Creating new instance for account switch...")
+                            if _GLOBAL_X_POSTER_FOUNDUPS is None:
+                                self.logger.info("[X THREAD] [NEW] Creating FoundUps X browser (Chrome)...")
+                                self.logger.info("[X THREAD] 💡 This will open a Chrome window for @Foundups")
+                                _GLOBAL_X_POSTER_FOUNDUPS = AntiDetectionX(use_foundups=True)
+                                self.logger.info("[X THREAD] ✁EFoundUps X poster created")
                             else:
-                                self.logger.info("[X THREAD] [NEW] Creating GLOBAL singleton X poster...")
-                            self.logger.info("[X THREAD] [GLOBAL] This will open ONE browser window")
+                                self.logger.info("[X THREAD] ♻�E�EREUSING FoundUps Chrome browser")
 
-                            if not use_foundups:
-                                self.logger.info("[X THREAD] 🎌 Using Move2Japan X account (GeozeAi)")
-                            else:
-                                self.logger.info("[X THREAD] 🐕 Using FoundUps X account")
-
-                            _GLOBAL_X_POSTER = AntiDetectionX(use_foundups=use_foundups)
-                            self.logger.info("[X THREAD] ✅ Global X poster created")
+                            poster = _GLOBAL_X_POSTER_FOUNDUPS
                         else:
-                            self.logger.info("[X THREAD] ♻️ REUSING GLOBAL X instance")
-                            self.logger.info("[X THREAD] 🌐 Browser window already open")
+                            # Use Move2Japan/GeozeAi account (@GeozeAi)
+                            self.logger.info("[X THREAD] 🎌 Using Move2Japan X account (@GeozeAi)")
+                            self.logger.info("[X THREAD] ⚠�E�ENOTE: Make sure you're logged into @GeozeAi in a separate browser")
+
+                            if _GLOBAL_X_POSTER_GEOZAI is None:
+                                self.logger.info("[X THREAD] [NEW] Creating GeozeAi X browser...")
+                                self.logger.info("[X THREAD] 💡 This will open another browser window for @GeozeAi")
+                                self.logger.info("[X THREAD] 💡 TIP: Use Edge or Firefox for @GeozeAi to avoid conflicts")
+                                _GLOBAL_X_POSTER_GEOZAI = AntiDetectionX(use_foundups=False)
+                                self.logger.info("[X THREAD] ✁EGeozeAi X poster created")
+                            else:
+                                self.logger.info("[X THREAD] ♻�E�EREUSING GeozeAi browser")
+
+                            poster = _GLOBAL_X_POSTER_GEOZAI
 
                         self.logger.info("[X THREAD] 📤 Calling post_to_x()...")
                         self.logger.info(f"[X THREAD] ⏰ Start time: {datetime.now().strftime('%H:%M:%S')}")
-                        result = _GLOBAL_X_POSTER.post_to_x(content)  # Note: removed video_id param
+                        result = poster.post_to_x(content)  # Use the selected poster
                         self.logger.info(f"[X THREAD] ⏰ End time: {datetime.now().strftime('%H:%M:%S')}")
 
                     x_success = bool(result)
@@ -791,7 +908,7 @@ class SimplePostingOrchestrator:
                 await asyncio.sleep(0.1)
             
             if x_success:
-                self.logger.info("[ORCHESTRATOR] ✅ X/Twitter posting successful")
+                self.logger.info("[ORCHESTRATOR] ✁EX/Twitter posting successful")
                 return PostResult(
                     success=True,
                     platform=Platform.X_TWITTER,
@@ -799,7 +916,7 @@ class SimplePostingOrchestrator:
                     timestamp=datetime.now()
                 )
             else:
-                self.logger.warning(f"[ORCHESTRATOR] ❌ X/Twitter posting failed: {error_message}")
+                self.logger.warning(f"[ORCHESTRATOR] ❁EX/Twitter posting failed: {error_message}")
                 return PostResult(
                     success=False,
                     platform=Platform.X_TWITTER,
@@ -865,8 +982,8 @@ def handle_stream_detected(video_id: str, stream_title: str = None, linkedin_pag
             ))
 
             # Log results
-            if response.all_successful():
-                logger.info(f"[ORCHESTRATOR] ✅ Posted to all platforms successfully")
+            if response.failure_count == 0:
+                logger.info(f"[ORCHESTRATOR] ✁EPosted to all platforms successfully")
             else:
                 logger.info(f"[ORCHESTRATOR] Posted to {response.success_count}/{len(response.results)} platforms")
 

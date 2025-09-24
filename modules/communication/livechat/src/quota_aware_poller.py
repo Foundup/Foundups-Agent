@@ -86,9 +86,10 @@ class QuotaAwarePoller:
         # Calculate time since last message
         time_since_message = time.time() - self.last_message_time
         
-        # CRITICAL: Over quota or near limit
-        if quota_percentage >= 1.0:
-            logger.critical(f"🚨 QUOTA EXHAUSTED: {units_used}/{self.daily_limit} units")
+        # CRITICAL: Over quota or near limit - EMERGENCY SHUTOFF
+        if quota_percentage >= 0.98:  # Stop at 98% to prevent death spiral
+            logger.critical(f"🚨 QUOTA EXHAUSTED: {units_used}/{self.daily_limit} units ({quota_percentage:.1%})")
+            logger.critical("🛑 EMERGENCY SHUTOFF - Stopping polling to preserve quota")
             return None  # Stop polling entirely
         
         if quota_percentage >= 0.95:

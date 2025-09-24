@@ -110,6 +110,27 @@ def get_authenticated_service(token_index=None):
                 # If loading fails, skip to the next credential set
                 continue
 
+        # Proactive token refresh - refresh if expiring within 10 minutes
+        if creds and creds.valid and creds.expiry:
+            from datetime import datetime, timedelta, timezone
+            time_until_expiry = creds.expiry - datetime.now(timezone.utc)
+            if time_until_expiry < timedelta(minutes=10):
+                logger.info(f"🔄 Token expiring in {time_until_expiry.seconds // 60} minutes for set {index}, proactively refreshing...")
+                try:
+                    creds.refresh(Request())
+                    logger.info(f"✅ Proactive refresh successful for set {index} (new expiry: {creds.expiry})")
+                    # Save the refreshed credentials
+                    try:
+                        with open(token_file, 'w') as token:
+                            token.write(creds.to_json())
+                        logger.info(f"💾 Refreshed credentials saved for set {index}")
+                    except Exception as save_e:
+                        logger.warning(f"⚠️ Could not save refreshed credentials: {save_e}")
+                except Exception as refresh_e:
+                    logger.warning(f"⚠️ Proactive refresh failed for set {index}: {refresh_e}")
+                    # Mark as invalid to trigger normal refresh flow
+                    creds = None
+
         # Handle credential refresh or new authentication
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
@@ -117,21 +138,42 @@ def get_authenticated_service(token_index=None):
                 try:
                     creds.refresh(Request())
                     logger.info(f"✅ Credentials refreshed successfully for set {index}")
+                    # Log the new expiration time
+                    if creds.expiry:
+                        logger.info(f"📅 New token expires at: {creds.expiry} (valid for ~1 hour)")
                 except Exception as e:
-                    logger.error(f"❌ Failed to refresh token for set {index}: {e}")
+                    error_msg = str(e)
+                    # Better error distinction
+                    if 'invalid_grant' in error_msg:
+                        if 'Token has been expired or revoked' in error_msg:
+                            # Try to distinguish between expired and revoked
+                            if 'revoked' in error_msg.lower():
+                                logger.error(f"🚫 Token has been REVOKED for set {index} - user action required")
+                                logger.info(f"ℹ️ To fix: Run 'python modules/platform_integration/youtube_auth/scripts/authorize_set{index}.py'")
+                            else:
+                                logger.error(f"⏰ Refresh token EXPIRED for set {index} (tokens last 6 months if unused)")
+                                logger.info(f"ℹ️ To fix: Run 'python modules/platform_integration/youtube_auth/scripts/authorize_set{index}.py'")
+                        else:
+                            logger.error(f"❌ Invalid grant error for set {index}: {error_msg}")
+                    else:
+                        logger.error(f"❌ Failed to refresh token for set {index}: {e}")
+
                     # Continue to next credential set instead of trying OAuth flow
                     continue
             else:
                 if creds and creds.expired and not creds.refresh_token:
                     logger.warning(f"⚠️ Credentials expired for set {index} but no refresh token available")
+                    logger.info(f"ℹ️ To fix: Run 'python modules/platform_integration/youtube_auth/scripts/authorize_set{index}.py'")
                 else:
                     logger.info(f"🆕 No valid credentials found for set {index}, initiating OAuth flow...")
-                
+
                 try:
                     flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
                         client_secrets_file, scopes)
                     creds = flow.run_local_server(port=0)
                     logger.info(f"✅ OAuth flow completed successfully for set {index}")
+                    if creds.expiry:
+                        logger.info(f"📅 Token expires at: {creds.expiry}")
                 except Exception as e:
                     logger.error(f"❌ OAuth flow failed for set {index}: {e}")
                     continue
@@ -202,7 +244,20 @@ def get_authenticated_service(token_index=None):
     # If we get here, all credential sets failed
     error_msg = f"💥 All credential sets failed to authenticate (tried {len(indices_to_try)} sets)"
     logger.critical(error_msg)
-    raise Exception("Could not authenticate with any Google credential set.")
+    logger.critical("🔓 FALLING BACK TO NO-AUTH MODE - Read-only YouTube operations")
+
+    # Return a no-auth YouTube service for read-only operations
+    # This allows checking if streams are live without consuming quota
+    try:
+        youtube_service = build('youtube', 'v3', developerKey=os.getenv('YOUTUBE_API_KEY', None))
+        if youtube_service:
+            logger.warning("✅ No-auth YouTube service created - Limited to public read-only operations")
+            return youtube_service
+    except Exception as e:
+        logger.error(f"❌ Failed to create no-auth service: {e}")
+
+    # Only raise if we can't even create a no-auth service
+    raise Exception("Could not authenticate with any Google credential set and no API key available.")
 
 # YouTube Comment API Extensions (Per WSP 84 - Enhance existing module)
 def list_video_comments(youtube_service, video_id: str, max_results: int = 100):

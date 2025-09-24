@@ -1,4 +1,4 @@
-# Qwen Advisor Interface
+# Qwen Advisor Interface (Including HoloDAE)
 
 ## Public API
 
@@ -205,6 +205,29 @@ print(f"Relevant WSPs: {analysis.suggested_wsps}")
 guidance_items = master.generate_comprehensive_guidance(analysis)
 for item in guidance_items:
     print(f"{item.wsp_reference}: {item.guidance}")
+```
+
+### HoloDAE Autonomous Intelligence
+```python
+from holo_index.qwen_advisor.autonomous_holodae import autonomous_holodae
+
+# Start autonomous monitoring (green LEGO baseboard)
+autonomous_holodae.start_autonomous_monitoring()
+
+# Handle HoloIndex request (automatic via CLI)
+report = autonomous_holodae.handle_holoindex_request(
+    query="create module",
+    search_results={'code': [...], 'wsps': [...]}
+)
+
+# Get status
+status = autonomous_holodae.get_status_report()
+print(f"Active: {status['active']}")
+print(f"Module: {status['current_module']}")
+print(f"Pattern: {status['task_pattern']}")
+
+# Stop monitoring
+autonomous_holodae.stop_autonomous_monitoring()
 ```
 
 ### Direct LLM Usage

@@ -654,10 +654,19 @@ class LiveChatCore:
                     
                     # Let quota poller know about activity
                     if self.quota_poller:
-                        poll_interval_ms = int(self.quota_poller.calculate_optimal_interval(
+                        optimal_interval = self.quota_poller.calculate_optimal_interval(
                             messages_received=len(messages),
                             stream_active=self.is_running
-                        ) * 1000)
+                        )
+
+                        # CRITICAL: Handle quota exhaustion (None return)
+                        if optimal_interval is None:
+                            logger.critical("🚨 QUOTA EXHAUSTED - calculate_optimal_interval returned None")
+                            logger.critical("🛑 EMERGENCY SHUTDOWN - Stopping all polling to preserve quota")
+                            self.is_running = False
+                            break
+
+                        poll_interval_ms = int(optimal_interval * 1000)
                     # Only reset error counter if we actually got a successful API response
                     # Empty messages list is OK (quiet chat), but API errors are not
                     consecutive_poll_errors = 0
@@ -716,6 +725,19 @@ class LiveChatCore:
                     if "quotaExceeded" in error_details or "403" in error_details:
                         logger.warning(f"[AUTO-QUOTA] Quota exceeded error detected")
                         if self.intelligent_throttle:
+                            # Check if all credential sets are exhausted before switching
+                            status = self.intelligent_throttle.get_status()
+                            all_exhausted = all(
+                                quota_info.get('exhausted', False) or quota_info.get('percentage', 0) >= 98
+                                for quota_info in status.get('quota_states', {}).values()
+                            )
+
+                            if all_exhausted:
+                                logger.critical("🚨 ALL CREDENTIAL SETS EXHAUSTED - EMERGENCY SHUTDOWN")
+                                logger.critical("🛑 Stopping all operations to prevent quota death spiral")
+                                self.is_running = False
+                                break
+
                             # Automatically switch credential sets
                             new_set = self.intelligent_throttle.handle_quota_error()
                             logger.info(f"[AUTO-QUOTA] Switching to credential set {new_set}")

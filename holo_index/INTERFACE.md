@@ -1,8 +1,11 @@
 # HoloIndex Public Interface
 
+## Overview
+HoloIndex has evolved into an autonomous intelligence foundation with HoloDAE - the "green foundation board agent" that comes with every LEGO set. Every search now triggers automatic intelligence analysis.
+
 ## Module API
 
-### Core Search Interface
+### Core Search Interface (Now with HoloDAE Intelligence)
 
 ```python
 from holo_index.cli import HoloIndex
@@ -53,6 +56,33 @@ holo.index_wsp_entries(paths=[Path("WSP_framework/")])
 
 # Index everything
 holo.index_all()
+```
+
+### HoloDAE Autonomous Intelligence Interface
+
+```python
+from holo_index.qwen_advisor.autonomous_holodae import autonomous_holodae
+
+# Start autonomous monitoring (like YouTube DAE)
+autonomous_holodae.start_autonomous_monitoring()
+
+# Get status report
+status = autonomous_holodae.get_status_report()
+# Returns: {
+#     'active': bool,
+#     'uptime_minutes': int,
+#     'files_watched': int,
+#     'current_module': str,
+#     'task_pattern': str,
+#     'session_actions': int,
+#     'last_activity': str
+# }
+
+# Stop monitoring
+autonomous_holodae.stop_autonomous_monitoring()
+
+# Manual request handling (automatic via CLI)
+report = autonomous_holodae.handle_holoindex_request(query, search_results)
 ```
 
 ### AI Advisor Interface
@@ -184,6 +214,16 @@ python holo_index.py --search "query" [options]
 python holo_index.py --index-all     # Index everything
 python holo_index.py --index-code    # Index code only
 python holo_index.py --index-wsp     # Index WSP only
+```
+
+### HoloDAE Autonomous Monitoring
+```bash
+python holo_index.py --start-holodae  # Start autonomous monitoring
+python holo_index.py --stop-holodae   # Stop monitoring
+python holo_index.py --holodae-status # Get status report
+
+# Or via main.py:
+python main.py --holo                  # Start HoloDAE monitoring
 ```
 
 ### DAE Initialization

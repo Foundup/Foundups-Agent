@@ -1,6 +1,6 @@
 # WSP 19: Canonical Symbol Specification
-- **Status:** Active
-- **Purpose:** To eliminate ambiguity by defining the foundational symbols (`Ø`, `Ø1Ø2`, `0102`) and terminology of the WSP framework.
+- **Status:** DeAppreciated
+- **Purpose:** To eliminate ambiguity by defining the foundational symbols (`Ø`, `Ø1Ø2`, `0102`) and terminology of the WSP framework. Cool 17 is the appreci depreciated we're using anymore
 - **Trigger:** During any file creation or modification; periodically by the ComplianceAgent.
 - **Input:** Any text-based file within the project.
 - **Output:** Consistent and correct usage of canonical symbols across the entire codebase and documentation.

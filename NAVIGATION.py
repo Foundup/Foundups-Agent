@@ -27,6 +27,17 @@ NEED_TO = {
     "post to linkedin/twitter": "modules.platform_integration.social_media_orchestrator.src.simple_posting_orchestrator.handle_stream_detected()",
     "check if already posted": "modules.platform_integration.social_media_orchestrator.src.simple_posting_orchestrator.check_if_already_posted()",
 
+    # Core Social Media Components (Refactored)
+    "prevent duplicate posts": "modules.platform_integration.social_media_orchestrator.src.core.duplicate_prevention_manager.DuplicatePreventionManager",
+    "manage duplicate history": "modules.platform_integration.social_media_orchestrator.src.core.duplicate_prevention_manager.DuplicatePreventionManager.mark_as_posted()",
+    "verify stream is live": "modules.platform_integration.social_media_orchestrator.src.core.live_status_verifier.LiveStatusVerifier.verify_live_status()",
+    "check live status cache": "modules.platform_integration.social_media_orchestrator.src.core.live_status_verifier.LiveStatusVerifier.clear_cache()",
+    "get channel configuration": "modules.platform_integration.social_media_orchestrator.src.core.channel_configuration_manager.ChannelConfigurationManager.get_channel_config()",
+    "map linkedin to x account": "modules.platform_integration.social_media_orchestrator.src.core.channel_configuration_manager.ChannelConfigurationManager.get_x_account_for_linkedin_page()",
+    "post to social platforms": "modules.platform_integration.social_media_orchestrator.src.core.platform_posting_service.PlatformPostingService",
+    "execute platform posting": "modules.platform_integration.social_media_orchestrator.src.core.platform_posting_service.PlatformPostingService.post_to_both_platforms()",
+    "clean orchestrator": "modules.platform_integration.social_media_orchestrator.src.refactored_posting_orchestrator.RefactoredPostingOrchestrator",
+
     # API Management
     "check youtube quota": "modules.platform_integration.youtube_auth.src.quota_monitor.QuotaMonitor",
     "throttle api calls": "modules.communication.livechat.src.intelligent_throttle_manager.IntelligentThrottleManager",
@@ -66,6 +77,15 @@ NEED_TO = {
 
     # Navigation Operations
     "run navigation audit": "WSP_framework/reports/NAVIGATION/NAVIGATION_COVERAGE.md -> update and commit",
+
+    # HoloIndex Health and Monitoring
+    "audit module dependencies": "holo_index.module_health.dependency_audit.DependencyAuditor",
+    "check file sizes": "holo_index.module_health.size_audit.SizeAuditor",
+    "validate module structure": "holo_index.module_health.structure_audit.StructureAuditor",
+    "trace breadcrumbs": "holo_index.adaptive_learning.breadcrumb_tracer.BreadcrumbTracer",
+    "monitor agent violations": "holo_index.monitoring.agent_violation_prevention",
+    "self monitor holo": "holo_index.monitoring.self_monitoring",
+    "watch terminal output": "holo_index.monitoring.terminal_watcher",
     "validate navigation schema": "python -m tests.navigation.test_navigation_schema",
 
     # HoloIndex Advisor (Qwen)

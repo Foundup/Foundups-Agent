@@ -2,6 +2,16 @@
 
 ## Latest Changes
 
+### **V026 - Dual Browser Support for X Accounts**
+#### **Change**: Edge for @Foundups, Chrome for @GeozeAi/Move2Japan
+#### **Why**: Prevent login conflicts and allow simultaneous X account usage
+#### **How**: Modified setup_driver() to detect account type and launch appropriate browser
+#### **Impact**:
+- @Foundups uses Edge with profile in edge_profile_foundups/
+- @GeozeAi uses Chrome with profile in chrome_profile_geozai/
+- Fallback to Chrome if Edge not available for FoundUps
+#### **WSP**: WSP 3 (module organization), WSP 50 (pre-action verification)
+
 ### **V025 - Fixed FoundUps Account Selection for Git Posts**
 
 #### **Change**: Fixed X poster to use correct FoundUps account (X_Acc2) for git posts

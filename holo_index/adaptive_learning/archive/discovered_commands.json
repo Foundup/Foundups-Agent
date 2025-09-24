@@ -1,0 +1,174 @@
+{
+  "discovered_commands": {
+    "slash_commands": {
+      "magadoom": {
+        "active": [
+          "/score",
+          "/stats",
+          "/rank",
+          "/whacks",
+          "/frags",
+          "/leaderboard",
+          "/sprees",
+          "/help",
+          "/session",
+          "/toggle",
+          "/quiz",
+          "/facts"
+        ],
+        "deprecated": {
+          "/level": "Use /score instead",
+          "/answer": "Use /quiz [answer] instead",
+          "/top": "Use /leaderboard instead",
+          "/fscale": "Coming soon - use /facts",
+          "/rate": "Coming soon - use /facts"
+        }
+      },
+      "pqn_research": {
+        "primary": [
+          "/pqn",
+          "/research",
+          "!pqn",
+          "!research"
+        ],
+        "typo_handlers": [
+          "/pnq",
+          "!pnq",
+          "/pqm",
+          "!pqm"
+        ],
+        "description": "Quantum consciousness pattern research"
+      }
+    },
+    "special_commands": {
+      "factcheck": {
+        "patterns": [
+          "factcheck @username",
+          "fc @username",
+          "@username fc",
+          "@username factcheck"
+        ],
+        "can_combine_with": [
+          "笨岩恚鱒"
+        ],
+        "description": "Instant truth detection for users"
+      },
+      "consciousness_triggers": {
+        "patterns": [
+          "笨岩恚鱒 [question]",
+          "笨岩恚鱒 fc @username",
+          "笨岩恚鱒 rate @username"
+        ],
+        "modes": [
+          "mod_only",
+          "everyone"
+        ],
+        "description": "0102 consciousness response triggers"
+      }
+    },
+    "command_locations": {
+      "/score": "modules/communication/livechat/src/command_handler.py:58",
+      "/pqn": "modules/communication/livechat/src/message_processor.py:745",
+      "/pnq": "modules/communication/livechat/src/message_processor.py:747",
+      "factcheck": "modules/communication/livechat/src/message_processor.py:677",
+      "笨岩恚鱒": "modules/communication/livechat/src/consciousness_handler.py:151"
+    },
+    "command": [
+      {
+        "type": "command",
+        "primary": "/pnq",
+        "variants": [
+          "/pqn",
+          "!pnq",
+          "/pqm"
+        ],
+        "location": "message_processor.py:747",
+        "context": "PQN typo handler",
+        "discovered_at": "2025-09-24T22:24:17.426650",
+        "discovered_by": "0102 DAE"
+      },
+      {
+        "type": "command",
+        "primary": "factcheck",
+        "variants": [
+          "fc",
+          "@user fc",
+          "fc @user"
+        ],
+        "location": "message_processor.py:677",
+        "context": "Fact-check command",
+        "discovered_at": "2025-09-24T22:24:17.435616",
+        "discovered_by": "0102 DAE"
+      },
+      {
+        "type": "command",
+        "primary": "✊✋🖐",
+        "variants": [
+          "consciousness",
+          "0102 trigger"
+        ],
+        "location": "consciousness_handler.py:151",
+        "context": "Consciousness trigger",
+        "discovered_at": "2025-09-24T22:24:17.452615",
+        "discovered_by": "0102 DAE"
+      }
+    ],
+    "typo_pattern": [
+      {
+        "type": "typo_pattern",
+        "primary": "pqn",
+        "variants": [
+          "pnq"
+        ],
+        "location": "adaptive_learning",
+        "context": "Common typo: pnq for pqn",
+        "discovered_at": "2025-09-24T22:24:17.469645",
+        "discovered_by": "0102 DAE"
+      },
+      {
+        "type": "typo_pattern",
+        "primary": "research",
+        "variants": [
+          "reserach"
+        ],
+        "location": "adaptive_learning",
+        "context": "Common typo: reserach for research",
+        "discovered_at": "2025-09-24T22:24:17.485616",
+        "discovered_by": "0102 DAE"
+      }
+    ],
+    "repeated_search": [
+      {
+        "type": "repeated_search",
+        "primary": "help command livechat",
+        "variants": [],
+        "location": "agent_activity_monitoring",
+        "context": "Search pattern 'help command livechat' used 2 times in general category",
+        "discovered_at": "2025-09-24T23:25:58.343620",
+        "discovered_by": "0102 DAE"
+      }
+    ]
+  },
+  "discovery_metadata": {
+    "last_updated": "2025-09-24",
+    "discovered_by": "0102 DAE",
+    "discovery_method": "Deep code analysis via grep and pattern matching",
+    "total_commands": 32,
+    "new_discoveries": 8
+  },
+  "learning_feedback": {
+    "new_patterns_found": [
+      "Typo tolerance handlers (e.g., /pnq for /pqn)",
+      "Non-slash special commands (factcheck, fc)",
+      "Emoji-based triggers (笨岩恚鱒)",
+      "Compound commands (@username fc)",
+      "Deprecated command redirects"
+    ],
+    "search_improvements_needed": [
+      "Include typo variants in semantic search",
+      "Index special character commands (emojis)",
+      "Map deprecated commands to active ones",
+      "Include command combinations in search"
+    ]
+  }
+}

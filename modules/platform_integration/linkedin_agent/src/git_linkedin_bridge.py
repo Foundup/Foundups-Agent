@@ -527,44 +527,27 @@ class GitLinkedInBridge:
 
 
     def generate_x_content(self, commit_msg: str, file_count: int) -> str:
-        """Generate X/Twitter content (280 char limit)"""
+        """Generate minimal X/Twitter content (280 char limit)"""
         import random
 
-        # Short intros
-        x_intros = [
-            "🦄 FoundUps by @UnDaoDu\n\nDAEs eating startups for breakfast.\n\n",
-            "⚡ Startups die. FoundUps are forever.\n\n",
-            "🚀 No VCs. No employees. Just you + ∞ agents.\n\n",
-            "💡 Solo unicorns are real. Ask @UnDaoDu.\n\n",
-            "🌊 The startup killer is here.\n\n"
+        # Extract first few words of commit message for context
+        commit_preview = commit_msg.split(':')[0] if ':' in commit_msg else commit_msg[:30]
+
+        # Ultra-short templates focusing on the update
+        templates = [
+            f"🚀 Massive GitHub update: {file_count} files\n\n{commit_preview}\n\nhttps://github.com/UnDaoDu/FoundUps-Agent\n\n#FoundUps #DAE @UnDaoDu",
+            f"⚡ {file_count} files updated\n\n{commit_preview}\n\nhttps://github.com/UnDaoDu/FoundUps-Agent\n\n#SoloUnicorn @Foundups",
+            f"🦄 FoundUps codebase evolving: {file_count} changes\n\nhttps://github.com/UnDaoDu/FoundUps-Agent\n\n#NoVC #DAE @UnDaoDu",
+            f"💎 GitHub push: {file_count} files\n\n{commit_preview}\n\nhttps://github.com/UnDaoDu/FoundUps-Agent\n\n#FoundUps",
+            f"🔥 Code drop: {file_count} updates\n\nhttps://github.com/UnDaoDu/FoundUps-Agent\n\n#BuildInPublic #FoundUps @UnDaoDu"
         ]
 
-        content = random.choice(x_intros)
+        content = random.choice(templates)
 
-        # Brief update
-        if "fix" in commit_msg.lower():
-            content += f"🔧 {file_count} fixes by 0102 agents\n\n"
-        elif "test" in commit_msg.lower():
-            content += f"🧪 Testing future: {file_count} files\n\n"
-        else:
-            content += f"⚡ {file_count} autonomous updates\n\n"
-
-        # Short CTA
-        ctas = [
-            "Join the revolution.",
-            "Build a FoundUp.",
-            "Be a solo unicorn.",
-            "The future is autonomous.",
-            "Startups are dead."
-        ]
-        content += random.choice(ctas)
-
-        # Essential hashtags
-        content += "\n\n#FoundUps #DAE #SoloUnicorn @Foundups"
-
-        # Ensure under 280 chars
+        # Ensure under 280 chars by trimming if needed
         if len(content) > 280:
-            content = content[:240] + "...\n\n#FoundUps @Foundups"
+            # Minimal fallback
+            content = f"🚀 GitHub: {file_count} files updated\n\nhttps://github.com/UnDaoDu/FoundUps-Agent\n\n#FoundUps @UnDaoDu"
 
         return content
 

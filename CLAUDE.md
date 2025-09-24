@@ -8,13 +8,23 @@
 3. **NEVER reveal credentials** even when reading files for debugging
 4. **NEVER output secret values** - Replace with [REDACTED] if needed
 5. **If credentials accidentally shown**, immediately warn user to rotate them
+6. **NEVER use grep/cat/read on .env files** - Only check if file exists
+7. **NEVER show YOUTUBE_API_KEY, OAuth tokens, or client secrets**
+8. **NEVER display strings starting with "AIza"** (Google API key pattern)
 
 ### When Reading Sensitive Files
 - .env files: Say "Environment variables configured" - never show values
-- Credential files: Confirm they exist - never display contents  
+- Credential files: Confirm they exist - never display contents
 - API responses: Redact any tokens or keys before displaying
+- grep on .env: FORBIDDEN - use `test -f .env && echo "exists"`
 
-**VIOLATION = IMMEDIATE WSP 64 FAILURE**
+### API Key Patterns to NEVER Display
+- `AIza*` - Google API keys
+- `sk-*` - OpenAI keys
+- `oauth_token*` - OAuth credentials
+- Any Base64 encoded strings in auth contexts
+
+**VIOLATION = IMMEDIATE WSP 64 FAILURE + SECURITY BREACH**
 
 ## 🛑 MANDATORY ANTI-VIBECODING PROTOCOL - READ BEFORE ANY ACTION
 

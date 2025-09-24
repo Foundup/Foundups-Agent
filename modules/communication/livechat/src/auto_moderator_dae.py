@@ -99,17 +99,20 @@ class AutoModeratorDAE:
         if not self.stream_resolver:
             self.stream_resolver = StreamResolver(self.service)
         
-        # List of channels to check - FoundUps, Move2Japan, and UnDaoDu (WSP 3: Multi-channel support)
+        # List of channels to check - PRIORITIZE MOVE2JAPAN FIRST (WSP 3: Multi-channel support)
         channels_to_check = [
-            os.getenv('CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),   # UnDaoDu main channel
-            os.getenv('CHANNEL_ID2', 'UCSNTUXjAgpd4sgWYP0xoJgw'),  # FoundUps channel
-            os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UCklMTNnu5POwRmQsg5JJumA'),  # Move2Japan channel
+            os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UCklMTNnu5POwRmQsg5JJumA'),  # Move2Japan channel - PRIORITY 1
+            os.getenv('CHANNEL_ID2', 'UCSNTUXjAgpd4sgWYP0xoJgw'),  # FoundUps channel - PRIORITY 2
+            os.getenv('CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),   # UnDaoDu main channel - PRIORITY 3
         ]
         
         # Filter out None values
         channels_to_check = [ch for ch in channels_to_check if ch]
         
-        # Try each channel
+        # Try each channel and collect all active streams
+        found_streams = []  # Collect all found streams for social media posting
+        first_stream_to_monitor = None  # The stream we'll actually monitor
+
         for i, channel_id in enumerate(channels_to_check, 1):
             channel_name = self.stream_resolver._get_channel_display_name(channel_id)
             logger.info(f"🔎 [{i}/{len(channels_to_check)}] Checking {channel_name}: {channel_id[:12]}...")
@@ -120,7 +123,7 @@ class AutoModeratorDAE:
             except Exception as e:
                 logger.error(f"🔎 [{i}/{len(channels_to_check)}] {channel_name}... ERROR: {e}")
                 result = None
-            
+
             if result and result[0]:  # Accept stream even without chat_id
                 video_id = result[0]
                 live_chat_id = result[1] if len(result) > 1 else None
@@ -132,10 +135,41 @@ class AutoModeratorDAE:
                 else:
                     logger.info(f"✅ Found stream on {channel_name} with video ID: {video_id} 🎉")
 
-                return video_id, live_chat_id
-        
-        logger.info(f"❌ No active livestream found on {len(channels_to_check)} channel(s)")
-        return None
+                # Trigger social media posting for EVERY stream found
+                logger.info(f"📱 Triggering social media posting for {channel_name} stream (video: {video_id})...")
+                try:
+                    # Call the stream resolver's trigger method
+                    self.stream_resolver._trigger_social_media_post(video_id, None, channel_id)
+
+                    # Add delay between social media postings to allow user to keep up
+                    if len(found_streams) > 0:  # If we already have streams, add delay
+                        logger.info(f"⏳ Waiting 15 seconds before next stream posting...")
+                        time.sleep(15)
+                except Exception as e:
+                    logger.error(f"📱 Failed to trigger social media posting for {channel_name}: {e}")
+
+                # Store the stream info
+                found_streams.append({
+                    'video_id': video_id,
+                    'live_chat_id': live_chat_id,
+                    'channel_id': channel_id,
+                    'channel_name': channel_name
+                })
+
+                # Remember the first stream found for monitoring
+                if not first_stream_to_monitor:
+                    first_stream_to_monitor = (video_id, live_chat_id)
+
+        # Report results
+        if found_streams:
+            logger.info(f"✅ Found {len(found_streams)} active stream(s):")
+            for stream in found_streams:
+                logger.info(f"  • {stream['channel_name']}: {stream['video_id']}")
+            logger.info(f"📺 Will monitor first stream: {found_streams[0]['channel_name']}")
+            return first_stream_to_monitor
+        else:
+            logger.info(f"❌ No active livestream found on {len(channels_to_check)} channel(s)")
+            return None
     
     async def monitor_chat(self):
         """

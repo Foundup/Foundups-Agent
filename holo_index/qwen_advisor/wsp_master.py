@@ -373,3 +373,68 @@ class WSPMaster:
     def get_related_wsps(self, wsp_num: str) -> List[str]:
         """Get WSPs related to the given WSP."""
         return self.protocol_relationships.get(wsp_num, [])
+
+    def _contains_unicode_emojis(self, text: str) -> bool:
+        """
+        Check if text contains Unicode characters or emojis that can cause encoding issues.
+
+        WSP 20 (Professional and Scientific Language) allows Unicode but STRONGLY
+        RECOMMENDS AGAINST it due to cross-platform compatibility issues.
+        """
+        # Common emoji ranges and Unicode symbols
+        emoji_ranges = [
+            (0x1F600, 0x1F64F),  # Emoticons
+            (0x1F300, 0x1F5FF),  # Misc Symbols and Pictographs
+            (0x1F680, 0x1F6FF),  # Transport and Map
+            (0x1F1E0, 0x1F1FF),  # Flags
+            (0x2600, 0x26FF),    # Misc symbols
+            (0x2700, 0x27BF),    # Dingbats
+            (0x2B00, 0x2BFF),    # Misc Symbols and Arrows
+        ]
+
+        for char in text:
+            code = ord(char)
+            # Check if character is in emoji ranges
+            for start, end in emoji_ranges:
+                if start <= code <= end:
+                    return True
+            # Check for other Unicode symbols that can cause issues
+            if code > 0x7F:  # Non-ASCII characters
+                # Allow some common characters that are usually safe in comments
+                if not (0xC0 <= code <= 0xFF):  # Latin-1 supplement (but still risky)
+                    return True
+
+        return False
+
+    def check_unicode_violation(self, text: str, context: str = "general") -> Dict[str, Any]:
+        """
+        Check for WSP 20 Unicode/emojis in code or documentation.
+
+        WSP 20 ALLOWS Unicode/emojis but STRONGLY RECOMMENDS AGAINST THEM
+        due to cross-platform encoding issues, especially on Windows systems.
+
+        Args:
+            text: The text to check
+            context: Context where the text appears ("code", "comments", "docs", "general")
+
+        Returns:
+            Dict with preventive warning details
+        """
+        has_unicode = self._contains_unicode_emojis(text)
+
+        result = {
+            "has_unicode": has_unicode,
+            "wsp_violation": False,  # WSP 20 allows Unicode, doesn't prohibit it
+            "severity": "low" if has_unicode else "none",
+            "context": context,
+            "recommendation": "",
+            "preventive_warning": has_unicode
+        }
+
+        if has_unicode:
+            result["recommendation"] = "⚠️ PREVENTIVE WARNING: Unicode/emojis detected. While WSP 20 allows them, AVOID using Unicode in code to prevent encoding issues on Windows/Linux/Mac. Use ASCII alternatives: [OK] not ✅, [ERROR] not ❌, [TARGET] not 🎯, etc."
+            if context == "code":
+                result["recommendation"] = "🚨 CRITICAL PREVENTION: NEVER use Unicode/emojis in executable code! They cause encoding failures. Use: [OK], [ERROR], [TARGET] instead of ✅❌🎯"
+                result["severity"] = "medium"
+
+        return result
