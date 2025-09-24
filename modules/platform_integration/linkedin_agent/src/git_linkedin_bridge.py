@@ -26,12 +26,59 @@ class GitLinkedInBridge:
             company_id: LinkedIn company page ID (default: 1263645)
         """
         self.company_id = company_id
-        # Use unified LinkedIn interface instead of direct poster
-        self.commit_cache_file = "modules/platform_integration/linkedin_agent/data/posted_commits.json"
-        self.posted_commits = self._load_posted_commits()
-        # X/Twitter tracking
-        self.x_posted_commits_file = "modules/platform_integration/linkedin_agent/data/x_posted_commits.json"
-        self.x_posted_commits = self._load_x_posted_commits()
+
+        # Use SQLite database for tracking posted commits (WSP 78)
+        try:
+            from modules.infrastructure.database.src.db_manager import DatabaseManager
+            self.db = DatabaseManager()
+
+            # Create tables if they don't exist
+            if not self.db.table_exists('modules_git_linkedin_posts'):
+                self.db.execute_write("""
+                    CREATE TABLE modules_git_linkedin_posts (
+                        commit_hash TEXT PRIMARY KEY,
+                        posted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        commit_message TEXT,
+                        post_content TEXT,
+                        success BOOLEAN DEFAULT 1
+                    )
+                """)
+
+            if not self.db.table_exists('modules_git_x_posts'):
+                self.db.execute_write("""
+                    CREATE TABLE modules_git_x_posts (
+                        commit_hash TEXT PRIMARY KEY,
+                        posted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        commit_message TEXT,
+                        post_content TEXT,
+                        success BOOLEAN DEFAULT 1
+                    )
+                """)
+
+            # Load existing posted commits
+            linkedin_rows = self.db.execute_query(
+                "SELECT commit_hash FROM modules_git_linkedin_posts WHERE success = 1"
+            )
+            self.posted_commits = {row['commit_hash'] for row in linkedin_rows}
+
+            x_rows = self.db.execute_query(
+                "SELECT commit_hash FROM modules_git_x_posts WHERE success = 1"
+            )
+            self.x_posted_commits = {row['commit_hash'] for row in x_rows}
+
+            print(f"📊 Using SQLite database (loaded {len(self.posted_commits)} LinkedIn, {len(self.x_posted_commits)} X posts)")
+
+            # Migrate from JSON if needed
+            self._migrate_from_json()
+
+        except Exception as e:
+            print(f"⚠️ Database not available, using JSON fallback: {e}")
+            # Fallback to JSON files
+            self.commit_cache_file = "modules/platform_integration/linkedin_agent/data/posted_commits.json"
+            self.posted_commits = self._load_posted_commits()
+            self.x_posted_commits_file = "modules/platform_integration/linkedin_agent/data/x_posted_commits.json"
+            self.x_posted_commits = self._load_x_posted_commits()
+            self.db = None
         
     def _load_posted_commits(self) -> set:
         """Load set of already posted commit hashes"""
@@ -45,9 +92,14 @@ class GitLinkedInBridge:
     
     def _save_posted_commits(self):
         """Save posted commit hashes to prevent duplicates"""
-        os.makedirs(os.path.dirname(self.commit_cache_file), exist_ok=True)
-        with open(self.commit_cache_file, 'w') as f:
-            json.dump(list(self.posted_commits), f)
+        if self.db:
+            # Database handles saving automatically when we mark as posted
+            pass
+        else:
+            # Fallback to JSON
+            os.makedirs(os.path.dirname(self.commit_cache_file), exist_ok=True)
+            with open(self.commit_cache_file, 'w') as f:
+                json.dump(list(self.posted_commits), f)
 
     def _load_x_posted_commits(self) -> set:
         """Load X/Twitter posted commits"""
@@ -59,11 +111,57 @@ class GitLinkedInBridge:
                 return set()
         return set()
 
+    def _migrate_from_json(self):
+        """Migrate data from old JSON files to database"""
+        import json
+        from datetime import datetime
+
+        # Migrate LinkedIn posts
+        ln_json = "modules/platform_integration/linkedin_agent/data/posted_commits.json"
+        if os.path.exists(ln_json) and self.db:
+            try:
+                with open(ln_json, 'r') as f:
+                    commits = json.load(f)
+                    for commit_hash in commits:
+                        if commit_hash not in self.posted_commits:
+                            self.db.execute_write("""
+                                INSERT OR IGNORE INTO modules_git_linkedin_posts
+                                (commit_hash, success) VALUES (?, ?)
+                            """, (commit_hash, 1))
+                            self.posted_commits.add(commit_hash)
+                    if commits:
+                        print(f"  Migrated {len(commits)} LinkedIn posts from JSON")
+            except Exception as e:
+                print(f"  Error migrating LinkedIn posts: {e}")
+
+        # Migrate X posts
+        x_json = "modules/platform_integration/linkedin_agent/data/x_posted_commits.json"
+        if os.path.exists(x_json) and self.db:
+            try:
+                with open(x_json, 'r') as f:
+                    commits = json.load(f)
+                    for commit_hash in commits:
+                        if commit_hash not in self.x_posted_commits:
+                            self.db.execute_write("""
+                                INSERT OR IGNORE INTO modules_git_x_posts
+                                (commit_hash, success) VALUES (?, ?)
+                            """, (commit_hash, 1))
+                            self.x_posted_commits.add(commit_hash)
+                    if commits:
+                        print(f"  Migrated {len(commits)} X posts from JSON")
+            except Exception as e:
+                print(f"  Error migrating X posts: {e}")
+
     def _save_x_posted_commits(self):
         """Save X/Twitter posted commits"""
-        os.makedirs(os.path.dirname(self.x_posted_commits_file), exist_ok=True)
-        with open(self.x_posted_commits_file, 'w') as f:
-            json.dump(list(self.x_posted_commits), f)
+        if self.db:
+            # Database handles saving automatically when we mark as posted
+            pass
+        else:
+            # Fallback to JSON
+            os.makedirs(os.path.dirname(self.x_posted_commits_file), exist_ok=True)
+            with open(self.x_posted_commits_file, 'w') as f:
+                json.dump(list(self.x_posted_commits), f)
     
     def get_recent_commits(self, count: int = 5) -> List[Dict]:
         """
@@ -589,6 +687,13 @@ class GitLinkedInBridge:
                     print("✅ Successfully posted to LinkedIn!")
 
                     # Mark as posted
+                    if self.db:
+                        from datetime import datetime
+                        self.db.execute_write("""
+                            INSERT OR REPLACE INTO modules_git_linkedin_posts
+                            (commit_hash, commit_message, post_content, success, posted_at)
+                            VALUES (?, ?, ?, ?, ?)
+                        """, (commit_hash, commit_msg, linkedin_content, 1, datetime.now()))
                     self.posted_commits.add(commit_hash)
                     self._save_posted_commits()
                     linkedin_success = True
@@ -598,19 +703,33 @@ class GitLinkedInBridge:
                 print("✓ Already posted to LinkedIn")
                 linkedin_success = True
 
-            # Post to X/Twitter
+            # Post to X/Twitter ONLY if LinkedIn succeeded
             x_success = False
-            if commit_hash not in self.x_posted_commits:
+            if not linkedin_success:
+                print("\n⚠️ Skipping X post since LinkedIn failed")
+            elif commit_hash not in self.x_posted_commits:
                 try:
+                    import time
                     from modules.platform_integration.x_twitter.src.x_anti_detection_poster import AntiDetectionX
 
-                    print("\n🐦 Posting to X/Twitter @Foundups...")
+                    # Wait a moment to ensure LinkedIn post completes
+                    print("\n⏳ Waiting for LinkedIn to complete...")
+                    time.sleep(3)
+
+                    print("🐦 Posting to X/Twitter @Foundups...")
                     x_poster = AntiDetectionX(use_foundups=True)  # Use FoundUps account
                     x_poster.setup_driver(use_existing_session=True)
                     x_poster.post_to_x(x_content)
                     print("✅ Successfully posted to X!")
 
                     # Mark as posted
+                    if self.db:
+                        from datetime import datetime
+                        self.db.execute_write("""
+                            INSERT OR REPLACE INTO modules_git_x_posts
+                            (commit_hash, commit_message, post_content, success, posted_at)
+                            VALUES (?, ?, ?, ?, ?)
+                        """, (commit_hash, commit_msg, x_content, 1, datetime.now()))
                     self.x_posted_commits.add(commit_hash)
                     self._save_x_posted_commits()
                     x_success = True

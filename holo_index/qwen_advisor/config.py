@@ -13,7 +13,7 @@ class QwenAdvisorConfig:
     editing source (WSP 87 navigation compliance).
     """
 
-    model_path: Path = Path(os.getenv("HOLO_QWEN_MODEL", "E:/HoloIndex/models/qwen-coder-1.5b"))
+    model_path: Path = Path(os.getenv("HOLO_QWEN_MODEL", "E:/HoloIndex/models/qwen-coder-1.5b.gguf"))
     telemetry_path: Path = Path(os.getenv("HOLO_QWEN_TELEMETRY", "E:/HoloIndex/indexes/holo_usage.json"))
     max_tokens: int = int(os.getenv("HOLO_QWEN_MAX_TOKENS", "512"))
     temperature: float = float(os.getenv("HOLO_QWEN_TEMPERATURE", "0.2"))

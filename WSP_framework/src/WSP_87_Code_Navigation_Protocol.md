@@ -22,18 +22,23 @@ The fingerprint system (MODULE_FINGERPRINTS.json) has proven ineffective:
 
 ### 1. HoloIndex Semantic Search Layer (PRIMARY DISCOVERY)
 
-**Location**: E:\HoloIndex\enhanced_holo_index.py
+**CLI Interface**: `python holo_index.py` (from project root)
+**SSD Storage**: E:\HoloIndex\ (vectors, models, cache)
 **Purpose**: AI-powered semantic code discovery that prevents vibecoding
 **Capabilities**:
 - Vector search with ChromaDB (instant results)
 - LLM understanding of natural language queries
 - Typo tolerance and intent recognition
 - Explains WHY files match your search
+- WSP violation detection and warnings
 
 **MANDATORY USAGE**:
 ```bash
-# Before ANY coding task, MUST run:
-python E:\HoloIndex\enhanced_holo_index.py --search "what you need to do"
+# Before ANY coding task, MUST run from project root:
+python holo_index.py --search "what you need to do"
+
+# Note: Data and models remain on E:\HoloIndex for SSD performance
+# The CLI interface (holo_index.py) lives in root for easy access
 ```
 
 ### 2. Central Navigation Index (NAVIGATION.py)
@@ -76,7 +81,8 @@ NEED_TO = {
 - [x] Install vector database (ChromaDB) on E: drive
 - [x] Add LLM model (Qwen2.5-Coder-1.5B) for understanding
 - [x] Index NAVIGATION.py entries into vectors
-- [x] Create enhanced_holo_index.py with AI search
+- [x] Create holo_index.py in root with full WSP 87 implementation
+- [x] SSD data storage remains at E:\HoloIndex for performance
 
 ### Phase 2: Navigation Infrastructure
 - [x] Create NAVIGATION.py with problem mappings

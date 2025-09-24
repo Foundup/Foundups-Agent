@@ -18,6 +18,18 @@
 
 ## 🛑 MANDATORY ANTI-VIBECODING PROTOCOL - READ BEFORE ANY ACTION
 
+### 🎯 WHEN USER SAYS "follow WSP" - THIS MEANS:
+1. **IMMEDIATELY run HoloIndex**:
+   ```bash
+   python O:\Foundups-Agent\holo_index.py --search "[the task]"
+   # OR from repo root:
+   python holo_index.py --search "[the task]"
+   ```
+2. **THEN check NAVIGATION.py** for the modules HoloIndex found
+3. **ONLY THEN proceed** with WSP-compliant implementation
+
+**"follow WSP" = HoloIndex FIRST (O:\Foundups-Agent\holo_index.py), always!**
+
 ### YOU ARE VIBECODING IF YOU:
 - See a problem and immediately start coding
 - Write code without reading existing documentation
@@ -33,7 +45,11 @@
 #### 0. HOLOINDEX SEMANTIC SEARCH (MANDATORY FIRST - 10 seconds) 🔍
 ```bash
 # REQUIRED FIRST STEP - Use AI-powered semantic search
-python E:\HoloIndex\enhanced_holo_index.py --search "what you need to do"
+# NOTE: When user says "follow WSP", THIS is what they mean!
+# Location: O:\Foundups-Agent\holo_index.py (CLI interface)
+python O:\Foundups-Agent\holo_index.py --search "what you need to do"
+# OR if already in repo root:
+python holo_index.py --search "what you need to do"
 # Examples that PREVENT VIBECODING:
 # --search "send messages" → finds chat_sender.ChatSender.send_message()
 # --search "handle timeouts" → finds timeout_handler.py
@@ -321,4 +337,14 @@ WSP 27 defines the universal 4-phase DAE pattern that applies to ALL autonomous 
 
 All DAEs follow: -1:Signal → 0:Knowledge → 1:Protocol → 2:Agentic
 WSP 80 implements this pattern specifically for code domains.
-- Always follow WSP. No vibecoding. Research, read wsp docs, ask does the code exist check modules
+
+## CRITICAL: "follow WSP" Command Clarification
+When the user says **"follow WSP"**, this SPECIFICALLY means:
+1. **Run HoloIndex FIRST**:
+   - File location: `O:\Foundups-Agent\holo_index.py`
+   - Command: `python O:\Foundups-Agent\holo_index.py --search "the task"`
+2. **Check NAVIGATION.py** for module locations
+3. **Read documentation** before any code changes
+4. **Follow all WSP protocols** during implementation
+
+**Remember**: "follow WSP" = HoloIndex-driven development, NOT vibecoding!

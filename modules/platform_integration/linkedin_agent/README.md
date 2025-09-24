@@ -116,6 +116,9 @@ The LinkedIn Agent module provides comprehensive automated LinkedIn interaction 
 - ✅ **Autonomous Operations**: Zero-human-intervention professional networking automation
 - ✅ **Error Handling**: Comprehensive error recovery with WRE-aware logging and fallback systems
 - ✅ **Git Integration**: Automatic posting to LinkedIn and X/Twitter when pushing code changes
+  - Uses SQLite database (`data/foundups.db`) per WSP 78
+  - Tables: `modules_git_linkedin_posts`, `modules_git_x_posts`
+  - Tracks commit_hash, message, content, timestamp, success
 - ✅ **X/Twitter Cross-posting**: Simultaneous posting to both LinkedIn and X with duplicate tracking
 
 ### **Technical Architecture (IMPLEMENTED)**

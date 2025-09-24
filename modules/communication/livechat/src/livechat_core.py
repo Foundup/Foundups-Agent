@@ -622,9 +622,9 @@ class LiveChatCore:
                     # Get intelligent delay based on current activity
                     messages_per_minute = len([ts for ts in self.message_timestamps if time.time() - ts < 60])
                     intelligent_delay = self.intelligent_throttle.calculate_adaptive_delay('poll')
-                    
-                    # Use intelligent delay if it's longer than current interval
-                    if intelligent_delay * 1000 > poll_interval_ms:
+
+                    # Use intelligent delay if it's longer than current interval (handle None case)
+                    if intelligent_delay is not None and intelligent_delay * 1000 > poll_interval_ms:
                         poll_interval_ms = int(intelligent_delay * 1000)
                         logger.info(f"[AUTO-THROTTLE] Adjusted poll interval to {intelligent_delay:.1f}s based on activity")
                     

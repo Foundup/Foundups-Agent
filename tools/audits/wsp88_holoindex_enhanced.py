@@ -62,6 +62,7 @@ class WSP88HoloIndexEnhanced:
         if local_holoindex.exists():
             self.holoindex_path = str(local_holoindex)
         else:
+            # Fallback to E: drive version if root doesn't exist
             self.holoindex_path = "E:/HoloIndex/enhanced_holo_index.py"
 
         self.audit_results = None

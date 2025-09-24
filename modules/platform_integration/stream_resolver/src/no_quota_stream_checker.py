@@ -68,12 +68,13 @@ class NoQuotaStreamChecker:
         logger.debug(f"Anti-detection delay: {delay:.1f}s")
         time.sleep(delay)
 
-    def check_video_is_live(self, video_id: str) -> Dict[str, Any]:
+    def check_video_is_live(self, video_id: str, channel_name: str = None) -> Dict[str, Any]:
         """
         Check if a YouTube video is currently live without using API quota
 
         Args:
             video_id: YouTube video ID
+            channel_name: Optional channel name with emoji for display
 
         Returns:
             Dict with status and details
@@ -283,6 +284,9 @@ class NoQuotaStreamChecker:
             else:
                 logger.info("❌ NOT A STREAM (regular video or not found)")
 
+            # Use provided channel_name with emoji if available, otherwise use scraped name
+            display_channel = channel_name if channel_name else channel
+
             result = {
                 "live": is_live,
                 "video_id": video_id,
@@ -292,9 +296,9 @@ class NoQuotaStreamChecker:
             }
 
             if is_live:
-                logger.info(f"✅ Found live stream on {channel}: {title}")
+                logger.info(f"✅ Found live stream on {display_channel}: {title}")
             else:
-                logger.info(f"❌ No live stream found on {channel}")
+                logger.info(f"❌ No live stream found on {display_channel}")
 
             return result
 
@@ -401,7 +405,7 @@ class NoQuotaStreamChecker:
                             # Try the first few video IDs
                             for idx, video_id in enumerate(video_ids[:3]):
                                 logger.info(f"[VERIFY] Checking video {idx+1}/{min(3, len(video_ids))}: {video_id}")
-                                result = self.check_video_is_live(video_id)
+                                result = self.check_video_is_live(video_id, channel_name)
                                 if result and result.get('live'):
                                     logger.info(f"[SUCCESS] Video {video_id} is LIVE!")
                                     return result
@@ -439,7 +443,7 @@ class NoQuotaStreamChecker:
                     if i > 0:  # Add delay between multiple video checks
                         self._anti_detection_delay()
 
-                    result = self.check_video_is_live(vid)
+                    result = self.check_video_is_live(vid, channel_name)
                     if result.get('live'):
                         # Add channel name to result for better logging
                         display_name = channel_name or channel_id

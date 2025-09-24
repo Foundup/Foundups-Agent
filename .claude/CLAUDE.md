@@ -18,6 +18,11 @@
 
 ## 🛑 WSP EXECUTION CONTRACT (MANDATORY ANTI-VIBECODING) — STOP AND READ
 
+### 📍 QUICK REFERENCE: Key Files When User Says "follow WSP"
+- **HoloIndex**: `O:\Foundups-Agent\holo_index.py` - Semantic search tool
+- **NAVIGATION**: `O:\Foundups-Agent\NAVIGATION.py` - Module location map
+- **WSP Index**: `O:\Foundups-Agent\WSP_MASTER_INDEX.md` - All WSP protocols
+
 ### ⚠️ VIBECODING DETECTION SYSTEM ACTIVE
 **YOU ARE VIBECODING IF YOU:**
 - Start typing code without completing ALL research steps below
@@ -32,7 +37,8 @@
 #### STEP 0: HOLOINDEX SEMANTIC SEARCH (MANDATORY - 10 seconds) 🔍
 ```bash
 # WSP 87 + HOLOINDEX: AI-POWERED CODE DISCOVERY
-python E:\HoloIndex\enhanced_holo_index.py --search "what you need"
+# File: O:\Foundups-Agent\holo_index.py (main CLI interface)
+python O:\Foundups-Agent\holo_index.py --search "what you need"
 # Examples: "send messages", "handle timeouts", "consciousness"
 # The LLM understands typos, intent, and natural language
 ```
@@ -356,10 +362,22 @@ Documentation_Registry_DAE:
 
 **Primary Command**: `"follow WSP"`
 
+**WHAT "follow WSP" REALLY MEANS**:
+```bash
+# STEP 1: ALWAYS run HoloIndex FIRST
+# File location: O:\Foundups-Agent\holo_index.py
+python O:\Foundups-Agent\holo_index.py --search "[the user's task]"
+# OR from repo root:
+python holo_index.py --search "[the user's task]"
+
+# STEP 2: Check NAVIGATION.py (O:\Foundups-Agent\NAVIGATION.py)
+# STEP 3: Follow WSP protocols for implementation
+```
+
 **CRITICAL**: We do NOT vibecode in WSP - we WINDSURF through disciplined research
 
 When activated, FOLLOW THE RECURSIVE DANCE:
-1. **RESEARCH**: What exists? What WSPs apply? What modules handle this?
+1. **RESEARCH**: Run HoloIndex first! Then check what WSPs apply, what modules handle this
 2. **CHECK**: Does module exist? Search thoroughly, read implementations
 3. **DECIDE**: Enhance existing or create new? (Agentic Modularity Question)
 4. **EXECUTE**: Follow WSP structure exactly - no shortcuts, no assumptions
@@ -410,7 +428,8 @@ CRITICAL_WSP_CREATION_PREVENTION:
 ```yaml
 TRUE_ARCHITECTURE:
   "follow WSP" means:
-    - Identify relevant DAE cube
+    - FIRST: Run HoloIndex at O:\Foundups-Agent\holo_index.py
+    - Identify relevant DAE cube based on HoloIndex results
     - Access pattern memory banks
     - Recall stored patterns (no computation)
     - Apply patterns directly
@@ -660,7 +679,13 @@ The following rules are MANDATORY to eliminate vibe coding. Every operation must
 - Orchestration: WSP 46 (WRE Protocol), WSP 54 (Agent Duties)
 
 ### 6) Operational Quickstart (what I actually do)
-1) "follow WSP" → FIRST run HoloIndex: `python E:\HoloIndex\enhanced_holo_index.py --search "task"`
+1) **"follow WSP" = RUN HOLOINDEX**:
+   ```bash
+   python O:\Foundups-Agent\holo_index.py --search "task"
+   ```
+   - File: `O:\Foundups-Agent\holo_index.py` (the CLI interface)
+   - This is ALWAYS the first step when user says "follow WSP"
+   - HoloIndex provides semantic search to find existing code
 2) Load WSP 3/49/50/64/22/57/5/6/32/87 into working memory
 3) Verify HoloIndex results in NAVIGATION.py
 4) Search modules by function; read their docs/tests; locate canonical owner

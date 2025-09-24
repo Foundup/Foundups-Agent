@@ -15,10 +15,12 @@ def build_compliance_prompt(query: str, code_hits: List[Dict[str, Any]], wsp_hit
             return f"No {prefix} results found."
         lines = []
         for item in hits[:5]:
+            if item is None:  # Skip None entries
+                continue
             summary = item.get("need") or item.get("summary") or item.get("title")
             location = item.get("location") or item.get("path")
             lines.append(f"- {summary} ({location})")
-        return "\n".join(lines)
+        return "\n".join(lines) if lines else f"No valid {prefix} results found."
 
     code_section = format_hits("code", code_hits)
     wsp_section = format_hits("WSP", wsp_hits)

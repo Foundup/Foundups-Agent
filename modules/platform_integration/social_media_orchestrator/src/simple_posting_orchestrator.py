@@ -52,6 +52,8 @@ class PostResponse:
     """Response containing results from all platforms"""
     request_id: str
     results: List[PostResult]
+    success_count: int = 0
+    failure_count: int = 0
     timestamp: datetime = None
 
     def __post_init__(self):
@@ -196,8 +198,19 @@ class SimplePostingOrchestrator:
         if platforms_already_posted:
             logger.info(f"[ORCHESTRATOR] ⏭️ SKIPPING: {[p.value for p in platforms_already_posted]} (already posted)")
 
+        # Determine channel handle based on LinkedIn page
+        channel_handle = "@UnDaoDu"  # Default
+        if linkedin_page:
+            # Map LinkedIn page IDs to channel handles
+            page_to_handle = {
+                "68706058": "@UnDaoDu",     # UnDaoDu page
+                "1263645": "@FoundUps",     # FoundUps page
+                "104834798": "@Move2Japan"  # Move2Japan page
+            }
+            channel_handle = page_to_handle.get(linkedin_page, "@UnDaoDu")
+
         # Create post content
-        content = f"""@UnDaoDu going live!
+        content = f"""{channel_handle} going live!
 
 {stream_title}
 
@@ -234,7 +247,7 @@ class SimplePostingOrchestrator:
                 self.logger.info(f"[ORCHESTRATOR] ⏰ Time: {datetime.now().strftime('%H:%M:%S')}")
                 self.logger.info("="*80)
 
-                result = await self._post_to_linkedin(content)
+                result = await self._post_to_linkedin(content, linkedin_page)
                 results.append(result)
                 linkedin_posted_successfully = result.success
 
@@ -297,7 +310,7 @@ class SimplePostingOrchestrator:
                     self.logger.info(f"[ORCHESTRATOR] ⏰ Time: {datetime.now().strftime('%H:%M:%S')}")
                     self.logger.info("="*80)
 
-                    result = await self._post_to_x_twitter(content)
+                    result = await self._post_to_x_twitter(content, linkedin_page)
                     results.append(result)
 
                     if result.success:
@@ -576,7 +589,7 @@ class SimplePostingOrchestrator:
         except Exception as e:
             self.logger.error(f"[ORCHESTRATOR] Error saving JSON: {e}")
 
-    async def _post_to_linkedin(self, content: str) -> PostResult:
+    async def _post_to_linkedin(self, content: str, linkedin_page: str = None) -> PostResult:
         """Post to LinkedIn using existing anti-detection poster"""
         try:
             self.logger.info("="*60)
@@ -611,7 +624,7 @@ class SimplePostingOrchestrator:
                 # Content format is: @UnDaoDu going live!\n\n{stream_title}\n\n{url}
                 lines = content.split('\n')
                 # The actual stream title is on the third line (index 2) after two newlines
-                title = lines[2] if len(lines) > 2 else stream_title  # Use passed stream_title as fallback
+                title = lines[2] if len(lines) > 2 else "Live Stream"  # Use default as fallback
                 if title.startswith("🔴 LIVE: "):
                     title = title[9:]  # Remove prefix
 
@@ -667,7 +680,7 @@ class SimplePostingOrchestrator:
                 timestamp=datetime.now()
             )
     
-    async def _post_to_x_twitter(self, content: str) -> PostResult:
+    async def _post_to_x_twitter(self, content: str, linkedin_page: str = None) -> PostResult:
         """Post to X/Twitter using existing anti-detection poster"""
         try:
             self.logger.info("="*60)
@@ -717,14 +730,41 @@ class SimplePostingOrchestrator:
                                 browser_closed = True
                                 _GLOBAL_X_POSTER = None
 
+                        # Determine which X account to use based on channel
+                        # Move2Japan (104834798) uses GeozeAi (X_Acc1)
+                        # FoundUps (1263645) and UnDaoDu (68706058) use Foundups (X_Acc2)
+                        use_foundups = linkedin_page != "104834798"  # Use Foundups unless it's Move2Japan
+
+                        # Check if we need to switch accounts
+                        need_new_instance = False
+                        if _GLOBAL_X_POSTER is not None:
+                            # Check if current instance is using the right account
+                            current_is_foundups = _GLOBAL_X_POSTER.username == os.getenv('X_Acc2', 'Foundups')
+                            if current_is_foundups != use_foundups:
+                                self.logger.info("[X THREAD] ⚠️ Account switch needed - closing current browser")
+                                try:
+                                    _GLOBAL_X_POSTER.driver.quit()
+                                except:
+                                    pass
+                                _GLOBAL_X_POSTER = None
+                                need_new_instance = True
+
                         # REUSE GLOBAL SINGLETON INSTANCE - Only ONE browser window
                         if _GLOBAL_X_POSTER is None:
                             if browser_closed:
                                 self.logger.info("[X THREAD] 🔄 Recreating X poster after manual close...")
+                            elif need_new_instance:
+                                self.logger.info("[X THREAD] 🔄 Creating new instance for account switch...")
                             else:
                                 self.logger.info("[X THREAD] [NEW] Creating GLOBAL singleton X poster...")
                             self.logger.info("[X THREAD] [GLOBAL] This will open ONE browser window")
-                            _GLOBAL_X_POSTER = AntiDetectionX()
+
+                            if not use_foundups:
+                                self.logger.info("[X THREAD] 🎌 Using Move2Japan X account (GeozeAi)")
+                            else:
+                                self.logger.info("[X THREAD] 🐕 Using FoundUps X account")
+
+                            _GLOBAL_X_POSTER = AntiDetectionX(use_foundups=use_foundups)
                             self.logger.info("[X THREAD] ✅ Global X poster created")
                         else:
                             self.logger.info("[X THREAD] ♻️ REUSING GLOBAL X instance")

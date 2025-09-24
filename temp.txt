@@ -1,0 +1,116 @@
+# Health checking now handled by intelligent subroutines
+# def _perform_health_checks_and_rewards(results: Dict[str, Any], query: str, add_reward_event) -> List[str]:
+    """Perform health checks and award rewards - called from both advisor and non-advisor paths."""
+    if ComplianceRulesEngine is None:
+        return []
+
+    engine = ComplianceRulesEngine()
+    health_notices: List[str] = []
+
+    try:
+        # Convert HoloIndex results to format expected by health checks
+        search_hits = []
+        for code_result in results.get('code', []):
+            # Extract file path from location (e.g., 'modules.communication.livechat.src.file.method' -> 'modules/communication/livechat/src/file.py')
+            location = code_result.get('location', '')
+            original_location = location
+
+            if '.' in location and '(' in location:
+                # Remove method signature
+                location = location[:location.index('(')]
+
+            if location and '.' in location:
+                # Convert module path to file path
+                parts = location.split('.')
+                if len(parts) >= 4 and parts[0] == 'modules' and parts[-2] == 'src':
+                    # modules.domain.subdomain.src.filename -> modules/domain/subdomain/src/filename.py
+                    file_path = '/'.join(parts) + '.py'
+                    search_hits.append({
+                        'location': original_location,
+                        'file_path': file_path,
+                        'path': file_path
+                    })
+                elif len(parts) >= 3 and parts[0] == 'modules':
+                    # Try alternative format: modules.domain.subdomain.src.filename -> modules/domain/subdomain/src/filename.py
+                    if 'src' in parts:
+                        src_index = parts.index('src')
+                        if src_index < len(parts) - 1:
+                            file_path = '/'.join(parts[:src_index+2]) + '.py'
+                            search_hits.append({
+                                'location': original_location,
+                                'file_path': file_path,
+                                'path': file_path
+                            })
+
+        size_checks = engine.check_module_size_health(search_hits)
+        structure_checks = engine.check_module_structure_health(search_hits)
+
+        # Track health detection rewards
+        critical_count = 0
+        high_count = 0
+        medium_count = 0
+
+        for check in size_checks + structure_checks:
+            metadata = check.metadata or {}
+            module_path = metadata.get('module_path') or metadata.get('path') or metadata.get('file') or 'unknown'
+
+            notice = f"[{check.wsp_reference}] {check.guidance}"
+            health_notices.append(notice)
+            if check.suggested_fix:
+                health_notices.append(f"    FIX: {check.suggested_fix}")
+
+            # Count severity levels for rewards
+            if check.severity == 'CRITICAL':
+                critical_count += 1
+            elif check.severity == 'HIGH':
+                high_count += 1
+            elif check.severity == 'MEDIUM':
+                medium_count += 1
+
+            # Record violation to structured database (WSP 47)
+            # Don't let violation recording failures break health checks
+            try:
+                violation_metadata = metadata.copy() if metadata else {}
+                if check.suggested_fix:
+                    violation_metadata.setdefault('suggested_fix', check.suggested_fix)
+                violation_metadata['query'] = query
+
+                violation_data = {
+                    'wsp': check.wsp_reference or 'UNKNOWN',
+                    'module': module_path,
+                    'severity': check.severity,
+                    'description': check.guidance,
+                    'agent': '0102',
+                    'remediation_status': 'pending',
+                    'metadata': violation_metadata
+                }
+                engine.record_violation(violation_data)
+            except Exception as violation_exc:
+                # Log violation recording failure but don't break health checks
+                pass
+
+        # Award points for health detections
+        if critical_count > 0:
+            add_reward_event('health_critical', critical_count * 10,
+                           f'Detected {critical_count} CRITICAL health issue(s)',
+                           {'query': query, 'count': critical_count})
+        if high_count > 0:
+            add_reward_event('health_high', high_count * 5,
+                           f'Detected {high_count} HIGH health issue(s)',
+                           {'query': query, 'count': high_count})
+        if medium_count > 0:
+            add_reward_event('health_medium', medium_count * 3,
+                           f'Detected {medium_count} MEDIUM health issue(s)',
+                           {'query': query, 'count': medium_count})
+
+    except Exception as exc:
+        # Only clear health_notices if we couldn't collect any (total failure)
+        if not health_notices:
+            health_notices = []
+        results['health_error'] = f'Health checks failed: {exc}'
+
+    return health_notices
+
+
+def main() -> None:
+

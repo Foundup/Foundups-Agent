@@ -221,7 +221,8 @@ class EnhancedHoloIndexWithCompliance(EnhancedHoloIndex):
 ### **Phase 1: WSP Protocol Indexing**
 ```bash
 # Index all WSP protocols into HoloIndex vector database
-python E:\HoloIndex\enhanced_holo_index.py --index-wsp
+# Run from project root - data storage remains on E:\HoloIndex for SSD performance
+python holo_index.py --index-wsp
 ```
 
 ### **Phase 2: Intent Recognition Enhancement**

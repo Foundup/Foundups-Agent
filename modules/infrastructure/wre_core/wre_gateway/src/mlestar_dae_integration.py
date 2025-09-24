@@ -25,12 +25,10 @@ import logging
 import sys
 sys.path.append(str(Path(__file__).parent.parent.parent.parent.parent))
 
-try:
-    from modules.ai_intelligence.mle_star_engine.src.mlestar_orchestrator import (
-        MLESTAROrchestrator, MLESTARPhase, OptimizationTarget
-    )
-except ImportError:
-    # If MLE-STAR not available, create minimal stub
+# MLE-STAR removed - was non-functional vibecoding
+# Using minimal stub instead
+if True:  # Always use stub since MLE-STAR was removed
+    # Minimal stub for backward compatibility
     class MLESTAROrchestrator:
         async def execute_outer_loop(self, spec):
             return type('obj', (object,), {
