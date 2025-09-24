@@ -317,22 +317,22 @@ async def post_stream_notification(stream_title: str, stream_url: str, video_id:
     return await unified_linkedin.post_to_linkedin(request)
 
 async def post_git_commits(commit_summary: str, commit_hashes: List[str]) -> LinkedInPostResult:
-    """Post git commit summary to LinkedIn (Development page)"""
+    """Post git commit summary to LinkedIn (FoundUps page)"""
     request = LinkedInPostRequest(
         content=commit_summary,
         content_type=LinkedInContentType.GIT_COMMIT,
-        company_page=LinkedInCompanyPage.DEVELOPMENT,
+        company_page=LinkedInCompanyPage.FOUNDUPS,
         duplicate_check_key="|".join(sorted(commit_hashes))  # Combined hash for duplicate detection
     )
 
     return await unified_linkedin.post_to_linkedin(request)
 
 async def post_development_update(update_content: str, update_id: str) -> LinkedInPostResult:
-    """Post development update to LinkedIn (Development page)"""
+    """Post development update to LinkedIn (FoundUps page)"""
     request = LinkedInPostRequest(
         content=update_content,
         content_type=LinkedInContentType.DEVELOPMENT_UPDATE,
-        company_page=LinkedInCompanyPage.DEVELOPMENT,
+        company_page=LinkedInCompanyPage.FOUNDUPS,
         duplicate_check_key=update_id
     )
 

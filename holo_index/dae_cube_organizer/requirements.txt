@@ -1,0 +1,2 @@
+# DAE Cube Organizer Dependencies
+# No additional dependencies required - uses existing HoloIndex infrastructure

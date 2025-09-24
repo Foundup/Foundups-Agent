@@ -13,7 +13,7 @@ Following WSP 3: Enterprise Domain Architecture
 
 import os
 import logging
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Tuple, Dict, Any, List
 import googleapiclient.errors
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import Resource
@@ -709,6 +709,66 @@ class StreamResolver:
         }
         return channel_map.get(channel_id, f"Channel-{channel_id[:8]}")
 
+    def _select_channel_by_pattern(self, channel_predictions: Dict[str, Dict], available_channels: List[str]) -> str:
+        """Select the next channel to check based on pattern predictions and timing."""
+        import random
+        from datetime import datetime
+
+        now = datetime.now()
+
+        # Score each channel based on prediction confidence and timing
+        channel_scores = {}
+        for channel_id in available_channels:
+            if channel_id in channel_predictions:
+                pred = channel_predictions[channel_id]
+                confidence = pred.get('confidence', 0.0)
+
+                # Boost score if prediction time is close to now
+                predicted_time_str = pred.get('predicted_time')
+                if predicted_time_str:
+                    try:
+                        from dateutil import parser
+                        predicted_time = parser.parse(predicted_time_str)
+                        time_diff = abs((predicted_time - now).total_seconds())
+
+                        # Channels with predictions within 2 hours get priority
+                        if time_diff < 7200:  # 2 hours
+                            time_boost = (7200 - time_diff) / 7200  # 0 to 1
+                            confidence *= (1.0 + time_boost)
+                    except:
+                        pass  # Ignore time parsing errors
+
+                channel_scores[channel_id] = confidence
+            else:
+                # Channels without predictions get base score
+                channel_scores[channel_id] = 0.1
+
+        # Select channel with highest score, with some randomness for exploration
+        if random.random() < 0.8:  # 80% of the time, pick best
+            return max(channel_scores.keys(), key=lambda k: channel_scores[k])
+        else:  # 20% of the time, pick randomly for exploration
+            return random.choice(available_channels)
+
+    def _calculate_pattern_based_delay(self, channel_id: str, channel_predictions: Dict[str, Dict],
+                                      attempt: int, base_delay: float) -> float:
+        """Calculate delay based on pattern confidence and attempt history."""
+        # Start with exponential backoff as baseline
+        exp_delay = min(base_delay * (2 ** min(attempt - 1, 4)), 60.0)
+
+        # Adjust based on pattern confidence
+        if channel_id in channel_predictions:
+            confidence = channel_predictions[channel_id].get('confidence', 0.0)
+
+            if confidence > 0.7:
+                # High confidence channels: check more frequently
+                exp_delay *= 0.5  # Reduce delay by half
+            elif confidence > 0.4:
+                # Medium confidence: slight reduction
+                exp_delay *= 0.75
+            # Low confidence: use full exponential backoff
+
+        return exp_delay
+
     def _get_linkedin_page_for_channel(self, channel_id: str) -> str:
         """Determine which LinkedIn page to post to based on YouTube channel"""
         from modules.platform_integration.social_media_orchestrator.src.unified_linkedin_interface import LinkedInCompanyPage
@@ -1001,23 +1061,38 @@ class StreamResolver:
 
             logger.info("="*60)
 
-            # NO-QUOTA mode: Multi-channel rotation loop
+            # NO-QUOTA mode: Intelligent pattern-based checking
             attempt = 0
-            channel_index = 0
             base_delay = 2.0  # Start with 2 second delay
+
+            # Get pattern-based predictions for all channels
+            channel_predictions = {}
+            for channel_id in channels_to_check:
+                if self.db:
+                    predictions = self.db.predict_next_stream_time(channel_id)
+                    if predictions:
+                        channel_predictions[channel_id] = predictions
 
             while True:  # Infinite loop until stream is found
                 attempt += 1
 
-                # Select channel to check (rotate through list)
-                current_channel_id = channels_to_check[channel_index % len(channels_to_check)]
-                channel_index += 1
+                # Select channel to check using pattern-based intelligence
+                if channel_predictions and attempt > 1:
+                    # Use pattern predictions for intelligent channel selection
+                    current_channel_id = self._select_channel_by_pattern(channel_predictions, channels_to_check)
+                else:
+                    # Fallback to rotation for first few attempts or if no patterns
+                    current_channel_id = channels_to_check[(attempt - 1) % len(channels_to_check)]
 
                 # Only log every 10th attempt to reduce log spam in idle mode
                 should_log = (attempt % 10 == 1 or attempt <= 5)
                 if should_log:
                     channel_name = self._get_channel_display_name(current_channel_id)
-                    logger.info(f"🔄 NO-QUOTA rotation - attempt #{attempt}, checking {channel_name} 🔍")
+                    pattern_info = ""
+                    if current_channel_id in channel_predictions:
+                        pred = channel_predictions[current_channel_id]
+                        pattern_info = f" (predicted: {pred.get('confidence', 0):.2f} confidence)"
+                    logger.info(f"🔄 NO-QUOTA pattern-based checking - attempt #{attempt}, checking {channel_name}{pattern_info} 🔍")
 
                 # PRIORITY 4a: Check environment variable for known video ID (only if it matches current channel)
                 env_video_id = get_env_variable("YOUTUBE_VIDEO_ID", default=None)
@@ -1030,6 +1105,8 @@ class StreamResolver:
                         # Record stream start in database (WSP 78)
                         if self.db:
                             self.db.record_stream_start(current_channel_id, env_video_id, result.get('title', 'Live Stream'))
+                            # Trigger pattern learning from historical data
+                            self.db.analyze_and_update_patterns(current_channel_id)
                         # Trigger social media posting with duplicate check
                         self._trigger_social_media_post(env_video_id, result.get('title', 'Live Stream'), current_channel_id)
                         # Return video_id but no chat_id in NO-QUOTA mode
@@ -1041,7 +1118,15 @@ class StreamResolver:
                 channel_name = self._get_channel_display_name(current_channel_id)
                 if should_log:
                     logger.info(f"🔍 Searching {channel_name} ({current_channel_id[:12]}...) for live streams...")
+                # Record check attempt for pattern learning
+                check_start = time.time()
                 result = self.no_quota_checker.check_channel_for_live(current_channel_id, channel_name)
+                check_duration = int((time.time() - check_start) * 1000)  # ms
+
+                # Record check result in database for pattern learning
+                if self.db:
+                    self.db.record_check(current_channel_id, result and result.get("live"), check_duration)
+
                 if result and result.get("live"):
                     video_id = result.get("video_id")
                     if video_id:
@@ -1049,15 +1134,16 @@ class StreamResolver:
                         # Record stream start in database (WSP 78)
                         if self.db:
                             self.db.record_stream_start(current_channel_id, video_id, result.get('title', 'Live Stream'))
+                            # Trigger pattern learning from historical data
+                            self.db.analyze_and_update_patterns(current_channel_id)
                         # Trigger social media posting with duplicate check
                         self._trigger_social_media_post(video_id, result.get('title', 'Live Stream'), current_channel_id)
                         return video_id, None
 
-                # Calculate delay with intelligent backoff (but cap it for idle mode)
-                # Use exponential backoff but don't go beyond 60 seconds for responsiveness
-                delay = min(base_delay * (2 ** min(attempt - 1, 4)), 60.0)  # Max 60s delay
+                # Calculate delay using pattern-based intelligence
+                delay = self._calculate_pattern_based_delay(current_channel_id, channel_predictions, attempt, base_delay)
                 if should_log:
-                    logger.info(f"⏳ No stream found, waiting {delay:.1f}s before next channel...")
+                    logger.info(f"⏳ No stream found, waiting {delay:.1f}s before next check...")
                 time.sleep(delay)
 
             # If we reach here, NO-QUOTA mode completed without finding a stream

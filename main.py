@@ -222,16 +222,20 @@ def search_with_holoindex(query: str):
     print("=" * 60)
 
     try:
-        # Check if HoloIndex is available
-        holo_path = r"E:\HoloIndex\enhanced_holo_index.py"
-        if not os.path.exists(holo_path):
-            print("⚠️ HoloIndex not found at E:\\HoloIndex")
+        # Check if HoloIndex is available (prefer root version)
+        if os.path.exists("holo_index.py"):
+            holo_cmd = ['python', 'holo_index.py', '--search', query]
+        elif os.path.exists(r"E:\HoloIndex\enhanced_holo_index.py"):
+            # Fallback to E: drive version
+            holo_cmd = ['python', r"E:\HoloIndex\enhanced_holo_index.py", '--search', query]
+        else:
+            print("⚠️ HoloIndex not found")
             print("Install HoloIndex to prevent vibecoding!")
             return None
 
         # Run HoloIndex search
         result = subprocess.run(
-            ['python', holo_path, '--search', query],
+            holo_cmd,
             capture_output=True,
             text=True,
             encoding='utf-8'

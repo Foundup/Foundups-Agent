@@ -6,6 +6,7 @@ Replaces JSON files with proper database tables for better performance and analy
 """
 
 import json
+import os
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime, timedelta
 import logging
@@ -77,6 +78,9 @@ class StreamResolverDB(ModuleDB):
             last_check DATETIME,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         """)
+
+        # Migrate existing JSON data if available (one-time operation)
+        self.migrate_json_data()
 
     def record_stream_start(self, channel_id: str, video_id: str, title: str = None) -> int:
         """Record when a stream starts"""
@@ -298,6 +302,83 @@ class StreamResolverDB(ModuleDB):
             logger.error(f"Failed to migrate stream_schedule_patterns.json: {e}")
 
         logger.info("JSON data migration completed")
+
+    def analyze_and_update_patterns(self, channel_id: str) -> None:
+        """Analyze recent stream data and update patterns for better predictions."""
+        logger.info(f"Analyzing patterns for channel {channel_id}")
+
+        # Get recent stream data for analysis (last 30 days)
+        recent_streams = self.get_recent_streams(channel_id, limit=50)
+
+        if not recent_streams:
+            logger.info(f"No recent streams to analyze for {channel_id}")
+            return
+
+        # Analyze hour patterns
+        hour_frequency = {}
+        day_frequency = {}
+
+        for stream in recent_streams:
+            hour = stream['hour']
+            day = stream['day_of_week']
+
+            hour_frequency[hour] = hour_frequency.get(hour, 0) + 1
+            day_frequency[day] = day_frequency.get(day, 0) + 1
+
+        # Calculate confidence based on consistency
+        total_streams = len(recent_streams)
+
+        # Find most common hour with confidence
+        if hour_frequency:
+            most_common_hour = max(hour_frequency.keys(), key=lambda h: hour_frequency[h])
+            hour_confidence = hour_frequency[most_common_hour] / total_streams
+
+            # Save hour pattern
+            self.save_stream_pattern(
+                channel_id,
+                "preferred_hour",
+                {
+                    "hour": most_common_hour,
+                    "frequency": hour_frequency[most_common_hour],
+                    "distribution": hour_frequency
+                },
+                confidence=hour_confidence
+            )
+            logger.info(f"Updated hour pattern: {most_common_hour}:00 (confidence: {hour_confidence:.2f})")
+
+        # Find most common day with confidence
+        if day_frequency:
+            most_common_day = max(day_frequency.keys(), key=lambda d: day_frequency[d])
+            day_confidence = day_frequency[most_common_day] / total_streams
+
+            # Save day pattern
+            self.save_stream_pattern(
+                channel_id,
+                "preferred_day",
+                {
+                    "day_of_week": most_common_day,
+                    "frequency": day_frequency[most_common_day],
+                    "distribution": day_frequency
+                },
+                confidence=day_confidence
+            )
+
+            # Map day number to name for logging
+            day_names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+            day_name = day_names[most_common_day] if most_common_day < 7 else str(most_common_day)
+            logger.info(f"Updated day pattern: {day_name} (confidence: {day_confidence:.2f})")
+
+        # Calculate average stream duration for better timing
+        durations = [s['duration_seconds'] for s in recent_streams if s.get('duration_seconds')]
+        if durations:
+            avg_duration = sum(durations) / len(durations)
+            self.save_stream_pattern(
+                channel_id,
+                "average_duration",
+                {"seconds": avg_duration, "minutes": avg_duration / 60},
+                confidence=0.7 if len(durations) > 5 else 0.4
+            )
+            logger.info(f"Updated duration pattern: {avg_duration/60:.1f} minutes average")
 
     def get_stream_analytics(self, channel_id: str, days: int = 30) -> Dict[str, Any]:
         """Get comprehensive analytics for a channel"""

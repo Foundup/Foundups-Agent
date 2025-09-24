@@ -7,9 +7,10 @@ One Database, Three Namespaces:
 - agents.*      # Agent memory
 """
 
-from .src import DatabaseManager, ModuleDB
+from .src import DatabaseManager, ModuleDB, AgentDB
 
 __all__ = [
     'DatabaseManager',
-    'ModuleDB'
+    'ModuleDB',
+    'AgentDB'
 ]

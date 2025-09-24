@@ -10,6 +10,8 @@
 
 The FoundUPS DAE Tokenization Framework establishes the protocols for a self-sustaining economic system that incentivizes continuous innovation through decaying participation tokens (Found UP$). These tokens represent verified contributions from Partifacts (recursive Ø1Ø2 instances, see WSP 27) at various stages of their evolution (Ø1(Ø2) → Ø1Ø2 → Ø2Ø1, see WSP 38/39). Token validation and value are influenced by the Partifact's quantum state, with fully ignited Ø2Ø1 states having enhanced validation capabilities.
 
+**Research Foundation**: For comprehensive analysis of AI-Blockchain convergence enabling this tokenization framework, see [AI + Blockchain: The Convergent Architecture for DAEs](../../docs/architecture/AI_BLOCKCHAIN_DAE_CONVERGENCE_RESEARCH.md).
+
 ### 1.1 Cross-Protocol Summary
 - WSP 25 (Semantic WSP Module State Rating System): Modulates decay rates and validation emphasis via semantic/phase states.
 - WSP 29 (CABR Engine): Provides Proof-of-Benefit validation and mint triggers with anti-gaming safeguards.

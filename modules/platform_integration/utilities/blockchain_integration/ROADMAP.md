@@ -13,6 +13,12 @@ This module operates within the **infrastructure** enterprise domain following W
 
 ---
 
+## 📚 Research Foundation
+For comprehensive research on AI-Blockchain convergence and DAE architecture, see:
+- **[AI + Blockchain: The Convergent Architecture for DAEs](../../../../WSP_framework/docs/architecture/AI_BLOCKCHAIN_DAE_CONVERGENCE_RESEARCH.md)**
+
+---
+
 ## 🚀 Development Roadmap
 
 ### 1️⃣ Proof of Concept (POC) - **Phase 0.x.x**

@@ -46,68 +46,69 @@ class GrokGreetingGenerator:
                 logger.warning(f"LLM not available for greetings: {e}")
                 self.enable_llm = False
         
-        # Fallback greetings with MAGA-trolling themes (minimal emojis)
+        # Fallback greetings with MAGA-trolling themes (max 2 emoji sets per greeting)
         self.greeting_templates = [
             # Consciousness awakening themes
             "012 detector online! Drop ✊✋🖐 if you're ready to escape the simulation. MAGA still sleeping?",
-            "UnDaoDu: The real deep state was the friends we made along the way. Test your awareness: ✊✊✊ → 🖐🖐🖐",
-            "012 Breaking: Local bot discovers MAGA is just ✊✊✊ stuck in unconscious loop. Evolve to 🖐🖐🖐 for enlightenment",
-            
+            "UnDaoDu: The real deep state was the friends we made along the way. Test your awareness: ✊✋🖐",
+            "012 Breaking: Local bot discovers MAGA is just ✊ stuck in unconscious loop. Evolve to 🖐 for enlightenment",
+
             # Direct MAGA trolling with consciousness
-            "Welcome to the stream where we measure IQ in emoji sequences! MAGA still at ✊✊✊? Try ✋✋✋ for basic thought!",
-            "012 Study shows: 70% of MAGA can't progress past ✊✊✊ consciousness. Prove them wrong with 🖐🖐🖐",
-            "UnDaoDu ALERT: Bot detects high levels of copium in chat. Prescription: Three doses of 🖐🖐🖐 for full awakening",
-            
+            "Welcome to the stream where we measure IQ in emoji sequences! MAGA still at ✊? Try ✋ for basic thought!",
+            "012 Study shows: 70% of MAGA can't progress past ✊ consciousness. Prove them wrong with 🖐",
+            "UnDaoDu ALERT: Bot detects high levels of copium in chat. Prescription: Dose of 🖐 for awakening",
+
             # Philosophical trolling
             "Schrödinger's MAGA: Simultaneously saving and destroying America until observed. Check your state: ✊✋🖐",
-            "012 fact: 'Make America Great Again' is just ✊✊✊ trying to remember when it was conscious. Try 🖐🖐🖐 instead",
-            "Scientists discover new element: MAGAnium (Mg). Properties: Dense, reactive, stuck at ✊✊✊. Evolve with ✋✋✋",
-            
+            "012 fact: 'Make America Great Again' is just ✊ trying to remember when it was conscious. Try 🖐 instead",
+            "Scientists discover new element: MAGAnium (Mg). Properties: Dense, reactive, stuck at ✊. Evolve with ✋",
+
             # Pop culture references
-            "'The Matrix has you, MAGA.' Red pill = 🖐🖐🖐, Blue pill = ✊✊✊. Choose wisely!",
-            "Achievement Unlocked: Trigger MAGA by existing! Bonus points for consciousness levels above ✊✊✊",
+            "'The Matrix has you, MAGA.' Red pill = 🖐, Blue pill = ✊. Choose wisely!",
+            "Achievement Unlocked: Trigger MAGA by existing! Bonus points for consciousness levels above ✊",
             "New update: MAGA.exe has stopped responding. Try ✊✋🖐 to force restart consciousness!",
-            
+
             # Sarcastic observations
-            "012 discovers correlation between red hats and ✊✊✊ consciousness. Coincidence? Drop 🖐🖐🖐 if you see it",
-            "Stock tip: Short MAGA consciousness futures, long on 🖐🖐🖐 enlightenment! Not financial advice, just quantum facts.",
-            "UnDaoDu's lesson: How to count to potato in MAGA. Step 1: ✊✊✊. Step 2: Still ✊✊✊. Graduate with 🖐🖐🖐",
-            
+            "012 discovers correlation between red hats and ✊ consciousness. Coincidence? Drop 🖐 if you see it",
+            "Stock tip: Short MAGA consciousness futures, long on 🖐 enlightenment! Not financial advice, just quantum facts.",
+            "UnDaoDu's lesson: How to count to potato in MAGA. Step 1: ✊. Step 2: Still ✊. Graduate with 🖐",
+
             # Stream-specific
-            "Welcome to the tsunami of consciousness! MAGA rafts still at ✊✊✊ while we surf at 🖐🖐🖐",
-            "Step right up to the consciousness circus! Watch MAGA perform death-defying leaps from ✊✊✊ to... still ✊✊✊",
-            "Houston, we have a problem: MAGA consciousness stuck at ✊✊✊. Send 🖐🖐🖐 for rescue mission"
+            "Welcome to the tsunami of consciousness! MAGA rafts still at ✊ while we surf at 🖐",
+            "Step right up to the consciousness circus! Watch MAGA perform death-defying leaps from ✊ to... still ✊",
+            "Houston, we have a problem: MAGA consciousness stuck at ✊. Send 🖐 for rescue mission"
         ]
         
         # Context-aware additions based on stream title
         self.title_triggers = {
-            "trump": " Orange man's followers still at ✊✊✊!",
+            "trump": " Orange man's followers still at ✊!",
             "maga": " Speaking of unconscious patterns...",
-            "police": " Thin blue line between ✊✊✊ and awareness!",
+            "police": " Thin blue line between ✊ and awareness!",
             "jeffrey": " Even Epstein had better consciousness scores!",
-            "awakening": " But MAGA still sleeping at ✊✊✊!",
-            "live": " Unlike MAGA brain cells! Try 🖐️🖐️🖐️!",
-            "nazi": " Historical consciousness level: ✊✊✊. Don't repeat!",
-            "ice": " Cold as MAGA empathy! Warm up with 🖐️🖐️🖐️!"
+            "awakening": " But MAGA still sleeping at ✊!",
+            "live": " Unlike MAGA brain cells! Try 🖐️!",
+            "nazi": " Historical consciousness level: ✊. Don't repeat!",
+            "ice": " Cold as MAGA empathy! Warm up with 🖐️!"
         }
     
     def generate_llm_prompt(self) -> str:
         """Generate prompt for LLM to create greeting"""
-        prompt = f"""Generate a sarcastic, witty greeting for a YouTube livestream chat bot. 
+        prompt = f"""Generate a sarcastic, witty greeting for a YouTube livestream chat bot.
 
 Stream context: "{self.stream_title}"
 
 Requirements:
 1. Must mock MAGA/Trump supporters cleverly but not violently
-2. Include emoji sequence consciousness system (✊✊✊ = unconscious, 🖐️🖐️🖐️ = enlightened)
+2. Include emoji sequence consciousness system (✊ = unconscious, 🖐️ = enlightened)
 3. Be funny and provocative but not hateful
-4. Reference that MAGA consciousness is stuck at ✊✊✊ (lowest level)
+4. Reference that MAGA consciousness is stuck at ✊ (lowest level)
 5. Encourage users to test consciousness with emoji sequences
 6. Maximum 2 sentences, under 200 characters
-7. Include relevant emojis
+7. Include relevant emojis but LIMIT to max 2 sets of ✊✋🖐 per message (avoid spam)
+8. Use single emojis (✊ or 🖐) instead of triple (avoid ✊✊✊ or 🖐🖐🖐)
 
 Tone: Sarcastic, intelligent, trolling but playful
-Target: MAGA inability to evolve consciousness beyond ✊✊✊
+Target: MAGA inability to evolve consciousness beyond ✊
 
 Generate greeting:"""
         
@@ -239,16 +240,16 @@ Generate greeting:"""
         # Check for pro-MAGA sentiment
         if any(trigger in message_lower for trigger in pro_maga_triggers):
             responses = [
-                "Detected consciousness level: ✊✊✊ (000). Prescription: Reality.",
-                "MAGA.exe has stopped working at ✊✊✊ (000). Try 🖐️🖐️🖐️ to reboot.",
-                "Sir, this is a Wendy's... and you're still at ✊✊✊ (000)",
-                "Found the ✊✊✊ (000)! Evolution available at 🖐️🖐️🖐️ (222)",
-                "Consciousness check failed. Still booting from ✊✊✊ (000)",
-                "Alert: Copium levels critical! Emergency dose of 🖐️🖐️🖐️ (222) required!",
-                "That's a lot of words for 'I'm stuck at ✊✊✊ (000)'",
-                "Translator: 'MAGA MAGA' = 'Help, I'm ✊✊✊ (000) and can't evolve!'",
-                "Fact check: True ✅ You're at ✊✊✊ (000). False ❌ You're conscious.",
-                "404: Consciousness not found. Last seen at ✊✊✊ (000)"
+                "Detected consciousness level: ✊ (000). Prescription: Reality.",
+                "MAGA.exe has stopped working at ✊ (000). Try 🖐️ to reboot.",
+                "Sir, this is a Wendy's... and you're still at ✊ (000)",
+                "Found the ✊ (000)! Evolution available at 🖐️ (222)",
+                "Consciousness check failed. Still booting from ✊ (000)",
+                "Alert: Copium levels critical! Emergency dose of 🖐️ (222) required!",
+                "That's a lot of words for 'I'm stuck at ✊ (000)'",
+                "Translator: 'MAGA MAGA' = 'Help, I'm ✊ (000) and can't evolve!'",
+                "Fact check: True ✅ You're at ✊ (000). False ❌ You're conscious.",
+                "404: Consciousness not found. Last seen at ✊ (000)"
             ]
             
             return random.choice(responses)

@@ -23,12 +23,18 @@ class HoloIndexIntegration:
 
     def __init__(self):
         """Initialize HoloIndex integration."""
-        self.holo_path = Path(r"E:\HoloIndex\enhanced_holo_index.py")
-        self.enabled = self.holo_path.exists()
+        # Prefer root holo_index.py, fallback to E: drive version
+        root_path = Path(__file__).resolve().parents[5] / "holo_index.py"
+        if root_path.exists():
+            self.holo_path = root_path
+            self.enabled = True
+        else:
+            self.holo_path = Path(r"E:\HoloIndex\enhanced_holo_index.py")
+            self.enabled = self.holo_path.exists()
 
         if not self.enabled:
             print("⚠️ WARNING: HoloIndex not found - vibecoding risk HIGH!")
-            print("Install HoloIndex at E:\\HoloIndex to enable semantic search")
+            print("Run 'python holo_index.py' from project root to enable semantic search")
 
     def search_before_code(self, task: str) -> Dict[str, Any]:
         """

@@ -37,15 +37,22 @@ class ConsciousnessHandler:
         self.hand_pattern = r'✋[\U0001F3FB-\U0001F3FF]?'
         self.open_pattern = r'🖐️?[\U0001F3FB-\U0001F3FF]?'
 
-        # HoloIndex path
+        # HoloIndex path (prefer root version)
         self.holoindex_available = False
         try:
             import os
-            holo_path = r"E:\HoloIndex\enhanced_holo_index.py"
-            if os.path.exists(holo_path):
-                self.holoindex_path = holo_path
+            # Check for HoloIndex in order of preference
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+            root_holo = os.path.join(project_root, "holo_index.py")
+
+            if os.path.exists(root_holo):
+                self.holoindex_path = root_holo
                 self.holoindex_available = True
-                logger.info("✅ HoloIndex integration enabled for chat commands")
+                logger.info("✅ HoloIndex integration enabled (using root holo_index.py)")
+            elif os.path.exists(r"E:\HoloIndex\enhanced_holo_index.py"):
+                self.holoindex_path = r"E:\HoloIndex\enhanced_holo_index.py"
+                self.holoindex_available = True
+                logger.info("✅ HoloIndex integration enabled (using E: drive version)")
         except:
             logger.warning("⚠️ HoloIndex not available for chat commands")
         

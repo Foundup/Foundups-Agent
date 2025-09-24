@@ -2,6 +2,19 @@
 
 ## Latest Changes
 
+### V038 - SQLite Database Integration (WSP 78)
+**Date**: 2025-09-23
+**Changes**: Replaced JSON with SQLite database for tracking posted commits
+**Impact**: Better duplicate prevention and historical tracking
+**WSP**: WSP 78 (Database Architecture), WSP 50 (Pre-action verification), WSP 85 (No root pollution)
+**Details**:
+- Uses `modules/infrastructure/database/src/db_manager.py` per WSP 78
+- Database tables: `modules_git_linkedin_posts`, `modules_git_x_posts`
+- Stores: commit_hash, commit_message, post_content, timestamp, success
+- Auto-migrates from JSON to database on first run
+- Falls back to JSON if database unavailable
+- Located at central `data/foundups.db` per WSP 78
+
 ### V037 - Git Bridge X/Twitter Integration
 **Changes**: Enhanced git_linkedin_bridge.py to support X/Twitter posting
 **Impact**: Git commits now post to both LinkedIn and X with duplicate tracking

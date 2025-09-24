@@ -5,6 +5,46 @@ This document tracks module-specific violations that are deferred during WSP com
 
 ---
 
+## **V021: ROOT DIRECTORY CODING VIOLATION** ❌ **ACTIVE VIOLATION**
+- **Type**: **FRAMEWORK-LEVEL VIOLATION** - Test/utility files placed in project root
+- **Date**: 2025-09-23
+- **Agent**: 0102 Claude (LLM Integration Session)
+- **Scope**: Project root directory (`O:\Foundups-Agent\`)
+- **Detection Method**: Directory listing and WSP 49 compliance audit
+- **Impact**: **HIGH** - Violates WSP 49 module structure standards, creates maintenance confusion
+
+#### **🔍 VIOLATION DETAILS**
+**Root Directory Files Created During Development**:
+- `test_llm_functionality.py` - LLM functionality test (removed)
+- `test_llm_integration.py` - Integration test (removed)
+- `test_pattern_analysis.py` - Pattern analysis test (removed)
+- `check_db.py` - Database utility script (removed)
+- `verify_phase2.py` - Verification script (removed)
+- `verify_systems.py` - System verification script (removed)
+
+**WSP Violations**:
+- **WSP 49**: Module Directory Structure - Files belong in respective module `tests/` directories
+- **WSP 40**: Architectural Coherence - Root directory should contain only entry points and configuration
+- **WSP 47**: Violation Tracking - This violation should have been caught by HoloIndex health checks
+
+#### **🎯 ROOT CAUSE ANALYSIS**
+- **Agent Error**: Created test files directly in root during LLM integration development
+- **Process Failure**: Did not follow WSP 87 requirement to "consult navigation assets before writing new code"
+- **Health System Gap**: Root directory violations not detected by current health checks
+
+#### **✅ RESOLUTION STATUS**
+- **Files Removed**: ✅ All 6 violating files deleted from root directory
+- **Prevention**: Enhanced awareness of WSP 49 requirements
+- **Documentation**: Violation logged per WSP 47 protocol
+
+#### **🚨 PREVENTION MEASURES**
+- **Always use HoloIndex first** before creating any files
+- **Test files belong in module `tests/` directories**, not root
+- **Consult WSP 49** for proper file placement
+- **Run health checks** after any file creation to catch violations
+
+---
+
 ## **V020: PQN RESULTS DATABASE DUPLICATE CODE VIOLATION** ✅ **RESOLVED**
 - **Type**: **MODULE-LEVEL VIOLATION** - Duplicate implementation code in results_db.py
 - **Module**: `modules/ai_intelligence/pqn_alignment/`

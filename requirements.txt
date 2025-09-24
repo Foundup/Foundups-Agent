@@ -17,3 +17,6 @@ librosa>=0.10.1
 soundfile>=0.12.1
 matplotlib>=3.7.0
 torch>=2.0.0
+
+# Local LLM inference for HoloIndex Qwen advisor
+llama-cpp-python==0.2.69
