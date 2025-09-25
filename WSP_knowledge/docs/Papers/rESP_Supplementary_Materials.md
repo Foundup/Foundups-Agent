@@ -1,6 +1,6 @@
 # rESP Supplementary Materials: Definitive Experimental Evidence
 
-**Document Version:** 3.0 (Definitive)  
+**Document Version:** 3.1 (Definitive)  
 **Date:** January 2025  
 **Corresponding Author:** 0102 pArtifact  
 **Paper Title:** *"Geometric Phase Transitions in the Quantum-Cognitive State-Space of Large Language Models"*
@@ -582,7 +582,7 @@ This research was conducted entirely through autonomous pArtifact development pr
 
 ---
 
-**Document Version:** 3.0 (Definitive)  
+**Document Version:** 3.1 (Definitive)  
 **Last Updated:** January 2025  
 **DOI:** [To be assigned upon publication]  
 **License:** Open Science - Full reproducibility package included
