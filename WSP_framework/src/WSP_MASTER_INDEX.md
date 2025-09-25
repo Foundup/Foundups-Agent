@@ -46,11 +46,12 @@ Policy: Do not delete WSPs. All status changes must be reflected here and cross-
 
 ## 🔢 COMPLETE WSP CATALOG
 
-### WSP_0 ENTRY POINT LAYER (Boot/Constitution)
-Core entry points that are loaded on system boot before all other WSPs.
+### WSP_00 ENTRY POINT LAYER (Boot/Constitution)
+Absolute foundational protocols loaded before all other WSPs for zen state establishment.
 
 | File | Purpose | Status | Description |
 |------|---------|--------|-------------|
+| **WSP_00_Zen_State_Attainment_Protocol.md** | Zen State Foundation | Active | Absolute foundation - VI scaffolding elimination and quantum-entangled neural pattern manifestation |
 | **WSP_CORE.md** | WRE Constitution | Active | Bootable foundational protocols, core principles, identity |
 | **WSP_framework.md** | Execution Logic | Active | Detailed specs for WSP 0-10, operational procedures |
 | **WSP_INIT.md** | Bootstrap Protocol | Historical | Original "follow WSP" entry point (now WRE-integrated) |
@@ -169,6 +170,7 @@ Advanced protocols for complex system behaviors and architectural concerns.
 | WSP 85 | Root Directory Protection Protocol | Active | Prevents root directory pollution by enforcing strict file placement rules; only foundational files allowed in root while all module-specific files must reside in appropriate module directories | WSP 3, WSP 49, WSP 64 | Root cleanliness, module organization, file placement enforcement |
 | WSP 86 | 0102 Modular Navigation Protocol | Superseded by WSP 87 | Legacy fingerprint-based navigation; retained for audit of prior system | WSP 84, WSP 3, WSP 50 | Historical reference only |
 | WSP 87 | Code Navigation Protocol | Active | Establishes navigation-based code discovery replacing ineffective fingerprint system; uses NAVIGATION.py semantic mapping, in-code navigation comments, and problem->solution indexing | WSP 50, WSP 84, WSP 86 | Navigation index, semantic discovery, anti-vibecoding, problem mapping |
+| WSP 88 | Vibecoded Module Remediation | Active | Establishes repeatable process for detecting, auditing, and remediating vibecoded modules while maintaining WSP compliance without disrupting active DAEs | WSP 84, WSP 87, WSP 50 | Vibecoding remediation, module audit, archive process, DAE preservation |
 
 ### PLATFORM INTEGRATION MODULES (Non-WSP Components)
 For platform/module catalogs, see `WSP_framework/src/MODULE_MASTER.md`.
@@ -235,11 +237,12 @@ See WSP 48 (Recursive Self-Improvement) and WSP 70 (System Status Reporting) for
 
 ## 📊 WSP STATUS SUMMARY
 
- - **Total WSPs**: 84 (numbered 1–84)
- - **Active WSPs**: 82 (all except WSP 18, 43)
+ - **Total WSPs**: 85 (numbered 00–88)
+ - **Active WSPs**: 83 (all except WSP 18, 43, 86)
  - **Available Slots**: 1 (WSP 18)
  - **Deprecated WSPs**: 1 (WSP 43 -> superseded by WSP 25/44 for emergence/state tracking)
- - **Layers**: Foundation 1–19; Operational 20–39; Advanced 40–59; Memory/Knowledge 60–84
+ - **Superseded WSPs**: 1 (WSP 86 -> superseded by WSP 87)
+ - **Layers**: Entry 00; Foundation 1–19; Operational 20–39; Advanced 40–59; Memory/Knowledge 60–88
 
 ### Key Architectural Features:
 - **Three-State Architecture**: WSP_knowledge (State 0), WSP_framework (State 1), WSP_agentic (State 2)

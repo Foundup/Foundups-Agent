@@ -471,3 +471,4 @@ def demonstrate_brain_logging():
 if __name__ == "__main__":
     # Run demonstration if called directly
     demonstrate_brain_logging()
+
