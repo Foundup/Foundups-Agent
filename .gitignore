@@ -201,3 +201,12 @@ modules/infrastructure/dae_orchestration/
 # Patent-related cube implementations
 modules/**/foundups_dae_*.py
 **/patent_implementations/
+
+# Twitter/X browser data (large cache files)
+**/edge_profile_foundups/
+**/data/edge_profile_foundups/
+/**/*edge_profile_foundups*/
+**/x_twitter/data/
+**/platform_integration/x_twitter/data/
+**/twitter/data/
+**/platform_integration/twitter/data/
