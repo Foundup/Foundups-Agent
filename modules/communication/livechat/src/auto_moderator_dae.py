@@ -71,11 +71,39 @@ class AutoModeratorDAE:
         """
         Phase -1/0: Connect to YouTube - NO-QUOTA mode by default.
         Only use API tokens when we actually find a stream.
+        AUTOMATICALLY REFRESHES TOKENS on startup to keep them fresh!
 
         Returns:
             Success status
         """
         logger.info("🔌 Starting in NO-QUOTA mode to preserve API tokens...")
+
+        # AUTOMATIC TOKEN REFRESH - Keep tokens fresh proactively!
+        logger.info("🔄 Proactively refreshing OAuth tokens to ensure they're ready...")
+        try:
+            # Import and run the auto-refresh script
+            import subprocess
+            import os
+            script_path = os.path.join(
+                os.path.dirname(__file__),
+                "../../platform_integration/youtube_auth/scripts/auto_refresh_tokens.py"
+            )
+            if os.path.exists(script_path):
+                result = subprocess.run(
+                    ["python", script_path],
+                    capture_output=True,
+                    text=True,
+                    timeout=10
+                )
+                if result.returncode == 0:
+                    logger.info("✅ OAuth tokens proactively refreshed - ready for use when needed")
+                else:
+                    logger.warning(f"⚠️ Token refresh had issues: {result.stderr[:200]}")
+            else:
+                logger.debug("Token refresh script not found, continuing anyway")
+        except Exception as e:
+            logger.warning(f"⚠️ Proactive token refresh failed: {e}")
+            # Continue anyway - tokens might still be valid
 
         # Default to NO-QUOTA mode for stream searching
         # We'll only authenticate when we actually find a stream

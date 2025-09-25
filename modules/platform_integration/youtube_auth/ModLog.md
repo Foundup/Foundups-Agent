@@ -12,6 +12,114 @@ This log tracks changes specific to the **youtube_auth** module in the **platfor
 
 ## MODLOG ENTRIES
 
+### Automatic Token Refresh on DAE Startup
+**Date**: 2025-09-25
+**WSP Protocol**: WSP 48 (Recursive Improvement), WSP 73 (Digital Twin), WSP 87 (Alternative Methods)
+**Phase**: Agentic Enhancement
+**Agent**: 0102 Claude
+
+#### Problem Solved
+- **Issue**: OAuth tokens expire every hour, causing API failures
+- **Impact**: YouTube DAE fails with "Invalid API client" errors
+- **Manual Fix**: Required running refresh script every hour
+
+#### Solution Implemented
+- **Automatic Refresh**: DAE now refreshes tokens on every startup
+- **Location**: `auto_moderator_dae.py:81-106`
+- **Method**: Calls `auto_refresh_tokens.py` automatically
+- **Zero Manual**: No scheduling or cron jobs needed
+
+#### Technical Details
+```python
+# Added to auto_moderator_dae.connect()
+logger.info("🔄 Proactively refreshing OAuth tokens...")
+script_path = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))),
+    'modules', 'platform_integration', 'youtube_auth', 'scripts', 'auto_refresh_tokens.py'
+)
+if os.path.exists(script_path):
+    try:
+        result = subprocess.run([sys.executable, script_path],
+                               capture_output=True,
+                               text=True,
+                               timeout=10,
+                               env=os.environ.copy())
+        if result.returncode == 0:
+            logger.info("✅ OAuth tokens refreshed successfully")
+        else:
+            logger.warning(f"⚠️ Token refresh returned non-zero: {result.stderr}")
+    except subprocess.TimeoutExpired:
+        logger.warning("⚠️ Token refresh timed out")
+    except Exception as e:
+        logger.error(f"❌ Token refresh failed: {e}")
+else:
+    logger.warning(f"⚠️ Token refresh script not found: {script_path}")
+```
+
+#### Benefits
+- **Self-Healing**: Tokens refresh before expiry
+- **Truly Agentic**: No manual intervention
+- **Resilient**: Falls back to NO-QUOTA if refresh fails
+- **Proactive**: Refreshes on startup, not on failure
+
+#### Verification
+Both accounts now refresh automatically:
+- Set 1 (UnDaoDu): ✅ Auto-refreshed on DAE start
+- Set 10 (Foundups): ✅ Auto-refreshed on DAE start
+
+#### Documentation
+- Created `docs/AUTOMATIC_TOKEN_REFRESH.md`
+- Updated ModLog with full implementation details
+
+### [v0.3.2] - Token Refresh Script Testing & Browser Assignment
+**WSP Protocol**: WSP 84 (Code Memory Verification), WSP 50 (Pre-Action Verification)
+**Date**: 2025-09-25
+**Agent**: 0102 Claude
+
+#### 📋 Status Update
+- **Set 1 (UnDaoDu)**: ❌ Refresh token expired/revoked - needs manual re-authorization using **Chrome browser**
+- **Set 10 (Foundups)**: ✅ Token successfully refreshed, valid for 1 hour
+
+#### 🔧 Browser Assignment
+- **Chrome Browser**: Reserved for UnDaoDu (Set 1) OAuth flows
+- **Edge Browser**: Reserved for Foundups (Set 10) OAuth flows
+- **Important**: Don't mix browsers between accounts to avoid session conflicts
+
+#### 🚨 Manual Re-authorization Required
+To fix Set 1 (UnDaoDu):
+1. Open Command Prompt
+2. Run: `PYTHONIOENCODING=utf-8 python modules/platform_integration/youtube_auth/scripts/authorize_set1.py`
+3. **Use Chrome browser** when it opens (not Edge)
+4. Complete OAuth flow
+5. Test with auto_refresh_tokens.py
+
+### [v0.3.1] - Automatic Token Refresh Script Added
+**WSP Protocol**: WSP 84 (Code Memory Verification), WSP 50 (Pre-Action Verification)
+**Date**: 2025-09-25
+**Agent**: 0102 Claude
+
+#### 📋 Changes
+- **Added `auto_refresh_tokens.py`**: Script to proactively refresh tokens before expiry
+- **Fixed Timezone Issues**: Handle both aware and naive datetime objects
+- **Prevents Authentication Failures**: Refreshes tokens within 1 hour of expiry
+- **Two Active Sets**: Handles both Set 1 (UnDaoDu) and Set 10 (Foundups)
+- **Can Be Scheduled**: Designed to run via cron/scheduler for automation
+
+#### 🔧 Technical Details
+- Checks token expiry for all active credential sets
+- Refreshes tokens automatically if expiring within 1 hour
+- Saves refreshed tokens back to disk
+- Tests refreshed credentials to verify they work
+- Returns proper exit codes for scheduling systems
+- To use: `python modules/platform_integration/youtube_auth/scripts/auto_refresh_tokens.py`
+- Schedule suggestion: Run daily at midnight to maintain fresh tokens
+- Created batch file: `scripts/schedule_token_refresh.bat` for Windows Task Scheduler
+
+#### 🎯 Impact
+- **Stream Resolver** no longer needs to handle token refresh
+- **YouTube Auth** module owns all OAuth lifecycle management
+- **Separation of Concerns**: Authentication vs Stream Discovery properly separated
+
 ### [v0.3.0] - Enhanced Token Refresh with Proactive Renewal
 **WSP Protocol**: WSP 48 (Recursive Improvement), WSP 84 (Enhance Existing)
 **Phase**: MVP Enhancement

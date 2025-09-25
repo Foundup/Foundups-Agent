@@ -959,13 +959,21 @@ def handle_stream_detected(video_id: str, stream_title: str = None, linkedin_pag
 
     logger = logging.getLogger(__name__)
 
+    logger.info("="*80)
+    logger.info("[ORCHESTRATOR] 🎯 STREAM DETECTION HANDLER CALLED")
+    logger.info(f"[ORCHESTRATOR] 📹 Video ID: {video_id}")
+    logger.info(f"[ORCHESTRATOR] 📝 Title: {stream_title}")
+    logger.info(f"[ORCHESTRATOR] 🏢 LinkedIn Page: {linkedin_page}")
+    logger.info("="*80)
+
     def post_in_background():
         try:
+            logger.info("[ORCHESTRATOR] 🧵 Background thread started")
             # Check if already posted
             status = orchestrator.check_if_already_posted(video_id)
             if status['already_posted']:
                 platforms = status['platforms_posted']
-                logger.info(f"[ORCHESTRATOR] Video {video_id} already posted to: {platforms}")
+                logger.info(f"[ORCHESTRATOR] ⚠️ Video {video_id} already posted to: {platforms}")
 
             # Build stream URL
             stream_url = f"https://www.youtube.com/watch?v={video_id}"

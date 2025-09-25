@@ -99,14 +99,16 @@ MAX_CONSECUTIVE_FAILURES = config.MAX_CONSECUTIVE_FAILURES
 CHANNEL_ID = config.CHANNEL_ID
 
 class CircuitBreaker:
-    """Circuit breaker pattern implementation for API calls."""
-    
+    """Circuit breaker pattern implementation for API calls with gradual recovery."""
+
     def __init__(self, failure_threshold: int = 10, timeout: int = 600):
         self.failure_threshold = failure_threshold
-        self.timeout = timeout
+        self.timeout = timeout  # 10 minutes default
         self.failure_count = 0
         self.last_failure_time = None
         self.state = "CLOSED"  # CLOSED, OPEN, HALF_OPEN
+        self.consecutive_successes = 0  # Track successes in HALF_OPEN state
+        self.recovery_threshold = 3  # Need 3 successes to fully close
         
     def call(self, func, *args, **kwargs):
         """Execute function with circuit breaker protection."""
@@ -131,18 +133,33 @@ class CircuitBreaker:
         return time.time() - self.last_failure_time > self.timeout
     
     def _on_success(self):
-        """Handle successful call."""
-        self.failure_count = 0
-        self.state = "CLOSED"
+        """Handle successful call with gradual recovery."""
+        if self.state == "HALF_OPEN":
+            self.consecutive_successes += 1
+            logger.info(f"🔄 Circuit breaker HALF_OPEN - success {self.consecutive_successes}/{self.recovery_threshold}")
+            if self.consecutive_successes >= self.recovery_threshold:
+                self.failure_count = 0
+                self.state = "CLOSED"
+                self.consecutive_successes = 0
+                logger.info("✅ Circuit breaker fully CLOSED after successful recovery")
+        else:
+            self.failure_count = 0
+            self.state = "CLOSED"
     
     def _on_failure(self):
-        """Handle failed call."""
+        """Handle failed call with reset on HALF_OPEN failure."""
         self.failure_count += 1
         self.last_failure_time = time.time()
-        
-        if self.failure_count >= self.failure_threshold:
+
+        if self.state == "HALF_OPEN":
+            # Failed during recovery - go back to OPEN
             self.state = "OPEN"
-            logger.warning(f"Circuit breaker opened after {self.failure_count} failures")
+            self.consecutive_successes = 0
+            logger.warning(f"⚠️ Circuit breaker recovery failed - back to OPEN state")
+        elif self.failure_count >= self.failure_threshold:
+            self.state = "OPEN"
+            logger.warning(f"🚫 Circuit breaker OPEN after {self.failure_count} failures (threshold: {self.failure_threshold})")
+            logger.info(f"⏰ Will attempt recovery in {self.timeout} seconds")
 
 # Global circuit breaker instance
 circuit_breaker = CircuitBreaker(
@@ -310,7 +327,15 @@ def check_video_details_enhanced(
         return None
     
     if not validate_api_client(youtube_client):
-        raise APIClientError("Invalid API client provided")
+        # More specific error logging for debugging
+        if youtube_client is None:
+            logger.error("❌ API client is None - OAuth tokens unavailable")
+            logger.info("💡 Possible causes:")
+            logger.info("   • Quota exhausted (10,000 units/day limit reached)")
+            logger.info("   • Token expired (access tokens expire in 1 hour)")
+            logger.info("   • Token revoked (refresh token invalid after 6 months)")
+            logger.info("   • To re-authorize: python modules/platform_integration/youtube_auth/scripts/authorize_set*.py")
+        raise APIClientError("Invalid API client - check OAuth token status")
     
     try:
         # Use circuit breaker for API calls
@@ -429,7 +454,15 @@ def search_livestreams_enhanced(
         return None
     
     if not validate_api_client(youtube_client):
-        raise APIClientError("Invalid API client provided")
+        # More specific error logging for debugging
+        if youtube_client is None:
+            logger.error("❌ API client is None - OAuth tokens unavailable")
+            logger.info("💡 Possible causes:")
+            logger.info("   • Quota exhausted (10,000 units/day limit reached)")
+            logger.info("   • Token expired (access tokens expire in 1 hour)")
+            logger.info("   • Token revoked (refresh token invalid after 6 months)")
+            logger.info("   • To re-authorize: python modules/platform_integration/youtube_auth/scripts/authorize_set*.py")
+        raise APIClientError("Invalid API client - check OAuth token status")
     
     try:
         def _make_search_call():
@@ -556,7 +589,15 @@ def get_active_livestream_video_id_enhanced(
         return None
     
     if not validate_api_client(youtube_client):
-        raise APIClientError("Invalid API client provided")
+        # More specific error logging for debugging
+        if youtube_client is None:
+            logger.error("❌ API client is None - OAuth tokens unavailable")
+            logger.info("💡 Possible causes:")
+            logger.info("   • Quota exhausted (10,000 units/day limit reached)")
+            logger.info("   • Token expired (access tokens expire in 1 hour)")
+            logger.info("   • Token revoked (refresh token invalid after 6 months)")
+            logger.info("   • To re-authorize: python modules/platform_integration/youtube_auth/scripts/authorize_set*.py")
+        raise APIClientError("Invalid API client - check OAuth token status")
     
     logger.info("="*60)
     logger.info(f"🔍 STREAM SEARCH INITIATED (Enhanced)")
@@ -1188,10 +1229,33 @@ class StreamResolver:
             return None
 
         else:
-            # NO-QUOTA mode not available
-            logger.info("⚠️ NO-QUOTA mode not available, falling back to API mode")
+            # NO-QUOTA mode not available but could be initialized
+            logger.info("⚠️ NO-QUOTA mode not available, attempting to initialize...")
+            try:
+                from .no_quota_stream_checker import NoQuotaStreamChecker
+                self.no_quota_checker = NoQuotaStreamChecker()
+                logger.info("✅ NO-QUOTA mode initialized successfully, retrying...")
+                # Recurse to retry with NO-QUOTA mode
+                return self.resolve_stream(channel_id)
+            except Exception as e:
+                logger.warning(f"❌ Failed to initialize NO-QUOTA mode: {e}")
+                logger.info("⚠️ Falling back to API mode")
 
         # PRIORITY 5: Fallback to API mode if NO-QUOTA is not available
+        # Check if API client is available before attempting
+        if self.youtube is None:
+            logger.error("❌ API client is None")
+            logger.info("🔄 Attempting to initialize NO-QUOTA mode as emergency fallback...")
+            try:
+                from .no_quota_stream_checker import NoQuotaStreamChecker
+                self.no_quota_checker = NoQuotaStreamChecker()
+                logger.info("✅ NO-QUOTA mode initialized as emergency fallback")
+                return self.resolve_stream(channel_id)  # Retry with NO-QUOTA
+            except Exception as e:
+                logger.error(f"❌ Failed to initialize emergency NO-QUOTA mode: {e}")
+                circuit_breaker._on_failure()  # Mark as failure
+                raise StreamResolverError("No API client available and NO-QUOTA mode failed")
+
         logger.info("="*60)
         logger.info("🔍 FALLBACK: API STREAM SEARCH STARTING")
         logger.info(f"   Target Channel: {search_channel_id} ({self._get_channel_display_name(search_channel_id)})")
@@ -1289,24 +1353,36 @@ class StreamResolver:
             stream_title: Title of the stream (if available)
             channel_id: YouTube channel ID to determine LinkedIn page routing
         """
+        self.logger.info(f"[STREAM] 🚀 Starting social media posting trigger for {video_id}")
+        self.logger.info(f"[STREAM] 📝 Title: {stream_title}, Channel: {channel_id}")
+
         try:
+            self.logger.info("[STREAM] 📦 Importing social_media_orchestrator module...")
             # WSP 3 Compliant: Delegate to social media orchestrator
             from modules.platform_integration.social_media_orchestrator.src.simple_posting_orchestrator import handle_stream_detected
+            self.logger.info("[STREAM] ✅ Import successful - orchestrator available")
 
             # Get title if not provided
             final_title = stream_title or self._get_stream_title(video_id) or "Live Stream"
+            self.logger.info(f"[STREAM] 📋 Final title: {final_title}")
 
             # Determine LinkedIn page based on channel
             linkedin_page = self._get_linkedin_page_for_channel(channel_id)
+            self.logger.info(f"[STREAM] 🔄 Channel routing: {channel_id} → LinkedIn page: {linkedin_page}")
 
             # Call orchestrator's stream detection handler (runs in background)
+            self.logger.info(f"[STREAM] 📢 Calling handle_stream_detected({video_id}, {final_title}, {linkedin_page})...")
             handle_stream_detected(video_id, final_title, linkedin_page)
-            self.logger.info(f"[STREAM] Triggered social media posting for video {video_id} → {linkedin_page}")
+            self.logger.info(f"[STREAM] ✅ Successfully triggered social media posting for video {video_id} → {linkedin_page}")
 
-        except ImportError:
-            self.logger.warning("[STREAM] Social media orchestrator not available")
+        except ImportError as e:
+            self.logger.error(f"[STREAM] ❌ Import failed: Social media orchestrator not available - {e}")
+            import traceback
+            self.logger.error(traceback.format_exc())
         except Exception as e:
-            self.logger.error(f"[STREAM] Failed to trigger social media posting: {e}")
+            self.logger.error(f"[STREAM] ❌ Failed to trigger social media posting: {e}")
+            import traceback
+            self.logger.error(traceback.format_exc())
 
     def _get_stream_title(self, video_id: str) -> Optional[str]:
         """

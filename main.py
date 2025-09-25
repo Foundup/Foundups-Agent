@@ -725,6 +725,16 @@ def main():
                             print("🧠 Starting autonomous HoloDAE monitoring...")
                             run_holodae()
                             break  # Exit menu after starting monitoring
+                        elif choice == "6":
+                            print("🧠 Launching Chain-of-Thought Brain Logging...")
+                            try:
+                                from holo_index.qwen_advisor.chain_of_thought_logger import demonstrate_brain_logging
+                                demonstrate_brain_logging()
+                                print("\n🧠 BRAIN LOGGING COMPLETE - Every thought, decision, and action was logged above!")
+                                print("💡 This shows exactly how the AI brain works - completely observable!")
+                            except Exception as e:
+                                print(f"❌ Brain logging failed: {e}")
+                            input("\nPress Enter to continue...")
                         elif choice in ["26", "27", "28", "29", "30"]:
                             print("🎲 This DAE operation requires main menu selection...")
                             # Would need to navigate to appropriate main menu option

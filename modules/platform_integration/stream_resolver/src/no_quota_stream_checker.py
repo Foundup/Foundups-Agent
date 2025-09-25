@@ -246,19 +246,34 @@ class NoQuotaStreamChecker:
                 if 'BADGE_STYLE_TYPE_LIVE_NOW' in html:
                     live_score += 2
                     logger.debug("Found LIVE badge")
-                if 'watching now</span>' in html:
+                if 'watching now</span>' in html or 'watching now</' in html:
                     live_score += 2
                     logger.debug("Found watching now")
+                # Additional patterns for 2025 YouTube
+                if '"isLive":true' in html:
+                    live_score += 2
+                    logger.debug("Found isLive:true")
+                if '"liveBroadcastDetails"' in html and '"isLiveNow":true' not in html:
+                    # Check for live broadcast details even without isLiveNow
+                    if '"startActualTime"' in html and '"endActualTime"' not in html:
+                        live_score += 2
+                        logger.debug("Found live broadcast in progress")
 
                 # Weak indicators (worth 1 point each)
                 if '"label":"LIVE"' in html:
                     live_score += 1
                 if '"isLiveContent":true' in html:
                     live_score += 1
+                if 'Move2Japan is live!' in html:
+                    live_score += 2  # Direct channel notification
+                    logger.debug("Found Move2Japan is live notification")
+                if '#MAGA #epsteinfiles' in html:
+                    live_score += 1  # Stream hashtags present
+                    logger.debug("Found stream hashtags")
 
-                # Need at least 4 points or isLiveNow:true to be sure it's live
-                # Increased threshold to reduce false positives
-                if live_score >= 4 or '"isLiveNow":true' in html:
+                # Lowered threshold to 3 points since YouTube changed indicators
+                # Also accept if we find direct live text
+                if live_score >= 3 or '"isLiveNow":true' in html or 'is live!' in html:
                     is_live = True
                     logger.debug(f"Stream confirmed as live (score: {live_score})")
 

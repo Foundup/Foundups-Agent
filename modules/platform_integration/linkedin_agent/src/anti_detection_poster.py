@@ -293,10 +293,50 @@ class AntiDetectionLinkedIn:
                         video_id = youtube_url.split("v=")[1].split("&")[0]
                     break
 
-        # FIRST: Check orchestrator's posted history (most reliable source)
+        # FIRST: Check orchestrator's posted history DATABASE (most reliable source)
         if video_id:
             import json
             import os
+
+            # Check database first (source of truth)
+            orchestrator_db_path = "modules/platform_integration/social_media_orchestrator/memory/orchestrator_posted_streams.db"
+
+            if os.path.exists(orchestrator_db_path):
+                try:
+                    import sqlite3
+                    conn = sqlite3.connect(orchestrator_db_path)
+                    cursor = conn.cursor()
+
+                    # Check if this video was already posted to LinkedIn
+                    cursor.execute("""
+                        SELECT video_id, platforms_posted, timestamp, title
+                        FROM posted_streams
+                        WHERE video_id = ?
+                    """, (video_id,))
+
+                    result = cursor.fetchone()
+                    conn.close()
+
+                    if result:
+                        platforms_str = result[1]
+                        if platforms_str and 'linkedin' in platforms_str:
+                            logger.info(f"[DUPLICATE] Already posted to LinkedIn per orchestrator DATABASE")
+                            logger.info(f"[DUPLICATE] Video: {result[3] if result[3] else 'Unknown'}")
+                            logger.info(f"[DUPLICATE] Posted at: {result[2]}")
+                            logger.info(f"[SKIP] Not opening browser - already posted!")
+                            # CLOSE BROWSER IF OPEN to save resources
+                            if self.driver:
+                                try:
+                                    self.driver.quit()
+                                    self.driver = None
+                                    logger.info("[CLEANUP] Browser closed to save resources")
+                                except:
+                                    pass
+                            return True  # Return True to prevent retries
+                except Exception as e:
+                    logger.warning(f"[WARNING] Could not check orchestrator DB: {e}")
+
+            # Fallback to JSON file if database check fails
             orchestrator_history_file = "memory/orchestrator_posted_streams.json"
             if os.path.exists(orchestrator_history_file):
                 try:
@@ -305,7 +345,7 @@ class AntiDetectionLinkedIn:
                         if video_id in orchestrator_history:
                             posted_info = orchestrator_history[video_id]
                             if 'linkedin' in posted_info.get('platforms_posted', []):
-                                logger.info(f"[DUPLICATE] Already posted to LinkedIn per orchestrator history")
+                                logger.info(f"[DUPLICATE] Already posted to LinkedIn per orchestrator JSON history")
                                 logger.info(f"[DUPLICATE] Video: {posted_info.get('title', 'Unknown')}")
                                 logger.info(f"[DUPLICATE] Posted at: {posted_info.get('timestamp')}")
                                 logger.info(f"[SKIP] Not opening browser - already posted!")
@@ -416,18 +456,30 @@ class AntiDetectionLinkedIn:
             
             if text_area:
                 # Click on text area
+                logger.info(f"[LINKEDIN] Text area found: {text_area.tag_name}, class={text_area.get_attribute('class')}")
+                logger.info(f"[LINKEDIN] Current URL: {self.driver.current_url}")
+
+                # Take screenshot before action
+                try:
+                    self.driver.save_screenshot("O:/Foundups-Agent/logs/linkedin_before_typing.png")
+                    logger.info("[LINKEDIN] Screenshot saved: linkedin_before_typing.png")
+                except:
+                    pass
+
                 text_area.click()
                 time.sleep(random.uniform(1, 2))
-                
+
                 # Type content with human-like speed
                 print("[TYPE] Typing post content...")
-                
+                logger.info(f"[LINKEDIN] Content to post: {content[:200]}...")
+
                 # Use JavaScript to set the content directly for emojis
                 # Then simulate typing for non-emoji parts
                 try:
                     # First set the full content via JavaScript to handle emojis
                     js_content = content.replace("'", "\\'").replace("\n", "\\n")
                     self.driver.execute_script(f"arguments[0].textContent = '{js_content}';", text_area)
+                    logger.info("[LINKEDIN] Content inserted via JavaScript")
                     
                     # Trigger input event to make LinkedIn recognize the change
                     self.driver.execute_script("""
@@ -458,6 +510,15 @@ class AntiDetectionLinkedIn:
                 
                 # Find and click Post button (not Schedule button)
                 print("[UI] Looking for Post button (immediate posting for live streams)...")
+                logger.info("[LINKEDIN] Searching for Post button...")
+
+                # Take screenshot to see what buttons are available
+                try:
+                    self.driver.save_screenshot("O:/Foundups-Agent/logs/linkedin_before_post_button.png")
+                    logger.info("[LINKEDIN] Screenshot saved: linkedin_before_post_button.png")
+                except:
+                    pass
+
                 post_selectors = [
                     # Most specific - the actual Post button with text='Post' and primary class
                     "//button[text()='Post' and contains(@class, 'share-actions__primary-action')]",
@@ -467,16 +528,19 @@ class AntiDetectionLinkedIn:
                     # Fallback but exclude schedule
                     "//button[contains(text(), 'Post') and not(contains(@aria-label, 'Schedule'))]"
                 ]
-                
+
                 post_button = None
                 for selector in post_selectors:
                     try:
                         print(f"[DEBUG] Trying selector: {selector}")
+                        logger.info(f"[LINKEDIN] Trying button selector: {selector}")
                         post_button = WebDriverWait(self.driver, 3).until(
                             EC.element_to_be_clickable((By.XPATH, selector))
                         )
                         if post_button:
                             print(f"[OK] Found Post button with selector: {selector}")
+                            logger.info(f"[LINKEDIN] ✅ Found Post button with selector: {selector}")
+                            logger.info(f"[LINKEDIN] Button text: {post_button.text}, enabled: {post_button.is_enabled()}")
                             break
                     except:
                         continue

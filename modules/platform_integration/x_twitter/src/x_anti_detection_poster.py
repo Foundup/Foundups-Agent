@@ -484,9 +484,38 @@ class AntiDetectionX:
         
         # Check for duplicate posts if video_id provided
         if video_id:
+            # FIRST: Check orchestrator's centralized database (source of truth)
+            orchestrator_db_path = "modules/platform_integration/social_media_orchestrator/memory/orchestrator_posted_streams.db"
+
+            if os.path.exists(orchestrator_db_path):
+                try:
+                    import sqlite3
+                    conn = sqlite3.connect(orchestrator_db_path)
+                    cursor = conn.cursor()
+
+                    # Check if this video was already posted to X
+                    cursor.execute("""
+                        SELECT video_id, platforms_posted, timestamp
+                        FROM posted_streams
+                        WHERE video_id = ?
+                    """, (video_id,))
+
+                    result = cursor.fetchone()
+                    conn.close()
+
+                    if result:
+                        platforms_str = result[1]
+                        if platforms_str and 'x_twitter' in platforms_str:
+                            print(f"[DUPLICATE] Video {video_id} already posted to X/Twitter per orchestrator DB")
+                            print(f"[DUPLICATE] Posted at: {result[2]}")
+                            return False
+                except Exception as e:
+                    print(f"[WARNING] Could not check orchestrator DB: {e}")
+
+            # SECOND: Check local tracking file as fallback
             post_tracking_file = os.path.join(self.data_dir, 'posted_videos.json')
             posted_videos = {}
-            
+
             # Load existing posts
             if os.path.exists(post_tracking_file):
                 try:
@@ -494,7 +523,7 @@ class AntiDetectionX:
                         posted_videos = json.load(f)
                 except:
                     posted_videos = {}
-            
+
             # Check if we posted this video recently
             if video_id in posted_videos:
                 last_post_timestamp = posted_videos[video_id].get('timestamp', None)
@@ -507,7 +536,7 @@ class AntiDetectionX:
                         last_post_time = last_post_dt.timestamp()
                     else:
                         last_post_time = float(last_post_timestamp)
-                    
+
                     hours_since_post = (time.time() - last_post_time) / 3600
                     if hours_since_post < 4:
                         print(f"[SKIP] Already posted {hours_since_post:.1f} hours ago for video {video_id}")

@@ -622,9 +622,15 @@ class GitLinkedInBridge:
                 print("✅ Successfully pushed to git!")
                 return True
 
-            # Push to git
-            subprocess.run(['git', 'push'], check=True)
-            print(f"✅ Successfully pushed to git! (commit: {commit_hash[:10]})")
+            # Try to push to git (but continue even if it fails)
+            push_success = False
+            try:
+                subprocess.run(['git', 'push'], check=True)
+                print(f"✅ Successfully pushed to git! (commit: {commit_hash[:10]})")
+                push_success = True
+            except subprocess.CalledProcessError as e:
+                print(f"⚠️  Git push failed: {e}")
+                print("   Will continue with social media posting anyway...")
 
             # Prepare commit info
             commit_info = {
@@ -731,6 +737,12 @@ class GitLinkedInBridge:
                 print("\n✅ Posted to X (LinkedIn failed)")
             else:
                 print("\n⚠️  Social media posting had issues")
+
+            # Git push status
+            if not push_success:
+                print("\n⚠️  Note: Git push failed - you may need to push manually later")
+                print("   Try: git config http.postBuffer 524288000")
+                print("   Then: git push")
 
             return True
 

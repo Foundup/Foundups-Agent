@@ -27,6 +27,7 @@ from modules.communication.livechat.src.chat_sender import ChatSender
 from modules.communication.livechat.src.chat_poller import ChatPoller
 from modules.infrastructure.system_health_monitor.src.system_health_analyzer import SystemHealthAnalyzer
 from modules.communication.livechat.src.chat_memory_manager import ChatMemoryManager
+from modules.communication.livechat.src.stream_session_logger import get_session_logger
 try:
     from modules.communication.livechat.src.quota_aware_poller import QuotaAwarePoller
 except ImportError:
@@ -169,13 +170,18 @@ class LiveChatCore:
         self.chat_poller.live_chat_id = self.live_chat_id
         self.chat_poller.channel_name = self.channel_name
         self.chat_poller.channel_id = self.channel_id
-        
+
+        # Start memory manager session for automatic logging
+        stream_title = getattr(self.session_manager, 'stream_title', None)
+        self.memory_manager.start_session(self.video_id, stream_title)
+        logger.info(f"📹 Started automatic session logging for video {self.video_id}")
+
         # Send greeting
         await self.session_manager.send_greeting(self.send_chat_message)
 
         # NOTE: Social media posting moved to stream_resolver for better architecture
         # Posting happens when stream is DETECTED, not when chat is initialized
-        
+
         logger.info("LiveChatCore initialized successfully")
         # Record successful initialization
         if record_success:
@@ -500,17 +506,24 @@ class LiveChatCore:
         try:
             author_details = message.get("authorDetails", {})
             snippet = message.get("snippet", {})
-            
+
             author_name = author_details.get("displayName", "Unknown")
+            author_id = author_details.get("channelId", "")
             display_message = snippet.get("displayMessage", "")
             is_moderator = author_details.get("isChatModerator", False)
             is_owner = author_details.get("isChatOwner", False)
-            
+
             # Determine role
             role = 'OWNER' if is_owner else 'MOD' if is_moderator else 'USER'
-            
-            # Use hybrid memory manager (smart storage based on importance)
-            self.memory_manager.store_message(author_name, display_message, role)
+
+            # Use hybrid memory manager with YouTube metadata for session logging
+            self.memory_manager.store_message(
+                author_name=author_name,
+                message_text=display_message,
+                role=role,
+                author_id=author_id,
+                youtube_name=author_name  # YouTube display name
+            )
             
         except Exception as e:
             logger.error(f"Error logging message: {e}")
@@ -839,11 +852,17 @@ class LiveChatCore:
         """Stop listening to chat messages."""
         if not self.is_running:
             return
-        
+
         logger.info("Stopping LiveChatCore...")
         self.is_running = False
+
+        # End memory manager session (saves all logs automatically)
+        self.memory_manager.end_session()
+        logger.info("📊 Session logs saved to conversation folder")
+
+        # End session manager session
         self.session_manager.end_session()
-        
+
         # Save stats
         logger.info("Final stats:")
         logger.info(self.mod_stats.get_moderation_stats())

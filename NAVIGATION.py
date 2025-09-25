@@ -23,6 +23,12 @@ NEED_TO = {
     "process chat message": "modules.communication.livechat.src.message_processor.MessageProcessor.process_message()",
     "handle consciousness trigger": "modules.communication.livechat.src.consciousness_handler.ConsciousnessHandler",
 
+    # Session Logging (Added 2025-09-25)
+    "start session logging": "modules.communication.livechat.src.chat_memory_manager.ChatMemoryManager.start_session()",
+    "end session logging": "modules.communication.livechat.src.chat_memory_manager.ChatMemoryManager.end_session()",
+    "log fact check event": "modules.communication.livechat.src.chat_memory_manager.ChatMemoryManager.log_fact_check()",
+    "view session logs": "modules/communication/livechat/memory/conversation/session_*/",
+
     # Social Media Posting
     "post to linkedin/twitter": "modules.platform_integration.social_media_orchestrator.src.simple_posting_orchestrator.handle_stream_detected()",
     "check if already posted": "modules.platform_integration.social_media_orchestrator.src.simple_posting_orchestrator.check_if_already_posted()",
@@ -196,6 +202,19 @@ PROBLEMS = {
         "check": "Is consciousness mode enabled? Check trigger pattern ✊✋🖐",
         "debug": "modules/communication/livechat/src/consciousness_handler.py",
         "test": "Send '✊✋🖐 test question' in chat",
+    },
+
+    "Session logs not being created": {
+        "check": "Is session starting? Check memory/conversation/ folder",
+        "debug": "modules/communication/livechat/src/chat_memory_manager.py",
+        "verify": "Look for start_session() call in livechat_core.py:176",
+        "test": "python modules/communication/livechat/tests/test_session_logging.py",
+    },
+
+    "Fact-checks not being logged": {
+        "check": "Are mods using ✊✋🖐FC @username format?",
+        "debug": "modules/communication/livechat/src/consciousness_handler.py:191-192",
+        "verify": "Check session logs for FACT-CHECK entries",
     },
 
     "LLM unavailable": {

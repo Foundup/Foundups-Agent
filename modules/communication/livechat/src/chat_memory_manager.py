@@ -28,14 +28,14 @@ class ChatMemoryManager:
     def __init__(self, memory_dir: str = "memory", buffer_size: int = 20):
         """
         Initialize hybrid memory manager.
-        
+
         Args:
             memory_dir: Directory for persistent storage
             buffer_size: Size of in-memory buffer per user
         """
         self.memory_dir = memory_dir
         self.buffer_size = buffer_size
-        
+
         # In-memory buffers (WSP 17 pattern)
         self.message_buffers = defaultdict(lambda: deque(maxlen=buffer_size))
         self.user_stats = defaultdict(lambda: {
@@ -43,25 +43,144 @@ class ChatMemoryManager:
             'last_seen': time.time(),
             'role': 'USER',
             'importance_score': 0,
-            'consciousness_triggers': 0
+            'consciousness_triggers': 0,
+            'youtube_id': None,  # Store YouTube channel ID
+            'youtube_name': None  # Store YouTube display name
         })
-        
+
         # Persistent storage criteria
         self.important_roles = {'MOD', 'OWNER'}
         self.importance_threshold = 5  # Store users with 5+ messages or special triggers
-        
-        # Ensure memory directory exists
+
+        # Session tracking for automatic logging
+        self.current_session = None
+        self.session_messages = []  # Full transcript for current session
+        self.session_mod_messages = []  # Mod-only messages for current session
+        self.conversation_dir = os.path.join(self.memory_dir, "conversation")
+
+        # Ensure memory directories exist
         os.makedirs(memory_dir, exist_ok=True)
+        os.makedirs(self.conversation_dir, exist_ok=True)
         logger.info(f"💾 ChatMemoryManager initialized: buffer={buffer_size}, dir={memory_dir}")
     
-    def store_message(self, author_name: str, message_text: str, role: str = 'USER') -> None:
+    def start_session(self, session_id: str, stream_title: str = None) -> None:
         """
-        Store message using hybrid approach.
-        
+        Start a new chat session for automatic logging.
+
+        Args:
+            session_id: Unique session identifier (video ID or timestamp)
+            stream_title: Optional stream title for context
+        """
+        try:
+            from datetime import datetime
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            self.current_session = f"session_{timestamp}_{session_id[:8] if len(session_id) > 8 else session_id}"
+            self.session_messages = []
+            self.session_mod_messages = []
+
+            logger.info(f"📹 Started session: {self.current_session}")
+            if stream_title:
+                logger.info(f"📺 Stream: {stream_title}")
+        except Exception as e:
+            logger.error(f"❌ Error starting session: {e}")
+
+    def end_session(self) -> None:
+        """
+        End current session and save all logs automatically.
+        """
+        if not self.current_session:
+            return
+
+        try:
+            from datetime import datetime
+
+            # Create session directory
+            session_path = os.path.join(self.conversation_dir, self.current_session)
+            os.makedirs(session_path, exist_ok=True)
+
+            # Save full transcript
+            if self.session_messages:
+                full_transcript = os.path.join(session_path, "full_transcript.txt")
+                with open(full_transcript, 'w', encoding='utf-8') as f:
+                    f.write(f"FULL CHAT TRANSCRIPT\n")
+                    f.write(f"Session: {self.current_session}\n")
+                    f.write(f"Messages: {len(self.session_messages)}\n")
+                    f.write("=" * 60 + "\n\n")
+                    for msg in self.session_messages:
+                        f.write(f"{msg}\n")
+                logger.info(f"💾 Saved {len(self.session_messages)} messages to full transcript")
+
+            # Save mod-only transcript
+            if self.session_mod_messages:
+                mod_transcript = os.path.join(session_path, "mod_messages.txt")
+                with open(mod_transcript, 'w', encoding='utf-8') as f:
+                    f.write(f"MOD/OWNER MESSAGES\n")
+                    f.write(f"Session: {self.current_session}\n")
+                    f.write(f"Mod Messages: {len(self.session_mod_messages)}\n")
+                    f.write("=" * 60 + "\n\n")
+                    for msg in self.session_mod_messages:
+                        f.write(f"{msg}\n")
+                logger.info(f"🛡️ Saved {len(self.session_mod_messages)} mod messages")
+
+            # Save session summary
+            summary_file = os.path.join(session_path, "session_summary.txt")
+            with open(summary_file, 'w', encoding='utf-8') as f:
+                f.write(f"SESSION SUMMARY\n")
+                f.write("=" * 60 + "\n")
+                f.write(f"Session ID: {self.current_session}\n")
+                f.write(f"End Time: {datetime.now()}\n")
+                f.write(f"Total Messages: {len(self.session_messages)}\n")
+                f.write(f"Mod Messages: {len(self.session_mod_messages)}\n")
+
+                # Count unique users
+                unique_users = set()
+                mod_users = set()
+                for msg in self.session_messages:
+                    if ": " in msg:
+                        user = msg.split(": ")[0].replace("[MOD] ", "").replace("[OWNER] ", "")
+                        unique_users.add(user)
+                        if "[MOD]" in msg or "[OWNER]" in msg:
+                            mod_users.add(user)
+
+                f.write(f"Unique Users: {len(unique_users)}\n")
+                f.write(f"Active Mods: {len(mod_users)}\n")
+
+                # Consciousness triggers
+                consciousness_count = sum(1 for msg in self.session_messages if "✊" in msg or "✋" in msg or "🖐" in msg)
+                f.write(f"Consciousness Triggers: {consciousness_count}\n")
+
+                # Fact checks
+                factcheck_count = sum(1 for msg in self.session_messages if "FC" in msg.upper() or "FACTCHECK" in msg.upper())
+                f.write(f"Fact Check Requests: {factcheck_count}\n")
+
+                # Defense mechanisms triggered (for 0102 analysis)
+                defense_keywords = ['fake', 'lies', 'conspiracy', 'mainstream', 'sheep', 'wake up', 'truth']
+                defense_count = sum(1 for msg in self.session_messages
+                                  for keyword in defense_keywords
+                                  if keyword.lower() in msg.lower())
+                f.write(f"Defense Mechanisms Triggered: {defense_count}\n")
+
+            logger.info(f"📊 Session ended: {self.current_session} - {len(self.session_messages)} total, {len(self.session_mod_messages)} mod messages")
+
+            # Reset session
+            self.current_session = None
+            self.session_messages = []
+            self.session_mod_messages = []
+
+        except Exception as e:
+            logger.error(f"❌ Error ending session: {e}")
+
+    def store_message(self, author_name: str, message_text: str, role: str = 'USER',
+                     author_id: str = None, youtube_name: str = None) -> None:
+        """
+        Store message using hybrid approach with session logging.
+
         Args:
             author_name: User's display name
             message_text: Message content
             role: User role (USER, MOD, OWNER)
+            author_id: YouTube channel ID
+            youtube_name: YouTube display name
         """
         try:
             # Update in-memory buffer (always)
@@ -70,23 +189,43 @@ class ChatMemoryManager:
                 'timestamp': time.time(),
                 'role': role
             })
-            
+
             # Update user statistics
             stats = self.user_stats[author_name]
             stats['message_count'] += 1
             stats['last_seen'] = time.time()
             stats['role'] = role  # Update role (user might become mod)
-            
+
+            # Store YouTube metadata if provided
+            if author_id:
+                stats['youtube_id'] = author_id
+            if youtube_name:
+                stats['youtube_name'] = youtube_name
+
             # Calculate importance score
             stats['importance_score'] = self._calculate_importance(stats, message_text)
-            
+
+            # Session logging (automatic for all messages)
+            if self.current_session:
+                # Format message for logs
+                role_prefix = f"[{role}] " if role in ['MOD', 'OWNER'] else ""
+
+                # Clean format for mod logs (YouTube ID + name + message)
+                if role in ['MOD', 'OWNER']:
+                    mod_entry = f"{author_id or 'unknown_id'} | {youtube_name or author_name}: {message_text}"
+                    self.session_mod_messages.append(mod_entry)
+
+                # Full transcript entry
+                full_entry = f"{role_prefix}{author_name}: {message_text}"
+                self.session_messages.append(full_entry)
+
             # Smart disk persistence (97% I/O reduction)
             if self._should_persist(stats):
                 self._persist_to_disk(author_name, message_text)
                 logger.debug(f"💾 Persisted message from important user: {author_name}")
             else:
                 logger.debug(f"📝 Buffered message from {author_name} (not persisting)")
-                
+
         except Exception as e:
             logger.error(f"❌ Error storing message from {author_name}: {e}")
     
@@ -314,17 +453,40 @@ class ChatMemoryManager:
         else:
             return 'frequent_poster'
     
+    def log_fact_check(self, target_user: str, requester: str, defense_mechanism: str = None) -> None:
+        """
+        Log a fact-check event for 0102 analysis.
+
+        Args:
+            target_user: User being fact-checked
+            requester: MOD/OWNER who requested fact-check
+            defense_mechanism: Detected defense mechanism if any
+        """
+        if self.current_session:
+            from datetime import datetime
+            timestamp = datetime.now().strftime('%H:%M:%S')
+            fact_check_entry = f"[{timestamp}] FACT-CHECK: {requester} → {target_user}"
+            if defense_mechanism:
+                fact_check_entry += f" | Defense: {defense_mechanism}"
+
+            # Add to session messages for tracking
+            self.session_messages.append(f"[SYSTEM] {fact_check_entry}")
+
+            logger.info(f"🎯 Logged fact-check: {target_user} by {requester}")
+
     def get_stats(self) -> Dict[str, Any]:
         """Get memory manager statistics."""
         total_users = len(self.user_stats)
         important_users = sum(1 for stats in self.user_stats.values() if self._should_persist(stats))
         disk_files = len([f for f in os.listdir(self.memory_dir) if f.endswith('.txt')])
-        
+
         return {
             'total_users_tracked': total_users,
             'important_users': important_users,
             'disk_storage_users': disk_files,
             'memory_buffers': len(self.message_buffers),
             'io_reduction_percent': round((1 - important_users/total_users) * 100, 1) if total_users > 0 else 0,
-            'buffer_size': self.buffer_size
+            'buffer_size': self.buffer_size,
+            'session_active': self.current_session is not None,
+            'session_messages': len(self.session_messages) if self.current_session else 0
         }
