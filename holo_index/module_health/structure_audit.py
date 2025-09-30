@@ -90,6 +90,23 @@ class StructureAuditor:
     REQUIRED_TEST_FILES = [
         "tests/TestModLog.md"
     ]
+    
+    # System directories to exclude from module compliance checks
+    EXCLUDED_SYSTEM_DIRS = {
+        "__pycache__",
+        ".git",
+        ".vscode", 
+        "node_modules",
+        "venv",
+        "env",
+        ".pytest_cache",
+        "build",
+        "dist",
+        ".mypy_cache",
+        ".coverage",
+        ".tox",
+        "__pypackages__"
+    }
 
     def __init__(self):
         """Initialize the structure auditor."""
@@ -117,6 +134,14 @@ class StructureAuditor:
             return StructureResult(
                 module_path=module_path,
                 missing_artifacts=["Not a directory"]
+            )
+        
+        # Check if this is a system directory that should be excluded
+        if module_path.name in self.EXCLUDED_SYSTEM_DIRS:
+            # System directories are compliant by exclusion
+            return StructureResult(
+                module_path=module_path,
+                missing_artifacts=[]  # No requirements for system dirs
             )
 
         missing = []
@@ -194,7 +219,13 @@ class StructureAuditor:
         - ModLog.md
         - src/ directory
         - tests/ directory
+        
+        Excludes system directories that should never be treated as modules.
         """
+        # Never treat system directories as module roots
+        if path.name in self.EXCLUDED_SYSTEM_DIRS:
+            return False
+            
         indicators = [
             "README.md",
             "INTERFACE.md",

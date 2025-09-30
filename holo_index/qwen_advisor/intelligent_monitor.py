@@ -266,9 +266,21 @@ class IntelligentMonitor:
         """Check WSP 49 compliance for touched modules"""
 
         required_structure = ['README.md', 'INTERFACE.md', 'ModLog.md', 'tests/', 'src/']
+        
+        # System directories to exclude from WSP compliance
+        excluded_system_dirs = {
+            "__pycache__", ".git", ".vscode", "node_modules", "venv", "env",
+            ".pytest_cache", "build", "dist", ".mypy_cache", ".coverage", 
+            ".tox", "__pypackages__", ".idea", ".vscode"
+        }
 
         for module_path in context.modules_touched[:5]:  # Check top 5 modules
             if not os.path.exists(module_path):
+                continue
+            
+            # Skip system directories - they don't need WSP compliance
+            module_name = Path(module_path).name
+            if module_name in excluded_system_dirs:
                 continue
 
             missing = []
@@ -358,15 +370,32 @@ class IntelligentMonitor:
     def _get_module_path(self, file_path: str) -> Optional[str]:
         """Extract module root path from file path"""
         path_parts = Path(file_path).parts
+        
+        # System directories to exclude
+        excluded_system_dirs = {
+            "__pycache__", ".git", ".vscode", "node_modules", "venv", "env",
+            ".pytest_cache", "build", "dist", ".mypy_cache", ".coverage", 
+            ".tox", "__pypackages__"
+        }
 
         # Look for module indicators
         for i, part in enumerate(path_parts):
+            # Skip if we encounter system directories
+            if part in excluded_system_dirs:
+                return None
+                
             if part == 'modules' and i + 2 < len(path_parts):
-                # modules/domain/module_name
+                # modules/domain/module_name - check if module_name is a system dir
+                potential_module = path_parts[i + 2]
+                if potential_module in excluded_system_dirs:
+                    return None
                 return str(Path(*path_parts[:i+3]))
             elif part == 'src' or part == 'tests':
-                # Back up to module root
-                return str(Path(*path_parts[:i]))
+                # Back up to module root - but check if module contains system dirs
+                potential_module_path = str(Path(*path_parts[:i]))
+                if any(excluded in potential_module_path for excluded in excluded_system_dirs):
+                    return None
+                return potential_module_path
 
         return None
 
