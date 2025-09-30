@@ -283,6 +283,20 @@ class AgenticOutputThrottler:
                 reminder_content += f"\n  - {reminder}"
             self.add_section('reminders', reminder_content, priority=3, tags=['reminders', 'actions'])
 
+        # Daemon debugging insights - recursive self-improvement enhancement
+        daemon_insights = result.get('daemon_insights', {})
+        if daemon_insights and daemon_insights.get('error_type'):
+            insight_content = "[🔧 DEBUG] Daemon Analysis (Recursive Self-Improvement):"
+            insight_content += f"\n  • Error Pattern: {daemon_insights['error_type']}"
+            if daemon_insights.get('likely_cause'):
+                insight_content += f"\n  • Likely Cause: {daemon_insights['likely_cause']}"
+            if daemon_insights.get('suggested_fixes'):
+                insight_content += f"\n  • Suggested Fixes:"
+                for fix in daemon_insights['suggested_fixes'][:3]:  # Top 3 fixes
+                    insight_content += f"\n    - {fix}"
+            insight_content += f"\n  📊 Breadcrumb Quality: {daemon_insights.get('breadcrumb_quality', 'unknown')}"
+            self.add_section('daemon_debug', insight_content, priority=2, tags=['debugging', 'daemon', 'insights'])
+
         # Intelligent subroutine results - only show when violations detected
         intelligent_analysis = result.get('intelligent_analysis', {})
         if intelligent_analysis:

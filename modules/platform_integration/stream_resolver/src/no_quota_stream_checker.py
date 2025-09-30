@@ -196,10 +196,30 @@ class NoQuotaStreamChecker:
                 try:
                     data = json.loads(initial_data_match.group(1))
 
-                    # Navigate through the JSON structure to find video details
-                    if 'contents' in data:
-                        results = data.get('contents', {}).get('twoColumnWatchNextResults', {}).get('results', {}).get('results', {})
-                        contents = results.get('contents', [])
+                    # Navigate through the JSON structure with defensive programming
+                    if data and isinstance(data, dict) and 'contents' in data:
+                        # Safe navigation with null checks at each level
+                        contents_data = data.get('contents')
+                        if not contents_data or not isinstance(contents_data, dict):
+                            logger.warning("YouTube JSON structure changed: missing 'contents'")
+                            contents_data = {}
+                        
+                        two_column = contents_data.get('twoColumnWatchNextResults')
+                        if not two_column or not isinstance(two_column, dict):
+                            logger.warning("YouTube JSON structure changed: missing 'twoColumnWatchNextResults'")
+                            two_column = {}
+                            
+                        results_outer = two_column.get('results')
+                        if not results_outer or not isinstance(results_outer, dict):
+                            logger.warning("YouTube JSON structure changed: missing outer 'results'")
+                            results_outer = {}
+                            
+                        results_inner = results_outer.get('results')
+                        if not results_inner or not isinstance(results_inner, dict):
+                            logger.warning("YouTube JSON structure changed: missing inner 'results'")
+                            results_inner = {}
+                            
+                        contents = results_inner.get('contents', [])
 
                         for item in contents:
                             if 'videoPrimaryInfoRenderer' in item:
@@ -222,17 +242,39 @@ class NoQuotaStreamChecker:
                                     if not title:
                                         title = 'Unknown'
 
-                    # Get channel info
-                    secondary = data.get('contents', {}).get('twoColumnWatchNextResults', {}).get('results', {}).get('results', {}).get('contents', [])
+                    # Get channel info with safe navigation
+                    secondary = []
+                    if (contents_data and two_column and results_outer and results_inner and 
+                        isinstance(results_inner.get('contents'), list)):
+                        secondary = results_inner.get('contents', [])
+                    
                     for item in secondary:
                         if 'videoSecondaryInfoRenderer' in item:
-                            owner = item['videoSecondaryInfoRenderer'].get('owner', {})
-                            runs = owner.get('videoOwnerRenderer', {}).get('title', {}).get('runs', [])
-                            if runs:
+                            # Safe navigation for channel info extraction
+                            renderer = item.get('videoSecondaryInfoRenderer', {})
+                            if not isinstance(renderer, dict):
+                                continue
+                                
+                            owner = renderer.get('owner', {})
+                            if not isinstance(owner, dict):
+                                continue
+                                
+                            video_owner = owner.get('videoOwnerRenderer', {})
+                            if not isinstance(video_owner, dict):
+                                continue
+                                
+                            title_data = video_owner.get('title', {})
+                            if not isinstance(title_data, dict):
+                                continue
+                                
+                            runs = title_data.get('runs', [])
+                            if isinstance(runs, list) and runs and isinstance(runs[0], dict):
                                 channel = runs[0].get('text', 'Unknown')
 
-                except json.JSONDecodeError:
-                    logger.warning("Failed to parse YouTube initial data")
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Failed to parse YouTube initial data: {e}")
+                except Exception as e:
+                    logger.warning(f"Unexpected error parsing YouTube data: {e}")
 
             # Method 2: Double-check with more specific patterns
             if not is_live and not is_ended:
@@ -295,10 +337,25 @@ class NoQuotaStreamChecker:
                 "url": url
             }
 
+            # Enhanced breadcrumb logging for success/failure tracking
+            breadcrumb_data = {
+                "timestamp": time.time(),
+                "video_id": video_id,
+                "channel": display_channel,
+                "title": title,
+                "is_live": is_live,
+                "live_score": locals().get('live_score', 0),
+                "method": "no_quota_scraping",
+                "status": "success"
+            }
+            
             if is_live:
-                logger.info(f"✅ Found live stream on {display_channel}: {title}")
+                logger.info(f"✅ LIVE STREAM DETECTED: {display_channel}")
+                logger.info(f"📺 Title: {title}")
+                logger.info(f"📊 Stream Data: {json.dumps(breadcrumb_data, indent=2)}")
             else:
-                logger.info(f"❌ No live stream found on {display_channel}")
+                logger.info(f"❌ NO LIVE STREAM: {display_channel}")
+                logger.info(f"📊 Check Data: {json.dumps(breadcrumb_data, indent=2)}")
 
             return result
 
@@ -306,8 +363,17 @@ class NoQuotaStreamChecker:
             logger.error(f"Request failed: {e}")
             return {"live": False, "error": str(e)}
         except Exception as e:
-            logger.error(f"Unexpected error: {e}")
-            return {"live": False, "error": str(e)}
+            # Enhanced breadcrumb logging for debugging
+            error_details = {
+                "error_type": type(e).__name__,
+                "error_message": str(e),
+                "video_id": video_id,
+                "channel_name": channel_name,
+                "url": url
+            }
+            logger.error(f"🚨 STREAM CHECK FAILED: {e}")
+            logger.error(f"📊 Error Context: {json.dumps(error_details, indent=2)}")
+            return {"live": False, "error": str(e), "error_details": error_details}
 
     def check_channel_for_live(self, channel_id: str, channel_name: str = None) -> Optional[Dict[str, Any]]:
         """
