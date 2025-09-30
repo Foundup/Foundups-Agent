@@ -48,15 +48,24 @@ if sys.platform.startswith('win'):
     sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
     sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
 
-# Configure logging with UTF-8 support
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler('main.log', encoding='utf-8')
-    ]
-)
+# Configure logging with UTF-8 support and Chinese character filtering
+try:
+    from utils.logging_config import setup_logging, CleanLoggingFilter
+    setup_logging()
+    # Add clean logging filter to file handler too
+    file_handler = logging.FileHandler('main.log', encoding='utf-8')
+    file_handler.addFilter(CleanLoggingFilter())
+    logging.getLogger().addHandler(file_handler)
+except ImportError:
+    # Fallback to basic configuration
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(sys.stdout),
+            logging.FileHandler('main.log', encoding='utf-8')
+        ]
+    )
 
 logger = logging.getLogger(__name__)
 
