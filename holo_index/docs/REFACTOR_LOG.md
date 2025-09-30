@@ -19,8 +19,8 @@ Each session leaves breadcrumbs for continuity across context windows.
 - ✅ check_module_exists method added for WSP compliance
 
 **Documentation Created**:
-- MODULE_AUDIT_2025_09_24.md - Comprehensive module usage audit
-- ENHANCED_LOGGING_PLAN.md - Detailed logging implementation plan
+- docs/MODULE_AUDIT_2025_09_24.md - Comprehensive module usage audit
+- docs/ENHANCED_LOGGING_PLAN.md - Detailed logging implementation plan
 
 **Key Findings**:
 1. All 7 module groups are actively used
@@ -97,7 +97,7 @@ Each session leaves breadcrumbs for continuity across context windows.
 - docs/REFACTOR_SUPERVISION.md - Guidelines for refactoring
 - docs/VIBECODING_ANALYSIS.md - Root cause analysis
 - docs/CLI_REFACTORING_PLAN.md - Technical plan
-- REFACTOR_LOG.md - This coordination log
+- docs/REFACTOR_LOG.md - This coordination log (moved to docs/ per WSP 49)
 
 **Discovered Patterns**:
 - CommandHandler pattern in livechat module
