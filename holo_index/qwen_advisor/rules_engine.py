@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 QwenAdvisor Rules Engine - Immediate Intelligence Without LLM
 WSP Compliance: WSP 50, WSP 84, WSP 85, WSP 87
@@ -397,6 +397,63 @@ class ComplianceRulesEngine:
 
         return None
 
+    def _analyze_daemon_debugging_patterns(self, query: str, search_hits: List[Dict]) -> Dict[str, Any]:
+        """
+        Analyze query and search results for daemon debugging patterns.
+        
+        This method was added through recursive self-improvement after fixing
+        NoneType errors in the YouTube DAE stream resolver system.
+        """
+        daemon_patterns = {
+            "error_type": None,
+            "likely_cause": None,
+            "suggested_fixes": [],
+            "breadcrumb_quality": "unknown"
+        }
+        
+        query_lower = query.lower()
+        
+        # Pattern 1: NoneType attribute errors in streaming/parsing
+        if any(pattern in query_lower for pattern in ['nonetype', 'no attribute', 'get', 'stream']):
+            daemon_patterns.update({
+                "error_type": "defensive_programming_needed",
+                "likely_cause": "Chained .get() calls without null checks in JSON parsing",
+                "suggested_fixes": [
+                    "Add isinstance() checks for each level of JSON navigation",
+                    "Replace chained .get() calls with defensive programming",
+                    "Add detailed logging for JSON structure changes",
+                    "Implement graceful degradation for missing data"
+                ]
+            })
+        
+        # Pattern 2: Daemon loop issues
+        elif any(pattern in query_lower for pattern in ['breadcrumb', 'log', 'daemon', 'monitor']):
+            daemon_patterns.update({
+                "error_type": "daemon_health_monitoring",
+                "likely_cause": "Insufficient structured logging in daemon loops",
+                "suggested_fixes": [
+                    "Add structured JSON breadcrumb logging",
+                    "Include timestamp and error context in all logs", 
+                    "Add success/failure tracking with detailed metadata",
+                    "Implement error categorization and recovery patterns"
+                ]
+            })
+            
+        # Pattern 3: Stream detection issues
+        elif any(pattern in query_lower for pattern in ['stream', 'youtube', 'live', 'detect']):
+            daemon_patterns.update({
+                "error_type": "stream_detection_reliability",
+                "likely_cause": "YouTube page structure changes breaking detection logic",
+                "suggested_fixes": [
+                    "Implement multiple detection methods with fallbacks",
+                    "Add score-based confidence system for live detection",
+                    "Log all detection indicators for debugging",
+                    "Implement adaptive detection patterns"
+                ]
+            })
+            
+        return daemon_patterns
+
     def generate_contextual_guidance(
         self,
         query: str,
@@ -409,6 +466,9 @@ class ComplianceRulesEngine:
         """
         # Analyze intent
         intent = self.analyze_query_intent(query)
+        
+        # Enhanced daemon debugging analysis (recursive self-improvement)
+        daemon_insights = self._analyze_daemon_debugging_patterns(query, search_hits)
 
         # Run all compliance checks
         checks = []
@@ -468,7 +528,8 @@ class ComplianceRulesEngine:
             "all_checks": [c.__dict__ for c in checks],
             "risk_level": self._calculate_risk_level(violations),
             "primary_guidance": self._generate_primary_guidance(intent, violations, search_hits),
-            "action_items": self._generate_action_items(checks)
+            "action_items": self._generate_action_items(checks),
+            "daemon_insights": daemon_insights  # Recursive self-improvement enhancement
         }
 
         return guidance
