@@ -255,7 +255,7 @@ class AntiDetectionX:
 
                 # Anti-detection flags (similar to Chrome)
                 edge_options.add_argument('--disable-blink-features=AutomationControlled')
-                edge_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+                edge_options.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
                 edge_options.add_experimental_option('useAutomationExtension', False)
 
                 # More human-like settings
@@ -263,6 +263,23 @@ class AntiDetectionX:
                 edge_options.add_argument('--disable-features=IsolateOrigins,site-per-process')
                 edge_options.add_argument('--window-size=1920,1080')
                 edge_options.add_argument('--start-maximized')
+
+                # Suppress browser error logs (GPU, WebGL, RE2, WebRTC, etc.)
+                edge_options.add_argument('--log-level=3')  # Suppress most logs (FATAL only)
+                edge_options.add_argument('--disable-gpu')
+                edge_options.add_argument('--disable-dev-shm-usage')
+                edge_options.add_argument('--disable-software-rasterizer')
+                edge_options.add_argument('--disable-background-networking')
+                edge_options.add_argument('--disable-default-apps')
+                edge_options.add_argument('--disable-extensions')
+                edge_options.add_argument('--disable-sync')
+                edge_options.add_argument('--metrics-recording-only')
+                edge_options.add_argument('--no-first-run')
+                edge_options.add_argument('--mute-audio')
+                edge_options.add_argument('--no-default-browser-check')
+                edge_options.add_argument('--disable-hang-monitor')
+                edge_options.add_argument('--disable-prompt-on-repost')
+                edge_options.add_argument('--disable-translate')
 
                 # User agent to appear as regular Edge
                 edge_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0')
@@ -291,12 +308,30 @@ class AntiDetectionX:
                 from selenium.webdriver.chrome.options import Options
                 chrome_options = Options()
                 chrome_options.add_argument('--disable-blink-features=AutomationControlled')
-                chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+                chrome_options.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
                 chrome_options.add_experimental_option('useAutomationExtension', False)
                 chrome_options.add_argument('--disable-web-security')
                 chrome_options.add_argument('--disable-features=IsolateOrigins,site-per-process')
                 chrome_options.add_argument('--window-size=1920,1080')
                 chrome_options.add_argument('--start-maximized')
+
+                # Suppress browser error logs (GPU, WebGL, RE2, WebRTC, etc.)
+                chrome_options.add_argument('--log-level=3')
+                chrome_options.add_argument('--disable-gpu')
+                chrome_options.add_argument('--disable-dev-shm-usage')
+                chrome_options.add_argument('--disable-software-rasterizer')
+                chrome_options.add_argument('--disable-background-networking')
+                chrome_options.add_argument('--disable-default-apps')
+                chrome_options.add_argument('--disable-extensions')
+                chrome_options.add_argument('--disable-sync')
+                chrome_options.add_argument('--metrics-recording-only')
+                chrome_options.add_argument('--no-first-run')
+                chrome_options.add_argument('--mute-audio')
+                chrome_options.add_argument('--no-default-browser-check')
+                chrome_options.add_argument('--disable-hang-monitor')
+                chrome_options.add_argument('--disable-prompt-on-repost')
+                chrome_options.add_argument('--disable-translate')
+
                 chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
 
                 if use_existing_session:
@@ -314,7 +349,7 @@ class AntiDetectionX:
 
             # Anti-detection flags
             chrome_options.add_argument('--disable-blink-features=AutomationControlled')
-            chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            chrome_options.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
             chrome_options.add_experimental_option('useAutomationExtension', False)
 
             # More human-like settings
@@ -322,6 +357,23 @@ class AntiDetectionX:
             chrome_options.add_argument('--disable-features=IsolateOrigins,site-per-process')
             chrome_options.add_argument('--window-size=1920,1080')
             chrome_options.add_argument('--start-maximized')
+
+            # Suppress browser error logs (GPU, WebGL, RE2, WebRTC, etc.)
+            chrome_options.add_argument('--log-level=3')
+            chrome_options.add_argument('--disable-gpu')
+            chrome_options.add_argument('--disable-dev-shm-usage')
+            chrome_options.add_argument('--disable-software-rasterizer')
+            chrome_options.add_argument('--disable-background-networking')
+            chrome_options.add_argument('--disable-default-apps')
+            chrome_options.add_argument('--disable-extensions')
+            chrome_options.add_argument('--disable-sync')
+            chrome_options.add_argument('--metrics-recording-only')
+            chrome_options.add_argument('--no-first-run')
+            chrome_options.add_argument('--mute-audio')
+            chrome_options.add_argument('--no-default-browser-check')
+            chrome_options.add_argument('--disable-hang-monitor')
+            chrome_options.add_argument('--disable-prompt-on-repost')
+            chrome_options.add_argument('--disable-translate')
 
             # User agent to appear as regular Chrome
             chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')

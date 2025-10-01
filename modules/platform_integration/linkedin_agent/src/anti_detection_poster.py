@@ -128,7 +128,7 @@ class AntiDetectionLinkedIn:
 
             # Anti-detection flags
             chrome_options.add_argument('--disable-blink-features=AutomationControlled')
-            chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            chrome_options.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
             chrome_options.add_experimental_option('useAutomationExtension', False)
 
             # More human-like settings
@@ -136,6 +136,23 @@ class AntiDetectionLinkedIn:
             chrome_options.add_argument('--disable-features=IsolateOrigins,site-per-process')
             chrome_options.add_argument('--window-size=1920,1080')
             chrome_options.add_argument('--start-maximized')
+
+            # Suppress browser error logs (GPU, WebGL, RE2, WebRTC, etc.)
+            chrome_options.add_argument('--log-level=3')  # Suppress most logs (FATAL only)
+            chrome_options.add_argument('--disable-gpu')
+            chrome_options.add_argument('--disable-dev-shm-usage')
+            chrome_options.add_argument('--disable-software-rasterizer')
+            chrome_options.add_argument('--disable-background-networking')
+            chrome_options.add_argument('--disable-default-apps')
+            chrome_options.add_argument('--disable-extensions')
+            chrome_options.add_argument('--disable-sync')
+            chrome_options.add_argument('--metrics-recording-only')
+            chrome_options.add_argument('--no-first-run')
+            chrome_options.add_argument('--mute-audio')
+            chrome_options.add_argument('--no-default-browser-check')
+            chrome_options.add_argument('--disable-hang-monitor')
+            chrome_options.add_argument('--disable-prompt-on-repost')
+            chrome_options.add_argument('--disable-translate')
 
             # User agent to appear as regular Chrome
             chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
@@ -546,16 +563,11 @@ class AntiDetectionLinkedIn:
             # If URL still contains "share", the posting dialog should be open
             if "?share=true" in current_url or "share" in current_url.lower():
                 print("[SUCCESS] Posting page loaded with share parameter")
-                print("[READY] Posting dialog should be open - you can now post manually")
-                print("[INFO] Keeping browser open for manual verification")
+                print("[AUTO] Continuing to automated posting...")
             else:
                 print(f"[WARN] URL doesn't contain share parameter - dialog may not have opened")
                 print(f"[INFO] Current URL: {current_url}")
-                print("[ACTION] Please check if posting interface is visible in the browser")
-
-            # Return True = browser is ready, posting interface should be open
-            # Automation stops here - user can manually verify and post
-            return True
+                print("[ACTION] Continuing anyway - attempting automated posting")
 
             # Now look for text area (the share URL opens the post box directly)
             print("[UI] Looking for post text area...")

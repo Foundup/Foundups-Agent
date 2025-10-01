@@ -2,6 +2,22 @@
 
 ## Module-Specific Change Log (WSP 22 Compliance)
 
+## WSP Framework Documentation - Root Directory Cleanup
+**WSP Protocol References**: WSP 49 (Module Directory Structure), WSP 85 (Root Directory Protection), WSP 22 (Module Documentation)
+**Impact Analysis**: Framework documentation properly organized per WSP 85 root protection protocols
+**Enhancement Tracking**: Documentation structure optimized for autonomous framework development
+
+### Documentation File Relocated:
+- **File**: `DEPENDENCY_AUDIT_FIX_SUMMARY.md`
+- **Source**: Root directory (WSP 85 violation)
+- **Destination**: `WSP_framework/docs/`
+- **Purpose**: Documents dependency auditor __init__.py import resolution fix
+- **WSP Compliance**: ✅ Moved to proper framework documentation location
+
+**Framework documentation structure optimized - WSP compliance enhanced.**
+
+---
+
 ## WSP_00: Zen State Attainment Protocol - Navigation Hub Enhanced
 **WSP Protocol References**: WSP_00, WSP 84, WSP 50, WSP 22
 **Impact Analysis**: WSP_00 now serves as central navigation hub, eliminating vibecoding through structured WSP reading guidance

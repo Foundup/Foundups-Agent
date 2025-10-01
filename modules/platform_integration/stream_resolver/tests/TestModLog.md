@@ -26,4 +26,13 @@ Following WSP guidance for module compliance:
 - Fixed README run commands and coverage paths
 - Verified tests scoped to module `tests/` only; no duplicates across modules
 - Cross-referenced YouTube suite execution with youtube_proxy to avoid duplication
-- Coverage target reaffirmed: ≥90% (WSP 5) 
+- Coverage target reaffirmed: ≥90% (WSP 5)
+
+## 📥 **LATEST: WSP 49 Compliance - File Relocation**
+### **Test File Added from Root Directory Cleanup**
+- **File**: `test_channel_mapping.py`
+- **Source**: Root directory (WSP 85 violation)
+- **Purpose**: Channel mapping verification for UnDaoDu/FoundUps/Move2Japan
+- **WSP Compliance**: ✅ Moved to proper module tests directory per WSP 49
+- **Integration**: Tests channel ID mapping fixes in stream_resolver.py
+- **Status**: ✅ ACTIVE - Ready for execution 

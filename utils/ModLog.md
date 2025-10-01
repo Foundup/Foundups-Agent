@@ -2,6 +2,37 @@
 
 ## Chronological Change Log
 
+### WSP 49 Compliance - Root Directory Cleanup
+**Date**: Current Session
+**WSP Protocol References**: WSP 49 (Module Directory Structure), WSP 85 (Root Directory Protection), WSP 22 (Module Documentation)
+**Impact Analysis**: Utility scripts properly organized per WSP 49 standards
+**Enhancement Tracking**: Root directory cleaned up, utilities centralized for better maintenance
+
+#### Utility Scripts Relocated from Root Directory
+- **File 1**: `check_channel_ids.py`
+  - **Source**: Root directory (WSP 85 violation)
+  - **Purpose**: YouTube channel ID verification and mapping utility
+  - **Integration**: Used for channel validation in platform integration modules
+
+- **File 2**: `check_video_channel.py`
+  - **Source**: Root directory (WSP 85 violation)
+  - **Purpose**: Video channel checking and validation utility
+  - **Integration**: Supports YouTube channel verification workflows
+
+- **File 3**: `post_to_linkedin.py`
+  - **Source**: Root directory (WSP 85 violation)
+  - **Purpose**: Manual LinkedIn posting utility for testing and debugging
+  - **Integration**: Used for LinkedIn posting validation and manual operations
+
+#### Documentation Updates
+- **Updated**: `README.md` - Added new utility scripts to documentation
+- **Updated**: `ModLog.md` - Documented file relocations per WSP 22
+- **WSP Compliance**: ✅ All relocations follow WSP 49 module structure standards
+
+**Utils module enhanced - root directory cleanup completed.**
+
+---
+
 ### WSP 34 & WSP 11: Complete Utils Module Implementation
 **Date**: 2025-08-03  
 **WSP Protocol References**: WSP 34, WSP 54, WSP 22, WSP 50  

@@ -39,6 +39,13 @@ Utility functions and helper modules for the FoundUps-Agent system. Provides ess
 - **`throttling.py`**: Rate limiting and throttling utilities for API operations
 - **`unicode_fixer.py`**: WSP-compliant Unicode character scanning and fixing tool
 
+### YouTube & Channel Utilities
+- **`check_channel_ids.py`**: YouTube channel ID verification and mapping utility
+- **`check_video_channel.py`**: Video channel checking and validation utility
+
+### Social Media Utilities
+- **`post_to_linkedin.py`**: Manual LinkedIn posting utility for testing and debugging
+
 ## Usage Examples
 
 ### OAuth Management
@@ -167,6 +174,9 @@ utils/
 ├── console_utils.py            # Console utilities
 ├── throttling.py               # Rate limiting utilities
 ├── unicode_fixer.py            # Unicode character fixing tool
+├── check_channel_ids.py        # YouTube channel ID verification
+├── check_video_channel.py      # Video channel checking utility
+├── post_to_linkedin.py         # LinkedIn posting utility
 └── WSP_agentic/                # WSP agentic utilities directory
 ```
 

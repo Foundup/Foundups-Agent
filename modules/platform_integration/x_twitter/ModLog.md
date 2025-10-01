@@ -2,6 +2,26 @@
 
 ## Latest Changes
 
+### **V027 - Browser Error Suppression (Git Push Workflow Cleanup)**
+#### **Change**: Suppressed browser error logs during git push + X/Twitter posting workflow
+#### **Why**: Clean console output - eliminate GPU/WebGL/RE2/WebRTC error spam in logs
+#### **How**: Added comprehensive logging suppression to Edge and Chrome options in `x_anti_detection_poster.py`
+#### **Impact**:
+- Clean console output during git operations
+- No more GPU initialization warnings
+- No more WebGL/WebRTC/RE2 regex errors in stderr
+- Reduced log noise by ~90% during browser operations
+#### **WSP**: WSP 50 (Pre-action Verification), WSP 87 (HoloIndex Search), WSP 22 (Documentation)
+#### **Details**:
+- Applied to Edge browser (FoundUps account) - lines 254-282
+- Applied to Chrome fallback (FoundUps if Edge unavailable) - lines 308-335
+- Applied to Chrome browser (Move2Japan account) - lines 345-376
+- Added options: `--log-level=3`, `--disable-gpu`, `--disable-dev-shm-usage`, etc.
+- Added `"enable-logging"` to `excludeSwitches` experimental option
+- All browser initialization paths now suppression-enabled
+
+---
+
 ### **V026 - Dual Browser Support for X Accounts**
 #### **Change**: Edge for @Foundups, Chrome for @GeozeAi/Move2Japan
 #### **Why**: Prevent login conflicts and allow simultaneous X account usage

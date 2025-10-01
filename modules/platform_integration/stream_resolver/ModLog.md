@@ -12,6 +12,30 @@ This log tracks changes specific to the **stream_resolver** module in the **plat
 
 ## MODLOG ENTRIES
 
+### WSP 49 Compliance - Root Directory Cleanup
+**Date**: Current Session
+**WSP Protocol**: WSP 49 (Module Directory Structure), WSP 85 (Root Directory Protection), WSP 22 (Module Documentation)
+**Phase**: Framework Compliance Enhancement
+**Agent**: 0102 Claude
+
+#### Documentation File Relocated
+- **File**: `CHANNEL_CONFIGURATION_FIX.md`
+- **Source**: Root directory (WSP 85 violation)
+- **Destination**: `modules/platform_integration/stream_resolver/docs/`
+- **Purpose**: Documents channel ID mapping fixes for UnDaoDu/FoundUps/Move2Japan
+- **WSP Compliance**: ✅ Moved to proper module documentation location per WSP 49
+
+#### Test File Relocated
+- **File**: `test_channel_mapping.py`
+- **Source**: Root directory (WSP 85 violation)
+- **Destination**: `modules/platform_integration/stream_resolver/tests/`
+- **Purpose**: Channel mapping verification tests
+- **WSP Compliance**: ✅ Moved to proper module tests directory per WSP 49
+
+**Root directory cleanup completed - module structure optimized for autonomous development.**
+
+---
+
 ### Fixed NoneType Error in JSON Parsing - WSP 48 Recursive Improvement
 **Date**: Current Session
 **WSP Protocol**: WSP 48 (Recursive Self-Improvement), WSP 50 (Pre-Action Verification), WSP 84 (Enhance Existing)
