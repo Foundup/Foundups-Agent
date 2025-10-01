@@ -10,9 +10,10 @@ This system moves beyond logging to active prevention through:
 
 import json
 import time
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 from collections import defaultdict
 from dataclasses import dataclass, field
 import hashlib
@@ -43,7 +44,7 @@ class ViolationPattern:
 class MultiAgentViolationPrevention:
     """Active violation prevention system for multi-agent collaboration"""
 
-    def __init__(self, log_dir: str = "E:/HoloIndex/agent_monitoring"):
+    def __init__(self, log_dir: str = "holo_index/agent_monitoring"):
         self.log_dir = Path(log_dir)
         self.log_dir.mkdir(exist_ok=True, parents=True)
 
@@ -64,8 +65,14 @@ class MultiAgentViolationPrevention:
             'low': 0.2
         }
 
+        # WSP violations file for historical learning
+        self.wsp_violations_file = Path("WSP_framework/src/WSP_MODULE_VIOLATIONS.md")
+
         # Load known violation patterns
         self._load_violation_patterns()
+
+        # Learn from historical WSP violations
+        self._learn_from_wsp_violations()
 
     def _load_violation_patterns(self):
         """Load known violation patterns from previous sessions"""
@@ -115,6 +122,112 @@ class MultiAgentViolationPrevention:
         }
 
         self.violation_patterns.update(common_patterns)
+
+    def _learn_from_wsp_violations(self):
+        """Learn from historical WSP violations documented in WSP_MODULE_VIOLATIONS.md"""
+        if not self.wsp_violations_file.exists():
+            return
+
+        try:
+            content = self.wsp_violations_file.read_text(encoding='utf-8')
+
+            # Parse violations from the markdown file
+            violations = self._parse_wsp_violations(content)
+
+            # Convert violations to patterns
+            for violation in violations:
+                pattern = self._violation_to_pattern(violation)
+                if pattern:
+                    self.violation_patterns[pattern.pattern_id] = pattern
+
+            print(f"[WSP Learning] Loaded {len(violations)} historical violations")
+
+        except Exception as e:
+            print(f"[WSP Learning] Error loading violations: {e}")
+
+    def _parse_wsp_violations(self, content: str) -> List[Dict[str, Any]]:
+        """Parse violations from WSP_MODULE_VIOLATIONS.md format"""
+        violations = []
+
+        # Regex patterns for parsing
+        violation_pattern = r'## \*\*V(\d+):(.*?)\*\*\s*(✅|❌|🚨)?\s*\*\*(.*?)\*\*'
+
+        for match in re.finditer(violation_pattern, content, re.DOTALL):
+            v_num = match.group(1)
+            v_title = match.group(2).strip()
+            v_status_icon = match.group(3) or ""
+            v_status = match.group(4).strip()
+
+            # Extract violation block
+            v_start = match.start()
+            next_violation = re.search(r'\n## \*\*V\d+:', content[v_start+1:])
+            v_end = v_start + next_violation.start() if next_violation else len(content)
+            v_block = content[v_start:v_end]
+
+            # Extract WSP violations
+            wsp_violations = re.findall(r'\*\*WSP (\d+)\*\*', v_block)
+
+            violations.append({
+                'id': f'V{v_num}',
+                'title': v_title,
+                'status': v_status,
+                'resolved': v_status_icon == "✅",
+                'wsp_violations': wsp_violations,
+                'content': v_block
+            })
+
+        return violations
+
+    def _violation_to_pattern(self, violation: Dict[str, Any]) -> Optional[ViolationPattern]:
+        """Convert a WSP violation to a preventable pattern"""
+
+        # Map specific violations to patterns
+        if "ROOT DIRECTORY" in violation['title']:
+            return ViolationPattern(
+                pattern_id=f"WSP_{violation['id']}",
+                description="Creating files in root directory instead of modules",
+                frequency=1,  # Will increment as we see more
+                agents_affected=['0102'],
+                typical_sequence=['create_file', 'in_root', 'not_in_module'],
+                prevention_strategy='Always place files in modules/{domain}/{module}/, never root',
+                success_rate=0.0  # Not yet tested
+            )
+
+        elif "DUPLICATE" in violation['title'] or "DUPLICATION" in violation['title']:
+            return ViolationPattern(
+                pattern_id=f"WSP_{violation['id']}",
+                description="Creating duplicate modules instead of enhancing existing",
+                frequency=1,
+                agents_affected=['0102'],
+                typical_sequence=['find_module', 'create_duplicate', 'not_enhance'],
+                prevention_strategy='Always enhance existing modules, never create duplicates',
+                success_rate=0.0
+            )
+
+        elif "WSP" in violation['title'] and ("CREATION" in violation['title'] or "REUSE" in violation['title']):
+            return ViolationPattern(
+                pattern_id=f"WSP_{violation['id']}",
+                description="Creating or reusing WSP numbers without checking index",
+                frequency=1,
+                agents_affected=['0102'],
+                typical_sequence=['need_wsp', 'create_new', 'no_index_check'],
+                prevention_strategy='Always check WSP_MASTER_INDEX.md before creating any WSP',
+                success_rate=0.0
+            )
+
+        # Generic pattern for other violations
+        if violation['wsp_violations']:
+            return ViolationPattern(
+                pattern_id=f"WSP_{violation['id']}",
+                description=violation['title'],
+                frequency=1,
+                agents_affected=['0102'],
+                typical_sequence=['action', 'violation', 'detection'],
+                prevention_strategy=f"Follow WSP {', '.join(violation['wsp_violations'])} protocols",
+                success_rate=0.0
+            )
+
+        return None
 
     def monitor_agent_action(self, agent_id: str, action: str, target: str) -> Dict:
         """Monitor an agent action in real-time and intervene if needed"""
@@ -393,6 +506,61 @@ class MultiAgentViolationPrevention:
             recommendations.append(f"Pattern Analysis: {violations} violations detected - enable Pattern Coach")
 
         return recommendations
+
+    def check_query_for_violations(self, query: str) -> Optional[Dict]:
+        """Check if a query might trigger known violation patterns"""
+        query_lower = query.lower()
+
+        # Check against all patterns
+        for pattern_id, pattern in self.violation_patterns.items():
+            # Check if query matches pattern triggers
+            risk_indicators = {
+                'create test': 'WSP_V021',  # Root directory violation
+                'enhanced_': 'VP003',  # Duplicate enhanced pattern
+                '_fixed': 'VP003',
+                '_v2': 'VP003',
+                'create new wsp': 'WSP_V018',  # WSP creation violation
+                'test.py': 'WSP_V021',
+                'root directory': 'WSP_V021',
+            }
+
+            for indicator, related_pattern in risk_indicators.items():
+                if indicator in query_lower and related_pattern == pattern_id:
+                    return {
+                        'pattern_id': pattern_id,
+                        'pattern': pattern,
+                        'warning': f"⚠️ VIOLATION RISK: {pattern.description}",
+                        'prevention': pattern.prevention_strategy,
+                        'alternatives': [
+                            f"python holo_index.py --search '{query}'",
+                            "Check NAVIGATION.py for existing solutions",
+                            "Read module documentation first"
+                        ]
+                    }
+
+        return None
+
+    def get_violation_stats(self) -> Dict:
+        """Get statistics on violations and preventions"""
+        return {
+            'total_patterns': len(self.violation_patterns),
+            'wsp_patterns': len([p for p in self.violation_patterns if p.startswith('WSP_')]),
+            'agent_scores': dict(self.agent_scores),
+            'violation_counts': dict(self.violation_counts),
+            'interventions_today': self._count_today_interventions()
+        }
+
+    def _count_today_interventions(self) -> int:
+        """Count interventions from today"""
+        today = datetime.now().date()
+        count = 0
+
+        log_file = self.log_dir / f"interventions_{today:%Y%m%d}.jsonl"
+        if log_file.exists():
+            with open(log_file) as f:
+                count = sum(1 for _ in f)
+
+        return count
 
 
 # Integration with HoloIndex CLI

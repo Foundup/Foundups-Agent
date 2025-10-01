@@ -205,6 +205,16 @@ class ChatPoller:
     
     async def _make_api_call(self) -> Dict[str, Any]:
         """Make the actual API call to get chat messages."""
+        # Check if we're in NO-QUOTA mode
+        if not self.youtube or not self.live_chat_id:
+            # NO-QUOTA mode - can't fetch messages without API
+            # Return empty response to prevent errors
+            return {
+                "items": [],
+                "pollingIntervalMillis": 30000,  # Default 30s interval
+                "nextPageToken": None
+            }
+
         # Run the synchronous API call in a thread to avoid blocking
         import asyncio
         loop = asyncio.get_event_loop()

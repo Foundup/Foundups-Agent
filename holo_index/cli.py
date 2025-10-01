@@ -49,16 +49,19 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
+# Temporarily use regular print - safe_print causing scoping issues
+# TODO: Fix safe_print scoping issue
+
 try:
     from holo_index.core import IntelligentSubroutineEngine, HoloIndex
     from holo_index.output import AgenticOutputThrottler
-    from holo_index.utils import safe_print, print_onboarding
+    from holo_index.utils import print_onboarding
 except ImportError:
     # Fallback for when run as script
     sys.path.insert(0, str(Path(__file__).parent))
     from core import IntelligentSubroutineEngine, HoloIndex
     from output import AgenticOutputThrottler
-    from utils import safe_print, print_onboarding
+    from utils import print_onboarding
 
 # SSD locations (Phase 1 requirement)
 os.environ.setdefault('CHROMADB_DATA_PATH', 'E:/HoloIndex/vectors')
@@ -171,6 +174,7 @@ def main() -> None:
     parser.add_argument('--wsp88', action='store_true', help='Run WSP 88 orphan analysis')
     parser.add_argument('--audit-docs', action='store_true', help='Audit documentation completeness for HoloIndex files')
     parser.add_argument('--check-module', type=str, help='Check if a module exists (WSP compliance - use before code generation)')
+    parser.add_argument('--docs-file', type=str, help='Get documentation paths for a Python file (implements 012 insight: direct doc provision)')
     parser.add_argument('--verbose', action='store_true', help='Show detailed output including low-priority information')
     parser.add_argument('--no-advisor', action='store_true', help='Disable advisor (opt-out for 0102 agents)')
     parser.add_argument('--advisor-rating', choices=['useful', 'needs_more'], help='Provide feedback on advisor output')
@@ -204,6 +208,9 @@ def main() -> None:
 
     print_onboarding(args, ADVISOR_AVAILABLE, run_number)
 
+    # CRITICAL: Unicode compliance reminder for 0102 agents
+# Removed noisy Unicode warnings - 0102 doesn't need internal system messages
+
     # Determine if advisor should run based on environment and args
     advisor = None
     should_run_advisor = False
@@ -228,7 +235,7 @@ def main() -> None:
             advisor = QwenAdvisor()
             # Notify user that advisor is active
             if not args.llm_advisor:  # Auto-enabled, not explicitly requested
-                safe_print('[INFO] Advisor enabled (0102 agent mode detected)')
+                print('[INFO] Advisor enabled (0102 agent mode detected)')
 
     if advisor is not None:
         telemetry_path = advisor.config.telemetry_path
@@ -243,7 +250,7 @@ def main() -> None:
     try:
         from holo_index.qwen_advisor.pattern_coach import PatternCoach
         pattern_coach = PatternCoach()
-        print('[INFO] Pattern Coach initialized - watching for vibecoding patterns')
+# Removed: Pattern Coach init message - internal system info
     except Exception as e:
         print(f'[WARN] Pattern coach not available: {e}')
 
@@ -254,11 +261,33 @@ def main() -> None:
 
     indexing_awarded = False
     if index_code:
+        start_time = time.time()
         holo.index_code_entries()
+        duration = time.time() - start_time
+
+        # Record index refresh in database
+        try:
+            from modules.infrastructure.database.src.agent_db import AgentDB
+            db = AgentDB()
+            db.record_index_refresh("code", duration, holo.get_code_entry_count())
+        except Exception as e:
+            print(f"[WARN] Failed to record index refresh: {e}")
+
         indexing_awarded = True
     if index_wsp:
+        start_time = time.time()
         wsp_dirs = [Path(p) for p in args.wsp_path] if args.wsp_path else None
         holo.index_wsp_entries(paths=wsp_dirs)
+        duration = time.time() - start_time
+
+        # Record WSP index refresh in database
+        try:
+            from modules.infrastructure.database.src.agent_db import AgentDB
+            db = AgentDB()
+            db.record_index_refresh("wsp", duration, holo.get_wsp_entry_count())
+        except Exception as e:
+            print(f"[WARN] Failed to record WSP index refresh: {e}")
+
         indexing_awarded = True
     if indexing_awarded:
         add_reward_event('index_refresh', 5, 'Refreshed indexes', {'query': args.search or ''})
@@ -266,12 +295,49 @@ def main() -> None:
     last_query = args.search or ''
     search_results = None
 
+    # Check if indexes need automatic refresh (only if not explicitly indexing)
+    if not (index_code or index_wsp or indexing_awarded):
+        try:
+            from modules.infrastructure.database.src.agent_db import AgentDB
+            db = AgentDB()
+
+            needs_code_refresh = db.should_refresh_index("code", max_age_hours=6)
+            needs_wsp_refresh = db.should_refresh_index("wsp", max_age_hours=6)
+
+            if needs_code_refresh or needs_wsp_refresh:
+                print(f"[AUTOMATIC] Index refresh needed (last refresh > 6 hours)")
+                print(f"[AUTOMATIC] Code index: {'STALE' if needs_code_refresh else 'FRESH'}")
+                print(f"[AUTOMATIC] WSP index: {'STALE' if needs_wsp_refresh else 'FRESH'}")
+
+                # Automatically refresh stale indexes
+                if needs_code_refresh:
+                    print("[AUTO-REFRESH] Refreshing code index...")
+                    start_time = time.time()
+                    holo.index_code_entries()
+                    duration = time.time() - start_time
+                    db.record_index_refresh("code", duration, holo.get_code_entry_count())
+                    print(f"[AUTO-REFRESH] Code index refreshed in {duration:.1f}s")
+                if needs_wsp_refresh:
+                    print("[AUTO-REFRESH] Refreshing WSP index...")
+                    start_time = time.time()
+                    holo.index_wsp_entries()
+                    duration = time.time() - start_time
+                    db.record_index_refresh("wsp", duration, holo.get_wsp_entry_count())
+                    print(f"[AUTO-REFRESH] WSP index refreshed in {duration:.1f}s")
+                print("[SUCCESS] Automatic index refresh completed")
+            else:
+                print("[FRESH] All indexes are up to date (< 6 hours old)")
+
+        except Exception as e:
+            print(f"[WARN] Could not check index freshness: {e}")
+            print("[FALLBACK] Manual refresh: python holo_index.py --index-all")
+
     # Phase 3: Initialize adaptive learning if available
     adaptive_orchestrator = None
     if ADAPTIVE_LEARNING_AVAILABLE:
         try:
             adaptive_orchestrator = AdaptiveLearningOrchestrator()
-            print('[INFO] Phase 3: Adaptive Learning initialized')
+    # Removed: Adaptive Learning init message - internal system info
         except Exception as e:
             print(f'[WARN] Phase 3: Adaptive Learning initialization failed: {e}')
 
@@ -356,7 +422,7 @@ def main() -> None:
 
     # Handle WSP 88 orphan analysis requests
     if args.wsp88:
-        print("🔍 WSP 88 ORPHAN ANALYSIS - Intelligent Connection System")
+        print("[SEARCH] WSP 88 ORPHAN ANALYSIS - Intelligent Connection System")
         print("=" * 65)
         print("Analyzing HoloIndex for orphaned files and connection opportunities...")
         print("This follows first principles: Connect rather than delete, enhance rather than remove")
@@ -385,7 +451,7 @@ def main() -> None:
             print("=" * 65)
 
         except Exception as e:
-            print(f"❌ WSP 88 analysis failed: {e}")
+            print(f"[ERROR] WSP 88 analysis failed: {e}")
             import traceback
             traceback.print_exc()
 
@@ -393,7 +459,7 @@ def main() -> None:
 
     # Handle documentation audit requests
     if args.audit_docs:
-        print("🔍 WSP 83 DOCUMENTATION TREE AUDIT - Preventing Orphaned Documentation")
+        print("[SEARCH] WSP 83 DOCUMENTATION TREE AUDIT - Preventing Orphaned Documentation")
         print("=" * 70)
 
         try:
@@ -487,22 +553,22 @@ def main() -> None:
 
             # Report findings per WSP 83
             if orphaned_files:
-                print(f"🚨 FOUND {len(orphaned_files)} ORPHANED DOCUMENTS (WSP 83 VIOLATION)")
+                print(f"[ALERT] FOUND {len(orphaned_files)} ORPHANED DOCUMENTS (WSP 83 VIOLATION)")
                 print()
-                print("📋 ORPHANED FILES (Not attached to system tree):")
+                print("[INFO] ORPHANED FILES (Not attached to system tree):")
                 print("-" * 50)
 
                 for file_type, file_path in orphaned_files:
                     print(f"  • {file_type}: {file_path}")
 
                 print()
-                print("🛠�E�EWSP 83 REMEDIATION REQUIRED:")
+                print("[FIX] WSP 83 REMEDIATION REQUIRED:")
                 print("-" * 50)
                 print("Per WSP 83 (Documentation Tree Attachment Protocol):")
-                print("1. ✅ VERIFY operational purpose (does 0102 need this?)")
-                print("2. 🔗 CREATE reference chain (add to ModLog/TESTModLog)")
-                print("3. 📍 ENSURE tree attachment (proper WSP 49 location)")
-                print("4. 🗑�E�EDELETE if unnecessary (prevents token waste)")
+                print("1. [CHECK] VERIFY operational purpose (does 0102 need this?)")
+                print("2. [LINK] CREATE reference chain (add to ModLog/TESTModLog)")
+                print("3. [LOCATION] ENSURE tree attachment (proper WSP 49 location)")
+                print("4. [DELETE] DELETE if unnecessary (prevents token waste)")
                 print()
                 print("Reference Chain Requirements (WSP 83.4.2):")
                 print("  - Referenced in ModLog or TESTModLog")
@@ -510,20 +576,20 @@ def main() -> None:
                 print("  - Referenced by another operational document")
 
             else:
-                print("✅ WSP 83 COMPLIANT")
+                print("[SUCCESS] WSP 83 COMPLIANT")
                 print("   All documents properly attached to system tree")
                 print("   No orphaned documentation found")
 
             print()
-            print("📊 AUDIT SUMMARY:")
+            print("[SUMMARY] AUDIT SUMMARY:")
             print(f"   • Protocol: WSP 83 (Documentation Tree Attachment)")
             print(f"   • Purpose: Prevent orphaned docs, ensure 0102 operational value")
-            print(f"   • Status: {'❌ VIOLATION' if orphaned_files else '✅ COMPLIANT'}")
+            print(f"   • Status: {'[VIOLATION]' if orphaned_files else '[COMPLIANT]'}")
 
             print("=" * 70)
 
         except Exception as e:
-            print(f"❁EWSP 83 Documentation audit failed: {e}")
+            print(f"[ERROR] WSP 83 Documentation audit failed: {e}")
             import traceback
             traceback.print_exc()
 
@@ -537,27 +603,73 @@ def main() -> None:
         module_check = holo.check_module_exists(args.check_module)
 
         if module_check["exists"]:
-            print(f"✅ MODULE EXISTS: {module_check['module_name']}")
-            print(f"📁 Path: {module_check['path']}")
-            print(f"📊 WSP Compliance: {module_check['wsp_compliance']} ({module_check['compliance_score']})")
+            print(f"[SUCCESS] MODULE EXISTS: {module_check['module_name']}")
+            print(f"[PATH] Path: {module_check['path']}")
+            print(f"[COMPLIANCE] WSP Compliance: {module_check['wsp_compliance']} ({module_check['compliance_score']})")
 
             if module_check["health_warnings"]:
-                print(f"⚠️  Health Issues:")
+                print(f"[WARN] Health Issues:")
                 for warning in module_check["health_warnings"]:
                     print(f"   • {warning}")
 
-            print(f"\n💡 RECOMMENDATION: {module_check['recommendation']}")
+            print(f"\n[TIP] RECOMMENDATION: {module_check['recommendation']}")
         else:
-            print(f"❌ MODULE NOT FOUND: {module_check['module_name']}")
+            print(f"[ERROR] MODULE NOT FOUND: {module_check['module_name']}")
             if module_check.get("similar_modules"):
-                print(f"🔍 Similar modules found:")
+                print(f"[SEARCH] Similar modules found:")
                 for similar in module_check["similar_modules"]:
                     print(f"   • {similar}")
-            print(f"\n💡 RECOMMENDATION: {module_check['recommendation']}")
+            print(f"\n[TIP] RECOMMENDATION: {module_check['recommendation']}")
 
         print("\n" + "=" * 60)
-        print("🛡️ WSP_84 COMPLIANCE: 0102 AGENTS MUST check module existence BEFORE ANY code generation - DO NOT VIBECODE")
+        print("[PROTECT] WSP_84 COMPLIANCE: 0102 AGENTS MUST check module existence BEFORE ANY code generation - DO NOT VIBECODE")
         return  # Exit after module check
+
+    if args.docs_file:
+        # Provide documentation paths for a given file (012's insight: direct doc provision)
+        from holo_index.utils.helpers import safe_print
+
+        safe_print(f"[0102] DOCUMENTATION PROVISION: '{args.docs_file}'")
+        safe_print("=" * 60)
+
+        # Use HoloDAE coordinator for doc provision
+        try:
+            from holo_index.qwen_advisor import HoloDAECoordinator
+            coordinator = HoloDAECoordinator()
+
+            # Get docs for the file
+            doc_info = coordinator.provide_docs_for_file(args.docs_file)
+
+            if 'error' in doc_info:
+                safe_print(f"[ERROR] {doc_info['error']}")
+                safe_print("\n[TIP] Try using the full path or filename with extension")
+            else:
+                safe_print(f"[MODULE] {doc_info['module']}")
+                safe_print("\n[DOCUMENTATION]")
+
+                for doc_name, doc_data in doc_info['docs'].items():
+                    status = "✅" if doc_data['exists'] else "❌"
+                    safe_print(f"  {status} {doc_name}: {doc_data['path']}")
+
+                safe_print("\n[COMMANDS]")
+                safe_print("To read existing docs:")
+                for doc_name, doc_data in doc_info['docs'].items():
+                    if doc_data['exists']:
+                        safe_print(f"  cat \"{doc_data['path']}\"")
+
+                missing_docs = [name for name, data in doc_info['docs'].items() if not data['exists']]
+                if missing_docs:
+                    safe_print("\n[MISSING]")
+                    safe_print(f"  Missing docs: {', '.join(missing_docs)}")
+                    safe_print("  Create these to improve WSP compliance")
+
+        except Exception as e:
+            safe_print(f"[ERROR] Failed to get documentation: {e}")
+            safe_print("[TIP] Ensure HoloDAE coordinator is properly initialized")
+
+        safe_print("\n" + "=" * 60)
+        safe_print("[PRINCIPLE] HoloIndex provides docs directly - no grep needed (012's insight)")
+        return  # Exit after doc provision
 
     if args.search:
         # Initialize agentic output throttler
@@ -565,22 +677,37 @@ def main() -> None:
 
         results = holo.search(args.search, limit=args.limit)
 
+        # Store search results in throttler for state determination
+        throttler._search_results = results
+
         # HoloDAE: Automatic Context-Driven Analysis
-        print(f"\n[HOLODAE] Processing HoloIndex request: '{args.search}'")
+        from holo_index.utils.helpers import safe_print
+
         try:
-            from holo_index.qwen_advisor.autonomous_holodae import autonomous_holodae
+            from holo_index.qwen_advisor import HoloDAECoordinator
 
-            # Use the global HoloDAE instance to handle the request
-            holodae_report = autonomous_holodae.handle_holoindex_request(args.search, results)
+            # Create HoloDAE coordinator instance to handle the request
+            coordinator = HoloDAECoordinator()
+            holodae_report = coordinator.handle_holoindex_request(args.search, results)
 
-            # Print the detailed HoloDAE analysis
+            # Determine actual system state based on results and processing
+            search_results = getattr(throttler, '_search_results', {})
+            total_results = len(search_results.get('code', [])) + len(search_results.get('wsps', []))
+
+            if total_results > 0:
+                throttler.set_system_state("found")
+            else:
+                throttler.set_system_state("missing")
+
+            # Print the detailed HoloDAE analysis (WSP 64 COMPLIANCE - prevent cp932 errors)
             for line in holodae_report.split('\n'):
                 if line.strip():
-                    print(line)
-
+                    safe_print(line)
 
         except Exception as e:
-            print(f"[HOLODAE-ERROR] Context analysis failed: {e}")
+            # Set system state to "error" when HoloDAE fails
+            throttler.set_system_state("error", e)
+            safe_print(f"[HOLODAE-ERROR] Context analysis failed: {e}")
 
         print()  # Add spacing before search results
 
@@ -663,11 +790,11 @@ def main() -> None:
                 enhanced_query = adaptive_result.query_processing.enhanced_query
                 optimized_response = adaptive_result.response_optimization.optimized_response
 
-                throttler.add_section('adaptive', f'🔄 Query enhanced: "{args.search}" → "{enhanced_query}"', priority=4, tags=['learning', 'optimization'])
-                throttler.add_section('adaptive', f'🎯 Adaptation Score: {adaptive_result.overall_performance.get("system_adaptation_score", 0.0):.2f}', priority=6, tags=['learning', 'metrics'])
+                throttler.add_section('adaptive', f'[RECURSIVE] Query enhanced: "{args.search}" -> "{enhanced_query}"', priority=4, tags=['learning', 'optimization'])
+                throttler.add_section('adaptive', f'[TARGET] Adaptation Score: {adaptive_result.overall_performance.get("system_adaptation_score", 0.0):.2f}', priority=6, tags=['learning', 'metrics'])
 
             except Exception as e:
-                throttler.add_section('system', f'⚠�E�E�E�EAdaptive learning failed: {e}', priority=7, tags=['system', 'warning'])
+                throttler.add_section('system', f'[WARN] Adaptive learning failed: {e}', priority=7, tags=['system', 'warning'])
                 enhanced_query = args.search
                 optimized_response = "Based on the search results, here are the most relevant findings for your query."
 
@@ -721,11 +848,12 @@ def main() -> None:
         # Wire in DAE memory architecture (WSP 84)
         _record_thought_to_memory(results, last_query, advisor, add_reward_event)
 
-        throttler.display_results(results)
         search_results = results
 
-        # Render prioritized output for 0102 consumption
-        print(throttler.render_prioritized_output(verbose=args.verbose if hasattr(args, 'verbose') else False))
+        # Render state-aware prioritized output for 0102 consumption (tri-state architecture)
+        from holo_index.utils.helpers import safe_print
+        output = throttler.render_prioritized_output(verbose=args.verbose if hasattr(args, 'verbose') else False)
+        safe_print(output)
         if args.llm_advisor and results.get('advisor'):
             add_reward_event('advisor_usage', 3, 'Consulted Qwen advisor guidance', {'query': last_query})
 
@@ -761,7 +889,7 @@ def main() -> None:
     if args.start_holodae:
         print("[HOLODAE] Starting Autonomous HoloDAE monitoring...")
         try:
-            from holo_index.qwen_advisor.autonomous_holodae import start_holodae
+            from holo_index.qwen_advisor import start_holodae
             start_holodae()
             print("[HOLODAE] Monitoring started successfully")
         except ImportError as e:
@@ -770,7 +898,7 @@ def main() -> None:
     elif args.stop_holodae:
         print("[HOLODAE] Stopping Autonomous HoloDAE monitoring...")
         try:
-            from holo_index.qwen_advisor.autonomous_holodae import stop_holodae
+            from holo_index.qwen_advisor import stop_holodae
             stop_holodae()
             print("[HOLODAE] Monitoring stopped")
         except ImportError as e:
@@ -779,7 +907,7 @@ def main() -> None:
     elif args.holodae_status:
         print("[HOLODAE] Status Report:")
         try:
-            from holo_index.qwen_advisor.autonomous_holodae import get_holodae_status
+            from holo_index.qwen_advisor import get_holodae_status
             status = get_holodae_status()
             print(f"  Active: {'Yes' if status['active'] else 'No'}")
             print(f"  Uptime: {status['uptime_minutes']} minutes")

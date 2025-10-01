@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 QwenAdvisor Rules Engine - Immediate Intelligence Without LLM
 WSP Compliance: WSP 50, WSP 84, WSP 85, WSP 87

@@ -65,6 +65,9 @@ class QwenAdvisor:
         self.pattern_coach = PatternCoach()
         self.pattern_coach.set_wsp_master(self.wsp_master)
 
+        # Troubleshooting pattern database
+        self.troubleshooting_db = self._build_troubleshooting_db()
+
     def generate_guidance(self, context: AdvisorContext) -> AdvisorResult:
         """Generate intelligent guidance using WSP Master, LLM, and Pattern Coach."""
 
@@ -74,6 +77,13 @@ class QwenAdvisor:
         if cached:
             logger.debug("Advisor cache hit for query: %s", context.query)
             return AdvisorResult(**cached)
+
+        # Step 0: Troubleshooting Pattern Recognition
+        troubleshooting_patterns = self._detect_troubleshooting_patterns(context.query)
+        troubleshooting_guidance = ""
+        if troubleshooting_patterns:
+            logger.info("🔧 Troubleshooting patterns detected: %s", list(troubleshooting_patterns.keys()))
+            troubleshooting_guidance = self._generate_troubleshooting_guidance(troubleshooting_patterns)
 
         # Step 1: WSP Master Analysis - Comprehensive protocol guidance
         wsp_analysis = self.wsp_master.analyze_query(context.query, context.code_hits)
@@ -119,7 +129,7 @@ class QwenAdvisor:
             todos.insert(0, "WSP 20 PREVENTION: Avoid Unicode/emojis in future code - use ASCII alternatives like [OK], [ERROR], [TARGET]")
 
         # Combine all guidance sources
-        guidance = self._synthesize_guidance(llm_analysis, wsp_analysis, rules_guidance)
+        guidance = self._synthesize_guidance(llm_analysis, wsp_analysis, rules_guidance, troubleshooting_guidance)
         todos = self._synthesize_todos(llm_analysis, wsp_analysis, rules_guidance)
         reminders = self._synthesize_reminders(wsp_analysis, rules_guidance)
 
@@ -179,9 +189,14 @@ class QwenAdvisor:
 
         return result
 
-    def _synthesize_guidance(self, llm_analysis, wsp_analysis, rules_guidance) -> str:
+    def _synthesize_guidance(self, llm_analysis, wsp_analysis, rules_guidance, troubleshooting_guidance="") -> str:
         """Synthesize guidance from all sources."""
         guidance_parts = []
+
+        # Priority: Troubleshooting guidance (if detected)
+        if troubleshooting_guidance:
+            guidance_parts.append(troubleshooting_guidance)
+            guidance_parts.append("")  # Add spacing
 
         # Primary: LLM analysis (if available)
         if llm_analysis and llm_analysis.get("guidance"):
@@ -251,3 +266,97 @@ class QwenAdvisor:
         confidence *= risk_multiplier.get(wsp_analysis.risk_level, 1.0)
 
         return min(confidence, 1.0)
+
+    def _detect_troubleshooting_patterns(self, query: str) -> Dict[str, Dict[str, Any]]:
+        """Detect common troubleshooting patterns in queries."""
+        patterns = {}
+        query_lower = query.lower()
+
+        for pattern_name, pattern_data in self.troubleshooting_db.items():
+            if any(keyword in query_lower for keyword in pattern_data['keywords']):
+                # Check if any of the code hits match the expected modules
+                patterns[pattern_name] = pattern_data
+
+        return patterns
+
+    def _build_troubleshooting_db(self) -> Dict[str, Dict[str, Any]]:
+        """Build database of common troubleshooting patterns and solutions."""
+        return {
+            'youtube_daemon_stuck': {
+                'keywords': ['youtube', 'daemon', 'stuck', 'hung', 'not responding', 'circuit breaker'],
+                'description': 'YouTube daemon is stuck, likely due to circuit breaker or authentication issues',
+                'solutions': [
+                    'Check circuit breaker status - may need manual reset',
+                    'Verify YouTube API authentication tokens',
+                    'Check for NO-QUOTA mode fallback capability',
+                    'Review rate limiting and CAPTCHA detection'
+                ],
+                'modules': ['communication/livechat', 'platform_integration/youtube_auth', 'platform_integration/stream_resolver'],
+                'priority': 'HIGH'
+            },
+            'rate_limiting_captcha': {
+                'keywords': ['rate limit', '429', 'captcha', 'blocked', 'google.com/sorry'],
+                'description': 'YouTube is rate limiting requests or showing CAPTCHA pages',
+                'solutions': [
+                    'Increase anti-detection delays (10-18s recommended)',
+                    'Implement CAPTCHA detection and automatic cooldown',
+                    'Reduce retry attempts from 5 to 2',
+                    'Use NO-QUOTA web scraping mode as fallback'
+                ],
+                'modules': ['platform_integration/stream_resolver'],
+                'priority': 'HIGH'
+            },
+            'authentication_failure': {
+                'keywords': ['auth', 'token', 'oauth', 'api client is none', 'credential'],
+                'description': 'YouTube API authentication is failing',
+                'solutions': [
+                    'Verify .env file has correct credential paths',
+                    'Check OAuth token files exist and are valid',
+                    'Ensure credential sets are properly configured (1, 10)',
+                    'Test token refresh functionality'
+                ],
+                'modules': ['platform_integration/youtube_auth'],
+                'priority': 'CRITICAL'
+            },
+            'stream_detection_failure': {
+                'keywords': ['stream', 'detection', 'not finding', 'live video', 'video id'],
+                'description': 'Daemon cannot detect live streams',
+                'solutions': [
+                    'Verify NO-QUOTA mode is properly initialized',
+                    'Check channel IDs are correct in environment variables',
+                    'Test individual video verification',
+                    'Review anti-detection delays and patterns'
+                ],
+                'modules': ['platform_integration/stream_resolver', 'communication/livechat'],
+                'priority': 'HIGH'
+            },
+            'circuit_breaker_open': {
+                'keywords': ['circuit breaker', 'open', 'blocked', 'api calls blocked'],
+                'description': 'Circuit breaker is stuck open, blocking all API calls',
+                'solutions': [
+                    'Implement manual circuit breaker reset',
+                    'Reduce circuit breaker threshold from 10 to 5 failures',
+                    'Add automatic recovery after timeout period',
+                    'Improve fallback to NO-QUOTA mode'
+                ],
+                'modules': ['platform_integration/stream_resolver'],
+                'priority': 'MEDIUM'
+            }
+        }
+
+    def _generate_troubleshooting_guidance(self, patterns: Dict[str, Dict[str, Any]]) -> str:
+        """Generate troubleshooting guidance for detected patterns."""
+        guidance_parts = ["🔧 TROUBLESHOOTING DETECTED:"]
+
+        for pattern_name, pattern_data in patterns.items():
+            guidance_parts.append(f"\n🚨 Issue: {pattern_data['description']}")
+            guidance_parts.append(f"🎯 Priority: {pattern_data['priority']}")
+            guidance_parts.append("💡 Solutions:")
+
+            for solution in pattern_data['solutions']:
+                guidance_parts.append(f"   • {solution}")
+
+            if pattern_data['modules']:
+                guidance_parts.append(f"📁 Focus modules: {', '.join(pattern_data['modules'])}")
+
+        return "\n".join(guidance_parts)

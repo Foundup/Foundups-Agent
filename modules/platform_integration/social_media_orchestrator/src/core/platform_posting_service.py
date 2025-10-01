@@ -83,6 +83,36 @@ class PlatformPostingService:
         start_time = time.time()
 
         try:
+            # Channel-to-LinkedIn page validation
+            page_mapping = {
+                "104834798": "GeoZai (Move2Japan)",  # Corrected GeoZai page ID
+                "165749317": "UnDaoDu",
+                "1263645": "FoundUps"
+            }
+
+            # Verify we're posting to a valid page
+            if linkedin_page not in page_mapping:
+                self.logger.error(f"❌ Invalid LinkedIn page ID: {linkedin_page}")
+                return PostingResult(
+                    platform="linkedin",
+                    status=PostingStatus.FAILED,
+                    message="Invalid LinkedIn page ID",
+                    error=f"Unknown page ID: {linkedin_page}",
+                    duration=time.time() - start_time
+                )
+
+            # Log which page we're posting to for verification
+            page_name = page_mapping[linkedin_page]
+            self.logger.info(f"✅ Verified LinkedIn page: {page_name} (ID: {linkedin_page})")
+
+            # Double-check channel mapping from title
+            if "Move2Japan" in title and linkedin_page != "104834798":
+                self.logger.warning(f"⚠️ MISMATCH: Move2Japan stream should post to GeoZai (104834798), but got {linkedin_page}")
+            elif "UnDaoDu" in title and linkedin_page != "165749317":
+                self.logger.warning(f"⚠️ MISMATCH: UnDaoDu stream should post to UnDaoDu (165749317), but got {linkedin_page}")
+            elif "FoundUps" in title and linkedin_page != "1263645":
+                self.logger.warning(f"⚠️ MISMATCH: FoundUps stream should post to FoundUps (1263645), but got {linkedin_page}")
+
             # Apply posting delay to slow down requests
             current_time = time.time()
             time_since_last = current_time - self.last_post_time
@@ -95,7 +125,7 @@ class PlatformPostingService:
             self.logger.info("📘 LINKEDIN POSTING STARTED")
             self.logger.info(f"📹 Title: {title}")
             self.logger.info(f"🔗 URL: {url}")
-            self.logger.info(f"📄 Page: {linkedin_page}")
+            self.logger.info(f"📄 Page: {page_name} ({linkedin_page})")
 
             # Check if poster script exists
             if not os.path.exists(self.linkedin_poster):
@@ -113,7 +143,8 @@ class PlatformPostingService:
             post_content = self._format_linkedin_post(title, url)
 
             # Run anti-detection poster
-            self.logger.info(f"🚀 Launching anti-detection poster (browser: {self.browser_config['linkedin']})")
+            self.logger.info(f"🚀 Launching anti-detection poster for {page_name} (browser: {self.browser_config['linkedin']})")
+            self.logger.info(f"📌 Posting to LinkedIn page ID: {linkedin_page}")
 
             try:
                 result = subprocess.run(
@@ -221,7 +252,7 @@ class PlatformPostingService:
                 env['X_ACCOUNT'] = x_account
 
                 result = subprocess.run(
-                    [sys.executable, self.x_poster, post_content],
+                    [sys.executable, self.x_poster, x_account, post_content],
                     capture_output=True,
                     text=True,
                     timeout=self.browser_timeout,

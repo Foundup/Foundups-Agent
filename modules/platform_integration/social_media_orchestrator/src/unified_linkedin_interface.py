@@ -39,7 +39,7 @@ class LinkedInCompanyPage(Enum):
     """Supported LinkedIn company pages"""
     FOUNDUPS = "1263645"     # FoundUps main page
     MOVE2JAPAN = "104834798" # Move2Japan page (same as FoundUps for streams)
-    UNDAODU = "68706058"     # UnDaoDu page
+    UNDAODU = "68706058"     # UnDaoDu page (CORRECTED back to 68706058)
 
 @dataclass
 class LinkedInPostRequest:
@@ -222,6 +222,21 @@ class UnifiedLinkedInInterface:
                         logger.info("[UNIFIED LINKEDIN] Reusing existing browser poster")
 
                     try:
+                        # Set the company_id from the request (maps to LinkedIn page)
+                        _GLOBAL_LINKEDIN_POSTER.company_id = request.company_page.value
+
+                        # Update the admin URL to match the new company_id
+                        company_vanity_map = {
+                            "68706058": "undaodu",   # UnDaoDu (CORRECTED from 165749317)
+                            "1263645": "foundups"    # FoundUps
+                            # Note: Move2Japan (104834798) removed - uses company ID directly
+                        }
+                        company_url_part = company_vanity_map.get(request.company_page.value, request.company_page.value)
+                        _GLOBAL_LINKEDIN_POSTER.company_admin_url = f"https://www.linkedin.com/company/{company_url_part}/admin/page-posts/published/"
+
+                        logger.info(f"[UNIFIED LINKEDIN] Targeting company page: {request.company_page.value} ({company_url_part})")
+                        logger.info(f"[UNIFIED LINKEDIN] Admin URL: {_GLOBAL_LINKEDIN_POSTER.company_admin_url}")
+
                         # Use browser automation to post (NOT API)
                         # AntiDetectionLinkedIn.post_to_company_page() returns True/False
                         success = _GLOBAL_LINKEDIN_POSTER.post_to_company_page(

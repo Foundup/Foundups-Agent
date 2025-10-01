@@ -93,8 +93,23 @@ class LiveChatCore:
         # Initialize modular components
         self.session_manager = SessionManager(youtube_service, video_id)
         self.mod_stats = ModerationStats(self.memory_dir)
-        self.message_processor = MessageProcessor(youtube_service, self.memory_manager)  # Pass memory manager
         self.chat_sender = ChatSender(youtube_service, live_chat_id)
+
+        # Get bot channel ID to prevent self-responses
+        bot_channel_id = None
+        try:
+            # Try to get bot channel ID synchronously if possible
+            import asyncio
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # If event loop is running, we need to handle this differently
+                logger.debug("Event loop running, skipping bot channel ID check")
+            else:
+                bot_channel_id = loop.run_until_complete(self.chat_sender._get_bot_channel_id())
+        except Exception as e:
+            logger.debug(f"Could not get bot channel ID: {e}")
+
+        self.message_processor = MessageProcessor(youtube_service, self.memory_manager, self.chat_sender)
         self.chat_poller = ChatPoller(youtube_service, live_chat_id, self.channel_name, self.channel_id)
         
         # Health monitoring for duplicate detection and error tracking
@@ -604,26 +619,44 @@ class LiveChatCore:
                 if time.time() - last_stream_check > stream_check_interval:
                     logger.info("🔍 Checking if stream is still live...")
                     try:
-                        # Try to get stream status
-                        response = self.youtube.videos().list(
-                            part="liveStreamingDetails,snippet",
-                            id=self.video_id
-                        ).execute()
-                        
-                        items = response.get('items', [])
-                        if not items:
-                            logger.warning("⚠️ Stream not found - may have ended")
-                            consecutive_poll_errors = 5  # Trigger exit
+                        if self.youtube:
+                            # API mode - check with API
+                            response = self.youtube.videos().list(
+                                part="liveStreamingDetails,snippet",
+                                id=self.video_id
+                            ).execute()
+
+                            items = response.get('items', [])
+                            if not items:
+                                logger.warning("⚠️ Stream not found - may have ended")
+                                consecutive_poll_errors = 5  # Trigger exit
+                            else:
+                                live_details = items[0].get('liveStreamingDetails', {})
+                                actual_end_time = live_details.get('actualEndTime')
+                                if actual_end_time:
+                                    logger.warning(f"⚠️ Stream has ended at {actual_end_time}")
+                                    logger.info("🔚 Exiting polling loop - stream ended")
+                                    self.is_running = False
+                                    break
+                                else:
+                                    logger.info("✅ Stream is still live")
+                                    consecutive_poll_errors = 0  # Reset error counter
                         else:
-                            live_details = items[0].get('liveStreamingDetails', {})
-                            actual_end_time = live_details.get('actualEndTime')
-                            if actual_end_time:
-                                logger.warning(f"⚠️ Stream has ended at {actual_end_time}")
+                            # NO-QUOTA mode - use web scraping to check
+                            logger.info("🌐 NO-QUOTA mode: Checking stream via web scraping...")
+                            from modules.platform_integration.stream_resolver.src.no_quota_stream_checker import NoQuotaStreamChecker
+
+                            checker = NoQuotaStreamChecker()
+                            is_live_result = checker.check_video_is_live(self.video_id)
+                            is_live = is_live_result.get('is_live', False)
+
+                            if not is_live:
+                                logger.warning("⚠️ Stream appears to have ended (NO-QUOTA check)")
                                 logger.info("🔚 Exiting polling loop - stream ended")
                                 self.is_running = False
                                 break
                             else:
-                                logger.info("✅ Stream is still live")
+                                logger.info("✅ Stream is still live (NO-QUOTA check)")
                                 consecutive_poll_errors = 0  # Reset error counter
                     except Exception as e:
                         logger.warning(f"⚠️ Error checking stream status: {e}")
@@ -696,34 +729,49 @@ class LiveChatCore:
                         # Agentic detection: Stream might be inactive/ended
                         if time_since_activity > inactivity_timeout:
                             logger.warning(f"⚠️ No chat activity for {time_since_activity:.0f}s - checking stream status")
-                            
+
                             # Quick stream validation
                             try:
-                                response = self.youtube.videos().list(
-                                    part="liveStreamingDetails,snippet",
-                                    id=self.video_id
-                                ).execute()
-                                
-                                items = response.get('items', [])
-                                if not items:
-                                    logger.warning("🔚 Stream disappeared - likely ended")
-                                    self.is_running = False
-                                    break
-                                    
-                                live_details = items[0].get('liveStreamingDetails', {})
-                                actual_end_time = live_details.get('actualEndTime')
-                                if actual_end_time:
-                                    logger.info(f"🔚 Stream confirmed ended at {actual_end_time}")
-                                    self.is_running = False
-                                    break
-                                    
+                                if self.youtube:
+                                    # API mode - check with API
+                                    response = self.youtube.videos().list(
+                                        part="liveStreamingDetails,snippet",
+                                        id=self.video_id
+                                    ).execute()
+
+                                    items = response.get('items', [])
+                                    if not items:
+                                        logger.warning("🔚 Stream disappeared - likely ended")
+                                        self.is_running = False
+                                        break
+
+                                    live_details = items[0].get('liveStreamingDetails', {})
+                                    actual_end_time = live_details.get('actualEndTime')
+                                    if actual_end_time:
+                                        logger.info(f"🔚 Stream confirmed ended at {actual_end_time}")
+                                        self.is_running = False
+                                        break
+                                else:
+                                    # NO-QUOTA mode - use web scraping
+                                    logger.info("🌐 NO-QUOTA mode: Checking if stream ended...")
+                                    from modules.platform_integration.stream_resolver.src.no_quota_stream_checker import NoQuotaStreamChecker
+
+                                    checker = NoQuotaStreamChecker()
+                                    is_live_result = checker.check_video_is_live(self.video_id)
+                                    is_live = is_live_result.get('is_live', False)
+
+                                    if not is_live:
+                                        logger.warning("🔚 Stream ended (NO-QUOTA check)")
+                                        self.is_running = False
+                                        break
+
                                 # Stream exists but no chat activity
                                 if consecutive_empty_polls > 20:  # ~100 seconds of no activity
                                     logger.warning("💤 Stream appears inactive - may be dead or viewers left")
                                     # Signal to auto_moderator to check for new streams
                                     self.is_running = False
                                     break
-                                    
+
                             except Exception as e:
                                 logger.warning(f"⚠️ Could not verify stream: {e}")
                                 if consecutive_empty_polls > 30:  # Give up after ~150 seconds

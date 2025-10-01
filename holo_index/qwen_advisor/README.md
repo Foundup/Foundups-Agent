@@ -1,7 +1,11 @@
 # Qwen Advisor - AI Intelligence System (HoloDAE Foundation)
 
+## 🚨 MAJOR ARCHITECTURAL EVOLUTION (2025-09-28)
+
+**HoloIndex Qwen Advisor has been completely refactored** from monolithic architecture to modular design following correct **Qwen→0102 orchestration** principles.
+
 ## Overview
-The Qwen Advisor provides intelligent AI-powered guidance for HoloIndex searches, combining multiple intelligence sources to deliver comprehensive WSP compliance coaching. This folder now includes **HoloDAE** - the autonomous intelligence foundation (the "green LEGO baseboard") that automatically monitors and enhances all HoloIndex operations.
+The Qwen Advisor provides intelligent AI-powered guidance for HoloIndex searches through a **modular architecture** that properly implements WSP 80 (Cube-Level DAE Orchestration). The system follows the correct **Qwen Orchestrator → 0102 Arbitrator → 012 Observer** flow.
 
 ## Purpose
 Transform HoloIndex from keyword search to **intelligent AI assistant** that:
@@ -9,78 +13,151 @@ Transform HoloIndex from keyword search to **intelligent AI assistant** that:
 - Provides WSP protocol guidance
 - Detects behavioral patterns for coaching
 - Learns from user interactions
+- **Maintains modular architecture** for scalability and maintainability
 
 ## Architecture
 
-### Core Components
-
-#### 1. **advisor.py** - Multi-Source Intelligence Synthesis
-Combines all intelligence sources:
-- LLM analysis (Qwen-Coder 1.5B)
-- WSP Master protocol guidance
-- Rules engine compliance checking
-- Pattern coach behavioral detection
-
-#### 2. **llm_engine.py** - LLM Integration
-- Loads Qwen-Coder 1.5B GGUF model
-- Provides code context analysis
-- Generates intelligent recommendations
-- ~500ms inference time
-
-#### 3. **wsp_master.py** - WSP Protocol Intelligence
-- Loads all 95+ WSP protocols
-- Intelligent protocol selection
-- Risk assessment and compliance checking
-- Protocol relationship mapping
-
-#### 4. **pattern_coach.py** - Behavioral Coaching
-- Detects user behavior patterns
-- Provides contextual interventions
-- Learns from coaching effectiveness
-- Replaces time-based reminders
-
-#### 5. **rules_engine.py** - Compliance Engine
-- Rule-based compliance checking
-- Fallback for when LLM unavailable
-- Structured guidance generation
-- WSP violation detection
-
-#### 6. **vibecoding_assessor.py** - Anti-Vibecoding System
-- Tracks code creation patterns
-- Calculates vibecoding scores
-
-#### 7. **autonomous_holodae.py** - HoloDAE Foundation Intelligence 🏗️
-- **The Green LEGO Baseboard** - foundational intelligence layer
-- Autonomous monitoring like YouTube DAE
-- Request-driven analysis triggered by HoloIndex searches
-- Real-time health checks and dependency audits
-- Continuous operation with idle status logging
-- Pattern detection for migrations and refactoring opportunities
-
-#### 8. **agent_detection.py** - Environment Detection
-- Detects if running as 0102 agent
-- Auto-enables advisor for agents
-- Environment-aware configuration
-
-## Intelligence Flow
+### 🎯 Correct Qwen→0102 Orchestration Architecture
 
 ```
-User Query → HoloIndex Search
+QWEN LLM (Primary Orchestrator - Circulatory System)
+    ↓ orchestrates ALL analysis operations
+    ↓ finds and rates issues with chain-of-thought
+    ↓ presents findings to
+0102 Agent (Arbitrator - The Brain)
+    ↓ reviews Qwen's findings using MPS scoring
+    ↓ decides actions (P0=immediate, P1=batch, etc.)
+    ↓ executes fixes autonomously
+012 Human (Observer)
+    ↓ monitors the Qwen→0102 collaboration
+    ↓ provides feedback for system tuning
+```
+
+### Modular Architecture (Post-Refactoring)
+
+#### **📁 Core Data Models** (`models/`)
+- **`work_context.py`**: WorkContext dataclass for tracking 0102 activity
+- **`monitoring_types.py`**: Type definitions for monitoring operations
+
+#### **🔧 Core Services** (`services/`)
+- **`file_system_watcher.py`**: Real-time file system monitoring
+- **`context_analyzer.py`**: Work pattern analysis and module detection
+
+#### **🎭 Orchestration Layer** (`orchestration/`)
+- **`qwen_orchestrator.py`**: Qwen's primary orchestration logic
+- Chain-of-thought logging and decision tracking
+
+#### **⚖️ Arbitration Layer** (`arbitration/`)
+- **`mps_arbitrator.py`**: 0102's MPS-based decision making (WSP 15)
+- Action prioritization and execution coordination
+
+#### **🖥️ UI Layer** (`ui/`)
+- **`menu_system.py`**: User interface for 0102 interaction
+- Status displays and menu navigation
+
+#### **🎯 Main Coordinator** (`holodae_coordinator.py`)
+- **Clean integration layer** replacing monolithic architecture
+- Orchestrates all modular components
+- Provides unified API for main.py integration
+
+### Legacy Components (Pre-Refactoring - Archived)
+- **Archived**: `autonomous_holodae.py` → `_archive/autonomous_holodae_monolithic_v1.py`
+- **Reason**: 1,405-line monolithic file violating WSP 62 and 80
+
+### Current Integration Status (Post-Verification)
+- **Modules Maintained**: 9 active modules (+ legacy intelligent monitor adapter)
+- **Line Ranges**: 59-327 lines across active modules (legacy intelligent_monitor.py is 531 lines; follow-up split queued)
+- **FileSystemWatcher/ContextAnalyzer**: Invoked by HoloDAECoordinator during monitoring cycles and request orchestration
+- **Quiet Logging**: start_monitoring() emits a single actionable summary; archived Δ heartbeat logs remain in _archive/
+- **MonitoringResult Model**: Unified in models/monitoring_types.py; intelligent_monitor.py now adapts to the shared dataclasses
+
+### Intelligence Flow
+
+#### Before (Monolithic):
+```
+❌ autonomous_holodae.py (1,405 lines)
+    ↓ Wrong: 0102 trying to orchestrate
+    ↓ Mixed concerns everywhere
+```
+
+#### After (Modular):
+```
+✅ HoloIndex Search Request
+    ↓
+✅ QwenOrchestrator (orchestrates analysis)
+    ↓ finds issues, applies MPS scoring
+✅ MPSArbitrator (0102 reviews & decides)
+    ↓ prioritizes actions (P0-P4)
+✅ Action Execution (autonomous fixes)
+    ↓
+✅ 012 Observes (monitors results)
+```
+
+#### Sample Coordinator Output:
+```
+[HOLODAE-INTELLIGENCE] Data-driven analysis for query: 'test query'
+[ORCHESTRATION] 3 components evaluated for execution
+[HOLODAE-VIBECODE] Vibecoding analysis initiated
+[ORCHESTRATION-SUMMARY] Executed: 3 | Total time: 0.00s
+
+[0102-ARBITRATION] Arbitration Decisions:
+  BATCH_FOR_SESSION: PATTERN-COACH Analyzing behavioral patterns...
+    MPS: 14 | P1 high priority, suitable for batch processing this session.
+[EXECUTION] Immediate: 0 | Batched: 1
+```
+
+### Enhanced 012 Visibility Logging
+
+**When 012 uses HoloIndex, detailed logs show the complete HoloDAE analysis process:**
+
+```
+[10:23:26] claude-code - holo [REQUEST] Processing query: 'create new module'
+[10:23:26] claude-code - holo [MODULES] Found 2 matched modules:
+[10:23:26] claude-code - holo   [MODULE] modules/communication/livechat
+[10:23:26] claude-code - holo     [HEALTH] [COMPLETE]
+[10:23:26] claude-code - holo     [SIZE] [GOOD] 850 lines in 12 files (avg: 70)
+[10:23:26] claude-code - holo     [WSP] WSP 49 (Module Structure) | WSP 22 (Documentation)
+[10:23:26] claude-code - holo   [MODULE] modules/infrastructure/database
+[10:23:26] claude-code - holo     [HEALTH] Missing: README.md
+[10:23:26] claude-code - holo     [SIZE] [CRITICAL] 2500 lines in 8 files (avg: 312)
+[10:23:26] claude-code - holo     [WSP] WSP 49 (Module Structure) | WSP 62 (Modularity Enforcement)
+[10:23:26] claude-code - holo [ALERTS] 2 system alerts detected:
+[10:23:26] claude-code - holo   [ALERT] Module modules/infrastructure/database exceeds size limits
+[10:23:26] claude-code - holo   [ALERT] Module modules/infrastructure/database missing required documentation
+[10:23:26] claude-code - holo [FILES] Analyzed 4 files across 2 modules
+[10:23:26] claude-code - holo [ARBITRATION] 2 MPS decisions made
+[10:23:26] claude-code - holo   batch_for_session: PATTERN-COACH Analyzing behavioral patterns...
+[10:23:26] claude-code - holo   batch_for_session: PERFORMANCE-DATA Components executed...
+[10:23:26] claude-code - holo [COMPLETE] Analysis finished - 2 actions recommended
+```
+
+**Features for 012:**
+- **HOLO_AGENT_ID**: Shows which LLM model processed the request (e.g., `claude-code`)
+- **Matched Modules**: Lists all modules relevant to the query
+- **Module Health**: Shows documentation completeness and missing files
+- **Module Size**: Displays line counts, file counts, and size warnings
+- **WSP Recommendations**: Suggests relevant WSP protocols to read
+- **System Alerts**: Highlights critical issues like oversized modules or missing docs
+- **Arbitration Results**: Shows MPS-based decisions made by 0102
+- **Real-time Visibility**: All processing is logged as it happens for immediate feedback
+
+
+## Intelligence Flow (Modular Architecture)
+
+```
+✅ User Query → HoloIndex Search
               ↓
-         Search Results
-              ↓
-    [Advisor Context Created]
-              ↓
-    ┌─────────────────┐
-    │ WSP Master      │ → Protocol recommendations
-    │ LLM Engine      │ → Code understanding
-    │ Rules Engine    │ → Compliance checking
-    │ Pattern Coach   │ → Behavioral coaching
-    └─────────────────┘
-              ↓
-    [Synthesized Guidance]
-              ↓
-    Guidance + Reminders + TODOs
+✅ QwenOrchestrator (Primary Orchestrator)
+    ↓ analyzes with chain-of-thought
+    ↓ finds issues, applies MPS scoring
+    ↓ presents findings to
+✅ MPSArbitrator (0102 Arbitrator)
+    ↓ reviews Qwen's findings (WSP 15)
+    ↓ prioritizes actions (P0=immediate, P1=batch, etc.)
+    ↓ executes autonomous fixes
+✅ 012 Observes (Human Observer)
+    ↓ monitors Qwen→0102 collaboration
+    ↓ provides tuning feedback
 ```
 
 ## Configuration

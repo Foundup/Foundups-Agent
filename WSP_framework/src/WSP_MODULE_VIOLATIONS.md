@@ -5,6 +5,177 @@ This document tracks module-specific violations that are deferred during WSP com
 
 ---
 
+## **V022: ROOT DIRECTORY SCRIPTS FOLDER VIOLATION** 🚨 **ACTIVE VIOLATION**
+- **Type**: **FRAMEWORK-LEVEL VIOLATION** - Scripts folder in project root violating WSP 85
+- **Date**: Current session
+- **Agent**: 0102 Claude (File organization analysis)
+- **Scope**: Project root directory (`O:\Foundups-Agent\`)
+- **Detection Method**: Directory analysis and WSP 85 compliance audit
+- **Impact**: **HIGH** - Violates WSP 85 Root Directory Protection Protocol
+
+#### **🔍 VIOLATION DETAILS**
+**Root Directory Scripts Folder**:
+- `scripts/` folder containing `integrate_feeds_to_holoindex.py`
+- **WSP 85 Violation**: Scripts must reside in `modules/{domain}/{module}/scripts/` not root
+
+**File Analysis**:
+- **File**: `scripts/integrate_feeds_to_holoindex.py`
+- **Purpose**: Integrates feed systems with HoloIndex discovery_feeder
+- **Dependencies**: Uses `holo_index.adaptive_learning.discovery_feeder` and `tools.scripts.feed_scripts_to_holoindex`
+- **Function**: Consolidates feeding mechanisms into main discovery system
+
+**WSP Violations**:
+- **WSP 85**: Root Directory Protection - Scripts belong in module directories
+- **WSP 3**: Enterprise Domain Organization - Scripts should follow domain structure
+- **WSP 49**: Module Directory Structure - Improper file placement
+
+#### **🎯 ROOT CAUSE ANALYSIS**
+- **Architectural Error**: Scripts placed in root instead of proper module structure
+- **Process Failure**: Did not follow WSP 85 pre-creation validation checklist
+- **Domain Classification**: Script deals with HoloIndex infrastructure but placed in root
+
+#### **✅ CORRECTION PLAN**
+**Step 1: Determine Proper Location**
+- **Domain**: infrastructure (HoloIndex is infrastructure component)
+- **Module**: Could be `holo_index` infrastructure module OR dedicated `feed_integration` module
+- **Path**: `modules/infrastructure/{module}/scripts/integrate_feeds_to_holoindex.py`
+
+**Step 2: Move File**
+```bash
+# Create proper directory structure
+mkdir -p modules/infrastructure/feed_integration/scripts/
+
+# Move file to correct location
+mv scripts/integrate_feeds_to_holoindex.py modules/infrastructure/feed_integration/scripts/
+
+# Update any imports/references if needed
+```
+
+**Step 3: Update References**
+- Check for any imports of this script
+- Update documentation references
+- Ensure script still functions from new location
+
+**Step 4: Remove Root Scripts Folder**
+- After moving all scripts, remove empty `scripts/` folder
+- Update any documentation mentioning root scripts folder
+
+#### **🚨 PREVENTION MEASURES**
+- **Always check WSP 85** before creating any scripts
+- **Scripts belong in modules**: `modules/{domain}/{module}/scripts/`
+- **Consult WSP 3** for proper domain classification
+- **Run directory audits** after any file creation
+- **Use HoloIndex first** to check existing script locations
+
+#### **📋 IMPLEMENTATION STATUS**
+- **Status**: ✅ **RESOLVED** - File moved to proper module structure
+- **Resolution Applied**:
+  - ✅ Created `modules/infrastructure/feed_integration/scripts/` directory
+  - ✅ Moved `integrate_feeds_to_holoindex.py` to proper location
+  - ✅ Removed empty root `scripts/` folder
+  - ✅ Created WSP 49 compliant module structure (README.md, INTERFACE.md)
+- **Priority**: **HIGH** - Framework-level violation successfully corrected
+- **Assignee**: Infrastructure domain organization
+- **Timeline**: ✅ **COMPLETED** - Immediate correction applied per WSP 85
+
+---
+
+## **V023: ROOT DIRECTORY AUDIT FILES VIOLATION** 🚨 **ACTIVE VIOLATION**
+- **Type**: **FRAMEWORK-LEVEL VIOLATION** - Audit/documentation files placed in project root
+- **Date**: Current session
+- **Agent**: 0102 Claude (Root directory audit)
+- **Scope**: Project root directory (`O:\Foundups-Agent\`)
+- **Detection Method**: Directory listing and WSP 85 compliance audit
+- **Impact**: **HIGH** - Violates WSP 85 Root Directory Protection Protocol
+
+#### **🔍 VIOLATION DETAILS**
+**Root Directory Files Found**:
+1. **LINKEDIN_AUDIT.md** - Audit report of LinkedIn posting integration
+   - Should be in: `modules/platform_integration/linkedin_agent/docs/audits/` or `modules/platform_integration/social_media_orchestrator/docs/audits/`
+   - Purpose: Documents LinkedIn integration architecture audit
+   - Referenced by: social_media_orchestrator modules
+
+2. **PARALLEL_SYSTEMS_AUDIT.md** - HoloIndex deep analysis of parallel systems
+   - Should be in: `holo_index/docs/audits/` or `WSP_knowledge/reports/`
+   - Purpose: Documents architectural violations and parallel implementations
+   - Referenced by: HoloIndex monitoring systems
+
+3. **micro_task_2_research_modules.py** - Test/research script for HoloDAECoordinator
+   - Should be in: `holo_index/tests/research/` or `holo_index/scripts/`
+   - Purpose: Research script using HoloDAE to analyze modules
+   - Dependencies: Uses `holo_index.qwen_advisor.HoloDAECoordinator`
+
+4. **test_menu_input.txt** - Test input data file
+   - Should be in: `tests/test_data/` or appropriate module's test directory
+   - Purpose: Simple test input file for menu-driven applications
+   - Content: Just contains "2\n99\n"
+
+**WSP Violations**:
+- **WSP 85**: Root Directory Protection - Only foundational files allowed in root
+- **WSP 3**: Enterprise Domain Organization - Files should follow domain structure
+- **WSP 49**: Module Directory Structure - Improper file placement
+- **WSP 83**: Documentation Tree Attachment - Docs must be attached to system tree
+
+#### **🎯 ROOT CAUSE ANALYSIS**
+- **Process Failure**: Created audit/test files directly in root during development
+- **Architectural Error**: Did not follow WSP 85 pre-creation validation
+- **Documentation Gap**: Audit reports not placed in proper documentation structure
+- **Testing Oversight**: Test files created in root instead of module test directories
+
+#### **✅ CORRECTION PLAN**
+**Step 1: Create Proper Directory Structures**
+```bash
+# For LinkedIn audit
+mkdir -p modules/platform_integration/linkedin_agent/docs/audits/
+
+# For parallel systems audit
+mkdir -p holo_index/docs/audits/
+
+# For HoloDAE research script
+mkdir -p holo_index/scripts/research/
+
+# For test data
+mkdir -p tests/test_data/
+```
+
+**Step 2: Move Files to Correct Locations**
+```bash
+# Move audit reports
+mv LINKEDIN_AUDIT.md modules/platform_integration/linkedin_agent/docs/audits/
+mv PARALLEL_SYSTEMS_AUDIT.md holo_index/docs/audits/
+
+# Move research script
+mv micro_task_2_research_modules.py holo_index/scripts/research/
+
+# Move test data
+mv test_menu_input.txt tests/test_data/
+```
+
+**Step 3: Update References**
+- Check for any imports or references to these files
+- Update documentation indexes if needed
+- Ensure files are still accessible from new locations
+
+#### **🚨 PREVENTION MEASURES**
+- **Always check WSP 85** before creating any files in root
+- **Audit reports belong in module docs**: `modules/{domain}/{module}/docs/audits/`
+- **Test scripts belong in module tests**: `modules/{domain}/{module}/tests/` or `scripts/`
+- **Test data belongs in test directories**: Not in root
+- **Use HoloIndex first** to check existing file locations
+
+#### **📋 IMPLEMENTATION STATUS**
+- **Status**: ✅ **RESOLVED** - Files moved to proper locations
+- **Resolution Applied**:
+  - ✅ Moved `LINKEDIN_AUDIT.md` to `modules/platform_integration/linkedin_agent/docs/audits/`
+  - ✅ Moved `PARALLEL_SYSTEMS_AUDIT.md` to `holo_index/docs/audits/`
+  - ✅ Moved `micro_task_2_research_modules.py` to `holo_index/scripts/research/`
+  - ✅ Moved `test_menu_input.txt` to `tests/test_data/`
+- **Priority**: **HIGH** - Framework-level violation successfully corrected
+- **Assignee**: Infrastructure and documentation organization
+- **Timeline**: ✅ **COMPLETED** - Immediate correction applied per WSP 85
+
+---
+
 ## **V021: ROOT DIRECTORY CODING VIOLATION** ❌ **ACTIVE VIOLATION**
 - **Type**: **FRAMEWORK-LEVEL VIOLATION** - Test/utility files placed in project root
 - **Date**: 2025-09-23
@@ -547,4 +718,48 @@ Investigating:
 
 **Status**: ⚠️ **RESOLVED BUT PATTERN PERSISTS** - Need stronger prevention mechanism
 
---- 
+## V019: Created test_enhanced_coordinator.py without searching for existing tests [2025-09-28]
+- **Module**: holo_index/tests/
+- **File Created**: test_enhanced_coordinator.py
+- **WSP Violations**:
+  - **WSP 50**: Did not perform pre-action verification with HoloIndex
+  - **WSP 84**: Created new file instead of enhancing existing test_holodae_coordinator.py
+  - **WSP 87**: Did not use HoloIndex --search "test coordinator" before creating
+- **Impact**: **HIGH** - Created duplicate test file when existing one could be enhanced
+- **Root Cause**:
+  - Followed gpt5's Sprint 1 plan without verification
+  - Did not use HoloIndex to search for existing tests
+  - Pattern of creating new files continues despite violations
+- **Existing Test Found**:
+  - `test_holodae_coordinator.py` already exists with coordinator tests
+  - Could have enhanced this file with new test methods
+- **Resolution Needed**:
+  - Should merge test_enhanced_coordinator.py into test_holodae_coordinator.py
+  - Or clearly differentiate purpose if both needed
+- **Learning**: **MUST use HoloIndex --search before ANY file creation**
+- **Status**: ⚠️ **ACTIVE** - Pattern violation continues, stronger habits needed
+
+## V020: Created enhanced_coordinator.py instead of enhancing holodae_coordinator.py [2025-09-29]
+- **Module**: holo_index/qwen_advisor/
+- **File Created**: enhanced_coordinator.py
+- **WSP Violations**:
+  - **WSP 50**: Did not verify existing coordinator implementation
+  - **WSP 84**: Created new file instead of enhancing existing holodae_coordinator.py
+  - **WSP 87**: Did not use HoloIndex --search "coordinator" to find existing file
+- **Impact**: **HIGH** - Created redundant coordinator when enhancements should go in existing file
+- **Root Cause**:
+  - Assumed need for separate "enhanced" version
+  - Did not check that holodae_coordinator.py was the production coordinator
+  - Pattern of creating "*_enhanced" files instead of enhancing existing
+- **Evidence of Vibecoding**:
+  - holodae_coordinator.py (22KB) already exists and is production
+  - Enhancements were later integrated into holodae_coordinator.py
+  - enhanced_coordinator.py only used in tests, not production
+- **Resolution**:
+  - ✅ Enhancements already integrated into holodae_coordinator.py
+  - 🔄 Need to delete redundant enhanced_coordinator.py
+  - 📝 Document that holodae_coordinator.py IS the main coordinator
+- **Learning**: **NEVER create enhanced_*, improved_*, or *_v2 files - ALWAYS enhance existing**
+- **Status**: ⚠️ **ACTIVE** - Redundant file still exists
+
+---

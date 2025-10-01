@@ -122,7 +122,7 @@ def safe_print(text: str, **kwargs) -> None:
 
 def print_onboarding(args, advisor_available: bool, run_number: str) -> None:
     """Print onboarding information for HoloIndex usage."""
-    safe_print("isor" if os.name == 'nt' else "🌀")
+    # Removed visual marker - focus on signal, not noise
     safe_print(f"\n[0102] HoloIndex Quickstart (Run {run_number})")
     safe_print("  - Refresh indexes with `python holo_index.py --index-all` at the start of a session.")
     safe_print("  - Running search for: " + (args.search if args.search else "benchmark"))
@@ -134,7 +134,7 @@ def print_onboarding(args, advisor_available: bool, run_number: str) -> None:
     safe_print("      python holo_index.py --search 'unit test plan' --llm-advisor")
     safe_print("      python holo_index.py --search 'navigation schema' --limit 3")
     safe_print("      python holo_index.py --init-dae 'YouTube Live'  # Initialize DAE context")
-    safe_print("  - Documentation: WSP_35_HoloIndex_Qwen_Advisor_Plan.md | docs/QWEN_ADVISOR_OVERVIEW.md | tests/holo_index/TESTModLog.md")
+    safe_print("  - Documentation: WSP_35_HoloIndex_Qwen_Advisor_Plan.md | docs/QWEN_ADVISOR_IMPLEMENTATION_COMPLETE.md | tests/holo_index/TESTModLog.md")
     safe_print("  - Session points summary appears after each run (WSP reward telemetry).")
     safe_print("[INFO] Pattern Coach initialized - watching for vibecoding patterns")
 
@@ -157,6 +157,11 @@ VIOLATION_RULES = [
         "wsp": "WSP 57",
         "message": "WSP 57: verify naming coherence before renaming components."
     },
+    {
+        "pattern": r"script|scripts",
+        "wsp": "WSP 85",
+        "message": "WSP 85: scripts belong in modules/{domain}/{module}/scripts/, not root or tools/scripts/."
+    },
 ]
 
 CONTEXT_WSP_MAP = {
@@ -176,6 +181,7 @@ WSP_HINTS = {
     "WSP 57": "Maintain naming coherence across files and identifiers.",
     "WSP 75": "Track effort in tokens, not wall-clock minutes.",
     "WSP 84": "Evolve existing modules instead of cloning new versions.",
+    "WSP 85": "Scripts belong in modules/{domain}/{module}/scripts/, not root directory.",
     "WSP 87": "Consult navigation assets before writing new code.",
 }
 

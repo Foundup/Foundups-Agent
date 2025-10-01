@@ -53,7 +53,7 @@ class OptimizedSearchResults:
 
 class VectorSearchOptimizer:
     """
-    Vector search optimizer using MLE-STAR ensemble strategies.
+    Vector search optimizer using direct ensemble strategies.
 
     Implements Phase 3 adaptive learning by:
     1. Ensemble-based ranking optimization through multiple strategies
@@ -93,7 +93,7 @@ class VectorSearchOptimizer:
                                     results: List[SearchResult],
                                     context: Dict[str, Any] = None) -> OptimizedSearchResults:
         """
-        Optimize search results using MLE-STAR ensemble strategies.
+        Optimize search results using direct ensemble strategies.
 
         Args:
             query: Original search query

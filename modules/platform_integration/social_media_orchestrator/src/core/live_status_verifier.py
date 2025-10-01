@@ -21,9 +21,35 @@ class LiveStatusVerifier:
         self._live_status_cache = {}
         self._cache_duration = timedelta(minutes=5)
 
+        # Stream age filtering - don't log noise about old streams
+        self.max_stream_age_days = 7  # Don't log about streams older than 7 days
+
+        # Track last status check results for orchestrator integration
+        self._last_broadcast_content = None
+        self._last_actual_end = None
+        self._last_age_hours = None
+
+        # Initialize Qwen intelligence for smart filtering
+        self.qwen_intelligence = None
+        try:
+            from modules.communication.livechat.src.qwen_youtube_integration import get_qwen_youtube
+            self.qwen_intelligence = get_qwen_youtube()
+            self.logger.info("🤖🧠 [QWEN-STATUS] Qwen intelligence connected to LiveStatusVerifier")
+        except Exception as e:
+            self.logger.debug(f"🤖🧠 [QWEN-STATUS] Qwen not available: {e}")
+
+        # Initialize duplicate prevention manager for checking posted videos
+        self.duplicate_manager = None
+        try:
+            from .duplicate_prevention_manager import DuplicatePreventionManager
+            self.duplicate_manager = DuplicatePreventionManager()
+            self.logger.debug("[DB] Duplicate prevention manager connected for status filtering")
+        except Exception as e:
+            self.logger.debug(f"[DB] Duplicate prevention manager not available: {e}")
+
     def verify_live_status(self, video_id: str, channel_name: str = None) -> bool:
         """
-        Verify if a stream is actually live using the YouTube API
+        Verify if a stream is actually live using NO-QUOTA web scraping first, API as fallback
 
         Args:
             video_id: YouTube video ID
@@ -38,7 +64,22 @@ class LiveStatusVerifier:
             self.logger.info(f"[CACHE] Using cached live status for {video_id}: {cached_result}")
             return cached_result
 
-        # Import here to avoid circular dependencies
+        # Try NO-QUOTA verification first to preserve API quota
+        self.logger.info(f"[NO-QUOTA] Trying web-based verification for {video_id} to save API quota")
+        no_quota_result = self._fallback_verification(video_id, channel_name)
+
+        if no_quota_result is False:
+            # NO-QUOTA says NOT live - no need to burn API quota
+            self.logger.info(f"[NO-QUOTA] Confirmed {video_id} is NOT live - skipping API verification")
+            self._cache_status(video_id, False)
+            return False
+
+        if no_quota_result is True:
+            # NO-QUOTA says LIVE - use API for final confirmation before posting
+            self.logger.info(f"[CONFIRM] {video_id} appears LIVE via web - confirming with API")
+            # Continue to API verification below
+
+        # Only reach here if NO-QUOTA said LIVE or was uncertain - use API for confirmation/verification
         try:
             from modules.platform_integration.youtube_auth.src.youtube_auth import get_authenticated_service
 
@@ -52,11 +93,11 @@ class LiveStatusVerifier:
 
         except ImportError as e:
             self.logger.error(f"[STATUS] Could not import YouTube auth: {e}")
-            return self._fallback_verification(video_id, channel_name)
+            return False  # Can't verify without API
 
         except Exception as e:
             self.logger.error(f"[STATUS] Error verifying live status: {e}")
-            return self._fallback_verification(video_id, channel_name)
+            return False  # Can't verify
 
     def _check_live_status_via_api(self, youtube_service, video_id: str, channel_name: str = None) -> bool:
         """
@@ -94,6 +135,39 @@ class LiveStatusVerifier:
             actual_end = live_details.get('actualEndTime')
             scheduled_start = live_details.get('scheduledStartTime')
 
+            # Store results for orchestrator integration
+            self._last_broadcast_content = live_broadcast
+            self._last_actual_end = actual_end
+
+            # Calculate age if stream has ended
+            if actual_end and (live_broadcast == 'completed' or live_broadcast == 'none'):
+                try:
+                    end_time = datetime.fromisoformat(actual_end.replace('Z', '+00:00'))
+                    self._last_age_hours = (datetime.now(end_time.tzinfo) - end_time).total_seconds() / 3600
+                except Exception:
+                    self._last_age_hours = None
+            else:
+                self._last_age_hours = None
+
+            # FILTERING LOGIC: Check if we should skip detailed logging for old streams
+            should_skip_logging = self._should_skip_detailed_logging(video_id, live_broadcast, actual_end, actual_start)
+
+            # AUTO-MARK OLD STREAMS AS PROCESSED: Only for streams that would be posted about
+            # Don't mark streams that are being filtered out (too old) - they're not worth tracking
+            if not is_live and actual_end and not should_skip_logging:
+                # Only auto-mark if this stream would have been considered for posting (recent enough)
+                # Skip auto-marking for very old streams that are just noise
+                self._conditional_auto_mark(video_id, snippet.get('title', 'Unknown'), actual_end, should_skip_logging)
+
+            if should_skip_logging:
+                if is_live:
+                    self.logger.info(f"✅ [STATUS] Stream {video_id} is LIVE")
+                else:
+                    reason = self._get_not_live_reason(live_broadcast, actual_end, scheduled_start, actual_start)
+                    self.logger.debug(f"❌ [STATUS] Stream {video_id} is NOT live (filtered): {reason}")
+                return is_live
+
+            # Detailed logging for recent/active streams only
             self.logger.info(f"[STATUS] Video {video_id} status:")
             self.logger.info(f"  • Live broadcast content: {live_broadcast}")
             self.logger.info(f"  • Title: {snippet.get('title', 'Unknown')}")
@@ -120,6 +194,113 @@ class LiveStatusVerifier:
             self.logger.error(f"[STATUS] API check failed for {video_id}: {e}")
             return False
 
+    def _should_skip_detailed_logging(self, video_id: str, broadcast_content: str,
+                                     actual_end: str, actual_start: str) -> bool:
+        """
+        Determine if we should skip detailed logging for this stream to reduce noise
+
+        Returns True if logging should be skipped (old stream, already processed, etc.)
+        """
+        # Always log live streams
+        if broadcast_content == 'live':
+            return False
+
+        # Check duplicate manager first - if we've already posted this video, skip detailed logging
+        if self.duplicate_manager:
+            try:
+                # Check if this video has been posted before
+                posted_info = self.duplicate_manager.check_if_already_posted(video_id)
+                if posted_info.get('already_posted', False):
+                    self.logger.debug(f"[FILTER] Video {video_id} already posted - skipping detailed logging")
+                    return True
+            except Exception as e:
+                self.logger.debug(f"[FILTER] Duplicate check failed: {e}")
+
+        # Check stream age - skip detailed logging for old streams
+        if actual_end or broadcast_content == 'completed':
+            try:
+                # Parse the end time
+                if actual_end:
+                    end_time = datetime.fromisoformat(actual_end.replace('Z', '+00:00'))
+                elif actual_start and broadcast_content == 'completed':
+                    # If no end time but marked completed, assume it ended after start
+                    end_time = datetime.fromisoformat(actual_start.replace('Z', '+00:00'))
+                else:
+                    return False  # Can't determine age, log it
+
+                # Check if stream is older than threshold
+                age_days = (datetime.now(end_time.tzinfo) - end_time).days
+                if age_days > self.max_stream_age_days:
+                    self.logger.debug(f"[FILTER] Stream {video_id} is {age_days} days old (> {self.max_stream_age_days}) - skipping detailed logging")
+                    return True
+
+            except Exception as e:
+                self.logger.debug(f"[FILTER] Age check failed: {e}")
+
+        # Use Qwen intelligence for additional filtering
+        if self.qwen_intelligence:
+            try:
+                # Ask Qwen if this stream is worth detailed logging
+                stream_info = {
+                    'video_id': video_id,
+                    'broadcast_content': broadcast_content,
+                    'actual_end': actual_end,
+                    'actual_start': actual_start,
+                    'age_hours': (datetime.now() - datetime.fromisoformat(actual_end.replace('Z', '+00:00'))).total_seconds() / 3600 if actual_end else None
+                }
+                should_log = self.qwen_intelligence.should_investigate_stream(stream_info)
+                if not should_log:
+                    self.logger.debug(f"🤖🧠 [QWEN-FILTER] Qwen recommends skipping detailed logging for {video_id}")
+                    return True
+            except Exception as e:
+                self.logger.debug(f"🤖🧠 [QWEN-FILTER] Qwen filtering failed: {e}")
+
+        # Default: log everything that's recent or uncertain
+        return False
+
+    def _conditional_auto_mark(self, video_id: str, title: str, actual_end: str, should_skip_logging: bool) -> None:
+        """
+        Conditionally mark streams as processed based on their relevance.
+        Only mark streams that would have been logged in detail (recent enough to be relevant).
+
+        Args:
+            video_id: YouTube video ID
+            title: Stream title
+            actual_end: When the stream ended (ISO format)
+            should_skip_logging: Whether detailed logging was skipped (indicates if stream is too old)
+        """
+        if not self.duplicate_manager:
+            self.logger.debug("[AUTO-MARK] Duplicate manager not available - skipping conditional auto-mark")
+            return
+
+        # Only auto-mark streams that are detailed-logged (recent enough to be relevant)
+        # Don't waste DB space on ancient streams that are just noise
+        if should_skip_logging:
+            self.logger.debug(f"[AUTO-MARK] Skipping auto-mark for {video_id} (too old for detailed logging)")
+            return
+
+        try:
+            # Check stream age - only mark streams that ended recently (within posting window)
+            if actual_end:
+                end_time = datetime.fromisoformat(actual_end.replace('Z', '+00:00'))
+                age_hours = (datetime.now(end_time.tzinfo) - end_time).total_seconds() / 3600
+
+                # Mark streams that ended 1-7 days ago (within potential posting window)
+                # Don't mark very recent streams (< 1 day) as they might still be relevant
+                # Don't mark ancient streams (> 7 days) as they're just noise
+                if 24 <= age_hours <= (7 * 24):  # 1-7 days ago
+                    self.duplicate_manager.mark_as_posted(video_id, "AUTO-MARK", title, f"https://www.youtube.com/watch?v={video_id}")
+                    self.logger.info(f"[AUTO-MARK] Marked ended stream {video_id} as processed (ended {age_hours:.1f} hours ago)")
+                elif age_hours < 24:
+                    self.logger.debug(f"[AUTO-MARK] Stream {video_id} too recent ({age_hours:.1f}h) - not auto-marking")
+                else:  # age_hours > 7*24
+                    self.logger.debug(f"[AUTO-MARK] Stream {video_id} too old ({age_hours:.1f}h) - not auto-marking")
+            else:
+                self.logger.debug(f"[AUTO-MARK] No end time for {video_id} - not auto-marking")
+
+        except Exception as e:
+            self.logger.debug(f"[AUTO-MARK] Failed to conditionally auto-mark {video_id}: {e}")
+
     def _get_not_live_reason(self, broadcast_content: str, actual_end: str,
                              scheduled_start: str, actual_start: str) -> str:
         """Get human-readable reason why stream is not live"""
@@ -132,18 +313,18 @@ class LiveStatusVerifier:
         else:
             return f"Unknown status: {broadcast_content}"
 
-    def _fallback_verification(self, video_id: str, channel_name: str = None) -> bool:
+    def _fallback_verification(self, video_id: str, channel_name: str = None) -> Optional[bool]:
         """
-        Fallback verification method when API is not available
+        NO-QUOTA verification method using web scraping
 
         Args:
             video_id: YouTube video ID
             channel_name: Optional channel name
 
         Returns:
-            True if we should assume stream is live (conservative approach)
+            True if live, False if not live, None if cannot determine (will fallback to API)
         """
-        self.logger.warning(f"[STATUS] Using fallback verification for {video_id}")
+        self.logger.info(f"[NO-QUOTA] Attempting web-based verification for {video_id}")
 
         # Try using stream resolver if available
         try:
@@ -152,17 +333,17 @@ class LiveStatusVerifier:
             checker = NoQuotaStreamChecker()
             is_live = checker.check_if_live(f"https://www.youtube.com/watch?v={video_id}")
 
-            self.logger.info(f"[STATUS] NoQuotaStreamChecker says {video_id} is {'LIVE' if is_live else 'NOT live'}")
+            self.logger.info(f"[NO-QUOTA] Web verification: {video_id} is {'LIVE' if is_live else 'NOT live'}")
             return is_live
 
         except ImportError:
-            self.logger.warning("[STATUS] NoQuotaStreamChecker not available")
+            self.logger.warning("[NO-QUOTA] NoQuotaStreamChecker not available")
         except Exception as e:
-            self.logger.error(f"[STATUS] NoQuotaStreamChecker failed: {e}")
+            self.logger.error(f"[NO-QUOTA] Web verification failed: {e}")
 
-        # Conservative approach: assume it's live if we can't verify
-        self.logger.warning(f"[STATUS] Cannot verify status, assuming {video_id} is LIVE (conservative)")
-        return True
+        # Return None to indicate NO-QUOTA failed, should fallback to API
+        self.logger.warning(f"[NO-QUOTA] Cannot verify via web scraping, will use API for {video_id}")
+        return None
 
     def verify_live_status_manually(self) -> bool:
         """

@@ -12,6 +12,33 @@ import os
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from datetime import datetime
+import time
+
+# Import unified agent logger for multi-agent coordination
+try:
+    from holo_index.utils.agent_logger import get_agent_logger, log_holo_search
+    AGENT_LOGGER_AVAILABLE = True
+except ImportError:
+    AGENT_LOGGER_AVAILABLE = False
+
+# Import BreadcrumbTracer for multi-agent discovery sharing
+try:
+    from holo_index.adaptive_learning.breadcrumb_tracer import BreadcrumbTracer
+    BREADCRUMB_AVAILABLE = True
+except ImportError:
+    BREADCRUMB_AVAILABLE = False
+    BreadcrumbTracer = None
+
+# Import circuit breaker for failure prevention
+try:
+    from holo_index.core.circuit_breaker import circuit_manager, CircuitBreakerOpenError
+    CIRCUIT_BREAKER_AVAILABLE = True
+except ImportError:
+    # Fallback if circuit breaker not available
+    circuit_manager = None
+    CircuitBreakerOpenError = Exception
+    CIRCUIT_BREAKER_AVAILABLE = False
 
 # Dependency bootstrap for this module
 try:
@@ -28,8 +55,36 @@ except ImportError:
 class HoloIndex:
     """Dual semantic index spanning NAVIGATION entries and WSP protocols."""
 
+    def _log_agent_action(self, message: str, action_tag: str = "0102"):
+        """Real-time logging for multi-agent coordination - allows other 0102 agents to follow."""
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        print(f"[{timestamp}] [HOLO-{action_tag}] {message}")
+
+        # Also log to shared file for other agents to follow
+        try:
+            log_file = Path("holo_index/logs/agent_activity.log")
+            log_file.parent.mkdir(exist_ok=True)
+            with open(log_file, "a", encoding="utf-8") as f:
+                f.write(f"[{timestamp}] [HOLO-{action_tag}] {message}\n")
+        except:
+            pass  # Don't break if logging fails
+
+    def _announce_breadcrumb_trail(self):
+        """Announce breadcrumb availability discreetly."""
+        if self._breadcrumb_hint_shown:
+            return
+        if not hasattr(self, 'breadcrumb_tracer') or not self.breadcrumb_tracer:
+            return
+        agents = self.breadcrumb_tracer.get_recent_agents()
+        if not agents:
+            return
+        agent_list = ", ".join(agents)
+        hint = f"🍞 breadcrumbs available (agents: {agent_list}). Run python -m holo_index.utils.log_follower to follow."
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] [BREADCRUMB] {hint}")
+        self._breadcrumb_hint_shown = True
+
     def __init__(self, ssd_path: str = "E:/HoloIndex") -> None:
-        print(f"[INIT] Initializing HoloIndex on SSD: {ssd_path}")
+        self._log_agent_action(f"Initializing HoloIndex on SSD: {ssd_path}", "INIT")
         self.ssd_path = Path(ssd_path)
         self.vector_path = self.ssd_path / "vectors"
         self.cache_path = self.ssd_path / "cache"
@@ -38,21 +93,50 @@ class HoloIndex:
         for path in [self.vector_path, self.cache_path, self.models_path, self.indexes_path]:
             path.mkdir(parents=True, exist_ok=True)
 
-        print("[INFO] Setting up persistent ChromaDB collections...")
+        self._log_agent_action("Setting up persistent ChromaDB collections...", "INFO")
         self.client = chromadb.PersistentClient(path=str(self.vector_path))
         self.code_collection = self._ensure_collection("navigation_code")
         self.wsp_collection = self._ensure_collection("navigation_wsp")
 
-        print("[MODEL] Loading sentence transformer (cached on SSD)...")
+        self._log_agent_action("Loading sentence transformer (cached on SSD)...", "MODEL")
         os.environ['SENTENCE_TRANSFORMERS_HOME'] = str(self.models_path)
         self.model = SentenceTransformer('all-MiniLM-L6-v2')
 
         self.need_to: Dict[str, str] = {}
         self.wsp_summary: Dict[str, Dict[str, str]] = {}
         self.wsp_summary_file = self.indexes_path / "wsp_summary.json"
+        self._breadcrumb_hint_shown: bool = False
+        self.breadcrumb_tracer = None  # Initialize breadcrumb_tracer attribute
+
+    def get_code_entry_count(self) -> int:
+        """Get count of indexed code entries."""
+        try:
+            return self.code_collection.count()
+        except:
+            return 0
+
+    def get_wsp_entry_count(self) -> int:
+        """Get count of indexed WSP entries."""
+        try:
+            return self.wsp_collection.count()
+        except:
+            return 0
 
         self._load_wsp_summary()
         self._load_navigation()
+
+        # Initialize breadcrumb tracer for multi-agent collaboration
+        self.breadcrumb_tracer = None
+        self._breadcrumb_hint_shown = False
+        if BREADCRUMB_AVAILABLE:
+            try:
+                self.breadcrumb_tracer = BreadcrumbTracer()
+                self._log_agent_action("Breadcrumb tracer initialized for multi-agent discovery sharing", "INFO")
+            except Exception as e:
+                self._log_agent_action(f"Breadcrumb tracer initialization failed: {e}", "WARN")
+                self.breadcrumb_tracer = None  # Ensure it's None on failure
+        else:
+            self.breadcrumb_tracer = None  # Ensure it's always defined
 
     def _infer_cube_tag(self, *values: Any) -> Optional[str]:
         text = ' '.join(v for v in values if isinstance(v, str)).lower()
@@ -82,38 +166,38 @@ class HoloIndex:
     def _load_navigation(self) -> None:
         nav_path = Path("NAVIGATION.py")
         if not nav_path.exists():
-            print("[WARN] NAVIGATION.py not found")
+            self._log_agent_action("NAVIGATION.py not found", "WARN")
             return
 
         import ast
-        print("[LOAD] Loading NEED_TO map from NAVIGATION.py...")
+        self._log_agent_action("Loading NEED_TO map from NAVIGATION.py...", "LOAD")
         tree = ast.parse(nav_path.read_text(encoding='utf-8-sig'))
         for node in ast.walk(tree):
             if isinstance(node, ast.Assign):
                 for target in node.targets:
                     if isinstance(target, ast.Name) and target.id == "NEED_TO":
                         self.need_to = ast.literal_eval(node.value)
-                        print(f"[OK] Loaded {len(self.need_to)} navigation entries")
+                        self._log_agent_action(f"Loaded {len(self.need_to)} navigation entries", "OK")
                         return
-        print("[WARN] NEED_TO dictionary not found in NAVIGATION.py")
+        self._log_agent_action("NEED_TO dictionary not found in NAVIGATION.py", "WARN")
 
     def _load_wsp_summary(self) -> None:
         if self.wsp_summary_file.exists():
             try:
                 self.wsp_summary = json.loads(self.wsp_summary_file.read_text(encoding='utf-8'))
-                print(f"[OK] Loaded {len(self.wsp_summary)} WSP summaries")
+                self._log_agent_action(f"Loaded {len(self.wsp_summary)} WSP summaries", "OK")
             except json.JSONDecodeError:
-                print("[WARN] WSP summary cache corrupted; rebuilding will overwrite on next index")
+                self._log_agent_action("WSP summary cache corrupted; rebuilding will overwrite on next index", "WARN")
                 self.wsp_summary = {}
 
     # --------- Indexing --------- #
 
     def index_code_entries(self) -> None:
         if not self.need_to:
-            print("[WARN] No NEED_TO entries to index")
+            self._log_agent_action("No NEED_TO entries to index", "WARN")
             return
 
-        print(f"[INDEX] Indexing {len(self.need_to)} code navigation entries...")
+        self._log_agent_action(f"Indexing {len(self.need_to)} code navigation entries...", "INDEX")
         self.code_collection = self._reset_collection("navigation_code")
 
         ids, embeddings, documents, metadatas = [], [], [], []
@@ -132,7 +216,7 @@ class HoloIndex:
             metadatas.append(meta)
 
         self.code_collection.add(ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas)
-        print("[OK] Code index refreshed on SSD")
+        self._log_agent_action("Code index refreshed on SSD", "OK")
 
     def index_wsp_entries(self, paths: Optional[List[Path]] = None) -> None:
         from ..utils.helpers import DEFAULT_WSP_PATHS
@@ -151,10 +235,10 @@ class HoloIndex:
                 ]
                 files.extend(filtered_files)
         if not files:
-            print("[WARN] No WSP documents found to index")
+            self._log_agent_action("No WSP documents found to index", "WARN")
             return
 
-        print(f"[INDEX] Indexing {len(files)} WSP documents...")
+        self._log_agent_action(f"Indexing {len(files)} WSP documents...", "INDEX")
         self.wsp_collection = self._reset_collection("navigation_wsp")
 
         ids, embeddings, documents, metadatas = [], [], [], []
@@ -211,11 +295,40 @@ class HoloIndex:
     # --------- Search --------- #
 
     def search(self, query: str, limit: int = 5) -> Dict[str, Any]:
-        print(f"\n[SEARCH] Searching for: '{query}'")
+        # Log to unified agent stream for 012 and other agents to follow
+        if AGENT_LOGGER_AVAILABLE:
+            # Get agent context from environment
+            agent_context = os.getenv("0102_HOLO_ID") or os.getenv("HOLO_AGENT_ID") or "unknown"
+            log_holo_search(query, code_results=[], wsp_results=[], agent_context=agent_context)
+
+        self._announce_breadcrumb_trail()
+
+        # Also log locally for backward compatibility
+        self._log_agent_action(f"Searching for: '{query}'", "SEARCH")
         start_time = __import__('time').time()
 
         code_hits = self._search_collection(self.code_collection, query, limit, kind="code")
         wsp_hits = self._search_collection(self.wsp_collection, query, limit, kind="wsp")
+
+        # Track search in breadcrumb tracer for multi-agent discovery sharing
+        if self.breadcrumb_tracer:
+            try:
+                # Record the search and its results
+                all_results = code_hits + wsp_hits
+                related_docs = [hit.get('metadata', {}).get('path', '') for hit in all_results if hit.get('metadata')]
+                self.breadcrumb_tracer.add_search(query, all_results[:3], related_docs[:5])
+
+                # Check if this is a significant discovery
+                if code_hits and code_hits[0].get('distance', 1.0) < 0.3:
+                    self.breadcrumb_tracer.add_discovery(
+                        discovery_type="high_relevance_code",
+                        item=code_hits[0].get('metadata', {}).get('function', 'unknown'),
+                        location=code_hits[0].get('metadata', {}).get('path', 'unknown'),
+                        impact="Direct match found for query"
+                    )
+            except Exception as e:
+                # Don't fail search if breadcrumb tracking fails
+                self._log_agent_action(f"Breadcrumb tracking error: {e}", "DEBUG")
 
         warnings = self._generate_warnings(query)
         warnings.extend(self._warnings_from_wsp_hits(wsp_hits))
@@ -226,10 +339,22 @@ class HoloIndex:
         reminders = self._dedupe(reminders)
 
         elapsed = (__import__('time').time() - start_time) * 1000
-        print(f"[PERF] Dual search completed in {elapsed:.1f}ms")
+        self._log_agent_action(f"Dual search completed in {elapsed:.1f}ms - {len(code_hits)} code, {len(wsp_hits)} WSP results", "PERF")
 
         cube_tags = sorted({hit.get('cube') for hit in code_hits + wsp_hits if hit.get('cube')})
         fmas_hint = self._should_show_fmas_hint(query, code_hits)
+
+        # Log completion to unified agent stream for 012 and other agents to follow
+        if AGENT_LOGGER_AVAILABLE:
+            agent_context = os.getenv("0102_HOLO_ID") or os.getenv("HOLO_AGENT_ID") or "unknown"
+            log_holo_search(query, len(code_hits + wsp_hits),
+                          code_results=code_hits, wsp_results=wsp_hits, agent_context=agent_context)
+
+        # Also log locally for backward compatibility
+        self._log_agent_action(f"Search '{query}' complete - {len(code_hits + wsp_hits)} total results", "COMPLETE")
+
+        # Notify HoloDAE of search activity for agent attribution
+        self._notify_holodae_search()
 
         return {
             "query": query,
@@ -243,6 +368,25 @@ class HoloIndex:
             "fmas_hint": fmas_hint,
             "elapsed_ms": f"{elapsed:.1f}"
         }
+
+    def _notify_holodae_search(self):
+        """Notify HoloDAE of recent search activity for agent attribution."""
+        try:
+            # Try to find and update HoloDAE instance
+            import sys
+            for module_name, module in sys.modules.items():
+                if module_name.startswith('holo_index.qwen_advisor.autonomous_holodae'):
+                    if hasattr(module, 'AutonomousHoloDAE'):
+                        # This is a simple way to notify - in a real system this would be more robust
+                        # For now, we'll use a file-based communication
+                        try:
+                            with open("holo_index/.holodae_search_signal", "w") as f:
+                                f.write(str(time.time()))
+                        except:
+                            pass
+                    break
+        except:
+            pass  # Don't fail if notification fails
 
     def _search_collection(self, collection, query: str, limit: int, kind: str) -> List[Dict[str, Any]]:
         if collection.count() == 0:
@@ -428,7 +572,7 @@ class HoloIndex:
                 "exists": False,
                 "module_name": module_name,
                 "similar_modules": similar_modules,
-                "recommendation": f"🚫 MODULE '{module_name}' DOES NOT EXIST - DO NOT CREATE IT! " +
+                "recommendation": f"[BLOCKED] MODULE '{module_name}' DOES NOT EXIST - DO NOT CREATE IT! " +
                                 (f"Similar modules found: {', '.join(similar_modules)}. " if similar_modules else "") +
                                 "ENHANCE EXISTING MODULES - DO NOT VIBECODE (See WSP_84_Module_Evolution). " +
                                 "Use --search to find existing functionality FIRST before ANY code generation."
@@ -448,7 +592,7 @@ class HoloIndex:
             modlog_exists, requirements_exists, tests_exist, memory_exists
         ])
 
-        wsp_compliance = "❌ NON-COMPLIANT" if compliance_score < 7 else "✅ COMPLIANT"
+        wsp_compliance = "[VIOLATION] NON-COMPLIANT" if compliance_score < 7 else "[COMPLIANT] COMPLIANT"
 
         # Check for health issues
         health_warnings = []
@@ -474,6 +618,6 @@ class HoloIndex:
             "compliance_score": f"{compliance_score}/7",
             "health_warnings": health_warnings,
             "recommendation": f"Module '{module_name}' exists at {module_path}. " +
-                            (f"WSP Compliance: {wsp_compliance}. " if wsp_compliance == "❌ NON-COMPLIANT" else "✅ WSP Compliant. ") +
+                            (f"WSP Compliance: {wsp_compliance}. " if wsp_compliance == "[VIOLATION] NON-COMPLIANT" else "[COMPLIANT] WSP Compliant. ") +
                             ("MANDATORY: Read README.md and INTERFACE.md BEFORE making changes. " if readme_exists and interface_exists else "CRITICAL: Create missing documentation FIRST (WSP_22_Documentation). ")
         }

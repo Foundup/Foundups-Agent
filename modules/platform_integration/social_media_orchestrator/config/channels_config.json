@@ -1,26 +1,32 @@
 {
+  "Move2Japan": {
+    "channel_id": "UCklMTNnu5POwRmQsg5JJumA",
+    "channel_name": "Move2Japan",
+    "linkedin_page": "104834798",
+    "enabled": true
+  },
   "@UnDaoDu": {
-    "channel_id": "UCOdP2Gc3n8xqGaHlDXi-Mbg",
+    "channel_id": "UC-LSSlOZwpGIRIYihaz8zCw",
     "channel_name": "UnDaoDu",
     "linkedin_page": "165749317",
-    "x_account": "Move2Japan",
-    "use_foundups_x": false,
     "enabled": true
   },
   "@FoundUps": {
     "channel_id": "UC8NMhWbOE9OVJF0V4DRmNnQ",
     "channel_name": "FoundUps",
-    "linkedin_page": "105793707",
-    "x_account": "FoundUps",
-    "use_foundups_x": true,
+    "linkedin_page": "1263645",
+    "enabled": true
+  },
+  "FoundUps": {
+    "channel_id": "UCSNTUXjAgpd4sgWYP0xoJgw",
+    "channel_name": "FoundUps Alt",
+    "linkedin_page": "1263645",
     "enabled": true
   },
   "Move 2 Japan": {
     "channel_id": "UCMjyY1Sh8TAQCTnSGiLVGnQ",
     "channel_name": "Move 2 Japan",
-    "linkedin_page": "106064089",
-    "x_account": "Move2Japan",
-    "use_foundups_x": false,
+    "linkedin_page": "104834798",
     "enabled": true
   }
 }

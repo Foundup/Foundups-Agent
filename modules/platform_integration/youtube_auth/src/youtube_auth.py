@@ -113,7 +113,13 @@ def get_authenticated_service(token_index=None):
         # Proactive token refresh - refresh if expiring within 10 minutes
         if creds and creds.valid and creds.expiry:
             from datetime import datetime, timedelta, timezone
-            time_until_expiry = creds.expiry - datetime.now(timezone.utc)
+            # Handle both timezone-aware and naive datetimes
+            if creds.expiry.tzinfo is None:
+                # If expiry is naive, assume UTC
+                time_until_expiry = creds.expiry - datetime.now()
+            else:
+                # If expiry is aware, use aware comparison
+                time_until_expiry = creds.expiry - datetime.now(timezone.utc)
             if time_until_expiry < timedelta(minutes=10):
                 logger.info(f"🔄 Token expiring in {time_until_expiry.seconds // 60} minutes for set {index}, proactively refreshing...")
                 try:

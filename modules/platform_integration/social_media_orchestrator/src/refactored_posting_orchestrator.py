@@ -7,7 +7,7 @@ Replaces the monolithic simple_posting_orchestrator.py
 import os
 import logging
 import threading
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, List
 
 # Import all core components
 from .core import (
@@ -37,8 +37,8 @@ class RefactoredPostingOrchestrator:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.config = config or {}
 
-        # Initialize core components
-        self.duplicate_manager = DuplicatePreventionManager()
+        # Initialize core components with QWEN intelligence enabled
+        self.duplicate_manager = DuplicatePreventionManager(qwen_enabled=True)
         self.status_verifier = LiveStatusVerifier()
         self.channel_config = ChannelConfigurationManager()
         self.posting_service = PlatformPostingService(
@@ -48,6 +48,10 @@ class RefactoredPostingOrchestrator:
         # State
         self.is_posting = False
         self.last_posted_video = None
+
+        # Log QWEN status
+        if self.duplicate_manager.qwen_enabled:
+            self.logger.info("🤖🧠 [QWEN-ORCHESTRATOR] Intelligence features enabled")
 
         self.logger.info("✅ RefactoredPostingOrchestrator initialized with core components")
 
@@ -92,20 +96,31 @@ class RefactoredPostingOrchestrator:
             results['errors'].append("Already processing another posting request")
             return results
 
-        # Step 2: Check duplicate
-        duplicate_check = self.duplicate_manager.check_if_already_posted(video_id)
-        if duplicate_check['already_posted']:
-            self.logger.info("🔁 Video already posted, skipping")
-            results['platforms'] = {
-                platform: 'already_posted'
-                for platform in duplicate_check.get('platforms_posted', [])
-            }
-            return results
-
-        # Step 3: Verify live status
-        if not self.status_verifier.verify_live_status(video_id):
+        # Step 2: Verify live status FIRST (before duplicate check)
+        live_status_result = self.status_verifier.verify_live_status(video_id)
+        if not live_status_result:
             self.logger.warning("⚠️ Stream not verified as live, skipping")
             results['errors'].append("Stream not verified as live")
+            return results
+
+        # Step 3: Check duplicate WITH live status information
+        # This allows duplicate manager to block stale/ended content
+        duplicate_check = self.duplicate_manager.check_if_already_posted(video_id, {
+            'broadcast_content': getattr(self.status_verifier, '_last_broadcast_content', 'live'),
+            'actual_end': getattr(self.status_verifier, '_last_actual_end', None),
+            'age_hours': getattr(self.status_verifier, '_last_age_hours', None)
+        })
+
+        if duplicate_check['already_posted']:
+            blocked_reason = duplicate_check.get('blocked_reason', 'already posted')
+            if blocked_reason == 'already_posted':
+                self.logger.info("🔁 Video already posted, skipping")
+            else:
+                self.logger.warning(f"🚫 Video blocked: {blocked_reason}")
+            results['platforms'] = {
+                platform: blocked_reason
+                for platform in duplicate_check.get('platforms_posted', [])
+            }
             return results
 
         # Step 4: Get channel configuration
@@ -120,11 +135,52 @@ class RefactoredPostingOrchestrator:
             results['errors'].append(f"Channel {channel_name} is disabled")
             return results
 
-        # Step 5: Post to platforms in background
+        # Step 5: QWEN Pre-posting Intelligence Check
+        stream_info = {
+            'video_id': video_id,
+            'title': title,
+            'url': url,
+            'channel_name': channel_name
+        }
+
+        # Determine target platforms from channel config
+        target_platforms = []
+        if channel_config.get('linkedin_page'):
+            target_platforms.append('linkedin')
+        if channel_config.get('x_account'):
+            target_platforms.append('x_twitter')
+
+        # Get QWEN intelligence decision
+        qwen_decision = self.duplicate_manager.qwen_pre_posting_check(stream_info, target_platforms)
+
+        if qwen_decision.get('qwen_active'):
+            self.logger.info("🤖🧠 [QWEN-ORCHESTRATOR] Intelligence analysis complete")
+
+            # Check if QWEN blocks posting
+            if not qwen_decision['should_post']:
+                self.logger.warning(f"🤖🧠 [QWEN-BLOCK] Posting blocked: {qwen_decision['warnings']}")
+                results['errors'].extend(qwen_decision['warnings'])
+                return results
+
+            # Update platforms based on QWEN decision
+            approved_platforms = qwen_decision.get('approved_platforms', target_platforms)
+            posting_delays = qwen_decision.get('delays', {})
+            posting_order = qwen_decision.get('posting_order', approved_platforms)
+
+            # Log QWEN optimizations
+            for optimization in qwen_decision.get('optimizations', []):
+                self.logger.info(f"🤖🧠 [QWEN-OPTIMIZE] {optimization}")
+        else:
+            # QWEN not active, use default behavior
+            approved_platforms = target_platforms
+            posting_delays = {}
+            posting_order = target_platforms
+
+        # Step 6: Post to platforms in background
         self.logger.info("🚀 Starting background posting thread")
         posting_thread = threading.Thread(
             target=self._post_to_platforms_background,
-            args=(video_id, title, url, channel_config, results),
+            args=(video_id, title, url, channel_config, results, approved_platforms, posting_delays, posting_order),
             daemon=True
         )
         posting_thread.start()
@@ -138,10 +194,13 @@ class RefactoredPostingOrchestrator:
         title: str,
         url: str,
         channel_config: Dict[str, Any],
-        results: Dict[str, Any]
+        results: Dict[str, Any],
+        approved_platforms: List[str] = None,
+        posting_delays: Dict[str, float] = None,
+        posting_order: List[str] = None
     ):
         """
-        Background thread for posting to platforms
+        Background thread for posting to platforms with QWEN intelligence
 
         Args:
             video_id: YouTube video ID
@@ -149,9 +208,16 @@ class RefactoredPostingOrchestrator:
             url: Stream URL
             channel_config: Channel configuration
             results: Results dictionary to update
+            approved_platforms: QWEN-approved platforms
+            posting_delays: QWEN-recommended delays per platform
+            posting_order: QWEN-optimized posting order
         """
         try:
             self.is_posting = True
+
+            # Use QWEN parameters if available
+            posting_delays = posting_delays or {}
+            posting_order = posting_order or []
 
             # Get platform accounts
             linkedin_page = channel_config.get('linkedin_page')
@@ -162,9 +228,20 @@ class RefactoredPostingOrchestrator:
                 results['errors'].append("No platform accounts configured")
                 return
 
-            # Post to both platforms
+            # Post to both platforms with QWEN intelligence
             if linkedin_page and x_account:
                 self.logger.info("📢 Posting to both LinkedIn and X/Twitter")
+
+                # Apply QWEN-recommended delays if available
+                for platform in posting_order:
+                    if platform in posting_delays and posting_delays[platform] > 0:
+                        self.logger.info(f"🤖🧠 [QWEN-DELAY] Waiting {posting_delays[platform]:.0f}s for {platform}")
+                        import time
+                        time.sleep(posting_delays[platform])
+
+                    # Monitor with QWEN - just log the attempt
+                    post_id = f"{video_id}_{platform}"
+                    self.logger.info(f"🤖🧠 [QWEN] Starting posting for {post_id}")
 
                 linkedin_result, x_result = self.posting_service.post_to_both_platforms(
                     title=title,
@@ -173,9 +250,17 @@ class RefactoredPostingOrchestrator:
                     x_account=x_account
                 )
 
-                # Update results
+                # Update results and QWEN monitoring
                 results['platforms']['linkedin'] = linkedin_result.status.value
                 results['platforms']['x_twitter'] = x_result.status.value
+
+                # Update QWEN with outcomes
+                self.duplicate_manager.qwen_monitor_posting_progress(
+                    f"{video_id}_linkedin", 'linkedin', linkedin_result.status, {'result': linkedin_result.status.value}
+                )
+                self.duplicate_manager.qwen_monitor_posting_progress(
+                    f"{video_id}_x_twitter", 'x_twitter', x_result.status, {'result': x_result.status.value}
+                )
 
                 # Mark as posted if successful
                 platforms_posted = []
@@ -185,14 +270,19 @@ class RefactoredPostingOrchestrator:
                     platforms_posted.append('x_twitter')
 
                 if platforms_posted:
-                    self.duplicate_manager.mark_as_posted(
-                        video_id=video_id,
-                        title=title,
-                        url=url,
-                        platforms=platforms_posted
-                    )
+                    # Mark each platform as posted individually
+                    for platform in platforms_posted:
+                        self.duplicate_manager.mark_as_posted(
+                            video_id=video_id,
+                            platform=platform,
+                            title=title,
+                            url=url
+                        )
                     results['posted'] = True
                     self.last_posted_video = video_id
+                else:
+                    # Both failed but don't mark - allow retry
+                    self.logger.warning(f"⚠️ Both platforms failed for {video_id}, will retry on next detection")
 
             # Post to LinkedIn only
             elif linkedin_page:
@@ -209,12 +299,15 @@ class RefactoredPostingOrchestrator:
                 if linkedin_result.status == PostingStatus.SUCCESS:
                     self.duplicate_manager.mark_as_posted(
                         video_id=video_id,
+                        platform='linkedin',
                         title=title,
-                        url=url,
-                        platforms=['linkedin']
+                        url=url
                     )
                     results['posted'] = True
                     self.last_posted_video = video_id
+                else:
+                    # LinkedIn failed but don't mark - allow retry
+                    self.logger.warning(f"⚠️ LinkedIn failed for {video_id}, will retry on next detection")
 
             # Post to X only
             elif x_account:
@@ -231,12 +324,21 @@ class RefactoredPostingOrchestrator:
                 if x_result.status == PostingStatus.SUCCESS:
                     self.duplicate_manager.mark_as_posted(
                         video_id=video_id,
+                        platform='x_twitter',
                         title=title,
-                        url=url,
-                        platforms=['x_twitter']
+                        url=url
                     )
                     results['posted'] = True
                     self.last_posted_video = video_id
+                else:
+                    # Mark as attempted even on failure to prevent infinite retries
+                    self.logger.warning(f"⚠️ X/Twitter failed for {video_id}, marking as attempted")
+                    self.duplicate_manager.mark_as_posted(
+                        video_id=video_id,
+                        platform='failed_x',
+                        title=title,
+                        url=url
+                    )
 
             # Log final results
             self.logger.info("="*60)
@@ -248,6 +350,9 @@ class RefactoredPostingOrchestrator:
         except Exception as e:
             self.logger.error(f"❌ Background posting error: {str(e)}")
             results['errors'].append(str(e))
+            # DO NOT mark as failed_attempt - let it retry naturally
+            # Browser-based posting should be allowed to retry
+            self.logger.info("⚠️ Error occurred but NOT marking as failed - will retry on next detection")
         finally:
             self.is_posting = False
 
@@ -264,6 +369,108 @@ class RefactoredPostingOrchestrator:
         stats['channel_config'] = self.channel_config.get_configuration_summary()
 
         return stats
+
+    def handle_multiple_streams_detected(self, detected_streams: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Handle multiple detected streams with proper priority and sequencing.
+        This is the proper WSP 3 compliant handoff from livechat DAE.
+
+        Args:
+            detected_streams: List of stream dictionaries with keys:
+                - video_id: YouTube video ID
+                - channel_id: YouTube channel ID
+                - channel_name: Human-readable channel name
+                - live_chat_id: Optional chat ID
+
+        Returns:
+            Results dictionary with posting status for all streams
+        """
+        import time
+
+        self.logger.info("="*80)
+        self.logger.info("[ORCHESTRATOR] MULTIPLE STREAMS DETECTED")
+        self.logger.info(f"[ORCHESTRATOR] Processing {len(detected_streams)} streams")
+        self.logger.info("="*80)
+
+        results = {
+            'success': True,
+            'streams_processed': 0,
+            'errors': [],
+            'stream_results': {}
+        }
+
+        # Deduplicate by video_id first (safety check)
+        unique_videos = {}
+        for stream in detected_streams:
+            video_id = stream.get('video_id')
+            if video_id and video_id not in unique_videos:
+                unique_videos[video_id] = stream
+            elif video_id:
+                self.logger.warning(f"[DUPLICATE] Ignoring duplicate stream {video_id} from {stream.get('channel_name')}")
+
+        # Use only unique streams
+        unique_streams = list(unique_videos.values())
+
+        if len(unique_streams) != len(detected_streams):
+            self.logger.info(f"[DEDUP] Reduced {len(detected_streams)} streams to {len(unique_streams)} unique streams")
+
+        # Sort streams by priority: Move2Japan -> UnDaoDu -> FoundUps
+        priority_order = {
+            'UCklMTNnu5POwRmQsg5JJumA': 1,  # Move2Japan
+            'UCSNTUXjAgpd4sgWYP0xoJgw': 2,   # UnDaoDu
+            'UC-LSSlOZwpGIRIYihaz8zCw': 3,   # FoundUps
+            'UC8NMhWbOE9OVJF0V4DRmNnQ': 3,   # FoundUps alt
+        }
+
+        sorted_streams = sorted(
+            unique_streams,
+            key=lambda s: priority_order.get(s['channel_id'], 999)
+        )
+
+        # Process each stream with proper delays
+        for idx, stream in enumerate(sorted_streams, 1):
+            video_id = stream['video_id']
+            channel_id = stream['channel_id']
+            channel_name = stream['channel_name']
+
+            self.logger.info(f"[{idx}/{len(sorted_streams)}] Processing {channel_name} stream...")
+
+            # Build stream URL
+            stream_url = f"https://www.youtube.com/watch?v={video_id}"
+            stream_title = f"{channel_name} Live Stream"
+
+            # Handle this stream
+            result = self.handle_stream_detected(
+                video_id=video_id,
+                title=stream_title,
+                url=stream_url,
+                channel_name=channel_id  # Pass channel ID for config lookup
+            )
+
+            results['stream_results'][channel_name] = result
+
+            if result.get('posted'):
+                results['streams_processed'] += 1
+                self.logger.info(f"[SUCCESS] {channel_name} posted successfully")
+            else:
+                self.logger.warning(f"[WARNING] {channel_name} posting issues: {result.get('errors')}")
+                results['errors'].extend(result.get('errors', []))
+
+            # Add delay between posts (except after last one)
+            if idx < len(sorted_streams):
+                delay_seconds = 15
+                self.logger.info(f"[DELAY] Waiting {delay_seconds}s before next post...")
+                time.sleep(delay_seconds)
+
+        # Summary
+        self.logger.info("="*60)
+        self.logger.info("[ORCHESTRATOR] POSTING SEQUENCE COMPLETE")
+        self.logger.info(f"[ORCHESTRATOR] Processed: {results['streams_processed']}/{len(detected_streams)} streams")
+        if results['errors']:
+            self.logger.warning(f"[ORCHESTRATOR] Errors: {results['errors']}")
+        self.logger.info("="*60)
+
+        return results
 
     def clear_live_cache(self, video_id: Optional[str] = None):
         """

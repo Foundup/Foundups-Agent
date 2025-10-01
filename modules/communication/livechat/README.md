@@ -10,7 +10,15 @@
 
 ## 🎯 Module Purpose
 
-The `LiveChat` module is the core of the **YouTube DAE Cube**, providing real-time YouTube Live Chat integration with MAGADOOM gamification, consciousness responses (0102), and advanced moderation. This module exemplifies **WSP 3 functional distribution principles** with 28 specialized sub-modules after cleanup (reduced from 31).
+The `LiveChat` module is the core of the **YouTube DAE Cube**, providing real-time YouTube Live Chat integration with MAGADOOM gamification, consciousness responses (0102), and advanced moderation. This module exemplifies **WSP 3 functional distribution principles** with 29 specialized sub-modules including QWEN intelligence integration.
+
+### 🤖🧠 QWEN Intelligence Features (NEW)
+The module now includes **QWEN (Quantum Wisdom Enhancement Network)** intelligence for:
+- **Channel Prioritization**: AI-powered decision-making for optimal channel checking order
+- **Heat Level Management**: Intelligent 429 error avoidance through pattern learning
+- **Stream Detection Learning**: Records successful detection patterns for future optimization
+- **Global System State**: Monitors overall health and decides when to check channels
+- **Pattern Memory**: Learns typical streaming hours and days for each channel
 
 ### 📋 Command System Overview
 The module supports **37 distinct command patterns** including:
@@ -29,13 +37,25 @@ All commands go through `intelligent_throttle_manager.py`:
 - **Consciousness**: Highest cost, maximum throttling
 - **YouTube API**: 5 units per poll, 200 units per send (10K daily quota)
 
+## Scripts
+
+### `capture_stream_logs.py`
+**Purpose**: Captures terminal output during YouTube DAE stream sessions for 0102 analysis
+**Functionality**:
+- Runs `main.py --youtube` and captures all terminal output
+- Saves logs to conversation memory for pattern analysis
+- Tracks mod interactions, bot responses, consciousness triggers, and errors
+- Generates session summaries with statistics
+**Usage**: `python modules/communication/livechat/scripts/capture_stream_logs.py`
+
 ## 🎲 YouTube DAE Cube Architecture (WSP 80)
 
 The LiveChat module forms the core of the **YouTube DAE Cube**, integrating with modules across multiple domains:
 
-### Core Components (28 modules in src/ - cleaned from 31)
+### Core Components (29 modules in src/)
 | Module | Lines | Purpose |
 |--------|-------|---------|
+| **qwen_youtube_integration.py** | 260 | NEW: QWEN intelligence for channel prioritization |
 | **core/orchestrator.py** | 239 | NEW: Refactored orchestration logic (74% reduction) |
 | **core/message_router.py** | 278 | NEW: Unified message routing with priority |
 | **intelligent_throttle_manager.py** | 600 | NEW: Automatic API throttling with learning |

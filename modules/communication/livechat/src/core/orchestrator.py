@@ -83,8 +83,9 @@ class LiveChatOrchestrator:
         """Initialize message processors and router."""
         # Initialize individual handlers
         self.message_processor = MessageProcessor(
-            self.youtube, 
-            self.memory_manager
+            self.youtube,
+            self.memory_manager,
+            None  # No chat_sender available in orchestrator context
         )
         self.event_handler = EventHandler(memory_dir="memory")
         self.command_handler = CommandHandler(

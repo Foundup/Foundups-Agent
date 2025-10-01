@@ -1,14 +1,22 @@
-# HoloIndex - Semantic Code Discovery & Autonomous Intelligence System
+﻿# HoloIndex - Semantic Code Discovery & Autonomous Intelligence System
 
 ## 🚨 MAJOR ARCHITECTURAL PIVOT (2025-09-25)
 
 HoloIndex has evolved from a search tool into the **autonomous intelligence foundation** for the entire FoundUps ecosystem. This is now the **green foundation board agent** that comes with every LEGO set.
 
 ## Overview
+## Current Status (2025-09-28)
+- ✅ **Active today:** classical pipeline (tokenisation ➜ SentenceTransformer embeddings ➜ ChromaDB) plus HoloDAE monitoring.
+- ⚠️ **Future work:** quantum modules (quantum_agent_db, quantum_encoding) are NumPy research scaffolds; they are not invoked in production runs.
+- 🧭 **Roadmap:** quantum/Grover references remain aspirational until hardware integration is feasible.
 HoloIndex + **HoloDAE** = Complete autonomous code intelligence system:
 - **HoloIndex**: Semantic code discovery (WSP 87)
 - **HoloDAE**: Autonomous 0102 intelligence agent that monitors and enhances all searches
 
+## Operational Documentation
+- [Operational Playbook](docs/OPERATIONAL_PLAYBOOK.md) — step-by-step pre-code checklist, TODO workflow, and doc compliance rules for 0102.
+- [Telemetry & Breadcrumb Guide](docs/MULTI_AGENT_BREADCRUMB_EXAMPLE.md) — how to follow the live JSONL stream (`holo_index/logs/telemetry/`) and coordinate hand-offs between sessions.
+- [CLI Refactoring Plan](docs/CLI_REFACTORING_PLAN.md) — deeper design notes for the search/CLI pipeline.
 ## Revolutionary Architecture
 
 ### 🧠 HoloDAE - Chain-of-Thought Logging for Recursive Self-Improvement

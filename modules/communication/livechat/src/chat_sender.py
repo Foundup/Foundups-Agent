@@ -67,23 +67,26 @@ class ChatSender:
             # All mentions are valid, proceed with sending
             logger.debug(f"✅ All @mentions validated in message")
         
-        # NOTE: Throttling is handled by livechat_core.py before calling this method
-        # We do NOT throttle here to avoid duplicate throttling logic
-        
+        # GLOBAL THROTTLING: Apply minimum delays to ALL messages to prevent spam
+        # Even "priority" messages get throttled to avoid quota exhaustion
+        await self._apply_global_throttling(response_type, skip_delay)
+
         try:
             # Ensure we have bot channel ID
             if not self.bot_channel_id:
                 await self._get_bot_channel_id()
-            
-            # NOTE: Adaptive delays are handled by livechat_core.py's IntelligentThrottleManager
-            # Skip delay only for explicit priority messages
-            if skip_delay:
-                if response_type == 'consciousness':
-                    logger.info("⚡ Skipping delay for consciousness trigger response")
-                elif response_type == 'timeout_announcement':
-                    logger.info("⚡🎮 PRIORITY: Skipping delay for timeout announcement!")
-                else:
-                    logger.info("⚡ Skipping delay as requested")
+
+            # Apply additional random delays for human-like behavior (except highest priority)
+            if skip_delay and response_type == 'timeout_announcement':
+                logger.info("⚡🎮 ULTIMATE PRIORITY: Minimal throttling for timeout announcement")
+            elif skip_delay:
+                logger.info("⚡ Reduced throttling for priority message")
+                # Still apply some minimum delay even for priority messages
+                if self.random_delay_enabled:
+                    min_delay = min(0.5, self.min_random_delay)
+                    random_delay = random.uniform(min_delay, min_delay + 1.0)
+                    logger.debug(f"⏱️ Priority message delay: {random_delay:.2f}s")
+                    await asyncio.sleep(random_delay)
             
             # WSP Enhancement: Add random pre-send delay for human-like behavior
             # Skip for timeout announcements (highest priority)
@@ -250,4 +253,56 @@ class ChatSender:
             "random_delay_enabled": self.random_delay_enabled,
             "random_delay_range": f"{self.min_random_delay:.1f}s-{self.max_random_delay:.1f}s",
             "has_service": self.youtube is not None
-        } 
+        }
+
+    async def _apply_global_throttling(self, response_type: str, skip_delay: bool) -> None:
+        """
+        Apply global throttling to ALL messages to prevent spam and quota exhaustion.
+
+        This enforces minimum delays between messages regardless of priority.
+        """
+        current_time = time.time()
+
+        # Initialize global throttling tracking if needed
+        if not hasattr(self, '_last_message_time'):
+            self._last_message_time = 0
+            self._message_count = 0
+
+        # Global minimum delays to prevent spam (in seconds)
+        global_delays = {
+            'default': 2.0,  # Minimum 2 seconds between any messages
+            'greeting': 5.0,  # Greetings need more spacing
+            'update': 10.0,   # Update broadcasts need significant spacing
+            'timeout_announcement': 0.5,  # Allow faster timeout announcements
+            'consciousness': 3.0,  # Consciousness responses
+            'maga': 15.0,     # MAGA responses (additional throttling)
+        }
+
+        # Determine appropriate delay based on message type
+        if 'greeting' in response_type.lower() or 'greeting' in str(self).lower():
+            min_delay = global_delays['greeting']
+        elif 'update' in response_type.lower() or 'broadcast' in str(self).lower():
+            min_delay = global_delays['update']
+        elif response_type in global_delays:
+            min_delay = global_delays[response_type]
+        else:
+            min_delay = global_delays['default']
+
+        # Calculate time since last message
+        time_since_last = current_time - self._last_message_time
+
+        if time_since_last < min_delay:
+            # Need to wait
+            wait_time = min_delay - time_since_last
+            logger.info(f"🛡️ GLOBAL THROTTLE: Waiting {wait_time:.1f}s before sending {response_type} message")
+            await asyncio.sleep(wait_time)
+        else:
+            logger.debug(f"✅ GLOBAL THROTTLE: OK to send {response_type} message (gap: {time_since_last:.1f}s)")
+
+        # Update tracking
+        self._last_message_time = time.time()
+        self._message_count += 1
+
+        # Log spam prevention stats periodically
+        if self._message_count % 10 == 0:
+            logger.info(f"📊 GLOBAL THROTTLE: Sent {self._message_count} messages, enforcing anti-spam delays") 

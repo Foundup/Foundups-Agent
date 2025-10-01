@@ -17,6 +17,8 @@
 - `AutonomousActionScheduler`: Natural language understanding for 0102 commands
 - `HumanSchedulingInterface`: Human (012) interface for scheduled posts
 - `SimplePostingOrchestrator`: Sequential posting with anti-detection
+- `RefactoredPostingOrchestrator`: Clean coordinator with QWEN pre-posting intelligence checks
+- `DuplicatePreventionManager`: Duplicate detection with QWEN platform health monitoring
 
 ### Primary Methods
 
@@ -39,6 +41,10 @@ async def get_content_history(platform: Optional[str] = None, limit: int = 10) -
 async def sync_platforms() -> Dict[str, bool]
 async def get_platform_status(platform: str) -> Dict[str, Any]
 def list_supported_platforms() -> List[str]
+
+# QWEN Intelligence Methods
+async def qwen_pre_posting_check(stream_info: Dict, platforms: List[str]) -> Dict[str, Any]
+async def get_platform_health() -> Dict[str, str]
 ```
 
 ### Adapter Interface
@@ -104,7 +110,21 @@ def get_platform_limits() -> Dict[str, Any]
     'platforms': {'twitter': 'authenticated', 'linkedin': 'error'},
     'active_schedules': 5,
     'total_posts': 142,
-    'last_activity': '2025-01-10T15:30:00Z'
+    'last_activity': '2025-01-10T15:30:00Z',
+    'platform_health': {'linkedin': 'HEALTHY', 'x_twitter': 'WARMING'}
+}
+```
+
+### qwen_pre_posting_check()
+- `Dict[str, Any]` - QWEN intelligence decision about posting
+```python
+{
+    'qwen_active': True,
+    'should_post': True,
+    'warnings': [],
+    'recommendations': ['linkedin', 'x_twitter'],
+    'delays': {'linkedin': 0, 'x_twitter': 15},
+    'reasons': ['All platforms healthy']
 }
 ```
 
@@ -242,4 +262,29 @@ post_id = human_scheduler.schedule_post(
 
 # Execute scheduled posts
 results = await human_scheduler.execute_scheduled_posts()
+```
+
+### QWEN Platform Intelligence
+```python
+from modules.platform_integration.social_media_orchestrator.src.core.duplicate_prevention_manager import DuplicatePreventionManager
+
+# Initialize with QWEN intelligence
+duplicate_mgr = DuplicatePreventionManager(qwen_enabled=True)
+
+# Get QWEN pre-posting decision
+stream_info = {
+    'title': 'Live Stream',
+    'url': 'https://youtube.com/watch?v=123',
+    'channel_name': 'FoundUps'
+}
+qwen_decision = duplicate_mgr.qwen_pre_posting_check(stream_info, ['linkedin', 'x_twitter'])
+
+if qwen_decision['should_post']:
+    print(f"QWEN recommends posting to: {qwen_decision['recommendations']}")
+else:
+    print(f"QWEN blocked posting: {qwen_decision['warnings']}")
+
+# Check platform health
+health = duplicate_mgr.get_platform_health()
+print(f"LinkedIn: {health['linkedin']}, X/Twitter: {health['x_twitter']}")
 ```

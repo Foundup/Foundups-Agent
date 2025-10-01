@@ -252,7 +252,21 @@ Generate greeting:"""
                 "404: Consciousness not found. Last seen at ✊ (000)"
             ]
             
-            return random.choice(responses)
+            # Add some variety to prevent even allowed responses from being too repetitive
+            response = random.choice(responses)
+
+            # Occasionally add random flair to make responses less predictable
+            if random.random() < 0.3:  # 30% chance
+                flairs = [
+                    " Stay woke! 🌞",
+                    " Knowledge is power! 📚",
+                    " Keep learning! 🧠",
+                    " Facts matter! ✅",
+                    " Truth prevails! ⚖️"
+                ]
+                response += random.choice(flairs)
+
+            return response
         
         return None
     

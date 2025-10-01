@@ -56,6 +56,41 @@ class TestDuplicatePreventionManager(unittest.TestCase):
         self.assertIn('linkedin', result['platforms_posted'])
         self.assertIn('x_twitter', result['platforms_posted'])
 
+    def test_stale_stream_blocking(self):
+        """Test that ended/stale streams are blocked by duplicate manager"""
+        import tempfile
+        import os
+
+        # Create a temporary database to avoid conflicts with other tests
+        temp_dir = tempfile.mkdtemp()
+        temp_db = os.path.join(temp_dir, 'test_stale.db')
+
+        # Create manager with fresh database
+        from src.core.duplicate_prevention_manager import DuplicatePreventionManager
+        test_manager = DuplicatePreventionManager(db_path=temp_db)
+
+        # Create a mock live status info for an ended stream
+        live_status_info = {
+            'broadcast_content': 'completed',
+            'actual_end': '2025-10-01T12:00:00Z',
+            'age_hours': 2.0  # 2 hours ago
+        }
+
+        # Test that duplicate manager blocks ended streams
+        result = test_manager.check_if_already_posted('ENDED_STREAM_123', live_status_info)
+
+        # Should be blocked
+        self.assertTrue(result['already_posted'])
+        self.assertEqual(result['blocked_reason'], 'Stream has ended (age: 2.0h)')
+        self.assertEqual(result['status'], 'STALE_ENDED')
+
+        # Verify it was persisted to prevent future checks
+        result2 = test_manager.check_if_already_posted('ENDED_STREAM_123')
+        self.assertTrue(result2['already_posted'])
+        self.assertEqual(result2['status'], 'STALE_ENDED')
+
+        # Test passed - stale stream blocking works
+
     def test_partial_posting(self):
         """Test video posted to only one platform"""
         self.manager.mark_as_posted(

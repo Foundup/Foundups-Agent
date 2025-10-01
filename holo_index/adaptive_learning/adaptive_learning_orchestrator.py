@@ -4,16 +4,16 @@ HoloIndex Phase 3: Adaptive Learning Orchestrator
 ===============================================
 
 Main orchestrator for Phase 3 adaptive learning system.
-Integrates all MLE-STAR powered components for comprehensive optimization.
+Integrates direct optimization components for comprehensive adaptive learning.
 
 Key Features:
 - Unified orchestration of adaptive learning components
-- MLE-STAR integration for system-wide optimization
+- Direct optimization integration for system-wide enhancement
 - Performance monitoring and continuous improvement
 - WSP-compliant recursive self-improvement
 
 WSP Compliance: WSP 48 (Recursive Improvement), WSP 54 (Agent Coordination)
-MLE-STAR Integration: System-wide optimization orchestration
+Direct Optimization Integration: System-wide enhancement orchestration
 """
 
 import asyncio
@@ -44,6 +44,12 @@ from holo_index.adaptive_learning.memory_architecture_evolution import (
 from modules.infrastructure.database import AgentDB
 
 logger = logging.getLogger(__name__)
+# Suppress console output for 0102 agent optimization (WSP 64 compliance)
+logger.propagate = False  # Don't send to root logger
+if not logger.handlers:  # Only add handler if none exists
+    handler = logging.NullHandler()  # Null handler suppresses all output
+    logger.addHandler(handler)
+logger.setLevel(logging.ERROR)  # Only log errors, suppress warnings
 
 @dataclass
 class AdaptiveLearningResult:
@@ -70,13 +76,13 @@ class AdaptiveLearningOrchestrator:
     """
     Main orchestrator for HoloIndex Phase 3 adaptive learning.
 
-    Integrates all MLE-STAR powered components:
+    Integrates direct optimization components:
     1. Adaptive Query Processor - Query understanding and enhancement
     2. Vector Search Optimizer - Ranking and result optimization
     3. LLM Response Optimizer - Response quality improvement
     4. Memory Architecture Evolution - Learning and memory optimization
 
-    Implements system-wide optimization through coordinated MLE-STAR orchestration.
+    Implements system-wide optimization through coordinated direct enhancement.
     """
 
     def __init__(self):
@@ -437,7 +443,7 @@ class AdaptiveLearningOrchestrator:
         """
         Perform system-wide optimization of adaptive learning configuration.
 
-        Uses MLE-STAR to optimize the entire adaptive learning pipeline.
+        Optimizes the entire adaptive learning pipeline using direct enhancement strategies.
         """
         try:
             # Get current system context

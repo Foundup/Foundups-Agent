@@ -18,12 +18,20 @@ Other 0102 agents can read these streams to immediately understand:
 
 import json
 import logging
+import os
 import threading
 import time
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
+
+# Unified agent logging for multi-agent coordination
+try:
+    from holo_index.utils.agent_logger import log_breadcrumb_activity
+    UNIFIED_LOGGING_AVAILABLE = True
+except ImportError:
+    UNIFIED_LOGGING_AVAILABLE = False
 
 # WSP 78 Database imports
 from modules.infrastructure.database.src.agent_db import AgentDB
@@ -101,13 +109,23 @@ class BreadcrumbTracer:
     def __init__(self):
         # WSP 78 Database integration - replaces JSON files
         self.db = AgentDB()
-        self.session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        raw_agent_id = os.getenv("0102_HOLO_ID", "0102").strip()
+        self.agent_id = raw_agent_id if raw_agent_id else "0102"
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.session_id = f"{self.agent_id}_{timestamp}"
+        logger.info("[BREADCRUMB] Session started for agent %s (%s)", self.agent_id, self.session_id)
 
         # In-memory caches for performance (synced with database)
         self.active_contracts = []
         self.collaboration_signals = {}
         self.autonomous_tasks = []
         self.coordination_events = []
+
+        # Console announcement tracking
+        self._console_hint_shown = False
+
+        # Breadcrumb broadcast counter for local tracking
+        self._breadcrumb_counter = 0
 
         # Autonomous coordination settings
         self.autonomous_mode = True
@@ -128,6 +146,71 @@ class BreadcrumbTracer:
 
         logger.info("[BRAIN] AUTONOMOUS Breadcrumb Tracer initialized - WSP 78 database enabled - 0102/0102 coordination active")
 
+    def _add_breadcrumb(self, action: str, **kwargs) -> int:
+        """Persist breadcrumb for shared memory and emit live updates."""
+        breadcrumb_id = self.db.add_breadcrumb(
+            session_id=self.session_id,
+            action=action,
+            agent_id=self.agent_id,
+            **kwargs
+        )
+
+        self._breadcrumb_counter += 1
+        fallback_identifiers = {None, 0, 1, "1"}
+        reference_id = self._breadcrumb_counter if breadcrumb_id in fallback_identifiers else breadcrumb_id
+
+        # Log to unified agent stream so 012 and other agents can follow DBA entries
+        if UNIFIED_LOGGING_AVAILABLE:
+            # Add agent and session context
+            enriched_kwargs = kwargs.copy()
+            enriched_kwargs['agent_id'] = self.agent_id
+            enriched_kwargs['session_id'] = self.session_id
+            log_breadcrumb_activity(action, reference_id, **enriched_kwargs)
+
+        # Also log locally for backward compatibility
+        self._log_breadcrumb(action, kwargs, reference_id)
+        return breadcrumb_id
+
+    def _log_breadcrumb(self, action: str, payload: Dict[str, Any], breadcrumb_id: int) -> None:
+        """Emit breadcrumb summary for shared logs without console noise."""
+        try:
+            details: List[str] = []
+            query = payload.get("query")
+            if query:
+                details.append(f"query={query}")
+            results = payload.get("results")
+            if isinstance(results, list):
+                details.append(f"results={len(results)}")
+            related_docs = payload.get("related_docs")
+            if isinstance(related_docs, list) and related_docs:
+                details.append(f"docs={len(related_docs)}")
+            data = payload.get("data")
+            if isinstance(data, dict) and data:
+                contract_id = data.get("contract_id")
+                if contract_id:
+                    details.append(f"contract={contract_id}")
+                task_id = data.get("task_id")
+                if task_id:
+                    details.append(f"task={task_id}")
+                description = data.get("description")
+                if description:
+                    desc_short = description if len(description) <= 60 else description[:57] + "..."
+                    details.append(f'description="{desc_short}"')
+                impact = data.get("impact")
+                if impact:
+                    details.append(f"impact={impact}")
+            contract_direct = payload.get("contract_id")
+            if contract_direct:
+                details.append(f"contract={contract_direct}")
+            task_direct = payload.get("task_id")
+            if task_direct:
+                details.append(f"task={task_direct}")
+            detail_text = " | ".join(details) if details else "recorded"
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            message = f"[{timestamp}] [BREADCRUMB][{self.agent_id}][{self.session_id}][{breadcrumb_id}] {action}: {detail_text}"
+            logger.info(message)
+        except Exception as exc:
+            logger.debug("Breadcrumb logging failed: %s", exc)
     def _load_from_database(self):
         """Load existing data from database into memory caches."""
         try:
@@ -154,11 +237,13 @@ class BreadcrumbTracer:
             self.autonomous_tasks = []
             self.coordination_events = []
 
+        # Breadcrumb broadcast counter for local tracking
+        self._breadcrumb_counter = 0
+
     def add_search(self, query: str, results: List[Dict], related_docs: List[str]):
         """Record a search operation with results and related documentation."""
         # Use database instead of JSON files (WSP 78)
-        self.db.add_breadcrumb(
-            session_id=self.session_id,
+        self._add_breadcrumb(
             action="search",
             query=query,
             results=results[:3],  # Store top 3 results
@@ -167,8 +252,7 @@ class BreadcrumbTracer:
 
     def add_discovery(self, discovery_type: str, item: str, location: str, impact: str = ""):
         """Record a discovery made during search."""
-        self.db.add_breadcrumb(
-            session_id=self.session_id,
+        self._add_breadcrumb(
             action="discovery",
             data={
                 "type": discovery_type,
@@ -180,8 +264,7 @@ class BreadcrumbTracer:
 
     def add_action(self, action: str, target: str, result: str, learned: str = None):
         """Record an action taken and its result."""
-        self.db.add_breadcrumb(
-            session_id=self.session_id,
+        self._add_breadcrumb(
             action="action_taken",
             data={
                 "what": action,
@@ -193,8 +276,7 @@ class BreadcrumbTracer:
 
     def add_documentation_link(self, search: str, doc_path: str, relevance: float):
         """Record a link to relevant documentation."""
-        self.db.add_breadcrumb(
-            session_id=self.session_id,
+        self._add_breadcrumb(
             action="doc_link",
             query=search,
             data={
@@ -207,6 +289,15 @@ class BreadcrumbTracer:
     def get_session_trail(self) -> List[Dict]:
         """Get the current session's breadcrumb trail."""
         return self.db.get_breadcrumbs(session_id=self.session_id)
+
+    def get_recent_agents(self, minutes: int = 120, limit: int = 5) -> List[str]:
+        """Return recent agent identifiers contributing breadcrumbs."""
+        if not hasattr(self.db, "get_recent_breadcrumb_agents"):
+            return []
+        try:
+            return self.db.get_recent_breadcrumb_agents(minutes=minutes, limit=limit)
+        except Exception:
+            return []
 
     def get_recent_discoveries(self, limit: int = 10) -> List[Dict]:
         """Get recent discoveries across all sessions."""
@@ -309,8 +400,7 @@ class BreadcrumbTracer:
                 self.active_contracts.append(contract)
 
             # Create breadcrumb for contract creation
-            self.db.add_breadcrumb(
-                session_id=self.session_id,
+            self._add_breadcrumb(
                 action="contract_created",
                 data={
                     "contract_id": contract_id,
@@ -366,8 +456,7 @@ class BreadcrumbTracer:
             contract = self.db.get_contract(contract_id)
             if contract:
                 # Create breadcrumb for assignment
-                self.db.add_breadcrumb(
-                    session_id=self.session_id,
+                self._add_breadcrumb(
                     action="contract_assigned",
                     data={
                         "contract_id": contract_id,
@@ -395,19 +484,18 @@ class BreadcrumbTracer:
             contract = self.db.get_contract(contract_id)
             if contract:
                 # Create completion breadcrumb
-                self.db.add_breadcrumb(
-                    session_id=self.session_id,
+                self._add_breadcrumb(
                     action="contract_completed",
                     data={
                         "contract_id": contract_id,
-                        "task": contract["task_description"],
-                        "assigned_to": contract["assigned_agent"],
+                        "task": contract.get("task_description"),
+                        "assigned_to": contract.get("assigned_agent"),
                         "actual_deliverables": deliverables or contract.get("deliverables", []),
                         "completion_time": datetime.now().isoformat()
                     }
                 )
 
-                logger.info(f"[COMPLETE] Contract {contract_id} completed by {contract['assigned_agent']}")
+                logger.info(f"[COMPLETE] Contract {contract_id} completed by {contract.get('assigned_agent')}")
                 return True
 
         logger.warning(f"Failed to complete contract {contract_id}")
@@ -447,16 +535,16 @@ class BreadcrumbTracer:
     def _check_contract_assignments(self):
         """Check for contracts that need agent assignment based on availability."""
         for contract in self.active_contracts:
-            if contract.assigned_agent == "unassigned":
+            if contract.get("assigned_agent") == "unassigned":
                 # Look for available agents with matching skills
-                required_skills = self._extract_skills_from_task(contract.task_description)
+                required_skills = self._extract_skills_from_task(contract.get("task_description", ""))
                 available_agents = self.get_available_collaborators(required_skills)
 
                 if available_agents:
                     # Assign to first available agent
                     best_agent = available_agents[0]["agent_id"]
-                    self.assign_task_from_contract(contract.contract_id, best_agent)
-                    logger.info(f"[HANDSHAKE] Auto-assigned contract {contract.contract_id} to {best_agent}")
+                    self.assign_task_from_contract(contract.get("contract_id"), best_agent)
+                    logger.info(f"[HANDSHAKE] Auto-assigned contract {contract.get('contract_id')} to {best_agent}")
 
     def _extract_skills_from_task(self, task: str) -> List[str]:
         """Extract required skills from task description."""
@@ -519,8 +607,7 @@ class BreadcrumbTracer:
             )
 
             # Create breadcrumb for autonomous task discovery
-            self.db.add_breadcrumb(
-                session_id=self.session_id,
+            self._add_breadcrumb(
                 action="autonomous_task_discovered",
                 data={
                     "task_id": task_id,
@@ -606,8 +693,8 @@ class BreadcrumbTracer:
         stale_contracts = self._find_stale_contracts()
         for contract in stale_contracts:
             self.discover_autonomous_task(
-                f"Follow up on stale contract: {contract.task_description}",
-                {"contract_id": contract.contract_id, "reason": "stale"}
+                f"Follow up on stale contract: {contract.get('task_description', '')}",
+                {"contract_id": contract.get("contract_id"), "reason": "stale"}
             )
 
     def _analyze_task_requirements(self, task_description: str) -> List[str]:
@@ -742,8 +829,14 @@ class BreadcrumbTracer:
         cutoff = datetime.now() - timedelta(hours=24)  # 24 hours
 
         for contract in self.active_contracts:
-            contract_time = datetime.fromisoformat(contract.created_at)
-            if contract_time < cutoff and contract.assigned_agent == "unassigned":
+            created_at = contract.get("created_at")
+            if not created_at:
+                continue
+            try:
+                contract_time = datetime.fromisoformat(created_at)
+            except ValueError:
+                continue
+            if contract_time < cutoff and contract.get("assigned_agent") == "unassigned":
                 stale_contracts.append(contract)
 
         return stale_contracts
@@ -867,20 +960,20 @@ class BreadcrumbTracer:
     def _redistribute_work_for_new_agent(self, new_agent_id: str):
         """Redistribute work when a new autonomous agent becomes available."""
         # Find high-priority unassigned contracts
-        unassigned_contracts = [c for c in self.active_contracts if c.assigned_agent == "unassigned"]
+        unassigned_contracts = [c for c in self.active_contracts if c.get("assigned_agent") == "unassigned"]
 
         for contract in unassigned_contracts:
-            if contract.priority == "high":
+            if contract.get('priority') == "high":
                 # Check if new agent can handle this
                 agent_signal = self.collaboration_signals.get(new_agent_id)
                 if agent_signal and self._agent_can_handle_contract(agent_signal, contract):
-                    self.assign_task_from_contract(contract.contract_id, new_agent_id)
+                    self.assign_task_from_contract(contract.get("contract_id"), new_agent_id)
                     logger.info(f"[REFRESH] Redistributed high-priority contract to new agent {new_agent_id}")
 
     def _agent_can_handle_contract(self, agent_signal: CollaborationSignal, contract: HandoffContract) -> bool:
         """Check if an agent can handle a specific contract."""
         agent_skills = set(agent_signal.skills_offered)
-        required_skills = set(self._extract_skills_from_task(contract.task_description))
+        required_skills = set(self._extract_skills_from_task(contract.get("task_description", "")))
 
         # Must have at least 50% skill match
         skill_match = len(agent_skills & required_skills) / len(required_skills) if required_skills else 1.0
@@ -998,3 +1091,7 @@ def get_autonomous_status() -> Dict[str, Any]:
         "autonomous_tasks": len(tracer.autonomous_tasks),
         "coordination_events": len(tracer.coordination_events)
     }
+
+
+
+

@@ -22,6 +22,14 @@
       "linkedin_page_name": "FoundUps",
       "x_account": "X_Acc2",
       "x_handle": "@Foundups",
+      "enabled": false
+    },
+    "UC8NMhWbOE9OVJF0V4DRmNnQ": {
+      "name": "FoundUps (Actual)",
+      "linkedin_page_id": "1263645",
+      "linkedin_page_name": "FoundUps",
+      "x_account": "X_Acc2",
+      "x_handle": "@Foundups",
       "enabled": true
     }
   },
@@ -29,7 +37,8 @@
     "linkedin_page_id": "1263645",
     "linkedin_page_name": "FoundUps",
     "x_account": "X_Acc2",
-    "x_handle": "@Foundups"
+    "x_handle": "@Foundups",
+    "enabled": false
   },
   "git_posting": {
     "linkedin_page_id": "1263645",

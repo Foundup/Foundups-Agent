@@ -2,6 +2,18 @@
 
 ## Latest Changes
 
+### V040 - Documentation Organization and Audit Report
+**Date**: Current session
+**Changes**: Added comprehensive LinkedIn integration audit report to module documentation
+**Impact**: Better visibility into LinkedIn posting architecture and integration status
+**WSP**: WSP 85 (Root Directory Protection), WSP 83 (Documentation Tree Attachment)
+**Details**:
+- Moved `LINKEDIN_AUDIT.md` from root to `docs/audits/` per WSP 85
+- Audit confirms proper integration across livechat and social_media_orchestrator
+- Documents architecture is WSP 3 compliant with proper domain separation
+- Validates refactored posting orchestrator with multi-stream support
+- No vibecoding found - all implementations properly integrated
+
 ### V039 - X/Twitter Content Minimization Fix
 **Date**: 2025-09-24
 **Changes**: Fixed X/Twitter posts to use minimal content with GitHub link

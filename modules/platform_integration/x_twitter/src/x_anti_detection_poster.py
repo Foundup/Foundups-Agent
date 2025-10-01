@@ -51,8 +51,12 @@ class AntiDetectionX:
         # For YouTube streams, can use Move2Japan (X_Acc1)
         if use_foundups:
             self.username = os.getenv('X_Acc2', 'Foundups')  # FoundUps account
+            self.target_account = "@Foundups"
+            print(f"[CONFIG] Using FoundUps account: {self.username}")
         else:
             self.username = os.getenv('X_Acc1', 'geozeai')  # Move2Japan account
+            self.target_account = "@Move2Japan"
+            print(f"[CONFIG] Using Move2Japan account: {self.username}")
         self.password = os.getenv('x_Acc_pass')
         self.compose_url = "https://x.com/compose/post"
         self.data_dir = "O:/Foundups-Agent/modules/platform_integration/x_twitter/data"
@@ -205,6 +209,39 @@ class AntiDetectionX:
     def setup_driver(self, use_existing_session=True):
         """Setup browser with anti-detection measures - Edge for FoundUps, Chrome for GeozeAi"""
 
+        # Try to use browser manager for reusing existing windows
+        try:
+            from modules.platform_integration.social_media_orchestrator.src.core.browser_manager import get_browser_manager
+            browser_manager = get_browser_manager()
+
+            # Determine if we're using FoundUps or GeozeAi account
+            use_foundups = self.username == os.getenv('X_Acc2', 'Foundups')
+
+            if use_foundups:
+                # Use Edge for FoundUps
+                print("[INFO] Getting managed Edge browser for @Foundups...")
+                self.driver = browser_manager.get_browser(
+                    browser_type='edge',
+                    profile_name='x_foundups',
+                    options={'disable_web_security': True}
+                )
+            else:
+                # Use Chrome for Move2Japan/GeozeAi
+                print("[INFO] Getting managed Chrome browser for @Move2Japan...")
+                self.driver = browser_manager.get_browser(
+                    browser_type='chrome',
+                    profile_name='x_move2japan',
+                    options={'disable_web_security': True}
+                )
+
+            print("[INFO] Using managed browser with anti-detection measures...")
+            return self.driver
+
+        except (ImportError, Exception) as e:
+            print(f"[WARNING] Browser manager not available: {e}")
+            print("[INFO] Falling back to creating new browser...")
+
+        # Fallback to original implementation if browser manager not available
         # Determine if we're using FoundUps or GeozeAi account
         use_foundups = self.username == os.getenv('X_Acc2', 'Foundups')
 
@@ -550,11 +587,32 @@ class AntiDetectionX:
         
         try:
             # Go directly to the compose URL
-            print(f"[NAV] Going directly to compose page...")
+            print(f"[NAV] Going directly to compose page for {self.target_account}...")
             self.driver.get(self.compose_url)
-            
+
             # Wait for page to load
             time.sleep(random.uniform(3, 5))
+
+            # Verify we're on the correct account
+            try:
+                # Check if we can see the account name in the page
+                page_source = self.driver.page_source.lower()
+                if self.target_account.lower() not in page_source:
+                    print(f"[WARNING] Account verification failed - may be logged into wrong account!")
+                    print(f"[WARNING] Expected: {self.target_account}, but it's not visible on page")
+                    # Check if we see the wrong account
+                    if "@foundups" in page_source and self.target_account != "@Foundups":
+                        print("[ERROR] Logged into @Foundups but should be @Move2Japan!")
+                        print("[ACTION] Clearing session and re-logging...")
+                        # Clear the session to force re-login
+                        self.driver.delete_all_cookies()
+                        self.driver.refresh()
+                        time.sleep(2)
+                        return self.post_to_x(content, video_id)  # Retry with fresh login
+                else:
+                    print(f"[OK] Verified account: {self.target_account}")
+            except Exception as e:
+                print(f"[WARNING] Could not verify account: {e}")
             
             # Check if we got redirected to login
             current_url = self.driver.current_url
@@ -959,8 +1017,32 @@ https://www.youtube.com/watch?v=test123"""
 
 
 if __name__ == "__main__":
-    poster = test_anti_detection_post()
-    
-    # Example: Post again without re-login
-    # time.sleep(10)
-    # poster.post_to_x("Second post without re-login!")
+    import sys
+
+    # Accept command-line arguments: account_name and content
+    if len(sys.argv) >= 3:
+        account_name = sys.argv[1].lower()
+        content = sys.argv[2]
+
+        print(f"[ARGS] X account: {account_name}")
+        print(f"[ARGS] Content length: {len(content)} chars")
+
+        # Determine which account to use
+        use_foundups = 'foundups' in account_name
+
+        # Create poster with the specified account
+        poster = AntiDetectionX(use_foundups=use_foundups)
+        print(f"[INFO] Using account: {'@Foundups' if use_foundups else '@Move2Japan'}")
+
+        # Post to X
+        success = poster.post_to_x(content)
+
+        # Exit with appropriate code
+        sys.exit(0 if success else 1)
+    else:
+        # Run test mode if no arguments provided
+        poster = test_anti_detection_post()
+
+        # Example: Post again without re-login
+        # time.sleep(10)
+        # poster.post_to_x("Second post without re-login!")

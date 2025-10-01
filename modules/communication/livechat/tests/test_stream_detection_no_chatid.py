@@ -44,8 +44,8 @@ class TestStreamDetectionNoChatId(unittest.TestCase):
 
         # Should return the stream even without chat_id
         self.assertIsNotNone(result, "Should accept stream without chat_id")
-        self.assertEqual(result[0], 'video123', "Should return video_id")
-        self.assertIsNone(result[1], "Chat_id should be None")
+        self.assertEqual(result['video_id'], 'video123', "Should return video_id")
+        self.assertIsNone(result['live_chat_id'], "Chat_id should be None")
 
     @patch('modules.communication.livechat.src.auto_moderator_dae.StreamResolver')
     def test_find_livestream_still_requires_video_id(self, mock_resolver_class):
@@ -86,8 +86,8 @@ class TestStreamDetectionNoChatId(unittest.TestCase):
 
         # Should return both IDs
         self.assertIsNotNone(result, "Should accept stream with both IDs")
-        self.assertEqual(result[0], 'video123', "Should return video_id")
-        self.assertEqual(result[1], 'chat456', "Should return chat_id")
+        self.assertEqual(result['video_id'], 'video123', "Should return video_id")
+        self.assertEqual(result['live_chat_id'], 'chat456', "Should return chat_id")
 
     @patch('modules.communication.livechat.src.auto_moderator_dae.logger')
     @patch('modules.communication.livechat.src.auto_moderator_dae.StreamResolver')

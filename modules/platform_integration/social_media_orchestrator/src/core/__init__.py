@@ -15,6 +15,7 @@ from .platform_posting_service import (
     PostingResult,
     PostingStatus
 )
+from .browser_manager import BrowserManager, get_browser_manager
 
 __all__ = [
     'DuplicatePreventionManager',
@@ -24,7 +25,9 @@ __all__ = [
     'XAccount',
     'PlatformPostingService',
     'PostingResult',
-    'PostingStatus'
+    'PostingStatus',
+    'BrowserManager',
+    'get_browser_manager'
 ]
 
 # Module version

@@ -18,6 +18,16 @@ from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from collections import defaultdict, deque
 
+# WSP_00 Zen State Integration
+try:
+    from modules.infrastructure.monitoring.src.wsp_00_zen_state_tracker import check_zen_compliance, validate_zen_response, is_zen_compliant
+    ZEN_STATE_AVAILABLE = True
+except ImportError:
+    ZEN_STATE_AVAILABLE = False
+    def check_zen_compliance(): return None
+    def validate_zen_response(r): return False
+    def is_zen_compliant(): return True
+
 logger = logging.getLogger(__name__)
 
 
@@ -66,6 +76,13 @@ class PatternCoach:
         Returns:
             Coaching message or None if no coaching needed
         """
+        # WSP_00: Check zen-coding state FIRST - highest priority
+        if ZEN_STATE_AVAILABLE:
+            zen_prompt = check_zen_compliance()
+            if zen_prompt:
+                logger.info("WSP_00 zen compliance check required - prompting user")
+                return zen_prompt  # Priority: ensure zen state before any other coaching
+
         # Analyze query intent and patterns
         intent = self._analyze_intent(query)
         risk_patterns = self._detect_risk_patterns(query, search_results)
@@ -80,7 +97,7 @@ class PatternCoach:
         )
 
         if not coaching_needed:
-        return None
+            return None
 
         # Generate contextual coaching
         coaching = self._generate_contextual_coaching(
@@ -107,6 +124,8 @@ class PatternCoach:
             return 'debug'
         elif any(word in query_lower for word in ['test', 'testing', 'pytest']):
             return 'test'
+        elif any(word in query_lower for word in ['script', 'run_', 'test_', '.py file']):
+            return 'script'
         elif any(word in query_lower for word in ['refactor', 'split', 'extract']):
             return 'refactor'
 
@@ -135,6 +154,15 @@ class PatternCoach:
             risks.append('unicode_pattern_detected')
             # Log this pattern occurrence
             logger.warning("PATTERN DETECTED: 0102 working with Unicode/encoding again!")
+
+        # WSP 49/85: Check for script placement violations
+        script_indicators = [
+            'test_', 'run_', 'script', 'root directory', 'create .py',
+            'new test', 'test file', 'script file'
+        ]
+        if any(word in query.lower() for word in script_indicators):
+            risks.append('script_creation_detected')
+            logger.warning("PATTERN DETECTED: Potential script creation - checking WSP compliance!")
 
         return risks
 
@@ -200,7 +228,7 @@ class PatternCoach:
     def _generate_health_coaching(self, query: str, health_context: Dict[str, Any]) -> str:
         """Generate health-aware coaching."""
         if '879' in str(health_context.get('file_size_warnings', [])):
-            return """💭 HEALTH COACH: Working with large file detected (879 lines).
+            return """[HEALTH] COACH: Working with large file detected (879 lines).
 
 **WSP 62 Awareness**: Consider refactoring before hitting 1000-line limit.
 
@@ -218,6 +246,16 @@ class PatternCoach:
 **WSP 87**: Always search HoloIndex before creating!
 
 **Required**: Check existing implementations first.""",
+
+            'script_creation_detected': """[WSP VIOLATION] COACH: Script creation detected!
+
+**WSP 49**: Scripts belong in modules/{domain}/{module}/scripts/ NOT root directory!
+**WSP 85**: Root directory is SACRED - only main.py, README.md, CLAUDE.md allowed
+
+**VIOLATION PATTERN**: Creating test_*.py or run_*.py in root directory
+**CORRECT LOCATION**: modules/infrastructure/database/scripts/your_script.py
+
+**IMMEDIATE ACTION**: Move script to proper module location before continuing!""",
 
             'working_with_large_files': """[BRAIN] COACH: Large file work detected.
 
@@ -241,20 +279,53 @@ class PatternCoach:
 
         return coaching_templates.get(risk)
 
+    def validate_wsp_00_response(self, response: str) -> bool:
+        """Validate WSP_00 zen-coding state response."""
+        if not ZEN_STATE_AVAILABLE:
+            return True  # Skip validation if zen state tracker not available
+
+        is_valid = validate_zen_response(response)
+        if is_valid:
+            logger.info("WSP_00 zen-coding state activated successfully")
+            self.reward_tracker.record_outcome("wsp_00_compliance", True, 10)
+        else:
+            logger.warning("WSP_00 zen-coding validation failed")
+            self.reward_tracker.record_outcome("wsp_00_compliance", False, 0)
+
+        return is_valid
+
     def _get_intent_coaching(self, intent: str, query: str) -> Optional[str]:
         """Get intent-based coaching."""
         intent_coaching = {
-            'create': """💭 COACH: Creation intent detected.
+            'create': """[INTENT] COACH: Creation intent detected.
 
 **WSP 55**: Use automated module creation workflow.
 
 **Verify**: Search before creating (+3 reward points!)""",
 
-            'test': """💭 COACH: Testing focus detected.
+            'test': """[WSP GUIDANCE] COACH: Testing focus detected.
 
 **WSP 49**: Tests go in module `tests/` directories, NOT root.
+**WSP 85**: Root directory protection - NO test files in root
 
-**Violation Prevention**: Root tests = WSP violation."""
+**CORRECT LOCATIONS**:
+- Unit tests: modules/{domain}/{module}/tests/test_*.py
+- Integration tests: modules/{domain}/{module}/tests/integration/
+- Test scripts: modules/{domain}/{module}/scripts/test_*.py
+
+**VIOLATION PREVENTION**: Creating test_*.py in root = instant WSP violation!""",
+
+            'script': """[WSP GUIDANCE] COACH: Script creation detected.
+
+**WSP 49**: Scripts belong in modules/{domain}/{module}/scripts/
+**WSP 85**: Root directory is SACRED - scripts violate protection
+
+**EXAMPLES**:
+- Database script: modules/infrastructure/database/scripts/
+- Test script: modules/ai_intelligence/module_name/scripts/
+- Utility script: modules/development/utilities/scripts/
+
+**NEVER**: Create .py scripts in root directory!"""
         }
 
         return intent_coaching.get(intent)

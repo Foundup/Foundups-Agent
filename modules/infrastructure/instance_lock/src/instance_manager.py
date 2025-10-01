@@ -240,22 +240,89 @@ class InstanceLock:
             "timestamp": datetime.now().isoformat()
         }
 
+    def cleanup_browser_windows(self) -> int:
+        """Find and close any stale browser windows from social media posting.
+        Returns the number of browser processes closed."""
+        closed_count = 0
+        browser_names = ["chrome.exe", "msedge.exe", "msedgedriver.exe", "chromedriver.exe"]
+
+        logger.info("🔍 Checking for stale browser windows...")
+
+        for process in psutil.process_iter(["pid", "name", "cmdline"]):
+            try:
+                process_name = process.info.get("name", "").lower()
+                cmdline = process.info.get("cmdline") or []
+                cmdline_str = " ".join(cmdline).lower()
+
+                # Check if it's a browser process
+                if any(browser in process_name for browser in browser_names):
+                    # Check if it's related to our automation (look for specific profiles)
+                    if any(marker in cmdline_str for marker in [
+                        "edge_profile_foundups",
+                        "chrome_profile",
+                        "linkedin_agent",
+                        "x_twitter",
+                        "--remote-debugging",
+                        "user-data-dir"
+                    ]):
+                        pid = process.info.get("pid")
+                        logger.warning(f"🚨 Found stale browser: {process_name} (PID: {pid})")
+                        try:
+                            process.terminate()
+                            closed_count += 1
+                            logger.info(f"✅ Terminated {process_name} (PID: {pid})")
+                        except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                            logger.warning(f"Could not terminate {process_name}: {e}")
+
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+
+        if closed_count > 0:
+            logger.info(f"🧹 Cleaned up {closed_count} stale browser window(s)")
+        else:
+            logger.info("✅ No stale browser windows found")
+
+        return closed_count
+
     def _cleanup_stale_processes(self) -> None:
+        # First cleanup any stale browser windows
+        self.cleanup_browser_windows()
+
+        # Also cleanup any orphaned Python processes from previous sessions
+        # This includes background shells that weren't properly terminated
         stale_pids = []
-        for process in psutil.process_iter(["pid", "cmdline", "create_time"]):
+        for process in psutil.process_iter(["pid", "cmdline", "create_time", "name"]):
             pid = process.info.get("pid")
             if pid == self.pid:
                 continue
+
+            # Check for Python processes
+            process_name = process.info.get("name", "").lower()
             cmdline = process.info.get("cmdline") or []
-            if self._looks_like_monitor(cmdline):
-                create_time = process.info.get("create_time")
-                if create_time is None:
-                    continue
-                age_minutes = (datetime.now() - datetime.fromtimestamp(create_time)).total_seconds() / 60
-                if age_minutes > self.ttl_minutes:
-                    stale_pids.append(pid)
+
+            # Kill any Python process that looks like our monitor or orphaned background process
+            if "python" in process_name:
+                # Check if it's our monitor process
+                if self._looks_like_monitor(cmdline):
+                    create_time = process.info.get("create_time")
+                    if create_time is None:
+                        continue
+                    age_minutes = (datetime.now() - datetime.fromtimestamp(create_time)).total_seconds() / 60
+                    if age_minutes > self.ttl_minutes:
+                        stale_pids.append(pid)
+                        logger.warning("Found stale monitor process %s (age: %.1f minutes)", pid, age_minutes)
+                # Also check for orphaned main.py processes that aren't the current one
+                elif any("main.py" in str(arg) for arg in cmdline):
+                    create_time = process.info.get("create_time")
+                    if create_time:
+                        age_minutes = (datetime.now() - datetime.fromtimestamp(create_time)).total_seconds() / 60
+                        # Kill if older than 1 minute and not the current process
+                        if age_minutes > 1:
+                            stale_pids.append(pid)
+                            logger.warning("Found orphaned main.py process %s (age: %.1f minutes)", pid, age_minutes)
+
         for pid in stale_pids:
-            logger.warning("Killing stale monitor process %s", pid)
+            logger.warning("Killing stale process %s", pid)
             self._kill_process(pid)
 
     @staticmethod
@@ -290,7 +357,11 @@ class InstanceLock:
         if not cmdline:
             return False
         lowered = [part.lower() for part in cmdline]
-        return any("main.py" in part for part in lowered) and any("--youtube" in part for part in lowered)
+        # Look for main.py script OR auto_moderator_dae direct invocation
+        has_main_py = any("main.py" in part for part in lowered)
+        has_auto_moderator = any("auto_moderator_dae" in part for part in lowered)
+        # Accept any main.py process OR auto_moderator_dae invocation as a DAE instance
+        return has_main_py or has_auto_moderator
 
     def check_duplicates(self, quiet: bool = False) -> list[int]:
         duplicates = []

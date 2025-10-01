@@ -1,0 +1,1123 @@
+﻿#!/usr/bin/env python3
+"""
+HoloDAE Coordinator - Main orchestrator following Qwen竊・102 architecture
+
+This is the refactored HoloDAE that properly implements the WSP 80 architecture:
+- Qwen LLM as Primary Orchestrator (circulatory system)
+- 0102 Agent as Arbitrator (brain)
+- 012 Human as Observer (monitoring)
+
+WSP Compliance: WSP 80 (Cube-Level DAE Orchestration)
+"""
+
+import time
+import logging
+import sys
+import os
+import json
+import threading
+from datetime import datetime
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
+from collections import Counter
+from typing import Dict, List, Optional, Any, Tuple, Set
+
+SUMMARY_EMOJI_ALIASES = {
+    '💊✅': 'HEALTH',
+    '🧠': 'PATTERN',
+    '📏': 'SIZE',
+    '📦': 'MODULE',
+    '👻': 'ORPHAN',
+    '📊': 'MONITOR',
+    '🤖🧠': 'QWEN',
+    '🍞': 'BREADCRUMB',
+    '🔍': 'SEMANTIC',
+}
+
+# Import our new modular components
+from .orchestration.qwen_orchestrator import QwenOrchestrator
+from .arbitration.mps_arbitrator import MPSArbitrator, ArbitrationDecision
+from .services.file_system_watcher import FileSystemWatcher
+from .services.context_analyzer import ContextAnalyzer
+from .models.work_context import WorkContext
+from .models.monitoring_types import MonitoringResult, FileChange, ChangeType
+from .ui.menu_system import HoloDAEMenuSystem, StatusDisplay
+from .output_formatter import HoloOutputFormatter, TelemetryLogger
+
+# Import breadcrumb tracer for multi-agent collaboration
+from holo_index.adaptive_learning.breadcrumb_tracer import get_tracer
+
+
+class HoloDAECoordinator:
+    """
+    Refactored HoloDAE Coordinator - Clean architecture implementation
+
+    Follows WSP 80: Qwen orchestrates 竊・0102 arbitrates 竊・012 observes
+    """
+
+    def __init__(self):
+        """Initialize the HoloDAE coordinator with all components"""
+        # Core orchestration components
+        self.qwen_orchestrator = QwenOrchestrator()
+        self.mps_arbitrator = MPSArbitrator()
+
+        # Core services
+        self.file_watcher = FileSystemWatcher()
+        self.context_analyzer = ContextAnalyzer()
+
+        # State management
+        self.current_work_context = WorkContext()
+        self.monitoring_active = False
+        self.monitoring_thread = None
+        self.monitoring_stop_event = threading.Event()
+        try:
+            self.monitoring_interval = max(1.0, float(os.getenv('HOLO_MONITOR_INTERVAL', '5.0')))
+        except ValueError:
+            self.monitoring_interval = 5.0
+        try:
+            self.monitoring_heartbeat = max(self.monitoring_interval, float(os.getenv('HOLO_MONITOR_HEARTBEAT', '60.0')))
+        except ValueError:
+            self.monitoring_heartbeat = max(self.monitoring_interval, 60.0)
+        self.last_monitoring_result: Optional[MonitoringResult] = None
+
+        # UI components
+        self.menu_system = HoloDAEMenuSystem()
+        self.status_display = StatusDisplay()
+
+        # Environment + logging context
+        self.repo_root = Path(__file__).resolve().parents[2]
+        self.holo_console_enabled = os.getenv("HOLO_SILENT", "0").lower() not in {"1", "true", "yes"}
+        self.session_id = f"holo-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        self.verbose = os.getenv('HOLO_VERBOSE', '').lower() in {"1", "true", "yes"}
+        self.output_formatter = HoloOutputFormatter(verbose=self.verbose)
+        self.telemetry_logger = TelemetryLogger(self.session_id)
+        self._module_metrics_cache: Dict[str, Dict[str, Any]] = {}
+
+        self._012_summary_path = Path(os.getenv('HOLO_012_PATH', '012.txt')).resolve()
+        try:
+            self._012_summary_limit = max(1, int(os.getenv('HOLO_012_LIMIT', '25')))
+        except ValueError:
+            self._012_summary_limit = 25
+
+        # Module mapping and doc tracking (implements 012's insights)
+        self.module_map: Dict[str, Dict[str, Any]] = {}
+        self.orphan_candidates: List[str] = []
+        self.doc_hints_given: Dict[str, datetime] = {}
+        self.docs_read: set = set()
+
+        # Setup logging
+        self.logger = logging.getLogger('holodae_activity')
+        self._configure_logging()
+        self.holo_agent_id = self._get_holo_agent_id()
+
+        # Initialize breadcrumb tracer for multi-agent collaboration
+        self.breadcrumb_tracer = get_tracer()
+        self._detailed_log("[HOLODAE-COORDINATOR] Initialized with modular architecture and breadcrumb tracing")
+
+    def handle_holoindex_request(self, query: str, search_results: dict) -> str:
+        """
+        Handle HoloIndex search request - Main orchestration entry point
+
+        This implements the WSP 80 architecture:
+        1. Qwen orchestrates analysis based on query
+        2. 0102 arbitrates using MPS scoring
+        3. Results presented for 012 monitoring
+        """
+        self._detailed_log(f"[HOLODAE-COORDINATOR] Processing query: '{query}'")
+
+        # Breadcrumb: Record search initiation
+        self.breadcrumb_tracer.add_search(query, search_results.get('code', [])[:3], [])
+
+        # Step 1: Qwen orchestrates the analysis
+        qwen_report = self.qwen_orchestrator.orchestrate_holoindex_request(query, search_results)
+
+        # Extract analysis context and gather module metrics
+        analysis_context = self.qwen_orchestrator.get_analysis_context()
+        involved_files = analysis_context['files']
+        involved_modules = analysis_context['modules']
+        module_metrics = self._collect_module_metrics_for_request(involved_modules)
+        alerts = self._get_system_alerts(list(module_metrics.keys()))
+
+        # Breadcrumb: Record modules discovered during analysis
+        if involved_modules:
+            self.breadcrumb_tracer.add_discovery(
+                "module_discovery",
+                f"modules_{len(involved_modules)}",
+                f"{len(involved_files)} files across {len(involved_modules)} modules",
+                f"Found implementations in modules: {', '.join(involved_modules[:3])}"
+            )
+
+        # Build module map for orphan detection and doc provision (012's insights)
+        self._build_module_map(module_metrics)
+
+        # Step 2: 0102 arbitrates using MPS
+        arbitration_decisions = self.mps_arbitrator.arbitrate_qwen_findings(qwen_report)
+        high_priority_decisions: List[ArbitrationDecision] = []
+
+        # Breadcrumb: Record key arbitration decisions
+        if arbitration_decisions:
+            high_priority_decisions = [d for d in arbitration_decisions if getattr(d, 'mps_analysis', None) and d.mps_analysis.total_score >= 13]
+            if high_priority_decisions:
+                self.breadcrumb_tracer.add_action(
+                    "arbitration_decision",
+                    f"{len(high_priority_decisions)} high-priority tasks",
+                    f"MPS arbitration identified {len(high_priority_decisions)} critical actions",
+                    f"Key decisions: {', '.join([d.description[:30] + '...' for d in high_priority_decisions[:2]])}"
+                )
+
+        # Step 3: Execute arbitration decisions
+        execution_results = self.mps_arbitrator.execute_arbitration_decisions(arbitration_decisions)
+
+        # Update work context using analyzer and arbitration actions
+        analysis_context = self.qwen_orchestrator.get_recent_analysis_context()
+        session_actions = [f"{decision.recommended_action.value}:{decision.description}" for decision in arbitration_decisions]
+        if analysis_context['files'] or session_actions:
+            self.current_work_context = self.context_analyzer.analyze_work_context(analysis_context['files'], session_actions)
+
+        search_summary = {
+            'code': search_results.get('code', []),
+            'wsps': search_results.get('wsps', [])
+        }
+        self._log_request_telemetry(query, search_summary, module_metrics, alerts)
+
+        final_report = self._format_final_report(qwen_report, arbitration_decisions, execution_results)
+        module_summary = self._format_module_metrics_summary(module_metrics, alerts)
+        if module_summary:
+            final_report = f"{final_report}\n{module_summary}" if final_report else module_summary
+
+        findings = self._extract_key_findings(alerts, module_metrics)
+        actions_overview = self._extract_high_priority_actions(high_priority_decisions)
+        self._append_012_summary(
+            self._build_search_summary_block(query, involved_modules, findings, actions_overview)
+        )
+
+        # Add breadcrumb trail from other agents for collaboration
+        breadcrumb_summary = self._get_collaborative_breadcrumb_summary()
+        if breadcrumb_summary:
+            final_report = f"{breadcrumb_summary}\n{final_report}" if final_report else breadcrumb_summary
+
+        self._detailed_log("[HOLODAE-COORDINATOR] Request processing complete")
+        return final_report
+
+    def _get_collaborative_breadcrumb_summary(self) -> str:
+        """Get summary of recent breadcrumbs from other 0102 agents for collaboration."""
+        try:
+            # Get recent discoveries from other agents (last 2 hours, limit 5)
+            recent_discoveries = self.breadcrumb_tracer.get_recent_discoveries(5)
+
+            if not recent_discoveries:
+                return ""
+
+            # Filter to show only other agents' work (not current session)
+            other_agent_discoveries = [
+                d for d in recent_discoveries
+                if d.get('session_id') != self.breadcrumb_tracer.session_id
+            ]
+
+            if not other_agent_discoveries:
+                return ""
+
+            # Format for 0102 agent consumption
+            lines = ["[0102-COLLABORATION] Recent discoveries from other agents:"]
+
+            for discovery in other_agent_discoveries[:3]:  # Show top 3
+                discovery_type = discovery.get('type', 'unknown')
+                item = discovery.get('item', 'unknown')
+                location = discovery.get('location', '')
+                impact = discovery.get('impact', '')
+
+                # Format based on discovery type
+                if discovery_type == 'module_discovery':
+                    lines.append(f"  📍 Agent found {item} at {location}")
+                elif discovery_type == 'typo_handler':
+                    lines.append(f"  💡 Agent discovered {item} typo handler")
+                else:
+                    lines.append(f"  🔍 Agent discovered: {item}")
+
+                if impact:
+                    lines.append(f"     Impact: {impact}")
+
+            # Add call to action for collaboration
+            lines.append("  🤝 Other agents may benefit from your current search results")
+
+            return "\n".join(lines)
+
+        except Exception as e:
+            self.logger.debug(f"Error getting collaborative breadcrumb summary: {e}")
+            return ""
+
+    def start_monitoring(self) -> bool:
+        """Start the quiet monitoring system"""
+        if self.monitoring_active:
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [HOLODAE] Monitoring already active")
+            return False
+
+        self.monitoring_active = True
+        self.monitoring_stop_event.clear()
+        self._detailed_log("[HOLODAE-COORDINATOR] Starting quiet monitoring mode")
+
+        result = self._run_monitoring_cycle()
+        if result.has_actionable_events():
+            summary = result.get_summary()
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [HOLODAE] [LAUNCH] Quiet monitoring activated - {summary}")
+            self._emit_monitoring_summary(result, prefix='[HOLO-MONITOR][INITIAL]')
+        else:
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [HOLODAE] [LAUNCH] Quiet monitoring activated")
+
+        if self.monitoring_thread is None or not self.monitoring_thread.is_alive():
+            self.monitoring_thread = threading.Thread(target=self._monitoring_loop, name='HoloMonitor', daemon=True)
+            self.monitoring_thread.start()
+            self._detailed_log("[HOLODAE-COORDINATOR] Monitoring loop thread started")
+        return True
+
+    def run_monitoring_cycle(self) -> MonitoringResult:
+        """Trigger a monitoring cycle manually"""
+        return self._run_monitoring_cycle()
+
+    def stop_monitoring(self) -> bool:
+        """Stop the monitoring system"""
+        if not self.monitoring_active:
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [HOLODAE] Monitoring not active")
+            return False
+
+        self.monitoring_active = False
+        self.monitoring_stop_event.set()
+        self._detailed_log("[HOLODAE-COORDINATOR] Monitoring deactivated")
+
+        if self.monitoring_thread and self.monitoring_thread.is_alive():
+            self.monitoring_thread.join(timeout=5.0)
+            self._detailed_log("[HOLODAE-COORDINATOR] Monitoring loop thread joined")
+        self.monitoring_thread = None
+        self.monitoring_stop_event.clear()
+
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] [HOLODAE] Monitoring deactivated")
+        return True
+
+    def get_status_summary(self) -> Dict[str, Any]:
+        """Get comprehensive status summary"""
+        return {
+            'monitoring_active': self.monitoring_active,
+            'qwen_status': self.qwen_orchestrator.get_chain_of_thought_summary(),
+            'arbitration_status': self.mps_arbitrator.get_arbitration_summary(),
+            'files_watched': self.file_watcher.get_watched_files_count(),
+            'current_work_context': self.current_work_context.get_summary(),
+            'last_monitoring_summary': self.last_monitoring_result.get_summary() if self.last_monitoring_result else None,
+            'last_monitoring_timestamp': self.last_monitoring_result.timestamp.isoformat() if self.last_monitoring_result else None
+        }
+
+    def show_menu(self) -> str:
+        """Show the main menu and get user choice"""
+        self.menu_system.show_main_menu()
+        return self.menu_system.get_menu_choice()
+
+    def show_sprint_status(self) -> None:
+        """Show sprint dashboard"""
+        # Get component status (in full implementation, this would be real data)
+        component_status = self._get_component_status()
+        self.menu_system.show_sprint_dashboard(component_status)
+
+    def _get_component_status(self) -> Dict[str, Any]:
+        """Get current component status for dashboard"""
+        # This would integrate with real performance monitoring
+        # For now, return placeholder data
+        return {
+            'qwen_orchestrator': {'status_icon': '[SUCCESS]', 'effectiveness': 0.85},
+            'mps_arbitrator': {'status_icon': '[SUCCESS]', 'effectiveness': 0.90},
+            'file_watcher': {'status_icon': '[SUCCESS]', 'effectiveness': 0.95},
+            'context_analyzer': {'status_icon': '[SUCCESS]', 'effectiveness': 0.80}
+        }
+
+    def _run_monitoring_cycle(self) -> MonitoringResult:
+        """Run a monitoring cycle and update internal state"""
+        cycle_start = time.perf_counter()
+        changes = self.file_watcher.scan_for_changes()
+        file_changes = [self._build_file_change(path) for path in changes]
+
+        result = MonitoringResult(
+            changes_detected=file_changes,
+            scan_duration=time.perf_counter() - cycle_start,
+            watched_paths=self.file_watcher.get_watched_paths()
+        )
+
+        if file_changes:
+            touched_modules = self.context_analyzer.get_related_modules([change.file_path for change in file_changes])
+            for module in touched_modules:
+                self._module_metrics_cache.pop(module, None)
+
+            analyzed_context = self.context_analyzer.analyze_work_context(
+                [change.file_path for change in file_changes],
+                self.current_work_context.session_actions
+            )
+            self.current_work_context = analyzed_context
+
+        self.last_monitoring_result = result
+        return result
+
+    def _monitoring_loop(self) -> None:
+        """Background monitoring loop that throttles noise for 012 oversight"""
+        self._detailed_log('[HOLODAE-COORDINATOR] Monitoring loop active')
+        last_heartbeat = time.perf_counter()
+
+        while not self.monitoring_stop_event.is_set():
+            cycle_start = time.perf_counter()
+            result = self._run_monitoring_cycle()
+
+            if result.has_actionable_events():
+                self._emit_monitoring_summary(result, prefix='[HOLO-MONITOR]')
+                last_heartbeat = time.perf_counter()
+            elif time.perf_counter() - last_heartbeat >= self.monitoring_heartbeat:
+                self._emit_monitoring_summary(result, prefix='[HOLO-MONITOR][HEARTBEAT]')
+                last_heartbeat = time.perf_counter()
+
+            elapsed = time.perf_counter() - cycle_start
+            sleep_for = max(0.2, self.monitoring_interval - elapsed)
+            if self.monitoring_stop_event.wait(sleep_for):
+                break
+
+        self._detailed_log('[HOLODAE-COORDINATOR] Monitoring loop stopped')
+
+    def _emit_monitoring_summary(self, result: MonitoringResult, prefix: str = '[HOLO-MONITOR]') -> None:
+        """Emit a compact summary of monitoring outcomes with module context"""
+        change_modules = sorted({change.module_path for change in result.changes_detected if change.module_path})
+        module_preview = ', '.join(change_modules[:3]) if change_modules else 'no module activity'
+        summary_parts = [
+            f"changes={len(result.changes_detected)}",
+            f"violations={len(result.violations_found)}",
+            f"patterns={len(result.pattern_alerts)}",
+            f"modules={module_preview}"
+        ]
+
+        if result.pattern_alerts:
+            high_conf = next((alert for alert in result.pattern_alerts if alert.is_high_confidence()), None)
+            if high_conf:
+                summary_parts.append(f"hi-pattern={high_conf.get_summary()}")
+        if result.violations_found:
+            summary_parts.append(f"first-violation={result.violations_found[0].get_summary()}")
+
+        message = f"{prefix} 📊 {' | '.join(summary_parts)}"
+        self._holo_log(message, console=True)
+
+        if result.has_actionable_events() or '[HEARTBEAT]' in prefix:
+            self._append_012_summary(self._build_monitor_summary_block(result, message, prefix))
+
+        if result.has_actionable_events() or '[HEARTBEAT]' in prefix:
+            self._append_012_summary(self._build_monitor_summary_block(result, message, prefix))
+
+    def _build_file_change(self, file_path: str) -> FileChange:
+        """Construct a FileChange record from a watched file"""
+        file_size = None
+        module_path = None
+        try:
+            file_size = os.path.getsize(file_path)
+        except (OSError, IOError):
+            pass
+
+        related_modules = self.context_analyzer.get_related_modules([file_path])
+        module_path = next(iter(related_modules)) if related_modules else None
+
+        return FileChange(
+            file_path=file_path,
+            change_type=ChangeType.MODIFIED,
+            file_size=file_size,
+            is_module_file=module_path is not None,
+            module_path=module_path
+        )
+
+    def _log_request_telemetry(self, query: str, search_summary: Dict[str, List[Any]],
+                               module_metrics: Dict[str, Dict[str, Any]],
+                               alerts: List[str]) -> None:
+        """Record structured telemetry for the current request"""
+        try:
+            code_hits = len(search_summary.get('code', []))
+            wsp_hits = len(search_summary.get('wsps', []))
+            self.telemetry_logger.log_search_request(query=query, code_hits=code_hits, wsp_hits=wsp_hits)
+
+            for module, metrics in module_metrics.items():
+                alerts_for_module = metrics.get('module_alerts') or []
+                if alerts_for_module:
+                    wsp_clause = 'WSP 49'
+                    for rec in metrics.get('recommendations', []):
+                        if 'WSP' in rec:
+                            wsp_clause = rec.split('(')[0].strip()
+                            break
+
+                    severity = 'critical' if '[CRITICAL]' in metrics.get('size_label', '') else 'warning'
+                    evidence = {
+                        'health': metrics.get('health_label'),
+                        'size': metrics.get('size_label'),
+                        'alerts': alerts_for_module,
+                    }
+                    self.telemetry_logger.log_module_status(
+                        module=module,
+                        wsp_clause=wsp_clause,
+                        severity=severity,
+                        evidence=evidence,
+                        next_action='refactor' if severity == 'critical' else 'review',
+                        acknowledged=False,
+                    )
+
+                    health = metrics.get('health_label', '')
+                    if 'Missing:' in health:
+                        missing_part = health.split('Missing:')[1].strip()
+                        for doc in [d.strip() for d in missing_part.split(',') if d.strip()]:
+                            doc_path = f"{module}/{doc}"
+                            self.telemetry_logger.log_doc_hint(module=module, doc_path=doc_path, reason='Missing required documentation')
+
+            if alerts:
+                self.telemetry_logger.log_event('system_alerts', alerts=alerts[:5])
+        except Exception as exc:
+            self._detailed_log(f"[HOLODAE-TELEMETRY] Failed to log telemetry: {exc}")
+
+    def _format_module_metrics_summary(self, module_metrics: Dict[str, Dict[str, Any]], alerts: List[str]) -> str:
+        """Create a concise summary of module metrics for final report"""
+        if not module_metrics and not alerts:
+            return ''
+
+        lines: List[str] = []
+        for module, metrics in module_metrics.items():
+            issues: List[str] = []
+            health_label = metrics.get('health_label')
+            if health_label and health_label != '[COMPLETE]':
+                issues.append(health_label)
+            module_alerts = metrics.get('module_alerts') or []
+            issues.extend(module_alerts)
+            if issues:
+                lines.append(f"[MODULE-ALERT] {module}: {'; '.join(issues)}")
+
+        if alerts:
+            lines.append(f"[SYSTEM-ALERT] {' | '.join(alerts[:3])}")
+
+        if not lines:
+            return ''
+
+        lines.insert(0, '[MODULE-METRICS] Module health recap')
+        return '\n'.join(lines)
+
+    def _format_final_report(self, qwen_report: str,
+                           arbitration_decisions: List[ArbitrationDecision],
+                           execution_results: Dict[str, Any]) -> str:
+        """Format the final report for 012 monitoring"""
+        lines = []
+
+        # Qwen's orchestrated analysis
+        lines.append(qwen_report)
+
+        # 0102's arbitration decisions
+        if arbitration_decisions:
+            lines.append("\n[0102-ARBITRATION] Arbitration Decisions:")
+            for decision in arbitration_decisions:
+                lines.append(f"  {decision.recommended_action.value.upper()}: {decision.description}")
+                lines.append(f"    MPS: {decision.mps_analysis.total_score} | {decision.reasoning}")
+
+        # Execution results
+        if execution_results:
+            executed = len(execution_results.get('executed_immediately', []))
+            batched = len(execution_results.get('batched_for_session', []))
+            lines.append(f"\n[EXECUTION] Immediate: {executed} | Batched: {batched}")
+
+        context_summary = self.current_work_context.get_summary()
+        if context_summary:
+            lines.append(f"\n[WORK-CONTEXT] {context_summary}")
+
+        if self.last_monitoring_result:
+            lines.append(f"[MONITORING] {self.last_monitoring_result.get_summary()}")
+
+        return "\n".join(lines)
+
+    def _normalize_summary_line(self, text: str) -> str:
+        normalized = text.strip()
+        for emoji, label in SUMMARY_EMOJI_ALIASES.items():
+            if emoji in normalized:
+                normalized = normalized.replace(emoji, f"{label} ({emoji})")
+        fallback_map = {
+            '?? [HOLODAE-HEALTH': 'HEALTH (💊✅) [HOLODAE-HEALTH',
+            '?? HOLODAE-HEALTH': 'HEALTH (💊✅) HOLODAE-HEALTH',
+            '抽笨・': 'HEALTH (💊✅)',
+            '剥': 'SEMANTIC (🔍)',
+            '逃': 'MODULE (📦)',
+            'ｧ': 'PATTERN (🧠)',
+            '棟': 'SIZE (📏)',
+            '遜': 'ORPHAN (👻)'
+        }
+        for fallback, replacement in fallback_map.items():
+            normalized = normalized.replace(fallback, replacement)
+        # Strip out any remaining non-ASCII glyphs introduced by noisy logs
+        normalized = ''.join(ch if 32 <= ord(ch) < 127 else ' ' for ch in normalized)
+        normalized = ' '.join(normalized.split())
+        return normalized
+
+    def _format_modules_for_summary(self, modules: List[str]) -> str:
+        module_list = []
+        for module in modules:
+            if module and module not in module_list:
+                module_list.append(module)
+        if not module_list:
+            return 'none'
+        preview = module_list[:4]
+        formatted = ', '.join(preview)
+        if len(module_list) > len(preview):
+            formatted += ' ...'
+        return formatted
+
+    def _extract_key_findings(self, alerts: List[str], module_metrics: Dict[str, Dict[str, Any]]) -> List[str]:
+        findings: List[str] = []
+        seen: Set[str] = set()
+
+        def add_entry(entry: str) -> None:
+            if entry and entry not in seen:
+                seen.add(entry)
+                findings.append(entry)
+
+        for alert in alerts:
+            normalized = self._normalize_summary_line(alert)
+            add_entry(normalized)
+            if len(findings) >= 5:
+                return findings
+
+        for module, metrics in module_metrics.items():
+            health_label = metrics.get('health_label')
+            if health_label and health_label not in {'[COMPLETE]', '[UNKNOWN]'}:
+                add_entry(self._normalize_summary_line(f"{module}: {health_label}"))
+            for module_alert in (metrics.get('module_alerts') or [])[:2]:
+                add_entry(self._normalize_summary_line(f"{module}: {module_alert}"))
+            if len(findings) >= 5:
+                break
+
+        return findings[:5]
+
+    def _extract_high_priority_actions(self, decisions: List[ArbitrationDecision]) -> List[str]:
+        actions: List[str] = []
+        seen: Set[str] = set()
+
+        for decision in decisions:
+            summary = self._normalize_summary_line(decision.description)
+            if not summary or not self._is_meaningful_action(summary):
+                continue
+
+            if summary in seen:
+                continue
+            seen.add(summary)
+
+            action_label = decision.recommended_action.value.replace('_', ' ').title()
+            score = None
+            if getattr(decision, 'mps_analysis', None):
+                score = decision.mps_analysis.total_score
+            if score is not None:
+                actions.append(f"{action_label} (MPS {score}): {summary}")
+            else:
+                actions.append(f"{action_label}: {summary}")
+
+            if len(actions) >= 5:
+                break
+
+        return actions
+
+    def _is_meaningful_action(self, summary: str) -> bool:
+        noise_phrases = (
+            'no high-risk vibecoding patterns detected',
+            'executed components',
+            'no monitoring alerts',
+            'no actionable violations detected',
+        )
+        lowered = summary.lower()
+        return not any(phrase in lowered for phrase in noise_phrases)
+
+    def _build_search_summary_block(self, query: str, modules: List[str], findings: List[str], actions: List[str]) -> List[str]:
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        lines = [f"=== {timestamp} SEARCH ==="]
+        lines.append(f"Query: {self._normalize_summary_line(query)}")
+        lines.append(f"Modules: {self._format_modules_for_summary(modules)}")
+        if findings:
+            lines.append('Key Findings:')
+            lines.extend(f"  - {entry}" for entry in findings)
+        else:
+            lines.append('Key Findings: none')
+        if actions:
+            lines.append('High Priority Actions:')
+            lines.extend(f"  - {entry}" for entry in actions)
+        else:
+            lines.append('High Priority Actions: none')
+        return lines
+
+    def _build_monitor_summary_block(self, result: MonitoringResult, summary_message: str, prefix: str) -> List[str]:
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        label = 'MONITOR-HEARTBEAT' if '[HEARTBEAT]' in prefix else 'MONITOR'
+        lines = [f"=== {timestamp} {label} ==="]
+        lines.append(f"Summary: {self._normalize_summary_line(summary_message)}")
+        modules = sorted({change.module_path for change in result.changes_detected if change.module_path})
+        lines.append(f"Modules: {self._format_modules_for_summary(modules)}")
+        if result.changes_detected:
+            lines.append('Recent Changes:')
+            for change in result.changes_detected[:3]:
+                path_display = change.file_path
+                lines.append(f"  - {self._normalize_summary_line(path_display)}")
+        if result.violations_found:
+            lines.append('Violations:')
+            for violation in result.violations_found[:3]:
+                lines.append(f"  - {self._normalize_summary_line(violation.get_summary())}")
+        if result.pattern_alerts:
+            lines.append('Patterns:')
+            for alert in result.pattern_alerts[:2]:
+                lines.append(f"  - {self._normalize_summary_line(alert.get_summary())}")
+        return lines
+
+    def _append_012_summary(self, block_lines: List[str]) -> None:
+        try:
+            entries: List[str] = []
+            if self._012_summary_path.exists():
+                content = self._012_summary_path.read_text(encoding='utf-8')
+                if '=== ' in content:
+                    parts = content.split('\n=== ')
+                    for part in parts:
+                        part = part.strip()
+                        if not part:
+                            continue
+                        if not part.startswith('=== '):
+                            part = '=== ' + part
+                        entries.append(self._sanitize_summary_block(part))
+            formatted_block = '\n'.join(block_lines)
+            if not formatted_block.startswith('=== '):
+                formatted_block = '=== ' + formatted_block
+            entries.append(self._sanitize_summary_block(formatted_block))
+            entries = entries[-self._012_summary_limit:]
+            new_content = '\n'.join(entries) + '\n'
+            self._012_summary_path.write_text(new_content, encoding='utf-8')
+        except Exception as exc:
+            self._detailed_log(f"[HOLODAE-012] Failed to update summary: {exc}")
+
+    def _sanitize_summary_block(self, block: str) -> str:
+        sanitized_lines: List[str] = []
+        for line in block.splitlines():
+            if not line.strip():
+                sanitized_lines.append('')
+                continue
+            if line.startswith('=== '):
+                sanitized_lines.append(' '.join(line.strip().split()))
+                continue
+            prefix_len = len(line) - len(line.lstrip())
+            prefix = line[:prefix_len]
+            normalized = self._normalize_summary_line(line.strip())
+            sanitized_lines.append(f"{prefix}{normalized}")
+        return '\n'.join(sanitized_lines)
+
+    def _get_holo_agent_id(self) -> str:
+        """Get the current HOLO_AGENT_ID for logging"""
+        return (os.getenv("0102_HOLO_ID") or os.getenv("HOLO_AGENT_ID") or "0102").strip()
+
+    def _holo_log(self, message: str, console: Optional[bool] = None) -> None:
+        """Log HoloDAE activity visible to 012 with HOLO_AGENT_ID"""
+        timestamp = datetime.now().strftime('%H:%M:%S')
+        sanitized = message.replace('\n', ' ').strip()
+        holo_message = f"[{timestamp}] {self.holo_agent_id} - holo {sanitized}"
+
+        # Persist detailed log for audit history
+        self.logger.info(holo_message)
+
+        should_print = self.holo_console_enabled if console is None else console
+        if should_print:
+            print(holo_message)
+
+    def _collect_module_metrics(self, module_path: str) -> Dict[str, Any]:
+        cached = self._module_metrics_cache.get(module_path)
+        if cached is not None:
+            return cached
+
+        display_name = module_path or 'unknown-module'
+        resolved_path = self._resolve_component_path(module_path)
+
+        recommendations: List[str] = ["WSP 49 (Module Structure)", "WSP 22 (Documentation)"]
+        module_alerts: List[str] = []
+        health_label = '[UNKNOWN]'
+        size_label = 'N/A'
+
+        if not resolved_path or not resolved_path.exists():
+            health_label = 'Module not found'
+            module_alerts.append('Module not found on disk')
+        else:
+            required_files = ("README.md", "INTERFACE.md", "requirements.txt")
+            missing_files = [req for req in required_files if not (resolved_path / req).exists()]
+            if missing_files:
+                health_label = f"Missing: {', '.join(missing_files)}"
+                module_alerts.append(f"Missing documentation: {', '.join(missing_files)}")
+                recommendations.append("WSP 11 (Interface Documentation)")
+            else:
+                health_label = '[COMPLETE]'
+
+            total_lines = 0
+            total_files = 0
+            has_tests = False
+            large_file_found = False
+
+            for py_file in resolved_path.rglob('*.py'):
+                try:
+                    with open(py_file, 'r', encoding='utf-8', errors='ignore') as handle:
+                        line_count = sum(1 for _ in handle)
+                    total_lines += line_count
+                    total_files += 1
+                    if py_file.name.startswith('test_'):
+                        has_tests = True
+                    if line_count > 500:
+                        large_file_found = True
+                except (OSError, IOError):
+                    continue
+
+            if not has_tests:
+                recommendations.append("WSP 5 (Testing Standards)")
+
+            if total_files == 0:
+                size_label = 'No Python files'
+            else:
+                avg_lines = max(1, total_lines // total_files)
+                if total_lines > 1600:
+                    status = '[CRITICAL]'
+                    module_alerts.append('Exceeds size thresholds (>1600 lines)')
+                elif total_lines > 1000:
+                    status = '[WARN]'
+                else:
+                    status = '[GOOD]'
+                size_label = f"{status} {total_lines} lines in {total_files} files (avg: {avg_lines})"
+
+            if large_file_found:
+                recommendations.append("WSP 62 (Modularity Enforcement)")
+                if total_lines <= 1600:
+                    module_alerts.append('Contains individual files exceeding 500 lines')
+
+        deduped_recommendations = []
+        for rec in recommendations:
+            if rec not in deduped_recommendations:
+                deduped_recommendations.append(rec)
+
+        metrics = {
+            'display_name': display_name,
+            'health_label': health_label,
+            'size_label': size_label,
+            'recommendations': tuple(deduped_recommendations[:3]),
+            'module_alerts': module_alerts,
+        }
+
+        self._module_metrics_cache[module_path] = metrics
+        return metrics
+
+    def _collect_module_metrics_for_request(self, involved_modules: List[str]) -> Dict[str, Dict[str, Any]]:
+        """Collect metrics for all modules involved in a request"""
+        metrics: Dict[str, Dict[str, Any]] = {}
+        if not involved_modules:
+            return metrics
+
+        for module in involved_modules:
+            if module and module not in metrics:
+                metrics[module] = self._collect_module_metrics(module)
+
+        return metrics
+
+    def _resolve_component_path(self, module_path: str) -> Optional[Path]:
+        if not module_path:
+            return None
+
+        candidate = Path(module_path)
+        if candidate.is_absolute() and candidate.exists():
+            return candidate
+
+        search_targets = []
+        relative = candidate if not candidate.is_absolute() else Path(candidate.name)
+        search_targets.append(self.repo_root / relative)
+
+        if not module_path.startswith('modules/'):
+            search_targets.append(self.repo_root / 'modules' / module_path)
+        if not module_path.startswith('holo_index/'):
+            search_targets.append(self.repo_root / 'holo_index' / module_path)
+
+        for target in search_targets:
+            if target.exists():
+                return target
+
+        return None
+
+    def _get_module_health_info(self, module_path: str) -> str:
+        """Get health information for a module"""
+        return self._collect_module_metrics(module_path)['health_label']
+
+    def _get_module_size_info(self, module_path: str) -> str:
+        """Get size information for a module"""
+        return self._collect_module_metrics(module_path)['size_label']
+
+    def _get_recommended_wsps(self, module_path: str) -> str:
+        """Get recommended WSP protocols for a module"""
+        recommendations = self._collect_module_metrics(module_path)['recommendations']
+        return ' | '.join(recommendations) if recommendations else 'WSP guidance unavailable'
+
+    def _get_system_alerts(self, modules: List[str]) -> List[str]:
+        """Get system-wide alerts for the matched modules"""
+        alerts: List[str] = []
+        if not modules:
+            return alerts
+
+        unique_modules: List[str] = []
+        for module in modules:
+            if module and module not in unique_modules:
+                unique_modules.append(module)
+
+        for module in unique_modules:
+            metrics = self._collect_module_metrics(module)
+            for module_alert in metrics['module_alerts']:
+                alerts.append(f"{metrics['display_name']}: {module_alert}")
+
+        name_counts = Counter(m.split('/')[-1] for m in unique_modules if m)
+        for name, count in name_counts.items():
+            if count > 1:
+                alerts.append(f"Multiple modules share the name '{name}' ({count} matches)")
+
+        return alerts
+
+    def _ensure_utf8_console(self) -> None:
+        """Ensure Windows consoles are switched to UTF-8 so emojis render correctly."""
+        if os.name != 'nt':
+            return
+        try:
+            import ctypes
+            kernel32 = ctypes.windll.kernel32
+            if kernel32.GetConsoleOutputCP() != 65001:
+                kernel32.SetConsoleOutputCP(65001)
+            if kernel32.GetConsoleCP() != 65001:
+                kernel32.SetConsoleCP(65001)
+            if hasattr(sys.stdout, 'reconfigure'):
+                sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+            if hasattr(sys.stderr, 'reconfigure'):
+                sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+        except Exception:
+            pass
+
+    def _configure_logging(self) -> None:
+        """Ensure holodae_activity logger writes breadcrumbs to persistent log"""
+        log_dir = (self.repo_root / 'holo_index' / 'logs').resolve()
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_path = (log_dir / 'holodae_activity.log').resolve()
+
+        existing_handler = None
+        for handler in list(self.logger.handlers):
+            if isinstance(handler, RotatingFileHandler):
+                handler_path = Path(getattr(handler, 'baseFilename', '')).resolve()
+                if handler_path == log_path:
+                    existing_handler = handler
+                    break
+        if existing_handler is None:
+            file_handler = RotatingFileHandler(log_path, maxBytes=2_000_000, backupCount=5, encoding='utf-8')
+            file_handler.setLevel(logging.INFO)
+            file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+            self.logger.addHandler(file_handler)
+        self.logger.setLevel(logging.INFO)
+
+    def _detailed_log(self, message: str) -> None:
+        """Log detailed information to file only"""
+        self.logger.info(message)
+
+    def _build_module_map(self, module_metrics: Dict[str, Dict[str, Any]]) -> None:
+        """Build module map for orphan analysis and save to JSON"""
+        for module_path, metrics in module_metrics.items():
+            resolved_path = Path(module_path)
+            if not resolved_path.exists():
+                continue
+
+            module_info = {
+                'path': module_path,
+                'files': {},
+                'orphans': [],
+                'duplicates': [],
+                'docs': {
+                    'README.md': (resolved_path / 'README.md').exists(),
+                    'INTERFACE.md': (resolved_path / 'INTERFACE.md').exists(),
+                    'ModLog.md': (resolved_path / 'ModLog.md').exists(),
+                    'tests/TestModLog.md': (resolved_path / 'tests' / 'TestModLog.md').exists()
+                }
+            }
+
+            # Scan Python files
+            for py_file in resolved_path.glob('**/*.py'):
+                if '_archive' in str(py_file) or '__pycache__' in str(py_file):
+                    continue
+
+                rel_path = py_file.relative_to(resolved_path)
+                line_count = sum(1 for _ in open(py_file, 'r', encoding='utf-8', errors='ignore'))
+
+                module_info['files'][str(rel_path)] = {
+                    'lines': line_count,
+                    'last_modified': datetime.fromtimestamp(py_file.stat().st_mtime).isoformat(),
+                    'has_tests': self._check_has_tests(module_path, py_file.stem),
+                    'is_imported': self._check_is_imported(module_path, py_file.stem)
+                }
+
+                # Check for orphans
+                if not module_info['files'][str(rel_path)]['is_imported']:
+                    if not module_info['files'][str(rel_path)]['has_tests']:
+                        module_info['orphans'].append(str(rel_path))
+                        self.orphan_candidates.append(f"{module_path}/{rel_path}")
+
+            self.module_map[module_path] = module_info
+
+            # Save module map to JSON
+            map_dir = Path('holo_index/logs/module_map')
+            map_dir.mkdir(parents=True, exist_ok=True)
+
+            module_name = module_path.replace('/', '_').replace('\\', '_')
+            map_file = map_dir / f"{module_name}.json"
+
+            with open(map_file, 'w', encoding='utf-8') as f:
+                json.dump(module_info, f, indent=2)
+
+    def _check_has_tests(self, module_path: str, file_stem: str) -> bool:
+        """Check if a file has associated tests"""
+        test_patterns = [
+            f"test_{file_stem}.py",
+            f"test_{file_stem}_*.py",
+            f"*_test_{file_stem}.py"
+        ]
+
+        test_dir = Path(module_path) / 'tests'
+        if not test_dir.exists():
+            return False
+
+        for pattern in test_patterns:
+            if list(test_dir.glob(pattern)):
+                return True
+
+        return False
+
+    def _check_is_imported(self, module_path: str, file_stem: str) -> bool:
+        """Check if a file is imported anywhere"""
+        # Simple heuristic - check if imported in __init__.py or other files
+        module_root = Path(module_path)
+
+        # Check __init__.py
+        init_file = module_root / '__init__.py'
+        if init_file.exists():
+            content = init_file.read_text(encoding='utf-8', errors='ignore')
+            if file_stem in content:
+                return True
+
+        # Check other Python files
+        for py_file in module_root.glob('**/*.py'):
+            if py_file.stem == file_stem:
+                continue
+            content = py_file.read_text(encoding='utf-8', errors='ignore')
+            if f"from .{file_stem}" in content or f"import {file_stem}" in content:
+                return True
+
+        return False
+
+    def track_doc_read(self, doc_path: str) -> None:
+        """Track that a document was read for compliance tracking"""
+        self.docs_read.add(doc_path)
+        self.telemetry_logger.log_doc_read(doc_path)
+
+        # Remove from hints given since it was read
+        if doc_path in self.doc_hints_given:
+            duration = (datetime.now() - self.doc_hints_given[doc_path]).total_seconds()
+            self.telemetry_logger.log_event(
+                "doc_compliance",
+                doc_path=doc_path,
+                time_to_read_seconds=duration
+            )
+
+    def provide_docs_for_file(self, file_path: str) -> Dict[str, str]:
+        """Provide documentation paths for a given Python file
+
+        This implements 012's insight: HoloIndex should provide docs directly
+        rather than just telling 0102 to find them.
+
+        Args:
+            file_path: Path to a Python file (e.g., 'livechat_core.py')
+
+        Returns:
+            Dict with doc paths and their existence status
+        """
+        # Load existing module maps from disk if not in memory
+        if not self.module_map:
+            map_dir = Path('holo_index/logs/module_map')
+            if map_dir.exists():
+                for map_file in map_dir.glob('*.json'):
+                    try:
+                        with open(map_file, 'r', encoding='utf-8') as f:
+                            module_data = json.load(f)
+                            module_path = module_data.get('path')
+                            if module_path:
+                                self.module_map[module_path] = module_data
+                    except Exception as e:
+                        self._detailed_log(f"Failed to load {map_file}: {e}")
+
+        # Find which module contains this file
+        module_path = None
+        for module in self.module_map:
+            for file_info in self.module_map[module].get('files', {}):
+                if file_path in file_info or file_path.endswith(file_info):
+                    module_path = module
+                    break
+            if module_path:
+                break
+
+        if not module_path:
+            # Try to find module from file path
+            path_parts = Path(file_path).parts
+            if 'modules' in path_parts:
+                idx = path_parts.index('modules')
+                if idx + 2 < len(path_parts):
+                    module_path = f"modules/{path_parts[idx+1]}/{path_parts[idx+2]}"
+
+        if not module_path:
+            return {"error": f"Module not found for {file_path}"}
+
+        # Return documentation paths
+        resolved_path = Path(module_path)
+        docs = {
+            'README.md': str(resolved_path / 'README.md'),
+            'INTERFACE.md': str(resolved_path / 'INTERFACE.md'),
+            'ModLog.md': str(resolved_path / 'ModLog.md'),
+            'tests/TestModLog.md': str(resolved_path / 'tests' / 'TestModLog.md'),
+            'tests/README.md': str(resolved_path / 'tests' / 'README.md')
+        }
+
+        # Check existence
+        result = {
+            'module': module_path,
+            'docs': {}
+        }
+        for doc_name, doc_path in docs.items():
+            result['docs'][doc_name] = {
+                'path': doc_path,
+                'exists': Path(doc_path).exists()
+            }
+
+        return result
+
+
+# Legacy compatibility functions (for gradual migration)
+def start_holodae():
+    """Legacy compatibility - start HoloDAE monitoring"""
+    coordinator = HoloDAECoordinator()
+    return coordinator.start_monitoring()
+
+
+def stop_holodae():
+    """Legacy compatibility - stop HoloDAE monitoring"""
+    coordinator = HoloDAECoordinator()
+    return coordinator.stop_monitoring()
+
+
+def get_holodae_status():
+    """Legacy compatibility - get HoloDAE status"""
+    coordinator = HoloDAECoordinator()
+    return coordinator.get_status_summary()
+
+
+def show_holodae_menu():
+    """Legacy compatibility - show HoloDAE menu"""
+    coordinator = HoloDAECoordinator()
+    return coordinator.show_menu()
+
+
+# Main entry point for testing
+if __name__ == "__main__":
+    coordinator = HoloDAECoordinator()
+    print("HoloDAE Coordinator initialized with modular architecture")
+    print(f"Status: {coordinator.get_status_summary()}")
+
+

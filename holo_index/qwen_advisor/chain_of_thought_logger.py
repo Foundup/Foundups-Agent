@@ -6,7 +6,7 @@ Chain-of-Thought Logger - Brain Visibility System
 Shows the brain working like YouTube DAE logs. Every decision, every process,
 every thought is logged for 012 observation and recursive improvement.
 
-🎯 Mission: Make the AI brain completely observable and understandable
+[MISSION] Make the AI brain completely observable and understandable
 
 Features:
 - Real-time logging of all cognitive processes
@@ -253,11 +253,11 @@ class ChainOfThoughtLogger:
 
         # Format for console output (like YouTube DAE logs)
         timestamp = thought.timestamp.strftime("%H:%M:%S")
-        confidence_icon = "🎯" if confidence >= 0.9 else "⚡" if confidence >= 0.7 else "🤔"
+        confidence_icon = "[HIGH]" if confidence >= 0.9 else "[MED]" if confidence >= 0.7 else "[LOW]"
 
         print(f"[{timestamp}] {confidence_icon} COT-{thought_type.upper()}: {content}")
         if reasoning:
-            print(f"         💭 REASONING: {reasoning}")
+            print(f"         [REASONING]: {reasoning}")
         print(f"         📊 CONFIDENCE: {confidence:.2f} | DURATION: {thought.duration:.2f}s")
         print()
 

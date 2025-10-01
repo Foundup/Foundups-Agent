@@ -1,0 +1,76 @@
+diff --git a/holo_index/qwen_advisor/holodae_coordinator.py b/holo_index/qwen_advisor/holodae_coordinator.py
+--- a/holo_index/qwen_advisor/holodae_coordinator.py
++++ b/holo_index/qwen_advisor/holodae_coordinator.py
+@@
+-from .services.context_analyzer import ContextAnalyzer
+-from .models.work_context import WorkContext
+-from .models.monitoring_types import MonitoringResult, FileChange, ChangeType
+-from .ui.menu_system import HoloDAEMenuSystem, StatusDisplay
++from .services.context_analyzer import ContextAnalyzer
++from .models.work_context import WorkContext
++from .models.monitoring_types import MonitoringResult, FileChange, ChangeType
++from .ui.menu_system import HoloDAEMenuSystem, StatusDisplay
++from .output_formatter import HoloOutputFormatter, TelemetryLogger
+@@
+-        # UI components
+-        self.menu_system = HoloDAEMenuSystem()
+-        self.status_display = StatusDisplay()
+-
+-        # Environment + logging context
+-        self.repo_root = Path(__file__).resolve().parents[2]
+-        self.holo_console_enabled = os.getenv("HOLO_SILENT", "0").lower() not in {"1", "true", "yes"}
+-        self._module_metrics_cache: Dict[str, Dict[str, Any]] = {}
++        # UI components
++        self.menu_system = HoloDAEMenuSystem()
++        self.status_display = StatusDisplay()
++
++        # Environment + logging context
++        self.repo_root = Path(__file__).resolve().parents[2]
++        self.holo_console_enabled = os.getenv("HOLO_SILENT", "0").lower() not in {"1", "true", "yes"}
++        self.session_id = f"holo-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
++        self.verbose = os.getenv('HOLO_VERBOSE', '').lower() in {"1", "true", "yes"}
++        self.output_formatter = HoloOutputFormatter(verbose=self.verbose)
++        self.telemetry_logger = TelemetryLogger(self.session_id)
++        self._module_metrics_cache: Dict[str, Dict[str, Any]] = {}
+@@
+-        # Log detailed analysis for 012 visibility
+-        self._log_detailed_holo_analysis(query, involved_files, involved_modules)
++        # Gather module metrics and alerts
++        module_metrics = self._collect_module_metrics_for_request(involved_modules)
++        alerts = self._get_system_alerts(list(module_metrics.keys()))
+@@
+-        # Step 3: Execute arbitration decisions
+-        execution_results = self.mps_arbitrator.execute_arbitration_decisions(arbitration_decisions)
++        # Step 3: Execute arbitration decisions
++        execution_results = self.mps_arbitrator.execute_arbitration_decisions(arbitration_decisions)
+@@
+-        # Step 4: Return results for 012 monitoring
+-        final_report = self._format_final_report(qwen_report, arbitration_decisions, execution_results)
+-
+-        self._holo_log(f"[COMPLETE] Analysis finished - {len(arbitration_decisions)} actions recommended")
+-        self._detailed_log("[HOLODAE-COORDINATOR] Request processing complete")
+-        return final_report
++        # Build clean console output
++        search_summary = {
++            'code': search_results.get('code', []),
++            'wsps': search_results.get('wsps', [])
++        }
++        clean_output = self.output_formatter.format_analysis(
++            query=query,
++            search_results=search_summary,
++            module_metrics=module_metrics,
++            alerts=alerts
++        )
++
++        if self.holo_console_enabled and clean_output:
++            print(clean_output)
++
++        # Step 4: Return results for monitoring
++        final_report = self._format_final_report(qwen_report, arbitration_decisions, execution_results)
++
++        self._log_request_telemetry(query, search_summary, module_metrics, alerts)
++        self._detailed_log("[HOLODAE-COORDINATOR] Request processing complete")
++        if clean_output:
++            return f"{clean_output}\n{final_report}"
++        return final_report
+*** End Patch

@@ -12,12 +12,18 @@ Unified orchestration layer for social media platforms (X/Twitter and LinkedIn) 
 
 - **Unified OAuth Management**: Single coordinator for all platform authentication
 - **Cross-Platform Content Distribution**: Consistent content formatting across platforms
+- **Multi-Stream Handling**: Orchestrates posting for multiple detected streams with priority sequencing
 - **Intelligent Scheduling**: Advanced scheduling engine with platform-specific optimizations
 - **Natural Language Understanding**: 0102 understands commands like "post in 2 hours" (NEW)
 - **Human Scheduling Interface**: 012 can schedule posts for future execution (NEW)
 - **Anti-Detection Posting**: Browser automation with human-like behavior
+- **Browser Selection**: Automatic browser selection (Chrome for Move2Japan/UnDaoDu, Edge for FoundUps)
+- **Channel-to-Platform Mapping**: Maps YouTube channels to correct LinkedIn pages and X accounts
 - **Platform Adapters**: Clean abstraction layer for platform-specific implementations
 - **WSP Compliance**: Full adherence to WSP standards for modular architecture
+- **QWEN Intelligence Integration**: Platform health monitoring and intelligent posting decisions (NEW)
+- **Heat Level Management**: Automatic rate limit tracking and cooling periods
+- **Pattern Learning**: Learns from successful posts and platform responses
 
 ## Architecture
 
@@ -25,11 +31,11 @@ Unified orchestration layer for social media platforms (X/Twitter and LinkedIn) 
 The module has been refactored from a monolithic 996-line file into focused, single-responsibility components:
 
 **Core Components** (in `src/core/`):
-- `DuplicatePreventionManager`: Duplicate detection with enhanced logging and database persistence
+- `DuplicatePreventionManager`: Duplicate detection with QWEN platform health monitoring and intelligent decisions
 - `LiveStatusVerifier`: Stream status verification with 5-minute caching to reduce API calls
 - `ChannelConfigurationManager`: Channel configuration and platform account mapping
 - `PlatformPostingService`: Platform-specific posting (LinkedIn + X/Twitter) with browser configuration
-- `RefactoredPostingOrchestrator`: Clean coordinator that uses all core components
+- `RefactoredPostingOrchestrator`: Clean coordinator with QWEN pre-posting intelligence checks
 
 **Migration Support**:
 - `orchestrator_migration.py`: Backward compatibility bridge (drop-in replacement)
@@ -61,13 +67,22 @@ from modules.platform_integration.social_media_orchestrator.src.refactored_posti
 # Get orchestrator instance
 orchestrator = get_orchestrator()
 
-# Handle stream detection event
+# Handle single stream detection event
 result = orchestrator.handle_stream_detected(
     video_id='VIDEO_123',
     title='My Live Stream',
     url='https://youtube.com/watch?v=VIDEO_123',
     channel_name='@FoundUps'
 )
+
+# Handle multiple streams detected (NEW - WSP 3 compliant)
+detected_streams = [
+    {'video_id': 'VIDEO_1', 'channel_id': 'UCklMTNnu5POwRmQsg5JJumA', 'channel_name': 'Move2Japan'},
+    {'video_id': 'VIDEO_2', 'channel_id': 'UC-LSSlOZwpGIRIYihaz8zCw', 'channel_name': 'UnDaoDu'},
+    {'video_id': 'VIDEO_3', 'channel_id': 'UCSNTUXjAgpd4sgWYP0xoJgw', 'channel_name': 'FoundUps'}
+]
+result = orchestrator.handle_multiple_streams_detected(detected_streams)
+# Automatically sorts by priority and handles sequencing
 ```
 
 ### Migration Bridge (Zero Changes Needed)
@@ -108,11 +123,27 @@ posting_service = PlatformPostingService()
 - ✅ **Migration**: Zero breaking changes with migration bridge
 
 ### Enhanced Features
-- Duplicate prevention with visual logging indicators
+- Duplicate prevention with visual logging indicators and QWEN intelligence
 - Live status verification with intelligent caching
 - Channel configuration with JSON persistence
 - Platform-specific posting with proper browser assignment
+- Multi-stream orchestration with priority sequencing
+- Automatic channel-to-platform mapping
 - Comprehensive error handling and validation
+- QWEN platform health monitoring (HEALTHY → WARMING → HOT → OVERHEATED)
+- Intelligent posting decisions based on platform heat levels
+- Pattern learning from successful posts and rate limits
+
+### Channel-to-Platform Mapping
+The orchestrator automatically maps YouTube channels to the correct social media accounts:
+
+| YouTube Channel | Channel ID | LinkedIn Page | X Account | Browser |
+|-----------------|------------|---------------|-----------|---------|
+| Move2Japan | UCklMTNnu5POwRmQsg5JJumA | GeoZai (104834798) | @Move2Japan | Chrome |
+| UnDaoDu | UC-LSSlOZwpGIRIYihaz8zCw | UnDaoDu (165749317) | @Move2Japan | Chrome |
+| FoundUps | UCSNTUXjAgpd4sgWYP0xoJgw | FoundUps (1263645) | @Foundups | Edge |
+
+**Posting Priority**: Move2Japan → UnDaoDu → FoundUps (15-second delays between posts)
 
 ## WSP Compliance
 

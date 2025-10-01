@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from collections import defaultdict
 import hashlib
 import json
+from .models.monitoring_types import MonitoringResult, HealthViolation, HealthStatus, PatternAlert
 
 
 @dataclass
@@ -31,15 +32,6 @@ class MonitoringContext:
     agent_actions: List[str] = field(default_factory=list)
 
 
-@dataclass
-class MonitoringResult:
-    """Result from intelligent monitoring"""
-    health_warnings: List[str] = field(default_factory=list)
-    duplicates_found: List[Dict] = field(default_factory=list)
-    size_issues: List[Dict] = field(default_factory=list)
-    structure_violations: List[str] = field(default_factory=list)
-    optimization_suggestions: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 class IntelligentMonitor:
@@ -70,7 +62,13 @@ class IntelligentMonitor:
         Main monitoring function - intelligently decides what to check
         based on context, not time or manual triggers.
         """
-        result = MonitoringResult()
+        legacy_data = {
+            'health_warnings': [],
+            'duplicates_found': [],
+            'size_issues': [],
+            'structure_violations': [],
+            'optimization_suggestions': []
+        }
 
         # Extract relevant paths from search results
         self._extract_context_paths(context)
@@ -78,12 +76,12 @@ class IntelligentMonitor:
         # Run subroutines based on algorithmic triggers
         for check_name, should_check in self.triggers.items():
             if should_check(context):
-                self._run_subroutine(check_name, context, result)
+                self._run_subroutine(check_name, context, legacy_data)
 
         # Add intelligent insights based on combined results
-        self._add_intelligent_insights(context, result)
+        self._add_intelligent_insights(context, legacy_data)
 
-        return result
+        return self._build_monitoring_result(context, legacy_data)
 
     def _should_check_size(self, context: MonitoringContext) -> bool:
         """
@@ -171,21 +169,21 @@ class IntelligentMonitor:
 
         return len(context.agent_actions) > 0  # Always light monitoring
 
-    def _run_subroutine(self, check_name: str, context: MonitoringContext, result: MonitoringResult):
+    def _run_subroutine(self, check_name: str, context: MonitoringContext, legacy_data: Dict[str, Any]):
         """Run specific monitoring subroutine"""
 
         if check_name == 'size_check':
-            self._check_file_sizes(context, result)
+            self._check_file_sizes(context, legacy_data)
         elif check_name == 'duplicate_check':
-            self._check_duplicates(context, result)
+            self._check_duplicates(context, legacy_data)
         elif check_name == 'structure_check':
-            self._check_module_structure(context, result)
+            self._check_module_structure(context, legacy_data)
         elif check_name == 'pattern_analysis':
-            self._analyze_patterns(context, result)
+            self._analyze_patterns(context, legacy_data)
         elif check_name == 'agent_behavior':
-            self._monitor_agent_behavior(context, result)
+            self._monitor_agent_behavior(context, legacy_data)
 
-    def _check_file_sizes(self, context: MonitoringContext, result: MonitoringResult):
+    def _check_file_sizes(self, context: MonitoringContext, legacy_data: Dict[str, Any]):
         """Intelligent file size checking"""
         for file_path in context.file_paths[:10]:  # Check top 10 files
             if not os.path.exists(file_path):
@@ -201,7 +199,7 @@ class IntelligentMonitor:
 
                 if line_count > 800:
                     severity = 'CRITICAL' if line_count > 1000 else 'WARNING'
-                    result.size_issues.append({
+                    legacy_data['size_issues'].append({
                         'file': file_path,
                         'lines': line_count,
                         'severity': severity,
@@ -209,7 +207,7 @@ class IntelligentMonitor:
                     })
 
                     # Add to health warnings for display
-                    result.health_warnings.append(
+                    legacy_data['health_warnings'].append(
                         f"[WSP 87] {severity}: {Path(file_path).name} has {line_count} lines"
                     )
 
@@ -219,7 +217,7 @@ class IntelligentMonitor:
                     with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                         line_count = sum(1 for _ in f)
                         if line_count > 800:
-                            result.size_issues.append({
+                            legacy_data['size_issues'].append({
                                 'file': file_path,
                                 'lines': line_count,
                                 'severity': 'WARNING'
@@ -227,7 +225,7 @@ class IntelligentMonitor:
                 except:
                     pass
 
-    def _check_duplicates(self, context: MonitoringContext, result: MonitoringResult):
+    def _check_duplicates(self, context: MonitoringContext, legacy_data: Dict[str, Any]):
         """Intelligent duplicate detection using fingerprinting"""
 
         # Build function fingerprints from search results
@@ -250,7 +248,7 @@ class IntelligentMonitor:
         # Detect duplicates
         for fingerprint, functions in function_fingerprints.items():
             if len(functions) > 1:
-                result.duplicates_found.append({
+                legacy_data['duplicates_found'].append({
                     'fingerprint': fingerprint,
                     'instances': functions,
                     'severity': 'HIGH' if len(functions) > 2 else 'MEDIUM'
@@ -258,11 +256,11 @@ class IntelligentMonitor:
 
                 # Add warning
                 func_names = [f['function'] for f in functions]
-                result.health_warnings.append(
+                legacy_data['health_warnings'].append(
                     f"[WSP 84] Duplicate pattern detected: {', '.join(func_names[:3])}"
                 )
 
-    def _check_module_structure(self, context: MonitoringContext, result: MonitoringResult):
+    def _check_module_structure(self, context: MonitoringContext, legacy_data: Dict[str, Any]):
         """Check WSP 49 compliance for touched modules"""
 
         required_structure = ['README.md', 'INTERFACE.md', 'ModLog.md', 'tests/', 'src/']
@@ -278,14 +276,14 @@ class IntelligentMonitor:
                     missing.append(required)
 
             if missing:
-                result.structure_violations.append(
+                legacy_data['structure_violations'].append(
                     f"{Path(module_path).name}: Missing {', '.join(missing)}"
                 )
-                result.health_warnings.append(
+                legacy_data['health_warnings'].append(
                     f"[WSP 49] {Path(module_path).name} missing: {', '.join(missing[:2])}"
                 )
 
-    def _analyze_patterns(self, context: MonitoringContext, result: MonitoringResult):
+    def _analyze_patterns(self, context: MonitoringContext, legacy_data: Dict[str, Any]):
         """Detect and suggest patterns for extraction"""
 
         # Analyze search result patterns
@@ -307,11 +305,11 @@ class IntelligentMonitor:
         # Generate suggestions
         if pattern_candidates:
             top_pattern = max(pattern_candidates, key=pattern_candidates.get)
-            result.optimization_suggestions.append(
+            legacy_data['optimization_suggestions'].append(
                 f"Pattern opportunity: {top_pattern} detected {pattern_candidates[top_pattern]} times"
             )
 
-    def _monitor_agent_behavior(self, context: MonitoringContext, result: MonitoringResult):
+    def _monitor_agent_behavior(self, context: MonitoringContext, legacy_data: Dict[str, Any]):
         """Monitor agent for vibecoding and WSP compliance"""
 
         if not context.agent_actions:
@@ -322,23 +320,23 @@ class IntelligentMonitor:
 
         # Vibecoding detection
         if 'file_create' in action_sequence and 'search' not in action_sequence:
-            result.health_warnings.append(
+            legacy_data['health_warnings'].append(
                 "[WSP 50] Vibecoding risk: Creating files without searching first"
             )
-            result.metadata['vibecode_risk'] = 'HIGH'
+            legacy_data.setdefault('metadata', {})['vibecode_risk'] = 'HIGH'
 
         # Pattern detection
         action_types = [a.split(':')[0] for a in context.agent_actions if ':' in a]
         if action_types:
             most_common = max(set(action_types), key=action_types.count)
             if action_types.count(most_common) > 3:
-                result.optimization_suggestions.append(
+                legacy_data['optimization_suggestions'].append(
                     f"Agent pattern detected: {most_common} repeated {action_types.count(most_common)} times"
                 )
 
         # WSP compliance check
         if 'wsp_violation' in action_sequence.lower():
-            result.health_warnings.append(
+            legacy_data['health_warnings'].append(
                 "[WSP 64] WSP violation detected in agent behavior"
             )
 
@@ -374,37 +372,113 @@ class IntelligentMonitor:
         """Check if module structure is already cached"""
         return module_path in self.check_cache
 
-    def _add_intelligent_insights(self, context: MonitoringContext, result: MonitoringResult):
+    def _add_intelligent_insights(self, context: MonitoringContext, legacy_data: Dict[str, Any]):
         """Add intelligent insights based on combined monitoring results"""
 
         # Combine insights
-        if result.size_issues and result.duplicates_found:
-            result.optimization_suggestions.append(
+        if legacy_data['size_issues'] and legacy_data['duplicates_found']:
+            legacy_data['optimization_suggestions'].append(
                 "Consider refactoring large files and consolidating duplicates together"
             )
 
-        if result.structure_violations and 'create' in context.query.lower():
-            result.optimization_suggestions.append(
+        if legacy_data['structure_violations'] and 'create' in context.query.lower():
+            legacy_data['optimization_suggestions'].append(
                 "Ensure new code follows WSP 49 structure from the start"
             )
 
         # Risk assessment
         risk_score = 0
-        risk_score += len(result.size_issues) * 2
-        risk_score += len(result.duplicates_found) * 3
-        risk_score += len(result.structure_violations)
+        risk_score += len(legacy_data['size_issues']) * 2
+        risk_score += len(legacy_data['duplicates_found']) * 3
+        risk_score += len(legacy_data['structure_violations'])
 
         if risk_score > 5:
-            result.metadata['overall_risk'] = 'HIGH'
-            result.health_warnings.insert(0,
+            legacy_data.setdefault('metadata', {})['overall_risk'] = 'HIGH'
+            legacy_data['health_warnings'].insert(0,
                 f"[HEALTH] High risk score ({risk_score}): Review warnings before proceeding"
             )
         elif risk_score > 2:
-            result.metadata['overall_risk'] = 'MEDIUM'
+            legacy_data.setdefault('metadata', {})['overall_risk'] = 'MEDIUM'
 
         # Success tracking
-        if not result.health_warnings:
-            result.metadata['health_status'] = 'EXCELLENT'
+        if not legacy_data['health_warnings']:
+            legacy_data.setdefault('metadata', {})['health_status'] = 'EXCELLENT'
+
+
+    def _build_monitoring_result(self, context: MonitoringContext, legacy_data: Dict[str, Any]) -> MonitoringResult:
+        """Convert legacy monitoring data into the shared MonitoringResult model"""
+        result = MonitoringResult()
+
+        # Translate size issues into health violations
+        for issue in legacy_data['size_issues']:
+            file_path = issue.get('file', 'unknown')
+            line_count = issue.get('lines', 0)
+            severity_label = issue.get('severity', 'WARNING')
+            severity = HealthStatus.CRITICAL if severity_label.upper() == 'CRITICAL' else HealthStatus.WARNING
+            description = f"[SIZE] {file_path} is {line_count} lines"
+            result.violations_found.append(
+                HealthViolation(
+                    violation_type='size_issue',
+                    severity=severity,
+                    description=description,
+                    affected_path=file_path
+                )
+            )
+
+        # Translate duplicate findings into pattern alerts
+        for duplicate in legacy_data['duplicates_found']:
+            name = duplicate.get('name', 'symbol')
+            occurrences = duplicate.get('occurrences', 0)
+            files = duplicate.get('files', [])
+            confidence = min(1.0, 0.6 + 0.05 * max(occurrences, 1))
+            result.pattern_alerts.append(
+                PatternAlert(
+                    pattern_type='duplicate_symbol',
+                    confidence=confidence,
+                    description=f"Duplicate symbol {name} detected ({occurrences} occurrences)",
+                    affected_files=files,
+                    suggested_action='Refactor duplicate implementations'
+                )
+            )
+
+        # Structure violations and direct warnings become health violations
+        for violation in legacy_data['structure_violations']:
+            result.violations_found.append(
+                HealthViolation(
+                    violation_type='structure_violation',
+                    severity=HealthStatus.WARNING,
+                    description=violation,
+                    affected_path=context.modules_touched[0] if context.modules_touched else 'context'
+                )
+            )
+
+        for warning in legacy_data['health_warnings']:
+            result.violations_found.append(
+                HealthViolation(
+                    violation_type='intelligent_monitor_warning',
+                    severity=HealthStatus.WARNING,
+                    description=warning,
+                    affected_path=context.modules_touched[0] if context.modules_touched else 'context'
+                )
+            )
+
+        # Optimization suggestions are exposed directly
+        result.optimization_suggestions.extend(legacy_data['optimization_suggestions'])
+
+        # Preserve legacy payload for backwards compatibility consumers
+        legacy_payload = {
+            'health_warnings': legacy_data['health_warnings'],
+            'duplicates_found': legacy_data['duplicates_found'],
+            'size_issues': legacy_data['size_issues'],
+            'structure_violations': legacy_data['structure_violations'],
+            'optimization_suggestions': legacy_data['optimization_suggestions']
+        }
+
+        metadata = legacy_data.get('metadata', {})
+        metadata['legacy_monitoring_payload'] = legacy_payload
+        result.metadata.update(metadata)
+
+        return result
 
 
 # Integration with HoloIndex search flow
@@ -443,16 +517,17 @@ if __name__ == "__main__":
     result = monitor.monitor(test_context)
 
     print("Intelligent Monitoring Results:")
-    print(f"Health Warnings: {len(result.health_warnings)}")
-    for warning in result.health_warnings:
-        print(f"  - {warning}")
+    print(f"Health Violations: {len(result.violations_found)}")
+    for violation in result.violations_found:
+        print(f"  - {violation.get_summary()}")
 
-    print(f"\nDuplicates Found: {len(result.duplicates_found)}")
-    print(f"Size Issues: {len(result.size_issues)}")
-    print(f"Structure Violations: {len(result.structure_violations)}")
+    print(f"\nPattern Alerts: {len(result.pattern_alerts)}")
+    for alert in result.pattern_alerts:
+        print(f"  - {alert.get_summary()}")
 
     print(f"\nOptimization Suggestions:")
     for suggestion in result.optimization_suggestions:
         print(f"  - {suggestion}")
 
     print(f"\nMetadata: {result.metadata}")
+

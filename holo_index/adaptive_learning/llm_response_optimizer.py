@@ -32,6 +32,12 @@ from modules.infrastructure.database import AgentDB
 # )
 
 logger = logging.getLogger(__name__)
+# Suppress console output for 0102 agent optimization (WSP 64 compliance)
+logger.propagate = False  # Don't send to root logger
+if not logger.handlers:  # Only add handler if none exists
+    handler = logging.NullHandler()  # Null handler suppresses all output
+    logger.addHandler(handler)
+logger.setLevel(logging.ERROR)  # Only log errors, suppress warnings
 
 @dataclass
 class ResponseCandidate:
@@ -54,13 +60,25 @@ class OptimizedResponse:
 
 class LLMResponseOptimizer:
     """
-    LLM response optimizer using MLE-STAR refinement loops.
+    LLM Response Optimizer with Qwen-Orchestrated Enhancement Strategies.
+
+    Integrates with Qwen's orchestration pattern for intelligent, context-aware
+    response optimization. Instead of blindly applying all enhancement strategies,
+    Qwen analyzes response quality and makes targeted decisions about which
+    specific optimizations are needed.
 
     Implements Phase 3 adaptive learning by:
-    1. Response quality assessment through ablation studies
-    2. Adaptive enhancement using iterative optimization
-    3. Context-aware response improvement with learned patterns
-    4. Multi-strategy generation with ensemble selection
+    1. Response quality analysis with multi-dimensional assessment
+    2. Qwen-orchestrated enhancement strategy selection
+    3. Confidence-based execution of targeted improvements
+    4. Context-aware optimization with learned patterns
+
+    Enhancement Strategies (Qwen-Decided):
+    - clarity_enhancement: Improve readability and understanding
+    - relevance_enhancement: Strengthen query-response alignment
+    - structure_enhancement: Add organization and headings
+    - actionability_enhancement: Add steps, examples, clear instructions
+    - conciseness_enhancement: Remove redundancy and verbosity
     """
 
     def __init__(self):
@@ -94,7 +112,10 @@ class LLMResponseOptimizer:
                                original_response: str,
                                context: Dict[str, Any] = None) -> OptimizedResponse:
         """
-        Optimize LLM response using MLE-STAR refinement loops.
+        Optimize LLM response using direct enhancement strategies.
+
+        Uses ensemble methods with clarity, relevance, and actionability
+        enhancements without external framework dependencies.
 
         Args:
             query: Original user query
@@ -131,39 +152,227 @@ class LLMResponseOptimizer:
             response_candidates=candidates,
             optimization_metadata={
                 'optimization_timestamp': datetime.now(timezone.utc).isoformat(),
-                'mlestar_phases_used': ['candidate_generation', 'quality_selection', 'final_refinement'],
+                'optimization_phases_used': ['candidate_generation', 'quality_selection', 'final_refinement'],
                 'candidate_count': len(candidates),
                 'query_complexity': self._assess_query_complexity(query)
             },
             quality_metrics=quality_metrics
         )
 
+    async def _get_qwen_enhancement_decisions(self,
+                                             query: str,
+                                             original_response: str,
+                                             context: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Get Qwen's orchestration decisions for which enhancement strategies to apply.
+
+        Analyzes response quality and determines which specific optimizations are needed,
+        following Qwen's intelligent decision-making pattern.
+        """
+        decisions = []
+
+        # Analyze response characteristics
+        response_analysis = self._analyze_response_quality(original_response, query, context)
+
+        # Define available enhancement strategies with Qwen's decision logic
+        available_strategies = {
+            "clarity_enhancement": {
+                "purpose": "Improve response clarity and readability",
+                "triggers": ["low_clarity_score", "complex_language", "ambiguous_terms"],
+                "cost": "low",
+                "value": "high"
+            },
+            "relevance_enhancement": {
+                "purpose": "Strengthen response relevance to query",
+                "triggers": ["low_relevance_score", "off_topic_content", "missing_key_points"],
+                "cost": "medium",
+                "value": "high"
+            },
+            "structure_enhancement": {
+                "purpose": "Improve response organization and structure",
+                "triggers": ["poor_structure", "long_paragraphs", "missing_headings"],
+                "cost": "medium",
+                "value": "high"
+            },
+            "actionability_enhancement": {
+                "purpose": "Make response more actionable with clear steps",
+                "triggers": ["low_actionability", "vague_instructions", "missing_examples"],
+                "cost": "medium",
+                "value": "medium"
+            },
+            "conciseness_enhancement": {
+                "purpose": "Remove redundancy and improve conciseness",
+                "triggers": ["high_redundancy", "verbose_content", "unnecessary_details"],
+                "cost": "low",
+                "value": "medium"
+            }
+        }
+
+        # Qwen's decision-making logic for each strategy
+        for strategy_name, strategy_config in available_strategies.items():
+            confidence, reasoning = self._calculate_enhancement_confidence(
+                strategy_name, strategy_config, response_analysis, query, context
+            )
+
+            decisions.append({
+                'strategy': strategy_name,
+                'confidence': confidence,
+                'reasoning': reasoning,
+                'cost': strategy_config['cost'],
+                'value': strategy_config['value']
+            })
+
+        # Sort by confidence (highest first) and return top decisions
+        decisions.sort(key=lambda x: x['confidence'], reverse=True)
+        return decisions
+
+    def _analyze_response_quality(self, response: str, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze response quality to inform enhancement decisions."""
+        analysis = {
+            'clarity_score': self._assess_clarity(response),
+            'relevance_score': self._assess_relevance(response, query),
+            'structure_score': self._assess_structure(response),
+            'actionability_score': self._assess_actionability(response),
+            'conciseness_score': self._assess_conciseness(response),
+            'length': len(response.split()),
+            'has_headings': '###' in response or '##' in response,
+            'has_lists': '- ' in response or '* ' in response or '1.' in response,
+            'has_examples': 'example' in response.lower() or '`' in response,
+            'complexity': self._assess_query_complexity(query)
+        }
+
+        # Add trigger flags based on analysis
+        analysis.update({
+            'low_clarity_score': analysis['clarity_score'] < 0.6,
+            'low_relevance_score': analysis['relevance_score'] < 0.6,
+            'poor_structure': analysis['structure_score'] < 0.6,
+            'low_actionability': analysis['actionability_score'] < 0.6,
+            'high_redundancy': analysis['conciseness_score'] < 0.6,
+            'complex_language': analysis['complexity'] > 0.7,
+            'long_paragraphs': any(len(p.split()) > 100 for p in response.split('\n\n')),
+            'missing_headings': not analysis['has_headings'] and analysis['length'] > 200,
+            'missing_examples': not analysis['has_examples'] and 'how' in query.lower(),
+            'verbose_content': analysis['length'] > 300
+        })
+
+        return analysis
+
+    def _calculate_enhancement_confidence(self, strategy_name: str, strategy_config: Dict,
+                                        analysis: Dict, query: str, context: Dict) -> tuple[float, str]:
+        """Calculate confidence score and reasoning for applying an enhancement strategy."""
+        confidence = 0.0
+        reasoning_parts = []
+
+        # Check triggers and adjust confidence
+        for trigger in strategy_config['triggers']:
+            if analysis.get(trigger, False):
+                confidence += 0.3
+                reasoning_parts.append(f"triggered by {trigger}")
+
+        # Strategy-specific logic
+        if strategy_name == 'clarity_enhancement':
+            if analysis['complexity'] > 0.7:
+                confidence += 0.2
+                reasoning_parts.append("high query complexity requires clarity")
+            if analysis['clarity_score'] < 0.5:
+                confidence += 0.3
+                reasoning_parts.append("very low clarity score")
+
+        elif strategy_name == 'relevance_enhancement':
+            if 'search' in query.lower() or 'find' in query.lower():
+                confidence += 0.2
+                reasoning_parts.append("search-oriented query needs relevance")
+            if analysis['relevance_score'] < 0.5:
+                confidence += 0.3
+                reasoning_parts.append("very low relevance score")
+
+        elif strategy_name == 'structure_enhancement':
+            if analysis['length'] > 200 and not analysis['has_headings']:
+                confidence += 0.4
+                reasoning_parts.append("long response without headings needs structure")
+            if analysis['structure_score'] < 0.5:
+                confidence += 0.3
+                reasoning_parts.append("very poor structure")
+
+        elif strategy_name == 'actionability_enhancement':
+            if any(word in query.lower() for word in ['how', 'steps', 'implement', 'create']):
+                confidence += 0.4
+                reasoning_parts.append("how-to query requires actionability")
+            if not analysis['has_lists'] and analysis['length'] > 100:
+                confidence += 0.2
+                reasoning_parts.append("response could benefit from structured steps")
+
+        elif strategy_name == 'conciseness_enhancement':
+            if analysis['length'] > 400:
+                confidence += 0.3
+                reasoning_parts.append("very long response needs conciseness")
+            if analysis['conciseness_score'] < 0.4:
+                confidence += 0.4
+                reasoning_parts.append("extremely verbose content")
+
+        # Cost-value adjustment
+        if strategy_config['cost'] == 'low' and strategy_config['value'] == 'high':
+            confidence += 0.1  # Bonus for high-value, low-cost strategies
+        elif strategy_config['cost'] == 'high':
+            confidence -= 0.1  # Penalty for high-cost strategies
+
+        confidence = max(0.0, min(1.0, confidence))  # Clamp to 0-1 range
+
+        reasoning = " | ".join(reasoning_parts) if reasoning_parts else "no clear triggers"
+
+        return confidence, reasoning
+
     async def _generate_response_candidates(self,
                                           query: str,
                                           original_response: str,
                                           context: Dict[str, Any]) -> List[ResponseCandidate]:
         """
-        Generate multiple response candidates using direct enhancement strategies.
+        Generate response candidates using Qwen-orchestrated enhancement strategies.
 
-        Creates different optimized versions through targeted improvements.
+        Analyzes response quality and applies only needed enhancements based on
+        Qwen's intelligent decision-making, not blind application of all strategies.
         """
 
         candidates = []
 
-        # Strategy 1: Clarity-focused enhancement
-        clarity_candidate = self._enhance_response_clarity(original_response, query, context)
-        candidates.append(clarity_candidate)
+        # Get Qwen's orchestration decisions for enhancement strategies
+        enhancement_decisions = await self._get_qwen_enhancement_decisions(query, original_response, context)
 
-        # Strategy 2: Relevance-focused enhancement
-        relevance_candidate = self._enhance_response_relevance(original_response, query, context)
-        candidates.append(relevance_candidate)
+        # Execute only the enhancements Qwen determined are necessary
+        for decision in enhancement_decisions:
+            strategy_name = decision['strategy']
+            confidence = decision['confidence']
+            reasoning = decision.get('reasoning', '')
 
-        # Strategy 3: Structure-focused enhancement
-        structure_candidate = self._enhance_response_structure(original_response, query, context)
-        candidates.append(structure_candidate)
+            if confidence >= 0.5:  # Only execute high-confidence enhancements
+                logger.debug(f"[QWEN-DECISION] EXECUTE {strategy_name} (confidence: {confidence:.2f}) - {reasoning}")
 
-        # If all enhancements failed, use original as fallback
-        if not any(c.content != original_response for c in candidates):
+                if strategy_name == 'clarity_enhancement':
+                    candidate = self._enhance_response_clarity(original_response, query, context)
+                elif strategy_name == 'relevance_enhancement':
+                    candidate = self._enhance_response_relevance(original_response, query, context)
+                elif strategy_name == 'structure_enhancement':
+                    candidate = self._enhance_response_structure(original_response, query, context)
+                elif strategy_name == 'actionability_enhancement':
+                    candidate = self._enhance_response_actionability(original_response, query, context)
+                elif strategy_name == 'conciseness_enhancement':
+                    candidate = self._enhance_response_conciseness(original_response, query, context)
+                else:
+                    continue
+
+                # Add Qwen's decision metadata
+                candidate.metadata.update({
+                    'qwen_decision': decision,
+                    'strategy_applied': strategy_name,
+                    'confidence_score': confidence
+                })
+                candidates.append(candidate)
+
+            else:
+                logger.debug(f"[QWEN-DECISION] SKIP {strategy_name} (confidence: {confidence:.2f}) - {reasoning}")
+
+        # If no enhancements were applied, use original as fallback
+        if not candidates:
             candidates.append(ResponseCandidate(
                 content=original_response,
                 quality_score=0.5,
@@ -333,7 +542,7 @@ class LLMResponseOptimizer:
 
         # Validate refinement
         if not self._validate_response_quality(refined_response):
-            logger.warning("Refinement validation failed, using selected response")
+            # Refinement validation failed - using selected response (internal processing, not shown to agents)
             return selected_response
 
         return refined_response
@@ -488,3 +697,88 @@ class LLMResponseOptimizer:
         except Exception as e:
             logger.warning(f"Failed to get response optimization insights: {e}")
             return {}
+
+    def _enhance_response_actionability(self, response: str, query: str, context: Dict[str, Any]) -> ResponseCandidate:
+        """
+        Enhance response actionability by adding clear steps and examples.
+
+        Makes responses more actionable by adding numbered lists, examples, and clear instructions.
+        """
+        enhanced = response
+
+        # Add step-by-step structure if missing
+        if not any(char in enhanced for char in ['1.', '2.', '3.', '-', '*']):
+            # Convert paragraphs to numbered steps for how-to queries
+            if any(word in query.lower() for word in ['how', 'steps', 'implement', 'create']):
+                paragraphs = [p.strip() for p in enhanced.split('\n\n') if p.strip()]
+                if len(paragraphs) > 1:
+                    enhanced = '\n\n'.join(f'{i+1}. {p}' for i, p in enumerate(paragraphs))
+
+        # Add examples if missing and query suggests need
+        if 'example' not in enhanced.lower() and any(word in query.lower() for word in ['how', 'implement', 'create']):
+            enhanced += '\n\nExample:\n```python\n# Example implementation\nprint("Hello, World!")\n```'
+
+        # Add actionable language
+        enhanced = enhanced.replace('should', 'must').replace('could', 'can').replace('might', 'will')
+
+        return ResponseCandidate(
+            content=enhanced,
+            quality_score=self._assess_actionability(enhanced),
+            relevance_score=self._assess_relevance(enhanced, query),
+            clarity_score=self._assess_clarity(enhanced)
+        )
+
+    def _enhance_response_conciseness(self, response: str, query: str, context: Dict[str, Any]) -> ResponseCandidate:
+        """
+        Enhance response conciseness by removing redundancy and verbosity.
+
+        Reduces word count while maintaining key information and clarity.
+        """
+        enhanced = response
+
+        # Remove redundant phrases
+        redundant_phrases = [
+            'it is important to note that',
+            'please be aware that',
+            'it should be noted that',
+            'as previously mentioned',
+            'in other words',
+            'basically',
+            'essentially'
+        ]
+
+        for phrase in redundant_phrases:
+            enhanced = enhanced.replace(phrase, '')
+
+        # Shorten long sentences (split sentences over 30 words)
+        sentences = enhanced.split('. ')
+        shortened_sentences = []
+        for sentence in sentences:
+            words = sentence.split()
+            if len(words) > 30:
+                # Split long sentences at natural break points
+                midpoint = len(words) // 2
+                # Find good break point (conjunction or preposition)
+                break_words = ['and', 'but', 'or', 'so', 'because', 'although', 'however']
+                break_point = midpoint
+                for i, word in enumerate(words[midpoint-5:midpoint+5]):
+                    if word.lower() in break_words:
+                        break_point = midpoint - 5 + i
+                        break
+                part1 = ' '.join(words[:break_point])
+                part2 = ' '.join(words[break_point:])
+                shortened_sentences.append(f'{part1}. {part2}')
+            else:
+                shortened_sentences.append(sentence)
+
+        enhanced = '. '.join(shortened_sentences)
+
+        # Remove excessive whitespace
+        enhanced = '\n\n'.join(line.strip() for line in enhanced.split('\n\n') if line.strip())
+
+        return ResponseCandidate(
+            content=enhanced,
+            quality_score=self._assess_conciseness(enhanced),
+            relevance_score=self._assess_relevance(enhanced, query),
+            clarity_score=self._assess_clarity(enhanced)
+        )

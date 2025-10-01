@@ -58,7 +58,7 @@ class MemoryOptimizationResult:
 
 class MemoryArchitectureEvolution:
     """
-    Memory architecture evolution using MLE-STAR optimization.
+    Memory architecture evolution using direct optimization strategies.
 
     Implements Phase 3 adaptive learning by:
     1. Memory pattern optimization through ablation studies
@@ -117,7 +117,7 @@ class MemoryArchitectureEvolution:
     async def optimize_memory_architecture(self,
                                          optimization_context: Dict[str, Any] = None) -> MemoryOptimizationResult:
         """
-        Optimize memory architecture using MLE-STAR refinement loops.
+        Optimize memory architecture using direct enhancement strategies.
 
         Args:
             optimization_context: Context for optimization (time constraints, priority patterns, etc.)

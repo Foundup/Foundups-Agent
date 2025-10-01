@@ -1,0 +1,29 @@
+{
+  "name": "foundups-agent",
+  "version": "1.0.0",
+  "description": "Autonomous development platform with AI-powered code intelligence",
+  "main": "main.py",
+  "scripts": {
+    "dev": "python main.py",
+    "build": "echo 'Python build complete'",
+    "start": "python main.py",
+    "deploy": "vercel --prod",
+    "preview": "vercel"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "ai",
+    "autonomous-development",
+    "code-intelligence",
+    "machine-learning",
+    "vercel"
+  ],
+  "author": "FoundUps",
+  "license": "MIT"
+}

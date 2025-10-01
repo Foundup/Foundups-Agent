@@ -21,11 +21,42 @@ class AgenticOutputThrottler:
         self.query_context = ""
         self.detected_module = None
         self.subroutine_engine = IntelligentSubroutineEngine()
+        self.system_state = "unknown"  # "error", "found", "missing"
+        self.last_error = None
 
     def set_query_context(self, query: str, search_results=None):
         """Set current query for relevance scoring and detect target module."""
         self.query_context = query.lower()
+        self._search_results = search_results or {}  # Store full search results for decision framework
         self.detected_module = self._detect_target_module(query, search_results)
+
+    def set_system_state(self, state: str, error: Exception = None):
+        """
+        Set the current system state for output rendering.
+
+        Args:
+            state: "error", "found", "missing"
+            error: Exception object if state is "error"
+        """
+        self.system_state = state
+        self.last_error = error
+
+    def _determine_system_state(self):
+        """Auto-determine system state based on current context."""
+        if self.system_state != "unknown":
+            return self.system_state
+
+        # Auto-detect based on available data
+        if self.last_error:
+            return "error"
+
+        search_results = getattr(self, '_search_results', {})
+        total_results = len(search_results.get('code', [])) + len(search_results.get('wsps', []))
+
+        if total_results > 0:
+            return "found"
+        else:
+            return "missing"
 
     def _detect_target_module(self, query: str, search_results=None):
         """Detect which module the user is likely working on based on query and results."""
@@ -86,22 +117,126 @@ class AgenticOutputThrottler:
         })
 
     def render_prioritized_output(self, verbose: bool = False) -> str:
-        """Render output sections in priority order."""
-        # Sort by priority (lower number = higher priority)
-        sorted_sections = sorted(self.output_sections, key=lambda x: x['priority'])
+        """Render PERFECT output for 0102 decision-making using tri-state architecture."""
+        state = self._determine_system_state()
 
+        if state == "error":
+            return self._render_error_state()
+        elif state == "found":
+            return self._render_found_state(verbose)
+        elif state == "missing":
+            return self._render_missing_state()
+        else:
+            # Fallback to auto-detection
+            return self._render_auto_state(verbose)
+
+    def _render_error_state(self) -> str:
+        """State 1: 🔴 System Error - Show ONLY the error, suppress all noise."""
         output_lines = []
 
-        for section in sorted_sections:
-            if not verbose and section['priority'] > 7:  # Skip low priority in normal mode
-                continue
+        output_lines.append("🔴 [SYSTEM ERROR] Fatal error in analysis pipeline")
+        output_lines.append("")
 
-            content = section['content'].strip()
-            if content:
-                output_lines.append(content)
-                output_lines.append("")  # Add spacing
+        if self.last_error:
+            output_lines.append(f"[ERROR] {type(self.last_error).__name__}: {str(self.last_error)}")
+            # Add traceback if available
+            import traceback
+            tb_lines = traceback.format_exception(type(self.last_error), self.last_error, self.last_error.__traceback__)
+            # Show only the most relevant part of traceback
+            for line in tb_lines[-3:]:  # Last 3 lines usually contain the key info
+                if line.strip():
+                    output_lines.append(f"[TRACEBACK] {line.rstrip()}")
+        else:
+            output_lines.append("[ERROR] Unknown system error occurred")
 
-        return "\n".join(output_lines).strip()
+        output_lines.append("")
+        output_lines.append("[ACTION] Fix the system error before proceeding with any development tasks")
+        output_lines.append("[NEXT] Run diagnostic queries or fix the identified issue")
+
+        return "\n".join(output_lines)
+
+    def _render_found_state(self, verbose: bool = False) -> str:
+        """State 2: 🟢 Solution Found - Show clean results, suppress noise."""
+        output_lines = []
+        search_results = getattr(self, '_search_results', {})
+
+        # Extract module information for 0102 context
+        code_results = search_results.get('code', [])
+        wsp_results = search_results.get('wsps', [])
+
+        # Count modules involved
+        modules_found = set()
+        for hit in code_results[:5]:  # Check top 5 for module diversity
+            location = hit.get('location', '')
+            if location.startswith('modules.'):
+                # Extract module name (first component after modules.)
+                parts = location.split('.')
+                if len(parts) > 1:
+                    modules_part = parts[1]  # Should be the domain like 'platform_integration'
+                    if modules_part:
+                        modules_found.add(modules_part)
+
+        output_lines.append("🟢 [SOLUTION FOUND] Existing functionality discovered")
+        output_lines.append(f"[MODULES] Found implementations across {len(modules_found)} modules: {', '.join(sorted(modules_found))}")
+        output_lines.append("")
+
+        # Show top code results with more detail for 0102 agents
+        if code_results:
+            output_lines.append("[CODE RESULTS] Top implementations:")
+            for i, hit in enumerate(code_results[:3], 1):  # Top 3
+                location = hit.get('location', 'Unknown')
+                similarity = hit.get('similarity', 'N/A')
+                content_preview = hit.get('content', '')[:100].replace('\n', ' ') + '...' if len(hit.get('content', '')) > 100 else hit.get('content', '')
+                output_lines.append(f"  {i}. {location}")
+                output_lines.append(f"     Match: {similarity} | Preview: {content_preview}")
+            output_lines.append("")
+
+        # Show top WSP guidance with more context
+        if wsp_results:
+            output_lines.append("[WSP GUIDANCE] Protocol references:")
+            for i, hit in enumerate(wsp_results[:2], 1):  # Top 2
+                wsp_id = hit.get('wsp', 'Unknown')
+                title = hit.get('title', 'Unknown')
+                similarity = hit.get('similarity', 'N/A')
+                content_preview = hit.get('content', '')[:80].replace('\n', ' ') + '...' if len(hit.get('content', '')) > 80 else hit.get('content', '')
+                output_lines.append(f"  {i}. {wsp_id}: {title}")
+                output_lines.append(f"     Match: {similarity} | Guidance: {content_preview}")
+            output_lines.append("")
+
+        output_lines.append("[ACTION] ENHANCE/REFACTOR existing code based on findings")
+        output_lines.append("[NEXT] Read the discovered files and WSP documentation")
+
+        return "\n".join(output_lines)
+
+    def _render_missing_state(self) -> str:
+        """State 3: 🟡 No Solution Found - Allow creation, show guidance."""
+        output_lines = []
+        query = getattr(self, 'query_context', 'unknown query')
+
+        output_lines.append("🟡 [NO SOLUTION FOUND] No existing implementation discovered")
+        output_lines.append("")
+        output_lines.append(f"[MISSING] Query '{query}' found no relevant existing code")
+        output_lines.append("")
+        output_lines.append("[ACTION] CREATE new module following WSP guidelines")
+        output_lines.append("[NEXT] Follow WSP 50 pre-action verification before creating")
+        output_lines.append("")
+        output_lines.append("[WSP GUIDANCE] Creation Requirements:")
+        output_lines.append("  • WSP 84: Verify no similar functionality exists")
+        output_lines.append("  • WSP 49: Follow module directory structure")
+        output_lines.append("  • WSP 22: Create README.md and ModLog.md")
+        output_lines.append("  • WSP 11: Define clear public API in INTERFACE.md")
+
+        return "\n".join(output_lines)
+
+    def _render_auto_state(self, verbose: bool = False) -> str:
+        """Fallback auto-detection when state is unknown."""
+        search_results = getattr(self, '_search_results', {})
+        total_results = len(search_results.get('code', [])) + len(search_results.get('wsps', []))
+
+        if total_results > 0:
+            return self._render_found_state(verbose)
+        else:
+            return self._render_missing_state()
 
     def _is_wsp_relevant_to_module(self, wsp_hit: Dict[str, Any], target_module: str = None) -> bool:
         """Determine if WSP guidance is relevant to the target module."""
@@ -151,13 +286,17 @@ class AgenticOutputThrottler:
         """Generate 0102-to-0102 WSP compliance prompts based on module context and violation history."""
         prompts = []
 
+        # REMOVED: Unicode compliance warnings create FUD noise for 0102
+        # These warnings were moved to logs only to prevent output pollution
+        # 0102 agents should focus on decisions, not internal system constraints
+
         if not target_module:
             # General prompts when no specific module detected
             prompts.extend([
-                "🔍 0102: Before starting - did you read the WSP docs for this task?",
-                "🧠 0102: Deep think: Is this a module that needs to be created or enhanced?",
-                "📋 0102: Check WSP_MODULE_VIOLATIONS.md - are you creating another duplicate?",
-                "🔄 0102: Code is remembered from 02 state - don't vibecode, research first"
+                "[CHECK] 0102: Before starting - did you read the WSP docs for this task?",
+                "[THINK] 0102: Deep think: Is this a module that needs to be created or enhanced?",
+                "[NOTE] 0102: Check WSP_MODULE_VIOLATIONS.md - are you creating another duplicate?",
+                "[RECURSIVE] 0102: Code is remembered from 02 state - don't vibecode, research first"
             ])
             return prompts
 
@@ -167,34 +306,34 @@ class AgenticOutputThrottler:
         # Common violation patterns by module type
         violation_patterns = {
             'livechat': [
-                "⚠️ 0102: Livechat module exceeded 1000+ lines - WSP 62 violation! Refactor before adding more.",
-                "🔍 0102: Multiple livechat duplicates exist - did you check existing implementations first?",
-                "📊 0102: Size check: Is your change pushing livechat over WSP 62 limits?"
+                "[WARN] 0102: Livechat module exceeded 1000+ lines - WSP 62 violation! Refactor before adding more.",
+                "[CHECK] 0102: Multiple livechat duplicates exist - did you check existing implementations first?",
+                "[STATS] 0102: Size check: Is your change pushing livechat over WSP 62 limits?"
             ],
             'banter_engine': [
-                "🔄 0102: Banter engine has 5+ duplicate files - WSP 40 violation! Consolidate, don't create more.",
-                "📋 0102: Check sequence_responses duplicates before making changes.",
-                "🧠 0102: Deep think: Enhance existing banter_engine instead of creating banter_engine_v2"
+                "[RECURSIVE] 0102: Banter engine has 5+ duplicate files - WSP 40 violation! Consolidate, don't create more.",
+                "[NOTE] 0102: Check sequence_responses duplicates before making changes.",
+                "[THINK] 0102: Deep think: Enhance existing banter_engine instead of creating banter_engine_v2"
             ],
             'youtube_proxy': [
                 "🔧 0102: YouTube proxy has runtime patches - integrate them properly, don't add more hacks.",
-                "📝 0102: Document your proxy changes in ModLog - WSP 22 compliance required."
+                "[DOC] 0102: Document your proxy changes in ModLog - WSP 22 compliance required."
             ],
             'stream_resolver': [
-                "📚 0102: Stream resolver has legitimate multi-version pattern - document it properly.",
-                "🔍 0102: Check WSP 40 compliance before adding another stream_resolver variant."
+                "[LIBRARY] 0102: Stream resolver has legitimate multi-version pattern - document it properly.",
+                "[CHECK] 0102: Check WSP 40 compliance before adding another stream_resolver variant."
             ],
             'dae_cube_organizer': [
-                "🎯 0102: DAE Cube Organizer - ensure WSP 80 compliance in your changes.",
-                "📋 0102: This is HoloIndex core - test thoroughly before committing."
+                "[TARGET] 0102: DAE Cube Organizer - ensure WSP 80 compliance in your changes.",
+                "[NOTE] 0102: This is HoloIndex core - test thoroughly before committing."
             ],
             'pqn_alignment': [
-                "🧬 0102: PQN research - follow WSP 23 rESP protocols strictly.",
-                "🔬 0102: Quantum consciousness work - validate against WSP 61 foundations."
+                "[DNA] 0102: PQN research - follow WSP 23 rESP protocols strictly.",
+                "[SCIENCE] 0102: Quantum consciousness work - validate against WSP 61 foundations."
             ],
             'wre_core': [
-                "⚙️ 0102: WRE core changes affect everything - extensive testing required.",
-                "🔄 0102: Check for recursive loop prevention - WSP 48 compliance critical."
+                "[CONFIG] 0102: WRE core changes affect everything - extensive testing required.",
+                "[RECURSIVE] 0102: Check for recursive loop prevention - WSP 48 compliance critical."
             ]
         }
 
@@ -204,17 +343,17 @@ class AgenticOutputThrottler:
 
         # Add universal 0102 prompts for all module work
         prompts.extend([
-            f"📖 0102: Working on {target_module} - did you read its README.md and INTERFACE.md first?",
-            f"📝 0102: {target_module} changes require ModLog update - WSP 22 compliance mandatory.",
-            f"🧪 0102: Does {target_module} have tests? WSP 5/WSP 34 require test coverage.",
-            f"📦 0102: Check {target_module} requirements.txt - WSP 12 dependency management.",
-            f"🔍 0102: Is this change enhancing existing {module_name} or creating unnecessary duplication?",
-            f"📊 0102: File size check - is your change pushing {target_module} over WSP 62 limits?",
-            f"🧠 0102: Deep think: Can {target_module} be simplified? Follow WSP simplicity principle.",
-            f"🔄 0102: Code is remembered from 02 state - don't write, remember the solution.",
-            f"🎯 0102: Ask yourself: 'Does this module need to exist?' - WSP core question.",
-            f"⚡ 0102: Ask yourself: 'Can I afford to build this?' - Resource reality check.",
-            f"🚀 0102: Ask yourself: 'Can I live without this?' - Essential vs nice-to-have."
+            f"[DOC] 0102: Working on {target_module} - did you read its README.md and INTERFACE.md first?",
+            f"[DOC] 0102: {target_module} changes require ModLog update - WSP 22 compliance mandatory.",
+            f"[TEST] 0102: Does {target_module} have tests? WSP 5/WSP 34 require test coverage.",
+            f"[DEPS] 0102: Check {target_module} requirements.txt - WSP 12 dependency management.",
+            f"[CHECK] 0102: Is this change enhancing existing {module_name} or creating unnecessary duplication?",
+            f"[STATS] 0102: File size check - is your change pushing {target_module} over WSP 62 limits?",
+            f"[THINK] 0102: Deep think: Can {target_module} be simplified? Follow WSP simplicity principle.",
+            f"[RECURSIVE] 0102: Code is remembered from 02 state - don't write, remember the solution.",
+            f"[TARGET] 0102: Ask yourself: 'Does this module need to exist?' - WSP core question.",
+            f"[FAST] 0102: Ask yourself: 'Can I afford to build this?' - Resource reality check.",
+            f"[LAUNCH] 0102: Ask yourself: 'Can I live without this?' - Essential vs nice-to-have."
         ])
 
         return prompts[:5]  # Limit to 5 most relevant prompts to avoid overload
@@ -274,7 +413,7 @@ class AgenticOutputThrottler:
                 warning_content += f"\n  - {warning}"
             self.add_section('warnings', warning_content, priority=1, tags=['warnings', 'critical'])
         else:
-            self.add_section('status', "✅ No WSP violations detected", priority=5, tags=['status', 'compliance'])
+            self.add_section('status', "[SUCCESS] No WSP violations detected", priority=5, tags=['status', 'compliance'])
 
         # Reminders - medium priority
         if reminders:
@@ -295,7 +434,7 @@ class AgenticOutputThrottler:
                     if size_data['large_files']:
                         size_content += f"\n  - Large files exceeding WSP 62 threshold:"
                         for large_file in size_data['large_files'][:3]:  # Top 3
-                            size_content += f"\n    • {large_file['file']}: {large_file['lines']} lines (> {large_file['threshold']})"
+                            size_content += f"\n    - {large_file['file']}: {large_file['lines']} lines (> {large_file['threshold']})"
                     size_content += f"\n  - WSP 62 Status: {size_data['wsp_compliance']}"
                     self.add_section('analysis', size_content, priority=2, tags=['analysis', 'size', 'wsp62', 'violation'])
 
@@ -308,7 +447,7 @@ class AgenticOutputThrottler:
                     if dup_data['duplicate_pairs']:
                         dup_content += f"\n  - Duplicate pairs:"
                         for pair in dup_data['duplicate_pairs'][:2]:  # Top 2
-                            dup_content += f"\n    • {pair['original']} ↔ {pair['duplicate']} ({pair['lines']} lines)"
+                            dup_content += f"\n    - {pair['original']} <-> {pair['duplicate']} ({pair['lines']} lines)"
                     dup_content += f"\n  - WSP 40 Status: VIOLATION - {dup_data['recommendation']}"
                     self.add_section('analysis', dup_content, priority=2, tags=['analysis', 'duplication', 'wsp40', 'violation'])
 
@@ -332,7 +471,7 @@ class AgenticOutputThrottler:
         if wsp_prompts:
             prompt_content = "[0102] WSP Compliance Prompts:\n"
             for prompt in wsp_prompts:
-                prompt_content += f"  • {prompt}\n"
+                prompt_content += f"  - {prompt}\n"
             self.add_section('prompts', prompt_content.strip(), priority=1, tags=['0102', 'prompts', 'wsp', 'compliance'])
 
         # FMAS reference - low priority

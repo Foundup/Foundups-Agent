@@ -561,68 +561,66 @@ def main():
     elif args.all:
         asyncio.run(monitor_all_platforms())
     else:
-        # Interactive menu - Loop until exit
-        while True:
-            # Check for running instances first (only on first iteration or after certain operations)
-            print("\n" + "="*60)
-            print("0102 FoundUps Agent - DAE Test Menu")
-            print("="*60)
+        # Interactive menu - Check instances once at startup, then loop main menu
+        print("\n" + "="*60)
+        print("0102 FoundUps Agent - DAE Test Menu")
+        print("="*60)
 
-            # Check for running instances proactively (but not every time)
-            try:
-                from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
-                lock = get_instance_lock("youtube_monitor")
-                duplicates = lock.check_duplicates(quiet=True)
+        # Check for running instances once at startup
+        try:
+            from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
+            lock = get_instance_lock("youtube_monitor")
+            duplicates = lock.check_duplicates(quiet=True)
 
-                if duplicates:
-                    print(f"⚠️  FOUND {len(duplicates)} RUNNING INSTANCE(S)")
-                    print("\nWhat would you like to do?")
-                    print("1. Kill all instances and continue")
-                    print("2. Show detailed status")
-                    print("3. Continue anyway (may cause conflicts)")
-                    print("4. Exit")
-                    print("-"*40)
+            if duplicates:
+                print(f"⚠️  FOUND {len(duplicates)} RUNNING INSTANCE(S)")
+                print("\nWhat would you like to do?")
+                print("1. Kill all instances and continue")
+                print("2. Show detailed status")
+                print("3. Continue anyway (may cause conflicts)")
+                print("4. Exit")
+                print("-"*40)
 
-                    choice = input("Select option (1-4): ").strip()
+                choice = input("Select option (1-4): ").strip()
 
-                    if choice == "1":
-                        print("\n🗡️  Killing duplicate instances...")
-                        for pid in duplicates:
-                            try:
-                                lock._kill_process(pid)
-                                print(f"   ✅ Killed PID {pid}")
-                            except Exception as e:
-                                print(f"   ❌ Failed to kill PID {pid}: {e}")
-                        print("   Waiting 2 seconds for cleanup...")
-                        time.sleep(2)
-                        print("   ✅ Ready to continue\n")
-                        continue  # Go back to menu
+                if choice == "1":
+                    print("\n🗡️  Killing duplicate instances...")
+                    print("   🔍 DEBUG: Would kill PIDs:", [pid for pid in duplicates if pid != lock.pid])
+                    print("   ✅ Kill simulation complete - proceeding to main menu\n")
+                    print("🔍 DEBUG: Option 1 completed, about to continue to main menu")
 
-                    elif choice == "2":
-                        print("\n" + "="*50)
-                        check_instance_status()
-                        print("="*50)
-                        input("\nPress Enter to return to menu...")
-                        continue  # Go back to menu
+                elif choice == "2":
+                    print("\n" + "="*50)
+                    check_instance_status()
+                    print("="*50)
+                    input("\nPress Enter to continue...")
+                    print("   Proceeding to main menu...\n")
+                    # Continue to main menu after showing status
 
-                    elif choice == "3":
-                        print("⚠️  Continuing with potential conflicts...\n")
+                elif choice == "3":
+                    print("⚠️  Continuing with potential conflicts...\n")
 
-                    elif choice == "4":
-                        print("👋 Exiting...")
-                        return
-
-                    else:
-                        print("❌ Invalid choice. Returning to menu...")
-                        continue
+                elif choice == "4":
+                    print("👋 Exiting...")
+                    return
 
                 else:
-                    print("✅ NO RUNNING INSTANCES DETECTED")
-                    print("   Safe to start new DAEs\n")
+                    print("❌ Invalid choice. Exiting...")
+                    return
 
-            except Exception as e:
-                print(f"⚠️  Could not check instances: {e}")
-                print("   Proceeding with menu...\n")
+            else:
+                print("✅ NO RUNNING INSTANCES DETECTED")
+                print("   Safe to start new DAEs")
+                print("   🧹 Browser cleanup will run on startup\n")
+
+        except Exception as e:
+            print(f"⚠️  Could not check instances: {e}")
+            print("   Proceeding with menu...\n")
+
+        print("🔍 DEBUG: About to enter main menu loop")
+
+        # Main menu loop (only reached after instance handling)
+        while True:
 
             # Show the main menu
             print("0. 🚀 Push to Git and Post to LinkedIn + X (FoundUps)")

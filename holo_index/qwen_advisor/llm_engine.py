@@ -64,17 +64,36 @@ class QwenInferenceEngine:
         try:
             # Import llama-cpp-python here to avoid import errors if not installed
             from llama_cpp import Llama
+            import os
 
             logger.info(f"Loading Qwen model from {self.model_path}")
 
-            # Initialize the model with optimized settings for 1.5B model
-            self.llm = Llama(
-                model_path=str(self.model_path),
-                n_ctx=self.context_length,
-                n_threads=4,  # Use 4 CPU threads
-                n_gpu_layers=0,  # CPU-only for now (GGUF models work well on CPU)
-                verbose=False  # Reduce logging noise
-            )
+            # Suppress llama-cpp output noise during model loading (WSP 64 compliance)
+            old_stdout = os.dup(1)  # Duplicate stdout
+            old_stderr = os.dup(2)  # Duplicate stderr
+            devnull = os.open(os.devnull, os.O_WRONLY)
+
+            try:
+                # Redirect stdout and stderr to /dev/null during model loading
+                os.dup2(devnull, 1)
+                os.dup2(devnull, 2)
+
+                # Initialize the model with optimized settings for 1.5B model
+                self.llm = Llama(
+                    model_path=str(self.model_path),
+                    n_ctx=self.context_length,
+                    n_threads=4,  # Use 4 CPU threads
+                    n_gpu_layers=0,  # CPU-only for now (GGUF models work well on CPU)
+                    verbose=False  # Reduce logging noise
+                )
+
+            finally:
+                # Restore stdout and stderr
+                os.dup2(old_stdout, 1)
+                os.dup2(old_stderr, 2)
+                os.close(devnull)
+                os.close(old_stdout)
+                os.close(old_stderr)
 
             self._initialized = True
             logger.info("Qwen model loaded successfully")

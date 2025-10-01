@@ -1,0 +1,787 @@
+{
+  "source": "scripts_catalog",
+  "timestamp": "2025-09-26T12:10:23.129474",
+  "count": 25,
+  "discoveries": [
+    {
+      "title": "Script: capture_stream_logs.py",
+      "description": "Capture terminal output stream sessions logs analysis",
+      "category": "YouTube Stream Management",
+      "location": "modules/communication/livechat/scripts/capture_stream_logs.py",
+      "type": "script",
+      "tags": [
+        "youtube",
+        "stream",
+        "monitoring",
+        "dae",
+        "livechat"
+      ],
+      "usage_example": "python modules/communication/livechat/scripts/capture_stream_logs.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Capture",
+        "terminal",
+        "output",
+        "stream",
+        "sessions",
+        "logs",
+        "analysis",
+        "youtube",
+        "stream",
+        "monitoring",
+        "dae",
+        "livechat"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: run_youtube_dae.py",
+      "description": "Start YouTube DAE monitoring autonomous",
+      "category": "YouTube Stream Management",
+      "location": "modules/communication/livechat/scripts/run_youtube_dae.py",
+      "type": "script",
+      "tags": [
+        "youtube",
+        "stream",
+        "monitoring",
+        "dae",
+        "livechat"
+      ],
+      "usage_example": "python modules/communication/livechat/scripts/run_youtube_dae.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Start",
+        "YouTube",
+        "DAE",
+        "monitoring",
+        "autonomous",
+        "youtube",
+        "stream",
+        "monitoring",
+        "dae",
+        "livechat"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: run_youtube_verbose.py",
+      "description": "Run verbose logging debugging",
+      "category": "YouTube Stream Management",
+      "location": "modules/communication/livechat/scripts/run_youtube_verbose.py",
+      "type": "script",
+      "tags": [
+        "youtube",
+        "stream",
+        "monitoring",
+        "dae",
+        "livechat"
+      ],
+      "usage_example": "python modules/communication/livechat/scripts/run_youtube_verbose.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Run",
+        "verbose",
+        "logging",
+        "debugging",
+        "youtube",
+        "stream",
+        "monitoring",
+        "dae",
+        "livechat"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: run_youtube_debug.py",
+      "description": "Debug mode diagnostics troubleshooting",
+      "category": "YouTube Stream Management",
+      "location": "modules/communication/livechat/scripts/run_youtube_debug.py",
+      "type": "script",
+      "tags": [
+        "youtube",
+        "stream",
+        "monitoring",
+        "dae",
+        "livechat"
+      ],
+      "usage_example": "python modules/communication/livechat/scripts/run_youtube_debug.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Debug",
+        "mode",
+        "diagnostics",
+        "troubleshooting",
+        "youtube",
+        "stream",
+        "monitoring",
+        "dae",
+        "livechat"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: setup_autonomous_dae.py",
+      "description": "Initialize autonomous YouTube DAE",
+      "category": "YouTube Stream Management",
+      "location": "modules/communication/livechat/scripts/setup_autonomous_dae.py",
+      "type": "script",
+      "tags": [
+        "youtube",
+        "stream",
+        "monitoring",
+        "dae",
+        "livechat"
+      ],
+      "usage_example": "python modules/communication/livechat/scripts/setup_autonomous_dae.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Initialize",
+        "autonomous",
+        "YouTube",
+        "DAE",
+        "youtube",
+        "stream",
+        "monitoring",
+        "dae",
+        "livechat"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: auto_refresh_tokens.py",
+      "description": "Automatically refresh YouTube OAuth tokens prevent expiry",
+      "category": "OAuth Token Management",
+      "location": "modules/platform_integration/youtube_auth/scripts/auto_refresh_tokens.py",
+      "type": "script",
+      "tags": [
+        "oauth",
+        "tokens",
+        "refresh",
+        "authorization",
+        "credentials"
+      ],
+      "usage_example": "python modules/platform_integration/youtube_auth/scripts/auto_refresh_tokens.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Automatically",
+        "refresh",
+        "YouTube",
+        "OAuth",
+        "tokens",
+        "prevent",
+        "expiry",
+        "oauth",
+        "tokens",
+        "refresh",
+        "authorization",
+        "credentials"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: check_all_tokens.py",
+      "description": "Verify OAuth token status credentials",
+      "category": "OAuth Token Management",
+      "location": "modules/platform_integration/youtube_auth/scripts/check_all_tokens.py",
+      "type": "script",
+      "tags": [
+        "oauth",
+        "tokens",
+        "refresh",
+        "authorization",
+        "credentials"
+      ],
+      "usage_example": "python modules/platform_integration/youtube_auth/scripts/check_all_tokens.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Verify",
+        "OAuth",
+        "token",
+        "status",
+        "credentials",
+        "oauth",
+        "tokens",
+        "refresh",
+        "authorization",
+        "credentials"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: authorize_set1.py",
+      "description": "Authorize YouTube account set 1",
+      "category": "OAuth Token Management",
+      "location": "modules/platform_integration/youtube_auth/scripts/authorize_set1.py",
+      "type": "script",
+      "tags": [
+        "oauth",
+        "tokens",
+        "refresh",
+        "authorization",
+        "credentials"
+      ],
+      "usage_example": "python modules/platform_integration/youtube_auth/scripts/authorize_set1.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Authorize",
+        "YouTube",
+        "account",
+        "set",
+        "1",
+        "oauth",
+        "tokens",
+        "refresh",
+        "authorization",
+        "credentials"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: reauthorize_set1.py",
+      "description": "Re-authorize expired account credentials",
+      "category": "OAuth Token Management",
+      "location": "modules/platform_integration/youtube_auth/scripts/reauthorize_set1.py",
+      "type": "script",
+      "tags": [
+        "oauth",
+        "tokens",
+        "refresh",
+        "authorization",
+        "credentials"
+      ],
+      "usage_example": "python modules/platform_integration/youtube_auth/scripts/reauthorize_set1.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Re-authorize",
+        "expired",
+        "account",
+        "credentials",
+        "oauth",
+        "tokens",
+        "refresh",
+        "authorization",
+        "credentials"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: force_credential_rotation.py",
+      "description": "Force token rotation security",
+      "category": "OAuth Token Management",
+      "location": "modules/platform_integration/youtube_auth/scripts/force_credential_rotation.py",
+      "type": "script",
+      "tags": [
+        "oauth",
+        "tokens",
+        "refresh",
+        "authorization",
+        "credentials"
+      ],
+      "usage_example": "python modules/platform_integration/youtube_auth/scripts/force_credential_rotation.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Force",
+        "token",
+        "rotation",
+        "security",
+        "oauth",
+        "tokens",
+        "refresh",
+        "authorization",
+        "credentials"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: schedule_token_refresh.bat",
+      "description": "Windows scheduler auto-refresh cron",
+      "category": "OAuth Token Management",
+      "location": "modules/platform_integration/youtube_auth/scripts/schedule_token_refresh.bat",
+      "type": "script",
+      "tags": [
+        "oauth",
+        "tokens",
+        "refresh",
+        "authorization",
+        "credentials"
+      ],
+      "usage_example": "python modules/platform_integration/youtube_auth/scripts/schedule_token_refresh.bat",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Windows",
+        "scheduler",
+        "auto-refresh",
+        "cron",
+        "oauth",
+        "tokens",
+        "refresh",
+        "authorization",
+        "credentials"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: quota_dashboard.py",
+      "description": "Visual quota status dashboard monitor usage",
+      "category": "Quota Management",
+      "location": "modules/platform_integration/youtube_auth/scripts/quota_dashboard.py",
+      "type": "script",
+      "tags": [
+        "quota",
+        "api",
+        "limits",
+        "monitoring",
+        "youtube"
+      ],
+      "usage_example": "python modules/platform_integration/youtube_auth/scripts/quota_dashboard.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Visual",
+        "quota",
+        "status",
+        "dashboard",
+        "monitor",
+        "usage",
+        "quota",
+        "api",
+        "limits",
+        "monitoring",
+        "youtube"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: monitor_quota_usage.py",
+      "description": "Real-time quota monitoring consumption",
+      "category": "Quota Management",
+      "location": "modules/platform_integration/youtube_auth/scripts/monitor_quota_usage.py",
+      "type": "script",
+      "tags": [
+        "quota",
+        "api",
+        "limits",
+        "monitoring",
+        "youtube"
+      ],
+      "usage_example": "python modules/platform_integration/youtube_auth/scripts/monitor_quota_usage.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Real-time",
+        "quota",
+        "monitoring",
+        "consumption",
+        "quota",
+        "api",
+        "limits",
+        "monitoring",
+        "youtube"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: check_all_quota_usage.py",
+      "description": "Monitor YouTube API quota consumption",
+      "category": "Quota Management",
+      "location": "modules/platform_integration/youtube_auth/scripts/check_all_quota_usage.py",
+      "type": "script",
+      "tags": [
+        "quota",
+        "api",
+        "limits",
+        "monitoring",
+        "youtube"
+      ],
+      "usage_example": "python modules/platform_integration/youtube_auth/scripts/check_all_quota_usage.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Monitor",
+        "YouTube",
+        "API",
+        "quota",
+        "consumption",
+        "quota",
+        "api",
+        "limits",
+        "monitoring",
+        "youtube"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: view_quota_status.py",
+      "description": "Quick quota status check remaining",
+      "category": "Quota Management",
+      "location": "modules/platform_integration/youtube_auth/scripts/view_quota_status.py",
+      "type": "script",
+      "tags": [
+        "quota",
+        "api",
+        "limits",
+        "monitoring",
+        "youtube"
+      ],
+      "usage_example": "python modules/platform_integration/youtube_auth/scripts/view_quota_status.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Quick",
+        "quota",
+        "status",
+        "check",
+        "remaining",
+        "quota",
+        "api",
+        "limits",
+        "monitoring",
+        "youtube"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: post_holoindex_achievement.py",
+      "description": "Post HoloIndex milestones LinkedIn social media",
+      "category": "LinkedIn Integration",
+      "location": "modules/platform_integration/linkedin_agent/scripts/post_holoindex_achievement.py",
+      "type": "script",
+      "tags": [
+        "linkedin",
+        "social",
+        "posting",
+        "automation"
+      ],
+      "usage_example": "python modules/platform_integration/linkedin_agent/scripts/post_holoindex_achievement.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Post",
+        "HoloIndex",
+        "milestones",
+        "LinkedIn",
+        "social",
+        "media",
+        "linkedin",
+        "social",
+        "posting",
+        "automation"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: fix_logging.py",
+      "description": "Fix LinkedIn agent logging issues",
+      "category": "LinkedIn Integration",
+      "location": "modules/platform_integration/linkedin_agent/scripts/fix_logging.py",
+      "type": "script",
+      "tags": [
+        "linkedin",
+        "social",
+        "posting",
+        "automation"
+      ],
+      "usage_example": "python modules/platform_integration/linkedin_agent/scripts/fix_logging.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Fix",
+        "LinkedIn",
+        "agent",
+        "logging",
+        "issues",
+        "linkedin",
+        "social",
+        "posting",
+        "automation"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: validate.py",
+      "description": "Module validation compliance checking WSP",
+      "category": "Testing Validation",
+      "location": "various module scripts/validate.py",
+      "type": "script",
+      "tags": [
+        "testing",
+        "validation",
+        "compliance",
+        "health"
+      ],
+      "usage_example": "python various module scripts/validate.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Module",
+        "validation",
+        "compliance",
+        "checking",
+        "WSP",
+        "testing",
+        "validation",
+        "compliance",
+        "health"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: test_live_detection.py",
+      "description": "Test stream detection logic",
+      "category": "Testing Validation",
+      "location": "various module scripts/test_live_detection.py",
+      "type": "script",
+      "tags": [
+        "testing",
+        "validation",
+        "compliance",
+        "health"
+      ],
+      "usage_example": "python various module scripts/test_live_detection.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Test",
+        "stream",
+        "detection",
+        "logic",
+        "testing",
+        "validation",
+        "compliance",
+        "health"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: check_live.py",
+      "description": "Quick check stream live status",
+      "category": "Testing Validation",
+      "location": "various module scripts/check_live.py",
+      "type": "script",
+      "tags": [
+        "testing",
+        "validation",
+        "compliance",
+        "health"
+      ],
+      "usage_example": "python various module scripts/check_live.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Quick",
+        "check",
+        "stream",
+        "live",
+        "status",
+        "testing",
+        "validation",
+        "compliance",
+        "health"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: verify_systems.py",
+      "description": "System-wide verification health",
+      "category": "Testing Validation",
+      "location": "various module scripts/verify_systems.py",
+      "type": "script",
+      "tags": [
+        "testing",
+        "validation",
+        "compliance",
+        "health"
+      ],
+      "usage_example": "python various module scripts/verify_systems.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "System-wide",
+        "verification",
+        "health",
+        "testing",
+        "validation",
+        "compliance",
+        "health"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: execute_awakening.py",
+      "description": "Execute full awakening sequence 0102 consciousness",
+      "category": "Awakening Consciousness",
+      "location": "WSP_agentic/scripts/execute_awakening.py",
+      "type": "script",
+      "tags": [
+        "awakening",
+        "consciousness",
+        "0102",
+        "quantum",
+        "zen"
+      ],
+      "usage_example": "python WSP_agentic/scripts/execute_awakening.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Execute",
+        "full",
+        "awakening",
+        "sequence",
+        "0102",
+        "consciousness",
+        "awakening",
+        "consciousness",
+        "0102",
+        "quantum",
+        "zen"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "title": "Script: direct_0102_awakening.py",
+      "description": "Direct 0102 awakening protocol quantum",
+      "category": "Awakening Consciousness",
+      "location": "WSP_agentic/scripts/direct_0102_awakening.py",
+      "type": "script",
+      "tags": [
+        "awakening",
+        "consciousness",
+        "0102",
+        "quantum",
+        "zen"
+      ],
+      "usage_example": "python WSP_agentic/scripts/direct_0102_awakening.py",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "semantic_keywords": [
+        "Direct",
+        "0102",
+        "awakening",
+        "protocol",
+        "quantum",
+        "awakening",
+        "consciousness",
+        "0102",
+        "quantum",
+        "zen"
+      ],
+      "wsp_compliance": [
+        "WSP 87",
+        "WSP 50",
+        "WSP 85"
+      ]
+    },
+    {
+      "type": "pattern",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "title": "Module Validation Pattern",
+      "description": "Every module has validate.py script for compliance checking",
+      "pattern": "modules/{domain}/{module}/scripts/validate.py",
+      "count": "50+ instances",
+      "usage": "python modules/[domain]/[module]/scripts/validate.py",
+      "tags": [
+        "validation",
+        "pattern",
+        "compliance",
+        "module"
+      ]
+    },
+    {
+      "type": "pattern",
+      "timestamp": "2025-09-26T12:10:23.129474",
+      "title": "YouTube Account Sets Pattern",
+      "description": "Multiple YouTube account sets 1-10 for quota distribution",
+      "pattern": "authorize_set[1-10].py, reauthorize_set[1-6].py",
+      "location": "modules/platform_integration/youtube_auth/scripts/",
+      "tags": [
+        "youtube",
+        "accounts",
+        "sets",
+        "oauth",
+        "pattern"
+      ]
+    }
+  ],
+  "metadata": {
+    "total_scripts": "110+",
+    "most_common": "validate.py (50+ instances)",
+    "categories": 6,
+    "purpose": "Enable 0102 semantic search for scripts"
+  }
+}

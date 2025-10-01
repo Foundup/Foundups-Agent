@@ -65,14 +65,19 @@ logger = logging.getLogger(__name__)
 class MessageProcessor:
     """Handles processing of chat messages and generating responses."""
     
-    def __init__(self, youtube_service=None, memory_manager=None):
+    def __init__(self, youtube_service=None, memory_manager=None, chat_sender=None):
         self.youtube_service = youtube_service
         self.memory_manager = memory_manager  # WSP-compliant hybrid storage
+        self.chat_sender = chat_sender  # To access bot channel ID and prevent self-responses
         self.banter_engine = BanterEngine()
         self.llm_bypass_engine = LLMBypassEngine()
         self.trigger_emojis = ["✊", "✋", "🖐️"]  # Configurable emoji trigger set
         self.last_trigger_time = {}  # Track last trigger time per user
+        self.last_maga_time = {}  # Track last MAGA response time per user
+        self.last_global_maga_time = 0  # Global MAGA response cooldown
         self.trigger_cooldown = 60  # Cooldown period in seconds
+        self.maga_cooldown = 600  # MAGA response cooldown (10 minutes to prevent spam)
+        self.global_maga_cooldown = 300  # Global cooldown: 5 minutes between ANY MAGA responses
         self.memory_dir = "memory"
         # Consciousness response mode: 'mod_only' or 'everyone' (default: everyone)
         # Changed to 'everyone' so bot trolls ALL users showing ✊✊✊ consciousness!
@@ -138,17 +143,22 @@ class MessageProcessor:
     def process_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """
         Process a single chat message and extract relevant information.
-        
+
         Args:
             message: Raw message data from YouTube API
-            
+
         Returns:
             Processed message data with additional metadata
         """
+        # QWEN DAE decision logging for visibility
+        logger.info("🤖🧠 [QWEN-DAE-INIT] Processing incoming message")
+
         # Handle timeout/ban events
         if message.get("type") == "timeout_event":
+            logger.info("🤖🧠 [QWEN-DAE-DECISION] EXECUTE timeout_handler (confidence: 1.00)")
             return self._handle_timeout_event(message)
         elif message.get("type") == "ban_event":
+            logger.info("🤖🧠 [QWEN-DAE-DECISION] EXECUTE ban_handler (confidence: 1.00)")
             return self._handle_ban_event(message)
         
         # Debug: Log message structure
@@ -157,6 +167,7 @@ class MessageProcessor:
             text = snippet.get("displayMessage", "")
             if text and text.startswith('/'):
                 logger.info(f"🎮 Processing slash command message: {text}")
+                logger.info("🤖🧠 [QWEN-DAE-DECISION] EXECUTE command_handler (confidence: 0.95)")
         
         # Handle regular messages - check if it's a raw YouTube API message
         if "snippet" in message and "authorDetails" in message:
@@ -175,6 +186,12 @@ class MessageProcessor:
             author_name = author_details.get("displayName", "Unknown")
             author_id = author_details.get("channelId", "")
             published_at = snippet.get("publishedAt", "")
+
+            # CRITICAL: Skip processing messages from the bot itself to prevent self-responses
+            if self.chat_sender and hasattr(self.chat_sender, 'bot_channel_id') and self.chat_sender.bot_channel_id:
+                if author_id == self.chat_sender.bot_channel_id:
+                    logger.debug(f"🤖 Skipping message from bot itself (channel {author_id})")
+                    return None  # Skip processing bot's own messages
             
             # CRITICAL: Filter out old buffered events (>5 minutes old)
             if published_at:
@@ -191,8 +208,10 @@ class MessageProcessor:
                         # Always process slash commands regardless of age
                         if message_text and message_text.strip().startswith('/'):
                             logger.info(f"⏰ Processing old slash command from {author_name} ({int(age_seconds)}s old): {message_text}")
+                            logger.info("🤖🧠 [QWEN-DAE-DECISION] OVERRIDE age_filter for slash_command (confidence: 1.00)")
                         else:
                             logger.debug(f"⏰ Skipping old buffered message from {author_name} ({int(age_seconds)}s old)")
+                            logger.info("🤖🧠 [QWEN-DAE-DECISION] SKIP old_message (confidence: 0.90)")
                             return {"skip": True, "reason": "old_buffered_event"}
                 except Exception as e:
                     logger.debug(f"Could not parse timestamp: {e}")
@@ -335,8 +354,8 @@ class MessageProcessor:
         try:
             # Priority 0: Fact-check commands with consciousness emojis (HIGHEST PRIORITY)
             if processed_message.get("has_factcheck"):
-                # Check moderator throttling first (WSP 84)
-                if self.intelligent_throttle:
+                # Check moderator throttling first (WSP 84) - only for actual moderators
+                if self.intelligent_throttle and role == 'MOD':
                     allowed, block_msg = self.intelligent_throttle.check_moderator_command_allowed(author_id, author_name, role, message_text)
                     if not allowed:
                         logger.info(f"🔍🚫 Moderator {author_name} blocked: {block_msg}")
@@ -359,8 +378,8 @@ class MessageProcessor:
             # Priority 1: PQN Research Commands (WSP 84 - Using existing handlers)
             # See: modules/ai_intelligence/pqn_alignment/docs/PQN_CHAT_INTEGRATION.md
             if self._check_pqn_command(message_text):
-                # Check moderator throttling (WSP 84)
-                if self.intelligent_throttle:
+                # Check moderator throttling (WSP 84) - only for actual moderators
+                if self.intelligent_throttle and role == 'MOD':
                     allowed, block_msg = self.intelligent_throttle.check_moderator_command_allowed(author_id, author_name, role, message_text)
                     if not allowed:
                         logger.info(f"🔬🚫 Moderator {author_name} blocked: {block_msg}")
@@ -395,6 +414,7 @@ class MessageProcessor:
                 logger.info(f"   Can use consciousness: {can_use_consciousness} (mode: {self.consciousness_mode})")
 
                 if can_use_consciousness:
+                    logger.info("🤖🧠 [QWEN-DAE-DECISION] EXECUTE consciousness_response (confidence: 0.85)")
                     # Generate agentic response based on chat history
                     agentic_response = self.agentic_engine.generate_agentic_response(
                         author_name, message_text, role
@@ -402,6 +422,7 @@ class MessageProcessor:
 
                     if agentic_response:
                         logger.info(f"🤖 Agentic ✊✋🖐️ response for {author_name} (mode: {self.consciousness_mode})")
+                        logger.info("🤖🧠 [QWEN-DAE-PERFORMANCE] consciousness_response: generated successfully")
                         # Mark this as a consciousness response in processed data
                         processed_message["response_type"] = "consciousness"
                         # If it's a mod, make sure we @ them
@@ -426,8 +447,9 @@ class MessageProcessor:
 
             # Priority 3: Handle remaining fact-check commands (without consciousness emojis)
             if processed_message.get("has_factcheck"):
-                # Check moderator throttling (WSP 84)
-                if self.intelligent_throttle:
+                logger.info("🤖🧠 [QWEN-DAE-DECISION] EXECUTE factcheck_handler (confidence: 0.80)")
+                # Check moderator throttling (WSP 84) - only for actual moderators
+                if self.intelligent_throttle and role == 'MOD':
                     allowed, block_msg = self.intelligent_throttle.check_moderator_command_allowed(author_id, author_name, role, message_text)
                     if not allowed:
                         logger.info(f"🔍🚫 Moderator {author_name} blocked: {block_msg}")
@@ -445,10 +467,11 @@ class MessageProcessor:
             
             # Priority 4: Handle whack commands (score, level, rank)
             if processed_message.get("has_whack_command"):
+                logger.info("🤖🧠 [QWEN-DAE-DECISION] EXECUTE whack_command_handler (confidence: 0.90)")
                 logger.info(f"🎮 Calling handle_whack_command for: '{message_text}' from {author_name}")
 
-                # Check moderator throttling (WSP 84)
-                if self.intelligent_throttle:
+                # Check moderator throttling (WSP 84) - only for actual moderators
+                if self.intelligent_throttle and role == 'MOD':
                     allowed, block_msg = self.intelligent_throttle.check_moderator_command_allowed(author_id, author_name, role, message_text)
                     if not allowed:
                         logger.info(f"🎮🚫 Moderator {author_name} blocked: {block_msg}")
@@ -473,6 +496,27 @@ class MessageProcessor:
             # Priority 5: Handle MAGA content - just respond with witty comebacks
             # Bot doesn't execute timeouts, only announces them when mods/owner do them
             if processed_message.get("has_maga"):
+                logger.info("🤖🧠 [QWEN-DAE-DECISION] EXECUTE maga_troll_response (confidence: 0.75)")
+
+                # Check GLOBAL MAGA rate limiting FIRST to prevent spam
+                current_time = time.time()
+                if current_time - self.last_global_maga_time < self.global_maga_cooldown:
+                    remaining = self.global_maga_cooldown - (current_time - self.last_global_maga_time)
+                    logger.debug(f"🛡️ GLOBAL: Skipping MAGA response - global cooldown active ({remaining:.0f}s remaining)")
+                    return None
+
+                # Check per-user MAGA rate limiting
+                if self._is_maga_rate_limited(author_id):
+                    logger.debug(f"🛡️ Skipping MAGA response to {author_name} - user rate limited (10 min cooldown)")
+                    return None
+
+                # Also check intelligent throttle for MAGA responses - only for moderators
+                if self.intelligent_throttle and role == 'MOD':
+                    allowed, block_msg = self.intelligent_throttle.check_moderator_command_allowed(author_id, author_name, role, message_text)
+                    if not allowed:
+                        logger.info(f"🛡️ Intelligent throttle blocked MAGA response to {author_name}: {block_msg}")
+                        return None
+
                 response = self.greeting_generator.get_response_to_maga(processed_message.get("text", ""))
                 if response:
                     # Only send if we can @mention properly
@@ -480,6 +524,9 @@ class MessageProcessor:
                         # Personalize with username
                         response = f"@{author_name} {response}"
                         logger.info(f"🎯 MAGA troll response for @{author_name}")
+                        # Update MAGA response times to prevent spam
+                        self._update_maga_time(author_id)
+                        self.last_global_maga_time = time.time()  # Update global cooldown
                         return response
                     else:
                         logger.debug(f"⚠️ DELETING MAGA response - cannot @mention '{author_name}'")
@@ -487,8 +534,10 @@ class MessageProcessor:
 
             # Priority 6: Handle regular emoji triggers
             if processed_message.get("has_trigger"):
+                logger.info("🤖🧠 [QWEN-DAE-DECISION] EXECUTE emoji_trigger_handler (confidence: 0.70)")
                 if processed_message.get("is_rate_limited"):
                     logger.debug(f"⏳ User {author_name} is rate limited")
+                    logger.info("🤖🧠 [QWEN-DAE-DECISION] SKIP rate_limited_user (confidence: 0.95)")
                     return None
                 
                 # Update trigger time for rate limiting
@@ -591,10 +640,10 @@ class MessageProcessor:
     def _is_rate_limited(self, user_id: str) -> bool:
         """
         Check if a user is rate limited from triggering gestures.
-        
+
         Args:
             user_id: The user's ID
-            
+
         Returns:
             True if user is rate limited, False otherwise
         """
@@ -605,6 +654,28 @@ class MessageProcessor:
                 logger.debug(f"⏳ Rate limited user {user_id} for {self.trigger_cooldown - time_since_last:.1f}s")
                 return True
         return False
+
+    def _is_maga_rate_limited(self, user_id: str) -> bool:
+        """
+        Check if a user is rate limited from MAGA responses (longer cooldown to prevent spam).
+
+        Args:
+            user_id: The user's ID
+
+        Returns:
+            True if user is rate limited, False otherwise
+        """
+        current_time = time.time()
+        if user_id in self.last_maga_time:
+            time_since_last = current_time - self.last_maga_time[user_id]
+            if time_since_last < self.maga_cooldown:
+                logger.debug(f"🛡️ MAGA rate limited user {user_id} for {self.maga_cooldown - time_since_last:.1f}s")
+                return True
+        return False
+
+    def _update_maga_time(self, user_id: str):
+        """Update the last MAGA response time for a user."""
+        self.last_maga_time[user_id] = time.time()
     
     def _is_valid_mention(self, username: str) -> bool:
         """
@@ -731,7 +802,11 @@ class MessageProcessor:
         """Get processing statistics."""
         return {
             "trigger_cooldown": self.trigger_cooldown,
+            "maga_cooldown": self.maga_cooldown,
+            "global_maga_cooldown": self.global_maga_cooldown,
             "active_users": len(self.last_trigger_time),
+            "maga_rate_limited_users": len(self.last_maga_time),
+            "last_global_maga_response": self.last_global_maga_time,
             "trigger_emojis": self.trigger_emojis,
             "memory_dir": self.memory_dir,
             "grok_enabled": self.grok is not None,

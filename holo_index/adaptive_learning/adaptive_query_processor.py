@@ -27,6 +27,12 @@ import re
 from modules.infrastructure.database import AgentDB
 
 logger = logging.getLogger(__name__)
+# Suppress console output for 0102 agent optimization (WSP 64 compliance)
+logger.propagate = False  # Don't send to root logger
+if not logger.handlers:  # Only add handler if none exists
+    handler = logging.NullHandler()  # Null handler suppresses all output
+    logger.addHandler(handler)
+logger.setLevel(logging.ERROR)  # Only log errors, suppress warnings
 
 @dataclass
 class QueryIntent:
@@ -48,7 +54,7 @@ class AdaptiveQueryResult:
 
 class AdaptiveQueryProcessor:
     """
-    Adaptive query processor using MLE-STAR for intelligent query enhancement.
+    Adaptive query processor using direct optimization for intelligent query enhancement.
 
     Implements Phase 3 adaptive learning by:
     1. Query intent classification through ablation studies
@@ -82,7 +88,7 @@ class AdaptiveQueryProcessor:
 
     async def process_query_adaptively(self, query: str, context: Dict[str, Any] = None) -> AdaptiveQueryResult:
         """
-        Process query using MLE-STAR adaptive learning.
+        Process query using direct adaptive optimization.
 
         Args:
             query: Original user query
@@ -246,7 +252,7 @@ class AdaptiveQueryProcessor:
 
         # Validate enhancement quality
         if not self._validate_enhancement(query, enhanced_query):
-            logger.warning(f"Enhancement validation failed, using original query: {query}")
+            # Enhancement validation failed - using original query (internal processing, not shown to agents)
             return query
 
         return enhanced_query

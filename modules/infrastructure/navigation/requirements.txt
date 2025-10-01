@@ -1,0 +1,1 @@
+# Navigation module - No external dependencies

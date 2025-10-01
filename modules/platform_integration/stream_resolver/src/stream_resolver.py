@@ -152,14 +152,23 @@ class CircuitBreaker:
         self.last_failure_time = time.time()
 
         if self.state == "HALF_OPEN":
-            # Failed during recovery - go back to OPEN
+            # Failed in HALF_OPEN state - go back to OPEN
             self.state = "OPEN"
             self.consecutive_successes = 0
-            logger.warning(f"⚠️ Circuit breaker recovery failed - back to OPEN state")
+            logger.warning(f"🔴 Circuit breaker failed in HALF_OPEN state - back to OPEN (failure {self.failure_count}/{self.failure_threshold})")
         elif self.failure_count >= self.failure_threshold:
             self.state = "OPEN"
-            logger.warning(f"🚫 Circuit breaker OPEN after {self.failure_count} failures (threshold: {self.failure_threshold})")
-            logger.info(f"⏰ Will attempt recovery in {self.timeout} seconds")
+            logger.error(f"🔴 Circuit breaker OPEN after {self.failure_count} failures - blocking API calls for {self.timeout}s")
+        else:
+            logger.warning(f"⚠️ Circuit breaker failure {self.failure_count}/{self.failure_threshold}")
+
+    def reset(self):
+        """Manually reset the circuit breaker (for testing/debugging)."""
+        self.failure_count = 0
+        self.last_failure_time = None
+        self.state = "CLOSED"
+        self.consecutive_successes = 0
+        logger.info("🔄 Circuit breaker manually reset to CLOSED state")
 
 # Global circuit breaker instance
 circuit_breaker = CircuitBreaker(
@@ -724,6 +733,15 @@ class StreamResolver:
         self._cache = {}
         self._last_stream_check = {}
 
+        # QWEN Intelligence Integration
+        try:
+            from modules.communication.livechat.src.qwen_youtube_integration import get_qwen_youtube
+            self.qwen = get_qwen_youtube()
+            logger.info("🤖🧠 [QWEN-RESOLVER] QWEN intelligence connected to StreamResolver")
+        except Exception as e:
+            logger.debug(f"QWEN not available for StreamResolver: {e}")
+            self.qwen = None
+
         # Initialize database for pattern learning (WSP 78)
         self.db = StreamResolverDB() if StreamResolverDB else None
 
@@ -736,6 +754,12 @@ class StreamResolver:
                 self.logger.info("🌐 NO-QUOTA mode initialized - using web scraping")
             except ImportError:
                 self.logger.warning("NoQuotaStreamChecker not available")
+
+    def reset_circuit_breaker(self):
+        """Reset the global circuit breaker to recover from stuck OPEN state."""
+        global circuit_breaker
+        circuit_breaker.reset()
+        self.logger.info("🔄 Circuit breaker reset requested from StreamResolver")
     
     def _ensure_memory_dir(self):
         """Ensure memory directory exists for session caching."""
@@ -744,8 +768,8 @@ class StreamResolver:
     def _get_channel_display_name(self, channel_id: str) -> str:
         """Get human-readable channel name for logging with visual indicators"""
         channel_map = {
-            'UC-LSSlOZwpGIRIYihaz8zCw': 'UnDaoDu 🧘',      # Meditation emoji for mindfulness/spirituality
-            'UCSNTUXjAgpd4sgWYP0xoJgw': 'FoundUps 🐕',     # Dog emoji for loyalty/persistence
+            'UCSNTUXjAgpd4sgWYP0xoJgw': 'UnDaoDu 🧘',      # Meditation emoji for mindfulness/spirituality
+            'UC-LSSlOZwpGIRIYihaz8zCw': 'FoundUps 🐕',     # Dog emoji for loyalty/persistence
             'UCklMTNnu5POwRmQsg5JJumA': 'Move2Japan 🍣'   # Sushi emoji for Japan
         }
         return channel_map.get(channel_id, f"Channel-{channel_id[:8]}")
@@ -847,8 +871,8 @@ class StreamResolver:
         # Fallback hardcoded routing if config fails
         from modules.platform_integration.social_media_orchestrator.src.unified_linkedin_interface import LinkedInCompanyPage
         linkedin_routing = {
-            'UC-LSSlOZwpGIRIYihaz8zCw': LinkedInCompanyPage.UNDAODU,     # UnDaoDu
-            'UCSNTUXjAgpd4sgWYP0xoJgw': LinkedInCompanyPage.FOUNDUPS,   # FoundUps
+            'UCSNTUXjAgpd4sgWYP0xoJgw': LinkedInCompanyPage.UNDAODU,     # UnDaoDu
+            'UC-LSSlOZwpGIRIYihaz8zCw': LinkedInCompanyPage.FOUNDUPS,   # FoundUps
             'UCklMTNnu5POwRmQsg5JJumA': LinkedInCompanyPage.MOVE2JAPAN, # Move2Japan
         }
         page = linkedin_routing.get(channel_id, LinkedInCompanyPage.FOUNDUPS)
@@ -1132,102 +1156,133 @@ class StreamResolver:
             logger.info("="*60)
 
             # NO-QUOTA mode: Intelligent pattern-based checking
+            total_channels = len(channels_to_check) or 1
+            channels_queue = list(channels_to_check)
             attempt = 0
-            base_delay = 2.0  # Start with 2 second delay
 
             # Get pattern-based predictions for all channels
             channel_predictions = {}
-            for channel_id in channels_to_check:
+            for cid in channels_to_check:
                 if self.db:
-                    predictions = self.db.predict_next_stream_time(channel_id)
+                    predictions = self.db.predict_next_stream_time(cid)
                     if predictions:
-                        channel_predictions[channel_id] = predictions
+                        channel_predictions[cid] = predictions
 
-            while True:  # Infinite loop until stream is found
+            while channels_queue:
                 attempt += 1
 
-                # Select channel to check using pattern-based intelligence
-                if channel_predictions and attempt > 1:
-                    # Use pattern predictions for intelligent channel selection
-                    current_channel_id = self._select_channel_by_pattern(channel_predictions, channels_to_check)
+                if channel_id:
+                    current_channel_id = channels_queue.pop(0)
+                elif channel_predictions and attempt > 1:
+                    current_channel_id = self._select_channel_by_pattern(channel_predictions, channels_queue)
+                    if current_channel_id in channels_queue:
+                        channels_queue.remove(current_channel_id)
+                    else:
+                        current_channel_id = channels_queue.pop(0)
                 else:
-                    # Fallback to rotation for first few attempts or if no patterns
-                    current_channel_id = channels_to_check[(attempt - 1) % len(channels_to_check)]
+                    current_channel_id = channels_queue.pop(0)
 
-                # Only log every 10th attempt to reduce log spam in idle mode
-                should_log = (attempt % 10 == 1 or attempt <= 5)
-                if should_log:
-                    channel_name = self._get_channel_display_name(current_channel_id)
-                    pattern_info = ""
-                    if current_channel_id in channel_predictions:
-                        pred = channel_predictions[current_channel_id]
-                        pattern_info = f" (predicted: {pred.get('confidence', 0):.2f} confidence)"
-                    logger.info(f"🔄 NO-QUOTA pattern-based checking - attempt #{attempt}, checking {channel_name}{pattern_info} 🔍")
+                channel_name = self._get_channel_display_name(current_channel_id)
+                pattern_info = ""
+                if current_channel_id in channel_predictions:
+                    pred = channel_predictions[current_channel_id]
+                    pattern_info = f" (predicted: {pred.get('confidence', 0):.2f} confidence)"
 
-                # PRIORITY 4a: Check environment variable for known video ID (only if it matches current channel)
+                if channel_id:
+                    logger.info(f"🔍 NO-QUOTA check for {channel_name}{pattern_info}")
+                else:
+                    logger.info(f"🤖🧠 🔄 NO-QUOTA rotation [{attempt}/{total_channels}] - QWEN checking {channel_name}{pattern_info}")
+
+                if self.qwen:
+                    try:
+                        profile = self.qwen.get_channel_profile(current_channel_id, channel_name)
+                        should_check, reason = profile.should_check_now()
+                        if not should_check:
+                            logger.info(f"⏭️ Skipping {channel_name}: {reason}")
+                            continue
+                    except Exception as q_err:
+                        logger.debug(f"QWEN profile lookup failed for {channel_name}: {q_err}")
+
                 env_video_id = get_env_variable("YOUTUBE_VIDEO_ID", default=None)
                 if env_video_id:
-                    if should_log:
-                        logger.info(f"📺 Checking specific video from env: {env_video_id}")
-                    result = self.no_quota_checker.check_video_is_live(env_video_id)
-                    if result.get("live"):
+                    logger.info(f"📺 Checking specific video from env: {env_video_id}")
+                    env_result = self.no_quota_checker.check_video_is_live(env_video_id, channel_name)
+                    if env_result.get('rate_limited'):
+                        cooldown = env_result.get('cooldown')
+                        if cooldown:
+                            logger.warning(f"⚠️ Rate limit hit while checking env video {env_video_id} on {channel_name} – pausing {cooldown:.0f}s")
+                        else:
+                            logger.warning(f"⚠️ Rate limit hit while checking env video {env_video_id} on {channel_name}")
+                        if self.qwen:
+                            try:
+                                profile = self.qwen.get_channel_profile(current_channel_id, channel_name)
+                                profile.record_429_error()
+                                self.qwen.global_heat_level = min(self.qwen.global_heat_level + 1, 10)
+                            except Exception as q_err:
+                                logger.debug(f"QWEN rate-limit record failed: {q_err}")
+                        continue
+                    if env_result.get('live'):
                         logger.info("✅ STREAM IS LIVE (via NO-QUOTA video check)")
-                        # Record stream start in database (WSP 78)
                         if self.db:
                             try:
-                                self.db.record_stream_start(current_channel_id, env_video_id, result.get('title', 'Live Stream'))
-                                # Trigger pattern learning from historical data
+                                self.db.record_stream_start(current_channel_id, env_video_id, env_result.get('title', 'Live Stream'))
                                 self.db.analyze_and_update_patterns(current_channel_id)
                             except Exception as db_err:
                                 logger.warning(f"Database error (non-critical): {db_err}")
-                                # Continue execution - database errors shouldn't prevent stream detection
-                        # Trigger social media posting with duplicate check
-                        self._trigger_social_media_post(env_video_id, result.get('title', 'Live Stream'), current_channel_id)
-                        # Return video_id but no chat_id in NO-QUOTA mode
                         return env_video_id, None
-                    if should_log:
-                        logger.info("❌ Specified video not live")
+                    logger.info("❌ Specified video not live")
 
-                # PRIORITY 4b: Search the current channel for live streams
-                channel_name = self._get_channel_display_name(current_channel_id)
-                if should_log:
-                    logger.info(f"🔍 Searching {channel_name} ({current_channel_id[:12]}...) for live streams...")
-                # Record check attempt for pattern learning
+                logger.info(f"🔍 Searching {channel_name} ({current_channel_id[:12]}...) for live streams...")
                 check_start = time.time()
                 result = self.no_quota_checker.check_channel_for_live(current_channel_id, channel_name)
-                check_duration = int((time.time() - check_start) * 1000)  # ms
+                check_duration = int((time.time() - check_start) * 1000)
 
-                # Record check result in database for pattern learning
                 if self.db:
-                    self.db.record_check(current_channel_id, result and result.get("live"), check_duration)
+                    found = bool(result and result.get('live'))
+                    self.db.record_check(current_channel_id, found, check_duration)
 
-                if result and result.get("live"):
-                    video_id = result.get("video_id")
+                if isinstance(result, dict) and result.get('rate_limited'):
+                    cooldown = result.get('cooldown')
+                    if cooldown:
+                        logger.warning(f"⚠️ Rate limit encountered while scraping {channel_name} – cooling down for {cooldown:.0f}s")
+                    else:
+                        logger.warning(f"⚠️ Rate limit encountered while scraping {channel_name}")
+                    if current_channel_id in channel_predictions:
+                        channel_predictions[current_channel_id]['confidence'] = 0.0
+                    if self.qwen:
+                        try:
+                            profile = self.qwen.get_channel_profile(current_channel_id, channel_name)
+                            profile.record_429_error()
+                            self.qwen.global_heat_level = min(self.qwen.global_heat_level + 1, 10)
+                        except Exception as q_err:
+                            logger.debug(f"QWEN rate-limit record failed: {q_err}")
+                    continue
+
+                if result and result.get('live'):
+                    video_id = result.get('video_id')
                     if video_id:
                         logger.info(f"✅ Found live stream on {channel_name}: {video_id} 🎉")
-                        # Record stream start in database (WSP 78)
                         if self.db:
                             try:
                                 self.db.record_stream_start(current_channel_id, video_id, result.get('title', 'Live Stream'))
-                                # Trigger pattern learning from historical data
                                 self.db.analyze_and_update_patterns(current_channel_id)
                             except Exception as db_err:
                                 logger.warning(f"Database error (non-critical): {db_err}")
-                                # Continue execution - database errors shouldn't prevent stream detection
-                        # Trigger social media posting with duplicate check
-                        self._trigger_social_media_post(video_id, result.get('title', 'Live Stream'), current_channel_id)
                         return video_id, None
 
-                # Calculate delay using pattern-based intelligence
-                delay = self._calculate_pattern_based_delay(current_channel_id, channel_predictions, attempt, base_delay)
-                if should_log:
-                    logger.info(f"⏳ No stream found, waiting {delay:.1f}s before next check...")
-                time.sleep(delay)
+                if channels_queue:
+                    delay = 2.0
+                    next_channel = self._get_channel_display_name(channels_queue[0]) if channels_queue else channel_name
+                    logger.info(f"⏳ No stream on {channel_name}, checking {next_channel} in {delay:.1f}s...")
+                    time.sleep(delay)
+                else:
+                    logger.info(f"❌ No stream on {channel_name} (last channel checked)")
 
-            # If we reach here, NO-QUOTA mode completed without finding a stream
-            logger.info("🏁 NO-QUOTA idle checking completed - no streams found")
+            if channel_id:
+                logger.info(f"❌ No stream found on {self._get_channel_display_name(channel_id)}")
+            else:
+                logger.info(f"❌ No streams found on any of the {total_channels} channels")
             return None
-
         else:
             # NO-QUOTA mode not available but could be initialized
             logger.info("⚠️ NO-QUOTA mode not available, attempting to initialize...")
@@ -1279,8 +1334,8 @@ class StreamResolver:
                     stream_title = self._get_stream_title(video_id)
                     if self.db:
                         self.db.record_stream_start(search_channel_id, video_id, stream_title)
-                    # Trigger social media posting with duplicate check
-                    self._trigger_social_media_post(video_id, stream_title)
+                    # Note: Social media posting handled by auto_moderator_dae
+                    # self._trigger_social_media_post(video_id, stream_title)
                     # Save successful connection to cache for future instant access
                     self._save_session_cache(video_id, chat_id)
                     self.logger.info(f"✅ Found and cached new livestream for future instant access")
@@ -1355,6 +1410,34 @@ class StreamResolver:
         """
         self.logger.info(f"[STREAM] 🚀 Starting social media posting trigger for {video_id}")
         self.logger.info(f"[STREAM] 📝 Title: {stream_title}, Channel: {channel_id}")
+
+        # Check if posting is enabled for this channel
+        import json
+        import os
+        config_path = os.path.join(
+            os.path.dirname(__file__),
+            '../../social_media_orchestrator/config/channel_routing.json'
+        )
+
+        posting_enabled = True  # Default to enabled
+        try:
+            if os.path.exists(config_path):
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+                    # Check channel-specific config
+                    channel_config = config.get('channel_routing', {}).get(channel_id)
+                    if channel_config:
+                        posting_enabled = channel_config.get('enabled', True)
+                        if not posting_enabled:
+                            self.logger.info(f"[STREAM] ⏸️ Posting disabled for channel {channel_id} ({channel_config.get('name')})")
+                            return
+                    # Check default if no channel-specific config
+                    elif config.get('default_routing', {}).get('enabled') == False:
+                        self.logger.info(f"[STREAM] ⏸️ Posting disabled by default routing")
+                        return
+        except Exception as e:
+            self.logger.warning(f"[STREAM] Warning: Could not check posting config: {e}")
+            # Continue with posting if config check fails
 
         try:
             self.logger.info("[STREAM] 📦 Importing social_media_orchestrator module...")
@@ -1444,4 +1527,5 @@ if __name__ == '__main__':
     except Exception as e:
         logger.exception(f"Error during direct execution: {e}")
         print(f"Error: {e}")
+        sys.exit(1) 
         sys.exit(1) 

@@ -5,6 +5,7 @@
 HoloIndex has undergone a **fundamental transformation** from a search tool into the **autonomous intelligence foundation** for the entire FoundUps ecosystem.
 
 ## Vision: The Green Foundation Board Agent
+> **Status clarification (2025-09-28):** Roadmap phases record planned work. Production today still runs on classical embeddings; quantum items remain future research.
 
 **Phase 1 (Complete)**: Basic semantic search with WSP compliance checking
 **Phase 2 (Complete)**: LLM-powered intelligent guidance and pattern learning

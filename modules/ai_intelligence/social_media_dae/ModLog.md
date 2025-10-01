@@ -1,5 +1,26 @@
 # ModLog for Social Media DAE
 
+## LinkedIn Article Creation Integration
+**WSP Protocol**: WSP 27 (Universal DAE), WSP 80 (Cube Architecture), WSP 84 (Don't vibecode)
+
+### Changes
+- Added `create_linkedin_article()` method to SocialMediaDAE class
+- Added `post_tts_experiment_article()` method for scientific content publication
+- Integrated LinkedIn native article editor automation (Medium-style articles)
+- Enhanced DAE to serve as central orchestrator for advanced content creation
+- Updated roadmap to prioritize LinkedIn article creation (Phase 2C)
+
+### Architecture Changes
+- Social Media DAE now functions as central 0102 digital twin orchestrator
+- Handles intelligent routing between posts vs articles based on content type
+- Maintains single consciousness across all platform interactions
+- Extends existing AntiDetectionLinkedIn infrastructure for article creation
+
+### Future Implementation
+- `create_full_article()` method to be implemented in AntiDetectionLinkedIn
+- Browser automation for LinkedIn article editor (title, content, tags, publishing)
+- TTS experiment article as first demonstration of capability
+
 ## Voice Control Implementation  
 **WSP Protocol**: WSP 27, 54, 22, 11, 48
 

@@ -14,8 +14,8 @@ from enum import Enum
 class LinkedInPage(Enum):
     """LinkedIn company pages"""
     UNDAODU = "165749317"
-    FOUNDUPS = "105793707"
-    GEOZAI = "106064089"
+    FOUNDUPS = "1263645"  # Corrected FoundUps page ID
+    GEOZAI = "104834798"  # Corrected GeoZai page ID for Move2Japan
 
 
 class XAccount(Enum):
@@ -90,11 +90,12 @@ class ChannelConfigurationManager:
             try:
                 with open(self.config_path, 'r') as f:
                     loaded_config = json.load(f)
-                    # Merge with defaults
+                    # Start with loaded config, then add any missing defaults
+                    self.channel_configs = loaded_config.copy()
+                    # Add any default configs that aren't in the loaded file
                     for channel, config in default_config.items():
-                        if channel in loaded_config:
-                            config.update(loaded_config[channel])
-                    self.channel_configs = default_config
+                        if channel not in self.channel_configs:
+                            self.channel_configs[channel] = config
                     self.logger.info(f"[CONFIG] Loaded channel configuration from {self.config_path}")
             except Exception as e:
                 self.logger.warning(f"[CONFIG] Could not load config file: {e}, using defaults")
@@ -115,31 +116,63 @@ class ChannelConfigurationManager:
         except Exception as e:
             self.logger.error(f"[CONFIG] Failed to save configuration: {e}")
 
-    def get_channel_config(self, channel_name: str) -> Optional[Dict[str, Any]]:
+    def get_channel_config(self, channel_identifier: str) -> Optional[Dict[str, Any]]:
         """
         Get configuration for a specific channel
 
         Args:
-            channel_name: Channel name or handle
+            channel_identifier: Channel name, handle, or YouTube channel ID
 
         Returns:
             Channel configuration dictionary or None
         """
+        # First check if it's a YouTube channel ID by searching all configs
+        if channel_identifier.startswith('UC'):
+            # Search for channel ID in all configs
+            for config_name, config in self.channel_configs.items():
+                if config.get('channel_id') == channel_identifier:
+                    self.logger.info(f"[CONFIG] Found config for channel ID {channel_identifier}: {config_name}")
+                    self.logger.info(f"[CONFIG] LinkedIn page: {config.get('linkedin_page')} | X account: {config.get('x_account')}")
+                    # Validate configuration
+                    if config_name == "Move2Japan" and config.get('linkedin_page') != "104834798":
+                        self.logger.error(f"[CONFIG ERROR] Move2Japan should use LinkedIn page 104834798 (GeoZai), not {config.get('linkedin_page')}")
+                    elif config_name == "@UnDaoDu" and config.get('linkedin_page') != "165749317":
+                        self.logger.error(f"[CONFIG ERROR] UnDaoDu should use LinkedIn page 165749317, not {config.get('linkedin_page')}")
+                    elif config_name in ["@FoundUps", "FoundUps"] and config.get('linkedin_page') != "1263645":
+                        self.logger.error(f"[CONFIG ERROR] FoundUps should use LinkedIn page 1263645, not {config.get('linkedin_page')}")
+                    return config.copy()
+
+            # Fallback to hardcoded mapping if not found
+            channel_id_mapping = {
+                'UCklMTNnu5POwRmQsg5JJumA': 'Move 2 Japan',
+                'UC-LSSlOZwpGIRIYihaz8zCw': '@UnDaoDu',
+                'UC8NMhWbOE9OVJF0V4DRmNnQ': '@FoundUps',
+                'UCSNTUXjAgpd4sgWYP0xoJgw': 'FoundUps',  # Alternative FoundUps ID
+                'UCOdP2Gc3n8xqGaHlDXi-Mbg': '@UnDaoDu',  # UnDaoDu main ID
+                'UCMjyY1Sh8TAQCTnSGiLVGnQ': 'Move 2 Japan'  # Move 2 Japan main ID
+            }
+            channel_name = channel_id_mapping.get(channel_identifier)
+            if channel_name and channel_name in self.channel_configs:
+                config = self.channel_configs[channel_name]
+                self.logger.info(f"[CONFIG] Found config via mapping for {channel_identifier}: {channel_name}")
+                self.logger.info(f"[CONFIG] LinkedIn page: {config.get('linkedin_page')} | X account: {config.get('x_account')}")
+                return config.copy()
+
         # Try exact match first
-        if channel_name in self.channel_configs:
-            return self.channel_configs[channel_name].copy()
+        if channel_identifier in self.channel_configs:
+            return self.channel_configs[channel_identifier].copy()
 
         # Try case-insensitive match
         for key, config in self.channel_configs.items():
-            if key.lower() == channel_name.lower():
+            if key.lower() == channel_identifier.lower():
                 return config.copy()
 
         # Try matching by channel_name field
         for config in self.channel_configs.values():
-            if config.get('channel_name', '').lower() == channel_name.lower():
+            if config.get('channel_name', '').lower() == channel_identifier.lower():
                 return config.copy()
 
-        self.logger.warning(f"[CONFIG] No configuration found for channel: {channel_name}")
+        self.logger.warning(f"[CONFIG] No configuration found for channel: {channel_identifier}")
         return None
 
     def get_linkedin_page_for_channel(self, channel_name: str) -> Optional[str]:

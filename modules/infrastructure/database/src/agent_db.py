@@ -5,7 +5,7 @@ Shared agent memory and state management.
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 from .db_manager import DatabaseManager
 
@@ -133,9 +133,19 @@ class AgentDB:
                     discovered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     context JSON,
                     assigned_to TEXT,
-                    assigned_at DATETIME,
-                    completed_at DATETIME,
-                    status TEXT DEFAULT 'pending'
+                    assigned_at DATETIME
+                )
+
+            ''')
+
+            # Index refresh tracking
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS index_refresh_tracking (
+                    index_type TEXT PRIMARY KEY,
+                    last_refresh DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    refresh_count INTEGER DEFAULT 0,
+                    last_refresh_duration REAL,
+                    total_entries_indexed INTEGER DEFAULT 0
                 )
             ''')
 
@@ -264,6 +274,21 @@ class AgentDB:
                         row[field] = None
 
         return results
+
+    def get_recent_breadcrumb_agents(self, minutes: int = 120, limit: int = 5) -> List[str]:
+        """Get distinct breadcrumb agent IDs within the time window."""
+        cutoff = datetime.now() - timedelta(minutes=minutes)
+        rows = self.execute_query(
+            """
+            SELECT DISTINCT agent_id
+            FROM agents_breadcrumbs
+            WHERE agent_id IS NOT NULL AND agent_id != '' AND timestamp >= ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+            """,
+            (cutoff.isoformat(), limit)
+        )
+        return [row['agent_id'] for row in rows]
 
     # ============================================================================
     # HANDOFF CONTRACTS (Multi-Agent Task Assignment)
@@ -459,7 +484,7 @@ class AgentDB:
         """Create an autonomous task."""
         try:
             self.db.execute_write('''
-                INSERT INTO agents_autonomous_tasks
+                INSERT OR REPLACE INTO agents_autonomous_tasks
                 (task_id, description, required_skills, estimated_complexity,
                  priority_score, context)
                 VALUES (?, ?, ?, ?, ?, ?)
@@ -503,3 +528,43 @@ class AgentDB:
             SET completed_at = ?, status = 'completed'
             WHERE task_id = ?
         ''', (datetime.now().isoformat(), task_id)) > 0
+
+    # ============================================================================
+    # INDEX REFRESH TRACKING (HoloIndex Automation)
+    # ============================================================================
+
+    def record_index_refresh(self, index_type: str, duration: float, entries_count: int) -> None:
+        """Record successful index refresh."""
+        with self.db.get_connection() as conn:
+            conn.execute('''
+                INSERT OR REPLACE INTO index_refresh_tracking
+                (index_type, last_refresh, refresh_count, last_refresh_duration, total_entries_indexed)
+                VALUES (
+                    ?,
+                    ?,
+                    COALESCE((SELECT refresh_count FROM index_refresh_tracking WHERE index_type = ?), 0) + 1,
+                    ?,
+                    ?
+                )
+            ''', (index_type, datetime.now(), index_type, duration, entries_count))
+
+    def get_last_index_refresh(self, index_type: str) -> Optional[datetime]:
+        """Get timestamp of last index refresh."""
+        result = self.db.execute_query(
+            "SELECT last_refresh FROM index_refresh_tracking WHERE index_type = ?",
+            (index_type,)
+        )
+        return result[0]['last_refresh'] if result else None
+
+    def should_refresh_index(self, index_type: str, max_age_hours: int = 24) -> bool:
+        """Check if index should be refreshed based on age."""
+        last_refresh = self.get_last_index_refresh(index_type)
+        if not last_refresh:
+            return True  # Never refreshed, should refresh
+
+        # Parse the datetime string
+        if isinstance(last_refresh, str):
+            last_refresh = datetime.fromisoformat(last_refresh.replace('Z', '+00:00'))
+
+        age = datetime.now() - last_refresh
+        return age.total_seconds() > (max_age_hours * 3600)

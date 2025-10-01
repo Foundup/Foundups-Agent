@@ -1,0 +1,8 @@
+# Infrastructure Deployment Module Dependencies
+# External tools required (not Python packages):
+# - Vercel CLI (npm install -g vercel)
+# - Node.js 14+ with npm
+# - PowerShell 5.1+ (for deploy-vercel.ps1)
+
+# No Python dependencies for this module
+# Deployment scripts are standalone

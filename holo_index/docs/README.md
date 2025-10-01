@@ -1,9 +1,13 @@
-# HoloIndex - Semantic Code Discovery System
+﻿# HoloIndex - Semantic Code Discovery System
 
 ## Overview
 
 HoloIndex is a sophisticated semantic search system designed to prevent vibecoding by finding existing code implementations and providing real-time WSP compliance guidance.
 
+## Key Operational Docs
+- [Operational Playbook](OPERATIONAL_PLAYBOOK.md) — primary runbook for 0102 (checklists, TODO flow, telemetry instructions).
+- [Multi-Agent Breadcrumb Example](MULTI_AGENT_BREADCRUMB_EXAMPLE.md) — examples for collaborative hand-offs.
+- [CLI Refactoring Plan](CLI_REFACTORING_PLAN.md) — implementation notes for the search/CLI pipeline.
 ## Key Features
 
 ### 🔍 Semantic Code Discovery

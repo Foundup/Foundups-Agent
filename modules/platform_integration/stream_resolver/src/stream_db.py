@@ -104,6 +104,40 @@ class StreamResolverDB(ModuleDB):
             (video_id,)
         )
 
+    def is_stream_already_ended(self, video_id: str) -> bool:
+        """
+        Check if a stream has already been detected and ended.
+        This prevents re-detecting old streams as live.
+
+        🤖🧠 [QWEN] Intelligence: Learn from past detections to prevent false positives
+        """
+        result = self.select(
+            "stream_times",
+            "video_id = ? AND stream_end IS NOT NULL",
+            (video_id,)
+        )
+        if result:
+            logger.info(f"🤖🧠 [QWEN-DB] Stream {video_id} already ended - preventing false positive")
+            return True
+        return False
+
+    def get_recent_stream_for_channel(self, channel_id: str, hours: int = 24) -> Optional[Dict]:
+        """
+        Get the most recent stream for a channel within the specified hours.
+
+        🤖🧠 [QWEN] Intelligence: Track recent streams to avoid duplicate detection
+        """
+        cutoff = (datetime.now() - timedelta(hours=hours)).isoformat()
+        result = self.select(
+            "stream_times",
+            "channel_id = ? AND stream_start > ? ORDER BY stream_start DESC LIMIT 1",
+            (channel_id, cutoff)
+        )
+        if result:
+            logger.info(f"🤖🧠 [QWEN-DB] Found recent stream for {channel_id}: {result[0]['video_id']}")
+            return result[0]
+        return None
+
     def record_check(self, channel_id: str, found: bool, response_time_ms: int = None) -> int:
         """Record a stream check attempt"""
         now = datetime.now()

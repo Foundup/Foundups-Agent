@@ -16,7 +16,7 @@ import asyncio
 import logging
 import os
 import time
-from typing import Optional
+from typing import Optional, Dict
 from modules.platform_integration.youtube_auth.src.youtube_auth import get_authenticated_service
 from modules.platform_integration.youtube_auth.src.monitored_youtube_service import create_monitored_service
 from modules.platform_integration.stream_resolver.src.stream_resolver import StreamResolver
@@ -64,7 +64,33 @@ class AutoModeratorDAE:
             self.wre_record_error = None
             self.wre_record_success = None
             self.wre_get_optimized = None
-        
+
+        # QWEN Intelligence Integration for smart decision making
+        try:
+            from holo_index.qwen_advisor.intelligent_monitor import IntelligentMonitor, MonitoringContext
+            from holo_index.qwen_advisor.rules_engine import ComplianceRulesEngine
+            self.qwen_monitor = IntelligentMonitor()
+            self.qwen_rules = ComplianceRulesEngine()
+            self.MonitoringContext = MonitoringContext  # Store class reference for later use
+            logger.info("🤖🧠 [QWEN-DAE] Intelligence layer connected - YouTube DAE now has a brain")
+        except Exception as e:
+            logger.debug(f"🤖🧠 [QWEN-DAE] Integration not available: {e}")
+            self.qwen_monitor = None
+            self.qwen_rules = None
+            self.MonitoringContext = None
+
+        # QWEN YouTube Integration for channel prioritization
+        try:
+            from .qwen_youtube_integration import get_qwen_youtube
+            self.qwen_youtube = get_qwen_youtube()  # Use singleton for shared intelligence
+            logger.info("🤖🧠 [QWEN-YOUTUBE] Channel prioritization intelligence connected")
+        except Exception as e:
+            logger.debug(f"🤖🧠 [QWEN-YOUTUBE] Integration not available: {e}")
+            self.qwen_youtube = None
+
+        self.high_priority_pending = False
+        self.priority_reason = None
+
         logger.info("✅ Auto Moderator DAE initialized")
     
     def connect(self) -> bool:
@@ -110,23 +136,65 @@ class AutoModeratorDAE:
         self.service = None
         self.credential_set = "NO-QUOTA"
         logger.info("🌐 Using NO-QUOTA web scraping for stream discovery")
-        logger.info("💡 API tokens will only be used when active stream is found")
+        logger.info("🛡️ Smart verification: NO-QUOTA first, API only for live/uncertain videos")
+        logger.info("💰 MAXIMUM API preservation - API only when posting is possible")
 
         return True
     
-    def find_livestream(self) -> Optional[tuple]:
+    def find_livestream(self) -> Optional[Dict[str, Optional[str]]]:
         """
         Find active livestream on the channel.
         Can check multiple channels if configured.
-        
+        QWEN intelligence decides HOW to search based on patterns.
+
         Returns:
-            Tuple of (video_id, live_chat_id) or None
+            Stream metadata dict containing video_id, live_chat_id, channel_id, and channel_name, or None
         """
         logger.info("🔍 Looking for livestream...")
-        
+
+        # QWEN Intelligence: Analyze context before searching
+        logger.info("🤖🧠 [QWEN-ANALYZE] QWEN analyzing stream detection strategy...")
+        if self.qwen_monitor and self.MonitoringContext:
+            try:
+                context = self.MonitoringContext(
+                    query="youtube_stream_detection",
+                    search_results=[],
+                    patterns_detected=["channel_rotation", "no_quota_mode"]
+                )
+                monitoring_result = self.qwen_monitor.monitor(context)
+
+                # Log QWEN's decision-making process with robot+brain emojis
+                health_status = getattr(monitoring_result, 'health_status', None)
+                if health_status:
+                    logger.info(f"🤖🧠 [QWEN-HEALTH] 📈 System health: {health_status}")
+                    insights = getattr(monitoring_result, 'insights', None)
+                    if insights:
+                        logger.info(f"🤖🧠 [QWEN-INSIGHT] 🔍 {insights}")
+                analysis = getattr(monitoring_result, 'analysis', None)
+                if analysis:
+                    logger.info(f"🤖🧠 [QWEN-ANALYSIS] {analysis}")
+            except Exception as e:
+                logger.info(f"🤖🧠 [QWEN-MONITOR] ⚠️ Monitor analysis incomplete: {e}")
+
         if not self.stream_resolver:
-            self.stream_resolver = StreamResolver(self.service)
-        
+            # Initialize StreamResolver with service if available, otherwise None to trigger NO-QUOTA mode
+            try:
+                self.stream_resolver = StreamResolver(self.service)
+                # Reset circuit breaker on fresh initialization to recover from stuck state
+                self.stream_resolver.reset_circuit_breaker()
+                logger.info("🔄 Circuit breaker reset on StreamResolver initialization")
+            except Exception as e:
+                logger.warning(f"Failed to initialize StreamResolver with service: {e}")
+                logger.info("🔄 Falling back to NO-QUOTA mode initialization")
+                # Initialize without service to force NO-QUOTA mode
+                self.stream_resolver = StreamResolver(None)
+                # Also reset circuit breaker in fallback mode
+                self.stream_resolver.reset_circuit_breaker()
+
+        # Reset priority tracking for this rotation
+        self.high_priority_pending = False
+        self.priority_reason = None
+
         # List of channels to check - PRIORITIZE MOVE2JAPAN FIRST (WSP 3: Multi-channel support)
         channels_to_check = [
             os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UCklMTNnu5POwRmQsg5JJumA'),  # Move2Japan channel - PRIORITY 1
@@ -134,23 +202,83 @@ class AutoModeratorDAE:
             os.getenv('CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),   # UnDaoDu main channel - PRIORITY 3
         ]
         
-        # Filter out None values
+        # Filter out None values and remove duplicates
         channels_to_check = [ch for ch in channels_to_check if ch]
-        
+
+        # Show rotation header with clear channel list
+        logger.info("="*60)
+        logger.info("🔄 CHANNEL ROTATION CHECK (NO-QUOTA MODE with QWEN Intelligence)")
+        logger.info("🤖🧠 [QWEN-INIT] Starting intelligent channel rotation analysis")
+
+        # Use QWEN to prioritize channels if available
+        if hasattr(self, 'qwen_youtube') and self.qwen_youtube:
+            # First check if QWEN recommends checking at all
+            should_check, reason = self.qwen_youtube.should_check_now()
+            logger.info(f"🤖🧠 [QWEN-GLOBAL] Global check decision: {should_check} - {reason}")
+
+            if not should_check:
+                logger.warning(f"🤖🧠 [QWEN-DECISION] Skipping channel checks: {reason}")
+                return None
+
+            # Build channel list with proper names
+            channel_list = []
+            for ch_id in channels_to_check:
+                ch_name = self.stream_resolver._get_channel_display_name(ch_id) if self.stream_resolver else ch_id
+                channel_list.append((ch_id, ch_name))
+
+            # Get QWEN's prioritized order
+            prioritized = self.qwen_youtube.prioritize_channels(channel_list)
+            logger.info(f"🤖🧠 [QWEN-PRIORITY] 🎯 Analyzed and reordered {len(prioritized)} channels")
+
+            if prioritized:
+                top_channel_id, top_channel_name, top_score = prioritized[0]
+                if top_score >= 1.05:
+                    self.high_priority_pending = True
+                    self.priority_reason = f"High-confidence window for {top_channel_name} (score {top_score:.2f})"
+                else:
+                    self.high_priority_pending = False
+                    self.priority_reason = None
+            else:
+                self.high_priority_pending = False
+                self.priority_reason = None
+
+            # Reorder channels based on QWEN priority (extract channel IDs from tuples)
+            channels_to_check = [ch_id for ch_id, _, _ in prioritized]
+
+            # Log the optimized order with scores
+            for ch_id, ch_name, score in prioritized[:3]:  # Show top 3
+                logger.info(f"🤖🧠 [QWEN-SCORE] {ch_name}: Priority score {score:.2f}")
+
+            logger.info(f"🤖🧠 [QWEN-ORDER] Optimized check order based on heat levels and patterns")
+
+        logger.info(f"   Checking {len(channels_to_check)} channels in QWEN-optimized sequence:")
+        for idx, ch_id in enumerate(channels_to_check, 1):
+            ch_name = self.stream_resolver._get_channel_display_name(ch_id) if self.stream_resolver else ch_id
+            logger.info(f"   {idx}. {ch_name}")
+        logger.info("="*60)
+
         # Try each channel and collect all active streams
         found_streams = []  # Collect all found streams for social media posting
         first_stream_to_monitor = None  # The stream we'll actually monitor
+        check_results = {}  # Track results for summary
 
         for i, channel_id in enumerate(channels_to_check, 1):
             channel_name = self.stream_resolver._get_channel_display_name(channel_id)
-            logger.info(f"🔎 [{i}/{len(channels_to_check)}] Checking {channel_name}: {channel_id[:12]}...")
+            logger.info(f"\n[🔍 Channel {i}/{len(channels_to_check)}] Checking {channel_name}...")
+            logger.info(f"🤖🧠 [QWEN-SCAN] Initiating channel scan #{i}")
             try:
                 result = self.stream_resolver.resolve_stream(channel_id)
-                status = 'FOUND 🎉' if result and result[0] else 'NONE ❌'
-                logger.info(f"🔎 [{i}/{len(channels_to_check)}] {channel_name}... result: {status}")
+                if result and result[0]:
+                    check_results[channel_name] = '✅ LIVE'
+                    logger.info(f"[🎉 Channel {i}/{len(channels_to_check)}] {channel_name}: STREAM FOUND!")
+                else:
+                    check_results[channel_name] = '⏳ offline'
+                    logger.info(f"[⏳ Channel {i}/{len(channels_to_check)}] {channel_name}: No active stream")
             except Exception as e:
                 logger.error(f"🔎 [{i}/{len(channels_to_check)}] {channel_name}... ERROR: {e}")
                 result = None
+                # Continue checking other channels even if one fails
+                continue
 
             if result and result[0]:  # Accept stream even without chat_id
                 video_id = result[0]
@@ -163,42 +291,121 @@ class AutoModeratorDAE:
                 else:
                     logger.info(f"✅ Found stream on {channel_name} with video ID: {video_id} 🎉")
 
-                # Trigger social media posting for EVERY stream found
-                logger.info(f"📱 Triggering social media posting for {channel_name} stream (video: {video_id})...")
-                try:
-                    # Call the stream resolver's trigger method
-                    self.stream_resolver._trigger_social_media_post(video_id, None, channel_id)
+                # QWEN learns from successful detection
+                if self.qwen_youtube:
+                    self.qwen_youtube.record_stream_found(channel_id, channel_name, video_id)
+                    logger.info(f"🤖🧠 [QWEN-LEARN] 📚 Recorded successful stream detection pattern")
 
-                    # Add delay between social media postings to allow user to keep up
-                    if len(found_streams) > 0:  # If we already have streams, add delay
-                        logger.info(f"⏳ Waiting 15 seconds before next stream posting...")
-                        time.sleep(15)
-                except Exception as e:
-                    logger.error(f"📱 Failed to trigger social media posting for {channel_name}: {e}")
+                # Social media posting is handled by social media DAE orchestrator
+                # Store stream info for later posting coordination
+                logger.info(f"📝 Detected stream on {channel_name} - queueing for social media posting")
 
                 # Store the stream info
-                found_streams.append({
+                stream_info = {
                     'video_id': video_id,
                     'live_chat_id': live_chat_id,
                     'channel_id': channel_id,
                     'channel_name': channel_name
-                })
+                }
+                found_streams.append(stream_info)
 
                 # Remember the first stream found for monitoring
                 if not first_stream_to_monitor:
-                    first_stream_to_monitor = (video_id, live_chat_id)
+                    first_stream_to_monitor = stream_info
 
         # Report results
+        logger.info("🤖🧠 [QWEN-EVALUATE] Analyzing search results...")
         if found_streams:
-            logger.info(f"✅ Found {len(found_streams)} active stream(s):")
+            # Deduplicate streams by video_id (same stream may appear on multiple channels)
+            unique_streams = {}
+            for stream in found_streams:
+                video_id = stream['video_id']
+                if video_id not in unique_streams:
+                    unique_streams[video_id] = stream
+                else:
+                    # Log that we found a duplicate
+                    logger.info(f"[DUPLICATE] Same stream {video_id} found on {stream['channel_name']} (already found on {unique_streams[video_id]['channel_name']})")
+
+            # Use only unique streams
+            found_streams = list(unique_streams.values())
+
+            if found_streams and not first_stream_to_monitor:
+                first_stream_to_monitor = found_streams[0]
+
+            logger.info(f"\n✅ Found {len(found_streams)} unique stream(s):")
             for stream in found_streams:
                 logger.info(f"  • {stream['channel_name']}: {stream['video_id']}")
+
+            # Only trigger social media posting if we have unique streams
+            if len(found_streams) == 1:
+                logger.info(f"📝 Single stream detected on {found_streams[0]['channel_name']} - posting to social media")
+            elif len(found_streams) > 1:
+                logger.info(f"📝 Multiple unique streams detected - posting all to social media")
+
+            # Trigger social media posting for unique streams only
+            self._trigger_social_media_posting_for_streams(found_streams)
+
             logger.info(f"📺 Will monitor first stream: {found_streams[0]['channel_name']}")
+            logger.info("🤖🧠 [QWEN-SUCCESS] Stream detection successful - transitioning to monitor phase")
             return first_stream_to_monitor
         else:
-            logger.info(f"❌ No active livestream found on {len(channels_to_check)} channel(s)")
+            # Show rotation summary
+            logger.info("\n" + "="*60)
+            logger.info("📋 ROTATION SUMMARY:")
+            for channel, status in check_results.items():
+                logger.info(f"   {channel}: {status}")
+            logger.info(f"\n❌ No active livestreams found (checked {len(channels_to_check)} channels: 🍣🧘🐕)")
+
+            # QWEN provides intelligence summary
+            if self.qwen_youtube:
+                logger.info("🤖🧠 [QWEN-LEARN] Recording no-stream pattern for time optimization")
+                summary = self.qwen_youtube.get_intelligence_summary()
+                logger.info(f"🤖🧠 [QWEN-SUMMARY] Current intelligence state:")
+                for line in summary.split('\n')[:5]:  # Show first 5 lines
+                    if line.strip():
+                        logger.info(f"    {line}")
+
+            logger.info(f"⏳ Will check again in 30 minutes...")
+            logger.info("="*60)
             return None
-    
+
+    def _trigger_social_media_posting_for_streams(self, found_streams):
+        """
+        Trigger social media posting for detected streams using proper orchestration.
+        Handles sequential posting and channel-specific logic.
+        """
+        logger.info("="*80)
+        logger.info("📱 SOCIAL MEDIA POSTING ORCHESTRATION")
+        logger.info("="*80)
+
+        try:
+            # Import the refactored posting orchestrator
+            from modules.platform_integration.social_media_orchestrator.src.refactored_posting_orchestrator import get_orchestrator
+            orchestrator = get_orchestrator()
+            logger.info("✅ Social media orchestrator loaded")
+
+            # Hand off ALL streams to social media orchestrator
+            # The orchestrator handles priority, sequencing, browser selection, and LinkedIn page mapping
+            logger.info(f"[HANDOFF] Sending {len(found_streams)} stream(s) to Social Media Orchestrator")
+
+            # Use the new multi-stream handler method (WSP 3 compliant)
+            result = orchestrator.handle_multiple_streams_detected(found_streams)
+
+            if result.get('success'):
+                logger.info(f"[SUCCESS] Orchestrator processed {result.get('streams_processed')} streams")
+            else:
+                logger.warning(f"[WARNING] Orchestrator reported issues: {result.get('errors')}")
+
+            # All posting now handled by orchestrator
+            logger.info("[COMPLETE] Social media posting handoff complete")
+
+        except ImportError as e:
+            logger.error(f"❌ Failed to import social media orchestrator: {e}")
+        except Exception as e:
+            logger.error(f"❌ Social media posting orchestration failed: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+
     async def monitor_chat(self):
         """
         Phase 2: Autonomous chat monitoring and moderation.
@@ -246,24 +453,35 @@ class AutoModeratorDAE:
             # Calculate intelligent delay based on retries and failures
             # Use trigger-aware delay for better idle behavior
             if quick_check_mode:
-                # After stream ends, check more frequently for new stream
-                delay = min(60, 30 * (consecutive_failures + 1))  # 5s, 10s, 15s, 15s...
+                priority_mode = getattr(self, 'high_priority_pending', False)
+                base_step = 8 if priority_mode else 20
+                max_quick = 24 if priority_mode else 45
+                delay = min(max_quick, base_step * (consecutive_failures + 1))
                 logger.info(f"⚡ Quick check mode: Checking again in {delay}s for new stream")
             else:
+                priority_mode = getattr(self, 'high_priority_pending', False)
+                min_delay = 20.0 if priority_mode else 30.0
+                max_delay = 120.0 if priority_mode else 600.0
                 delay = create_intelligent_delay(
                     consecutive_failures=consecutive_failures,
                     previous_delay=previous_delay,
-                    has_trigger=True  # We have trigger capability
+                    has_trigger=False,
+                    min_delay=min_delay,
+                    max_delay=max_delay
                 )
-                
+
+                if priority_mode:
+                    delay = min(delay, 90.0)
+                    if self.priority_reason and consecutive_failures == 0:
+                        logger.info(f"🤖🧠 [QWEN-WATCH] {self.priority_reason}; tightening delay to {delay:.0f}s")
+
                 # Show different messages based on delay length
                 if delay < 60:
                     logger.info(f"📺 No stream found. Checking again in {delay:.0f} seconds...")
                 elif delay < 300:
-                    logger.info(f"⏳ No stream found. Waiting {delay/60:.1f} minutes (quota conservation mode)...")
+                    logger.info(f"⏳ No stream found. Waiting {delay/60:.1f} minutes (adaptive idle)...")
                 else:
-                    logger.info(f"💤 Idle mode: {delay/60:.1f} minutes (or until triggered)")
-                    logger.info(f"💡 Tip: echo TRIGGER > stream_trigger.txt to check immediately")
+                    logger.info(f"💤 Idle mode: {delay/60:.1f} minutes (adaptive)")
             
             # Wait with intelligent delay, but check for triggers every 5 seconds
             elapsed = 0
@@ -288,7 +506,11 @@ class AutoModeratorDAE:
             consecutive_failures += 1
             previous_delay = delay
         
-        video_id, live_chat_id = result
+        stream_info = result or {}
+        video_id = stream_info.get('video_id')
+        live_chat_id = stream_info.get('live_chat_id')
+        channel_id = stream_info.get('channel_id')
+        channel_name = stream_info.get('channel_name')
 
         # Now that we found a stream, try to authenticate for full functionality
         # Authenticate FIRST, then get chat_id with API
@@ -305,9 +527,16 @@ class AutoModeratorDAE:
                     if not live_chat_id:
                         logger.info("🔍 Getting chat ID with authenticated service...")
                         self.stream_resolver = StreamResolver(self.service)
-                        auth_result = self.stream_resolver.resolve_stream(os.getenv('CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'))
+                        target_channel_id = channel_id or os.getenv('CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw')
+                        auth_result = self.stream_resolver.resolve_stream(target_channel_id)
                         if auth_result and len(auth_result) > 1:
+                            resolved_video_id = auth_result[0]
+                            if resolved_video_id and resolved_video_id != video_id:
+                                logger.info(f"🔁 API resolved stream {resolved_video_id} (replacing {video_id})")
+                                video_id = resolved_video_id
+                                stream_info['video_id'] = video_id
                             live_chat_id = auth_result[1]
+                            stream_info['live_chat_id'] = live_chat_id
                             logger.info(f"✅ Got chat ID with API: {live_chat_id[:20]}...")
                         else:
                             logger.warning("⚠️ Could not get chat ID even with API")
@@ -327,7 +556,9 @@ class AutoModeratorDAE:
         self.livechat = LiveChatCore(
             youtube_service=self.service,
             video_id=video_id,
-            live_chat_id=live_chat_id
+            live_chat_id=live_chat_id,
+            channel_name=channel_name,
+            channel_id=channel_id
         )
 
         # Initialize LiveChatCore (THIS TRIGGERS SOCIAL MEDIA POSTS!)

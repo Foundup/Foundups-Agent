@@ -1,13 +1,60 @@
 # LiveChat Module Interface
 
 ## Overview
-The LiveChat module provides functionality to connect to a YouTube livestream chat, listen for messages, log them, and send responses. It integrates with other modules like BanterEngine for automated responses and token_manager for credential rotation.
+The LiveChat module provides functionality to connect to a YouTube livestream chat, listen for messages, log them, and send responses. It integrates with other modules like BanterEngine for automated responses and token_manager for credential rotation. The module now includes QWEN intelligence for enhanced decision-making and pattern learning.
 
 ## Exports
 This module exports:
 - `LiveChatListener`: Class for connecting to and interacting with YouTube livestream chats
+- `AutoModeratorDAE`: WSP-compliant DAE orchestrator with QWEN intelligence
+- `QwenYouTubeIntegration`: QWEN intelligence layer for channel prioritization
 
 ## Classes
+
+### `QwenYouTubeIntegration`
+QWEN intelligence layer providing smart decision-making for YouTube DAE channel rotation.
+
+#### Public Methods
+
+##### `get_qwen_youtube()`
+Returns singleton instance of QWEN YouTube intelligence.
+
+**Returns:**
+- `QwenYouTubeIntegration`: Singleton QWEN instance
+
+##### `should_check_now() -> Tuple[bool, str]`
+Global decision on whether to check any channels based on system health.
+
+**Returns:**
+- `bool`: Whether checking is recommended
+- `str`: Reason for the decision
+
+##### `prioritize_channels(channels: List[Tuple[str, str]]) -> List[Tuple[str, str, float]]`
+Intelligently prioritize channel checking order based on patterns and heat levels.
+
+**Parameters:**
+- `channels`: List of (channel_id, channel_name) tuples
+
+**Returns:**
+- List of (channel_id, channel_name, priority_score) tuples sorted by priority
+
+##### `record_stream_found(channel_id: str, channel_name: str, video_id: str)`
+Record successful stream detection for pattern learning.
+
+**Parameters:**
+- `channel_id`: YouTube channel ID
+- `channel_name`: Display name of channel
+- `video_id`: ID of detected stream
+
+### `AutoModeratorDAE`
+WSP-compliant DAE orchestrator with integrated QWEN intelligence for stream detection and chat monitoring.
+
+#### Features
+- QWEN-powered channel prioritization
+- Heat level management for 429 error prevention
+- Pattern learning from successful detections
+- Automatic social media posting orchestration
+- Stream lifecycle management
 
 ### `LiveChatListener`
 Connects to a YouTube livestream chat, listens for messages, logs them, and provides hooks for sending messages and AI interaction.
