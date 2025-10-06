@@ -36,6 +36,12 @@ try:
     from modules.communication.livechat.src.intelligent_throttle_manager import IntelligentThrottleManager
 except ImportError:
     IntelligentThrottleManager = None
+try:
+    from modules.platform_integration.youtube_auth.src.quota_intelligence import QuotaIntelligence
+    from modules.platform_integration.youtube_auth.src.quota_monitor import QuotaMonitor
+except ImportError:
+    QuotaIntelligence = None
+    QuotaMonitor = None
 
 # WRE Integration for recursive learning
 try:
@@ -146,6 +152,17 @@ class LiveChatCore:
             except Exception as e:
                 logger.warning(f"[AUTO] Could not initialize intelligent throttle: {e}")
                 self.intelligent_throttle = None
+
+        # REVOLUTIONARY: Intelligent credential rotation orchestration
+        self.quota_intelligence = None
+        if QuotaIntelligence and QuotaMonitor:
+            try:
+                quota_monitor = QuotaMonitor()
+                self.quota_intelligence = QuotaIntelligence(quota_monitor)
+                logger.info("🔄 Intelligent credential rotation system initialized")
+            except Exception as e:
+                logger.warning(f"🔄 Could not initialize quota intelligence: {e}")
+                self.quota_intelligence = None
         
         # Ensure memory directory exists
         os.makedirs(self.memory_dir, exist_ok=True)
@@ -719,7 +736,7 @@ class LiveChatCore:
                     for set_id, quota_info in status.get('quota_states', {}).items():
                         if quota_info['percentage'] < 10:
                             logger.warning(f"[AUTO-QUOTA] Low quota on set {set_id}: {quota_info['percentage']:.1f}%")
-                
+
                 # Original quota poller as fallback
                 elif self.quota_poller:
                     should_poll, wait_time = self.quota_poller.should_poll()
@@ -727,12 +744,66 @@ class LiveChatCore:
                         logger.critical("🚨 QUOTA EXHAUSTED - Stopping polling")
                         self.is_running = False
                         break
-                    
+
                     # Override poll interval with quota-aware interval
                     if wait_time:
                         poll_interval_ms = int(wait_time * 1000)
                         logger.info(f"⏱️ Quota-aware interval: {wait_time:.1f}s")
-                
+
+                # REVOLUTIONARY: Intelligent credential rotation check
+                if self.quota_intelligence:
+                    try:
+                        # Get current credential set (default to 1 if not available)
+                        current_set = getattr(self.youtube, 'credential_set', 1)
+
+                        # Check if rotation is needed
+                        rotation_decision = self.quota_intelligence.should_rotate_credentials(current_set)
+
+                        if rotation_decision['should_rotate']:
+                            urgency = rotation_decision['urgency']
+                            target_set = rotation_decision['target_set']
+                            reason = rotation_decision['reason']
+
+                            # Log rotation decision with appropriate severity
+                            if urgency == 'critical':
+                                logger.critical(f"🔄🚨 CREDENTIAL ROTATION TRIGGERED: {reason}")
+                            elif urgency == 'high':
+                                logger.warning(f"🔄⚠️ CREDENTIAL ROTATION TRIGGERED: {reason}")
+                            else:
+                                logger.info(f"🔄 CREDENTIAL ROTATION TRIGGERED: {reason}")
+
+                            logger.critical(f"🎯 Rotating from Set {current_set} to Set {target_set}")
+                            logger.info(f"📊 Current available: {rotation_decision['current_available']} units")
+                            logger.info(f"📊 Target available: {rotation_decision['target_available']} units")
+                            logger.info(f"💡 Recommendation: {rotation_decision['recommendation']}")
+
+                            # TODO: Implement graceful rotation
+                            # This requires:
+                            # 1. Gracefully stop current polling
+                            # 2. Reinitialize YouTube service with target credential set
+                            # 3. Update self.youtube and self.quota_poller references
+                            # 4. Resume polling with new credentials
+                            # For now, log the decision (actual rotation implementation in next commit)
+                            logger.warning(f"🔄 ROTATION DECISION LOGGED - Manual rotation required to Set {target_set}")
+
+                            # Update session.json with rotation recommendation
+                            session_logger = get_session_logger()
+                            if session_logger:
+                                session_logger.log_event({
+                                    "event": "rotation_recommended",
+                                    "timestamp": datetime.now().isoformat(),
+                                    "current_set": current_set,
+                                    "target_set": target_set,
+                                    "urgency": urgency,
+                                    "reason": reason,
+                                    "current_available": rotation_decision['current_available'],
+                                    "target_available": rotation_decision['target_available'],
+                                    "recommendation": rotation_decision['recommendation']
+                                })
+
+                    except Exception as e:
+                        logger.error(f"🔄❌ Rotation check failed: {e}", exc_info=True)
+
                 # Poll for messages
                 logger.info(f"🔄 Polling for messages...")
                 try:
