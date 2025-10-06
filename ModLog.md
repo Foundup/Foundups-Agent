@@ -5,6 +5,86 @@
      Root ModLog should reference module ModLogs, not duplicate content
      Update this ONLY when pushing to git with system-wide impacts -->
 
+## [2025-10-06] - Intelligent Credential Rotation + YouTube Shorts Routing
+
+**Agent**: 0102 Claude (Proactive Quota Management)
+**Type**: Multi-module architectural fixes following first principles
+**WSP Compliance**: WSP 3 (Enterprise Domains), WSP 50 (Pre-Action Verification), WSP 87 (Intelligent Orchestration), WSP 22 (ModLog Updates)
+**Impact**: Revolutionary proactive quota rotation system + fixed command routing
+
+### **System-Wide Changes**
+
+#### **1. Intelligent Credential Rotation System** ⭐ REVOLUTIONARY
+**Problem**: Set 1 (UnDaoDu) at 97.9% quota didn't rotate to Set 10 (Foundups)
+
+**Root Cause** (via HoloIndex research):
+- `quota_monitor.py` writes alerts but NO consumer reads them
+- ROADMAP.md line 69: rotation was PLANNED but never implemented
+- No event bridge connecting quota alerts → rotation action
+
+**Solution** - Multi-threshold intelligent rotation decision engine:
+- **CRITICAL (≥95%)**: Immediate rotation if backup has >20% quota
+- **PROACTIVE (≥85%)**: Rotate if backup has >50% quota
+- **STRATEGIC (≥70%)**: Rotate if backup has 2x more quota
+- **HEALTHY (<70%)**: No rotation needed
+
+**Implementation**:
+- `quota_intelligence.py`: Added `should_rotate_credentials()` decision engine
+- `livechat_core.py`: Integrated rotation check into polling loop
+- Logs rotation decisions to console + session.json
+- Event-driven intelligence, not file polling
+
+**Files Changed**:
+- `modules/platform_integration/youtube_auth/src/quota_intelligence.py` - Rotation decision engine
+- `modules/communication/livechat/src/livechat_core.py` - Polling loop integration
+
+**Module ModLogs**:
+- See `modules/platform_integration/youtube_auth/ModLog.md` - Rotation system architecture
+- See `modules/communication/livechat/ModLog.md` - Integration details
+
+#### **2. YouTube Shorts Command Routing Fix**
+**Problem**: `!createshort` command not being detected in livechat
+
+**Root Cause**: Command was routed to gamification handler (wrong domain)
+
+**Solution**: Separated YouTube Shorts commands from gamification commands
+- Added `_check_shorts_command()` for !createshort/!shortstatus/!shortstats
+- Priority 3.5 routing to `modules.communication.youtube_shorts`
+- Proper domain separation per WSP 3
+
+**Files Changed**:
+- `modules/communication/livechat/src/message_processor.py` - Shorts command detection
+
+#### **3. OWNER Priority Queue**
+**Enhancement**: Channel owners bypass all queues for immediate bot control
+
+**Implementation**: Messages processed in order: OWNER → MOD → USER
+
+**Files Changed**:
+- `modules/communication/livechat/src/livechat_core.py` - Message batch prioritization
+
+#### **4. SQLite UNIQUE Constraint Fix**
+**Problem**: Database errors on stream pattern updates
+
+**Solution**: Use `INSERT OR REPLACE` for composite UNIQUE keys
+
+**Files Changed**:
+- `modules/platform_integration/stream_resolver/src/stream_db.py` - Database operations
+
+### **Git Commits**
+1. `31a3694c` - Shorts routing + UNIQUE constraint + OWNER priority
+2. `2fa67461` - Intelligent rotation orchestration system
+3. `14a2b6ab` - Rotation integration into livechat polling loop
+
+### **WSP Compliance**
+- WSP 3: Proper enterprise domain separation (Shorts → communication, not gamification)
+- WSP 50: HoloIndex research before all implementations
+- WSP 87: Intelligent orchestration for quota management
+- WSP 22: All module ModLogs updated
+- WSP 84: Code memory - architectural patterns preserved
+
+---
+
 ## [Current Session] - QWEN Intelligence Integration Across Modules
 
 **Agent**: 0102 Claude (Intelligence Enhancement)

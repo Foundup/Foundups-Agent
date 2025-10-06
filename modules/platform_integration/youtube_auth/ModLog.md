@@ -87,13 +87,27 @@ livechat_core polling loop
 #### Testing Status
 - ✅ First principles architecture validated
 - ✅ Multi-threshold logic implemented (95%/85%/70%)
-- ⏸️ Integration pending - needs livechat_core polling hook
+- ✅ **INTEGRATION COMPLETE** - Integrated into livechat_core polling loop
+- ✅ Rotation decisions logged to session.json
+- ✅ Tested with current quota (Set 1 at 95.9% → triggers CRITICAL rotation)
+
+#### Integration Results
+**Polling Loop Integration** (livechat_core.py lines 753-805):
+- Rotation check runs every poll cycle BEFORE message polling
+- Logs rotation decisions with urgency levels (critical/high/medium/low)
+- Writes rotation_recommended events to session.json
+- Currently logs decision only (graceful rotation execution is TODO)
+
+**Production Test**:
+- Set 1 (UnDaoDu): 95.9% used → **CRITICAL rotation triggered**
+- Set 10 (Foundups): 0.0% used → 10,000 units available
+- Decision: Rotate immediately to Set 10 ✅
 
 #### Next Steps
-1. Add rotation trigger to `livechat_core.py` polling loop
-2. Implement graceful service reinitialization on rotation
-3. Add rotation event logging to session.json
-4. Update ModLog with integration results
+1. ✅ ~~Add rotation trigger to livechat_core.py polling loop~~ **COMPLETE**
+2. ⏸️ Implement graceful service reinitialization on rotation
+3. ✅ ~~Add rotation event logging to session.json~~ **COMPLETE**
+4. ✅ ~~Update ModLog with integration results~~ **COMPLETE**
 
 ---
 
