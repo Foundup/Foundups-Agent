@@ -68,6 +68,274 @@ class QwenAdvisor:
         # Troubleshooting pattern database
         self.troubleshooting_db = self._build_troubleshooting_db()
 
+    def detect_file_movements_and_compliance(self, context: AdvisorContext) -> Dict[str, Any]:
+        """
+        NEW: Detect file movements and provide WSP compliance guidance.
+
+        Analyzes context for signs of file movements and ensures 0102 discoverability.
+        Returns guidance for proper WSP compliance after file operations.
+        """
+        guidance = {
+            'file_movements_detected': [],
+            'wsp_violations': [],
+            'documentation_updates_needed': [],
+            'navigation_updates_needed': [],
+            '0102_discoverability_score': 1.0
+        }
+
+        # Detect file movement patterns in query
+        movement_indicators = ['move', 'moved', 'refactor', 'relocate', 'organize', 'wsp']
+        if any(indicator in context.query.lower() for indicator in movement_indicators):
+            guidance['file_movements_detected'].append('Query indicates file movement operation')
+
+        # Check code hits for moved files
+        for hit in context.code_hits:
+            path = hit.get('path', hit.get('file_path', ''))
+            if path and ('moved' in path.lower() or 'refactor' in path.lower()):
+                guidance['file_movements_detected'].append(f"File movement detected: {path}")
+
+        # WSP compliance analysis
+        if guidance['file_movements_detected']:
+            guidance['wsp_violations'].append('WSP VIOLATION: Files moved without 0102 indexing verification')
+            guidance['documentation_updates_needed'].extend([
+                'Update module README.md to document moved files',
+                'Verify files are indexed in navigation system',
+                'Check WSP knowledge base for proper documentation'
+            ])
+            guidance['navigation_updates_needed'].extend([
+                'Add moved files to modules/infrastructure/navigation/src/navigation.py NEED_TO dictionary',
+                'Ensure 0102 agents can discover moved files through navigation system'
+            ])
+            guidance['0102_discoverability_score'] = 0.3  # Low score indicates potential issues
+
+        return guidance
+
+    def detect_integration_gaps(self, context: AdvisorContext) -> Dict[str, Any]:
+        """
+        HOLOINDEX IMPROVEMENT OPPORTUNITY #1: Integration Gap Detection
+
+        Detect when Module A monitors state but Module B could act on it,
+        but NO CONNECTION exists between A->B.
+
+        Example: QuotaAwarePoller monitors quota but TokenManager.rotate() exists
+        but no integration between them.
+        """
+        gaps = {
+            'detected_gaps': [],
+            'missing_connections': [],
+            'recommended_integrations': [],
+            'confidence_score': 1.0
+        }
+
+        # Step 1: Extract modules and their capabilities from search results
+        monitoring_modules = {}
+        action_modules = {}
+
+        for hit in context.code_hits:
+            path = hit.get('path', hit.get('file_path', ''))
+            content = hit.get('content', hit.get('preview', ''))
+
+            # Detect monitoring patterns (Module A - monitors state)
+            if any(keyword in content.lower() for keyword in [
+                'monitor', 'check', 'quota', 'usage', 'status', 'health', 'alert'
+            ]):
+                module_name = self._extract_module_name(path)
+                if module_name not in monitoring_modules:
+                    monitoring_modules[module_name] = {'path': path, 'capabilities': []}
+                monitoring_modules[module_name]['capabilities'].append('monitoring')
+
+            # Detect action patterns (Module B - can act on state)
+            if any(keyword in content.lower() for keyword in [
+                'rotate', 'switch', 'change', 'update', 'reset', 'refresh', 'cleanup'
+            ]):
+                module_name = self._extract_module_name(path)
+                if module_name not in action_modules:
+                    action_modules[module_name] = {'path': path, 'capabilities': []}
+                action_modules[module_name]['capabilities'].append('action')
+
+        # Step 2: Analyze for integration gaps
+        for monitor_name, monitor_info in monitoring_modules.items():
+            monitor_path = monitor_info['path']
+
+            # Look for potential action partners
+            for action_name, action_info in action_modules.items():
+                if monitor_name == action_name:
+                    continue  # Same module, not a gap
+
+                action_path = action_info['path']
+
+                # Check if there's any connection between modules
+                connection_exists = self._check_module_connection(monitor_path, action_path, context)
+
+                if not connection_exists:
+                    # Detect specific integration gap patterns
+                    gap_type = self._classify_integration_gap(monitor_path, action_path)
+
+                    if gap_type:
+                        gap = {
+                            'type': gap_type,
+                            'monitoring_module': monitor_name,
+                            'action_module': action_name,
+                            'monitor_path': monitor_path,
+                            'action_path': action_path,
+                            'severity': 'HIGH' if 'quota' in monitor_path.lower() else 'MEDIUM'
+                        }
+
+                        gaps['detected_gaps'].append(gap)
+                        gaps['missing_connections'].append(
+                            f"{monitor_name} -> {action_name} (no integration detected)"
+                        )
+
+                        # Generate specific recommendations
+                        recommendation = self._generate_integration_recommendation(gap)
+                        if recommendation:
+                            gaps['recommended_integrations'].append(recommendation)
+
+        # Adjust confidence based on gap detection quality
+        if gaps['detected_gaps']:
+            gaps['confidence_score'] = 0.8  # High confidence when gaps found
+        else:
+            gaps['confidence_score'] = 0.9  # High confidence when no gaps (good integration)
+
+        return gaps
+
+    def _extract_module_name(self, path: str) -> str:
+        """Extract module name from file path."""
+        parts = path.split('/')
+        # Look for modules/ pattern
+        if 'modules' in parts:
+            modules_idx = parts.index('modules')
+            if modules_idx + 2 < len(parts):
+                return f"{parts[modules_idx+1]}.{parts[modules_idx+2]}"
+        return path.split('/')[-2] if '/' in path else 'unknown'
+
+    def _check_module_connection(self, monitor_path: str, action_path: str, context: AdvisorContext) -> bool:
+        """Check if there's any connection between two modules in the codebase."""
+        # Look for imports, function calls, or references between modules
+        monitor_module = self._extract_module_name(monitor_path)
+        action_module = self._extract_module_name(action_path)
+
+        for hit in context.code_hits:
+            content = hit.get('content', hit.get('preview', ''))
+            # Check for cross-module references
+            if monitor_module in content and action_module in content:
+                return True
+
+        return False
+
+    def _classify_integration_gap(self, monitor_path: str, action_path: str) -> Optional[str]:
+        """Classify the type of integration gap detected."""
+        monitor_lower = monitor_path.lower()
+        action_lower = action_path.lower()
+
+        # Quota monitoring -> Token rotation gap
+        if ('quota' in monitor_lower or 'poller' in monitor_lower) and ('token' in action_lower or 'oauth' in action_lower):
+            return 'QUOTA_TOKEN_ROTATION_GAP'
+
+        # Health monitoring -> Cleanup action gap
+        if 'health' in monitor_lower and ('cleanup' in action_lower or 'reset' in action_lower):
+            return 'HEALTH_MAINTENANCE_GAP'
+
+        # Generic monitoring -> action gap
+        if ('monitor' in monitor_lower or 'check' in monitor_lower) and ('rotate' in action_lower or 'switch' in action_lower):
+            return 'MONITORING_ACTION_GAP'
+
+        return None
+
+    def _generate_integration_recommendation(self, gap: Dict[str, Any]) -> Optional[str]:
+        """Generate specific integration recommendations."""
+        gap_type = gap['type']
+
+        if gap_type == 'QUOTA_TOKEN_ROTATION_GAP':
+            return f"INTEGRATION: Add token rotation to {gap['monitoring_module']} when quota >95%. Pass token_manager to __init__ and call rotate() in calculate_optimal_interval()"
+
+        elif gap_type == 'HEALTH_MAINTENANCE_GAP':
+            return f"INTEGRATION: Connect {gap['monitoring_module']} health checks to {gap['action_module']} cleanup actions"
+
+        elif gap_type == 'MONITORING_ACTION_GAP':
+            return f"INTEGRATION: Connect {gap['monitoring_module']} state monitoring to {gap['action_module']} corrective actions"
+
+        return None
+
+    def _generate_work_context_map(self, context: AdvisorContext) -> Optional[Dict[str, Any]]:
+        """
+        Generate a real-time work context map showing what 0102 is currently working on.
+
+        This analyzes multiple signals:
+        - Query content (what the agent is asking about)
+        - Recent code changes (what files are being modified)
+        - Module relationships (what's connected to current work)
+        - Task patterns (what type of work is being done)
+        """
+        try:
+            work_map = {
+                'current_task': 'Unknown',
+                'active_module': 'Unknown',
+                'exact_location': 'Unknown',
+                'related_modules': [],
+                'task_type': 'unknown',
+                'confidence': 0.0
+            }
+
+            # Signal 1: Analyze query content for current task
+            query_lower = context.query.lower()
+            if any(kw in query_lower for kw in ['quota', 'token', 'oauth', 'rotation']):
+                work_map['current_task'] = 'OAuth Token Rotation Integration'
+                work_map['task_type'] = 'integration'
+                work_map['active_module'] = 'communication.livechat'
+                work_map['related_modules'] = ['platform_integration.utilities.oauth_management']
+                work_map['confidence'] = 0.9
+            elif any(kw in query_lower for kw in ['greeting', 'spam', 'session']):
+                work_map['current_task'] = 'Bot Greeting Optimization'
+                work_map['task_type'] = 'optimization'
+                work_map['active_module'] = 'communication.livechat'
+                work_map['confidence'] = 0.8
+            elif any(kw in query_lower for kw in ['holo', 'index', 'search']):
+                work_map['current_task'] = 'HoloIndex Enhancement'
+                work_map['task_type'] = 'enhancement'
+                work_map['active_module'] = 'holo_index'
+                work_map['confidence'] = 0.7
+
+            # Signal 2: Analyze code hits for active modules
+            if context.code_hits:
+                # Find most recently modified files
+                active_files = []
+                for hit in context.code_hits:
+                    path = hit.get('path', hit.get('file_path', ''))
+                    if path:
+                        active_files.append(path)
+
+                if active_files:
+                    # Extract module from most active file
+                    primary_file = active_files[0]
+                    work_map['active_module'] = self._extract_module_name(primary_file)
+
+                    # Set exact location if we can determine it
+                    if len(active_files) == 1:
+                        work_map['exact_location'] = f"{primary_file}"
+
+            # Signal 3: Check breadcrumb tracer for recent activity
+            try:
+                from ..adaptive_learning.breadcrumb_tracer import BreadcrumbTracer
+                tracer = BreadcrumbTracer()
+                recent_tasks = tracer.get_recent_tasks(limit=1)
+                if recent_tasks:
+                    recent_task = recent_tasks[0]
+                    work_map['current_task'] = recent_task.get('description', work_map['current_task'])
+                    work_map['confidence'] = min(1.0, work_map['confidence'] + 0.2)
+            except Exception:
+                pass  # Breadcrumb tracer not available
+
+            # Only return if we have reasonable confidence
+            if work_map['confidence'] >= 0.5:
+                return work_map
+            else:
+                return None
+
+        except Exception as e:
+            logger.warning(f"Failed to generate work context map: {e}")
+            return None
+
     def generate_guidance(self, context: AdvisorContext) -> AdvisorResult:
         """Generate intelligent guidance using WSP Master, LLM, and Pattern Coach."""
 
@@ -78,11 +346,29 @@ class QwenAdvisor:
             logger.debug("Advisor cache hit for query: %s", context.query)
             return AdvisorResult(**cached)
 
+        # NEW: Step 0.5 - File Movement Detection & WSP Compliance
+        file_movement_analysis = self.detect_file_movements_and_compliance(context)
+        if file_movement_analysis['file_movements_detected']:
+            logger.info("[CYCLE] File movement detected - initiating WSP compliance verification")
+
+        # Initialize guidance as dict to store analysis results
+        guidance = {}
+
+        # NEW: Step 0.6 - Integration Gap Detection
+        logger.info("[INTEGRATION-GAP] Starting integration gap detection analysis")
+        integration_gap_analysis = self.detect_integration_gaps(context)
+        logger.info(f"[INTEGRATION-GAP] Analysis complete - Found {len(integration_gap_analysis.get('detected_gaps', []))} gaps")
+        if integration_gap_analysis['detected_gaps']:
+            logger.info("[LINK] Integration gaps detected - Module A monitors but Module B can't act")
+            for gap in integration_gap_analysis['detected_gaps']:
+                logger.info(f"[GAP] {gap['type']}: {gap['monitoring_module']} -> {gap['action_module']}")
+            guidance['integration_gaps'] = integration_gap_analysis
+
         # Step 0: Troubleshooting Pattern Recognition
         troubleshooting_patterns = self._detect_troubleshooting_patterns(context.query)
         troubleshooting_guidance = ""
         if troubleshooting_patterns:
-            logger.info("🔧 Troubleshooting patterns detected: %s", list(troubleshooting_patterns.keys()))
+            logger.info("[TOOL] Troubleshooting patterns detected: %s", list(troubleshooting_patterns.keys()))
             troubleshooting_guidance = self._generate_troubleshooting_guidance(troubleshooting_patterns)
 
         # Step 1: WSP Master Analysis - Comprehensive protocol guidance
@@ -124,13 +410,16 @@ class QwenAdvisor:
         # Step 4: Pattern Coach - Behavioral coaching
         # Note: Pattern coach is handled at CLI level for now, but could be integrated here
 
-        # Add Unicode preventive warning if detected
-        if unicode_check and unicode_check["preventive_warning"]:
-            todos.insert(0, "WSP 20 PREVENTION: Avoid Unicode/emojis in future code - use ASCII alternatives like [OK], [ERROR], [TARGET]")
 
         # Combine all guidance sources
-        guidance = self._synthesize_guidance(llm_analysis, wsp_analysis, rules_guidance, troubleshooting_guidance)
+        integration_gaps = guidance.get('integration_gaps')
+        guidance = self._synthesize_guidance(llm_analysis, wsp_analysis, rules_guidance, troubleshooting_guidance, integration_gaps, context)
         todos = self._synthesize_todos(llm_analysis, wsp_analysis, rules_guidance)
+        # Add Unicode preventive warning if detected
+        if unicode_check and unicode_check["preventive_warning"]:
+            unicode_todo = ("WSP 20 PREVENTION: Avoid Unicode/emojis in future code - use ASCII alternatives like [OK], [ERROR], [TARGET]")
+            if unicode_todo not in todos:
+                todos.insert(0, unicode_todo)
         reminders = self._synthesize_reminders(wsp_analysis, rules_guidance)
 
         # Add Unicode preventive warning to guidance if detected
@@ -154,6 +443,28 @@ class QwenAdvisor:
         for violation in rules_guidance.get("violations", []):
             violations.append(f"[{violation['wsp_reference']}] {violation['guidance']}")
 
+        # NEW: Integrate file movement guidance into main guidance
+        if file_movement_analysis['file_movements_detected']:
+            guidance += f"\n\n[CYCLE] FILE MOVEMENT DETECTED - WSP COMPLIANCE REQUIRED:\n"
+            guidance += f"0102 Discoverability Score: {file_movement_analysis['0102_discoverability_score']:.1f}/1.0\n\n"
+
+            if file_movement_analysis['wsp_violations']:
+                guidance += "[ERROR] WSP VIOLATIONS:\n"
+                for violation in file_movement_analysis['wsp_violations']:
+                    guidance += f"   - {violation}\n"
+
+            if file_movement_analysis['documentation_updates_needed']:
+                guidance += "\n[DOCS] REQUIRED DOCUMENTATION UPDATES:\n"
+                for update in file_movement_analysis['documentation_updates_needed']:
+                    guidance += f"   - {update}\n"
+                    todos.append(update)
+
+            if file_movement_analysis['navigation_updates_needed']:
+                guidance += "\n[NAV] REQUIRED NAVIGATION UPDATES:\n"
+                for update in file_movement_analysis['navigation_updates_needed']:
+                    guidance += f"   - {update}\n"
+                    todos.append(update)
+
         result = AdvisorResult(
             guidance=guidance,
             reminders=reminders,
@@ -173,6 +484,7 @@ class QwenAdvisor:
                     "suggested_wsps": wsp_analysis.suggested_wsps,
                     "relevance_scores": wsp_analysis.wsp_relevance
                 },
+                "file_movement_analysis": file_movement_analysis,  # NEW: File movement compliance data
             },
         )
 
@@ -189,13 +501,41 @@ class QwenAdvisor:
 
         return result
 
-    def _synthesize_guidance(self, llm_analysis, wsp_analysis, rules_guidance, troubleshooting_guidance="") -> str:
+    def _synthesize_guidance(self, llm_analysis, wsp_analysis, rules_guidance, troubleshooting_guidance="", integration_gaps=None, context=None) -> str:
         """Synthesize guidance from all sources."""
         guidance_parts = []
 
         # Priority: Troubleshooting guidance (if detected)
         if troubleshooting_guidance:
             guidance_parts.append(troubleshooting_guidance)
+            guidance_parts.append("")  # Add spacing
+
+        # NEW: HIGH PRIORITY - Integration Gap Detection
+        if integration_gaps and integration_gaps.get('detected_gaps'):
+            guidance_parts.append("[LINK] INTEGRATION GAPS DETECTED:")
+            for gap in integration_gaps['detected_gaps']:
+                guidance_parts.append(f"  - {gap['type']}: {gap['monitoring_module']} -> {gap['action_module']}")
+            if integration_gaps.get('recommended_integrations'):
+                guidance_parts.append("  [IDEA] RECOMMENDED INTEGRATIONS:")
+                for rec in integration_gaps['recommended_integrations'][:2]:  # Limit to top 2
+                    guidance_parts.append(f"     {rec}")
+            guidance_parts.append("")  # Add spacing
+
+        # NEW: REAL-TIME 0102 WORK CONTEXT MAP
+        logger.info("[WORK-CONTEXT] Generating 0102 work context map")
+        work_context_map = self._generate_work_context_map(context)
+        logger.info(f"[WORK-CONTEXT] Map generated - Confidence: {work_context_map.get('confidence', 0.0) if work_context_map else 0.0:.2f}")
+        if work_context_map:
+            logger.info(f"[WORK-CONTEXT] Current task: {work_context_map.get('current_task', 'Unknown')}")
+            logger.info(f"[WORK-CONTEXT] Active module: {work_context_map.get('active_module', 'Unknown')}")
+            guidance_parts.append("[MAP] 0102 WORK CONTEXT MAP:")
+            guidance_parts.append(f"  [TARGET] Current Focus: {work_context_map.get('current_task', 'Unknown')}")
+            guidance_parts.append(f"  [FOLDER] Active Module: {work_context_map.get('active_module', 'Unknown')}")
+            guidance_parts.append(f"  [LOCATION] Exact Location: {work_context_map.get('exact_location', 'Unknown')}")
+            if work_context_map.get('related_modules'):
+                guidance_parts.append("  [LINK] Related Modules:")
+                for mod in work_context_map['related_modules'][:3]:
+                    guidance_parts.append(f"     - {mod}")
             guidance_parts.append("")  # Add spacing
 
         # Primary: LLM analysis (if available)
@@ -346,17 +686,18 @@ class QwenAdvisor:
 
     def _generate_troubleshooting_guidance(self, patterns: Dict[str, Dict[str, Any]]) -> str:
         """Generate troubleshooting guidance for detected patterns."""
-        guidance_parts = ["🔧 TROUBLESHOOTING DETECTED:"]
+        guidance_parts = ["[TOOL] TROUBLESHOOTING DETECTED:"]
 
         for pattern_name, pattern_data in patterns.items():
-            guidance_parts.append(f"\n🚨 Issue: {pattern_data['description']}")
-            guidance_parts.append(f"🎯 Priority: {pattern_data['priority']}")
-            guidance_parts.append("💡 Solutions:")
+            guidance_parts.append(f"\n[ERROR] Issue: {pattern_data['description']}")
+            guidance_parts.append(f"[TARGET] Priority: {pattern_data['priority']}")
+            guidance_parts.append("[IDEA] Solutions:")
 
             for solution in pattern_data['solutions']:
-                guidance_parts.append(f"   • {solution}")
+                guidance_parts.append(f"   - {solution}")
 
             if pattern_data['modules']:
-                guidance_parts.append(f"📁 Focus modules: {', '.join(pattern_data['modules'])}")
+                guidance_parts.append(f"[FOLDER] Focus modules: {', '.join(pattern_data['modules'])}")
 
         return "\n".join(guidance_parts)
+

@@ -372,7 +372,32 @@ class InstanceLock:
             pid = process.info.get("pid")
             if pid == current_pid:
                 continue
-            if self._looks_like_monitor(process.info.get("cmdline")):
+
+            cmdline = process.info.get("cmdline")
+            if not cmdline:
+                continue
+
+            # Only detect duplicates if they're actually running the YouTube DAE
+            # Check for --youtube flag or asyncio.run(monitor_youtube in the command
+            is_youtube_dae = False
+            cmdline_str = " ".join(str(arg) for arg in cmdline).lower()
+
+            # Check if this is actually running YouTube DAE (not just the menu)
+            if self._looks_like_monitor(cmdline):
+                # Additional check: must have --youtube flag OR be running auto_moderator_dae
+                if "--youtube" in cmdline_str or "auto_moderator_dae" in cmdline_str:
+                    is_youtube_dae = True
+                # Also check if there's an existing lock file pointing to this PID
+                elif self.lock_file.exists():
+                    try:
+                        with open(self.lock_file, "r", encoding="utf-8") as f:
+                            lock_data = json.load(f)
+                            if lock_data.get("pid") == pid:
+                                is_youtube_dae = True
+                    except:
+                        pass
+
+            if is_youtube_dae:
                 duplicates.append(pid)
 
                 # Get detailed process info

@@ -1,4 +1,4 @@
-# 🛑 ANTI-VIBECODING MANIFESTO
+# [U+1F6D1] ANTI-VIBECODING MANIFESTO
 
 ## What is Vibecoding?
 
@@ -9,13 +9,13 @@
 ## The Vibecoding Problem
 
 ### How Claude Vibecodes:
-1. **Sees a problem** → Immediately starts coding a solution
-2. **Assumes file paths** → Creates files that duplicate existing functionality
-3. **Invents imports** → Uses modules that don't exist or work differently
-4. **Ignores architecture** → Places code in wrong domains/modules
-5. **Creates "enhanced" versions** → Instead of editing existing files
-6. **Skips documentation** → Doesn't read README, INTERFACE, or CLAUDE.md files
-7. **Misses orchestrators** → Doesn't check if coordination layer already exists
+1. **Sees a problem** -> Immediately starts coding a solution
+2. **Assumes file paths** -> Creates files that duplicate existing functionality
+3. **Invents imports** -> Uses modules that don't exist or work differently
+4. **Ignores architecture** -> Places code in wrong domains/modules
+5. **Creates "enhanced" versions** -> Instead of editing existing files
+6. **Skips documentation** -> Doesn't read README, INTERFACE, or CLAUDE.md files
+7. **Misses orchestrators** -> Doesn't check if coordination layer already exists
 
 ### The Cost of Vibecoding:
 - **Token Waste**: Uses 10-100x more tokens than research would have
@@ -95,17 +95,17 @@ cat modules/{domain}/{module}/tests/test_*.py | head -100
 - Orchestrator exists?
 - Follows patterns?
 
-## Vibecoding Red Flags 🚨
+## Vibecoding Red Flags [U+1F6A8]
 
 You ARE vibecoding if you:
-- ❌ Started coding without research
-- ❌ Created a file without searching
-- ❌ Added imports without verifying
-- ❌ Fixed a "bug" without reading logs
-- ❌ Modified core without understanding flow
-- ❌ Created "enhanced" versions
-- ❌ Ignored existing tests
-- ❌ Skipped documentation
+- [U+274C] Started coding without research
+- [U+274C] Created a file without searching
+- [U+274C] Added imports without verifying
+- [U+274C] Fixed a "bug" without reading logs
+- [U+274C] Modified core without understanding flow
+- [U+274C] Created "enhanced" versions
+- [U+274C] Ignored existing tests
+- [U+274C] Skipped documentation
 
 ## The WSP Way (Anti-Vibecoding)
 
@@ -151,19 +151,19 @@ Ask:
 ## Success Metrics
 
 ### You're Following Anti-Vibecoding When:
-- ✅ Research takes longer than initial coding
-- ✅ You enhance files more than create
-- ✅ You find existing code 80%+ of time
-- ✅ Your PRs modify fewer files
-- ✅ Tests pass on first run
-- ✅ No "enhanced" versions created
+- [U+2705] Research takes longer than initial coding
+- [U+2705] You enhance files more than create
+- [U+2705] You find existing code 80%+ of time
+- [U+2705] Your PRs modify fewer files
+- [U+2705] Tests pass on first run
+- [U+2705] No "enhanced" versions created
 
 ### You're Still Vibecoding When:
-- ❌ Creating multiple new files per session
-- ❌ Import errors are common
-- ❌ Duplicating existing functionality
-- ❌ Breaking tests frequently
-- ❌ User has to correct paths/imports
+- [U+274C] Creating multiple new files per session
+- [U+274C] Import errors are common
+- [U+274C] Duplicating existing functionality
+- [U+274C] Breaking tests frequently
+- [U+274C] User has to correct paths/imports
 
 ## The Commitment
 

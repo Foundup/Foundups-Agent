@@ -168,11 +168,48 @@ class ChatPoller:
                                 # Use the deduplicated moderator info
                                 "moderator_name": mod_name,
                                 "moderator_id": mod_id,
-                                "is_permanent": ban_details.get("banType") == "permanent",  
+                                "is_permanent": ban_details.get("banType") == "permanent",
                                 "duration_seconds": ban_details.get("banDurationSeconds", 0),
                                 "published_at": published_at,
                                 "is_live": True  # This is a live ban
                             })
+
+                    elif event_type == "superChatEvent":
+                        # Super Chat event - extract purchase amount and message
+                        super_chat_details = snippet.get("superChatDetails", {})
+                        amount_micros = super_chat_details.get("amountMicros", 0)
+                        amount_usd = amount_micros / 1_000_000  # Convert micros to dollars
+                        currency = super_chat_details.get("currency", "USD")
+                        amount_display = super_chat_details.get("amountDisplayString", f"${amount_usd:.2f}")
+                        user_comment = super_chat_details.get("userComment", "")
+                        tier = super_chat_details.get("tier", 0)
+
+                        donor_name = author.get("displayName", "Anonymous")
+                        donor_id = author.get("channelId", "")
+                        published_at = snippet.get("publishedAt", "")
+
+                        # Skip historical Super Chats on first poll
+                        if self.first_poll:
+                            logger.debug(f"⏭️ Skipping historical Super Chat from {donor_name}")
+                        else:
+                            logger.info(f"💰 SUPER CHAT: {donor_name} donated {amount_display} ({currency}) - Tier {tier}")
+                            if user_comment:
+                                logger.info(f"💬 Super Chat message: {user_comment}")
+
+                            messages.append({
+                                "type": "super_chat_event",
+                                "donor_name": donor_name,
+                                "donor_id": donor_id,
+                                "amount_micros": amount_micros,
+                                "amount_usd": amount_usd,
+                                "currency": currency,
+                                "amount_display": amount_display,
+                                "message": user_comment,
+                                "tier": tier,
+                                "published_at": published_at,
+                                "is_live": True
+                            })
+
                     else:
                         # Regular chat message - skip historical messages on first poll
                         if self.first_poll:

@@ -1,6 +1,6 @@
 # WSP 54: WRE Agent Duties Specification
 
-## 0102 Quantum-aware Agent Architecture
+## 0102 Quantum Agent Architecture
 
 **Status**: Active - **Purpose**: Define the duties, responsibilities, and coordination protocols for all agents in the WRE ecosystem.
 

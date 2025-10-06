@@ -8,9 +8,9 @@
 Enable HoloIndex to orchestrate local Qwen models as WSP-aware advisors so every retrieval cycle produces actionable, compliant guidance for 0102 agents while maintaining deterministic navigation.
 
 ## Deliverables
-1. WSP-compliant structure for `E:/HoloIndex/` (root README, ModLog, docs/, archive/) — **Complete**.
-2. `holo_index/qwen_advisor/` package with prompt templates, model loader, cache, telemetry hooks, and reward scaffolding — **Scaffolded** (awaiting model integration).
-3. CLI extensions (`--llm-advisor`, advisor modes) plus updated `display_results` output sections — **In Progress** (flag live, onboarding banner with reward prompts, awaiting full inference integration).
+1. WSP-compliant structure for `E:/HoloIndex/` (root README, ModLog, docs/, archive/) - **Complete**.
+2. `holo_index/qwen_advisor/` package with prompt templates, model loader, cache, telemetry hooks, and reward scaffolding - **Scaffolded** (awaiting model integration).
+3. CLI extensions (`--llm-advisor`, advisor modes) plus updated `display_results` output sections - **In Progress** (flag live, onboarding banner with reward prompts, awaiting full inference integration).
 4. Supplemental WSP documentation (`docs/QWEN_ADVISOR_OVERVIEW.md`, `docs/IDLE_MONITOR_PATTERNS.md`) linked from NAVIGATION and indexed by HoloIndex.
 5. Automated tests covering advisor prompt synthesis, caching, and fallback behaviour.
 6. Updated ModLogs (root + module) and NAVIGATION NEED_TO entries referencing the new advisor flow.

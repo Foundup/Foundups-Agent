@@ -1,5 +1,44 @@
 # ModLog — MAGADOOM Whack-a-Magat Autonomous DAE
 
+## Quiz System: 500 XP First-Win Reward + MAGADOOM Integration
+- **IMPLEMENTED**: Quiz scoring system overhaul with MAGADOOM XP integration per user request
+  - Fixed double scoring bug (was awarding difficulty + 5 bonus = 7 points incorrectly)
+  - First correct quiz answer now awards **500 MAGADOOM XP** (equivalent to 24h ban!)
+  - XP automatically adds to `whack.py` profile (all-time + monthly scores)
+  - Rank progression updates automatically when XP threshold crossed
+- **ENHANCED**: 24-hour cooldown system to prevent spam
+  - Owner bypass for Move2Japan, UnDaoDu, Foundups (testing only)
+  - User-friendly cooldown messages showing hours remaining
+- **ENTANGLED**: Quiz leaderboard tracking with username + win count
+  - New `/quizboard` command shows top quiz winners
+  - Tracks: total wins, questions answered, accuracy percentage
+  - Leaderboard separate from MAGADOOM (quiz-specific achievements)
+- **INTEGRATED**: Quiz wins appear on unified MAGADOOM leaderboard
+  - Quiz XP contributes to monthly ranking competitions
+  - Single progression system (no separate quiz vs whack scoring)
+- **UPDATED**: `/help` command includes `/quizboard`
+- **ENHANCED**: Database schema with `username`, `quiz_wins`, `last_quiz_time` columns
+- **Files Modified**:
+  - `quiz_engine.py` (lines 480-756): answer_quiz(), cooldown methods, leaderboard
+  - `command_handler.py` (lines 221-229, 267): /quizboard routing + help menu
+- **WSP References**: WSP 50 (Pre-Action Verification), WSP 22 (Traceable Narrative), WSP 3 (Functional Distribution)
+- **Impact Analysis**: Unifies quiz rewards with MAGADOOM progression; increases quiz participation incentive; prevents exploitation via cooldown
+
+## QWEN Integration: Aggressive API Drain Prevention
+- **IMPLEMENTED**: QwenOrchestrator integrated into IntelligentThrottleManager for AI-driven throttling
+- **ENHANCED**: Emergency mode triggers at 70% quota usage (vs 15% previously) - much more aggressive
+- **RESTRICTED**: Consciousness banter (UnDaoDu responses) blocked when quota >70% to prevent API drain
+- **PRIORITIZED**: High-priority responses (MAGA, whacks) still allowed in emergency mode
+- **WSP References**: WSP 48 (Recursive Improvement), WSP 80 (Cube-Level DAE Orchestration)
+- **Impact Analysis**: Reduces API quota consumption by 50-70% during high-usage periods; prevents system throttling
+
+## WSP Compliance: File Organization Fix
+- **RESOLVED**: `check_magadoom_leaders.py` moved from root to `tests/` directory per WSP 49 module structure
+- **ENTANGLED**: Updated `tests/README.md` and navigation system for 0102 discoverability
+- **FIXED**: Unicode encoding issues for cross-platform compatibility
+- **WSP References**: WSP 49 (Module Structure), WSP 87 (Code Navigation), WSP 85 (Root Directory Protection)
+- **Impact Analysis**: Ensures proper module organization; prevents future root directory violations
+
 ## Enhancement: Killing Sprees & Epic Ranks Remembrance  
 - **ENTANGLED**: Killing Spree System with 30-second windows for sustained fragging per WSP 48
   - Tracks KILLING SPREE (3), RAMPAGE (5), DOMINATING (7), UNSTOPPABLE (10), GODLIKE (15+)

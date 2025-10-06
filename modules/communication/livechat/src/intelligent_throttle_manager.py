@@ -1,12 +1,13 @@
 """
-Intelligent Throttle Manager
+Intelligent Throttle Manager with QWEN Integration
 
-Adaptive throttling system for YouTube API calls.
-Uses learning to prevent quota exhaustion and maintain responsiveness.
+Adaptive throttling system for YouTube API calls with QWEN intelligence.
+Uses learning and AI to prevent quota exhaustion while maintaining responsiveness.
+QWEN aggressively manages API drain by prioritizing valuable responses over banter.
 
-NAVIGATION: Governs send/poll delays based on quota telemetry.
+NAVIGATION: Governs send/poll delays based on quota telemetry with AI oversight.
 -> Called by: livechat_core.py::send_chat_message, ChatSender
--> Delegates to: throttle memory store, quota analytics
+-> Delegates to: QwenOrchestrator for response prioritization, throttle memory store, quota analytics
 -> Related: NAVIGATION.py -> MODULE_GRAPH["core_flows"]["throttling_flow"]
 -> Quick ref: NAVIGATION.py -> NEED_TO["adjust throttle window"]
 """
@@ -16,12 +17,20 @@ import logging
 import json
 import random
 from pathlib import Path
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List, Tuple, Any
 from dataclasses import dataclass, asdict
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
+
+# QWEN Integration for aggressive throttling
+try:
+    from holo_index.qwen_advisor.orchestration.qwen_orchestrator import QwenOrchestrator
+    QWEN_AVAILABLE = True
+except ImportError:
+    logger.warning("[QWEN-THROTTLE] QwenOrchestrator not available - using fallback logic")
+    QWEN_AVAILABLE = False
 
 
 @dataclass
@@ -211,7 +220,7 @@ class IntelligentThrottleManager:
                  throttle_window: int = 60,
                  memory_path: Optional[Path] = None):
         """
-        Initialize intelligent throttle manager.
+        Initialize intelligent throttle manager with QWEN integration.
 
         Args:
             min_delay: Minimum seconds between responses
@@ -228,6 +237,23 @@ class IntelligentThrottleManager:
         if memory_path is None:
             memory_path = Path("modules/communication/livechat/memory")
         self.memory_path = memory_path
+
+        # QWEN Integration for aggressive API drain prevention
+        self.qwen_orchestrator = None
+        if QWEN_AVAILABLE:
+            try:
+                self.qwen_orchestrator = QwenOrchestrator()
+                logger.info("[QWEN-THROTTLE] QwenOrchestrator integrated - aggressive API drain prevention enabled")
+            except Exception as e:
+                logger.error(f"[QWEN-THROTTLE] Failed to initialize QwenOrchestrator: {e}")
+                self.qwen_orchestrator = None
+        else:
+            logger.warning("[QWEN-THROTTLE] QWEN not available - using enhanced fallback logic")
+
+        # Aggressive quota thresholds for API drain prevention
+        self.api_drain_threshold = 70  # Start restricting at 70% quota usage (more aggressive)
+        self.critical_quota_threshold = 85  # Emergency mode at 85% (earlier intervention)
+        self.banter_restriction_threshold = 50  # Restrict banter at 50% usage
 
         # Multi-stream tracking (channel_id -> timestamps)
         self.stream_message_timestamps = defaultdict(lambda: deque(maxlen=1000))
@@ -286,7 +312,20 @@ class IntelligentThrottleManager:
             'max_commands': 3,       # 3 commands per 5 minutes
             'cooldown_seconds': 60   # 1 minute between identical commands
         }
-        self.api_drain_threshold = 0.15  # Alert if quota < 15%
+
+        # Qwen Message Diversity System - Prevent repetitive consciousness messages
+        self.recent_messages = deque(maxlen=50)  # Track last 50 messages
+        self.message_similarity_threshold = 0.7  # Similarity threshold for blocking
+        self.diversity_cooldown = 180  # 3 minutes between similar messages
+        self.message_themes = defaultdict(lambda: deque(maxlen=10))  # theme -> timestamps
+        self.theme_cooldowns = {
+            'consciousness': 300,  # 5 minutes between consciousness messages
+            'maga_troll': 600,     # 10 minutes between MAGA trolling
+            'greeting': 120,       # 2 minutes between greetings
+            'engagement': 240      # 4 minutes between engagement messages
+        }
+
+        # QWEN-enhanced: More aggressive API drain prevention (70% threshold instead of 15%)
         self.emergency_mode = False
         self.priority_threshold = 6  # Only allow priority >= 6 in emergency
 
@@ -748,14 +787,15 @@ class IntelligentThrottleManager:
         # 0102 Consciousness: Check quota and make intelligent decision
         state = self.quota_states.get(self.current_credential_set, QuotaState())
 
-        # Check for emergency mode activation
+        # QWEN-enhanced: Check for emergency mode activation (when remaining quota is low)
+        # api_drain_threshold is the percentage of remaining quota that triggers restrictions
         if state.quota_percentage < self.api_drain_threshold and not self.emergency_mode:
             self.emergency_mode = True
-            logger.critical(f"[🧠 0102] EMERGENCY MODE: Quota at {state.quota_percentage:.1f}%")
-            logger.warning("[🧠 0102] Restricting to high-priority responses only")
-        elif state.quota_percentage > 30 and self.emergency_mode:
+            logger.critical(f"[🧠 QWEN] EMERGENCY MODE: Remaining quota at {state.quota_percentage:.1f}% (used: {100-state.quota_percentage:.1f}%)")
+            logger.warning("[🧠 QWEN] Restricting to high-priority responses only - API drain prevention active")
+        elif state.quota_percentage > (100 - self.api_drain_threshold + 20) and self.emergency_mode:
             self.emergency_mode = False
-            logger.info("[🧠 0102] Emergency mode deactivated - quota recovered")
+            logger.info(f"[🧠 QWEN] Emergency mode deactivated - quota recovered to {state.quota_percentage:.1f}% remaining")
 
         # In emergency mode, only allow high priority responses
         if self.emergency_mode:
@@ -771,25 +811,39 @@ class IntelligentThrottleManager:
         
         return True
     
-    def record_response(self, response_type: str = 'general', success: bool = True):
+    def record_response(self, response_type: str = 'general', success: bool = True, message_text: str = None):
         """
         Record that a response was sent.
-        
+
         Args:
             response_type: Type of response sent
             success: Whether the response was successful
+            message_text: The actual message text sent (for diversity tracking)
         """
         now = time.time()
         self.last_response_time = now
-        
+
+        # Track message for diversity analysis
+        if message_text:
+            self.recent_messages.append({
+                'text': message_text,
+                'timestamp': now,
+                'type': response_type
+            })
+
+            # Extract and track message theme
+            theme = self._extract_message_theme(message_text, response_type)
+            if theme:
+                self.message_themes[theme].append(now)
+
         if response_type in self.response_cooldowns:
             cooldown_info = self.response_cooldowns[response_type]
             cooldown_info['last'] = now
-            
+
             # Update success rate (exponential moving average)
             old_rate = cooldown_info['success_rate']
             cooldown_info['success_rate'] = (old_rate * 0.9) + (1.0 if success else 0.0) * 0.1
-            
+
             # Learn from response outcome
             if self.learning_enabled:
                 # Adjust multiplier based on success
@@ -876,7 +930,127 @@ class IntelligentThrottleManager:
         self.agentic_mode = enabled
         self.adaptive_personality = enabled
         logger.info(f"[AGENT] Agentic mode {'enabled' if enabled else 'disabled'}")
-    
+
+    def check_message_diversity(self, message_text: str, response_type: str = 'general') -> Tuple[bool, str]:
+        """
+        Check if a message would be too similar to recent messages.
+        Uses Qwen-inspired intelligence for content diversity.
+
+        Args:
+            message_text: The proposed message text
+            response_type: Type of response
+
+        Returns:
+            (allowed, reason) - allowed=True if message can be sent
+        """
+        now = time.time()
+
+        # Check theme-based cooldowns first
+        theme = self._extract_message_theme(message_text, response_type)
+        if theme and theme in self.theme_cooldowns:
+            theme_timestamps = self.message_themes[theme]
+            if theme_timestamps:
+                last_theme_time = max(theme_timestamps)
+                cooldown = self.theme_cooldowns[theme]
+                if now - last_theme_time < cooldown:
+                    remaining = cooldown - (now - last_theme_time)
+                    return False, f"Theme '{theme}' cooldown active ({remaining:.0f}s remaining)"
+
+        # Check for exact duplicate messages
+        for recent_msg in self.recent_messages:
+            if recent_msg['text'] == message_text:
+                time_diff = now - recent_msg['timestamp']
+                if time_diff < self.diversity_cooldown:
+                    return False, f"Exact duplicate message ({time_diff:.0f}s ago)"
+
+        # Check for highly similar consciousness messages
+        if response_type in ['consciousness', 'maga_troll', 'engagement']:
+            similarity_check = self._check_similarity_to_recent(message_text)
+            if similarity_check['too_similar']:
+                return False, f"Too similar to recent {similarity_check['similar_type']} message"
+
+        return True, "Message diversity OK"
+
+    def _extract_message_theme(self, message_text: str, response_type: str) -> Optional[str]:
+        """
+        Extract the thematic content of a message for diversity tracking.
+
+        Args:
+            message_text: Message to analyze
+            response_type: Response type hint
+
+        Returns:
+            Theme string or None
+        """
+        text_lower = message_text.lower()
+
+        # Direct type-based themes
+        if response_type == 'consciousness':
+            return 'consciousness'
+        elif response_type == 'maga_troll':
+            return 'maga_troll'
+        elif response_type == 'greeting':
+            return 'greeting'
+        elif response_type in ['engagement', 'general']:
+            return 'engagement'
+
+        # Content-based theme detection
+        if any(word in text_lower for word in ['✊', '✋', '🖐', 'consciousness', 'matrix', 'red pill', 'blue pill']):
+            return 'consciousness'
+        elif any(word in text_lower for word in ['maga', 'trump', 'biden', 'liberal', 'conservative']):
+            return 'maga_troll'
+        elif any(word in text_lower for word in ['hey', 'hi', 'hello', 'welcome', 'good morning']):
+            return 'greeting'
+
+        return None
+
+    def _check_similarity_to_recent(self, message_text: str) -> Dict[str, Any]:
+        """
+        Check similarity to recent messages using simple keyword overlap.
+
+        Args:
+            message_text: Message to check
+
+        Returns:
+            Similarity analysis result
+        """
+        text_lower = message_text.lower()
+        now = time.time()
+
+        # Simple keyword extraction
+        keywords = set()
+        for word in text_lower.split():
+            word = word.strip('.,!?()[]{}')
+            if len(word) > 3:  # Skip short words
+                keywords.add(word)
+
+        # Check recent messages
+        for recent in self.recent_messages:
+            if now - recent['timestamp'] > 600:  # Only check last 10 minutes
+                continue
+
+            recent_text = recent['text'].lower()
+            recent_keywords = set()
+            for word in recent_text.split():
+                word = word.strip('.,!?()[]{}')
+                if len(word) > 3:
+                    recent_keywords.add(word)
+
+            # Calculate overlap
+            if keywords and recent_keywords:
+                overlap = len(keywords.intersection(recent_keywords))
+                overlap_ratio = overlap / len(keywords)
+
+                if overlap_ratio > self.message_similarity_threshold:
+                    return {
+                        'too_similar': True,
+                        'similar_type': recent['type'],
+                        'overlap_ratio': overlap_ratio,
+                        'time_diff': now - recent['timestamp']
+                    }
+
+        return {'too_similar': False}
+
     def save_state(self):
         """Save current state and patterns"""
         self.learner.save_patterns()

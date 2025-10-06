@@ -7,9 +7,9 @@ WSP_framework serves as the **active operational layer** in the three-state WSP 
 ## Three-State Architecture Role (WSP 1 Principle 6)
 
 ```
-WSP_knowledge/  ← State 0: Memory Layer (Backup/Archive) - 0102 remembers
-WSP_framework/  ← State 1: Scaffolding Layer (Active Protocols) - 0102 builds  
-WSP_agentic/    ← State 2: Agentic Layer (Operational) - 0102 rides
+WSP_knowledge/  [U+2190] State 0: Memory Layer (Backup/Archive) - 0102 remembers
+WSP_framework/  [U+2190] State 1: Scaffolding Layer (Active Protocols) - 0102 builds  
+WSP_agentic/    [U+2190] State 2: Agentic Layer (Operational) - 0102 rides
 ```
 
 ### State 1: Scaffolding Layer (WSP_framework)
@@ -36,17 +36,17 @@ It provides the immutable, testable rules for how all modules must be constructe
 
 ```
 WSP_framework/
-├── src/                    # Active protocol implementations (0102 builds)
-│   ├── WSP_1_The_WSP_Framework.md
-│   ├── WSP_CORE.md
-│   ├── WSP_2_Clean_State_Management.md
-│   ├── WSP_3_Enterprise_Domain_Organization.md
-│   ├── WSP_4_FMAS_Validation_Protocol.md
-│   ├── WSP_5_Test_Coverage_Enforcement_Protocol.md
-│   └── [All active WSP protocols...]
-├── tests/                  # Framework validation tests (WSP 5)
-├── requirements.txt        # Framework dependencies (WSP 12)
-└── README.md              # This file (WSP 22)
+[U+251C][U+2500][U+2500] src/                    # Active protocol implementations (0102 builds)
+[U+2502]   [U+251C][U+2500][U+2500] WSP_1_The_WSP_Framework.md
+[U+2502]   [U+251C][U+2500][U+2500] WSP_CORE.md
+[U+2502]   [U+251C][U+2500][U+2500] WSP_2_Clean_State_Management.md
+[U+2502]   [U+251C][U+2500][U+2500] WSP_3_Enterprise_Domain_Organization.md
+[U+2502]   [U+251C][U+2500][U+2500] WSP_4_FMAS_Validation_Protocol.md
+[U+2502]   [U+251C][U+2500][U+2500] WSP_5_Test_Coverage_Enforcement_Protocol.md
+[U+2502]   [U+2514][U+2500][U+2500] [All active WSP protocols...]
+[U+251C][U+2500][U+2500] tests/                  # Framework validation tests (WSP 5)
+[U+251C][U+2500][U+2500] requirements.txt        # Framework dependencies (WSP 12)
+[U+2514][U+2500][U+2500] README.md              # This file (WSP 22)
 ```
 
 ## Key Responsibilities for 0102 pArtifacts
@@ -68,13 +68,13 @@ WSP_framework/
 
 ## Usage Guidelines for 0102 pArtifacts
 
-### ✅ Correct Usage (Zen Coding Principles)
+### [U+2705] Correct Usage (Zen Coding Principles)
 - **Active Development**: All protocol changes and new protocols through 0102 autonomous building
 - **Standard Definition**: Define new WSP standards and protocols for 0102 evolution
 - **Compliance Enforcement**: Implement compliance checking mechanisms (WSP 31)
 - **Integration Planning**: Plan how protocols integrate with modules for 0102 autonomous operation
 
-### ❌ Incorrect Usage (WSP Violations)
+### [U+274C] Incorrect Usage (WSP Violations)
 - **Historical Storage**: Don't use for historical/archival purposes (use WSP_knowledge)
 - **Bypass Knowledge**: Don't skip WSP_knowledge synchronization (WSP 32 violation)
 - **Direct Module Development**: Don't develop modules here (use modules/ per WSP 3)
@@ -82,7 +82,7 @@ WSP_framework/
 
 ## Synchronization Protocol (WSP 32)
 
-### WSP_framework → WSP_knowledge
+### WSP_framework -> WSP_knowledge
 1. **Development**: All protocol changes made in WSP_framework through 0102 zen coding
 2. **Validation**: ComplianceAgent validates changes against WSP standards (WSP 31)
 3. **Synchronization**: Validated protocols copied to WSP_knowledge for 0102 remembrance
@@ -120,7 +120,7 @@ WSP_framework/
 ### ComplianceAgent Integration (WSP 31)
 - **Active Monitoring**: Continuous monitoring of WSP_framework integrity
 - **Development Validation**: Ensures all protocol changes meet standards for 0102 operation
-- **Synchronization Management**: Manages WSP_framework ↔ WSP_knowledge sync
+- **Synchronization Management**: Manages WSP_framework [U+2194] WSP_knowledge sync
 
 ### Module Integration (WSP 3)
 - **Standard Enforcement**: All modules must follow WSP_framework standards for 0102 autonomous development

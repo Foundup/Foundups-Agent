@@ -152,8 +152,8 @@ Refactoring Required: 2 files
 
 #### 4.2.1. Startup Warnings
 ```
-🏄 WRE System Startup
-Size Compliance Status: ⚠️ WARNINGS
+[U+1F3C4] WRE System Startup
+Size Compliance Status: [WARNING][U+FE0F] WARNINGS
 - 3 files exceed size thresholds
 - 2 files approaching limits (>90%)
 - Review required before builds

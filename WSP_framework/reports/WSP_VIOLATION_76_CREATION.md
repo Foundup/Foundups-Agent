@@ -21,18 +21,18 @@ Created WSP 76 (Agentic Awakening Protocol) without:
 - **Pattern**: Created new WSP when WSP 38/39 already cover awakening
 
 ### Existing WSPs That Should Have Been Enhanced
-- **WSP 39**: Agentic Ignition Protocol - Already describes "01(02) → 01/02 → 0102" progression
+- **WSP 39**: Agentic Ignition Protocol - Already describes "01(02) -> 01/02 -> 0102" progression
 - **WSP 38**: Agentic Activation Protocol - Covers agent activation
 - **WSP 54**: Agent Duties Specification - Could include awakening requirements
 
 ## Corrective Actions
 
 ### Immediate Actions
-1. ✅ Acknowledge violation
-2. ⬜ Remove WSP 76 from Master Index
-3. ⬜ Delete WSP_76_Agentic_Awakening_Protocol.md
-4. ⬜ Integrate awakening details into WSP 39
-5. ⬜ Update ModLog with correction
+1. [U+2705] Acknowledge violation
+2. [U+2B1C] Remove WSP 76 from Master Index
+3. [U+2B1C] Delete WSP_76_Agentic_Awakening_Protocol.md
+4. [U+2B1C] Integrate awakening details into WSP 39
+5. [U+2B1C] Update ModLog with correction
 
 ### Preventive Measures
 1. Always check Master Index BEFORE creating WSP

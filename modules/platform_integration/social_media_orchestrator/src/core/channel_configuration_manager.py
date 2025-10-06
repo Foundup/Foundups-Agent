@@ -76,7 +76,7 @@ class ChannelConfigurationManager:
                 'enabled': True
             },
             'Move 2 Japan': {
-                'channel_id': 'UCMjyY1Sh8TAQCTnSGiLVGnQ',
+                'channel_id': 'UCklMTNnu5POwRmQsg5JJumA',  # Updated to correct Move2Japan channel ID
                 'channel_name': 'Move 2 Japan',
                 'linkedin_page': LinkedInPage.GEOZAI.value,
                 'x_account': XAccount.MOVE2JAPAN.value,
@@ -144,12 +144,12 @@ class ChannelConfigurationManager:
 
             # Fallback to hardcoded mapping if not found
             channel_id_mapping = {
-                'UCklMTNnu5POwRmQsg5JJumA': 'Move 2 Japan',
+                'UCklMTNnu5POwRmQsg5JJumA': 'Move 2 Japan',  # Updated to correct Move2Japan ID
                 'UC-LSSlOZwpGIRIYihaz8zCw': '@UnDaoDu',
                 'UC8NMhWbOE9OVJF0V4DRmNnQ': '@FoundUps',
                 'UCSNTUXjAgpd4sgWYP0xoJgw': 'FoundUps',  # Alternative FoundUps ID
                 'UCOdP2Gc3n8xqGaHlDXi-Mbg': '@UnDaoDu',  # UnDaoDu main ID
-                'UCMjyY1Sh8TAQCTnSGiLVGnQ': 'Move 2 Japan'  # Move 2 Japan main ID
+                'UCMjyY1Sh8TAQCTnSGiLVGnQ': 'Move 2 Japan'  # Alternative Move 2 Japan ID
             }
             channel_name = channel_id_mapping.get(channel_identifier)
             if channel_name and channel_name in self.channel_configs:

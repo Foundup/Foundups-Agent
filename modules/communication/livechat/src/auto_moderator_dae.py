@@ -104,32 +104,11 @@ class AutoModeratorDAE:
         """
         logger.info("🔌 Starting in NO-QUOTA mode to preserve API tokens...")
 
-        # AUTOMATIC TOKEN REFRESH - Keep tokens fresh proactively!
-        logger.info("🔄 Proactively refreshing OAuth tokens to ensure they're ready...")
-        try:
-            # Import and run the auto-refresh script
-            import subprocess
-            import os
-            script_path = os.path.join(
-                os.path.dirname(__file__),
-                "../../platform_integration/youtube_auth/scripts/auto_refresh_tokens.py"
-            )
-            if os.path.exists(script_path):
-                result = subprocess.run(
-                    ["python", script_path],
-                    capture_output=True,
-                    text=True,
-                    timeout=10
-                )
-                if result.returncode == 0:
-                    logger.info("✅ OAuth tokens proactively refreshed - ready for use when needed")
-                else:
-                    logger.warning(f"⚠️ Token refresh had issues: {result.stderr[:200]}")
-            else:
-                logger.debug("Token refresh script not found, continuing anyway")
-        except Exception as e:
-            logger.warning(f"⚠️ Proactive token refresh failed: {e}")
-            # Continue anyway - tokens might still be valid
+        # TOKEN REFRESH DISABLED DURING STARTUP - Prevents blocking on OAuth
+        # Token refresh should be done before starting the daemon using:
+        # python modules/platform_integration/youtube_auth/scripts/auto_refresh_tokens.py
+        logger.info("💡 Token refresh happens on-demand when authentication is needed")
+        logger.info("   To manually refresh: python modules/platform_integration/youtube_auth/scripts/auto_refresh_tokens.py")
 
         # Default to NO-QUOTA mode for stream searching
         # We'll only authenticate when we actually find a stream
@@ -281,13 +260,32 @@ class AutoModeratorDAE:
                 continue
 
             if result and result[0]:  # Accept stream even without chat_id
+                logger.info(f"[FLOW-TRACE] Stream found! result={result}")
                 video_id = result[0]
                 live_chat_id = result[1] if len(result) > 1 else None
+                logger.info(f"[FLOW-TRACE] video_id={video_id}, chat_id={live_chat_id}")
 
                 channel_name = self.stream_resolver._get_channel_display_name(channel_id)
+                logger.info(f"[FLOW-TRACE] channel_name={channel_name}")
                 if not live_chat_id:
                     logger.info(f"⚠️ Found stream on {channel_name} but chat_id not available (likely quota exhausted)")
-                    logger.info(f"✅ Accepting stream anyway - video ID: {video_id} 🎉")
+
+                    # CRITICAL: Attempt to get chat_id with credential rotation
+                    logger.info(f"🔄 Attempting to get chat_id with credential rotation...")
+                    try:
+                        # Reuse existing stream_resolver to avoid rapid re-initialization loop
+                        # Creating new StreamResolver() every retry causes 20+ inits/sec (StreamDB migration spam)
+                        retry_result = self.stream_resolver.resolve_stream(channel_id=channel_id)
+
+                        if retry_result and len(retry_result) > 1 and retry_result[1]:
+                            live_chat_id = retry_result[1]
+                            logger.info(f"✅ Got chat_id after credential rotation: {live_chat_id}")
+                        else:
+                            logger.warning(f"⚠️ Credential rotation failed - still no chat_id")
+                            logger.info(f"✅ Accepting stream anyway - video ID: {video_id} 🎉")
+                    except Exception as e:
+                        logger.error(f"❌ Error during credential rotation: {e}")
+                        logger.info(f"✅ Accepting stream anyway - video ID: {video_id} 🎉")
                 else:
                     logger.info(f"✅ Found stream on {channel_name} with video ID: {video_id} 🎉")
 
@@ -307,15 +305,26 @@ class AutoModeratorDAE:
                     'channel_id': channel_id,
                     'channel_name': channel_name
                 }
+                logger.info(f"[FLOW-TRACE] Created stream_info: {stream_info}")
                 found_streams.append(stream_info)
+                logger.info(f"[FLOW-TRACE] Appended to found_streams, count={len(found_streams)}")
 
                 # Remember the first stream found for monitoring
                 if not first_stream_to_monitor:
                     first_stream_to_monitor = stream_info
+                    logger.info(f"[FLOW-TRACE] Set first_stream_to_monitor")
+
+                # CRITICAL FIX: Break out of channel checking loop immediately when we find streams
+                # We only need ONE stream to monitor, so stop wasting time checking other channels
+                logger.info(f"🎯 Found active stream on {channel_name} - stopping channel scan to post immediately")
+                logger.info(f"[FLOW-TRACE] About to break from channel loop")
+                break  # Exit the channel checking loop
 
         # Report results
+        logger.info(f"[FLOW-TRACE] After channel loop: found_streams count={len(found_streams)}")
         logger.info("🤖🧠 [QWEN-EVALUATE] Analyzing search results...")
         if found_streams:
+            logger.info(f"[FLOW-TRACE] Entering found_streams block, count={len(found_streams)}")
             # Deduplicate streams by video_id (same stream may appear on multiple channels)
             unique_streams = {}
             for stream in found_streams:
@@ -328,22 +337,39 @@ class AutoModeratorDAE:
 
             # Use only unique streams
             found_streams = list(unique_streams.values())
+            logger.info(f"[FLOW-TRACE] After dedup: unique streams count={len(found_streams)}")
 
             if found_streams and not first_stream_to_monitor:
                 first_stream_to_monitor = found_streams[0]
+                logger.info(f"[FLOW-TRACE] Updated first_stream_to_monitor after dedup")
 
             logger.info(f"\n✅ Found {len(found_streams)} unique stream(s):")
             for stream in found_streams:
                 logger.info(f"  • {stream['channel_name']}: {stream['video_id']}")
 
-            # Only trigger social media posting if we have unique streams
-            if len(found_streams) == 1:
-                logger.info(f"📝 Single stream detected on {found_streams[0]['channel_name']} - posting to social media")
-            elif len(found_streams) > 1:
-                logger.info(f"📝 Multiple unique streams detected - posting all to social media")
+            # SEMANTIC SWITCHING: Only post if this is a NEW stream (not same one we're already monitoring)
+            should_post = True
+            for stream in found_streams:
+                if stream['video_id'] == self._last_stream_id:
+                    logger.info(f"🔄 [SEMANTIC-SWITCH] Already monitoring/posted stream {stream['video_id']} - skipping duplicate post")
+                    should_post = False
+                    break
 
-            # Trigger social media posting for unique streams only
-            self._trigger_social_media_posting_for_streams(found_streams)
+            # Only trigger social media posting if we have NEW unique streams
+            if should_post:
+                if len(found_streams) == 1:
+                    logger.info(f"📝 Single NEW stream detected on {found_streams[0]['channel_name']} - posting to social media")
+                elif len(found_streams) > 1:
+                    logger.info(f"📝 Multiple NEW unique streams detected - posting all to social media")
+
+                # Trigger social media posting for new unique streams only
+                logger.info(f"[FINGERPRINT-HANDOFF-1] About to call _trigger_social_media_posting_for_streams with {len(found_streams)} streams")
+                import time
+                time.sleep(0.5)  # Brief pause for visibility
+                self._trigger_social_media_posting_for_streams(found_streams)
+                logger.info(f"[FINGERPRINT-HANDOFF-2] Returned from _trigger_social_media_posting_for_streams")
+            else:
+                logger.info(f"⏭️ [SEMANTIC-SWITCH] Skipped posting - stream already active in current session")
 
             logger.info(f"📺 Will monitor first stream: {found_streams[0]['channel_name']}")
             logger.info("🤖🧠 [QWEN-SUCCESS] Stream detection successful - transitioning to monitor phase")
@@ -374,22 +400,36 @@ class AutoModeratorDAE:
         Trigger social media posting for detected streams using proper orchestration.
         Handles sequential posting and channel-specific logic.
         """
+        import time
+        logger.info("[FINGERPRINT-HANDOFF-3] === ENTERED _trigger_social_media_posting_for_streams ===")
+        time.sleep(0.5)
+        logger.info(f"[FINGERPRINT-HANDOFF-4] Received {len(found_streams)} streams")
         logger.info("="*80)
         logger.info("📱 SOCIAL MEDIA POSTING ORCHESTRATION")
         logger.info("="*80)
 
         try:
+            logger.info("[FINGERPRINT-HANDOFF-5] Importing refactored_posting_orchestrator...")
+            time.sleep(0.5)
             # Import the refactored posting orchestrator
             from modules.platform_integration.social_media_orchestrator.src.refactored_posting_orchestrator import get_orchestrator
+            logger.info("[FINGERPRINT-HANDOFF-6] Calling get_orchestrator()...")
+            time.sleep(0.5)
             orchestrator = get_orchestrator()
+            logger.info(f"[FINGERPRINT-HANDOFF-7] Orchestrator loaded: {type(orchestrator).__name__}")
+            time.sleep(0.5)
             logger.info("✅ Social media orchestrator loaded")
 
             # Hand off ALL streams to social media orchestrator
             # The orchestrator handles priority, sequencing, browser selection, and LinkedIn page mapping
             logger.info(f"[HANDOFF] Sending {len(found_streams)} stream(s) to Social Media Orchestrator")
+            logger.info(f"[FINGERPRINT-HANDOFF-8] About to call handle_multiple_streams_detected()...")
+            time.sleep(0.5)
 
             # Use the new multi-stream handler method (WSP 3 compliant)
             result = orchestrator.handle_multiple_streams_detected(found_streams)
+            logger.info(f"[FINGERPRINT-HANDOFF-9] Orchestrator returned: success={result.get('success')}")
+            time.sleep(0.5)
 
             if result.get('success'):
                 logger.info(f"[SUCCESS] Orchestrator processed {result.get('streams_processed')} streams")
@@ -398,13 +438,18 @@ class AutoModeratorDAE:
 
             # All posting now handled by orchestrator
             logger.info("[COMPLETE] Social media posting handoff complete")
+            logger.info("[FINGERPRINT-HANDOFF-10] === EXITING _trigger_social_media_posting_for_streams ===")
+            logger.info("[FLOW-TRACE] === EXITING _trigger_social_media_posting_for_streams (success) ===")
 
         except ImportError as e:
+            logger.error(f"[FLOW-TRACE] ImportError in _trigger_social_media_posting_for_streams: {e}")
             logger.error(f"❌ Failed to import social media orchestrator: {e}")
         except Exception as e:
+            logger.error(f"[FLOW-TRACE] Exception in _trigger_social_media_posting_for_streams: {e}")
             logger.error(f"❌ Social media posting orchestration failed: {e}")
             import traceback
             logger.error(traceback.format_exc())
+            logger.error("[FLOW-TRACE] === EXITING _trigger_social_media_posting_for_streams (error) ===")
 
     async def monitor_chat(self):
         """
@@ -526,7 +571,11 @@ class AutoModeratorDAE:
                     # Now try to get the chat_id with authenticated service
                     if not live_chat_id:
                         logger.info("🔍 Getting chat ID with authenticated service...")
-                        self.stream_resolver = StreamResolver(self.service)
+                        # Update existing resolver's service instead of creating new instance (prevents rapid init loop)
+                        if self.stream_resolver:
+                            self.stream_resolver.service = self.service
+                        else:
+                            self.stream_resolver = StreamResolver(self.service)
                         target_channel_id = channel_id or os.getenv('CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw')
                         auth_result = self.stream_resolver.resolve_stream(target_channel_id)
                         if auth_result and len(auth_result) > 1:

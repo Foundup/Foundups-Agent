@@ -30,7 +30,7 @@ The FoundUps Agent system has migrated from a traditional agent-based architectu
 ### 2. Compliance & Quality DAE
 - **Token Budget**: 7,000
 - **Replaces**: 6 agents (compliance, testing, janitor, error-learning, violation-prevention, quality-assurance)
-- **Patterns**: WSP validation, pre-violation detection, error→solution mappings, test execution
+- **Patterns**: WSP validation, pre-violation detection, error->solution mappings, test execution
 - **Location**: `modules/infrastructure/compliance_quality_dae/`
 
 ### 3. Knowledge & Learning DAE
@@ -75,7 +75,7 @@ def recall_pattern(pattern_type, context):
 ### Pattern Types
 1. **Scaffolding Patterns**: Module creation templates
 2. **Compliance Patterns**: WSP validation rules
-3. **Error Solution Patterns**: Error→fix mappings
+3. **Error Solution Patterns**: Error->fix mappings
 4. **Documentation Patterns**: Template generation
 5. **Scoring Patterns**: Priority algorithms
 6. **Cleanup Patterns**: Maintenance automation
@@ -103,7 +103,7 @@ Removed all old agent implementations:
 ## Benefits Achieved
 
 ### Performance
-- **Token Usage**: 93% reduction (460K → 30K)
+- **Token Usage**: 93% reduction (460K -> 30K)
 - **Speed**: 100-1000x faster operations
 - **Memory**: 50-200 tokens per operation (vs 15-25K)
 

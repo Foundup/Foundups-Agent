@@ -21,6 +21,104 @@ Centralized orchestration system providing unified social media management acros
 
 ## Recent Changes
 
+### V026 - Duplicate Prevention Database Architecture Documentation
+**Type**: Documentation
+**Date**: 2025-10-05
+**Impact**: Medium - Clarifies database integration for operators and future 0102 agents
+**WSP Compliance**: WSP 83 (Documentation Tree Attachment), WSP 22 (ModLog Tracking)
+
+#### What Changed:
+**User Concern**: "We have a database the posting should check the db before posting to ensure it wasn't previously posted"
+- User saw `[CACHE] BLOCKED` logs and wanted to ensure database was source of truth
+- Analysis revealed system was working correctly with write-through cache pattern
+
+**Solution**: Created comprehensive architecture documentation at [docs/DUPLICATE_PREVENTION_DATABASE_ARCHITECTURE.md](docs/DUPLICATE_PREVENTION_DATABASE_ARCHITECTURE.md)
+
+1. **Documentation Scope**:
+   - Complete data flow diagrams (startup, check, persist)
+   - Code evidence with line numbers from duplicate_prevention_manager.py
+   - Explanation of write-through cache pattern
+   - Database schema and file location
+   - Verification steps for operators
+
+2. **Key Findings**:
+   - Database IS being checked - loaded into memory on startup (line 156)
+   - Cache contains database data - synchronized on every post (line 491)
+   - Direct DB fallback on cache miss (line 397)
+   - System correctly prevents duplicates across daemon restarts
+
+3. **WSP 83 Compliance**:
+   - Document moved to module docs/ directory (not orphaned in root)
+   - Referenced in README.md Documentation section
+   - Serves 0102 operational needs for architecture understanding
+   - Attached to module tree per WSP 83
+
+#### Files Changed:
+- Created: [docs/DUPLICATE_PREVENTION_DATABASE_ARCHITECTURE.md](docs/DUPLICATE_PREVENTION_DATABASE_ARCHITECTURE.md)
+- Updated: [README.md](README.md) - Added Documentation section with reference
+- Updated: [ModLog.md](ModLog.md) - This entry
+
+#### Why This Matters:
+- Prevents future confusion about database integration
+- Documents correct write-through cache architecture
+- Provides reference for performance optimization decisions
+- Demonstrates WSP 83 compliance for future doc creation
+
+**Status**: ✅ Complete - Documentation properly attached to module tree
+
+---
+
+### V025 - Enhanced Flow Tracing for Social Media Posting Diagnosis
+**Type**: Diagnostic Enhancement
+**Date**: 2025-10-05
+**Impact**: High - Enables root cause analysis of posting failures
+**WSP Compliance**: WSP 50 (Pre-Action Verification), WSP 22 (ModLog Tracking)
+
+#### What Changed:
+**Problem**: User reported stream detected but social media posts not being created
+- Stream detection working (NO-QUOTA mode)
+- No social media posts appearing
+- Unknown failure point in handoff chain
+
+**Solution**: Added comprehensive `[ORCHESTRATOR-TRACE]` logging in RefactoredPostingOrchestrator
+
+1. **Entry Point Logging** [refactored_posting_orchestrator.py:80-88](src/refactored_posting_orchestrator.py:80-88):
+   - Logs method entry with all parameters
+   - Tracks skip_live_verification flag
+   - Records video_id and channel info
+
+2. **Step-by-Step Tracing** [refactored_posting_orchestrator.py:98-149](src/refactored_posting_orchestrator.py:98-149):
+   - Step 1: Logs is_posting flag check
+   - Step 2: Logs live verification decision and result
+   - Step 3: Logs duplicate check with full result
+   - Step 4: Logs channel config lookup with result
+   - All early returns explicitly logged with reason
+
+3. **Diagnostic Markers**:
+   ```python
+   [ORCHESTRATOR-TRACE] === ENTERED handle_stream_detected ===
+   [ORCHESTRATOR-TRACE] Step 1: Checking is_posting flag = {value}
+   [ORCHESTRATOR-TRACE] Step 2: Live verification, skip={bool}
+   [ORCHESTRATOR-TRACE] Step 3: Checking duplicate for video_id={id}
+   [ORCHESTRATOR-TRACE] Step 4: Getting config for channel={name}
+   [ORCHESTRATOR-TRACE] Returning early - {reason}
+   ```
+
+**Next Steps**:
+1. Run daemon with enhanced logging
+2. Identify exact failure point from traces
+3. Fix root cause based on evidence
+4. Clean up or reduce trace logging
+
+**Expected Diagnosis**: Logs will reveal one of:
+- is_posting flag stuck true (lock issue)
+- Live verification failing (API/scraper issue)
+- Duplicate check blocking (cache issue)
+- Channel config not found (mapping issue)
+- QWEN blocking posts (intelligence override)
+
+---
+
 ### V024 - QWEN Intelligence Integration for Platform Health Monitoring
 **Type**: Intelligence Enhancement
 **Date**: Current Session

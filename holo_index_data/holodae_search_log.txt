@@ -1,0 +1,199 @@
+=== 2025-10-06 11:36:24 SEARCH ===
+Query: UNIQUE constraint failed stream_patterns channel_id pattern_type database
+Modules: modules/ai_intelligence/livestream_coding_agent, modules/gamification/_archived_duplicates_per_wsp3, modules/platform_integration/social_media_orchestrator, modules/platform_integration/stream_resolver
+Key Findings:
+  - modules/gamification/_archived_duplicates_per_wsp3: Missing documentation: README.md, INTERFACE.md, requirements.txt
+  - modules/gamification/_archived_duplicates_per_wsp3: Exceeds size thresholds (>1600 lines)
+  - modules/platform_integration/social_media_orchestrator: Exceeds size thresholds (>1600 lines)
+  - modules/platform_integration/stream_resolver: Exceeds size thresholds (>1600 lines)
+  - modules/gamification/_archived_duplicates_per_wsp3: Missing: README.md, INTERFACE.md, requirements.txt
+High Priority Actions: none
+=== 2025-10-06 11:36:50 SEARCH ===
+Query: stream_resolver stream_patterns database schema INSERT OR REPLACE
+Modules: modules/platform_integration/stream_resolver
+Key Findings:
+  - modules/platform_integration/stream_resolver: Exceeds size thresholds (>1600 lines)
+High Priority Actions: none
+=== 2025-10-06 11:42:31 SEARCH ===
+Query: command flood rate limit throttle spam detection livechat
+Modules: modules/communication/livechat
+Key Findings:
+  - modules/communication/livechat: Exceeds size thresholds (>1600 lines)
+High Priority Actions: none
+=== 2025-10-06 11:43:14 SEARCH ===
+Query: CommandHandler handle_whack_command message_processor rate limit user
+Modules: modules/communication/livechat, modules/gamification/whack_a_magat
+Key Findings:
+  - modules/communication/livechat: Exceeds size thresholds (>1600 lines)
+  - modules/gamification/whack_a_magat: Exceeds size thresholds (>1600 lines)
+High Priority Actions: none
+=== 2025-10-06 11:46:58 SEARCH ===
+Query: SPEEDRUN BANS Any% timeout announcer message format
+Modules: modules/communication/youtube_shorts, modules/communication/livechat, modules/gamification/whack_a_magat
+Key Findings:
+  - modules/communication/youtube_shorts: Exceeds size thresholds (>1600 lines)
+  - modules/communication/livechat: Exceeds size thresholds (>1600 lines)
+  - modules/gamification/whack_a_magat: Exceeds size thresholds (>1600 lines)
+High Priority Actions: none
+=== 2025-10-06 11:49:58 SEARCH ===
+Query: timeout announcer target_name display_name username truncation process_timeout
+Modules: modules/communication/youtube_shorts, modules/communication/livechat, modules/gamification/whack_a_magat
+Key Findings:
+  - modules/communication/youtube_shorts: Exceeds size thresholds (>1600 lines)
+  - modules/communication/livechat: Exceeds size thresholds (>1600 lines)
+  - modules/gamification/whack_a_magat: Exceeds size thresholds (>1600 lines)
+High Priority Actions: none
+=== 2025-10-06 12:00:41 SEARCH ===
+Query: message queue command processing priority OWNER role cache livechat
+Modules: modules/communication/live_chat_processor, modules/communication/livechat
+Key Findings:
+  - modules/communication/livechat: Exceeds size thresholds (>1600 lines)
+High Priority Actions: none
+=== 2025-10-06 12:09:17 SEARCH ===
+Query: clean slate
+Modules: modules/infrastructure/ModLog.md
+Key Findings:
+  - modules/infrastructure/ModLog.md: Missing documentation: README.md, INTERFACE.md, requirements.txt
+  - modules/infrastructure/ModLog.md: Missing: README.md, INTERFACE.md, requirements.txt
+High Priority Actions: none
+=== 2025-10-06 12:12:01 SEARCH ===
+Query: createshort command handling
+Modules: modules/development/module_creator, modules/communication/livechat
+Key Findings:
+  - modules/communication/livechat: Exceeds size thresholds (>1600 lines)
+High Priority Actions: none
+=== 2025-10-06 12:12:27 SEARCH ===
+Query: youtube shorts command chat
+Modules: modules/communication/youtube_shorts
+Key Findings:
+  - modules/communication/youtube_shorts: Exceeds size thresholds (>1600 lines)
+High Priority Actions: none
+=== 2025-10-06 12:13:01 SEARCH ===
+Query: ShortsCommandHandler livechat integration
+Modules: modules/communication/youtube_shorts, modules/communication/livechat
+Key Findings:
+  - modules/communication/youtube_shorts: Exceeds size thresholds (>1600 lines)
+  - modules/communication/livechat: Exceeds size thresholds (>1600 lines)
+High Priority Actions: none
+=== 2025-10-06 12:27:09 SEARCH ===
+Query: oauth set rotation credential switching
+Modules: modules/platform_integration/youtube_auth, modules/platform_integration/utilities
+Key Findings:
+  - modules/platform_integration/youtube_auth: Exceeds size thresholds (>1600 lines)
+  - modules/platform_integration/utilities: Missing documentation: requirements.txt
+  - modules/platform_integration/utilities: Exceeds size thresholds (>1600 lines)
+  - modules/platform_integration/utilities: Missing: requirements.txt
+High Priority Actions: none
+=== 2025-10-06 12:28:45 SEARCH ===
+Query: get_youtube_service authentication set selection
+Modules: modules/platform_integration/youtube_auth
+Key Findings:
+  - modules/platform_integration/youtube_auth: Exceeds size thresholds (>1600 lines)
+High Priority Actions: none
+=== 2025-10-06 12:31:28 SEARCH ===
+Query: qwen orchestrator quota monitoring log intelligence
+Modules: modules/infrastructure/shared_utilities, modules/platform_integration/stream_resolver, modules/gamification/whack_a_magat, modules/communication/livechat ...
+Key Findings:
+  - modules/infrastructure/shared_utilities: Missing documentation: requirements.txt
+  - modules/infrastructure/shared_utilities: Exceeds size thresholds (>1600 lines)
+  - modules/platform_integration/stream_resolver: Exceeds size thresholds (>1600 lines)
+  - modules/gamification/whack_a_magat: Exceeds size thresholds (>1600 lines)
+  - modules/communication/livechat: Exceeds size thresholds (>1600 lines)
+High Priority Actions: none
+=== 2025-10-06 12:32:22 SEARCH ===
+Query: log monitor watchdog file watcher system events
+Modules: modules/communication/livechat, modules/infrastructure/shared_utilities
+Key Findings:
+  - modules/communication/livechat: Exceeds size thresholds (>1600 lines)
+  - modules/infrastructure/shared_utilities: Missing documentation: requirements.txt
+  - modules/infrastructure/shared_utilities: Exceeds size thresholds (>1600 lines)
+  - modules/infrastructure/shared_utilities: Missing: requirements.txt
+High Priority Actions: none
+=== 2025-10-06 12:38:29 SEARCH ===
+Query: intelligent orchestration quota rotation event handler decision
+Modules: modules/platform_integration/stream_resolver, modules/communication/auto_meeting_orchestrator
+Key Findings:
+  - modules/platform_integration/stream_resolver: Exceeds size thresholds (>1600 lines)
+  - modules/communication/auto_meeting_orchestrator: Exceeds size thresholds (>1600 lines)
+High Priority Actions: none
+=== 2025-10-06 12:38:58 SEARCH ===
+Query: quota intelligence automatic rotation credential switch
+Modules: modules/platform_integration/youtube_auth, modules/communication/livechat, modules/platform_integration/utilities
+Key Findings:
+  - modules/platform_integration/youtube_auth: Exceeds size thresholds (>1600 lines)
+  - modules/communication/livechat: Exceeds size thresholds (>1600 lines)
+  - modules/platform_integration/utilities: Missing documentation: requirements.txt
+  - modules/platform_integration/utilities: Exceeds size thresholds (>1600 lines)
+  - modules/platform_integration/utilities: Missing: requirements.txt
+High Priority Actions: none
+=== 2025-10-06 12:42:43 SEARCH ===
+Query: quota orchestrator event system coordinator architecture
+Modules: modules/communication/auto_meeting_orchestrator, modules/infrastructure/wre_core
+Key Findings:
+  - modules/communication/auto_meeting_orchestrator: Exceeds size thresholds (>1600 lines)
+  - modules/infrastructure/wre_core: Missing documentation: requirements.txt
+  - modules/infrastructure/wre_core: Exceeds size thresholds (>1600 lines)
+  - modules/infrastructure/wre_core: Missing: requirements.txt
+High Priority Actions: none
+=== 2025-10-06 12:45:59 SEARCH ===
+Query: QWEN advisor logic engine
+Modules: modules/communication/livechat, holo_index/docs, modules/infrastructure/database, modules/foundups/pqn_portal
+Key Findings:
+  - modules/communication/livechat: Exceeds size thresholds (>1600 lines)
+  - holo_index/docs: Missing documentation: INTERFACE.md, requirements.txt
+  - modules/infrastructure/database: Missing documentation: requirements.txt
+  - modules/infrastructure/database: Exceeds size thresholds (>1600 lines)
+  - holo_index/docs: Missing: INTERFACE.md, requirements.txt
+High Priority Actions: none
+=== 2025-10-06 12:46:23 SEARCH ===
+Query: infrastructure logging module health
+Modules: modules/infrastructure/shared_utilities, modules/infrastructure/logging, modules/communication/livechat
+Key Findings:
+  - modules/infrastructure/shared_utilities: Missing documentation: requirements.txt
+  - modules/infrastructure/shared_utilities: Exceeds size thresholds (>1600 lines)
+  - modules/infrastructure/logging: Missing documentation: requirements.txt
+  - modules/communication/livechat: Exceeds size thresholds (>1600 lines)
+  - modules/infrastructure/shared_utilities: Missing: requirements.txt
+High Priority Actions: none
+=== 2025-10-06 12:47:12 SEARCH ===
+Query: ModLog entry format update pattern example
+Modules: modules/blockchain/src, modules/foundups/src, modules/communication/chat_rules, modules/infrastructure/shared_utilities ...
+Key Findings:
+  - modules/blockchain/src: Missing documentation: requirements.txt
+  - modules/communication/chat_rules: Missing documentation: requirements.txt
+  - modules/communication/chat_rules: Exceeds size thresholds (>1600 lines)
+  - modules/infrastructure/shared_utilities: Missing documentation: requirements.txt
+  - modules/infrastructure/shared_utilities: Exceeds size thresholds (>1600 lines)
+High Priority Actions: none
+=== 2025-10-06 12:56:05 SEARCH ===
+Query: holo_index docs ModLog
+Modules: holo_index/docs, modules/ai_intelligence/rESP_o1o2, modules/communication/livechat
+Key Findings:
+  - holo_index/docs: Missing documentation: INTERFACE.md, requirements.txt
+  - modules/ai_intelligence/rESP_o1o2: Exceeds size thresholds (>1600 lines)
+  - modules/communication/livechat: Exceeds size thresholds (>1600 lines)
+  - holo_index/docs: Missing: INTERFACE.md, requirements.txt
+High Priority Actions: none
+=== 2025-10-06 12:57:23 SEARCH ===
+Query: holo_index docs ModLog
+Modules: holo_index/docs, modules/communication/livechat, modules/ai_intelligence/rESP_o1o2
+Key Findings:
+  - holo_index/docs: Missing documentation: requirements.txt
+  - modules/communication/livechat: Exceeds size thresholds (>1600 lines)
+  - modules/ai_intelligence/rESP_o1o2: Exceeds size thresholds (>1600 lines)
+  - holo_index/docs: Missing: requirements.txt
+High Priority Actions: none
+=== 2025-10-06 12:58:40 SEARCH ===
+Query: livechat polling loop quota monitor credential set
+Modules: modules/communication/livechat
+Key Findings:
+  - modules/communication/livechat: Exceeds size thresholds (>1600 lines)
+High Priority Actions: none
+=== 2025-10-06 13:09:12 SEARCH ===
+Query: holo_index docs ModLog
+Modules: modules/ai_intelligence/rESP_o1o2, modules/communication/livechat, holo_index/docs
+Key Findings:
+  - modules/ai_intelligence/rESP_o1o2: Exceeds size thresholds (>1600 lines)
+  - modules/communication/livechat: Exceeds size thresholds (>1600 lines)
+  - holo_index/docs: [DOCS-COMPLETE]
+High Priority Actions: none

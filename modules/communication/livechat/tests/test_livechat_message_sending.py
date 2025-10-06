@@ -84,6 +84,40 @@ class TestLiveChatListenerMessageSending(unittest.TestCase):
         )
     
     @pytest.mark.asyncio
+    async def test_send_chat_message_throttle_delay_for_whack(self):
+        """High-priority commands should wait through throttle rather than being dropped."""
+
+        class StubThrottle:
+            def __init__(self):
+                self.calls = 0
+
+            def track_api_call(self, quota_cost=0):
+                self.last_quota = quota_cost
+
+            def should_respond(self, response_type):
+                self.calls += 1
+                return self.calls > 1
+
+            def calculate_adaptive_delay(self, response_type):
+                return 0.01
+
+            def record_response(self, response_type, success=True, message_text=""):
+                self.recorded = (response_type, success, message_text)
+
+        self.listener.intelligent_throttle = StubThrottle()
+        self.listener.chat_sender = MagicMock()
+        self.listener.chat_sender.send_message = AsyncMock(return_value=True)
+
+        with patch("modules.communication.livechat.src.livechat_core.asyncio.sleep", new=AsyncMock()) as mock_sleep:
+            result = await self.listener.send_chat_message("/score", response_type="whack")
+
+        self.assertTrue(result)
+        self.assertEqual(self.listener.intelligent_throttle.calls, 2)
+        mock_sleep.assert_awaited_once()
+        self.listener.chat_sender.send_message.assert_awaited_once()
+
+
+    @pytest.mark.asyncio
     async def test_send_chat_message_no_chat_id(self):
         """Test sending a chat message when no live_chat_id is set."""
         # Setup - remove chat ID

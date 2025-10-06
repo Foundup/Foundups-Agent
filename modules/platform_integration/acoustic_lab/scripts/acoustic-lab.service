@@ -1,0 +1,52 @@
+# Acoustic Lab - Systemd Service
+# Systemd service configuration for automatic startup and management
+
+[Unit]
+Description=🌐 Acoustic Lab Educational Web Service (WSP Protocol)
+After=network.target postgresql.service redis-server.service
+Requires=network.target
+
+[Service]
+Type=exec
+User=acoustic
+Group=acoustic
+WorkingDirectory=/var/www/acoustic-lab
+Environment=PATH=/var/www/acoustic-lab/venv/bin
+Environment=PYTHONPATH=/var/www/acoustic-lab
+Environment=NODE_ENV=production
+EnvironmentFile=/var/www/acoustic-lab/.env
+ExecStart=/var/www/acoustic-lab/venv/bin/gunicorn --config modules/platform_integration/acoustic_lab/scripts/gunicorn.conf.py
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=60
+PrivateTmp=true
+RestartSec=5
+Restart=always
+
+# Resource limits (Phase 1 conservative)
+LimitNOFILE=65536
+MemoryLimit=1G
+CPUQuota=75%
+
+# Security settings (WSP 71 compliant)
+NoNewPrivileges=yes
+PrivateDevices=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/var/www/acoustic-lab /var/log/acoustic-lab /var/run/acoustic-lab /var/cache/acoustic-lab /var/lib/acoustic-lab
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+
+# Resource limits (Phase 1 conservative)
+LimitNOFILE=65536
+MemoryLimit=1G
+CPUQuota=75%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=acoustic-lab
+
+[Install]
+WantedBy=multi-user.target

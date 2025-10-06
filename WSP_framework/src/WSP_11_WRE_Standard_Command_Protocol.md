@@ -15,7 +15,7 @@ All modules that provide standalone interactive interfaces MUST implement a numb
 
 **Standard Pattern:**
 ```
-🎯 [Module Name] Interactive Mode
+[U+1F3AF] [Module Name] Interactive Mode
 Available commands:
   1. status     - Show current status
   2. [command]  - [Description]
@@ -47,9 +47,9 @@ Press Ctrl+C or type 'N' or 'quit' to exit
 
 ### 1.3 Module-Specific Implementations
 
-#### **🎬 YouTube Proxy** (`youtube_proxy`)
+#### **[U+1F3AC] YouTube Proxy** (`youtube_proxy`)
 ```
-🎬 YouTube Proxy Interactive Mode
+[U+1F3AC] YouTube Proxy Interactive Mode
 Available commands:
   1. status     - Show current status
   2. stream     - Show stream info
@@ -58,9 +58,9 @@ Available commands:
   5. quit       - Exit
 ```
 
-#### **💼 LinkedIn Agent** (`linkedin_agent`)
+#### **[U+1F4BC] LinkedIn Agent** (`linkedin_agent`)
 ```
-💼 LinkedIn Agent Interactive Mode
+[U+1F4BC] LinkedIn Agent Interactive Mode
 Available commands:
   1. status     - Show current status
   2. auth       - Test authentication
@@ -70,9 +70,9 @@ Available commands:
   6. quit       - Exit
 ```
 
-#### **🐦 X/Twitter DAE** (`x_twitter`)
+#### **[U+1F426] X/Twitter DAE** (`x_twitter`)
 ```
-🐦 X/Twitter DAE Interactive Mode
+[U+1F426] X/Twitter DAE Interactive Mode
 Available commands:
   1. status     - Show DAE status
   2. auth       - Test authentication

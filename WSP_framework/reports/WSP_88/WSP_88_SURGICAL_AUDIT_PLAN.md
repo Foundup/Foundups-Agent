@@ -1,10 +1,10 @@
 # WSP 88 Surgical Audit Plan - CRITICAL VIBECODE CLEANUP
 
-**Status**: 🚨 CRISIS MODE - Massive vibecode accumulation detected  
+**Status**: [U+1F6A8] CRISIS MODE - Massive vibecode accumulation detected  
 **Scale**: 892+ modules audited, hundreds requiring remediation  
 **Risk**: HIGH - main.py integration points must be protected  
 
-## 🔍 DEEP ANALYSIS RESULTS
+## [U+1F50D] DEEP ANALYSIS RESULTS
 
 ### **Vibecode Crisis Scale**
 - **Total Modules**: 892+ in audit
@@ -21,7 +21,7 @@
 4. modules.platform_integration.linkedin_agent.src.git_linkedin_bridge (GitLinkedInBridge)
 ```
 
-## 🎯 SURGICAL REMEDIATION STRATEGY
+## [U+1F3AF] SURGICAL REMEDIATION STRATEGY
 
 ### **Phase 1: Safe Archive (IMMEDIATE)**
 Target modules with **ZERO inbound references** and **NO main.py dependencies**:
@@ -56,14 +56,14 @@ After each phase, verify:
 2. All menu options work
 3. Critical DAEs remain functional
 
-## 🛡️ PROTECTION PROTOCOLS
+## [U+1F6E1][U+FE0F] PROTECTION PROTOCOLS
 
 ### **WSP 50 Pre-Action Verification**
 Before ANY deletion:
-1. ✅ Confirm zero inbound references in audit
-2. ✅ Verify NOT in main.py critical dependency list  
-3. ✅ Check for WSP protocol implementations
-4. ✅ Document archival rationale
+1. [U+2705] Confirm zero inbound references in audit
+2. [U+2705] Verify NOT in main.py critical dependency list  
+3. [U+2705] Check for WSP protocol implementations
+4. [U+2705] Document archival rationale
 
 ### **WSP 87 Navigation Updates**
 After archival:
@@ -77,7 +77,7 @@ Log ALL changes in:
 2. WSP_framework/ModLog.md
 3. Individual module ModLogs where applicable
 
-## 📊 EXPECTED IMPACT
+## [U+1F4CA] EXPECTED IMPACT
 
 ### **Code Reduction**
 - **Conservative Estimate**: 30,000+ lines of dead code removed
@@ -85,18 +85,18 @@ Log ALL changes in:
 - **Repository Size**: Significant reduction in bloat
 
 ### **Maintenance Benefits**
-- ✅ Faster searches and navigation
-- ✅ Reduced cognitive load for 0102 agents
-- ✅ Cleaner audit reports
-- ✅ Improved WSP compliance
+- [U+2705] Faster searches and navigation
+- [U+2705] Reduced cognitive load for 0102 agents
+- [U+2705] Cleaner audit reports
+- [U+2705] Improved WSP compliance
 
 ### **Risk Mitigation**
-- 🛡️ Main.py functionality preserved
-- 🛡️ Critical DAE operations maintained
-- 🛡️ WSP protocol implementations protected
-- 🛡️ Systematic documentation of all changes
+- [U+1F6E1][U+FE0F] Main.py functionality preserved
+- [U+1F6E1][U+FE0F] Critical DAE operations maintained
+- [U+1F6E1][U+FE0F] WSP protocol implementations protected
+- [U+1F6E1][U+FE0F] Systematic documentation of all changes
 
-## 🚀 EXECUTION PHASES
+## [U+1F680] EXECUTION PHASES
 
 ### **Phase 1A: AI Intelligence Cleanup** (IMMEDIATE)
 Archive PQN alignment tests and unused controllers
@@ -122,7 +122,7 @@ CAREFUL review of livechat archives and unused components
 - **Impact**: ~10,000 lines removed
 - **Time**: 60 minutes
 
-## ⚠️ CRITICAL SUCCESS CRITERIA
+## [WARNING][U+FE0F] CRITICAL SUCCESS CRITERIA
 
 1. **main.py functionality**: MUST remain 100% operational
 2. **Zero broken imports**: All active modules must resolve

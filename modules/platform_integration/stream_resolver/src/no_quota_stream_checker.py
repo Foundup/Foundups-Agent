@@ -37,13 +37,11 @@ class NoQuotaStreamChecker:
         self.session = requests.Session()
         self._setup_retry_strategy()
 
-        # Initialize LiveStatusVerifier for hybrid API verification
-        if LIVE_STATUS_VERIFIER_AVAILABLE:
-            self.live_verifier = LiveStatusVerifier()
-            logger.info("🔌 Smart hybrid mode: NO-QUOTA scraping + intelligent verification (API only for live candidates)")
-        else:
-            self.live_verifier = None
-            logger.info("🌐 Pure NO-QUOTA mode: Web scraping only (0 units)")
+        # LiveStatusVerifier creates NoQuotaStreamChecker, creating circular dependency loop
+        # Disable to prevent rapid re-initialization cascade (40+ instances per second)
+        # NO-QUOTA web scraping works fine standalone without LiveStatusVerifier
+        self.live_verifier = None
+        logger.info("🌐 NO-QUOTA mode: Web scraping (prevents circular dependency with LiveStatusVerifier)")
 
         # Pool of realistic User-Agents (2024)
         self.USER_AGENTS = [

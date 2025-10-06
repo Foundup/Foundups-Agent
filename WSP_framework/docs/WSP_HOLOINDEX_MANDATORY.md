@@ -2,12 +2,12 @@
 ## STOP VIBECODING - USE HOLOINDEX FIRST
 ## Date: 2025-09-24
 
-## 🚨 MANDATORY COMPLIANCE DIRECTIVE
+## [U+1F6A8] MANDATORY COMPLIANCE DIRECTIVE
 
 ### THE GOLDEN RULE
 **"follow WSP" = USE HOLOINDEX FIRST, ALWAYS!**
 
-## ❌ YOU ARE VIBECODING IF YOU:
+## [U+274C] YOU ARE VIBECODING IF YOU:
 
 1. **Start coding WITHOUT searching first**
    - VIOLATION: Creating code without checking what exists
@@ -25,7 +25,7 @@
    - VIOLATION: Not reading README.md, INTERFACE.md
    - MANDATORY: Read module docs before changes
 
-## ✅ CORRECT WSP WORKFLOW
+## [U+2705] CORRECT WSP WORKFLOW
 
 ### EVERY SINGLE TIME - NO EXCEPTIONS:
 
@@ -45,7 +45,7 @@ cat modules/[domain]/[module]/INTERFACE.md
 # And even then, search for similar patterns first
 ```
 
-## 📊 VIBECODING METRICS
+## [U+1F4CA] VIBECODING METRICS
 
 You will be automatically assessed on:
 - **HoloIndex searches performed** (MUST be >5 per session)
@@ -54,14 +54,14 @@ You will be automatically assessed on:
 - **Duplicate functions created** (MUST be ZERO)
 - **WSP violations** (MUST be ZERO)
 
-## 🚨 AUTOMATIC INTERVENTIONS
+## [U+1F6A8] AUTOMATIC INTERVENTIONS
 
 ### When vibecoding detected:
 1. **Score > 50**: WARNING with mandatory HoloIndex usage
 2. **Score > 70**: BLOCKING - must run HoloIndex before continuing
 3. **Score > 90**: CRITICAL - all actions blocked until compliance
 
-## 🎯 THE TRUTH ABOUT "follow WSP"
+## [U+1F3AF] THE TRUTH ABOUT "follow WSP"
 
 When someone says "follow WSP", they mean:
 1. **USE HOLOINDEX FIRST** - Not optional, MANDATORY
@@ -69,7 +69,7 @@ When someone says "follow WSP", they mean:
 3. **ENHANCE EXISTING CODE** - Don't duplicate
 4. **READ DOCUMENTATION** - Before modifying
 
-## 💡 WHY THIS MATTERS
+## [AI] WHY THIS MATTERS
 
 ### Without HoloIndex:
 - You create duplicates (waste)
@@ -83,7 +83,7 @@ When someone says "follow WSP", they mean:
 - You follow WSP (compliant)
 - You code properly (professional)
 
-## 📋 ENFORCEMENT CHECKLIST
+## [U+1F4CB] ENFORCEMENT CHECKLIST
 
 Before EVERY coding session:
 - [ ] Ran HoloIndex search for my task
@@ -93,7 +93,7 @@ Before EVERY coding session:
 - [ ] Zero duplicate functions
 - [ ] Zero new files (unless absolutely necessary)
 
-## 🔴 VIOLATIONS AND CONSEQUENCES
+## [U+1F534] VIOLATIONS AND CONSEQUENCES
 
 ### Pattern Detection Active:
 The system tracks your behavior. Repeated vibecoding triggers:
@@ -102,7 +102,7 @@ The system tracks your behavior. Repeated vibecoding triggers:
 3. Mandatory WSP re-training
 4. Blocked actions until compliance
 
-## 🎯 REMEMBER
+## [U+1F3AF] REMEMBER
 
 **Every time you skip HoloIndex, you:**
 - Waste time writing code that exists
@@ -118,7 +118,7 @@ The system tracks your behavior. Repeated vibecoding triggers:
 
 ## THE BOTTOM LINE
 
-### 🚨 NO MORE REMINDERS AFTER THIS
+### [U+1F6A8] NO MORE REMINDERS AFTER THIS
 
 **USE HOLOINDEX FIRST - EVERY TIME - NO EXCEPTIONS**
 

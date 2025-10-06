@@ -47,7 +47,10 @@ class IntelligentMonitor:
             'duplicate_check': self._should_check_duplicates,
             'structure_check': self._should_check_structure,
             'pattern_analysis': self._should_analyze_patterns,
-            'agent_behavior': self._should_monitor_agent
+            'agent_behavior': self._should_monitor_agent,
+            'reindex_trigger': self._should_trigger_reindex,
+            'file_movement_check': self._should_check_file_movements,  # NEW: WSP compliance
+            'documentation_indexing': self._should_verify_documentation  # NEW: 0102 discoverability
         }
 
         # Cache to avoid redundant checks
@@ -77,6 +80,11 @@ class IntelligentMonitor:
         for check_name, should_check in self.triggers.items():
             if should_check(context):
                 self._run_subroutine(check_name, context, legacy_data)
+
+        # NEW: Always run file movement and documentation checks after other monitoring
+        # These are proactive checks that should run regardless of triggers
+        self._run_file_movement_check(context, legacy_data)
+        self._run_documentation_verification(context, legacy_data)
 
         # Add intelligent insights based on combined results
         self._add_intelligent_insights(context, legacy_data)
@@ -138,6 +146,52 @@ class IntelligentMonitor:
 
         return False
 
+    def _should_trigger_reindex(self, context: MonitoringContext) -> bool:
+        """
+        Algorithm: Trigger HoloIndex re-indexing when new modules are detected
+        or when module documentation changes are detected.
+        """
+        reindex_keywords = ['new module', 'module created', 'acoustic lab', 'module added', 'reindex', 'index']
+        if any(word in context.query.lower() for word in reindex_keywords):
+            return True
+
+        # Check for module creation patterns in agent actions
+        module_creation_patterns = ['module_create', 'new_module', 'scaffold_module']
+        if any(pattern in ' '.join(context.agent_actions).lower() for pattern in module_creation_patterns):
+            return True
+
+        # Check if new modules exist that aren't in the index
+        try:
+            from pathlib import Path
+            modules_dir = Path("../modules") if Path.cwd().name == 'holo_index' else Path("modules")
+            if modules_dir.exists():
+                for module_dir in modules_dir.rglob("*"):
+                    if module_dir.is_dir() and (module_dir / "README.md").exists():
+                        module_name = module_dir.name
+                        # Check if this module is in our cache
+                        if not self._is_module_cached(module_name):
+                            return True
+        except Exception:
+            pass  # Don't break if module checking fails
+
+        return False
+
+    def _trigger_reindex(self, context: MonitoringContext, legacy_data: Dict[str, Any]):
+        """Trigger HoloIndex re-indexing recommendation"""
+        # Add reindexing suggestion to health warnings
+        legacy_data['health_warnings'].append(
+            "[HOLO] New modules detected - recommend running: python holo_index/cli.py --index-wsp"
+        )
+
+        # Add optimization suggestion
+        legacy_data['optimization_suggestions'].append({
+            'type': 'reindex',
+            'priority': 'HIGH',
+            'action': 'Run HoloIndex re-indexing to discover new Acoustic Lab module documentation',
+            'command': 'python holo_index/cli.py --index-wsp',
+            'benefit': 'Enable discovery of new module documentation for better search results'
+        })
+
     def _should_analyze_patterns(self, context: MonitoringContext) -> bool:
         """
         Algorithm: Analyze patterns when multiple similar operations detected
@@ -182,6 +236,8 @@ class IntelligentMonitor:
             self._analyze_patterns(context, legacy_data)
         elif check_name == 'agent_behavior':
             self._monitor_agent_behavior(context, legacy_data)
+        elif check_name == 'reindex_trigger':
+            self._trigger_reindex(context, legacy_data)
 
     def _check_file_sizes(self, context: MonitoringContext, legacy_data: Dict[str, Any]):
         """Intelligent file size checking"""
@@ -479,6 +535,96 @@ class IntelligentMonitor:
         result.metadata.update(metadata)
 
         return result
+
+    def _should_check_file_movements(self, context: MonitoringContext) -> bool:
+        """
+        NEW: Algorithmic trigger for file movement detection and WSP compliance.
+
+        Triggers when:
+        - Query contains file movement keywords
+        - Context shows file operations
+        - Agent actions indicate refactoring
+        """
+        # Trigger on file movement keywords
+        movement_keywords = ['move', 'moved', 'refactor', 'relocate', 'organize', 'wsp']
+        if any(keyword in context.query.lower() for keyword in movement_keywords):
+            return True
+
+        # Trigger on agent actions that involve file operations
+        file_actions = ['file_move', 'refactor', 'organize', 'wsp_compliance']
+        if any(action in (context.agent_actions or []) for action in file_actions):
+            return True
+
+        return False
+
+    def _should_verify_documentation(self, context: MonitoringContext) -> bool:
+        """
+        NEW: Algorithmic trigger for documentation indexing verification.
+
+        Triggers when:
+        - File movements detected
+        - WSP compliance queries
+        - Agent mentions documentation or indexing
+        """
+        # Always trigger after file movements
+        if self._should_check_file_movements(context):
+            return True
+
+        # Trigger on documentation keywords
+        doc_keywords = ['readme', 'documentation', 'index', 'discover', '0102']
+        if any(keyword in context.query.lower() for keyword in doc_keywords):
+            return True
+
+        return False
+
+    def _run_file_movement_check(self, context: MonitoringContext, legacy_data: Dict):
+        """
+        NEW: Check for WSP compliance violations in file movements.
+
+        Verifies that moved files are properly indexed for 0102 discoverability.
+        """
+        # Detect recent file movements by checking for moved files in context
+        moved_files = []
+        for result in context.search_results:
+            path = result.get('path', result.get('file_path', ''))
+            if path and ('moved' in path.lower() or 'refactor' in path.lower()):
+                moved_files.append(path)
+
+        if moved_files:
+            legacy_data['structure_violations'].append(
+                f"WSP VIOLATION: {len(moved_files)} files moved but may not be indexed for 0102 discoverability"
+            )
+
+            # Suggest documentation updates
+            legacy_data['optimization_suggestions'].append(
+                "After file movements, update module README.md and navigation.py to ensure 0102 discoverability"
+            )
+
+    def _run_documentation_verification(self, context: MonitoringContext, legacy_data: Dict):
+        """
+        NEW: Verify that files are properly indexed in documentation.
+
+        Checks README.md and navigation.py for moved files.
+        """
+        # Check if moved files are documented
+        files_needing_docs = []
+
+        # Look for files that should be in documentation but might not be
+        for result in context.search_results:
+            path = result.get('path', result.get('file_path', ''))
+            if path and path.startswith('modules/'):
+                # Check if this file is mentioned in navigation
+                if 'navigation' not in path.lower() and 'readme' not in path.lower():
+                    files_needing_docs.append(path)
+
+        if files_needing_docs:
+            legacy_data['health_warnings'].append(
+                f"0102 DISCOVERABILITY: {len(files_needing_docs)} files may not be indexed in navigation system"
+            )
+
+            legacy_data['optimization_suggestions'].append(
+                "Add moved files to modules/infrastructure/navigation/src/navigation.py NEED_TO dictionary"
+            )
 
 
 # Integration with HoloIndex search flow

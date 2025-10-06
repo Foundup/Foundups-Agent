@@ -1,0 +1,17 @@
+{
+  "video_id": "veo3_1759684067",
+  "type": "3-act-short",
+  "topic": "Cherry blossoms falling at Meguro River in Tokyo",
+  "mode": "journal",
+  "story": "baby floating upward \u2192 Wait... I'm thinking (Video #2)",
+  "acts": {
+    "act1": "Setup: Cherry blossoms falling at Meguro River in Tokyo",
+    "act2": "Shock: baby floating upward",
+    "act3": "Reveal: Wait... I'm thinking (Video #2)"
+  },
+  "combined_prompt": "adorable baby in tiny kimono exploring Cherry blossoms falling at Meguro River in Tokyo, clapping tiny hands in amazement. Suddenly, baby defies gravity and floats upward giggling as physics breaks around them. Then baby stops, hand on chin saying 'Wait... I'm thinking about thinking' with recursive thought spirals appearing",
+  "final_video": "O:\\Foundups-Agent\\modules\\communication\\youtube_shorts\\assets\\generated\\veo3_1759684067.mp4",
+  "duration": 15,
+  "cost": 6.0,
+  "generated_at": 1759684068.158687
+}

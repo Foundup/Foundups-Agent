@@ -47,6 +47,15 @@ class LiveStatusVerifier:
         except Exception as e:
             self.logger.debug(f"[DB] Duplicate prevention manager not available: {e}")
 
+        # Initialize NO-QUOTA stream checker ONCE to avoid rapid re-initialization loop
+        self.no_quota_checker = None
+        try:
+            from modules.platform_integration.stream_resolver.src.no_quota_stream_checker import NoQuotaStreamChecker
+            self.no_quota_checker = NoQuotaStreamChecker()
+            self.logger.debug("[NO-QUOTA] Stream checker initialized and ready for reuse")
+        except Exception as e:
+            self.logger.debug(f"[NO-QUOTA] Stream checker not available: {e}")
+
     def verify_live_status(self, video_id: str, channel_name: str = None) -> bool:
         """
         Verify if a stream is actually live using NO-QUOTA web scraping first, API as fallback
@@ -326,24 +335,19 @@ class LiveStatusVerifier:
         """
         self.logger.info(f"[NO-QUOTA] Attempting web-based verification for {video_id}")
 
-        # Try using stream resolver if available
-        try:
-            from modules.platform_integration.stream_resolver.src.no_quota_stream_checker import NoQuotaStreamChecker
-
-            checker = NoQuotaStreamChecker()
-            is_live = checker.check_if_live(f"https://www.youtube.com/watch?v={video_id}")
-
-            self.logger.info(f"[NO-QUOTA] Web verification: {video_id} is {'LIVE' if is_live else 'NOT live'}")
-            return is_live
-
-        except ImportError:
-            self.logger.warning("[NO-QUOTA] NoQuotaStreamChecker not available")
-        except Exception as e:
-            self.logger.error(f"[NO-QUOTA] Web verification failed: {e}")
-
-        # Return None to indicate NO-QUOTA failed, should fallback to API
-        self.logger.warning(f"[NO-QUOTA] Cannot verify via web scraping, will use API for {video_id}")
-        return None
+        # Reuse existing checker to avoid rapid re-initialization (StreamDB migration spam)
+        if self.no_quota_checker:
+            try:
+                result = self.no_quota_checker.check_video_is_live(video_id, channel_name)
+                is_live = result.get('is_live', False)
+                self.logger.info(f"[NO-QUOTA] Web verification: {video_id} is {'LIVE' if is_live else 'NOT live'}")
+                return is_live
+            except Exception as e:
+                self.logger.error(f"[NO-QUOTA] Checker failed: {e}")
+                return None
+        else:
+            self.logger.warning("[NO-QUOTA] No checker available - skipping web verification")
+            return None
 
     def verify_live_status_manually(self) -> bool:
         """

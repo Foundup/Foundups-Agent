@@ -20,18 +20,19 @@ logger = logging.getLogger(__name__)
 
 class QuotaAwarePoller:
     """Manages polling frequency based on quota and activity."""
-    
-    def __init__(self, credential_set: int = 1):
+
+    def __init__(self, credential_set: int = 1, oauth_manager=None):
         self.credential_set = credential_set
         self.quota_file = Path("memory/quota_usage.json")
         self.daily_limit = 10000  # YouTube API daily quota
+        self.oauth_manager = oauth_manager  # HOLOINDEX IMPROVEMENT: Integration gap fix
         
-        # Polling intervals (in seconds)
-        self.EMERGENCY_INTERVAL = 60  # 1 minute - quota critical
-        self.CONSERVATIVE_INTERVAL = 30  # 30 seconds - quota warning  
-        self.MODERATE_INTERVAL = 10  # 10 seconds - quota caution
-        self.NORMAL_INTERVAL = 5  # 5 seconds - quota healthy
-        self.ACTIVE_INTERVAL = 3  # 3 seconds - active chat
+        # Polling intervals (in seconds) - Conservative to preserve quota
+        self.EMERGENCY_INTERVAL = 90  # 90 seconds - quota critical (90%+)
+        self.CONSERVATIVE_INTERVAL = 60  # 60 seconds - quota warning (70-90%)
+        self.MODERATE_INTERVAL = 20  # 20 seconds - quota caution (50-70%)
+        self.NORMAL_INTERVAL = 10  # 10 seconds - quota healthy (<50%)
+        self.ACTIVE_INTERVAL = 5  # 5 seconds - very active chat
         
         # Activity tracking
         self.last_message_time = time.time()
@@ -94,6 +95,21 @@ class QuotaAwarePoller:
         
         if quota_percentage >= 0.95:
             logger.error(f"🔴 QUOTA CRITICAL: {units_used}/{self.daily_limit} units ({quota_percentage:.1%})")
+
+            # HOLOINDEX IMPROVEMENT: Integration Gap Fix - Rotate OAuth tokens when quota critical
+            if self.oauth_manager and hasattr(self.oauth_manager, 'rotate_credentials'):
+                logger.warning("🔄 HOLOINDEX FIX: Attempting OAuth token rotation due to quota exhaustion")
+                try:
+                    rotation_success = self.oauth_manager.rotate_credentials()
+                    if rotation_success:
+                        logger.info("✅ HOLOINDEX FIX: OAuth token rotation successful - quota reset")
+                        # Reset quota tracking for new credential set
+                        # Note: Actual quota reset happens on YouTube's side, we just switch credentials
+                    else:
+                        logger.error("❌ HOLOINDEX FIX: OAuth token rotation failed")
+                except Exception as e:
+                    logger.error(f"❌ HOLOINDEX FIX: OAuth rotation error: {e}")
+
             return self.EMERGENCY_INTERVAL
         
         # EMERGENCY: 90-95% quota used

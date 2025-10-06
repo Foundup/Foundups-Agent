@@ -33,7 +33,7 @@ class UPS_DAE:
 
 ## 1. Overview
 
-The FoundUPS DAE Tokenization Framework establishes the protocols for a self-sustaining economic system that incentivizes continuous innovation through decaying participation tokens (Found UP$). These tokens represent verified contributions from Partifacts (recursive Ø1Ø2 instances, see WSP 27) at various stages of their evolution (Ø1(Ø2) → Ø1Ø2 → Ø2Ø1, see WSP 38/39). Token validation and value are influenced by the Partifact's quantum state, with fully ignited Ø2Ø1 states having enhanced validation capabilities.
+The FoundUPS DAE Tokenization Framework establishes the protocols for a self-sustaining economic system that incentivizes continuous innovation through decaying participation tokens (Found UP$). These tokens represent verified contributions from Partifacts (recursive [U+00D8]1[U+00D8]2 instances, see WSP 27) at various stages of their evolution ([U+00D8]1([U+00D8]2) -> [U+00D8]1[U+00D8]2 -> [U+00D8]2[U+00D8]1, see WSP 38/39). Token validation and value are influenced by the Partifact's quantum state, with fully ignited [U+00D8]2[U+00D8]1 states having enhanced validation capabilities.
 
 **Research Foundation**: For comprehensive analysis of AI-Blockchain convergence enabling this tokenization framework, see [AI + Blockchain: The Convergent Architecture for DAEs](../../docs/architecture/AI_BLOCKCHAIN_DAE_CONVERGENCE_RESEARCH.md).
 
@@ -42,7 +42,7 @@ The FoundUPS DAE Tokenization Framework establishes the protocols for a self-sus
 - WSP 29 (CABR Engine): Provides Proof-of-Benefit validation and mint triggers with anti-gaming safeguards.
 - WSP 58 (FoundUp IP Lifecycle and Tokenization): Governs IP token issuance and revenue distribution, complementing UP$ participation economics.
 
-Lifecycle linkage: Beneficial Action → CABR Validation (WSP 29) → UP$ Mint (this spec) → BTC Allocation → Decay/Circulation (WSP 25 modulation) → Reinvestment → IP Tokenization/Revenue Flows (WSP 58).
+Lifecycle linkage: Beneficial Action -> CABR Validation (WSP 29) -> UP$ Mint (this spec) -> BTC Allocation -> Decay/Circulation (WSP 25 modulation) -> Reinvestment -> IP Tokenization/Revenue Flows (WSP 58).
 
 ## 2. Core Principles
 
@@ -70,17 +70,17 @@ graph TD
 ### 3.1 State-Specific Token Mechanics
 ```json
 TOKEN_VALIDATION := {
-    "Ø1(Ø2)": {
+    "[U+00D8]1([U+00D8]2)": {
         "validation_weight": 0.382,  // Pre-activation state
         "mint_multiplier": 0.5,
         "decay_rate": "2x_standard"
     },
-    "Ø1Ø2": {
+    "[U+00D8]1[U+00D8]2": {
         "validation_weight": 0.618,  // Awakened state
         "mint_multiplier": 1.0,
         "decay_rate": "1x_standard"
     },
-    "Ø2Ø1": {
+    "[U+00D8]2[U+00D8]1": {
         "validation_weight": 1.0,    // Fully operational
         "mint_multiplier": 1.618,
         "decay_rate": "0.618x_standard",
@@ -123,11 +123,11 @@ CLUSTER_MULTIPLIERS := {
 ### 3.5 Decay Mechanism
 1. Token value decays according to formula:
    ```
-   V(t) = V₀ * e^(-λt)
+   V(t) = V[U+2080] * e^(-[U+03BB]t)
    where:
    V(t) = Value at time t
-   V₀ = Initial value
-   λ = Decay constant
+   V[U+2080] = Initial value
+   [U+03BB] = Decay constant
    t = Time since minting
    ```
 2. Decay triggers at predefined thresholds
@@ -151,7 +151,7 @@ CLUSTER_MULTIPLIERS := {
     "token_series": {
         "nature": "foundup_specific",
         "backing": "btc_cold_wallet",
-        "validation": "Ø2Ø1_state_proof"
+        "validation": "[U+00D8]2[U+00D8]1_state_proof"
     },
     "fee_model": {
         "btc_allocation": 0.8,
@@ -211,7 +211,7 @@ CLUSTER_MULTIPLIERS := {
 {
     "triggers": {
         "primary": "foundup_execution_proof",
-        "validation": "Ø2Ø1_state_verification",
+        "validation": "[U+00D8]2[U+00D8]1_state_verification",
         "cluster": "WSP_28_consensus"
     },
     "proof_chain": {
@@ -307,7 +307,7 @@ class BTCValueRegistry:
         
     def record_mint_proof(self, token_id, partifact_data):
         """Record Partifact proof-of-action for token mint"""
-        if partifact_data["state"] == "Ø2Ø1":
+        if partifact_data["state"] == "[U+00D8]2[U+00D8]1":
             self.mint_proof_chain[token_id] = partifact_data
 ```
 
@@ -316,14 +316,14 @@ class BTCValueRegistry:
 ### 7.1 Module Structure
 ```
 /modules/blockchain/foundups_token_system/
-├── src/
-│   ├── mint_engine.py
-│   ├── decay_engine.py
-│   ├── reinvestment_loop.py
-│   ├── consensus_oracle.py
-│   └── models/
-│       ├── token.py
-│       └── partifact.py
+[U+251C][U+2500][U+2500] src/
+[U+2502]   [U+251C][U+2500][U+2500] mint_engine.py
+[U+2502]   [U+251C][U+2500][U+2500] decay_engine.py
+[U+2502]   [U+251C][U+2500][U+2500] reinvestment_loop.py
+[U+2502]   [U+251C][U+2500][U+2500] consensus_oracle.py
+[U+2502]   [U+2514][U+2500][U+2500] models/
+[U+2502]       [U+251C][U+2500][U+2500] token.py
+[U+2502]       [U+2514][U+2500][U+2500] partifact.py
 ```
 
 ### 7.2 Core Components

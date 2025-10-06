@@ -7,11 +7,11 @@
 
 ## Module Purpose
 - Transform YouTube moderator timeouts into epic Quake-style frags with announcements
-- Track XP and ranks: Grunt → Warrior → Hunter → Slayer → Champion → Master → Elite → Godlike → Legendary
+- Track XP and ranks: Grunt → Warrior → Hunter → Slayer → Champion → Master → Elite → Godlike → Legendary → DOOM SLAYER
 - Multi-kill detection (5-second window): DOUBLE WHACK, TRIPLE WHACK, MEGA WHACK, ULTRA WHACK
 - Duke Nukem milestone achievements at 100, 500, 1000+ total whacks
-- Daily cap: 1000 points max (increased from 100 for active streams)
-- Anti-abuse: Diminishing returns for repeat targets (100% → 75% → 50% → 25%)
+- **Quiz System**: Educational anti-fascism quiz with 500 XP first-win reward (24h cooldown)
+- Anti-abuse: Diminishing returns for repeat targets (100% → 60% → 30% → 10%)
 
 ## Public API
 ```python
@@ -40,6 +40,7 @@ pytest modules/gamification/tests/test_whack.py -q
 
 ## Core Components
 - `src/whack.py` - Core gamification engine (simplified from RPG to pure fragging)
+- `src/quiz_engine.py` - Educational anti-fascism quiz with MAGADOOM XP integration
 - `src/timeout_announcer.py` - Quake/Duke Nukem style announcements with priorities
 - `src/timeout_tracker.py` - Tracks timeouts and multi-kill windows
 - `src/enhanced_commands.py` - Command handling and troll mockery system
@@ -50,8 +51,11 @@ pytest modules/gamification/tests/test_whack.py -q
 - ✅ COMPLETED: Quake-style multi-kill announcements (5-second window)
 - ✅ COMPLETED: Duke Nukem milestone achievements
 - ✅ COMPLETED: Stream density adaptive throttling
-- ✅ COMPLETED: Daily cap increase to 1000 points
+- ✅ COMPLETED: Daily cap removed (unlimited whacking per owner request)
 - ✅ COMPLETED: Troll mockery instead of suppression
+- ✅ COMPLETED: Quiz system with 500 XP first-win reward + 24h cooldown
+- ✅ COMPLETED: Quiz leaderboard tracking (wins, accuracy%)
+- ✅ COMPLETED: MAGADOOM XP integration for quiz winners
 - 🚧 IN PROGRESS: Killing spree mode for active fragging periods
 - 📋 PLANNED: Special event modes (Frag Fest, Boss Raid)
 - 📋 PLANNED: Cross-stream global leaderboard

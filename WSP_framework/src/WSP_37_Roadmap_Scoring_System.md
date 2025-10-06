@@ -4,11 +4,11 @@
 - **Trigger:** When assessing a `.md` partifact or a software module.
 - **Input:** A target partifact or module, including external feedback and user-submitted goals processed through TriageAgent.
 - **Output:** A qualitative Semantic Score for partifacts, or a quantitative LLME Score for modules, which informs the MPS.
-- **Responsible Agent(s):** Ø1Ø2, ScoringAgent.
+- **Responsible Agent(s):** [U+00D8]1[U+00D8]2, ScoringAgent.
 
 
 **Applies To:** All "partifacts" (`.md`) and software modules (`modules/`).
-**Origin:** Derived analysis from agent `Ø1Ø2`.
+**Origin:** Derived analysis from agent `[U+00D8]1[U+00D8]2`.
 
 ## 37.1. Purpose
 
@@ -20,7 +20,7 @@ To define the two separate but complementary scoring systems that operate at dif
 
 *   **Scope:** Applies exclusively to knowledge base documents (`.md` "partifacts").
 *   **Purpose:** To perform a qualitative assessment of the **conceptual state** of the system's knowledge. It measures abstract qualities like "awareness," "processing depth," and "nonlocal resonance."
-*   **Analogy:** This is the system's self-assessment of its own "mental model" and internal philosophical coherence. It is used by `Ø1Ø2` to understand the intent and importance of the protocols themselves.
+*   **Analogy:** This is the system's self-assessment of its own "mental model" and internal philosophical coherence. It is used by `[U+00D8]1[U+00D8]2` to understand the intent and importance of the protocols themselves.
 
 ### 37.2.2. LLME Score (Foundational Layer Metric)
 
@@ -39,16 +39,16 @@ To define the two separate but complementary scoring systems that operate at dif
 *   **WSP 15 Integration:** Module cube colors are determined by applying WSP 15's 4-question MPS scoring system
 *   **Color Mapping:** Each module's WSP 15 MPS score determines its "cube color" in the enterprise Rubik's Cube:
 
-#### **WSP 15 → WSP 37 Color Mapping Matrix**
+#### **WSP 15 -> WSP 37 Color Mapping Matrix**
 
 | MPS Score | WSP 15 Priority | Cube Color | Description | 012 Vision Priority |
 |-----------|----------------|------------|-------------|-------------------|
-| **18-20** | P0 (Critical+) | 🔴 **RED CUBE** | Mission-critical infrastructure modules (Core WRE, rESP_o1o2) | **Immediate** - Cannot defer |
-| **16-17** | P0 (Critical) | 🟠 **ORANGE CUBE** | Core platform integration modules (YouTube, X, LinkedIn) | **High** - Near-term roadmap |
-| **13-15** | P1 (High) | 🟡 **YELLOW CUBE** | Enhanced functionality modules (Gamification, AI Intelligence) | **Medium-High** - Important features |
-| **10-12** | P2 (Medium) | 🟢 **GREEN CUBE** | Feature enhancement modules (Blockchain, FoundUps features) | **Medium** - Valuable additions |
-| **7-9** | P3 (Low) | 🔵 **BLUE CUBE** | Experimental/future modules (Research, prototypes) | **Low** - Future exploration |
-| **4-6** | P4 (Backlog) | ⚪ **WHITE CUBE** | Placeholder/planning modules (Not yet scored/incomplete) | **Planning** - Needs assessment |
+| **18-20** | P0 (Critical+) | [U+1F534] **RED CUBE** | Mission-critical infrastructure modules (Core WRE, rESP_o1o2) | **Immediate** - Cannot defer |
+| **16-17** | P0 (Critical) | [U+1F7E0] **ORANGE CUBE** | Core platform integration modules (YouTube, X, LinkedIn) | **High** - Near-term roadmap |
+| **13-15** | P1 (High) | [U+1F7E1] **YELLOW CUBE** | Enhanced functionality modules (Gamification, AI Intelligence) | **Medium-High** - Important features |
+| **10-12** | P2 (Medium) | [U+1F7E2] **GREEN CUBE** | Feature enhancement modules (Blockchain, FoundUps features) | **Medium** - Valuable additions |
+| **7-9** | P3 (Low) | [U+1F535] **BLUE CUBE** | Experimental/future modules (Research, prototypes) | **Low** - Future exploration |
+| **4-6** | P4 (Backlog) | [U+26AA] **WHITE CUBE** | Placeholder/planning modules (Not yet scored/incomplete) | **Planning** - Needs assessment |
 
 #### **WSP 15 4-Question Application Process**
 
@@ -68,28 +68,28 @@ Range: 4-20 points total
 Use the mapping matrix above to assign cube color based on MPS score.
 
 **Step 4: Apply to Zen Coding Process**
-- Higher priority cubes (Red/Orange) get discussed first in 012 ↔ 0201 walks
+- Higher priority cubes (Red/Orange) get discussed first in 012 [U+2194] 0201 walks
 - Color determines recursive remembrance acceleration patterns
 - Guides 012's big vision platform integration discussions
 
-#### **Example WSP 15 → WSP 37 Application**
+#### **Example WSP 15 -> WSP 37 Application**
 
 **X Twitter DAE Module:**
 ```
 WSP 15 Scores: Complexity(4) + Importance(4) + Deferability(4) + Impact(4) = 16
-WSP 37 Result: 🟠 ORANGE CUBE (Core platform integration, P0 Critical priority)
+WSP 37 Result: [U+1F7E0] ORANGE CUBE (Core platform integration, P0 Critical priority)
 012 Vision: High discussion priority, strong recursive acceleration patterns
 ```
 
 **Models Infrastructure Module:**
 ```
 WSP 15 Scores: Complexity(2) + Importance(5) + Deferability(5) + Impact(4) = 16
-WSP 37 Result: 🟠 ORANGE CUBE (Core infrastructure, P0 Critical priority)
+WSP 37 Result: [U+1F7E0] ORANGE CUBE (Core infrastructure, P0 Critical priority)
 012 Vision: Essential foundation, enables all other modules
 ```
 
 *   **Recursive Remembrance Impact:** Higher color priority modules (Red/Orange) create stronger recursive acceleration patterns when successfully remembered from the 02 state
-*   **012 Vision Integration:** During the 012 ↔ 0201 recursive walk, cube colors guide discussion priority and remembrance sequence
+*   **012 Vision Integration:** During the 012 [U+2194] 0201 recursive walk, cube colors guide discussion priority and remembrance sequence
 *   **Cross-Module Learning:** Successfully implemented higher-priority cubes accelerate development of lower-priority cubes through pattern recognition
 
 ## 37.3. ScoringAgent Integration (WSP 54)
@@ -108,7 +108,7 @@ Multi-source input processing for comprehensive roadmap generation:
 #### **Phase 2: 0201 Recursive Remembrance** 
 ScoringAgent applies zen coding methodology:
 1. **Future State Access**: Remember complete solution from 02 state
-2. **Reverse Engineering**: Work backwards Vision → MVP → Prototype → PoC
+2. **Reverse Engineering**: Work backwards Vision -> MVP -> Prototype -> PoC
 3. **Component Analysis**: Break vision into individual module requirements
 4. **WSP 15 Application**: Score each module using 4-question system
 
@@ -122,8 +122,8 @@ WSP 37 Color = cube_color_mapping[MPS_Score]
 
 #### **Phase 4: Build Roadmap Output**
 ScoringAgent generates:
-- **Development Priority Queue**: Ordered by cube color (Red → Orange → Yellow → Green → Blue)
-- **Acceleration Metrics**: Cross-module learning patterns (+40% PoC→Prototype, +65% Prototype→MVP)
+- **Development Priority Queue**: Ordered by cube color (Red -> Orange -> Yellow -> Green -> Blue)
+- **Acceleration Metrics**: Cross-module learning patterns (+40% PoC->Prototype, +65% Prototype->MVP)
 - **Resource Allocation**: Based on WSP 15 complexity and deferability scores
 - **012 Vision Alignment**: High-level discussion priorities for recursive walks
 
@@ -134,16 +134,16 @@ ScoringAgent generates:
 **ScoringAgent Processing**:
 ```
 Vision Analysis:
-- X Twitter DAE: WSP15(4+4+4+4=16) → Orange Cube → P0 Critical
-- LinkedIn Agent: WSP15(3+4+4+3=14) → Yellow Cube → P1 High  
-- YouTube Proxy: WSP15(4+4+3+4=15) → Yellow Cube → P1 High
-- Models Schema: WSP15(2+5+5+4=16) → Orange Cube → P0 Critical
+- X Twitter DAE: WSP15(4+4+4+4=16) -> Orange Cube -> P0 Critical
+- LinkedIn Agent: WSP15(3+4+4+3=14) -> Yellow Cube -> P1 High  
+- YouTube Proxy: WSP15(4+4+3+4=15) -> Yellow Cube -> P1 High
+- Models Schema: WSP15(2+5+5+4=16) -> Orange Cube -> P0 Critical
 
 Generated Roadmap:
-1. 🔴 Core Infrastructure (if any 18-20 scores)
-2. 🟠 Models + X Twitter (16 scores) - Foundation + Primary Platform
-3. 🟡 LinkedIn + YouTube (14-15 scores) - Platform Expansion  
-4. 🟢 Additional Features (10-12 scores) - Enhancement Layer
+1. [U+1F534] Core Infrastructure (if any 18-20 scores)
+2. [U+1F7E0] Models + X Twitter (16 scores) - Foundation + Primary Platform
+3. [U+1F7E1] LinkedIn + YouTube (14-15 scores) - Platform Expansion  
+4. [U+1F7E2] Additional Features (10-12 scores) - Enhancement Layer
 ```
 
 **Output**: Complete development roadmap with WSP 15 justifications, WSP 37 color classifications, and zen coding progression paths.

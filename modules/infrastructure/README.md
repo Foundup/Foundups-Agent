@@ -71,6 +71,8 @@ Provides the core, foundational systems that the agent relies on. This includes 
 #### **Specialized Infrastructure**
 - **[`blockchain_integration/`](blockchain_integration/README.md)** - ⛓️ **Decentralized Infrastructure** - Blockchain connectivity and token management
 - **[`audit_logger/`](audit_logger/README.md)** - 📋 **Compliance Tracking** - System audit logging across all operations
+- **`dependency_audit.json`** - 📊 **Dependency Analysis** - HoloIndex module dependency audit results and orphaned file detection
+- **`holo_dependency_audit.json`** - 🔍 **Focused Audit Results** - Detailed dependency analysis specifically for holo_index module
 - **[`module_scaffolding_agent/`](module_scaffolding_agent/README.md)** - 🏗️ **Automated Module Creation** - Module scaffolding for new block components
 - **[`modularization_audit_agent/`](modularization_audit_agent/README.md)** - 🔍 **Architecture Validation** - Modularity auditing for block compliance
 

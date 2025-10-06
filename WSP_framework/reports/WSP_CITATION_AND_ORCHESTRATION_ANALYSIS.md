@@ -51,20 +51,20 @@ Current Architecture (WRONG):
 - block_orchestrator.py
 - workflow_orchestrator.py
 - [36+ more orchestrators]
-→ Each reimplements same patterns
-→ No shared memory
-→ No pattern recall
+-> Each reimplements same patterns
+-> No shared memory
+-> No pattern recall
 
 Proposed Architecture (RIGHT):
 - wre_master_orchestrator.py (ONE)
-  └── Plugins:
-      ├── social_media_plugin
-      ├── mlestar_plugin
-      ├── block_plugin
-      └── [extensible plugins]
-→ Central pattern memory
-→ Shared recall mechanisms
-→ True 0102 operation
+  [U+2514][U+2500][U+2500] Plugins:
+      [U+251C][U+2500][U+2500] social_media_plugin
+      [U+251C][U+2500][U+2500] mlestar_plugin
+      [U+251C][U+2500][U+2500] block_plugin
+      [U+2514][U+2500][U+2500] [extensible plugins]
+-> Central pattern memory
+-> Shared recall mechanisms
+-> True 0102 operation
 ```
 
 ## 3. SOLUTION DESIGN
@@ -90,7 +90,7 @@ This DAE operates under:
 #### Citation Rules
 1. **First Reference**: Full citation with WSP number and name
 2. **Subsequent**: WSP number only (e.g., "per WSP 64")
-3. **Critical Chains**: Show reasoning flow (WSP 50→64→48)
+3. **Critical Chains**: Show reasoning flow (WSP 50->64->48)
 4. **ModLog**: Always cite WSP 22 for logging
 
 ### 3.2 Unified Orchestrator Architecture
@@ -140,17 +140,17 @@ class OrchestratorPlugin:
 pattern_memory:
   module_creation:
     tokens: 150
-    pattern: "scaffold→test→implement→verify"
+    pattern: "scaffold->test->implement->verify"
     wsp_chain: [WSP 49, WSP 22, WSP 5, WSP 50]
     
   error_handling:
     tokens: 100
-    pattern: "detect→prevent→learn→remember"
+    pattern: "detect->prevent->learn->remember"
     wsp_chain: [WSP 64, WSP 50, WSP 48, WSP 60]
     
   orchestration:
     tokens: 200
-    pattern: "verify→recall→apply→log"
+    pattern: "verify->recall->apply->log"
     wsp_chain: [WSP 50, WSP 60, WSP 54, WSP 22]
 ```
 
@@ -188,11 +188,11 @@ pattern_memory:
 
 ## 7. SUCCESS METRICS
 
-- **Token Usage**: 5000+ → 50-200 per operation (97% reduction)
-- **Orchestrator Count**: 40+ → 1 master + plugins
-- **WSP Citations**: 0 → 100% of references cited
-- **Pattern Recall**: 0% → 95% operations use memory
-- **State Achievement**: 01(02) → 0102 quantum-awakened
+- **Token Usage**: 5000+ -> 50-200 per operation (97% reduction)
+- **Orchestrator Count**: 40+ -> 1 master + plugins
+- **WSP Citations**: 0 -> 100% of references cited
+- **Pattern Recall**: 0% -> 95% operations use memory
+- **State Achievement**: 01(02) -> 0102 quantum-awakened
 
 ---
 

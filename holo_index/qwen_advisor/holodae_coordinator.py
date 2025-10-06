@@ -92,6 +92,8 @@ class HoloDAECoordinator:
         self.output_formatter = HoloOutputFormatter(verbose=self.verbose)
         self.telemetry_logger = TelemetryLogger(self.session_id)
         self._module_metrics_cache: Dict[str, Dict[str, Any]] = {}
+        self.doc_only_modules: Set[str] = set()
+        self._initialize_doc_only_modules()
 
         self._012_summary_path = Path(os.getenv('HOLO_012_PATH', '012.txt')).resolve()
         try:
@@ -717,6 +719,39 @@ class HoloDAECoordinator:
         if should_print:
             print(holo_message)
 
+    def _initialize_doc_only_modules(self) -> None:
+        """Register documentation-only bundles that skip runtime checks."""
+        # Import WSP_DOC_CONFIG to mirror doc-only exemptions
+        try:
+            from .orchestration.qwen_orchestrator import WSP_DOC_CONFIG
+            wsp_doc_only = WSP_DOC_CONFIG.get('doc_only_modules', set())
+        except ImportError:
+            wsp_doc_only = set()
+
+        # Combine local doc paths with WSP config
+        doc_paths = ['holo_index/docs'] + list(wsp_doc_only)
+
+        for doc_path in doc_paths:
+            normalized = doc_path.replace('\\', '/').strip()
+            if normalized:
+                self.doc_only_modules.add(normalized)
+            absolute = (self.repo_root / normalized).resolve()
+            self.doc_only_modules.add(str(absolute).replace('\\', '/'))
+
+    def _is_doc_only_module(self, module_path: str, resolved_path: Optional[Path]) -> bool:
+        """Check if module is a documentation-only bundle."""
+        if not resolved_path:
+            return False
+        normalized = (module_path or '').replace('\\', '/').strip()
+        if normalized in self.doc_only_modules:
+            return True
+        resolved_norm = str(resolved_path.resolve()).replace('\\', '/')
+        if resolved_norm in self.doc_only_modules:
+            return True
+        if resolved_path.name == 'docs' and resolved_path.parent.name == 'holo_index':
+            return True
+        return False
+
     def _collect_module_metrics(self, module_path: str) -> Dict[str, Any]:
         cached = self._module_metrics_cache.get(module_path)
         if cached is not None:
@@ -734,53 +769,64 @@ class HoloDAECoordinator:
             health_label = 'Module not found'
             module_alerts.append('Module not found on disk')
         else:
-            required_files = ("README.md", "INTERFACE.md", "requirements.txt")
+            doc_only = self._is_doc_only_module(module_path, resolved_path)
+            if doc_only:
+                required_files = ("README.md", "INTERFACE.md", "ModLog.md")
+            else:
+                required_files = ("README.md", "INTERFACE.md", "requirements.txt")
             missing_files = [req for req in required_files if not (resolved_path / req).exists()]
             if missing_files:
-                health_label = f"Missing: {', '.join(missing_files)}"
-                module_alerts.append(f"Missing documentation: {', '.join(missing_files)}")
-                recommendations.append("WSP 11 (Interface Documentation)")
-            else:
-                health_label = '[COMPLETE]'
-
-            total_lines = 0
-            total_files = 0
-            has_tests = False
-            large_file_found = False
-
-            for py_file in resolved_path.rglob('*.py'):
-                try:
-                    with open(py_file, 'r', encoding='utf-8', errors='ignore') as handle:
-                        line_count = sum(1 for _ in handle)
-                    total_lines += line_count
-                    total_files += 1
-                    if py_file.name.startswith('test_'):
-                        has_tests = True
-                    if line_count > 500:
-                        large_file_found = True
-                except (OSError, IOError):
-                    continue
-
-            if not has_tests:
-                recommendations.append("WSP 5 (Testing Standards)")
-
-            if total_files == 0:
-                size_label = 'No Python files'
-            else:
-                avg_lines = max(1, total_lines // total_files)
-                if total_lines > 1600:
-                    status = '[CRITICAL]'
-                    module_alerts.append('Exceeds size thresholds (>1600 lines)')
-                elif total_lines > 1000:
-                    status = '[WARN]'
+                if doc_only:
+                    health_label = f"[DOCS-INCOMPLETE] Missing: {', '.join(missing_files)}"
                 else:
-                    status = '[GOOD]'
-                size_label = f"{status} {total_lines} lines in {total_files} files (avg: {avg_lines})"
+                    health_label = f"Missing: {', '.join(missing_files)}"
+                module_alerts.append(f"Missing documentation: {', '.join(missing_files)}")
+                if not doc_only:
+                    recommendations.append("WSP 11 (Interface Documentation)")
+            else:
+                health_label = "[DOCS-COMPLETE]" if doc_only else '[COMPLETE]'
 
-            if large_file_found:
-                recommendations.append("WSP 62 (Modularity Enforcement)")
-                if total_lines <= 1600:
-                    module_alerts.append('Contains individual files exceeding 500 lines')
+            if doc_only:
+                size_label = 'Docs bundle (no code files)'
+            else:
+                total_lines = 0
+                total_files = 0
+                has_tests = False
+                large_file_found = False
+
+                for py_file in resolved_path.rglob('*.py'):
+                    try:
+                        with open(py_file, 'r', encoding='utf-8', errors='ignore') as handle:
+                            line_count = sum(1 for _ in handle)
+                        total_lines += line_count
+                        total_files += 1
+                        if py_file.name.startswith('test_'):
+                            has_tests = True
+                        if line_count > 500:
+                            large_file_found = True
+                    except (OSError, IOError):
+                        continue
+
+                if not has_tests:
+                    recommendations.append("WSP 5 (Testing Standards)")
+
+                if total_files == 0:
+                    size_label = 'No Python files'
+                else:
+                    avg_lines = max(1, total_lines // total_files)
+                    if total_lines > 1600:
+                        status = '[CRITICAL]'
+                        module_alerts.append('Exceeds size thresholds (>1600 lines)')
+                    elif total_lines > 1000:
+                        status = '[WARN]'
+                    else:
+                        status = '[GOOD]'
+                    size_label = f"{status} {total_lines} lines in {total_files} files (avg: {avg_lines})"
+
+                if large_file_found:
+                    recommendations.append("WSP 62 (Modularity Enforcement)")
+                    if total_lines <= 1600:
+                        module_alerts.append('Contains individual files exceeding 500 lines')
 
         deduped_recommendations = []
         for rec in recommendations:
@@ -1119,5 +1165,3 @@ if __name__ == "__main__":
     coordinator = HoloDAECoordinator()
     print("HoloDAE Coordinator initialized with modular architecture")
     print(f"Status: {coordinator.get_status_summary()}")
-
-

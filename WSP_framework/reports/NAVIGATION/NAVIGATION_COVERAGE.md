@@ -1,4 +1,4 @@
-﻿# NAVIGATION Coverage Log
+[U+FEFF]# NAVIGATION Coverage Log
 
 | Need | Location | Last Verified | Owner |
 |------|----------|---------------|-------|

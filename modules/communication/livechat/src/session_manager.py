@@ -43,7 +43,9 @@ class SessionManager:
         # WSP 84 compliant: Use existing greeting generator
         self.greeting_generator = GrokGreetingGenerator()
         self.greeting_message = None  # Will be generated dynamically
-        
+        self.greeting_sent = False  # Track if greeting already sent for this session
+        self.update_broadcast_sent = False  # Track if update broadcast already sent for this session
+
         logger.info(f"SessionManager initialized for video: {video_id}")
     
     def get_live_chat_id(self) -> Optional[str]:
@@ -161,13 +163,18 @@ class SessionManager:
     async def send_greeting(self, send_function) -> bool:
         """
         Send greeting message to chat.
-        
+
         Args:
             send_function: Function to send messages to chat
-            
+
         Returns:
             True if greeting sent successfully
         """
+        # FIRST PRINCIPLES: Only send greeting once per session to prevent spam
+        if self.greeting_sent:
+            logger.info("Greeting already sent for this session - skipping")
+            return True
+
         if not self.greeting_message:
             logger.info("No greeting message configured")
             return True
@@ -197,6 +204,7 @@ class SessionManager:
             
             if success:
                 logger.info("Greeting sent successfully")
+                self.greeting_sent = True  # Mark greeting as sent for this session
                 # Add longer post-greeting delay to prevent message stacking
                 delay = random.uniform(15, 25)  # 15-25 seconds between messages
                 logger.info(f"Waiting {delay:.1f}s before update broadcast to prevent stacking")
@@ -219,13 +227,18 @@ class SessionManager:
     async def send_update_broadcast(self, send_function) -> bool:
         """
         Send update broadcast about new 0102 features.
-        
+
         Args:
             send_function: Function to send messages to chat
-            
+
         Returns:
             True if broadcast sent successfully
         """
+        # FIRST PRINCIPLES: Only send update broadcast once per session to prevent spam
+        if self.update_broadcast_sent:
+            logger.info("Update broadcast already sent for this session - skipping")
+            return True
+
         import random
         from datetime import datetime
         
@@ -267,6 +280,7 @@ class SessionManager:
             
             if success:
                 logger.info("Update broadcast sent successfully")
+                self.update_broadcast_sent = True  # Mark broadcast as sent for this session
             else:
                 logger.warning("Failed to send update broadcast")
             

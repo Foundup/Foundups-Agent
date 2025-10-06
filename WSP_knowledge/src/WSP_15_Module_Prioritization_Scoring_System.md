@@ -115,4 +115,63 @@ The total MPS score (range: 4-20) and the LLME score determine priority.
 | 13-15           | P1       | **High**. Important for near-term roadmap. Use LLME to sequence P1s (e.g., prioritize a `011` -> `122` evolution). |
 | 10-12           | P2       | **Medium**. Valuable but not urgent. LLME can help differentiate P2s.                                      |
 | 7-9             | P3       | **Low**. Can be deferred. Typically low current and target LLME.                                           |
-| 4-6             | P4       | **Backlog**. Reconsidered in future planning. Candidates for deprecation if LLME remains `000`.            | 
+| 4-6             | P4       | **Backlog**. Reconsidered in future planning. Candidates for deprecation if LLME remains `000`.            |
+
+## 5. HoloDAE Issue Evaluation Adaptation (0102 Implementation)
+
+### 5.1 MPS-Based Issue Evaluation Algorithm
+**Implementation Location**: `O:\Foundups-Agent\holo_index\qwen_advisor\issue_mps_evaluator.py`
+**Agent**: 0102 (Arbitrator over Qwen findings)
+**Created**: 2025-09-27
+
+The MPS system has been adapted for automated issue evaluation in HoloDAE, where:
+- **Qwen (HoloDAE)** finds issues and suggests complexity ratings
+- **0102** uses MPS algorithm to arbitrate and decide actions autonomously
+- **012** observes but doesn't approve - fully autonomous system
+
+### 5.2 Issue Type MPS Mappings
+
+| Issue Type | Complexity | Importance | Deferability | Impact | Total MPS | Action |
+|------------|------------|------------|--------------|--------|-----------|--------|
+| VIBECODE | 2 (Low) | 4 (Critical) | 5 (Cannot defer) | 4 (Major) | 15 (P1) | Fix in batch |
+| WSP_VIOLATION | 1 (Trivial) | 4 (Critical) | 4 (Difficult) | 3 (Moderate) | 12 (P2) | Schedule |
+| DEAD_CODE | 1 (Trivial) | 2 (Helpful) | 2 (Deferrable) | 2 (Minor) | 7 (P3) | Can defer |
+| DUPLICATE | 3 (Moderate) | 3 (Important) | 3 (Moderate) | 3 (Moderate) | 12 (P2) | Schedule |
+| ARCHITECTURE | 4 (High) | 5 (Essential) | 3 (Moderate) | 5 (Transform) | 17 (P0) | Fix now |
+| DEPENDENCY | 3 (Moderate) | 4 (Critical) | 4 (Difficult) | 4 (Major) | 15 (P1) | Fix in batch |
+
+### 5.3 0102 Arbitration Logic
+
+The implementation allows 0102 to autonomously decide based on MPS scores:
+- **P0 (16-20)**: Fix immediately - critical issues that block progress
+- **P1 (13-15)**: Batch fixes - high priority within current session
+- **P2 (10-12)**: Schedule for sprint - medium priority planned work
+- **P3 (7-9)**: Add to backlog - can defer with minimal impact
+- **P4 (4-6)**: Reconsider later - very low priority
+
+### 5.4 Integration with HoloDAE
+
+**Usage in autonomous_holodae.py**:
+```python
+from holo_index.qwen_advisor.issue_mps_evaluator import IssueMPSEvaluator
+
+evaluator = IssueMPSEvaluator()
+evaluation = evaluator.evaluate_issue(issue_type, description, confidence)
+
+# 0102 decides based on evaluation.priority
+if evaluation.priority == IssueSeverity.P0_CRITICAL:
+    # Fix immediately
+elif evaluation.priority == IssueSeverity.P1_HIGH:
+    # Add to batch queue
+```
+
+### 5.5 Future Improvements for 0102
+
+Location for enhancement: `holo_index\qwen_advisor\issue_mps_evaluator.py`
+
+Potential improvements:
+1. **Context-aware scoring**: Adjust scores based on current module being worked on
+2. **Learning from outcomes**: Track fix success rates to refine scores
+3. **Dynamic thresholds**: Adjust P0-P4 boundaries based on workload
+4. **Integration with AgentDB**: Store evaluation history for pattern learning
+5. **Confidence calibration**: Better mapping of Qwen confidence to score adjustments 

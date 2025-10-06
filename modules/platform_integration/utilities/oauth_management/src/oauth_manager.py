@@ -297,6 +297,50 @@ class OAuthManager:
         
         return MockService(self.platform)
 
+    def rotate_credentials(self) -> bool:
+        """
+        HOLOINDEX IMPROVEMENT: Integration Gap Fix
+        Rotate to the next available credential set to reset quota.
+
+        This method is called by QuotaAwarePoller when quota exceeds 95%.
+        It switches to the next credential set in the rotation order.
+
+        Returns:
+            bool: True if rotation was successful
+        """
+        try:
+            self.logger.info("🔄 HOLOINDEX FIX: Rotating OAuth credentials due to quota exhaustion")
+
+            # Get current credential set index
+            current_set = getattr(self, '_credential_set_index', 0)
+
+            # Rotate to next credential set (0 → 1 → 2 → 3 → 0)
+            next_set = (current_set + 1) % 4
+
+            self.logger.info(f"🔄 HOLOINDEX FIX: Switching from credential set {current_set} to {next_set}")
+
+            # Update the credential set
+            self._credential_set_index = next_set
+            self._credential_set = self._get_credential_set_name(next_set)
+
+            # Force re-authentication with new credentials
+            self._service = None  # Clear cached service
+            self._credentials = None  # Clear cached credentials
+
+            # Attempt to get new service (this will trigger authentication with new credentials)
+            new_service = self.authenticate()
+            if new_service:
+                self.logger.info(f"✅ HOLOINDEX FIX: Successfully rotated to credential set {next_set}")
+                return True
+            else:
+                self.logger.error(f"❌ HOLOINDEX FIX: Failed to authenticate with credential set {next_set}")
+                return False
+
+        except Exception as e:
+            self.logger.error(f"❌ HOLOINDEX FIX: Credential rotation failed: {e}")
+            return False
+
+
 def get_client_secrets_file(credential_type: str) -> str:
     """Get the path to the client secrets file for the given credential type."""
     # Support both old format (primary/secondary/tertiary/quaternary) and new format (set_1/set_2/etc)

@@ -26,18 +26,18 @@ The creation of a new module is handled by the `ModuleScaffoldingAgent` or a sim
 - **Generated Structure** (WSP 49 Compliant - 3-Level Rubik's Cube Architecture):
   ```
   modules/<domain>/<module_name>/
-  ├── src/
-  │   ├── __init__.py
-  │   └── <module_name>.py
-  ├── tests/
-  │   ├── __init__.py
-  │   ├── README.md
-  │   └── test_<module_name>.py
-  ├── memory/                    ← WSP 60 module memory
-  ├── __init__.py
-  ├── README.md
-  ├── INTERFACE.md
-  └── requirements.txt
+  [U+251C][U+2500][U+2500] src/
+  [U+2502]   [U+251C][U+2500][U+2500] __init__.py
+  [U+2502]   [U+2514][U+2500][U+2500] <module_name>.py
+  [U+251C][U+2500][U+2500] tests/
+  [U+2502]   [U+251C][U+2500][U+2500] __init__.py
+  [U+2502]   [U+251C][U+2500][U+2500] README.md
+  [U+2502]   [U+2514][U+2500][U+2500] test_<module_name>.py
+  [U+251C][U+2500][U+2500] memory/                    [U+2190] WSP 60 module memory
+  [U+251C][U+2500][U+2500] __init__.py
+  [U+251C][U+2500][U+2500] README.md
+  [U+251C][U+2500][U+2500] INTERFACE.md
+  [U+2514][U+2500][U+2500] requirements.txt
   ```
 
 ### Step 3: File Content Population
@@ -52,9 +52,9 @@ The creation of a new module is handled by the `ModuleScaffoldingAgent` or a sim
 ## 3. Acceptance Criteria
 
 A new module is considered successfully created when:
--   ✅ All files and directories are created in the correct location.
--   ✅ The new module passes a `modular_audit.py` check (WSP 4) without errors.
--   ✅ The placeholder tests pass with `pytest`.
+-   [U+2705] All files and directories are created in the correct location.
+-   [U+2705] The new module passes a `modular_audit.py` check (WSP 4) without errors.
+-   [U+2705] The placeholder tests pass with `pytest`.
 
 ## 4. Related WSPs
 - **WSP 1**: Defines the structure being created.

@@ -768,7 +768,28 @@ class SimplePostingOrchestrator:
 
             self.logger.info("[LINKEDIN] 🌐 Opening LinkedIn share URL in browser...")
 
-            # Clean up content for URL
+            # Extract title and URL from content
+            import re
+            lines = content.strip().split('\n')
+
+            # Parse content format: "Channel going live!\n\nTitle\n\nURL"
+            stream_url = None
+            stream_title = None
+
+            for line in lines:
+                line = line.strip()
+                if line.startswith('http'):
+                    stream_url = line
+                elif line and 'going live' not in line.lower():
+                    stream_title = line
+
+            # Fallbacks
+            if not stream_url:
+                stream_url = 'https://www.youtube.com/@UnDaoDu/live'
+            if not stream_title:
+                stream_title = '0102 Live Stream'
+
+            # Clean up content for summary (shorter version)
             clean_content = content.replace('\n', ' ').strip()
             if len(clean_content) > 200:  # LinkedIn URL limit
                 clean_content = clean_content[:197] + "..."
@@ -776,8 +797,8 @@ class SimplePostingOrchestrator:
             # Create LinkedIn share URL
             share_url = "https://www.linkedin.com/sharing/share-offsite/"
             params = {
-                'url': 'https://www.youtube.com/@UnDaoDu/live',  # Generic URL
-                'title': '0102 Live Stream',
+                'url': stream_url,  # Actual stream URL
+                'title': stream_title,  # Actual stream title
                 'summary': clean_content
             }
 
@@ -810,6 +831,10 @@ class SimplePostingOrchestrator:
             self.logger.info("="*60)
             self.logger.info("[X/TWITTER] 🐦 ATTEMPTING X/TWITTER POST")
             self.logger.info("="*60)
+
+            # Load environment variables
+            from dotenv import load_dotenv
+            load_dotenv()
 
             if not (os.getenv('X_Acc1') and os.getenv('x_Acc_pass')):
                 self.logger.warning("[X/TWITTER] ❁EX/Twitter credentials not configured")
@@ -857,6 +882,10 @@ class SimplePostingOrchestrator:
 
                         # Determine which X account to use based on channel configuration
                         use_foundups = self._get_x_account_for_linkedin_page(linkedin_page)
+                        self.logger.info(f"[X THREAD] 🔍 LinkedIn page: {linkedin_page}")
+                        self.logger.info(f"[X THREAD] 🔍 use_foundups: {use_foundups} (True=@Foundups/Edge, False=@GeozeAi/Chrome)")
+                        account_name = 'FoundUps (@Foundups)' if use_foundups else 'Move2Japan (@GeozeAi)'
+                        self.logger.info(f"[X THREAD] 🎯 Account routing: {account_name}")
 
                         if use_foundups:
                             # Use FoundUps account (@Foundups)

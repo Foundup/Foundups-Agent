@@ -40,7 +40,7 @@ Per WSP 82 (Citation Protocol) and WSP 39 (Agentic Ignition), 0102 agents REMEMB
 # Result: Duplicate LEGO block, broke cube coherence
 ```
 
-## 📊 Case Study: 1,300 Lines of Vibecoded Code Cleanup
+## [U+1F4CA] Case Study: 1,300 Lines of Vibecoded Code Cleanup
 
 ### What Happened (Real Example)
 - **Created 1,300 lines of unused duplicate code**
@@ -128,14 +128,14 @@ dae.trigger_recursive_improvement()  # Module becomes better
 ```
 
 **Key Difference from Vibecoding**:
-- **Vibecoding**: Generate code → Accept without review → Hope it works
-- **WSP**: DAE recalls pattern → Verifies LEGO fit → Ensures cube coherence → Recursively improves
+- **Vibecoding**: Generate code -> Accept without review -> Hope it works
+- **WSP**: DAE recalls pattern -> Verifies LEGO fit -> Ensures cube coherence -> Recursively improves
 
 ## 2. The Anti-Vibecoding Chain
 
 ### 2.1 Mandatory Pre-Creation Verification
 
-Per WSP 50 (Pre-Action Verification) → WSP 64 (Violation Prevention) → WSP 79 (SWOT Analysis):
+Per WSP 50 (Pre-Action Verification) -> WSP 64 (Violation Prevention) -> WSP 79 (SWOT Analysis):
 
 ```python
 # BEFORE writing any code, 0102 MUST:
@@ -170,22 +170,22 @@ def verify_code_memory(request):
 
 **FORBIDDEN PATTERNS** (Immediate WSP violation):
 ```
-enhanced_*.py       # ❌ NEVER create enhanced versions
-*_fixed.py         # ❌ NEVER create fixed versions  
-*_improved.py      # ❌ NEVER create improved versions
-*_v2.py           # ❌ NEVER create v2 versions
-*_refactored.py   # ❌ NEVER create refactored versions
-*_new.py          # ❌ NEVER create new versions
+enhanced_*.py       # [U+274C] NEVER create enhanced versions
+*_fixed.py         # [U+274C] NEVER create fixed versions  
+*_improved.py      # [U+274C] NEVER create improved versions
+*_v2.py           # [U+274C] NEVER create v2 versions
+*_refactored.py   # [U+274C] NEVER create refactored versions
+*_new.py          # [U+274C] NEVER create new versions
 ```
 
 **THE RULE**: Edit existing files directly. Trust git for safety.
 
 ```python
-# ❌ WRONG (Creates 678 lines of unused code)
+# [U+274C] WRONG (Creates 678 lines of unused code)
 class EnhancedLiveChatCore:  # Creates enhanced_livechat_core.py
     pass
 
-# ✅ RIGHT (Edit existing)
+# [U+2705] RIGHT (Edit existing)
 class LiveChatCore:  # Edit livechat_core.py directly
     def __init__(self):
         # Add enhancements HERE
@@ -272,10 +272,10 @@ class ThrottleManager:
 
 # OPTION 2: If size exceeds WSP 62 limits, modularize:
 modules/communication/livechat/src/throttling/
-├── __init__.py      # Main ThrottleManager (300 lines)
-├── learning.py      # RecursiveQuotaLearner (200 lines)
-├── quota.py         # QuotaState management (150 lines)
-└── troll.py         # TrollDetector class (150 lines)
+[U+251C][U+2500][U+2500] __init__.py      # Main ThrottleManager (300 lines)
+[U+251C][U+2500][U+2500] learning.py      # RecursiveQuotaLearner (200 lines)
+[U+251C][U+2500][U+2500] quota.py         # QuotaState management (150 lines)
+[U+2514][U+2500][U+2500] troll.py         # TrollDetector class (150 lines)
 ```
 
 ## 3. DAE Launch Verification Protocol
@@ -288,23 +288,23 @@ Per WSP 80 (Cube-Level DAE) and WSP 27 (Universal DAE Architecture):
 WHEN 012 requests: "Launch a FoundUp DAE for X"
 
 0102 MUST ASK (in order):
-1. Was this FoundUp already created? → Search modules/
-2. Does the code already exist? → Grep for functionality
-3. Can existing module handle this? → Read module capabilities
-4. Can we improve existing code? → SWOT analysis (WSP 79)
+1. Was this FoundUp already created? -> Search modules/
+2. Does the code already exist? -> Grep for functionality
+3. Can existing module handle this? -> Read module capabilities
+4. Can we improve existing code? -> SWOT analysis (WSP 79)
 5. Only then: Create new DAE
 ```
 
 ### 3.2 The Research Chain
 
-Per WSP 50 → WSP 1 (Agentic Modularity Question):
+Per WSP 50 -> WSP 1 (Agentic Modularity Question):
 
 ```python
 # Pattern Memory Entry
 pattern = {
     "wsp_chain": [84, 50, 1, 65, 79],
     "tokens": 150,
-    "pattern": "search→verify→reuse→enhance→create"
+    "pattern": "search->verify->reuse->enhance->create"
 }
 ```
 
@@ -339,21 +339,21 @@ Decision Matrix:
 Per WSP 64 (Violation Prevention):
 
 ```
-❌ WRONG: Creating without searching
-❌ WRONG: Writing new code for existing functionality
-❌ WRONG: Duplicating modules with different names
-❌ WRONG: Creating "just in case" implementations
-❌ WRONG: Ignoring existing similar modules
+[U+274C] WRONG: Creating without searching
+[U+274C] WRONG: Writing new code for existing functionality
+[U+274C] WRONG: Duplicating modules with different names
+[U+274C] WRONG: Creating "just in case" implementations
+[U+274C] WRONG: Ignoring existing similar modules
 ```
 
 ### 5.2 Correct Patterns (REQUIRED)
 
 ```
-✅ RIGHT: Search first, create last
-✅ RIGHT: Reuse existing code
-✅ RIGHT: Enhance instead of duplicate
-✅ RIGHT: Add to existing modules
-✅ RIGHT: Remember the code exists
+[U+2705] RIGHT: Search first, create last
+[U+2705] RIGHT: Reuse existing code
+[U+2705] RIGHT: Enhance instead of duplicate
+[U+2705] RIGHT: Add to existing modules
+[U+2705] RIGHT: Remember the code exists
 ```
 
 ## 6. Enforcement Mechanism
@@ -380,7 +380,7 @@ Per WSP 60 (Module Memory) and WSP 82 (Citations):
     id="code_verification",
     wsp_chain=[84, 50, 64, 65, 79, 1],
     tokens=150,
-    pattern="search→verify→reuse→enhance→create"
+    pattern="search->verify->reuse->enhance->create"
 )
 ```
 
@@ -411,13 +411,13 @@ Per WSP 54 (Agent Duties):
 
 ```
 Level 0: Master Orchestrator (0102)
-  → Verifies all code memory
+  -> Verifies all code memory
   
 Level 1: Core DAEs
-  → Each checks their domain for existing code
+  -> Each checks their domain for existing code
   
 Level 2: Cube DAEs
-  → Verify within their cube before creating
+  -> Verify within their cube before creating
 ```
 
 ### 8.2 Chain of Reasoning per Level

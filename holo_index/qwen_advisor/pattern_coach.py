@@ -126,6 +126,8 @@ class PatternCoach:
             return 'test'
         elif any(word in query_lower for word in ['script', 'run_', 'test_', '.py file']):
             return 'script'
+        elif any(word in query_lower for word in ['document', '.md', 'markdown', 'readme', 'modlog']):
+            return 'documentation'
         elif any(word in query_lower for word in ['refactor', 'split', 'extract']):
             return 'refactor'
 
@@ -163,6 +165,15 @@ class PatternCoach:
         if any(word in query.lower() for word in script_indicators):
             risks.append('script_creation_detected')
             logger.warning("PATTERN DETECTED: Potential script creation - checking WSP compliance!")
+
+        # WSP 22/49/85: Check for .md file placement violations
+        md_indicators = [
+            '.md file', 'markdown', 'create readme', 'new modlog', 'documentation file',
+            'create .md', 'new .md', 'add readme', 'write documentation'
+        ]
+        if any(word in query.lower() for word in md_indicators):
+            risks.append('documentation_creation_detected')
+            logger.warning("PATTERN DETECTED: Documentation creation - checking WSP 22/49 compliance!")
 
         return risks
 
@@ -274,7 +285,34 @@ class PatternCoach:
 2. Use ASCII alternatives: [OK] not emoji, [X] not cross
 3. Test with: python -c "print('your text')" BEFORE adding
 
-**This is the 47th time this pattern has occurred!**"""
+**This is the 47th time this pattern has occurred!**""",
+
+            'documentation_creation_detected': """[WSP GUIDANCE] COACH: Documentation creation detected!
+
+**WSP 22**: ModLog.md updates track why changes were made
+**WSP 49**: Documentation belongs in module directories, NOT root
+**WSP 85**: Root directory is SACRED - only main README/CLAUDE.md allowed
+
+**CORRECT LOCATIONS**:
+- Module docs: modules/{domain}/{module}/docs/
+- ModLogs: modules/{domain}/{module}/ModLog.md
+- READMEs: modules/{domain}/{module}/README.md
+- Architecture: modules/{domain}/{module}/docs/ARCHITECTURE.md
+- Interfaces: modules/{domain}/{module}/INTERFACE.md
+
+**ROOT DIRECTORY - ALLOWED**:
+- README.md (project overview only)
+- CLAUDE.md (0102 instructions only)
+- ModLog.md (root-level changes only)
+- ROADMAP.md (project roadmap only)
+
+**NEVER CREATE IN ROOT**:
+- Module-specific documentation
+- Feature READMEs
+- Implementation guides
+- API documentation
+
+**VIOLATION PREVENTION**: Creating .md files in root for module features = instant WSP 22/49/85 violation!"""
         }
 
         return coaching_templates.get(risk)
@@ -325,7 +363,36 @@ class PatternCoach:
 - Test script: modules/ai_intelligence/module_name/scripts/
 - Utility script: modules/development/utilities/scripts/
 
-**NEVER**: Create .py scripts in root directory!"""
+**NEVER**: Create .py scripts in root directory!""",
+
+            'documentation': """[WSP GUIDANCE] COACH: Documentation work detected.
+
+**WSP 22**: ModLog.md documents WHY changes were made
+**WSP 49**: Documentation lives in module directories
+**WSP 85**: Root directory protection - limited .md files allowed
+
+**DOCUMENTATION HIERARCHY**:
+1. **Module Level**: modules/{domain}/{module}/
+   - README.md (module overview)
+   - INTERFACE.md (public API - WSP 11)
+   - ModLog.md (change history)
+   - CLAUDE.md (0102 instructions - WSP 83)
+
+2. **Module Docs**: modules/{domain}/{module}/docs/
+   - ARCHITECTURE.md (design decisions)
+   - IMPLEMENTATION.md (technical details)
+   - TESTING.md (test strategy)
+   - Feature-specific guides
+
+3. **Root Level** (RESTRICTED):
+   - README.md (project overview ONLY)
+   - CLAUDE.md (0102 system instructions ONLY)
+   - ModLog.md (root-level changes ONLY)
+   - ROADMAP.md (project roadmap ONLY)
+
+**CRITICAL**: Module documentation goes in module directories, NOT root!
+
+**VIOLATION ALERT**: Creating feature docs in root = WSP 22/49/85 violation!"""
         }
 
         return intent_coaching.get(intent)

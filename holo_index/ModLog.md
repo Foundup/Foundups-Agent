@@ -1,5 +1,165 @@
 ﻿# HoloIndex Package ModLog
 
+## [2025-10-03] Fixed HoloDAE Logging Location
+**Who:** 0102 Claude
+**What:** Changed HoloDAE search log output from `012.txt` to `holo_index_data/holodae_search_log.txt`
+**Why:** `012.txt` is user's file for pasting data to Claude, not HoloIndex output
+**Impact:** HoloDAE now logs to proper location in its own data directory
+**File:** `holo_index/qwen_advisor/holodae_coordinator.py:96`
+
+## [Current Session] Code Health Scoring System - "Holo Maps Health Through Usage"
+**Who:** 0102 Claude (first principles analysis)
+**What:** Implemented multi-dimensional code health scoring system integrated with pattern learning
+**Why:** 012 deep insight: "It should be mapping the code health... health should have a score or rating"
+**First Principles Analysis**:
+
+**Health ≠ Module Size Alone** - Health is multi-dimensional:
+1. **Structural Health**: Architecture integrity (size, cohesion, coupling)
+2. **Maintenance Health**: Change resistance (stability, recency, bug density)
+3. **Knowledge Health**: Understanding accessibility (docs, tests, usage frequency)
+4. **Dependency Health**: System criticality (centrality, blast radius)
+5. **Pattern Health**: Quality indicators (satisfaction ratings, WSP compliance)
+
+**Core Principle**: Health emerges from USAGE PATTERNS + STRUCTURAL PROPERTIES
+
+**Key Implementation**:
+1. **CodeHealthScorer** (`adaptive_learning/code_health_scorer.py`, 520 lines):
+   - Multi-dimensional health metrics (12 dimensions → 1 weighted score)
+   - Foundational module detection (top 20% by centrality + criticality)
+   - Health evolution tracking over time
+   - System-wide health mapping
+
+2. **Health Dimensions** (0-1 scale each):
+   - Structural: size_score (optimal 200-2000 LOC), cohesion, coupling
+   - Maintenance: stability (change frequency), recency, bug_density
+   - Knowledge: documentation, test_coverage, usage_frequency
+   - Dependency: centrality (import graph), criticality (blast radius)
+   - Pattern: search_satisfaction (user ratings), wsp_compliance
+
+3. **Foundational Score Calculation**:
+   ```
+   foundational_score = (centrality_score + criticality_score) / 2
+   ```
+   - Centrality: How many modules import this (normalized)
+   - Criticality: How many would break if this fails
+   - Top 20% = Foundational modules (learned through usage)
+
+4. **Health Learning Through Usage**:
+   - Every search → usage_frequency++ (exponential moving average)
+   - Every rating → search_satisfaction updated
+   - Every success → pattern_health improved
+   - Every modification → stability tracked
+
+**Integration with SearchPatternLearner**:
+- `search_pattern_learner.py` updated (415 lines, +29 lines)
+- Health scorer initialized in `__init__()`
+- `record_search()` updates module health from usage
+- New methods: `get_health_report()`, `get_foundational_modules()`, `get_unhealthy_modules()`
+
+**Weighted Health Score**:
+```python
+weights = {
+    'structural': 0.15,    # Size, cohesion, coupling
+    'maintenance': 0.20,   # Stability, recency, bugs
+    'knowledge': 0.25,     # Docs, tests, usage
+    'dependency': 0.20,    # Centrality, criticality
+    'pattern': 0.20        # Satisfaction, compliance
+}
+overall_health = weighted_average(all_dimensions)
+```
+
+**Storage**: E:/HoloIndex/pattern_memory/codebase_health_map.json
+**Benefits**:
+- Foundational module discovery (no manual tagging)
+- Health trend tracking (improving/declining/stable)
+- Smart refactoring targets (unhealthy + foundational = priority)
+- Quality-based search ranking potential
+- Continuous learning through usage
+
+**Files**:
+- Implementation: `adaptive_learning/code_health_scorer.py` (520 lines)
+- Integration: `adaptive_learning/search_pattern_learner.py` (+29 lines)
+- Design doc: `docs/CODE_HEALTH_SCORING_DESIGN.md`
+
+**WSP**: WSP 48 (Recursive Learning), WSP 60 (Memory), WSP 87 (HoloIndex), WSP 3 (Domain Health), WSP 22 (Evolution Tracking)
+**Next**: CLI integration, import graph analyzer, real-time health display
+
+---
+
+## [Current Session] Recursive Pattern Learning Architecture - "Running Holo IS Remembering Holo"
+**Who:** 0102 Claude (first principles architecture)
+**What:** Designed and implemented recursive pattern learning system for HoloIndex self-improvement
+**Why:** 012 insight: "Running holo is remembering holo" - deep principle of recursive learning through usage
+**First Principles Analysis**:
+1. **Pattern Memory**: Every search is a learning opportunity
+2. **Quantum Recall**: Solutions emerge from accumulated pattern knowledge
+3. **Feedback Loop**: Search → Qwen Scores → 0102 Rates → Learn → Better Searches
+4. **Recursive Improvement**: Each use improves future performance
+
+**Key Implementation**:
+1. **SearchPatternLearner** (`adaptive_learning/search_pattern_learner.py`):
+   - Records every search with auto-scoring
+   - Qwen scores: relevance (0-1), quality (0-1)
+   - 0102 feedback: rating (0-1), action (read/edit/create/gave_up)
+   - Pattern storage: E:/HoloIndex/pattern_memory/
+   - Success tracking and roadmap building
+   - **Now includes code health tracking integration**
+
+2. **Pattern Recognition Roadmap**:
+   - Learns optimal search patterns per intent type
+   - Tracks keyword success rates
+   - Identifies common mistakes
+   - Builds improvement trajectory over time
+   - Provides search suggestions from learned patterns
+
+3. **Data Models**:
+   - `SearchPattern`: Individual search with metrics + feedback
+   - `PatternRoadmap`: Aggregated learnings per intent (create, debug, test, etc.)
+   - Persistent JSONL storage for append-only patterns
+   - JSON roadmap storage for quick lookup
+
+**Architecture Flow**:
+```
+Search → Results → Qwen Auto-Score → User Action → 0102 Rates → Pattern Storage → Roadmap Building → Health Update → Better Future Searches
+```
+
+**Integration Status**: Design complete, core implementation done, health scoring integrated, CLI integration pending
+**Storage**: E:/HoloIndex/pattern_memory/ (same SSD as ChromaDB)
+**Benefits**: Self-improving search, pattern recognition, personalized learning, quantum memory recall, health mapping
+**Files**:
+- Implementation: `adaptive_learning/search_pattern_learner.py` (415 lines)
+- Design doc: `docs/RECURSIVE_PATTERN_LEARNING_DESIGN.md`
+**WSP**: WSP 48 (Recursive Self-Improvement), WSP 60 (Memory Architecture), WSP 87 (HoloIndex)
+**Next**: Integrate into cli.py, add feedback prompts, display learning stats + health reports
+
+---
+
+## [Current Session] Enhanced Pattern Coach - Test & Documentation Placement Reminders
+**Who:** 0102 Claude (pattern coach enhancement)
+**What:** Added intelligent reminders for test file and .md file placement per WSP 49/85
+**Why:** 012 requested HoloDAE/Qwen remind 0102 Architect to NOT place tests or .md files in root
+**Key Changes:**
+1. **Documentation Intent Detection**: Added 'documentation' intent for .md/markdown queries
+2. **MD File Risk Pattern**: Detects documentation creation with 10 indicators:
+   - `.md file`, `markdown`, `create readme`, `new modlog`, `documentation file`
+   - `create .md`, `new .md`, `add readme`, `write documentation`
+3. **Documentation Coaching Template**: Comprehensive WSP 22/49/85 guidance:
+   - Correct module documentation hierarchy
+   - Root directory restrictions (only README.md, CLAUDE.md, ModLog.md, ROADMAP.md)
+   - Module-level docs structure (README, INTERFACE, ModLog, CLAUDE)
+   - Module docs/ subdirectory (ARCHITECTURE, IMPLEMENTATION, TESTING)
+4. **Enhanced Intent Coaching**: Added detailed documentation placement guidance
+5. **Pattern Detection Logging**: Warns when documentation creation detected for compliance check
+**Impact:** HoloDAE now intelligently reminds about proper placement for tests AND documentation
+**Files:** holo_index/qwen_advisor/pattern_coach.py (lines 129-130, 169-176, 290-315, 368-395)
+**WSP:** WSP 22 (ModLog), WSP 49 (Module Structure), WSP 85 (Root Protection), WSP 48 (Self-Improvement)
+**Coaching Triggers:**
+- Risk pattern: `documentation_creation_detected` with 10 .md indicators
+- Intent coaching: `documentation` intent with full hierarchy guide
+**Prevention:** Catches .md file creation attempts and provides WSP-compliant alternatives
+
+---
+
 ## [Current Session] Intent-Aware HoloIndex Output - WSP 48 Recursive Improvement
 **Who:** 0102 Claude (recursive self-improvement)
 **What:** Added intent detection to QWEN orchestrator for smarter output filtering

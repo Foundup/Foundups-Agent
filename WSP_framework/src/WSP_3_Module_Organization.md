@@ -1,40 +1,40 @@
 # WSP 3: Module Organization Protocol
 
-## Core Principle: Domain → Block → Cube Pattern
+## Core Principle: Domain -> Block -> Cube Pattern
 
 ### Structure Hierarchy
 
 ```
 modules/                          # Root
-├── [domain]/                     # Enterprise Domain (communication, gamification, etc.)
-│   ├── __init__.py              # Domain-level exports
-│   └── [block]/                 # Specific Feature/Component Block
-│       ├── __init__.py          # Block-level exports
-│       ├── src/                 # The Cube - Implementation
-│       │   ├── __init__.py      # Cube exports
-│       │   └── *.py             # Implementation files (<500 lines each)
-│       ├── tests/               # Block-specific tests
-│       ├── docs/                # Block documentation
-│       └── ModLog.md            # Block change log
+[U+251C][U+2500][U+2500] [domain]/                     # Enterprise Domain (communication, gamification, etc.)
+[U+2502]   [U+251C][U+2500][U+2500] __init__.py              # Domain-level exports
+[U+2502]   [U+2514][U+2500][U+2500] [block]/                 # Specific Feature/Component Block
+[U+2502]       [U+251C][U+2500][U+2500] __init__.py          # Block-level exports
+[U+2502]       [U+251C][U+2500][U+2500] src/                 # The Cube - Implementation
+[U+2502]       [U+2502]   [U+251C][U+2500][U+2500] __init__.py      # Cube exports
+[U+2502]       [U+2502]   [U+2514][U+2500][U+2500] *.py             # Implementation files (<500 lines each)
+[U+2502]       [U+251C][U+2500][U+2500] tests/               # Block-specific tests
+[U+2502]       [U+251C][U+2500][U+2500] docs/                # Block documentation
+[U+2502]       [U+2514][U+2500][U+2500] ModLog.md            # Block change log
 ```
 
-### ❌ WRONG Pattern (Domain-level src)
+### [U+274C] WRONG Pattern (Domain-level src)
 ```
 modules/gamification/
-├── src/                # ❌ WRONG - No src at domain level!
-│   └── whack.py       
-└── whack_a_magat/     
-    └── src/           
+[U+251C][U+2500][U+2500] src/                # [U+274C] WRONG - No src at domain level!
+[U+2502]   [U+2514][U+2500][U+2500] whack.py       
+[U+2514][U+2500][U+2500] whack_a_magat/     
+    [U+2514][U+2500][U+2500] src/           
 ```
 
-### ✅ CORRECT Pattern (Block→Cube)
+### [U+2705] CORRECT Pattern (Block->Cube)
 ```
 modules/gamification/           # Domain
-└── whack_a_magat/             # Block (specific game)
-    └── src/                   # Cube (implementation)
-        ├── whack.py          
-        ├── timeout_tracker.py
-        └── timeout_announcer.py
+[U+2514][U+2500][U+2500] whack_a_magat/             # Block (specific game)
+    [U+2514][U+2500][U+2500] src/                   # Cube (implementation)
+        [U+251C][U+2500][U+2500] whack.py          
+        [U+251C][U+2500][U+2500] timeout_tracker.py
+        [U+2514][U+2500][U+2500] timeout_announcer.py
 ```
 
 ## Examples of Correct Implementation
@@ -42,37 +42,37 @@ modules/gamification/           # Domain
 ### 1. Communication Domain
 ```
 modules/communication/
-├── livechat/                  # Block: YouTube Live Chat
-│   └── src/                   # Cube: Implementation
-│       ├── livechat_core.py
-│       ├── message_processor.py
-│       └── chat_sender.py
-├── discord/                   # Block: Discord Bot
-│   └── src/                   # Cube: Implementation
-└── slack/                     # Block: Slack Integration
-    └── src/                   # Cube: Implementation
+[U+251C][U+2500][U+2500] livechat/                  # Block: YouTube Live Chat
+[U+2502]   [U+2514][U+2500][U+2500] src/                   # Cube: Implementation
+[U+2502]       [U+251C][U+2500][U+2500] livechat_core.py
+[U+2502]       [U+251C][U+2500][U+2500] message_processor.py
+[U+2502]       [U+2514][U+2500][U+2500] chat_sender.py
+[U+251C][U+2500][U+2500] discord/                   # Block: Discord Bot
+[U+2502]   [U+2514][U+2500][U+2500] src/                   # Cube: Implementation
+[U+2514][U+2500][U+2500] slack/                     # Block: Slack Integration
+    [U+2514][U+2500][U+2500] src/                   # Cube: Implementation
 ```
 
 ### 2. Gamification Domain
 ```
 modules/gamification/
-├── whack_a_magat/            # Block: Whack-a-MAGA Game
-│   └── src/                  # Cube: Implementation
-├── chess/                    # Block: Chess Game
-│   └── src/                  # Cube: Implementation
-└── poker/                    # Block: Poker Game
-    └── src/                  # Cube: Implementation
+[U+251C][U+2500][U+2500] whack_a_magat/            # Block: Whack-a-MAGA Game
+[U+2502]   [U+2514][U+2500][U+2500] src/                  # Cube: Implementation
+[U+251C][U+2500][U+2500] chess/                    # Block: Chess Game
+[U+2502]   [U+2514][U+2500][U+2500] src/                  # Cube: Implementation
+[U+2514][U+2500][U+2500] poker/                    # Block: Poker Game
+    [U+2514][U+2500][U+2500] src/                  # Cube: Implementation
 ```
 
 ### 3. Platform Integration Domain
 ```
 modules/platform_integration/
-├── youtube_auth/             # Block: YouTube Authentication
-│   └── src/                  # Cube: Implementation
-├── twitter_api/              # Block: Twitter/X API
-│   └── src/                  # Cube: Implementation
-└── linkedin_api/             # Block: LinkedIn API
-    └── src/                  # Cube: Implementation
+[U+251C][U+2500][U+2500] youtube_auth/             # Block: YouTube Authentication
+[U+2502]   [U+2514][U+2500][U+2500] src/                  # Cube: Implementation
+[U+251C][U+2500][U+2500] twitter_api/              # Block: Twitter/X API
+[U+2502]   [U+2514][U+2500][U+2500] src/                  # Cube: Implementation
+[U+2514][U+2500][U+2500] linkedin_api/             # Block: LinkedIn API
+    [U+2514][U+2500][U+2500] src/                  # Cube: Implementation
 ```
 
 ## Import Patterns
@@ -107,7 +107,7 @@ from .whack_a_magat import get_profile, get_leaderboard
 ## Benefits
 
 1. **Clear Ownership**: Each block owns its implementation
-2. **Easy Discovery**: Domain→Block→Cube makes finding code intuitive
+2. **Easy Discovery**: Domain->Block->Cube makes finding code intuitive
 3. **Scalability**: New blocks can be added without affecting existing ones
 4. **Modularity**: Blocks can be moved/deleted as complete units
 5. **Import Clarity**: Full paths make dependencies explicit

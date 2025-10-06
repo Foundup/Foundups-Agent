@@ -1,0 +1,36 @@
+# Acoustic Lab - Educational Acoustic Triangulation Platform
+# WSP 49 Module Dependencies
+
+# Web Framework
+Flask==3.0.0
+Werkzeug==3.0.0
+gunicorn==21.2.0
+
+# Audio Processing
+librosa==0.10.1
+numpy==1.26.0
+scipy==1.11.3
+soundfile==0.12.1
+
+# Image Processing (for map visualization)
+Pillow==10.1.0
+
+# HTTP Requests and APIs
+requests==2.31.0
+
+# Video/Audio Download (X integration)
+yt-dlp==2024.3.10
+
+# Ethereum Integration (testnet only)
+web3==6.15.0
+eth-account==0.10.0
+
+# Development and Testing
+pytest==8.0.0
+pytest-asyncio==0.23.0
+
+# Optional: Audio visualization (Phase 2)
+# matplotlib==3.8.0
+
+# Optional: WebAssembly support (Phase 2)
+# pyodide==0.24.1

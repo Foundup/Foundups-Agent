@@ -12,7 +12,7 @@
 
 ## 37.1. Purpose
 
-To define the two separate but complementary scoring systems that operate at different layers of the architecture: the **Agentic Layer** and the **Foundational (Engineering) Layer**. This protocol formalizes their scope, purpose, and relationship.
+To define the two separate but complementary scoring systems that operate at different layers of the architecture: the **Agentic Layer** and the **Foundational (Engineering) Layer**. This protocol formalizes their scope, purpose, and relationship. WSP 8 remains the quick-reference summary for 012 decision briefs, but WSP 37 is the canonical workflow that 0102 and roadmap automation must execute.
 
 ## 37.2. Scoring Systems
 

@@ -145,6 +145,14 @@ The orchestrator automatically maps YouTube channels to the correct social media
 
 **Posting Priority**: Move2Japan → UnDaoDu → FoundUps (15-second delays between posts)
 
+## Documentation
+
+For detailed technical architecture documentation:
+- [Duplicate Prevention Database Architecture](docs/DUPLICATE_PREVENTION_DATABASE_ARCHITECTURE.md) - Complete analysis of write-through cache pattern and database integration
+- [Vision Enhancement Proposal](docs/VISION_ENHANCEMENT_PROPOSAL.md)
+- [Posting Scenarios Map](docs/POSTING_SCENARIOS_MAP.md)
+- [LinkedIn URL Fix](docs/LINKEDIN_URL_FIX.md)
+
 ## WSP Compliance
 
 - **WSP 3**: Proper domain placement in platform_integration

@@ -46,6 +46,267 @@ class DAEModule:
     health_score: int = 0
 
 
+class DAECubeCodeMap:
+    """
+    DAE Cube Code Map - Real-time 0102 Work Context Mapping
+
+    Creates dynamic code maps showing exactly what 0102 agents are working on,
+    down to the module and line number. Integrates with IDE state, file changes,
+    and agent activity to provide live navigation assistance.
+
+    Research Inspiration:
+    - Live Programming Environments (Smalltalk, Lisp machines)
+    - IDE debuggers with call stack visualization
+    - Code comprehension tools (CodeQL, Sourcegraph)
+    """
+
+    def __init__(self):
+        self.active_contexts = {}  # agent_id -> WorkContext
+        self.file_watchers = {}    # file_path -> modification_time
+        self.cursor_positions = {} # agent_id -> (file, line, column)
+        self.task_patterns = self._load_task_patterns()
+
+    def _load_task_patterns(self) -> Dict[str, Dict]:
+        """Load patterns for recognizing different types of development tasks."""
+        return {
+            'integration': {
+                'keywords': ['connect', 'integrate', 'bridge', 'link', 'combine'],
+                'file_patterns': ['*integration*', '*orchestrator*', '*coordinator*'],
+                'confidence': 0.8
+            },
+            'optimization': {
+                'keywords': ['optimize', 'performance', 'speed', 'efficiency', 'throttle'],
+                'file_patterns': ['*throttle*', '*performance*', '*cache*'],
+                'confidence': 0.7
+            },
+            'enhancement': {
+                'keywords': ['enhance', 'improve', 'extend', 'feature', 'capability'],
+                'file_patterns': ['*advisor*', '*intelligence*', '*daemon*'],
+                'confidence': 0.6
+            },
+            'bug_fix': {
+                'keywords': ['fix', 'bug', 'error', 'issue', 'problem'],
+                'file_patterns': ['*test*', '*fix*', '*patch*'],
+                'confidence': 0.9
+            }
+        }
+
+    def update_cursor_position(self, agent_id: str, file_path: str, line: int, column: int = 0):
+        """Update the current cursor position for an agent."""
+        self.cursor_positions[agent_id] = (file_path, line, column)
+        self._update_work_context(agent_id)
+
+    def detect_current_task(self, agent_id: str, recent_queries: List[str] = None,
+                           recent_files: List[str] = None) -> Dict[str, Any]:
+        """
+        Detect what task an agent is currently working on using multiple signals.
+
+        Signals analyzed:
+        1. Recent search queries (what they're asking about)
+        2. Files they're editing (what they're changing)
+        3. Cursor position (what they're looking at)
+        4. Code patterns (what type of work)
+        """
+        task_info = {
+            'task_type': 'unknown',
+            'description': 'Unknown task',
+            'active_module': 'unknown',
+            'exact_location': 'unknown',
+            'related_modules': [],
+            'confidence': 0.0,
+            'evidence': []
+        }
+
+        # Signal 1: Analyze recent queries
+        if recent_queries:
+            for query in recent_queries[-3:]:  # Last 3 queries
+                query_lower = query.lower()
+                for task_type, pattern in self.task_patterns.items():
+                    if any(kw in query_lower for kw in pattern['keywords']):
+                        task_info['task_type'] = task_type
+                        task_info['confidence'] = max(task_info['confidence'], pattern['confidence'])
+                        task_info['evidence'].append(f"Query: '{query}' matches {task_type} pattern")
+                        break
+
+        # Signal 2: Analyze files being edited
+        if recent_files:
+            active_module = self._extract_module_from_files(recent_files)
+            if active_module:
+                task_info['active_module'] = active_module
+                task_info['evidence'].append(f"Active in module: {active_module}")
+
+        # Signal 3: Cursor position analysis
+        if agent_id in self.cursor_positions:
+            file_path, line, column = self.cursor_positions[agent_id]
+            task_info['exact_location'] = f"{file_path}:{line}"
+            task_info['evidence'].append(f"Cursor at {file_path}:{line}")
+
+            # Analyze code around cursor for task hints
+            cursor_task = self._analyze_code_at_cursor(file_path, line)
+            if cursor_task:
+                task_info.update(cursor_task)
+                task_info['evidence'].append(f"Code analysis: {cursor_task.get('description', 'Unknown')}")
+
+        # Generate human-readable description
+        task_info['description'] = self._generate_task_description(task_info)
+
+        return task_info
+
+    def _extract_module_from_files(self, file_paths: List[str]) -> str:
+        """Extract the primary module being worked on from file paths."""
+        if not file_paths:
+            return 'unknown'
+
+        # Count module occurrences
+        module_counts = {}
+        for path in file_paths:
+            module = self._extract_module_name(path)
+            module_counts[module] = module_counts.get(module, 0) + 1
+
+        # Return most frequent module
+        if module_counts:
+            return max(module_counts, key=module_counts.get)
+
+        return 'unknown'
+
+    def _extract_module_name(self, path: str) -> str:
+        """Extract module name from file path."""
+        parts = path.split('/')
+        if 'modules' in parts:
+            modules_idx = parts.index('modules')
+            if modules_idx + 2 < len(parts):
+                return f"{parts[modules_idx+1]}.{parts[modules_idx+2]}"
+        elif 'holo_index' in path:
+            return 'holo_index'
+        return path.split('/')[-2] if '/' in path else 'unknown'
+
+    def _analyze_code_at_cursor(self, file_path: str, line: int) -> Optional[Dict[str, Any]]:
+        """Analyze the code around the cursor position to understand the task."""
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                lines = f.readlines()
+
+            if line < len(lines):
+                # Get context around cursor (5 lines before and after)
+                start_line = max(0, line - 5)
+                end_line = min(len(lines), line + 6)
+                context_lines = lines[start_line:end_line]
+
+                # Analyze the code for patterns
+                context_text = ''.join(context_lines).lower()
+
+                # Look for specific development patterns
+                if 'integration' in context_text or 'connect' in context_text:
+                    return {
+                        'task_type': 'integration',
+                        'description': 'Working on system integration',
+                        'confidence': 0.8
+                    }
+                elif 'throttle' in context_text or 'quota' in context_text:
+                    return {
+                        'task_type': 'optimization',
+                        'description': 'Optimizing resource usage',
+                        'confidence': 0.9
+                    }
+                elif 'test' in context_text or 'fix' in context_text:
+                    return {
+                        'task_type': 'bug_fix',
+                        'description': 'Fixing bugs or adding tests',
+                        'confidence': 0.7
+                    }
+
+        except Exception as e:
+            print(f"Error analyzing code at cursor: {e}")
+
+        return None
+
+    def _generate_task_description(self, task_info: Dict) -> str:
+        """Generate a human-readable task description."""
+        task_type = task_info.get('task_type', 'unknown')
+        active_module = task_info.get('active_module', 'unknown')
+
+        descriptions = {
+            'integration': f"Integrating systems in {active_module}",
+            'optimization': f"Optimizing performance in {active_module}",
+            'enhancement': f"Enhancing capabilities in {active_module}",
+            'bug_fix': f"Fixing issues in {active_module}",
+            'unknown': f"Working on {active_module}"
+        }
+
+        return descriptions.get(task_type, descriptions['unknown'])
+
+    def get_live_code_map(self, agent_id: str) -> Dict[str, Any]:
+        """
+        Generate a live code map showing exactly what the agent is working on.
+
+        Returns a comprehensive map including:
+        - Current task and description
+        - Active module and exact location
+        - Related modules and dependencies
+        - Navigation suggestions
+        """
+        print(f"[CODE-MAP] DAECubeCodeMap: Generating live code map for agent {agent_id}")
+
+        code_map = {
+            'agent_id': agent_id,
+            'timestamp': datetime.now().isoformat(),
+            'current_task': {},
+            'navigation_suggestions': [],
+            'confidence': 0.0
+        }
+
+        # Get current cursor position and recent activity
+        cursor_pos = self.cursor_positions.get(agent_id)
+        if cursor_pos:
+            file_path, line, column = cursor_pos
+            code_map['cursor_position'] = {
+                'file': file_path,
+                'line': line,
+                'column': column
+            }
+            print(f"[CODE-MAP] Cursor position detected: {file_path}:{line}")
+
+        # Detect current task
+        task_info = self.detect_current_task(agent_id)
+        code_map['current_task'] = task_info
+        code_map['confidence'] = task_info.get('confidence', 0.0)
+
+        print(f"[CODE-MAP] Task detected: {task_info.get('description', 'Unknown')} (confidence: {task_info.get('confidence', 0.0):.2f})")
+
+        # Generate navigation suggestions
+        code_map['navigation_suggestions'] = self._generate_navigation_suggestions(task_info)
+
+        print(f"[CODE-MAP] Generated {len(code_map['navigation_suggestions'])} navigation suggestions")
+        return code_map
+
+    def _generate_navigation_suggestions(self, task_info: Dict) -> List[str]:
+        """Generate intelligent navigation suggestions based on current task."""
+        suggestions = []
+        task_type = task_info.get('task_type', 'unknown')
+        active_module = task_info.get('active_module', '')
+
+        if task_type == 'integration':
+            suggestions.extend([
+                f"Check {active_module} dependencies",
+                "Look for existing integration patterns",
+                "Review module interfaces and APIs"
+            ])
+        elif task_type == 'optimization':
+            suggestions.extend([
+                f"Check {active_module} performance metrics",
+                "Look for throttling and caching mechanisms",
+                "Review resource usage patterns"
+            ])
+        elif task_type == 'bug_fix':
+            suggestions.extend([
+                f"Check {active_module} test coverage",
+                "Look for error handling patterns",
+                "Review recent changes and commits"
+            ])
+
+        return suggestions
+
+
 class DAECubeOrganizer:
     """
     DAE Cube Organizer - The foundational intelligence layer.

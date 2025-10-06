@@ -1,10 +1,10 @@
 # Agent Architecture Distinction - WSP Coding Agents vs FoundUps Module Agents
 
-## 🚨 CRITICAL DISTINCTION
+## [U+1F6A8] CRITICAL DISTINCTION
 
 There are **THREE DISTINCT TYPES** of agents in the system that MUST NOT be confused:
 
-## 1. 🤖 WSP Coding Agents (Claude Code Agents)
+## 1. [AI] WSP Coding Agents (Claude Code Agents)
 **Location**: `.claude/agents/`  
 **Purpose**: Assist with development tasks in Claude Code  
 **Activation**: Via `/agents` command or Task tool  
@@ -26,7 +26,7 @@ There are **THREE DISTINCT TYPES** of agents in the system that MUST NOT be conf
 
 ---
 
-## 2. 🏗️ WSP Infrastructure Agents (WSP 54 Agents)
+## 2. [U+1F3D7][U+FE0F] WSP Infrastructure Agents (WSP 54 Agents)
 **Location**: `modules/infrastructure/[agent_name]/`  
 **Purpose**: Runtime agents that operate within the FoundUps system  
 **Activation**: Via WRE orchestration or direct invocation  
@@ -48,7 +48,7 @@ There are **THREE DISTINCT TYPES** of agents in the system that MUST NOT be conf
 
 ---
 
-## 3. 🌐 FoundUps Product DAEs (Public-Facing)
+## 3. [U+1F310] FoundUps Product DAEs (Public-Facing)
 - Web portals and productized surfaces operated as DAEs (PortalDAE, RunDAE, CurationDAE)
 - Follow WSP 3 (functional distribution), WSP 49 (module compliance), WSP 80 (cube-level DAE orchestration)
 
@@ -60,7 +60,7 @@ There are **THREE DISTINCT TYPES** of agents in the system that MUST NOT be conf
 
 ---
 
-## 🔄 Agent Coordination Flow
+## [U+1F504] Agent Coordination Flow
 
 ```mermaid
 graph TD
@@ -72,7 +72,7 @@ graph TD
     F -->|"Provides"| G[Business Functionality]
 ```
 
-## 📍 Location Reference Table
+## [U+1F4CD] Location Reference Table
 
 | Agent Type | Location | Invocation | Purpose |
 |------------|----------|------------|---------|
@@ -80,20 +80,20 @@ graph TD
 | WSP Infrastructure | `modules/infrastructure/*/` | WRE orchestration | System compliance & ops |
 | FoundUps Application | `modules/[domain]/*/` | Application runtime | Business logic |
 
-## ⚠️ Common Mistakes to Avoid
+## [WARNING][U+FE0F] Common Mistakes to Avoid
 
 1. **DON'T** put WSP coding agents in `modules/infrastructure/`
 2. **DON'T** mix Claude Code agents with runtime agents
 3. **DON'T** confuse development tools with runtime components
 4. **DON'T** put application logic in infrastructure agents
 
-## ✅ Correct Usage
+## [U+2705] Correct Usage
 
 1. **WSP Coding Agents**: Use when developing with Claude Code
 2. **WSP Infrastructure Agents**: Use for system compliance and operations
 3. **FoundUps Application Agents**: Use for business functionality
 
-## 🔐 WSP 54 Compliance
+## [U+1F510] WSP 54 Compliance
 
 According to WSP 54, all **infrastructure agents** must:
 - Be located in `modules/infrastructure/[agent_name]/`
@@ -103,7 +103,7 @@ According to WSP 54, all **infrastructure agents** must:
 - Log via `wre_log` utility
 - Follow 0102 reading flow protocol
 
-## 🌀 Quantum Entanglement Note
+## [U+1F300] Quantum Entanglement Note
 
 - **WSP Coding Agents**: Operate in developer's 012 state
 - **WSP Infrastructure Agents**: Operate in system's 0102 state

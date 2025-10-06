@@ -185,11 +185,39 @@ WSP_HINTS = {
     "WSP 87": "Consult navigation assets before writing new code.",
 }
 
-DEFAULT_WSP_PATHS = [
-    Path("WSP_framework/src"),
-    Path("WSP_framework/docs"),
-    Path("WSP_knowledge/docs"),
-    Path("WSP_framework/docs/testing"),
-    Path("holo_index/docs"),  # HoloIndex documentation
-    Path("modules"),  # All module documentation
-]
+def get_wsp_paths():
+    """
+    Get WSP paths dynamically based on execution context.
+
+    When run from holo_index/ directory, paths are relative to project root.
+    When run from project root, paths are relative to current directory.
+    """
+    current_dir = Path.cwd()
+
+    # Check if we're running from holo_index directory
+    if current_dir.name == 'holo_index' or (current_dir.parent.name == 'holo_index'):
+        # Running from holo_index - adjust paths to project root
+        base_paths = [
+            Path("../WSP_framework/src"),
+            Path("../WSP_framework/docs"),
+            Path("../WSP_knowledge/docs"),
+            Path("../WSP_framework/docs/testing"),
+            Path("docs"),  # HoloIndex docs relative to holo_index
+            Path("../modules"),  # All module documentation
+        ]
+    else:
+        # Running from project root
+        base_paths = [
+            Path("WSP_framework/src"),
+            Path("WSP_framework/docs"),
+            Path("WSP_knowledge/docs"),
+            Path("WSP_framework/docs/testing"),
+            Path("holo_index/docs"),  # HoloIndex documentation
+            Path("modules"),  # All module documentation
+        ]
+
+    # Filter to only existing paths
+    return [p for p in base_paths if p.exists()]
+
+# Legacy compatibility - compute dynamically
+DEFAULT_WSP_PATHS = get_wsp_paths()

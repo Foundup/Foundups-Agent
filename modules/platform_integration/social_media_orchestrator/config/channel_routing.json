@@ -49,6 +49,8 @@
   "posting_rules": {
     "enable_linkedin": true,
     "enable_x": true,
+    "enable_facebook": false,
+    "facebook_disabled_note": "Facebook posting DISABLED - not implemented",
     "post_order": ["linkedin", "x"],
     "delay_between_platforms_seconds": 10,
     "delay_between_streams_seconds": 15,

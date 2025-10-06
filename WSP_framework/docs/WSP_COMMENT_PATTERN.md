@@ -4,7 +4,7 @@
 - Scope: Guidance only; not a numbered protocol; see `src/` for normative rules
 
 ## Principles
-- Prefer code clarity over comments; comment the “why,” not the “what”
+- Prefer code clarity over comments; comment the [U+201C]why,[U+201D] not the [U+201C]what[U+201D]
 - Use docstrings for public APIs; keep examples minimal and accurate
 - Avoid TODOs in production code; file ROADMAP items instead
 - Keep comments stable across refactors; avoid duplicating logic

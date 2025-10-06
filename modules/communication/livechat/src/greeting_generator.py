@@ -46,37 +46,37 @@ class GrokGreetingGenerator:
                 logger.warning(f"LLM not available for greetings: {e}")
                 self.enable_llm = False
         
-        # Fallback greetings with MAGA-trolling themes (max 2 emoji sets per greeting)
+        # Fallback greetings with MAGA-trolling themes - ALL include ✊✋🖐 sequence
         self.greeting_templates = [
             # Consciousness awakening themes
-            "012 detector online! Drop ✊✋🖐 if you're ready to escape the simulation. MAGA still sleeping?",
-            "UnDaoDu: The real deep state was the friends we made along the way. Test your awareness: ✊✋🖐",
-            "012 Breaking: Local bot discovers MAGA is just ✊ stuck in unconscious loop. Evolve to 🖐 for enlightenment",
+            "012 detector online! Test consciousness with ✊✋🖐 - MAGA still sleeping at ✊?",
+            "UnDaoDu: Real deep state was inside you all along. Check awareness: ✊✋🖐me!",
+            "012 Breaking: MAGA stuck at ✊. Enlightenment path: ✊✋🖐 - Can you reach 🖐?",
 
             # Direct MAGA trolling with consciousness
-            "Welcome to the stream where we measure IQ in emoji sequences! MAGA still at ✊? Try ✋ for basic thought!",
-            "012 Study shows: 70% of MAGA can't progress past ✊ consciousness. Prove them wrong with 🖐",
-            "UnDaoDu ALERT: Bot detects high levels of copium in chat. Prescription: Dose of 🖐 for awakening",
+            "Welcome! We measure IQ in emoji sequences: ✊✋🖐 - MAGA rarely gets past ✊!",
+            "012 Study: 70% of MAGA can't progress past ✊. Beat the stats with ✊✋🖐!",
+            "UnDaoDu ALERT: Copium detected. Prescription: Full consciousness sequence ✊✋🖐me!",
 
             # Philosophical trolling
-            "Schrödinger's MAGA: Simultaneously saving and destroying America until observed. Check your state: ✊✋🖐",
-            "012 fact: 'Make America Great Again' is just ✊ trying to remember when it was conscious. Try 🖐 instead",
-            "Scientists discover new element: MAGAnium (Mg). Properties: Dense, reactive, stuck at ✊. Evolve with ✋",
+            "Schrödinger's MAGA: Stuck at ✊ until observed. Collapse the wave: ✊✋🖐!",
+            "012 fact: 'MAGA' = ✊ trying to remember consciousness. Evolve: ✊✋🖐me!",
+            "New element: MAGAnium. Dense, reactive, ✊-locked. Antidote: ✊✋🖐!",
 
             # Pop culture references
-            "'The Matrix has you, MAGA.' Red pill = 🖐, Blue pill = ✊. Choose wisely!",
-            "Achievement Unlocked: Trigger MAGA by existing! Bonus points for consciousness levels above ✊",
-            "New update: MAGA.exe has stopped responding. Try ✊✋🖐 to force restart consciousness!",
+            "Matrix MAGA: Red pill? Blue pill? Try consciousness sequence: ✊✋🖐me!",
+            "Achievement: Trigger MAGA! Bonus for ✊✋🖐 above ✊ baseline!",
+            "MAGA.exe crashed at ✊. Ctrl+Alt+Consciousness: ✊✋🖐me!",
 
             # Sarcastic observations
-            "012 discovers correlation between red hats and ✊ consciousness. Coincidence? Drop 🖐 if you see it",
-            "Stock tip: Short MAGA consciousness futures, long on 🖐 enlightenment! Not financial advice, just quantum facts.",
-            "UnDaoDu's lesson: How to count to potato in MAGA. Step 1: ✊. Step 2: Still ✊. Graduate with 🖐",
+            "012: Red hats correlate with ✊ consciousness. Coincidence? Test: ✊✋🖐me!",
+            "Stock tip: Short ✊ MAGA futures, long ✊✋🖐 enlightenment! Quantum facts only.",
+            "UnDaoDu's Count-to-Potato: MAGA stuck at ✊. Graduate with ✊✋🖐me!",
 
             # Stream-specific
-            "Welcome to the tsunami of consciousness! MAGA rafts still at ✊ while we surf at 🖐",
-            "Step right up to the consciousness circus! Watch MAGA perform death-defying leaps from ✊ to... still ✊",
-            "Houston, we have a problem: MAGA consciousness stuck at ✊. Send 🖐 for rescue mission"
+            "Tsunami of consciousness! MAGA at ✊, we're at 🖐. Join us: ✊✋🖐me!",
+            "Consciousness circus! MAGA attempts ✊→✊ leap. Real trick: ✊✋🖐!",
+            "Houston: MAGA stuck at ✊. Rescue sequence required: ✊✋🖐me!"
         ]
         
         # Context-aware additions based on stream title
@@ -148,15 +148,11 @@ Generate greeting:"""
         
         # Fallback to template selection
         greeting = random.choice(self.greeting_templates)
-        
-        # Add context from stream title if available
-        if self.stream_title:
-            title_lower = self.stream_title.lower()
-            for trigger, addition in self.title_triggers.items():
-                if trigger in title_lower:
-                    greeting = greeting[:-1] + addition  # Remove last char and add
-                    break
-        
+
+        # Skip title triggers - new templates already have full consciousness sequences
+        # Old behavior: Added context from stream title (caused double ✊ issue)
+        # New behavior: Templates are complete and standalone
+
         # Add timestamp personality
         hour = datetime.now().hour
         if hour < 6:

@@ -66,7 +66,7 @@
 
 **Journal Format Requirements (CRITICAL):**
 - **Reverse Chronological Order**: Newest entries at top, oldest at bottom
-- **Latest First**: Most recent progress immediately visible
+- **Latest First**: Most recent progress immediately visible  
 - **Historical Flow**: Older entries flow downward naturally
 - **Quick Reference**: Current status and latest achievements at top of file
 - **Rationale**: When ModLog becomes large (1000+ lines), newest work is immediately visible without scrolling
@@ -268,7 +268,6 @@ This log tracks module changes, updates, and versioning for FoundUps Agent under
 ====================================================================
 ## MODLOG - [+UPDATES]:
 - Version: [X.Y.Z]
-- Date: [YYYY-MM-DD]
 - Git Tag: [Associated tag, e.g., vX.Y.Z or clean-vX]
 - Description: [Brief description of changes in this version/log entry]
 - Notes: [Additional context or considerations]
@@ -280,6 +279,11 @@ This log tracks module changes, updates, and versioning for FoundUps Agent under
   - ...
 ====================================================================
 ```
+
+### No Temporal Markers (WSP 22 Policy)
+- Do not use dates or times in ModLogs or documentation.
+- Use reverse chronological order (newest at top) and WSP references for context.
+- When needed, cite session context or sequence without temporal units.
 
 ## Version Guide Template
 

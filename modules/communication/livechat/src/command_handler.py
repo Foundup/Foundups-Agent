@@ -20,37 +20,159 @@ from modules.gamification.whack_a_magat.src.spree_tracker import get_active_spre
 from modules.gamification.whack_a_magat.src.self_improvement import observe_command
 from modules.gamification.whack_a_magat.src.historical_facts import get_random_fact, get_parallel, get_warning
 
+# YouTube Shorts chat commands integration
+try:
+    from modules.communication.youtube_shorts.src.chat_commands import get_shorts_handler
+    SHORTS_AVAILABLE = True
+except ImportError:
+    SHORTS_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
+
+import time
+import random
+from collections import deque
+
+
+class CommandFloodDetector:
+    """
+    Detects command floods and triggers troll cooldown mode.
+
+    Tracks commands per 60s window - if >5 commands in 10s, go into cooldown.
+    Cooldown duration is adaptive (3-7 minutes), troll messages are random.
+    """
+
+    def __init__(self):
+        self.command_timestamps = deque(maxlen=50)  # Track last 50 commands
+        self.cooldown_until = 0  # Timestamp when cooldown ends
+        self.cooldown_count = 0  # How many times we've cooled down this session
+
+        # Agentic troll responses
+        self.troll_messages = [
+            "🛑 WHOA! Stop trying to hump me! I'm AFK this is nuts.... be back in {mins}m 🚶",
+            "🤚 Y'all need to CHILL! Command spam detected. Taking a {mins}min break to touch grass 🌱",
+            "😵 MY CIRCUITS ARE OVERLOADING! Too many commands. Cooldown mode for {mins}m ⏳",
+            "🙄 Seriously? This isn't a speedrun. Going AFK for {mins} minutes. Try meditation 🧘",
+            "🚨 FLOOD ALERT! Bot needs a break from y'all's thirst. Back in {mins}m 💤",
+            "🤖 ERROR 418: I'M A TEAPOT! Cooldown engaged for {mins} minutes ☕",
+            "😤 TOO. MANY. COMMANDS. Activating self-care mode for {mins}m. Go outside! 🌞"
+        ]
+
+    def check_flood(self, role: str) -> tuple[bool, Optional[str]]:
+        """
+        Check if command flood detected.
+
+        Returns: (is_in_cooldown, troll_message_if_triggered)
+        OWNER (Move2Japan, UnDaoDu, Foundups) can bypass cooldown.
+        """
+        now = time.time()
+
+        # OWNER bypass
+        if role == 'OWNER':
+            return False, None
+
+        # Check if already in cooldown
+        if now < self.cooldown_until:
+            remaining = int((self.cooldown_until - now) / 60)
+            logger.info(f"🛑 Command blocked - cooldown active ({remaining}m remaining)")
+            return True, None  # Don't spam the troll message
+
+        # Add current command timestamp
+        self.command_timestamps.append(now)
+
+        # Check last 10 seconds for flood (>5 commands = flood)
+        recent_commands = [ts for ts in self.command_timestamps if now - ts <= 10]
+
+        if len(recent_commands) > 5:
+            # FLOOD DETECTED! Trigger cooldown
+            cooldown_minutes = self._calculate_cooldown()
+            self.cooldown_until = now + (cooldown_minutes * 60)
+            self.cooldown_count += 1
+
+            # Pick random troll message
+            troll_msg = random.choice(self.troll_messages).format(mins=cooldown_minutes)
+
+            logger.warning(f"🚨 COMMAND FLOOD DETECTED! {len(recent_commands)} commands in 10s")
+            logger.warning(f"🛑 Entering {cooldown_minutes}m cooldown (#{self.cooldown_count})")
+
+            return True, troll_msg
+
+        return False, None
+
+    def _calculate_cooldown(self) -> int:
+        """
+        Agentic cooldown duration based on flood frequency.
+
+        First flood: 3 minutes
+        Second flood: 5 minutes
+        Third+ flood: 7 minutes
+        """
+        if self.cooldown_count == 0:
+            return 3  # First offense - gentle
+        elif self.cooldown_count == 1:
+            return 5  # Second offense - stern
+        else:
+            return 7  # Repeat offenders - harsh
+
+    def reset_session(self):
+        """Reset flood detection for new stream session"""
+        self.command_timestamps.clear()
+        self.cooldown_until = 0
+        self.cooldown_count = 0
 
 
 class CommandHandler:
     """Handles chat commands and generates responses."""
-    
+
     def __init__(self, timeout_manager, message_processor=None):
         self.timeout_manager = timeout_manager
         self.message_processor = message_processor  # For /toggle command
-        
+
         # Initialize quiz and RPG systems
         self.quiz_engine = QuizEngine()
         # No need for facts provider instance - using module functions directly
         self.rpg_commands = None  # RPGCommands requires database, initialize on demand
-        
+
         # Track active quiz sessions
         self.active_quizzes: Dict[str, Any] = {}
-        
+
+        # Command flood protection
+        self.flood_detector = CommandFloodDetector()
+
     def handle_whack_command(self, text: str, username: str, user_id: str, role: str) -> Optional[str]:
         """Handle whack gamification commands."""
         text_lower = text.lower().strip()
         logger.info(f"🎮 Processing whack command: '{text_lower}' from {username} (role: {role}, id: {user_id})")
-        
+
+        # PRIORITY -1: Check flood detection FIRST (before any processing)
+        is_cooldown, troll_msg = self.flood_detector.check_flood(role)
+        if is_cooldown:
+            return troll_msg  # Returns troll message on first flood, None during cooldown
+
+        # PRIORITY 0: Quiz answers with !# syntax (must come BEFORE Shorts routing!)
+        import re
+        quiz_answer_match = re.match(r'^!([1-4])$', text_lower.strip())
+        if quiz_answer_match:
+            answer_num = quiz_answer_match.group(1)
+            logger.info(f"📚 Quiz answer detected: !{answer_num} from {username}")
+            # Route to quiz handler as /quiz #
+            return self.handle_whack_command(f"/quiz {answer_num}", username, user_id, role)
+
+        # Check for YouTube Shorts commands (!createshort, !shortstatus, !shortstats)
+        if SHORTS_AVAILABLE and text_lower.startswith('!'):
+            shorts_handler = get_shorts_handler()
+            shorts_response = shorts_handler.handle_shorts_command(text, username, user_id, role)
+            if shorts_response:
+                return shorts_response
+
         # Special logging for /quiz debugging
         if 'quiz' in text_lower:
             logger.warning(f"🧠🧠🧠 QUIZ COMMAND DETECTED: '{text_lower}'")
-        
+
         try:
             # Debug: Log all commands at entry
             logger.info(f"🔍 ENTERING TRY BLOCK with command: '{text_lower[:30]}'")
-            
+
             # Get user profile (creates if doesn't exist)
             profile = get_profile(user_id, username)
             logger.debug(f"📊 Profile for {username}: Score={profile.score}, Rank={profile.rank}, Level={profile.level}")
@@ -202,8 +324,19 @@ class CommandHandler:
                             return f"@{username} 🧠 Quiz initializing. Please try again!"
                 except Exception as e:
                     logger.error(f"🧠❌ EXCEPTION in quiz command: {e}", exc_info=True)
-                    return f"@{username} 🧠 Quiz error occurred. Please try again."
-            
+                    # DON'T waste quota on error messages - just log it silently
+                    return None  # Suppress error response to save quota
+
+            elif text_lower.startswith('/quizboard') or text_lower.startswith('/quizleader'):
+                # Quiz leaderboard showing top quiz winners
+                observe_command('/quizboard', 0.0)
+                try:
+                    leaderboard_msg = self.quiz_engine.get_quiz_leaderboard(limit=10)
+                    return f"@{username} {leaderboard_msg}"
+                except Exception as e:
+                    logger.error(f"📚 Error getting quiz leaderboard: {e}")
+                    return f"@{username} 📚 Quiz leaderboard unavailable. Try /quiz to initialize!"
+
             elif text_lower.startswith('/facts'):
                 # Educational 1933 → 2025 parallels
                 observe_command('/facts', 0.0)
@@ -240,11 +373,11 @@ class CommandHandler:
                     return f"@{username} 🚫 /session is for moderators only"
             
             elif text_lower.startswith('/help'):
-                help_msg = f"@{username} 💀 MAGADOOM: /score /rank /whacks /leaderboard /sprees /quiz /facts /help"
+                help_msg = f"@{username} 💀 MAGADOOM: /score /rank /whacks /leaderboard /sprees /quiz /quizboard /facts /help"
                 if role == 'MOD':
                     help_msg += " | MOD: /session"
-                elif role == 'OWNER':
-                    help_msg += " | OWNER: /toggle /session"
+                if role == 'OWNER':
+                    help_msg += " | OWNER: /toggle /session !createshort !shortstatus !shortstats"
                 return help_msg
 
             # Handle deprecated/removed commands with helpful messages

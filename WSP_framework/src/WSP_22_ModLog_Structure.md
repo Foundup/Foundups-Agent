@@ -17,8 +17,8 @@ Defines the structure and requirements for Module ModLogs and Roadmaps to mainta
   - Modules with complex functionality requiring history
   - Modules referenced frequently by other modules
 - **Examples**:
-  - `modules/communication/livechat/ModLog.md` ✅
-  - `modules/platform_integration/social_media_orchestrator/ModLog.md` ✅
+  - `modules/communication/livechat/ModLog.md` [U+2705]
+  - `modules/platform_integration/social_media_orchestrator/ModLog.md` [U+2705]
 - **NOT Required For**:
   - Simple utility modules (document in root instead)
   - Static/stable modules with no evolution

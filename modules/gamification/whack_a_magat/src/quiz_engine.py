@@ -65,10 +65,13 @@ class QuizEngine:
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS quiz_scores (
                     user_id TEXT PRIMARY KEY,
+                    username TEXT DEFAULT 'Unknown',
                     total_score INTEGER DEFAULT 0,
                     questions_answered INTEGER DEFAULT 0,
+                    quiz_wins INTEGER DEFAULT 0,
                     avg_difficulty REAL DEFAULT 0,
                     last_played TIMESTAMP,
+                    last_quiz_time TIMESTAMP,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
@@ -85,6 +88,28 @@ class QuizEngine:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+
+            # MIGRATION: Add missing columns to existing databases
+            try:
+                cursor.execute("PRAGMA table_info(quiz_scores)")
+                columns = {col[1] for col in cursor.fetchall()}
+
+                if 'username' not in columns:
+                    cursor.execute("ALTER TABLE quiz_scores ADD COLUMN username TEXT DEFAULT 'Unknown'")
+                    logger.info("📚 MIGRATION: Added 'username' column to quiz_scores")
+
+                if 'quiz_wins' not in columns:
+                    cursor.execute("ALTER TABLE quiz_scores ADD COLUMN quiz_wins INTEGER DEFAULT 0")
+                    logger.info("📚 MIGRATION: Added 'quiz_wins' column to quiz_scores")
+
+                if 'last_quiz_time' not in columns:
+                    cursor.execute("ALTER TABLE quiz_scores ADD COLUMN last_quiz_time TIMESTAMP")
+                    logger.info("📚 MIGRATION: Added 'last_quiz_time' column to quiz_scores")
+
+                conn.commit()
+            except Exception as e:
+                logger.warning(f"📚 Migration check failed (non-critical): {e}")
+
             conn.commit()
     
     def _load_questions(self):
@@ -425,63 +450,119 @@ class QuizEngine:
             )
         ]
     
-    def start_quiz(self, user_id: str) -> Tuple[QuizQuestion, str]:
+    def start_quiz(self, user_id: str, compact_mode: bool = False) -> Tuple[QuizQuestion, str]:
         """
         Start a new quiz for a user
+
+        Args:
+            user_id: User identifier
+            compact_mode: If True, format for YouTube Live Chat (200 char limit)
+
         Returns: (question, formatted_message)
         """
         question = random.choice(self.quiz_questions)
-        
+
         self.sessions[user_id] = QuizSession(
             user_id=user_id,
             current_question=question,
             started_at=datetime.now()
         )
-        
-        message = f"📚 FASCISM AWARENESS QUIZ\n"
-        message += f"Difficulty: {'⭐' * question.difficulty}\n"
-        message += f"Category: {question.category.replace('_', ' ').title()}\n\n"
-        message += f"Question: {question.question}\n\n"
-        
-        for i, option in enumerate(question.options):
-            message += f"{i+1}. {option}\n"
-        
-        message += f"\nReply with !answer [number] to answer"
-        
+
+        if compact_mode:
+            # YouTube Live Chat optimized format (200 char limit)
+            # Format: "📚 Q: [question]? 1) [opt1] 2) [opt2] 3) [opt3] 4) [opt4] !answer #"
+            message = f"📚 Q: {question.question}? "
+            for i, option in enumerate(question.options):
+                # Shorten options to first few words
+                short_opt = ' '.join(option.split()[:3])  # First 3 words
+                message += f"{i+1}) {short_opt} "
+            message += "!answer #"
+
+            # Final check: if still too long, truncate question
+            if len(message) > 197:  # 200 - "..."
+                max_question_len = 30  # Drastically shorten question
+                short_question = question.question[:max_question_len]
+                message = f"📚 Q: {short_question}? "
+                for i, option in enumerate(question.options):
+                    short_opt = ' '.join(option.split()[:2])  # First 2 words only
+                    message += f"{i+1}) {short_opt} "
+                message += "!answer #"
+        else:
+            # Original format for platforms with longer limits
+            message = f"📚 FASCISM AWARENESS QUIZ\n"
+            message += f"Difficulty: {'⭐' * question.difficulty}\n"
+            message += f"Category: {question.category.replace('_', ' ').title()}\n\n"
+            message += f"Question: {question.question}\n\n"
+
+            for i, option in enumerate(question.options):
+                message += f"{i+1}. {option}\n"
+
+            message += f"\nReply with !answer [number] to answer"
+
         return question, message
     
-    def answer_quiz(self, user_id: str, answer_index: int) -> Tuple[bool, str]:
+    def answer_quiz(self, user_id: str, answer_index: int, username: str = "Unknown") -> Tuple[bool, str]:
         """
         Process a quiz answer
+        Awards 500 MAGADOOM XP for FIRST correct answer!
         Returns: (is_correct, response_message)
         """
         if user_id not in self.sessions:
             return False, "No active quiz session. Start with !quiz"
-        
+
         session = self.sessions[user_id]
         if not session.current_question:
             return False, "No active question. Start with !quiz"
-        
+
         question = session.current_question
         is_correct = (answer_index == question.correct_index)
-        
+
         if is_correct:
-            session.score += question.difficulty
-            message = f"✅ CORRECT! (+{question.difficulty} points)\n"
+            # Check if this is user's FIRST correct answer
+            from .whack import get_profile, _profiles_repo
+
+            # Check quiz history
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT questions_answered FROM quiz_scores WHERE user_id = ?", (user_id,))
+                result = cursor.fetchone()
+                is_first_correct = (result is None or result[0] == 0)
+
+            # Award MASSIVE XP for first correct answer (equivalent to 24h ban!)
+            if is_first_correct:
+                xp_awarded = 500  # FIRST ANSWER BONUS!
+                profile = get_profile(user_id, username)
+                profile.score += xp_awarded  # All-time XP
+                profile.monthly_score += xp_awarded  # Monthly leaderboard
+                _profiles_repo.save(profile)  # Save and update rank
+
+                message = f"✅ CORRECT! 🎉 FIRST QUIZ WIN! (+{xp_awarded} MAGADOOM XP!)\n"
+                message += f"📖 {question.explanation}\n"
+                message += f"🏆 Your MAGADOOM Rank: {profile.rank} (Total XP: {profile.score})"
+            else:
+                # Regular correct answer (no XP, just educational)
+                session.score += question.difficulty
+                message = f"✅ CORRECT! (+{question.difficulty} education points)\n"
+                message += f"📖 {question.explanation}\n"
+                message += f"📚 Quiz session score: {session.score}"
         else:
             correct_option = question.options[question.correct_index]
             message = f"❌ INCORRECT! The answer was: {correct_option}\n"
-        
-        message += f"\n📖 {question.explanation}\n"
-        message += f"\nYour session score: {session.score} points"
-        
-        # Update database
+            message += f"📖 {question.explanation}"
+
+        # Update database (track wins for leaderboard)
         session.questions_answered += 1
-        self._update_quiz_score(user_id, question.difficulty if is_correct else 0, question.difficulty)
-        
+        self._update_quiz_score(
+            user_id,
+            question.difficulty if is_correct else 0,
+            question.difficulty,
+            username=username,
+            is_win=is_correct  # Track every correct answer as a "win"
+        )
+
         # Clear current question
         session.current_question = None
-        
+
         return is_correct, message
     
     def start_fscale(self, user_id: str) -> Tuple[FScaleQuestion, str]:
@@ -511,23 +592,23 @@ class QuizEngine:
     def handle_quiz_command(self, user_id: str, username: str, args: str) -> str:
         """Handle quiz commands and answers"""
         if not args:
-            # Start a new quiz
-            question, message = self.start_quiz(user_id)
+            # Check cooldown (unless owner)
+            if not self._check_quiz_cooldown(user_id, username):
+                cooldown_msg = self._get_cooldown_message(user_id)
+                return cooldown_msg
+
+            # Start a new quiz (YouTube Live Chat = 200 char limit)
+            question, message = self.start_quiz(user_id, compact_mode=True)
             return message
-        
+
         # Check if it's an answer (number)
         try:
             answer_index = int(args) - 1  # Convert to 0-based
-            is_correct, message = self.answer_quiz(user_id, answer_index)
-            
-            # Add bonus for correct answer
-            if is_correct:
-                # Award quiz points (could integrate with whack.py later)
-                if user_id not in self.sessions:
-                    self.sessions[user_id] = QuizSession(user_id=user_id, score=0)
-                self.sessions[user_id].score += 5
-                message += f" (Total quiz score: {self.sessions[user_id].score})"
-            
+            is_correct, message = self.answer_quiz(user_id, answer_index, username)
+
+            # NO BONUS - Fixed double scoring bug!
+            # XP is awarded inside answer_quiz() for MAGADOOM integration
+
             return message
         except (ValueError, IndexError):
             return "Invalid answer! Use /quiz to get a question, then reply with 1, 2, 3, or 4"
@@ -604,22 +685,84 @@ class QuizEngine:
         
         if not quiz_data and not fscale_data:
             message = "No educational stats yet. Try !quiz or !fscale"
-        
+
         return message
-    
-    def _update_quiz_score(self, user_id: str, points: int, difficulty: int):
-        """Update quiz score in database"""
+
+    def get_quiz_leaderboard(self, limit: int = 10) -> str:
+        """
+        Get quiz leaderboard showing top quiz winners
+        Shows: quiz_wins, questions_answered, accuracy%
+        """
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
+
+            # Check if new schema exists
+            cursor.execute("PRAGMA table_info(quiz_scores)")
+            columns = [col[1] for col in cursor.fetchall()]
+
+            if 'quiz_wins' not in columns or 'username' not in columns:
+                return "📚 Quiz leaderboard not available (run a quiz to initialize)"
+
+            # Get top quiz winners
             cursor.execute("""
-                INSERT INTO quiz_scores (user_id, total_score, questions_answered, avg_difficulty, last_played)
-                VALUES (?, ?, 1, ?, CURRENT_TIMESTAMP)
-                ON CONFLICT(user_id) DO UPDATE SET
-                    total_score = total_score + ?,
-                    questions_answered = questions_answered + 1,
-                    avg_difficulty = ((avg_difficulty * questions_answered) + ?) / (questions_answered + 1),
-                    last_played = CURRENT_TIMESTAMP
-            """, (user_id, points, difficulty, points, difficulty))
+                SELECT username, quiz_wins, questions_answered, total_score
+                FROM quiz_scores
+                WHERE quiz_wins > 0
+                ORDER BY quiz_wins DESC, questions_answered DESC
+                LIMIT ?
+            """, (limit,))
+
+            leaders = cursor.fetchall()
+
+        if not leaders:
+            return "📚 No quiz winners yet! Be the first to win 500 MAGADOOM XP!"
+
+        message = "📚 QUIZ LEADERBOARD - Top Anti-Fascist Scholars\n\n"
+
+        for i, (username, wins, answered, total_score) in enumerate(leaders, 1):
+            accuracy = (wins / answered * 100) if answered > 0 else 0
+            medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
+
+            message += f"{medal} {username}: {wins} wins ({accuracy:.0f}% accuracy)\n"
+
+        message += "\n💡 First correct answer = 500 MAGADOOM XP!"
+        return message
+    
+    def _update_quiz_score(self, user_id: str, points: int, difficulty: int, username: str = "Unknown", is_win: bool = False):
+        """Update quiz score in database (tracks wins for leaderboard)"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+
+            # Check if username column exists (migration support)
+            cursor.execute("PRAGMA table_info(quiz_scores)")
+            columns = [col[1] for col in cursor.fetchall()]
+
+            if 'username' in columns and 'quiz_wins' in columns:
+                # New schema with username and quiz_wins
+                cursor.execute("""
+                    INSERT INTO quiz_scores (user_id, username, total_score, questions_answered, quiz_wins, avg_difficulty, last_played)
+                    VALUES (?, ?, ?, 1, ?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(user_id) DO UPDATE SET
+                        username = ?,
+                        total_score = total_score + ?,
+                        questions_answered = questions_answered + 1,
+                        quiz_wins = quiz_wins + ?,
+                        avg_difficulty = ((avg_difficulty * questions_answered) + ?) / (questions_answered + 1),
+                        last_played = CURRENT_TIMESTAMP
+                """, (user_id, username, points, 1 if is_win else 0, difficulty,
+                      username, points, 1 if is_win else 0, difficulty))
+            else:
+                # Old schema without username/quiz_wins
+                cursor.execute("""
+                    INSERT INTO quiz_scores (user_id, total_score, questions_answered, avg_difficulty, last_played)
+                    VALUES (?, ?, 1, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(user_id) DO UPDATE SET
+                        total_score = total_score + ?,
+                        questions_answered = questions_answered + 1,
+                        avg_difficulty = ((avg_difficulty * questions_answered) + ?) / (questions_answered + 1),
+                        last_played = CURRENT_TIMESTAMP
+                """, (user_id, points, difficulty, points, difficulty))
+
             conn.commit()
     
     def _update_fscale_score(self, user_id: str, dimension: str, score: int):
@@ -645,3 +788,61 @@ class QuizEngine:
                     last_tested = CURRENT_TIMESTAMP
             """, (user_id, score, score, score, score))
             conn.commit()
+
+    def _check_quiz_cooldown(self, user_id: str, username: str) -> bool:
+        """
+        Check if user can start a new quiz (cooldown protection)
+        Owner (Move2Japan, UnDaoDu, Foundups) can ALWAYS trigger for testing
+        Returns: True if allowed, False if on cooldown
+        """
+        # OWNER BYPASS - Can always trigger quiz for testing
+        owner_usernames = ["Move2Japan", "UnDaoDu", "Foundups"]
+        if username in owner_usernames:
+            logger.info(f"👑 Owner {username} bypassing quiz cooldown")
+            return True
+
+        # Check last quiz time
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT last_quiz_time FROM quiz_scores WHERE user_id = ?
+            """, (user_id,))
+            result = cursor.fetchone()
+
+            if result and result[0]:
+                from datetime import datetime, timedelta
+                last_quiz = datetime.fromisoformat(result[0])
+                cooldown_hours = 24  # 24 hour cooldown
+                time_since_last = datetime.now() - last_quiz
+
+                if time_since_last < timedelta(hours=cooldown_hours):
+                    logger.info(f"⏰ User {username} on quiz cooldown ({time_since_last.total_seconds() / 3600:.1f}h ago)")
+                    return False
+
+            # Update last quiz time
+            cursor.execute("""
+                INSERT INTO quiz_scores (user_id, last_quiz_time)
+                VALUES (?, CURRENT_TIMESTAMP)
+                ON CONFLICT(user_id) DO UPDATE SET
+                    last_quiz_time = CURRENT_TIMESTAMP
+            """, (user_id,))
+            conn.commit()
+
+        return True
+
+    def _get_cooldown_message(self, user_id: str) -> str:
+        """Get user-friendly cooldown message"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT last_quiz_time FROM quiz_scores WHERE user_id = ?", (user_id,))
+            result = cursor.fetchone()
+
+            if result and result[0]:
+                from datetime import datetime, timedelta
+                last_quiz = datetime.fromisoformat(result[0])
+                time_until_next = timedelta(hours=24) - (datetime.now() - last_quiz)
+                hours_left = int(time_until_next.total_seconds() / 3600)
+
+                return f"⏰ Quiz cooldown! You already won 500 XP today. Next quiz in {hours_left}h"
+
+        return "⏰ Quiz on cooldown. Try again later!"

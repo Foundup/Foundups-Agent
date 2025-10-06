@@ -55,7 +55,7 @@ class CABR_DAE:
         "min_validators": 3,
         "consensus_threshold": 0.382,
         "challenge_window_seconds": 86400,
-        "score_decay_rate": "e^(-t/τ)",
+        "score_decay_rate": "e^(-t/[U+03C4])",
         "weight_update_frequency": "1 recursive cycle"
     }
 }
@@ -150,9 +150,9 @@ class CABRStateManager:
             str: New Partifact state
         """
         transitions = {
-            'Ø1(Ø2)': self._handle_initiation,
-            'Ø1Ø2': self._handle_validation,
-            'Ø2Ø1': self._handle_crystallization
+            '[U+00D8]1([U+00D8]2)': self._handle_initiation,
+            '[U+00D8]1[U+00D8]2': self._handle_validation,
+            '[U+00D8]2[U+00D8]1': self._handle_crystallization
         }
         return transitions[current_state](cabr_event)
 ```

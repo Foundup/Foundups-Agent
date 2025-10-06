@@ -121,14 +121,20 @@ WSP_HINTS: Dict[str, str] = {
     "WSP 87": "Consult navigation assets before writing new code.",
 }
 
-DEFAULT_WSP_PATHS = [
-    Path("WSP_framework/src"),
-    Path("WSP_framework/docs"),
-    Path("WSP_knowledge/docs"),
-    Path("WSP_framework/docs/testing"),
-    Path("holo_index/docs"),  # HoloIndex documentation
-    Path("modules"),  # All module documentation
-]
+# Import dynamic WSP paths from helpers
+try:
+    from .utils.helpers import get_wsp_paths
+    DEFAULT_WSP_PATHS = get_wsp_paths()
+except ImportError:
+    # Fallback if import fails
+    DEFAULT_WSP_PATHS = [
+        Path("../WSP_framework/src"),
+        Path("../WSP_framework/docs"),
+        Path("../WSP_knowledge/docs"),
+        Path("../WSP_framework/docs/testing"),
+        Path("docs"),
+        Path("../modules"),
+    ]
 
 # Onboarding function now imported from utils module
 # -------------------- HoloIndex Implementation -------------------- #
@@ -166,6 +172,7 @@ def main() -> None:
     parser.add_argument('--wsp-path', nargs='*', help='Additional WSP directories to include in the index')
     parser.add_argument('--search', type=str, help='Search for code + WSP guidance')
     parser.add_argument('--limit', type=int, default=5, help='Number of results per category (default: 5)')
+    parser.add_argument('--doc-type', choices=['wsp_protocol', 'module_readme', 'interface', 'documentation', 'roadmap', 'modlog', 'all'], default='all', help='Filter by document type (default: all)')
     parser.add_argument('--benchmark', action='store_true', help='Benchmark SSD performance')
     parser.add_argument('--ssd', type=str, default='E:/HoloIndex', help='SSD base path (default: E:/HoloIndex)')
 
@@ -175,6 +182,9 @@ def main() -> None:
     parser.add_argument('--audit-docs', action='store_true', help='Audit documentation completeness for HoloIndex files')
     parser.add_argument('--check-module', type=str, help='Check if a module exists (WSP compliance - use before code generation)')
     parser.add_argument('--docs-file', type=str, help='Get documentation paths for a Python file (implements 012 insight: direct doc provision)')
+    parser.add_argument('--check-wsp-docs', action='store_true', help='Run WSP Documentation Guardian compliance check (read-only)')
+    parser.add_argument('--fix-ascii', action='store_true', help='Enable ASCII auto-remediation when used with --check-wsp-docs')
+    parser.add_argument('--rollback-ascii', type=str, help='Rollback ASCII changes for a specific file (provide filename)')
     parser.add_argument('--verbose', action='store_true', help='Show detailed output including low-priority information')
     parser.add_argument('--no-advisor', action='store_true', help='Disable advisor (opt-out for 0102 agents)')
     parser.add_argument('--advisor-rating', choices=['useful', 'needs_more'], help='Provide feedback on advisor output')
@@ -625,6 +635,67 @@ def main() -> None:
         print("[PROTECT] WSP_84 COMPLIANCE: 0102 AGENTS MUST check module existence BEFORE ANY code generation - DO NOT VIBECODE")
         return  # Exit after module check
 
+    if args.check_wsp_docs:
+        # WSP Documentation Guardian - First Principles Compliance Check
+        print(f"[WSP-GUARDIAN] WSP Documentation Guardian - Compliance Check")
+        print("=" * 60)
+
+        # Import the orchestrator and run WSP guardian
+        try:
+            from holo_index.qwen_advisor.orchestration.qwen_orchestrator import QwenOrchestrator
+
+            orchestrator = QwenOrchestrator()
+
+            # Create mock search to trigger WSP guardian
+            mock_files = ["dummy_wsp_file.md"]  # Will be filtered out by guardian
+            mock_modules = ["dummy_module"]    # Will be filtered out by guardian
+            mock_snapshots = {}
+
+            # Enable remediation mode if --fix-ascii flag is used
+            remediation_mode = args.fix_ascii
+            if remediation_mode:
+                print("[WSP-GUARDIAN] ASCII auto-remediation ENABLED (--fix-ascii flag used)")
+                print("=" * 60)
+
+            results = orchestrator._run_wsp_documentation_guardian(
+                query="wsp documentation compliance check",
+                files=mock_files,
+                modules=mock_modules,
+                module_snapshots=mock_snapshots,
+                remediation_mode=remediation_mode
+            )
+
+            if results:
+                print("\n".join(results))
+            else:
+                print("[WSP-GUARDIAN] All WSP documentation compliant and up-to-date")
+
+            print(f"\n[TIP] Use 'python -m holo_index.cli --search \"wsp\"' for real-time WSP guidance during development")
+
+        except Exception as e:
+            print(f"[ERROR] Failed to run WSP Documentation Guardian: {e}")
+            print(f"[TIP] Ensure HoloIndex is properly configured")
+
+        return
+
+    if args.rollback_ascii:
+        # Rollback ASCII changes for a specific file
+        print(f"[WSP-GUARDIAN] ASCII Rollback - {args.rollback_ascii}")
+        print("=" * 60)
+
+        try:
+            from holo_index.qwen_advisor.orchestration.qwen_orchestrator import QwenOrchestrator
+
+            orchestrator = QwenOrchestrator()
+            result = orchestrator.rollback_ascii_changes(args.rollback_ascii)
+            print(result)
+
+        except Exception as e:
+            print(f"[ERROR] Failed to rollback ASCII changes: {e}")
+            print(f"[TIP] Ensure the file exists and has a backup in temp/wsp_backups/")
+
+        return
+
     if args.docs_file:
         # Provide documentation paths for a given file (012's insight: direct doc provision)
         from holo_index.utils.helpers import safe_print
@@ -675,10 +746,29 @@ def main() -> None:
         # Initialize agentic output throttler
         throttler = AgenticOutputThrottler()
 
-        results = holo.search(args.search, limit=args.limit)
+        # QWEN ROUTING: Route through orchestrator for intelligent filtering if available
+        qwen_orchestrator = None
+        try:
+            from .qwen_advisor.orchestration.qwen_orchestrator import QwenOrchestrator
+            qwen_orchestrator = QwenOrchestrator()
+            results = holo.search(args.search, limit=args.limit, doc_type_filter=args.doc_type)
 
-        # Store search results in throttler for state determination
-        throttler._search_results = results
+            # Route through QWEN orchestrator for intelligent output filtering
+            orchestrated_response = qwen_orchestrator.orchestrate_holoindex_request(args.search, results)
+
+            # Display QWEN-filtered response
+            print(orchestrated_response)
+
+            # Store results for HoloDAE analysis
+            throttler._search_results = results
+
+        except Exception as e:
+            # Fallback to direct search if QWEN not available
+            logger.debug(f"QWEN orchestrator not available, using direct search: {e}")
+            results = holo.search(args.search, limit=args.limit, doc_type_filter=args.doc_type)
+
+            # Store search results in throttler for state determination
+            throttler._search_results = results
 
         # HoloDAE: Automatic Context-Driven Analysis
         from holo_index.utils.helpers import safe_print

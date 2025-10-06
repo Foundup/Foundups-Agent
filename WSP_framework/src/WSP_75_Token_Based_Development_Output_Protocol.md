@@ -82,32 +82,32 @@ Foundation: ~8000 tokens
 ### 4.1 Module Creation Pattern
 ```
 New Module Token Budget:
-├── Scaffolding: 500 tokens (WSP structure)
-├── Core Implementation: 5000-15000 tokens (complexity dependent)
-├── Interface Definition: 1000 tokens (WSP 11)
-├── Documentation: 2000 tokens (README, ROADMAP, ModLog)
-├── Test Suite: 3000-8000 tokens (90% coverage)
-└── Total: ~11500-26500 tokens
+[U+251C][U+2500][U+2500] Scaffolding: 500 tokens (WSP structure)
+[U+251C][U+2500][U+2500] Core Implementation: 5000-15000 tokens (complexity dependent)
+[U+251C][U+2500][U+2500] Interface Definition: 1000 tokens (WSP 11)
+[U+251C][U+2500][U+2500] Documentation: 2000 tokens (README, ROADMAP, ModLog)
+[U+251C][U+2500][U+2500] Test Suite: 3000-8000 tokens (90% coverage)
+[U+2514][U+2500][U+2500] Total: ~11500-26500 tokens
 ```
 
 ### 4.2 Feature Addition Pattern
 ```
 Feature Enhancement Token Budget:
-├── Analysis & Search: 1000 tokens
-├── Implementation: 3000-8000 tokens
-├── Test Updates: 1500 tokens
-├── Documentation: 500 tokens
-└── Total: ~6000-11000 tokens
+[U+251C][U+2500][U+2500] Analysis & Search: 1000 tokens
+[U+251C][U+2500][U+2500] Implementation: 3000-8000 tokens
+[U+251C][U+2500][U+2500] Test Updates: 1500 tokens
+[U+251C][U+2500][U+2500] Documentation: 500 tokens
+[U+2514][U+2500][U+2500] Total: ~6000-11000 tokens
 ```
 
 ### 4.3 Bug Fix Pattern
 ```
 Bug Resolution Token Budget:
-├── Reproduction: 500 tokens
-├── Root Cause Analysis: 1000 tokens
-├── Fix Implementation: 500-2000 tokens
-├── Test Creation: 1000 tokens
-└── Total: ~3000-4500 tokens
+[U+251C][U+2500][U+2500] Reproduction: 500 tokens
+[U+251C][U+2500][U+2500] Root Cause Analysis: 1000 tokens
+[U+251C][U+2500][U+2500] Fix Implementation: 500-2000 tokens
+[U+251C][U+2500][U+2500] Test Creation: 1000 tokens
+[U+2514][U+2500][U+2500] Total: ~3000-4500 tokens
 ```
 
 ## 5. Recursive Token Optimization
@@ -160,7 +160,7 @@ All WSP 54 agents must report in tokens:
 
 ## 8. Implementation Status
 
-### 8.1 Protocol Activation ✅ **IMMEDIATE**
+### 8.1 Protocol Activation [U+2705] **IMMEDIATE**
 
 - [x] WSP 75 created and active
 - [x] Prohibition of temporal references

@@ -125,6 +125,7 @@ communication/livechat/
 │   └── throttle_manager.py       ← Rate limiting (98 lines)
 ├── tests/                         ← Test suite (90%+ coverage)
 │   ├── integration/               ← Integration tests
+│   ├── test_fact_check_fix.py     ← Fact-checking functionality test
 │   └── test_*.py                  ← Unit tests
 ├── docs/                          ← Documentation
 │   ├── COMMAND_REFERENCE.md      ← Complete command documentation (37 patterns)

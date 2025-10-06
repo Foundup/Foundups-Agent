@@ -1,0 +1,7 @@
+=== 2025-10-02 13:30:52 SEARCH ===
+Query: acoustic triangulation
+Modules: modules/platform_integration/acoustic_lab
+Key Findings:
+  - modules/platform_integration/acoustic_lab: Exceeds size thresholds (>1600 lines)
+High Priority Actions:
+  - Batch For Session (MPS 14): PATTERN ( ) VIBECODING-PATTERN Low coverage 18% in modules/platform_integration/acoustic_lab (2 tests across 11 files)

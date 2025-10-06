@@ -19,16 +19,16 @@ logger = logging.getLogger(__name__)
 class GrokIntegration:
     """Handles all Grok LLM interactions"""
     
-    def __init__(self, llm_connector, mod_owner_messages: Dict[str, List] = None):
+    def __init__(self, llm_connector, all_user_messages: Dict[str, List] = None):
         """
         Initialize Grok integration.
-        
+
         Args:
             llm_connector: LLMConnector instance configured for Grok
-            mod_owner_messages: Optional message history for context
+            all_user_messages: Optional message history for all users (not just mods/owners)
         """
         self.llm = llm_connector
-        self.mod_owner_messages = mod_owner_messages or {}
+        self.all_user_messages = all_user_messages or {}
         self.max_response_length = 180  # YouTube chat limit
         
     def _limit_response(self, response: str) -> str:
@@ -40,7 +40,7 @@ class GrokIntegration:
     def _get_user_context(self, username: str) -> List[str]:
         """Get recent messages from a user for context."""
         messages = []
-        for user_id, user_msgs in self.mod_owner_messages.items():
+        for user_id, user_msgs in self.all_user_messages.items():
             for msg in user_msgs:
                 if msg.get('username') == username:
                     messages.append(msg.get('message', ''))

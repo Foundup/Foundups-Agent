@@ -43,6 +43,8 @@ NEED_TO = {
     "post to social platforms": "modules.platform_integration.social_media_orchestrator.src.core.platform_posting_service.PlatformPostingService",
     "execute platform posting": "modules.platform_integration.social_media_orchestrator.src.core.platform_posting_service.PlatformPostingService.post_to_both_platforms()",
     "clean orchestrator": "modules.platform_integration.social_media_orchestrator.src.refactored_posting_orchestrator.RefactoredPostingOrchestrator",
+    "read duplicate prevention docs": "modules/platform_integration/social_media_orchestrator/docs/DUPLICATE_PREVENTION_DATABASE_ARCHITECTURE.md",
+    "test fact check functionality": "modules/communication/livechat/tests/test_fact_check_fix.py",
 
     # API Management
     "check youtube quota": "modules.platform_integration.youtube_auth.src.quota_monitor.QuotaMonitor",
@@ -98,6 +100,8 @@ NEED_TO = {
     "audit module dependencies": "holo_index.module_health.dependency_audit.DependencyAuditor",
     "check file sizes": "holo_index.module_health.size_audit.SizeAuditor",
     "validate module structure": "holo_index.module_health.structure_audit.StructureAuditor",
+    "view dependency audit results": "modules/infrastructure/dependency_audit.json",
+    "view holo dependency audit": "modules/infrastructure/holo_dependency_audit.json",
     "trace breadcrumbs": "holo_index.adaptive_learning.breadcrumb_tracer.BreadcrumbTracer",
     "monitor agent violations": "holo_index.monitoring.agent_violation_prevention",
     "self monitor holo": "holo_index.monitoring.self_monitoring",
@@ -284,6 +288,7 @@ DATABASES = {
 COMMANDS = {
     "start_youtube_monitoring": "python main.py --youtube",
     "check_posted_streams": "sqlite3 modules/gamification/whack_a_magat/data/magadoom_scores.db 'SELECT * FROM posted_streams'",
+    "check_magadoom_leaders": "python modules/gamification/whack_a_magat/tests/check_magadoom_leaders.py",
     "clear_stream_cache": "rm modules/platform_integration/stream_resolver/memory/*.json",
     "test_social_posting": "python modules/platform_integration/social_media_orchestrator/tests/test_simplified_posting.py",
     "check_quota": "python modules/platform_integration/youtube_auth/scripts/check_quota.py",

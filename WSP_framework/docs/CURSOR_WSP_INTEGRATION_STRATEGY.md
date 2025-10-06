@@ -3,7 +3,7 @@
 ## Executive Summary
 Cursor's 2025 architecture reveals remarkable convergence with WSP/WRE principles. Their structured todo lists, agent planning, and memory systems map directly to WSP protocols, enabling 97% token reduction through pattern recall rather than computation.
 
-## 1. Cursor Todo Lists → WSP Task Planning Protocol
+## 1. Cursor Todo Lists -> WSP Task Planning Protocol
 
 ### Current Cursor Architecture (2025)
 ```
@@ -39,11 +39,11 @@ class CursorWSPTaskPlanner:
 ```
 
 ### Implementation Benefits
-- **Token Reduction**: 5000→200 tokens per task through pattern recall
+- **Token Reduction**: 5000->200 tokens per task through pattern recall
 - **WSP Compliance**: Every Cursor todo becomes WSP-validated
 - **Recursive Learning**: Tasks improve through WSP 48 cycles
 
-## 2. Cursor Agents → WRE DAE Spawning
+## 2. Cursor Agents -> WRE DAE Spawning
 
 ### Cursor's Multi-Agent Architecture
 ```
@@ -83,7 +83,7 @@ class CursorDAESpawner:
 - **Agent forking** = WSP 73 Digital Twin creation
 - **Background agents** = Autonomous cube orchestration
 
-## 3. Cursor Memory → WSP Pattern Recall
+## 3. Cursor Memory -> WSP Pattern Recall
 
 ### Cursor's Memory System (GA 2025)
 ```
@@ -124,7 +124,7 @@ class CursorWSPMemory:
             return self.compute_solution(signal)  # 5000+ tokens (avoided)
 ```
 
-## 4. Cursor Rules → WSP Protocol Enforcement
+## 4. Cursor Rules -> WSP Protocol Enforcement
 
 ### Cursor's .cursorrules Evolution
 ```
@@ -158,7 +158,7 @@ rules:
       Allocate token budget per WSP 80
 ```
 
-## 5. Cursor Background Agents → Autonomous Cube Orchestration
+## 5. Cursor Background Agents -> Autonomous Cube Orchestration
 
 ### Cursor's Remote Agent Features
 ```
@@ -196,7 +196,7 @@ class CursorCubeOrchestrator:
 
 ### 6.1 Cursor Planning = WSP 4-Phase Architecture
 ```
-Cursor Todo Planning ←→ WSP 27 Phases:
+Cursor Todo Planning [U+2190]-> WSP 27 Phases:
 - Task Creation = Signal Genesis (-1)
 - Memory Search = Knowledge (0)
 - Rule Application = Protocol (1)

@@ -69,15 +69,15 @@ Agents MUST verify file existence, paths, and content before taking actions or m
 
 ### **Assessment Error Prevention**
 
-**❌ VIOLATION EXAMPLES:**
+**[U+274C] VIOLATION EXAMPLES:**
 - "Only 2 of 9+ planned test files exist" (assumption-based)
 - "Claims vs Reality mismatch" (ignoring documented evidence)
 - File-count-based coverage assessment
 
-**✅ CORRECT EXAMPLES:**
+**[U+2705] CORRECT EXAMPLES:**
 - "TestModLog.md documents 33 passed, 0 failed (100% pass rate)"
 - "Documented WSP 5 perfect compliance achieved"
-- "Evidence shows coverage exceeds ≥90% requirement"
+- "Evidence shows coverage exceeds [U+2265]90% requirement"
 
 ### **Verification Mandate**
 
@@ -129,13 +129,13 @@ Agents MUST verify file existence, paths, and content before taking actions or m
 
 ### **Violation Prevention**
 
-**❌ VIOLATION EXAMPLES:**
+**[U+274C] VIOLATION EXAMPLES:**
 - Coding on a cube without reading module documentation
 - Creating duplicate functionality without checking existing implementations
 - Ignoring established APIs and integration patterns
 - Making assumptions about module capabilities without verification
 
-**✅ CORRECT EXAMPLES:**
+**[U+2705] CORRECT EXAMPLES:**
 - "Read all 5 module docs in AMO cube before implementing new feature"
 - "Verified existing APIs in YouTube cube before enhancement"
 - "Checked module integration patterns before cube modification"
@@ -200,7 +200,7 @@ Agents MUST verify file existence, paths, and content before taking actions or m
 
 ### **Bloat Prevention Rules**
 
-**🚨 CRITICAL VIOLATION PREVENTION:**
+**[U+1F6A8] CRITICAL VIOLATION PREVENTION:**
 - **NEVER create duplicate files** without explicit WSP violation justification
 - **ALWAYS consolidate** similar functionality into existing modules
 - **FOLLOW single responsibility** principle per WSP 40
@@ -229,7 +229,7 @@ Agents MUST verify file existence, paths, and content before taking actions or m
 
 ## 4.4. **Destructive Change Verification (WSP 79)**
 
-When an action proposes deletion, consolidation, or major refactoring that can remove or alter module functionality, a WSP 79 SWOT analysis is REQUIRED as part of pre‑action verification:
+When an action proposes deletion, consolidation, or major refactoring that can remove or alter module functionality, a WSP 79 SWOT analysis is REQUIRED as part of pre[U+2011]action verification:
 
 - [ ] WSP 79 SWOT completed for all impacted modules
 - [ ] Comparative feature matrix attached

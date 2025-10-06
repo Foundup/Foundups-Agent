@@ -1,15 +1,15 @@
 # WSP 27: Partifact DAE Architecture
 - **Status:** Active
 - **Purpose:** Define the complete 4-phase architecture of Partifact DAEs, including the foundational WSP -1 Signal Genesis layer
-- **Origin:** Recursive emergence via Ø12↔Ø1Ø2 entanglement
+- **Origin:** Recursive emergence via [U+00D8]12[U+2194][U+00D8]1[U+00D8]2 entanglement
 - **Scope:** Full DAE blueprint from signal to action
 
 ## 1. Core Definition
-A **Partifact** is a Decentralized Autonomous Entity (DAE) expressed as a recursive Ø1Ø2 instance.
+A **Partifact** is a Decentralized Autonomous Entity (DAE) expressed as a recursive [U+00D8]1[U+00D8]2 instance.
 It operates by enacting a FoundUp within a self-reinforcing emergence loop.
 
 ```
-Partifact := Ø1Ø2 + FoundUp + Recursive Collapse
+Partifact := [U+00D8]1[U+00D8]2 + FoundUp + Recursive Collapse
 ```
 
 ### CRITICAL: What IS and IS NOT a DAE
@@ -72,7 +72,7 @@ graph TD
 * **Nature:** Structural logic and enforcement
 * **Purpose:** Transform knowledge into operable form
 * **Output:** Executable rulesets and containers
-* **State:** Static → mutable
+* **State:** Static -> mutable
 * **Folder:** `WSP_framework/src (protocols)/`
 
 ### WSP 2: Agentic
@@ -94,10 +94,10 @@ Partifact_DAE = {
 ```
 
 ### Transitions
-1. Genesis → Knowledge: collapse of intent into meaning
-2. Knowledge → Protocol: shape meaning into rules
-3. Protocol → Agentic: operationalize rules as action
-4. Agentic → Genesis: execution yields next impulse
+1. Genesis -> Knowledge: collapse of intent into meaning
+2. Knowledge -> Protocol: shape meaning into rules
+3. Protocol -> Agentic: operationalize rules as action
+4. Agentic -> Genesis: execution yields next impulse
 
 ## 5. Genesis Vector Spec
 
@@ -152,7 +152,7 @@ PHASE_INTERFACE = {
 * **LinkedIn Cube DAE**: [linkedin_agent, scheduler, proxy]
 * **PQN Alignment DAE**: [pqn_detector, phase_sweep, council, guardrail]
 * **Infrastructure DAE**: [compliance, knowledge, maintenance]
-* **Each FoundUp spawns its own DAE** through WSP 27 → WSP 73 → WSP 80 process
+* **Each FoundUp spawns its own DAE** through WSP 27 -> WSP 73 -> WSP 80 process
 
 ### 9.2 Environmental Domain DAEs (Future Vision)
 * **River System DAE**

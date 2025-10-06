@@ -238,17 +238,23 @@ class TimeoutManager:
         # Enforce MAGADOOM terminology on title
         return enforce_terminology(title)
     
-    def record_timeout(self, mod_id: str, mod_name: str, target_id: str, target_name: str, 
+    def record_timeout(self, mod_id: str, mod_name: str, target_id: str, target_name: str,
                       duration: int, reason: str = "MAGA", timestamp: str = None) -> Dict[str, Any]:
         """
         Record a timeout using whack.py and generate announcements
-        
+
         Args:
             timestamp: Optional ISO timestamp from YouTube event for accurate multi-whack detection
-        
+
         Returns:
             Dict with 'announcement', 'level_up', 'stats', 'behavior'
         """
+        # FIX: Validate target_name to prevent truncated/empty usernames
+        # YouTube API sometimes returns partial display names
+        if not target_name or len(target_name) <= 2 or target_name.strip() in ["", "t!", "!"]:
+            logger.warning(f"⚠️ Invalid/truncated target_name detected: '{target_name}' - using fallback")
+            target_name = "MAGAT"  # Fallback for truncated/empty names
+
         # Use provided timestamp if available, otherwise current time
         if timestamp:
             # Parse ISO timestamp to Unix time

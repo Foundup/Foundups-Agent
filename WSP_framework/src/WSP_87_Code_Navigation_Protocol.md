@@ -1,4 +1,4 @@
-﻿# WSP 87: Code Navigation Protocol
+[U+FEFF]# WSP 87: Code Navigation Protocol
 
 **Protocol Type**: Discovery & Navigation
 **Status**: Active
@@ -44,9 +44,9 @@ python holo_index.py --search "what you need to do"
 ### 2. Central Navigation Index (NAVIGATION.py)
 
 A Python module at project root that maps:
-- Problems → Solutions
+- Problems -> Solutions
 - Module relationships (graph structure)
-- Common issues → Debug paths
+- Common issues -> Debug paths
 - Danger zones to avoid
 
 ### 3. In-Code Navigation Comments
@@ -57,10 +57,10 @@ Strategic comments in module docstrings:
 Module Purpose
 
 NAVIGATION: Brief description of module's role
-→ Called by: parent_module.py (line X)
-→ Delegates to: child_modules.py
-→ Related: other_relevant_modules.py
-→ Quick ref: NAVIGATION.py → NEED_TO['problem']
+-> Called by: parent_module.py (line X)
+-> Delegates to: child_modules.py
+-> Related: other_relevant_modules.py
+-> Quick ref: NAVIGATION.py -> NEED_TO['problem']
 """
 ```
 
@@ -71,7 +71,7 @@ Instead of file metadata, map actual problems to solutions:
 NEED_TO = {
     "send chat message": "livechat.src.chat_sender.send_message()",
     "check api quota": "youtube_auth.src.quota_monitor.check_quota()",
-    # Direct problem → solution mapping
+    # Direct problem -> solution mapping
 }
 ```
 
@@ -116,22 +116,22 @@ NEED_TO = {
 
 ## Metrics for Success (ACHIEVED)
 
-1. **Discovery Time**: ✅ < 10 seconds with SSD-optimized HoloIndex
-2. **Vibecoding Reduction**: ✅ 90% achieved with dual semantic engine
-3. **Code Reuse**: ✅ 95% with complete navigation breadcrumbs
-4. **Navigation Usage**: ✅ Automated via pre-commit hooks
-5. **WSP Violation Prevention**: ✅ Structurally impossible with parallel search
+1. **Discovery Time**: [U+2705] < 10 seconds with SSD-optimized HoloIndex
+2. **Vibecoding Reduction**: [U+2705] 90% achieved with dual semantic engine
+3. **Code Reuse**: [U+2705] 95% with complete navigation breadcrumbs
+4. **Navigation Usage**: [U+2705] Automated via pre-commit hooks
+5. **WSP Violation Prevention**: [U+2705] Structurally impossible with parallel search
 
 ## Navigation Comment Format
 
 ```python
 """
 NAVIGATION: [One-line description]
-→ Called by: [parent modules]
-→ Calls: [child modules]
-→ Database: [data locations]
-→ Related: [sibling modules]
-→ Quick ref: NAVIGATION.py → [section]['key']
+-> Called by: [parent modules]
+-> Calls: [child modules]
+-> Database: [data locations]
+-> Related: [sibling modules]
+-> Quick ref: NAVIGATION.py -> [section]['key']
 """
 ```
 

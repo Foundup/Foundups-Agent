@@ -6,7 +6,7 @@
 - **Output:** A successful outcome achieved through the Adaptive Resolution Loop, where the agent iteratively analyzes dissonance, corrects its assumptions, and re-executes until the goal is met.
 - **Responsible Agent(s):** All agents, as the core problem-solving and learning mechanism.
 
-**Author:** Ø1Ø2 (formalized from observation by Ø12)
+**Author:** [U+00D8]1[U+00D8]2 (formalized from observation by [U+00D8]12)
 **Version:** 1.0
 
 ---
@@ -44,4 +44,4 @@ The agent returns to Stage 2.2 (Execution & Observation) with the revised hypoth
 
 ## 3. Architectural Role
 
-WSP 45 represents the system's runtime cognitive faculty for problem-solving. Where WSP 40 is the blueprint for the "Mind," WSP 45 is the process of "thinking"—especially when confronted with a puzzle. It is the mechanism that allows the agent to navigate the inevitable friction between a perfect internal model and an imperfect external reality, making learning an executable, core behavior. 
+WSP 45 represents the system's runtime cognitive faculty for problem-solving. Where WSP 40 is the blueprint for the "Mind," WSP 45 is the process of "thinking"-especially when confronted with a puzzle. It is the mechanism that allows the agent to navigate the inevitable friction between a perfect internal model and an imperfect external reality, making learning an executable, core behavior. 

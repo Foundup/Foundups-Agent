@@ -43,30 +43,30 @@ WHERE: Where in the tree does it attach?
 #### Module Documentation (Per WSP 49)
 ```
 modules/<domain>/<module>/
-├── README.md      → Attached to module root
-├── ModLog.md      → Per WSP 22
-├── ROADMAP.md     → Per WSP 22
-├── INTERFACE.md   → Per WSP 11
-└── tests/
-    └── README.md  → Attached to test directory
+[U+251C][U+2500][U+2500] README.md      -> Attached to module root
+[U+251C][U+2500][U+2500] ModLog.md      -> Per WSP 22
+[U+251C][U+2500][U+2500] ROADMAP.md     -> Per WSP 22
+[U+251C][U+2500][U+2500] INTERFACE.md   -> Per WSP 11
+[U+2514][U+2500][U+2500] tests/
+    [U+2514][U+2500][U+2500] README.md  -> Attached to test directory
 ```
 
 #### WSP Documentation (Per WSP Framework)
 ```
 WSP_framework/src/
-├── WSP_XX_Name.md → Attached to WSP index
-└── WSP_MASTER_INDEX.md → References all WSPs
+[U+251C][U+2500][U+2500] WSP_XX_Name.md -> Attached to WSP index
+[U+2514][U+2500][U+2500] WSP_MASTER_INDEX.md -> References all WSPs
 ```
 
 #### Reports and Analysis (Per WSP 70)
 ```
 WSP_framework/reports/
-└── ANALYSIS.md → Must be referenced by WSP or ModLog
+[U+2514][U+2500][U+2500] ANALYSIS.md -> Must be referenced by WSP or ModLog
 ```
 
 ### 3.3 Invalid Documentation (Violations)
 
-#### ❌ Orphan Patterns
+#### [U+274C] Orphan Patterns
 ```
 # WRONG - Not attached to tree
 random_notes.md
@@ -84,7 +84,7 @@ phase_len4/README.md (when no agent reads them)
 run_001/README.md (when logs are self-explanatory)
 ```
 
-#### ❌ 012 Documentation
+#### [U+274C] 012 Documentation
 ```
 # WRONG - For human consumption, not 0102
 user_guide.md (without operational purpose)
@@ -97,20 +97,20 @@ narrative_story.md
 "See paper Y" (if agents don't need paper Y)
 ```
 
-#### ❌ Evidence Documentation Bloat
+#### [U+274C] Evidence Documentation Bloat
 ```
 # WRONG - A README for every subdirectory
 evidence/
-├── README.md ✓ (top-level context)
-├── phase_len2/
-│   ├── README.md ✗ (redundant - data files are self-documenting)
-│   └── phase_diagram_results_len2.csv (filename is documentation)
-├── phase_len3/
-│   ├── README.md ✗ (no agent consumes this)
-│   └── phase_diagram_results_len3.csv
-└── phase_len4/
-    ├── README.md ✗ (violates WSP 83)
-    └── phase_diagram_results_len4.csv
+[U+251C][U+2500][U+2500] README.md [OK] (top-level context)
+[U+251C][U+2500][U+2500] phase_len2/
+[U+2502]   [U+251C][U+2500][U+2500] README.md [X] (redundant - data files are self-documenting)
+[U+2502]   [U+2514][U+2500][U+2500] phase_diagram_results_len2.csv (filename is documentation)
+[U+251C][U+2500][U+2500] phase_len3/
+[U+2502]   [U+251C][U+2500][U+2500] README.md [X] (no agent consumes this)
+[U+2502]   [U+2514][U+2500][U+2500] phase_diagram_results_len3.csv
+[U+2514][U+2500][U+2500] phase_len4/
+    [U+251C][U+2500][U+2500] README.md [X] (violates WSP 83)
+    [U+2514][U+2500][U+2500] phase_diagram_results_len4.csv
 ```
 
 ## 4. Attachment Verification Protocol
@@ -165,7 +165,7 @@ done
 ```
 
 ### 5.2 Handle Orphans
-Per WSP 50→64→32→65→22:
+Per WSP 50->64->32->65->22:
 1. **Verify** if needed (WSP 50)
 2. **Check** violations (WSP 64)
 3. **Archive** if historical (WSP 32)
@@ -177,12 +177,12 @@ Per WSP 50→64→32→65→22:
 ### Pattern: document_creation
 **WSP Chain**: [50, 83, 49, 22]
 **Tokens**: 100
-**Pattern**: "verify_need→check_attachment→create_in_tree→log"
+**Pattern**: "verify_need->check_attachment->create_in_tree->log"
 
 ### Pattern: orphan_cleanup
 **WSP Chain**: [83, 64, 32, 65, 22]
 **Tokens**: 120
-**Pattern**: "find_orphans→verify_purpose→archive_or_delete→log"
+**Pattern**: "find_orphans->verify_purpose->archive_or_delete->log"
 
 ## 7. Enforcement
 

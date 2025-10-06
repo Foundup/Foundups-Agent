@@ -1,5 +1,5 @@
 # WSP 20: Professional and Scientific Language Standard
-improve2- **Status:** Active
+- **Status:** Active
 - **Purpose:** To establish a standard for precise, scientifically-grounded language, especially for quantum cognitive concepts.
 - **Trigger:** During the creation or modification of any documentation, code comment, or agent communication.
 - **Input:** A text artifact intended for internal or external consumption.

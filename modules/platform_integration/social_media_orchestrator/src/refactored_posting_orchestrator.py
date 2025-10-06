@@ -60,7 +60,8 @@ class RefactoredPostingOrchestrator:
         video_id: str,
         title: str,
         url: str,
-        channel_name: str
+        channel_name: str,
+        skip_live_verification: bool = False
     ) -> Dict[str, Any]:
         """
         Main entry point for stream detection events
@@ -71,10 +72,13 @@ class RefactoredPostingOrchestrator:
             title: Stream title
             url: Stream URL
             channel_name: Channel name/handle
+            skip_live_verification: Skip redundant live status check (for streams already verified)
 
         Returns:
             Results dictionary with posting status
         """
+        self.logger.info("[ORCHESTRATOR-TRACE] === ENTERED handle_stream_detected ===")
+        self.logger.info(f"[ORCHESTRATOR-TRACE] video_id={video_id}, skip_live={skip_live_verification}")
         self.logger.info("="*80)
         self.logger.info("🎬 STREAM DETECTION EVENT RECEIVED")
         self.logger.info(f"📹 Video: {video_id}")
@@ -91,25 +95,36 @@ class RefactoredPostingOrchestrator:
         }
 
         # Step 1: Check if already posting
+        self.logger.info(f"[ORCHESTRATOR-TRACE] Step 1: Checking is_posting flag = {self.is_posting}")
         if self.is_posting:
             self.logger.warning("⚠️ Already posting, skipping duplicate request")
             results['errors'].append("Already processing another posting request")
+            self.logger.info("[ORCHESTRATOR-TRACE] Returning early - already posting")
             return results
 
         # Step 2: Verify live status FIRST (before duplicate check)
-        live_status_result = self.status_verifier.verify_live_status(video_id)
-        if not live_status_result:
-            self.logger.warning("⚠️ Stream not verified as live, skipping")
-            results['errors'].append("Stream not verified as live")
-            return results
+        # Skip for streams already verified by live detection system
+        self.logger.info(f"[ORCHESTRATOR-TRACE] Step 2: Live verification, skip={skip_live_verification}")
+        if not skip_live_verification:
+            live_status_result = self.status_verifier.verify_live_status(video_id)
+            self.logger.info(f"[ORCHESTRATOR-TRACE] Live status result: {live_status_result}")
+            if not live_status_result:
+                self.logger.warning("⚠️ Stream not verified as live, skipping")
+                results['errors'].append("Stream not verified as live")
+                self.logger.info("[ORCHESTRATOR-TRACE] Returning early - not live")
+                return results
+        else:
+            self.logger.info("⏭️ Skipping redundant live verification (already verified by detection system)")
 
         # Step 3: Check duplicate WITH live status information
         # This allows duplicate manager to block stale/ended content
+        self.logger.info(f"[ORCHESTRATOR-TRACE] Step 3: Checking duplicate for video_id={video_id}")
         duplicate_check = self.duplicate_manager.check_if_already_posted(video_id, {
             'broadcast_content': getattr(self.status_verifier, '_last_broadcast_content', 'live'),
             'actual_end': getattr(self.status_verifier, '_last_actual_end', None),
             'age_hours': getattr(self.status_verifier, '_last_age_hours', None)
         })
+        self.logger.info(f"[ORCHESTRATOR-TRACE] Duplicate check result: {duplicate_check}")
 
         if duplicate_check['already_posted']:
             blocked_reason = duplicate_check.get('blocked_reason', 'already posted')
@@ -121,13 +136,17 @@ class RefactoredPostingOrchestrator:
                 platform: blocked_reason
                 for platform in duplicate_check.get('platforms_posted', [])
             }
+            self.logger.info("[ORCHESTRATOR-TRACE] Returning early - duplicate/blocked")
             return results
 
         # Step 4: Get channel configuration
+        self.logger.info(f"[ORCHESTRATOR-TRACE] Step 4: Getting config for channel={channel_name}")
         channel_config = self.channel_config.get_channel_config(channel_name)
+        self.logger.info(f"[ORCHESTRATOR-TRACE] Channel config result: {channel_config}")
         if not channel_config:
             self.logger.error(f"❌ No configuration found for channel: {channel_name}")
             results['errors'].append(f"No configuration for channel: {channel_name}")
+            self.logger.info("[ORCHESTRATOR-TRACE] Returning early - no config")
             return results
 
         if not channel_config.get('enabled', True):
@@ -219,55 +238,131 @@ class RefactoredPostingOrchestrator:
             posting_delays = posting_delays or {}
             posting_order = posting_order or []
 
-            # Get platform accounts
+            # Get platform accounts (Facebook posting disabled/not implemented)
             linkedin_page = channel_config.get('linkedin_page')
             x_account = channel_config.get('x_account')
+            # facebook_account = None  # Facebook posting DISABLED
 
             if not linkedin_page and not x_account:
                 self.logger.error("❌ No platform accounts configured")
                 results['errors'].append("No platform accounts configured")
                 return
 
-            # Post to both platforms with QWEN intelligence
-            if linkedin_page and x_account:
-                self.logger.info("📢 Posting to both LinkedIn and X/Twitter")
+            # IMPLEMENT PROPER HANDOFF: LinkedIn first, then X ONLY if LinkedIn succeeds
+            linkedin_success = False
+            x_success = False
 
-                # Apply QWEN-recommended delays if available
-                for platform in posting_order:
-                    if platform in posting_delays and posting_delays[platform] > 0:
-                        self.logger.info(f"🤖🧠 [QWEN-DELAY] Waiting {posting_delays[platform]:.0f}s for {platform}")
-                        import time
-                        time.sleep(posting_delays[platform])
+            # POSTING FINGERPRINT: Add delays for process visibility
+            import time
 
-                    # Monitor with QWEN - just log the attempt
-                    post_id = f"{video_id}_{platform}"
-                    self.logger.info(f"🤖🧠 [QWEN] Starting posting for {post_id}")
+            # Post to LinkedIn first
+            if linkedin_page:
+                self.logger.info("🔵 [FINGERPRINT-1] STARTING LINKEDIN POSTING SEQUENCE")
+                time.sleep(1)  # 1s delay for visibility
 
-                linkedin_result, x_result = self.posting_service.post_to_both_platforms(
+                # Apply QWEN delay for LinkedIn if specified
+                if 'linkedin' in posting_delays and posting_delays['linkedin'] > 0:
+                    self.logger.info(f"🤖🧠 [QWEN-DELAY] Waiting {posting_delays['linkedin']:.0f}s for LinkedIn")
+                    time.sleep(posting_delays['linkedin'])
+
+                self.logger.info("🔵 [FINGERPRINT-2] Calling LinkedIn posting service...")
+                time.sleep(0.5)
+
+                linkedin_result = self.posting_service.post_to_linkedin(
                     title=title,
                     url=url,
-                    linkedin_page=linkedin_page,
-                    x_account=x_account
+                    linkedin_page=linkedin_page
                 )
 
-                # Update results and QWEN monitoring
-                results['platforms']['linkedin'] = linkedin_result.status.value
-                results['platforms']['x_twitter'] = x_result.status.value
+                self.logger.info(f"🔵 [FINGERPRINT-3] LinkedIn result: {linkedin_result.status.value}")
+                time.sleep(0.5)
 
-                # Update QWEN with outcomes
+                results['platforms']['linkedin'] = linkedin_result.status.value
+                linkedin_success = linkedin_result.status == PostingStatus.SUCCESS
+
+                # Update QWEN monitoring
                 self.duplicate_manager.qwen_monitor_posting_progress(
                     f"{video_id}_linkedin", 'linkedin', linkedin_result.status, {'result': linkedin_result.status.value}
                 )
-                self.duplicate_manager.qwen_monitor_posting_progress(
-                    f"{video_id}_x_twitter", 'x_twitter', x_result.status, {'result': x_result.status.value}
-                )
 
-                # Mark as posted if successful
-                platforms_posted = []
-                if linkedin_result.status == PostingStatus.SUCCESS:
-                    platforms_posted.append('linkedin')
-                if x_result.status == PostingStatus.SUCCESS:
-                    platforms_posted.append('x_twitter')
+                if linkedin_success:
+                    self.logger.info("✁E[FINGERPRINT-4] LINKEDIN SUCCESS - proceeding to X")
+                    results['posted'] = True
+                    self.last_posted_video = video_id
+                    time.sleep(1)  # Pause to show success
+
+                    # Mark as posted immediately to prevent duplicates
+                    self.duplicate_manager.mark_as_posted(
+                        video_id=video_id,
+                        platform='linkedin',
+                        title=title,
+                        url=url
+                    )
+                    self.logger.info("✁E[FINGERPRINT-5] LinkedIn marked as posted")
+                else:
+                    self.logger.warning("❁E[FINGERPRINT-4] LINKEDIN FAILED - X will be skipped")
+                    results['errors'].append(f"LinkedIn failed: {linkedin_result.message}")
+                    time.sleep(1)
+
+            # Post to X ONLY if LinkedIn succeeded
+            if x_account:
+                if linkedin_success:
+                    self.logger.info("🐦 [FINGERPRINT-6] STARTING X/TWITTER POSTING SEQUENCE (LinkedIn prerequisite met)")
+                    time.sleep(1)
+
+                    # Apply QWEN delay for X if specified
+                    if 'x_twitter' in posting_delays and posting_delays['x_twitter'] > 0:
+                        self.logger.info(f"🤖🧠 [QWEN-DELAY] Waiting {posting_delays['x_twitter']:.0f}s for X/Twitter")
+                        time.sleep(posting_delays['x_twitter'])
+
+                    self.logger.info("🐦 [FINGERPRINT-7] Calling X/Twitter posting service...")
+                    time.sleep(0.5)
+
+                    x_result = self.posting_service.post_to_x(
+                        title=title,
+                        url=url,
+                        x_account=x_account
+                    )
+
+                    self.logger.info(f"🐦 [FINGERPRINT-8] X/Twitter result: {x_result.status.value}")
+                    time.sleep(0.5)
+
+                    results['platforms']['x_twitter'] = x_result.status.value
+                    x_success = x_result.status == PostingStatus.SUCCESS
+
+                    # Update QWEN monitoring
+                    self.duplicate_manager.qwen_monitor_posting_progress(
+                        f"{video_id}_x_twitter", 'x_twitter', x_result.status, {'result': x_result.status.value}
+                    )
+
+                    if x_success:
+                        self.logger.info("✁E[FINGERPRINT-9] X/TWITTER SUCCESS")
+                        time.sleep(1)
+
+                        # Mark as posted immediately to prevent duplicates
+                        self.duplicate_manager.mark_as_posted(
+                            video_id=video_id,
+                            platform='x_twitter',
+                            title=title,
+                            url=url
+                        )
+                        self.logger.info("✁E[FINGERPRINT-10] X/Twitter marked as posted")
+                    else:
+                        self.logger.warning(f"❁E[FINGERPRINT-9] X/TWITTER FAILED: {x_result.message}")
+                        results['errors'].append(f"X/Twitter failed: {x_result.message}")
+
+                else:
+                    self.logger.warning("⏭️[FINGERPRINT-6] SKIPPING X/TWITTER - LinkedIn prerequisite not met")
+                    results['platforms']['x_twitter'] = 'skipped_linkedin_failed'
+                    results['errors'].append("X/Twitter skipped - LinkedIn posting failed")
+                    time.sleep(1)
+
+            # Mark as posted if successful
+            platforms_posted = []
+            if linkedin_success:
+                platforms_posted.append('linkedin')
+            if x_success:
+                platforms_posted.append('x_twitter')
 
                 if platforms_posted:
                     # Mark each platform as posted individually
@@ -444,7 +539,8 @@ class RefactoredPostingOrchestrator:
                 video_id=video_id,
                 title=stream_title,
                 url=stream_url,
-                channel_name=channel_id  # Pass channel ID for config lookup
+                channel_name=channel_id,  # Pass channel ID for config lookup
+                skip_live_verification=True  # Skip redundant verification for streams already verified by detection system
             )
 
             results['stream_results'][channel_name] = result

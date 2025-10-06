@@ -16,6 +16,13 @@ from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 
 try:
+    import pyperclip
+    PYPERCLIP_AVAILABLE = True
+except ImportError:
+    PYPERCLIP_AVAILABLE = False
+    print("[WARNING] pyperclip not available - X posting will use JavaScript fallback")
+
+try:
     from selenium import webdriver
     from selenium.webdriver.common.by import By
     from selenium.webdriver.common.keys import Keys
@@ -732,8 +739,8 @@ class AntiDetectionX:
                 except:
                     pass
                 
-                # Type content with human-like speed - character by character preserves @mentions
-                print("[TYPE] Typing post content character by character...")
+                # Use clipboard paste method instead of typing simulation - avoids # character issues
+                print("[PASTE] Using clipboard paste method for reliable posting...")
 
                 # Sanitize content for ChromeDriver BMP limitation
                 def sanitize_for_chromedriver(text):
@@ -760,7 +767,7 @@ class AntiDetectionX:
                                 pass
                     return sanitized
 
-                # Use slower, more reliable typing method
+                # Use clipboard paste method - more reliable than typing simulation
                 try:
                     # Click again to ensure focus
                     text_area.click()
@@ -771,27 +778,60 @@ class AntiDetectionX:
                     if safe_content != content:
                         print("[SANITIZE] Removed non-BMP characters for ChromeDriver compatibility")
 
-                    # Type character by character - this method preserves @mentions correctly
-                    for char in safe_content:
-                        text_area.send_keys(char)
-                        time.sleep(random.uniform(0.03, 0.08))  # Human-like speed that works
+                    # Use clipboard paste method - works better with special characters like #
+                    if PYPERCLIP_AVAILABLE:
+                        try:
+                            # Copy to clipboard
+                            pyperclip.copy(safe_content)
+                            print("[CLIPBOARD] Content copied to clipboard")
 
-                    print("[OK] Content typed successfully")
-                    
-                except Exception as e:
-                    print(f"[WARNING] Typing error: {e}")
-                    # Fallback to JavaScript if typing fails
-                    try:
-                        js_content = content.replace("'", "\\'").replace("\n", "\\n")
+                            # Paste using keyboard shortcut
+                            text_area.send_keys(Keys.CONTROL, 'v')  # Ctrl+V for paste
+                            time.sleep(0.5)  # Brief pause after paste
+
+                            print("[OK] Content pasted successfully via clipboard")
+
+                        except Exception as paste_e:
+                            print(f"[WARNING] Clipboard paste failed: {paste_e}, falling back to JavaScript")
+                            # Fallback to JavaScript if clipboard paste fails
+                            js_content = safe_content.replace("'", "\\'").replace("\n", "\\n")
+                            self.driver.execute_script(f"arguments[0].textContent = '{js_content}';", text_area)
+
+                            # Trigger input event
+                            self.driver.execute_script("""
+                                var event = new Event('input', { bubbles: true });
+                                arguments[0].dispatchEvent(event);
+                            """, text_area)
+                            print("[OK] Content set via JavaScript fallback")
+                    else:
+                        print("[WARNING] pyperclip not available, using JavaScript paste")
+                        # Fallback to JavaScript if clipboard not available
+                        js_content = safe_content.replace("'", "\\'").replace("\n", "\\n")
                         self.driver.execute_script(f"arguments[0].textContent = '{js_content}';", text_area)
-                        
+
                         # Trigger input event
                         self.driver.execute_script("""
                             var event = new Event('input', { bubbles: true });
                             arguments[0].dispatchEvent(event);
                         """, text_area)
-                    except:
-                        pass
+                        print("[OK] Content set via JavaScript fallback")
+
+                except Exception as e:
+                    print(f"[WARNING] Paste error: {e}")
+                    # Final fallback to JavaScript
+                    try:
+                        js_content = safe_content.replace("'", "\\'").replace("\n", "\\n")
+                        self.driver.execute_script(f"arguments[0].textContent = '{js_content}';", text_area)
+
+                        # Trigger input event
+                        self.driver.execute_script("""
+                            var event = new Event('input', { bubbles: true });
+                            arguments[0].dispatchEvent(event);
+                        """, text_area)
+                        print("[OK] Content set via final JavaScript fallback")
+                    except Exception as js_e:
+                        print(f"[ERROR] All paste methods failed: {js_e}")
+                        return False
                 
                 # Random pause after typing
                 time.sleep(random.uniform(2, 4))

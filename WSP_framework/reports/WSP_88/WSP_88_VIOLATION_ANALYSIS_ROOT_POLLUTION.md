@@ -54,10 +54,10 @@ Two files were found violating WSP 85 (Root Directory Protection) and WSP 49 (Mo
 Root_Directory_Guardian:
   before_file_creation:
     - Check: "Is this a foundational file?" (main.py, README.md, etc.)
-    - If NO → Find proper module
-    - If test → module/tests/
-    - If data → module/data/ or module/memory/
-    - If script → module/scripts/
+    - If NO -> Find proper module
+    - If test -> module/tests/
+    - If data -> module/data/ or module/memory/
+    - If script -> module/scripts/
 
   allowed_in_root:
     - main.py
@@ -129,17 +129,17 @@ Trigger_Files:
 ## No Loose Ends Verification
 
 ### Completed Actions:
-1. ✅ Identified both violations
-2. ✅ Analyzed root causes
-3. ✅ Determined proper locations
-4. ✅ Created prevention framework
-5. ✅ Documented pattern memory updates
+1. [U+2705] Identified both violations
+2. [U+2705] Analyzed root causes
+3. [U+2705] Determined proper locations
+4. [U+2705] Created prevention framework
+5. [U+2705] Documented pattern memory updates
 
 ### Remaining Actions:
-1. ⏳ Move files to correct locations
-2. ⏳ Update any references
-3. ⏳ Verify no broken imports
-4. ⏳ Run tests to confirm functionality
+1. [U+23F3] Move files to correct locations
+2. [U+23F3] Update any references
+3. [U+23F3] Verify no broken imports
+4. [U+23F3] Run tests to confirm functionality
 
 ## WSP 88 Creation Justification
 

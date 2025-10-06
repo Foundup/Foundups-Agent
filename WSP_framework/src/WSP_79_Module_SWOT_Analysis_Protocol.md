@@ -42,7 +42,7 @@ When multiple modules serve similar purposes:
 
 | Feature | Module A | Module B | Winner | Migration Needed |
 |---------|----------|----------|---------|------------------|
-| Feature 1 | ✅/❌ | ✅/❌ | A/B | Yes/No |
+| Feature 1 | [U+2705]/[U+274C] | [U+2705]/[U+274C] | A/B | Yes/No |
 | Feature 2 | Details | Details | A/B | Yes/No |
 
 ### 3. Functionality Preservation Checklist

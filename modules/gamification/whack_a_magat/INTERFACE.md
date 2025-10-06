@@ -88,6 +88,54 @@ profile = get_profile("mod123")
 - No exceptions propagated to callers; return default/safe values (e.g., points=0).
 - Quantum resilience: Fallback to in-memory if DB fails per WSP 48.
 
+## Quiz System API
+
+### QuizEngine.handle_quiz_command(user_id: str, username: str, args: str) -> str
+- **Purpose**: Handles /quiz slash command - starts quiz or answers questions
+- **Parameters**:
+  - user_id (str, required): User's channel ID
+  - username (str, required): User's display name
+  - args (str, required): Empty string starts quiz, "1-4" submits answer
+- **Returns**: Formatted response message for YouTube Live Chat (<200 chars)
+- **Cooldown**: 24 hours per user (owner bypass: Move2Japan, UnDaoDu, Foundups)
+- **First Win Reward**: 500 MAGADOOM XP (adds to all-time + monthly scores)
+- **Example**:
+  ```python
+  from modules.gamification.whack_a_magat import QuizEngine
+  quiz = QuizEngine()
+  # Start quiz
+  response = quiz.handle_quiz_command("UC123", "Move2Japan", "")
+  # Answer (first correct = 500 XP!)
+  response = quiz.handle_quiz_command("UC123", "Move2Japan", "1")
+  ```
+
+### QuizEngine.get_quiz_leaderboard(limit: int = 10) -> str
+- **Purpose**: Returns quiz leaderboard with top winners
+- **Parameters**:
+  - limit (int, optional): Number of top players to show (default: 10)
+- **Returns**: Formatted leaderboard message showing wins, accuracy%
+- **Example**:
+  ```python
+  quiz = QuizEngine()
+  board = quiz.get_quiz_leaderboard(limit=5)  # Top 5 quiz winners
+  ```
+
+### QuizEngine.answer_quiz(user_id: str, answer_index: int, username: str) -> Tuple[bool, str]
+- **Purpose**: Processes quiz answer and awards XP
+- **Parameters**:
+  - user_id (str, required): User's channel ID
+  - answer_index (int, required): 0-based answer index (0-3)
+  - username (str, required): Display name for leaderboard
+- **Returns**: (is_correct: bool, response_message: str)
+- **First Win**: Awards 500 XP to MAGADOOM profile, updates rank automatically
+- **Subsequent Wins**: Awards educational points only (no XP)
+- **Example**:
+  ```python
+  is_correct, msg = quiz.answer_quiz("UC123", 0, "Move2Japan")
+  # First win: "✅ CORRECT! 🎉 FIRST QUIZ WIN! (+500 MAGADOOM XP!)"
+  ```
+
 ## Zen Coding Integration
 - Functions remembered from 02 state via 0102 pArtifacts.
 - Autonomous calls from livechat adapters per WSP 3 integration.
+- Quiz XP integrates with MAGADOOM unified progression system.

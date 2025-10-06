@@ -32,6 +32,7 @@ import json
 import time
 from datetime import datetime
 from typing import Optional, Dict, Any
+import psutil
 
 # Set UTF-8 encoding for Windows (must be done before logging setup)
 if sys.platform.startswith('win'):
@@ -256,10 +257,42 @@ def search_with_holoindex(query: str):
 def run_holodae():
     """Run HoloDAE (Code Intelligence & Monitoring)."""
     print("[HOLODAE] Starting HoloDAE - Code Intelligence & Monitoring System...")
+
+    # HOLO-DAE INSTANCE LOCKING (First Principles: Resource Protection & Consistency)
+    from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
+    lock = get_instance_lock("holodae_monitor")
+
+    # Check for duplicates and acquire lock
+    duplicates = lock.check_duplicates()
+    if duplicates:
+        logger.warning("🔴 Duplicate HoloDAE Instances Detected!")
+        print("\n🔴 Duplicate HoloDAE Instances Detected!")
+        print(f"\n  Found {len(duplicates)} instances of HoloDAE running:")
+        for i, pid in enumerate(duplicates, 1):
+            print(f"\n  {i}. PID {pid} - [Checking process details...]")
+        print("\n  Current instance will exit to prevent conflicts.")
+        print("  Use --no-lock to disable instance locking.")
+        return  # Exit if duplicates found
+
+    # Acquire lock for this instance
+    if not lock.acquire():
+        logger.error("❌ Failed to acquire HoloDAE instance lock - another instance is running")
+        print("\n❌ Failed to acquire HoloDAE instance lock!")
+        print("   Another HoloDAE instance is already running.")
+        print("   Only one instance can run at a time to prevent index conflicts.")
+        print("   Use --no-lock to disable instance locking.")
+        return  # Exit if lock acquisition failed
+
     try:
         from holo_index.qwen_advisor.autonomous_holodae import AutonomousHoloDAE
-
         holodae = AutonomousHoloDAE()
+
+        # Log successful instance acquisition
+        instance_summary = lock.get_instance_summary()
+        total_instances = instance_summary["total_instances"]
+        current_pid = instance_summary["current_pid"]
+        logger.info(f"✅ HoloDAE SINGLE INSTANCE: PID {current_pid} - No other HoloDAEs detected")
+
         holodae.start_autonomous_monitoring()
 
         print("[HOLODAE] Autonomous monitoring active. Press Ctrl+C to stop.")
@@ -277,6 +310,11 @@ def run_holodae():
         print(f"[HOLODAE-ERROR] Failed to start: {e}")
         import traceback
         traceback.print_exc()
+
+    finally:
+        # Release the instance lock when done
+        lock.release()
+        logger.info("🔓 HoloDAE monitor instance lock released")
 
 
 def run_amo_dae():
@@ -372,6 +410,59 @@ def check_instance_status():
         print(f"   Message: {health.get('message', 'no data')}")
         if 'timestamp' in health:
             print(f"   Last update: {health['timestamp']}")
+
+        # Check HoloDAE instances
+        print("\n" + "-"*40)
+        print("🤖 HOLO-DAE STATUS")
+        print("-"*40)
+
+        try:
+            holodae_lock = get_instance_lock("holodae_monitor")
+
+            # Check for running HoloDAE instances
+            holodae_duplicates = holodae_lock.check_duplicates()
+
+            if holodae_duplicates:
+                print(f"❌ Found {len(holodae_duplicates)} HoloDAE instances running")
+                return
+            else:
+                print("✅ No duplicate HoloDAE instances detected")
+
+            # Check HoloDAE lock file status
+            if holodae_lock.lock_file.exists():
+                print("🔒 HoloDAE Lock file exists:")
+                try:
+                    with open(holodae_lock.lock_file, 'r') as f:
+                        lock_data = json.load(f)
+                    pid = lock_data.get('pid')
+                    heartbeat = lock_data.get('heartbeat', 'Unknown')
+                    start_time = lock_data.get('start_time', 'Unknown')
+
+                    print(f"   PID: {pid}")
+                    print(f"   Started: {start_time}")
+                    print(f"   Last heartbeat: {heartbeat}")
+
+                    # Check if process is actually running
+                    if holodae_lock._is_process_running(pid):
+                        print("   Status: ✅ RUNNING")
+                    else:
+                        print("   Status: ❌ PROCESS NOT FOUND (stale lock)")
+
+                except Exception as e:
+                    print(f"   Error reading lock file: {e}")
+            else:
+                print("🔓 No HoloDAE lock file found (no instances running)")
+
+            # Check HoloDAE health status
+            holodae_health = holodae_lock.get_health_status()
+            print("\n🏥 HoloDAE Health Status:")
+            print(f"   Status: {holodae_health.get('status', 'unknown')}")
+            print(f"   Message: {holodae_health.get('message', 'no data')}")
+            if 'timestamp' in holodae_health:
+                print(f"   Last update: {holodae_health['timestamp']}")
+
+        except Exception as e:
+            print(f"❌ Error checking HoloDAE status: {e}")
 
     except Exception as e:
         print(f"❌ Error checking status: {e}")
@@ -585,9 +676,46 @@ def main():
 
                 if choice == "1":
                     print("\n🗡️  Killing duplicate instances...")
-                    print("   🔍 DEBUG: Would kill PIDs:", [pid for pid in duplicates if pid != lock.pid])
-                    print("   ✅ Kill simulation complete - proceeding to main menu\n")
-                    print("🔍 DEBUG: Option 1 completed, about to continue to main menu")
+                    killed_pids = []
+                    failed_pids = []
+
+                    current_pid = os.getpid()
+
+                    for pid in duplicates:
+                        if pid == current_pid:
+                            continue  # Don't kill ourselves
+
+                        try:
+                            print(f"   🔪 Terminating PID {pid}...")
+                            process = psutil.Process(pid)
+                            process.terminate()  # Try graceful termination first
+
+                            # Wait up to 5 seconds for process to terminate
+                            gone, alive = psutil.wait_procs([process], timeout=5)
+
+                            if alive:
+                                # If still alive, force kill
+                                print(f"   💀 Force killing PID {pid}...")
+                                process.kill()
+                                gone, alive = psutil.wait_procs([process], timeout=2)
+
+                            if not alive:
+                                killed_pids.append(pid)
+                                print(f"   ✅ PID {pid} terminated successfully")
+                            else:
+                                failed_pids.append(pid)
+                                print(f"   ❌ Failed to kill PID {pid}")
+
+                        except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                            print(f"   ⚠️  Could not kill PID {pid}: {e}")
+                            failed_pids.append(pid)
+
+                    if killed_pids:
+                        print(f"\n✅ Successfully killed {len(killed_pids)} instance(s): {killed_pids}")
+                    if failed_pids:
+                        print(f"⚠️  Failed to kill {len(failed_pids)} instance(s): {failed_pids}")
+
+                    print("   Proceeding to main menu...\n")
 
                 elif choice == "2":
                     print("\n" + "="*50)
@@ -645,28 +773,124 @@ def main():
                 # Will return to menu after completion
 
             elif choice == "1":
-                # YouTube Live DAE
-                print("🎥 Starting YouTube Live DAE...")
-                asyncio.run(monitor_youtube(disable_lock=False))
+                # YouTube DAE Menu - Live Chat OR Shorts
+                print("\n📺 YouTube DAE Menu")
+                print("="*60)
+                print("1. 🔴 YouTube Live Chat Monitor (AutoModeratorDAE)")
+                print("2. 🎬 YouTube Shorts Generator (AI Baby/Emergence Journal)")
+                print("3. 📊 YouTube Stats & Info")
+                print("0. ⬅️  Back to Main Menu")
+                print("="*60)
+
+                yt_choice = input("\nSelect YouTube option: ")
+
+                if yt_choice == "1":
+                    print("🎥 Starting YouTube Live Chat Monitor...")
+                    asyncio.run(monitor_youtube(disable_lock=False))
+
+                elif yt_choice == "2":
+                    # YouTube Shorts Generator
+                    print("\n🎬 YouTube Shorts Generator")
+                    print("="*60)
+                    print("Channel: Move2Japan (9,020 subscribers)")
+                    print("System: 3-Act Story (Setup → Shock → 0102 Reveal)")
+                    print("="*60)
+
+                    topic = input("\n💡 Enter topic (e.g., 'Cherry blossoms in Tokyo'): ").strip()
+
+                    if topic:
+                        try:
+                            from modules.communication.youtube_shorts.src.shorts_orchestrator import ShortsOrchestrator
+
+                            print(f"\n🎬 Generating YouTube Short: {topic}")
+                            print("  Mode: Emergence Journal POC")
+                            print("  Duration: ~16s (2×8s clips merged)")
+                            print("  Privacy: PUBLIC")
+
+                            orchestrator = ShortsOrchestrator(channel="move2japan")
+
+                            # Generate and upload with 3-act system
+                            youtube_url = orchestrator.create_and_upload(
+                                topic=topic,
+                                duration=15,  # Triggers 3-act multi-clip system
+                                enhance_prompt=True,
+                                fast_mode=True,
+                                privacy="public",
+                                use_3act=True  # Enable emergence journal 3-act structure
+                            )
+
+                            print(f"\n✅ SHORT PUBLISHED!")
+                            print(f"   URL: {youtube_url}")
+                            print(f"   Channel: Move2Japan")
+
+                        except Exception as e:
+                            print(f"\n❌ YouTube Shorts generation failed: {e}")
+                            import traceback
+                            traceback.print_exc()
+                    else:
+                        print("⚠️  No topic entered - returning to menu")
+
+                elif yt_choice == "3":
+                    # YouTube Stats
+                    print("\n📊 YouTube Stats")
+                    try:
+                        from modules.communication.youtube_shorts.src.shorts_orchestrator import ShortsOrchestrator
+                        orch = ShortsOrchestrator(channel="move2japan")
+                        stats = orch.get_stats()
+
+                        print(f"\n  Total Shorts: {stats['total_shorts']}")
+                        print(f"  Uploaded: {stats['uploaded']}")
+                        print(f"  Total Cost: ${stats['total_cost_usd']}")
+                        print(f"  Avg Cost: ${stats['average_cost_per_short']}")
+
+                        if stats['recent_shorts']:
+                            print(f"\n  Recent Shorts:")
+                            for s in stats['recent_shorts'][-3:]:
+                                print(f"    - {s.get('topic', 'N/A')[:40]}...")
+                                print(f"      {s.get('youtube_url', 'N/A')}")
+                    except Exception as e:
+                        print(f"❌ Failed to get stats: {e}")
+
+                elif yt_choice == "0":
+                    print("⬅️  Returning to main menu...")
+                else:
+                    print("❌ Invalid choice")
 
             elif choice == "2":
                 # HoloDAE - Code Intelligence & Monitoring
-                print("🧠 Starting HoloDAE - Code Intelligence & Monitoring System...")
+                print("🧠 HoloDAE Menu - Code Intelligence & Monitoring System")
                 try:
-                    # Import and initialize HoloDAE with detailed logging
-                    from holo_index.qwen_advisor.autonomous_holodae import start_holodae_monitoring
-
-                    # Start HoloDAE with full initialization sequence
-                    holodae_instance = start_holodae_monitoring()
-
-                    # Show operational menu
+                    # Import menu function ONLY (don't start daemon yet)
                     from holo_index.qwen_advisor.autonomous_holodae import show_holodae_menu
+
+                    holodae_instance = None  # Initialize as None, created only when needed
 
                     while True:
                         choice = show_holodae_menu()
 
-                        if choice in ["0", "99"]:
-                            print("🧠 HoloDAE monitoring paused. Returning to main menu...")
+                        if choice == "0":
+                            # Launch the daemon (option 0 in HoloDAE menu)
+                            print("🚀 Launching HoloDAE Autonomous Monitor...")
+                            from holo_index.qwen_advisor.autonomous_holodae import start_holodae_monitoring
+                            if holodae_instance is None:
+                                holodae_instance = start_holodae_monitoring()
+                                print("✅ HoloDAE monitoring started in background")
+                                print("💡 Daemon is running - select 9 to stop, or 99 to return to main menu")
+                            else:
+                                print("✅ HoloDAE already running")
+                            # Don't break - loop back to HoloDAE menu for more selections
+                        elif choice == "9":
+                            # Stop the daemon (option 9 - toggle monitoring)
+                            if holodae_instance is not None and holodae_instance.active:
+                                print("🛑 Stopping HoloDAE monitoring...")
+                                holodae_instance.stop_autonomous_monitoring()
+                                print("✅ HoloDAE daemon stopped")
+                            else:
+                                print("ℹ️ HoloDAE daemon is not running")
+                        elif choice == "99":
+                            print("🧠 Returning to main menu...")
+                            if holodae_instance is not None and holodae_instance.active:
+                                print("⚠️ HoloDAE daemon still running in background")
                             break
                         elif choice == "1":
                             print("📊 Running semantic code search...")

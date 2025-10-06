@@ -26,6 +26,9 @@ class ChannelIntelligence:
     last_successful_check: Optional[float] = None
     heat_level: int = 0  # 0=cold, 1=warm, 2=hot, 3=overheated
     video_count: int = 0
+    last_stream_time: Optional[float] = None  # When was the last stream detected
+    total_streams_detected: int = 0  # How many streams have we found
+    recent_activity_boost: float = 1.0  # Boost factor for recent activity
 
     def should_check_now(self) -> Tuple[bool, str]:
         """Intelligent decision on whether to check this channel"""
@@ -195,10 +198,10 @@ class QwenYouTubeIntegration:
         for channel_id, channel_name in channels:
             profile = self.get_channel_profile(channel_id, channel_name)
 
-            # Calculate priority score
+            # Calculate priority score (base = 1.0)
             score = 1.0
 
-            # Reduce priority if overheated or recently rate-limited
+            # PENALTY: Reduce priority if overheated or recently rate-limited
             if profile.heat_level >= 3:
                 score -= 0.9
             elif profile.heat_level == 2:
@@ -209,19 +212,47 @@ class QwenYouTubeIntegration:
             if profile.last_429_time and time.time() - profile.last_429_time < 300:
                 score -= 0.5
 
-            # Reduce priority if overheated
+            # PENALTY: Reduce by heat level multiplier
             score *= (1.0 - (profile.heat_level * 0.3))
 
-            # Increase priority if it's typical streaming time
+            # BOOST 1: Recent stream activity (last 24 hours)
+            if profile.last_stream_time:
+                hours_since_last_stream = (time.time() - profile.last_stream_time) / 3600
+                if hours_since_last_stream < 24:
+                    # Strong boost if stream was recent
+                    activity_boost = 2.0 - (hours_since_last_stream / 24)  # 2.0x -> 1.0x over 24h
+                    score *= activity_boost
+                    logger.debug(f"🤖🧠 [QWEN-BOOST] 🎯 {channel_name}: Recent stream {hours_since_last_stream:.1f}h ago (+{activity_boost:.1f}x)")
+                elif hours_since_last_stream < 168:  # Last week
+                    # Moderate boost for streams in the last week
+                    score *= 1.3
+                    logger.debug(f"🤖🧠 [QWEN-BOOST] 📊 {channel_name}: Stream {hours_since_last_stream:.1f}h ago (+1.3x)")
+
+            # BOOST 2: Typical streaming time pattern matching
             current_hour = datetime.now().hour
+            current_day = datetime.now().weekday()
+
             if profile.typical_stream_hours and current_hour in profile.typical_stream_hours:
                 score *= 1.5
+                logger.debug(f"🤖🧠 [QWEN-BOOST] ⏰ {channel_name}: Typical streaming hour {current_hour}:00 (+1.5x)")
 
-            # Reduce priority if recently checked
+            if profile.typical_stream_days and current_day in profile.typical_stream_days:
+                score *= 1.2
+                logger.debug(f"🤖🧠 [QWEN-BOOST] 📅 {channel_name}: Typical streaming day ({datetime.now().strftime('%A')}) (+1.2x)")
+
+            # BOOST 3: Channel has history of streams
+            if profile.total_streams_detected > 0:
+                # Channels with proven activity get priority
+                history_boost = 1.0 + min(0.5, profile.total_streams_detected * 0.1)  # Up to 1.5x
+                score *= history_boost
+                logger.debug(f"🤖🧠 [QWEN-BOOST] 📈 {channel_name}: {profile.total_streams_detected} streams found (+{history_boost:.1f}x)")
+
+            # PENALTY: Recently checked (avoid spam)
             if profile.last_successful_check:
                 minutes_since = (time.time() - profile.last_successful_check) / 60
                 if minutes_since < 5:
                     score *= 0.3
+                    logger.debug(f"🤖🧠 [QWEN-PENALTY] ⏳ {channel_name}: Checked {minutes_since:.1f}m ago (-70%)")
 
             prioritized.append((channel_id, channel_name, score))
 
@@ -281,15 +312,21 @@ class QwenYouTubeIntegration:
         profile = self.get_channel_profile(channel_id)
         profile.record_success()
 
+        # Track stream detection history
+        profile.last_stream_time = time.time()
+        profile.total_streams_detected += 1
+
         # Learn streaming patterns
         current_hour = datetime.now().hour
         current_day = datetime.now().weekday()
 
         if current_hour not in profile.typical_stream_hours:
             profile.typical_stream_hours.append(current_hour)
+            logger.info(f"🤖🧠 [QWEN-LEARN] 🕐 New typical hour learned: {current_hour}:00 for {profile.channel_name}")
 
         if current_day not in profile.typical_stream_days:
             profile.typical_stream_days.append(current_day)
+            logger.info(f"🤖🧠 [QWEN-LEARN] 📅 New typical day learned: {datetime.now().strftime('%A')} for {profile.channel_name}")
 
         # Record to pattern coach if available (skip if method not available)
         if self.pattern_coach:
@@ -322,7 +359,14 @@ class QwenYouTubeIntegration:
             summary += f"\n{profile.channel_name}:\n"
             summary += f"  Heat Level: {profile.heat_level}\n"
             summary += f"  429 Count: {profile.consecutive_429_count}\n"
+            summary += f"  Streams Found: {profile.total_streams_detected}\n"
+
+            if profile.last_stream_time:
+                hours_ago = (time.time() - profile.last_stream_time) / 3600
+                summary += f"  Last Stream: {hours_ago:.1f}h ago\n"
+
             summary += f"  Typical Hours: {profile.typical_stream_hours}\n"
+            summary += f"  Typical Days: {[datetime.fromtimestamp(0).replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=d) for d in profile.typical_stream_days] if profile.typical_stream_days else []}\n"
 
         summary += f"\nRecent Decisions: {self.decision_history[-5:]}\n"
 

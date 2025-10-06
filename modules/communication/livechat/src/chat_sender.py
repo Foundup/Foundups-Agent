@@ -13,6 +13,7 @@ NAVIGATION: Outputs responses to chat with throttle safeguards.
 import logging
 import asyncio
 import random
+import time
 from typing import Optional
 import googleapiclient.errors
 
@@ -38,18 +39,27 @@ class ChatSender:
     async def send_message(self, message_text: str, response_type: str = 'general', skip_delay: bool = False) -> bool:
         """
         Send a message to the live chat with adaptive throttling.
-        
+
         Args:
             message_text: The message to send
             response_type: Type of response (consciousness, factcheck, maga, general)
             skip_delay: If True, skip the adaptive delay (for greetings/broadcasts)
-            
+
         Returns:
             True if message was sent successfully, False otherwise
         """
         if not message_text or not message_text.strip():
             logger.warning("⚠️ Cannot send empty message")
             return False
+
+        # CRITICAL FIX: YouTube Live Chat has 200 character limit
+        # Truncate messages that exceed limit to prevent INVALID_REQUEST_METADATA error
+        MAX_MESSAGE_LENGTH = 200
+        if len(message_text) > MAX_MESSAGE_LENGTH:
+            original_length = len(message_text)
+            message_text = message_text[:MAX_MESSAGE_LENGTH - 3] + "..."  # Truncate with ellipsis
+            logger.warning(f"⚠️ Message truncated from {original_length} to {MAX_MESSAGE_LENGTH} chars (YouTube limit)")
+            logger.debug(f"Original message: {message_text[:50]}...")
         
         # CRITICAL: Validate all @mentions in the message before sending
         # If we can't @mention properly, don't send the message at all

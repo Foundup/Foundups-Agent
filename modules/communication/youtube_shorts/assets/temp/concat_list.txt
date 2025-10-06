@@ -1,0 +1,2 @@
+file 'O:\Foundups-Agent\modules\communication\youtube_shorts\assets\generated\veo3_1759680446.mp4'
+file 'O:\Foundups-Agent\modules\communication\youtube_shorts\assets\generated\veo3_1759684067.mp4'

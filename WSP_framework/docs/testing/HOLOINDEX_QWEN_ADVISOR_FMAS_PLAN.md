@@ -1,4 +1,4 @@
-﻿# HoloIndex Qwen Advisor Test Plan (FMAS Draft)
+[U+FEFF]# HoloIndex Qwen Advisor Test Plan (FMAS Draft)
 
 - **Status:** Draft (Pre-Implementation)
 - **Protocols:** WSP 22, WSP 35, WSP 17, WSP 18, WSP 87

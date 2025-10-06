@@ -253,6 +253,7 @@ class HoloIndex:
             title = lines[0].lstrip('# ')
             summary = ' '.join(lines[1:6])[:400]
             wsp_id = self._extract_wsp_id(file_path.name, title)
+            doc_type = self._classify_document_type(file_path, title, lines)
             doc_payload = f"{title}\n{summary}"
 
             ids.append(f"wsp_{idx}")
@@ -264,7 +265,8 @@ class HoloIndex:
                 "title": title,
                 "path": str(file_path),
                 "summary": summary,
-                "type": "wsp"
+                "type": doc_type,  # ← Enhanced document classification
+                "priority": self._calculate_document_priority(doc_type, file_path)  # ← Priority scoring
             }
             if cube:
                 metadata["cube"] = cube
@@ -283,6 +285,82 @@ class HoloIndex:
         else:
             print("[WARN] No WSP entries were indexed (empty content)")
 
+    def _classify_document_type(self, file_path: Path, title: str, lines: List[str]) -> str:
+        """
+        Classify document type based on filename, path, and content patterns.
+
+        Returns one of:
+        - wsp_protocol: Official WSP protocol documents
+        - module_readme: Module README.md files
+        - roadmap: ROADMAP.md files
+        - interface: INTERFACE.md files
+        - modlog: ModLog.md files
+        - documentation: General documentation in docs/ folders
+        - other: Unclassified documents
+        """
+        filename = file_path.name.lower()
+        path_str = str(file_path).lower()
+
+        # WSP Protocol documents
+        if filename.startswith('wsp') and filename.endswith('.md'):
+            return "wsp_protocol"
+
+        # Module structure files
+        if filename == 'readme.md':
+            # Check if it's in a module directory (has src/, tests/, etc.)
+            parent_dir = file_path.parent
+            if any((parent_dir / d).exists() for d in ['src', 'tests', 'docs']):
+                return "module_readme"
+            return "readme"
+
+        if filename == 'roadmap.md':
+            return "roadmap"
+
+        if filename == 'interface.md':
+            return "interface"
+
+        if filename == 'modlog.md':
+            return "modlog"
+
+        # Documentation in docs/ folders
+        if 'docs/' in path_str or 'docs\\' in path_str:
+            return "documentation"
+
+        # Module test documentation
+        if 'test' in filename and 'readme' in filename:
+            return "test_documentation"
+
+        return "other"
+
+    def _calculate_document_priority(self, doc_type: str, file_path: Path) -> int:
+        """
+        Calculate document priority for search ranking (higher = more important).
+
+        Priority scale: 1-10 (10 = highest priority)
+        """
+        priority_map = {
+            "wsp_protocol": 10,      # Core protocols - highest priority
+            "interface": 9,          # API documentation - very important
+            "module_readme": 8,      # Module overviews - important for discovery
+            "documentation": 7,      # Technical docs - good for detailed info
+            "roadmap": 6,            # Planning docs - useful for context
+            "modlog": 5,             # Change logs - useful for history
+            "readme": 4,             # General READMEs - baseline
+            "test_documentation": 3, # Test docs - lower priority
+            "other": 2               # Everything else - lowest
+        }
+
+        base_priority = priority_map.get(doc_type, 2)
+
+        # Boost priority for certain paths
+        path_str = str(file_path).lower()
+        if 'wsp_framework' in path_str:
+            base_priority += 1  # Framework docs are more important
+        elif 'modules/' in path_str and 'platform_integration' in path_str:
+            base_priority += 1  # Platform modules are key
+
+        return min(base_priority, 10)  # Cap at 10
+
     def _extract_wsp_id(self, filename: str, title: str) -> str:
         match = re.search(r"WSP[_-]?(\d+)", filename)
         if match:
@@ -294,7 +372,7 @@ class HoloIndex:
 
     # --------- Search --------- #
 
-    def search(self, query: str, limit: int = 5) -> Dict[str, Any]:
+    def search(self, query: str, limit: int = 5, doc_type_filter: str = "all") -> Dict[str, Any]:
         # Log to unified agent stream for 012 and other agents to follow
         if AGENT_LOGGER_AVAILABLE:
             # Get agent context from environment
@@ -308,7 +386,7 @@ class HoloIndex:
         start_time = __import__('time').time()
 
         code_hits = self._search_collection(self.code_collection, query, limit, kind="code")
-        wsp_hits = self._search_collection(self.wsp_collection, query, limit, kind="wsp")
+        wsp_hits = self._search_collection(self.wsp_collection, query, limit, kind="wsp", doc_type_filter=doc_type_filter)
 
         # Track search in breadcrumb tracer for multi-agent discovery sharing
         if self.breadcrumb_tracer:
@@ -388,7 +466,7 @@ class HoloIndex:
         except:
             pass  # Don't fail if notification fails
 
-    def _search_collection(self, collection, query: str, limit: int, kind: str) -> List[Dict[str, Any]]:
+    def _search_collection(self, collection, query: str, limit: int, kind: str, doc_type_filter: str = "all") -> List[Dict[str, Any]]:
         if collection.count() == 0:
             return []
 
@@ -400,24 +478,50 @@ class HoloIndex:
         metas = results.get('metadatas', [[]])[0]
         dists = results.get('distances', [[]])[0]
 
+        # Collect all results first for filtering and ranking
+        raw_results = []
         for doc, meta, distance in zip(docs, metas, dists):
             similarity = max(0.0, 1 - float(distance))
+            doc_type = meta.get('type', 'other')
+            priority = meta.get('priority', 1)
+
+            # Apply document type filtering
+            if doc_type_filter != "all" and doc_type != doc_type_filter:
+                continue
+
             if kind == "code":
-                formatted.append({
+                result = {
                     "need": meta.get('need'),
                     "location": doc,
                     "similarity": f"{similarity*100:.1f}%",
-                    "cube": meta.get('cube')
-                })
+                    "cube": meta.get('cube'),
+                    "type": doc_type,
+                    "priority": priority,
+                    "_sort_key": (priority, similarity)  # For ranking
+                }
             else:
-                formatted.append({
+                result = {
                     "wsp": meta.get('wsp'),
                     "title": meta.get('title'),
                     "summary": meta.get('summary'),
                     "path": meta.get('path'),
                     "similarity": f"{similarity*100:.1f}%",
-                    "cube": meta.get('cube')
-                })
+                    "cube": meta.get('cube'),
+                    "type": doc_type,
+                    "priority": priority,
+                    "_sort_key": (priority, similarity)  # For ranking
+                }
+            raw_results.append(result)
+
+        # Sort by priority (descending) then similarity (descending)
+        raw_results.sort(key=lambda x: x["_sort_key"], reverse=True)
+
+        # Take top results and remove sort key
+        formatted = []
+        for result in raw_results[:limit]:
+            result_copy = result.copy()
+            del result_copy["_sort_key"]
+            formatted.append(result_copy)
         return formatted
 
     # --------- Warning & Reminder Generation --------- #

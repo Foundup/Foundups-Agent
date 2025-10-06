@@ -3,7 +3,9 @@
     "channel_id": "UCklMTNnu5POwRmQsg5JJumA",
     "channel_name": "Move2Japan",
     "linkedin_page": "104834798",
-    "enabled": true
+    "enabled": true,
+    "x_account": "Move2Japan",
+    "use_foundups_x": false
   },
   "@UnDaoDu": {
     "channel_id": "UC-LSSlOZwpGIRIYihaz8zCw",
