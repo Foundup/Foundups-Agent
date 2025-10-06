@@ -388,7 +388,7 @@ class QuotaIntelligence:
         """Generate system-wide quota management recommendations."""
         recommendations = []
         total_usage_percent = summary['total_usage_percent']
-        
+
         if total_usage_percent > 90:
             recommendations.append("🚨 CRITICAL: Minimize all non-essential operations")
             recommendations.append("⏰ Wait for quota reset at midnight PT")
@@ -400,15 +400,167 @@ class QuotaIntelligence:
             recommendations.append("💡 Consider batching operations efficiently")
         else:
             recommendations.append("✅ HEALTHY: Normal operation levels")
-        
+
         # Check for imbalanced usage
         sets_data = list(summary['sets'].values())
         if len(sets_data) > 1:
             usage_variance = max(s['usage_percent'] for s in sets_data) - min(s['usage_percent'] for s in sets_data)
             if usage_variance > 30:
                 recommendations.append("⚖️ Consider balancing load across credential sets")
-        
+
         return recommendations
+
+    def should_rotate_credentials(self, current_set: int) -> Dict:
+        """
+        Intelligent credential rotation decision system.
+
+        First Principles Analysis:
+        - Rotation MUST happen BEFORE quota exhaustion breaks the system
+        - Backup credential set MUST have sufficient quota to continue operations
+        - Rotation is event-driven, not reactive (proactive intelligence)
+
+        Args:
+            current_set: Currently active credential set (1 or 10)
+
+        Returns:
+            Dict with rotation decision:
+            {
+                'should_rotate': bool,
+                'target_set': int or None,
+                'reason': str,
+                'urgency': 'critical'|'high'|'medium'|'low',
+                'current_available': int,
+                'target_available': int,
+                'recommendation': str
+            }
+        """
+        summary = self.quota_monitor.get_usage_summary()
+        current_info = summary['sets'].get(current_set, {})
+
+        # Safety check - if current set doesn't exist, rotation is impossible
+        if not current_info:
+            logger.error(f"❌ Cannot rotate - Set {current_set} not configured")
+            return {
+                'should_rotate': False,
+                'target_set': None,
+                'reason': f'Current set {current_set} not found in configuration',
+                'urgency': 'critical',
+                'current_available': 0,
+                'target_available': 0,
+                'recommendation': 'Fix credential configuration immediately'
+            }
+
+        current_usage_percent = current_info['usage_percent']
+        current_available = current_info['available']
+        current_limit = current_info['limit']
+
+        # Determine target set (1 ↔ 10)
+        target_set = 10 if current_set == 1 else 1
+        target_info = summary['sets'].get(target_set, {})
+
+        # If target doesn't exist, can't rotate
+        if not target_info:
+            logger.warning(f"⚠️ Cannot rotate - Set {target_set} not configured")
+            return {
+                'should_rotate': False,
+                'target_set': None,
+                'reason': f'Target set {target_set} not configured',
+                'urgency': 'high' if current_usage_percent > 95 else 'medium',
+                'current_available': current_available,
+                'target_available': 0,
+                'recommendation': f'Configure credential set {target_set} or wait for quota reset'
+            }
+
+        target_available = target_info['available']
+        target_usage_percent = target_info['usage_percent']
+
+        # CRITICAL: Immediate rotation needed (>95% usage)
+        if current_usage_percent >= 95:
+            if target_available > current_limit * 0.2:  # Target has >20% quota
+                logger.critical(f"🚨 CRITICAL ROTATION NEEDED: Set {current_set} at {current_usage_percent:.1f}%")
+                return {
+                    'should_rotate': True,
+                    'target_set': target_set,
+                    'reason': f'CRITICAL: Set {current_set} quota exhausted ({current_usage_percent:.1f}%)',
+                    'urgency': 'critical',
+                    'current_available': current_available,
+                    'target_available': target_available,
+                    'recommendation': f'Rotate immediately to Set {target_set} ({target_available} units available)'
+                }
+            else:
+                logger.critical(f"🚨 QUOTA CRISIS: Both sets depleted! Current={current_usage_percent:.1f}%, Target={target_usage_percent:.1f}%")
+                return {
+                    'should_rotate': False,
+                    'target_set': target_set,
+                    'reason': f'CRISIS: Both credential sets depleted (Set {current_set}={current_usage_percent:.1f}%, Set {target_set}={target_usage_percent:.1f}%)',
+                    'urgency': 'critical',
+                    'current_available': current_available,
+                    'target_available': target_available,
+                    'recommendation': 'Wait for midnight PT quota reset - all operations suspended'
+                }
+
+        # HIGH: Proactive rotation (85-95% usage)
+        if current_usage_percent >= 85:
+            if target_available > current_limit * 0.5:  # Target has >50% quota
+                logger.warning(f"⚠️ PROACTIVE ROTATION: Set {current_set} at {current_usage_percent:.1f}%")
+                return {
+                    'should_rotate': True,
+                    'target_set': target_set,
+                    'reason': f'PROACTIVE: Set {current_set} approaching exhaustion ({current_usage_percent:.1f}%)',
+                    'urgency': 'high',
+                    'current_available': current_available,
+                    'target_available': target_available,
+                    'recommendation': f'Rotate to Set {target_set} to prevent service interruption'
+                }
+            elif target_available > current_limit * 0.2:  # Target has >20% quota
+                logger.warning(f"⚠️ DEFENSIVE ROTATION: Set {current_set} at {current_usage_percent:.1f}%, Set {target_set} low")
+                return {
+                    'should_rotate': True,
+                    'target_set': target_set,
+                    'reason': f'DEFENSIVE: Set {current_set} high ({current_usage_percent:.1f}%), Set {target_set} available',
+                    'urgency': 'medium',
+                    'current_available': current_available,
+                    'target_available': target_available,
+                    'recommendation': f'Rotate to Set {target_set} but monitor closely ({target_available} units)'
+                }
+            else:
+                logger.error(f"❌ STUCK: Set {current_set} at {current_usage_percent:.1f}%, Set {target_set} also depleted")
+                return {
+                    'should_rotate': False,
+                    'target_set': target_set,
+                    'reason': f'STUCK: Both sets nearly exhausted (Set {current_set}={current_usage_percent:.1f}%, Set {target_set}={target_usage_percent:.1f}%)',
+                    'urgency': 'high',
+                    'current_available': current_available,
+                    'target_available': target_available,
+                    'recommendation': 'Reduce operations immediately - wait for quota reset'
+                }
+
+        # MEDIUM: Strategic rotation (70-85% usage)
+        if current_usage_percent >= 70:
+            # Only rotate if target is significantly better (>2x available quota)
+            if target_available > current_available * 2:
+                logger.info(f"📊 STRATEGIC ROTATION: Set {current_set} at {current_usage_percent:.1f}%, Set {target_set} healthier")
+                return {
+                    'should_rotate': True,
+                    'target_set': target_set,
+                    'reason': f'STRATEGIC: Set {target_set} has 2x more quota ({target_available} vs {current_available})',
+                    'urgency': 'medium',
+                    'current_available': current_available,
+                    'target_available': target_available,
+                    'recommendation': f'Optional rotation to Set {target_set} for better resource distribution'
+                }
+
+        # HEALTHY: No rotation needed (<70% usage)
+        logger.debug(f"✅ HEALTHY: Set {current_set} at {current_usage_percent:.1f}% - no rotation needed")
+        return {
+            'should_rotate': False,
+            'target_set': None,
+            'reason': f'HEALTHY: Set {current_set} usage acceptable ({current_usage_percent:.1f}%)',
+            'urgency': 'low',
+            'current_available': current_available,
+            'target_available': target_available,
+            'recommendation': 'Continue normal operations'
+        }
 
 
 # Convenience functions for easy integration
