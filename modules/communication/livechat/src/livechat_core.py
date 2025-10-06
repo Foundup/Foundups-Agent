@@ -155,14 +155,25 @@ class LiveChatCore:
 
         # REVOLUTIONARY: Intelligent credential rotation orchestration
         self.quota_intelligence = None
+        logger.info(f"🔄 [INIT] QuotaIntelligence available: {QuotaIntelligence is not None}")
+        logger.info(f"🔄 [INIT] QuotaMonitor available: {QuotaMonitor is not None}")
+
         if QuotaIntelligence and QuotaMonitor:
             try:
                 quota_monitor = QuotaMonitor()
                 self.quota_intelligence = QuotaIntelligence(quota_monitor)
                 logger.info("🔄 Intelligent credential rotation system initialized")
             except Exception as e:
-                logger.warning(f"🔄 Could not initialize quota intelligence: {e}")
+                logger.warning(f"🔄 Could not initialize quota intelligence: {e}", exc_info=True)
                 self.quota_intelligence = None
+        else:
+            logger.critical("🔄❌ ROTATION SYSTEM DISABLED - QuotaIntelligence/QuotaMonitor not imported")
+
+        # Log final status
+        if self.quota_intelligence:
+            logger.info("🔄✅ Rotation intelligence ACTIVE - will check every poll cycle")
+        else:
+            logger.critical("🔄❌ Rotation intelligence INACTIVE - manual rotation required")
         
         # Ensure memory directory exists
         os.makedirs(self.memory_dir, exist_ok=True)
@@ -755,9 +766,11 @@ class LiveChatCore:
                     try:
                         # Get current credential set (default to 1 if not available)
                         current_set = getattr(self.youtube, 'credential_set', 1)
+                        logger.debug(f"🔄 [ROTATION-CHECK] Checking rotation for Set {current_set}")
 
                         # Check if rotation is needed
                         rotation_decision = self.quota_intelligence.should_rotate_credentials(current_set)
+                        logger.debug(f"🔄 [ROTATION-CHECK] Decision: should_rotate={rotation_decision['should_rotate']}, urgency={rotation_decision.get('urgency', 'N/A')}")
 
                         if rotation_decision['should_rotate']:
                             urgency = rotation_decision['urgency']
