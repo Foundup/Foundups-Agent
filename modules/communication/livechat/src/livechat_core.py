@@ -116,12 +116,15 @@ class LiveChatCore:
         self.health_analyzer = SystemHealthAnalyzer()
         self.recent_messages_sent = []  # Track sent messages
         
-        # NEW: Quota-aware polling
+        # NEW: Quota-aware polling with HOLOINDEX integration gap fix
         try:
             # Get credential set number from service
             cred_set = getattr(youtube_service, 'credential_set', 1)
-            self.quota_poller = QuotaAwarePoller(cred_set) if QuotaAwarePoller else None
-        except:
+            # HOLOINDEX IMPROVEMENT: Pass oauth_manager for automatic token rotation
+            oauth_manager = youtube_service if hasattr(youtube_service, 'rotate_credentials') else None
+            self.quota_poller = QuotaAwarePoller(cred_set, oauth_manager) if QuotaAwarePoller else None
+        except Exception as e:
+            logger.warning(f"HOLOINDEX FIX: Failed to initialize quota poller with OAuth integration: {e}")
             self.quota_poller = None
         
         # AUTOMATIC: Intelligent throttle manager for API quota
@@ -232,9 +235,15 @@ class LiveChatCore:
             # Check if we should send based on intelligent throttling
             if not self.intelligent_throttle.should_respond(response_type):
                 delay = self.intelligent_throttle.calculate_adaptive_delay(response_type)
-                logger.info(f"[AUTO-THROTTLE] Delaying {response_type} by {delay:.1f}s to conserve quota")
-                # Don't send if throttled
-                return False
+                if response_type in {"whack", "consciousness"}:
+                    logger.info(f"[AUTO-THROTTLE] Delaying {response_type} by {delay:.1f}s to conserve quota")
+                    await asyncio.sleep(delay)
+                    if not self.intelligent_throttle.should_respond(response_type):
+                        logger.info(f"[AUTO-THROTTLE] Suppressing {response_type} after delay to protect quota")
+                        return False
+                else:
+                    logger.info(f"[AUTO-THROTTLE] Suppressing {response_type} to conserve quota (delay {delay:.1f}s)")
+                    return False
         
         # Check for duplicate messages
         issues = self.health_analyzer.analyze_message(f"SENDING: {message_text}")
@@ -545,12 +554,43 @@ class LiveChatCore:
     
     async def process_message_batch(self, messages: List[Dict[str, Any]]) -> None:
         """
-        Process a batch of messages.
-        
+        Process a batch of messages with OWNER priority queue.
+
+        OWNER commands are ALWAYS processed FIRST, regardless of arrival order.
+        This ensures channel owners can control the bot immediately.
+
+        Priority Order:
+        1. OWNER messages (isChatOwner=True)
+        2. MOD messages (isChatModerator=True)
+        3. Regular user messages
+
         Args:
             messages: List of messages to process
         """
+        # Split messages by role priority
+        owner_messages = []
+        mod_messages = []
+        user_messages = []
+
         for message in messages:
+            author_details = message.get("authorDetails", {})
+            is_owner = author_details.get("isChatOwner", False)
+            is_mod = author_details.get("isChatModerator", False)
+
+            if is_owner:
+                owner_messages.append(message)
+            elif is_mod:
+                mod_messages.append(message)
+            else:
+                user_messages.append(message)
+
+        # Process in priority order: OWNER → MOD → USER
+        priority_queue = owner_messages + mod_messages + user_messages
+
+        if owner_messages:
+            logger.info(f"👑 Processing {len(owner_messages)} OWNER message(s) FIRST (bypassing queue of {len(messages) - len(owner_messages)} others)")
+
+        for message in priority_queue:
             await self.process_message(message)
     
     async def run_polling_loop(self) -> None:

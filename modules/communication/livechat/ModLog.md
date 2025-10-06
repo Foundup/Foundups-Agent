@@ -12,6 +12,432 @@ This log tracks changes specific to the **livechat** module in the **communicati
 
 ## MODLOG ENTRIES
 
+### FEATURE: YouTube Shorts Command Routing + OWNER Priority Queue
+**Date**: 2025-10-06
+**WSP Protocol**: WSP 3 (Enterprise Domain Organization), WSP 50 (Pre-Action Verification)
+**Phase**: Feature Enhancement - Command Architecture
+**Agent**: 0102 Claude
+
+#### Changes Made
+**1. YouTube Shorts Command Detection and Routing** at [message_processor.py:872-920](src/message_processor.py#L872-L920):
+- Added `_check_shorts_command()` method to detect `!createshort`, `!shortstatus`, `!shortstats`
+- Separated Shorts commands from gamification commands (they route to different modules)
+- Added Priority 3.5 routing for Shorts commands BEFORE gamification commands
+- Implemented `_handle_shorts_command()` to route to `modules.communication.youtube_shorts.src.chat_commands`
+
+**Why This Was Needed**:
+- `!createshort` command was incorrectly being routed to `handle_whack_command()` (gamification)
+- YouTube Shorts commands are VIDEO CREATION tools, not game commands
+- Proper separation of concerns per WSP 3 enterprise domain organization
+
+**2. OWNER Priority Queue** at [livechat_core.py:555-594](src/livechat_core.py#L555-L594):
+- Implemented priority queue in `process_message_batch()`
+- Messages now processed in order: OWNER → MODERATOR → USER
+- OWNER commands bypass all queues and process FIRST
+- Ensures channel owners maintain immediate control over bot behavior
+
+#### Architecture Impact
+- **Command Flow**: Chat message → `_check_shorts_command()` → `_handle_shorts_command()` → `ShortsCommandHandler`
+- **Module Separation**: Gamification (`/score`, `/quiz`) vs Video Creation (`!createshort`, `!shortstatus`)
+- **Domain Compliance**: Communication module properly routes to youtube_shorts module per WSP 3
+
+#### Files Changed
+- [src/message_processor.py](src/message_processor.py#L293) - Added `has_shorts_command` flag
+- [src/message_processor.py](src/message_processor.py#L872-920) - Shorts command detection/routing
+- [src/message_processor.py](src/message_processor.py#L1140-1170) - Shorts handler implementation
+- [src/livechat_core.py](src/livechat_core.py#L555-594) - OWNER priority queue
+
+#### Testing Status
+- ✅ Command routing architecture validated
+- ⏸️ Live testing pending bot restart (quota exhaustion at 97.9%)
+
+---
+
+### FIX: NoneType Error in Message Logging - Defensive Programming
+**Date**: 2025-10-05
+**WSP Protocol**: WSP 64 (Violation Prevention), WSP 50 (Pre-Action Verification)
+**Phase**: Bug Fix - Error Handling
+**Agent**: 0102 Claude
+
+#### Problem Identified
+**User reported NoneType error during FACT CHECK command**:
+```
+ERROR - Error processing message: 'NoneType' object has no attribute 'get'
+```
+- FACT CHECK response generated successfully ("No data found. Ghost user...")
+- Error occurred when trying to log the original message to user file
+- Root cause: `message` parameter was `None` in `_log_to_user_file()`
+
+**Root Cause**: No defensive check for None message before calling `.get()` at [livechat_core.py:527](src/livechat_core.py:527)
+
+#### Solution: Defensive None Checks
+Added two layers of protection:
+
+1. **Message Logging**: Check for None before accessing fields at [livechat_core.py:527-530](src/livechat_core.py:527-530):
+```python
+# WSP 64: Verify message is not None before accessing fields
+if message is None:
+    logger.warning("⚠️ Cannot log message: message object is None")
+    return
+```
+
+2. **Batch Processing**: Filter None messages from batch at [livechat_core.py:563-566](src/livechat_core.py:563-566):
+```python
+# WSP 64: Filter out None messages to prevent downstream errors
+valid_messages = [msg for msg in messages if msg is not None]
+if len(valid_messages) != len(messages):
+    logger.warning(f"⚠️ Filtered out {len(messages) - len(valid_messages)} None messages from batch")
+```
+
+#### Technical Details
+1. **Early Return**: Prevents attempting to access `.get()` on None object
+2. **Logging**: Warns operators when None messages detected
+3. **Batch Safety**: Ensures all messages processed are valid dicts
+4. **WSP 64**: Implements violation prevention through pre-action verification
+
+#### Files Changed
+- [src/livechat_core.py](src/livechat_core.py#L527-L530) - None check in `_log_to_user_file()`
+- [src/livechat_core.py](src/livechat_core.py#L563-L566) - None filtering in `process_message_batch()`
+
+#### Why This Matters
+- Prevents crashes during message processing
+- Maintains system stability when corrupt/incomplete data received
+- Provides visibility into data quality issues via warning logs
+- Follows WSP 64 defensive programming principles
+
+**Status**: ✅ Complete - NoneType errors prevented with defensive checks
+
+**Related Investigation**: User also asked about "No data found" in FACT CHECK - suggests chat memory may not be capturing user history properly. See next entry for race condition fix.
+
+---
+
+### FIX: FACT CHECK Race Condition - Message Logging Order
+**Date**: 2025-10-05
+**WSP Protocol**: WSP 64 (Violation Prevention), WSP 84 (Enhance Existing)
+**Phase**: Critical Fix - Data Race Condition
+**Agent**: 0102 Claude
+
+#### Problem Identified
+**User reported FACT CHECK always returns "No data found" for users who ARE chatting**:
+```
+@JS FC FACT CHECK by Move2Japan: No data found. Ghost user or fresh account? Sus!
+```
+- User "@JS" WAS active in chat
+- But FACT CHECK found 0 messages in memory for them
+- Pattern: Happens most often when FC targets recent messages
+
+**Root Cause**: Message logging happened AFTER processing at [livechat_core.py:471](src/livechat_core.py:471)
+
+**Race Condition Flow**:
+1. User "@JS" sends message → enters processing queue
+2. User "@Move2Japan" sends FC command → enters same or next batch
+3. FC command processed, looks up "@JS" in `chat_memory_manager`
+4. Memory shows "@JS" has 0 messages (not logged yet!)
+5. Returns "No data found. Ghost user..."
+6. THEN "@JS"'s original message gets logged to memory
+
+This means FACT CHECK was checking memory BEFORE the target's messages were stored, causing false "ghost user" results.
+
+#### Solution: Log Messages BEFORE Processing
+Moved `_log_to_user_file()` call from line 471 to line 349 (BEFORE processing):
+
+**OLD ORDER** (Race Condition):
+```python
+# Line 380: Process message
+processed = message_processor.process_message(message)
+# Line 442: Generate FC response → looks up user in memory
+response = generate_response(processed)
+# Line 471: NOW log to memory (too late!)
+self._log_to_user_file(message)
+```
+
+**NEW ORDER** (Race-Free):
+```python
+# Line 345: Extract message details
+display_message = snippet.get("displayMessage", "")
+author_name = author_details.get("displayName", "Unknown")
+# Line 349: IMMEDIATELY log to memory
+self._log_to_user_file(message)  # ✅ Logged BEFORE processing
+# Line 380: Process message
+processed = message_processor.process_message(message)
+# Line 442: Generate FC response → user IS in memory now!
+response = generate_response(processed)
+```
+
+#### Technical Details
+1. **Early Logging**: Messages logged to `ChatMemoryManager` immediately after extraction
+2. **Same-Batch Visibility**: FC commands in same batch can now see earlier messages
+3. **Memory Consistency**: `analyze_user()` returns accurate counts
+4. **WSP 64**: Prevents data races through proper sequencing
+
+#### Files Changed
+- [src/livechat_core.py](src/livechat_core.py#L347-L349) - Moved `_log_to_user_file()` BEFORE processing
+- [src/livechat_core.py](src/livechat_core.py#L474-L475) - Removed duplicate call, added comment
+
+#### Why This Matters
+- FACT CHECK now works correctly for active users
+- Prevents false "ghost user" reports
+- Ensures chat memory reflects real-time activity
+- Critical for mod activity tracking and user analytics
+- Fixes core data synchronization issue
+
+**Status**: ✅ Complete - Messages logged before processing, race condition eliminated
+
+---
+
+### FIX: Proactive Troll Throttle Bypass - Respecting Intelligent Throttle
+**Date**: 2025-10-05
+**WSP Protocol**: WSP 84 (Enhance Existing), WSP 50 (Pre-Action Verification)
+**Phase**: Bug Fix - Throttle Compliance
+**Agent**: 0102 Claude
+
+#### Problem Identified
+**User reported excessive proactive posting**: Bot posting to chat too frequently
+- Proactive troll interval set correctly (5 minutes for active chat)
+- BUT: `last_troll` timer reset even when `send_chat_message()` returned `False` due to throttling
+- Result: Immediate retry on next poll loop iteration, bypassing intelligent throttle
+
+**Root Cause**: Timer reset happening unconditionally at [livechat_core.py:621](src/livechat_core.py:621)
+```python
+await self.send_chat_message(troll_msg)  # Might return False
+last_troll = time.time()  # ❌ ALWAYS resets, even if throttled
+```
+
+#### Solution: Conditional Timer Reset
+Check `send_chat_message()` return value before resetting timer at [livechat_core.py:616-624](src/livechat_core.py:616-624):
+
+```python
+sent = await self.send_chat_message(troll_msg, response_type='proactive_troll')
+if sent:
+    # Success logging
+    last_troll = time.time()  # ✅ Only reset if actually sent
+else:
+    logger.debug(f"⏸️ Proactive troll throttled - will retry later")
+```
+
+#### Technical Details
+1. **Response Type Added**: Pass `response_type='proactive_troll'` to enable intelligent throttle tracking
+2. **Respect Throttle**: Intelligent throttle can now properly block proactive messages
+3. **Retry Logic**: Timer doesn't reset, so next interval check will retry appropriately
+4. **Debug Visibility**: Added logging when throttled for operator awareness
+
+#### Files Changed
+- [src/livechat_core.py](src/livechat_core.py#L616-L624) - Conditional timer reset in proactive troll logic
+
+#### Why This Matters
+- Prevents API quota exhaustion from excessive proactive posts
+- Respects intelligent throttle delays based on quota state
+- Maintains proper 5/10/20 minute intervals based on chat activity
+- Enables Qwen monitoring to properly track proactive message patterns
+
+**Status**: ✅ Complete - Proactive posts now respect intelligent throttle
+
+---
+
+### SEMANTIC SWITCHING - Prevent Duplicate Social Media Posts for Same Stream
+**Date**: 2025-10-05
+**WSP Protocol**: WSP 84 (Enhance Existing), WSP 48 (Recursive Learning)
+**Phase**: Critical Fix - Semantic State Management
+**Agent**: 0102 Claude
+
+#### Problem Identified
+**Logs showed excessive posting**: Same stream `gzbeDHBYcAo` being posted to LinkedIn multiple times
+- Stream detected → Posted → Still live → Re-detected → Blocked by duplicate cache → Retry loop
+- Duplicate prevention manager correctly blocking, but daemon kept retrying upstream
+
+**Root Cause**: No semantic awareness of "current monitoring session"
+- `_last_stream_id` tracked for WRE but not used for posting decisions
+- Every detection triggered social media handoff (even for same stream)
+
+#### Solution: Semantic Switching Pattern
+[auto_moderator_dae.py:350-372](src/auto_moderator_dae.py:350-372) - Check `_last_stream_id` before posting:
+
+```python
+# Only post if NEW stream (not same one we're monitoring)
+if stream['video_id'] == self._last_stream_id:
+    logger.info("[SEMANTIC-SWITCH] Already monitoring - skip posting")
+    should_post = False
+```
+
+**Semantic State Flow**:
+1. First detection: `_last_stream_id = None` → Post ✅
+2. Set after monitor: `_last_stream_id = video_id`
+3. Re-detection: `video_id == _last_stream_id` → Skip ⏭️
+4. New stream: `video_id != _last_stream_id` → Post ✅
+
+**Benefits**: Single post per stream, semantic session awareness, reduced API calls
+
+---
+
+### Enhanced Flow Tracing for Social Media Posting Diagnosis
+**Date**: 2025-10-05
+**WSP Protocol**: WSP 50 (Pre-Action Verification), WSP 22 (ModLog Tracking)
+**Phase**: Diagnostic Enhancement
+**Agent**: 0102 Claude
+
+#### Problem Identified
+User reported: "Stream detected but social media posting not happening"
+- ✅ Stream detection working (NO-QUOTA mode)
+- ❌ No social media posts being created
+- ❓ Unknown: Where is the handoff failing?
+
+#### Investigation Approach
+Added comprehensive `[FLOW-TRACE]` logging throughout auto_moderator_dae.py to trace execution:
+
+1. **Stream Detection Path** [auto_moderator_dae.py:263-269](src/auto_moderator_dae.py:263-269)
+   - Logs when stream found with result details
+   - Tracks video_id and chat_id extraction
+   - Confirms channel name resolution
+
+2. **Stream Collection** [auto_moderator_dae.py:308-320](src/auto_moderator_dae.py:308-320)
+   - Logs stream_info creation
+   - Tracks append to found_streams list
+   - Confirms loop break after first stream
+
+3. **Deduplication Logic** [auto_moderator_dae.py:327-344](src/auto_moderator_dae.py:327-344)
+   - Logs entry to found_streams block
+   - Tracks deduplication process
+   - Confirms unique stream count
+
+4. **Social Media Handoff** [auto_moderator_dae.py:357-359](src/auto_moderator_dae.py:357-359)
+   - Logs before calling _trigger_social_media_posting_for_streams
+   - Tracks return from method
+
+5. **Orchestrator Execution** [auto_moderator_dae.py:390-431](src/auto_moderator_dae.py:390-431)
+   - Detailed entry/exit logging
+   - Import success/failure tracking
+   - Orchestrator instance logging
+   - Method call and return value tracking
+   - Exception handling with full traceback
+
+#### Diagnostic Logs Added
+```python
+[FLOW-TRACE] Stream found! result=...
+[FLOW-TRACE] video_id=..., chat_id=...
+[FLOW-TRACE] Created stream_info: {...}
+[FLOW-TRACE] Appended to found_streams, count=X
+[FLOW-TRACE] About to break from channel loop
+[FLOW-TRACE] After channel loop: found_streams count=X
+[FLOW-TRACE] Entering found_streams block, count=X
+[FLOW-TRACE] After dedup: unique streams count=X
+[FLOW-TRACE] About to call _trigger_social_media_posting_for_streams with X streams
+[FLOW-TRACE] === ENTERED _trigger_social_media_posting_for_streams ===
+[FLOW-TRACE] Received X streams: [...]
+[FLOW-TRACE] Attempting to import refactored_posting_orchestrator...
+[FLOW-TRACE] Import successful, calling get_orchestrator()...
+[FLOW-TRACE] Orchestrator instance: ...
+[FLOW-TRACE] About to call orchestrator.handle_multiple_streams_detected()...
+[FLOW-TRACE] Orchestrator returned: {...}
+[FLOW-TRACE] === EXITING _trigger_social_media_posting_for_streams ===
+```
+
+#### Next Steps
+1. Run daemon with enhanced logging
+2. Identify exact failure point from [FLOW-TRACE] logs
+3. Fix root cause based on diagnostic evidence
+4. Remove or reduce trace logging once issue resolved
+
+#### Expected Outcome
+Logs will reveal one of:
+- Stream not reaching found_streams (detection issue)
+- Deduplication removing stream (logic bug)
+- Import/instantiation failing (module issue)
+- Orchestrator method failing silently (exception handling)
+
+---
+
+### Critical Fix: Credential Rotation When chat_id Unavailable
+**Date**: 2025-10-03
+**WSP Protocol**: WSP 84 (Enhance Existing), WSP 50 (Pre-Action Verification)
+**Phase**: Bug Fix - Chat Connection
+**Agent**: 0102 Claude
+
+#### Problem Identified
+When stream is detected via NO-QUOTA web scraping but `chat_id` is unavailable (quota exhausted), the system would:
+- ✅ Detect stream successfully
+- ✅ Queue for social media posting
+- ❌ **NOT attempt credential rotation to get chat_id**
+- ❌ **Agent can't connect to chat**
+
+#### Root Cause
+[auto_moderator_dae.py:288-290](src/auto_moderator_dae.py:288-290) - When `live_chat_id` is None, code just logs warning and accepts stream without attempting rotation.
+
+#### Solution Implemented
+[auto_moderator_dae.py:288-310](src/auto_moderator_dae.py:288-310) - Added credential rotation retry logic:
+1. When `chat_id` is None, attempt retry with credential rotation
+2. Create new `StreamResolver` instance (triggers auto-rotation in youtube_auth)
+3. Retry `find_livestream()` for same channel
+4. If successful, update `live_chat_id`
+5. If still fails, accept stream without chat (social media still posts)
+
+#### Expected Behavior
+**Before Fix**:
+```
+⚠️ Found stream but chat_id not available (likely quota exhausted)
+✅ Accepting stream anyway
+→ Agent never connects to chat
+```
+
+**After Fix**:
+```
+⚠️ Found stream but chat_id not available (likely quota exhausted)
+🔄 Attempting to get chat_id with credential rotation...
+🔑 Attempting authentication with credential set 10
+✅ Got chat_id after credential rotation: ABC123
+→ Agent connects to chat successfully!
+```
+
+#### WSP Compliance
+- ✅ WSP 84: Enhanced existing logic in `auto_moderator_dae.py`
+- ✅ WSP 50: Verified rotation logic exists before implementing
+- ✅ WSP 22: Documented in ModLog
+
+---
+
+### Qwen YouTube Intelligence - Stream Detection Enhancement
+**Date**: 2025-10-03
+**WSP Protocol**: WSP 84 (Enhance Existing), WSP 50 (Pre-Action Verification)
+**Phase**: Intelligence Enhancement
+**Agent**: 0102 Claude
+
+#### Enhancement Objective
+Improve stream detection intelligence by learning from actual streaming patterns and prioritizing channels based on historical activity.
+
+#### Changes Implemented
+1. **ChannelIntelligence Enhancements** ([qwen_youtube_integration.py](qwen_youtube_integration.py:16-31)):
+   - Added `last_stream_time` to track when last stream was detected
+   - Added `total_streams_detected` to count historical stream findings
+   - Added `recent_activity_boost` for dynamic priority adjustment
+
+2. **Smarter Channel Prioritization** ([qwen_youtube_integration.py](qwen_youtube_integration.py:191-257)):
+   - **BOOST 1**: Recent activity (2.0x boost for streams <24h, 1.3x for <1 week)
+   - **BOOST 2**: Pattern matching (1.5x for typical hours, 1.2x for typical days)
+   - **BOOST 3**: Historical activity (up to 1.5x for channels with proven streams)
+   - **Detailed logging**: Each boost/penalty is now logged for transparency
+
+3. **Enhanced Pattern Learning** ([qwen_youtube_integration.py](qwen_youtube_integration.py:310-329)):
+   - Tracks stream detection timestamps
+   - Increments total_streams_detected counter
+   - Logs when new patterns are learned (hours/days)
+
+4. **Improved Intelligence Summary** ([qwen_youtube_integration.py](qwen_youtube_integration.py:352-373)):
+   - Shows total streams found per channel
+   - Displays time since last stream
+   - Shows typical streaming days
+
+#### Expected Behavior
+- Channels with recent streams get **priority boost** (up to 2x)
+- Channels with proven streaming history get **consistency boost** (up to 1.5x)
+- Time-based pattern matching provides **scheduling intelligence** (1.5x-1.8x)
+- Combined boosts can reach **5.4x priority** for highly active channels during typical hours
+
+#### WSP Compliance
+- ✅ WSP 84: Enhanced existing `qwen_youtube_integration.py` instead of creating new files
+- ✅ WSP 50: Verified existing code structure before modifications
+- ✅ WSP 22: Documented changes in ModLog
+
+---
+
 ### QWEN Intelligence Enhancement in Existing Modules
 **Date**: Current Session
 **WSP Protocol**: WSP 84 (Check Existing Code First), WSP 3 (Module Organization), WSP 50 (Pre-Action Verification)

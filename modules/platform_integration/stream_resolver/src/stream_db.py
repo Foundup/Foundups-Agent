@@ -203,14 +203,31 @@ class StreamResolverDB(ModuleDB):
 
     def save_stream_pattern(self, channel_id: str, pattern_type: str,
                            pattern_data: Dict[str, Any], confidence: float = 0.0) -> int:
-        """Save a learned pattern"""
-        return self.upsert("stream_patterns", {
-            "channel_id": channel_id,
-            "pattern_type": pattern_type,
-            "pattern_data": json.dumps(pattern_data),
-            "confidence": confidence,
-            "last_updated": datetime.now().isoformat()
-        })
+        """
+        Save a learned pattern using INSERT OR REPLACE to handle UNIQUE constraint.
+
+        The stream_patterns table has UNIQUE(channel_id, pattern_type), so we must use
+        INSERT OR REPLACE instead of generic upsert() which only checks 'id' field.
+
+        This prevents "UNIQUE constraint failed" errors when updating existing patterns.
+        """
+        full_table = self._get_full_table_name("stream_patterns")
+
+        query = f"""
+            INSERT OR REPLACE INTO {full_table}
+            (channel_id, pattern_type, pattern_data, confidence, last_updated)
+            VALUES (?, ?, ?, ?, ?)
+        """
+
+        params = (
+            channel_id,
+            pattern_type,
+            json.dumps(pattern_data),
+            confidence,
+            datetime.now().isoformat()
+        )
+
+        return self.db.execute_write(query, params)
 
     def get_optimal_check_times(self, channel_id: str) -> List[Dict[str, Any]]:
         """Get optimal times to check for streams based on historical data"""

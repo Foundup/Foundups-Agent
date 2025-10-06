@@ -130,10 +130,14 @@ class MessageProcessor:
             except Exception as e:
                 logger.warning(f"Could not initialize PQN orchestrator: {e}")
                 self.pqn_orchestrator = None
-        
+
+        # Intelligent throttle manager (set by LiveChatCore after initialization)
+        self.intelligent_throttle = None
+
         # Stream session tracking for announcements (once per stream)
         self.announced_joins = set()  # Set of user_ids who have been greeted this stream
         self.proactive_engaged = set()  # Set of user_ids we've proactively engaged with
+        self.stream_greeting_sent = False  # Track if stream greeting was sent
         self.stream_start_time = time.time()  # Reset when stream restarts
         
         # Ensure memory directory exists
@@ -160,6 +164,9 @@ class MessageProcessor:
         elif message.get("type") == "ban_event":
             logger.info("🤖🧠 [QWEN-DAE-DECISION] EXECUTE ban_handler (confidence: 1.00)")
             return self._handle_ban_event(message)
+        elif message.get("type") == "super_chat_event":
+            logger.info("🤖🧠 [QWEN-DAE-DECISION] EXECUTE super_chat_handler (confidence: 1.00)")
+            return self._handle_super_chat_event(message)
         
         # Debug: Log message structure
         if isinstance(message, dict) and "snippet" in message:
@@ -178,14 +185,39 @@ class MessageProcessor:
         
         try:
             snippet = message.get("snippet", {})
-            author_details = message.get("authorDetails", {})
-            
+            author_details = message.get("authorDetails") or {}  # Handle None case for bot messages
+
+            # CRITICAL: Skip bot messages early (authorDetails is None for bot's own messages)
+            if not author_details:
+                logger.debug("🤖 Skipping message with no authorDetails (likely bot's own message)")
+                return {"skip": True, "reason": "no_author_details"}
+
             # Extract basic message info
             message_id = snippet.get("messageId", "")
             message_text = snippet.get("displayMessage", "")
             author_name = author_details.get("displayName", "Unknown")
             author_id = author_details.get("channelId", "")
             published_at = snippet.get("publishedAt", "")
+
+            # 💰 SUPERCHAT DETECTION - Priority Response for Paid Supporters
+            super_chat_details = snippet.get("superChatDetails", None)
+            if super_chat_details:
+                amount_micros = super_chat_details.get("amountMicros", 0)
+                amount_display = super_chat_details.get("amountDisplayString", "$0")
+                currency = super_chat_details.get("currency", "USD")
+                tier = super_chat_details.get("tier", 1)
+
+                # Convert micros to dollars (1,000,000 micros = $1)
+                amount_dollars = int(amount_micros) / 1000000 if amount_micros else 0
+
+                logger.warning(f"💰💰💰 SUPERCHAT DETECTED! {author_name} sent {amount_display} ({amount_dollars} {currency}) - Tier {tier}")
+                logger.info(f"🎉 Super Chat message: {message_text}")
+
+                # Mark as priority for processing
+                message["_is_superchat"] = True
+                message["_superchat_amount"] = amount_dollars
+                message["_superchat_display"] = amount_display
+                message["_superchat_tier"] = tier
 
             # CRITICAL: Skip processing messages from the bot itself to prevent self-responses
             if self.chat_sender and hasattr(self.chat_sender, 'bot_channel_id') and self.chat_sender.bot_channel_id:
@@ -258,13 +290,16 @@ class MessageProcessor:
             # Check for fact-check commands
             has_factcheck = self._check_factcheck_command(message_text)
             
+            # Check for YouTube Shorts commands (!createshort, !shortstatus, !shortstats)
+            has_shorts_command = self._check_shorts_command(message_text)
+
             # Check for whack commands (score, level, rank, etc)
             has_whack_command = self._check_whack_command(message_text)
-            
+
             # Check for MAGA content (WSP: use existing detector)
             maga_response = self.greeting_generator.get_response_to_maga(message_text)
             has_maga = maga_response is not None
-            
+
             processed_message = {
                 "message_id": message_id,
                 "text": message_text,
@@ -275,12 +310,19 @@ class MessageProcessor:
                 "is_rate_limited": is_rate_limited,
                 "has_consciousness": has_consciousness,
                 "has_factcheck": has_factcheck,
+                "has_shorts_command": has_shorts_command,
                 "has_whack_command": has_whack_command,
                 "has_maga": has_maga,
+                "maga_response": maga_response,  # Store generated response to prevent double-call
                 "is_moderator": author_details.get("isChatModerator", False),
                 "is_owner": author_details.get("isChatOwner", False),
                 "live_chat_id": snippet.get("liveChatId"),  # Add for MAGADOOM timeouts
-                "raw_message": message
+                "raw_message": message,
+                # Superchat support
+                "is_superchat": message.get("_is_superchat", False),
+                "superchat_amount": message.get("_superchat_amount", 0),
+                "superchat_display": message.get("_superchat_display", ""),
+                "superchat_tier": message.get("_superchat_tier", 0)
             }
             
             logger.debug(f"📝 Processed message from {author_name}: {message_text[:50]}...")
@@ -352,7 +394,40 @@ class MessageProcessor:
             self.self_improvement.observe_command(message_text, 1.0)
         
         try:
-            # Priority 0: Fact-check commands with consciousness emojis (HIGHEST PRIORITY)
+            # Priority 0: SUPERCHAT RESPONSES (HIGHEST PRIORITY - Always respond to paid supporters!)
+            if processed_message.get("is_superchat"):
+                amount = processed_message.get("superchat_amount", 0)
+                display = processed_message.get("superchat_display", "$0")
+                tier = processed_message.get("superchat_tier", 1)
+
+                logger.warning(f"💰 SUPERCHAT HANDLER TRIGGERED for {author_name} ({display})")
+
+                # Generate enthusiastic UnDaoDu✊✋🖐 praise response
+                praise_responses = [
+                    f"✊✋🖐 LEGENDARY SUPPORT! @{author_name} just dropped {display}! Democracy needs heroes like you! 🇺🇸✨",
+                    f"✊✋🖐 HOLY RESISTANCE! @{author_name} with {display}! You're powering the fight against fascism! 💪🔥",
+                    f"✊✋🖐 EPIC CONTRIBUTION! @{author_name} ({display})! You're making history! The resistance is REAL! 🦅⚡",
+                    f"✊✋🖐 UNSTOPPABLE! @{author_name} just sent {display}! You are the BACKBONE of democracy! 🛡️💎",
+                    f"✊✋🖐 PHENOMENAL! @{author_name} with {display} of PURE DEMOCRACY FUEL! The MAGAts are SHAKING! 🌊🔥"
+                ]
+
+                # Choose random praise
+                import random
+                praise = random.choice(praise_responses)
+
+                # Grant $20+ superchats video creation privilege
+                if amount >= 20:
+                    logger.warning(f"💰💰💰 $20+ SUPERCHAT! Granting video creation privilege to {author_name}")
+                    # Store privilege in processed_message for YouTube Shorts module
+                    processed_message["_can_create_video"] = True
+                    praise += f" | 🎬 VIDEO CREATION UNLOCKED! Type your idea!"
+
+                # Log for analytics
+                logger.info(f"💰 Superchat response: {praise}")
+
+                return praise
+
+            # Priority 1: Fact-check commands with consciousness emojis
             if processed_message.get("has_factcheck"):
                 # Check moderator throttling first (WSP 84) - only for actual moderators
                 if self.intelligent_throttle and role == 'MOD':
@@ -414,6 +489,17 @@ class MessageProcessor:
                 logger.info(f"   Can use consciousness: {can_use_consciousness} (mode: {self.consciousness_mode})")
 
                 if can_use_consciousness:
+                    # QUIZ ANSWER: Check if ✊✋🖐 is followed by a number (1-4)
+                    quiz_answer_match = re.search(r'✊✋🖐\s*([1-4])', message_text)
+                    if quiz_answer_match:
+                        answer_num = quiz_answer_match.group(1)
+                        logger.info(f"📚 Quiz answer: ✊✋🖐{answer_num} from {author_name}")
+                        quiz_response = self.command_handler.handle_whack_command(
+                            f"/quiz {answer_num}", author_name, author_id, role
+                        )
+                        if quiz_response:
+                            return quiz_response
+
                     logger.info("🤖🧠 [QWEN-DAE-DECISION] EXECUTE consciousness_response (confidence: 0.85)")
                     # Generate agentic response based on chat history
                     agentic_response = self.agentic_engine.generate_agentic_response(
@@ -422,6 +508,14 @@ class MessageProcessor:
 
                     if agentic_response:
                         logger.info(f"🤖 Agentic ✊✋🖐️ response for {author_name} (mode: {self.consciousness_mode})")
+
+                        # Qwen Message Diversity Check - Prevent repetitive consciousness messages
+                        if self.intelligent_throttle:
+                            allowed, reason = self.intelligent_throttle.check_message_diversity(agentic_response, 'consciousness')
+                            if not allowed:
+                                logger.info(f"🤖🧠 [QWEN-DIVERSITY] Blocking repetitive consciousness response: {reason}")
+                                return None
+
                         logger.info("🤖🧠 [QWEN-DAE-PERFORMANCE] consciousness_response: generated successfully")
                         # Mark this as a consciousness response in processed data
                         processed_message["response_type"] = "consciousness"
@@ -464,7 +558,19 @@ class MessageProcessor:
                         self.intelligent_throttle.record_moderator_command(author_id, author_name, role, message_text)
 
                     return response
-            
+
+            # Priority 3.5: Handle YouTube Shorts commands (!createshort, !shortstatus, !shortstats)
+            if processed_message.get("has_shorts_command"):
+                logger.info("🤖🧠 [QWEN-DAE-DECISION] EXECUTE shorts_command_handler (confidence: 0.90)")
+                logger.info(f"🎬 Routing Shorts command: '{message_text}' from {author_name} (role: {role})")
+
+                response = self._handle_shorts_command(message_text, author_name, author_id, role)
+                if response:
+                    logger.info(f"🎬 Shorts command response for {author_name}: {response[:100]}")
+                    return response
+                else:
+                    logger.warning(f"🎬❌ No response from Shorts handler for '{message_text}'")
+
             # Priority 4: Handle whack commands (score, level, rank)
             if processed_message.get("has_whack_command"):
                 logger.info("🤖🧠 [QWEN-DAE-DECISION] EXECUTE whack_command_handler (confidence: 0.90)")
@@ -517,7 +623,8 @@ class MessageProcessor:
                         logger.info(f"🛡️ Intelligent throttle blocked MAGA response to {author_name}: {block_msg}")
                         return None
 
-                response = self.greeting_generator.get_response_to_maga(processed_message.get("text", ""))
+                # Reuse the MAGA response generated during classification to prevent duplicates
+                response = processed_message.get("maga_response")
                 if response:
                     # Only send if we can @mention properly
                     if self._is_valid_mention(author_name):
@@ -580,6 +687,14 @@ class MessageProcessor:
                                         self.proactive_engaged.add(author_id)
                                         return None
 
+                            # Qwen Message Diversity Check - Prevent repetitive engagement messages
+                            if self.intelligent_throttle:
+                                allowed, reason = self.intelligent_throttle.check_message_diversity(proactive_response, 'engagement')
+                                if not allowed:
+                                    logger.info(f"🤖🧠 [QWEN-DIVERSITY] Blocking repetitive engagement response: {reason}")
+                                    self.proactive_engaged.add(author_id)  # Still mark as engaged to prevent retry
+                                    return None
+
                             # Response is valid, send it
                             self.proactive_engaged.add(author_id)
                             logger.info(f"💬 Proactive engagement with {author_name} (once per stream)")
@@ -587,15 +702,23 @@ class MessageProcessor:
                         else:
                             logger.debug(f"No proactive response generated for {author_name}")
 
-            # Priority 8: Check for top whacker greeting (only ONCE per stream session)
-            # These greetings don't use @mentions, they announce the player by name
-            if author_id not in self.announced_joins:  # Only announce if not already announced this stream
-                whacker_greeting = self.greeting_generator.generate_whacker_greeting(author_name, author_id, role)
-                if whacker_greeting:
-                    self.announced_joins.add(author_id)  # Mark as announced
-                    logger.info(f"🏆 Greeting top whacker {author_name} (first time this stream)")
-                    # Join greetings don't need @mentions - they're announcements about the user
-                    return whacker_greeting
+            # Priority 8: Check for stream greeting (only ONCE per stream session)
+            # Send ONE greeting per stream, not per user, to avoid spam
+            if not hasattr(self, 'stream_greeting_sent') or not self.stream_greeting_sent:
+                # Generate a general stream greeting, not user-specific
+                greeting = self.greeting_generator.generate_greeting()
+                if greeting:
+                    # Qwen Message Diversity Check - Prevent repetitive greeting messages
+                    if self.intelligent_throttle:
+                        allowed, reason = self.intelligent_throttle.check_message_diversity(greeting, 'greeting')
+                        if not allowed:
+                            logger.info(f"🤖🧠 [QWEN-DIVERSITY] Blocking repetitive greeting: {reason}")
+                            self.stream_greeting_sent = True  # Mark as sent to prevent future greetings
+                            return None
+
+                    self.stream_greeting_sent = True  # Mark stream greeting as sent
+                    logger.info(f"🌞 Stream greeting sent (once per stream)")
+                    return greeting
             
             return None
             
@@ -712,8 +835,9 @@ class MessageProcessor:
     def reset_stream_session(self):
         """Reset the stream session tracking (call when stream restarts)."""
         self.announced_joins.clear()
+        self.stream_greeting_sent = False  # Reset stream greeting flag
         self.stream_start_time = time.time()
-        logger.info("🔄 Stream session reset - join announcements cleared")
+        logger.info("🔄 Stream session reset - join announcements and greetings cleared")
     
     def log_message_to_file(self, processed_message: Dict[str, Any]):
         """
@@ -744,48 +868,202 @@ class MessageProcessor:
             logger.error(f"❌ Error logging message to file: {e}")
     
     def _check_factcheck_command(self, text: str) -> bool:
-        """Check if message contains fact-check command."""
-        pattern = r'(?:factcheck|fc)\s+@[\w\s]+'
+        """
+        Check if message contains fact-check command.
+
+        Supports tiered analysis:
+        - FC @user = ALL comments (full history)
+        - FC1 @user = last 1 comment
+        - FC2 @user = last 2 comments
+        - ... up to FC9 @user = last 9 comments
+        - factcheck @user = alias for FC (all comments)
+        """
+        pattern = r'(?:factcheck|fc\d?)\s+@[\w\s]+'
         return bool(re.search(pattern, text.lower()))
     
+    def _check_shorts_command(self, text: str) -> bool:
+        """
+        Check if message contains YouTube Shorts commands.
+
+        Commands:
+        - !createshort <topic> - Create and upload Short
+        - !shortstatus - Check generation status
+        - !shortstats - View statistics
+        """
+        shorts_commands = ['!createshort', '!shortstatus', '!shortstats']
+        text_lower = text.lower().strip()
+
+        has_shorts = any(text_lower.startswith(cmd) for cmd in shorts_commands)
+
+        if has_shorts:
+            logger.info(f"🎬 Detected YouTube Shorts command: {text_lower}")
+
+        return has_shorts
+
     def _check_whack_command(self, text: str) -> bool:
-        """Check if message contains whack gamification commands."""
+        """
+        Check if message contains whack gamification commands.
+
+        Handles ONLY / commands for MAGADOOM gamification:
+        - /score, /quiz, /stats, etc.
+        - Quiz answers: !1, !2, !3, !4
+        """
         commands = [
             '/score', '/rank', '/stats', '/leaderboard', '/frags', '/whacks',
             '/help', '/quiz', '/facts', '/sprees', '/toggle', '/session',
             # Deprecated but handled with helpful messages:
             '/level', '/answer', '/top', '/fscale', '/rate'
         ]
+
+        # Quiz answer shortcuts
+        quiz_answers = ['!1', '!2', '!3', '!4']
+
         text_lower = text.lower().strip()
-        has_command = any(text_lower.startswith(cmd) for cmd in commands)
+
+        # Check / commands
+        has_slash_command = any(text_lower.startswith(cmd) for cmd in commands)
+
+        # Check quiz answers (!1-!4)
+        has_quiz_answer = any(text_lower.startswith(cmd) for cmd in quiz_answers)
+
+        has_command = has_slash_command or has_quiz_answer
+
         if has_command:
-            logger.info(f"🎮 Detected whack command: {text_lower}")
+            logger.info(f"🎮 Detected gamification command: {text_lower}")
         else:
             # Log if it looks like a command but isn't recognized
             if text_lower.startswith('/'):
-                logger.debug(f"🔍 Slash message not a whack command: {text_lower}")
+                logger.debug(f"🔍 Unrecognized / command: {text_lower}")
+
         return has_command
     
     async def _handle_factcheck(self, text: str, requester: str, role: str) -> Optional[str]:
-        """Handle fact-check commands."""
-        # Extract target username
-        pattern = r'(?:factcheck|fc)\s+@([\w\s]+?)(?:\s|$)'
+        """
+        Handle fact-check commands with tiered analysis.
+
+        Examples:
+        - FC @user or factcheck @user = Analyze ALL comments
+        - FC1 @user = Analyze last 1 comment
+        - FC5 @user = Analyze last 5 comments
+        """
+        # Extract target username and optional message limit
+        pattern = r'(?:factcheck|fc(\d?))\s+@([\w\s]+?)(?:\s|$)'
         match = re.search(pattern, text.lower())
-        
+
         if match:
-            target = match.group(1).strip()
+            count_str = match.group(1)  # Empty string or digit 1-9
+            target = match.group(2).strip()
+
+            # Parse message count limit (None = all messages)
+            message_limit = int(count_str) if count_str else None
+
             # Extract emoji sequence if present
             emoji_seq = self.consciousness.extract_emoji_sequence(text)
-            
+
             # Try Grok first, then fallback to simple fact checker
             if self.grok:
+                # Collect user messages with optional limit
+                all_user_messages = self._collect_all_user_messages(message_limit=message_limit)
+                # Temporarily update Grok with collected messages
+                if hasattr(self.grok, 'all_user_messages'):
+                    self.grok.all_user_messages = all_user_messages
+
+                # Log tiered analysis for debugging
+                if message_limit:
+                    logger.info(f"🔍 [TIERED FC{message_limit}] Analyzing last {message_limit} comment(s) from @{target}")
+                else:
+                    logger.info(f"🔍 [FULL FC] Analyzing ALL comments from @{target}")
+
                 return self.grok.fact_check(target, role, emoji_seq)
             elif hasattr(self, 'simple_fact_checker'):
                 return self.simple_fact_checker.fact_check(target, requester, role, emoji_seq)
             else:
                 return f"@{requester} Fact-checking temporarily unavailable"
         return None
-    
+
+    def _collect_all_user_messages(self, message_limit: Optional[int] = None) -> Dict[str, List]:
+        """
+        Collect user messages from memory manager for fact-checking.
+
+        Args:
+            message_limit: Optional limit on messages per user (None = all messages)
+                          If specified, returns the LAST N messages per user
+
+        Returns:
+            Dict mapping usernames to lists of message dicts
+
+        Examples:
+            _collect_all_user_messages()           # All messages
+            _collect_all_user_messages(1)          # Last 1 message per user
+            _collect_all_user_messages(5)          # Last 5 messages per user
+        """
+        all_messages = {}
+
+        try:
+            # Get messages from chat memory manager
+            if hasattr(self, 'memory_manager') and self.memory_manager:
+                # Access the session messages from memory manager
+                if hasattr(self.memory_manager, 'session_messages') and self.memory_manager.session_messages:
+                    for msg in self.memory_manager.session_messages:
+                        # session_messages contains STRINGS like "[MOD] username: message"
+                        if isinstance(msg, dict):
+                            username = msg.get('author', msg.get('username', 'unknown'))
+                            message_text = msg.get('message', msg.get('text', ''))
+                        else:
+                            # Parse string format: "[ROLE] username: message" or "username: message"
+                            msg_str = str(msg)
+                            # Remove role prefix if present
+                            if msg_str.startswith('['):
+                                msg_str = msg_str.split('] ', 1)[-1]  # Remove "[MOD] " prefix
+
+                            # Split on first ": " to get username and message
+                            if ': ' in msg_str:
+                                username, message_text = msg_str.split(': ', 1)
+                            else:
+                                username = 'unknown'
+                                message_text = msg_str
+
+                        if username not in all_messages:
+                            all_messages[username] = []
+
+                        all_messages[username].append({
+                            'username': username,
+                            'message': message_text,
+                            'timestamp': ''  # String format doesn't include timestamp
+                        })
+
+                # Also check message buffers for any additional messages
+                if hasattr(self.memory_manager, 'message_buffers'):
+                    for username, messages in self.memory_manager.message_buffers.items():
+                        if username not in all_messages:
+                            all_messages[username] = []
+
+                        for msg in messages:
+                            if isinstance(msg, dict):
+                                message_text = msg.get('message', msg.get('text', ''))
+                            else:
+                                message_text = str(msg)
+
+                            all_messages[username].append({
+                                'username': username,
+                                'message': message_text,
+                                'timestamp': ''
+                            })
+
+        except Exception as e:
+            logger.warning(f"Could not collect user messages for fact-checking: {e}")
+
+        # Apply message limit if specified (tiered analysis)
+        if message_limit is not None and message_limit > 0:
+            limited_messages = {}
+            for username, messages in all_messages.items():
+                # Take the LAST N messages (most recent)
+                limited_messages[username] = messages[-message_limit:]
+            logger.info(f"📊 [TIERED] Limited to last {message_limit} message(s) per user ({len(all_messages)} users)")
+            return limited_messages
+
+        return all_messages
+
     def _handle_whack_command(self, text: str, username: str, user_id: str, role: str) -> Optional[str]:
         """Delegate whack command handling to CommandHandler."""
         return self.command_handler.handle_whack_command(text, username, user_id, role)
@@ -797,7 +1075,54 @@ class MessageProcessor:
     def _handle_ban_event(self, event: Dict[str, Any]) -> Dict[str, Any]:
         """Delegate ban event handling to EventHandler."""
         return self.event_handler.handle_ban_event(event)
-    
+
+    def _handle_super_chat_event(self, event: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle Super Chat monetization events.
+
+        $20+ Super Chats trigger YouTube Shorts creation.
+        """
+        donor_name = event.get("donor_name", "Anonymous")
+        donor_id = event.get("donor_id", "")
+        amount_usd = event.get("amount_usd", 0.0)
+        message = event.get("message", "")
+        amount_display = event.get("amount_display", f"${amount_usd:.2f}")
+
+        logger.info(f"💰 Super Chat received: {donor_name} - {amount_display}")
+
+        # Try to import YouTube Shorts handler
+        try:
+            from modules.communication.youtube_shorts.src.chat_commands import get_shorts_handler
+            shorts_handler = get_shorts_handler()
+
+            # Handle $20+ Super Chats for Shorts creation
+            response = shorts_handler.handle_super_chat_short(
+                donor_name=donor_name,
+                donor_id=donor_id,
+                amount_usd=amount_usd,
+                message=message
+            )
+
+            if response:
+                logger.info(f"🎬 YouTube Shorts: {response}")
+                return {
+                    "type": "super_chat_short",
+                    "response": response,
+                    "donor": donor_name,
+                    "amount": amount_display
+                }
+            else:
+                # Below $20 threshold
+                logger.info(f"💰 Super Chat below $20 threshold ({amount_display})")
+                return {"skip": True, "reason": "below_threshold"}
+
+        except ImportError as e:
+            logger.warning(f"YouTube Shorts module not available: {e}")
+            return {"skip": True, "reason": "shorts_unavailable"}
+        except Exception as e:
+            logger.error(f"Error handling Super Chat Short: {e}")
+            return {"skip": True, "reason": "error"}
+
     def get_processing_stats(self) -> Dict[str, Any]:
         """Get processing statistics."""
         return {
@@ -813,6 +1138,49 @@ class MessageProcessor:
             "consciousness_enabled": self.consciousness is not None,
             "pqn_enabled": self.pqn_orchestrator is not None
         }
+
+    def _handle_shorts_command(self, text: str, username: str, user_id: str, role: str) -> Optional[str]:
+        """
+        Handle YouTube Shorts commands by routing to Shorts module.
+
+        Commands:
+        - !createshort <topic> - Create and upload Short (OWNER or #1 MAGADOOM leader)
+        - !shortstatus - Check generation status
+        - !shortstats - View statistics
+
+        Args:
+            text: Command text
+            username: User's display name
+            user_id: User's YouTube ID
+            role: User's role (OWNER, MODERATOR, VIEWER)
+
+        Returns:
+            str: Response message, or None if command failed
+        """
+        try:
+            from modules.communication.youtube_shorts.src.chat_commands import get_shorts_handler
+
+            # Get Shorts handler instance
+            shorts_handler = get_shorts_handler()
+
+            # Route to Shorts module
+            response = shorts_handler.handle_shorts_command(
+                text=text,
+                username=username,
+                user_id=user_id,
+                role=role
+            )
+
+            if response:
+                logger.info(f"🎬 YouTube Shorts response: {response[:100]}")
+                return response
+            else:
+                logger.debug(f"🎬 Shorts command '{text}' returned None (not processed)")
+                return None
+
+        except Exception as e:
+            logger.error(f"🎬❌ Shorts command failed: {e}", exc_info=True)
+            return f"@{username} 🎬 Error processing Shorts command. Try again later."
 
     def _check_pqn_command(self, text: str) -> bool:
         """Check if message contains PQN research commands."""
