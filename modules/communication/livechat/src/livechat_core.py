@@ -790,29 +790,39 @@ class LiveChatCore:
                             logger.info(f"📊 Target available: {rotation_decision['target_available']} units")
                             logger.info(f"💡 Recommendation: {rotation_decision['recommendation']}")
 
-                            # TODO: Implement graceful rotation
-                            # This requires:
-                            # 1. Gracefully stop current polling
-                            # 2. Reinitialize YouTube service with target credential set
-                            # 3. Update self.youtube and self.quota_poller references
-                            # 4. Resume polling with new credentials
-                            # For now, log the decision (actual rotation implementation in next commit)
-                            logger.warning(f"🔄 ROTATION DECISION LOGGED - Manual rotation required to Set {target_set}")
+                            # Execute graceful credential rotation
+                            logger.info(f"🔄 EXECUTING ROTATION from Set {current_set} to Set {target_set}")
 
-                            # Update session.json with rotation recommendation
-                            session_logger = get_session_logger()
-                            if session_logger:
-                                session_logger.log_event({
-                                    "event": "rotation_recommended",
-                                    "timestamp": datetime.now().isoformat(),
-                                    "current_set": current_set,
-                                    "target_set": target_set,
-                                    "urgency": urgency,
-                                    "reason": reason,
-                                    "current_available": rotation_decision['current_available'],
-                                    "target_available": rotation_decision['target_available'],
-                                    "recommendation": rotation_decision['recommendation']
-                                })
+                            try:
+                                # Import youtube_auth module for service reinitialization
+                                from modules.platform_integration.youtube_auth.src.youtube_auth import get_authenticated_service
+
+                                # Get new YouTube service with target credential set
+                                logger.info(f"🔄 Reinitializing YouTube service with Set {target_set} credentials...")
+                                new_youtube = get_authenticated_service(token_index=target_set)
+
+                                if new_youtube:
+                                    # Update service reference
+                                    old_service = self.youtube
+                                    self.youtube = new_youtube
+
+                                    # Reinitialize quota poller with new service
+                                    if hasattr(new_youtube, 'quota_manager'):
+                                        self.quota_poller = QuotaAwarePoller(new_youtube.quota_manager)
+                                        logger.info(f"🔄 QuotaAwarePoller reinitialized with Set {target_set}")
+
+                                    logger.critical(f"✅ ROTATION SUCCESSFUL: Now using Set {target_set} credentials")
+                                    logger.info(f"📊 Available quota on Set {target_set}: {rotation_decision['target_available']} units")
+
+                                    # Continue polling with new credentials
+                                    # No need to stop - next poll will use new service
+                                else:
+                                    logger.error(f"❌ ROTATION FAILED: Could not get service for Set {target_set}")
+                                    logger.warning(f"⚠️ Continuing with Set {current_set} credentials")
+
+                            except Exception as rotation_error:
+                                logger.error(f"❌ ROTATION FAILED: {rotation_error}", exc_info=True)
+                                logger.warning(f"⚠️ Continuing with Set {current_set} credentials")
 
                     except Exception as e:
                         logger.error(f"🔄❌ Rotation check failed: {e}", exc_info=True)
