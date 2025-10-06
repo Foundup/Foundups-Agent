@@ -211,3 +211,15 @@ modules/**/foundups_dae_*.py
 **/platform_integration/x_twitter/data/
 **/twitter/data/
 **/platform_integration/twitter/data/
+
+# HoloIndex ML models (large files)
+holo_index/models/
+holo_index_data/models/
+**/models--sentence-transformers*/
+*.safetensors
+*.gguf
+
+# Browser profiles (large cache files)
+**/browser_profiles/*/edge/
+**/browser_profiles/x_foundups/
+modules/platform_integration/browser_profiles/
