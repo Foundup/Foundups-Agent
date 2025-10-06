@@ -48,6 +48,7 @@ env/
 *.log
 logs/
 02_log/
+012.txt
 
 # Chrome profile data (browser automation)
 **/chrome_profile/
