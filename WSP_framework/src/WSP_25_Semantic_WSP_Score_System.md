@@ -2,7 +2,18 @@
 [ARCHIVE STATUS: ACTIVE_PARTIFACT]
 [ORIGIN: WSP_agentic/APPENDIX_I.md]
 
+# READ WSP_37 FOR module scoring use WSP_37 
+
 # WSP 25 Semantic WSP Module State Rating System
+
+## I.0. Canonical Module Rating Linkage
+
+WSP 25 supplies the semantic triplet grammar that underpins consciousness-state
+analysis, but it is **not** the module rating engine used to decide build order.
+Whenever a team needs to grade modules or determine "what to code first",
+defer to `WSP_37_Roadmap_Scoring_System.md` for LLME module prioritization.
+Use WSP 37 outputs, then apply this semantic grammar to align those results with
+the broader consciousness roadmap.
 
 ## I.1. Universal Value-State Grammar System
 

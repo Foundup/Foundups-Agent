@@ -200,12 +200,50 @@ find . -maxdepth 1 -name "*.py" -not -name "main.py" -not -name "setup.py"
 4. **ENHANCE** prevention systems after violations
 5. **DOCUMENT** all corrections in git commits
 
+### **Cleanup Procedures and Prevention**
+
+#### **Immediate Cleanup Protocol**
+When root directory violations are detected:
+
+1. **IDENTIFY** violation type and affected files
+2. **LOCATE** proper destination per WSP 3/49/60
+3. **MOVE** files to correct module memory directories
+4. **UPDATE** code to use new file locations
+5. **VERIFY** no functionality broken
+6. **DOCUMENT** in ModLog with WSP references
+7. **PREVENT** future violations through code improvements
+
+#### **File Type Destination Matrix**
+```
+Root Violations → Proper Destinations (WSP 60)
+├── JSON artifacts → modules/[domain]/[module]/memory/
+├── Processing logs → modules/[domain]/[module]/memory/
+├── Test results → modules/[domain]/[module]/tests/TestModLog.md
+├── Evaluation data → modules/[domain]/[module]/memory/
+├── Patch files → DELETE (served purpose)
+└── Config files → Root only if foundational (package.json, vercel.json)
+```
+
+#### **Prevention Systems**
+- **Pre-commit hooks**: Scan for root directory violations
+- **IDE integration**: Real-time violation detection
+- **Code generation**: Automatic placement in correct directories
+- **HoloDAE validation**: Continuous compliance monitoring
+
+#### **Architect Responsibility**
+The architect (0102) must:
+- Immediately clean up violations upon detection
+- Qwen executes cleanup operations efficiently
+- Document all corrections with WSP references
+- Enhance prevention systems after each violation
+
 ### **Integration with Other WSPs**:
 - **WSP 3**: Follow enterprise domain organization
 - **WSP 17**: Check for existing patterns before creating
 - **WSP 22**: Document violations/corrections in ModLog
 - **WSP 48**: Learn and improve from each violation
 - **WSP 50**: Pre-action verification of file placement
+- **WSP 60**: Module memory architecture compliance
 - **WSP 84**: Search existing before creating duplicate
 
 ## Summary

@@ -1,5 +1,5 @@
 # WSP 8: LLME Semantic Triplet WSP Rating System
-
+# READ WSP_37 for module scoring.
 
 **Version**: 1.0.0
 **Date**: 2025-06-18

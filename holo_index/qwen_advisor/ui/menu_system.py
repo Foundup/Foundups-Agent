@@ -30,49 +30,69 @@ class HoloDAEMenuSystem:
             '9': ('👁️ Start Monitoring', 'Toggle continuous operation'),
             '10': ('🧵 Chain-of-Thought Log', 'View AI decision process'),
             '11': ('🐌 Slow Mode', 'Enable recursive feedback (2-3s delays)'),
-            '12': ('🧠 Pattern Memory', 'View learned interventions')
+            '12': ('🧠 Pattern Memory', 'View learned interventions'),
+            '13': ('🛰 MCP Hook Map', 'Inspect registered connectors & health'),
+            '14': ('📡 MCP Action Log', 'Review recent MCP tool activity'),
+            '15': ('🔧 PID Detective', 'Detect & manage HoloDAE processes'),
+            '16': ('📊 Execution Log Analyzer', 'Process massive logs for HoloDAE improvement')
         }
 
     def show_main_menu(self) -> None:
-        """Display the main HoloDAE menu for 0102"""
-        print("\n" + "="*80)
-        print("🧠 [THINKING] HoloDAE MONITORING MENU - Observe 0102 Agent Intelligence")
-        print("="*80)
-        print("👤 FOR 012 HUMANS | 👁️ Watch 0102's Chain-of-Thought | 🎯 See Agent Decisions")
-        print("="*80)
+        """Display the main HoloDAE menu for 0102 and 012 observers"""
+        print("\n" + "=" * 84)
+        print("🧠 HoloDAE Observatory • 0102 Autonomy w/ 012 Oversight")
+        print("👤 012 Observers | 👁️ Chain-of-Thought Feed | 🛰 MCP Hook Telemetry")
+        print("=" * 84)
         print()
-
-        print("🚀 0. LAUNCH HOLODAE - Start Continuous Monitoring (Like YouTube DAE)")
+        print("🚀 0. LAUNCH HOLODAE - Start autonomous monitoring loop")
         print()
-        print("🎯 --- PRIMARY FEATURES (Core Vibecoding Prevention) ---")
+        print("🎯 CORE PREVENTION (Stay out of vibecoding)")
         for i in range(1, 5):
-            if str(i) in self.menu_options:
-                name, desc = self.menu_options[str(i)]
-                emoji = name.split()[0]  # Get the emoji from the name
-                display_name = ' '.join(name.split()[1:])  # Remove emoji from display
+            option = str(i)
+            if option in self.menu_options:
+                name, desc = self.menu_options[option]
+                emoji = name.split()[0]
+                display_name = ' '.join(name.split()[1:])
                 print(f"{i}. {emoji} {display_name} - {desc}")
         print()
-        print("🛠️ --- SECONDARY FEATURES (Support Systems) ---")
+        print("🛠 SUPPORT SYSTEMS (Diagnostics)")
         for i in range(5, 9):
-            if str(i) in self.menu_options:
-                name, desc = self.menu_options[str(i)]
-                emoji = name.split()[0]  # Get the emoji from the name
-                display_name = ' '.join(name.split()[1:])  # Remove emoji from display
+            option = str(i)
+            if option in self.menu_options:
+                name, desc = self.menu_options[option]
+                emoji = name.split()[0]
+                display_name = ' '.join(name.split()[1:])
                 print(f"{i}. {emoji} {display_name} - {desc}")
         print()
-        print("🔄 --- CONTINUOUS MONITORING CONTROLS ---")
+        print("👁 CONTINUOUS OBSERVABILITY")
         for i in range(9, 13):
-            if str(i) in self.menu_options:
-                name, desc = self.menu_options[str(i)]
-                emoji = name.split()[0]  # Get the emoji from the name
-                display_name = ' '.join(name.split()[1:])  # Remove emoji from display
+            option = str(i)
+            if option in self.menu_options:
+                name, desc = self.menu_options[option]
+                emoji = name.split()[0]
+                display_name = ' '.join(name.split()[1:])
                 print(f"{i}. {emoji} {display_name} - {desc}")
         print()
-        print("⚙️ --- SYSTEM CONTROLS ---")
+        print("🛰 MCP RESEARCH BRIDGE")
+        for option in ['13', '14']:
+            if option in self.menu_options:
+                name, desc = self.menu_options[option]
+                emoji = name.split()[0]
+                display_name = ' '.join(name.split()[1:])
+                print(f"{option}. {emoji} {display_name} - {desc}")
+        print()
+        print("🔧 DAEMON MANAGEMENT")
+        for option in ['15', '16']:
+            if option in self.menu_options:
+                name, desc = self.menu_options[option]
+                emoji = name.split()[0]
+                display_name = ' '.join(name.split()[1:])
+                print(f"{option}. {emoji} {display_name} - {desc}")
+        print()
+        print("⚙️ SYSTEM CONTROLS")
         print("💾 98. [SAVE] Save Session Patterns - Store successful interventions")
         print("⬅️ 99. [BACK] Return to Main Menu")
-        print("="*80)
-
+        print("=" * 84)
     def show_sprint_dashboard(self, component_status: Optional[Dict[str, Any]] = None) -> None:
         """Display the WSP 37 sprint dashboard with component status"""
         print("\n[TARGET] HOLODAE LIVING SPRINT - WSP 37 PRIORITY MATRIX")

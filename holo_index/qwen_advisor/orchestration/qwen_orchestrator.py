@@ -6,7 +6,10 @@ This is the Qwen LLM orchestration layer that coordinates all HoloIndex componen
 Qwen acts as the "circulatory system" - continuously analyzing and orchestrating operations,
 then presenting findings to 0102 for arbitration.
 
-WSP Compliance: WSP 80 (Cube-Level DAE Orchestration)
+ENHANCEMENT (2025-10-07): Intent-driven component routing with breadcrumb event tracking
+Design Doc: docs/agentic_journals/HOLODAE_INTENT_ORCHESTRATION_DESIGN.md
+
+WSP Compliance: WSP 80 (Cube-Level DAE Orchestration), WSP 48 (Recursive Learning)
 """
 
 import logging
@@ -17,6 +20,26 @@ from pathlib import Path
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+# Intent Classification Integration
+from holo_index.intent_classifier import get_classifier, IntentType
+
+# Breadcrumb Tracer for event tracking
+from holo_index.adaptive_learning.breadcrumb_tracer import get_tracer
+
+# PHASE 3: Output Composition Integration
+from holo_index.output_composer import get_composer
+
+# PHASE 4: Feedback Learning Integration
+from holo_index.feedback_learner import get_learner
+
+# MCP Integration imports
+try:
+    from modules.ai_intelligence.ric_dae.src.mcp_tools import ResearchIngestionMCP
+    MCP_AVAILABLE = True
+except ImportError:
+    MCP_AVAILABLE = False
+    ResearchIngestionMCP = None
+
 
 COMPONENT_META = {
     'health_analysis': ('💊✅', 'Health & WSP Compliance'),
@@ -26,6 +49,41 @@ COMPONENT_META = {
     'pattern_coach': ('🧠', 'Pattern Coach'),
     'orphan_analysis': ('👻', 'Orphan Analysis'),
     'wsp_documentation_guardian': ('📚', 'WSP Documentation Guardian'),
+}
+
+# Intent-to-Component Routing Map (ENHANCEMENT 2025-10-07)
+# Maps IntentType to relevant components for smart routing
+INTENT_COMPONENT_MAP = {
+    IntentType.DOC_LOOKUP: [
+        'wsp_documentation_guardian',  # Primary - WSP/README/INTERFACE docs
+        'module_analysis'              # Secondary - module context
+    ],
+    IntentType.CODE_LOCATION: [
+        'module_analysis',             # Primary - find files/modules
+        'orphan_analysis',             # Secondary - check if orphaned
+        'file_size_monitor'            # Secondary - large file warnings
+    ],
+    IntentType.MODULE_HEALTH: [
+        'health_analysis',             # Primary - WSP compliance
+        'vibecoding_analysis',         # Secondary - pattern violations
+        'orphan_analysis',             # Secondary - orphaned files
+        'file_size_monitor'            # Secondary - size issues
+    ],
+    IntentType.RESEARCH: [
+        'pattern_coach',               # Primary - explain patterns
+        'wsp_documentation_guardian',  # Secondary - WSP context
+        # MCP tools called separately for RESEARCH intent
+    ],
+    IntentType.GENERAL: [
+        # All components - fallback for ambiguous queries
+        'health_analysis',
+        'vibecoding_analysis',
+        'file_size_monitor',
+        'module_analysis',
+        'pattern_coach',
+        'orphan_analysis',
+        'wsp_documentation_guardian'
+    ]
 }
 
 # WSP Documentation Guardian Configuration
@@ -51,7 +109,7 @@ WSP_DOC_CONFIG = {
 class QwenOrchestrator:
     """Primary orchestrator for HoloDAE - Qwen's decision-making and coordination layer"""
 
-    def __init__(self) -> None:
+    def __init__(self, coordinator=None) -> None:
         """Initialize the Qwen orchestrator"""
         self._ensure_utf8_console()
         self.logger = logging.getLogger('holodae_activity')
@@ -61,6 +119,7 @@ class QwenOrchestrator:
         self._last_modules: List[str] = []
         self._last_executed_components: List[str] = []
         self.repo_root = Path(__file__).resolve().parents[3]
+        self.coordinator = coordinator  # Reference to HoloDAECoordinator for MCP logging
 
         # Initialize QWEN filtering attributes
         self._intent_filters = {}
@@ -68,9 +127,205 @@ class QwenOrchestrator:
         self._max_suggestions = 10
         self._deduplicate_alerts = False
 
+        # ENHANCEMENT (2025-10-07): Intent classifier for smart routing
+        self.intent_classifier = get_classifier()
+        self._log_chain_of_thought("INTENT-INIT", "🎯 Intent classifier initialized")
+
+        # ENHANCEMENT (2025-10-07): Breadcrumb tracer for event tracking
+        self.breadcrumb_tracer = get_tracer()
+        self._log_chain_of_thought("BREADCRUMB-INIT", "🍞 Breadcrumb tracer initialized")
+
+        # PHASE 3 (2025-10-07): Output composition for structured, deduplicated output
+        self.output_composer = get_composer()
+        self._log_chain_of_thought("COMPOSER-INIT", "📝 Output composer initialized")
+
+        # PHASE 4 (2025-10-07): Feedback learner for recursive improvement
+        self.feedback_learner = get_learner()
+        self._log_chain_of_thought("LEARNER-INIT", "📊 Feedback learner initialized")
+
+        # Initialize MCP integration
+        self.mcp_client = None
+        if MCP_AVAILABLE:
+            try:
+                self.mcp_client = ResearchIngestionMCP()
+                self._log_chain_of_thought("MCP-INIT", "🔗 Research MCP client initialized successfully")
+            except Exception as e:
+                self._log_chain_of_thought("MCP-ERROR", f"🔗 MCP client initialization failed: {e}")
+                self.mcp_client = None
+
     def _format_component_display(self, component_name: str) -> str:
         emoji, label = COMPONENT_META.get(component_name, ('', component_name.replace('_', ' ').title()))
         return f"{emoji} {label}".strip()
+
+    def _call_research_mcp_tools(self, query: str, context: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Call ricDAE MCP tools for research-augmented analysis
+
+        Returns list of research insights that can enhance the analysis
+        """
+        if not self.mcp_client:
+            self._log_chain_of_thought("MCP-SKIP", "🔗 MCP client not available")
+            return []
+
+        insights = []
+
+        try:
+            # Call literature_search for relevant queries
+            if self._should_call_literature_search(query):
+                self._log_chain_of_thought("MCP-TOOL", "🔍 Calling literature_search MCP tool")
+                search_results = self.mcp_client.literature_search(query, limit=5)
+                if search_results:
+                    insights.extend(search_results)
+                    self._log_chain_of_thought("MCP-RESULT", f"📚 Found {len(search_results)} literature results")
+                    # Record MCP tool call in coordinator's action log
+                    self._record_mcp_tool_call("literature_search", query, len(search_results))
+
+            # Call trend_digest for research queries
+            if self._should_call_trend_digest(query, context):
+                self._log_chain_of_thought("MCP-TOOL", "📈 Calling trend_digest MCP tool")
+                trend_results = self.mcp_client.trend_digest(days=7)
+                if trend_results:
+                    insights.extend(trend_results)
+                    self._log_chain_of_thought("MCP-RESULT", f"📊 Found {len(trend_results)} trend insights")
+                    # Record MCP tool call in coordinator's action log
+                    self._record_mcp_tool_call("trend_digest", query, len(trend_results))
+
+            # Call research_update to check for new research
+            if self._should_call_research_update(query):
+                self._log_chain_of_thought("MCP-TOOL", "🆕 Calling research_update MCP tool")
+                update_results = self.mcp_client.research_update()
+                if update_results:
+                    insights.extend(update_results)
+                    self._log_chain_of_thought("MCP-RESULT", f"🔄 Found {len(update_results)} research updates")
+                    # Record MCP tool call in coordinator's action log
+                    self._record_mcp_tool_call("research_update", query, len(update_results))
+
+        except Exception as e:
+            self._log_chain_of_thought("MCP-ERROR", f"🔗 MCP tool call failed: {e}")
+
+        return insights
+
+    def _should_call_literature_search(self, query: str) -> bool:
+        """Determine if literature_search should be called for this query"""
+        research_keywords = ['research', 'paper', 'study', 'neural', 'ai', 'ml', 'algorithm']
+        return any(keyword in query.lower() for keyword in research_keywords)
+
+    def _should_call_trend_digest(self, query: str, context: Dict[str, Any]) -> bool:
+        """Determine if trend_digest should be called"""
+        trend_keywords = ['trend', 'latest', 'recent', 'new', 'update', 'progress']
+        return any(keyword in query.lower() for keyword in trend_keywords)
+
+    def _should_call_research_update(self, query: str) -> bool:
+        """Determine if research_update should be called"""
+        update_keywords = ['update', 'new', 'latest', 'recent', 'fresh']
+        return any(keyword in query.lower() for keyword in update_keywords)
+
+    def _learn_from_mcp_usage(self, query: str, mcp_insights: List[Dict[str, Any]], context: Dict[str, Any]):
+        """
+        RECURSIVE LEARNING: Learn from successful MCP tool usage to improve future orchestration
+
+        This enables HoloDAE to continuously improve its intelligence by:
+        1. Learning which queries benefit from MCP tools
+        2. Adapting tool selection based on success patterns
+        3. Building knowledge of effective tool combinations
+        """
+        try:
+            # Extract learning insights from MCP usage
+            learning_insights = {
+                "query": query,
+                "mcp_tools_used": [],
+                "insights_found": len(mcp_insights),
+                "tool_effectiveness": {},
+                "query_patterns": self._extract_query_patterns(query),
+                "timestamp": datetime.now().isoformat()
+            }
+
+            # Analyze which tools were called and their effectiveness
+            if self._should_call_literature_search(query):
+                learning_insights["mcp_tools_used"].append("literature_search")
+                literature_results = [i for i in mcp_insights if i.get("type") == "literature_result"]
+                learning_insights["tool_effectiveness"]["literature_search"] = len(literature_results)
+
+            if self._should_call_trend_digest(query, context):
+                learning_insights["mcp_tools_used"].append("trend_digest")
+                trend_results = [i for i in mcp_insights if i.get("type") == "trend_analysis"]
+                learning_insights["tool_effectiveness"]["trend_digest"] = len(trend_results)
+
+            if self._should_call_research_update(query):
+                learning_insights["mcp_tools_used"].append("research_update")
+                update_results = [i for i in mcp_insights if i.get("type") == "research_update"]
+                learning_insights["tool_effectiveness"]["research_update"] = len(update_results)
+
+            # Store learning for future use
+            self._store_mcp_learning(learning_insights)
+
+            # Update pattern coach with MCP effectiveness data
+            self._update_pattern_coach_with_mcp_data(learning_insights)
+
+            self._log_chain_of_thought("MCP-LEARNING", f"🧠 Learned from {len(learning_insights['mcp_tools_used'])} MCP tools")
+
+        except Exception as e:
+            self._log_chain_of_thought("MCP-LEARNING-ERROR", f"Failed to learn from MCP usage: {e}")
+
+    def _extract_query_patterns(self, query: str) -> List[str]:
+        """Extract patterns from queries that trigger MCP tool usage"""
+        patterns = []
+        query_lower = query.lower()
+
+        if any(word in query_lower for word in ['research', 'paper', 'study']):
+            patterns.append("academic_research")
+        if any(word in query_lower for word in ['neural', 'ai', 'ml', 'algorithm']):
+            patterns.append("ai_technology")
+        if any(word in query_lower for word in ['trend', 'latest', 'recent']):
+            patterns.append("current_trends")
+        if any(word in query_lower for word in ['quantum', 'hybrid']):
+            patterns.append("advanced_tech")
+
+        return patterns
+
+    def _store_mcp_learning(self, learning_insights: Dict[str, Any]):
+        """Store MCP learning data for future orchestration improvement"""
+        # This would typically store to a persistent learning database
+        # For now, we maintain it in memory and log it
+        if not hasattr(self, '_mcp_learning_history'):
+            self._mcp_learning_history = []
+
+        self._mcp_learning_history.append(learning_insights)
+
+        # Keep only recent learning (last 100 entries)
+        if len(self._mcp_learning_history) > 100:
+            self._mcp_learning_history = self._mcp_learning_history[-100:]
+
+    def _update_pattern_coach_with_mcp_data(self, learning_insights: Dict[str, Any]):
+        """Update pattern coach with MCP effectiveness data for better future decisions"""
+        # This enables the pattern coach to learn which MCP tools work well for different query types
+        patterns = learning_insights.get("query_patterns", [])
+        tools_used = learning_insights.get("mcp_tools_used", [])
+        effectiveness = learning_insights.get("tool_effectiveness", {})
+
+        # Log pattern learning for transparency
+        for pattern in patterns:
+            effective_tools = [tool for tool in tools_used if effectiveness.get(tool, 0) > 0]
+            if effective_tools:
+                self._log_chain_of_thought("PATTERN-LEARNED",
+                    f"📊 Pattern '{pattern}' effectively uses: {', '.join(effective_tools)}")
+
+    def _record_mcp_tool_call(self, tool_name: str, query: str, result_count: int):
+        """Record MCP tool call in the coordinator's action log"""
+        if not self.coordinator:
+            return
+
+        try:
+            payload = {
+                'query': query,
+                'module': 'modules/ai_intelligence/ric_dae',
+                'tool_name': tool_name,
+                'result_count': result_count,
+                'notes': [f"MCP tool '{tool_name}' called for query '{query}'", f"Returned {result_count} results"]
+            }
+            self.coordinator._record_mcp_event('tool_call', payload)
+        except Exception as e:
+            self._log_chain_of_thought("MCP-LOG-ERROR", f"Failed to record MCP tool call: {e}")
 
     def _ensure_utf8_console(self) -> None:
         if os.name != 'nt':
@@ -108,7 +363,11 @@ class QwenOrchestrator:
         return MonitoringResult(active_files, task_pattern)
 
     def orchestrate_holoindex_request(self, query: str, search_results: Dict[str, Any]) -> str:
-        """Handle incoming HoloIndex request with chain-of-thought orchestration"""
+        """
+        Handle incoming HoloIndex request with intent-driven orchestration
+
+        ENHANCEMENT (2025-10-07): Integrated intent classification and breadcrumb event tracking
+        """
         involved_files = self._extract_files_from_results(search_results)
         involved_modules = self._extract_modules_from_files(involved_files)
 
@@ -127,11 +386,41 @@ class QwenOrchestrator:
             self._log_chain_of_thought("DECISION", "No files to analyze - returning early")
             return "[HOLODAE-ANALYZE] No files found to analyze"
 
-        context = self._build_orchestration_context(query, involved_files, involved_modules)
+        # ENHANCEMENT: Classify intent using new intent classifier
+        intent_classification = self.intent_classifier.classify(query)
+        intent = intent_classification.intent
 
-        # NEW: QWEN-CONTROLLED OUTPUT: Filter based on intent before any processing
-        intent = context.get("query_intent", "standard")
-        output_filter = self._get_output_filter_for_intent(intent)
+        # BREADCRUMB EVENT: Intent classification
+        self.breadcrumb_tracer.add_action(
+            'intent_classification',
+            intent.value,
+            f"Query classified as {intent.value} (confidence: {intent_classification.confidence:.2f})",
+            query
+        )
+
+        self._log_chain_of_thought(
+            "INTENT",
+            f"🎯 Classified as {intent.value.upper()} (confidence: {intent_classification.confidence:.2f}, patterns: {len(intent_classification.patterns_matched)})"
+        )
+
+        context = self._build_orchestration_context(query, involved_files, involved_modules, intent)
+
+        # Legacy intent mapping for backward compatibility with output filters
+        legacy_intent = self._map_intent_to_legacy(intent)
+        output_filter = self._get_output_filter_for_intent(legacy_intent)
+
+        # PHASE 5: MCP Integration Separation (Intent-Gated)
+        # Only call MCP research tools for RESEARCH intent
+        mcp_insights = []
+        if intent == IntentType.RESEARCH:
+            self._log_chain_of_thought("MCP-GATE", "🔬 RESEARCH intent detected - calling MCP tools")
+            mcp_insights = self._call_research_mcp_tools(query, context)
+            if mcp_insights:
+                self._log_chain_of_thought("MCP-RESEARCH", f"🔍 Retrieved {len(mcp_insights)} research insights")
+                # RECURSIVE LEARNING: Learn from successful MCP tool usage
+                self._learn_from_mcp_usage(query, mcp_insights, context)
+        else:
+            self._log_chain_of_thought("MCP-SKIP", f"⏭️ Intent {intent.value} - skipping MCP research tools")
 
         # Log detected intent (always shown for transparency)
         if intent == "fix_error":
@@ -141,13 +430,53 @@ class QwenOrchestrator:
         elif intent == "explore":
             self._log_chain_of_thought("INTENT", "🔍 Exploration mode - full analysis")
 
-        # Get orchestration decisions and filter based on intent
-        raw_decisions = self._get_orchestration_decisions(context)
+        # ENHANCEMENT: Get intent-based component routing
+        base_components = INTENT_COMPONENT_MAP.get(intent, INTENT_COMPONENT_MAP[IntentType.GENERAL])
+
+        # PHASE 4: Apply feedback learning to filter components
+        components_to_execute = self.feedback_learner.get_filtered_components(
+            intent=intent,
+            available_components=base_components,
+            threshold=0.3  # Filter components with weight < 0.3
+        )
+
+        # BREADCRUMB EVENT: Component routing decision
+        all_components = list(COMPONENT_META.keys())
+        components_filtered = [c for c in all_components if c not in components_to_execute]
+
+        self.breadcrumb_tracer.add_discovery(
+            'component_routing',
+            f"routed_{intent.value}",
+            f"Selected {len(components_to_execute)} relevant, filtered {len(components_filtered)} noisy"
+        )
+
+        self._log_chain_of_thought(
+            "ROUTING",
+            f"📍 Intent {intent.value} → {len(components_to_execute)} components selected (filtered {len(components_filtered)})"
+        )
+
+        # Get orchestration decisions for selected components only
+        raw_decisions = self._get_orchestration_decisions_for_components(
+            context, components_to_execute
+        )
         orchestration_decisions = self._filter_orchestration_decisions(raw_decisions, output_filter)
 
         # Execute analysis with filtered output
+        import time
+        start_time = time.time()
+
         analysis_report = self._execute_orchestrated_analysis_filtered(
             query, involved_files, involved_modules, orchestration_decisions, output_filter
+        )
+
+        duration_ms = int((time.time() - start_time) * 1000)
+
+        # BREADCRUMB EVENT: Orchestration execution
+        self.breadcrumb_tracer.add_action(
+            'orchestration_execution',
+            f"executed_{len(orchestration_decisions)}_components",
+            f"Executed {len(orchestration_decisions)} components in {duration_ms}ms",
+            query
         )
 
         # Calculate effectiveness (filtered logging)
@@ -159,8 +488,43 @@ class QwenOrchestrator:
         if output_filter["show_performance_logs"]:
             self._log_chain_of_thought("EFFECTIVENESS", f"Analysis effectiveness: {effectiveness:.2f}")
 
-        # Return intent-aware formatted response
-        return self._format_intent_aware_response(intent, analysis_report)
+        # PHASE 3: Output Composition - Structure and deduplicate output
+        # Collect alerts from analysis_report
+        collected_alerts = []
+        for line in analysis_report.split('\n'):
+            if any(keyword in line.upper() for keyword in ['WARNING', 'VIOLATION', 'STALE', 'ALERT', 'ERROR']):
+                collected_alerts.append(line.strip())
+
+        # Format MCP insights if available
+        mcp_section = None
+        if mcp_insights:
+            mcp_lines = []
+            for insight in mcp_insights[:3]:  # Limit to top 3 insights
+                tool_name = insight.get('tool_name', 'Unknown')
+                result = insight.get('result', 'No result')
+                mcp_lines.append(f"  - [{tool_name}] {result[:200]}...")  # Truncate long results
+            mcp_section = '\n'.join(mcp_lines)
+
+        # Compose structured output with context-aware formatting
+        composed = self.output_composer.compose(
+            intent_classification=intent_classification,
+            findings=analysis_report,
+            mcp_results=mcp_section,
+            alerts=collected_alerts if collected_alerts else None,
+            query=query,
+            search_results=search_results  # Pass search results for CODE_LOCATION
+        )
+
+        # BREADCRUMB EVENT: Output composition
+        self.breadcrumb_tracer.add_action(
+            'output_composition',
+            f"composed_{intent.value}",
+            f"Composed {len(composed.full_output)} chars with {len(collected_alerts)} alerts",
+            query
+        )
+
+        # Return composed output (replaces legacy format_intent_aware_response)
+        return composed.full_output
 
     def _get_output_filter_for_intent(self, intent: str) -> Dict[str, bool]:
         """
@@ -369,6 +733,85 @@ class QwenOrchestrator:
         """Return latest executed component list for downstream consumers"""
         return {'executed_components': self._last_executed_components.copy()}
 
+    def record_feedback(self, query: str, intent: IntentType, components: List[str], rating: str, notes: str = "") -> Optional[str]:
+        """
+        PHASE 4: Record user feedback for recursive learning
+
+        Args:
+            query: The original query
+            intent: Classified intent type
+            components: Components that were executed
+            rating: "good", "noisy", or "missing"
+            notes: Optional notes about the feedback
+
+        Returns:
+            Feedback ID if recorded, None if error
+        """
+        from holo_index.feedback_learner import FeedbackRating, FeedbackDimensions
+
+        # Map string rating to enum
+        rating_map = {
+            "good": FeedbackRating.GOOD,
+            "noisy": FeedbackRating.NOISY,
+            "missing": FeedbackRating.MISSING
+        }
+
+        feedback_rating = rating_map.get(rating.lower())
+        if not feedback_rating:
+            self._log_chain_of_thought("FEEDBACK-ERROR", f"Invalid rating: {rating}")
+            return None
+
+        # For advanced ratings, parse dimensions from notes
+        dimensions = None
+        if "relevance:" in notes.lower():
+            # Parse dimension scores from notes (format: "relevance:0.8 noise:0.2 ...")
+            dimensions = self._parse_feedback_dimensions(notes)
+
+        # Record feedback
+        feedback_id = self.feedback_learner.record_feedback(
+            query=query,
+            intent=intent,
+            components_executed=components,
+            rating=feedback_rating,
+            dimensions=dimensions,
+            notes=notes
+        )
+
+        if feedback_id:
+            self._log_chain_of_thought("FEEDBACK-RECORDED", f"✅ Feedback recorded: {feedback_id}")
+
+            # BREADCRUMB EVENT: Feedback learning
+            self.breadcrumb_tracer.add_action(
+                'feedback_learning',
+                f"feedback_{rating}",
+                f"Recorded {rating} feedback for {len(components)} components",
+                query
+            )
+
+        return feedback_id
+
+    def _parse_feedback_dimensions(self, notes: str) -> Optional[object]:
+        """Parse FeedbackDimensions from notes string"""
+        from holo_index.feedback_learner import FeedbackDimensions
+        import re
+
+        try:
+            # Extract dimension scores (format: "relevance:0.8 noise:0.2 completeness:0.9 efficiency:0.7")
+            relevance = float(re.search(r'relevance:(\d+\.?\d*)', notes, re.I).group(1)) if re.search(r'relevance:', notes, re.I) else 0.5
+            noise_level = float(re.search(r'noise:(\d+\.?\d*)', notes, re.I).group(1)) if re.search(r'noise:', notes, re.I) else 0.5
+            completeness = float(re.search(r'completeness:(\d+\.?\d*)', notes, re.I).group(1)) if re.search(r'completeness:', notes, re.I) else 0.5
+            token_efficiency = float(re.search(r'efficiency:(\d+\.?\d*)', notes, re.I).group(1)) if re.search(r'efficiency:', notes, re.I) else 0.5
+
+            return FeedbackDimensions(
+                relevance=relevance,
+                noise_level=noise_level,
+                completeness=completeness,
+                token_efficiency=token_efficiency
+            )
+        except Exception as e:
+            self._log_chain_of_thought("FEEDBACK-PARSE-ERROR", f"Failed to parse dimensions: {e}")
+            return None
+
     def _extract_files_from_results(self, search_results: Dict[str, Any]) -> List[str]:
         """Extract file paths from HoloIndex search results"""
         files: List[str] = []
@@ -449,26 +892,38 @@ class QwenOrchestrator:
         query: str,
         files: List[str],
         modules: List[str],
+        intent: IntentType = None
     ) -> Dict[str, Any]:
-        """Build context dictionary for orchestration decisions"""
-        lower_query = query.lower()
-        intent = self._detect_query_intent(query)
+        """
+        Build context dictionary for orchestration decisions
 
-        # Only check health if intent is exploration or explicitly requested
-        should_check_health = (intent == "explore" or
-                              'health' in lower_query or
-                              'audit' in lower_query)
+        ENHANCEMENT (2025-10-07): Added intent parameter for new classification system
+        """
+        lower_query = query.lower()
+
+        # Use new intent if provided, otherwise fall back to legacy detection
+        if intent is None:
+            legacy_intent = self._detect_query_intent(query)
+        else:
+            legacy_intent = self._map_intent_to_legacy(intent)
+
+        # Only check health if intent is MODULE_HEALTH or GENERAL
+        should_check_health = (
+            intent in [IntentType.MODULE_HEALTH, IntentType.GENERAL] if intent
+            else (legacy_intent == "explore" or 'health' in lower_query)
+        )
 
         return {
             "query": query,
-            "query_intent": intent,
+            "query_intent": legacy_intent,  # Legacy field for backward compat
+            "intent_type": intent,  # New field for intent-based routing
             "files_count": len(files),
             "modules_count": len(modules),
             "query_keywords": lower_query.split(),
             "is_search_request": True,
             "has_files": bool(files),
             "has_modules": bool(modules),
-            "query_contains_health": should_check_health,  # Smart detection based on intent
+            "query_contains_health": should_check_health,
             "query_contains_vibecoding": any(kw in lower_query for kw in ['vibe', 'pattern', 'behavior', 'coach']),
             "query_contains_module": any(kw in lower_query for kw in ['module', 'create', 'refactor']),
             "query_contains_error": any(kw in lower_query for kw in ['error', 'fix', 'debug', 'issue']),
@@ -570,6 +1025,57 @@ class QwenOrchestrator:
                     f"SKIP {display_name} (confidence: {confidence:.2f}) - insufficient trigger strength",
                 )
         return decisions
+
+    def _get_orchestration_decisions_for_components(
+        self,
+        context: Dict[str, Any],
+        allowed_components: List[str]
+    ) -> List[Dict[str, Any]]:
+        """
+        ENHANCEMENT (2025-10-07): Get orchestration decisions for specific components only
+
+        This method filters component execution based on intent-driven routing.
+        Only components in allowed_components list are considered.
+
+        Args:
+            context: Orchestration context dictionary
+            allowed_components: List of component names to consider
+
+        Returns:
+            List of orchestration decisions for allowed components only
+        """
+        # Get all decisions
+        all_decisions = self._get_orchestration_decisions(context)
+
+        # Filter to only allowed components
+        filtered_decisions = [
+            decision for decision in all_decisions
+            if decision['component_name'] in allowed_components
+        ]
+
+        return filtered_decisions
+
+    def _map_intent_to_legacy(self, intent: IntentType) -> str:
+        """
+        ENHANCEMENT (2025-10-07): Map new IntentType to legacy intent strings
+
+        For backward compatibility with existing output filter system.
+
+        Args:
+            intent: New IntentType enum
+
+        Returns:
+            Legacy intent string
+        """
+        intent_mapping = {
+            IntentType.DOC_LOOKUP: "wsp_manage",
+            IntentType.CODE_LOCATION: "locate_code",
+            IntentType.MODULE_HEALTH: "explore",
+            IntentType.RESEARCH: "explore",
+            IntentType.GENERAL: "standard"
+        }
+
+        return intent_mapping.get(intent, "standard")
 
     def _execute_orchestrated_analysis(
         self,

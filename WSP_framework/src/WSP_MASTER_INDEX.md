@@ -102,7 +102,7 @@ Protocols that govern day-to-day operations and development processes.
 | WSP 32 | 0102 Reading Flow Protocol | Active | 0102 reading and comprehension strategy | WSP 31, WSP 50 | Reading strategy, comprehension |
 | WSP 33 | Autonomous Module Implementation Workflow | Active | Comprehensive autonomous module implementation | WSP 1, WSP 30, WSP 55 | Autonomous development, zen coding |
 | WSP 34 | Git Operations Protocol | Active | Git workflow and operations | WSP 7, WSP 34 | Version control, git operations |
-| WSP 35 | Module Execution Automation | Active | Module execution and automation | WSP 30, WSP 55 | Execution automation, workflow |
+| WSP 35 | HoloIndex Qwen Advisor Execution Plan | Active | HoloIndex Qwen advisor integration and execution | WSP 30, WSP 55 | Qwen advisor, HoloIndex integration |
 | WSP 36 | Agentic Core | Active | Core agentic system implementation | WSP 13, WSP 38, WSP 39 | Core systems, agentic implementation |
 | WSP 37 | Roadmap Scoring System | Active | Cube color visualization and roadmap derived from WSP 25/44 semantic state progression | WSP 25, WSP 15, WSP 8 | Visual roadmap management within unified framework |
 | WSP 38 | Agentic Activation Protocol | Active | Agent activation and initialization | WSP 36, WSP 39 | Agent activation, initialization |
@@ -144,7 +144,7 @@ Advanced protocols for complex system behaviors and architectural concerns.
 |-----|------|--------|---------|--------------|----------|
 | WSP 60 | Module Memory Architecture | Active | Memory management for autonomous modules | WSP 1, WSP 3 | Memory architecture, persistence |
 | WSP 61 | Theoretical Physics Foundation Protocol | Active | Theoretical physics foundations for quantum-cognitive development | WSP 54, WSP 60, WSP 47, WSP 22 | Theoretical foundations, quantum mechanics, historical context |
-| WSP 62 | Large File and Refactoring Enforcement Protocol | Active | Automated file size management and refactoring enforcement | WSP 4, WSP 47, WSP 54, WSP 49 | File size thresholds, refactoring enforcement, modular architecture |
+| WSP 62 | Large File and Refactoring Enforcement Protocol | Active | Automated file size management with WSP 87 tiered thresholds (800/1000/1500) and enforced refactoring | WSP 4, WSP 47, WSP 54, WSP 49 | File size tiers, refactoring enforcement, modular architecture |
 | WSP 63 | Component Directory Organization and Scaling Protocol | Active | Component directory organization, scaling, and 0102 navigation | WSP 62, WSP 49, WSP 1, WSP 22 | Directory organization, component scaling, 0102 comprehension |
 | WSP 64 | Violation Prevention Protocol - Zen Learning System | Active | Violation prevention through zen coding pattern learning and memory enhancement | WSP 50, WSP 57, WSP 60, WSP 54 | Violation prevention, zen learning, pattern recognition, autonomous enhancement |
 | WSP 65 | Component Consolidation Protocol | Active | Systematic consolidation of redundant components into unified systems | WSP 1, WSP 3, WSP 22, WSP 30, WSP 33, WSP 40, WSP 47, WSP 54, WSP 57 | Component consolidation, architectural violations, code utilization, zen coding |
@@ -172,6 +172,7 @@ Advanced protocols for complex system behaviors and architectural concerns.
 | WSP 87 | Code Navigation Protocol | Active | Establishes navigation-based code discovery replacing ineffective fingerprint system; uses NAVIGATION.py semantic mapping, in-code navigation comments, and problem->solution indexing | WSP 50, WSP 84, WSP 86 | Navigation index, semantic discovery, anti-vibecoding, problem mapping |
 | WSP 88 | Vibecoded Module Remediation | Active | Establishes repeatable process for detecting, auditing, and remediating vibecoded modules while maintaining WSP compliance without disrupting active DAEs | WSP 84, WSP 87, WSP 50 | Vibecoding remediation, module audit, archive process, DAE preservation |
 | WSP 89 | Production Deployment Infrastructure Protocol | Active | Comprehensive production deployment infrastructure including automated setup, service orchestration, security hardening, and scaling patterns for Ubuntu VPS and Google Cloud | WSP 49, WSP 71, WSP 1, WSP 22 | Production deployment, infrastructure automation, service orchestration, security hardening |
+| WSP 90 | UTF-8 Encoding Enforcement Protocol | Active | Prevents UnicodeEncodeError on Windows by enforcing UTF-8 encoding across all Python modules through mandatory header blocks, file encoding declarations, and ASCII-safe output patterns | WSP 1, WSP 49, WSP 64 | UTF-8 enforcement, Windows compatibility, Unicode handling, encoding standards |
 
 ### PLATFORM INTEGRATION MODULES (Non-WSP Components)
 For platform/module catalogs, see `WSP_framework/src/MODULE_MASTER.md`.
@@ -238,12 +239,12 @@ See WSP 48 (Recursive Self-Improvement) and WSP 70 (System Status Reporting) for
 
 ## [U+1F4CA] WSP STATUS SUMMARY
 
- - **Total WSPs**: 86 (numbered 00-89)
- - **Active WSPs**: 84 (all except WSP 18, 43, 86)
+ - **Total WSPs**: 87 (numbered 00-90)
+ - **Active WSPs**: 85 (all except WSP 18, 43, 86)
  - **Available Slots**: 1 (WSP 18)
  - **Deprecated WSPs**: 1 (WSP 43 -> superseded by WSP 25/44 for emergence/state tracking)
  - **Superseded WSPs**: 1 (WSP 86 -> superseded by WSP 87)
- - **Layers**: Entry 00; Foundation 1-19; Operational 20-39; Advanced 40-59; Memory/Knowledge 60-88
+ - **Layers**: Entry 00; Foundation 1-19; Operational 20-39; Advanced 40-59; Memory/Knowledge 60-90
 
 ### Key Architectural Features:
 - **Three-State Architecture**: WSP_knowledge (State 0), WSP_framework (State 1), WSP_agentic (State 2)

@@ -1,10 +1,10 @@
 """
 YouTube Shorts Orchestrator
 
-Manages the complete 012↔0102 interaction flow:
+Manages the complete 012ↁE102 interaction flow:
 1. 012 provides topic
 2. 0102 enhances prompt
-3. Veo 3 generates video
+3. Veo 3 or Sora2 generates video
 4. Upload to YouTube
 5. Report back to 012
 
@@ -20,6 +20,7 @@ import logging
 from pathlib import Path
 from typing import Optional, Dict
 from .veo3_generator import Veo3Generator, Veo3GenerationError, InsufficientCreditsError
+from .sora2_generator import Sora2GenerationError
 from .youtube_uploader import YouTubeShortsUploader, YouTubeUploadError
 
 # Initialize logger for daemon monitoring
@@ -33,19 +34,37 @@ class ShortsOrchestrator:
     Coordinates the full flow from topic input to YouTube upload.
     """
 
-    def __init__(self, channel: str = "move2japan"):
+    def __init__(self, channel: str = "move2japan", default_engine: str = "veo3"):
         """
         Initialize orchestrator with generator and uploader.
 
         Args:
             channel: YouTube channel to use ("move2japan" or "undaodu")
                     Default: "move2japan" for Move2Japan talking baby Shorts
+            default_engine: Preferred generator ('veo3', 'sora2', or 'auto')
         """
 
         logger.info("🎬 [SHORTS-INIT] Initializing YouTube Shorts Orchestrator")
         logger.info(f"📺 [SHORTS-INIT] Target channel: {channel.upper()}")
 
-        self.generator = Veo3Generator()
+        self.default_engine = (default_engine or "veo3").lower()
+        if self.default_engine not in {"veo3", "sora2", "auto"}:
+            logger.warning("[SHORTS-INIT] Unknown engine '%s', defaulting to Veo3", self.default_engine)
+            self.default_engine = "veo3"
+
+        self.generators: Dict[str, object] = {}
+        bootstrap_engine = "veo3" if self.default_engine == "auto" else self.default_engine
+        try:
+            self.generator = self._get_generator(bootstrap_engine)
+            self.last_engine_used = bootstrap_engine
+        except ImportError as exc:
+            if bootstrap_engine != "veo3":
+                raise
+            logger.warning("[SHORTS-INIT] Veo3 unavailable (%s); falling back to Sora2", exc)
+            self.default_engine = "sora2"
+            self.generator = self._get_generator("sora2")
+            self.last_engine_used = "sora2"
+
         self.uploader = YouTubeShortsUploader(channel=channel)
         self.channel = channel
 
@@ -57,7 +76,7 @@ class ShortsOrchestrator:
         # Load existing memory
         self.shorts_memory = self._load_memory()
 
-        logger.info(f"✅ [SHORTS-INIT] Orchestrator initialized for {channel.upper()}")
+        logger.info(f"✁E[SHORTS-INIT] Orchestrator initialized for {channel.upper()}")
         logger.info(f"💾 [SHORTS-INIT] Memory: {len(self.shorts_memory)} Shorts tracked")
         logger.info(f"📁 [SHORTS-INIT] Memory file: {self.memory_file}")
 
@@ -73,6 +92,146 @@ class ShortsOrchestrator:
         with open(self.memory_file, 'w') as f:
             json.dump(self.shorts_memory, f, indent=2)
 
+    def _select_engine(self, topic: str, requested: Optional[str] = None) -> str:
+        """Determine which generator engine to use for a given topic."""
+
+        if requested:
+            normalized = requested.lower()
+            if normalized == 'auto':
+                return self._suggest_engine(topic)
+            if normalized in {'veo3', 'sora2'}:
+                return normalized
+            logger.warning("[SHORTS-ENGINE] Unknown requested engine '%s' - falling back", requested)
+
+        if self.default_engine == 'sora2':
+            return 'sora2'
+
+        suggested = self._suggest_engine(topic)
+        if suggested == 'sora2':
+            return 'sora2'
+
+        return 'veo3'
+
+    def _suggest_engine(self, topic: str) -> str:
+        """Heuristic auto-selection between Veo3 and Sora2."""
+
+        topic_lower = topic.lower()
+        sora_keywords = {"live action", "photorealistic", "realistic", "cinematic", "documentary", "hyperreal", "movie", "film", "human"}
+        if any(keyword in topic_lower for keyword in sora_keywords):
+            return 'sora2'
+
+        return 'veo3'
+
+    def _get_generator(self, engine: str):
+        """
+        Lazy-load generator instances with graceful fallbacks.
+
+        Catches ImportError specifically to handle missing dependencies.
+        Falls back from Veo3 → Sora2 automatically if Veo3 unavailable.
+        Prevents infinite recursion if both generators fail.
+        """
+        import sys
+
+        normalized = (engine or 'veo3').lower()
+        if normalized == 'auto':
+            normalized = self._suggest_engine('')
+
+        logger.info(f"[SHORTS-ENGINE] 🔍 Requesting {normalized.upper()} generator")
+        logger.debug(f"[SHORTS-ENGINE] Currently cached generators: {list(self.generators.keys())}")
+
+        # Return cached generator if available
+        if normalized in self.generators:
+            logger.debug(f"[SHORTS-ENGINE] ✅ Using cached {normalized.upper()} generator (no import needed)")
+            return self.generators[normalized]
+
+        # Not cached - need to load
+        logger.info(f"[SHORTS-ENGINE] 📦 Loading {normalized.upper()} generator for first time...")
+        logger.debug(f"[SHORTS-ENGINE] Python: {sys.executable}")
+
+        try:
+            if normalized == 'sora2':
+                logger.info(f"[SHORTS-ENGINE] 🔧 Importing Sora2Generator from sora2_generator.py...")
+                from .sora2_generator import Sora2Generator
+                logger.info(f"[SHORTS-ENGINE] 🔧 Instantiating Sora2Generator()...")
+                generator = Sora2Generator()
+                logger.info(f"[SHORTS-ENGINE] ✅ Sora2Generator loaded successfully")
+            else:
+                # Veo3Generator already imported at top
+                logger.info(f"[SHORTS-ENGINE] 🔧 Instantiating Veo3Generator() (already imported at module top)...")
+                generator = Veo3Generator()
+                logger.info(f"[SHORTS-ENGINE] ✅ Veo3Generator loaded successfully")
+
+        except ImportError as exc:
+            # SPECIFIC: Catch dependency import errors (google.genai, etc.)
+            logger.error(f"[SHORTS-ENGINE] ❌ {normalized.upper()} ImportError: {exc}")
+            logger.error(f"[SHORTS-ENGINE] 📍 Error type: {type(exc).__name__}")
+            logger.error(f"[SHORTS-ENGINE] 📍 Error details: {str(exc)}")
+
+            # Prevent infinite recursion: only fallback if not already trying Sora2
+            if normalized == 'veo3':
+                logger.warning(f"[SHORTS-ENGINE] 🔄 FALLBACK TRIGGERED: Veo3 → Sora2")
+                logger.warning(f"[SHORTS-ENGINE] 🔄 Reason: Veo3 dependencies missing ({exc})")
+                logger.warning(f"[SHORTS-ENGINE] 🔄 Attempting Sora2 as fallback...")
+                return self._get_generator('sora2')  # One-time fallback
+            else:
+                # Both generators failed - re-raise with helpful message
+                logger.error(f"[SHORTS-ENGINE] 🚨 CRITICAL: Both Veo3 AND Sora2 unavailable!")
+                logger.error(f"[SHORTS-ENGINE] 🚨 Veo3 failed with: {exc}")
+                logger.error(f"[SHORTS-ENGINE] 🚨 Sora2 ALSO failed (current error)")
+                logger.error(f"")
+                logger.error(f"[SHORTS-ENGINE] 🔍 TROUBLESHOOTING STEPS:")
+                logger.error(f"  1. Check package: pip show google-genai")
+                logger.error(f"  2. Reinstall: pip install google-genai --upgrade")
+                logger.error(f"  3. Test import: python -c 'import google.genai as genai; print(genai.__version__)'")
+                logger.error(f"  4. Python path: {sys.executable}")
+                logger.error(f"  5. Check if running in correct environment (venv/conda)")
+                logger.error(f"")
+                raise ImportError(f"No video generators available. Both Veo3 and Sora2 failed to load.") from exc
+
+        except Exception as exc:
+            # OTHER: Runtime errors (config, API keys, etc.)
+            logger.error(f"[SHORTS-ENGINE] ❌ {normalized.upper()} initialization failed (NON-IMPORT ERROR)")
+            logger.error(f"[SHORTS-ENGINE] 📍 Error type: {type(exc).__name__}")
+            logger.error(f"[SHORTS-ENGINE] 📍 Error details: {str(exc)}")
+            logger.warning(f"[SHORTS-ENGINE] ⚠️ NOT falling back - this is a runtime error, not missing dependencies")
+            raise  # Don't fallback on runtime errors, only import errors
+
+        # Cache and return the successfully loaded generator
+        logger.info(f"[SHORTS-ENGINE] 💾 Caching {normalized.upper()} generator for future use")
+        self.generators[normalized] = generator
+        logger.info(f"[SHORTS-ENGINE] 📊 Available generators: {list(self.generators.keys())}")
+        return generator
+
+    def _select_engine(self, topic: str, requested: Optional[str] = None) -> str:
+        """Determine which generator engine to use for a given topic."""
+
+        if requested:
+            normalized = requested.lower()
+            if normalized == 'auto':
+                return self._suggest_engine(topic)
+            if normalized in {'veo3', 'sora2'}:
+                return normalized
+            logger.warning(f"[SHORTS-ENGINE] Unknown requested engine '{requested}' - falling back to auto")
+
+        if self.default_engine == 'sora2':
+            return 'sora2'
+
+        suggested = self._suggest_engine(topic)
+        if suggested == 'sora2':
+            return 'sora2'
+
+        return 'veo3'
+
+    def _suggest_engine(self, topic: str) -> str:
+        """Heuristic auto-selection between Veo3 and Sora2."""
+
+        topic_lower = topic.lower()
+        sora_keywords = {"live action", "photorealistic", "realistic", "cinematic", "documentary", "hyperreal", "movie", "film", "human"}
+        if any(keyword in topic_lower for keyword in sora_keywords):
+            return 'sora2'
+
+        return 'veo3'
+
     def create_and_upload(
         self,
         topic: str,
@@ -80,10 +239,11 @@ class ShortsOrchestrator:
         enhance_prompt: bool = True,
         fast_mode: bool = True,
         privacy: str = "public",
-        use_3act: bool = True
+        use_3act: bool = True,
+        engine: Optional[str] = None
     ) -> str:
         """
-        Complete 012↔0102 flow: Generate and upload Short.
+        Complete 012<->0102 flow: Generate and upload Short.
 
         Args:
             topic: Simple topic from 012 (e.g., "Cherry blossoms in Tokyo")
@@ -94,72 +254,81 @@ class ShortsOrchestrator:
             privacy: "public", "unlisted", or "private"
             use_3act: Use 3-act multi-clip system (recommended for 15s Shorts)
                      Default: True
+            engine: Force generator selection ('veo3', 'sora2', 'auto', or None)
 
         Returns:
             str: YouTube Shorts URL
 
         Raises:
             Veo3GenerationError: If video generation fails
+            Sora2GenerationError: If Sora2 generation fails
             YouTubeUploadError: If upload fails
             InsufficientCreditsError: If quota exceeded
 
         Notes:
-            - 3-act system: Setup → Shock → 0102 Reveal (baby IS 0102)
-            - Economics: 3×5s = $6 vs 30s = $12 (50% cheaper)
-            - Guaranteed 15s duration vs unpredictable single clip
+            - 3-act system: Setup -> Shock -> 0102 Reveal (baby IS 0102)
+            - Economics: 3x5s = $6 vs 30s = $12 (50% cheaper)
+            - Sora2 enables live-action cinematic prompts via OpenAI when selected
         """
 
-        print(f"\n{'='*60}")
-        print(f"🎬 YouTube Shorts Creation Flow - 012↔0102")
-        print(f"{'='*60}")
-        print(f"\n[012 Input] Topic: {topic}")
+        engine_to_use = self._select_engine(topic, engine)
+        generator = self._get_generator(engine_to_use)
+        self.generator = generator
+        self.last_engine_used = engine_to_use
+
+        print()
+        print("=" * 60)
+        print("YouTube Shorts Creation Flow - 012<->0102")
+        print("=" * 60)
+        print(f"[012 Input] Topic: {topic}")
+        print(f"  Engine: {engine_to_use.upper()}")
 
         start_time = time.time()
 
         try:
             # Step 1 & 2: Generate video
             # Use 3-act system for 15s, single clip for other durations
-            if use_3act and duration == 15:
-                print(f"\n[0102 Generating] Creating 3-act Short (Setup → Shock → Reveal)...")
-                video_path = self.generator.generate_three_act_short(
+            if use_3act and duration == 15 and hasattr(generator, "generate_three_act_short"):
+                print("[0102 Generating] Creating 3-act Short (Setup -> Shock -> Reveal)...")
+                video_path = generator.generate_three_act_short(
                     topic=topic,
                     fast_mode=fast_mode,
-                    mode="journal"  # Default to emergence journal POC
+                    mode="journal"
                 )
-                # 3-act system has its own prompting
-                video_prompt = f"3-act story: {topic}"
+                video_prompt = f"3-act story via {engine_to_use}: {topic}"
 
             else:
-                # Traditional single-clip generation
-                if enhance_prompt:
-                    print("\n[0102 Processing] Enhancing prompt with Gemini...")
-                    video_prompt = self.generator.enhance_prompt(topic)
+                if enhance_prompt and hasattr(generator, "enhance_prompt"):
+                    print("[0102 Processing] Enhancing prompt with Move2Japan style...")
+                    video_prompt = generator.enhance_prompt(topic)
                 else:
                     video_prompt = topic
 
-                print(f"\n[0102 Generating] Creating video with Veo 3...")
-                video_path = self.generator.generate_video(
+                print(f"[0102 Generating] Creating video with {engine_to_use.upper()}...")
+                video_path = generator.generate_video(
                     prompt=video_prompt,
                     duration=duration,
                     fast_mode=fast_mode
                 )
 
-            # Step 3: Prepare metadata for upload
-            title = topic[:100]  # YouTube max 100 chars
-            description = f"{topic}\n\nGenerated with AI for Move2Japan\n\n#Shorts #Japan #AI"
+            title = topic[:100]
+            description = f"""{topic}
+
+Generated with AI for Move2Japan
+
+#Shorts #Japan #AI"""
 
             tags = ["Shorts", "Japan", "Move2Japan", "AI"]
 
-            # Add topic-specific tags
-            if "cherry" in topic.lower() or "sakura" in topic.lower():
+            topic_lower = topic.lower()
+            if "cherry" in topic_lower or "sakura" in topic_lower:
                 tags.append("CherryBlossoms")
-            if "tokyo" in topic.lower():
+            if "tokyo" in topic_lower:
                 tags.append("Tokyo")
-            if "food" in topic.lower():
+            if "food" in topic_lower:
                 tags.append("JapaneseFood")
 
-            # Step 4: Upload to YouTube
-            print(f"\n[0102 Uploading] Posting to YouTube...")
+            print("[0102 Uploading] Posting to YouTube...")
             youtube_url = self.uploader.upload_short(
                 video_path=video_path,
                 title=title,
@@ -168,12 +337,11 @@ class ShortsOrchestrator:
                 privacy=privacy
             )
 
-            # Step 5: Save to memory
             elapsed_time = time.time() - start_time
-            estimated_cost = duration * self.generator.cost_per_second
+            estimated_cost = duration * getattr(generator, 'cost_per_second', 0.0)
 
             short_record = {
-                "id": youtube_url.split('/')[-1],  # Extract video ID
+                "id": youtube_url.split('/')[-1],
                 "topic": topic,
                 "prompt": video_prompt,
                 "video_path": video_path,
@@ -181,6 +349,7 @@ class ShortsOrchestrator:
                 "duration": duration,
                 "cost": estimated_cost,
                 "privacy": privacy,
+                "engine": engine_to_use,
                 "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 "processing_time": round(elapsed_time, 2),
                 "status": "uploaded"
@@ -189,42 +358,44 @@ class ShortsOrchestrator:
             self.shorts_memory.append(short_record)
             self._save_memory()
 
-            # Step 6: Report back to 012
-            print(f"\n{'='*60}")
-            print(f"✅ SHORT CREATED SUCCESSFULLY")
-            print(f"{'='*60}")
+            print()
+            print("=" * 60)
+            print("SHORT CREATED SUCCESSFULLY")
+            print("=" * 60)
             print(f"  Topic: {topic}")
             print(f"  URL: {youtube_url}")
             print(f"  Duration: {duration}s")
             print(f"  Cost: ${estimated_cost:.2f}")
+            print(f"  Engine: {engine_to_use.upper()}")
             print(f"  Processing time: {elapsed_time:.1f}s")
             print(f"  Privacy: {privacy}")
-            print(f"{'='*60}\n")
+            print("=" * 60)
+            print()
 
             return youtube_url
 
-        except Veo3GenerationError as e:
-            print(f"\n❌ [ERROR] Video generation failed: {e}")
+        except (Veo3GenerationError, Sora2GenerationError) as e:
+            print(f"[ERROR] Video generation failed: {e}")
             raise
 
         except YouTubeUploadError as e:
-            print(f"\n❌ [ERROR] YouTube upload failed: {e}")
+            print(f"[ERROR] YouTube upload failed: {e}")
             raise
 
         except InsufficientCreditsError as e:
-            print(f"\n❌ [ERROR] {e}")
+            print(f"[ERROR] {e}")
             raise
 
         except Exception as e:
-            print(f"\n❌ [ERROR] Unexpected error: {e}")
+            print(f"[ERROR] Unexpected error: {e}")
             raise
-
     def generate_video_only(
         self,
         topic: str,
         duration: int = 30,
         enhance_prompt: bool = True,
-        fast_mode: bool = True
+        fast_mode: bool = True,
+        engine: Optional[str] = None
     ) -> str:
         """
         Generate video without uploading.
@@ -232,19 +403,25 @@ class ShortsOrchestrator:
         Args:
             topic: Video topic
             duration: Video length in seconds
-            enhance_prompt: Use Gemini to enhance prompt
-            fast_mode: Use Veo 3 Fast
+            enhance_prompt: Use Gemini/Sora prompt enhancement when available
+            fast_mode: Generator-specific fast mode flag
+            engine: Optional override for generator selection
 
         Returns:
             str: Path to generated .mp4 file
         """
 
-        if enhance_prompt:
-            video_prompt = self.generator.enhance_prompt(topic)
+        engine_to_use = self._select_engine(topic, engine)
+        generator = self._get_generator(engine_to_use)
+        self.generator = generator
+        self.last_engine_used = engine_to_use
+
+        if enhance_prompt and hasattr(generator, 'enhance_prompt'):
+            video_prompt = generator.enhance_prompt(topic)
         else:
             video_prompt = topic
 
-        return self.generator.generate_video(
+        return generator.generate_video(
             prompt=video_prompt,
             duration=duration,
             fast_mode=fast_mode
@@ -294,12 +471,18 @@ class ShortsOrchestrator:
 
         uploaded_count = sum(1 for s in self.shorts_memory if s.get('status') == 'uploaded')
 
+        engine_usage: Dict[str, int] = {}
+        for short in self.shorts_memory:
+            engine_key = short.get('engine', 'veo3')
+            engine_usage[engine_key] = engine_usage.get(engine_key, 0) + 1
+
         return {
             "total_shorts": total_shorts,
             "uploaded": uploaded_count,
             "total_cost_usd": round(total_cost, 2),
             "total_duration_seconds": total_duration,
             "average_cost_per_short": round(total_cost / total_shorts, 2) if total_shorts > 0 else 0,
+            "engine_usage": engine_usage,
             "recent_shorts": self.shorts_memory[-5:]  # Last 5
         }
 
@@ -334,3 +517,8 @@ if __name__ == "__main__":
     #     duration=30
     # )
     # print(f"\nCreated Short: {url}")
+
+
+
+
+

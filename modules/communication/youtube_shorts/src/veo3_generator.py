@@ -18,15 +18,30 @@ from pathlib import Path
 from typing import Optional
 from dotenv import load_dotenv
 
-# Use newer google.genai SDK for Veo 3 video generation
-from google import genai
-from google.genai import types
+# Initialize logger FIRST for import debugging
+logger = logging.getLogger(__name__)
+
+# Use newer google.genai SDK for Veo 3 video generation (optional dependency)
+_GENAI_IMPORT_ERROR = None
+try:
+    import google.genai as genai
+    from google.genai import types
+    logger.info("[VEO3-IMPORT] ✅ google.genai imported successfully (version: %s)", getattr(genai, '__version__', 'unknown'))
+except ImportError as e:
+    genai = None  # type: ignore
+    types = None  # type: ignore
+    _GENAI_IMPORT_ERROR = e
+    logger.warning("[VEO3-IMPORT] ❌ google.genai not available: %s", e)
 
 # Keep generativeai for Gemini text (prompt enhancement)
-import google.generativeai as genai_legacy
-
-# Initialize logger for daemon monitoring
-logger = logging.getLogger(__name__)
+_GENAI_LEGACY_IMPORT_ERROR = None
+try:
+    import google.generativeai as genai_legacy
+    logger.info("[VEO3-IMPORT] google.generativeai imported successfully")
+except ImportError as e:
+    genai_legacy = None  # type: ignore
+    _GENAI_LEGACY_IMPORT_ERROR = e
+    logger.warning("[VEO3-IMPORT] google.generativeai not available: %s", e)
 
 
 class Veo3GenerationError(Exception):
@@ -60,6 +75,20 @@ class Veo3Generator:
 
         if not api_key:
             raise ValueError("GOOGLE_API_KEY not found in .env file")
+
+        if genai is None:
+            message = "google.genai is not installed. Install with: pip install google-genai --upgrade"
+            logger.error("[VEO3-INIT] %s", message)
+            if _GENAI_IMPORT_ERROR is not None:
+                raise ImportError(message) from _GENAI_IMPORT_ERROR
+            raise ImportError(message)
+
+        if genai_legacy is None:
+            message = "google.generativeai is not installed. Install with: pip install google-generativeai --upgrade"
+            logger.error("[VEO3-INIT] %s", message)
+            if _GENAI_LEGACY_IMPORT_ERROR is not None:
+                raise ImportError(message) from _GENAI_LEGACY_IMPORT_ERROR
+            raise ImportError(message)
 
         # Initialize Veo client (new SDK)
         self.client = genai.Client(api_key=api_key)
@@ -125,10 +154,15 @@ class Veo3Generator:
             # Generate video using new SDK
             logger.info(f"🚀 [VEO3-API] Calling Veo 3 API: {model_name}")
             logger.info(f"⚡ [VEO3-API] Fast mode: {fast_mode}")
+            logger.info(f"📐 [VEO3-API] Aspect ratio: 9:16 (vertical Shorts format)")
 
             operation = self.client.models.generate_videos(
                 model=model_name,
-                prompt=prompt
+                prompt=prompt,
+                config={
+                    'duration': f'{duration}s',
+                    'aspectRatio': '9:16'  # Vertical format for Shorts
+                }
             )
 
             # Poll for completion

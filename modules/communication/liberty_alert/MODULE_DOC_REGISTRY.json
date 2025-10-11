@@ -1,0 +1,215 @@
+{
+  "module_name": "liberty_alert",
+  "module_path": "O:\\Foundups-Agent\\modules\\communication\\liberty_alert",
+  "module_domain": "communication",
+  "documents": [
+    {
+      "doc_type": "wsp_protocol",
+      "file_path": "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\docs\\LIBERTY_ALERT_WSP_COMPLIANCE_CONFIG.md",
+      "title": "Liberty Alert WSP Compliance Configuration",
+      "purpose": "**Module**: liberty_alert",
+      "related_docs": [
+        "ModLog.md",
+        "INTERFACE.md",
+        "README.md"
+      ],
+      "cross_references": [
+        "WSP 49",
+        "WSP 64",
+        "WSP 3",
+        "WSP 22",
+        "WSP 57",
+        "WSP 83"
+      ],
+      "last_updated": "2025-10-11T12:50:25.193147"
+    },
+    {
+      "doc_type": "documentation",
+      "file_path": "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\docs\\QUICKSTART.md",
+      "title": "Liberty Alert - Quick Start Guide",
+      "purpose": "**Liberty Alert** is an open-source, off-grid mesh alert system that protects communities through real-time P2P notifications - no servers, no tracking, pure freedom.",
+      "related_docs": [
+        "INTERFACE.md",
+        "README.md"
+      ],
+      "cross_references": [
+        "WSP 49",
+        "WSP 60"
+      ],
+      "last_updated": "2025-10-11T12:50:25.194148"
+    },
+    {
+      "doc_type": "module_readme",
+      "file_path": "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\docs\\README.md",
+      "title": "Liberty Alert Documentation",
+      "purpose": "**Module**: liberty_alert",
+      "related_docs": [
+        "ModLog.md",
+        "INTERFACE.md",
+        "README.md"
+      ],
+      "cross_references": [
+        "WSP 11",
+        "WSP 49",
+        "WSP 60",
+        "WSP 22",
+        "WSP 34",
+        "WSP 83"
+      ],
+      "last_updated": "2025-10-11T12:50:25.194148"
+    },
+    {
+      "doc_type": "interface",
+      "file_path": "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\INTERFACE.md",
+      "title": "Liberty Alert Interface Specification (WSP 11)",
+      "purpose": "**Module**: liberty_alert",
+      "related_docs": [],
+      "cross_references": [
+        "WSP 11"
+      ],
+      "last_updated": "2025-10-11T12:50:25.195148"
+    },
+    {
+      "doc_type": "modlog",
+      "file_path": "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\ModLog.md",
+      "title": "Liberty Alert Module ModLog (WSP 22)",
+      "purpose": "<!-- ============================================================",
+      "related_docs": [
+        "ModLog.md",
+        "INTERFACE.md",
+        "README.md",
+        "ROADMAP.md"
+      ],
+      "cross_references": [
+        "WSP 1",
+        "WSP 50",
+        "WSP 57",
+        "WSP 15",
+        "WSP 11",
+        "WSP 85",
+        "WSP 90",
+        "WSP 64",
+        "WSP 49",
+        "WSP 22",
+        "WSP 3",
+        "WSP 60",
+        "WSP 5",
+        "WSP 83"
+      ],
+      "last_updated": "2025-10-11T12:50:25.197148"
+    },
+    {
+      "doc_type": "module_readme",
+      "file_path": "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\README.md",
+      "title": "Liberty Alert - Open Source Off-Grid Alert System",
+      "purpose": "**Status**: POC Development",
+      "related_docs": [],
+      "cross_references": [
+        "WSP 3"
+      ],
+      "last_updated": "2025-10-11T12:50:25.198147"
+    },
+    {
+      "doc_type": "roadmap",
+      "file_path": "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\ROADMAP.md",
+      "title": "Liberty Alert Development Roadmap",
+      "purpose": "**Module**: liberty_alert",
+      "related_docs": [
+        "ModLog.md"
+      ],
+      "cross_references": [
+        "WSP 2",
+        "WSP 11",
+        "WSP 49",
+        "WSP 3",
+        "WSP 22",
+        "WSP 60",
+        "WSP 4",
+        "WSP 57",
+        "WSP 5",
+        "WSP 83"
+      ],
+      "last_updated": "2025-10-11T12:50:25.198147"
+    },
+    {
+      "doc_type": "module_readme",
+      "file_path": "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\tests\\README.md",
+      "title": "Evade.Net Test Suite",
+      "purpose": "**Module**: evade_net",
+      "related_docs": [],
+      "cross_references": [
+        "WSP 5"
+      ],
+      "last_updated": "2025-10-11T12:50:25.199146"
+    },
+    {
+      "doc_type": "test_documentation",
+      "file_path": "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\tests\\TestModLog.md",
+      "title": "Liberty Alert Test Evolution Chronicle",
+      "purpose": "**Module**: liberty_alert",
+      "related_docs": [
+        "ModLog.md"
+      ],
+      "cross_references": [
+        "WSP 85",
+        "WSP 49",
+        "WSP 22",
+        "WSP 5",
+        "WSP 34"
+      ],
+      "last_updated": "2025-10-11T12:50:25.199146"
+    }
+  ],
+  "relationships": {
+    "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\docs\\LIBERTY_ALERT_WSP_COMPLIANCE_CONFIG.md": [
+      "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\ModLog.md",
+      "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\INTERFACE.md",
+      "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\README.md"
+    ],
+    "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\docs\\QUICKSTART.md": [
+      "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\INTERFACE.md",
+      "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\README.md"
+    ],
+    "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\docs\\README.md": [
+      "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\ModLog.md",
+      "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\INTERFACE.md",
+      "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\README.md"
+    ],
+    "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\INTERFACE.md": [],
+    "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\ModLog.md": [
+      "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\ModLog.md",
+      "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\INTERFACE.md",
+      "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\README.md",
+      "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\ROADMAP.md"
+    ],
+    "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\README.md": [],
+    "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\ROADMAP.md": [
+      "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\ModLog.md"
+    ],
+    "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\tests\\README.md": [],
+    "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\tests\\TestModLog.md": [
+      "O:\\Foundups-Agent\\modules\\communication\\liberty_alert\\ModLog.md"
+    ]
+  },
+  "wsp_implementations": [
+    "WSP 1",
+    "WSP 11",
+    "WSP 15",
+    "WSP 2",
+    "WSP 22",
+    "WSP 3",
+    "WSP 34",
+    "WSP 4",
+    "WSP 49",
+    "WSP 5",
+    "WSP 50",
+    "WSP 57",
+    "WSP 60",
+    "WSP 64",
+    "WSP 83",
+    "WSP 85",
+    "WSP 90"
+  ],
+  "linked_timestamp": "2025-10-11T12:50:25.200146",
+  "linker_version": "1.0.0"
+}

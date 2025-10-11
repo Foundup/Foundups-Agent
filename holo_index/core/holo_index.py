@@ -620,14 +620,15 @@ class HoloIndex:
                 return True
         return False
 
+
     def check_module_exists(self, module_name: str) -> Dict[str, Any]:
         """
         WSP Compliance: Check if a module exists before code generation.
         This method should be called by 0102 agents before creating ANY new code.
-
+    
         Args:
             module_name: Name of the module to check (e.g., "youtube_auth", "livechat")
-
+    
         Returns:
             Dict containing:
             - exists: bool - Whether the module exists
@@ -639,8 +640,11 @@ class HoloIndex:
             - recommendation: str - What 0102 should do next
         """
         from pathlib import Path
-
-        # Check all possible domains for the module
+    
+        project_root = Path(__file__).resolve().parents[2]
+        normalized = module_name.strip().strip("/\\")
+        normalized = normalized.replace("\\", "/")
+    
         domains = [
             "modules/ai_intelligence",
             "modules/communication",
@@ -652,37 +656,70 @@ class HoloIndex:
             "modules/gamification",
             "modules/blockchain"
         ]
-
-        module_path = None
+        domain_names = {Path(d).name for d in domains}
+    
+        candidate_paths = []
+        if normalized:
+            candidate_paths.append(project_root / normalized)
+            if normalized.startswith("modules/"):
+                parts = normalized.split("/")
+                if len(parts) >= 3:
+                    domain_part = parts[1]
+                    module_part = parts[2]
+                    candidate_paths.append(project_root / "modules" / domain_part / module_part)
+            else:
+                parts = normalized.split("/")
+                if len(parts) >= 2 and parts[0] in domain_names:
+                    domain_part = parts[0]
+                    module_part = parts[1]
+                    candidate_paths.append(project_root / "modules" / domain_part / module_part)
+                if len(parts) >= 3 and parts[0] == "modules":
+                    domain_part = parts[1]
+                    module_part = parts[2]
+                    candidate_paths.append(project_root / "modules" / domain_part / module_part)
+    
+        module_basename = normalized.split("/")[-1] if normalized else module_name.strip()
         for domain in domains:
-            candidate_path = Path(domain) / module_name
-            if candidate_path.exists() and candidate_path.is_dir():
-                module_path = candidate_path
+            domain_path = project_root / domain
+            candidate_paths.append(domain_path / module_basename)
+    
+        module_path = None
+        seen = set()
+        for candidate in candidate_paths:
+            resolved = candidate.resolve()
+            if resolved in seen:
+                continue
+            seen.add(resolved)
+            if resolved.exists() and resolved.is_dir():
+                module_path = resolved
                 break
-
+    
         if not module_path:
-            # Search in navigation entries for similar modules
             similar_modules = []
+            key = normalized.lower() if normalized else module_name.lower()
             for need, location in self.need_to.items():
-                if module_name.lower() in need.lower() or module_name.lower() in location.lower():
-                    # Extract module path from location
+                if key in need.lower() or key in location.lower():
                     path_parts = location.split('/')
                     if len(path_parts) >= 3 and path_parts[0] == 'modules':
-                        module_path_str = '/'.join(path_parts[:4])  # modules/domain/module
+                        module_path_str = '/'.join(path_parts[:4])
                         if module_path_str not in similar_modules:
                             similar_modules.append(module_path_str)
-
+    
             return {
                 "exists": False,
                 "module_name": module_name,
                 "similar_modules": similar_modules,
                 "recommendation": f"[BLOCKED] MODULE '{module_name}' DOES NOT EXIST - DO NOT CREATE IT! " +
-                                (f"Similar modules found: {', '.join(similar_modules)}. " if similar_modules else "") +
-                                "ENHANCE EXISTING MODULES - DO NOT VIBECODE (See WSP_84_Module_Evolution). " +
-                                "Use --search to find existing functionality FIRST before ANY code generation."
+                                   (f"Similar modules found: {', '.join(similar_modules)}. " if similar_modules else "") +
+                                   "ENHANCE EXISTING MODULES - DO NOT VIBECODE (See WSP_84_Module_Evolution). " +
+                                   "Use --search to find existing functionality FIRST before ANY code generation."
             }
-
-        # Module exists - check compliance
+    
+        try:
+            module_label = str(module_path.relative_to(project_root))
+        except ValueError:
+            module_label = str(module_path)
+    
         readme_exists = (module_path / "README.md").exists()
         interface_exists = (module_path / "INTERFACE.md").exists()
         roadmap_exists = (module_path / "ROADMAP.md").exists()
@@ -690,15 +727,14 @@ class HoloIndex:
         requirements_exists = (module_path / "requirements.txt").exists()
         tests_exist = (module_path / "tests").exists()
         memory_exists = (module_path / "memory").exists()
-
+    
         compliance_score = sum([
             readme_exists, interface_exists, roadmap_exists,
             modlog_exists, requirements_exists, tests_exist, memory_exists
         ])
-
+    
         wsp_compliance = "[VIOLATION] NON-COMPLIANT" if compliance_score < 7 else "[COMPLIANT] COMPLIANT"
-
-        # Check for health issues
+    
         health_warnings = []
         if not tests_exist:
             health_warnings.append("Missing tests directory (WSP 49)")
@@ -706,10 +742,10 @@ class HoloIndex:
             health_warnings.append("Missing README.md (WSP 22)")
         if not interface_exists:
             health_warnings.append("Missing INTERFACE.md (WSP 11)")
-
+    
         return {
             "exists": True,
-            "module_name": module_name,
+            "module_name": module_label,
             "path": str(module_path),
             "readme_exists": readme_exists,
             "interface_exists": interface_exists,
@@ -721,7 +757,7 @@ class HoloIndex:
             "wsp_compliance": wsp_compliance,
             "compliance_score": f"{compliance_score}/7",
             "health_warnings": health_warnings,
-            "recommendation": f"Module '{module_name}' exists at {module_path}. " +
-                            (f"WSP Compliance: {wsp_compliance}. " if wsp_compliance == "[VIOLATION] NON-COMPLIANT" else "[COMPLIANT] WSP Compliant. ") +
-                            ("MANDATORY: Read README.md and INTERFACE.md BEFORE making changes. " if readme_exists and interface_exists else "CRITICAL: Create missing documentation FIRST (WSP_22_Documentation). ")
+            "recommendation": f"Module '{module_label}' exists at {module_path}. " +
+                               (f"WSP Compliance: {wsp_compliance}. " if wsp_compliance == "[VIOLATION] NON-COMPLIANT" else "[COMPLIANT] WSP Compliant. ") +
+                               ("MANDATORY: Read README.md and INTERFACE.md BEFORE making changes. " if readme_exists and interface_exists else "CRITICAL: Create missing documentation FIRST (WSP_22_Documentation). ")
         }

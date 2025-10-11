@@ -19,7 +19,11 @@ This protocol implements comprehensive file size management and refactoring enfo
 ### 2.1. Default Threshold Definitions
 
 #### 2.1.1. Code Files
-- **Python Files (.py)**: 500 lines
+- **Python Files (.py)** (aligned with WSP 87):
+  - < 800 lines: OK
+  - 800-1000 lines: Guideline range – plan refactor
+  - 1000-1500 lines: Critical window – document remediation
+  - >=1500 lines: Violation; mandatory split
 - **JavaScript/TypeScript (.js/.ts)**: 400 lines
 - **Configuration Files (.json/.yaml/.toml)**: 200 lines
 - **Shell Scripts (.sh/.ps1)**: 300 lines
@@ -78,9 +82,9 @@ When a file exceeds its threshold:
 
 #### 3.1.2. Growth Rate Monitoring
 Monitor files approaching thresholds:
-- **80% threshold**: Display warning during development
-- **90% threshold**: Require documentation of growth plan
-- **95% threshold**: Mandatory refactoring review
+- **>=1200 lines (80% of 1500 hard limit)**: Display warning during development
+- **>=1350 lines (90% of hard limit)**: Require documented remediation plan
+- **>=1425 lines (95% of hard limit)**: Mandatory refactoring review
 
 ### 3.2. Enforcement Actions
 
@@ -107,7 +111,8 @@ def enforce_file_sizes():
 ### 3.3. Refactoring Requirements
 
 #### 3.3.1. Mandatory Refactoring Triggers
-- **File > 150% threshold**: Immediate refactoring required
+- **File > 1000 lines**: Enter critical remediation window; plan decomposition
+- **File >= 1500 lines**: Immediate refactoring required (hard limit per WSP 87)
 - **Class > 300 lines**: Split into multiple classes
 - **Function > 75 lines**: Extract sub-functions
 - **Config > 250 lines**: Modularize configuration
@@ -142,7 +147,7 @@ FMAS VALIDATION REPORT
 Structure: PASS
 Tests: PASS
 Size Compliance: FAIL
-  - src/large_module.py (687 lines > 500 threshold)
+  - src/large_module.py (1120 lines > 1000 guideline threshold)
   - config/complex_config.json (234 lines > 200 threshold)
   
 Refactoring Required: 2 files
@@ -276,7 +281,7 @@ AUTO_EXEMPT_PATTERNS = [
 ```python
 def test_size_detection():
     """Test WSP 62 size detection accuracy."""
-    large_file = create_test_file(600)  # Exceeds 500 line threshold
+    large_file = create_test_file(1100)  # Exceeds 1000 line critical window
     violations = size_validator.validate_file_sizes([large_file])
     assert len(violations) == 1
     assert violations[0].file_path == large_file

@@ -414,6 +414,11 @@ class LiveChatCore:
                 # Legacy processing mode
                 processed = self.message_processor.process_message(message)
             
+            # Check if message processor returned None (bot's own message filtered out)
+            if processed is None:
+                logger.debug(f"[MESSAGE-FILTER] ⏭️ Message from {author_name} was filtered out (likely bot's own message)")
+                return
+
             # Log ALL messages and their processing result
             logger.info(f"📨 [{author_name}] ({author_id}): {display_message[:100]}")
             if processed.get("has_consciousness"):
@@ -421,7 +426,7 @@ class LiveChatCore:
             if processed.get("has_whack_command"):
                 logger.info(f"🎮 WHACK COMMAND DETECTED from {author_name}!")
                 logger.info(f"🔍 DEBUG: Whack command message text: '{display_message}'")
-            
+
             # Debug log for slash commands
             if display_message and display_message.startswith('/'):
                 logger.info(f"🔍 SLASH COMMAND DETECTED: '{display_message}' from {author_name}")

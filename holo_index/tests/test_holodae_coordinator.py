@@ -11,6 +11,8 @@ import sys
 import os
 import json
 import tempfile
+import io
+from contextlib import redirect_stdout
 from pathlib import Path
 
 # Add parent directory to path
@@ -104,6 +106,34 @@ class TestHoloDAECoordinator(unittest.TestCase):
         # Should contain arbitration decisions
         self.assertIn('[0102-ARBITRATION]', result)
         self.assertIn('Arbitration Decisions:', result)
+
+
+    def test_mcp_activity_logging(self):
+        """MCP-enabled modules should register activity in the coordinator log"""
+        sample_results = {
+            'code': [{'location': 'modules/ai_intelligence/ric_dae/src/__init__.py', 'content': 'from . import *'}],
+            'wsps': []
+        }
+
+        self.coordinator.handle_holoindex_request('ric_dae mcp query', sample_results)
+
+        self.assertTrue(self.coordinator.mcp_action_log, 'Expected MCP log entries after ricDAE query')
+        latest = self.coordinator.mcp_action_log[0]
+        self.assertIn('timestamp', latest)
+        if latest.get('module'):
+            self.assertIn('ric_dae', latest['module'])
+
+    def test_show_mcp_helpers(self):
+        """Ensure MCP helper displays render without raising errors"""
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            self.coordinator.show_mcp_hook_status()
+        self.assertIn('MCP Hook Map', buf.getvalue())
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            self.coordinator.show_mcp_action_log()
+        self.assertIn('MCP Action Log', buf.getvalue())
 
 
 class TestEnhancedFeatures(unittest.TestCase):

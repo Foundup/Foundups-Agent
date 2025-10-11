@@ -594,22 +594,24 @@ def compute_file_hash(file_path):
 def get_file_size_thresholds():
     """
     Get default WSP 62 file size thresholds.
-    
+
     Returns:
-        dict: File extension to line threshold mapping
+        dict: File extension to line threshold mapping (warn/critical/hard).
     """
     return {
-        '.py': 500,
-        '.js': 400,
-        '.ts': 400,
-        '.json': 200,
-        '.yaml': 200,
-        '.yml': 200,
-        '.toml': 200,
-        '.sh': 300,
-        '.ps1': 300,
-        '.md': 1000
+        '.py': {'warn': 800, 'critical': 1000, 'hard': 1500},
+        '.js': {'warn': 400, 'critical': 400, 'hard': 600},
+        '.ts': {'warn': 400, 'critical': 400, 'hard': 600},
+        '.json': {'warn': 200, 'critical': 200, 'hard': 300},
+        '.yaml': {'warn': 200, 'critical': 200, 'hard': 300},
+        '.yml': {'warn': 200, 'critical': 200, 'hard': 300},
+        '.toml': {'warn': 200, 'critical': 200, 'hard': 300},
+        '.sh': {'warn': 300, 'critical': 300, 'hard': 450},
+        '.ps1': {'warn': 300, 'critical': 300, 'hard': 450},
+        '.md': {'warn': 1000, 'critical': 1000, 'hard': 1500}
     }
+
+
 
 def count_file_lines(file_path):
     """
@@ -695,18 +697,35 @@ def audit_file_sizes(modules_root, enable_wsp_62=False):
             if file_extension not in thresholds:
                 continue
                 
-            threshold = thresholds[file_extension]
+            threshold_data = thresholds[file_extension]
+            if isinstance(threshold_data, dict):
+                warn_limit = threshold_data.get('warn', threshold_data.get('critical', threshold_data.get('hard')))
+                critical_limit = threshold_data.get('critical', warn_limit)
+                hard_limit = threshold_data.get('hard', critical_limit)
+            else:
+                warn_limit = threshold_data
+                critical_limit = threshold_data
+                hard_limit = int(threshold_data * 1.5)
+
             line_count = count_file_lines(file_path)
-            
-            if line_count > threshold:
-                severity = "CRITICAL" if line_count > threshold * 1.5 else "WARNING"
-                findings.append(f"WSP 62 {severity}: {domain_path}/{relative_path} "
-                              f"({line_count} lines > {threshold} threshold)")
-                              
-            elif line_count > threshold * 0.9:  # 90% threshold
-                findings.append(f"WSP 62 APPROACHING: {domain_path}/{relative_path} "
-                              f"({line_count} lines, {threshold} threshold)")
-    
+
+            if line_count >= hard_limit:
+                findings.append(f"WSP 62 CRITICAL: {domain_path}/{relative_path} "
+                              f"({line_count} lines >= hard limit {hard_limit})")
+            elif line_count > critical_limit:
+                findings.append(f"WSP 62 WARNING: {domain_path}/{relative_path} "
+                              f"({line_count} lines > critical window {critical_limit})")
+            elif line_count >= warn_limit:
+                if warn_limit != critical_limit:
+                    findings.append(f"WSP 62 APPROACHING: {domain_path}/{relative_path} "
+                                  f"({line_count} lines within {warn_limit}-{critical_limit} guideline window)")
+                else:
+                    findings.append(f"WSP 62 APPROACHING: {domain_path}/{relative_path} "
+                                  f"({line_count} lines approaching limit {warn_limit})")
+            elif line_count >= int(warn_limit * 0.9):  # 90% watch threshold
+                findings.append(f"WSP 62 WATCH: {domain_path}/{relative_path} "
+                              f"({line_count} lines at 90% of limit {warn_limit})")
+
     return findings
 
 def audit_with_baseline_comparison(target_root, baseline_root):
@@ -1014,3 +1033,4 @@ def main():
 
 if __name__ == "__main__":
     main() 
+

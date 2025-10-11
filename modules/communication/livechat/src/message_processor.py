@@ -886,14 +886,17 @@ class MessageProcessor:
         Check if message contains YouTube Shorts commands.
 
         Commands:
-        - !createshort <topic> - Create and upload Short
+        - !createshort <topic> - Create and upload Short (auto engine)
+        - !shortsora2 <topic> - Create with Sora2 engine
+        - !shortveo3 <topic> - Create with Veo3 engine
+        - !short - List recent shorts
         - !shortstatus - Check generation status
         - !shortstats - View statistics
         """
-        shorts_commands = ['!createshort', '!shortstatus', '!shortstats']
+        shorts_commands = ['!createshort', '!shortsora2', '!shortveo3', '!short', '!shortstatus', '!shortstats']
         text_lower = text.lower().strip()
 
-        has_shorts = any(text_lower.startswith(cmd) for cmd in shorts_commands)
+        has_shorts = any(text_lower.startswith(cmd) if cmd != '!short' else text_lower == cmd for cmd in shorts_commands)
 
         if has_shorts:
             logger.info(f"🎬 Detected YouTube Shorts command: {text_lower}")
@@ -1144,9 +1147,12 @@ class MessageProcessor:
         Handle YouTube Shorts commands by routing to Shorts module.
 
         Commands:
-        - !createshort <topic> - Create and upload Short (OWNER or #1 MAGADOOM leader)
-        - !shortstatus - Check generation status
-        - !shortstats - View statistics
+        - !createshort <topic> - Create and upload Short (OWNER or Top 3 MAGADOOM mods)
+        - !shortsora2 <topic> - Create with Sora2 engine (OWNER or Top 3 MAGADOOM mods)
+        - !shortveo3 <topic> - Create with Veo3 engine (OWNER or Top 3 MAGADOOM mods)
+        - !short - List recent shorts (everyone)
+        - !shortstatus - Check generation status (everyone)
+        - !shortstats - View statistics (everyone)
 
         Args:
             text: Command text

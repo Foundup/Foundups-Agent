@@ -4,6 +4,30 @@
 
 HoloIndex has evolved from a search tool into the **autonomous intelligence foundation** for the entire FoundUps ecosystem. This is now the **green foundation board agent** that comes with every LEGO set.
 
+## 🔥 UPCOMING ENHANCEMENT: Intent-Driven Orchestration (2025-10-07)
+
+**Design Complete** - See `docs/agentic_journals/HOLODAE_INTENT_ORCHESTRATION_DESIGN.md`
+
+**Problem:** All components fire for every query → 87 warnings flood output → Relevant info buried
+**Solution:** Intent classification → Smart component routing → Structured output → 71% token reduction
+
+**Key Features:**
+- **Intent Classification**: Automatically detect 5 query types (DOC_LOOKUP, CODE_LOCATION, MODULE_HEALTH, RESEARCH, GENERAL)
+- **Smart Routing**: Only relevant components execute (not all 7 every time)
+- **Structured Output**: 4 priority sections (INTENT, FINDINGS, MCP, ALERTS)
+- **Alert Deduplication**: 87 "ModLog outdated" warnings → 1 line
+- **Feedback Learning**: Rate output (good/noisy/missing) → System learns and improves
+- **Breadcrumb Events**: Track all orchestration decisions for multi-agent learning
+
+**Token Efficiency:**
+- Before: ~10,000 tokens per query
+- After: ~2,900 tokens per query (71% reduction)
+- With learning: ~1,500 tokens after 1000 cycles (48% total reduction)
+
+**Architecture Preserved:** Qwen→0102→012 orchestration UNCHANGED (enhancement, not replacement)
+
+**Status:** Awaiting 012 decision to begin implementation
+
 ## Overview
 ## Current Status (2025-09-28)
 - ✅ **Active today:** classical pipeline (tokenisation ➜ SentenceTransformer embeddings ➜ ChromaDB) plus HoloDAE monitoring.

@@ -11,6 +11,7 @@ Canonical Index (consult before action):
 
 Enterprise Domain Map (WSP 3 – functional distribution):
 - `modules/ai_intelligence/` — AI logic, cognitive engines
+  - `holo_index/adaptive_learning/execution_log_analyzer/` — Mass execution log analysis for HoloDAE improvement
 - `modules/communication/` — chat, live interactions, protocols
 - `modules/platform_integration/` — external APIs, proxies, OAuth
 - `modules/infrastructure/` — agents, auth, core services
@@ -290,8 +291,9 @@ These modules are actively operational and ready for Phase 2 intelligence enhanc
 - **📝 Intent Manager**: `modules/communication/intent_manager/` — Meeting coordination
 - **📡 Presence Aggregator**: `modules/integration/presence_aggregator/` — Cross-platform monitoring
 - **🤝 Consent Engine**: `modules/communication/consent_engine/` — Intelligent prompting
-- **🚀 Session Launcher**: `modules/platform_integration/session_launcher/` — Multi-platform coordination  
+- **🚀 Session Launcher**: `modules/platform_integration/session_launcher/` — Multi-platform coordination
 - **📋 Post-Meeting Feedback**: `modules/ai_intelligence/post_meeting_feedback/` — WSP 25/44 learning
+- **🚨 Liberty Alert**: `modules/communication/liberty_alert/` — Open-source mesh alert system for community protection
 
 #### **Development Environment**
 - **💻 IDE FoundUps**: `modules/development/ide_foundups/` — Multi-agent VSCode system

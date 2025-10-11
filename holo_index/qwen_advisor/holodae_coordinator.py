@@ -19,7 +19,7 @@ import threading
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from collections import Counter
+from collections import Counter, deque
 from typing import Dict, List, Optional, Any, Tuple, Set
 
 SUMMARY_EMOJI_ALIASES = {
@@ -37,6 +37,7 @@ SUMMARY_EMOJI_ALIASES = {
 # Import our new modular components
 from .orchestration.qwen_orchestrator import QwenOrchestrator
 from .arbitration.mps_arbitrator import MPSArbitrator, ArbitrationDecision
+from holo_index.core.intelligent_subroutine_engine import IntelligentSubroutineEngine
 from .services.file_system_watcher import FileSystemWatcher
 from .services.context_analyzer import ContextAnalyzer
 from .models.work_context import WorkContext
@@ -58,7 +59,7 @@ class HoloDAECoordinator:
     def __init__(self):
         """Initialize the HoloDAE coordinator with all components"""
         # Core orchestration components
-        self.qwen_orchestrator = QwenOrchestrator()
+        self.qwen_orchestrator = QwenOrchestrator(coordinator=self)
         self.mps_arbitrator = MPSArbitrator()
 
         # Core services
@@ -83,6 +84,29 @@ class HoloDAECoordinator:
         # UI components
         self.menu_system = HoloDAEMenuSystem()
         self.status_display = StatusDisplay()
+
+        # MCP observability
+        self.mcp_action_log = deque(maxlen=100)
+        self.mcp_watchlist = [
+            {
+                'name': 'ricDAE Research Ingestion Cube',
+                'module': 'modules/ai_intelligence/ric_dae',
+                'description': 'Sovereign research ingestion MCP server',
+                'priority': 'P0'
+            },
+            {
+                'name': 'YouTube MCP Bridge',
+                'module': 'modules/communication/livechat',
+                'description': 'Live stream moderation MCP adapters',
+                'priority': 'P1'
+            },
+            {
+                'name': 'Whack-A-MCP Control',
+                'module': 'modules/gamification/whack_a_magat',
+                'description': 'Game loop MCP command surface',
+                'priority': 'P2'
+            }
+        ]
 
         # Environment + logging context
         self.repo_root = Path(__file__).resolve().parents[2]
@@ -186,6 +210,8 @@ class HoloDAECoordinator:
         module_summary = self._format_module_metrics_summary(module_metrics, alerts)
         if module_summary:
             final_report = f"{final_report}\n{module_summary}" if final_report else module_summary
+
+        self._track_mcp_activity(query, module_metrics, qwen_report)
 
         findings = self._extract_key_findings(alerts, module_metrics)
         actions_overview = self._extract_high_priority_actions(high_priority_decisions)
@@ -317,6 +343,625 @@ class HoloDAECoordinator:
         # Get component status (in full implementation, this would be real data)
         component_status = self._get_component_status()
         self.menu_system.show_sprint_dashboard(component_status)
+
+    def show_mcp_hook_status(self) -> None:
+        """Display MCP connector health for 012 oversight."""
+        status_rows = self._collect_mcp_watch_status()
+        print('\n🛰 MCP Hook Map — Research & Platform Connectors')
+        if not status_rows:
+            print("No MCP-aware modules detected. Trigger ricDAE ingestion to register connectors.")
+            return
+        for row in status_rows:
+            print(f"{row['icon']} {row['name']} ({row['priority']})")
+            print(f"   Path: {row['module']}")
+            print(f"   Health: {row['health']} | Size: {row['size']}")
+            if row['notes']:
+                for note in row['notes'][:3]:
+                    print(f"   - {note}")
+            print(f"   About: {row['description']}")
+            print()
+
+    def show_mcp_action_log(self, limit: int = 10) -> None:
+        """Render the recent MCP activity log for 012 observers."""
+        entries = list(self.mcp_action_log)[:limit]
+        print('\n📡 MCP Action Log — Recent Tool Activity')
+        if not entries:
+            print("No MCP activity recorded. Run HoloIndex against MCP-enabled modules to generate telemetry.")
+            return
+        for entry in entries:
+            timestamp = entry.get('timestamp', '??:??:??')
+            line = f"[{timestamp}] {entry.get('event_type', 'event').upper()}"
+            module = entry.get('module')
+            if module:
+                line += f" · {module}"
+            health = entry.get('health')
+            if health:
+                line += f" · {health}"
+            print(line)
+            notes = entry.get('notes') or []
+            for note in notes[:3]:
+                print(f"   - {note}")
+            query = entry.get('query')
+            if query:
+                print(f"   Query: {query}")
+            print()
+
+    def check_pid_health(self) -> List[str]:
+        """Quick health check for HoloDAE processes - returns list of issues with PID identification."""
+        issues = []
+
+        try:
+            from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
+            lock = get_instance_lock("holodae_daemon")
+
+            instance_summary = lock.get_instance_summary()
+            total_instances = instance_summary["total_instances"]
+            instances = instance_summary.get("instances", [])
+            current_pid = instance_summary["current_pid"]
+
+            # Analyze each instance to identify what they are
+            active_instances = []
+            orphan_instances = []
+            duplicate_launches = []
+
+            for instance in instances:
+                pid = instance.get('pid')
+                if not pid:
+                    continue
+
+                try:
+                    import psutil
+                    if psutil.pid_exists(pid):
+                        proc = psutil.Process(pid)
+                        cmdline = ' '.join(proc.cmdline()) if proc.cmdline() else 'unknown'
+                        name = proc.name()
+
+                        # Identify the type of HoloDAE process
+                        instance_type = self._identify_holodae_instance_type(cmdline, name, pid)
+
+                        active_instances.append({
+                            'pid': pid,
+                            'type': instance_type,
+                            'cmdline': cmdline[:100] + '...' if len(cmdline) > 100 else cmdline,
+                            'cpu_percent': proc.cpu_percent(),
+                            'memory_mb': proc.memory_info().rss / 1024 / 1024 if proc.memory_info() else 0
+                        })
+
+                        # Check for duplicate main.py launches
+                        if 'main.py' in cmdline and pid != current_pid:
+                            duplicate_launches.append(pid)
+
+                    else:
+                        orphan_instances.append(pid)
+
+                except ImportError:
+                    # Without psutil, basic identification
+                    if pid == current_pid:
+                        active_instances.append({'pid': pid, 'type': 'current_session', 'cmdline': 'current'})
+                    else:
+                        orphan_instances.append(pid)
+                except Exception:
+                    # Process might have died between checks
+                    orphan_instances.append(pid)
+
+            # Generate intelligent health report
+            if duplicate_launches:
+                issues.append(f"🚨 DUPLICATE LAUNCHES: {len(duplicate_launches)} extra main.py sessions detected")
+                issues.append(f"   PIDs: {', '.join(map(str, duplicate_launches))} - Kill these to prevent conflicts")
+
+            if orphan_instances:
+                issues.append(f"🪦 ORPHAN PROCESSES: {len(orphan_instances)} dead HoloDAE locks detected")
+                issues.append(f"   PIDs: {', '.join(map(str, orphan_instances))} - Safe to clean with option 15")
+
+            if len(active_instances) > 1:
+                # Multiple active instances - analyze if they're necessary
+                necessary_count = sum(1 for inst in active_instances if inst['type'] in ['current_session', 'daemon_monitor', 'specialized_analysis'])
+                duplicate_count = len(active_instances) - necessary_count
+
+                if duplicate_count > 0:
+                    issues.append(f"⚠️ POTENTIAL DUPLICATES: {duplicate_count} unnecessary instances detected")
+                    issues.append("   Review with PID Detective (option 15) to identify which to keep")
+
+                if necessary_count > 1:
+                    issues.append(f"ℹ️ MULTIPLE LEGITIMATE: {necessary_count} different HoloDAE tasks running")
+                    issues.append("   This is normal for specialized analysis workflows")
+
+            # Performance warnings
+            total_memory = sum(inst.get('memory_mb', 0) for inst in active_instances)
+            if total_memory > 1000:  # Over 1GB
+                issues.append(f"⚠️ HIGH MEMORY: {total_memory:.1f}MB total - Monitor system resources")
+
+            # Success message if everything is clean
+            if not issues:
+                if total_instances == 0:
+                    issues.append("✅ CLEAN: No HoloDAE processes currently running")
+                elif total_instances == 1:
+                    issues.append("✅ CLEAN: Single HoloDAE session running normally")
+                else:
+                    issues.append(f"✅ CLEAN: {total_instances} HoloDAE processes running normally")
+
+        except Exception as e:
+            issues.append(f"❌ PID health check failed: {e}")
+
+        return issues
+
+    def _identify_holodae_instance_type(self, cmdline: str, name: str, pid: int) -> str:
+        """Identify what type of HoloDAE process this is."""
+        cmdline_lower = cmdline.lower()
+
+        # Current session
+        if 'main.py' in cmdline_lower and 'python' in name.lower():
+            return 'main_menu_session'
+
+        # Daemon monitor
+        if 'holodae' in cmdline_lower and 'monitor' in cmdline_lower:
+            return 'daemon_monitor'
+
+        # MCP-related processes
+        if 'mcp' in cmdline_lower or 'research' in cmdline_lower:
+            return 'mcp_service'
+
+        # Analysis processes
+        if 'analysis' in cmdline_lower or 'intelligence' in cmdline_lower:
+            return 'analysis_worker'
+
+        # Specialized tasks
+        if 'pqn' in cmdline_lower:
+            return 'pqn_analysis'
+        if 'youtube' in cmdline_lower:
+            return 'youtube_analysis'
+        if 'social' in cmdline_lower:
+            return 'social_analysis'
+
+        # Generic daemon
+        if 'holodae' in cmdline_lower:
+            return 'holodae_daemon'
+
+        return 'unknown_holodae'
+
+    def _get_process_details(self, pid: int) -> Dict[str, Any]:
+        """Get detailed information about a specific process."""
+        details = {'type': 'unknown', 'cmdline': '', 'cpu_percent': None, 'memory_mb': None}
+
+        try:
+            import psutil
+            if psutil.pid_exists(pid):
+                proc = psutil.Process(pid)
+                cmdline = ' '.join(proc.cmdline()) if proc.cmdline() else 'unknown'
+                name = proc.name()
+
+                details.update({
+                    'type': self._identify_holodae_instance_type(cmdline, name, pid),
+                    'cmdline': cmdline[:150] + '...' if len(cmdline) > 150 else cmdline,
+                    'cpu_percent': proc.cpu_percent(),
+                    'memory_mb': proc.memory_info().rss / 1024 / 1024 if proc.memory_info() else 0
+                })
+        except ImportError:
+            details['type'] = 'basic_info_unavailable'
+        except Exception as e:
+            details['error'] = str(e)
+
+        return details
+
+    def show_pid_detective(self) -> None:
+        """Detect and manage HoloDAE daemon processes for clean operation."""
+        print('\n🔧 PID Detective — HoloDAE Process Management')
+        print('=' * 60)
+
+        try:
+            from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
+            lock = get_instance_lock("holodae_daemon")
+
+            # Get process information
+            instance_summary = lock.get_instance_summary()
+            total_instances = instance_summary["total_instances"]
+            current_pid = instance_summary["current_pid"]
+            instances = instance_summary.get("instances", [])
+
+            print(f"Current Process PID: {current_pid}")
+            print(f"Total HoloDAE Instances: {total_instances}")
+            print()
+
+            if total_instances <= 1:
+                print("✅ Clean state: Single HoloDAE instance detected")
+                if total_instances == 1:
+                    print(f"   Active daemon: PID {current_pid}")
+                else:
+                    print("   No HoloDAE daemons currently running")
+                print()
+                print("💡 Multiple instances are allowed for HoloDAE (unlike YouTube DAE)")
+                print("   Each can monitor different codebases or run specialized analysis")
+                return
+
+            # Multiple instances detected - show details
+            print("🚨 Multiple HoloDAE instances detected!")
+            print()
+            print("Active Instances:")
+            for i, instance in enumerate(instances, 1):
+                pid = instance.get('pid', 'unknown')
+                status = instance.get('status', 'unknown')
+                start_time = instance.get('start_time', 'unknown')
+
+                # Get detailed process info if available
+                process_details = self._get_process_details(pid) if pid != 'unknown' else {}
+                process_type = process_details.get('type', 'unknown')
+                cmdline = process_details.get('cmdline', '')
+
+                print(f"  {i}. PID {pid} - Type: {process_type}")
+                print(f"     Status: {status}")
+                if start_time != 'unknown':
+                    print(f"     Started: {start_time}")
+                if cmdline:
+                    print(f"     Command: {cmdline}")
+                if process_details.get('cpu_percent') is not None:
+                    print(f"     CPU: {process_details['cpu_percent']:.1f}%, Memory: {process_details.get('memory_mb', 0):.1f}MB")
+                print()
+
+            print()
+            print("🔍 Orphan Detection:")
+            orphans = []
+            active_daemons = []
+
+            for instance in instances:
+                pid = instance.get('pid')
+                if pid and pid != current_pid:
+                    try:
+                        # Check if process is actually running
+                        import psutil
+                        if psutil.pid_exists(pid):
+                            active_daemons.append(pid)
+                        else:
+                            orphans.append(pid)
+                    except ImportError:
+                        # psutil not available, use basic check
+                        orphans.append(pid)
+
+            if orphans:
+                print(f"  🪦 Orphan PIDs found: {', '.join(map(str, orphans))}")
+                print("     These processes are no longer running but locks remain")
+            else:
+                print("  ✅ No orphan processes detected")
+
+            if active_daemons:
+                print(f"  🟢 Active daemons: {', '.join(map(str, active_daemons))}")
+
+            # Check for log analysis daemon status
+            print()
+            print("📊 Specialized Daemons:")
+            try:
+                from holo_index.adaptive_learning.execution_log_analyzer.execution_log_librarian import get_daemon_status
+                daemon_status = get_daemon_status()
+
+                if daemon_status:
+                    status = daemon_status.get('status', 'unknown')
+                    timestamp = daemon_status.get('timestamp', 0)
+                    data = daemon_status.get('data', {})
+
+                    print(f"  🔍 Log Analysis Daemon: {status.upper()}")
+
+                    if status == 'processing':
+                        processed = data.get('processed_chunks', 0)
+                        total = data.get('total_chunks', 0)
+                        current = data.get('current_chunk', 0)
+                        progress = data.get('progress_percentage', 0)
+                        print(f"     Progress: {processed}/{total} chunks ({progress:.1f}%)")
+                        print(f"     Current: Chunk {current}")
+                    elif status == 'completed':
+                        processed = data.get('processed_chunks', 0)
+                        print(f"     Completed: {processed} chunks processed")
+                        print("     📄 Check final_analysis_report.json for results")
+                    elif status == 'failed':
+                        error = data.get('error', 'Unknown error')
+                        print(f"     ❌ Failed: {error}")
+                    elif status == 'error':
+                        chunk = data.get('error_chunk', 'unknown')
+                        error = data.get('error_message', 'Unknown error')
+                        processed = data.get('processed_chunks', 0)
+                        print(f"     ❌ Error in chunk {chunk}: {error}")
+                        print(f"     Processed: {processed} chunks before error")
+
+                    import time
+                    elapsed = time.time() - timestamp
+                    print(f"     Runtime: {elapsed:.1f}s")
+                else:
+                    print("  🔍 Log Analysis Daemon: INACTIVE")
+
+            except Exception as e:
+                print(f"  🔍 Log Analysis Daemon: Status check failed ({e})")
+
+            print()
+            print("Management Recommendations:")
+            if duplicate_launches:
+                print(f"🚨 PRIORITY: Kill duplicate main.py sessions (PIDs: {', '.join(map(str, duplicate_launches))})")
+                print("   These prevent proper menu operation and cause conflicts")
+            elif len(active_instances) > 1:
+                print("ℹ️  Multiple instances detected - review which are necessary:")
+                necessary = [inst for inst in active_instances if inst.get('type') in
+                           ['daemon_monitor', 'mcp_service', 'specialized_analysis']]
+                unnecessary = [inst for inst in active_instances if inst.get('type') not in
+                             ['daemon_monitor', 'mcp_service', 'specialized_analysis', 'current_session']]
+
+                if unnecessary:
+                    unnecessary_pids = [str(inst['pid']) for inst in unnecessary]
+                    print(f"   🗑️  Consider killing: {', '.join(unnecessary_pids)} (generic/unknown processes)")
+                if necessary:
+                    necessary_pids = [str(inst['pid']) for inst in necessary]
+                    print(f"   ✅ Keep these: {', '.join(necessary_pids)} (specialized services)")
+            else:
+                print("✅ System appears clean - no immediate action needed")
+
+            print()
+            print("Management Options:")
+            print("  1. Clean orphan locks (safe - removes dead process locks)")
+            print("  2. Show detailed process info (full technical details)")
+            print("  3. Kill specific PID (dangerous - use with caution!)")
+            print("  4. Kill duplicate sessions (recommended if duplicates found)")
+            print("  0. Return to menu")
+
+            try:
+                choice = input("\nSelect option (0-4): ").strip()
+
+                if choice == "1":
+                    # Clean orphan locks
+                    cleaned = 0
+                    for orphan_pid in orphans:
+                        try:
+                            lock.release_orphan_lock(orphan_pid)
+                            print(f"✅ Cleaned orphan lock for PID {orphan_pid}")
+                            cleaned += 1
+                        except Exception as e:
+                            print(f"❌ Failed to clean PID {orphan_pid}: {e}")
+
+                    if cleaned > 0:
+                        print(f"\n🧹 Cleaned {cleaned} orphan locks")
+                        print("HoloDAE launch will now work cleanly")
+                    else:
+                        print("\nℹ️ No orphan locks to clean")
+
+                elif choice == "2":
+                    # Show detailed process info
+                    print("\n🔍 Detailed Process Information:")
+                    for instance in instances:
+                        pid = instance.get('pid', 'unknown')
+                        print(f"\nPID {pid}:")
+                        try:
+                            import psutil
+                            if psutil.pid_exists(pid):
+                                proc = psutil.Process(pid)
+                                print(f"  Command: {proc.name()}")
+                                print(f"  CPU: {proc.cpu_percent()}%")
+                                print(f"  Memory: {proc.memory_info().rss / 1024 / 1024:.1f} MB")
+                                print(f"  Started: {datetime.fromtimestamp(proc.create_time()).strftime('%Y-%m-%d %H:%M:%S')}")
+                            else:
+                                print("  Status: Process not found (possible orphan)")
+                        except ImportError:
+                            print("  Status: Process details unavailable (psutil not installed)")
+                        except Exception as e:
+                            print(f"  Status: Error getting details - {e}")
+
+                elif choice == "3":
+                    # Kill specific PID
+                    print("\n⚠️ DANGER ZONE ⚠️")
+                    print("Killing processes can cause data loss!")
+                    target_pid = input("Enter PID to kill (or 'cancel'): ").strip()
+
+                    if target_pid.lower() == 'cancel':
+                        print("❌ Operation cancelled")
+                        return
+
+                    try:
+                        target_pid = int(target_pid)
+                        if target_pid == current_pid:
+                            print("❌ Cannot kill current process!")
+                            return
+
+                        # Confirm
+                        confirm = input(f"Are you sure you want to kill PID {target_pid}? (yes/no): ").strip().lower()
+                        if confirm == 'yes':
+                            import os
+                            import signal
+                            try:
+                                os.kill(target_pid, signal.SIGTERM)
+                                print(f"✅ Sent SIGTERM to PID {target_pid}")
+                                print("   Process should shut down gracefully")
+
+                                # Wait a moment and check if it's gone
+                                import time
+                                time.sleep(2)
+                                try:
+                                    os.kill(target_pid, 0)  # Check if still exists
+                                    print("   ⚠️ Process still running, may need manual intervention")
+                                except OSError:
+                                    print("   ✅ Process terminated successfully")
+
+                            except OSError as e:
+                                print(f"❌ Failed to kill PID {target_pid}: {e}")
+                        else:
+                            print("❌ Operation cancelled")
+
+                    except ValueError:
+                        print("❌ Invalid PID format")
+
+                elif choice == "4":
+                    # Kill duplicate sessions
+                    if not duplicate_launches:
+                        print("ℹ️ No duplicate sessions detected to kill")
+                        return
+
+                    print(f"⚠️ About to kill {len(duplicate_launches)} duplicate main.py sessions:")
+                    for pid in duplicate_launches:
+                        print(f"   PID {pid}")
+
+                    confirm = input(f"\nKill these {len(duplicate_launches)} duplicate sessions? (yes/no): ").strip().lower()
+                    if confirm == 'yes':
+                        killed = 0
+                        for pid in duplicate_launches:
+                            try:
+                                import os
+                                import signal
+                                os.kill(pid, signal.SIGTERM)
+                                print(f"✅ Sent SIGTERM to duplicate session PID {pid}")
+                                killed += 1
+                            except OSError as e:
+                                print(f"❌ Failed to kill PID {pid}: {e}")
+
+                        if killed > 0:
+                            print(f"\n🧹 Killed {killed} duplicate sessions")
+                            print("Menu operation should now work properly")
+                    else:
+                        print("❌ Operation cancelled")
+
+                elif choice == "0":
+                    return
+                else:
+                    print("❌ Invalid choice")
+
+            except (KeyboardInterrupt, EOFError):
+                print("\n❌ Operation cancelled")
+                return
+
+        except Exception as e:
+            print(f"❌ PID Detective failed: {e}")
+            print("This may be due to missing dependencies or permission issues")
+            print("Basic process detection may still work without advanced features")
+
+    def _track_mcp_activity(self, query: str, module_metrics: Dict[str, Dict[str, Any]], qwen_report: str) -> None:
+        """Capture MCP-related activity for telemetry and breadcrumbs."""
+        events: list[tuple[str, dict]] = []
+        for module_path, metrics in module_metrics.items():
+            if self._module_has_mcp_signature(module_path):
+                alerts = list(metrics.get('module_alerts') or [])
+                recommendations = metrics.get('recommendations') or ()
+                notes = alerts + [f"Recommendation: {rec}" for rec in recommendations if rec]
+                events.append((
+                    'module',
+                    {
+                        'query': query,
+                        'module': module_path,
+                        'health': metrics.get('health_label'),
+                        'size': metrics.get('size_label'),
+                        'notes': notes,
+                    },
+                ))
+        for line in qwen_report.splitlines():
+            upper_line = line.upper()
+            if 'MCP' in upper_line or 'RICDAE' in upper_line:
+                clean_line = line.strip()
+                if clean_line:
+                    events.append((
+                        'telemetry',
+                        {
+                            'query': query,
+                            'notes': [clean_line],
+                        },
+                    ))
+        for event_type, payload in events:
+            self._record_mcp_event(event_type, payload)
+
+    def _record_mcp_event(self, event_type: str, payload: Dict[str, Any]) -> None:
+        """Store MCP events for telemetry, breadcrumbs, and audits."""
+        timestamp = datetime.now()
+        notes = payload.get('notes') or []
+        if isinstance(notes, str):
+            notes = [notes]
+        entry = {
+            'timestamp': timestamp.strftime('%H:%M:%S'),
+            'timestamp_iso': timestamp.isoformat(),
+            'event_type': event_type,
+            'query': payload.get('query'),
+            'module': payload.get('module'),
+            'health': payload.get('health'),
+            'size': payload.get('size'),
+            'notes': notes,
+        }
+        self.mcp_action_log.appendleft(entry)
+        preview = '; '.join(notes[:2]) if notes else ''
+        breadcrumb_target = payload.get('module') or 'mcp'
+        if hasattr(self, 'breadcrumb_tracer') and self.breadcrumb_tracer:
+            try:
+                self.breadcrumb_tracer.add_action(
+                    'mcp_activity',
+                    breadcrumb_target,
+                    preview or 'MCP event captured',
+                    payload.get('query', 'n/a')
+                )
+            except Exception:
+                pass
+        try:
+            self.telemetry_logger.log_event(
+                'mcp_action',
+                timestamp=entry['timestamp_iso'],
+                event_type=event_type,
+                module=entry.get('module'),
+                health=entry.get('health'),
+                size=entry.get('size'),
+                notes=notes,
+                query=entry.get('query'),
+            )
+        except Exception as exc:
+            self._detailed_log(f"[HOLODAE-MCP] Telemetry logging failed: {exc}")
+
+    def _collect_mcp_watch_status(self) -> List[Dict[str, Any]]:
+        """Collect status data for known and detected MCP connectors."""
+        status_rows: List[Dict[str, Any]] = []
+        seen_modules: set[str] = set()
+        for item in self.mcp_watchlist:
+            metrics = self._collect_module_metrics(item['module'])
+            status_rows.append(self._build_mcp_status_row(item, metrics))
+            seen_modules.add(item['module'])
+        for module_path in list(self._module_metrics_cache.keys()):
+            if module_path in seen_modules:
+                continue
+            if self._module_has_mcp_signature(module_path):
+                metrics = self._collect_module_metrics(module_path)
+                dynamic_item = {
+                    'name': module_path,
+                    'module': module_path,
+                    'description': 'Detected MCP signature',
+                    'priority': 'P?'
+                }
+                status_rows.append(self._build_mcp_status_row(dynamic_item, metrics))
+                seen_modules.add(module_path)
+        status_rows.sort(key=lambda row: row['name'])
+        return status_rows
+
+    def _build_mcp_status_row(self, item: Dict[str, Any], metrics: Dict[str, Any]) -> Dict[str, Any]:
+        health = metrics.get('health_label', '[UNKNOWN]')
+        size = metrics.get('size_label', '[UNKNOWN]')
+        notes = list(metrics.get('module_alerts') or [])
+        recommendations = metrics.get('recommendations') or ()
+        notes.extend(recommendations)
+        return {
+            'name': item.get('name', item.get('module', 'MCP Connector')),
+            'module': item.get('module', ''),
+            'description': item.get('description', 'Detected MCP signature'),
+            'priority': item.get('priority', 'P?'),
+            'health': health,
+            'size': size,
+            'notes': notes,
+            'icon': self._derive_health_icon(health),
+        }
+
+    def _derive_health_icon(self, health_label: str) -> str:
+        label = (health_label or '').upper()
+        if 'MISSING' in label or 'CRITICAL' in label:
+            return '🔴'
+        if 'WARN' in label:
+            return '🟡'
+        if 'COMPLETE' in label or 'OK' in label:
+            return '🟢'
+        return '🔹'
+
+    def _module_has_mcp_signature(self, module_path: str) -> bool:
+        if not module_path:
+            return False
+        lowered = module_path.lower()
+        if 'mcp' in lowered or 'ric_dae' in lowered:
+            return True
+        for item in self.mcp_watchlist:
+            if lowered.startswith(item['module'].lower()):
+                return True
+        return False
 
     def _get_component_status(self) -> Dict[str, Any]:
         """Get current component status for dashboard"""
@@ -664,28 +1309,9 @@ class HoloDAECoordinator:
         return lines
 
     def _append_012_summary(self, block_lines: List[str]) -> None:
-        try:
-            entries: List[str] = []
-            if self._012_summary_path.exists():
-                content = self._012_summary_path.read_text(encoding='utf-8')
-                if '=== ' in content:
-                    parts = content.split('\n=== ')
-                    for part in parts:
-                        part = part.strip()
-                        if not part:
-                            continue
-                        if not part.startswith('=== '):
-                            part = '=== ' + part
-                        entries.append(self._sanitize_summary_block(part))
-            formatted_block = '\n'.join(block_lines)
-            if not formatted_block.startswith('=== '):
-                formatted_block = '=== ' + formatted_block
-            entries.append(self._sanitize_summary_block(formatted_block))
-            entries = entries[-self._012_summary_limit:]
-            new_content = '\n'.join(entries) + '\n'
-            self._012_summary_path.write_text(new_content, encoding='utf-8')
-        except Exception as exc:
-            self._detailed_log(f"[HOLODAE-012] Failed to update summary: {exc}")
+        """DISABLED: 012.txt is user's scratch page - no automated writes allowed."""
+        # Method disabled per user request - 012.txt is for manual use only
+        pass
 
     def _sanitize_summary_block(self, block: str) -> str:
         sanitized_lines: List[str] = []
@@ -789,21 +1415,49 @@ class HoloDAECoordinator:
             if doc_only:
                 size_label = 'Docs bundle (no code files)'
             else:
+                # Use IntelligentSubroutineEngine for language-specific threshold detection
+                engine = IntelligentSubroutineEngine()
                 total_lines = 0
                 total_files = 0
                 has_tests = False
                 large_file_found = False
+                violations_by_type = {}
 
-                for py_file in resolved_path.rglob('*.py'):
+                # Scan ALL code files (not just .py) with language-specific thresholds
+                for code_file in resolved_path.rglob('*'):
+                    if not code_file.is_file():
+                        continue
+
+                    # Only check files with known thresholds (WSP 62 Section 2.1)
+                    if code_file.suffix.lower() not in engine.FILE_THRESHOLDS:
+                        continue
+
                     try:
-                        with open(py_file, 'r', encoding='utf-8', errors='ignore') as handle:
+                        with open(code_file, 'r', encoding='utf-8', errors='ignore') as handle:
                             line_count = sum(1 for _ in handle)
                         total_lines += line_count
                         total_files += 1
-                        if py_file.name.startswith('test_'):
+
+                        # Check for tests
+                        if code_file.name.startswith('test_'):
                             has_tests = True
-                        if line_count > 500:
+
+                        # Agentic threshold detection per WSP 62/87
+                        threshold, file_type = engine.get_file_threshold(code_file)
+                        if line_count > threshold:
                             large_file_found = True
+                            severity = engine._classify_severity(line_count, code_file.suffix)
+
+                            # Track violations by file type
+                            if file_type not in violations_by_type:
+                                violations_by_type[file_type] = []
+                            violations_by_type[file_type].append({
+                                'file': code_file.name,
+                                'lines': line_count,
+                                'threshold': threshold,
+                                'severity': severity
+                            })
+
                     except (OSError, IOError):
                         continue
 
@@ -811,7 +1465,7 @@ class HoloDAECoordinator:
                     recommendations.append("WSP 5 (Testing Standards)")
 
                 if total_files == 0:
-                    size_label = 'No Python files'
+                    size_label = 'No code files'
                 else:
                     avg_lines = max(1, total_lines // total_files)
                     if total_lines > 1600:
@@ -826,7 +1480,10 @@ class HoloDAECoordinator:
                 if large_file_found:
                     recommendations.append("WSP 62 (Modularity Enforcement)")
                     if total_lines <= 1600:
-                        module_alerts.append('Contains individual files exceeding 500 lines')
+                        # Build detailed alert with file types
+                        for file_type, violations in violations_by_type.items():
+                            count = len(violations)
+                            module_alerts.append(f'{count} {file_type} file(s) exceed WSP 62/87 thresholds')
 
         deduped_recommendations = []
         for rec in recommendations:

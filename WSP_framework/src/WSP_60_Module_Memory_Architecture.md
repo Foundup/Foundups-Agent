@@ -97,6 +97,15 @@ HoloDAE Memory (E:/HoloIndex/):  Foundational Intelligence Layer
 - **Content**: Semantic search indexes, WSP patterns, violation history
 - **Management**: HoloDAE autonomous management with effectiveness scoring
 
+#### **Module-Specific Memory Extensions**
+- **Location**: `modules/[domain]/[module]/memory/` (per WSP 49)
+- **Purpose**: Module-specific persistent data storage with isolation
+- **Examples**:
+  - `holo_index/adaptive_learning/execution_log_analyzer/memory/` - Processing artifacts, task coordination, analysis results
+  - `holo_index/adaptive_learning/discovery_evaluation_system/memory/` - Evaluation results, performance metrics, capability assessments
+- **Access**: Module owner manages, HoloDAE validates compliance
+- **Management**: Automatic cleanup, version control integration, backup procedures
+
 ## 4. Module Memory Directory Structure
 
 Each module follows this memory directory structure:

@@ -189,6 +189,23 @@ class AutoModeratorDAE:
         logger.info("🔄 CHANNEL ROTATION CHECK (NO-QUOTA MODE with QWEN Intelligence)")
         logger.info("🤖🧠 [QWEN-INIT] Starting intelligent channel rotation analysis")
 
+        # PRIORITY 0: 🤖🧠 First Principles - "Is the last video still live?"
+        # Check cache + DB BEFORE any channel rotation logic
+        logger.info("🤖🧠 [QWEN-FIRST-PRINCIPLES] ❓ Is the last video still live?")
+        try:
+            # Call resolve_stream with None to trigger Priority 1 (cache) and Priority 1.5 (Qwen DB check)
+            # This checks: 1) session_cache.json, 2) last stream in DB with lenient threshold + API
+            pre_check_result = self.stream_resolver.resolve_stream(channel_id=None)
+            if pre_check_result and pre_check_result[0]:
+                logger.info(f"🤖🧠 [QWEN-SUCCESS] ✅ Last known stream still live! Instant reconnection.")
+                logger.info(f"🚀 Skipping ALL channel rotation - already found active stream: {pre_check_result[0]}")
+                # Return immediately with the cached stream - no need for any other checks
+                return pre_check_result
+            else:
+                logger.info(f"🤖🧠 [QWEN-INFO] ❌ No cached stream or last stream ended - need full channel scan")
+        except Exception as e:
+            logger.warning(f"🤖🧠 [QWEN-ERROR] First principles check failed: {e} - proceeding to channel rotation")
+
         # Use QWEN to prioritize channels if available
         if hasattr(self, 'qwen_youtube') and self.qwen_youtube:
             # First check if QWEN recommends checking at all

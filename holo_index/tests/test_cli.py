@@ -8,6 +8,7 @@ import sys
 import unittest
 import tempfile
 from unittest.mock import patch, MagicMock
+from pathlib import Path
 
 # Add project root to path
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -42,6 +43,23 @@ class TestHoloIndexCLI(unittest.TestCase):
 
         holo = HoloIndex(ssd_path=self.test_data_dir)
         self.assertIsNotNone(holo)
+
+    @patch('holo_index.core.holo_index.SentenceTransformer')
+    @patch('holo_index.core.holo_index.chromadb.PersistentClient')
+    def test_check_module_exists_recognizes_ric_dae(self, mock_client, mock_model):
+        """Ensure HoloIndex reports new ricDAE module as compliant."""
+        mock_client.return_value = MagicMock()
+        mock_model.return_value = MagicMock()
+
+        from holo_index.core.holo_index import HoloIndex as CoreHoloIndex
+
+        holo = CoreHoloIndex(ssd_path=self.test_data_dir)
+        result = holo.check_module_exists('ric_dae')
+
+        self.assertTrue(result['exists'])
+        self.assertEqual(Path(result['path']).as_posix(), 'modules/ai_intelligence/ric_dae')
+        self.assertEqual(result['wsp_compliance'], '[COMPLIANT] COMPLIANT')
+        self.assertEqual(result['compliance_score'], '7/7')
 
     def test_qwen_advisor_stub(self):
         """Test QwenAdvisor basic functionality."""

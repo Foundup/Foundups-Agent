@@ -33,5 +33,5 @@ social_media_dae/
 ## WSP Compliance
 - WSP 3: Proper module structure with src/, tests/, docs/
 - WSP 22: ModLog maintained for all changes
-- WSP 62: Files under 500 lines
+- WSP 62/87: File size management (< 800 OK, guideline 800-1000, hard limit 1500)
 - WSP 84: No vibecoding - uses existing implementations

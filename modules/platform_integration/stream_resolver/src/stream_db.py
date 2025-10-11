@@ -104,21 +104,44 @@ class StreamResolverDB(ModuleDB):
             (video_id,)
         )
 
-    def is_stream_already_ended(self, video_id: str) -> bool:
+    def is_stream_already_ended(self, video_id: str, hours_threshold: int = 6) -> bool:
         """
-        Check if a stream has already been detected and ended.
-        This prevents re-detecting old streams as live.
+        Check if a stream has recently ended (within threshold hours).
+        This prevents re-detecting old streams as live while allowing for restarted streams.
 
         🤖🧠 [QWEN] Intelligence: Learn from past detections to prevent false positives
+                                  BUT allow streams that ended >6h ago to be re-detected
+
+        Args:
+            video_id: The video ID to check
+            hours_threshold: Only block if ended within this many hours (default: 6)
+
+        Returns:
+            True if stream ended within threshold, False otherwise
         """
+        # Get stream end time
         result = self.select(
             "stream_times",
-            "video_id = ? AND stream_end IS NOT NULL",
+            "video_id = ? AND stream_end IS NOT NULL ORDER BY stream_end DESC LIMIT 1",
             (video_id,)
         )
-        if result:
-            logger.info(f"🤖🧠 [QWEN-DB] Stream {video_id} already ended - preventing false positive")
-            return True
+
+        if not result:
+            return False
+
+        # Check if ended recently
+        stream_end = result[0].get('stream_end')
+        if stream_end:
+            end_time = datetime.fromisoformat(stream_end)
+            hours_since_end = (datetime.now() - end_time).total_seconds() / 3600
+
+            if hours_since_end < hours_threshold:
+                logger.info(f"🤖🧠 [QWEN-DB] Stream {video_id} ended {hours_since_end:.1f}h ago (<{hours_threshold}h) - preventing false positive")
+                return True
+            else:
+                logger.info(f"🤖🧠 [QWEN-DB] Stream {video_id} ended {hours_since_end:.1f}h ago (>{hours_threshold}h) - allowing re-detection (may have restarted)")
+                return False
+
         return False
 
     def get_recent_stream_for_channel(self, channel_id: str, hours: int = 24) -> Optional[Dict]:

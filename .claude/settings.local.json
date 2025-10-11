@@ -1,8 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git push:*)",
-      "Bash(git pull:*)"
+      "Bash(python:*)",
+      "Bash(test:*)",
+      "Bash(cat:*)",
+      "Read(//o/**)",
+      "Bash(tee:*)",
+      "Bash(git checkout:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": [],

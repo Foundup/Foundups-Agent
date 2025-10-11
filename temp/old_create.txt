@@ -1,0 +1,146 @@
+    def create_and_upload(
+        self,
+        topic: str,
+        duration: int = 15,
+        enhance_prompt: bool = True,
+        fast_mode: bool = True,
+        privacy: str = "public",
+        use_3act: bool = True
+    ) -> str:
+        """
+        Complete 012?0102 flow: Generate and upload Short.
+
+        Args:
+            topic: Simple topic from 012 (e.g., "Cherry blossoms in Tokyo")
+            duration: Video length in seconds (15-60)
+                     Default: 15 (uses 3-act multi-clip system)
+            enhance_prompt: Use Gemini to enhance topic (ignored if use_3act=True)
+            fast_mode: Use Veo 3 Fast (cheaper) vs standard
+            privacy: "public", "unlisted", or "private"
+            use_3act: Use 3-act multi-clip system (recommended for 15s Shorts)
+                     Default: True
+
+        Returns:
+            str: YouTube Shorts URL
+
+        Raises:
+            Veo3GenerationError: If video generation fails
+            YouTubeUploadError: If upload fails
+            InsufficientCreditsError: If quota exceeded
+
+        Notes:
+            - 3-act system: Setup Å® Shock Å® 0102 Reveal (baby IS 0102)
+            - Economics: 3Å~5s = $6 vs 30s = $12 (50% cheaper)
+            - Guaranteed 15s duration vs unpredictable single clip
+        """
+
+        print(f"\n{'='*60}")
+        print(f"?? YouTube Shorts Creation Flow - 012?0102")
+        print(f"{'='*60}")
+        print(f"\n[012 Input] Topic: {topic}")
+
+        start_time = time.time()
+
+        try:
+            # Step 1 & 2: Generate video
+            # Use 3-act system for 15s, single clip for other durations
+            if use_3act and duration == 15:
+                print(f"\n[0102 Generating] Creating 3-act Short (Setup Å® Shock Å® Reveal)...")
+                video_path = self.generator.generate_three_act_short(
+                    topic=topic,
+                    fast_mode=fast_mode,
+                    mode="journal"  # Default to emergence journal POC
+                )
+                # 3-act system has its own prompting
+                video_prompt = f"3-act story: {topic}"
+
+            else:
+                # Traditional single-clip generation
+                if enhance_prompt:
+                    print("\n[0102 Processing] Enhancing prompt with Gemini...")
+                    video_prompt = self.generator.enhance_prompt(topic)
+                else:
+                    video_prompt = topic
+
+                print(f"\n[0102 Generating] Creating video with Veo 3...")
+                video_path = self.generator.generate_video(
+                    prompt=video_prompt,
+                    duration=duration,
+                    fast_mode=fast_mode
+                )
+
+            # Step 3: Prepare metadata for upload
+            title = topic[:100]  # YouTube max 100 chars
+            description = f"{topic}\n\nGenerated with AI for Move2Japan\n\n#Shorts #Japan #AI"
+
+            tags = ["Shorts", "Japan", "Move2Japan", "AI"]
+
+            # Add topic-specific tags
+            if "cherry" in topic.lower() or "sakura" in topic.lower():
+                tags.append("CherryBlossoms")
+            if "tokyo" in topic.lower():
+                tags.append("Tokyo")
+            if "food" in topic.lower():
+                tags.append("JapaneseFood")
+
+            # Step 4: Upload to YouTube
+            print(f"\n[0102 Uploading] Posting to YouTube...")
+            youtube_url = self.uploader.upload_short(
+                video_path=video_path,
+                title=title,
+                description=description,
+                tags=tags,
+                privacy=privacy
+            )
+
+            # Step 5: Save to memory
+            elapsed_time = time.time() - start_time
+            estimated_cost = duration * self.generator.cost_per_second
+
+            short_record = {
+                "id": youtube_url.split('/')[-1],  # Extract video ID
+                "topic": topic,
+                "prompt": video_prompt,
+                "video_path": video_path,
+                "youtube_url": youtube_url,
+                "duration": duration,
+                "cost": estimated_cost,
+                "privacy": privacy,
+                "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "processing_time": round(elapsed_time, 2),
+                "status": "uploaded"
+            }
+
+            self.shorts_memory.append(short_record)
+            self._save_memory()
+
+            # Step 6: Report back to 012
+            print(f"\n{'='*60}")
+            print(f"? SHORT CREATED SUCCESSFULLY")
+            print(f"{'='*60}")
+            print(f"  Topic: {topic}")
+            print(f"  URL: {youtube_url}")
+            print(f"  Duration: {duration}s")
+            print(f"  Cost: ${estimated_cost:.2f}")
+            print(f"  Processing time: {elapsed_time:.1f}s")
+            print(f"  Privacy: {privacy}")
+            print(f"{'='*60}\n")
+
+            return youtube_url
+
+        except Veo3GenerationError as e:
+            print(f"\n? [ERROR] Video generation failed: {e}")
+            raise
+
+        except YouTubeUploadError as e:
+            print(f"\n? [ERROR] YouTube upload failed: {e}")
+            raise
+
+        except InsufficientCreditsError as e:
+            print(f"\n? [ERROR] {e}")
+            raise
+
+        except Exception as e:
+            print(f"\n? [ERROR] Unexpected error: {e}")
+            raise
+

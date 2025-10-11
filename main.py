@@ -108,20 +108,11 @@ async def monitor_youtube(disable_lock: bool = False):
             # Create and run the DAE with enhanced error handling
             dae = AutoModeratorDAE()
 
-            # Log instance monitoring information
+            # Log instance monitoring information (duplicate check already done in menu)
             try:
                 instance_summary = lock.get_instance_summary()
-                total_instances = instance_summary["total_instances"]
                 current_pid = instance_summary["current_pid"]
-
-                if total_instances > 1:
-                    logger.warning(f"🚨 MULTIPLE INSTANCES DETECTED: {total_instances} YouTube DAEs running")
-                    for instance in instance_summary["instances"]:
-                        status = "CURRENT" if instance["is_current"] else "OTHER"
-                        logger.warning(f"  • {status} PID {instance['pid']} - {instance['age_minutes']:.1f}min old - {instance['memory_mb']} RAM")
-                else:
-                    logger.info(f"✅ SINGLE INSTANCE: PID {current_pid} - No other YouTube DAEs detected")
-
+                logger.info(f"✅ YouTube DAE started: PID {current_pid}")
             except Exception as e:
                 logger.debug(f"Could not check instance summary: {e}")
 
@@ -354,6 +345,30 @@ def run_pqn_dae():
         asyncio.run(pqn_dae.run())
     except Exception as e:
         print(f"❌ PQN DAE failed: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+def run_evade_net():
+    """Run Liberty Alert Mesh Alert System (Community Protection)."""
+    print("🚨 Starting Liberty Alert - Mesh Alert System...")
+    print("📡 Offline P2P alerts for community protection")
+    try:
+        from modules.communication.liberty_alert.src.liberty_alert_orchestrator import LibertyAlertOrchestrator
+        from modules.communication.liberty_alert.src.models import LibertyAlertConfig
+
+        # Configure Liberty Alert
+        config = LibertyAlertConfig(
+            mesh_enabled=True,
+            voice_enabled=True,
+            default_language="es",
+            alert_radius_km=5.0,
+        )
+
+        orchestrator = LibertyAlertOrchestrator(config)
+        asyncio.run(orchestrator.run())
+    except Exception as e:
+        print(f"❌ Liberty Alert failed: {e}")
         import traceback
         traceback.print_exc()
 
@@ -630,6 +645,7 @@ def main():
     parser.add_argument('--amo', action='store_true', help='Run AMO DAE (Autonomous Moderation Operations)')
     parser.add_argument('--smd', action='store_true', help='Run Social Media DAE (012 Digital Twin)')
     parser.add_argument('--pqn', action='store_true', help='Run PQN Orchestration (Research & Alignment)')
+    parser.add_argument('--liberty', action='store_true', help='Run Liberty Alert Mesh Alert System (Community Protection)')
     parser.add_argument('--all', action='store_true', help='Monitor all platforms')
     parser.add_argument('--no-lock', action='store_true', help='Disable instance lock (allow multiple instances)')
     parser.add_argument('--status', action='store_true', help='Check instance status and health')
@@ -649,6 +665,8 @@ def main():
         run_social_media_dae()
     elif args.pqn:
         run_pqn_dae()
+    elif args.liberty:
+        run_evade_net()
     elif args.all:
         asyncio.run(monitor_all_platforms())
     else:
@@ -757,12 +775,13 @@ def main():
             print("3. 🔨 AMO DAE (Autonomous Moderation Operations)")
             print("4. 📢 Social Media DAE (012 Digital Twin)")
             print("5. 🧬 PQN Orchestration (Research & Alignment)")
-            print("6. 🌐 All DAEs (Full System)")
-            print("7. 💚 Check Instance Status & Health")
-            print("8. ❌ Exit")
+            print("6. 🚨 Liberty Alert (Mesh Alert System - Community Protection)")
+            print("7. 🌐 All DAEs (Full System)")
+            print("8. 💚 Check Instance Status & Health")
+            print("9. ❌ Exit")
             print("-"*60)
-            print("9. 🔍 HoloIndex Search (Find code semantically)")
-            print("10. 📋 View Git Post History")
+            print("10. 🔍 HoloIndex Search (Find code semantically)")
+            print("11. 📋 View Git Post History")
             print("="*60)
 
             choice = input("\nSelect option: ")
@@ -777,75 +796,97 @@ def main():
                 print("\n📺 YouTube DAE Menu")
                 print("="*60)
                 print("1. 🔴 YouTube Live Chat Monitor (AutoModeratorDAE)")
-                print("2. 🎬 YouTube Shorts Generator (AI Baby/Emergence Journal)")
-                print("3. 📊 YouTube Stats & Info")
+                print("2. 🎬 YouTube Shorts Generator (Gemini/Veo 3)")
+                print("3. 🎥 YouTube Shorts Generator (Sora2 Live Action)")
+                print("4. 📊 YouTube Stats & Info")
                 print("0. ⬅️  Back to Main Menu")
                 print("="*60)
 
                 yt_choice = input("\nSelect YouTube option: ")
+
+                def run_shorts_flow(engine_label: str, system_label: str, mode_label: str, duration_label: str, engine_key: str) -> None:
+                    print(f"\n🎬 YouTube Shorts Generator [{engine_label}]")
+                    print("="*60)
+                    print("Channel: Move2Japan (9,020 subscribers)")
+                    print(f"System: {system_label}")
+                    print("="*60)
+
+                    topic = input("\n💡 Enter topic (e.g., 'Cherry blossoms in Tokyo'): ").strip()
+
+                    if not topic:
+                        print("⚠️  No topic entered - returning to menu")
+                        return
+
+                    try:
+                        from modules.communication.youtube_shorts.src.shorts_orchestrator import ShortsOrchestrator
+
+                        print(f"\n🎬 Generating YouTube Short ({engine_label}): {topic}")
+                        print(f"  Mode: {mode_label}")
+                        print(f"  Duration: {duration_label}")
+                        print("  Privacy: PUBLIC")
+
+                        orchestrator = ShortsOrchestrator(channel="move2japan", default_engine="auto")
+
+                        youtube_url = orchestrator.create_and_upload(
+                            topic=topic,
+                            duration=15,
+                            enhance_prompt=True,
+                            fast_mode=True,
+                            privacy="public",
+                            use_3act=True,
+                            engine=engine_key
+                        )
+
+                        print(f"\n✅ SHORT PUBLISHED!")
+                        print(f"   URL: {youtube_url}")
+                        print(f"   Channel: Move2Japan")
+
+                    except Exception as e:
+                        print(f"\n❌ YouTube Shorts generation failed: {e}")
+                        import traceback
+                        traceback.print_exc()
 
                 if yt_choice == "1":
                     print("🎥 Starting YouTube Live Chat Monitor...")
                     asyncio.run(monitor_youtube(disable_lock=False))
 
                 elif yt_choice == "2":
-                    # YouTube Shorts Generator
-                    print("\n🎬 YouTube Shorts Generator")
-                    print("="*60)
-                    print("Channel: Move2Japan (9,020 subscribers)")
-                    print("System: 3-Act Story (Setup → Shock → 0102 Reveal)")
-                    print("="*60)
-
-                    topic = input("\n💡 Enter topic (e.g., 'Cherry blossoms in Tokyo'): ").strip()
-
-                    if topic:
-                        try:
-                            from modules.communication.youtube_shorts.src.shorts_orchestrator import ShortsOrchestrator
-
-                            print(f"\n🎬 Generating YouTube Short: {topic}")
-                            print("  Mode: Emergence Journal POC")
-                            print("  Duration: ~16s (2×8s clips merged)")
-                            print("  Privacy: PUBLIC")
-
-                            orchestrator = ShortsOrchestrator(channel="move2japan")
-
-                            # Generate and upload with 3-act system
-                            youtube_url = orchestrator.create_and_upload(
-                                topic=topic,
-                                duration=15,  # Triggers 3-act multi-clip system
-                                enhance_prompt=True,
-                                fast_mode=True,
-                                privacy="public",
-                                use_3act=True  # Enable emergence journal 3-act structure
-                            )
-
-                            print(f"\n✅ SHORT PUBLISHED!")
-                            print(f"   URL: {youtube_url}")
-                            print(f"   Channel: Move2Japan")
-
-                        except Exception as e:
-                            print(f"\n❌ YouTube Shorts generation failed: {e}")
-                            import traceback
-                            traceback.print_exc()
-                    else:
-                        print("⚠️  No topic entered - returning to menu")
+                    run_shorts_flow(
+                        engine_label="Gemini/Veo 3",
+                        system_label="3-Act Story (Setup → Shock → 0102 Reveal)",
+                        mode_label="Emergence Journal POC",
+                        duration_label="~16s (2×8s clips merged)",
+                        engine_key="veo3"
+                    )
 
                 elif yt_choice == "3":
+                    run_shorts_flow(
+                        engine_label="Sora2 Live Action",
+                        system_label="3-Act Story (Cinematic Reveal)",
+                        mode_label="Cinematic Sora2 (live-action focus)",
+                        duration_label="15s cinematic (single clip)",
+                        engine_key="sora2"
+                    )
+
+                elif yt_choice == "4":
                     # YouTube Stats
                     print("\n📊 YouTube Stats")
                     try:
                         from modules.communication.youtube_shorts.src.shorts_orchestrator import ShortsOrchestrator
-                        orch = ShortsOrchestrator(channel="move2japan")
+                        orch = ShortsOrchestrator(channel="move2japan", default_engine="auto")
                         stats = orch.get_stats()
 
                         print(f"\n  Total Shorts: {stats['total_shorts']}")
                         print(f"  Uploaded: {stats['uploaded']}")
                         print(f"  Total Cost: ${stats['total_cost_usd']}")
                         print(f"  Avg Cost: ${stats['average_cost_per_short']}")
+                        if stats.get('engine_usage'):
+                            print(f"  Engine Usage: {stats['engine_usage']}")
 
-                        if stats['recent_shorts']:
+                        recent = stats.get('recent_shorts') or []
+                        if recent:
                             print(f"\n  Recent Shorts:")
-                            for s in stats['recent_shorts'][-3:]:
+                            for s in recent[-3:]:
                                 print(f"    - {s.get('topic', 'N/A')[:40]}...")
                                 print(f"      {s.get('youtube_url', 'N/A')}")
                     except Exception as e:
@@ -921,16 +962,71 @@ def main():
                             # Could integrate with HoloIndex CLI
                             print("Use: python holo_index.py --wsp88")
                         elif choice == "16":
-                            print("🚀 Launching HoloDAE Autonomous Monitor...")
-                            try:
-                                # Start autonomous monitoring mode
-                                holodae_instance.start_autonomous_monitoring()
-                                print("👁️ HoloDAE autonomous monitoring started!")
-                                print("Monitoring codebase for changes, violations, and intelligence opportunities...")
-                                print("Press Ctrl+C to stop monitoring and return to menu")
-                                # This would block here until interrupted
-                            except Exception as e:
-                                print(f"❌ Failed to launch monitor: {e}")
+                            print("📊 Execution Log Analyzer - Advisor Choice")
+                            print("=" * 60)
+                            print("Advisor: Choose analysis mode for systematic log processing")
+                            print()
+                            print("1. 🤖 Interactive Mode - Step-by-step advisor guidance")
+                            print("2. ⚡ Daemon Mode - Autonomous 0102 background processing")
+                            print()
+                            print("Interactive: User-guided analysis with advisor oversight")
+                            print("Daemon: Autonomous processing once triggered - follows WSP 80")
+                            print()
+
+                            analysis_choice = input("Select mode (1-2): ").strip()
+
+                            if analysis_choice == "1":
+                                # Interactive mode - advisor-guided
+                                print("\n🤖 Starting Interactive Log Analysis...")
+                                try:
+                                    from holo_index.adaptive_learning.execution_log_analyzer.execution_log_librarian import coordinate_execution_log_processing
+
+                                    print("🔍 Advisor-guided systematic log analysis...")
+                                    print("📈 Processing 23,000+ lines with advisor oversight...")
+
+                                    librarian = coordinate_execution_log_processing(daemon_mode=False)
+
+                                    print("\n✅ Interactive analysis initialized!")
+                                    print("📋 Results saved to:")
+                                    print("   - complete_file_index.json (full scope analysis)")
+                                    print("   - qwen_processing_plan.json (processing plan)")
+                                    print("   - qwen_next_task.json (ready for Qwen analysis)")
+
+                                    print("\n🎯 Next: Advisor guides Qwen analysis of chunks")
+                                    input("\nPress Enter to continue...")
+
+                                except Exception as e:
+                                    print(f"❌ Interactive analysis failed: {e}")
+                                    import traceback
+                                    traceback.print_exc()
+
+                            elif analysis_choice == "2":
+                                # Daemon mode - autonomous 0102 processing
+                                print("\n⚡ Starting Log Analysis Daemon...")
+                                try:
+                                    from holo_index.adaptive_learning.execution_log_analyzer.execution_log_librarian import coordinate_execution_log_processing
+
+                                    print("🔄 Advisor triggers autonomous 0102 processing...")
+                                    print("📊 0102 will process entire log file independently")
+
+                                    # Start daemon
+                                    daemon_thread = coordinate_execution_log_processing(daemon_mode=True)
+
+                                    print("\n✅ Daemon started successfully!")
+                                    print("🔍 0102 processing 23,000+ lines autonomously")
+                                    print("📊 Check progress: HoloDAE menu → Option 15 (PID Detective)")
+                                    print("📈 Results will be saved to analysis output files")
+
+                                    input("\nPress Enter to continue (daemon runs in background)...")
+
+                                except Exception as e:
+                                    print(f"❌ Daemon startup failed: {e}")
+                                    import traceback
+                                    traceback.print_exc()
+
+                            else:
+                                print("❌ Invalid choice - returning to menu")
+                                input("\nPress Enter to continue...")
                         elif choice in ["15", "17", "18"]:
                             print("📋 Running WSP compliance functions...")
                             # These would trigger compliance checking
@@ -998,20 +1094,24 @@ def main():
                 asyncio.run(pqn_dae.run())
 
             elif choice == "6":
+                # Liberty Alert mesh alert system
+                run_evade_net()
+
+            elif choice == "7":
                 # All platforms
                 print("[ALL] Starting ALL DAEs...")
                 asyncio.run(monitor_all_platforms())
 
-            elif choice == "7":
+            elif choice == "8":
                 # Check instance status
                 check_instance_status()
                 input("\nPress Enter to continue...")
 
-            elif choice == "8":
+            elif choice == "9":
                 print("[EXIT] Exiting...")
                 break  # Exit the while True loop
 
-            elif choice == "9":
+            elif choice == "10":
                 # HoloIndex search
                 print("\n[HOLOINDEX] Semantic Code Search")
                 print("=" * 60)
@@ -1025,7 +1125,7 @@ def main():
                 else:
                     print("No search query provided")
 
-            elif choice == "10":
+            elif choice == "11":
                 # View git post history
                 view_git_post_history()
 

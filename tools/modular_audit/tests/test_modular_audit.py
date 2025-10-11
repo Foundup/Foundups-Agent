@@ -370,5 +370,43 @@ class TestBaselineComparison(unittest.TestCase):
         self.assertGreater(result["files"]["new"], 0)
         self.assertGreater(result["files"]["deleted"], 0)
 
+class TestWSP62Thresholds(unittest.TestCase):
+    """Validate WSP 62 tiered thresholds for Python files."""
+
+    def test_python_tiered_thresholds(self):
+        """Python files should trigger tiered WSP 62 notices."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            modules_dir = root / "modules"
+
+            scenarios = [
+                ("ai_intelligence", "size_guideline", 850, "APPROACHING"),
+                ("communication", "size_warning", 1200, "WARNING"),
+                ("platform_integration", "size_critical", 1510, "CRITICAL"),
+            ]
+
+            for domain, module, lines, _ in scenarios:
+                src_dir = modules_dir / domain / module / "src"
+                src_dir.mkdir(parents=True, exist_ok=True)
+                file_path = src_dir / "sample.py"
+                with file_path.open('w', encoding='utf-8') as handle:
+                    handle.writelines(f"print({i})\n" for i in range(lines))
+
+            findings = modular_audit.audit_file_sizes(root, enable_wsp_62=True)
+
+            self.assertTrue(
+                any("APPROACHING" in message and "guideline" in message for message in findings),
+                msg="Expected guideline warning for files between 800-1000 lines",
+            )
+            self.assertTrue(
+                any("WARNING" in message and "critical window" in message for message in findings),
+                msg="Expected critical window warning for files >1000 lines",
+            )
+            self.assertTrue(
+                any("CRITICAL" in message and "hard limit" in message for message in findings),
+                msg="Expected hard limit violation for files >=1500 lines",
+            )
+
+
 if __name__ == "__main__":
-    unittest.main() 
+    unittest.main()

@@ -66,6 +66,7 @@ FoundUps remains sovereign and blockchain-agnostic. II is an optional signal lay
 - WSP 32 (Reading Flow): decision guidance for enabling comp.
 - WSP 58 (IP Lifecycle): tokenization of IP and receipts; ledger references.
 - WSP 73 (012 Digital Twin Architecture): identity/roles for 0102 twins.
+- **WSP 77 Enhancement**: EmbeddingGemma semantic model for advanced orchestration intelligence (see holo_index/docs/EmbeddingGemma_Integration_Plan.md).
 
 ## 8. Governance, Privacy, Sovereignty
 - Shared ledger optionality; sovereign roll-ups; non-custodial keys; optional personhood proofs; guardians; credible neutrality.

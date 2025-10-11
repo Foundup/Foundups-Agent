@@ -89,7 +89,7 @@ def log_update(
             return False
 
         # Define paths
-        modlog_path = "docs/ModLog.md" # Use path in docs/
+        modlog_path = "ModLog.md" # Use root ModLog.md per WSP 85
         template_path = "docs/ModLog_Template.md"
 
         # Read existing content

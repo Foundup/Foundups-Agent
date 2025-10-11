@@ -251,23 +251,23 @@ class WSP88OrphanAnalyzer:
         recommendations = []
 
         if analysis.actual_status == "connected":
-            recommendations.append("✅ File is properly connected - no action needed")
+            recommendations.append("[OK] File is properly connected - no action needed")
 
         elif analysis.actual_status == "useful_utility":
             if not analysis.import_chains:
-                recommendations.append("🔗 Consider connecting this utility to CLI or __init__.py")
-                recommendations.append("📚 Add documentation on how to use this utility")
+                recommendations.append("[CONNECT] Consider connecting this utility to CLI or __init__.py")
+                recommendations.append("[DOCS] Add documentation on how to use this utility")
             else:
-                recommendations.append("✅ Useful utility with some connections - consider strengthening usage")
+                recommendations.append("[OK] Useful utility with some connections - consider strengthening usage")
 
         elif analysis.actual_status == "needs_connection":
-            recommendations.append("🔗 HIGH PRIORITY: Connect this file to the system")
-            recommendations.append("📋 Check if it provides needed functionality")
-            recommendations.append("🧹 Only consider deletion after confirming it's truly unused")
+            recommendations.append("[CONNECT] HIGH PRIORITY: Connect this file to the system")
+            recommendations.append("[CHECK] Check if it provides needed functionality")
+            recommendations.append("[REVIEW] Only consider deletion after confirming it's truly unused")
 
         if analysis.apparent_status == "orphan" and analysis.actual_status == "connected":
-            recommendations.append("🔍 FALSE POSITIVE: Dependency auditor missed __init__.py imports")
-            recommendations.append("🛠️ Consider improving dependency auditor to trace __init__.py chains")
+            recommendations.append("[FALSE-POSITIVE] Dependency auditor missed __init__.py imports")
+            recommendations.append("[IMPROVE] Consider improving dependency auditor to trace __init__.py chains")
 
         return recommendations
 
@@ -336,18 +336,18 @@ class WSP88OrphanAnalyzer:
 [WSP88-ANALYSIS] HoloIndex Orphan Analysis Complete
 ==================================================
 
-📊 SUMMARY:
+[SUMMARY]
 - Total Python files analyzed: {total_files}
 - Properly connected: {connected} ({connected/total_files*100:.1f}%)
 - Useful utilities: {utilities} ({utilities/total_files*100:.1f}%)
 - False positives (missed by basic auditors): {false_positives}
 
-🎯 KEY FINDINGS:
+[KEY FINDINGS]
 1. Most "orphans" are false positives from __init__.py import tracing failures
 2. {utilities} useful utilities identified for potential connection enhancement
 3. {false_positives} files incorrectly flagged as orphans
 
-🔧 RECOMMENDATIONS:
+[RECOMMENDATIONS]
 - Focus on connecting utilities rather than deleting "orphans"
 - Improve dependency auditors to trace __init__.py import chains
 - Consider CLI integration for valuable standalone utilities

@@ -1,0 +1,5 @@
+﻿# ricDAE dependencies (WSP 12)
+# Pin actual versions once connectors implemented.
+requests>=2.32.0
+httpx>=0.27.0
+pydantic>=2.8.0
