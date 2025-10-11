@@ -149,6 +149,76 @@ class AgentDB:
                 )
             ''')
 
+            # ============================================================================
+            # MODULE DOCUMENTATION REGISTRY (Qwen Module Doc Linker)
+            # ============================================================================
+
+            # Module registry
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS modules (
+                    module_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    module_name TEXT NOT NULL,
+                    module_path TEXT NOT NULL UNIQUE,
+                    module_domain TEXT NOT NULL,
+                    linked_timestamp DATETIME,
+                    linker_version TEXT DEFAULT '1.0.0'
+                )
+            ''')
+
+            # Document registry
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS module_documents (
+                    doc_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    module_id INTEGER NOT NULL,
+                    doc_type TEXT NOT NULL,
+                    file_path TEXT NOT NULL UNIQUE,
+                    title TEXT,
+                    purpose TEXT,
+                    last_updated DATETIME,
+                    FOREIGN KEY (module_id) REFERENCES modules(module_id) ON DELETE CASCADE
+                )
+            ''')
+
+            # Document relationships (bidirectional links)
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS document_relationships (
+                    from_doc_id INTEGER NOT NULL,
+                    to_doc_id INTEGER NOT NULL,
+                    PRIMARY KEY (from_doc_id, to_doc_id),
+                    FOREIGN KEY (from_doc_id) REFERENCES module_documents(doc_id) ON DELETE CASCADE,
+                    FOREIGN KEY (to_doc_id) REFERENCES module_documents(doc_id) ON DELETE CASCADE
+                )
+            ''')
+
+            # WSP implementations per module
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS module_wsp_implementations (
+                    module_id INTEGER NOT NULL,
+                    wsp_number TEXT NOT NULL,
+                    PRIMARY KEY (module_id, wsp_number),
+                    FOREIGN KEY (module_id) REFERENCES modules(module_id) ON DELETE CASCADE
+                )
+            ''')
+
+            # Cross-references in documents
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS document_cross_references (
+                    doc_id INTEGER NOT NULL,
+                    reference_type TEXT NOT NULL,
+                    reference_value TEXT NOT NULL,
+                    PRIMARY KEY (doc_id, reference_type, reference_value),
+                    FOREIGN KEY (doc_id) REFERENCES module_documents(doc_id) ON DELETE CASCADE
+                )
+            ''')
+
+            # Create indexes for common queries
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_modules_name ON modules(module_name)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_modules_domain ON modules(module_domain)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_documents_module ON module_documents(module_id)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_documents_type ON module_documents(doc_type)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_wsp_impl_wsp ON module_wsp_implementations(wsp_number)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_cross_ref_value ON document_cross_references(reference_value)')
+
     def record_awakening(self, agent_id: str, consciousness_level: str, koan: str = None) -> None:
         """Record agent awakening state."""
         with self.db.get_connection() as conn:
@@ -568,3 +638,274 @@ class AgentDB:
 
         age = datetime.now() - last_refresh
         return age.total_seconds() > (max_age_hours * 3600)
+
+    # ============================================================================
+    # MODULE DOCUMENTATION REGISTRY (Qwen Module Doc Linker)
+    # ============================================================================
+
+    def register_module(self, module_name: str, module_path: str, module_domain: str,
+                       linker_version: str = "1.0.0") -> int:
+        """
+        Register or update a module in the documentation registry.
+
+        Args:
+            module_name: Name of the module (e.g., "liberty_alert")
+            module_path: Full path to module directory
+            module_domain: Domain (e.g., "communication")
+            linker_version: Version of the linker
+
+        Returns:
+            module_id (int)
+        """
+        with self.db.get_connection() as conn:
+            # Try to insert, on conflict update timestamp
+            cursor = conn.execute('''
+                INSERT INTO modules (module_name, module_path, module_domain, linked_timestamp, linker_version)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(module_path) DO UPDATE SET
+                    module_name = excluded.module_name,
+                    module_domain = excluded.module_domain,
+                    linked_timestamp = excluded.linked_timestamp,
+                    linker_version = excluded.linker_version
+            ''', (module_name, module_path, module_domain, datetime.now().isoformat(), linker_version))
+
+            # Get the module_id (either newly inserted or existing)
+            result = conn.execute(
+                "SELECT module_id FROM modules WHERE module_path = ?",
+                (module_path,)
+            ).fetchone()
+
+            return result[0] if result else cursor.lastrowid
+
+    def register_document(self, module_id: int, doc_type: str, file_path: str,
+                         title: str, purpose: str) -> int:
+        """
+        Register a document in the module documentation registry.
+
+        Args:
+            module_id: ID of the parent module
+            doc_type: Type of document (modlog, readme, interface, etc.)
+            file_path: Full path to document
+            title: Document title
+            purpose: Document purpose/summary
+
+        Returns:
+            doc_id (int)
+        """
+        with self.db.get_connection() as conn:
+            cursor = conn.execute('''
+                INSERT INTO module_documents (module_id, doc_type, file_path, title, purpose, last_updated)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(file_path) DO UPDATE SET
+                    doc_type = excluded.doc_type,
+                    title = excluded.title,
+                    purpose = excluded.purpose,
+                    last_updated = excluded.last_updated
+            ''', (module_id, doc_type, file_path, title, purpose, datetime.now().isoformat()))
+
+            # Get the doc_id
+            result = conn.execute(
+                "SELECT doc_id FROM module_documents WHERE file_path = ?",
+                (file_path,)
+            ).fetchone()
+
+            return result[0] if result else cursor.lastrowid
+
+    def add_document_relationship(self, from_doc_id: int, to_doc_id: int) -> bool:
+        """
+        Add a relationship between two documents.
+
+        Args:
+            from_doc_id: Source document ID
+            to_doc_id: Target document ID
+
+        Returns:
+            True if successful
+        """
+        try:
+            self.db.execute_write('''
+                INSERT OR IGNORE INTO document_relationships (from_doc_id, to_doc_id)
+                VALUES (?, ?)
+            ''', (from_doc_id, to_doc_id))
+            return True
+        except Exception:
+            return False
+
+    def add_wsp_implementation(self, module_id: int, wsp_number: str) -> bool:
+        """
+        Record that a module implements a WSP protocol.
+
+        Args:
+            module_id: Module ID
+            wsp_number: WSP protocol number (e.g., "WSP 90")
+
+        Returns:
+            True if successful
+        """
+        try:
+            self.db.execute_write('''
+                INSERT OR IGNORE INTO module_wsp_implementations (module_id, wsp_number)
+                VALUES (?, ?)
+            ''', (module_id, wsp_number))
+            return True
+        except Exception:
+            return False
+
+    def add_cross_reference(self, doc_id: int, reference_type: str, reference_value: str) -> bool:
+        """
+        Add a cross-reference in a document.
+
+        Args:
+            doc_id: Document ID
+            reference_type: Type of reference ('wsp', 'module', 'file')
+            reference_value: Value of the reference
+
+        Returns:
+            True if successful
+        """
+        try:
+            self.db.execute_write('''
+                INSERT OR IGNORE INTO document_cross_references (doc_id, reference_type, reference_value)
+                VALUES (?, ?, ?)
+            ''', (doc_id, reference_type, reference_value))
+            return True
+        except Exception:
+            return False
+
+    def get_module(self, module_name: str = None, module_path: str = None) -> Optional[Dict[str, Any]]:
+        """
+        Get module by name or path.
+
+        Args:
+            module_name: Module name
+            module_path: Module path
+
+        Returns:
+            Module dictionary or None
+        """
+        if module_path:
+            result = self.db.execute_query(
+                "SELECT * FROM modules WHERE module_path = ?",
+                (module_path,)
+            )
+        elif module_name:
+            result = self.db.execute_query(
+                "SELECT * FROM modules WHERE module_name = ?",
+                (module_name,)
+            )
+        else:
+            return None
+
+        return dict(result[0]) if result else None
+
+    def get_module_documents(self, module_id: int) -> List[Dict[str, Any]]:
+        """
+        Get all documents for a module.
+
+        Args:
+            module_id: Module ID
+
+        Returns:
+            List of document dictionaries
+        """
+        return self.db.execute_query('''
+            SELECT * FROM module_documents WHERE module_id = ?
+            ORDER BY doc_type, title
+        ''', (module_id,))
+
+    def get_document_relationships(self, doc_id: int) -> List[Dict[str, Any]]:
+        """
+        Get all related documents for a document.
+
+        Args:
+            doc_id: Document ID
+
+        Returns:
+            List of related document dictionaries
+        """
+        return self.db.execute_query('''
+            SELECT d.* FROM module_documents d
+            JOIN document_relationships r ON d.doc_id = r.to_doc_id
+            WHERE r.from_doc_id = ?
+        ''', (doc_id,))
+
+    def get_module_wsp_implementations(self, module_id: int) -> List[str]:
+        """
+        Get all WSP implementations for a module.
+
+        Args:
+            module_id: Module ID
+
+        Returns:
+            List of WSP numbers
+        """
+        results = self.db.execute_query('''
+            SELECT wsp_number FROM module_wsp_implementations
+            WHERE module_id = ?
+            ORDER BY wsp_number
+        ''', (module_id,))
+
+        return [row['wsp_number'] for row in results]
+
+    def get_modules_implementing_wsp(self, wsp_number: str) -> List[Dict[str, Any]]:
+        """
+        Get all modules implementing a specific WSP protocol.
+
+        Args:
+            wsp_number: WSP protocol number (e.g., "WSP 90")
+
+        Returns:
+            List of module dictionaries
+        """
+        return self.db.execute_query('''
+            SELECT m.* FROM modules m
+            JOIN module_wsp_implementations w ON m.module_id = w.module_id
+            WHERE w.wsp_number = ?
+            ORDER BY m.module_name
+        ''', (wsp_number,))
+
+    def get_all_modules(self) -> List[Dict[str, Any]]:
+        """
+        Get all registered modules.
+
+        Returns:
+            List of module dictionaries
+        """
+        return self.db.execute_query('''
+            SELECT * FROM modules
+            ORDER BY module_domain, module_name
+        ''')
+
+    def get_document_by_path(self, file_path: str) -> Optional[Dict[str, Any]]:
+        """
+        Get document by file path.
+
+        Args:
+            file_path: Full path to document
+
+        Returns:
+            Document dictionary or None
+        """
+        result = self.db.execute_query(
+            "SELECT * FROM module_documents WHERE file_path = ?",
+            (file_path,)
+        )
+        return dict(result[0]) if result else None
+
+    def delete_module_documentation(self, module_id: int) -> bool:
+        """
+        Delete all documentation for a module (cascade delete).
+
+        Args:
+            module_id: Module ID
+
+        Returns:
+            True if successful
+        """
+        try:
+            with self.db.get_connection() as conn:
+                # Foreign keys with CASCADE will handle related records
+                conn.execute("DELETE FROM modules WHERE module_id = ?", (module_id,))
+            return True
+        except Exception:
+            return False

@@ -207,6 +207,11 @@ def main() -> None:
     parser.add_argument('--interactive', action='store_true', help='Interactive verification mode for module linking')
     parser.add_argument('--force', action='store_true', help='Force relink even if already linked')
 
+    # Module documentation query commands
+    parser.add_argument('--query-modules', action='store_true', help='Query module documentation from database')
+    parser.add_argument('--wsp', type=str, help='Find modules implementing a WSP protocol (e.g., "WSP 90")')
+    parser.add_argument('--list-modules', action='store_true', help='List all registered modules')
+
     args = parser.parse_args()
 
     run_number = os.getenv('HOLOINDEX_RUN', '1')
@@ -1082,6 +1087,99 @@ def main() -> None:
 
         return  # Exit after module linking
 
+    # Handle module documentation queries (database-powered)
+    if args.query_modules or args.wsp or args.list_modules:
+        try:
+            from modules.infrastructure.database.src.agent_db import AgentDB
+            db = AgentDB()
+
+            if args.wsp:
+                # Query modules implementing a specific WSP
+                safe_print(f"[QUERY] Modules implementing {args.wsp}")
+                safe_print("=" * 65)
+
+                modules = db.get_modules_implementing_wsp(args.wsp)
+
+                if modules:
+                    safe_print(f"\n[FOUND] {len(modules)} module(s) implementing {args.wsp}:")
+                    for module in modules:
+                        safe_print(f"  - {module['module_domain']}/{module['module_name']}")
+                        safe_print(f"    Path: {module['module_path']}")
+                        safe_print(f"    Last linked: {module['linked_timestamp']}")
+                        safe_print("")
+                else:
+                    safe_print(f"\n[NOT FOUND] No modules found implementing {args.wsp}")
+
+            elif args.list_modules:
+                # List all registered modules
+                safe_print("[QUERY] All registered modules")
+                safe_print("=" * 65)
+
+                modules = db.get_all_modules()
+
+                if modules:
+                    safe_print(f"\n[FOUND] {len(modules)} registered module(s):")
+
+                    # Group by domain
+                    by_domain = {}
+                    for module in modules:
+                        domain = module['module_domain']
+                        if domain not in by_domain:
+                            by_domain[domain] = []
+                        by_domain[domain].append(module)
+
+                    for domain in sorted(by_domain.keys()):
+                        safe_print(f"\n[{domain.upper()}]")
+                        for module in by_domain[domain]:
+                            safe_print(f"  - {module['module_name']}")
+
+                            # Get document count
+                            docs = db.get_module_documents(module['module_id'])
+                            wsps = db.get_module_wsp_implementations(module['module_id'])
+
+                            safe_print(f"    Documents: {len(docs)}, WSP implementations: {len(wsps)}")
+                            safe_print(f"    Last linked: {module['linked_timestamp']}")
+                else:
+                    safe_print("\n[EMPTY] No modules registered yet")
+                    safe_print("[TIP] Run: python holo_index.py --link-modules")
+
+            elif args.module:
+                # Query specific module documentation
+                safe_print(f"[QUERY] Module documentation: {args.module}")
+                safe_print("=" * 65)
+
+                module = db.get_module(module_name=args.module)
+
+                if module:
+                    safe_print(f"\n[MODULE] {module['module_domain']}/{module['module_name']}")
+                    safe_print(f"Path: {module['module_path']}")
+                    safe_print(f"Last linked: {module['linked_timestamp']}")
+
+                    # Get documents
+                    docs = db.get_module_documents(module['module_id'])
+                    safe_print(f"\n[DOCUMENTS] {len(docs)} document(s):")
+                    for doc in docs:
+                        safe_print(f"  - [{doc['doc_type']}] {doc['title']}")
+                        safe_print(f"    {doc['file_path']}")
+
+                    # Get WSP implementations
+                    wsps = db.get_module_wsp_implementations(module['module_id'])
+                    if wsps:
+                        safe_print(f"\n[WSP IMPLEMENTATIONS] {len(wsps)} protocol(s):")
+                        safe_print(f"  {', '.join(wsps)}")
+                else:
+                    safe_print(f"\n[NOT FOUND] Module '{args.module}' not registered")
+                    safe_print("[TIP] Run: python holo_index.py --link-modules --module {args.module}")
+
+            safe_print("\n" + "=" * 65)
+
+        except Exception as e:
+            safe_print(f"[ERROR] Query failed: {e}")
+            import traceback
+            traceback.print_exc()
+
+        return  # Exit after query
+
     if args.benchmark:
         holo.benchmark_ssd()
 
@@ -1097,6 +1195,9 @@ def main() -> None:
         safe_print("  python holo_index.py --link-modules          # Link all module documentation (Qwen)")
         safe_print("  python holo_index.py --link-modules --module liberty_alert  # Link one module")
         safe_print("  python holo_index.py --link-modules --interactive  # Interactive mode")
+        safe_print("  python holo_index.py --list-modules          # List all registered modules (DB)")
+        safe_print("  python holo_index.py --wsp 'WSP 90'          # Find modules implementing WSP 90 (DB)")
+        safe_print("  python holo_index.py --query-modules --module liberty_alert  # Query module docs (DB)")
         safe_print("  python holo_index.py --start-holodae         # Start autonomous HoloDAE monitoring")
         safe_print("  python holo_index.py --holodae-status        # Check HoloDAE status")
         safe_print("  python holo_index.py --benchmark             # Test SSD performance")

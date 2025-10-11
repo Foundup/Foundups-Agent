@@ -83,18 +83,26 @@ class QwenModuleDocLinker:
     metadata with module ownership and cross-references.
     """
 
-    def __init__(self, repo_root: Path, holo_coordinator: HoloDAECoordinator):
+    def __init__(self, repo_root: Path, holo_coordinator: HoloDAECoordinator, agent_db=None):
         """
         Initialize the Qwen Module Documentation Linker.
 
         Args:
             repo_root: Path to repository root (O:\Foundups-Agent)
             holo_coordinator: HoloDAE coordinator for Qwen LLM access
+            agent_db: AgentDB instance (will create if None)
         """
         self.repo_root = Path(repo_root)
         self.modules_dir = self.repo_root / "modules"
         self.holo_coordinator = holo_coordinator
         self.linker_version = "1.0.0"
+
+        # Initialize AgentDB
+        if agent_db is None:
+            from modules.infrastructure.database.src.agent_db import AgentDB
+            self.db = AgentDB()
+        else:
+            self.db = agent_db
 
     def discover_all_modules(self) -> List[Path]:
         """
@@ -456,31 +464,57 @@ Respond in JSON format:
 
     def save_module_registry(self, registry: ModuleDocumentRegistry):
         """
-        Save MODULE_DOC_REGISTRY.json to module directory.
+        Save module documentation registry to AgentDB.
 
         Args:
             registry: ModuleDocumentRegistry object to save
         """
-        module_path = Path(registry.module_path)
-        registry_path = module_path / "MODULE_DOC_REGISTRY.json"
+        # Register module in database
+        module_id = self.db.register_module(
+            module_name=registry.module_name,
+            module_path=registry.module_path,
+            module_domain=registry.module_domain,
+            linker_version=registry.linker_version
+        )
 
-        # Convert to dictionary (handle dataclass serialization)
-        registry_dict = {
-            "module_name": registry.module_name,
-            "module_path": registry.module_path,
-            "module_domain": registry.module_domain,
-            "documents": [asdict(doc) for doc in registry.documents],
-            "relationships": registry.relationships,
-            "wsp_implementations": registry.wsp_implementations,
-            "linked_timestamp": registry.linked_timestamp,
-            "linker_version": registry.linker_version
-        }
+        # Register all documents
+        doc_id_map = {}  # file_path -> doc_id
+        for doc in registry.documents:
+            doc_id = self.db.register_document(
+                module_id=module_id,
+                doc_type=doc.doc_type,
+                file_path=doc.file_path,
+                title=doc.title,
+                purpose=doc.purpose
+            )
+            doc_id_map[doc.file_path] = doc_id
 
-        # Write JSON
-        with open(registry_path, 'w', encoding='utf-8') as f:
-            json.dump(registry_dict, f, indent=2, ensure_ascii=False)
+            # Add cross-references
+            for cross_ref in doc.cross_references:
+                # Determine reference type
+                if cross_ref.upper().startswith("WSP"):
+                    ref_type = "wsp"
+                elif any(domain in cross_ref.lower() for domain in ["communication", "infrastructure", "ai_intelligence", "platform_integration"]):
+                    ref_type = "module"
+                else:
+                    ref_type = "other"
 
-        print(f"[OK] Registry saved: {registry_path}")
+                self.db.add_cross_reference(doc_id, ref_type, cross_ref)
+
+        # Add document relationships
+        for from_path, to_paths in registry.relationships.items():
+            if from_path in doc_id_map:
+                from_doc_id = doc_id_map[from_path]
+                for to_path in to_paths:
+                    if to_path in doc_id_map:
+                        to_doc_id = doc_id_map[to_path]
+                        self.db.add_document_relationship(from_doc_id, to_doc_id)
+
+        # Add WSP implementations
+        for wsp_number in registry.wsp_implementations:
+            self.db.add_wsp_implementation(module_id, wsp_number)
+
+        print(f"[OK] Registry saved to database: module_id={module_id}")
 
     def link_single_module(self, module_name: str, interactive: bool = False, force: bool = False) -> bool:
         """
@@ -520,9 +554,9 @@ Respond in JSON format:
             print(f"[FAIL] Module path does not exist: {module_path}")
             return False
 
-        # Check if already linked
-        registry_path = module_path / "MODULE_DOC_REGISTRY.json"
-        if registry_path.exists() and not force:
+        # Check if already linked in database
+        existing_module = self.db.get_module(module_path=str(module_path))
+        if existing_module and not force:
             print(f"[INFO] Module already linked: {module_path.name}")
             print(f"[INFO] Use --force to relink")
             return True
