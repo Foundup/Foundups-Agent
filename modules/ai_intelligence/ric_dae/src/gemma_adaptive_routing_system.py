@@ -20,7 +20,7 @@ class GemmaAdaptiveRouter:
 
     def __init__(self):
         self.holo_data_path = Path('../../../holo_index')
-        self.wsp_matrix_path = Path('../../../WSP_Sentinel_Opportunity_Matrix.json')
+        self.wsp_matrix_path = Path('../../../WSP_framework/docs/matrices/WSP_Sentinel_Opportunity_Matrix.json')
         self.token_budget = 25000  # WSP 75 compliance
 
         # Adaptive complexity thresholds

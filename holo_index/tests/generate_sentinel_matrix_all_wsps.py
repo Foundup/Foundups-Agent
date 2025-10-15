@@ -117,8 +117,8 @@ def generate_complete_matrix():
     # Generate summary statistics
     print_matrix_summary(results)
 
-    # Save matrix to JSON
-    output_file = Path("O:/Foundups-Agent/docs/SENTINEL_OPPORTUNITY_MATRIX.json")
+    # Save matrix to JSON (updated path after DocDAE organization)
+    output_file = Path("O:/Foundups-Agent/WSP_framework/docs/matrices/SENTINEL_OPPORTUNITY_MATRIX.json")
     save_matrix(results, output_file, elapsed)
 
     return results

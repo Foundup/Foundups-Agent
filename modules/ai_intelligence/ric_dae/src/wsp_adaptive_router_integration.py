@@ -18,7 +18,7 @@ class WSPAdaptiveRouterIntegrator:
 
     def __init__(self):
         self.router_path = Path('../../../../foundups-mcp-p1/servers/youtube_dae_gemma')
-        self.wsp_matrix_path = Path('../../../../WSP_Sentinel_Opportunity_Matrix.json')
+        self.wsp_matrix_path = Path('../../../../WSP_framework/docs/matrices/WSP_Sentinel_Opportunity_Matrix.json')
         self.message_processor_path = Path('../../../../modules/communication/livechat/src/message_processor.py')
 
     def wsp_compliance_check(self) -> Dict[str, bool]:
@@ -269,8 +269,8 @@ class WSPAdaptiveRouterIntegrator:
             }
         }
 
-        # Save report
-        report_path = Path('../../../../docs/adaptive_router_wsp_integration_report.json')
+        # Save report (updated path after DocDAE organization)
+        report_path = Path(__file__).parent.parent / 'docs' / 'adaptive_router_wsp_integration_report.json'
         report_path.parent.mkdir(parents=True, exist_ok=True)
         with open(report_path, 'w') as f:
             json.dump(report, f, indent=2)

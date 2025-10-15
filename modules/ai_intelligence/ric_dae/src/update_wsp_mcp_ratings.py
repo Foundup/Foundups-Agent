@@ -14,7 +14,7 @@ sys.path.append('../../../..')
 def update_wsp_matrix_with_mcp_ratings():
     """Add MCP utility ratings to all WSPs in the matrix"""
 
-    matrix_path = Path('../../../WSP_Sentinel_Opportunity_Matrix.json')
+    matrix_path = Path('../../../WSP_framework/docs/matrices/WSP_Sentinel_Opportunity_Matrix.json')
 
     try:
         # Load existing matrix

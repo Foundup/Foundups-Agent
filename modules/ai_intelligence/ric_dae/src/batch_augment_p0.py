@@ -18,7 +18,7 @@ def batch_augment_p0():
 
     try:
         # Load the matrix
-        matrix_file = Path('../../../WSP_Sentinel_Opportunity_Matrix.json')
+        matrix_file = Path('../../../WSP_framework/docs/matrices/WSP_Sentinel_Opportunity_Matrix.json')
         with open(matrix_file, 'r') as f:
             matrix = json.load(f)
 

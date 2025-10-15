@@ -24,7 +24,7 @@ def generate_matrix():
         print(f'✅ Matrix generated: {len(matrix)} WSPs analyzed')
 
         # Save matrix
-        matrix_file = Path('WSP_Sentinel_Opportunity_Matrix.json')
+        matrix_file = Path('../../../WSP_framework/docs/matrices/WSP_Sentinel_Opportunity_Matrix.json')
         with open(matrix_file, 'w') as f:
             json.dump(matrix, f, indent=2)
         print(f'💾 Matrix saved to {matrix_file}')
