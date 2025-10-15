@@ -173,9 +173,13 @@ class DocDAE:
         Examples:
         - "Gemma3_YouTube_DAE_First_Principles_Analysis" → youtube_dae
         - "HoloIndex_MCP_ricDAE_Integration" → holo_index
-        - "Qwen_Gemma_Training_Architecture" → qwen_advisor
+        - "adaptive_router_wsp_integration_report" → ric_dae
         """
         filename_lower = filename.lower()
+
+        # Pattern: ricDAE / Adaptive Router (check before general DAE)
+        if any(x in filename_lower for x in ['ricdae', 'ric_dae', 'adaptive_router']):
+            return 'ric_dae'
 
         # Pattern: YouTube DAE
         if any(x in filename_lower for x in ['youtube', 'yt_dae', 'livechat', 'shorts']):
@@ -193,11 +197,11 @@ class DocDAE:
         if any(x in filename_lower for x in ['mcp', 'gemini']):
             return 'mcp_integration'
 
-        # Pattern: WSP / CodeIndex
+        # Pattern: WSP / CodeIndex / Sentinel
         if any(x in filename_lower for x in ['wsp', 'codeindex', 'sentinel']):
             return 'wsp_framework'
 
-        # Pattern: DAE general
+        # Pattern: DAE general (after specific DAE patterns)
         if 'dae' in filename_lower:
             return 'dae_infrastructure'
 
@@ -269,17 +273,38 @@ class DocDAE:
         Qwen Task: Complex reasoning for file destination.
 
         Decision Matrix:
-        1. Operational data (JSON) → Archive (not documentation)
-        2. Documentation with module hint → Move to module/docs/
-        3. Documentation without hint → Keep (needs manual review)
-        4. Other files → Archive
+        1. JSON reports/analysis (documentation) → Move to module/docs/
+        2. JSON operational data (batch files, temp data) → Archive
+        3. Documentation with module hint → Move to module/docs/
+        4. Documentation without hint → Keep (needs manual review)
+        5. Other files → Archive
         """
         file_type = file_info['type']
         module_hint = file_info['module_hint']
         filename = file_info['name']
 
-        # Rule 1: Operational data (JSON batch files, analysis results)
+        # Rule 1: JSON Classification (documentation vs operational)
         if file_type == 'operational_data':
+            # JSON Documentation: Reports, analysis, reference data
+            if any(x in filename.lower() for x in ['report', 'manifest', 'matrix', 'index']):
+                # These are structured documentation, not operational data
+                if module_hint:
+                    destination = self._map_to_module_docs(module_hint, filename)
+                    if destination:
+                        return {
+                            "action": "move",
+                            "destination": destination,
+                            "module": module_hint,
+                            "reason": f"JSON documentation for {module_hint} module"
+                        }
+                # System-wide reference data
+                if any(x in filename.lower() for x in ['index', 'complete']):
+                    return {
+                        "action": "keep",
+                        "reason": "System-wide reference data (JSON documentation)"
+                    }
+
+            # JSON Operational Data: Batch files, temp analysis
             if 'batch' in filename.lower() or 'qwen_batch' in filename.lower():
                 return {
                     "action": "archive",
@@ -289,11 +314,6 @@ class DocDAE:
                 return {
                     "action": "archive",
                     "reason": "Large orphan analysis dataset (operational)"
-                }
-            elif 'matrix' in filename.lower() or 'index' in filename.lower():
-                return {
-                    "action": "keep",
-                    "reason": "Reference data - keep for analysis"
                 }
 
         # Rule 2: Documentation with clear module hint
@@ -325,6 +345,7 @@ class DocDAE:
         """Map module hint to actual module docs/ path."""
         # Map hints to actual module paths
         module_mapping = {
+            'ric_dae': 'modules/ai_intelligence/ric_dae/docs',
             'youtube_dae': 'modules/communication/livechat/docs',
             'holo_index': 'holo_index/docs',
             'orphan_analysis': 'docs/orphan_analysis',  # Special case: keep organized
