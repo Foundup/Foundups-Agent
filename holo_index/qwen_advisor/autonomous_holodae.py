@@ -15,6 +15,7 @@ WSP Compliance: WSP 80 (Cube-Level DAE), WSP 87 (Code Navigation), WSP 84 (Memor
 """
 
 import os
+import sys
 import time
 import threading
 import logging
@@ -29,6 +30,16 @@ from .intelligent_monitor import IntelligentMonitor, MonitoringContext
 from .models.work_context import WorkContext
 from ..dae_cube_organizer.dae_cube_organizer import DAECubeCodeMap
 from modules.infrastructure.database.src.agent_db import AgentDB
+
+# Gemma Integration - P0 Enhancement for YouTube DAE
+sys.path.append(str(Path(__file__).parent.parent.parent / 'modules' / 'ai_intelligence' / 'ric_dae' / 'src'))
+try:
+    from holodae_gemma_integration import HoloDAEGemmaIntegrator
+    from gemma_adaptive_routing_system import GemmaAdaptiveRouter
+    GEMMA_AVAILABLE = True
+except ImportError as e:
+    logging.warning(f"[GEMMA] Gemma integration not available: {e}")
+    GEMMA_AVAILABLE = False
 
 
 class AutonomousHoloDAE:
@@ -63,6 +74,21 @@ class AutonomousHoloDAE:
         # Track file changes for re-indexing triggers
         self.documentation_paths = get_wsp_paths()
         self.last_known_file_count = self._count_documentation_files()
+
+        # Gemma Integration - Enhanced intelligence for YouTube DAE
+        if GEMMA_AVAILABLE:
+            try:
+                self.gemma_integrator = HoloDAEGemmaIntegrator()
+                self.gemma_router = GemmaAdaptiveRouter()
+                self.gemma_enabled = True
+                self.logger.info("[HOLO-DAE] ✅ Gemma integration initialized - 6 specializations ready")
+                self.logger.info("[HOLO-DAE] Gemma: pattern_recognition, embedding_optimization, health_anomaly_detection, violation_prevention, query_understanding, dae_cube_organization")
+            except Exception as e:
+                self.logger.warning(f"[HOLO-DAE] Gemma integration failed: {e}")
+                self.gemma_enabled = False
+        else:
+            self.gemma_enabled = False
+            self.logger.info("[HOLO-DAE] Gemma integration not available - continuing with Qwen only")
 
         self.logger.info("[HOLO-DAE] Autonomous HoloDAE initialized with auto-reindexing")
 

@@ -88,6 +88,7 @@ class MonitoringResult:
     scan_duration: float = 0.0
     watched_paths: List[str] = field(default_factory=list)
     optimization_suggestions: List[str] = field(default_factory=list)
+    codeindex_reports: List[Dict[str, Any]] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def has_actionable_events(self) -> bool:
@@ -95,7 +96,8 @@ class MonitoringResult:
         return (
             len(self.changes_detected) >= 3 or
             len(self.violations_found) > 0 or
-            any(alert.is_high_confidence() for alert in self.pattern_alerts)
+            any(alert.is_high_confidence() for alert in self.pattern_alerts) or
+            any(report.get("critical_fixes", 0) > 0 for report in self.codeindex_reports)
         )
 
     def get_summary(self) -> str:

@@ -7,16 +7,16 @@
 
 ### Three Database Namespaces
 ```
-foundups.db (SQLite → PostgreSQL when scaling)
-├── modules.*     # All module data
-├── foundups.*    # Independent FoundUp projects  
-└── agents.*      # Agent memory and state
+foundups.db (SQLite -> PostgreSQL when scaling)
+[U+251C][U+2500][U+2500] modules.*     # All module data
+[U+251C][U+2500][U+2500] foundups.*    # Independent FoundUp projects  
+[U+2514][U+2500][U+2500] agents.*      # Agent memory and state
 ```
 
 ### Why This Works
 - **One Database File**: Simple to backup, move, manage
 - **Module Isolation**: Each module gets its own tables with prefix
-- **Easy Scaling**: SQLite → PostgreSQL is a connection string change
+- **Easy Scaling**: SQLite -> PostgreSQL is a connection string change
 - **No Complexity**: No microservices, no distributed systems (until 100K+ users)
 
 ## Implementation: Dead Simple
@@ -250,21 +250,21 @@ _db_url = os.getenv('DATABASE_URL', 'sqlite:///data/foundups.db')
 
 ```
 modules/infrastructure/database/
-├── src/
-│   ├── __init__.py
-│   ├── db_manager.py      # Core database manager (singleton)
-│   ├── module_db.py       # Module database base class
-│   ├── foundup_db.py      # FoundUp database class
-│   └── agent_db.py        # Agent memory database
-├── data/
-│   └── foundups.db        # Single database file
-└── tests/
-    └── test_database.py
+[U+251C][U+2500][U+2500] src/
+[U+2502]   [U+251C][U+2500][U+2500] __init__.py
+[U+2502]   [U+251C][U+2500][U+2500] db_manager.py      # Core database manager (singleton)
+[U+2502]   [U+251C][U+2500][U+2500] module_db.py       # Module database base class
+[U+2502]   [U+251C][U+2500][U+2500] foundup_db.py      # FoundUp database class
+[U+2502]   [U+2514][U+2500][U+2500] agent_db.py        # Agent memory database
+[U+251C][U+2500][U+2500] data/
+[U+2502]   [U+2514][U+2500][U+2500] foundups.db        # Single database file
+[U+2514][U+2500][U+2500] tests/
+    [U+2514][U+2500][U+2500] test_database.py
 
 # Each module just imports and uses:
 modules/communication/chat_rules/
-└── src/
-    └── database.py        # from modules.infrastructure.database import ModuleDB
+[U+2514][U+2500][U+2500] src/
+    [U+2514][U+2500][U+2500] database.py        # from modules.infrastructure.database import ModuleDB
 ```
 
 ## Why This Is Better
@@ -314,15 +314,15 @@ def migrate_to_unified():
 
 ## Anti-Patterns to Avoid
 
-❌ **Don't**: Create separate databases per module
-❌ **Don't**: Use microservices until 1M+ users  
-❌ **Don't**: Add complexity before it's needed
-❌ **Don't**: Use NoSQL unless you need it
+[U+274C] **Don't**: Create separate databases per module
+[U+274C] **Don't**: Use microservices until 1M+ users  
+[U+274C] **Don't**: Add complexity before it's needed
+[U+274C] **Don't**: Use NoSQL unless you need it
 
-✅ **Do**: Keep it simple with one database
-✅ **Do**: Use table prefixes for isolation
-✅ **Do**: Plan for scaling but don't pre-optimize
-✅ **Do**: Use SQLite until you outgrow it
+[U+2705] **Do**: Keep it simple with one database
+[U+2705] **Do**: Use table prefixes for isolation
+[U+2705] **Do**: Plan for scaling but don't pre-optimize
+[U+2705] **Do**: Use SQLite until you outgrow it
 
 ## Decision Matrix
 

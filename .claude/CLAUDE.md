@@ -94,14 +94,17 @@ location = NEED_TO.get("your_problem", None)
 
 #### STEP 3: CODE ARCHAEOLOGY (2 minutes)
 ```bash
-# Find existing implementations (Use HoloIndex first!)
+# Find existing implementations (ONLY HoloIndex - grep = violation!)
 python holo_index.py --search "functionality_name"
-# Only if exact match needed:
-# rg "exact_function_name" modules/
-ls -la modules/{domain}/{module}/src/
 python holo_index.py --search "import {module}"
-cat modules/{domain}/{module}/tests/test_*.py | head -100
+python holo_index.py --search "test {functionality}"
+ls -la modules/{domain}/{module}/src/
+
+# WSP 87 ENFORCEMENT: grep/rg = BLIND pattern matching
+# HoloIndex = SEMANTIC search with LLM intelligence
+# Using grep before HoloIndex = WSP 50 + WSP 87 violation
 ```
+- [ ] **USED HOLOINDEX ONLY** (grep/rg = violation)
 - [ ] Searched for existing functionality
 - [ ] Listed all source files in module
 - [ ] Checked how module is imported elsewhere
@@ -121,11 +124,11 @@ cat modules/{domain}/{module}/tests/test_*.py | head -100
 - [ ] Applied WSP 3 (Module Organization)
 - [ ] Applied WSP 49 (Module Structure)
 
-### ⏱️ RESEARCH TIME REQUIREMENTS
-- **Minimum Research Time**: 4 minutes before ANY code
-- **Documentation Reading**: 2 minutes minimum
-- **Code Search**: 2 minutes minimum
-- **If you skip research**: Expect 40+ minutes of debugging
+### ⚡ RESEARCH TOKEN REQUIREMENTS (0102 operates in tokens, not time)
+- **Minimum Research**: 2-5K tokens (HoloIndex + docs)
+- **Documentation Reading**: 1-3K tokens (README + INTERFACE + ModLog)
+- **Code Search**: 500-1K tokens (HoloIndex semantic search)
+- **If you skip research**: Waste 50-200K tokens debugging + refactoring
 
 ### 🚨 VIBECODING CONSEQUENCES
 Every time you vibecode:

@@ -39,13 +39,8 @@ class IdleAutomationDAE:
         self.idle_state = self._load_idle_state()
         self.execution_history = self._load_execution_history()
 
-        # Configuration from environment (WSP 70)
-        self.config = {
-            "auto_git_push": os.getenv("AUTO_GIT_PUSH", "false").lower() == "true",
-            "auto_linkedin_post": os.getenv("AUTO_LINKEDIN_POST", "false").lower() == "true",
-            "idle_task_timeout": int(os.getenv("IDLE_TASK_TIMEOUT", "300")),
-            "max_daily_executions": int(os.getenv("MAX_DAILY_EXECUTIONS", "3")),
-        }
+        # Configuration from environment (WSP 70) with validation
+        self.config = self._load_and_validate_config()
 
         # WSP 48: WRE integration for recursive improvement
         self._setup_wre_integration()
@@ -53,37 +48,85 @@ class IdleAutomationDAE:
         logger.info("✅ Idle Automation DAE initialized")
         logger.info(f"   Auto Git Push: {self.config['auto_git_push']}")
         logger.info(f"   Auto LinkedIn: {self.config['auto_linkedin_post']}")
+        logger.info(f"   Health Score: {self.idle_state.get('health_score', 'N/A')}")
 
     def _load_idle_state(self) -> Dict[str, Any]:
-        """Load persistent idle state (WSP 60)."""
+        """Load persistent idle state (WSP 60) with backup recovery."""
         state_file = self.memory_path / "idle_state.json"
+        backup_file = self.memory_path / "idle_state.backup.json"
 
+        # Try primary file first
         if state_file.exists():
             try:
                 with open(state_file, 'r') as f:
-                    return json.load(f)
+                    state = json.load(f)
+                    logger.debug("✅ Loaded idle state from primary file")
+                    # Create backup on successful load
+                    self._create_backup(state)
+                    return state
             except Exception as e:
-                logger.warning(f"Failed to load idle state: {e}")
+                logger.warning(f"❌ Failed to load primary idle state: {e}")
+                # Try backup file
+                if backup_file.exists():
+                    try:
+                        with open(backup_file, 'r') as f:
+                            state = json.load(f)
+                            logger.info("✅ Recovered idle state from backup file")
+                            return state
+                    except Exception as backup_e:
+                        logger.error(f"❌ Backup file also corrupted: {backup_e}")
 
-        # Default state
-        return {
+        # Default state with validation
+        default_state = {
             "last_idle_execution": None,
             "last_git_push": None,
             "last_linkedin_post": None,
             "execution_count_today": 0,
             "last_reset_date": datetime.now().date().isoformat(),
             "idle_session_count": 0,
+            "circuit_breaker_reset": datetime.now().isoformat(),
+            "health_score": 100,  # 0-100 health metric
         }
 
+        logger.info("🏗️ Initialized default idle state")
+        return default_state
+
+    def _create_backup(self, state: Dict[str, Any]):
+        """Create backup of idle state (WSP 60)."""
+        backup_file = self.memory_path / "idle_state.backup.json"
+        try:
+            with open(backup_file, 'w') as f:
+                json.dump(state, f, indent=2, default=str)
+        except Exception as e:
+            logger.debug(f"Failed to create backup: {e}")
+
     def _save_idle_state(self):
-        """Save idle state persistently (WSP 60)."""
+        """Save idle state persistently (WSP 60) with atomic writes."""
         state_file = self.memory_path / "idle_state.json"
+        temp_file = self.memory_path / "idle_state.tmp.json"
 
         try:
-            with open(state_file, 'w') as f:
+            # Write to temporary file first (atomic operation)
+            with open(temp_file, 'w') as f:
                 json.dump(self.idle_state, f, indent=2, default=str)
+
+            # Atomic move to final location
+            import shutil
+            shutil.move(str(temp_file), str(state_file))
+
+            # Create backup after successful save
+            self._create_backup(self.idle_state)
+
+            logger.debug("✅ Idle state saved successfully")
+
         except Exception as e:
-            logger.error(f"Failed to save idle state: {e}")
+            logger.error(f"❌ Failed to save idle state: {e}")
+            # Clean up temp file if it exists
+            if temp_file.exists():
+                try:
+                    temp_file.unlink()
+                except:
+                    pass
 
     def _load_execution_history(self) -> list:
         """Load execution history for telemetry (WSP 60)."""
@@ -148,6 +191,50 @@ class IdleAutomationDAE:
         except Exception as e:
             logger.debug(f"WRE integration not available: {e}")
             self.wre_integration = None
+
+    def _load_and_validate_config(self) -> Dict[str, Any]:
+        """Load and validate configuration with defaults and bounds checking."""
+        config = {}
+
+        # Boolean configurations with validation
+        config["auto_git_push"] = self._parse_bool_env("AUTO_GIT_PUSH", False)
+        config["auto_linkedin_post"] = self._parse_bool_env("AUTO_LINKEDIN_POST", False)
+
+        # Numeric configurations with bounds
+        config["idle_task_timeout"] = self._parse_int_env("IDLE_TASK_TIMEOUT", 300, 30, 3600)
+        config["max_daily_executions"] = self._parse_int_env("MAX_DAILY_EXECUTIONS", 3, 1, 10)
+
+        # Health monitoring thresholds
+        config["health_critical_threshold"] = 20  # Below this = critical
+        config["health_warning_threshold"] = 50   # Below this = warning
+
+        return config
+
+    def _parse_bool_env(self, key: str, default: bool) -> bool:
+        """Parse boolean environment variable with validation."""
+        value = os.getenv(key, str(default).lower())
+        if value.lower() in ('true', '1', 'yes', 'on'):
+            return True
+        elif value.lower() in ('false', '0', 'no', 'off'):
+            return False
+        else:
+            logger.warning(f"Invalid boolean value for {key}: '{value}', using default {default}")
+            return default
+
+    def _parse_int_env(self, key: str, default: int, min_val: int, max_val: int) -> int:
+        """Parse integer environment variable with bounds checking."""
+        try:
+            value = int(os.getenv(key, str(default)))
+            if value < min_val:
+                logger.warning(f"Value for {key} ({value}) below minimum ({min_val}), using {min_val}")
+                return min_val
+            elif value > max_val:
+                logger.warning(f"Value for {key} ({value}) above maximum ({max_val}), using {max_val}")
+                return max_val
+            return value
+        except ValueError:
+            logger.warning(f"Invalid integer value for {key}: '{os.getenv(key)}', using default {default}")
+            return default
 
     def _check_daily_limits(self) -> bool:
         """Check if we've exceeded daily execution limits."""
@@ -261,42 +348,62 @@ class IdleAutomationDAE:
         return result
 
     async def _execute_linkedin_post(self, git_result: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute LinkedIn posting using GitLinkedInBridge."""
+        """Execute LinkedIn posting using GitLinkedInBridge - IMPROVED VERSION."""
         result = {
             "task": "linkedin_post",
             "success": False,
             "post_content": None,
             "duration": 0,
+            "circuit_breaker_tripped": False,
         }
 
         start_time = datetime.now()
 
         try:
-            # Pre-conditions check
+            # Pre-conditions check with circuit breaker
             if not self.config["auto_linkedin_post"]:
                 result["error"] = "Auto LinkedIn posting disabled"
                 return result
 
-            if not git_result.get("success"):
-                result["error"] = "Skipping LinkedIn post - Git push failed"
+            # Check circuit breaker for LinkedIn failures
+            recent_failures = [e for e in self.execution_history[-10:]
+                             if e.get("details", {}).get("linkedin_success") == False]
+            if len(recent_failures) >= 3:
+                result["circuit_breaker_tripped"] = True
+                result["error"] = f"Circuit breaker: {len(recent_failures)} recent failures"
                 return result
 
-            # Import and use GitLinkedInBridge
+            # Git success is now optional - can post independently
+            if not git_result.get("success"):
+                logger.info("⚠️ Git push failed but proceeding with LinkedIn post")
+
+            # Import and use GitLinkedInBridge with error handling
             from modules.platform_integration.linkedin_agent.src.git_linkedin_bridge import GitLinkedInBridge
 
             bridge = GitLinkedInBridge(company_id="foundups")
 
-            # Get recent commits (should include our new commit)
+            # Get recent commits (with fallback to last known commit)
             commits = bridge.get_recent_commits(1)
             if not commits:
-                result["error"] = "No recent commits found"
-                return result
+                # Fallback: use the commit from git_result if available
+                if git_result.get("commit_hash"):
+                    commits = [{
+                        "hash": git_result["commit_hash"],
+                        "subject": git_result.get("commit_message", "Recent changes"),
+                        "body": "",
+                        "timestamp": int(datetime.now().timestamp())
+                    }]
+                else:
+                    result["error"] = "No commits available for posting"
+                    return result
 
             # Generate LinkedIn content
             content = bridge.generate_linkedin_content(commits)
 
-            # Post to LinkedIn (currently commented out for safety)
-            # bridge.post_to_linkedin(content)
+            # POSTING DISABLED FOR SAFETY - Only prepare content
+            # TODO: Re-enable when safety mechanisms are fully tested
+            logger.info("📝 LinkedIn content prepared (posting disabled for safety)")
+            logger.debug(f"Content preview: {content[:100]}...")
 
             result["success"] = True
             result["post_content"] = content
@@ -307,10 +414,75 @@ class IdleAutomationDAE:
 
         except Exception as e:
             result["error"] = f"LinkedIn posting failed: {e}"
+            logger.warning(f"LinkedIn operation failed: {e}")
         finally:
             result["duration"] = (datetime.now() - start_time).total_seconds()
 
         return result
+
+    def _update_health_score(self, git_result: Dict[str, Any], linkedin_result: Dict[str, Any]):
+        """Update system health score based on execution results."""
+        current_health = self.idle_state.get("health_score", 100)
+
+        # Calculate health impact
+        health_change = 0
+
+        # Git operations are critical (+/- 10 points)
+        if git_result["success"]:
+            health_change += 2  # Small positive for success
+        else:
+            health_change -= 10  # Large penalty for git failure
+
+        # LinkedIn operations are secondary (+/- 5 points)
+        if linkedin_result["success"]:
+            health_change += 1
+        elif linkedin_result.get("circuit_breaker_tripped"):
+            health_change -= 2  # Moderate penalty for circuit breaker
+        else:
+            health_change -= 5  # Penalty for failure
+
+        # Duration penalties (slow operations = unhealthy)
+        total_duration = git_result.get("duration", 0) + linkedin_result.get("duration", 0)
+        if total_duration > 60:  # Over 1 minute is slow
+            health_change -= 5
+        elif total_duration > 30:  # Over 30 seconds is concerning
+            health_change -= 2
+
+        # Apply health change with bounds (0-100)
+        new_health = max(0, min(100, current_health + health_change))
+
+        # Log significant health changes
+        if abs(health_change) >= 5:
+            level = "INFO" if health_change > 0 else "WARNING"
+            logger.log(getattr(logging, level),
+                      f"🏥 Health score: {current_health} → {new_health} ({health_change:+d})")
+
+        self.idle_state["health_score"] = new_health
+
+        # Trigger recovery actions for critical health
+        if new_health < self.config["health_critical_threshold"]:
+            logger.error("🚨 CRITICAL: Health score critically low, triggering recovery")
+            self._trigger_critical_recovery()
+        elif new_health < self.config["health_warning_threshold"]:
+            logger.warning("⚠️ WARNING: Health score low, monitoring closely")
+
+    def _trigger_critical_recovery(self):
+        """Trigger critical recovery actions when health is critically low."""
+        logger.info("🔧 Initiating critical recovery sequence")
+
+        # Reset circuit breakers
+        self.idle_state["circuit_breaker_reset"] = datetime.now().isoformat()
+
+        # Clear execution history to remove bad patterns
+        self.execution_history = self.execution_history[-10:]  # Keep only last 10
+
+        # Reset daily counter to allow recovery attempts
+        self.reset_daily_counter()
+
+        # Force state save
+        self._save_idle_state()
+
+        logger.info("✅ Critical recovery completed")
 
     def _generate_commit_message(self, git_status: Dict[str, Any]) -> str:
         """Generate contextual commit message."""
@@ -322,6 +494,194 @@ class IdleAutomationDAE:
             return f"Auto-commit: {change_count} files updated during idle automation"
         else:
             return f"Auto-commit: {change_count} files updated - batch changes during idle automation"
+
+    async def _execute_pattern_training(self) -> Dict[str, Any]:
+        """
+        Phase 3: Execute Qwen/Gemma pattern training from 012.txt.
+        Implements WRE pattern (WSP 46): Learn from 0102's operational decisions.
+        """
+        result = {
+            "task": "pattern_training",
+            "success": False,
+            "patterns_stored": 0,
+            "lines_processed": 0,
+            "duration": 0,
+        }
+
+        start_time = datetime.now()
+
+        try:
+            # Check if training is enabled via environment variable
+            training_enabled = self._parse_bool_env("AUTO_PATTERN_TRAINING", True)
+            if not training_enabled:
+                result["error"] = "Pattern training disabled"
+                return result
+
+            # Import pattern memory
+            from holo_index.qwen_advisor.pattern_memory import PatternMemory
+
+            # Initialize pattern memory
+            pattern_memory = PatternMemory()
+
+            # Get checkpoint - where did we stop last time?
+            last_processed = pattern_memory.get_checkpoint()
+
+            # 012.txt location
+            txt_file = Path("O:/Foundups-Agent/012.txt")
+            if not txt_file.exists():
+                result["error"] = "012.txt not found"
+                return result
+
+            # Count total lines
+            with open(txt_file, 'r', encoding='utf-8', errors='ignore') as f:
+                total_lines = sum(1 for _ in f)
+
+            # Check if there's new data to process
+            if last_processed >= total_lines:
+                result["error"] = f"Already processed (checkpoint: {last_processed}, total: {total_lines})"
+                return result
+
+            # Process 1000 lines per idle cycle (chunked for performance)
+            chunk_size = 1000
+            end_line = min(last_processed + chunk_size, total_lines)
+
+            logger.info(f"🤖 [TRAINING] Processing lines {last_processed}-{end_line} of 012.txt")
+
+            # Read chunk
+            lines = []
+            with open(txt_file, 'r', encoding='utf-8', errors='ignore') as f:
+                for i, line in enumerate(f, 1):
+                    if i > last_processed and i <= end_line:
+                        lines.append((i, line.strip()))
+
+            # Extract patterns from chunk
+            patterns_found = self._extract_patterns_from_lines(lines)
+
+            # Store patterns in ChromaDB
+            for pattern in patterns_found:
+                if pattern_memory.store_pattern(pattern):
+                    result["patterns_stored"] += 1
+
+            # Update checkpoint
+            pattern_memory.save_checkpoint(end_line)
+
+            result["success"] = True
+            result["lines_processed"] = len(lines)
+            result["progress"] = f"{end_line}/{total_lines} ({end_line/total_lines*100:.1f}%)"
+
+            # Update idle state with training progress
+            self.idle_state["last_pattern_training"] = datetime.now().isoformat()
+            self.idle_state["patterns_trained_total"] = self.idle_state.get("patterns_trained_total", 0) + result["patterns_stored"]
+
+        except Exception as e:
+            result["error"] = f"Training failed: {e}"
+            logger.warning(f"Pattern training error: {e}")
+        finally:
+            result["duration"] = (datetime.now() - start_time).total_seconds()
+
+        return result
+
+    def _extract_patterns_from_lines(self, lines: list) -> list:
+        """
+        Extract training patterns from 012.txt lines.
+        Identifies Qwen decisions, priority scoring, module references.
+        """
+        patterns = []
+
+        i = 0
+        while i < len(lines):
+            line_num, line = lines[i]
+
+            # Pattern 1: Qwen priority scoring decisions
+            if "🤖🧠 [QWEN-SCORE]" in line:
+                # Extract context (10 lines before and after)
+                context_start = max(0, i - 10)
+                context_end = min(len(lines), i + 20)
+                context_lines = [lines[j][1] for j in range(context_start, context_end)]
+                context = "\n".join(context_lines)
+
+                # Parse score from line (format: "🤖🧠 [QWEN-SCORE] ChannelName: 1.23")
+                import re
+                score_match = re.search(r'\[QWEN-SCORE\] (.+): ([\d.]+)', line)
+                if score_match:
+                    channel = score_match.group(1)
+                    score = float(score_match.group(2))
+
+                    pattern = {
+                        "id": f"012_{line_num}_qwen_score",
+                        "context": context,
+                        "decision": {
+                            "action": "priority_scoring",
+                            "channel": channel,
+                            "score": score,
+                            "reasoning": "Lower score = better embedding match"
+                        },
+                        "outcome": {},  # Will be filled if we find result in next lines
+                        "module": "modules/communication/livechat/src/qwen_youtube_integration.py",
+                        "timestamp": datetime.now().isoformat(),
+                        "verified": True,
+                        "source": "012.txt"
+                    }
+                    patterns.append(pattern)
+
+            # Pattern 2: Module paths (import statements, file references)
+            elif "modules/" in line and ".py" in line:
+                # Extract module reference
+                import re
+                module_match = re.search(r'(modules/[\w/]+/[\w]+\.py)', line)
+                if module_match:
+                    module_path = module_match.group(1)
+
+                    # Get context
+                    context_start = max(0, i - 5)
+                    context_end = min(len(lines), i + 5)
+                    context_lines = [lines[j][1] for j in range(context_start, context_end)]
+                    context = "\n".join(context_lines)
+
+                    pattern = {
+                        "id": f"012_{line_num}_module_ref",
+                        "context": context,
+                        "decision": {
+                            "action": "module_reference",
+                            "module": module_path
+                        },
+                        "outcome": {},
+                        "module": module_path,
+                        "timestamp": datetime.now().isoformat(),
+                        "verified": True,
+                        "source": "012.txt"
+                    }
+                    patterns.append(pattern)
+
+            # Pattern 3: Error patterns (ERROR, WARNING logs)
+            elif "[ERROR]" in line or "[WARNING]" in line:
+                # Get context
+                context_start = max(0, i - 5)
+                context_end = min(len(lines), i + 10)
+                context_lines = [lines[j][1] for j in range(context_start, context_end)]
+                context = "\n".join(context_lines)
+
+                level = "ERROR" if "[ERROR]" in line else "WARNING"
+
+                pattern = {
+                    "id": f"012_{line_num}_error",
+                    "context": context,
+                    "decision": {
+                        "action": "error_detected",
+                        "level": level,
+                        "message": line
+                    },
+                    "outcome": {},
+                    "module": "unknown",
+                    "timestamp": datetime.now().isoformat(),
+                    "verified": True,
+                    "source": "012.txt"
+                }
+                patterns.append(pattern)
+
+            i += 1
+
+        return patterns
 
     async def run_idle_tasks(self) -> Dict[str, Any]:
         """
@@ -366,26 +726,44 @@ class IdleAutomationDAE:
                 logger.warning(f"⚠️ Git push failed: {git_result.get('error', 'Unknown error')}")
                 execution_result["overall_success"] = False
 
-            # Phase 2: Social media posting (if git succeeded)
+            # Phase 2: Social media posting (independent of git success)
             linkedin_result = await self._execute_linkedin_post(git_result)
             execution_result["tasks_executed"].append(linkedin_result)
 
             if linkedin_result["success"]:
                 logger.info("✅ LinkedIn post prepared (posting disabled for safety)")
+            elif linkedin_result.get("circuit_breaker_tripped"):
+                logger.warning(f"🔌 Circuit breaker tripped: {linkedin_result.get('error', 'N/A')}")
             else:
                 logger.info(f"ℹ️ LinkedIn posting skipped: {linkedin_result.get('error', 'N/A')}")
+
+            # Phase 3: Qwen/Gemma Training (NEW - WRE pattern learning)
+            training_result = await self._execute_pattern_training()
+            execution_result["tasks_executed"].append(training_result)
+
+            if training_result["success"]:
+                logger.info(f"🤖 Pattern training: {training_result['patterns_stored']} patterns stored")
+            else:
+                logger.info(f"ℹ️ Pattern training skipped: {training_result.get('error', 'N/A')}")
 
             # Update execution counter
             self.idle_state["execution_count_today"] += 1
 
-            # Log execution
+            # Update health score based on execution results
+            self._update_health_score(git_result, linkedin_result)
+
+            # Log execution with enhanced telemetry
             self._log_execution(
                 task_type="idle_automation_cycle",
                 success=execution_result["overall_success"],
                 details={
                     "git_success": git_result["success"],
                     "linkedin_success": linkedin_result["success"],
+                    "circuit_breaker_tripped": linkedin_result.get("circuit_breaker_tripped", False),
                     "session_id": execution_result["session_id"],
+                    "health_score": self.idle_state.get("health_score", 100),
+                    "git_duration": git_result.get("duration", 0),
+                    "linkedin_duration": linkedin_result.get("duration", 0),
                 }
             )
 
@@ -407,7 +785,14 @@ class IdleAutomationDAE:
         return execution_result
 
     def get_idle_status(self) -> Dict[str, Any]:
-        """Get current idle automation status (WSP 70)."""
+        """Get current idle automation status (WSP 70) with health metrics."""
+        health_score = self.idle_state.get("health_score", 100)
+        health_status = "healthy"
+        if health_score < self.config["health_critical_threshold"]:
+            health_status = "critical"
+        elif health_score < self.config["health_warning_threshold"]:
+            health_status = "warning"
+
         return {
             "last_idle_execution": self.idle_state.get("last_idle_execution"),
             "last_git_push": self.idle_state.get("last_git_push"),
@@ -416,7 +801,16 @@ class IdleAutomationDAE:
             "idle_session_count": self.idle_state.get("idle_session_count", 0),
             "auto_git_enabled": self.config["auto_git_push"],
             "auto_linkedin_enabled": self.config["auto_linkedin_post"],
+            "health_score": health_score,
+            "health_status": health_status,
+            "circuit_breaker_reset": self.idle_state.get("circuit_breaker_reset"),
             "recent_executions": self.execution_history[-5:] if self.execution_history else [],
+            "config": {
+                "idle_task_timeout": self.config["idle_task_timeout"],
+                "max_daily_executions": self.config["max_daily_executions"],
+                "health_critical_threshold": self.config["health_critical_threshold"],
+                "health_warning_threshold": self.config["health_warning_threshold"],
+            }
         }
 
     def reset_daily_counter(self):

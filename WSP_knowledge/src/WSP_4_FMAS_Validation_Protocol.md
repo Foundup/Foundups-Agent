@@ -44,7 +44,7 @@ grep -r "from.*TARGET_NAME\|import.*TARGET_NAME" modules/ tools/
 #### 2.3.2. Impact Classification
 | Impact Level | Definition | FMAS Action Required |
 |--------------|------------|---------------------|
-| **ISOLATED** | ≤3 references, single module | Standard validation |
+| **ISOLATED** | [U+2264]3 references, single module | Standard validation |
 | **MODULAR** | 4-10 references, cross-module | Cross-module validation |
 | **SYSTEMIC** | >10 references, cross-domain | Full coherence protocol |
 | **CRITICAL** | Core infrastructure, WRE engine | Architecture review + approval |

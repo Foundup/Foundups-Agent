@@ -529,10 +529,55 @@ def generate_x_content(commit_msg, file_count):
     return content
 
 
+def launch_git_push_dae():
+    """
+    Launch GitPushDAE daemon with WSP 91 full observability.
+    Transforms git push from human-triggered action to autonomous DAE.
+    """
+    print("\n" + "="*60)
+    print("🚀 GIT PUSH DAE - AUTONOMOUS DEVELOPMENT")
+    print("="*60)
+    print("WSP 91 DAEMON: Fully autonomous git push with observability")
+    print("No human decision required - agentic parameters drive decisions")
+    print("="*60)
+
+    try:
+        # Import and launch the GitPushDAE
+        from modules.infrastructure.git_push_dae.src.git_push_dae import GitPushDAE
+
+        # Create and start the daemon
+        dae = GitPushDAE(domain="foundups_development", check_interval=300)  # 5-minute checks
+        dae.start()
+
+        print("\n✅ GitPushDAE launched successfully!")
+        print("📊 Monitor logs at: logs/git_push_dae.log")
+        print("🛑 Press Ctrl+C to stop the daemon")
+
+        try:
+            # Keep running until interrupted
+            while dae.active:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\n🛑 Stopping GitPushDAE...")
+            dae.stop()
+
+    except ImportError as e:
+        print(f"❌ Failed to import GitPushDAE: {e}")
+        print("Falling back to legacy git_push_and_post...")
+
+        # Fallback to old method
+        git_push_and_post()
+
+    except Exception as e:
+        print(f"❌ GitPushDAE failed: {e}")
+        input("\nPress Enter to continue...")
+
+
 def git_push_and_post():
     """
-    Git push with automatic social media posting.
+    LEGACY: Git push with automatic social media posting.
     Uses the git_linkedin_bridge module to handle posting.
+    DEPRECATED: Use GitPushDAE instead for full autonomy.
     """
     import sys
     import os
@@ -543,6 +588,7 @@ def git_push_and_post():
     print("\n" + "="*60)
     print("GIT PUSH & LINKEDIN + X POST (FoundUps)")
     print("="*60)
+    print("⚠️  LEGACY MODE: Consider using GitPushDAE for full autonomy")
 
     # Use the git bridge module with X support
     bridge = GitLinkedInBridge(company_id="1263645")
@@ -637,9 +683,349 @@ def view_git_post_history():
     input("\nPress Enter to continue...")
 
 
+def run_training_system():
+    """
+    Qwen/Gemma Training System - Pattern Learning from 012.txt
+    Implements WRE pattern (WSP 46): Learn from 0102's operational decisions
+    """
+    from holo_index.qwen_advisor.pattern_memory import PatternMemory
+    import asyncio
+
+    while True:
+        print("\n" + "="*60)
+        print("🤖 QWEN/GEMMA TRAINING SYSTEM")
+        print("="*60)
+        print("Implements WRE Pattern (WSP 46): Qwen coordinates, Gemma executes")
+        print("Training Data: 012.txt (28K+ lines of 0102 operational decisions)")
+        print("="*60)
+
+        # Get stats
+        try:
+            memory = PatternMemory()
+            stats = memory.get_stats()
+
+            print(f"\n📊 CURRENT STATUS:")
+            print(f"   Patterns Stored: {stats['total_patterns']}")
+            print(f"   012.txt Progress: {stats['checkpoint_line']}/28326 ({stats['checkpoint_line']/283.26:.1f}%)")
+            print(f"   Verification Rate: {stats['verification_rate']:.1%}")
+            print(f"   Sources: {stats['sources']}")
+
+        except Exception as e:
+            print(f"⚠️  Could not load stats: {e}")
+            print(f"   Pattern memory may need initialization")
+
+        print("\n" + "-"*60)
+        print("TRAINING OPTIONS:")
+        print("-"*60)
+        print("1. 🏃 Start Batch Training (Process 012.txt)")
+        print("2. 📊 View Training Progress")
+        print("3. 🧪 Test Pattern Recall")
+        print("4. 🔄 Test Qwen/Gemma Routing (Adaptive AI)")
+        print("5. 📈 View Training Metrics")
+        print("6. 🗑️  Clear Pattern Memory (Reset)")
+        print("7. 🔙 Back to Main Menu")
+        print("-"*60)
+
+        choice = input("\nSelect option (1-7): ").strip()
+
+        if choice == "1":
+            # Batch training
+            print("\n🏃 Starting Batch Training...")
+            print("="*60)
+
+            try:
+                from modules.infrastructure.idle_automation.src.idle_automation_dae import IdleAutomationDAE
+
+                # Create DAE and run training phase
+                dae = IdleAutomationDAE()
+                result = asyncio.run(dae._execute_pattern_training())
+
+                print(f"\n[RESULT]")
+                print(f"  Success: {'✅ Yes' if result['success'] else '❌ No'}")
+                print(f"  Patterns Stored: {result['patterns_stored']}")
+                print(f"  Lines Processed: {result['lines_processed']}")
+                print(f"  Duration: {result['duration']:.1f}s")
+
+                if 'progress' in result:
+                    print(f"  Progress: {result['progress']}")
+
+                if 'error' in result:
+                    print(f"  Error: {result['error']}")
+
+            except Exception as e:
+                print(f"❌ Batch training failed: {e}")
+
+            input("\nPress Enter to continue...")
+
+        elif choice == "2":
+            # View progress
+            print("\n📊 Training Progress")
+            print("="*60)
+
+            try:
+                memory = PatternMemory()
+                stats = memory.get_stats()
+
+                total_lines = 28326
+                processed = stats['checkpoint_line']
+                remaining = total_lines - processed
+                progress_pct = (processed / total_lines) * 100
+
+                print(f"\n📈 Progress:")
+                print(f"   Total Lines: {total_lines:,}")
+                print(f"   Processed: {processed:,} ({progress_pct:.1f}%)")
+                print(f"   Remaining: {remaining:,}")
+                print(f"   Estimated Chunks: {remaining // 1000} @ 1000 lines/chunk")
+
+                print(f"\n🗂️  Pattern Storage:")
+                print(f"   Total Patterns: {stats['total_patterns']}")
+                print(f"   Verified: {int(stats['total_patterns'] * stats['verification_rate'])}")
+                print(f"   Verification Rate: {stats['verification_rate']:.1%}")
+
+                if stats['sources']:
+                    print(f"\n📚 Sources:")
+                    for source, count in stats['sources'].items():
+                        print(f"   {source}: {count} patterns")
+
+                # Progress bar
+                bar_width = 40
+                filled = int(bar_width * progress_pct / 100)
+                bar = '█' * filled + '░' * (bar_width - filled)
+                print(f"\n[{bar}] {progress_pct:.1f}%")
+
+            except Exception as e:
+                print(f"❌ Could not load progress: {e}")
+
+            input("\nPress Enter to continue...")
+
+        elif choice == "3":
+            # Test pattern recall
+            print("\n🧪 Test Pattern Recall")
+            print("="*60)
+            print("Enter a query to test Gemma pattern recall:")
+            print("Examples:")
+            print("  - 'Which module handles YouTube authentication?'")
+            print("  - 'How does priority scoring work?'")
+            print("  - 'Where should test files be placed?'")
+            print("="*60)
+
+            query = input("\nQuery: ").strip()
+
+            if not query:
+                print("⚠️  No query entered")
+                input("\nPress Enter to continue...")
+                continue
+
+            try:
+                memory = PatternMemory()
+                patterns = memory.recall_similar(query, n=5, min_similarity=0.3)
+
+                if patterns:
+                    print(f"\n✅ Found {len(patterns)} similar patterns:\n")
+
+                    for i, pattern in enumerate(patterns, 1):
+                        print(f"Pattern {i}:")
+                        print(f"  ID: {pattern['id']}")
+                        print(f"  Similarity: {pattern['similarity']:.2f}")
+                        print(f"  Context: {pattern['context'][:100]}...")
+                        print(f"  Module: {pattern['metadata'].get('module', 'unknown')}")
+                        print()
+                else:
+                    print(f"\n❌ No patterns found above similarity threshold (0.3)")
+
+            except Exception as e:
+                print(f"❌ Pattern recall failed: {e}")
+
+            input("\nPress Enter to continue...")
+
+        elif choice == "4":
+            # Test Gemma/Qwen routing
+            print("\n🔄 Qwen/Gemma Routing Test")
+            print("="*60)
+            print("WRE Pattern: 012 → 0102 → Qwen (Coordinator) → Gemma (Executor)")
+            print("="*60)
+
+            try:
+                from pathlib import Path
+                from holo_index.qwen_advisor.gemma_rag_inference import GemmaRAGInference
+
+                # Initialize inference engine with correct model paths
+                gemma_path = Path("E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf")
+                qwen_path = Path("E:/HoloIndex/models/qwen-coder-1.5b.gguf")
+
+                if not gemma_path.exists() or not qwen_path.exists():
+                    print(f"\n❌ Models not found:")
+                    if not gemma_path.exists():
+                        print(f"   Missing: {gemma_path}")
+                    if not qwen_path.exists():
+                        print(f"   Missing: {qwen_path}")
+                    print("\n   Download models and place in E:/HoloIndex/models/")
+                    input("\nPress Enter to continue...")
+                    continue
+
+                print("\n✓ Initializing Gemma/Qwen routing engine...")
+                engine = GemmaRAGInference(
+                    gemma_model_path=gemma_path,
+                    qwen_model_path=qwen_path,
+                    confidence_threshold=0.7
+                )
+
+                # Test queries menu
+                while True:
+                    print("\n" + "-"*60)
+                    print("TEST QUERIES:")
+                    print("-"*60)
+                    print("1. Which module handles YouTube authentication? (simple)")
+                    print("2. How does priority scoring work? (medium)")
+                    print("3. Why did Move2Japan get score 1.00? (complex)")
+                    print("4. Where should test files be placed? (simple)")
+                    print("5. Custom query")
+                    print("6. View performance stats")
+                    print("7. Back to training menu")
+                    print("-"*60)
+
+                    query_choice = input("\nSelect option (1-7): ").strip()
+
+                    if query_choice == "1":
+                        query = "Which module handles YouTube authentication?"
+                    elif query_choice == "2":
+                        query = "How does priority scoring work?"
+                    elif query_choice == "3":
+                        query = "Why did Move2Japan get score 1.00?"
+                    elif query_choice == "4":
+                        query = "Where should test files be placed?"
+                    elif query_choice == "5":
+                        query = input("\nEnter your query: ").strip()
+                        if not query:
+                            print("❌ No query entered")
+                            continue
+                    elif query_choice == "6":
+                        # Show stats
+                        stats = engine.get_stats()
+                        print("\n📊 ROUTING PERFORMANCE:")
+                        print(f"   Total Queries: {stats['total_queries']}")
+                        print(f"   Gemma Handled: {stats['gemma_handled']} ({stats['gemma_percentage']:.1f}%)")
+                        print(f"   Qwen Escalated: {stats['qwen_escalated']} ({stats['qwen_percentage']:.1f}%)")
+                        print(f"\n🎯 TARGET: 70% Gemma / 30% Qwen")
+                        print(f"   ACTUAL: {stats['gemma_percentage']:.1f}% Gemma / {stats['qwen_percentage']:.1f}% Qwen")
+
+                        if 50 <= stats['gemma_percentage'] <= 90:
+                            print("\n✓ Performance within target range!")
+                        else:
+                            print("\n⚠️  Performance needs tuning")
+
+                        input("\nPress Enter to continue...")
+                        continue
+                    elif query_choice == "7":
+                        print("🔙 Returning to training menu...")
+                        break
+                    else:
+                        print(f"❌ Invalid choice '{query_choice}'")
+                        continue
+
+                    # Run inference
+                    print(f"\n[QUERY] {query}")
+                    print("⏱️  Processing...")
+
+                    result = engine.infer(query)
+
+                    print(f"\n[RESULT]")
+                    print(f"   Model Used: {result.model_used}")
+                    print(f"   Latency: {result.latency_ms}ms")
+                    print(f"   Confidence: {result.confidence:.2f}")
+                    print(f"   Patterns Used: {result.patterns_used}")
+
+                    if result.escalated:
+                        print(f"   ⬆️  Escalated: {result.escalation_reason}")
+
+                    print(f"\n[RESPONSE]")
+                    print(f"   {result.response}")
+
+                    input("\nPress Enter to continue...")
+
+            except Exception as e:
+                print(f"\n❌ Routing test failed: {e}")
+                import traceback
+                traceback.print_exc()
+
+            input("\nPress Enter to continue...")
+
+        elif choice == "5":
+            # View metrics
+            print("\n📈 Training Metrics")
+            print("="*60)
+
+            try:
+                memory = PatternMemory()
+                stats = memory.get_stats()
+
+                print(f"\n🎯 Performance Metrics:")
+                print(f"   Total Patterns: {stats['total_patterns']}")
+                print(f"   Verification Rate: {stats['verification_rate']:.1%}")
+                print(f"   Storage Location: holo_index/memory/chroma/")
+
+                print(f"\n📊 Training Coverage:")
+                print(f"   Lines Processed: {stats['checkpoint_line']:,} / 28,326")
+                print(f"   Progress: {stats['checkpoint_line']/283.26:.1f}%")
+
+                print(f"\n🔍 Pattern Distribution:")
+                if stats['sources']:
+                    for source, count in stats['sources'].items():
+                        pct = (count / stats['total_patterns'] * 100) if stats['total_patterns'] > 0 else 0
+                        print(f"   {source}: {count} ({pct:.1f}%)")
+
+                print(f"\n💾 Storage Stats:")
+                print(f"   Database: ChromaDB (vector embeddings)")
+                print(f"   Checkpoint File: checkpoint.txt")
+                print(f"   Training Method: In-context learning (RAG)")
+                print(f"   Cost: $0 (no fine-tuning)")
+
+            except Exception as e:
+                print(f"❌ Could not load metrics: {e}")
+
+            input("\nPress Enter to continue...")
+
+        elif choice == "6":
+            # Clear memory
+            print("\n🗑️  Clear Pattern Memory")
+            print("="*60)
+            print("⚠️  WARNING: This will delete ALL stored patterns!")
+            print("   - Pattern memory will be reset to empty")
+            print("   - Checkpoint will be reset to 0")
+            print("   - Training will need to restart from beginning")
+            print("="*60)
+
+            confirm = input("\nType 'CONFIRM' to proceed: ").strip()
+
+            if confirm == "CONFIRM":
+                try:
+                    memory = PatternMemory()
+                    memory.clear_all(confirm=True)
+                    memory.save_checkpoint(0)
+                    print("\n✅ Pattern memory cleared successfully")
+                    print("   All patterns deleted")
+                    print("   Checkpoint reset to 0")
+                except Exception as e:
+                    print(f"❌ Clear failed: {e}")
+            else:
+                print("\n❌ Clear aborted - memory preserved")
+
+            input("\nPress Enter to continue...")
+
+        elif choice == "7":
+            # Back to main menu
+            print("🔙 Returning to main menu...")
+            break
+
+        else:
+            print(f"❌ Invalid choice '{choice}'. Please enter 1-7.")
+            input("\nPress Enter to continue...")
+
+
 def main():
     """Main entry point with command line arguments."""
     parser = argparse.ArgumentParser(description='0102 FoundUps Agent')
+    parser.add_argument('--git', action='store_true', help='Launch GitPushDAE (autonomous git push + social posting)')
     parser.add_argument('--youtube', action='store_true', help='Monitor YouTube only')
     parser.add_argument('--holodae', '--holo', action='store_true', help='Run HoloDAE (Code Intelligence & Monitoring)')
     parser.add_argument('--amo', action='store_true', help='Run AMO DAE (Autonomous Moderation Operations)')
@@ -655,6 +1041,8 @@ def main():
     if args.status:
         check_instance_status()
         return
+    elif args.git:
+        launch_git_push_dae()
     elif args.youtube:
         asyncio.run(monitor_youtube(disable_lock=args.no_lock))
     elif args.holodae:
@@ -682,77 +1070,83 @@ def main():
             duplicates = lock.check_duplicates(quiet=True)
 
             if duplicates:
-                print(f"⚠️  FOUND {len(duplicates)} RUNNING INSTANCE(S)")
-                print("\nWhat would you like to do?")
-                print("1. Kill all instances and continue")
-                print("2. Show detailed status")
-                print("3. Continue anyway (may cause conflicts)")
-                print("4. Exit")
-                print("-"*40)
+                # Loop until user makes a valid choice
+                while True:
+                    print(f"⚠️  FOUND {len(duplicates)} RUNNING INSTANCE(S)")
+                    print("\nWhat would you like to do?")
+                    print("1. Kill all instances and continue")
+                    print("2. Show detailed status")
+                    print("3. Continue anyway (may cause conflicts)")
+                    print("4. Exit")
+                    print("-"*40)
 
-                choice = input("Select option (1-4): ").strip()
+                    # Get user input and clean it (remove brackets, spaces, etc.)
+                    choice = input("Select option (1-4): ").strip().lstrip(']').lstrip('[')
 
-                if choice == "1":
-                    print("\n🗡️  Killing duplicate instances...")
-                    killed_pids = []
-                    failed_pids = []
+                    if choice == "1":
+                        print("\n🗡️  Killing duplicate instances...")
+                        killed_pids = []
+                        failed_pids = []
 
-                    current_pid = os.getpid()
+                        current_pid = os.getpid()
 
-                    for pid in duplicates:
-                        if pid == current_pid:
-                            continue  # Don't kill ourselves
+                        for pid in duplicates:
+                            if pid == current_pid:
+                                continue  # Don't kill ourselves
 
-                        try:
-                            print(f"   🔪 Terminating PID {pid}...")
-                            process = psutil.Process(pid)
-                            process.terminate()  # Try graceful termination first
+                            try:
+                                print(f"   🔪 Terminating PID {pid}...")
+                                process = psutil.Process(pid)
+                                process.terminate()  # Try graceful termination first
 
-                            # Wait up to 5 seconds for process to terminate
-                            gone, alive = psutil.wait_procs([process], timeout=5)
+                                # Wait up to 5 seconds for process to terminate
+                                gone, alive = psutil.wait_procs([process], timeout=5)
 
-                            if alive:
-                                # If still alive, force kill
-                                print(f"   💀 Force killing PID {pid}...")
-                                process.kill()
-                                gone, alive = psutil.wait_procs([process], timeout=2)
+                                if alive:
+                                    # If still alive, force kill
+                                    print(f"   💀 Force killing PID {pid}...")
+                                    process.kill()
+                                    gone, alive = psutil.wait_procs([process], timeout=2)
 
-                            if not alive:
-                                killed_pids.append(pid)
-                                print(f"   ✅ PID {pid} terminated successfully")
-                            else:
+                                if not alive:
+                                    killed_pids.append(pid)
+                                    print(f"   ✅ PID {pid} terminated successfully")
+                                else:
+                                    failed_pids.append(pid)
+                                    print(f"   ❌ Failed to kill PID {pid}")
+
+                            except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                                print(f"   ⚠️  Could not kill PID {pid}: {e}")
                                 failed_pids.append(pid)
-                                print(f"   ❌ Failed to kill PID {pid}")
 
-                        except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                            print(f"   ⚠️  Could not kill PID {pid}: {e}")
-                            failed_pids.append(pid)
+                        if killed_pids:
+                            print(f"\n✅ Successfully killed {len(killed_pids)} instance(s): {killed_pids}")
+                        if failed_pids:
+                            print(f"⚠️  Failed to kill {len(failed_pids)} instance(s): {failed_pids}")
 
-                    if killed_pids:
-                        print(f"\n✅ Successfully killed {len(killed_pids)} instance(s): {killed_pids}")
-                    if failed_pids:
-                        print(f"⚠️  Failed to kill {len(failed_pids)} instance(s): {failed_pids}")
+                        print("   Proceeding to main menu...\n")
+                        break  # Exit loop and continue to main menu
 
-                    print("   Proceeding to main menu...\n")
+                    elif choice == "2":
+                        print("\n" + "="*50)
+                        check_instance_status()
+                        print("="*50)
+                        input("\nPress Enter to continue...")
+                        # Don't break - loop back to menu
 
-                elif choice == "2":
-                    print("\n" + "="*50)
-                    check_instance_status()
-                    print("="*50)
-                    input("\nPress Enter to continue...")
-                    print("   Proceeding to main menu...\n")
-                    # Continue to main menu after showing status
+                    elif choice == "3":
+                        print("⚠️  Continuing with potential conflicts...\n")
+                        break  # Exit loop and continue to main menu
 
-                elif choice == "3":
-                    print("⚠️  Continuing with potential conflicts...\n")
+                    elif choice == "4":
+                        print("👋 Exiting...")
+                        return  # Exit entire program
 
-                elif choice == "4":
-                    print("👋 Exiting...")
-                    return
-
-                else:
-                    print("❌ Invalid choice. Exiting...")
-                    return
+                    else:
+                        print(f"❌ Invalid choice '{choice}'. Please enter 1, 2, 3, or 4.")
+                        print("   Try again...\n")
+                        # Don't break - loop will continue and ask again
+                        continue
 
             else:
                 print("✅ NO RUNNING INSTANCES DETECTED")
@@ -769,26 +1163,29 @@ def main():
         while True:
 
             # Show the main menu
-            print("0. 🚀 Push to Git and Post to LinkedIn + X (FoundUps)")
-            print("1. 📺 YouTube Live DAE (Move2Japan/UnDaoDu/FoundUps)")
-            print("2. 🧠 HoloDAE (Code Intelligence & Monitoring)")
-            print("3. 🔨 AMO DAE (Autonomous Moderation Operations)")
-            print("4. 📢 Social Media DAE (012 Digital Twin)")
-            print("5. 🧬 PQN Orchestration (Research & Alignment)")
-            print("6. 🚨 Liberty Alert (Mesh Alert System - Community Protection)")
-            print("7. 🌐 All DAEs (Full System)")
-            print("8. 💚 Check Instance Status & Health")
+            print("0. 🚀 Push to Git and Post to LinkedIn + X (FoundUps)  │ --git")
+            print("1. 📺 YouTube Live DAE (Move2Japan/UnDaoDu/FoundUps)  │ --youtube")
+            print("2. 🧠 HoloDAE (Code Intelligence & Monitoring)       │ --holodae")
+            print("3. 🔨 AMO DAE (Autonomous Moderation Operations)     │ --amo")
+            print("4. 📢 Social Media DAE (012 Digital Twin)            │ --smd")
+            print("5. 🧬 PQN Orchestration (Research & Alignment)       │ --pqn")
+            print("6. 🚨 Liberty Alert (Mesh Alert System)              │ --liberty")
+            print("7. 🌐 All DAEs (Full System)                         │ --all")
+            print("8. 💚 Check Instance Status & Health                 │ --status")
             print("9. ❌ Exit")
             print("-"*60)
             print("10. 🔍 HoloIndex Search (Find code semantically)")
             print("11. 📋 View Git Post History")
+            print("12. 🤖 Qwen/Gemma Training System (Pattern Learning)")
+            print("="*60)
+            print("💡 CLI: --youtube --no-lock (bypass menu + instance lock)")
             print("="*60)
 
             choice = input("\nSelect option: ")
 
             if choice == "0":
-                # Git push with LinkedIn and X posting
-                git_push_and_post()
+                # Launch GitPushDAE daemon (WSP 91 compliant)
+                launch_git_push_dae()
                 # Will return to menu after completion
 
             elif choice == "1":
@@ -1128,6 +1525,10 @@ def main():
             elif choice == "11":
                 # View git post history
                 view_git_post_history()
+
+            elif choice == "12":
+                # Qwen/Gemma Training System
+                run_training_system()
 
             else:
                 print("Invalid choice. Please try again.")

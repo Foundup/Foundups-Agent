@@ -240,7 +240,8 @@ class ShortsOrchestrator:
         fast_mode: bool = True,
         privacy: str = "public",
         use_3act: bool = True,
-        engine: Optional[str] = None
+        engine: Optional[str] = None,
+        progress_callback: Optional[callable] = None
     ) -> str:
         """
         Complete 012<->0102 flow: Generate and upload Short.
@@ -255,6 +256,7 @@ class ShortsOrchestrator:
             use_3act: Use 3-act multi-clip system (recommended for 15s Shorts)
                      Default: True
             engine: Force generator selection ('veo3', 'sora2', 'auto', or None)
+            progress_callback: Optional callable(message: str) for progress updates
 
         Returns:
             str: YouTube Shorts URL
@@ -308,7 +310,8 @@ class ShortsOrchestrator:
                 video_path = generator.generate_video(
                     prompt=video_prompt,
                     duration=duration,
-                    fast_mode=fast_mode
+                    fast_mode=fast_mode,
+                    progress_callback=progress_callback
                 )
 
             title = topic[:100]
@@ -329,6 +332,9 @@ Generated with AI for Move2Japan
                 tags.append("JapaneseFood")
 
             print("[0102 Uploading] Posting to YouTube...")
+            if progress_callback:
+                progress_callback("📤 Uploading to YouTube... Almost there!")
+
             youtube_url = self.uploader.upload_short(
                 video_path=video_path,
                 title=title,
@@ -336,6 +342,10 @@ Generated with AI for Move2Japan
                 tags=tags,
                 privacy=privacy
             )
+
+            # Notify chat with final YouTube link
+            if progress_callback:
+                progress_callback(f"🎉 Video LIVE! Watch it here: {youtube_url}")
 
             elapsed_time = time.time() - start_time
             estimated_cost = duration * getattr(generator, 'cost_per_second', 0.0)

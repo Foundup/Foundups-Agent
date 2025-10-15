@@ -17,8 +17,8 @@ This protocol addresses critical naming inconsistencies discovered in the WSP fr
 
 **ALL WSP documents MUST have numeric identification except Core Framework documents:**
 
-✅ **CORRECT**: `WSP_47_Module_Violation_Tracking_Protocol.md`  
-❌ **INCORRECT**: `WSP_MODULE_VIOLATIONS.md` (missing numeric ID)
+[U+2705] **CORRECT**: `WSP_47_Module_Violation_Tracking_Protocol.md`  
+[U+274C] **INCORRECT**: `WSP_MODULE_VIOLATIONS.md` (missing numeric ID)
 
 ### 2.2. Three-State Architecture Compliance
 
@@ -57,7 +57,7 @@ Only these documents may omit numeric IDs:
 ### 3.3. Missing Synchronization
 
 **Issue**: WSP_MODULE_VIOLATIONS.md missing from WSP_knowledge/src/
-**Resolution**: ✅ FIXED - Document created to maintain three-state architecture
+**Resolution**: [U+2705] FIXED - Document created to maintain three-state architecture
 
 ## 4. Naming Convention Specifications
 
@@ -158,33 +158,131 @@ Periodic manual review required for:
 - Cross-reference accuracy
 - Historical document preservation
 
-## 8. WSP_48 Integration
+## 8. WSP File Prefix Usage Rules (All Files)
+
+### 8.1. When "WSP_" Prefix IS Allowed
+
+**ONLY these file locations may use "WSP_" prefix:**
+
+1. **Official WSP Protocol Documents**:
+   - `WSP_framework/src/WSP_*.md` - Framework protocols
+   - `WSP_knowledge/src/WSP_*.md` - Knowledge protocols
+
+2. **WSP Analysis Reports** (in designated report directories):
+   - `WSP_framework/reports/WSP_*/` - WSP-specific analysis folders
+   - `WSP_knowledge/reports/WSP_*/` - Knowledge WSP analysis folders
+   - Individual reports: `WSP_framework/reports/WSP_*.md`
+
+3. **Archives and Backups** (historical preservation):
+   - `*/archive/*/WSP_*.md` - Any archive subdirectory
+   - `docs/wsp_archive/WSP_*.md` - Dedicated WSP archive
+   - `docs/session_backups/WSP_*.md` - Session backup archives
+
+### 8.2. When "WSP_" Prefix is PROHIBITED
+
+**Module Documentation** - Use descriptive names instead:
+- [U+274C] `modules/*/docs/WSP_COMPLIANCE_REPORT.md`
+- [U+2705] `modules/*/docs/Compliance_Report.md`
+
+- [U+274C] `modules/*/src/WSP_AUDIT_REPORT.md`
+- [U+2705] `modules/*/src/Audit_Report.md`
+
+- [U+274C] `modules/*/docs/WSP_79_SWOT_ANALYSIS_Feature.md`
+- [U+2705] `modules/*/docs/SWOT_Analysis_Feature.md`
+
+**Root Documentation** - Use descriptive names or move to backups:
+- [U+274C] `docs/WSP_Something_Analysis.md`
+- [U+2705] `docs/Something_Analysis_WSP57_Compliant.md`
+- [U+2705] `docs/session_backups/WSP_Something_Analysis.md` (if historical)
+
+### 8.3. Replacement Pattern Guide
+
+When renaming files that violate WSP_ prefix rules:
+
+| Violation Pattern | Replacement Pattern | Location |
+|-------------------|---------------------|----------|
+| `WSP_COMPLIANCE*` | `COMPLIANCE_STATUS.md` or `Compliance_Report.md` | module/docs/ |
+| `WSP_AUDIT_REPORT` | `Audit_Report.md` | module/docs/ or module/tests/ |
+| `WSP_NN_SWOT_ANALYSIS_*` | `SWOT_Analysis_*.md` | module/docs/ |
+| `WSP_VIOLATION_*` | `Violation_Analysis.md` or `Violation_Status_Report.md` | module/docs/ |
+| `WSP_NN_Implementation` | `Implementation_WSPNN_Reference.md` | module/docs/ or session_backups/ |
+
+### 8.4. Enforcement via Qwen (Baby 0102)
+
+**Automated Detection**:
+- Qwen 270M trained on WSP 57 naming rules
+- Pre-commit hook scans for WSP_ violations
+- Real-time suggestions during development
+- Violations stored in ChromaDB for learning
+
+**Training Corpus**:
+- WSP 57 naming rules and examples
+- Historical violation fixes from git log
+- Replacement pattern mappings
+- Severity classification (P0-P3)
+
+**Expected Performance**:
+- Detection accuracy: 95-98%
+- Analysis time: <100ms per file
+- Full repo scan: <10 seconds
+- Automated fix success: 80%+ (rest need human review)
+
+**Integration Points**:
+- `holo_index/tests/test_qwen_file_naming_trainer.py` - Training test
+- WSP Sentinel Protocol (planned) - Real-time enforcement
+- Pre-commit hooks (planned) - Block violations at commit time
+
+### 8.5. Validation Command
+
+Check for WSP_ files outside allowed locations:
+
+```bash
+# Find violations (should return 0 files)
+find . -name "WSP_*.md" -type f 2>/dev/null \
+  | grep -v "/WSP_framework/src/" \
+  | grep -v "/WSP_knowledge/src/" \
+  | grep -v "/reports/" \
+  | grep -v "archive" \
+  | grep -v "session_backups"
+```
+
+## 9. WSP_48 Integration
 
 This protocol supports recursive self-improvement:
 
 - **Level 1 (Protocol)**: Naming convention improvements
 - **Level 2 (Engine)**: Automated naming validation tools
-- **Level 3 (Quantum)**: Predictive naming conflict detection
+- **Level 3 (Quantum)**: Predictive naming conflict detection via Qwen
 
-## 9. Implementation Status
+## 10. Implementation Status
 
-### 9.1. ✅ Completed
+### 10.1. Completed (2025-10-14)
 
 - WSP_MODULE_VIOLATIONS.md synchronized to WSP_knowledge
 - Naming convention analysis completed
 - Document relationship mapping established
+- **WSP file prefix rules established** (Section 8)
+- **24 files renamed** to comply with WSP_ prefix rules:
+  - 17 module documentation files
+  - 4 generated documentation files
+  - 2 test files
+  - 1 journal report file
+- **Qwen training test created** (`holo_index/tests/test_qwen_file_naming_trainer.py`)
+- **Validation: 0 violations** remaining outside allowed locations
 
-### 9.2. 🔄 In Progress
+### 10.2. In Progress
 
-- Automated naming validation integration
-- Cross-reference verification system
-- Three-state synchronization validation
+- Qwen 270M installation and training (WSP 35)
+- Pre-commit hook integration
+- WSP Sentinel real-time enforcement
+- ChromaDB training corpus indexing
 
-### 9.3. 📋 Planned
+### 10.3. Planned
 
-- Predictive naming conflict detection
+- Predictive naming conflict detection via Qwen
 - Automated document creation templates
 - Historical naming audit completion
+- Full repo scan automation (<10 seconds target)
 
 ---
 

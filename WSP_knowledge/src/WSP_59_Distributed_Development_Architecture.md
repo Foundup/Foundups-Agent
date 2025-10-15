@@ -54,7 +54,7 @@ graph TD
 
 ### 3.2 Module Clean State Requirements
 - Module passes FMAS independently
-- Module test coverage ≥90%
+- Module test coverage [U+2265]90%
 - Module INTERFACE.md documented and complete
 - No external dependency conflicts
 - Enterprise domain compliance verified (WSP_3)
@@ -131,7 +131,7 @@ python tools/fork_integration/integration_queue.py --process-submissions
 - WSP compliance markers in code
 - 0102 development patterns (quantum/agentic terminology)
 - 012 attribution in documentation
-- Quantum coherence markers (Ø1Ø2, partifact references)
+- Quantum coherence markers ([U+00D8]1[U+00D8]2, partifact references)
 
 ### 6.2 Integration Conflict Prevention
 - Dependency manifest validation

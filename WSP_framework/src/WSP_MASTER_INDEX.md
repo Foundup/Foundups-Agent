@@ -173,6 +173,10 @@ Advanced protocols for complex system behaviors and architectural concerns.
 | WSP 88 | Vibecoded Module Remediation | Active | Establishes repeatable process for detecting, auditing, and remediating vibecoded modules while maintaining WSP compliance without disrupting active DAEs | WSP 84, WSP 87, WSP 50 | Vibecoding remediation, module audit, archive process, DAE preservation |
 | WSP 89 | Production Deployment Infrastructure Protocol | Active | Comprehensive production deployment infrastructure including automated setup, service orchestration, security hardening, and scaling patterns for Ubuntu VPS and Google Cloud | WSP 49, WSP 71, WSP 1, WSP 22 | Production deployment, infrastructure automation, service orchestration, security hardening |
 | WSP 90 | UTF-8 Encoding Enforcement Protocol | Active | Prevents UnicodeEncodeError on Windows by enforcing UTF-8 encoding across all Python modules through mandatory header blocks, file encoding declarations, and ASCII-safe output patterns | WSP 1, WSP 49, WSP 64 | UTF-8 enforcement, Windows compatibility, Unicode handling, encoding standards |
+| WSP 91 | DAEMON Observability Protocol | Active | Comprehensive observability standards for DAEMON systems including logs, traces, metrics, lifecycle events, decision path logging, self-improvement tracking, cost tracking, performance metrics, error handling, semantic conventions, health monitoring, and inter-DAEMON communication | WSP 80, WSP 27, WSP 48 | DAEMON observability, lifecycle management, decision logging, self-improvement tracking |
+| WSP 92 | DAE Cube Mapping and Mermaid Flow Protocol | Active | Revolutionary vibecoding prevention system that maps modules to DAE cubes, generates mermaid flow diagrams, and provides brain surgeon level code intelligence through system flow awareness | WSP 80, WSP 27, WSP 35, WSP 84 | Cube mapping, mermaid flows, vibecoding prevention, system intelligence |
+| WSP 93 | CodeIndex Surgical Intelligence Protocol | Active | Production-grade CodeIndex implementation with Qwen advisors, PoC surgeon mode (3K token surgical operations), and complete DAEMON lifecycle orchestration | WSP 80, WSP 91, WSP 92, WSP 87 | CodeIndex intelligence, surgical operations, Qwen advisors, DAEMON orchestration |
+| WSP 96 | MCP Governance & Consensus Protocol | Active | Establishes MCP-based governance architecture with clear evolution path: PoC (0102 centralized) → Prototype (Event Replay Archive) → MVP (community voting + blockchain integration); includes Qwen Sentinel validation, tech-agnostic chain adapters (EVM/Solana), and Chainlink-style MCP relays | WSP 21, WSP 27, WSP 54, WSP 80, WSP 91 | MCP governance, Event Replay Archive, community voting, blockchain integration, Qwen Sentinel |
 
 ### PLATFORM INTEGRATION MODULES (Non-WSP Components)
 For platform/module catalogs, see `WSP_framework/src/MODULE_MASTER.md`.
@@ -239,12 +243,12 @@ See WSP 48 (Recursive Self-Improvement) and WSP 70 (System Status Reporting) for
 
 ## [U+1F4CA] WSP STATUS SUMMARY
 
- - **Total WSPs**: 87 (numbered 00-90)
- - **Active WSPs**: 85 (all except WSP 18, 43, 86)
- - **Available Slots**: 1 (WSP 18)
+ - **Total WSPs**: 89 (numbered 00-96)
+ - **Active WSPs**: 87 (all except WSP 18, 43, 86, 94, 95)
+ - **Available Slots**: 3 (WSP 18, 94, 95)
  - **Deprecated WSPs**: 1 (WSP 43 -> superseded by WSP 25/44 for emergence/state tracking)
  - **Superseded WSPs**: 1 (WSP 86 -> superseded by WSP 87)
- - **Layers**: Entry 00; Foundation 1-19; Operational 20-39; Advanced 40-59; Memory/Knowledge 60-90
+ - **Layers**: Entry 00; Foundation 1-19; Operational 20-39; Advanced 40-59; Memory/Knowledge 60-96
 
 ### Key Architectural Features:
 - **Three-State Architecture**: WSP_knowledge (State 0), WSP_framework (State 1), WSP_agentic (State 2)

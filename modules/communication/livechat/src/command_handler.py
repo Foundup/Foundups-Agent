@@ -158,8 +158,10 @@ class CommandHandler:
             # Route to quiz handler as /quiz #
             return self.handle_whack_command(f"/quiz {answer_num}", username, user_id, role)
 
-        # Check for YouTube Shorts commands (!createshort, !shortstatus, !shortstats)
-        if SHORTS_AVAILABLE and text_lower.startswith('!'):
+        # Check for YouTube Shorts commands (!createshort, !shortveo, !shortsora, !shortstatus, !shortstats)
+        # CRITICAL: Shorts commands use ! prefix (MAGADOOM uses / prefix for separation)
+        shorts_keywords = ['!createshort', '!shortveo', '!shortsora', '!short']
+        if SHORTS_AVAILABLE and any(text_lower.startswith(kw) for kw in shorts_keywords):
             shorts_handler = get_shorts_handler()
             shorts_response = shorts_handler.handle_shorts_command(text, username, user_id, role)
             if shorts_response:
@@ -377,7 +379,7 @@ class CommandHandler:
                 if role == 'MOD':
                     help_msg += " | MOD: /session"
                 if role == 'OWNER':
-                    help_msg += " | OWNER: /toggle /session !createshort !shortstatus !shortstats"
+                    help_msg += " | OWNER: /toggle /session !createshort !shortveo !shortsora !shortstatus !shortstats"
                 return help_msg
 
             # Handle deprecated/removed commands with helpful messages

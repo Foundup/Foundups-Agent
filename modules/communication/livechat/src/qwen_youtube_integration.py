@@ -146,7 +146,8 @@ class ChannelIntelligence:
         self.consecutive_429_count = 0
         self.heat_level = max(0, self.heat_level - 1)
         if old_heat != self.heat_level:
-            logger.info(f"🤖🧠 [QWEN-COOL] ❄️ {self.channel_name} cooling down: {old_heat} → {self.heat_level}")
+            channel_emoji = {"Move2Japan": "🍣", "UnDaoDu": "🧘", "FoundUps": "🐕"}.get(self.channel_name, "❄️")
+            logger.info(f"🤖🧠 [QWEN-COOL] {channel_emoji} {self.channel_name} cooling down: {old_heat} → {self.heat_level}")
 
 
 class QwenYouTubeIntegration:
@@ -256,13 +257,14 @@ class QwenYouTubeIntegration:
 
             prioritized.append((channel_id, channel_name, score))
 
-        # Sort by priority score (highest first)
-        prioritized.sort(key=lambda x: x[2], reverse=True)
+        # Sort by priority score (LOWEST first - lower score = better match in embedding space)
+        prioritized.sort(key=lambda x: x[2])
 
         # Log detailed decision process
         logger.info("🤖🧠 [QWEN-PRIORITIZE] 🎯 Channel prioritization analysis:")
         for _, name, score in prioritized:
-            heat_emoji = "🔥" if self.get_channel_profile(_, name).heat_level >= 2 else "❄️"
+            channel_emoji = {"Move2Japan": "🍣", "UnDaoDu": "🧘", "FoundUps": "🐕"}.get(name, "❄️")
+            heat_emoji = "🔥" if self.get_channel_profile(_, name).heat_level >= 2 else channel_emoji
             logger.info(f"🤖🧠 [QWEN-SCORE] {heat_emoji} {name}: {score:.2f}")
 
         decision = f"Channel priorities: {[(name, f'{score:.2f}') for _, name, score in prioritized]}"
@@ -293,8 +295,9 @@ class QwenYouTubeIntegration:
         # Cap at 10 minutes
         delay = min(delay, 600)
 
-        # Enhanced delay logging with reasoning
-        heat_emoji = {0: "❄️", 1: "🌤️", 2: "🔥", 3: "🌋"}.get(profile.heat_level, "🌡️")
+        # Enhanced delay logging with reasoning - channel-specific emojis
+        channel_emoji = {"Move2Japan": "🍣", "UnDaoDu": "🧘", "FoundUps": "🐕"}.get(profile.channel_name, "❄️")
+        heat_emoji = {0: channel_emoji, 1: "🌤️", 2: "🔥", 3: "🌋"}.get(profile.heat_level, "🌡️")
         logger.info(f"🤖🧠 [QWEN-DELAY] {heat_emoji} {profile.channel_name}: {delay}s delay")
         logger.info(f"🤖🧠 [QWEN-REASON] 📊 Heat={profile.heat_level}, Retries={retry_count}, Base={base_delay}s")
 
@@ -391,6 +394,99 @@ class QwenYouTubeIntegration:
 
         logger.info(f"🤖🧠 [QWEN-TIME] {time_emoji} Normal hours ({current_hour}:00) - standard checking")
         return True, "Normal checking enabled"
+
+    def analyze_chat_for_short(self, user_messages: List[str], username: str) -> Dict[str, Any]:
+        """
+        Analyze user's chat messages and generate Short video topic.
+
+        Uses Qwen intelligence to:
+        1. Identify key themes and topics from user's messages
+        2. Detect user's interests and conversation patterns
+        3. Generate appropriate video topic for Shorts
+
+        Args:
+            user_messages: List of user's recent messages
+            username: User's display name
+
+        Returns:
+            Dict with 'topic', 'reasoning', and 'confidence' keys
+        """
+        logger.info(f"🤖🧠 [QWEN-SHORTS] 📊 Analyzing {len(user_messages)} messages from @{username}")
+
+        if not user_messages:
+            return {
+                'topic': None,
+                'reasoning': "No chat history available",
+                'confidence': 0.0
+            }
+
+        # Extract text from formatted messages (remove "username: " prefix)
+        clean_messages = []
+        for msg in user_messages:
+            if ": " in msg:
+                text = msg.split(": ", 1)[1]
+                clean_messages.append(text.lower())
+            else:
+                clean_messages.append(msg.lower())
+
+        # Analyze themes and topics
+        themes = {
+            'japan': ['japan', 'tokyo', 'osaka', 'kyoto', 'japanese', 'anime', 'sushi', 'cherry', 'blossom'],
+            'travel': ['travel', 'trip', 'visit', 'vacation', 'flight', 'hotel', 'tourist'],
+            'tech': ['ai', 'llm', 'code', 'programming', 'python', 'tech', 'computer'],
+            'consciousness': ['consciousness', '✊', '✋', '🖐️', 'aware', 'woke', 'truth'],
+            'gaming': ['game', 'gaming', 'play', 'video game', 'esports'],
+            'food': ['food', 'eat', 'cooking', 'recipe', 'restaurant', 'ramen'],
+            'politics': ['trump', 'biden', 'election', 'political', 'government'],
+            'life': ['life', 'work', 'job', 'family', 'home', 'happy', 'sad']
+        }
+
+        # Count theme occurrences
+        theme_scores = {theme: 0 for theme in themes}
+        for msg in clean_messages:
+            for theme, keywords in themes.items():
+                if any(kw in msg for kw in keywords):
+                    theme_scores[theme] += 1
+
+        # Find dominant theme
+        dominant_theme = max(theme_scores.items(), key=lambda x: x[1])
+        theme_name, theme_count = dominant_theme
+
+        # Calculate confidence based on message count and theme strength
+        confidence = min(1.0, (theme_count / len(clean_messages)) * 1.5)
+
+        # Generate topic based on theme
+        topic_templates = {
+            'japan': f"Life in Japan according to @{username}",
+            'travel': f"Travel experiences shared by @{username}",
+            'tech': f"Tech insights from @{username}",
+            'consciousness': f"Conscious thoughts from @{username}",
+            'gaming': f"Gaming moments with @{username}",
+            'food': f"Food adventures by @{username}",
+            'politics': f"Political views from @{username}",
+            'life': f"Daily life stories from @{username}"
+        }
+
+        topic = topic_templates.get(theme_name, f"Chat highlights from @{username}")
+
+        # Build reasoning
+        reasoning = f"Detected {theme_count} messages about {theme_name} out of {len(user_messages)} total"
+        if theme_count > 0:
+            reasoning += f". Strong {theme_name} theme with {confidence:.0%} confidence."
+        else:
+            reasoning += ". General chat content - creating generic highlight."
+            topic = f"Chat moments from @{username}"
+
+        logger.info(f"🤖🧠 [QWEN-SHORTS] 🎬 Generated topic: '{topic}'")
+        logger.info(f"🤖🧠 [QWEN-SHORTS] 💭 Reasoning: {reasoning}")
+
+        return {
+            'topic': topic,
+            'reasoning': reasoning,
+            'confidence': confidence,
+            'theme': theme_name,
+            'message_count': len(user_messages)
+        }
 
 
 # Singleton instance for shared intelligence

@@ -14,8 +14,10 @@ Features:
 - Step-by-step reasoning visibility
 - Recursive improvement data collection
 - Performance analytics integration
+- WSP compliance tracking (per WSP 91)
 
-WSP Compliance: WSP 48 (Recursive Improvement), WSP 37 (Roadmap Scoring)
+WSP Compliance: WSP 48 (Recursive Improvement), WSP 37 (Roadmap Scoring),
+                WSP 91 (DAEMON Observability Protocol)
 """
 
 import time
@@ -41,6 +43,7 @@ class ThoughtProcess:
     reasoning: str
     confidence: float
     duration: float = 0.0
+    wsps_followed: List[str] = field(default_factory=list)  # WSP 91: Track WSP compliance
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -104,8 +107,17 @@ class ChainOfThoughtLogger:
         return session_id
 
     def log_analysis_step(self, step_name: str, analysis_data: Any,
-                         reasoning: str, confidence: float = 0.8) -> None:
-        """Log an analysis step in the chain of thought"""
+                         reasoning: str, confidence: float = 0.8,
+                         wsps_followed: List[str] = None) -> None:
+        """Log an analysis step in the chain of thought
+
+        Args:
+            step_name: Name of the analysis step
+            analysis_data: Data being analyzed
+            reasoning: Why this analysis is being performed
+            confidence: Confidence level (0-1)
+            wsps_followed: WSP protocols followed during this step (WSP 91)
+        """
         if not self.current_session:
             return
 
@@ -115,11 +127,20 @@ class ChainOfThoughtLogger:
         else:
             content += f" | Data: {str(analysis_data)[:200]}"
 
-        self._log_thought("analysis", content, reasoning, confidence)
+        self._log_thought("analysis", content, reasoning, confidence, wsps_followed or [])
 
     def log_decision_point(self, decision: str, options_considered: List[str],
-                          reasoning: str, confidence: float) -> None:
-        """Log a decision point with options considered"""
+                          reasoning: str, confidence: float,
+                          wsps_followed: List[str] = None) -> None:
+        """Log a decision point with options considered
+
+        Args:
+            decision: The decision made
+            options_considered: Alternative options that were evaluated
+            reasoning: Why this decision was chosen
+            confidence: Confidence level (0-1)
+            wsps_followed: WSP protocols followed during this decision (WSP 91)
+        """
         if not self.current_session:
             return
 
@@ -129,23 +150,33 @@ class ChainOfThoughtLogger:
         if len(options_considered) > 5:
             content += f" (+{len(options_considered) - 5} more)"
 
-        self._log_thought("decision", content, reasoning, confidence)
+        self._log_thought("decision", content, reasoning, confidence, wsps_followed or [])
 
     def log_action_taken(self, action: str, target: str, expected_outcome: str,
-                        reasoning: str, confidence: float = 0.9) -> None:
-        """Log an action being taken"""
+                        reasoning: str, confidence: float = 0.9,
+                        wsps_followed: List[str] = None) -> None:
+        """Log an action being taken
+
+        Args:
+            action: The action being performed
+            target: What the action targets
+            expected_outcome: Expected result
+            reasoning: Why this action is being taken
+            confidence: Confidence level (0-1)
+            wsps_followed: WSP protocols followed during this action (WSP 91)
+        """
         if not self.current_session:
             return
 
         content = f"ACTION: {action} | TARGET: {target} | EXPECTED: {expected_outcome}"
 
-        self._log_thought("action", content, reasoning, confidence)
+        self._log_thought("action", content, reasoning, confidence, wsps_followed or [])
 
         # Add artificial delay for slow mode
         if self.slow_mode:
             delay = 0.5 * self.slow_factor
             self._log_thought("system", f"SLOW MODE DELAY: {delay:.1f}s",
-                             "Artificial delay for observability", 1.0)
+                             "Artificial delay for observability", 1.0, [])
             time.sleep(delay)
 
     def log_result(self, result_type: str, result_data: Any,
@@ -179,8 +210,17 @@ class ChainOfThoughtLogger:
         self._log_thought("metric", content, reasoning, 1.0)
 
     def log_recursive_improvement(self, improvement_type: str, before_state: Any,
-                                 after_state: Any, learning_insight: str) -> None:
-        """Log recursive improvement insights"""
+                                 after_state: Any, learning_insight: str,
+                                 wsps_followed: List[str] = None) -> None:
+        """Log recursive improvement insights
+
+        Args:
+            improvement_type: Type of improvement made
+            before_state: State before improvement
+            after_state: State after improvement
+            learning_insight: What was learned from this improvement
+            wsps_followed: WSP protocols followed during improvement (WSP 91)
+        """
         if not self.current_session:
             return
 
@@ -190,7 +230,7 @@ class ChainOfThoughtLogger:
 
         reasoning = f"Learning insight: {learning_insight}"
 
-        self._log_thought("improvement", content, reasoning, 0.95)
+        self._log_thought("improvement", content, reasoning, 0.95, wsps_followed or [])
 
     def end_session(self, final_decision: str = "", effectiveness_score: float = 0.0) -> Dict[str, Any]:
         """End the current chain-of-thought session"""
@@ -230,8 +270,17 @@ class ChainOfThoughtLogger:
 
         return summary
 
-    def _log_thought(self, thought_type: str, content: str, reasoning: str, confidence: float) -> None:
-        """Log a single thought in the chain"""
+    def _log_thought(self, thought_type: str, content: str, reasoning: str, confidence: float,
+                    wsps_followed: List[str] = None) -> None:
+        """Log a single thought in the chain
+
+        Args:
+            thought_type: Type of thought (analysis, decision, action, etc.)
+            content: Content of the thought
+            reasoning: Reasoning behind the thought
+            confidence: Confidence level (0-1)
+            wsps_followed: WSP protocols followed (WSP 91)
+        """
         if not self.current_session:
             return
 
@@ -241,7 +290,8 @@ class ChainOfThoughtLogger:
             thought_type=thought_type,
             content=content,
             reasoning=reasoning,
-            confidence=confidence
+            confidence=confidence,
+            wsps_followed=wsps_followed or []
         )
 
         # Calculate duration from previous thought
@@ -258,6 +308,9 @@ class ChainOfThoughtLogger:
         print(f"[{timestamp}] {confidence_icon} COT-{thought_type.upper()}: {content}")
         if reasoning:
             print(f"         [REASONING]: {reasoning}")
+        # WSP 91: Show which WSPs are being followed
+        if thought.wsps_followed:
+            print(f"         [WSP-COMPLIANCE]: Following {', '.join(thought.wsps_followed)}")
         print(f"         📊 CONFIDENCE: {confidence:.2f} | DURATION: {thought.duration:.2f}s")
         print()
 
@@ -316,6 +369,9 @@ class ChainOfThoughtLogger:
                 f.write(f"{latest_thought.content}\n")
                 if latest_thought.reasoning:
                     f.write(f"    REASONING: {latest_thought.reasoning}\n")
+                # WSP 91: Log which WSPs are being followed
+                if latest_thought.wsps_followed:
+                    f.write(f"    WSP-COMPLIANCE: Following {', '.join(latest_thought.wsps_followed)}\n")
                 f.write(f"    CONFIDENCE: {latest_thought.confidence:.2f} | ")
                 f.write(f"DURATION: {latest_thought.duration:.2f}s\n\n")
 
@@ -387,20 +443,35 @@ def start_cot_logging(query: str, slow_mode: bool = True) -> str:
     logger = get_chain_of_thought_logger()
     return logger.start_session(query, "HoloDAE Brain Activity Logging")
 
-def log_cot_analysis(step_name: str, data: Any, reasoning: str, confidence: float = 0.8) -> None:
-    """Log an analysis step"""
-    logger = get_chain_of_thought_logger()
-    logger.log_analysis_step(step_name, data, reasoning, confidence)
+def log_cot_analysis(step_name: str, data: Any, reasoning: str, confidence: float = 0.8,
+                    wsps_followed: List[str] = None) -> None:
+    """Log an analysis step
 
-def log_cot_decision(decision: str, options: List[str], reasoning: str, confidence: float) -> None:
-    """Log a decision point"""
+    Args:
+        wsps_followed: WSP protocols followed during this step (WSP 91)
+    """
     logger = get_chain_of_thought_logger()
-    logger.log_decision_point(decision, options, reasoning, confidence)
+    logger.log_analysis_step(step_name, data, reasoning, confidence, wsps_followed)
 
-def log_cot_action(action: str, target: str, expected: str, reasoning: str, confidence: float = 0.9) -> None:
-    """Log an action taken"""
+def log_cot_decision(decision: str, options: List[str], reasoning: str, confidence: float,
+                    wsps_followed: List[str] = None) -> None:
+    """Log a decision point
+
+    Args:
+        wsps_followed: WSP protocols followed during this decision (WSP 91)
+    """
     logger = get_chain_of_thought_logger()
-    logger.log_action_taken(action, target, expected, reasoning, confidence)
+    logger.log_decision_point(decision, options, reasoning, confidence, wsps_followed)
+
+def log_cot_action(action: str, target: str, expected: str, reasoning: str, confidence: float = 0.9,
+                  wsps_followed: List[str] = None) -> None:
+    """Log an action taken
+
+    Args:
+        wsps_followed: WSP protocols followed during this action (WSP 91)
+    """
+    logger = get_chain_of_thought_logger()
+    logger.log_action_taken(action, target, expected, reasoning, confidence, wsps_followed)
 
 def log_cot_result(result_type: str, data: Any, assessment: str, confidence: float) -> None:
     """Log a result"""
@@ -412,10 +483,15 @@ def log_cot_metric(name: str, value: Any, benchmark: Any = None, assessment: str
     logger = get_chain_of_thought_logger()
     logger.log_performance_metric(name, value, benchmark, assessment)
 
-def log_cot_improvement(improvement_type: str, before: Any, after: Any, insight: str) -> None:
-    """Log recursive improvement"""
+def log_cot_improvement(improvement_type: str, before: Any, after: Any, insight: str,
+                       wsps_followed: List[str] = None) -> None:
+    """Log recursive improvement
+
+    Args:
+        wsps_followed: WSP protocols followed during improvement (WSP 91)
+    """
     logger = get_chain_of_thought_logger()
-    logger.log_recursive_improvement(improvement_type, before, after, insight)
+    logger.log_recursive_improvement(improvement_type, before, after, insight, wsps_followed)
 
 def end_cot_logging(final_decision: str = "", effectiveness: float = 0.0) -> Dict[str, Any]:
     """End Chain-of-Thought logging"""
@@ -438,16 +514,19 @@ def demonstrate_brain_logging():
     # Start session
     session_id = start_cot_logging("How should I optimize this code?", slow_mode=True)
 
-    # Simulate brain thinking process
+    # Simulate brain thinking process with WSP compliance tracking
     log_cot_analysis("input_analysis", {"query_length": 28, "keywords": ["optimize", "code"]},
-                    "Analyzing user query for optimization intent", 0.9)
+                    "Analyzing user query for optimization intent", 0.9,
+                    wsps_followed=["WSP 50", "WSP 84"])  # Pre-action verification, Code memory
 
     log_cot_decision("approach_selection",
                     ["Static analysis", "Performance profiling", "Code review", "Refactoring suggestions"],
-                    "Considering multiple optimization approaches based on query context", 0.8)
+                    "Considering multiple optimization approaches based on query context", 0.8,
+                    wsps_followed=["WSP 50", "WSP 64", "WSP 91"])  # Verification, Prevention, Observability
 
     log_cot_action("static_analysis", "target_code.py", "Identify performance bottlenecks",
-                  "Starting with static analysis to understand code structure", 0.85)
+                  "Starting with static analysis to understand code structure", 0.85,
+                  wsps_followed=["WSP 87", "WSP 91"])  # Code navigation, Observability
 
     log_cot_result("analysis_complete", {"issues_found": 3, "complexity_score": 7.2},
                   "Found 3 optimization opportunities with moderate complexity", 0.9)
@@ -455,7 +534,8 @@ def demonstrate_brain_logging():
     log_cot_metric("analysis_time", "2.3s", "target < 3.0s", "Within acceptable performance bounds")
 
     log_cot_improvement("decision_algorithm", "random_selection", "priority_weighted",
-                       "Switching to weighted selection improved decision quality by 15%")
+                       "Switching to weighted selection improved decision quality by 15%",
+                       wsps_followed=["WSP 48", "WSP 91"])  # Recursive improvement, Observability
 
     # End session
     summary = end_cot_logging("Implement the 3 identified optimizations", 0.87)

@@ -159,16 +159,13 @@ class AutoModeratorDAE:
             # Initialize StreamResolver with service if available, otherwise None to trigger NO-QUOTA mode
             try:
                 self.stream_resolver = StreamResolver(self.service)
-                # Reset circuit breaker on fresh initialization to recover from stuck state
-                self.stream_resolver.reset_circuit_breaker()
-                logger.info("🔄 Circuit breaker reset on StreamResolver initialization")
+                # WSP 3 Phase 4: circuit_breaker removed from StreamResolver (moved to youtube_api_ops)
+                logger.info("🔄 StreamResolver initialized")
             except Exception as e:
                 logger.warning(f"Failed to initialize StreamResolver with service: {e}")
                 logger.info("🔄 Falling back to NO-QUOTA mode initialization")
                 # Initialize without service to force NO-QUOTA mode
                 self.stream_resolver = StreamResolver(None)
-                # Also reset circuit breaker in fallback mode
-                self.stream_resolver.reset_circuit_breaker()
 
         # Reset priority tracking for this rotation
         self.high_priority_pending = False
@@ -266,7 +263,9 @@ class AutoModeratorDAE:
                 result = self.stream_resolver.resolve_stream(channel_id)
                 if result and result[0]:
                     check_results[channel_name] = '✅ LIVE'
-                    logger.info(f"[🎉 Channel {i}/{len(channels_to_check)}] {channel_name}: STREAM FOUND!")
+                    # Get channel-specific emoji
+                    channel_emoji = "🍣" if "Move2Japan" in channel_name else ("🧘" if "UnDaoDu" in channel_name else ("🐕" if "FoundUps" in channel_name else "🎉"))
+                    logger.info(f"[{channel_emoji} Channel {i}/{len(channels_to_check)}] {channel_name}: STREAM FOUND!")
                 else:
                     check_results[channel_name] = '⏳ offline'
                     logger.info(f"[⏳ Channel {i}/{len(channels_to_check)}] {channel_name}: No active stream")
@@ -315,12 +314,25 @@ class AutoModeratorDAE:
                 # Store stream info for later posting coordination
                 logger.info(f"📝 Detected stream on {channel_name} - queueing for social media posting")
 
+                # Get stream title for social media posting
+                stream_title = None
+                if self.stream_resolver:
+                    # Try to get title from stream resolver
+                    stream_title = self.stream_resolver._get_stream_title(video_id)
+
+                if not stream_title:
+                    # Fallback: Use channel name + "Live Stream"
+                    stream_title = f"{channel_name} is LIVE!"
+
+                logger.info(f"📺 Stream title: {stream_title}")
+
                 # Store the stream info
                 stream_info = {
                     'video_id': video_id,
                     'live_chat_id': live_chat_id,
                     'channel_id': channel_id,
-                    'channel_name': channel_name
+                    'channel_name': channel_name,
+                    'title': stream_title  # Add actual title for social media posting
                 }
                 logger.info(f"[FLOW-TRACE] Created stream_info: {stream_info}")
                 found_streams.append(stream_info)
@@ -471,12 +483,14 @@ class AutoModeratorDAE:
     async def monitor_chat(self):
         """
         Phase 2: Autonomous chat monitoring and moderation.
-        
+
         This is the main execution loop with intelligent throttling.
         Returns when stream ends/becomes inactive for seamless switching.
         """
         # Import the intelligent delay calculator and trigger
-        from modules.platform_integration.stream_resolver.src.stream_resolver import calculate_enhanced_delay
+        # WSP 3 Phase 4: calculate_enhanced_delay moved to infrastructure/shared_utilities
+        from modules.infrastructure.shared_utilities.delay_utils import DelayUtils
+        delay_utils = DelayUtils()
         from modules.communication.livechat.src.stream_trigger import StreamTrigger, create_intelligent_delay
         
         # Initialize trigger mechanism

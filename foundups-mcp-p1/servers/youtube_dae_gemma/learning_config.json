@@ -1,0 +1,25 @@
+{
+  "training_data_sources": [
+    "memory/*.txt",
+    "WSP_framework/src/",
+    "modules/communication/livechat/_archive/"
+  ],
+  "evaluation_metrics": [
+    "intent_accuracy",
+    "response_quality",
+    "processing_speed",
+    "user_satisfaction"
+  ],
+  "learning_schedule": {
+    "initial_threshold": 0.3,
+    "adjustment_interval": 100,
+    "min_threshold": 0.1,
+    "max_threshold": 0.8,
+    "convergence_target": 0.02
+  },
+  "0102_oversight_triggers": [
+    "threshold_convergence",
+    "performance_degradation",
+    "new_patterns_detected"
+  ]
+}

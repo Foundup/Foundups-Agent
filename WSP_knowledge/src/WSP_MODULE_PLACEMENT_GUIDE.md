@@ -1,79 +1,79 @@
 # WSP Module Placement Guide - PREVENT WRONG PLACEMENT
 
-## 🚨 CRITICAL: Before Creating ANY Module, Ask These Questions:
+## [U+1F6A8] CRITICAL: Before Creating ANY Module, Ask These Questions:
 
 ### 1. WHAT DOMAIN DOES IT BELONG TO?
 
 | If the module is about... | It goes in... | NOT in... |
 |---------------------------|---------------|-----------|
-| **Gaming/Points/Levels** | `modules/gamification/` | ❌ chat_rules, livechat |
-| **Chat Moderation** | `modules/communication/chat_rules/` | ❌ gamification |
-| **YouTube Live Chat** | `modules/communication/livechat/` | ❌ chat_rules |
-| **AI/LLM Integration** | `modules/ai_intelligence/` | ❌ communication |
-| **OAuth/APIs** | `modules/platform_integration/` | ❌ communication |
+| **Gaming/Points/Levels** | `modules/gamification/` | [U+274C] chat_rules, livechat |
+| **Chat Moderation** | `modules/communication/chat_rules/` | [U+274C] gamification |
+| **YouTube Live Chat** | `modules/communication/livechat/` | [U+274C] chat_rules |
+| **AI/LLM Integration** | `modules/ai_intelligence/` | [U+274C] communication |
+| **OAuth/APIs** | `modules/platform_integration/` | [U+274C] communication |
 
 ### 2. EXAMPLES OF CORRECT PLACEMENT:
 
-✅ **CORRECT:**
+[U+2705] **CORRECT:**
 ```
 modules/gamification/whack_a_magat/src/
-├── whack.py                  # Game logic
-├── timeout_announcer.py      # Game announcements
-├── rpg_leveling_system.py    # Leveling logic
-└── game_commands.py          # Game commands
+[U+251C][U+2500][U+2500] whack.py                  # Game logic
+[U+251C][U+2500][U+2500] timeout_announcer.py      # Game announcements
+[U+251C][U+2500][U+2500] rpg_leveling_system.py    # Leveling logic
+[U+2514][U+2500][U+2500] game_commands.py          # Game commands
 ```
 
-❌ **WRONG:**
+[U+274C] **WRONG:**
 ```
 modules/communication/chat_rules/src/
-├── whack_a_magat.py         # WRONG! This is gaming!
-├── rpg_leveling_system.py   # WRONG! This is gaming!
-└── game_commands.py         # WRONG! This is gaming!
+[U+251C][U+2500][U+2500] whack_a_magat.py         # WRONG! This is gaming!
+[U+251C][U+2500][U+2500] rpg_leveling_system.py   # WRONG! This is gaming!
+[U+2514][U+2500][U+2500] game_commands.py         # WRONG! This is gaming!
 ```
 
-## 📋 Module Type Checklist
+## [U+1F4CB] Module Type Checklist
 
 ### Is it GAMIFICATION?
-- [ ] Points/XP system? → `gamification/`
-- [ ] Levels/Ranks? → `gamification/`
-- [ ] Game mechanics? → `gamification/`
-- [ ] Leaderboards? → `gamification/`
-- [ ] Achievements? → `gamification/`
-- [ ] Game commands (/score, /level)? → `gamification/`
+- [ ] Points/XP system? -> `gamification/`
+- [ ] Levels/Ranks? -> `gamification/`
+- [ ] Game mechanics? -> `gamification/`
+- [ ] Leaderboards? -> `gamification/`
+- [ ] Achievements? -> `gamification/`
+- [ ] Game commands (/score, /level)? -> `gamification/`
 
 ### Is it CHAT RULES?
-- [ ] Message filtering? → `chat_rules/`
-- [ ] Spam detection? → `chat_rules/`
-- [ ] Bad word filtering? → `chat_rules/`
-- [ ] Rate limiting rules? → `chat_rules/`
-- [ ] Chat permissions? → `chat_rules/`
-- [ ] Moderation policies? → `chat_rules/`
+- [ ] Message filtering? -> `chat_rules/`
+- [ ] Spam detection? -> `chat_rules/`
+- [ ] Bad word filtering? -> `chat_rules/`
+- [ ] Rate limiting rules? -> `chat_rules/`
+- [ ] Chat permissions? -> `chat_rules/`
+- [ ] Moderation policies? -> `chat_rules/`
 
 ### Is it LIVE CHAT?
-- [ ] YouTube API interaction? → `livechat/`
-- [ ] Message polling? → `livechat/`
-- [ ] Chat sending? → `livechat/`
-- [ ] Stream session management? → `livechat/`
-- [ ] YouTube-specific features? → `livechat/`
+- [ ] YouTube API interaction? -> `livechat/`
+- [ ] Message polling? -> `livechat/`
+- [ ] Chat sending? -> `livechat/`
+- [ ] Stream session management? -> `livechat/`
+- [ ] YouTube-specific features? -> `livechat/`
 
-## 🎯 Common Mistakes and How to Avoid Them
+## [U+1F3AF] Common Mistakes and How to Avoid Them
 
 ### Mistake 1: "It's used in chat, so it goes in chat_rules"
 **WRONG!** Just because something is used in chat doesn't mean it belongs in chat_rules.
-- Game commands used in chat → Still goes in `gamification/`
-- AI responses in chat → Still goes in `ai_intelligence/`
+- Game commands used in chat -> Still goes in `gamification/`
+- AI responses in chat -> Still goes in `ai_intelligence/`
 
 ### Mistake 2: "It handles timeouts, so it goes with moderation"
 **WRONG!** Purpose matters, not trigger:
-- Timeout for **points/gaming** → `gamification/`
-- Timeout for **rule violation** → `chat_rules/`
+- Timeout for **points/gaming** -> `gamification/`
+- Timeout for **rule violation** -> `chat_rules/`
 
 ### Mistake 3: "It's all related, so keep it together"
 **WRONG!** Separate by domain:
 - Even if tightly coupled, modules go in their proper domains
 - Use imports to connect them, not co-location
 
-## 🔍 Before Creating a Module:
+## [U+1F50D] Before Creating a Module:
 
 1. **CHECK IF IT EXISTS:**
    ```bash
@@ -97,7 +97,7 @@ modules/communication/chat_rules/src/
    modules/[DOMAIN]/[BLOCK]/src/[module].py
    ```
 
-## ⚠️ Red Flags You're in the Wrong Place:
+## [WARNING][U+FE0F] Red Flags You're in the Wrong Place:
 
 1. **File named `game_*` in non-gamification folder**
 2. **File named `*_leveling_*` in non-gamification folder**
@@ -106,7 +106,7 @@ modules/communication/chat_rules/src/
 5. **Chat API code outside livechat**
 6. **OAuth code outside platform_integration**
 
-## 📝 Migration Checklist:
+## [U+1F4DD] Migration Checklist:
 
 When you find misplaced modules:
 
@@ -118,7 +118,7 @@ When you find misplaced modules:
 6. [ ] Run tests
 7. [ ] Update ModLog
 
-## 🚫 NEVER DO THIS:
+## [U+1F6AB] NEVER DO THIS:
 
 1. **NEVER** create gaming files in `chat_rules/`
 2. **NEVER** create chat moderation in `gamification/`
@@ -126,10 +126,10 @@ When you find misplaced modules:
 4. **NEVER** duplicate modules across domains
 5. **NEVER** ignore WSP 3 structure
 
-## ✅ ALWAYS DO THIS:
+## [U+2705] ALWAYS DO THIS:
 
 1. **ALWAYS** check if module already exists (WSP 84)
-2. **ALWAYS** follow Domain→Block→Cube pattern (WSP 3)
+2. **ALWAYS** follow Domain->Block->Cube pattern (WSP 3)
 3. **ALWAYS** keep files under 500 lines (WSP compliance)
 4. **ALWAYS** put gaming in gamification
 5. **ALWAYS** put chat rules in chat_rules

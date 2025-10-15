@@ -1,31 +1,31 @@
 # WSP Module Placement Decision Matrix
 
-## 🎯 Quick Decision Tree
+## [U+1F3AF] Quick Decision Tree
 
 ```
 Is it about...
-│
-├─ Points/XP/Levels/Games?
-│  └─ YES → modules/gamification/[game_name]/src/
-│
-├─ Chat moderation/filtering?
-│  └─ YES → modules/communication/chat_rules/src/
-│
-├─ YouTube Live Chat API?
-│  └─ YES → modules/communication/livechat/src/
-│
-├─ AI/LLM responses?
-│  └─ YES → modules/ai_intelligence/[model_name]/src/
-│
-├─ OAuth/External APIs?
-│  └─ YES → modules/platform_integration/[platform_name]/src/
-│
-└─ Still unsure?
-   └─ Ask: "What is the PRIMARY PURPOSE?"
-      └─ That determines the domain!
+[U+2502]
+[U+251C][U+2500] Points/XP/Levels/Games?
+[U+2502]  [U+2514][U+2500] YES -> modules/gamification/[game_name]/src/
+[U+2502]
+[U+251C][U+2500] Chat moderation/filtering?
+[U+2502]  [U+2514][U+2500] YES -> modules/communication/chat_rules/src/
+[U+2502]
+[U+251C][U+2500] YouTube Live Chat API?
+[U+2502]  [U+2514][U+2500] YES -> modules/communication/livechat/src/
+[U+2502]
+[U+251C][U+2500] AI/LLM responses?
+[U+2502]  [U+2514][U+2500] YES -> modules/ai_intelligence/[model_name]/src/
+[U+2502]
+[U+251C][U+2500] OAuth/External APIs?
+[U+2502]  [U+2514][U+2500] YES -> modules/platform_integration/[platform_name]/src/
+[U+2502]
+[U+2514][U+2500] Still unsure?
+   [U+2514][U+2500] Ask: "What is the PRIMARY PURPOSE?"
+      [U+2514][U+2500] That determines the domain!
 ```
 
-## 📊 Decision Matrix Table
+## [U+1F4CA] Decision Matrix Table
 
 | Feature | Domain | Block | Example Path |
 |---------|--------|-------|--------------|
@@ -47,7 +47,7 @@ Is it about...
 | **YouTube Auth** | platform_integration | youtube_auth | `platform_integration/youtube_auth/src/oauth.py` |
 | **Twitter API** | platform_integration | twitter_api | `platform_integration/twitter_api/src/client.py` |
 
-## ⚠️ Common Confusion Points
+## [WARNING][U+FE0F] Common Confusion Points
 
 ### "But it's used in chat!"
 **WRONG THINKING:** "Game commands are used in chat, so they go in chat_rules"
@@ -61,16 +61,16 @@ Is it about...
 **WRONG THINKING:** "Keep related code in the same place"
 **CORRECT THINKING:** "Separate by domain, connect via imports"
 
-## 🚫 Red Flags - You're Doing It Wrong!
+## [U+1F6AB] Red Flags - You're Doing It Wrong!
 
-1. File contains "XP" or "points" → Should be in `gamification/`
-2. File contains "level" or "rank" → Should be in `gamification/`
-3. File contains "game" in name → Should be in `gamification/`
-4. File contains "leaderboard" → Should be in `gamification/`
-5. File handles YouTube API → Should be in `livechat/`
-6. File does AI responses → Should be in `ai_intelligence/`
+1. File contains "XP" or "points" -> Should be in `gamification/`
+2. File contains "level" or "rank" -> Should be in `gamification/`
+3. File contains "game" in name -> Should be in `gamification/`
+4. File contains "leaderboard" -> Should be in `gamification/`
+5. File handles YouTube API -> Should be in `livechat/`
+6. File does AI responses -> Should be in `ai_intelligence/`
 
-## ✅ Examples of CORRECT Placement
+## [U+2705] Examples of CORRECT Placement
 
 ### Scenario 1: Timeout Points System
 ```
@@ -104,14 +104,14 @@ Block: livechat (YouTube-specific)
 File: modules/communication/livechat/src/chat_sender.py
 ```
 
-## 📝 Before Creating ANY Module:
+## [U+1F4DD] Before Creating ANY Module:
 
 1. **What is the PRIMARY PURPOSE?**
-   - Gaming? → gamification
-   - Chat moderation? → chat_rules
-   - YouTube interaction? → livechat
-   - AI/LLM? → ai_intelligence
-   - External API? → platform_integration
+   - Gaming? -> gamification
+   - Chat moderation? -> chat_rules
+   - YouTube interaction? -> livechat
+   - AI/LLM? -> ai_intelligence
+   - External API? -> platform_integration
 
 2. **Does it already exist?**
    ```bash
@@ -126,7 +126,7 @@ File: modules/communication/livechat/src/chat_sender.py
 4. **Will it be over 500 lines?**
    - If yes, plan to split it NOW
 
-## 🔥 The Golden Rule:
+## [U+1F525] The Golden Rule:
 
 **DOMAIN DETERMINES LOCATION, NOT USAGE!**
 

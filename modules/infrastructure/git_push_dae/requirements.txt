@@ -1,0 +1,27 @@
+# GitPushDAE Dependencies
+
+# Core daemon functionality
+threading
+time
+datetime
+json
+logging
+pathlib
+subprocess
+
+# WSP 91 observability
+# (No additional dependencies - uses standard library for logging)
+
+# Database integration
+# (Uses existing modules.infrastructure.database)
+
+# Social media integration
+# (Uses existing modules.platform_integration.linkedin_agent)
+
+# Quality assessment
+# (Uses existing holo_index.qwen_advisor)
+
+# Development dependencies
+pytest>=7.0.0
+black>=22.0.0
+mypy>=1.0.0

@@ -1,0 +1,6 @@
+# YouTube API Operations Requirements
+# WSP 70: Externalized configuration and dependencies
+
+google-api-python-client>=2.0.0
+# Circuit breaker provided by caller (infrastructure dependency)
+# Logger provided by caller (standard library)

@@ -57,8 +57,28 @@ class ChatSender:
         MAX_MESSAGE_LENGTH = 200
         if len(message_text) > MAX_MESSAGE_LENGTH:
             original_length = len(message_text)
-            message_text = message_text[:MAX_MESSAGE_LENGTH - 3] + "..."  # Truncate with ellipsis
-            logger.warning(f"⚠️ Message truncated from {original_length} to {MAX_MESSAGE_LENGTH} chars (YouTube limit)")
+
+            # Smart truncation: Preserve @mentions at start
+            if message_text.startswith('@'):
+                # Find the end of the @mention (space, punctuation, or colon)
+                import re
+                mention_match = re.match(r'(@[A-Za-z0-9_-]+[\s:,!]*)', message_text)
+                if mention_match:
+                    mention = mention_match.group(1)
+                    # Keep @mention + truncated rest + ellipsis
+                    remaining_space = MAX_MESSAGE_LENGTH - len(mention) - 3
+                    rest = message_text[len(mention):remaining_space + len(mention)]
+                    message_text = mention + rest + "..."
+                    logger.info(f"✂️ Smart truncate: Preserved @mention, {original_length}→{len(message_text)} chars")
+                else:
+                    # Fallback to simple truncation
+                    message_text = message_text[:MAX_MESSAGE_LENGTH - 3] + "..."
+                    logger.warning(f"⚠️ Message truncated from {original_length} to {MAX_MESSAGE_LENGTH} chars (YouTube limit)")
+            else:
+                # No @mention at start, simple truncation
+                message_text = message_text[:MAX_MESSAGE_LENGTH - 3] + "..."
+                logger.warning(f"⚠️ Message truncated from {original_length} to {MAX_MESSAGE_LENGTH} chars (YouTube limit)")
+
             logger.debug(f"Original message: {message_text[:50]}...")
         
         # CRITICAL: Validate all @mentions in the message before sending

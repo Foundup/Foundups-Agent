@@ -3,7 +3,7 @@
 - **Purpose:** Extension of WSP 84 to prevent pattern duplication across LEGO modules by maintaining searchable pattern registries that DAEs use for perfect cube assembly
 - **Core Principle:** "Patterns are LEGO templates that DAEs remember and snap together into perfect cubes"
 - **Trigger:** Before implementing ANY reusable pattern in a new module
-- **Chain:** [WSP 17 → WSP 84 → WSP 50]
+- **Chain:** [WSP 17 -> WSP 84 -> WSP 50]
 
 ## 1. Core Principle: LEGO Pattern Memory
 
@@ -19,14 +19,14 @@ Each domain MUST maintain a `PATTERN_REGISTRY.md`:
 
 ```
 modules/
-├── communication/
-│   └── PATTERN_REGISTRY.md     # Chat patterns
-├── ai_intelligence/
-│   └── PATTERN_REGISTRY.md     # AI patterns  
-├── infrastructure/
-│   └── PATTERN_REGISTRY.md     # System patterns
-└── gamification/
-    └── PATTERN_REGISTRY.md     # Game patterns
+[U+251C][U+2500][U+2500] communication/
+[U+2502]   [U+2514][U+2500][U+2500] PATTERN_REGISTRY.md     # Chat patterns
+[U+251C][U+2500][U+2500] ai_intelligence/
+[U+2502]   [U+2514][U+2500][U+2500] PATTERN_REGISTRY.md     # AI patterns  
+[U+251C][U+2500][U+2500] infrastructure/
+[U+2502]   [U+2514][U+2500][U+2500] PATTERN_REGISTRY.md     # System patterns
+[U+2514][U+2500][U+2500] gamification/
+    [U+2514][U+2500][U+2500] PATTERN_REGISTRY.md     # Game patterns
 ```
 
 ### 2.2 Registry Format
@@ -115,17 +115,17 @@ def pattern_creation_gates():
 ### Pattern Duplication Examples (LEGO Anti-Pattern vs Proper Assembly)
 
 ```python
-# ❌ WRONG (Vibecoding): Created duplicate LEGO blocks
+# [U+274C] WRONG (Vibecoding): Created duplicate LEGO blocks
 module_a_pattern.py      # 600 lines - New LEGO block
 module_b_pattern.py      # 300 lines - Duplicate LEGO block  
 module_c_pattern.py      # 100 lines - Another duplicate
 # Result: 3 incompatible LEGO blocks that can't snap together!
 
-# ✅ RIGHT (WSP/LEGO Assembly): One pattern, DAE-managed adapters
+# [U+2705] RIGHT (WSP/LEGO Assembly): One pattern, DAE-managed adapters
 base_pattern.py          # Base LEGO template (DAE recalls this)
-├── adapters/
-│   ├── module_a_adapter.py  # 20 lines - Snaps into cube A
-│   └── module_b_adapter.py  # 20 lines - Snaps into cube B
+[U+251C][U+2500][U+2500] adapters/
+[U+2502]   [U+251C][U+2500][U+2500] module_a_adapter.py  # 20 lines - Snaps into cube A
+[U+2502]   [U+2514][U+2500][U+2500] module_b_adapter.py  # 20 lines - Snaps into cube B
 # Result: DAE ensures perfect LEGO connections across all cubes
 ```
 
@@ -201,11 +201,11 @@ This protocol EXTENDS WSP 84 in the LEGO-cube architecture:
 
 ```
 WSP 84: Don't duplicate LEGO blocks (modules/functions)
-    ↓
+    [U+2193]
 WSP 17: Don't duplicate LEGO templates (pattern architectures)
-    ↓
+    [U+2193]
 DAE Management: Ensures all LEGOs snap into perfect cubes
-    ↓
+    [U+2193]
 Result: Complete pattern memory with perfect cube coherence
 ```
 

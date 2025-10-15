@@ -251,3 +251,31 @@ The architect (0102) must:
 WSP 85 maintains codebase organization by keeping root directory sacred. All module-specific functionality must reside in proper module directories. Violations are immediately corrected and prevention systems enhanced through recursive improvement.
 
 **Mantra**: "Root is sacred - modules contain implementation"
+
+---
+
+## Related Documentation
+
+### Comprehensive Root Health Audit
+**Location**: `docs/WSP_85_ROOT_DIRECTORY_HEALTH_AUDIT.md`
+**Purpose**: Complete analysis of root directory violations, HoloIndex health assessment, and remediation plan
+**Created**: 2025-10-14
+**Scope**:
+- 18 violations cataloged (logs, temp files, test scripts, data dirs)
+- HoloIndex functionality assessment
+- Proposed RootDirectoryGuardian component
+- Phase-by-phase remediation plan
+- First principles analysis for HoloDAE learning
+
+**Quick Reference**:
+```bash
+# Search for audit document via HoloIndex
+python holo_index.py --search "WSP 85 root directory health audit"
+
+# View current violations
+ls -la O:\Foundups-Agent\*.log
+ls -la O:\Foundups-Agent\*.txt
+ls -la O:\Foundups-Agent\test_*.py
+```
+
+**Status**: 🔴 CRITICAL violations documented, awaiting remediation execution

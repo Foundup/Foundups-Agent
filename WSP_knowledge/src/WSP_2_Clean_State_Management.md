@@ -15,7 +15,7 @@ A repository is in a "clean state" if and only if all of the following condition
 - **No Uncommitted Changes:** `git status` reports a clean working directory.
 - **Full Test Suite Pass:** All module tests pass (`pytest modules/`).
 - **100% Audit Compliance:** The Modular Audit (`WSP 4`) reports zero violations (`python tools/modular_audit/modular_audit.py ./modules`).
-- **Coverage Maintained:** Test coverage meets or exceeds the project standard defined in `WSP 5` (≥90%).
+- **Coverage Maintained:** Test coverage meets or exceeds the project standard defined in `WSP 5` ([U+2265]90%).
 
 ## 3. Snapshot Creation Protocol
 
@@ -59,7 +59,7 @@ git checkout clean-vX -- path/to/file
 
 ### 5.1 Pre-Deployment Checklist
 - [ ] All social integration modules pass FMAS audit
-- [ ] Social media module test coverage ≥90%
+- [ ] Social media module test coverage [U+2265]90%
 - [ ] Authentication and API modules validated
 - [ ] Rate limiting and safety mechanisms tested
 - [ ] Autonomous behavior validation in sandbox environment

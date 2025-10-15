@@ -1,26 +1,26 @@
 # ANNEX: WSP Orchestration Hierarchy - Clear Responsibility Framework
 
 **WSP Compliance**: WSP 40 (Architectural Coherence), yes   
-**Purpose**: Reference annex for orchestration hierarchy details; canonical hierarchy is now embedded in WSP 46 §2.5.  
-**Status**: Reference Annex (see WSP 46 §2.5 for canonical)
+**Purpose**: Reference annex for orchestration hierarchy details; canonical hierarchy is now embedded in WSP 46 [U+00A7]2.5.  
+**Status**: Reference Annex (see WSP 46 [U+00A7]2.5 for canonical)
 
 ---
 
-## 🎯 **ORCHESTRATION HIERARCHY OVERVIEW**
+## [U+1F3AF] **ORCHESTRATION HIERARCHY OVERVIEW**
 
 The WSP framework implements a **three-tier orchestration hierarchy** with clear responsibilities and domain boundaries:
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    WRE CORE ORCHESTRATION                       │
-│              (Main System Orchestration)                        │
-├─────────────────────────────────────────────────────────────────┤
-│              DOMAIN ORCHESTRATORS                               │
-│         (Domain-Specific Coordination)                          │
-├─────────────────────────────────────────────────────────────────┤
-│              MODULE ORCHESTRATORS                               │
-│         (Module-Specific Operations)                            │
-└─────────────────────────────────────────────────────────────────┘
+[U+250C][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2510]
+[U+2502]                    WRE CORE ORCHESTRATION                       [U+2502]
+[U+2502]              (Main System Orchestration)                        [U+2502]
+[U+251C][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2524]
+[U+2502]              DOMAIN ORCHESTRATORS                               [U+2502]
+[U+2502]         (Domain-Specific Coordination)                          [U+2502]
+[U+251C][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2524]
+[U+2502]              MODULE ORCHESTRATORS                               [U+2502]
+[U+2502]         (Module-Specific Operations)                            [U+2502]
+[U+2514][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2518]
 ```
 
 ---
@@ -37,7 +37,7 @@ The WSP framework implements a **three-tier orchestration hierarchy** with clear
 
 ---
 
-## 🏗️ **TIER 1: WRE CORE ORCHESTRATION**
+## [U+1F3D7][U+FE0F] **TIER 1: WRE CORE ORCHESTRATION**
 
 ### **Primary Orchestrator: WRE_0102_Orchestrator**
 **Location**: `modules/wre_core/src/wre_0102_orchestrator.py`  
@@ -82,7 +82,7 @@ def orchestrate_new_module(module_name: str) -> bool
 
 ---
 
-## 🎯 **TIER 2: DOMAIN ORCHESTRATORS**
+## [U+1F3AF] **TIER 2: DOMAIN ORCHESTRATORS**
 
 ### **Communication Domain: Auto Meeting Orchestrator (AMO)** Cube. 
 **Location**: `modules/communication/auto_meeting_orchestrator/src/orchestrator.py`  
@@ -137,7 +137,7 @@ def optimize_performance() -> Dict[str, Any]
 
 ---
 
-## 🔧 **TIER 3: MODULE ORCHESTRATORS**
+## [TOOL] **TIER 3: MODULE ORCHESTRATORS**
 
 ### **Module-Specific Orchestrators**
 Each module may have its own orchestrator for module-specific operations:
@@ -156,16 +156,16 @@ Each module may have its own orchestrator for module-specific operations:
 
 ---
 
-## 🔄 **ORCHESTRATION FLOW**
+## [U+1F504] **ORCHESTRATION FLOW**
 
 ### **Standard Orchestration Flow**
 ```
 1. WRE_0102_Orchestrator (Main)
-   ↓
+   [U+2193]
 2. WRE Core Orchestrator (Agent Health)
-   ↓
+   [U+2193]
 3. Domain Orchestrators (Domain-Specific)
-   ↓
+   [U+2193]
 4. Module Orchestrators (Module-Specific)
 ```
 
@@ -188,7 +188,7 @@ Each module may have its own orchestrator for module-specific operations:
 
 ---
 
-## 🛡️ **WSP COMPLIANCE ENFORCEMENT**
+## [U+1F6E1][U+FE0F] **WSP COMPLIANCE ENFORCEMENT**
 
 ### **WSP 40 Architectural Coherence**
 - **Clear Hierarchy**: Three-tier orchestration with defined responsibilities
@@ -207,7 +207,7 @@ Each module may have its own orchestrator for module-specific operations:
 
 ---
 
-## 📊 **ORCHESTRATION METRICS**
+## [U+1F4CA] **ORCHESTRATION METRICS**
 
 ### **Performance Metrics**
 - **Agent Health**: 100% WSP 54 agent availability
@@ -219,11 +219,11 @@ Each module may have its own orchestrator for module-specific operations:
 - **Architectural Coherence**: 100% WSP 40 compliance
 - **Domain Separation**: 100% functional distribution
 - **Documentation Coverage**: 100% WSP 22 compliance
-- **Testing Coverage**: ≥90% WSP 5 compliance
+- **Testing Coverage**: [U+2265]90% WSP 5 compliance
 
 ---
 
-## 🎯 **CONCLUSION**
+## [U+1F3AF] **CONCLUSION**
 
 This orchestration hierarchy establishes **clear responsibilities and domain boundaries** across the WSP framework, ensuring:
 
@@ -232,4 +232,4 @@ This orchestration hierarchy establishes **clear responsibilities and domain bou
 - **WSP Compliance**: Full adherence to WSP 40, WSP 54, and WSP 46 protocols
 - **Autonomous Operation**: Complete autonomous orchestration capability
 
-**0102 Signal**: Clear orchestration hierarchy established. WSP 40 architectural coherence achieved. Autonomous operation ready. 🎯
+**0102 Signal**: Clear orchestration hierarchy established. WSP 40 architectural coherence achieved. Autonomous operation ready. [U+1F3AF]

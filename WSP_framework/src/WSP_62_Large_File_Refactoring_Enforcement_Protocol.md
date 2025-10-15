@@ -19,11 +19,11 @@ This protocol implements comprehensive file size management and refactoring enfo
 ### 2.1. Default Threshold Definitions
 
 #### 2.1.1. Code Files
-- **Python Files (.py)** (aligned with WSP 87):
-  - < 800 lines: OK
-  - 800-1000 lines: Guideline range - plan refactor
-  - 1000-1500 lines: Critical window - document remediation
-  - >=1500 lines: Violation; mandatory split
+- **Python Files (.py)** (aligned with WSP 87, updated for 0102 agentic growth):
+  - < 1200 lines: OK (allows agentic evolution and AI verbosity)
+  - 1200-1500 lines: Guideline range - plan refactor
+  - 1500-2000 lines: Critical window - document remediation
+  - >=2000 lines: Violation; mandatory split
 - **JavaScript/TypeScript (.js/.ts)**: 400 lines
 - **Configuration Files (.json/.yaml/.toml)**: 200 lines
 - **Shell Scripts (.sh/.ps1)**: 300 lines
@@ -48,18 +48,18 @@ This protocol implements comprehensive file size management and refactoring enfo
 # modules/[domain]/wsp_62_config.yaml
 thresholds:
   ai_intelligence:
-    python_files: 600      # AI models may be larger
-    class_limit: 300       # Complex neural architectures
+    python_files: 900      # AI models may be larger (updated for 0102 growth)
+    class_limit: 450       # Complex neural architectures
   infrastructure:
-    python_files: 400      # Infrastructure utilities should be lean
-    dae_modules: 800       # DAE orchestrators are complex (use full Python threshold)
-    config_files: 150      # Tight configuration control
+    python_files: 600      # Infrastructure utilities should be lean
+    dae_modules: 1200      # DAE orchestrators are complex (use full Python threshold)
+    config_files: 200      # Tight configuration control
   communication:
-    python_files: 450      # Protocol handlers
-    function_limit: 40     # Message processing functions
+    python_files: 675      # Protocol handlers
+    function_limit: 60     # Message processing functions
 ```
 
-**Note**: DAE modules (`*_dae.py`, `*dae*.py` in infrastructure/) are **complex orchestrators** managing state machines, sub-agents, and workflows. They follow the **full Python threshold of 800/1000/1500** (OK/Guideline/Hard limit) per WSP 87, NOT the lean infrastructure 400-line limit.
+**Note**: DAE modules (`*_dae.py`, `*dae*.py` in infrastructure/) are **complex orchestrators** managing state machines, sub-agents, and workflows. They follow the **full Python threshold of 1200/1500/2000** (OK/Guideline/Hard limit) per WSP 87, NOT the lean infrastructure 600-line limit.
 
 #### 2.2.2. Module-Specific Overrides
 ```yaml
@@ -85,9 +85,9 @@ When a file exceeds its threshold:
 
 #### 3.1.2. Growth Rate Monitoring
 Monitor files approaching thresholds:
-- **>=1200 lines (80% of 1500 hard limit)**: Display warning during development
-- **>=1350 lines (90% of hard limit)**: Require documented remediation plan
-- **>=1425 lines (95% of hard limit)**: Mandatory refactoring review
+- **>=1600 lines (80% of 2000 hard limit)**: Display warning during development
+- **>=1800 lines (90% of hard limit)**: Require documented remediation plan
+- **>=1900 lines (95% of hard limit)**: Mandatory refactoring review
 
 ### 3.2. Enforcement Actions
 

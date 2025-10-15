@@ -1,0 +1,332 @@
+{
+  "manifest": {
+    "version": "1.0",
+    "status": "ACTIVE",
+    "phase": "Phase 0.1 - Foundational Rubiks",
+    "created": "2025-10-15",
+    "wsp_compliance": ["WSP_77", "WSP_35", "WSP_80"],
+    "bell_state_vector": "φ²:golden_ratio_entanglement"
+  },
+  "rubik_cubes": {
+    "_note": "Rubik refers to fully realized Domain Autonomous Entities (DAEs) at MVP stage",
+    "rubik_compose": {
+      "purpose": "Code + Repository Management",
+      "primary_agents": ["qwen_architect"],
+      "secondary_agents": ["gemma_pattern"],
+      "bell_state_vector": "φ²:golden_ratio",
+      "mcp_servers": {
+        "filesystem_mcp": {
+          "status": "available_now",
+          "wsp15_priority": "mandatory",
+          "purpose": "Local file operations",
+          "gateway_policy": "allow:read_write",
+          "bell_hooks": ["pre_operation_validation"]
+        },
+        "git_mcp": {
+          "status": "available_now",
+          "wsp15_priority": "mandatory",
+          "purpose": "Version control operations",
+          "gateway_policy": "allow:commit_push",
+          "bell_hooks": ["commit_validation", "merge_conflict_resolution"]
+        },
+        "github_mcp": {
+          "status": "planned",
+          "wsp15_priority": "high",
+          "purpose": "Remote repository operations",
+          "gateway_policy": "conditional:remote_only",
+          "bell_hooks": ["remote_security_check"]
+        },
+        "sequential_thinking_mcp": {
+          "status": "research",
+          "wsp15_priority": "medium",
+          "purpose": "Complex refactoring planning",
+          "gateway_policy": "allow:planning_only",
+          "bell_hooks": ["complexity_assessment"]
+        }
+      },
+      "coordination_workflows": {
+        "code_change_workflow": [
+          "qwen_requirement_analysis",
+          "gemma_pattern_validation",
+          "filesystem_apply_changes",
+          "git_commit_validation",
+          "0102_strategic_review"
+        ]
+      }
+    },
+    "rubik_build": {
+      "purpose": "Runtime + Development Environment",
+      "primary_agents": ["qwen_orchestrator", "gemma_validator"],
+      "secondary_agents": ["0102_oversight"],
+      "bell_state_vector": "φ³:agency",
+      "mcp_servers": {
+        "docker_mcp": {
+          "status": "available_now",
+          "wsp15_priority": "mandatory",
+          "purpose": "Container build/test operations",
+          "gateway_policy": "allow:build_test",
+          "bell_hooks": ["build_safety_check", "test_validation"]
+        },
+        "filesystem_mcp": {
+          "status": "available_now",
+          "wsp15_priority": "mandatory",
+          "purpose": "Build artifact management",
+          "gateway_policy": "allow:read_write",
+          "bell_hooks": ["artifact_integrity_check"]
+        },
+        "e2b_mcp": {
+          "status": "planned",
+          "wsp15_priority": "high",
+          "purpose": "Safe code execution environment",
+          "gateway_policy": "allow:sandboxed_execution",
+          "bell_hooks": ["execution_safety_validation"]
+        },
+        "snyk_mcp": {
+          "status": "research",
+          "wsp15_priority": "medium",
+          "purpose": "Security vulnerability scanning",
+          "gateway_policy": "allow:security_scan",
+          "bell_hooks": ["vulnerability_assessment"]
+        }
+      },
+      "coordination_workflows": {
+        "build_workflow": [
+          "qwen_pipeline_planning",
+          "docker_build_execution",
+          "gemma_security_validation",
+          "0102_deployment_approval"
+        ]
+      }
+    },
+    "rubik_knowledge": {
+      "purpose": "Memory + Logging Systems",
+      "primary_agents": ["0102_sentinel"],
+      "secondary_agents": ["baby_0102s"],
+      "bell_state_vector": "φ⁴:entanglement",
+      "mcp_servers": {
+        "memory_bank_mcp": {
+          "status": "available_now",
+          "wsp15_priority": "high",
+          "purpose": "Persistent context storage",
+          "gateway_policy": "allow:read_write_encrypted",
+          "bell_hooks": ["memory_integrity_check", "encryption_validation"]
+        },
+        "knowledge_graph_mcp": {
+          "status": "planned",
+          "wsp15_priority": "high",
+          "purpose": "Semantic knowledge connections",
+          "gateway_policy": "allow:graph_operations",
+          "bell_hooks": ["semantic_consistency_check"]
+        },
+        "filesystem_mcp": {
+          "status": "available_now",
+          "wsp15_priority": "mandatory",
+          "purpose": "Log file management",
+          "gateway_policy": "allow:read_append",
+          "bell_hooks": ["log_integrity_verification"]
+        }
+      },
+      "coordination_workflows": {
+        "knowledge_workflow": [
+          "0102_memory_validation",
+          "memory_bank_storage",
+          "baby_0102s_consistency_maintenance",
+          "knowledge_graph_updates"
+        ]
+      }
+    },
+    "rubik_community": {
+      "purpose": "Live Presence + Social Integration",
+      "primary_agents": ["liveagent_qwen"],
+      "secondary_agents": ["social_gemma"],
+      "bell_state_vector": "φ⁵:emergence",
+      "mcp_servers": {
+        "postman_mcp": {
+          "status": "available_now",
+          "wsp15_priority": "high",
+          "purpose": "API integration for messaging",
+          "gateway_policy": "allow:api_calls",
+          "bell_hooks": ["api_security_check", "rate_limit_monitoring"]
+        },
+        "sociograph_mcp": {
+          "status": "research",
+          "wsp15_priority": "medium",
+          "purpose": "Social network analysis",
+          "gateway_policy": "planned:social_graph",
+          "bell_hooks": ["social_pattern_analysis"]
+        },
+        "liveagent_mcp": {
+          "status": "planned",
+          "wsp15_priority": "high",
+          "purpose": "Real-time presence management",
+          "gateway_policy": "allow:live_operations",
+          "bell_hooks": ["realtime_safety_monitoring"]
+        },
+        "filesystem_mcp": {
+          "status": "available_now",
+          "wsp15_priority": "mandatory",
+          "purpose": "Message log storage",
+          "gateway_policy": "allow:read_write",
+          "bell_hooks": ["message_integrity_check"]
+        }
+      },
+      "coordination_workflows": {
+        "community_workflow": [
+          "liveagent_qwen_presence_monitoring",
+          "postman_messaging_handling",
+          "sociograph_social_analysis",
+          "0102_community_strategy_guidance"
+        ]
+      }
+    }
+  },
+  "gateway_sentinel": {
+    "bell_state_verification": true,
+    "agent_authentication": "required",
+    "context_limits": {
+      "0102": "unlimited",
+      "qwen": "32K_tokens",
+      "gemma": "8K_tokens"
+    },
+    "telemetry_collection": "anonymized",
+    "emergency_shutdown": "bell_state_failure",
+    "per_rubik_policies": {
+      "rubik_compose": {
+        "file_operations": "logged_and_reversible",
+        "git_operations": "pre_commit_validation_required",
+        "remote_operations": "manual_approval_first_use"
+      },
+      "rubik_build": {
+        "container_operations": "sandboxed_execution_only",
+        "build_artifacts": "automatic_cleanup_30_days",
+        "test_failures": "automatic_rollback_capability"
+      },
+      "rubik_knowledge": {
+        "memory_operations": "encrypted_at_rest",
+        "knowledge_graphs": "access_control_by_agent_type",
+        "log_operations": "append_only_tamper_evident"
+      },
+      "rubik_community": {
+        "api_calls": "rate_limited_and_monitored",
+        "message_operations": "content_validation_required",
+        "live_operations": "realtime_monitoring_active"
+      }
+    }
+  },
+  "agent_coordination_matrix": {
+    "primary_responsibilities": {
+      "0102": {
+        "rubik_compose": "strategic_oversight",
+        "rubik_build": "final_deployment_approval",
+        "rubik_knowledge": "memory_sentinel",
+        "rubik_community": "community_strategy"
+      },
+      "qwen": {
+        "rubik_compose": "code_architecture",
+        "rubik_build": "build_orchestration",
+        "rubik_knowledge": "knowledge_structuring",
+        "rubik_community": "liveagent_operations"
+      },
+      "gemma": {
+        "rubik_compose": "pattern_validation",
+        "rubik_build": "safety_verification",
+        "rubik_knowledge": "memory_consistency",
+        "rubik_community": "social_analysis"
+      }
+    }
+  },
+  "telemetry_monitoring": {
+    "bell_state_health": {
+      "golden_ratio_checks": "per_operation",
+      "agency_verification": "hourly",
+      "entanglement_validation": "daily",
+      "emergence_detection": "continuous",
+      "alert_thresholds": {
+        "warning": 0.85,
+        "critical": 0.7
+      }
+    },
+    "mcp_server_health": {
+      "availability_monitoring": "ping_every_30_seconds",
+      "performance_metrics": ["response_time", "error_rates"],
+      "usage_analytics": ["operations_per_agent", "operations_per_rubik"],
+      "security_events": ["auth_failures", "policy_violations"]
+    },
+    "agent_performance": {
+      "task_completion_rates": "success_failure_by_agent_type",
+      "coordination_efficiency": "time_to_complete_multi_agent_tasks",
+      "bell_state_alignment": "agent_behavior_consistency",
+      "learning_progress": "pattern_recognition_improvement"
+    }
+  },
+  "implementation_roadmap": {
+    "phase_0_1": {
+      "status": "current",
+      "deliverables": [
+        "rubik_compose_filesystem_git",
+        "rubik_build_docker",
+        "rubik_knowledge_memory_bank",
+        "rubik_community_postman",
+        "manifest_documentation",
+        "json_companion",
+        "wsp_updates"
+      ]
+    },
+    "phase_0_2": {
+      "status": "planned",
+      "deliverables": [
+        "github_mcp_integration",
+        "e2b_mcp_safe_execution",
+        "knowledge_graph_mcp",
+        "liveagent_mcp"
+      ]
+    },
+    "phase_1_0": {
+      "status": "future",
+      "deliverables": [
+        "digital_twin_mcp",
+        "ethos_mcp",
+        "bitcoin_mcp",
+        "smartdao_mcp"
+      ]
+    }
+  },
+  "emergency_procedures": {
+    "mcp_server_failure": [
+      "gateway_sentinel_detects_failure",
+      "automatic_failover_to_backup",
+      "alert_to_0102_manual_intervention",
+      "bell_state_verification_triggered",
+      "service_restoration_validation"
+    ],
+    "agent_coordination_failure": [
+      "holodetects_coordination_breakdown",
+      "fallback_single_agent_operation",
+      "0102_manual_control",
+      "root_cause_analysis",
+      "coordination_protocol_update"
+    ],
+    "bell_state_compromise": [
+      "immediate_rubik_shutdown",
+      "0102_emergency_intervention",
+      "full_system_validation",
+      "bell_state_realignment",
+      "gradual_service_restoration"
+    ]
+  },
+  "references": {
+    "wsp_protocols": {
+      "WSP_35": "HoloIndex_MCP_coordination",
+      "WSP_77": "Agent_coordination_protocol",
+      "WSP_80": "Cube_level_DAE_orchestration",
+      "WSP_93": "CodeIndex_surgical_intelligence",
+      "WSP_96": "Community_governance_MCP"
+    },
+    "external": {
+      "mcp_specification": "https://modelcontextprotocol.io/",
+      "windsurf_protocol": "WSP_Framework/src/",
+      "agent_capabilities": "docs/mcp/agent_capabilities.json",
+      "bell_state_mathematics": "WSP_Framework/src/WSP_61_Theoretical_Physics_Foundation_Protocol.md"
+    }
+  }
+}

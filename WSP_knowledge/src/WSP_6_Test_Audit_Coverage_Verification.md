@@ -36,7 +36,7 @@ The rigor of this audit should be scaled based on a module's LLME score, with fo
 
 ### E. Step 4: Per-Module Coverage Verification
 -   **Action**: Loop through each module and verify its test coverage meets the project standard.
--   **Standard**: **≥90% test coverage** is required for all modules. Higher thresholds (e.g., 95% or 100%) may be mandated for foundational (`C=2`) modules.
+-   **Standard**: **[U+2265]90% test coverage** is required for all modules. Higher thresholds (e.g., 95% or 100%) may be mandated for foundational (`C=2`) modules.
 -   **Command**: `pytest <module_path>/tests/ --cov=<module_import_path>.src --cov-fail-under=90`
 -   **Goal**: Every module must meet or exceed the 90% threshold.
 
@@ -84,18 +84,18 @@ assert response == "Exact expected text"
 
 # Use pattern/structure matching:
 assert isinstance(response, str) and len(response) > 0
-assert "✊✋🖐️" in response  # Contains expected emoji sequence
+assert "[U+270A][U+270B][U+1F590][U+FE0F]" in response  # Contains expected emoji sequence
 assert response.startswith(("Nice", "That's", "I see"))  # Pattern matching
 ```
 
 ## 3. Acceptance Criteria (Audit PASS)
 
 An audit is considered passed only when all of the following criteria are met:
--   ✅ **FMAS**: Zero `NO_TEST` or `STRUCTURE_ERROR` warnings.
--   ✅ **Pytest Run**: Zero `F`/`E` results and all warnings are addressed.
--   ✅ **Interface Tests**: Zero failures in contract tests.
--   ✅ **Coverage**: Every module meets or exceeds the **90% coverage** standard.
--   ✅ **Behavioral Sync**: All test expectations synchronized with current module behavior.
+-   [U+2705] **FMAS**: Zero `NO_TEST` or `STRUCTURE_ERROR` warnings.
+-   [U+2705] **Pytest Run**: Zero `F`/`E` results and all warnings are addressed.
+-   [U+2705] **Interface Tests**: Zero failures in contract tests.
+-   [U+2705] **Coverage**: Every module meets or exceeds the **90% coverage** standard.
+-   [U+2705] **Behavioral Sync**: All test expectations synchronized with current module behavior.
 
 ## 4. Production Override Provision
 

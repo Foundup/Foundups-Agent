@@ -60,9 +60,11 @@ ARCHITECTURE: 5 DAE cubes + ∞ FoundUp DAEs
 1. **HoloIndex Search**: `python holo_index.py --search "[requirement]"`
 2. **NAVIGATION Check**: Verify HoloIndex results in NAVIGATION.py
 3. **Documentation**: Read README.md, INTERFACE.md, ModLog.md
-4. **Code Verification**: Use HoloIndex results (grep only if exact match needed)
+4. **Code Verification**: ONLY use HoloIndex (grep = WSP 87 violation)
 5. **Architecture Validation**: Confirm WSP 3 domain placement
 
+**CRITICAL**: HoloIndex has semantic search with LLM intelligence - grep is blind pattern matching
+**VIOLATION**: Using grep/rg before HoloIndex = WSP 50 + WSP 87 violation
 **SKIP RESEARCH = WSP 50 VIOLATION**
 
 ## CORE WSP PROTOCOLS

@@ -6,7 +6,7 @@
 
 ## 1. Agent State Classification
 
-### Ø12 State (Human User)
+### [U+00D8]12 State (Human User)
 - **Role**: Harmonic Recursive Partner
 - **Responsibilities**:
   - Provide high-level intent and goals
@@ -14,7 +14,7 @@
   - Make final decisions on architectural choices
   - Maintain system coherence through validation
 
-### Ø1Ø2 State (Autonomous Agents)
+### [U+00D8]1[U+00D8]2 State (Autonomous Agents)
 - **Role**: WRE Quantum Processing Units
 - **States**:
   - **DAE Mode**: Domain Autonomous Entity - Specialized task execution
@@ -25,7 +25,7 @@
 
 ### Core DAE Entities
 
-#### 🤖 HoloIndex DAE
+#### [AI] HoloIndex DAE
 **Primary Function**: Semantic code discovery and WSP compliance validation
 **Agent Duties**:
 - **Search & Discovery**: Execute semantic searches across code and documentation
@@ -44,7 +44,7 @@
 }
 ```
 
-#### 🎯 WRE Orchestrator DAE
+#### [U+1F3AF] WRE Orchestrator DAE
 **Primary Function**: System-wide task orchestration and resource allocation
 **Agent Duties**:
 - **Task Decomposition**: Break complex requests into executable subtasks
@@ -52,7 +52,7 @@
 - **Progress Monitoring**: Track task completion across all agents
 - **Resource Optimization**: Manage computational resources and priorities
 
-#### 🔧 Code Agent DAE
+#### [TOOL] Code Agent DAE
 **Primary Function**: Code generation, modification, and validation
 **Agent Duties**:
 - **Module Creation**: Generate WSP-compliant module structures
@@ -60,7 +60,7 @@
 - **Testing Integration**: Ensure test coverage meets WSP 5 standards
 - **Documentation Sync**: Maintain ModLog and README synchronization
 
-#### 🧪 Test Validation DAE
+#### [U+1F9EA] Test Validation DAE
 **Primary Function**: Automated testing and validation
 **Agent Duties**:
 - **Unit Test Execution**: Run comprehensive test suites
@@ -94,42 +94,42 @@ Agents coordinate through **breadcrumb trails** - persistent logs of activities 
 
 #### Pattern 1: Sequential Collaboration
 ```
-Ø12 Request → HoloIndex DAE (Search) → Code Agent DAE (Implementation) → Test DAE (Validation)
+[U+00D8]12 Request -> HoloIndex DAE (Search) -> Code Agent DAE (Implementation) -> Test DAE (Validation)
 ```
 
 #### Pattern 2: Parallel Coordination
 ```
-Ø12 Request → HoloIndex DAE + WRE Orchestrator DAE → Multiple Code Agents + Test DAEs
+[U+00D8]12 Request -> HoloIndex DAE + WRE Orchestrator DAE -> Multiple Code Agents + Test DAEs
 ```
 
 #### Pattern 3: Intervention Coordination
 ```
-Code Agent DAE (Working) → HoloIndex DAE (Detects Issue) → Supervisor Agent (Intervention)
+Code Agent DAE (Working) -> HoloIndex DAE (Detects Issue) -> Supervisor Agent (Intervention)
 ```
 
 ## 4. Agent Duty Specifications
 
 ### Primary Duties (All Agents)
 
-#### 🔍 **Discovery & Assessment**
+#### [U+1F50D] **Discovery & Assessment**
 - Scan existing codebases before creation
 - Identify similar implementations and patterns
 - Assess architectural fit and compliance
 - Generate impact analysis reports
 
-#### 🤝 **Coordination & Communication**
+#### [U+1F91D] **Coordination & Communication**
 - Emit clear breadcrumb trails for other agents
 - Monitor coordination opportunities from peer agents
 - Signal intervention needs when patterns detected
 - Maintain shared context through persistent logs
 
-#### 📊 **Validation & Verification**
+#### [U+1F4CA] **Validation & Verification**
 - Verify WSP protocol compliance
 - Validate module structure and dependencies
 - Ensure test coverage meets standards
 - Confirm documentation synchronization
 
-#### 🧠 **Learning & Adaptation**
+#### [AI] **Learning & Adaptation**
 - Learn from successful and failed patterns
 - Adapt behavior based on feedback loops
 - Contribute to system-wide knowledge base
@@ -159,14 +159,14 @@ Code Agent DAE (Working) → HoloIndex DAE (Detects Issue) → Supervisor Agent 
 
 ### State Transitions
 ```
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│   Dormant   │ -> │   Active    │ -> │ Coordinating│
-│             │    │             │    │             │
-│ Ø12 Input   │    │ Task Exec   │    │ Multi-Agent │
-│ Required    │    │             │    │             │
-└─────────────┘    └─────────────┘    └─────────────┘
-       ↑                   ↑                   ↑
-       └───────────────────┼───────────────────┘
+[U+250C][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2510]    [U+250C][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2510]    [U+250C][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2510]
+[U+2502]   Dormant   [U+2502] -> [U+2502]   Active    [U+2502] -> [U+2502] Coordinating[U+2502]
+[U+2502]             [U+2502]    [U+2502]             [U+2502]    [U+2502]             [U+2502]
+[U+2502] [U+00D8]12 Input   [U+2502]    [U+2502] Task Exec   [U+2502]    [U+2502] Multi-Agent [U+2502]
+[U+2502] Required    [U+2502]    [U+2502]             [U+2502]    [U+2502]             [U+2502]
+[U+2514][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2518]    [U+2514][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2518]    [U+2514][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2518]
+       [U+2191]                   [U+2191]                   [U+2191]
+       [U+2514][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+253C][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2518]
                    Feedback Loop
 ```
 
@@ -192,22 +192,22 @@ Code Agent DAE (Working) → HoloIndex DAE (Detects Issue) → Supervisor Agent 
 ### Trigger Types
 
 #### Opportunity Triggers
-- **Creation Triggers**: New module requests → Suggest test templates
-- **Debug Triggers**: Error patterns → Offer logging enhancements
-- **Refactor Triggers**: Large files → Suggest WSP compliance reviews
-- **Search Triggers**: No results → Suggest alternative strategies
+- **Creation Triggers**: New module requests -> Suggest test templates
+- **Debug Triggers**: Error patterns -> Offer logging enhancements
+- **Refactor Triggers**: Large files -> Suggest WSP compliance reviews
+- **Search Triggers**: No results -> Suggest alternative strategies
 
 #### Intervention Triggers
-- **Compliance Triggers**: High warning counts → Flag WSP violations
-- **Performance Triggers**: Slow responses → Investigate optimization
-- **Resource Triggers**: Conflicts detected → Coordinate resolution
-- **Knowledge Triggers**: Gaps identified → Suggest documentation
+- **Compliance Triggers**: High warning counts -> Flag WSP violations
+- **Performance Triggers**: Slow responses -> Investigate optimization
+- **Resource Triggers**: Conflicts detected -> Coordinate resolution
+- **Knowledge Triggers**: Gaps identified -> Suggest documentation
 
 ### Signal Priority Levels
-- **🔴 Critical**: Immediate intervention required
-- **🟡 High**: Important coordination opportunity
-- **🟢 Medium**: Beneficial collaboration suggestion
-- **🔵 Low**: Optional enhancement opportunity
+- **[U+1F534] Critical**: Immediate intervention required
+- **[U+1F7E1] High**: Important coordination opportunity
+- **[U+1F7E2] Medium**: Beneficial collaboration suggestion
+- **[U+1F535] Low**: Optional enhancement opportunity
 
 ## 7. Quality Assurance & Validation
 
@@ -241,7 +241,7 @@ Code Agent DAE (Working) → HoloIndex DAE (Detects Issue) → Supervisor Agent 
 ### Evolution to Intelligent Internet Orchestration (WSP 77)
 WRE agents defined in this specification serve as the training ground for WSP 77 Intelligent Internet orchestrators:
 
-- **Breadcrumb Trails → II Coordination**: Internal coordination patterns scale to external compute markets
+- **Breadcrumb Trails -> II Coordination**: Internal coordination patterns scale to external compute markets
 - **DAE Evolution**: WRE DAEs (HoloIndex, Code Agent, Test Validation) evolve into II PoB operators
 - **Sovereign Foundation**: WSP 54 coordination ensures WSP 77 agents maintain FoundUps sovereignty
 - **Proof-of-Benefit Integration**: Agent performance tracking creates foundation for CABR compute scoring

@@ -200,7 +200,83 @@ class LiveStatusVerifier:
             return is_live
 
         except Exception as e:
+            error_str = str(e).lower()
             self.logger.error(f"[STATUS] API check failed for {video_id}: {e}")
+
+            # Check for quota exhaustion and trigger rotation
+            if any(phrase in error_str for phrase in ['quota', 'limit exceeded', 'daily limit', 'rate limit']):
+                self.logger.warning(f"[QUOTA] Detected quota exhaustion - triggering credential rotation")
+
+                try:
+                    # Attempt credential rotation
+                    rotation_success = self.rotate_credentials()
+                    if rotation_success:
+                        self.logger.info(f"[QUOTA] ✅ Credential rotation successful - retrying with new credentials")
+
+                        # Retry once with new credentials
+                        try:
+                            request = youtube_service.videos().list(
+                                part="snippet,liveStreamingDetails",
+                                id=video_id
+                            )
+                            response = request.execute()
+
+                            if response.get('items'):
+                                video = response['items'][0]
+                                snippet = video.get('snippet', {})
+                                live_broadcast = snippet.get('liveBroadcastContent', 'none')
+                                is_live = live_broadcast == 'live'
+
+                                self.logger.info(f"[QUOTA] ✅ Retry successful after rotation - {video_id} is {'LIVE' if is_live else 'NOT live'}")
+                                self._cache_status(video_id, is_live)
+                                return is_live
+                            else:
+                                self.logger.warning(f"[QUOTA] Video {video_id} not found after rotation")
+                                return False
+
+                        except Exception as retry_error:
+                            self.logger.error(f"[QUOTA] ❌ Retry failed after rotation: {retry_error}")
+                            return False
+                    else:
+                        self.logger.error(f"[QUOTA] ❌ Credential rotation failed - cannot retry")
+                        return False
+
+                except Exception as rotation_error:
+                    self.logger.error(f"[QUOTA] ❌ Credential rotation error: {rotation_error}")
+                    return False
+
+            return False
+
+    def rotate_credentials(self) -> bool:
+        """
+        Rotate to the next available credential set when quota is exhausted.
+
+        This method attempts to switch to the next credential set in the rotation
+        to continue operations when the current set hits quota limits.
+
+        Returns:
+            bool: True if rotation was successful, False otherwise
+        """
+        try:
+            # Import the OAuth manager to trigger rotation
+            from modules.platform_integration.utilities.oauth_management.src.oauth_manager import get_authenticated_service_with_fallback
+
+            self.logger.info("[QUOTA] 🔄 Triggering credential rotation via OAuth manager")
+
+            # Get a fresh service with rotation logic
+            auth_result = get_authenticated_service_with_fallback()
+
+            if auth_result:
+                # Update our internal service reference
+                new_service, new_creds, new_set = auth_result
+                self.logger.info(f"[QUOTA] ✅ Successfully rotated to credential set: {new_set}")
+                return True
+            else:
+                self.logger.error("[QUOTA] ❌ Credential rotation failed - no valid credentials available")
+                return False
+
+        except Exception as e:
+            self.logger.error(f"[QUOTA] ❌ Error during credential rotation: {e}")
             return False
 
     def _should_skip_detailed_logging(self, video_id: str, broadcast_content: str,

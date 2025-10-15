@@ -78,6 +78,9 @@ def safe_print(text: str, **kwargs) -> None:
         '📝': '[MEMO]',
         '🌀': '[SPIRAL]',
         '❄️': '[SNOW]',
+        '🍣': '[SUSHI]',
+        '🧘': '[MEDITATE]',
+        '🐕': '[DOG]',
         '🔥': '[FIRE]',
         '💎': '[GEM]',
         '🎨': '[ART]',
@@ -202,6 +205,7 @@ def get_wsp_paths():
             Path("../WSP_framework/docs"),
             Path("../WSP_knowledge/docs"),
             Path("../WSP_framework/docs/testing"),
+            Path("../docs"),  # Root docs: architecture, vision, first principles
             Path("docs"),  # HoloIndex docs relative to holo_index
             Path("../modules"),  # All module documentation
         ]
@@ -212,6 +216,7 @@ def get_wsp_paths():
             Path("WSP_framework/docs"),
             Path("WSP_knowledge/docs"),
             Path("WSP_framework/docs/testing"),
+            Path("docs"),  # Root docs: architecture, vision, first principles
             Path("holo_index/docs"),  # HoloIndex documentation
             Path("modules"),  # All module documentation
         ]

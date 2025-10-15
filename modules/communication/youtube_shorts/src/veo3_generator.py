@@ -114,34 +114,41 @@ class Veo3Generator:
     def generate_video(
         self,
         prompt: str,
-        duration: int = 30,
-        fast_mode: bool = True
+        duration: int = 8,
+        fast_mode: bool = True,
+        progress_callback: Optional[callable] = None
     ) -> str:
         """
         Generate video from text prompt using Veo 3.
 
+        NOTE: VEO3 API generates ~8 second clips by default.
+        The duration parameter is accepted for cost calculation but not sent to API.
+        Actual video length will be ~8 seconds regardless of requested duration.
+
         Args:
             prompt: Text description of video to generate
-            duration: Video length in seconds (15-60)
+            duration: Requested duration for cost calculation (API ignores, generates ~8s)
             fast_mode: Use Veo 3 Fast (cheaper, faster) vs standard
 
         Returns:
-            str: Path to generated .mp4 file
+            str: Path to generated .mp4 file (~8 seconds actual length)
 
         Raises:
             Veo3GenerationError: If generation fails
             InsufficientCreditsError: If quota exceeded
         """
 
-        # Validate duration
-        if not 15 <= duration <= 60:
-            raise ValueError(f"Duration must be 15-60 seconds, got {duration}")
+        # Note: Duration validation kept for cost calculation
+        # Actual API generates ~8s clips regardless
+        if not 5 <= duration <= 60:
+            duration = 8  # Use default if out of range
 
-        # Calculate cost
-        estimated_cost = duration * self.cost_per_second
+        # Calculate cost (VEO3 generates ~8s clips)
+        actual_duration = 8  # API generates ~8s regardless of request
+        estimated_cost = actual_duration * self.cost_per_second
         logger.info("🎬 [VEO3-GEN] Starting video generation")
         logger.info(f"📝 [VEO3-GEN] Prompt: {prompt[:60]}...")
-        logger.info(f"⏱️  [VEO3-GEN] Duration: {duration}s")
+        logger.info(f"⏱️  [VEO3-GEN] Expected output: ~{actual_duration}s (API default)")
         logger.info(f"💰 [VEO3-GEN] Estimated cost: ${estimated_cost:.2f}")
 
         try:
@@ -156,26 +163,58 @@ class Veo3Generator:
             logger.info(f"⚡ [VEO3-API] Fast mode: {fast_mode}")
             logger.info(f"📐 [VEO3-API] Aspect ratio: 9:16 (vertical Shorts format)")
 
+            # Note: VEO3 API generates ~8 second clips by default
+            # Duration parameter is not supported in config (validation error)
+            # We request what we can and work with what we get
             operation = self.client.models.generate_videos(
                 model=model_name,
                 prompt=prompt,
                 config={
-                    'duration': f'{duration}s',
                     'aspectRatio': '9:16'  # Vertical format for Shorts
                 }
             )
 
+            # Fun cinematic progress messages
+            import random
+            cinematic_messages = [
+                "🎬 Hiring director... (this is expensive!)",
+                "📞 Calling casting agent...",
+                "💰 Negotiating with producers... *cough* SuperChat *cough*",
+                "🎭 Actors in makeup...",
+                "🎥 Setting up cameras...",
+                "💡 Adjusting lighting... perfection takes time!",
+                "🎬 Rolling cameras... ACTION!",
+                "🎞️ Capturing that perfect shot...",
+                "✨ Adding movie magic...",
+                "🎨 Post-production wizardry in progress...",
+                "🌟 Rendering cinematic masterpiece...",
+                "🎵 Composing epic soundtrack... (just kidding, no audio yet)",
+                "🎬 Director yelling 'CUT!' ...oh wait, keep rolling!"
+            ]
+
             # Poll for completion
             logger.info("🎥 [VEO3-PROGRESS] Video generation in progress...")
+            if progress_callback:
+                progress_callback("🎬 Lights, camera, ACTION! Making your video...")
+
             poll_count = 0
             while not operation.done:
                 time.sleep(10)
                 poll_count += 1
                 logger.info(f"⏳ [VEO3-PROGRESS] Still generating... ({poll_count * 10}s elapsed)")
+
+                # Send fun message to chat every 20 seconds
+                if progress_callback and poll_count % 2 == 0:
+                    msg = random.choice(cinematic_messages)
+                    progress_callback(msg)
+
                 operation = self.client.operations.get(operation)
 
             # Download generated video
             logger.info("📥 [VEO3-DOWNLOAD] Retrieving generated video...")
+            if progress_callback:
+                progress_callback("🎬 That's a WRAP! Downloading your masterpiece...")
+
             generated_video = operation.response.generated_videos[0]
 
             # Download to file
@@ -187,6 +226,9 @@ class Veo3Generator:
             self.client.files.download(file=generated_video.video)
             generated_video.video.save(str(video_path))
             logger.info("✅ [VEO3-DOWNLOAD] Video file saved successfully")
+
+            if progress_callback:
+                progress_callback("✅ Video complete! Preparing for upload...")
 
             # Save metadata
             metadata = {
@@ -397,7 +439,7 @@ Return ONLY the video prompt, no explanation.
 
             clip1 = self.generate_video(
                 prompt=clip1_prompt,
-                duration=15,  # Gets ~8s
+                duration=8,  # API generates ~8s clips
                 fast_mode=fast_mode
             )
             clips.append(clip1)
@@ -409,7 +451,7 @@ Return ONLY the video prompt, no explanation.
 
             clip2 = self.generate_video(
                 prompt=story['act3'],
-                duration=15,  # Gets ~8s
+                duration=8,  # API generates ~8s clips
                 fast_mode=fast_mode
             )
             clips.append(clip2)

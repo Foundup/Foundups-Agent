@@ -789,7 +789,15 @@ class AntiDetectionX:
                             text_area.send_keys(Keys.CONTROL, 'v')  # Ctrl+V for paste
                             time.sleep(0.5)  # Brief pause after paste
 
-                            print("[OK] Content pasted successfully via clipboard")
+                            # CRITICAL FIX: Trigger input event so X recognizes the text
+                            # Without this, the Post button stays greyed out
+                            self.driver.execute_script("""
+                                var event = new Event('input', { bubbles: true });
+                                arguments[0].dispatchEvent(event);
+                            """, text_area)
+                            time.sleep(0.3)  # Brief pause for event to process
+
+                            print("[OK] Content pasted successfully via clipboard + input event triggered")
 
                         except Exception as paste_e:
                             print(f"[WARNING] Clipboard paste failed: {paste_e}, falling back to JavaScript")

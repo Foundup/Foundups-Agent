@@ -12,6 +12,31 @@ This log tracks changes specific to the **youtube_auth** module in the **platfor
 
 ## MODLOG ENTRIES
 
+### [2025-10-15] WSP 85 Root Directory Violation Fixed
+**Date**: 2025-10-15
+**WSP Protocol**: WSP 85 (Root Directory Protection), WSP 84 (Code Memory)
+**Phase**: Compliance Fix
+**Agent**: 0102 Claude
+
+#### Problem
+- `authorize_set10_nonemoji.py` found in root directory (WSP 85 violation)
+- Script belongs in `modules/platform_integration/youtube_auth/scripts/`
+
+#### Solution
+- Moved `authorize_set10_nonemoji.py` from root → `scripts/`
+- File now properly located with other authorization scripts
+- No code changes needed - script works from new location
+
+#### Files Changed
+- Moved: `authorize_set10_nonemoji.py` → `modules/platform_integration/youtube_auth/scripts/authorize_set10_nonemoji.py`
+
+#### Impact
+- ✅ WSP 85 compliant - Root directory protected
+- ✅ Proper module organization per WSP 3
+- ✅ Script co-located with related authorization tools
+
+---
+
 ### FEATURE: Intelligent Credential Rotation Orchestration System
 **Date**: 2025-10-06
 **WSP Protocol**: WSP 50 (Pre-Action Verification), WSP 87 (Intelligent Orchestration), First Principles

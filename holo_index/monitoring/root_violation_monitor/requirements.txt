@@ -1,0 +1,17 @@
+# Root Violation Monitor Dependencies
+# WSP 12 Compliant - Minimal, version-pinned dependencies
+
+# Core Python Libraries (Standard Library - No External Dependencies Required)
+# All functionality uses built-in Python libraries for maximum compatibility
+
+# Optional: For enhanced performance (uncomment if needed)
+# numpy>=1.21.0        # Advanced numerical operations (if ML features added)
+# scikit-learn>=1.0.0  # Machine learning capabilities (future enhancement)
+
+# Development Dependencies (for testing only)
+# pytest>=7.0.0         # Testing framework
+# pytest-asyncio>=0.21.0 # Async testing support
+
+# Note: This module is designed with zero external dependencies to ensure
+# maximum compatibility and minimal maintenance overhead. All core functionality
+# uses Python 3.9+ standard library features.

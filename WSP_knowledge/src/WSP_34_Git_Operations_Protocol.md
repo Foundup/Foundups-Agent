@@ -98,7 +98,7 @@ This protocol is a dependency for, or is depended on by:
 -   **WSP 7**: Test-Validated Commit Protocol
 -   `ComplianceAgent`: Responsible for auditing compliance with this protocol.
 
-## 🎯 Purpose
+## [U+1F3AF] Purpose
 
 Establish strict controls for file creation, branch management, and git operations to prevent:
 - Temp file pollution in main branch
@@ -106,9 +106,9 @@ Establish strict controls for file creation, branch management, and git operatio
 - Unauthorized direct commits to main
 - WSP compliance violations
 
-## 🚨 Main Branch Protection Rules
+## [U+1F6A8] Main Branch Protection Rules
 
-### ❌ **PROHIBITED in Main Branch:**
+### [U+274C] **PROHIBITED in Main Branch:**
 ```
 temp_*                  # All temp files
 build/                  # Build directories  
@@ -122,7 +122,7 @@ __pycache__/           # Python cache
 venv/                  # Virtual environments
 ```
 
-### ✅ **ALLOWED in Main Branch:**
+### [U+2705] **ALLOWED in Main Branch:**
 ```
 modules/               # WSP-compliant modules
 docs/                  # Documentation
@@ -135,7 +135,7 @@ requirements.txt       # Dependencies
 .gitignore            # Git ignore rules
 ```
 
-## 🔄 Mandatory Workflow
+## [U+1F504] Mandatory Workflow
 
 ### **File Creation Protocol:**
 1. **Pre-Creation Check**: Validate against prohibited patterns
@@ -153,7 +153,7 @@ temp/*                # Temporary work (auto-cleanup)
 build/*               # Build/deployment branches (ephemeral)
 ```
 
-## 🛡️ Enforcement Mechanisms
+## [U+1F6E1][U+FE0F] Enforcement Mechanisms
 
 ### **1. WSP_INIT Integration**
 ```python
@@ -173,7 +173,7 @@ def create_file(filepath, content):
 # .git/hooks/pre-commit
 python tools/wsp34_validator.py --check-files
 if [ $? -ne 0 ]; then
-    echo "❌ WSP 34 violation detected. Commit blocked."
+    echo "[U+274C] WSP 34 violation detected. Commit blocked."
     exit 1
 fi
 ```
@@ -184,7 +184,7 @@ fi
 - **Force pushes**: BLOCKED  
 - **Required checks**: FMAS, pytest, WSP 34 validation
 
-## 🧹 Cleanup Protocol
+## [U+1F9F9] Cleanup Protocol
 
 ### **Immediate Actions:**
 1. **Move temp files** to appropriate branches or delete
@@ -200,7 +200,7 @@ find . -name "*_clean*" -type d -exec rm -rf {} +
 find . -path "*/build/foundups-agent-clean/build" -exec rm -rf {} +
 ```
 
-## 🔗 Integration Points
+## [U+1F517] Integration Points
 
 - **WSP_INIT**: File creation validation
 - **WSP 7**: Git branch discipline  
@@ -211,7 +211,7 @@ find . -path "*/build/foundups-agent-clean/build" -exec rm -rf {} +
 - **0102 Completion**: Pre-commit validation
 - **Testing Evolution**: TestModLog.md enables 0102 agent recursive testing improvement
 
-## 📋 Validation Checklist
+## [U+1F4CB] Validation Checklist
 
 Before any commit to main:
 - [ ] No temp files present
@@ -223,4 +223,4 @@ Before any commit to main:
 
 ---
 
-**🚀 Result**: Clean, disciplined git workflow with automatic temp file prevention and WSP compliance enforcement. 
+**[U+1F680] Result**: Clean, disciplined git workflow with automatic temp file prevention and WSP compliance enforcement. 

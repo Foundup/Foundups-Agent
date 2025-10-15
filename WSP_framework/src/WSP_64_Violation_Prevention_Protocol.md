@@ -315,6 +315,235 @@ IF unclear:
 
 ---
 
-**Last Updated**: 2025-01-29  
-**WSP Compliance**: WSP 50 (Pre-Action Verification), WSP 57 (Naming Coherence), WSP 60 (Memory Architecture), WSP 54 (Agent Coordination)  
-**Integration Status**: Ready for immediate implementation with **Cursor Rules Integration** and **Automated Prevention System** 
+## 🤖 Sentinel Augmentation Analysis
+
+**SAI Score**: `222` (Speed: 2, Automation: 2, Intelligence: 2)
+
+**Priority**: **P0 - CRITICAL** (Maximum Sentinel value)
+
+### Sentinel Use Case
+
+Gemma 3 270M Sentinel monitors all file creation/modification operations in real-time, detecting WSP violations BEFORE they occur. The Sentinel acts as a **pre-commit guard** that understands WSP domain rules, module structure requirements, and naming conventions, blocking violations with instant feedback (<50ms latency vs current manual review).
+
+### Expected Benefits
+
+- **Latency Reduction**: Manual WSP review (2-5 minutes) → Real-time blocking (<50ms)
+- **Automation Level**: **Autonomous** (blocks violations automatically, logs for 012 review)
+- **Resource Savings**:
+  - 95% reduction in WSP violation cleanup time
+  - Zero post-commit violations requiring git history rewrites
+  - Eliminates documentation debt from misplaced files
+- **Accuracy Target**: >98% (critical path - false positives are acceptable, false negatives are not)
+
+### Implementation Strategy
+
+**Training Data Sources**:
+1. **WSP_MODULE_VIOLATIONS.md** - All historical violations with correct resolutions
+2. **Git commit history** - Successful file placements (positive examples)
+3. **Module structure** - All 93 WSPs' requirements and rules
+4. **Domain mapping** - WSP 3 enterprise domain → function mapping
+5. **HoloIndex logs** - Qwen's WSP compliance decisions
+
+**Integration Points**:
+
+```python
+# modules/infrastructure/gemma_sentinels/wsp_violation_sentinel.py
+
+class WSPViolationSentinel:
+    """
+    Real-time WSP compliance enforcement
+    Runs on every file operation before execution
+    """
+
+    def __init__(self):
+        self.model = tf.lite.Interpreter('wsp_64_classifier.tflite')
+        self.wsp_rules = self.load_wsp_knowledge()
+
+    def check_file_operation(self, operation: FileOp) -> Decision:
+        """
+        Check file operation against all WSP rules
+
+        Returns:
+            Decision(
+                allowed=True/False,
+                confidence=0.98,
+                violations=["WSP 3: Wrong domain", "WSP 49: Missing README"],
+                suggestion="Move to modules/ai_intelligence/priority_scorer/"
+            )
+        """
+        # Extract features
+        features = {
+            'path': operation.path,
+            'filename': operation.filename,
+            'operation': operation.type,  # CREATE, MODIFY, DELETE
+            'content_preview': operation.content[:500]
+        }
+
+        # Run inference
+        result = self.model.predict(features)
+
+        # High confidence block
+        if result.violation_prob > 0.95:
+            return Decision(allowed=False, confidence=result.confidence,
+                          violations=result.violations,
+                          suggestion=result.corrective_action)
+
+        # Medium confidence warn
+        elif result.violation_prob > 0.70:
+            return Decision(allowed=True, confidence=result.confidence,
+                          warnings=result.potential_violations,
+                          suggestion="Review WSP compliance")
+
+        # Low probability - allow
+        else:
+            return Decision(allowed=True, confidence=result.confidence)
+
+# Pre-commit hook integration
+# .git/hooks/pre-commit
+sentinel = WSPViolationSentinel()
+for file_op in staged_files:
+    decision = sentinel.check_file_operation(file_op)
+    if not decision.allowed:
+        print(f"❌ WSP VIOLATION BLOCKED: {decision.violations}")
+        print(f"💡 Suggestion: {decision.suggestion}")
+        sys.exit(1)
+```
+
+**CLI Integration**:
+```bash
+# Check file before creation
+python modules/infrastructure/gemma_sentinels/check_wsp.py create modules/new_module.py
+
+# Validate entire changeset
+git diff --cached | python modules/infrastructure/gemma_sentinels/check_wsp.py --stdin
+
+# Install pre-commit hook
+python modules/infrastructure/gemma_sentinels/install_hook.py
+```
+
+### Inference Pattern
+
+```python
+# Real-time blocking flow
+def create_file(path: str, content: str):
+    # 1. Sentinel pre-check (<50ms)
+    decision = wsp_sentinel.check_file_operation(
+        FileOp(type='CREATE', path=path, content=content)
+    )
+
+    # 2. Block if violation detected
+    if not decision.allowed:
+        raise WSPViolationError(
+            violations=decision.violations,
+            suggestion=decision.suggestion,
+            confidence=decision.confidence
+        )
+
+    # 3. Warn if uncertain
+    if decision.warnings:
+        logger.warning(f"Potential WSP issues: {decision.warnings}")
+
+    # 4. Proceed with creation
+    write_file(path, content)
+
+    # 5. Log decision for learning
+    wsp_sentinel.log_decision(decision, outcome='allowed')
+```
+
+### Training Data Schema
+
+```json
+{
+    "positive_examples": [
+        {
+            "operation": "CREATE",
+            "path": "modules/ai_intelligence/priority_scorer/src/scorer.py",
+            "domain": "ai_intelligence",
+            "function": "scoring logic",
+            "wsp_compliant": true,
+            "violated_wsps": [],
+            "rationale": "AI logic in ai_intelligence domain per WSP 3"
+        }
+    ],
+    "negative_examples": [
+        {
+            "operation": "CREATE",
+            "path": "priority_scorer.py",  # Wrong: root directory
+            "domain": null,
+            "function": "scoring logic",
+            "wsp_compliant": false,
+            "violated_wsps": ["WSP 85: Root directory protection", "WSP 3: Missing domain"],
+            "correct_path": "modules/ai_intelligence/priority_scorer/src/scorer.py",
+            "rationale": "Scoring logic belongs in ai_intelligence domain, not root"
+        }
+    ]
+}
+```
+
+### Risk Assessment
+
+**Risks**:
+1. **False Positives**: Blocking valid operations
+   - Mitigation: High confidence threshold (>95%) for blocks, warnings for 70-95%
+   - Fallback: Override flag `--force-wsp-skip` with 012 approval log
+
+2. **Model Drift**: WSPs evolve, model becomes outdated
+   - Mitigation: Continuous retraining on new violations
+   - Monitor: Track false positive/negative rates weekly
+
+3. **Edge Cases**: Novel file types or operations
+   - Mitigation: Low-confidence decisions escalate to human
+   - Learning: All human decisions become new training data
+
+**Fallback Strategy**:
+```python
+# Confidence-based escalation
+if decision.confidence < 0.85:
+    # Low confidence - defer to human
+    print(f"⚠️  WSP Sentinel uncertain (confidence: {decision.confidence})")
+    print(f"   Potential violations: {decision.warnings}")
+    response = input("Proceed anyway? (yes/no): ")
+
+    if response == 'yes':
+        # Log as training data
+        wsp_sentinel.log_uncertain_allow(file_op, human_approved=True)
+    else:
+        # Block and log
+        wsp_sentinel.log_uncertain_block(file_op, human_rejected=True)
+```
+
+### Success Metrics
+
+**Pre-Production** (Test on historical violations):
+- [ ] 98%+ accuracy on WSP_MODULE_VIOLATIONS.md test set
+- [ ] <50ms inference latency (p95)
+- [ ] Zero false negatives on critical violations (WSP 3, 49, 85)
+
+**Post-Production** (30-day monitoring):
+- [ ] <2% false positive rate (based on --force-wsp-skip usage)
+- [ ] 100% catch rate for domain misplacement (WSP 3)
+- [ ] 100% catch rate for root directory violations (WSP 85)
+- [ ] <5 human escalations per week
+
+### Integration with Existing Systems
+
+**ComplianceAgent (WSP 54)**:
+- Sentinel handles **real-time** blocking
+- ComplianceAgent handles **periodic** auditing
+- Both feed violations to WSP_MODULE_VIOLATIONS.md
+
+**WSP 50 (Pre-Action Verification)**:
+- Sentinel runs BEFORE file operations
+- WSP 50 remains for verification logic
+- Sentinel automates the verification checks
+
+**WSP 48 (Recursive Self-Improvement)**:
+- Every Sentinel decision becomes training data
+- Model retrains weekly on new violations
+- Accuracy improves continuously
+
+---
+
+**Last Updated**: 2025-10-14 (Sentinel augmentation added)
+**WSP Compliance**: WSP 50 (Pre-Action Verification), WSP 57 (Naming Coherence), WSP 60 (Memory Architecture), WSP 54 (Agent Coordination)
+**Integration Status**: Ready for immediate implementation with **Cursor Rules Integration**, **Automated Prevention System**, and **Gemma 3 270M Sentinel (P0)** 

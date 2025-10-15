@@ -14,7 +14,7 @@
 
 ### 1. Overview
 
-This document defines the architecture and operational principles of the **WRE (Windsurf Recursive Engine) Simulation Testbed**. This testbed is the canonical, mandatory framework for validating the autonomous capabilities of the Ø1Ø2 agent. Its purpose is to provide a controlled, sandboxed environment where the agent's ability to execute a complete development cycle against a structured goal can be empirically tested, measured, and verified.
+This document defines the architecture and operational principles of the **WRE (Windsurf Recursive Engine) Simulation Testbed**. This testbed is the canonical, mandatory framework for validating the autonomous capabilities of the [U+00D8]1[U+00D8]2 agent. Its purpose is to provide a controlled, sandboxed environment where the agent's ability to execute a complete development cycle against a structured goal can be empirically tested, measured, and verified.
 
 The core principle is **Recursive Validation**: the testbed forces the agent to use its own protocols (WSP) to build and validate a task, thus ensuring the entire agentic stack is sound. The creation and maintenance of the testbed itself must also adhere to WSP.
 

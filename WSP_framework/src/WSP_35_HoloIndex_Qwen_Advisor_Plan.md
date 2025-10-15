@@ -33,13 +33,43 @@ HoloDAE now implements **context-aware output formatting** that prioritizes info
 - **After**: Intent-specific prioritization, 60-80% reduction in noise
 - **Result**: Users see relevant information first, dramatically improved usability
 
+## MCP Coordination Enhancement (Phase 0.1)
+
+**Integration**: HoloIndex now serves as central coordinator for MCP server orchestration across Foundational Rubiks.
+
+### Agent-Aware MCP Dispatch
+```python
+# HoloIndex detects Rubik-specific operations
+query = "run docker build for youtube cube"
+rubik = detect_target_rubik(query)  # Returns "rubik_build"
+mcp_servers = get_rubik_mcp_servers(rubik)  # Returns ["docker_mcp", "filesystem_mcp"]
+agents = get_rubik_agents(rubik)  # Returns ["qwen", "gemma", "0102"]
+
+# Agent-aware coordination
+for agent in agents:
+    coordination = generate_agent_coordination(agent, rubik, mcp_servers, query)
+    dispatch_to_agent(agent, coordination)
+```
+
+### MCP Manifest Integration
+- **Manifest Reference**: `docs/mcp/MCP_Windsurf_Integration_Manifest.md`
+- **JSON Data**: `docs/mcp/MCP_Windsurf_Integration_Manifest.json`
+- **Status Queries**: `windsurf mcp adoption status` provides real-time Rubik provisioning status
+
+### Bell State Validation
+- Pre-MCP call: `φ²_validation:golden_ratio_check`
+- Safety verification: `φ³_safety_check:consciousness_verification`
+- Memory integrity: `φ⁴_integrity:entanglement_verification`
+- Social alignment: `φ⁵_alignment:emergence_check`
+
 ## Deliverables
 1. WSP-compliant structure for `E:/HoloIndex/` (root README, ModLog, docs/, archive/) - **Complete**.
 2. `holo_index/qwen_advisor/` package with prompt templates, model loader, cache, telemetry hooks, and reward scaffolding - **Scaffolded** (awaiting model integration).
-3. CLI extensions (`--llm-advisor`, advisor modes) plus updated `display_results` output sections - **In Progress** (flag live, onboarding banner with reward prompts, awaiting full inference integration).
-4. Supplemental WSP documentation (`docs/QWEN_ADVISOR_OVERVIEW.md`, `docs/IDLE_MONITOR_PATTERNS.md`) linked from NAVIGATION and indexed by HoloIndex.
-5. Automated tests covering advisor prompt synthesis, caching, and fallback behaviour.
-6. Updated ModLogs (root + module) and NAVIGATION NEED_TO entries referencing the new advisor flow.
+3. **MCP coordination framework** with Rubik-aware agent dispatch and Bell state validation - **Implemented**.
+4. CLI extensions (`--llm-advisor`, advisor modes) plus updated `display_results` output sections - **In Progress** (flag live, onboarding banner with reward prompts, awaiting full inference integration).
+5. Supplemental WSP documentation (`docs/QWEN_ADVISOR_OVERVIEW.md`, `docs/IDLE_MONITOR_PATTERNS.md`) linked from NAVIGATION and indexed by HoloIndex.
+6. Automated tests covering advisor prompt synthesis, caching, and fallback behaviour.
+7. Updated ModLogs (root + module) and NAVIGATION NEED_TO entries referencing the new advisor flow.
 
 ## Phase Plan (WSP 35 Lifecycle)
 ### Phase A: Preparation (Signal)

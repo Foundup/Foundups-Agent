@@ -44,6 +44,8 @@ from .models.work_context import WorkContext
 from .models.monitoring_types import MonitoringResult, FileChange, ChangeType
 from .ui.menu_system import HoloDAEMenuSystem, StatusDisplay
 from .output_formatter import HoloOutputFormatter, TelemetryLogger
+from .qwen_health_monitor import CodeIndexCirculationEngine
+from .architect_mode import ArchitectDecisionEngine
 
 # Import breadcrumb tracer for multi-agent collaboration
 from holo_index.adaptive_learning.breadcrumb_tracer import get_tracer
@@ -65,6 +67,8 @@ class HoloDAECoordinator:
         # Core services
         self.file_watcher = FileSystemWatcher()
         self.context_analyzer = ContextAnalyzer()
+        self.codeindex_engine = CodeIndexCirculationEngine()
+        self.architect_engine = ArchitectDecisionEngine()
 
         # State management
         self.current_work_context = WorkContext()
@@ -986,16 +990,38 @@ class HoloDAECoordinator:
             watched_paths=self.file_watcher.get_watched_paths()
         )
 
+        modules_to_scan: Set[str] = set()
+
         if file_changes:
             touched_modules = self.context_analyzer.get_related_modules([change.file_path for change in file_changes])
             for module in touched_modules:
                 self._module_metrics_cache.pop(module, None)
+            modules_to_scan.update(touched_modules)
 
             analyzed_context = self.context_analyzer.analyze_work_context(
                 [change.file_path for change in file_changes],
                 self.current_work_context.session_actions
             )
             self.current_work_context = analyzed_context
+        elif self.current_work_context.primary_module:
+            modules_to_scan.add(self.current_work_context.primary_module)
+
+        if modules_to_scan:
+            module_paths = []
+            for module in list(modules_to_scan)[:3]:
+                module_path = (self.repo_root / module).resolve()
+                if module_path.exists():
+                    module_paths.append(module_path)
+            if module_paths:
+                health_reports = self.codeindex_engine.evaluate_modules(module_paths)
+                if health_reports:
+                    result.codeindex_reports = [report.to_summary() for report in health_reports]
+                    architect_summaries = [
+                        self.architect_engine.summarize(report) for report in health_reports
+                    ]
+                    if architect_summaries:
+                        result.optimization_suggestions.extend(architect_summaries[:1])
+                        result.metadata['architect_decisions'] = architect_summaries
 
         self.last_monitoring_result = result
         return result
@@ -1040,6 +1066,11 @@ class HoloDAECoordinator:
                 summary_parts.append(f"hi-pattern={high_conf.get_summary()}")
         if result.violations_found:
             summary_parts.append(f"first-violation={result.violations_found[0].get_summary()}")
+        if result.codeindex_reports:
+            critical_total = sum(report.get('critical_fixes', 0) for report in result.codeindex_reports)
+            summary_parts.append(f"codeindex-critical={critical_total}")
+            if critical_total > 0:
+                summary_parts.append("architect=A/B/C ready")
 
         message = f"{prefix} 📊 {' | '.join(summary_parts)}"
         self._holo_log(message, console=True)

@@ -20,9 +20,9 @@ This protocol establishes the governance model for WSP Framework backups, recogn
 ### 2.2 Backup Hierarchy
 ```
 WSP_framework/src/     <- Live protocols (0102 writes with 012 approval)
-       ↕
+       [U+2195]
 WSP_knowledge/src/     <- Immutable backups (012 can restore)
-       ↕
+       [U+2195]
 WSP_knowledge/archive/ <- Historical versions (full audit trail)
 ```
 

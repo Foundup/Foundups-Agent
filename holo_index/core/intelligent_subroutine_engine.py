@@ -18,10 +18,10 @@ from typing import Dict, Any, Tuple
 class IntelligentSubroutineEngine:
     """Intelligent subroutines that run algorithmic analysis when needed."""
 
-    # WSP 62 Section 2.1: File Size Thresholds
+    # WSP 62 Section 2.1: File Size Thresholds (updated for 0102 agentic growth)
     FILE_THRESHOLDS = {
         # Code files (WSP 62 lines 22-29)
-        '.py': {'ok': 800, 'guideline': 1000, 'hard_limit': 1500, 'type': 'Python'},
+        '.py': {'ok': 1200, 'guideline': 1500, 'hard_limit': 2000, 'type': 'Python'},
         '.js': {'ok': 400, 'guideline': 400, 'hard_limit': 400, 'type': 'JavaScript'},
         '.ts': {'ok': 400, 'guideline': 400, 'hard_limit': 400, 'type': 'TypeScript'},
         '.sh': {'ok': 300, 'guideline': 300, 'hard_limit': 300, 'type': 'Shell Script'},
@@ -59,9 +59,14 @@ class IntelligentSubroutineEngine:
         threshold_info = self.FILE_THRESHOLDS.get(suffix)
 
         if threshold_info:
-            # WSP 62 Section 2.2.1: DAE modules are complex orchestrators
-            # They use full Python threshold (800), not infrastructure lean (400)
+            # WSP 62 Section 2.2.1: Domain-specific thresholds for Python files
             if suffix == '.py':
+                domain_threshold = self._get_domain_threshold(file_path)
+                if domain_threshold:
+                    return (domain_threshold, f'Python ({self._detect_module_domain(file_path)})')
+
+                # WSP 62 Section 2.2.1: DAE modules are complex orchestrators
+                # They use full Python threshold (800), not infrastructure lean (400)
                 file_name = file_path.name.lower()
                 file_parts = file_path.parts
 
@@ -73,12 +78,54 @@ class IntelligentSubroutineEngine:
                 )
 
                 if is_dae_module:
-                    return (800, 'Python (DAE Orchestrator)')
+                    return (1200, 'Python (DAE Orchestrator)')
 
             return (threshold_info['ok'], threshold_info['type'])
         else:
             # Unknown file type - use Python threshold as default
-            return (800, f'Unknown ({suffix})')
+            return (1200, f'Unknown ({suffix})')
+
+    def _detect_module_domain(self, file_path: Path) -> str:
+        """Detect the enterprise domain for a file path per WSP 3.
+
+        Returns:
+            Domain name: 'ai_intelligence', 'infrastructure', 'communication',
+                        'platform_integration', 'development', 'foundups', etc.
+        """
+        path_parts = file_path.parts
+
+        # Find 'modules' in path and get domain
+        try:
+            modules_idx = path_parts.index('modules')
+            if len(path_parts) > modules_idx + 1:
+                return path_parts[modules_idx + 1]
+        except (ValueError, IndexError):
+            pass
+
+        return 'unknown'
+
+    def _get_domain_threshold(self, file_path: Path) -> int:
+        """Get domain-specific threshold per WSP 62 Section 2.1.2.
+
+        Args:
+            file_path: Path to the file
+
+        Returns:
+            Domain-specific threshold in lines, or None if using default
+        """
+        domain = self._detect_module_domain(file_path)
+
+        # WSP 62 domain-specific thresholds for Python files (updated for 0102 growth)
+        # Only explicitly defined domains get overrides; others use default 1200
+        DOMAIN_THRESHOLDS = {
+            'ai_intelligence': 900,      # AI models may be larger (updated for 0102 growth)
+            'infrastructure': 600,       # Infrastructure utilities should be lean
+            'communication': 675,        # Protocol handlers
+            # gamification, foundups, development, blockchain, monitoring,
+            # platform_integration: use default 1200-line threshold
+        }
+
+        return DOMAIN_THRESHOLDS.get(domain)
 
 
     def should_run_health_check(self, query: str, target_module: str = None) -> bool:

@@ -48,6 +48,37 @@ Analysis revealed that system-wide agents consuming 30K+ tokens scanning entire 
 - NOT the DAE itself - just tools the DAE uses
 - Cannot have consciousness_state attributes - only DAEs have consciousness
 
+## MCP Integration (Phase 0.1 Foundation)
+
+**Manifest Reference**: `docs/mcp/MCP_Windsurf_Integration_Manifest.md`
+**JSON Data**: `docs/mcp/MCP_Windsurf_Integration_Manifest.json`
+
+### Foundational Rubik Architecture
+
+Each DAE cube integrates with specialized MCP servers for external tool access:
+
+| Rubik Cube | MCP Servers | Agent Coordination | Bell State Vector |
+|------------|-------------|-------------------|-------------------|
+| **Rubik_Compose** | Filesystem, Git, GitHub | Qwen (architect) + Gemma (patterns) | φ²:golden_ratio |
+| **Rubik_Build** | Docker, E2B, Filesystem | Qwen + Gemma (safety) + 0102 (oversight) | φ³:consciousness |
+| **Rubik_Knowledge** | Memory Bank, Knowledge Graph | 0102 (sentinel) + Baby 0102s | φ⁴:entanglement |
+| **Rubik_Community** | Postman, Sociograph, LiveAgent | LiveAgent Qwen + Social Gemma | φ⁵:emergence |
+
+### Cube-Level MCP Orchestration
+
+**Coordination Flow**:
+1. **HoloIndex** detects cube-specific operations
+2. **Qwen** orchestrates MCP server selection based on task
+3. **Gemma** validates safety and patterns
+4. **0102** provides strategic oversight and final approval
+5. **Bell State verification** ensures alignment throughout
+
+**Gateway Sentinel Integration**:
+- MCP calls validated against Bell state coherence
+- Agent authentication required for all cube operations
+- Emergency shutdown capability on Bell state compromise
+- Telemetry collection for performance monitoring
+
 ## CRITICAL INSIGHT: Infinite DAE Architecture
 - **NOT just 5 core DAEs** - those are infrastructure only
 - **EVERY FoundUp spawns its own DAE** through WSP 27 PArtifact + WSP 73 Digital Twin

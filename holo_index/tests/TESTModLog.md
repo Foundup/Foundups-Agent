@@ -1,4 +1,35 @@
 ﻿# HoloIndex Test Suite TESTModLog
+## ++ CodeIndex Circulation Monitor Coverage
+**WSP Protocol**: WSP 93 (CodeIndex), WSP 35 (HoloIndex Qwen Advisor Plan), WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Added `test_codeindex_monitor.py` to validate the new circulation engine + architect decision helpers that feed 0102.
+- Synthetic module fixture reuses CodeIndex first principles (200+ line function) to keep tests deterministic and fast.
+- Extended coverage to orchestrator heuristics so CodeIndex activation follows WSP 93 first principles.
+
+### Test Coverage
+- ✅ `CodeIndexCirculationEngine.evaluate_module` returns structured HealthReport with surgical fixes and assumption alerts.
+- ✅ `ArchitectDecisionEngine` produces A/B/C framing and console summaries without hitting external dependencies.
+- ✅ `QwenOrchestrator._should_trigger_codeindex` and `_generate_codeindex_section` fire on large-module/refactor scenarios.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest holo_index/tests/test_codeindex_monitor.py holo_index/tests/test_codeindex_precision.py`
+
+## ++ CodeIndex Advisor Surgical Regression Coverage
+**WSP Protocol**: WSP 93 (CodeIndex), WSP 35 (Qwen Advisor), WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Added test_codeindex_precision.py covering surgical fixes, LEGO mapping, circulation health, choice framing, and assumption detection for QwenAdvisor.
+- Uses isolated tempfile fixture with 200+ line routine to validate first-principles behaviour without mutating production modules.
+
+### Test Coverage
+- surgical_code_index now emits high-complexity fix coordinates with 90-minute effort estimates.
+- lego_visualization, present_choice, and continuous_circulation outputs verified against WSP 93 architect workflow.
+- challenge_assumptions surfaces TODO plus long hardcoded path after loop indentation correction.
+
+### Verification
+- PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest holo_index/tests/test_codeindex_precision.py
+
 ## [2025-09-29] Coordinator Output & Telemetry Coverage
 - Added tests for HoloOutputFormatter summary/TODO structure and telemetry JSONL logging.
 - Existing coordinator tests now validate structured response still includes arbitration/execution details.

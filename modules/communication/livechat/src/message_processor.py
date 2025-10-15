@@ -290,7 +290,7 @@ class MessageProcessor:
             # Check for fact-check commands
             has_factcheck = self._check_factcheck_command(message_text)
             
-            # Check for YouTube Shorts commands (!createshort, !shortstatus, !shortstats)
+            # Check for YouTube Shorts commands (!createshort, !shortveo, !shortsora, !shortstatus, !shortstats)
             has_shorts_command = self._check_shorts_command(message_text)
 
             # Check for whack commands (score, level, rank, etc)
@@ -559,7 +559,7 @@ class MessageProcessor:
 
                     return response
 
-            # Priority 3.5: Handle YouTube Shorts commands (!createshort, !shortstatus, !shortstats)
+            # Priority 3.5: Handle YouTube Shorts commands (!createshort, !shortveo, !shortsora, !shortstatus, !shortstats)
             if processed_message.get("has_shorts_command"):
                 logger.info("🤖🧠 [QWEN-DAE-DECISION] EXECUTE shorts_command_handler (confidence: 0.90)")
                 logger.info(f"🎬 Routing Shorts command: '{message_text}' from {author_name} (role: {role})")
@@ -678,7 +678,6 @@ class MessageProcessor:
                             # Check if response contains @mentions that might fail
                             if '@' in proactive_response:
                                 # Extract username from @mention in response
-                                import re
                                 mention_match = re.search(r'@(\S+)', proactive_response)
                                 if mention_match:
                                     mentioned_user = mention_match.group(1)
@@ -887,16 +886,19 @@ class MessageProcessor:
 
         Commands:
         - !createshort <topic> - Create and upload Short (auto engine)
-        - !shortsora2 <topic> - Create with Sora2 engine
-        - !shortveo3 <topic> - Create with Veo3 engine
+        - !shortsora <topic> - Create with Sora2 engine (simplified from shortsora2)
+        - !shortveo <topic> - Create with Veo3 engine (simplified from shortveo3)
         - !short - List recent shorts
         - !shortstatus - Check generation status
         - !shortstats - View statistics
+
+        Note: Shorts use ! prefix, MAGADOOM uses / prefix for command separation.
         """
-        shorts_commands = ['!createshort', '!shortsora2', '!shortveo3', '!short', '!shortstatus', '!shortstats']
+        shorts_commands = ['!createshort', '!shortsora', '!shortveo', '!short', '!shortstatus', '!shortstats']
         text_lower = text.lower().strip()
 
-        has_shorts = any(text_lower.startswith(cmd) if cmd != '!short' else text_lower == cmd for cmd in shorts_commands)
+        # All commands use startswith() - !short can be followed by @username or alone
+        has_shorts = any(text_lower.startswith(cmd) for cmd in shorts_commands)
 
         if has_shorts:
             logger.info(f"🎬 Detected YouTube Shorts command: {text_lower}")
@@ -1148,8 +1150,8 @@ class MessageProcessor:
 
         Commands:
         - !createshort <topic> - Create and upload Short (OWNER or Top 3 MAGADOOM mods)
-        - !shortsora2 <topic> - Create with Sora2 engine (OWNER or Top 3 MAGADOOM mods)
-        - !shortveo3 <topic> - Create with Veo3 engine (OWNER or Top 3 MAGADOOM mods)
+        - !shortsora <topic> - Create with Sora2 engine (OWNER or Top 3 MAGADOOM mods)
+        - !shortveo <topic> - Create with Veo3 engine (OWNER or Top 3 MAGADOOM mods)
         - !short - List recent shorts (everyone)
         - !shortstatus - Check generation status (everyone)
         - !shortstats - View statistics (everyone)

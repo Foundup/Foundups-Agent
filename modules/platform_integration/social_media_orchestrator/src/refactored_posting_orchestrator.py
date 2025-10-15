@@ -401,8 +401,20 @@ class RefactoredPostingOrchestrator:
                     results['posted'] = True
                     self.last_posted_video = video_id
                 else:
-                    # LinkedIn failed but don't mark - allow retry
-                    self.logger.warning(f"⚠️ LinkedIn failed for {video_id}, will retry on next detection")
+                    # Check if user cancelled (closed browser window)
+                    error_msg = linkedin_result.message or ""
+                    if 'unknown error' in error_msg.lower() or 'closed' in error_msg.lower():
+                        # User cancelled - mark as attempted to prevent retry
+                        self.logger.warning(f"🚫 LinkedIn cancelled by user for {video_id}, marking as attempted")
+                        self.duplicate_manager.mark_as_posted(
+                            video_id=video_id,
+                            platform='linkedin_cancelled',
+                            title=title,
+                            url=url
+                        )
+                    else:
+                        # Real error - allow retry
+                        self.logger.warning(f"⚠️ LinkedIn failed for {video_id}, will retry on next detection")
 
             # Post to X only
             elif x_account:
@@ -528,11 +540,24 @@ class RefactoredPostingOrchestrator:
             channel_id = stream['channel_id']
             channel_name = stream['channel_name']
 
+            # BLOCK TEST VIDEOS from posting
+            if video_id and 'TEST' in video_id.upper():
+                self.logger.warning(f"⏭️ [{idx}/{len(sorted_streams)}] Skipping TEST video: {video_id}")
+                continue
+
             self.logger.info(f"[{idx}/{len(sorted_streams)}] Processing {channel_name} stream...")
 
             # Build stream URL
             stream_url = f"https://www.youtube.com/watch?v={video_id}"
-            stream_title = f"{channel_name} Live Stream"
+
+            # Use actual stream title from detection (not generic)
+            stream_title = stream.get('title', f"{channel_name} Live Stream")
+
+            # Add hashtags for social media visibility
+            if '#' not in stream_title:  # Only add if not already present
+                stream_title = f"{stream_title} #YouTube #Live #Streaming"
+
+            self.logger.info(f"📝 Post content: {stream_title}")
 
             # Handle this stream
             result = self.handle_stream_detected(

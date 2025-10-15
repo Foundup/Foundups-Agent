@@ -111,6 +111,10 @@ class IntentClassifier:
             r'what (?:does|is) (?:the )?(?:readme|interface|modlog)',
             r'(?:show|read|explain) (?:the )?(?:readme|interface\.md|modlog)',
             r'wsp\s*\d+\s+(?:says?|documents?|describes?)',
+            # Enhanced patterns for broader doc lookup
+            r'(?:docs?|documentation) (?:for|about|on)',
+            r'(?:protocol|spec|standard) \d+',
+            r'(?:wsp|protocol) (?:definition|explanation)',
         ],
         IntentType.CODE_LOCATION: [
             r'where (?:is|does|can i find)',
@@ -119,6 +123,10 @@ class IntentClassifier:
             r'(?:which|what) file (?:contains|has|defines)',
             r'(?:which|what) module (?:contains|has|implements)',
             r'show me (?:the )?(?:code|implementation) (?:for|of)',
+            # Enhanced patterns for code finding
+            r'(?:search|look) (?:for|up) (?:the )?\w+',
+            r'\w+\.(?:py|js|ts|java|cpp|c\+\+|rs|go)',
+            r'(?:class|function|method) \w+',
         ],
         IntentType.MODULE_HEALTH: [
             r'check (?:\w+\s)?health',
@@ -127,6 +135,10 @@ class IntentClassifier:
             r'(?:wsp|compliance) (?:violations|issues|problems)',
             r'(?:module|system|code) status',
             r'(?:show|list) (?:module |system )?(?:issues|problems|violations)',
+            # Enhanced patterns for health checking
+            r'(?:test|lint|coverage) (?:status|results?)',
+            r'(?:dependencies|requirements) (?:check|status)',
+            r'(?:module|system) (?:analysis|review|audit)',
         ],
         IntentType.RESEARCH: [
             r'how (?:does|do|can|to)',
@@ -135,8 +147,14 @@ class IntentClassifier:
             r'(?:understand|learn) (?:about )?',
             r'tell me about',
             r'(?:architecture|design|pattern) (?:of|for)',
+            # Enhanced patterns for research queries
+            r'(?:can|does|will) (?:\w+\s)*(?:improve|help|work|function)',
+            r'(?:servers?|systems?|tools?) (?:improve|enhance|optimize)',
+            r'(?:integrate|connect|combine) (?:\w+\s)*with',
+            r'(?:better|faster|smarter|efficient) (?:\w+\s)*(?:way|method|approach)',
+            r'(?:optimize|improve|enhance) (?:\w+\s)*(?:performance|efficiency|workflow)',
         ],
-        # GENERAL has no patterns - it's the fallback
+        # GENERAL has no patterns - it's the fallback, but we'll improve component selection
     }
 
     def __init__(self):

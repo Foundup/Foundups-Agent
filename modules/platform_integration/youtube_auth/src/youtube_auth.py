@@ -71,9 +71,9 @@ def get_authenticated_service(token_index=None):
 
     # Determine which credential sets to try
     if token_index is not None:
-        # Use specific token index (convert from 0-based to 1-based)
-        indices_to_try = [token_index + 1]
-        logger.info(f"🎯 Using specific credential set {token_index + 1}")
+        # Use specific token index (already 1-based from caller)
+        indices_to_try = [token_index]
+        logger.info(f"🎯 Using specific credential set {token_index}")
     else:
         # Auto-rotation: Only use available credential sets (dynamic detection)
         from modules.platform_integration.youtube_auth.src.quota_monitor import get_available_credential_sets

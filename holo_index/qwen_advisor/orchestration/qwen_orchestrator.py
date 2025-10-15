@@ -12,13 +12,14 @@ Design Doc: docs/agentic_journals/HOLODAE_INTENT_ORCHESTRATION_DESIGN.md
 WSP Compliance: WSP 80 (Cube-Level DAE Orchestration), WSP 48 (Recursive Learning)
 """
 
+import json
 import logging
 import os
 import re
 import sys
 from pathlib import Path
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 # Intent Classification Integration
 from holo_index.intent_classifier import get_classifier, IntentType
@@ -31,6 +32,9 @@ from holo_index.output_composer import get_composer
 
 # PHASE 4: Feedback Learning Integration
 from holo_index.feedback_learner import get_learner
+
+from ..qwen_health_monitor import CodeIndexCirculationEngine
+from ..architect_mode import ArchitectDecisionEngine
 
 # MCP Integration imports
 try:
@@ -75,14 +79,9 @@ INTENT_COMPONENT_MAP = {
         # MCP tools called separately for RESEARCH intent
     ],
     IntentType.GENERAL: [
-        # All components - fallback for ambiguous queries
-        'health_analysis',
-        'vibecoding_analysis',
-        'file_size_monitor',
-        'module_analysis',
-        'pattern_coach',
-        'orphan_analysis',
-        'wsp_documentation_guardian'
+        # FIRST PRINCIPLES: Smart component selection based on query content
+        # Instead of running ALL components, select 2-3 most relevant based on keywords
+        # This is handled by _select_general_components() method below
     ]
 }
 
@@ -143,6 +142,12 @@ class QwenOrchestrator:
         self.feedback_learner = get_learner()
         self._log_chain_of_thought("LEARNER-INIT", "📊 Feedback learner initialized")
 
+        # WSP 93: CodeIndex circulation + architect decision helpers
+        self.codeindex_engine = CodeIndexCirculationEngine()
+        self.architect_engine = ArchitectDecisionEngine()
+        self._last_module_snapshots: Dict[str, Dict[str, Any]] = {}
+        self._last_codeindex_reports: List[Dict[str, Any]] = []
+
         # Initialize MCP integration
         self.mcp_client = None
         if MCP_AVAILABLE:
@@ -156,6 +161,433 @@ class QwenOrchestrator:
     def _format_component_display(self, component_name: str) -> str:
         emoji, label = COMPONENT_META.get(component_name, ('', component_name.replace('_', ' ').title()))
         return f"{emoji} {label}".strip()
+
+    def _select_orphan_archaeology_components(self, query: str) -> List[str]:
+        """
+        FIRST PRINCIPLES: Specialized component selection for orphan archaeology queries
+
+        When query contains orphan analysis keywords, select components optimized
+        for code archaeology rather than general health checking.
+
+        Token Budget: ~100 tokens per selection
+        WSP Compliance: WSP 77 (Agent Coordination), WSP 80 (Cube-Level Orchestration)
+        """
+        query_lower = query.lower()
+
+        # Orphan archaeology specific keywords
+        if any(word in query_lower for word in ['orphan', '464', 'archaeology', 'cleanup', 'dead code']):
+            # Skip general health checks, focus on code analysis
+            return ['orphan_analysis', 'module_analysis']
+
+        # Not orphan archaeology - use general selection
+        return self._select_general_components(query, [], [])
+
+    def _select_general_components(self, query: str, files: List[str], modules: List[str]) -> List[str]:
+        """
+        FIRST PRINCIPLES: Intelligently select 2-3 most relevant components for GENERAL queries
+
+        Instead of running all 7 components simultaneously (causing massive output),
+        analyze query content and select only the most relevant components.
+
+        Token Budget: ~200 tokens per selection
+        WSP Compliance: WSP 75 (Token-Based Development), WSP 80 (Cube-Level Orchestration)
+        """
+        query_lower = query.lower()
+
+        # FIRST PRINCIPLES: Keyword-based component prioritization
+        component_scores = {
+            'health_analysis': 0,
+            'vibecoding_analysis': 0,
+            'file_size_monitor': 0,
+            'module_analysis': 0,
+            'pattern_coach': 0,
+            'orphan_analysis': 0,
+            'wsp_documentation_guardian': 0
+        }
+
+        # Score based on query keywords (FIRST PRINCIPLES: Relevance matching)
+        if any(word in query_lower for word in ['health', 'status', 'check', 'compliance', 'wsp']):
+            component_scores['health_analysis'] += 3
+            component_scores['wsp_documentation_guardian'] += 2
+
+        if any(word in query_lower for word in ['pattern', 'vibe', 'code', 'quality', 'analysis']):
+            component_scores['vibecoding_analysis'] += 3
+            component_scores['pattern_coach'] += 2
+
+        if any(word in query_lower for word in ['size', 'large', 'big', 'file', 'kb', 'mb']):
+            component_scores['file_size_monitor'] += 3
+
+        if any(word in query_lower for word in ['module', 'component', 'structure', 'organization']):
+            component_scores['module_analysis'] += 3
+
+        if any(word in query_lower for word in ['orphan', 'missing', 'test', 'connection']):
+            component_scores['orphan_analysis'] += 3
+
+        if any(word in query_lower for word in ['doc', 'readme', 'interface', 'modlog', 'documentation']):
+            component_scores['wsp_documentation_guardian'] += 3
+
+        # Score based on file/module context (FIRST PRINCIPLES: Context awareness)
+        if len(files) > 10:
+            component_scores['file_size_monitor'] += 2  # Large result sets suggest size monitoring
+        if len(modules) > 3:
+            component_scores['module_analysis'] += 2    # Multiple modules suggest module analysis
+
+        # FIRST PRINCIPLES: Select top 2-3 components with highest relevance
+        # Never select more than 3 to prevent output overload
+        sorted_components = sorted(component_scores.items(), key=lambda x: x[1], reverse=True)
+        selected = [comp for comp, score in sorted_components if score > 0][:3]
+
+        # FIRST PRINCIPLES: Ensure at least basic analysis if no strong matches
+        if not selected:
+            selected = ['module_analysis', 'health_analysis']  # Minimal useful analysis
+
+        self._log_chain_of_thought(
+            "SMART-SELECTION",
+            f"🎯 GENERAL query '{query[:30]}...' → Selected {len(selected)} components: {', '.join(selected)}"
+        )
+
+        return selected
+
+    def _coordinate_mcp_adoption_mission(self, query: str) -> str:
+        """
+        FIRST PRINCIPLES: HoloIndex MCP adoption status checker
+
+        Mission template for repeatable MCP status queries:
+        - "windsurf mcp adoption status"
+        - "mcp rubik provisioning check"
+        - "check rubik mcp status"
+
+        Uses manifest to provide comprehensive MCP adoption status.
+        """
+        query_lower = query.lower()
+
+        # Detect MCP adoption status queries
+        if not any(phrase in query_lower for phrase in [
+            'mcp adoption status', 'rubik provisioning', 'mcp rubik status',
+            'windsurf mcp status', 'mcp integration status'
+        ]):
+            return None
+
+        # Load MCP manifest for status checking
+        try:
+            with open('docs/mcp/MCP_Windsurf_Integration_Manifest.json', 'r', encoding='utf-8') as f:
+                manifest = json.load(f)
+        except FileNotFoundError:
+            return "❌ MCP manifest not found. Run MCP manifest creation first."
+        except UnicodeDecodeError:
+            return "❌ MCP manifest encoding error. Please regenerate the manifest."
+
+        # Generate agent-aware status report
+        if hasattr(self, '_is_qwen_agent') and self._is_qwen_agent():
+            return self._generate_qwen_mcp_status(manifest)
+        elif hasattr(self, '_is_gemma_agent') and self._is_gemma_agent():
+            return self._generate_gemma_mcp_status(manifest)
+        else:
+            return self._generate_0102_mcp_status(manifest)
+
+    def _generate_qwen_mcp_status(self, manifest: Dict) -> str:
+        """Qwen gets structured MCP status for planning."""
+        status_summary = {
+            "phase": manifest["manifest"]["phase"],
+            "rubik_status": {},
+            "mcp_availability": {},
+            "coordination_readiness": "ready_for_implementation"
+        }
+
+        for rubik_name, rubik_data in manifest["rubik_cubes"].items():
+            rubik_status = {
+                "mcp_servers": len(rubik_data["mcp_servers"]),
+                "available_now": sum(1 for mcp in rubik_data["mcp_servers"].values()
+                                   if mcp["status"] == "available_now"),
+                "planned": sum(1 for mcp in rubik_data["mcp_servers"].values()
+                             if mcp["status"] == "planned"),
+                "research": sum(1 for mcp in rubik_data["mcp_servers"].values()
+                              if mcp["status"] == "research")
+            }
+            status_summary["rubik_status"][rubik_name] = rubik_status
+
+        # MCP availability summary
+        all_mcp = {}
+        for rubik_data in manifest["rubik_cubes"].values():
+            for mcp_name, mcp_data in rubik_data["mcp_servers"].items():
+                if mcp_name not in all_mcp:
+                    all_mcp[mcp_name] = {"status": mcp_data["status"], "used_by": []}
+                all_mcp[mcp_name]["used_by"].append(rubik_data["purpose"][:20])
+
+        status_summary["mcp_availability"] = all_mcp
+
+        return json.dumps(status_summary, indent=2)
+
+    def _generate_gemma_mcp_status(self, manifest: Dict) -> str:
+        """Gemma gets binary status validations."""
+        # Count available MCPs
+        available_count = 0
+        planned_count = 0
+        research_count = 0
+
+        for rubik_data in manifest["rubik_cubes"].values():
+            for mcp_data in rubik_data["mcp_servers"].values():
+                if mcp_data["status"] == "available_now":
+                    available_count += 1
+                elif mcp_data["status"] == "planned":
+                    planned_count += 1
+                elif mcp_data["status"] == "research":
+                    research_count += 1
+
+        return f"MCP_STATUS|available:{available_count}|planned:{planned_count}|research:{research_count}|phase_0_1_ready"
+
+    def _generate_0102_mcp_status(self, manifest: Dict) -> str:
+        """0102 gets strategic MCP adoption overview."""
+        phase = manifest["manifest"]["phase"]
+
+        # Calculate overall readiness
+        total_mcp = 0
+        available_mcp = 0
+
+        for rubik_data in manifest["rubik_cubes"].values():
+            for mcp_data in rubik_data["mcp_servers"].values():
+                total_mcp += 1
+                if mcp_data["status"] == "available_now":
+                    available_mcp += 1
+
+        readiness_percentage = (available_mcp / total_mcp) * 100 if total_mcp > 0 else 0
+
+        strategic_status = f"""
+# 🏗️ WINDSURF MCP ADOPTION STATUS
+
+## 📊 Current Phase: {phase}
+## 🎯 Overall Readiness: {readiness_percentage:.1f}% ({available_mcp}/{total_mcp} MCP servers available)
+
+## 🧊 Foundational Rubik Status
+
+"""
+
+        for rubik_name, rubik_data in manifest["rubik_cubes"].items():
+            rubik_title = rubik_name.replace('_', ' ').title()
+            purpose = rubik_data["purpose"]
+            mcp_count = len(rubik_data["mcp_servers"])
+            available = sum(1 for mcp in rubik_data["mcp_servers"].values()
+                          if mcp["status"] == "available_now")
+
+            strategic_status += f"""
+### {rubik_title}
+**Purpose**: {purpose}
+**MCP Servers**: {available}/{mcp_count} available
+**Status**: {'🟢 READY' if available == mcp_count else '🟡 PARTIAL' if available > 0 else '🔴 PENDING'}
+"""
+
+            # List available MCPs
+            available_mcps = [name.replace('_', ' ').title()
+                            for name, data in rubik_data["mcp_servers"].items()
+                            if data["status"] == "available_now"]
+            if available_mcps:
+                strategic_status += f"**Available**: {', '.join(available_mcps)}\n"
+
+        strategic_status += f"""
+
+## 🚀 Next Steps
+
+1. **Complete Phase 0.1**: Integrate remaining available MCP servers
+2. **Phase 0.2 Planning**: Begin GitHub/E2B MCP integration
+3. **Monitor Coordination**: Ensure WSP 77 agent coordination working
+4. **Validate Bell States**: Confirm φ²-φ⁵ entanglement across Rubiks
+
+## ⚡ Immediate Actions Required
+
+- [ ] Verify Filesystem MCP integration in all Rubiks
+- [ ] Confirm Git MCP version control operations
+- [ ] Test Docker MCP build capabilities
+- [ ] Validate Memory Bank MCP persistence
+
+## 🔗 References
+
+- **Manifest**: docs/mcp/MCP_Windsurf_Integration_Manifest.md
+- **JSON Data**: docs/mcp/MCP_Windsurf_Integration_Manifest.json
+- **WSP 77**: Agent Coordination Protocol
+- **WSP 80**: Cube-Level DAE Orchestration
+
+**Status**: {'🟢 PHASE 0.1 ACTIVE' if readiness_percentage >= 50 else '🟡 INITIALIZING'}
+**HoloIndex**: 🟢 COORDINATOR MODE ACTIVE
+"""
+
+        return strategic_status.strip()
+
+    def _coordinate_orphan_archaeology_mission(self, query: str) -> str:
+        """
+        FIRST PRINCIPLES: HoloIndex as multi-agent coordinator for orphan archaeology
+
+        When detecting orphan analysis queries, HoloIndex becomes the central coordinator:
+        1. Load existing orphan datasets (don't recreate)
+        2. Dispatch analysis tasks to appropriate agents
+        3. Aggregate results and provide coordination guidance
+
+        This transforms HoloIndex from "search tool" to "analysis orchestration platform".
+
+        Token Budget: ~1000 tokens per coordination session
+        WSP Compliance: WSP 77 (Agent Coordination), WSP 80 (Cube-Level DAE Orchestration)
+        """
+        query_lower = query.lower()
+
+        # Detect orphan archaeology mission
+        if not any(word in query_lower for word in ['orphan', '464', 'archaeology', 'cleanup']):
+            return None  # Not orphan archaeology
+
+        # FIRST PRINCIPLES: Use existing data structures
+        try:
+            with open('docs/Orphan_Complete_Dataset.json', 'r') as f:
+                dataset = json.load(f)
+                orphan_dataset = {orphan['relative_path']: orphan for orphan in dataset.get('orphans', [])}
+        except FileNotFoundError:
+            return "❌ Orphan dataset not found. Run orphan analysis preparation first."
+        except json.JSONDecodeError:
+            return "❌ Orphan dataset corrupted. Regenerate from orphan analysis."
+
+        total_orphans = len(orphan_dataset)
+        analyzed_count = self._count_analyzed_orphans()
+
+        # Agent-aware coordination output
+        if hasattr(self, '_is_qwen_agent') and self._is_qwen_agent():
+            return self._generate_qwen_orphan_coordination(orphan_dataset, analyzed_count)
+        elif hasattr(self, '_is_gemma_agent') and self._is_gemma_agent():
+            return self._generate_gemma_orphan_coordination(orphan_dataset, analyzed_count)
+        else:
+            # 0102 gets strategic overview and delegation plan
+            return self._generate_0102_orphan_coordination(orphan_dataset, analyzed_count)
+
+    def _count_analyzed_orphans(self) -> int:
+        """Count how many orphans have been analyzed so far."""
+        analysis_files = [
+            'docs/Qwen_Orphan_Analysis_Complete.json',
+            'docs/Gemma_Similarity_Matrix.json'
+        ]
+        count = 0
+        for file_path in analysis_files:
+            try:
+                with open(file_path, 'r') as f:
+                    data = json.load(f)
+                    count += len(data)
+            except (FileNotFoundError, json.JSONDecodeError):
+                continue
+        return count
+
+    def _generate_qwen_orphan_coordination(self, orphan_dataset: Dict, analyzed_count: int) -> str:
+        """Generate Qwen-specific coordination output with batch processing plan."""
+        total_orphans = len(orphan_dataset)
+        batch_size = 50
+        remaining = total_orphans - analyzed_count
+        batches_needed = (remaining + batch_size - 1) // batch_size
+
+        # Prepare next batch for Qwen processing
+        unanalyzed = [oid for oid in orphan_dataset.keys() if oid not in self._get_analyzed_orphan_ids()]
+        next_batch = unanalyzed[:batch_size]
+
+        coordination = {
+            "mission": "ORPHAN_ARCHAEOLOGY_PHASE_1",
+            "status": f"{analyzed_count}/{total_orphans} analyzed",
+            "next_batch": next_batch,
+            "batch_size": len(next_batch),
+            "remaining_batches": max(0, batches_needed - 1),
+            "tasks": [
+                "read_file_content_first_100_lines",
+                "parse_imports_ast_based",
+                "identify_code_purpose_from_docstrings",
+                "categorize_integrate_archive_delete_standalone",
+                "assign_cluster_id_if_applicable"
+            ],
+            "output_format": "structured_json_per_orphan",
+            "coordination_guidance": "Focus on batch processing efficiency. Gemma will handle similarity analysis after your categorization."
+        }
+
+        return json.dumps(coordination, indent=2)
+
+    def _generate_gemma_orphan_coordination(self, orphan_dataset: Dict, analyzed_count: int) -> str:
+        """Generate Gemma-specific coordination output with specialized tasks."""
+        pending_similarity = self._get_orphans_needing_similarity_analysis()
+
+        coordination = {
+            "mission": "ORPHAN_ARCHAEOLOGY_SIMILARITY_ANALYSIS",
+            "pending_tasks": len(pending_similarity),
+            "specialization": "FAST_SIMILARITY_ANALYSIS",
+            "next_task": pending_similarity[:10] if pending_similarity else [],
+            "method": "ast_based_similarity_scoring",
+            "output_format": "binary_duplicate_unique_classification",
+            "parallel_capable": True
+        }
+
+        return json.dumps(coordination, indent=2)
+
+    def _generate_0102_orphan_coordination(self, orphan_dataset: Dict, analyzed_count: int) -> str:
+        """Generate 0102 strategic overview with delegation plan."""
+        total_orphans = len(orphan_dataset)
+        progress_percentage = (analyzed_count / total_orphans) * 100 if total_orphans > 0 else 0
+
+        strategic_overview = f"""
+# 🏛️ ORPHAN ARCHAEOLOGY MISSION COORDINATION
+
+## 📊 Mission Status
+- **Total Orphans**: {total_orphans}
+- **Analyzed**: {analyzed_count} ({progress_percentage:.1f}%)
+- **Remaining**: {total_orphans - analyzed_count}
+
+## 🎯 Agent Delegation Strategy
+
+### Qwen (Coordination & Categorization)
+- **Role**: Batch analysis of 50 orphans at a time
+- **Tasks**: Purpose identification, import analysis, categorization
+- **Output**: Structured JSON per orphan
+- **Status**: Ready for next batch
+
+### Gemma (Similarity Analysis)
+- **Role**: Fast AST-based similarity scoring
+- **Tasks**: Duplicate detection, function comparison
+- **Output**: Binary classifications
+- **Status**: Parallel processing capable
+
+## 🚀 Next Actions
+
+1. **Dispatch Qwen**: Analyze next batch of 50 orphans
+2. **Monitor Progress**: Track completion across all 464 orphans
+3. **Aggregate Results**: Build integration roadmap
+4. **Execute Cleanup**: Integrate/archive/delete based on analysis
+
+## 📈 Expected Outcomes
+
+- **Clean Codebase**: Every orphan accounted for
+- **Agent Training**: Qwen/Gemma learn codebase patterns
+- **Prevention**: Future vibecoding detection
+- **Integration**: Valuable code properly integrated
+
+**HoloIndex Status**: 🟢 COORDINATOR MODE ACTIVE
+**Mission Control**: 0102 strategic oversight
+**Execution Agents**: Qwen + Gemma specialized analysis
+        """.strip()
+
+        return strategic_overview
+
+    def _get_analyzed_orphan_ids(self) -> set:
+        """Get set of orphan IDs that have been analyzed."""
+        analyzed_ids = set()
+        try:
+            with open('docs/Qwen_Orphan_Analysis_Complete.json', 'r') as f:
+                qwen_data = json.load(f)
+                analyzed_ids.update(qwen_data.keys())
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass
+
+        try:
+            with open('docs/Gemma_Similarity_Matrix.json', 'r') as f:
+                gemma_data = json.load(f)
+                analyzed_ids.update(gemma_data.keys())
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass
+
+        return analyzed_ids
+
+    def _get_orphans_needing_similarity_analysis(self) -> List[str]:
+        """Get orphans that need similarity analysis."""
+        # This would check Qwen analysis results to find orphans needing Gemma similarity scoring
+        # For now, return a sample list
+        return ["orphan_1", "orphan_2", "orphan_3"]  # Placeholder
 
     def _call_research_mcp_tools(self, query: str, context: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
@@ -386,6 +818,27 @@ class QwenOrchestrator:
             self._log_chain_of_thought("DECISION", "No files to analyze - returning early")
             return "[HOLODAE-ANALYZE] No files found to analyze"
 
+        # FIRST PRINCIPLES: Check for mission coordination FIRST (MCP adoption, then orphans)
+        # HoloIndex becomes the coordinator for specialized multi-agent missions
+
+        # Check MCP adoption status first (higher priority)
+        mcp_coordination = self._coordinate_mcp_adoption_mission(query)
+        if mcp_coordination is not None:
+            self._log_chain_of_thought(
+                "COORDINATION",
+                f"🏗️ MCP adoption mission detected - HoloIndex providing Rubik status"
+            )
+            return mcp_coordination
+
+        # Check orphan archaeology coordination
+        orphan_coordination = self._coordinate_orphan_archaeology_mission(query)
+        if orphan_coordination is not None:
+            self._log_chain_of_thought(
+                "COORDINATION",
+                f"🏛️ Orphan archaeology mission detected - HoloIndex coordinating Qwen/Gemma analysis"
+            )
+            return orphan_coordination
+
         # ENHANCEMENT: Classify intent using new intent classifier
         intent_classification = self.intent_classifier.classify(query)
         intent = intent_classification.intent
@@ -431,7 +884,11 @@ class QwenOrchestrator:
             self._log_chain_of_thought("INTENT", "🔍 Exploration mode - full analysis")
 
         # ENHANCEMENT: Get intent-based component routing
-        base_components = INTENT_COMPONENT_MAP.get(intent, INTENT_COMPONENT_MAP[IntentType.GENERAL])
+        if intent == IntentType.GENERAL:
+            # FIRST PRINCIPLES: For GENERAL queries, intelligently select 2-3 most relevant components
+            base_components = self._select_general_components(query, involved_files, involved_modules)
+        else:
+            base_components = INTENT_COMPONENT_MAP.get(intent, INTENT_COMPONENT_MAP[IntentType.GENERAL])
 
         # PHASE 4: Apply feedback learning to filter components
         components_to_execute = self.feedback_learner.get_filtered_components(
@@ -468,6 +925,23 @@ class QwenOrchestrator:
         analysis_report = self._execute_orchestrated_analysis_filtered(
             query, involved_files, involved_modules, orchestration_decisions, output_filter
         )
+
+        should_codeindex, trigger_reason = self._should_trigger_codeindex(
+            query=query,
+            intent_classification=intent_classification,
+            module_snapshots=self._last_module_snapshots,
+        )
+        if should_codeindex:
+            codeindex_section = self._generate_codeindex_section(self._last_module_snapshots)
+            if codeindex_section:
+                analysis_report = f"{analysis_report}\n{codeindex_section}"
+                self._log_chain_of_thought("CODEINDEX", f"🩺 CodeIndex triggered: {trigger_reason}")
+                self.breadcrumb_tracer.add_action(
+                    'codeindex_activation',
+                    'codeindex_surgical',
+                    trigger_reason,
+                    query
+                )
 
         duration_ms = int((time.time() - start_time) * 1000)
 
@@ -523,8 +997,111 @@ class QwenOrchestrator:
             query
         )
 
-        # Return composed output (replaces legacy format_intent_aware_response)
+        # FIRST PRINCIPLES: For GENERAL queries, use intelligent 0102 summary instead of massive output
+        if intent == IntentType.GENERAL:
+            # Import throttler here to avoid circular imports
+            from holo_index.output.agentic_output_throttler import AgenticOutputThrottler
+
+            throttler = AgenticOutputThrottler()
+            throttler.set_query_context(query, search_results)
+
+            # Extract component results from analysis_report for summary generation
+            component_results = self._extract_component_results_from_report(analysis_report)
+
+            concise_summary = throttler.generate_0102_summary(component_results, query)
+
+            # Log the efficiency gain
+            original_length = len(composed.full_output.split())
+            summary_length = len(concise_summary.split())
+            compression_ratio = original_length / max(summary_length, 1)
+
+            self._log_chain_of_thought(
+                "0102-OPTIMIZATION",
+                f"🎯 GENERAL query optimized: {compression_ratio:.1f}x compression ({original_length} → {summary_length} tokens)"
+            )
+
+            return concise_summary
+
+        # Return composed output for other intents (replaces legacy format_intent_aware_response)
         return composed.full_output
+
+    def _extract_component_results_from_report(self, analysis_report: str) -> Dict[str, Any]:
+        """
+        FIRST PRINCIPLES: Extract structured component results from verbose analysis report
+
+        Parses the massive analysis_report string and extracts actionable data
+        for each component to feed into the 0102 summary generator.
+
+        Args:
+            analysis_report: The full verbose analysis report string
+
+        Returns:
+            Dict mapping component names to their structured results
+
+        Token Budget: ~300 tokens per extraction
+        """
+        results = {}
+        lines = analysis_report.split('\n')
+
+        current_component = None
+        component_data = []
+
+        # FIRST PRINCIPLES: Parse report by component sections
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+
+            # Detect component section headers
+            if '[HEALTH]' in line.upper() or 'health & wsp compliance' in line.lower():
+                current_component = 'health_analysis'
+                component_data = []
+            elif '[SIZE]' in line.upper() or 'file size monitor' in line.lower():
+                current_component = 'file_size_monitor'
+                component_data = []
+            elif '[MODULE]' in line.upper() or 'module analysis' in line.lower():
+                current_component = 'module_analysis'
+                component_data = []
+            elif '[VIBECODING' in line.upper() or 'vibecoding analysis' in line.lower():
+                current_component = 'vibecoding_analysis'
+                component_data = []
+            elif '[ORPHAN' in line.upper() or 'orphan analysis' in line.lower():
+                current_component = 'orphan_analysis'
+                component_data = []
+
+            # Collect data for current component
+            if current_component:
+                component_data.append(line)
+
+        # FIRST PRINCIPLES: Structure extracted data
+        for component_name in ['health_analysis', 'file_size_monitor', 'module_analysis', 'vibecoding_analysis', 'orphan_analysis']:
+            if component_name in locals() and component_name == 'current_component':
+                component_lines = component_data
+            else:
+                component_lines = []
+
+            # Extract actionable insights from component data
+            if component_name == 'health_analysis':
+                violations = [line for line in component_lines if 'violation' in line.lower() or 'missing' in line.lower()]
+                results[component_name] = {'violations': violations[:5]}  # Max 5 violations
+
+            elif component_name == 'file_size_monitor':
+                large_files = [line for line in component_lines if 'large file' in line.lower() or 'exceeds' in line.lower()]
+                results[component_name] = {'large_files': large_files[:3]}  # Max 3 files
+
+            elif component_name == 'module_analysis':
+                incomplete = [line for line in component_lines if 'missing' in line.lower() or 'incomplete' in line.lower()]
+                results[component_name] = {'incomplete_modules': incomplete[:3]}  # Max 3 modules
+
+            elif component_name == 'vibecoding_analysis':
+                patterns = [line for line in component_lines if 'pattern' in line.lower()]
+                results[component_name] = {'patterns': patterns[:2]}  # Max 2 patterns
+
+            elif component_name == 'orphan_analysis':
+                orphans = [line for line in component_lines if 'orphan' in line.lower() or 'lack' in line.lower()]
+                results[component_name] = {'orphans': orphans[:3]}  # Max 3 orphans
+
+        return results
 
     def _get_output_filter_for_intent(self, intent: str) -> Dict[str, bool]:
         """
@@ -724,6 +1301,113 @@ class QwenOrchestrator:
             return '\n'.join(compact_lines[:10]) if compact_lines else report  # Limit output
 
         return report
+
+    def _should_trigger_codeindex(
+        self,
+        query: str,
+        intent_classification,
+        module_snapshots: Dict[str, Dict[str, Any]],
+    ) -> Tuple[bool, str]:
+        """Decide if CodeIndex surgical analysis should augment the response."""
+        if not module_snapshots:
+            return False, ""
+
+        query_lower = query.lower()
+        reasons: List[str] = []
+
+        keyword_map = {
+            "keyword 'codeindex'": ["codeindex", "surgical"],
+            "refactor keyword": ["refactor", "split function", "break apart", "too long"],
+            "optimization keyword": ["optimize", "performance", "efficiency"],
+        }
+        for label, keywords in keyword_map.items():
+            if any(keyword in query_lower for keyword in keywords):
+                reasons.append(label)
+                break
+
+        large_modules = [
+            module for module, snapshot in module_snapshots.items()
+            if snapshot.get("large_python_files")
+        ]
+        if large_modules:
+            reasons.append(f"large modules detected ({len(large_modules)})")
+
+        coverage_gaps = [
+            module for module, snapshot in module_snapshots.items()
+            if snapshot.get("py_file_count", 0) >= 3 and snapshot.get("test_count", 0) == 0
+        ]
+        if coverage_gaps and intent_classification.intent in {
+            IntentType.CODE_LOCATION,
+            IntentType.MODULE_HEALTH,
+            IntentType.GENERAL,
+        }:
+            reasons.append("module coverage gap identified")
+
+        if intent_classification.intent == IntentType.MODULE_HEALTH:
+            reasons.append("module health review")
+
+        # Encourage pattern-based triggers only when module set is manageable
+        if len(module_snapshots) > 6 and not reasons:
+            return False, ""
+
+        if not reasons:
+            return False, ""
+
+        return True, "; ".join(reasons[:3])
+
+    def _generate_codeindex_section(self, module_snapshots: Dict[str, Dict[str, Any]]) -> str:
+        """Produce textual summary of CodeIndex reports for selected modules."""
+        if not module_snapshots:
+            return ""
+
+        module_candidates: List[Tuple[int, str, Path]] = []
+        for module, snapshot in module_snapshots.items():
+            path = snapshot.get("path")
+            if not path or not snapshot.get("exists"):
+                continue
+            score = 0
+            large_files = snapshot.get("large_python_files", [])
+            if large_files:
+                score += min(6, len(large_files) * 2)
+                max_lines = max((info[1] for info in large_files), default=0)
+                score += min(6, max_lines // 200)
+            if snapshot.get("py_file_count", 0) and snapshot.get("test_count", 0) == 0:
+                score += 2
+            module_candidates.append((score, module, path))
+
+        module_candidates.sort(key=lambda item: item[0], reverse=True)
+        selected_paths = [
+            path for score, module, path in module_candidates if score > 0
+        ][:2]
+        if not selected_paths and module_candidates:
+            selected_paths = [module_candidates[0][2]]
+        if not selected_paths:
+            return ""
+
+        reports = self.codeindex_engine.evaluate_modules(selected_paths)
+        if not reports:
+            return ""
+
+        self._last_codeindex_reports = [report.to_summary() for report in reports]
+
+        lines: List[str] = ["[CODEINDEX][WSP 93] Surgical intelligence summary:"]
+        for report in reports:
+            lines.append(f"  - Module {report.module_name}: {report.critical_fix_count()} critical fixes")
+            for fix in report.surgical_fixes[:2]:
+                lines.append(
+                    f"    - {fix.function} ({fix.line_range}) -> {fix.estimated_effort}min (complexity {fix.complexity})"
+                )
+            architect_lines = self.architect_engine.summarize(report).splitlines()
+            for architect_line in architect_lines[:4]:
+                lines.append(f"    {architect_line}")
+            if report.assumption_alerts:
+                assumption_lines = [
+                    line.strip() for line in report.assumption_alerts.splitlines()
+                    if line.strip() and not line.startswith("[ASSUMPTIONS]")
+                ][:2]
+                for assumption_line in assumption_lines:
+                    lines.append(f"    [ASSUMPTION] {assumption_line}")
+        return "\n".join(lines)
 
     def get_recent_analysis_context(self) -> Dict[str, List[str]]:
         """Return the most recent file/module context analyzed by Qwen"""
@@ -1088,6 +1772,7 @@ class QwenOrchestrator:
         report_lines: List[str] = [f"[HOLODAE-INTELLIGENCE] Data-driven analysis for query: '{query}'"]
         unique_modules = sorted({module for module in modules if module})
         module_snapshots = {module: self._build_module_snapshot(module) for module in unique_modules}
+        self._last_module_snapshots = module_snapshots
         report_lines.append(
             f"[SEMANTIC] {len(files)} files across {len(unique_modules)} modules"
         )
@@ -1747,4 +2432,3 @@ class QwenOrchestrator:
             'recent_activity': [entry['message'] for entry in self.chain_of_thought_log[-5:]],
             'avg_effectiveness': sum(self.performance_history[-10:]) / max(1, len(self.performance_history[-10:])),
         }
-

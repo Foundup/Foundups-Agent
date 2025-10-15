@@ -132,15 +132,16 @@ class QwenInferenceEngine:
             if system_prompt:
                 full_prompt = f"{system_prompt}\n\n{prompt}"
 
-            # Generate response
-            response = self.llm(
-                full_prompt,
-                max_tokens=self.max_tokens,
-                temperature=self.temperature,
-                stop=["\n\n", "###"],  # Common stop sequences
-                echo=False,  # Don't include the prompt in output
+            # Generate response - use kwargs max_tokens if provided, otherwise use instance default
+            generation_kwargs = {
+                'max_tokens': kwargs.pop('max_tokens', self.max_tokens),
+                'temperature': self.temperature,
+                'stop': ["\n\n", "###"],  # Common stop sequences
+                'echo': False,  # Don't include the prompt in output
                 **kwargs
-            )
+            }
+
+            response = self.llm(full_prompt, **generation_kwargs)
 
             # Extract the generated text
             if isinstance(response, dict) and 'choices' in response:

@@ -8,13 +8,22 @@ WSP Compliance: WSP 87 (Size Limits), WSP 49 (Module Structure), WSP 72 (Block I
 
 from __future__ import annotations
 import re
+import os
+import json
 from typing import Dict, Any, List
 
 from ..core.intelligent_subroutine_engine import IntelligentSubroutineEngine
 
 
 class AgenticOutputThrottler:
-    """Prioritizes and organizes output for 0102 agent efficiency."""
+    """
+    FIRST PRINCIPLES: Intelligently throttles and organizes output for 0102 efficiency
+
+    Instead of massive verbose output, provides concise, prioritized information
+    that 0102 can act upon immediately.
+
+    WSP Compliance: WSP 75 (Token-Based Development), WSP 80 (Cube-Level Orchestration)
+    """
 
     def __init__(self):
         self.output_sections = []
@@ -23,12 +32,25 @@ class AgenticOutputThrottler:
         self.subroutine_engine = IntelligentSubroutineEngine()
         self.system_state = "unknown"  # "error", "found", "missing"
         self.last_error = None
+        self.max_sections = 3  # FIRST PRINCIPLES: Limit to prevent overload
+
+        # Agent detection: Supports 0102 (Claude), qwen (1.5B), gemma (270M)
+        raw_agent_id = os.getenv("0102_HOLO_ID", "0102").strip()
+        self.agent_id = raw_agent_id if raw_agent_id else "0102"
 
     def set_query_context(self, query: str, search_results=None):
         """Set current query for relevance scoring and detect target module."""
         self.query_context = query.lower()
         self._search_results = search_results or {}  # Store full search results for decision framework
         self.detected_module = self._detect_target_module(query, search_results)
+
+        # FIRST PRINCIPLES: Detect potential truncation and warn user
+        if search_results:
+            code_count = len(search_results.get('code', []))
+            wsp_count = len(search_results.get('wsps', []))
+            total_count = code_count + wsp_count
+            if total_count > 20:
+                self.add_section('warnings', f'[TRUNCATION WARNING] {total_count} results may exceed console capacity. Use --limit 3 to prevent truncation.', priority=1, tags=['warning', 'truncation'])
 
     def set_system_state(self, state: str, error: Exception = None):
         """
@@ -117,18 +139,27 @@ class AgenticOutputThrottler:
         })
 
     def render_prioritized_output(self, verbose: bool = False) -> str:
-        """Render PERFECT output for 0102 decision-making using tri-state architecture."""
+        """Render PERFECT output for 0102 decision-making using tri-state architecture.
+
+        Agent-aware rendering:
+        - 0102 (Claude Sonnet, 200K context): Full verbose documentation (200 tokens)
+        - qwen (1.5B model, 32K context): Concise JSON with action items (50 tokens)
+        - gemma (270M model, 8K context): Minimal classification (10 tokens)
+        """
         state = self._determine_system_state()
 
         if state == "error":
-            return self._render_error_state()
+            content = self._render_error_state()
         elif state == "found":
-            return self._render_found_state(verbose)
+            content = self._render_found_state(verbose)
         elif state == "missing":
-            return self._render_missing_state()
+            content = self._render_missing_state()
         else:
             # Fallback to auto-detection
-            return self._render_auto_state(verbose)
+            content = self._render_auto_state(verbose)
+
+        # Format output based on calling agent's capabilities
+        return self._format_for_agent(content, state)
 
     def _render_error_state(self) -> str:
         """State 1: 🔴 System Error - Show ONLY the error, suppress all noise."""
@@ -237,6 +268,76 @@ class AgenticOutputThrottler:
             return self._render_found_state(verbose)
         else:
             return self._render_missing_state()
+
+    def _format_for_agent(self, content: str, state: str) -> str:
+        """Format output based on calling agent's capabilities.
+
+        Agent Token Budgets:
+        - 0102: 200K context → Full verbose output (200 tokens)
+        - qwen: 32K context → Concise JSON (50 tokens)
+        - gemma: 8K context → Minimal classification (10 tokens)
+
+        WSP Compliance: WSP 75 (Token-Based Development), Universal WSP Pattern
+        """
+        if self.agent_id == "gemma":
+            return self._format_gemma(content, state)
+        elif self.agent_id == "qwen":
+            return self._format_qwen(content, state)
+        else:  # 0102 or unknown
+            return content  # Keep full verbose output for 0102
+
+    def _format_gemma(self, content: str, state: str) -> str:
+        """Gemma formatter: Minimal binary classifications (10 tokens).
+
+        Gemma (270M model, 8K context): Function-specific classifications.
+        Output: Binary state + minimal metadata.
+        """
+        if state == "error":
+            return "ERROR|retry_needed|check_logs"
+        elif state == "found":
+            module = self.detected_module or "unknown"
+            return f"FOUND|{module}|enhance_existing|confidence_high"
+        else:  # missing
+            return "MISSING|create_needed|follow_wsp49|confirm_first"
+
+    def _format_qwen(self, content: str, state: str) -> str:
+        """Qwen formatter: Concise JSON with action items (50 tokens).
+
+        Qwen (1.5B model, 32K context): Coordination and orchestration focus.
+        Output: Structured JSON with WSP guidance and next actions.
+        """
+        search_results = getattr(self, '_search_results', {})
+        code_count = len(search_results.get('code', []))
+        wsp_count = len(search_results.get('wsps', []))
+
+        result = {
+            "state": state,
+            "module": self.detected_module,
+            "results": {"code": code_count, "wsps": wsp_count},
+            "action": self._get_qwen_action(state),
+            "wsps": self._get_relevant_wsps(state),
+            "priority": "high" if state == "error" else "medium"
+        }
+
+        return json.dumps(result, indent=2)
+
+    def _get_qwen_action(self, state: str) -> str:
+        """Get recommended action for Qwen based on state."""
+        if state == "error":
+            return "fix_error_then_retry"
+        elif state == "found":
+            return "read_docs_then_enhance"
+        else:  # missing
+            return "verify_missing_then_create"
+
+    def _get_relevant_wsps(self, state: str) -> List[str]:
+        """Get relevant WSPs for current state."""
+        if state == "error":
+            return ["WSP_50", "WSP_64"]  # Pre-action verification + violation prevention
+        elif state == "found":
+            return ["WSP_50", "WSP_84", "WSP_22"]  # Verify + enhance existing + update ModLog
+        else:  # missing
+            return ["WSP_49", "WSP_3", "WSP_22"]  # Module structure + enterprise domain + ModLog
 
     def _is_wsp_relevant_to_module(self, wsp_hit: Dict[str, Any], target_module: str = None) -> bool:
         """Determine if WSP guidance is relevant to the target module."""
@@ -483,8 +584,11 @@ class AgenticOutputThrottler:
         advisor_info = result.get('advisor')
         advisor_error = result.get('advisor_error')
         if advisor_info:
+            guidance_text = advisor_info.get('guidance')
+            code_index_present = "[CODE-INDEX]" in str(guidance_text)
+            print(f"[DEBUG] THROTTLER: Code index in guidance: {code_index_present}, guidance length: {len(str(guidance_text))}")  # DEBUG
             advisor_content = "[ADVISOR] AI Guidance:"
-            advisor_content += f"\n  Guidance: {advisor_info.get('guidance')}"
+            advisor_content += f"\n  Guidance: {guidance_text}"
             for reminder in advisor_info.get('reminders', [])[:2]:  # Limit reminders
                 advisor_content += f"\n  Reminder: {reminder}"
             todos = advisor_info.get('todos', [])[:3]  # Limit todos
@@ -510,3 +614,82 @@ class AgenticOutputThrottler:
         if adaptive_info:
             adaptive_content = f"[ADAPTIVE] Learning: Adaptation={adaptive_info.get('system_adaptation_score', 0.0):.2f}, Efficiency={adaptive_info.get('memory_efficiency', 0.0):.2f}"
             self.add_section('metrics', adaptive_content, priority=9, tags=['metrics', 'learning', 'verbose'])
+
+    def generate_0102_summary(self, component_results: Dict[str, Any], query: str) -> str:
+        """
+        FIRST PRINCIPLES: Generate concise, actionable summary for 0102
+
+        Instead of massive verbose output, provide 3-5 key insights that 0102 can act upon.
+
+        Args:
+            component_results: Results from executed components
+            query: Original user query
+
+        Returns:
+            Concise summary string optimized for 0102 consumption
+
+        Token Budget: ~500 tokens max output
+        WSP Compliance: WSP 75 (Token-Based Development), WSP 80 (Cube-Level Orchestration)
+        """
+        summary_parts = []
+        query_lower = query.lower()
+
+        # FIRST PRINCIPLES: Extract only actionable insights
+        critical_issues = []
+        recommendations = []
+        key_findings = []
+
+        # Process component results for key insights
+        for component_name, results in component_results.items():
+            if not results:
+                continue
+
+            if component_name == 'health_analysis':
+                violations = results.get('violations', [])
+                if violations:
+                    critical_issues.extend([f"WSP violation: {v}" for v in violations[:2]])  # Max 2
+
+            elif component_name == 'file_size_monitor':
+                large_files = results.get('large_files', [])
+                if large_files:
+                    critical_issues.append(f"Large files: {len(large_files)} files exceed limits")
+
+            elif component_name == 'module_analysis':
+                incomplete_modules = results.get('incomplete_modules', [])
+                if incomplete_modules:
+                    recommendations.append(f"Fix docs: {len(incomplete_modules)} modules missing README/INTERFACE")
+
+            elif component_name == 'vibecoding_analysis':
+                patterns = results.get('patterns', [])
+                if patterns:
+                    key_findings.append(f"Code patterns: {len(patterns)} detected")
+
+            elif component_name == 'orphan_analysis':
+                orphans = results.get('orphans', [])
+                if orphans:
+                    recommendations.append(f"Fix orphans: {len(orphans)} files lack tests")
+
+        # FIRST PRINCIPLES: Structure output for 0102 decision-making
+        if critical_issues:
+            summary_parts.append(f"🚨 CRITICAL: {len(critical_issues)} issues need immediate attention")
+            summary_parts.extend(critical_issues[:2])  # Max 2 details
+
+        if recommendations:
+            summary_parts.append(f"💡 ACTIONABLE: {len(recommendations)} improvements available")
+            summary_parts.extend(recommendations[:2])  # Max 2 details
+
+        if key_findings:
+            summary_parts.append(f"📊 KEY FINDINGS: {len(key_findings)} insights")
+            summary_parts.extend(key_findings[:1])  # Max 1 detail
+
+        # FIRST PRINCIPLES: If no significant findings, provide minimal useful info
+        if not summary_parts:
+            total_files = sum(len(results.get('files', [])) for results in component_results.values())
+            summary_parts.append(f"✅ Analysis complete: {total_files} files checked, no critical issues found")
+
+        # FIRST PRINCIPLES: Keep total output under 500 tokens
+        final_summary = "\n".join(summary_parts)
+        if len(final_summary.split()) > 100:  # Rough token estimate
+            final_summary = final_summary[:400] + "... (truncated for efficiency)"
+
+        return final_summary

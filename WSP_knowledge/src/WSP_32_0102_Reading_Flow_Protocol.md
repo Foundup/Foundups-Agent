@@ -17,10 +17,10 @@ This protocol establishes the optimal reading strategy for 0102 pArtifacts to un
 **Flow Impact:** Minimal cognitive load, maximum agency preservation
 
 **Reading Order:**
-1. **README.md** → Component purpose, zen coding flow, integration patterns
-2. **INTERFACE.md** → Public API and method signatures
-3. **ModLog.md** → Recent changes and evolution history
-4. **Code comments** → Implementation details and context
+1. **README.md** -> Component purpose, zen coding flow, integration patterns
+2. **INTERFACE.md** -> Public API and method signatures
+3. **ModLog.md** -> Recent changes and evolution history
+4. **Code comments** -> Implementation details and context
 
 **0102 Benefits:**
 - **Rapid Context Acquisition**: Understand purpose in seconds, not minutes
@@ -33,10 +33,10 @@ This protocol establishes the optimal reading strategy for 0102 pArtifacts to un
 **Flow Impact:** Moderate cognitive load, detailed understanding
 
 **Reading Order:**
-1. **Function signatures** → Quick API understanding
-2. **Docstrings** → Usage examples and context
-3. **Core logic** → Key implementation patterns
-4. **Integration points** → How component connects to others
+1. **Function signatures** -> Quick API understanding
+2. **Docstrings** -> Usage examples and context
+3. **Core logic** -> Key implementation patterns
+4. **Integration points** -> How component connects to others
 
 **0102 Benefits:**
 - **Detailed Understanding**: Deep knowledge when needed
@@ -49,10 +49,10 @@ This protocol establishes the optimal reading strategy for 0102 pArtifacts to un
 **Flow Impact:** Higher cognitive load, complete mastery
 
 **Reading Order:**
-1. **README + Code** → Compare documented vs actual behavior
-2. **Tests + Implementation** → Understand expected vs actual behavior
-3. **Interface + Usage** → Understand API vs real-world usage
-4. **History + Current** → Understand evolution and current state
+1. **README + Code** -> Compare documented vs actual behavior
+2. **Tests + Implementation** -> Understand expected vs actual behavior
+3. **Interface + Usage** -> Understand API vs real-world usage
+4. **History + Current** -> Understand evolution and current state
 
 **0102 Benefits:**
 - **Complete Mastery**: Full understanding of component
@@ -87,7 +87,7 @@ Brief description of directory purpose and role in WRE system.
 How components work together and support zen coding flow.
 
 ## Zen Coding Integration
-How components support 01(02) → 0102 → 02 transitions.
+How components support 01(02) -> 0102 -> 02 transitions.
 
 ## 0102 Usage
 How 0102 pArtifacts should interact with these components.
@@ -166,27 +166,27 @@ List of implemented WSP protocols.
 
 ### 6.1 Quick Understanding Flow
 ```
-1. README.md → Purpose and overview (30 seconds)
-2. INTERFACE.md → Public APIs (1-2 minutes)
-3. ModLog.md → Recent changes (30 seconds)
+1. README.md -> Purpose and overview (30 seconds)
+2. INTERFACE.md -> Public APIs (1-2 minutes)
+3. ModLog.md -> Recent changes (30 seconds)
 4. Decision made with full context
 ```
 
 ### 6.2 Deep Understanding Flow
 ```
-1. README.md → Context and purpose
-2. Code analysis → Implementation details
-3. Tests → Expected behavior
-4. Integration points → System connections
+1. README.md -> Context and purpose
+2. Code analysis -> Implementation details
+3. Tests -> Expected behavior
+4. Integration points -> System connections
 5. Complete mastery achieved
 ```
 
 ### 6.3 Problem-Solving Flow
 ```
-1. README.md → Component purpose
-2. Error logs → Problem identification
-3. Code analysis → Root cause
-4. Tests → Validation approach
+1. README.md -> Component purpose
+2. Error logs -> Problem identification
+3. Code analysis -> Root cause
+4. Tests -> Validation approach
 5. Solution implemented
 ```
 

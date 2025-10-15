@@ -14,8 +14,8 @@ Enables 0102 pArtifacts to analyze code quality, complexity, and compliance.
 import ast
 import os
 import re
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple, Set
+from dataclasses import dataclass, field
 from pathlib import Path
 
 
@@ -29,6 +29,18 @@ class CodeAnalysisResult:
     issues: List[str]
     recommendations: List[str]
     wsp_compliance: Dict[str, bool]
+
+
+@dataclass
+class ExecutionGraphResult:
+    """Result of execution graph tracing (snake & ladders pattern)."""
+    entry_point: str
+    total_modules: int
+    execution_graph: Dict[str, List[str]]  # module -> list of imported modules
+    module_list: List[str]  # All unique modules in execution order
+    depth_map: Dict[str, int]  # module -> depth from entry point
+    orphaned_modules: List[Dict[str, str]] = field(default_factory=list)  # modules in folder but not in graph
+    mermaid_flowchart: str = ""  # Mermaid visualization
 
 
 class CodeAnalyzer:
@@ -275,12 +287,274 @@ class CodeAnalyzer:
         lines = content.split('\n')
         code_lines = [line for line in lines if line.strip() and not line.strip().startswith('#')]
         comment_lines = [line for line in lines if line.strip().startswith('#')]
-        
+
         if not code_lines:
             return True
-            
+
         comment_ratio = len(comment_lines) / len(code_lines)
         return comment_ratio >= 0.1  # At least 10% comments
+
+    # ========== EXECUTION GRAPH TRACING (Snake & Ladders Pattern) ==========
+
+    def trace_execution_graph(
+        self,
+        entry_point: str,
+        max_depth: int = 10,
+        modules_root: Optional[str] = None
+    ) -> ExecutionGraphResult:
+        """
+        Trace execution graph from entry point following ALL imports (snake & ladders).
+
+        This implements the "CodeIndex" pattern: trace every import recursively to map
+        complete execution flow from a given entry point (e.g., main.py::monitor_youtube).
+
+        Args:
+            entry_point: Starting file path (e.g., "main.py" or "main.py::monitor_youtube")
+            max_depth: Maximum import depth to trace (default: 10)
+            modules_root: Root directory containing modules/ folder (default: auto-detect)
+
+        Returns:
+            ExecutionGraphResult with complete execution graph, orphan detection, and visualization
+
+        Example:
+            >>> analyzer = CodeAnalyzer()
+            >>> result = analyzer.trace_execution_graph("main.py", max_depth=10)
+            >>> print(f"Total modules: {result.total_modules}")
+            >>> print(f"Orphaned: {len(result.orphaned_modules)}")
+        """
+        # Parse entry point (support "file.py::function" format)
+        if "::" in entry_point:
+            entry_file, entry_function = entry_point.split("::", 1)
+        else:
+            entry_file = entry_point
+            entry_function = None
+
+        # Auto-detect modules root if not provided
+        if modules_root is None:
+            modules_root = self._find_modules_root(entry_file)
+
+        # Initialize traversal state
+        visited: Set[str] = set()
+        execution_graph: Dict[str, List[str]] = {}
+        depth_map: Dict[str, int] = {}
+        queue: List[Tuple[str, int]] = [(entry_file, 0)]
+
+        # BFS traversal (snake & ladders pattern)
+        while queue:
+            current_file, current_depth = queue.pop(0)
+
+            # Skip if already visited or exceeds max depth
+            if current_file in visited or current_depth > max_depth:
+                continue
+
+            visited.add(current_file)
+            depth_map[current_file] = current_depth
+
+            # Parse imports from current file
+            imports = self._parse_imports(current_file, modules_root)
+            execution_graph[current_file] = imports
+
+            # Add imports to queue (follow the ladder)
+            for imported_module in imports:
+                if imported_module not in visited:
+                    queue.append((imported_module, current_depth + 1))
+
+        # Detect orphaned modules (in folder but not in execution graph)
+        orphaned_modules = self._find_orphaned_modules(modules_root, visited)
+
+        # Generate Mermaid flowchart visualization
+        mermaid_flowchart = self._generate_mermaid_flowchart(execution_graph, depth_map)
+
+        return ExecutionGraphResult(
+            entry_point=entry_point,
+            total_modules=len(visited),
+            execution_graph=execution_graph,
+            module_list=sorted(visited, key=lambda x: depth_map.get(x, 999)),
+            depth_map=depth_map,
+            orphaned_modules=orphaned_modules,
+            mermaid_flowchart=mermaid_flowchart
+        )
+
+    def _parse_imports(self, file_path: str, modules_root: str) -> List[str]:
+        """
+        Parse all imports from a Python file using AST.
+
+        Returns list of resolved module file paths that were imported.
+        """
+        imports = []
+
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            tree = ast.parse(content, filename=file_path)
+        except Exception as e:
+            # Can't parse file - return empty list
+            return []
+
+        # Extract import statements
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    imports.append(alias.name)
+            elif isinstance(node, ast.ImportFrom):
+                if node.module:
+                    imports.append(node.module)
+
+        # Resolve import names to actual file paths
+        resolved_imports = []
+        for import_name in imports:
+            resolved_path = self._resolve_import_path(import_name, file_path, modules_root)
+            if resolved_path:
+                resolved_imports.append(resolved_path)
+
+        return resolved_imports
+
+    def _resolve_import_path(
+        self,
+        import_name: str,
+        from_file: str,
+        modules_root: str
+    ) -> Optional[str]:
+        """
+        Resolve import name to actual file path following WSP 3 module structure.
+
+        Examples:
+            "modules.communication.livechat.src.livechat_core"
+            -> "O:/Foundups-Agent/modules/communication/livechat/src/livechat_core.py"
+
+            ".livechat_core" (relative import)
+            -> Resolve based on from_file location
+        """
+        # Skip stdlib imports
+        stdlib_modules = {
+            'os', 'sys', 'ast', 're', 'json', 'time', 'datetime', 'pathlib',
+            'typing', 'dataclasses', 'collections', 'itertools', 'functools',
+            'asyncio', 'logging', 'unittest', 'tempfile', 'shutil'
+        }
+        first_part = import_name.split('.')[0]
+        if first_part in stdlib_modules:
+            return None
+
+        # Handle relative imports (e.g., ".livechat_core")
+        if import_name.startswith('.'):
+            base_dir = Path(from_file).parent
+            relative_parts = import_name.lstrip('.').split('.')
+            for part in relative_parts:
+                candidate = base_dir / f"{part}.py"
+                if candidate.exists():
+                    return str(candidate)
+            return None
+
+        # Handle absolute imports (e.g., "modules.communication.livechat.src.livechat_core")
+        parts = import_name.split('.')
+
+        # Try converting dots to slashes and appending .py
+        for i in range(len(parts), 0, -1):
+            potential_path = Path(modules_root) / '/'.join(parts[:i])
+
+            # Try as direct file
+            if potential_path.with_suffix('.py').exists():
+                return str(potential_path.with_suffix('.py'))
+
+            # Try as package __init__.py
+            if (potential_path / '__init__.py').exists():
+                return str(potential_path / '__init__.py')
+
+        return None
+
+    def _find_modules_root(self, entry_file: str) -> str:
+        """
+        Find the root directory containing the modules/ folder.
+        Walks up from entry_file until finding modules/ directory.
+        """
+        current_dir = Path(entry_file).parent.absolute()
+
+        # Walk up directory tree
+        for _ in range(10):  # Max 10 levels up
+            modules_dir = current_dir / "modules"
+            if modules_dir.exists() and modules_dir.is_dir():
+                return str(current_dir)
+            current_dir = current_dir.parent
+
+        # Fallback to current directory
+        return str(Path(entry_file).parent)
+
+    def _find_orphaned_modules(
+        self,
+        modules_root: str,
+        visited: Set[str]
+    ) -> List[Dict[str, str]]:
+        """
+        Find modules in modules/ folder that are NOT in execution graph.
+        Returns list of orphaned modules with metadata.
+        """
+        orphans = []
+        modules_dir = Path(modules_root) / "modules"
+
+        if not modules_dir.exists():
+            return orphans
+
+        # Scan all .py files in modules/
+        for py_file in modules_dir.rglob("*.py"):
+            file_path = str(py_file)
+
+            # Skip if in execution graph
+            if file_path in visited:
+                continue
+
+            # Skip __init__.py files (not orphans)
+            if py_file.name == "__init__.py":
+                continue
+
+            # Skip test files (separate concern)
+            if "/tests/" in file_path or "\\tests\\" in file_path:
+                continue
+
+            # This is an orphan
+            orphans.append({
+                "path": file_path,
+                "reason": "Not imported by any module in execution graph",
+                "module": str(py_file.relative_to(modules_dir)),
+                "suggested_action": "Investigate why module exists or archive if unused"
+            })
+
+        return orphans
+
+    def _generate_mermaid_flowchart(
+        self,
+        execution_graph: Dict[str, List[str]],
+        depth_map: Dict[str, int]
+    ) -> str:
+        """
+        Generate Mermaid flowchart for execution graph visualization.
+
+        Output format:
+        ```mermaid
+        flowchart TD
+            N0[main.py] --> N1[auto_moderator_dae.py]
+            N1 --> N2[stream_resolver.py]
+            N1 --> N3[livechat_core.py]
+        ```
+        """
+        mermaid = "flowchart TD\n"
+
+        # Generate node IDs and labels
+        node_ids = {}
+        for i, module in enumerate(sorted(execution_graph.keys(), key=lambda x: depth_map.get(x, 999))):
+            node_ids[module] = f"N{i}"
+            # Shorten module name for display (just filename)
+            display_name = Path(module).stem
+            mermaid += f"    {node_ids[module]}[{display_name}]\n"
+
+        # Generate edges
+        for module, imports in execution_graph.items():
+            if module not in node_ids:
+                continue
+            for imported in imports:
+                if imported in node_ids:
+                    mermaid += f"    {node_ids[module]} --> {node_ids[imported]}\n"
+
+        return mermaid
 
 
 def analyze_code(file_path: str) -> CodeAnalysisResult:

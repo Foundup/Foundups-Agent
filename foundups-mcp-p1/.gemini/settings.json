@@ -1,0 +1,37 @@
+{
+  "mcpServers": {
+    "Foundups HoloIndex MCP Server": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--with",
+        "fastmcp",
+        "fastmcp",
+        "run",
+        "O:\\Foundups-Agent\\foundups-mcp-p1\\servers\\holo_index\\server.py"
+      ]
+    },
+    "Test MCP Server": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--with",
+        "fastmcp",
+        "fastmcp",
+        "run",
+        "O:\\Foundups-Agent\\foundups-mcp-p1\\test_server.py"
+      ]
+    },
+    "Foundups HoloIndex MCP Server (Simple)": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--with",
+        "fastmcp",
+        "fastmcp",
+        "run",
+        "O:\\Foundups-Agent\\foundups-mcp-p1\\servers\\holo_index\\simple_server.py"
+      ]
+    }
+  }
+}

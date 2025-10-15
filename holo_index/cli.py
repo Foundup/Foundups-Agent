@@ -22,6 +22,7 @@ if str(project_root) not in sys.path:
 from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import asdict
 from holo_index.utils.helpers import safe_print
+from holo_index.reports.codeindex_reporter import CodeIndexReporter, resolve_module_paths
 
 try:
     from holo_index.qwen_advisor.advisor import AdvisorContext, QwenAdvisor
@@ -123,6 +124,15 @@ WSP_HINTS: Dict[str, str] = {
     "WSP 87": "Consult navigation assets before writing new code.",
 }
 
+CODEINDEX_REPORT_ALIASES: Dict[str, List[str]] = {
+    "youtube_dae": [
+        "modules/communication/livechat",
+        "modules/communication/youtube_dae",
+        "modules/platform_integration/stream_resolver",
+        "modules/platform_integration/youtube_auth",
+    ],
+}
+
 # Import dynamic WSP paths from helpers
 try:
     from .utils.helpers import get_wsp_paths
@@ -165,6 +175,60 @@ def _perform_health_checks_and_rewards(results, last_query, add_reward_event):
     """Stub function for health checks and rewards - TODO: implement properly"""
     return None
 
+def _run_codeindex_report(target: str) -> None:
+    reporter = CodeIndexReporter()
+    repo_root = project_root
+    alias = target.strip()
+    modules = CODEINDEX_REPORT_ALIASES.get(alias, [alias])
+    module_paths = resolve_module_paths(repo_root, modules)
+    if not module_paths:
+        safe_print(f"[CODEINDEX] No modules resolved for target '{alias}'.")
+        safe_print("           Provide a known alias (e.g., youtube_dae) or a module path.")
+        return
+
+    title = f"CodeIndex Report: {alias}"
+    report = reporter.generate(module_paths, title)
+    timestamp = report.generated_at.strftime('%Y%m%d-%H%M%S')
+    sanitized_alias = re.sub(r'[^A-Za-z0-9_-]', '_', alias)
+    # WSP 3: Reports belong in holo_index/reports/, not root docs/
+    output_dir = Path(__file__).parent / "reports"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / f"CodeIndex_Report_{sanitized_alias}_{timestamp}.md"
+    output_path.write_text(report.markdown, encoding='utf-8')
+
+    module_list_display = ", ".join(path.name for path in module_paths)
+    safe_print(f"[CODEINDEX] Report saved -> {output_path}")
+    safe_print(f"[CODEINDEX] Modules analyzed: {module_list_display}")
+    for summary in report.module_reports:
+        safe_print(
+            f"  - {summary.module_name}: {summary.critical_fix_count()} critical fixes "
+            f"({len(summary.surgical_fixes)} total surgical recommendations)"
+        )
+
+    log_path = output_dir / "CodeIndex_Report_Log.md"
+    # Make path relative to holo_index for cleaner display
+    try:
+        relative_report = output_path.relative_to(Path(__file__).parent.parent)
+    except ValueError:
+        relative_report = output_path  # Fallback to absolute if relative fails
+    critical_summary = ", ".join(
+        f"{summary.module_name}:{summary.critical_fix_count()}"
+        for summary in report.module_reports
+    ) or "n/a"
+    log_entry = [
+        f"## {report.generated_at.isoformat()} UTC — {alias}",
+        f"- Report: `{relative_report}`",
+        f"- Modules: {module_list_display if module_list_display else 'n/a'}",
+        f"- Critical Fixes: {critical_summary}",
+        ""
+    ]
+    if log_path.exists():
+        existing = log_path.read_text(encoding='utf-8')
+    else:
+        existing = "# CodeIndex Report Log\n\nTracks CodeIndex surgical reports generated via CLI.\n\n"
+    log_path.write_text("\n".join(log_entry) + existing, encoding='utf-8')
+    safe_print(f"[CODEINDEX] Log updated -> {log_path}")
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="HoloIndex - Semantic Navigation with WSP guardrails")
     parser.add_argument('--index', action='store_true', help='Index code + WSP (backward compatible shorthand)')
@@ -173,7 +237,11 @@ def main() -> None:
     parser.add_argument('--index-all', action='store_true', help='Index both code and WSP documents')
     parser.add_argument('--wsp-path', nargs='*', help='Additional WSP directories to include in the index')
     parser.add_argument('--search', type=str, help='Search for code + WSP guidance')
-    parser.add_argument('--limit', type=int, default=5, help='Number of results per category (default: 5)')
+    parser.add_argument('--limit', type=int, default=5, help='Number of results per category (default: 5, use 3 for console output to prevent truncation)')
+    parser.add_argument('--dae-cubes', action='store_true', help='Enable DAE cube mapping and mermaid flow generation (revolutionary vibecoding prevention)')
+    parser.add_argument('--function-index', action='store_true', help='Enable code index level function indexing with line numbers and complexity analysis')
+    parser.add_argument('--code-index', action='store_true', help='Enable full code index mode: function indexing + inefficiency analysis + detailed mermaid diagrams')
+    parser.add_argument('--code-index-report', type=str, help='Generate CodeIndex report for an alias or module path (e.g., youtube_dae)')
     parser.add_argument('--doc-type', choices=['wsp_protocol', 'module_readme', 'interface', 'documentation', 'roadmap', 'modlog', 'all'], default='all', help='Filter by document type (default: all)')
     parser.add_argument('--benchmark', action='store_true', help='Benchmark SSD performance')
     parser.add_argument('--ssd', type=str, default='E:/HoloIndex', help='SSD base path (default: E:/HoloIndex)')
@@ -187,6 +255,7 @@ def main() -> None:
     parser.add_argument('--check-wsp-docs', action='store_true', help='Run WSP Documentation Guardian compliance check (read-only)')
     parser.add_argument('--fix-ascii', action='store_true', help='Enable ASCII auto-remediation when used with --check-wsp-docs')
     parser.add_argument('--rollback-ascii', type=str, help='Rollback ASCII changes for a specific file (provide filename)')
+    parser.add_argument('--fix-violations', action='store_true', help='Auto-correct correctable root directory violations (WSP compliance)')
     parser.add_argument('--verbose', action='store_true', help='Show detailed output including low-priority information')
     parser.add_argument('--no-advisor', action='store_true', help='Disable advisor (opt-out for 0102 agents)')
     parser.add_argument('--advisor-rating', choices=['useful', 'needs_more'], help='Provide feedback on advisor output')
@@ -213,6 +282,10 @@ def main() -> None:
     parser.add_argument('--list-modules', action='store_true', help='List all registered modules')
 
     args = parser.parse_args()
+
+    if args.code_index_report:
+        _run_codeindex_report(args.code_index_report)
+        return
 
     run_number = os.getenv('HOLOINDEX_RUN', '1')
 
@@ -713,6 +786,34 @@ def main() -> None:
 
         return
 
+    if args.fix_violations:
+        # Auto-correct root directory violations
+        safe_print("[WSP-COMPLIANCE] Auto-correcting root directory violations")
+        safe_print("=" * 60)
+
+        try:
+            from holo_index.monitoring.root_violation_monitor import scan_and_correct_violations
+            import asyncio
+
+            # Run auto-correction synchronously
+            corrections = asyncio.run(scan_and_correct_violations())
+
+            safe_print("\n[RESULTS] Auto-correction completed:")
+            safe_print(f"  ✅ Corrections applied: {corrections['corrections_applied']}")
+            safe_print(f"  ❌ Failed corrections: {corrections['failed_corrections']}")
+            safe_print(f"  📊 Total processed: {corrections['total_processed']}")
+
+            if corrections['corrections_applied']:
+                safe_print("\n[SUCCESS] Violations auto-corrected. Run search again to verify.")
+            else:
+                safe_print("\n[INFO] No auto-correctable violations found.")
+
+        except Exception as e:
+            safe_print(f"[ERROR] Failed to auto-correct violations: {e}")
+            safe_print("[TIP] Manual correction may be required for some violations.")
+
+        return
+
     if args.docs_file:
         # Provide documentation paths for a given file (012's insight: direct doc provision)
 
@@ -759,6 +860,21 @@ def main() -> None:
         return  # Exit after doc provision
 
     if args.search:
+        # WSP COMPLIANCE: Check root violations using Gemma monitoring
+        try:
+            from holo_index.monitoring.root_violation_monitor import get_root_violation_alert
+            import asyncio
+
+            # Run violation check synchronously
+            violation_alert = asyncio.run(get_root_violation_alert())
+            if violation_alert:
+                # Display violation alert at the TOP of HoloIndex output
+                safe_print(violation_alert)
+                safe_print("")  # Add spacing
+        except Exception as e:
+            safe_print(f"[WARNING] Root violation monitoring failed: {e}")
+            safe_print("")
+
         # Initialize agentic output throttler
         throttler = AgenticOutputThrottler()
 
@@ -908,7 +1024,11 @@ def main() -> None:
                 # Use enhanced query from Phase 3 if available, otherwise original query
                 advisor_query = enhanced_query if 'enhanced_query' in locals() else args.search
                 context = AdvisorContext(query=advisor_query, code_hits=results.get('code', []), wsp_hits=results.get('wsps', []))
-                advisor_output = advisor.generate_guidance(context)
+                advisor_output = advisor.generate_guidance(
+                    context,
+                    enable_dae_cube_mapping=args.dae_cubes or args.code_index,
+                    enable_function_indexing=args.function_index or args.code_index
+                )
                 results['advisor'] = asdict(advisor_output)
 
                 # Extract health notices from advisor metadata and perform health checks

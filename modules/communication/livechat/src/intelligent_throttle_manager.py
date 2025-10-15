@@ -278,6 +278,7 @@ class IntelligentThrottleManager:
             'troll_response': {'last': None, 'multiplier': 3.0, 'success_rate': 1.0, 'priority': 2},
             'pqn_research': {'last': None, 'multiplier': 2.5, 'success_rate': 1.0, 'priority': 3},  # NEW: PQN throttling
             'command': {'last': None, 'multiplier': 0.8, 'success_rate': 1.0, 'priority': 7},  # NEW: Command throttling
+            'video_progress': {'last': None, 'multiplier': 2.0, 'success_rate': 1.0, 'priority': 4},  # NEW: Shorts video progress messages
             'general': {'last': None, 'multiplier': 1.5, 'success_rate': 1.0, 'priority': 5}
         }
         
