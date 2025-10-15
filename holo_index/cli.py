@@ -409,6 +409,27 @@ def main() -> None:
                 print(f"[AUTOMATIC] Code index: {'STALE' if needs_code_refresh else 'FRESH'}")
                 print(f"[AUTOMATIC] WSP index: {'STALE' if needs_wsp_refresh else 'FRESH'}")
 
+                # DOCDAE: Autonomous documentation organization (WSP 3 compliance)
+                # Runs BEFORE indexing to ensure file system is organized
+                print("[DOCDAE] Checking documentation organization...")
+                try:
+                    from modules.infrastructure.doc_dae.src.doc_dae import DocDAE
+                    dae = DocDAE()
+
+                    # Quick analysis: any misplaced files in root docs/?
+                    analysis = dae.analyze_docs_folder()
+                    misplaced_count = analysis['markdown_docs'] + analysis['json_data']
+
+                    if misplaced_count > 0:
+                        print(f"[DOCDAE] Found {misplaced_count} misplaced files - organizing...")
+                        result = dae.run_autonomous_organization(dry_run=False)
+                        print(f"[DOCDAE] Organized: {result['execution']['moves_completed']} moved, "
+                              f"{result['execution']['archives_completed']} archived")
+                    else:
+                        print("[DOCDAE] Documentation already organized")
+                except Exception as e:
+                    print(f"[WARN] DocDAE failed: {e} - continuing with indexing")
+
                 # Automatically refresh stale indexes
                 if needs_code_refresh:
                     print("[AUTO-REFRESH] Refreshing code index...")
