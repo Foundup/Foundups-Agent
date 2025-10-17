@@ -265,20 +265,129 @@ def search_with_holoindex(query: str):
         return None
 
 
-# Extracted to modules/ai_intelligence/holo_dae/scripts/launch.py per WSP 62
-from modules.ai_intelligence.holo_dae.scripts.launch import run_holodae
+def run_holodae():
+    """Run HoloDAE (Code Intelligence & Monitoring)."""
+    print("[HOLODAE] Starting HoloDAE - Code Intelligence & Monitoring System...")
+
+    # HOLO-DAE INSTANCE LOCKING (First Principles: Resource Protection & Consistency)
+    from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
+    lock = get_instance_lock("holodae_monitor")
+
+    # Check for duplicates and acquire lock
+    duplicates = lock.check_duplicates()
+    if duplicates:
+        logger.warning("[REC] Duplicate HoloDAE Instances Detected!")
+        print("\n[REC] Duplicate HoloDAE Instances Detected!")
+        print(f"\n  Found {len(duplicates)} instances of HoloDAE running:")
+        for i, pid in enumerate(duplicates, 1):
+            print(f"\n  {i}. PID {pid} - [Checking process details...]")
+        print("\n  Current instance will exit to prevent conflicts.")
+        print("  Use --no-lock to disable instance locking.")
+        return  # Exit if duplicates found
+
+    # Acquire lock for this instance
+    if not lock.acquire():
+        logger.error("*EFailed to acquire HoloDAE instance lock - another instance is running")
+        print("\n*EFailed to acquire HoloDAE instance lock!")
+        print("   Another HoloDAE instance is already running.")
+        print("   Only one instance can run at a time to prevent index conflicts.")
+        print("   Use --no-lock to disable instance locking.")
+        return  # Exit if lock acquisition failed
+
+    try:
+        from holo_index.qwen_advisor.autonomous_holodae import AutonomousHoloDAE
+        holodae = AutonomousHoloDAE()
+
+        # Log successful instance acquisition
+        instance_summary = lock.get_instance_summary()
+        total_instances = instance_summary["total_instances"]
+        current_pid = instance_summary["current_pid"]
+        logger.info(f"[INFO]HoloDAE SINGLE INSTANCE: PID {current_pid} - No other HoloDAEs detected")
+
+        holodae.start_autonomous_monitoring()
+
+        print("[HOLODAE] Autonomous monitoring active. Press Ctrl+C to stop.")
+
+        # Keep the process running
+        try:
+            while holodae.active:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("[HOLODAE] Stopping autonomous monitoring...")
+            holodae.stop_autonomous_monitoring()
+            print("[HOLODAE] HoloDAE stopped successfully")
+
+    except Exception as e:
+        print(f"[HOLODAE-ERROR] Failed to start: {e}")
+        import traceback
+        traceback.print_exc()
+
+    finally:
+        # Release the instance lock when done
+        lock.release()
+        logger.info("[LOCK] HoloDAE monitor instance lock released")
 
 
-# Extracted to modules/communication/auto_meeting_orchestrator/scripts/launch.py per WSP 62
-from modules.communication.auto_meeting_orchestrator.scripts.launch import run_amo_dae
+def run_amo_dae():
+    """Run AMO DAE (Autonomous Moderation Operations)."""
+    print("[AMO] Starting AMO DAE (Autonomous Moderation Operations)...")
+    try:
+        from modules.communication.livechat.src.auto_moderator_dae import AutoModeratorDAE
+        dae = AutoModeratorDAE()
+        asyncio.run(dae.run())
+    except Exception as e:
+        print(f"[AMO-ERROR] AMO DAE failed: {e}")
+        import traceback
+        traceback.print_exc()
 
 
-# Extracted to modules/platform_integration/social_media_orchestrator/scripts/launch.py per WSP 62
-from modules.platform_integration.social_media_orchestrator.scripts.launch import run_social_media_dae
+def run_social_media_dae():
+    """Run Social Media DAE (012 Digital Twin)."""
+    print("[INFO] Starting Social Media DAE (012 Digital Twin)...")
+    try:
+        from modules.platform_integration.social_media_orchestrator.src.social_media_orchestrator import SocialMediaOrchestrator
+        orchestrator = SocialMediaOrchestrator()
+        # TODO: Implement digital twin mode
+        print("Digital Twin mode coming soon...")
+        print("Social Media DAE orchestration available for development.")
+    except Exception as e:
+        print(f"[ERROR]Social Media DAE failed: {e}")
+        import traceback
+        traceback.print_exc()
 
 
-# Extracted to modules/infrastructure/dae_infrastructure/foundups_vision_dae/scripts/launch.py per WSP 62
-from modules.infrastructure.dae_infrastructure.foundups_vision_dae.scripts.launch import run_vision_dae
+def run_vision_dae(enable_voice: bool = False):
+    """Run FoundUps Vision DAE (multi-modal pattern sensorium)."""
+    print("[VISION] Starting FoundUps Vision DAE (Pattern Sensorium)...")
+    from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
+    lock = get_instance_lock("vision_dae_monitor")
+
+    duplicates = lock.check_duplicates()
+    if duplicates:
+        logger.warning("[VisionDAE] Duplicate instances detected")
+        print("\n[VisionDAE] Duplicate Vision DAE instances detected!")
+        for i, pid in enumerate(duplicates, 1):
+            print(f"  {i}. PID {pid}")
+        print("Use --no-lock to bypass duplicate protection.")
+        return
+
+    if not lock.acquire():
+        logger.error("[VisionDAE] Failed to acquire instance lock")
+        print("\n[VisionDAE] Failed to acquire Vision DAE instance lock!")
+        print("Another Vision DAE instance is already running.")
+        print("Use --no-lock to disable locking if this is intentional.")
+        return
+
+    try:
+        from modules.infrastructure.dae_infrastructure.foundups_vision_dae.src.vision_dae import launch_vision_dae
+        asyncio.run(launch_vision_dae(enable_voice=enable_voice))
+    except Exception as e:
+        print(f"[VisionDAE] Vision DAE failed: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        lock.release()
+        logger.info("[VisionDAE] Instance lock released")
 
 
 def run_utf8_hygiene_scan(
@@ -919,14 +1028,54 @@ def execute_training_command(command: str, targets: Optional[str], json_output: 
             print(f"[ERROR] Training command failed: {response.get('message', response.get('error'))}")
         if warning:
             print(f"[WARN] {warning}")
-# Extracted to modules/ai_intelligence/pqn/scripts/launch.py per WSP 62
-from modules.ai_intelligence.pqn.scripts.launch import run_pqn_dae
+def run_pqn_dae():
+    """Run PQN Orchestration (Research & Alignment)."""
+    print("[INFO] Starting PQN Research DAE...")
+    try:
+        from modules.ai_intelligence.pqn_alignment.src.pqn_research_dae_orchestrator import PQNResearchDAEOrchestrator
+        pqn_dae = PQNResearchDAEOrchestrator()
+        asyncio.run(pqn_dae.run())
+    except Exception as e:
+        print(f"[ERROR]PQN DAE failed: {e}")
+        import traceback
+        traceback.print_exc()
 
-# Extracted to modules/communication/liberty_alert/scripts/launch.py per WSP 62
-from modules.communication.liberty_alert.scripts.launch import run_liberty_alert_dae
 
-# Extracted to modules/infrastructure/evade_net/scripts/launch.py per WSP 62
-from modules.infrastructure.evade_net.scripts.launch import run_evade_net
+def run_liberty_alert_dae():
+    """Run Liberty Alert DAE (Community Protection Autonomous Entity)."""
+    print("[LIBERTY ALERT DAE] Starting Community Protection Autonomous Entity...")
+    print("[LIBERTY ALERT DAE] 'L as resistance roots' - Liberty through community protection via mesh alerts")
+    try:
+        from modules.communication.liberty_alert.src.liberty_alert_dae import run_liberty_alert_dae as _run_dae
+        asyncio.run(_run_dae())
+    except Exception as e:
+        print(f"[ERROR] Liberty Alert DAE failed: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+def run_evade_net():
+    """Run Liberty Alert Mesh Alert System (Community Protection)."""
+    print("[WARN] Starting Liberty Alert - Mesh Alert System...")
+    print("[INFO] Offline P2P alerts for community protection")
+    try:
+        from modules.communication.liberty_alert.src.liberty_alert_orchestrator import LibertyAlertOrchestrator
+        from modules.communication.liberty_alert.src.models import LibertyAlertConfig
+
+        # Configure Liberty Alert
+        config = LibertyAlertConfig(
+            mesh_enabled=True,
+            voice_enabled=True,
+            default_language="es",
+            alert_radius_km=5.0,
+        )
+
+        orchestrator = LibertyAlertOrchestrator(config)
+        asyncio.run(orchestrator.run())
+    except Exception as e:
+        print(f"[ERROR]Liberty Alert failed: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 def check_instance_status():
@@ -1085,8 +1234,62 @@ def generate_x_content(commit_msg, file_count):
     return content
 
 
-# Extracted to modules/infrastructure/git_push_dae/scripts/launch.py per WSP 62
-from modules.infrastructure.git_push_dae.scripts.launch import launch_git_push_dae
+def launch_git_push_dae():
+    """
+    Launch GitPushDAE daemon with WSP 91 full observability.
+    Transforms git push from human-triggered action to autonomous DAE.
+    """
+    print("\n" + "="*60)
+    print("[MENU] GIT PUSH DAE - AUTONOMOUS DEVELOPMENT")
+    print("="*60)
+    print("WSP 91 DAEMON: Fully autonomous git push with observability")
+    print("No human decision required - agentic parameters drive decisions")
+    print("="*60)
+
+    try:
+        # Import and launch the GitPushDAE
+        print("[DEBUG-MAIN] About to import GitPushDAE module...")
+        from modules.infrastructure.git_push_dae.src.git_push_dae import GitPushDAE
+        print("[DEBUG-MAIN] GitPushDAE module imported successfully")
+
+        # Create and start the daemon
+        print("[DEBUG-MAIN] Creating GitPushDAE instance...")
+        dae = GitPushDAE(domain="foundups_development", check_interval=300)  # 5-minute checks
+        print("[DEBUG-MAIN] GitPushDAE instance created, starting daemon...")
+        dae.start()
+        print("[DEBUG-MAIN] GitPushDAE daemon started")
+
+        print("\n[INFO]GitPushDAE launched successfully!")
+        print("[INFO] Monitor logs at: logs/git_push_dae.log")
+        print("[INFO] Press Ctrl+C to stop the daemon")
+
+        try:
+            # Keep running until interrupted
+            while dae.active:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\n[INFO] Stopping GitPushDAE...")
+            dae.stop()
+
+    except ImportError as e:
+        print(f"[ERROR]Failed to import GitPushDAE: {e}")
+        print("Falling back to legacy git_push_and_post...")
+
+        # Fallback to old method
+        git_push_and_post()
+
+    except Exception as e:
+        print(f"[ERROR]GitPushDAE failed: {e}")
+        input("\nPress Enter to continue...")
+
+    finally:
+        # Flush stdout/stderr to prevent "lost sys.stderr" errors
+        # when returning to menu (WSP 90 UTF-8 enforcement cleanup)
+        try:
+            sys.stdout.flush()
+            sys.stderr.flush()
+        except:
+            pass
 
 
 def git_push_and_post():
