@@ -5,7 +5,13 @@ Shares development progress with LinkedIn audience
 Uses Qwen for 0102-branded condensed content generation
 """
 
+# NOTE: UTF-8 enforcement removed per WSP 90
+# Library modules must NOT include UTF-8 enforcement header
+# Only entry point files (with if __name__ == "__main__") should have it
+# See: main.py for proper UTF-8 enforcement implementation
+
 import os
+import sys
 import subprocess
 import json
 import time
@@ -115,7 +121,7 @@ class GitLinkedInBridge:
         """Load set of already posted commit hashes"""
         if os.path.exists(self.commit_cache_file):
             try:
-                with open(self.commit_cache_file, 'r') as f:
+                with open(self.commit_cache_file, 'r', encoding="utf-8") as f:
                     return set(json.load(f))
             except:
                 return set()
@@ -129,14 +135,14 @@ class GitLinkedInBridge:
         else:
             # Fallback to JSON
             os.makedirs(os.path.dirname(self.commit_cache_file), exist_ok=True)
-            with open(self.commit_cache_file, 'w') as f:
+            with open(self.commit_cache_file, 'w', encoding="utf-8") as f:
                 json.dump(list(self.posted_commits), f)
 
     def _load_x_posted_commits(self) -> set:
         """Load X/Twitter posted commits"""
         if os.path.exists(self.x_posted_commits_file):
             try:
-                with open(self.x_posted_commits_file, 'r') as f:
+                with open(self.x_posted_commits_file, 'r', encoding="utf-8") as f:
                     return set(json.load(f))
             except:
                 return set()
@@ -151,7 +157,7 @@ class GitLinkedInBridge:
         ln_json = "modules/platform_integration/linkedin_agent/data/posted_commits.json"
         if os.path.exists(ln_json) and self.db:
             try:
-                with open(ln_json, 'r') as f:
+                with open(ln_json, 'r', encoding="utf-8") as f:
                     commits = json.load(f)
                     for commit_hash in commits:
                         if commit_hash not in self.posted_commits:
@@ -169,7 +175,7 @@ class GitLinkedInBridge:
         x_json = "modules/platform_integration/linkedin_agent/data/x_posted_commits.json"
         if os.path.exists(x_json) and self.db:
             try:
-                with open(x_json, 'r') as f:
+                with open(x_json, 'r', encoding="utf-8") as f:
                     commits = json.load(f)
                     for commit_hash in commits:
                         if commit_hash not in self.x_posted_commits:
@@ -191,7 +197,7 @@ class GitLinkedInBridge:
         else:
             # Fallback to JSON
             os.makedirs(os.path.dirname(self.x_posted_commits_file), exist_ok=True)
-            with open(self.x_posted_commits_file, 'w') as f:
+            with open(self.x_posted_commits_file, 'w', encoding="utf-8") as f:
                 json.dump(list(self.x_posted_commits), f)
     
     def get_recent_commits(self, count: int = 5) -> List[Dict]:
@@ -643,80 +649,59 @@ class GitLinkedInBridge:
                 print("⏭️  Skipped social media posting")
                 return True
 
-            # Post to LinkedIn
-            linkedin_success = False
+            # Post via Unified Interface (auto-triggers both LinkedIn AND X)
+            # All anti-detection timing, delays, and logging handled in daemon
             if commit_hash not in self.posted_commits:
                 try:
-                    from modules.platform_integration.linkedin_agent.src.anti_detection_poster import AntiDetectionLinkedIn
+                    from modules.platform_integration.social_media_orchestrator.src.unified_linkedin_interface import post_git_commits
+                    import asyncio
 
-                    print("\n📱 Posting to LinkedIn...")
-                    poster = AntiDetectionLinkedIn()
-                    poster.setup_driver(use_existing_session=True)
-                    poster.post_to_company_page(linkedin_content)
-                    print("✅ Successfully posted to LinkedIn!")
+                    print("\n📱 Posting via Social Media DAE (LinkedIn → Auto X)...")
 
-                    # Mark as posted
-                    if self.db:
-                        from datetime import datetime
-                        self.db.execute_write("""
-                            INSERT OR REPLACE INTO modules_git_linkedin_posts
-                            (commit_hash, commit_message, post_content, success, posted_at)
-                            VALUES (?, ?, ?, ?, ?)
-                        """, (commit_hash, commit_msg, linkedin_content, 1, datetime.now()))
-                    self.posted_commits.add(commit_hash)
-                    self._save_posted_commits()
-                    linkedin_success = True
+                    # Single call posts to BOTH platforms with human-like timing
+                    result = asyncio.run(post_git_commits(
+                        linkedin_content,
+                        [commit_hash],
+                        x_content=x_content,
+                        auto_post_to_x=True
+                    ))
+
+                    if result.success:
+                        print(f"✅ {result.message}")
+
+                        # Mark LinkedIn as posted
+                        if self.db:
+                            from datetime import datetime
+                            self.db.execute_write("""
+                                INSERT OR REPLACE INTO modules_git_linkedin_posts
+                                (commit_hash, commit_message, post_content, success, posted_at)
+                                VALUES (?, ?, ?, ?, ?)
+                            """, (commit_hash, commit_msg, linkedin_content, 1, datetime.now()))
+                        self.posted_commits.add(commit_hash)
+                        self._save_posted_commits()
+
+                        # Mark X as posted (auto-triggered by unified interface)
+                        if "X:" in result.message:
+                            if self.db:
+                                from datetime import datetime
+                                self.db.execute_write("""
+                                    INSERT OR REPLACE INTO modules_git_x_posts
+                                    (commit_hash, commit_message, post_content, success, posted_at)
+                                    VALUES (?, ?, ?, ?, ?)
+                                """, (commit_hash, commit_msg, x_content, 1, datetime.now()))
+                            self.x_posted_commits.add(commit_hash)
+                            self._save_x_posted_commits()
+                    else:
+                        # Log failure - daemon has full details
+                        print(f"⚠️  {result.message}")
+                        print("   See daemon logs for anti-detection timing and full trace")
+
                 except Exception as e:
-                    print(f"⚠️  LinkedIn posting failed: {e}")
+                    # Log exception - daemon has full stack trace
+                    print(f"❌ {e}")
+                    print("   See daemon logs for complete error details")
             else:
-                print("✓ Already posted to LinkedIn")
-                linkedin_success = True
-
-            # Post to X/Twitter ONLY if LinkedIn succeeded
-            x_success = False
-            if not linkedin_success:
-                print("\n⚠️ Skipping X post since LinkedIn failed")
-            elif commit_hash not in self.x_posted_commits:
-                try:
-                    import time
-                    from modules.platform_integration.x_twitter.src.x_anti_detection_poster import AntiDetectionX
-
-                    # Wait a moment to ensure LinkedIn post completes
-                    print("\n⏳ Waiting for LinkedIn to complete...")
-                    time.sleep(3)
-
-                    print("🐦 Posting to X/Twitter @Foundups...")
-                    x_poster = AntiDetectionX(use_foundups=True)  # Use FoundUps account
-                    x_poster.setup_driver(use_existing_session=True)
-                    x_poster.post_to_x(x_content)
-                    print("✅ Successfully posted to X!")
-
-                    # Mark as posted
-                    if self.db:
-                        from datetime import datetime
-                        self.db.execute_write("""
-                            INSERT OR REPLACE INTO modules_git_x_posts
-                            (commit_hash, commit_message, post_content, success, posted_at)
-                            VALUES (?, ?, ?, ?, ?)
-                        """, (commit_hash, commit_msg, x_content, 1, datetime.now()))
-                    self.x_posted_commits.add(commit_hash)
-                    self._save_x_posted_commits()
-                    x_success = True
-                except Exception as e:
-                    print(f"⚠️  X posting failed: {e}")
-            else:
-                print("✓ Already posted to X")
-                x_success = True
-
-            # Summary
-            if linkedin_success and x_success:
-                print("\n🎉 Successfully posted to both LinkedIn and X!")
-            elif linkedin_success:
-                print("\n✅ Posted to LinkedIn (X failed)")
-            elif x_success:
-                print("\n✅ Posted to X (LinkedIn failed)")
-            else:
-                print("\n⚠️  Social media posting had issues")
+                print("✓ Already posted")
 
             # Git push status
             if not push_success:
