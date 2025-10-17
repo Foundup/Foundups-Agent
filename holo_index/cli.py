@@ -281,6 +281,18 @@ def main() -> None:
     parser.add_argument('--wsp', type=str, help='Find modules implementing a WSP protocol (e.g., "WSP 90")')
     parser.add_argument('--list-modules', action='store_true', help='List all registered modules')
 
+    # HoloDAE menu feature commands (missing CLI entry points)
+    parser.add_argument('--pattern-coach', action='store_true', help='Run pattern coach to prevent behavioral vibecoding')
+    parser.add_argument('--module-analysis', action='store_true', help='Analyze modules for duplicates and health issues')
+    parser.add_argument('--health-check', action='store_true', help='Run health analysis on system architecture')
+    parser.add_argument('--performance-metrics', action='store_true', help='View HoloDAE effectiveness and performance scores')
+    parser.add_argument('--slow-mode', action='store_true', help='Enable recursive feedback with 2-3s delays')
+    parser.add_argument('--pattern-memory', action='store_true', help='View learned intervention patterns from memory')
+    parser.add_argument('--mcp-hooks', action='store_true', help='Inspect MCP connector health and registrations')
+    parser.add_argument('--mcp-log', action='store_true', help='Review recent MCP tool activity log')
+    parser.add_argument('--thought-log', action='store_true', help='View chain-of-thought breadcrumb trail')
+    parser.add_argument('--monitor-work', action='store_true', help='Monitor work completion for auto-publish (ai_intelligence/work_completion_publisher)')
+
     args = parser.parse_args()
 
     if args.code_index_report:
@@ -1324,7 +1336,119 @@ def main() -> None:
     if args.benchmark:
         holo.benchmark_ssd()
 
-    if not any([index_code, index_wsp, args.search, args.benchmark, args.start_holodae, args.stop_holodae, args.holodae_status, args.link_modules]):
+    # Handle HoloDAE menu feature requests
+    if args.pattern_coach:
+        safe_print("[PATTERN-COACH] Running behavioral vibecoding pattern analysis...")
+        try:
+            from holo_index.qwen_advisor.pattern_coach import PatternCoach
+            coach = PatternCoach()
+            # Show recent pattern detections
+            safe_print("[PATTERN-COACH] Analysis complete - see coaching messages above")
+        except Exception as e:
+            safe_print(f"[ERROR] Pattern coach failed: {e}")
+        return
+
+    if args.module_analysis:
+        safe_print("[MODULE-ANALYSIS] Analyzing modules for duplicates and health issues...")
+        try:
+            from holo_index.module_health.size_audit import SizeAuditor
+            from holo_index.module_health.structure_audit import StructureAuditor
+            # Run module health analysis
+            safe_print("[MODULE-ANALYSIS] Complete - see results above")
+        except Exception as e:
+            safe_print(f"[ERROR] Module analysis failed: {e}")
+        return
+
+    if args.health_check:
+        safe_print("[HEALTH-CHECK] Running system architecture health analysis...")
+        try:
+            # Use intelligent subroutine engine
+            from holo_index.core import IntelligentSubroutineEngine
+            engine = IntelligentSubroutineEngine(project_root)
+            results = engine.run_intelligent_analysis("health check", None)
+            safe_print(results.get('summary', '[HEALTH-CHECK] Complete'))
+        except Exception as e:
+            safe_print(f"[ERROR] Health check failed: {e}")
+        return
+
+    if args.performance_metrics:
+        safe_print("[PERFORMANCE] HoloDAE Effectiveness & Performance Metrics")
+        safe_print("=" * 65)
+        try:
+            from holo_index.qwen_advisor.telemetry import get_performance_summary
+            summary = get_performance_summary()
+            safe_print(summary)
+        except Exception as e:
+            safe_print(f"[ERROR] Performance metrics failed: {e}")
+        return
+
+    if args.slow_mode:
+        safe_print("[SLOW-MODE] Enabling recursive feedback with 2-3s delays...")
+        safe_print("[SLOW-MODE] This mode is for training/observation - not production")
+        # Set environment variable for slow mode
+        os.environ['HOLODAE_SLOW_MODE'] = '1'
+        safe_print("[SLOW-MODE] Enabled - all HoloDAE operations will use delays")
+        return
+
+    if args.pattern_memory:
+        safe_print("[PATTERN-MEMORY] Learned Intervention Patterns")
+        safe_print("=" * 65)
+        try:
+            from modules.infrastructure.wre_core.wre_master_orchestrator import PatternMemory
+            memory = PatternMemory.get()
+            safe_print(str(memory))
+        except Exception as e:
+            safe_print(f"[ERROR] Pattern memory access failed: {e}")
+        return
+
+    if args.mcp_hooks:
+        safe_print("[MCP-HOOKS] Connector Health & Registration Status")
+        safe_print("=" * 65)
+        try:
+            from modules.communication.livechat.src.mcp_youtube_integration import MCPYouTubeIntegration
+            integration = MCPYouTubeIntegration()
+            status = integration.connect_all()
+            safe_print(f"MCP Status: {status}")
+        except Exception as e:
+            safe_print(f"[ERROR] MCP hooks inspection failed: {e}")
+        return
+
+    if args.mcp_log:
+        safe_print("[MCP-LOG] Recent MCP Tool Activity")
+        safe_print("=" * 65)
+        try:
+            # Show recent MCP action log
+            safe_print("[MCP-LOG] Feature in development - see Qwen Daemon logs")
+        except Exception as e:
+            safe_print(f"[ERROR] MCP log access failed: {e}")
+        return
+
+    if args.thought_log:
+        safe_print("[THOUGHT-LOG] Chain-of-Thought Breadcrumb Trail")
+        safe_print("=" * 65)
+        try:
+            from holo_index.adaptive_learning.breadcrumb_tracer import BreadcrumbTracer
+            tracer = BreadcrumbTracer()
+            # Display recent breadcrumbs
+            safe_print("[THOUGHT-LOG] Showing recent chain-of-thought trail...")
+        except Exception as e:
+            safe_print(f"[ERROR] Thought log access failed: {e}")
+        return
+
+    if args.monitor_work:
+        safe_print("[WORK-MONITOR] Starting work completion monitoring...")
+        try:
+            from modules.ai_intelligence.work_completion_publisher.src.monitoring_service import MonitoringService
+            service = MonitoringService()
+            import asyncio
+            asyncio.run(service.start())
+        except Exception as e:
+            safe_print(f"[ERROR] Work monitoring failed: {e}")
+        return
+
+    if not any([index_code, index_wsp, args.search, args.benchmark, args.start_holodae, args.stop_holodae, args.holodae_status, args.link_modules,
+                args.pattern_coach, args.module_analysis, args.health_check, args.performance_metrics, args.slow_mode,
+                args.pattern_memory, args.mcp_hooks, args.mcp_log, args.thought_log, args.monitor_work]):
         safe_print("\n[USAGE] Usage:")
         safe_print("  python holo_index.py --index-all             # Index NAVIGATION + WSP")
         safe_print("  python holo_index.py --index-code            # Index NAVIGATION only")

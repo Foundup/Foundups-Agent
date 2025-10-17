@@ -158,8 +158,18 @@ class AgenticOutputThrottler:
             # Fallback to auto-detection
             content = self._render_auto_state(verbose)
 
-        # Format output based on calling agent's capabilities
-        return self._format_for_agent(content, state)
+        # REAL-TIME UNICODE FILTERING - BEFORE agent formatting (WSP 90)
+        # This ensures ALL agents (0102, qwen, gemma) get clean ASCII output
+        filtered_content, stats = self.filter_unicode_violations(content)
+
+        # Log if fixes were applied (for learning)
+        if stats.get('replaced', 0) > 0:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"[UNICODE-FIX] Replaced {stats['replaced']} emojis for agent={self.agent_id}")
+
+        # Format output based on calling agent's capabilities (after cleaning)
+        return self._format_for_agent(filtered_content, state)
 
     def _render_error_state(self) -> str:
         """State 1: 🔴 System Error - Show ONLY the error, suppress all noise."""
@@ -338,6 +348,66 @@ class AgenticOutputThrottler:
             return ["WSP_50", "WSP_84", "WSP_22"]  # Verify + enhance existing + update ModLog
         else:  # missing
             return ["WSP_49", "WSP_3", "WSP_22"]  # Module structure + enterprise domain + ModLog
+
+    def filter_unicode_violations(self, content: str) -> tuple:
+        """
+        Real-time Unicode violation detection and fixing for multi-agent output.
+
+        Filters emojis from HoloIndex output BEFORE agent formatting to ensure:
+        - 0102 (Claude): cp932 console compatibility
+        - Qwen (1.5B): Valid JSON parsing (no Unicode breaks)
+        - Gemma (270M): Pure ASCII classification (no pattern noise)
+
+        Reuses existing patterns from qwen_advisor/patterns/unicode_violations.json
+
+        Args:
+            content: Output content to filter
+
+        Returns:
+            (filtered_content, stats) - Clean ASCII content + fix statistics
+
+        WSP Compliance: WSP 90 (UTF-8 Enforcement), WSP 84 (Enhance Existing)
+        """
+        try:
+            # Load emoji patterns from existing unicode_violations.json
+            from pathlib import Path
+            import json
+
+            patterns_file = Path(__file__).parent.parent / "qwen_advisor" / "patterns" / "unicode_violations.json"
+
+            if not patterns_file.exists():
+                # Fallback: No patterns available, return original
+                return content, {"violations": 0, "replaced": 0, "error": "patterns_file_missing"}
+
+            with open(patterns_file, 'r', encoding='utf-8') as f:
+                patterns = json.load(f)
+
+            emoji_replacements = patterns.get('emoji_replacements', {})
+
+            # Quick check: any emojis present?
+            violations_detected = any(emoji in content for emoji in emoji_replacements.keys())
+
+            if not violations_detected:
+                return content, {"violations": 0, "replaced": 0}
+
+            # Apply replacements
+            filtered_content = content
+            replacements = 0
+
+            for emoji, replacement in emoji_replacements.items():
+                if emoji in filtered_content:
+                    filtered_content = filtered_content.replace(emoji, replacement)
+                    replacements += 1
+
+            return filtered_content, {
+                "violations": len([e for e in emoji_replacements.keys() if e in content]),
+                "replaced": replacements,
+                "agent": self.agent_id
+            }
+
+        except Exception as e:
+            # On error, return original content (fail-safe)
+            return content, {"violations": 0, "replaced": 0, "error": str(e)}
 
     def _is_wsp_relevant_to_module(self, wsp_hit: Dict[str, Any], target_module: str = None) -> bool:
         """Determine if WSP guidance is relevant to the target module."""

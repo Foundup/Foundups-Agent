@@ -391,7 +391,7 @@ class InfrastructureConsentEngine:
                     'total_records': len(self.consent_records)
                 }
                 
-                with open(output_file, 'w') as f:
+                with open(output_file, 'w', encoding="utf-8") as f:
                     json.dump(data, f, indent=2, default=str)
                 
                 self.logger.info(f"Consent data exported to {output_file}")
@@ -475,7 +475,7 @@ class InfrastructureConsentEngine:
         """Load consent records from storage."""
         if self.storage_path.exists():
             try:
-                with open(self.storage_path, 'r') as f:
+                with open(self.storage_path, 'r', encoding="utf-8") as f:
                     data = json.load(f)
                     for record_data in data.get('consent_records', []):
                         # Convert string dates back to datetime objects
@@ -500,7 +500,7 @@ class InfrastructureConsentEngine:
                 'last_updated': datetime.now().isoformat()
             }
             
-            with open(self.storage_path, 'w') as f:
+            with open(self.storage_path, 'w', encoding="utf-8") as f:
                 json.dump(data, f, indent=2, default=str)
         except Exception as e:
             self.logger.error(f"Failed to save consent records: {e}")

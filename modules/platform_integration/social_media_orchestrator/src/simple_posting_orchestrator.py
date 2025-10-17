@@ -93,7 +93,7 @@ class SimplePostingOrchestrator:
 
         try:
             if os.path.exists(config_path):
-                with open(config_path, 'r') as f:
+                with open(config_path, 'r', encoding="utf-8") as f:
                     return json.load(f)
             else:
                 self.logger.warning(f"[CONFIG] Channel routing config not found at {config_path}")
@@ -620,7 +620,7 @@ class SimplePostingOrchestrator:
         import json
         history_file = "memory/orchestrator_posted_streams.json"
         try:
-            with open(history_file, 'r') as f:
+            with open(history_file, 'r', encoding="utf-8") as f:
                 history = json.load(f)
                 self.logger.info(f"[ORCHESTRATOR] 📚 Loaded {len(history)} posted streams from JSON fallback")
                 return history
@@ -685,7 +685,7 @@ class SimplePostingOrchestrator:
         history_file = "memory/orchestrator_posted_streams.json"
 
         try:
-            with open(history_file, 'w') as f:
+            with open(history_file, 'w', encoding="utf-8") as f:
                 json.dump(self.posted_streams, f, indent=2)
             self.logger.info(f"[ORCHESTRATOR] 💾 Saved {len(self.posted_streams)} posted streams to JSON")
         except Exception as e:
@@ -803,7 +803,7 @@ class SimplePostingOrchestrator:
             }
 
             full_url = share_url + '?' + urllib.parse.urlencode(params)
-            webbrowser.open(full_url)
+            webbrowser.open(full_url, encoding="utf-8")
 
             self.logger.info("[LINKEDIN] ✅ LinkedIn share URL opened in browser")
             self.logger.info("[LINKEDIN] 📋 Content ready for manual posting")

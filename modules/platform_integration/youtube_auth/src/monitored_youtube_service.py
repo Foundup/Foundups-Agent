@@ -6,6 +6,15 @@ This wrapper intercepts all YouTube API calls to track quota usage
 and provide real-time monitoring and alerting.
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import logging
 from typing import Any
 from modules.platform_integration.youtube_auth.src.quota_monitor import QuotaMonitor

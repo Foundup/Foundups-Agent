@@ -1,6 +1,23 @@
 ﻿# HoloIndex - Brain Surgeon Level Code Intelligence System
 
-## 🚨 REVOLUTIONARY EVOLUTION (2025-10-13)
+## 🚨 REVOLUTIONARY EVOLUTION (2025-10-17): WSP 97 System Execution Prompting Protocol
+
+HoloIndex has evolved from module finder to **brain surgeon level code intelligence** with **baked-in WSP 97 execution prompting**:
+- **Before**: Find modules → "Here's the file"
+- **After**: Function-level indexing → "Lines 256-276: check_video_is_live" + Mermaid flow analysis + inefficiency detection
+- **WSP 97**: **META-FRAMEWORK** - Baked-in execution methodology for building Rubik Cubes (MVP DAEs)
+
+### Core Mantra (Baked into All Agents)
+```
+HoloIndex → Research → Hard Think → First Principles → Build → Follow WSP
+```
+
+**Agent Profiles**: 0102 (strategic), Qwen (coordination), Gemma (validation)
+**Mission Templates**: MCP Rubik, Orphan Archaeology, Code Review
+**Rubik Context**: Rubik = MVP DAE. Currently "Cubes" (modules) need Qwen/Gemma enhancement to become fully agentic PWAs connecting to blockchains via FoundUp MCPs
+**Holo as Toolkit**: HoloIndex provides the intelligence toolkit for Rubik Cube development and orchestration
+
+## 🚨 PREVIOUS REVOLUTIONARY EVOLUTION (2025-10-13)
 
 HoloIndex has evolved from module finder to **brain surgeon level code intelligence**:
 - **Before**: Find modules → "Here's the file"

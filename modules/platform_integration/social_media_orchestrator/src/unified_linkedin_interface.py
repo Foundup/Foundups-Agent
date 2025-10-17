@@ -12,6 +12,15 @@ WSP Compliance:
 - WSP 84: Consolidates existing LinkedIn functionality
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import os
 import json
 import asyncio
@@ -82,7 +91,7 @@ class UnifiedLinkedInInterface:
         """Load posting history for duplicate prevention"""
         try:
             if os.path.exists(self.history_file):
-                with open(self.history_file, 'r') as f:
+                with open(self.history_file, 'r', encoding="utf-8") as f:
                     self.posted_content = json.load(f)
             else:
                 self.posted_content = {}
@@ -94,7 +103,7 @@ class UnifiedLinkedInInterface:
     def _save_history(self):
         """Save posting history"""
         try:
-            with open(self.history_file, 'w') as f:
+            with open(self.history_file, 'w', encoding="utf-8") as f:
                 json.dump(self.posted_content, f, indent=2)
         except Exception as e:
             logger.error(f"[UNIFIED LINKEDIN] Could not save history: {e}")
@@ -181,17 +190,7 @@ class UnifiedLinkedInInterface:
                 duplicate_prevented=True
             )
 
-        # Step 2: Validate credentials
-        if not (os.getenv('LINKEDIN_CLIENT_ID') and os.getenv('LINKEDIN_CLIENT_SECRET')):
-            return LinkedInPostResult(
-                success=False,
-                message="LinkedIn API credentials not configured",
-                timestamp=datetime.now(),
-                content_type=request.content_type,
-                company_page=request.company_page
-            )
-
-        # Step 3: Post via LinkedIn Scheduler with proper coordination
+        # Step 2: Post via MCP Server (Selenium - no API credentials needed)
         logger.info("="*60)
         logger.info(f"[UNIFIED LINKEDIN] POSTING {request.content_type.value.upper()}")
         logger.info(f"[UNIFIED LINKEDIN] Target: {request.company_page.value}")
@@ -201,78 +200,110 @@ class UnifiedLinkedInInterface:
         success = False
         error_message = None
 
-        # Use threading to avoid blocking async code
-        linkedin_completed = threading.Event()
+        # Post via MCP FastMCP HoloIndex Server
+        # MCP server handles: Selenium + Gemini Vision + Training Data Collection
+        try:
+            import random
+            from holo_index.mcp_client.holo_mcp_client import HoloIndexMCPClient
 
-        def post_thread():
-            nonlocal success, error_message
-            global _GLOBAL_LINKEDIN_POSTER
+            logger.info("[UNIFIED LINKEDIN] Using MCP FastMCP HoloIndex Server for posting")
 
+            # ANTI-DETECTION: Random delay before posting (2-5 seconds)
+            # Mimics human reading/reviewing content before posting
+            pre_post_delay = random.uniform(2.0, 5.0)
+            logger.info(f"[ANTI-DETECTION] Waiting {pre_post_delay:.1f}s before posting (human-like behavior)")
+            await asyncio.sleep(pre_post_delay)
+
+            mcp_client = HoloIndexMCPClient()
+
+            # Call MCP tool: post_to_linkedin_via_selenium
+            # This automatically:
+            # 1. Uses Selenium browser automation (no API)
+            # 2. Captures screenshot and analyzes with Gemini Vision
+            # 3. Saves training pattern to holo_index/training/selenium_patterns.json
+            result = await mcp_client.call_tool(
+                "post_to_linkedin_via_selenium",
+                content=request.content,
+                company_id=request.company_page.value,
+                capture_screenshot=True  # Enable Gemini Vision analysis
+            )
+
+            # ANTI-DETECTION: Random delay after posting (1-3 seconds)
+            # Mimics human verifying post success
+            post_post_delay = random.uniform(1.0, 3.0)
+            logger.info(f"[ANTI-DETECTION] Waiting {post_post_delay:.1f}s after posting (human-like verification)")
+            await asyncio.sleep(post_post_delay)
+
+            success = result.get("success", False)
+            error_message = result.get("error", None) if not success else None
+
+            if success:
+                logger.info(f"[UNIFIED LINKEDIN] ✅ MCP post successful to page {request.company_page.value}")
+                logger.info(f"[UNIFIED LINKEDIN] Training pattern saved: {result.get('training_pattern_id')}")
+
+                # Log Gemini Vision analysis if available
+                gemini_analysis = result.get("gemini_analysis")
+                if gemini_analysis:
+                    logger.info(f"[UNIFIED LINKEDIN] Gemini Vision UI analysis: {gemini_analysis.get('ui_state', 'N/A')}")
+            else:
+                error_message = error_message or "MCP posting failed"
+                logger.warning(f"[UNIFIED LINKEDIN] ❌ MCP post failed: {error_message}")
+
+        except Exception as e:
+            error_message = str(e)
+            logger.error(f"[UNIFIED LINKEDIN] Exception during MCP posting: {e}")
+
+            # Check if this is a cancellation/duplicate attempt
+            if any(indicator in error_message.lower() for indicator in ["window already closed", "target window already closed", "no such window"]):
+                logger.warning("[UNIFIED LINKEDIN] User cancellation detected - marking as duplicate")
+                # This will be marked as posted below to prevent future attempts
+
+        # Step 4: AUTO-TRIGGER X/TWITTER POST if LinkedIn succeeded
+        x_post_success = False
+        x_post_message = None
+
+        if success and request.metadata and request.metadata.get('auto_post_to_x'):
             try:
-                with _POSTER_LOCK:
-                    # Import AntiDetectionLinkedIn for browser automation (NOT API)
-                    from modules.platform_integration.linkedin_agent.src.anti_detection_poster import AntiDetectionLinkedIn
+                logger.info("="*60)
+                logger.info("[UNIFIED LINKEDIN] LinkedIn post successful - AUTO-TRIGGERING X post")
+                logger.info("="*60)
 
-                    # Create or reuse global poster instance
-                    if not _GLOBAL_LINKEDIN_POSTER:
-                        logger.info("[UNIFIED LINKEDIN] Creating AntiDetection browser poster (NO API)")
-                        _GLOBAL_LINKEDIN_POSTER = AntiDetectionLinkedIn()
-                        logger.info("[UNIFIED LINKEDIN] AntiDetection browser poster created")
-                    else:
-                        logger.info("[UNIFIED LINKEDIN] Reusing existing browser poster")
+                # ANTI-DETECTION: Wait 3 seconds between platforms (mimics 012 switching tabs)
+                logger.info("[ANTI-DETECTION] Waiting 3s before X post (platform switching)")
+                await asyncio.sleep(3)
 
-                    try:
-                        # Set the company_id from the request (maps to LinkedIn page)
-                        _GLOBAL_LINKEDIN_POSTER.company_id = request.company_page.value
+                # Import unified X interface
+                from .unified_x_interface import unified_x, XPostRequest, XContentType, XAccount
 
-                        # Update the admin URL to match the new company_id
-                        company_vanity_map = {
-                            "68706058": "undaodu",   # UnDaoDu (CORRECTED from 165749317)
-                            "1263645": "foundups"    # FoundUps
-                            # Note: Move2Japan (104834798) removed - uses company ID directly
-                        }
-                        company_url_part = company_vanity_map.get(request.company_page.value, request.company_page.value)
-                        _GLOBAL_LINKEDIN_POSTER.company_admin_url = f"https://www.linkedin.com/company/{company_url_part}/admin/page-posts/published/"
+                # Prepare X content (must be ≤280 chars)
+                x_content = request.metadata.get('x_content')
+                if not x_content:
+                    # Auto-generate condensed version from LinkedIn content
+                    x_content = request.content[:250] + "..." if len(request.content) > 250 else request.content
 
-                        logger.info(f"[UNIFIED LINKEDIN] Targeting company page: {request.company_page.value} ({company_url_part})")
-                        logger.info(f"[UNIFIED LINKEDIN] Admin URL: {_GLOBAL_LINKEDIN_POSTER.company_admin_url}")
+                # Create X post request
+                x_request = XPostRequest(
+                    content=x_content,
+                    content_type=XContentType.GIT_COMMIT if request.content_type == LinkedInContentType.GIT_COMMIT else XContentType.GENERAL_POST,
+                    account=XAccount.FOUNDUPS,  # Default to FoundUps
+                    duplicate_check_key=request.duplicate_check_key
+                )
 
-                        # Use browser automation to post (NOT API)
-                        # AntiDetectionLinkedIn.post_to_company_page() returns True/False
-                        success = _GLOBAL_LINKEDIN_POSTER.post_to_company_page(
-                            content=request.content
-                        )
+                # Post to X (automatically includes anti-detection delays)
+                x_result = await unified_x.post_to_x(x_request)
+                x_post_success = x_result.success
+                x_post_message = x_result.message
 
-                        if success:
-                            logger.info(f"[UNIFIED LINKEDIN] ✅ Browser post successful to page {request.company_page.value}")
-                        else:
-                            error_message = "Browser automation post failed"
-                            logger.warning(f"[UNIFIED LINKEDIN] ❌ Browser post failed: {error_message}")
-                    except Exception as e:
-                        error_message = str(e)
-                        logger.error(f"[UNIFIED LINKEDIN] Exception during browser posting: {e}")
+                if x_post_success:
+                    logger.info("[UNIFIED LINKEDIN] ✅ X post auto-triggered successfully")
+                else:
+                    logger.warning(f"[UNIFIED LINKEDIN] ⚠️ X post auto-trigger failed: {x_post_message}")
 
             except Exception as e:
-                error_message = str(e)
-                logger.error(f"[UNIFIED LINKEDIN] Exception during posting: {e}")
+                logger.error(f"[UNIFIED LINKEDIN] Exception during X auto-trigger: {e}")
+                x_post_message = str(e)
 
-                # Check if this is a cancellation/duplicate attempt
-                if any(indicator in error_message.lower() for indicator in ["window already closed", "target window already closed", "no such window"]):
-                    logger.warning("[UNIFIED LINKEDIN] User cancellation detected - marking as duplicate")
-                    # This will be marked as posted below to prevent future attempts
-
-            finally:
-                linkedin_completed.set()
-
-        # Start posting thread
-        thread = threading.Thread(target=post_thread, daemon=False)
-        thread.start()
-
-        # Wait for completion
-        while not linkedin_completed.is_set():
-            await asyncio.sleep(0.1)
-
-        # Step 4: Update tracking and return result
+        # Step 5: Update tracking and return result
         if success:
             self.mark_as_posted(request, success=True)
         elif "window already closed" in str(error_message):
@@ -282,7 +313,7 @@ class UnifiedLinkedInInterface:
 
         return LinkedInPostResult(
             success=success,
-            message=error_message or "Posted successfully",
+            message=error_message or "Posted successfully" + (f" | X: {x_post_message}" if x_post_success or x_post_message else ""),
             timestamp=datetime.now(),
             content_type=request.content_type,
             company_page=request.company_page
@@ -331,13 +362,28 @@ async def post_stream_notification(stream_title: str, stream_url: str, video_id:
 
     return await unified_linkedin.post_to_linkedin(request)
 
-async def post_git_commits(commit_summary: str, commit_hashes: List[str]) -> LinkedInPostResult:
-    """Post git commit summary to LinkedIn (FoundUps page)"""
+async def post_git_commits(commit_summary: str, commit_hashes: List[str], x_content: Optional[str] = None, auto_post_to_x: bool = True) -> LinkedInPostResult:
+    """
+    Post git commit summary to LinkedIn (FoundUps page).
+
+    Args:
+        commit_summary: LinkedIn post content
+        commit_hashes: List of commit hashes for duplicate detection
+        x_content: Optional X/Twitter content (auto-generated if None)
+        auto_post_to_x: If True, automatically post to X after LinkedIn succeeds
+
+    Returns:
+        LinkedInPostResult with both LinkedIn and X status
+    """
     request = LinkedInPostRequest(
         content=commit_summary,
         content_type=LinkedInContentType.GIT_COMMIT,
         company_page=LinkedInCompanyPage.FOUNDUPS,
-        duplicate_check_key="|".join(sorted(commit_hashes))  # Combined hash for duplicate detection
+        duplicate_check_key="|".join(sorted(commit_hashes)),  # Combined hash for duplicate detection
+        metadata={
+            'auto_post_to_x': auto_post_to_x,
+            'x_content': x_content  # Will auto-generate if None
+        }
     )
 
     return await unified_linkedin.post_to_linkedin(request)

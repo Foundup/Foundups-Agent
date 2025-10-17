@@ -26,6 +26,15 @@ Features:
 - Support for forced credential selection via environment variables
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import os
 import logging
 import json
@@ -104,7 +113,7 @@ class QuotaManager:
         """Load quota usage data from file."""
         if os.path.exists(self.quota_file):
             try:
-                with open(self.quota_file, 'r') as f:
+                with open(self.quota_file, 'r', encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:
                 logger.error(f"Error loading quota data: {e}")
@@ -130,7 +139,7 @@ class QuotaManager:
         """Save quota usage data to file."""
         try:
             os.makedirs(os.path.dirname(self.quota_file), exist_ok=True)
-            with open(self.quota_file, 'w') as f:
+            with open(self.quota_file, 'w', encoding="utf-8") as f:
                 json.dump(self.usage_data, f, indent=2)
         except Exception as e:
             logger.error(f"Error saving quota data: {e}")
@@ -364,7 +373,7 @@ def save_oauth_token_file(credentials: Credentials, credential_type: str) -> Non
     token_file_path = get_oauth_token_file(credential_type)
     try:
         os.makedirs(os.path.dirname(token_file_path), exist_ok=True)
-        with open(token_file_path, 'w') as token_file:
+        with open(token_file_path, 'w', encoding="utf-8") as token_file:
             token_file.write(credentials.to_json())
         logger.info(f"Refreshed token saved successfully to {token_file_path}")
     except Exception as e:
@@ -388,7 +397,7 @@ def authenticate_with_config(client_secrets_file: str, token_file: str, config_n
         # Check if token file exists and is not empty
         if os.path.exists(token_file):
             try:
-                with open(token_file, 'r') as f:
+                with open(token_file, 'r', encoding="utf-8") as f:
                     token_data = json.load(f)
                     if not token_data:  # Empty JSON object
                         logger.info(f"{config_name}: Token file is empty, triggering OAuth login")
@@ -444,7 +453,7 @@ def authenticate_with_config(client_secrets_file: str, token_file: str, config_n
             
             # Save the credentials for future use
             os.makedirs(os.path.dirname(token_file), exist_ok=True)
-            with open(token_file, "w") as token:
+            with open(token_file, "w", encoding="utf-8") as token:
                 token.write(creds.to_json())
             logger.info(f"{config_name}: Successfully saved new credentials to {token_file}")
 
@@ -464,7 +473,7 @@ def authenticate_with_config(client_secrets_file: str, token_file: str, config_n
             logger.info(f"{config_name}: OAuth flow completed successfully (fallback)")
             # Save credentials
             os.makedirs(os.path.dirname(token_file), exist_ok=True)
-            with open(token_file, "w") as token:
+            with open(token_file, "w", encoding="utf-8") as token:
                 token.write(creds.to_json())
             logger.info(f"{config_name}: Successfully saved new credentials to {token_file}")
             

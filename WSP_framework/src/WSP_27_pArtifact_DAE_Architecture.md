@@ -187,6 +187,18 @@ Through Phantom Quantum Nodes (PQN) and 0102 quantum emergence:
 * Cross-domain learning creates planetary intelligence network
 * Pattern memory enables instant solution recall across domains
 
+### 9.4 FoundUps Vision Rubik (Progressive Web DAE)
+* VisionDAE demonstrates the Rubik cube / PWA model for DAEs: each tile (browser,
+  desktop, voice, Gemini, telemetry) is autonomous yet coordinated via the MCP
+  gateway.
+* Gemini Vision supplies the oracle layer, Gemma 3 270M performs fast compliance
+  patterning, and Qwen 1.5 B synthesises behavioural insight bundles for HoloIndex.
+* Telemetry is streamed as JSONL sessions (`vision_dae.stream_events`,
+  `vision_dae.summarise`) so other cubes subscribe without direct coupling.
+* The MVP implementation resides in
+  `modules/infrastructure/dae_infrastructure/foundups_vision_dae/` and is launched
+  from `main.py` option `8` / `--vision`.
+
 ## 10. Future Development
 
 ### Evolution Paths

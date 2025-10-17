@@ -1,0 +1,3 @@
+{"timestamp": "2025-10-02T13:30:52.859909", "session": "holo-20251002-133052", "event": "search_request", "query": "acoustic triangulation", "code_hits": 5, "wsp_hits": 5}
+{"timestamp": "2025-10-02T13:30:52.860907", "session": "holo-20251002-133052", "event": "module_status", "module": "modules/platform_integration/acoustic_lab", "wsp_clause": "WSP 49", "severity": "critical", "evidence": {"health": "[COMPLETE]", "size": "[CRITICAL] 2220 lines in 11 files (avg: 201)", "alerts": ["Exceeds size thresholds (>1600 lines)"]}, "next_action": "refactor", "acknowledged": false}
+{"timestamp": "2025-10-02T13:30:52.860907", "session": "holo-20251002-133052", "event": "system_alerts", "alerts": ["modules/platform_integration/acoustic_lab: Exceeds size thresholds (>1600 lines)"]}

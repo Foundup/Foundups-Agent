@@ -4,6 +4,15 @@ Standalone YouTube Live Stream Detection Test
 WSP-compliant: Tests stream detection before integration
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import requests
 import re
 import json
@@ -190,7 +199,7 @@ def main():
         print(f"  - Stream URL: https://www.youtube.com/watch?v={channel_result['video_found']}")
 
     # Save results for debugging
-    with open("test_results.json", "w") as f:
+    with open("test_results.json", "w", encoding="utf-8") as f:
         json.dump({
             "channel": channel_result,
             "video": video_result

@@ -5,6 +5,15 @@ Comprehensive test coverage for YouTube Proxy module achieving WSP 5 compliance 
 Tests cover authentication, stream discovery, community engagement, component orchestration, and WRE integration.
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import pytest
 import asyncio
 from unittest.mock import Mock, patch, AsyncMock, MagicMock

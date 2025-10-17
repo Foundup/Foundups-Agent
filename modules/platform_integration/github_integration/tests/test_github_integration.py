@@ -8,6 +8,15 @@ Usage:
 2. Run: python test_github_integration.py
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import asyncio
 import os
 import sys
@@ -152,7 +161,7 @@ def main():
         except ImportError:
             print("⚠️  python-dotenv not installed, reading environment manually")
             # Simple .env parsing
-            with open(env_file, 'r') as f:
+            with open(env_file, 'r', encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if line and not line.startswith('#') and '=' in line:

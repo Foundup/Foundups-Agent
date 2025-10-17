@@ -52,9 +52,9 @@ class AIIntelligenceCubeAdapter(BaseCubeAdapter):
         
         # AI-specific PR templates and labels
         self.cube_templates = {
-            "create": "🧠 AI Intelligence Module Creation",
-            "update": "🔬 AI Intelligence Enhancement", 
-            "delete": "🗑️ AI Intelligence Module Removal"
+            "create": "[AI] AI Intelligence Module Creation",
+            "update": "[LAB] AI Intelligence Enhancement", 
+            "delete": "[DELETE] AI Intelligence Module Removal"
         }
         
         self.logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ class AIIntelligenceCubeAdapter(BaseCubeAdapter):
         
         if change_type == "create":
             return """
-## 🧠 AI Intelligence Module Creation
+## [AI] AI Intelligence Module Creation
 
 ### Module Overview
 - **Purpose**: Enhance AI capabilities in FoundUps ecosystem
@@ -94,7 +94,7 @@ class AIIntelligenceCubeAdapter(BaseCubeAdapter):
             
         elif change_type == "update":
             return """
-## 🔬 AI Intelligence Enhancement
+## [LAB] AI Intelligence Enhancement
 
 ### Enhancement Summary
 - **Model Improvements**: [Accuracy/Speed/Memory optimizations]
@@ -115,7 +115,7 @@ class AIIntelligenceCubeAdapter(BaseCubeAdapter):
             
         else:
             return """
-## 🗑️ AI Intelligence Module Removal
+## [DELETE] AI Intelligence Module Removal
 
 ### Removal Rationale
 - **Reason**: [Why module is being removed]
@@ -147,10 +147,10 @@ class AIIntelligenceCubeAdapter(BaseCubeAdapter):
         module_type = self._detect_ai_module_type(change.module_name)
         
         description = f"""
-🧠 **AI Intelligence Module**: {change.module_name}
-📊 **Module Type**: {module_type}
-🔄 **Change**: {change.change_type.title()} operation
-📁 **Files Affected**: {len(change.files_changed)} files
+[AI] **AI Intelligence Module**: {change.module_name}
+[STATS] **Module Type**: {module_type}
+[UPDATE] **Change**: {change.change_type.title()} operation
+[FILES] **Files Affected**: {len(change.files_changed)} files
 
 ### AI Intelligence Integration
 This module integrates with the FoundUps AI Intelligence domain to provide:

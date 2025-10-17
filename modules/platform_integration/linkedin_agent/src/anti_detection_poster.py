@@ -5,6 +5,15 @@ Posts to company page with human-like behavior to avoid bot detection
 Stealth mode evolution
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import os
 import sys
 import time
@@ -299,7 +308,7 @@ class AntiDetectionLinkedIn:
         if self.driver:
             os.makedirs(os.path.dirname(self.session_file), exist_ok=True)
             cookies = self.driver.get_cookies()
-            with open(self.session_file, 'wb') as f:
+            with open(self.session_file, 'wb', encoding="utf-8") as f:
                 pickle.dump(cookies, f)
             if verbose:
                 print("[INFO] Session saved for reuse")
@@ -308,7 +317,7 @@ class AntiDetectionLinkedIn:
         """Load saved session/cookies"""
         if os.path.exists(self.session_file) and self.driver:
             self.driver.get("https://www.linkedin.com")
-            with open(self.session_file, 'rb') as f:
+            with open(self.session_file, 'rb', encoding="utf-8") as f:
                 cookies = pickle.load(f)
                 for cookie in cookies:
                     try:
@@ -390,7 +399,7 @@ class AntiDetectionLinkedIn:
             orchestrator_history_file = "memory/orchestrator_posted_streams.json"
             if os.path.exists(orchestrator_history_file):
                 try:
-                    with open(orchestrator_history_file, 'r') as f:
+                    with open(orchestrator_history_file, 'r', encoding="utf-8") as f:
                         orchestrator_history = json.load(f)
                         if video_id in orchestrator_history:
                             posted_info = orchestrator_history[video_id]
@@ -1104,7 +1113,7 @@ class AntiDetectionLinkedIn:
         """WSP 48: Load posting patterns memory for recursive improvement"""
         import json
         try:
-            with open(self.memory_file, 'r') as f:
+            with open(self.memory_file, 'r', encoding="utf-8") as f:
                 self.posting_memory = json.load(f)
                 stats = self.posting_memory.get('learning_statistics', {})
                 if stats.get('total_posts', 0) > 0:
@@ -1117,7 +1126,7 @@ class AntiDetectionLinkedIn:
         """WSP 48: Save improved patterns back to memory"""
         import json
         try:
-            with open(self.memory_file, 'w') as f:
+            with open(self.memory_file, 'w', encoding="utf-8") as f:
                 json.dump(self.posting_memory, f, indent=2)
         except:
             pass

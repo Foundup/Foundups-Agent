@@ -72,9 +72,9 @@ class GitHubAutomation:
 {chr(10).join(f'- `{file}`' for file in files_changed)}
 
 ### WSP Compliance
-- ✅ WSP {wsp_number}: {changes_description}
-- ✅ WSP 22: ModLog updated
-- ✅ WSP 34: Git operations compliant
+- [PASS] WSP {wsp_number}: {changes_description}
+- [PASS] WSP 22: ModLog updated
+- [PASS] WSP 34: Git operations compliant
 
 ### Testing
 - [ ] All existing tests pass
@@ -84,7 +84,7 @@ class GitHubAutomation:
 ---
 *This PR was created automatically by the FoundUps Agent system.*
 
-🤖 Generated with [Claude Code](https://claude.ai/code)
+[AI] Generated with [Claude Code](https://claude.ai/code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 """
@@ -133,10 +133,10 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 {update_description}
 
 ### WSP Compliance
-- ✅ WSP 3: Enterprise Domain Organization
-- ✅ WSP 22: ModLog updated
-- ✅ WSP 49: Module directory structure
-- ✅ WSP 55: Module creation automation
+- [PASS] WSP 3: Enterprise Domain Organization
+- [PASS] WSP 22: ModLog updated
+- [PASS] WSP 49: Module directory structure
+- [PASS] WSP 55: Module creation automation
 
 ### Module Status
 - [ ] Tests passing
@@ -147,7 +147,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ---
 *Module update automated by FoundUps Agent system.*
 
-🤖 Generated with [Claude Code](https://claude.ai/code)
+[AI] Generated with [Claude Code](https://claude.ai/code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 """
@@ -236,7 +236,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
         """
         try:
             branch_name = f"docs/sync-{datetime.now().strftime('%Y%m%d-%H%M')}"
-            pr_title = "📚 Automated Documentation Sync"
+            pr_title = "[DOCS] Automated Documentation Sync"
             
             # Scan for documentation files
             doc_files = []
@@ -258,14 +258,14 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Synchronized ModLog files
 
 ### WSP Compliance
-- ✅ WSP 22: ModLog management
-- ✅ WSP 57: Naming coherence
-- ✅ WSP 60: Module memory architecture
+- [PASS] WSP 22: ModLog management
+- [PASS] WSP 57: Naming coherence
+- [PASS] WSP 60: Module memory architecture
 
 ---
 *Automated documentation sync by FoundUps Agent system.*
 
-🤖 Generated with [Claude Code](https://claude.ai/code)
+[AI] Generated with [Claude Code](https://claude.ai/code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 """
@@ -297,12 +297,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>
         """
         try:
             branch_name = f"release/{version}"
-            pr_title = f"🚀 Release {version}"
+            pr_title = f"[RELEASE] Release {version}"
             
             breaking_section = ""
             if breaking_changes:
                 breaking_section = f"""
-### ⚠️ Breaking Changes
+### [WARNING] Breaking Changes
 {chr(10).join(f'- {change}' for change in breaking_changes)}
 """
             
@@ -323,14 +323,14 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - [ ] Security review completed
 
 ### WSP Compliance
-- ✅ WSP 22: ModLog updated with release info
-- ✅ WSP 34: Git operations compliant
-- ✅ WSP 48: Recursive self-improvement documented
+- [PASS] WSP 22: ModLog updated with release info
+- [PASS] WSP 34: Git operations compliant
+- [PASS] WSP 48: Recursive self-improvement documented
 
 ---
 *Release PR automated by FoundUps Agent system.*
 
-🤖 Generated with [Claude Code](https://claude.ai/code)
+[AI] Generated with [Claude Code](https://claude.ai/code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 """

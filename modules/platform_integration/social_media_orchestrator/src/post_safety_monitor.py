@@ -7,6 +7,15 @@ This module detects when posts are cancelled or fail, indicating a duplicate
 attempt was made, and automatically updates the database to prevent future attempts.
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import os
 import json
 import logging
@@ -40,7 +49,7 @@ class PostSafetyMonitor:
         """Load existing monitoring data"""
         if self.monitor_file.exists():
             try:
-                with open(self.monitor_file, 'r') as f:
+                with open(self.monitor_file, 'r', encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:
                 logger.error(f"Error loading monitor data: {e}")
@@ -54,7 +63,7 @@ class PostSafetyMonitor:
     def _save_monitoring_data(self):
         """Save monitoring data"""
         try:
-            with open(self.monitor_file, 'w') as f:
+            with open(self.monitor_file, 'w', encoding="utf-8") as f:
                 json.dump(self.monitoring_data, f, indent=2)
         except Exception as e:
             logger.error(f"Error saving monitor data: {e}")
@@ -63,7 +72,7 @@ class PostSafetyMonitor:
         """Load duplicate attempt history"""
         if self.duplicate_attempts_file.exists():
             try:
-                with open(self.duplicate_attempts_file, 'r') as f:
+                with open(self.duplicate_attempts_file, 'r', encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:
                 logger.error(f"Error loading duplicate attempts: {e}")
@@ -76,7 +85,7 @@ class PostSafetyMonitor:
             if len(self.duplicate_attempts) > 100:
                 self.duplicate_attempts = self.duplicate_attempts[-100:]
 
-            with open(self.duplicate_attempts_file, 'w') as f:
+            with open(self.duplicate_attempts_file, 'w', encoding="utf-8") as f:
                 json.dump(self.duplicate_attempts, f, indent=2)
         except Exception as e:
             logger.error(f"Error saving duplicate attempts: {e}")

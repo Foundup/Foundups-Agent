@@ -3,6 +3,15 @@
 Fix anti_detection_poster.py by replacing print statements with logger calls
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import re
 
 def fix_logging(file_path):
@@ -66,8 +75,8 @@ if __name__ == "__main__":
 
     # Backup original
     backup_file = target_file + '.backup_print'
-    with open(target_file, 'r') as src:
-        with open(backup_file, 'w') as dst:
+    with open(target_file, 'r', encoding="utf-8") as src:
+        with open(backup_file, 'w', encoding="utf-8") as dst:
             dst.write(src.read())
     print(f"Created backup: {backup_file}")
 

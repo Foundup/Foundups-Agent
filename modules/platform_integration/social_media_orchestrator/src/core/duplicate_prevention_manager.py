@@ -204,7 +204,7 @@ class DuplicatePreventionManager:
         """Load posted history from JSON backup"""
         try:
             if os.path.exists(self.json_path):
-                with open(self.json_path, 'r') as f:
+                with open(self.json_path, 'r', encoding="utf-8") as f:
                     self.posted_streams = json.load(f)
                     for video_id, data in self.posted_streams.items():
                         data.setdefault('platforms_posted', [])
@@ -533,7 +533,7 @@ class DuplicatePreventionManager:
         """Save posted history to JSON backup"""
         try:
             os.makedirs(os.path.dirname(self.json_path), exist_ok=True)
-            with open(self.json_path, 'w') as f:
+            with open(self.json_path, 'w', encoding="utf-8") as f:
                 json.dump(self.posted_streams, f, indent=2, default=str)
 
         except Exception as e:
@@ -889,7 +889,7 @@ class DuplicatePreventionManager:
         patterns_file = self.qwen_memory_path / "posting_patterns.json"
         if patterns_file.exists():
             try:
-                with open(patterns_file, 'r') as f:
+                with open(patterns_file, 'r', encoding="utf-8") as f:
                     self.posting_patterns = json.load(f)
                 self.logger.info(f"🤖🧠 [QWEN-LOAD] Loaded {len(self.posting_patterns)} patterns")
             except Exception as e:
@@ -899,7 +899,7 @@ class DuplicatePreventionManager:
         heat_file = self.qwen_memory_path / "platform_heat.json"
         if heat_file.exists():
             try:
-                with open(heat_file, 'r') as f:
+                with open(heat_file, 'r', encoding="utf-8") as f:
                     heat_data = json.load(f)
                     for platform, heat in heat_data.items():
                         if platform in self.platform_status:
@@ -912,7 +912,7 @@ class DuplicatePreventionManager:
         try:
             # Save posting patterns
             patterns_file = self.qwen_memory_path / "posting_patterns.json"
-            with open(patterns_file, 'w') as f:
+            with open(patterns_file, 'w', encoding="utf-8") as f:
                 json.dump(self.posting_patterns, f, indent=2, default=str)
 
             # Save platform heat levels
@@ -921,7 +921,7 @@ class DuplicatePreventionManager:
                 platform: status['heat']
                 for platform, status in self.platform_status.items()
             }
-            with open(heat_file, 'w') as f:
+            with open(heat_file, 'w', encoding="utf-8") as f:
                 json.dump(heat_data, f, indent=2)
 
         except Exception as e:

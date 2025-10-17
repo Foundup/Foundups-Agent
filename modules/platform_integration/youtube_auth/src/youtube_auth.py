@@ -21,6 +21,15 @@ def get_credentials_for_index(index):
     Get credentials for a specific index (1-5).
     Returns tuple of (client_secrets_file, token_file) or None if not found.
     """
+
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
     client_secrets = os.getenv(f'GOOGLE_CLIENT_SECRETS_FILE_{index}')
     token_file = os.getenv(f'OAUTH_TOKEN_FILE_{index}')
     
@@ -127,7 +136,7 @@ def get_authenticated_service(token_index=None):
                     logger.info(f"✅ Proactive refresh successful for set {index} (new expiry: {creds.expiry})")
                     # Save the refreshed credentials
                     try:
-                        with open(token_file, 'w') as token:
+                        with open(token_file, 'w', encoding="utf-8") as token:
                             token.write(creds.to_json())
                         logger.info(f"💾 Refreshed credentials saved for set {index}")
                     except Exception as save_e:
@@ -188,7 +197,7 @@ def get_authenticated_service(token_index=None):
             if creds:
                 try:
                     os.makedirs(os.path.dirname(token_file), exist_ok=True)
-                    with open(token_file, 'w') as token:
+                    with open(token_file, 'w', encoding="utf-8") as token:
                         token.write(creds.to_json())
                     logger.info(f"💾 Credentials saved to {token_file}")
                 except Exception as e:

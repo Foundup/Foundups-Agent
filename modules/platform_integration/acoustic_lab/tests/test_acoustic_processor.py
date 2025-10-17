@@ -5,6 +5,15 @@ Acoustic Lab - Test Suite for Acoustic Processor
 Tests the core functionality of audio fingerprinting and triangulation.
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import unittest
 import numpy as np
 from src.acoustic_processor import AcousticProcessor, AudioValidationError, GPSValidationError

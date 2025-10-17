@@ -7,6 +7,15 @@ This module provides scheduling capabilities for humans to queue posts
 that will be executed by the autonomous system at specified times.
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import os
 import json
 import asyncio
@@ -76,7 +85,7 @@ class HumanSchedulingInterface:
         """Load scheduled posts from file"""
         if os.path.exists(self.schedule_file):
             try:
-                with open(self.schedule_file, 'r') as f:
+                with open(self.schedule_file, 'r', encoding="utf-8") as f:
                     data = json.load(f)
                     for post_id, post_data in data.items():
                         # Convert string times back to datetime
@@ -113,7 +122,7 @@ class HumanSchedulingInterface:
                 post_dict['schedule_type'] = post.schedule_type.value
                 data[post_id] = post_dict
 
-            with open(self.schedule_file, 'w') as f:
+            with open(self.schedule_file, 'w', encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
 
             logger.info(f"[012 SCHEDULER] Saved {len(self.scheduled_posts)} scheduled posts")

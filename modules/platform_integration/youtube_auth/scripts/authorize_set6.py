@@ -19,7 +19,7 @@ print('=' * 50)
 # Check that client_secret6.json exists
 client_secret_path = 'credentials/client_secret6.json'
 if os.path.exists(client_secret_path):
-    with open(client_secret_path, 'r') as f:
+    with open(client_secret_path, 'r', encoding="utf-8") as f:
         secret_data = json.load(f)
         if 'installed' in secret_data:
             print('[OK] Desktop app credentials detected')

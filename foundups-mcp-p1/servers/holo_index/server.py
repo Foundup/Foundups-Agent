@@ -435,6 +435,111 @@ class HoloIndexMCPServer:
                 "verified_patterns": 0
             }
 
+    @app.tool()
+    async def post_to_linkedin_via_selenium(
+        self,
+        content: str,
+        company_id: str = "1263645",
+        capture_screenshot: bool = True
+    ) -> dict:
+        """Post to LinkedIn using Selenium (no API). Collects training data automatically."""
+        try:
+            from modules.platform_integration.linkedin_agent.src.anti_detection_poster import AntiDetectionLinkedIn
+            from modules.platform_integration.social_media_orchestrator.src.gemini_vision_analyzer import GeminiVisionAnalyzer
+
+            poster = AntiDetectionLinkedIn()
+            poster.setup_driver(use_existing_session=True)
+
+            gemini_analysis = None
+            if capture_screenshot:
+                screenshot = poster.driver.get_screenshot_as_png()
+                gemini = GeminiVisionAnalyzer(api_key=os.getenv('GOOGLE_AISTUDIO_API_KEY'))
+                gemini_analysis = gemini.analyze_posting_ui(screenshot)
+
+            success = poster.post_to_company_page(content=content, company_id=company_id)
+
+            pattern_id = self._save_selenium_training_pattern({
+                "mcp_tool": "post_to_linkedin_via_selenium",
+                "input": {"content": content},
+                "gemini_analysis": gemini_analysis,
+                "result": "success" if success else "failure",
+                "training_category": "linkedin_posting"
+            })
+
+            return {
+                "success": success,
+                "platform": "linkedin",
+                "gemini_analysis": gemini_analysis,
+                "training_pattern_id": pattern_id
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    @app.tool()
+    async def post_to_x_via_selenium(
+        self,
+        content: str,
+        account: str = "foundups",
+        capture_screenshot: bool = True
+    ) -> dict:
+        """Post to X/Twitter using Selenium (no API). Collects training data automatically."""
+        try:
+            from modules.platform_integration.x_twitter.src.x_anti_detection_poster import AntiDetectionX
+            from modules.platform_integration.social_media_orchestrator.src.gemini_vision_analyzer import GeminiVisionAnalyzer
+
+            poster = AntiDetectionX(use_foundups=(account == "foundups"))
+            poster.setup_driver(use_existing_session=True)
+
+            gemini_analysis = None
+            if capture_screenshot:
+                screenshot = poster.driver.get_screenshot_as_png()
+                gemini = GeminiVisionAnalyzer(api_key=os.getenv('GOOGLE_AISTUDIO_API_KEY'))
+                gemini_analysis = gemini.analyze_posting_ui(screenshot)
+
+            success = poster.post_to_x(content=content)
+
+            pattern_id = self._save_selenium_training_pattern({
+                "mcp_tool": "post_to_x_via_selenium",
+                "input": {"content": content, "account": account},
+                "gemini_analysis": gemini_analysis,
+                "result": "success" if success else "failure",
+                "training_category": "x_posting"
+            })
+
+            return {
+                "success": success,
+                "platform": "x_twitter",
+                "gemini_analysis": gemini_analysis,
+                "training_pattern_id": pattern_id
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def _save_selenium_training_pattern(self, pattern: dict) -> str:
+        """Save training pattern to JSON file"""
+        import json
+        from pathlib import Path
+        from datetime import datetime
+
+        pattern_id = f"{pattern.get('training_category', 'general')}_{int(datetime.now().timestamp())}"
+        pattern['training_pattern_id'] = pattern_id
+        pattern['timestamp'] = datetime.now().isoformat()
+
+        patterns_file = Path("holo_index/training/selenium_patterns.json")
+        patterns_file.parent.mkdir(parents=True, exist_ok=True)
+
+        patterns = []
+        if patterns_file.exists():
+            with open(patterns_file, 'r') as f:
+                patterns = json.load(f)
+
+        patterns.append(pattern)
+
+        with open(patterns_file, 'w') as f:
+            json.dump(patterns, f, indent=2)
+
+        return pattern_id
+
 # Initialize server
 holo_server = HoloIndexMCPServer()
 

@@ -39,6 +39,15 @@ class TestCalculateDynamicDelay(unittest.TestCase):
     @patch('modules.platform_integration.stream_resolver.src.stream_resolver.FORCE_DEV_DELAY', False)
     def test_calculate_dynamic_delay_with_high_activity(self):
         """Test delay calculation with high chat activity."""
+
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
         delay = calculate_dynamic_delay(active_users=1500)
         # Should be close to MIN_DELAY
         self.assertGreaterEqual(delay, 5.0)  
@@ -567,7 +576,7 @@ except Exception as e_guard:
         # Create a temporary file with the test code
         fd, path = tempfile.mkstemp(suffix='.py')
         try:
-            with os.fdopen(fd, 'w') as f:
+            with os.fdopen(fd, 'w', encoding="utf-8") as f:
                 f.write(test_guard_code)
             
             # Execute the temporary file and catch the exception

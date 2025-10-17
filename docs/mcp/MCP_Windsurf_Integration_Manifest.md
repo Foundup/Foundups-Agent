@@ -3,7 +3,7 @@
 **Status**: ACTIVE (Phase 0.1 - Foundational Rubiks)
 **Version**: 1.0
 **Date**: 2025-10-15
-**WSP Compliance**: WSP 77 (Agent Coordination), WSP 35 (HoloIndex Integration), WSP 80 (Cube-Level DAE Orchestration)
+**WSP Compliance**: WSP 77 (Agent Coordination), WSP 35 (HoloIndex Integration), WSP 80 (Cube-Level DAE Orchestration), WSP 97 (System Execution Prompting)
 
 ---
 
@@ -17,10 +17,11 @@ This manifest defines the MCP (Model Context Protocol) server integration strate
 
 ## Foundational Rubik Architecture
 
-### Core Rubik (DAE) Definitions
+### Core Rubik Definitions
+**Rubik = MVP DAE**: A Rubik Cube represents a fully realized Domain Autonomous Entity at MVP stage. Currently these are "Cubes" (modules) that need Qwen/Gemma enhancement to become fully agentic Progressive Web Apps (PWAs) built with web technologies, installable and runnable on all devices from one codebase. Rubiks connect ubiquitously to any blockchain via FoundUp MCPs.
 
-| Rubik (DAE) | Purpose | Primary Agents | Secondary Agents | Bell State Vector |
-|-------------|---------|----------------|------------------|-------------------|
+| Rubik (MVP DAE) | Purpose | Primary Agents | Secondary Agents | Bell State Vector |
+|-----------------|---------|----------------|------------------|-------------------|
 | **Rubik_Compose** | Code + Repository Management | Qwen (architect) | Gemma (pattern) | `φ²:golden_ratio` |
 | **Rubik_Build** | Runtime + Development Environment | Qwen + Gemma | 0102 (oversight) | `φ³:agency` |
 | **Rubik_Knowledge** | Memory + Logging Systems | 0102 (sentinel) | Baby 0102s | `φ⁴:entanglement` |

@@ -339,7 +339,7 @@ class StreamResolverDB(ModuleDB):
         # Migrate stream_history.json
         try:
             if os.path.exists("memory/stream_history.json"):
-                with open("memory/stream_history.json", "r") as f:
+                with open("memory/stream_history.json", "r", encoding="utf-8") as f:
                     history = json.load(f)
 
                 # This is minimal data, just log it
@@ -350,7 +350,7 @@ class StreamResolverDB(ModuleDB):
         # Migrate stream_schedule_patterns.json
         try:
             if os.path.exists("memory/stream_schedule_patterns.json"):
-                with open("memory/stream_schedule_patterns.json", "r") as f:
+                with open("memory/stream_schedule_patterns.json", "r", encoding="utf-8") as f:
                     patterns = json.load(f)
 
                 if "stream_times" in patterns:

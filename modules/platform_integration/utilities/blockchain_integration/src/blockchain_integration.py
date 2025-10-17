@@ -278,7 +278,7 @@ class BlockchainIntegration:
         # Ensure directory exists
         export_file.parent.mkdir(parents=True, exist_ok=True)
         
-        with open(export_file, 'w') as f:
+        with open(export_file, 'w', encoding="utf-8") as f:
             json.dump(blockchain_export, f, indent=2)
         
         return {
@@ -298,7 +298,7 @@ class BlockchainIntegration:
             }
         
         try:
-            with open(import_file, 'r') as f:
+            with open(import_file, 'r', encoding="utf-8") as f:
                 blockchain_data = json.load(f)
             
             self.blocks = blockchain_data.get("blocks", [])

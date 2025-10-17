@@ -7,6 +7,15 @@ When 012 says "post about the stream in 2 hours" or "schedule a LinkedIn post
 for tomorrow at 3pm", 0102 understands and schedules autonomously.
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import os
 import json
 import asyncio
@@ -354,7 +363,7 @@ class AutonomousActionScheduler:
         """Load scheduled actions from file"""
         if os.path.exists(self.schedule_file):
             try:
-                with open(self.schedule_file, 'r') as f:
+                with open(self.schedule_file, 'r', encoding="utf-8") as f:
                     data = json.load(f)
                     for action_id, action_data in data.items():
                         # Convert strings to proper types
@@ -388,7 +397,7 @@ class AutonomousActionScheduler:
                 }
                 data[action_id] = action_dict
 
-            with open(self.schedule_file, 'w') as f:
+            with open(self.schedule_file, 'w', encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
 
         except Exception as e:

@@ -1,13 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python:*)",
-      "Read(//o//**)",
-      "Bash(timeout 180 python \"holo_index\\tests\\generate_sentinel_matrix_all_wsps.py\")",
-      "Read(//e//**)",
-      "Read(//e/HoloIndex/**)",
-      "Bash(find:*)",
-      "Bash(del test_execution_tracer.py)"
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": [],

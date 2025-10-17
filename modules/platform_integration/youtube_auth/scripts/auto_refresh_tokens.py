@@ -11,6 +11,15 @@ This script should be run periodically (e.g., daily via cron/scheduler) to:
 WSP Compliance: WSP 84 (Code Memory Verification) - Enhancing existing youtube_auth module
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import os
 import sys
 import json
@@ -111,7 +120,7 @@ def refresh_credential_set(index: int, force_refresh: bool = False) -> dict:
                 creds.refresh(Request())
 
                 # Save the refreshed token
-                with open(token_file, 'w') as token:
+                with open(token_file, 'w', encoding="utf-8") as token:
                     token.write(creds.to_json())
 
                 # Log new expiry

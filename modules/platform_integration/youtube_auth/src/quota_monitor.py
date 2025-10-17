@@ -6,6 +6,15 @@ This module provides real-time quota monitoring, usage tracking, and alerting
 when quota limits are approached or exceeded.
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import os
 import time
 import json
@@ -70,7 +79,7 @@ class QuotaMonitor:
         """Load quota usage data from file."""
         if self.quota_file.exists():
             try:
-                with open(self.quota_file, 'r') as f:
+                with open(self.quota_file, 'r', encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:
                 logger.error(f"Error loading quota data: {e}")
@@ -84,7 +93,7 @@ class QuotaMonitor:
     def _save_usage_data(self):
         """Save quota usage data to file."""
         try:
-            with open(self.quota_file, 'w') as f:
+            with open(self.quota_file, 'w', encoding="utf-8") as f:
                 json.dump(self.usage_data, f, indent=2)
         except Exception as e:
             logger.error(f"Error saving quota data: {e}")
@@ -93,7 +102,7 @@ class QuotaMonitor:
         """Load alert history."""
         if self.alert_file.exists():
             try:
-                with open(self.alert_file, 'r') as f:
+                with open(self.alert_file, 'r', encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:
                 logger.error(f"Error loading alerts: {e}")
@@ -107,7 +116,7 @@ class QuotaMonitor:
             self.alerts = self.alerts[-100:]
         
         try:
-            with open(self.alert_file, 'w') as f:
+            with open(self.alert_file, 'w', encoding="utf-8") as f:
                 json.dump(self.alerts, f, indent=2)
         except Exception as e:
             logger.error(f"Error saving alert: {e}")
@@ -225,7 +234,7 @@ class QuotaMonitor:
         # Write to alert file for external monitoring
         alert_trigger = self.memory_dir / "quota_alert_trigger.txt"
         try:
-            with open(alert_trigger, 'w') as f:
+            with open(alert_trigger, 'w', encoding="utf-8") as f:
                 f.write(json.dumps(alert, indent=2))
             logger.info(f"📢 Alert written to {alert_trigger}")
         except Exception as e:

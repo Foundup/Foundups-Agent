@@ -1,0 +1,31 @@
+{
+  "successful_remediations": [
+    {
+      "timestamp": 1760667706.0347853,
+      "strategy": "scoped_module_fix",
+      "total_files": 44,
+      "violations_fixed": 303,
+      "success": true,
+      "lessons_learned": {
+        "pattern_type": "utf8_remediation",
+        "fix_strategy": "scoped_module_fix",
+        "files_affected": 44
+      }
+    }
+  ],
+  "failed_attempts": [
+    {
+      "timestamp": 1760686531.8894486,
+      "strategy": "incremental_scoped_fix",
+      "total_files": 242,
+      "violations_fixed": 1339,
+      "success": false,
+      "lessons_learned": {
+        "pattern_type": "utf8_remediation",
+        "fix_strategy": "incremental_scoped_fix",
+        "files_affected": 242
+      }
+    }
+  ],
+  "violation_patterns": {}
+}

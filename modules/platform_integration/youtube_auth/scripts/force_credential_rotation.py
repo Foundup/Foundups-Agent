@@ -6,6 +6,15 @@ WSP 86: Emergency credential rotation script
 Usage: python force_credential_rotation.py
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import json
 import sys
 import os
@@ -25,7 +34,7 @@ def force_rotation_to_set_10():
     # Check current quota usage
     quota_file = Path("memory/quota_usage.json")
     if quota_file.exists():
-        with open(quota_file, 'r') as f:
+        with open(quota_file, 'r', encoding="utf-8") as f:
             quota_data = json.load(f)
             if "sets" in quota_data and "1" in quota_data["sets"]:
                 used = quota_data["sets"]["1"]["used"]
@@ -35,7 +44,7 @@ def force_rotation_to_set_10():
     exhausted_file = Path("memory/exhausted_credentials.json")
 
     if exhausted_file.exists():
-        with open(exhausted_file, 'r') as f:
+        with open(exhausted_file, 'r', encoding="utf-8") as f:
             data = json.load(f)
     else:
         data = {"exhausted_sets": [], "last_reset": None, "next_reset": None}
@@ -73,7 +82,7 @@ def force_rotation_to_set_10():
         print(f"📅 Next reset (UTC-8): {next_midnight_pt.strftime('%Y-%m-%d %H:%M:%S')}")
 
     # Save the updated exhausted credentials
-    with open(exhausted_file, 'w') as f:
+    with open(exhausted_file, 'w', encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
     print("💾 Saved exhausted credentials status")

@@ -10,6 +10,7 @@ Status: POC Development
 """
 
 from .liberty_alert_orchestrator import LibertyAlertOrchestrator
+from .liberty_alert_dae import LibertyAlertDAE, run_liberty_alert_dae
 from .mesh_network import MeshNetwork
 from .alert_broadcaster import AlertBroadcaster
 from .models import (
@@ -25,6 +26,8 @@ __version__ = "0.1.0-POC"
 
 __all__ = [
     "LibertyAlertOrchestrator",
+    "LibertyAlertDAE",
+    "run_liberty_alert_dae",
     "MeshNetwork",
     "AlertBroadcaster",
     "Alert",

@@ -1,0 +1,11 @@
+# Work Completion Publisher Dependencies
+
+# Core dependencies (stdlib, no external packages needed)
+# All functionality uses Python standard library
+
+# Internal dependencies (relative imports)
+# - holo_index.qwen_advisor (for Qwen intelligence)
+# - main.py --git (for publishing execution)
+
+# System dependencies
+# - git (command line tool)

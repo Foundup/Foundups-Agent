@@ -4,6 +4,15 @@ Detailed quota and API testing for all credential sets
 Tests actual API calls and reports exact errors
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import os
 import sys
 import json
@@ -52,7 +61,7 @@ def test_credential_set(set_num):
     
     # Get project ID
     try:
-        with open(secret_path, 'r') as f:
+        with open(secret_path, 'r', encoding="utf-8") as f:
             secret_data = json.load(f)
             result['project_id'] = secret_data.get('installed', {}).get('project_id', 'Unknown')
     except Exception as e:
@@ -66,7 +75,7 @@ def test_credential_set(set_num):
     
     # Load and test credentials
     try:
-        with open(token_path, 'r') as f:
+        with open(token_path, 'r', encoding="utf-8") as f:
             creds_data = json.load(f)
         
         creds = Credentials.from_authorized_user_info(creds_data)
@@ -78,7 +87,7 @@ def test_credential_set(set_num):
                     creds.refresh(Request())
                     result['token_valid'] = True
                     # Save refreshed token
-                    with open(token_path, 'w') as f:
+                    with open(token_path, 'w', encoding="utf-8") as f:
                         f.write(creds.to_json())
                 except Exception as e:
                     result['error'] = f'Token refresh failed: {e}'

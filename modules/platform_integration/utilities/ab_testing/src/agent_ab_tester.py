@@ -5,6 +5,15 @@ Tests different agent combinations to find optimal recipes
 Follows WSP 21 (Prometheus Recursion), WSP 48 (Recursive Improvement)
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import json
 import time
 import hashlib
@@ -224,7 +233,7 @@ class ABTestingSystem:
     
     def _log_result(self, results: Dict) -> None:
         """Log test results to NDJSON journal"""
-        with open(self.ab_journal, 'a') as f:
+        with open(self.ab_journal, 'a', encoding="utf-8") as f:
             f.write(json.dumps(results) + '\n')
     
     def compare_recipes(self, user_input: str, recipe_ids: List[str] = None) -> Dict[str, Any]:
@@ -274,7 +283,7 @@ class ABTestingSystem:
             "average_metrics": {}
         }
         
-        with open(self.ab_journal, 'r') as f:
+        with open(self.ab_journal, 'r', encoding="utf-8") as f:
             for line in f:
                 result = json.loads(line)
                 stats["total_tests"] += 1

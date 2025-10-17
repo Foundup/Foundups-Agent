@@ -41,10 +41,10 @@ test_log = [
 # Create test data files
 os.makedirs("memory", exist_ok=True)
 
-with open("memory/git_posted_commits.json", "w") as f:
+with open("memory/git_posted_commits.json", "w", encoding="utf-8") as f:
     json.dump(test_commits, f)
 
-with open("memory/git_post_log.json", "w") as f:
+with open("memory/git_post_log.json", "w", encoding="utf-8") as f:
     json.dump(test_log, f, indent=2)
 
 print("\n✅ Created test data files:")
@@ -60,7 +60,7 @@ print("="*60)
 posted_commits_file = "memory/git_posted_commits.json"
 if os.path.exists(posted_commits_file):
     try:
-        with open(posted_commits_file, 'r') as f:
+        with open(posted_commits_file, 'r', encoding="utf-8") as f:
             posted_commits = json.load(f)
             print(f"\n✅ {len(posted_commits)} commits posted to social media")
             print("\nPosted commit hashes:")
@@ -77,7 +77,7 @@ else:
 log_file = "memory/git_post_log.json"
 if os.path.exists(log_file):
     try:
-        with open(log_file, 'r') as f:
+        with open(log_file, 'r', encoding="utf-8") as f:
             log_entries = json.load(f)
             print(f"\n📋 Detailed posting log ({len(log_entries)} entries):")
             print("-" * 60)

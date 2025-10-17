@@ -93,7 +93,7 @@ class LinkedInPostScheduler:
         """Load scheduled posts from storage file"""
         try:
             if os.path.exists(self.storage_file):
-                with open(self.storage_file, 'r') as f:
+                with open(self.storage_file, 'r', encoding="utf-8") as f:
                     data = json.load(f)
                     for post_data in data.values():
                         post = ScheduledPost(**post_data)
@@ -126,7 +126,7 @@ class LinkedInPostScheduler:
                     post_dict['posted_at'] = post.posted_at.isoformat()
                 data[post_id] = post_dict
             
-            with open(self.storage_file, 'w') as f:
+            with open(self.storage_file, 'w', encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
             self.logger.error(f"❌ Failed to save scheduled posts: {e}")

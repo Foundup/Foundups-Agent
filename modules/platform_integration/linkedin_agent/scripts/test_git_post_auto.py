@@ -37,7 +37,7 @@ try:
         print("\n⚠️ Creating a test change...")
         # Create a small test file to have something to commit
         test_file = f"test_commit_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-        with open(test_file, 'w') as f:
+        with open(test_file, 'w', encoding="utf-8") as f:
             f.write("Test commit for FoundUps posting\n")
         print(f"Created {test_file}")
 

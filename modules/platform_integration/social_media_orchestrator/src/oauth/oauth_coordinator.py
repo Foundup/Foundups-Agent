@@ -49,11 +49,11 @@ class OAuthCoordinator:
         key_file = os.path.join(self.config.get('key_path', '.'), '.oauth_key')
         
         if os.path.exists(key_file):
-            with open(key_file, 'rb') as f:
+            with open(key_file, 'rb', encoding="utf-8") as f:
                 return f.read()
         else:
             key = Fernet.generate_key() if Fernet else b'mock_key_for_dev_mode'
-            with open(key_file, 'wb') as f:
+            with open(key_file, 'wb', encoding="utf-8") as f:
                 f.write(key)
             os.chmod(key_file, 0o600)  # Restrict access
             return key
@@ -83,7 +83,7 @@ class OAuthCoordinator:
             encrypted_data = self.cipher.encrypt(json.dumps(credentials).encode())
             
             storage_file = os.path.join(self.storage_path, f'{platform}_oauth.enc')
-            with open(storage_file, 'wb') as f:
+            with open(storage_file, 'wb', encoding="utf-8") as f:
                 f.write(encrypted_data)
                 
             # Update cache
@@ -123,7 +123,7 @@ class OAuthCoordinator:
             return None
             
         try:
-            with open(storage_file, 'rb') as f:
+            with open(storage_file, 'rb', encoding="utf-8") as f:
                 encrypted_data = f.read()
                 
             decrypted_data = self.cipher.decrypt(encrypted_data)

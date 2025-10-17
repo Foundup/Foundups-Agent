@@ -298,7 +298,7 @@ class GemmaRootViolationMonitor:
         }
 
     async def _apply_auto_correction(self, violation: Dict[str, Any]) -> bool:
-        """Apply automatic correction for violation"""
+        """Apply automatic correction for violation using Qwen coordination"""
 
         filename = violation['filename']
         violation_type = violation['violation_type']
@@ -307,11 +307,12 @@ class GemmaRootViolationMonitor:
             src_path = self.root_path / filename
 
             if violation_type == 'script_in_root' and filename.endswith('.py'):
-                # Move Python scripts to appropriate module
-                dest_path = self.root_path / 'modules' / 'ai_intelligence' / 'ric_dae' / 'src' / filename
-                dest_path.parent.mkdir(parents=True, exist_ok=True)
-                src_path.rename(dest_path)
-                return True
+                # Use Qwen autonomous refactoring for intelligent module placement
+                return await self._apply_qwen_refactoring(src_path, filename)
+
+            elif violation_type == 'debug_file_in_root' and filename.startswith('test_'):
+                # Use Qwen for test file placement
+                return await self._apply_qwen_refactoring(src_path, filename)
 
             elif violation_type == 'temp_file_in_root':
                 # Move temp files to temp directory
@@ -332,6 +333,86 @@ class GemmaRootViolationMonitor:
             return False
 
         return False
+
+    async def _apply_qwen_refactoring(self, src_path: Path, filename: str) -> bool:
+        """Use Qwen autonomous refactoring to intelligently place file"""
+
+        try:
+            # Import Qwen orchestrator
+            from holo_index.qwen_advisor.orchestration.autonomous_refactoring import AutonomousRefactoringOrchestrator
+
+            # Initialize orchestrator
+            orchestrator = AutonomousRefactoringOrchestrator(self.root_path)
+
+            # Phase 1: Gemma analyzes file dependencies
+            print(f"[QWEN] Analyzing {filename} dependencies...")
+            analysis = orchestrator.analyze_module_dependencies(str(src_path))
+
+            # Phase 2: Qwen determines target location based on imports
+            target_location = self._determine_target_location_qwen(filename, analysis)
+
+            if not target_location:
+                print(f"[QWEN] Could not determine target location for {filename}")
+                return False
+
+            print(f"[QWEN] Moving {filename} → {target_location}")
+
+            # Phase 3: Execute move with 0102 supervision (auto-approve for CLI)
+            plan = orchestrator.generate_refactoring_plan(
+                module_path=str(src_path),
+                target_location=target_location,
+                analysis=analysis
+            )
+
+            results = orchestrator.execute_with_supervision(plan, auto_approve=True)
+
+            # Phase 4: Learning - store pattern
+            orchestrator.store_refactoring_pattern(
+                module_path=str(src_path),
+                target_location=target_location,
+                plan=plan,
+                results=results
+            )
+
+            return results.get('success', False)
+
+        except Exception as e:
+            print(f"[ERROR] Qwen refactoring failed for {filename}: {e}")
+            return False
+
+    def _determine_target_location_qwen(self, filename: str, analysis: Dict[str, Any]) -> str:
+        """Qwen intelligence: Determine target location based on file analysis"""
+
+        # Test files go to module test directories
+        if filename.startswith('test_'):
+            # Analyze imports to determine which module this test belongs to
+            import_refs = analysis.get('import_references', [])
+
+            # Check for module imports in the file content
+            try:
+                with open(self.root_path / filename, 'r', encoding='utf-8') as f:
+                    content = f.read()
+
+                # Pattern matching for module imports
+                if 'holo_index' in content:
+                    return 'holo_index/tests/' + filename
+                elif 'youtube_shorts' in content or 'veo3' in content.lower():
+                    return 'modules/communication/youtube_shorts/tests/' + filename
+                elif 'linkedin' in content.lower():
+                    return 'modules/platform_integration/linkedin_agent/tests/' + filename
+                elif 'twitter' in content.lower() or 'x_twitter' in content:
+                    return 'modules/platform_integration/x_twitter/tests/' + filename
+                elif 'social_media_orchestrator' in content:
+                    return 'modules/platform_integration/social_media_orchestrator/tests/' + filename
+
+            except Exception as e:
+                print(f"[QWEN] Could not analyze file content: {e}")
+
+            # Default: holo_index tests
+            return 'holo_index/tests/' + filename
+
+        # Non-test scripts: analyze by functionality
+        return None  # Qwen will need more sophisticated analysis for non-test files
 
 # Integration point for HoloIndex
 async def get_root_violation_alert() -> str:

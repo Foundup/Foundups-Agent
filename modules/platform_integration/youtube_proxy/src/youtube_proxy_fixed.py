@@ -112,7 +112,7 @@ class YouTubeProxyFixed:
                 
                 if os.path.exists(token_path):
                     try:
-                        with open(token_path, 'r') as f:
+                        with open(token_path, 'r', encoding="utf-8") as f:
                             creds_data = json.load(f)
                         
                         creds = Credentials.from_authorized_user_info(creds_data, SCOPES)
@@ -122,7 +122,7 @@ class YouTubeProxyFixed:
                                 creds.refresh(Request())
                                 
                                 # Save refreshed token
-                                with open(token_path, 'w') as f:
+                                with open(token_path, 'w', encoding="utf-8") as f:
                                     f.write(creds.to_json())
                                 
                                 self.logger.info(f"[OK] Auto-refreshed token: {token_file}")

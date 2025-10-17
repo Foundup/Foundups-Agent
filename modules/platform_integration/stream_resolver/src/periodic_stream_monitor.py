@@ -8,6 +8,15 @@ WSP 3: Enterprise Domain Architecture
 WSP 87: Alternative detection without API quota
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import os
 import sys
 import time
@@ -67,7 +76,7 @@ class PeriodicStreamMonitor:
         """Load previous session state"""
         try:
             if os.path.exists(self.session_file):
-                with open(self.session_file, 'r') as f:
+                with open(self.session_file, 'r', encoding="utf-8") as f:
                     session = json.load(f)
                     self.last_detected_video_id = session.get('last_video_id')
                     logger.info(f"[SESSION] Loaded previous video: {self.last_detected_video_id}")
@@ -78,7 +87,7 @@ class PeriodicStreamMonitor:
         """Save current session state"""
         try:
             os.makedirs(os.path.dirname(self.session_file), exist_ok=True)
-            with open(self.session_file, 'w') as f:
+            with open(self.session_file, 'w', encoding="utf-8") as f:
                 json.dump({
                     'last_video_id': self.last_detected_video_id,
                     'timestamp': datetime.now().isoformat()

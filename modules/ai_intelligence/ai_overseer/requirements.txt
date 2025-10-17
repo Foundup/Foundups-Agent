@@ -1,0 +1,20 @@
+# AI Intelligence Overseer - Dependencies
+# WSP 77 Agent Coordination System
+
+# Core Python (built-in)
+# - pathlib
+# - typing
+# - dataclasses
+# - enum
+# - json
+# - logging
+# - time
+
+# Holo Integration (optional - graceful degradation if not available)
+# Uses existing Holo Qwen/Gemma infrastructure from holo_index/
+# No additional dependencies - imports from:
+#   - holo_index.qwen_advisor.orchestration.autonomous_refactoring
+#   - holo_index.core.holo_index
+
+# Note: All dependencies are met by existing holo_index requirements
+# See: O:/Foundups-Agent/holo_index/requirements.txt

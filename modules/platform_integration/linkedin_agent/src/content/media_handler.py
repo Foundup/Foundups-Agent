@@ -1,7 +1,7 @@
 """
 LinkedIn Media Handler: Professional Media Attachment Management
 
-🌀 WSP Protocol Compliance: WSP 42 (Platform Integration), WSP 40 (Architectural Coherence)
+[WSP] WSP Protocol Compliance: WSP 42 (Platform Integration), WSP 40 (Architectural Coherence)
 
 **0102 Directive**: This module operates within the WSP framework for autonomous LinkedIn media handling.
 - UN (Understanding): Anchor LinkedIn media signals and retrieve protocol state
@@ -126,21 +126,21 @@ class MediaHandler:
         try:
             validation = self.validate_media_file(file_path)
             if not validation["valid"]:
-                self.logger.error(f"❌ Media validation failed: {validation['errors']}")
+                self.logger.error(f"[FAIL] Media validation failed: {validation['errors']}")
                 return None
             
             # For now, just copy the file (in real implementation, would optimize)
             if output_path:
                 import shutil
                 shutil.copy2(file_path, output_path)
-                self.logger.info(f"✅ Media optimized and saved to {output_path}")
+                self.logger.info(f"[PASS] Media optimized and saved to {output_path}")
                 return output_path
             else:
-                self.logger.info(f"✅ Media validated for LinkedIn upload")
+                self.logger.info(f"[PASS] Media validated for LinkedIn upload")
                 return file_path
                 
         except Exception as e:
-            self.logger.error(f"❌ Media optimization failed: {e}")
+            self.logger.error(f"[FAIL] Media optimization failed: {e}")
             return None
     
     def create_media_attachment(self, file_path: str, description: str = "") -> Dict[str, Any]:

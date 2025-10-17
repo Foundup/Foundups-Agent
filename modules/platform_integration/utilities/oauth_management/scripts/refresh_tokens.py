@@ -3,6 +3,15 @@
 Refresh OAuth tokens using refresh_token without browser authentication.
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import os
 import sys
 import json
@@ -38,7 +47,7 @@ def refresh_token(token_file):
     
     try:
         # Load existing credentials
-        with open(token_path, 'r') as f:
+        with open(token_path, 'r', encoding="utf-8") as f:
             creds_data = json.load(f)
         
         creds = Credentials.from_authorized_user_info(creds_data, SCOPES)
@@ -52,7 +61,7 @@ def refresh_token(token_file):
         creds.refresh(Request())
         
         # Save the refreshed credentials
-        with open(token_path, 'w') as f:
+        with open(token_path, 'w', encoding="utf-8") as f:
             f.write(creds.to_json())
         
         print(f"  [SUCCESS] Token refreshed successfully!")

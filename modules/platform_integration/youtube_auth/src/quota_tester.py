@@ -6,6 +6,15 @@ WSP-Compliant: WSP 48 (Recursive Improvement)
 0102 Architect: Intelligently tests and sorts credentials by quota availability
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import logging
 import os
 import json
@@ -164,7 +173,7 @@ class QuotaTester:
                 'recommended_order': [r['credential_set'] for r in results if r['quota_score'] > 0]
             }
             
-            with open(self.test_results_file, 'w') as f:
+            with open(self.test_results_file, 'w', encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
                 
             logger.info(f"[SAVED] Test results saved to {self.test_results_file}")
@@ -176,7 +185,7 @@ class QuotaTester:
         """Load previous test results"""
         try:
             if os.path.exists(self.test_results_file):
-                with open(self.test_results_file, 'r') as f:
+                with open(self.test_results_file, 'r', encoding="utf-8") as f:
                     return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load results: {e}")

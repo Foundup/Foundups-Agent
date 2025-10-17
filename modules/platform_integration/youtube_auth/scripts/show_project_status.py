@@ -3,6 +3,15 @@
 Show status of all Google Cloud projects and credential sets
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..')))
@@ -35,7 +44,7 @@ def check_credential_set(set_num):
     # Get project ID
     if os.path.exists(secret_file):
         try:
-            with open(secret_file, 'r') as f:
+            with open(secret_file, 'r', encoding="utf-8") as f:
                 data = json.load(f)
                 if 'installed' in data:
                     result['project'] = data['installed'].get('project_id', 'Unknown')

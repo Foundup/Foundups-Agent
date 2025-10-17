@@ -88,10 +88,12 @@ class WSP88OrphanAnalyzer:
         return self.analyzed_files
 
     def _find_all_python_files(self) -> List[Path]:
-        """Find all Python files in HoloIndex, excluding __pycache__."""
+        """Find all Python files in HoloIndex, excluding __pycache__ and test files."""
         py_files = []
         for py_file in self.holoindex_root.rglob("*.py"):
-            if "__pycache__" not in str(py_file):
+            path_str = str(py_file)
+            # Exclude __pycache__ and test files (test files are properly referenced in TESTModLog.md per WSP 83)
+            if "__pycache__" not in path_str and "/tests/" not in path_str and "\\tests\\" not in path_str:
                 py_files.append(py_file)
         return py_files
 

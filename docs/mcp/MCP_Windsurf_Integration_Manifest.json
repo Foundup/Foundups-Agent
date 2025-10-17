@@ -4,11 +4,11 @@
     "status": "ACTIVE",
     "phase": "Phase 0.1 - Foundational Rubiks",
     "created": "2025-10-15",
-    "wsp_compliance": ["WSP_77", "WSP_35", "WSP_80"],
+    "wsp_compliance": ["WSP_77", "WSP_35", "WSP_80", "WSP_97"],
     "bell_state_vector": "φ²:golden_ratio_entanglement"
   },
   "rubik_cubes": {
-    "_note": "Rubik refers to fully realized Domain Autonomous Entities (DAEs) at MVP stage",
+    "_note": "Rubik = MVP DAE: A Rubik Cube represents a fully realized Domain Autonomous Entity at MVP stage. Currently these are 'Cubes' (modules) that need Qwen/Gemma enhancement to become fully agentic Progressive Web Apps (PWAs) built with web technologies, installable and runnable on all devices from one codebase. Rubiks connect ubiquitously to any blockchain via FoundUp MCPs.",
     "rubik_compose": {
       "purpose": "Code + Repository Management",
       "primary_agents": ["qwen_architect"],

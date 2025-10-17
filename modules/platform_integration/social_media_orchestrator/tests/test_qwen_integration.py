@@ -4,6 +4,15 @@ Test script to verify QWEN intelligence integration with social media orchestrat
 Tests that the enhanced DuplicatePreventionManager works with refactored orchestrator
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import sys
 import os
 import json

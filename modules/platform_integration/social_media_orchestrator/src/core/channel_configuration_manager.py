@@ -88,7 +88,7 @@ class ChannelConfigurationManager:
         # Try to load from file
         if os.path.exists(self.config_path):
             try:
-                with open(self.config_path, 'r') as f:
+                with open(self.config_path, 'r', encoding="utf-8") as f:
                     loaded_config = json.load(f)
                     # Start with loaded config, then add any missing defaults
                     self.channel_configs = loaded_config.copy()
@@ -110,7 +110,7 @@ class ChannelConfigurationManager:
         """Save current configuration to file"""
         try:
             os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
-            with open(self.config_path, 'w') as f:
+            with open(self.config_path, 'w', encoding="utf-8") as f:
                 json.dump(self.channel_configs, f, indent=2)
             self.logger.info(f"[CONFIG] Saved configuration to {self.config_path}")
         except Exception as e:

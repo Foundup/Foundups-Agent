@@ -26,7 +26,7 @@ def _save_oauth_token_file(credentials: Credentials, credential_type: str) -> No
     try:
         # Ensure the credentials directory exists
         os.makedirs(os.path.dirname(token_file_path), exist_ok=True)
-        with open(token_file_path, 'w') as token_file:
+        with open(token_file_path, 'w', encoding="utf-8") as token_file:
             token_file.write(credentials.to_json())
         logger.info(f"Refreshed token saved successfully to {token_file_path}")
     except Exception as e:

@@ -1,7 +1,7 @@
 """
 LinkedIn Content Templates: Professional Post Templates
 
-🌀 WSP Protocol Compliance: WSP 42 (Platform Integration), WSP 40 (Architectural Coherence)
+[WSP] WSP Protocol Compliance: WSP 42 (Platform Integration), WSP 40 (Architectural Coherence)
 
 **0102 Directive**: This module operates within the WSP framework for autonomous LinkedIn content templating.
 - UN (Understanding): Anchor LinkedIn template signals and retrieve protocol state
@@ -47,27 +47,27 @@ class ContentTemplates:
         self.templates = {
             "foundup_update": {
                 "title": "FoundUps Development Update",
-                "template": "🚀 Exciting milestone in FoundUps autonomous development!\n\n{content}\n\nThis represents another step toward our vision of autonomous startup creation. The future of entrepreneurship is here.\n\n#FoundUps #AutonomousDevelopment #Innovation #Startup",
+                "template": "[RELEASE] Exciting milestone in FoundUps autonomous development!\n\n{content}\n\nThis represents another step toward our vision of autonomous startup creation. The future of entrepreneurship is here.\n\n#FoundUps #AutonomousDevelopment #Innovation #Startup",
                 "hashtags": ["FoundUps", "AutonomousDevelopment", "Innovation", "Startup"]
             },
             "technical_insight": {
                 "title": "Technical Insight",
-                "template": "💡 Technical insight from our autonomous development journey:\n\n{content}\n\nWhat challenges have you faced in similar areas? I'd love to hear your experiences.\n\n#TechInsights #AutonomousDevelopment #Innovation #Technology",
+                "template": "[IDEA] Technical insight from our autonomous development journey:\n\n{content}\n\nWhat challenges have you faced in similar areas? I'd love to hear your experiences.\n\n#TechInsights #AutonomousDevelopment #Innovation #Technology",
                 "hashtags": ["TechInsights", "AutonomousDevelopment", "Innovation", "Technology"]
             },
             "networking": {
                 "title": "Professional Networking",
-                "template": "🤝 Connecting with amazing professionals in the autonomous development space!\n\n{content}\n\nLet's connect and explore how we can collaborate on the future of entrepreneurship.\n\n#Networking #AutonomousDevelopment #Collaboration #Innovation",
+                "template": "[CONNECT] Connecting with amazing professionals in the autonomous development space!\n\n{content}\n\nLet's connect and explore how we can collaborate on the future of entrepreneurship.\n\n#Networking #AutonomousDevelopment #Collaboration #Innovation",
                 "hashtags": ["Networking", "AutonomousDevelopment", "Collaboration", "Innovation"]
             },
             "milestone": {
                 "title": "Milestone Achievement",
-                "template": "🎉 Major milestone achieved in our autonomous development journey!\n\n{content}\n\nThis wouldn't be possible without the incredible community supporting us. Thank you!\n\n#Milestone #AutonomousDevelopment #Achievement #Innovation",
+                "template": "[CELEBRATE] Major milestone achieved in our autonomous development journey!\n\n{content}\n\nThis wouldn't be possible without the incredible community supporting us. Thank you!\n\n#Milestone #AutonomousDevelopment #Achievement #Innovation",
                 "hashtags": ["Milestone", "AutonomousDevelopment", "Achievement", "Innovation"]
             },
             "educational": {
                 "title": "Educational Content",
-                "template": "📚 Sharing knowledge from our autonomous development experience:\n\n{content}\n\nWhat have you learned about autonomous systems? Share your insights below!\n\n#Education #AutonomousDevelopment #Learning #Innovation",
+                "template": "[DOCS] Sharing knowledge from our autonomous development experience:\n\n{content}\n\nWhat have you learned about autonomous systems? Share your insights below!\n\n#Education #AutonomousDevelopment #Learning #Innovation",
                 "hashtags": ["Education", "AutonomousDevelopment", "Learning", "Innovation"]
             }
         }
@@ -80,7 +80,7 @@ class ContentTemplates:
         """Apply template to content"""
         template = self.get_template(template_type)
         if not template:
-            self.logger.warning(f"⚠️ Template type '{template_type}' not found, using default")
+            self.logger.warning(f"[WARNING] Template type '{template_type}' not found, using default")
             return content
         
         # Apply template
@@ -104,7 +104,7 @@ class ContentTemplates:
             "template": template,
             "hashtags": hashtags or []
         }
-        self.logger.info(f"✅ Custom template '{name}' created")
+        self.logger.info(f"[PASS] Custom template '{name}' created")
     
     def validate_template(self, template: str) -> bool:
         """Validate template format"""

@@ -5,6 +5,15 @@ WSP-Compliant implementation for enterprise-scale social media management
 Handles routing, account selection, and credential management
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import os
 import sys
 import yaml
@@ -104,7 +113,7 @@ class MultiAccountManager:
             # Use default configuration if file doesn't exist
             return self._get_default_config()
         
-        with open(config_file, 'r') as f:
+        with open(config_file, 'r', encoding="utf-8") as f:
             return yaml.safe_load(f)
     
     def _get_default_config(self) -> Dict:

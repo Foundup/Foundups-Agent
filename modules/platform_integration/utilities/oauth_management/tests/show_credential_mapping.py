@@ -3,6 +3,15 @@
 Show credential set to YouTube channel mapping.
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import os
 import sys
 import json
@@ -68,7 +77,7 @@ def show_current_session_info():
     session_cache_file = "memory/session_cache.json"
     if os.path.exists(session_cache_file):
         try:
-            with open(session_cache_file, 'r') as f:
+            with open(session_cache_file, 'r', encoding="utf-8") as f:
                 cache = json.load(f)
             
             video_id = cache.get('video_id', 'Unknown')

@@ -6,6 +6,15 @@ Uses same approach as LinkedIn for consistency
 WSP 48: Includes recursive learning for self-improvement
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import os
 import json
 import time
@@ -51,7 +60,7 @@ class AntiDetectionX:
     Uses compose URL for direct posting
     """
     
-    def __init__(self, use_foundups=True):
+    def __init__(self, use_foundups=True, enable_vision=True):
         load_dotenv()
         # Support multiple X accounts
         # For git posting, use FoundUps account (X_Acc2)
@@ -70,7 +79,19 @@ class AntiDetectionX:
         self.session_file = os.path.join(self.data_dir, "x_session.pkl")
         self.memory_file = "O:/Foundups-Agent/modules/platform_integration/social_media_orchestrator/memory/posting_patterns.json"
         self.driver = None
-        
+
+        # Gemini Vision integration for UI analysis
+        self.enable_vision = enable_vision
+        self.vision_analyzer = None
+        if enable_vision:
+            try:
+                from modules.platform_integration.social_media_orchestrator.src.gemini_vision_analyzer import GeminiVisionAnalyzer
+                self.vision_analyzer = GeminiVisionAnalyzer()
+                print("[VISION] Gemini Vision enabled for UI analysis")
+            except Exception as e:
+                print(f"[VISION] Could not initialize Gemini Vision: {e}")
+                self.enable_vision = False
+
         # WSP 48: Load pattern memory for recursive learning
         self.memory = self.load_memory()
         
@@ -104,7 +125,7 @@ class AntiDetectionX:
         """WSP 48: Load posting patterns memory for recursive improvement"""
         try:
             if os.path.exists(self.memory_file):
-                with open(self.memory_file, 'r') as f:
+                with open(self.memory_file, 'r', encoding="utf-8") as f:
                     return json.load(f)
         except Exception as e:
             print(f"[WSP48] Could not load memory: {e}")
@@ -129,7 +150,7 @@ class AntiDetectionX:
         """WSP 48: Save improved patterns back to memory"""
         try:
             os.makedirs(os.path.dirname(self.memory_file), exist_ok=True)
-            with open(self.memory_file, 'w') as f:
+            with open(self.memory_file, 'w', encoding="utf-8") as f:
                 json.dump(self.memory, f, indent=2)
         except Exception as e:
             print(f"[WSP48] Could not save memory: {e}")
@@ -216,7 +237,28 @@ class AntiDetectionX:
     def setup_driver(self, use_existing_session=True):
         """Setup browser with anti-detection measures - Edge for FoundUps, Chrome for GeozeAi"""
 
-        # Try to use browser manager for reusing existing windows
+        # PRIORITY 1: Try to connect to existing Chrome with debugging port 9222
+        # This reuses a browser window you opened manually or via start_chrome_for_selenium.bat
+        try:
+            from selenium.webdriver.chrome.options import Options
+            chrome_options = Options()
+            chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+
+            print("[INFO] 🔌 Attempting to connect to existing Chrome on port 9222...")
+            self.driver = webdriver.Chrome(options=chrome_options)
+            print("[SUCCESS] ✅ Connected to existing Chrome browser!")
+            print("[INFO] 🎯 Reusing browser window - no new window opened")
+            print("[TIP] 💡 All tabs in this browser are available to Selenium")
+            return self.driver
+        except Exception as e:
+            print(f"[INFO] ⚠️ Could not connect to existing Chrome on port 9222: {str(e)[:100]}")
+            print("[TIP] 💡 To reuse existing browser:")
+            print("[TIP]    1. Run: start_chrome_for_selenium.bat")
+            print("[TIP]    2. Login to X manually if needed")
+            print("[TIP]    3. Run this script again - it will reuse that window")
+            print("[INFO] 🔄 Falling back to browser manager...")
+
+        # PRIORITY 2: Try to use browser manager for reusing existing windows
         try:
             from modules.platform_integration.social_media_orchestrator.src.core.browser_manager import get_browser_manager
             browser_manager = get_browser_manager()
@@ -225,10 +267,10 @@ class AntiDetectionX:
             use_foundups = self.username == os.getenv('X_Acc2', 'Foundups')
 
             if use_foundups:
-                # Use Edge for FoundUps
-                print("[INFO] Getting managed Edge browser for @Foundups...")
+                # Use Chrome for FoundUps (better anti-detection + Gemini Vision support)
+                print("[INFO] Getting managed Chrome browser for @Foundups...")
                 self.driver = browser_manager.get_browser(
-                    browser_type='edge',
+                    browser_type='chrome',
                     profile_name='x_foundups',
                     options={'disable_web_security': True}
                 )
@@ -553,7 +595,7 @@ class AntiDetectionX:
         if self.driver:
             os.makedirs(os.path.dirname(self.session_file), exist_ok=True)
             cookies = self.driver.get_cookies()
-            with open(self.session_file, 'wb') as f:
+            with open(self.session_file, 'wb', encoding="utf-8") as f:
                 pickle.dump(cookies, f)
             print("[INFO] Session saved for reuse")
     
@@ -561,7 +603,7 @@ class AntiDetectionX:
         """Load saved session/cookies"""
         if os.path.exists(self.session_file) and self.driver:
             self.driver.get("https://x.com")
-            with open(self.session_file, 'rb') as f:
+            with open(self.session_file, 'rb', encoding="utf-8") as f:
                 cookies = pickle.load(f)
                 for cookie in cookies:
                     try:
@@ -615,7 +657,7 @@ class AntiDetectionX:
             # Load existing posts
             if os.path.exists(post_tracking_file):
                 try:
-                    with open(post_tracking_file, 'r') as f:
+                    with open(post_tracking_file, 'r', encoding="utf-8") as f:
                         posted_videos = json.load(f)
                 except:
                     posted_videos = {}
@@ -645,12 +687,98 @@ class AntiDetectionX:
             print("[OK] Using existing browser session")
         
         try:
-            # Go directly to the compose URL
-            print(f"[NAV] Going directly to compose page for {self.target_account}...")
-            self.driver.get(self.compose_url)
-
-            # Wait for page to load
+            # FIRST: Go to home page to establish session
+            print(f"[NAV] Navigating to X home first to establish session...")
+            self.driver.get("https://x.com/home")
             time.sleep(random.uniform(3, 5))
+
+            # Check if we're logged in
+            current_url = self.driver.current_url
+
+            # VISION ANALYSIS: Verify we're actually logged in
+            if self.enable_vision and self.vision_analyzer:
+                print("[VISION] Analyzing page with Gemini Vision...")
+                screenshot_bytes = self.driver.get_screenshot_as_png()
+                vision_analysis = self.vision_analyzer.analyze_posting_ui(screenshot_bytes)
+
+                print(f"[VISION] UI State: {vision_analysis.get('ui_state', 'unknown')}")
+
+                # Save screenshot for training data
+                from datetime import datetime as dt
+                screenshot_path = os.path.join(self.data_dir, f"screenshot_home_{dt.now().strftime('%Y%m%d_%H%M%S')}.png")
+                os.makedirs(self.data_dir, exist_ok=True)
+                with open(screenshot_path, 'wb', encoding="utf-8") as f:
+                    f.write(screenshot_bytes)
+                print(f"[VISION] Screenshot saved: {screenshot_path}")
+
+                # Check for errors or login page
+                if vision_analysis.get('errors'):
+                    print(f"[VISION] Detected errors: {vision_analysis['errors']}")
+
+            if "login" in current_url.lower():
+                print("[BOT DETECTION] X/Twitter redirected to login page")
+                print("[BOT DETECTION] This indicates bot detection - DO NOT RETRY")
+                print("[ACTION] Please manually:")
+                print("   1. Open Chrome browser")  # Changed from Edge to Chrome
+                print("   2. Login to X/Twitter as @Foundups")
+                print("   3. Keep browser window open")
+                print("   4. Run this script again")
+                print("[INFO] Browser will stay open for manual login")
+                print("[INFO] After manual login, browser manager will reuse this window")
+                return False
+            else:
+                print("[OK] Already logged in - session established")
+
+            # NOW: Click the compose/post button on home page (better than deep-linking)
+            print(f"[NAV] Looking for compose button to create new post...")
+
+            # Wait for page to fully load
+            print("[WAIT] Waiting for home page to load...")
+            time.sleep(random.uniform(3, 5))
+
+            compose_button_selectors = [
+                "//a[@href='/compose/post']",
+                "//a[@href='/compose/tweet']",
+                "//a[contains(@aria-label, 'Post')]",
+                "//button[contains(@aria-label, 'Post')]",
+                "//div[@data-testid='SideNav_NewTweet_Button']",
+                # Additional selectors for the compose button
+                "//a[@role='link' and contains(@href, '/compose')]",
+                "//button[@data-testid='SideNav_NewTweet_Button']"
+            ]
+
+            compose_button = None
+            for selector in compose_button_selectors:
+                try:
+                    print(f"[DEBUG] Trying selector: {selector}")
+                    compose_button = WebDriverWait(self.driver, 5).until(
+                        EC.element_to_be_clickable((By.XPATH, selector))
+                    )
+                    if compose_button:
+                        print(f"[OK] Found compose button with selector: {selector}")
+                        break
+                except Exception as e:
+                    print(f"[DEBUG] Selector failed: {str(e)[:100]}")
+                    continue
+
+            if compose_button:
+                print("[CLICK] Clicking compose button...")
+                compose_button.click()
+                time.sleep(random.uniform(2, 3))
+            else:
+                print("[ERROR] Could not find compose button on home page!")
+                print(f"[DEBUG] Current URL: {self.driver.current_url}")
+                print("[DEBUG] Listing all links on page...")
+                try:
+                    all_links = self.driver.find_elements(By.XPATH, "//a[@href]")
+                    for link in all_links[:20]:  # Show first 20 links
+                        href = link.get_attribute('href')
+                        if href and ('compose' in href or 'post' in href or 'tweet' in href):
+                            print(f"[DEBUG] Found link: {href}")
+                except:
+                    pass
+                print("[ERROR] X may have changed their UI - cannot proceed")
+                return False
 
             # Verify we're on the correct account
             try:
@@ -673,19 +801,15 @@ class AntiDetectionX:
             except Exception as e:
                 print(f"[WARNING] Could not verify account: {e}")
             
-            # Check if we got redirected to login
+            # Check if we got redirected to login (should not happen if already logged in)
             current_url = self.driver.current_url
-            print(f"[DEBUG] Current URL after navigation: {current_url}")
-            
+            print(f"[DEBUG] Current URL after compose click: {current_url}")
+
             if "login" in current_url.lower():
-                print("[INFO] Redirected to login - attempting login...")
-                if not self.login_with_anti_detection():
-                    print("[FAIL] Could not login")
-                    return False
-                # After login, go back to compose
-                print("[NAV] Navigating back to compose after login...")
-                self.driver.get(self.compose_url)
-                time.sleep(random.uniform(3, 5))
+                print("[BOT DETECTION] Redirected to login after compose click")
+                print("[BOT DETECTION] X detected bot behavior - DO NOT RETRY")
+                print("[ACTION] Browser will stay open - manually login and run again")
+                return False
             
             # Now look for text area
             print("[UI] Looking for post text area...")
@@ -739,8 +863,9 @@ class AntiDetectionX:
                 except:
                     pass
                 
-                # Use clipboard paste method instead of typing simulation - avoids # character issues
-                print("[PASTE] Using clipboard paste method for reliable posting...")
+                # Type like a human - character by character
+                # X detects pasting and disables the Post button
+                print("[TYPE] Typing content character-by-character (human-like)...")
 
                 # Sanitize content for ChromeDriver BMP limitation
                 def sanitize_for_chromedriver(text):
@@ -767,7 +892,6 @@ class AntiDetectionX:
                                 pass
                     return sanitized
 
-                # Use clipboard paste method - more reliable than typing simulation
                 try:
                     # Click again to ensure focus
                     text_area.click()
@@ -778,72 +902,50 @@ class AntiDetectionX:
                     if safe_content != content:
                         print("[SANITIZE] Removed non-BMP characters for ChromeDriver compatibility")
 
-                    # Use clipboard paste method - works better with special characters like #
-                    if PYPERCLIP_AVAILABLE:
-                        try:
-                            # Copy to clipboard
-                            pyperclip.copy(safe_content)
-                            print("[CLIPBOARD] Content copied to clipboard")
+                    # Type character-by-character like a human
+                    # This is REQUIRED for X to enable the Post button
+                    lines = safe_content.split('\n')
+                    for line_idx, line in enumerate(lines):
+                        for char in line:
+                            text_area.send_keys(char)
+                            # Random delay between keystrokes (30-80ms) - human-like
+                            time.sleep(random.uniform(0.03, 0.08))
 
-                            # Paste using keyboard shortcut
-                            text_area.send_keys(Keys.CONTROL, 'v')  # Ctrl+V for paste
-                            time.sleep(0.5)  # Brief pause after paste
+                        # Press Enter for new line (except last line)
+                        if line_idx < len(lines) - 1:
+                            text_area.send_keys(Keys.RETURN)
+                            time.sleep(random.uniform(0.2, 0.4))
 
-                            # CRITICAL FIX: Trigger input event so X recognizes the text
-                            # Without this, the Post button stays greyed out
-                            self.driver.execute_script("""
-                                var event = new Event('input', { bubbles: true });
-                                arguments[0].dispatchEvent(event);
-                            """, text_area)
-                            time.sleep(0.3)  # Brief pause for event to process
-
-                            print("[OK] Content pasted successfully via clipboard + input event triggered")
-
-                        except Exception as paste_e:
-                            print(f"[WARNING] Clipboard paste failed: {paste_e}, falling back to JavaScript")
-                            # Fallback to JavaScript if clipboard paste fails
-                            js_content = safe_content.replace("'", "\\'").replace("\n", "\\n")
-                            self.driver.execute_script(f"arguments[0].textContent = '{js_content}';", text_area)
-
-                            # Trigger input event
-                            self.driver.execute_script("""
-                                var event = new Event('input', { bubbles: true });
-                                arguments[0].dispatchEvent(event);
-                            """, text_area)
-                            print("[OK] Content set via JavaScript fallback")
-                    else:
-                        print("[WARNING] pyperclip not available, using JavaScript paste")
-                        # Fallback to JavaScript if clipboard not available
-                        js_content = safe_content.replace("'", "\\'").replace("\n", "\\n")
-                        self.driver.execute_script(f"arguments[0].textContent = '{js_content}';", text_area)
-
-                        # Trigger input event
-                        self.driver.execute_script("""
-                            var event = new Event('input', { bubbles: true });
-                            arguments[0].dispatchEvent(event);
-                        """, text_area)
-                        print("[OK] Content set via JavaScript fallback")
+                    print(f"[OK] Typed {len(safe_content)} characters human-style")
 
                 except Exception as e:
-                    print(f"[WARNING] Paste error: {e}")
-                    # Final fallback to JavaScript
-                    try:
-                        js_content = safe_content.replace("'", "\\'").replace("\n", "\\n")
-                        self.driver.execute_script(f"arguments[0].textContent = '{js_content}';", text_area)
-
-                        # Trigger input event
-                        self.driver.execute_script("""
-                            var event = new Event('input', { bubbles: true });
-                            arguments[0].dispatchEvent(event);
-                        """, text_area)
-                        print("[OK] Content set via final JavaScript fallback")
-                    except Exception as js_e:
-                        print(f"[ERROR] All paste methods failed: {js_e}")
-                        return False
+                    print(f"[ERROR] Typing error: {e}")
+                    return False
                 
                 # Random pause after typing
                 time.sleep(random.uniform(2, 4))
-                
+
+                # VISION ANALYSIS: Check if Post button is enabled
+                if self.enable_vision and self.vision_analyzer:
+                    print("[VISION] Analyzing compose UI with Gemini Vision...")
+                    screenshot_bytes = self.driver.get_screenshot_as_png()
+                    vision_analysis = self.vision_analyzer.analyze_posting_ui(screenshot_bytes)
+
+                    print(f"[VISION] Post button enabled: {vision_analysis.get('post_button', {}).get('enabled', 'unknown')}")
+                    print(f"[VISION] UI State: {vision_analysis.get('ui_state', 'unknown')}")
+
+                    # Save screenshot for training data
+                    from datetime import datetime as dt
+                    screenshot_path = os.path.join(self.data_dir, f"screenshot_compose_{dt.now().strftime('%Y%m%d_%H%M%S')}.png")
+                    with open(screenshot_path, 'wb', encoding="utf-8") as f:
+                        f.write(screenshot_bytes)
+                    print(f"[VISION] Screenshot saved: {screenshot_path}")
+
+                    # If vision says Post button is disabled, wait longer
+                    if not vision_analysis.get('post_button', {}).get('enabled', True):
+                        print("[VISION] Post button appears disabled - waiting 3 more seconds...")
+                        time.sleep(3)
+
                 # Find and click Post button
                 print("[UI] Looking for Post button...")
                 post_selectors = [
@@ -1010,7 +1112,7 @@ class AntiDetectionX:
                         post_tracking_file = os.path.join(self.data_dir, 'posted_videos.json')
                         try:
                             if os.path.exists(post_tracking_file):
-                                with open(post_tracking_file, 'r') as f:
+                                with open(post_tracking_file, 'r', encoding="utf-8") as f:
                                     posted_videos = json.load(f)
                             else:
                                 posted_videos = {}
@@ -1020,7 +1122,7 @@ class AntiDetectionX:
                                 'content': content[:100]  # Store first 100 chars for reference
                             }
                             
-                            with open(post_tracking_file, 'w') as f:
+                            with open(post_tracking_file, 'w', encoding="utf-8") as f:
                                 json.dump(posted_videos, f, indent=2)
                             print(f"[TRACK] Saved post for video {video_id} to prevent duplicates")
                         except Exception as e:

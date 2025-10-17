@@ -9,6 +9,15 @@ WSP 17 Pattern Registry: Reusable quota testing pattern
 - Can be adapted for LinkedIn, X/Twitter, Discord quota management
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import unittest
 import json
 import os
@@ -267,7 +276,7 @@ class TestQuotaMonitor(unittest.TestCase):
         self.assertTrue(alert_file.exists())
         
         # Verify alert content
-        with open(alert_file, 'r') as f:
+        with open(alert_file, 'r', encoding="utf-8") as f:
             alert_data = json.loads(f.read())
             self.assertEqual(alert_data['severity'], 'CRITICAL')
             self.assertEqual(alert_data['credential_set'], 1)

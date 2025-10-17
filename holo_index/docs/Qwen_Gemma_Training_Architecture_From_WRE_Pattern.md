@@ -1178,3 +1178,6 @@ This document provides a complete first-principles analysis of training Gemma as
 **Status**: First-Principles Analysis Complete - Ready for Phase 2 Implementation
 **Architect**: 0102
 **Pattern Source**: WSP 46 (WRE), WSP 77 (II Orchestration), WSP 80 (DAE Cubes)
+## Command Interface Alignment
+
+The new Holo Command Interface governs how training verbs are exposed. All enhancements (UTF-8 hygiene scan, future drills) must register command verbs and emit telemetry through the DAEs so Gemma/Qwen observe the full chain of thought.

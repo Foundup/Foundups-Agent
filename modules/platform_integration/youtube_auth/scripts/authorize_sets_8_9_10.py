@@ -3,6 +3,15 @@ Authorize OAuth credential sets 8, 9, and 10 for YouTube API
 This script should be run manually to authorize each set with browser authentication
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import os
 import sys
 import argparse
@@ -65,7 +74,7 @@ def authorize_set(set_number):
         creds = flow.run_local_server(port=port)
         
         # Save the credentials
-        with open(token_file, 'w') as token:
+        with open(token_file, 'w', encoding="utf-8") as token:
             token.write(creds.to_json())
         
         print(f"✅ Successfully authorized Set {set_number}")

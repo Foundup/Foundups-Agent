@@ -1,7 +1,7 @@
 """
 LinkedIn Feed Reader: Professional Feed Content Extraction
 
-🌀 WSP Protocol Compliance: WSP 42 (Platform Integration), WSP 40 (Architectural Coherence)
+[WSP] WSP Protocol Compliance: WSP 42 (Platform Integration), WSP 40 (Architectural Coherence)
 
 **0102 Directive**: This module operates within the WSP framework for autonomous LinkedIn feed reading.
 - UN (Understanding): Anchor LinkedIn feed signals and retrieve protocol state
@@ -71,25 +71,25 @@ class LinkedInFeedReader:
         try:
             # In real implementation, would initialize LinkedIn API client
             self.api_client = None
-            self.logger.info("✅ LinkedIn API client initialized")
+            self.logger.info("[PASS] LinkedIn API client initialized")
         except Exception as e:
-            self.logger.warning(f"⚠️ Using mock feed reader: {e}")
+            self.logger.warning(f"[WARNING] Using mock feed reader: {e}")
             self._initialize_mock_components()
     
     def _initialize_mock_components(self):
         """Initialize mock components for standalone operation"""
         self.api_client = None
-        self.logger.info("⚠️ Using mock LinkedIn feed reader")
+        self.logger.info("[WARNING] Using mock LinkedIn feed reader")
     
     async def read_feed(self, limit: int = 20) -> List[FeedPost]:
         """Read LinkedIn feed posts"""
         try:
             # Mock implementation - in real version would use LinkedIn API
             mock_posts = self._generate_mock_feed_posts(limit)
-            self.logger.info(f"✅ Read {len(mock_posts)} feed posts")
+            self.logger.info(f"[PASS] Read {len(mock_posts)} feed posts")
             return mock_posts
         except Exception as e:
-            self.logger.error(f"❌ Failed to read feed: {e}")
+            self.logger.error(f"[FAIL] Failed to read feed: {e}")
             return []
     
     def _generate_mock_feed_posts(self, limit: int) -> List[FeedPost]:
@@ -137,11 +137,11 @@ class LinkedInFeedReader:
                 recommended_actions=recommended_actions
             )
             
-            self.logger.info(f"✅ Feed analysis completed: {total_posts} posts, {engagement_rate:.2f} avg engagement")
+            self.logger.info(f"[PASS] Feed analysis completed: {total_posts} posts, {engagement_rate:.2f} avg engagement")
             return analysis
             
         except Exception as e:
-            self.logger.error(f"❌ Feed analysis failed: {e}")
+            self.logger.error(f"[FAIL] Feed analysis failed: {e}")
             return FeedAnalysis(0, 0.0, [], [])
     
     def _extract_trending_topics(self, hashtags: List[str]) -> List[str]:
@@ -180,7 +180,7 @@ class LinkedInFeedReader:
                 topic_lower in [tag.lower() for tag in post.hashtags]):
                 filtered_posts.append(post)
         
-        self.logger.info(f"✅ Filtered {len(filtered_posts)} posts for topic: {topic}")
+        self.logger.info(f"[PASS] Filtered {len(filtered_posts)} posts for topic: {topic}")
         return filtered_posts
     
     async def get_engagement_opportunities(self, posts: List[FeedPost]) -> List[FeedPost]:
@@ -195,5 +195,5 @@ class LinkedInFeedReader:
             elif "Professional" in post.author:
                 opportunities.append(post)
         
-        self.logger.info(f"✅ Identified {len(opportunities)} engagement opportunities")
+        self.logger.info(f"[PASS] Identified {len(opportunities)} engagement opportunities")
         return opportunities 

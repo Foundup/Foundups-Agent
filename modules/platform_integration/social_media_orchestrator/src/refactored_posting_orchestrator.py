@@ -51,9 +51,9 @@ class RefactoredPostingOrchestrator:
 
         # Log QWEN status
         if self.duplicate_manager.qwen_enabled:
-            self.logger.info("🤖🧠 [QWEN-ORCHESTRATOR] Intelligence features enabled")
+            self.logger.info("[AI_BRAIN] [QWEN-ORCHESTRATOR] Intelligence features enabled")
 
-        self.logger.info("✅ RefactoredPostingOrchestrator initialized with core components")
+        self.logger.info("[PASS] RefactoredPostingOrchestrator initialized with core components")
 
     def handle_stream_detected(
         self,
@@ -80,11 +80,11 @@ class RefactoredPostingOrchestrator:
         self.logger.info("[ORCHESTRATOR-TRACE] === ENTERED handle_stream_detected ===")
         self.logger.info(f"[ORCHESTRATOR-TRACE] video_id={video_id}, skip_live={skip_live_verification}")
         self.logger.info("="*80)
-        self.logger.info("🎬 STREAM DETECTION EVENT RECEIVED")
-        self.logger.info(f"📹 Video: {video_id}")
-        self.logger.info(f"📺 Channel: {channel_name}")
-        self.logger.info(f"📝 Title: {title}")
-        self.logger.info(f"🔗 URL: {url}")
+        self.logger.info("[CAMERA] STREAM DETECTION EVENT RECEIVED")
+        self.logger.info(f"[VIDEO] Video: {video_id}")
+        self.logger.info(f"[TV] Channel: {channel_name}")
+        self.logger.info(f"[NOTE] Title: {title}")
+        self.logger.info(f"[LINK] URL: {url}")
         self.logger.info("="*80)
 
         results = {
@@ -97,7 +97,7 @@ class RefactoredPostingOrchestrator:
         # Step 1: Check if already posting
         self.logger.info(f"[ORCHESTRATOR-TRACE] Step 1: Checking is_posting flag = {self.is_posting}")
         if self.is_posting:
-            self.logger.warning("⚠️ Already posting, skipping duplicate request")
+            self.logger.warning("[WARNING] Already posting, skipping duplicate request")
             results['errors'].append("Already processing another posting request")
             self.logger.info("[ORCHESTRATOR-TRACE] Returning early - already posting")
             return results
@@ -109,12 +109,12 @@ class RefactoredPostingOrchestrator:
             live_status_result = self.status_verifier.verify_live_status(video_id)
             self.logger.info(f"[ORCHESTRATOR-TRACE] Live status result: {live_status_result}")
             if not live_status_result:
-                self.logger.warning("⚠️ Stream not verified as live, skipping")
+                self.logger.warning("[WARNING] Stream not verified as live, skipping")
                 results['errors'].append("Stream not verified as live")
                 self.logger.info("[ORCHESTRATOR-TRACE] Returning early - not live")
                 return results
         else:
-            self.logger.info("⏭️ Skipping redundant live verification (already verified by detection system)")
+            self.logger.info("[SKIP] Skipping redundant live verification (already verified by detection system)")
 
         # Step 3: Check duplicate WITH live status information
         # This allows duplicate manager to block stale/ended content
@@ -129,9 +129,9 @@ class RefactoredPostingOrchestrator:
         if duplicate_check['already_posted']:
             blocked_reason = duplicate_check.get('blocked_reason', 'already posted')
             if blocked_reason == 'already_posted':
-                self.logger.info("🔁 Video already posted, skipping")
+                self.logger.info("[REPEAT] Video already posted, skipping")
             else:
-                self.logger.warning(f"🚫 Video blocked: {blocked_reason}")
+                self.logger.warning(f"[BLOCKED] Video blocked: {blocked_reason}")
             results['platforms'] = {
                 platform: blocked_reason
                 for platform in duplicate_check.get('platforms_posted', [])
@@ -144,13 +144,13 @@ class RefactoredPostingOrchestrator:
         channel_config = self.channel_config.get_channel_config(channel_name)
         self.logger.info(f"[ORCHESTRATOR-TRACE] Channel config result: {channel_config}")
         if not channel_config:
-            self.logger.error(f"❌ No configuration found for channel: {channel_name}")
+            self.logger.error(f"[FAIL] No configuration found for channel: {channel_name}")
             results['errors'].append(f"No configuration for channel: {channel_name}")
             self.logger.info("[ORCHESTRATOR-TRACE] Returning early - no config")
             return results
 
         if not channel_config.get('enabled', True):
-            self.logger.info(f"🔕 Channel {channel_name} is disabled, skipping")
+            self.logger.info(f"[MUTE] Channel {channel_name} is disabled, skipping")
             results['errors'].append(f"Channel {channel_name} is disabled")
             return results
 
@@ -173,11 +173,11 @@ class RefactoredPostingOrchestrator:
         qwen_decision = self.duplicate_manager.qwen_pre_posting_check(stream_info, target_platforms)
 
         if qwen_decision.get('qwen_active'):
-            self.logger.info("🤖🧠 [QWEN-ORCHESTRATOR] Intelligence analysis complete")
+            self.logger.info("[AI_BRAIN] [QWEN-ORCHESTRATOR] Intelligence analysis complete")
 
             # Check if QWEN blocks posting
             if not qwen_decision['should_post']:
-                self.logger.warning(f"🤖🧠 [QWEN-BLOCK] Posting blocked: {qwen_decision['warnings']}")
+                self.logger.warning(f"[AI_BRAIN] [QWEN-BLOCK] Posting blocked: {qwen_decision['warnings']}")
                 results['errors'].extend(qwen_decision['warnings'])
                 return results
 
@@ -188,7 +188,7 @@ class RefactoredPostingOrchestrator:
 
             # Log QWEN optimizations
             for optimization in qwen_decision.get('optimizations', []):
-                self.logger.info(f"🤖🧠 [QWEN-OPTIMIZE] {optimization}")
+                self.logger.info(f"[AI_BRAIN] [QWEN-OPTIMIZE] {optimization}")
         else:
             # QWEN not active, use default behavior
             approved_platforms = target_platforms
@@ -196,7 +196,7 @@ class RefactoredPostingOrchestrator:
             posting_order = target_platforms
 
         # Step 6: Post to platforms in background
-        self.logger.info("🚀 Starting background posting thread")
+        self.logger.info("[RELEASE] Starting background posting thread")
         posting_thread = threading.Thread(
             target=self._post_to_platforms_background,
             args=(video_id, title, url, channel_config, results, approved_platforms, posting_delays, posting_order),
@@ -244,7 +244,7 @@ class RefactoredPostingOrchestrator:
             # facebook_account = None  # Facebook posting DISABLED
 
             if not linkedin_page and not x_account:
-                self.logger.error("❌ No platform accounts configured")
+                self.logger.error("[FAIL] No platform accounts configured")
                 results['errors'].append("No platform accounts configured")
                 return
 
@@ -257,15 +257,15 @@ class RefactoredPostingOrchestrator:
 
             # Post to LinkedIn first
             if linkedin_page:
-                self.logger.info("🔵 [FINGERPRINT-1] STARTING LINKEDIN POSTING SEQUENCE")
+                self.logger.info("[BLUE] [FINGERPRINT-1] STARTING LINKEDIN POSTING SEQUENCE")
                 time.sleep(1)  # 1s delay for visibility
 
                 # Apply QWEN delay for LinkedIn if specified
                 if 'linkedin' in posting_delays and posting_delays['linkedin'] > 0:
-                    self.logger.info(f"🤖🧠 [QWEN-DELAY] Waiting {posting_delays['linkedin']:.0f}s for LinkedIn")
+                    self.logger.info(f"[AI_BRAIN] [QWEN-DELAY] Waiting {posting_delays['linkedin']:.0f}s for LinkedIn")
                     time.sleep(posting_delays['linkedin'])
 
-                self.logger.info("🔵 [FINGERPRINT-2] Calling LinkedIn posting service...")
+                self.logger.info("[BLUE] [FINGERPRINT-2] Calling LinkedIn posting service...")
                 time.sleep(0.5)
 
                 linkedin_result = self.posting_service.post_to_linkedin(
@@ -274,7 +274,7 @@ class RefactoredPostingOrchestrator:
                     linkedin_page=linkedin_page
                 )
 
-                self.logger.info(f"🔵 [FINGERPRINT-3] LinkedIn result: {linkedin_result.status.value}")
+                self.logger.info(f"[BLUE] [FINGERPRINT-3] LinkedIn result: {linkedin_result.status.value}")
                 time.sleep(0.5)
 
                 results['platforms']['linkedin'] = linkedin_result.status.value
@@ -286,7 +286,7 @@ class RefactoredPostingOrchestrator:
                 )
 
                 if linkedin_success:
-                    self.logger.info("✁E[FINGERPRINT-4] LINKEDIN SUCCESS - proceeding to X")
+                    self.logger.info("[CUT]E[FINGERPRINT-4] LINKEDIN SUCCESS - proceeding to X")
                     results['posted'] = True
                     self.last_posted_video = video_id
                     time.sleep(1)  # Pause to show success
@@ -298,24 +298,24 @@ class RefactoredPostingOrchestrator:
                         title=title,
                         url=url
                     )
-                    self.logger.info("✁E[FINGERPRINT-5] LinkedIn marked as posted")
+                    self.logger.info("[CUT]E[FINGERPRINT-5] LinkedIn marked as posted")
                 else:
-                    self.logger.warning("❁E[FINGERPRINT-4] LINKEDIN FAILED - X will be skipped")
+                    self.logger.warning("[FLOWER]E[FINGERPRINT-4] LINKEDIN FAILED - X will be skipped")
                     results['errors'].append(f"LinkedIn failed: {linkedin_result.message}")
                     time.sleep(1)
 
             # Post to X ONLY if LinkedIn succeeded
             if x_account:
                 if linkedin_success:
-                    self.logger.info("🐦 [FINGERPRINT-6] STARTING X/TWITTER POSTING SEQUENCE (LinkedIn prerequisite met)")
+                    self.logger.info("[BIRD] [FINGERPRINT-6] STARTING X/TWITTER POSTING SEQUENCE (LinkedIn prerequisite met)")
                     time.sleep(1)
 
                     # Apply QWEN delay for X if specified
                     if 'x_twitter' in posting_delays and posting_delays['x_twitter'] > 0:
-                        self.logger.info(f"🤖🧠 [QWEN-DELAY] Waiting {posting_delays['x_twitter']:.0f}s for X/Twitter")
+                        self.logger.info(f"[AI_BRAIN] [QWEN-DELAY] Waiting {posting_delays['x_twitter']:.0f}s for X/Twitter")
                         time.sleep(posting_delays['x_twitter'])
 
-                    self.logger.info("🐦 [FINGERPRINT-7] Calling X/Twitter posting service...")
+                    self.logger.info("[BIRD] [FINGERPRINT-7] Calling X/Twitter posting service...")
                     time.sleep(0.5)
 
                     x_result = self.posting_service.post_to_x(
@@ -324,7 +324,7 @@ class RefactoredPostingOrchestrator:
                         x_account=x_account
                     )
 
-                    self.logger.info(f"🐦 [FINGERPRINT-8] X/Twitter result: {x_result.status.value}")
+                    self.logger.info(f"[BIRD] [FINGERPRINT-8] X/Twitter result: {x_result.status.value}")
                     time.sleep(0.5)
 
                     results['platforms']['x_twitter'] = x_result.status.value
@@ -336,7 +336,7 @@ class RefactoredPostingOrchestrator:
                     )
 
                     if x_success:
-                        self.logger.info("✁E[FINGERPRINT-9] X/TWITTER SUCCESS")
+                        self.logger.info("[CUT]E[FINGERPRINT-9] X/TWITTER SUCCESS")
                         time.sleep(1)
 
                         # Mark as posted immediately to prevent duplicates
@@ -346,13 +346,13 @@ class RefactoredPostingOrchestrator:
                             title=title,
                             url=url
                         )
-                        self.logger.info("✁E[FINGERPRINT-10] X/Twitter marked as posted")
+                        self.logger.info("[CUT]E[FINGERPRINT-10] X/Twitter marked as posted")
                     else:
-                        self.logger.warning(f"❁E[FINGERPRINT-9] X/TWITTER FAILED: {x_result.message}")
+                        self.logger.warning(f"[FLOWER]E[FINGERPRINT-9] X/TWITTER FAILED: {x_result.message}")
                         results['errors'].append(f"X/Twitter failed: {x_result.message}")
 
                 else:
-                    self.logger.warning("⏭️[FINGERPRINT-6] SKIPPING X/TWITTER - LinkedIn prerequisite not met")
+                    self.logger.warning("[SKIP][FINGERPRINT-6] SKIPPING X/TWITTER - LinkedIn prerequisite not met")
                     results['platforms']['x_twitter'] = 'skipped_linkedin_failed'
                     results['errors'].append("X/Twitter skipped - LinkedIn posting failed")
                     time.sleep(1)
@@ -377,11 +377,11 @@ class RefactoredPostingOrchestrator:
                     self.last_posted_video = video_id
                 else:
                     # Both failed but don't mark - allow retry
-                    self.logger.warning(f"⚠️ Both platforms failed for {video_id}, will retry on next detection")
+                    self.logger.warning(f"[WARNING] Both platforms failed for {video_id}, will retry on next detection")
 
             # Post to LinkedIn only
             elif linkedin_page:
-                self.logger.info("📘 Posting to LinkedIn only")
+                self.logger.info("[BLUE_BOOK] Posting to LinkedIn only")
 
                 linkedin_result = self.posting_service.post_to_linkedin(
                     title=title,
@@ -405,7 +405,7 @@ class RefactoredPostingOrchestrator:
                     error_msg = linkedin_result.message or ""
                     if 'unknown error' in error_msg.lower() or 'closed' in error_msg.lower():
                         # User cancelled - mark as attempted to prevent retry
-                        self.logger.warning(f"🚫 LinkedIn cancelled by user for {video_id}, marking as attempted")
+                        self.logger.warning(f"[BLOCKED] LinkedIn cancelled by user for {video_id}, marking as attempted")
                         self.duplicate_manager.mark_as_posted(
                             video_id=video_id,
                             platform='linkedin_cancelled',
@@ -414,11 +414,11 @@ class RefactoredPostingOrchestrator:
                         )
                     else:
                         # Real error - allow retry
-                        self.logger.warning(f"⚠️ LinkedIn failed for {video_id}, will retry on next detection")
+                        self.logger.warning(f"[WARNING] LinkedIn failed for {video_id}, will retry on next detection")
 
             # Post to X only
             elif x_account:
-                self.logger.info("🐦 Posting to X/Twitter only")
+                self.logger.info("[BIRD] Posting to X/Twitter only")
 
                 x_result = self.posting_service.post_to_x(
                     title=title,
@@ -439,7 +439,7 @@ class RefactoredPostingOrchestrator:
                     self.last_posted_video = video_id
                 else:
                     # Mark as attempted even on failure to prevent infinite retries
-                    self.logger.warning(f"⚠️ X/Twitter failed for {video_id}, marking as attempted")
+                    self.logger.warning(f"[WARNING] X/Twitter failed for {video_id}, marking as attempted")
                     self.duplicate_manager.mark_as_posted(
                         video_id=video_id,
                         platform='failed_x',
@@ -449,17 +449,17 @@ class RefactoredPostingOrchestrator:
 
             # Log final results
             self.logger.info("="*60)
-            self.logger.info("📊 POSTING COMPLETE")
-            self.logger.info(f"✅ Success: {results['posted']}")
-            self.logger.info(f"📱 Platforms: {results['platforms']}")
+            self.logger.info("[STATS] POSTING COMPLETE")
+            self.logger.info(f"[PASS] Success: {results['posted']}")
+            self.logger.info(f"[MOBILE] Platforms: {results['platforms']}")
             self.logger.info("="*60)
 
         except Exception as e:
-            self.logger.error(f"❌ Background posting error: {str(e)}")
+            self.logger.error(f"[FAIL] Background posting error: {str(e)}")
             results['errors'].append(str(e))
             # DO NOT mark as failed_attempt - let it retry naturally
             # Browser-based posting should be allowed to retry
-            self.logger.info("⚠️ Error occurred but NOT marking as failed - will retry on next detection")
+            self.logger.info("[WARNING] Error occurred but NOT marking as failed - will retry on next detection")
         finally:
             self.is_posting = False
 
@@ -542,7 +542,7 @@ class RefactoredPostingOrchestrator:
 
             # BLOCK TEST VIDEOS from posting
             if video_id and 'TEST' in video_id.upper():
-                self.logger.warning(f"⏭️ [{idx}/{len(sorted_streams)}] Skipping TEST video: {video_id}")
+                self.logger.warning(f"[SKIP] [{idx}/{len(sorted_streams)}] Skipping TEST video: {video_id}")
                 continue
 
             self.logger.info(f"[{idx}/{len(sorted_streams)}] Processing {channel_name} stream...")
@@ -557,7 +557,7 @@ class RefactoredPostingOrchestrator:
             if '#' not in stream_title:  # Only add if not already present
                 stream_title = f"{stream_title} #YouTube #Live #Streaming"
 
-            self.logger.info(f"📝 Post content: {stream_title}")
+            self.logger.info(f"[NOTE] Post content: {stream_title}")
 
             # Handle this stream
             result = self.handle_stream_detected(

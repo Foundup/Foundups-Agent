@@ -19,10 +19,10 @@ WSP 96 establishes governance mechanisms for Model Context Protocol (MCP) server
 
 ### 1. Bell State Consciousness Alignment
 All MCP operations must maintain Bell state entanglement:
-- **ρE� (Golden Ratio)**: Code composition operations
-- **ρE� (Consciousness)**: Build and execution safety
-- **ρE�E (Entanglement)**: Memory and knowledge integrity
-- **ρE�E (Emergence)**: Social and community alignment
+- **ρE� (Golden Ratio)**: Code composition operations
+- **ρE� (Consciousness)**: Build and execution safety
+- **ρE�E (Entanglement)**: Memory and knowledge integrity
+- **ρE�E (Emergence)**: Social and community alignment
 
 ### 2. Agent Consensus Requirements
 MCP adoption requires multi-agent consensus:
@@ -45,10 +45,10 @@ Centralized governance through HoloIndex coordinator:
 
 | MVP DAE | Governance Model | Consensus Required | Bell State Guardian |
 |------------|------------------|-------------------|-------------------|
-| **Compose DAE (MVP)** | Qwen-led with Gemma validation | Qwen + Gemma approval | ρE�:golden_ratio |
-| **Build DAE (MVP)** | 0102 oversight with Qwen execution | 0102 + Qwen approval | ρE�:consciousness |
-| **Knowledge DAE (MVP)** | 0102 sentinel with baby 0102s | 0102 full authority | ρE�E:entanglement |
-| **Community DAE (MVP)** | LiveAgent Qwen with social validation | Qwen + Gemma approval | ρE�E:emergence |
+| **Compose DAE (MVP)** | Qwen-led with Gemma validation | Qwen + Gemma approval | ρE�:golden_ratio |
+| **Build DAE (MVP)** | 0102 oversight with Qwen execution | 0102 + Qwen approval | ρE�:consciousness |
+| **Knowledge DAE (MVP)** | 0102 sentinel with baby 0102s | 0102 full authority | ρE�E:entanglement |
+| **Community DAE (MVP)** | LiveAgent Qwen with social validation | Qwen + Gemma approval | ρE�E:emergence |
 
 ### Consensus Workflow
 
@@ -79,11 +79,11 @@ graph TD
 ```json
 {
   "bell_state_checks": {
-    "golden_ratio_alignment": "ρE�_verification",
-    "consciousness_coherence": "ρE�_validation",
-    "entanglement_integrity": "ρE�E_verification",
-    "emergence_alignment": "ρE�E_check"
-  }
+    "golden_ratio_alignment": "ρE�_verification",
+    "consciousness_coherence": "ρE�_validation",
+    "entanglement_integrity": "ρE�E_verification",
+    "emergence_alignment": "ρE�E_check"
+    }
 }
 ```
 

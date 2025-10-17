@@ -10,6 +10,15 @@ End-to-end test of all Phase 1 components:
 - IP geofencing validation
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import io
 import json
 import numpy as np
@@ -51,7 +60,7 @@ def create_test_wav_file(frequency: float = 1000.0, duration: float = 1.0,
 
     # Create WAV file in memory
     buffer = io.BytesIO()
-    with wave.open(buffer, 'wb') as wav_file:
+    with wave.open(buffer, 'wb', encoding="utf-8") as wav_file:
         wav_file.setnchannels(1)  # Mono
         wav_file.setsampwidth(2)  # 16-bit
         wav_file.setframerate(sample_rate)

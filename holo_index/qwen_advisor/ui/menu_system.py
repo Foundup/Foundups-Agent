@@ -18,81 +18,67 @@ class HoloDAEMenuSystem:
     def __init__(self):
         """Initialize the menu system"""
         self.menu_options = {
-            '0': ('🚀 LAUNCH HOLODAE', 'Start Continuous Monitoring (Like YouTube DAE)'),
-            '1': ('🔍 Semantic Search', 'Find existing code before creating'),
-            '2': ('✅ WSP Compliance Check', 'Validate protocol adherence'),
-            '3': ('🧠 Pattern Coach', 'Prevent behavioral vibecoding patterns'),
-            '4': ('📦 Module Analysis', 'Detect duplicate implementations'),
-            '5': ('💊 Health Analysis', 'Check system architectural integrity'),
-            '6': ('👻 Orphan Analysis', 'Find dead code and unused modules'),
-            '7': ('📊 Performance Metrics', 'View effectiveness scores'),
-            '8': ('🤖 LLM Advisor', 'Get AI-powered guidance'),
-            '9': ('👁️ Start Monitoring', 'Toggle continuous operation'),
-            '10': ('🧵 Chain-of-Thought Log', 'View AI decision process'),
-            '11': ('🐌 Slow Mode', 'Enable recursive feedback (2-3s delays)'),
-            '12': ('🧠 Pattern Memory', 'View learned interventions'),
-            '13': ('🛰 MCP Hook Map', 'Inspect registered connectors & health'),
-            '14': ('📡 MCP Action Log', 'Review recent MCP tool activity'),
+            '00': ('🔄 MANUAL INDEX', 'Refresh HoloIndex while 0102 works (--index-all)'),
+            '0': ('🚀 LAUNCH HOLODAE', 'Start Continuous Monitoring (--start-holodae)'),
+            '1': ('🔍 Semantic Search', 'Find existing code before creating (--search)'),
+            '2': ('✅ WSP Compliance Check', 'Validate protocol adherence (--check-module)'),
+            '3': ('🧠 Pattern Coach', 'Prevent behavioral vibecoding patterns (--pattern-coach)'),
+            '4': ('📦 Module Analysis', 'Detect duplicate implementations (--module-analysis)'),
+            '5': ('💊 Health Analysis', 'Check system architectural integrity (--health-check)'),
+            '6': ('👻 Orphan Analysis', 'Find dead code and unused modules (--wsp88)'),
+            '7': ('📊 Performance Metrics', 'View effectiveness scores (--performance-metrics)'),
+            '8': ('🤖 LLM Advisor', 'Get AI-powered guidance (--llm-advisor with search)'),
+            '9': ('👁️ Start Monitoring', 'Toggle continuous operation (--start-holodae)'),
+            '10': ('🧵 Chain-of-Thought Log', 'View AI decision process (--thought-log)'),
+            '11': ('🐌 Slow Mode', 'Enable recursive feedback 2-3s delays (--slow-mode)'),
+            '12': ('🧠 Pattern Memory', 'View learned interventions (--pattern-memory)'),
+            '13': ('🛰 MCP Hook Map', 'Inspect registered connectors & health (--mcp-hooks)'),
+            '14': ('📡 MCP Action Log', 'Review recent MCP tool activity (--mcp-log)'),
             '15': ('🔧 PID Detective', 'Detect & manage HoloDAE processes'),
-            '16': ('📊 Execution Log Analyzer', 'Process massive logs for HoloDAE improvement')
+            '16': ('📊 Execution Log Analyzer', 'Process massive logs for HoloDAE improvement'),
+            '17': ('📤 Work Publisher', 'Monitor work completion for auto-publish (--monitor-work)'),
+            '18': ('🧹 UTF-8 Fix', 'Auto-fix UTF-8 violations with Qwen/Gemma (main.py --training-command utf8_fix --targets <scope>)')
         }
 
     def show_main_menu(self) -> None:
         """Display the main HoloDAE menu for 0102 and 012 observers"""
-        print("\n" + "=" * 84)
-        print("🧠 HoloDAE Observatory • 0102 Autonomy w/ 012 Oversight")
-        print("👤 012 Observers | 👁️ Chain-of-Thought Feed | 🛰 MCP Hook Telemetry")
-        print("=" * 84)
+        print("\n" + "=" * 60)
+        print("HoloDAE Code Intelligence & WSP Compliance Observatory")
+        print("=" * 60)
+        print("0. Launch HoloDAE (Autonomous Monitoring)       | --start-holodae")
         print()
-        print("🚀 0. LAUNCH HOLODAE - Start autonomous monitoring loop")
+        print("CORE PREVENTION (Stay out of vibecoding)")
+        print("1. Semantic Search                              | --search")
+        print("2. WSP Compliance Check                         | --check-module")
+        print("3. Pattern Coach                                | --pattern-coach")
+        print("4. Module Analysis                              | --module-analysis")
         print()
-        print("🎯 CORE PREVENTION (Stay out of vibecoding)")
-        for i in range(1, 5):
-            option = str(i)
-            if option in self.menu_options:
-                name, desc = self.menu_options[option]
-                emoji = name.split()[0]
-                display_name = ' '.join(name.split()[1:])
-                print(f"{i}. {emoji} {display_name} - {desc}")
+        print("SUPPORT SYSTEMS (Diagnostics)")
+        print("5. Health Analysis                              | --health-check")
+        print("6. Orphan Analysis                              | --wsp88")
+        print("7. Performance Metrics                          | --performance-metrics")
+        print("8. LLM Advisor (with search)                    | --llm-advisor")
         print()
-        print("🛠 SUPPORT SYSTEMS (Diagnostics)")
-        for i in range(5, 9):
-            option = str(i)
-            if option in self.menu_options:
-                name, desc = self.menu_options[option]
-                emoji = name.split()[0]
-                display_name = ' '.join(name.split()[1:])
-                print(f"{i}. {emoji} {display_name} - {desc}")
+        print("CONTINUOUS OBSERVABILITY")
+        print("9. Start Monitoring                             | --start-holodae")
+        print("10. Chain-of-Thought Log                        | --thought-log")
+        print("11. Slow Mode                                   | --slow-mode")
+        print("12. Pattern Memory                              | --pattern-memory")
         print()
-        print("👁 CONTINUOUS OBSERVABILITY")
-        for i in range(9, 13):
-            option = str(i)
-            if option in self.menu_options:
-                name, desc = self.menu_options[option]
-                emoji = name.split()[0]
-                display_name = ' '.join(name.split()[1:])
-                print(f"{i}. {emoji} {display_name} - {desc}")
+        print("MCP RESEARCH BRIDGE")
+        print("13. MCP Hook Map                                | --mcp-hooks")
+        print("14. MCP Action Log                              | --mcp-log")
         print()
-        print("🛰 MCP RESEARCH BRIDGE")
-        for option in ['13', '14']:
-            if option in self.menu_options:
-                name, desc = self.menu_options[option]
-                emoji = name.split()[0]
-                display_name = ' '.join(name.split()[1:])
-                print(f"{option}. {emoji} {display_name} - {desc}")
+        print("SYSTEM CONTROLS")
+        print("17. Work Publisher (Auto Git/Social)            | --monitor-work")
         print()
-        print("🔧 DAEMON MANAGEMENT")
-        for option in ['15', '16']:
-            if option in self.menu_options:
-                name, desc = self.menu_options[option]
-                emoji = name.split()[0]
-                display_name = ' '.join(name.split()[1:])
-                print(f"{option}. {emoji} {display_name} - {desc}")
+        print("QWEN/GEMMA AUTONOMOUS TRAINING")
+        print("18. UTF-8 Fix (Autonomous Remediation)          | main.py --training-command utf8_fix --targets <scope>")
         print()
-        print("⚙️ SYSTEM CONTROLS")
-        print("💾 98. [SAVE] Save Session Patterns - Store successful interventions")
-        print("⬅️ 99. [BACK] Return to Main Menu")
-        print("=" * 84)
+        print("98. Exit")
+        print("------------------------------------------------------------")
+        print("00. Manual Index Refresh                        | --index-all")
+        print("=" * 60)
     def show_sprint_dashboard(self, component_status: Optional[Dict[str, Any]] = None) -> None:
         """Display the WSP 37 sprint dashboard with component status"""
         print("\n[TARGET] HOLODAE LIVING SPRINT - WSP 37 PRIORITY MATRIX")

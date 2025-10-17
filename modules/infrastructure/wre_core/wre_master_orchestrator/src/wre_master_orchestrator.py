@@ -74,6 +74,12 @@ class PatternMemory:
                 wsp_chain=[50, 64, 32, 65, 22],  # WSP 50→64→32→65→22
                 tokens=150,
                 pattern="verify→archive→delete→log"
+            ),
+            "utf8_remediation": Pattern(
+                id="utf8_remediation",
+                wsp_chain=[90, 50, 77, 91, 22],  # WSP 90→50→77→91→22
+                tokens=200,
+                pattern="scan→classify→fix→validate→log"
             )
         }
     

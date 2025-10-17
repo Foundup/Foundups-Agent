@@ -57,7 +57,7 @@ def check_credential_set(index):
             try:
                 creds.refresh(Request())
                 # Save refreshed token
-                with open(token_file, 'w') as token:
+                with open(token_file, 'w', encoding="utf-8") as token:
                     token.write(creds.to_json())
                 print(f'   ✅ Token refreshed successfully!')
                 

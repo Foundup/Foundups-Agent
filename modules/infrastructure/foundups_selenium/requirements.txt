@@ -1,0 +1,11 @@
+# FoundUps Selenium Requirements
+
+# Core dependency
+selenium>=4.0.0
+
+# Optional - for Gemini Vision integration
+# google-generativeai>=0.3.0
+
+# Note: Most dependencies are already part of FoundUps system
+# - modules.platform_integration.social_media_orchestrator (Gemini Vision)
+# - modules.platform_integration.x_twitter (X posting)

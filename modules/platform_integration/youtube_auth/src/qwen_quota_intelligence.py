@@ -101,7 +101,7 @@ class QwenQuotaIntelligence:
         profile_file = self.memory_dir / "quota_profiles.json"
         if profile_file.exists():
             try:
-                with open(profile_file, 'r') as f:
+                with open(profile_file, 'r', encoding="utf-8") as f:
                     data = json.load(f)
                     for set_num_str, profile_data in data.items():
                         set_num = int(set_num_str)
@@ -134,7 +134,7 @@ class QwenQuotaIntelligence:
                 for set_num, profile in self.profiles.items()
             }
 
-            with open(profile_file, 'w') as f:
+            with open(profile_file, 'w', encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
 
             logger.debug(f"🤖🧠 [QWEN-QUOTA] Saved {len(self.profiles)} quota profiles")

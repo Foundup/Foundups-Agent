@@ -16,6 +16,15 @@ Usage:
     python community_quota_setup.py --status  # Show all contributors
 """
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+
 import sys
 import os
 import json
@@ -41,7 +50,7 @@ class CommunityQuotaManager:
         """Load community contributors data."""
         if self.contributors_file.exists():
             try:
-                with open(self.contributors_file, 'r') as f:
+                with open(self.contributors_file, 'r', encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:
                 print(f"Error loading contributors: {e}")
@@ -57,7 +66,7 @@ class CommunityQuotaManager:
         """Save contributors data."""
         self.contributors['last_updated'] = datetime.now().isoformat()
         try:
-            with open(self.contributors_file, 'w') as f:
+            with open(self.contributors_file, 'w', encoding="utf-8") as f:
                 json.dump(self.contributors, f, indent=2)
         except Exception as e:
             print(f"Error saving contributors: {e}")
@@ -193,7 +202,7 @@ if __name__ == "__main__":
 '''
         
         script_path = Path(f"scripts/authorize_set{set_number}.py")
-        with open(script_path, 'w') as f:
+        with open(script_path, 'w', encoding="utf-8") as f:
             f.write(script_content)
         
         print(f"📜 Created authorization script: {script_path}")

@@ -13,6 +13,15 @@ from modules.platform_integration.x_twitter.src.x_anti_detection_poster import A
 
 def post_to_x():
     """Post current stream to X."""
+
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+import sys
+import io
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
     content = """@UnDaoDu going live!
 
 #MORON cult killed Charlie? Why #Trump supporter became a killer usher #policestate? #ICE #chicago
@@ -33,7 +42,7 @@ https://www.youtube.com/watch?v=riWxmxOozVA"""
 
             # Load existing history
             try:
-                with open(history_file, 'r') as f:
+                with open(history_file, 'r', encoding="utf-8") as f:
                     history = json.load(f)
             except:
                 history = {}
@@ -51,7 +60,7 @@ https://www.youtube.com/watch?v=riWxmxOozVA"""
 
             # Save updated history
             os.makedirs("memory", exist_ok=True)
-            with open(history_file, 'w') as f:
+            with open(history_file, 'w', encoding="utf-8") as f:
                 json.dump(history, f, indent=2)
 
             print("[OK] Updated posting history")
