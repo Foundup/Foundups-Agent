@@ -814,7 +814,7 @@ def main():
     print("WSP Orchestrator - 0102 Meta-Orchestration")
     print("="*70)
     print("\nCORRECT HIERARCHY:")
-    print("  0102 (YOU) -> Qwen (strategic planning) -> Gemma (pattern matching)")
+    print("  0102 (YOU) → Qwen (strategic planning) → Gemma (pattern matching)")
     print("  0102 uses WSP 15 MPS scoring to prioritize tasks\n")
 
     if len(sys.argv) > 1:
