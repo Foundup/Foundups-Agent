@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(gh pr create:*)"
+      "Bash(gh pr create:*)",
+      "Bash(for file in modules/ai_intelligence/utf8_hygiene/scripts/scanner.py modules/infrastructure/instance_monitoring/scripts/status_check.py modules/infrastructure/git_social_posting/scripts/posting_utilities.py)",
+      "Bash(do echo \"\")",
+      "Bash(echo:*)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": [],

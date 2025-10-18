@@ -53,13 +53,6 @@ MAX_CONSECUTIVE_FAILURES = 5  # Maximum number of consecutive failures before in
 def calculate_dynamic_delay(active_users: int = 0, previous_delay: float = None, consecutive_failures: int = 0) -> float:
     """
 
-# === UTF-8 ENFORCEMENT (WSP 90) ===
-import sys
-import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-# === END UTF-8 ENFORCEMENT ===
 
     Calculate a human-like delay based on chat activity and failure history.
     

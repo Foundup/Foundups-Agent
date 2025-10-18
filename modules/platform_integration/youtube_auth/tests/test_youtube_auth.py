@@ -46,13 +46,6 @@ class TestYoutubeAuth(unittest.TestCase):
     def test_get_authenticated_service_with_valid_token(self, mock_get_creds, mock_exists, mock_from_file, mock_build):
         """Test successful authentication with valid token."""
 
-# === UTF-8 ENFORCEMENT (WSP 90) ===
-import sys
-import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-# === END UTF-8 ENFORCEMENT ===
 
         # Arrange
         mock_get_creds.return_value = ('credentials/client_secret.json', 'credentials/oauth_token.json')

@@ -22,13 +22,6 @@ def get_credentials_for_index(index):
     Returns tuple of (client_secrets_file, token_file) or None if not found.
     """
 
-# === UTF-8 ENFORCEMENT (WSP 90) ===
-import sys
-import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-# === END UTF-8 ENFORCEMENT ===
 
     client_secrets = os.getenv(f'GOOGLE_CLIENT_SECRETS_FILE_{index}')
     token_file = os.getenv(f'OAUTH_TOKEN_FILE_{index}')

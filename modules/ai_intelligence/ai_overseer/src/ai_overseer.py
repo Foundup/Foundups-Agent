@@ -140,6 +140,18 @@ class AIIntelligenceOverseer:
             / "ai_overseer_patterns.json"
         )
         self.memory_path.parent.mkdir(parents=True, exist_ok=True)
+        # Ensure memory file exists with initial structure for tests and WSP 60 compliance
+        if not self.memory_path.exists():
+            try:
+                with open(self.memory_path, 'w', encoding='utf-8') as f:
+                    json.dump({
+                        "successful_missions": [],
+                        "failed_missions": [],
+                        "learned_strategies": {},
+                        "team_performance": {}
+                    }, f, indent=2)
+            except Exception:
+                pass
 
         # Initialize Holo Qwen/Gemma orchestrator
         if HOLO_AVAILABLE:
@@ -522,6 +534,14 @@ class AIIntelligenceOverseer:
             try:
                 # Execute phase (delegated to appropriate agent)
                 phase_result = self._execute_single_phase(phase, team)
+
+                # Ensure required identifiers are present for DB persistence
+                if "phase" not in phase_result:
+                    phase_result["phase"] = phase.get("phase")
+                if "name" not in phase_result:
+                    phase_result["name"] = phase.get("name")
+                if "agent" not in phase_result and phase.get("agent"):
+                    phase_result["agent"] = phase.get("agent")
 
                 phase_duration = (time.time() - phase_start) * 1000
                 phase_result["duration_ms"] = phase_duration
