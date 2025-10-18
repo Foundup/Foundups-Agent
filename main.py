@@ -48,25 +48,25 @@ import atexit
 _original_stdout = sys.stdout
 _original_stderr = sys.stderr
 
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True)
+# TEMP DISABLED WSP90: if sys.platform.startswith('win'):
+# TEMP DISABLED WSP90:     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
+# TEMP DISABLED WSP90:     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True)
 
-    # Register cleanup to flush streams before exit
-    def _flush_streams():
-        """Flush UTF-8 wrapped streams before Python cleanup."""
-        try:
-            if sys.stdout and not sys.stdout.closed:
-                sys.stdout.flush()
-        except:
-            pass
-        try:
-            if sys.stderr and not sys.stderr.closed:
-                sys.stderr.flush()
-        except:
-            pass
-
-    atexit.register(_flush_streams)
+# TEMP DISABLED WSP90:     # Register cleanup to flush streams before exit
+# TEMP DISABLED WSP90:     def _flush_streams():
+# TEMP DISABLED WSP90:         """Flush UTF-8 wrapped streams before Python cleanup."""
+# TEMP DISABLED WSP90:         try:
+# TEMP DISABLED WSP90:             if sys.stdout and not sys.stdout.closed:
+# TEMP DISABLED WSP90:                 sys.stdout.flush()
+# TEMP DISABLED WSP90:         except:
+# TEMP DISABLED WSP90:             pass
+# TEMP DISABLED WSP90:         try:
+# TEMP DISABLED WSP90:             if sys.stderr and not sys.stderr.closed:
+# TEMP DISABLED WSP90:                 sys.stderr.flush()
+# TEMP DISABLED WSP90:         except:
+# TEMP DISABLED WSP90:             pass
+# TEMP DISABLED WSP90: 
+# TEMP DISABLED WSP90:     atexit.register(_flush_streams)
 # === END UTF-8 ENFORCEMENT ===
 
 # Configure logging with UTF-8 support

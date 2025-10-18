@@ -964,7 +964,7 @@ class SimplePostingOrchestrator:
 
 
 # Convenient instance for import
-orchestrator = SimplePostingOrchestrator()
+# TEMP FIX WSP90: orchestrator = SimplePostingOrchestrator()
 
 
 # Convenience functions for easy import
