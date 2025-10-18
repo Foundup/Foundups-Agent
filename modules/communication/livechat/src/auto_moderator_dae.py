@@ -102,7 +102,7 @@ class AutoModeratorDAE:
         Returns:
             Success status
         """
-        logger.info("[U+1F50C] Starting in NO-QUOTA mode to preserve API tokens...")
+        logger.info("🔌 Starting in NO-QUOTA mode to preserve API tokens...")
 
         # TOKEN REFRESH DISABLED DURING STARTUP - Prevents blocking on OAuth
         # Token refresh should be done before starting the daemon using:
@@ -114,9 +114,9 @@ class AutoModeratorDAE:
         # We'll only authenticate when we actually find a stream
         self.service = None
         self.credential_set = "NO-QUOTA"
-        logger.info("[U+1F310] Using NO-QUOTA web scraping for stream discovery")
-        logger.info("[U+1F6E1]️ Smart verification: NO-QUOTA first, API only for live/uncertain videos")
-        logger.info("[U+1F4B0] MAXIMUM API preservation - API only when posting is possible")
+        logger.info("🌐 Using NO-QUOTA web scraping for stream discovery")
+        logger.info("🛡️ Smart verification: NO-QUOTA first, API only for live/uncertain videos")
+        logger.info("💰 MAXIMUM API preservation - API only when posting is possible")
 
         return True
     
@@ -153,7 +153,7 @@ class AutoModeratorDAE:
                 if analysis:
                     logger.info(f"[BOT][AI] [QWEN-ANALYSIS] {analysis}")
             except Exception as e:
-                logger.info(f"[BOT][AI] [QWEN-MONITOR] [U+26A0]️ Monitor analysis incomplete: {e}")
+                logger.info(f"[BOT][AI] [QWEN-MONITOR] ⚠️ Monitor analysis incomplete: {e}")
 
         if not self.stream_resolver:
             # Initialize StreamResolver with service if available, otherwise None to trigger NO-QUOTA mode
@@ -188,7 +188,7 @@ class AutoModeratorDAE:
 
         # PRIORITY 0: [BOT][AI] First Principles - "Is the last video still live?"
         # Check cache + DB BEFORE any channel rotation logic
-        logger.info("[BOT][AI] [QWEN-FIRST-PRINCIPLES] [U+2753] Is the last video still live?")
+        logger.info("[BOT][AI] [QWEN-FIRST-PRINCIPLES] ❓ Is the last video still live?")
         try:
             # Call resolve_stream with None to trigger Priority 1 (cache) and Priority 1.5 (Qwen DB check)
             # This checks: 1) session_cache.json, 2) last stream in DB with lenient threshold + API
@@ -264,13 +264,13 @@ class AutoModeratorDAE:
                 if result and result[0]:
                     check_results[channel_name] = '[OK] LIVE'
                     # Get channel-specific emoji
-                    channel_emoji = "[U+1F363]" if "Move2Japan" in channel_name else ("[U+1F9D8]" if "UnDaoDu" in channel_name else ("[U+1F415]" if "FoundUps" in channel_name else "[CELEBRATE]"))
+                    channel_emoji = "🍣" if "Move2Japan" in channel_name else ("🧘" if "UnDaoDu" in channel_name else ("🐕" if "FoundUps" in channel_name else "🎉"))
                     logger.info(f"[{channel_emoji} Channel {i}/{len(channels_to_check)}] {channel_name}: STREAM FOUND!")
                 else:
                     check_results[channel_name] = '⏳ offline'
                     logger.info(f"[⏳ Channel {i}/{len(channels_to_check)}] {channel_name}: No active stream")
             except Exception as e:
-                logger.error(f"[U+1F50E] [{i}/{len(channels_to_check)}] {channel_name}... ERROR: {e}")
+                logger.error(f"🔎 [{i}/{len(channels_to_check)}] {channel_name}... ERROR: {e}")
                 result = None
                 # Continue checking other channels even if one fails
                 continue
@@ -284,7 +284,7 @@ class AutoModeratorDAE:
                 channel_name = self.stream_resolver._get_channel_display_name(channel_id)
                 logger.info(f"[FLOW-TRACE] channel_name={channel_name}")
                 if not live_chat_id:
-                    logger.info(f"[U+26A0]️ Found stream on {channel_name} but chat_id not available (likely quota exhausted)")
+                    logger.info(f"⚠️ Found stream on {channel_name} but chat_id not available (likely quota exhausted)")
 
                     # CRITICAL: Attempt to get chat_id with credential rotation
                     logger.info(f"[REFRESH] Attempting to get chat_id with credential rotation...")
@@ -297,7 +297,7 @@ class AutoModeratorDAE:
                             live_chat_id = retry_result[1]
                             logger.info(f"[OK] Got chat_id after credential rotation: {live_chat_id}")
                         else:
-                            logger.warning(f"[U+26A0]️ Credential rotation failed - still no chat_id")
+                            logger.warning(f"⚠️ Credential rotation failed - still no chat_id")
                             logger.info(f"[OK] Accepting stream anyway - video ID: {video_id} [CELEBRATE]")
                     except Exception as e:
                         logger.error(f"[FAIL] Error during credential rotation: {e}")
@@ -324,7 +324,7 @@ class AutoModeratorDAE:
                     # Fallback: Use channel name + "Live Stream"
                     stream_title = f"{channel_name} is LIVE!"
 
-                logger.info(f"[U+1F4FA] Stream title: {stream_title}")
+                logger.info(f"📺 Stream title: {stream_title}")
 
                 # Store the stream info
                 stream_info = {
@@ -400,7 +400,7 @@ class AutoModeratorDAE:
             else:
                 logger.info(f"⏭️ [SEMANTIC-SWITCH] Skipped posting - stream already active in current session")
 
-            logger.info(f"[U+1F4FA] Will monitor first stream: {found_streams[0]['channel_name']}")
+            logger.info(f"📺 Will monitor first stream: {found_streams[0]['channel_name']}")
             logger.info("[BOT][AI] [QWEN-SUCCESS] Stream detection successful - transitioning to monitor phase")
             return first_stream_to_monitor
         else:
@@ -409,7 +409,7 @@ class AutoModeratorDAE:
             logger.info("[CLIPBOARD] ROTATION SUMMARY:")
             for channel, status in check_results.items():
                 logger.info(f"   {channel}: {status}")
-            logger.info(f"\n[FAIL] No active livestreams found (checked {len(channels_to_check)} channels: [U+1F363][U+1F9D8][U+1F415])")
+            logger.info(f"\n[FAIL] No active livestreams found (checked {len(channels_to_check)} channels: 🍣🧘🐕)")
 
             # QWEN provides intelligence summary
             if self.qwen_youtube:
@@ -434,7 +434,7 @@ class AutoModeratorDAE:
         time.sleep(0.5)
         logger.info(f"[FINGERPRINT-HANDOFF-4] Received {len(found_streams)} streams")
         logger.info("="*80)
-        logger.info("[U+1F4F1] SOCIAL MEDIA POSTING ORCHESTRATION")
+        logger.info("📱 SOCIAL MEDIA POSTING ORCHESTRATION")
         logger.info("="*80)
 
         try:
@@ -553,11 +553,11 @@ class AutoModeratorDAE:
 
                 # Show different messages based on delay length
                 if delay < 60:
-                    logger.info(f"[U+1F4FA] No stream found. Checking again in {delay:.0f} seconds...")
+                    logger.info(f"📺 No stream found. Checking again in {delay:.0f} seconds...")
                 elif delay < 300:
                     logger.info(f"⏳ No stream found. Waiting {delay/60:.1f} minutes (adaptive idle)...")
                 else:
-                    logger.info(f"[U+1F4A4] Idle mode: {delay/60:.1f} minutes (adaptive)")
+                    logger.info(f"💤 Idle mode: {delay/60:.1f} minutes (adaptive)")
             
             # Wait with intelligent delay, but check for triggers every 5 seconds
             elapsed = 0
@@ -591,7 +591,7 @@ class AutoModeratorDAE:
         # Now that we found a stream, try to authenticate for full functionality
         # Authenticate FIRST, then get chat_id with API
         if not self.service and video_id:
-            logger.info("[U+1F510] Stream found! Attempting authentication for chat interaction...")
+            logger.info("🔐 Stream found! Attempting authentication for chat interaction...")
             try:
                 service = get_authenticated_service()
                 if service:
@@ -612,17 +612,17 @@ class AutoModeratorDAE:
                         if auth_result and len(auth_result) > 1:
                             resolved_video_id = auth_result[0]
                             if resolved_video_id and resolved_video_id != video_id:
-                                logger.info(f"[U+1F501] API resolved stream {resolved_video_id} (replacing {video_id})")
+                                logger.info(f"🔁 API resolved stream {resolved_video_id} (replacing {video_id})")
                                 video_id = resolved_video_id
                                 stream_info['video_id'] = video_id
                             live_chat_id = auth_result[1]
                             stream_info['live_chat_id'] = live_chat_id
                             logger.info(f"[OK] Got chat ID with API: {live_chat_id[:20]}...")
                         else:
-                            logger.warning("[U+26A0]️ Could not get chat ID even with API")
+                            logger.warning("⚠️ Could not get chat ID even with API")
             except Exception as e:
-                logger.warning(f"[U+26A0]️ Authentication failed: {e}")
-                logger.info("[U+1F310] Continuing in NO-QUOTA mode (view-only)")
+                logger.warning(f"⚠️ Authentication failed: {e}")
+                logger.info("🌐 Continuing in NO-QUOTA mode (view-only)")
 
         # WRE Monitor: Track stream transition completion
         if hasattr(self, 'wre_monitor') and self.wre_monitor:
@@ -647,7 +647,7 @@ class AutoModeratorDAE:
 
         # Start monitoring
         logger.info("="*60)
-        logger.info("[U+1F441]️ MONITORING CHAT - WSP-COMPLIANT ARCHITECTURE")
+        logger.info("👁️ MONITORING CHAT - WSP-COMPLIANT ARCHITECTURE")
         logger.info("="*60)
 
         try:
@@ -719,7 +719,7 @@ class AutoModeratorDAE:
                     if idle_result.get("overall_success"):
                         logger.info(f"[OK] Idle automation completed successfully ({idle_result.get('duration', 0):.1f}s)")
                     else:
-                        logger.info(f"[U+26A0]️ Idle automation completed with issues ({idle_result.get('duration', 0):.1f}s)")
+                        logger.info(f"⚠️ Idle automation completed with issues ({idle_result.get('duration', 0):.1f}s)")
                 except ImportError:
                     logger.debug("Idle automation module not available - skipping")
                 except Exception as e:
