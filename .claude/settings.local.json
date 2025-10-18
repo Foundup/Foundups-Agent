@@ -10,7 +10,9 @@
       "Bash(git -C \"O:\\Foundups-Agent\" commit -m \"CLEANUP: Archive 22 unicode campaign backup files\n\nMoved .unicode_backup files to archive/unicode_campaign_backups/\nThese were created during WSP 90 Unicode cleanup campaign.\n\nFollowing WSP 85 root directory protection.\n\nGenerated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
       "Bash(find:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git -C \"O:\\Foundups-Agent\" add ModLog.md)",
+      "Bash(git -C \"O:\\Foundups-Agent\" commit -m \"DOC: Update ModLog with root cleanup session summary\n\nFollowing WSP 22 documentation requirements.\n\nGenerated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")"
     ],
     "deny": [],
     "ask": [],
