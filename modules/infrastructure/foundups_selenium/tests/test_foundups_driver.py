@@ -244,11 +244,18 @@ def test_analyze_ui_saves_screenshot_and_calls_vision(
     assert result["status"] == "ok"
     assert "screenshot_path" in result
     assert os.path.exists(result["screenshot_path"])
+    assert "annotated_screenshot_path" in result
+    assert os.path.exists(result["annotated_screenshot_path"])
+    assert result["screenshot_hash"]
+    assert len(result["screenshot_hash"]) == 64
+    assert set(result["screenshot_hash"]) <= set("0123456789abcdef")
     completed_payload = next(
         payload for event, payload in events if event == "vision_analyze_completed"
     )
     assert completed_payload["save_screenshot"] is True
     assert os.path.exists(completed_payload["screenshot_path"])
+    assert os.path.exists(completed_payload["annotated_screenshot_path"])
+    assert completed_payload["screenshot_hash"] == result["screenshot_hash"]
 
 
 def test_analyze_ui_returns_error_when_vision_disabled(
@@ -346,3 +353,37 @@ def test_post_to_x_emits_events(monkeypatch, patched_chrome, noop_js):
         event == "post_to_x_completed" and payload.get("success") is True
         for event, payload in events
     )
+
+
+def test_post_to_x_failure_still_emits_payload(monkeypatch, patched_chrome, noop_js):
+    """Posting failure should propagate False and record telemetry state."""
+    from modules.infrastructure.foundups_selenium.src.foundups_driver import (
+        FoundUpsDriver,
+    )
+
+    events = []
+
+    class FailingPoster:
+        def __init__(self, use_foundups):
+            self.use_foundups = use_foundups
+            self.driver = None
+
+        def post_to_x(self, content):
+            assert self.driver is not None
+            return False
+
+    monkeypatch.setattr(
+        "modules.platform_integration.x_twitter.src.x_anti_detection_poster.AntiDetectionX",
+        FailingPoster,
+    )
+
+    driver = FoundUpsDriver()
+    driver.register_observer(lambda event, payload: events.append((event, payload)))
+
+    result = driver.post_to_x("Failure case", account="foundups")
+
+    assert result is False
+    completed = [
+        payload for event, payload in events if event == "post_to_x_completed"
+    ]
+    assert completed and completed[0]["success"] is False

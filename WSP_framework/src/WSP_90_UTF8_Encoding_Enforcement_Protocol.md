@@ -23,38 +23,83 @@ UnicodeEncodeError: 'cp932' codec can't encode character '\U0001f4cd' in positio
 - International text support broken
 - Emoji-based logging fails
 
+**CRITICAL LESSON LEARNED** (2025-10-18):
+During WSP 90 bulk enforcement campaign, emojis were incorrectly removed from production code (replaced with `[U+XXXX]` notation), breaking:
+- Banter engine emoji-to-number mappings (✊✋🖐️ for DAO consciousness)
+- LiveChat visual feedback (🍣🧘🐕 channel identification)
+- Liberty Alert notifications (🔴 live indicators)
+
+**ROOT CAUSE OF MISTAKE**: WSP 90 was incorrectly applied at MODULE level instead of ENTRY POINT level, leading to belief that emojis must be removed. This was wrong.
+
+**CORRECT APPROACH**:
+1. ✅ Apply WSP 90 UTF-8 enforcement at entry points (main.py, daemon scripts)
+2. ✅ Library modules inherit encoding automatically
+3. ✅ Production emojis work perfectly with proper entry point setup
+4. ❌ NEVER remove production emojis - they are critical for UX
+
 ---
 
 ## Solution Architecture
 
-### 1. Module-Level Enforcement (MANDATORY)
+### 1. Entry Point Enforcement (MANDATORY)
 
-**Every Python module MUST include this header block**:
+**CRITICAL DISTINCTION**: WSP 90 enforcement MUST be applied at **entry points** (scripts/daemons with `if __name__ == "__main__":`), NOT at library module level.
+
+**Entry Point Files (main.py, daemon scripts, CLI tools):**
 
 ```python
+#!/usr/bin/env python3
 """
-Module Name
-===========
+Script Name - Entry Point
+==========================
 
-[Module description]
+[Script description]
 """
 
 # === UTF-8 ENFORCEMENT (WSP 90) ===
-# Prevent UnicodeEncodeError on Windows systems
+# CRITICAL: Apply ONLY at entry points (main.py, daemon scripts)
+# DO NOT apply in library modules (causes import conflicts)
 import sys
 import io
 
-# Force UTF-8 encoding for stdout/stderr
+# Force UTF-8 encoding for stdout/stderr on Windows
 if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True)
 # === END UTF-8 ENFORCEMENT ===
 
 # Standard imports continue below
 import asyncio
 import logging
 # ... rest of imports
+
+if __name__ == "__main__":
+    main()
 ```
+
+**Library Modules (imported by other code):**
+
+```python
+"""
+Library Module Name
+===================
+
+[Module description]
+"""
+
+# NO WSP 90 HEADER - Library modules inherit encoding from entry point
+import asyncio
+import logging
+# ... standard imports
+
+# Library code...
+```
+
+**Why This Matters**:
+- ✅ Entry points set UTF-8 encoding ONCE for entire process
+- ✅ Library modules inherit encoding automatically via logging system
+- ✅ Production emojis work correctly in logs (🍣🧘🐕🔌💰⚠️)
+- ❌ Module-level enforcement causes import conflicts and wrapping issues
 
 ### 2. Environment-Level Enforcement (RECOMMENDED)
 
@@ -103,24 +148,43 @@ target-version = "py312"
 
 ## WSP 90 Compliance Rules
 
-### Rule 1: UTF-8 Header Block (MANDATORY)
+### Rule 1: UTF-8 Header Block (Entry Points Only)
 
-**ALL Python files MUST include WSP 90 UTF-8 enforcement header:**
+**ONLY entry point files (scripts/daemons) include WSP 90 enforcement header:**
 
+**✅ Entry Points (main.py, daemon scripts, CLI tools):**
 ```python
 # === UTF-8 ENFORCEMENT (WSP 90) ===
+# CRITICAL: Apply ONLY at entry points
+# DO NOT apply in library modules
 import sys
 import io
 if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True)
 # === END UTF-8 ENFORCEMENT ===
 ```
 
-**Placement**:
+**❌ Library Modules (imported code):**
+```python
+# NO WSP 90 HEADER
+# Library modules inherit encoding from entry point automatically
+import asyncio
+import logging
+# ... standard imports
+```
+
+**Entry Point Detection**:
+- Files with `if __name__ == "__main__":` → Add WSP 90 header
+- Files with `def main():` + CLI execution → Add WSP 90 header
+- Files imported by other modules → NO WSP 90 header
+- Daemon/service entry points → Add WSP 90 header
+
+**Placement** (for entry points only):
 - After module docstring
 - Before all other imports
 - Always wrapped in Windows platform check
+- Add `line_buffering=True` for real-time log output
 
 ### Rule 2: File Encoding Declaration (MANDATORY)
 
@@ -143,26 +207,34 @@ Module Name
 """
 ```
 
-### Rule 3: ASCII-Safe Output (RECOMMENDED)
+### Rule 3: Production Emoji Usage (CONDITIONAL)
 
-**For console output, prefer ASCII-safe alternatives**:
+**With proper entry point WSP 90 enforcement, production emojis are SAFE and ENCOURAGED for user-facing output:**
 
+**✅ SAFE - Production Emojis (with entry point WSP 90):**
 ```python
-# AVOID (causes UnicodeEncodeError on Windows):
-print(f"[SUCCESS] Test passed")    # Checkmark emoji
-
-# PREFER (ASCII-safe):
-print(f"[SUCCESS] Test passed")
-print(f"[PASS] Test passed")
-print(f"[OK] Test passed")
-
-# AVOID:
-print(f"[WARNING] Alert!")      # Warning emoji
-
-# PREFER:
-print(f"[WARNING] Alert!")
-print(f"[WARN] Alert!")
+# Production code with entry point UTF-8 enforcement
+logger.info("🍣 Move2Japan [JAPAN] stream detected")
+logger.info("🧘 UnDaoDu [MINDFUL] stream detected")
+logger.info("🐕 FoundUps [FOUNDUPS] stream detected")
+logger.info("🔌 Starting in NO-QUOTA mode")
+logger.info("💰 API preservation active")
+logger.info("⚠️ Authentication failed")
+print("✊✋🖐️ DAO consciousness state transition")  # Banter engine
 ```
+
+**❌ UNSAFE - Without Entry Point Enforcement:**
+```python
+# Library module without entry point UTF-8 setup = UnicodeEncodeError
+print(f"✓ Success")  # Will crash on Windows if no entry point enforcement
+```
+
+**Guidelines**:
+- ✅ Use emojis in daemon/service logs for visibility (🍣🧘🐕🔌💰⚠️)
+- ✅ Use emojis in production UI/notifications (critical for user feedback)
+- ✅ Use emojis in banter engine (✊✋🖐️ for DAO state mapping)
+- ⚠️ Ensure entry point has WSP 90 enforcement before using emojis
+- 📋 ASCII fallbacks optional for maximum compatibility (test environments)
 
 ### Rule 4: JSON/File Output Encoding
 
@@ -221,26 +293,33 @@ logging.basicConfig(
 
 ### For Existing Modules
 
-1. **Add UTF-8 declaration at top** (if missing)
+1. **Identify file type**:
+   - Entry point (has `if __name__ == "__main__":`) → Add WSP 90
+   - Library module (imported by others) → NO WSP 90
 
-2. **Insert WSP 90 header after docstring**:
+2. **For Entry Points Only - Insert WSP 90 header after docstring**:
    ```python
    """Module docstring"""
 
    # === UTF-8 ENFORCEMENT (WSP 90) ===
+   # CRITICAL: Apply ONLY at entry points
    import sys
    import io
    if sys.platform.startswith('win'):
-       sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-       sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+       sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
+       sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True)
    # === END UTF-8 ENFORCEMENT ===
 
    # Existing imports continue...
    ```
 
-3. **Review output statements** - replace emoji/Unicode with ASCII
+3. **For Library Modules - REMOVE WSP 90 if present**:
+   - Library modules inherit encoding from entry point
+   - Removing prevents import conflicts
 
-4. **Update file I/O** - add `encoding="utf-8"` parameter
+4. **Production emojis** - KEEP them (safe with proper entry point setup)
+
+5. **Update file I/O** - add `encoding="utf-8"` parameter
 
 ### Testing UTF-8 Compliance
 

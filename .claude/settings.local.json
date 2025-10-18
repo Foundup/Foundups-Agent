@@ -18,7 +18,13 @@
       "Bash(do echo \"=== $dir ===\")",
       "Bash(ls:*)",
       "Bash(if [ -f .holodae_search_signal ])",
-      "Bash(then cat .holodae_search_signal)"
+      "Bash(then cat .holodae_search_signal)",
+      "Bash(git push)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr edit:*)",
+      "Bash(python3:*)",
+      "Bash(we need to add the emojis back in to the banter engine\"\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": [],
