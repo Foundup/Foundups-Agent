@@ -16,7 +16,9 @@
       "Bash(test:*)",
       "Bash(for dir in memory prompt temp templates utils)",
       "Bash(do echo \"=== $dir ===\")",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(if [ -f .holodae_search_signal ])",
+      "Bash(then cat .holodae_search_signal)"
     ],
     "deny": [],
     "ask": [],
