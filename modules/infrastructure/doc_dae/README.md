@@ -15,21 +15,21 @@
 **Current State** (WSP 3 Violation):
 ```
 docs/
-├── Gemma3_YouTube_DAE_First_Principles_Analysis.md  # Should be in youtube_dae/docs/
-├── HoloIndex_MCP_ricDAE_Integration_Architecture.md # Should be in holo_index/docs/
-├── qwen_batch_1_input.json                          # Operational data, not docs
-├── orphan_analysis_complete_poc.json                # Operational data (350KB)
-└── ... 73 total files (54 MD + 19 JSON)
++-- Gemma3_YouTube_DAE_First_Principles_Analysis.md  # Should be in youtube_dae/docs/
++-- HoloIndex_MCP_ricDAE_Integration_Architecture.md # Should be in holo_index/docs/
++-- qwen_batch_1_input.json                          # Operational data, not docs
++-- orphan_analysis_complete_poc.json                # Operational data (350KB)
++-- ... 73 total files (54 MD + 19 JSON)
 ```
 
 **Target State** (WSP 3 Compliant):
 ```
 modules/communication/livechat/docs/
-  └── Gemma3_YouTube_DAE_First_Principles_Analysis.md
+  +-- Gemma3_YouTube_DAE_First_Principles_Analysis.md
 holo_index/docs/
-  └── HoloIndex_MCP_ricDAE_Integration_Architecture.md
+  +-- HoloIndex_MCP_ricDAE_Integration_Architecture.md
 docs/_archive/20251015/
-  └── qwen_batch_*.json (operational data)
+  +-- qwen_batch_*.json (operational data)
 ```
 
 ## WSP 77 Agent Coordination
@@ -43,9 +43,9 @@ docs/_archive/20251015/
 **Example**:
 ```python
 filename = "Gemma3_YouTube_DAE_First_Principles_Analysis.md"
-→ type: documentation
-→ module_hint: "youtube_dae"
-→ confidence: 0.85
+-> type: documentation
+-> module_hint: "youtube_dae"
+-> confidence: 0.85
 ```
 
 ### Phase 2: Complex Coordination (Qwen)
@@ -122,17 +122,17 @@ This is **Qwen/Gemma's first autonomous training mission**:
 
 ### Documentation (Move to Module)
 - `*.md` files with clear module hints
-- Example: `Gemma3_YouTube_DAE_*.md` → `youtube_dae/docs/`
+- Example: `Gemma3_YouTube_DAE_*.md` -> `youtube_dae/docs/`
 
 ### Operational Data (Archive)
 - `qwen_batch_*.json` - Temporary batch processing data
 - Large analysis results (>100KB JSON files)
-- Example: `orphan_analysis_complete_poc.json` → `docs/_archive/`
+- Example: `orphan_analysis_complete_poc.json` -> `docs/_archive/`
 
 ### System Docs (Keep in Root)
 - Architecture documentation
 - Vision documents
-- Example: `foundups_vision.md` → Keep in `docs/`
+- Example: `foundups_vision.md` -> Keep in `docs/`
 
 ## Expected Results
 
@@ -166,16 +166,16 @@ This is **Qwen/Gemma's first autonomous training mission**:
 
 ```
 doc_dae/
-├── README.md           # This file
-├── INTERFACE.md        # Public API
-├── src/
-│   └── doc_dae.py     # Main implementation
-├── tests/
-│   └── test_doc_dae.py # Test suite
-├── docs/
-│   └── WSP_77_Training_Mission.md
-└── memory/
-    └── doc_organization_patterns.json  # Training data
++-- README.md           # This file
++-- INTERFACE.md        # Public API
++-- src/
+[U+2502]   +-- doc_dae.py     # Main implementation
++-- tests/
+[U+2502]   +-- test_doc_dae.py # Test suite
++-- docs/
+[U+2502]   +-- WSP_77_Training_Mission.md
++-- memory/
+    +-- doc_organization_patterns.json  # Training data
 ```
 
 ## Performance Metrics

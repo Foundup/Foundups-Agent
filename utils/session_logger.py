@@ -173,7 +173,7 @@ CONTEXT: {json.dumps(full_context, indent=2)}
     
     def log_memory_migration(self, source: str, target: str, status: str, details: str = None):
         """Log memory migration actions for WSP 60 compliance."""
-        content = f"Migration: {source} → {target}\nStatus: {status}"
+        content = f"Migration: {source} -> {target}\nStatus: {status}"
         if details:
             content += f"\nDetails:\n{details}"
         
@@ -288,7 +288,7 @@ def search_memory(query: str, max_results: int = 5) -> list:
 
 if __name__ == "__main__":
     # Demo the session logger
-    print("🧠 WSP Institutional Memory Session Logger Demo")
+    print("[AI] WSP Institutional Memory Session Logger Demo")
     print("=" * 50)
     
     # Initialize logger
@@ -314,7 +314,7 @@ if __name__ == "__main__":
     )
     
     # Search demo
-    print("\n🔍 Memory Search Demo:")
+    print("\n[SEARCH] Memory Search Demo:")
     results = logger.search_previous_sessions("WSP", max_results=3)
     for i, result in enumerate(results, 1):
         print(f"{i}. {result.get('matched_line', 'N/A')[:100]}...")
@@ -322,5 +322,5 @@ if __name__ == "__main__":
     # End session
     logger.end_session("Demo completed successfully - institutional memory logging operational")
     
-    print(f"\n✅ Session logged to: {logger.log_file}")
-    print("🚀 Institutional memory system ready for production use!") 
+    print(f"\n[OK] Session logged to: {logger.log_file}")
+    print("[ROCKET] Institutional memory system ready for production use!") 

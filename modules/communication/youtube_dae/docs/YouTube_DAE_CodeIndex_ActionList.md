@@ -5,7 +5,7 @@
 
 ## Immediate Observations
 - **Critical Fixes:** None flagged across `livechat`, `youtube_dae`, `stream_resolver`, `youtube_auth` – CodeIndex confirms no high-complexity functions currently exceed the surgical threshold.
-- **Testing Gap:** All modules scanned register `0.0%` coverage. This violates the ≥80% target (WSP 5/6) and should be treated as the top remediation item.
+- **Testing Gap:** All modules scanned register `0.0%` coverage. This violates the [GREATER_EQUAL]80% target (WSP 5/6) and should be treated as the top remediation item.
 - **Assumption Alerts:** Each module exposes hard-coded strings in `__init__.py` entry-points, flagged by CodeIndex as environmental risk.
 
 ## Action Plan for 0102

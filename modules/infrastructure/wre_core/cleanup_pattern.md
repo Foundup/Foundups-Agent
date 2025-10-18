@@ -6,7 +6,7 @@ Per WSP 60 (Module Memory Architecture) and WSP 82 (Citation Protocol)
 ### Pattern ID: cleanup_legacy_code
 **WSP Chain**: [WSP 50, WSP 64, WSP 32, WSP 65, WSP 22]
 **Token Cost**: 150
-**Pattern**: verify→archive→delete→log
+**Pattern**: verify->archive->delete->log
 
 ## The Pattern (Remember, Don't Compute)
 
@@ -43,14 +43,14 @@ if has_historical_value:
 
 ## Anti-Patterns to Prevent
 
-### ❌ NEVER: Create Backup Folders
+### [FAIL] NEVER: Create Backup Folders
 ```
 modules/infrastructure_legacy_backup/  # WRONG
 modules/wre_core_BACKUP_TO_DELETE/     # WRONG
 modules/old_module_backup/             # WRONG
 ```
 
-### ✅ ALWAYS: Use Proper Archive
+### [OK] ALWAYS: Use Proper Archive
 ```
 WSP_knowledge/archive/legacy_code/     # RIGHT
 WSP_knowledge/archive/deprecated/      # RIGHT
@@ -63,7 +63,7 @@ Any future cleanup operations will recall this pattern rather than compute
 new solutions.
 
 ## Citation Chain for Cleanup
-Always follow: WSP 50→64→32→65→22
+Always follow: WSP 50->64->32->65->22
 1. Verify need (WSP 50)
 2. Check violations (WSP 64)
 3. Use proper memory (WSP 32)

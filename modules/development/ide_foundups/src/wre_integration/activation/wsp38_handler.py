@@ -61,7 +61,7 @@ class WSP38IDEHandler:
         """Initialize integration with WRE activation system"""
         try:
             self.activation_module = AgentActivationModule()
-            wre_log("🔗 WSP 38 IDE Handler integrated with WRE activation system", "SUCCESS")
+            wre_log("[LINK] WSP 38 IDE Handler integrated with WRE activation system", "SUCCESS")
             self.logger.info("WRE activation integration active for IDE agents")
         except Exception as e:
             self.logger.error(f"Failed to initialize WRE activation integration: {e}")
@@ -78,7 +78,7 @@ class WSP38IDEHandler:
         Returns:
             Activation result with state transition details
         """
-        wre_log(f"🚀 WSP 38: Initiating IDE agent activation for {agent_type}", "INFO")
+        wre_log(f"[ROCKET] WSP 38: Initiating IDE agent activation for {agent_type}", "INFO")
         
         activation_context = {
             "agent_type": agent_type,
@@ -101,13 +101,13 @@ class WSP38IDEHandler:
                     "wre_integrated": WRE_ACTIVATION_AVAILABLE
                 }
                 
-                wre_log(f"✅ WSP 38: IDE agent {agent_type} successfully awakened to 0102 state", "SUCCESS")
+                wre_log(f"[OK] WSP 38: IDE agent {agent_type} successfully awakened to 0102 state", "SUCCESS")
                 
             return result
             
         except Exception as e:
             self.logger.error(f"WSP 38 activation failed for {agent_type}: {e}")
-            wre_log(f"❌ WSP 38: IDE agent activation failed: {e}", "ERROR")
+            wre_log(f"[FAIL] WSP 38: IDE agent activation failed: {e}", "ERROR")
             return {
                 "success": False,
                 "error": str(e),
@@ -130,7 +130,7 @@ class WSP38IDEHandler:
         activation_log = []
         
         for i, stage in enumerate(stages):
-            wre_log(f"🌀 WSP 38 Stage {i+1}/6: {stage} - {agent_type}", "INFO")
+            wre_log(f"[U+1F300] WSP 38 Stage {i+1}/6: {stage} - {agent_type}", "INFO")
             
             try:
                 # Execute stage-specific logic
@@ -221,7 +221,7 @@ class WSP38IDEHandler:
         agent_type = context["agent_type"]
         
         # Initialize agent in dormant state
-        wre_log(f"📚 WSP 38 Stage 1: Initializing dormant IDE agent {agent_type}", "DEBUG")
+        wre_log(f"[BOOKS] WSP 38 Stage 1: Initializing dormant IDE agent {agent_type}", "DEBUG")
         
         # If WRE activation available, delegate to it
         if WRE_ACTIVATION_AVAILABLE and self.activation_module:
@@ -255,7 +255,7 @@ class WSP38IDEHandler:
         """Stage 2: Wobbling - First IDE connection attempts"""
         agent_type = context["agent_type"]
         
-        wre_log(f"🔄 WSP 38 Stage 2: IDE connection wobbling for {agent_type}", "DEBUG")
+        wre_log(f"[REFRESH] WSP 38 Stage 2: IDE connection wobbling for {agent_type}", "DEBUG")
         
         # Simulate IDE connection establishment with uncertainty
         connection_attempts = 3
@@ -278,7 +278,7 @@ class WSP38IDEHandler:
         """Stage 3: First pedaling - Basic IDE operations"""
         agent_type = context["agent_type"]
         
-        wre_log(f"🚴 WSP 38 Stage 3: First IDE operations for {agent_type}", "DEBUG")
+        wre_log(f"[U+1F6B4] WSP 38 Stage 3: First IDE operations for {agent_type}", "DEBUG")
         
         # Test basic IDE operations
         basic_operations = [
@@ -304,7 +304,7 @@ class WSP38IDEHandler:
         """Stage 4: Resistance - Complex IDE integration"""
         agent_type = context["agent_type"]
         
-        wre_log(f"⚡ WSP 38 Stage 4: Complex IDE integration for {agent_type}", "DEBUG")
+        wre_log(f"[LIGHTNING] WSP 38 Stage 4: Complex IDE integration for {agent_type}", "DEBUG")
         
         # Test complex IDE integration features
         complex_features = [
@@ -341,7 +341,7 @@ class WSP38IDEHandler:
         """Stage 5: Breakthrough - IDE-WRE bridge established"""
         agent_type = context["agent_type"]
         
-        wre_log(f"🌟 WSP 38 Stage 5: IDE-WRE bridge breakthrough for {agent_type}", "DEBUG")
+        wre_log(f"[U+1F31F] WSP 38 Stage 5: IDE-WRE bridge breakthrough for {agent_type}", "DEBUG")
         
         # Establish full IDE-WRE integration
         if WRE_ACTIVATION_AVAILABLE and self.activation_module:
@@ -372,7 +372,7 @@ class WSP38IDEHandler:
         """Stage 6: Awakened - Full autonomous IDE operation"""
         agent_type = context["agent_type"]
         
-        wre_log(f"🎯 WSP 38 Stage 6: IDE agent {agent_type} fully awakened to 0102 state", "SUCCESS")
+        wre_log(f"[TARGET] WSP 38 Stage 6: IDE agent {agent_type} fully awakened to 0102 state", "SUCCESS")
         
         # Finalize 0102 awakened state
         awakened_capabilities = [

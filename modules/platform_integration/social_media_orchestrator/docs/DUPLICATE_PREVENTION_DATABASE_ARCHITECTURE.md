@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-**STATUS**: ✅ **WORKING CORRECTLY** - Database IS being checked, system architecture is sound
+**STATUS**: [OK] **WORKING CORRECTLY** - Database IS being checked, system architecture is sound
 
 **User Concern**: "We have a database the posting should check the db before posting to ensure it wasn't previously posted"
 
@@ -15,51 +15,51 @@
 
 ### Data Flow Diagram
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│ 1. STARTUP (Initialization)                                      │
-├─────────────────────────────────────────────────────────────────┤
-│ __init__() →                                                     │
-│   _ensure_database_exists() → Creates SQLite DB + tables         │
-│   _load_posted_history() → Loads ALL db entries into memory     │
-│                                                                   │
-│ Database (SQLite)                  In-Memory Cache (dict)        │
-│ ┌────────────────┐  load_all()   ┌─────────────────┐           │
-│ │ video_id       │─────────────→  │ self.posted_    │           │
-│ │ timestamp      │                │ streams = {     │           │
-│ │ title          │                │   'vid123': {   │           │
-│ │ platforms_posted│                │     'platforms':│           │
-│ │ status         │                │     ['linkedin']│           │
-│ └────────────────┘                │   }             │           │
-│                                    └─────────────────┘           │
-└─────────────────────────────────────────────────────────────────┘
++-----------------------------------------------------------------+
+[U+2502] 1. STARTUP (Initialization)                                      [U+2502]
++-----------------------------------------------------------------+
+[U+2502] __init__() ->                                                     [U+2502]
+[U+2502]   _ensure_database_exists() -> Creates SQLite DB + tables         [U+2502]
+[U+2502]   _load_posted_history() -> Loads ALL db entries into memory     [U+2502]
+[U+2502]                                                                   [U+2502]
+[U+2502] Database (SQLite)                  In-Memory Cache (dict)        [U+2502]
+[U+2502] +----------------+  load_all()   +-----------------+           [U+2502]
+[U+2502] [U+2502] video_id       [U+2502]-------------->  [U+2502] self.posted_    [U+2502]           [U+2502]
+[U+2502] [U+2502] timestamp      [U+2502]                [U+2502] streams = {     [U+2502]           [U+2502]
+[U+2502] [U+2502] title          [U+2502]                [U+2502]   'vid123': {   [U+2502]           [U+2502]
+[U+2502] [U+2502] platforms_posted[U+2502]                [U+2502]     'platforms':[U+2502]           [U+2502]
+[U+2502] [U+2502] status         [U+2502]                [U+2502]     ['linkedin'][U+2502]           [U+2502]
+[U+2502] +----------------+                [U+2502]   }             [U+2502]           [U+2502]
+[U+2502]                                    +-----------------+           [U+2502]
++-----------------------------------------------------------------+
 
-┌─────────────────────────────────────────────────────────────────┐
-│ 2. DUPLICATE CHECK (Before Posting)                             │
-├─────────────────────────────────────────────────────────────────┤
-│ check_if_already_posted(video_id) →                             │
-│   1. Check in-memory cache (line 255)                           │
-│      ↓                                                           │
-│   2. IF found → Return cached result (contains db data)         │
-│      ↓                                                           │
-│   3. IF NOT found → Check database directly (line 292)          │
-│      ↓                                                           │
-│   4. IF in db → Load into cache + return                        │
-│      ↓                                                           │
-│   5. IF nowhere → Allow posting                                 │
-│                                                                  │
-│ KEY INSIGHT: Cache check IS a database check (data loaded)      │
-└─────────────────────────────────────────────────────────────────┘
++-----------------------------------------------------------------+
+[U+2502] 2. DUPLICATE CHECK (Before Posting)                             [U+2502]
++-----------------------------------------------------------------+
+[U+2502] check_if_already_posted(video_id) ->                             [U+2502]
+[U+2502]   1. Check in-memory cache (line 255)                           [U+2502]
+[U+2502]      v                                                           [U+2502]
+[U+2502]   2. IF found -> Return cached result (contains db data)         [U+2502]
+[U+2502]      v                                                           [U+2502]
+[U+2502]   3. IF NOT found -> Check database directly (line 292)          [U+2502]
+[U+2502]      v                                                           [U+2502]
+[U+2502]   4. IF in db -> Load into cache + return                        [U+2502]
+[U+2502]      v                                                           [U+2502]
+[U+2502]   5. IF nowhere -> Allow posting                                 [U+2502]
+[U+2502]                                                                  [U+2502]
+[U+2502] KEY INSIGHT: Cache check IS a database check (data loaded)      [U+2502]
++-----------------------------------------------------------------+
 
-┌─────────────────────────────────────────────────────────────────┐
-│ 3. MARK AS POSTED (After Successful Post)                       │
-├─────────────────────────────────────────────────────────────────┤
-│ mark_as_posted(video_id, platform) →                            │
-│   1. Update in-memory cache (line 489)                          │
-│   2. _save_to_database() → INSERT OR REPLACE (line 491)         │
-│   3. _save_posted_history_json() → Backup to JSON (line 502)    │
-│                                                                  │
-│ CONSISTENCY: All 3 stores updated on every post                 │
-└─────────────────────────────────────────────────────────────────┘
++-----------------------------------------------------------------+
+[U+2502] 3. MARK AS POSTED (After Successful Post)                       [U+2502]
++-----------------------------------------------------------------+
+[U+2502] mark_as_posted(video_id, platform) ->                            [U+2502]
+[U+2502]   1. Update in-memory cache (line 489)                          [U+2502]
+[U+2502]   2. _save_to_database() -> INSERT OR REPLACE (line 491)         [U+2502]
+[U+2502]   3. _save_posted_history_json() -> Backup to JSON (line 502)    [U+2502]
+[U+2502]                                                                  [U+2502]
+[U+2502] CONSISTENCY: All 3 stores updated on every post                 [U+2502]
++-----------------------------------------------------------------+
 ```
 
 ## Code Evidence
@@ -79,7 +79,7 @@ def _load_posted_history(self) -> None:
             for row in rows:
                 video_id, timestamp, title, url, platforms_str, status, ended_at, notes = row
                 platforms = json.loads(platforms_str) if platforms_str else []
-                self.posted_streams[video_id] = {  # ← LOADS DATABASE INTO MEMORY
+                self.posted_streams[video_id] = {  # <- LOADS DATABASE INTO MEMORY
                     'timestamp': timestamp,
                     'title': title,
                     'url': url,
@@ -98,7 +98,7 @@ def _load_posted_history(self) -> None:
 def check_if_already_posted(self, video_id: str, live_status_info: Optional[Dict[str, Any]] = None):
     # Step 1: Check in-memory cache (contains database data)
     self.logger.info('[CACHE] Checking in-memory cache...')
-    if video_id in self.posted_streams:  # ← Cache populated from DB on startup
+    if video_id in self.posted_streams:  # <- Cache populated from DB on startup
         entry = self.posted_streams[video_id]
         # ... process cache entry
         return result  # Returns early with database data
@@ -106,7 +106,7 @@ def check_if_already_posted(self, video_id: str, live_status_info: Optional[Dict
     # Step 2: Only reaches here if NOT in startup-loaded cache
     self.logger.info('[CACHE] Not found in memory cache')
     self.logger.info('[DB] Checking database...')
-    db_result = self._check_database_for_post(video_id)  # ← Direct DB query
+    db_result = self._check_database_for_post(video_id)  # <- Direct DB query
     # ... return database result
 ```
 
@@ -131,14 +131,14 @@ def _save_to_database(self, video_id: str, timestamp: str, title: Optional[str],
         self.logger.error(f"[DB] Failed to save to database: {e}")
 ```
 
-**EVIDENCE**: Database is updated on every post via `mark_as_posted()` → `_save_to_database()`.
+**EVIDENCE**: Database is updated on every post via `mark_as_posted()` -> `_save_to_database()`.
 
 ## Why This Architecture is CORRECT
 
 ### Design Pattern: Write-Through Cache
 This is a standard **write-through cache** pattern used in high-performance systems:
 
-1. **Read Path**: Check cache (fast) → Fallback to DB (slow)
+1. **Read Path**: Check cache (fast) -> Fallback to DB (slow)
 2. **Write Path**: Update cache + DB simultaneously
 3. **Initialization**: Warm cache from DB on startup
 
@@ -153,7 +153,7 @@ This is a standard **write-through cache** pattern used in high-performance syst
 From logs in `012.txt`:
 ```
 [CACHE] Checking in-memory cache...
-[CACHE] ❌ BLOCKED: Already posted to ['linkedin']
+[CACHE] [FAIL] BLOCKED: Already posted to ['linkedin']
 ```
 
 This is **CORRECT** behavior:
@@ -201,7 +201,7 @@ To verify database is working correctly:
    - Should appear in daemon startup logs
 
 4. **Verify persistence across restarts**:
-   - Post a stream → Stop daemon → Restart daemon
+   - Post a stream -> Stop daemon -> Restart daemon
    - Same stream should still be blocked (database persisted)
 
 ## Addressing User's Concern
@@ -209,11 +209,11 @@ To verify database is working correctly:
 **User said**: "we have a database the posting should check the db before posting to ensure it wasn't previously posted"
 
 **Current Reality**: The system DOES check the database:
-1. ✅ Database loaded into memory on startup
-2. ✅ Every duplicate check queries this database-sourced cache
-3. ✅ Database directly queried if cache miss
-4. ✅ Database updated on every post
-5. ✅ Database persists across daemon restarts
+1. [OK] Database loaded into memory on startup
+2. [OK] Every duplicate check queries this database-sourced cache
+3. [OK] Database directly queried if cache miss
+4. [OK] Database updated on every post
+5. [OK] Database persists across daemon restarts
 
 **What the user likely meant**: "I see logs saying [CACHE] blocked, but I want to ensure database is the source of truth"
 
@@ -239,15 +239,15 @@ But this is cosmetic - the architecture is fundamentally sound.
 
 ## Conclusion
 
-**Status**: ✅ **NO CODE CHANGES NEEDED**
+**Status**: [OK] **NO CODE CHANGES NEEDED**
 
 The duplicate prevention system:
-1. ✅ Uses database as source of truth
-2. ✅ Loads database into memory on startup (write-through cache)
-3. ✅ Checks database-sourced cache on every duplicate check
-4. ✅ Falls back to direct database query on cache miss
-5. ✅ Persists every post to database
-6. ✅ Survives daemon restarts (database persistent)
+1. [OK] Uses database as source of truth
+2. [OK] Loads database into memory on startup (write-through cache)
+3. [OK] Checks database-sourced cache on every duplicate check
+4. [OK] Falls back to direct database query on cache miss
+5. [OK] Persists every post to database
+6. [OK] Survives daemon restarts (database persistent)
 
 **The system is working exactly as designed and is correctly preventing duplicate posts using database-backed persistence.**
 

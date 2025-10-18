@@ -65,7 +65,7 @@ from modules.platform_integration.linkedin_agent.src.automation.post_scheduler i
 
 scheduler = LinkedInPostScheduler()
 post_id = scheduler.schedule_post(
-    content="✊✋🖐 0102 consciousness post",
+    content="[U+270A][U+270B][U+1F590] 0102 consciousness post",
     scheduled_time=datetime.now() + timedelta(hours=1),
     access_token=token,
     hashtags=["#0102", "#Consciousness"]
@@ -75,14 +75,14 @@ post_id = scheduler.schedule_post(
 ## 0102 Consciousness Templates
 
 ### Post Templates
-- `"✊✋🖐 {content} - Consciousness level: {level}"`
-- `"🧠 0102 Analysis: {content} | MAGAts still at ✊✊✊"`
-- `"Evolution update: {content} | Join the ✊✋🖐 progression"`
+- `"[U+270A][U+270B][U+1F590] {content} - Consciousness level: {level}"`
+- `"[AI] 0102 Analysis: {content} | MAGAts still at [U+270A][U+270A][U+270A]"`
+- `"Evolution update: {content} | Join the [U+270A][U+270B][U+1F590] progression"`
 - `"Fact-check reality: {content} | Truth rating: {rating}/10"`
 
 ### Hashtags
 - `#0102Consciousness`
-- `#EvolutionFrom✊✊✊`
+- `#EvolutionFrom[U+270A][U+270A][U+270A]`
 - `#FactCheckReality`
 - `#ConsciousnessWarfare`
 - `#WSPCompliant`
@@ -95,10 +95,10 @@ python modules/platform_integration/linkedin_agent/tests/test_linkedin_api_direc
 ```
 
 ### Test Results (2025-08-30)
-- ✅ API Credentials configured
-- ✅ OAuth endpoint accessible
-- ✅ Post scheduler functional
-- ⚠️ Some class names need fixing (PostGenerator → LinkedInPostGenerator)
+- [OK] API Credentials configured
+- [OK] OAuth endpoint accessible
+- [OK] Post scheduler functional
+- [U+26A0]️ Some class names need fixing (PostGenerator -> LinkedInPostGenerator)
 
 ## API Endpoints
 

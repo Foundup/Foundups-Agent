@@ -29,7 +29,7 @@ def test_like_single_comment():
     MOVE2JAPAN_CHANNEL_ID = "UC-LSSlOZwpGIRIYihaz8zCw"
     
     logger.info("="*60)
-    logger.info("🎯 TESTING SINGLE COMMENT LIKE ON MOVE2JAPAN")
+    logger.info("[TARGET] TESTING SINGLE COMMENT LIKE ON MOVE2JAPAN")
     logger.info("="*60)
     
     # Get YouTube service
@@ -41,7 +41,7 @@ def test_like_single_comment():
     
     try:
         # Find a video with comments
-        logger.info("🔍 Searching for Move2Japan videos with comments...")
+        logger.info("[SEARCH] Searching for Move2Japan videos with comments...")
         
         # Get channel uploads playlist
         channel_response = youtube.channels().list(
@@ -63,7 +63,7 @@ def test_like_single_comment():
             video_id = item['snippet']['resourceId']['videoId']
             video_title = item['snippet']['title']
             
-            logger.info(f"\n📹 Checking video: {video_title[:50]}...")
+            logger.info(f"\n[U+1F4F9] Checking video: {video_title[:50]}...")
             
             # Get comments
             comments = list_video_comments(youtube, video_id, max_results=5)
@@ -76,42 +76,42 @@ def test_like_single_comment():
                 text = first_comment['snippet']['topLevelComment']['snippet']['textDisplay'][:100]
                 like_count = first_comment['snippet']['topLevelComment']['snippet']['likeCount']
                 
-                logger.info(f"\n💬 Found comment by {author}:")
+                logger.info(f"\n[U+1F4AC] Found comment by {author}:")
                 logger.info(f"   Text: {text}...")
                 logger.info(f"   Current likes: {like_count}")
                 logger.info(f"   Comment ID: {comment_id}")
                 
                 # Try to like it
-                logger.info("\n👍 Attempting to like this comment...")
+                logger.info("\n[U+1F44D] Attempting to like this comment...")
                 result = like_comment(youtube, comment_id)
                 
                 if result:
-                    logger.info("✅ Successfully liked the comment!")
+                    logger.info("[OK] Successfully liked the comment!")
                 else:
-                    logger.info("❌ Cannot like comment - API limitation")
+                    logger.info("[FAIL] Cannot like comment - API limitation")
                     logger.info("   YouTube API v3 does not support liking individual comments")
                     logger.info("   This is a known limitation, not an error")
                 
                 # Try to heart it (only works if we own the video)
-                logger.info("\n❤️ Attempting to heart this comment...")
-                logger.info("❌ Cannot heart comment - API limitation")
+                logger.info("\n[U+2764]️ Attempting to heart this comment...")
+                logger.info("[FAIL] Cannot heart comment - API limitation")
                 logger.info("   Hearts can only be added by video owner through YouTube Studio")
                 logger.info("   No API endpoint exists for this action")
                 
                 # What we CAN do
-                logger.info("\n✅ What we CAN do via API:")
+                logger.info("\n[OK] What we CAN do via API:")
                 logger.info("   1. Reply to this comment")
                 logger.info("   2. Like the entire video")
                 logger.info("   3. Subscribe to the channel")
                 logger.info("   4. Create our own comments")
                 
                 # Show how to reply instead
-                logger.info("\n💡 Alternative: We could reply to show engagement")
+                logger.info("\n[IDEA] Alternative: We could reply to show engagement")
                 logger.info(f"   Example: 'Great point, {author}! Thanks for watching!'")
                 
                 return
         
-        logger.info("\n⚠️ No comments found on recent videos")
+        logger.info("\n[U+26A0]️ No comments found on recent videos")
         
     except Exception as e:
         logger.error(f"Error: {e}")
@@ -121,12 +121,12 @@ def test_like_single_comment():
 
 if __name__ == "__main__":
     print("""
-    ╔════════════════════════════════════════════════════════╗
-    ║        TEST LIKING A SINGLE MOVE2JAPAN COMMENT        ║
-    ╠════════════════════════════════════════════════════════╣
-    ║  This will attempt to like and heart one comment      ║
-    ║  Note: API limitations prevent these actions          ║
-    ╚════════════════════════════════════════════════════════╝
+    [U+2554]========================================================[U+2557]
+    [U+2551]        TEST LIKING A SINGLE MOVE2JAPAN COMMENT        [U+2551]
+    [U+2560]========================================================[U+2563]
+    [U+2551]  This will attempt to like and heart one comment      [U+2551]
+    [U+2551]  Note: API limitations prevent these actions          [U+2551]
+    [U+255A]========================================================[U+255D]
     """)
     
     test_like_single_comment()

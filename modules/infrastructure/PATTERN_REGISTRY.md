@@ -9,7 +9,7 @@
 
 ### 2. Recursive Improvement Engine
 **Current Implementation**: `wre_core/recursive_improvement/`
-**Pattern**: Error → Learning → Pattern Update → Prevention
+**Pattern**: Error -> Learning -> Pattern Update -> Prevention
 **Use Cases**: Self-improvement, pattern evolution
 
 ### 3. Agent Management

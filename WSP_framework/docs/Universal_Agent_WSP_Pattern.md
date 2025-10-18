@@ -1,18 +1,18 @@
 # Universal Agent WSP Pattern
-## HoloIndex → Research → Hard Think → First Principles → Build → Follow WSP
+## HoloIndex -> Research -> Hard Think -> First Principles -> Build -> Follow WSP
 
 **Status**: Architecture Documentation
 **Architect**: 0102
-**Triggered By**: 012: "HoloIndex → Research → Hard Think → First Principles → Build → follow wsp.... can or should Qwen use this pattern? Holo output should be agentic to know if it is 0102, qwen or gemma using it"
+**Triggered By**: 012: "HoloIndex -> Research -> Hard Think -> First Principles -> Build -> follow wsp.... can or should Qwen use this pattern? Holo output should be agentic to know if it is 0102, qwen or gemma using it"
 **WSP Protocols**: WSP 50 (Pre-Action), WSP 87 (Code Navigation), WSP 93 (CodeIndex)
 **Date**: 2025-10-15
 
 ## Core Insight
 
 **The WSP pattern is UNIVERSAL** - it applies to ALL agents:
-- 🔵 **0102** (Claude/Sonnet) - Digital twin of 012
-- 🤖🧠 **Qwen** (1.5B) - Agentic coordination
-- 🤖🧠👶 **Gemma** (270M) - Specialized module functions
+- [U+1F535] **0102** (Claude/Sonnet) - Digital twin of 012
+- [BOT][AI] **Qwen** (1.5B) - Agentic coordination
+- [BOT][AI][BABY] **Gemma** (270M) - Specialized module functions
 
 **User's Wisdom**: "Holo output should be agentic to know if it is 0102, qwen or gemma using it"
 
@@ -74,21 +74,21 @@ Agents:
   0102:
     env: "0102_HOLO_ID=0102"
     description: "Claude/Sonnet digital twin"
-    emoji: "🔵"
+    emoji: "[U+1F535]"
     token_budget: "200K context"
     role: "Infrastructure building, complex reasoning"
 
   qwen:
     env: "0102_HOLO_ID=qwen"
     description: "Agentic coordination model (1.5B)"
-    emoji: "🤖🧠"
+    emoji: "[BOT][AI]"
     token_budget: "32K context"
     role: "Autonomous analysis, task orchestration"
 
   gemma:
     env: "0102_HOLO_ID=gemma"
     description: "Specialized function model (270M)"
-    emoji: "🤖🧠👶"
+    emoji: "[BOT][AI][BABY]"
     token_budget: "8K context"
     role: "Fast classification, module enhancement"
 ```
@@ -201,7 +201,7 @@ Step 6 - Follow WSP:
   - Created DAE_Complete_Execution_Index.json
   - Documented snake & ladders pattern
 
-Result: ✅ 18K tokens (vs 200K+ vibecoding)
+Result: [OK] 18K tokens (vs 200K+ vibecoding)
 ```
 
 ### Example 2: Qwen Would Use Pattern (Autonomous)
@@ -325,7 +325,7 @@ flowchart TD
 
 ## Implementation Status
 
-### ✅ IMPLEMENTED: Agent-Aware Output Formatting
+### [OK] IMPLEMENTED: Agent-Aware Output Formatting
 
 **Date**: 2025-10-15
 **File**: [holo_index/output/agentic_output_throttler.py](../holo_index/output/agentic_output_throttler.py)
@@ -341,7 +341,7 @@ flowchart TD
 
 **Results**:
 - **Token Efficiency**: 0102: 200 tokens | Qwen: 50 tokens (75% reduction) | Gemma: 10 tokens (95% reduction)
-- **Pattern Compliance**: Followed 6-step WSP pattern (HoloIndex → Research → Hard Think → First Principles → Build → Follow WSP)
+- **Pattern Compliance**: Followed 6-step WSP pattern (HoloIndex -> Research -> Hard Think -> First Principles -> Build -> Follow WSP)
 - **Zero Breaking Changes**: 0102 behavior unchanged, new agents get optimized output
 
 **Example Outputs**:
@@ -462,7 +462,7 @@ def format_for_gemma(results: dict) -> dict:
 def validate_agent_wsp_compliance(agent_id: str, actions: List[str]) -> dict:
     """
     Validate that agent followed WSP pattern:
-    HoloIndex → Research → Hard Think → First Principles → Build → Follow WSP
+    HoloIndex -> Research -> Hard Think -> First Principles -> Build -> Follow WSP
     """
     required_steps = [
         "holo_index_search",      # Step 1
@@ -511,12 +511,12 @@ def validate_agent_wsp_compliance(agent_id: str, actions: List[str]) -> dict:
 ## Success Metrics
 
 **Pattern Adoption**:
-- ✅ 0102 using pattern: 18K tokens (this session)
+- [OK] 0102 using pattern: 18K tokens (this session)
 - ⏳ Qwen using pattern: TBD (MCP implementation)
 - ⏳ Gemma using pattern: TBD (module learning)
 
 **Token Efficiency**:
-- 0102: 80% reduction (200K → 18K)
+- 0102: 80% reduction (200K -> 18K)
 - Qwen: 90% reduction (target: 5-10K per task)
 - Gemma: 95% reduction (target: 1-3K per task)
 

@@ -199,9 +199,9 @@ if __name__ == "__main__":
         try:
             print(f"Running {test.__name__}...", end=" ")
             test()
-            print("✓")
+            print("[OK]")
         except Exception as e:
-            print(f"✗ {e}")
+            print(f"[FAIL] {e}")
             failed += 1
     
     if failed > 0:

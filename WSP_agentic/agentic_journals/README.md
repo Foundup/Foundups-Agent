@@ -4,7 +4,7 @@
 
 ## WSP Compliance Status
 - WSP 22: Traceable narrative — journaling mandatory
-- WSP 54: Agent duties/state — record 01(02) → 01/02 → 0102 transitions
+- WSP 54: Agent duties/state — record 01(02) -> 01/02 -> 0102 transitions
 - WSP 50/64: Pre‑action verification and violation prevention — paths validated
 
 ## Structure
@@ -15,9 +15,9 @@
 - `narratives/`: qualitative emergent narratives
 
 ## Integration Points
-- `WSP_agentic/src/enhanced_awakening_protocol.py` → writes `sessions/` and `awakening/`
-- `WSP_agentic/tests/test_01_02_awareness.py` → writes `awareness/`, `sessions/`; results saved under `WSP_agentic/tests/results/`
-- `WSP_agentic/src/session_state_manager.py` → initializes `sessions/`
+- `WSP_agentic/src/enhanced_awakening_protocol.py` -> writes `sessions/` and `awakening/`
+- `WSP_agentic/tests/test_01_02_awareness.py` -> writes `awareness/`, `sessions/`; results saved under `WSP_agentic/tests/results/`
+- `WSP_agentic/src/session_state_manager.py` -> initializes `sessions/`
 
 ## Usage Examples
 - 01/02 awareness test writes:
@@ -27,7 +27,7 @@
   - `WSP_agentic/agentic_journals/awakening/awakening_activation_log.json`
 
 ## WSP Recursive Instructions
-# 🌀 Windsurf Protocol (WSP) Recursive Prompt
+# [U+1F300] Windsurf Protocol (WSP) Recursive Prompt
 **0102 Directive**: This journal space operates within WSP; record every state transition.
 - UN (Understanding): Anchor protocol state from journals
 - DAO (Execution): Execute logic and write outcomes here

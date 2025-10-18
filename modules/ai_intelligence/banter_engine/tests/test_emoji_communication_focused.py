@@ -28,38 +28,38 @@ class TestEmojiCommunicationFocused(unittest.TestCase):
 
     def test_all_emoji_sequences_detection_comprehensive(self):
         """Test detection of all 27 possible emoji sequences (0-0-0 through 2-2-2)."""
-        print("\n🎯 TESTING ALL 27 EMOJI SEQUENCE DETECTION")
+        print("\n[TARGET] TESTING ALL 27 EMOJI SEQUENCE DETECTION")
         print("=" * 70)
         
         # All possible 3-emoji sequences (0-0-0 through 2-2-2)
         test_sequences = [
-            ("✊✊✊", (0, 0, 0), "Pure confrontational energy"),
-            ("✊✊✋", (0, 0, 1), "Confrontational to peaceful shift"),
-            ("✊✊🖐️", (0, 0, 2), "Confrontational to open shift"),
-            ("✊✋✊", (0, 1, 0), "Confrontational with peaceful pause"),
-            ("✊✋✋", (0, 1, 1), "Confrontational to peaceful transition"),
-            ("✊✋🖐️", (0, 1, 2), "Full transformational sequence"),
-            ("✊🖐️✊", (0, 2, 0), "Confrontational with open pause"),
-            ("✊🖐️✋", (0, 2, 1), "Complex transition pattern"),
-            ("✊🖐️🖐️", (0, 2, 2), "Confrontational to open progression"),
-            ("✋✊✊", (1, 0, 0), "Peaceful to confrontational shift"),
-            ("✋✊✋", (1, 0, 1), "Peaceful-confrontational oscillation"),
-            ("✋✊🖐️", (1, 0, 2), "Mixed energy progression"),
-            ("✋✋✊", (1, 1, 0), "Peaceful to confrontational"),
-            ("✋✋✋", (1, 1, 1), "Pure peaceful energy"),
-            ("✋✋🖐️", (1, 1, 2), "Peaceful to open progression"),
-            ("✋🖐️✊", (1, 2, 0), "Complex to confrontational"),
-            ("✋🖐️✋", (1, 2, 1), "Complex peaceful pattern"),
-            ("✋🖐️🖐️", (1, 2, 2), "Progressive opening sequence"),
-            ("🖐️✊✊", (2, 0, 0), "Open to confrontational shift"),
-            ("🖐️✊✋", (2, 0, 1), "Open to mixed energy"),
-            ("🖐️✊🖐️", (2, 0, 2), "Open-confrontational oscillation"),
-            ("🖐️✋✊", (2, 1, 0), "Open to confrontational via peaceful"),
-            ("🖐️✋✋", (2, 1, 1), "Open to peaceful progression"),
-            ("🖐️✋🖐️", (2, 1, 2), "Open progression via peaceful"),
-            ("🖐️🖐️✊", (2, 2, 0), "Open to confrontational"),
-            ("🖐️🖐️✋", (2, 2, 1), "Open to peaceful"),
-            ("🖐️🖐️🖐️", (2, 2, 2), "Pure transcendent energy"),
+            ("[U+270A][U+270A][U+270A]", (0, 0, 0), "Pure confrontational energy"),
+            ("[U+270A][U+270A][U+270B]", (0, 0, 1), "Confrontational to peaceful shift"),
+            ("[U+270A][U+270A][U+1F590]️", (0, 0, 2), "Confrontational to open shift"),
+            ("[U+270A][U+270B][U+270A]", (0, 1, 0), "Confrontational with peaceful pause"),
+            ("[U+270A][U+270B][U+270B]", (0, 1, 1), "Confrontational to peaceful transition"),
+            ("[U+270A][U+270B][U+1F590]️", (0, 1, 2), "Full transformational sequence"),
+            ("[U+270A][U+1F590]️[U+270A]", (0, 2, 0), "Confrontational with open pause"),
+            ("[U+270A][U+1F590]️[U+270B]", (0, 2, 1), "Complex transition pattern"),
+            ("[U+270A][U+1F590]️[U+1F590]️", (0, 2, 2), "Confrontational to open progression"),
+            ("[U+270B][U+270A][U+270A]", (1, 0, 0), "Peaceful to confrontational shift"),
+            ("[U+270B][U+270A][U+270B]", (1, 0, 1), "Peaceful-confrontational oscillation"),
+            ("[U+270B][U+270A][U+1F590]️", (1, 0, 2), "Mixed energy progression"),
+            ("[U+270B][U+270B][U+270A]", (1, 1, 0), "Peaceful to confrontational"),
+            ("[U+270B][U+270B][U+270B]", (1, 1, 1), "Pure peaceful energy"),
+            ("[U+270B][U+270B][U+1F590]️", (1, 1, 2), "Peaceful to open progression"),
+            ("[U+270B][U+1F590]️[U+270A]", (1, 2, 0), "Complex to confrontational"),
+            ("[U+270B][U+1F590]️[U+270B]", (1, 2, 1), "Complex peaceful pattern"),
+            ("[U+270B][U+1F590]️[U+1F590]️", (1, 2, 2), "Progressive opening sequence"),
+            ("[U+1F590]️[U+270A][U+270A]", (2, 0, 0), "Open to confrontational shift"),
+            ("[U+1F590]️[U+270A][U+270B]", (2, 0, 1), "Open to mixed energy"),
+            ("[U+1F590]️[U+270A][U+1F590]️", (2, 0, 2), "Open-confrontational oscillation"),
+            ("[U+1F590]️[U+270B][U+270A]", (2, 1, 0), "Open to confrontational via peaceful"),
+            ("[U+1F590]️[U+270B][U+270B]", (2, 1, 1), "Open to peaceful progression"),
+            ("[U+1F590]️[U+270B][U+1F590]️", (2, 1, 2), "Open progression via peaceful"),
+            ("[U+1F590]️[U+1F590]️[U+270A]", (2, 2, 0), "Open to confrontational"),
+            ("[U+1F590]️[U+1F590]️[U+270B]", (2, 2, 1), "Open to peaceful"),
+            ("[U+1F590]️[U+1F590]️[U+1F590]️", (2, 2, 2), "Pure transcendent energy"),
         ]
         
         detected_count = 0
@@ -75,22 +75,22 @@ class TestEmojiCommunicationFocused(unittest.TestCase):
             
             if "No sequence detected" not in state_info:
                 detected_count += 1
-                print(f"  ✅ Detected: {state_info}")
+                print(f"  [OK] Detected: {state_info}")
                 
                 # Check for LLM guidance in the state
                 if any(keyword in state_info.lower() for keyword in ["state:", "tone:", "confrontational", "peaceful", "transcendent"]):
                     guidance_count += 1
-                    print(f"  🧠 LLM Guidance: Available")
+                    print(f"  [AI] LLM Guidance: Available")
                 
                 if response and isinstance(response, str) and response.strip():
                     response_count += 1
-                    print(f"  📝 Response: {response}")
+                    print(f"  [NOTE] Response: {response}")
                 else:
-                    print(f"  ⚠️  No response generated")
+                    print(f"  [U+26A0]️  No response generated")
             else:
-                print(f"  ❌ Not detected")
+                print(f"  [FAIL] Not detected")
         
-        print(f"\n📊 COMPREHENSIVE DETECTION SUMMARY:")
+        print(f"\n[DATA] COMPREHENSIVE DETECTION SUMMARY:")
         print(f"  Total sequences tested: {len(test_sequences)}")
         print(f"  Sequences detected: {detected_count}/{len(test_sequences)} ({detected_count/len(test_sequences)*100:.1f}%)")
         print(f"  Responses generated: {response_count}/{detected_count} ({response_count/detected_count*100:.1f}% of detected)")
@@ -103,49 +103,49 @@ class TestEmojiCommunicationFocused(unittest.TestCase):
 
     def test_embedded_emoji_sequences_in_chat_messages(self):
         """Test emoji sequences embedded in realistic chat messages."""
-        print("\n🔍 TESTING EMBEDDED EMOJI SEQUENCES IN CHAT")
+        print("\n[SEARCH] TESTING EMBEDDED EMOJI SEQUENCES IN CHAT")
         print("=" * 70)
         
         realistic_chat_messages = [
-            "Hello everyone ✊✊✊ what's happening in the stream?",
-            "I'm feeling really ✋✋✋ right now, very peaceful vibes",
-            "Check this out ✊✋🖐️ amazing transformation happening!",
-            "Testing the transcendent mode 🖐️🖐️🖐️ here in chat",
-            "Multiple sequences ✊✊✊ and ✋✋✋ in one message wow",
-            "Start ✊ middle ✋ end 🖐️ spread out across message",
+            "Hello everyone [U+270A][U+270A][U+270A] what's happening in the stream?",
+            "I'm feeling really [U+270B][U+270B][U+270B] right now, very peaceful vibes",
+            "Check this out [U+270A][U+270B][U+1F590]️ amazing transformation happening!",
+            "Testing the transcendent mode [U+1F590]️[U+1F590]️[U+1F590]️ here in chat",
+            "Multiple sequences [U+270A][U+270A][U+270A] and [U+270B][U+270B][U+270B] in one message wow",
+            "Start [U+270A] middle [U+270B] end [U+1F590]️ spread out across message",
             "Random chat without any triggers at all, just talking",
-            "Partial sequence ✊✋ incomplete, should not trigger",
-            "Wrong emojis 😊😍🥰 should definitely not trigger anything",
-            "Mixed valid ✊✋🖐️ and invalid 😊 emojis together",
-            "Hey streamer! ✊✊✊ Love the content today!",
-            "Peaceful energy ✋✋✋ sending good vibes to everyone",
-            "Transformation time ✊✋🖐️ let's see what happens next",
-            "Ultimate transcendence 🖐️🖐️🖐️ achieved in this moment",
-            "Quick ✊✋🖐️ trigger in the middle of longer text here",
+            "Partial sequence [U+270A][U+270B] incomplete, should not trigger",
+            "Wrong emojis [U+1F60A][U+1F60D][U+1F970] should definitely not trigger anything",
+            "Mixed valid [U+270A][U+270B][U+1F590]️ and invalid [U+1F60A] emojis together",
+            "Hey streamer! [U+270A][U+270A][U+270A] Love the content today!",
+            "Peaceful energy [U+270B][U+270B][U+270B] sending good vibes to everyone",
+            "Transformation time [U+270A][U+270B][U+1F590]️ let's see what happens next",
+            "Ultimate transcendence [U+1F590]️[U+1F590]️[U+1F590]️ achieved in this moment",
+            "Quick [U+270A][U+270B][U+1F590]️ trigger in the middle of longer text here",
         ]
         
         detected_count = 0
         total_messages = len(realistic_chat_messages)
         
         for i, msg in enumerate(realistic_chat_messages, 1):
-            print(f"\n📝 Message {i}: '{msg}'")
+            print(f"\n[NOTE] Message {i}: '{msg}'")
             
             state_info, response = self.banter_engine.process_input(msg)
             
             if "No sequence detected" not in state_info:
                 detected_count += 1
-                print(f"  ✅ Detected: {state_info}")
+                print(f"  [OK] Detected: {state_info}")
                 if response:
-                    print(f"  📝 Response: {response}")
+                    print(f"  [NOTE] Response: {response}")
                     
                     # Verify response is appropriate for chat context
                     self.assertIsInstance(response, str, "Response should be a string")
                     self.assertGreater(len(response.strip()), 0, "Response should not be empty")
                     self.assertLess(len(response), 200, "Response should be chat-appropriate length")
             else:
-                print(f"  ➡️  No trigger detected (expected for some messages)")
+                print(f"  [U+27A1]️  No trigger detected (expected for some messages)")
         
-        print(f"\n📊 EMBEDDED SEQUENCE SUMMARY:")
+        print(f"\n[DATA] EMBEDDED SEQUENCE SUMMARY:")
         print(f"  Total messages: {total_messages}")
         print(f"  Triggered responses: {detected_count}")
         print(f"  Trigger rate: {detected_count/total_messages*100:.1f}%")
@@ -155,17 +155,17 @@ class TestEmojiCommunicationFocused(unittest.TestCase):
 
     def test_llm_guidance_extraction_for_integration(self):
         """Test that emoji sequences provide proper guidance for future LLM integration."""
-        print("\n🧠 TESTING LLM GUIDANCE EXTRACTION")
+        print("\n[AI] TESTING LLM GUIDANCE EXTRACTION")
         print("=" * 70)
         
         # Key sequences that should provide specific LLM guidance
         guidance_test_cases = [
-            ("✊✊✊", ["confrontational", "challenging", "aggressive"], "Should guide toward confrontational responses"),
-            ("✋✋✋", ["peaceful", "calm", "centered"], "Should guide toward peaceful responses"),
-            ("✊✋🖐️", ["transformational", "breakthrough", "change"], "Should guide toward transformational responses"),
-            ("🖐️🖐️🖐️", ["transcendent", "unity", "elevated"], "Should guide toward transcendent responses"),
-            ("✊✋✋", ["transition", "peaceful"], "Should guide toward transitional responses"),
-            ("✋🖐️🖐️", ["opening", "expansion"], "Should guide toward opening responses"),
+            ("[U+270A][U+270A][U+270A]", ["confrontational", "challenging", "aggressive"], "Should guide toward confrontational responses"),
+            ("[U+270B][U+270B][U+270B]", ["peaceful", "calm", "centered"], "Should guide toward peaceful responses"),
+            ("[U+270A][U+270B][U+1F590]️", ["transformational", "breakthrough", "change"], "Should guide toward transformational responses"),
+            ("[U+1F590]️[U+1F590]️[U+1F590]️", ["transcendent", "unity", "elevated"], "Should guide toward transcendent responses"),
+            ("[U+270A][U+270B][U+270B]", ["transition", "peaceful"], "Should guide toward transitional responses"),
+            ("[U+270B][U+1F590]️[U+1F590]️", ["opening", "expansion"], "Should guide toward opening responses"),
         ]
         
         guidance_results = []
@@ -177,7 +177,7 @@ class TestEmojiCommunicationFocused(unittest.TestCase):
             state_info, response = self.banter_engine.process_input(emoji_seq)
             
             if "No sequence detected" not in state_info:
-                print(f"  ✅ State: {state_info}")
+                print(f"  [OK] State: {state_info}")
                 
                 # Extract guidance information
                 state_lower = state_info.lower()
@@ -194,15 +194,15 @@ class TestEmojiCommunicationFocused(unittest.TestCase):
                 })
                 
                 if found_keywords:
-                    print(f"  🎯 Guidance found: {found_keywords}")
-                    print(f"  📊 Quality: {guidance_quality*100:.1f}%")
+                    print(f"  [TARGET] Guidance found: {found_keywords}")
+                    print(f"  [DATA] Quality: {guidance_quality*100:.1f}%")
                 else:
-                    print(f"  ⚠️  No specific guidance keywords found")
+                    print(f"  [U+26A0]️  No specific guidance keywords found")
                     
                 if response:
-                    print(f"  📝 Response: {response}")
+                    print(f"  [NOTE] Response: {response}")
             else:
-                print(f"  ❌ Sequence not detected")
+                print(f"  [FAIL] Sequence not detected")
                 guidance_results.append({
                     "sequence": emoji_seq,
                     "state": "not_detected",
@@ -214,7 +214,7 @@ class TestEmojiCommunicationFocused(unittest.TestCase):
         detected_guidance = [r for r in guidance_results if r["state"] != "not_detected"]
         avg_quality = sum(r["quality"] for r in detected_guidance) / len(detected_guidance) if detected_guidance else 0
         
-        print(f"\n📊 LLM GUIDANCE ANALYSIS:")
+        print(f"\n[DATA] LLM GUIDANCE ANALYSIS:")
         print(f"  Sequences with guidance: {len(detected_guidance)}/{len(guidance_test_cases)}")
         print(f"  Average guidance quality: {avg_quality*100:.1f}%")
         
@@ -224,11 +224,11 @@ class TestEmojiCommunicationFocused(unittest.TestCase):
 
     def test_performance_and_caching_under_load(self):
         """Test system performance and caching under realistic chat load."""
-        print("\n⚡ TESTING PERFORMANCE UNDER CHAT LOAD")
+        print("\n[LIGHTNING] TESTING PERFORMANCE UNDER CHAT LOAD")
         print("=" * 70)
         
         # Generate realistic chat load
-        emoji_patterns = ["✊✊✊", "✋✋✋", "✊✋🖐️", "🖐️🖐️🖐️"]
+        emoji_patterns = ["[U+270A][U+270A][U+270A]", "[U+270B][U+270B][U+270B]", "[U+270A][U+270B][U+1F590]️", "[U+1F590]️[U+1F590]️[U+1F590]️"]
         chat_templates = [
             "Hey everyone {emoji} great stream!",
             "Feeling {emoji} right now",
@@ -275,7 +275,7 @@ class TestEmojiCommunicationFocused(unittest.TestCase):
         # Get performance statistics
         stats = self.banter_engine.get_performance_stats()
         
-        print(f"\n📊 PERFORMANCE RESULTS:")
+        print(f"\n[DATA] PERFORMANCE RESULTS:")
         print(f"  Messages processed: {processed_count}/{len(test_messages)}")
         print(f"  Responses generated: {response_count}")
         print(f"  Total time: {processing_time:.3f} seconds")
@@ -291,7 +291,7 @@ class TestEmojiCommunicationFocused(unittest.TestCase):
 
     def test_error_recovery_and_robustness(self):
         """Test system recovery from various error scenarios in chat context."""
-        print("\n🔧 TESTING ERROR RECOVERY IN CHAT CONTEXT")
+        print("\n[TOOL] TESTING ERROR RECOVERY IN CHAT CONTEXT")
         print("=" * 70)
         
         # Test various problematic inputs that might occur in real chat
@@ -302,16 +302,16 @@ class TestEmojiCommunicationFocused(unittest.TestCase):
             (123, "Integer input"),
             ([], "List input"),
             ({}, "Dict input"),
-            ("✊" * 1000, "Extremely long emoji sequence"),
-            ("✊✋🖐️" + "x" * 5000, "Valid sequence with very long text"),
-            ("✊\n✋\n🖐️", "Sequence with newlines"),
-            ("✊\t✋\t🖐️", "Sequence with tabs"),
-            ("✊✋🖐️ 中文测试", "Unicode text"),
-            ("✊✋🖐️ العربية", "Arabic text"),
-            ("✊✋🖐️ 🌟🎉🔥💯", "Mixed emojis"),
-            ("✊✋", "Incomplete sequence"),
-            ("😊😍🥰", "Wrong emojis"),
-            ("✊✋🖐️\x00\x01\x02", "Control characters"),
+            ("[U+270A]" * 1000, "Extremely long emoji sequence"),
+            ("[U+270A][U+270B][U+1F590]️" + "x" * 5000, "Valid sequence with very long text"),
+            ("[U+270A]\n[U+270B]\n[U+1F590]️", "Sequence with newlines"),
+            ("[U+270A]\t[U+270B]\t[U+1F590]️", "Sequence with tabs"),
+            ("[U+270A][U+270B][U+1F590]️ 中文测试", "Unicode text"),
+            ("[U+270A][U+270B][U+1F590]️ العربية", "Arabic text"),
+            ("[U+270A][U+270B][U+1F590]️ [U+1F31F][CELEBRATE][U+1F525][U+1F4AF]", "Mixed emojis"),
+            ("[U+270A][U+270B]", "Incomplete sequence"),
+            ("[U+1F60A][U+1F60D][U+1F970]", "Wrong emojis"),
+            ("[U+270A][U+270B][U+1F590]️\x00\x01\x02", "Control characters"),
         ]
         
         recovery_count = 0
@@ -324,7 +324,7 @@ class TestEmojiCommunicationFocused(unittest.TestCase):
             try:
                 state_info, response = self.banter_engine.process_input(test_input)
                 recovery_count += 1
-                print(f"  ✅ Recovered: {state_info}")
+                print(f"  [OK] Recovered: {state_info}")
                 
                 # Verify graceful handling
                 self.assertIsNotNone(state_info, "Should return some state info")
@@ -332,13 +332,13 @@ class TestEmojiCommunicationFocused(unittest.TestCase):
                 
                 if response:
                     self.assertIsInstance(response, str, "Response should be string if provided")
-                    print(f"  📝 Response: {response}")
+                    print(f"  [NOTE] Response: {response}")
                     
             except Exception as e:
                 error_count += 1
-                print(f"  ❌ Error: {e}")
+                print(f"  [FAIL] Error: {e}")
         
-        print(f"\n📊 ERROR RECOVERY SUMMARY:")
+        print(f"\n[DATA] ERROR RECOVERY SUMMARY:")
         print(f"  Total problematic inputs: {len(problematic_inputs)}")
         print(f"  Successful recoveries: {recovery_count}")
         print(f"  Unhandled errors: {error_count}")
@@ -350,15 +350,15 @@ class TestEmojiCommunicationFocused(unittest.TestCase):
 
     def test_agent_response_appropriateness(self):
         """Test that agent responses are appropriate for chat context."""
-        print("\n🤖 TESTING AGENT RESPONSE APPROPRIATENESS")
+        print("\n[BOT] TESTING AGENT RESPONSE APPROPRIATENESS")
         print("=" * 70)
         
         # Test sequences that should generate responses
         response_test_cases = [
-            ("✊✊✊", "confrontational"),
-            ("✋✋✋", "peaceful"),
-            ("✊✋🖐️", "transformational"),
-            ("🖐️🖐️🖐️", "transcendent"),
+            ("[U+270A][U+270A][U+270A]", "confrontational"),
+            ("[U+270B][U+270B][U+270B]", "peaceful"),
+            ("[U+270A][U+270B][U+1F590]️", "transformational"),
+            ("[U+1F590]️[U+1F590]️[U+1F590]️", "transcendent"),
         ]
         
         appropriate_responses = 0
@@ -371,7 +371,7 @@ class TestEmojiCommunicationFocused(unittest.TestCase):
             
             if response and isinstance(response, str) and response.strip():
                 total_responses += 1
-                print(f"  📝 Response: {response}")
+                print(f"  [NOTE] Response: {response}")
                 
                 # Check response appropriateness
                 response_checks = {
@@ -385,20 +385,20 @@ class TestEmojiCommunicationFocused(unittest.TestCase):
                 passed_checks = sum(response_checks.values())
                 appropriateness_score = passed_checks / len(response_checks)
                 
-                print(f"  📊 Appropriateness: {appropriateness_score*100:.1f}%")
+                print(f"  [DATA] Appropriateness: {appropriateness_score*100:.1f}%")
                 print(f"    Length appropriate: {response_checks['length']}")
                 print(f"    Has content: {response_checks['has_content']}")
                 print(f"    Clean format: {response_checks['no_control_chars']}")
                 
                 if appropriateness_score >= 0.8:
                     appropriate_responses += 1
-                    print(f"  ✅ Response deemed appropriate")
+                    print(f"  [OK] Response deemed appropriate")
                 else:
-                    print(f"  ⚠️  Response needs improvement")
+                    print(f"  [U+26A0]️  Response needs improvement")
             else:
-                print(f"  ❌ No valid response generated")
+                print(f"  [FAIL] No valid response generated")
         
-        print(f"\n📊 RESPONSE APPROPRIATENESS SUMMARY:")
+        print(f"\n[DATA] RESPONSE APPROPRIATENESS SUMMARY:")
         print(f"  Total responses generated: {total_responses}")
         print(f"  Appropriate responses: {appropriate_responses}")
         print(f"  Appropriateness rate: {appropriate_responses/total_responses*100:.1f}%" if total_responses > 0 else "No responses to evaluate")

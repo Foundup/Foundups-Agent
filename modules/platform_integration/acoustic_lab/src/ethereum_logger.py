@@ -52,14 +52,14 @@ class EthereumLogger:
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
             if not self.web3.is_connected():
-                print("⚠️  Ethereum connection failed - simulating logging")
+                print("[U+26A0]️  Ethereum connection failed - simulating logging")
                 self.simulate_only = True
             else:
-                print("✅ Connected to Ethereum testnet")
+                print("[OK] Connected to Ethereum testnet")
                 # In a real implementation, load contract ABI and address here
 
         except Exception as e:
-            print(f"⚠️  Ethereum initialization failed: {e} - simulating logging")
+            print(f"[U+26A0]️  Ethereum initialization failed: {e} - simulating logging")
             self.simulate_only = True
 
     def log_acoustic_analysis(self, analysis_results: Dict[str, Any]) -> str:
@@ -117,14 +117,14 @@ class EthereumLogger:
         simulated_tx_hash = hashlib.sha256(simulation_data.encode()).hexdigest()
 
         # Log the simulated transaction for educational purposes
-        print("🎯 Educational Proof-of-Existence (Simulated)")
-        print(f"   📊 Analysis Hash: {results_hash}")
-        print(f"   ⛓️  Simulated TX: 0x{simulated_tx_hash[:64]}")
-        print(f"   📍 Location: {results.get('location', 'Unknown')}")
-        print(f"   🔊 Sound Type: {results.get('sound_type', 'Unknown')}")
-        print(f"   🎯 Confidence: {results.get('confidence', 0):.3f}")
-        print("   📚 Educational Note: This demonstrates how blockchain provides immutable proof-of-existence")
-        print("   🔗 In production, this hash would be permanently stored on Ethereum testnet")
+        print("[TARGET] Educational Proof-of-Existence (Simulated)")
+        print(f"   [DATA] Analysis Hash: {results_hash}")
+        print(f"   [U+26D3]️  Simulated TX: 0x{simulated_tx_hash[:64]}")
+        print(f"   [PIN] Location: {results.get('location', 'Unknown')}")
+        print(f"   [U+1F50A] Sound Type: {results.get('sound_type', 'Unknown')}")
+        print(f"   [TARGET] Confidence: {results.get('confidence', 0):.3f}")
+        print("   [BOOKS] Educational Note: This demonstrates how blockchain provides immutable proof-of-existence")
+        print("   [LINK] In production, this hash would be permanently stored on Ethereum testnet")
         return f"simulated_{simulated_tx_hash[:32]}"
 
     def _real_logging(self, results_hash: str, results: Dict[str, Any]) -> str:
@@ -140,7 +140,7 @@ class EthereumLogger:
         """
         # This would implement actual Ethereum transaction in Phase 2/3
         # For now, fall back to simulation
-        print("⚠️  Real Ethereum logging not implemented in Phase 1")
+        print("[U+26A0]️  Real Ethereum logging not implemented in Phase 1")
         return self._simulate_logging(results_hash, results)
 
     def verify_log(self, transaction_hash: str) -> Optional[Dict[str, Any]]:
@@ -212,8 +212,8 @@ def demonstrate_proof_of_existence():
     tx_hash = logger.log_acoustic_analysis(sample_results)
     verification = logger.verify_log(tx_hash)
 
-    print("\n🎓 Educational Proof-of-Existence Demonstration Complete")
-    print(f"   ✅ Transaction: {tx_hash}")
-    print(f"   ✅ Verification: {verification is not None}")
+    print("\n[GRADUATE] Educational Proof-of-Existence Demonstration Complete")
+    print(f"   [OK] Transaction: {tx_hash}")
+    print(f"   [OK] Verification: {verification is not None}")
 
     return tx_hash, verification

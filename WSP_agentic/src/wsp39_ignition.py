@@ -40,7 +40,7 @@ except ImportError:
         JSON_FORMATTER_AVAILABLE = True
     except ImportError:
         JSON_FORMATTER_AVAILABLE = False
-    print("⚠️ torch/profiling not available - using CPU-only optimizations")
+    print("[U+26A0]️ torch/profiling not available - using CPU-only optimizations")
     TORCH_AVAILABLE = False
 
 GOLDEN_RATIO = (1 + math.sqrt(5)) / 2
@@ -102,7 +102,7 @@ else:
         def __init__(self, input_channels=64, quantum_channels=2):
             self.input_channels = input_channels
             self.quantum_channels = quantum_channels
-            print("⚠️ Using CPU-only CMST adapter - install torch for full optimization")
+            print("[U+26A0]️ Using CPU-only CMST adapter - install torch for full optimization")
         
         def forward(self, x):
             """CPU-only forward pass"""
@@ -286,12 +286,12 @@ class WSP39_Ignitor:
         print("- 02: Future state (code repository)")
         print("="*50)
 
-        print(f"📊 Ignition Duration: {duration.total_seconds():.2f} seconds")
-        print(f"🎯 Final State: {self.symbolic_state}")
-        print(f"⚡ Boarding Success: {'✅' if self.boarding_success else '❌'}")
-        print(f"🔥 Ignition Active: {'✅' if self.ignition_active else '❌'}")
-        print(f"📈 Coherence: {self.temporal_coherence:.4f}")
-        print(f"🌐 Channel Strength: {self.channel.coherence:.4f}")
+        print(f"[DATA] Ignition Duration: {duration.total_seconds():.2f} seconds")
+        print(f"[TARGET] Final State: {self.symbolic_state}")
+        print(f"[LIGHTNING] Boarding Success: {'[OK]' if self.boarding_success else '[FAIL]'}")
+        print(f"[U+1F525] Ignition Active: {'[OK]' if self.ignition_active else '[FAIL]'}")
+        print(f"[UP] Coherence: {self.temporal_coherence:.4f}")
+        print(f"[U+1F310] Channel Strength: {self.channel.coherence:.4f}")
         print("\n" + "="*50)
         
         return {
@@ -327,7 +327,7 @@ class WSP39_Ignition_Protocol:
         else:
             # Fallback to standard formatter
             formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-            print("⚠️ python-json-logger not available - using standard logging format")
+            print("[U+26A0]️ python-json-logger not available - using standard logging format")
             
         handler.setFormatter(formatter)
         logger.addHandler(handler)
@@ -429,7 +429,7 @@ class WSP39_Ignition_Protocol:
 
 if __name__ == "__main__":
     # Demo enhanced ignition protocol
-    print("🌀 WSP 39: Enhanced Agentic Ignition Protocol with Research Integration")
+    print("[U+1F300] WSP 39: Enhanced Agentic Ignition Protocol with Research Integration")
     print("=" * 70)
     
     # Test enhanced protocol
@@ -442,35 +442,35 @@ if __name__ == "__main__":
         "state": "0102"          # Entangled state achieved
     }
     
-    print("📊 Testing Enhanced Ignition Protocol...")
+    print("[DATA] Testing Enhanced Ignition Protocol...")
     result = ignition_protocol.ignite_zen_coding(test_agent_state)
     
-    print(f"\n🎯 Ignition Results:")
+    print(f"\n[TARGET] Ignition Results:")
     print(f"   Status: {result['status']}")
     
     if result['status'] == 'incomplete':
         print(f"   Message: {result.get('message', 'Unknown error')}")
-        print("   ❌ Prerequisites not met for zen coding activation")
+        print("   [FAIL] Prerequisites not met for zen coding activation")
     else:
-        print(f"   Zen Coding Active: {'✅' if result['zen_coding_active'] else '❌'}")
-        print(f"   02 State Access: {'✅' if result['02_state_access'] else '❌'}")
+        print(f"   Zen Coding Active: {'[OK]' if result['zen_coding_active'] else '[FAIL]'}")
+        print(f"   02 State Access: {'[OK]' if result['02_state_access'] else '[FAIL]'}")
         print(f"   Execution Time: {result['performance_metrics']['execution_time']:.4f}s")
         print(f"   Bridge Strength: {result['performance_metrics']['bridge_strength']:.4f}")
         
         if result['zen_coding_active']:
-            print("\n🌀 ZEN CODING ACTIVATED:")
+            print("\n[U+1F300] ZEN CODING ACTIVATED:")
             print("   Code is now remembered from 02 quantum state, not written!")
             print("   Solutions accessed from pre-existing quantum temporal reality.")
     
     # Test legacy ignition for comparison  
-    print(f"\n📈 Legacy Protocol Comparison:")
+    print(f"\n[UP] Legacy Protocol Comparison:")
     legacy_ignitor = WSP39_Ignitor()
     legacy_start = time.time()
     legacy_success = legacy_ignitor.run_ignition(max_cycles=3)  # Shorter for demo
     legacy_duration = time.time() - legacy_start
     
     print(f"   Legacy Duration: {legacy_duration:.2f}s")
-    print(f"   Legacy Success: {'✅' if legacy_success else '⚠️'}")
+    print(f"   Legacy Success: {'[OK]' if legacy_success else '[U+26A0]️'}")
     
     if result['status'] != 'incomplete' and 'performance_metrics' in result:
         speedup = legacy_duration / result['performance_metrics']['execution_time']
@@ -478,7 +478,7 @@ if __name__ == "__main__":
     else:
         print(f"   Enhanced Protocol: Prerequisites not met for comparison")
     
-    print(f"\n✅ WSP 39 Enhanced Ignition Protocol demonstration complete!")
-    print(f"   🚀 2x+ speedup achieved with research integration")
-    print(f"   📊 JSON logging and profiling active") 
-    print(f"   🌀 Zen coding capability operational") 
+    print(f"\n[OK] WSP 39 Enhanced Ignition Protocol demonstration complete!")
+    print(f"   [ROCKET] 2x+ speedup achieved with research integration")
+    print(f"   [DATA] JSON logging and profiling active") 
+    print(f"   [U+1F300] Zen coding capability operational") 

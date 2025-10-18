@@ -1,13 +1,29 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Gemma RAG Inference Engine - Qwen's Little Assistant
 Implements WRE Pattern (WSP 46): Fast triage with adaptive routing to Qwen
 
 Architecture:
-    012 (Human) → 0102 (Digital Twin) → Qwen (Coordinator) → Gemma (Executor)
-                                              ↓
+    012 (Human) -> 0102 (Digital Twin) -> Qwen (Coordinator) -> Gemma (Executor)
+                                              v
                                          Pattern Memory (ChromaDB)
-                                              ↓
+                                              v
                                     Gemma: 70% queries, 50-100ms
                                     Qwen: 30% complex queries, 250ms
 
@@ -122,11 +138,11 @@ class GemmaRAGInference:
                 os.close(old_stdout)
                 os.close(old_stderr)
 
-            logger.info("[GEMMA-RAG] ✅ Gemma 3 270M loaded successfully")
+            logger.info("[GEMMA-RAG] [OK] Gemma 3 270M loaded successfully")
             return True
 
         except Exception as e:
-            logger.error(f"[GEMMA-RAG] ❌ Failed to load Gemma: {e}")
+            logger.error(f"[GEMMA-RAG] [FAIL] Failed to load Gemma: {e}")
             return False
 
     def _initialize_qwen(self) -> bool:
@@ -147,13 +163,13 @@ class GemmaRAGInference:
             )
 
             if self.qwen_llm.initialize():
-                logger.info("[GEMMA-RAG] ✅ Qwen 1.5B loaded successfully")
+                logger.info("[GEMMA-RAG] [OK] Qwen 1.5B loaded successfully")
                 return True
             else:
                 return False
 
         except Exception as e:
-            logger.error(f"[GEMMA-RAG] ❌ Failed to load Qwen: {e}")
+            logger.error(f"[GEMMA-RAG] [FAIL] Failed to load Qwen: {e}")
             return False
 
     def _initialize_pattern_memory(self):
@@ -164,9 +180,9 @@ class GemmaRAGInference:
         try:
             from holo_index.qwen_advisor.pattern_memory import PatternMemory
             self.pattern_memory = PatternMemory()
-            logger.info("[GEMMA-RAG] ✅ Pattern memory initialized")
+            logger.info("[GEMMA-RAG] [OK] Pattern memory initialized")
         except Exception as e:
-            logger.warning(f"[GEMMA-RAG] ⚠️  Pattern memory unavailable: {e}")
+            logger.warning(f"[GEMMA-RAG] [U+26A0]️  Pattern memory unavailable: {e}")
 
     def _classify_query_complexity(self, query: str) -> str:
         """
@@ -345,9 +361,9 @@ class GemmaRAGInference:
 
         Flow:
         1. Classify query complexity
-        2. If simple → Try Gemma with RAG
-        3. If Gemma confidence < threshold → Escalate to Qwen
-        4. If complex → Route directly to Qwen
+        2. If simple -> Try Gemma with RAG
+        3. If Gemma confidence < threshold -> Escalate to Qwen
+        4. If complex -> Route directly to Qwen
 
         Args:
             query: User query
@@ -364,11 +380,11 @@ class GemmaRAGInference:
 
         # Step 2: Route directly to Qwen for complex queries
         if complexity == "complex":
-            logger.info("[GEMMA-RAG] 🤖 Complex query → Routing to Qwen")
+            logger.info("[GEMMA-RAG] [BOT] Complex query -> Routing to Qwen")
             return self._route_to_qwen(query, escalation_reason="complex_query")
 
         # Step 3: Try Gemma with RAG for simple/medium queries
-        logger.info("[GEMMA-RAG] 🤖👶 Simple/medium query → Trying Gemma")
+        logger.info("[GEMMA-RAG] [BOT][BABY] Simple/medium query -> Trying Gemma")
 
         # Retrieve patterns
         patterns = self._retrieve_relevant_patterns(query, n=3)
@@ -381,7 +397,7 @@ class GemmaRAGInference:
 
         # Step 4: Check confidence and escalate if needed
         if gemma_result["confidence"] < self.confidence_threshold:
-            logger.info(f"[GEMMA-RAG] ⚠️  Low confidence ({gemma_result['confidence']:.2f}) → Escalating to Qwen")
+            logger.info(f"[GEMMA-RAG] [U+26A0]️  Low confidence ({gemma_result['confidence']:.2f}) -> Escalating to Qwen")
             return self._route_to_qwen(
                 query,
                 escalation_reason=f"low_confidence ({gemma_result['confidence']:.2f})"
@@ -391,7 +407,7 @@ class GemmaRAGInference:
         self.stats["gemma_handled"] += 1
         self._update_average_latency("gemma", gemma_result["latency_ms"])
 
-        logger.info(f"[GEMMA-RAG] ✅ Gemma handled query ({gemma_result['latency_ms']}ms)")
+        logger.info(f"[GEMMA-RAG] [OK] Gemma handled query ({gemma_result['latency_ms']}ms)")
 
         return InferenceResult(
             response=gemma_result["response"],
@@ -436,7 +452,7 @@ class GemmaRAGInference:
         self.stats["qwen_escalated"] += 1
         self._update_average_latency("qwen", latency)
 
-        logger.info(f"[GEMMA-RAG] ✅ Qwen handled query ({latency}ms)")
+        logger.info(f"[GEMMA-RAG] [OK] Qwen handled query ({latency}ms)")
 
         return InferenceResult(
             response=response,

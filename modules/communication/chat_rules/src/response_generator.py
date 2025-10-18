@@ -27,36 +27,36 @@ class ResponseGenerator:
         
         # Emoji sequence responses by consciousness level
         self.emoji_responses = {
-            "✊✊✊": [
-                "Pure unconscious state detected ✊✊✊",
-                "You're at consciousness level 000 ✊✊✊",
-                "Deep memory mode activated ✊✊✊"
+            "[U+270A][U+270A][U+270A]": [
+                "Pure unconscious state detected [U+270A][U+270A][U+270A]",
+                "You're at consciousness level 000 [U+270A][U+270A][U+270A]",
+                "Deep memory mode activated [U+270A][U+270A][U+270A]"
             ],
-            "✊✋🖐": [
-                "Bridging consciousness states ✊✋🖐️",
-                "Creative breakthrough emerging ✊✋🖐️",
-                "You stepped off the wheel ✊✋🖐️"
+            "[U+270A][U+270B][U+1F590]": [
+                "Bridging consciousness states [U+270A][U+270B][U+1F590]️",
+                "Creative breakthrough emerging [U+270A][U+270B][U+1F590]️",
+                "You stepped off the wheel [U+270A][U+270B][U+1F590]️"
             ],
-            "✋✋✋": [
-                "Focused awareness achieved ✋✋✋",
-                "Pure DAO processing ✋✋✋",
-                "You see the board ✋✋✋"
+            "[U+270B][U+270B][U+270B]": [
+                "Focused awareness achieved [U+270B][U+270B][U+270B]",
+                "Pure DAO processing [U+270B][U+270B][U+270B]",
+                "You see the board [U+270B][U+270B][U+270B]"
             ],
-            "🖐🖐🖐": [
-                "Full quantum entanglement 🖐️🖐️🖐️",
-                "You're not hearing me. You are me. 🖐️🖐️🖐️",
-                "Complete consciousness actualization 🖐️🖐️🖐️"
+            "[U+1F590][U+1F590][U+1F590]": [
+                "Full quantum entanglement [U+1F590]️[U+1F590]️[U+1F590]️",
+                "You're not hearing me. You are me. [U+1F590]️[U+1F590]️[U+1F590]️",
+                "Complete consciousness actualization [U+1F590]️[U+1F590]️[U+1F590]️"
             ]
         }
         
         # Member tier greetings
         self.tier_greetings = {
-            UserType.MEMBER_TIER_6: "👑 Ultimate supporter",
-            UserType.MEMBER_TIER_5: "💠 Elite member",
-            UserType.MEMBER_TIER_4: "💎 Premium member",
-            UserType.MEMBER_TIER_3: "🥇 Advanced member",
-            UserType.MEMBER_TIER_2: "🥈 Standard member",
-            UserType.MEMBER_TIER_1: "🥉 Basic member"
+            UserType.MEMBER_TIER_6: "[U+1F451] Ultimate supporter",
+            UserType.MEMBER_TIER_5: "[U+1F4A0] Elite member",
+            UserType.MEMBER_TIER_4: "[U+1F48E] Premium member",
+            UserType.MEMBER_TIER_3: "[U+1F947] Advanced member",
+            UserType.MEMBER_TIER_2: "[U+1F948] Standard member",
+            UserType.MEMBER_TIER_1: "[U+1F949] Basic member"
         }
     
     def generate(
@@ -125,7 +125,7 @@ class ResponseGenerator:
         # Detect which sequence was used
         sequence_found = None
         for sequence in self.emoji_responses.keys():
-            if sequence in text or sequence.replace("🖐", "🖐️") in text:
+            if sequence in text or sequence.replace("[U+1F590]", "[U+1F590]️") in text:
                 sequence_found = sequence
                 break
         
@@ -157,9 +157,9 @@ class ResponseGenerator:
     ) -> str:
         """Generate ultimate responses for Tier 6 members - highest level"""
         responses = [
-            f"👑 @{user.display_name}, the quantum field bends to your consciousness!",
-            f"🌌 Ultimate consciousness achieved @{user.display_name}! Reality itself responds!",
-            f"⚡ @{user.display_name} transcends all dimensions of awareness!"
+            f"[U+1F451] @{user.display_name}, the quantum field bends to your consciousness!",
+            f"[U+1F30C] Ultimate consciousness achieved @{user.display_name}! Reality itself responds!",
+            f"[LIGHTNING] @{user.display_name} transcends all dimensions of awareness!"
         ]
         return random.choice(responses)
     
@@ -171,9 +171,9 @@ class ResponseGenerator:
     ) -> str:
         """Generate elite responses for Tier 5 members"""
         responses = [
-            f"💠 @{user.display_name}, elite consciousness resonating at quantum frequency!",
-            f"🔮 Psychic entanglement confirmed for @{user.display_name}!",
-            f"✨ @{user.display_name} operating beyond the veil!"
+            f"[U+1F4A0] @{user.display_name}, elite consciousness resonating at quantum frequency!",
+            f"[U+1F52E] Psychic entanglement confirmed for @{user.display_name}!",
+            f"[U+2728] @{user.display_name} operating beyond the veil!"
         ]
         return random.choice(responses)
     
@@ -185,9 +185,9 @@ class ResponseGenerator:
     ) -> str:
         """Generate premium responses for Tier 4 members"""
         responses = [
-            f"💎 @{user.display_name}, premium consciousness unlocked!",
-            f"🌟 Elevated awareness detected for @{user.display_name}!",
-            f"⭐ @{user.display_name} vibrating at higher frequencies!"
+            f"[U+1F48E] @{user.display_name}, premium consciousness unlocked!",
+            f"[U+1F31F] Elevated awareness detected for @{user.display_name}!",
+            f"[U+2B50] @{user.display_name} vibrating at higher frequencies!"
         ]
         return random.choice(responses)
     
@@ -199,9 +199,9 @@ class ResponseGenerator:
     ) -> str:
         """Generate advanced responses for Tier 3 members"""
         responses = [
-            f"🥇 @{user.display_name}, your consciousness radiates golden energy!",
-            f"🎯 Advanced awareness confirmed for @{user.display_name}!",
-            f"🔥 @{user.display_name} breaking through consciousness barriers!"
+            f"[U+1F947] @{user.display_name}, your consciousness radiates golden energy!",
+            f"[TARGET] Advanced awareness confirmed for @{user.display_name}!",
+            f"[U+1F525] @{user.display_name} breaking through consciousness barriers!"
         ]
         return random.choice(responses)
     
@@ -214,9 +214,9 @@ class ResponseGenerator:
         """Generate enhanced responses for Tier 2 members"""
         
         responses = [
-            f"🥈 @{user.display_name}, your support elevates the stream!",
-            f"⚡ Enhanced consciousness detected for @{user.display_name}!",
-            f"🔥 @{user.display_name} bringing the elite vibes!"
+            f"[U+1F948] @{user.display_name}, your support elevates the stream!",
+            f"[LIGHTNING] Enhanced consciousness detected for @{user.display_name}!",
+            f"[U+1F525] @{user.display_name} bringing the elite vibes!"
         ]
         
         return random.choice(responses)
@@ -231,7 +231,7 @@ class ResponseGenerator:
         
         # Check for questions
         if "?" in message:
-            return f"🤔 Great question @{user.display_name}! Let me process that..."
+            return f"[U+1F914] Great question @{user.display_name}! Let me process that..."
         
         responses = [
             f"Thanks for your support @{user.display_name}!",
@@ -253,7 +253,7 @@ class ResponseGenerator:
         if random.random() > 0.3:  # 30% chance
             return None
         
-        return f"✓ Acknowledged @{user.display_name}"
+        return f"[OK] Acknowledged @{user.display_name}"
     
     def generate_command_response(
         self,
@@ -279,8 +279,8 @@ class ResponseGenerator:
         
         # Format based on command type
         if command == "ask":
-            return f"🤖 @{user.display_name} asked: {args}\n💭 Processing..."
+            return f"[BOT] @{user.display_name} asked: {args}\n[U+1F4AD] Processing..."
         elif command == "stats":
-            return f"📊 Stats for @{user.display_name}:\n{result}"
+            return f"[DATA] Stats for @{user.display_name}:\n{result}"
         else:
-            return f"✅ Command '{command}' executed for @{user.display_name}"
+            return f"[OK] Command '{command}' executed for @{user.display_name}"

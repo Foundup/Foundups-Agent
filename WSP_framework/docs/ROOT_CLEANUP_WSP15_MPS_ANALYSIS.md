@@ -6,15 +6,15 @@
 
 ---
 
-## 🎯 FILE PURPOSE ANALYSIS (Deep Research)
+## [TARGET] FILE PURPOSE ANALYSIS (Deep Research)
 
 ### Log Files (Origin: main.py logging)
 | File | Size | PURPOSE | Keep/Archive/Delete |
 |------|------|---------|---------------------|
-| `main.log` | 90 MB | **ACTIVE** - Current system logs | ✅ KEEP (move to logs/) |
-| `youtube_dae_*.log` | 1 MB total | **HISTORICAL** - Legacy testing logs (Sept 30) | 📦 ARCHIVE |
-| `m2j_monitor.log` | 66 bytes | **ACTIVE** - Stream monitoring | ✅ KEEP (move to logs/) |
-| `test_shorts_logging.log` | 2 KB | **TESTING** - Development artifact | 📦 ARCHIVE |
+| `main.log` | 90 MB | **ACTIVE** - Current system logs | [OK] KEEP (move to logs/) |
+| `youtube_dae_*.log` | 1 MB total | **HISTORICAL** - Legacy testing logs (Sept 30) | [BOX] ARCHIVE |
+| `m2j_monitor.log` | 66 bytes | **ACTIVE** - Stream monitoring | [OK] KEEP (move to logs/) |
+| `test_shorts_logging.log` | 2 KB | **TESTING** - Development artifact | [BOX] ARCHIVE |
 
 **Purpose**: System observability and debugging. Main.log is CRITICAL for production monitoring.
 
@@ -23,10 +23,10 @@
 ### Test Scripts (Origin: Session development)
 | File | PURPOSE | Current Use | Keep/Archive/Delete |
 |------|---------|-------------|---------------------|
-| `authorize_set10_nonemoji.py` | **ACTIVE TOOL** - Reauthorize OAuth Set 10 (FoundUps) when expired | Still needed | ✅ KEEP (move to scripts/) |
-| `test_veo3_fixed.py` | **ONE-TIME FIX** - Validated VEO3 duration parameter fix (Oct 13) | Completed | 📦 ARCHIVE |
-| `test_git_fixes.py` | **ONE-TIME FIX** - Validated git credential rotation fix (Oct 11) | Completed | 📦 ARCHIVE |
-| `debug_codeindex.py` | **DEVELOPMENT** - HoloIndex debugging (Oct 13) | May be useful | ✅ KEEP (move to holo_index/scripts/) |
+| `authorize_set10_nonemoji.py` | **ACTIVE TOOL** - Reauthorize OAuth Set 10 (FoundUps) when expired | Still needed | [OK] KEEP (move to scripts/) |
+| `test_veo3_fixed.py` | **ONE-TIME FIX** - Validated VEO3 duration parameter fix (Oct 13) | Completed | [BOX] ARCHIVE |
+| `test_git_fixes.py` | **ONE-TIME FIX** - Validated git credential rotation fix (Oct 11) | Completed | [BOX] ARCHIVE |
+| `debug_codeindex.py` | **DEVELOPMENT** - HoloIndex debugging (Oct 13) | May be useful | [OK] KEEP (move to holo_index/scripts/) |
 
 **Purpose**: Development validation and operational tools. `authorize_set10_nonemoji.py` is CRITICAL for OAuth maintenance.
 
@@ -35,11 +35,11 @@
 ### Temp Files (Origin: Various sessions)
 | File | PURPOSE | Current Use | Keep/Archive/Delete |
 |------|---------|-------------|---------------------|
-| `012.txt` | **PERSONAL NOTES** - 012's working memory (1.4 MB, Oct 13) | Active scratchpad | ✅ KEEP (move to temp/) |
-| `stream_trigger.txt` | **MANUAL TRIGGER** - Force stream check (20 bytes) | Development tool | ✅ KEEP (move to temp/) |
-| `temp_012_first2k.txt` | **DEBUG DUMP** - Analysis artifact (Oct 9) | Completed | 📦 ARCHIVE |
-| `temp_log_analysis.txt` | **DEBUG DUMP** - Log analysis (Oct 13) | Completed | 📦 ARCHIVE |
-| `temp_test.txt` | **TEST ARTIFACT** - Minimal test (Sept 28) | Obsolete | ❌ DELETE |
+| `012.txt` | **PERSONAL NOTES** - 012's working memory (1.4 MB, Oct 13) | Active scratchpad | [OK] KEEP (move to temp/) |
+| `stream_trigger.txt` | **MANUAL TRIGGER** - Force stream check (20 bytes) | Development tool | [OK] KEEP (move to temp/) |
+| `temp_012_first2k.txt` | **DEBUG DUMP** - Analysis artifact (Oct 9) | Completed | [BOX] ARCHIVE |
+| `temp_log_analysis.txt` | **DEBUG DUMP** - Log analysis (Oct 13) | Completed | [BOX] ARCHIVE |
+| `temp_test.txt` | **TEST ARTIFACT** - Minimal test (Sept 28) | Obsolete | [FAIL] DELETE |
 
 **Purpose**: Working memory and development artifacts. `012.txt` is the human's active thought space.
 
@@ -48,7 +48,7 @@
 ### Data Directories
 | Directory | PURPOSE | Current Use | Action |
 |-----------|---------|-------------|--------|
-| `holo_index_data/` | HoloIndex persistent storage (ChromaDB) | ACTIVE - semantic search | ✅ MOVE to holo_index/data/ |
+| `holo_index_data/` | HoloIndex persistent storage (ChromaDB) | ACTIVE - semantic search | [OK] MOVE to holo_index/data/ |
 
 **Purpose**: HoloIndex semantic search database. CRITICAL for system intelligence.
 
@@ -57,13 +57,13 @@
 ### Security Documentation
 | File | PURPOSE | Action |
 |------|---------|--------|
-| `SECURITY_CLEANUP_NEEDED.md` | Git history cleanup plan (1728 browser files, 189MB) | ✅ MOVE to docs/security/ |
+| `SECURITY_CLEANUP_NEEDED.md` | Git history cleanup plan (1728 browser files, 189MB) | [OK] MOVE to docs/security/ |
 
 **Purpose**: Security remediation tracking. Important reference document.
 
 ---
 
-## 📊 WSP 15 MPS SCORING - 4 SOLUTION OPTIONS
+## [DATA] WSP 15 MPS SCORING - 4 SOLUTION OPTIONS
 
 ### Option 1: Archive + Selective Move (Recommended by 012)
 **Philosophy**: "Understand purpose before deleting. Archive is safer than delete."
@@ -86,16 +86,16 @@
 - **TOTAL MPS**: 3+5+1+5 = **14 (P1 - HIGH PRIORITY)**
 
 **Pros**:
-- ✅ Nothing lost - can recover anything
-- ✅ Respects 012's working memory (012.txt preserved)
-- ✅ Operational tools remain accessible
-- ✅ Historical artifacts documented
-- ✅ Clear mental model of root directory
+- [OK] Nothing lost - can recover anything
+- [OK] Respects 012's working memory (012.txt preserved)
+- [OK] Operational tools remain accessible
+- [OK] Historical artifacts documented
+- [OK] Clear mental model of root directory
 
 **Cons**:
 - ⏱️ Takes 15-20 minutes to execute
-- 📁 Creates more directories to manage
-- 🔍 Need to track archive locations
+- [U+1F4C1] Creates more directories to manage
+- [SEARCH] Need to track archive locations
 
 ---
 
@@ -118,15 +118,15 @@
 - **TOTAL MPS**: 1+5+1+3 = **10 (P2 - MEDIUM PRIORITY)**
 
 **Pros**:
-- ⚡ Fast execution (< 5 minutes)
-- 🎯 Minimalist approach
-- 📏 Simplest implementation
+- [LIGHTNING] Fast execution (< 5 minutes)
+- [TARGET] Minimalist approach
+- [RULER] Simplest implementation
 
 **Cons**:
-- ⚠️ Risk losing useful tools (authorize_set10_nonemoji.py)
-- ⚠️ 012.txt deleted (personal notes lost)
-- ⚠️ No historical reference
-- ⚠️ Can't recover if needed
+- [U+26A0]️ Risk losing useful tools (authorize_set10_nonemoji.py)
+- [U+26A0]️ 012.txt deleted (personal notes lost)
+- [U+26A0]️ No historical reference
+- [U+26A0]️ Can't recover if needed
 
 ---
 
@@ -134,10 +134,10 @@
 **Philosophy**: "Move one category at a time, test between each."
 
 **Actions**:
-1. **Phase 1**: Move logs → Test system
-2. **Phase 2**: Move test scripts → Test system
-3. **Phase 3**: Move temp files → Test system
-4. **Phase 4**: Move holo_index_data → Test HoloIndex
+1. **Phase 1**: Move logs -> Test system
+2. **Phase 2**: Move test scripts -> Test system
+3. **Phase 3**: Move temp files -> Test system
+4. **Phase 4**: Move holo_index_data -> Test HoloIndex
 5. **Phase 5**: Update main.py logging
 6. **Phase 6**: Create RootDirectoryGuardian
 
@@ -149,14 +149,14 @@
 - **TOTAL MPS**: 4+5+3+4 = **16 (P0 - CRITICAL but slow)**
 
 **Pros**:
-- ✅ Safest approach - test after each move
-- ✅ Can rollback if issues found
-- ✅ Minimal risk
+- [OK] Safest approach - test after each move
+- [OK] Can rollback if issues found
+- [OK] Minimal risk
 
 **Cons**:
 - ⏱️ Takes 30-45 minutes total
-- 🔄 Multiple restarts required
-- 🐌 Slow progress
+- [REFRESH] Multiple restarts required
+- [U+1F40C] Slow progress
 
 ---
 
@@ -179,19 +179,19 @@
 - **TOTAL MPS**: 5+5+4+5 = **19 (P0 - CRITICAL for long-term)**
 
 **Pros**:
-- ✅ Self-healing system
-- ✅ Nothing lost initially
-- ✅ Automatic maintenance
-- ✅ Best for long-term health
+- [OK] Self-healing system
+- [OK] Nothing lost initially
+- [OK] Automatic maintenance
+- [OK] Best for long-term health
 
 **Cons**:
 - ⏱️ Takes 2-3 hours to implement fully
-- 🔧 Requires new cleanup daemon
-- 🧠 More complexity to maintain
+- [TOOL] Requires new cleanup daemon
+- [AI] More complexity to maintain
 
 ---
 
-## 🏆 RECOMMENDATION
+## [U+1F3C6] RECOMMENDATION
 
 ### **OPTION 1: Archive + Selective Move**
 
@@ -209,7 +209,7 @@
 
 ---
 
-## 📋 OPTION 1 IMPLEMENTATION PLAN
+## [CLIPBOARD] OPTION 1 IMPLEMENTATION PLAN
 
 ### Phase 1: Directory Structure (1 minute)
 ```bash
@@ -292,7 +292,7 @@ python holo_index.py --search "test"
 
 ---
 
-## 🔄 POST-CLEANUP: Phase 2 (Root Directory Guardian)
+## [REFRESH] POST-CLEANUP: Phase 2 (Root Directory Guardian)
 
 **After** root is clean, implement prevention:
 
@@ -306,7 +306,7 @@ python holo_index.py --search "test"
 
 ---
 
-## ✅ SUCCESS CRITERIA
+## [OK] SUCCESS CRITERIA
 
 ### Before
 - 18 files violating WSP 85
@@ -323,7 +323,7 @@ python holo_index.py --search "test"
 
 ---
 
-## 🎯 DECISION POINT
+## [TARGET] DECISION POINT
 
 **Question for 012**:
 
@@ -340,4 +340,4 @@ I recommend **Option 1: Archive + Selective Move** because:
 ---
 
 **Status**: ⏸️ AWAITING 012 APPROVAL
-**Next**: Execute chosen option → Full system orchestration
+**Next**: Execute chosen option -> Full system orchestration

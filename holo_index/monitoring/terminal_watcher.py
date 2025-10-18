@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """Terminal Activity Watcher for HoloDAE
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Monitors terminal commands and file changes to track 0102 coding activity
 
 This allows HoloDAE to:
@@ -58,7 +75,7 @@ class TerminalActivityMonitor:
         if watch_paths is None:
             watch_paths = ['.', 'modules/', 'holo_index/']
 
-        print("\n🔍 HoloDAE Terminal Monitoring Active")
+        print("\n[SEARCH] HoloDAE Terminal Monitoring Active")
         print("=" * 60)
 
         # Start file system monitoring
@@ -72,8 +89,8 @@ class TerminalActivityMonitor:
         self._start_pattern_detection()
 
         self.monitoring = True
-        print("✅ Monitoring active on:", watch_paths)
-        print("📝 Logs: " + str(self.log_dir))
+        print("[OK] Monitoring active on:", watch_paths)
+        print("[NOTE] Logs: " + str(self.log_dir))
         print("=" * 60 + "\n")
 
     def _start_file_monitoring(self, paths: List[str]):
@@ -301,11 +318,11 @@ echo "$(date): git commit" >> E:/HoloIndex/terminal_logs/git_commands.log
     def _intervene_vibecoding(self, command: str):
         """Intervene when vibecoding detected"""
         print("\n" + "=" * 60)
-        print("🚨 VIBECODING DETECTED IN TERMINAL!")
+        print("[ALERT] VIBECODING DETECTED IN TERMINAL!")
         print("=" * 60)
         print(f"Command: {command}")
-        print("\n❌ STOP! You're creating without using HoloIndex!")
-        print("\n✅ DO THIS INSTEAD:")
+        print("\n[FAIL] STOP! You're creating without using HoloIndex!")
+        print("\n[OK] DO THIS INSTEAD:")
         print("1. python holo_index.py --search 'what you need'")
         print("2. python holo_index.py --check-module 'module_name'")
         print("3. Read the results COMPLETELY")
@@ -317,7 +334,7 @@ echo "$(date): git commit" >> E:/HoloIndex/terminal_logs/git_commands.log
 
     def _alert_no_search_before_create(self, filepath: str):
         """Alert when file created without search"""
-        print("\n⚠️  FILE CREATED WITHOUT HOLOINDEX SEARCH!")
+        print("\n[U+26A0]️  FILE CREATED WITHOUT HOLOINDEX SEARCH!")
         print(f"   File: {filepath}")
         print("   MANDATORY: Always search before creating!")
         print("   Run: python holo_index.py --search\n")
@@ -330,7 +347,7 @@ echo "$(date): git commit" >> E:/HoloIndex/terminal_logs/git_commands.log
             'duplicate_file_patterns': "Creating duplicate/enhanced files"
         }
 
-        print(f"\n📊 PATTERN DETECTED: {patterns.get(pattern_type, pattern_type)}")
+        print(f"\n[DATA] PATTERN DETECTED: {patterns.get(pattern_type, pattern_type)}")
         print("   This is VIBECODING behavior!")
         print("   Use HoloIndex BEFORE writing code!\n")
 
@@ -396,7 +413,7 @@ echo "$(date): git commit" >> E:/HoloIndex/terminal_logs/git_commands.log
         if self.observer:
             self.observer.stop()
             self.observer.join()
-        print("\n📊 Monitoring stopped")
+        print("\n[DATA] Monitoring stopped")
         print("Logs saved to:", self.log_dir)
 
 
@@ -414,7 +431,7 @@ def start_terminal_monitoring():
             # Periodic summary
             summary = monitor.get_activity_summary()
             if summary['vibecode_score'] > 50:
-                print(f"\n⚠️  VIBECODE SCORE: {summary['vibecode_score']}/100")
+                print(f"\n[U+26A0]️  VIBECODE SCORE: {summary['vibecode_score']}/100")
                 print("   Use HoloIndex MORE!\n")
 
     except KeyboardInterrupt:
@@ -423,10 +440,10 @@ def start_terminal_monitoring():
 
 if __name__ == "__main__":
     print("""
-╔════════════════════════════════════════════════╗
-║     HoloDAE Terminal Activity Monitor          ║
-║     Watching for vibecoding patterns...        ║
-╚════════════════════════════════════════════════╝
+[U+2554]================================================[U+2557]
+[U+2551]     HoloDAE Terminal Activity Monitor          [U+2551]
+[U+2551]     Watching for vibecoding patterns...        [U+2551]
+[U+255A]================================================[U+255D]
     """)
 
     start_terminal_monitoring()

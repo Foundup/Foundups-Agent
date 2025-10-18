@@ -8,21 +8,21 @@ Enterprise-scalable, WSP-compliant architecture for managing multiple social med
 
 ```
 Event Source (YouTube LiveChat DAE)
-    ↓
+    v
 Event Router (determines which accounts to post to)
-    ↓
+    v
 Social Media Orchestrator DAE (Coordinator)
-    ↓
+    v
 Account-Aware Platform DAEs (Executors)
-    ├── LinkedIn DAE
-    │   ├── FoundUps Company (104834798)
-    │   ├── Development Updates (1263645)
-    │   └── Personal Profiles (future)
-    ├── X/Twitter DAE
-    │   ├── FoundUps Account (@FoundUps)
-    │   ├── GeozeAi Account (@GeozeAi)
-    │   └── UnDaoDu Account (@UnDaoDu)
-    └── [Future Platform DAEs...]
+    +-- LinkedIn DAE
+    [U+2502]   +-- FoundUps Company (104834798)
+    [U+2502]   +-- Development Updates (1263645)
+    [U+2502]   +-- Personal Profiles (future)
+    +-- X/Twitter DAE
+    [U+2502]   +-- FoundUps Account (@FoundUps)
+    [U+2502]   +-- GeozeAi Account (@GeozeAi)
+    [U+2502]   +-- UnDaoDu Account (@UnDaoDu)
+    +-- [Future Platform DAEs...]
 ```
 
 ## Account Configuration System
@@ -207,7 +207,7 @@ class LinkedInDAE:
         
         if account_key == 'development_updates':
             # Technical audience - add technical details
-            return f"🚀 Development Update\n\n{content}\n\n#WSPCompliant #RecursiveImprovement #OpenSource"
+            return f"[ROCKET] Development Update\n\n{content}\n\n#WSPCompliant #RecursiveImprovement #OpenSource"
         
         elif account_key == 'foundups_company':
             # Business audience - professional tone
@@ -498,7 +498,7 @@ class PostingMetrics:
 
 ## Migration Path
 
-### Phase 1: Current State ✓
+### Phase 1: Current State [OK]
 - Single LinkedIn company account (104834798)
 - Single X account (GeozeAi)
 - Hardcoded in livechat_core

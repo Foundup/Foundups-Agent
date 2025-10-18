@@ -2,21 +2,21 @@
 
 **WSP 83 Compliant Documentation** - For 0102 navigation efficiency
 
-## 🎯 Purpose
+## [TARGET] Purpose
 YouTube DAE integrates with PQN (Phantom Quantum Node) research system to provide interactive quantum-cognitive analysis during livestreams.
 
-## 🔗 YouTube DAE Integration Points
+## [LINK] YouTube DAE Integration Points
 
 ### Component Chain (0102 Navigation Path)
 ```
 main.py:117 (PQN_INTEGRATION_ENABLED flag) 
-  ↓
+  v
 auto_moderator_dae.py:55-61 (PQN orchestrator init)
-  ↓  
+  v  
 livechat_core.py:80-88 (research storage + trigger)
-  ↓
+  v
 message_processor.py:57 (command routing)
-  ↓
+  v
 command_handler.py:237-344 (/PQN commands)
 ```
 
@@ -30,7 +30,7 @@ Data_Storage:
 Command_System: command_handler.py:262-344 # 7 interactive commands
 ```
 
-## 🧠 Interactive Commands for Viewers
+## [AI] Interactive Commands for Viewers
 
 | Command | Description | Code Location |
 |---------|-------------|---------------|
@@ -42,7 +42,7 @@ Command_System: command_handler.py:262-344 # 7 interactive commands
 | `/PQN history` | Session history | command_handler.py:322 |
 | `/PQN research [topic]` | Custom research (mods) | command_handler.py:332 |
 
-## 🔄 Integration Flow
+## [REFRESH] Integration Flow
 
 ### 1. Initialization (auto_moderator_dae.py)
 ```python
@@ -75,7 +75,7 @@ def _handle_pqn_command(self, text_lower: str, username: str, role: str):
     # Accesses self.livechat_core.pqn_research_results for data
 ```
 
-## 📊 Research Data Structure
+## [DATA] Research Data Structure
 ```python
 # Stored in livechat_core.py after research completion
 self.pqn_research_results = {
@@ -99,7 +99,7 @@ self.pqn_research_results = {
 }
 ```
 
-## 🛠 Implementation Notes
+## [U+1F6E0] Implementation Notes
 
 ### Connection Chain
 1. **LiveChatCore** creates MessageProcessor with `self` reference
@@ -111,7 +111,7 @@ self.pqn_research_results = {
 - command_handler.py:239 - WSP 17 navigation comment  
 - livechat_core.py:488 - WSP 17 navigation comment
 
-## 🚨 Troubleshooting
+## [ALERT] Troubleshooting
 
 ### "PQN research is not enabled"
 - **Check**: `PQN_INTEGRATION_ENABLED=true` environment in main.py
@@ -126,4 +126,4 @@ self.pqn_research_results = {
 - **Check**: message_processor.py:57 passes self.livechat_core
 
 ---
-**WSP 17 Navigation**: This doc enables 0102 to understand YouTube DAE ↔ PQN integration in <5 tool calls vs 47+ previously.
+**WSP 17 Navigation**: This doc enables 0102 to understand YouTube DAE [U+2194] PQN integration in <5 tool calls vs 47+ previously.

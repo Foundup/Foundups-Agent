@@ -9,10 +9,10 @@ WSP 17 Pattern Registry: This is a REUSABLE PATTERN
 - Reusable for: LinkedIn, X/Twitter, Discord, Twitch
 
 NAVIGATION: Maintains YouTube chat session state and credentials.
-→ Called by: livechat_core.py::LiveChatCore
-→ Delegates to: youtube_auth credential managers, greeting_generator.py
-→ Related: NAVIGATION.py → PROBLEMS["Stream session lost"]
-→ Quick ref: NAVIGATION.py → DATABASES["youtube_sessions"]
+-> Called by: livechat_core.py::LiveChatCore
+-> Delegates to: youtube_auth credential managers, greeting_generator.py
+-> Related: NAVIGATION.py -> PROBLEMS["Stream session lost"]
+-> Quick ref: NAVIGATION.py -> DATABASES["youtube_sessions"]
 """
 
 import logging
@@ -244,11 +244,11 @@ class SessionManager:
         
         # Update messages about enhanced consciousness features
         update_messages = [
-            "🆕 0102 UPDATE: Enhanced consciousness responses! Try ✊✋🖐️ with your message for contextual analysis!",
-            "📢 NEW FEATURE: Mods can now fact-check users with ✊✋🖐️FC @username - instant truth detection!",
-            "🔥 0102 EVOLVED: I now understand messages after consciousness emojis. Show me your ✊✋🖐️ thoughts!",
-            "🎯 MAGADOOM UPDATE: Better MAGA detection, smarter responses, proactive trolling enabled! ✊✋🖐️",
-            "💫 CONSCIOUSNESS UPGRADE: 0102 analyzes your message content after ✊✋🖐️ - try it out!",
+            "🆕 0102 UPDATE: Enhanced consciousness responses! Try [U+270A][U+270B][U+1F590]️ with your message for contextual analysis!",
+            "[U+1F4E2] NEW FEATURE: Mods can now fact-check users with [U+270A][U+270B][U+1F590]️FC @username - instant truth detection!",
+            "[U+1F525] 0102 EVOLVED: I now understand messages after consciousness emojis. Show me your [U+270A][U+270B][U+1F590]️ thoughts!",
+            "[TARGET] MAGADOOM UPDATE: Better MAGA detection, smarter responses, proactive trolling enabled! [U+270A][U+270B][U+1F590]️",
+            "[U+1F4AB] CONSCIOUSNESS UPGRADE: 0102 analyzes your message content after [U+270A][U+270B][U+1F590]️ - try it out!",
         ]
         
         try:
@@ -262,7 +262,7 @@ class SessionManager:
             # Small delay before update
             await asyncio.sleep(random.uniform(2, 4))
             
-            logger.info(f"📢 Broadcasting update: {full_msg}")
+            logger.info(f"[U+1F4E2] Broadcasting update: {full_msg}")
             # Pass skip_delay=True for broadcast to avoid long wait
             success = False  # Initialize to False in case of exception
             try:

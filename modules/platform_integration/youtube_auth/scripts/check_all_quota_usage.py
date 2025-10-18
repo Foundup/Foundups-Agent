@@ -7,9 +7,13 @@ Shows both local tracking and tests actual API availability
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -98,7 +102,7 @@ def main():
     total_used = 0
     total_available = 0
     
-    print("\n📊 TESTING EACH PROJECT:")
+    print("\n[DATA] TESTING EACH PROJECT:")
     print("-"*80)
     
     for set_num in range(1, 8):
@@ -129,21 +133,21 @@ def main():
         
         # Display results
         if api_test['available']:
-            print(f"  ✅ API Status: AVAILABLE")
-            print(f"  📊 Usage: {local_used:,}/{local_limit:,} units ({local_percent:.1f}%)")
-            print(f"  ⚡ Response: {api_test['response_time_ms']:.0f}ms")
-            print(f"  👤 Connected as: {api_test.get('channel', 'Unknown')}")
+            print(f"  [OK] API Status: AVAILABLE")
+            print(f"  [DATA] Usage: {local_used:,}/{local_limit:,} units ({local_percent:.1f}%)")
+            print(f"  [LIGHTNING] Response: {api_test['response_time_ms']:.0f}ms")
+            print(f"  [U+1F464] Connected as: {api_test.get('channel', 'Unknown')}")
             total_available += (local_limit - local_used)
             total_used += local_used
         else:
             if api_test.get('error') == 'QUOTA_EXHAUSTED':
-                print(f"  ⚠️ API Status: QUOTA EXHAUSTED")
-                print(f"  📊 Usage: {local_limit:,}/{local_limit:,} units (100%)")
+                print(f"  [U+26A0]️ API Status: QUOTA EXHAUSTED")
+                print(f"  [DATA] Usage: {local_limit:,}/{local_limit:,} units (100%)")
                 total_used += local_limit
             else:
-                print(f"  ❌ API Status: ERROR")
-                print(f"  📊 Usage: {local_used:,}/{local_limit:,} units ({local_percent:.1f}%)")
-                print(f"  ⚠️ Error: {api_test.get('error', 'Unknown')}")
+                print(f"  [FAIL] API Status: ERROR")
+                print(f"  [DATA] Usage: {local_used:,}/{local_limit:,} units ({local_percent:.1f}%)")
+                print(f"  [U+26A0]️ Error: {api_test.get('error', 'Unknown')}")
     
     # Summary statistics
     print("\n" + "="*80)
@@ -154,7 +158,7 @@ def main():
     exhausted_projects = [r for r in results if not r['api_available'] and r.get('api_error') == 'QUOTA_EXHAUSTED']
     error_projects = [r for r in results if not r['api_available'] and r.get('api_error') != 'QUOTA_EXHAUSTED']
     
-    print(f"\n✅ Working Projects: {len(working_projects)}/7")
+    print(f"\n[OK] Working Projects: {len(working_projects)}/7")
     for r in working_projects:
         bar_length = 20
         filled = int(bar_length * r['local_percent'] / 100)
@@ -162,12 +166,12 @@ def main():
         print(f"   {r['set']}. {r['project']:20} [{bar}] {r['local_percent']:5.1f}% ({r['local_used']:,}/{r['local_limit']:,})")
     
     if exhausted_projects:
-        print(f"\n⚠️ Quota Exhausted: {len(exhausted_projects)}/7")
+        print(f"\n[U+26A0]️ Quota Exhausted: {len(exhausted_projects)}/7")
         for r in exhausted_projects:
             print(f"   {r['set']}. {r['project']:20} [████████████████████] 100.0%")
     
     if error_projects:
-        print(f"\n❌ Errors: {len(error_projects)}/7")
+        print(f"\n[FAIL] Errors: {len(error_projects)}/7")
         for r in error_projects:
             print(f"   {r['set']}. {r['project']:20} - {r['api_error'][:50]}")
     
@@ -179,12 +183,12 @@ def main():
     total_limit = 70000  # 7 projects * 10,000 units each
     total_percent = (total_used / total_limit * 100) if total_limit > 0 else 0
     
-    print(f"\n📊 Total Quota Pool: {total_limit:,} units/day")
-    print(f"📈 Total Used: {total_used:,} units ({total_percent:.1f}%)")
-    print(f"📉 Total Available: {total_available:,} units")
+    print(f"\n[DATA] Total Quota Pool: {total_limit:,} units/day")
+    print(f"[UP] Total Used: {total_used:,} units ({total_percent:.1f}%)")
+    print(f"[U+1F4C9] Total Available: {total_available:,} units")
     
     # Usage breakdown by project
-    print("\n📋 Detailed Usage by Project:")
+    print("\n[CLIPBOARD] Detailed Usage by Project:")
     print("-"*40)
     
     # Sort by usage percentage
@@ -200,27 +204,27 @@ def main():
     print("-"*80)
     
     if len(working_projects) == 7:
-        print("✅ All projects operational - maximum redundancy achieved!")
+        print("[OK] All projects operational - maximum redundancy achieved!")
     elif len(working_projects) >= 5:
-        print("✅ Good redundancy - multiple projects available")
+        print("[OK] Good redundancy - multiple projects available")
     elif len(working_projects) >= 3:
-        print("⚠️ Moderate redundancy - consider fixing error projects")
+        print("[U+26A0]️ Moderate redundancy - consider fixing error projects")
     else:
-        print("🚨 Low redundancy - urgent attention needed!")
+        print("[ALERT] Low redundancy - urgent attention needed!")
     
     if total_percent < 20:
-        print("✅ Quota usage is healthy - plenty of capacity")
+        print("[OK] Quota usage is healthy - plenty of capacity")
     elif total_percent < 50:
-        print("✅ Quota usage is moderate - normal operations")
+        print("[OK] Quota usage is moderate - normal operations")
     elif total_percent < 80:
-        print("⚠️ Quota usage is high - monitor closely")
+        print("[U+26A0]️ Quota usage is high - monitor closely")
     else:
-        print("🚨 Quota usage is critical - may hit limits soon")
+        print("[ALERT] Quota usage is critical - may hit limits soon")
     
     # Best project for next use
     if working_projects:
         best = min(working_projects, key=lambda x: x['local_percent'])
-        print(f"\n🎯 Best project for next use: Set {best['set']} ({best['project']}) - {best['local_percent']:.1f}% used")
+        print(f"\n[TARGET] Best project for next use: Set {best['set']} ({best['project']}) - {best['local_percent']:.1f}% used")
     
     print("="*80)
 

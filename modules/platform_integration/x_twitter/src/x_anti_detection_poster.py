@@ -9,9 +9,13 @@ WSP 48: Includes recursive learning for self-improvement
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -228,11 +232,11 @@ class AntiDetectionX:
         
         # WSP 48: Self-improvement message
         if success_rate > 0.8:
-            print("[WSP48] ✓ System performing well - patterns stabilized")
+            print("[WSP48] [OK] System performing well - patterns stabilized")
         elif success_rate > 0.5:
-            print("[WSP48] ↑ System improving - learning from patterns")
+            print("[WSP48] ^ System improving - learning from patterns")
         else:
-            print("[WSP48] ⚠ System adapting - analyzing failures")
+            print("[WSP48] [U+26A0] System adapting - analyzing failures")
     
     def setup_driver(self, use_existing_session=True):
         """Setup browser with anti-detection measures - Edge for FoundUps, Chrome for GeozeAi"""
@@ -244,19 +248,19 @@ class AntiDetectionX:
             chrome_options = Options()
             chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
 
-            print("[INFO] 🔌 Attempting to connect to existing Chrome on port 9222...")
+            print("[INFO] [U+1F50C] Attempting to connect to existing Chrome on port 9222...")
             self.driver = webdriver.Chrome(options=chrome_options)
-            print("[SUCCESS] ✅ Connected to existing Chrome browser!")
-            print("[INFO] 🎯 Reusing browser window - no new window opened")
-            print("[TIP] 💡 All tabs in this browser are available to Selenium")
+            print("[SUCCESS] [OK] Connected to existing Chrome browser!")
+            print("[INFO] [TARGET] Reusing browser window - no new window opened")
+            print("[TIP] [IDEA] All tabs in this browser are available to Selenium")
             return self.driver
         except Exception as e:
-            print(f"[INFO] ⚠️ Could not connect to existing Chrome on port 9222: {str(e)[:100]}")
-            print("[TIP] 💡 To reuse existing browser:")
+            print(f"[INFO] [U+26A0]️ Could not connect to existing Chrome on port 9222: {str(e)[:100]}")
+            print("[TIP] [IDEA] To reuse existing browser:")
             print("[TIP]    1. Run: start_chrome_for_selenium.bat")
             print("[TIP]    2. Login to X manually if needed")
             print("[TIP]    3. Run this script again - it will reuse that window")
-            print("[INFO] 🔄 Falling back to browser manager...")
+            print("[INFO] [REFRESH] Falling back to browser manager...")
 
         # PRIORITY 2: Try to use browser manager for reusing existing windows
         try:
@@ -877,15 +881,15 @@ class AntiDetectionX:
                             sanitized += char
                         else:
                             # Replace problematic emojis with text equivalents
-                            if char == '🚀':
+                            if char == '[ROCKET]':
                                 sanitized += '[rocket]'
-                            elif char == '🦄':
+                            elif char == '[U+1F984]':
                                 sanitized += '[unicorn]'
-                            elif char == '💎':
+                            elif char == '[U+1F48E]':
                                 sanitized += '[gem]'
-                            elif char == '🔥':
+                            elif char == '[U+1F525]':
                                 sanitized += '[fire]'
-                            elif char == '⚡':
+                            elif char == '[LIGHTNING]':
                                 sanitized += '[lightning]'
                             else:
                                 # Skip other non-BMP characters
@@ -1079,12 +1083,12 @@ class AntiDetectionX:
                         # Check for @UnDaoDu posts
                         posts = self.driver.find_elements(By.XPATH, "//span[contains(text(), '@UnDaoDu')]")
                         if posts:
-                            print(f"[FEED] ✓✓✓ Found {len(posts)} @UnDaoDu posts on profile")
+                            print(f"[FEED] [OK][OK][OK] Found {len(posts)} @UnDaoDu posts on profile")
                             # Check the first one (most recent)
                             try:
                                 recent_post = posts[0].text
                                 if 'going live' in recent_post.lower():
-                                    print(f"[VERIFIED] ✓✓✓ Live stream post confirmed on X/Twitter!")
+                                    print(f"[VERIFIED] [OK][OK][OK] Live stream post confirmed on X/Twitter!")
                                     print(f"   Post preview: {recent_post[:100]}...")
                                     success = True
                             except:
@@ -1094,13 +1098,13 @@ class AntiDetectionX:
                         if not success:
                             links = self.driver.find_elements(By.XPATH, "//a[contains(@href, 'youtube.com/watch')]")
                             if links:
-                                print(f"[VERIFIED] ✓ YouTube link found in recent posts")
+                                print(f"[VERIFIED] [OK] YouTube link found in recent posts")
                                 success = True
                     except Exception as e:
                         print(f"[WARNING] Could not verify post: {e}")
                     
                     if success:
-                        print("[SUCCESS] ✓✓✓ Posted and verified on X/Twitter!")
+                        print("[SUCCESS] [OK][OK][OK] Posted and verified on X/Twitter!")
                     else:
                         print("[WARNING] Post may be processing or saved as draft")
                     

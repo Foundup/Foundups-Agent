@@ -102,21 +102,21 @@ Be VICIOUS. We are AntiMa, the anti-MAGA resistance. Under 180 chars."""
 
                 # Add cutting prefixes for each fallacy type
                 if "strawman" in response.lower():
-                    return f"🌾 @{target_username} {response}"
+                    return f"[U+1F33E] @{target_username} {response}"
                 elif "ad hominem" in response.lower():
-                    return f"🤡 @{target_username} {response}"
+                    return f"[U+1F921] @{target_username} {response}"
                 elif "whatabout" in response.lower():
-                    return f"🔄 @{target_username} {response}"
+                    return f"[REFRESH] @{target_username} {response}"
                 elif "gaslight" in response.lower():
-                    return f"🕯️ @{target_username} {response}"
+                    return f"[U+1F56F]️ @{target_username} {response}"
                 elif "projection" in response.lower():
-                    return f"🎬 @{target_username} {response}"
+                    return f"[U+1F3AC] @{target_username} {response}"
                 elif "gish gallop" in response.lower():
-                    return f"🏇 @{target_username} {response}"
+                    return f"[U+1F3C7] @{target_username} {response}"
                 elif "goalpost" in response.lower():
-                    return f"🥅 @{target_username} {response}"
+                    return f"[U+1F945] @{target_username} {response}"
                 else:
-                    return f"💀 @{target_username} {response}"
+                    return f"[U+1F480] @{target_username} {response}"
             else:
                 return "Grok analysis failed to generate response"
         except Exception as e:
@@ -146,9 +146,9 @@ Be VICIOUS. We are AntiMa, the anti-MAGA resistance. Under 180 chars."""
         
         # Consciousness rating based on emoji
         consciousness_map = {
-            '✊✊✊': 'MAGA/dormant',
-            '✊✋🖐': 'awakening',
-            '🖐🖐🖐': 'enlightened'
+            '[U+270A][U+270A][U+270A]': 'MAGA/dormant',
+            '[U+270A][U+270B][U+1F590]': 'awakening',
+            '[U+1F590][U+1F590][U+1F590]': 'enlightened'
         }
         consciousness = consciousness_map.get(emoji_sequence, 'neutral')
         
@@ -163,7 +163,7 @@ Keep under 180 characters."""
             response = self.llm.get_response(prompt)
             if response:
                 response = self._limit_response(response)
-                return f"🤖 Grok Rating: {response}"
+                return f"[BOT] Grok Rating: {response}"
             else:
                 return "Grok rating failed"
         except Exception as e:
@@ -189,11 +189,11 @@ Keep under 180 characters."""
         target_messages = self._get_user_context(target_username)
         
         # Determine response tone
-        if emoji_sequence == '✊✊✊':
+        if emoji_sequence == '[U+270A][U+270A][U+270A]':
             tone = "TROLL/SATIRICAL - mock MAGA mindset"
-        elif emoji_sequence == '✊✋🖐':
+        elif emoji_sequence == '[U+270A][U+270B][U+1F590]':
             tone = "AWAKENING - encourage consciousness evolution"
-        elif emoji_sequence == '🖐🖐🖐':
+        elif emoji_sequence == '[U+1F590][U+1F590][U+1F590]':
             tone = "ENLIGHTENED - recognize their advanced state"
         else:
             tone = "NEUTRAL"
@@ -211,7 +211,7 @@ Keep under 180 characters."""
             response = self.llm.get_response(prompt)
             if response:
                 # Remove emojis Grok might add
-                response = re.sub(r'[✊✋🖐️🖐]+', '', response).strip()
+                response = re.sub(r'[[U+270A][U+270B][U+1F590]️[U+1F590]]+', '', response).strip()
                 response = self._limit_response(response)
                 return f"@{target_username} {response}"
             else:
@@ -236,16 +236,16 @@ Keep under 180 characters."""
             return f"@{author} Grok not available for creative requests"
         
         # Determine prompt based on emoji
-        if emoji_sequence == '✊✊✊':
+        if emoji_sequence == '[U+270A][U+270A][U+270A]':
             prompt = f"""Generate SATIRICAL/TROLL response: {request_text}
 Be creative, humorous, subversive. Mock if appropriate."""
-        elif emoji_sequence in ['✊🖐🖐', '🖐✊✊']:
+        elif emoji_sequence in ['[U+270A][U+1F590][U+1F590]', '[U+1F590][U+270A][U+270A]']:
             prompt = f"""Generate CREATIVE response: {request_text}
 Be imaginative (song, poem, story, etc.)"""
-        elif emoji_sequence == '✊✋🖐':
+        elif emoji_sequence == '[U+270A][U+270B][U+1F590]':
             prompt = f"""Generate ENLIGHTENED response: {request_text}
 Be philosophical and consciousness-expanding."""
-        elif emoji_sequence == '🖐🖐🖐':
+        elif emoji_sequence == '[U+1F590][U+1F590][U+1F590]':
             prompt = f"""Generate TRANSCENDENT response: {request_text}
 Speak from highest consciousness."""
         else:

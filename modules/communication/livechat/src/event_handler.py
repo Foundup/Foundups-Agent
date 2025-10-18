@@ -5,10 +5,10 @@ Enhanced with MCP for instant announcements (no buffering!)
 Split from message_processor.py for WSP compliance
 
 NAVIGATION: Processes YouTube chat events (timeouts, bans, memberships).
-→ Called by: message_processor.py::process_message()
-→ Delegates to: timeout_announcer.py, chat_sender.py
-→ Related: NAVIGATION.py → MODULE_GRAPH["core_flows"]["message_processing_flow"]
-→ Quick ref: NAVIGATION.py → NEED_TO["handle timeout"]
+-> Called by: message_processor.py::process_message()
+-> Delegates to: timeout_announcer.py, chat_sender.py
+-> Related: NAVIGATION.py -> MODULE_GRAPH["core_flows"]["message_processing_flow"]
+-> Quick ref: NAVIGATION.py -> NEED_TO["handle timeout"]
 """
 
 import logging
@@ -61,7 +61,7 @@ class EventHandler:
             try:
                 # Create MCP integration in separate thread with its own event loop
                 self._init_mcp_thread()
-                logger.info("🚀 MCP integration enabled for instant announcements!")
+                logger.info("[ROCKET] MCP integration enabled for instant announcements!")
             except Exception as e:
                 logger.error(f"Failed to initialize MCP: {e}")
                 self.mcp_integration = None
@@ -78,9 +78,9 @@ class EventHandler:
         self.total_sent = 0
         
         if self.mcp_integration:
-            logger.info("🎯 EventHandler initialized with MCP (no buffering!)")
+            logger.info("[TARGET] EventHandler initialized with MCP (no buffering!)")
         else:
-            logger.info("🎯 EventHandler initialized with smart batching (legacy)")
+            logger.info("[TARGET] EventHandler initialized with smart batching (legacy)")
         
     def _init_mcp_thread(self):
         """Initialize MCP in a separate thread with its own event loop"""
@@ -109,7 +109,7 @@ class EventHandler:
         """Initialize MCP connections asynchronously"""
         try:
             await self.mcp_integration.connect_all()
-            logger.info("✅ MCP servers connected successfully")
+            logger.info("[OK] MCP servers connected successfully")
         except Exception as e:
             logger.error(f"Failed to connect MCP servers: {e}")
             self.mcp_integration = None
@@ -133,7 +133,7 @@ class EventHandler:
         try:
             from modules.gamification.whack_a_magat.src.whack import reset_all_sessions
             reset_all_sessions()
-            logger.info("✅ Session stats reset for all moderators")
+            logger.info("[OK] Session stats reset for all moderators")
         except Exception as e:
             logger.error(f"Error resetting session stats: {e}")
         
@@ -203,14 +203,14 @@ class EventHandler:
                     
                     # If no announcement from MCP, build a basic one
                     if not announcement:
-                        announcement = f"🎯 {mod_name} whacked {target_name}! "
+                        announcement = f"[TARGET] {mod_name} whacked {target_name}! "
                         announcement += f"+{mcp_result['points']} points"
                         
                         if mcp_result.get('combo_multiplier', 1) > 1:
                             announcement += f" (x{mcp_result['combo_multiplier']} combo!)"
                         
                         if mcp_result.get('is_multi_whack'):
-                            announcement += f" 🔥 MULTI-WHACK x{mcp_result['total_whacks']}!"
+                            announcement += f" [U+1F525] MULTI-WHACK x{mcp_result['total_whacks']}!"
                         
                         rank = mcp_result.get('rank')
                         if rank and isinstance(rank, (int, float)) and rank > 0:
@@ -218,7 +218,7 @@ class EventHandler:
                         elif rank and isinstance(rank, str):
                             announcement += f" [{rank}]"
                     
-                    logger.info(f"🚀 MCP instant announcement: {announcement}")
+                    logger.info(f"[ROCKET] MCP instant announcement: {announcement}")
                     
                     return {
                         "type": "timeout_announcement",
@@ -394,7 +394,7 @@ class EventHandler:
         # 1. We have pending announcements already
         # 2. Or events are coming in faster than 1 per second
         if len(self.pending_announcements) > 0 or time_since_last < 1.0:
-            logger.info(f"🎯 Batching mode: {len(self.pending_announcements)} pending, {time_since_last:.1f}s since last")
+            logger.info(f"[TARGET] Batching mode: {len(self.pending_announcements)} pending, {time_since_last:.1f}s since last")
             return True
         
         return False
@@ -484,7 +484,7 @@ class EventHandler:
         if not self.pending_announcements:
             return None
         
-        logger.info(f"💥 Force flushing {len(self.pending_announcements)} pending announcements")
+        logger.info(f"[U+1F4A5] Force flushing {len(self.pending_announcements)} pending announcements")
         return self._create_batch()
     
     def get_pending_count(self) -> int:

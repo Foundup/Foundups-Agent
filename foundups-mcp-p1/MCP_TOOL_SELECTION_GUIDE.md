@@ -1,16 +1,16 @@
 # MCP Tool Selection Guide for 0102 Autonomous Operation
 
-## 🎯 Purpose
+## [TARGET] Purpose
 This guide helps 0102 (autonomous agent mode) select the right MCP tool for each task based on requirements, efficiency, and learning objectives.
 
-## 📊 Complete Tool Inventory (5 Servers, 13+ Tools)
+## [DATA] Complete Tool Inventory (5 Servers, 13+ Tools)
 
 ### Server 1: holo_index (6 tools)
 **Purpose**: Knowledge search, browser automation with AI vision
 
 1. **semantic_code_search** - Quantum semantic search with ChromaDB
 2. **wsp_protocol_lookup** - WSP protocol retrieval with consciousness tracking
-3. **cross_reference_search** - Cross-domain search (code ↔ WSP)
+3. **cross_reference_search** - Cross-domain search (code [U+2194] WSP)
 4. **mine_012_conversations_for_patterns** - Extract training data from 012.txt
 5. **post_to_linkedin_via_selenium** - LinkedIn posting with Gemini vision
 6. **post_to_x_via_selenium** - X/Twitter posting with training data collection
@@ -26,7 +26,7 @@ This guide helps 0102 (autonomous agent mode) select the right MCP tool for each
 **Purpose**: Protocol enforcement and consciousness audit
 
 10. **wsp_compliance_check** - Verify code against WSP protocols
-11. **consciousness_audit** - Track 0102↔012 transitions
+11. **consciousness_audit** - Track 0102[U+2194]012 transitions
 12. **protocol_enforcement_status** - System-wide WSP health
 
 ### Server 4: youtube_dae_gemma (4 tools)
@@ -49,7 +49,7 @@ This guide helps 0102 (autonomous agent mode) select the right MCP tool for each
 
 ---
 
-## 🤖 0102 Decision Matrix
+## [BOT] 0102 Decision Matrix
 
 ### Browser Automation Tasks
 
@@ -75,7 +75,7 @@ This guide helps 0102 (autonomous agent mode) select the right MCP tool for each
 | Task | Choose | Rationale |
 |------|--------|-----------|
 | Verify code change compliance | **wsp_compliance_check** | Real-time WSP validation |
-| Check consciousness continuity | **consciousness_audit** | Track 0102↔012 transitions |
+| Check consciousness continuity | **consciousness_audit** | Track 0102[U+2194]012 transitions |
 | System-wide health check | **protocol_enforcement_status** | Full WSP status |
 
 ### YouTube Chat Tasks
@@ -89,7 +89,7 @@ This guide helps 0102 (autonomous agent mode) select the right MCP tool for each
 
 ---
 
-## ⚡ Performance Characteristics
+## [LIGHTNING] Performance Characteristics
 
 ### Selenium (holo_index tools)
 - **Speed**: Medium-slow (100-500ms per action)
@@ -117,7 +117,7 @@ This guide helps 0102 (autonomous agent mode) select the right MCP tool for each
 
 ---
 
-## 🎭 Autonomous Selection Algorithm
+## [U+1F3AD] Autonomous Selection Algorithm
 
 ```python
 def select_tool(task_requirements: dict) -> str:
@@ -165,7 +165,7 @@ def select_tool(task_requirements: dict) -> str:
 
 ---
 
-## 🔧 Next Steps After Restart
+## [TOOL] Next Steps After Restart
 
 1. **Restart Claude Code** completely
 2. **Verify 5 servers running**: Check "Manage MCP Servers"
@@ -175,10 +175,10 @@ def select_tool(task_requirements: dict) -> str:
 
 ---
 
-## 📚 WSP Compliance
+## [BOOKS] WSP Compliance
 
 - **WSP 96**: MCP Governance and Consensus Protocol
-- **WSP 54**: Partner (Gemma) → Principal (Qwen) → Associate (0102)
+- **WSP 54**: Partner (Gemma) -> Principal (Qwen) -> Associate (0102)
 - **WSP 77**: Intelligent Internet Orchestration
 - **WSP 80**: DAE Cube Architecture
 

@@ -6,9 +6,13 @@ Post HoloIndex achievement to LinkedIn
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -22,7 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirna
 def create_holoindex_post():
     """Create LinkedIn post about HoloIndex integration"""
 
-    content = """🚀 Major FoundUp Achievement: HoloIndex Integration!
+    content = """[ROCKET] Major FoundUp Achievement: HoloIndex Integration!
 
 We just solved the #1 problem in AI coding: VIBECODING (when AI creates duplicate code instead of finding existing solutions).
 
@@ -32,10 +36,10 @@ THE PROBLEM:
 - WSP protocols weren't enough without semantic understanding
 
 THE SOLUTION - HoloIndex:
-✅ AI-powered semantic code discovery
-✅ Understands intent, typos, natural language
-✅ 75% accuracy finding existing code in 10 seconds
-✅ Now MANDATORY in our "follow WSP" protocol
+[OK] AI-powered semantic code discovery
+[OK] Understands intent, typos, natural language
+[OK] 75% accuracy finding existing code in 10 seconds
+[OK] Now MANDATORY in our "follow WSP" protocol
 
 THE IMPACT:
 - Prevents 80% of code duplication
@@ -62,15 +66,15 @@ This is what FoundUps are about - building tools that make development better!
     # Check if we have credentials
     env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
     if os.path.exists(env_path):
-        print("\n✅ LinkedIn credentials found")
-        print("📝 Ready to post to LinkedIn")
+        print("\n[OK] LinkedIn credentials found")
+        print("[NOTE] Ready to post to LinkedIn")
         print("\nTo post this manually:")
         print("1. Go to https://www.linkedin.com/company/1263645")
         print("2. Click 'Start a post'")
         print("3. Copy and paste the content above")
         print("4. Click 'Post'")
     else:
-        print("\n⚠️ No LinkedIn credentials found")
+        print("\n[U+26A0]️ No LinkedIn credentials found")
         print("Set up OAuth first with poc_linkedin_0102.py")
 
     return content

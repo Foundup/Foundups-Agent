@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 DAE Cube Assembly Automation
 Implements WSP 80 infinite DAE spawning architecture
 
@@ -157,7 +174,7 @@ class DAECubeAssembler:
         self.dae_registry[f"foundup_{name.lower()}"] = {
             "type": "foundup",
             "dae": foundup_dae,
-            "evolution_path": "POC → Proto → MVP"
+            "evolution_path": "POC -> Proto -> MVP"
         }
         
         logger.info(f"FoundUp DAE '{name}' spawned successfully in POC phase")
@@ -256,7 +273,7 @@ class DAECubeAssembler:
     def evolve_dae(self, dae_name: str) -> bool:
         """
         Evolve a FoundUp DAE to next phase.
-        POC → Prototype → MVP
+        POC -> Prototype -> MVP
         """
         dae_entry = self.dae_registry.get(f"foundup_{dae_name.lower()}")
         if not dae_entry or dae_entry["type"] != "foundup":

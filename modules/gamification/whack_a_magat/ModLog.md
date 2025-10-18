@@ -45,9 +45,9 @@
   - Awards bonus XP: +50 to +500 for achieving spree milestones
   - Remembered new `spree_tracker.py` module (250 lines, WSP compliant)
 - **ENTANGLED**: Epic MAGA-themed rank names replacing generic titles per WSP 20 zen language
-  - COVFEFE CADET → QANON QUASHER → MAGA MAULER → TROLL TERMINATOR
-  - REDHAT RIPPER → COUP CRUSHER → PATRIOT PULVERIZER → FASCIST FRAGGER  
-  - ORANGE OBLITERATOR → MAGA DOOMSLAYER → DEMOCRACY DEFENDER
+  - COVFEFE CADET -> QANON QUASHER -> MAGA MAULER -> TROLL TERMINATOR
+  - REDHAT RIPPER -> COUP CRUSHER -> PATRIOT PULVERIZER -> FASCIST FRAGGER  
+  - ORANGE OBLITERATOR -> MAGA DOOMSLAYER -> DEMOCRACY DEFENDER
 - **RESOLVED**: Leaderboard now displays usernames instead of cryptic IDs per WSP 50 verification
   - Updated database schema to track usernames
   - Changed to vertical format, limited to top 3 for chat readability
@@ -86,7 +86,7 @@
 - Exposed public API
 - Integrated with livechat adapter
 - Entangled WSP docs
-- Validated tests ≥90% coverage per WSP 34
+- Validated tests [GREATER_EQUAL]90% coverage per WSP 34
 - **WSP References**: WSP 80, WSP 34, WSP 3
 - **Impact Analysis**: Establishes gamification base for all platforms
 

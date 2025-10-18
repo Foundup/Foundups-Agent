@@ -10,7 +10,7 @@ This directory contains legacy utilities that have been **archived** (not delete
 
 ## Archived Tools
 
-### 🗃️ Core Legacy Utilities
+### [U+1F5C3]️ Core Legacy Utilities
 
 | Tool | Lines | Archive Reason | Replacement |
 |------|-------|----------------|-------------|
@@ -23,14 +23,14 @@ This directory contains legacy utilities that have been **archived** (not delete
 
 ## Why These Tools Were Archived
 
-### 📊 Audit Findings
+### [DATA] Audit Findings
 - **100% MPS Logic Duplication**: Identical `calculate_mps()` functions across all tools
 - **100% Factor Definitions**: Same FACTORS dictionary with weights and descriptions  
 - **80% Score Validation**: Similar input validation patterns with minor variations
 - **Missing automation capabilities**: No integration with Agent 0102 decision logic
 - **Limited ModLog integration**: Despite available infrastructure
 
-### 🎯 Consolidation Benefits
+### [TARGET] Consolidation Benefits
 - **Single source of truth** for MPS calculations
 - **Enhanced automation** for Agent 0102 integration
 - **ModLog compliance** for WSP 10 requirements
@@ -39,19 +39,19 @@ This directory contains legacy utilities that have been **archived** (not delete
 
 ## Migration Path
 
-### ✅ For Developers
+### [OK] For Developers
 ```bash
 # Instead of using archived tools:
-# python tools/guided_dev_protocol.py        # ❌ Archived
-# python tools/prioritize_module.py          # ❌ Archived  
-# python tools/process_and_score_modules.py  # ❌ Archived
+# python tools/guided_dev_protocol.py        # [FAIL] Archived
+# python tools/prioritize_module.py          # [FAIL] Archived  
+# python tools/process_and_score_modules.py  # [FAIL] Archived
 
 # Use modern shared architecture:
-python tools/demo_wsp_compliance.py          # ✅ Interactive demonstrations
-python -c "from tools.shared.mps_calculator import calculate_mps; print(calculate_mps(7,9,2,8))"  # ✅ Direct API
+python tools/demo_wsp_compliance.py          # [OK] Interactive demonstrations
+python -c "from tools.shared.mps_calculator import calculate_mps; print(calculate_mps(7,9,2,8))"  # [OK] Direct API
 ```
 
-### 🤖 For Agent 0102
+### [BOT] For Agent 0102
 The WSP Compliance Engine provides autonomous protocol enforcement:
 - Pre-execution validation pipeline
 - Automated task impact scoring  
@@ -60,13 +60,13 @@ The WSP Compliance Engine provides autonomous protocol enforcement:
 
 ## Preservation Policy
 
-### 📋 What's Preserved
+### [CLIPBOARD] What's Preserved
 - **All original source code** (no deletions)
 - **Historical functionality** documented in `_ARCHIVED.md` files
 - **Migration documentation** with code examples
 - **Audit trail** linking to analysis report
 
-### 🔍 Access for Research
+### [SEARCH] Access for Research
 These files remain available for:
 - Historical reference
 - Logic extraction for edge cases

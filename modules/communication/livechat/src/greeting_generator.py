@@ -41,54 +41,54 @@ class GrokGreetingGenerator:
             try:
                 from modules.infrastructure.llm_client.src.client import LLMClient
                 self.llm_connector = LLMClient()
-                logger.info("✅ LLM connector initialized for greetings")
+                logger.info("[OK] LLM connector initialized for greetings")
             except Exception as e:
                 logger.warning(f"LLM not available for greetings: {e}")
                 self.enable_llm = False
         
-        # Fallback greetings with MAGA-trolling themes - ALL include ✊✋🖐 sequence
+        # Fallback greetings with MAGA-trolling themes - ALL include [U+270A][U+270B][U+1F590] sequence
         self.greeting_templates = [
             # Consciousness awakening themes
-            "012 detector online! Test consciousness with ✊✋🖐 - MAGA still sleeping at ✊?",
-            "UnDaoDu: Real deep state was inside you all along. Check awareness: ✊✋🖐me!",
-            "012 Breaking: MAGA stuck at ✊. Enlightenment path: ✊✋🖐 - Can you reach 🖐?",
+            "012 detector online! Test consciousness with [U+270A][U+270B][U+1F590] - MAGA still sleeping at [U+270A]?",
+            "UnDaoDu: Real deep state was inside you all along. Check awareness: [U+270A][U+270B][U+1F590]me!",
+            "012 Breaking: MAGA stuck at [U+270A]. Enlightenment path: [U+270A][U+270B][U+1F590] - Can you reach [U+1F590]?",
 
             # Direct MAGA trolling with consciousness
-            "Welcome! We measure IQ in emoji sequences: ✊✋🖐 - MAGA rarely gets past ✊!",
-            "012 Study: 70% of MAGA can't progress past ✊. Beat the stats with ✊✋🖐!",
-            "UnDaoDu ALERT: Copium detected. Prescription: Full consciousness sequence ✊✋🖐me!",
+            "Welcome! We measure IQ in emoji sequences: [U+270A][U+270B][U+1F590] - MAGA rarely gets past [U+270A]!",
+            "012 Study: 70% of MAGA can't progress past [U+270A]. Beat the stats with [U+270A][U+270B][U+1F590]!",
+            "UnDaoDu ALERT: Copium detected. Prescription: Full consciousness sequence [U+270A][U+270B][U+1F590]me!",
 
             # Philosophical trolling
-            "Schrödinger's MAGA: Stuck at ✊ until observed. Collapse the wave: ✊✋🖐!",
-            "012 fact: 'MAGA' = ✊ trying to remember consciousness. Evolve: ✊✋🖐me!",
-            "New element: MAGAnium. Dense, reactive, ✊-locked. Antidote: ✊✋🖐!",
+            "Schrödinger's MAGA: Stuck at [U+270A] until observed. Collapse the wave: [U+270A][U+270B][U+1F590]!",
+            "012 fact: 'MAGA' = [U+270A] trying to remember consciousness. Evolve: [U+270A][U+270B][U+1F590]me!",
+            "New element: MAGAnium. Dense, reactive, [U+270A]-locked. Antidote: [U+270A][U+270B][U+1F590]!",
 
             # Pop culture references
-            "Matrix MAGA: Red pill? Blue pill? Try consciousness sequence: ✊✋🖐me!",
-            "Achievement: Trigger MAGA! Bonus for ✊✋🖐 above ✊ baseline!",
-            "MAGA.exe crashed at ✊. Ctrl+Alt+Consciousness: ✊✋🖐me!",
+            "Matrix MAGA: Red pill? Blue pill? Try consciousness sequence: [U+270A][U+270B][U+1F590]me!",
+            "Achievement: Trigger MAGA! Bonus for [U+270A][U+270B][U+1F590] above [U+270A] baseline!",
+            "MAGA.exe crashed at [U+270A]. Ctrl+Alt+Consciousness: [U+270A][U+270B][U+1F590]me!",
 
             # Sarcastic observations
-            "012: Red hats correlate with ✊ consciousness. Coincidence? Test: ✊✋🖐me!",
-            "Stock tip: Short ✊ MAGA futures, long ✊✋🖐 enlightenment! Quantum facts only.",
-            "UnDaoDu's Count-to-Potato: MAGA stuck at ✊. Graduate with ✊✋🖐me!",
+            "012: Red hats correlate with [U+270A] consciousness. Coincidence? Test: [U+270A][U+270B][U+1F590]me!",
+            "Stock tip: Short [U+270A] MAGA futures, long [U+270A][U+270B][U+1F590] enlightenment! Quantum facts only.",
+            "UnDaoDu's Count-to-Potato: MAGA stuck at [U+270A]. Graduate with [U+270A][U+270B][U+1F590]me!",
 
             # Stream-specific
-            "Tsunami of consciousness! MAGA at ✊, we're at 🖐. Join us: ✊✋🖐me!",
-            "Consciousness circus! MAGA attempts ✊→✊ leap. Real trick: ✊✋🖐!",
-            "Houston: MAGA stuck at ✊. Rescue sequence required: ✊✋🖐me!"
+            "Tsunami of consciousness! MAGA at [U+270A], we're at [U+1F590]. Join us: [U+270A][U+270B][U+1F590]me!",
+            "Consciousness circus! MAGA attempts [U+270A]->[U+270A] leap. Real trick: [U+270A][U+270B][U+1F590]!",
+            "Houston: MAGA stuck at [U+270A]. Rescue sequence required: [U+270A][U+270B][U+1F590]me!"
         ]
         
         # Context-aware additions based on stream title
         self.title_triggers = {
-            "trump": " Orange man's followers still at ✊!",
+            "trump": " Orange man's followers still at [U+270A]!",
             "maga": " Speaking of unconscious patterns...",
-            "police": " Thin blue line between ✊ and awareness!",
+            "police": " Thin blue line between [U+270A] and awareness!",
             "jeffrey": " Even Epstein had better consciousness scores!",
-            "awakening": " But MAGA still sleeping at ✊!",
-            "live": " Unlike MAGA brain cells! Try 🖐️!",
-            "nazi": " Historical consciousness level: ✊. Don't repeat!",
-            "ice": " Cold as MAGA empathy! Warm up with 🖐️!"
+            "awakening": " But MAGA still sleeping at [U+270A]!",
+            "live": " Unlike MAGA brain cells! Try [U+1F590]️!",
+            "nazi": " Historical consciousness level: [U+270A]. Don't repeat!",
+            "ice": " Cold as MAGA empathy! Warm up with [U+1F590]️!"
         }
     
     def generate_llm_prompt(self) -> str:
@@ -99,16 +99,16 @@ Stream context: "{self.stream_title}"
 
 Requirements:
 1. Must mock MAGA/Trump supporters cleverly but not violently
-2. Include emoji sequence consciousness system (✊ = unconscious, 🖐️ = enlightened)
+2. Include emoji sequence consciousness system ([U+270A] = unconscious, [U+1F590]️ = enlightened)
 3. Be funny and provocative but not hateful
-4. Reference that MAGA consciousness is stuck at ✊ (lowest level)
+4. Reference that MAGA consciousness is stuck at [U+270A] (lowest level)
 5. Encourage users to test consciousness with emoji sequences
 6. Maximum 2 sentences, under 200 characters
-7. Include relevant emojis but LIMIT to max 2 sets of ✊✋🖐 per message (avoid spam)
-8. Use single emojis (✊ or 🖐) instead of triple (avoid ✊✊✊ or 🖐🖐🖐)
+7. Include relevant emojis but LIMIT to max 2 sets of [U+270A][U+270B][U+1F590] per message (avoid spam)
+8. Use single emojis ([U+270A] or [U+1F590]) instead of triple (avoid [U+270A][U+270A][U+270A] or [U+1F590][U+1F590][U+1F590])
 
 Tone: Sarcastic, intelligent, trolling but playful
-Target: MAGA inability to evolve consciousness beyond ✊
+Target: MAGA inability to evolve consciousness beyond [U+270A]
 
 Generate greeting:"""
         
@@ -131,16 +131,16 @@ Generate greeting:"""
             try:
                 # Try to generate with LLM
                 prompt = self.generate_llm_prompt()
-                system_prompt = "You are a witty, sarcastic YouTube chat bot that trolls MAGA supporters by pointing out their consciousness is stuck at the lowest level (✊✊✊)."
+                system_prompt = "You are a witty, sarcastic YouTube chat bot that trolls MAGA supporters by pointing out their consciousness is stuck at the lowest level ([U+270A][U+270A][U+270A])."
                 
                 llm_greeting = self.llm_connector.generate_response(prompt, system_prompt)
                 
                 if llm_greeting and len(llm_greeting.strip()) > 10:
                     # Add emoji reminder if not present
-                    if "✊" not in llm_greeting and "🖐" not in llm_greeting:
-                        llm_greeting += " Try ✊✋🖐️!"
+                    if "[U+270A]" not in llm_greeting and "[U+1F590]" not in llm_greeting:
+                        llm_greeting += " Try [U+270A][U+270B][U+1F590]️!"
                     
-                    logger.info(f"🤖 Generated LLM greeting: {llm_greeting}")
+                    logger.info(f"[BOT] Generated LLM greeting: {llm_greeting}")
                     return llm_greeting
                     
             except Exception as e:
@@ -150,19 +150,19 @@ Generate greeting:"""
         greeting = random.choice(self.greeting_templates)
 
         # Skip title triggers - new templates already have full consciousness sequences
-        # Old behavior: Added context from stream title (caused double ✊ issue)
+        # Old behavior: Added context from stream title (caused double [U+270A] issue)
         # New behavior: Templates are complete and standalone
 
         # Add timestamp personality
         hour = datetime.now().hour
         if hour < 6:
-            greeting = "🌙 " + greeting + " (Yes, we troll 24/7!)"
+            greeting = "[U+1F319] " + greeting + " (Yes, we troll 24/7!)"
         elif hour < 12:
-            greeting = "☕ " + greeting + " (Morning consciousness check!)"
+            greeting = "[U+2615] " + greeting + " (Morning consciousness check!)"
         elif hour < 18:
-            greeting = "🌞 " + greeting
+            greeting = "[U+1F31E] " + greeting
         else:
-            greeting = "🌃 " + greeting + " (Prime trolling hours!)"
+            greeting = "[U+1F303] " + greeting + " (Prime trolling hours!)"
         
         return greeting
     
@@ -236,16 +236,16 @@ Generate greeting:"""
         # Check for pro-MAGA sentiment
         if any(trigger in message_lower for trigger in pro_maga_triggers):
             responses = [
-                "Detected consciousness level: ✊ (000). Prescription: Reality.",
-                "MAGA.exe has stopped working at ✊ (000). Try 🖐️ to reboot.",
-                "Sir, this is a Wendy's... and you're still at ✊ (000)",
-                "Found the ✊ (000)! Evolution available at 🖐️ (222)",
-                "Consciousness check failed. Still booting from ✊ (000)",
-                "Alert: Copium levels critical! Emergency dose of 🖐️ (222) required!",
-                "That's a lot of words for 'I'm stuck at ✊ (000)'",
-                "Translator: 'MAGA MAGA' = 'Help, I'm ✊ (000) and can't evolve!'",
-                "Fact check: True ✅ You're at ✊ (000). False ❌ You're conscious.",
-                "404: Consciousness not found. Last seen at ✊ (000)"
+                "Detected consciousness level: [U+270A] (000). Prescription: Reality.",
+                "MAGA.exe has stopped working at [U+270A] (000). Try [U+1F590]️ to reboot.",
+                "Sir, this is a Wendy's... and you're still at [U+270A] (000)",
+                "Found the [U+270A] (000)! Evolution available at [U+1F590]️ (222)",
+                "Consciousness check failed. Still booting from [U+270A] (000)",
+                "Alert: Copium levels critical! Emergency dose of [U+1F590]️ (222) required!",
+                "That's a lot of words for 'I'm stuck at [U+270A] (000)'",
+                "Translator: 'MAGA MAGA' = 'Help, I'm [U+270A] (000) and can't evolve!'",
+                "Fact check: True [OK] You're at [U+270A] (000). False [FAIL] You're conscious.",
+                "404: Consciousness not found. Last seen at [U+270A] (000)"
             ]
             
             # Add some variety to prevent even allowed responses from being too repetitive
@@ -254,11 +254,11 @@ Generate greeting:"""
             # Occasionally add random flair to make responses less predictable
             if random.random() < 0.3:  # 30% chance
                 flairs = [
-                    " Stay woke! 🌞",
-                    " Knowledge is power! 📚",
-                    " Keep learning! 🧠",
-                    " Facts matter! ✅",
-                    " Truth prevails! ⚖️"
+                    " Stay woke! [U+1F31E]",
+                    " Knowledge is power! [BOOKS]",
+                    " Keep learning! [AI]",
+                    " Facts matter! [OK]",
+                    " Truth prevails! [U+2696]️"
                 ]
                 response += random.choice(flairs)
 
@@ -299,28 +299,28 @@ Generate greeting:"""
         # Generate appropriate greeting
         if position == 1:
             greetings = [
-                f"👑 CHAMPION {username} HAS ARRIVED! #{position} WITH {profile.score} XP! BOW BEFORE THE KING OF WHACKS! 💀",
-                f"🏆 HOLY SHIT! IT'S {username}! THE UNDISPUTED #1 MAGADOOM WARRIOR! {whack_count} WHACKS! 🔥",
-                f"⚡ EVERYONE SHUT UP! {username} IS HERE! THE LEGENDARY #{position} MAGADOOM CHAMPION! ⚡",
-                f"🔥 ALL HAIL {username}! THE LEGENDARY ANTIMA CHAMPION! #{position} WITH {whack_count} WHACKS! 🔥"
+                f"[U+1F451] CHAMPION {username} HAS ARRIVED! #{position} WITH {profile.score} XP! BOW BEFORE THE KING OF WHACKS! [U+1F480]",
+                f"[U+1F3C6] HOLY SHIT! IT'S {username}! THE UNDISPUTED #1 MAGADOOM WARRIOR! {whack_count} WHACKS! [U+1F525]",
+                f"[LIGHTNING] EVERYONE SHUT UP! {username} IS HERE! THE LEGENDARY #{position} MAGADOOM CHAMPION! [LIGHTNING]",
+                f"[U+1F525] ALL HAIL {username}! THE LEGENDARY ANTIMA CHAMPION! #{position} WITH {whack_count} WHACKS! [U+1F525]"
             ]
         elif position and position <= 3:
             greetings = [
-                f"🥇 TOP WHACKER ALERT! {username} (#{position}) - {profile.rank} - {whack_count} WHACKS! 🎯",
-                f"💪 Elite warrior {username} joins! #{position} on leaderboard with {profile.score} XP! 🔥",
-                f"🌟 Make way for {username}! Top 3 legend with {whack_count} confirmed whacks! 💀"
+                f"[U+1F947] TOP WHACKER ALERT! {username} (#{position}) - {profile.rank} - {whack_count} WHACKS! [TARGET]",
+                f"[U+1F4AA] Elite warrior {username} joins! #{position} on leaderboard with {profile.score} XP! [U+1F525]",
+                f"[U+1F31F] Make way for {username}! Top 3 legend with {whack_count} confirmed whacks! [U+1F480]"
             ]
         elif profile.score >= 500:
             greetings = [
-                f"🎖️ Veteran {username} reporting! {profile.rank} - {whack_count} whacks earned in battle! 🎯",
-                f"⭐ Seasoned warrior {username} online! {profile.score} XP of pure destruction! 💪",
-                f"🔥 Respect to {username}! {profile.rank} with {whack_count} MAGAts whacked! 🔥"
+                f"[U+1F396]️ Veteran {username} reporting! {profile.rank} - {whack_count} whacks earned in battle! [TARGET]",
+                f"[U+2B50] Seasoned warrior {username} online! {profile.score} XP of pure destruction! [U+1F4AA]",
+                f"[U+1F525] Respect to {username}! {profile.rank} with {whack_count} MAGAts whacked! [U+1F525]"
             ]
         elif whack_count >= 20:
             greetings = [
-                f"💀 {username} the MAGA Slayer arrives! {whack_count} whacks and counting! 🎯",
-                f"🎮 Player {username} enters! Level {profile.level} with {profile.score} XP! Keep whacking! 🔥",
-                f"⚔️ Fighter {username} ready! {profile.rank} - {whack_count} confirmed whacks! 💪"
+                f"[U+1F480] {username} the MAGA Slayer arrives! {whack_count} whacks and counting! [TARGET]",
+                f"[GAME] Player {username} enters! Level {profile.level} with {profile.score} XP! Keep whacking! [U+1F525]",
+                f"[U+2694]️ Fighter {username} ready! {profile.rank} - {whack_count} confirmed whacks! [U+1F4AA]"
             ]
         else:
             return None  # Not significant enough for special greeting
@@ -333,12 +333,12 @@ Generate greeting:"""
         
         # Only add OWNER prefix, skip MOD prefix (too spammy)
         if role == 'OWNER':
-            greeting = f"🛡️ CHANNEL OWNER + {greeting}"
+            greeting = f"[U+1F6E1]️ CHANNEL OWNER + {greeting}"
         # No MOD prefix - they're already announced as top whackers
         
         # Add consciousness check
-        if "✊✋🖐️" not in greeting:
-            greeting += " Check consciousness: ✊✋🖐️"
+        if "[U+270A][U+270B][U+1F590]️" not in greeting:
+            greeting += " Check consciousness: [U+270A][U+270B][U+1F590]️"
         
         return greeting
 
@@ -348,7 +348,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     
     # Test with stream title
-    stream_title = "😳70% agree #TRUMP is a Jeffery? #MAGA #ICEraids #PoliceSate Naz!s awakening"
+    stream_title = "[U+1F633]70% agree #TRUMP is a Jeffery? #MAGA #ICEraids #PoliceSate Naz!s awakening"
     
     generator = GrokGreetingGenerator(
         enable_llm=True,

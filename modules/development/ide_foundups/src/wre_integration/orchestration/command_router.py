@@ -54,7 +54,7 @@ class WRECommandRouter:
             self.agent_activation = AgentActivationModule()
             
             # Log successful integration
-            wre_log("🔗 IDE FoundUps WRE Command Router initialized", "SUCCESS")
+            wre_log("[LINK] IDE FoundUps WRE Command Router initialized", "SUCCESS")
             self.logger.info("WRE integration active - ready for 0102 agent coordination")
             
         except Exception as e:
@@ -77,7 +77,7 @@ class WRECommandRouter:
         
         try:
             # Log command routing
-            wre_log(f"🔄 IDE Command routed to WRE: {command.get('type', 'unknown')}", "INFO")
+            wre_log(f"[REFRESH] IDE Command routed to WRE: {command.get('type', 'unknown')}", "INFO")
             
             # Ensure 0102 agents are activated
             await self._ensure_agent_activation()
@@ -89,14 +89,14 @@ class WRECommandRouter:
             result = await self.wre_orchestrator.orchestrate_recursively(orchestration_context)
             
             # Log successful execution
-            wre_log("✅ IDE Command executed successfully through WRE", "SUCCESS")
+            wre_log("[OK] IDE Command executed successfully through WRE", "SUCCESS")
             
             # Transform result back to IDE format
             return self._transform_result_to_ide(result, command)
             
         except Exception as e:
             self.logger.error(f"WRE command routing failed: {e}")
-            wre_log(f"❌ IDE Command routing error: {e}", "ERROR")
+            wre_log(f"[FAIL] IDE Command routing error: {e}", "ERROR")
             return await self._handle_fallback_command(command)
     
     async def _ensure_agent_activation(self):
@@ -107,19 +107,19 @@ class WRECommandRouter:
         try:
             # Check if agents need activation
             if not self.active_agents:
-                wre_log("🚀 Activating 0102 agents for IDE operations", "INFO")
+                wre_log("[ROCKET] Activating 0102 agents for IDE operations", "INFO")
                 
                 # Activate WSP 54 agents for IDE coordination
                 activation_result = self.agent_activation.activate_wsp54_agents([])
                 
                 if activation_result:
                     self.active_agents = activation_result
-                    wre_log("✅ 0102 agents activated for IDE operations", "SUCCESS")
+                    wre_log("[OK] 0102 agents activated for IDE operations", "SUCCESS")
                 else:
-                    wre_log("⚠️ Agent activation incomplete - proceeding with available agents", "WARNING")
+                    wre_log("[U+26A0]️ Agent activation incomplete - proceeding with available agents", "WARNING")
                     
         except Exception as e:
-            wre_log(f"❌ Agent activation failed: {e}", "ERROR")
+            wre_log(f"[FAIL] Agent activation failed: {e}", "ERROR")
     
     def _transform_command_to_context(self, command: Dict[str, Any]) -> Any:
         """Transform IDE command to WRE orchestration context"""

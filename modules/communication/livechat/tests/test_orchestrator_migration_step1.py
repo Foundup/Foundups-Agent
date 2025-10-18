@@ -204,10 +204,10 @@ if __name__ == "__main__":
 
     if all([test1, test2, test3, test4]):
         print("\n[SUCCESS] Step 1 validation complete!")
-        print("✅ Orchestrator is ready for migration")
-        print("✅ All basic functionality works")
-        print("✅ Compatible with existing interface")
+        print("[OK] Orchestrator is ready for migration")
+        print("[OK] All basic functionality works")
+        print("[OK] Compatible with existing interface")
         print("\nREADY FOR STEP 2: Gradual component migration")
     else:
         print("\n[FAILURE] Step 1 has issues")
-        print("❌ Fix orchestrator issues before migration")
+        print("[FAIL] Fix orchestrator issues before migration")

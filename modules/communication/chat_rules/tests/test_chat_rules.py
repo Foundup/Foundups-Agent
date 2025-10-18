@@ -72,7 +72,7 @@ def test_whack_system():
     whack_system = WhackAMAGAtSystem()
     
     # Simulate mod whacking MAGAs
-    print("\n🔨 Simulating MAGA whacks:")
+    print("\n[U+1F528] Simulating MAGA whacks:")
     
     result = whack_system.record_whack(
         mod_id="mod123",
@@ -138,18 +138,18 @@ def test_commands():
     )
     
     # Test commands
-    print("\n📝 Testing member commands:")
+    print("\n[NOTE] Testing member commands:")
     print(processor.process("/leaders", member))
     print(processor.process("/stats", member))
     print(processor.process("/level", member))
     print(processor.process("/ask How do I reach 222 consciousness?", member))
     
-    print("\n🔧 Testing moderator commands:")
+    print("\n[TOOL] Testing moderator commands:")
     print(processor.process("/fullboard", moderator))
     print(processor.process("/daily", moderator))
     print(processor.process("/whack @MAGATroll spam", moderator))
     
-    print("\n❌ Testing regular user (should fail):")
+    print("\n[FAIL] Testing regular user (should fail):")
     print(processor.process("/leaders", regular))
 
 def test_chat_engine():
@@ -172,7 +172,7 @@ def test_chat_engine():
             'snippet': {
                 'type': 'textMessageEvent',
                 'textMessageDetails': {
-                    'messageText': 'Testing 🖐🖐🖐'
+                    'messageText': 'Testing [U+1F590][U+1F590][U+1F590]'
                 }
             }
         },
@@ -233,7 +233,7 @@ def test_chat_engine():
         }
     ]
     
-    print("\n📨 Processing test messages:")
+    print("\n[U+1F4E8] Processing test messages:")
     for i, message in enumerate(test_messages, 1):
         author = message['authorDetails']['displayName']
         text = message['snippet'].get('textMessageDetails', {}).get('messageText', '')
@@ -243,9 +243,9 @@ def test_chat_engine():
         
         response = engine.process_message(message)
         if response:
-            print(f"   🤖 Bot: {response}")
+            print(f"   [BOT] Bot: {response}")
         else:
-            print(f"   ❌ No response (user not authorized)")
+            print(f"   [FAIL] No response (user not authorized)")
 
 def test_response_generator():
     """Test response generation"""
@@ -266,11 +266,11 @@ def test_response_generator():
     tier3_member._update_permissions()
     
     # Test emoji response
-    print("\n🎯 Testing emoji responses:")
-    response = generator.generate_emoji_response("Hey 🖐🖐🖐", tier3_member)
+    print("\n[TARGET] Testing emoji responses:")
+    response = generator.generate_emoji_response("Hey [U+1F590][U+1F590][U+1F590]", tier3_member)
     print(f"Tier 3 member: {response}")
     
-    response = generator.generate_emoji_response("Check this ✊✊✊", tier3_member)
+    response = generator.generate_emoji_response("Check this [U+270A][U+270A][U+270A]", tier3_member)
     print(f"Consciousness check: {response}")
 
 def main():
@@ -288,11 +288,11 @@ def main():
         test_chat_engine()
         
         print("\n" + "="*60)
-        print(" ✅ ALL TESTS COMPLETED SUCCESSFULLY")
+        print(" [OK] ALL TESTS COMPLETED SUCCESSFULLY")
         print("="*60)
         
     except Exception as e:
-        print(f"\n❌ Test failed with error: {e}")
+        print(f"\n[FAIL] Test failed with error: {e}")
         import traceback
         traceback.print_exc()
         return 1

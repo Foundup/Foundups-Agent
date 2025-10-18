@@ -17,7 +17,7 @@ if os.path.exists(db_path):
     cursor.execute("DELETE FROM profiles WHERE user_id LIKE 'test_user%'")
     conn.commit()
     
-    print(f"✅ Removed {test_count} test users from database")
+    print(f"[OK] Removed {test_count} test users from database")
     
     # Show remaining top users
     cursor.execute("""

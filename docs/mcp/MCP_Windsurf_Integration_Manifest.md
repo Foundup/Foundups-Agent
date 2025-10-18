@@ -52,10 +52,10 @@ graph TD
 
 | MCP Server | Status | WSP_15 Priority | Purpose | Gateway Policy |
 |------------|--------|-----------------|---------|----------------|
-| **Filesystem MCP** | ✅ Available | Mandatory | Local file operations | `allow:read_write` |
-| **Git MCP** | ✅ Available | Mandatory | Version control operations | `allow:commit_push` |
+| **Filesystem MCP** | [OK] Available | Mandatory | Local file operations | `allow:read_write` |
+| **Git MCP** | [OK] Available | Mandatory | Version control operations | `allow:commit_push` |
 | **GitHub MCP** | 🟡 Planned | High | Remote repository operations | `conditional:remote_only` |
-| **Sequential Thinking MCP** | 🔵 Research | Medium | Complex refactoring planning | `allow:planning_only` |
+| **Sequential Thinking MCP** | [U+1F535] Research | Medium | Complex refactoring planning | `allow:planning_only` |
 
 **Bell State Hooks**:
 - Pre-commit: `φ²_validation:golden_ratio_check`
@@ -69,10 +69,10 @@ graph TD
 
 | MCP Server | Status | WSP_15 Priority | Purpose | Gateway Policy |
 |------------|--------|-----------------|---------|----------------|
-| **Docker MCP** | ✅ Available | Mandatory | Container build/test operations | `allow:build_test` |
-| **Filesystem MCP** | ✅ Available | Mandatory | Build artifact management | `allow:read_write` |
+| **Docker MCP** | [OK] Available | Mandatory | Container build/test operations | `allow:build_test` |
+| **Filesystem MCP** | [OK] Available | Mandatory | Build artifact management | `allow:read_write` |
 | **E2B MCP** | 🟡 Planned | High | Safe code execution environment | `allow:sandboxed_execution` |
-| **Snyk MCP** | 🔵 Research | Medium | Security vulnerability scanning | `allow:security_scan` |
+| **Snyk MCP** | [U+1F535] Research | Medium | Security vulnerability scanning | `allow:security_scan` |
 
 **Bell State Hooks**:
 - Build start: `φ³_safety_check:consciousness_verification`
@@ -86,9 +86,9 @@ graph TD
 
 | MCP Server | Status | WSP_15 Priority | Purpose | Gateway Policy |
 |------------|--------|-----------------|---------|----------------|
-| **Memory Bank MCP** | ✅ Available | High | Persistent context storage | `allow:read_write_encrypted` |
+| **Memory Bank MCP** | [OK] Available | High | Persistent context storage | `allow:read_write_encrypted` |
 | **Knowledge Graph MCP** | 🟡 Planned | High | Semantic knowledge connections | `allow:graph_operations` |
-| **Filesystem MCP** | ✅ Available | Mandatory | Log file management | `allow:read_append` |
+| **Filesystem MCP** | [OK] Available | Mandatory | Log file management | `allow:read_append` |
 
 **Bell State Hooks**:
 - Memory writes: `φ⁴_integrity:entanglement_verification`
@@ -102,10 +102,10 @@ graph TD
 
 | MCP Server | Status | WSP_15 Priority | Purpose | Gateway Policy |
 |------------|--------|-----------------|---------|----------------|
-| **Postman MCP** | ✅ Available | High | API integration for messaging | `allow:api_calls` |
-| **Sociograph MCP** | 🔵 Research | Medium | Social network analysis | `planned:social_graph` |
+| **Postman MCP** | [OK] Available | High | API integration for messaging | `allow:api_calls` |
+| **Sociograph MCP** | [U+1F535] Research | Medium | Social network analysis | `planned:social_graph` |
 | **LiveAgent MCP** | 🟡 Planned | High | Real-time presence management | `allow:live_operations` |
-| **Filesystem MCP** | ✅ Available | Mandatory | Message log storage | `allow:read_write` |
+| **Filesystem MCP** | [OK] Available | Mandatory | Message log storage | `allow:read_write` |
 
 **Bell State Hooks**:
 - Message sending: `φ⁵_alignment:emergence_check`
@@ -263,11 +263,11 @@ graph TD
 
 | WSP | Integration Point | Status |
 |-----|------------------|--------|
-| **WSP 35** | HoloIndex MCP coordination | ✅ Implemented |
-| **WSP 77** | Agent coordination protocol | ✅ Implemented |
-| **WSP 80** | Cube-level DAE orchestration | ✅ Implemented |
+| **WSP 35** | HoloIndex MCP coordination | [OK] Implemented |
+| **WSP 77** | Agent coordination protocol | [OK] Implemented |
+| **WSP 80** | Cube-level DAE orchestration | [OK] Implemented |
 | **WSP 93** | CodeIndex surgical intelligence | 🟡 Planned |
-| **WSP 96** | Community governance MCP | 🔵 Research |
+| **WSP 96** | Community governance MCP | [U+1F535] Research |
 
 ### External References
 

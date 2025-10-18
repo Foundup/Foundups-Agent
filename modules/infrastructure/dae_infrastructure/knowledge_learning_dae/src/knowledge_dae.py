@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Knowledge & Learning DAE - Autonomous Knowledge Keeper
 Absorbs 4 agents into single knowledge cube
 Token Budget: 6K (vs 80K for individual agents)
@@ -90,13 +107,13 @@ class KnowledgeLearningDAE:
         """Load recursive improvement patterns."""
         return {
             "error_to_improvement": {
-                "pattern": "capture_error → extract_pattern → store_solution → prevent_recurrence"
+                "pattern": "capture_error -> extract_pattern -> store_solution -> prevent_recurrence"
             },
             "violation_to_compliance": {
-                "pattern": "detect_violation → identify_root → create_prevention → enforce_pattern"
+                "pattern": "detect_violation -> identify_root -> create_prevention -> enforce_pattern"
             },
             "inefficiency_to_optimization": {
-                "pattern": "measure_tokens → find_pattern → apply_memory → reduce_compute"
+                "pattern": "measure_tokens -> find_pattern -> apply_memory -> reduce_compute"
             }
         }
     
@@ -317,14 +334,14 @@ class KnowledgeLearningDAE:
                 "token_reduction": f"{((80000 - self.token_budget) / 80000 * 100):.1f}%",
                 "speed": "1000x faster (recall vs search)",
                 "accuracy": "100% (stored patterns)",
-                "complexity": "4 agents → 1 DAE"
+                "complexity": "4 agents -> 1 DAE"
             }
         }
 
 
 def demonstrate_knowledge_dae():
     """Demonstrate the Knowledge & Learning DAE."""
-    print("🧠 Knowledge & Learning DAE Demo")
+    print("[AI] Knowledge & Learning DAE Demo")
     print("=" * 60)
     
     dae = KnowledgeLearningDAE()
@@ -378,7 +395,7 @@ def demonstrate_knowledge_dae():
     print(f"   Speed Improvement: {comparison['improvements']['speed']}")
     print(f"   Accuracy: {comparison['improvements']['accuracy']}")
     
-    print("\n✅ Single DAE provides instant knowledge with 93% token reduction!")
+    print("\n[OK] Single DAE provides instant knowledge with 93% token reduction!")
 
 
 if __name__ == "__main__":

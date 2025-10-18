@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Single Instance Enforcement Utility
 WSP 48: Recursive improvement - prevent duplicate processes
 WSP 85: Infrastructure utility (not root pollution)
@@ -63,28 +78,28 @@ class SingleInstanceEnforcer:
                         process_info = ""
 
                     if force:
-                        logger.warning(f"🔪 Killing existing {self.name} process (PID: {old_pid}{process_info})")
+                        logger.warning(f"[U+1F52A] Killing existing {self.name} process (PID: {old_pid}{process_info})")
                         self._kill_process(old_pid)
                         time.sleep(2)  # Wait for process to die
                     else:
-                        logger.error(f"❌ {self.name} already running (PID: {old_pid}{process_info})")
-                        logger.info(f"💡 Current process trying to start: PID {self.pid}")
-                        logger.info(f"💡 Use --force to kill existing process")
+                        logger.error(f"[FAIL] {self.name} already running (PID: {old_pid}{process_info})")
+                        logger.info(f"[IDEA] Current process trying to start: PID {self.pid}")
+                        logger.info(f"[IDEA] Use --force to kill existing process")
                         return False
                 else:
-                    logger.info(f"🧹 Cleaning stale lock file (PID {old_pid} not running)")
+                    logger.info(f"[U+1F9F9] Cleaning stale lock file (PID {old_pid} not running)")
                     
             except (ValueError, IOError) as e:
-                logger.warning(f"⚠️ Invalid lock file, removing: {e}")
+                logger.warning(f"[U+26A0]️ Invalid lock file, removing: {e}")
         
         # Write our PID to lock file
         try:
             with open(self.lock_file, 'w') as f:
                 f.write(str(self.pid))
-            logger.info(f"🔒 Acquired lock for {self.name} (PID: {self.pid})")
+            logger.info(f"[LOCK] Acquired lock for {self.name} (PID: {self.pid})")
             return True
         except IOError as e:
-            logger.error(f"❌ Failed to create lock file: {e}")
+            logger.error(f"[FAIL] Failed to create lock file: {e}")
             return False
     
     def release_lock(self):
@@ -99,11 +114,11 @@ class SingleInstanceEnforcer:
                 
                 if lock_pid == self.pid:
                     self.lock_file.unlink()
-                    logger.info(f"🔓 Released lock for {self.name}")
+                    logger.info(f"[U+1F513] Released lock for {self.name}")
                 else:
-                    logger.warning(f"⚠️ Lock belongs to PID {lock_pid}, not releasing")
+                    logger.warning(f"[U+26A0]️ Lock belongs to PID {lock_pid}, not releasing")
             except (ValueError, IOError) as e:
-                logger.error(f"❌ Error releasing lock: {e}")
+                logger.error(f"[FAIL] Error releasing lock: {e}")
     
     def _is_process_running(self, pid: int) -> bool:
         """
@@ -142,7 +157,7 @@ class SingleInstanceEnforcer:
                 
             return True
         except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-            logger.warning(f"⚠️ Could not kill process {pid}: {e}")
+            logger.warning(f"[U+26A0]️ Could not kill process {pid}: {e}")
             return False
     
     def check_status(self) -> Optional[int]:
@@ -209,10 +224,10 @@ def enforce_single_instance(name: str, force: bool = False) -> SingleInstanceEnf
     # Check current status
     existing_pid = enforcer.check_status()
     if existing_pid:
-        logger.warning(f"⚠️ {name} is already running (PID: {existing_pid})")
+        logger.warning(f"[U+26A0]️ {name} is already running (PID: {existing_pid})")
         if not force:
-            logger.error("❌ Exiting to prevent duplicate instance")
-            logger.info("💡 Use --force flag to kill existing instance")
+            logger.error("[FAIL] Exiting to prevent duplicate instance")
+            logger.info("[IDEA] Use --force flag to kill existing instance")
             sys.exit(1)
     
     return enforcer

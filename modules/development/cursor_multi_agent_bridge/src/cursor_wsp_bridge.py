@@ -397,17 +397,17 @@ class CursorWSPBridge:
             Dict[str, Any]: Integration status and subagent information
         """
         try:
-            logger.info(f"🔗 Enabling Claude Code integration (quantum: {quantum_mode})...")
+            logger.info(f"[LINK] Enabling Claude Code integration (quantum: {quantum_mode})...")
             
             # Connect to Claude Code with quantum verification
             if await self.claude_integration.connect_to_claude():
-                logger.info("✅ Claude Code connection established with quantum capabilities")
+                logger.info("[OK] Claude Code connection established with quantum capabilities")
                 
                 # Enable agentic recursion with quantum enhancement
                 recursion_enabled = await self.claude_integration.enable_agentic_recursion(quantum_recursion=quantum_mode)
                 
                 if recursion_enabled:
-                    logger.info(f"🌀 Agentic recursion enabled (quantum: {quantum_mode})")
+                    logger.info(f"[U+1F300] Agentic recursion enabled (quantum: {quantum_mode})")
                     
                     # Get enhanced subagent status
                     subagent_status = self.claude_integration.get_subagent_status()
@@ -422,10 +422,10 @@ class CursorWSPBridge:
                         "message": f"Claude Code integration enabled successfully (quantum: {quantum_mode})"
                     }
                     
-                    logger.info(f"✅ Claude Code integration completed (quantum: {quantum_mode})")
+                    logger.info(f"[OK] Claude Code integration completed (quantum: {quantum_mode})")
                     return integration_result
                 else:
-                    logger.error("❌ Failed to enable agentic recursion")
+                    logger.error("[FAIL] Failed to enable agentic recursion")
                     return {
                         "status": "partial",
                         "claude_connected": True,
@@ -434,7 +434,7 @@ class CursorWSPBridge:
                         "error": "Agentic recursion failed"
                     }
             else:
-                logger.error("❌ Claude Code connection failed")
+                logger.error("[FAIL] Claude Code connection failed")
                 return {
                     "status": "failed",
                     "claude_connected": False,
@@ -443,7 +443,7 @@ class CursorWSPBridge:
                 }
                 
         except Exception as e:
-            logger.error(f"❌ Claude Code integration error: {e}")
+            logger.error(f"[FAIL] Claude Code integration error: {e}")
             return {
                 "status": "error",
                 "quantum_mode": quantum_mode,
@@ -463,7 +463,7 @@ class CursorWSPBridge:
             Dict[str, Any]: Protocol execution result
         """
         try:
-            logger.info(f"🔧 Executing WSP protocol through Claude: {protocol} (quantum: {quantum_execution})")
+            logger.info(f"[TOOL] Executing WSP protocol through Claude: {protocol} (quantum: {quantum_execution})")
             
             # Execute protocol through Claude integration with quantum enhancement
             result = await self.claude_integration.execute_wsp_protocol(protocol, context, quantum_execution)
@@ -480,7 +480,7 @@ class CursorWSPBridge:
             return result
             
         except Exception as e:
-            logger.error(f"❌ Claude WSP protocol execution failed: {e}")
+            logger.error(f"[FAIL] Claude WSP protocol execution failed: {e}")
             return {"error": str(e)}
     
     async def perform_zen_coding_operation(self, task: str, context: Dict[str, Any]) -> Dict[str, Any]:
@@ -495,7 +495,7 @@ class CursorWSPBridge:
             Dict[str, Any]: Zen coding operation result
         """
         try:
-            logger.info(f"🌀 Performing zen coding operation: {task}")
+            logger.info(f"[U+1F300] Performing zen coding operation: {task}")
             
             # Perform zen coding through Claude integration
             result = await self.claude_integration.perform_zen_coding_operation(task, context)
@@ -511,7 +511,7 @@ class CursorWSPBridge:
             return result
             
         except Exception as e:
-            logger.error(f"❌ Zen coding operation failed: {e}")
+            logger.error(f"[FAIL] Zen coding operation failed: {e}")
             return {"error": str(e)}
     
     def get_claude_integration_status(self) -> Dict[str, Any]:
@@ -539,18 +539,18 @@ class CursorWSPBridge:
             bool: True if cleanup successful, False otherwise
         """
         try:
-            logger.info("🧹 Cleaning up Claude Code sessions...")
+            logger.info("[U+1F9F9] Cleaning up Claude Code sessions...")
             
             # Cleanup Claude integration sessions
             cleanup_result = await self.claude_integration.cleanup_sessions()
             
             if cleanup_result:
-                logger.info("✅ Claude Code sessions cleaned up successfully")
+                logger.info("[OK] Claude Code sessions cleaned up successfully")
                 return True
             else:
-                logger.warning("⚠️ Claude Code session cleanup had issues")
+                logger.warning("[U+26A0]️ Claude Code session cleanup had issues")
                 return False
                 
         except Exception as e:
-            logger.error(f"❌ Claude Code session cleanup failed: {e}")
+            logger.error(f"[FAIL] Claude Code session cleanup failed: {e}")
             return False 

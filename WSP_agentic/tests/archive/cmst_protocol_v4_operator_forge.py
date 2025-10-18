@@ -1,8 +1,8 @@
 """
-⚠️ DEPRECATED: CMST Protocol v4 - The Operator Forge
+[U+26A0]️ DEPRECATED: CMST Protocol v4 - The Operator Forge
 ===================================================
 
-🚨 WSP PROTOCOL NOTICE: This implementation has been SUPERSEDED 🚨
+[ALERT] WSP PROTOCOL NOTICE: This implementation has been SUPERSEDED [ALERT]
 
 **CURRENT STANDARD**: CMST Protocol v6 (Full Quantum-Cognitive Engine)
 **CURRENT FILE**: `cmst_protocol_v11_neural_network_adapters.py`
@@ -16,11 +16,11 @@ expanded operator algebra has been integrated into the unified CMST Protocol v6 
 - **For WSP 54 Compliance**: Use CMST_Protocol_v6 class
 - **For Legacy Reference**: This file preserved for evolutionary documentation
 
-### v4 → v6 Evolution
-- ✅ v2 Lindblad Engine → Integrated into v6 Phase 1
-- ✅ v3 Geometric Engine → Integrated into v6 Phase 2
-- ✅ **v4 Operator Forge → Integrated into v6 Phase 3** ⭐
-- 🎯 v6 = Complete unified three-phase quantum-cognitive engine
+### v4 -> v6 Evolution
+- [OK] v2 Lindblad Engine -> Integrated into v6 Phase 1
+- [OK] v3 Geometric Engine -> Integrated into v6 Phase 2
+- [OK] **v4 Operator Forge -> Integrated into v6 Phase 3** [U+2B50]
+- [TARGET] v6 = Complete unified three-phase quantum-cognitive engine
 
 ### Key v4 Features Now in v6
 - **Expanded Operator Algebra**: Enhanced ~/& operators replace ^ operator
@@ -29,7 +29,7 @@ expanded operator algebra has been integrated into the unified CMST Protocol v6 
 - **67% Larger Intervention Window**: 10 cycles vs v4's 6 cycles
 - **17% Efficiency Improvement**: 25 cycles vs v4's 30 cycles
 
-### Operator Evolution: ^ → ~/&
+### Operator Evolution: ^ -> ~/&
 - **v4 ^ Operator**: Single Pauli-Y entanglement drive
 - **v6 ~ Operator**: Pauli-X retrocausal tilt for entanglement manipulation
 - **v6 & Operator**: Pauli-Z coherence stabilization for quantum control
@@ -101,7 +101,7 @@ class CMST_Protocol_v4:
         # Coherent Drives (Hamiltonian additions)
         self.hamiltonian_ops = {
             # Recalibrated ^ operator for covariance inversion
-            # Creates anti-correlated dynamics: ↑entanglement, ↓coherence
+            # Creates anti-correlated dynamics: ^entanglement, vcoherence
             "operator_^": self.h_info * np.array([
                 [2.0, -1.8j],    # Suppresses ground state, drives off-diagonal
                 [1.8j, -1.5]     # Suppresses excited state, maximizes entanglement
@@ -271,8 +271,8 @@ if __name__ == "__main__":
     
     # Validation summary
     if test.det_g < 0:
-        print("✓ VALIDATION SUCCESS: ^ operator confirmed as coherent entanglement drive")
-        print("✓ Covariance inversion achieved (hyperbolic geometry)")
-        print("✓ Active state-space manipulation validated")
+        print("[OK] VALIDATION SUCCESS: ^ operator confirmed as coherent entanglement drive")
+        print("[OK] Covariance inversion achieved (hyperbolic geometry)")
+        print("[OK] Active state-space manipulation validated")
     else:
-        print("⚠ VALIDATION INCOMPLETE: Further calibration required") 
+        print("[U+26A0] VALIDATION INCOMPLETE: Further calibration required") 

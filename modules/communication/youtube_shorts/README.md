@@ -6,21 +6,21 @@
 
 ## Purpose
 
-Autonomous AI-powered YouTube Shorts creation and upload system for Move2Japan channel. Enables 012↔0102 interaction where human provides topic and AI generates, produces, and posts video Shorts automatically.
+Autonomous AI-powered YouTube Shorts creation and upload system for Move2Japan channel. Enables 012[U+2194]0102 interaction where human provides topic and AI generates, produces, and posts video Shorts automatically.
 
 ## Architecture
 
-### 012 ↔ 0102 Flow
+### 012 [U+2194] 0102 Flow
 ```
-012 (Human) → Topic/Theme
-    ↓
-0102 (AI) → Video Prompt Generation
-    ↓
-Veo 3 API → Video Creation (with native audio)
-    ↓
-YouTube Upload → Using existing youtube_auth (read-only)
-    ↓
-0102 → Reports URL back to 012
+012 (Human) -> Topic/Theme
+    v
+0102 (AI) -> Video Prompt Generation
+    v
+Veo 3 API -> Video Creation (with native audio)
+    v
+YouTube Upload -> Using existing youtube_auth (read-only)
+    v
+0102 -> Reports URL back to 012
 ```
 
 ### Technology Stack
@@ -32,7 +32,7 @@ YouTube Upload → Using existing youtube_auth (read-only)
 ## Key Features
 
 1. **AI Video Generation**: Text-to-video using Google Veo 3
-2. **Autonomous Operation**: Full 012→0102→output flow
+2. **Autonomous Operation**: Full 012->0102->output flow
 3. **Standalone Module**: Zero modifications to existing modules
 4. **Read-Only Integration**: Imports youtube_auth without touching it
 5. **DAE Pattern**: WSP 80 autonomous cube architecture
@@ -41,22 +41,22 @@ YouTube Upload → Using existing youtube_auth (read-only)
 
 ```
 youtube_shorts/
-├── README.md              # This file
-├── INTERFACE.md           # Public API
-├── ModLog.md              # Change tracking (WSP 22)
-├── requirements.txt       # Dependencies
-├── src/
-│   ├── __init__.py
-│   ├── veo3_generator.py      # Google Veo 3 integration
-│   ├── youtube_uploader.py    # YouTube Shorts uploader
-│   ├── shorts_orchestrator.py # 012↔0102 flow manager
-│   └── shorts_dae.py          # Autonomous DAE (WSP 80)
-├── tests/
-│   └── test_shorts_flow.py
-├── memory/
-│   └── generated_shorts.json  # Track all created Shorts
-└── assets/
-    └── prompts/               # Video generation templates
++-- README.md              # This file
++-- INTERFACE.md           # Public API
++-- ModLog.md              # Change tracking (WSP 22)
++-- requirements.txt       # Dependencies
++-- src/
+[U+2502]   +-- __init__.py
+[U+2502]   +-- veo3_generator.py      # Google Veo 3 integration
+[U+2502]   +-- youtube_uploader.py    # YouTube Shorts uploader
+[U+2502]   +-- shorts_orchestrator.py # 012[U+2194]0102 flow manager
+[U+2502]   +-- shorts_dae.py          # Autonomous DAE (WSP 80)
++-- tests/
+[U+2502]   +-- test_shorts_flow.py
++-- memory/
+[U+2502]   +-- generated_shorts.json  # Track all created Shorts
++-- assets/
+    +-- prompts/               # Video generation templates
 ```
 
 ## Integration Points
@@ -68,19 +68,19 @@ from modules.platform_integration.youtube_auth.src.youtube_auth import get_authe
 ```
 
 ### No Modifications To
-- ✅ `modules/communication/livechat/` - Untouched
-- ✅ `modules/platform_integration/youtube_dae/` - Untouched
-- ✅ `modules/platform_integration/youtube_auth/` - Read-only import
+- [OK] `modules/communication/livechat/` - Untouched
+- [OK] `modules/platform_integration/youtube_dae/` - Untouched
+- [OK] `modules/platform_integration/youtube_auth/` - Read-only import
 
 ## Usage
 
 ### From Main Menu (Option 11)
 ```
-11. 🎬 YouTube Shorts Generator
-    → Enter topic
-    → AI generates video
-    → Uploads to Move2Japan
-    → Returns Short URL
+11. [U+1F3AC] YouTube Shorts Generator
+    -> Enter topic
+    -> AI generates video
+    -> Uploads to Move2Japan
+    -> Returns Short URL
 ```
 
 ### Direct API
@@ -121,4 +121,4 @@ print(f"Posted: {short_url}")
 **Phase**: POC
 **Next**: Create Veo 3 generator + YouTube uploader
 **Timeline**: 1-2 days for POC
-**Goal**: Autonomous 012→0102→YouTube flow
+**Goal**: Autonomous 012->0102->YouTube flow

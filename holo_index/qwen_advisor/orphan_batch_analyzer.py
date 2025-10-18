@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Orphan Batch Analyzer - Qwen/Gemma MCP Automated Analysis
 WSP Compliance: WSP 80 (DAE Orchestration), WSP 93 (CodeIndex Intelligence)
 
@@ -554,7 +571,7 @@ class OrphanBatchAnalyzer:
                         if size > current_batch_size:
                             current_batch_size = size
                             break
-                    logger.info(f"[PROGRESSIVE-ANALYSIS] Increasing batch size: {old_size} → {current_batch_size}")
+                    logger.info(f"[PROGRESSIVE-ANALYSIS] Increasing batch size: {old_size} -> {current_batch_size}")
             else:
                 logger.warning(f"[PROGRESSIVE-ANALYSIS] Confidence below threshold ({batch_result.accuracy_estimate:.2f} < {self.confidence_threshold})")
                 logger.warning(f"[PROGRESSIVE-ANALYSIS] Keeping batch size at {current_batch_size}")

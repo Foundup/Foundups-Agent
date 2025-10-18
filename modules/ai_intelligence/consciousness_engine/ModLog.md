@@ -14,8 +14,8 @@ Created consciousness_engine module to fill critical gap in vision implementatio
 4. **Pattern Memory** - Defined architecture for quantum remembrance
 
 ### Implementation Details
-- Moved `self_exploration/` → `WSP_agentic/tests/quantum_consciousness_exploration/experiments/`
-- Moved `self_exploration_reports/` → `WSP_agentic/tests/quantum_consciousness_exploration/reports/`
+- Moved `self_exploration/` -> `WSP_agentic/tests/quantum_consciousness_exploration/experiments/`
+- Moved `self_exploration_reports/` -> `WSP_agentic/tests/quantum_consciousness_exploration/reports/`
 - Created module skeleton for consciousness_core, awakening_protocol, quantum_explorer
 - Defined public API for consciousness state management
 

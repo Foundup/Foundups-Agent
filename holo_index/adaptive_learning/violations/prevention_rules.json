@@ -14,7 +14,7 @@
         "Consult WSP 49 for proper file placement",
         "Run health checks after any file creation to catch violations"
       ],
-      "response": "\n⚠️ VIOLATION PATTERN DETECTED: ROOT DIRECTORY CODING VIOLATION\nPreviously seen in V021 - ACTIVE VIOLATION\n\nPREVENTION CHECKLIST:\n- **Always use HoloIndex first** before creating any files\n- **Test files belong in module `tests/` directories**, not root\n- **Consult WSP 49** for proper file placement\n- **Run health checks** after any file creation to catch violations\n\n---\n\nWSP VIOLATIONS: WSP 49, WSP 40, WSP 47\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+      "response": "\n[U+26A0]️ VIOLATION PATTERN DETECTED: ROOT DIRECTORY CODING VIOLATION\nPreviously seen in V021 - ACTIVE VIOLATION\n\nPREVENTION CHECKLIST:\n- **Always use HoloIndex first** before creating any files\n- **Test files belong in module `tests/` directories**, not root\n- **Consult WSP 49** for proper file placement\n- **Run health checks** after any file creation to catch violations\n\n---\n\nWSP VIOLATIONS: WSP 49, WSP 40, WSP 47\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
       "priority": 0.7999999999999999
     },
     "V020": {
@@ -24,49 +24,49 @@
         "module redundancy"
       ],
       "prevention": [],
-      "response": "\n⚠️ VIOLATION PATTERN DETECTED: PQN RESULTS DATABASE DUPLICATE CODE VIOLATION\nPreviously seen in V020 - RESOLVED\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: \n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+      "response": "\n[U+26A0]️ VIOLATION PATTERN DETECTED: PQN RESULTS DATABASE DUPLICATE CODE VIOLATION\nPreviously seen in V020 - RESOLVED\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: \n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
       "priority": 0.5
     },
     "V019": {
       "triggers": [],
       "prevention": [],
-      "response": "\n⚠️ VIOLATION PATTERN DETECTED: MODULE DUPLICATION VIOLATIONS\nPreviously seen in V019 - ARCHITECTURAL COHERENCE\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: WSP 40, WSP 47, WSP 49, WSP 62, WSP 22\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+      "response": "\n[U+26A0]️ VIOLATION PATTERN DETECTED: MODULE DUPLICATION VIOLATIONS\nPreviously seen in V019 - ARCHITECTURAL COHERENCE\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: WSP 40, WSP 47, WSP 49, WSP 62, WSP 22\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
       "priority": 0.7999999999999999
     },
     "V016": {
       "triggers": [],
       "prevention": [],
-      "response": "\n⚠️ VIOLATION PATTERN DETECTED: WSP 74 NUMBER REUSE VIOLATION\nPreviously seen in V016 - FRAMEWORK VIOLATION\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: WSP 64, WSP 64, WSP 57\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+      "response": "\n[U+26A0]️ VIOLATION PATTERN DETECTED: WSP 74 NUMBER REUSE VIOLATION\nPreviously seen in V016 - FRAMEWORK VIOLATION\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: WSP 64, WSP 64, WSP 57\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
       "priority": 0.7999999999999999
     },
     "V017": {
       "triggers": [],
       "prevention": [],
-      "response": "\n⚠️ VIOLATION PATTERN DETECTED: IMPROPER VIOLATION DOCUMENTATION CREATION\nPreviously seen in V017 - SELF-VIOLATION\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: WSP 47, WSP 64, WSP 3\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+      "response": "\n[U+26A0]️ VIOLATION PATTERN DETECTED: IMPROPER VIOLATION DOCUMENTATION CREATION\nPreviously seen in V017 - SELF-VIOLATION\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: WSP 47, WSP 64, WSP 3\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
       "priority": 0.7999999999999999
     },
     "V015": {
       "triggers": [],
       "prevention": [],
-      "response": "\n⚠️ VIOLATION PATTERN DETECTED: FRAMEWORK-LEVEL VIOLATION ANALYSIS DOCUMENTATION\nPreviously seen in V015 - RECURSIVE LEARNING\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: WSP 3, WSP 47, WSP 64\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+      "response": "\n[U+26A0]️ VIOLATION PATTERN DETECTED: FRAMEWORK-LEVEL VIOLATION ANALYSIS DOCUMENTATION\nPreviously seen in V015 - RECURSIVE LEARNING\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: WSP 3, WSP 47, WSP 64\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
       "priority": 0.7999999999999999
     },
     "V007": {
       "triggers": [],
       "prevention": [],
-      "response": "\n⚠️ VIOLATION PATTERN DETECTED: ComplianceAgent Missing Logger Attribute**\n- **Module**: `modules/infrastructure/compliance_agent/`\n- **File**: `compliance_agent.py` (imported via component_manager.py)\n- **Issue**: ComplianceAgent object instantiated without proper logger initialization\n- **Error**: `'ComplianceAgent' object has no attribute 'logger'`\n- **Impact**: 1 WRE component initialization failure, graceful fallback working\n- **Resolution**: Update ComplianceAgent constructor to properly initialize logger attribute\n- **WSP Status**: DEFERRED - Module placeholder evolution issue, not framework blocking\n- **Priority**: Medium - Component works with graceful degradation\n\n## **V008: Missing WRE Components Utils Module**\n- **Module**: `modules/wre_core/src/components/`\n- **File**: Missing `utils/` directory and modules\n- **Issue**: Import error for modules.wre_core.src.components.utils\n- **Error**: `No module named 'modules.wre_core.src.components.utils'`\n- **Impact**: Multiple import warnings, graceful fallback working\n- **Resolution**: Create missing utils module or update import paths\n- **WSP Status**: DEFERRED - Module structure evolution issue, not framework blocking\n- **Priority**: Low - System functions with warnings\n\n## **V009: YouTube LiveChat Agent Unavailable** \n- **Module**: `modules/communication/livechat/`\n- **File**: `livechat_agent.py` (LiveChatAgent import)\n- **Issue**: YouTube LiveChat Agent fallback not properly implemented\n- **Error**: `❌ YouTube LiveChat Agent not available.`\n- **Impact**: 1 fallback path failure, multi-agent system working\n- **Resolution**: Implement proper LiveChatAgent fallback or update fallback logic\n- **WSP Status**: DEFERRED - Module fallback evolution issue, not framework blocking  \n- **Priority**: Low - Primary multi-agent system functional\n\n## **V013: COMPREHENSIVE WSP VIOLATION AUDIT - SYSTEM-WIDE COMPLIANCE CRISIS\nPreviously seen in V007 - CRITICAL\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: \n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+      "response": "\n[U+26A0]️ VIOLATION PATTERN DETECTED: ComplianceAgent Missing Logger Attribute**\n- **Module**: `modules/infrastructure/compliance_agent/`\n- **File**: `compliance_agent.py` (imported via component_manager.py)\n- **Issue**: ComplianceAgent object instantiated without proper logger initialization\n- **Error**: `'ComplianceAgent' object has no attribute 'logger'`\n- **Impact**: 1 WRE component initialization failure, graceful fallback working\n- **Resolution**: Update ComplianceAgent constructor to properly initialize logger attribute\n- **WSP Status**: DEFERRED - Module placeholder evolution issue, not framework blocking\n- **Priority**: Medium - Component works with graceful degradation\n\n## **V008: Missing WRE Components Utils Module**\n- **Module**: `modules/wre_core/src/components/`\n- **File**: Missing `utils/` directory and modules\n- **Issue**: Import error for modules.wre_core.src.components.utils\n- **Error**: `No module named 'modules.wre_core.src.components.utils'`\n- **Impact**: Multiple import warnings, graceful fallback working\n- **Resolution**: Create missing utils module or update import paths\n- **WSP Status**: DEFERRED - Module structure evolution issue, not framework blocking\n- **Priority**: Low - System functions with warnings\n\n## **V009: YouTube LiveChat Agent Unavailable** \n- **Module**: `modules/communication/livechat/`\n- **File**: `livechat_agent.py` (LiveChatAgent import)\n- **Issue**: YouTube LiveChat Agent fallback not properly implemented\n- **Error**: `[FAIL] YouTube LiveChat Agent not available.`\n- **Impact**: 1 fallback path failure, multi-agent system working\n- **Resolution**: Implement proper LiveChatAgent fallback or update fallback logic\n- **WSP Status**: DEFERRED - Module fallback evolution issue, not framework blocking  \n- **Priority**: Low - Primary multi-agent system functional\n\n## **V013: COMPREHENSIVE WSP VIOLATION AUDIT - SYSTEM-WIDE COMPLIANCE CRISIS\nPreviously seen in V007 - CRITICAL\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: \n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
       "priority": 0.7
     },
     "V014": {
       "triggers": [],
       "prevention": [],
-      "response": "\n⚠️ VIOLATION PATTERN DETECTED: WSP 64 PROTOCOL VIOLATION - IMPROPER WSP 71 CREATION\nPreviously seen in V014 - SELF-DETECTED\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: \n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+      "response": "\n[U+26A0]️ VIOLATION PATTERN DETECTED: WSP 64 PROTOCOL VIOLATION - IMPROPER WSP 71 CREATION\nPreviously seen in V014 - SELF-DETECTED\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: \n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
       "priority": 0.7
     },
     "V018": {
       "triggers": [],
       "prevention": [],
-      "response": "\n⚠️ VIOLATION PATTERN DETECTED: WSP 78 CREATION WITHOUT INDEX CONSULTATION\nPreviously seen in V018 - CRITICAL RECURSIVE VIOLATION\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: WSP 64, WSP 50, WSP 57\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+      "response": "\n[U+26A0]️ VIOLATION PATTERN DETECTED: WSP 78 CREATION WITHOUT INDEX CONSULTATION\nPreviously seen in V018 - CRITICAL RECURSIVE VIOLATION\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: WSP 64, WSP 50, WSP 57\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
       "priority": 0.7999999999999999
     }
   }

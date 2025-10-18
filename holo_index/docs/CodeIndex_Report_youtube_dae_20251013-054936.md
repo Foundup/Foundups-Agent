@@ -12,14 +12,14 @@
 [ARCHITECT] Module: livechat
 [ARCHITECT] Critical Fixes: 0
   (A) Maintain current module state
-     → No surgical fixes detected by CodeIndex.
-     → Continue monitoring via circulation loop.
+     -> No surgical fixes detected by CodeIndex.
+     -> Continue monitoring via circulation loop.
   (B) Improve documentation and assumptions
-     → Address assumption alerts to prevent regressions.
-     → Use TODO reminders surfaced in the report.
+     -> Address assumption alerts to prevent regressions.
+     -> Use TODO reminders surfaced in the report.
   (C) Schedule holistic module refactor
-     → Plan future sprint to improve modularity.
-     → Use HoloDAE module metrics to estimate effort.
+     -> Plan future sprint to improve modularity.
+     -> Use HoloDAE module metrics to estimate effort.
 ```
 
 ### Circulation Health
@@ -51,14 +51,14 @@
 [ARCHITECT] Module: youtube_dae
 [ARCHITECT] Critical Fixes: 0
   (A) Maintain current module state
-     → No surgical fixes detected by CodeIndex.
-     → Continue monitoring via circulation loop.
+     -> No surgical fixes detected by CodeIndex.
+     -> Continue monitoring via circulation loop.
   (B) Improve documentation and assumptions
-     → Address assumption alerts to prevent regressions.
-     → Use TODO reminders surfaced in the report.
+     -> Address assumption alerts to prevent regressions.
+     -> Use TODO reminders surfaced in the report.
   (C) Schedule holistic module refactor
-     → Plan future sprint to improve modularity.
-     → Use HoloDAE module metrics to estimate effort.
+     -> Plan future sprint to improve modularity.
+     -> Use HoloDAE module metrics to estimate effort.
 ```
 
 ### Circulation Health
@@ -90,14 +90,14 @@
 [ARCHITECT] Module: stream_resolver
 [ARCHITECT] Critical Fixes: 0
   (A) Maintain current module state
-     → No surgical fixes detected by CodeIndex.
-     → Continue monitoring via circulation loop.
+     -> No surgical fixes detected by CodeIndex.
+     -> Continue monitoring via circulation loop.
   (B) Improve documentation and assumptions
-     → Address assumption alerts to prevent regressions.
-     → Use TODO reminders surfaced in the report.
+     -> Address assumption alerts to prevent regressions.
+     -> Use TODO reminders surfaced in the report.
   (C) Schedule holistic module refactor
-     → Plan future sprint to improve modularity.
-     → Use HoloDAE module metrics to estimate effort.
+     -> Plan future sprint to improve modularity.
+     -> Use HoloDAE module metrics to estimate effort.
 ```
 
 ### Circulation Health
@@ -133,14 +133,14 @@
 [ARCHITECT] Module: youtube_auth
 [ARCHITECT] Critical Fixes: 0
   (A) Maintain current module state
-     → No surgical fixes detected by CodeIndex.
-     → Continue monitoring via circulation loop.
+     -> No surgical fixes detected by CodeIndex.
+     -> Continue monitoring via circulation loop.
   (B) Improve documentation and assumptions
-     → Address assumption alerts to prevent regressions.
-     → Use TODO reminders surfaced in the report.
+     -> Address assumption alerts to prevent regressions.
+     -> Use TODO reminders surfaced in the report.
   (C) Schedule holistic module refactor
-     → Plan future sprint to improve modularity.
-     → Use HoloDAE module metrics to estimate effort.
+     -> Plan future sprint to improve modularity.
+     -> Use HoloDAE module metrics to estimate effort.
 ```
 
 ### Circulation Health

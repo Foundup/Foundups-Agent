@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Pattern Memory - ChromaDB-backed storage for Qwen/Gemma training
 Stores patterns extracted from 012.txt for in-context learning (RAG)
 WSP Compliance: WSP 93 (CodeIndex Surgical Intelligence), WSP 46 (WRE Pattern)
@@ -26,8 +42,8 @@ class PatternMemory:
     - No fine-tuning required - pure in-context learning
 
     Architecture:
-    - 012 (Human) → 0102 (Digital Twin) → Patterns → ChromaDB
-    - At inference: Query → Retrieve patterns → Gemma/Qwen with context
+    - 012 (Human) -> 0102 (Digital Twin) -> Patterns -> ChromaDB
+    - At inference: Query -> Retrieve patterns -> Gemma/Qwen with context
     """
 
     def __init__(self, persist_directory: str = "O:/Foundups-Agent/holo_index/memory/chroma"):
@@ -366,7 +382,7 @@ if __name__ == "__main__":
         }
 
         success = memory.store_pattern(test_pattern)
-        print(f"  Storage: {'✅ Success' if success else '❌ Failed'}")
+        print(f"  Storage: {'[OK] Success' if success else '[FAIL] Failed'}")
 
     # Test recall
     if "--test-recall" in sys.argv:

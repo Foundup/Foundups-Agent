@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Documentation Finder for HoloIndex
 Finds and presents related documentation for search results
 
@@ -237,7 +254,7 @@ class DocFinder:
             return "No related documentation found."
 
         output = []
-        output.append("📚 Related Documentation:")
+        output.append("[BOOKS] Related Documentation:")
         output.append("")
 
         # Group by module
@@ -370,7 +387,7 @@ if __name__ == "__main__":
     module = "modules.communication.livechat"
     examples = finder.get_implementation_examples(module)
     if examples:
-        print("\n📝 Implementation Examples:")
+        print("\n[NOTE] Implementation Examples:")
         for file_path, example in examples:
             print(f"\nFrom {file_path}:")
             print(example)
@@ -378,7 +395,7 @@ if __name__ == "__main__":
     # Get breadcrumbs
     breadcrumbs = finder.find_breadcrumbs(module)
     if any(breadcrumbs.values()):
-        print("\n🍞 Breadcrumb Trail:")
+        print("\n[BREAD] Breadcrumb Trail:")
         for category, crumbs in breadcrumbs.items():
             if crumbs:
                 print(f"\n{category.title()}:")

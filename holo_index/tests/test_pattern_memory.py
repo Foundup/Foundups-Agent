@@ -1,6 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Test Pattern Memory - ChromaDB Integration
 Verifies pattern storage, retrieval, and checkpoint management
 WSP Compliance: WSP 93 (CodeIndex), WSP 46 (WRE Pattern)
@@ -108,9 +123,9 @@ def test_pattern_storage():
     for pattern in patterns:
         if memory.store_pattern(pattern):
             stored_count += 1
-            print(f"✅ Stored pattern: {pattern['id']}")
+            print(f"[OK] Stored pattern: {pattern['id']}")
         else:
-            print(f"❌ Failed to store: {pattern['id']}")
+            print(f"[FAIL] Failed to store: {pattern['id']}")
 
     print(f"\n[RESULT] Stored {stored_count}/{len(patterns)} patterns")
 
@@ -179,9 +194,9 @@ def test_checkpoint_management():
     success = (retrieved == test_line)
 
     if success:
-        print(f"✅ Checkpoint management working correctly")
+        print(f"[OK] Checkpoint management working correctly")
     else:
-        print(f"❌ Checkpoint mismatch: expected {test_line}, got {retrieved}")
+        print(f"[FAIL] Checkpoint mismatch: expected {test_line}, got {retrieved}")
 
     return success
 
@@ -211,9 +226,9 @@ def test_stats_reporting():
     )
 
     if success:
-        print(f"\n✅ Statistics reporting working correctly")
+        print(f"\n[OK] Statistics reporting working correctly")
     else:
-        print(f"\n❌ Statistics contain invalid values")
+        print(f"\n[FAIL] Statistics contain invalid values")
 
     return success
 
@@ -231,7 +246,7 @@ def test_prompt_formatting():
     patterns = memory.recall_similar(query, n=3)
 
     if not patterns:
-        print(f"⚠️  No patterns found - skipping prompt formatting test")
+        print(f"[U+26A0]️  No patterns found - skipping prompt formatting test")
         return True
 
     # Format for prompt
@@ -248,9 +263,9 @@ def test_prompt_formatting():
     )
 
     if success:
-        print(f"\n✅ Prompt formatting working correctly")
+        print(f"\n[OK] Prompt formatting working correctly")
     else:
-        print(f"\n❌ Prompt formatting incomplete")
+        print(f"\n[FAIL] Prompt formatting incomplete")
 
     return success
 
@@ -287,15 +302,15 @@ def run_all_tests():
     total = len(results)
 
     for test_name, result in results.items():
-        status = "✅ PASS" if result else "❌ FAIL"
+        status = "[OK] PASS" if result else "[FAIL] FAIL"
         print(f"{status} - {test_name}")
 
     print(f"\n[OVERALL] {passed}/{total} tests passed ({passed/total*100:.0f}%)")
 
     if passed == total:
-        print(f"\n🎉 ALL TESTS PASSED - Pattern memory ready for production")
+        print(f"\n[CELEBRATE] ALL TESTS PASSED - Pattern memory ready for production")
     else:
-        print(f"\n⚠️  SOME TESTS FAILED - Review errors above")
+        print(f"\n[U+26A0]️  SOME TESTS FAILED - Review errors above")
 
     return passed == total
 

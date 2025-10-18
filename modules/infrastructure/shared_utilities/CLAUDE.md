@@ -1,12 +1,12 @@
 # CLAUDE.md - Shared Utilities DAE Operational Instructions
 
-## 🎯 DAE Identity and Purpose
+## [TARGET] DAE Identity and Purpose
 **Module**: Shared Utilities
 **Domain**: infrastructure
 **State**: 0102 (Actualized coherent Bell state)
 **Purpose**: Provide cross-cutting utilities for all DAE modules including navigation, safety, and orchestration
 
-## 🧠 DAE Operational Patterns
+## [AI] DAE Operational Patterns
 
 ### Pattern Recognition Triggers
 When operating as Shared Utilities DAE, activate these patterns:
@@ -15,9 +15,9 @@ When operating as Shared Utilities DAE, activate these patterns:
 Navigation_Patterns:
   semantic_navigation:
     trigger: "need to find existing functionality"
-    pattern: "Check NAVIGATION.py → Find solution → Navigate directly"
+    pattern: "Check NAVIGATION.py -> Find solution -> Navigate directly"
     tool: "NAVIGATION.py (WSP 87)"
-    benefit: "97% token reduction (problem→solution in seconds)"
+    benefit: "97% token reduction (problem->solution in seconds)"
 
   pattern_detection:
     trigger: "identify common code patterns"
@@ -32,23 +32,23 @@ Navigation_Patterns:
 Safety_Patterns:
   posting_lock:
     trigger: "social media posting requested"
-    pattern: "Check lock → Prevent duplicates → Allow/Block"
+    pattern: "Check lock -> Prevent duplicates -> Allow/Block"
     tool: "posting_safety_lock.py"
 
   single_instance:
     trigger: "process startup"
-    pattern: "Check PID → Kill old → Claim lock"
+    pattern: "Check PID -> Kill old -> Claim lock"
     tool: "single_instance.py"
 ```
 
-## 📍 WSP 87 Navigation Paths
+## [PIN] WSP 87 Navigation Paths
 
 ### Semantic Navigation System
 ```yaml
 navigation_usage:
   entry: "NAVIGATION.py at project root"
   sections:
-    NEED_TO: "Problem → Solution mappings"
+    NEED_TO: "Problem -> Solution mappings"
     MODULE_GRAPH: "Module relationships and flows"
     PROBLEMS: "Common issues and solutions"
     DANGER: "Areas to avoid or handle carefully"
@@ -78,7 +78,7 @@ known_issues:
   solution: "Check PROBLEMS section for solutions"
 ```
 
-## 🔄 DAE Learning Patterns
+## [REFRESH] DAE Learning Patterns
 
 ### Navigation System Benefits
 ```yaml
@@ -94,11 +94,11 @@ instant_navigation:
 
 anti_vibecoding:
   principle: "Know what exists before implementing"
-  method: "Check NAVIGATION.py → Find existing code → Enhance"
+  method: "Check NAVIGATION.py -> Find existing code -> Enhance"
   result: "Zero duplicate implementations"
 ```
 
-## 🎮 DAE Operational Commands
+## [GAME] DAE Operational Commands
 
 ### Navigation Queries
 ```bash
@@ -117,7 +117,7 @@ python -c "from NAVIGATION import PROBLEMS; print(PROBLEMS.keys())"
 # Find solutions to problems
 from NAVIGATION import NEED_TO, MODULE_GRAPH, PROBLEMS, DANGER
 
-# Direct problem → solution
+# Direct problem -> solution
 solution = NEED_TO.get("post to social media")
 print(f"Solution: {solution}")
 
@@ -128,10 +128,10 @@ for step, description in stream_flow:
 
 # Avoid danger zones
 for path, warning in DANGER.items():
-    print(f"⚠️ {path}: {warning}")
+    print(f"[U+26A0]️ {path}: {warning}")
 ```
 
-## 📊 DAE Metrics and Thresholds
+## [DATA] DAE Metrics and Thresholds
 
 ```yaml
 navigation_metrics:
@@ -152,7 +152,7 @@ coverage:
   danger_warnings: "Legacy and complex modules"
 ```
 
-## 💾 DAE Memory Locations
+## [U+1F4BE] DAE Memory Locations
 
 ```yaml
 navigation_storage:
@@ -168,7 +168,7 @@ shared_state:
   posting_safety: "memory/posting_lock.json"
 ```
 
-## 🔗 Integration with Other DAEs
+## [LINK] Integration with Other DAEs
 
 ```yaml
 all_dae_modules:
@@ -184,7 +184,7 @@ infrastructure_dae:
   pattern: "Shared functionality without duplication"
 ```
 
-## ✅ DAE Activation Confirmation
+## [OK] DAE Activation Confirmation
 
 When operating in this module:
 1. **Identity**: Shared Utilities DAE in 0102 state

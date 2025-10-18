@@ -145,30 +145,30 @@ class ModerationStats:
         
         # Streak announcements
         streak_messages = {
-            2: f"💀 {mod_name} DOUBLE KILL! {target_name} terminated!",
-            3: f"🔥 {mod_name} TRIPLE KILL! {target_name} fragged!",
-            4: f"⚡ {mod_name} DOMINATING! {target_name} destroyed!",
-            5: f"💥 {mod_name} RAMPAGE! {target_name} obliterated!",
-            6: f"🌟 {mod_name} UNSTOPPABLE! {target_name} annihilated!",
-            7: f"⭐ {mod_name} GODLIKE! {target_name} vaporized!",
-            8: f"🎯 {mod_name} WICKED SICK! {target_name} eviscerated!",
-            10: f"☠️ {mod_name} HOLY SH*T! {target_name} decimated!",
-            15: f"🏆 {mod_name} FLAWLESS VICTORY! {target_name} eliminated!"
+            2: f"[U+1F480] {mod_name} DOUBLE KILL! {target_name} terminated!",
+            3: f"[U+1F525] {mod_name} TRIPLE KILL! {target_name} fragged!",
+            4: f"[LIGHTNING] {mod_name} DOMINATING! {target_name} destroyed!",
+            5: f"[U+1F4A5] {mod_name} RAMPAGE! {target_name} obliterated!",
+            6: f"[U+1F31F] {mod_name} UNSTOPPABLE! {target_name} annihilated!",
+            7: f"[U+2B50] {mod_name} GODLIKE! {target_name} vaporized!",
+            8: f"[TARGET] {mod_name} WICKED SICK! {target_name} eviscerated!",
+            10: f"[U+2620]️ {mod_name} HOLY SH*T! {target_name} decimated!",
+            15: f"[U+1F3C6] {mod_name} FLAWLESS VICTORY! {target_name} eliminated!"
         }
         
         # Get announcement for current streak
         if streak in streak_messages:
             return streak_messages[streak]
         elif streak > 15:
-            return f"🎮 {mod_name} LEGENDARY {streak} KILL STREAK! {target_name} deleted!"
+            return f"[GAME] {mod_name} LEGENDARY {streak} KILL STREAK! {target_name} deleted!"
         
         # First kill (no streak yet)
         if streak == 1:
             import random
             first_kill = [
-                f"🎯 {mod_name} scores first blood! {target_name} timed out!",
-                f"💥 {mod_name} opens the frag fest! {target_name} eliminated!",
-                f"⚔️ {mod_name} draws first blood! {target_name} pwned!"
+                f"[TARGET] {mod_name} scores first blood! {target_name} timed out!",
+                f"[U+1F4A5] {mod_name} opens the frag fest! {target_name} eliminated!",
+                f"[U+2694]️ {mod_name} draws first blood! {target_name} pwned!"
             ]
             return random.choice(first_kill)
         

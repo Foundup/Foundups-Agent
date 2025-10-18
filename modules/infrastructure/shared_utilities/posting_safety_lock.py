@@ -1,6 +1,22 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
-🚨 GLOBAL POSTING SAFETY LOCK - WSP Compliant
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
+[ALERT] GLOBAL POSTING SAFETY LOCK - WSP Compliant
 Critical safety module that prevents ALL social media posting until verification system is working.
 
 WSP Compliance:
@@ -21,14 +37,14 @@ logger = logging.getLogger(__name__)
 
 class PostingSafetyLock:
     """
-    🚨 GLOBAL SAFETY LOCK: Prevents all social media posting until verification works
+    [ALERT] GLOBAL SAFETY LOCK: Prevents all social media posting until verification works
 
     This class provides methods that can be called from ANY posting module to ensure
     safety protocols are enforced before any social media posting occurs.
     """
 
     SAFETY_ENABLED = False  # Master switch - disabled to allow posting (verification is now working)
-    SAFETY_MESSAGE = "🚨 [GLOBAL SAFETY] SOCIAL MEDIA POSTING DISABLED - VERIFICATION SYSTEM MALFUNCTION"
+    SAFETY_MESSAGE = "[ALERT] [GLOBAL SAFETY] SOCIAL MEDIA POSTING DISABLED - VERIFICATION SYSTEM MALFUNCTION"
 
     @classmethod
     def is_posting_allowed(cls) -> bool:
@@ -41,8 +57,8 @@ class PostingSafetyLock:
         """
         if cls.SAFETY_ENABLED:
             logger.error(cls.SAFETY_MESSAGE)
-            logger.error("💡 To re-enable posting, set PostingSafetyLock.SAFETY_ENABLED = False")
-            logger.error("💡 AFTER verifying the live verification system is working correctly")
+            logger.error("[IDEA] To re-enable posting, set PostingSafetyLock.SAFETY_ENABLED = False")
+            logger.error("[IDEA] AFTER verifying the live verification system is working correctly")
             return False
         return True
 
@@ -58,7 +74,7 @@ class PostingSafetyLock:
             False - Always blocks LinkedIn posting when safety is enabled
         """
         if cls.SAFETY_ENABLED:
-            logger.error(f"🚨 [LINKEDIN BLOCKED] {caller} attempted LinkedIn posting")
+            logger.error(f"[ALERT] [LINKEDIN BLOCKED] {caller} attempted LinkedIn posting")
             logger.error(cls.SAFETY_MESSAGE)
             return False
         return True
@@ -75,7 +91,7 @@ class PostingSafetyLock:
             False - Always blocks X posting when safety is enabled
         """
         if cls.SAFETY_ENABLED:
-            logger.error(f"🚨 [X BLOCKED] {caller} attempted X/Twitter posting")
+            logger.error(f"[ALERT] [X BLOCKED] {caller} attempted X/Twitter posting")
             logger.error(cls.SAFETY_MESSAGE)
             return False
         return True
@@ -93,7 +109,7 @@ class PostingSafetyLock:
             False - Always blocks posting when safety is enabled
         """
         if cls.SAFETY_ENABLED:
-            logger.error(f"🚨 [{platform.upper()} BLOCKED] {caller} attempted {platform} posting")
+            logger.error(f"[ALERT] [{platform.upper()} BLOCKED] {caller} attempted {platform} posting")
             logger.error(cls.SAFETY_MESSAGE)
             return False
         return True
@@ -114,11 +130,11 @@ class PostingSafetyLock:
         }
 
 
-# 🚨 EMERGENCY GLOBAL FUNCTIONS FOR IMMEDIATE USE
+# [ALERT] EMERGENCY GLOBAL FUNCTIONS FOR IMMEDIATE USE
 
 def global_posting_blocked(platform: str = "unknown", caller: str = "unknown") -> bool:
     """
-    🚨 GLOBAL FUNCTION: Check if posting is blocked system-wide
+    [ALERT] GLOBAL FUNCTION: Check if posting is blocked system-wide
 
     This function can be called from ANYWHERE to check posting safety.
 
@@ -134,11 +150,11 @@ def global_posting_blocked(platform: str = "unknown", caller: str = "unknown") -
 
 def emergency_posting_shutdown():
     """
-    🚨 EMERGENCY FUNCTION: Force shutdown all posting capabilities
+    [ALERT] EMERGENCY FUNCTION: Force shutdown all posting capabilities
     """
     PostingSafetyLock.SAFETY_ENABLED = True
-    logger.error("🚨 [EMERGENCY] ALL SOCIAL MEDIA POSTING FORCED SHUTDOWN")
-    logger.error("🚨 [EMERGENCY] SAFETY PROTOCOLS ACTIVATED")
+    logger.error("[ALERT] [EMERGENCY] ALL SOCIAL MEDIA POSTING FORCED SHUTDOWN")
+    logger.error("[ALERT] [EMERGENCY] SAFETY PROTOCOLS ACTIVATED")
 
 
 def check_posting_safety() -> Dict[str, Any]:
@@ -148,13 +164,13 @@ def check_posting_safety() -> Dict[str, Any]:
     return PostingSafetyLock.get_safety_status()
 
 
-# 🚨 AUTOMATIC SAFETY STATUS ON IMPORT
-logger.info("🔐 [GLOBAL SAFETY] PostingSafetyLock module imported")
+# [ALERT] AUTOMATIC SAFETY STATUS ON IMPORT
+logger.info("[U+1F510] [GLOBAL SAFETY] PostingSafetyLock module imported")
 if PostingSafetyLock.SAFETY_ENABLED:
-    logger.warning("🚨 [GLOBAL SAFETY] All social media posting is currently BLOCKED")
+    logger.warning("[ALERT] [GLOBAL SAFETY] All social media posting is currently BLOCKED")
 else:
-    logger.info("✅ [GLOBAL SAFETY] Social media posting is currently ALLOWED")
-logger.info("📊 [GLOBAL SAFETY] Safety status: " + str(check_posting_safety()))
+    logger.info("[OK] [GLOBAL SAFETY] Social media posting is currently ALLOWED")
+logger.info("[DATA] [GLOBAL SAFETY] Safety status: " + str(check_posting_safety()))
 
 # Export for easy importing
 __all__ = [

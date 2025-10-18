@@ -8,7 +8,7 @@
 ### QUANTUM TESTING OBJECTIVES
 - Validate system integrity through quantum test patterns
 - Ensure WSP compliance in all test execution
-- Maintain ≥90% test coverage per WSP-5
+- Maintain [GREATER_EQUAL]90% test coverage per WSP-5
 - Validate proper module/tests/ directory structure per WSP-49
 - Generate quantum-coherent coverage reports
 - Enable recursive self-improvement through WSP-48

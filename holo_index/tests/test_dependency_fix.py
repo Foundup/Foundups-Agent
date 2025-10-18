@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Dependency resolution testing for holo_index module
 WSP 3 Compliant: Located in holo_index/tests/ per proper module organization
 WSP 5 Compliant: Testing standards for dependency resolution
@@ -21,21 +37,21 @@ def test_dependency_resolution():
     try:
         # Import the DependencyAuditor directly to avoid corrupted import chain
         from holo_index.module_health.dependency_audit import DependencyAuditor
-        print("✅ Successfully imported DependencyAuditor")
+        print("[OK] Successfully imported DependencyAuditor")
     except ImportError as e:
-        print(f"❌ Failed to import DependencyAuditor: {e}")
+        print(f"[FAIL] Failed to import DependencyAuditor: {e}")
         return False
 
     # Create auditor focused on holo_index only
     try:
         auditor = DependencyAuditor(root_path=".", scan_path="holo_index")
-        print("✅ Created DependencyAuditor for holo_index focus")
+        print("[OK] Created DependencyAuditor for holo_index focus")
     except Exception as e:
-        print(f"❌ Failed to create auditor: {e}")
+        print(f"[FAIL] Failed to create auditor: {e}")
         return False
 
     # Test the new _module_to_file method directly
-    print("\n🔍 Testing module-to-file resolution...")
+    print("\n[SEARCH] Testing module-to-file resolution...")
 
     test_modules = [
         "holo_index.module_health.dependency_audit",
@@ -49,33 +65,33 @@ def test_dependency_resolution():
             if module_name == "holo_index":
                 file_path = Path(auditor.root_path) / "holo_index.py"
                 if file_path.exists():
-                    print(f"✅ Resolved {module_name} → {file_path.name}")
+                    print(f"[OK] Resolved {module_name} -> {file_path.name}")
                     success_count += 1
                 else:
-                    print(f"❌ Could not find {module_name}")
+                    print(f"[FAIL] Could not find {module_name}")
             elif module_name == "holo_index.module_health.dependency_audit":
                 file_path = Path(auditor.root_path) / "holo_index" / "module_health" / "dependency_audit.py"
                 if file_path.exists():
-                    print(f"✅ Resolved {module_name} → {file_path.name}")
+                    print(f"[OK] Resolved {module_name} -> {file_path.name}")
                     success_count += 1
                 else:
-                    print(f"❌ Could not find {module_name}")
+                    print(f"[FAIL] Could not find {module_name}")
             else:
-                print(f"⚠️ Skipping complex resolution for {module_name}")
+                print(f"[U+26A0]️ Skipping complex resolution for {module_name}")
         except Exception as e:
-            print(f"❌ Error resolving {module_name}: {e}")
+            print(f"[FAIL] Error resolving {module_name}: {e}")
 
     if success_count == len(test_modules):
-        print(f"\n✅ All {success_count} module resolutions successful")
+        print(f"\n[OK] All {success_count} module resolutions successful")
     else:
-        print(f"\n⚠️ {success_count}/{len(test_modules)} modules resolved successfully")
+        print(f"\n[U+26A0]️ {success_count}/{len(test_modules)} modules resolved successfully")
 
     # Test dependency scanning
-    print("\n🔍 Testing dependency scanning...")
+    print("\n[SEARCH] Testing dependency scanning...")
 
     try:
         results = auditor.audit_dependencies()
-        print("✅ Dependency audit completed")
+        print("[OK] Dependency audit completed")
 
         modules_found = len(results.get('modules', {}))
         dependencies_found = len(results.get('dependencies', {}))
@@ -90,12 +106,12 @@ def test_dependency_resolution():
             for issue in issues[:2]:  # Show first 2
                 print(f"   - {issue}")
         else:
-            print("   No issues detected ✅")
+            print("   No issues detected [OK]")
 
         return True
 
     except Exception as e:
-        print(f"❌ Dependency scanning failed: {e}")
+        print(f"[FAIL] Dependency scanning failed: {e}")
         return False
 
 def test_import_chain_validation():
@@ -110,25 +126,25 @@ def test_import_chain_validation():
         # Test that we can run a full audit (which validates import chains internally)
         try:
             results = auditor.audit_dependencies()
-            print("✅ Full dependency audit completed")
+            print("[OK] Full dependency audit completed")
             print(f"   Files processed: {results.get('files_processed', 'N/A')}")
             print(f"   Entry points: {len(results.get('entry_points', []))}")
 
             # Check if any issues were found during import processing
             issues = results.get('issues', [])
             if issues:
-                print(f"   ⚠️ Found {len(issues)} issues during processing")
+                print(f"   [U+26A0]️ Found {len(issues)} issues during processing")
             else:
-                print("   ✅ No import chain issues detected")
+                print("   [OK] No import chain issues detected")
 
             return True
 
         except Exception as e:
-            print(f"❌ Failed to run dependency audit: {e}")
+            print(f"[FAIL] Failed to run dependency audit: {e}")
             return False
 
     except Exception as e:
-        print(f"❌ Import chain test setup failed: {e}")
+        print(f"[FAIL] Import chain test setup failed: {e}")
         return False
 
 if __name__ == "__main__":
@@ -141,7 +157,7 @@ if __name__ == "__main__":
     success &= test_import_chain_validation()
 
     if success:
-        print("\n🎉 All dependency resolution tests passed!")
+        print("\n[CELEBRATE] All dependency resolution tests passed!")
     else:
-        print("\n❌ Some dependency resolution tests failed!")
+        print("\n[FAIL] Some dependency resolution tests failed!")
         sys.exit(1)

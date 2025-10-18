@@ -2,7 +2,7 @@
 Last Updated: 2025-09-24
 Discovered by: 0102 DAE Deep Analysis
 
-## 📋 Command Categories
+## [CLIPBOARD] Command Categories
 
 ### 1. MAGADOOM Gamification Commands (/slash)
 All go through throttling (5 tokens per API call)
@@ -16,7 +16,7 @@ All go through throttling (5 tokens per API call)
 | `/sprees` | - | Active killing sprees | 0 (local) | Yes |
 | `/help` | - | List available commands | 0 (local) | Yes |
 | `/quiz` | - | Political education quiz | 0 (local) | Yes |
-| `/facts` | - | 1933→2025 parallels | 0 (local) | Yes |
+| `/facts` | - | 1933->2025 parallels | 0 (local) | Yes |
 | `/session` | - | Session stats (MOD only) | 0 (local) | Yes |
 | `/toggle` | - | Toggle consciousness (OWNER) | 0 (local) | Yes |
 
@@ -49,32 +49,32 @@ These use pattern matching, not slash detection
 | `factcheck @user` | `fc @user` | Fact-check user | Medium |
 | `@user fc` | `@user factcheck` | Reverse order | Medium |
 
-### 5. Consciousness Triggers (✊✋🖐)
+### 5. Consciousness Triggers ([U+270A][U+270B][U+1F590])
 Uses Grok API (0102 consciousness mode)
 
 | Pattern | Purpose | Mode | API Cost |
 |---------|---------|------|----------|
-| `✊✋🖐 [question]` | Ask consciousness | mod_only/everyone | High |
-| `✊✋🖐 fc @user` | Conscious fact-check | mod_only/everyone | High |
-| `✊✋🖐 rate @user` | Conscious rating | mod_only/everyone | High |
+| `[U+270A][U+270B][U+1F590] [question]` | Ask consciousness | mod_only/everyone | High |
+| `[U+270A][U+270B][U+1F590] fc @user` | Conscious fact-check | mod_only/everyone | High |
+| `[U+270A][U+270B][U+1F590] rate @user` | Conscious rating | mod_only/everyone | High |
 
-## 🔄 Command Flow & Throttling
+## [REFRESH] Command Flow & Throttling
 
 ```
-User Input → message_processor.py
-    ↓
+User Input -> message_processor.py
+    v
 Check Command Type:
-    ├─ Slash Command? → command_handler.py
-    │   └─ Goes through throttle_manager.py
-    ├─ PQN Command? → pqn_orchestrator
-    │   └─ High API cost, throttled heavily
-    ├─ Factcheck? → fact_checker (Grok or Simple)
-    │   └─ Medium throttling
-    └─ Consciousness? → consciousness_handler.py
-        └─ Highest API cost, maximum throttling
+    +- Slash Command? -> command_handler.py
+    [U+2502]   +- Goes through throttle_manager.py
+    +- PQN Command? -> pqn_orchestrator
+    [U+2502]   +- High API cost, throttled heavily
+    +- Factcheck? -> fact_checker (Grok or Simple)
+    [U+2502]   +- Medium throttling
+    +- Consciousness? -> consciousness_handler.py
+        +- Highest API cost, maximum throttling
 ```
 
-## 💰 API Token Costs
+## [U+1F4B0] API Token Costs
 
 ### YouTube API Costs (per call)
 - `liveChatMessages.list`: 5 units (polling)
@@ -94,7 +94,7 @@ Check Command Type:
 - **Cost Management**: Grok API calls are expensive
 - **User Experience**: Ensure responses for everyone
 
-## 🚀 Discovery System Integration
+## [ROCKET] Discovery System Integration
 
 The new discovery_feeder.py automatically:
 1. Records new commands as they're found
@@ -102,7 +102,7 @@ The new discovery_feeder.py automatically:
 3. Learns from typos and creates aliases
 4. Updates this documentation automatically
 
-## 📝 Implementation Files
+## [NOTE] Implementation Files
 
 - **Command Recognition**: `message_processor.py:680-694`
 - **Command Handling**: `command_handler.py:50-287`
@@ -111,7 +111,7 @@ The new discovery_feeder.py automatically:
 - **Consciousness**: `consciousness_handler.py:151-242`
 - **Throttling**: `intelligent_throttle_manager.py:200-300`
 
-## 🔍 Quick Lookup
+## [SEARCH] Quick Lookup
 
 To find a command implementation:
 ```bash
@@ -119,7 +119,7 @@ python holo_index.py --search "[command name]"
 # Now includes all typo variants and aliases!
 ```
 
-## 📊 Statistics
+## [DATA] Statistics
 - **Total Commands**: 37 distinct patterns
 - **Active Commands**: 17
 - **Deprecated**: 5
@@ -128,7 +128,7 @@ python holo_index.py --search "[command name]"
 - **Discovery Date**: 2025-09-24
 - **Discovery Method**: 0102 DAE Deep Analysis
 
-## 🧠 Future Improvements
+## [AI] Future Improvements
 - [ ] Auto-generate help text from this doc
 - [ ] Create command usage analytics
 - [ ] Add command success/failure tracking

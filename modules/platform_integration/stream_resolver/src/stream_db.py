@@ -109,7 +109,7 @@ class StreamResolverDB(ModuleDB):
         Check if a stream has recently ended (within threshold hours).
         This prevents re-detecting old streams as live while allowing for restarted streams.
 
-        🤖🧠 [QWEN] Intelligence: Learn from past detections to prevent false positives
+        [BOT][AI] [QWEN] Intelligence: Learn from past detections to prevent false positives
                                   BUT allow streams that ended >6h ago to be re-detected
 
         Args:
@@ -136,10 +136,10 @@ class StreamResolverDB(ModuleDB):
             hours_since_end = (datetime.now() - end_time).total_seconds() / 3600
 
             if hours_since_end < hours_threshold:
-                logger.info(f"🤖🧠 [QWEN-DB] Stream {video_id} ended {hours_since_end:.1f}h ago (<{hours_threshold}h) - preventing false positive")
+                logger.info(f"[BOT][AI] [QWEN-DB] Stream {video_id} ended {hours_since_end:.1f}h ago (<{hours_threshold}h) - preventing false positive")
                 return True
             else:
-                logger.info(f"🤖🧠 [QWEN-DB] Stream {video_id} ended {hours_since_end:.1f}h ago (>{hours_threshold}h) - allowing re-detection (may have restarted)")
+                logger.info(f"[BOT][AI] [QWEN-DB] Stream {video_id} ended {hours_since_end:.1f}h ago (>{hours_threshold}h) - allowing re-detection (may have restarted)")
                 return False
 
         return False
@@ -148,7 +148,7 @@ class StreamResolverDB(ModuleDB):
         """
         Get the most recent stream for a channel within the specified hours.
 
-        🤖🧠 [QWEN] Intelligence: Track recent streams to avoid duplicate detection
+        [BOT][AI] [QWEN] Intelligence: Track recent streams to avoid duplicate detection
         """
         cutoff = (datetime.now() - timedelta(hours=hours)).isoformat()
         result = self.select(
@@ -157,7 +157,7 @@ class StreamResolverDB(ModuleDB):
             (channel_id, cutoff)
         )
         if result:
-            logger.info(f"🤖🧠 [QWEN-DB] Found recent stream for {channel_id}: {result[0]['video_id']}")
+            logger.info(f"[BOT][AI] [QWEN-DB] Found recent stream for {channel_id}: {result[0]['video_id']}")
             return result[0]
         return None
 

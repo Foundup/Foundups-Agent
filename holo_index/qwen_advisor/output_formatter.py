@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Output Formatter - Clean, actionable console output for 0102
 
 Based on 012's observations: The output 0102 sees is the choke point.
@@ -55,7 +71,7 @@ class HoloOutputFormatter:
         code_hits = len(search_results.get('code', []))
         wsp_hits = len(search_results.get('wsps', []))
         self.summary_lines.append(
-            f"  - Search: \"{query}\" → {code_hits} code hits, {wsp_hits} WSP docs"
+            f"  - Search: \"{query}\" -> {code_hits} code hits, {wsp_hits} WSP docs"
         )
 
         # Modules flagged

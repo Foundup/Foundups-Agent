@@ -53,7 +53,7 @@ class WSPAdaptiveRouterIntegrator:
             if 'tokens' in content.lower() or 'token_budget' in content.lower():
                 compliance['wsp_75_token_based'] = True
 
-            # WSP 54: Agentic duties (Gemma partner → Qwen principal → 0102 associate)
+            # WSP 54: Agentic duties (Gemma partner -> Qwen principal -> 0102 associate)
             if 'partner' in content.lower() or 'principal' in content.lower():
                 compliance['wsp_54_agentic_duties'] = True
 

@@ -21,7 +21,7 @@ print()
 success = poster.post_to_company_page(content)
 
 if success:
-    print(f"✅ LinkedIn browser opened successfully!")
+    print(f"[OK] LinkedIn browser opened successfully!")
     print(f"   Browser should be open for manual posting")
 else:
-    print(f"❌ Failed to open LinkedIn browser")
+    print(f"[FAIL] Failed to open LinkedIn browser")

@@ -17,18 +17,18 @@ Enhance agentic_output_throttler.py to detect and fix Unicode violations in real
 
 ### Current Flow
 ```
-HoloIndex Search → Qwen Orchestrator → Output Throttler → Console
-                                              ↓
+HoloIndex Search -> Qwen Orchestrator -> Output Throttler -> Console
+                                              v
                                     Priority filtering only
                                     (no Unicode detection)
 ```
 
 ### Desired Flow
 ```
-HoloIndex Search → Qwen Orchestrator → Output Throttler → Unicode Fixer → Console
-                                              ↓                  ↓
+HoloIndex Search -> Qwen Orchestrator -> Output Throttler -> Unicode Fixer -> Console
+                                              v                  v
                                     Priority filtering    Pattern matching
-                                    Noise reduction       Emoji → ASCII
+                                    Noise reduction       Emoji -> ASCII
 ```
 
 ## Execute These Steps (Validate After Each)
@@ -147,7 +147,7 @@ def render_prioritized_output(self, verbose: bool = False) -> str:
 **Validate**: Test with all three agent types:
 ```bash
 # Test as 0102 (default)
-python holo_index.py --search "test" 2>&1 | grep "\[OK\]"  # Should see [OK] not ✅
+python holo_index.py --search "test" 2>&1 | grep "\[OK\]"  # Should see [OK] not [OK]
 
 # Test as qwen (requires env var set in qwen context)
 # Qwen will receive clean JSON with no emoji characters
@@ -222,11 +222,11 @@ python -c "from holo_index.output.agentic_output_throttler import AgenticOutputT
 ```
 
 ## Success Criteria
-- ✅ Unicode fixer integrated into output throttler
-- ✅ Real-time emoji → ASCII conversion working
-- ✅ First principles noise detection implemented
-- ✅ No breaking changes to existing output
-- ✅ Logging shows when fixes applied
+- [OK] Unicode fixer integrated into output throttler
+- [OK] Real-time emoji -> ASCII conversion working
+- [OK] First principles noise detection implemented
+- [OK] No breaking changes to existing output
+- [OK] Logging shows when fixes applied
 
 ## Integration Points
 
@@ -263,7 +263,7 @@ python -c "from holo_index.output.agentic_output_throttler import AgenticOutputT
 ## Submission
 After completing all 3 steps and validating each:
 - Report: "Task 4 complete - Real-time Unicode filtering integrated"
-- Show test results with emoji → ASCII conversion
+- Show test results with emoji -> ASCII conversion
 - Ready for 0102 review
 
 ## Time Estimate
@@ -281,15 +281,15 @@ After completing all 3 steps and validating each:
 ```bash
 # 0102 (Claude)
 $ python holo_index.py --search "test"
-🔴 [SYSTEM ERROR] Fatal error...  # cp932 crash!
+[U+1F534] [SYSTEM ERROR] Fatal error...  # cp932 crash!
 UnicodeEncodeError: 'cp932' codec can't encode character...
 
 # Qwen (1.5B)
-{"state": "error", "action": "fix_error_then_retry", "priority": "🔥 high"}
+{"state": "error", "action": "fix_error_then_retry", "priority": "[U+1F525] high"}
 # JSON parsing breaks on emoji!
 
 # Gemma (270M)
-ERROR|retry_needed|check_logs_🔴
+ERROR|retry_needed|check_logs_[U+1F534]
 # Binary classification confused by emoji noise
 ```
 

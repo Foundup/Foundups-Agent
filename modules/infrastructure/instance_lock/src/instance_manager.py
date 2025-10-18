@@ -1,6 +1,22 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Instance Lock Manager - prevents multiple YouTube monitor instances.
 """
 
@@ -246,7 +262,7 @@ class InstanceLock:
         closed_count = 0
         browser_names = ["chrome.exe", "msedge.exe", "msedgedriver.exe", "chromedriver.exe"]
 
-        logger.info("🔍 Checking for stale browser windows...")
+        logger.info("[SEARCH] Checking for stale browser windows...")
 
         for process in psutil.process_iter(["pid", "name", "cmdline"]):
             try:
@@ -266,11 +282,11 @@ class InstanceLock:
                         "user-data-dir"
                     ]):
                         pid = process.info.get("pid")
-                        logger.warning(f"🚨 Found stale browser: {process_name} (PID: {pid})")
+                        logger.warning(f"[ALERT] Found stale browser: {process_name} (PID: {pid})")
                         try:
                             process.terminate()
                             closed_count += 1
-                            logger.info(f"✅ Terminated {process_name} (PID: {pid})")
+                            logger.info(f"[OK] Terminated {process_name} (PID: {pid})")
                         except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                             logger.warning(f"Could not terminate {process_name}: {e}")
 
@@ -278,9 +294,9 @@ class InstanceLock:
                 continue
 
         if closed_count > 0:
-            logger.info(f"🧹 Cleaned up {closed_count} stale browser window(s)")
+            logger.info(f"[U+1F9F9] Cleaned up {closed_count} stale browser window(s)")
         else:
-            logger.info("✅ No stale browser windows found")
+            logger.info("[OK] No stale browser windows found")
 
         return closed_count
 
@@ -431,7 +447,7 @@ class InstanceLock:
             logger.warning("Found duplicate YouTube monitors: %s", duplicates)
             # Only show detailed output if not in quiet mode (for menu usage)
             if not quiet:
-                print("\n🔴 Duplicate main.py Instances Detected!")
+                print("\n[U+1F534] Duplicate main.py Instances Detected!")
                 print(f"\n  Found {len(duplicates)} instances of main.py running:")
                 print()
 

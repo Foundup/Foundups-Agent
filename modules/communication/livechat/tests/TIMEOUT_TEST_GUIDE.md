@@ -1,7 +1,7 @@
 # Mod Timeout Testing Guide
 
 ## Test Setup
-1. Bot must be running: `python main.py` → Option 1
+1. Bot must be running: `python main.py` -> Option 1
 2. You must be a MOD or OWNER in the stream
 3. Have some test users ready to timeout
 
@@ -94,12 +94,12 @@ The database tracks:
 
 ## Success Metrics
 
-✅ **PoC Success:**
+[OK] **PoC Success:**
 - [ ] Basic timeout command works
 - [ ] Points are awarded
 - [ ] Database saves timeout history
 
-✅ **Anti-Gaming Success:**
+[OK] **Anti-Gaming Success:**
 - [ ] Repeat timeouts detected
 - [ ] Spam prevention active
 - [ ] Daily limits enforced

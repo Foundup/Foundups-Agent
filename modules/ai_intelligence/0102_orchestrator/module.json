@@ -62,11 +62,11 @@
   },
   "wsp_compliance": {
     "version": "1.0",
-    "domain_placement": "✅ ai_intelligence",
-    "test_coverage": "≥90%",
-    "interface_definition": "✅ INTERFACE.md",
-    "dependency_management": "✅ requirements.txt",
-    "documentation": "✅ README.md"
+    "domain_placement": "[OK] ai_intelligence",
+    "test_coverage": "[GREATER_EQUAL]90%",
+    "interface_definition": "[OK] INTERFACE.md",
+    "dependency_management": "[OK] requirements.txt",
+    "documentation": "[OK] README.md"
   },
   "testing": {
     "test_framework": "pytest",
@@ -78,7 +78,7 @@
   "roadmap": {
     "phase_1_poc": {
       "version": "0.0.x",
-      "status": "✅ Complete",
+      "status": "[OK] Complete",
       "features": [
         "Basic natural language processing",
         "Console notifications",
@@ -89,7 +89,7 @@
     },
     "phase_2_nlp": {
       "version": "0.1.x", 
-      "status": "🔄 Planned",
+      "status": "[REFRESH] Planned",
       "features": [
         "Advanced language model integration",
         "Improved entity recognition",

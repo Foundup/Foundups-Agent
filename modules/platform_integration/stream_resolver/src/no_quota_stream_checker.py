@@ -9,9 +9,13 @@ Uses direct HTTP requests to check stream status
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -57,7 +61,7 @@ class NoQuotaStreamChecker:
         # Only initialize when actually needed for API verification
         self.live_verifier = None
         self._live_verifier_initialized = False
-        logger.info("🌐 NO-QUOTA mode: Web scraping with API verification fallback (lazy-loaded to prevent circular dependency)")
+        logger.info("[U+1F310] NO-QUOTA mode: Web scraping with API verification fallback (lazy-loaded to prevent circular dependency)")
 
         # Pool of realistic User-Agents (2024)
         self.USER_AGENTS = [
@@ -72,9 +76,9 @@ class NoQuotaStreamChecker:
         # Initialize database for QWEN intelligence and history tracking
         try:
             self.stream_db = StreamResolverDB()
-            logger.info("🤖🧠 [QWEN] Stream database initialized for intelligent detection")
+            logger.info("[BOT][AI] [QWEN] Stream database initialized for intelligent detection")
         except Exception as e:
-            logger.warning(f"🤖🧠 [QWEN] Database init failed, continuing without DB: {e}")
+            logger.warning(f"[BOT][AI] [QWEN] Database init failed, continuing without DB: {e}")
             self.stream_db = None
 
         self.channel_cooldowns = {}
@@ -89,9 +93,9 @@ class NoQuotaStreamChecker:
                 from modules.platform_integration.social_media_orchestrator.src.core.live_status_verifier import LiveStatusVerifier
                 self.live_verifier = LiveStatusVerifier()
                 self._live_verifier_initialized = True
-                logger.info("✅ Lazy-loaded LiveStatusVerifier for API verification fallback")
+                logger.info("[OK] Lazy-loaded LiveStatusVerifier for API verification fallback")
             except Exception as e:
-                logger.warning(f"⚠️ Failed to lazy-load LiveStatusVerifier: {e}")
+                logger.warning(f"[U+26A0]️ Failed to lazy-load LiveStatusVerifier: {e}")
                 self.live_verifier = None
                 self._live_verifier_initialized = True  # Don't try again
 
@@ -148,7 +152,7 @@ class NoQuotaStreamChecker:
         self.channel_cooldowns[channel_id] = time.time() + cooldown
         self.last_rate_limit = time.time()
         name = channel_name or channel_id
-        logger.warning(f"⚠️ Rate limit triggered for {name} – holding for {cooldown:.0f}s before retry")
+        logger.warning(f"[U+26A0]️ Rate limit triggered for {name} – holding for {cooldown:.0f}s before retry")
         return cooldown
 
     def check_video_is_live(self, video_id: str, channel_name: str = None) -> Dict[str, Any]:
@@ -157,8 +161,8 @@ class NoQuotaStreamChecker:
 
         FIRST PRINCIPLES STRATEGY (daemon-friendly):
         1. Use NO-QUOTA scraping to check if video appears live (0 cost, fast pre-filter)
-        2. Only if scraping indicates "appears live" → Use API for confirmation (1 unit, accurate)
-        3. If scraping indicates "definitely not live" → Skip API entirely (0 cost)
+        2. Only if scraping indicates "appears live" -> Use API for confirmation (1 unit, accurate)
+        3. If scraping indicates "definitely not live" -> Skip API entirely (0 cost)
 
         This preserves API quota for daemons that run 24/7 while maintaining accuracy.
 
@@ -184,7 +188,7 @@ class NoQuotaStreamChecker:
 
             # Detect CAPTCHA redirect to Google sorry page
             if 'google.com/sorry' in response.url or 'www.google.com/sorry' in response.url:
-                logger.warning(f"⚠️ CAPTCHA detected - YouTube redirected to Google verification page")
+                logger.warning(f"[U+26A0]️ CAPTCHA detected - YouTube redirected to Google verification page")
                 logger.warning(f"  Triggered URL: {url}")
                 return {"live": False, "captcha": True}
 
@@ -209,23 +213,23 @@ class NoQuotaStreamChecker:
             )
 
             if not has_any_live_indicator:
-                logger.info(f"❌ SCRAPING PRE-FILTER: No live indicators found for {video_id}")
+                logger.info(f"[FAIL] SCRAPING PRE-FILTER: No live indicators found for {video_id}")
                 logger.info(f"  • Method: Scraping pre-filter (0 API units saved)")
                 return {"live": False, "method": "scraping_prefilter"}
 
             # If we have live indicators, proceed to API verification for accuracy
-            logger.info(f"✅ SCRAPING PRE-FILTER: Found live indicators for {video_id}")
+            logger.info(f"[OK] SCRAPING PRE-FILTER: Found live indicators for {video_id}")
             logger.info(f"  • Proceeding to API confirmation (1 API unit)")
 
         except Exception as e:
-            logger.warning(f"⚠️ Scraping pre-filter failed: {e}, falling back to direct API check")
+            logger.warning(f"[U+26A0]️ Scraping pre-filter failed: {e}, falling back to direct API check")
             # Fall through to API check if scraping fails
 
         # PRIORITY 2: API verification only for videos that appear live (1 unit cost)
         # NOTE: Do NOT call LiveStatusVerifier.verify_live_status() as it creates circular dependency
         # Instead, call the YouTube API directly here
         logger.info("="*60)
-        logger.info("🔌 FINAL VERIFICATION: API CONFIRMATION")
+        logger.info("[U+1F50C] FINAL VERIFICATION: API CONFIRMATION")
         logger.info(f"  • Video ID: {video_id} (pre-filtered candidate)")
         logger.info(f"  • Method: YouTube API (1 unit - only for promising candidates)")
         logger.info(f"  • Strategy: Efficient quota usage for 24/7 daemon")
@@ -255,27 +259,27 @@ class NoQuotaStreamChecker:
             is_live = live_broadcast == 'live'
 
             if is_live:
-                logger.info(f"✅ API confirmed: {video_id} is LIVE")
+                logger.info(f"[OK] API confirmed: {video_id} is LIVE")
                 return {"live": True, "video_id": video_id, "method": "api"}
             else:
-                logger.info(f"❌ API confirmed: {video_id} is NOT live (status: {live_broadcast})")
+                logger.info(f"[FAIL] API confirmed: {video_id} is NOT live (status: {live_broadcast})")
                 return {"live": False, "method": "api", "status": live_broadcast}
 
         except Exception as e:
             error_str = str(e).lower()
             # Check if this is a quota-related error that should trigger rotation
             if any(phrase in error_str for phrase in ['quota', 'limit exceeded', 'daily limit', 'rate limit']):
-                logger.warning(f"⚠️ API quota exhausted during verification: {e}")
+                logger.warning(f"[U+26A0]️ API quota exhausted during verification: {e}")
                 logger.info(f"[QUOTA] Returning rate_limited status to trigger rotation upstream")
                 return {"live": False, "rate_limited": True, "method": "api", "error": str(e)}
             else:
-                logger.warning(f"⚠️ API verification failed (non-quota): {e}, using scraping result")
+                logger.warning(f"[U+26A0]️ API verification failed (non-quota): {e}, using scraping result")
                 # Since scraping showed live indicators, assume live if API fails non-quota
                 return {"live": True, "video_id": video_id, "method": "scraping_fallback"}
 
         # PRIORITY 3: Ultimate fallback - comprehensive scraping if API unavailable
         logger.info("="*60)
-        logger.info("🌐 ULTIMATE FALLBACK: COMPREHENSIVE SCRAPING")
+        logger.info("[U+1F310] ULTIMATE FALLBACK: COMPREHENSIVE SCRAPING")
         logger.info(f"  • Video ID: {video_id} (final verification)")
         logger.info(f"  • Method: Full scraping analysis (0 API units)")
         logger.info("="*60)
@@ -290,7 +294,7 @@ class NoQuotaStreamChecker:
 
             # Detect CAPTCHA redirect to Google sorry page
             if 'google.com/sorry' in response.url or 'www.google.com/sorry' in response.url:
-                logger.warning(f"⚠️ CAPTCHA detected - YouTube redirected to Google verification page")
+                logger.warning(f"[U+26A0]️ CAPTCHA detected - YouTube redirected to Google verification page")
                 logger.warning(f"  Triggered URL: {url}")
                 return {"live": False, "rate_limited": True, "captcha": True}
 
@@ -368,12 +372,12 @@ class NoQuotaStreamChecker:
             logger.info(f"  - Ended Signals: {ended_signals} (threshold: 2)")
             logger.info(f"  - Is Ended: {is_ended}")
 
-            # 🤖🧠 [QWEN] Check database to prevent false positives from old streams
+            # [BOT][AI] [QWEN] Check database to prevent false positives from old streams
             if self.stream_db and not is_ended:
                 # Check if this stream has already been detected and ended
                 if self.stream_db.is_stream_already_ended(video_id):
                     is_ended = True
-                    logger.info(f"🤖🧠 [QWEN-DB] Stream {video_id} was already detected and ended - preventing false positive")
+                    logger.info(f"[BOT][AI] [QWEN-DB] Stream {video_id} was already detected and ended - preventing false positive")
 
             # Stream is only live if:
             # 1. Has STRONG live indicators (score >= 3) or
@@ -396,13 +400,13 @@ class NoQuotaStreamChecker:
                 is_live = ((live_score >= 3 or has_is_live_now) and not is_ended)
 
             if is_live:
-                logger.info(f"✅ Stream appears to be CURRENTLY live (score: {live_score})")
+                logger.info(f"[OK] Stream appears to be CURRENTLY live (score: {live_score})")
             elif is_ended and live_score > 0:
-                logger.info(f"❌ Stream has ended (old stream) - score: {live_score}")
+                logger.info(f"[FAIL] Stream has ended (old stream) - score: {live_score}")
             elif live_score == 0:
-                logger.info(f"❌ Not a stream video (regular video) - score: {live_score}")
+                logger.info(f"[FAIL] Not a stream video (regular video) - score: {live_score}")
             else:
-                logger.info(f"❌ Not currently live (score: {live_score}/3 required, needs isLiveNow or badge)")
+                logger.info(f"[FAIL] Not currently live (score: {live_score}/3 required, needs isLiveNow or badge)")
 
             # Extract initial data JSON
             initial_data_match = re.search(r'var ytInitialData = ({.*?});', html)
@@ -535,7 +539,7 @@ class NoQuotaStreamChecker:
             if is_live:
                 # Include channel name in success message too
                 display_name = channel_name if channel_name else channel if channel else "Unknown"
-                logger.info(f"✅ STREAM IS LIVE on {display_name} (detected via scraping)")
+                logger.info(f"[OK] STREAM IS LIVE on {display_name} (detected via scraping)")
                 logger.info(f"  • Channel: {channel}")
                 logger.info(f"  • Title: {title}")
                 logger.info(f"  • Video ID: {video_id} (for {display_name})")
@@ -547,7 +551,7 @@ class NoQuotaStreamChecker:
                 logger.info(f"  • Video ID: {video_id} (for {display_name})")
                 logger.info("  • Status: Not currently live")
             else:
-                logger.info("❌ NOT A STREAM (regular video or not found)")
+                logger.info("[FAIL] NOT A STREAM (regular video or not found)")
 
             # Use provided channel_name with emoji if available, otherwise use scraped name
             display_channel = channel_name if channel_name else channel
@@ -556,9 +560,9 @@ class NoQuotaStreamChecker:
             # Note: QWEN integration happens at the YouTube DAE level, not here
             if display_channel:
                 if is_live:
-                    logger.info(f"🤖🧠 [QWEN-PATTERN] Live stream detected for {display_channel}")
+                    logger.info(f"[BOT][AI] [QWEN-PATTERN] Live stream detected for {display_channel}")
                 else:
-                    logger.info(f"🤖🧠 [QWEN-CHECK] {display_channel} checked - no stream active")
+                    logger.info(f"[BOT][AI] [QWEN-CHECK] {display_channel} checked - no stream active")
 
             result = {
                 "live": is_live,
@@ -569,9 +573,9 @@ class NoQuotaStreamChecker:
             }
 
             if is_live:
-                logger.info(f"✅ Found live stream on {display_channel}: {title}")
+                logger.info(f"[OK] Found live stream on {display_channel}: {title}")
             else:
-                logger.info(f"❌ No live stream found on {display_channel}")
+                logger.info(f"[FAIL] No live stream found on {display_channel}")
 
             return result
 
@@ -627,7 +631,7 @@ class NoQuotaStreamChecker:
         for live_url in urls_to_try:
             try:
                 logger.info("")
-                logger.info("🔍 NO-QUOTA CHANNEL CHECK")
+                logger.info("[SEARCH] NO-QUOTA CHANNEL CHECK")
                 logger.info(f"  • Channel ID: {channel_id}")
                 logger.info(f"  • Trying URL: {live_url}")
                 logger.info(f"  • Method: NO-QUOTA detection (0 API units)")
@@ -705,9 +709,9 @@ class NoQuotaStreamChecker:
                                     )
                                     if qwen_validation.get('alternative_selection'):
                                         videos_to_check = qwen_validation['alternative_selection']
-                                        logger.info(f"🤖🧠 [QWEN-SELECT] Qwen optimized video selection: {videos_to_check}")
+                                        logger.info(f"[BOT][AI] [QWEN-SELECT] Qwen optimized video selection: {videos_to_check}")
                                 except Exception as e:
-                                    logger.debug(f"🤖🧠 [QWEN-SELECT] Validation failed: {e}")
+                                    logger.debug(f"[BOT][AI] [QWEN-SELECT] Validation failed: {e}")
 
                             # Try the selected video IDs
                             for idx, video_id in enumerate(videos_to_check):

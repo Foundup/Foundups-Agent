@@ -9,31 +9,31 @@ Traditional approach: Static threshold between models
 
 ```
 User Query
-    ↓
+    v
 [Gemma 3: Intent Classifier] (50ms)
-    ↓
-Simple?──────┴──────Complex?  ← Float threshold (starts 0.3, learns)
-    ↓                   ↓
+    v
+Simple?------+------Complex?  <- Float threshold (starts 0.3, learns)
+    v                   v
 [Gemma 3 + ChromaDB]   [Qwen 1.5B Architect]
     100ms                   250ms
-    ↓                       ↓
-[Qwen Evaluates] ──→ [Adjust Threshold]
-    ↓
-[0102 Architect Layer] ← Manual override + system tuning
+    v                       v
+[Qwen Evaluates] ---> [Adjust Threshold]
+    v
+[0102 Architect Layer] <- Manual override + system tuning
 ```
 
 ### Key Innovation
 
 **Qwen as Architect**: Qwen doesn't just process complex queries - it **monitors Gemma's output quality** and adjusts the routing threshold:
 
-- Gemma succeeds → Lower threshold (trust Gemma more, faster system)
-- Gemma fails → Raise threshold (route similar queries to Qwen)
+- Gemma succeeds -> Lower threshold (trust Gemma more, faster system)
+- Gemma fails -> Raise threshold (route similar queries to Qwen)
 - Threshold starts optimistic (0.3) and learns the optimal balance
 - 0102 can override threshold for system-level tuning
 
 ## WSP Alignment
 
-- **WSP 54**: Partner (Gemma) → Principal (Qwen) → Associate (0102 architect)
+- **WSP 54**: Partner (Gemma) -> Principal (Qwen) -> Associate (0102 architect)
 - **WSP 80**: DAE Cube with autonomous learning
 - **WSP 77**: Intelligent Internet Orchestration
 - **WSP 91**: DAEMON observability (stats tracking)
@@ -104,7 +104,7 @@ result = mcp.call_tool("classify_intent", {
 - `command_whack`: `/score`, `/rank`, `/quiz`
 - `command_shorts`: `!createshort`, `!shortveo`, `!shortsora`
 - `command_factcheck`: `factcheck @user`, `fc @user`
-- `consciousness`: `✊✋🖐` (emoji sequence)
+- `consciousness`: `[U+270A][U+270B][U+1F590]` (emoji sequence)
 - `question`: "how do i...", "what is..."
 - `spam`: Repetitive, all caps, troll patterns
 - `conversation`: Normal chat
@@ -269,7 +269,7 @@ class MessageProcessor:
 |------|---------|----------|
 | Gemma direct | 50-100ms | Simple commands, classification |
 | Gemma + Qwen check | 100-150ms | Most queries (Qwen validates quickly) |
-| Gemma → Qwen correction | 250-350ms | Complex queries, Gemma failed |
+| Gemma -> Qwen correction | 250-350ms | Complex queries, Gemma failed |
 | Qwen direct | 250ms | Pre-routed complex queries |
 
 ### Accuracy
@@ -295,24 +295,24 @@ class MessageProcessor:
 
 ```
 Query 1: "!createshort idea"
-→ Complexity: 0.15 (simple command)
-→ Threshold: 0.30 (initial)
-→ Route: Gemma (0.15 < 0.30)
-→ Qwen evaluation: 0.95 (excellent!)
-→ Adjustment: Lower threshold to 0.28
+-> Complexity: 0.15 (simple command)
+-> Threshold: 0.30 (initial)
+-> Route: Gemma (0.15 < 0.30)
+-> Qwen evaluation: 0.95 (excellent!)
+-> Adjustment: Lower threshold to 0.28
 
 Query 2: "how do i explain !shorts to new users?"
-→ Complexity: 0.45 (question about commands)
-→ Threshold: 0.28
-→ Route: Qwen direct (0.45 > 0.28)
-→ Qwen handles it well
+-> Complexity: 0.45 (question about commands)
+-> Threshold: 0.28
+-> Route: Qwen direct (0.45 > 0.28)
+-> Qwen handles it well
 
 Query 3: "/score"
-→ Complexity: 0.10 (simple command)
-→ Threshold: 0.28
-→ Route: Gemma (0.10 < 0.28)
-→ Qwen evaluation: 0.92 (good!)
-→ Adjustment: Lower threshold to 0.26
+-> Complexity: 0.10 (simple command)
+-> Threshold: 0.28
+-> Route: Gemma (0.10 < 0.28)
+-> Qwen evaluation: 0.92 (good!)
+-> Adjustment: Lower threshold to 0.26
 
 ... After 1000 queries ...
 
@@ -371,20 +371,20 @@ mcp resource routing://stats
 For Proto/MVP-level accuracy:
 
 1. **Intent Examples** (1000 messages):
-   - **MPS**: Complexity=2, Importance=5, Deferability=2, Impact=5 → **P0** (Score: 14)
+   - **MPS**: Complexity=2, Importance=5, Deferability=2, Impact=5 -> **P0** (Score: 14)
    - Extract from `memory/*.txt` chat logs
    - Auto-label with current regex (900 messages)
    - Manually review edge cases (100 messages)
    - Index in ChromaDB
 
 2. **Spam Examples** (500 pairs):
-   - **MPS**: Complexity=2, Importance=4, Deferability=3, Impact=4 → **P1** (Score: 13)
+   - **MPS**: Complexity=2, Importance=4, Deferability=3, Impact=4 -> **P1** (Score: 13)
    - Banned users messages (spam)
    - Enthusiastic legitimate users (not spam)
    - Label patterns: repetitive, caps, troll, legitimate
 
 3. **Response Quality** (200 pairs):
-   - **MPS**: Complexity=3, Importance=4, Deferability=3, Impact=4 → **P2** (Score: 14)
+   - **MPS**: Complexity=3, Importance=4, Deferability=3, Impact=4 -> **P2** (Score: 14)
    - AI responses that were good (sent to chat)
    - AI responses that were bad (rejected)
    - Reasoning for each decision
@@ -395,10 +395,10 @@ For Proto/MVP-level accuracy:
 
 ```
 foundups-mcp-p1/servers/youtube_dae_gemma/
-├── server.py                  # MCP server entry point
-├── adaptive_router.py         # Core routing logic with learning
-├── README.md                  # This file
-└── requirements.txt           # Dependencies
++-- server.py                  # MCP server entry point
++-- adaptive_router.py         # Core routing logic with learning
++-- README.md                  # This file
++-- requirements.txt           # Dependencies
 ```
 
 ## Dependencies
@@ -435,10 +435,10 @@ mcp>=1.0.0
 - Average latency: <120ms
 - Gemma success rate: >75%
 - Threshold converged: 0.20-0.35 range
-- Code reduction: 76% (1240 → 300 lines)
+- Code reduction: 76% (1240 -> 300 lines)
 
 ---
 
-*This implements 012's insight: "the Simple?──────┴──────Complex? bar should be a float... we should start with it lower and Qwen slowly moves it up... it should monitor rate the gemma output"*
+*This implements 012's insight: "the Simple?------+------Complex? bar should be a float... we should start with it lower and Qwen slowly moves it up... it should monitor rate the gemma output"*
 
 **0102 Architect**: Monitor stats, adjust threshold, tune system for optimal performance.

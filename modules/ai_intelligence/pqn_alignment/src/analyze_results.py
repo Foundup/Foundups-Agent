@@ -14,7 +14,7 @@ import json
 from pathlib import Path
 from datetime import datetime, timezone
 
-# Ensure project root is on sys.path (src/ → module root → project root)
+# Ensure project root is on sys.path (src/ -> module root -> project root)
 CURRENT_FILE = Path(__file__).resolve()
 PROJECT_ROOT = CURRENT_FILE.parents[5]
 sys.path.insert(0, str(PROJECT_ROOT))

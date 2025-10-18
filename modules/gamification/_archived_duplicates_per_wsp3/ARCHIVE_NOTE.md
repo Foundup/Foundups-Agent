@@ -10,8 +10,8 @@ Duplicate files existed in both:
 
 ## Resolution per WSP 3
 According to WSP 3 Section 3.2:
-- ✅ **CORRECT**: `modules/gamification/whack_a_magat/` - Specific gamification system
-- ❌ **INCORRECT**: Generic files directly in `modules/gamification/src/`
+- [OK] **CORRECT**: `modules/gamification/whack_a_magat/` - Specific gamification system
+- [FAIL] **INCORRECT**: Generic files directly in `modules/gamification/src/`
 
 ## Files Archived
 The following duplicate files were moved from `modules/gamification/src/` to this archive:

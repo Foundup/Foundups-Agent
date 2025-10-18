@@ -64,7 +64,7 @@ class TimeoutTracker:
         if dedup_key in self.event_dedup_window:
             time_diff = current_time - self.event_dedup_window[dedup_key]
             if time_diff < self.dedup_window_seconds:
-                logger.debug(f"⏭️ Duplicate ban within {time_diff:.1f}s: {mod_name} → {target_name}")
+                logger.debug(f"⏭️ Duplicate ban within {time_diff:.1f}s: {mod_name} -> {target_name}")
                 return False, None
         
         # This is a valid new frag!
@@ -114,9 +114,9 @@ class TimeoutTracker:
         is_multi_whack = unique_targets > 1
         
         # Log the frag
-        frag_msg = f"🎯 FRAG #{self.mod_frag_counts[mod_id]}: {mod_name} → {target_name} ({ban_type})"
+        frag_msg = f"[TARGET] FRAG #{self.mod_frag_counts[mod_id]}: {mod_name} -> {target_name} ({ban_type})"
         if is_multi_whack:
-            frag_msg += f" | 🔥 MULTI-WHACK x{unique_targets}!"
+            frag_msg += f" | [U+1F525] MULTI-WHACK x{unique_targets}!"
         logger.info(frag_msg)
         
         # Debug: Show all moderator frag counts
@@ -125,7 +125,7 @@ class TimeoutTracker:
             name = self.mod_names.get(mid, mid[:8])
             mod_summary.append(f"{name}:{count}")
         if mod_summary:
-            logger.info(f"📊 Leaderboard: {' | '.join(mod_summary)}")
+            logger.info(f"[DATA] Leaderboard: {' | '.join(mod_summary)}")
         
         return True, {
             "mod_id": mod_id,

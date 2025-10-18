@@ -68,26 +68,26 @@ class OrphanAnalyzerPOC:
                    in_src, imports, docstring, domain, module):
         """Categorize orphan using heuristics."""
 
-        # RULE 1: Already archived → ARCHIVE
+        # RULE 1: Already archived -> ARCHIVE
         if archived or '_archive' in path:
             return 'ARCHIVE', 'Already in _archive folder - confirmed archival', 'P3', 0
 
-        # RULE 2: Test files → ARCHIVE (they shouldn't be in production anyway)
+        # RULE 2: Test files -> ARCHIVE (they shouldn't be in production anyway)
         if 'test' in filename.lower() or 'test' in path.lower():
             return 'ARCHIVE', 'Test file - not part of production execution', 'P3', 0
 
-        # RULE 3: Scripts folder → STANDALONE or DELETE
+        # RULE 3: Scripts folder -> STANDALONE or DELETE
         if is_script:
             if 'run_' in filename or 'setup_' in filename:
                 return 'STANDALONE', 'Standalone script - check if still needed', 'P2', 2
             else:
                 return 'DELETE', 'Utility script likely superseded by main.py', 'P3', 0
 
-        # RULE 4: Looks like DAE → STANDALONE (potential new entry point)
+        # RULE 4: Looks like DAE -> STANDALONE (potential new entry point)
         if is_dae:
             return 'STANDALONE', 'Appears to be DAE entry point - evaluate for main.py integration', 'P1', 8
 
-        # RULE 5: In src/ folder → INTEGRATE (should be imported by module)
+        # RULE 5: In src/ folder -> INTEGRATE (should be imported by module)
         if in_src:
             # Check module domain for priority
             if domain in ['communication', 'platform_integration']:
@@ -105,21 +105,21 @@ class OrphanAnalyzerPOC:
 
             return 'INTEGRATE', reason, priority, effort
 
-        # RULE 6: Has many imports → INTEGRATE or STANDALONE
+        # RULE 6: Has many imports -> INTEGRATE or STANDALONE
         if len(imports) > 5:
             return 'INTEGRATE', 'Complex module with dependencies - likely functional', 'P1', 8
 
-        # RULE 7: Experimental or POC keywords → ARCHIVE
+        # RULE 7: Experimental or POC keywords -> ARCHIVE
         experimental_keywords = ['experiment', 'poc', 'demo', 'test', 'temp', 'old', 'backup']
         if any(kw in filename.lower() or kw in path.lower() for kw in experimental_keywords):
             return 'ARCHIVE', 'Experimental/POC code - archive for reference', 'P3', 0
 
-        # RULE 8: Duplicate pattern (v2, _old, _new, _fixed) → DELETE
+        # RULE 8: Duplicate pattern (v2, _old, _new, _fixed) -> DELETE
         duplicate_patterns = ['_v2', '_old', '_new', '_fixed', '_backup', '_copy']
         if any(pattern in filename.lower() for pattern in duplicate_patterns):
             return 'DELETE', 'Appears to be duplicate/old version - verify and delete', 'P2', 1
 
-        # RULE 9: Core functionality keywords → INTEGRATE
+        # RULE 9: Core functionality keywords -> INTEGRATE
         core_keywords = ['handler', 'processor', 'manager', 'engine', 'controller', 'service']
         if any(kw in filename.lower() for kw in core_keywords):
             return 'INTEGRATE', 'Core functionality module - check integration points', 'P1', 6

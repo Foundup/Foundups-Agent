@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Enterprise Domain Import Path Migration Tool
 WSP 3 Compliance: Tool for migrating import paths to Enterprise Domain structure
 
@@ -68,7 +83,7 @@ def fix_imports_in_file(file_path: Path) -> bool:
         if content != original_content:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-            print(f"✅ Fixed {file_path}")
+            print(f"[OK] Fixed {file_path}")
             for change in changes_made:
                 print(change)
             return True
@@ -76,7 +91,7 @@ def fix_imports_in_file(file_path: Path) -> bool:
             return False
             
     except Exception as e:
-        print(f"❌ Error processing {file_path}: {e}")
+        print(f"[FAIL] Error processing {file_path}: {e}")
         return False
 
 def scan_for_violations() -> list:
@@ -116,15 +131,15 @@ def scan_for_violations() -> list:
 
 def main():
     """Main function to fix all import paths for Enterprise Domain compliance"""
-    print("🔧 Enterprise Domain Import Migration Tool (WSP 3 Compliance)")
+    print("[TOOL] Enterprise Domain Import Migration Tool (WSP 3 Compliance)")
     print("=" * 60)
     
     # First, scan for violations
-    print("🔍 Scanning for WSP 3 violations...")
+    print("[SEARCH] Scanning for WSP 3 violations...")
     violations = scan_for_violations()
     
     if violations:
-        print(f"⚠️  Found {len(violations)} files with potential flat import violations")
+        print(f"[U+26A0]️  Found {len(violations)} files with potential flat import violations")
         for violation in violations[:5]:  # Show first 5
             print(f"   - {violation}")
         if len(violations) > 5:
@@ -140,7 +155,7 @@ def main():
         if Path(root_file).exists():
             python_files.append(Path(root_file))
     
-    print(f"\n🔧 Processing {len(python_files)} Python files...")
+    print(f"\n[TOOL] Processing {len(python_files)} Python files...")
     
     fixed_count = 0
     total_count = len(python_files)
@@ -149,17 +164,17 @@ def main():
         if fix_imports_in_file(file_path):
             fixed_count += 1
     
-    print(f"\n📊 Migration Summary:")
+    print(f"\n[DATA] Migration Summary:")
     print(f"  Total files checked: {total_count}")
     print(f"  Files updated: {fixed_count}")
     print(f"  Files unchanged: {total_count - fixed_count}")
     
     if fixed_count > 0:
-        print(f"\n✨ Enterprise Domain import migration complete!")
-        print("📝 Remember to run FMAS to verify WSP 3 compliance:")
+        print(f"\n[U+2728] Enterprise Domain import migration complete!")
+        print("[NOTE] Remember to run FMAS to verify WSP 3 compliance:")
         print("   python tools/modular_audit/modular_audit.py ./modules")
     else:
-        print(f"\n✅ All imports already comply with Enterprise Domain structure!")
+        print(f"\n[OK] All imports already comply with Enterprise Domain structure!")
 
 if __name__ == "__main__":
     main() 

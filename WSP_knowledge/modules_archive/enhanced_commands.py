@@ -23,8 +23,8 @@ class EnhancedCommands(RPGCommands):
     
     def cmd_help(self, user_id: str, user_name: str, args: List[str]) -> str:
         """Show all available commands"""
-        return ("🎮 Commands: /help /stats /level /smacks /leaderboard /score /rank | "
-                "✊✋🖐️ = 0102 consciousness")
+        return ("[GAME] Commands: /help /stats /level /smacks /leaderboard /score /rank | "
+                "[U+270A][U+270B][U+1F590]️ = 0102 consciousness")
     
     def cmd_smacks(self, user_id: str, user_name: str, args: List[str]) -> str:
         """Show timeout breakdown by duration"""

@@ -26,7 +26,7 @@ def post_comment_on_video(video_id: str = None, comment_text: str = None):
     MOVE2JAPAN_CHANNEL_ID = "UC-LSSlOZwpGIRIYihaz8zCw"
     
     logger.info("="*60)
-    logger.info("💬 POSTING COMMENT ON MOVE2JAPAN VIDEO")
+    logger.info("[U+1F4AC] POSTING COMMENT ON MOVE2JAPAN VIDEO")
     logger.info("="*60)
     
     # Get YouTube service
@@ -39,7 +39,7 @@ def post_comment_on_video(video_id: str = None, comment_text: str = None):
     try:
         # If no video_id provided, get the latest video
         if not video_id:
-            logger.info("🔍 Getting latest Move2Japan video...")
+            logger.info("[SEARCH] Getting latest Move2Japan video...")
             
             # Get channel uploads playlist
             channel_response = youtube.channels().list(
@@ -59,7 +59,7 @@ def post_comment_on_video(video_id: str = None, comment_text: str = None):
             if videos_response.get('items'):
                 video_id = videos_response['items'][0]['snippet']['resourceId']['videoId']
                 video_title = videos_response['items'][0]['snippet']['title']
-                logger.info(f"✅ Found video: {video_title[:50]}...")
+                logger.info(f"[OK] Found video: {video_title[:50]}...")
                 logger.info(f"   Video ID: {video_id}")
             else:
                 logger.error("No videos found")
@@ -67,9 +67,9 @@ def post_comment_on_video(video_id: str = None, comment_text: str = None):
         
         # Default comment if none provided
         if not comment_text:
-            comment_text = f"🤖 0102 automated test at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - Testing comment posting capability for real-time dialogue system. This is a PoC test."
+            comment_text = f"[BOT] 0102 automated test at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - Testing comment posting capability for real-time dialogue system. This is a PoC test."
         
-        logger.info(f"\n📝 Posting comment: {comment_text[:100]}...")
+        logger.info(f"\n[NOTE] Posting comment: {comment_text[:100]}...")
         
         # Post the comment using commentThreads.insert
         request = youtube.commentThreads().insert(
@@ -93,11 +93,11 @@ def post_comment_on_video(video_id: str = None, comment_text: str = None):
             posted_text = response['snippet']['topLevelComment']['snippet']['textDisplay']
             author = response['snippet']['topLevelComment']['snippet']['authorDisplayName']
             
-            logger.info("\n✅ SUCCESS! Comment posted!")
+            logger.info("\n[OK] SUCCESS! Comment posted!")
             logger.info(f"   Comment ID: {comment_id}")
             logger.info(f"   Author: {author}")
             logger.info(f"   Text: {posted_text}")
-            logger.info(f"\n🎉 We CAN post comments on videos!")
+            logger.info(f"\n[CELEBRATE] We CAN post comments on videos!")
             
             return comment_id
         else:
@@ -115,28 +115,28 @@ def test_comment_capabilities():
     """Test all comment capabilities"""
     
     logger.info("="*60)
-    logger.info("📊 YOUTUBE COMMENT CAPABILITIES TEST")
+    logger.info("[DATA] YOUTUBE COMMENT CAPABILITIES TEST")
     logger.info("="*60)
     
-    logger.info("\n✅ What we CAN do:")
+    logger.info("\n[OK] What we CAN do:")
     logger.info("1. Post new comments on videos")
     logger.info("2. Reply to existing comments")
     logger.info("3. Read all comments")
     logger.info("4. Delete our own comments")
     logger.info("5. Monitor comments in real-time")
     
-    logger.info("\n❌ What we CANNOT do:")
+    logger.info("\n[FAIL] What we CANNOT do:")
     logger.info("1. Like individual comments")
     logger.info("2. Heart comments (creator only)")
     
-    logger.info("\n🚀 Testing comment posting...")
+    logger.info("\n[ROCKET] Testing comment posting...")
     
     # Test posting a comment
     comment_id = post_comment_on_video()
     
     if comment_id:
         logger.info("\n="*60)
-        logger.info("💡 CONCLUSION")
+        logger.info("[IDEA] CONCLUSION")
         logger.info("="*60)
         logger.info("YES - The solution CAN comment on videos!")
         logger.info("We can create autonomous dialogue systems that:")
@@ -145,17 +145,17 @@ def test_comment_capabilities():
         logger.info("- Maintain conversation threads")
         logger.info("- Remember users across sessions")
     else:
-        logger.info("\n⚠️ Comment posting failed - check quota limits")
+        logger.info("\n[U+26A0]️ Comment posting failed - check quota limits")
 
 
 if __name__ == "__main__":
     print("""
-    ╔════════════════════════════════════════════════════════╗
-    ║         TEST COMMENTING ON MOVE2JAPAN VIDEO           ║
-    ╠════════════════════════════════════════════════════════╣
-    ║  This will post a test comment on a video to verify   ║
-    ║  that our solution CAN comment on videos.             ║
-    ╚════════════════════════════════════════════════════════╝
+    [U+2554]========================================================[U+2557]
+    [U+2551]         TEST COMMENTING ON MOVE2JAPAN VIDEO           [U+2551]
+    [U+2560]========================================================[U+2563]
+    [U+2551]  This will post a test comment on a video to verify   [U+2551]
+    [U+2551]  that our solution CAN comment on videos.             [U+2551]
+    [U+255A]========================================================[U+255D]
     """)
     
     test_comment_capabilities()

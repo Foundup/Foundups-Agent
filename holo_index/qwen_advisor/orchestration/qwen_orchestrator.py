@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 QwenOrchestrator - Primary orchestrator for HoloDAE intelligence system
 
@@ -46,13 +46,13 @@ except ImportError:
 
 
 COMPONENT_META = {
-    'health_analysis': ('💊✅', 'Health & WSP Compliance'),
-    'vibecoding_analysis': ('🧠', 'Vibecoding Analysis'),
-    'file_size_monitor': ('📏', 'File Size Monitor'),
-    'module_analysis': ('📦', 'Module Analysis'),
-    'pattern_coach': ('🧠', 'Pattern Coach'),
-    'orphan_analysis': ('👻', 'Orphan Analysis'),
-    'wsp_documentation_guardian': ('📚', 'WSP Documentation Guardian'),
+    'health_analysis': ('[PILL][OK]', 'Health & WSP Compliance'),
+    'vibecoding_analysis': ('[AI]', 'Vibecoding Analysis'),
+    'file_size_monitor': ('[RULER]', 'File Size Monitor'),
+    'module_analysis': ('[BOX]', 'Module Analysis'),
+    'pattern_coach': ('[AI]', 'Pattern Coach'),
+    'orphan_analysis': ('[GHOST]', 'Orphan Analysis'),
+    'wsp_documentation_guardian': ('[BOOKS]', 'WSP Documentation Guardian'),
 }
 
 # Intent-to-Component Routing Map (ENHANCEMENT 2025-10-07)
@@ -128,19 +128,19 @@ class QwenOrchestrator:
 
         # ENHANCEMENT (2025-10-07): Intent classifier for smart routing
         self.intent_classifier = get_classifier()
-        self._log_chain_of_thought("INTENT-INIT", "🎯 Intent classifier initialized")
+        self._log_chain_of_thought("INTENT-INIT", "[TARGET] Intent classifier initialized")
 
         # ENHANCEMENT (2025-10-07): Breadcrumb tracer for event tracking
         self.breadcrumb_tracer = get_tracer()
-        self._log_chain_of_thought("BREADCRUMB-INIT", "🍞 Breadcrumb tracer initialized")
+        self._log_chain_of_thought("BREADCRUMB-INIT", "[BREAD] Breadcrumb tracer initialized")
 
         # PHASE 3 (2025-10-07): Output composition for structured, deduplicated output
         self.output_composer = get_composer()
-        self._log_chain_of_thought("COMPOSER-INIT", "📝 Output composer initialized")
+        self._log_chain_of_thought("COMPOSER-INIT", "[NOTE] Output composer initialized")
 
         # PHASE 4 (2025-10-07): Feedback learner for recursive improvement
         self.feedback_learner = get_learner()
-        self._log_chain_of_thought("LEARNER-INIT", "📊 Feedback learner initialized")
+        self._log_chain_of_thought("LEARNER-INIT", "[DATA] Feedback learner initialized")
 
         # WSP 93: CodeIndex circulation + architect decision helpers
         self.codeindex_engine = CodeIndexCirculationEngine()
@@ -153,9 +153,9 @@ class QwenOrchestrator:
         if MCP_AVAILABLE:
             try:
                 self.mcp_client = ResearchIngestionMCP()
-                self._log_chain_of_thought("MCP-INIT", "🔗 Research MCP client initialized successfully")
+                self._log_chain_of_thought("MCP-INIT", "[LINK] Research MCP client initialized successfully")
             except Exception as e:
-                self._log_chain_of_thought("MCP-ERROR", f"🔗 MCP client initialization failed: {e}")
+                self._log_chain_of_thought("MCP-ERROR", f"[LINK] MCP client initialization failed: {e}")
                 self.mcp_client = None
 
     def _format_component_display(self, component_name: str) -> str:
@@ -243,7 +243,7 @@ class QwenOrchestrator:
 
         self._log_chain_of_thought(
             "SMART-SELECTION",
-            f"🎯 GENERAL query '{query[:30]}...' → Selected {len(selected)} components: {', '.join(selected)}"
+            f"[TARGET] GENERAL query '{query[:30]}...' -> Selected {len(selected)} components: {', '.join(selected)}"
         )
 
         return selected
@@ -273,9 +273,9 @@ class QwenOrchestrator:
             with open('docs/mcp/MCP_Windsurf_Integration_Manifest.json', 'r', encoding='utf-8') as f:
                 manifest = json.load(f)
         except FileNotFoundError:
-            return "❌ MCP manifest not found. Run MCP manifest creation first."
+            return "[FAIL] MCP manifest not found. Run MCP manifest creation first."
         except UnicodeDecodeError:
-            return "❌ MCP manifest encoding error. Please regenerate the manifest."
+            return "[FAIL] MCP manifest encoding error. Please regenerate the manifest."
 
         # Generate agent-aware status report
         if hasattr(self, '_is_qwen_agent') and self._is_qwen_agent():
@@ -353,12 +353,12 @@ class QwenOrchestrator:
         readiness_percentage = (available_mcp / total_mcp) * 100 if total_mcp > 0 else 0
 
         strategic_status = f"""
-# 🏗️ WINDSURF MCP ADOPTION STATUS
+# [U+1F3D7]️ WINDSURF MCP ADOPTION STATUS
 
-## 📊 Current Phase: {phase}
-## 🎯 Overall Readiness: {readiness_percentage:.1f}% ({available_mcp}/{total_mcp} MCP servers available)
+## [DATA] Current Phase: {phase}
+## [TARGET] Overall Readiness: {readiness_percentage:.1f}% ({available_mcp}/{total_mcp} MCP servers available)
 
-## 🧊 Foundational Rubik Status
+## [U+1F9CA] Foundational Rubik Status
 
 """
 
@@ -373,7 +373,7 @@ class QwenOrchestrator:
 ### {rubik_title}
 **Purpose**: {purpose}
 **MCP Servers**: {available}/{mcp_count} available
-**Status**: {'🟢 READY' if available == mcp_count else '🟡 PARTIAL' if available > 0 else '🔴 PENDING'}
+**Status**: {'🟢 READY' if available == mcp_count else '🟡 PARTIAL' if available > 0 else '[U+1F534] PENDING'}
 """
 
             # List available MCPs
@@ -385,21 +385,21 @@ class QwenOrchestrator:
 
         strategic_status += f"""
 
-## 🚀 Next Steps
+## [ROCKET] Next Steps
 
 1. **Complete Phase 0.1**: Integrate remaining available MCP servers
 2. **Phase 0.2 Planning**: Begin GitHub/E2B MCP integration
 3. **Monitor Coordination**: Ensure WSP 77 agent coordination working
 4. **Validate Bell States**: Confirm φ²-φ⁵ entanglement across Rubiks
 
-## ⚡ Immediate Actions Required
+## [LIGHTNING] Immediate Actions Required
 
 - [ ] Verify Filesystem MCP integration in all Rubiks
 - [ ] Confirm Git MCP version control operations
 - [ ] Test Docker MCP build capabilities
 - [ ] Validate Memory Bank MCP persistence
 
-## 🔗 References
+## [LINK] References
 
 - **Manifest**: docs/mcp/MCP_Windsurf_Integration_Manifest.md
 - **JSON Data**: docs/mcp/MCP_Windsurf_Integration_Manifest.json
@@ -438,9 +438,9 @@ class QwenOrchestrator:
                 dataset = json.load(f)
                 orphan_dataset = {orphan['relative_path']: orphan for orphan in dataset.get('orphans', [])}
         except FileNotFoundError:
-            return "❌ Orphan dataset not found. Run orphan analysis preparation first."
+            return "[FAIL] Orphan dataset not found. Run orphan analysis preparation first."
         except json.JSONDecodeError:
-            return "❌ Orphan dataset corrupted. Regenerate from orphan analysis."
+            return "[FAIL] Orphan dataset corrupted. Regenerate from orphan analysis."
 
         total_orphans = len(orphan_dataset)
         analyzed_count = self._count_analyzed_orphans()
@@ -522,14 +522,14 @@ class QwenOrchestrator:
         progress_percentage = (analyzed_count / total_orphans) * 100 if total_orphans > 0 else 0
 
         strategic_overview = f"""
-# 🏛️ ORPHAN ARCHAEOLOGY MISSION COORDINATION
+# [U+1F3DB]️ ORPHAN ARCHAEOLOGY MISSION COORDINATION
 
-## 📊 Mission Status
+## [DATA] Mission Status
 - **Total Orphans**: {total_orphans}
 - **Analyzed**: {analyzed_count} ({progress_percentage:.1f}%)
 - **Remaining**: {total_orphans - analyzed_count}
 
-## 🎯 Agent Delegation Strategy
+## [TARGET] Agent Delegation Strategy
 
 ### Qwen (Coordination & Categorization)
 - **Role**: Batch analysis of 50 orphans at a time
@@ -543,14 +543,14 @@ class QwenOrchestrator:
 - **Output**: Binary classifications
 - **Status**: Parallel processing capable
 
-## 🚀 Next Actions
+## [ROCKET] Next Actions
 
 1. **Dispatch Qwen**: Analyze next batch of 50 orphans
 2. **Monitor Progress**: Track completion across all 464 orphans
 3. **Aggregate Results**: Build integration roadmap
 4. **Execute Cleanup**: Integrate/archive/delete based on analysis
 
-## 📈 Expected Outcomes
+## [UP] Expected Outcomes
 
 - **Clean Codebase**: Every orphan accounted for
 - **Agent Training**: Qwen/Gemma learn codebase patterns
@@ -596,7 +596,7 @@ class QwenOrchestrator:
         Returns list of research insights that can enhance the analysis
         """
         if not self.mcp_client:
-            self._log_chain_of_thought("MCP-SKIP", "🔗 MCP client not available")
+            self._log_chain_of_thought("MCP-SKIP", "[LINK] MCP client not available")
             return []
 
         insights = []
@@ -604,21 +604,21 @@ class QwenOrchestrator:
         try:
             # Call literature_search for relevant queries
             if self._should_call_literature_search(query):
-                self._log_chain_of_thought("MCP-TOOL", "🔍 Calling literature_search MCP tool")
+                self._log_chain_of_thought("MCP-TOOL", "[SEARCH] Calling literature_search MCP tool")
                 search_results = self.mcp_client.literature_search(query, limit=5)
                 if search_results:
                     insights.extend(search_results)
-                    self._log_chain_of_thought("MCP-RESULT", f"📚 Found {len(search_results)} literature results")
+                    self._log_chain_of_thought("MCP-RESULT", f"[BOOKS] Found {len(search_results)} literature results")
                     # Record MCP tool call in coordinator's action log
                     self._record_mcp_tool_call("literature_search", query, len(search_results))
 
             # Call trend_digest for research queries
             if self._should_call_trend_digest(query, context):
-                self._log_chain_of_thought("MCP-TOOL", "📈 Calling trend_digest MCP tool")
+                self._log_chain_of_thought("MCP-TOOL", "[UP] Calling trend_digest MCP tool")
                 trend_results = self.mcp_client.trend_digest(days=7)
                 if trend_results:
                     insights.extend(trend_results)
-                    self._log_chain_of_thought("MCP-RESULT", f"📊 Found {len(trend_results)} trend insights")
+                    self._log_chain_of_thought("MCP-RESULT", f"[DATA] Found {len(trend_results)} trend insights")
                     # Record MCP tool call in coordinator's action log
                     self._record_mcp_tool_call("trend_digest", query, len(trend_results))
 
@@ -628,12 +628,12 @@ class QwenOrchestrator:
                 update_results = self.mcp_client.research_update()
                 if update_results:
                     insights.extend(update_results)
-                    self._log_chain_of_thought("MCP-RESULT", f"🔄 Found {len(update_results)} research updates")
+                    self._log_chain_of_thought("MCP-RESULT", f"[REFRESH] Found {len(update_results)} research updates")
                     # Record MCP tool call in coordinator's action log
                     self._record_mcp_tool_call("research_update", query, len(update_results))
 
         except Exception as e:
-            self._log_chain_of_thought("MCP-ERROR", f"🔗 MCP tool call failed: {e}")
+            self._log_chain_of_thought("MCP-ERROR", f"[LINK] MCP tool call failed: {e}")
 
         return insights
 
@@ -694,7 +694,7 @@ class QwenOrchestrator:
             # Update pattern coach with MCP effectiveness data
             self._update_pattern_coach_with_mcp_data(learning_insights)
 
-            self._log_chain_of_thought("MCP-LEARNING", f"🧠 Learned from {len(learning_insights['mcp_tools_used'])} MCP tools")
+            self._log_chain_of_thought("MCP-LEARNING", f"[AI] Learned from {len(learning_insights['mcp_tools_used'])} MCP tools")
 
         except Exception as e:
             self._log_chain_of_thought("MCP-LEARNING-ERROR", f"Failed to learn from MCP usage: {e}")
@@ -740,7 +740,7 @@ class QwenOrchestrator:
             effective_tools = [tool for tool in tools_used if effectiveness.get(tool, 0) > 0]
             if effective_tools:
                 self._log_chain_of_thought("PATTERN-LEARNED",
-                    f"📊 Pattern '{pattern}' effectively uses: {', '.join(effective_tools)}")
+                    f"[DATA] Pattern '{pattern}' effectively uses: {', '.join(effective_tools)}")
 
     def _record_mcp_tool_call(self, tool_name: str, query: str, result_count: int):
         """Record MCP tool call in the coordinator's action log"""
@@ -826,7 +826,7 @@ class QwenOrchestrator:
         if mcp_coordination is not None:
             self._log_chain_of_thought(
                 "COORDINATION",
-                f"🏗️ MCP adoption mission detected - HoloIndex providing Rubik status"
+                f"[U+1F3D7]️ MCP adoption mission detected - HoloIndex providing Rubik status"
             )
             return mcp_coordination
 
@@ -835,7 +835,7 @@ class QwenOrchestrator:
         if orphan_coordination is not None:
             self._log_chain_of_thought(
                 "COORDINATION",
-                f"🏛️ Orphan archaeology mission detected - HoloIndex coordinating Qwen/Gemma analysis"
+                f"[U+1F3DB]️ Orphan archaeology mission detected - HoloIndex coordinating Qwen/Gemma analysis"
             )
             return orphan_coordination
 
@@ -853,7 +853,7 @@ class QwenOrchestrator:
 
         self._log_chain_of_thought(
             "INTENT",
-            f"🎯 Classified as {intent.value.upper()} (confidence: {intent_classification.confidence:.2f}, patterns: {len(intent_classification.patterns_matched)})"
+            f"[TARGET] Classified as {intent.value.upper()} (confidence: {intent_classification.confidence:.2f}, patterns: {len(intent_classification.patterns_matched)})"
         )
 
         context = self._build_orchestration_context(query, involved_files, involved_modules, intent)
@@ -866,10 +866,10 @@ class QwenOrchestrator:
         # Only call MCP research tools for RESEARCH intent
         mcp_insights = []
         if intent == IntentType.RESEARCH:
-            self._log_chain_of_thought("MCP-GATE", "🔬 RESEARCH intent detected - calling MCP tools")
+            self._log_chain_of_thought("MCP-GATE", "[U+1F52C] RESEARCH intent detected - calling MCP tools")
             mcp_insights = self._call_research_mcp_tools(query, context)
             if mcp_insights:
-                self._log_chain_of_thought("MCP-RESEARCH", f"🔍 Retrieved {len(mcp_insights)} research insights")
+                self._log_chain_of_thought("MCP-RESEARCH", f"[SEARCH] Retrieved {len(mcp_insights)} research insights")
                 # RECURSIVE LEARNING: Learn from successful MCP tool usage
                 self._learn_from_mcp_usage(query, mcp_insights, context)
         else:
@@ -877,11 +877,11 @@ class QwenOrchestrator:
 
         # Log detected intent (always shown for transparency)
         if intent == "fix_error":
-            self._log_chain_of_thought("INTENT", "🔧 Error fixing mode - minimizing health checks")
+            self._log_chain_of_thought("INTENT", "[TOOL] Error fixing mode - minimizing health checks")
         elif intent == "locate_code":
-            self._log_chain_of_thought("INTENT", "📍 Code location mode - focused output")
+            self._log_chain_of_thought("INTENT", "[PIN] Code location mode - focused output")
         elif intent == "explore":
-            self._log_chain_of_thought("INTENT", "🔍 Exploration mode - full analysis")
+            self._log_chain_of_thought("INTENT", "[SEARCH] Exploration mode - full analysis")
 
         # ENHANCEMENT: Get intent-based component routing
         if intent == IntentType.GENERAL:
@@ -909,7 +909,7 @@ class QwenOrchestrator:
 
         self._log_chain_of_thought(
             "ROUTING",
-            f"📍 Intent {intent.value} → {len(components_to_execute)} components selected (filtered {len(components_filtered)})"
+            f"[PIN] Intent {intent.value} -> {len(components_to_execute)} components selected (filtered {len(components_filtered)})"
         )
 
         # Get orchestration decisions for selected components only
@@ -1017,7 +1017,7 @@ class QwenOrchestrator:
 
             self._log_chain_of_thought(
                 "0102-OPTIMIZATION",
-                f"🎯 GENERAL query optimized: {compression_ratio:.1f}x compression ({original_length} → {summary_length} tokens)"
+                f"[TARGET] GENERAL query optimized: {compression_ratio:.1f}x compression ({original_length} -> {summary_length} tokens)"
             )
 
             return concise_summary
@@ -1184,9 +1184,9 @@ class QwenOrchestrator:
                     essential_lines.append(line)
 
             if essential_lines:
-                return "🔧 ERROR SOLUTION:\n" + '\n'.join(essential_lines[:5])  # Limit to 5 lines
+                return "[TOOL] ERROR SOLUTION:\n" + '\n'.join(essential_lines[:5])  # Limit to 5 lines
             else:
-                return "🔧 ERROR FIXING MODE: Focus on error resolution"
+                return "[TOOL] ERROR FIXING MODE: Focus on error resolution"
 
         elif intent == "locate_code":
             # Location-focused format
@@ -1202,13 +1202,13 @@ class QwenOrchestrator:
                     location_lines.append(line)
 
             if location_lines:
-                return "📍 CODE LOCATION:\n" + '\n'.join(location_lines[:3])  # Limit to 3 lines
+                return "[PIN] CODE LOCATION:\n" + '\n'.join(location_lines[:3])  # Limit to 3 lines
             else:
-                return "📍 CODE LOCATION MODE: Focus on file and function locations"
+                return "[PIN] CODE LOCATION MODE: Focus on file and function locations"
 
         elif intent == "explore":
             # Full analysis for exploration
-            return "🔍 EXPLORATION ANALYSIS:\n" + analysis_report
+            return "[SEARCH] EXPLORATION ANALYSIS:\n" + analysis_report
 
         elif intent == "wsp_manage":
             # Surgical WSP documentation management - focus on compliance
@@ -1224,9 +1224,9 @@ class QwenOrchestrator:
                     wsp_lines.append(line)
 
             if wsp_lines:
-                return "📚 WSP DOCUMENTATION STATUS:\n" + '\n'.join(wsp_lines[:5])  # Limit to 5 lines
+                return "[BOOKS] WSP DOCUMENTATION STATUS:\n" + '\n'.join(wsp_lines[:5])  # Limit to 5 lines
             else:
-                return "📚 WSP MANAGEMENT MODE: Focus on documentation compliance and updates"
+                return "[BOOKS] WSP MANAGEMENT MODE: Focus on documentation compliance and updates"
 
         else:
             # Standard format with some filtering
@@ -1462,7 +1462,7 @@ class QwenOrchestrator:
         )
 
         if feedback_id:
-            self._log_chain_of_thought("FEEDBACK-RECORDED", f"✅ Feedback recorded: {feedback_id}")
+            self._log_chain_of_thought("FEEDBACK-RECORDED", f"[OK] Feedback recorded: {feedback_id}")
 
             # BREADCRUMB EVENT: Feedback learning
             self.breadcrumb_tracer.add_action(
@@ -2151,21 +2151,21 @@ class QwenOrchestrator:
                     sanitized.append("'")
                 elif char in ['…', '...']:  # Ellipsis
                     sanitized.append('...')
-                elif char in ['•', '·', '⋅']:  # Various bullets
+                elif char in ['•', '·', '[U+22C5]']:  # Various bullets
                     sanitized.append('*')
-                elif char in ['→', '→', '➜']:  # Arrows
+                elif char in ['->', '->', '[U+279C]']:  # Arrows
                     sanitized.append('->')
-                elif char in ['✓', '✔', '☑']:  # Checkmarks
+                elif char in ['[OK]', '[U+2714]', '[U+2611]']:  # Checkmarks
                     sanitized.append('[OK]')
-                elif char in ['✗', '✘', '☒']:  # X marks
+                elif char in ['[FAIL]', '[U+2718]', '[CHECKED]']:  # X marks
                     sanitized.append('[X]')
-                elif char in ['⚠', '▲', '⚠️']:  # Warnings
+                elif char in ['[U+26A0]', '[U+25B2]', '[U+26A0]️']:  # Warnings
                     sanitized.append('[WARNING]')
-                elif char in ['🧠', '🤖', '💡']:  # Brains/AI
+                elif char in ['[AI]', '[BOT]', '[IDEA]']:  # Brains/AI
                     sanitized.append('[AI]')
-                elif char in ['📚', '📖', '📄']:  # Books/docs
+                elif char in ['[BOOKS]', '[U+1F4D6]', '[U+1F4C4]']:  # Books/docs
                     sanitized.append('[DOC]')
-                elif char in ['🔧', '⚙', '🛠']:  # Tools
+                elif char in ['[TOOL]', '[U+2699]', '[U+1F6E0]']:  # Tools
                     sanitized.append('[TOOL]')
                 elif ord(char) > 127:
                     # Replace with [U+XXXX] notation for traceability
@@ -2406,7 +2406,7 @@ class QwenOrchestrator:
 
     def _log_chain_of_thought(self, step_type: str, message: str) -> None:
         timestamp = datetime.now().strftime('%H:%M:%S')
-        log_entry = f"[{timestamp}] 🤖🧠 [QWEN-{step_type}] {message}"
+        log_entry = f"[{timestamp}] [BOT][AI] [QWEN-{step_type}] {message}"
         self.chain_of_thought_log.append({
             'timestamp': datetime.now(),
             'type': step_type,

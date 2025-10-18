@@ -19,9 +19,13 @@ Usage:
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -74,44 +78,44 @@ class CommunityQuotaManager:
     def show_setup_guide(self):
         """Display interactive setup guide for new contributors."""
         print("\\n" + "="*80)
-        print("🚀 COMMUNITY QUOTA SHARING SETUP GUIDE")
+        print("[ROCKET] COMMUNITY QUOTA SHARING SETUP GUIDE")
         print("="*80)
         print()
         print("Help expand our YouTube API quota by contributing your free 10,000 daily units!")
         print()
         
-        print("📋 STEP 1: Google Cloud Setup")
+        print("[CLIPBOARD] STEP 1: Google Cloud Setup")
         print("   1. Go to https://console.cloud.google.com/")
         print("   2. Create a new project (or use existing)")
         print("   3. Enable 'YouTube Data API v3' in APIs & Services")
         print()
         
-        print("🔑 STEP 2: Create OAuth Credentials")
+        print("[U+1F511] STEP 2: Create OAuth Credentials")
         print("   1. Go to 'APIs & Services' > 'Credentials'")
         print("   2. Click 'Create Credentials' > 'OAuth 2.0 Client IDs'")
         print("   3. Choose 'Desktop Application'")
         print("   4. Download the JSON file")
         print()
         
-        print("📧 STEP 3: Contact Us")
+        print("[U+1F4E7] STEP 3: Contact Us")
         print("   1. Send the downloaded JSON file (safely)")
         print("   2. Include your preferred username for recognition")
         print("   3. We'll add you to the rotation system")
         print()
         
-        print("💰 YOUR CONTRIBUTION:")
+        print("[U+1F4B0] YOUR CONTRIBUTION:")
         print(f"   • 10,000 API units per day (resets at midnight PT)")
         print(f"   • Current total: {self.get_total_daily_quota():,} units from {len(self.contributors['contributors'])} contributors")
         print(f"   • Each unit enables ~50 chat messages or stream monitoring")
         print()
         
-        print("🏆 RECOGNITION:")
+        print("[U+1F3C6] RECOGNITION:")
         print("   • Listed as quota contributor in our dashboard")
         print("   • Special recognition during streams")
         print("   • Helping enable MAGAdoom gaming for everyone!")
         print()
         
-        print("⚠️ IMPORTANT:")
+        print("[U+26A0]️ IMPORTANT:")
         print("   • Your credentials only access YouTube API (read/write chat)")
         print("   • No access to your personal data or accounts")
         print("   • You can revoke access anytime in Google Cloud Console")
@@ -120,7 +124,7 @@ class CommunityQuotaManager:
     def add_contributor(self, username: str, credentials_path: str = None):
         """Add a new community contributor."""
         if username in self.contributors['contributors']:
-            print(f"❌ Contributor '{username}' already exists!")
+            print(f"[FAIL] Contributor '{username}' already exists!")
             return False
         
         # Get next available set number
@@ -146,8 +150,8 @@ class CommunityQuotaManager:
         
         self._save_contributors()
         
-        print(f"✅ Added contributor '{username}' as credential set {set_number}")
-        print(f"📊 Total daily quota now: {self.get_total_daily_quota():,} units")
+        print(f"[OK] Added contributor '{username}' as credential set {set_number}")
+        print(f"[DATA] Total daily quota now: {self.get_total_daily_quota():,} units")
         
         # Create authorization script for this contributor
         self._create_auth_script(username, set_number)
@@ -158,7 +162,7 @@ class CommunityQuotaManager:
         """Update quota monitor to include new credential set."""
         # This would update the quota monitor configuration
         # For now, we'll document the manual steps needed
-        print(f"\\n📝 MANUAL STEPS NEEDED:")
+        print(f"\\n[NOTE] MANUAL STEPS NEEDED:")
         print(f"   1. Add set {set_number} to quota_monitor.py daily_limits")
         print(f"   2. Update quota_intelligence.py if needed")
         print(f"   3. Test authorization with authorize_set{set_number}.py")
@@ -190,10 +194,10 @@ def main():
     try:
         success = authorize_specific_set({set_number})
         if success:
-            print("✅ Authorization successful!")
+            print("[OK] Authorization successful!")
             print("Your quota is now available for community use.")
         else:
-            print("❌ Authorization failed. Please check your credentials.")
+            print("[FAIL] Authorization failed. Please check your credentials.")
     except Exception as e:
         print(f"Error: {{e}}")
 
@@ -205,7 +209,7 @@ if __name__ == "__main__":
         with open(script_path, 'w', encoding="utf-8") as f:
             f.write(script_content)
         
-        print(f"📜 Created authorization script: {script_path}")
+        print(f"[U+1F4DC] Created authorization script: {script_path}")
     
     def get_total_daily_quota(self) -> int:
         """Get total daily quota from all contributors."""
@@ -216,13 +220,13 @@ if __name__ == "__main__":
     def show_status(self):
         """Show community contributors status."""
         print("\\n" + "="*80)
-        print("🏆 COMMUNITY QUOTA CONTRIBUTORS")
+        print("[U+1F3C6] COMMUNITY QUOTA CONTRIBUTORS")
         print("="*80)
         
         total_quota = self.get_total_daily_quota()
-        print(f"📊 Total Daily Quota: {total_quota:,} units")
-        print(f"👥 Contributors: {len(self.contributors['contributors'])}")
-        print(f"💰 Community Contribution: {len(self.contributors['contributors']) * 10000:,} units")
+        print(f"[DATA] Total Daily Quota: {total_quota:,} units")
+        print(f"[U+1F465] Contributors: {len(self.contributors['contributors'])}")
+        print(f"[U+1F4B0] Community Contribution: {len(self.contributors['contributors']) * 10000:,} units")
         print()
         
         if not self.contributors['contributors']:
@@ -234,9 +238,9 @@ if __name__ == "__main__":
         for username, data in self.contributors['contributors'].items():
             status_emoji = {
                 'pending_setup': '⏳',
-                'active': '✅',
-                'inactive': '❌'
-            }.get(data['status'], '❓')
+                'active': '[OK]',
+                'inactive': '[FAIL]'
+            }.get(data['status'], '[U+2753]')
             
             print(f"  {status_emoji} {username} (Set {data['credential_set']}) - {data['daily_quota']:,} units/day")
             print(f"     Added: {data['added_date'][:10]} | Status: {data['status']}")
@@ -246,7 +250,7 @@ if __name__ == "__main__":
     def remove_contributor(self, username: str):
         """Remove a community contributor."""
         if username not in self.contributors['contributors']:
-            print(f"❌ Contributor '{username}' not found!")
+            print(f"[FAIL] Contributor '{username}' not found!")
             return False
         
         contributor = self.contributors['contributors'][username]
@@ -258,9 +262,9 @@ if __name__ == "__main__":
         
         self._save_contributors()
         
-        print(f"✅ Removed contributor '{username}' (Set {set_number})")
-        print(f"📊 Total daily quota now: {self.get_total_daily_quota():,} units")
-        print(f"\\n📝 MANUAL CLEANUP NEEDED:")
+        print(f"[OK] Removed contributor '{username}' (Set {set_number})")
+        print(f"[DATA] Total daily quota now: {self.get_total_daily_quota():,} units")
+        print(f"\\n[NOTE] MANUAL CLEANUP NEEDED:")
         print(f"   1. Remove oauth_token{set_number}.json")
         print(f"   2. Update quota_monitor.py daily_limits")
         print(f"   3. Remove authorize_set{set_number}.py")

@@ -138,13 +138,13 @@ if __name__ == '__main__':
 
     print("\n" + "=" * 60)
     if result.wasSuccessful():
-        print("✅ ALL IDLE SYSTEM TESTS PASSED!")
+        print("[OK] ALL IDLE SYSTEM TESTS PASSED!")
         print("The idle system properly handles:")
         print("  • NO-QUOTA mode for stream detection")
         print("  • Intelligent delay progression")
         print("  • Idle loop when no streams found")
     else:
-        print("❌ SOME IDLE SYSTEM TESTS FAILED")
+        print("[FAIL] SOME IDLE SYSTEM TESTS FAILED")
         print(f"Failures: {len(result.failures)}")
         print(f"Errors: {len(result.errors)}")
 

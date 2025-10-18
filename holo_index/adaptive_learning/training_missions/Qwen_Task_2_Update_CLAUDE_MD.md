@@ -33,10 +33,10 @@ Before implementing ANY code, ask:
 ### Execution Pattern
 
 ```
-SEARCH (HoloIndex) → THINK (0102) → DELEGATE (Qwen/Gemma) → SUPERVISE (0102) → LEARN (Pattern Memory)
+SEARCH (HoloIndex) -> THINK (0102) -> DELEGATE (Qwen/Gemma) -> SUPERVISE (0102) -> LEARN (Pattern Memory)
 ```
 
-**Execute Small Task → Validate → Execute Next → Validate → Repeat**
+**Execute Small Task -> Validate -> Execute Next -> Validate -> Repeat**
 
 This builds a system that works autonomously without constant 012 input.
 
@@ -62,10 +62,10 @@ This builds a system that works autonomously without constant 012 input.
 **Validate**: Read both files, confirm placement correct.
 
 ## Success Criteria
-- ✅ Delegation section added to both files
-- ✅ Placement correct (before OPERATIONAL RULES)
-- ✅ Formatting consistent
-- ✅ No content lost
+- [OK] Delegation section added to both files
+- [OK] Placement correct (before OPERATIONAL RULES)
+- [OK] Formatting consistent
+- [OK] No content lost
 
 ## Submission
 After completing all 3 steps and validating each:

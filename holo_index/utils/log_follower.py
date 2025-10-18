@@ -74,19 +74,19 @@ class LogFollower:
 
                 # Highlight different types of agent activities
                 if 'HOLO-SEARCH' in agent_id:
-                    print(f"🔍 {timestamp} | {agent_id} | {message}")
+                    print(f"[SEARCH] {timestamp} | {agent_id} | {message}")
                 elif 'BREADCRUMB' in agent_id:
-                    print(f"🧵 {timestamp} | {agent_id} | {message}")
+                    print(f"[U+1F9F5] {timestamp} | {agent_id} | {message}")
                 elif 'QWEN' in agent_id:
-                    print(f"🧠 {timestamp} | {agent_id} | {message}")
+                    print(f"[AI] {timestamp} | {agent_id} | {message}")
                 elif '0102' in agent_id:
-                    print(f"🎯 {timestamp} | {agent_id} | {message}")
+                    print(f"[TARGET] {timestamp} | {agent_id} | {message}")
                 else:
-                    print(f"📝 {timestamp} | {agent_id} | {message}")
+                    print(f"[NOTE] {timestamp} | {agent_id} | {message}")
 
         except:
             # Fallback for malformed lines
-            print(f"📝 {line}")
+            print(f"[NOTE] {line}")
 
 def follow_agent_logs(agent_id: str = "012-FOLLOWER"):
     """Convenience function to follow agent logs."""

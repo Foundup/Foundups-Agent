@@ -99,7 +99,7 @@ success = await dae_node.authenticate_twitter(
 ```python
 # Post autonomous content with DAE signature
 post_id = await dae_node.post_autonomous_content(
-    "🤖 Autonomous communication from FoundUps DAE network! #AutonomousDAE",
+    "[BOT] Autonomous communication from FoundUps DAE network! #AutonomousDAE",
     {"test_mode": False, "dae_verified": True}
 )
 ```

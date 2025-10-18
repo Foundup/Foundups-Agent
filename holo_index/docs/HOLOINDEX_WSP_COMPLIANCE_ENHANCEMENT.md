@@ -64,29 +64,29 @@ def detect_file_movements_and_compliance(self, context: AdvisorContext) -> Dict[
 ## How It Prevents Future Violations
 
 ### Before Enhancement:
-1. Agent moves files according to WSP ✅
-2. Files become undiscoverable ❌
-3. 0102 agents can't find them ❌
-4. Knowledge continuity broken ❌
+1. Agent moves files according to WSP [OK]
+2. Files become undiscoverable [FAIL]
+3. 0102 agents can't find them [FAIL]
+4. Knowledge continuity broken [FAIL]
 
 ### After Enhancement:
-1. Agent moves files according to WSP ✅
-2. HoloDAE detects movement ✅
-3. QWEN analyzes compliance ✅
-4. Automatic guidance provided ✅
-5. Documentation updates suggested ✅
-6. Navigation indexing required ✅
-7. 0102 discoverability maintained ✅
+1. Agent moves files according to WSP [OK]
+2. HoloDAE detects movement [OK]
+3. QWEN analyzes compliance [OK]
+4. Automatic guidance provided [OK]
+5. Documentation updates suggested [OK]
+6. Navigation indexing required [OK]
+7. 0102 discoverability maintained [OK]
 
 ## Technical Architecture
 
 ### Monitoring Flow:
 ```
-Search Query → Intelligent Monitor → File Movement Check → Documentation Verification
-                      ↓
-               Qwen Advisor → Compliance Analysis → Guidance Generation
-                      ↓
-               Advisor Result → Todos + Reminders → WSP Compliance Achieved
+Search Query -> Intelligent Monitor -> File Movement Check -> Documentation Verification
+                      v
+               Qwen Advisor -> Compliance Analysis -> Guidance Generation
+                      v
+               Advisor Result -> Todos + Reminders -> WSP Compliance Achieved
 ```
 
 ### Detection Algorithms:
@@ -115,18 +115,18 @@ Search Query → Intelligent Monitor → File Movement Check → Documentation V
 Query: "move test_fact_check_fix.py to communication module"
 
 HoloIndex Response:
-🔄 FILE MOVEMENT DETECTED - WSP COMPLIANCE REQUIRED:
+[REFRESH] FILE MOVEMENT DETECTED - WSP COMPLIANCE REQUIRED:
 0102 Discoverability Score: 0.3/1.0
 
-🚨 WSP VIOLATIONS:
+[ALERT] WSP VIOLATIONS:
    • WSP VIOLATION: Files moved without 0102 indexing verification
 
-📚 REQUIRED DOCUMENTATION UPDATES:
+[BOOKS] REQUIRED DOCUMENTATION UPDATES:
    • Update module README.md to document moved files
    • Verify files are indexed in navigation system
    • Check WSP knowledge base for proper documentation
 
-🧭 REQUIRED NAVIGATION UPDATES:
+[U+1F9ED] REQUIRED NAVIGATION UPDATES:
    • Add moved files to modules/infrastructure/navigation/src/navigation.py NEED_TO dictionary
    • Ensure 0102 agents can discover moved files through navigation system
 ```
@@ -136,9 +136,9 @@ HoloIndex Response:
 Query: "check documentation indexing"
 
 HoloIndex Response:
-🔍 Documentation verification triggered
+[SEARCH] Documentation verification triggered
 0102 DISCOVERABILITY: 5 files may not be indexed in navigation system
-💡 Add moved files to NEED_TO dictionary for 0102 discoverability
+[IDEA] Add moved files to NEED_TO dictionary for 0102 discoverability
 ```
 
 ## WSP Compliance Achieved
@@ -154,17 +154,17 @@ HoloIndex Response:
 ## Impact Assessment
 
 ### Before: Manual Process
-- ❌ Files moved without indexing verification
-- ❌ 0102 discoverability broken
-- ❌ Knowledge continuity gaps
-- ❌ Manual remediation required
+- [FAIL] Files moved without indexing verification
+- [FAIL] 0102 discoverability broken
+- [FAIL] Knowledge continuity gaps
+- [FAIL] Manual remediation required
 
 ### After: Automated Intelligence
-- ✅ Real-time file movement detection
-- ✅ QWEN-powered compliance analysis
-- ✅ Automatic documentation guidance
-- ✅ 0102 discoverability preservation
-- ✅ Proactive violation prevention
+- [OK] Real-time file movement detection
+- [OK] QWEN-powered compliance analysis
+- [OK] Automatic documentation guidance
+- [OK] 0102 discoverability preservation
+- [OK] Proactive violation prevention
 
 ## Future Enhancements
 

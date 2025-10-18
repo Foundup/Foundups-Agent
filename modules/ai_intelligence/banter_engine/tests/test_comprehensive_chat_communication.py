@@ -44,38 +44,38 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
 
     def test_all_emoji_sequences_detection(self):
         """Test detection of all supported emoji sequences."""
-        print("\n🎯 TESTING ALL EMOJI SEQUENCE DETECTION")
+        print("\n[TARGET] TESTING ALL EMOJI SEQUENCE DETECTION")
         print("=" * 60)
         
         # All possible 3-emoji sequences (0-0-0 through 2-2-2)
         test_sequences = [
-            ("✊✊✊", (0, 0, 0), "Confrontational energy"),
-            ("✊✊✋", (0, 0, 1), "Shifting from confrontation"),
-            ("✊✊🖐️", (0, 0, 2), "Opening from confrontation"),
-            ("✊✋✊", (0, 1, 0), "Confrontational pause"),
-            ("✊✋✋", (0, 1, 1), "Peaceful transition"),
-            ("✊✋🖐️", (0, 1, 2), "Transformational sequence"),
-            ("✊🖐️✊", (0, 2, 0), "Confrontational return"),
-            ("✊🖐️✋", (0, 2, 1), "Complex transition"),
-            ("✊🖐️🖐️", (0, 2, 2), "Opening sequence"),
-            ("✋✊✊", (1, 0, 0), "Peaceful to confrontational"),
-            ("✋✊✋", (1, 0, 1), "Peaceful oscillation"),
-            ("✋✊🖐️", (1, 0, 2), "Mixed energy"),
-            ("✋✋✊", (1, 1, 0), "Peaceful to confrontational"),
-            ("✋✋✋", (1, 1, 1), "Pure peaceful energy"),
-            ("✋✋🖐️", (1, 1, 2), "Peaceful opening"),
-            ("✋🖐️✊", (1, 2, 0), "Complex to confrontational"),
-            ("✋🖐️✋", (1, 2, 1), "Complex peaceful"),
-            ("✋🖐️🖐️", (1, 2, 2), "Progressive opening"),
-            ("🖐️✊✊", (2, 0, 0), "Open to confrontational"),
-            ("🖐️✊✋", (2, 0, 1), "Open mixed"),
-            ("🖐️✊🖐️", (2, 0, 2), "Open oscillation"),
-            ("🖐️✋✊", (2, 1, 0), "Open to confrontational"),
-            ("🖐️✋✋", (2, 1, 1), "Open to peaceful"),
-            ("🖐️✋🖐️", (2, 1, 2), "Open progression"),
-            ("🖐️🖐️✊", (2, 2, 0), "Open to confrontational"),
-            ("🖐️🖐️✋", (2, 2, 1), "Open to peaceful"),
-            ("🖐️🖐️🖐️", (2, 2, 2), "Pure transcendent energy"),
+            ("[U+270A][U+270A][U+270A]", (0, 0, 0), "Confrontational energy"),
+            ("[U+270A][U+270A][U+270B]", (0, 0, 1), "Shifting from confrontation"),
+            ("[U+270A][U+270A][U+1F590]️", (0, 0, 2), "Opening from confrontation"),
+            ("[U+270A][U+270B][U+270A]", (0, 1, 0), "Confrontational pause"),
+            ("[U+270A][U+270B][U+270B]", (0, 1, 1), "Peaceful transition"),
+            ("[U+270A][U+270B][U+1F590]️", (0, 1, 2), "Transformational sequence"),
+            ("[U+270A][U+1F590]️[U+270A]", (0, 2, 0), "Confrontational return"),
+            ("[U+270A][U+1F590]️[U+270B]", (0, 2, 1), "Complex transition"),
+            ("[U+270A][U+1F590]️[U+1F590]️", (0, 2, 2), "Opening sequence"),
+            ("[U+270B][U+270A][U+270A]", (1, 0, 0), "Peaceful to confrontational"),
+            ("[U+270B][U+270A][U+270B]", (1, 0, 1), "Peaceful oscillation"),
+            ("[U+270B][U+270A][U+1F590]️", (1, 0, 2), "Mixed energy"),
+            ("[U+270B][U+270B][U+270A]", (1, 1, 0), "Peaceful to confrontational"),
+            ("[U+270B][U+270B][U+270B]", (1, 1, 1), "Pure peaceful energy"),
+            ("[U+270B][U+270B][U+1F590]️", (1, 1, 2), "Peaceful opening"),
+            ("[U+270B][U+1F590]️[U+270A]", (1, 2, 0), "Complex to confrontational"),
+            ("[U+270B][U+1F590]️[U+270B]", (1, 2, 1), "Complex peaceful"),
+            ("[U+270B][U+1F590]️[U+1F590]️", (1, 2, 2), "Progressive opening"),
+            ("[U+1F590]️[U+270A][U+270A]", (2, 0, 0), "Open to confrontational"),
+            ("[U+1F590]️[U+270A][U+270B]", (2, 0, 1), "Open mixed"),
+            ("[U+1F590]️[U+270A][U+1F590]️", (2, 0, 2), "Open oscillation"),
+            ("[U+1F590]️[U+270B][U+270A]", (2, 1, 0), "Open to confrontational"),
+            ("[U+1F590]️[U+270B][U+270B]", (2, 1, 1), "Open to peaceful"),
+            ("[U+1F590]️[U+270B][U+1F590]️", (2, 1, 2), "Open progression"),
+            ("[U+1F590]️[U+1F590]️[U+270A]", (2, 2, 0), "Open to confrontational"),
+            ("[U+1F590]️[U+1F590]️[U+270B]", (2, 2, 1), "Open to peaceful"),
+            ("[U+1F590]️[U+1F590]️[U+1F590]️", (2, 2, 2), "Pure transcendent energy"),
         ]
         
         detected_count = 0
@@ -87,52 +87,52 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
             
             if "No sequence detected" not in state_info:
                 detected_count += 1
-                print(f"  ✅ Detected: {state_info}")
+                print(f"  [OK] Detected: {state_info}")
                 if response:
-                    print(f"  📝 Response: {response}")
+                    print(f"  [NOTE] Response: {response}")
                 else:
-                    print(f"  ⚠️  No response generated")
+                    print(f"  [U+26A0]️  No response generated")
             else:
-                print(f"  ❌ Not detected")
+                print(f"  [FAIL] Not detected")
         
-        print(f"\n📊 Detection Summary: {detected_count}/{len(test_sequences)} sequences detected")
+        print(f"\n[DATA] Detection Summary: {detected_count}/{len(test_sequences)} sequences detected")
         
         # Assert that we detect a reasonable number of sequences
         self.assertGreater(detected_count, 15, "Should detect most emoji sequences")
 
     def test_embedded_emoji_sequences(self):
         """Test emoji sequences embedded in longer messages."""
-        print("\n🔍 TESTING EMBEDDED EMOJI SEQUENCES")
+        print("\n[SEARCH] TESTING EMBEDDED EMOJI SEQUENCES")
         print("=" * 60)
         
         test_messages = [
-            "Hello everyone ✊✊✊ what's happening?",
-            "I'm feeling ✋✋✋ right now, very peaceful",
-            "Check this out ✊✋🖐️ amazing transformation!",
-            "Testing 🖐️🖐️🖐️ transcendent mode here",
-            "Multiple sequences ✊✊✊ and ✋✋✋ in one message",
-            "Start ✊ middle ✋ end 🖐️ spread out",
+            "Hello everyone [U+270A][U+270A][U+270A] what's happening?",
+            "I'm feeling [U+270B][U+270B][U+270B] right now, very peaceful",
+            "Check this out [U+270A][U+270B][U+1F590]️ amazing transformation!",
+            "Testing [U+1F590]️[U+1F590]️[U+1F590]️ transcendent mode here",
+            "Multiple sequences [U+270A][U+270A][U+270A] and [U+270B][U+270B][U+270B] in one message",
+            "Start [U+270A] middle [U+270B] end [U+1F590]️ spread out",
             "Random text without any triggers at all",
-            "Partial sequence ✊✋ incomplete",
-            "Wrong emojis 😊😍🥰 should not trigger",
-            "Mixed valid ✊✋🖐️ and invalid 😊 emojis",
+            "Partial sequence [U+270A][U+270B] incomplete",
+            "Wrong emojis [U+1F60A][U+1F60D][U+1F970] should not trigger",
+            "Mixed valid [U+270A][U+270B][U+1F590]️ and invalid [U+1F60A] emojis",
         ]
         
         detected_count = 0
         for msg in test_messages:
-            print(f"📝 Message: '{msg}'")
+            print(f"[NOTE] Message: '{msg}'")
             
             state_info, response = self.banter_engine.process_input(msg)
             
             if "No sequence detected" not in state_info:
                 detected_count += 1
-                print(f"  ✅ Detected: {state_info}")
+                print(f"  [OK] Detected: {state_info}")
                 if response:
-                    print(f"  📝 Response: {response}")
+                    print(f"  [NOTE] Response: {response}")
             else:
-                print(f"  ➡️  No trigger detected")
+                print(f"  [U+27A1]️  No trigger detected")
         
-        print(f"\n📊 Embedded Detection: {detected_count}/{len(test_messages)} messages triggered")
+        print(f"\n[DATA] Embedded Detection: {detected_count}/{len(test_messages)} messages triggered")
         
         # Should detect at least the clear sequences
         self.assertGreaterEqual(detected_count, 4, "Should detect clear embedded sequences")
@@ -140,19 +140,19 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
     @pytest.mark.asyncio
     async def test_real_time_message_processing_flow(self):
         """Test the complete real-time message processing flow."""
-        print("\n⚡ TESTING REAL-TIME MESSAGE PROCESSING FLOW")
+        print("\n[LIGHTNING] TESTING REAL-TIME MESSAGE PROCESSING FLOW")
         print("=" * 60)
         
         # Test messages simulating real chat
         test_messages = [
             {
                 "id": "msg_001",
-                "snippet": {"displayMessage": "Hello everyone! ✊✋🖐️"},
+                "snippet": {"displayMessage": "Hello everyone! [U+270A][U+270B][U+1F590]️"},
                 "authorDetails": {"displayName": "TestUser1", "channelId": "user_001"}
             },
             {
                 "id": "msg_002", 
-                "snippet": {"displayMessage": "Feeling peaceful ✋✋✋ today"},
+                "snippet": {"displayMessage": "Feeling peaceful [U+270B][U+270B][U+270B] today"},
                 "authorDetails": {"displayName": "TestUser2", "channelId": "user_002"}
             },
             {
@@ -162,7 +162,7 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
             },
             {
                 "id": "msg_004",
-                "snippet": {"displayMessage": "Transcendent vibes 🖐️🖐️🖐️ here"},
+                "snippet": {"displayMessage": "Transcendent vibes [U+1F590]️[U+1F590]️[U+1F590]️ here"},
                 "authorDetails": {"displayName": "TestUser4", "channelId": "user_004"}
             },
         ]
@@ -179,20 +179,20 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
                 
                 if log_entry:
                     processed_count += 1
-                    print(f"  ✅ Processed: {log_entry.get('author', 'Unknown')}")
+                    print(f"  [OK] Processed: {log_entry.get('author', 'Unknown')}")
                     
                     # Check if it triggered a response
                     display_message = message["snippet"]["displayMessage"]
                     if self.listener._check_trigger_patterns(display_message):
                         triggered_count += 1
-                        print(f"  🎯 Triggered emoji response")
+                        print(f"  [TARGET] Triggered emoji response")
                 else:
-                    print(f"  ⚠️  Processing returned None")
+                    print(f"  [U+26A0]️  Processing returned None")
                     
             except Exception as e:
-                print(f"  ❌ Error processing: {e}")
+                print(f"  [FAIL] Error processing: {e}")
         
-        print(f"\n📊 Processing Summary:")
+        print(f"\n[DATA] Processing Summary:")
         print(f"  Processed: {processed_count}/{len(test_messages)} messages")
         print(f"  Triggered: {triggered_count} emoji responses")
         
@@ -215,7 +215,7 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
         result1 = await self.listener._handle_emoji_trigger(
             author_name="RapidUser",
             author_id=user_id,
-            message_text="✊✋🖐️ First message"
+            message_text="[U+270A][U+270B][U+1F590]️ First message"
         )
         
         print(f"First message result: {result1}")
@@ -227,18 +227,18 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
         result2 = await self.listener._handle_emoji_trigger(
             author_name="RapidUser", 
             author_id=user_id,
-            message_text="✊✋🖐️ Second message"
+            message_text="[U+270A][U+270B][U+1F590]️ Second message"
         )
         
         print(f"Second message result: {result2}")
         self.assertFalse(result2, "Second message should be rate limited")
         
-        print("✅ Rate limiting working correctly")
+        print("[OK] Rate limiting working correctly")
 
     @pytest.mark.asyncio
     async def test_fallback_system_integration(self):
         """Test the complete fallback system when primary systems fail."""
-        print("\n🛡️  TESTING FALLBACK SYSTEM INTEGRATION")
+        print("\n[U+1F6E1]️  TESTING FALLBACK SYSTEM INTEGRATION")
         print("=" * 60)
         
         # Test 1: Banter engine fails, LLM bypass succeeds
@@ -254,14 +254,14 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
                 result = await self.listener._handle_emoji_trigger(
                     author_name="TestUser",
                     author_id="test_user_123", 
-                    message_text="✊✋🖐️"
+                    message_text="[U+270A][U+270B][U+1F590]️"
                 )
                 
                 print(f"  Result: {result}")
                 self.assertTrue(result, "Should succeed with LLM bypass")
                 
                 # Verify LLM bypass was called
-                mock_bypass.assert_called_once_with("✊✋🖐️")
+                mock_bypass.assert_called_once_with("[U+270A][U+270B][U+1F590]️")
         
         # Test 2: Both systems fail, ultimate fallback
         print("\nTest 2: Both systems fail -> Ultimate fallback")
@@ -279,7 +279,7 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
                 result = await self.listener._handle_emoji_trigger(
                     author_name="TestUser",
                     author_id="test_user_456",
-                    message_text="✊✋🖐️"
+                    message_text="[U+270A][U+270B][U+1F590]️"
                 )
                 
                 print(f"  Result: {result}")
@@ -289,19 +289,19 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
                 # Verify fallback was called
                 mock_fallback.assert_called_once_with("TestUser")
         
-        print("✅ Fallback system working correctly")
+        print("[OK] Fallback system working correctly")
 
     def test_llm_guidance_extraction(self):
         """Test that emoji sequences provide proper LLM guidance."""
-        print("\n🧠 TESTING LLM GUIDANCE EXTRACTION")
+        print("\n[AI] TESTING LLM GUIDANCE EXTRACTION")
         print("=" * 60)
         
         # Key sequences that should provide LLM guidance
         guidance_tests = [
-            ("✊✊✊", "confrontational", "Should guide LLM toward confrontational responses"),
-            ("✋✋✋", "peaceful", "Should guide LLM toward peaceful responses"),
-            ("✊✋🖐️", "transformational", "Should guide LLM toward transformational responses"),
-            ("🖐️🖐️🖐️", "transcendent", "Should guide LLM toward transcendent responses"),
+            ("[U+270A][U+270A][U+270A]", "confrontational", "Should guide LLM toward confrontational responses"),
+            ("[U+270B][U+270B][U+270B]", "peaceful", "Should guide LLM toward peaceful responses"),
+            ("[U+270A][U+270B][U+1F590]️", "transformational", "Should guide LLM toward transformational responses"),
+            ("[U+1F590]️[U+1F590]️[U+1F590]️", "transcendent", "Should guide LLM toward transcendent responses"),
         ]
         
         guidance_found = 0
@@ -312,22 +312,22 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
             state_info, response = self.banter_engine.process_input(emoji_seq)
             
             if "No sequence detected" not in state_info:
-                print(f"  ✅ State: {state_info}")
+                print(f"  [OK] State: {state_info}")
                 
                 # Check if the state contains guidance-related keywords
                 state_lower = state_info.lower()
                 if any(keyword in state_lower for keyword in [expected_guidance, "tone", "state"]):
                     guidance_found += 1
-                    print(f"  🎯 Guidance found: {description}")
+                    print(f"  [TARGET] Guidance found: {description}")
                 else:
-                    print(f"  ⚠️  No clear guidance in state")
+                    print(f"  [U+26A0]️  No clear guidance in state")
                     
                 if response:
-                    print(f"  📝 Response: {response}")
+                    print(f"  [NOTE] Response: {response}")
             else:
-                print(f"  ❌ Sequence not detected")
+                print(f"  [FAIL] Sequence not detected")
         
-        print(f"\n📊 Guidance Summary: {guidance_found}/{len(guidance_tests)} sequences provided guidance")
+        print(f"\n[DATA] Guidance Summary: {guidance_found}/{len(guidance_tests)} sequences provided guidance")
         
         # Should provide guidance for most key sequences
         self.assertGreater(guidance_found, 2, "Should provide LLM guidance for key sequences")
@@ -335,14 +335,14 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
     @pytest.mark.asyncio
     async def test_bot_self_message_prevention(self):
         """Test that bot doesn't respond to its own emoji messages."""
-        print("\n🤖 TESTING BOT SELF-MESSAGE PREVENTION")
+        print("\n[BOT] TESTING BOT SELF-MESSAGE PREVENTION")
         print("=" * 60)
         
         # Test bot responding to its own message
         result = await self.listener._handle_emoji_trigger(
             author_name="FoundUpsBot",
             author_id="bot_channel_123",  # Same as listener.bot_channel_id
-            message_text="✊✋🖐️ Bot's own message"
+            message_text="[U+270A][U+270B][U+1F590]️ Bot's own message"
         )
         
         print(f"Bot self-message result: {result}")
@@ -352,22 +352,22 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
         result = await self.listener._handle_emoji_trigger(
             author_name="RegularUser",
             author_id="user_channel_456",  # Different from bot_channel_id
-            message_text="✊✋🖐️ User message"
+            message_text="[U+270A][U+270B][U+1F590]️ User message"
         )
         
         print(f"User message result: {result}")
         self.assertTrue(result, "Bot should respond to user messages")
         
-        print("✅ Self-message prevention working correctly")
+        print("[OK] Self-message prevention working correctly")
 
     def test_performance_under_load(self):
         """Test system performance under high message load."""
-        print("\n⚡ TESTING PERFORMANCE UNDER LOAD")
+        print("\n[LIGHTNING] TESTING PERFORMANCE UNDER LOAD")
         print("=" * 60)
         
         # Generate many test messages
         test_messages = []
-        emoji_sequences = ["✊✊✊", "✋✋✋", "✊✋🖐️", "🖐️🖐️🖐️"]
+        emoji_sequences = ["[U+270A][U+270A][U+270A]", "[U+270B][U+270B][U+270B]", "[U+270A][U+270B][U+1F590]️", "[U+1F590]️[U+1F590]️[U+1F590]️"]
         
         for i in range(100):
             emoji_seq = emoji_sequences[i % len(emoji_sequences)]
@@ -388,7 +388,7 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
         end_time = time.time()
         processing_time = end_time - start_time
         
-        print(f"📊 Performance Results:")
+        print(f"[DATA] Performance Results:")
         print(f"  Messages processed: {processed_count}/{len(test_messages)}")
         print(f"  Total time: {processing_time:.3f} seconds")
         print(f"  Messages per second: {len(test_messages)/processing_time:.1f}")
@@ -405,7 +405,7 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
 
     def test_error_recovery_scenarios(self):
         """Test system recovery from various error scenarios."""
-        print("\n🔧 TESTING ERROR RECOVERY SCENARIOS")
+        print("\n[TOOL] TESTING ERROR RECOVERY SCENARIOS")
         print("=" * 60)
         
         # Test 1: Invalid input types
@@ -422,7 +422,7 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
         
         # Test 2: Extremely long input
         print("\nTest 2: Extremely long input")
-        long_input = "✊✋🖐️ " + "x" * 10000
+        long_input = "[U+270A][U+270B][U+1F590]️ " + "x" * 10000
         
         try:
             state_info, response = self.banter_engine.process_input(long_input)
@@ -434,10 +434,10 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
         # Test 3: Unicode and special characters
         print("\nTest 3: Unicode and special characters")
         unicode_inputs = [
-            "✊✋🖐️ 中文测试",
-            "✊✋🖐️ العربية",
-            "✊✋🖐️ 🌟🎉🔥",
-            "✊✋🖐️ \n\t\r special chars",
+            "[U+270A][U+270B][U+1F590]️ 中文测试",
+            "[U+270A][U+270B][U+1F590]️ العربية",
+            "[U+270A][U+270B][U+1F590]️ [U+1F31F][CELEBRATE][U+1F525]",
+            "[U+270A][U+270B][U+1F590]️ \n\t\r special chars",
         ]
         
         for unicode_input in unicode_inputs:
@@ -448,39 +448,39 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
             except Exception as e:
                 print(f"  Unicode error: {e}")
         
-        print("✅ Error recovery working correctly")
+        print("[OK] Error recovery working correctly")
 
     def test_comprehensive_integration_flow(self):
         """Test the complete integration flow from emoji detection to response."""
-        print("\n🔄 TESTING COMPREHENSIVE INTEGRATION FLOW")
+        print("\n[REFRESH] TESTING COMPREHENSIVE INTEGRATION FLOW")
         print("=" * 60)
         
         # Simulate a complete chat interaction
         chat_scenario = [
-            ("User1", "Hello everyone! ✊✊✊"),
-            ("User2", "Feeling peaceful today ✋✋✋"),
+            ("User1", "Hello everyone! [U+270A][U+270A][U+270A]"),
+            ("User2", "Feeling peaceful today [U+270B][U+270B][U+270B]"),
             ("User3", "Just regular chat without emojis"),
-            ("User1", "Transformation time ✊✋🖐️"),
-            ("User4", "Transcendent vibes 🖐️🖐️🖐️"),
-            ("User2", "Mixed message ✊✋🖐️ with more text"),
+            ("User1", "Transformation time [U+270A][U+270B][U+1F590]️"),
+            ("User4", "Transcendent vibes [U+1F590]️[U+1F590]️[U+1F590]️"),
+            ("User2", "Mixed message [U+270A][U+270B][U+1F590]️ with more text"),
         ]
         
         interaction_results = []
         
         for username, message in chat_scenario:
-            print(f"\n👤 {username}: {message}")
+            print(f"\n[U+1F464] {username}: {message}")
             
             # Step 1: Check trigger detection
             has_trigger = self.listener._check_trigger_patterns(message)
-            print(f"  🎯 Trigger detected: {has_trigger}")
+            print(f"  [TARGET] Trigger detected: {has_trigger}")
             
             if has_trigger:
                 # Step 2: Process with banter engine
                 state_info, response = self.banter_engine.process_input(message)
-                print(f"  🧠 Banter engine: {state_info}")
+                print(f"  [AI] Banter engine: {state_info}")
                 
                 if response:
-                    print(f"  📝 Generated response: {response}")
+                    print(f"  [NOTE] Generated response: {response}")
                     interaction_results.append({
                         "user": username,
                         "message": message,
@@ -491,10 +491,10 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
                 else:
                     # Step 3: Try LLM bypass
                     bypass_state, bypass_response = self.llm_bypass.process_input(message)
-                    print(f"  🔄 LLM bypass: {bypass_state}")
+                    print(f"  [REFRESH] LLM bypass: {bypass_state}")
                     
                     if bypass_response:
-                        print(f"  📝 Bypass response: {bypass_response}")
+                        print(f"  [NOTE] Bypass response: {bypass_response}")
                         interaction_results.append({
                             "user": username,
                             "message": message,
@@ -505,7 +505,7 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
                     else:
                         # Step 4: Ultimate fallback
                         fallback = self.llm_bypass.get_fallback_response(username)
-                        print(f"  🛡️  Fallback: {fallback}")
+                        print(f"  [U+1F6E1]️  Fallback: {fallback}")
                         interaction_results.append({
                             "user": username,
                             "message": message,
@@ -514,7 +514,7 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
                             "success": True
                         })
             else:
-                print("  ➡️  No response needed")
+                print("  [U+27A1]️  No response needed")
                 interaction_results.append({
                     "user": username,
                     "message": message,
@@ -527,7 +527,7 @@ class TestComprehensiveChatCommunication(unittest.TestCase):
         triggered_interactions = [r for r in interaction_results if r["state"] != "no_trigger"]
         successful_responses = [r for r in triggered_interactions if r["response"]]
         
-        print(f"\n📊 Integration Flow Summary:")
+        print(f"\n[DATA] Integration Flow Summary:")
         print(f"  Total interactions: {len(interaction_results)}")
         print(f"  Triggered responses: {len(triggered_interactions)}")
         print(f"  Successful responses: {len(successful_responses)}")

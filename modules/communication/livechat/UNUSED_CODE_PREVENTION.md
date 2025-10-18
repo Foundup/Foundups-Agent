@@ -22,10 +22,10 @@
 
 ### 1. ALWAYS Edit Existing Files (WSP 84)
 ```python
-# ❌ WRONG - Creating duplicate
+# [FAIL] WRONG - Creating duplicate
 enhanced_livechat_core.py  # New file
 
-# ✅ RIGHT - Edit existing
+# [OK] RIGHT - Edit existing
 livechat_core.py  # Edit this directly
 ```
 

@@ -1,47 +1,47 @@
 # MAGADOOM Commands (Streamlined v2.0)
 
-**✅ UPDATED 2025-08-26**: Focused on pure fragging fundamentals. Removed redundant commands.
+**[OK] UPDATED 2025-08-26**: Focused on pure fragging fundamentals. Removed redundant commands.
 
-## 💀 Essential MAGADOOM Commands
+## [U+1F480] Essential MAGADOOM Commands
 
 ### `/score` - Complete Player Stats
 Shows everything: XP, title, level, total whacks
 ```
-@User 💀 MAGADOOM | 150 XP | WARRIOR | LVL 2 | 8 WHACKS 🔥
+@User [U+1F480] MAGADOOM | 150 XP | WARRIOR | LVL 2 | 8 WHACKS [U+1F525]
 ```
 
 ### `/rank` - Leaderboard Position  
 Shows where you rank among all players
 ```
-@User 🏆 MAGADOOM Ranking: 🥈 #2 of 12 players | 150 XP
+@User [U+1F3C6] MAGADOOM Ranking: [U+1F948] #2 of 12 players | 150 XP
 ```
 
 ### `/whacks` - Whack-Focused Stats
 Same data as `/score` but emphasizes whack count
 ```
-@User 🎯 MAGADOOM | 8 WHACKS | 150 XP | WARRIOR 💀
+@User [TARGET] MAGADOOM | 8 WHACKS | 150 XP | WARRIOR [U+1F480]
 ```
 
 ### `/leaderboard` - Top Whackers
 Shows top 5 players in compact format
 ```
-@User 🏆 MAGADOOM Top Whackers: | 🥇Player1 [WAR] 200xp | 🥈Player2 [HUN] 150xp | 🥉Player3 [GRU] 100xp
+@User [U+1F3C6] MAGADOOM Top Whackers: | [U+1F947]Player1 [WAR] 200xp | [U+1F948]Player2 [HUN] 150xp | [U+1F949]Player3 [GRU] 100xp
 ```
 
 ### `/sprees` - Active Whacking Sprees
 Shows mods on whacking sprees with 30-second windows
 ```
-@User 🔥 ACTIVE WHACKING SPREES:
-⚡ ModName: WHACKING SPREE (3 whacks)
-🎯 OtherMod: 2 whacks (15s left)
+@User [U+1F525] ACTIVE WHACKING SPREES:
+[LIGHTNING] ModName: WHACKING SPREE (3 whacks)
+[TARGET] OtherMod: 2 whacks (15s left)
 ```
 
 ### `/help` - Command List
 ```
-@User 💀 MAGADOOM: /score /rank /whacks /leaderboard /sprees /help
+@User [U+1F480] MAGADOOM: /score /rank /whacks /leaderboard /sprees /help
 ```
 
-## 💀 EPIC MAGADOOM RANKS 
+## [U+1F480] EPIC MAGADOOM RANKS 
 
 **Rise through the ranks by whacking MAGA trolls - PURE DOOM STYLE:**
 - **GRUNT** (0-99 XP) - Fresh meat, just spawned
@@ -56,7 +56,7 @@ Shows mods on whacking sprees with 30-second windows
 - **LEGENDARY** (20000-49999 XP) - Stuff of legends
 - **DOOM SLAYER** (50000+ XP) - THE ONLY ONE THEY FEAR
 
-## 🔥 WHACKING SPREE SYSTEM (NEW!)
+## [U+1F525] WHACKING SPREE SYSTEM (NEW!)
 
 **Sustained whacking within 30-second windows:**
 - **WHACKING SPREE** (3 whacks) - +50 bonus XP
@@ -67,14 +67,14 @@ Shows mods on whacking sprees with 30-second windows
 
 Sprees reset if no whacks for 30 seconds. Bonus XP stacks with regular whack points!
 
-## 🎮 Game Mechanics (Core)
+## [GAME] Game Mechanics (Core)
 
 - **Moderators = Players**: Each mod tracked as MAGADOOM player
 - **Timeouts = Whacks**: Every timeout/ban = 1 whack + XP points
 - **Cumulative Stats**: All whacks and XP persist in database across sessions
 - **Real-time Updates**: Stats update immediately when timeouts happen
 
-## 🗑️ Removed Commands (Non-MAGADOOM)
+## [U+1F5D1]️ Removed Commands (Non-MAGADOOM)
 
 ### REDUNDANT:
 - ~~`/level`~~ - Info now in `/score`  
@@ -87,8 +87,8 @@ Sprees reset if no whacks for 30 seconds. Bonus XP stacks with regular whack poi
 - ~~`/fscale`~~ - Personality tests
 - ~~`/rate`~~ - Rating systems
 
-## 🎯 MAGADOOM Philosophy
+## [TARGET] MAGADOOM Philosophy
 
-**Pure whacking focus**: Mods time out trolls → Get whacks → Earn XP → Climb ranks → Achieve glory
+**Pure whacking focus**: Mods time out trolls -> Get whacks -> Earn XP -> Climb ranks -> Achieve glory
 
 No educational content, no complex mechanics - just DOOM-style whacking action for YouTube moderation!

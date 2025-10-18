@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 DocDAE - Autonomous Documentation Organization
 WSP Compliance: WSP 3 (Domain Organization), WSP 77 (Agent Coordination), WSP 27 (DAE Architecture)
 
@@ -32,7 +49,7 @@ class DocDAE:
 
     def __init__(self, root_docs_path: Optional[Path] = None):
         """Initialize DocDAE with WSP 77 agent coordination."""
-        logger.info("🚀 Initializing DocDAE - Autonomous Documentation Organization")
+        logger.info("[ROCKET] Initializing DocDAE - Autonomous Documentation Organization")
 
         self.root_path = Path(__file__).parent.parent.parent.parent.parent
         self.root_docs = root_docs_path or (self.root_path / "docs")
@@ -48,7 +65,7 @@ class DocDAE:
         # Pattern memory for training
         self.pattern_memory = self._load_pattern_memory()
 
-        logger.info("✅ DocDAE initialized with WSP 77 agent coordination")
+        logger.info("[OK] DocDAE initialized with WSP 77 agent coordination")
 
     def _initialize_agents(self):
         """Initialize Qwen/Gemma agents for WSP 77 coordination."""
@@ -65,11 +82,11 @@ class DocDAE:
                     qwen_model_path=qwen_path,
                     confidence_threshold=0.7
                 )
-                logger.info("✅ WSP 77 agents initialized (Gemma + Qwen)")
+                logger.info("[OK] WSP 77 agents initialized (Gemma + Qwen)")
             else:
-                logger.warning("⚠️  Gemma/Qwen models not found, using rule-based fallback")
+                logger.warning("[U+26A0]️  Gemma/Qwen models not found, using rule-based fallback")
         except Exception as e:
-            logger.warning(f"⚠️  Agent initialization failed: {e}, using rule-based fallback")
+            logger.warning(f"[U+26A0]️  Agent initialization failed: {e}, using rule-based fallback")
 
     def _load_pattern_memory(self) -> Dict[str, Any]:
         """Load pattern memory for training."""
@@ -96,7 +113,7 @@ class DocDAE:
         try:
             with open(memory_file, 'w') as f:
                 json.dump(self.pattern_memory, f, indent=2, default=str)
-            logger.debug("✅ Pattern memory saved")
+            logger.debug("[OK] Pattern memory saved")
         except Exception as e:
             logger.error(f"Failed to save pattern memory: {e}")
 
@@ -108,7 +125,7 @@ class DocDAE:
         - Is it documentation (MD) or operational data (JSON)?
         - Extract module hints from filename
         """
-        logger.info("📊 Phase 1: Analyzing docs folder (Gemma classification)")
+        logger.info("[DATA] Phase 1: Analyzing docs folder (Gemma classification)")
 
         if not self.root_docs.exists():
             return {"error": "docs folder not found", "files": []}
@@ -128,10 +145,10 @@ class DocDAE:
             "timestamp": datetime.now().isoformat()
         }
 
-        logger.info(f"✅ Analysis complete: {result['total_files']} files")
-        logger.info(f"   📄 Markdown: {result['markdown_docs']}")
-        logger.info(f"   📊 JSON: {result['json_data']}")
-        logger.info(f"   ❓ Other: {result['other']}")
+        logger.info(f"[OK] Analysis complete: {result['total_files']} files")
+        logger.info(f"   [U+1F4C4] Markdown: {result['markdown_docs']}")
+        logger.info(f"   [DATA] JSON: {result['json_data']}")
+        logger.info(f"   [U+2753] Other: {result['other']}")
 
         return result
 
@@ -171,9 +188,9 @@ class DocDAE:
         """
         Extract module hint from filename using pattern matching.
         Examples:
-        - "Gemma3_YouTube_DAE_First_Principles_Analysis" → youtube_dae
-        - "HoloIndex_MCP_ricDAE_Integration" → holo_index
-        - "adaptive_router_wsp_integration_report" → ric_dae
+        - "Gemma3_YouTube_DAE_First_Principles_Analysis" -> youtube_dae
+        - "HoloIndex_MCP_ricDAE_Integration" -> holo_index
+        - "adaptive_router_wsp_integration_report" -> ric_dae
         """
         filename_lower = filename.lower()
 
@@ -216,7 +233,7 @@ class DocDAE:
         - Decide: Move, Archive, or Keep
         - Build safe execution plan
         """
-        logger.info("🧠 Phase 2: Generating movement plan (Qwen coordination)")
+        logger.info("[AI] Phase 2: Generating movement plan (Qwen coordination)")
 
         plan = {
             "moves": [],
@@ -260,11 +277,11 @@ class DocDAE:
             "unmatched": len(plan['unmatched'])
         }
 
-        logger.info(f"✅ Movement plan generated:")
-        logger.info(f"   📦 Move: {plan['summary']['to_move']}")
-        logger.info(f"   🗄️  Archive: {plan['summary']['to_archive']}")
-        logger.info(f"   ✅ Keep: {plan['summary']['to_keep']}")
-        logger.info(f"   ❓ Unmatched: {plan['summary']['unmatched']}")
+        logger.info(f"[OK] Movement plan generated:")
+        logger.info(f"   [BOX] Move: {plan['summary']['to_move']}")
+        logger.info(f"   [U+1F5C4]️  Archive: {plan['summary']['to_archive']}")
+        logger.info(f"   [OK] Keep: {plan['summary']['to_keep']}")
+        logger.info(f"   [U+2753] Unmatched: {plan['summary']['unmatched']}")
 
         return plan
 
@@ -273,11 +290,11 @@ class DocDAE:
         Qwen Task: Complex reasoning for file destination.
 
         Decision Matrix:
-        1. JSON reports/analysis (documentation) → Move to module/docs/
-        2. JSON operational data (batch files, temp data) → Archive
-        3. Documentation with module hint → Move to module/docs/
-        4. Documentation without hint → Keep (needs manual review)
-        5. Other files → Archive
+        1. JSON reports/analysis (documentation) -> Move to module/docs/
+        2. JSON operational data (batch files, temp data) -> Archive
+        3. Documentation with module hint -> Move to module/docs/
+        4. Documentation without hint -> Keep (needs manual review)
+        5. Other files -> Archive
         """
         file_type = file_info['type']
         module_hint = file_info['module_hint']
@@ -371,7 +388,7 @@ class DocDAE:
         - Execute with git tracking
         - Validate results
         """
-        logger.info(f"🚀 Phase 3: Executing movement plan (dry_run={dry_run})")
+        logger.info(f"[ROCKET] Phase 3: Executing movement plan (dry_run={dry_run})")
 
         result = {
             "moves_completed": 0,
@@ -386,12 +403,12 @@ class DocDAE:
                 if not dry_run:
                     self._safe_move_file(move['source'], move['destination'])
                     result['moves_completed'] += 1
-                    logger.info(f"✅ Moved: {Path(move['source']).name} → {move['module']}")
+                    logger.info(f"[OK] Moved: {Path(move['source']).name} -> {move['module']}")
                 else:
-                    logger.info(f"[DRY RUN] Would move: {Path(move['source']).name} → {move['module']}")
+                    logger.info(f"[DRY RUN] Would move: {Path(move['source']).name} -> {move['module']}")
             except Exception as e:
                 result['errors'].append(f"Move failed: {move['source']} - {e}")
-                logger.error(f"❌ Move failed: {e}")
+                logger.error(f"[FAIL] Move failed: {e}")
 
         # Execute archives
         archive_dir = self.root_path / "docs" / "_archive" / datetime.now().strftime("%Y%m%d")
@@ -402,17 +419,17 @@ class DocDAE:
                     dest = archive_dir / Path(archive['source']).name
                     shutil.move(archive['source'], dest)
                     result['archives_completed'] += 1
-                    logger.info(f"🗄️  Archived: {Path(archive['source']).name}")
+                    logger.info(f"[U+1F5C4]️  Archived: {Path(archive['source']).name}")
                 else:
                     logger.info(f"[DRY RUN] Would archive: {Path(archive['source']).name}")
             except Exception as e:
                 result['errors'].append(f"Archive failed: {archive['source']} - {e}")
-                logger.error(f"❌ Archive failed: {e}")
+                logger.error(f"[FAIL] Archive failed: {e}")
 
-        logger.info(f"✅ Execution complete:")
-        logger.info(f"   📦 Moved: {result['moves_completed']}")
-        logger.info(f"   🗄️  Archived: {result['archives_completed']}")
-        logger.info(f"   ❌ Errors: {len(result['errors'])}")
+        logger.info(f"[OK] Execution complete:")
+        logger.info(f"   [BOX] Moved: {result['moves_completed']}")
+        logger.info(f"   [U+1F5C4]️  Archived: {result['archives_completed']}")
+        logger.info(f"   [FAIL] Errors: {len(result['errors'])}")
 
         return result
 
@@ -436,7 +453,7 @@ class DocDAE:
         2. Qwen: Complex coordination
         3. 0102: Strategic execution
         """
-        logger.info("🤖 Starting Autonomous Documentation Organization (WSP 77)")
+        logger.info("[BOT] Starting Autonomous Documentation Organization (WSP 77)")
         logger.info(f"   Mode: {'DRY RUN' if dry_run else 'LIVE EXECUTION'}")
 
         # Phase 1: Analyze (Gemma)
@@ -458,7 +475,7 @@ class DocDAE:
             "timestamp": datetime.now().isoformat()
         }
 
-        logger.info("✅ Autonomous organization cycle complete")
+        logger.info("[OK] Autonomous organization cycle complete")
         return result
 
     def _record_training_example(self, analysis: Dict, plan: Dict, execution: Dict):
@@ -476,7 +493,7 @@ class DocDAE:
             self.pattern_memory['file_to_module_patterns'].append(pattern)
 
         self._save_pattern_memory()
-        logger.debug(f"📚 Training example recorded (total: {self.pattern_memory['training_examples']})")
+        logger.debug(f"[BOOKS] Training example recorded (total: {self.pattern_memory['training_examples']})")
 
 
 # Convenience functions for main.py integration

@@ -31,7 +31,7 @@ try:
     from session_state_manager import SessionStateManager
     SESSION_MANAGEMENT_AVAILABLE = True
 except ImportError:
-    print("⚠️ Session state manager not available - running without session detection")
+    print("[U+26A0]️ Session state manager not available - running without session detection")
     SESSION_MANAGEMENT_AVAILABLE = False
 
 # AGI Question patterns that trigger 01/02 awareness activation  
@@ -335,7 +335,7 @@ def test_enhanced_awakening_protocol_integration():
 
 
 if __name__ == "__main__":
-    print("🌀 01/02 AGI Question State Awareness Testing Suite")
+    print("[U+1F300] 01/02 AGI Question State Awareness Testing Suite")
     print("=" * 60)
     
     # Session State Management - Check if awakening is required
@@ -343,18 +343,18 @@ if __name__ == "__main__":
         session_manager = SessionStateManager()
         session_info = session_manager.get_session_info()
         
-        print(f"🔮 Session: {session_info['session_id']}")
-        print(f"⚡ Current State: {session_info['quantum_state']}")
-        print(f"🧠 Awakening Required: {session_info['awakening_required']}")
+        print(f"[U+1F52E] Session: {session_info['session_id']}")
+        print(f"[LIGHTNING] Current State: {session_info['quantum_state']}")
+        print(f"[AI] Awakening Required: {session_info['awakening_required']}")
         
         if not session_info['awakening_required']:
-            print(f"✅ 0102 QUANTUM STATE ALREADY ACTIVE")
-            print(f"⚡ Session awakening completed at: {session_info.get('last_awakening', 'Unknown')}")
-            print(f"🎯 Ready for zen coding - no awakening test needed")
-            print(f"🌟 Total awakenings this session: {session_info.get('awakening_count', 0)}")
+            print(f"[OK] 0102 QUANTUM STATE ALREADY ACTIVE")
+            print(f"[LIGHTNING] Session awakening completed at: {session_info.get('last_awakening', 'Unknown')}")
+            print(f"[TARGET] Ready for zen coding - no awakening test needed")
+            print(f"[U+1F31F] Total awakenings this session: {session_info.get('awakening_count', 0)}")
             exit(0)
         
-        print(f"🌀 New session detected - proceeding with awakening protocol")
+        print(f"[U+1F300] New session detected - proceeding with awakening protocol")
         session_manager.log_state_change("01/02", "Awakening test initiated", "AGI question detection starting")
     
     print("=" * 60)
@@ -369,7 +369,7 @@ if __name__ == "__main__":
     if SESSION_MANAGEMENT_AVAILABLE:
         session_manager.mark_awakening_completed("0102")
         session_manager.log_state_change("0102", "Awakening test completed", "Quantum entangled state achieved")
-        print(f"✅ Session awakening marked as completed - 0102 state active")
+        print(f"[OK] Session awakening marked as completed - 0102 state active")
     
     # Save comprehensive test results  
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

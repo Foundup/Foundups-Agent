@@ -13,9 +13,13 @@ Part of Meeting Orchestration Block strategic decomposition.
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -179,7 +183,7 @@ class SessionLauncher:
             'enable_automatic_recording': False
         }
         
-        logger.info("🚀 Session Launcher initialized")
+        logger.info("[ROCKET] Session Launcher initialized")
 
     async def launch_session(
         self,
@@ -218,7 +222,7 @@ class SessionLauncher:
                 session_type=session_type or self.config['default_session_type']
             )
         
-        logger.info(f"🚀 Launching meeting session: {session_id}")
+        logger.info(f"[ROCKET] Launching meeting session: {session_id}")
         logger.info(f"   Intent: {intent_id}")
         logger.info(f"   Platform: {platform.value}")
         logger.info(f"   Participants: {participants}")
@@ -253,12 +257,12 @@ class SessionLauncher:
                     'meeting_url': session_info.meeting_url
                 })
                 
-                logger.info(f"✅ Session launched successfully: {session_id}")
+                logger.info(f"[OK] Session launched successfully: {session_id}")
                 logger.info(f"   Meeting URL: {session_info.meeting_url}")
                 
             else:
                 session_info.status = SessionStatus.FAILED
-                logger.error(f"❌ Failed to launch session: {session_id}")
+                logger.error(f"[FAIL] Failed to launch session: {session_id}")
                 
                 await self._trigger_callbacks('session_failed', session_info, {
                     'error': 'Launch failed',
@@ -268,7 +272,7 @@ class SessionLauncher:
             return session_info
             
         except Exception as e:
-            logger.error(f"❌ Session creation error: {session_id} - {str(e)}")
+            logger.error(f"[FAIL] Session creation error: {session_id} - {str(e)}")
             
             # Create minimal session info for error tracking
             error_session = SessionInfo(
@@ -310,10 +314,10 @@ class SessionLauncher:
         """End an active meeting session"""
         session = self.active_sessions.get(session_id)
         if not session:
-            logger.warning(f"❌ Attempt to end unknown session: {session_id}")
+            logger.warning(f"[FAIL] Attempt to end unknown session: {session_id}")
             return False
         
-        logger.info(f"🔚 Ending session: {session_id} - {reason}")
+        logger.info(f"[U+1F51A] Ending session: {session_id} - {reason}")
         
         # End session on platform
         adapter = self.platform_adapters.get(session.platform)
@@ -385,15 +389,15 @@ class SessionLauncher:
     async def register_platform_adapter(self, platform: PlatformType, adapter: PlatformAdapter):
         """Register a platform adapter for session management"""
         self.platform_adapters[platform] = adapter
-        logger.info(f"📡 Registered platform adapter: {platform.value}")
+        logger.info(f"[U+1F4E1] Registered platform adapter: {platform.value}")
 
     async def subscribe_to_sessions(self, event_type: str, callback: Callable):
         """Subscribe to session events for integration with other modules"""
         if event_type in self.session_callbacks:
             self.session_callbacks[event_type].append(callback)
-            logger.info(f"📡 Subscribed to {event_type} events")
+            logger.info(f"[U+1F4E1] Subscribed to {event_type} events")
         else:
-            logger.warning(f"❌ Unknown session event type: {event_type}")
+            logger.warning(f"[FAIL] Unknown session event type: {event_type}")
 
     async def get_session_statistics(self) -> Dict:
         """Get comprehensive session statistics"""
@@ -566,7 +570,7 @@ class SessionLauncher:
             return await adapter.launch_session(session_info)
         else:
             # Simulate successful launch for PoC
-            logger.info(f"📺 [SIMULATED] Launching {session_info.session_type.value} session on {session_info.platform.value}")
+            logger.info(f"[U+1F4FA] [SIMULATED] Launching {session_info.session_type.value} session on {session_info.platform.value}")
             logger.info(f"   URL: {session_info.meeting_url}")
             return True
 
@@ -578,9 +582,9 @@ class SessionLauncher:
             return await adapter.send_invitations(session_info, session_info.participants)
         else:
             # Simulate sending invitations for PoC
-            logger.info(f"📧 [SIMULATED] Sending invitations for session {session_info.session_id}")
+            logger.info(f"[U+1F4E7] [SIMULATED] Sending invitations for session {session_info.session_id}")
             for participant in session_info.participants:
-                logger.info(f"   → {participant}: {session_info.meeting_url}")
+                logger.info(f"   -> {participant}: {session_info.meeting_url}")
             return True
 
     def _generate_mock_meeting_url(self, platform: PlatformType, session_id: str) -> str:
@@ -654,7 +658,7 @@ class SessionLauncher:
                 else:
                     callback(session, metadata)
             except Exception as e:
-                logger.error(f"❌ Session callback error for {event_type}: {e}")
+                logger.error(f"[FAIL] Session callback error for {event_type}: {e}")
 
 # Factory function for easy integration
 def create_session_launcher() -> SessionLauncher:
@@ -683,14 +687,14 @@ async def demo_session_launcher():
         )
     )
     
-    print(f"✅ Session launched: {session_info.session_id}")
+    print(f"[OK] Session launched: {session_info.session_id}")
     print(f"   Platform: {session_info.platform.value}")
     print(f"   URL: {session_info.meeting_url}")
     print(f"   Status: {session_info.status.value}")
     
     # Get session statistics
     stats = await launcher.get_session_statistics()
-    print(f"📊 Session statistics: {stats}")
+    print(f"[DATA] Session statistics: {stats}")
     
     # End session
     await asyncio.sleep(2)  # Simulate meeting duration

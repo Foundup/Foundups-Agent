@@ -16,14 +16,14 @@ This utility was identified in the **Tools Directory Audit Report** as containin
 
 The module prioritization functionality has been consolidated into the **MPS Calculator** which provides:
 
-### ✅ Enhanced Capabilities
+### [OK] Enhanced Capabilities
 - **MPSCalculator class** with comprehensive scoring methodology
 - **Batch processing support** for multiple modules
 - **File I/O operations** for YAML input/output
 - **ModLog integration** through `modlog_integration.py`
 - **Backward compatibility** with existing interfaces
 
-### 🔧 Migration Path
+### [TOOL] Migration Path
 ```python
 # Old usage (prioritize_module.py)
 # Manual interactive prompts only
@@ -36,7 +36,7 @@ score = calculator.calculate_score(complexity=7, importance=9, deferability=2, i
 # Returns: comprehensive scoring with validation and reporting
 ```
 
-### 📊 Improvements
+### [DATA] Improvements
 - **70% code reduction** through consolidation
 - **Enhanced validation** with detailed error reporting
 - **Automated reporting** in multiple formats (dict, table, detailed)

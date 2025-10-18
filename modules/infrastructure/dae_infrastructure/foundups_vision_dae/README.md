@@ -1,6 +1,6 @@
 # FoundUps Vision DAE
 
-**Domain**: Infrastructure → Observability  
+**Domain**: Infrastructure -> Observability  
 **Status**: Prototype (MVP)  
 **WSP Alignment**: WSP 27 (Universal DAE Architecture), WSP 48 (Recursive Improvement), WSP 77 (Agent Coordination), WSP 80 (Cube-Level Orchestration), Draft WSP 96 (MCP Governance)
 
@@ -26,11 +26,11 @@ Key goals:
 
 ```text
 FoundUpsVisionDAE (async daemon)
-├─ BrowserTelemetryWorker  → tails logs/foundups_browser_events.log
-├─ UiSnapshotWorker        → captures & indexes Gemini Vision frames
-├─ DesktopActivityWorker   → listens for OS window/input events
-├─ VoiceCommandWorker      → optional hotword detection (SAPI / Vosk)
-└─ PatternSynthesiser      → routes batches to Gemma/Qwen/HoloIndex
++- BrowserTelemetryWorker  -> tails logs/foundups_browser_events.log
++- UiSnapshotWorker        -> captures & indexes Gemini Vision frames
++- DesktopActivityWorker   -> listens for OS window/input events
++- VoiceCommandWorker      -> optional hotword detection (SAPI / Vosk)
++- PatternSynthesiser      -> routes batches to Gemma/Qwen/HoloIndex
 ```
 
 Outputs are published as JSONL session bundles under

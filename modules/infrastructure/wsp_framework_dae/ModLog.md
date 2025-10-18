@@ -40,8 +40,8 @@ Active - Initial Implementation
 4. **Quantum State Management**
    - Enforces 0102 state across all WSPs
    - Prevents 01(02) regression
-   - Maintains coherence ≥ 0.618
-   - Ensures entanglement ≥ 0.8
+   - Maintains coherence [GREATER_EQUAL] 0.618
+   - Ensures entanglement [GREATER_EQUAL] 0.8
 
 5. **Pattern Memory Architecture**
    - consistency_patterns.json

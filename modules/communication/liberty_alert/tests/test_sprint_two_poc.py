@@ -1,4 +1,20 @@
+# -*- coding: utf-8 -*-
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Liberty Alert Sprint Two - POC Test
 ====================================
 
@@ -74,7 +90,7 @@ def voice_announce(message: str, language: str = "es"):
     Simulate voice announcement.
     POC: Just print. Future: edge-tts integration.
     """
-    print(f"\n🔊 [VOICE-{language.upper()}]: {message}")
+    print(f"\n[U+1F50A] [VOICE-{language.upper()}]: {message}")
     # TODO: Add edge-tts here:
     # import edge_tts
     # await edge_tts.Communicate(message, "es-MX-DaliaNeural").save("alert.mp3")
@@ -89,7 +105,7 @@ def check_geofence(location: GeoPoint, danger_zone: GeoPoint, radius_km: float =
     distance = location.distance_to(danger_zone)
     in_zone = distance <= radius_km
     if in_zone:
-        print(f"⚠️  [GEOFENCE] Within danger zone! Distance: {distance:.2f}km")
+        print(f"[U+26A0]️  [GEOFENCE] Within danger zone! Distance: {distance:.2f}km")
     return in_zone
 
 
@@ -141,8 +157,8 @@ async def test_sprint_two_poc():
         },
     )
 
-    print(f"\n📍 Node A: {node_a.mesh.peer_id} at {node_a_location}")
-    print(f"📍 Node B: {node_b.mesh.peer_id} at {node_b_location}")
+    print(f"\n[PIN] Node A: {node_a.mesh.peer_id} at {node_a_location}")
+    print(f"[PIN] Node B: {node_b.mesh.peer_id} at {node_b_location}")
 
     # ===== Start Both Nodes =====
     print("\n[STEP 1] Starting mesh nodes...")
@@ -171,7 +187,7 @@ async def test_sprint_two_poc():
         },
     )
 
-    print(f"✅ Alert created: {alert.id}")
+    print(f"[OK] Alert created: {alert.id}")
     print(f"   Message: {alert.message}")
 
     # ===== Voice Announcement =====
@@ -205,7 +221,7 @@ async def test_sprint_two_poc():
 
     # Node B checks for nearby alerts
     node_b_alerts = node_b.get_active_alerts(location=node_b_location, radius_km=5.0)
-    print(f"✅ Node B received {len(node_b_alerts)} alerts")
+    print(f"[OK] Node B received {len(node_b_alerts)} alerts")
 
     # ===== Verify Results =====
     print("\n[STEP 6] Verification...")
@@ -233,18 +249,18 @@ async def test_sprint_two_poc():
     logger.save()
 
     print("\n" + "=" * 60)
-    print("✅ SPRINT TWO POC: SUCCESS")
+    print("[OK] SPRINT TWO POC: SUCCESS")
     print("=" * 60)
     print(f"\nProof of Concept Verified:")
-    print(f"  ✓ 2-node mesh simulation")
-    print(f"  ✓ Alert propagation (simulated)")
-    print(f"  ✓ Geofencing (distance-based)")
-    print(f"  ✓ Voice output (placeholder)")
-    print(f"  ✓ JSON logging: {LOG_FILE}")
+    print(f"  [OK] 2-node mesh simulation")
+    print(f"  [OK] Alert propagation (simulated)")
+    print(f"  [OK] Geofencing (distance-based)")
+    print(f"  [OK] Voice output (placeholder)")
+    print(f"  [OK] JSON logging: {LOG_FILE}")
     print(f"\nReady for:")
-    print(f"  → Real WebRTC mesh (aiortc)")
-    print(f"  → Real voice (edge-tts)")
-    print(f"  → Map dashboard (Flask + Leaflet)")
+    print(f"  -> Real WebRTC mesh (aiortc)")
+    print(f"  -> Real voice (edge-tts)")
+    print(f"  -> Map dashboard (Flask + Leaflet)")
 
 
 if __name__ == "__main__":

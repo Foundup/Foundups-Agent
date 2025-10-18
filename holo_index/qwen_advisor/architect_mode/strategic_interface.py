@@ -105,5 +105,5 @@ class ArchitectDecisionEngine:
         for decision in decisions:
             lines.append(f"  ({decision.label}) {decision.summary}")
             for detail in decision.supporting_details[:2]:
-                lines.append(f"     → {detail}")
+                lines.append(f"     -> {detail}")
         return "\n".join(lines)

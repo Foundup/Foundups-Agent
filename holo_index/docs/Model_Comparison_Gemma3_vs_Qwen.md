@@ -69,7 +69,7 @@ While Gemma 3 270M is faster to download (241MB vs 1.1GB), Qwen 1.5B provides be
 |--------|--------------|-----------|
 | Download size | 241 MB | 1.1 GB |
 | Download time | 1-2 min | 3-5 min |
-| **Status** | ✅ Downloaded | ✅ Already installed |
+| **Status** | [OK] Downloaded | [OK] Already installed |
 | Source | lmstudio-community/gemma-3-270m-it-GGUF | E:/HoloIndex/models (existing) |
 
 ### Performance
@@ -79,17 +79,17 @@ While Gemma 3 270M is faster to download (241MB vs 1.1GB), Qwen 1.5B provides be
 | **Accuracy** | 66.7% (4/6) | 85-95% (expected) |
 | Inference speed | 1577 ms | 250-300 ms (est.) |
 | Model load time | 0.52 s | 1-2 s (est.) |
-| **Speed winner** | ❌ Slower | ✅ **6x faster** |
+| **Speed winner** | [FAIL] Slower | [OK] **6x faster** |
 
 ### Use Case Suitability
 
 | Task | Gemma 3 270M | Qwen 1.5B |
 |------|--------------|-----------|
-| Simple yes/no questions | ✅ Good | ✅ Excellent |
-| Multi-rule classification | ❌ Struggles (66% acc) | ✅ Strong |
-| Code understanding | ⚠️ Limited | ✅ **Specialized** |
-| File path analysis | ⚠️ Limited | ✅ **Excellent** |
-| WSP 57 enforcement | ❌ Not recommended | ✅ **Recommended** |
+| Simple yes/no questions | [OK] Good | [OK] Excellent |
+| Multi-rule classification | [FAIL] Struggles (66% acc) | [OK] Strong |
+| Code understanding | [U+26A0]️ Limited | [OK] **Specialized** |
+| File path analysis | [U+26A0]️ Limited | [OK] **Excellent** |
+| WSP 57 enforcement | [FAIL] Not recommended | [OK] **Recommended** |
 
 ---
 
@@ -111,7 +111,7 @@ python holo_index/scripts/download_gemma3_270m.py
 
 ## Integration Recommendations
 
-### For WSP 57 File Naming Enforcement → Use **Qwen 1.5B**
+### For WSP 57 File Naming Enforcement -> Use **Qwen 1.5B**
 
 **Reason**:
 - Higher accuracy required (80%+ target)
@@ -134,7 +134,7 @@ llm = Llama(
 response = llm(prompt, max_tokens=100, temperature=0.1)
 ```
 
-### For Simple Classification → Use **Gemma 3 270M**
+### For Simple Classification -> Use **Gemma 3 270M**
 
 **Good for**:
 - Binary yes/no questions (no nuance)
@@ -155,8 +155,8 @@ We now have **both models** on E:/ for different use cases:
 
 ```
 E:/HoloIndex/models/
-├── gemma-3-270m-it-Q4_K_M.gguf (241 MB)  ← Fast, simple tasks
-└── qwen-coder-1.5b.gguf (1.1 GB)          ← Accurate, code tasks
++-- gemma-3-270m-it-Q4_K_M.gguf (241 MB)  <- Fast, simple tasks
++-- qwen-coder-1.5b.gguf (1.1 GB)          <- Accurate, code tasks
 ```
 
 **Model Selection Strategy**:
@@ -190,7 +190,7 @@ E:/HoloIndex/models/
 
 ### For WSP 57 Enforcement (Use Qwen 1.5B)
 
-1. ✅ **Qwen 1.5B already installed** at E:/HoloIndex/models/qwen-coder-1.5b.gguf
+1. [OK] **Qwen 1.5B already installed** at E:/HoloIndex/models/qwen-coder-1.5b.gguf
 2. Create file naming enforcer using Qwen:
    ```bash
    python holo_index/tests/test_qwen1.5b_file_naming_live.py
@@ -210,13 +210,13 @@ E:/HoloIndex/models/
 
 ## Conclusion
 
-**WSP 57 File Naming Enforcement**: ✅ **Use Qwen 1.5B**
+**WSP 57 File Naming Enforcement**: [OK] **Use Qwen 1.5B**
 
 Gemma 3 270M downloaded successfully and works, but **Qwen 1.5B is superior** for this task:
-- 5.5x more parameters → Better accuracy
-- Code-specialized → Understands file paths
-- 6x faster inference → Better performance
-- Already installed → No additional download
+- 5.5x more parameters -> Better accuracy
+- Code-specialized -> Understands file paths
+- 6x faster inference -> Better performance
+- Already installed -> No additional download
 
 **Keep both models** for flexibility, but **default to Qwen 1.5B** for production.
 

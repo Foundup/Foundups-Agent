@@ -20,13 +20,13 @@ The Log Monitor module provides real-time log analysis and recursive improvement
 
 ```
 log_monitor/
-├── src/
-│   ├── log_monitor_agent.py    # Main monitoring agent
-│   └── issue_patterns.py       # Pattern definitions
-├── tests/
-│   └── test_log_monitor.py     # Unit tests
-└── memory/
-    └── improvements.jsonl       # Improvement history
++-- src/
+[U+2502]   +-- log_monitor_agent.py    # Main monitoring agent
+[U+2502]   +-- issue_patterns.py       # Pattern definitions
++-- tests/
+[U+2502]   +-- test_log_monitor.py     # Unit tests
++-- memory/
+    +-- improvements.jsonl       # Improvement history
 ```
 
 ## Quantum State Operation

@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WRE Launcher - Unicode-safe wrapper for Cursor integration
 """
 
@@ -31,18 +46,18 @@ def safe_log(message, level="INFO"):
     }.get(level, "[INFO]")
     
     # Remove Unicode characters and replace with safe alternatives
-    safe_message = message.replace("❌", "[ERROR]")
-    safe_message = safe_message.replace("✅", "[OK]")
-    safe_message = safe_message.replace("🌀", "[WSP]")
-    safe_message = safe_message.replace("🚀", "[WRE]")
-    safe_message = safe_message.replace("📱", "[PHASE1]")
-    safe_message = safe_message.replace("💫", "[PHASE8]")
-    safe_message = safe_message.replace("🏗️", "[PHASE7]")
-    safe_message = safe_message.replace("🔍", "[PHASE4]")
-    safe_message = safe_message.replace("📊", "[PHASE3]")
-    safe_message = safe_message.replace("🧪", "[PHASE10]")
-    safe_message = safe_message.replace("📚", "[PHASE11]")
-    safe_message = safe_message.replace("🔄", "[PHASE12]")
+    safe_message = message.replace("[FAIL]", "[ERROR]")
+    safe_message = safe_message.replace("[OK]", "[OK]")
+    safe_message = safe_message.replace("[U+1F300]", "[WSP]")
+    safe_message = safe_message.replace("[ROCKET]", "[WRE]")
+    safe_message = safe_message.replace("[U+1F4F1]", "[PHASE1]")
+    safe_message = safe_message.replace("[U+1F4AB]", "[PHASE8]")
+    safe_message = safe_message.replace("[U+1F3D7]️", "[PHASE7]")
+    safe_message = safe_message.replace("[SEARCH]", "[PHASE4]")
+    safe_message = safe_message.replace("[DATA]", "[PHASE3]")
+    safe_message = safe_message.replace("[U+1F9EA]", "[PHASE10]")
+    safe_message = safe_message.replace("[BOOKS]", "[PHASE11]")
+    safe_message = safe_message.replace("[REFRESH]", "[PHASE12]")
     
     print(f"{prefix} {safe_message}")
 

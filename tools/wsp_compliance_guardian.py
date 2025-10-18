@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WSP Compliance Guardian - Complete WSP Framework Enforcement System
 Implements WSP 48 Recursive Self-Improvement with automatic compliance monitoring
 
@@ -125,7 +140,7 @@ class WSPComplianceGuardian:
             timestamp=datetime.now()
         )
         
-        logger.info(f"🔍 Analyzing module: {module_path}")
+        logger.info(f"[SEARCH] Analyzing module: {module_path}")
         
         # Layer 1: Deterministic validation
         self._validate_structure(module_path, report)
@@ -166,7 +181,7 @@ class WSPComplianceGuardian:
                 # WSP 48: Auto-create missing directory
                 if self.auto_fix_enabled:
                     dir_path.mkdir(parents=True, exist_ok=True)
-                    logger.info(f"✅ Auto-created missing directory: {dir_path}")
+                    logger.info(f"[OK] Auto-created missing directory: {dir_path}")
     
     def _validate_mandatory_files(self, module_path: Path, report: ComplianceReport):
         """Validate WSP 22 mandatory file requirements"""
@@ -261,7 +276,7 @@ class WSPComplianceGuardian:
         Perform deep semantic analysis to detect subtle violations
         This goes beyond simple file checking to understand code patterns
         """
-        logger.info(f"🧠 Performing semantic analysis on {module_path}")
+        logger.info(f"[AI] Performing semantic analysis on {module_path}")
         
         # Check for anti-patterns
         src_dir = module_path / 'src'
@@ -307,7 +322,7 @@ class WSPComplianceGuardian:
             # Escalate severity for recurring violations
             if self.learning_patterns[key] > 3:
                 violation.level = ComplianceLevel.CRITICAL
-                logger.warning(f"⚠️ Recurring violation escalated to CRITICAL: {key}")
+                logger.warning(f"[U+26A0]️ Recurring violation escalated to CRITICAL: {key}")
     
     def _generate_improvements(self, report: ComplianceReport):
         """Generate recursive improvement recommendations"""
@@ -342,14 +357,14 @@ class WSPComplianceGuardian:
         WSP 48: Attempt to automatically fix violations
         This implements the self-healing capability
         """
-        logger.info(f"🔧 Attempting auto-fix for {len(report.violations)} violations")
+        logger.info(f"[TOOL] Attempting auto-fix for {len(report.violations)} violations")
         
         fixed_count = 0
         for violation in report.violations:
             if violation.level in [ComplianceLevel.WARNING, ComplianceLevel.FAIL]:
                 if self._auto_fix_violation(module_path, violation):
                     fixed_count += 1
-                    logger.info(f"✅ Auto-fixed: {violation.description}")
+                    logger.info(f"[OK] Auto-fixed: {violation.description}")
         
         if fixed_count > 0:
             # Update ModLog with auto-fixes
@@ -429,9 +444,9 @@ See ROADMAP.md for development phases and ModLog.md for change history.
 **Agent**: ComplianceGuardian (WSP 48)
 
 #### Changes
-- ✅ Module structure created per WSP 49
-- ✅ ModLog.md initialized per WSP 22
-- ✅ Compliance validation completed
+- [OK] Module structure created per WSP 49
+- [OK] ModLog.md initialized per WSP 22
+- [OK] Compliance validation completed
 
 ---
 
@@ -445,7 +460,7 @@ Per WSP 22, this roadmap defines the development phases for the {module_name} mo
 ## Development Phases
 
 ### Phase 1: POC (Proof of Concept) - v0.x.x
-**Status**: 🚧 In Progress
+**Status**: [U+1F6A7] In Progress
 **Target**: Basic functionality demonstration
 
 #### Objectives
@@ -454,7 +469,7 @@ Per WSP 22, this roadmap defines the development phases for the {module_name} mo
 - [ ] Initial documentation
 
 ### Phase 2: Prototype - v1.x.x
-**Status**: 📋 Planned
+**Status**: [CLIPBOARD] Planned
 **Target**: Enhanced integration
 
 #### Objectives
@@ -463,7 +478,7 @@ Per WSP 22, this roadmap defines the development phases for the {module_name} mo
 - [ ] WSP compliance validation
 
 ### Phase 3: MVP (Minimum Viable Product) - v2.x.x
-**Status**: 🔮 Future
+**Status**: [U+1F52E] Future
 **Target**: Production-ready
 
 #### Objectives
@@ -503,7 +518,7 @@ This log tracks test execution results for the {module_name} module.
         
         template = templates.get(file_name, f"# {file_name}\n\nWSP compliant file created by ComplianceGuardian\n")
         file_path.write_text(template, encoding='utf-8')
-        logger.info(f"✅ Created {file_path} from template")
+        logger.info(f"[OK] Created {file_path} from template")
     
     def _create_test_skeleton(self, test_path: Path, source_path: str):
         """Create a test file skeleton for a source file"""
@@ -541,7 +556,7 @@ if __name__ == "__main__":
     pytest.main([__file__, "-v"])
 '''
         test_path.write_text(test_content, encoding='utf-8')
-        logger.info(f"✅ Created test skeleton: {test_path}")
+        logger.info(f"[OK] Created test skeleton: {test_path}")
     
     def _update_modlog(self, module_path: Path, report: ComplianceReport, fixed_count: int):
         """Update ModLog.md with compliance actions"""
@@ -583,9 +598,9 @@ if __name__ == "__main__":
 **Agent**: ComplianceGuardian
 
 #### Changes
-- ✅ Auto-fixed {fixed_count} compliance violations
-- ✅ Violations analyzed: {len(report.violations)}
-- ✅ Overall status: {report.overall_status.value}
+- [OK] Auto-fixed {fixed_count} compliance violations
+- [OK] Violations analyzed: {len(report.violations)}
+- [OK] Overall status: {report.overall_status.value}
 
 #### Violations Fixed
 """
@@ -603,11 +618,11 @@ if __name__ == "__main__":
         
         # Write back
         modlog_path.write_text('\n'.join(lines), encoding='utf-8')
-        logger.info(f"✅ Updated ModLog.md with compliance actions")
+        logger.info(f"[OK] Updated ModLog.md with compliance actions")
     
     def generate_compliance_report(self, output_path: Optional[Path] = None) -> str:
         """Generate comprehensive compliance report for the entire project"""
-        logger.info("🚀 Starting comprehensive WSP compliance analysis")
+        logger.info("[ROCKET] Starting comprehensive WSP compliance analysis")
         
         all_reports = []
         modules_dir = self.project_root / 'modules'
@@ -626,7 +641,7 @@ if __name__ == "__main__":
         # Save report if path provided
         if output_path:
             output_path.write_text(summary, encoding='utf-8')
-            logger.info(f"📄 Report saved to: {output_path}")
+            logger.info(f"[U+1F4C4] Report saved to: {output_path}")
         
         return summary
     
@@ -662,7 +677,7 @@ Guardian: WSP Compliance Guardian v1.0
                 by_standard[violation.standard] += 1
         
         for standard, count in sorted(by_standard.items(), key=lambda x: x[1], reverse=True):
-            status = "❌" if count > 10 else "⚠️" if count > 5 else "✅"
+            status = "[FAIL]" if count > 10 else "[U+26A0]️" if count > 5 else "[OK]"
             summary += f"- {status} **{standard.name}**: {count} violations - {standard.value}\n"
         
         summary += "\n## Module Details\n\n"
@@ -670,7 +685,7 @@ Guardian: WSP Compliance Guardian v1.0
         # Add details for each module
         for report in sorted(reports, key=lambda r: len(r.violations), reverse=True)[:10]:
             if report.violations:
-                status_icon = "❌" if report.overall_status == ComplianceLevel.CRITICAL else "⚠️"
+                status_icon = "[FAIL]" if report.overall_status == ComplianceLevel.CRITICAL else "[U+26A0]️"
                 summary += f"### {status_icon} {report.module_path}\n"
                 summary += f"- **Status**: {report.overall_status.value}\n"
                 summary += f"- **Violations**: {len(report.violations)}\n"
@@ -732,11 +747,11 @@ def main():
     report = guardian.generate_compliance_report(report_path)
     
     print(report)
-    print(f"\n✅ Full report saved to: {report_path}")
+    print(f"\n[OK] Full report saved to: {report_path}")
     
     # Show learning patterns
     if guardian.learning_patterns:
-        print("\n🧠 Learning Patterns Detected:")
+        print("\n[AI] Learning Patterns Detected:")
         for pattern, count in sorted(guardian.learning_patterns.items(), 
                                     key=lambda x: x[1], reverse=True)[:5]:
             print(f"  - {count}x: {pattern}")

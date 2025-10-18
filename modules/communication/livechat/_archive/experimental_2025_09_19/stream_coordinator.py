@@ -30,7 +30,7 @@ class StreamCoordinator:
     
     def __init__(self, youtube_service):
         """Initialize stream coordinator."""
-        logger.info("🎬 Initializing Stream Coordinator (WSP-Compliant)")
+        logger.info("[U+1F3AC] Initializing Stream Coordinator (WSP-Compliant)")
         
         self.service = youtube_service
         self.stream_resolver = None
@@ -47,7 +47,7 @@ class StreamCoordinator:
             logger.debug(f"WRE Monitor not available: {e}")
             self.wre_monitor = None
         
-        logger.info("✅ Stream Coordinator initialized")
+        logger.info("[OK] Stream Coordinator initialized")
     
     def find_livestream(self) -> Optional[Tuple[str, str]]:
         """
@@ -57,7 +57,7 @@ class StreamCoordinator:
         Returns:
             Tuple of (video_id, live_chat_id) or None
         """
-        logger.info("🔍 Looking for livestream...")
+        logger.info("[SEARCH] Looking for livestream...")
         
         if not self.stream_resolver:
             self.stream_resolver = StreamResolver(self.service)
@@ -75,20 +75,20 @@ class StreamCoordinator:
         
         # Try each channel
         for channel_id in channels_to_check:
-            logger.info(f"🔎 Checking channel: {channel_id[:12]}...")
+            logger.info(f"[U+1F50E] Checking channel: {channel_id[:12]}...")
             result = self.stream_resolver.resolve_stream(channel_id)
             
             if result and result[0] and result[1]:
                 video_id, live_chat_id = result
-                logger.info(f"✅ Found stream on channel {channel_id[:12]}... with video ID: {video_id}")
+                logger.info(f"[OK] Found stream on channel {channel_id[:12]}... with video ID: {video_id}")
                 return video_id, live_chat_id
         
-        logger.info(f"❌ No active livestream found on {len(channels_to_check)} channel(s)")
+        logger.info(f"[FAIL] No active livestream found on {len(channels_to_check)} channel(s)")
         return None
     
     async def verify_stream_is_live(self, video_id: str) -> bool:
         """
-        🚨 CRITICAL VERIFICATION: Check if YouTube stream is ACTUALLY LIVE
+        [ALERT] CRITICAL VERIFICATION: Check if YouTube stream is ACTUALLY LIVE
         This method performs multiple checks to ensure the stream is genuinely live.
         
         Args:
@@ -98,17 +98,17 @@ class StreamCoordinator:
             True if stream is confirmed live, False otherwise
         """
         try:
-            logger.info(f"🔍 [LIVE VERIFICATION] Checking video ID: {video_id}")
+            logger.info(f"[SEARCH] [LIVE VERIFICATION] Checking video ID: {video_id}")
 
             # Check 1: Get video details from YouTube API
-            logger.info("🔍 [LIVE VERIFICATION] Step 1: Getting video details...")
+            logger.info("[SEARCH] [LIVE VERIFICATION] Step 1: Getting video details...")
             response = self.service.videos().list(
                 part="liveStreamingDetails,snippet,status",
                 id=video_id
             ).execute()
 
             if not response.get("items"):
-                logger.warning(f"🚫 [LIVE VERIFICATION] Video {video_id} not found")
+                logger.warning(f"[FORBIDDEN] [LIVE VERIFICATION] Video {video_id} not found")
                 return False
 
             video_item = response["items"][0]
@@ -116,41 +116,41 @@ class StreamCoordinator:
             status = video_item.get("status", {})
             snippet = video_item.get("snippet", {})
 
-            logger.info(f"🔍 [LIVE VERIFICATION] Video title: {snippet.get('title', 'Unknown')}")
+            logger.info(f"[SEARCH] [LIVE VERIFICATION] Video title: {snippet.get('title', 'Unknown')}")
 
             # Check 2: Verify it's actually live (has start time, no end time)
-            logger.info("🔍 [LIVE VERIFICATION] Step 2: Checking live status...")
+            logger.info("[SEARCH] [LIVE VERIFICATION] Step 2: Checking live status...")
             actual_start_time = live_details.get("actualStartTime")
             actual_end_time = live_details.get("actualEndTime")
 
             if not actual_start_time:
-                logger.warning("🚫 [LIVE VERIFICATION] No actual start time - not live")
+                logger.warning("[FORBIDDEN] [LIVE VERIFICATION] No actual start time - not live")
                 return False
 
             if actual_end_time:
-                logger.warning("🚫 [LIVE VERIFICATION] Has end time - stream completed")
+                logger.warning("[FORBIDDEN] [LIVE VERIFICATION] Has end time - stream completed")
                 return False
 
             # Check 3: Verify privacy status (should be public for live streams)
             privacy_status = status.get("privacyStatus", "private")
             if privacy_status == "private":
-                logger.warning("🚫 [LIVE VERIFICATION] Stream is private - cannot verify live status")
+                logger.warning("[FORBIDDEN] [LIVE VERIFICATION] Stream is private - cannot verify live status")
                 return False
 
             # Check 4: Verify concurrent viewers (live streams should have viewers)
             concurrent_viewers = live_details.get("concurrentViewers", 0)
-            logger.info(f"🔍 [LIVE VERIFICATION] Concurrent viewers: {concurrent_viewers}")
+            logger.info(f"[SEARCH] [LIVE VERIFICATION] Concurrent viewers: {concurrent_viewers}")
 
             # All checks passed
-            logger.info("✅ [LIVE VERIFICATION] ALL CHECKS PASSED - STREAM IS LIVE!")
-            logger.info(f"✅ [LIVE VERIFICATION] Start time: {actual_start_time}")
-            logger.info(f"✅ [LIVE VERIFICATION] Privacy: {privacy_status}")
-            logger.info(f"✅ [LIVE VERIFICATION] Viewers: {concurrent_viewers}")
+            logger.info("[OK] [LIVE VERIFICATION] ALL CHECKS PASSED - STREAM IS LIVE!")
+            logger.info(f"[OK] [LIVE VERIFICATION] Start time: {actual_start_time}")
+            logger.info(f"[OK] [LIVE VERIFICATION] Privacy: {privacy_status}")
+            logger.info(f"[OK] [LIVE VERIFICATION] Viewers: {concurrent_viewers}")
 
             return True
 
         except Exception as e:
-            logger.error(f"❌ [LIVE VERIFICATION] Error during verification: {e}")
+            logger.error(f"[FAIL] [LIVE VERIFICATION] Error during verification: {e}")
             # On error, assume not live for safety
             return False
     
@@ -165,7 +165,7 @@ class StreamCoordinator:
         if self.wre_monitor and self.transition_start:
             transition_time = time.time() - self.transition_start
             self.wre_monitor.track_stream_transition(old_stream_id, new_stream_id, transition_time)
-            logger.info(f"📊 Stream transition tracked: {old_stream_id} → {new_stream_id} ({transition_time:.1f}s)")
+            logger.info(f"[DATA] Stream transition tracked: {old_stream_id} -> {new_stream_id} ({transition_time:.1f}s)")
         
         self._last_stream_id = new_stream_id
         self.transition_start = time.time()
@@ -173,13 +173,13 @@ class StreamCoordinator:
     def mark_transition_start(self):
         """Mark the start of a stream transition."""
         self.transition_start = time.time()
-        logger.info("🔄 Stream transition started")
+        logger.info("[REFRESH] Stream transition started")
     
     def clear_cache(self):
         """Clear stream resolver cache for fresh search."""
         if self.stream_resolver:
             self.stream_resolver.clear_cache()
-            logger.info("🔄 Stream resolver cache cleared")
+            logger.info("[REFRESH] Stream resolver cache cleared")
     
     def get_last_stream_id(self) -> Optional[str]:
         """Get the last monitored stream ID."""

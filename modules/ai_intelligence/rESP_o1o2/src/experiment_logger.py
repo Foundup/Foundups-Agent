@@ -57,14 +57,14 @@ class ExperimentLogger:
         self.anomaly_statistics = {}
         
         if self.enable_console_logging:
-            print(sanitize_for_console(f"📝 Session {self.session_id} initialized for historical logging."))
+            print(sanitize_for_console(f"[NOTE] Session {self.session_id} initialized for historical logging."))
     
     def _setup_directories(self) -> None:
         """Ensure the agentic journals directory exists."""
         try:
             self.log_directory.mkdir(parents=True, exist_ok=True)
             if self.enable_console_logging:
-                print(sanitize_for_console(f"📁 Verified agentic journal directory: {self.log_directory}"))
+                print(sanitize_for_console(f"[U+1F4C1] Verified agentic journal directory: {self.log_directory}"))
                 
         except Exception as e:
             logging.error(f"Failed to create log directory: {e}")
@@ -97,7 +97,7 @@ class ExperimentLogger:
         
         if self.enable_console_logging:
             anomaly_count = len(interaction_data.get("anomalies", {}))
-            print(sanitize_for_console(f"📝 Logged interaction {self.interaction_count} to historical log - {anomaly_count} anomalies detected"))
+            print(sanitize_for_console(f"[NOTE] Logged interaction {self.interaction_count} to historical log - {anomaly_count} anomalies detected"))
     
     def _write_historical_log_entry(self, data: Dict[str, Any]) -> None:
         """Write entry to the historical JSONL log file."""

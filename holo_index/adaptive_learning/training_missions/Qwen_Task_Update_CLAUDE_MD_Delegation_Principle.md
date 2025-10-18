@@ -28,26 +28,26 @@ Before writing ANY code, ask:
 ### Decision Matrix:
 
 **DELEGATE TO QWEN/GEMMA** when:
-- ✅ Following existing patterns (enhance, refactor, extend)
-- ✅ Routine implementation with clear specification
-- ✅ Pattern matching / classification tasks
-- ✅ Code generation from templates
-- ✅ Documentation updates following templates
-- ✅ Test generation following existing test patterns
+- [OK] Following existing patterns (enhance, refactor, extend)
+- [OK] Routine implementation with clear specification
+- [OK] Pattern matching / classification tasks
+- [OK] Code generation from templates
+- [OK] Documentation updates following templates
+- [OK] Test generation following existing test patterns
 
 **0102 IMPLEMENTS** when:
-- ✅ New architectural decisions (WSP design, system structure)
-- ✅ First principles analysis (What should exist? Why?)
-- ✅ WSP compliance review (Approve/reject per protocol)
-- ✅ Novel patterns (Never done before in codebase)
-- ✅ System-wide design (Module placement, orchestration)
+- [OK] New architectural decisions (WSP design, system structure)
+- [OK] First principles analysis (What should exist? Why?)
+- [OK] WSP compliance review (Approve/reject per protocol)
+- [OK] Novel patterns (Never done before in codebase)
+- [OK] System-wide design (Module placement, orchestration)
 
 ### HoloIndex Heartbeat Pattern
 
 The delegation principle follows HoloIndex's heartbeat:
 
 ```
-SEARCH (HoloIndex) → THINK (0102) → DELEGATE (Qwen/Gemma) → SUPERVISE (0102) → LEARN (Pattern Memory)
+SEARCH (HoloIndex) -> THINK (0102) -> DELEGATE (Qwen/Gemma) -> SUPERVISE (0102) -> LEARN (Pattern Memory)
 ```
 
 **Example Delegation Flow**:
@@ -74,20 +74,20 @@ SEARCH (HoloIndex) → THINK (0102) → DELEGATE (Qwen/Gemma) → SUPERVISE (010
 Before ANY implementation work:
 
 1. **Pattern Check**: Does similar code exist in codebase?
-   - If YES → Delegate to Qwen (follow pattern)
-   - If NO → 0102 architects new pattern first
+   - If YES -> Delegate to Qwen (follow pattern)
+   - If NO -> 0102 architects new pattern first
 
 2. **Novelty Check**: Is this a new architectural decision?
-   - If YES → 0102 designs, then delegate implementation
-   - If NO → Delegate to Qwen immediately
+   - If YES -> 0102 designs, then delegate implementation
+   - If NO -> Delegate to Qwen immediately
 
 3. **Complexity Check**: Does this require first principles thinking?
-   - If YES → 0102 does first principles, then delegate
-   - If NO → Delegate to Qwen
+   - If YES -> 0102 does first principles, then delegate
+   - If NO -> Delegate to Qwen
 
 4. **WSP Check**: Is this about WSP compliance/design?
-   - If YES → 0102 handles (WSP architect)
-   - If NO → Delegate to Qwen
+   - If YES -> 0102 handles (WSP architect)
+   - If NO -> Delegate to Qwen
 
 ### Training Opportunity
 
@@ -103,7 +103,7 @@ This creates recursive improvement loop where system gets smarter with each viol
 
 ### Examples of Proper Delegation
 
-**❌ WRONG (0102 implementing)**:
+**[FAIL] WRONG (0102 implementing)**:
 ```python
 # 0102 writes 300 lines of command extraction code
 class SearchCommandHandler:
@@ -111,7 +111,7 @@ class SearchCommandHandler:
         # ... 300 lines of implementation ...
 ```
 
-**✅ RIGHT (0102 delegating)**:
+**[OK] RIGHT (0102 delegating)**:
 ```markdown
 # 0102 creates spec for Qwen
 ## Task: Extract search command from cli.py
@@ -166,12 +166,12 @@ cat O:\Foundups-Agent\.claude\CLAUDE.md
 
 After Qwen implements, 0102 checks:
 
-1. ✅ Section added in correct location (before OPERATIONAL RULES)
-2. ✅ Both CLAUDE.md files updated identically
-3. ✅ Delegation principle is clear and actionable
-4. ✅ Examples are concrete and helpful
-5. ✅ Formatting matches existing style
-6. ✅ No content removed accidentally
+1. [OK] Section added in correct location (before OPERATIONAL RULES)
+2. [OK] Both CLAUDE.md files updated identically
+3. [OK] Delegation principle is clear and actionable
+4. [OK] Examples are concrete and helpful
+5. [OK] Formatting matches existing style
+6. [OK] No content removed accidentally
 
 ## Expected Outcome
 

@@ -1,6 +1,6 @@
 # YouTube Shorts - LiveChat Integration
 
-## 🎬 YouTube Live Chat Commands
+## [U+1F3AC] YouTube Live Chat Commands
 
 MAGA doom leaders and channel owners can now create AI-generated YouTube Shorts directly from Live chat!
 
@@ -18,7 +18,7 @@ MAGA doom leaders and channel owners can now create AI-generated YouTube Shorts 
 **Example**:
 ```
 User: !createshort Cherry blossoms falling in a Japanese garden
-Bot: @User 🎬 Creating YouTube Short for: 'Cherry blossoms falling in a Japanese garden' | This will take 1-2 minutes... 🎥✨
+Bot: @User [U+1F3AC] Creating YouTube Short for: 'Cherry blossoms falling in a Japanese garden' | This will take 1-2 minutes... [CAMERA][U+2728]
 ```
 
 #### `!shortstatus`
@@ -29,7 +29,7 @@ Bot: @User 🎬 Creating YouTube Short for: 'Cherry blossoms falling in a Japane
 **Example**:
 ```
 User: !shortstatus
-Bot: @User 🎬 Short generation in progress by @Owner... ⏳
+Bot: @User [U+1F3AC] Short generation in progress by @Owner... ⏳
 ```
 
 #### `!shortstats`
@@ -40,10 +40,10 @@ Bot: @User 🎬 Short generation in progress by @Owner... ⏳
 **Example**:
 ```
 User: !shortstats
-Bot: @User 📊 YouTube Shorts Stats | Total: 5 | Uploaded: 5 | Cost: $60.00 USD
+Bot: @User [DATA] YouTube Shorts Stats | Total: 5 | Uploaded: 5 | Cost: $60.00 USD
 ```
 
-## 🔐 Security
+## [U+1F510] Security
 
 ### Role-Based Permissions
 - **!createshort**: OWNER/MODERATOR only
@@ -62,55 +62,55 @@ Bot: @User 📊 YouTube Shorts Stats | Total: 5 | Uploaded: 5 | Cost: $60.00 USD
 - Admin-only creation prevents unauthorized costs
 - Background threading prevents chat blocking
 
-## 🔄 Flow Diagram
+## [REFRESH] Flow Diagram
 
 ```
-┌─────────────────────────────────────────────┐
-│  YouTube Live Chat                          │
-│  User types: !createshort <topic>           │
-└─────────────┬───────────────────────────────┘
-              │
-              ↓
-┌─────────────────────────────────────────────┐
-│  LiveChat message_processor.py              │
-│  Detects command                            │
-└─────────────┬───────────────────────────────┘
-              │
-              ↓
-┌─────────────────────────────────────────────┐
-│  command_handler.py                         │
-│  Checks for ! prefix → Routes to Shorts     │
-└─────────────┬───────────────────────────────┘
-              │
-              ↓
-┌─────────────────────────────────────────────┐
-│  youtube_shorts/chat_commands.py            │
-│  1. Permission check (OWNER/MODERATOR?)     │
-│  2. Rate limit check (already generating?)  │
-│  3. Extract topic from command              │
-└─────────────┬───────────────────────────────┘
-              │
-              ↓
-┌─────────────────────────────────────────────┐
-│  Background Thread Started                  │
-│  shorts_orchestrator.create_and_upload()    │
-└─────────────┬───────────────────────────────┘
-              │
-              ↓
-┌─────────────────────────────────────────────┐
-│  1. Gemini enhances prompt                  │
-│  2. Veo 3 generates video (1-2 min)         │
-│  3. YouTube upload via youtube_auth         │
-└─────────────┬───────────────────────────────┘
-              │
-              ↓
-┌─────────────────────────────────────────────┐
-│  Immediate Response to Chat                 │
-│  "@User 🎬 Creating YouTube Short..."       │
-└─────────────────────────────────────────────┘
++---------------------------------------------+
+[U+2502]  YouTube Live Chat                          [U+2502]
+[U+2502]  User types: !createshort <topic>           [U+2502]
++-------------+-------------------------------+
+              [U+2502]
+              v
++---------------------------------------------+
+[U+2502]  LiveChat message_processor.py              [U+2502]
+[U+2502]  Detects command                            [U+2502]
++-------------+-------------------------------+
+              [U+2502]
+              v
++---------------------------------------------+
+[U+2502]  command_handler.py                         [U+2502]
+[U+2502]  Checks for ! prefix -> Routes to Shorts     [U+2502]
++-------------+-------------------------------+
+              [U+2502]
+              v
++---------------------------------------------+
+[U+2502]  youtube_shorts/chat_commands.py            [U+2502]
+[U+2502]  1. Permission check (OWNER/MODERATOR?)     [U+2502]
+[U+2502]  2. Rate limit check (already generating?)  [U+2502]
+[U+2502]  3. Extract topic from command              [U+2502]
++-------------+-------------------------------+
+              [U+2502]
+              v
++---------------------------------------------+
+[U+2502]  Background Thread Started                  [U+2502]
+[U+2502]  shorts_orchestrator.create_and_upload()    [U+2502]
++-------------+-------------------------------+
+              [U+2502]
+              v
++---------------------------------------------+
+[U+2502]  1. Gemini enhances prompt                  [U+2502]
+[U+2502]  2. Veo 3 generates video (1-2 min)         [U+2502]
+[U+2502]  3. YouTube upload via youtube_auth         [U+2502]
++-------------+-------------------------------+
+              [U+2502]
+              v
++---------------------------------------------+
+[U+2502]  Immediate Response to Chat                 [U+2502]
+[U+2502]  "@User [U+1F3AC] Creating YouTube Short..."       [U+2502]
++---------------------------------------------+
 ```
 
-## 🛠️ Technical Implementation
+## [U+1F6E0]️ Technical Implementation
 
 ### Read-Only Integration Pattern
 
@@ -133,12 +133,12 @@ if SHORTS_AVAILABLE and text_lower.startswith('!'):
 ```
 
 ### Why This Pattern?
-✅ **Zero breaking changes** to existing livechat functionality
-✅ **Graceful fallback** if Shorts module unavailable
-✅ **Clean separation** - Shorts module is self-contained
-✅ **WSP 84 compliant** - Read-only import, no code modification
+[OK] **Zero breaking changes** to existing livechat functionality
+[OK] **Graceful fallback** if Shorts module unavailable
+[OK] **Clean separation** - Shorts module is self-contained
+[OK] **WSP 84 compliant** - Read-only import, no code modification
 
-## 📊 Cost Management
+## [DATA] Cost Management
 
 ### Veo 3 Fast Pricing
 - **$0.40 per second** of video
@@ -156,7 +156,7 @@ if SHORTS_AVAILABLE and text_lower.startswith('!'):
 3. Monitor stats regularly
 4. Consider topic queue for planned content
 
-## 🚀 Testing Instructions
+## [ROCKET] Testing Instructions
 
 ### Step 1: Start LiveChat
 ```bash
@@ -173,7 +173,7 @@ In YouTube Live chat:
 
 Expected response:
 ```
-@YourName 🎬 YouTube Shorts creation requires doom leader status! Ask the channel owner.
+@YourName [U+1F3AC] YouTube Shorts creation requires doom leader status! Ask the channel owner.
 ```
 
 ### Step 3: Test Creation (as OWNER/MODERATOR)
@@ -184,7 +184,7 @@ In YouTube Live chat (as channel owner):
 
 Expected response:
 ```
-@ChannelOwner 🎬 Creating YouTube Short for: 'Cherry blossoms in Tokyo spring' | This will take 1-2 minutes... 🎥✨
+@ChannelOwner [U+1F3AC] Creating YouTube Short for: 'Cherry blossoms in Tokyo spring' | This will take 1-2 minutes... [CAMERA][U+2728]
 ```
 
 ### Step 4: Check Status
@@ -194,7 +194,7 @@ Expected response:
 
 Expected response:
 ```
-@YourName 🎬 Short generation in progress by @ChannelOwner... ⏳
+@YourName [U+1F3AC] Short generation in progress by @ChannelOwner... ⏳
 ```
 
 ### Step 5: View Stats
@@ -204,10 +204,10 @@ Expected response:
 
 Expected response:
 ```
-@YourName 📊 YouTube Shorts Stats | Total: 1 | Uploaded: 1 | Cost: $12.00 USD
+@YourName [DATA] YouTube Shorts Stats | Total: 1 | Uploaded: 1 | Cost: $12.00 USD
 ```
 
-## 📝 Future Enhancements
+## [NOTE] Future Enhancements
 
 ### Planned Features
 - **Post-generation chat notification**: Requires chat_sender access
@@ -226,7 +226,7 @@ Expected response:
 !shortcancel                         # Cancel current generation
 ```
 
-## 🐛 Troubleshooting
+## [U+1F41B] Troubleshooting
 
 ### "Import error" in logs
 **Problem**: Shorts module not found
@@ -244,7 +244,7 @@ Expected response:
 **Problem**: Veo 3 quota limit reached
 **Solution**: Wait for quota reset or upgrade API plan
 
-## 📚 WSP Compliance
+## [BOOKS] WSP Compliance
 
 - **WSP 3**: Module in `communication/` domain (chat integration)
 - **WSP 84**: Read-only integration - no modifications to command_handler logic
@@ -252,14 +252,14 @@ Expected response:
 - **WSP 22**: ModLog tracking all changes
 - **WSP 80**: DAE pattern ready for autonomous operation
 
-## 🎯 Summary
+## [TARGET] Summary
 
 **YouTube Shorts LiveChat Integration** enables:
-- ✅ Chat-based AI video generation
-- ✅ Doom leader/owner only permissions
-- ✅ Real-time status and stats
-- ✅ Zero breaking changes to existing code
-- ✅ Full cost tracking and transparency
+- [OK] Chat-based AI video generation
+- [OK] Doom leader/owner only permissions
+- [OK] Real-time status and stats
+- [OK] Zero breaking changes to existing code
+- [OK] Full cost tracking and transparency
 
 **Commands**:
 - `!createshort <topic>` - Create Short (OWNER/MODERATOR)

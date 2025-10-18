@@ -215,13 +215,13 @@ When root directory violations are detected:
 
 #### **File Type Destination Matrix**
 ```
-Root Violations → Proper Destinations (WSP 60)
-├── JSON artifacts → modules/[domain]/[module]/memory/
-├── Processing logs → modules/[domain]/[module]/memory/
-├── Test results → modules/[domain]/[module]/tests/TestModLog.md
-├── Evaluation data → modules/[domain]/[module]/memory/
-├── Patch files → DELETE (served purpose)
-└── Config files → Root only if foundational (package.json, vercel.json)
+Root Violations -> Proper Destinations (WSP 60)
++-- JSON artifacts -> modules/[domain]/[module]/memory/
++-- Processing logs -> modules/[domain]/[module]/memory/
++-- Test results -> modules/[domain]/[module]/tests/TestModLog.md
++-- Evaluation data -> modules/[domain]/[module]/memory/
++-- Patch files -> DELETE (served purpose)
++-- Config files -> Root only if foundational (package.json, vercel.json)
 ```
 
 #### **Prevention Systems**
@@ -278,4 +278,4 @@ ls -la O:\Foundups-Agent\*.txt
 ls -la O:\Foundups-Agent\test_*.py
 ```
 
-**Status**: 🔴 CRITICAL violations documented, awaiting remediation execution
+**Status**: [U+1F534] CRITICAL violations documented, awaiting remediation execution

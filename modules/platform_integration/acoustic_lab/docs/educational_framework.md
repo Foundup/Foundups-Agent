@@ -52,8 +52,8 @@ Students will learn how digital signal processing techniques can identify and cl
 
 #### Signal Processing Pipeline
 ```
-Raw Audio → Preprocessing → Feature Extraction → Pattern Matching → Classification
-     ↓            ↓               ↓                ↓              ↓
+Raw Audio -> Preprocessing -> Feature Extraction -> Pattern Matching -> Classification
+     v            v               v                v              v
  44.1kHz WAV   Filtering     MFCC Coefficients   Cosine Distance   Tone Identity
 ```
 
@@ -175,24 +175,24 @@ def assess_triangulation_accuracy(student_result, expected_location):
 #### Learning Progression Milestones
 ```
 Level 1: Basic Triangulation
-├── Understand time-of-arrival concepts
-├── Calculate simple distances
-└── Locate sources with 2 sensors
++-- Understand time-of-arrival concepts
++-- Calculate simple distances
++-- Locate sources with 2 sensors
 
 Level 2: Multi-Sensor Networks
-├── Handle 3+ sensor configurations
-├── Manage sensor synchronization
-└── Optimize network geometry
++-- Handle 3+ sensor configurations
++-- Manage sensor synchronization
++-- Optimize network geometry
 
 Level 3: Advanced Signal Processing
-├── Implement custom feature extraction
-├── Handle noisy real-world conditions
-└── Design robust classification algorithms
++-- Implement custom feature extraction
++-- Handle noisy real-world conditions
++-- Design robust classification algorithms
 
 Level 4: System Integration
-├── Build complete monitoring systems
-├── Integrate with external sensors
-└── Deploy production acoustic networks
++-- Build complete monitoring systems
++-- Integrate with external sensors
++-- Deploy production acoustic networks
 ```
 
 ## Curriculum Integration

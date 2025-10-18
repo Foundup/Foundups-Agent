@@ -1,4 +1,4 @@
-# How To Test YouTube Shorts - Talking Baby Feature 👶🎥
+# How To Test YouTube Shorts - Talking Baby Feature [BABY][CAMERA]
 
 ## Quick Test (FREE - No Cost)
 
@@ -10,9 +10,9 @@ PYTHONIOENCODING=utf-8 python modules/communication/youtube_shorts/tests/test_pr
 ```
 
 **What it does**:
-- ✅ Tests talking baby is included in all prompts
-- ✅ Generates META promotional prompt
-- ✅ Initializes Veo3 generator
+- [OK] Tests talking baby is included in all prompts
+- [OK] Generates META promotional prompt
+- [OK] Initializes Veo3 generator
 - ⏸️ Asks before actual video generation ($12 cost)
 
 ---
@@ -89,11 +89,11 @@ PYTHONIOENCODING=utf-8 python modules/communication/youtube_shorts/tests/test_su
 ```
 
 **Tests**:
-- ✅ Super Chat event parsing
-- ✅ $20 threshold check
-- ✅ Topic extraction
-- ✅ Handler routing
-- ⚠️ Video generation (mocked - no cost)
+- [OK] Super Chat event parsing
+- [OK] $20 threshold check
+- [OK] Topic extraction
+- [OK] Handler routing
+- [U+26A0]️ Video generation (mocked - no cost)
 
 ### 2. Real Super Chat Test (COSTS $20+)
 
@@ -119,14 +119,14 @@ PYTHONIOENCODING=utf-8 python modules/communication/youtube_shorts/tests/test_su
 
 ---
 
-## What Makes The Talking Baby Special? 👶
+## What Makes The Talking Baby Special? [BABY]
 
 **Before (Generic)**:
 ```
 Cherry blossoms in Tokyo, Meguro River, golden hour lighting
 ```
 
-**After (With Talking Baby)** ✨:
+**After (With Talking Baby)** [U+2728]:
 ```
 Cherry blossoms in Tokyo, Meguro River, golden hour lighting,
 baby bouncing happily saying 'Move! Japan!' in adorable baby voice with huge smile
@@ -188,12 +188,12 @@ smooth pan revealing hidden details, golden hour lighting, cinematic composition
 ```
 
 **Result**: 30-second video with:
-- ✅ Cherry blossoms at Meguro River
-- ✅ Golden hour cinematic lighting
-- ✅ Smooth camera pan
-- ✅ **Adorable baby saying "Move! Japan!"**
-- ✅ Trending BeReal style
-- ✅ Authentic Japan vibes
+- [OK] Cherry blossoms at Meguro River
+- [OK] Golden hour cinematic lighting
+- [OK] Smooth camera pan
+- [OK] **Adorable baby saying "Move! Japan!"**
+- [OK] Trending BeReal style
+- [OK] Authentic Japan vibes
 
 ---
 
@@ -225,4 +225,4 @@ PYTHONIOENCODING=utf-8 python modules/communication/youtube_shorts/tests/test_pr
 # When ready for actual video, type "yes" when prompted
 ```
 
-**Remember**: Every video now has a talking baby narrator! 👶✨
+**Remember**: Every video now has a talking baby narrator! [BABY][U+2728]

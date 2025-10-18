@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 HoloIndex Discovery Feeder - WSP 48 Recursive Self-Improvement
 Feeds newly discovered patterns back into HoloIndex for continuous learning
 
@@ -309,7 +326,7 @@ class DiscoveryFeeder:
             self.metrics['total_discoveries'] += 1
             self.metrics['last_feed_time'] = datetime.now().isoformat()
 
-            logger.info(f"✅ Fed discovery: {discovery.get('title', 'Unknown')}")
+            logger.info(f"[OK] Fed discovery: {discovery.get('title', 'Unknown')}")
             return True
 
         except Exception as e:

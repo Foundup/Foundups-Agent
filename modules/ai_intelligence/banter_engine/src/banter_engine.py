@@ -117,7 +117,7 @@ class BanterEngine:
                             temperature=0.8
                         )
                         self.use_llm = True
-                        self.logger.info("✅ GPT-3.5 Turbo initialized for BanterEngine")
+                        self.logger.info("[OK] GPT-3.5 Turbo initialized for BanterEngine")
                     except Exception as e:
                         self.logger.warning(f"Failed to initialize GPT: {e}")
                 elif os.getenv("CLAUDE_API_KEY"):
@@ -128,7 +128,7 @@ class BanterEngine:
                             temperature=0.8
                         )
                         self.use_llm = True
-                        self.logger.info("✅ Claude initialized for BanterEngine")
+                        self.logger.info("[OK] Claude initialized for BanterEngine")
                     except Exception as e:
                         self.logger.warning(f"Failed to initialize Claude: {e}")
             self._failed_responses = 0
@@ -143,10 +143,10 @@ class BanterEngine:
             # Validate initialization
             self._validate_initialization()
             
-            self.logger.info("✅ Enhanced BanterEngine initialized successfully")
+            self.logger.info("[OK] Enhanced BanterEngine initialized successfully")
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to initialize BanterEngine: {e}")
+            self.logger.error(f"[FAIL] Failed to initialize BanterEngine: {e}")
             raise BanterEngineError(f"Initialization failed: {e}")
 
     def _load_external_banter(self):
@@ -196,32 +196,32 @@ class BanterEngine:
         try:
             # Default responses with validation
             default_responses = [
-                "Interesting sequence! 🤔",
-                "Your emoji game is strong! 💪", 
-                "I see what you did there! 👀",
-                "That's a unique combination! ✨",
-                "Nice emoji work! 🎯"
+                "Interesting sequence! [U+1F914]",
+                "Your emoji game is strong! [U+1F4AA]", 
+                "I see what you did there! [U+1F440]",
+                "That's a unique combination! [U+2728]",
+                "Nice emoji work! [TARGET]"
             ]
             
             greeting_responses = [
-                "Hey there! 👋",
-                "Hello! How's it going? 😊",
-                "Welcome! Great to see you! 🌟",
-                "Hi! Ready for some fun? 🎉",
-                "Greetings! What brings you here? 🤗"
+                "Hey there! [U+1F44B]",
+                "Hello! How's it going? [U+1F60A]",
+                "Welcome! Great to see you! [U+1F31F]",
+                "Hi! Ready for some fun? [CELEBRATE]",
+                "Greetings! What brings you here? [U+1F917]"
             ]
 
             # Additional themed responses from banter_engine2
             roast_responses = [
-                "You keep 📢yelling but never **say**🫥 a single *thought*🧠 worth hearing 🤡😂",
-                "Every 📝sentence you write is a tripwire for a new 🧨braincell detonation 🤯💀🤣",
-                "You chase 🦅freedom with the precision of a toddler and a 🔨hammer 🤪 LOL"
+                "You keep [U+1F4E2]yelling but never **say**🫥 a single *thought*[AI] worth hearing [U+1F921][U+1F602]",
+                "Every [NOTE]sentence you write is a tripwire for a new [U+1F9E8]braincell detonation [U+1F92F][U+1F480][U+1F923]",
+                "You chase [U+1F985]freedom with the precision of a toddler and a [U+1F528]hammer [U+1F92A] LOL"
             ]
             
             philosophy_responses = [
-                "UNs✊ still tweaking on *Truth™ Lite*",
-                "DAOs✋ chillin' in the middle like ✨balance with broadband✨",
-                "DUs🖐️? Already built a quantum farm with solar flare wifi 💫🌱"
+                "UNs[U+270A] still tweaking on *Truth™ Lite*",
+                "DAOs[U+270B] chillin' in the middle like [U+2728]balance with broadband[U+2728]",
+                "DUs[U+1F590]️? Already built a quantum farm with solar flare wifi [U+1F4AB][U+1F331]"
             ]
             
             rebuttal_responses = [
@@ -266,9 +266,9 @@ class BanterEngine:
                 # Add contextual responses for each tone
                 if tone and tone not in ["default", "greeting"]:
                     contextual_responses = [
-                        f"Feeling the {tone} vibes! 🌊",
-                        f"That's some {tone} energy! ⚡",
-                        f"Perfect {tone} moment! 🎭"
+                        f"Feeling the {tone} vibes! [U+1F30A]",
+                        f"That's some {tone} energy! [LIGHTNING]",
+                        f"Perfect {tone} moment! [U+1F3AD]"
                     ]
                     
                     for response in contextual_responses:
@@ -279,11 +279,11 @@ class BanterEngine:
             # Ensure all themes have at least one response
             for theme, responses in self._themes.items():
                 if not responses:
-                    fallback_response = f"Exploring {theme} vibes! ✨"
+                    fallback_response = f"Exploring {theme} vibes! [U+2728]"
                     self._themes[theme] = [fallback_response]
             
             total_responses = sum(len(responses) for responses in self._themes.values())
-            self.logger.info(f"✅ Populated {total_responses} responses across {len(self._themes)} themes")
+            self.logger.info(f"[OK] Populated {total_responses} responses across {len(self._themes)} themes")
             
         except Exception as e:
             self.logger.error(f"Failed to populate themed responses: {e}")
@@ -330,7 +330,7 @@ class BanterEngine:
         if total_responses == 0:
             raise BanterEngineError("No responses available")
         
-        self.logger.debug(f"✅ Validation passed: {len(self.sequence_map_data)} sequences, {len(self._themes)} themes, {total_responses} responses")
+        self.logger.debug(f"[OK] Validation passed: {len(self.sequence_map_data)} sequences, {len(self._themes)} themes, {total_responses} responses")
 
     def _extract_emoji_sequence_enhanced(self, input_text: str) -> Optional[Tuple[int, int, int]]:
         """Enhanced emoji sequence extraction with better error handling."""
@@ -350,7 +350,7 @@ class BanterEngine:
             max_length = min(len(input_text), config.MAX_INPUT_LENGTH)
             
             while i < max_length and len(sequence) < config.MAX_EMOJI_SEQUENCE_LENGTH:
-                # Check for multi-character emoji first (🖐️)
+                # Check for multi-character emoji first ([U+1F590]️)
                 if i + 1 < max_length:
                     two_char = input_text[i:i+2]
                     if two_char in EMOJI_TO_NUM:
@@ -517,13 +517,13 @@ class BanterEngine:
         try:
             # More sophisticated pattern matching
             patterns = {
-                "✊✋🖐️": (0, 1, 2),
-                "✊✊✊": (0, 0, 0),
-                "✋✋✋": (1, 1, 1),
-                "🖐️🖐️🖐️": (2, 2, 2),
-                "✊✊✋": (0, 0, 1),
-                "✊✋✋": (0, 1, 1),
-                "✋✊✊": (1, 0, 0),
+                "[U+270A][U+270B][U+1F590]️": (0, 1, 2),
+                "[U+270A][U+270A][U+270A]": (0, 0, 0),
+                "[U+270B][U+270B][U+270B]": (1, 1, 1),
+                "[U+1F590]️[U+1F590]️[U+1F590]️": (2, 2, 2),
+                "[U+270A][U+270A][U+270B]": (0, 0, 1),
+                "[U+270A][U+270B][U+270B]": (0, 1, 1),
+                "[U+270B][U+270A][U+270A]": (1, 0, 0),
             }
             
             for pattern, sequence in patterns.items():
@@ -547,7 +547,7 @@ class BanterEngine:
         Returns:
             Random banter message with action-tag emoji appended
         """
-        final_response = "Thanks for the interaction! 😊" # Ultimate fallback
+        final_response = "Thanks for the interaction! [U+1F60A]" # Ultimate fallback
         try:
             # Validate theme
             if not theme or not isinstance(theme, str):
@@ -577,7 +577,7 @@ class BanterEngine:
                     
                     if llm_response:
                         selected_response = llm_response
-                        self.logger.info(f"🤖 Using LLM response for theme '{theme}'")
+                        self.logger.info(f"[BOT] Using LLM response for theme '{theme}'")
                 except Exception as e:
                     self.logger.warning(f"LLM response failed, falling back to predefined: {e}")
             
@@ -635,7 +635,7 @@ class BanterEngine:
         self._cache_timestamps.clear()
         self._cache_hits = 0
         self._cache_misses = 0
-        self.logger.info("✅ Response cache cleared")
+        self.logger.info("[OK] Response cache cleared")
 
     def list_themes_enhanced(self) -> List[str]:
         """

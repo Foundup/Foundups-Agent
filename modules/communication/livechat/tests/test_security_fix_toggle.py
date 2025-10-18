@@ -95,7 +95,7 @@ if __name__ == "__main__":
 
     if success:
         print("\n[SUCCESS] Security fix verified working correctly!")
-        print("✅ /toggle command is now OWNER-ONLY as required")
+        print("[OK] /toggle command is now OWNER-ONLY as required")
     else:
         print("\n[FAILURE] Security issues still present!")
-        print("❌ Review the command_handler.py implementation")
+        print("[FAIL] Review the command_handler.py implementation")

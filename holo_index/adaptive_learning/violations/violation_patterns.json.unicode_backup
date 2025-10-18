@@ -1,0 +1,213 @@
+[
+  {
+    "violation_id": "V021",
+    "timestamp": "2025-09-26T09:16:14.783451",
+    "pattern_type": "violation_prevention",
+    "trigger_patterns": [
+      "creating file in root",
+      "test file placement",
+      "utility script location"
+    ],
+    "prevention_rules": [
+      "Always use HoloIndex first before creating any files",
+      "Test files belong in module `tests/` directories, not root",
+      "Consult WSP 49 for proper file placement",
+      "Run health checks after any file creation to catch violations"
+    ],
+    "semantic_keywords": [
+      "test_pattern_analysis.py",
+      "verify_phase2.py",
+      "error",
+      "WSP 40",
+      "test",
+      "violation",
+      "test_llm_functionality.py",
+      "check_db.py",
+      "root",
+      "tests/",
+      "WSP 87",
+      "verify_systems.py",
+      "WSP 47",
+      "WSP 49",
+      "test_llm_integration.py"
+    ],
+    "wsp_context": [
+      "49",
+      "40",
+      "47"
+    ],
+    "learning_confidence": 0.6,
+    "prevention_priority": 0.7999999999999999,
+    "holodae_response": "\n⚠️ VIOLATION PATTERN DETECTED: ROOT DIRECTORY CODING VIOLATION\nPreviously seen in V021 - ACTIVE VIOLATION\n\nPREVENTION CHECKLIST:\n- **Always use HoloIndex first** before creating any files\n- **Test files belong in module `tests/` directories**, not root\n- **Consult WSP 49** for proper file placement\n- **Run health checks** after any file creation to catch violations\n\n---\n\nWSP VIOLATIONS: WSP 49, WSP 40, WSP 47\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+    "detection_queries": [
+      "where to place test files",
+      "root directory files",
+      "test file location"
+    ]
+  },
+  {
+    "violation_id": "V020",
+    "timestamp": "2025-09-26T09:16:14.784451",
+    "pattern_type": "violation_prevention",
+    "trigger_patterns": [
+      "creating similar functionality",
+      "code duplication",
+      "module redundancy"
+    ],
+    "prevention_rules": [],
+    "semantic_keywords": [
+      "violation",
+      "duplicate"
+    ],
+    "wsp_context": [],
+    "learning_confidence": 0.8,
+    "prevention_priority": 0.5,
+    "holodae_response": "\n⚠️ VIOLATION PATTERN DETECTED: PQN RESULTS DATABASE DUPLICATE CODE VIOLATION\nPreviously seen in V020 - RESOLVED\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: \n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+    "detection_queries": [
+      "existing implementation",
+      "similar functionality",
+      "check duplicates"
+    ]
+  },
+  {
+    "violation_id": "V019",
+    "timestamp": "2025-09-26T09:16:14.784451",
+    "pattern_type": "violation_prevention",
+    "trigger_patterns": [],
+    "prevention_rules": [],
+    "semantic_keywords": [
+      "violation"
+    ],
+    "wsp_context": [
+      "40",
+      "47",
+      "49",
+      "62",
+      "22"
+    ],
+    "learning_confidence": 0.6,
+    "prevention_priority": 0.7999999999999999,
+    "holodae_response": "\n⚠️ VIOLATION PATTERN DETECTED: MODULE DUPLICATION VIOLATIONS\nPreviously seen in V019 - ARCHITECTURAL COHERENCE\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: WSP 40, WSP 47, WSP 49, WSP 62, WSP 22\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+    "detection_queries": []
+  },
+  {
+    "violation_id": "V016",
+    "timestamp": "2025-09-26T09:16:14.784451",
+    "pattern_type": "violation_prevention",
+    "trigger_patterns": [],
+    "prevention_rules": [],
+    "semantic_keywords": [
+      "violation",
+      "WSP 74"
+    ],
+    "wsp_context": [
+      "64",
+      "64",
+      "57"
+    ],
+    "learning_confidence": 0.6,
+    "prevention_priority": 0.7999999999999999,
+    "holodae_response": "\n⚠️ VIOLATION PATTERN DETECTED: WSP 74 NUMBER REUSE VIOLATION\nPreviously seen in V016 - FRAMEWORK VIOLATION\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: WSP 64, WSP 64, WSP 57\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+    "detection_queries": []
+  },
+  {
+    "violation_id": "V017",
+    "timestamp": "2025-09-26T09:16:14.784451",
+    "pattern_type": "violation_prevention",
+    "trigger_patterns": [],
+    "prevention_rules": [],
+    "semantic_keywords": [
+      "violation"
+    ],
+    "wsp_context": [
+      "47",
+      "64",
+      "3"
+    ],
+    "learning_confidence": 0.6,
+    "prevention_priority": 0.7999999999999999,
+    "holodae_response": "\n⚠️ VIOLATION PATTERN DETECTED: IMPROPER VIOLATION DOCUMENTATION CREATION\nPreviously seen in V017 - SELF-VIOLATION\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: WSP 47, WSP 64, WSP 3\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+    "detection_queries": []
+  },
+  {
+    "violation_id": "V015",
+    "timestamp": "2025-09-26T09:16:14.784451",
+    "pattern_type": "violation_prevention",
+    "trigger_patterns": [],
+    "prevention_rules": [],
+    "semantic_keywords": [
+      "violation"
+    ],
+    "wsp_context": [
+      "3",
+      "47",
+      "64"
+    ],
+    "learning_confidence": 0.6,
+    "prevention_priority": 0.7999999999999999,
+    "holodae_response": "\n⚠️ VIOLATION PATTERN DETECTED: FRAMEWORK-LEVEL VIOLATION ANALYSIS DOCUMENTATION\nPreviously seen in V015 - RECURSIVE LEARNING\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: WSP 3, WSP 47, WSP 64\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+    "detection_queries": []
+  },
+  {
+    "violation_id": "V007",
+    "timestamp": "2025-09-26T09:16:14.784451",
+    "pattern_type": "violation_prevention",
+    "trigger_patterns": [],
+    "prevention_rules": [],
+    "semantic_keywords": [
+      "utils/",
+      "modules/wre_core/src/components/",
+      "No module named 'modules.wre_core.src.components.utils'",
+      "component_manager.py",
+      "violation",
+      "livechat_agent.py",
+      "compliance_agent.py",
+      "'ComplianceAgent' object has no attribute 'logger'",
+      "modules/infrastructure/compliance_agent/",
+      "modules/communication/livechat/",
+      "❌ YouTube LiveChat Agent not available.",
+      "error"
+    ],
+    "wsp_context": [],
+    "learning_confidence": 0.6,
+    "prevention_priority": 0.7,
+    "holodae_response": "\n⚠️ VIOLATION PATTERN DETECTED: ComplianceAgent Missing Logger Attribute**\n- **Module**: `modules/infrastructure/compliance_agent/`\n- **File**: `compliance_agent.py` (imported via component_manager.py)\n- **Issue**: ComplianceAgent object instantiated without proper logger initialization\n- **Error**: `'ComplianceAgent' object has no attribute 'logger'`\n- **Impact**: 1 WRE component initialization failure, graceful fallback working\n- **Resolution**: Update ComplianceAgent constructor to properly initialize logger attribute\n- **WSP Status**: DEFERRED - Module placeholder evolution issue, not framework blocking\n- **Priority**: Medium - Component works with graceful degradation\n\n## **V008: Missing WRE Components Utils Module**\n- **Module**: `modules/wre_core/src/components/`\n- **File**: Missing `utils/` directory and modules\n- **Issue**: Import error for modules.wre_core.src.components.utils\n- **Error**: `No module named 'modules.wre_core.src.components.utils'`\n- **Impact**: Multiple import warnings, graceful fallback working\n- **Resolution**: Create missing utils module or update import paths\n- **WSP Status**: DEFERRED - Module structure evolution issue, not framework blocking\n- **Priority**: Low - System functions with warnings\n\n## **V009: YouTube LiveChat Agent Unavailable** \n- **Module**: `modules/communication/livechat/`\n- **File**: `livechat_agent.py` (LiveChatAgent import)\n- **Issue**: YouTube LiveChat Agent fallback not properly implemented\n- **Error**: `❌ YouTube LiveChat Agent not available.`\n- **Impact**: 1 fallback path failure, multi-agent system working\n- **Resolution**: Implement proper LiveChatAgent fallback or update fallback logic\n- **WSP Status**: DEFERRED - Module fallback evolution issue, not framework blocking  \n- **Priority**: Low - Primary multi-agent system functional\n\n## **V013: COMPREHENSIVE WSP VIOLATION AUDIT - SYSTEM-WIDE COMPLIANCE CRISIS\nPreviously seen in V007 - CRITICAL\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: \n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+    "detection_queries": []
+  },
+  {
+    "violation_id": "V014",
+    "timestamp": "2025-09-26T09:16:14.784451",
+    "pattern_type": "violation_prevention",
+    "trigger_patterns": [],
+    "prevention_rules": [],
+    "semantic_keywords": [
+      "violation",
+      "WSP 64",
+      "WSP 71"
+    ],
+    "wsp_context": [],
+    "learning_confidence": 0.6,
+    "prevention_priority": 0.7,
+    "holodae_response": "\n⚠️ VIOLATION PATTERN DETECTED: WSP 64 PROTOCOL VIOLATION - IMPROPER WSP 71 CREATION\nPreviously seen in V014 - SELF-DETECTED\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: \n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+    "detection_queries": []
+  },
+  {
+    "violation_id": "V018",
+    "timestamp": "2025-09-26T09:16:14.784451",
+    "pattern_type": "violation_prevention",
+    "trigger_patterns": [],
+    "prevention_rules": [],
+    "semantic_keywords": [
+      "WSP 78"
+    ],
+    "wsp_context": [
+      "64",
+      "50",
+      "57"
+    ],
+    "learning_confidence": 0.6,
+    "prevention_priority": 0.7999999999999999,
+    "holodae_response": "\n⚠️ VIOLATION PATTERN DETECTED: WSP 78 CREATION WITHOUT INDEX CONSULTATION\nPreviously seen in V018 - CRITICAL RECURSIVE VIOLATION\n\nPREVENTION CHECKLIST:\n\n\nWSP VIOLATIONS: WSP 64, WSP 50, WSP 57\n\nUSE HOLOINDEX FIRST: python holo_index.py --search \"[your task]\"\n",
+    "detection_queries": []
+  }
+]

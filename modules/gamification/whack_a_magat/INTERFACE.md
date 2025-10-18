@@ -132,7 +132,7 @@ profile = get_profile("mod123")
 - **Example**:
   ```python
   is_correct, msg = quiz.answer_quiz("UC123", 0, "Move2Japan")
-  # First win: "✅ CORRECT! 🎉 FIRST QUIZ WIN! (+500 MAGADOOM XP!)"
+  # First win: "[OK] CORRECT! [CELEBRATE] FIRST QUIZ WIN! (+500 MAGADOOM XP!)"
   ```
 
 ## Zen Coding Integration

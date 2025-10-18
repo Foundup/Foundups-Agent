@@ -96,19 +96,19 @@ class QuizEngine:
 
                 if 'username' not in columns:
                     cursor.execute("ALTER TABLE quiz_scores ADD COLUMN username TEXT DEFAULT 'Unknown'")
-                    logger.info("📚 MIGRATION: Added 'username' column to quiz_scores")
+                    logger.info("[BOOKS] MIGRATION: Added 'username' column to quiz_scores")
 
                 if 'quiz_wins' not in columns:
                     cursor.execute("ALTER TABLE quiz_scores ADD COLUMN quiz_wins INTEGER DEFAULT 0")
-                    logger.info("📚 MIGRATION: Added 'quiz_wins' column to quiz_scores")
+                    logger.info("[BOOKS] MIGRATION: Added 'quiz_wins' column to quiz_scores")
 
                 if 'last_quiz_time' not in columns:
                     cursor.execute("ALTER TABLE quiz_scores ADD COLUMN last_quiz_time TIMESTAMP")
-                    logger.info("📚 MIGRATION: Added 'last_quiz_time' column to quiz_scores")
+                    logger.info("[BOOKS] MIGRATION: Added 'last_quiz_time' column to quiz_scores")
 
                 conn.commit()
             except Exception as e:
-                logger.warning(f"📚 Migration check failed (non-critical): {e}")
+                logger.warning(f"[BOOKS] Migration check failed (non-critical): {e}")
 
             conn.commit()
     
@@ -470,8 +470,8 @@ class QuizEngine:
 
         if compact_mode:
             # YouTube Live Chat optimized format (200 char limit)
-            # Format: "📚 Q: [question]? 1) [opt1] 2) [opt2] 3) [opt3] 4) [opt4] !answer #"
-            message = f"📚 Q: {question.question}? "
+            # Format: "[BOOKS] Q: [question]? 1) [opt1] 2) [opt2] 3) [opt3] 4) [opt4] !answer #"
+            message = f"[BOOKS] Q: {question.question}? "
             for i, option in enumerate(question.options):
                 # Shorten options to first few words
                 short_opt = ' '.join(option.split()[:3])  # First 3 words
@@ -482,15 +482,15 @@ class QuizEngine:
             if len(message) > 197:  # 200 - "..."
                 max_question_len = 30  # Drastically shorten question
                 short_question = question.question[:max_question_len]
-                message = f"📚 Q: {short_question}? "
+                message = f"[BOOKS] Q: {short_question}? "
                 for i, option in enumerate(question.options):
                     short_opt = ' '.join(option.split()[:2])  # First 2 words only
                     message += f"{i+1}) {short_opt} "
                 message += "!answer #"
         else:
             # Original format for platforms with longer limits
-            message = f"📚 FASCISM AWARENESS QUIZ\n"
-            message += f"Difficulty: {'⭐' * question.difficulty}\n"
+            message = f"[BOOKS] FASCISM AWARENESS QUIZ\n"
+            message += f"Difficulty: {'[U+2B50]' * question.difficulty}\n"
             message += f"Category: {question.category.replace('_', ' ').title()}\n\n"
             message += f"Question: {question.question}\n\n"
 
@@ -536,19 +536,19 @@ class QuizEngine:
                 profile.monthly_score += xp_awarded  # Monthly leaderboard
                 _profiles_repo.save(profile)  # Save and update rank
 
-                message = f"✅ CORRECT! 🎉 FIRST QUIZ WIN! (+{xp_awarded} MAGADOOM XP!)\n"
-                message += f"📖 {question.explanation}\n"
-                message += f"🏆 Your MAGADOOM Rank: {profile.rank} (Total XP: {profile.score})"
+                message = f"[OK] CORRECT! [CELEBRATE] FIRST QUIZ WIN! (+{xp_awarded} MAGADOOM XP!)\n"
+                message += f"[U+1F4D6] {question.explanation}\n"
+                message += f"[U+1F3C6] Your MAGADOOM Rank: {profile.rank} (Total XP: {profile.score})"
             else:
                 # Regular correct answer (no XP, just educational)
                 session.score += question.difficulty
-                message = f"✅ CORRECT! (+{question.difficulty} education points)\n"
-                message += f"📖 {question.explanation}\n"
-                message += f"📚 Quiz session score: {session.score}"
+                message = f"[OK] CORRECT! (+{question.difficulty} education points)\n"
+                message += f"[U+1F4D6] {question.explanation}\n"
+                message += f"[BOOKS] Quiz session score: {session.score}"
         else:
             correct_option = question.options[question.correct_index]
-            message = f"❌ INCORRECT! The answer was: {correct_option}\n"
-            message += f"📖 {question.explanation}"
+            message = f"[FAIL] INCORRECT! The answer was: {correct_option}\n"
+            message += f"[U+1F4D6] {question.explanation}"
 
         # Update database (track wins for leaderboard)
         session.questions_answered += 1
@@ -577,7 +577,7 @@ class QuizEngine:
         
         self.sessions[user_id].current_fscale = question
         
-        message = f"📊 F-SCALE AUTHORITARIAN TEST\n"
+        message = f"[DATA] F-SCALE AUTHORITARIAN TEST\n"
         message += f"Rate your agreement (1-5):\n"
         message += f'"{question.question}"\n\n'
         message += "1 = Strongly Disagree\n"
@@ -634,7 +634,7 @@ class QuizEngine:
         
         self._update_fscale_score(user_id, question.dimension, score)
         
-        message = f"📊 Response recorded: {auth_level}\n"
+        message = f"[DATA] Response recorded: {auth_level}\n"
         message += f"Dimension measured: {question.dimension.replace('_', ' ').title()}\n"
         message += "\nHigher scores indicate greater susceptibility to fascist ideology."
         
@@ -661,7 +661,7 @@ class QuizEngine:
             """, (user_id,))
             fscale_data = cursor.fetchone()
         
-        message = f"📊 EDUCATIONAL STATS\n"
+        message = f"[DATA] EDUCATIONAL STATS\n"
         
         if quiz_data:
             accuracy = (quiz_data[0] / (quiz_data[1] * quiz_data[2] or 1)) * 100
@@ -701,7 +701,7 @@ class QuizEngine:
             columns = [col[1] for col in cursor.fetchall()]
 
             if 'quiz_wins' not in columns or 'username' not in columns:
-                return "📚 Quiz leaderboard not available (run a quiz to initialize)"
+                return "[BOOKS] Quiz leaderboard not available (run a quiz to initialize)"
 
             # Get top quiz winners
             cursor.execute("""
@@ -715,17 +715,17 @@ class QuizEngine:
             leaders = cursor.fetchall()
 
         if not leaders:
-            return "📚 No quiz winners yet! Be the first to win 500 MAGADOOM XP!"
+            return "[BOOKS] No quiz winners yet! Be the first to win 500 MAGADOOM XP!"
 
-        message = "📚 QUIZ LEADERBOARD - Top Anti-Fascist Scholars\n\n"
+        message = "[BOOKS] QUIZ LEADERBOARD - Top Anti-Fascist Scholars\n\n"
 
         for i, (username, wins, answered, total_score) in enumerate(leaders, 1):
             accuracy = (wins / answered * 100) if answered > 0 else 0
-            medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
+            medal = "[U+1F947]" if i == 1 else "[U+1F948]" if i == 2 else "[U+1F949]" if i == 3 else f"{i}."
 
             message += f"{medal} {username}: {wins} wins ({accuracy:.0f}% accuracy)\n"
 
-        message += "\n💡 First correct answer = 500 MAGADOOM XP!"
+        message += "\n[IDEA] First correct answer = 500 MAGADOOM XP!"
         return message
     
     def _update_quiz_score(self, user_id: str, points: int, difficulty: int, username: str = "Unknown", is_win: bool = False):
@@ -798,7 +798,7 @@ class QuizEngine:
         # OWNER BYPASS - Can always trigger quiz for testing
         owner_usernames = ["Move2Japan", "UnDaoDu", "Foundups"]
         if username in owner_usernames:
-            logger.info(f"👑 Owner {username} bypassing quiz cooldown")
+            logger.info(f"[U+1F451] Owner {username} bypassing quiz cooldown")
             return True
 
         # Check last quiz time

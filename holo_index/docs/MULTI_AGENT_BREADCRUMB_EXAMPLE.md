@@ -4,7 +4,7 @@
 
 ### Scenario: Agent 1 Discovers `/pnq`, Agent 2 Follows
 
-#### 🤖 Agent 1 (0102-Claude) Discovery Process
+#### [BOT] Agent 1 (0102-Claude) Discovery Process
 ```python
 # Agent 1 searches for PQN commands
 python holo_index.py --search "pnq command typo"
@@ -13,10 +13,10 @@ python holo_index.py --search "pnq command typo"
 1. Search: "pnq command typo"
 2. Discovery: /pnq is typo handler at message_processor.py:747
 3. Documentation: Found in COMMAND_REFERENCE.md
-4. Learning: "/pnq" → "/pqn" typo tolerance pattern
+4. Learning: "/pnq" -> "/pqn" typo tolerance pattern
 ```
 
-#### 🤖 Agent 2 (0102-Grok-Code) Following Breadcrumbs
+#### [BOT] Agent 2 (0102-Grok-Code) Following Breadcrumbs
 ```python
 # Agent 2 reads Agent 1's breadcrumbs
 from holo_index.adaptive_learning.breadcrumb_tracer import get_tracer

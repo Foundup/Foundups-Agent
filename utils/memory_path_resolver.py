@@ -116,7 +116,7 @@ class MemoryPathResolver:
         self.migration_log.append(log_entry)
         
         # Log to console for debugging
-        logger.debug(f"WSP 60 Memory Path: {path_type} | {original_path} → {resolved_path}")
+        logger.debug(f"WSP 60 Memory Path: {path_type} | {original_path} -> {resolved_path}")
     
     def get_migration_status(self) -> dict:
         """Get migration status summary."""
@@ -169,7 +169,7 @@ class MemoryPathResolver:
                 import shutil
                 shutil.copytree(legacy_path, module_path)
             
-            logger.info(f"Migrated {legacy_path} → {module_path}")
+            logger.info(f"Migrated {legacy_path} -> {module_path}")
             return True
             
         except Exception as e:
@@ -221,7 +221,7 @@ if __name__ == "__main__":
     
     for path in test_paths:
         resolved = resolver.resolve_path(path)
-        print(f"{path} → {resolved}")
+        print(f"{path} -> {resolved}")
     
     print("\nMigration Status:")
     print("=" * 20)

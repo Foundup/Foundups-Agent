@@ -49,11 +49,11 @@ class ShortsDAE:
         """
 
         if self.active:
-            print("[ShortsDAE] ⚠️  Already running in autonomous mode")
+            print("[ShortsDAE] [U+26A0]️  Already running in autonomous mode")
             return
 
         if not topics:
-            print("[ShortsDAE] ❌ No topics provided")
+            print("[ShortsDAE] [FAIL] No topics provided")
             return
 
         self.topic_queue = topics
@@ -68,7 +68,7 @@ class ShortsDAE:
         )
         self.thread.start()
 
-        print(f"[ShortsDAE] ✅ Autonomous mode started")
+        print(f"[ShortsDAE] [OK] Autonomous mode started")
         print(f"  Topics: {len(topics)}")
         print(f"  Interval: Every {interval_hours} hours")
         print(f"  Duration: {duration}s per Short")
@@ -87,7 +87,7 @@ class ShortsDAE:
 
         interval_seconds = interval_hours * 3600
 
-        print(f"[ShortsDAE] 🤖 Autonomous loop started")
+        print(f"[ShortsDAE] [BOT] Autonomous loop started")
 
         while self.active:
             try:
@@ -95,7 +95,7 @@ class ShortsDAE:
                 topic = self.topic_queue[self.current_topic_index]
                 self.current_topic_index = (self.current_topic_index + 1) % len(self.topic_queue)
 
-                print(f"\n[ShortsDAE] 🎬 Creating scheduled Short...")
+                print(f"\n[ShortsDAE] [U+1F3AC] Creating scheduled Short...")
                 print(f"  Topic: {topic}")
 
                 # Create and upload Short
@@ -105,7 +105,7 @@ class ShortsDAE:
                     privacy=privacy
                 )
 
-                print(f"[ShortsDAE] ✅ Autonomous Short posted: {youtube_url}")
+                print(f"[ShortsDAE] [OK] Autonomous Short posted: {youtube_url}")
 
                 # Wait for next interval
                 if self.active:
@@ -113,11 +113,11 @@ class ShortsDAE:
                     time.sleep(interval_seconds)
 
             except Exception as e:
-                print(f"[ShortsDAE] ❌ Error in autonomous loop: {e}")
+                print(f"[ShortsDAE] [FAIL] Error in autonomous loop: {e}")
                 print(f"[ShortsDAE] ⏰ Retrying in 1 hour...")
                 time.sleep(3600)  # Wait 1 hour on error
 
-        print(f"[ShortsDAE] 🛑 Autonomous loop stopped")
+        print(f"[ShortsDAE] [STOP] Autonomous loop stopped")
 
     def stop_autonomous_mode(self):
         """Stop autonomous Short generation."""
@@ -126,13 +126,13 @@ class ShortsDAE:
             print("[ShortsDAE] ℹ️  Not running in autonomous mode")
             return
 
-        print("[ShortsDAE] 🛑 Stopping autonomous mode...")
+        print("[ShortsDAE] [STOP] Stopping autonomous mode...")
         self.active = False
 
         if self.thread:
             self.thread.join(timeout=5)
 
-        print("[ShortsDAE] ✅ Autonomous mode stopped")
+        print("[ShortsDAE] [OK] Autonomous mode stopped")
 
     def add_topics(self, topics: List[str]):
         """
@@ -143,7 +143,7 @@ class ShortsDAE:
         """
 
         self.topic_queue.extend(topics)
-        print(f"[ShortsDAE] ✅ Added {len(topics)} topics to queue")
+        print(f"[ShortsDAE] [OK] Added {len(topics)} topics to queue")
         print(f"  Total topics: {len(self.topic_queue)}")
 
     def get_status(self) -> dict:

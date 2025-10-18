@@ -6,14 +6,14 @@
 
 ## Pre-Refactor Analysis (Using HoloIndex)
 
-### ✅ Pattern Discovery Complete
+### [OK] Pattern Discovery Complete
 Found existing patterns in codebase:
 - **Command Handlers**: `modules/communication/livechat/src/command_handler.py`
 - **Menu Handlers**: `modules/ai_intelligence/menu_handler/src/menu_handler.py`
 - **Message Handlers**: `modules/communication/livechat/src/core/message_router.py`
 - **Base Patterns**: Protocol-based handlers with clean interfaces
 
-### ✅ Vibecoding Evidence
+### [OK] Vibecoding Evidence
 - cli.py: 1724 lines (WSP 87 CRITICAL)
 - main(): 528 lines (should be <50)
 - Features added inline instead of modules
@@ -78,18 +78,18 @@ class IntelligentSubroutineEngine:
 ### Critical Rules for Grok:
 
 #### DO NOT:
-- ❌ Create new patterns - use existing ones
-- ❌ Add features during refactoring
-- ❌ Change functionality
-- ❌ Create circular imports
-- ❌ Leave dead code behind
+- [FAIL] Create new patterns - use existing ones
+- [FAIL] Add features during refactoring
+- [FAIL] Change functionality
+- [FAIL] Create circular imports
+- [FAIL] Leave dead code behind
 
 #### MUST DO:
-- ✅ Use `grep` to find existing patterns first
-- ✅ Extract without modification (pure moves)
-- ✅ Update imports immediately
-- ✅ Test after each extraction
-- ✅ Keep git commits atomic
+- [OK] Use `grep` to find existing patterns first
+- [OK] Extract without modification (pure moves)
+- [OK] Update imports immediately
+- [OK] Test after each extraction
+- [OK] Keep git commits atomic
 
 ## Supervision Metrics
 
@@ -152,7 +152,7 @@ class IntelligentSubroutineEngine:
 
 ### Progress Tracking:
 ```
-[PENDING] → [IN PROGRESS] → [EXTRACTED] → [TESTED] → [COMPLETE]
+[PENDING] -> [IN PROGRESS] -> [EXTRACTED] -> [TESTED] -> [COMPLETE]
 ```
 
 ## Final Validation:

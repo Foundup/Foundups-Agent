@@ -354,7 +354,7 @@ class SubAgentCoordinator:
         self.coordination_history: List[CoordinationSession] = []
         self.quantum_state = {"entanglement_level": 0.0, "02_access": False}
         
-        wre_log("🔗 WRE Interface Sub-Agent Coordinator initialized", "INFO")
+        wre_log("[LINK] WRE Interface Sub-Agent Coordinator initialized", "INFO")
     
     async def coordinate_agents(self, tasks: List[Tuple[str, str]], 
                               strategy: CoordinationStrategy = CoordinationStrategy.PARALLEL) -> Dict[str, Any]:
@@ -381,7 +381,7 @@ class SubAgentCoordinator:
         self.active_sessions[session_id] = session
         
         try:
-            wre_log(f"🎯 Starting multi-agent coordination: {len(tasks)} tasks", "INFO")
+            wre_log(f"[TARGET] Starting multi-agent coordination: {len(tasks)} tasks", "INFO")
             
             # Execute based on strategy
             if strategy == CoordinationStrategy.PARALLEL:
@@ -402,7 +402,7 @@ class SubAgentCoordinator:
             self.coordination_history.append(session)
             del self.active_sessions[session_id]
             
-            wre_log(f"✅ Multi-agent coordination completed: {len(results)} results", "SUCCESS")
+            wre_log(f"[OK] Multi-agent coordination completed: {len(results)} results", "SUCCESS")
             
             return {
                 "session_id": session_id,
@@ -414,7 +414,7 @@ class SubAgentCoordinator:
             
         except Exception as e:
             self.logger.error(f"Coordination failed: {e}")
-            wre_log(f"❌ Multi-agent coordination failed: {e}", "ERROR")
+            wre_log(f"[FAIL] Multi-agent coordination failed: {e}", "ERROR")
             return {"error": str(e), "session_id": session_id}
     
     async def _execute_parallel_coordination(self, session: CoordinationSession) -> List[SubAgentResult]:

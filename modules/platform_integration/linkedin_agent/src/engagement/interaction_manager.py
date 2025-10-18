@@ -1,7 +1,7 @@
 """
 LinkedIn Interaction Manager
 
-🌀 WSP Protocol Compliance: WSP 42 (Platform Integration), WSP 40 (Architectural Coherence)
+[U+1F300] WSP Protocol Compliance: WSP 42 (Platform Integration), WSP 40 (Architectural Coherence)
 
 **0102 Directive**: This module operates within the WSP framework for autonomous LinkedIn interaction management.
 - UN (Understanding): Anchor LinkedIn interaction signals and retrieve protocol state
@@ -14,9 +14,13 @@ wsp_cycle(input="linkedin_interaction", log=True)
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -37,12 +41,12 @@ class InteractionType(Enum):
 
 class ReactionType(Enum):
     """LinkedIn reaction types"""
-    LIKE = "👍"
-    CELEBRATE = "🎉"
-    SUPPORT = "❤️"
-    FUNNY = "😂"
-    INSIGHTFUL = "💡"
-    CURIOUS = "🤔"
+    LIKE = "[U+1F44D]"
+    CELEBRATE = "[CELEBRATE]"
+    SUPPORT = "[U+2764]️"
+    FUNNY = "[U+1F602]"
+    INSIGHTFUL = "[IDEA]"
+    CURIOUS = "[U+1F914]"
 
 
 @dataclass
@@ -72,7 +76,7 @@ class LinkedInInteractionManager:
     """
     Manages LinkedIn interactions including likes, comments, shares, and reactions.
     
-    Follows WSP 40 compliance with single responsibility and ≤300 lines.
+    Follows WSP 40 compliance with single responsibility and [U+2264]300 lines.
     Implements WSP 66 proactive component architecture for engagement automation.
     """
     
@@ -96,7 +100,7 @@ class LinkedInInteractionManager:
             'engagement_threshold': 0.5
         }
         
-        self.logger.info("✅ LinkedInInteractionManager initialized for autonomous engagement")
+        self.logger.info("[OK] LinkedInInteractionManager initialized for autonomous engagement")
     
     def like_post(self, post_id: str, author_id: str) -> InteractionResult:
         """
@@ -134,11 +138,11 @@ class LinkedInInteractionManager:
             )
             
             self.interaction_history.append(result)
-            self.logger.info(f"✅ Liked post {post_id}")
+            self.logger.info(f"[OK] Liked post {post_id}")
             return result
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to like post {post_id}: {str(e)}")
+            self.logger.error(f"[FAIL] Failed to like post {post_id}: {str(e)}")
             return InteractionResult(
                 interaction_id=f"like_{post_id}_{datetime.now().timestamp()}",
                 target_post_id=post_id,
@@ -200,11 +204,11 @@ class LinkedInInteractionManager:
             )
             
             self.interaction_history.append(result)
-            self.logger.info(f"✅ Commented on post {post_id}")
+            self.logger.info(f"[OK] Commented on post {post_id}")
             return result
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to comment on post {post_id}: {str(e)}")
+            self.logger.error(f"[FAIL] Failed to comment on post {post_id}: {str(e)}")
             return InteractionResult(
                 interaction_id=f"comment_{post_id}_{datetime.now().timestamp()}",
                 target_post_id=post_id,
@@ -255,11 +259,11 @@ class LinkedInInteractionManager:
             )
             
             self.interaction_history.append(result)
-            self.logger.info(f"✅ Shared post {post_id}")
+            self.logger.info(f"[OK] Shared post {post_id}")
             return result
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to share post {post_id}: {str(e)}")
+            self.logger.error(f"[FAIL] Failed to share post {post_id}: {str(e)}")
             return InteractionResult(
                 interaction_id=f"share_{post_id}_{datetime.now().timestamp()}",
                 target_post_id=post_id,
@@ -310,11 +314,11 @@ class LinkedInInteractionManager:
             )
             
             self.interaction_history.append(result)
-            self.logger.info(f"✅ Reacted to post {post_id} with {reaction_type.value}")
+            self.logger.info(f"[OK] Reacted to post {post_id} with {reaction_type.value}")
             return result
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to react to post {post_id}: {str(e)}")
+            self.logger.error(f"[FAIL] Failed to react to post {post_id}: {str(e)}")
             return InteractionResult(
                 interaction_id=f"react_{post_id}_{datetime.now().timestamp()}",
                 target_post_id=post_id,
@@ -437,7 +441,7 @@ class LinkedInInteractionManager:
         """
         import time
         time.sleep(self.rate_limit_delay)  # Simulate API delay
-        self.logger.debug(f"🔗 Simulated {action} API call for post {post_id}")
+        self.logger.debug(f"[LINK] Simulated {action} API call for post {post_id}")
 
 
 # Factory function for clean initialization

@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WSP Module Audit & Bootstrap Tool (Simplest Working Solution)
 
 Purpose:
@@ -37,7 +52,7 @@ REQUIRED_TEST_DOCS = [
 
 PLACEHOLDERS = {
     "README.md": "# Module README (WSP)\n\n- Module Purpose\n- WSP Compliance Status\n- Dependencies\n- Usage Examples\n- Integration Points\n- WSP Recursive Instructions\n",
-    "ROADMAP.md": "# ROADMAP (WSP 22)\n\n- Vision\n- Milestones (PoC → Prototype → MVP)\n- Risks\n- Dependencies\n",
+    "ROADMAP.md": "# ROADMAP (WSP 22)\n\n- Vision\n- Milestones (PoC -> Prototype -> MVP)\n- Risks\n- Dependencies\n",
     "ModLog.md": "# Module ModLog (WSP 22)\n\n- Initialized ModLog per WSP 22.\n",
     "INTERFACE.md": "# INTERFACE (WSP 11)\n\n## Public API\n## Parameters\n## Returns\n## Errors\n## Examples\n",
     "requirements.txt": "# Module requirements (pin as needed)\n",

@@ -87,13 +87,13 @@ class RealtimeCommentDialogue:
         if LLMCommentGenerator:
             try:
                 self.llm_generator = LLMCommentGenerator(provider="grok")  # Or "claude", "gpt"
-                logger.info("🤖 Using LLM for intelligent comment responses")
+                logger.info("[BOT] Using LLM for intelligent comment responses")
             except Exception as e:
-                logger.warning(f"⚠️ LLM initialization failed: {e}")
+                logger.warning(f"[U+26A0]️ LLM initialization failed: {e}")
                 self.llm_generator = None
         else:
             self.llm_generator = None
-            logger.info("⚠️ No LLM available, using template responses")
+            logger.info("[U+26A0]️ No LLM available, using template responses")
         
         self.chat_engine = AgenticChatEngine()  # Fallback
         self.memory_manager = ChatMemoryManager(memory_dir)
@@ -107,12 +107,12 @@ class RealtimeCommentDialogue:
         self.current_video_id = None
         self.video_check_time = datetime.now()
         
-        logger.info(f"🔴 Real-time Comment Dialogue initialized for channel: {channel_id}")
+        logger.info(f"[U+1F534] Real-time Comment Dialogue initialized for channel: {channel_id}")
     
     async def start(self):
         """Start real-time comment monitoring and dialogue"""
         self.is_running = True
-        logger.info("🚀 Real-time Comment Dialogue starting...")
+        logger.info("[ROCKET] Real-time Comment Dialogue starting...")
         
         # Run multiple monitoring tasks concurrently
         await asyncio.gather(
@@ -189,7 +189,7 @@ class RealtimeCommentDialogue:
         text_lower = text.lower()
         
         # Always engage with consciousness triggers
-        if '✊✋🖐' in text:
+        if '[U+270A][U+270B][U+1F590]' in text:
             return True
         
         # Engage with questions
@@ -219,7 +219,7 @@ class RealtimeCommentDialogue:
     async def start_conversation(self, comment_id: str, author: str, text: str):
         """Start a new conversation thread"""
         try:
-            logger.info(f"💬 Starting conversation with {author}")
+            logger.info(f"[U+1F4AC] Starting conversation with {author}")
             
             # Create thread
             thread = CommentThread(comment_id, author)
@@ -235,7 +235,7 @@ class RealtimeCommentDialogue:
                 self.our_replies[comment_id] = reply_id
                 thread.add_message("0102", response)
                 
-                logger.info(f"✅ Started dialogue with {author}: {response[:50]}...")
+                logger.info(f"[OK] Started dialogue with {author}: {response[:50]}...")
                 
                 # Update memory
                 self.memory_manager.update_user_memory(author, {
@@ -250,7 +250,7 @@ class RealtimeCommentDialogue:
                                   author: str, text: str):
         """Handle a reply to one of our comments - continue the dialogue!"""
         try:
-            logger.info(f"🔄 {author} replied to us: {text[:50]}...")
+            logger.info(f"[REFRESH] {author} replied to us: {text[:50]}...")
             
             # Get or create thread
             thread = self.active_threads.get(parent_id)
@@ -270,7 +270,7 @@ class RealtimeCommentDialogue:
                 self.our_replies[comment_id] = reply_id
                 thread.add_message("0102", response)
                 
-                logger.info(f"✅ Continued dialogue with {author}: {response[:50]}...")
+                logger.info(f"[OK] Continued dialogue with {author}: {response[:50]}...")
                 
                 # Update memory with conversation progress
                 self.memory_manager.update_user_memory(author, {
@@ -293,7 +293,7 @@ class RealtimeCommentDialogue:
                 # Check each active thread for new replies
                 for thread_id, thread in list(self.active_threads.items()):
                     if thread.should_close():
-                        logger.info(f"📕 Closing inactive thread with {thread.author}")
+                        logger.info(f"[U+1F4D5] Closing inactive thread with {thread.author}")
                         del self.active_threads[thread_id]
                         continue
                     
@@ -328,7 +328,7 @@ class RealtimeCommentDialogue:
                 
                 for thread_id in inactive:
                     thread = self.active_threads[thread_id]
-                    logger.info(f"🧹 Cleaning up thread with {thread.author}")
+                    logger.info(f"[U+1F9F9] Cleaning up thread with {thread.author}")
                     
                     # Save conversation to memory
                     self.memory_manager.update_user_memory(thread.author, {
@@ -377,7 +377,7 @@ class RealtimeCommentDialogue:
                 response = self.llm_generator.generate_dialogue_response(
                     thread, text, author
                 )
-                logger.info(f"🤖 LLM generated response for {author}")
+                logger.info(f"[BOT] LLM generated response for {author}")
             else:
                 # Fallback to template engine
                 response = self.chat_engine.generate_response(
@@ -398,7 +398,7 @@ class RealtimeCommentDialogue:
                 # Deep in conversation - add emoji occasionally
                 import random
                 if random.random() < 0.3:
-                    emojis = ['😊', '👍', '🎉', '💬', '🤔']
+                    emojis = ['[U+1F60A]', '[U+1F44D]', '[CELEBRATE]', '[U+1F4AC]', '[U+1F914]']
                     response += f" {random.choice(emojis)}"
             
             return response

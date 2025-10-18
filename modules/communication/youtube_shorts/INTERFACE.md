@@ -8,7 +8,7 @@
 
 ### ShortsOrchestrator
 
-Main orchestration class for 012↔0102 interaction flow.
+Main orchestration class for 012[U+2194]0102 interaction flow.
 
 ```python
 from modules.communication.youtube_shorts import ShortsOrchestrator
@@ -185,7 +185,7 @@ from modules.communication.youtube_shorts import ShortsOrchestrator
 # Create and upload in one call
 orchestrator = ShortsOrchestrator()
 url = orchestrator.create_and_upload("Japanese autumn leaves", duration=30)
-print(f"✅ Short posted: {url}")
+print(f"[OK] Short posted: {url}")
 ```
 
 ### Advanced Usage (Custom Workflow)
@@ -265,6 +265,6 @@ except YouTubeUploadError as e:
 - `modules.platform_integration.youtube_auth` (OAuth service)
 
 **No Modifications To:**
-- ✅ livechat module
-- ✅ youtube_dae module
-- ✅ youtube_auth module
+- [OK] livechat module
+- [OK] youtube_dae module
+- [OK] youtube_auth module

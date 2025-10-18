@@ -2,7 +2,7 @@
 Test 3-Act Multi-Clip Short Generation
 
 Tests the complete pipeline:
-1. Story generation (Setup → Shock → Reveal)
+1. Story generation (Setup -> Shock -> Reveal)
 2. Multi-clip video generation (3×5s clips)
 3. Clip concatenation (ffmpeg)
 4. Upload to Move2Japan channel
@@ -39,7 +39,7 @@ def test_story_generation():
     # Generate story
     story = generator.generate_story(topic)
 
-    print(f"\n🎭 Story Structure:")
+    print(f"\n[U+1F3AD] Story Structure:")
     print(f"  Full story: {story['full_story']}")
     print()
     print(f"  ACT 1 - SETUP (5s):")
@@ -60,7 +60,7 @@ def test_story_generation():
     assert 'act3' in story, "Missing Act 3"
     assert 'full_story' in story, "Missing full story"
 
-    print("\n✅ Story generation test PASSED")
+    print("\n[OK] Story generation test PASSED")
     return story
 
 
@@ -78,7 +78,7 @@ def test_video_editor():
     # Note: Actual concatenation requires real video files
     # This test just verifies the editor initializes correctly
 
-    print("\n✅ Video editor test PASSED")
+    print("\n[OK] Video editor test PASSED")
     return editor
 
 
@@ -99,11 +99,11 @@ def test_generator_initialization():
         assert hasattr(generator, 'generate_three_act_short'), \
             "Missing generate_three_act_short method"
 
-        print("\n✅ Generator initialization test PASSED")
+        print("\n[OK] Generator initialization test PASSED")
         return generator
 
     except Exception as e:
-        print(f"\n❌ Generator initialization FAILED: {e}")
+        print(f"\n[FAIL] Generator initialization FAILED: {e}")
         return None
 
 
@@ -127,11 +127,11 @@ def test_orchestrator_initialization():
         print(f"  Subscribers: {channel_info.get('subscribers', 'N/A')}")
         print(f"  Video count: {channel_info.get('video_count', 'N/A')}")
 
-        print("\n✅ Orchestrator initialization test PASSED")
+        print("\n[OK] Orchestrator initialization test PASSED")
         return orchestrator
 
     except Exception as e:
-        print(f"\n❌ Orchestrator initialization FAILED: {e}")
+        print(f"\n[FAIL] Orchestrator initialization FAILED: {e}")
         return None
 
 
@@ -148,9 +148,9 @@ def test_full_3act_generation(run_actual: bool = False):
     print("="*80)
 
     if not run_actual:
-        print("\n⚠️  Actual generation DISABLED (would cost $6)")
+        print("\n[U+26A0]️  Actual generation DISABLED (would cost $6)")
         print("   Set run_actual=True to test real generation")
-        print("\n✅ Pipeline structure test PASSED")
+        print("\n[OK] Pipeline structure test PASSED")
         return None
 
     try:
@@ -171,13 +171,13 @@ def test_full_3act_generation(run_actual: bool = False):
             use_3act=True
         )
 
-        print(f"\n✅ 3-Act Short Generated!")
+        print(f"\n[OK] 3-Act Short Generated!")
         print(f"  URL: {youtube_url}")
 
         return youtube_url
 
     except Exception as e:
-        print(f"\n❌ 3-Act generation FAILED: {e}")
+        print(f"\n[FAIL] 3-Act generation FAILED: {e}")
         return None
 
 
@@ -189,9 +189,9 @@ def run_all_tests(include_actual_generation: bool = False):
         include_actual_generation: Run actual video generation ($6 cost)
     """
     print("\n" + "="*80)
-    print("🎬 3-ACT SHORT GENERATION TEST SUITE")
+    print("[U+1F3AC] 3-ACT SHORT GENERATION TEST SUITE")
     print("="*80)
-    print(f"\nActual generation: {'ENABLED ⚠️ ($6 cost)' if include_actual_generation else 'DISABLED'}")
+    print(f"\nActual generation: {'ENABLED [U+26A0]️ ($6 cost)' if include_actual_generation else 'DISABLED'}")
 
     results = {}
 
@@ -200,7 +200,7 @@ def run_all_tests(include_actual_generation: bool = False):
         story = test_story_generation()
         results['story_generation'] = 'PASS'
     except Exception as e:
-        print(f"\n❌ Story generation failed: {e}")
+        print(f"\n[FAIL] Story generation failed: {e}")
         results['story_generation'] = 'FAIL'
 
     # Test 2: Video editor
@@ -208,7 +208,7 @@ def run_all_tests(include_actual_generation: bool = False):
         editor = test_video_editor()
         results['video_editor'] = 'PASS'
     except Exception as e:
-        print(f"\n❌ Video editor failed: {e}")
+        print(f"\n[FAIL] Video editor failed: {e}")
         results['video_editor'] = 'FAIL'
 
     # Test 3: Generator initialization
@@ -216,7 +216,7 @@ def run_all_tests(include_actual_generation: bool = False):
         generator = test_generator_initialization()
         results['generator_init'] = 'PASS' if generator else 'FAIL'
     except Exception as e:
-        print(f"\n❌ Generator init failed: {e}")
+        print(f"\n[FAIL] Generator init failed: {e}")
         results['generator_init'] = 'FAIL'
 
     # Test 4: Orchestrator initialization
@@ -224,7 +224,7 @@ def run_all_tests(include_actual_generation: bool = False):
         orchestrator = test_orchestrator_initialization()
         results['orchestrator_init'] = 'PASS' if orchestrator else 'FAIL'
     except Exception as e:
-        print(f"\n❌ Orchestrator init failed: {e}")
+        print(f"\n[FAIL] Orchestrator init failed: {e}")
         results['orchestrator_init'] = 'FAIL'
 
     # Test 5: Full pipeline (optional)
@@ -233,7 +233,7 @@ def run_all_tests(include_actual_generation: bool = False):
             url = test_full_3act_generation(run_actual=True)
             results['full_pipeline'] = 'PASS' if url else 'FAIL'
         except Exception as e:
-            print(f"\n❌ Full pipeline failed: {e}")
+            print(f"\n[FAIL] Full pipeline failed: {e}")
             results['full_pipeline'] = 'FAIL'
     else:
         test_full_3act_generation(run_actual=False)
@@ -245,7 +245,7 @@ def run_all_tests(include_actual_generation: bool = False):
     print("="*80)
 
     for test_name, result in results.items():
-        status_icon = "✅" if result == "PASS" else "⏭️" if result == "SKIP" else "❌"
+        status_icon = "[OK]" if result == "PASS" else "⏭️" if result == "SKIP" else "[FAIL]"
         print(f"  {status_icon} {test_name}: {result}")
 
     passed = sum(1 for r in results.values() if r == "PASS")
@@ -270,5 +270,5 @@ if __name__ == "__main__":
     run_all_tests(include_actual_generation=args.generate)
 
     if not args.generate:
-        print("\n💡 To test actual video generation, run:")
+        print("\n[IDEA] To test actual video generation, run:")
         print("   python test_3act_generation.py --generate")

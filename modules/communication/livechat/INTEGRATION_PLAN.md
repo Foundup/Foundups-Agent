@@ -5,7 +5,7 @@ WSP-Compliant Feature Migration Strategy
 Migrate from `auto_moderator_simple.py` (1922 lines, WSP violation) to enhanced `livechat_core.py` (317 lines, WSP-compliant).
 
 ## Architecture Decision
-✅ **Primary Implementation**: `livechat_core.py`
+[OK] **Primary Implementation**: `livechat_core.py`
 - Fully async/await architecture (superior concurrency)
 - WSP-compliant modular design
 - Clean separation of concerns
@@ -13,7 +13,7 @@ Migrate from `auto_moderator_simple.py` (1922 lines, WSP violation) to enhanced 
 
 ## Features to Integrate
 
-### 1. Consciousness Handler Integration ✊✋🖐
+### 1. Consciousness Handler Integration [U+270A][U+270B][U+1F590]
 **Current**: `emoji_trigger_handler.py` (basic)
 **Upgrade**: Use `consciousness_handler.py` (advanced)
 
@@ -29,7 +29,7 @@ if self.consciousness_handler.detect_consciousness_command(display_message):
     )
 ```
 
-### 2. Grok Integration 🤖
+### 2. Grok Integration [BOT]
 **Add**: Fact-checking and creative responses
 
 ```python
@@ -42,7 +42,7 @@ if "factcheck" in message_text.lower() or "fc" in message_text.lower():
     response = await self.grok.fact_check(target_username, requester_role, emoji_sequence)
 ```
 
-### 3. MAGA Moderation 🚫
+### 3. MAGA Moderation [FORBIDDEN]
 **Add**: Political moderation features
 
 ```python
@@ -52,16 +52,16 @@ def check_maga_content(self, text: str) -> bool:
     return any(pattern in text.lower() for pattern in maga_patterns)
 ```
 
-### 4. Duke Nukem Announcer 🎮
+### 4. Duke Nukem Announcer [GAME]
 **Add**: Achievement announcements
 
 ```python
 # In moderation_stats.py:
 def get_duke_nukem_announcement(self, achievement: str) -> str:
     announcements = {
-        "first_timeout": "🎮 DUKE: 'Time to kick ass and chew bubble gum!'",
-        "tenth_violation": "🎮 DUKE: 'Hail to the king, baby!'",
-        "level_up": "🎮 DUKE: 'Come get some!'"
+        "first_timeout": "[GAME] DUKE: 'Time to kick ass and chew bubble gum!'",
+        "tenth_violation": "[GAME] DUKE: 'Hail to the king, baby!'",
+        "level_up": "[GAME] DUKE: 'Come get some!'"
     }
     return announcements.get(achievement, "")
 ```
@@ -80,7 +80,7 @@ if await self.throttle.should_respond(response_type):
     await self.throttle.record_response(response_type)
 ```
 
-### 6. D&D Leveling System 🎲
+### 6. D&D Leveling System [U+1F3B2]
 **Verify**: Existing in `moderation_stats.py`
 
 ```python

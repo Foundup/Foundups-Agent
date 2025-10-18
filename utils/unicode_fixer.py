@@ -79,23 +79,23 @@ class UnicodeFixer:
             
             # Bullets
             '•': '*',  # Bullet
-            '◦': '*',  # White bullet
-            '▪': '*',  # Black small square
-            '▫': '*',  # White small square
+            '[U+25E6]': '*',  # White bullet
+            '[DOT]': '*',  # Black small square
+            '[U+25AB]': '*',  # White small square
             
             # Arrows
-            '→': '->',  # Right arrow
-            '←': '<-',  # Left arrow
-            '⇒': '=>',  # Right double arrow
-            '⇐': '<=',  # Left double arrow
+            '->': '->',  # Right arrow
+            '<-': '<-',  # Left arrow
+            '[U+21D2]': '=>',  # Right double arrow
+            '[U+21D0]': '<=',  # Left double arrow
             
             # Mathematical symbols
             '×': '*',  # Multiplication sign
             '÷': '/',  # Division sign
             '±': '+/-',  # Plus-minus sign
-            '≤': '<=',  # Less than or equal
-            '≥': '>=',  # Greater than or equal
-            '≠': '!=',  # Not equal
+            '[U+2264]': '<=',  # Less than or equal
+            '[GREATER_EQUAL]': '>=',  # Greater than or equal
+            '!=': '!=',  # Not equal
             
             # Currency symbols
             '€': 'EUR',  # Euro
@@ -387,31 +387,31 @@ def main():
     fixer = UnicodeFixer(args.path)
     
     if args.scan or not (args.scan or args.fix):
-        print("🔍 Scanning for Unicode issues...")
+        print("[SEARCH] Scanning for Unicode issues...")
         issues = fixer.scan_codebase()
         
         if issues:
-            print(f"⚠️  Found {len(issues)} Unicode issues")
+            print(f"[U+26A0]️  Found {len(issues)} Unicode issues")
             for issue in issues[:10]:  # Show first 10 issues
                 print(f"  {issue.file_path}:{issue.line_number}:{issue.column} - '{issue.character}' ({issue.severity})")
             if len(issues) > 10:
                 print(f"  ... and {len(issues) - 10} more issues")
         else:
-            print("✅ No Unicode issues found")
+            print("[OK] No Unicode issues found")
     
     if args.fix:
-        print("🔧 Fixing Unicode issues...")
+        print("[TOOL] Fixing Unicode issues...")
         stats = fixer.fix_issues(auto_fix=args.auto_fix, dry_run=args.dry_run)
-        print(f"📊 Fixing complete:")
+        print(f"[DATA] Fixing complete:")
         print(f"  Files processed: {stats['files_processed']}")
         print(f"  Issues fixed: {stats['issues_fixed']}")
         print(f"  Files modified: {stats['files_modified']}")
         print(f"  Errors: {stats['errors']}")
     
     if args.report:
-        print("📄 Generating report...")
+        print("[U+1F4C4] Generating report...")
         report = fixer.generate_report(args.report)
-        print(f"📋 Report generated: {args.report}")
+        print(f"[CLIPBOARD] Report generated: {args.report}")
 
 
 if __name__ == "__main__":

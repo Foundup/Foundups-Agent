@@ -362,7 +362,7 @@ class AIRouter:
                 if agent.agent_type == agent_type and agent.state == AgentState.DORMANT:
                     agent.state = AgentState.ACTIVATING
                     
-                    # Simulate activation process (01(02) → 0102 transition)
+                    # Simulate activation process (01(02) -> 0102 transition)
                     await asyncio.sleep(0.1)  # Brief activation delay
                     
                     agent.state = AgentState.ACTIVE

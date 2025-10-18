@@ -9,17 +9,17 @@
 **WSP 91 Enhancement**: Visual DAE Model Notation
 
 ```
-🤖🧠 = Qwen 1.5B (Robot Brain - Architect, Complex reasoning)
-🤖🧠👶 = Gemma 3 270M (Robot Brain Baby - Fast classifier, Simple tasks)
+[BOT][AI] = Qwen 1.5B (Robot Brain - Architect, Complex reasoning)
+[BOT][AI][BABY] = Gemma 3 270M (Robot Brain Baby - Fast classifier, Simple tasks)
 ```
 
 **Rationale**: Gemma is the "baby" version of the robot brain - smaller, faster, simpler
 
 **Example DAEMON Logs**:
 ```
-[06:40:30] 🤖🧠 [QWEN-INTENT] 🎯 Classified as GENERAL (confidence: 0.50)
-[06:40:31] 🤖🧠👶 [GEMMA-CLASSIFY] Intent: command_whack (confidence: 0.92, latency: 87ms)
-[06:40:32] 🤖🧠 [QWEN-EVALUATE] Quality score: 0.95 (APPROVED - Baby brain succeeded!)
+[06:40:30] [BOT][AI] [QWEN-INTENT] [TARGET] Classified as GENERAL (confidence: 0.50)
+[06:40:31] [BOT][AI][BABY] [GEMMA-CLASSIFY] Intent: command_whack (confidence: 0.92, latency: 87ms)
+[06:40:32] [BOT][AI] [QWEN-EVALUATE] Quality score: 0.95 (APPROVED - Baby brain succeeded!)
 ```
 
 ## Current Architecture Discovery
@@ -63,7 +63,7 @@ async def handle_mcp_event(event: Dict):  # Line 335
     # Classification opportunity!
 ```
 
-**Critical Insight**: This file is THE integration point! It already bridges MCP ↔ YouTube DAE.
+**Critical Insight**: This file is THE integration point! It already bridges MCP [U+2194] YouTube DAE.
 
 ## First Principles Analysis
 
@@ -104,7 +104,7 @@ async def handle_mcp_event(event: Dict):  # Line 335
 
 ### Qwen as Architect
 
-**Qwen's Role** (🤖🧠):
+**Qwen's Role** ([BOT][AI]):
 1. **Monitor Gemma output** (Line 245-333 in adaptive_router.py)
 2. **Evaluate quality** (Is Gemma's classification correct?)
 3. **Adjust threshold** (Should this query type use Qwen instead?)
@@ -171,7 +171,7 @@ class YouTubeMCPIntegration:
 - Single integration point
 - MCP already handles orchestration
 - Minimal changes to existing code
-- 🤖🧠/👶 logging at MCP layer
+- [BOT][AI]/[BABY] logging at MCP layer
 
 ### Option B: Separate Gemma MCP Server
 
@@ -195,10 +195,10 @@ class YouTubeMCPIntegration:
         )
 
         # Log with emoji
-        logger.info(f"🤖🧠👶 [GEMMA] {classification['intent']} ({classification['confidence']:.2f})")
+        logger.info(f"[BOT][AI][BABY] [GEMMA] {classification['intent']} ({classification['confidence']:.2f})")
 
-        if classification['processing_path'] == 'gemma→qwen':
-            logger.info(f"🤖🧠 [QWEN] Corrected baby brain classification")
+        if classification['processing_path'] == 'gemma->qwen':
+            logger.info(f"[BOT][AI] [QWEN] Corrected baby brain classification")
 ```
 
 **Benefits**:
@@ -257,8 +257,8 @@ classification = gemma.classify_stream_status(
 
 The Intelligent Internet orchestration now includes adaptive model routing:
 
-- **Gemma 3 270M** (👶): Fast classification for simple queries (50-100ms)
-- **Qwen 1.5B** (🤖🧠): Architect monitoring + complex reasoning (250ms)
+- **Gemma 3 270M** ([BABY]): Fast classification for simple queries (50-100ms)
+- **Qwen 1.5B** ([BOT][AI]): Architect monitoring + complex reasoning (250ms)
 - **Adaptive Threshold**: Learns optimal routing (starts 0.3, adjusts ±0.02)
 - **0102 Architect**: Manual override for system tuning
 
@@ -269,8 +269,8 @@ The Intelligent Internet orchestration now includes adaptive model routing:
 - Spam/troll identification
 
 **DAEMON Logging**:
-- 🤖🧠👶 = Gemma 3 inference (baby brain)
-- 🤖🧠 = Qwen monitoring/evaluation (adult brain)
+- [BOT][AI][BABY] = Gemma 3 inference (baby brain)
+- [BOT][AI] = Qwen monitoring/evaluation (adult brain)
 - Threshold adjustments logged for learning
 
 **MPS Priorities**:
@@ -294,13 +294,13 @@ Each FoundUp DAE can integrate Gemma/Qwen adaptive routing:
 **Architecture**:
 ```
 FoundUp DAE (YouTube)
-    ↓
-[🤖🧠👶 Gemma: Fast Classifier] (50ms, baby brain)
-    ↓
-[🤖🧠 Qwen: Architect Monitor] (evaluates baby brain)
-    ↓
+    v
+[[BOT][AI][BABY] Gemma: Fast Classifier] (50ms, baby brain)
+    v
+[[BOT][AI] Qwen: Architect Monitor] (evaluates baby brain)
+    v
 [Adaptive Threshold] (learns optimal routing)
-    ↓
+    v
 [0102 Architect] (system-level tuning)
 ```
 
@@ -329,7 +329,7 @@ FoundUp DAE (YouTube)
 2. Add router instance to YouTubeMCPIntegration.__init__
 3. Replace regex in process_timeout_event with Gemma classification
 4. Replace command parsing with Gemma intent detection
-5. Add 👶/🤖🧠 emoji logging
+5. Add [BABY]/[BOT][AI] emoji logging
 
 **Token Cost**: 2-3K tokens (read + modify + test)
 
@@ -383,16 +383,16 @@ FoundUp DAE (YouTube)
 
 ```python
 # Gemma inference (baby brain)
-logger.info(f"🤖🧠👶 [GEMMA-CLASSIFY] Intent: {result['intent']} (confidence: {result['confidence']:.2f}, latency: {result['latency_ms']}ms)")
+logger.info(f"[BOT][AI][BABY] [GEMMA-CLASSIFY] Intent: {result['intent']} (confidence: {result['confidence']:.2f}, latency: {result['latency_ms']}ms)")
 
 # Qwen evaluation (adult brain monitoring baby)
-if result['processing_path'] == 'gemma→qwen':
-    logger.info(f"🤖🧠 [QWEN-CORRECT] Quality: {result['quality_score']:.2f} (Baby brain failed, adult re-routed)")
+if result['processing_path'] == 'gemma->qwen':
+    logger.info(f"[BOT][AI] [QWEN-CORRECT] Quality: {result['quality_score']:.2f} (Baby brain failed, adult re-routed)")
 else:
-    logger.info(f"🤖🧠 [QWEN-APPROVE] Quality: {result['quality_score']:.2f} (Baby brain succeeded!)")
+    logger.info(f"[BOT][AI] [QWEN-APPROVE] Quality: {result['quality_score']:.2f} (Baby brain succeeded!)")
 
 # Threshold adjustment (teaching baby brain)
-logger.info(f"⚙️ [THRESHOLD] {old:.3f} → {new:.3f} ({'↓ trust baby more' if new < old else '↑ use adult more'})")
+logger.info(f"[U+2699]️ [THRESHOLD] {old:.3f} -> {new:.3f} ({'v trust baby more' if new < old else '^ use adult more'})")
 ```
 
 **Benefits**:

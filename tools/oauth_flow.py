@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 OAuth Flow Tool - Generate Fresh YouTube API Tokens
 
 Usage:
@@ -36,14 +51,14 @@ def generate_oauth_token(client_secrets_file: str, output_file: str, scopes: lis
     if scopes is None:
         scopes = DEFAULT_SCOPES
         
-    print(f"🔑 Generating OAuth token...")
-    print(f"📁 Client secrets: {client_secrets_file}")
-    print(f"📄 Output file: {output_file}")
-    print(f"🎯 Scopes: {scopes}")
+    print(f"[U+1F511] Generating OAuth token...")
+    print(f"[U+1F4C1] Client secrets: {client_secrets_file}")
+    print(f"[U+1F4C4] Output file: {output_file}")
+    print(f"[TARGET] Scopes: {scopes}")
     
     # Check if client secrets file exists
     if not os.path.exists(client_secrets_file):
-        print(f"❌ Error: Client secrets file not found: {client_secrets_file}")
+        print(f"[FAIL] Error: Client secrets file not found: {client_secrets_file}")
         return False
         
     try:
@@ -61,15 +76,15 @@ def generate_oauth_token(client_secrets_file: str, output_file: str, scopes: lis
             parsed = urllib.parse.urlparse(redirect_uris[0])
             if parsed.port:
                 redirect_port = parsed.port
-                print(f"🌐 Using redirect port from client secrets: {redirect_port}")
+                print(f"[U+1F310] Using redirect port from client secrets: {redirect_port}")
             else:
-                print(f"🌐 Using default redirect port: {redirect_port}")
+                print(f"[U+1F310] Using default redirect port: {redirect_port}")
         
         # Create OAuth flow
         flow = InstalledAppFlow.from_client_secrets_file(client_secrets_file, scopes)
         
         # Run the OAuth flow with the correct port
-        print(f"🌐 Starting OAuth flow (browser will open at http://localhost:{redirect_port})...")
+        print(f"[U+1F310] Starting OAuth flow (browser will open at http://localhost:{redirect_port})...")
         credentials = flow.run_local_server(port=redirect_port)
         
         # Create output directory if needed
@@ -79,7 +94,7 @@ def generate_oauth_token(client_secrets_file: str, output_file: str, scopes: lis
         with open(output_file, 'w') as f:
             f.write(credentials.to_json())
             
-        print(f"✅ OAuth token saved successfully to: {output_file}")
+        print(f"[OK] OAuth token saved successfully to: {output_file}")
         
         # Verify the structure
         with open(output_file, 'r') as f:
@@ -89,15 +104,15 @@ def generate_oauth_token(client_secrets_file: str, output_file: str, scopes: lis
         missing_keys = [key for key in required_keys if key not in token_data]
         
         if missing_keys:
-            print(f"⚠️ Warning: Generated token missing keys: {missing_keys}")
+            print(f"[U+26A0]️ Warning: Generated token missing keys: {missing_keys}")
             return False
         else:
-            print("✅ Token structure validated - all required keys present")
-            print(f"🔑 Token expires: {token_data.get('expiry', 'Unknown')}")
+            print("[OK] Token structure validated - all required keys present")
+            print(f"[U+1F511] Token expires: {token_data.get('expiry', 'Unknown')}")
             return True
             
     except Exception as e:
-        print(f"❌ Error generating OAuth token: {e}")
+        print(f"[FAIL] Error generating OAuth token: {e}")
         return False
 
 def main():
@@ -112,10 +127,10 @@ def main():
     success = generate_oauth_token(args.client, args.out, args.scopes)
     
     if success:
-        print("🎉 OAuth token generation completed successfully!")
+        print("[CELEBRATE] OAuth token generation completed successfully!")
         sys.exit(0)
     else:
-        print("💥 OAuth token generation failed!")
+        print("[U+1F4A5] OAuth token generation failed!")
         sys.exit(1)
 
 if __name__ == '__main__':

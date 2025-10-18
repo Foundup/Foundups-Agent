@@ -25,7 +25,7 @@ class LinkedInScheduler:
     LinkedIn post scheduling system with LinkedIn API v2 integration
     
     Supports OAuth 2.0 authentication and UGC Posts API for automated posting.
-    Designed for 012 observer → 0102 executor delegation workflow.
+    Designed for 012 observer -> 0102 executor delegation workflow.
     """
     
     # LinkedIn API Configuration

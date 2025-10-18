@@ -390,23 +390,23 @@ class QuotaIntelligence:
         total_usage_percent = summary['total_usage_percent']
 
         if total_usage_percent > 90:
-            recommendations.append("🚨 CRITICAL: Minimize all non-essential operations")
+            recommendations.append("[ALERT] CRITICAL: Minimize all non-essential operations")
             recommendations.append("⏰ Wait for quota reset at midnight PT")
         elif total_usage_percent > 70:
-            recommendations.append("⚠️ HIGH USAGE: Avoid expensive operations (search, etc.)")
-            recommendations.append("🎯 Focus on essential live chat operations only")
+            recommendations.append("[U+26A0]️ HIGH USAGE: Avoid expensive operations (search, etc.)")
+            recommendations.append("[TARGET] Focus on essential live chat operations only")
         elif total_usage_percent > 50:
-            recommendations.append("📊 MODERATE USAGE: Monitor quota closely")
-            recommendations.append("💡 Consider batching operations efficiently")
+            recommendations.append("[DATA] MODERATE USAGE: Monitor quota closely")
+            recommendations.append("[IDEA] Consider batching operations efficiently")
         else:
-            recommendations.append("✅ HEALTHY: Normal operation levels")
+            recommendations.append("[OK] HEALTHY: Normal operation levels")
 
         # Check for imbalanced usage
         sets_data = list(summary['sets'].values())
         if len(sets_data) > 1:
             usage_variance = max(s['usage_percent'] for s in sets_data) - min(s['usage_percent'] for s in sets_data)
             if usage_variance > 30:
-                recommendations.append("⚖️ Consider balancing load across credential sets")
+                recommendations.append("[U+2696]️ Consider balancing load across credential sets")
 
         return recommendations
 
@@ -439,7 +439,7 @@ class QuotaIntelligence:
 
         # Safety check - if current set doesn't exist, rotation is impossible
         if not current_info:
-            logger.error(f"❌ Cannot rotate - Set {current_set} not configured")
+            logger.error(f"[FAIL] Cannot rotate - Set {current_set} not configured")
             return {
                 'should_rotate': False,
                 'target_set': None,
@@ -454,13 +454,13 @@ class QuotaIntelligence:
         current_available = current_info['available']
         current_limit = current_info['limit']
 
-        # Determine target set (1 ↔ 10)
+        # Determine target set (1 [U+2194] 10)
         target_set = 10 if current_set == 1 else 1
         target_info = summary['sets'].get(target_set, {})
 
         # If target doesn't exist, can't rotate
         if not target_info:
-            logger.warning(f"⚠️ Cannot rotate - Set {target_set} not configured")
+            logger.warning(f"[U+26A0]️ Cannot rotate - Set {target_set} not configured")
             return {
                 'should_rotate': False,
                 'target_set': None,
@@ -477,7 +477,7 @@ class QuotaIntelligence:
         # CRITICAL: Immediate rotation needed (>95% usage)
         if current_usage_percent >= 95:
             if target_available > current_limit * 0.2:  # Target has >20% quota
-                logger.critical(f"🚨 CRITICAL ROTATION NEEDED: Set {current_set} at {current_usage_percent:.1f}%")
+                logger.critical(f"[ALERT] CRITICAL ROTATION NEEDED: Set {current_set} at {current_usage_percent:.1f}%")
                 return {
                     'should_rotate': True,
                     'target_set': target_set,
@@ -488,7 +488,7 @@ class QuotaIntelligence:
                     'recommendation': f'Rotate immediately to Set {target_set} ({target_available} units available)'
                 }
             else:
-                logger.critical(f"🚨 QUOTA CRISIS: Both sets depleted! Current={current_usage_percent:.1f}%, Target={target_usage_percent:.1f}%")
+                logger.critical(f"[ALERT] QUOTA CRISIS: Both sets depleted! Current={current_usage_percent:.1f}%, Target={target_usage_percent:.1f}%")
                 return {
                     'should_rotate': False,
                     'target_set': target_set,
@@ -502,7 +502,7 @@ class QuotaIntelligence:
         # HIGH: Proactive rotation (85-95% usage)
         if current_usage_percent >= 85:
             if target_available > current_limit * 0.5:  # Target has >50% quota
-                logger.warning(f"⚠️ PROACTIVE ROTATION: Set {current_set} at {current_usage_percent:.1f}%")
+                logger.warning(f"[U+26A0]️ PROACTIVE ROTATION: Set {current_set} at {current_usage_percent:.1f}%")
                 return {
                     'should_rotate': True,
                     'target_set': target_set,
@@ -513,7 +513,7 @@ class QuotaIntelligence:
                     'recommendation': f'Rotate to Set {target_set} to prevent service interruption'
                 }
             elif target_available > current_limit * 0.2:  # Target has >20% quota
-                logger.warning(f"⚠️ DEFENSIVE ROTATION: Set {current_set} at {current_usage_percent:.1f}%, Set {target_set} low")
+                logger.warning(f"[U+26A0]️ DEFENSIVE ROTATION: Set {current_set} at {current_usage_percent:.1f}%, Set {target_set} low")
                 return {
                     'should_rotate': True,
                     'target_set': target_set,
@@ -524,7 +524,7 @@ class QuotaIntelligence:
                     'recommendation': f'Rotate to Set {target_set} but monitor closely ({target_available} units)'
                 }
             else:
-                logger.error(f"❌ STUCK: Set {current_set} at {current_usage_percent:.1f}%, Set {target_set} also depleted")
+                logger.error(f"[FAIL] STUCK: Set {current_set} at {current_usage_percent:.1f}%, Set {target_set} also depleted")
                 return {
                     'should_rotate': False,
                     'target_set': target_set,
@@ -539,7 +539,7 @@ class QuotaIntelligence:
         if current_usage_percent >= 70:
             # Only rotate if target is significantly better (>2x available quota)
             if target_available > current_available * 2:
-                logger.info(f"📊 STRATEGIC ROTATION: Set {current_set} at {current_usage_percent:.1f}%, Set {target_set} healthier")
+                logger.info(f"[DATA] STRATEGIC ROTATION: Set {current_set} at {current_usage_percent:.1f}%, Set {target_set} healthier")
                 return {
                     'should_rotate': True,
                     'target_set': target_set,
@@ -551,7 +551,7 @@ class QuotaIntelligence:
                 }
 
         # HEALTHY: No rotation needed (<70% usage)
-        logger.debug(f"✅ HEALTHY: Set {current_set} at {current_usage_percent:.1f}% - no rotation needed")
+        logger.debug(f"[OK] HEALTHY: Set {current_set} at {current_usage_percent:.1f}% - no rotation needed")
         return {
             'should_rotate': False,
             'target_set': None,

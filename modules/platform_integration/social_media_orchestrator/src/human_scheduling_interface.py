@@ -10,9 +10,13 @@ that will be executed by the autonomous system at specified times.
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -325,13 +329,13 @@ def main():
             schedule_type=ScheduleType(args.type)
         )
 
-        print(f"✅ Scheduled post {post_id} for {scheduled_time}")
+        print(f"[OK] Scheduled post {post_id} for {scheduled_time}")
         print(f"   Platforms: {args.platforms}")
         print(f"   Type: {args.type}")
 
     elif args.action == "list":
         posts = scheduler.get_scheduled_posts(status=args.status)
-        print(f"\n📅 Scheduled Posts ({len(posts)} total):")
+        print(f"\n[U+1F4C5] Scheduled Posts ({len(posts)} total):")
         print("-" * 60)
         for post in posts:
             print(f"ID: {post.id}")
@@ -344,16 +348,16 @@ def main():
 
     elif args.action == "cancel":
         if scheduler.cancel_post(args.id):
-            print(f"✅ Cancelled post {args.id}")
+            print(f"[OK] Cancelled post {args.id}")
         else:
-            print(f"❌ Post {args.id} not found")
+            print(f"[FAIL] Post {args.id} not found")
 
     elif args.action == "execute":
         # Execute pending posts (usually called by 0102 system)
-        print("🚀 Executing pending posts...")
+        print("[ROCKET] Executing pending posts...")
         results = asyncio.run(scheduler.execute_scheduled_posts())
         for post_id, response in results:
-            print(f"   {post_id}: {'✅' if response.failure_count == 0 else '❌'}")
+            print(f"   {post_id}: {'[OK]' if response.failure_count == 0 else '[FAIL]'}")
 
 if __name__ == "__main__":
     main()

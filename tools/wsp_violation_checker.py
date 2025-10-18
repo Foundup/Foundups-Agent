@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WSP Violation Checker - Prevents WSP 49 violations
 Checks for test files in wrong locations and other WSP violations
 """
@@ -119,27 +134,27 @@ class WSPViolationChecker:
         
         # Test files in root
         if results['test_files_in_root']:
-            print("\n❌ WSP 49 VIOLATION: Test files in root directory")
+            print("\n[FAIL] WSP 49 VIOLATION: Test files in root directory")
             print("-" * 40)
             for file, proper_location in results['test_files_in_root']:
                 print(f"  File: {file}")
                 print(f"  Move to: {proper_location}")
                 print()
         else:
-            print("\n✅ No test files in root directory")
+            print("\n[OK] No test files in root directory")
         
         # Redundant structure
         if results['redundant_structure']:
-            print("\n❌ WSP 49 VIOLATION: Redundant module structure")
+            print("\n[FAIL] WSP 49 VIOLATION: Redundant module structure")
             print("-" * 40)
             for path in results['redundant_structure']:
                 print(f"  Redundant: {path}")
         else:
-            print("\n✅ No redundant module structures")
+            print("\n[OK] No redundant module structures")
         
         # Missing test directories
         if results['missing_test_dirs']:
-            print("\n⚠️ WSP 49 WARNING: Modules missing test directories")
+            print("\n[U+26A0]️ WSP 49 WARNING: Modules missing test directories")
             print("-" * 40)
             for path in results['missing_test_dirs']:
                 print(f"  Missing tests/: {path}")
@@ -152,9 +167,9 @@ class WSPViolationChecker:
         
         print("\n" + "=" * 60)
         if total_violations == 0:
-            print("✅ WSP COMPLIANCE: All checks passed!")
+            print("[OK] WSP COMPLIANCE: All checks passed!")
         else:
-            print(f"❌ WSP VIOLATIONS: {total_violations} issues found")
+            print(f"[FAIL] WSP VIOLATIONS: {total_violations} issues found")
             print("Run 'python tools/wsp_violation_fixer.py' to auto-fix")
         print("=" * 60)
         

@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Test: Gemma 3 270M Live File Naming Enforcement
 
 Uses actual Gemma 3 270M model (not simulation) to detect violations.
@@ -88,9 +105,9 @@ PROHIBITED "WSP_" prefix locations:
 - docs/WSP_*.md (unless in session_backups/)
 
 Replacement patterns:
-- WSP_COMPLIANCE → COMPLIANCE_STATUS.md
-- WSP_AUDIT_REPORT → Audit_Report.md
-- WSP_79_SWOT_ANALYSIS → SWOT_Analysis_*.md
+- WSP_COMPLIANCE -> COMPLIANCE_STATUS.md
+- WSP_AUDIT_REPORT -> Audit_Report.md
+- WSP_79_SWOT_ANALYSIS -> SWOT_Analysis_*.md
 """
 
         # Analysis query - simplified for better parsing

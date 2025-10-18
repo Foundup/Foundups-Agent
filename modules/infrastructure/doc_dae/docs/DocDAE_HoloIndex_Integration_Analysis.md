@@ -19,9 +19,9 @@ needs_code_refresh = db.should_refresh_index("code", max_age_hours=1)
 needs_wsp_refresh = db.should_refresh_index("wsp", max_age_hours=1)
 
 if needs_code_refresh:
-    holo.index_code_entries()  # ← INTEGRATION POINT
+    holo.index_code_entries()  # <- INTEGRATION POINT
 if needs_wsp_refresh:
-    holo.index_wsp_entries()   # ← INTEGRATION POINT
+    holo.index_wsp_entries()   # <- INTEGRATION POINT
 ```
 
 **Frequency**: Every search triggers automatic check (< 1 hour = skip, > 1 hour = refresh)
@@ -40,8 +40,8 @@ class DocDAE:
 ## First Principles Analysis
 
 ### The Core Question: Order of Operations
-**Option A**: DocDAE FIRST → Then check paths
-**Option B**: Check paths FIRST → Then DocDAE
+**Option A**: DocDAE FIRST -> Then check paths
+**Option B**: Check paths FIRST -> Then DocDAE
 
 **Answer**: **Option A (DocDAE First)** is correct!
 
@@ -49,16 +49,16 @@ class DocDAE:
 1. **Source of Truth**: File system is source of truth, not code references
 2. **Broken References are Detectable**: Easier to find broken imports than misplaced files
 3. **Atomic Operation**: Organization should be atomic before indexing
-4. **Causality**: Docs move → Imports break → Fix is obvious
+4. **Causality**: Docs move -> Imports break -> Fix is obvious
 
 ### Execution Flow (Correct Order)
 ```
 1. DocDAE organizes files (source of truth)
-   ↓
+   v
 2. Code references break (detectable)
-   ↓
+   v
 3. Fix imports (automated or manual)
-   ↓
+   v
 4. HoloIndex indexes (reflects organized state)
 ```
 
@@ -86,11 +86,11 @@ if needs_code_refresh or needs_wsp_refresh:
 ### Why This is Occam's Razor
 
 **Simplest Solution**:
-- ✅ No new CLI flags
-- ✅ No new DAE daemon
-- ✅ No new configuration
-- ✅ Leverages existing automatic refresh trigger
-- ✅ 3-line code addition
+- [OK] No new CLI flags
+- [OK] No new DAE daemon
+- [OK] No new configuration
+- [OK] Leverages existing automatic refresh trigger
+- [OK] 3-line code addition
 
 **Automatic Behavior**:
 - DocDAE runs when indexes are stale
@@ -99,7 +99,7 @@ if needs_code_refresh or needs_wsp_refresh:
 
 ## Alternative Architectures (More Complex)
 
-### ❌ Option B: Separate DocDAE Daemon
+### [FAIL] Option B: Separate DocDAE Daemon
 ```python
 # More complex - requires:
 - New daemon process
@@ -110,7 +110,7 @@ if needs_code_refresh or needs_wsp_refresh:
 ```
 **Why Not**: Violates Occam's Razor (unnecessary complexity)
 
-### ❌ Option C: Git Pre-Commit Hook
+### [FAIL] Option C: Git Pre-Commit Hook
 ```python
 # Issues:
 - Only runs on commits
@@ -120,7 +120,7 @@ if needs_code_refresh or needs_wsp_refresh:
 ```
 **Why Not**: Doesn't integrate with HoloIndex workflow
 
-### ❌ Option D: Manual CLI Flag
+### [FAIL] Option D: Manual CLI Flag
 ```python
 python holo_index.py --index-all --organize-docs
 ```
@@ -198,26 +198,26 @@ else:
 
 ## Execution Order Decision: FINAL ANSWER
 
-### ✅ Correct Order: DocDAE FIRST, Then Check Paths
+### [OK] Correct Order: DocDAE FIRST, Then Check Paths
 
 **Rationale**:
 1. **Single Source of Truth**: File system layout is authoritative
 2. **Detectable Failures**: Broken imports are easy to find (import errors, grep)
 3. **Atomic Operations**: Organization completes before indexing
-4. **Clear Causality**: Docs move → Imports break → Fix is obvious
+4. **Clear Causality**: Docs move -> Imports break -> Fix is obvious
 
 ### Flow Diagram
 ```
 User runs HoloIndex
-    ↓
+    v
 [Check] Index age > 1 hour?
-    ↓ (yes)
+    v (yes)
 [DocDAE] Organize misplaced docs (Phase 1)
-    ↓
-[DocDAE] Update path references (Phase 2) ← THIS COULD BE AUTOMATED!
-    ↓
+    v
+[DocDAE] Update path references (Phase 2) <- THIS COULD BE AUTOMATED!
+    v
 [HoloIndex] Refresh indexes (Phase 3)
-    ↓
+    v
 [HoloIndex] Search with organized structure
 ```
 
@@ -266,9 +266,9 @@ def _fix_path_references(self, moves):
 ## Recommendations
 
 ### Immediate (Occam's Razor)
-1. ✅ **Integrate DocDAE into HoloIndex automatic refresh** (3 lines)
-2. ✅ **Run DocDAE BEFORE indexing** (correct order)
-3. ✅ **No new configuration needed** (simplest solution)
+1. [OK] **Integrate DocDAE into HoloIndex automatic refresh** (3 lines)
+2. [OK] **Run DocDAE BEFORE indexing** (correct order)
+3. [OK] **No new configuration needed** (simplest solution)
 
 ### Future Enhancements
 1. **Add automated path reference fixing** (Phase 2.5)
@@ -276,9 +276,9 @@ def _fix_path_references(self, moves):
 3. **Add timestamp caching** (skip if docs/ unchanged)
 
 ### NOT Recommended
-1. ❌ Separate DocDAE daemon (unnecessary complexity)
-2. ❌ Git hooks (doesn't integrate with workflow)
-3. ❌ Manual CLI flags (not autonomous)
+1. [FAIL] Separate DocDAE daemon (unnecessary complexity)
+2. [FAIL] Git hooks (doesn't integrate with workflow)
+3. [FAIL] Manual CLI flags (not autonomous)
 
 ## Conclusion
 

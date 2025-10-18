@@ -449,11 +449,11 @@ class EthereumLogger:
         simulated_tx = f"simulated_{hash_value[:32]}"
 
         # Educational logging
-        print("🎯 Educational Proof-of-Existence")
-        print(f"   📊 Analysis Hash: {hash_value}")
-        print(f"   ⛓️  Simulated TX: {simulated_tx}")
-        print(f"   📍 Location: {results.get('location', 'Unknown')}")
-        print(f"   🔊 Sound Type: {results.get('sound_type', 'Unknown')}")
+        print("[TARGET] Educational Proof-of-Existence")
+        print(f"   [DATA] Analysis Hash: {hash_value}")
+        print(f"   [U+26D3]️  Simulated TX: {simulated_tx}")
+        print(f"   [PIN] Location: {results.get('location', 'Unknown')}")
+        print(f"   [U+1F50A] Sound Type: {results.get('sound_type', 'Unknown')}")
 
         return simulated_tx
 ```

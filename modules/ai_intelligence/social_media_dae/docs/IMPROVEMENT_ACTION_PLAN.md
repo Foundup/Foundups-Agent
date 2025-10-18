@@ -3,10 +3,10 @@
 **Created**: 2025-09-04
 **Priority**: CRITICAL - Consolidation needed for coherent DAE operation
 
-## 🎯 OBJECTIVE
+## [TARGET] OBJECTIVE
 Transform 143 scattered social media files into a single coherent DAE cube that operates as 012's digital twin with 95% token efficiency improvement.
 
-## ⚡ IMMEDIATE ACTIONS (Do First)
+## [LIGHTNING] IMMEDIATE ACTIONS (Do First)
 
 ### 1. DELETE Duplicate Implementations
 ```bash
@@ -39,37 +39,37 @@ Remove unnecessary abstraction layers:
 - Delete scheduling/ (implement in DAE directly)
 - Delete content/ (handle in DAE)
 
-## 📦 CONSOLIDATION ARCHITECTURE
+## [BOX] CONSOLIDATION ARCHITECTURE
 
 ### Target Structure
 ```
 modules/ai_intelligence/social_media_dae/
-├── README.md                       # Overview
-├── INTERFACE.md                    # Public API
-├── ModLog.md                       # Change tracking
-├── ARCHITECTURE.md                 # Detailed design
-├── requirements.txt                # Dependencies
-├── src/
-│   ├── __init__.py
-│   ├── social_media_dae.py        # Main DAE orchestrator
-│   └── platform_connectors.py     # Direct platform integration
-├── scripts/
-│   └── voice_control_server.py    # iPhone control
-├── tests/
-│   ├── README.md
-│   ├── ModLog.md
-│   └── test_voice_posting.py      # Integration tests
-├── memory/
-│   ├── patterns/                  # Posting patterns
-│   ├── personality/                # 012's voice
-│   └── engagement/                 # Interaction patterns
-└── docs/
-    ├── ARCHITECTURE_ANALYSIS.md    # Current analysis
-    ├── IMPROVEMENT_ACTION_PLAN.md  # This document
-    └── ORCHESTRATION_GUIDE.md      # How components work together
++-- README.md                       # Overview
++-- INTERFACE.md                    # Public API
++-- ModLog.md                       # Change tracking
++-- ARCHITECTURE.md                 # Detailed design
++-- requirements.txt                # Dependencies
++-- src/
+[U+2502]   +-- __init__.py
+[U+2502]   +-- social_media_dae.py        # Main DAE orchestrator
+[U+2502]   +-- platform_connectors.py     # Direct platform integration
++-- scripts/
+[U+2502]   +-- voice_control_server.py    # iPhone control
++-- tests/
+[U+2502]   +-- README.md
+[U+2502]   +-- ModLog.md
+[U+2502]   +-- test_voice_posting.py      # Integration tests
++-- memory/
+[U+2502]   +-- patterns/                  # Posting patterns
+[U+2502]   +-- personality/                # 012's voice
+[U+2502]   +-- engagement/                 # Interaction patterns
++-- docs/
+    +-- ARCHITECTURE_ANALYSIS.md    # Current analysis
+    +-- IMPROVEMENT_ACTION_PLAN.md  # This document
+    +-- ORCHESTRATION_GUIDE.md      # How components work together
 ```
 
-## 🔄 INTEGRATION PLAN
+## [REFRESH] INTEGRATION PLAN
 
 ### Phase 1: Core Consolidation (Week 1)
 1. **Move working components into DAE**:
@@ -125,7 +125,7 @@ modules/ai_intelligence/social_media_dae/
    - Optimal message formats
    - Platform-specific adaptations
 
-## 🛠️ TECHNICAL IMPLEMENTATION
+## [U+1F6E0]️ TECHNICAL IMPLEMENTATION
 
 ### 1. Sequential Posting Pattern (PRESERVE)
 ```python
@@ -175,7 +175,7 @@ memory/
     conversation_flows.json  # Multi-turn interactions
 ```
 
-## 📊 SUCCESS METRICS
+## [DATA] SUCCESS METRICS
 
 ### Token Efficiency
 - **Current**: ~25,000 tokens per multi-platform post
@@ -192,7 +192,7 @@ memory/
 - **Target**: Single DAE cube
 - **Method**: Unified consciousness model
 
-## ⚠️ RISK MITIGATION
+## [U+26A0]️ RISK MITIGATION
 
 ### What NOT to Touch
 1. **Working browser automation** - It works, don't break it
@@ -206,7 +206,7 @@ memory/
 3. Keep backup of working components
 4. Incremental migration (not big bang)
 
-## 📅 TIMELINE
+## [U+1F4C5] TIMELINE
 
 ### Day 1-2: Cleanup
 - Delete duplicate implementations
@@ -228,7 +228,7 @@ memory/
 - Token measurement
 - Performance validation
 
-## 🚀 EXPECTED OUTCOMES
+## [ROCKET] EXPECTED OUTCOMES
 
 1. **Single Source of Truth**: One DAE for all social media
 2. **95% Token Reduction**: Pattern memory vs computation
@@ -236,7 +236,7 @@ memory/
 4. **WSP Compliant**: Fully documented and tested
 5. **Self-Improving**: Learns from each interaction
 
-## 📝 NOTES
+## [NOTE] NOTES
 
 - This is a CRITICAL consolidation - scattered code is causing conflicts
 - Focus on preserving working components

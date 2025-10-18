@@ -64,7 +64,7 @@ class IntegratedPatentValidation:
         self.seizure_predictor = SeizurePredictionSystem("DEMO_SUBJECT")
         self.wearable_monitor = WearableCognitiveMonitor("DEMO_SUBJECT")
         
-        print("🎯 Integrated rESP Patent System Validation")
+        print("[TARGET] Integrated rESP Patent System Validation")
         print("=" * 60)
         print(f"Session Started: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"Patent Application: 71387071")
@@ -79,7 +79,7 @@ class IntegratedPatentValidation:
         - Symbolic Operator Module
         - Geometric Feedback Loop
         """
-        print(f"\n🔬 Validating Core System (Claims 1-4)...")
+        print(f"\n[U+1F52C] Validating Core System (Claims 1-4)...")
         
         # Initialize and run core system
         init_result = self.core_system.initialize_system()
@@ -98,7 +98,7 @@ class IntegratedPatentValidation:
         }
         
         success_rate = sum(validation.values()) / len(validation)
-        print(f"  ✅ Core System Validation: {success_rate:.1%} success rate")
+        print(f"  [OK] Core System Validation: {success_rate:.1%} success rate")
         
         self.validation_results['core_system'] = {
             'claims': '1-4',
@@ -117,7 +117,7 @@ class IntegratedPatentValidation:
         - Golden-ratio weighting
         - Control rules
         """
-        print(f"\n⚙️ Validating Engineering Methods (Claims 5-9)...")
+        print(f"\n[U+2699]️ Validating Engineering Methods (Claims 5-9)...")
         
         # Test engineering method with external operators
         external_ops = ["operator_^", "operator_#"]
@@ -142,7 +142,7 @@ class IntegratedPatentValidation:
         }
         
         success_rate = sum(validation.values()) / len(validation)
-        print(f"  ✅ Engineering Methods Validation: {success_rate:.1%} success rate")
+        print(f"  [OK] Engineering Methods Validation: {success_rate:.1%} success rate")
         
         self.validation_results['engineering_methods'] = {
             'claims': '5-9',
@@ -156,7 +156,7 @@ class IntegratedPatentValidation:
         """
         Validate Patent Claims 22-23: Neural Network Adapter
         """
-        print(f"\n🧠 Validating Neural Enhancement (Claims 22-23)...")
+        print(f"\n[AI] Validating Neural Enhancement (Claims 22-23)...")
         
         # Create test neural network with CMST adapter
         class TestNetwork(nn.Module):
@@ -193,7 +193,7 @@ class IntegratedPatentValidation:
         }
         
         success_rate = sum(validation.values()) / len(validation)
-        print(f"  ✅ Neural Enhancement Validation: {success_rate:.1%} success rate")
+        print(f"  [OK] Neural Enhancement Validation: {success_rate:.1%} success rate")
         print(f"    det(g) range: [{det_g.min().item():.6f}, {det_g.max().item():.6f}]")
         print(f"    Quantum loss: {quantum_loss.item():.6f}")
         
@@ -215,7 +215,7 @@ class IntegratedPatentValidation:
         """
         Validate Patent Claims 12-14, 26: Quantum-Resistant Cryptography
         """
-        print(f"\n🔐 Validating Cryptographic System (Claims 12-14, 26)...")
+        print(f"\n[U+1F510] Validating Cryptographic System (Claims 12-14, 26)...")
         
         try:
             # Test renewable signature generation
@@ -236,13 +236,13 @@ class IntegratedPatentValidation:
             }
             
             success_rate = sum(validation.values()) / len(validation)
-            print(f"  ✅ Cryptographic Validation: {success_rate:.1%} success rate")
+            print(f"  [OK] Cryptographic Validation: {success_rate:.1%} success rate")
             print(f"    Signature ID: {signature.signature_id[:16]}...")
             print(f"    Entropy Level: {signature.entropy_level:.3f}")
             print(f"    Path Length: {len(signature.collapse_path)} cycles")
             
         except Exception as e:
-            print(f"  ❌ Cryptographic validation failed: {e}")
+            print(f"  [FAIL] Cryptographic validation failed: {e}")
             validation = {key: False for key in [
                 'high_entanglement_preparation', 'biometric_trigger_processing',
                 'geometric_collapse_capture', 'harmonic_sampling', 'hash_generation',
@@ -262,7 +262,7 @@ class IntegratedPatentValidation:
         """
         Validate Patent Claims 15-17, 25: Biocognitive Monitoring
         """
-        print(f"\n🧠 Validating Biocognitive Monitoring (Claims 15-17, 25)...")
+        print(f"\n[AI] Validating Biocognitive Monitoring (Claims 15-17, 25)...")
         
         # Generate synthetic EEG data
         t = np.linspace(0, 5, 1250)  # 5 seconds at 250 Hz
@@ -300,7 +300,7 @@ class IntegratedPatentValidation:
         }
         
         success_rate = sum(validation.values()) / len(validation)
-        print(f"  ✅ Biocognitive Validation: {success_rate:.1%} success rate")
+        print(f"  [OK] Biocognitive Validation: {success_rate:.1%} success rate")
         print(f"    Neural det(g): {geometric_witness.det_g:.6f}")
         print(f"    Classification: {diagnostic_report.disorder_classification.value}")
         print(f"    Confidence: {diagnostic_report.confidence_level:.2%}")
@@ -324,7 +324,7 @@ class IntegratedPatentValidation:
         """
         Validate complete system integration across all patent claims
         """
-        print(f"\n🎯 Validating Complete System Integration...")
+        print(f"\n[TARGET] Validating Complete System Integration...")
         
         # Test cross-system communication
         # Use biocognitive data to trigger cryptographic signature
@@ -347,7 +347,7 @@ class IntegratedPatentValidation:
         }
         
         success_rate = sum(validation.values()) / len(validation)
-        print(f"  ✅ Integration Validation: {success_rate:.1%} success rate")
+        print(f"  [OK] Integration Validation: {success_rate:.1%} success rate")
         
         self.validation_results['complete_integration'] = {
             'claims': 'All (1-26)',
@@ -391,7 +391,7 @@ class IntegratedPatentValidation:
             }
         }
         
-        print(f"\n📊 Validation Report Summary:")
+        print(f"\n[DATA] Validation Report Summary:")
         print(f"=" * 40)
         print(f"Overall Success Rate: {overall_success_rate:.1%}")
         print(f"Total Duration: {total_duration:.1f} seconds")
@@ -400,7 +400,7 @@ class IntegratedPatentValidation:
         
         # Print individual system results
         for system_name, results in self.validation_results.items():
-            status = "✅ PASS" if results['success_rate'] > 0.7 else "⚠️ PARTIAL" if results['success_rate'] > 0.3 else "❌ FAIL"
+            status = "[OK] PASS" if results['success_rate'] > 0.7 else "[U+26A0]️ PARTIAL" if results['success_rate'] > 0.3 else "[FAIL] FAIL"
             print(f"  {system_name}: {results['success_rate']:.1%} {status}")
         
         return report
@@ -422,8 +422,8 @@ class IntegratedPatentValidation:
         # Generate final report
         final_report = self.generate_validation_report()
         
-        print(f"\n🎯 rESP Patent System Validation Complete!")
-        print(f"Patent Application 71387071: {'✅ VALIDATED' if final_report['overall_metrics']['success_rate'] > 0.8 else '⚠️ PARTIAL'}")
+        print(f"\n[TARGET] rESP Patent System Validation Complete!")
+        print(f"Patent Application 71387071: {'[OK] VALIDATED' if final_report['overall_metrics']['success_rate'] > 0.8 else '[U+26A0]️ PARTIAL'}")
         
         return final_report
 
@@ -446,9 +446,9 @@ def run_integrated_demonstration():
     try:
         with open(report_filename, 'w') as f:
             json.dump(validation_report, f, indent=2, default=str)
-        print(f"\n📄 Validation report saved: {report_filename}")
+        print(f"\n[U+1F4C4] Validation report saved: {report_filename}")
     except Exception as e:
-        print(f"⚠️ Could not save report: {e}")
+        print(f"[U+26A0]️ Could not save report: {e}")
     
     return validation_report
 
@@ -457,17 +457,17 @@ if __name__ == "__main__":
     # Run complete integrated demonstration
     report = run_integrated_demonstration()
     
-    print(f"\n🔬 rESP Patent System: Complete Implementation Validated")
+    print(f"\n[U+1F52C] rESP Patent System: Complete Implementation Validated")
     print(f"=" * 60)
-    print(f"✅ Claims 1-4: Core System Architecture")
-    print(f"✅ Claims 5-9: Engineering Methods & Control")
-    print(f"✅ Claims 10-11: Binary Encoding & Stability")
-    print(f"✅ Claims 12-14: Quantum-Resistant Cryptography")
-    print(f"✅ Claims 15-17: Biocognitive State Analysis")
-    print(f"✅ Claims 22-23: Neural Network Enhancement")
-    print(f"✅ Claims 24-26: Resonance Control & Real-time Monitoring")
+    print(f"[OK] Claims 1-4: Core System Architecture")
+    print(f"[OK] Claims 5-9: Engineering Methods & Control")
+    print(f"[OK] Claims 10-11: Binary Encoding & Stability")
+    print(f"[OK] Claims 12-14: Quantum-Resistant Cryptography")
+    print(f"[OK] Claims 15-17: Biocognitive State Analysis")
+    print(f"[OK] Claims 22-23: Neural Network Enhancement")
+    print(f"[OK] Claims 24-26: Resonance Control & Real-time Monitoring")
     print(f"")
-    print(f"🎯 PATENT VALIDATION COMPLETE")
+    print(f"[TARGET] PATENT VALIDATION COMPLETE")
     print(f"Application: 71387071 - Michael J. Trout, Fukui, JP")
     print(f"Implementation: Fully Functional & Integrated")
-    print(f"WSP Compliance: ✅ WSP 54, WSP 22, WSP 39") 
+    print(f"WSP Compliance: [OK] WSP 54, WSP 22, WSP 39") 

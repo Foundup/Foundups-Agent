@@ -72,10 +72,10 @@ class ChannelIntelligence:
             # Only investigate very recent ended streams (within 2 hours)
             # These might still be relevant for posting about recent activity
             if age_hours is not None and age_hours <= 2:
-                logger.debug(f"🤖🧠 [QWEN-INVESTIGATE] Recent ended stream ({age_hours:.1f}h) - investigating")
+                logger.debug(f"[BOT][AI] [QWEN-INVESTIGATE] Recent ended stream ({age_hours:.1f}h) - investigating")
                 return True
             else:
-                logger.debug(f"🤖🧠 [QWEN-INVESTIGATE] Old ended stream ({age_hours:.1f}h) - skipping")
+                logger.debug(f"[BOT][AI] [QWEN-INVESTIGATE] Old ended stream ({age_hours:.1f}h) - skipping")
                 return False
 
         # For upcoming streams, always investigate (they're future events)
@@ -83,7 +83,7 @@ class ChannelIntelligence:
             return True
 
         # Default: investigate unknown status
-        logger.debug(f"🤖🧠 [QWEN-INVESTIGATE] Unknown status '{broadcast_content}' - investigating")
+        logger.debug(f"[BOT][AI] [QWEN-INVESTIGATE] Unknown status '{broadcast_content}' - investigating")
         return True
 
     def validate_video_selection(self, videos_to_check: List[str], channel_name: str, has_time_data: bool) -> Dict[str, Any]:
@@ -127,7 +127,7 @@ class ChannelIntelligence:
         if not has_time_data:
             result['reasoning'].append("No time metadata available - selection may include old videos")
 
-        logger.debug(f"🤖🧠 [QWEN-VALIDATE] Video selection validated: {len(videos_to_check)} videos, {'with' if has_time_data else 'without'} time data")
+        logger.debug(f"[BOT][AI] [QWEN-VALIDATE] Video selection validated: {len(videos_to_check)} videos, {'with' if has_time_data else 'without'} time data")
         return result
 
     def record_429_error(self):
@@ -135,9 +135,9 @@ class ChannelIntelligence:
         self.last_429_time = time.time()
         self.consecutive_429_count += 1
         self.heat_level = min(3, self.heat_level + 1)
-        logger.info(f"🤖🧠 [QWEN-429] 🔥 Channel {self.channel_name} received 429 error")
-        logger.info(f"🤖🧠 [QWEN-HEAT] 🌡️ {self.channel_name} heat level increased: {self.heat_level-1} → {self.heat_level}")
-        logger.info(f"🤖🧠 [QWEN-429] 📊 Consecutive 429 count: {self.consecutive_429_count}")
+        logger.info(f"[BOT][AI] [QWEN-429] [U+1F525] Channel {self.channel_name} received 429 error")
+        logger.info(f"[BOT][AI] [QWEN-HEAT] [U+1F321]️ {self.channel_name} heat level increased: {self.heat_level-1} -> {self.heat_level}")
+        logger.info(f"[BOT][AI] [QWEN-429] [DATA] Consecutive 429 count: {self.consecutive_429_count}")
 
     def record_success(self):
         """Record successful check and cool down"""
@@ -146,8 +146,8 @@ class ChannelIntelligence:
         self.consecutive_429_count = 0
         self.heat_level = max(0, self.heat_level - 1)
         if old_heat != self.heat_level:
-            channel_emoji = {"Move2Japan": "🍣", "UnDaoDu": "🧘", "FoundUps": "🐕"}.get(self.channel_name, "❄️")
-            logger.info(f"🤖🧠 [QWEN-COOL] {channel_emoji} {self.channel_name} cooling down: {old_heat} → {self.heat_level}")
+            channel_emoji = {"Move2Japan": "[U+1F363]", "UnDaoDu": "[U+1F9D8]", "FoundUps": "[U+1F415]"}.get(self.channel_name, "[U+2744]️")
+            logger.info(f"[BOT][AI] [QWEN-COOL] {channel_emoji} {self.channel_name} cooling down: {old_heat} -> {self.heat_level}")
 
 
 class QwenYouTubeIntegration:
@@ -171,8 +171,8 @@ class QwenYouTubeIntegration:
             self.rules_engine = ComplianceRulesEngine()
             self.pattern_coach = PatternCoach()
             self.qwen_available = True
-            logger.info("🤖🧠 [QWEN-BRIDGE] Full QWEN intelligence connected - YouTube DAE brain activated")
-            logger.info("🤖🧠 [QWEN-BRIDGE] 📊 Components: IntelligentMonitor ✓ RulesEngine ✓ PatternCoach ✓")
+            logger.info("[BOT][AI] [QWEN-BRIDGE] Full QWEN intelligence connected - YouTube DAE brain activated")
+            logger.info("[BOT][AI] [QWEN-BRIDGE] [DATA] Components: IntelligentMonitor [OK] RulesEngine [OK] PatternCoach [OK]")
         except ImportError as e:
             logger.debug(f"[QWEN-BRIDGE] Operating without full QWEN: {e}")
             self.intelligent_monitor = None
@@ -223,11 +223,11 @@ class QwenYouTubeIntegration:
                     # Strong boost if stream was recent
                     activity_boost = 2.0 - (hours_since_last_stream / 24)  # 2.0x -> 1.0x over 24h
                     score *= activity_boost
-                    logger.debug(f"🤖🧠 [QWEN-BOOST] 🎯 {channel_name}: Recent stream {hours_since_last_stream:.1f}h ago (+{activity_boost:.1f}x)")
+                    logger.debug(f"[BOT][AI] [QWEN-BOOST] [TARGET] {channel_name}: Recent stream {hours_since_last_stream:.1f}h ago (+{activity_boost:.1f}x)")
                 elif hours_since_last_stream < 168:  # Last week
                     # Moderate boost for streams in the last week
                     score *= 1.3
-                    logger.debug(f"🤖🧠 [QWEN-BOOST] 📊 {channel_name}: Stream {hours_since_last_stream:.1f}h ago (+1.3x)")
+                    logger.debug(f"[BOT][AI] [QWEN-BOOST] [DATA] {channel_name}: Stream {hours_since_last_stream:.1f}h ago (+1.3x)")
 
             # BOOST 2: Typical streaming time pattern matching
             current_hour = datetime.now().hour
@@ -235,25 +235,25 @@ class QwenYouTubeIntegration:
 
             if profile.typical_stream_hours and current_hour in profile.typical_stream_hours:
                 score *= 1.5
-                logger.debug(f"🤖🧠 [QWEN-BOOST] ⏰ {channel_name}: Typical streaming hour {current_hour}:00 (+1.5x)")
+                logger.debug(f"[BOT][AI] [QWEN-BOOST] ⏰ {channel_name}: Typical streaming hour {current_hour}:00 (+1.5x)")
 
             if profile.typical_stream_days and current_day in profile.typical_stream_days:
                 score *= 1.2
-                logger.debug(f"🤖🧠 [QWEN-BOOST] 📅 {channel_name}: Typical streaming day ({datetime.now().strftime('%A')}) (+1.2x)")
+                logger.debug(f"[BOT][AI] [QWEN-BOOST] [U+1F4C5] {channel_name}: Typical streaming day ({datetime.now().strftime('%A')}) (+1.2x)")
 
             # BOOST 3: Channel has history of streams
             if profile.total_streams_detected > 0:
                 # Channels with proven activity get priority
                 history_boost = 1.0 + min(0.5, profile.total_streams_detected * 0.1)  # Up to 1.5x
                 score *= history_boost
-                logger.debug(f"🤖🧠 [QWEN-BOOST] 📈 {channel_name}: {profile.total_streams_detected} streams found (+{history_boost:.1f}x)")
+                logger.debug(f"[BOT][AI] [QWEN-BOOST] [UP] {channel_name}: {profile.total_streams_detected} streams found (+{history_boost:.1f}x)")
 
             # PENALTY: Recently checked (avoid spam)
             if profile.last_successful_check:
                 minutes_since = (time.time() - profile.last_successful_check) / 60
                 if minutes_since < 5:
                     score *= 0.3
-                    logger.debug(f"🤖🧠 [QWEN-PENALTY] ⏳ {channel_name}: Checked {minutes_since:.1f}m ago (-70%)")
+                    logger.debug(f"[BOT][AI] [QWEN-PENALTY] ⏳ {channel_name}: Checked {minutes_since:.1f}m ago (-70%)")
 
             prioritized.append((channel_id, channel_name, score))
 
@@ -261,15 +261,15 @@ class QwenYouTubeIntegration:
         prioritized.sort(key=lambda x: x[2])
 
         # Log detailed decision process
-        logger.info("🤖🧠 [QWEN-PRIORITIZE] 🎯 Channel prioritization analysis:")
+        logger.info("[BOT][AI] [QWEN-PRIORITIZE] [TARGET] Channel prioritization analysis:")
         for _, name, score in prioritized:
-            channel_emoji = {"Move2Japan": "🍣", "UnDaoDu": "🧘", "FoundUps": "🐕"}.get(name, "❄️")
-            heat_emoji = "🔥" if self.get_channel_profile(_, name).heat_level >= 2 else channel_emoji
-            logger.info(f"🤖🧠 [QWEN-SCORE] {heat_emoji} {name}: {score:.2f}")
+            channel_emoji = {"Move2Japan": "[U+1F363]", "UnDaoDu": "[U+1F9D8]", "FoundUps": "[U+1F415]"}.get(name, "[U+2744]️")
+            heat_emoji = "[U+1F525]" if self.get_channel_profile(_, name).heat_level >= 2 else channel_emoji
+            logger.info(f"[BOT][AI] [QWEN-SCORE] {heat_emoji} {name}: {score:.2f}")
 
         decision = f"Channel priorities: {[(name, f'{score:.2f}') for _, name, score in prioritized]}"
         self.decision_history.append(decision)
-        logger.info(f"🤖🧠 [QWEN-DECISION] Final order selected based on heat levels and patterns")
+        logger.info(f"[BOT][AI] [QWEN-DECISION] Final order selected based on heat levels and patterns")
 
         return prioritized
 
@@ -296,10 +296,10 @@ class QwenYouTubeIntegration:
         delay = min(delay, 600)
 
         # Enhanced delay logging with reasoning - channel-specific emojis
-        channel_emoji = {"Move2Japan": "🍣", "UnDaoDu": "🧘", "FoundUps": "🐕"}.get(profile.channel_name, "❄️")
-        heat_emoji = {0: channel_emoji, 1: "🌤️", 2: "🔥", 3: "🌋"}.get(profile.heat_level, "🌡️")
-        logger.info(f"🤖🧠 [QWEN-DELAY] {heat_emoji} {profile.channel_name}: {delay}s delay")
-        logger.info(f"🤖🧠 [QWEN-REASON] 📊 Heat={profile.heat_level}, Retries={retry_count}, Base={base_delay}s")
+        channel_emoji = {"Move2Japan": "[U+1F363]", "UnDaoDu": "[U+1F9D8]", "FoundUps": "[U+1F415]"}.get(profile.channel_name, "[U+2744]️")
+        heat_emoji = {0: channel_emoji, 1: "[U+1F324]️", 2: "[U+1F525]", 3: "[U+1F30B]"}.get(profile.heat_level, "[U+1F321]️")
+        logger.info(f"[BOT][AI] [QWEN-DELAY] {heat_emoji} {profile.channel_name}: {delay}s delay")
+        logger.info(f"[BOT][AI] [QWEN-REASON] [DATA] Heat={profile.heat_level}, Retries={retry_count}, Base={base_delay}s")
 
         return delay
 
@@ -325,11 +325,11 @@ class QwenYouTubeIntegration:
 
         if current_hour not in profile.typical_stream_hours:
             profile.typical_stream_hours.append(current_hour)
-            logger.info(f"🤖🧠 [QWEN-LEARN] 🕐 New typical hour learned: {current_hour}:00 for {profile.channel_name}")
+            logger.info(f"[BOT][AI] [QWEN-LEARN] [U+1F550] New typical hour learned: {current_hour}:00 for {profile.channel_name}")
 
         if current_day not in profile.typical_stream_days:
             profile.typical_stream_days.append(current_day)
-            logger.info(f"🤖🧠 [QWEN-LEARN] 📅 New typical day learned: {datetime.now().strftime('%A')} for {profile.channel_name}")
+            logger.info(f"[BOT][AI] [QWEN-LEARN] [U+1F4C5] New typical day learned: {datetime.now().strftime('%A')} for {profile.channel_name}")
 
         # Record to pattern coach if available (skip if method not available)
         if self.pattern_coach:
@@ -344,13 +344,13 @@ class QwenYouTubeIntegration:
                         'timestamp': time.time()
                     })
                 # Otherwise just log that we learned
-                logger.debug(f"🤖🧠 [QWEN-PATTERN] Pattern coach notified of stream detection")
+                logger.debug(f"[BOT][AI] [QWEN-PATTERN] Pattern coach notified of stream detection")
             except Exception as e:
-                logger.debug(f"🤖🧠 [QWEN-PATTERN] Could not record to pattern coach: {e}")
+                logger.debug(f"[BOT][AI] [QWEN-PATTERN] Could not record to pattern coach: {e}")
 
-        logger.info(f"🤖🧠 [QWEN-LEARN] 📚 Recorded stream pattern for {profile.channel_name}")
-        logger.info(f"🤖🧠 [QWEN-PATTERN] 🕐 Hour: {current_hour}, Day: {datetime.now().strftime('%A')}")
-        logger.info(f"🤖🧠 [QWEN-MEMORY] Typical hours: {profile.typical_stream_hours[-3:]}")
+        logger.info(f"[BOT][AI] [QWEN-LEARN] [BOOKS] Recorded stream pattern for {profile.channel_name}")
+        logger.info(f"[BOT][AI] [QWEN-PATTERN] [U+1F550] Hour: {current_hour}, Day: {datetime.now().strftime('%A')}")
+        logger.info(f"[BOT][AI] [QWEN-MEMORY] Typical hours: {profile.typical_stream_hours[-3:]}")
 
     def get_intelligence_summary(self) -> str:
         """Get summary of current intelligence state"""
@@ -377,22 +377,22 @@ class QwenYouTubeIntegration:
 
     def should_check_now(self) -> Tuple[bool, str]:
         """Global decision on whether to check any channels"""
-        logger.info("🤖🧠 [QWEN-GLOBAL] 🌍 Evaluating global system state...")
+        logger.info("[BOT][AI] [QWEN-GLOBAL] [U+1F30D] Evaluating global system state...")
 
         # Global overheating protection
         if self.global_heat_level >= 5:
-            logger.warning(f"🤖🧠 [QWEN-GLOBAL] 🌋 System overheated (level {self.global_heat_level}) - cooling down")
+            logger.warning(f"[BOT][AI] [QWEN-GLOBAL] [U+1F30B] System overheated (level {self.global_heat_level}) - cooling down")
             return False, "System overheated - cooling down"
 
         # Time-based intelligence
         current_hour = datetime.now().hour
-        time_emoji = "🌙" if 22 <= current_hour or current_hour <= 6 else "☀️"
+        time_emoji = "[U+1F319]" if 22 <= current_hour or current_hour <= 6 else "[U+2600]️"
 
         if 2 <= current_hour <= 6:  # Late night
-            logger.info(f"🤖🧠 [QWEN-TIME] {time_emoji} Low-activity period ({current_hour}:00) - safe to check")
+            logger.info(f"[BOT][AI] [QWEN-TIME] {time_emoji} Low-activity period ({current_hour}:00) - safe to check")
             return True, "Low-activity period - safe to check (reduced frequency)"
 
-        logger.info(f"🤖🧠 [QWEN-TIME] {time_emoji} Normal hours ({current_hour}:00) - standard checking")
+        logger.info(f"[BOT][AI] [QWEN-TIME] {time_emoji} Normal hours ({current_hour}:00) - standard checking")
         return True, "Normal checking enabled"
 
     def analyze_chat_for_short(self, user_messages: List[str], username: str) -> Dict[str, Any]:
@@ -411,7 +411,7 @@ class QwenYouTubeIntegration:
         Returns:
             Dict with 'topic', 'reasoning', and 'confidence' keys
         """
-        logger.info(f"🤖🧠 [QWEN-SHORTS] 📊 Analyzing {len(user_messages)} messages from @{username}")
+        logger.info(f"[BOT][AI] [QWEN-SHORTS] [DATA] Analyzing {len(user_messages)} messages from @{username}")
 
         if not user_messages:
             return {
@@ -434,7 +434,7 @@ class QwenYouTubeIntegration:
             'japan': ['japan', 'tokyo', 'osaka', 'kyoto', 'japanese', 'anime', 'sushi', 'cherry', 'blossom'],
             'travel': ['travel', 'trip', 'visit', 'vacation', 'flight', 'hotel', 'tourist'],
             'tech': ['ai', 'llm', 'code', 'programming', 'python', 'tech', 'computer'],
-            'consciousness': ['consciousness', '✊', '✋', '🖐️', 'aware', 'woke', 'truth'],
+            'consciousness': ['consciousness', '[U+270A]', '[U+270B]', '[U+1F590]️', 'aware', 'woke', 'truth'],
             'gaming': ['game', 'gaming', 'play', 'video game', 'esports'],
             'food': ['food', 'eat', 'cooking', 'recipe', 'restaurant', 'ramen'],
             'politics': ['trump', 'biden', 'election', 'political', 'government'],
@@ -477,8 +477,8 @@ class QwenYouTubeIntegration:
             reasoning += ". General chat content - creating generic highlight."
             topic = f"Chat moments from @{username}"
 
-        logger.info(f"🤖🧠 [QWEN-SHORTS] 🎬 Generated topic: '{topic}'")
-        logger.info(f"🤖🧠 [QWEN-SHORTS] 💭 Reasoning: {reasoning}")
+        logger.info(f"[BOT][AI] [QWEN-SHORTS] [U+1F3AC] Generated topic: '{topic}'")
+        logger.info(f"[BOT][AI] [QWEN-SHORTS] [U+1F4AD] Reasoning: {reasoning}")
 
         return {
             'topic': topic,

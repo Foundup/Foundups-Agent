@@ -1,6 +1,6 @@
 """
 Test MCP Integration with YouTube Bot
-Tests the complete flow: YouTube event → MCP → Instant announcement
+Tests the complete flow: YouTube event -> MCP -> Instant announcement
 """
 
 import asyncio
@@ -74,16 +74,16 @@ async def test_mcp_system():
         result = event_handler.handle_timeout_event(event)
         
         if result.get("instant"):
-            print(f"  ✅ MCP INSTANT: {result['announcement']}")
+            print(f"  [OK] MCP INSTANT: {result['announcement']}")
         elif result.get("announcement"):
             print(f"  ⏰ LEGACY: {result['announcement']}")
         else:
-            print(f"  ⚠️ NO ANNOUNCEMENT")
+            print(f"  [U+26A0]️ NO ANNOUNCEMENT")
         
         # Show stats
         if result.get("stats"):
             stats = result["stats"]
-            print(f"  📊 Stats: Points={stats.get('points', 0)}, "
+            print(f"  [DATA] Stats: Points={stats.get('points', 0)}, "
                   f"Combo={stats.get('combo_multiplier', 1)}x, "
                   f"Multi={stats.get('is_multi_whack', False)}")
         
@@ -93,7 +93,7 @@ async def test_mcp_system():
     print("\n[TEST 4] Getting leaderboard via MCP...")
     leaderboard = await dae.get_slash_command_response("/leaderboard", "mod_123")
     if leaderboard:
-        print(f"  📋 Leaderboard response:")
+        print(f"  [CLIPBOARD] Leaderboard response:")
         print("  " + leaderboard.replace("\n", "\n  "))
     
     # Test 5: Check user stats
@@ -103,22 +103,22 @@ async def test_mcp_system():
     whacks = await dae.get_slash_command_response("/whacks", "mod_123")
     
     if rank:
-        print(f"  🏆 {rank}")
+        print(f"  [U+1F3C6] {rank}")
     if score:
-        print(f"  📊 {score}")
+        print(f"  [DATA] {score}")
     if whacks:
-        print(f"  🎯 {whacks}")
+        print(f"  [TARGET] {whacks}")
     
     # Test 6: Check quota status
     print("\n[TEST 6] Checking quota status via MCP...")
     quota_status = await dae.mcp.check_quota_status()
     if "error" not in quota_status:
-        print(f"  📈 Quota Status:")
+        print(f"  [UP] Quota Status:")
         print(f"     Total: {quota_status.get('total_available', 0):,} units")
         print(f"     Used: {quota_status.get('total_used', 0):,} units")
         print(f"     Remaining: {quota_status.get('total_remaining', 0):,} units")
     else:
-        print(f"  ❌ Quota check failed: {quota_status['error']}")
+        print(f"  [FAIL] Quota check failed: {quota_status['error']}")
     
     print("\n" + "="*60)
     print("TEST COMPLETE")
@@ -127,10 +127,10 @@ async def test_mcp_system():
     # Summary
     print("\nSUMMARY:")
     if event_handler.mcp_integration:
-        print("✅ MCP Integration: ACTIVE")
-        print("✅ Instant Announcements: WORKING")
+        print("[OK] MCP Integration: ACTIVE")
+        print("[OK] Instant Announcements: WORKING")
     else:
-        print("⚠️ MCP Integration: FALLBACK TO LEGACY")
+        print("[U+26A0]️ MCP Integration: FALLBACK TO LEGACY")
     
     print("\nMCP Servers Status:")
     whack_conn = dae.mcp.connections.get('whack')

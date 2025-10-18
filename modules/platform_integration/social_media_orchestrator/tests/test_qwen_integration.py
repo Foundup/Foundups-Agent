@@ -7,9 +7,13 @@ Tests that the enhanced DuplicatePreventionManager works with refactored orchest
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -32,7 +36,7 @@ logger = logging.getLogger(__name__)
 def test_qwen_integration():
     """Test QWEN intelligence features in DuplicatePreventionManager"""
     logger.info("=" * 60)
-    logger.info("🧪 TESTING QWEN INTEGRATION")
+    logger.info("[U+1F9EA] TESTING QWEN INTEGRATION")
     logger.info("=" * 60)
 
     # Import the enhanced module
@@ -47,7 +51,7 @@ def test_qwen_integration():
 
     # Verify QWEN is enabled
     assert manager.qwen_enabled, "QWEN should be enabled"
-    logger.info("✅ QWEN intelligence enabled")
+    logger.info("[OK] QWEN intelligence enabled")
 
     # Test QWEN pre-posting check
     logger.info("\n2️⃣ Testing QWEN pre-posting check...")
@@ -69,7 +73,7 @@ def test_qwen_integration():
     assert 'posting_order' in decision, "Decision should include posting order"
     assert 'delays' in decision, "Decision should include delays"
 
-    logger.info(f"✅ QWEN decision: {json.dumps(decision, indent=2)}")
+    logger.info(f"[OK] QWEN decision: {json.dumps(decision, indent=2)}")
 
     # Test QWEN monitoring
     logger.info("\n3️⃣ Testing QWEN monitoring...")
@@ -83,14 +87,14 @@ def test_qwen_integration():
         post_id, 'linkedin', QwenPostingStatus.IN_PROGRESS,
         {'stream_info': stream_info}
     )
-    logger.info("✅ QWEN monitoring IN_PROGRESS")
+    logger.info("[OK] QWEN monitoring IN_PROGRESS")
 
     # Simulate success
     manager.qwen_monitor_posting_progress(
         post_id, 'linkedin', QwenPostingStatus.SUCCESS,
         {'result': 'success'}
     )
-    logger.info("✅ QWEN monitoring SUCCESS")
+    logger.info("[OK] QWEN monitoring SUCCESS")
 
     # Get QWEN report
     logger.info("\n4️⃣ Getting QWEN posting report...")
@@ -99,7 +103,7 @@ def test_qwen_integration():
     assert report['qwen_active'], "Report should show QWEN is active"
     assert 'platform_health' in report, "Report should include platform health"
 
-    logger.info(f"✅ QWEN report: {json.dumps(report, indent=2)}")
+    logger.info(f"[OK] QWEN report: {json.dumps(report, indent=2)}")
 
     # Test integration with orchestrator
     logger.info("\n5️⃣ Testing orchestrator integration...")
@@ -111,10 +115,10 @@ def test_qwen_integration():
 
     # Verify QWEN is enabled in orchestrator's duplicate manager
     assert orchestrator.duplicate_manager.qwen_enabled, "Orchestrator should have QWEN enabled"
-    logger.info("✅ Orchestrator has QWEN intelligence enabled")
+    logger.info("[OK] Orchestrator has QWEN intelligence enabled")
 
     logger.info("\n" + "=" * 60)
-    logger.info("✅ ALL QWEN INTEGRATION TESTS PASSED!")
+    logger.info("[OK] ALL QWEN INTEGRATION TESTS PASSED!")
     logger.info("=" * 60)
 
     return True
@@ -123,7 +127,7 @@ def test_qwen_integration():
 def test_backwards_compatibility():
     """Test that existing functionality still works without QWEN"""
     logger.info("\n" + "=" * 60)
-    logger.info("🧪 TESTING BACKWARDS COMPATIBILITY")
+    logger.info("[U+1F9EA] TESTING BACKWARDS COMPATIBILITY")
     logger.info("=" * 60)
 
     from modules.platform_integration.social_media_orchestrator.src.core import (
@@ -142,7 +146,7 @@ def test_backwards_compatibility():
     assert 'already_posted' in result, "Result should include already_posted flag"
     assert 'platforms_posted' in result, "Result should include platforms_posted"
 
-    logger.info(f"✅ Duplicate check works: {result}")
+    logger.info(f"[OK] Duplicate check works: {result}")
 
     # Test marking as posted still works
     logger.info("\n3️⃣ Testing mark as posted without QWEN...")
@@ -153,10 +157,10 @@ def test_backwards_compatibility():
     assert result['already_posted'], "Video should be marked as posted"
     assert 'linkedin' in result['platforms_posted'], "LinkedIn should be in posted platforms"
 
-    logger.info("✅ Mark as posted works")
+    logger.info("[OK] Mark as posted works")
 
     logger.info("\n" + "=" * 60)
-    logger.info("✅ BACKWARDS COMPATIBILITY MAINTAINED!")
+    logger.info("[OK] BACKWARDS COMPATIBILITY MAINTAINED!")
     logger.info("=" * 60)
 
     return True
@@ -170,17 +174,17 @@ if __name__ == "__main__":
         # Run backwards compatibility tests
         test_backwards_compatibility()
 
-        logger.info("\n" + "🎉" * 20)
-        logger.info("✅ ALL TESTS PASSED SUCCESSFULLY!")
+        logger.info("\n" + "[CELEBRATE]" * 20)
+        logger.info("[OK] ALL TESTS PASSED SUCCESSFULLY!")
         logger.info("QWEN intelligence has been successfully integrated")
         logger.info("into existing social media orchestrator modules!")
-        logger.info("🎉" * 20)
+        logger.info("[CELEBRATE]" * 20)
 
     except AssertionError as e:
-        logger.error(f"❌ Test assertion failed: {e}")
+        logger.error(f"[FAIL] Test assertion failed: {e}")
         sys.exit(1)
     except Exception as e:
-        logger.error(f"❌ Test failed with error: {e}")
+        logger.error(f"[FAIL] Test failed with error: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

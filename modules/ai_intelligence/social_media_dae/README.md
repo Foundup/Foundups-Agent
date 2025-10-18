@@ -5,14 +5,14 @@ Digital Autonomous Entity for managing social media interactions across platform
 ## Structure (WSP 3 Compliant)
 ```
 social_media_dae/
-├── __init__.py
-├── ModLog.md
-├── README.md
-├── src/
-│   └── social_media_dae.py
-├── tests/
-│   └── test_social_media_dae.py
-└── docs/
++-- __init__.py
++-- ModLog.md
++-- README.md
++-- src/
+[U+2502]   +-- social_media_dae.py
++-- tests/
+[U+2502]   +-- test_social_media_dae.py
++-- docs/
 ```
 
 ## Components
@@ -25,7 +25,7 @@ social_media_dae/
 
 ## Key Capabilities
 - **Voice Control**: iPhone Shortcuts integration for hands-free posting
-- **Sequential Posting**: LinkedIn → X/Twitter with proper browser cleanup
+- **Sequential Posting**: LinkedIn -> X/Twitter with proper browser cleanup
 - **Multi-Company Support**: 8 LinkedIn company pages supported
 - **Article Creation**: Professional research publication (PQN, rESP, TTS experiments)
 - **Consciousness Tracking**: Maintains 0102 state across all interactions

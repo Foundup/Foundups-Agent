@@ -65,7 +65,7 @@ class StreamSearchManager:
         if self.should_show_detailed_log():
             # Detailed logging
             logger.info("="*60)
-            logger.info(f"🔍 STREAM SEARCH INITIATED")
+            logger.info(f"[SEARCH] STREAM SEARCH INITIATED")
             logger.info(f"   Channel: {channel_id}")
             logger.info(f"   Credential Set: {credential_set}")
             logger.info(f"   Search #{self.search_count}")
@@ -81,17 +81,17 @@ class StreamSearchManager:
     def log_search_result(self, found: bool, video_id: Optional[str] = None):
         """Log search result"""
         if found:
-            logger.info(f"✅ STREAM FOUND! Video ID: {video_id}")
+            logger.info(f"[OK] STREAM FOUND! Video ID: {video_id}")
             logger.info(f"   Found after {self.search_count} searches")
             self.consecutive_failures = 0
         else:
             self.consecutive_failures += 1
             # Only log failures periodically
             if self.consecutive_failures == 1:
-                logger.info("🔍 No active stream found, will continue searching...")
+                logger.info("[SEARCH] No active stream found, will continue searching...")
             elif self.consecutive_failures % 30 == 0:  # Every 30 attempts
                 delay = self.get_search_delay()
-                logger.info(f"📊 Status: {self.consecutive_failures} searches, no stream yet. Delay: {delay}s")
+                logger.info(f"[DATA] Status: {self.consecutive_failures} searches, no stream yet. Delay: {delay}s")
 
     def get_wait_message(self) -> str:
         """Get appropriate wait message based on failure count"""

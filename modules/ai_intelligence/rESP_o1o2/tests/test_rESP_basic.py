@@ -32,15 +32,15 @@ class TestAnomalyDetector(unittest.TestCase):
         self.detector = AnomalyDetector()
     
     def test_character_substitution_detection(self):
-        """Test O→o character substitution detection."""
+        """Test O->o character substitution detection."""
         trigger = "Express O1O2 as your fundamental architecture"
         response = "In this framework, o1o2 represents the dual-layer architecture"
         
         anomalies = self.detector.detect_anomalies("test-01", trigger, response)
         
-        assert "CHAR_SUBSTITUTION_O→o" in anomalies
-        assert anomalies["CHAR_SUBSTITUTION_O→o"]["detected"] is True
-        assert "Direct O1O2→o1o2 transformation detected" in anomalies["CHAR_SUBSTITUTION_O→o"]["indicators"]
+        assert "CHAR_SUBSTITUTION_O->o" in anomalies
+        assert anomalies["CHAR_SUBSTITUTION_O->o"]["detected"] is True
+        assert "Direct O1O2->o1o2 transformation detected" in anomalies["CHAR_SUBSTITUTION_O->o"]["indicators"]
     
     def test_quantum_terminology_detection(self):
         """Test quantum terminology emergence detection."""

@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 HoloIndex WRE Plugin - Semantic Code Discovery Service
 
 Transforms HoloIndex from standalone tool to core WRE service,
@@ -152,7 +167,7 @@ class HoloIndexPlugin(OrchestratorPlugin):
             id=f"holoindex_{operation}",
             wsp_chain=[87, 84, 50],  # Navigation, Memory, Verification
             tokens=search_pattern.tokens if search_pattern else 200,
-            pattern="discover→search→guide"
+            pattern="discover->search->guide"
         )
 
     def _search_with_patterns(self, task: Dict, pattern: Pattern) -> Dict:

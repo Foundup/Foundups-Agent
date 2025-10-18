@@ -100,7 +100,7 @@ class WSPOAuthRotationValidator:
         
         # Verify the OAuth manager module
         oauth_module_path = "modules.infrastructure.oauth_management.src.oauth_manager"
-        self.logger.info(f"✅ OAuth Manager Module: {oauth_module_path}")
+        self.logger.info(f"[OK] OAuth Manager Module: {oauth_module_path}")
         
         # Verify key functions exist
         functions = [
@@ -112,12 +112,12 @@ class WSPOAuthRotationValidator:
         for func_name in functions:
             try:
                 func = getattr(sys.modules[oauth_module_path], func_name)
-                self.logger.info(f"✅ Function found: {func_name}")
+                self.logger.info(f"[OK] Function found: {func_name}")
             except AttributeError:
-                self.logger.error(f"❌ Function missing: {func_name}")
+                self.logger.error(f"[FAIL] Function missing: {func_name}")
                 
         # Verify credential sets (1-4)
-        self.logger.info("🔑 Credential Sets Supported: set_1, set_2, set_3, set_4")
+        self.logger.info("[U+1F511] Credential Sets Supported: set_1, set_2, set_3, set_4")
         
         self.test_results.append({
             'test': 'module_identification',
@@ -134,7 +134,7 @@ class WSPOAuthRotationValidator:
         credential_sets = ['set_1', 'set_2', 'set_3', 'set_4']
         
         for credential_set in credential_sets:
-            self.logger.info(f"🧪 Testing quota exceeded simulation for {credential_set}...")
+            self.logger.info(f"[U+1F9EA] Testing quota exceeded simulation for {credential_set}...")
             
             # Create mock error
             mock_error = self.create_mock_quota_exceeded_error(credential_set)
@@ -148,9 +148,9 @@ class WSPOAuthRotationValidator:
             )
             
             if is_quota_exceeded:
-                self.logger.info(f"✅ {credential_set}: Quota exceeded simulation successful")
+                self.logger.info(f"[OK] {credential_set}: Quota exceeded simulation successful")
             else:
-                self.logger.error(f"❌ {credential_set}: Quota exceeded simulation failed")
+                self.logger.error(f"[FAIL] {credential_set}: Quota exceeded simulation failed")
                 
         self.test_results.append({
             'test': 'quota_simulation',
@@ -159,13 +159,13 @@ class WSPOAuthRotationValidator:
         })
         
     def test_rotation_sequence_validation(self):
-        """Test 3: Validate rotation sequence (Set 1 → 2 → 3 → 4)."""
+        """Test 3: Validate rotation sequence (Set 1 -> 2 -> 3 -> 4)."""
         self.logger.info("=" * 80)
         self.logger.info("WSP OAUTH ROTATION VALIDATION - TEST 3: ROTATION SEQUENCE")
         self.logger.info("=" * 80)
         
         # Test actual rotation behavior
-        self.logger.info("🔄 Testing actual credential rotation behavior...")
+        self.logger.info("[REFRESH] Testing actual credential rotation behavior...")
         
         try:
             # Test with real system (this will use actual credentials)
@@ -173,7 +173,7 @@ class WSPOAuthRotationValidator:
             
             if result:
                 service, creds, credential_set = result
-                self.logger.info(f"✅ Rotation successful: Selected {credential_set}")
+                self.logger.info(f"[OK] Rotation successful: Selected {credential_set}")
                 self.logger.info(f"   Service type: {type(service).__name__}")
                 self.logger.info(f"   Credentials type: {type(creds).__name__}")
                 
@@ -187,7 +187,7 @@ class WSPOAuthRotationValidator:
                 if cooldown_sets:
                     self.logger.info(f"⏳ Sets in cooldown: {cooldown_sets}")
                 else:
-                    self.logger.info("🔄 No sets currently in cooldown")
+                    self.logger.info("[REFRESH] No sets currently in cooldown")
                     
                 self.test_results.append({
                     'test': 'rotation_sequence',
@@ -195,7 +195,7 @@ class WSPOAuthRotationValidator:
                     'details': f'Rotation successful, selected {credential_set}'
                 })
             else:
-                self.logger.error("❌ Rotation failed: No working credentials available")
+                self.logger.error("[FAIL] Rotation failed: No working credentials available")
                 self.test_results.append({
                     'test': 'rotation_sequence',
                     'status': 'FAIL',
@@ -203,7 +203,7 @@ class WSPOAuthRotationValidator:
                 })
                 
         except Exception as e:
-            self.logger.error(f"❌ Rotation test failed: {e}")
+            self.logger.error(f"[FAIL] Rotation test failed: {e}")
             self.test_results.append({
                 'test': 'rotation_sequence',
                 'status': 'ERROR',
@@ -217,27 +217,27 @@ class WSPOAuthRotationValidator:
         self.logger.info("=" * 80)
         
         # Test multiple rotation attempts
-        self.logger.info("🔄 Testing multiple rotation attempts...")
+        self.logger.info("[REFRESH] Testing multiple rotation attempts...")
         
         attempts = 3
         results = []
         
         for attempt in range(attempts):
-            self.logger.info(f"🧪 Attempt {attempt + 1}/{attempts}...")
+            self.logger.info(f"[U+1F9EA] Attempt {attempt + 1}/{attempts}...")
             
             try:
                 result = get_authenticated_service_with_fallback()
                 if result:
                     service, creds, credential_set = result
                     results.append(credential_set)
-                    self.logger.info(f"✅ Attempt {attempt + 1}: Selected {credential_set}")
+                    self.logger.info(f"[OK] Attempt {attempt + 1}: Selected {credential_set}")
                 else:
                     results.append(None)
-                    self.logger.warning(f"⚠️ Attempt {attempt + 1}: No credentials available")
+                    self.logger.warning(f"[U+26A0]️ Attempt {attempt + 1}: No credentials available")
                     
             except Exception as e:
                 results.append(f"ERROR: {e}")
-                self.logger.error(f"❌ Attempt {attempt + 1}: Error - {e}")
+                self.logger.error(f"[FAIL] Attempt {attempt + 1}: Error - {e}")
                 
             # Small delay between attempts
             time.sleep(0.1)
@@ -246,7 +246,7 @@ class WSPOAuthRotationValidator:
         successful_attempts = [r for r in results if r and not str(r).startswith('ERROR')]
         
         if successful_attempts:
-            self.logger.info(f"✅ Fallback behavior working: {len(successful_attempts)}/{attempts} successful")
+            self.logger.info(f"[OK] Fallback behavior working: {len(successful_attempts)}/{attempts} successful")
             self.logger.info(f"   Selected credentials: {successful_attempts}")
             
             self.test_results.append({
@@ -255,7 +255,7 @@ class WSPOAuthRotationValidator:
                 'details': f'{len(successful_attempts)}/{attempts} attempts successful'
             })
         else:
-            self.logger.warning("⚠️ No successful fallback attempts")
+            self.logger.warning("[U+26A0]️ No successful fallback attempts")
             self.test_results.append({
                 'test': 'fallback_behavior',
                 'status': 'WARNING',
@@ -284,21 +284,21 @@ class WSPOAuthRotationValidator:
                     'size': stat.st_size,
                     'mtime': stat.st_mtime
                 }
-                self.logger.info(f"📄 {file_path}: {stat.st_size} bytes, modified {datetime.fromtimestamp(stat.st_mtime)}")
+                self.logger.info(f"[U+1F4C4] {file_path}: {stat.st_size} bytes, modified {datetime.fromtimestamp(stat.st_mtime)}")
             else:
                 file_states[file_path] = None
-                self.logger.info(f"📄 {file_path}: Not found")
+                self.logger.info(f"[U+1F4C4] {file_path}: Not found")
                 
         # Perform rotation test
-        self.logger.info("🔄 Performing rotation test...")
+        self.logger.info("[REFRESH] Performing rotation test...")
         try:
             result = get_authenticated_service_with_fallback()
             if result:
-                self.logger.info("✅ Rotation test completed")
+                self.logger.info("[OK] Rotation test completed")
             else:
-                self.logger.info("⚠️ Rotation test completed (no credentials)")
+                self.logger.info("[U+26A0]️ Rotation test completed (no credentials)")
         except Exception as e:
-            self.logger.error(f"❌ Rotation test error: {e}")
+            self.logger.error(f"[FAIL] Rotation test error: {e}")
             
         # Check file states after test
         files_modified = []
@@ -312,13 +312,13 @@ class WSPOAuthRotationValidator:
                 
                 if file_states[file_path] and current_state != file_states[file_path]:
                     files_modified.append(file_path)
-                    self.logger.warning(f"⚠️ {file_path}: File was modified during test")
+                    self.logger.warning(f"[U+26A0]️ {file_path}: File was modified during test")
                 else:
-                    self.logger.info(f"✅ {file_path}: File unchanged")
+                    self.logger.info(f"[OK] {file_path}: File unchanged")
             else:
                 if file_states[file_path] is not None:
                     files_modified.append(file_path)
-                    self.logger.warning(f"⚠️ {file_path}: File was deleted during test")
+                    self.logger.warning(f"[U+26A0]️ {file_path}: File was deleted during test")
                     
         if files_modified:
             self.test_results.append({
@@ -327,7 +327,7 @@ class WSPOAuthRotationValidator:
                 'details': f'Files modified: {files_modified}'
             })
         else:
-            self.logger.info("✅ All credential files preserved")
+            self.logger.info("[OK] All credential files preserved")
             self.test_results.append({
                 'test': 'state_preservation',
                 'status': 'PASS',
@@ -346,33 +346,33 @@ class WSPOAuthRotationValidator:
         warning_tests = len([r for r in self.test_results if r['status'] == 'WARNING'])
         failed_tests = len([r for r in self.test_results if r['status'] in ['FAIL', 'ERROR']])
         
-        self.logger.info(f"📊 TEST SUMMARY:")
+        self.logger.info(f"[DATA] TEST SUMMARY:")
         self.logger.info(f"   Total Tests: {total_tests}")
-        self.logger.info(f"   ✅ Passed: {passed_tests}")
-        self.logger.info(f"   ⚠️ Warnings: {warning_tests}")
-        self.logger.info(f"   ❌ Failed: {failed_tests}")
+        self.logger.info(f"   [OK] Passed: {passed_tests}")
+        self.logger.info(f"   [U+26A0]️ Warnings: {warning_tests}")
+        self.logger.info(f"   [FAIL] Failed: {failed_tests}")
         
         # Detailed results
-        self.logger.info(f"\n📋 DETAILED RESULTS:")
+        self.logger.info(f"\n[CLIPBOARD] DETAILED RESULTS:")
         for result in self.test_results:
             status_emoji = {
-                'PASS': '✅',
-                'WARNING': '⚠️',
-                'FAIL': '❌',
-                'ERROR': '💥'
-            }.get(result['status'], '❓')
+                'PASS': '[OK]',
+                'WARNING': '[U+26A0]️',
+                'FAIL': '[FAIL]',
+                'ERROR': '[U+1F4A5]'
+            }.get(result['status'], '[U+2753]')
             
             self.logger.info(f"   {status_emoji} {result['test']}: {result['status']}")
             self.logger.info(f"      {result['details']}")
             
         # WSP Compliance Check
-        self.logger.info(f"\n🎯 WSP COMPLIANCE:")
+        self.logger.info(f"\n[TARGET] WSP COMPLIANCE:")
         compliance_items = [
-            ("✅ Each credential set tested", True),
-            ("✅ Rotation logic properly triggered", passed_tests > 0),
-            ("✅ Logs confirm fallback behavior", True),
-            ("✅ Output: tests/logs/oauth_rotation_test_log.txt", True),
-            ("✅ No external writes or state leaks", failed_tests == 0)
+            ("[OK] Each credential set tested", True),
+            ("[OK] Rotation logic properly triggered", passed_tests > 0),
+            ("[OK] Logs confirm fallback behavior", True),
+            ("[OK] Output: tests/logs/oauth_rotation_test_log.txt", True),
+            ("[OK] No external writes or state leaks", failed_tests == 0)
         ]
         
         for item, status in compliance_items:
@@ -380,21 +380,21 @@ class WSPOAuthRotationValidator:
             
         # Overall result
         if failed_tests == 0:
-            self.logger.info(f"\n🎉 WSP OAUTH ROTATION VALIDATION: SUCCESSFUL")
+            self.logger.info(f"\n[CELEBRATE] WSP OAUTH ROTATION VALIDATION: SUCCESSFUL")
             self.logger.info(f"   All requirements met, system is functioning correctly")
         else:
-            self.logger.info(f"\n⚠️ WSP OAUTH ROTATION VALIDATION: ISSUES DETECTED")
+            self.logger.info(f"\n[U+26A0]️ WSP OAUTH ROTATION VALIDATION: ISSUES DETECTED")
             self.logger.info(f"   {failed_tests} test(s) failed, review required")
             
-        self.logger.info(f"\n📁 Full test log saved to: {self.test_log_file}")
+        self.logger.info(f"\n[U+1F4C1] Full test log saved to: {self.test_log_file}")
         
     def run_full_validation(self):
         """Run the complete WSP OAuth rotation validation suite."""
         start_time = datetime.now()
         
-        self.logger.info("🚀 Starting WSP OAuth Token Rotation Validation")
+        self.logger.info("[ROCKET] Starting WSP OAuth Token Rotation Validation")
         self.logger.info(f"⏰ Test started at: {start_time}")
-        self.logger.info(f"📁 Log file: {self.test_log_file}")
+        self.logger.info(f"[U+1F4C1] Log file: {self.test_log_file}")
         
         try:
             # Run all tests
@@ -408,7 +408,7 @@ class WSPOAuthRotationValidator:
             self.generate_final_report()
             
         except Exception as e:
-            self.logger.error(f"💥 Validation suite failed: {e}")
+            self.logger.error(f"[U+1F4A5] Validation suite failed: {e}")
             
         finally:
             end_time = datetime.now()
@@ -423,13 +423,13 @@ class WSPOAuthRotationValidator:
 
 def main():
     """Main entry point for WSP OAuth rotation validation."""
-    print("🧪 WSP OAuth Token Rotation Validation Suite")
+    print("[U+1F9EA] WSP OAuth Token Rotation Validation Suite")
     print("=" * 60)
     
     validator = WSPOAuthRotationValidator()
     validator.run_full_validation()
     
-    print(f"\n📁 Full test log available at: {validator.test_log_file}")
+    print(f"\n[U+1F4C1] Full test log available at: {validator.test_log_file}")
 
 if __name__ == '__main__':
     main() 

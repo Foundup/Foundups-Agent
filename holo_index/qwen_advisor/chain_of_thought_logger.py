@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Chain-of-Thought Logger - Brain Visibility System
 ===============================================
 
@@ -311,7 +327,7 @@ class ChainOfThoughtLogger:
         # WSP 91: Show which WSPs are being followed
         if thought.wsps_followed:
             print(f"         [WSP-COMPLIANCE]: Following {', '.join(thought.wsps_followed)}")
-        print(f"         📊 CONFIDENCE: {confidence:.2f} | DURATION: {thought.duration:.2f}s")
+        print(f"         [DATA] CONFIDENCE: {confidence:.2f} | DURATION: {thought.duration:.2f}s")
         print()
 
     def _calculate_session_metrics(self) -> Dict[str, Any]:
@@ -405,7 +421,7 @@ class ChainOfThoughtLogger:
 
     def show_brain_activity(self) -> None:
         """Display current brain activity like YouTube DAE logs"""
-        print("\n🧠 CHAIN-OF-THOUGHT BRAIN ACTIVITY LOG")
+        print("\n[AI] CHAIN-OF-THOUGHT BRAIN ACTIVITY LOG")
         print("=" * 60)
 
         if not self.current_session:
@@ -424,8 +440,8 @@ class ChainOfThoughtLogger:
             print(f"{i}. [{thought.timestamp.strftime('%H:%M:%S')}] {thought.thought_type.upper()}: {thought.content[:60]}...")
 
         print()
-        print("💭 REAL-TIME BRAIN ACTIVITY - Every thought, decision, and action is logged above")
-        print("📊 This is the AI brain working - completely observable and understandable")
+        print("[U+1F4AD] REAL-TIME BRAIN ACTIVITY - Every thought, decision, and action is logged above")
+        print("[DATA] This is the AI brain working - completely observable and understandable")
 
 
 # Global instance
@@ -507,7 +523,7 @@ def show_brain_activity() -> None:
 # Demonstration function - shows how the brain logging works
 def demonstrate_brain_logging():
     """Demonstrate the Chain-of-Thought logging system"""
-    print("🚀 STARTING CHAIN-OF-THOUGHT BRAIN LOGGING DEMONSTRATION")
+    print("[ROCKET] STARTING CHAIN-OF-THOUGHT BRAIN LOGGING DEMONSTRATION")
     print("This shows exactly how the AI brain works - every thought is logged!")
     print()
 
@@ -540,12 +556,12 @@ def demonstrate_brain_logging():
     # End session
     summary = end_cot_logging("Implement the 3 identified optimizations", 0.87)
 
-    print(f"\n✅ SESSION COMPLETE: {summary['session_id']}")
-    print(f"📊 Effectiveness: {summary['effectiveness']:.2f}")
+    print(f"\n[OK] SESSION COMPLETE: {summary['session_id']}")
+    print(f"[DATA] Effectiveness: {summary['effectiveness']:.2f}")
     print(f"⏱️  Duration: {summary['duration']:.1f}s")
-    print(f"🧠 Thoughts: {summary['steps']}")
+    print(f"[AI] Thoughts: {summary['steps']}")
 
-    print("\n💡 This is exactly how the AI brain works - every decision is logged and observable!")
+    print("\n[IDEA] This is exactly how the AI brain works - every decision is logged and observable!")
 
 
 if __name__ == "__main__":

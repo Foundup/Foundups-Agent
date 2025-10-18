@@ -315,10 +315,10 @@ results = overseer.coordinate_mission(
 )
 
 if results["success"]:
-    print(f"✓ Analysis complete: {results['mission_id']}")
+    print(f"[OK] Analysis complete: {results['mission_id']}")
     print(f"  Phases: {results['results']['phases_completed']}")
 else:
-    print(f"✗ Analysis failed: {results['results']['errors']}")
+    print(f"[FAIL] Analysis failed: {results['results']['errors']}")
 ```
 
 ---

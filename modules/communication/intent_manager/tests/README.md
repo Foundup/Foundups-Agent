@@ -12,7 +12,7 @@ Test suite for IntentManager implementation - strategic decomposition from auto_
 ## Test Coverage
 - Meeting intent creation and context validation
 - Priority scoring algorithms and urgency calculations
-- Intent lifecycle management (pending → monitoring → completed)
+- Intent lifecycle management (pending -> monitoring -> completed)
 - Persistent storage using WSP 60 memory architecture
 - Intent expiration and cleanup operations
 - Priority-based intent retrieval and sorting

@@ -44,31 +44,31 @@ class WSPVerification:
         # Step 1: Search for existing code
         existing = self._search_existing(feature_name)
         if existing:
-            print(f"✅ FOUND EXISTING: {existing}")
+            print(f"[OK] FOUND EXISTING: {existing}")
             print("ACTION: Extend existing code, don't create new")
             return False, f"Use existing: {existing}"
         
         # Step 2: Check similar implementations
         similar = self._find_similar(feature_name)
         if similar:
-            print(f"⚠️  SIMILAR EXISTS: {similar}")
+            print(f"[U+26A0]️  SIMILAR EXISTS: {similar}")
             print("ACTION: Extend similar code")
             return False, f"Extend similar: {similar}"
         
         # Step 3: Check ROADMAP
         if not self._check_roadmap(feature_name):
-            print("❌ NOT IN ROADMAP")
+            print("[FAIL] NOT IN ROADMAP")
             print("ACTION: Add to ROADMAP first")
             return False, "Feature not in ROADMAP - propose first"
         
         # Step 4: Check if it's truly new
         if self._is_variation(feature_name):
-            print("❌ VARIATION OF EXISTING")
+            print("[FAIL] VARIATION OF EXISTING")
             print("ACTION: Use existing with parameters")
             return False, "This is a variation - use existing code"
         
         # Step 5: Final approval (rare)
-        print("✅ TRULY NEW FEATURE")
+        print("[OK] TRULY NEW FEATURE")
         print("ACTION: Can create, but minimize code")
         return True, "New feature verified"
     

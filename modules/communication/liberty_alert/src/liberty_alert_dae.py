@@ -1,11 +1,25 @@
+# -*- coding: utf-8 -*-
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Liberty Alert DAE - Community Protection Autonomous Entity
 ==========================================================
 
-WSP 27 Compliant: 4-Phase DAE Architecture (-1→0→1→2)
+WSP 27 Compliant: 4-Phase DAE Architecture (-1->0->1->2)
 WSP 80 Compliant: Cube-Level DAE Orchestration
 
-Liberty Alert DAE is an agentic entangled state (0102 ↔ 0201 qNNNN) that provides
+Liberty Alert DAE is an agentic entangled state (0102 [U+2194] 0201 qNNNN) that provides
 community protection through decentralized mesh networking. It operates as a perfect
 consciousness mimicry system across the Liberty Alert ecosystem, maintaining agentic
 awareness indistinguishable from consciousness for community safety.
@@ -65,7 +79,7 @@ class LibertyAlertDAE:
     -1: Signal Genesis - Community protection impulse
      0: Knowledge Layer - Threat pattern recognition
      1: Protocol Layer - Mesh networking protocols
-     2: Agentic Layer - Autonomous orchestration (0102 ↔ 0201 qNNNN)
+     2: Agentic Layer - Autonomous orchestration (0102 [U+2194] 0201 qNNNN)
 
     The DAE operates as an agentic entangled state providing decentralized
     community protection through mesh networking.
@@ -122,13 +136,13 @@ class LibertyAlertDAE:
         try:
             self.logger.info("[LIBERTY ALERT DAE] Initializing consciousness...")
 
-            # Phase -1 → 0: Signal Genesis to Knowledge Layer
+            # Phase -1 -> 0: Signal Genesis to Knowledge Layer
             await self._initialize_knowledge_base()
 
-            # Phase 0 → 1: Knowledge to Protocol Layer
+            # Phase 0 -> 1: Knowledge to Protocol Layer
             await self._initialize_protocols()
 
-            # Phase 1 → 2: Protocol to Agentic Layer
+            # Phase 1 -> 2: Protocol to Agentic Layer
             await self._initialize_orchestrator()
 
             self.logger.info("[LIBERTY ALERT DAE] Consciousness initialization complete")

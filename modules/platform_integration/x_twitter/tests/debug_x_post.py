@@ -6,9 +6,13 @@ Debug X/Twitter posting to see if it's actually posting
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -135,10 +139,10 @@ def debug_x_post():
                 # Click it
                 try:
                     post_btn.click()
-                    print("   ✓ Clicked with regular click")
+                    print("   [OK] Clicked with regular click")
                 except:
                     driver.execute_script("arguments[0].click();", post_btn)
-                    print("   ✓ Clicked with JavaScript")
+                    print("   [OK] Clicked with JavaScript")
                 
                 # Wait for post
                 print("\n[7] Waiting for post to complete...")
@@ -149,18 +153,18 @@ def debug_x_post():
                 print(f"   Current URL: {current_url}")
                 
                 if "compose" not in current_url:
-                    print("   ✓ Redirected away from compose!")
+                    print("   [OK] Redirected away from compose!")
                 else:
-                    print("   ⚠ Still on compose page")
+                    print("   [U+26A0] Still on compose page")
                     
                     # Check if text area is empty
                     try:
                         text_area = driver.find_element(By.XPATH, "//div[@role='textbox']")
                         current_text = text_area.text
                         if not current_text:
-                            print("   ✓ Text area cleared - post sent!")
+                            print("   [OK] Text area cleared - post sent!")
                         else:
-                            print(f"   ⚠ Text still there: {current_text}")
+                            print(f"   [U+26A0] Text still there: {current_text}")
                     except:
                         pass
                 
@@ -172,9 +176,9 @@ def debug_x_post():
                 # Check for new posts
                 new_posts = driver.find_elements(By.XPATH, f"//span[contains(text(), '{test_content[:10]}')]")
                 if new_posts:
-                    print(f"   ✓✓✓ TEST POST FOUND! Success!")
+                    print(f"   [OK][OK][OK] TEST POST FOUND! Success!")
                 else:
-                    print(f"   ✗ Test post not found")
+                    print(f"   [FAIL] Test post not found")
                     
                     # Check any recent posts
                     all_posts = driver.find_elements(By.XPATH, "//article")

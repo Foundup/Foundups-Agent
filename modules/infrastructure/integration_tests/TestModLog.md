@@ -15,7 +15,7 @@
   - Social media posting (LinkedIn, X/Twitter)
   - LiveChat core functionality
   - Gamification (Whack-a-Magat) integration
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 - **Dependencies**: Multiple modules across domains
 
 ### detailed_workflow_test.py
@@ -26,7 +26,7 @@
   - Message processing workflows
   - Command handling scenarios
   - Gamification workflows
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 - **Dependencies**: LiveChat, StreamResolver, WhackAMagat
 
 ## Recent Updates

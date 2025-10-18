@@ -539,22 +539,22 @@ def _extract_capabilities(self, patterns: list) -> list:
 
 ```
 1. Git commit happens
-        ↓
+        v
 2. git_linkedin_bridge.py triggers
-        ↓
+        v
 3. Calls MCP tool: post_to_linkedin_via_selenium(content)
-        ↓
+        v
 4. MCP server:
    - Initializes Selenium (existing code)
    - Takes screenshot
    - Calls Gemini Vision for UI analysis
    - Posts via Selenium
    - Saves training pattern automatically
-        ↓
+        v
 5. Training pattern stored in selenium_patterns.json
-        ↓
+        v
 6. Periodically: train_gemma_on_selenium_patterns()
-        ↓
+        v
 7. Gemma learns from real posting operations
 ```
 
@@ -563,26 +563,26 @@ def _extract_capabilities(self, patterns: list) -> list:
 ## Advantages
 
 ### 1. **Uses Existing Infrastructure**
-- ✅ FastMCP HoloIndex Server already running
-- ✅ Selenium posting systems already built
-- ✅ Just add new MCP tools
+- [OK] FastMCP HoloIndex Server already running
+- [OK] Selenium posting systems already built
+- [OK] Just add new MCP tools
 
 ### 2. **No APIs Needed**
-- ✅ LinkedIn: Selenium (no $$ API)
-- ✅ X/Twitter: Selenium (no $100/month API)
-- ✅ Gemini Vision: FREE (AI Studio key)
+- [OK] LinkedIn: Selenium (no $$ API)
+- [OK] X/Twitter: Selenium (no $100/month API)
+- [OK] Gemini Vision: FREE (AI Studio key)
 
 ### 3. **Automatic Training Data**
-- ✅ Every MCP post = training pattern
-- ✅ Gemini Vision analysis included
-- ✅ Success/failure captured
-- ✅ No manual data prep
+- [OK] Every MCP post = training pattern
+- [OK] Gemini Vision analysis included
+- [OK] Success/failure captured
+- [OK] No manual data prep
 
 ### 4. **No GPU Needed**
-- ✅ Gemini Vision runs in cloud (Google)
-- ✅ Selenium runs locally (browser)
-- ✅ ChromaDB stores patterns (local)
-- ✅ RAG for Gemma (no fine-tuning needed)
+- [OK] Gemini Vision runs in cloud (Google)
+- [OK] Selenium runs locally (browser)
+- [OK] ChromaDB stores patterns (local)
+- [OK] RAG for Gemma (no fine-tuning needed)
 
 ---
 

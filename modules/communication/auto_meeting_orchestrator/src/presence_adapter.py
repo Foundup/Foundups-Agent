@@ -66,7 +66,7 @@ class PresenceToAMOAdapter:
 
 
 async def demo_wire_presence_to_amo() -> MeetingOrchestrator:
-    """PoC demo: wire aggregator → AMO and run briefly."""
+    """PoC demo: wire aggregator -> AMO and run briefly."""
     amo = MeetingOrchestrator()
     aggregator = PresenceAggregator()
     adapter = PresenceToAMOAdapter(amo, aggregator)

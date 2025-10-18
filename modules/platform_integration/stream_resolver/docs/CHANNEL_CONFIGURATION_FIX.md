@@ -10,9 +10,9 @@ Channel IDs were misassigned:
 - But the configuration had them swapped!
 
 ## Verification Results
-- ✅ **@UnDaoDu** → Channel ID: `UCSNTUXjAgpd4sgWYP0xoJgw`
-- ❌ **@Foundups** → Could not verify (may not exist or different handle)
-- ❓ **@MOVE2JAPAN** → Could not verify channel ID pattern
+- [OK] **@UnDaoDu** -> Channel ID: `UCSNTUXjAgpd4sgWYP0xoJgw`
+- [FAIL] **@Foundups** -> Could not verify (may not exist or different handle)
+- [U+2753] **@MOVE2JAPAN** -> Could not verify channel ID pattern
 
 ## Files Fixed
 Updated channel mappings in these files:
@@ -38,14 +38,14 @@ MOVE2JAPAN_CHANNEL_ID=UCklMTNnu5POwRmQsg5JJumA  # Move2Japan (needs verification
 ```
 
 ## Current Status
-- ✅ Channel mappings corrected in code
+- [OK] Channel mappings corrected in code
 - ⏳ **ACTION REQUIRED**: Update `.env` file with corrected channel IDs
-- ✅ Daemon will now properly attribute videos to correct channels
+- [OK] Daemon will now properly attribute videos to correct channels
 
 ## Impact
-- Videos from UnDaoDu will now be correctly labeled as "UnDaoDu 🧘"
-- Videos from FoundUps will be correctly labeled as "FoundUps 🐕"
-- Videos from Move2Japan will be correctly labeled as "Move2Japan 🍣"
+- Videos from UnDaoDu will now be correctly labeled as "UnDaoDu [U+1F9D8]"
+- Videos from FoundUps will be correctly labeled as "FoundUps [U+1F415]"
+- Videos from Move2Japan will be correctly labeled as "Move2Japan [U+1F363]"
 
 ## Next Steps
 1. Update `.env` file with the corrected channel IDs above

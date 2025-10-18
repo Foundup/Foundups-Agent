@@ -1,7 +1,7 @@
 # HoloDAE Qwen Throttle Enhancement Plan
 **Session:** 2025-10-07 | **Status:** ARCHITECTURE MAPPED - READY
 
-## Architecture Discovery ✓
+## Architecture Discovery [OK]
 
 **Key Files:**
 - `holo_index/qwen_advisor/holodae_coordinator.py`
@@ -9,8 +9,8 @@
 - `holo_index/cli.py`
 - Pattern reference: `modules/communication/livechat/src/intelligent_throttle_manager.py` (1057 lines)
 
-**Current:** All components fire → Noise
-**Target:** Intent-driven filtering → Signal
+**Current:** All components fire -> Noise
+**Target:** Intent-driven filtering -> Signal
 
 ## 5 Phases (Sequential, ~5 hours total)
 
@@ -21,8 +21,8 @@
 
 ### 2. Component Routing (45min)
 - ENHANCE: `qwen_orchestrator._get_orchestration_decisions(intent=...)`
-- Map intent → relevant components only
-- Example: DOC_LOOKUP → only `wsp_documentation_guardian`
+- Map intent -> relevant components only
+- Example: DOC_LOOKUP -> only `wsp_documentation_guardian`
 
 ### 3. Output Composition (60min)
 - NEW: `holo_index/output_composer.py`
@@ -31,7 +31,7 @@
 
 ### 4. Feedback Loop (45min)
 - NEW: `holo_index/feedback_learner.py`
-- Track: query → intent → components → outcome
+- Track: query -> intent -> components -> outcome
 - Learn: Downweight noisy, upweight useful
 - Flag: `--rate-output good/noisy`
 
@@ -49,7 +49,7 @@ RESEARCH: "how does PQN emergence work"
 GENERAL: "find youtube auth"
 ```
 
-## WSP Compliance ✓
+## WSP Compliance [OK]
 - WSP 50: Pre-action verification (searched existing)
 - WSP 64: Violation prevention (checked patterns)
 - WSP 84: Code reuse (found throttle pattern)

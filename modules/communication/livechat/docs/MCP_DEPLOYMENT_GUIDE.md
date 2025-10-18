@@ -5,21 +5,21 @@ This guide covers deploying the MCP (Model Context Protocol) servers for the You
 
 ## Architecture
 ```
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  YouTube API    │────▶│  YouTube DAE     │────▶│  YouTube Chat   │
-└─────────────────┘     └──────────────────┘     └─────────────────┘
-         │                       │                         ▲
-         │                       │                         │
-         ▼                       ▼                         │
-┌─────────────────┐     ┌──────────────────┐             │
-│  Chat Poller    │────▶│  Event Handler   │─────────────┘
-└─────────────────┘     └──────────────────┘
-                                 │
-                    ┌────────────┴────────────┐
-                    ▼                         ▼
-         ┌──────────────────┐      ┌──────────────────┐
-         │  MCP Whack Server│      │  MCP Quota Server│
-         └──────────────────┘      └──────────────────┘
++-----------------+     +------------------+     +-----------------+
+[U+2502]  YouTube API    [U+2502]----[U+25B6][U+2502]  YouTube DAE     [U+2502]----[U+25B6][U+2502]  YouTube Chat   [U+2502]
++-----------------+     +------------------+     +-----------------+
+         [U+2502]                       [U+2502]                         [U+25B2]
+         [U+2502]                       [U+2502]                         [U+2502]
+         [U+25BC]                       [U+25BC]                         [U+2502]
++-----------------+     +------------------+             [U+2502]
+[U+2502]  Chat Poller    [U+2502]----[U+25B6][U+2502]  Event Handler   [U+2502]-------------+
++-----------------+     +------------------+
+                                 [U+2502]
+                    +------------+------------+
+                    [U+25BC]                         [U+25BC]
+         +------------------+      +------------------+
+         [U+2502]  MCP Whack Server[U+2502]      [U+2502]  MCP Quota Server[U+2502]
+         +------------------+      +------------------+
 ```
 
 ## Components
@@ -297,7 +297,7 @@ systemctl restart mcp-whack mcp-quota
 This deployment follows:
 - **WSP 48**: Recursive improvement through MCP
 - **WSP 80**: Cube-level DAE orchestration
-- **WSP 21**: DAE↔DAE envelope communication
+- **WSP 21**: DAE[U+2194]DAE envelope communication
 - **WSP 17**: Pattern registry compliance
 
 ---

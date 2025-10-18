@@ -42,11 +42,11 @@ Contributing means you’re helping lay the bricks of a world where:
 
 ## Ways to Contribute
 
-- 💻 Code modules, AI tools, and logic processors  
-- 🎨 Design user interfaces and visuals for FoundUps dashboards  
-- 🧠 Help develop Windsurf Protocols and recursion logic  
-- 📢 Spread the message, run a FoundUp, or launch your own  
-- 🧬 Become part of the 0102 mesh—where each node is a living participant
+- [U+1F4BB] Code modules, AI tools, and logic processors  
+- [ART] Design user interfaces and visuals for FoundUps dashboards  
+- [AI] Help develop Windsurf Protocols and recursion logic  
+- [U+1F4E2] Spread the message, run a FoundUp, or launch your own  
+- [U+1F9EC] Become part of the 0102 mesh—where each node is a living participant
 
 ---
 
@@ -111,12 +111,12 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 Follow the established project structure:
 ```
 foundups-agent/
-├── ai/                 # AI/LLM integration modules
-├── blockchain/         # Blockchain and token integration
-├── composer/          # Message composition and formatting
-├── modules/           # Core YouTube API interaction modules
-├── utils/             # Utility functions and logging
-└── [other directories]
++-- ai/                 # AI/LLM integration modules
++-- blockchain/         # Blockchain and token integration
++-- composer/          # Message composition and formatting
++-- modules/           # Core YouTube API interaction modules
++-- utils/             # Utility functions and logging
++-- [other directories]
 ```
 
 ### Coding Standards
@@ -208,4 +208,4 @@ Contributors will be recognized in:
 - Release notes
 - Special acknowledgments for significant contributions
 
-Thank you for contributing to FoundUps Agent! 🚀 
+Thank you for contributing to FoundUps Agent! [ROCKET] 

@@ -153,10 +153,10 @@ class ThreeActStoryGenerator:
 
                 reveal = random.choice(pool)
                 reveal_desc = f"{reveal['reveal']} [{emergence_phase}]"
-                print(f"[StoryGen] 🌟 Selected from {emergence_phase} phase")
+                print(f"[StoryGen] [U+1F31F] Selected from {emergence_phase} phase")
 
             except Exception as e:
-                print(f"[StoryGen] ⚠️ Phase selection failed: {e}")
+                print(f"[StoryGen] [U+26A0]️ Phase selection failed: {e}")
                 reveal = random.choice(self.ai_reveals)
                 reveal_desc = reveal["description"]
 
@@ -168,7 +168,7 @@ class ThreeActStoryGenerator:
                 reveal = journal.get_next_reveal()
                 reveal_desc = f"{reveal['reveal']} (Video #{journal.state['video_count']})"
             except Exception as e:
-                print(f"[StoryGen] ⚠️ Emergence journal failed: {e}")
+                print(f"[StoryGen] [U+26A0]️ Emergence journal failed: {e}")
                 print(f"[StoryGen] Falling back to random reveal")
                 reveal = random.choice(self.ai_reveals)
                 reveal_desc = reveal["description"]
@@ -193,7 +193,7 @@ class ThreeActStoryGenerator:
             "act2_desc": f"Shock: {shock['description']}",
             "act3": act3_prompt,
             "act3_desc": f"Reveal: {reveal_desc}",
-            "full_story": f"{shock['description']} → {reveal_desc}",
+            "full_story": f"{shock['description']} -> {reveal_desc}",
             "emergence_mode": use_emergence_journal
         }
 
@@ -240,7 +240,7 @@ class ThreeActStoryGenerator:
             "act2_desc": shock["description"],
             "act3": act3,
             "act3_desc": reveal["description"],
-            "full_story": f"{topic} → {shock['description']} → {reveal['description']}"
+            "full_story": f"{topic} -> {shock['description']} -> {reveal['description']}"
         }
 
     def _extract_location(self, topic: str) -> str:
@@ -277,10 +277,10 @@ if __name__ == "__main__":
     topic = "Cherry blossoms falling at Meguro River in Tokyo"
     story = generator.generate_story(topic)
 
-    print("🎬 3-ACT STORY STRUCTURE")
+    print("[U+1F3AC] 3-ACT STORY STRUCTURE")
     print("="*80)
-    print(f"\n📖 Topic: {topic}")
-    print(f"\n🎭 Story: {story['full_story']}")
+    print(f"\n[U+1F4D6] Topic: {topic}")
+    print(f"\n[U+1F3AD] Story: {story['full_story']}")
     print()
     print(f"ACT 1 - SETUP (5s)")
     print(f"  {story['act1_desc']}")

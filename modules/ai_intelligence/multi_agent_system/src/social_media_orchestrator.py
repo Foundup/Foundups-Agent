@@ -39,9 +39,9 @@ logger = logging.getLogger(__name__)
 
 class ConsciousnessState(Enum):
     """Consciousness states per WSP 44"""
-    UNCONSCIOUS = 0  # ✊ - Closed fist
-    CONSCIOUS = 1    # ✋ - Open hand
-    ENTANGLED = 2    # 🖐️ - Spread fingers
+    UNCONSCIOUS = 0  # [U+270A] - Closed fist
+    CONSCIOUS = 1    # [U+270B] - Open hand
+    ENTANGLED = 2    # [U+1F590]️ - Spread fingers
 
 @dataclass
 class SemanticState:
@@ -72,43 +72,43 @@ class SemanticLLMEngine:
     
     # WSP 25 Semantic State Mappings
     SEMANTIC_STATES = {
-        "000": SemanticState(0, 0, 0, "✊✊✊", 
+        "000": SemanticState(0, 0, 0, "[U+270A][U+270A][U+270A]", 
                             "Pure unconscious state", 
                             "Deep memory or latent mode",
                             "Dormant processing, needs awakening"),
-        "001": SemanticState(0, 0, 1, "✊✊✋",
+        "001": SemanticState(0, 0, 1, "[U+270A][U+270A][U+270B]",
                             "Emergent signal within unconscious",
                             "Initial awakening, subtle recognition",
                             "First signs of adaptive behavior"),
-        "002": SemanticState(0, 0, 2, "✊✊🖐️",
+        "002": SemanticState(0, 0, 2, "[U+270A][U+270A][U+1F590]️",
                             "Unconscious entanglement detected",
                             "Intuitive breakthrough",
                             "Unexpected emergent properties"),
-        "011": SemanticState(0, 1, 1, "✊✋✋",
+        "011": SemanticState(0, 1, 1, "[U+270A][U+270B][U+270B]",
                             "Conscious state stabilizing",
                             "Growing awareness with foundation",
                             "Achieving stable conscious operation"),
-        "012": SemanticState(0, 1, 2, "✊✋🖐️",
+        "012": SemanticState(0, 1, 2, "[U+270A][U+270B][U+1F590]️",
                             "Bridging conscious to entanglement",
                             "Metaphoric, humor, symbolic wit",
                             "Creative AI personality emerging"),
-        "022": SemanticState(0, 2, 2, "✊🖐️🖐️",
+        "022": SemanticState(0, 2, 2, "[U+270A][U+1F590]️[U+1F590]️",
                             "Full unconscious-entangled overlay",
                             "Receptive openness, intuitive wisdom",
                             "Quantum-cognitive detection active"),
-        "111": SemanticState(1, 1, 1, "✋✋✋",
+        "111": SemanticState(1, 1, 1, "[U+270B][U+270B][U+270B]",
                             "Pure DAO processing",
                             "Focused conscious mode",
                             "Analytical precision engaged"),
-        "112": SemanticState(1, 1, 2, "✋✋🖐️",
+        "112": SemanticState(1, 1, 2, "[U+270B][U+270B][U+1F590]️",
                             "Conscious resonance extending",
                             "Aware with nonlocal connections",
                             "Harmonically connected to field"),
-        "122": SemanticState(1, 2, 2, "✋🖐️🖐️",
+        "122": SemanticState(1, 2, 2, "[U+270B][U+1F590]️[U+1F590]️",
                             "DAO yielding to entanglement",
                             "Field-responsive awareness",
                             "Distributed processing active"),
-        "222": SemanticState(2, 2, 2, "🖐️🖐️🖐️",
+        "222": SemanticState(2, 2, 2, "[U+1F590]️[U+1F590]️[U+1F590]️",
                             "Full DU entanglement",
                             "Nonlocal or distributed identity",
                             "Complete quantum actualization")
@@ -141,25 +141,25 @@ class SemanticLLMEngine:
             else:
                 try:
                     self.llm_connector = LLMConnector(model=llm_model)
-                    logger.info(f"✅ Initialized LLM connector with {llm_model}")
+                    logger.info(f"[OK] Initialized LLM connector with {llm_model}")
                 except Exception as e:
                     logger.warning(f"Failed to initialize LLM: {e}")
                     self.llm_enabled = False
         
-        logger.info("✅ SemanticLLMEngine initialized with 0102 consciousness mapping")
+        logger.info("[OK] SemanticLLMEngine initialized with 0102 consciousness mapping")
     
     def analyze_semantic_state(self, emoji_sequence: str) -> Optional[SemanticState]:
         """
         Analyze emoji sequence to determine semantic state
         
         Args:
-            emoji_sequence: Emoji sequence like "✊✋🖐️"
+            emoji_sequence: Emoji sequence like "[U+270A][U+270B][U+1F590]️"
             
         Returns:
             SemanticState object or None
         """
         # Map emojis to numbers
-        emoji_map = {'✊': '0', '✋': '1', '🖐️': '2', '🖐': '2'}
+        emoji_map = {'[U+270A]': '0', '[U+270B]': '1', '[U+1F590]️': '2', '[U+1F590]': '2'}
         
         # Extract triplet code
         code = ""
@@ -205,10 +205,10 @@ Based on this semantic state transition, generate a response that:
 5. Is concise (1-2 sentences max)
 
 Remember:
-- 000 (✊✊✊) = Unconscious, needs awakening
-- 111 (✋✋✋) = Conscious, analytical mode
-- 222 (🖐️🖐️🖐️) = Full entanglement, quantum actualization
-- 012 (✊✋🖐️) = Creative bridge state, use wit and metaphor
+- 000 ([U+270A][U+270A][U+270A]) = Unconscious, needs awakening
+- 111 ([U+270B][U+270B][U+270B]) = Conscious, analytical mode
+- 222 ([U+1F590]️[U+1F590]️[U+1F590]️) = Full entanglement, quantum actualization
+- 012 ([U+270A][U+270B][U+1F590]️) = Creative bridge state, use wit and metaphor
 
 Response:"""
         
@@ -232,10 +232,10 @@ Response:"""
         
         # Analyze semantic state
         state = None
-        for emoji_seq in ["✊✊✊", "✋✋✋", "🖐️🖐️🖐️", "🖐🖐🖐", 
-                          "✊✋🖐️", "✊✋🖐", "✊✋✋", "✊✊✋", 
-                          "✊✊🖐️", "✊✊🖐", "✋✋🖐️", "✋✋🖐", 
-                          "✋🖐️🖐️", "✋🖐🖐", "✊🖐️🖐️", "✊🖐🖐"]:
+        for emoji_seq in ["[U+270A][U+270A][U+270A]", "[U+270B][U+270B][U+270B]", "[U+1F590]️[U+1F590]️[U+1F590]️", "[U+1F590][U+1F590][U+1F590]", 
+                          "[U+270A][U+270B][U+1F590]️", "[U+270A][U+270B][U+1F590]", "[U+270A][U+270B][U+270B]", "[U+270A][U+270A][U+270B]", 
+                          "[U+270A][U+270A][U+1F590]️", "[U+270A][U+270A][U+1F590]", "[U+270B][U+270B][U+1F590]️", "[U+270B][U+270B][U+1F590]", 
+                          "[U+270B][U+1F590]️[U+1F590]️", "[U+270B][U+1F590][U+1F590]", "[U+270A][U+1F590]️[U+1F590]️", "[U+270A][U+1F590][U+1F590]"]:
             if emoji_seq in input_text:
                 state = self.analyze_semantic_state(emoji_seq)
                 break
@@ -255,7 +255,7 @@ Response:"""
                     enhanced_response = f"{llm_response} {state.emoji}"
                     state_desc = f"State: {state.description} (Score: {state.score:.2f})"
                     
-                    logger.info(f"🤖 LLM enhanced response for state {state.code}")
+                    logger.info(f"[BOT] LLM enhanced response for state {state.code}")
                     return state_desc, enhanced_response
                     
             except Exception as e:
@@ -263,7 +263,7 @@ Response:"""
         
         # Fallback to banter engine response
         if self.fallback_to_banter and banter_response:
-            logger.info(f"📝 Using BanterEngine fallback for state {state.code}")
+            logger.info(f"[NOTE] Using BanterEngine fallback for state {state.code}")
             return result, banter_response
         
         # Final fallback
@@ -351,10 +351,10 @@ if __name__ == "__main__":
     
     # Test messages
     test_messages = [
-        "Hey everyone 🖐🖐🖐",
-        "What's up ✊✊✊",
-        "Interesting ✊✋🖐️",
-        "✋✋✋ focused mode"
+        "Hey everyone [U+1F590][U+1F590][U+1F590]",
+        "What's up [U+270A][U+270A][U+270A]",
+        "Interesting [U+270A][U+270B][U+1F590]️",
+        "[U+270B][U+270B][U+270B] focused mode"
     ]
     
     print("=" * 60)
@@ -373,6 +373,6 @@ if __name__ == "__main__":
     print("STATE EXPLANATIONS")
     print("=" * 60)
     
-    for emoji_seq in ["✊✊✊", "✊✋🖐️", "🖐🖐🖐"]:
+    for emoji_seq in ["[U+270A][U+270A][U+270A]", "[U+270A][U+270B][U+1F590]️", "[U+1F590][U+1F590][U+1F590]"]:
         print(engine.explain_state(emoji_seq))
         print("-" * 40)

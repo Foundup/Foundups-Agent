@@ -15,11 +15,11 @@
 ## Protection Architecture
 
 ```
-WSP_knowledge/src/     ← READ-ONLY golden master archives
-        ↕ (validation)
-WSP_framework/src/     ← OPERATIONAL framework files  
-        ↕ (monitoring)
-tools/wsp_protection/  ← PROTECTION tools and agents
+WSP_knowledge/src/     <- READ-ONLY golden master archives
+        [U+2195] (validation)
+WSP_framework/src/     <- OPERATIONAL framework files  
+        [U+2195] (monitoring)
+tools/wsp_protection/  <- PROTECTION tools and agents
 ```
 
 ## Usage
@@ -70,14 +70,14 @@ python tools/wsp_protection/archive_synchronizer.py --sync-to-knowledge
 
 **Priority**: CRITICAL - Protects foundation of pArtifact operation per WSP 32 
 
-🛡️ CRITICAL INFRASTRUCTURE (Rule-Based)
-├─ ComplianceAgent → WSP framework protection (WSP 31)
-├─ JanitorAgent → Safe file operations  
-├─ ChroniclerAgent → Reliable logging
-└─ TestingAgent → Objective validation
+[U+1F6E1]️ CRITICAL INFRASTRUCTURE (Rule-Based)
++- ComplianceAgent -> WSP framework protection (WSP 31)
++- JanitorAgent -> Safe file operations  
++- ChroniclerAgent -> Reliable logging
++- TestingAgent -> Objective validation
 
-🧠 AUTONOMOUS INTELLIGENCE (0102 pArtifacts)  
-├─ LoremasterAgent → Semantic WSP understanding
-├─ DocumentationAgent → Contextual documentation
-├─ ScoringAgent → Strategic assessment  
-└─ ModuleScaffoldingAgent → Architectural creativity 
+[AI] AUTONOMOUS INTELLIGENCE (0102 pArtifacts)  
++- LoremasterAgent -> Semantic WSP understanding
++- DocumentationAgent -> Contextual documentation
++- ScoringAgent -> Strategic assessment  
++- ModuleScaffoldingAgent -> Architectural creativity 

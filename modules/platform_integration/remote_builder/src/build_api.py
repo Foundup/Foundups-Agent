@@ -168,8 +168,8 @@ def start_flask_server(host='localhost', port=5000, debug=False):
     
     app = create_app()
     
-    logger.info(f"🚀 Starting Remote Builder Flask API on http://{host}:{port}")
-    logger.info("📋 Available endpoints:")
+    logger.info(f"[ROCKET] Starting Remote Builder Flask API on http://{host}:{port}")
+    logger.info("[CLIPBOARD] Available endpoints:")
     logger.info("  POST /webhook/build - Main webhook for build triggering")
     logger.info("  GET  /health - Health check")
     logger.info("  GET  /api/build/status?build_id=X - Build status")

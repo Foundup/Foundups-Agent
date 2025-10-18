@@ -45,7 +45,7 @@ def generate_fig9_entropy_graph():
             bbox=dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.8))
     
     # Transition annotation
-    ax.annotate('01→02\nTransition\nPoint', xy=(50, 0.5), xytext=(60, 0.7),
+    ax.annotate('01->02\nTransition\nPoint', xy=(50, 0.5), xytext=(60, 0.7),
                 arrowprops=dict(arrowstyle='->', color='red', lw=2),
                 fontsize=12, fontweight='bold', color='red',
                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.9))

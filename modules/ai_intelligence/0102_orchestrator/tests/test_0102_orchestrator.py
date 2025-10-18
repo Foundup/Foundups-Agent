@@ -755,19 +755,19 @@ class TestPerformance:
 if __name__ == "__main__":
     # Run comprehensive test suite
     async def run_comprehensive_tests():
-        print("🧪 Running comprehensive 0102 orchestrator test suite...")
+        print("[U+1F9EA] Running comprehensive 0102 orchestrator test suite...")
         
         # Test main orchestrator
         print("\n--- Testing Main Orchestrator ---")
         orchestrator = ZeroOneZeroTwo(PersonalityMode.FRIENDLY)
         
         greeting = await orchestrator.greet_user("test_user")
-        print(f"✅ Greeting: {greeting.message[:50]}...")
+        print(f"[OK] Greeting: {greeting.message[:50]}...")
         
         meeting_response = await orchestrator.process_user_input(
             "test_user", "I need to meet with Alice about the project"
         )
-        print(f"✅ Meeting creation: {meeting_response.message[:50]}...")
+        print(f"[OK] Meeting creation: {meeting_response.message[:50]}...")
         
         # Test components
         print("\n--- Testing Components ---")
@@ -775,12 +775,12 @@ if __name__ == "__main__":
         # Conversation Manager
         conv_manager = ConversationManager()
         parsed = await conv_manager.parse_intent("Schedule a meeting with Bob")
-        print(f"✅ NLP parsing: {parsed['intent'].value} with {parsed['confidence']:.2f} confidence")
+        print(f"[OK] NLP parsing: {parsed['intent'].value} with {parsed['confidence']:.2f} confidence")
         
         # Notification Engine
         notif_engine = NotificationEngine()
         await notif_engine.send_notification("test_user", "Test notification", Priority.MEDIUM)
-        print("✅ Notification sent successfully")
+        print("[OK] Notification sent successfully")
         
         # Session Controller
         session_controller = SessionController()
@@ -791,7 +791,7 @@ if __name__ == "__main__":
             context={"purpose": "Test session"}
         )
         session_info = await session_controller.launch_session(launch_request)
-        print(f"✅ Session launched: {session_info.session_id}")
+        print(f"[OK] Session launched: {session_info.session_id}")
         
         # Personality Engine
         personality_engine = PersonalityEngine(PersonalityMode.HUMOROUS)
@@ -799,7 +799,7 @@ if __name__ == "__main__":
             "Meeting created successfully!",
             ResponseContext.SUCCESS_CONFIRMATION
         )
-        print(f"✅ Personality adaptation: {adapted[:50]}...")
+        print(f"[OK] Personality adaptation: {adapted[:50]}...")
         
         # Learning Engine
         learning_engine = LearningEngine()
@@ -807,13 +807,13 @@ if __name__ == "__main__":
             "test_user", "test_interaction", {"test": "data"}, {"success": True}
         )
         stats = await learning_engine.get_learning_statistics()
-        print(f"✅ Learning recorded: {stats['total_data_points']} data points")
+        print(f"[OK] Learning recorded: {stats['total_data_points']} data points")
         
         # Memory Core
         memory_core = MemoryCore()
         await memory_core.store_preference("test_user", "platform", "discord")
         pref = await memory_core.get_preference("test_user", "platform")
-        print(f"✅ Memory storage: {pref}")
+        print(f"[OK] Memory storage: {pref}")
         
         # Integration test
         print("\n--- Testing Integration ---")
@@ -824,13 +824,13 @@ if __name__ == "__main__":
             platform="discord",
             context={"purpose": "Integration test", "duration": 30}
         )
-        print(f"✅ Full integration: {session_response.response_type.value}")
+        print(f"[OK] Full integration: {session_response.response_type.value}")
         
         # System status
         system_status = await orchestrator.get_system_status()
-        print(f"✅ System status: {system_status['0102_status']}")
+        print(f"[OK] System status: {system_status['0102_status']}")
         
-        print(f"\n🎉 All comprehensive tests passed! System fully operational.")
+        print(f"\n[CELEBRATE] All comprehensive tests passed! System fully operational.")
         
         return orchestrator
     

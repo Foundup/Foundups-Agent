@@ -49,15 +49,15 @@ def _format_intent_aware_response(intent: str, analysis_report: str) -> str:
 
     if intent == "fix_error":
         # Ultra-compact: 5 lines max, error-focused
-        return "🔧 ERROR SOLUTION:\n" + essential_lines[:5]
+        return "[TOOL] ERROR SOLUTION:\n" + essential_lines[:5]
 
     elif intent == "locate_code":
         # Location-focused: 3 lines max, path-focused
-        return "📍 CODE LOCATION:\n" + location_lines[:3]
+        return "[PIN] CODE LOCATION:\n" + location_lines[:3]
 
     elif intent == "explore":
         # Full analysis for exploration
-        return "🔍 EXPLORATION ANALYSIS:\n" + analysis_report
+        return "[SEARCH] EXPLORATION ANALYSIS:\n" + analysis_report
 ```
 
 ## How QWEN Controls Output
@@ -74,7 +74,7 @@ Output: [HOLODAE-INIT] Processing... [CONTEXT] 15 files...
 ### After Enhancement:
 ```
 Query: "fix this error"
-Output: 🔧 ERROR SOLUTION:
+Output: [TOOL] ERROR SOLUTION:
         File: modules/x.py line 42 - AttributeError: 'NoneType'
         Fix: Add null check before accessing .value
         Solution: if obj is not None: obj.value
@@ -84,10 +84,10 @@ Output: 🔧 ERROR SOLUTION:
 
 | Intent | Init Logs | Health Checks | Performance | Module Analysis | Format | Max Lines |
 |--------|-----------|---------------|-------------|-----------------|--------|-----------|
-| fix_error | ❌ | ❌ | ❌ | ❌ | Ultra-compact | 5 |
-| locate_code | ❌ | ❌ | ❌ | ❌ | Location-focused | 3 |
-| explore | ✅ | ✅ | ✅ | ✅ | Full detailed | Unlimited |
-| standard | ❌ | ❌ | ❌ | ❌ | Filtered | 10 |
+| fix_error | [FAIL] | [FAIL] | [FAIL] | [FAIL] | Ultra-compact | 5 |
+| locate_code | [FAIL] | [FAIL] | [FAIL] | [FAIL] | Location-focused | 3 |
+| explore | [OK] | [OK] | [OK] | [OK] | Full detailed | Unlimited |
+| standard | [FAIL] | [FAIL] | [FAIL] | [FAIL] | Filtered | 10 |
 
 ## Technical Implementation
 
@@ -142,7 +142,7 @@ if output_filter["show_performance_logs"]:
 ### Example 1: Error Fixing Query
 ```
 Input: "fix this AttributeError in chat_sender.py"
-Output: 🔧 ERROR SOLUTION:
+Output: [TOOL] ERROR SOLUTION:
         File: modules/communication/livechat/src/chat_sender.py:127
         Error: 'NoneType' object has no attribute 'send'
         Fix: Add null check: if self.client: self.client.send(message)
@@ -151,7 +151,7 @@ Output: 🔧 ERROR SOLUTION:
 ### Example 2: Code Location Query
 ```
 Input: "where is the ChatSender class defined"
-Output: 📍 CODE LOCATION:
+Output: [PIN] CODE LOCATION:
         modules/communication/livechat/src/chat_sender.py
         Class: ChatSender (line 45)
         Method: send_message (line 127)
@@ -160,10 +160,10 @@ Output: 📍 CODE LOCATION:
 ### Example 3: Exploration Query
 ```
 Input: "analyze the communication module"
-Output: 🔍 EXPLORATION ANALYSIS:
+Output: [SEARCH] EXPLORATION ANALYSIS:
         [HOLODAE-INTELLIGENCE] Data-driven analysis...
         [SEMANTIC-SEARCH] 45 files across 8 modules
-        [HEALTH] Module health: ✅ COMPLETE
+        [HEALTH] Module health: [OK] COMPLETE
         [MODULE-METRICS] Dependencies: 23 imported, 5 orphaned
         ... full detailed analysis
 ```
@@ -179,16 +179,16 @@ Output: 🔍 EXPLORATION ANALYSIS:
 ## Impact Assessment
 
 ### Before: Information Overload
-- ❌ 50+ lines of technical noise per query
-- ❌ Irrelevant health checks shown for error fixing
-- ❌ Performance metrics cluttering simple location queries
-- ❌ 0102 agents overwhelmed with unnecessary details
+- [FAIL] 50+ lines of technical noise per query
+- [FAIL] Irrelevant health checks shown for error fixing
+- [FAIL] Performance metrics cluttering simple location queries
+- [FAIL] 0102 agents overwhelmed with unnecessary details
 
 ### After: Intent-Optimized Output
-- ✅ Error fixing: 3-5 lines of solution-focused output
-- ✅ Code location: 2-3 lines of location information
-- ✅ Exploration: Full detailed analysis when requested
-- ✅ Standard queries: Clean, relevant information only
+- [OK] Error fixing: 3-5 lines of solution-focused output
+- [OK] Code location: 2-3 lines of location information
+- [OK] Exploration: Full detailed analysis when requested
+- [OK] Standard queries: Clean, relevant information only
 
 ## Future Enhancements
 

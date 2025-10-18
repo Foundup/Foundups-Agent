@@ -11,9 +11,13 @@ Usage:
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -35,14 +39,14 @@ logger = logging.getLogger(__name__)
 async def test_github_integration():
     """Test GitHub integration functionality"""
     
-    print("🚀 Testing GitHub Integration for FoundUps Agent")
+    print("[ROCKET] Testing GitHub Integration for FoundUps Agent")
     print("=" * 50)
     
     # Check if token is available
     token = os.getenv("GITHUB_TOKEN")
     if not token:
-        print("❌ GITHUB_TOKEN not found in environment")
-        print("📝 Please add your GitHub token to the .env file:")
+        print("[FAIL] GITHUB_TOKEN not found in environment")
+        print("[NOTE] Please add your GitHub token to the .env file:")
         print("   1. Generate token at: https://github.com/settings/tokens")
         print("   2. Add to .env: GITHUB_TOKEN=your_token_here")
         print("   3. Ensure token has 'repo' and 'workflow' scopes")
@@ -53,30 +57,30 @@ async def test_github_integration():
         from modules.platform_integration.github_integration.src.wre_integration import WREGitHubIntegration
         from modules.platform_integration.github_integration.src.wsp_automation import WSPAutomationManager
         
-        print("✅ GitHub integration modules imported successfully")
+        print("[OK] GitHub integration modules imported successfully")
         
         # Test 1: Health Check
-        print("\n🏥 Running health check...")
+        print("\n[U+1F3E5] Running health check...")
         integration = WREGitHubIntegration(token=token)
         health = await integration.health_check()
         
         if health["overall_status"]:
-            print("✅ GitHub integration is healthy!")
+            print("[OK] GitHub integration is healthy!")
             print(f"   - User: {health.get('user', 'Unknown')}")
             print(f"   - Repository: {health.get('repository', 'Unknown')}")
             print(f"   - Rate limit: {health.get('rate_limit', {}).get('remaining', '?')}/{health.get('rate_limit', {}).get('limit', '?')}")
         else:
-            print("❌ GitHub integration has issues:")
+            print("[FAIL] GitHub integration has issues:")
             for error in health.get("errors", []):
                 print(f"   - {error}")
             return False
         
         # Test 2: Repository Status
-        print("\n📊 Checking repository status...")
+        print("\n[DATA] Checking repository status...")
         status = await integration.sync_repository_status()
         
         if "error" not in status:
-            print("✅ Repository status retrieved:")
+            print("[OK] Repository status retrieved:")
             print(f"   - Repository: {status['repository']['name']}")
             print(f"   - Default branch: {status['repository']['default_branch']}")
             print(f"   - Branches: {status['branches']['total']}")
@@ -84,15 +88,15 @@ async def test_github_integration():
             print(f"   - Open Issues: {status['issues']['open']}")
             print(f"   - Workflows: {status['workflows']['total']}")
         else:
-            print(f"❌ Failed to get repository status: {status['error']}")
+            print(f"[FAIL] Failed to get repository status: {status['error']}")
             return False
         
         # Test 3: WSP Compliance Scan
-        print("\n🔍 Running WSP compliance scan...")
+        print("\n[SEARCH] Running WSP compliance scan...")
         wsp_manager = WSPAutomationManager(token=token)
         violations = await wsp_manager.scan_for_violations()
         
-        print(f"✅ WSP scan complete: {len(violations)} violations found")
+        print(f"[OK] WSP scan complete: {len(violations)} violations found")
         if violations:
             # Group by type
             violation_types = {}
@@ -110,13 +114,13 @@ async def test_github_integration():
             auto_fixable = sum(1 for v in violations if v.auto_fixable)
             print(f"   - Auto-fixable: {auto_fixable}/{len(violations)}")
         else:
-            print("   🎉 No violations found - perfect WSP compliance!")
+            print("   [CELEBRATE] No violations found - perfect WSP compliance!")
         
         # Test 4: Generate Compliance Report
-        print("\n📋 Generating compliance report...")
+        print("\n[CLIPBOARD] Generating compliance report...")
         report = await wsp_manager.generate_compliance_report()
         
-        print(f"✅ Compliance report generated:")
+        print(f"[OK] Compliance report generated:")
         print(f"   - Compliance score: {report['compliance_score']}%")
         print(f"   - Total violations: {report['total_violations']}")
         print(f"   - Auto-fixable: {report['auto_fixable']}")
@@ -128,10 +132,10 @@ async def test_github_integration():
                 if count > 0:
                     print(f"   - {severity.title()}: {count}")
         
-        print("\n🎉 GitHub Integration Test Complete!")
+        print("\n[CELEBRATE] GitHub Integration Test Complete!")
         print("=" * 50)
-        print("✅ All tests passed - GitHub integration is working correctly!")
-        print("\n🚀 You can now use:")
+        print("[OK] All tests passed - GitHub integration is working correctly!")
+        print("\n[ROCKET] You can now use:")
         print("   - Automated PR creation")
         print("   - WSP violation detection and fixes") 
         print("   - Issue creation for violations")
@@ -141,11 +145,11 @@ async def test_github_integration():
         return True
         
     except ImportError as e:
-        print(f"❌ Failed to import GitHub integration modules: {e}")
-        print("💡 Make sure you're running from the project root directory")
+        print(f"[FAIL] Failed to import GitHub integration modules: {e}")
+        print("[IDEA] Make sure you're running from the project root directory")
         return False
     except Exception as e:
-        print(f"❌ Test failed with error: {e}")
+        print(f"[FAIL] Test failed with error: {e}")
         logger.exception("Test failed")
         return False
 
@@ -157,9 +161,9 @@ def main():
         from dotenv import load_dotenv
         try:
             load_dotenv(env_file)
-            print(f"✅ Loaded environment variables from {env_file}")
+            print(f"[OK] Loaded environment variables from {env_file}")
         except ImportError:
-            print("⚠️  python-dotenv not installed, reading environment manually")
+            print("[U+26A0]️  python-dotenv not installed, reading environment manually")
             # Simple .env parsing
             with open(env_file, 'r', encoding="utf-8") as f:
                 for line in f:
@@ -169,15 +173,15 @@ def main():
                         if value and not value.isspace():
                             os.environ[key.strip()] = value.strip()
     else:
-        print("⚠️  No .env file found - relying on system environment variables")
+        print("[U+26A0]️  No .env file found - relying on system environment variables")
     
     # Run the test
     success = asyncio.run(test_github_integration())
     
     if success:
-        print("\n✅ GitHub integration is ready for production use!")
+        print("\n[OK] GitHub integration is ready for production use!")
     else:
-        print("\n❌ Please fix the issues above before using GitHub integration.")
+        print("\n[FAIL] Please fix the issues above before using GitHub integration.")
     
     return 0 if success else 1
 

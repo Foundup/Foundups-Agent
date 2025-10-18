@@ -1,6 +1,6 @@
 # FoundUps SDK Module Roadmap
 
-## Current Status: ✅ Core SDK Complete
+## Current Status: [OK] Core SDK Complete
 - Python SDK with full API coverage
 - JavaScript SDK for Node.js
 - Comprehensive documentation

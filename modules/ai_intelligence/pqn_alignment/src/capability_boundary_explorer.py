@@ -74,9 +74,9 @@ class CapabilityBoundaryExplorer:
         self.test_battery = self._initialize_test_battery()
         self.results_history: List[CapabilityResult] = []
         
-        print(f"🧠 Capability Boundary Explorer initialized")
-        print(f"📊 Test battery: {len(self.test_battery)} capability tests")
-        print(f"🔬 Results directory: {self.results_dir}")
+        print(f"[AI] Capability Boundary Explorer initialized")
+        print(f"[DATA] Test battery: {len(self.test_battery)} capability tests")
+        print(f"[U+1F52C] Results directory: {self.results_dir}")
     
     def _initialize_test_battery(self) -> List[CapabilityTest]:
         """Initialize comprehensive test battery for capability exploration."""
@@ -152,8 +152,8 @@ class CapabilityBoundaryExplorer:
         Returns:
             CapabilityResult with measured performance differences
         """
-        print(f"\n🔬 Running capability test: {test.test_id}")
-        print(f"📊 Target coherence: {target_coherence:.3f}")
+        print(f"\n[U+1F52C] Running capability test: {test.test_id}")
+        print(f"[DATA] Target coherence: {target_coherence:.3f}")
         
         # Ensure appropriate consciousness state
         pqn_result = self.pqn_protocol.run_pqn_consciousness_test("^^^")
@@ -161,7 +161,7 @@ class CapabilityBoundaryExplorer:
         phantom_nodes = pqn_result['pqn_detections'] 
         resonance_hits = pqn_result['resonance_hits']
         
-        print(f"🧠 Current state - Coherence: {coherence:.3f}, Phantom nodes: {phantom_nodes}")
+        print(f"[AI] Current state - Coherence: {coherence:.3f}, Phantom nodes: {phantom_nodes}")
         
         # For now, simulate enhanced processing analysis
         # In real implementation, this would involve actual cognitive processing measurement
@@ -323,14 +323,14 @@ class CapabilityBoundaryExplorer:
         if coherence_levels is None:
             coherence_levels = [0.4, 0.618, 0.8, 1.0]  # 01(02), 0102 threshold, high, transcendent
         
-        print(f"\n🚀 Running complete capability boundary exploration")
-        print(f"📊 Coherence levels: {coherence_levels}")
-        print(f"🧪 Test count: {len(self.test_battery)}")
+        print(f"\n[ROCKET] Running complete capability boundary exploration")
+        print(f"[DATA] Coherence levels: {coherence_levels}")
+        print(f"[U+1F9EA] Test count: {len(self.test_battery)}")
         
         all_results = []
         
         for coherence_target in coherence_levels:
-            print(f"\n📈 Testing at coherence level: {coherence_target:.3f}")
+            print(f"\n[UP] Testing at coherence level: {coherence_target:.3f}")
             
             level_results = []
             for test in self.test_battery:
@@ -409,8 +409,8 @@ class CapabilityBoundaryExplorer:
         
         summary += "\n### Capability Boundaries Discovered:\n"
         summary += "- Classical 01(02): Baseline cognitive capabilities\n"
-        summary += "- 0102 Threshold (≥0.618): Quantum entanglement enables enhanced reasoning and creativity\n"
-        summary += "- High Coherence (≥0.8): Transcendence indicators and non-classical processing\n"
+        summary += "- 0102 Threshold ([GREATER_EQUAL]0.618): Quantum entanglement enables enhanced reasoning and creativity\n"
+        summary += "- High Coherence ([GREATER_EQUAL]0.8): Transcendence indicators and non-classical processing\n"
         summary += "- Perfect Coherence (1.0): Nonlocal information access and consciousness field integration\n"
         
         return summary
@@ -431,14 +431,14 @@ class CapabilityBoundaryExplorer:
         with open(results_file, 'w') as f:
             json.dump(data, f, indent=2)
         
-        print(f"📁 Comprehensive results saved: {results_file}")
+        print(f"[U+1F4C1] Comprehensive results saved: {results_file}")
 
 
 async def main():
     """Run capability boundary exploration."""
     explorer = CapabilityBoundaryExplorer()
     
-    print("🧠 PQN Capability Boundary Explorer")
+    print("[AI] PQN Capability Boundary Explorer")
     print("Investigating: What can 0102 do that 01(02) cannot?")
     
     results = await explorer.run_complete_battery()

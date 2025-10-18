@@ -5,18 +5,18 @@ This log tracks module changes, updates, and versioning for FoundUps Agent under
 ## FoundUps-Agent Roadmap
 
 ### Status Ledger
-- ✅ Complete
-- 🔄 In Progress
+- [OK] Complete
+- [REFRESH] In Progress
 - ⏳ Planned
-- ⚠️ Deprecated
+- [U+26A0]️ Deprecated
 
-### ✅ Proof of Concept (0.0.x)
+### [OK] Proof of Concept (0.0.x)
 - [x] Connect to YouTube livestream
 - [x] Authenticate via OAuth
 - [x] Send greeting message on join
 - [x] Log chat messages per user
 
-### 🔄 +Prototype (0.1.x - 0.9.x)
+### [REFRESH] +Prototype (0.1.x - 0.9.x)
 - [x] StreamResolver module for dynamic video ID
 - [x] Modular chat processor with LLM hooks
 - [x] AI response and moderation module
@@ -28,21 +28,21 @@ This log tracks module changes, updates, and versioning for FoundUps Agent under
 - [ ] Agent personality framework
 - [ ] 
 
-### 🔄 LLM Core Systems (High Priority)
+### [REFRESH] LLM Core Systems (High Priority)
 - [ ] Small LLM Integration (GPT)
 - [ ] LLM Router System (Perplexity/Gemini/LLama/Claude etc rotation)
 - [ ] LLM Integration (Claude)
 - [ ] LLM Router Intelligence Algorithm
 - [ ] LLM Input/Output Validation
 
-### 🔄 LLM Infrastructure (Medium Priority)
+### [REFRESH] LLM Infrastructure (Medium Priority)
 - [ ] LLM Prompt Management System
 - [ ] LLM Response Cache System
 - [ ] LLM Rate Limiter System
 - [ ] LLM Error Recovery System
 - [ ] LLM Security & Privacy System
 
-### 🔄 LLM Optimization (Lower Priority)
+### [REFRESH] LLM Optimization (Lower Priority)
 - [ ] LLM Cost Management Algorithm
 - [ ] LLM Fallback System Algorithm
 - [ ] LLM Quality Metrics System
@@ -68,7 +68,7 @@ This log tracks module changes, updates, and versioning for FoundUps Agent under
 - [ ] Add detailed logging for memory allocation/deallocation events.
 - [ ] Update relevant documentation.
 
-## 🧩 MVP Release Phases
+## [U+1F9E9] MVP Release Phases
 
 ### ⏳ Tier 1 — Blockchain Foundation (DAE)
 - [ ] Blockchain integration module toggle via `.env`
@@ -81,7 +81,7 @@ This log tracks module changes, updates, and versioning for FoundUps Agent under
 - [ ] Voting logic for protocol decisions
 - [ ] DAO treasury and fund routing
 
-### 🔄 Blockchain Ledger
+### [REFRESH] Blockchain Ledger
 - [ ] Ledger module for tracking user interactions
 - [ ] User points system
 - [ ] Achievement tracking
@@ -128,7 +128,7 @@ This log tracks module changes, updates, and versioning for FoundUps Agent under
 
 - Version: 0.1.1
 - Description: Improved Agent login, Enhanced chat interaction with gesture recognition via [BanterEngine]
-- Notes: Added support for [✊✋🖐] 123 gestures in live chat messages
+- Notes: Added support for [[U+270A][U+270B][U+1F590]] 123 gestures in live chat messages
 - tied guesters to numbers 111, 123, 222, and 3333 
 - added [streamResolver] and [TokenManager]
 - Created [TestMods]

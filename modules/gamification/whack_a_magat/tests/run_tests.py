@@ -30,7 +30,7 @@ def run_tests():
     ]
     
     print("=" * 60)
-    print("🎮 Running Whack-a-MAGA Tests")
+    print("[GAME] Running Whack-a-MAGA Tests")
     print("=" * 60)
     
     # Run pytest with arguments
@@ -38,12 +38,12 @@ def run_tests():
     
     if exit_code == 0:
         print("\n" + "=" * 60)
-        print("✅ All tests passed!")
-        print("📊 Coverage report generated in coverage_html/")
+        print("[OK] All tests passed!")
+        print("[DATA] Coverage report generated in coverage_html/")
         print("=" * 60)
     else:
         print("\n" + "=" * 60)
-        print("❌ Some tests failed!")
+        print("[FAIL] Some tests failed!")
         print("=" * 60)
     
     return exit_code

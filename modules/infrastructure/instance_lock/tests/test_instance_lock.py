@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Quick test to verify instance lock prevents duplicate YouTube monitors.
 """
 
@@ -10,7 +25,7 @@ import time
 
 def test_instance_lock():
     """Test that instance lock prevents multiple instances."""
-    print("🔒 Testing Instance Lock Prevention")
+    print("[LOCK] Testing Instance Lock Prevention")
     print("=" * 50)
 
     # Start first instance in background
@@ -25,12 +40,12 @@ def test_instance_lock():
     # Check if it's still running
     if proc1.poll() is not None:
         stdout, stderr = proc1.communicate()
-        print(f"❌ First instance exited early (code: {proc1.returncode})")
+        print(f"[FAIL] First instance exited early (code: {proc1.returncode})")
         print(f"STDOUT: {stdout.decode()}")
         print(f"STDERR: {stderr.decode()}")
         return False
 
-    print("✅ First instance is running (PID: {})".format(proc1.pid))
+    print("[OK] First instance is running (PID: {})".format(proc1.pid))
 
     # Try to start second instance
     print("\n2. Attempting to start second YouTube monitor instance...")
@@ -43,7 +58,7 @@ def test_instance_lock():
 
     # Check if second instance exited (should exit due to lock)
     if proc2.poll() is None:
-        print("❌ Second instance is still running - lock failed!")
+        print("[FAIL] Second instance is still running - lock failed!")
         proc2.terminate()
         proc1.terminate()
         return False
@@ -52,10 +67,10 @@ def test_instance_lock():
         output = stdout.decode() + stderr.decode()
 
         if "Duplicate main.py Instances Detected" in output:
-            print("✅ Second instance correctly detected duplicates and exited")
+            print("[OK] Second instance correctly detected duplicates and exited")
             print("   Lock prevention working!")
         else:
-            print("❌ Second instance exited but didn't show duplicate detection message")
+            print("[FAIL] Second instance exited but didn't show duplicate detection message")
             print(f"Output: {output}")
             proc1.terminate()
             return False
@@ -69,10 +84,10 @@ def test_instance_lock():
     time.sleep(2)
 
     if proc3.poll() is None:
-        print("✅ Third instance with --no-lock is running (multiple instances allowed)")
+        print("[OK] Third instance with --no-lock is running (multiple instances allowed)")
         proc3.terminate()
     else:
-        print("❌ Third instance with --no-lock exited unexpectedly")
+        print("[FAIL] Third instance with --no-lock exited unexpectedly")
         proc1.terminate()
         return False
 
@@ -82,12 +97,12 @@ def test_instance_lock():
 
     try:
         proc1.wait(timeout=5)
-        print("✅ First instance terminated cleanly")
+        print("[OK] First instance terminated cleanly")
     except subprocess.TimeoutExpired:
         proc1.kill()
-        print("⚠️ First instance had to be force-killed")
+        print("[U+26A0]️ First instance had to be force-killed")
 
-    print("\n🎉 Instance lock test completed successfully!")
+    print("\n[CELEBRATE] Instance lock test completed successfully!")
     print("   - Lock prevents duplicate instances")
     print("   - --no-lock flag allows multiple instances")
     print("   - Clean shutdown works properly")

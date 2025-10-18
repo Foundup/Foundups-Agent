@@ -6,7 +6,7 @@
 
      This ModLog documents changes to the WSP FRAMEWORK itself:
 
-     ✅ DOCUMENT HERE:
+     [OK] DOCUMENT HERE:
      - Creating NEW WSP protocol documents
 
 ---
@@ -75,20 +75,20 @@
      - WSP framework version changes
      - Cross-WSP architectural decisions
 
-     ❌ DO NOT DOCUMENT HERE:
+     [FAIL] DO NOT DOCUMENT HERE:
      - Implementing WSPs in modules (use module ModLog)
      - Module-specific features (use module ModLog)
      - Test implementations (use module/TestModLog)
      - System-wide changes (use root /ModLog.md)
 
      Per WSP 22:
-     - WSP creation → This file
-     - WSP implementation → modules/[module]/ModLog.md
-     - System-wide impact → /ModLog.md (root)
+     - WSP creation -> This file
+     - WSP implementation -> modules/[module]/ModLog.md
+     - System-wide impact -> /ModLog.md (root)
 
      When in doubt: "Am I changing the WSP framework itself?"
-     - YES → Document here
-     - NO → Document elsewhere
+     - YES -> Document here
+     - NO -> Document elsewhere
      ============================================================ -->
 
 ## 2025-10-10 - Root Directory Cleanup & WSP Documentation Enhancements
@@ -130,7 +130,7 @@
 
 **Changes Made**:
 - Updated `WSP_62_Large_File_Refactoring_Enforcement_Protocol.md` Python thresholds from 800/1000/1500 to 1200/1500/2000 (+50% increase)
-- Scaled domain-specific thresholds proportionally: ai_intelligence (600→900), infrastructure (400→600), communication (450→675), DAE modules (800→1200)
+- Scaled domain-specific thresholds proportionally: ai_intelligence (600->900), infrastructure (400->600), communication (450->675), DAE modules (800->1200)
 - Updated growth monitoring percentages: 80% (1600), 90% (1800), 95% (1900) of new 2000-line hard limit
 - Updated `intelligent_subroutine_engine.py` in HoloIndex to implement new thresholds with domain awareness
 

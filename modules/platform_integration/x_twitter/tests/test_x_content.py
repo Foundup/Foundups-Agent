@@ -22,7 +22,7 @@ test_cases = [
 ]
 
 for commit_msg, file_count in test_cases:
-    print(f"\n📝 Commit: '{commit_msg}' ({file_count} files)")
+    print(f"\n[NOTE] Commit: '{commit_msg}' ({file_count} files)")
     print("-"*40)
 
     # Generate content 3 times to see variety
@@ -34,11 +34,11 @@ for commit_msg, file_count in test_cases:
 
         # Verify it's under 280 chars
         if char_count > 280:
-            print("❌ TOO LONG!")
+            print("[FAIL] TOO LONG!")
         else:
-            print(f"✅ Fits in {280 - char_count} chars to spare")
+            print(f"[OK] Fits in {280 - char_count} chars to spare")
 
 print("\n" + "="*60)
-print("✅ X content generation working!")
+print("[OK] X content generation working!")
 print("Each post is compelling and under 280 chars")
 print("="*60)

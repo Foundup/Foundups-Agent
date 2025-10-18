@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WSP Integrity Checker with 0102 Intelligence
 
 Implements WSP 31: WSP Framework Protection Protocol
@@ -35,7 +50,7 @@ class WSPIntegrityChecker:
         
     def run_integrity_check(self) -> dict:
         """Run WSP integrity check based on mode"""
-        print(f"🔍 Running WSP Integrity Check (mode: {self.mode})")
+        print(f"[SEARCH] Running WSP Integrity Check (mode: {self.mode})")
         print("=" * 60)
         
         if self.mode == "deterministic":
@@ -47,7 +62,7 @@ class WSPIntegrityChecker:
     
     def _run_deterministic_only(self) -> dict:
         """Run deterministic checks only (fail-safe mode)"""
-        print("🛡️  Running DETERMINISTIC ONLY check (fail-safe mode)")
+        print("[U+1F6E1]️  Running DETERMINISTIC ONLY check (fail-safe mode)")
         
         try:
             # Force deterministic validation
@@ -62,12 +77,12 @@ class WSPIntegrityChecker:
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
             }
-            print(f"❌ Deterministic check failed: {str(e)}")
+            print(f"[FAIL] Deterministic check failed: {str(e)}")
             return error_result
     
     def _run_semantic_only(self) -> dict:
         """Run semantic analysis only (0102 intelligence)"""
-        print("🧠 Running SEMANTIC ONLY check (0102 intelligence)")
+        print("[AI] Running SEMANTIC ONLY check (0102 intelligence)")
         
         try:
             semantic_results = self.compliance_agent._semantic_analysis()
@@ -88,12 +103,12 @@ class WSPIntegrityChecker:
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
             }
-            print(f"❌ Semantic analysis failed: {str(e)}")
+            print(f"[FAIL] Semantic analysis failed: {str(e)}")
             return error_result
     
     def _run_full_check(self) -> dict:
         """Run complete WSP protection check (deterministic + 0102)"""
-        print("🌟 Running FULL WSP PROTECTION check (deterministic + 0102 intelligence)")
+        print("[U+1F31F] Running FULL WSP PROTECTION check (deterministic + 0102 intelligence)")
         
         try:
             # Use main protection function
@@ -108,50 +123,50 @@ class WSPIntegrityChecker:
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
             }
-            print(f"❌ Full check failed: {str(e)}")
+            print(f"[FAIL] Full check failed: {str(e)}")
             return error_result
     
     def _display_deterministic_results(self, results: dict):
         """Display deterministic validation results"""
-        print("\n📊 DETERMINISTIC VALIDATION RESULTS:")
+        print("\n[DATA] DETERMINISTIC VALIDATION RESULTS:")
         print("-" * 40)
         
         if results.get("passed"):
-            print("✅ Framework integrity: PASSED")
+            print("[OK] Framework integrity: PASSED")
         else:
-            print("❌ Framework integrity: FAILED")
+            print("[FAIL] Framework integrity: FAILED")
         
-        print(f"📁 Framework files exist: {results.get('framework_files_exist', 'Unknown')}")
-        print(f"📚 Knowledge files exist: {results.get('knowledge_files_exist', 'Unknown')}")
+        print(f"[U+1F4C1] Framework files exist: {results.get('framework_files_exist', 'Unknown')}")
+        print(f"[BOOKS] Knowledge files exist: {results.get('knowledge_files_exist', 'Unknown')}")
         
         file_integrity = results.get("file_integrity", {})
         if file_integrity.get("passed"):
-            print("✅ File integrity: PASSED")
+            print("[OK] File integrity: PASSED")
         else:
             corrupted = file_integrity.get("corrupted_files", [])
-            print(f"❌ File integrity: FAILED ({len(corrupted)} corrupted files)")
+            print(f"[FAIL] File integrity: FAILED ({len(corrupted)} corrupted files)")
             for file in corrupted[:5]:  # Show first 5
                 print(f"   - {file}")
         
         sync_status = results.get("cross_state_sync", {})
         if sync_status.get("synchronized"):
-            print("✅ Cross-state sync: SYNCHRONIZED")
+            print("[OK] Cross-state sync: SYNCHRONIZED")
         else:
-            print(f"⚠️  Cross-state sync: UNSYNCHRONIZED (score: {sync_status.get('sync_score', 0):.2f})")
+            print(f"[U+26A0]️  Cross-state sync: UNSYNCHRONIZED (score: {sync_status.get('sync_score', 0):.2f})")
     
     def _display_semantic_results(self, semantic: dict, utilization: dict):
         """Display semantic analysis results"""
-        print("\n🧠 SEMANTIC ANALYSIS RESULTS:")
+        print("\n[AI] SEMANTIC ANALYSIS RESULTS:")
         print("-" * 40)
         
         # Semantic coherence
         coherence = semantic.get("semantic_coherence", {})
         score = coherence.get("coherence_score", 0)
-        print(f"🎯 Semantic coherence score: {score}/100")
+        print(f"[TARGET] Semantic coherence score: {score}/100")
         
         issues = coherence.get("issues", [])
         if issues:
-            print(f"⚠️  Coherence issues found: {len(issues)}")
+            print(f"[U+26A0]️  Coherence issues found: {len(issues)}")
             for issue in issues[:3]:  # Show first 3
                 print(f"   - {issue.get('wsp')}: {issue.get('issue')}")
         
@@ -159,62 +174,62 @@ class WSPIntegrityChecker:
         drift = semantic.get("content_drift_analysis", {})
         if drift.get("drift_detected"):
             affected = drift.get("affected_wsps", [])
-            print(f"📊 Content drift detected in {len(affected)} WSPs")
+            print(f"[DATA] Content drift detected in {len(affected)} WSPs")
         else:
-            print("✅ No significant content drift detected")
+            print("[OK] No significant content drift detected")
         
         # Utilization assessment
-        print(f"\n📈 WSP UTILIZATION ASSESSMENT:")
+        print(f"\n[UP] WSP UTILIZATION ASSESSMENT:")
         effectiveness = utilization.get("utilization_effectiveness", {})
         overall = effectiveness.get("overall_effectiveness", 0)
-        print(f"🎯 Overall effectiveness: {overall}%")
+        print(f"[TARGET] Overall effectiveness: {overall}%")
         
         improvements = utilization.get("recursive_improvement_recommendations", [])
         if improvements:
-            print(f"💡 Improvement opportunities: {len(improvements)}")
+            print(f"[IDEA] Improvement opportunities: {len(improvements)}")
     
     def _display_full_results(self, results: dict):
         """Display complete protection results"""
         mode = results.get("protection_mode", results.get("mode", "unknown"))
-        print(f"\n🌟 FULL PROTECTION RESULTS (Mode: {mode}):")
+        print(f"\n[U+1F31F] FULL PROTECTION RESULTS (Mode: {mode}):")
         print("-" * 50)
         
         if mode == "FULL_0102_INTELLIGENCE":
-            print("✅ FULL 0102 INTELLIGENCE MODE ACTIVE")
+            print("[OK] FULL 0102 INTELLIGENCE MODE ACTIVE")
             
             # Deterministic core
             deterministic = results.get("deterministic_core", {})
             if deterministic.get("passed"):
-                print("✅ Deterministic core: PASSED")
+                print("[OK] Deterministic core: PASSED")
             else:
-                print("❌ Deterministic core: FAILED")
+                print("[FAIL] Deterministic core: FAILED")
             
             # Semantic analysis
             semantic = results.get("semantic_analysis", {})
             if semantic:
                 coherence = semantic.get("semantic_coherence", {})
                 score = coherence.get("coherence_score", 0)
-                print(f"🧠 Semantic coherence: {score}/100")
+                print(f"[AI] Semantic coherence: {score}/100")
             
             # Optimization recommendations
             optimization = results.get("optimization_recommendations", {})
             improvements = optimization.get("recursive_improvements", [])
             if improvements:
-                print(f"💡 Recursive improvements available: {len(improvements)}")
+                print(f"[IDEA] Recursive improvements available: {len(improvements)}")
                 for imp in improvements[:2]:  # Show first 2
                     print(f"   - {imp.get('type')}: {imp.get('description')}")
             
-            print(f"🎯 Overall status: {results.get('overall_status', 'unknown')}")
+            print(f"[TARGET] Overall status: {results.get('overall_status', 'unknown')}")
             
         elif mode in ["FAIL_SAFE_EMERGENCY", "EMERGENCY_DETERMINISTIC_ONLY"]:
-            print(f"🚨 EMERGENCY MODE: {mode}")
-            print("⚠️  LLM analysis disabled - deterministic protection only")
-            print("🛠️  Manual intervention may be required")
+            print(f"[ALERT] EMERGENCY MODE: {mode}")
+            print("[U+26A0]️  LLM analysis disabled - deterministic protection only")
+            print("[U+1F6E0]️  Manual intervention may be required")
             
         else:
             print(f"ℹ️  Protection mode: {mode}")
             if "error" in results:
-                print(f"❌ Error: {results['error']}")
+                print(f"[FAIL] Error: {results['error']}")
 
 def main():
     """Main entry point for WSP integrity checker"""
@@ -251,21 +266,21 @@ def main():
         with open(output_path, 'w') as f:
             json.dump(results, f, indent=2)
         
-        print(f"\n💾 Results saved to: {output_path}")
+        print(f"\n[U+1F4BE] Results saved to: {output_path}")
     
     # Display summary
-    print(f"\n📋 INTEGRITY CHECK SUMMARY:")
+    print(f"\n[CLIPBOARD] INTEGRITY CHECK SUMMARY:")
     print(f"Mode: {args.mode}")
     print(f"Timestamp: {results.get('timestamp', 'unknown')}")
     
     if results.get("protection_mode") == "FULL_0102_INTELLIGENCE":
-        print("Status: ✅ PROTECTED AND OPTIMIZED")
+        print("Status: [OK] PROTECTED AND OPTIMIZED")
     elif "emergency" in results.get("mode", "").lower():
-        print("Status: 🚨 EMERGENCY MODE")
+        print("Status: [ALERT] EMERGENCY MODE")
     elif results.get("passed"):
-        print("Status: ✅ PASSED")
+        print("Status: [OK] PASSED")
     else:
-        print("Status: ❌ ISSUES DETECTED")
+        print("Status: [FAIL] ISSUES DETECTED")
     
     # Exit code
     if results.get("passed") or results.get("protection_mode") == "FULL_0102_INTELLIGENCE":

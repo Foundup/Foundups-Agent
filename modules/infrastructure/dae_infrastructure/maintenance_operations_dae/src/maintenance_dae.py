@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Maintenance & Operations DAE - Autonomous System Keeper
 Absorbs 3 agents into single maintenance cube
 Token Budget: 5K (vs 60K for individual agents)
@@ -90,11 +107,11 @@ class MaintenanceOperationsDAE:
         return {
             "valid_states": ["inactive", "activating", "active", "self_maintaining", "hibernating"],
             "transitions": {
-                "inactive→activating": "initialization",
-                "activating→active": "ready",
-                "active→self_maintaining": "autonomous",
-                "active→hibernating": "idle",
-                "hibernating→active": "wake"
+                "inactive->activating": "initialization",
+                "activating->active": "ready",
+                "active->self_maintaining": "autonomous",
+                "active->hibernating": "idle",
+                "hibernating->active": "wake"
             }
         }
     
@@ -193,7 +210,7 @@ class MaintenanceOperationsDAE:
         state_result["current_state"] = current_state
         
         # Check valid transition
-        transition_key = f"{current_state}→{desired_state}"
+        transition_key = f"{current_state}->{desired_state}"
         if transition_key in self.state_patterns["transitions"]:
             state_result["transition"] = self.state_patterns["transitions"][transition_key]
             state_result["success"] = True
@@ -320,14 +337,14 @@ class MaintenanceOperationsDAE:
                 "token_reduction": f"{((60000 - self.token_budget) / 60000 * 100):.1f}%",
                 "automation": "100% autonomous",
                 "efficiency": "10x faster operations",
-                "complexity": "3 agents → 1 DAE"
+                "complexity": "3 agents -> 1 DAE"
             }
         }
 
 
 def demonstrate_maintenance_dae():
     """Demonstrate the Maintenance & Operations DAE."""
-    print("🔧 Maintenance & Operations DAE Demo")
+    print("[TOOL] Maintenance & Operations DAE Demo")
     print("=" * 60)
     
     dae = MaintenanceOperationsDAE()
@@ -356,7 +373,7 @@ def demonstrate_maintenance_dae():
     print("\n3. State Management (replaces agent-activation):")
     state = dae.manage_state("youtube_dae", "active")
     print(f"   Entity: {state['entity']}")
-    print(f"   Transition: {state['current_state']} → {state['desired_state']}")
+    print(f"   Transition: {state['current_state']} -> {state['desired_state']}")
     print(f"   Success: {state['success']}")
     print(f"   Tokens: {state['tokens_used']} (vs ~25K for agent)")
     
@@ -375,7 +392,7 @@ def demonstrate_maintenance_dae():
     print(f"   Automation: {comparison['improvements']['automation']}")
     print(f"   Efficiency: {comparison['improvements']['efficiency']}")
     
-    print("\n✅ Single DAE maintains system with 92% token reduction!")
+    print("\n[OK] Single DAE maintains system with 92% token reduction!")
 
 
 if __name__ == "__main__":

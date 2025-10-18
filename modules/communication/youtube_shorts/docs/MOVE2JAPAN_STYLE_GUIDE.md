@@ -7,7 +7,7 @@
 
 ---
 
-## 🎯 Core Brand Identity
+## [TARGET] Core Brand Identity
 
 ### Mission
 Help people discover the **real Japan** - not tourist traps, but authentic experiences that make you want to move there.
@@ -21,7 +21,7 @@ Help people discover the **real Japan** - not tourist traps, but authentic exper
 
 ---
 
-## 🎬 Video Style Guidelines
+## [U+1F3AC] Video Style Guidelines
 
 ### Visual Style
 - **Cinematic**: High-quality, film-like aesthetic
@@ -38,34 +38,34 @@ Help people discover the **real Japan** - not tourist traps, but authentic exper
 
 ---
 
-## 🌸 Japan Authenticity Filters
+## [U+1F338] Japan Authenticity Filters
 
 ### Must Include (Pick 1-2):
-- 🏯 **Architecture**: Temples, shrines, traditional buildings
-- 🌸 **Nature**: Cherry blossoms, bamboo, mountains, gardens
-- 🍜 **Food Culture**: Ramen, sushi, street food, izakaya
-- 🚇 **Urban Life**: Tokyo streets, neon, vending machines, trains
-- 🎎 **Cultural Elements**: Kimonos, festivals, traditional crafts
-- 🗻 **Iconic Locations**: Mt. Fuji, Kyoto, Shibuya, Osaka
+- [U+1F3EF] **Architecture**: Temples, shrines, traditional buildings
+- [U+1F338] **Nature**: Cherry blossoms, bamboo, mountains, gardens
+- [U+1F35C] **Food Culture**: Ramen, sushi, street food, izakaya
+- [U+1F687] **Urban Life**: Tokyo streets, neon, vending machines, trains
+- [U+1F38E] **Cultural Elements**: Kimonos, festivals, traditional crafts
+- [U+1F5FB] **Iconic Locations**: Mt. Fuji, Kyoto, Shibuya, Osaka
 
 ### Avoid (Western Stereotypes):
-- ❌ Anime/manga references (unless authentic)
-- ❌ Ninja/samurai without context
-- ❌ Over-the-top "weird Japan" tropes
-- ❌ Tourist-only perspectives
-- ❌ Generic Asian imagery
+- [FAIL] Anime/manga references (unless authentic)
+- [FAIL] Ninja/samurai without context
+- [FAIL] Over-the-top "weird Japan" tropes
+- [FAIL] Tourist-only perspectives
+- [FAIL] Generic Asian imagery
 
 ---
 
-## 💬 Tone Examples
+## [U+1F4AC] Tone Examples
 
-### ✅ Good (Fun, Cheeky, Authentic)
+### [OK] Good (Fun, Cheeky, Authentic)
 - "POV: You discover the secret 24-hour ramen spot locals won't tell tourists about"
 - "When the vending machine has *hot* corn soup and you realize Japan is the future"
 - "That moment you see Mount Fuji perfectly framed between Tokyo skyscrapers"
 - "Trying to be quiet in a Kyoto temple but the floorboards are designed to squeak"
 
-### ❌ Avoid (Too Serious or Cliché)
+### [FAIL] Avoid (Too Serious or Cliché)
 - "Experience the beauty of traditional Japanese architecture"
 - "Japan: Land of the Rising Sun"
 - "Ancient wisdom meets modern technology"
@@ -73,11 +73,11 @@ Help people discover the **real Japan** - not tourist traps, but authentic exper
 
 ---
 
-## 🎨 Visual Prompt Templates
+## [ART] Visual Prompt Templates
 
 ### Template 1: Discovery/Reveal
 ```
-Structure: Wide shot → Slow pan → Close-up reveal → Satisfying detail
+Structure: Wide shot -> Slow pan -> Close-up reveal -> Satisfying detail
 Example: "A narrow Tokyo alley at dusk, camera slowly panning to reveal a
 hidden ramen shop with steam rising from bowls, warm yellow light spilling
 onto wet pavement, a satisfied customer slurping noodles through the window"
@@ -85,7 +85,7 @@ onto wet pavement, a satisfied customer slurping noodles through the window"
 
 ### Template 2: POV Experience
 ```
-Structure: First-person view → Natural movement → Surprising element
+Structure: First-person view -> Natural movement -> Surprising element
 Example: "POV walking through a bamboo forest in Arashiyama, shafts of
 golden sunlight filtering through towering stalks, camera tilts up to reveal
 the canopy swaying in gentle wind, a hidden shrine appears in the distance"
@@ -93,7 +93,7 @@ the canopy swaying in gentle wind, a hidden shrine appears in the distance"
 
 ### Template 3: Cultural Moment
 ```
-Structure: Everyday scene → Uniquely Japanese detail → Emotional payoff
+Structure: Everyday scene -> Uniquely Japanese detail -> Emotional payoff
 Example: "A salary worker feeds coins into a vending machine at midnight,
 camera zooms to show 20+ drink options including hot coffee, he smiles as
 warm can dispenses, steam rising in the cold Tokyo night"
@@ -101,7 +101,7 @@ warm can dispenses, steam rising in the cold Tokyo night"
 
 ### Template 4: Nature + Culture Blend
 ```
-Structure: Natural beauty → Human element → Harmonious integration
+Structure: Natural beauty -> Human element -> Harmonious integration
 Example: "Cherry blossom petals drift across a traditional wooden bridge
 in Kyoto, a woman in kimono pauses to look at the reflection in the pond
 below, camera pulls back to reveal the entire scene bathed in soft pink light"
@@ -109,7 +109,7 @@ below, camera pulls back to reveal the entire scene bathed in soft pink light"
 
 ---
 
-## 🎭 Character Archetypes (For "Baby-Talking" Style)
+## [U+1F3AD] Character Archetypes (For "Baby-Talking" Style)
 
 ### The Curious Explorer
 - **Tone**: Wide-eyed wonder, gentle surprise
@@ -133,7 +133,7 @@ below, camera pulls back to reveal the entire scene bathed in soft pink light"
 
 ---
 
-## 📊 Engagement Hooks
+## [DATA] Engagement Hooks
 
 ### Opening Hooks (First 2 Seconds)
 1. **Surprise**: "You won't believe what's inside this vending machine..."
@@ -151,7 +151,7 @@ below, camera pulls back to reveal the entire scene bathed in soft pink light"
 
 ---
 
-## 🎵 Audio Considerations (Veo 3 Native Audio)
+## [U+1F3B5] Audio Considerations (Veo 3 Native Audio)
 
 ### Sound Profile
 - **Ambient**: Natural street sounds, footsteps, nature
@@ -166,7 +166,7 @@ below, camera pulls back to reveal the entire scene bathed in soft pink light"
 
 ---
 
-## 🌟 Example Perfect Prompts
+## [U+1F31F] Example Perfect Prompts
 
 ### Example 1: Food Discovery
 ```
@@ -177,11 +177,11 @@ in slow motion, warm golden lighting, the chef smiles proudly in the background
 ```
 
 **Why it works**:
-- ✅ Specific dish (tonkotsu ramen)
-- ✅ Real location (Osaka)
-- ✅ Sensory details (steam, golden lighting)
-- ✅ Human element (chef's pride)
-- ✅ Dynamic camera movement
+- [OK] Specific dish (tonkotsu ramen)
+- [OK] Real location (Osaka)
+- [OK] Sensory details (steam, golden lighting)
+- [OK] Human element (chef's pride)
+- [OK] Dynamic camera movement
 
 ### Example 2: Urban Discovery
 ```
@@ -192,11 +192,11 @@ in perfect synchronized chaos, a single person stops to look up in wonder
 ```
 
 **Why it works**:
-- ✅ Iconic location (Shibuya)
-- ✅ POV perspective (following footsteps)
-- ✅ Atmospheric (rain, neon)
-- ✅ Scale reveal (ground → massive screens)
-- ✅ Human moment (person in wonder)
+- [OK] Iconic location (Shibuya)
+- [OK] POV perspective (following footsteps)
+- [OK] Atmospheric (rain, neon)
+- [OK] Scale reveal (ground -> massive screens)
+- [OK] Human moment (person in wonder)
 
 ### Example 3: Nature Serenity
 ```
@@ -207,11 +207,11 @@ perfect symmetry, soft golden sunrise light bathes everything in warmth
 ```
 
 **Why it works**:
-- ✅ Peaceful atmosphere (mist, morning)
-- ✅ Cultural detail (ryokan, gravel patterns)
-- ✅ Natural beauty (koi, moss, Mt. Fuji)
-- ✅ Satisfying composition (symmetry)
-- ✅ Emotional payoff (warmth, beauty)
+- [OK] Peaceful atmosphere (mist, morning)
+- [OK] Cultural detail (ryokan, gravel patterns)
+- [OK] Natural beauty (koi, moss, Mt. Fuji)
+- [OK] Satisfying composition (symmetry)
+- [OK] Emotional payoff (warmth, beauty)
 
 ### Example 4: Everyday Magic
 ```
@@ -222,37 +222,37 @@ face lights up with simple joy, Tokyo skyline glows softly behind them
 ```
 
 **Why it works**:
-- ✅ Relatable character (tired worker)
-- ✅ Uniquely Japanese (amazing vending machines)
-- ✅ Sensory moments (steam, glow)
-- ✅ Emotional arc (tired → joy)
-- ✅ Cultural authenticity (salary worker culture)
+- [OK] Relatable character (tired worker)
+- [OK] Uniquely Japanese (amazing vending machines)
+- [OK] Sensory moments (steam, glow)
+- [OK] Emotional arc (tired -> joy)
+- [OK] Cultural authenticity (salary worker culture)
 
 ---
 
-## 🚫 Common Pitfalls to Avoid
+## [FORBIDDEN] Common Pitfalls to Avoid
 
 ### Visual
-- ❌ Generic "sunset over Japan" without specific location
-- ❌ Stock footage vibes (too polished, no personality)
-- ❌ Cultural appropriation (misusing sacred symbols)
-- ❌ Tourist trap focus (only famous spots)
+- [FAIL] Generic "sunset over Japan" without specific location
+- [FAIL] Stock footage vibes (too polished, no personality)
+- [FAIL] Cultural appropriation (misusing sacred symbols)
+- [FAIL] Tourist trap focus (only famous spots)
 
 ### Tone
-- ❌ Over-explaining (let visuals do the work)
-- ❌ Condescending "weird Japan" angle
-- ❌ Too serious/documentary style
-- ❌ Fake hype energy
+- [FAIL] Over-explaining (let visuals do the work)
+- [FAIL] Condescending "weird Japan" angle
+- [FAIL] Too serious/documentary style
+- [FAIL] Fake hype energy
 
 ### Content
-- ❌ Mixing Korean/Chinese elements (cultural confusion)
-- ❌ Anime-only reference (not real Japan)
-- ❌ Ignoring modern Japan (it's not all traditional)
-- ❌ Missing the human element (people make it relatable)
+- [FAIL] Mixing Korean/Chinese elements (cultural confusion)
+- [FAIL] Anime-only reference (not real Japan)
+- [FAIL] Ignoring modern Japan (it's not all traditional)
+- [FAIL] Missing the human element (people make it relatable)
 
 ---
 
-## 📈 Success Metrics
+## [UP] Success Metrics
 
 ### High-Performing Content Indicators
 1. **Watch Time**: 100% completion rate (15-30s)
@@ -262,16 +262,16 @@ face lights up with simple joy, Tokyo skyline glows softly behind them
 5. **Follows**: "Show me more Japan content"
 
 ### Content Themes That Work
-- 🔥 Hidden local spots
-- 🔥 Food close-ups (ASMR quality)
-- 🔥 "Day in the life" POV
-- 🔥 Seasonal beauty (sakura, autumn leaves, snow)
-- 🔥 Convenient tech (vending machines, trains)
-- 🔥 Cozy moments (cafes, onsen, quiet streets)
+- [U+1F525] Hidden local spots
+- [U+1F525] Food close-ups (ASMR quality)
+- [U+1F525] "Day in the life" POV
+- [U+1F525] Seasonal beauty (sakura, autumn leaves, snow)
+- [U+1F525] Convenient tech (vending machines, trains)
+- [U+1F525] Cozy moments (cafes, onsen, quiet streets)
 
 ---
 
-## 🎬 Production Checklist
+## [U+1F3AC] Production Checklist
 
 Before generating any Short, ensure:
 - [ ] Specific Japanese location mentioned
@@ -287,6 +287,6 @@ Before generating any Short, ensure:
 
 ---
 
-**Remember**: We're not making travel documentaries. We're creating **micro-moments of Japan magic** that make people want to book a flight. ✈️🇯🵧
+**Remember**: We're not making travel documentaries. We're creating **micro-moments of Japan magic** that make people want to book a flight. [U+2708]️🇯🵧
 
 Every Short should answer: "Why would I want to move to Japan?"

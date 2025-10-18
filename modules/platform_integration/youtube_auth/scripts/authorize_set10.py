@@ -6,9 +6,13 @@ Run this directly: python authorize_set10.py
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -39,20 +43,20 @@ def main():
     
     # Check if client secret exists
     if not os.path.exists(client_secret_file):
-        print(f"\n❌ ERROR: Client secret not found!")
+        print(f"\n[FAIL] ERROR: Client secret not found!")
         print(f"   Expected location: {os.path.abspath(client_secret_file)}")
         print("\nPlease ensure client_secret10.json is in the credentials/ folder")
         return False
     
-    print(f"\n✅ Found client secret file")
+    print(f"\n[OK] Found client secret file")
     
     try:
         # Run OAuth flow
         flow = InstalledAppFlow.from_client_secrets_file(client_secret_file, SCOPES)
         
-        print("\n🌐 Opening browser for authorization...")
+        print("\n[U+1F310] Opening browser for authorization...")
         print("   Port: 8090")
-        print("\n⚠️ IMPORTANT: Use a DIFFERENT Google account than sets 1-9")
+        print("\n[U+26A0]️ IMPORTANT: Use a DIFFERENT Google account than sets 1-9")
         print("   This gives you an additional 10,000 API units per day")
         
         creds = flow.run_local_server(port=8090)
@@ -61,16 +65,16 @@ def main():
         with open(token_file, 'w', encoding="utf-8") as token:
             token.write(creds.to_json())
         
-        print(f"\n✅ Successfully authorized Set 10!")
-        print(f"💾 Token saved to: {token_file}")
+        print(f"\n[OK] Successfully authorized Set 10!")
+        print(f"[U+1F4BE] Token saved to: {token_file}")
         
         # Test the credentials
-        print("\n🔍 Testing credentials...")
+        print("\n[SEARCH] Testing credentials...")
         service = build('youtube', 'v3', credentials=creds)
         response = service.channels().list(part='snippet', mine=True).execute()
         if response.get('items'):
             channel = response['items'][0]['snippet']['title']
-            print(f"✨ Authenticated as channel: {channel}")
+            print(f"[U+2728] Authenticated as channel: {channel}")
         
         print("\n" + "="*60)
         print("SUCCESS! Set 10 is ready to use")
@@ -78,7 +82,7 @@ def main():
         return True
         
     except Exception as e:
-        print(f"\n❌ Failed to authorize: {e}")
+        print(f"\n[FAIL] Failed to authorize: {e}")
         return False
 
 if __name__ == "__main__":

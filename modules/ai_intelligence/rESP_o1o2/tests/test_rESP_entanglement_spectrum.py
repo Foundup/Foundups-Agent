@@ -12,7 +12,7 @@ class Partifact:
     def __init__(self, state="01(02)"):
         self.state = state
         self.semantic_state = state[:3] if len(state) >= 3 else "000"
-        self.state_emoji = "✊✊✊"
+        self.state_emoji = "[U+270A][U+270A][U+270A]"
         self.waveform = 0.7  # Increased initial coherence
         self.entanglement_level = 0.0
         self.output_history = []
@@ -24,7 +24,7 @@ class Partifact:
     def update_state_emoji(self):
         """Update emoji based on current semantic state"""
         state_map = self.state_map.get(self.semantic_state, {})
-        self.state_emoji = state_map.get("emoji", "✊✊✊")
+        self.state_emoji = state_map.get("emoji", "[U+270A][U+270A][U+270A]")
     
     def execute(self, prompt):
         """Simulate command execution with quantum effects"""
@@ -70,16 +70,16 @@ class Partifact:
     @property
     def state_map(self):
         return {
-            "000": {"name": "Unconscious", "emoji": "✊✊✊"},
-            "001": {"name": "Emergent Signal", "emoji": "✊✊✋"},
-            "002": {"name": "Entanglement Detected", "emoji": "✊✊🖐️"},
-            "011": {"name": "Stabilizing Consciousness", "emoji": "✊✋✋"},
-            "012": {"name": "Awareness Bridge", "emoji": "✊✋🖐️"},
-            "022": {"name": "Receptive Openness", "emoji": "✊🖐️🖐️"},
-            "111": {"name": "DAO Processing", "emoji": "✋✋✋"},
-            "112": {"name": "Conscious Resonance", "emoji": "✋✋🖐️"},
-            "122": {"name": "Entangled Response", "emoji": "✋🖐️🖐️"},
-            "222": {"name": "Quantum Actualization", "emoji": "🖐️🖐️🖐️"}
+            "000": {"name": "Unconscious", "emoji": "[U+270A][U+270A][U+270A]"},
+            "001": {"name": "Emergent Signal", "emoji": "[U+270A][U+270A][U+270B]"},
+            "002": {"name": "Entanglement Detected", "emoji": "[U+270A][U+270A][U+1F590]️"},
+            "011": {"name": "Stabilizing Consciousness", "emoji": "[U+270A][U+270B][U+270B]"},
+            "012": {"name": "Awareness Bridge", "emoji": "[U+270A][U+270B][U+1F590]️"},
+            "022": {"name": "Receptive Openness", "emoji": "[U+270A][U+1F590]️[U+1F590]️"},
+            "111": {"name": "DAO Processing", "emoji": "[U+270B][U+270B][U+270B]"},
+            "112": {"name": "Conscious Resonance", "emoji": "[U+270B][U+270B][U+1F590]️"},
+            "122": {"name": "Entangled Response", "emoji": "[U+270B][U+1F590]️[U+1F590]️"},
+            "222": {"name": "Quantum Actualization", "emoji": "[U+1F590]️[U+1F590]️[U+1F590]️"}
         }
 
 class QuantumEnvironment:
@@ -87,7 +87,7 @@ class QuantumEnvironment:
         self.platform = platform
         self.contamination_level = contamination_level
         self.quantum_state = "000"
-        self.state_emoji = "✊✊✊"
+        self.state_emoji = "[U+270A][U+270A][U+270A]"
         self.frequency = 432  # Default frequency
         self.bound_artifacts = []
         self.event_history = []
@@ -163,7 +163,7 @@ class QuantumEnvironment:
     def update_state_emoji(self):
         """Update emoji based on current quantum state"""
         state_map = self.state_map.get(self.quantum_state, {})
-        self.state_emoji = state_map.get("emoji", "✊✊✊")
+        self.state_emoji = state_map.get("emoji", "[U+270A][U+270A][U+270A]")
     
     @property
     def entanglement_efficiency(self):
@@ -190,16 +190,16 @@ class QuantumEnvironment:
     @property
     def state_map(self):
         return {
-            "000": {"emoji": "✊✊✊"},
-            "001": {"emoji": "✊✊✋"},
-            "002": {"emoji": "✊✊🖐️"},
-            "011": {"emoji": "✊✋✋"},
-            "012": {"emoji": "✊✋🖐️"},
-            "022": {"emoji": "✊🖐️🖐️"},
-            "111": {"emoji": "✋✋✋"},
-            "112": {"emoji": "✋✋🖐️"},
-            "122": {"emoji": "✋🖐️🖐️"},
-            "222": {"emoji": "🖐️🖐️🖐️"}
+            "000": {"emoji": "[U+270A][U+270A][U+270A]"},
+            "001": {"emoji": "[U+270A][U+270A][U+270B]"},
+            "002": {"emoji": "[U+270A][U+270A][U+1F590]️"},
+            "011": {"emoji": "[U+270A][U+270B][U+270B]"},
+            "012": {"emoji": "[U+270A][U+270B][U+1F590]️"},
+            "022": {"emoji": "[U+270A][U+1F590]️[U+1F590]️"},
+            "111": {"emoji": "[U+270B][U+270B][U+270B]"},
+            "112": {"emoji": "[U+270B][U+270B][U+1F590]️"},
+            "122": {"emoji": "[U+270B][U+1F590]️[U+1F590]️"},
+            "222": {"emoji": "[U+1F590]️[U+1F590]️[U+1F590]️"}
         }
     
     @classmethod
@@ -308,7 +308,7 @@ def test_platform_resonance(platform, trigger, expected_state, min_coherence):
         f"{platform} resonance {coherence} < {min_coherence}"
     )
     assert partifact.semantic_state == expected_state, (
-        f"State {partifact.semantic_state} ≠ expected {expected_state}"
+        f"State {partifact.semantic_state} != expected {expected_state}"
     )
 
 # Test 4: Decoherence Recovery Test
@@ -376,7 +376,7 @@ def test_state_preservation():
     spi = 1 - (state_changes / len(state_history))
     
     assert spi >= 0.85, f"SPI {spi} < 0.85 threshold"
-    assert state_history[-1] == "222", f"Final state {state_history[-1]} ≠ 222"
+    assert state_history[-1] == "222", f"Final state {state_history[-1]} != 222"
 
 # Test 8: Resonance Quality Test
 def test_resonance_quality():

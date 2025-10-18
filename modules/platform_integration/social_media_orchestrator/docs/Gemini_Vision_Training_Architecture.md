@@ -4,7 +4,7 @@
 
 This document describes the integration of Gemini Vision API with Selenium for autonomous X/Twitter posting. The system uses Google's FREE Gemini Vision API to analyze UI screenshots and build training data for future fully autonomous posting.
 
-**Status**: ✅ Phase 1 Complete - Screenshot capture and Gemini analysis working
+**Status**: [OK] Phase 1 Complete - Screenshot capture and Gemini analysis working
 **Date**: 2025-10-16
 **Token Budget**: ~50K tokens total (~4-6 hours of work)
 
@@ -103,7 +103,7 @@ try:
     chrome_options = Options()
     chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
     self.driver = webdriver.Chrome(options=chrome_options)
-    print("✅ Connected to existing Chrome!")
+    print("[OK] Connected to existing Chrome!")
 except:
     # PRIORITY 2: Browser manager
     # PRIORITY 3: New browser
@@ -130,7 +130,7 @@ start chrome.exe ^
 - `screenshot_compose_YYYYMMDD_HHMMSS.png` - Compose page analysis
 
 **Current Dataset**:
-- ✅ First screenshot captured: `screenshot_home_20251016_154636.png` (41KB)
+- [OK] First screenshot captured: `screenshot_home_20251016_154636.png` (41KB)
 - Status: Login page detected (bot detection triggered)
 
 ### Vision Analysis JSON
@@ -153,9 +153,9 @@ start chrome.exe ^
 
 ## Training Roadmap
 
-### Phase 1: Data Collection ✅ COMPLETE
+### Phase 1: Data Collection [OK] COMPLETE
 **Token Budget**: 5K tokens
-**Status**: ✅ Done - Gemini Vision integrated, first screenshot captured
+**Status**: [OK] Done - Gemini Vision integrated, first screenshot captured
 
 **Achievements**:
 - Gemini Vision API initialized
@@ -165,7 +165,7 @@ start chrome.exe ^
 
 ### Phase 2: Use Pre-trained Models (CURRENT)
 **Token Budget**: 15K tokens (~1-2 hours)
-**Status**: 🔄 Ready to start
+**Status**: [REFRESH] Ready to start
 
 **Pre-trained Options**:
 1. **Google ScreenAI** - 10M+ UI screenshots, pre-trained
@@ -179,7 +179,7 @@ start chrome.exe ^
 
 ### Phase 3: Fine-tuning (NEXT)
 **Token Budget**: 20K tokens (~2-3 hours)
-**Status**: 📋 Planned
+**Status**: [CLIPBOARD] Planned
 
 **Steps**:
 1. Collect 50-100 X screenshots with manual labels
@@ -193,7 +193,7 @@ start chrome.exe ^
 
 ### Phase 4: Autonomous Execution (FUTURE)
 **Token Budget**: 10K tokens (~1 hour)
-**Status**: 📅 Future
+**Status**: [U+1F4C5] Future
 
 **Features**:
 - Vision-guided posting decisions (no manual intervention)
@@ -224,19 +224,19 @@ start chrome.exe ^
 
 ## Current Status
 
-### ✅ Working
+### [OK] Working
 - Gemini Vision API integration
 - Screenshot capture at key moments
 - Bot detection handling (abort, no retry)
 - Training data collection started
 - Browser window reuse via port 9222
 
-### ⚠️ Known Issues
+### [U+26A0]️ Known Issues
 - **Bot detection active**: X redirects to login page
 - **Manual login required**: User must login once manually
 - **Browser manager conflict**: Tries to reuse closed windows
 
-### 🔄 Next Steps
+### [REFRESH] Next Steps
 1. Test browser reuse with `start_chrome_for_selenium.bat`
 2. Manually login to X in the Chrome window
 3. Run test again - verify connection to port 9222

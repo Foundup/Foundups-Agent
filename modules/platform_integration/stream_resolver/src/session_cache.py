@@ -51,17 +51,17 @@ class SessionCache:
 
                 # Validate cache structure
                 if isinstance(cache_data, dict) and 'video_id' in cache_data and 'chat_id' in cache_data:
-                    self.logger.info("📂 Loaded valid session cache")
+                    self.logger.info("[U+1F4C2] Loaded valid session cache")
                     return cache_data
                 else:
-                    self.logger.warning("📂 Invalid cache structure, ignoring")
+                    self.logger.warning("[U+1F4C2] Invalid cache structure, ignoring")
                     return None
             else:
-                self.logger.debug("📂 No session cache file found")
+                self.logger.debug("[U+1F4C2] No session cache file found")
                 return None
 
         except (json.JSONDecodeError, IOError) as e:
-            self.logger.warning(f"📂 Failed to load session cache: {e}")
+            self.logger.warning(f"[U+1F4C2] Failed to load session cache: {e}")
             return None
 
     def save_cache(self, video_id: str, chat_id: str, title: Optional[str] = None):
@@ -84,10 +84,10 @@ class SessionCache:
             with open(self.cache_file, 'w', encoding='utf-8') as f:
                 json.dump(cache_data, f, indent=2, ensure_ascii=False)
 
-            self.logger.info(f"💾 Saved session cache for video {video_id[:12]}...")
+            self.logger.info(f"[U+1F4BE] Saved session cache for video {video_id[:12]}...")
 
         except Exception as e:
-            self.logger.error(f"💾 Failed to save session cache: {e}")
+            self.logger.error(f"[U+1F4BE] Failed to save session cache: {e}")
 
     def try_cached_stream(self, cache: Dict[str, Any]) -> Tuple[Optional[str], Optional[str]]:
         """
@@ -107,7 +107,7 @@ class SessionCache:
 
         if video_id and chat_id:
             # Could add validation here to check if stream is still live
-            self.logger.info(f"🔄 Using cached stream: {video_id[:12]}...")
+            self.logger.info(f"[REFRESH] Using cached stream: {video_id[:12]}...")
             return video_id, chat_id
 
         return None, None
@@ -117,9 +117,9 @@ class SessionCache:
         try:
             if self.cache_file.exists():
                 self.cache_file.unlink()
-                self.logger.info("🗑️ Cleared session cache")
+                self.logger.info("[U+1F5D1]️ Cleared session cache")
         except Exception as e:
-            self.logger.error(f"🗑️ Failed to clear session cache: {e}")
+            self.logger.error(f"[U+1F5D1]️ Failed to clear session cache: {e}")
 
     def _current_timestamp(self) -> str:
         """Get current timestamp for cache metadata."""

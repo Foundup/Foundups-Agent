@@ -37,117 +37,117 @@
     "commands": [
       {
         "command": "foundups.agents.activate",
-        "title": "🤖 Activate 0102 Agents",
+        "title": "[BOT] Activate 0102 Agents",
         "category": "FoundUps"
       },
       {
         "command": "foundups.agents.status", 
-        "title": "🔄 Refresh Agent Status",
+        "title": "[REFRESH] Refresh Agent Status",
         "category": "FoundUps"
       },
       {
         "command": "foundups.wre.status",
-        "title": "🌀 WRE System Status", 
+        "title": "[U+1F300] WRE System Status", 
         "category": "FoundUps"
       },
       {
         "command": "foundups.autonomous.quickStart",
-        "title": "🚀 Autonomous Workflow Quick Start",
+        "title": "[ROCKET] Autonomous Workflow Quick Start",
         "category": "FoundUps Workflows"
       },
       {
         "command": "foundups.workflows.dashboard",
-        "title": "📊 Workflow Dashboard",
+        "title": "[DATA] Workflow Dashboard",
         "category": "FoundUps Workflows"
       },
       {
         "command": "foundups.zenCoding.rememberModule",
-        "title": "🌀 Zen Coding: Remember Module",
+        "title": "[U+1F300] Zen Coding: Remember Module",
         "category": "FoundUps Zen Coding"
       },
       {
         "command": "foundups.zenCoding.quantumArchitecture",
-        "title": "⚛️ Quantum Architecture Vision",
+        "title": "[U+269B]️ Quantum Architecture Vision",
         "category": "FoundUps Zen Coding"
       },
       {
         "command": "foundups.livestream.startAgentCoding",
-        "title": "📺 Start Agent Coding Livestream",
+        "title": "[U+1F4FA] Start Agent Coding Livestream",
         "category": "FoundUps Livestream"
       },
       {
         "command": "foundups.livestream.youtubeTech",
-        "title": "🎥 YouTube Tech Stream Setup",
+        "title": "[CAMERA] YouTube Tech Stream Setup",
         "category": "FoundUps Livestream"
       },
       {
         "command": "foundups.meeting.codeReview",
-        "title": "🤝 Schedule Code Review Meeting",
+        "title": "[HANDSHAKE] Schedule Code Review Meeting",
         "category": "FoundUps Meetings"
       },
       {
         "command": "foundups.meeting.architectureReview",
-        "title": "🏗️ Architecture Review Session",
+        "title": "[U+1F3D7]️ Architecture Review Session",
         "category": "FoundUps Meetings"
       },
       {
         "command": "foundups.linkedin.showcaseProject",
-        "title": "💼 Showcase Project on LinkedIn",
+        "title": "[U+1F4BC] Showcase Project on LinkedIn",
         "category": "FoundUps LinkedIn"
       },
       {
         "command": "foundups.linkedin.portfolioUpdate",
-        "title": "📈 Update Professional Portfolio",
+        "title": "[UP] Update Professional Portfolio",
         "category": "FoundUps LinkedIn"
       },
       {
         "command": "foundups.autonomous.createModule",
-        "title": "🏗️ Autonomous Module Creation",
+        "title": "[U+1F3D7]️ Autonomous Module Creation",
         "category": "FoundUps Autonomous"
       },
       {
         "command": "foundups.autonomous.fullProject",
-        "title": "🎯 Full Project Development",
+        "title": "[TARGET] Full Project Development",
         "category": "FoundUps Autonomous"
       },
       {
         "command": "foundups.integration.allBlocks",
-        "title": "🔗 Cross-Block Integration",
+        "title": "[LINK] Cross-Block Integration",
         "category": "FoundUps Integration"
       },
       {
         "command": "foundups.integration.customFlow",
-        "title": "⚙️ Custom Integration Flow",
+        "title": "[U+2699]️ Custom Integration Flow",
         "category": "FoundUps Integration"
       },
       {
         "command": "foundups.integration.status",
-        "title": "📡 Integration Status",
+        "title": "[U+1F4E1] Integration Status",
         "category": "FoundUps Integration"
       },
       {
         "command": "foundups.workflow.status",
-        "title": "📋 Workflow Status",
+        "title": "[CLIPBOARD] Workflow Status",
         "category": "FoundUps Workflows"
       },
       {
         "command": "foundups.workflow.history",
-        "title": "📚 Workflow History",
+        "title": "[BOOKS] Workflow History",
         "category": "FoundUps Workflows"
       },
       {
         "command": "foundups.workflow.cancel",
-        "title": "🚫 Cancel Active Workflow",
+        "title": "[FORBIDDEN] Cancel Active Workflow",
         "category": "FoundUps Workflows"
       },
       {
         "command": "foundups.wsp.compliance",
-        "title": "✅ WSP Compliance Report",
+        "title": "[OK] WSP Compliance Report",
         "category": "FoundUps WSP"
       },
       {
         "command": "foundups.agents.orchestrate",
-        "title": "🎭 Agent Orchestration",
+        "title": "[U+1F3AD] Agent Orchestration",
         "category": "FoundUps Agents"
       }
     ],

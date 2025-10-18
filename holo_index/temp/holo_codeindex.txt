@@ -17,41 +17,41 @@
 [08:08:18] [HOLO-INFO] Setting up persistent ChromaDB collections...
 [08:08:18] [HOLO-MODEL] Loading sentence transformer (cached on SSD)...
 [FRESH] All indexes are up to date (< 1 hour old)
-[08:08:22] 🤖🧠 [QWEN-INTENT-INIT] 🎯 Intent classifier initialized
-[08:08:22] 🤖🧠 [QWEN-BREADCRUMB-INIT] 🍞 Breadcrumb tracer initialized
-[08:08:22] 🤖🧠 [QWEN-COMPOSER-INIT] 📝 Output composer initialized
-[08:08:22] 🤖🧠 [QWEN-LEARNER-INIT] 📊 Feedback learner initialized
-[08:08:22] 🤖🧠 [QWEN-MCP-INIT] 🔗 Research MCP client initialized successfully
+[08:08:22] [BOT][AI] [QWEN-INTENT-INIT] [TARGET] Intent classifier initialized
+[08:08:22] [BOT][AI] [QWEN-BREADCRUMB-INIT] [BREAD] Breadcrumb tracer initialized
+[08:08:22] [BOT][AI] [QWEN-COMPOSER-INIT] [NOTE] Output composer initialized
+[08:08:22] [BOT][AI] [QWEN-LEARNER-INIT] [DATA] Feedback learner initialized
+[08:08:22] [BOT][AI] [QWEN-MCP-INIT] [LINK] Research MCP client initialized successfully
 [08:08:22] [0102::HOLO-SEARCH] [AGENT-INIT] role=HOLO-SEARCH identity=0102 stream=unified
 [08:08:22] [0102::HOLO-SEARCH] [SEARCH] query='CodeIndex' | results=0 | code_hits=0 | wsp_hits=0
 [08:08:22] [HOLO-SEARCH] Searching for: 'CodeIndex'
 [08:08:22] [HOLO-PERF] Dual search completed in 133.8ms - 5 code, 5 WSP results
 [08:08:22] [0102::HOLO-SEARCH] [SEARCH] query='CodeIndex' | results=10 | code_hits=5 | wsp_hits=5
 [08:08:22] [HOLO-COMPLETE] Search 'CodeIndex' complete - 10 total results
-[08:08:22] 🤖🧠 [QWEN-INIT] Processing HoloIndex query: 'CodeIndex'
-[08:08:22] 🤖🧠 [QWEN-CONTEXT] Found 10 files across 3 modules
+[08:08:22] [BOT][AI] [QWEN-INIT] Processing HoloIndex query: 'CodeIndex'
+[08:08:22] [BOT][AI] [QWEN-CONTEXT] Found 10 files across 3 modules
 [08:08:22] [0102::BREADCRUMB] [AGENT-INIT] role=BREADCRUMB identity=0102 stream=unified
-[08:08:22] [0102::BREADCRUMB] 🍞 [BREADCRUMB #1] action_taken - agent=0102 | session=0102_20251013_080822
-[08:08:22] 🤖🧠 [QWEN-INTENT] 🎯 Classified as GENERAL (confidence: 0.50, patterns: 0)
-[08:08:22] 🤖🧠 [QWEN-MCP-SKIP] ⏭️ Intent general - skipping MCP research tools
-[08:08:22] [0102::BREADCRUMB] 🍞 [BREADCRUMB #2] discovery - agent=0102 | session=0102_20251013_080822
-[08:08:22] 🤖🧠 [QWEN-ROUTING] 📍 Intent general → 7 components selected (filtered 0)
-[08:08:22] 🤖🧠 [QWEN-DECISION] EXECUTE 💊✅ Health & WSP Compliance (confidence: 0.90) - triggered by query_contains_health, triggered by has_modules
-[08:08:22] 🤖🧠 [QWEN-DECISION] EXECUTE 🧠 Vibecoding Analysis (confidence: 0.70) - triggered by has_files
-[08:08:22] 🤖🧠 [QWEN-DECISION] EXECUTE 📏 File Size Monitor (confidence: 0.70) - triggered by has_files
-[08:08:22] 🤖🧠 [QWEN-DECISION] EXECUTE 📦 Module Analysis (confidence: 0.70) - triggered by has_modules
-[08:08:22] 🤖🧠 [QWEN-DECISION] EXECUTE 🧠 Pattern Coach (confidence: 0.70) - triggered by has_files
-[08:08:22] 🤖🧠 [QWEN-DECISION] EXECUTE 👻 Orphan Analysis (confidence: 0.90) - triggered by query_contains_health, triggered by has_modules
-[08:08:22] 🤖🧠 [QWEN-DECISION] EXECUTE 📚 WSP Documentation Guardian (confidence: 0.70) - triggered by has_files
-[08:08:22] 🤖🧠 [QWEN-PERFORMANCE] 💊✅ Health & WSP Compliance executed with results
-[08:08:22] 🤖🧠 [QWEN-PERFORMANCE] 🧠 Vibecoding Analysis executed with results
-[08:08:22] 🤖🧠 [QWEN-PERFORMANCE] 📏 File Size Monitor executed with results
-[08:08:22] 🤖🧠 [QWEN-PERFORMANCE] 📦 Module Analysis executed with results
-[08:08:22] 🤖🧠 [QWEN-PERFORMANCE] 🧠 Pattern Coach executed with results
-[08:08:22] 🤖🧠 [QWEN-PERFORMANCE] 👻 Orphan Analysis executed with results
-[08:08:22] 🤖🧠 [QWEN-PERFORMANCE] 📚 WSP Documentation Guardian executed with results
-[08:08:22] [0102::BREADCRUMB] 🍞 [BREADCRUMB #5] action_taken - agent=0102 | session=0102_20251013_080822
-[08:08:22] [0102::BREADCRUMB] 🍞 [BREADCRUMB #6] action_taken - agent=0102 | session=0102_20251013_080822
+[08:08:22] [0102::BREADCRUMB] [BREAD] [BREADCRUMB #1] action_taken - agent=0102 | session=0102_20251013_080822
+[08:08:22] [BOT][AI] [QWEN-INTENT] [TARGET] Classified as GENERAL (confidence: 0.50, patterns: 0)
+[08:08:22] [BOT][AI] [QWEN-MCP-SKIP] ⏭️ Intent general - skipping MCP research tools
+[08:08:22] [0102::BREADCRUMB] [BREAD] [BREADCRUMB #2] discovery - agent=0102 | session=0102_20251013_080822
+[08:08:22] [BOT][AI] [QWEN-ROUTING] [PIN] Intent general -> 7 components selected (filtered 0)
+[08:08:22] [BOT][AI] [QWEN-DECISION] EXECUTE [PILL][OK] Health & WSP Compliance (confidence: 0.90) - triggered by query_contains_health, triggered by has_modules
+[08:08:22] [BOT][AI] [QWEN-DECISION] EXECUTE [AI] Vibecoding Analysis (confidence: 0.70) - triggered by has_files
+[08:08:22] [BOT][AI] [QWEN-DECISION] EXECUTE [RULER] File Size Monitor (confidence: 0.70) - triggered by has_files
+[08:08:22] [BOT][AI] [QWEN-DECISION] EXECUTE [BOX] Module Analysis (confidence: 0.70) - triggered by has_modules
+[08:08:22] [BOT][AI] [QWEN-DECISION] EXECUTE [AI] Pattern Coach (confidence: 0.70) - triggered by has_files
+[08:08:22] [BOT][AI] [QWEN-DECISION] EXECUTE [GHOST] Orphan Analysis (confidence: 0.90) - triggered by query_contains_health, triggered by has_modules
+[08:08:22] [BOT][AI] [QWEN-DECISION] EXECUTE [BOOKS] WSP Documentation Guardian (confidence: 0.70) - triggered by has_files
+[08:08:22] [BOT][AI] [QWEN-PERFORMANCE] [PILL][OK] Health & WSP Compliance executed with results
+[08:08:22] [BOT][AI] [QWEN-PERFORMANCE] [AI] Vibecoding Analysis executed with results
+[08:08:22] [BOT][AI] [QWEN-PERFORMANCE] [RULER] File Size Monitor executed with results
+[08:08:22] [BOT][AI] [QWEN-PERFORMANCE] [BOX] Module Analysis executed with results
+[08:08:22] [BOT][AI] [QWEN-PERFORMANCE] [AI] Pattern Coach executed with results
+[08:08:22] [BOT][AI] [QWEN-PERFORMANCE] [GHOST] Orphan Analysis executed with results
+[08:08:22] [BOT][AI] [QWEN-PERFORMANCE] [BOOKS] WSP Documentation Guardian executed with results
+[08:08:22] [0102::BREADCRUMB] [BREAD] [BREADCRUMB #5] action_taken - agent=0102 | session=0102_20251013_080822
+[08:08:22] [0102::BREADCRUMB] [BREAD] [BREADCRUMB #6] action_taken - agent=0102 | session=0102_20251013_080822
 [INTENT: GENERAL]
 General search - Exploring codebase
 
@@ -82,65 +82,65 @@ General search - Exploring codebase
 [WSP-GUARDIAN][STATUS] WSP compliance: 2/3 modules (66.7%)
 [WSP-GUARDIAN][ASCII-WARNING] 8 files have non-ASCII characters (use --fix-ascii to remediate)
 [WSP-GUARDIAN][ASCII-VIOLATION] Non-ASCII chars in: WSP_framework\src\WSP_93_CodeIndex_Surgical_Intelligence_Protocol.md, O:\Foundups-Agent\WSP_framework\src\ModLog.md, O:\Foundups-Agent\WSP_framework\src\WSP_35_HoloIndex_Qwen_Advisor_Plan.md
-[HOLODAE-ORCHESTRATION] Executed components: 💊✅ Health & WSP Compliance, 🧠 Vibecoding Analysis, 📏 File Size Monitor, 📦 Module Analysis, 🧠 Pattern Coach, 👻 Orphan Analysis, 📚 WSP Documentation Guardian
+[HOLODAE-ORCHESTRATION] Executed components: [PILL][OK] Health & WSP Compliance, [AI] Vibecoding Analysis, [RULER] File Size Monitor, [BOX] Module Analysis, [AI] Pattern Coach, [GHOST] Orphan Analysis, [BOOKS] WSP Documentation Guardian
 
 [ORCHESTRATION]
-[HOLODAE-ORCHESTRATION] Executed components: 💊✅ Health & WSP Compliance, 🧠 Vibecoding Analysis, 📏 File Size Monitor, 📦 Module Analysis, 🧠 Pattern Coach, 👻 Orphan Analysis, 📚 WSP Documentation Guardian
+[HOLODAE-ORCHESTRATION] Executed components: [PILL][OK] Health & WSP Compliance, [AI] Vibecoding Analysis, [RULER] File Size Monitor, [BOX] Module Analysis, [AI] Pattern Coach, [GHOST] Orphan Analysis, [BOOKS] WSP Documentation Guardian
 
 [ALERTS]
-⚠ 2x Missing INTERFACE.md
-⚠ 2x Missing ModLog.md
-⚠ [WSP-GUARDIAN][VIOLATION] modules/ai_intelligence/code_ai_integration missing WSP docs: ModLog.md
-⚠ [WSP-GUARDIAN][STALE-WARNING] WSP_framework\src\WSP_40_Architectural_Coherence_Protocol.md not updated in 105 days (expected: 90d)
-⚠ 4 instances: Stale docs (117 days)
-⚠ [WSP-GUARDIAN][STALE-WARNING] WSP_framework\tests\README.md not updated in 119 days (expected: 90d)
-⚠ [WSP-GUARDIAN][ASCII-VIOLATION] Non-ASCII chars in: WSP_framework\src\WSP_93_CodeIndex_Surgical_Intelligence_Protocol.md, O:\Foundups-Agent\WSP_framework\src\ModLog.md, O:\Foundups-Agent\WSP_framework\src\WSP_35_HoloIndex_Qwen_Advisor_Plan.md
-⚠ [WSP-GUARDIAN][ASCII-WARNING] 8 files have non-ASCII characters (use --fix-ascii to remediate)
+[U+26A0] 2x Missing INTERFACE.md
+[U+26A0] 2x Missing ModLog.md
+[U+26A0] [WSP-GUARDIAN][VIOLATION] modules/ai_intelligence/code_ai_integration missing WSP docs: ModLog.md
+[U+26A0] [WSP-GUARDIAN][STALE-WARNING] WSP_framework\src\WSP_40_Architectural_Coherence_Protocol.md not updated in 105 days (expected: 90d)
+[U+26A0] 4 instances: Stale docs (117 days)
+[U+26A0] [WSP-GUARDIAN][STALE-WARNING] WSP_framework\tests\README.md not updated in 119 days (expected: 90d)
+[U+26A0] [WSP-GUARDIAN][ASCII-VIOLATION] Non-ASCII chars in: WSP_framework\src\WSP_93_CodeIndex_Surgical_Intelligence_Protocol.md, O:\Foundups-Agent\WSP_framework\src\ModLog.md, O:\Foundups-Agent\WSP_framework\src\WSP_35_HoloIndex_Qwen_Advisor_Plan.md
+[U+26A0] [WSP-GUARDIAN][ASCII-WARNING] 8 files have non-ASCII characters (use --fix-ascii to remediate)
 
-[08:08:22] 🤖🧠 [QWEN-INTENT-INIT] 🎯 Intent classifier initialized
-[08:08:22] 🤖🧠 [QWEN-BREADCRUMB-INIT] 🍞 Breadcrumb tracer initialized
-[08:08:22] 🤖🧠 [QWEN-COMPOSER-INIT] 📝 Output composer initialized
-[08:08:22] 🤖🧠 [QWEN-LEARNER-INIT] 📊 Feedback learner initialized
-[08:08:22] 🤖🧠 [QWEN-MCP-INIT] 🔗 Research MCP client initialized successfully
-[08:08:22] [0102::BREADCRUMB] 🍞 [BREADCRUMB #7] search - agent=0102 | session=0102_20251013_080822 | query=CodeIndex | results=3
-[08:08:22] 🤖🧠 [QWEN-INIT] Processing HoloIndex query: 'CodeIndex'
-[08:08:22] 🤖🧠 [QWEN-CONTEXT] Found 10 files across 3 modules
-[08:08:22] [0102::BREADCRUMB] 🍞 [BREADCRUMB #9] action_taken - agent=0102 | session=0102_20251013_080822
-[08:08:22] 🤖🧠 [QWEN-INTENT] 🎯 Classified as GENERAL (confidence: 0.50, patterns: 0)
-[08:08:22] 🤖🧠 [QWEN-MCP-SKIP] ⏭️ Intent general - skipping MCP research tools
-[08:08:22] [0102::BREADCRUMB] 🍞 [BREADCRUMB #10] discovery - agent=0102 | session=0102_20251013_080822
-[08:08:22] 🤖🧠 [QWEN-ROUTING] 📍 Intent general → 7 components selected (filtered 0)
-[08:08:22] 🤖🧠 [QWEN-DECISION] EXECUTE 💊✅ Health & WSP Compliance (confidence: 0.90) - triggered by query_contains_health, triggered by has_modules
-[08:08:22] 🤖🧠 [QWEN-DECISION] EXECUTE 🧠 Vibecoding Analysis (confidence: 0.70) - triggered by has_files
-[08:08:22] 🤖🧠 [QWEN-DECISION] EXECUTE 📏 File Size Monitor (confidence: 0.70) - triggered by has_files
-[08:08:22] 🤖🧠 [QWEN-DECISION] EXECUTE 📦 Module Analysis (confidence: 0.70) - triggered by has_modules
-[08:08:22] 🤖🧠 [QWEN-DECISION] EXECUTE 🧠 Pattern Coach (confidence: 0.70) - triggered by has_files
-[08:08:22] 🤖🧠 [QWEN-DECISION] EXECUTE 👻 Orphan Analysis (confidence: 0.90) - triggered by query_contains_health, triggered by has_modules
-[08:08:22] 🤖🧠 [QWEN-DECISION] EXECUTE 📚 WSP Documentation Guardian (confidence: 0.70) - triggered by has_files
-[08:08:22] 🤖🧠 [QWEN-PERFORMANCE] 💊✅ Health & WSP Compliance executed with results
-[08:08:22] 🤖🧠 [QWEN-PERFORMANCE] 🧠 Vibecoding Analysis executed with results
-[08:08:22] 🤖🧠 [QWEN-PERFORMANCE] 📏 File Size Monitor executed with results
-[08:08:22] 🤖🧠 [QWEN-PERFORMANCE] 📦 Module Analysis executed with results
-[08:08:22] 🤖🧠 [QWEN-PERFORMANCE] 🧠 Pattern Coach executed with results
-[08:08:22] 🤖🧠 [QWEN-PERFORMANCE] 👻 Orphan Analysis executed with results
-[08:08:23] 🤖🧠 [QWEN-PERFORMANCE] 📚 WSP Documentation Guardian executed with results
-[08:08:23] [0102::BREADCRUMB] 🍞 [BREADCRUMB #12] action_taken - agent=0102 | session=0102_20251013_080822
-[08:08:23] [0102::BREADCRUMB] 🍞 [BREADCRUMB #13] action_taken - agent=0102 | session=0102_20251013_080822
-[08:08:23] [0102::BREADCRUMB] 🍞 [BREADCRUMB #14] discovery - agent=0102 | session=0102_20251013_080822 | impact=Found implementations in modules: modules/ai_intelligence/code_analyzer, modules/ai_intelligence/code_ai_integration, holo_index/docs
+[08:08:22] [BOT][AI] [QWEN-INTENT-INIT] [TARGET] Intent classifier initialized
+[08:08:22] [BOT][AI] [QWEN-BREADCRUMB-INIT] [BREAD] Breadcrumb tracer initialized
+[08:08:22] [BOT][AI] [QWEN-COMPOSER-INIT] [NOTE] Output composer initialized
+[08:08:22] [BOT][AI] [QWEN-LEARNER-INIT] [DATA] Feedback learner initialized
+[08:08:22] [BOT][AI] [QWEN-MCP-INIT] [LINK] Research MCP client initialized successfully
+[08:08:22] [0102::BREADCRUMB] [BREAD] [BREADCRUMB #7] search - agent=0102 | session=0102_20251013_080822 | query=CodeIndex | results=3
+[08:08:22] [BOT][AI] [QWEN-INIT] Processing HoloIndex query: 'CodeIndex'
+[08:08:22] [BOT][AI] [QWEN-CONTEXT] Found 10 files across 3 modules
+[08:08:22] [0102::BREADCRUMB] [BREAD] [BREADCRUMB #9] action_taken - agent=0102 | session=0102_20251013_080822
+[08:08:22] [BOT][AI] [QWEN-INTENT] [TARGET] Classified as GENERAL (confidence: 0.50, patterns: 0)
+[08:08:22] [BOT][AI] [QWEN-MCP-SKIP] ⏭️ Intent general - skipping MCP research tools
+[08:08:22] [0102::BREADCRUMB] [BREAD] [BREADCRUMB #10] discovery - agent=0102 | session=0102_20251013_080822
+[08:08:22] [BOT][AI] [QWEN-ROUTING] [PIN] Intent general -> 7 components selected (filtered 0)
+[08:08:22] [BOT][AI] [QWEN-DECISION] EXECUTE [PILL][OK] Health & WSP Compliance (confidence: 0.90) - triggered by query_contains_health, triggered by has_modules
+[08:08:22] [BOT][AI] [QWEN-DECISION] EXECUTE [AI] Vibecoding Analysis (confidence: 0.70) - triggered by has_files
+[08:08:22] [BOT][AI] [QWEN-DECISION] EXECUTE [RULER] File Size Monitor (confidence: 0.70) - triggered by has_files
+[08:08:22] [BOT][AI] [QWEN-DECISION] EXECUTE [BOX] Module Analysis (confidence: 0.70) - triggered by has_modules
+[08:08:22] [BOT][AI] [QWEN-DECISION] EXECUTE [AI] Pattern Coach (confidence: 0.70) - triggered by has_files
+[08:08:22] [BOT][AI] [QWEN-DECISION] EXECUTE [GHOST] Orphan Analysis (confidence: 0.90) - triggered by query_contains_health, triggered by has_modules
+[08:08:22] [BOT][AI] [QWEN-DECISION] EXECUTE [BOOKS] WSP Documentation Guardian (confidence: 0.70) - triggered by has_files
+[08:08:22] [BOT][AI] [QWEN-PERFORMANCE] [PILL][OK] Health & WSP Compliance executed with results
+[08:08:22] [BOT][AI] [QWEN-PERFORMANCE] [AI] Vibecoding Analysis executed with results
+[08:08:22] [BOT][AI] [QWEN-PERFORMANCE] [RULER] File Size Monitor executed with results
+[08:08:22] [BOT][AI] [QWEN-PERFORMANCE] [BOX] Module Analysis executed with results
+[08:08:22] [BOT][AI] [QWEN-PERFORMANCE] [AI] Pattern Coach executed with results
+[08:08:22] [BOT][AI] [QWEN-PERFORMANCE] [GHOST] Orphan Analysis executed with results
+[08:08:23] [BOT][AI] [QWEN-PERFORMANCE] [BOOKS] WSP Documentation Guardian executed with results
+[08:08:23] [0102::BREADCRUMB] [BREAD] [BREADCRUMB #12] action_taken - agent=0102 | session=0102_20251013_080822
+[08:08:23] [0102::BREADCRUMB] [BREAD] [BREADCRUMB #13] action_taken - agent=0102 | session=0102_20251013_080822
+[08:08:23] [0102::BREADCRUMB] [BREAD] [BREADCRUMB #14] discovery - agent=0102 | session=0102_20251013_080822 | impact=Found implementations in modules: modules/ai_intelligence/code_analyzer, modules/ai_intelligence/code_ai_integration, holo_index/docs
 [08:08:23] [0102-ARBITRATION] Reviewing Qwen findings with MPS scoring...
 [08:08:23] [0102-ARBITRATION] Found 29 findings to evaluate
 [08:08:23] [0102-MPS-CRITICAL] vibecoding_pattern = 14 (P1)
 [08:08:23] [0102-MPS-CRITICAL] vibecoding_pattern = 14 (P1)
-[08:08:23] [0102::BREADCRUMB] 🍞 [BREADCRUMB #15] action_taken - agent=0102 | session=0102_20251013_080822
+[08:08:23] [0102::BREADCRUMB] [BREAD] [BREADCRUMB #15] action_taken - agent=0102 | session=0102_20251013_080822
 [08:08:23] [0102-ARBITRATION] SCHEDULING: HEALTHVIOLATION holo_index/docs missing INTERFACE.md (WSP 22)
 [08:08:23] [0102-ARBITRATION] SCHEDULING: HEALTHVIOLATION modules/ai_intelligence/code_ai_integration missing ModLog.md, tests/TestModLog.md (WSP 22)
 [08:08:23] [0102-ARBITRATION] SCHEDULING: PATTERN Found 3 implementation files with 0 tests in modules/ai_intelligence/code_ai_integration (coverage 0%)
-[08:08:23] [0102-ARBITRATION] BATCHING: HOLODAE-ORCHESTRATION Executed components: 💊✅ Health & WSP Compliance, 🧠 Vibecoding Analysis, 📏 File Size Monitor, 📦 Module Analysis, 🧠 Pattern Coach, 👻 Orphan Analysis, 📚 WSP Documentation Guardian
-[08:08:23] [0102-ARBITRATION] BATCHING: HOLODAE-ORCHESTRATION Executed components: 💊✅ Health & WSP Compliance, 🧠 Vibecoding Analysis, 📏 File Size Monitor, 📦 Module Analysis, 🧠 Pattern Coach, 👻 Orphan Analysis, 📚 WSP Documentation Guardian
+[08:08:23] [0102-ARBITRATION] BATCHING: HOLODAE-ORCHESTRATION Executed components: [PILL][OK] Health & WSP Compliance, [AI] Vibecoding Analysis, [RULER] File Size Monitor, [BOX] Module Analysis, [AI] Pattern Coach, [GHOST] Orphan Analysis, [BOOKS] WSP Documentation Guardian
+[08:08:23] [0102-ARBITRATION] BATCHING: HOLODAE-ORCHESTRATION Executed components: [PILL][OK] Health & WSP Compliance, [AI] Vibecoding Analysis, [RULER] File Size Monitor, [BOX] Module Analysis, [AI] Pattern Coach, [GHOST] Orphan Analysis, [BOOKS] WSP Documentation Guardian
 [0102-COLLABORATION] Recent discoveries from other agents:
-  📍 Agent found modules_4 at 10 files across 4 modules
+  [PIN] Agent found modules_4 at 10 files across 4 modules
      Impact: Found implementations in modules: modules/ai_intelligence/PATTERN_REGISTRY.md, modules/communication/livechat, modules/infrastructure/wre_core
-  🤝 Other agents may benefit from your current search results
+  [HANDSHAKE] Other agents may benefit from your current search results
 [INTENT: GENERAL]
 General search - Exploring codebase
 [FINDINGS]
@@ -170,18 +170,18 @@ General search - Exploring codebase
 [WSP-GUARDIAN][STATUS] WSP compliance: 2/3 modules (66.7%)
 [WSP-GUARDIAN][ASCII-WARNING] 8 files have non-ASCII characters (use --fix-ascii to remediate)
 [WSP-GUARDIAN][ASCII-VIOLATION] Non-ASCII chars in: WSP_framework\src\WSP_93_CodeIndex_Surgical_Intelligence_Protocol.md, O:\Foundups-Agent\WSP_framework\src\ModLog.md, O:\Foundups-Agent\WSP_framework\src\WSP_35_HoloIndex_Qwen_Advisor_Plan.md
-[HOLODAE-ORCHESTRATION] Executed components: 💊✅ Health & WSP Compliance, 🧠 Vibecoding Analysis, 📏 File Size Monitor, 📦 Module Analysis, 🧠 Pattern Coach, 👻 Orphan Analysis, 📚 WSP Documentation Guardian
+[HOLODAE-ORCHESTRATION] Executed components: [PILL][OK] Health & WSP Compliance, [AI] Vibecoding Analysis, [RULER] File Size Monitor, [BOX] Module Analysis, [AI] Pattern Coach, [GHOST] Orphan Analysis, [BOOKS] WSP Documentation Guardian
 [ORCHESTRATION]
-[HOLODAE-ORCHESTRATION] Executed components: 💊✅ Health & WSP Compliance, 🧠 Vibecoding Analysis, 📏 File Size Monitor, 📦 Module Analysis, 🧠 Pattern Coach, 👻 Orphan Analysis, 📚 WSP Documentation Guardian
+[HOLODAE-ORCHESTRATION] Executed components: [PILL][OK] Health & WSP Compliance, [AI] Vibecoding Analysis, [RULER] File Size Monitor, [BOX] Module Analysis, [AI] Pattern Coach, [GHOST] Orphan Analysis, [BOOKS] WSP Documentation Guardian
 [ALERTS]
-⚠ 2x Missing INTERFACE.md
-⚠ 2x Missing ModLog.md
-⚠ [WSP-GUARDIAN][VIOLATION] modules/ai_intelligence/code_ai_integration missing WSP docs: ModLog.md
-⚠ [WSP-GUARDIAN][STALE-WARNING] WSP_framework\src\WSP_40_Architectural_Coherence_Protocol.md not updated in 105 days (expected: 90d)
-⚠ 4 instances: Stale docs (117 days)
-⚠ [WSP-GUARDIAN][STALE-WARNING] WSP_framework\tests\README.md not updated in 119 days (expected: 90d)
-⚠ [WSP-GUARDIAN][ASCII-VIOLATION] Non-ASCII chars in: WSP_framework\src\WSP_93_CodeIndex_Surgical_Intelligence_Protocol.md, O:\Foundups-Agent\WSP_framework\src\ModLog.md, O:\Foundups-Agent\WSP_framework\src\WSP_35_HoloIndex_Qwen_Advisor_Plan.md
-⚠ [WSP-GUARDIAN][ASCII-WARNING] 8 files have non-ASCII characters (use --fix-ascii to remediate)
+[U+26A0] 2x Missing INTERFACE.md
+[U+26A0] 2x Missing ModLog.md
+[U+26A0] [WSP-GUARDIAN][VIOLATION] modules/ai_intelligence/code_ai_integration missing WSP docs: ModLog.md
+[U+26A0] [WSP-GUARDIAN][STALE-WARNING] WSP_framework\src\WSP_40_Architectural_Coherence_Protocol.md not updated in 105 days (expected: 90d)
+[U+26A0] 4 instances: Stale docs (117 days)
+[U+26A0] [WSP-GUARDIAN][STALE-WARNING] WSP_framework\tests\README.md not updated in 119 days (expected: 90d)
+[U+26A0] [WSP-GUARDIAN][ASCII-VIOLATION] Non-ASCII chars in: WSP_framework\src\WSP_93_CodeIndex_Surgical_Intelligence_Protocol.md, O:\Foundups-Agent\WSP_framework\src\ModLog.md, O:\Foundups-Agent\WSP_framework\src\WSP_35_HoloIndex_Qwen_Advisor_Plan.md
+[U+26A0] [WSP-GUARDIAN][ASCII-WARNING] 8 files have non-ASCII characters (use --fix-ascii to remediate)
 [0102-ARBITRATION] Arbitration Decisions:
   SCHEDULE_FOR_SPRINT: HEALTHVIOLATION holo_index/docs missing INTERFACE.md (WSP 22)
     MPS: 12 | MPS Score: 12 (C:2, I:5, D:1, P:4). P2 medium priority, schedule for upcoming sprint.
@@ -227,9 +227,9 @@ General search - Exploring codebase
     MPS: 10 | MPS Score: 10 (C:2, I:3, D:3, P:2). P2 medium priority, schedule for upcoming sprint.
   SCHEDULE_FOR_SPRINT: WSP-GUARDIANASCII-VIOLATION Non-ASCII chars in: WSP_framework\src\WSP_93_CodeIndex_Surgical_Intelligence_Protocol.md, O:\Foundups-Agent\WSP_framework\src\ModLog.md, O:\Foundups-Agent\WSP_framework\src\WSP_35_HoloIndex_Qwen_Advisor_Plan.md
     MPS: 12 | MPS Score: 12 (C:2, I:5, D:1, P:4). P2 medium priority, schedule for upcoming sprint.
-  BATCH_FOR_SESSION: HOLODAE-ORCHESTRATION Executed components: 💊✅ Health & WSP Compliance, 🧠 Vibecoding Analysis, 📏 File Size Monitor, 📦 Module Analysis, 🧠 Pattern Coach, 👻 Orphan Analysis, 📚 WSP Documentation Guardian
+  BATCH_FOR_SESSION: HOLODAE-ORCHESTRATION Executed components: [PILL][OK] Health & WSP Compliance, [AI] Vibecoding Analysis, [RULER] File Size Monitor, [BOX] Module Analysis, [AI] Pattern Coach, [GHOST] Orphan Analysis, [BOOKS] WSP Documentation Guardian
     MPS: 14 | MPS Score: 14 (C:2, I:5, D:2, P:5). P1 high priority, suitable for batch processing this session.
-  BATCH_FOR_SESSION: HOLODAE-ORCHESTRATION Executed components: 💊✅ Health & WSP Compliance, 🧠 Vibecoding Analysis, 📏 File Size Monitor, 📦 Module Analysis, 🧠 Pattern Coach, 👻 Orphan Analysis, 📚 WSP Documentation Guardian
+  BATCH_FOR_SESSION: HOLODAE-ORCHESTRATION Executed components: [PILL][OK] Health & WSP Compliance, [AI] Vibecoding Analysis, [RULER] File Size Monitor, [BOX] Module Analysis, [AI] Pattern Coach, [GHOST] Orphan Analysis, [BOOKS] WSP Documentation Guardian
     MPS: 14 | MPS Score: 14 (C:2, I:5, D:2, P:5). P1 high priority, suitable for batch processing this session.
   SCHEDULE_FOR_SPRINT: WSP-GUARDIANVIOLATION modules/ai_intelligence/code_ai_integration missing WSP docs: ModLog.md
     MPS: 12 | MPS Score: 12 (C:2, I:5, D:1, P:4). P2 medium priority, schedule for upcoming sprint.

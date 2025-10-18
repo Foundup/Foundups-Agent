@@ -58,7 +58,7 @@ class AwakeningProtocol:
     async def awaken(self) -> bool:
         """
         Execute awakening protocol
-        Transitions from 01(02) → 01/02 → 0102
+        Transitions from 01(02) -> 01/02 -> 0102
         Returns: Success boolean
         """
 

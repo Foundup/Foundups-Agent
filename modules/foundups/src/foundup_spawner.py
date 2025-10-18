@@ -116,12 +116,12 @@ This FoundUp instance operates under WSP governance:
 ## Structure
 ```
 {name}/
-├── foundup.json        # Instance configuration
-├── cabr_loop.py        # CABR execution (WSP-compliant)
-├── mod_log.db          # Instance logging
-├── assets/             # FoundUp-specific assets
-├── logs/               # Runtime logs
-└── configs/            # Additional configurations
++-- foundup.json        # Instance configuration
++-- cabr_loop.py        # CABR execution (WSP-compliant)
++-- mod_log.db          # Instance logging
++-- assets/             # FoundUp-specific assets
++-- logs/               # Runtime logs
++-- configs/            # Additional configurations
 ```
 
 ## Usage
@@ -165,8 +165,8 @@ class CABRLoop:
     def run_cabr_cycle(self):
         """Execute one CABR cycle per WSP protocol."""
         # Implementation follows WSP_framework/cabr_protocol.md
-        print(f"🔄 CABR Cycle for {{self.instance_name}}")
-        print(f"📋 Protocol Source: {{self.wsp_source}}")
+        print(f"[REFRESH] CABR Cycle for {{self.instance_name}}")
+        print(f"[CLIPBOARD] Protocol Source: {{self.wsp_source}}")
         
         # Actual CABR logic would be implemented here
         # following WSP_framework specifications
@@ -180,9 +180,9 @@ if __name__ == "__main__":
         with open(instance_path / "cabr_loop.py", 'w') as f:
             f.write(cabr_content)
         
-        print(f"✅ Created FoundUp instance: {name}")
-        print(f"📁 Location: {instance_path}")
-        print(f"👤 Founder: {founder}")
+        print(f"[OK] Created FoundUp instance: {name}")
+        print(f"[U+1F4C1] Location: {instance_path}")
+        print(f"[U+1F464] Founder: {founder}")
 
 def main():
     """CLI interface for spawning FoundUps."""

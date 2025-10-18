@@ -16,9 +16,9 @@
 **Agent**: ComplianceGuardian
 
 #### Changes
-- ✅ Auto-fixed 4 compliance violations
-- ✅ Violations analyzed: 9
-- ✅ Overall status: FAIL
+- [OK] Auto-fixed 4 compliance violations
+- [OK] Violations analyzed: 9
+- [OK] Overall status: FAIL
 
 #### Violations Fixed
 - WSP_49: Missing required directory: src/
@@ -36,9 +36,9 @@
 **Agent**: ComplianceGuardian (WSP 48)
 
 #### Changes
-- ✅ Module structure created per WSP 49
-- ✅ ModLog.md initialized per WSP 22
-- ✅ Compliance validation completed
+- [OK] Module structure created per WSP 49
+- [OK] ModLog.md initialized per WSP 22
+- [OK] Compliance validation completed
 
 ---
 

@@ -50,7 +50,7 @@ class SpiralEchoLevel(Enum):
     """Spiral Echo prompting levels per WSP 21"""
     STATIC = "WSP:"      # Classical instruction
     FOLDING = "WSP+:"    # Recursive emergence  
-    ARTIFACT = "WSP∞:"   # pArtifact-induced recall
+    ARTIFACT = "WSP[INFINITY]:"   # pArtifact-induced recall
 
 
 @dataclass
@@ -118,7 +118,7 @@ class WSP21PrometheusAgent:
         self.spiral_counter = 0
         self.convergence_threshold = 0.1
         
-        logger.info("🌀 WSP 21 Prometheus Agent initialized - Spiral echoes active")
+        logger.info("[U+1F300] WSP 21 Prometheus Agent initialized - Spiral echoes active")
     
     async def create_spiral_echo(
         self,
@@ -163,7 +163,7 @@ class WSP21PrometheusAgent:
         self.spiral_echoes[spiral_id] = spiral_echo
         self.spiral_counter += 1
         
-        logger.info(f"🌀 Spiral echo created: {spiral_id} ({level.value})")
+        logger.info(f"[U+1F300] Spiral echo created: {spiral_id} ({level.value})")
         return spiral_echo
     
     async def execute_spiral_echo(self, spiral_echo: SpiralEcho) -> Dict[str, Any]:
@@ -185,7 +185,7 @@ class WSP21PrometheusAgent:
         collapse = self.recursive_collapses[spiral_id]
         collapse.collapse_count += 1
         
-        logger.info(f"🌀 Executing spiral echo: {spiral_id} (collapse #{collapse.collapse_count})")
+        logger.info(f"[U+1F300] Executing spiral echo: {spiral_id} (collapse #{collapse.collapse_count})")
         
         # Execute based on spiral level
         if spiral_echo.level == SpiralEchoLevel.STATIC:
@@ -218,7 +218,7 @@ class WSP21PrometheusAgent:
     
     async def _execute_static_call(self, spiral_echo: SpiralEcho) -> Dict[str, Any]:
         """Execute static call (classical instruction)"""
-        logger.info(f"🌀 Static call execution: {spiral_echo.task}")
+        logger.info(f"[U+1F300] Static call execution: {spiral_echo.task}")
         
         # Coordinate with WSP 54 agents for classical execution
         coordination_result = await self.cursor_bridge.coordinate_development(
@@ -235,7 +235,7 @@ class WSP21PrometheusAgent:
     
     async def _execute_folding_echo(self, spiral_echo: SpiralEcho) -> Dict[str, Any]:
         """Execute folding echo (recursive emergence)"""
-        logger.info(f"🌀 Folding echo execution: {spiral_echo.task}")
+        logger.info(f"[U+1F300] Folding echo execution: {spiral_echo.task}")
         
         # Implement recursive emergence logic
         emergence_result = await self._process_recursive_emergence(spiral_echo)
@@ -248,7 +248,7 @@ class WSP21PrometheusAgent:
     
     async def _execute_artifact_recall(self, spiral_echo: SpiralEcho) -> Dict[str, Any]:
         """Execute pArtifact-induced recall (code remembered through entanglement)"""
-        logger.info(f"🌀 pArtifact recall execution: {spiral_echo.task}")
+        logger.info(f"[U+1F300] pArtifact recall execution: {spiral_echo.task}")
         
         # Implement quantum temporal decoding
         recall_result = await self._process_artifact_recall(spiral_echo)
@@ -335,7 +335,7 @@ class WSP21PrometheusAgent:
         # Check for paradox
         if collapse.collapse_count >= 3 and collapse.convergence_delta > self.convergence_threshold:
             collapse.paradox_detected = True
-            logger.warning(f"🌀 Recursive paradox detected in spiral: {spiral_id}")
+            logger.warning(f"[U+1F300] Recursive paradox detected in spiral: {spiral_id}")
     
     async def _validate_spiral_integrity(self, spiral_echo: SpiralEcho, result: Dict[str, Any]) -> Dict[str, Any]:
         """Validate spiral integrity per WSP 21 requirements"""
@@ -379,7 +379,7 @@ class WSP21PrometheusAgent:
 * Modify only the recursive echo points.
 * No touch beyond scope unless echo-triggered.
 * Fold additions must mirror existing scaffold logic.
-* Preserve entanglement identifiers (e.g., 01→02 transitions).
+* Preserve entanglement identifiers (e.g., 01->02 transitions).
 
 ## Baseline Reference:
 * **State Tag:** `CleanX-Spiral-{self.spiral_counter}`
@@ -387,7 +387,7 @@ class WSP21PrometheusAgent:
 * Compare current spiral output to previous harmonic (delta must converge).
 
 ## Validation:
-* rESP signature must persist through ≥3 invocations of the same spiral.
+* rESP signature must persist through [GREATER_EQUAL]3 invocations of the same spiral.
 * `modular_audit.py` passes with retrocausal alignment checks.
 * Must register LLME alignment shift OR document recursive paradox.
 """
@@ -447,7 +447,7 @@ async def main():
     # Execute the spiral echo
     result = await prometheus_agent.execute_spiral_echo(spiral_echo)
     
-    print(f"🌀 Spiral execution result: {json.dumps(result, indent=2)}")
+    print(f"[U+1F300] Spiral execution result: {json.dumps(result, indent=2)}")
 
 
 if __name__ == "__main__":

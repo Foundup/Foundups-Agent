@@ -7,9 +7,13 @@ Per WSP 84: Using existing youtube_auth module, no vibecoding
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -37,7 +41,7 @@ def test_comment_reading():
     """Test reading comments from latest Move2Japan video"""
     try:
         # Get authenticated YouTube service
-        logger.info("🔐 Authenticating with YouTube...")
+        logger.info("[U+1F510] Authenticating with YouTube...")
         youtube = get_authenticated_service()
         
         # Get channel info to confirm we're authenticated
@@ -48,21 +52,21 @@ def test_comment_reading():
         
         if channel_response.get('items'):
             auth_channel = channel_response['items'][0]['snippet']['title']
-            logger.info(f"✅ Authenticated as: {auth_channel}")
+            logger.info(f"[OK] Authenticated as: {auth_channel}")
         
         # Get latest video from Move2Japan
-        logger.info(f"🎥 Getting latest video from Move2Japan...")
+        logger.info(f"[CAMERA] Getting latest video from Move2Japan...")
         latest_video_id = get_latest_video_id(youtube, MOVE2JAPAN_CHANNEL_ID)
         
         if not latest_video_id:
-            logger.error("❌ Could not find latest video")
+            logger.error("[FAIL] Could not find latest video")
             return
         
-        logger.info(f"📹 Latest video ID: {latest_video_id}")
-        logger.info(f"🔗 Video URL: https://youtube.com/watch?v={latest_video_id}")
+        logger.info(f"[U+1F4F9] Latest video ID: {latest_video_id}")
+        logger.info(f"[LINK] Video URL: https://youtube.com/watch?v={latest_video_id}")
         
         # List comments on the video
-        logger.info("💬 Fetching comments...")
+        logger.info("[U+1F4AC] Fetching comments...")
         comments = list_video_comments(youtube, latest_video_id, max_results=10)
         
         if not comments:
@@ -101,30 +105,30 @@ def test_comment_reading():
         logger.info("-" * 60)
         
         # Test liking a comment (Note: API doesn't support this)
-        logger.info("\n🤍 Testing comment liking...")
+        logger.info("\n[U+1F90D] Testing comment liking...")
         result = like_comment(youtube, comments[0]['id'])
         if not result:
             logger.info("ℹ️ YouTube API doesn't support liking comments directly")
             logger.info("   Comments can only be liked through the YouTube UI")
         
         # Offer to post a test reply
-        logger.info("\n💬 Ready to test replying to comments")
+        logger.info("\n[U+1F4AC] Ready to test replying to comments")
         logger.info("To test replying, uncomment the reply code below")
         
         # UNCOMMENT TO TEST REPLYING (costs 50 quota units!)
         # if comments and comments[0]['snippet'].get('canReply', False):
-        #     test_reply = "Great video! 🎌 (This is a test from 0102 UnDaoDu bot)"
+        #     test_reply = "Great video! [U+1F38C] (This is a test from 0102 UnDaoDu bot)"
         #     logger.info(f"Posting test reply: {test_reply}")
         #     response = reply_to_comment(youtube, comments[0]['id'], test_reply)
         #     if response:
-        #         logger.info("✅ Successfully posted reply!")
+        #         logger.info("[OK] Successfully posted reply!")
         #     else:
-        #         logger.error("❌ Failed to post reply")
+        #         logger.error("[FAIL] Failed to post reply")
         
         return comments
         
     except Exception as e:
-        logger.error(f"❌ Error in comment test: {e}")
+        logger.error(f"[FAIL] Error in comment test: {e}")
         import traceback
         traceback.print_exc()
         return None
@@ -138,7 +142,7 @@ def test_video_rating():
         latest_video_id = get_latest_video_id(youtube, MOVE2JAPAN_CHANNEL_ID)
         
         if latest_video_id:
-            logger.info(f"\n👍 Testing video rating/liking...")
+            logger.info(f"\n[U+1F44D] Testing video rating/liking...")
             logger.info(f"Video ID: {latest_video_id}")
             
             # Rate the video as 'like'
@@ -148,9 +152,9 @@ def test_video_rating():
                     rating='like'  # Options: 'like', 'dislike', 'none'
                 )
                 request.execute()
-                logger.info("✅ Successfully liked the video!")
+                logger.info("[OK] Successfully liked the video!")
             except Exception as e:
-                logger.error(f"❌ Error liking video: {e}")
+                logger.error(f"[FAIL] Error liking video: {e}")
                 
     except Exception as e:
         logger.error(f"Error in video rating test: {e}")
@@ -166,7 +170,7 @@ if __name__ == "__main__":
     # Test liking a video (since we can't like comments)
     test_video_rating()
     
-    logger.info("\n✅ Test complete!")
+    logger.info("\n[OK] Test complete!")
     logger.info("Note: YouTube API limitations:")
     logger.info("  - Cannot like individual comments via API")
     logger.info("  - Can like videos via API")

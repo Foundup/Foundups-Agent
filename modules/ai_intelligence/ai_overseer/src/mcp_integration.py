@@ -16,15 +16,19 @@ WSP Compliance:
     - WSP 96: MCP Governance and Consensus Protocol
     - WSP 77: Agent Coordination Protocol
     - WSP 54: Role Assignment (Agent Teams)
-    - WSP 21: DAE↔DAE Envelope Protocol
+    - WSP 21: DAE[U+2194]DAE Envelope Protocol
 """
 
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 import asyncio
@@ -160,7 +164,7 @@ class AIOverseerMCPIntegration:
                 await self._subscribe_telemetry(server)
 
                 server.connected = True
-                logger.info(f"[MCP-OVERSEER] ✓ Connected to {server.name}")
+                logger.info(f"[MCP-OVERSEER] [OK] Connected to {server.name}")
 
             except Exception as e:
                 logger.error(f"[MCP-OVERSEER] Failed to connect to {server.name}: {e}")
@@ -196,7 +200,7 @@ class AIOverseerMCPIntegration:
                 logger.warning(f"[BELL-STATE] Engagement index too low: {self.bell_state.engagement_index}")
                 return False
 
-        logger.info(f"[BELL-STATE] ✓ Alignment verified for {server.name}")
+        logger.info(f"[BELL-STATE] [OK] Alignment verified for {server.name}")
         return True
 
     async def _connect_server(self, server: MCPServer):
@@ -297,7 +301,7 @@ class AIOverseerMCPIntegration:
             logger.warning(f"[QWEN-PARTNER] No tools configured")
             return False
 
-        logger.info(f"[QWEN-PARTNER] ✓ Technical review passed")
+        logger.info(f"[QWEN-PARTNER] [OK] Technical review passed")
         return True
 
     async def _gemma_safety_validation(self, action: str, server: MCPServer) -> bool:
@@ -314,7 +318,7 @@ class AIOverseerMCPIntegration:
             logger.warning(f"[GEMMA-ASSOCIATE] Bell state alignment failed")
             return False
 
-        logger.info(f"[GEMMA-ASSOCIATE] ✓ Safety validation passed")
+        logger.info(f"[GEMMA-ASSOCIATE] [OK] Safety validation passed")
         return True
 
     def _requires_principal_approval(self, action: str) -> bool:
@@ -339,7 +343,7 @@ class AIOverseerMCPIntegration:
 
         # For now, simulate approval
         # In production, would prompt for human oversight
-        logger.info(f"[0102-PRINCIPAL] ✓ Strategic approval granted")
+        logger.info(f"[0102-PRINCIPAL] [OK] Strategic approval granted")
         return True
 
     # ==================== MCP Tool Execution ====================

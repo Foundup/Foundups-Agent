@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Detailed Workflow Test Suite - Deep validation of system workflows
 Tests the actual business logic and user journeys
 """
@@ -26,17 +41,17 @@ class DetailedWorkflowTest:
         
     def print_scenario(self, name: str):
         """Print scenario header"""
-        print(f"\n{Fore.MAGENTA}╔{'═'*78}╗")
-        print(f"║ SCENARIO: {name:<66} ║")
-        print(f"╚{'═'*78}╝{Style.RESET_ALL}")
+        print(f"\n{Fore.MAGENTA}[U+2554]{'='*78}[U+2557]")
+        print(f"[U+2551] SCENARIO: {name:<66} [U+2551]")
+        print(f"[U+255A]{'='*78}[U+255D]{Style.RESET_ALL}")
         
     def print_step(self, step: int, description: str, status: str = "RUNNING"):
         """Print workflow step"""
         symbols = {
-            "RUNNING": "⚙",
-            "PASS": "✓",
-            "FAIL": "✗",
-            "SKIP": "○"
+            "RUNNING": "[U+2699]",
+            "PASS": "[OK]",
+            "FAIL": "[FAIL]",
+            "SKIP": "[U+25CB]"
         }
         colors = {
             "RUNNING": Fore.YELLOW,
@@ -108,21 +123,21 @@ class DetailedWorkflowTest:
         # Step 2: Prepare social media posts
         self.print_step(2, "Preparing social media content...", "RUNNING")
         
-        x_post = f"""🔴 LIVE NOW: {self.test_stream_info['title']}
+        x_post = f"""[U+1F534] LIVE NOW: {self.test_stream_info['title']}
 
 Join us for cutting-edge AI development!
 
-📺 Watch: {self.test_stream_info['url']}
+[U+1F4FA] Watch: {self.test_stream_info['url']}
 
 #AI #LiveCoding #FoundUps #0102 #QuantumComputing"""
 
-        linkedin_post = f"""🚀 We're LIVE! 
+        linkedin_post = f"""[ROCKET] We're LIVE! 
 
 {self.test_stream_info['title']}
 
 Join our AI development session where we're building the future of autonomous systems.
 
-🔗 {self.test_stream_info['url']}
+[LINK] {self.test_stream_info['url']}
 
 #ArtificialIntelligence #SoftwareDevelopment #Innovation #FoundUps"""
         
@@ -173,7 +188,7 @@ Join our AI development session where we're building the future of autonomous sy
         # Step 6: Send greeting message
         self.print_step(6, "Sending greeting to chat...", "RUNNING")
         greeting = os.getenv('AGENT_GREETING_MESSAGE', 
-                           "🤖 UnDaoDu Bot is now online! Type /help for commands.")
+                           "[BOT] UnDaoDu Bot is now online! Type /help for commands.")
         print(f"    {Fore.WHITE}Greeting: {greeting}{Style.RESET_ALL}")
         self.print_step(6, "Greeting sent", "PASS")
         results["steps"].append({"step": 6, "status": "PASS", "greeting": greeting})
@@ -190,7 +205,7 @@ Join our AI development session where we're building the future of autonomous sy
         test_messages = [
             {"user": "TestUser", "message": "/score", "type": "command"},
             {"user": "TestMod", "message": "/leaderboard", "type": "command"},
-            {"user": "RandomUser", "message": "✊✋🖐 What is consciousness?", "type": "emoji_trigger"},
+            {"user": "RandomUser", "message": "[U+270A][U+270B][U+1F590] What is consciousness?", "type": "emoji_trigger"},
             {"user": "MAGATroll", "message": "trump 2024 maga!", "type": "maga_content"},
             {"user": "Moderator", "message": "/whacks", "type": "mod_command"}
         ]
@@ -230,7 +245,7 @@ Join our AI development session where we're building the future of autonomous sy
                     
             elif test['type'] == 'emoji_trigger':
                 # Check if emoji sequence is detected
-                if "✊✋🖐" in test['message']:
+                if "[U+270A][U+270B][U+1F590]" in test['message']:
                     self.print_step(i, "Emoji trigger detected", "PASS")
                     print(f"    {Fore.WHITE}Would trigger consciousness response{Style.RESET_ALL}")
                     results["interactions"].append({
@@ -318,9 +333,9 @@ Join our AI development session where we're building the future of autonomous sy
         self.print_step(5, "Generating leaderboard...", "RUNNING")
         leaderboard = whack.get_leaderboard(limit=5)
         
-        print(f"\n    {Fore.CYAN}🏆 MAGADOOM LEADERBOARD:{Style.RESET_ALL}")
+        print(f"\n    {Fore.CYAN}[U+1F3C6] MAGADOOM LEADERBOARD:{Style.RESET_ALL}")
         for i, entry in enumerate(leaderboard, 1):
-            emoji = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"][i-1] if i <= 5 else ""
+            emoji = ["[U+1F947]", "[U+1F948]", "[U+1F949]", "4️⃣", "5️⃣"][i-1] if i <= 5 else ""
             print(f"    {emoji} {entry['user_id']}: {entry['score']} XP ({entry['rank']})")
             
         self.print_step(5, "Leaderboard generated", "PASS")
@@ -457,9 +472,9 @@ Join our AI development session where we're building the future of autonomous sy
             await asyncio.sleep(0.5)  # Pause between scenarios
             
         # Print summary
-        print(f"\n{Fore.CYAN}╔{'═'*78}╗")
-        print(f"║{'WORKFLOW TEST SUMMARY':^78}║")
-        print(f"╚{'═'*78}╝{Style.RESET_ALL}")
+        print(f"\n{Fore.CYAN}[U+2554]{'='*78}[U+2557]")
+        print(f"[U+2551]{'WORKFLOW TEST SUMMARY':^78}[U+2551]")
+        print(f"[U+255A]{'='*78}[U+255D]{Style.RESET_ALL}")
         
         total_pass = 0
         total_fail = 0
@@ -486,9 +501,9 @@ Join our AI development session where we're building the future of autonomous sy
         print(f"  {Fore.RED}Failed:{Style.RESET_ALL} {total_fail}")
         
         if total_fail == 0:
-            print(f"\n{Fore.GREEN}ALL WORKFLOWS OPERATIONAL ✓{Style.RESET_ALL}")
+            print(f"\n{Fore.GREEN}ALL WORKFLOWS OPERATIONAL [OK]{Style.RESET_ALL}")
         else:
-            print(f"\n{Fore.YELLOW}WORKFLOWS NEED ATTENTION ⚠{Style.RESET_ALL}")
+            print(f"\n{Fore.YELLOW}WORKFLOWS NEED ATTENTION [U+26A0]{Style.RESET_ALL}")
 
 
 def main():

@@ -13,7 +13,7 @@
 - `.gitignore` now blocks them, but history remains
 
 ## What Selenium Needs (Keep These Files Locally)
-✅ KEEP these directories locally for posting to work:
+[OK] KEEP these directories locally for posting to work:
 - `modules/platform_integration/browser_profiles/` - LinkedIn/X sessions
 - `modules/platform_integration/linkedin_agent/data/chrome_profile/` - LinkedIn auth
 - `modules/platform_integration/x_twitter/data/chrome_profile_foundups/` - X/Twitter auth
@@ -21,7 +21,7 @@
 These maintain login sessions so Selenium doesn't need to re-authenticate.
 
 ## What's Safe to Delete from Git History
-❌ DELETE from git history (but keep locally):
+[FAIL] DELETE from git history (but keep locally):
 - All browser cache files
 - Session storage
 - Cookies
@@ -67,9 +67,9 @@ git push --force
 - BUT removes all personal data from GitHub
 
 ## Immediate Action
-1. Verified `.gitignore` blocks future commits ✅
-2. Browser profiles removed from tracking ✅  
-3. Files kept locally for Selenium ✅
+1. Verified `.gitignore` blocks future commits [OK]
+2. Browser profiles removed from tracking [OK]  
+3. Files kept locally for Selenium [OK]
 4. Need to purge git history ⏳
 
 ## Rotation Fix Status

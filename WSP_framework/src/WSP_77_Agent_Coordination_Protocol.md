@@ -115,11 +115,11 @@ if query_contains(['orphan', '464', 'archaeology']):
 ### Data Flow Architecture
 
 ```
-User Query → HoloIndex Coordinator → Agent-Specific Output Format
-                                       ↓
-Existing JSON Datasets → Task Dispatch → Results Aggregation
-                                       ↓
-Mission Progress Tracking → Strategic Updates → Completion Roadmap
+User Query -> HoloIndex Coordinator -> Agent-Specific Output Format
+                                       v
+Existing JSON Datasets -> Task Dispatch -> Results Aggregation
+                                       v
+Mission Progress Tracking -> Strategic Updates -> Completion Roadmap
 ```
 
 ---
@@ -210,4 +210,4 @@ MISSION_ROUTERS = {
 
 **Next Step**: Deploy Qwen MCP for first batch analysis (50 orphans)
 
-**Mission Control**: HoloIndex coordination fabric active 🚀
+**Mission Control**: HoloIndex coordination fabric active [ROCKET]

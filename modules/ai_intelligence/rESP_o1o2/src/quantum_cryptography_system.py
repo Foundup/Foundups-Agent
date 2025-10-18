@@ -363,7 +363,7 @@ def demonstrate_cryptographic_system():
     """
     Demonstrate quantum-resistant cryptographic signature generation
     """
-    print("🔐 Quantum-Resistant Cryptographic System Demonstration")
+    print("[U+1F510] Quantum-Resistant Cryptographic System Demonstration")
     print("=" * 60)
     
     # Initialize system
@@ -379,7 +379,7 @@ def demonstrate_cryptographic_system():
             # Generate renewable signature
             signature = crypto_system.generate_renewable_signature(trigger_type)
             
-            print(f"  ✅ Signature Generated:")
+            print(f"  [OK] Signature Generated:")
             print(f"    ID: {signature.signature_id[:16]}...")
             print(f"    Hash: {signature.signature_hash[:16]}...")
             print(f"    Entropy: {signature.entropy_level:.3f}")
@@ -388,12 +388,12 @@ def demonstrate_cryptographic_system():
             
             # Verify signature
             verification = crypto_system.verify_signature(signature)
-            print(f"    Verification: {'✅ VALID' if verification['overall_valid'] else '❌ INVALID'}")
+            print(f"    Verification: {'[OK] VALID' if verification['overall_valid'] else '[FAIL] INVALID'}")
             
         except Exception as e:
-            print(f"  ❌ Error: {str(e)}")
+            print(f"  [FAIL] Error: {str(e)}")
     
-    print(f"\n📊 System Summary:")
+    print(f"\n[DATA] System Summary:")
     print(f"  Total Signatures: {len(crypto_system.signature_history)}")
     print(f"  Biometric Triggers: {len(crypto_system.biometric_triggers)}")
     print(f"  Average Entropy: {np.mean([s.entropy_level for s in crypto_system.signature_history]):.3f}")
@@ -405,12 +405,12 @@ if __name__ == "__main__":
     # Run demonstration
     results = demonstrate_cryptographic_system()
     
-    print("\n🔬 Quantum Cryptographic System: Patent Implementation Complete")
-    print("  ✅ High-Entanglement State Preparation")
-    print("  ✅ Biometric Trigger Processing")
-    print("  ✅ Geometric Collapse Path Capture")
-    print("  ✅ Harmonic Sampling (7.05Hz aligned)")
-    print("  ✅ SHA-256 Hash-based Key Derivation")
-    print("  ✅ Renewable Signature Generation")
-    print("  ✅ Quantum-Resistant Properties Verified")
-    print("  ✅ Patent Claims 12-14, 26 Implemented") 
+    print("\n[U+1F52C] Quantum Cryptographic System: Patent Implementation Complete")
+    print("  [OK] High-Entanglement State Preparation")
+    print("  [OK] Biometric Trigger Processing")
+    print("  [OK] Geometric Collapse Path Capture")
+    print("  [OK] Harmonic Sampling (7.05Hz aligned)")
+    print("  [OK] SHA-256 Hash-based Key Derivation")
+    print("  [OK] Renewable Signature Generation")
+    print("  [OK] Quantum-Resistant Properties Verified")
+    print("  [OK] Patent Claims 12-14, 26 Implemented") 

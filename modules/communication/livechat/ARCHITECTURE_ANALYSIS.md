@@ -8,7 +8,7 @@ WSP-Compliant Analysis per WSP 22, 3, 84
 #### 1. auto_moderator_simple.py (1922 lines) - LEGACY MONOLITH
 - **Status**: Should be deprecated
 - **Features**:
-  - Consciousness emoji responses (✊✋🖐)
+  - Consciousness emoji responses ([U+270A][U+270B][U+1F590])
   - Grok integration for fact-checking
   - MAGA moderation
   - D&D leveling system
@@ -67,16 +67,16 @@ WSP-Compliant Analysis per WSP 22, 3, 84
 
 | Feature | auto_moderator_simple | livechat_core | Missing? |
 |---------|----------------------|---------------|----------|
-| Async/Await | Partial | Full | ✅ Better |
-| Consciousness Emojis | ✅ | Via emoji_trigger_handler | Check integration |
-| Grok Integration | ✅ | ❌ | Need to add |
-| MAGA Moderation | ✅ | ❌ | Need to add |
-| D&D Leveling | ✅ | Via moderation_stats | Check completeness |
-| Duke Nukem Announcer | ✅ | ❌ | Need to add |
-| Adaptive Throttling | ✅ | ❌ | Need to add |
-| Database | ✅ | Via moderation_stats | Check schema |
-| Session Management | Basic | ✅ Advanced | Better |
-| Message Processing | Inline | ✅ Modular | Better |
+| Async/Await | Partial | Full | [OK] Better |
+| Consciousness Emojis | [OK] | Via emoji_trigger_handler | Check integration |
+| Grok Integration | [OK] | [FAIL] | Need to add |
+| MAGA Moderation | [OK] | [FAIL] | Need to add |
+| D&D Leveling | [OK] | Via moderation_stats | Check completeness |
+| Duke Nukem Announcer | [OK] | [FAIL] | Need to add |
+| Adaptive Throttling | [OK] | [FAIL] | Need to add |
+| Database | [OK] | Via moderation_stats | Check schema |
+| Session Management | Basic | [OK] Advanced | Better |
+| Message Processing | Inline | [OK] Modular | Better |
 
 ## Recommended Architecture
 

@@ -61,13 +61,13 @@ class VoiceInterface:
         """Calibrate microphone for ambient noise."""
         try:
             with self.microphone as source:
-                print("🎤 Calibrating microphone for ambient noise...")
+                print("[U+1F3A4] Calibrating microphone for ambient noise...")
                 self.recognizer.adjust_for_ambient_noise(source, duration=2)
-                print("✅ Microphone calibrated")
+                print("[OK] Microphone calibrated")
         except Exception as e:
             logging.warning(f"Microphone calibration failed: {e}")
     
-    def speak(self, text: str, prefix: str = "🔊") -> bool:
+    def speak(self, text: str, prefix: str = "[U+1F50A]") -> bool:
         """
         Convert text to speech.
         
@@ -102,9 +102,9 @@ class VoiceInterface:
             Recognized text or None if recognition failed
         """
         if prompt:
-            self.speak(prompt, "🎤")
+            self.speak(prompt, "[U+1F3A4]")
         
-        print("🎤 Listening for voice input...")
+        print("[U+1F3A4] Listening for voice input...")
         
         try:
             with self.microphone as source:
@@ -115,21 +115,21 @@ class VoiceInterface:
                     phrase_time_limit=self.phrase_time_limit
                 )
                 
-                print("🧠 Processing speech...")
+                print("[AI] Processing speech...")
                 
                 # Convert speech to text using Google Speech Recognition
                 text = self.recognizer.recognize_google(audio)
-                print(f"✅ Recognized: '{text}'")
+                print(f"[OK] Recognized: '{text}'")
                 return text.strip()
                 
         except sr.WaitTimeoutError:
             print("⏰ No speech detected within timeout period")
             return None
         except sr.UnknownValueError:
-            print("❓ Could not understand audio - please speak clearly")
+            print("[U+2753] Could not understand audio - please speak clearly")
             return None
         except sr.RequestError as e:
-            print(f"❌ Speech recognition service error: {e}")
+            print(f"[FAIL] Speech recognition service error: {e}")
             return None
         except Exception as e:
             logging.error(f"Unexpected voice recognition error: {e}")
@@ -277,11 +277,11 @@ class VoiceInterface:
         
         # Test TTS
         if self.tts_available:
-            tts_success = self.speak("Voice system test", "🧪")
+            tts_success = self.speak("Voice system test", "[U+1F9EA]")
             results["tts_working"] = tts_success
         
         # Test speech recognition (with user interaction)
-        print("🧪 Testing speech recognition - please say 'test'")
+        print("[U+1F9EA] Testing speech recognition - please say 'test'")
         test_input = self.listen()
         results["speech_recognition_working"] = test_input is not None
         

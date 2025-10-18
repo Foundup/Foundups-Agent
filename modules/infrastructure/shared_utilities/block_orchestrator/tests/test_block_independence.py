@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Block Independence Test Script
 WSP Protocol: WSP 40 (Architectural Coherence)
 
@@ -29,7 +44,7 @@ class IndependenceTestRunner:
     
     async def test_dependency_injection(self):
         """Test that dependency injection works"""
-        print("🧪 Testing Dependency Injection System...")
+        print("[U+1F9EA] Testing Dependency Injection System...")
         
         # Test injector creation
         injector = DependencyInjector("test_block", "INFO")
@@ -43,12 +58,12 @@ class IndependenceTestRunner:
         injector.set_config({"test_key": "test_value"})
         assert injector.get_config("test_key") == "test_value"
         
-        print("✅ Dependency injection working perfectly!")
+        print("[OK] Dependency injection working perfectly!")
         return True
     
     async def test_mock_components(self):
         """Test that mock components work for standalone mode"""
-        print("🧪 Testing Mock Component System...")
+        print("[U+1F9EA] Testing Mock Component System...")
         
         class MockBlock:
             def __init__(self):
@@ -63,12 +78,12 @@ class IndependenceTestRunner:
         # Test that block can use injected dependencies
         block.logger.info("Mock block test message")
         
-        print("✅ Mock component system working!")
+        print("[OK] Mock component system working!")
         return True
     
     async def test_standalone_patterns(self):
         """Test standalone execution patterns"""
-        print("🧪 Testing Standalone Execution Patterns...")
+        print("[U+1F9EA] Testing Standalone Execution Patterns...")
         
         # Test async standalone method pattern
         class TestBlock:
@@ -78,10 +93,10 @@ class IndependenceTestRunner:
                 self.running = False
             
             async def run_standalone(self):
-                self.logger.info("🚀 Starting standalone execution...")
+                self.logger.info("[ROCKET] Starting standalone execution...")
                 self.running = True
                 await asyncio.sleep(0.1)  # Simulate work
-                self.logger.info("✅ Standalone execution complete")
+                self.logger.info("[OK] Standalone execution complete")
                 return True
         
         # Test the pattern
@@ -92,12 +107,12 @@ class IndependenceTestRunner:
         assert result is True
         assert block.running is True
         
-        print("✅ Standalone execution patterns working!")
+        print("[OK] Standalone execution patterns working!")
         return True
     
     async def test_block_registry(self):
         """Test that block registry system works"""
-        print("🧪 Testing Block Registry System...")
+        print("[U+1F9EA] Testing Block Registry System...")
         
         from block_runner import ModularBlockRunner
         
@@ -110,14 +125,14 @@ class IndependenceTestRunner:
         assert "auto_meeting_orchestrator" in runner.block_configs
         assert "post_meeting_feedback" in runner.block_configs
         
-        print("✅ Block registry system working!")
-        print(f"📊 Discovered {len(runner.block_configs)} blocks")
+        print("[OK] Block registry system working!")
+        print(f"[DATA] Discovered {len(runner.block_configs)} blocks")
         
         return True
     
     async def run_all_tests(self):
         """Run comprehensive independence tests"""
-        print("🧊 FOUNDUPS BLOCK INDEPENDENCE TEST SUITE")
+        print("[U+1F9CA] FOUNDUPS BLOCK INDEPENDENCE TEST SUITE")
         print("=" * 50)
         
         tests = [
@@ -134,28 +149,28 @@ class IndependenceTestRunner:
             try:
                 result = await test_func()
                 if result:
-                    print(f"✅ {test_name}: PASS")
+                    print(f"[OK] {test_name}: PASS")
                     passed += 1
                 else:
-                    print(f"❌ {test_name}: FAIL")
+                    print(f"[FAIL] {test_name}: FAIL")
             except Exception as e:
-                print(f"❌ {test_name}: ERROR - {e}")
+                print(f"[FAIL] {test_name}: ERROR - {e}")
         
         print("=" * 50)
-        print(f"🎯 RESULTS: {passed}/{total} tests passed")
+        print(f"[TARGET] RESULTS: {passed}/{total} tests passed")
         
         if passed == total:
-            print("🎉 BLOCK INDEPENDENCE: FULLY OPERATIONAL!")
-            print("\n🧊 KEY ACHIEVEMENTS:")
-            print("  ✅ Modular LEGO architecture working")
-            print("  ✅ Dependency injection system operational")
-            print("  ✅ Mock components for standalone testing")
-            print("  ✅ Block registry and discovery functional")
-            print("  ✅ Ready for independent block execution")
+            print("[CELEBRATE] BLOCK INDEPENDENCE: FULLY OPERATIONAL!")
+            print("\n[U+1F9CA] KEY ACHIEVEMENTS:")
+            print("  [OK] Modular LEGO architecture working")
+            print("  [OK] Dependency injection system operational")
+            print("  [OK] Mock components for standalone testing")
+            print("  [OK] Block registry and discovery functional")
+            print("  [OK] Ready for independent block execution")
             
             return True
         else:
-            print("⚠️  Some tests failed - needs investigation")
+            print("[U+26A0]️  Some tests failed - needs investigation")
             return False
 
 async def main():
@@ -164,10 +179,10 @@ async def main():
     success = await runner.run_all_tests()
     
     if success:
-        print("\n🚀 BLOCK INDEPENDENCE PROOF-OF-CONCEPT: SUCCESS!")
+        print("\n[ROCKET] BLOCK INDEPENDENCE PROOF-OF-CONCEPT: SUCCESS!")
         print("   Ready to solve package import conflicts and achieve full independence")
     else:
-        print("\n❌ Block independence needs more work")
+        print("\n[FAIL] Block independence needs more work")
         
     return success
 

@@ -10,7 +10,7 @@ sys.path.insert(0, os.getcwd())
 from modules.gamification.whack_a_magat.src.whack import get_profile, _update_rank_and_level
 
 def test_rank_progression():
-    print("🎮 MAGADOOM RANK PROGRESSION TEST")
+    print("[GAME] MAGADOOM RANK PROGRESSION TEST")
     print("="*60)
     
     # Test scores with expected ranks
@@ -46,14 +46,14 @@ def test_rank_progression():
         _update_rank_and_level(test_profile)
         
         # Check if rank matches expectation
-        status = "✅" if test_profile.rank == expected_rank else "❌"
-        print(f"{status} {score:6d} XP → {test_profile.rank:20s} (Level {test_profile.level})")
+        status = "[OK]" if test_profile.rank == expected_rank else "[FAIL]"
+        print(f"{status} {score:6d} XP -> {test_profile.rank:20s} (Level {test_profile.level})")
         
         if test_profile.rank != expected_rank:
             print(f"   EXPECTED: {expected_rank}")
     
     print("="*60)
-    print("💀 MAGADOOM rank system test complete!")
+    print("[U+1F480] MAGADOOM rank system test complete!")
 
 if __name__ == "__main__":
     test_rank_progression()

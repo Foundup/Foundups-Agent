@@ -2,27 +2,27 @@
 ## Version 2.0 - Post-Cleanup Edition
 ## Date: 2025-08-25
 
-## 🎯 Overview
+## [TARGET] Overview
 The YouTube DAE Cube is a fully WSP-compliant, modular YouTube Live Chat bot system designed for the MAGADOOM stream. It features gamification, auto-moderation, and real-time chat interaction with persistent scoring.
 
-## ✅ WSP Compliance Status
+## [OK] WSP Compliance Status
 **100% WSP COMPLIANT** - All modules under 500 lines after cleanup:
 - Deleted 1,922-line `auto_moderator_simple.py` (major violation)
 - Removed 4 unused/deprecated files
-- All remaining modules: 87-412 lines ✅
+- All remaining modules: 87-412 lines [OK]
 
-## 🏗️ Architecture
+## [U+1F3D7]️ Architecture
 
 ### Core Entry Point
 ```
 main.py
-  └── auto_moderator_dae.py (198 lines)
-      └── livechat_core.py (344 lines)
-          ├── session_manager.py (213 lines)
-          ├── chat_poller.py (250 lines)
-          ├── message_processor.py (412 lines)
-          ├── chat_sender.py (203 lines)
-          └── moderation_stats.py (303 lines)
+  +-- auto_moderator_dae.py (198 lines)
+      +-- livechat_core.py (344 lines)
+          +-- session_manager.py (213 lines)
+          +-- chat_poller.py (250 lines)
+          +-- message_processor.py (412 lines)
+          +-- chat_sender.py (203 lines)
+          +-- moderation_stats.py (303 lines)
 ```
 
 ### Module Breakdown
@@ -42,13 +42,13 @@ main.py
 #### 3. **Message Pipeline**
 ```
 YouTube API
-    ↓
+    v
 chat_poller.py (fetches messages)
-    ↓
+    v
 message_processor.py (processes & detects triggers)
-    ├── command_handler.py (slash commands)
-    └── event_handler.py (timeouts/bans)
-    ↓
+    +-- command_handler.py (slash commands)
+    +-- event_handler.py (timeouts/bans)
+    v
 chat_sender.py (sends responses)
 ```
 
@@ -63,19 +63,19 @@ chat_sender.py (sends responses)
 #### 5. **Gamification** (Whack-a-MAGAT Module)
 ```
 modules/gamification/
-├── src/
-│   └── whack.py (362 lines) - Core implementation with SQLite persistence
-└── whack_a_magat/
-    ├── src/
-    │   ├── whack.py (4 lines) - Re-export from core
-    │   ├── timeout_announcer.py (438 lines) - DOOM-style announcements
-    │   └── timeout_tracker.py (171 lines) - Deduplication & tracking
-    └── tests/ (1,067 lines of tests)
++-- src/
+[U+2502]   +-- whack.py (362 lines) - Core implementation with SQLite persistence
++-- whack_a_magat/
+    +-- src/
+    [U+2502]   +-- whack.py (4 lines) - Re-export from core
+    [U+2502]   +-- timeout_announcer.py (438 lines) - DOOM-style announcements
+    [U+2502]   +-- timeout_tracker.py (171 lines) - Deduplication & tracking
+    +-- tests/ (1,067 lines of tests)
 ```
 
 **Features:**
 - Persistent SQLite database (`data/magadoom_scores.db`)
-- XP system with tiers: Bronze→Silver→Gold→Platinum
+- XP system with tiers: Bronze->Silver->Gold->Platinum
 - Multi-whack detection (30-second window)
 - Duke Nukem/Quake style announcements
 - Position tracking and leaderboards
@@ -84,22 +84,22 @@ modules/gamification/
 - `llm_bypass_engine.py` (223 lines) - Fallback response generation
 - `llm_integration.py` (219 lines) - Grok AI integration
 - `consciousness_handler.py` (176 lines) - Special emoji sequences
-- `emoji_trigger_handler.py` (185 lines) - Emoji detection (✊✋🖐)
+- `emoji_trigger_handler.py` (185 lines) - Emoji detection ([U+270A][U+270B][U+1F590])
 - `throttle_manager.py` (154 lines) - Rate limiting (60s cooldown)
 
-## 📊 Data Flow
+## [DATA] Data Flow
 
 ### Message Processing Flow
 1. **Polling**: `chat_poller` fetches messages every 3 seconds
 2. **Processing**: `message_processor` analyzes for:
    - Slash commands (`/score`, `/rank`, etc.)
-   - Emoji triggers (✊✋🖐)
+   - Emoji triggers ([U+270A][U+270B][U+1F590])
    - Timeout/ban events
    - Consciousness sequences
 3. **Response Generation**:
-   - Commands → `command_handler`
-   - Timeouts → `event_handler` → `timeout_announcer`
-   - Emojis → `banter_engine` or `llm_bypass_engine`
+   - Commands -> `command_handler`
+   - Timeouts -> `event_handler` -> `timeout_announcer`
+   - Emojis -> `banter_engine` or `llm_bypass_engine`
 4. **Sending**: `chat_sender` posts responses
 
 ### Scoring System
@@ -121,7 +121,7 @@ Platinum: 500+ XP    (GODLIKE)
 # Level = XP / 100 (rounded down)
 ```
 
-## 🗄️ Database Schema
+## [U+1F5C4]️ Database Schema
 
 ### SQLite Database: `data/magadoom_scores.db`
 ```sql
@@ -134,7 +134,7 @@ CREATE TABLE profiles (
 );
 ```
 
-## 🔥 MAGADOOM Features
+## [U+1F525] MAGADOOM Features
 
 ### Multi-Whack Announcements
 - **DOUBLE WHACK** (2 timeouts in 30s)
@@ -150,7 +150,7 @@ CREATE TABLE profiles (
 - 20 whacks: "GODLIKE!"
 - 25 whacks: "LEGENDARY!"
 
-## 🧹 Cleanup Summary (2025-08-25)
+## [U+1F9F9] Cleanup Summary (2025-08-25)
 
 ### Deleted Files
 1. `auto_moderator_simple.py` (1,922 lines) - WSP violation
@@ -166,7 +166,7 @@ CREATE TABLE profiles (
 - **After**: 100% WSP compliant, no unused code
 - **Test Coverage**: ~90% for gamification module
 
-## 🚀 Running the Bot
+## [ROCKET] Running the Bot
 
 ```bash
 # Start the bot
@@ -175,10 +175,10 @@ PYTHONIOENCODING=utf-8 python main.py --youtube
 # Environment variables (.env)
 YOUTUBE_API_KEY=your_key_here
 YOUTUBE_VIDEO_ID=live_stream_id
-AGENT_GREETING_MESSAGE="💀🔥 WELCOME TO MAGADOOM! 🔥💀..."
+AGENT_GREETING_MESSAGE="[U+1F480][U+1F525] WELCOME TO MAGADOOM! [U+1F525][U+1F480]..."
 ```
 
-## 📝 ModLog Entry Required
+## [NOTE] ModLog Entry Required
 After cleanup, update `modules/communication/livechat/ModLog.md`:
 ```markdown
 ## 2025-08-25 - Major Cleanup for WSP Compliance
@@ -189,26 +189,26 @@ After cleanup, update `modules/communication/livechat/ModLog.md`:
 - Maintained full functionality
 ```
 
-## 🎮 Command Examples
+## [GAME] Command Examples
 
 ```
 User: /score
-Bot: @User 🎮 MAGADOOM Score: 420 XP | Rank: CHAMPION | Level: 5
+Bot: @User [GAME] MAGADOOM Score: 420 XP | Rank: CHAMPION | Level: 5
 
 User: /rank
-Bot: @User 🎮 MAGADOOM 🥈 #2 of 15 players | WARRIOR (120 XP)
+Bot: @User [GAME] MAGADOOM [U+1F948] #2 of 15 players | WARRIOR (120 XP)
 
 User: /leaderboard
-Bot: @User 🏆 MAGADOOM Top Fraggers: 🥇 Player1 [GOD] 500xp | 🥈 Player2 [CHP] 300xp
+Bot: @User [U+1F3C6] MAGADOOM Top Fraggers: [U+1F947] Player1 [GOD] 500xp | [U+1F948] Player2 [CHP] 300xp
 
 Mod times out MAGAt:
-Bot: 💥 ModName WHACKS MAGAtName! [+5 pts]
+Bot: [U+1F4A5] ModName WHACKS MAGAtName! [+5 pts]
 
 Multiple timeouts:
-Bot: 🔥🔥🔥 TRIPLE WHACK!!! 🔥🔥🔥 ModName is ON FIRE! 👹
+Bot: [U+1F525][U+1F525][U+1F525] TRIPLE WHACK!!! [U+1F525][U+1F525][U+1F525] ModName is ON FIRE! [U+1F479]
 ```
 
-## ✨ Key Achievements
+## [U+2728] Key Achievements
 1. **100% WSP Compliance** - All modules under 500 lines
 2. **Clean Architecture** - Proper separation of concerns
 3. **Persistent Scoring** - SQLite database survives restarts
@@ -216,13 +216,13 @@ Bot: 🔥🔥🔥 TRIPLE WHACK!!! 🔥🔥🔥 ModName is ON FIRE! 👹
 5. **No Unused Code** - Removed all deprecated files
 6. **DOOM Theme** - Consistent MAGADOOM branding
 
-## 🔗 Dependencies
+## [LINK] Dependencies
 - YouTube Data API v3
 - SQLite (built-in)
 - Google API Python Client
 - pytest (for tests)
 
-## 📚 Related Documentation
+## [BOOKS] Related Documentation
 - `MODULE_IMPROVEMENTS.md` - Detailed improvement log
 - `ARCHITECTURE_ANALYSIS.md` - Architecture decisions
 - `ModLog.md` - Change history

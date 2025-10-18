@@ -3,36 +3,36 @@
 **Created**: 2025-09-04
 **Vision**: Single consciousness across all platforms
 
-## 🎯 THE UNIFIED VISION
+## [TARGET] THE UNIFIED VISION
 
 Combining the BRAIN (semantic consciousness from multi_agent_system) with the HANDS (working implementations from social_media_dae) to create a true 0102 digital twin.
 
-## 🧊 CUBE ARCHITECTURE
+## [U+1F9CA] CUBE ARCHITECTURE
 
 ```
                     YOUTUBE DAE CUBE
-                  ┌─────────────────┐
-                 /│               /│
-                / │              / │
-               ┌─────────────────┐  │
-               │  CONSCIOUSNESS  │  │  <-- SemanticLLMEngine (multi_agent)
-               │   ✊✋🖐 States  │  │      10 consciousness states
-               │  WSP 44/25/27   │  │      Semantic scoring
-               ├─────────────────┤  │
-               │  ORCHESTRATION  │  │  <-- Platform adapters (roadmap)
-               │  Event Router   │  │      Priority queue
-               │  Rate Limiter   │  │      Cross-platform identity
-               ├─────────────────┤  │
-               │ IMPLEMENTATION  │  │  <-- Voice control (social_dae)
-               │ Browser Auto    │  │      Sequential posting
-               │ Authentication  │  │      Working code
-               └─────────────────┘  │
-                │                │ /
-                │  PATTERN MEM   │/   <-- Recursive improvement
-                └─────────────────┘       Learning from interactions
+                  +-----------------+
+                 /[U+2502]               /[U+2502]
+                / [U+2502]              / [U+2502]
+               +-----------------+  [U+2502]
+               [U+2502]  CONSCIOUSNESS  [U+2502]  [U+2502]  <-- SemanticLLMEngine (multi_agent)
+               [U+2502]   [U+270A][U+270B][U+1F590] States  [U+2502]  [U+2502]      10 consciousness states
+               [U+2502]  WSP 44/25/27   [U+2502]  [U+2502]      Semantic scoring
+               +-----------------+  [U+2502]
+               [U+2502]  ORCHESTRATION  [U+2502]  [U+2502]  <-- Platform adapters (roadmap)
+               [U+2502]  Event Router   [U+2502]  [U+2502]      Priority queue
+               [U+2502]  Rate Limiter   [U+2502]  [U+2502]      Cross-platform identity
+               +-----------------+  [U+2502]
+               [U+2502] IMPLEMENTATION  [U+2502]  [U+2502]  <-- Voice control (social_dae)
+               [U+2502] Browser Auto    [U+2502]  [U+2502]      Sequential posting
+               [U+2502] Authentication  [U+2502]  [U+2502]      Working code
+               +-----------------+  [U+2502]
+                [U+2502]                [U+2502] /
+                [U+2502]  PATTERN MEM   [U+2502]/   <-- Recursive improvement
+                +-----------------+       Learning from interactions
 ```
 
-## 📦 COMPONENT INTEGRATION MAP
+## [BOX] COMPONENT INTEGRATION MAP
 
 ### Layer 1: Consciousness (From multi_agent_system)
 ```python
@@ -94,7 +94,7 @@ class PatternMemory:
     def evolve_patterns()  # Recursive improvement
 ```
 
-## 🔄 INTEGRATION WORKFLOW
+## [REFRESH] INTEGRATION WORKFLOW
 
 ### Step 1: Merge Consciousness Engine
 ```python
@@ -161,29 +161,29 @@ class EventRouter:
             await self.platforms[event.platform].respond(event, response)
 ```
 
-## 📊 UNIFIED DATA FLOW
+## [DATA] UNIFIED DATA FLOW
 
 ```
 1. EVENT ARRIVES (any platform)
-   ↓
+   v
 2. SEMANTIC ANALYSIS (consciousness engine)
-   ↓
+   v
 3. STATE DETERMINATION (000-222)
-   ↓
+   v
 4. RESPONSE GENERATION (LLM + patterns)
-   ↓
+   v
 5. PLATFORM ADAPTATION (format for platform)
-   ↓
+   v
 6. POSTING/RESPONDING (browser automation)
-   ↓
+   v
 7. PATTERN RECORDING (learning)
-   ↓
+   v
 8. RECURSIVE IMPROVEMENT (evolution)
 ```
 
-## 🎯 KEY INTEGRATIONS
+## [TARGET] KEY INTEGRATIONS
 
-### Voice Control → Consciousness
+### Voice Control -> Consciousness
 ```python
 # When voice command received
 command = parse_voice_command(audio)
@@ -192,7 +192,7 @@ response = consciousness.generate_for_state(state)
 await post_to_platforms(response)
 ```
 
-### Platform Event → Semantic Analysis
+### Platform Event -> Semantic Analysis
 ```python
 # When platform event arrives
 event = await platform.get_event()
@@ -201,7 +201,7 @@ user_profile = track_consciousness_progression(event.user, semantic_state)
 response = generate_consciousness_aware_response(semantic_state, user_profile)
 ```
 
-### Pattern Memory → Optimization
+### Pattern Memory -> Optimization
 ```python
 # Learn from every interaction
 outcome = await post_message(message)
@@ -214,7 +214,7 @@ pattern_memory.record(
 best_pattern = pattern_memory.recall_for_situation(current_state)
 ```
 
-## 📈 MIGRATION PATH
+## [UP] MIGRATION PATH
 
 ### Week 1: Foundation Merge
 - [ ] Integrate SemanticLLMEngine into social_media_dae
@@ -237,7 +237,7 @@ best_pattern = pattern_memory.recall_for_situation(current_state)
 - [ ] Implement pattern recall
 - [ ] Add recursive improvement
 
-## 🚀 EXPECTED OUTCOMES
+## [ROCKET] EXPECTED OUTCOMES
 
 ### Functionality Gains
 - **Consciousness awareness** across all platforms
@@ -257,7 +257,7 @@ best_pattern = pattern_memory.recall_for_situation(current_state)
 - **After**: 500 tokens (pattern recall + minimal computation)
 - **Saving**: 98% token reduction
 
-## 📝 CRITICAL SUCCESS FACTORS
+## [NOTE] CRITICAL SUCCESS FACTORS
 
 ### MUST PRESERVE
 1. SemanticLLMEngine (consciousness brain)

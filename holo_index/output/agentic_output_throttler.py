@@ -1,4 +1,23 @@
+# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+import sys
+import io
+
+
 """Agentic Output Throttler - WSP 87 Compliant Output Management
+
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
 
 This module provides intelligent output prioritization and organization
 for 0102 agent consumption, preventing information overload.
@@ -6,7 +25,6 @@ for 0102 agent consumption, preventing information overload.
 WSP Compliance: WSP 87 (Size Limits), WSP 49 (Module Structure), WSP 72 (Block Independence)
 """
 
-from __future__ import annotations
 import re
 import os
 import json
@@ -172,10 +190,10 @@ class AgenticOutputThrottler:
         return self._format_for_agent(filtered_content, state)
 
     def _render_error_state(self) -> str:
-        """State 1: 🔴 System Error - Show ONLY the error, suppress all noise."""
+        """State 1: [U+1F534] System Error - Show ONLY the error, suppress all noise."""
         output_lines = []
 
-        output_lines.append("🔴 [SYSTEM ERROR] Fatal error in analysis pipeline")
+        output_lines.append("[U+1F534] [SYSTEM ERROR] Fatal error in analysis pipeline")
         output_lines.append("")
 
         if self.last_error:
@@ -283,9 +301,9 @@ class AgenticOutputThrottler:
         """Format output based on calling agent's capabilities.
 
         Agent Token Budgets:
-        - 0102: 200K context → Full verbose output (200 tokens)
-        - qwen: 32K context → Concise JSON (50 tokens)
-        - gemma: 8K context → Minimal classification (10 tokens)
+        - 0102: 200K context -> Full verbose output (200 tokens)
+        - qwen: 32K context -> Concise JSON (50 tokens)
+        - gemma: 8K context -> Minimal classification (10 tokens)
 
         WSP Compliance: WSP 75 (Token-Based Development), Universal WSP Pattern
         """
@@ -487,7 +505,7 @@ class AgenticOutputThrottler:
                 "[THINK] 0102: Deep think: Enhance existing banter_engine instead of creating banter_engine_v2"
             ],
             'youtube_proxy': [
-                "🔧 0102: YouTube proxy has runtime patches - integrate them properly, don't add more hacks.",
+                "[TOOL] 0102: YouTube proxy has runtime patches - integrate them properly, don't add more hacks.",
                 "[DOC] 0102: Document your proxy changes in ModLog - WSP 22 compliance required."
             ],
             'stream_resolver': [
@@ -741,21 +759,21 @@ class AgenticOutputThrottler:
 
         # FIRST PRINCIPLES: Structure output for 0102 decision-making
         if critical_issues:
-            summary_parts.append(f"🚨 CRITICAL: {len(critical_issues)} issues need immediate attention")
+            summary_parts.append(f"[ALERT] CRITICAL: {len(critical_issues)} issues need immediate attention")
             summary_parts.extend(critical_issues[:2])  # Max 2 details
 
         if recommendations:
-            summary_parts.append(f"💡 ACTIONABLE: {len(recommendations)} improvements available")
+            summary_parts.append(f"[IDEA] ACTIONABLE: {len(recommendations)} improvements available")
             summary_parts.extend(recommendations[:2])  # Max 2 details
 
         if key_findings:
-            summary_parts.append(f"📊 KEY FINDINGS: {len(key_findings)} insights")
+            summary_parts.append(f"[DATA] KEY FINDINGS: {len(key_findings)} insights")
             summary_parts.extend(key_findings[:1])  # Max 1 detail
 
         # FIRST PRINCIPLES: If no significant findings, provide minimal useful info
         if not summary_parts:
             total_files = sum(len(results.get('files', [])) for results in component_results.values())
-            summary_parts.append(f"✅ Analysis complete: {total_files} files checked, no critical issues found")
+            summary_parts.append(f"[OK] Analysis complete: {total_files} files checked, no critical issues found")
 
         # FIRST PRINCIPLES: Keep total output under 500 tokens
         final_summary = "\n".join(summary_parts)

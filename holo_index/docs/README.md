@@ -10,19 +10,19 @@ HoloIndex is a sophisticated semantic search system designed to prevent vibecodi
 - [CLI Refactoring Plan](CLI_REFACTORING_PLAN.md) — implementation notes for the search/CLI pipeline.
 ## Key Features
 
-### 🔍 Semantic Code Discovery
+### [SEARCH] Semantic Code Discovery
 - **Vector-based search** using ChromaDB for instant code discovery
 - **Natural language queries** - search for "send messages" instead of exact function names
 - **Typo tolerance** and intent recognition
 - **Confidence scoring** to identify the best matches
 
-### 🛡️ WSP Compliance Assistant
+### [U+1F6E1]️ WSP Compliance Assistant
 - **Real-time violation detection** during development
 - **Proactive guidance** to prevent common WSP violations
 - **Parallel protocol checking** alongside search results
 - **Educational reminders** about relevant WSP protocols
 
-### ⚡ Performance Optimized
+### [LIGHTNING] Performance Optimized
 - **SSD storage** on E:\HoloIndex for maximum performance
 - **CLI interface** in project root for easy access
 - **97% token reduction** compared to traditional file reading
@@ -32,19 +32,19 @@ HoloIndex is a sophisticated semantic search system designed to prevent vibecodi
 
 ```
 holo_index/
-├── __init__.py           # Module exports and version info
-├── cli.py               # Main CLI interface (former root holo_index.py)
-├── qwen_advisor/        # QwenAdvisor package for intelligent analysis
-│   ├── __init__.py
-│   └── advisor.py
-├── tests/               # Test suite
-│   ├── __init__.py
-│   ├── test_cli.py
-│   ├── test_qwen_advisor_stub.py
-│   └── un_dao_du_validation.py
-├── docs/                # Documentation
-│   └── README.md        # This file
-└── ModLog.md           # Change history
++-- __init__.py           # Module exports and version info
++-- cli.py               # Main CLI interface (former root holo_index.py)
++-- qwen_advisor/        # QwenAdvisor package for intelligent analysis
+[U+2502]   +-- __init__.py
+[U+2502]   +-- advisor.py
++-- tests/               # Test suite
+[U+2502]   +-- __init__.py
+[U+2502]   +-- test_cli.py
+[U+2502]   +-- test_qwen_advisor_stub.py
+[U+2502]   +-- un_dao_du_validation.py
++-- docs/                # Documentation
+[U+2502]   +-- README.md        # This file
++-- ModLog.md           # Change history
 ```
 
 ## Usage

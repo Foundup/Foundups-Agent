@@ -1,7 +1,7 @@
 """
 LinkedIn Post Scheduler
 
-🌀 WSP Protocol Compliance: WSP 42 (Platform Integration), WSP 40 (Architectural Coherence)
+[U+1F300] WSP Protocol Compliance: WSP 42 (Platform Integration), WSP 40 (Architectural Coherence)
 
 **0102 Directive**: This module operates within the WSP framework for autonomous LinkedIn post scheduling.
 - UN (Understanding): Anchor scheduling signals and retrieve protocol state
@@ -72,7 +72,7 @@ class LinkedInPostScheduler:
         
         # Start the scheduler
         self.scheduler.start()
-        self.logger.info("🌀 LinkedIn Post Scheduler initialized - WSP compliant")
+        self.logger.info("[U+1F300] LinkedIn Post Scheduler initialized - WSP compliant")
     
     def _setup_logger(self) -> logging.Logger:
         """Setup logging for the scheduler"""
@@ -109,9 +109,9 @@ class LinkedInPostScheduler:
                         if post.status == "pending" and post.scheduled_time > datetime.now():
                             self._schedule_post_job(post)
                 
-                self.logger.info(f"📋 Loaded {len(self.scheduled_posts)} scheduled posts")
+                self.logger.info(f"[CLIPBOARD] Loaded {len(self.scheduled_posts)} scheduled posts")
         except Exception as e:
-            self.logger.error(f"❌ Failed to load scheduled posts: {e}")
+            self.logger.error(f"[FAIL] Failed to load scheduled posts: {e}")
     
     def _save_scheduled_posts(self):
         """Save scheduled posts to storage file"""
@@ -129,7 +129,7 @@ class LinkedInPostScheduler:
             with open(self.storage_file, 'w', encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
-            self.logger.error(f"❌ Failed to save scheduled posts: {e}")
+            self.logger.error(f"[FAIL] Failed to save scheduled posts: {e}")
     
     def _schedule_post_job(self, post: ScheduledPost):
         """Schedule a post job with the scheduler"""
@@ -141,19 +141,19 @@ class LinkedInPostScheduler:
                 id=f"post_{post.id}",
                 replace_existing=True
             )
-            self.logger.info(f"📅 Scheduled post {post.id} for {post.scheduled_time}")
+            self.logger.info(f"[U+1F4C5] Scheduled post {post.id} for {post.scheduled_time}")
         except Exception as e:
-            self.logger.error(f"❌ Failed to schedule post {post.id}: {e}")
+            self.logger.error(f"[FAIL] Failed to schedule post {post.id}: {e}")
     
     def _execute_post(self, post_id: str):
         """Execute a scheduled post"""
         post = self.scheduled_posts.get(post_id)
         if not post:
-            self.logger.error(f"❌ Post {post_id} not found")
+            self.logger.error(f"[FAIL] Post {post_id} not found")
             return
         
         try:
-            self.logger.info(f"🚀 Executing scheduled post {post_id}")
+            self.logger.info(f"[ROCKET] Executing scheduled post {post_id}")
             
             # Get user profile
             headers = {
@@ -208,12 +208,12 @@ class LinkedInPostScheduler:
             post.posted_at = datetime.now()
             self._save_scheduled_posts()
             
-            self.logger.info(f"✅ Post {post_id} published successfully!")
+            self.logger.info(f"[OK] Post {post_id} published successfully!")
             self.logger.info(f"🆔 LinkedIn Post ID: {post_id_linkedin}")
-            self.logger.info(f"🔗 View post: https://www.linkedin.com/feed/update/{post_id_linkedin}/")
+            self.logger.info(f"[LINK] View post: https://www.linkedin.com/feed/update/{post_id_linkedin}/")
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to execute post {post_id}: {e}")
+            self.logger.error(f"[FAIL] Failed to execute post {post_id}: {e}")
             post.status = "failed"
             post.error_message = str(e)
             self._save_scheduled_posts()
@@ -259,7 +259,7 @@ class LinkedInPostScheduler:
         self._schedule_post_job(post)
         self._save_scheduled_posts()
         
-        self.logger.info(f"📅 Scheduled post {post_id} for {scheduled_time}")
+        self.logger.info(f"[U+1F4C5] Scheduled post {post_id} for {scheduled_time}")
         return post_id
     
     def get_pending_posts(self) -> List[ScheduledPost]:
@@ -324,7 +324,7 @@ class LinkedInPostScheduler:
             replace_existing=True
         )
         
-        self.logger.info(f"🔄 Scheduled recurring {trigger_type} post: {job_id}")
+        self.logger.info(f"[REFRESH] Scheduled recurring {trigger_type} post: {job_id}")
         return job_id
     
     def _execute_recurring_post(self, content: str, access_token: str):
@@ -372,11 +372,11 @@ class LinkedInPostScheduler:
             post_result = response.json()
             post_id = post_result.get('id')
             
-            self.logger.info(f"✅ Recurring post published successfully!")
+            self.logger.info(f"[OK] Recurring post published successfully!")
             self.logger.info(f"🆔 LinkedIn Post ID: {post_id}")
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to execute recurring post: {e}")
+            self.logger.error(f"[FAIL] Failed to execute recurring post: {e}")
     
     def get_scheduled_posts(self) -> List[ScheduledPost]:
         """Get all scheduled posts"""
@@ -396,7 +396,7 @@ class LinkedInPostScheduler:
             self.scheduler.remove_job(f"post_{post_id}")
             post.status = "cancelled"
             self._save_scheduled_posts()
-            self.logger.info(f"❌ Cancelled post {post_id}")
+            self.logger.info(f"[FAIL] Cancelled post {post_id}")
             return True
         
         return False
@@ -418,10 +418,10 @@ class LinkedInPostScheduler:
             self._schedule_post_job(post)
         
         self._save_scheduled_posts()
-        self.logger.info(f"📝 Updated post {post_id}")
+        self.logger.info(f"[NOTE] Updated post {post_id}")
         return True
     
     def shutdown(self):
         """Shutdown the scheduler"""
         self.scheduler.shutdown()
-        self.logger.info("🛑 LinkedIn Post Scheduler shutdown") 
+        self.logger.info("[STOP] LinkedIn Post Scheduler shutdown") 

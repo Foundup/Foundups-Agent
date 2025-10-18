@@ -138,10 +138,10 @@ class CursorSubAgentManager:
             # Log the activation
             activation_time = datetime.now()
             
-            print(f"🤖 Activating Cursor Sub-Agent: {subagent.name}")
-            print(f"📋 Role: {subagent.role}")
-            print(f"🛠️ Tools: {', '.join(subagent.tools)}")
-            print(f"📖 WSP Protocols: {', '.join(subagent.wsp_protocols)}")
+            print(f"[BOT] Activating Cursor Sub-Agent: {subagent.name}")
+            print(f"[CLIPBOARD] Role: {subagent.role}")
+            print(f"[U+1F6E0]️ Tools: {', '.join(subagent.tools)}")
+            print(f"[U+1F4D6] WSP Protocols: {', '.join(subagent.wsp_protocols)}")
             
             # Update agent status
             subagent.is_active = True
@@ -201,8 +201,8 @@ class CursorSubAgentManager:
         try:
             coordination_start = datetime.now()
             
-            print(f"🔄 Coordinating Cursor Sub-Agents for: {task_description}")
-            print(f"👥 Required Agents: {', '.join(required_agents)}")
+            print(f"[REFRESH] Coordinating Cursor Sub-Agents for: {task_description}")
+            print(f"[U+1F465] Required Agents: {', '.join(required_agents)}")
             
             # Activate required agents if not active
             activation_results = []
@@ -280,7 +280,7 @@ class CursorSubAgentManager:
                 "status": "success"
             })
             
-            print(f"✅ Coordination completed in {coordination_time:.2f}s")
+            print(f"[OK] Coordination completed in {coordination_time:.2f}s")
             return results
             
         except Exception as e:
@@ -334,8 +334,8 @@ class CursorSubAgentManager:
             
             request_time = datetime.now()
             
-            print(f"💬 Requesting assistance from {subagent.name}")
-            print(f"📝 Request: {specific_request}")
+            print(f"[U+1F4AC] Requesting assistance from {subagent.name}")
+            print(f"[NOTE] Request: {specific_request}")
             
             # Create WSP request
             wsp_request = WSPSubAgentRequest(
@@ -440,7 +440,7 @@ class CursorSubAgentManager:
         try:
             demo_start = datetime.now()
             
-            print("🚀 CURSOR SUB-AGENT INTEGRATION DEMONSTRATION")
+            print("[ROCKET] CURSOR SUB-AGENT INTEGRATION DEMONSTRATION")
             print("=" * 50)
             
             # 1. Activate key sub-agents
@@ -451,7 +451,7 @@ class CursorSubAgentManager:
             for agent_name in key_agents:
                 result = await self.activate_cursor_subagent(agent_name)
                 activation_results.append(result)
-                print(f"✅ {agent_name}: {result['status']}")
+                print(f"[OK] {agent_name}: {result['status']}")
             
             # 2. Demonstrate coordination
             print("\n--- Testing Multi-Agent Coordination ---")
@@ -471,7 +471,7 @@ class CursorSubAgentManager:
                     {"module": "cursor_multi_agent_bridge", "task": "integration"}
                 )
                 assistance_results.append(assistance_result)
-                print(f"💬 {agent_name}: {assistance_result['status']}")
+                print(f"[U+1F4AC] {agent_name}: {assistance_result['status']}")
             
             demo_time = (datetime.now() - demo_start).total_seconds()
             
@@ -489,9 +489,9 @@ class CursorSubAgentManager:
                 "cursor_integration": True
             }
             
-            print(f"\n✅ Demonstration completed in {demo_time:.2f}s")
-            print(f"🤖 Active Sub-Agents: {len(self.get_active_subagents())}")
-            print(f"📊 Integration Status: Operational")
+            print(f"\n[OK] Demonstration completed in {demo_time:.2f}s")
+            print(f"[BOT] Active Sub-Agents: {len(self.get_active_subagents())}")
+            print(f"[DATA] Integration Status: Operational")
             
             return demo_results
             
@@ -514,7 +514,7 @@ async def main():
     with open(results_file, 'w') as f:
         json.dump(demo_results, f, indent=2, default=str)
     
-    print(f"\n📄 Demo results saved: {results_file}")
+    print(f"\n[U+1F4C4] Demo results saved: {results_file}")
     
     return demo_results
 

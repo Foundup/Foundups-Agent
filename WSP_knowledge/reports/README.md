@@ -1,15 +1,15 @@
 # WSP_knowledge/reports/ - Historical Reports Archive
 
-## 📋 WSP Three-State Architecture Compliance
+## [CLIPBOARD] WSP Three-State Architecture Compliance
 
 This directory follows **WSP State 0 (Memory Layer)** architecture, containing historical reports, implementation records, and analytical documentation.
 
-### 🏗️ Architecture Location
-- **State 0** (`WSP_knowledge/`): **Memory layer** - Archives, reports, historical records ← **THIS LOCATION**
+### [U+1F3D7]️ Architecture Location
+- **State 0** (`WSP_knowledge/`): **Memory layer** - Archives, reports, historical records <- **THIS LOCATION**
 - **State 1** (`WSP_framework/`): Scaffolding layer - Active protocols  
 - **State 2** (`WSP_agentic/`): Agentic layer - Live operations
 
-## 📊 Report Categories
+## [DATA] Report Categories
 
 ### Implementation Reports
 - `Memory_Architecture_Migration_Complete.md` - WSP 60 implementation completion record
@@ -36,14 +36,14 @@ This directory follows **WSP State 0 (Memory Layer)** architecture, containing h
 ### Achievement Documentation
 - `modlog_20250525_refactoring_achievements.md` - Major refactoring milestone record
 
-## 🔄 WSP Clean Move Completed
+## [REFRESH] WSP Clean Move Completed
 
 **Date:** 2025-06-29  
 **Action:** Consolidated scattered reports into WSP-compliant structure  
 **Previous Locations:** `/reports/`, `WSP_agentic/` (mixed placement)  
 **Current Location:** `WSP_knowledge/reports/` (proper State 0 memory layer)
 
-## 📝 Report Access Patterns
+## [NOTE] Report Access Patterns
 
 ### For Historical Analysis
 ```bash
@@ -63,7 +63,7 @@ All reports serve as historical memory for:
 - **Traceable Narrative** (WSP 1) - Complete development audit trail  
 - **Protocol-Driven Development** (WSP 1) - Evidence of WSP compliance
 
-## 🎯 WSP Compliance Status
+## [TARGET] WSP Compliance Status
 
 - [x] **Proper State Location** - Reports in WSP_knowledge (State 0)
 - [x] **Memory Layer Function** - Historical records and archives

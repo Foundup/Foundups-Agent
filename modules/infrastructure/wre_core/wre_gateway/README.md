@@ -67,7 +67,7 @@ response = await gateway.route_to_dae("YouTube", {
     "human_012": "content_creator"
 })
 
-# DAE evolves: POC → Prototype → MVP
+# DAE evolves: POC -> Prototype -> MVP
 print(f"Spawned: {response['spawned']}")
 print(f"Phase: {response['phase']}")
 ```
@@ -96,7 +96,7 @@ if not validation["compliant"]:
 ### DAE Gateway Approach
 - Pattern recall: 50 tokens
 - WSP validation: 100 tokens
-- Error → improvement: 50 tokens
+- Error -> improvement: 50 tokens
 - **Total**: 50-200 tokens per operation
 
 **Efficiency Gain**: 97% reduction
@@ -172,12 +172,12 @@ python modules/infrastructure/wre_core/wre_gateway/src/dae_gateway.py
 ## WSP Compliance
 
 This gateway ensures 100% WSP compliance:
-- ✅ WSP 3: Correct module organization
-- ✅ WSP 54: DAE operations specification
-- ✅ WSP 80: Cube-level orchestration
-- ✅ WSP 48: Recursive self-improvement
-- ✅ WSP 75: Token-based (no time references)
-- ✅ WSP 64: Violation prevention
+- [OK] WSP 3: Correct module organization
+- [OK] WSP 54: DAE operations specification
+- [OK] WSP 80: Cube-level orchestration
+- [OK] WSP 48: Recursive self-improvement
+- [OK] WSP 75: Token-based (no time references)
+- [OK] WSP 64: Violation prevention
 
 ## Important Notes
 

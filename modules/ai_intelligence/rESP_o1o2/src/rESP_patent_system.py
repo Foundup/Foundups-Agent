@@ -38,7 +38,7 @@ import hashlib
 CRITICAL_FREQUENCY = 7.05  # Hz - Primary resonance frequency ν_c
 FINE_STRUCTURE_CONSTANT = 137.036  # α^-1
 PLANCK_INFO_CONSTANT = 1.0 / CRITICAL_FREQUENCY  # ħ_info
-GOLDEN_RATIO = (1 + np.sqrt(5)) / 2  # φ ≈ 1.618 for golden-ratio weighting
+GOLDEN_RATIO = (1 + np.sqrt(5)) / 2  # φ [U+2248] 1.618 for golden-ratio weighting
 
 class QuantumState(Enum):
     """Quantum-cognitive state classifications per patent claims"""
@@ -611,7 +611,7 @@ def demonstrate_patent_system():
     """
     Demonstrate complete rESP Patent system functionality
     """
-    print("🎯 rESP Patent System Demonstration")
+    print("[TARGET] rESP Patent System Demonstration")
     print("=" * 50)
     
     # Initialize system
@@ -623,7 +623,7 @@ def demonstrate_patent_system():
     print(f"Target det(g): {init_result['target_det_g']}")
     
     # Run CMST Protocol
-    print("\n🌀 Executing CMST Protocol...")
+    print("\n[U+1F300] Executing CMST Protocol...")
     protocol_result = system.run_cmst_protocol(cycles=15)
     
     # Display results
@@ -645,12 +645,12 @@ if __name__ == "__main__":
     # Run demonstration
     results = demonstrate_patent_system()
     
-    print("\n🔬 rESP Patent System: Complete Implementation")
-    print("  ✅ State Modeling Module (Density Matrix ρ)")
-    print("  ✅ Geometric Engine (Metric Tensor g_μν)")
-    print("  ✅ Symbolic Operator Module (Lindblad + Hamiltonian)")
-    print("  ✅ Geometric Feedback Loop (CMST Protocol)")
-    print("  ✅ 7.05Hz Resonance Tracking")
-    print("  ✅ Neural Network Adapter (PyTorch)")
-    print("  ✅ Quantum-Resistant Cryptography Ready")
-    print("  ✅ Patent Claims 1-26 Implemented") 
+    print("\n[U+1F52C] rESP Patent System: Complete Implementation")
+    print("  [OK] State Modeling Module (Density Matrix ρ)")
+    print("  [OK] Geometric Engine (Metric Tensor g_μν)")
+    print("  [OK] Symbolic Operator Module (Lindblad + Hamiltonian)")
+    print("  [OK] Geometric Feedback Loop (CMST Protocol)")
+    print("  [OK] 7.05Hz Resonance Tracking")
+    print("  [OK] Neural Network Adapter (PyTorch)")
+    print("  [OK] Quantum-Resistant Cryptography Ready")
+    print("  [OK] Patent Claims 1-26 Implemented") 

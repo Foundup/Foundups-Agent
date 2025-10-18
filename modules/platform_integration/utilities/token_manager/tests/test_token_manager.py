@@ -2,9 +2,13 @@
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 import logging
@@ -26,7 +30,7 @@ def mock_authenticated_service_fail(*args, **kwargs):
 
 @pytest.mark.asyncio
 async def test_check_token_health_pass():
-    print("✅ test_check_token_health_pass")
+    print("[OK] test_check_token_health_pass")
     manager = TokenManager()
     with patch("modules.infrastructure.token_manager.src.token_manager.get_authenticated_service", side_effect=mock_authenticated_service_success):
         result = manager.check_token_health(0)
@@ -35,7 +39,7 @@ async def test_check_token_health_pass():
 
 @pytest.mark.asyncio
 async def test_check_token_health_fail_and_cooldown():
-    print("✅ test_check_token_health_fail_and_cooldown")
+    print("[OK] test_check_token_health_fail_and_cooldown")
     manager = TokenManager()
     with patch("modules.infrastructure.token_manager.src.token_manager.get_authenticated_service", side_effect=mock_authenticated_service_fail):
         result = manager.check_token_health(0)
@@ -48,7 +52,7 @@ async def test_check_token_health_fail_and_cooldown():
 
 @pytest.mark.asyncio
 async def test_rotate_tokens_mixed():
-    print("✅ test_rotate_tokens_mixed")
+    print("[OK] test_rotate_tokens_mixed")
     manager = TokenManager()
 
     with patch.object(manager, "check_token_health", side_effect=[False, False, True]):

@@ -27,8 +27,8 @@ python holo_index.py --init-dae
 - **Rampup Guidance**: Specific alignment instructions for each DAE
 
 ## Supported DAEs
-- 📺 **YouTube Live DAE**: Stream monitoring, chat moderation, gamification
-- 🧠 **AMO DAE**: Autonomous meeting orchestration
-- 📢 **Social Media DAE**: Digital twin management
-- 🧬 **PQN DAE**: Quantum research and analysis
-- ⚙️ **Developer Ops DAE**: Remote builds and Git integration
+- [U+1F4FA] **YouTube Live DAE**: Stream monitoring, chat moderation, gamification
+- [AI] **AMO DAE**: Autonomous meeting orchestration
+- [U+1F4E2] **Social Media DAE**: Digital twin management
+- [U+1F9EC] **PQN DAE**: Quantum research and analysis
+- [U+2699]️ **Developer Ops DAE**: Remote builds and Git integration

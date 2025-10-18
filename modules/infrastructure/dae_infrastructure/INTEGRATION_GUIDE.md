@@ -58,7 +58,7 @@ class AutoModeratorDAE(BaseDAE):
 
 1. **Self-Maintenance**: Fingerprints auto-update when files change
 2. **Navigation**: Find any pattern/capability instantly
-3. **Token Efficiency**: 97% reduction (35K → 500 tokens)
+3. **Token Efficiency**: 97% reduction (35K -> 500 tokens)
 4. **Self-Awareness**: DAE knows entire codebase structure
 5. **WSP Compliance**: Follows WSP 27, 48, 86
 

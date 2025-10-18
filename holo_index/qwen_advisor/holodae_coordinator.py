@@ -1,4 +1,20 @@
-﻿#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
+#!/usr/bin/env python3
 """
 HoloDAE Coordinator - Main orchestrator following Qwen竊・102 architecture
 
@@ -23,15 +39,15 @@ from collections import Counter, deque
 from typing import Dict, List, Optional, Any, Tuple, Set
 
 SUMMARY_EMOJI_ALIASES = {
-    '💊✅': 'HEALTH',
-    '🧠': 'PATTERN',
-    '📏': 'SIZE',
-    '📦': 'MODULE',
-    '👻': 'ORPHAN',
-    '📊': 'MONITOR',
-    '🤖🧠': 'QWEN',
-    '🍞': 'BREADCRUMB',
-    '🔍': 'SEMANTIC',
+    '[PILL][OK]': 'HEALTH',
+    '[AI]': 'PATTERN',
+    '[RULER]': 'SIZE',
+    '[BOX]': 'MODULE',
+    '[GHOST]': 'ORPHAN',
+    '[DATA]': 'MONITOR',
+    '[BOT][AI]': 'QWEN',
+    '[BREAD]': 'BREADCRUMB',
+    '[SEARCH]': 'SEMANTIC',
 }
 
 # Import our new modular components
@@ -260,17 +276,17 @@ class HoloDAECoordinator:
 
                 # Format based on discovery type
                 if discovery_type == 'module_discovery':
-                    lines.append(f"  📍 Agent found {item} at {location}")
+                    lines.append(f"  [PIN] Agent found {item} at {location}")
                 elif discovery_type == 'typo_handler':
-                    lines.append(f"  💡 Agent discovered {item} typo handler")
+                    lines.append(f"  [IDEA] Agent discovered {item} typo handler")
                 else:
-                    lines.append(f"  🔍 Agent discovered: {item}")
+                    lines.append(f"  [SEARCH] Agent discovered: {item}")
 
                 if impact:
                     lines.append(f"     Impact: {impact}")
 
             # Add call to action for collaboration
-            lines.append("  🤝 Other agents may benefit from your current search results")
+            lines.append("  [HANDSHAKE] Other agents may benefit from your current search results")
 
             return "\n".join(lines)
 
@@ -351,7 +367,7 @@ class HoloDAECoordinator:
     def show_mcp_hook_status(self) -> None:
         """Display MCP connector health for 012 oversight."""
         status_rows = self._collect_mcp_watch_status()
-        print('\n🛰 MCP Hook Map — Research & Platform Connectors')
+        print('\n[U+1F6F0] MCP Hook Map — Research & Platform Connectors')
         if not status_rows:
             print("No MCP-aware modules detected. Trigger ricDAE ingestion to register connectors.")
             return
@@ -368,7 +384,7 @@ class HoloDAECoordinator:
     def show_mcp_action_log(self, limit: int = 10) -> None:
         """Render the recent MCP activity log for 012 observers."""
         entries = list(self.mcp_action_log)[:limit]
-        print('\n📡 MCP Action Log — Recent Tool Activity')
+        print('\n[U+1F4E1] MCP Action Log — Recent Tool Activity')
         if not entries:
             print("No MCP activity recorded. Run HoloIndex against MCP-enabled modules to generate telemetry.")
             return
@@ -450,7 +466,7 @@ class HoloDAECoordinator:
 
             # Generate intelligent health report
             if duplicate_launches:
-                issues.append(f"🚨 DUPLICATE LAUNCHES: {len(duplicate_launches)} extra main.py sessions detected")
+                issues.append(f"[ALERT] DUPLICATE LAUNCHES: {len(duplicate_launches)} extra main.py sessions detected")
                 issues.append(f"   PIDs: {', '.join(map(str, duplicate_launches))} - Kill these to prevent conflicts")
 
             if orphan_instances:
@@ -463,7 +479,7 @@ class HoloDAECoordinator:
                 duplicate_count = len(active_instances) - necessary_count
 
                 if duplicate_count > 0:
-                    issues.append(f"⚠️ POTENTIAL DUPLICATES: {duplicate_count} unnecessary instances detected")
+                    issues.append(f"[U+26A0]️ POTENTIAL DUPLICATES: {duplicate_count} unnecessary instances detected")
                     issues.append("   Review with PID Detective (option 15) to identify which to keep")
 
                 if necessary_count > 1:
@@ -473,19 +489,19 @@ class HoloDAECoordinator:
             # Performance warnings
             total_memory = sum(inst.get('memory_mb', 0) for inst in active_instances)
             if total_memory > 1000:  # Over 1GB
-                issues.append(f"⚠️ HIGH MEMORY: {total_memory:.1f}MB total - Monitor system resources")
+                issues.append(f"[U+26A0]️ HIGH MEMORY: {total_memory:.1f}MB total - Monitor system resources")
 
             # Success message if everything is clean
             if not issues:
                 if total_instances == 0:
-                    issues.append("✅ CLEAN: No HoloDAE processes currently running")
+                    issues.append("[OK] CLEAN: No HoloDAE processes currently running")
                 elif total_instances == 1:
-                    issues.append("✅ CLEAN: Single HoloDAE session running normally")
+                    issues.append("[OK] CLEAN: Single HoloDAE session running normally")
                 else:
-                    issues.append(f"✅ CLEAN: {total_instances} HoloDAE processes running normally")
+                    issues.append(f"[OK] CLEAN: {total_instances} HoloDAE processes running normally")
 
         except Exception as e:
-            issues.append(f"❌ PID health check failed: {e}")
+            issues.append(f"[FAIL] PID health check failed: {e}")
 
         return issues
 
@@ -549,7 +565,7 @@ class HoloDAECoordinator:
 
     def show_pid_detective(self) -> None:
         """Detect and manage HoloDAE daemon processes for clean operation."""
-        print('\n🔧 PID Detective — HoloDAE Process Management')
+        print('\n[TOOL] PID Detective — HoloDAE Process Management')
         print('=' * 60)
 
         try:
@@ -567,18 +583,18 @@ class HoloDAECoordinator:
             print()
 
             if total_instances <= 1:
-                print("✅ Clean state: Single HoloDAE instance detected")
+                print("[OK] Clean state: Single HoloDAE instance detected")
                 if total_instances == 1:
                     print(f"   Active daemon: PID {current_pid}")
                 else:
                     print("   No HoloDAE daemons currently running")
                 print()
-                print("💡 Multiple instances are allowed for HoloDAE (unlike YouTube DAE)")
+                print("[IDEA] Multiple instances are allowed for HoloDAE (unlike YouTube DAE)")
                 print("   Each can monitor different codebases or run specialized analysis")
                 return
 
             # Multiple instances detected - show details
-            print("🚨 Multiple HoloDAE instances detected!")
+            print("[ALERT] Multiple HoloDAE instances detected!")
             print()
             print("Active Instances:")
             for i, instance in enumerate(instances, 1):
@@ -602,7 +618,7 @@ class HoloDAECoordinator:
                 print()
 
             print()
-            print("🔍 Orphan Detection:")
+            print("[SEARCH] Orphan Detection:")
             orphans = []
             active_daemons = []
 
@@ -624,14 +640,14 @@ class HoloDAECoordinator:
                 print(f"  🪦 Orphan PIDs found: {', '.join(map(str, orphans))}")
                 print("     These processes are no longer running but locks remain")
             else:
-                print("  ✅ No orphan processes detected")
+                print("  [OK] No orphan processes detected")
 
             if active_daemons:
                 print(f"  🟢 Active daemons: {', '.join(map(str, active_daemons))}")
 
             # Check for log analysis daemon status
             print()
-            print("📊 Specialized Daemons:")
+            print("[DATA] Specialized Daemons:")
             try:
                 from holo_index.adaptive_learning.execution_log_analyzer.execution_log_librarian import get_daemon_status
                 daemon_status = get_daemon_status()
@@ -641,7 +657,7 @@ class HoloDAECoordinator:
                     timestamp = daemon_status.get('timestamp', 0)
                     data = daemon_status.get('data', {})
 
-                    print(f"  🔍 Log Analysis Daemon: {status.upper()}")
+                    print(f"  [SEARCH] Log Analysis Daemon: {status.upper()}")
 
                     if status == 'processing':
                         processed = data.get('processed_chunks', 0)
@@ -653,30 +669,30 @@ class HoloDAECoordinator:
                     elif status == 'completed':
                         processed = data.get('processed_chunks', 0)
                         print(f"     Completed: {processed} chunks processed")
-                        print("     📄 Check final_analysis_report.json for results")
+                        print("     [U+1F4C4] Check final_analysis_report.json for results")
                     elif status == 'failed':
                         error = data.get('error', 'Unknown error')
-                        print(f"     ❌ Failed: {error}")
+                        print(f"     [FAIL] Failed: {error}")
                     elif status == 'error':
                         chunk = data.get('error_chunk', 'unknown')
                         error = data.get('error_message', 'Unknown error')
                         processed = data.get('processed_chunks', 0)
-                        print(f"     ❌ Error in chunk {chunk}: {error}")
+                        print(f"     [FAIL] Error in chunk {chunk}: {error}")
                         print(f"     Processed: {processed} chunks before error")
 
                     import time
                     elapsed = time.time() - timestamp
                     print(f"     Runtime: {elapsed:.1f}s")
                 else:
-                    print("  🔍 Log Analysis Daemon: INACTIVE")
+                    print("  [SEARCH] Log Analysis Daemon: INACTIVE")
 
             except Exception as e:
-                print(f"  🔍 Log Analysis Daemon: Status check failed ({e})")
+                print(f"  [SEARCH] Log Analysis Daemon: Status check failed ({e})")
 
             print()
             print("Management Recommendations:")
             if duplicate_launches:
-                print(f"🚨 PRIORITY: Kill duplicate main.py sessions (PIDs: {', '.join(map(str, duplicate_launches))})")
+                print(f"[ALERT] PRIORITY: Kill duplicate main.py sessions (PIDs: {', '.join(map(str, duplicate_launches))})")
                 print("   These prevent proper menu operation and cause conflicts")
             elif len(active_instances) > 1:
                 print("ℹ️  Multiple instances detected - review which are necessary:")
@@ -687,12 +703,12 @@ class HoloDAECoordinator:
 
                 if unnecessary:
                     unnecessary_pids = [str(inst['pid']) for inst in unnecessary]
-                    print(f"   🗑️  Consider killing: {', '.join(unnecessary_pids)} (generic/unknown processes)")
+                    print(f"   [U+1F5D1]️  Consider killing: {', '.join(unnecessary_pids)} (generic/unknown processes)")
                 if necessary:
                     necessary_pids = [str(inst['pid']) for inst in necessary]
-                    print(f"   ✅ Keep these: {', '.join(necessary_pids)} (specialized services)")
+                    print(f"   [OK] Keep these: {', '.join(necessary_pids)} (specialized services)")
             else:
-                print("✅ System appears clean - no immediate action needed")
+                print("[OK] System appears clean - no immediate action needed")
 
             print()
             print("Management Options:")
@@ -711,20 +727,20 @@ class HoloDAECoordinator:
                     for orphan_pid in orphans:
                         try:
                             lock.release_orphan_lock(orphan_pid)
-                            print(f"✅ Cleaned orphan lock for PID {orphan_pid}")
+                            print(f"[OK] Cleaned orphan lock for PID {orphan_pid}")
                             cleaned += 1
                         except Exception as e:
-                            print(f"❌ Failed to clean PID {orphan_pid}: {e}")
+                            print(f"[FAIL] Failed to clean PID {orphan_pid}: {e}")
 
                     if cleaned > 0:
-                        print(f"\n🧹 Cleaned {cleaned} orphan locks")
+                        print(f"\n[U+1F9F9] Cleaned {cleaned} orphan locks")
                         print("HoloDAE launch will now work cleanly")
                     else:
                         print("\nℹ️ No orphan locks to clean")
 
                 elif choice == "2":
                     # Show detailed process info
-                    print("\n🔍 Detailed Process Information:")
+                    print("\n[SEARCH] Detailed Process Information:")
                     for instance in instances:
                         pid = instance.get('pid', 'unknown')
                         print(f"\nPID {pid}:")
@@ -745,18 +761,18 @@ class HoloDAECoordinator:
 
                 elif choice == "3":
                     # Kill specific PID
-                    print("\n⚠️ DANGER ZONE ⚠️")
+                    print("\n[U+26A0]️ DANGER ZONE [U+26A0]️")
                     print("Killing processes can cause data loss!")
                     target_pid = input("Enter PID to kill (or 'cancel'): ").strip()
 
                     if target_pid.lower() == 'cancel':
-                        print("❌ Operation cancelled")
+                        print("[FAIL] Operation cancelled")
                         return
 
                     try:
                         target_pid = int(target_pid)
                         if target_pid == current_pid:
-                            print("❌ Cannot kill current process!")
+                            print("[FAIL] Cannot kill current process!")
                             return
 
                         # Confirm
@@ -766,7 +782,7 @@ class HoloDAECoordinator:
                             import signal
                             try:
                                 os.kill(target_pid, signal.SIGTERM)
-                                print(f"✅ Sent SIGTERM to PID {target_pid}")
+                                print(f"[OK] Sent SIGTERM to PID {target_pid}")
                                 print("   Process should shut down gracefully")
 
                                 # Wait a moment and check if it's gone
@@ -774,17 +790,17 @@ class HoloDAECoordinator:
                                 time.sleep(2)
                                 try:
                                     os.kill(target_pid, 0)  # Check if still exists
-                                    print("   ⚠️ Process still running, may need manual intervention")
+                                    print("   [U+26A0]️ Process still running, may need manual intervention")
                                 except OSError:
-                                    print("   ✅ Process terminated successfully")
+                                    print("   [OK] Process terminated successfully")
 
                             except OSError as e:
-                                print(f"❌ Failed to kill PID {target_pid}: {e}")
+                                print(f"[FAIL] Failed to kill PID {target_pid}: {e}")
                         else:
-                            print("❌ Operation cancelled")
+                            print("[FAIL] Operation cancelled")
 
                     except ValueError:
-                        print("❌ Invalid PID format")
+                        print("[FAIL] Invalid PID format")
 
                 elif choice == "4":
                     # Kill duplicate sessions
@@ -792,7 +808,7 @@ class HoloDAECoordinator:
                         print("ℹ️ No duplicate sessions detected to kill")
                         return
 
-                    print(f"⚠️ About to kill {len(duplicate_launches)} duplicate main.py sessions:")
+                    print(f"[U+26A0]️ About to kill {len(duplicate_launches)} duplicate main.py sessions:")
                     for pid in duplicate_launches:
                         print(f"   PID {pid}")
 
@@ -804,28 +820,28 @@ class HoloDAECoordinator:
                                 import os
                                 import signal
                                 os.kill(pid, signal.SIGTERM)
-                                print(f"✅ Sent SIGTERM to duplicate session PID {pid}")
+                                print(f"[OK] Sent SIGTERM to duplicate session PID {pid}")
                                 killed += 1
                             except OSError as e:
-                                print(f"❌ Failed to kill PID {pid}: {e}")
+                                print(f"[FAIL] Failed to kill PID {pid}: {e}")
 
                         if killed > 0:
-                            print(f"\n🧹 Killed {killed} duplicate sessions")
+                            print(f"\n[U+1F9F9] Killed {killed} duplicate sessions")
                             print("Menu operation should now work properly")
                     else:
-                        print("❌ Operation cancelled")
+                        print("[FAIL] Operation cancelled")
 
                 elif choice == "0":
                     return
                 else:
-                    print("❌ Invalid choice")
+                    print("[FAIL] Invalid choice")
 
             except (KeyboardInterrupt, EOFError):
-                print("\n❌ Operation cancelled")
+                print("\n[FAIL] Operation cancelled")
                 return
 
         except Exception as e:
-            print(f"❌ PID Detective failed: {e}")
+            print(f"[FAIL] PID Detective failed: {e}")
             print("This may be due to missing dependencies or permission issues")
             print("Basic process detection may still work without advanced features")
 
@@ -949,12 +965,12 @@ class HoloDAECoordinator:
     def _derive_health_icon(self, health_label: str) -> str:
         label = (health_label or '').upper()
         if 'MISSING' in label or 'CRITICAL' in label:
-            return '🔴'
+            return '[U+1F534]'
         if 'WARN' in label:
             return '🟡'
         if 'COMPLETE' in label or 'OK' in label:
             return '🟢'
-        return '🔹'
+        return '[U+1F539]'
 
     def _module_has_mcp_signature(self, module_path: str) -> bool:
         if not module_path:
@@ -1072,7 +1088,7 @@ class HoloDAECoordinator:
             if critical_total > 0:
                 summary_parts.append("architect=A/B/C ready")
 
-        message = f"{prefix} 📊 {' | '.join(summary_parts)}"
+        message = f"{prefix} [DATA] {' | '.join(summary_parts)}"
         self._holo_log(message, console=True)
 
         if result.has_actionable_events() or '[HEARTBEAT]' in prefix:
@@ -1208,14 +1224,14 @@ class HoloDAECoordinator:
             if emoji in normalized:
                 normalized = normalized.replace(emoji, f"{label} ({emoji})")
         fallback_map = {
-            '?? [HOLODAE-HEALTH': 'HEALTH (💊✅) [HOLODAE-HEALTH',
-            '?? HOLODAE-HEALTH': 'HEALTH (💊✅) HOLODAE-HEALTH',
-            '抽笨・': 'HEALTH (💊✅)',
-            '剥': 'SEMANTIC (🔍)',
-            '逃': 'MODULE (📦)',
-            'ｧ': 'PATTERN (🧠)',
-            '棟': 'SIZE (📏)',
-            '遜': 'ORPHAN (👻)'
+            '?? [HOLODAE-HEALTH': 'HEALTH ([PILL][OK]) [HOLODAE-HEALTH',
+            '?? HOLODAE-HEALTH': 'HEALTH ([PILL][OK]) HOLODAE-HEALTH',
+            '抽笨・': 'HEALTH ([PILL][OK])',
+            '剥': 'SEMANTIC ([SEARCH])',
+            '逃': 'MODULE ([BOX])',
+            'ｧ': 'PATTERN ([AI])',
+            '棟': 'SIZE ([RULER])',
+            '遜': 'ORPHAN ([GHOST])'
         }
         for fallback, replacement in fallback_map.items():
             normalized = normalized.replace(fallback, replacement)

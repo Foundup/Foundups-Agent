@@ -14,9 +14,13 @@ WSP Compliance:
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -436,19 +440,19 @@ class WSPAutomationManager:
 
 ### v0.0.1 - Initial Creation (Current)
 **Date**: {datetime.now().strftime('%Y-%m-%d')}  
-**Status**: ✅ Created via WSP Automation  
+**Status**: [OK] Created via WSP Automation  
 **Milestone**: Initial Module Setup
 
 #### Changes
-- ✅ **Module Structure**: Created basic module structure
-- ✅ **WSP Compliance**: Module follows WSP protocols
-- ✅ **Documentation**: ModLog.md created for tracking
-- ✅ **Domain Placement**: Correctly placed in {domain_name} domain
+- [OK] **Module Structure**: Created basic module structure
+- [OK] **WSP Compliance**: Module follows WSP protocols
+- [OK] **Documentation**: ModLog.md created for tracking
+- [OK] **Domain Placement**: Correctly placed in {domain_name} domain
 
 #### WSP Compliance
-- ✅ WSP 3: Enterprise Domain Organization
-- ✅ WSP 22: ModLog management
-- ✅ WSP 49: Module directory structure
+- [OK] WSP 3: Enterprise Domain Organization
+- [OK] WSP 22: ModLog management
+- [OK] WSP 49: Module directory structure
 
 ---
 
@@ -473,7 +477,7 @@ class WSPAutomationManager:
 
 **Session ID**: wsp_automation_modlog_creation  
 **Action**: Automated ModLog creation via WSP violation remediation  
-**Status**: ✅ Created  
+**Status**: [OK] Created  
 **WSP 22**: ModLog created automatically to resolve WSP 22 violation
 
 ---"""

@@ -55,22 +55,22 @@ HoloIndex_Patterns:
   semantic_search:
     wsp_chain: [87, 84, 50]  # Navigation, Memory, Verification
     tokens: 150
-    pattern: "embed→search→rank→guide"
+    pattern: "embed->search->rank->guide"
 
   wsp_analysis:
     wsp_chain: [64, 35, 87]  # Prevention, HoloIndex Plan, Navigation
     tokens: 100
-    pattern: "analyze→validate→recommend"
+    pattern: "analyze->validate->recommend"
 
   dae_discovery:
     wsp_chain: [80, 87]  # DAE Orchestration, Navigation
     tokens: 120
-    pattern: "identify→map→align"
+    pattern: "identify->map->align"
 
   code_indexing:
     wsp_chain: [87, 22]  # Navigation, Documentation
     tokens: 200
-    pattern: "discover→embed→store"
+    pattern: "discover->embed->store"
 ```
 
 ### 3. WRE Service Endpoints
@@ -124,11 +124,11 @@ class HoloIndexServices:
 ```python
 # Create HoloIndexPlugin in WRE
 modules/infrastructure/wre_core/wre_master_orchestrator/src/plugins/
-├── __init__.py
-├── holoindex_plugin.py       # Plugin implementation
-├── patterns.yaml              # HoloIndex patterns
-└── tests/
-    └── test_holoindex_plugin.py
++-- __init__.py
++-- holoindex_plugin.py       # Plugin implementation
++-- patterns.yaml              # HoloIndex patterns
++-- tests/
+    +-- test_holoindex_plugin.py
 ```
 
 ### Phase 2: Pattern Learning

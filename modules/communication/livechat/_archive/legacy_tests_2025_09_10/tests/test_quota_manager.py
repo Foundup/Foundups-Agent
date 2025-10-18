@@ -16,7 +16,7 @@ def test_quota_manager_cooldown():
     qm.cooldowns[test_set] -= qm.COOLDOWN_DURATION + 1
     assert not qm.is_in_cooldown(test_set)
 
-    print("QuotaManager cooldown logic passed ✅")
+    print("QuotaManager cooldown logic passed [OK]")
 
 if __name__ == "__main__":
     test_quota_manager_cooldown() 

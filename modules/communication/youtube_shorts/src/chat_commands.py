@@ -50,9 +50,9 @@ def normalize_channel_name(channel_name: str) -> str:
     Normalize channel display name to orchestrator format.
 
     Maps channel display names (with emojis) to shorts orchestrator format:
-    - "Move2Japan 🍣" or "Move2Japan" -> "move2japan"
-    - "UnDaoDu 🧘" or "UnDaoDu" -> "undaodu"
-    - "FoundUps 🐕" or "FoundUps" -> "foundups"
+    - "Move2Japan [U+1F363]" or "Move2Japan" -> "move2japan"
+    - "UnDaoDu [U+1F9D8]" or "UnDaoDu" -> "undaodu"
+    - "FoundUps [U+1F415]" or "FoundUps" -> "foundups"
 
     Args:
         channel_name: Channel display name (may include emojis)
@@ -145,13 +145,13 @@ class ShortsCommandHandler:
 
         # Check if already generating
         if self.generating:
-            return f"@{donor_name} 💰 Thank you for the ${amount_usd:.2f} Super Chat! Short generation in progress by @{self.last_generation_user}. Please wait!"
+            return f"@{donor_name} [U+1F4B0] Thank you for the ${amount_usd:.2f} Super Chat! Short generation in progress by @{self.last_generation_user}. Please wait!"
 
         # Extract topic from Super Chat message
         topic = message.strip()
 
         if not topic:
-            return f"@{donor_name} 💰 Thank you for the ${amount_usd:.2f} Super Chat! Please include your video topic in the message. Example: 'Cherry blossoms in Tokyo'"
+            return f"@{donor_name} [U+1F4B0] Thank you for the ${amount_usd:.2f} Super Chat! Please include your video topic in the message. Example: 'Cherry blossoms in Tokyo'"
 
         # Start generation in background thread
         self.generating = True
@@ -159,7 +159,7 @@ class ShortsCommandHandler:
 
         def generate_in_background():
             try:
-                logger.info(f"[ShortsChat] 💰 {donor_name} (${amount_usd:.2f} SC) requested Short: {topic}")
+                logger.info(f"[ShortsChat] [U+1F4B0] {donor_name} (${amount_usd:.2f} SC) requested Short: {topic}")
 
                 # Generate and upload (15 seconds, public)
                 # 15 seconds = $6 cost (better economics: $10 donation - $6 = $4 margin)
@@ -185,7 +185,7 @@ class ShortsCommandHandler:
         thread = threading.Thread(target=generate_in_background, daemon=True)
         thread.start()
 
-        return f"@{donor_name} 💰 Thank you for the ${amount_usd:.2f} Super Chat! Creating YouTube Short for: '{topic}' | This will take 1-2 minutes... 🎥✨"
+        return f"@{donor_name} [U+1F4B0] Thank you for the ${amount_usd:.2f} Super Chat! Creating YouTube Short for: '{topic}' | This will take 1-2 minutes... [CAMERA][U+2728]"
 
     def handle_shorts_command(
         self,
@@ -211,19 +211,19 @@ class ShortsCommandHandler:
 
         # Command: !createshort <topic> (default engine: auto)
         if text_lower.startswith('!createshort'):
-            logger.info(f"[ShortsChat] 🎬 !createshort detected from {username} (role: {role})")
+            logger.info(f"[ShortsChat] [U+1F3AC] !createshort detected from {username} (role: {role})")
             return self._handle_create_short(text, username, user_id, role, engine="auto")
 
         # Command: !shortsora <topic> (Sora2 engine) - simplified from shortsora2
         elif text_lower.startswith('!shortsora'):
             topic = text[len('!shortsora'):].strip()
-            logger.info(f"[ShortsChat] 🎬 !shortsora detected from {username} → ENGINE: SORA2 | Topic: {topic}")
+            logger.info(f"[ShortsChat] [U+1F3AC] !shortsora detected from {username} -> ENGINE: SORA2 | Topic: {topic}")
             return self._handle_create_short(f"!createshort {topic}", username, user_id, role, engine="sora2")
 
         # Command: !shortveo <topic> (Veo3 engine) - simplified from shortveo3
         elif text_lower.startswith('!shortveo'):
             topic = text[len('!shortveo'):].strip()
-            logger.info(f"[ShortsChat] 🎬 !shortveo detected from {username} → ENGINE: VEO3 | Topic: {topic}")
+            logger.info(f"[ShortsChat] [U+1F3AC] !shortveo detected from {username} -> ENGINE: VEO3 | Topic: {topic}")
             return self._handle_create_short(f"!createshort {topic}", username, user_id, role, engine="veo3")
 
         # Command: !short @username - Generate short from user's chat history
@@ -233,21 +233,21 @@ class ShortsCommandHandler:
             if '@' in text:
                 target_user = text.split('@', 1)[1].strip().split()[0] if '@' in text else None
                 if target_user:
-                    logger.info(f"[ShortsChat] 🎬 !short @{target_user} requested by {username} (role: {role})")
+                    logger.info(f"[ShortsChat] [U+1F3AC] !short @{target_user} requested by {username} (role: {role})")
                     return self._handle_short_from_chat(text, username, user_id, role, target_user)
 
             # Otherwise, list recent shorts
-            logger.info(f"[ShortsChat] 📋 !short (list) requested by {username}")
+            logger.info(f"[ShortsChat] [CLIPBOARD] !short (list) requested by {username}")
             return self._handle_list_shorts(username)
 
         # Command: !shortstatus
         elif text_lower == '!shortstatus':
-            logger.info(f"[ShortsChat] 📊 !shortstatus requested by {username}")
+            logger.info(f"[ShortsChat] [DATA] !shortstatus requested by {username}")
             return self._handle_short_status(username)
 
         # Command: !shortstats
         elif text_lower == '!shortstats':
-            logger.info(f"[ShortsChat] 📈 !shortstats requested by {username}")
+            logger.info(f"[ShortsChat] [UP] !shortstats requested by {username}")
             return self._handle_short_stats(username)
 
         # Not a Shorts command
@@ -358,7 +358,7 @@ class ShortsCommandHandler:
         top_moderators = self._get_top_moderators()
 
         if not top_moderators:
-            return f"@{username} 🎬 Could not verify leaderboard status. Try again later."
+            return f"@{username} [U+1F3AC] Could not verify leaderboard status. Try again later."
 
         # Check permissions: OWNER always allowed, or in top 3 MAGADOOM moderators
         is_owner = (role == "OWNER")
@@ -366,32 +366,32 @@ class ShortsCommandHandler:
 
         if not is_owner and not is_top_mod:
             top_names = ", ".join([f"@{mod[0]} ({mod[2]:,}xp)" for mod in top_moderators])
-            return f"@{username} 🎬 Only the channel OWNER or Top 3 MAGADOOM mods can create Shorts! Current top 3: {top_names}"
+            return f"@{username} [U+1F3AC] Only the channel OWNER or Top 3 MAGADOOM mods can create Shorts! Current top 3: {top_names}"
 
         # Log permission grant
         if is_owner:
-            logger.warning(f"[ShortsChat] ✅ PERMISSION GRANTED: {username} authorized as channel OWNER (no rate limit) | ENGINE: {engine.upper()}")
+            logger.warning(f"[ShortsChat] [OK] PERMISSION GRANTED: {username} authorized as channel OWNER (no rate limit) | ENGINE: {engine.upper()}")
         elif is_top_mod:
             user_rank = next((i+1 for i, mod in enumerate(top_moderators) if username == mod[0] or user_id == mod[1]), None)
             user_score = next((mod[2] for mod in top_moderators if username == mod[0] or user_id == mod[1]), 0)
-            logger.warning(f"[ShortsChat] ✅ PERMISSION GRANTED: {username} authorized as #{user_rank} MAGADOOM mod ({user_score:,} XP) | ENGINE: {engine.upper()}")
+            logger.warning(f"[ShortsChat] [OK] PERMISSION GRANTED: {username} authorized as #{user_rank} MAGADOOM mod ({user_score:,} XP) | ENGINE: {engine.upper()}")
 
         # Check weekly rate limit (OWNER is exempt)
         if not is_owner:
             can_post, limit_msg = self._check_weekly_limit(username)
 
             if not can_post:
-                return f"@{username} 🎬 {limit_msg}"
+                return f"@{username} [U+1F3AC] {limit_msg}"
 
         # Check if already generating
         if self.generating:
-            return f"@{username} 🎬 Short already being generated by @{self.last_generation_user}. Please wait!"
+            return f"@{username} [U+1F3AC] Short already being generated by @{self.last_generation_user}. Please wait!"
 
         # Extract topic from command
         topic = text[len('!createshort'):].strip()
 
         if not topic:
-            return f"@{username} 🎬 Usage: !createshort <topic>  Example: !createshort Cherry blossoms in Tokyo"
+            return f"@{username} [U+1F3AC] Usage: !createshort <topic>  Example: !createshort Cherry blossoms in Tokyo"
 
         # Record post for weekly limit
         self._record_post(username)
@@ -434,7 +434,7 @@ class ShortsCommandHandler:
                 if self.throttle_manager:
                     self.throttle_manager.record_response('video_progress', success=True, message_text=message)
 
-                logger.info(f"[ShortsChat] 🎬 Progress: {message}")
+                logger.info(f"[ShortsChat] [U+1F3AC] Progress: {message}")
             except Exception as e:
                 # Record failure
                 if self.throttle_manager:
@@ -442,7 +442,7 @@ class ShortsCommandHandler:
                 logger.error(f"[ShortsChat] Failed to send progress message: {e}")
 
         try:
-            logger.warning(f"[ShortsChat] 🎬 GENERATION STARTED: {username} → ENGINE: {engine.upper()} | Topic: '{topic}' | Duration: 30s")
+            logger.warning(f"[ShortsChat] [U+1F3AC] GENERATION STARTED: {username} -> ENGINE: {engine.upper()} | Topic: '{topic}' | Duration: 30s")
 
             # Generate and upload (30 seconds, public, specified engine)
             youtube_url = self.orchestrator.create_and_upload(
@@ -453,13 +453,13 @@ class ShortsCommandHandler:
                 progress_callback=send_progress_to_chat
             )
 
-            logger.warning(f"[ShortsChat] ✅ GENERATION COMPLETE: {youtube_url} | ENGINE: {engine.upper()} | User: {username}")
+            logger.warning(f"[ShortsChat] [OK] GENERATION COMPLETE: {youtube_url} | ENGINE: {engine.upper()} | User: {username}")
 
-            return f"@{username} ✅ Short created! {youtube_url}"
+            return f"@{username} [OK] Short created! {youtube_url}"
 
         except Exception as e:
             logger.error(f"[ShortsChat] Generation failed: {e}")
-            return f"@{username} ❌ Short generation failed: {str(e)[:100]}"
+            return f"@{username} [FAIL] Short generation failed: {str(e)[:100]}"
 
         finally:
             self.generating = False
@@ -470,7 +470,7 @@ class ShortsCommandHandler:
         recent_shorts = stats.get('recent_shorts', [])
 
         if not recent_shorts:
-            return f"@{username} 🎬 No shorts created yet! Use !createshort, !shortsora, or !shortveo to make one!"
+            return f"@{username} [U+1F3AC] No shorts created yet! Use !createshort, !shortsora, or !shortveo to make one!"
 
         # Show last 3 shorts with clickable links (YouTube 200 char limit: 185 chars)
         shorts_list = []
@@ -484,18 +484,18 @@ class ShortsCommandHandler:
                 shorts_list.append(f"{i}. {title}")
 
         shorts_text = " | ".join(shorts_list)
-        return f"@{username} 🎬 {shorts_text}"
+        return f"@{username} [U+1F3AC] {shorts_text}"
 
     def _handle_short_status(self, username: str) -> str:
         """Handle !shortstatus command."""
 
         if self.generating:
-            return f"@{username} 🎬 Short generation in progress by @{self.last_generation_user}... ⏳"
+            return f"@{username} [U+1F3AC] Short generation in progress by @{self.last_generation_user}... ⏳"
         else:
             stats = self.orchestrator.get_stats()
             recent_count = min(len(stats.get('recent_shorts', [])), 5)
 
-            return f"@{username} 🎬 No active generation | Last {recent_count} Shorts ready!"
+            return f"@{username} [U+1F3AC] No active generation | Last {recent_count} Shorts ready!"
 
     def _handle_short_stats(self, username: str) -> str:
         """Handle !shortstats command."""
@@ -506,7 +506,7 @@ class ShortsCommandHandler:
         cost = stats.get('total_cost_usd', 0.0)
         uploaded = stats.get('uploaded', 0)
 
-        return f"@{username} 📊 YouTube Shorts Stats | Total: {total} | Uploaded: {uploaded} | Cost: ${cost:.2f} USD"
+        return f"@{username} [DATA] YouTube Shorts Stats | Total: {total} | Uploaded: {uploaded} | Cost: ${cost:.2f} USD"
 
     def _handle_short_from_chat(
         self,
@@ -530,7 +530,7 @@ class ShortsCommandHandler:
         top_moderators = self._get_top_moderators()
 
         if not top_moderators:
-            return f"@{username} 🎬 Could not verify leaderboard status. Try again later."
+            return f"@{username} [U+1F3AC] Could not verify leaderboard status. Try again later."
 
         # Check permissions: OWNER always allowed, or in top 3 MAGADOOM moderators
         is_owner = (role == "OWNER")
@@ -538,25 +538,25 @@ class ShortsCommandHandler:
 
         if not is_owner and not is_top_mod:
             top_names = ", ".join([f"@{mod[0]} ({mod[2]:,}xp)" for mod in top_moderators])
-            return f"@{username} 🎬 Only the channel OWNER or Top 3 MAGADOOM mods can create Shorts! Current top 3: {top_names}"
+            return f"@{username} [U+1F3AC] Only the channel OWNER or Top 3 MAGADOOM mods can create Shorts! Current top 3: {top_names}"
 
         # Log permission grant
         if is_owner:
-            logger.warning(f"[ShortsChat] ✅ PERMISSION GRANTED: {username} authorized as channel OWNER for @{target_user} Short")
+            logger.warning(f"[ShortsChat] [OK] PERMISSION GRANTED: {username} authorized as channel OWNER for @{target_user} Short")
         elif is_top_mod:
             user_rank = next((i+1 for i, mod in enumerate(top_moderators) if username == mod[0] or user_id == mod[1]), None)
             user_score = next((mod[2] for mod in top_moderators if username == mod[0] or user_id == mod[1]), 0)
-            logger.warning(f"[ShortsChat] ✅ PERMISSION GRANTED: {username} authorized as #{user_rank} MAGADOOM mod for @{target_user} Short")
+            logger.warning(f"[ShortsChat] [OK] PERMISSION GRANTED: {username} authorized as #{user_rank} MAGADOOM mod for @{target_user} Short")
 
         # Check weekly rate limit (OWNER is exempt)
         if not is_owner:
             can_post, limit_msg = self._check_weekly_limit(username)
             if not can_post:
-                return f"@{username} 🎬 {limit_msg}"
+                return f"@{username} [U+1F3AC] {limit_msg}"
 
         # Check if already generating
         if self.generating:
-            return f"@{username} 🎬 Short already being generated by @{self.last_generation_user}. Please wait!"
+            return f"@{username} [U+1F3AC] Short already being generated by @{self.last_generation_user}. Please wait!"
 
         # Get chat memory manager and Qwen integration
         try:
@@ -571,27 +571,27 @@ class ShortsCommandHandler:
             user_messages = memory_manager.get_history(target_user, limit=20)
 
             if not user_messages:
-                return f"@{username} 🎬 No chat history found for @{target_user}. They need to chat first!"
+                return f"@{username} [U+1F3AC] No chat history found for @{target_user}. They need to chat first!"
 
             # Use Qwen to analyze chat and generate topic
             analysis = qwen.analyze_chat_for_short(user_messages, target_user)
 
             if not analysis['topic']:
-                return f"@{username} 🎬 Could not generate topic from @{target_user}'s chat. Not enough context."
+                return f"@{username} [U+1F3AC] Could not generate topic from @{target_user}'s chat. Not enough context."
 
             topic = analysis['topic']
             confidence = analysis['confidence']
             theme = analysis['theme']
 
-            logger.warning(f"[ShortsChat] 🧠 QWEN ANALYSIS: {target_user} → Theme: {theme}, Confidence: {confidence:.0%}")
-            logger.warning(f"[ShortsChat] 🎬 Generated topic: '{topic}'")
+            logger.warning(f"[ShortsChat] [AI] QWEN ANALYSIS: {target_user} -> Theme: {theme}, Confidence: {confidence:.0%}")
+            logger.warning(f"[ShortsChat] [U+1F3AC] Generated topic: '{topic}'")
 
         except ImportError as e:
             logger.error(f"[ShortsChat] Failed to import dependencies: {e}")
-            return f"@{username} 🎬 Chat analysis system not available. Try !createshort with a topic instead."
+            return f"@{username} [U+1F3AC] Chat analysis system not available. Try !createshort with a topic instead."
         except Exception as e:
             logger.error(f"[ShortsChat] Failed to analyze @{target_user}'s chat: {e}")
-            return f"@{username} 🎬 Error analyzing @{target_user}'s chat: {str(e)[:50]}"
+            return f"@{username} [U+1F3AC] Error analyzing @{target_user}'s chat: {str(e)[:50]}"
 
         # Record post for weekly limit
         self._record_post(username)
@@ -634,7 +634,7 @@ class ShortsCommandHandler:
                 if self.throttle_manager:
                     self.throttle_manager.record_response('video_progress', success=True, message_text=message)
 
-                logger.info(f"[ShortsChat] 🎬 Progress: {message}")
+                logger.info(f"[ShortsChat] [U+1F3AC] Progress: {message}")
             except Exception as e:
                 # Record failure
                 if self.throttle_manager:
@@ -642,7 +642,7 @@ class ShortsCommandHandler:
                 logger.error(f"[ShortsChat] Failed to send progress message: {e}")
 
         try:
-            logger.warning(f"[ShortsChat] 🎬 GENERATION STARTED: {username} → ENGINE: AUTO | Topic from @{target_user}'s chat: '{topic}' | Duration: 30s")
+            logger.warning(f"[ShortsChat] [U+1F3AC] GENERATION STARTED: {username} -> ENGINE: AUTO | Topic from @{target_user}'s chat: '{topic}' | Duration: 30s")
 
             # Generate and upload (30 seconds, public, auto engine)
             youtube_url = self.orchestrator.create_and_upload(
@@ -653,13 +653,13 @@ class ShortsCommandHandler:
                 progress_callback=send_progress_to_chat
             )
 
-            logger.warning(f"[ShortsChat] ✅ GENERATION COMPLETE: {youtube_url} | FROM CHAT: @{target_user} | Requested by: {username}")
+            logger.warning(f"[ShortsChat] [OK] GENERATION COMPLETE: {youtube_url} | FROM CHAT: @{target_user} | Requested by: {username}")
 
-            return f"@{username} ✅ Short created from @{target_user}'s chat ({theme} theme)! {youtube_url}"
+            return f"@{username} [OK] Short created from @{target_user}'s chat ({theme} theme)! {youtube_url}"
 
         except Exception as e:
             logger.error(f"[ShortsChat] Generation failed: {e}")
-            return f"@{username} ❌ Short generation failed: {str(e)[:100]}"
+            return f"@{username} [FAIL] Short generation failed: {str(e)[:100]}"
 
         finally:
             self.generating = False

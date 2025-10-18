@@ -149,7 +149,7 @@ stateDiagram-v2
 - Leaderboard with top 10 display
 
 ### 3. **Consciousness (0102) System**
-- Triggered by ✊✋🖐️ emojis
+- Triggered by [U+270A][U+270B][U+1F590]️ emojis
 - Mod/Owner only by default
 - `/toggle` command switches between mod-only and everyone
 - Uses Grok 3 for advanced responses
@@ -176,24 +176,24 @@ Bot announces when mods/owners timeout users:
 
 ```
 modules/
-├── communication/
-│   └── livechat/
-│       ├── src/
-│       │   ├── livechat_core.py         # Main chat listener (<500 lines)
-│       │   ├── message_processor.py     # Message handling
-│       │   ├── chat_poller.py          # YouTube API polling
-│       │   ├── chat_sender.py          # Send messages
-│       │   ├── event_handler.py        # Timeout/ban events
-│       │   ├── session_manager.py      # Session & greetings
-│       │   └── stream_trigger.py       # Trigger mechanism
-│       └── docs/
-│           └── BOT_FLOW_COT.md         # This document
-└── gamification/
-    └── whack_a_magat/
-        └── src/
-            ├── whack.py                # Core XP/rank system
-            ├── timeout_announcer.py    # Duke/Quake announcer
-            └── spree_tracker.py        # Kill streak tracking
++-- communication/
+[U+2502]   +-- livechat/
+[U+2502]       +-- src/
+[U+2502]       [U+2502]   +-- livechat_core.py         # Main chat listener (<500 lines)
+[U+2502]       [U+2502]   +-- message_processor.py     # Message handling
+[U+2502]       [U+2502]   +-- chat_poller.py          # YouTube API polling
+[U+2502]       [U+2502]   +-- chat_sender.py          # Send messages
+[U+2502]       [U+2502]   +-- event_handler.py        # Timeout/ban events
+[U+2502]       [U+2502]   +-- session_manager.py      # Session & greetings
+[U+2502]       [U+2502]   +-- stream_trigger.py       # Trigger mechanism
+[U+2502]       +-- docs/
+[U+2502]           +-- BOT_FLOW_COT.md         # This document
++-- gamification/
+    +-- whack_a_magat/
+        +-- src/
+            +-- whack.py                # Core XP/rank system
+            +-- timeout_announcer.py    # Duke/Quake announcer
+            +-- spree_tracker.py        # Kill streak tracking
 ```
 
 ## No Vibecoding Policy

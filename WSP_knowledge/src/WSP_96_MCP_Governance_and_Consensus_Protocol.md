@@ -1,7 +1,7 @@
 # WSP 96: MCP Governance & Consensus Protocol
 
 **Status:** Active
-**Purpose:** Establish governance and consensus mechanisms for MCP-based DAE coordination across FoundUps ecosystem, with clear evolution path from PoC (0102-driven) → Prototype (event recording) → MVP (community voting)
+**Purpose:** Establish governance and consensus mechanisms for MCP-based DAE coordination across FoundUps ecosystem, with clear evolution path from PoC (0102-driven) -> Prototype (event recording) -> MVP (community voting)
 **Trigger:** When governance decisions need coordination across DAE cubes, when establishing community participation mechanisms, when implementing transparent decision tracking
 **Input:** Governance proposals, DAE consensus requirements, community voting needs, blockchain integration planning
 **Output:** Recorded governance events, consensus mechanisms, transparent decision audit trails, blockchain-ready MCP architecture
@@ -13,7 +13,7 @@
 
 ---
 
-## 🎯 EXECUTIVE SUMMARY
+## [TARGET] EXECUTIVE SUMMARY
 
 WSP 96 defines the governance and consensus architecture for MCP-based DAE coordination in the FoundUps ecosystem. This protocol establishes:
 
@@ -26,7 +26,7 @@ WSP 96 defines the governance and consensus architecture for MCP-based DAE coord
 
 ---
 
-## 📐 GOVERNANCE ARCHITECTURE PHASES
+## [U+1F4D0] GOVERNANCE ARCHITECTURE PHASES
 
 ### **Phase 0: PoC (Current State) - 0102 Centralized Governance**
 
@@ -34,30 +34,30 @@ WSP 96 defines the governance and consensus architecture for MCP-based DAE coord
 
 **Architecture**:
 ```
-┌─────────────────────────────────────────────────────────┐
-│            0102 Orchestrator (Holo_DAE LEGO Baseplate)  │
-│  ┌───────────────────────────────────────────────────┐  │
-│  │  Centralized Decision-Making                      │  │
-│  │  • Stream detection policies                      │  │
-│  │  • Social media posting schedules                │  │
-│  │  • Quota rotation decisions                      │  │
-│  │  • System health responses                       │  │
-│  └───────────────────────────────────────────────────┘  │
-│                          │                              │
-│              All decisions recorded as MCP events       │
-│                          ▼                              │
-│              ┌──────────────────────┐                   │
-│              │ Event Replay Archive │                   │
-│              │ (immutable log)      │                   │
-│              └──────────────────────┘                   │
-└─────────────────────────────────────────────────────────┘
++---------------------------------------------------------+
+[U+2502]            0102 Orchestrator (Holo_DAE LEGO Baseplate)  [U+2502]
+[U+2502]  +---------------------------------------------------+  [U+2502]
+[U+2502]  [U+2502]  Centralized Decision-Making                      [U+2502]  [U+2502]
+[U+2502]  [U+2502]  • Stream detection policies                      [U+2502]  [U+2502]
+[U+2502]  [U+2502]  • Social media posting schedules                [U+2502]  [U+2502]
+[U+2502]  [U+2502]  • Quota rotation decisions                      [U+2502]  [U+2502]
+[U+2502]  [U+2502]  • System health responses                       [U+2502]  [U+2502]
+[U+2502]  +---------------------------------------------------+  [U+2502]
+[U+2502]                          [U+2502]                              [U+2502]
+[U+2502]              All decisions recorded as MCP events       [U+2502]
+[U+2502]                          [U+25BC]                              [U+2502]
+[U+2502]              +----------------------+                   [U+2502]
+[U+2502]              [U+2502] Event Replay Archive [U+2502]                   [U+2502]
+[U+2502]              [U+2502] (immutable log)      [U+2502]                   [U+2502]
+[U+2502]              +----------------------+                   [U+2502]
++---------------------------------------------------------+
 ```
 
 **Benefits**:
-- ✅ Fast decision-making during development
-- ✅ No coordination overhead
-- ✅ Full event recording prepares for transparency
-- ✅ 0102 learns patterns for future automation
+- [OK] Fast decision-making during development
+- [OK] No coordination overhead
+- [OK] Full event recording prepares for transparency
+- [OK] 0102 learns patterns for future automation
 
 **PoC Governance Events**:
 ```python
@@ -80,23 +80,23 @@ await governance_mcp.record_decision({
 
 **Architecture**:
 ```
-┌─────────────────────────────────────────────────────────┐
-│            0102 Orchestrator (Still Decision-Maker)     │
-│                          │                              │
-│              Every decision → MCP event                 │
-│                          ▼                              │
-│              ┌──────────────────────┐                   │
-│              │ Event Replay Archive │                   │
-│              │  (WSP 21 Envelopes)  │                   │
-│              └──────────┬───────────┘                   │
-│                         │                               │
-│            ┌────────────┴────────────┐                  │
-│            │                         │                  │
-│    ┌───────▼────────┐      ┌────────▼────────┐         │
-│    │ CodeIndex      │      │ Community       │         │
-│    │ Reports (012)  │      │ Dashboard (012) │         │
-│    └────────────────┘      └─────────────────┘         │
-└─────────────────────────────────────────────────────────┘
++---------------------------------------------------------+
+[U+2502]            0102 Orchestrator (Still Decision-Maker)     [U+2502]
+[U+2502]                          [U+2502]                              [U+2502]
+[U+2502]              Every decision -> MCP event                 [U+2502]
+[U+2502]                          [U+25BC]                              [U+2502]
+[U+2502]              +----------------------+                   [U+2502]
+[U+2502]              [U+2502] Event Replay Archive [U+2502]                   [U+2502]
+[U+2502]              [U+2502]  (WSP 21 Envelopes)  [U+2502]                   [U+2502]
+[U+2502]              +----------+-----------+                   [U+2502]
+[U+2502]                         [U+2502]                               [U+2502]
+[U+2502]            +------------+------------+                  [U+2502]
+[U+2502]            [U+2502]                         [U+2502]                  [U+2502]
+[U+2502]    +-------[U+25BC]--------+      +--------[U+25BC]--------+         [U+2502]
+[U+2502]    [U+2502] CodeIndex      [U+2502]      [U+2502] Community       [U+2502]         [U+2502]
+[U+2502]    [U+2502] Reports (012)  [U+2502]      [U+2502] Dashboard (012) [U+2502]         [U+2502]
+[U+2502]    +----------------+      +-----------------+         [U+2502]
++---------------------------------------------------------+
 ```
 
 **New Capabilities**:
@@ -115,23 +115,23 @@ class EventReplayArchive(Server):
 
     # TOOLS
     tools:
-        - record_event(event) → Store governance event
-        - query_events(filters) → Search historical events
-        - replay_timeline(start, end) → Replay decision sequence
-        - export_audit_trail(date_range) → Compliance reporting
-        - get_decision_chain(decision_id) → Full context retrieval
+        - record_event(event) -> Store governance event
+        - query_events(filters) -> Search historical events
+        - replay_timeline(start, end) -> Replay decision sequence
+        - export_audit_trail(date_range) -> Compliance reporting
+        - get_decision_chain(decision_id) -> Full context retrieval
 
     # RESOURCES
     resources:
-        - governance_feed → Real-time decision stream
-        - audit_dashboard → Searchable decision history
-        - pattern_analysis → ML-ready decision dataset
+        - governance_feed -> Real-time decision stream
+        - audit_dashboard -> Searchable decision history
+        - pattern_analysis -> ML-ready decision dataset
 
     # EVENTS
     events:
-        - "decision_recorded" → New governance event stored
-        - "pattern_detected" → Recurring decision pattern identified
-        - "anomaly_alert" → Unusual decision flagged by Qwen Sentinel
+        - "decision_recorded" -> New governance event stored
+        - "pattern_detected" -> Recurring decision pattern identified
+        - "anomaly_alert" -> Unusual decision flagged by Qwen Sentinel
 ```
 
 **Qwen Sentinel Integration**:
@@ -184,31 +184,31 @@ class QwenSentinel:
 
 **Architecture**:
 ```
-┌─────────────────────────────────────────────────────────┐
-│           Community Governance MCP Server               │
-│  ┌───────────────────────────────────────────────────┐  │
-│  │  Proposal System                                  │  │
-│  │  • 012 humans propose changes                    │  │
-│  │  │  • System configuration updates                 │  │
-│  │  • Community votes (weighted by stake)          │  │
-│  │  • Threshold enforcement (quorum, majority)     │  │
-│  └───────────────────────────────────────────────────┘  │
-│                          │                              │
-│              Votes → Consensus → Execution              │
-│                          ▼                              │
-│              ┌──────────────────────┐                   │
-│              │ Event Replay Archive │                   │
-│              │ (full transparency)  │                   │
-│              └──────────┬───────────┘                   │
-│                         │                               │
-│            ┌────────────┴────────────┐                  │
-│            │                         │                  │
-│    ┌───────▼────────┐      ┌────────▼────────┐         │
-│    │ On-Chain       │      │ Off-Chain        │         │
-│    │ Recording      │      │ Execution        │         │
-│    │ (optional)     │      │ (0102)           │         │
-│    └────────────────┘      └──────────────────┘         │
-└─────────────────────────────────────────────────────────┘
++---------------------------------------------------------+
+[U+2502]           Community Governance MCP Server               [U+2502]
+[U+2502]  +---------------------------------------------------+  [U+2502]
+[U+2502]  [U+2502]  Proposal System                                  [U+2502]  [U+2502]
+[U+2502]  [U+2502]  • 012 humans propose changes                    [U+2502]  [U+2502]
+[U+2502]  [U+2502]  [U+2502]  • System configuration updates                 [U+2502]  [U+2502]
+[U+2502]  [U+2502]  • Community votes (weighted by stake)          [U+2502]  [U+2502]
+[U+2502]  [U+2502]  • Threshold enforcement (quorum, majority)     [U+2502]  [U+2502]
+[U+2502]  +---------------------------------------------------+  [U+2502]
+[U+2502]                          [U+2502]                              [U+2502]
+[U+2502]              Votes -> Consensus -> Execution              [U+2502]
+[U+2502]                          [U+25BC]                              [U+2502]
+[U+2502]              +----------------------+                   [U+2502]
+[U+2502]              [U+2502] Event Replay Archive [U+2502]                   [U+2502]
+[U+2502]              [U+2502] (full transparency)  [U+2502]                   [U+2502]
+[U+2502]              +----------+-----------+                   [U+2502]
+[U+2502]                         [U+2502]                               [U+2502]
+[U+2502]            +------------+------------+                  [U+2502]
+[U+2502]            [U+2502]                         [U+2502]                  [U+2502]
+[U+2502]    +-------[U+25BC]--------+      +--------[U+25BC]--------+         [U+2502]
+[U+2502]    [U+2502] On-Chain       [U+2502]      [U+2502] Off-Chain        [U+2502]         [U+2502]
+[U+2502]    [U+2502] Recording      [U+2502]      [U+2502] Execution        [U+2502]         [U+2502]
+[U+2502]    [U+2502] (optional)     [U+2502]      [U+2502] (0102)           [U+2502]         [U+2502]
+[U+2502]    +----------------+      +------------------+         [U+2502]
++---------------------------------------------------------+
 ```
 
 **Community Governance MCP Tools**:
@@ -221,28 +221,28 @@ class CommunityGovernanceMCP(Server):
 
     # TOOLS
     tools:
-        - create_proposal(title, description, type) → New governance proposal
-        - vote(proposal_id, vote, stake) → Cast weighted vote
-        - get_proposal_status(proposal_id) → Current voting status
-        - execute_proposal(proposal_id) → Execute approved proposal
-        - delegate_vote(to_address, stake) → Delegate voting power
-        - revoke_delegation(from_address) → Revoke voting delegation
+        - create_proposal(title, description, type) -> New governance proposal
+        - vote(proposal_id, vote, stake) -> Cast weighted vote
+        - get_proposal_status(proposal_id) -> Current voting status
+        - execute_proposal(proposal_id) -> Execute approved proposal
+        - delegate_vote(to_address, stake) -> Delegate voting power
+        - revoke_delegation(from_address) -> Revoke voting delegation
 
     # RESOURCES
     resources:
-        - active_proposals → Current voting proposals
-        - voting_history → Past proposal results
-        - delegation_graph → Voting power delegation
-        - participation_metrics → Community engagement stats
+        - active_proposals -> Current voting proposals
+        - voting_history -> Past proposal results
+        - delegation_graph -> Voting power delegation
+        - participation_metrics -> Community engagement stats
 
     # EVENTS
     events:
-        - "proposal_created" → New proposal submitted
-        - "vote_cast" → Vote recorded
-        - "quorum_reached" → Voting threshold met
-        - "proposal_approved" → Proposal passed
-        - "proposal_rejected" → Proposal failed
-        - "proposal_executed" → Approved proposal executed
+        - "proposal_created" -> New proposal submitted
+        - "vote_cast" -> Vote recorded
+        - "quorum_reached" -> Voting threshold met
+        - "proposal_approved" -> Proposal passed
+        - "proposal_rejected" -> Proposal failed
+        - "proposal_executed" -> Approved proposal executed
 ```
 
 **Voting Mechanisms**:
@@ -304,7 +304,7 @@ class VotingWeight:
 
 ---
 
-## 🔗 BLOCKCHAIN INTEGRATION (Post-PoC Exploration)
+## [LINK] BLOCKCHAIN INTEGRATION (Post-PoC Exploration)
 
 ### **Tech-Agnostic Principle**
 
@@ -312,23 +312,23 @@ class VotingWeight:
 
 **Architecture**:
 ```
-┌─────────────────────────────────────────────────────────┐
-│                   MCP Governance Layer                  │
-│              (Chain-Agnostic Interface)                 │
-└────────────────────┬────────────────────────────────────┘
-                     │
-         ┌───────────┴────────────┐
-         │                        │
-    ┌────▼────┐            ┌──────▼─────┐
-    │ EVM     │            │ Solana     │
-    │ Adapter │            │ Adapter    │
-    └────┬────┘            └──────┬─────┘
-         │                        │
-    ┌────▼────┐            ┌──────▼─────┐
-    │Ethereum │            │  Solana    │
-    │Polygon  │            │  Network   │
-    │Arbitrum │            │            │
-    └─────────┘            └────────────┘
++---------------------------------------------------------+
+[U+2502]                   MCP Governance Layer                  [U+2502]
+[U+2502]              (Chain-Agnostic Interface)                 [U+2502]
++--------------------+------------------------------------+
+                     [U+2502]
+         +-----------+------------+
+         [U+2502]                        [U+2502]
+    +----[U+25BC]----+            +------[U+25BC]-----+
+    [U+2502] EVM     [U+2502]            [U+2502] Solana     [U+2502]
+    [U+2502] Adapter [U+2502]            [U+2502] Adapter    [U+2502]
+    +----+----+            +------+-----+
+         [U+2502]                        [U+2502]
+    +----[U+25BC]----+            +------[U+25BC]-----+
+    [U+2502]Ethereum [U+2502]            [U+2502]  Solana    [U+2502]
+    [U+2502]Polygon  [U+2502]            [U+2502]  Network   [U+2502]
+    [U+2502]Arbitrum [U+2502]            [U+2502]            [U+2502]
+    +---------+            +------------+
 ```
 
 ### **Chainlink-Style MCP Relays** (Future Vision)
@@ -476,25 +476,25 @@ class SolanaAdapter:
 
 ### **Migration Strategy**
 
-**Phase 0 → Phase 1**:
+**Phase 0 -> Phase 1**:
 - Continue using Event Replay Archive (off-chain)
 - No blockchain dependency yet
 - Focus on governance process maturity
 
-**Phase 1 → Phase 2**:
+**Phase 1 -> Phase 2**:
 - Deploy smart contracts on chosen chain(s)
 - Implement MCP chain relay
 - Parallel recording (off-chain + on-chain)
 - Validate consistency
 
-**Phase 2 → Phase 3**:
+**Phase 2 -> Phase 3**:
 - Optional: Migrate fully to on-chain governance
 - Off-chain archive becomes backup/cache
 - Performance optimization via rollups
 
 ---
 
-## 📊 GOVERNANCE EVENT SCHEMA (WSP 21 Compliant)
+## [DATA] GOVERNANCE EVENT SCHEMA (WSP 21 Compliant)
 
 ### **Standard Governance Envelope**
 
@@ -580,7 +580,7 @@ voting_event = {
 
 ---
 
-## 🔒 SECURITY & INTEGRITY
+## [LOCK] SECURITY & INTEGRITY
 
 ### **Qwen Sentinel Validation**
 
@@ -595,7 +595,7 @@ class QwenSentinel:
         Multi-layer validation:
         1. WSP 21 envelope structure
         2. Governance schema compliance
-        3. Coherence threshold (≥0.618)
+        3. Coherence threshold ([GREATER_EQUAL]0.618)
         4. Anomaly detection (ML-based)
         5. Signature verification (if applicable)
         """
@@ -661,12 +661,12 @@ class EventReplayArchive:
 
 ---
 
-## 🎯 INTEGRATION WITH EXISTING WSPs
+## [TARGET] INTEGRATION WITH EXISTING WSPs
 
 ### **WSP 21 (Enhanced Prompt Engineering Protocol)**
 - Governance events use WSP 21 envelope format
 - Ensures consistency across all MCP communication
-- Coherence validation (golden ratio ≥0.618)
+- Coherence validation (golden ratio [GREATER_EQUAL]0.618)
 
 ### **WSP 27 (Universal DAE Architecture)**
 - Community Governance MCP is a DAE following 4-phase pattern
@@ -692,29 +692,29 @@ class EventReplayArchive:
 
 ---
 
-## 📈 SUCCESS METRICS
+## [UP] SUCCESS METRICS
 
 ### **PoC Phase Metrics**
-- ✅ All governance decisions recorded as MCP events
-- ✅ Event Replay Archive fully populated
-- ✅ 0102 decision confidence ≥0.85 average
-- ✅ Zero governance-related system failures
+- [OK] All governance decisions recorded as MCP events
+- [OK] Event Replay Archive fully populated
+- [OK] 0102 decision confidence [GREATER_EQUAL]0.85 average
+- [OK] Zero governance-related system failures
 
 ### **Prototype Phase Metrics**
-- ✅ Qwen Sentinel anomaly detection accuracy ≥95%
-- ✅ Event query response time <100ms
-- ✅ Temporal debugging used for root cause analysis
-- ✅ 012 review engagement ≥80% of major decisions
+- [OK] Qwen Sentinel anomaly detection accuracy [GREATER_EQUAL]95%
+- [OK] Event query response time <100ms
+- [OK] Temporal debugging used for root cause analysis
+- [OK] 012 review engagement [GREATER_EQUAL]80% of major decisions
 
 ### **MVP Phase Metrics**
-- ✅ Community participation ≥30% quorum on key proposals
-- ✅ Proposal approval within 72 hours
-- ✅ On-chain governance transactions <$0.01 cost
-- ✅ Zero governance disputes requiring human intervention
+- [OK] Community participation [GREATER_EQUAL]30% quorum on key proposals
+- [OK] Proposal approval within 72 hours
+- [OK] On-chain governance transactions <$0.01 cost
+- [OK] Zero governance disputes requiring human intervention
 
 ---
 
-## 🚀 IMMEDIATE ACTION ITEMS (PoC)
+## [ROCKET] IMMEDIATE ACTION ITEMS (PoC)
 
 ### **1. Deploy Event Replay Archive MCP Server**
 ```bash
@@ -765,7 +765,7 @@ docs/reports/governance_decision_log.md
 
 ---
 
-## 📚 REFERENCES
+## [BOOKS] REFERENCES
 
 - **WSP 21**: Enhanced Prompt Engineering Protocol (envelope format)
 - **WSP 27**: Universal DAE Architecture (4-phase DAE pattern)
@@ -776,7 +776,7 @@ docs/reports/governance_decision_log.md
 
 ---
 
-## 🌟 FOUNDUPS VISION ALIGNMENT
+## [U+1F31F] FOUNDUPS VISION ALIGNMENT
 
 ### **No Employees, All Stakeholders**
 - MVP governance enables community participation in decision-making

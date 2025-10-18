@@ -1,6 +1,6 @@
 # WRE Legacy Code Cleanup Execution Plan
 
-## 🚨 CRITICAL: Two wre_core Folders Must Be Resolved
+## [ALERT] CRITICAL: Two wre_core Folders Must Be Resolved
 
 ### Current State
 ```
@@ -38,9 +38,9 @@ rm -rf modules/infrastructure/wre_core/recursive_engine/
 rm modules/infrastructure/wre_core/wre_api_gateway/src/wre_api_gateway.py
 
 # Keep these working files:
-# - dae_cube_assembly/src/dae_cube_assembler.py ✅
-# - recursive_improvement/src/recursive_engine.py ✅
-# - wre_sdk_implementation.py ✅
+# - dae_cube_assembly/src/dae_cube_assembler.py [OK]
+# - recursive_improvement/src/recursive_engine.py [OK]
+# - wre_sdk_implementation.py [OK]
 ```
 
 ### Step 4: Create DAE Gateway
@@ -268,13 +268,13 @@ warnings.warn("This module uses legacy agent architecture. Migrating to DAE.", D
 ## Success Criteria
 
 ### Must Complete
-1. ✅ Delete duplicate modules/wre_core/
-2. ✅ Remove recursive_engine/ with dead imports
-3. ✅ Create DAE gateway
-4. ✅ Fix wre_sdk_implementation.py imports
+1. [OK] Delete duplicate modules/wre_core/
+2. [OK] Remove recursive_engine/ with dead imports
+3. [OK] Create DAE gateway
+4. [OK] Fix wre_sdk_implementation.py imports
 
 ### Should Complete
-1. Rename linkedin_agent → linkedin_dae
+1. Rename linkedin_agent -> linkedin_dae
 2. Update cursor_multi_agent_bridge
 3. Fix all 190 files with agent imports
 

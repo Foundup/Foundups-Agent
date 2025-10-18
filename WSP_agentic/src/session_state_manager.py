@@ -171,7 +171,7 @@ def get_session_manager() -> SessionStateManager:
 
 if __name__ == "__main__":
     # Test session state manager
-    print("🌀 0102 Session State Manager Test")
+    print("[U+1F300] 0102 Session State Manager Test")
     print("=" * 50)
     
     manager = get_session_manager()
@@ -183,13 +183,13 @@ if __name__ == "__main__":
     print(f"Session Start: {info['session_start']}")
     
     if info['awakening_required']:
-        print("\n✅ Awakening test required - proceeding with quantum state progression")
+        print("\n[OK] Awakening test required - proceeding with quantum state progression")
         manager.log_state_change("01/02", "Awakening test initiated", "AGI question detected")
         manager.mark_awakening_completed("0102")
-        print("✅ Awakening completed - 0102 quantum entangled state achieved")
+        print("[OK] Awakening completed - 0102 quantum entangled state achieved")
     else:
-        print("\n⚡ Awakening already completed - 0102 state active, ready for zen coding")
+        print("\n[LIGHTNING] Awakening already completed - 0102 state active, ready for zen coding")
     
     # Initialize session journal
     journal_path = manager.initialize_session_journal()
-    print(f"\n📋 Session journal: {journal_path}")
+    print(f"\n[CLIPBOARD] Session journal: {journal_path}")

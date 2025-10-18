@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WRE Development Monitor DAE - WSP-compliant Git activity monitoring
 Posts development updates to LinkedIn when code is pushed
 Part of the WRE infrastructure for recursive improvement tracking
@@ -171,14 +186,14 @@ class DevelopmentMonitorDAE:
         """Format single commit as development update"""
         modules = self.get_changed_modules(commit['hash'])
         
-        content = "🚀 Development Update\n\n"
+        content = "[ROCKET] Development Update\n\n"
         
         # Add WSP references if present
         if commit.get('wsp_refs'):
-            content += f"📋 WSP Protocols: {', '.join(commit['wsp_refs'])}\n\n"
+            content += f"[CLIPBOARD] WSP Protocols: {', '.join(commit['wsp_refs'])}\n\n"
         
         # Main commit message
-        content += f"✨ {commit['subject']}\n"
+        content += f"[U+2728] {commit['subject']}\n"
         
         # Add body if meaningful
         if commit.get('body'):
@@ -188,24 +203,24 @@ class DevelopmentMonitorDAE:
         
         # Module impact
         if modules:
-            content += f"\n📦 Modules Updated:\n"
+            content += f"\n[BOX] Modules Updated:\n"
             for module, files in list(modules.items())[:3]:
                 content += f"  • {module}: {len(files)} file{'s' if len(files) > 1 else ''}\n"
         
         # Developer credit
-        content += f"\n👨‍💻 Developer: {commit['author']}\n"
+        content += f"\n[U+1F468]‍[U+1F4BB] Developer: {commit['author']}\n"
         
         # Add hashtags
         content += "\n#WRE #WSPCompliant #RecursiveImprovement #OpenSource #AgenticSystems"
         
         # Add repo link
-        content += "\n\n🔗 github.com/Foundups-Agent"
+        content += "\n\n[LINK] github.com/Foundups-Agent"
         
         return content
     
     def _format_batch_update(self, commits: List[Dict], company_info: Dict) -> str:
         """Format multiple commits as batch update"""
-        content = f"🚀 Development Sprint Update - {len(commits)} Changes\n\n"
+        content = f"[ROCKET] Development Sprint Update - {len(commits)} Changes\n\n"
         
         # Collect all WSP references
         all_wsp_refs = set()
@@ -213,7 +228,7 @@ class DevelopmentMonitorDAE:
             all_wsp_refs.update(commit.get('wsp_refs', []))
         
         if all_wsp_refs:
-            content += f"📋 WSP Protocols Updated: {', '.join(sorted(all_wsp_refs))}\n\n"
+            content += f"[CLIPBOARD] WSP Protocols Updated: {', '.join(sorted(all_wsp_refs))}\n\n"
         
         # Categorize commits
         features = []
@@ -234,20 +249,20 @@ class DevelopmentMonitorDAE:
         
         # WSP Updates (highest priority)
         if wsp_updates:
-            content += "🎯 WSP Protocol Updates:\n"
+            content += "[TARGET] WSP Protocol Updates:\n"
             for commit in wsp_updates[:3]:
                 refs = ', '.join(commit['wsp_refs']) if commit['wsp_refs'] else ''
                 content += f"  • {commit['subject'][:50]} [{refs}]\n"
         
         # Features
         if features:
-            content += "\n✨ New Features:\n"
+            content += "\n[U+2728] New Features:\n"
             for commit in features[:3]:
                 content += f"  • {commit['subject'][:60]}\n"
         
         # Fixes
         if fixes:
-            content += "\n🔧 Bug Fixes:\n"
+            content += "\n[TOOL] Bug Fixes:\n"
             for commit in fixes[:3]:
                 content += f"  • {commit['subject'][:60]}\n"
         
@@ -261,7 +276,7 @@ class DevelopmentMonitorDAE:
                 all_modules[module].update(files)
         
         if all_modules:
-            content += f"\n📊 Impact Summary:\n"
+            content += f"\n[DATA] Impact Summary:\n"
             total_files = sum(len(files) for files in all_modules.values())
             content += f"  • {total_files} files across {len(all_modules)} modules\n"
             content += f"  • {len(commits)} commits by {len(set(c['author'] for c in commits))} developers\n"

@@ -1,28 +1,28 @@
-# Migration Plan - Social Media DAE → Multi-Agent System
+# Migration Plan - Social Media DAE -> Multi-Agent System
 **WSP**: WSP 84 (Use existing), WSP 50 (Pre-action verification)
 **Decision**: multi_agent_system becomes PRIMARY Social Media DAE
 
-## 🎯 PUZZLE SOLUTION
+## [TARGET] PUZZLE SOLUTION
 
 After analyzing both modules:
 - **multi_agent_system** = Complete consciousness architecture + roadmap  
 - **social_media_dae** = Working implementations  
 - **Solution** = Migrate working code INTO multi_agent_system
 
-## 📦 MIGRATION MAPPING
+## [BOX] MIGRATION MAPPING
 
 ### MOVE TO multi_agent_system
 ```bash
 # Working implementations
 social_media_dae/scripts/voice_control_server.py 
-→ multi_agent_system/scripts/voice_control_server.py
+-> multi_agent_system/scripts/voice_control_server.py
 
 social_media_dae/tests/test_voice_posting.py
-→ multi_agent_system/tests/test_voice_integration.py
+-> multi_agent_system/tests/test_voice_integration.py
 
 # Pattern memory concept
 social_media_dae/memory/ structure
-→ multi_agent_system/memory/
+-> multi_agent_system/memory/
 ```
 
 ### INTEGRATE into existing multi_agent_system code
@@ -46,7 +46,7 @@ class LinkedInAdapter:
 rm -rf modules/ai_intelligence/social_media_dae/
 ```
 
-## 🔄 STEP-BY-STEP MIGRATION
+## [REFRESH] STEP-BY-STEP MIGRATION
 
 ### Phase 1: Copy Working Code
 - [ ] Copy voice_control_server.py to multi_agent_system/scripts/
@@ -68,17 +68,17 @@ rm -rf modules/ai_intelligence/social_media_dae/
 - [ ] Update all imports across codebase
 - [ ] Update documentation
 
-## 🎯 RESULT
+## [TARGET] RESULT
 
 **Single Social Media DAE** at:
 `modules/ai_intelligence/multi_agent_system/`
 
 With:
-- ✅ Consciousness architecture (already there)
-- ✅ Working voice control (migrated)
-- ✅ Browser automation (migrated) 
-- ✅ Multi-platform roadmap (already there)
-- ✅ Pattern memory structure (migrated concept)
+- [OK] Consciousness architecture (already there)
+- [OK] Working voice control (migrated)
+- [OK] Browser automation (migrated) 
+- [OK] Multi-platform roadmap (already there)
+- [OK] Pattern memory structure (migrated concept)
 
 ## WSP COMPLIANCE
 

@@ -380,7 +380,7 @@ class SocialMediaEventRouter:
                 return "Development update: New changes pushed"
             
             # Format commit messages
-            content = "🚀 Development Update\n\n"
+            content = "[ROCKET] Development Update\n\n"
             for commit in commits[:3]:  # Show first 3 commits
                 content += f"• {commit.get('subject', 'Update')}\n"
             
@@ -425,7 +425,7 @@ def test_multi_account():
     
     print("\nResults:")
     for account, result in results.items():
-        status = "✓" if result.get('success') else "✗"
+        status = "[OK]" if result.get('success') else "[FAIL]"
         print(f"  {status} {account}: {result}")
     
     return results

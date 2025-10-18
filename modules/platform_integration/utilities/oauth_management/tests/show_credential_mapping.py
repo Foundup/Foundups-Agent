@@ -6,9 +6,13 @@ Show credential set to YouTube channel mapping.
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -22,7 +26,7 @@ sys.path.insert(0, os.path.abspath('.'))
 def show_credential_mapping():
     """Show which credential set maps to which YouTube channel."""
     
-    print("🔑 FoundUps Agent - Credential Set Mapping")
+    print("[U+1F511] FoundUps Agent - Credential Set Mapping")
     print("=" * 50)
     
     try:
@@ -31,7 +35,7 @@ def show_credential_mapping():
         # Test each credential set
         for i in range(4):
             credential_set = f"set_{i+1}"
-            print(f"\n🧪 Testing {credential_set}...")
+            print(f"\n[U+1F9EA] Testing {credential_set}...")
             
             try:
                 auth_result = get_authenticated_service(i)
@@ -45,33 +49,33 @@ def show_credential_mapping():
                     if items:
                         channel_title = items[0]['snippet']['title']
                         channel_id = items[0]['id']
-                        print(f"✅ {credential_set}: {channel_title}")
+                        print(f"[OK] {credential_set}: {channel_title}")
                         print(f"   Channel ID: {channel_id[:8]}...{channel_id[-4:]}")
                     else:
-                        print(f"❌ {credential_set}: No channel found")
+                        print(f"[FAIL] {credential_set}: No channel found")
                 else:
-                    print(f"❌ {credential_set}: Authentication failed")
+                    print(f"[FAIL] {credential_set}: Authentication failed")
                     
             except FileNotFoundError:
-                print(f"❌ {credential_set}: Credential files not found")
+                print(f"[FAIL] {credential_set}: Credential files not found")
             except Exception as e:
-                print(f"❌ {credential_set}: Error - {str(e)[:50]}...")
+                print(f"[FAIL] {credential_set}: Error - {str(e)[:50]}...")
     
     except Exception as e:
-        print(f"❌ Failed to load authentication system: {e}")
+        print(f"[FAIL] Failed to load authentication system: {e}")
 
 def show_current_session_info():
     """Show information about the current session."""
     
-    print("\n📊 Current Session Information")
+    print("\n[DATA] Current Session Information")
     print("=" * 50)
     
     # Check environment variables
     forced_set = os.getenv("FORCE_CREDENTIAL_SET")
     if forced_set:
-        print(f"🎯 FORCED credential set: set_{forced_set}")
+        print(f"[TARGET] FORCED credential set: set_{forced_set}")
     else:
-        print("🔄 Using automatic credential rotation")
+        print("[REFRESH] Using automatic credential rotation")
     
     # Check session cache
     session_cache_file = "memory/session_cache.json"
@@ -84,21 +88,21 @@ def show_current_session_info():
             stream_title = cache.get('stream_title', 'Unknown')
             timestamp = cache.get('timestamp', 'Unknown')
             
-            print(f"💾 Session cache found:")
+            print(f"[U+1F4BE] Session cache found:")
             print(f"   Video ID: {video_id}")
             print(f"   Stream: {stream_title}")
             print(f"   Cached: {timestamp}")
         except Exception as e:
-            print(f"⚠️ Session cache exists but couldn't read: {e}")
+            print(f"[U+26A0]️ Session cache exists but couldn't read: {e}")
     else:
-        print("📭 No session cache found")
+        print("[U+1F4ED] No session cache found")
 
 if __name__ == "__main__":
     show_credential_mapping()
     show_current_session_info()
     
     print("\n" + "=" * 50)
-    print("💡 Tips:")
+    print("[IDEA] Tips:")
     print("  - Use FORCE_CREDENTIAL_SET=2 to force set_2 (Move2Japan)")
     print("  - Use FORCE_CREDENTIAL_SET=1 to force set_1 (UnDaoDu)")
     print("  - Remove environment variable for automatic rotation") 

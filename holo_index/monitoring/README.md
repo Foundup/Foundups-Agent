@@ -48,15 +48,15 @@ warning = monitor.check_query_for_violations("create test file")
 #### Violation Patterns Learned:
 
 **From WSP_MODULE_VIOLATIONS.md:**
-- V021: Root directory violations → Files must go in modules
-- V019/V020: Module duplication → Enhance existing, don't duplicate
-- V016/V018: WSP creation violations → Check WSP_MASTER_INDEX.md first
-- V017: Documentation violations → Follow proper WSP protocols
+- V021: Root directory violations -> Files must go in modules
+- V019/V020: Module duplication -> Enhance existing, don't duplicate
+- V016/V018: WSP creation violations -> Check WSP_MASTER_INDEX.md first
+- V017: Documentation violations -> Follow proper WSP protocols
 
 **Built-in Patterns:**
-- VP001: Vibecoding (create without check) → Force module check first
-- VP002: Unicode print errors → Auto-replace with safe_print()
-- VP003: Enhanced_ duplicates → Block enhanced_ prefix creation
+- VP001: Vibecoding (create without check) -> Force module check first
+- VP002: Unicode print errors -> Auto-replace with safe_print()
+- VP003: Enhanced_ duplicates -> Block enhanced_ prefix creation
 
 ### self_monitoring.py
 Self-monitoring system for HoloIndex health and performance tracking.
@@ -93,15 +93,15 @@ if warning:
 ## The Feedback Loop
 
 ```
-WSP_MODULE_VIOLATIONS.md → Parse violations → Create patterns
-            ↓                                        ↓
+WSP_MODULE_VIOLATIONS.md -> Parse violations -> Create patterns
+            v                                        v
      Historical learning                    Real-time prevention
-            ↓                                        ↓
-     Pattern database ←──── Agent actions ────→ Risk scoring
-            ↓                                        ↓
-     Query checking ←────── Intervention ─────→ Score updates
-            ↓                                        ↓
-     Prevention stats ←──── Learning loop ────→ Better patterns
+            v                                        v
+     Pattern database <----- Agent actions -----> Risk scoring
+            v                                        v
+     Query checking <------- Intervention ------> Score updates
+            v                                        v
+     Prevention stats <----- Learning loop -----> Better patterns
 ```
 
 ## Statistics and Monitoring

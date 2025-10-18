@@ -1,14 +1,14 @@
-# 🚨 URGENT: Module Migration Plan
+# [ALERT] URGENT: Module Migration Plan
 
-## Files to Move from chat_rules → gamification
+## Files to Move from chat_rules -> gamification
 
 ### 1. Create new RPG block in gamification:
 ```bash
 modules/gamification/rpg_system/
-├── src/
-│   ├── rpg_leveling_system.py (from chat_rules, 594 lines - NEEDS SPLIT)
-│   └── game_commands.py (from chat_rules, 341 lines)
-└── tests/
++-- src/
+[U+2502]   +-- rpg_leveling_system.py (from chat_rules, 594 lines - NEEDS SPLIT)
+[U+2502]   +-- game_commands.py (from chat_rules, 341 lines)
++-- tests/
 ```
 
 ### 2. Move whack_a_magat.py:
@@ -20,7 +20,7 @@ modules/gamification/rpg_system/
 - KEEP: `modules/gamification/whack_a_magat/src/timeout_announcer.py` (438 lines)
 
 ### 4. Split oversized files:
-- `chat_rules/src/commands.py` (938 lines) → Split into:
+- `chat_rules/src/commands.py` (938 lines) -> Split into:
   - `moderation_commands.py` (<500 lines)
   - `utility_commands.py` (<500 lines)
 

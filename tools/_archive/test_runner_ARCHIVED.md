@@ -16,14 +16,14 @@ This basic test runner was identified in the **Tools Directory Audit Report** as
 
 The test runner functionality has been enhanced and integrated into the **WSP Compliance Engine** architecture:
 
-### ✅ Enhanced Capabilities
+### [OK] Enhanced Capabilities
 - **WSP 14 compliance checking** for test strategy evaluation
 - **ModLog integration** for automatic test result documentation  
 - **MPS scoring integration** for module priority assessment
 - **Pre-execution validation** using WSP Compliance Engine
 - **Comprehensive reporting** with recommendations and metrics
 
-### 🔧 Migration Path
+### [TOOL] Migration Path
 ```bash
 # Old usage (basic test runner)
 python tools/test_runner.py
@@ -33,16 +33,16 @@ python tools/shared/test_runner_enhanced.py modules/ai_intelligence/banter_engin
 python -c "from tools.shared.test_runner_enhanced import WSPTestRunner; runner = WSPTestRunner(); results = runner.run_module_tests('modules/ai_intelligence/banter_engine/')"
 ```
 
-### 📊 Feature Comparison
+### [DATA] Feature Comparison
 | Feature | Legacy | Enhanced |
 |---------|--------|----------|
-| Basic test execution | ✅ | ✅ |
-| WSP 14 compliance | ❌ | ✅ |
-| ModLog integration | ❌ | ✅ |
-| MPS scoring | ❌ | ✅ |
-| Test strategy evaluation | ❌ | ✅ |
-| Comprehensive reporting | ❌ | ✅ |
-| Agent 0102 integration | ❌ | ✅ |
+| Basic test execution | [OK] | [OK] |
+| WSP 14 compliance | [FAIL] | [OK] |
+| ModLog integration | [FAIL] | [OK] |
+| MPS scoring | [FAIL] | [OK] |
+| Test strategy evaluation | [FAIL] | [OK] |
+| Comprehensive reporting | [FAIL] | [OK] |
+| Agent 0102 integration | [FAIL] | [OK] |
 
 ## Historical Context
 

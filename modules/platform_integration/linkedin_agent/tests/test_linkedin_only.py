@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Test LinkedIn Posting Only - Step 1
-Tests: MCP Server → Selenium → Gemini Vision → Training Data
+Tests: MCP Server -> Selenium -> Gemini Vision -> Training Data
 
 Run: python test_linkedin_only.py
 """
@@ -9,9 +9,13 @@ Run: python test_linkedin_only.py
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -84,11 +88,11 @@ This is a test post to verify:
         print()
 
         if result.success:
-            print("✅ LinkedIn posting successful!")
+            print("[OK] LinkedIn posting successful!")
             print()
             print("Next step: Check training patterns in holo_index/training/selenium_patterns.json")
         else:
-            print("⚠️  Posting failed - check message above")
+            print("[U+26A0]️  Posting failed - check message above")
 
     except Exception as e:
         print()

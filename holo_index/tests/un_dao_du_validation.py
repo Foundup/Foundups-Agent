@@ -7,7 +7,7 @@ Critical validation tests for the proposed Un-Dao-Du architecture.
 Tests feasibility, performance, and integration with existing WSP systems.
 
 WSP Compliance:
-- WSP 5: ≥90% test coverage enforcement
+- WSP 5: [GREATER_EQUAL]90% test coverage enforcement
 - WSP 34: Test documentation requirements
 - WSP 50: Pre-action verification
 - WSP 84: Code memory verification (anti-vibecoding)

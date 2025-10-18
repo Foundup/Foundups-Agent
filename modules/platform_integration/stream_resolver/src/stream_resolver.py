@@ -392,14 +392,14 @@ class StreamResolver:
             self.logger.info("[RESET] Attempting cached stream reconnection...")
             video_id, chat_id = self._try_cached_stream(cache)
             if video_id and chat_id:
-                self.logger.info(f"🚀 INSTANT reconnection successful using cached stream!")
+                self.logger.info(f"[ROCKET] INSTANT reconnection successful using cached stream!")
                 return video_id, chat_id
             else:
                 self.logger.info("[ERROR] Cached stream no longer active, proceeding to fresh search")
         
         # PRIORITY 2: Check circuit breaker before making API calls
         if self.circuit_breaker and hasattr(self.circuit_breaker, 'state') and self.circuit_breaker.state == "OPEN":
-            self.logger.warning(f"🚫 Circuit breaker OPEN - API calls blocked for {self.circuit_breaker.timeout/60:.1f} minutes")
+            self.logger.warning(f"[FORBIDDEN] Circuit breaker OPEN - API calls blocked for {self.circuit_breaker.timeout/60:.1f} minutes")
             # Try to reset if timeout expired
             if hasattr(self.circuit_breaker, '_should_attempt_reset') and self.circuit_breaker._should_attempt_reset():
                 self.logger.info("[RESET] Circuit breaker timeout expired, attempting reset...")
@@ -485,14 +485,14 @@ class StreamResolver:
 
                 env_video_id = get_env_variable("YOUTUBE_VIDEO_ID", default=None)
                 if env_video_id:
-                    logger.info(f"📺 Checking specific video from env: {env_video_id}")
+                    logger.info(f"[U+1F4FA] Checking specific video from env: {env_video_id}")
                     env_result = self.no_quota_checker.check_video_is_live(env_video_id, channel_name)
                     if env_result.get('rate_limited'):
                         cooldown = env_result.get('cooldown')
                         if cooldown:
-                            logger.warning(f"⚠️ Rate limit hit while checking env video {env_video_id} on {channel_name} – pausing {cooldown:.0f}s")
+                            logger.warning(f"[U+26A0]️ Rate limit hit while checking env video {env_video_id} on {channel_name} – pausing {cooldown:.0f}s")
                         else:
-                            logger.warning(f"⚠️ Rate limit hit while checking env video {env_video_id} on {channel_name}")
+                            logger.warning(f"[U+26A0]️ Rate limit hit while checking env video {env_video_id} on {channel_name}")
                         if self.qwen:
                             try:
                                 profile = self.qwen.get_channel_profile(current_channel_id, channel_name)
@@ -524,9 +524,9 @@ class StreamResolver:
                 if isinstance(result, dict) and result.get('rate_limited'):
                     cooldown = result.get('cooldown')
                     if cooldown:
-                        logger.warning(f"⚠️ Rate limit encountered while scraping {channel_name} – cooling down for {cooldown:.0f}s")
+                        logger.warning(f"[U+26A0]️ Rate limit encountered while scraping {channel_name} – cooling down for {cooldown:.0f}s")
                     else:
-                        logger.warning(f"⚠️ Rate limit encountered while scraping {channel_name}")
+                        logger.warning(f"[U+26A0]️ Rate limit encountered while scraping {channel_name}")
                     if current_channel_id in channel_predictions:
                         channel_predictions[current_channel_id]['confidence'] = 0.0
                     if self.qwen:
@@ -541,7 +541,7 @@ class StreamResolver:
                 if result and result.get('live'):
                     video_id = result.get('video_id')
                     if video_id:
-                        logger.info(f"[SUCCESS] Found live stream on {channel_name}: {video_id} 🎉")
+                        logger.info(f"[SUCCESS] Found live stream on {channel_name}: {video_id} [CELEBRATE]")
                         if self.db:
                             try:
                                 self.db.record_stream_start(current_channel_id, video_id, result.get('title', 'Live Stream'))
@@ -565,7 +565,7 @@ class StreamResolver:
             return None
         else:
             # NO-QUOTA mode not available but could be initialized
-            logger.info("⚠️ NO-QUOTA mode not available, attempting to initialize...")
+            logger.info("[U+26A0]️ NO-QUOTA mode not available, attempting to initialize...")
             try:
                 from .no_quota_stream_checker import NoQuotaStreamChecker
                 self.no_quota_checker = NoQuotaStreamChecker()
@@ -574,7 +574,7 @@ class StreamResolver:
                 return self.resolve_stream(channel_id)
             except Exception as e:
                 logger.warning(f"[ERROR] Failed to initialize NO-QUOTA mode: {e}")
-                logger.info("⚠️ Falling back to API mode")
+                logger.info("[U+26A0]️ Falling back to API mode")
 
         # PRIORITY 5: Fallback to API mode if NO-QUOTA is not available
         # Check if API client is available before attempting
@@ -656,7 +656,7 @@ class StreamResolver:
                 
         except StreamResolverError as e:
             if "Circuit breaker is OPEN" in str(e):
-                self.logger.error("🚫 Circuit breaker prevented API call - too many recent failures")
+                self.logger.error("[FORBIDDEN] Circuit breaker prevented API call - too many recent failures")
             else:
                 self.logger.error(f"[ERROR] Stream resolution failed: {e}")
             return None

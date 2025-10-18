@@ -123,7 +123,7 @@ message = {
 ### Output (Bot Response)
 ```python
 # String response or None
-response = "🔨 TIMEOUT! ModName → TrollUser (Standard timeout)\n⏱️ Duration: 60s | Points: 15"
+response = "[U+1F528] TIMEOUT! ModName -> TrollUser (Standard timeout)\n⏱️ Duration: 60s | Points: 15"
 ```
 
 ## Commands

@@ -62,9 +62,9 @@ for module_name, description in modules_to_research:
         input("[012-INPUT] Press Enter to continue...")
 
 print("\n=== MICRO TASK 2 COMPLETE ===")
-print("✅ Researched all enterprise domains using enhanced Holo visibility")
-print("✅ Each module showed: health, size, WSP recommendations")
-print("✅ 012 can see complete HoloDAE analysis for every search")
+print("[OK] Researched all enterprise domains using enhanced Holo visibility")
+print("[OK] Each module showed: health, size, WSP recommendations")
+print("[OK] 012 can see complete HoloDAE analysis for every search")
 
 print("\n=== NEXT STEPS ===")
 print("Micro Task 3: Hard think on vibecoding detection using Holo")

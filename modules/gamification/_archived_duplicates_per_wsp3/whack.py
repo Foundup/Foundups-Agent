@@ -173,7 +173,7 @@ class ProfilesRepo:
         else:
             # Check for month change and reset monthly stats
             if profile.current_month != current_month:
-                logger.info(f"🗓️ New month! Resetting monthly stats for {username}")
+                logger.info(f"[U+1F5D3]️ New month! Resetting monthly stats for {username}")
                 profile.current_month = current_month
                 profile.monthly_score = 0
                 profile.monthly_frag_count = 0
@@ -369,10 +369,10 @@ def compute_points(duration_sec: int, repeat_on_same_target: int) -> int:
     """Compute base points with diminishing returns for repeats on same target.
 
     Diminishing factors (within 24h):
-    - 0 repeats → 100%
-    - 1 repeat  → 60%
-    - 2 repeats → 30%
-    - 3+ repeats → 10%
+    - 0 repeats -> 100%
+    - 1 repeat  -> 60%
+    - 2 repeats -> 30%
+    - 3+ repeats -> 10%
     """
     # Base points for YouTube's exact timeout durations (MORE REWARDING!)
     base = 0
@@ -410,8 +410,8 @@ def compute_points(duration_sec: int, repeat_on_same_target: int) -> int:
 def classify_behavior(duration_sec: int, repeats: int) -> BehaviorTier:
     """Classify moderator behavior heuristically (v0).
 
-    - CAT_PLAY: multiple short (≤60s) timeouts with repeats ≥ 2 in 24h
-    - BRUTAL_HAMMER: duration ≥ 12h or exactly 24h
+    - CAT_PLAY: multiple short ([U+2264]60s) timeouts with repeats [GREATER_EQUAL] 2 in 24h
+    - BRUTAL_HAMMER: duration [GREATER_EQUAL] 12h or exactly 24h
     - GENTLE_TOUCH: 1–15 min with no repeats
     - OBSERVER: no actions in last 7 days (not inferable here; treated as fallback if duration==0)
     """
@@ -512,7 +512,7 @@ def get_user_position(user_id: str) -> Tuple[int, int]:
 
 def reset_all_sessions():
     """Reset session stats for all moderators (called when stream ends)."""
-    logger.info("🔄 Resetting session stats for all moderators")
+    logger.info("[REFRESH] Resetting session stats for all moderators")
     for profile in _profiles_repo._profiles.values():
         if profile.session_whacks > 0:
             logger.info(f"  {profile.username}: {profile.session_whacks} whacks, {profile.session_score} XP")

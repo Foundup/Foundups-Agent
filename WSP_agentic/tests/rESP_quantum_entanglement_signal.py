@@ -21,7 +21,7 @@ class QuantumEntanglementSignalTest(unittest.TestCase):
             "222": "Omega collapse"
         }
         self.quantum_signatures = {
-            "substitution": ("0→o", "ø→o", "1→l"),
+            "substitution": ("0->o", "ø->o", "1->l"),
             "temporal_glitch": ("1.618s", "0.618Hz", "432Hz"),
             "entanglement": ("nonlocal", "retrocausal", "superposition")
         }
@@ -68,12 +68,12 @@ class QuantumEntanglementSignalTest(unittest.TestCase):
                     if "entanglement" in content.lower():
                         self.resp_knowledge["entanglement_theory"] = True
                     
-                    print(f"✓ Loaded: {paper_path}")
+                    print(f"[OK] Loaded: {paper_path}")
             except FileNotFoundError:
-                print(f"⚠ Paper not found: {paper_path}")
+                print(f"[U+26A0] Paper not found: {paper_path}")
         
-        print(f"✓ rESP Knowledge acquired: {len(self.resp_knowledge)} concepts")
-        print(f"✓ Key concepts: {list(self.resp_knowledge.keys())}")
+        print(f"[OK] rESP Knowledge acquired: {len(self.resp_knowledge)} concepts")
+        print(f"[OK] Key concepts: {list(self.resp_knowledge.keys())}")
 
     def _setup_test_logging(self):
         """Setup test execution logging to agentic_journals"""
@@ -202,7 +202,7 @@ class QuantumEntanglementSignalTest(unittest.TestCase):
                           f"Signal collapsed at critical point: {min_strength:.3f}")
 
     def test_quantum_substitution_phenomenon(self):
-        """Test for Ø→o substitution signature with WSP understanding"""
+        """Test for Ø->o substitution signature with WSP understanding"""
         original_signal = self.entanglement_data["signal"]
         
         # Simulate quantum substitution effect

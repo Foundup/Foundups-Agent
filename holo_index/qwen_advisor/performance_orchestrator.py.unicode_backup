@@ -1,0 +1,584 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+Performance-Driven Chain-of-Thought Orchestrator
+===============================================
+
+Data-driven orchestration system that prevents vibecoding through intelligent prioritization.
+
+🎯 Core Mission: Stop vibecoding by orchestrating components based on REAL performance data
+
+Key Components:
+1. PerformanceTracker - Tracks effectiveness scores over time
+2. PriorityCalculator - Dynamic prioritization based on data patterns
+3. OrchestrationEngine - Makes intelligent when/how decisions
+4. GamificationEngine - Rewards good performance, incentivizes improvement
+5. ChainOfReasoningLogger - Detailed logging of all orchestration decisions
+
+WSP Compliance: WSP 48 (Recursive Improvement), WSP 37 (Roadmap Scoring)
+"""
+
+import json
+import logging
+import threading
+from typing import Dict, List, Any, Optional, Tuple
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from collections import defaultdict, deque
+import statistics
+import os
+
+# Import Chain-of-Thought Logger for brain visibility
+from .chain_of_thought_logger import (get_chain_of_thought_logger, log_cot_analysis,
+                                     log_cot_decision, log_cot_action, log_cot_result,
+                                     log_cot_metric, log_cot_improvement)
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ComponentPerformance:
+    """Real-time performance metrics for a component"""
+    component_name: str
+    effectiveness_scores: List[float] = field(default_factory=list)
+    execution_times: List[float] = field(default_factory=list)
+    success_rate: float = 1.0
+    last_executed: Optional[datetime] = None
+    times_executed: int = 0
+    vibecoding_prevention_score: float = 0.0  # How well it prevents vibecoding
+    trend_direction: str = "stable"  # "improving", "declining", "stable"
+    priority_boost: float = 0.0  # Gamification rewards/penalties
+
+
+@dataclass
+class OrchestrationDecision:
+    """Detailed orchestration decision with chain-of-reasoning"""
+    component_name: str
+    decision_type: str  # "execute", "skip", "delay", "prioritize"
+    confidence_score: float  # 0.0-1.0
+    reasoning_chain: List[str]  # Step-by-step reasoning
+    performance_data: Dict[str, Any]
+    gamification_impact: Dict[str, Any]
+    timestamp: datetime = field(default_factory=datetime.now)
+
+
+class PerformanceTracker:
+    """Tracks real performance metrics over time"""
+
+    def __init__(self, max_history: int = 100):
+        self.max_history = max_history
+        self.component_performance: Dict[str, ComponentPerformance] = {}
+        self.performance_history = deque(maxlen=max_history * 10)  # Store all executions
+
+    def record_execution(self, component_name: str, effectiveness: float,
+                        execution_time: float, success: bool, vibecoding_prevention: float):
+        """Record a component execution with detailed metrics"""
+
+        if component_name not in self.component_performance:
+            self.component_performance[component_name] = ComponentPerformance(component_name)
+
+        perf = self.component_performance[component_name]
+
+        # Update metrics
+        perf.effectiveness_scores.append(effectiveness)
+        perf.execution_times.append(execution_time)
+        perf.last_executed = datetime.now()
+        perf.times_executed += 1
+
+        # Keep only recent scores (sliding window)
+        if len(perf.effectiveness_scores) > self.max_history:
+            perf.effectiveness_scores = perf.effectiveness_scores[-self.max_history:]
+
+        # Calculate success rate (weighted recent performance)
+        recent_successes = sum(1 for score in perf.effectiveness_scores[-10:] if score > 0.5)
+        perf.success_rate = recent_successes / min(10, len(perf.effectiveness_scores[-10:])) if perf.effectiveness_scores else 0.0
+
+        # Update vibecoding prevention score
+        perf.vibecoding_prevention_score = vibecoding_prevention
+
+        # Calculate trend
+        perf.trend_direction = self._calculate_trend(perf.effectiveness_scores)
+
+        # Store in history
+        self.performance_history.append({
+            'component': component_name,
+            'effectiveness': effectiveness,
+            'execution_time': execution_time,
+            'success': success,
+            'vibecoding_prevention': vibecoding_prevention,
+            'timestamp': datetime.now().isoformat()
+        })
+
+    def _calculate_trend(self, scores: List[float]) -> str:
+        """Calculate performance trend direction"""
+        if len(scores) < 5:
+            return "stable"
+
+        # Compare recent vs older performance
+        recent_avg = statistics.mean(scores[-5:])
+        older_avg = statistics.mean(scores[:-5]) if len(scores) > 5 else recent_avg
+
+        if recent_avg > older_avg + 0.1:
+            return "improving"
+        elif recent_avg < older_avg - 0.1:
+            return "declining"
+        else:
+            return "stable"
+
+    def get_component_rankings(self) -> List[Tuple[str, float]]:
+        """Get components ranked by overall effectiveness"""
+        rankings = []
+        for name, perf in self.component_performance.items():
+            if perf.effectiveness_scores:
+                # Weighted score: effectiveness + vibecoding prevention + trend bonus
+                base_score = statistics.mean(perf.effectiveness_scores)
+                trend_bonus = {"improving": 0.2, "stable": 0.0, "declining": -0.2}[perf.trend_direction]
+                composite_score = base_score + perf.vibecoding_prevention_score * 0.3 + trend_bonus
+                rankings.append((name, composite_score))
+
+        return sorted(rankings, key=lambda x: x[1], reverse=True)
+
+    def get_performance_insights(self, component_name: str) -> Dict[str, Any]:
+        """Get detailed performance insights for a component"""
+        if component_name not in self.component_performance:
+            return {"status": "no_data"}
+
+        perf = self.component_performance[component_name]
+
+        return {
+            "average_effectiveness": statistics.mean(perf.effectiveness_scores) if perf.effectiveness_scores else 0.0,
+            "success_rate": perf.success_rate,
+            "times_executed": perf.times_executed,
+            "trend": perf.trend_direction,
+            "vibecoding_prevention": perf.vibecoding_prevention_score,
+            "last_executed": perf.last_executed.isoformat() if perf.last_executed else None,
+            "execution_time_avg": statistics.mean(perf.execution_times) if perf.execution_times else 0.0,
+            "priority_boost": perf.priority_boost
+        }
+
+
+class PriorityCalculator:
+    """Calculates dynamic priorities based on performance data"""
+
+    def __init__(self, performance_tracker: PerformanceTracker):
+        self.performance_tracker = performance_tracker
+
+    def calculate_dynamic_priorities(self) -> Dict[str, float]:
+        """Calculate dynamic priorities based on current performance data"""
+        rankings = self.performance_tracker.get_component_rankings()
+        if not rankings:
+            return {}
+
+        # Convert rankings to priority scores (0.0-1.0)
+        priorities = {}
+        max_score = rankings[0][1] if rankings else 1.0
+
+        for component, score in rankings:
+            priorities[component] = score / max_score if max_score > 0 else 0.5
+
+        return priorities
+
+    def should_execute_component(self, component_name: str, context: Dict[str, Any]) -> Tuple[bool, str]:
+        """Decide if a component should execute based on current context"""
+
+        insights = self.performance_tracker.get_performance_insights(component_name)
+
+        if insights["status"] == "no_data":
+            return True, "No performance data - execute to establish baseline"
+
+        # Check success rate threshold
+        if insights["success_rate"] < 0.3:
+            return False, f"Low success rate ({insights['success_rate']:.2f}) - needs improvement before execution"
+
+        # Check if component is declining and needs attention
+        if insights["trend"] == "declining":
+            return True, f"Declining performance trend - execute to attempt recovery"
+
+        # Check vibecoding prevention importance
+        if insights["vibecoding_prevention"] > 0.7:
+            return True, f"High vibecoding prevention score ({insights['vibecoding_prevention']:.2f}) - critical component"
+
+        # Check execution frequency (don't over-execute successful components)
+        hours_since_last = (datetime.now() - datetime.fromisoformat(insights["last_executed"])).total_seconds() / 3600 if insights["last_executed"] else 24
+        if insights["average_effectiveness"] > 0.8 and hours_since_last < 1:
+            return False, f"High effectiveness ({insights['average_effectiveness']:.2f}) and recently executed - skip to avoid redundancy"
+
+        return True, f"Good performance metrics - execute normally"
+
+
+class GamificationEngine:
+    """Rewards good performance and incentivizes improvement"""
+
+    def __init__(self, performance_tracker: PerformanceTracker):
+        self.performance_tracker = performance_tracker
+        self.rewards_given = defaultdict(int)
+        self.improvement_targets = {}  # Components that need improvement
+
+    def calculate_rewards(self, component_name: str) -> Dict[str, Any]:
+        """Calculate gamification rewards/penalties for a component"""
+        insights = self.performance_tracker.get_performance_insights(component_name)
+
+        rewards = {
+            "points_earned": 0,
+            "badges": [],
+            "priority_boost": 0.0,
+            "improvement_required": False,
+            "reasoning": []
+        }
+
+        # Effectiveness-based rewards
+        effectiveness = insights.get("average_effectiveness", 0.0)
+        if effectiveness > 0.9:
+            rewards["points_earned"] += 50
+            rewards["badges"].append("Vibecoding Prevention Champion")
+            rewards["priority_boost"] += 0.2
+            rewards["reasoning"].append(f"Excellent effectiveness ({effectiveness:.2f})")
+        elif effectiveness > 0.7:
+            rewards["points_earned"] += 25
+            rewards["badges"].append("Reliable Component")
+            rewards["priority_boost"] += 0.1
+            rewards["reasoning"].append(f"Good effectiveness ({effectiveness:.2f})")
+
+        # Trend-based rewards
+        trend = insights.get("trend", "stable")
+        if trend == "improving":
+            rewards["points_earned"] += 30
+            rewards["badges"].append("Improvement Champion")
+            rewards["reasoning"].append("Improving performance trend")
+        elif trend == "declining":
+            rewards["improvement_required"] = True
+            rewards["points_earned"] -= 20
+            rewards["reasoning"].append("Declining performance - improvement needed")
+
+        # Vibecoding prevention rewards
+        vibecoding_score = insights.get("vibecoding_prevention", 0.0)
+        if vibecoding_score > 0.8:
+            rewards["points_earned"] += 40
+            rewards["badges"].append("Anti-Vibecoding Guardian")
+            rewards["reasoning"].append(f"Outstanding vibecoding prevention ({vibecoding_score:.2f})")
+
+        # Success rate rewards
+        success_rate = insights.get("success_rate", 0.0)
+        if success_rate > 0.95:
+            rewards["points_earned"] += 20
+            rewards["badges"].append("Consistency Champion")
+
+        return rewards
+
+    def apply_rewards(self, component_name: str, rewards: Dict[str, Any]):
+        """Apply calculated rewards to component performance"""
+        if component_name in self.performance_tracker.component_performance:
+            perf = self.performance_tracker.component_performance[component_name]
+            perf.priority_boost = rewards.get("priority_boost", 0.0)
+
+        # Track rewards given
+        self.rewards_given[component_name] += rewards.get("points_earned", 0)
+
+
+class ChainOfReasoningLogger:
+    """Detailed logging of orchestration decisions"""
+
+    def __init__(self):
+        self.decision_history = deque(maxlen=1000)
+        self.orchestration_sessions = []
+
+    def log_decision(self, decision: OrchestrationDecision):
+        """Log a detailed orchestration decision"""
+        self.decision_history.append(decision)
+
+        # Create detailed reasoning log
+        reasoning_log = {
+            "session_id": f"orchestration_{int(datetime.now().timestamp())}",
+            "timestamp": decision.timestamp.isoformat(),
+            "component": decision.component_name,
+            "decision": decision.decision_type,
+            "confidence": decision.confidence_score,
+            "reasoning_steps": decision.reasoning_chain,
+            "performance_data": decision.performance_data,
+            "gamification_impact": decision.gamification_impact
+        }
+
+        self.orchestration_sessions.append(reasoning_log)
+
+        # Log to system logger with detailed reasoning
+        reasoning_summary = " → ".join(decision.reasoning_chain)
+        logger.info(f"[ORCHESTRATION] {decision.component_name} → {decision.decision_type} "
+                   f"(confidence: {decision.confidence_score:.2f}) | {reasoning_summary}")
+
+    def get_recent_reasoning(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get recent orchestration reasoning"""
+        return list(self.orchestration_sessions)[-limit:]
+
+    def get_decision_patterns(self) -> Dict[str, Any]:
+        """Analyze patterns in orchestration decisions"""
+        patterns = {
+            "total_decisions": len(self.decision_history),
+            "decisions_by_type": defaultdict(int),
+            "decisions_by_component": defaultdict(int),
+            "average_confidence": 0.0
+        }
+
+        if not self.decision_history:
+            return patterns
+
+        confidences = []
+        for decision in self.decision_history:
+            patterns["decisions_by_type"][decision.decision_type] += 1
+            patterns["decisions_by_component"][decision.component_name] += 1
+            confidences.append(decision.confidence_score)
+
+        patterns["average_confidence"] = statistics.mean(confidences) if confidences else 0.0
+
+        return patterns
+
+
+class OrchestrationEngine:
+    """Main orchestration engine that makes intelligent decisions"""
+
+    def __init__(self):
+        self.performance_tracker = PerformanceTracker()
+        self.priority_calculator = PriorityCalculator(self.performance_tracker)
+        self.gamification_engine = GamificationEngine(self.performance_tracker)
+        self.reasoning_logger = ChainOfReasoningLogger()
+
+        # Component definitions with their vibecoding prevention roles
+        self.components = {
+            "chain_of_thought": {
+                "role": "orchestration_coordinator",
+                "vibecoding_prevention": 1.0,
+                "description": "Coordinates all components to prevent vibecoding"
+            },
+            "semantic_search": {
+                "role": "duplicate_detector",
+                "vibecoding_prevention": 0.9,
+                "description": "Finds existing code before allowing creation"
+            },
+            "health_analysis": {
+                "role": "integrity_checker",
+                "vibecoding_prevention": 0.7,
+                "description": "Ensures architectural integrity"
+            },
+            "file_size_monitor": {
+                "role": "bloat_preventer",
+                "vibecoding_prevention": 0.6,
+                "description": "Prevents code bloat and duplication"
+            },
+            "module_analysis": {
+                "role": "structure_validator",
+                "vibecoding_prevention": 0.8,
+                "description": "Validates module structure and dependencies"
+            },
+            "pattern_coach": {
+                "role": "behavior_preventer",
+                "vibecoding_prevention": 0.8,
+                "description": "Prevents behavioral vibecoding patterns"
+            },
+            "orphan_analysis": {
+                "role": "dead_code_detector",
+                "vibecoding_prevention": 0.5,
+                "description": "Identifies dead code and connection opportunities"
+            }
+        }
+
+    def orchestrate_execution(self, available_components: List[str],
+                            context: Dict[str, Any]) -> List[OrchestrationDecision]:
+        """Orchestrate which components should execute and in what order"""
+
+        # Start Chain-of-Thought logging for this orchestration session
+        session_id = f"orchestration_{int(datetime.now().timestamp())}"
+        log_cot_analysis("orchestration_start", {
+            "available_components": available_components,
+            "context": context,
+            "session_id": session_id
+        }, "Beginning intelligent component orchestration based on performance data", 1.0)
+
+        decisions = []
+        priorities = self.priority_calculator.calculate_dynamic_priorities()
+
+        log_cot_analysis("priority_calculation", {
+            "priorities": priorities,
+            "available_components": available_components
+        }, f"Calculated dynamic priorities for {len(available_components)} components", 0.95)
+
+        # Sort components by dynamic priority (highest first)
+        prioritized_components = sorted(
+            available_components,
+            key=lambda c: priorities.get(c, 0.5) + self._get_component_boost(c),
+            reverse=True
+        )
+
+        log_cot_decision("component_ordering",
+                        [f"Execute {comp} (priority: {priorities.get(comp, 0.5):.2f})" for comp in prioritized_components],
+                        f"Ordered {len(prioritized_components)} components by performance priority", 0.9)
+
+        for component_name in prioritized_components:
+            decision = self._make_orchestration_decision(component_name, context, priorities)
+
+            # Log the orchestration decision through Chain-of-Thought
+            log_cot_decision(f"component_{component_name}",
+                           [f"Execute {component_name}", f"Skip {component_name}", f"Delay {component_name}"],
+                           f"Decision: {decision.decision_type} | Reasoning: {decision.reasoning_chain[-1] if decision.reasoning_chain else 'N/A'}",
+                           decision.confidence_score)
+
+            decisions.append(decision)
+            self.reasoning_logger.log_decision(decision)
+
+        log_cot_result("orchestration_complete", {
+            "decisions_made": len(decisions),
+            "components_to_execute": len([d for d in decisions if d.decision_type in ["execute", "prioritize"]]),
+            "components_skipped": len([d for d in decisions if d.decision_type == "delay"])
+        }, f"Orchestration complete: {len([d for d in decisions if d.decision_type in ['execute', 'prioritize']])} components will execute", 0.95)
+
+        return decisions
+
+    def _make_orchestration_decision(self, component_name: str, context: Dict[str, Any],
+                                   priorities: Dict[str, float]) -> OrchestrationDecision:
+        """Make a detailed orchestration decision for a component"""
+
+        reasoning_chain = []
+        performance_data = self.performance_tracker.get_performance_insights(component_name)
+        gamification_data = self.gamification_engine.calculate_rewards(component_name)
+
+        # Step 1: Check if component should execute based on performance
+        should_execute, reason = self.priority_calculator.should_execute_component(component_name, context)
+        reasoning_chain.append(f"Performance check: {reason}")
+
+        # Step 2: Consider vibecoding prevention importance
+        component_info = self.components.get(component_name, {})
+        vibecoding_importance = component_info.get("vibecoding_prevention", 0.5)
+        reasoning_chain.append(f"Vibecoding prevention importance: {vibecoding_importance:.1f}/1.0")
+
+        # Step 3: Factor in dynamic priority
+        dynamic_priority = priorities.get(component_name, 0.5)
+        reasoning_chain.append(f"Dynamic priority ranking: {dynamic_priority:.2f}")
+
+        # Step 4: Consider gamification incentives
+        priority_boost = gamification_data.get("priority_boost", 0.0)
+        if priority_boost > 0:
+            reasoning_chain.append(f"Gamification boost: +{priority_boost:.2f} (rewarded for good performance)")
+        elif priority_boost < 0:
+            reasoning_chain.append(f"Gamification penalty: {priority_boost:.2f} (needs improvement)")
+
+        # Step 5: Final decision logic
+        confidence_score = 0.5  # Base confidence
+
+        if should_execute:
+            # High priority components get executed
+            if dynamic_priority > 0.8 or vibecoding_importance > 0.8:
+                decision_type = "prioritize"
+                confidence_score = 0.9
+                reasoning_chain.append("FINAL: High priority - execute immediately")
+            else:
+                decision_type = "execute"
+                confidence_score = 0.7
+                reasoning_chain.append("FINAL: Standard priority - execute normally")
+        else:
+            # Check if this is a declining component that needs attention
+            if performance_data.get("trend") == "declining":
+                decision_type = "prioritize"
+                confidence_score = 0.8
+                reasoning_chain.append("FINAL: Declining performance - prioritize for improvement")
+            else:
+                decision_type = "delay"
+                confidence_score = 0.6
+                reasoning_chain.append("FINAL: Low priority - delay execution")
+
+        return OrchestrationDecision(
+            component_name=component_name,
+            decision_type=decision_type,
+            confidence_score=confidence_score,
+            reasoning_chain=reasoning_chain,
+            performance_data=performance_data,
+            gamification_impact=gamification_data
+        )
+
+    def _get_component_boost(self, component_name: str) -> float:
+        """Get any additional boost for a component"""
+        if component_name in self.performance_tracker.component_performance:
+            return self.performance_tracker.component_performance[component_name].priority_boost
+        return 0.0
+
+    def record_component_result(self, component_name: str, effectiveness: float,
+                              execution_time: float, success: bool):
+        """Record the result of a component execution with full Chain-of-Thought logging"""
+
+        # Log the component execution through Chain-of-Thought
+        log_cot_action("component_execution", component_name,
+                      f"Execute {component_name} for analysis",
+                      f"Executing component with expected effectiveness baseline", 0.9)
+
+        component_info = self.components.get(component_name, {})
+        vibecoding_prevention = component_info.get("vibecoding_prevention", 0.5)
+
+        # Log performance recording
+        log_cot_analysis("performance_recording", {
+            "component": component_name,
+            "effectiveness": effectiveness,
+            "execution_time": execution_time,
+            "success": success,
+            "vibecoding_prevention": vibecoding_prevention
+        }, f"Recording execution results for {component_name}", 1.0)
+
+        self.performance_tracker.record_execution(
+            component_name, effectiveness, execution_time, success, vibecoding_prevention
+        )
+
+        # Calculate and log gamification rewards
+        rewards = self.gamification_engine.calculate_rewards(component_name)
+
+        log_cot_analysis("gamification_calculation", {
+            "component": component_name,
+            "points_earned": rewards.get("points_earned", 0),
+            "badges": rewards.get("badges", []),
+            "priority_boost": rewards.get("priority_boost", 0.0)
+        }, f"Gamification assessment for {component_name} performance", 0.95)
+
+        self.gamification_engine.apply_rewards(component_name, rewards)
+
+        # Log improvement insights if applicable
+        if effectiveness < 0.5:
+            log_cot_improvement("performance_improvement", "current_performance", "target_performance",
+                              f"{component_name} needs improvement - effectiveness {effectiveness:.2f} below threshold")
+        elif effectiveness > 0.9:
+            log_cot_improvement("performance_optimization", "baseline_performance", "optimized_performance",
+                              f"{component_name} performing excellently - effectiveness {effectiveness:.2f}")
+
+        # Log final result assessment
+        assessment = "excellent" if effectiveness > 0.9 else "good" if effectiveness > 0.7 else "needs_improvement"
+        log_cot_result("component_assessment", {
+            "component": component_name,
+            "effectiveness": effectiveness,
+            "assessment": assessment,
+            "execution_time": execution_time,
+            "success": success
+        }, f"Component {component_name} assessment: {assessment} ({effectiveness:.2f} effectiveness)", effectiveness)
+
+    def get_orchestration_insights(self) -> Dict[str, Any]:
+        """Get comprehensive insights about the orchestration system"""
+        return {
+            "performance_rankings": self.performance_tracker.get_component_rankings(),
+            "decision_patterns": self.reasoning_logger.get_decision_patterns(),
+            "recent_decisions": self.reasoning_logger.get_recent_reasoning(5),
+            "component_performance": {
+                name: self.performance_tracker.get_performance_insights(name)
+                for name in self.components.keys()
+            }
+        }
+
+
+# Global instance
+_orchestrator = None
+
+def get_performance_orchestrator() -> OrchestrationEngine:
+    """Get or create the global performance orchestrator"""
+    global _orchestrator
+    if _orchestrator is None:
+        _orchestrator = OrchestrationEngine()
+    return _orchestrator

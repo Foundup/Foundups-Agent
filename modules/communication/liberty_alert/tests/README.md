@@ -1,34 +1,34 @@
 # Evade.Net Test Suite
 
 **Module**: evade_net
-**Coverage Target**: ≥90% (WSP 5)
+**Coverage Target**: [GREATER_EQUAL]90% (WSP 5)
 
 ## Test Organization
 
 ### Unit Tests
 ```
 tests/
-├── test_models.py           # Data model tests
-├── test_mesh_network.py     # Mesh networking tests
-├── test_alert_broadcaster.py # Alert system tests
-├── test_voice_synthesizer.py # Voice synthesis tests
-└── test_orchestrator.py      # Integration tests
++-- test_models.py           # Data model tests
++-- test_mesh_network.py     # Mesh networking tests
++-- test_alert_broadcaster.py # Alert system tests
++-- test_voice_synthesizer.py # Voice synthesis tests
++-- test_orchestrator.py      # Integration tests
 ```
 
 ### Integration Tests
 ```
 tests/integration/
-├── test_two_phone_mesh.py     # POC: 2-phone mesh demo
-├── test_alert_propagation.py  # Alert through mesh test
-└── test_offline_mode.py        # Offline functionality test
++-- test_two_phone_mesh.py     # POC: 2-phone mesh demo
++-- test_alert_propagation.py  # Alert through mesh test
++-- test_offline_mode.py        # Offline functionality test
 ```
 
 ### PWA Tests
 ```
 tests/pwa/
-├── offline-functionality.test.js
-├── service-worker.test.js
-└── mesh-connection.test.js
++-- offline-functionality.test.js
++-- service-worker.test.js
++-- mesh-connection.test.js
 ```
 
 ## Running Tests
@@ -38,7 +38,7 @@ tests/pwa/
 # From module root
 pytest tests/ -v --cov=src --cov-report=term-missing
 
-# Coverage target: ≥90%
+# Coverage target: [GREATER_EQUAL]90%
 ```
 
 ### Specific Test Suites
@@ -100,7 +100,7 @@ def fake_alert():
 - Encryption/decryption
 - Alert expiration
 
-### Standard Paths (≥90% coverage)
+### Standard Paths ([GREATER_EQUAL]90% coverage)
 - Voice synthesis
 - Map rendering
 - Peer discovery

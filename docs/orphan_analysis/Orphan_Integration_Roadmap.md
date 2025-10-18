@@ -228,8 +228,8 @@ Old Versions:
 
 **Process**:
 1. Grep codebase for imports of each delete candidate
-2. If no imports found → DELETE
-3. If imports found → Investigate why orphaned
+2. If no imports found -> DELETE
+3. If imports found -> Investigate why orphaned
 
 ---
 

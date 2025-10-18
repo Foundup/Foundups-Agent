@@ -1,6 +1,6 @@
 # YouTube DAE Complete Startup Flow
 
-## 🚀 System Launch Sequence
+## [ROCKET] System Launch Sequence
 
 ### WSP 86 Navigation
 - **See Also**: [ENHANCED_NAVIGATION.md](./ENHANCED_NAVIGATION.md) for module fingerprints
@@ -13,21 +13,21 @@ Module Import Order (happens BEFORE any stream detection):
 1. main.py imports auto_moderator_dae
 2. auto_moderator_dae imports:
    - youtube_auth modules (Lines 14-15)
-   - Stream Resolver (Line 16) ← MOST CRITICAL MODULE - FINDS THE STREAM!
+   - Stream Resolver (Line 16) <- MOST CRITICAL MODULE - FINDS THE STREAM!
    - LiveChatCore (Line 19)
 3. LiveChatCore imports MessageProcessor
 4. MessageProcessor imports CommandHandler
 5. CommandHandler imports whack_a_magat modules
-   → This triggers SpreeTracker initialization (first log message)
+   -> This triggers SpreeTracker initialization (first log message)
 ```
 
 **CRITICAL**: Stream Resolver is THE MOST IMPORTANT module - without it, nothing works!
-**Execution Flow**: Stream Resolver → Social Posts → Chat Monitoring
+**Execution Flow**: Stream Resolver -> Social Posts -> Chat Monitoring
 **Important**: The above is IMPORT order, not EXECUTION order. See Phase 1 for execution.
 
 ### Phase 1: Initial Launch (After Module Loading)
 ```
-main.py:50 → auto_moderator_dae.py:45 → stream_resolver.py:620
+main.py:50 -> auto_moderator_dae.py:45 -> stream_resolver.py:620
 ```
 
 1. **main.py execution** (Line 50):
@@ -40,13 +40,13 @@ main.py:50 → auto_moderator_dae.py:45 → stream_resolver.py:620
    PRIMARY METHOD (ONLY METHOD):
      1. StreamResolver.resolve_stream() [Line 1234]
      2. no_quota_stream_checker.py - Web scraping (0 API units)
-     3. If found → Try to get chat_id (1 API unit if available)
+     3. If found -> Try to get chat_id (1 API unit if available)
      4. Total cost: 0-1 units when stream found, 0 units during idle
      5. NO API FALLBACK - continues scraping indefinitely
 
    QUOTA EXHAUSTION HANDLING (2025-09-15):
      - Stream accepted even without chat_id
-     - If self.youtube is None → Skip chat_id fetch
+     - If self.youtube is None -> Skip chat_id fetch
      - Social posting still triggers
      - Chat monitoring works without initial chat_id
 
@@ -55,12 +55,12 @@ main.py:50 → auto_moderator_dae.py:45 → stream_resolver.py:620
      - CHANNEL_ID2 (UCSNTUXjAgpd4sgWYP0xoJgw - FoundUps)
 
    LOGGING INDICATORS:
-     - "🌐 NO-QUOTA SCRAPING ACTIVATED" - scraping started
-     - "✅ STREAM IS LIVE" - stream detected via scraping
-     - "⚠️ No YouTube service available" - quota exhausted
+     - "[U+1F310] NO-QUOTA SCRAPING ACTIVATED" - scraping started
+     - "[OK] STREAM IS LIVE" - stream detected via scraping
+     - "[U+26A0]️ No YouTube service available" - quota exhausted
      - "Chat ID: Not available" - when chat_id fetch fails
-     - "🎉 STREAM FOUND!" - stream accepted for processing
-     - "❌ NOT LIVE" - no stream found, will retry
+     - "[CELEBRATE] STREAM FOUND!" - stream accepted for processing
+     - "[FAIL] NOT LIVE" - no stream found, will retry
    ```
 
 ### Phase 2: Stream Detection & Social Media Posting
@@ -86,8 +86,8 @@ flowchart TD
 - **Storage**: `memory/posted_streams.json`
 - **Process**:
   1. Check if video_id in posted_streams set
-  2. If exists → Skip social media posting (prevent duplicates)
-  3. If new → Proceed with posting
+  2. If exists -> Skip social media posting (prevent duplicates)
+  3. If new -> Proceed with posting
 
 #### 2.2 Social Media Orchestration
 - **Trigger**: `auto_moderator_dae.py:_trigger_social_media_posting()` [Line 660]
@@ -95,7 +95,7 @@ flowchart TD
   1. Get stream details (title, URL) [Line 675]
   2. Send to SimplePostingOrchestrator
   3. Live verification before posting (safety check)
-  4. Sequential posting: LinkedIn → X/Twitter
+  4. Sequential posting: LinkedIn -> X/Twitter
   5. Add video_id to posted_streams set
   6. Persist to disk for restart resilience
 
@@ -127,7 +127,7 @@ flowchart TD
 #### 4.1 Initial State on Launch
 - **Default**: `consciousness_mode = 'everyone'`
 - **Location**: `message_processor.py:64`
-- **Meaning**: Bot responds to ALL users showing ✊✋🖐 pattern
+- **Meaning**: Bot responds to ALL users showing [U+270A][U+270B][U+1F590] pattern
 
 #### 4.2 Toggle Command (/toggle)
 - **Access**: MOD/OWNER only
@@ -148,14 +148,14 @@ flowchart TD
 ```yaml
 Message Processing Loop:
   1. Poll for new messages
-  2. Check for consciousness triggers (✊✋🖐)
+  2. Check for consciousness triggers ([U+270A][U+270B][U+1F590])
   3. Process commands (/quiz, /whack, /PQN, etc.)
-  4. Generate responses (Grok 3 → Banter Engine → Patterns)
+  4. Generate responses (Grok 3 -> Banter Engine -> Patterns)
   5. Send responses with rate limiting
   6. Learn from interactions (WSP 48)
 ```
 
-## 🔧 Key Configuration Files
+## [TOOL] Key Configuration Files
 
 ### Environment Variables (.env)
 ```env
@@ -172,7 +172,7 @@ memory/quota_usage.json           # Daily quota usage
 logs/intensive_monitoring.log     # Detailed debug logs
 ```
 
-## 🚨 Important Behaviors
+## [ALERT] Important Behaviors
 
 ### Stream Switching
 - **Automatic**: Detects stream end, searches for new streams
@@ -183,7 +183,7 @@ logs/intensive_monitoring.log     # Detailed debug logs
 ### Quota Management (ENHANCED with No-Quota)
 - **PRIMARY**: No-quota web scraping (0 units) [no_quota_stream_checker.py:116]
 - **Pre-call Protection**: QuotaIntelligence checks before API calls
-- **Credential Rotation**: Set 1 → Set 10 when exhausted [youtube_auth.py:119]
+- **Credential Rotation**: Set 1 -> Set 10 when exhausted [youtube_auth.py:119]
 - **Midnight Reset**: Pacific Time quota refresh [youtube_auth.py:87]
 - **Emergency Reserve**: 5% quota protected for critical ops
 - **Trust API**: When API says exhausted at 46%, it's exhausted (not local tracking)
@@ -194,35 +194,35 @@ logs/intensive_monitoring.log     # Detailed debug logs
 - **pytz Fallback**: UTC-8 approximation if pytz missing
 - **Duplicate Prevention**: Never posts same stream twice
 
-## 📊 Startup Decision Tree (Updated with No-Quota)
+## [DATA] Startup Decision Tree (Updated with No-Quota)
 
 ```
 START
-  ↓
+  v
 Is another instance running?
-  Yes → Kill with --force or exit
-  No → Continue
-  ↓
+  Yes -> Kill with --force or exit
+  No -> Continue
+  v
 Try NO-QUOTA web scraping first (0 units)
-  ↓
+  v
 Stream found via scraping?
-  No → Fallback to API search (100+ units)
-  Yes → Get chat_id only (1 unit)
-  ↓
+  No -> Fallback to API search (100+ units)
+  Yes -> Get chat_id only (1 unit)
+  v
 Already posted this stream?
-  Yes → Skip social media
-  No → Post to LinkedIn & X
-  ↓
+  Yes -> Skip social media
+  No -> Post to LinkedIn & X
+  v
 Connect to live chat
-  ↓
+  v
 Send greeting via banter engine
-  ↓
+  v
 Start monitoring with 0102 consciousness ON
-  ↓
+  v
 Process messages continuously
 ```
 
-## 🎯 WSP Compliance & Navigation
+## [TARGET] WSP Compliance & Navigation
 
 - **WSP 3**: Functional domain organization maintained
 - **WSP 48**: Recursive self-improvement through learning
@@ -230,7 +230,7 @@ Process messages continuously
 - **WSP 85**: Proper file placement (no root pollution)
 - **WSP 86**: Navigation documentation with line numbers
 
-## 📚 Cross-Referenced Documentation
+## [BOOKS] Cross-Referenced Documentation
 
 For deeper understanding, see these related docs:
 - **[ENHANCED_NAVIGATION.md](./ENHANCED_NAVIGATION.md)** - Module fingerprints & pattern banks

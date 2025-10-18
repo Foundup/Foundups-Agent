@@ -25,8 +25,8 @@ def test_adaptive_learning():
 
     Expected behavior:
     - Start at threshold 0.30
-    - Simple queries succeed → threshold decreases
-    - Complex queries fail → threshold increases
+    - Simple queries succeed -> threshold decreases
+    - Complex queries fail -> threshold increases
     - System converges to optimal threshold
     """
 
@@ -80,7 +80,7 @@ def test_adaptive_learning():
             "expected_intent": "command_factcheck"
         },
         {
-            "message": "✊✋🖐",
+            "message": "[U+270A][U+270B][U+1F590]",
             "role": "USER",
             "expected_complexity": 0.10,  # Simple emoji
             "expected_intent": "consciousness"
@@ -110,12 +110,12 @@ def test_adaptive_learning():
         )
 
         # Display results
-        print(f"→ Complexity: {result['complexity_score']:.3f} (expected: {query['expected_complexity']:.3f})")
-        print(f"→ Threshold: {router.complexity_threshold:.3f}")
-        print(f"→ Intent: {result['intent']} (expected: {query['expected_intent']})")
-        print(f"→ Processing: {result['processing_path']}")
-        print(f"→ Latency: {result['latency_ms']}ms")
-        print(f"→ Quality: {result['quality_score']:.3f}")
+        print(f"-> Complexity: {result['complexity_score']:.3f} (expected: {query['expected_complexity']:.3f})")
+        print(f"-> Threshold: {router.complexity_threshold:.3f}")
+        print(f"-> Intent: {result['intent']} (expected: {query['expected_intent']})")
+        print(f"-> Processing: {result['processing_path']}")
+        print(f"-> Latency: {result['latency_ms']}ms")
+        print(f"-> Quality: {result['quality_score']:.3f}")
 
         # Threshold adjustment
         threshold_history.append(router.complexity_threshold)
@@ -123,7 +123,7 @@ def test_adaptive_learning():
             delta = threshold_history[-1] - threshold_history[-2]
             if delta != 0:
                 direction = "DOWN" if delta < 0 else "UP"
-                print(f"→ Threshold adjusted: {direction} by {abs(delta):.3f}")
+                print(f"-> Threshold adjusted: {direction} by {abs(delta):.3f}")
 
     # Final statistics
     print("\n" + "-"*80)
@@ -133,7 +133,7 @@ def test_adaptive_learning():
     stats = router.get_stats()
     print(f"\nTotal queries: {stats['total_queries']}")
     print(f"Gemma direct (success): {stats['gemma_direct']} ({stats['gemma_success_rate']*100:.1f}%)")
-    print(f"Gemma→Qwen (corrected): {stats['gemma_corrected']} ({stats['gemma_correction_rate']*100:.1f}%)")
+    print(f"Gemma->Qwen (corrected): {stats['gemma_corrected']} ({stats['gemma_correction_rate']*100:.1f}%)")
     print(f"Qwen direct (complex): {stats['qwen_direct']} ({stats['qwen_usage_rate']*100:.1f}%)")
     print(f"Average latency: {stats['avg_latency_ms']:.0f}ms")
 
@@ -160,7 +160,7 @@ def test_adaptive_learning():
     old_threshold = router.complexity_threshold
     router.complexity_threshold = 0.25
 
-    print(f"Manual adjustment: {old_threshold:.3f} → 0.25")
+    print(f"Manual adjustment: {old_threshold:.3f} -> 0.25")
     print("\nThis is the architect layer - 0102 tunes system based on observed performance")
 
     print("\n" + "="*80)

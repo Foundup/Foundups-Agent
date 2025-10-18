@@ -32,19 +32,19 @@ def main():
     
     # Check if client secret exists
     if not os.path.exists(client_secret_file):
-        print(f"❌ Client secret file not found: {client_secret_file}")
+        print(f"[FAIL] Client secret file not found: {client_secret_file}")
         return False
     
-    print(f"\n✅ Found client secret file")
+    print(f"\n[OK] Found client secret file")
     
     try:
         # Run the OAuth flow
         flow = InstalledAppFlow.from_client_secrets_file(
             client_secret_file, SCOPES)
         
-        print(f"\n🌐 Opening browser for authorization...")
+        print(f"\n[U+1F310] Opening browser for authorization...")
         print(f"   Port: 8080")
-        print(f"\n⚠️ IMPORTANT: Use the FoundUps Google account")
+        print(f"\n[U+26A0]️ IMPORTANT: Use the FoundUps Google account")
         print(f"   This gives you access to FoundUps YouTube API quota")
         
         # Run local server on port 8080 for Set 1
@@ -54,31 +54,31 @@ def main():
         with open(token_file, 'w', encoding="utf-8") as token:
             token.write(credentials.to_json())
         
-        print(f"\n✅ Successfully authorized Set 1!")
-        print(f"💾 Token saved to: {token_file}")
+        print(f"\n[OK] Successfully authorized Set 1!")
+        print(f"[U+1F4BE] Token saved to: {token_file}")
         
         # Test the credentials
-        print(f"\n🔍 Testing credentials...")
+        print(f"\n[SEARCH] Testing credentials...")
         service = build('youtube', 'v3', credentials=credentials)
         request = service.channels().list(part='snippet', mine=True)
         response = request.execute()
         
         if 'items' in response and len(response['items']) > 0:
             channel_title = response['items'][0]['snippet']['title']
-            print(f"✅ Successfully connected to channel: {channel_title}")
+            print(f"[OK] Successfully connected to channel: {channel_title}")
             return True
         else:
-            print(f"⚠️ Connected but no channel found. This is normal for some accounts.")
+            print(f"[U+26A0]️ Connected but no channel found. This is normal for some accounts.")
             return True
             
     except Exception as e:
-        print(f"❌ Failed to authorize: {e}")
+        print(f"[FAIL] Failed to authorize: {e}")
         return False
 
 if __name__ == '__main__':
     success = main()
     if success:
-        print(f"\n🎉 Set 1 authorization complete!")
+        print(f"\n[CELEBRATE] Set 1 authorization complete!")
     else:
-        print(f"\n💥 Set 1 authorization failed!")
+        print(f"\n[U+1F4A5] Set 1 authorization failed!")
         sys.exit(1)

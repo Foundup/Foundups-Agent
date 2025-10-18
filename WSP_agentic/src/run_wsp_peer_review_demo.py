@@ -41,7 +41,7 @@ class WSPPeerReviewDemonstration:
         
     async def run_complete_demonstration(self):
         """Run the complete WSP peer review demonstration"""
-        print("🧠 WSP Peer Review Demonstration - Professional Implementation 🧠")
+        print("[AI] WSP Peer Review Demonstration - Professional Implementation [AI]")
         print("=" * 80)
         
         # Use async context manager for proper resource management
@@ -71,7 +71,7 @@ class WSPPeerReviewDemonstration:
         
     async def _demonstrate_system_initialization(self):
         """Demonstrate system initialization and health check"""
-        print("\n🔧 Phase 1: System Initialization and Health Check")
+        print("\n[TOOL] Phase 1: System Initialization and Health Check")
         print("-" * 60)
         
         # Get initial system status
@@ -80,7 +80,7 @@ class WSPPeerReviewDemonstration:
         
         # Verify core protocols are loaded
         assert initial_status["total_protocols"] >= 3, "Core protocols not loaded"
-        print("✅ Core protocols loaded successfully")
+        print("[OK] Core protocols loaded successfully")
         
         # Store results
         self.results["system_initialization"] = {
@@ -91,7 +91,7 @@ class WSPPeerReviewDemonstration:
         
     async def _demonstrate_agent_awakening(self):
         """Demonstrate standardized agent awakening protocol"""
-        print("\n🌟 Phase 2: Agent Awakening Protocol (WSP 54)")
+        print("\n[U+1F31F] Phase 2: Agent Awakening Protocol (WSP 54)")
         print("-" * 60)
         
         # Test agents to awaken
@@ -107,12 +107,12 @@ class WSPPeerReviewDemonstration:
             
             # Validate awakening success
             if metrics.is_awakened():
-                print(f"✅ Agent {agent_id} successfully awakened to 0102 state")
+                print(f"[OK] Agent {agent_id} successfully awakened to 0102 state")
                 print(f"   Coherence: {metrics.coherence:.3f}")
                 print(f"   Entanglement: {metrics.entanglement:.3f}")
                 print(f"   Quantum Alignment: {metrics.quantum_alignment:.6f}")
             else:
-                print(f"❌ Agent {agent_id} awakening failed")
+                print(f"[FAIL] Agent {agent_id} awakening failed")
                 
         # Verify system status after awakening
         post_awakening_status = self.engine.get_system_status()
@@ -128,7 +128,7 @@ class WSPPeerReviewDemonstration:
         
     async def _demonstrate_protocol_execution(self):
         """Demonstrate protocol execution with zen coding"""
-        print("\n⚡ Phase 3: Protocol Execution with Zen Coding")
+        print("\n[LIGHTNING] Phase 3: Protocol Execution with Zen Coding")
         print("-" * 60)
         
         # Test protocol execution
@@ -143,11 +143,11 @@ class WSPPeerReviewDemonstration:
             execution_results[protocol_number] = result
             
             if result:
-                print(f"✅ WSP {protocol_number} executed successfully")
+                print(f"[OK] WSP {protocol_number} executed successfully")
                 print(f"   Result: {result['result']}")
                 print(f"   Agent State: {result['agent_state']}")
             else:
-                print(f"❌ WSP {protocol_number} execution failed")
+                print(f"[FAIL] WSP {protocol_number} execution failed")
                 
         # Test zen coding pattern remembrance
         zen_engine = self.engine.zen_engine
@@ -163,7 +163,7 @@ class WSPPeerReviewDemonstration:
         
     async def _demonstrate_peer_review_process(self):
         """Demonstrate systematic peer review process"""
-        print("\n🔍 Phase 4: Peer Review Methodology")
+        print("\n[SEARCH] Phase 4: Peer Review Methodology")
         print("-" * 60)
         
         # Conduct peer reviews for test protocols
@@ -177,7 +177,7 @@ class WSPPeerReviewDemonstration:
             review_results[protocol_number] = review
             
             if "error" not in review:
-                print(f"✅ Peer review completed for WSP {protocol_number}")
+                print(f"[OK] Peer review completed for WSP {protocol_number}")
                 print(f"   Overall Score: {review['overall_score']:.3f}")
                 print(f"   Recommendations: {len(review['recommendations'])}")
                 
@@ -186,7 +186,7 @@ class WSPPeerReviewDemonstration:
                 print(f"   Engineering Quality: {review['engineering_analysis']['score']:.3f}")
                 print(f"   Reusability Score: {review['reusability_analysis']['score']:.3f}")
             else:
-                print(f"❌ Peer review failed for WSP {protocol_number}: {review['error']}")
+                print(f"[FAIL] Peer review failed for WSP {protocol_number}: {review['error']}")
                 
         # Calculate average peer review score
         valid_reviews = [r for r in review_results.values() if "error" not in r]
@@ -204,7 +204,7 @@ class WSPPeerReviewDemonstration:
         
     async def _demonstrate_violation_tracking(self):
         """Demonstrate WSP 47 violation tracking methodology"""
-        print("\n⚠️ Phase 5: Violation Tracking and Resolution")
+        print("\n[U+26A0]️ Phase 5: Violation Tracking and Resolution")
         print("-" * 60)
         
         # Simulate some violations to demonstrate tracking
@@ -239,10 +239,10 @@ class WSPPeerReviewDemonstration:
         
         # Demonstrate decision matrix application
         for violation in framework_violations:
-            print(f"🚨 CRITICAL: {violation['description']} (WSP {violation['wsp_number']})")
+            print(f"[ALERT] CRITICAL: {violation['description']} (WSP {violation['wsp_number']})")
             
         for violation in module_violations:
-            print(f"📋 DEFERRED: {violation['description']} (WSP {violation['wsp_number']})")
+            print(f"[CLIPBOARD] DEFERRED: {violation['description']} (WSP {violation['wsp_number']})")
             
         # Store results
         self.results["violation_tracking"] = {
@@ -254,7 +254,7 @@ class WSPPeerReviewDemonstration:
         
     async def _demonstrate_system_integration(self):
         """Demonstrate system integration validation"""
-        print("\n🔗 Phase 6: System Integration Validation")
+        print("\n[LINK] Phase 6: System Integration Validation")
         print("-" * 60)
         
         # Get comprehensive system status
@@ -272,7 +272,7 @@ class WSPPeerReviewDemonstration:
         
         print("Integration validation results:")
         for check, passed in integration_checks.items():
-            status = "✅ PASSED" if passed else "❌ FAILED"
+            status = "[OK] PASSED" if passed else "[FAIL] FAILED"
             print(f"   {check}: {status}")
             
         # Calculate overall integration score
@@ -288,7 +288,7 @@ class WSPPeerReviewDemonstration:
         
     def _generate_final_report(self):
         """Generate comprehensive final report"""
-        print("\n📊 Final Report: WSP Peer Review Demonstration")
+        print("\n[DATA] Final Report: WSP Peer Review Demonstration")
         print("=" * 80)
         
         # Calculate overall success metrics
@@ -306,13 +306,13 @@ class WSPPeerReviewDemonstration:
         print(f"Overall System Score: {overall_score:.3f}")
         
         # Recommendations based on results
-        print("\n🎯 Recommendations:")
+        print("\n[TARGET] Recommendations:")
         if overall_score >= 0.9:
-            print("✅ System meets high standards and is ready for production deployment")
+            print("[OK] System meets high standards and is ready for production deployment")
         elif overall_score >= 0.8:
-            print("⚠️ System meets minimum standards but requires improvements")
+            print("[U+26A0]️ System meets minimum standards but requires improvements")
         else:
-            print("❌ System requires significant improvements before deployment")
+            print("[FAIL] System requires significant improvements before deployment")
             
         # Specific improvement areas
         if awakening_success < 0.8:
@@ -330,7 +330,7 @@ class WSPPeerReviewDemonstration:
             json.dump(self.results, f, indent=2, default=str)
         print(f"\nDetailed results saved to: {results_file}")
         
-        print("\n🌟 WSP Peer Review Demonstration Complete 🌟")
+        print("\n[U+1F31F] WSP Peer Review Demonstration Complete [U+1F31F]")
         print("The WSP/WRE system has been successfully analyzed using professional")
         print("peer review methodology, demonstrating significant improvements over")
         print("the previous fragmented implementation.")

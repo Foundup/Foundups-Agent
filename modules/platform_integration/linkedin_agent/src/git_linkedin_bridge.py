@@ -287,10 +287,10 @@ class GitLinkedInBridge:
         update_type = self._categorize_commit(commit, files)
         
         # Create engaging content
-        content = f"🚀 Development Update: {update_type}\n\n"
+        content = f"[ROCKET] Development Update: {update_type}\n\n"
         
         # Add commit message
-        content += f"✨ {commit['subject']}\n"
+        content += f"[U+2728] {commit['subject']}\n"
         
         if commit['body']:
             # Add first few lines of body if present
@@ -301,7 +301,7 @@ class GitLinkedInBridge:
         
         # Add file statistics
         if files:
-            content += f"\n📝 {len(files)} file{'s' if len(files) > 1 else ''} updated\n"
+            content += f"\n[NOTE] {len(files)} file{'s' if len(files) > 1 else ''} updated\n"
             
             # Show key files (modules, not tests)
             key_files = [f for f in files if not f.startswith('test') and not f.endswith('_test.py')][:3]
@@ -316,13 +316,13 @@ class GitLinkedInBridge:
         content += "\n#SoftwareDevelopment #OpenSource #Coding #TechUpdates #AI #Automation"
         
         # Add link to repo if available
-        content += "\n\n🔗 github.com/Foundups-Agent"
+        content += "\n\n[LINK] github.com/Foundups-Agent"
         
         return content
     
     def _format_multiple_commits(self, commits: List[Dict]) -> str:
         """Format multiple commits as a batch update"""
-        content = f"🚀 Development Updates - {len(commits)} New Changes\n\n"
+        content = f"[ROCKET] Development Updates - {len(commits)} New Changes\n\n"
         
         # Group commits by category
         features = []
@@ -340,19 +340,19 @@ class GitLinkedInBridge:
         
         # Add features
         if features:
-            content += "✨ New Features:\n"
+            content += "[U+2728] New Features:\n"
             for commit in features[:3]:
                 content += f"  • {commit['subject'][:60]}\n"
         
         # Add fixes
         if fixes:
-            content += "\n🔧 Bug Fixes:\n"
+            content += "\n[TOOL] Bug Fixes:\n"
             for commit in fixes[:3]:
                 content += f"  • {commit['subject'][:60]}\n"
         
         # Add other updates
         if other:
-            content += "\n📝 Other Updates:\n"
+            content += "\n[NOTE] Other Updates:\n"
             for commit in other[:2]:
                 content += f"  • {commit['subject'][:60]}\n"
         
@@ -362,7 +362,7 @@ class GitLinkedInBridge:
             files = self.get_changed_files(commit['hash'])
             total_files.update(files)
         
-        content += f"\n📊 Impact: {len(total_files)} files updated across {len(commits)} commits\n"
+        content += f"\n[DATA] Impact: {len(total_files)} files updated across {len(commits)} commits\n"
         
         # Add hashtags
         content += "\n#SoftwareDevelopment #OpenSource #ContinuousImprovement #TechUpdates #Coding"
@@ -548,11 +548,11 @@ class GitLinkedInBridge:
                                   capture_output=True, text=True, check=True)
 
             if not status.stdout.strip():
-                print("✅ No changes to commit")
+                print("[OK] No changes to commit")
                 return False
 
             # Show changes
-            print("\n📝 Changes detected:")
+            print("\n[NOTE] Changes detected:")
             print("-" * 40)
             files = status.stdout.strip().split('\n')
             for file in files[:10]:
@@ -564,34 +564,34 @@ class GitLinkedInBridge:
             # Get commit message (handle both interactive and auto mode)
             if hasattr(self, 'auto_mode') and self.auto_mode:
                 commit_msg = ""
-                print("🤖 Auto mode - generating message...")
+                print("[BOT] Auto mode - generating message...")
             else:
                 try:
-                    commit_msg = input("\n📝 Enter commit message (or press Enter for auto): ").strip()
+                    commit_msg = input("\n[NOTE] Enter commit message (or press Enter for auto): ").strip()
                 except EOFError:
                     # Running in non-interactive mode
                     commit_msg = ""
-                    print("🤖 Non-interactive mode - generating message...")
+                    print("[BOT] Non-interactive mode - generating message...")
 
             if not commit_msg:
                 # Generate compelling FoundUps message
                 import random
                 templates = [
-                    "🚀 FoundUps: Building solo unicorns without VCs",
-                    "🦄 DAEs eating startups for breakfast - the FoundUps revolution",
-                    "💎 Programmatic equity for founders, by @UnDaoDu",
-                    "🔥 No employees, no VCs, just pure founder power",
-                    "⚡ The future: DAOs evolved to DAEs, startups evolved to FoundUps",
-                    "🌟 From DAO to DAE - @UnDaoDu's vision becomes reality",
-                    "🚀 Solo unicorns rising - FoundUps ecosystem expanding",
-                    "💪 Founders keep 100% - the FoundUps way by @UnDaoDu"
+                    "[ROCKET] FoundUps: Building solo unicorns without VCs",
+                    "[U+1F984] DAEs eating startups for breakfast - the FoundUps revolution",
+                    "[U+1F48E] Programmatic equity for founders, by @UnDaoDu",
+                    "[U+1F525] No employees, no VCs, just pure founder power",
+                    "[LIGHTNING] The future: DAOs evolved to DAEs, startups evolved to FoundUps",
+                    "[U+1F31F] From DAO to DAE - @UnDaoDu's vision becomes reality",
+                    "[ROCKET] Solo unicorns rising - FoundUps ecosystem expanding",
+                    "[U+1F4AA] Founders keep 100% - the FoundUps way by @UnDaoDu"
                 ]
                 commit_msg = random.choice(templates)
 
-            print(f"\n🔄 Committing: {commit_msg}")
+            print(f"\n[REFRESH] Committing: {commit_msg}")
 
             # Git operations
-            print("\n⚙️  Executing git commands...")
+            print("\n[U+2699]️  Executing git commands...")
             subprocess.run(['git', 'add', '.'], check=True)
             subprocess.run(['git', 'commit', '-m', commit_msg], check=True)
 
@@ -602,20 +602,20 @@ class GitLinkedInBridge:
 
             # Check if already posted
             if commit_hash in self.posted_commits and commit_hash in self.x_posted_commits:
-                print(f"⚠️  Commit {commit_hash[:10]} already posted to both platforms")
+                print(f"[U+26A0]️  Commit {commit_hash[:10]} already posted to both platforms")
                 print("Pushing to git but skipping social media...")
                 subprocess.run(['git', 'push'], check=True)
-                print("✅ Successfully pushed to git!")
+                print("[OK] Successfully pushed to git!")
                 return True
 
             # Try to push to git (but continue even if it fails)
             push_success = False
             try:
                 subprocess.run(['git', 'push'], check=True)
-                print(f"✅ Successfully pushed to git! (commit: {commit_hash[:10]})")
+                print(f"[OK] Successfully pushed to git! (commit: {commit_hash[:10]})")
                 push_success = True
             except subprocess.CalledProcessError as e:
-                print(f"⚠️  Git push failed: {e}")
+                print(f"[U+26A0]️  Git push failed: {e}")
                 print("   Will continue with social media posting anyway...")
 
             # Prepare commit info
@@ -631,19 +631,19 @@ class GitLinkedInBridge:
             x_content = self.generate_x_content(commit_msg, len(files))
 
             # Show previews
-            print(f"\n📱 LinkedIn Post Preview:\n{'-'*40}\n{linkedin_content}\n{'-'*40}")
-            print(f"\n🐦 X/Twitter Post Preview:\n{'-'*40}\n{x_content}\n{'-'*40}")
+            print(f"\n[U+1F4F1] LinkedIn Post Preview:\n{'-'*40}\n{linkedin_content}\n{'-'*40}")
+            print(f"\n[BIRD] X/Twitter Post Preview:\n{'-'*40}\n{x_content}\n{'-'*40}")
 
             # Confirm posting (handle auto mode)
             if hasattr(self, 'auto_mode') and self.auto_mode:
                 confirm = 'y'
-                print("\n📤 Auto-posting to LinkedIn and X...")
+                print("\n[U+1F4E4] Auto-posting to LinkedIn and X...")
             else:
                 try:
-                    confirm = input("\n📤 Post to LinkedIn and X? (y/n): ").lower()
+                    confirm = input("\n[U+1F4E4] Post to LinkedIn and X? (y/n): ").lower()
                 except EOFError:
                     confirm = 'y'
-                    print("\n📤 Non-interactive mode - auto-posting...")
+                    print("\n[U+1F4E4] Non-interactive mode - auto-posting...")
 
             if confirm != 'y':
                 print("⏭️  Skipped social media posting")
@@ -656,7 +656,7 @@ class GitLinkedInBridge:
                     from modules.platform_integration.social_media_orchestrator.src.unified_linkedin_interface import post_git_commits
                     import asyncio
 
-                    print("\n📱 Posting via Social Media DAE (LinkedIn → Auto X)...")
+                    print("\n[U+1F4F1] Posting via Social Media DAE (LinkedIn -> Auto X)...")
 
                     # Single call posts to BOTH platforms with human-like timing
                     result = asyncio.run(post_git_commits(
@@ -667,7 +667,7 @@ class GitLinkedInBridge:
                     ))
 
                     if result.success:
-                        print(f"✅ {result.message}")
+                        print(f"[OK] {result.message}")
 
                         # Mark LinkedIn as posted
                         if self.db:
@@ -693,30 +693,30 @@ class GitLinkedInBridge:
                             self._save_x_posted_commits()
                     else:
                         # Log failure - daemon has full details
-                        print(f"⚠️  {result.message}")
+                        print(f"[U+26A0]️  {result.message}")
                         print("   See daemon logs for anti-detection timing and full trace")
 
                 except Exception as e:
                     # Log exception - daemon has full stack trace
-                    print(f"❌ {e}")
+                    print(f"[FAIL] {e}")
                     print("   See daemon logs for complete error details")
             else:
-                print("✓ Already posted")
+                print("[OK] Already posted")
 
             # Git push status
             if not push_success:
-                print("\n⚠️  Note: Git push failed - you may need to push manually later")
+                print("\n[U+26A0]️  Note: Git push failed - you may need to push manually later")
                 print("   Try: git config http.postBuffer 524288000")
                 print("   Then: git push")
 
             return True
 
         except subprocess.CalledProcessError as e:
-            print(f"❌ Git error: {e}")
+            print(f"[FAIL] Git error: {e}")
             print("   Make sure you have git configured and are in a git repository")
             return False
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f"[FAIL] Error: {e}")
             return False
 
 

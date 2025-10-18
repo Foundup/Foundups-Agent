@@ -8,82 +8,82 @@
 
 ---
 
-## 🔍 **COMPARATIVE FEATURE MATRIX**
+## [SEARCH] **COMPARATIVE FEATURE MATRIX**
 
 | Feature | config.py | config_loader.py | Winner | Migration Needed |
 |---------|-----------|------------------|---------|------------------|
-| **Basic YAML Loading** | ✅ Simple | ✅ Advanced | config_loader | No |
-| **JSON Support** | ❌ Removed | ✅ Full | config_loader | Yes |
-| **Schema Validation** | ❌ None | ✅ jsonschema | config_loader | Yes |
-| **Type Safety** | ❌ Dict only | ✅ Dataclasses | config_loader | Yes |
-| **Default Configs** | ❌ None | ✅ Built-in | config_loader | Yes |
-| **PQN-Specific** | ❌ Generic | ✅ Specialized | config_loader | Yes |
-| **File Size** | ✅ 25 lines | ❌ 221 lines | config.py | No |
-| **Dependencies** | ✅ PyYAML only | ❌ Multiple | config.py | No |
-| **WSP 12 Compliance** | ✅ YAML-only | ⚠️ YAML+JSON | config.py | Yes |
+| **Basic YAML Loading** | [OK] Simple | [OK] Advanced | config_loader | No |
+| **JSON Support** | [FAIL] Removed | [OK] Full | config_loader | Yes |
+| **Schema Validation** | [FAIL] None | [OK] jsonschema | config_loader | Yes |
+| **Type Safety** | [FAIL] Dict only | [OK] Dataclasses | config_loader | Yes |
+| **Default Configs** | [FAIL] None | [OK] Built-in | config_loader | Yes |
+| **PQN-Specific** | [FAIL] Generic | [OK] Specialized | config_loader | Yes |
+| **File Size** | [OK] 25 lines | [FAIL] 221 lines | config.py | No |
+| **Dependencies** | [OK] PyYAML only | [FAIL] Multiple | config.py | No |
+| **WSP 12 Compliance** | [OK] YAML-only | [U+26A0]️ YAML+JSON | config.py | Yes |
 | **Usage Count** | 0 references | 1 reference | config_loader | No |
 
 ---
 
-## 📊 **config.py SWOT ANALYSIS**
+## [DATA] **config.py SWOT ANALYSIS**
 
-### 🔍 **STRENGTHS**
-- ✅ **WSP 12 compliant** - YAML-only canonical format
-- ✅ **Minimal dependencies** - PyYAML only
-- ✅ **Lightweight** - 25 lines, simple function
-- ✅ **Clear purpose** - Single responsibility (load YAML)
-- ✅ **Error handling** - Proper validation and exceptions
+### [SEARCH] **STRENGTHS**
+- [OK] **WSP 12 compliant** - YAML-only canonical format
+- [OK] **Minimal dependencies** - PyYAML only
+- [OK] **Lightweight** - 25 lines, simple function
+- [OK] **Clear purpose** - Single responsibility (load YAML)
+- [OK] **Error handling** - Proper validation and exceptions
 
-### ⚠️ **WEAKNESSES**
-- ❌ **Zero usage** - No inbound references (archive candidate)
-- ❌ **Generic** - Not PQN-specific, no domain knowledge
-- ❌ **No validation** - No schema checking or type safety
-- ❌ **No defaults** - Cannot provide fallback configurations
-- ❌ **Limited features** - Basic YAML loading only
+### [U+26A0]️ **WEAKNESSES**
+- [FAIL] **Zero usage** - No inbound references (archive candidate)
+- [FAIL] **Generic** - Not PQN-specific, no domain knowledge
+- [FAIL] **No validation** - No schema checking or type safety
+- [FAIL] **No defaults** - Cannot provide fallback configurations
+- [FAIL] **Limited features** - Basic YAML loading only
 
-### 🚀 **OPPORTUNITIES**
-- 🔄 **Merge into config_loader** - Become the YAML loading function
-- 🔄 **WSP 12 enforcement** - Could enforce YAML-only policy
-- 🔄 **Simplification base** - Could simplify config_loader
+### [ROCKET] **OPPORTUNITIES**
+- [REFRESH] **Merge into config_loader** - Become the YAML loading function
+- [REFRESH] **WSP 12 enforcement** - Could enforce YAML-only policy
+- [REFRESH] **Simplification base** - Could simplify config_loader
 
-### 🚨 **THREATS**
-- ⚠️ **Superseded** - config_loader provides all functionality + more
-- ⚠️ **Unused code** - Zero references indicate obsolescence
-- ⚠️ **Maintenance burden** - Duplicate functionality
-
----
-
-## 📊 **config_loader.py SWOT ANALYSIS**
-
-### 🔍 **STRENGTHS**
-- ✅ **Active usage** - 1 inbound reference (actively used)
-- ✅ **PQN-specific** - DetectorConfig, SweepConfig, CouncilConfig
-- ✅ **Type safety** - Dataclass-based configuration objects
-- ✅ **Schema validation** - jsonschema validation for reliability
-- ✅ **Default configs** - Built-in defaults for all config types
-- ✅ **Comprehensive** - Handles detector, sweep, council, guardrail configs
-- ✅ **Save functionality** - Can persist configurations back to files
-- ✅ **Path flexibility** - Supports relative/absolute paths and config directory
-
-### ⚠️ **WEAKNESSES**
-- ⚠️ **WSP 12 violation** - Supports both YAML and JSON (not canonical)
-- ❌ **Heavy dependencies** - PyYAML, jsonschema, dataclasses
-- ❌ **Complex** - 221 lines vs 25 lines for basic loading
-- ❌ **Over-engineered** - Complex for simple config loading needs
-
-### 🚀 **OPPORTUNITIES**
-- 🔄 **WSP 12 compliance** - Remove JSON support, YAML-only
-- 🔄 **Simplification** - Remove unused features
-- 🔄 **Integration** - Absorb config.py's simplicity
-- 🔄 **YouTube DAE integration** - Could add PQN config commands
-
-### 🚨 **THREATS**
-- ⚠️ **Over-complexity** - Could be simplified by merging with config.py approach
-- ⚠️ **Dependency risk** - Multiple dependencies increase maintenance burden
+### [ALERT] **THREATS**
+- [U+26A0]️ **Superseded** - config_loader provides all functionality + more
+- [U+26A0]️ **Unused code** - Zero references indicate obsolescence
+- [U+26A0]️ **Maintenance burden** - Duplicate functionality
 
 ---
 
-## 🎯 **WSP 79 CONSOLIDATION DECISION**
+## [DATA] **config_loader.py SWOT ANALYSIS**
+
+### [SEARCH] **STRENGTHS**
+- [OK] **Active usage** - 1 inbound reference (actively used)
+- [OK] **PQN-specific** - DetectorConfig, SweepConfig, CouncilConfig
+- [OK] **Type safety** - Dataclass-based configuration objects
+- [OK] **Schema validation** - jsonschema validation for reliability
+- [OK] **Default configs** - Built-in defaults for all config types
+- [OK] **Comprehensive** - Handles detector, sweep, council, guardrail configs
+- [OK] **Save functionality** - Can persist configurations back to files
+- [OK] **Path flexibility** - Supports relative/absolute paths and config directory
+
+### [U+26A0]️ **WEAKNESSES**
+- [U+26A0]️ **WSP 12 violation** - Supports both YAML and JSON (not canonical)
+- [FAIL] **Heavy dependencies** - PyYAML, jsonschema, dataclasses
+- [FAIL] **Complex** - 221 lines vs 25 lines for basic loading
+- [FAIL] **Over-engineered** - Complex for simple config loading needs
+
+### [ROCKET] **OPPORTUNITIES**
+- [REFRESH] **WSP 12 compliance** - Remove JSON support, YAML-only
+- [REFRESH] **Simplification** - Remove unused features
+- [REFRESH] **Integration** - Absorb config.py's simplicity
+- [REFRESH] **YouTube DAE integration** - Could add PQN config commands
+
+### [ALERT] **THREATS**
+- [U+26A0]️ **Over-complexity** - Could be simplified by merging with config.py approach
+- [U+26A0]️ **Dependency risk** - Multiple dependencies increase maintenance burden
+
+---
+
+## [TARGET] **WSP 79 CONSOLIDATION DECISION**
 
 ### **Recommended Action: CONSOLIDATE INTO config_loader.py**
 
@@ -109,15 +109,15 @@ class ConfigLoader:
 ```
 
 #### Phase 2: Archive config.py safely
-- ✅ Zero references confirmed - safe to archive
-- ✅ Functionality preserved in config_loader.py
-- ✅ WSP 12 compliance maintained through yaml_only flag
+- [OK] Zero references confirmed - safe to archive
+- [OK] Functionality preserved in config_loader.py
+- [OK] WSP 12 compliance maintained through yaml_only flag
 
 ---
 
-## 📋 **WSP 79 IMPLEMENTATION CHECKLIST**
+## [CLIPBOARD] **WSP 79 IMPLEMENTATION CHECKLIST**
 
-### Functionality Preservation ✅
+### Functionality Preservation [OK]
 - [x] **All features documented** - Simple YAML loading preserved
 - [x] **Migration plan created** - Enhance config_loader.py
 - [x] **No functionality lost** - config_loader.py is superset
@@ -136,4 +136,4 @@ class ConfigLoader:
 - [ ] Create deprecation notice
 - [ ] Update documentation
 
-**Status**: ✅ **APPROVED FOR CONSOLIDATION** - Safe to proceed with enhancement + archive
+**Status**: [OK] **APPROVED FOR CONSOLIDATION** - Safe to proceed with enhancement + archive

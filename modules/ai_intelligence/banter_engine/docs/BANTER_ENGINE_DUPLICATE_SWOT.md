@@ -4,17 +4,17 @@
 
 ### ROOT Version (banter_engine/emoji_sequence_map.py)
 **Strengths:**
-- ✅ Handles BOTH emoji variants (with/without variation selector)
-- ✅ More robust compatibility
-- ✅ Import from .src.sequence_responses (correct path)
+- [OK] Handles BOTH emoji variants (with/without variation selector)
+- [OK] More robust compatibility
+- [OK] Import from .src.sequence_responses (correct path)
 ```python
-'🖐️': 2,  # With variation selector
-'🖐': 2    # Without variation selector
+'[U+1F590]️': 2,  # With variation selector
+'[U+1F590]': 2    # Without variation selector
 ```
 
 **Weaknesses:**
-- ❌ In wrong location (should be in src/)
-- ❌ Violates WSP 49 directory structure
+- [FAIL] In wrong location (should be in src/)
+- [FAIL] Violates WSP 49 directory structure
 
 **Opportunities:**
 - Move to src/ with enhanced features
@@ -26,14 +26,14 @@
 
 ### SRC Version (banter_engine/src/emoji_sequence_map.py)
 **Strengths:**
-- ✅ Correct WSP 49 location (src/)
-- ✅ Cleaner import structure
-- ✅ Proper module organization
+- [OK] Correct WSP 49 location (src/)
+- [OK] Cleaner import structure
+- [OK] Proper module organization
 
 **Weaknesses:**
-- ❌ Missing emoji variant handling
-- ❌ Less compatible (only one 🖐 variant)
-- ❌ Could fail with different emoji encodings
+- [FAIL] Missing emoji variant handling
+- [FAIL] Less compatible (only one [U+1F590] variant)
+- [FAIL] Could fail with different emoji encodings
 
 **Opportunities:**
 - Add variant handling from root version
@@ -43,7 +43,7 @@
 - May not handle all emoji inputs
 - Less robust than root version
 
-### VERDICT: ROOT version is MORE ADVANCED ⚠️
+### VERDICT: ROOT version is MORE ADVANCED [U+26A0]️
 - Has better emoji handling
 - BUT in wrong location
 
@@ -87,10 +87,10 @@ test_banter_engine_enhanced.py (enhanced)
 # Target: banter_engine/src/emoji_sequence_map.py
 # Add from root version:
 EMOJI_TO_NUMBER = {
-    '✊': 0,
-    '✋': 1,
-    '🖐️': 2,  # With variation selector
-    '🖐': 2   # Without variation selector - ADD THIS
+    '[U+270A]': 0,
+    '[U+270B]': 1,
+    '[U+1F590]️': 2,  # With variation selector
+    '[U+1F590]': 2   # Without variation selector - ADD THIS
 }
 ```
 
@@ -135,10 +135,10 @@ If consolidation fails:
 
 | Feature | Root | Src | Keep In |
 |---------|------|-----|---------|
-| Location | ❌ | ✅ | src/ |
-| Emoji variants | ✅ | ❌ | Merge to src |
-| Import path | ❌ | ✅ | src/ |
-| WSP compliance | ❌ | ✅ | src/ |
+| Location | [FAIL] | [OK] | src/ |
+| Emoji variants | [OK] | [FAIL] | Merge to src |
+| Import path | [FAIL] | [OK] | src/ |
+| WSP compliance | [FAIL] | [OK] | src/ |
 
 ## 10. Recommendation
 

@@ -1,4 +1,4 @@
-# 012 ↔ 0102 ↔ Colab Workflow - Who Does What
+# 012 [U+2194] 0102 [U+2194] Colab Workflow - Who Does What
 
 ## Quick Answer
 
@@ -10,10 +10,10 @@
 5. Download the result (~4MB adapter file)
 
 **What 0102 already did**:
-✅ Collected ALL system data (1,385 patterns)
-✅ Created training export (colab_training_export.json)
-✅ Embedded all training instructions in the JSON
-✅ Ready for 012 to upload
+[OK] Collected ALL system data (1,385 patterns)
+[OK] Created training export (colab_training_export.json)
+[OK] Embedded all training instructions in the JSON
+[OK] Ready for 012 to upload
 
 **What happens in Colab**:
 - Colab's GPU trains Gemma automatically
@@ -25,17 +25,17 @@
 ## The Complete Workflow
 
 ```
-0102 (Local) → 012 (Upload) → Colab (Train) → 012 (Download) → 0102 (Integrate)
+0102 (Local) -> 012 (Upload) -> Colab (Train) -> 012 (Download) -> 0102 (Integrate)
 ```
 
-### Phase 1: 0102 Prepares Training Data (DONE ✅)
+### Phase 1: 0102 Prepares Training Data (DONE [OK])
 
 **What 0102 did**:
 ```bash
 # Collected ALL system data:
 - 012.txt: 145 patterns (0102 operational decisions)
 - ModLogs: 1,106 patterns (module evolution)
-- WSP violations: 84 patterns (error → fix)
+- WSP violations: 84 patterns (error -> fix)
 - Daemon logs: 50 patterns (runtime operations)
 - Chat logs: 0 patterns (no chat data yet)
 - Git history: 0 patterns (encoding error, minor)
@@ -62,7 +62,7 @@ Export: colab_training_export.json (3.11 MB)
 - Click: **"New Notebook"**
 
 #### 2. Enable GPU
-- Click: **Runtime** menu → **Change runtime type**
+- Click: **Runtime** menu -> **Change runtime type**
 - Hardware accelerator: **GPU**
 - GPU type: **T4** (free tier)
 - Click: **Save**
@@ -295,17 +295,17 @@ response = model.generate(tokenizer.encode(prompt))
 ## What You Need
 
 ### Required
-✅ Google account (you have - used for AI Studio API key)
-✅ Web browser
-✅ Internet connection
-✅ The JSON file (already created: 3.11 MB)
+[OK] Google account (you have - used for AI Studio API key)
+[OK] Web browser
+[OK] Internet connection
+[OK] The JSON file (already created: 3.11 MB)
 
 ### NOT Required
-❌ Local GPU
-❌ Python installation (Colab has it)
-❌ Package installation (Colab handles it)
-❌ Understanding ML/AI (just copy/paste code)
-❌ Coding skills (just run cells)
+[FAIL] Local GPU
+[FAIL] Python installation (Colab has it)
+[FAIL] Package installation (Colab handles it)
+[FAIL] Understanding ML/AI (just copy/paste code)
+[FAIL] Coding skills (just run cells)
 
 ---
 
@@ -313,7 +313,7 @@ response = model.generate(tokenizer.encode(prompt))
 
 | Phase | Duration | Who |
 |-------|----------|-----|
-| 0102 prepares data | ✅ DONE | 0102 |
+| 0102 prepares data | [OK] DONE | 0102 |
 | 012 uploads to Colab | 5 minutes | YOU |
 | Colab trains Gemma | 30-60 minutes | Automatic |
 | 012 downloads result | 1 minute | YOU |
@@ -334,10 +334,10 @@ response = model.generate(tokenizer.encode(prompt))
 - Upload/download requires manual file transfer
 
 **However, 0102 can**:
-✅ Prepare all training data (DONE)
-✅ Create all code you need (DONE)
-✅ Write instructions (DONE)
-✅ Integrate trained model after you download
+[OK] Prepare all training data (DONE)
+[OK] Create all code you need (DONE)
+[OK] Write instructions (DONE)
+[OK] Integrate trained model after you download
 
 ---
 
@@ -345,7 +345,7 @@ response = model.generate(tokenizer.encode(prompt))
 
 **What you actually do**:
 1. [ ] Open https://colab.research.google.com/
-2. [ ] New Notebook → Runtime → GPU (T4)
+2. [ ] New Notebook -> Runtime -> GPU (T4)
 3. [ ] Upload `colab_training_export.json` (3.11 MB)
 4. [ ] Copy/paste 6 code cells from this document
 5. [ ] Run each cell (click play button)
@@ -387,7 +387,7 @@ response = model.generate(tokenizer.encode(prompt))
 - Assists: Qwen in DAE Rubik's Cube architecture
 - Result: Faster, smarter, more efficient system
 
-**Your 6 minutes of work → System-wide intelligence improvement**
+**Your 6 minutes of work -> System-wide intelligence improvement**
 
 ---
 

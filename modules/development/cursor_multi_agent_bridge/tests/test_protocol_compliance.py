@@ -60,7 +60,7 @@ class ProtocolComplianceValidator:
         Returns:
             Dict containing compliance validation results
         """
-        logger.info("📋 Starting Protocol Compliance Validation")
+        logger.info("[CLIPBOARD] Starting Protocol Compliance Validation")
         
         try:
             # Protocol 1: WSP 54 (Agent Duties Specification)
@@ -87,11 +87,11 @@ class ProtocolComplianceValidator:
             # Calculate overall compliance
             self._calculate_overall_compliance()
             
-            logger.info("✅ Protocol Compliance Validation Completed")
+            logger.info("[OK] Protocol Compliance Validation Completed")
             return self.compliance_results
             
         except Exception as e:
-            logger.error(f"❌ Protocol compliance validation failed: {e}")
+            logger.error(f"[FAIL] Protocol compliance validation failed: {e}")
             return {"error": str(e)}
     
     async def _validate_wsp54_agent_duties(self):
@@ -99,7 +99,7 @@ class ProtocolComplianceValidator:
         self.compliance_results["total_protocols"] += 1
         
         try:
-            logger.info("🤖 Validating WSP 54 Agent Duties Specification")
+            logger.info("[BOT] Validating WSP 54 Agent Duties Specification")
             
             # Check agent activation
             agent_activation_valid = await self._check_agent_activation()
@@ -142,18 +142,18 @@ class ProtocolComplianceValidator:
             self.compliance_results["compliant_protocols"] += 1
             self.compliance_results["protocol_details"]["WSP_54"] = wsp54_compliance
             
-            logger.info(f"✅ WSP 54: PASSED - {wsp54_compliance['compliance_score']:.2%} compliance")
+            logger.info(f"[OK] WSP 54: PASSED - {wsp54_compliance['compliance_score']:.2%} compliance")
             
         except Exception as e:
             self.compliance_results["non_compliant_protocols"] += 1
-            logger.error(f"❌ WSP 54: FAILED - {e}")
+            logger.error(f"[FAIL] WSP 54: FAILED - {e}")
     
     async def _validate_wsp22_modlog_roadmap(self):
         """Validate WSP 22 Module ModLog and Roadmap compliance."""
         self.compliance_results["total_protocols"] += 1
         
         try:
-            logger.info("📝 Validating WSP 22 Module ModLog and Roadmap")
+            logger.info("[NOTE] Validating WSP 22 Module ModLog and Roadmap")
             
             # Check ModLog existence and structure
             modlog_valid = await self._check_modlog_structure()
@@ -191,18 +191,18 @@ class ProtocolComplianceValidator:
             self.compliance_results["compliant_protocols"] += 1
             self.compliance_results["protocol_details"]["WSP_22"] = wsp22_compliance
             
-            logger.info(f"✅ WSP 22: PASSED - {wsp22_compliance['compliance_score']:.2%} compliance")
+            logger.info(f"[OK] WSP 22: PASSED - {wsp22_compliance['compliance_score']:.2%} compliance")
             
         except Exception as e:
             self.compliance_results["non_compliant_protocols"] += 1
-            logger.error(f"❌ WSP 22: FAILED - {e}")
+            logger.error(f"[FAIL] WSP 22: FAILED - {e}")
     
     async def _validate_wsp11_interface_standards(self):
         """Validate WSP 11 Interface Standards compliance."""
         self.compliance_results["total_protocols"] += 1
         
         try:
-            logger.info("🔌 Validating WSP 11 Interface Standards")
+            logger.info("[U+1F50C] Validating WSP 11 Interface Standards")
             
             # Check public API definition
             public_api_valid = await self._check_public_api_definition()
@@ -245,18 +245,18 @@ class ProtocolComplianceValidator:
             self.compliance_results["compliant_protocols"] += 1
             self.compliance_results["protocol_details"]["WSP_11"] = wsp11_compliance
             
-            logger.info(f"✅ WSP 11: PASSED - {wsp11_compliance['compliance_score']:.2%} compliance")
+            logger.info(f"[OK] WSP 11: PASSED - {wsp11_compliance['compliance_score']:.2%} compliance")
             
         except Exception as e:
             self.compliance_results["non_compliant_protocols"] += 1
-            logger.error(f"❌ WSP 11: FAILED - {e}")
+            logger.error(f"[FAIL] WSP 11: FAILED - {e}")
     
     async def _validate_wsp60_memory_architecture(self):
         """Validate WSP 60 Memory Architecture compliance."""
         self.compliance_results["total_protocols"] += 1
         
         try:
-            logger.info("🧠 Validating WSP 60 Memory Architecture")
+            logger.info("[AI] Validating WSP 60 Memory Architecture")
             
             # Check memory directory structure
             memory_structure_valid = await self._check_memory_structure()
@@ -294,18 +294,18 @@ class ProtocolComplianceValidator:
             self.compliance_results["compliant_protocols"] += 1
             self.compliance_results["protocol_details"]["WSP_60"] = wsp60_compliance
             
-            logger.info(f"✅ WSP 60: PASSED - {wsp60_compliance['compliance_score']:.2%} compliance")
+            logger.info(f"[OK] WSP 60: PASSED - {wsp60_compliance['compliance_score']:.2%} compliance")
             
         except Exception as e:
             self.compliance_results["non_compliant_protocols"] += 1
-            logger.error(f"❌ WSP 60: FAILED - {e}")
+            logger.error(f"[FAIL] WSP 60: FAILED - {e}")
     
     async def _validate_wsp34_testing_protocol(self):
         """Validate WSP 34 Testing Protocol compliance."""
         self.compliance_results["total_protocols"] += 1
         
         try:
-            logger.info("🧪 Validating WSP 34 Testing Protocol")
+            logger.info("[U+1F9EA] Validating WSP 34 Testing Protocol")
             
             # Check test structure
             test_structure_valid = await self._check_test_structure()
@@ -343,18 +343,18 @@ class ProtocolComplianceValidator:
             self.compliance_results["compliant_protocols"] += 1
             self.compliance_results["protocol_details"]["WSP_34"] = wsp34_compliance
             
-            logger.info(f"✅ WSP 34: PASSED - {wsp34_compliance['compliance_score']:.2%} compliance")
+            logger.info(f"[OK] WSP 34: PASSED - {wsp34_compliance['compliance_score']:.2%} compliance")
             
         except Exception as e:
             self.compliance_results["non_compliant_protocols"] += 1
-            logger.error(f"❌ WSP 34: FAILED - {e}")
+            logger.error(f"[FAIL] WSP 34: FAILED - {e}")
     
     async def _validate_wsp46_wre_protocol(self):
         """Validate WSP 46 WRE Protocol compliance."""
         self.compliance_results["total_protocols"] += 1
         
         try:
-            logger.info("⚡ Validating WSP 46 WRE Protocol")
+            logger.info("[LIGHTNING] Validating WSP 46 WRE Protocol")
             
             # Check WRE integration
             wre_integration_valid = await self._check_wre_integration()
@@ -392,18 +392,18 @@ class ProtocolComplianceValidator:
             self.compliance_results["compliant_protocols"] += 1
             self.compliance_results["protocol_details"]["WSP_46"] = wsp46_compliance
             
-            logger.info(f"✅ WSP 46: PASSED - {wsp46_compliance['compliance_score']:.2%} compliance")
+            logger.info(f"[OK] WSP 46: PASSED - {wsp46_compliance['compliance_score']:.2%} compliance")
             
         except Exception as e:
             self.compliance_results["non_compliant_protocols"] += 1
-            logger.error(f"❌ WSP 46: FAILED - {e}")
+            logger.error(f"[FAIL] WSP 46: FAILED - {e}")
     
     async def _validate_wsp48_recursive_improvement(self):
         """Validate WSP 48 Recursive Self-Improvement compliance."""
         self.compliance_results["total_protocols"] += 1
         
         try:
-            logger.info("🔄 Validating WSP 48 Recursive Self-Improvement")
+            logger.info("[REFRESH] Validating WSP 48 Recursive Self-Improvement")
             
             # Check improvement mechanisms
             improvement_mechanisms_valid = await self._check_improvement_mechanisms()
@@ -441,11 +441,11 @@ class ProtocolComplianceValidator:
             self.compliance_results["compliant_protocols"] += 1
             self.compliance_results["protocol_details"]["WSP_48"] = wsp48_compliance
             
-            logger.info(f"✅ WSP 48: PASSED - {wsp48_compliance['compliance_score']:.2%} compliance")
+            logger.info(f"[OK] WSP 48: PASSED - {wsp48_compliance['compliance_score']:.2%} compliance")
             
         except Exception as e:
             self.compliance_results["non_compliant_protocols"] += 1
-            logger.error(f"❌ WSP 48: FAILED - {e}")
+            logger.error(f"[FAIL] WSP 48: FAILED - {e}")
     
     # Helper methods for validation checks
     async def _check_agent_activation(self) -> bool:
@@ -614,7 +614,7 @@ class ProtocolComplianceValidator:
 
 async def main():
     """Main protocol compliance validation function."""
-    print("📋 Protocol Compliance Validation Suite")
+    print("[CLIPBOARD] Protocol Compliance Validation Suite")
     print("=" * 50)
     
     validator = ProtocolComplianceValidator()
@@ -622,26 +622,26 @@ async def main():
     try:
         results = await validator.validate_all_protocols()
         
-        print(f"\n📊 Compliance Results:")
+        print(f"\n[DATA] Compliance Results:")
         print(f"Total Protocols: {results['total_protocols']}")
         print(f"Compliant: {results['compliant_protocols']}")
         print(f"Non-Compliant: {results['non_compliant_protocols']}")
         print(f"Overall Compliance: {results['overall_compliance_score']:.2%}")
         
         if results['protocol_details']:
-            print(f"\n📋 Protocol Details:")
+            print(f"\n[CLIPBOARD] Protocol Details:")
             for protocol, details in results['protocol_details'].items():
                 print(f"  {protocol}: {details['compliance_score']:.2%} compliance")
         
         if results['non_compliant_protocols'] == 0:
-            print("\n✅ All protocols compliant! System meets WSP standards.")
+            print("\n[OK] All protocols compliant! System meets WSP standards.")
         else:
-            print(f"\n⚠️ {results['non_compliant_protocols']} protocols need attention.")
+            print(f"\n[U+26A0]️ {results['non_compliant_protocols']} protocols need attention.")
         
         return results
         
     except Exception as e:
-        print(f"\n❌ Protocol compliance validation failed: {e}")
+        print(f"\n[FAIL] Protocol compliance validation failed: {e}")
         return {"error": str(e)}
 
 

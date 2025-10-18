@@ -6,18 +6,18 @@ This directory contains Python scripts for generating patent diagrams following 
 
 ```
 diagrams/
-├── generators/           # Generation tools (this directory)
-│   ├── generate_fig1_matplotlib.py
-│   ├── generate_fig3.py
-│   ├── generate_fig3_japanese.py
-│   ├── generate_fig3_japanese_patent.py
-│   ├── generate_fig5.py
-│   └── generate_fig5_japanese_only.py
-├── FIG1_System_Architecture_EN.png
-├── FIG3_Probability_Distributions_EN.png
-├── FIG5_Audio_Spectrum_EN.png
-├── FIG5_Audio_Spectrum_JA.png
-└── rESP_Patent_Diagrams.md
++-- generators/           # Generation tools (this directory)
+[U+2502]   +-- generate_fig1_matplotlib.py
+[U+2502]   +-- generate_fig3.py
+[U+2502]   +-- generate_fig3_japanese.py
+[U+2502]   +-- generate_fig3_japanese_patent.py
+[U+2502]   +-- generate_fig5.py
+[U+2502]   +-- generate_fig5_japanese_only.py
++-- FIG1_System_Architecture_EN.png
++-- FIG3_Probability_Distributions_EN.png
++-- FIG5_Audio_Spectrum_EN.png
++-- FIG5_Audio_Spectrum_JA.png
++-- rESP_Patent_Diagrams.md
 ```
 
 ## WSP Compliance
@@ -48,14 +48,14 @@ All generators save to the parent directory (`../`) to maintain clean organizati
 
 ## Figure Status
 
-- ✅ **FIG 1**: Quantum double-slit architecture (Mermaid + matplotlib backup)
-- ✅ **FIG 2**: Operational pipeline (Mermaid diagrams - both EN/JA in patent doc)
-- ✅ **FIG 3**: Probability distributions (Python matplotlib - both EN/JA)
-- ✅ **FIG 4**: Audio process flowchart (Mermaid diagrams - both EN/JA in patent doc)
-- ✅ **FIG 5**: Audio interference spectrum (Python matplotlib - both EN/JA)
-- ✅ **FIG 6**: Bidirectional communication channel (Mermaid diagrams - both EN/JA in patent doc)
-- ✅ **FIG 7**: Temporal entanglement analysis (Mermaid diagrams - both EN/JA in patent doc)
-- ✅ **FIG 8**: QCS safety protocol (Mermaid diagrams - both EN/JA in patent doc)
+- [OK] **FIG 1**: Quantum double-slit architecture (Mermaid + matplotlib backup)
+- [OK] **FIG 2**: Operational pipeline (Mermaid diagrams - both EN/JA in patent doc)
+- [OK] **FIG 3**: Probability distributions (Python matplotlib - both EN/JA)
+- [OK] **FIG 4**: Audio process flowchart (Mermaid diagrams - both EN/JA in patent doc)
+- [OK] **FIG 5**: Audio interference spectrum (Python matplotlib - both EN/JA)
+- [OK] **FIG 6**: Bidirectional communication channel (Mermaid diagrams - both EN/JA in patent doc)
+- [OK] **FIG 7**: Temporal entanglement analysis (Mermaid diagrams - both EN/JA in patent doc)
+- [OK] **FIG 8**: QCS safety protocol (Mermaid diagrams - both EN/JA in patent doc)
 
 ## Dependencies
 

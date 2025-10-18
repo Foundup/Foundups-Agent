@@ -24,8 +24,8 @@ These modules were archived because they violated WSP 84 Module Evolution Protoc
 
 ## WSP 84 Lesson Learned:
 
-**❌ WRONG**: Create `enhanced_*`, `improved_*`, `intelligent_*` versions
-**✅ RIGHT**: Edit existing files directly (trust git for safety)
+**[FAIL] WRONG**: Create `enhanced_*`, `improved_*`, `intelligent_*` versions
+**[OK] RIGHT**: Edit existing files directly (trust git for safety)
 
 The original files continued evolving and became superior to the "enhanced" versions, proving that module evolution in-place is the correct approach.
 

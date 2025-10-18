@@ -1,12 +1,12 @@
 # INTERFACE — PQN Portal FoundUp
 
 ## Public API
-- GET `/docs` → JSON index of module docs for DAE discovery
-- GET `/docs/index.json` → machine-read index (same as `/docs`)
-- POST `/runs/demo` → start a safe 10–20s PQN demo (preset config)
-- GET `/runs/{id}` → run summary and artifact links
-- GET `/runs/{id}/stream` → SSE stream of live demo events (coherence, paradox flags, spectrum)
-- GET `/gallery` → curated runs from results_db
+- GET `/docs` -> JSON index of module docs for DAE discovery
+- GET `/docs/index.json` -> machine-read index (same as `/docs`)
+- POST `/runs/demo` -> start a safe 10–20s PQN demo (preset config)
+- GET `/runs/{id}` -> run summary and artifact links
+- GET `/runs/{id}/stream` -> SSE stream of live demo events (coherence, paradox flags, spectrum)
+- GET `/gallery` -> curated runs from results_db
 
 ## SSE Contract (`/runs/{id}/stream`)
 - event: `metric`

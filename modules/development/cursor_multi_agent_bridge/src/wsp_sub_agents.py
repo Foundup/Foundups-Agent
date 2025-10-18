@@ -389,7 +389,7 @@ class WSPTestingSubAgent:
             "violations": violations,
             "suggestions": suggestions + [
                 "WSP 34: Ensure test directory exists",
-                "WSP 5: Target ≥90% test coverage"
+                "WSP 5: Target [GREATER_EQUAL]90% test coverage"
             ],
             "confidence": 0.9
         }
@@ -410,7 +410,7 @@ class WSPTestingSubAgent:
             "wsp5_compliant": coverage_percentage >= 90,
             "violations": violations,
             "suggestions": [
-                "WSP 5: Achieve ≥90% test coverage",
+                "WSP 5: Achieve [GREATER_EQUAL]90% test coverage",
                 "Add tests for uncovered code paths"
             ],
             "confidence": 0.85

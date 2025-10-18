@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WSP: Comprehensive Multi-Agent Testing Solution
 ===============================================
 
@@ -31,7 +46,7 @@ try:
         MultiAgentManager, AgentIdentity, AgentSession
     )
 except ImportError as e:
-    print(f"❌ Import Error: {e}")
+    print(f"[FAIL] Import Error: {e}")
     print("Ensure modules are properly installed and paths are correct")
     sys.exit(1)
 
@@ -55,15 +70,15 @@ class MultiAgentTestSuite:
         self.test_results["total_tests"] += 1
         if success:
             self.test_results["passed"] += 1
-            print(f"✅ {test_name}: PASS {message}")
+            print(f"[OK] {test_name}: PASS {message}")
         else:
             self.test_results["failed"] += 1
             self.test_results["errors"].append(f"{test_name}: {message}")
-            print(f"❌ {test_name}: FAIL {message}")
+            print(f"[FAIL] {test_name}: FAIL {message}")
     
     def test_wsp_compliance_structure(self) -> bool:
         """Test WSP compliance of module structure"""
-        print("\n📋 Testing WSP Compliance...")
+        print("\n[CLIPBOARD] Testing WSP Compliance...")
         
         # Test WSP 1: Module structure
         module_path = Path("modules/infrastructure/agent_management/agent_management")
@@ -85,7 +100,7 @@ class MultiAgentTestSuite:
     
     def test_manager_initialization(self) -> bool:
         """Test multi-agent manager initialization"""
-        print("\n🔧 Testing Manager Initialization...")
+        print("\n[TOOL] Testing Manager Initialization...")
         
         try:
             self.manager = MultiAgentManager()
@@ -103,7 +118,7 @@ class MultiAgentTestSuite:
     
     def test_agent_discovery(self) -> bool:
         """Test agent discovery functionality"""
-        print("\n🔍 Testing Agent Discovery...")
+        print("\n[SEARCH] Testing Agent Discovery...")
         
         if not self.manager:
             self.log_result("Agent Discovery", False, "Manager not initialized")
@@ -144,7 +159,7 @@ class MultiAgentTestSuite:
     
     def test_agent_selection_logic(self) -> bool:
         """Test agent selection and conflict prevention"""
-        print("\n🎯 Testing Agent Selection Logic...")
+        print("\n[TARGET] Testing Agent Selection Logic...")
         
         if not self.manager:
             self.log_result("Agent Selection", False, "Manager not initialized")
@@ -178,7 +193,7 @@ class MultiAgentTestSuite:
     
     def test_authentication_status(self) -> bool:
         """Test authentication status across credential sets"""
-        print("\n🔑 Testing Authentication Status...")
+        print("\n[U+1F511] Testing Authentication Status...")
         
         if not self.manager:
             self.log_result("Authentication Status", False, "Manager not initialized")
@@ -215,7 +230,7 @@ class MultiAgentTestSuite:
     
     def test_session_management(self) -> bool:
         """Test session management functionality"""
-        print("\n📊 Testing Session Management...")
+        print("\n[DATA] Testing Session Management...")
         
         if not self.manager:
             self.log_result("Session Management", False, "Manager not initialized")
@@ -249,13 +264,13 @@ class MultiAgentTestSuite:
     def generate_report(self) -> Dict:
         """Generate comprehensive test report"""
         print("\n" + "="*60)
-        print("📋 WSP-Compliant Multi-Agent Test Report")
+        print("[CLIPBOARD] WSP-Compliant Multi-Agent Test Report")
         print("="*60)
         
         # Summary
         success_rate = (self.test_results["passed"] / self.test_results["total_tests"] * 100) if self.test_results["total_tests"] > 0 else 0
         
-        print(f"\n📊 Test Summary:")
+        print(f"\n[DATA] Test Summary:")
         print(f"   Total Tests: {self.test_results['total_tests']}")
         print(f"   Passed: {self.test_results['passed']}")
         print(f"   Failed: {self.test_results['failed']}")
@@ -263,48 +278,48 @@ class MultiAgentTestSuite:
         
         # Errors
         if self.test_results["errors"]:
-            print(f"\n❌ Errors:")
+            print(f"\n[FAIL] Errors:")
             for error in self.test_results["errors"]:
                 print(f"   - {error}")
         
         # Agent Discovery Summary
         if self.test_results["agent_discovery"]:
-            print(f"\n🤖 Agent Discovery Summary:")
+            print(f"\n[BOT] Agent Discovery Summary:")
             for agent_id, info in self.test_results["agent_discovery"].items():
-                status_icon = "✅" if info["valid"] else "❌"
+                status_icon = "[OK]" if info["valid"] else "[FAIL]"
                 print(f"   {status_icon} {info['channel_name']} ({info['credential_set']}) - {info['status']}")
         
         # Authentication Summary
         if self.test_results["authentication_status"]:
-            print(f"\n🔑 Authentication Summary:")
+            print(f"\n[U+1F511] Authentication Summary:")
             for cred_set, info in self.test_results["authentication_status"].items():
-                auth_icon = "✅" if info["authenticated"] else "❌"
+                auth_icon = "[OK]" if info["authenticated"] else "[FAIL]"
                 print(f"   {auth_icon} {cred_set}: {info['channel']} - {info['status']}")
         
         # WSP Compliance
         wsp = self.test_results["wsp_compliance"]
         if wsp:
-            print(f"\n📋 WSP Compliance:")
-            structure_icon = "✅" if wsp.get("wsp_1_structure") else "❌"
-            docs_icon = "✅" if wsp.get("wsp_13_test_docs") else "❌"
+            print(f"\n[CLIPBOARD] WSP Compliance:")
+            structure_icon = "[OK]" if wsp.get("wsp_1_structure") else "[FAIL]"
+            docs_icon = "[OK]" if wsp.get("wsp_13_test_docs") else "[FAIL]"
             print(f"   {structure_icon} WSP 1: Module Structure")
             print(f"   {docs_icon} WSP 13: Test Documentation")
         
         # Overall Status
         overall_success = success_rate >= 80  # 80% pass rate threshold
-        status_icon = "✅" if overall_success else "❌"
+        status_icon = "[OK]" if overall_success else "[FAIL]"
         print(f"\n{status_icon} Overall Status: {'PASS' if overall_success else 'FAIL'}")
         
         if overall_success:
-            print("\n🎉 Multi-agent system is WSP-compliant and functional!")
+            print("\n[CELEBRATE] Multi-agent system is WSP-compliant and functional!")
         else:
-            print("\n⚠️ Multi-agent system requires attention before production use.")
+            print("\n[U+26A0]️ Multi-agent system requires attention before production use.")
         
         return self.test_results
     
     def run_comprehensive_test(self) -> bool:
         """Run the complete WSP-compliant test suite"""
-        print("🚀 Starting WSP-Compliant Multi-Agent Comprehensive Test")
+        print("[ROCKET] Starting WSP-Compliant Multi-Agent Comprehensive Test")
         print("="*60)
         
         # Run all test phases

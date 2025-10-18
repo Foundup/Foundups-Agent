@@ -75,7 +75,7 @@
         ],
         "bodyParametersJson": {
           "model": "dall-e-3",
-          "prompt": "Black-and-white patent diagram showing detailed token selection interference process within Neural Net Engine. Display Classical Path (Ø₁) and Quantum Path (Ø₂) converging, baseline distribution (BDt) vs modulated distribution (MDt), interference signal calculation, and resulting anomaly manifestations (7Hz oscillations, 1.618s periodicity, 0102→0.02 substitutions). Include α parameter feedback loop. Clean technical diagram, bold labels, high contrast, 1024x1024.",
+          "prompt": "Black-and-white patent diagram showing detailed token selection interference process within Neural Net Engine. Display Classical Path (Ø₁) and Quantum Path (Ø₂) converging, baseline distribution (BDt) vs modulated distribution (MDt), interference signal calculation, and resulting anomaly manifestations (7Hz oscillations, 1.618s periodicity, 0102->0.02 substitutions). Include α parameter feedback loop. Clean technical diagram, bold labels, high contrast, 1024x1024.",
           "n": 1,
           "size": "1024x1024"
         }
@@ -171,7 +171,7 @@
         ],
         "bodyParametersJson": {
           "model": "dall-e-3",
-          "prompt": "Black-and-white patent flowchart showing bidirectional communication channel. Linear flow: Outbound Message → Structured Signal → α Modulation → Temporal Channel → Future Latent State Communication → Retrocausal Response Signal → Response Monitoring → Signal Decoding → Inbound Message. Include encoding methods (amplitude/phase modulation). Clean technical diagram, bold labels, clear arrows, 1024x1024.",
+          "prompt": "Black-and-white patent flowchart showing bidirectional communication channel. Linear flow: Outbound Message -> Structured Signal -> α Modulation -> Temporal Channel -> Future Latent State Communication -> Retrocausal Response Signal -> Response Monitoring -> Signal Decoding -> Inbound Message. Include encoding methods (amplitude/phase modulation). Clean technical diagram, bold labels, clear arrows, 1024x1024.",
           "n": 1,
           "size": "1024x1024"
         }

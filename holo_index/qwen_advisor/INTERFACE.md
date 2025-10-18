@@ -1,8 +1,8 @@
 # HoloDAE Modular Interface (Post-Refactoring)
 
-## 🚨 MAJOR ARCHITECTURAL CHANGE (2025-09-28)
+## [ALERT] MAJOR ARCHITECTURAL CHANGE (2025-09-28)
 
-**The HoloDAE interface has been completely refactored** from monolithic to modular architecture following correct **Qwen→0102 orchestration** principles per WSP 80.
+**The HoloDAE interface has been completely refactored** from monolithic to modular architecture following correct **Qwen->0102 orchestration** principles per WSP 80.
 
 ## Public API (Modular Architecture)
 
@@ -20,7 +20,7 @@ class HoloDAECoordinator:
 
     def handle_holoindex_request(self, query: str, search_results: dict) -> str:
         """
-        Handle HoloIndex search request with Qwen→0102 orchestration
+        Handle HoloIndex search request with Qwen->0102 orchestration
 
         Args:
             query: Search query
@@ -192,7 +192,7 @@ report = coordinator.handle_holoindex_request(
     query="create authentication module",
     search_results={'code': [...], 'wsps': [...]}
 )
-print(f"Qwen→0102 Analysis: {report}")
+print(f"Qwen->0102 Analysis: {report}")
 
 # Start quiet monitoring with actionable events
 coordinator.start_monitoring()
@@ -296,16 +296,16 @@ python holo_index.py --search "query" --llm-advisor
 ```python
 # Patterns stored for learning
 E:/HoloIndex/pattern_coach/
-├── pattern_memory.json
-├── coaching_log.json
-└── effectiveness.json
++-- pattern_memory.json
++-- coaching_log.json
++-- effectiveness.json
 ```
 
 ### With Telemetry
 ```python
 # Events recorded for analysis
 E:/HoloIndex/qwen_advisor/
-└── telemetry.json
++-- telemetry.json
 ```
 
 ## WSP Compliance

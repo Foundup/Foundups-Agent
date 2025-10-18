@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 TSUNAMI WAVE: Generate Complete Sentinel Opportunity Matrix
 
 Batch process ALL 93 WSPs through validated Phase 5 pipeline
@@ -61,7 +78,7 @@ def generate_complete_matrix():
     """
     print("\n" + "=" * 70)
     print("TSUNAMI WAVE: COMPLETE SENTINEL OPPORTUNITY MATRIX")
-    print("   93 WSPs → Complete Augmentation Roadmap")
+    print("   93 WSPs -> Complete Augmentation Roadmap")
     print("=" * 70)
 
     # Initialize analyzer
@@ -73,7 +90,7 @@ def generate_complete_matrix():
     print("\n[DISCOVERY] Finding all WSPs...")
     wsp_numbers = get_all_wsp_numbers()
     print(f"   [OK] Found {len(wsp_numbers)} WSPs")
-    print(f"   Range: WSP {wsp_numbers[0]} → WSP {wsp_numbers[-1]}")
+    print(f"   Range: WSP {wsp_numbers[0]} -> WSP {wsp_numbers[-1]}")
 
     # Batch analyze all WSPs
     print(f"\n[TSUNAMI] Analyzing {len(wsp_numbers)} WSPs...")

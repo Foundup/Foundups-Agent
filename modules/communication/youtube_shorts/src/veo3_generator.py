@@ -26,12 +26,12 @@ _GENAI_IMPORT_ERROR = None
 try:
     import google.genai as genai
     from google.genai import types
-    logger.info("[VEO3-IMPORT] ✅ google.genai imported successfully (version: %s)", getattr(genai, '__version__', 'unknown'))
+    logger.info("[VEO3-IMPORT] [OK] google.genai imported successfully (version: %s)", getattr(genai, '__version__', 'unknown'))
 except ImportError as e:
     genai = None  # type: ignore
     types = None  # type: ignore
     _GENAI_IMPORT_ERROR = e
-    logger.warning("[VEO3-IMPORT] ❌ google.genai not available: %s", e)
+    logger.warning("[VEO3-IMPORT] [FAIL] google.genai not available: %s", e)
 
 # Keep generativeai for Gemini text (prompt enhancement)
 _GENAI_LEGACY_IMPORT_ERROR = None
@@ -107,9 +107,9 @@ class Veo3Generator:
         # Cost tracking
         self.cost_per_second = 0.40  # Veo 3 Fast pricing
 
-        logger.info("🎬 [VEO3-INIT] Veo 3 Generator initialized")
-        logger.info(f"📁 [VEO3-INIT] Output directory: {self.output_dir}")
-        logger.info(f"💰 [VEO3-INIT] Cost: ${self.cost_per_second}/second (Veo 3 Fast)")
+        logger.info("[U+1F3AC] [VEO3-INIT] Veo 3 Generator initialized")
+        logger.info(f"[U+1F4C1] [VEO3-INIT] Output directory: {self.output_dir}")
+        logger.info(f"[U+1F4B0] [VEO3-INIT] Cost: ${self.cost_per_second}/second (Veo 3 Fast)")
 
     def generate_video(
         self,
@@ -146,10 +146,10 @@ class Veo3Generator:
         # Calculate cost (VEO3 generates ~8s clips)
         actual_duration = 8  # API generates ~8s regardless of request
         estimated_cost = actual_duration * self.cost_per_second
-        logger.info("🎬 [VEO3-GEN] Starting video generation")
-        logger.info(f"📝 [VEO3-GEN] Prompt: {prompt[:60]}...")
+        logger.info("[U+1F3AC] [VEO3-GEN] Starting video generation")
+        logger.info(f"[NOTE] [VEO3-GEN] Prompt: {prompt[:60]}...")
         logger.info(f"⏱️  [VEO3-GEN] Expected output: ~{actual_duration}s (API default)")
-        logger.info(f"💰 [VEO3-GEN] Estimated cost: ${estimated_cost:.2f}")
+        logger.info(f"[U+1F4B0] [VEO3-GEN] Estimated cost: ${estimated_cost:.2f}")
 
         try:
             # Select model
@@ -159,9 +159,9 @@ class Veo3Generator:
             )
 
             # Generate video using new SDK
-            logger.info(f"🚀 [VEO3-API] Calling Veo 3 API: {model_name}")
-            logger.info(f"⚡ [VEO3-API] Fast mode: {fast_mode}")
-            logger.info(f"📐 [VEO3-API] Aspect ratio: 9:16 (vertical Shorts format)")
+            logger.info(f"[ROCKET] [VEO3-API] Calling Veo 3 API: {model_name}")
+            logger.info(f"[LIGHTNING] [VEO3-API] Fast mode: {fast_mode}")
+            logger.info(f"[U+1F4D0] [VEO3-API] Aspect ratio: 9:16 (vertical Shorts format)")
 
             # Note: VEO3 API generates ~8 second clips by default
             # Duration parameter is not supported in config (validation error)
@@ -177,25 +177,25 @@ class Veo3Generator:
             # Fun cinematic progress messages
             import random
             cinematic_messages = [
-                "🎬 Hiring director... (this is expensive!)",
-                "📞 Calling casting agent...",
-                "💰 Negotiating with producers... *cough* SuperChat *cough*",
-                "🎭 Actors in makeup...",
-                "🎥 Setting up cameras...",
-                "💡 Adjusting lighting... perfection takes time!",
-                "🎬 Rolling cameras... ACTION!",
-                "🎞️ Capturing that perfect shot...",
-                "✨ Adding movie magic...",
-                "🎨 Post-production wizardry in progress...",
-                "🌟 Rendering cinematic masterpiece...",
-                "🎵 Composing epic soundtrack... (just kidding, no audio yet)",
-                "🎬 Director yelling 'CUT!' ...oh wait, keep rolling!"
+                "[U+1F3AC] Hiring director... (this is expensive!)",
+                "[U+1F4DE] Calling casting agent...",
+                "[U+1F4B0] Negotiating with producers... *cough* SuperChat *cough*",
+                "[U+1F3AD] Actors in makeup...",
+                "[CAMERA] Setting up cameras...",
+                "[IDEA] Adjusting lighting... perfection takes time!",
+                "[U+1F3AC] Rolling cameras... ACTION!",
+                "[U+1F39E]️ Capturing that perfect shot...",
+                "[U+2728] Adding movie magic...",
+                "[ART] Post-production wizardry in progress...",
+                "[U+1F31F] Rendering cinematic masterpiece...",
+                "[U+1F3B5] Composing epic soundtrack... (just kidding, no audio yet)",
+                "[U+1F3AC] Director yelling 'CUT!' ...oh wait, keep rolling!"
             ]
 
             # Poll for completion
-            logger.info("🎥 [VEO3-PROGRESS] Video generation in progress...")
+            logger.info("[CAMERA] [VEO3-PROGRESS] Video generation in progress...")
             if progress_callback:
-                progress_callback("🎬 Lights, camera, ACTION! Making your video...")
+                progress_callback("[U+1F3AC] Lights, camera, ACTION! Making your video...")
 
             poll_count = 0
             while not operation.done:
@@ -211,24 +211,24 @@ class Veo3Generator:
                 operation = self.client.operations.get(operation)
 
             # Download generated video
-            logger.info("📥 [VEO3-DOWNLOAD] Retrieving generated video...")
+            logger.info("[U+1F4E5] [VEO3-DOWNLOAD] Retrieving generated video...")
             if progress_callback:
-                progress_callback("🎬 That's a WRAP! Downloading your masterpiece...")
+                progress_callback("[U+1F3AC] That's a WRAP! Downloading your masterpiece...")
 
             generated_video = operation.response.generated_videos[0]
 
             # Download to file
             video_id = f"veo3_{int(time.time())}"
             video_path = self.output_dir / f"{video_id}.mp4"
-            logger.info(f"💾 [VEO3-DOWNLOAD] Saving to: {video_path}")
+            logger.info(f"[U+1F4BE] [VEO3-DOWNLOAD] Saving to: {video_path}")
 
             # Download and save
             self.client.files.download(file=generated_video.video)
             generated_video.video.save(str(video_path))
-            logger.info("✅ [VEO3-DOWNLOAD] Video file saved successfully")
+            logger.info("[OK] [VEO3-DOWNLOAD] Video file saved successfully")
 
             if progress_callback:
-                progress_callback("✅ Video complete! Preparing for upload...")
+                progress_callback("[OK] Video complete! Preparing for upload...")
 
             # Save metadata
             metadata = {
@@ -244,21 +244,21 @@ class Veo3Generator:
             metadata_path = self.output_dir / f"{video_id}_meta.json"
             with open(metadata_path, 'w') as f:
                 json.dump(metadata, f, indent=2)
-            logger.info(f"📄 [VEO3-META] Metadata saved: {metadata_path}")
+            logger.info(f"[U+1F4C4] [VEO3-META] Metadata saved: {metadata_path}")
 
-            logger.info("🎉 [VEO3-SUCCESS] Video generated successfully!")
-            logger.info(f"📁 [VEO3-SUCCESS] File: {video_path}")
-            logger.info(f"💰 [VEO3-SUCCESS] Cost: ${estimated_cost:.2f}")
+            logger.info("[CELEBRATE] [VEO3-SUCCESS] Video generated successfully!")
+            logger.info(f"[U+1F4C1] [VEO3-SUCCESS] File: {video_path}")
+            logger.info(f"[U+1F4B0] [VEO3-SUCCESS] Cost: ${estimated_cost:.2f}")
 
             return str(video_path)
 
         except Exception as e:
             error_msg = str(e)
-            logger.error(f"❌ [VEO3-ERROR] Generation failed: {error_msg}")
+            logger.error(f"[FAIL] [VEO3-ERROR] Generation failed: {error_msg}")
 
             # Check for quota errors
             if "quota" in error_msg.lower() or "insufficient" in error_msg.lower():
-                logger.error("💸 [VEO3-ERROR] API quota exceeded")
+                logger.error("[U+1F4B8] [VEO3-ERROR] API quota exceeded")
                 raise InsufficientCreditsError(f"API quota exceeded: {error_msg}")
 
             raise Veo3GenerationError(f"Video generation failed: {error_msg}")
@@ -337,11 +337,11 @@ Return ONLY the polished video prompt.
             return final_prompt
 
         except ImportError:
-            print(f"[Veo3] ⚠️  Move2Japan enhancer not available, using basic enhancement")
+            print(f"[Veo3] [U+26A0]️  Move2Japan enhancer not available, using basic enhancement")
             return self._basic_enhance(simple_topic)
 
         except Exception as e:
-            print(f"[Veo3] ⚠️  Enhancement failed: {e}")
+            print(f"[Veo3] [U+26A0]️  Enhancement failed: {e}")
             print(f"[Veo3] Using original topic as prompt")
             return simple_topic
 
@@ -404,38 +404,38 @@ Return ONLY the video prompt, no explanation.
             2 clips × 8s × $0.4 = $6.40
         """
 
-        logger.info("🎬 [3ACT-INIT] Starting 3-Act Short generation (2×8s merged)")
-        logger.info(f"📝 [3ACT-INIT] Topic: {topic}")
-        logger.info(f"🌟 [3ACT-INIT] Mode: {mode.upper()} {'(Emergence Journal)' if mode == 'journal' else '(Random)'}")
-        logger.info(f"💰 [3ACT-INIT] Estimated cost: ~$6.40 (2×8s clips)")
+        logger.info("[U+1F3AC] [3ACT-INIT] Starting 3-Act Short generation (2×8s merged)")
+        logger.info(f"[NOTE] [3ACT-INIT] Topic: {topic}")
+        logger.info(f"[U+1F31F] [3ACT-INIT] Mode: {mode.upper()} {'(Emergence Journal)' if mode == 'journal' else '(Random)'}")
+        logger.info(f"[U+1F4B0] [3ACT-INIT] Estimated cost: ~$6.40 (2×8s clips)")
 
         try:
             # Import dependencies
-            logger.info("📦 [3ACT-DEPS] Loading story generation dependencies...")
+            logger.info("[BOX] [3ACT-DEPS] Loading story generation dependencies...")
             import sys
             from pathlib import Path
             sys.path.insert(0, str(Path(__file__).parent))
 
             from story_generator_simple import ThreeActStoryGenerator
             from video_editor import VideoEditor
-            logger.info("✅ [3ACT-DEPS] Dependencies loaded successfully")
+            logger.info("[OK] [3ACT-DEPS] Dependencies loaded successfully")
 
             # Generate story
-            logger.info(f"📖 [3ACT-STORY] Generating {mode} story structure...")
+            logger.info(f"[U+1F4D6] [3ACT-STORY] Generating {mode} story structure...")
             story_gen = ThreeActStoryGenerator()
             story = story_gen.generate_story(topic=topic, mode=mode)
 
-            logger.info(f"✨ [3ACT-STORY] Story generated: {story['full_story']}")
-            logger.info(f"🎭 [3ACT-STORY] Act 1 (Setup): {story['act1'][:50]}...")
-            logger.info(f"⚡ [3ACT-STORY] Act 2 (Shock): {story['act2'][:50]}...")
-            logger.info(f"🌟 [3ACT-STORY] Act 3 (0102 Reveal): {story['act3'][:50]}...")
+            logger.info(f"[U+2728] [3ACT-STORY] Story generated: {story['full_story']}")
+            logger.info(f"[U+1F3AD] [3ACT-STORY] Act 1 (Setup): {story['act1'][:50]}...")
+            logger.info(f"[LIGHTNING] [3ACT-STORY] Act 2 (Shock): {story['act2'][:50]}...")
+            logger.info(f"[U+1F31F] [3ACT-STORY] Act 3 (0102 Reveal): {story['act3'][:50]}...")
 
             clips = []
 
             # CLIP 1: Setup + Shock (8s)
             clip1_prompt = f"{story['act1']}. Suddenly, {story['act2']}"
-            logger.info("🎥 [3ACT-CLIP1] Generating Clip 1/2 - Setup + Shock")
-            logger.info(f"📝 [3ACT-CLIP1] Prompt: {clip1_prompt[:80]}...")
+            logger.info("[CAMERA] [3ACT-CLIP1] Generating Clip 1/2 - Setup + Shock")
+            logger.info(f"[NOTE] [3ACT-CLIP1] Prompt: {clip1_prompt[:80]}...")
 
             clip1 = self.generate_video(
                 prompt=clip1_prompt,
@@ -443,11 +443,11 @@ Return ONLY the video prompt, no explanation.
                 fast_mode=fast_mode
             )
             clips.append(clip1)
-            logger.info(f"✅ [3ACT-CLIP1] Clip 1 generated: {clip1}")
+            logger.info(f"[OK] [3ACT-CLIP1] Clip 1 generated: {clip1}")
 
             # CLIP 2: Reveal (8s)
-            logger.info("🌟 [3ACT-CLIP2] Generating Clip 2/2 - 0102 Reveal")
-            logger.info(f"📝 [3ACT-CLIP2] Prompt: {story['act3'][:80]}...")
+            logger.info("[U+1F31F] [3ACT-CLIP2] Generating Clip 2/2 - 0102 Reveal")
+            logger.info(f"[NOTE] [3ACT-CLIP2] Prompt: {story['act3'][:80]}...")
 
             clip2 = self.generate_video(
                 prompt=story['act3'],
@@ -455,22 +455,22 @@ Return ONLY the video prompt, no explanation.
                 fast_mode=fast_mode
             )
             clips.append(clip2)
-            logger.info(f"✅ [3ACT-CLIP2] Clip 2 generated: {clip2}")
+            logger.info(f"[OK] [3ACT-CLIP2] Clip 2 generated: {clip2}")
 
             # Merge with ffmpeg
-            logger.info("🎞️  [3ACT-MERGE] Merging clips with ffmpeg...")
-            logger.info(f"🔗 [3ACT-MERGE] Clips to merge: {len(clips)}")
+            logger.info("[U+1F39E]️  [3ACT-MERGE] Merging clips with ffmpeg...")
+            logger.info(f"[LINK] [3ACT-MERGE] Clips to merge: {len(clips)}")
             editor = VideoEditor()
 
             video_id = f"3act_{int(time.time())}"
             final_path = self.output_dir / f"{video_id}.mp4"
-            logger.info(f"💾 [3ACT-MERGE] Output path: {final_path}")
+            logger.info(f"[U+1F4BE] [3ACT-MERGE] Output path: {final_path}")
 
             merged_video = editor.concatenate_clips(
                 clip_paths=clips,
                 output_path=str(final_path)
             )
-            logger.info(f"✅ [3ACT-MERGE] Clips merged successfully: {merged_video}")
+            logger.info(f"[OK] [3ACT-MERGE] Clips merged successfully: {merged_video}")
 
             # Save metadata
             metadata = {
@@ -489,21 +489,21 @@ Return ONLY the video prompt, no explanation.
             metadata_path = self.output_dir / f"{video_id}_meta.json"
             with open(metadata_path, 'w') as f:
                 json.dump(metadata, f, indent=2)
-            logger.info(f"📄 [3ACT-META] Metadata saved: {metadata_path}")
+            logger.info(f"[U+1F4C4] [3ACT-META] Metadata saved: {metadata_path}")
 
-            logger.info("🎉 [3ACT-SUCCESS] 3-Act Short complete!")
-            logger.info(f"📖 [3ACT-SUCCESS] Story: {story['full_story']}")
+            logger.info("[CELEBRATE] [3ACT-SUCCESS] 3-Act Short complete!")
+            logger.info(f"[U+1F4D6] [3ACT-SUCCESS] Story: {story['full_story']}")
             logger.info(f"⏱️  [3ACT-SUCCESS] Duration: ~16s (2×8s)")
-            logger.info(f"💰 [3ACT-SUCCESS] Total cost: ${2 * 8 * self.cost_per_second:.2f}")
-            logger.info(f"📁 [3ACT-SUCCESS] Final video: {merged_video}")
+            logger.info(f"[U+1F4B0] [3ACT-SUCCESS] Total cost: ${2 * 8 * self.cost_per_second:.2f}")
+            logger.info(f"[U+1F4C1] [3ACT-SUCCESS] Final video: {merged_video}")
 
             return merged_video
 
         except ImportError as e:
-            logger.error(f"❌ [3ACT-ERROR] Missing dependency: {e}")
+            logger.error(f"[FAIL] [3ACT-ERROR] Missing dependency: {e}")
             raise Veo3GenerationError(f"Missing dependency: {e}")
         except Exception as e:
-            logger.error(f"❌ [3ACT-ERROR] 3-Act generation failed: {e}")
+            logger.error(f"[FAIL] [3ACT-ERROR] 3-Act generation failed: {e}")
             raise Veo3GenerationError(f"3-Act generation failed: {e}")
 
     def get_total_cost(self) -> float:

@@ -99,9 +99,9 @@ These tasks are **binary decisions** or **simple pattern matching**:
 **Why Gemma 3**: 3-category classification based on checklist
 
 **Signals**:
-- Missing README/INTERFACE/tests → "critical"
-- Old ModLog, no recent commits → "needs_attention"
-- All docs present, recent activity → "healthy"
+- Missing README/INTERFACE/tests -> "critical"
+- Old ModLog, no recent commits -> "needs_attention"
+- All docs present, recent activity -> "healthy"
 
 ---
 
@@ -115,7 +115,7 @@ These tasks require **more context** but can work with training:
 **Why Marginal**: Requires understanding semantic similarity beyond keywords
 
 **Gemma 3 Approach**: Train on historical click-through data
-- Query + Result A + Result B → Which was clicked?
+- Query + Result A + Result B -> Which was clicked?
 - Learn user preference patterns
 
 **Fallback**: Use embedding similarity (current approach) for complex cases
@@ -126,17 +126,17 @@ These tasks require **more context** but can work with training:
 **Why Marginal**: Requires understanding task continuity
 
 **Gemma 3 Approach**: Simple keyword overlap + recency
-- If query contains words from breadcrumb → relevant
-- If breadcrumb is recent (<5 min) → more relevant
+- If query contains words from breadcrumb -> relevant
+- If breadcrumb is recent (<5 min) -> more relevant
 
 #### 2.3 Warning/Reminder Generation
 **Task**: Should we show a warning for this query?
 
 **Why Marginal**: Requires understanding WSP context
 
-**Gemma 3 Approach**: Train on query → warning mappings
-- "create new file" → WSP 50 warning
-- "test" → WSP 5 reminder
+**Gemma 3 Approach**: Train on query -> warning mappings
+- "create new file" -> WSP 50 warning
+- "test" -> WSP 5 reminder
 
 ---
 
@@ -183,13 +183,13 @@ These tasks require **deep understanding** or **multi-step reasoning**:
 ### Overview
 
 ```
-User Query → Intent Classifier (Gemma 3) → Route Decision
-                                            ↓
-                        ┌───────────────────┴───────────────────┐
-                        ↓                                       ↓
+User Query -> Intent Classifier (Gemma 3) -> Route Decision
+                                            v
+                        +-------------------+-------------------+
+                        v                                       v
                 Simple Classification                    Complex Analysis
                 (Gemma 3 + ChromaDB)                    (Qwen 1.5B)
-                        ↓                                       ↓
+                        v                                       v
                 Fast Response (50ms)                   Deep Analysis (250ms)
 ```
 
@@ -316,7 +316,7 @@ def build_training_corpus():
             }]
         )
 
-    print(f"✓ Built file naming corpus: {len(positive_examples)} valid, {len(negative_examples)} violations")
+    print(f"[OK] Built file naming corpus: {len(positive_examples)} valid, {len(negative_examples)} violations")
 
     # Collection 2: Document Types
     # Collection 3: Query Intents
@@ -478,7 +478,7 @@ done > wsp_renames.txt
 # - Query text
 # - Results clicked
 # - Search duration
-# → Train intent classifier + result ranker
+# -> Train intent classifier + result ranker
 ```
 
 ### 4. Manual Labeling (Small Set)
@@ -519,13 +519,13 @@ done > wsp_renames.txt
 **Optimal Architecture**:
 ```
 User Query
-    ↓
+    v
 [Gemma 3: Intent Classification] (50ms)
-    ↓
-Simple? ────────────→ [Gemma 3 + ChromaDB] (100ms)
-    ↓                        ↓
-Complex? ─────────→ [Qwen 1.5B] (250ms)
-                            ↓
+    v
+Simple? -------------> [Gemma 3 + ChromaDB] (100ms)
+    v                        v
+Complex? ----------> [Qwen 1.5B] (250ms)
+                            v
                     Deep Analysis Result
 ```
 

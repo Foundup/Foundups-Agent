@@ -37,8 +37,8 @@ try:
     from modules.infrastructure.testing_agent.src.testing_agent import TestingAgent
     WRE_AVAILABLE = True
 except ImportError as e:
-    print(f"❌ WSP/WRE components not available: {e}")
-    print("⚠️ Running in standalone mode")
+    print(f"[FAIL] WSP/WRE components not available: {e}")
+    print("[U+26A0]️ Running in standalone mode")
     wre_log = lambda msg, level: print(f"[{level}] {msg}")
     WRE_AVAILABLE = False
 
@@ -50,8 +50,8 @@ try:
     from src.exceptions import CursorWSPBridgeError
     BRIDGE_AVAILABLE = True
 except ImportError as e:
-    print(f"❌ Cursor Bridge components not available: {e}")
-    print("⚠️ Running in simulation mode")
+    print(f"[FAIL] Cursor Bridge components not available: {e}")
+    print("[U+26A0]️ Running in simulation mode")
     BRIDGE_AVAILABLE = False
 
 # Configure logging
@@ -94,8 +94,8 @@ class CursorBridgeDeployer:
         Returns:
             Dict containing deployment results and status
         """
-        wre_log("🚀 Starting Cursor Multi-Agent Bridge Deployment", "INFO")
-        wre_log("📋 Following WSP 54 Agent Deployment Protocols", "INFO")
+        wre_log("[ROCKET] Starting Cursor Multi-Agent Bridge Deployment", "INFO")
+        wre_log("[CLIPBOARD] Following WSP 54 Agent Deployment Protocols", "INFO")
         
         try:
             # Phase 1: Pre-deployment validation
@@ -125,18 +125,18 @@ class CursorBridgeDeployer:
             self.deployment_status["success"] = True
             self.deployment_status["status"] = "completed"
             
-            wre_log("✅ Cursor Multi-Agent Bridge Deployment Completed Successfully", "SUCCESS")
+            wre_log("[OK] Cursor Multi-Agent Bridge Deployment Completed Successfully", "SUCCESS")
             return self.deployment_status
             
         except Exception as e:
             self.deployment_status["status"] = "failed"
             self.deployment_status["errors"].append(str(e))
-            wre_log(f"❌ Deployment failed: {e}", "ERROR")
+            wre_log(f"[FAIL] Deployment failed: {e}", "ERROR")
             return self.deployment_status
     
     async def _validate_prerequisites(self):
         """Phase 1: Validate deployment prerequisites."""
-        wre_log("🔍 Phase 1: Validating Prerequisites", "INFO")
+        wre_log("[SEARCH] Phase 1: Validating Prerequisites", "INFO")
         
         # Check module structure
         required_files = [
@@ -157,27 +157,27 @@ class CursorBridgeDeployer:
                 missing_files.append(file_path)
         
         if missing_files:
-            wre_log(f"⚠️ Missing files: {missing_files}", "WARNING")
+            wre_log(f"[U+26A0]️ Missing files: {missing_files}", "WARNING")
             self.deployment_status["warnings"].append(f"Missing files: {missing_files}")
         else:
-            wre_log("✅ All required files present", "SUCCESS")
+            wre_log("[OK] All required files present", "SUCCESS")
         
-        wre_log("✅ Prerequisites validation completed", "SUCCESS")
+        wre_log("[OK] Prerequisites validation completed", "SUCCESS")
     
     async def _simulate_wre_integration(self):
         """Phase 2: Simulate WRE system integration."""
-        wre_log("🔗 Phase 2: Simulating WRE System Integration", "INFO")
+        wre_log("[LINK] Phase 2: Simulating WRE System Integration", "INFO")
         
         try:
             # Simulate WRE core initialization
-            wre_log("✅ WRE core simulation initialized", "SUCCESS")
+            wre_log("[OK] WRE core simulation initialized", "SUCCESS")
             
             # Simulate Cursor Bridge initialization
             if BRIDGE_AVAILABLE:
                 self.bridge = CursorWSPBridge()
-                wre_log("✅ Cursor Bridge initialized", "SUCCESS")
+                wre_log("[OK] Cursor Bridge initialized", "SUCCESS")
             else:
-                wre_log("⚠️ Cursor Bridge simulation mode", "WARNING")
+                wre_log("[U+26A0]️ Cursor Bridge simulation mode", "WARNING")
             
             # Simulate agent registration
             agent_data = {
@@ -198,24 +198,24 @@ class CursorBridgeDeployer:
                 "status": "active"
             }
             
-            wre_log(f"📝 Simulated agent registration: {agent_data['name']}", "INFO")
+            wre_log(f"[NOTE] Simulated agent registration: {agent_data['name']}", "INFO")
             
         except Exception as e:
             raise Exception(f"WRE simulation failed: {e}")
     
     async def _integrate_with_wre(self):
         """Phase 2: Integrate with WRE system."""
-        wre_log("🔗 Phase 2: Integrating with WRE System", "INFO")
+        wre_log("[LINK] Phase 2: Integrating with WRE System", "INFO")
         
         try:
             # Initialize WRE core
             self.wre_core = WRE()
-            wre_log("✅ WRE core initialized", "SUCCESS")
+            wre_log("[OK] WRE core initialized", "SUCCESS")
             
             # Initialize Cursor Bridge
             if BRIDGE_AVAILABLE:
                 self.bridge = CursorWSPBridge()
-                wre_log("✅ Cursor Bridge initialized", "SUCCESS")
+                wre_log("[OK] Cursor Bridge initialized", "SUCCESS")
             
             # Register with WRE agent registry
             await self._register_with_wre()
@@ -246,14 +246,14 @@ class CursorBridgeDeployer:
             }
             
             # Register with WRE (simulated for now)
-            wre_log(f"📝 Registered agent: {agent_data['name']}", "INFO")
+            wre_log(f"[NOTE] Registered agent: {agent_data['name']}", "INFO")
             
         except Exception as e:
             raise Exception(f"Agent registration failed: {e}")
     
     async def _activate_agents(self):
         """Phase 3: Activate WSP 54 agents."""
-        wre_log("🤖 Phase 3: Activating WSP 54 Agents", "INFO")
+        wre_log("[BOT] Phase 3: Activating WSP 54 Agents", "INFO")
         
         try:
             if BRIDGE_AVAILABLE and self.bridge:
@@ -262,30 +262,30 @@ class CursorBridgeDeployer:
                 
                 for agent_type, status in activation_results.items():
                     if status:
-                        wre_log(f"✅ Activated {agent_type} agent", "SUCCESS")
+                        wre_log(f"[OK] Activated {agent_type} agent", "SUCCESS")
                         self.agent_status[agent_type] = "active"
                     else:
-                        wre_log(f"❌ Failed to activate {agent_type} agent", "ERROR")
+                        wre_log(f"[FAIL] Failed to activate {agent_type} agent", "ERROR")
                         self.deployment_status["errors"].append(f"Agent activation failed: {agent_type}")
             else:
                 # Simulate agent activation
                 simulated_agents = ["compliance", "documentation", "testing"]
                 for agent in simulated_agents:
                     self.agent_status[agent] = "active"
-                    wre_log(f"✅ Simulated activation of {agent} agent", "SUCCESS")
+                    wre_log(f"[OK] Simulated activation of {agent} agent", "SUCCESS")
             
             # Verify agent states
             if len(self.agent_status) < 3:
                 raise Exception("Insufficient agents activated")
                 
-            wre_log(f"✅ Agent activation completed: {len(self.agent_status)} agents active", "SUCCESS")
+            wre_log(f"[OK] Agent activation completed: {len(self.agent_status)} agents active", "SUCCESS")
             
         except Exception as e:
             raise Exception(f"Agent activation failed: {e}")
     
     async def _validate_wsp_compliance(self):
         """Phase 4: Validate WSP compliance."""
-        wre_log("📋 Phase 4: Validating WSP Compliance", "INFO")
+        wre_log("[CLIPBOARD] Phase 4: Validating WSP Compliance", "INFO")
         
         try:
             # Validate module compliance
@@ -299,20 +299,20 @@ class CursorBridgeDeployer:
                 )
                 
                 if validation_result.get("compliance_score", 0) >= 0.8:
-                    wre_log("✅ WSP compliance validation passed", "SUCCESS")
+                    wre_log("[OK] WSP compliance validation passed", "SUCCESS")
                 else:
-                    wre_log("⚠️ WSP compliance below threshold", "WARNING")
+                    wre_log("[U+26A0]️ WSP compliance below threshold", "WARNING")
                     self.deployment_status["warnings"].append("Low WSP compliance score")
             else:
                 # Simulate compliance validation
-                wre_log("✅ Simulated WSP compliance validation passed", "SUCCESS")
+                wre_log("[OK] Simulated WSP compliance validation passed", "SUCCESS")
                 
         except Exception as e:
             raise Exception(f"WSP compliance validation failed: {e}")
     
     async def _setup_memory_architecture(self):
         """Phase 5: Setup memory architecture (WSP 60)."""
-        wre_log("🧠 Phase 5: Setting up Memory Architecture", "INFO")
+        wre_log("[AI] Phase 5: Setting up Memory Architecture", "INFO")
         
         try:
             # Create memory directory structure
@@ -335,14 +335,14 @@ class CursorBridgeDeployer:
             with open(memory_path / "memory_index.json", "w") as f:
                 json.dump(memory_index, f, indent=2)
             
-            wre_log("✅ Memory architecture setup completed", "SUCCESS")
+            wre_log("[OK] Memory architecture setup completed", "SUCCESS")
             
         except Exception as e:
             raise Exception(f"Memory architecture setup failed: {e}")
     
     async def _configure_security(self):
         """Phase 6: Configure security and access control."""
-        wre_log("🔒 Phase 6: Configuring Security", "INFO")
+        wre_log("[LOCK] Phase 6: Configuring Security", "INFO")
         
         try:
             # Set up permission matrix
@@ -361,14 +361,14 @@ class CursorBridgeDeployer:
                         "security_level": "medium"
                     })
             
-            wre_log("✅ Security configuration completed", "SUCCESS")
+            wre_log("[OK] Security configuration completed", "SUCCESS")
             
         except Exception as e:
             raise Exception(f"Security configuration failed: {e}")
     
     async def _final_validation(self):
         """Phase 7: Final validation and activation."""
-        wre_log("✅ Phase 7: Final Validation", "INFO")
+        wre_log("[OK] Phase 7: Final Validation", "INFO")
         
         try:
             if BRIDGE_AVAILABLE and self.bridge:
@@ -380,12 +380,12 @@ class CursorBridgeDeployer:
                 )
                 
                 if test_result.get("success", False):
-                    wre_log("✅ Final validation test passed", "SUCCESS")
+                    wre_log("[OK] Final validation test passed", "SUCCESS")
                 else:
                     raise Exception("Final validation test failed")
             else:
                 # Simulate validation test
-                wre_log("✅ Simulated final validation test passed", "SUCCESS")
+                wre_log("[OK] Simulated final validation test passed", "SUCCESS")
                 
             # Update deployment status
             self.deployment_status["phase"] = "completed"
@@ -405,8 +405,8 @@ class CursorBridgeDeployer:
 
 async def main():
     """Main deployment function."""
-    print("🚀 Cursor Multi-Agent Bridge Deployment")
-    print("📋 Following WSP 54 Agent Deployment Protocols")
+    print("[ROCKET] Cursor Multi-Agent Bridge Deployment")
+    print("[CLIPBOARD] Following WSP 54 Agent Deployment Protocols")
     print("=" * 50)
     
     deployer = CursorBridgeDeployer()
@@ -414,35 +414,35 @@ async def main():
     try:
         result = await deployer.deploy()
         
-        print("\n📊 Deployment Results:")
+        print("\n[DATA] Deployment Results:")
         print(f"Status: {result['status']}")
         print(f"Success: {result['success']}")
         
         if result['errors']:
             print(f"Errors: {len(result['errors'])}")
             for error in result['errors']:
-                print(f"  ❌ {error}")
+                print(f"  [FAIL] {error}")
         
         if result['warnings']:
             print(f"Warnings: {len(result['warnings'])}")
             for warning in result['warnings']:
-                print(f"  ⚠️ {warning}")
+                print(f"  [U+26A0]️ {warning}")
         
         if result['success']:
-            print("\n✅ Deployment completed successfully!")
-            print("🎯 Cursor Multi-Agent Bridge is now operational")
-            print("🤖 WSP 54 agents are active and ready for coordination")
+            print("\n[OK] Deployment completed successfully!")
+            print("[TARGET] Cursor Multi-Agent Bridge is now operational")
+            print("[BOT] WSP 54 agents are active and ready for coordination")
             
             # Display agent status
             agent_status = deployer.get_agent_status()
-            print(f"\n🤖 Active Agents: {len(agent_status)}")
+            print(f"\n[BOT] Active Agents: {len(agent_status)}")
             for agent, status in agent_status.items():
-                print(f"  ✅ {agent}: {status}")
+                print(f"  [OK] {agent}: {status}")
         
         return result
         
     except Exception as e:
-        print(f"\n❌ Deployment failed: {e}")
+        print(f"\n[FAIL] Deployment failed: {e}")
         return {"success": False, "error": str(e)}
 
 

@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Test Autonomous Refactoring - Move DocDAE to holo_index/doc_organizer
 
 This tests Qwen's autonomous refactoring capability with 0102 supervision.
@@ -24,7 +40,7 @@ def main():
     module_path = "modules/infrastructure/doc_dae"
     target_location = "holo_index/doc_organizer"
 
-    print(f"[PLAN] Move: {module_path} → {target_location}")
+    print(f"[PLAN] Move: {module_path} -> {target_location}")
     print()
 
     # Phase 1: Gemma Analysis

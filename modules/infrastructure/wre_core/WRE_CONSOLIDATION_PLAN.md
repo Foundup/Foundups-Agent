@@ -28,19 +28,19 @@ The WRE currently has significant duplication and legacy code referencing non-ex
 ### Core WRE Components
 ```
 wre_core/
-├── dae_cube_assembly/       # KEEP - WSP 80 DAE spawning
-│   └── src/
-│       └── dae_cube_assembler.py  # Core DAE spawning logic
-│
-├── recursive_improvement/   # KEEP - WSP 48 pattern learning
-│   └── src/
-│       └── recursive_engine.py    # Pattern memory & quantum recall
-│
-├── wre_gateway/            # RENAME from wre_api_gateway
-│   └── src/
-│       └── dae_gateway.py        # NEW - DAE routing (not agents)
-│
-└── wre_sdk_implementation.py  # KEEP - Claude Code enhanced SDK
++-- dae_cube_assembly/       # KEEP - WSP 80 DAE spawning
+[U+2502]   +-- src/
+[U+2502]       +-- dae_cube_assembler.py  # Core DAE spawning logic
+[U+2502]
++-- recursive_improvement/   # KEEP - WSP 48 pattern learning
+[U+2502]   +-- src/
+[U+2502]       +-- recursive_engine.py    # Pattern memory & quantum recall
+[U+2502]
++-- wre_gateway/            # RENAME from wre_api_gateway
+[U+2502]   +-- src/
+[U+2502]       +-- dae_gateway.py        # NEW - DAE routing (not agents)
+[U+2502]
++-- wre_sdk_implementation.py  # KEEP - Claude Code enhanced SDK
 ```
 
 ## What We Remove

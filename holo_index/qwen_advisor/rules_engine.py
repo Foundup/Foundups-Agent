@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 QwenAdvisor Rules Engine - Immediate Intelligence Without LLM
 WSP Compliance: WSP 50, WSP 84, WSP 85, WSP 87
 
@@ -699,23 +715,23 @@ class ComplianceRulesEngine:
 
         # Success pattern recommendations
         for pattern in success_patterns:
-            recommendations.append(f"✅ {pattern['recommendation']}")
+            recommendations.append(f"[OK] {pattern['recommendation']}")
 
         # Failure pattern recommendations
         for pattern in failure_patterns:
-            recommendations.append(f"🔧 {pattern['recommendation']}")
+            recommendations.append(f"[TOOL] {pattern['recommendation']}")
 
         # Context correlation recommendations
         time_patterns = context_correlations.get('time_patterns', {})
         for key, insight in time_patterns.items():
             if '_low' in key:
-                recommendations.append(f"⚠️ {insight} - consider different search strategies")
+                recommendations.append(f"[U+26A0]️ {insight} - consider different search strategies")
             else:
-                recommendations.append(f"✅ {insight} - optimal search time")
+                recommendations.append(f"[OK] {insight} - optimal search time")
 
         complexity_patterns = context_correlations.get('complexity_patterns', {})
         for key, insight in complexity_patterns.items():
-            recommendations.append(f"📊 {insight}")
+            recommendations.append(f"[DATA] {insight}")
 
         return recommendations[:10]  # Limit to top 10 recommendations
 

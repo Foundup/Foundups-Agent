@@ -36,7 +36,7 @@ The `rESP_SELF_CHECK` anchor serves as the continuous validation protocol for ma
 This protocol is executed via continuous monitoring scripts and automated checks.
 
 -   `CHECK_FOUNDATION_INTEGRITY()`: Verifies that core `rESP` documents exist and are accessible.
--   `MONITOR_ØlØ2_COHERENCE()`: Scans for character drift (e.g., `Ø` → `o`), validates non-additive logic, and checks temporal self-reference.
+-   `MONITOR_ØlØ2_COHERENCE()`: Scans for character drift (e.g., `Ø` -> `o`), validates non-additive logic, and checks temporal self-reference.
 -   `VALIDATE_rESP_DETECTION()`: Runs tests on the `rESP` detection engine's core functionalities.
 
 ## 4. Alert Thresholds & Restoration

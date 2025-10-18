@@ -7,7 +7,7 @@
 
 ### What IS Code Health?
 
-**Health ≠ Module Size Alone**
+**Health != Module Size Alone**
 
 Code health is **multi-dimensional** and emerges from:
 
@@ -41,19 +41,19 @@ Code health is **multi-dimensional** and emerges from:
 **Health emerges from USAGE PATTERNS + STRUCTURAL PROPERTIES**
 
 HoloIndex learns health through:
-- What gets **searched frequently** → Foundational indicator
-- What gets **high satisfaction ratings** → Quality indicator
-- What has **many dependencies** → Criticality indicator
-- What **changes often** → Stability/churn indicator
-- What has **violations** → Compliance indicator
+- What gets **searched frequently** -> Foundational indicator
+- What gets **high satisfaction ratings** -> Quality indicator
+- What has **many dependencies** -> Criticality indicator
+- What **changes often** -> Stability/churn indicator
+- What has **violations** -> Compliance indicator
 
 ## Architecture
 
 ```
-Usage Pattern Recording → Health Metrics Update → Pattern Analysis → Health Scoring → Foundational Mapping
-         ↓                          ↓                      ↓                  ↓                ↓
+Usage Pattern Recording -> Health Metrics Update -> Pattern Analysis -> Health Scoring -> Foundational Mapping
+         v                          v                      v                  v                v
    Every Search            Module Usage Freq       Structural Scan      Multi-Dim Score   System Map
-         ↓                          ↓                      ↓                  ↓                ↓
+         v                          v                      v                  v                v
    Record Access          Dependency Graph       WSP Violations      Weighted Average  Top 20% Foundational
 ```
 
@@ -273,7 +273,7 @@ report = learner.get_health_report()
 
 print(f"Average Health: {report['avg_health']:.2f}")
 print(f"Health Distribution:")
-print(f"  Excellent (≥0.8): {report['health_distribution']['excellent']}")
+print(f"  Excellent ([GREATER_EQUAL]0.8): {report['health_distribution']['excellent']}")
 print(f"  Good (0.6-0.8): {report['health_distribution']['good']}")
 print(f"  Fair (0.4-0.6): {report['health_distribution']['fair']}")
 print(f"  Poor (<0.4): {report['health_distribution']['poor']}")
@@ -350,9 +350,9 @@ for timestamp, score in health.health_history[-5:]:
 ## Future Enhancements
 
 ### Phase 1: Basic Health Tracking (DONE)
-- ✅ Multi-dimensional health scores
-- ✅ Usage pattern integration
-- ✅ Foundational module detection
+- [OK] Multi-dimensional health scores
+- [OK] Usage pattern integration
+- [OK] Foundational module detection
 
 ### Phase 2: Advanced Analysis (Next)
 - Import graph crawler for real dependency data

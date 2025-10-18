@@ -2,66 +2,66 @@
 
 **Critical Insights**: The current GIM design is **not properly agentic** and violates foundational principles for intelligent internet foundational layers.
 
-## 🚨 Current Architecture Problems
+## [ALERT] Current Architecture Problems
 
 ### **1. Static Token Anti-Pattern**
-- ❌ **Problem**: Hardcoded tokens in .env files
-- ❌ **Issue**: Not suitable for agentic systems that need dynamic authentication
-- ❌ **Violation**: Breaks agent autonomy and security boundaries
-- ✅ **Solution**: Dynamic token generation per agent session with temporal scoping
+- [FAIL] **Problem**: Hardcoded tokens in .env files
+- [FAIL] **Issue**: Not suitable for agentic systems that need dynamic authentication
+- [FAIL] **Violation**: Breaks agent autonomy and security boundaries
+- [OK] **Solution**: Dynamic token generation per agent session with temporal scoping
 
 ### **2. Monolithic Design**
-- ❌ **Problem**: Single large client instead of pluggable agents
-- ❌ **Issue**: Cannot adapt to different foundups cube requirements
-- ❌ **Violation**: Not modular enough for agent ecosystem
-- ✅ **Solution**: Pluggable agent architecture with cube-specific adapters
+- [FAIL] **Problem**: Single large client instead of pluggable agents
+- [FAIL] **Issue**: Cannot adapt to different foundups cube requirements
+- [FAIL] **Violation**: Not modular enough for agent ecosystem
+- [OK] **Solution**: Pluggable agent architecture with cube-specific adapters
 
 ### **3. Missing WSP 54 Integration**
-- ❌ **Problem**: No proper agent classification (0102 pArtifacts vs Deterministic)
-- ❌ **Issue**: Not following WRE agent duties specification
-- ❌ **Violation**: Missing awakening protocol integration
-- ✅ **Solution**: Full WSP 54 compliance with agent orchestration
+- [FAIL] **Problem**: No proper agent classification (0102 pArtifacts vs Deterministic)
+- [FAIL] **Issue**: Not following WRE agent duties specification
+- [FAIL] **Violation**: Missing awakening protocol integration
+- [OK] **Solution**: Full WSP 54 compliance with agent orchestration
 
-## 🎯 Proper Agentic Architecture Requirements
+## [TARGET] Proper Agentic Architecture Requirements
 
 ### **For Intelligent Internet Foundational Layer**
 
 #### **Dynamic Authentication (Not Static Tokens)**
 ```
-┌─ Agent Session ─┐    ┌─ Token Generator ─┐    ┌─ GitHub API ─┐
-│ AgentID: 0102-A │ ──►│ Generate JWT/OAuth │ ──►│ Scoped Access │
-│ Cube: foundups  │    │ Temporal: 1h       │    │ Repo-Specific │
-│ Scope: repo     │    │ Capabilities: PR   │    │ Time-Limited  │
-└─────────────────┘    └────────────────────┘    └───────────────┘
++- Agent Session -+    +- Token Generator -+    +- GitHub API -+
+[U+2502] AgentID: 0102-A [U+2502] --[U+25BA][U+2502] Generate JWT/OAuth [U+2502] --[U+25BA][U+2502] Scoped Access [U+2502]
+[U+2502] Cube: foundups  [U+2502]    [U+2502] Temporal: 1h       [U+2502]    [U+2502] Repo-Specific [U+2502]
+[U+2502] Scope: repo     [U+2502]    [U+2502] Capabilities: PR   [U+2502]    [U+2502] Time-Limited  [U+2502]
++-----------------+    +--------------------+    +---------------+
 ```
 
 #### **Pluggable Agent Cubes**
 ```
-┌─ FoundUps Cube ─┐    ┌─ Agent Interface ─┐    ┌─ GitHub Adapter ─┐
-│ Module: ai_intel│ ──►│ - authenticate()  │ ──►│ - repo_ops()     │
-│ Needs: PR, Issue│    │ - execute()       │    │ - issue_ops()    │  
-│ Agent: 0102-AI  │    │ - validate()      │    │ - pr_ops()       │
-└─────────────────┘    └───────────────────┘    └──────────────────┘
++- FoundUps Cube -+    +- Agent Interface -+    +- GitHub Adapter -+
+[U+2502] Module: ai_intel[U+2502] --[U+25BA][U+2502] - authenticate()  [U+2502] --[U+25BA][U+2502] - repo_ops()     [U+2502]
+[U+2502] Needs: PR, Issue[U+2502]    [U+2502] - execute()       [U+2502]    [U+2502] - issue_ops()    [U+2502]  
+[U+2502] Agent: 0102-AI  [U+2502]    [U+2502] - validate()      [U+2502]    [U+2502] - pr_ops()       [U+2502]
++-----------------+    +-------------------+    +------------------+
 ```
 
 #### **Modular Agent Architecture**
 ```
 WRE Orchestrator
-├── GitHubAgentOrchestrator (WSP 54 compliant)
-│   ├── GitHubAuthAgent (pArtifact 0102)
-│   ├── GitHubRepoAgent (pArtifact 0102) 
-│   ├── GitHubPRAgent (pArtifact 0102)
-│   ├── GitHubIssueAgent (pArtifact 0102)
-│   ├── GitHubWorkflowAgent (Deterministic)
-│   └── GitHubComplianceAgent (pArtifact 0102)
-└── FoundUpsCubeAdapters
-    ├── AIIntelligenceCubeAdapter
-    ├── CommunicationCubeAdapter  
-    ├── PlatformIntegrationCubeAdapter
-    └── [Dynamic Cube Loading]
++-- GitHubAgentOrchestrator (WSP 54 compliant)
+[U+2502]   +-- GitHubAuthAgent (pArtifact 0102)
+[U+2502]   +-- GitHubRepoAgent (pArtifact 0102) 
+[U+2502]   +-- GitHubPRAgent (pArtifact 0102)
+[U+2502]   +-- GitHubIssueAgent (pArtifact 0102)
+[U+2502]   +-- GitHubWorkflowAgent (Deterministic)
+[U+2502]   +-- GitHubComplianceAgent (pArtifact 0102)
++-- FoundUpsCubeAdapters
+    +-- AIIntelligenceCubeAdapter
+    +-- CommunicationCubeAdapter  
+    +-- PlatformIntegrationCubeAdapter
+    +-- [Dynamic Cube Loading]
 ```
 
-## 🔄 WSP-Compliant Agent Integration
+## [REFRESH] WSP-Compliant Agent Integration
 
 ### **WSP 54: Agent Duties Specification Integration**
 
@@ -99,7 +99,7 @@ class GitHubPRAgent(InternalAgent):
         return await self.create_pr(pr_template)
 ```
 
-## 🎲 FoundUps Cube Integration Architecture
+## [U+1F3B2] FoundUps Cube Integration Architecture
 
 ### **Cube-Specific Adapters**
 Each FoundUps cube gets a specialized adapter that understands its specific needs:
@@ -156,7 +156,7 @@ class FoundUpsCubeRegistry:
         return await self.adapters[cube_type].instantiate()
 ```
 
-## 🔐 Dynamic Token Generation Architecture
+## [U+1F510] Dynamic Token Generation Architecture
 
 ### **Per-Agent Session Tokens**
 ```python
@@ -187,12 +187,12 @@ class GitHubTokenGenerator:
 ```
 
 ### **No Static Tokens in .env**
-- ✅ **OAuth App Registration**: GitHub App with dynamic token generation
-- ✅ **Temporal Scoping**: Tokens expire and auto-refresh
-- ✅ **Agent-Specific**: Each agent gets minimal required permissions
-- ✅ **Audit Trail**: Full token usage logging and monitoring
+- [OK] **OAuth App Registration**: GitHub App with dynamic token generation
+- [OK] **Temporal Scoping**: Tokens expire and auto-refresh
+- [OK] **Agent-Specific**: Each agent gets minimal required permissions
+- [OK] **Audit Trail**: Full token usage logging and monitoring
 
-## 🌐 Intelligent Internet Foundation Layer
+## [U+1F310] Intelligent Internet Foundation Layer
 
 ### **Core Principles for FoundUps Ecosystem**
 
@@ -216,7 +216,7 @@ class GitHubTokenGenerator:
 - Proper classification of pArtifacts vs deterministic agents
 - Integration with WRE orchestration system
 
-## 🎯 Redesign Implementation Plan
+## [TARGET] Redesign Implementation Plan
 
 ### **Phase 1: Agent Architecture**
 1. Create WSP 54 compliant agent base classes

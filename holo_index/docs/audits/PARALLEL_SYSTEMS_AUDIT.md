@@ -3,7 +3,7 @@
 ## Executive Summary
 After deep analysis using HoloIndex, I've discovered significant parallel implementations and duplications that violate WSP 84 (Don't Vibecode) and WSP 40 (Module Evolution).
 
-## 🔴 CRITICAL FINDINGS
+## [U+1F534] CRITICAL FINDINGS
 
 ### 1. MASSIVE LIVECHAT MODULE VIOLATIONS
 - **35,830 lines** across 154 files (WSP 62 violation - should be < 1000)
@@ -106,7 +106,7 @@ After deep analysis using HoloIndex, I've discovered significant parallel implem
 
 **PATTERN**: Multiple parallel learning systems not talking to each other
 
-## 🎯 ROOT CAUSE ANALYSIS
+## [TARGET] ROOT CAUSE ANALYSIS
 
 ### Why These Parallel Systems Exist:
 
@@ -130,7 +130,7 @@ After deep analysis using HoloIndex, I've discovered significant parallel implem
    - Legacy tests still present
    - Old code not cleaned up
 
-## 🔧 RECOMMENDED ACTIONS
+## [TOOL] RECOMMENDED ACTIONS
 
 ### Immediate (P0):
 1. **Fix Pattern Coach syntax error** (it's warning about issues it has!)
@@ -138,7 +138,7 @@ After deep analysis using HoloIndex, I've discovered significant parallel implem
 3. **Delete orphaned files** after verification
 
 ### Short-term (P1):
-1. **Refactor livechat module** (35K lines → <5K)
+1. **Refactor livechat module** (35K lines -> <5K)
 2. **Consolidate monitoring systems**
 3. **Clean up _archive folders**
 
@@ -147,7 +147,7 @@ After deep analysis using HoloIndex, I've discovered significant parallel implem
 2. **Establish clear module boundaries**
 3. **Implement automatic orphan detection**
 
-## 📊 METRICS
+## [DATA] METRICS
 
 ### Duplication Level:
 - **Code Duplication**: 43 duplicate pairs in livechat alone
@@ -164,14 +164,14 @@ After deep analysis using HoloIndex, I've discovered significant parallel implem
 - Each parallel system costs ~5-10K tokens to understand
 - Total waste: ~50-100K tokens navigating duplicates
 
-## 🚨 IRONIC FINDING
+## [ALERT] IRONIC FINDING
 
 **Pattern Coach**, which warns about vibecoding and creating without checking:
 1. Has a syntax error preventing it from running
 2. Exists in multiple parallel implementations
 3. Warns "Creating without checking existing code" while being a duplicate itself!
 
-## 💡 KEY INSIGHT
+## [IDEA] KEY INSIGHT
 
 The system is trying to prevent the very problems it embodies:
 - Violation prevention systems created through violations
@@ -187,4 +187,4 @@ We have a **"Physician, heal thyself"** situation where our prevention systems n
 3. **Following WSP 40**: Remove duplicates
 4. **Following WSP 62**: Keep modules small
 
-The feedback loop you wanted (violations → learning → prevention) is actually working - it just revealed massive technical debt that needs addressing!
+The feedback loop you wanted (violations -> learning -> prevention) is actually working - it just revealed massive technical debt that needs addressing!

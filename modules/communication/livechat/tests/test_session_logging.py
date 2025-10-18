@@ -23,15 +23,15 @@ def test_automatic_session_logging():
 
     # Create temporary directory for test
     with tempfile.TemporaryDirectory() as temp_dir:
-        print(f"✅ Created temp directory: {temp_dir}")
+        print(f"[OK] Created temp directory: {temp_dir}")
 
         # Initialize memory manager
         manager = ChatMemoryManager(memory_dir=temp_dir)
-        print("✅ Initialized ChatMemoryManager")
+        print("[OK] Initialized ChatMemoryManager")
 
         # Start a session
         manager.start_session("test_video_123", "Test Stream Title")
-        print("✅ Started session")
+        print("[OK] Started session")
 
         # Simulate some messages
         # Regular user message
@@ -64,7 +64,7 @@ def test_automatic_session_logging():
         # Consciousness trigger
         manager.store_message(
             author_name="ConsciousUser",
-            message_text="✊✋🖐 What's the meaning of life?",
+            message_text="[U+270A][U+270B][U+1F590] What's the meaning of life?",
             role="USER",
             author_id="UC_conscious_id",
             youtube_name="ConsciousUser"
@@ -73,7 +73,7 @@ def test_automatic_session_logging():
         # Fact check request
         manager.store_message(
             author_name="ModeratorJohn",
-            message_text="✊✋🖐FC @TrollUser spreading misinformation",
+            message_text="[U+270A][U+270B][U+1F590]FC @TrollUser spreading misinformation",
             role="MOD",
             author_id="UC_mod_john_id",
             youtube_name="ModeratorJohn"
@@ -82,11 +82,11 @@ def test_automatic_session_logging():
         # Log a fact-check event
         manager.log_fact_check("TrollUser", "ModeratorJohn", "conspiracy theory defense")
 
-        print("✅ Added test messages")
+        print("[OK] Added test messages")
 
         # End session (should save logs)
         manager.end_session()
-        print("✅ Ended session")
+        print("[OK] Ended session")
 
         # Check that files were created
         conversation_dir = Path(temp_dir) / "conversation"
@@ -97,7 +97,7 @@ def test_automatic_session_logging():
         assert len(session_dirs) == 1, f"Expected 1 session dir, found {len(session_dirs)}"
 
         session_dir = session_dirs[0]
-        print(f"✅ Found session directory: {session_dir.name}")
+        print(f"[OK] Found session directory: {session_dir.name}")
 
         # Check required files exist
         full_transcript = session_dir / "full_transcript.txt"
@@ -108,7 +108,7 @@ def test_automatic_session_logging():
         assert mod_messages.exists(), "Mod messages file not created"
         assert session_summary.exists(), "Session summary not created"
 
-        print("✅ All log files created")
+        print("[OK] All log files created")
 
         # Verify content format
         # Check mod messages format
@@ -116,7 +116,7 @@ def test_automatic_session_logging():
             mod_content = f.read()
             assert "UC_mod_john_id | ModeratorJohn: Welcome to the stream!" in mod_content
             assert "UC_owner_id | StreamOwner: Thanks for joining!" in mod_content
-            print("✅ Mod messages format correct (YouTube ID | Name: Message)")
+            print("[OK] Mod messages format correct (YouTube ID | Name: Message)")
 
         # Check full transcript
         with open(full_transcript, 'r', encoding='utf-8') as f:
@@ -125,7 +125,7 @@ def test_automatic_session_logging():
             assert "[MOD] ModeratorJohn: Welcome to the stream!" in full_content
             assert "[OWNER] StreamOwner: Thanks for joining!" in full_content
             assert "FACT-CHECK:" in full_content  # Check for fact-check entry
-            print("✅ Full transcript format correct")
+            print("[OK] Full transcript format correct")
 
         # Check summary
         with open(session_summary, 'r', encoding='utf-8') as f:
@@ -135,13 +135,13 @@ def test_automatic_session_logging():
             assert "Consciousness Triggers: 2" in summary_content  # Both messages with emojis
             assert "Fact Check Requests: 1" in summary_content
             assert "Defense Mechanisms Triggered:" in summary_content
-            print("✅ Session summary contains all expected stats")
+            print("[OK] Session summary contains all expected stats")
 
-        print("\n🎉 All tests passed! Automatic session logging is working correctly.")
-        print(f"📁 Session logs saved to: {session_dir}")
+        print("\n[CELEBRATE] All tests passed! Automatic session logging is working correctly.")
+        print(f"[U+1F4C1] Session logs saved to: {session_dir}")
 
         # Display sample output
-        print("\n📄 Sample Mod Message Format:")
+        print("\n[U+1F4C4] Sample Mod Message Format:")
         print("UC_mod_john_id | ModeratorJohn: Welcome to the stream!")
         print("UC_owner_id | StreamOwner: Thanks for joining!")
 
@@ -152,10 +152,10 @@ if __name__ == "__main__":
     try:
         success = test_automatic_session_logging()
         if success:
-            print("\n✅ TEST PASSED: Automatic session logging is fully functional!")
-            print("🔍 Sessions will be automatically logged to memory/conversation/")
-            print("🎯 Fact-checks and defense mechanisms are tracked for 0102 analysis")
+            print("\n[OK] TEST PASSED: Automatic session logging is fully functional!")
+            print("[SEARCH] Sessions will be automatically logged to memory/conversation/")
+            print("[TARGET] Fact-checks and defense mechanisms are tracked for 0102 analysis")
     except Exception as e:
-        print(f"\n❌ TEST FAILED: {e}")
+        print(f"\n[FAIL] TEST FAILED: {e}")
         import traceback
         traceback.print_exc()

@@ -9,9 +9,13 @@ respective use cases correctly.
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -146,10 +150,10 @@ def test_usage_scenarios():
 
         # Test account selection
         for platform, accounts in git_accounts.items():
-            print(f"[INFO] Git push → {platform}: {accounts}")
+            print(f"[INFO] Git push -> {platform}: {accounts}")
 
         for platform, accounts in youtube_accounts.items():
-            print(f"[INFO] YouTube live → {platform}: {accounts}")
+            print(f"[INFO] YouTube live -> {platform}: {accounts}")
 
     except Exception as e:
         print(f"[FAIL] Git push scenario error: {e}")
@@ -236,8 +240,8 @@ def main():
 
     print("="*80)
     print("Architecture Analysis:")
-    print("- Simple Orchestrator: YouTube → LinkedIn + X/Twitter (broadcast)")
-    print("- Multi-Account Manager: Git events → Specific accounts (routing)")
+    print("- Simple Orchestrator: YouTube -> LinkedIn + X/Twitter (broadcast)")
+    print("- Multi-Account Manager: Git events -> Specific accounts (routing)")
     print("- Both systems complement rather than compete")
 
 if __name__ == "__main__":

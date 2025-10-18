@@ -53,7 +53,7 @@ class YouTubeDAESelfImprovement:
         self.last_optimization = time.time()
         self.optimization_interval = 300  # 5 minutes between optimizations
         
-        logger.info("🔄 YouTube DAE Self-Improvement system initialized (WSP 48)")
+        logger.info("[REFRESH] YouTube DAE Self-Improvement system initialized (WSP 48)")
     
     def _load_memory(self, filename: str) -> Dict:
         """Load memory data from file."""
@@ -93,7 +93,7 @@ class YouTubeDAESelfImprovement:
             error_signature = self._create_error_signature(error_context)
             if error_signature in self.error_patterns:
                 existing_solution = self.error_patterns[error_signature]
-                logger.info(f"🔄 Known error pattern - applying existing solution: {existing_solution['solution_summary']}")
+                logger.info(f"[REFRESH] Known error pattern - applying existing solution: {existing_solution['solution_summary']}")
                 return existing_solution
             
             # LLM analyzes new error for improvement
@@ -120,7 +120,7 @@ Format as JSON with: root_cause, improvement_strategy, prevention_method, ux_enh
                     self.error_patterns[error_signature] = improvement
                     self._save_memory(self.error_patterns, "error_patterns.json")
                     
-                    logger.info(f"🧠 LLM generated improvement for error: {improvement['improvement_strategy'][:100]}...")
+                    logger.info(f"[AI] LLM generated improvement for error: {improvement['improvement_strategy'][:100]}...")
                     return improvement
                     
         except Exception as e:
@@ -176,7 +176,7 @@ Keep response under 200 characters for implementation guidance."""
                 self.optimization_history['optimizations'].append(optimization_entry)
                 self._save_memory(self.optimization_history, "optimizations.json")
                 
-                logger.info(f"🚀 LLM optimization generated: {optimization[:100]}...")
+                logger.info(f"[ROCKET] LLM optimization generated: {optimization[:100]}...")
                 return optimization
                 
         except Exception as e:
@@ -234,7 +234,7 @@ Format as JSON with: next_step, strategy, approach"""
                 if guidance:
                     guidance_data = self._parse_improvement_response(guidance)
                     if guidance_data:
-                        logger.info(f"🧠 Consciousness guidance for {user_id}: {guidance_data.get('strategy', 'Generated')[:50]}...")
+                        logger.info(f"[AI] Consciousness guidance for {user_id}: {guidance_data.get('strategy', 'Generated')[:50]}...")
                         return guidance_data
             
         except Exception as e:
@@ -259,7 +259,7 @@ Format as JSON with: next_step, strategy, approach"""
         self.improvement_memory['successful_improvements'].append(improvement_record)
         self._save_memory(self.improvement_memory, "improvements.json")
         
-        logger.info(f"✅ Recorded successful improvement: {improvement_type}")
+        logger.info(f"[OK] Recorded successful improvement: {improvement_type}")
     
     def _create_error_signature(self, error_context: Dict) -> str:
         """Create unique signature for error pattern matching."""
@@ -334,7 +334,7 @@ Format as JSON with: next_step, strategy, approach"""
             if len(quota_events) >= 5:
                 optimization = await self._generate_quota_optimization(quota_events)
                 if optimization:
-                    logger.info(f"🎯 WSP 48 quota optimization: {optimization['strategy']}")
+                    logger.info(f"[TARGET] WSP 48 quota optimization: {optimization['strategy']}")
                     return optimization
                 
         except Exception as e:

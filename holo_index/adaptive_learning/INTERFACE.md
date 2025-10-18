@@ -268,11 +268,11 @@ Automatically integrated when Phase 3 is available:
 ### Storage Locations
 ```
 E:/HoloIndex/adaptive_learning/
-├── query_patterns.json      # Learned query patterns
-├── search_metrics.json      # Search optimization data
-├── response_templates.json  # Response templates
-├── memory_evolution.json    # Memory patterns
-└── adaptation_metrics.json  # Performance metrics
++-- query_patterns.json      # Learned query patterns
++-- search_metrics.json      # Search optimization data
++-- response_templates.json  # Response templates
++-- memory_evolution.json    # Memory patterns
++-- adaptation_metrics.json  # Performance metrics
 ```
 
 ## Performance Considerations

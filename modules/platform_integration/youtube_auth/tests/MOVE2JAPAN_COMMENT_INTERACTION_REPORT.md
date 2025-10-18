@@ -10,13 +10,13 @@ We conducted comprehensive testing of YouTube API capabilities for interacting w
 
 ### Key Findings
 
-**✅ SUPPORTED FEATURES:**
+**[OK] SUPPORTED FEATURES:**
 - Reading/listing comments and their metadata
 - Replying to comments (high quota cost)  
 - Rating/liking videos (not individual comments)
 - Getting video statistics including comment counts
 
-**❌ NOT SUPPORTED:**
+**[FAIL] NOT SUPPORTED:**
 - Liking individual comments via API
 - Hearting comments as channel owner via API
 - Advanced comment moderation on other channels
@@ -24,13 +24,13 @@ We conducted comprehensive testing of YouTube API capabilities for interacting w
 ## Detailed Test Results
 
 ### 1. Authentication Testing
-- **Status**: ✅ SUCCESS
+- **Status**: [OK] SUCCESS
 - **Working Credentials**: Successfully authenticated with credential set 5
 - **Quota Management**: Auto-rotation working correctly, exhausted sets properly tracked
 - **Evidence**: Authentication successful after cycling through quota-exhausted credential sets
 
 ### 2. Comment Liking API Test
-- **Status**: ❌ CONFIRMED NOT SUPPORTED
+- **Status**: [FAIL] CONFIRMED NOT SUPPORTED
 - **Method Tested**: `like_comment()` function in `/modules/platform_integration/youtube_auth/src/youtube_auth.py`
 - **Result**: Function returns `False` with warning message
 - **API Documentation**: No comment liking endpoint exists in YouTube Data API v3
@@ -99,10 +99,10 @@ Channel owner "heart" functionality is completely separate from the public API:
 **File**: `/modules/platform_integration/youtube_auth/src/youtube_auth.py`
 
 **Implemented Methods**:
-- ✅ `list_video_comments()` - Working, 1 unit cost
-- ❌ `like_comment()` - Returns False, documents API limitation
-- ✅ `reply_to_comment()` - Working, 50 unit cost  
-- ✅ `get_latest_video_id()` - Working, 1 unit cost
+- [OK] `list_video_comments()` - Working, 1 unit cost
+- [FAIL] `like_comment()` - Returns False, documents API limitation
+- [OK] `reply_to_comment()` - Working, 50 unit cost  
+- [OK] `get_latest_video_id()` - Working, 1 unit cost
 
 **Test Scripts**:
 - `/scripts/test_comment_apis.py` - Comprehensive test suite
@@ -112,25 +112,25 @@ Channel owner "heart" functionality is completely separate from the public API:
 ## Move2Japan Specific Scenarios
 
 ### Scenario 1: Find Videos with Comments
-- **Feasibility**: HIGH ✅
+- **Feasibility**: HIGH [OK]
 - **Implementation**: Fully functional via existing API methods
 - **Quota Required**: ~150 units for 20 recent videos
 - **Expected Results**: Can identify videos with active comment sections
 
 ### Scenario 2: Like Existing Comments  
-- **Feasibility**: IMPOSSIBLE ❌
+- **Feasibility**: IMPOSSIBLE [FAIL]
 - **Reason**: YouTube Data API v3 limitation
 - **Workaround**: Manual interaction through YouTube web interface
 - **Alternative**: Like the entire video instead of individual comments
 
 ### Scenario 3: Reply to Comments
-- **Feasibility**: HIGH ✅  
+- **Feasibility**: HIGH [OK]  
 - **Implementation**: Fully functional via `comments.insert`
 - **Quota Cost**: 50+ units per reply
 - **Considerations**: High cost, requires write permissions
 
 ### Scenario 4: Heart Comments as Creator
-- **Feasibility**: IMPOSSIBLE ❌
+- **Feasibility**: IMPOSSIBLE [FAIL]
 - **Reason**: No API endpoint available
 - **Workaround**: Must use YouTube Studio manually
 
@@ -169,7 +169,7 @@ comments = list_video_comments(service, video_id, max_results=20)
 
 #### Working: Reply to Comment  
 ```python  
-reply_text = "Thanks for watching! 🎌"
+reply_text = "Thanks for watching! [U+1F38C]"
 response = reply_to_comment(service, comment_id, reply_text)
 ```
 

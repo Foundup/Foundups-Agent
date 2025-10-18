@@ -4,7 +4,7 @@ Agent Coordinator - Multi-Agent Coordination and Orchestration
 WSP Compliance:
 - WSP 54 (Agent Duties): 8 specialized 0102 agents coordination
 - WSP 4 (FMAS): Agent coordination structure validation  
-- WSP 5 (Coverage): ≥90% test coverage for coordination functionality
+- WSP 5 (Coverage): [GREATER_EQUAL]90% test coverage for coordination functionality
 
 Multi-agent coordination and orchestration for VSCode extension.
 """

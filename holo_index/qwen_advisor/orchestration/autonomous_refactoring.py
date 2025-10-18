@@ -14,7 +14,7 @@ Architecture:
     Phase 4 (Learning): Store patterns for recursive improvement
 
 WSP Compliance:
-    - WSP 77: Agent Coordination Protocol (Qwen → Gemma → 0102)
+    - WSP 77: Agent Coordination Protocol (Qwen -> Gemma -> 0102)
     - WSP 50: Pre-Action Verification (analyze before execute)
     - WSP 48: Recursive Self-Improvement (learn from refactorings)
     - WSP 84: Code Memory Verification (no duplication)
@@ -668,7 +668,7 @@ Analyze and provide detailed findings:"""
         Returns:
             Complete RefactoringPlan with all tasks
         """
-        logger.info(f"[QWEN] Generating refactoring plan: {module_path} → {target_location}")
+        logger.info(f"[QWEN] Generating refactoring plan: {module_path} -> {target_location}")
 
         # Use Qwen LLM for intelligent planning if available
         if self.qwen_engine:
@@ -915,7 +915,7 @@ Recommend strategy: """
         Returns:
             Results dict with success status and metrics
         """
-        logger.info(f"[START] Autonomous refactoring: {module_path} → {target_location}")
+        logger.info(f"[START] Autonomous refactoring: {module_path} -> {target_location}")
 
         # Phase 1: Gemma analysis
         analysis = self.analyze_module_dependencies(module_path)

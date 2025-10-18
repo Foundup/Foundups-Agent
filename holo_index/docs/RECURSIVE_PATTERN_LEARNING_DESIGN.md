@@ -14,16 +14,16 @@
 ## Architecture
 
 ```
-Search → Results → Qwen Scores → User Action → 0102 Rates → Pattern Storage → Roadmap Building
-   ↓                    ↓                           ↓                                  ↑
+Search -> Results -> Qwen Scores -> User Action -> 0102 Rates -> Pattern Storage -> Roadmap Building
+   v                    v                           v                                  ^
 Query Intent      Relevance/Quality          Feedback (0-1)                   Self-Improvement
-   ↓                    ↓                           ↓                                  ↑
+   v                    v                           v                                  ^
 Results Ranking    Auto-Scoring            Success Tracking               Better Future Searches
 ```
 
 ## Implementation Status
 
-### ✅ Created (2025-10-02)
+### [OK] Created (2025-10-02)
 
 **File**: `holo_index/adaptive_learning/search_pattern_learner.py`
 
@@ -93,7 +93,7 @@ python holo_index.py --search-suggestions "test"
 - Best keywords: test_*, pytest, module/tests/
 - Common mistake: Searching for test names instead of functionality
 - Optimal pattern: Search for what the test does, not its name
-- Improvement trend: 0.65 → 0.72 → 0.78 → 0.82 (getting better!)
+- Improvement trend: 0.65 -> 0.72 -> 0.78 -> 0.82 (getting better!)
 ```
 
 ### View Statistics
@@ -114,7 +114,7 @@ Intent roadmaps learned: 8
 - documentation: 31 searches, 71% success
 
 [INSIGHT] Your 'debug' searches are most successful!
-[INSIGHT] 'Create' queries improving: 0.58 → 0.68 over time
+[INSIGHT] 'Create' queries improving: 0.58 -> 0.68 over time
 ```
 
 ## Storage

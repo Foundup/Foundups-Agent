@@ -22,6 +22,6 @@ pytest modules/platform_integration/youtube_auth/tests/ \
 ## WSP Compliance
 - WSP 3: Platform integration domain
 - WSP 34: Test docs and runnable commands present
-- WSP 5: Target ≥90% coverage
+- WSP 5: Target [GREATER_EQUAL]90% coverage
 - WSP 49: Tests under module `tests/`
 - WSP 50/64: No stray tests; suite audited 

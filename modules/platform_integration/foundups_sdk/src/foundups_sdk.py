@@ -287,28 +287,28 @@ def main():
     try:
         if args.health:
             status = client.health_check()
-            print(f"✅ System Health: {status}")
+            print(f"[OK] System Health: {status}")
 
         elif args.search:
             results = client.search(args.search, args.limit)
-            print(f"🔍 Search Results for '{args.search}':")
+            print(f"[SEARCH] Search Results for '{args.search}':")
             print(f"   Total: {results.total_results} results")
             print(f"   Code hits: {len(results.code_results)}")
             print(f"   WSP hits: {len(results.wsp_results)}")
 
             if results.code_results:
-                print("\n📝 Top Code Results:")
+                print("\n[NOTE] Top Code Results:")
                 for i, result in enumerate(results.code_results[:3], 1):
                     print(f"   {i}. {result.location} (similarity: {result.similarity})")
 
         elif args.analyze:
             analysis = client.analyze(args.analyze)
-            print(f"🤖 AI Analysis for '{args.analyze}':")
+            print(f"[BOT] AI Analysis for '{args.analyze}':")
             print(f"   Recommendations: {len(analysis.recommendations)}")
             print(f"   WSP Guidance: {len(analysis.wsp_guidance)}")
 
             if analysis.recommendations:
-                print("\n💡 Key Recommendations:")
+                print("\n[IDEA] Key Recommendations:")
                 for rec in analysis.recommendations[:3]:
                     print(f"   • {rec}")
 
@@ -316,7 +316,7 @@ def main():
             print("Use --search, --analyze, or --health")
 
     except FoundUpsError as e:
-        print(f"❌ Error: {e}")
+        print(f"[FAIL] Error: {e}")
         exit(1)
 
 

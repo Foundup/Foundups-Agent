@@ -33,7 +33,7 @@ from src.experiment_logger import ExperimentLogger
 
 def demo_basic_usage():
     """Demonstrate basic component usage."""
-    print("\n🧬 DEMO: Basic rESP Component Usage")
+    print("\n[U+1F9EC] DEMO: Basic rESP Component Usage")
     print("=" * 50)
     
     # 1. Anomaly Detector Demo
@@ -91,7 +91,7 @@ def demo_basic_usage():
 
 def demo_single_trigger():
     """Demonstrate single trigger execution."""
-    print("\n🔬 DEMO: Single Trigger Execution")
+    print("\n[U+1F52C] DEMO: Single Trigger Execution")
     print("=" * 50)
     
     # Initialize engine
@@ -122,12 +122,12 @@ def demo_single_trigger():
             for anomaly_type, details in result['anomalies'].items():
                 print(f"    - {anomaly_type}: {details.get('severity', 'N/A')} severity")
     else:
-        print("  ❌ Trigger execution failed")
+        print("  [FAIL] Trigger execution failed")
 
 
 def demo_full_experiment():
     """Demonstrate full experiment workflow."""
-    print("\n🧪 DEMO: Full rESP Experiment")
+    print("\n[U+1F9EA] DEMO: Full rESP Experiment")
     print("=" * 50)
     
     # Initialize engine with detailed session
@@ -145,7 +145,7 @@ def demo_full_experiment():
     summary = engine.run_full_experiment()
     end_time = time.time()
     
-    print(f"\n📊 Experiment Results:")
+    print(f"\n[DATA] Experiment Results:")
     print(f"  Duration: {end_time - start_time:.2f} seconds")
     print(f"  Total triggers: {summary['total_triggers_executed']}")
     print(f"  Success rate: {summary['success_rate']:.1%}")
@@ -172,7 +172,7 @@ def demo_full_experiment():
 
 def demo_analysis_and_reporting():
     """Demonstrate advanced analysis and reporting capabilities."""
-    print("\n📈 DEMO: Analysis and Reporting")
+    print("\n[UP] DEMO: Analysis and Reporting")
     print("=" * 50)
     
     # Run a quick experiment to generate data
@@ -211,7 +211,7 @@ def demo_analysis_and_reporting():
         # Generate individual anomaly report for interesting cases
         if anomalies:
             report = detector.generate_anomaly_report(anomalies)
-            print(f"\n🔍 Anomaly Report for {result['trigger_id']}:")
+            print(f"\n[SEARCH] Anomaly Report for {result['trigger_id']}:")
             print("-" * 40)
             # Show first few lines of report
             report_lines = report.split('\n')[:10]
@@ -221,7 +221,7 @@ def demo_analysis_and_reporting():
                 print("  ... (truncated)")
     
     # Summary statistics
-    print(f"\n📊 Analysis Summary:")
+    print(f"\n[DATA] Analysis Summary:")
     print(f"  Total triggers analyzed: {len(results)}")
     print(f"  Total anomalies found: {total_anomalies}")
     print(f"  Average anomalies per trigger: {total_anomalies/len(results):.2f}")
@@ -261,12 +261,12 @@ def main():
     
     args = parser.parse_args()
     
-    print("🧬 rESP_o1o2 Demonstration Script")
+    print("[U+1F9EC] rESP_o1o2 Demonstration Script")
     print("Retrocausal Entanglement Signal Phenomena Detection System")
     print("=" * 60)
     
     if args.voice:
-        print("⚠️  Voice interface requested but not implemented in demo")
+        print("[U+26A0]️  Voice interface requested but not implemented in demo")
         print("    Voice features available in full rESPTriggerEngine")
     
     try:
@@ -282,7 +282,7 @@ def main():
         if args.mode in ["analysis", "all"]:
             demo_analysis_and_reporting()
             
-        print("\n✅ Demo completed successfully!")
+        print("\n[OK] Demo completed successfully!")
         print("\nNext steps:")
         print("1. Install API keys for real LLM testing (ANTHROPIC_API_KEY, OPENAI_API_KEY)")
         print("2. Install voice dependencies for speech interface: pip install SpeechRecognition pyttsx3 pyaudio")
@@ -290,9 +290,9 @@ def main():
         print("4. Review generated logs in rESP_logs/ directory")
         
     except KeyboardInterrupt:
-        print("\n🔲 Demo interrupted by user")
+        print("\n[U+1F532] Demo interrupted by user")
     except Exception as e:
-        print(f"\n❌ Demo failed with error: {e}")
+        print(f"\n[FAIL] Demo failed with error: {e}")
         import traceback
         traceback.print_exc()
 

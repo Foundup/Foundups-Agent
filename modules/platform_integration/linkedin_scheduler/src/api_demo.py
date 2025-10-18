@@ -6,9 +6,13 @@ Demonstrates real LinkedIn API v2 integration capabilities
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -35,9 +39,9 @@ def demo_oauth_flow():
     redirect_uri = "https://your-app.com/auth/linkedin/callback"
     oauth_url = scheduler.get_oauth_url(redirect_uri, state="demo_state_123")
     
-    logger.info(f"📱 OAuth URL Generated:")
+    logger.info(f"[U+1F4F1] OAuth URL Generated:")
     logger.info(f"   {oauth_url}")
-    logger.info(f"📋 Steps to authenticate:")
+    logger.info(f"[CLIPBOARD] Steps to authenticate:")
     logger.info(f"   1. Visit the OAuth URL above")
     logger.info(f"   2. Login to LinkedIn and authorize your app")
     logger.info(f"   3. LinkedIn will redirect to your callback URL with 'code' parameter")
@@ -59,18 +63,18 @@ def demo_api_capabilities():
     demo_profile = "urn:li:person:demo123"
     demo_token = "demo_access_token"
     
-    logger.info(f"📝 Supported Post Types:")
-    logger.info(f"   ✅ Text Posts: Simple text-only LinkedIn posts")
-    logger.info(f"   ✅ Article Posts: Posts with URL attachments and metadata")
-    logger.info(f"   🔄 Image Posts: (Implementation ready for asset upload flow)")
-    logger.info(f"   🔄 Video Posts: (Implementation ready for asset upload flow)")
+    logger.info(f"[NOTE] Supported Post Types:")
+    logger.info(f"   [OK] Text Posts: Simple text-only LinkedIn posts")
+    logger.info(f"   [OK] Article Posts: Posts with URL attachments and metadata")
+    logger.info(f"   [REFRESH] Image Posts: (Implementation ready for asset upload flow)")
+    logger.info(f"   [REFRESH] Video Posts: (Implementation ready for asset upload flow)")
     
-    logger.info(f"\n📊 Rate Limits (per LinkedIn documentation):")
+    logger.info(f"\n[DATA] Rate Limits (per LinkedIn documentation):")
     logger.info(f"   • Member Daily: {scheduler.RATE_LIMITS['member_daily']} requests")
     logger.info(f"   • Application Daily: {scheduler.RATE_LIMITS['app_daily']} requests")
     logger.info(f"   • Recommended: {scheduler.RATE_LIMITS['posts_per_hour']} posts/hour")
     
-    logger.info(f"\n🔐 Authentication Requirements:")
+    logger.info(f"\n[U+1F510] Authentication Requirements:")
     logger.info(f"   • OAuth 2.0 scope: 'w_member_social'")
     logger.info(f"   • Required headers: X-Restli-Protocol-Version: 2.0.0")
     logger.info(f"   • API endpoint: {scheduler.UGC_POSTS_ENDPOINT}")
@@ -88,7 +92,7 @@ def demo_text_post_structure():
         "specificContent": {
             "com.linkedin.ugc.ShareContent": {
                 "shareCommentary": {
-                    "text": "Hello World! This is my first automated LinkedIn post! 🚀"
+                    "text": "Hello World! This is my first automated LinkedIn post! [ROCKET]"
                 },
                 "shareMediaCategory": "NONE"
             }
@@ -98,7 +102,7 @@ def demo_text_post_structure():
         }
     }
     
-    logger.info(f"📋 Sample Text Post JSON Structure:")
+    logger.info(f"[CLIPBOARD] Sample Text Post JSON Structure:")
     import json
     logger.info(json.dumps(sample_post, indent=2))
     
@@ -115,7 +119,7 @@ def demo_article_post_structure():
         "specificContent": {
             "com.linkedin.ugc.ShareContent": {
                 "shareCommentary": {
-                    "text": "Great insights on professional networking! 💼"
+                    "text": "Great insights on professional networking! [U+1F4BC]"
                 },
                 "shareMediaCategory": "ARTICLE",
                 "media": [
@@ -137,7 +141,7 @@ def demo_article_post_structure():
         }
     }
     
-    logger.info(f"📋 Sample Article Post JSON Structure:")
+    logger.info(f"[CLIPBOARD] Sample Article Post JSON Structure:")
     import json
     logger.info(json.dumps(sample_article, indent=2))
     
@@ -154,7 +158,7 @@ def demo_queue_management():
     # Simulate adding posts to queue
     future_time = datetime.now() + timedelta(hours=1)
     
-    logger.info(f"📅 Adding sample posts to queue:")
+    logger.info(f"[U+1F4C5] Adding sample posts to queue:")
     
     # Add text post
     text_post_id = queue.add_post(
@@ -164,7 +168,7 @@ def demo_queue_management():
         post_type="text",
         visibility="PUBLIC"
     )
-    logger.info(f"   ✅ Added text post: {text_post_id}")
+    logger.info(f"   [OK] Added text post: {text_post_id}")
     
     # Add article post
     article_post_id = queue.add_post(
@@ -177,22 +181,22 @@ def demo_queue_management():
         description="Analysis of upcoming technology developments",
         visibility="PUBLIC"
     )
-    logger.info(f"   ✅ Added article post: {article_post_id}")
+    logger.info(f"   [OK] Added article post: {article_post_id}")
     
     # Show queue status
     status = queue.get_queue_status()
-    logger.info(f"\n📊 Queue Status:")
+    logger.info(f"\n[DATA] Queue Status:")
     logger.info(f"   • Queued: {status['queued']}")
     logger.info(f"   • Processed: {status['processed']}")
     logger.info(f"   • Failed: {status['failed']}")
     logger.info(f"   • Total: {status['total']}")
     logger.info(f"   • Next Scheduled: {status['next_scheduled']}")
     
-    logger.info(f"\n🔄 Queue Features:")
-    logger.info(f"   ✅ Automatic retry logic with exponential backoff")
-    logger.info(f"   ✅ Rate limit awareness and spacing")
-    logger.info(f"   ✅ Comprehensive error handling and logging")
-    logger.info(f"   ✅ Support for multiple post types and profiles")
+    logger.info(f"\n[REFRESH] Queue Features:")
+    logger.info(f"   [OK] Automatic retry logic with exponential backoff")
+    logger.info(f"   [OK] Rate limit awareness and spacing")
+    logger.info(f"   [OK] Comprehensive error handling and logging")
+    logger.info(f"   [OK] Support for multiple post types and profiles")
     
     return queue
 
@@ -201,7 +205,7 @@ def demo_integration_workflow():
     """Demonstrate complete integration workflow"""
     logger.info("\n=== Complete Integration Workflow Demo ===")
     
-    logger.info(f"🔄 Typical 012 Observer → 0102 Executor Workflow:")
+    logger.info(f"[REFRESH] Typical 012 Observer -> 0102 Executor Workflow:")
     logger.info(f"   1. 012 Observer identifies content to share")
     logger.info(f"   2. Content is analyzed and formatted for LinkedIn")
     logger.info(f"   3. Optimal posting time is calculated")
@@ -211,18 +215,18 @@ def demo_integration_workflow():
     logger.info(f"   7. Result is logged and any failures are retried")
     logger.info(f"   8. Success metrics are tracked for optimization")
     
-    logger.info(f"\n💡 Key Benefits:")
-    logger.info(f"   🎯 Automated content distribution")
-    logger.info(f"   📈 Consistent professional presence")
+    logger.info(f"\n[IDEA] Key Benefits:")
+    logger.info(f"   [TARGET] Automated content distribution")
+    logger.info(f"   [UP] Consistent professional presence")
     logger.info(f"   ⏰ Optimal timing for maximum engagement")
-    logger.info(f"   🔒 Secure OAuth 2.0 authentication")
-    logger.info(f"   📊 Built-in rate limiting and error handling")
-    logger.info(f"   🔄 Automatic retry logic for resilience")
+    logger.info(f"   [LOCK] Secure OAuth 2.0 authentication")
+    logger.info(f"   [DATA] Built-in rate limiting and error handling")
+    logger.info(f"   [REFRESH] Automatic retry logic for resilience")
 
 
 def run_complete_demo():
     """Run the complete LinkedIn API integration demo"""
-    logger.info("🚀 LinkedIn Scheduler API Integration Demo")
+    logger.info("[ROCKET] LinkedIn Scheduler API Integration Demo")
     logger.info("=" * 60)
     
     try:
@@ -243,12 +247,12 @@ def run_complete_demo():
         demo_integration_workflow()
         
         logger.info("\n" + "=" * 60)
-        logger.info("🎉 Demo completed successfully!")
-        logger.info("📚 Ready for production LinkedIn API integration")
-        logger.info("🔧 Configure with real LinkedIn app credentials to go live")
+        logger.info("[CELEBRATE] Demo completed successfully!")
+        logger.info("[BOOKS] Ready for production LinkedIn API integration")
+        logger.info("[TOOL] Configure with real LinkedIn app credentials to go live")
         
     except Exception as e:
-        logger.error(f"❌ Demo failed: {e}")
+        logger.error(f"[FAIL] Demo failed: {e}")
         raise
 
 

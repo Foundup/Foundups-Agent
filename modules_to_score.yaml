@@ -1,6 +1,6 @@
 # modules_to_score.yaml
 # ----------------------------------------------------------------------
-# ⚠️ 012/0102 PRIORITIZATION DISTINCTION:
+# [U+26A0]️ 012/0102 PRIORITIZATION DISTINCTION:
 # - A/B/C is for 012 (high-level triage/grouping, legacy dashboards, or human readability)
 # - WSP 37 dynamic scoring is for 0102 (agentic, zen, and enterprise-scale prioritization)
 # - If A/B/C is needed, derive it from the dynamic score (e.g., P0/P1 = A, P2 = B, P3/P4 = C)
@@ -9,7 +9,7 @@
 # WSP 37 Dynamic Module Scoring System with Strategic Activation
 # ----------------------------------------------------------------------
 # This file implements WSP 37 Roadmap Scoring System with dynamic priority
-# calculation based on roadmap progression (POC → Prototype → MVP).
+# calculation based on roadmap progression (POC -> Prototype -> MVP).
 #
 # STRATEGIC ACTIVATION SYSTEM:
 # - active: true = Currently active and available in WRE menu
@@ -272,7 +272,7 @@ modules:
 # WSP 37 DYNAMIC SCORING RULES
 # ----------------------------------------------------------------------
 # The system automatically adjusts scores based on:
-# 1. Roadmap progression (POC → Prototype → MVP)
+# 1. Roadmap progression (POC -> Prototype -> MVP)
 # 2. Dependency relationships
 # 3. 012 priority changes
 # 4. System health and completion status

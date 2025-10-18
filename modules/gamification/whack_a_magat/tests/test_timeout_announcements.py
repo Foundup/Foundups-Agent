@@ -107,7 +107,7 @@ def test_timeout_announcements():
     
     # Run test cases
     for test in test_cases:
-        print(f"\n🧪 TEST: {test['name']}")
+        print(f"\n[U+1F9EA] TEST: {test['name']}")
         print("-" * 40)
         
         for i, timeout in enumerate(test['timeouts']):
@@ -126,21 +126,21 @@ def test_timeout_announcements():
             
             print(f"\n   Timeout #{i+1}: {timeout['target']} for {timeout['duration']}s")
             if result['announcement']:
-                print(f"   📢 ANNOUNCEMENT: {result['announcement']}")
+                print(f"   [U+1F4E2] ANNOUNCEMENT: {result['announcement']}")
             if result['level_up']:
-                print(f"   🎉 LEVEL UP: {result['level_up']}")
+                print(f"   [CELEBRATE] LEVEL UP: {result['level_up']}")
             if result['points_gained'] > 0:
-                print(f"   📈 Points: +{result['points_gained']}")
+                print(f"   [UP] Points: +{result['points_gained']}")
             if result['stats']:
                 stats = result['stats']
-                print(f"   📊 Stats: {stats['title']} | {stats['rank']} | Level {stats['level']} | Score: {stats['score']}")
+                print(f"   [DATA] Stats: {stats['title']} | {stats['rank']} | Level {stats['level']} | Score: {stats['score']}")
     
     print("\n" + "=" * 60)
-    print("✅ ANNOUNCEMENT SYSTEM TEST COMPLETE")
+    print("[OK] ANNOUNCEMENT SYSTEM TEST COMPLETE")
     print("=" * 60)
     
     # Show final stats
-    print("\n📊 FINAL MODERATOR STATS:")
+    print("\n[DATA] FINAL MODERATOR STATS:")
     final_stats = manager.get_player_stats("owner")
     if final_stats:
         print(f"   {final_stats['title']}")
@@ -149,7 +149,7 @@ def test_timeout_announcements():
         print(f"   Total Score: {final_stats['score']}")
         print(f"   Current Streak: {manager.kill_streaks.get('owner', 0)}")
     
-    print("\n💡 NOTES:")
+    print("\n[IDEA] NOTES:")
     print("   - Multi-whack window is 10 seconds (for YouTube's slow UI)")
     print("   - Kill streak window is 15 seconds")
     print("   - YouTube API limitation: Can't detect which mod performed timeout")

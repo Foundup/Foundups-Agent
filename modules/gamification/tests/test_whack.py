@@ -26,17 +26,17 @@ def test_points_zero_for_10s():
 @pytest.mark.parametrize(
     "duration_sec,expected_min",
     [
-        (11, 1),           # 11–59s → 1 pt
+        (11, 1),           # 11–59s -> 1 pt
         (59, 1),
-        (60, 2),           # 1–14m → 2 pts
+        (60, 2),           # 1–14m -> 2 pts
         (14 * 60, 2),
-        (15 * 60, 3),      # 15–59m → 3 pts
+        (15 * 60, 3),      # 15–59m -> 3 pts
         (59 * 60, 3),
-        (60 * 60, 5),      # 60–239m → 5 pts
+        (60 * 60, 5),      # 60–239m -> 5 pts
         (239 * 60, 5),
-        (240 * 60, 8),     # 240–1439m → 8 pts
+        (240 * 60, 8),     # 240–1439m -> 8 pts
         (1439 * 60, 8),
-        (24 * 60 * 60, 13) # 24h → 13 pts
+        (24 * 60 * 60, 13) # 24h -> 13 pts
     ],
 )
 def test_points_scale_by_duration(duration_sec, expected_min):
@@ -79,7 +79,7 @@ def test_daily_cap_enforced():
 
 
 def test_behavior_classification_examples():
-    # CAT_PLAY: multiple short with repeats≥2
+    # CAT_PLAY: multiple short with repeats[GREATER_EQUAL]2
     assert classify_behavior(30, 2) == BehaviorTier.CAT_PLAY
     # BRUTAL_HAMMER: >= 12h
     assert classify_behavior(12 * 60 * 60, 0) == BehaviorTier.BRUTAL_HAMMER
@@ -113,7 +113,7 @@ def test_rank_and_level_progression():
     assert profile.score == 55 + 100
     assert profile.rank in ("Silver", "Gold")
 
-    # Day 3: another fresh 24h window → cap allows +100 again
+    # Day 3: another fresh 24h window -> cap allows +100 again
     day3 = next_day + timedelta(hours=25)
     for i in range(40):
         apply_whack(mod, f"d3_{i}", 60 * 60, day3 + timedelta(minutes=i))

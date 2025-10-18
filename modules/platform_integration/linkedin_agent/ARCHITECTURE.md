@@ -6,12 +6,12 @@
 
 1. **YouTube Stream Notifications**
    ```
-   Stream Detected → simple_posting_orchestrator → unified_linkedin_interface → anti_detection_poster (browser)
+   Stream Detected -> simple_posting_orchestrator -> unified_linkedin_interface -> anti_detection_poster (browser)
    ```
 
 2. **Git Commits**
    ```
-   Git Push → git_linkedin_bridge → unified_linkedin_interface → anti_detection_poster (browser)
+   Git Push -> git_linkedin_bridge -> unified_linkedin_interface -> anti_detection_poster (browser)
    ```
 
 ### Core Components:
@@ -71,14 +71,14 @@
 ## File Structure:
 ```
 linkedin_agent/
-├── src/
-│   ├── anti_detection_poster.py  # Main browser automation
-│   ├── git_linkedin_bridge.py    # Git commit posting
-│   └── linkedin_agent.py         # Module orchestrator
-└── tests/                         # Test scripts (to be cleaned)
++-- src/
+[U+2502]   +-- anti_detection_poster.py  # Main browser automation
+[U+2502]   +-- git_linkedin_bridge.py    # Git commit posting
+[U+2502]   +-- linkedin_agent.py         # Module orchestrator
++-- tests/                         # Test scripts (to be cleaned)
 
 linkedin_scheduler/
-├── src/
-│   └── linkedin_scheduler.py     # OAuth API implementation
-└── tests/                         # API tests
++-- src/
+[U+2502]   +-- linkedin_scheduler.py     # OAuth API implementation
++-- tests/                         # API tests
 ```

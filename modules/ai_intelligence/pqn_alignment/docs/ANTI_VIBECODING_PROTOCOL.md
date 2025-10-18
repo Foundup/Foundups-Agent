@@ -43,7 +43,7 @@ def before_any_code():
 
 ## Usage Example
 
-### ❌ WRONG (Vibecoding):
+### [FAIL] WRONG (Vibecoding):
 ```python
 # Task: Add spectral analysis to PQN detector
 # WRONG: Immediately create new EnhancedResonanceDetector class
@@ -52,7 +52,7 @@ class EnhancedResonanceDetector:
         # 500 lines of new code...
 ```
 
-### ✅ CORRECT (WSP-Compliant):
+### [OK] CORRECT (WSP-Compliant):
 ```python
 # Task: Add spectral analysis to PQN detector
 # Step 1: Run verification
@@ -69,16 +69,16 @@ def analyze_detector_output(events_path):
 ## Key Principles
 
 ### The Code Memory Hierarchy
-1. **Level 1**: Exact match exists → USE IT
-2. **Level 2**: Similar exists → EXTEND IT
-3. **Level 3**: Can combine existing → COMPOSE IT
-4. **Level 4**: Truly new (rare) → MINIMIZE IT
+1. **Level 1**: Exact match exists -> USE IT
+2. **Level 2**: Similar exists -> EXTEND IT
+3. **Level 3**: Can combine existing -> COMPOSE IT
+4. **Level 4**: Truly new (rare) -> MINIMIZE IT
 
 ### Pattern Recognition
-- ResonanceDetector → Handles ALL frequency detection
-- GeomMeter → Handles ALL geometric measurements
-- SymbolSource → Handles ALL script execution
-- Council → Handles ALL multi-agent evaluation
+- ResonanceDetector -> Handles ALL frequency detection
+- GeomMeter -> Handles ALL geometric measurements
+- SymbolSource -> Handles ALL script execution
+- Council -> Handles ALL multi-agent evaluation
 
 ### The 97% Rule
 97% of "new" features already exist in some form. Only 3% are truly new.

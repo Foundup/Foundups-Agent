@@ -29,7 +29,7 @@ class AIIntelligenceCore:
         self.learning_enabled = True
         self.multi_agent_coordination = True
 
-        logger.info("🧠 AI Intelligence Core initialized")
+        logger.info("[AI] AI Intelligence Core initialized")
 
     def process_consciousness_input(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """

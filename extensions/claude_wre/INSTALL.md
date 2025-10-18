@@ -40,13 +40,13 @@ python modules/wre_core/src/main.py --websocket --ws-port 8765
 
 ### 4. **Use "Run WRE"**
 1. Open any workspace in VS Code
-2. Click 🚀 **WRE** button in status bar
-3. Or use Command Palette: `Ctrl+Shift+P` → `WRE: Run WRE`
+2. Click [ROCKET] **WRE** button in status bar
+3. Or use Command Palette: `Ctrl+Shift+P` -> `WRE: Run WRE`
 4. Watch 12-phase autonomous development flow
 
 ## Detailed Installation
 
-### Prerequisites ✅
+### Prerequisites [OK]
 
 **Required:**
 - VS Code 1.74.0+
@@ -130,9 +130,9 @@ pip install asyncio  # Usually built-in with Python 3.7+
 python modules/wre_core/src/main.py --websocket
 
 # Should show:
-# 🌐 Starting WRE WebSocket server on localhost:8765
-# ✅ WRE WebSocket server started successfully  
-# 🔗 Claude Code extensions can connect to ws://localhost:8765
+# [U+1F310] Starting WRE WebSocket server on localhost:8765
+# [OK] WRE WebSocket server started successfully  
+# [LINK] Claude Code extensions can connect to ws://localhost:8765
 ```
 
 ### Integration Testing
@@ -151,7 +151,7 @@ ws.send(JSON.stringify({ type: 'get_status' }));
 - Try `WRE: Run WRE` and `WRE: WRE Status`
 
 **3. Test Status Bar Integration:**
-- Look for 🚀 **WRE Ready** in status bar (bottom right)
+- Look for [ROCKET] **WRE Ready** in status bar (bottom right)
 - Click to trigger WRE execution
 - Status should update to show progress
 
@@ -173,7 +173,7 @@ vsce package
 code --install-extension claude-wre-integration-1.0.0.vsix
 
 # Or through VS Code UI:
-# Extensions → ... → Install from VSIX
+# Extensions -> ... -> Install from VSIX
 ```
 
 **3. Distribute:**
@@ -273,13 +273,13 @@ python -c "import websockets; print('WebSocket support OK')"
 ### Debug Logging
 
 **Extension Logs:**
-- `View → Output → WRE Integration`
+- `View -> Output -> WRE Integration`
 
 **WRE Server Logs:**
 - `O:\Foundups-Agent\modules\wre_core\logs\websocket_server.log`
 
 **VS Code Developer Tools:**
-- `Help → Toggle Developer Tools`
+- `Help -> Toggle Developer Tools`
 - Check Console for extension errors
 
 ## Advanced Configuration

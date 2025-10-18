@@ -90,7 +90,7 @@ class ThreeActStoryGenerator:
             "act2_desc": f"Shock: {shock['desc']}",
             "act3": act3,
             "act3_desc": f"Reveal: {reveal_desc}",
-            "full_story": f"{shock['desc']} → {reveal_desc}"
+            "full_story": f"{shock['desc']} -> {reveal_desc}"
         }
 
 

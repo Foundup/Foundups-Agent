@@ -13,7 +13,7 @@ Core testing for autonomous development capabilities:
 - Dependency management automation
 
 ### Coverage Requirements
-Target: ≥90% per WSP 5
+Target: [GREATER_EQUAL]90% per WSP 5
 Current: Basic test framework for autonomous module creation
 
 ### IDE Integration Testing

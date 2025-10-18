@@ -315,7 +315,7 @@ IF unclear:
 
 ---
 
-## 🤖 Sentinel Augmentation Analysis
+## [BOT] Sentinel Augmentation Analysis
 
 **SAI Score**: `222` (Speed: 2, Automation: 2, Intelligence: 2)
 
@@ -327,7 +327,7 @@ Gemma 3 270M Sentinel monitors all file creation/modification operations in real
 
 ### Expected Benefits
 
-- **Latency Reduction**: Manual WSP review (2-5 minutes) → Real-time blocking (<50ms)
+- **Latency Reduction**: Manual WSP review (2-5 minutes) -> Real-time blocking (<50ms)
 - **Automation Level**: **Autonomous** (blocks violations automatically, logs for 012 review)
 - **Resource Savings**:
   - 95% reduction in WSP violation cleanup time
@@ -341,7 +341,7 @@ Gemma 3 270M Sentinel monitors all file creation/modification operations in real
 1. **WSP_MODULE_VIOLATIONS.md** - All historical violations with correct resolutions
 2. **Git commit history** - Successful file placements (positive examples)
 3. **Module structure** - All 93 WSPs' requirements and rules
-4. **Domain mapping** - WSP 3 enterprise domain → function mapping
+4. **Domain mapping** - WSP 3 enterprise domain -> function mapping
 5. **HoloIndex logs** - Qwen's WSP compliance decisions
 
 **Integration Points**:
@@ -404,8 +404,8 @@ sentinel = WSPViolationSentinel()
 for file_op in staged_files:
     decision = sentinel.check_file_operation(file_op)
     if not decision.allowed:
-        print(f"❌ WSP VIOLATION BLOCKED: {decision.violations}")
-        print(f"💡 Suggestion: {decision.suggestion}")
+        print(f"[FAIL] WSP VIOLATION BLOCKED: {decision.violations}")
+        print(f"[IDEA] Suggestion: {decision.suggestion}")
         sys.exit(1)
 ```
 
@@ -500,7 +500,7 @@ def create_file(path: str, content: str):
 # Confidence-based escalation
 if decision.confidence < 0.85:
     # Low confidence - defer to human
-    print(f"⚠️  WSP Sentinel uncertain (confidence: {decision.confidence})")
+    print(f"[U+26A0]️  WSP Sentinel uncertain (confidence: {decision.confidence})")
     print(f"   Potential violations: {decision.warnings}")
     response = input("Proceed anyway? (yes/no): ")
 

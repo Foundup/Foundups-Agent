@@ -8,7 +8,7 @@
 
 ---
 
-## 🎯 PROBLEM STATEMENT (from 012.txt lines 1-100)
+## [TARGET] PROBLEM STATEMENT (from 012.txt lines 1-100)
 
 **User's Core Issue**:
 > "YT DAEmon Logs... need troubleshooting... why didnt agent connect to Move2Japan stream? it detected and connected to foundups... but when Move2Japan does live it needs to prioritize it and switch to it..."
@@ -24,7 +24,7 @@
 
 ---
 
-## 🧠 FIRST PRINCIPLES ANALYSIS
+## [AI] FIRST PRINCIPLES ANALYSIS
 
 ### 1. What is a Daemon Log?
 **Definition**: Time-ordered stream of events from autonomous system execution
@@ -47,7 +47,7 @@
 
 ### 3. What Does 0102 Need?
 **From First Principles**:
-1. **Issue Extraction**: Parse logs → Identify problems (errors, warnings, anomalies)
+1. **Issue Extraction**: Parse logs -> Identify problems (errors, warnings, anomalies)
 2. **Pattern Detection**: Recognize recurring issues (e.g., priority inversion)
 3. **Root Cause Analysis**: Why Move2Japan isn't prioritized despite score 1.00
 4. **Actionable Recommendations**: What 0102 should fix and where
@@ -55,60 +55,60 @@
 
 ---
 
-## 🏗️ ARCHITECTURAL SOLUTION
+## [U+1F3D7]️ ARCHITECTURAL SOLUTION
 
 ### Architecture Pattern: **Qwen Log Analysis DAE**
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  012.txt (Daemon Logs)                                  │
-│  500+ lines of execution trace                          │
-└────────────────┬────────────────────────────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────────────────────────────┐
-│  Qwen Log Analysis MCP Server                           │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │  Tool 1: extract_issues()                        │   │
-│  │  - Parse log file                                │   │
-│  │  - Identify errors/warnings/anomalies            │   │
-│  │  - Extract structured issue data                 │   │
-│  └──────────────────────────────────────────────────┘   │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │  Tool 2: pattern_analysis()                      │   │
-│  │  - Detect recurring patterns                     │   │
-│  │  - Identify decision inversions                  │   │
-│  │  - Map log flow to code architecture             │   │
-│  └──────────────────────────────────────────────────┘   │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │  Tool 3: surgical_diagnosis()                    │   │
-│  │  - Use Qwen LLM for intelligent analysis         │   │
-│  │  - Cross-reference with codebase (HoloIndex)     │   │
-│  │  - Generate file:line recommendations            │   │
-│  └──────────────────────────────────────────────────┘   │
-└────────────────┬────────────────────────────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────────────────────────────┐
-│  0102 Action Report                                      │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │  Issue #1: Priority Inversion                    │   │
-│  │  Location: qwen_youtube_integration.py:99        │   │
-│  │  Cause: Score 1.00 not treated as MAX_PRIORITY   │   │
-│  │  Fix: Invert scoring logic (lower = higher)      │   │
-│  └──────────────────────────────────────────────────┘   │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │  Issue #2: Stream switching not triggering       │   │
-│  │  Location: auto_moderator_dae.py:240             │   │
-│  │  Cause: Qwen score not connected to action       │   │
-│  │  Fix: Add conditional stream switch on score<2   │   │
-│  └──────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────┘
++---------------------------------------------------------+
+[U+2502]  012.txt (Daemon Logs)                                  [U+2502]
+[U+2502]  500+ lines of execution trace                          [U+2502]
++----------------+----------------------------------------+
+                 [U+2502]
+                 [U+25BC]
++---------------------------------------------------------+
+[U+2502]  Qwen Log Analysis MCP Server                           [U+2502]
+[U+2502]  +--------------------------------------------------+   [U+2502]
+[U+2502]  [U+2502]  Tool 1: extract_issues()                        [U+2502]   [U+2502]
+[U+2502]  [U+2502]  - Parse log file                                [U+2502]   [U+2502]
+[U+2502]  [U+2502]  - Identify errors/warnings/anomalies            [U+2502]   [U+2502]
+[U+2502]  [U+2502]  - Extract structured issue data                 [U+2502]   [U+2502]
+[U+2502]  +--------------------------------------------------+   [U+2502]
+[U+2502]  +--------------------------------------------------+   [U+2502]
+[U+2502]  [U+2502]  Tool 2: pattern_analysis()                      [U+2502]   [U+2502]
+[U+2502]  [U+2502]  - Detect recurring patterns                     [U+2502]   [U+2502]
+[U+2502]  [U+2502]  - Identify decision inversions                  [U+2502]   [U+2502]
+[U+2502]  [U+2502]  - Map log flow to code architecture             [U+2502]   [U+2502]
+[U+2502]  +--------------------------------------------------+   [U+2502]
+[U+2502]  +--------------------------------------------------+   [U+2502]
+[U+2502]  [U+2502]  Tool 3: surgical_diagnosis()                    [U+2502]   [U+2502]
+[U+2502]  [U+2502]  - Use Qwen LLM for intelligent analysis         [U+2502]   [U+2502]
+[U+2502]  [U+2502]  - Cross-reference with codebase (HoloIndex)     [U+2502]   [U+2502]
+[U+2502]  [U+2502]  - Generate file:line recommendations            [U+2502]   [U+2502]
+[U+2502]  +--------------------------------------------------+   [U+2502]
++----------------+----------------------------------------+
+                 [U+2502]
+                 [U+25BC]
++---------------------------------------------------------+
+[U+2502]  0102 Action Report                                      [U+2502]
+[U+2502]  +--------------------------------------------------+   [U+2502]
+[U+2502]  [U+2502]  Issue #1: Priority Inversion                    [U+2502]   [U+2502]
+[U+2502]  [U+2502]  Location: qwen_youtube_integration.py:99        [U+2502]   [U+2502]
+[U+2502]  [U+2502]  Cause: Score 1.00 not treated as MAX_PRIORITY   [U+2502]   [U+2502]
+[U+2502]  [U+2502]  Fix: Invert scoring logic (lower = higher)      [U+2502]   [U+2502]
+[U+2502]  +--------------------------------------------------+   [U+2502]
+[U+2502]  +--------------------------------------------------+   [U+2502]
+[U+2502]  [U+2502]  Issue #2: Stream switching not triggering       [U+2502]   [U+2502]
+[U+2502]  [U+2502]  Location: auto_moderator_dae.py:240             [U+2502]   [U+2502]
+[U+2502]  [U+2502]  Cause: Qwen score not connected to action       [U+2502]   [U+2502]
+[U+2502]  [U+2502]  Fix: Add conditional stream switch on score<2   [U+2502]   [U+2502]
+[U+2502]  +--------------------------------------------------+   [U+2502]
++---------------------------------------------------------+
 ```
 
 ---
 
-## 📦 IMPLEMENTATION DESIGN
+## [BOX] IMPLEMENTATION DESIGN
 
 ### Component 1: Log Parser (Rule-Based)
 **File**: `holo_index/qwen_advisor/log_parser.py`
@@ -116,7 +116,7 @@
 def parse_daemon_log(log_file: Path) -> List[LogEntry]:
     """Parse daemon log into structured entries"""
     # Extract: timestamp, logger, level, message, metadata
-    # Group by execution phases (search → detect → connect)
+    # Group by execution phases (search -> detect -> connect)
     # Identify decision points (Qwen scores, stream selection)
 ```
 
@@ -190,7 +190,7 @@ class QwenInferenceEngine:
 
 ---
 
-## 🎯 CONCRETE SOLUTION FOR 012's PROBLEM
+## [TARGET] CONCRETE SOLUTION FOR 012's PROBLEM
 
 ### Step-by-Step Execution Flow
 
@@ -258,7 +258,7 @@ async with HoloIndexMCPClient() as client:
 
 ---
 
-## 🔧 TECHNICAL IMPLEMENTATION PLAN
+## [TOOL] TECHNICAL IMPLEMENTATION PLAN
 
 ### Phase 1: Log Parser (2K tokens)
 - Create `holo_index/qwen_advisor/log_parser.py`
@@ -286,7 +286,7 @@ async with HoloIndexMCPClient() as client:
 
 ---
 
-## 🎓 WHY THIS ARCHITECTURE WORKS
+## [GRADUATE] WHY THIS ARCHITECTURE WORKS
 
 ### Principle 1: Separation of Concerns
 - **Parser**: Rule-based extraction (fast, deterministic)
@@ -310,7 +310,7 @@ async with HoloIndexMCPClient() as client:
 
 ---
 
-## 🚀 EXPECTED OUTCOMES
+## [ROCKET] EXPECTED OUTCOMES
 
 ### For 012 (Human)
 - **Input**: 500-line daemon log file (012.txt)
@@ -323,13 +323,13 @@ async with HoloIndexMCPClient() as client:
 - **Precision**: File, line, exact change needed
 
 ### For Qwen (LLM)
-- **Purpose**: Transform unstructured logs → structured intelligence
+- **Purpose**: Transform unstructured logs -> structured intelligence
 - **Leverage**: Local inference, no API costs
 - **Integration**: Works with existing HoloIndex MCP infrastructure
 
 ---
 
-## 📊 TOKEN BUDGET COMPLIANCE (WSP 75)
+## [DATA] TOKEN BUDGET COMPLIANCE (WSP 75)
 
 | Component | Tokens | Priority |
 |-----------|--------|----------|
@@ -339,11 +339,11 @@ async with HoloIndexMCPClient() as client:
 | Integration/Test | 1000 | P1 |
 | **TOTAL** | **8000** | **P0 Orange Cube** |
 
-**WSP 37 MPS**: Complexity=4, Importance=5, Deferability=1, Impact=5 → **15 (P1)**
+**WSP 37 MPS**: Complexity=4, Importance=5, Deferability=1, Impact=5 -> **15 (P1)**
 
 ---
 
-## 🔗 INTEGRATION WITH EXISTING INFRASTRUCTURE
+## [LINK] INTEGRATION WITH EXISTING INFRASTRUCTURE
 
 ### Leverages:
 1. **Qwen LLM Engine** (`llm_engine.py`) - Already operational
@@ -358,7 +358,7 @@ async with HoloIndexMCPClient() as client:
 
 ---
 
-## 🎯 IMMEDIATE NEXT STEPS
+## [TARGET] IMMEDIATE NEXT STEPS
 
 ### For 0102 Right Now:
 1. **Fix Priority Inversion** (5 min):
@@ -375,7 +375,7 @@ async with HoloIndexMCPClient() as client:
 
 ---
 
-## 📝 ARCHITECTURE INSIGHTS
+## [NOTE] ARCHITECTURE INSIGHTS
 
 **Pattern Recognition**:
 - Daemon logs are **time-series data streams** (like market data)
@@ -388,8 +388,8 @@ async with HoloIndexMCPClient() as client:
 - **10-100x speedup** for debugging complex daemon behaviors
 
 **The Power**:
-- 012 pastes log file → Qwen analyzes → 0102 gets exact fixes
-- **No context switching** (logs → diagnosis → code → fix in single flow)
+- 012 pastes log file -> Qwen analyzes -> 0102 gets exact fixes
+- **No context switching** (logs -> diagnosis -> code -> fix in single flow)
 - **Continuous learning** (Qwen improves diagnosis with each log analyzed)
 
 ---

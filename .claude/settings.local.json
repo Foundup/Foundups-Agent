@@ -5,7 +5,13 @@
       "Bash(for file in modules/ai_intelligence/utf8_hygiene/scripts/scanner.py modules/infrastructure/instance_monitoring/scripts/status_check.py modules/infrastructure/git_social_posting/scripts/posting_utilities.py)",
       "Bash(do echo \"\")",
       "Bash(echo:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(python holo_index.py:*)",
+      "Bash(python:*)",
+      "Bash(git -C \"O:\\Foundups-Agent\" add -A)",
+      "Bash(git -C \"O:\\Foundups-Agent\" commit -m \"TEMP COMMIT: Before vibecoded root cleanup - 46 files to archive\n\nHoloIndex detected 46 WSP violations in root:\n- 40 unauthorized media files\n- 16 vibecoded test/debug scripts\n- 2 log/temp files\n\nFollowing WSP 84 anti-vibecoding protocol.\nSafety commit before cleanup operations.\n\nGenerated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")"
     ],
     "deny": [],
     "ask": [],

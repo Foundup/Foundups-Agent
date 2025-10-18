@@ -9,9 +9,13 @@ Channel: Move2Japan (UC-LSSlOZwpGIRIYihaz8zCw)
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -107,16 +111,16 @@ def test_comment_interactions(youtube_service, comment_id):
 
 def main():
     """Main testing function."""
-    logger.info("🎬 Starting Move2Japan YouTube Comments Test")
+    logger.info("[U+1F3AC] Starting Move2Japan YouTube Comments Test")
     
     # Move2Japan channel ID
     CHANNEL_ID = "UC-LSSlOZwpGIRIYihaz8zCw"
     
     try:
         # Get authenticated service
-        logger.info("🔑 Authenticating with YouTube API...")
+        logger.info("[U+1F511] Authenticating with YouTube API...")
         youtube_service = get_authenticated_service()
-        logger.info("✅ Authentication successful")
+        logger.info("[OK] Authentication successful")
         
         # Results collection
         test_results = {
@@ -130,7 +134,7 @@ def main():
         }
         
         # Step 1: Get recent videos from the channel
-        logger.info("📺 Fetching recent videos from Move2Japan channel...")
+        logger.info("[U+1F4FA] Fetching recent videos from Move2Japan channel...")
         videos = get_channel_videos(youtube_service, CHANNEL_ID, max_results=20)
         logger.info(f"Found {len(videos)} recent videos")
         
@@ -142,7 +146,7 @@ def main():
             video_title = video['snippet']['title']
             published = video['snippet']['publishedAt']
             
-            logger.info(f"🔍 Analyzing video {i+1}: {video_title[:50]}...")
+            logger.info(f"[SEARCH] Analyzing video {i+1}: {video_title[:50]}...")
             
             # Get video statistics
             video_stats = get_video_statistics(youtube_service, video_id)
@@ -166,7 +170,7 @@ def main():
             }
             
             if comment_count > 0:
-                logger.info(f"💬 Video has {comment_count} comments, fetching sample...")
+                logger.info(f"[U+1F4AC] Video has {comment_count} comments, fetching sample...")
                 
                 # Get sample comments
                 comments = list_video_comments(youtube_service, video_id, max_results=5)
@@ -186,14 +190,14 @@ def main():
                 
             test_results['videos_analyzed'].append(video_info)
             
-        logger.info(f"📊 Found {len(videos_with_comments)} videos with comments")
+        logger.info(f"[DATA] Found {len(videos_with_comments)} videos with comments")
         
         # Step 3: Test comment interactions on first available comment
         if videos_with_comments and videos_with_comments[0]['sample_comments']:
             test_video = videos_with_comments[0]
             test_comment = test_video['sample_comments'][0]
             
-            logger.info(f"🧪 Testing comment interactions on: {test_comment['comment_id']}")
+            logger.info(f"[U+1F9EA] Testing comment interactions on: {test_comment['comment_id']}")
             
             interaction_results = test_comment_interactions(
                 youtube_service, 
@@ -259,38 +263,38 @@ def main():
         ]
         
         # Step 5: Generate detailed report
-        logger.info("📋 Generating detailed report...")
+        logger.info("[CLIPBOARD] Generating detailed report...")
         
         print("\n" + "="*80)
         print("MOVE2JAPAN YOUTUBE COMMENTS ANALYSIS REPORT")
         print("="*80)
         
-        print(f"\n📺 CHANNEL ANALYSIS")
+        print(f"\n[U+1F4FA] CHANNEL ANALYSIS")
         print(f"Channel ID: {CHANNEL_ID}")
         print(f"Videos Analyzed: {len(test_results['videos_analyzed'])}")
         print(f"Videos with Comments: {len(videos_with_comments)}")
         
-        print(f"\n💬 VIDEOS WITH COMMENTS:")
+        print(f"\n[U+1F4AC] VIDEOS WITH COMMENTS:")
         for video in videos_with_comments[:5]:  # Show top 5
             print(f"  • {video['title'][:60]}...")
             print(f"    Comments: {video['comment_count']}, Views: {video['view_count']:,}")
             print(f"    Latest comment: {video['sample_comments'][0]['text'][:100]}...")
             print()
         
-        print(f"\n🧪 API INTERACTION TEST RESULTS:")
+        print(f"\n[U+1F9EA] API INTERACTION TEST RESULTS:")
         if test_results['comment_interaction_tests']:
             test_data = test_results['comment_interaction_tests']
             print(f"Test Video: {test_data['test_video_title'][:50]}...")
             print(f"Test Comment by: {test_data['test_comment_author']}")
             for test_name, result in test_data['results'].items():
-                status = "✅ PASS" if result['success'] else "❌ FAIL"
+                status = "[OK] PASS" if result['success'] else "[FAIL] FAIL"
                 print(f"  {test_name}: {status}")
                 if 'note' in result:
                     print(f"    Note: {result['note']}")
                 if 'error' in result:
                     print(f"    Error: {result['error']}")
         
-        print(f"\n⚠️  API LIMITATIONS:")
+        print(f"\n[U+26A0]️  API LIMITATIONS:")
         for limitation in test_results['api_limitations']:
             print(f"  • {limitation['feature']}: {limitation['status']}")
             print(f"    Reason: {limitation['reason']}")
@@ -298,7 +302,7 @@ def main():
                 print(f"    Alternative: {limitation['alternative']}")
             print()
         
-        print(f"\n✅ WORKING FEATURES:")
+        print(f"\n[OK] WORKING FEATURES:")
         for feature in test_results['working_features']:
             print(f"  • {feature['feature']}: {feature['status']}")
             print(f"    Cost: {feature['quota_cost']}")
@@ -314,13 +318,13 @@ def main():
         with open(report_path, 'w', encoding='utf-8') as f:
             json.dump(test_results, f, indent=2, ensure_ascii=False)
         
-        print(f"\n📄 Detailed results saved to: {report_path}")
+        print(f"\n[U+1F4C4] Detailed results saved to: {report_path}")
         print("="*80)
         
-        logger.info("✅ Analysis complete!")
+        logger.info("[OK] Analysis complete!")
         
     except Exception as e:
-        logger.error(f"❌ Test failed with error: {e}")
+        logger.error(f"[FAIL] Test failed with error: {e}")
         raise
 
 if __name__ == "__main__":

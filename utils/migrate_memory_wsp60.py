@@ -134,7 +134,7 @@ class WSP60MemoryMigrator:
                     "status": "success",
                     "timestamp": datetime.now().isoformat()
                 })
-                logger.info(f"Migrated: {filename} → {module_path}")
+                logger.info(f"Migrated: {filename} -> {module_path}")
                 return True
             else:
                 logger.error(f"Validation failed for {filename}")
@@ -180,7 +180,7 @@ class WSP60MemoryMigrator:
                     "status": "success", 
                     "timestamp": datetime.now().isoformat()
                 })
-                logger.info(f"Migrated: {dirname}/ → {module_path}/")
+                logger.info(f"Migrated: {dirname}/ -> {module_path}/")
                 return True
             else:
                 logger.error(f"Validation failed for {dirname}")
@@ -283,33 +283,33 @@ def main():
     """Main migration function."""
     migrator = WSP60MemoryMigrator()
     
-    print("🚀 WSP 60 Memory Migration Starting...")
+    print("[ROCKET] WSP 60 Memory Migration Starting...")
     print("=" * 50)
     
     # Create backup
     if not migrator.create_backup():
-        print("❌ Backup creation failed - aborting migration")
+        print("[FAIL] Backup creation failed - aborting migration")
         return False
     
-    print("✅ Backup created successfully")
+    print("[OK] Backup created successfully")
     
     # Phase 1: Agent Management Data
-    print("\n📁 Phase 1: Agent Management Data")
+    print("\n[U+1F4C1] Phase 1: Agent Management Data")
     if migrator.migrate_agent_management_data():
-        print("✅ Agent management data migrated")
+        print("[OK] Agent management data migrated")
     else:
-        print("⚠️  Agent management migration had issues")
+        print("[U+26A0]️  Agent management migration had issues")
     
     # Phase 2: LiveChat Data  
-    print("\n💬 Phase 2: LiveChat Data")
+    print("\n[U+1F4AC] Phase 2: LiveChat Data")
     if migrator.migrate_livechat_data():
-        print("✅ LiveChat data migrated")
+        print("[OK] LiveChat data migrated")
     else:
-        print("⚠️  LiveChat migration had issues")
+        print("[U+26A0]️  LiveChat migration had issues")
     
     # Generate report
     report = migrator.get_migration_report()
-    print(f"\n📊 Migration Report:")
+    print(f"\n[DATA] Migration Report:")
     print(f"   Total: {report['total_migrations']}")
     print(f"   Success: {report['successful_migrations']}")
     print(f"   Failed: {report['failed_migrations']}")
@@ -321,7 +321,7 @@ def main():
     with open(report_path, 'w') as f:
         json.dump(report, f, indent=2)
     
-    print(f"📝 Report saved: {report_path}")
+    print(f"[NOTE] Report saved: {report_path}")
     
     return report['failed_migrations'] == 0
 

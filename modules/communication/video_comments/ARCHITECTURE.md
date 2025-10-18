@@ -18,14 +18,14 @@ Handle YouTube video comments separately from live chat, as they are fundamental
 
 ```
 modules/communication/video_comments/
-├── src/
-│   ├── comment_monitor.py      # Main orchestrator
-│   ├── comment_poller.py       # Polls for new comments
-│   ├── comment_processor.py    # Analyzes comments
-│   ├── comment_responder.py    # Generates responses
-│   └── comment_memory.py       # Tracks conversations
-├── tests/
-└── memory/
++-- src/
+[U+2502]   +-- comment_monitor.py      # Main orchestrator
+[U+2502]   +-- comment_poller.py       # Polls for new comments
+[U+2502]   +-- comment_processor.py    # Analyzes comments
+[U+2502]   +-- comment_responder.py    # Generates responses
+[U+2502]   +-- comment_memory.py       # Tracks conversations
++-- tests/
++-- memory/
 ```
 
 ## Integration Points
@@ -108,7 +108,7 @@ modules/communication/video_comments/
 ## Why Separate from LiveChat
 
 1. **Resource Optimization**: Don't waste quota polling comments during streams
-2. **Mental Model**: Comments ≠ Chat (different user expectations)
+2. **Mental Model**: Comments != Chat (different user expectations)
 3. **Scalability**: Can run comment system 24/7 without stream
 4. **Testing**: Can test comments without live stream
 5. **Maintenance**: Fix comment bugs without breaking live chat

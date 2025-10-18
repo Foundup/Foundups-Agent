@@ -2,13 +2,13 @@
 **Created**: 2025-09-24
 **Purpose**: Map all posting scenarios and account routing logic
 
-## 📊 Posting Scenarios Overview
+## [DATA] Posting Scenarios Overview
 
 ### 1️⃣ YOUTUBE LIVE STREAM DETECTION
 **Trigger**: Stream detected by stream_resolver
-**Flow**: stream_resolver → social_media_orchestrator → LinkedIn + X
+**Flow**: stream_resolver -> social_media_orchestrator -> LinkedIn + X
 
-#### Channel → Account Routing Configuration:
+#### Channel -> Account Routing Configuration:
 
 ```json
 {
@@ -58,7 +58,7 @@
 
 ### 2️⃣ GIT COMMIT POSTING
 **Trigger**: Option 0 in main.py or git push command
-**Flow**: git_linkedin_bridge → LinkedIn + X
+**Flow**: git_linkedin_bridge -> LinkedIn + X
 
 #### Account Configuration:
 - **LinkedIn**: Always posts to FoundUps company page (1263645)
@@ -76,43 +76,43 @@
 
 ---
 
-## 🔄 Implementation Flow
+## [REFRESH] Implementation Flow
 
 ### YouTube Stream Detection Flow:
 ```
 1. auto_moderator_dae.py finds stream
-   ↓
+   v
 2. stream_resolver.resolve_stream() gets video_id
-   ↓
+   v
 3. stream_resolver._trigger_social_media_post()
-   ↓
+   v
 4. simple_posting_orchestrator.handle_stream_detected()
-   ↓
+   v
 5. Routes to correct LinkedIn page based on channel_id
-   ↓
+   v
 6. Routes to correct X account based on channel_id
-   ↓
+   v
 7. Posts sequentially (LinkedIn first, then X)
 ```
 
 ### Git Posting Flow:
 ```
 1. main.py option 0 selected
-   ↓
+   v
 2. git_linkedin_bridge.push_and_post()
-   ↓
+   v
 3. Generate LinkedIn content (detailed)
-   ↓
+   v
 4. Generate X content (minimal)
-   ↓
+   v
 5. Post to LinkedIn (FoundUps page)
-   ↓
+   v
 6. Post to X (@Foundups)
 ```
 
 ---
 
-## 🚨 Current Issues & Fixes Needed
+## [ALERT] Current Issues & Fixes Needed
 
 ### Issue 1: Move2Japan Not Posting to LinkedIn
 **Problem**: Stream detected but LinkedIn post not triggering
@@ -131,7 +131,7 @@
 
 ---
 
-## 📝 Required Code Changes
+## [NOTE] Required Code Changes
 
 ### 1. Fix LinkedIn Page Routing
 In `stream_resolver.py::_get_linkedin_page_for_channel()`:
@@ -162,18 +162,18 @@ Add clear logging at each step:
 
 ---
 
-## ✅ Testing Checklist
+## [OK] Testing Checklist
 
-- [ ] Move2Japan stream → LinkedIn Move2Japan page + X @GeozeAi
-- [ ] UnDaoDu stream → LinkedIn UnDaoDu page + X @Foundups
-- [ ] FoundUps stream → LinkedIn FoundUps page + X @Foundups
-- [ ] Git push → LinkedIn FoundUps page + X @Foundups
+- [ ] Move2Japan stream -> LinkedIn Move2Japan page + X @GeozeAi
+- [ ] UnDaoDu stream -> LinkedIn UnDaoDu page + X @Foundups
+- [ ] FoundUps stream -> LinkedIn FoundUps page + X @Foundups
+- [ ] Git push -> LinkedIn FoundUps page + X @Foundups
 - [ ] Duplicate prevention per platform, not global
 - [ ] Proper error handling when browser closes
 
 ---
 
-## 📚 Related Files
+## [BOOKS] Related Files
 
 ### Core Orchestration:
 - `modules/platform_integration/social_media_orchestrator/src/simple_posting_orchestrator.py`
@@ -191,7 +191,7 @@ Add clear logging at each step:
 
 ---
 
-## 🔧 WSP Compliance
+## [TOOL] WSP Compliance
 
 - **WSP 3**: Module organization - each platform has its own module
 - **WSP 50**: Pre-action verification - check duplicates before posting

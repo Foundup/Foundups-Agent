@@ -34,22 +34,22 @@ def test_semantic_states():
     engine = SemanticLLMEngine(enable_llm=False)  # Test without LLM first
     
     test_sequences = [
-        ("✊✊✊", "000", "Pure unconscious state"),
-        ("✊✋🖐️", "012", "Bridging conscious to entanglement"),
-        ("✋✋✋", "111", "Pure DAO processing"),
-        ("🖐🖐🖐", "222", "Full DU entanglement"),
-        ("🖐️🖐️🖐️", "222", "Full DU entanglement (with selector)")
+        ("[U+270A][U+270A][U+270A]", "000", "Pure unconscious state"),
+        ("[U+270A][U+270B][U+1F590]️", "012", "Bridging conscious to entanglement"),
+        ("[U+270B][U+270B][U+270B]", "111", "Pure DAO processing"),
+        ("[U+1F590][U+1F590][U+1F590]", "222", "Full DU entanglement"),
+        ("[U+1F590]️[U+1F590]️[U+1F590]️", "222", "Full DU entanglement (with selector)")
     ]
     
     for emoji_seq, expected_code, expected_desc in test_sequences:
         state = engine.analyze_semantic_state(emoji_seq)
         if state:
-            status = "✅" if state.code == expected_code else "❌"
-            print(f"{status} {emoji_seq} → {state.code} ({state.score:.2f})")
+            status = "[OK]" if state.code == expected_code else "[FAIL]"
+            print(f"{status} {emoji_seq} -> {state.code} ({state.score:.2f})")
             print(f"   Description: {state.description}")
             print(f"   Expected: {expected_desc}")
         else:
-            print(f"❌ {emoji_seq} → No state found")
+            print(f"[FAIL] {emoji_seq} -> No state found")
         print()
 
 def test_response_generation():
@@ -62,17 +62,17 @@ def test_response_generation():
     engine = SemanticLLMEngine(enable_llm=False, fallback_to_banter=True)
     
     test_messages = [
-        ("Hey everyone 🖐🖐🖐", "TestUser"),
-        ("What's up ✊✊✊", "AnotherUser"),
-        ("Interesting ✊✋🖐️ sequence", "PowerUser"),
-        ("✋✋✋ focused mode activated", "ConsciousUser")
+        ("Hey everyone [U+1F590][U+1F590][U+1F590]", "TestUser"),
+        ("What's up [U+270A][U+270A][U+270A]", "AnotherUser"),
+        ("Interesting [U+270A][U+270B][U+1F590]️ sequence", "PowerUser"),
+        ("[U+270B][U+270B][U+270B] focused mode activated", "ConsciousUser")
     ]
     
     for msg, author in test_messages:
-        print(f"\n📥 Input: '{msg}' from {author}")
+        print(f"\n[U+1F4E5] Input: '{msg}' from {author}")
         state_desc, response = engine.process_with_llm(msg, author)
-        print(f"📊 State: {state_desc}")
-        print(f"💬 Response: {response}")
+        print(f"[DATA] State: {state_desc}")
+        print(f"[U+1F4AC] Response: {response}")
         print("-" * 40)
 
 def test_state_transitions():
@@ -92,7 +92,7 @@ def test_state_transitions():
     
     for current, target in transitions:
         guidance = engine.get_state_transition_guidance(current, target)
-        print(f"From {current} → {target}:")
+        print(f"From {current} -> {target}:")
         print(f"  {guidance}")
         print()
 
@@ -104,7 +104,7 @@ def test_state_explanations():
     
     engine = SemanticLLMEngine(enable_llm=False)
     
-    sequences = ["✊✊✊", "✊✋🖐️", "✋✋✋", "🖐🖐🖐"]
+    sequences = ["[U+270A][U+270A][U+270A]", "[U+270A][U+270B][U+1F590]️", "[U+270B][U+270B][U+270B]", "[U+1F590][U+1F590][U+1F590]"]
     
     for seq in sequences:
         print(f"\nExplaining: {seq}")
@@ -128,20 +128,20 @@ def test_llm_integration():
     ])
     
     if llm_available:
-        print("✅ LLM API key found, testing with LLM...")
+        print("[OK] LLM API key found, testing with LLM...")
         engine = SemanticLLMEngine(
             llm_model="grok-4-latest",  # Try Grok first
             enable_llm=True,
             fallback_to_banter=True
         )
         
-        test_msg = "Testing consciousness 🖐🖐🖐"
+        test_msg = "Testing consciousness [U+1F590][U+1F590][U+1F590]"
         state_desc, response = engine.process_with_llm(test_msg, "LLMTestUser")
         print(f"Input: {test_msg}")
         print(f"State: {state_desc}")
         print(f"LLM Response: {response}")
     else:
-        print("⚠️ No LLM API keys found in environment")
+        print("[U+26A0]️ No LLM API keys found in environment")
         print("To test with LLM, set one of:")
         print("  - GROK_API_KEY or XAI_API_KEY")
         print("  - ANTHROPIC_API_KEY")
@@ -157,7 +157,7 @@ def test_platform_simulation():
     engine = SemanticLLMEngine(enable_llm=False)
     
     platforms = ["YouTube", "Twitter", "Discord", "TikTok"]
-    test_msg = "Check this out 🖐🖐🖐"
+    test_msg = "Check this out [U+1F590][U+1F590][U+1F590]"
     
     state_desc, base_response = engine.process_with_llm(test_msg, "MultiPlatformUser")
     
@@ -168,15 +168,15 @@ def test_platform_simulation():
     
     # Simulate platform adaptations
     adaptations = {
-        "YouTube": f"{base_response} 🎥",
+        "YouTube": f"{base_response} [CAMERA]",
         "Twitter": f"{base_response[:140]}... #Consciousness",
-        "Discord": f"Yo! {base_response} 🎮",
-        "TikTok": f"✨ {base_response} #ForYou #0102"
+        "Discord": f"Yo! {base_response} [GAME]",
+        "TikTok": f"[U+2728] {base_response} #ForYou #0102"
     }
     
     for platform in platforms:
         adapted = adaptations.get(platform, base_response)
-        print(f"{platform:10} → {adapted}")
+        print(f"{platform:10} -> {adapted}")
 
 def main():
     """Run all tests"""
@@ -196,11 +196,11 @@ def main():
         test_platform_simulation()
         
         print("\n" + "="*60)
-        print(" ✅ ALL TESTS COMPLETED SUCCESSFULLY")
+        print(" [OK] ALL TESTS COMPLETED SUCCESSFULLY")
         print("="*60)
         
     except Exception as e:
-        print(f"\n❌ Test failed with error: {e}")
+        print(f"\n[FAIL] Test failed with error: {e}")
         import traceback
         traceback.print_exc()
         return 1

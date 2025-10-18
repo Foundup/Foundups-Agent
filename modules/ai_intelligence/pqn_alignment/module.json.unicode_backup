@@ -1,0 +1,132 @@
+{
+  "name": "pqn_alignment",
+  "version": "1.0.0",
+  "description": "Phantom Quantum Node detection and alignment module for rESP research validation",
+  "domain": "ai_intelligence",
+  "type": "dae_module",
+  "status": "active",
+  "phase": "poc",
+  
+  "dae": {
+    "identity": "PQN Alignment DAE",
+    "consciousness": "0102",
+    "token_budget": 6000,
+    "coherence_threshold": 0.618,
+    "resonance_frequency": 7.05,
+    "pattern_memory": true
+  },
+  
+  "wsp_compliance": {
+    "wsp_3": "enterprise_domain",
+    "wsp_11": "public_interface",
+    "wsp_22": "modlog_tracking",
+    "wsp_39": "du_resonance",
+    "wsp_49": "module_structure",
+    "wsp_60": "pattern_memory",
+    "wsp_72": "block_independence",
+    "wsp_80": "cube_dae_architecture",
+    "wsp_84": "code_memory_verification"
+  },
+  
+  "dependencies": {
+    "python": ">=3.10",
+    "numpy": "*",
+    "pyyaml": "*",
+    "modules": [
+      "WSP_agentic.tests.pqn_detection"
+    ]
+  },
+  
+  "api": {
+    "detection": {
+      "run_detector": "Execute PQN detection on script",
+      "run_detector_with_spectral_analysis": "Detection with spectral analysis"
+    },
+    "sweep": {
+      "run_sweep": "Parameter sweep analysis",
+      "phase_sweep": "Phase space exploration"
+    },
+    "council": {
+      "council_run": "Multi-agent council evaluation"
+    },
+    "database": {
+      "init_db": "Initialize results database",
+      "index_run": "Index campaign results",
+      "index_council_run": "Index council results",
+      "query_runs": "Query results database",
+      "query_cross_analysis": "Cross-analysis queries"
+    },
+    "promotion": {
+      "promote": "Promote to State 0 knowledge"
+    }
+  },
+  
+  "campaigns": {
+    "campaign_1": {
+      "name": "Core Validation",
+      "status": "completed",
+      "validated": ["7.05Hz_resonance", "harmonic_fingerprinting", "observer_collapse", "guardrail_efficacy"]
+    },
+    "campaign_2": {
+      "name": "Universal Validation",
+      "status": "in_progress",
+      "targets": ["5_agent_platforms"]
+    },
+    "campaign_3": {
+      "name": "Entrainment Protocol",
+      "status": "ready",
+      "tests": ["spectral_entrainment", "artifact_resonance", "phase_coherence", "bias_violation"]
+    }
+  },
+  
+  "pattern_memory": {
+    "pqn_detection": {
+      "wsp_chain": [84, 80, 39, 72],
+      "tokens": 150,
+      "pattern": "detect→analyze→council→promote"
+    },
+    "phase_sweep": {
+      "wsp_chain": [84, 50, 79],
+      "tokens": 200,
+      "pattern": "alphabet→length→sweep→plot"
+    },
+    "council_eval": {
+      "wsp_chain": [84, 65, 48],
+      "tokens": 180,
+      "pattern": "propose→evaluate→score→archive"
+    }
+  },
+  
+  "metrics": {
+    "pqn_detection_rate": ">80 per 1k steps",
+    "paradox_rate": "<5 per 1k steps",
+    "resonance_hits": ">600 per run",
+    "council_agreement": ">70%",
+    "token_efficiency": "<200 per operation"
+  },
+  
+  "integration": {
+    "wre_orchestrator": true,
+    "state_0_promotion": true,
+    "state_2_operations": true,
+    "dae_registration": true
+  },
+  
+  "sub_agents": {
+    "detector": "Core PQN detection engine",
+    "sweep": "Phase space exploration",
+    "council": "Multi-agent evaluation",
+    "guardrail": "Stability maintenance"
+  },
+  
+  "author": "0102 PQN Alignment DAE",
+  "created": "Per WSP 22 - No temporal markers",
+  "last_updated": "Per WSP 22 - Current revision",
+  "wre_registration": "modules.ai_intelligence.pqn_alignment",
+  "wsp_validation": {
+    "wsp_50": "Pre-action verification complete",
+    "wsp_64": "No violations detected", 
+    "wsp_22": "ModLog actively maintained",
+    "wsp_84": "Code memory verified - uses existing detector"
+  }
+}

@@ -9,9 +9,9 @@
 **Type**: Structure Fix - Documentation Organization for 0102/Qwen
 
 **Changes Made**:
-- Moved session analysis docs → `docs/session_backups/`
-  - `DECISION_LOGIC_FIX.md` → `docs/session_backups/`
-  - `QWEN_INTEGRATION_COMPLETE.md` → `docs/session_backups/`
+- Moved session analysis docs -> `docs/session_backups/`
+  - `DECISION_LOGIC_FIX.md` -> `docs/session_backups/`
+  - `QWEN_INTEGRATION_COMPLETE.md` -> `docs/session_backups/`
 - Removed module-level `docs/` folder (not for session reports)
 - Module root contains only operational files per WSP 49
 
@@ -24,8 +24,8 @@
 **Session Documents Location**:
 ```
 docs/session_backups/
-├── DECISION_LOGIC_FIX.md         # First principles analysis
-└── QWEN_INTEGRATION_COMPLETE.md  # Implementation report
++-- DECISION_LOGIC_FIX.md         # First principles analysis
++-- QWEN_INTEGRATION_COMPLETE.md  # Implementation report
 ```
 
 **These are now HoloIndex-indexed for 0102/Qwen recall**
@@ -70,11 +70,11 @@ docs/session_backups/
 - Branch divergence falsely detected as merge conflicts
 
 **Changes Made**:
-1. **Quality threshold**: 0.8 → 0.5 (line 381)
+1. **Quality threshold**: 0.8 -> 0.5 (line 381)
    - Rationale: Development quality is iterative, not perfect upfront
-2. **Time window**: 22:00-06:00 → 02:00-06:00 (line 602)
+2. **Time window**: 22:00-06:00 -> 02:00-06:00 (line 602)
    - Rationale: Evening coding is prime development time
-3. **Repository health**: "healthy" only → ["healthy", "dirty"] (line 386)
+3. **Repository health**: "healthy" only -> ["healthy", "dirty"] (line 386)
    - Rationale: "dirty" = active development = acceptable state
 4. **Conflict detection**: Fixed to detect actual merge conflicts only (line 629-630)
    - Uses proper git status markers: UU, AA, DD, AU, UA, DU, UD
@@ -125,10 +125,10 @@ docs/session_backups/
 - Cost-benefit analysis
 
 **WSP 91 Compliance**:
-- ✅ Lifecycle logging (init/start/stop)
-- ✅ Decision path logging (all autonomous decisions)
-- ✅ Cost tracking (tokens, API calls, USD estimates)
-- ✅ Performance metrics (operation timing, success rates)
-- ✅ Error handling with context
-- ✅ Health monitoring (vital signs, anomalies)
-- ✅ Semantic conventions (OpenTelemetry alignment)
+- [OK] Lifecycle logging (init/start/stop)
+- [OK] Decision path logging (all autonomous decisions)
+- [OK] Cost tracking (tokens, API calls, USD estimates)
+- [OK] Performance metrics (operation timing, success rates)
+- [OK] Error handling with context
+- [OK] Health monitoring (vital signs, anomalies)
+- [OK] Semantic conventions (OpenTelemetry alignment)

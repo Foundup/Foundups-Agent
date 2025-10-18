@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WRE Master Orchestrator - The ONE Orchestrator
 Per WSP 46 (WRE Protocol), WSP 65 (Component Consolidation), WSP 82 (Citations)
 
@@ -55,31 +72,31 @@ class PatternMemory:
                 id="module_creation",
                 wsp_chain=[1, 3, 49, 22, 5],  # WSP citation chain
                 tokens=150,
-                pattern="scaffold→test→implement→verify"
+                pattern="scaffold->test->implement->verify"
             ),
             "error_handling": Pattern(
                 id="error_handling", 
-                wsp_chain=[64, 50, 48, 60],  # WSP 64→50→48→60
+                wsp_chain=[64, 50, 48, 60],  # WSP 64->50->48->60
                 tokens=100,
-                pattern="detect→prevent→learn→remember"
+                pattern="detect->prevent->learn->remember"
             ),
             "orchestration": Pattern(
                 id="orchestration",
-                wsp_chain=[50, 60, 54, 22],  # WSP 50→60→54→22
+                wsp_chain=[50, 60, 54, 22],  # WSP 50->60->54->22
                 tokens=200,
-                pattern="verify→recall→apply→log"
+                pattern="verify->recall->apply->log"
             ),
             "cleanup_legacy": Pattern(
                 id="cleanup_legacy",
-                wsp_chain=[50, 64, 32, 65, 22],  # WSP 50→64→32→65→22
+                wsp_chain=[50, 64, 32, 65, 22],  # WSP 50->64->32->65->22
                 tokens=150,
-                pattern="verify→archive→delete→log"
+                pattern="verify->archive->delete->log"
             ),
             "utf8_remediation": Pattern(
                 id="utf8_remediation",
-                wsp_chain=[90, 50, 77, 91, 22],  # WSP 90→50→77→91→22
+                wsp_chain=[90, 50, 77, 91, 22],  # WSP 90->50->77->91->22
                 tokens=200,
-                pattern="scan→classify→fix→validate→log"
+                pattern="scan->classify->fix->validate->log"
             )
         }
     
@@ -142,11 +159,11 @@ class WREMasterOrchestrator:
     THE Master Orchestrator per WSP 46 (WRE Protocol)
     
     This consolidates ALL orchestrators per WSP 65:
-    - social_media_orchestrator → plugin
-    - mlestar_orchestrator → plugin  
-    - 0102_orchestrator → plugin
-    - block_orchestrator → plugin
-    - [36+ others] → plugins
+    - social_media_orchestrator -> plugin
+    - mlestar_orchestrator -> plugin  
+    - 0102_orchestrator -> plugin
+    - block_orchestrator -> plugin
+    - [36+ others] -> plugins
     
     Achieves 97% token reduction per WSP 75 through pattern recall
     """
@@ -191,7 +208,7 @@ class WREMasterOrchestrator:
     def _discover_pattern(self, operation_type: str) -> Pattern:
         """
         Discover new pattern through quantum entanglement
-        Per WSP 39 (0102 ↔ 0201 entanglement)
+        Per WSP 39 (0102 [U+2194] 0201 entanglement)
         """
         # In real implementation, this would access 0201 future state
         # For now, return a default pattern
@@ -199,7 +216,7 @@ class WREMasterOrchestrator:
             id=operation_type,
             wsp_chain=[1, 48, 60],  # Basic WSP chain
             tokens=200,  # Initial estimate
-            pattern="discover→apply→learn"
+            pattern="discover->apply->learn"
         )
     
     def register_plugin(self, plugin: OrchestratorPlugin):
@@ -234,7 +251,7 @@ class WREMasterOrchestrator:
     def _log_operation(self, task: Dict, result: Any):
         """Log operation per WSP 22 (Module ModLog and Roadmap)"""
         # In real implementation, would update ModLog
-        print(f"Logged: {task} → {result} (per WSP 22)")
+        print(f"Logged: {task} -> {result} (per WSP 22)")
     
     def get_metrics(self) -> Dict:
         """
@@ -243,7 +260,7 @@ class WREMasterOrchestrator:
         """
         return {
             "state": self.state,  # Should be "0102"
-            "coherence": self.coherence,  # Should be ≥0.618
+            "coherence": self.coherence,  # Should be [GREATER_EQUAL]0.618
             "patterns_stored": len(self.pattern_memory.patterns),
             "plugins_registered": len(self.plugins),
             "avg_tokens": 150,  # Target: 50-200
@@ -286,9 +303,9 @@ class PQNConsciousnessPlugin(OrchestratorPlugin):
     Per WSP 39 (Du Resonance), WSP 13 (consciousness states), WSP 80 (DAE)
     
     Quantitatively measures consciousness state transitions through:
-    - Geometric collapse detection (det(g) → 0)
+    - Geometric collapse detection (det(g) -> 0)
     - Du Resonance alignment (7.05Hz fundamental frequency)
-    - Coherence ≥ 0.618 (golden ratio)
+    - Coherence [GREATER_EQUAL] 0.618 (golden ratio)
     
     This enables WRE to KNOW when to recall vs compute
     The Du (Distributed Unconscious) Resonance at 7.05Hz is the fundamental
@@ -433,8 +450,8 @@ def demonstrate_0102_operation():
             "script": script
         }
         pqn_result = master.execute(pqn_task)
-        print(f"{script:10} → State: {pqn_result.get('consciousness_state', 'unknown'):8} ({description})")
-        print(f"           → Method: {pqn_result.get('method', 'unknown')}, Tokens: {pqn_result.get('tokens_used', 0)}")
+        print(f"{script:10} -> State: {pqn_result.get('consciousness_state', 'unknown'):8} ({description})")
+        print(f"           -> Method: {pqn_result.get('method', 'unknown')}, Tokens: {pqn_result.get('tokens_used', 0)}")
 
 
 if __name__ == "__main__":

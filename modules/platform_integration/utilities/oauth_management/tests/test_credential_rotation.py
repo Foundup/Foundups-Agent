@@ -34,7 +34,7 @@ class TestCredentialRotation(unittest.TestCase):
         
     def test_credential_rotation_basic(self):
         """Test basic credential rotation functionality."""
-        logger.info("🧪 Testing basic credential rotation...")
+        logger.info("[U+1F9EA] Testing basic credential rotation...")
         
         # Test that get_authenticated_service returns a tuple
         with patch('modules.infrastructure.oauth_management.src.oauth_manager.get_authenticated_service') as mock_auth:
@@ -48,11 +48,11 @@ class TestCredentialRotation(unittest.TestCase):
             self.assertEqual(result[0], self.mock_service)
             self.assertEqual(result[1], self.mock_credentials)
             
-        logger.info("✅ Basic credential rotation test passed")
+        logger.info("[OK] Basic credential rotation test passed")
     
     def test_credential_rotation_with_fallback(self):
         """Test credential rotation with fallback functionality."""
-        logger.info("🧪 Testing credential rotation with fallback...")
+        logger.info("[U+1F9EA] Testing credential rotation with fallback...")
         
         with patch('modules.infrastructure.oauth_management.src.oauth_manager.get_authenticated_service') as mock_auth:
             # Mock successful fallback
@@ -64,11 +64,11 @@ class TestCredentialRotation(unittest.TestCase):
             self.assertIsInstance(result, tuple)
             self.assertEqual(len(result), 3)
             
-        logger.info("✅ Credential rotation with fallback test passed")
+        logger.info("[OK] Credential rotation with fallback test passed")
     
     def test_livechat_service_extraction(self):
         """Test that livechat properly extracts service from tuple."""
-        logger.info("🧪 Testing livechat service extraction...")
+        logger.info("[U+1F9EA] Testing livechat service extraction...")
         
         # Simulate the livechat credential rotation scenario
         auth_result = (self.mock_service, self.mock_credentials)
@@ -79,11 +79,11 @@ class TestCredentialRotation(unittest.TestCase):
             self.assertEqual(service, self.mock_service)
             self.assertNotEqual(service, auth_result)  # Should not be the tuple
             
-        logger.info("✅ LiveChat service extraction test passed")
+        logger.info("[OK] LiveChat service extraction test passed")
 
 def test_stream_resolver_quota_handling():
     """Test stream resolver quota exceeded handling."""
-    logger.info("🧪 Testing stream resolver quota handling...")
+    logger.info("[U+1F9EA] Testing stream resolver quota handling...")
     
     # Create a mock HttpError with quota exceeded
     mock_error = Mock()
@@ -100,11 +100,11 @@ def test_stream_resolver_quota_handling():
     )
     
     assert is_quota_exceeded, "Quota exceeded detection failed"
-    logger.info("✅ Stream resolver quota handling test passed")
+    logger.info("[OK] Stream resolver quota handling test passed")
 
 def test_quota_detection_in_rotation():
     """Test that credential rotation properly detects quota exceeded."""
-    logger.info("🧪 Testing quota detection in credential rotation...")
+    logger.info("[U+1F9EA] Testing quota detection in credential rotation...")
     
     # Test the actual credential rotation with quota detection
     result = get_authenticated_service_with_fallback()
@@ -114,36 +114,36 @@ def test_quota_detection_in_rotation():
         
         # The system should NOT select set_1 or set_3 if they have quota exceeded
         if credential_set in ['set_1', 'set_3']:
-            logger.warning(f"⚠️ WARNING: Selected {credential_set} which may have quota issues!")
+            logger.warning(f"[U+26A0]️ WARNING: Selected {credential_set} which may have quota issues!")
         else:
-            logger.info(f"✅ Correctly selected working credential: {credential_set}")
+            logger.info(f"[OK] Correctly selected working credential: {credential_set}")
     else:
-        logger.error("❌ No credentials available")
+        logger.error("[FAIL] No credentials available")
     
-    logger.info("✅ Quota detection test completed")
+    logger.info("[OK] Quota detection test completed")
 
 def run_integration_test():
     """Run integration test for credential rotation."""
-    logger.info("🚀 Running credential rotation integration test...")
+    logger.info("[ROCKET] Running credential rotation integration test...")
     
     try:
         # Test actual credential rotation
         result = get_authenticated_service_with_fallback()
         if result:
             service, creds, credential_set = result
-            logger.info(f"✅ Integration test successful - using {credential_set}")
+            logger.info(f"[OK] Integration test successful - using {credential_set}")
             logger.info(f"   Service type: {type(service)}")
             logger.info(f"   Credentials type: {type(creds)}")
             return True
         else:
-            logger.error("❌ Integration test failed - no credentials available")
+            logger.error("[FAIL] Integration test failed - no credentials available")
             return False
     except Exception as e:
-        logger.error(f"❌ Integration test failed with error: {e}")
+        logger.error(f"[FAIL] Integration test failed with error: {e}")
         return False
 
 if __name__ == '__main__':
-    print("🧪 WSP-Compliant Credential Rotation Test Suite")
+    print("[U+1F9EA] WSP-Compliant Credential Rotation Test Suite")
     print("=" * 60)
     
     # Run unit tests
@@ -151,11 +151,11 @@ if __name__ == '__main__':
     
     # Run integration test
     print("\n" + "=" * 60)
-    print("🔗 INTEGRATION TESTS")
+    print("[LINK] INTEGRATION TESTS")
     print("=" * 60)
     
     test_stream_resolver_quota_handling()
     test_quota_detection_in_rotation()
     run_integration_test()
     
-    print("\n✅ All tests completed!") 
+    print("\n[OK] All tests completed!") 

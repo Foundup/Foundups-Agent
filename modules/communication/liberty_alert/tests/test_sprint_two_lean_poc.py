@@ -28,9 +28,13 @@ Run: python modules/communication/liberty_alert/tests/test_sprint_two_lean_poc.p
 import sys
 import io
 
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 import json
@@ -287,7 +291,7 @@ def main():
     })
 
     # ===== Simulate Mesh Propagation =====
-    print("\n[STEP 5] Simulating mesh alert propagation (Node A → Node B)...")
+    print("\n[STEP 5] Simulating mesh alert propagation (Node A -> Node B)...")
 
     # In real implementation, WebRTC mesh would propagate automatically
     # For POC, we manually simulate propagation

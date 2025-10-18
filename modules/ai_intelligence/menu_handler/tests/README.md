@@ -7,7 +7,7 @@ This directory contains tests for the **menu_handler** module in the **ai_intell
 - **WSP 1-13**: Core WSP framework adherence
 - **WSP 3**: AI Intelligence domain enterprise organization  
 - **WSP 4**: FMAS audit compliance
-- **WSP 5**: ≥90% test coverage maintained
+- **WSP 5**: [GREATER_EQUAL]90% test coverage maintained
 - **WSP 22**: Module roadmap and ModLog maintenance
 - **WSP 60**: Module memory architecture compliance
 
@@ -60,7 +60,7 @@ pytest modules/ai_intelligence/menu_handler/tests/ --cov=modules.ai_intelligence
 ## WSP Compliance
 
 ### WSP 5 - Test Coverage
-- **Target**: ≥90% test coverage
+- **Target**: [GREATER_EQUAL]90% test coverage
 - **Current**: TBD (needs measurement)
 - **Status**: Foundation established
 
@@ -76,19 +76,19 @@ pytest modules/ai_intelligence/menu_handler/tests/ --cov=modules.ai_intelligence
 
 ## Development Status
 
-### ✅ Foundation Complete
+### [OK] Foundation Complete
 - [x] Test directory structure created
 - [x] WSP 22 documentation established
 - [x] FMAS audit compliance achieved
 - [x] Test framework initialized
 
-### 🔧 Implementation In Progress
+### [TOOL] Implementation In Progress
 - [ ] Core test files implementation
 - [ ] Coverage measurement setup
 - [ ] Integration test development
 - [ ] Performance test validation
 
-### 🎯 Next Milestone
+### [TARGET] Next Milestone
 - **Target**: Complete test implementation
-- **Focus**: Achieve ≥90% test coverage
+- **Focus**: Achieve [GREATER_EQUAL]90% test coverage
 - **Timeline**: Foundation phase completion 

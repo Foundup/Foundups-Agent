@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Infrastructure Orchestration DAE - Autonomous Cube Entity
 Used by 0102 for autonomous operation; not an approval checkpoint
 Absorbs 8 agents into single pattern-based orchestrator
@@ -285,7 +302,7 @@ class InfrastructureOrchestrationDAE:
             },
             "improvements": {
                 "token_reduction": f"{((160000 - self.token_budget) / 160000 * 100):.1f}%",
-                "complexity_reduction": "8 agents → 1 DAE",
+                "complexity_reduction": "8 agents -> 1 DAE",
                 "speed_improvement": "10x (pattern lookup vs compute)",
                 "maintenance": "Single entity vs 8 files"
             }
@@ -294,7 +311,7 @@ class InfrastructureOrchestrationDAE:
 
 def demonstrate_infrastructure_dae():
     """Demonstrate the Infrastructure DAE replacing 8 agents."""
-    print("🏗️ Infrastructure Orchestration DAE Demo")
+    print("[U+1F3D7]️ Infrastructure Orchestration DAE Demo")
     print("=" * 60)
     
     dae = InfrastructureOrchestrationDAE()
@@ -313,7 +330,7 @@ def demonstrate_infrastructure_dae():
     # Orchestrate workflow
     print("\n2. Orchestrating Workflow (replaces coordinator + orchestrator):")
     workflow = dae.orchestrate_workflow("feature_development")
-    print(f"   Steps: {' → '.join(workflow['steps'])}")
+    print(f"   Steps: {' -> '.join(workflow['steps'])}")
     print(f"   Tokens: {workflow['tokens_used']} (vs ~40K for agents)")
     
     # Show comparison
@@ -323,7 +340,7 @@ def demonstrate_infrastructure_dae():
     print(f"   Complexity: {comparison['improvements']['complexity_reduction']}")
     print(f"   Speed: {comparison['improvements']['speed_improvement']}")
     
-    print("\n✅ Single DAE replaces 8 agents with 95% token reduction!")
+    print("\n[OK] Single DAE replaces 8 agents with 95% token reduction!")
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ FoundUps Multi-Agent IDE Extension - WRE Bridge Tests
 
 WSP Compliance:
 - WSP 4 (FMAS): WebSocket bridge structure validation
-- WSP 5 (Coverage): ≥90% test coverage for bridge functionality
+- WSP 5 (Coverage): [GREATER_EQUAL]90% test coverage for bridge functionality
 - WSP 54 (Agent Duties): Real-time agent communication testing
 - WSP 60 (Memory Architecture): Bridge state persistence
 
@@ -496,4 +496,4 @@ def test_wsp_compliance_markers():
     # WSP 54: Agent communication testing - verified by bridge tests
     # WSP 60: Bridge state persistence - verified by persistence tests
     
-    print("✅ WSP compliance markers validated for WRE bridge tests") 
+    print("[OK] WSP compliance markers validated for WRE bridge tests") 

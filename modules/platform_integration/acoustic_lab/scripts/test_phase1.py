@@ -78,20 +78,20 @@ def test_audio_library():
     fp1 = library.get_tone_fingerprint('Tone A')
     fp2 = library.get_tone_fingerprint('Tone A')
     np.testing.assert_array_equal(fp1, fp2, "Fingerprints should be identical")
-    print("  ✅ Fingerprint generation is consistent")
+    print("  [OK] Fingerprint generation is consistent")
 
     # Test matching
     match, confidence = library.match_fingerprint(fp1)
     assert match == 'Tone A', f"Expected Tone A match, got {match}"
     assert confidence > 0.8, f"Confidence too low: {confidence}"
-    print(f"  ✅ Tone matching working: {match} ({confidence:.3f} confidence)")
+    print(f"  [OK] Tone matching working: {match} ({confidence:.3f} confidence)")
     # Test audio validation
     valid_audio = library._generate_synthetic_tone(1500, 1.0)
     assert library.validate_audio_signature(valid_audio), "Valid audio should pass validation"
 
     silent_audio = np.zeros(1000)
     assert not library.validate_audio_signature(silent_audio), "Silent audio should fail validation"
-    print("  ✅ Audio validation working correctly")
+    print("  [OK] Audio validation working correctly")
 
 
 def test_triangulation_engine():
@@ -104,7 +104,7 @@ def test_triangulation_engine():
     lat, lon = 40.7649, -111.8421
     x, y = engine._gps_to_cartesian(lat, lon)
     assert isinstance(x, float) and isinstance(y, float), "GPS conversion should return floats"
-    print("  ✅ GPS to Cartesian conversion working")
+    print("  [OK] GPS to Cartesian conversion working")
 
     # Test triangulation with sample data
     sensor_data = [
@@ -118,7 +118,7 @@ def test_triangulation_engine():
     location = engine.calculate_location(sensor_data)
     assert len(location) == 2, "Location should be (lat, lon) tuple"
     assert isinstance(location[0], float) and isinstance(location[1], float), "Coordinates should be floats"
-    print(f"  ✅ Triangulation calculation returned: {location[0]:.4f}, {location[1]:.4f}")
+    print(f"  [OK] Triangulation calculation returned: {location[0]:.4f}, {location[1]:.4f}")
 
 
 def test_acoustic_processor():
@@ -149,21 +149,21 @@ def test_acoustic_processor():
     assert results['sound_type'] in ['Tone A', 'Tone B', 'Tone C', 'Unknown'], f"Invalid sound type: {results['sound_type']}"
     assert 0.0 <= results['confidence'] <= 1.0, f"Invalid confidence: {results['confidence']}"
 
-    print(f"  ✅ Processing successful: {results['sound_type']} at {results['location']} (confidence: {results['confidence']:.3f})")
-    print(f"  ✅ Ethereum hash generated: {results['ethereum_hash'][:32]}...")
+    print(f"  [OK] Processing successful: {results['sound_type']} at {results['location']} (confidence: {results['confidence']:.3f})")
+    print(f"  [OK] Ethereum hash generated: {results['ethereum_hash'][:32]}...")
 
     # Test error conditions
     try:
         processor.process_audio(b'invalid', metadata)
         assert False, "Should have raised AudioValidationError"
     except AudioValidationError:
-        print("  ✅ Audio validation error handling working")
+        print("  [OK] Audio validation error handling working")
 
     try:
         processor.process_audio(wav_data, {})
         assert False, "Should have raised GPSValidationError"
     except GPSValidationError:
-        print("  ✅ GPS validation error handling working")
+        print("  [OK] GPS validation error handling working")
 
 
 def test_ethereum_logger():
@@ -178,7 +178,7 @@ def test_ethereum_logger():
     hash2 = logger._create_results_hash(test_data)
     assert hash1 == hash2, "Hashes should be deterministic"
     assert len(hash1) == 64, f"Hash should be 64 chars, got {len(hash1)}"
-    print(f"  ✅ Deterministic hash generation: {hash1[:32]}...")
+    print(f"  [OK] Deterministic hash generation: {hash1[:32]}...")
 
     # Test logging simulation
     results = {
@@ -189,13 +189,13 @@ def test_ethereum_logger():
 
     tx_hash = logger.log_acoustic_analysis(results)
     assert tx_hash.startswith('simulated_'), f"Expected simulated hash, got {tx_hash}"
-    print(f"  ✅ Logging simulation successful: {tx_hash[:32]}...")
+    print(f"  [OK] Logging simulation successful: {tx_hash[:32]}...")
 
     # Test verification
     verification = logger.verify_log(tx_hash)
     assert verification is not None, "Verification should succeed"
     assert verification['verified'] == True, "Should be verified"
-    print("  ✅ Log verification working")
+    print("  [OK] Log verification working")
 
 
 def test_web_app():
@@ -212,18 +212,18 @@ def test_web_app():
     data = json.loads(response.data)
     assert data['status'] == 'healthy', f"Health status incorrect: {data['status']}"
     assert 'stats' in data, "Health response missing stats"
-    print("  ✅ Health check endpoint working")
+    print("  [OK] Health check endpoint working")
 
     # Test index page
     response = client.get('/')
     assert response.status_code == 200, "Index page failed"
     assert b'Acoustic Lab' in response.data, "Index page missing title"
-    print("  ✅ Index page loading correctly")
+    print("  [OK] Index page loading correctly")
 
     # Test upload with missing file
     response = client.post('/upload')
     assert response.status_code == 400, f"Expected 400 for missing file, got {response.status_code}"
-    print("  ✅ File validation working")
+    print("  [OK] File validation working")
 
 
 def test_ip_geofencing():
@@ -244,7 +244,7 @@ def test_ip_geofencing():
 
         # Should not raise exception
         check_ip_geofencing('192.168.1.1')
-        print("  ✅ Utah IP validation working")
+        print("  [OK] Utah IP validation working")
 
     # Test with non-Utah IP
     with mock.patch('requests.get') as mock_get:
@@ -261,7 +261,7 @@ def test_ip_geofencing():
             check_ip_geofencing('192.168.1.1')
             assert False, "Should have raised IPGeofencingError"
         except IPGeofencingError:
-            print("  ✅ Non-Utah IP rejection working")
+            print("  [OK] Non-Utah IP rejection working")
 
 
 def run_all_tests():

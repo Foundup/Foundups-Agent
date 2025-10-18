@@ -36,7 +36,7 @@ class CommentDialoguePOC:
     async def initialize(self):
         """Initialize YouTube service and dialogue system"""
         logger.info("="*60)
-        logger.info("🚀 COMMENT DIALOGUE POC STARTING")
+        logger.info("[ROCKET] COMMENT DIALOGUE POC STARTING")
         logger.info("="*60)
         
         # Get YouTube service
@@ -62,13 +62,13 @@ class CommentDialoguePOC:
             return
         
         logger.info("="*60)
-        logger.info("🔴 STARTING REAL-TIME COMMENT MONITORING")
+        logger.info("[U+1F534] STARTING REAL-TIME COMMENT MONITORING")
         logger.info("="*60)
         logger.info("Features being tested:")
-        logger.info("  ✅ Detect new comments within 15 seconds")
-        logger.info("  ✅ Auto-reply to questions and mentions")
-        logger.info("  ✅ Maintain conversation threads")
-        logger.info("  ✅ Real-time back-and-forth dialogue")
+        logger.info("  [OK] Detect new comments within 15 seconds")
+        logger.info("  [OK] Auto-reply to questions and mentions")
+        logger.info("  [OK] Maintain conversation threads")
+        logger.info("  [OK] Real-time back-and-forth dialogue")
         logger.info("="*60)
         
         # Create monitoring task
@@ -92,7 +92,7 @@ class CommentDialoguePOC:
             status = self.dialogue_system.get_status()
             
             logger.info("="*60)
-            logger.info("📊 STATUS UPDATE")
+            logger.info("[DATA] STATUS UPDATE")
             logger.info(f"  Running: {status['running']}")
             logger.info(f"  Active Threads: {status['active_threads']}")
             logger.info(f"  Comments Processed: {status['processed_comments']}")
@@ -139,19 +139,19 @@ async def main():
 
 if __name__ == "__main__":
     print("""
-    ╔════════════════════════════════════════════════════════╗
-    ║     YOUTUBE COMMENT DIALOGUE POC - REAL-TIME TEST     ║
-    ╠════════════════════════════════════════════════════════╣
-    ║  This will monitor YouTube comments in real-time and  ║
-    ║  engage in dialogue with commenters automatically.    ║
-    ║                                                        ║
-    ║  Test Actions:                                        ║
-    ║  1. Post a comment with a question                   ║
-    ║  2. Reply to the bot's response                      ║
-    ║  3. Watch the conversation continue!                 ║
-    ║                                                        ║
-    ║  Press Ctrl+C to stop                                ║
-    ╚════════════════════════════════════════════════════════╝
+    [U+2554]========================================================[U+2557]
+    [U+2551]     YOUTUBE COMMENT DIALOGUE POC - REAL-TIME TEST     [U+2551]
+    [U+2560]========================================================[U+2563]
+    [U+2551]  This will monitor YouTube comments in real-time and  [U+2551]
+    [U+2551]  engage in dialogue with commenters automatically.    [U+2551]
+    [U+2551]                                                        [U+2551]
+    [U+2551]  Test Actions:                                        [U+2551]
+    [U+2551]  1. Post a comment with a question                   [U+2551]
+    [U+2551]  2. Reply to the bot's response                      [U+2551]
+    [U+2551]  3. Watch the conversation continue!                 [U+2551]
+    [U+2551]                                                        [U+2551]
+    [U+2551]  Press Ctrl+C to stop                                [U+2551]
+    [U+255A]========================================================[U+255D]
     """)
     
     try:

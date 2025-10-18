@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WSP Master System for HoloIndex
 
 Makes HoloIndex a comprehensive WSP protocol expert that provides
@@ -8,7 +26,6 @@ intelligent guidance based on the complete WSP framework.
 WSP Compliance: WSP 64 (Violation Prevention), WSP 87 (Code Navigation)
 """
 
-from __future__ import annotations
 
 import json
 import logging
@@ -432,9 +449,9 @@ class WSPMaster:
         }
 
         if has_unicode:
-            result["recommendation"] = "⚠️ PREVENTIVE WARNING: Unicode/emojis detected. While WSP 20 allows them, AVOID using Unicode in code to prevent encoding issues on Windows/Linux/Mac. Use ASCII alternatives: [OK] not ✅, [ERROR] not ❌, [TARGET] not 🎯, etc."
+            result["recommendation"] = "[U+26A0]️ PREVENTIVE WARNING: Unicode/emojis detected. While WSP 20 allows them, AVOID using Unicode in code to prevent encoding issues on Windows/Linux/Mac. Use ASCII alternatives: [OK] not [OK], [ERROR] not [FAIL], [TARGET] not [TARGET], etc."
             if context == "code":
-                result["recommendation"] = "🚨 CRITICAL PREVENTION: NEVER use Unicode/emojis in executable code! They cause encoding failures. Use: [OK], [ERROR], [TARGET] instead of ✅❌🎯"
+                result["recommendation"] = "[ALERT] CRITICAL PREVENTION: NEVER use Unicode/emojis in executable code! They cause encoding failures. Use: [OK], [ERROR], [TARGET] instead of [OK][FAIL][TARGET]"
                 result["severity"] = "medium"
 
         return result

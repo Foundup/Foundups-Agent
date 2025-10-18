@@ -28,7 +28,7 @@ Track development progress and changes for the WSP 48 Recursive Self-Improvement
 - WSP 22: Documentation and ModLog created
 
 **Key Features**:
-- Automatic error→pattern→solution→improvement pipeline
+- Automatic error->pattern->solution->improvement pipeline
 - Pattern memory for token-efficient recall
 - Quantum solution remembrance (simulated)
 - Exponential learning velocity growth

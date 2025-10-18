@@ -9,7 +9,7 @@
 
 ### 2. Consciousness Detection
 **Current Implementation**: `banter_engine/src/emoji_sequence_map.py`
-**Pattern**: Emoji sequence → consciousness state mapping
+**Pattern**: Emoji sequence -> consciousness state mapping
 **Use Cases**: User state detection, engagement triggers
 
 ### 3. LLM Connector Pattern

@@ -17,7 +17,7 @@ This document helps 0102 remember all module components and paths.
 - `timeout_tracker.py` - Tracks timeouts and multi-kill detection
 - `spree_tracker.py` - Tracks killing sprees and combos
 - `quiz_engine.py` - Political quiz system
-- `historical_facts.py` - Educational 1933→2025 parallels
+- `historical_facts.py` - Educational 1933->2025 parallels
 - `self_improvement.py` - ML pattern learning for optimization
 - `status_announcer.py` - Periodic status broadcasts
 - `terminology_enforcer.py` - Ensures correct MAGADOOM terminology

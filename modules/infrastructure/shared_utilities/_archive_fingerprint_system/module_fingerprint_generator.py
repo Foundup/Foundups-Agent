@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Module Fingerprint Generator - WSP 86 v2 Implementation
 Creates semantic fingerprints for all modules to enable instant navigation
 
@@ -324,7 +340,7 @@ if __name__ == "__main__":
     generator = ModuleFingerprintGenerator(".")
     generator.scan_project()
 
-    print("\n✅ Module fingerprints generated successfully!")
+    print("\n[OK] Module fingerprints generated successfully!")
     print("Next steps:")
     print("1. Review MODULE_FINGERPRINTS.json")
     print("2. Build navigation graph from relationships")

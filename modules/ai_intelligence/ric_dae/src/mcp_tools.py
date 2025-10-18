@@ -42,7 +42,7 @@ class ResearchIngestionMCP:
         # Initialize mock research data for demonstration
         self._init_mock_research_data()
 
-        self.logger.info("🔗 ricDAE MCP client initialized")
+        self.logger.info("[LINK] ricDAE MCP client initialized")
 
     def _init_mock_research_data(self):
         """Initialize mock research data for demonstration"""
@@ -89,7 +89,7 @@ class ResearchIngestionMCP:
         Returns:
             List of research paper metadata
         """
-        self.logger.info(f"🔍 literature_search called with query: '{query}', limit: {limit}")
+        self.logger.info(f"[SEARCH] literature_search called with query: '{query}', limit: {limit}")
 
         # Mock search implementation - in production this would use vector search
         results = []
@@ -117,7 +117,7 @@ class ResearchIngestionMCP:
         results.sort(key=lambda x: x["relevance_score"], reverse=True)
         limited_results = results[:limit]
 
-        self.logger.info(f"📚 literature_search returned {len(limited_results)} results")
+        self.logger.info(f"[BOOKS] literature_search returned {len(limited_results)} results")
         return limited_results
 
     def research_update(self) -> List[Dict[str, Any]]:
@@ -150,7 +150,7 @@ class ResearchIngestionMCP:
             except ValueError:
                 continue
 
-        self.logger.info(f"🔄 research_update returned {len(updates)} updates")
+        self.logger.info(f"[REFRESH] research_update returned {len(updates)} updates")
         return updates
 
     def trend_digest(self, days: int = 7) -> List[Dict[str, Any]]:
@@ -165,7 +165,7 @@ class ResearchIngestionMCP:
         Returns:
             List of trend insights and analysis
         """
-        self.logger.info(f"📈 trend_digest called for {days} days")
+        self.logger.info(f"[UP] trend_digest called for {days} days")
 
         # Mock trend analysis
         trends = [
@@ -197,7 +197,7 @@ class ResearchIngestionMCP:
             }
         ]
 
-        self.logger.info(f"📊 trend_digest returned {len(trends)} trend insights")
+        self.logger.info(f"[DATA] trend_digest returned {len(trends)} trend insights")
         return trends
 
     def source_register(self, source_url: str, source_type: str = "git") -> Dict[str, Any]:
@@ -213,7 +213,7 @@ class ResearchIngestionMCP:
         Returns:
             Registration confirmation
         """
-        self.logger.info(f"📝 source_register called: {source_url} ({source_type})")
+        self.logger.info(f"[NOTE] source_register called: {source_url} ({source_type})")
 
         # Mock source registration
         registration = {
@@ -226,7 +226,7 @@ class ResearchIngestionMCP:
             "compliance_check": "passed"
         }
 
-        self.logger.info(f"✅ source_register completed for {source_url}")
+        self.logger.info(f"[OK] source_register completed for {source_url}")
         return registration
 
     async def call_tool(self, tool_name: str, **kwargs) -> Any:
@@ -240,7 +240,7 @@ class ResearchIngestionMCP:
         Returns:
             Tool execution result
         """
-        self.logger.info(f"🔧 MCP tool call: {tool_name} with args: {kwargs}")
+        self.logger.info(f"[TOOL] MCP tool call: {tool_name} with args: {kwargs}")
 
         tool_map = {
             "literature_search": self.literature_search,
@@ -255,5 +255,5 @@ class ResearchIngestionMCP:
         # Execute tool (some are sync, some could be async)
         result = tool_map[tool_name](**kwargs)
 
-        self.logger.info(f"✅ MCP tool {tool_name} completed successfully")
+        self.logger.info(f"[OK] MCP tool {tool_name} completed successfully")
         return result

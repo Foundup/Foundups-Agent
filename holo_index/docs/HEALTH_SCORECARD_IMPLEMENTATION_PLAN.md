@@ -2,7 +2,7 @@
 
 ## 0102 gpt5 Feedback Analysis & Implementation Strategy
 
-### 1. Reward System Status ✅
+### 1. Reward System Status [OK]
 **Finding**: Reward system IS working as designed
 - 5 points for refreshing indexes
 - 3 points for using advisor
@@ -15,7 +15,7 @@
 - +5 points for proactive refactoring suggestions
 - +3 points for tracking technical debt
 
-### 2. WSP Violations Storage Strategy 🔄
+### 2. WSP Violations Storage Strategy [REFRESH]
 **Current State**: Fragmented across multiple files
 - Various `WSP_VIOLATION_*.md` files scattered
 - No central JSONL database yet
@@ -39,7 +39,7 @@ violation = {
 }
 ```
 
-### 3. Module Health Scorecard Design 📊
+### 3. Module Health Scorecard Design [DATA]
 
 #### Scorecard Components
 ```yaml
@@ -80,7 +80,7 @@ class LLMEPrioritizer:
         return sorted_modules_by_refactor_priority
 ```
 
-### 4. WSP 88 Remediation Workflow 🔧
+### 4. WSP 88 Remediation Workflow [TOOL]
 
 #### Automatic Remediation Links
 ```python

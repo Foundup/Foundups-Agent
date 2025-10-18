@@ -181,7 +181,7 @@ await orchestrator.authenticate_platform('linkedin', linkedin_creds)
 ```python
 # Post to both platforms simultaneously
 result = await orchestrator.post_content(
-    content="🚀 Exciting update from FoundUps development team!",
+    content="[ROCKET] Exciting update from FoundUps development team!",
     platforms=['twitter', 'linkedin'],
     options={
         'twitter': {'hashtags': ['#FoundUps', '#Development']},
@@ -200,7 +200,7 @@ from datetime import datetime, timedelta
 # Schedule content for tomorrow
 schedule_time = datetime.now() + timedelta(days=1)
 schedule_id = await orchestrator.schedule_content(
-    content="Weekly development update! 💻 #WeeklyUpdate",
+    content="Weekly development update! [U+1F4BB] #WeeklyUpdate",
     platforms=['twitter', 'linkedin'],
     schedule_time=schedule_time
 )

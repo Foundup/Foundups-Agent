@@ -319,11 +319,11 @@ async def demo_learning_engine():
     
     # Get predictions
     predictions = await engine.predict_user_behavior(user_id, {"meeting_type": "sync"})
-    print(f"🔮 Behavior predictions: {predictions}")
+    print(f"[U+1F52E] Behavior predictions: {predictions}")
     
     # Get statistics
     stats = await engine.get_learning_statistics()
-    print(f"📊 Learning statistics: {stats}")
+    print(f"[DATA] Learning statistics: {stats}")
     
     return engine
 

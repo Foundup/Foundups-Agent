@@ -8,10 +8,10 @@ This directory contains the test suite for the execution log analyzer module. Th
 
 ```
 tests/
-├── __init__.py                 # Package marker
-├── README.md                   # This file
-├── TestModLog.md              # Test documentation and status
-└── test_execution_log_librarian.py  # Core librarian functionality tests
++-- __init__.py                 # Package marker
++-- README.md                   # This file
++-- TestModLog.md              # Test documentation and status
++-- test_execution_log_librarian.py  # Core librarian functionality tests
 ```
 
 ## Test Categories

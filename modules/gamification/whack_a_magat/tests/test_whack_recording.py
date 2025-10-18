@@ -11,7 +11,7 @@ from modules.gamification.whack_a_magat.src.whack import apply_whack, get_profil
 from datetime import datetime
 
 def test_whack_system():
-    print("🎯 Testing MAGADOOM whack recording system...")
+    print("[TARGET] Testing MAGADOOM whack recording system...")
     
     # Test moderator
     mod_id = "UC99a5bqC4Uc634yB-72VRbw"  # 1PissedOffVeteran's actual ID
@@ -22,7 +22,7 @@ def test_whack_system():
     print(f"Initial state: {initial_profile.frag_count} frags, {initial_profile.score} XP")
     
     # Record a whack
-    print("\n🔥 Recording a whack...")
+    print("\n[U+1F525] Recording a whack...")
     action = apply_whack(
         moderator_id=mod_id,
         target_id=target_id,
@@ -40,14 +40,14 @@ def test_whack_system():
     frag_increase = updated_profile.frag_count - initial_profile.frag_count
     xp_increase = updated_profile.score - initial_profile.score
     
-    print(f"\n📊 Results:")
+    print(f"\n[DATA] Results:")
     print(f"Frag increase: {frag_increase}")
     print(f"XP increase: {xp_increase}")
     
     if frag_increase > 0 and xp_increase > 0:
-        print("✅ Whack recording system is working!")
+        print("[OK] Whack recording system is working!")
     else:
-        print("❌ Whack recording system has issues!")
+        print("[FAIL] Whack recording system has issues!")
         
     return frag_increase > 0 and xp_increase > 0
 

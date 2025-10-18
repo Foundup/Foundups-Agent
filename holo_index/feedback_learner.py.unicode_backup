@@ -1,0 +1,775 @@
+# -*- coding: utf-8 -*-
+
+"""
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+Feedback Learner for HoloDAE Intent Orchestration
+WSP Compliance: WSP 48 (Recursive Learning), WSP 37 (Roadmap Scoring), WSP 3 (Module Organization)
+
+Multi-dimensional feedback learning inspired by WSP 37's comprehensive scoring.
+Learns from user feedback to improve intent classification and component routing.
+Part of Intent-Driven Orchestration Enhancement (2025-10-07).
+
+Design Doc: docs/agentic_journals/HOLODAE_INTENT_ORCHESTRATION_DESIGN.md
+"""
+
+import json
+import logging
+from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Any
+from dataclasses import dataclass, asdict
+from enum import Enum
+
+from holo_index.intent_classifier import IntentType
+
+logger = logging.getLogger(__name__)
+
+
+class FeedbackRating(Enum):
+    """User feedback ratings for output quality (legacy compatibility)"""
+    GOOD = "good"          # Output was relevant and helpful
+    NOISY = "noisy"        # Output had too many irrelevant components
+    MISSING = "missing"    # Output missed relevant information
+
+
+@dataclass
+class FeedbackDimensions:
+    """
+    Multi-dimensional feedback scoring (WSP 37-inspired).
+
+    Each dimension scored 0.0 to 1.0:
+    - 1.0 = Excellent
+    - 0.5 = Neutral/Average
+    - 0.0 = Poor
+    """
+    relevance: float = 0.5       # Was component output relevant to query?
+    noise_level: float = 0.5     # How much irrelevant info? (higher = more noise)
+    completeness: float = 0.5    # Did it provide complete information?
+    token_efficiency: float = 0.5  # Tokens used vs value delivered?
+
+    def to_dict(self) -> Dict:
+        """Convert to dictionary"""
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: Dict) -> 'FeedbackDimensions':
+        """Create from dictionary"""
+        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+
+    @classmethod
+    def from_rating(cls, rating: FeedbackRating) -> 'FeedbackDimensions':
+        """
+        Convert legacy rating to multi-dimensional scores.
+
+        WSP 37 Pattern: Transform simple rating into nuanced dimensions
+        """
+        if rating == FeedbackRating.GOOD:
+            return cls(
+                relevance=0.9,
+                noise_level=0.2,  # Low noise
+                completeness=0.9,
+                token_efficiency=0.8
+            )
+        elif rating == FeedbackRating.NOISY:
+            return cls(
+                relevance=0.5,
+                noise_level=0.8,  # High noise
+                completeness=0.6,
+                token_efficiency=0.3
+            )
+        else:  # MISSING
+            return cls(
+                relevance=0.6,
+                noise_level=0.4,
+                completeness=0.2,  # Low completeness
+                token_efficiency=0.5
+            )
+
+    def calculate_overall_quality(self) -> float:
+        """
+        Calculate overall quality score (0.0-1.0).
+
+        WSP 37 Pattern: Weighted combination of dimensions
+        Weights inspired by PriorityScorer factor_weights
+        """
+        weights = {
+            'relevance': 0.35,        # Most important
+            'noise_level': 0.25,      # High impact (inverted)
+            'completeness': 0.25,     # High impact
+            'token_efficiency': 0.15  # Moderate impact
+        }
+
+        score = (
+            self.relevance * weights['relevance'] +
+            (1.0 - self.noise_level) * weights['noise_level'] +  # Invert noise
+            self.completeness * weights['completeness'] +
+            self.token_efficiency * weights['token_efficiency']
+        )
+
+        return score
+
+
+@dataclass
+class FeedbackRecord:
+    """
+    Single feedback instance with multi-dimensional scoring.
+
+    WSP 37 Pattern: Comprehensive feedback capture
+    """
+    feedback_id: str
+    query: str
+    intent: IntentType
+    components_executed: List[str]
+    rating: FeedbackRating  # Legacy compatibility
+    dimensions: FeedbackDimensions  # WSP 37-inspired multi-dimensional scoring
+    timestamp: str
+    notes: Optional[str] = None
+
+    def to_dict(self) -> Dict:
+        """Convert to dictionary for JSON serialization"""
+        return {
+            'feedback_id': self.feedback_id,
+            'query': self.query,
+            'intent': self.intent.value,
+            'components_executed': self.components_executed,
+            'rating': self.rating.value,
+            'dimensions': self.dimensions.to_dict(),
+            'timestamp': self.timestamp,
+            'notes': self.notes
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict) -> 'FeedbackRecord':
+        """Create from dictionary"""
+        # Handle legacy records without dimensions
+        if 'dimensions' in data:
+            dimensions = FeedbackDimensions.from_dict(data['dimensions'])
+        else:
+            # Convert legacy rating to dimensions
+            dimensions = FeedbackDimensions.from_rating(FeedbackRating(data['rating']))
+
+        return cls(
+            feedback_id=data['feedback_id'],
+            query=data['query'],
+            intent=IntentType(data['intent']),
+            components_executed=data['components_executed'],
+            rating=FeedbackRating(data['rating']),
+            dimensions=dimensions,
+            timestamp=data['timestamp'],
+            notes=data.get('notes')
+        )
+
+
+class FeedbackLearner:
+    """
+    Multi-dimensional feedback learning system (WSP 37-inspired).
+
+    Implements WSP 48 Recursive Self-Improvement with WSP 37 comprehensive scoring:
+    - Multi-dimensional feedback recording (relevance, noise, completeness, efficiency)
+    - Weighted component adjustment based on feedback dimensions
+    - Component-Intent affinity matrix learning
+    - Dynamic component filtering with learned patterns
+
+    Token Budget: ~50-100 tokens per feedback cycle
+    """
+
+    def __init__(self, memory_root: Optional[Path] = None):
+        """Initialize feedback learner with WSP 37-inspired architecture"""
+        if memory_root is None:
+            memory_root = Path(__file__).parent / "memory"
+
+        self.memory_root = Path(memory_root)
+        self.memory_root.mkdir(parents=True, exist_ok=True)
+
+        # Memory files
+        self.feedback_history_file = self.memory_root / "feedback_history.json"
+        self.intent_weights_file = self.memory_root / "intent_weights.json"
+        self.affinity_matrix_file = self.memory_root / "component_intent_affinity.json"
+
+        # Runtime state
+        self.feedback_history: List[FeedbackRecord] = []
+        self.intent_weights: Dict[str, Dict[str, float]] = {}
+
+        # WSP 37 Pattern: Component-Intent Affinity Matrix
+        # affinity_scores[intent][component] = learned affinity (0.0-1.0)
+        self.affinity_matrix: Dict[str, Dict[str, float]] = {}
+
+        # Learning metrics (WSP 37-inspired tracking)
+        self.metrics = {
+            "total_feedback": 0,
+            "good_ratings": 0,
+            "noisy_ratings": 0,
+            "missing_ratings": 0,
+            "weight_adjustments": 0,
+            "learning_cycles": 0,
+            "average_confidence": 0.0,
+            # WSP 37-inspired metrics
+            "average_relevance": 0.0,
+            "average_noise_level": 0.0,
+            "average_completeness": 0.0,
+            "average_token_efficiency": 0.0,
+            "affinity_calculations": 0
+        }
+
+        # Load existing memory
+        self._load_memory()
+
+        logger.info(
+            "[FEEDBACK-LEARNER] Initialized (WSP 37-inspired) with %d historical records, %d affinity scores",
+            len(self.feedback_history), sum(len(comps) for comps in self.affinity_matrix.values())
+        )
+
+    def _load_memory(self):
+        """Load feedback history, learned weights, and affinity matrix from disk"""
+        # Load feedback history
+        if self.feedback_history_file.exists():
+            try:
+                with open(self.feedback_history_file, 'r') as f:
+                    data = json.load(f)
+                    self.feedback_history = [
+                        FeedbackRecord.from_dict(record) for record in data
+                    ]
+                    self.metrics["total_feedback"] = len(self.feedback_history)
+                    logger.info("[FEEDBACK-LEARNER] Loaded %d feedback records", len(self.feedback_history))
+            except Exception as e:
+                logger.warning("[FEEDBACK-LEARNER] Failed to load feedback history: %s", e)
+
+        # Load learned weights
+        if self.intent_weights_file.exists():
+            try:
+                with open(self.intent_weights_file, 'r') as f:
+                    self.intent_weights = json.load(f)
+                    logger.info("[FEEDBACK-LEARNER] Loaded weights for %d intents", len(self.intent_weights))
+            except Exception as e:
+                logger.warning("[FEEDBACK-LEARNER] Failed to load intent weights: %s", e)
+
+        # Load affinity matrix (WSP 37 pattern)
+        if self.affinity_matrix_file.exists():
+            try:
+                with open(self.affinity_matrix_file, 'r') as f:
+                    self.affinity_matrix = json.load(f)
+                    total_affinities = sum(len(comps) for comps in self.affinity_matrix.values())
+                    logger.info("[FEEDBACK-LEARNER] Loaded %d affinity scores", total_affinities)
+            except Exception as e:
+                logger.warning("[FEEDBACK-LEARNER] Failed to load affinity matrix: %s", e)
+
+    def _save_memory(self):
+        """Persist feedback history, learned weights, and affinity matrix to disk"""
+        # Save feedback history
+        try:
+            with open(self.feedback_history_file, 'w') as f:
+                data = [record.to_dict() for record in self.feedback_history]
+                json.dump(data, f, indent=2)
+        except Exception as e:
+            logger.error("[FEEDBACK-LEARNER] Failed to save feedback history: %s", e)
+
+        # Save learned weights
+        try:
+            with open(self.intent_weights_file, 'w') as f:
+                json.dump(self.intent_weights, f, indent=2)
+        except Exception as e:
+            logger.error("[FEEDBACK-LEARNER] Failed to save intent weights: %s", e)
+
+        # Save affinity matrix (WSP 37 pattern)
+        try:
+            with open(self.affinity_matrix_file, 'w') as f:
+                json.dump(self.affinity_matrix, f, indent=2)
+        except Exception as e:
+            logger.error("[FEEDBACK-LEARNER] Failed to save affinity matrix: %s", e)
+
+    def record_feedback(
+        self,
+        query: str,
+        intent: IntentType,
+        components_executed: List[str],
+        rating: Optional[FeedbackRating] = None,
+        dimensions: Optional[FeedbackDimensions] = None,
+        notes: Optional[str] = None
+    ) -> str:
+        """
+        Record user feedback with multi-dimensional scoring (WSP 37-inspired).
+
+        Args:
+            query: Original user query
+            intent: Classified intent type
+            components_executed: List of component names that executed
+            rating: User's rating (legacy compatibility, optional if dimensions provided)
+            dimensions: Multi-dimensional feedback scores (WSP 37 pattern)
+            notes: Optional feedback notes
+
+        Returns:
+            Feedback ID for tracking
+
+        Token Budget: ~50-70 tokens (includes dimension processing)
+        """
+        import hashlib
+
+        # Handle legacy calls (rating only) or new calls (dimensions)
+        if dimensions is None:
+            if rating is None:
+                raise ValueError("Either rating or dimensions must be provided")
+            dimensions = FeedbackDimensions.from_rating(rating)
+            actual_rating = rating
+        else:
+            # Infer rating from dimensions if not provided
+            if rating is None:
+                quality = dimensions.calculate_overall_quality()
+                if quality >= 0.7:
+                    actual_rating = FeedbackRating.GOOD
+                elif quality >= 0.4:
+                    actual_rating = FeedbackRating.NOISY if dimensions.noise_level > 0.6 else FeedbackRating.MISSING
+                else:
+                    actual_rating = FeedbackRating.MISSING
+            else:
+                actual_rating = rating
+
+        # Generate feedback ID
+        feedback_sig = f"{query}:{intent.value}:{datetime.now().isoformat()}"
+        feedback_id = hashlib.md5(feedback_sig.encode()).hexdigest()[:8]
+
+        # Create feedback record with dimensions
+        record = FeedbackRecord(
+            feedback_id=feedback_id,
+            query=query,
+            intent=intent,
+            components_executed=components_executed,
+            rating=actual_rating,
+            dimensions=dimensions,
+            timestamp=datetime.now().isoformat(),
+            notes=notes
+        )
+
+        # Store in history
+        self.feedback_history.append(record)
+
+        # Update metrics
+        self.metrics["total_feedback"] += 1
+        if actual_rating == FeedbackRating.GOOD:
+            self.metrics["good_ratings"] += 1
+        elif actual_rating == FeedbackRating.NOISY:
+            self.metrics["noisy_ratings"] += 1
+        elif actual_rating == FeedbackRating.MISSING:
+            self.metrics["missing_ratings"] += 1
+
+        # Update dimensional metrics (WSP 37 pattern)
+        self._update_dimensional_metrics(dimensions)
+
+        # Learn from feedback (WSP 37-inspired weighted adjustment)
+        self._update_intent_weights_multidimensional(intent, components_executed, dimensions)
+
+        # Update affinity matrix (WSP 37 pattern)
+        self._update_affinity_matrix(intent, components_executed, dimensions)
+
+        # Persist to disk
+        self._save_memory()
+
+        logger.info(
+            "[FEEDBACK-LEARNER] Recorded %s feedback (quality: %.2f) for intent %s",
+            actual_rating.value, dimensions.calculate_overall_quality(), intent.value
+        )
+
+        return feedback_id
+
+    def _update_intent_weights(
+        self,
+        intent: IntentType,
+        components: List[str],
+        rating: FeedbackRating
+    ):
+        """
+        Update component weights based on feedback.
+
+        Learning Rules (WSP 48):
+        - GOOD rating: Increase weights for executed components (+0.1)
+        - NOISY rating: Decrease weights for executed components (-0.15)
+        - MISSING rating: Log for manual review (no automatic adjustment)
+
+        Weights range: 0.0 (never include) to 1.0 (always include)
+        Default weight: 0.5 (neutral)
+
+        Token Budget: ~30 tokens
+        """
+        intent_key = intent.value
+
+        # Initialize intent weights if new
+        if intent_key not in self.intent_weights:
+            self.intent_weights[intent_key] = {}
+
+        # Determine weight adjustment
+        if rating == FeedbackRating.GOOD:
+            weight_delta = 0.1  # Positive reinforcement
+        elif rating == FeedbackRating.NOISY:
+            weight_delta = -0.15  # Negative reinforcement (stronger)
+        else:  # MISSING
+            # No automatic adjustment - requires manual review
+            logger.info(
+                "[FEEDBACK-LEARNER] MISSING rating logged for review: intent=%s, components=%s",
+                intent_key, components
+            )
+            return
+
+        # Update weights for each component
+        for component in components:
+            current_weight = self.intent_weights[intent_key].get(component, 0.5)
+            new_weight = max(0.0, min(1.0, current_weight + weight_delta))
+
+            self.intent_weights[intent_key][component] = new_weight
+            self.metrics["weight_adjustments"] += 1
+
+            logger.debug(
+                "[FEEDBACK-LEARNER] Adjusted weight: %s/%s: %.2f → %.2f (delta: %+.2f)",
+                intent_key, component, current_weight, new_weight, weight_delta
+            )
+
+        self.metrics["learning_cycles"] += 1
+
+        # Update average confidence
+        all_weights = [
+            w for intent_weights in self.intent_weights.values()
+            for w in intent_weights.values()
+        ]
+        if all_weights:
+            self.metrics["average_confidence"] = sum(all_weights) / len(all_weights)
+
+    def _update_dimensional_metrics(self, dimensions: FeedbackDimensions):
+        """
+        Update average dimensional metrics (WSP 37 pattern).
+
+        Token Budget: ~10 tokens
+        """
+        total = self.metrics["total_feedback"]
+        if total == 0:
+            return
+
+        # Running average calculation
+        self.metrics["average_relevance"] = (
+            (self.metrics["average_relevance"] * (total - 1) + dimensions.relevance) / total
+        )
+        self.metrics["average_noise_level"] = (
+            (self.metrics["average_noise_level"] * (total - 1) + dimensions.noise_level) / total
+        )
+        self.metrics["average_completeness"] = (
+            (self.metrics["average_completeness"] * (total - 1) + dimensions.completeness) / total
+        )
+        self.metrics["average_token_efficiency"] = (
+            (self.metrics["average_token_efficiency"] * (total - 1) + dimensions.token_efficiency) / total
+        )
+
+    def _update_intent_weights_multidimensional(
+        self,
+        intent: IntentType,
+        components: List[str],
+        dimensions: FeedbackDimensions
+    ):
+        """
+        Update component weights using multi-dimensional feedback (WSP 37-inspired).
+
+        Weighted Adjustment (from PriorityScorer pattern):
+        Instead of fixed +0.1/-0.15, calculate delta based on dimensions.
+
+        Token Budget: ~40 tokens
+        """
+        intent_key = intent.value
+
+        # Initialize intent weights if new
+        if intent_key not in self.intent_weights:
+            self.intent_weights[intent_key] = {}
+
+        # Calculate weighted delta (WSP 37 pattern)
+        weight_delta = self._calculate_weighted_delta(dimensions)
+
+        # Update weights for each component
+        for component in components:
+            current_weight = self.intent_weights[intent_key].get(component, 0.5)
+            new_weight = max(0.0, min(1.0, current_weight + weight_delta))
+
+            self.intent_weights[intent_key][component] = new_weight
+            self.metrics["weight_adjustments"] += 1
+
+            logger.debug(
+                "[FEEDBACK-LEARNER] WSP37 adjusted weight: %s/%s: %.2f → %.2f (delta: %+.3f)",
+                intent_key, component, current_weight, new_weight, weight_delta
+            )
+
+        self.metrics["learning_cycles"] += 1
+
+        # Update average confidence
+        all_weights = [
+            w for intent_weights in self.intent_weights.values()
+            for w in intent_weights.values()
+        ]
+        if all_weights:
+            self.metrics["average_confidence"] = sum(all_weights) / len(all_weights)
+
+    def _calculate_weighted_delta(self, dimensions: FeedbackDimensions) -> float:
+        """
+        Calculate weight adjustment delta from feedback dimensions (WSP 37 pattern).
+
+        Uses weighted scoring inspired by PriorityScorer.factor_weights.
+
+        Token Budget: ~15 tokens
+        """
+        # Calculate overall quality (0.0-1.0)
+        quality = dimensions.calculate_overall_quality()
+
+        # Map quality to delta range
+        # Quality 0.0 → delta -0.20 (strong negative)
+        # Quality 0.5 → delta  0.00 (neutral)
+        # Quality 1.0 → delta +0.20 (strong positive)
+        delta = (quality - 0.5) * 0.4
+
+        # Apply dimension-specific modifiers
+        # High noise penalty
+        if dimensions.noise_level > 0.7:
+            delta -= 0.05
+
+        # High relevance bonus
+        if dimensions.relevance > 0.8:
+            delta += 0.05
+
+        # Clamp delta to reasonable range
+        delta = max(-0.25, min(0.25, delta))
+
+        return delta
+
+    def _update_affinity_matrix(
+        self,
+        intent: IntentType,
+        components: List[str],
+        dimensions: FeedbackDimensions
+    ):
+        """
+        Update Component-Intent Affinity Matrix (WSP 37 concept).
+
+        Learns which components naturally pair with which intents based on
+        relevance and completeness scores.
+
+        affinity_scores[intent][component] = learned affinity (0.0-1.0)
+
+        Token Budget: ~30 tokens
+        """
+        intent_key = intent.value
+
+        # Initialize intent affinity scores if new
+        if intent_key not in self.affinity_matrix:
+            self.affinity_matrix[intent_key] = {}
+
+        # Calculate affinity from dimensions
+        # Affinity = combination of relevance and completeness
+        # (noise_level is already captured in weights, focus on positive signals here)
+        affinity_score = (
+            dimensions.relevance * 0.6 +
+            dimensions.completeness * 0.4
+        )
+
+        # Update affinity for each component (running average)
+        for component in components:
+            current_affinity = self.affinity_matrix[intent_key].get(component, 0.5)
+
+            # Running average with learning rate 0.3
+            learning_rate = 0.3
+            new_affinity = (
+                current_affinity * (1 - learning_rate) +
+                affinity_score * learning_rate
+            )
+
+            self.affinity_matrix[intent_key][component] = new_affinity
+            self.metrics["affinity_calculations"] += 1
+
+            logger.debug(
+                "[FEEDBACK-LEARNER] WSP37 affinity: %s/%s: %.3f → %.3f (score: %.3f)",
+                intent_key, component, current_affinity, new_affinity, affinity_score
+            )
+
+    def get_filtered_components(
+        self,
+        intent: IntentType,
+        available_components: List[str],
+        threshold: float = 0.3
+    ) -> List[str]:
+        """
+        Filter components based on learned weights.
+
+        Args:
+            intent: Intent type for filtering
+            available_components: All available component names
+            threshold: Minimum weight to include component (default: 0.3)
+
+        Returns:
+            List of component names to execute
+
+        Token Budget: ~20 tokens
+        """
+        intent_key = intent.value
+
+        # If no learned weights for this intent, return all components
+        if intent_key not in self.intent_weights:
+            logger.debug(
+                "[FEEDBACK-LEARNER] No learned weights for %s, using all components",
+                intent_key
+            )
+            return available_components
+
+        # Filter components by weight threshold
+        filtered = []
+        weights = self.intent_weights[intent_key]
+
+        for component in available_components:
+            weight = weights.get(component, 0.5)  # Default: neutral
+
+            if weight >= threshold:
+                filtered.append(component)
+                logger.debug(
+                    "[FEEDBACK-LEARNER] Including %s for %s (weight: %.2f)",
+                    component, intent_key, weight
+                )
+            else:
+                logger.debug(
+                    "[FEEDBACK-LEARNER] Filtering out %s for %s (weight: %.2f < threshold: %.2f)",
+                    component, intent_key, weight, threshold
+                )
+
+        # Safety: Always return at least one component
+        if not filtered:
+            logger.warning(
+                "[FEEDBACK-LEARNER] All components filtered out for %s, using defaults",
+                intent_key
+            )
+            return available_components
+
+        return filtered
+
+    def get_component_weight(self, intent: IntentType, component: str) -> float:
+        """
+        Get learned weight for specific intent/component pair.
+
+        Args:
+            intent: Intent type
+            component: Component name
+
+        Returns:
+            Weight value (0.0-1.0), default 0.5 if unknown
+        """
+        intent_key = intent.value
+
+        if intent_key not in self.intent_weights:
+            return 0.5
+
+        return self.intent_weights[intent_key].get(component, 0.5)
+
+    def get_component_affinity(self, intent: IntentType, component: str) -> float:
+        """
+        Get component-intent affinity score (WSP 37 pattern).
+
+        Args:
+            intent: Intent type
+            component: Component name
+
+        Returns:
+            Affinity score (0.0-1.0), default 0.5 if unknown
+        """
+        intent_key = intent.value
+
+        if intent_key not in self.affinity_matrix:
+            return 0.5
+
+        return self.affinity_matrix[intent_key].get(component, 0.5)
+
+    def get_feedback_stats(self) -> Dict[str, Any]:
+        """
+        Get feedback learning statistics (WSP 37-enhanced).
+
+        Returns:
+            Dictionary with learning metrics including dimensional and affinity stats
+        """
+        stats = self.metrics.copy()
+
+        # Calculate derived metrics
+        if stats["total_feedback"] > 0:
+            stats["good_rate"] = stats["good_ratings"] / stats["total_feedback"]
+            stats["noisy_rate"] = stats["noisy_ratings"] / stats["total_feedback"]
+            stats["missing_rate"] = stats["missing_ratings"] / stats["total_feedback"]
+        else:
+            stats["good_rate"] = 0.0
+            stats["noisy_rate"] = 0.0
+            stats["missing_rate"] = 0.0
+
+        # Intent-specific stats
+        stats["intents_with_weights"] = len(self.intent_weights)
+        stats["total_component_weights"] = sum(
+            len(weights) for weights in self.intent_weights.values()
+        )
+
+        # WSP 37 affinity matrix stats
+        stats["intents_with_affinity"] = len(self.affinity_matrix)
+        stats["total_affinity_scores"] = sum(
+            len(affinities) for affinities in self.affinity_matrix.values()
+        )
+
+        # Calculate average affinity if available
+        all_affinities = [
+            a for intent_affinities in self.affinity_matrix.values()
+            for a in intent_affinities.values()
+        ]
+        if all_affinities:
+            stats["average_affinity"] = sum(all_affinities) / len(all_affinities)
+        else:
+            stats["average_affinity"] = 0.5
+
+        return stats
+
+    def get_feedback_history(
+        self,
+        intent: Optional[IntentType] = None,
+        rating: Optional[FeedbackRating] = None,
+        limit: int = 100
+    ) -> List[FeedbackRecord]:
+        """
+        Get feedback history with optional filters.
+
+        Args:
+            intent: Filter by intent type
+            rating: Filter by rating
+            limit: Maximum records to return
+
+        Returns:
+            List of feedback records (most recent first)
+        """
+        filtered = self.feedback_history
+
+        if intent:
+            filtered = [r for r in filtered if r.intent == intent]
+
+        if rating:
+            filtered = [r for r in filtered if r.rating == rating]
+
+        # Sort by timestamp (most recent first)
+        filtered.sort(key=lambda r: r.timestamp, reverse=True)
+
+        return filtered[:limit]
+
+
+# Singleton instance
+_learner_instance: Optional[FeedbackLearner] = None
+
+
+def get_learner() -> FeedbackLearner:
+    """
+    Get singleton FeedbackLearner instance.
+
+    Returns:
+        Global FeedbackLearner instance
+    """
+    global _learner_instance
+
+    if _learner_instance is None:
+        _learner_instance = FeedbackLearner()
+
+    return _learner_instance

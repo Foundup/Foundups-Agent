@@ -16,8 +16,8 @@ Test Coverage:
 - System-level: Error handling, import failures, credential validation
 
 Architecture Under Test:
-- PRIMARY: YouTube DAE → SimplePostingOrchestrator → Platform adapters
-- FALLBACK: YouTube DAE → Direct posting (sequential: LinkedIn → X)
+- PRIMARY: YouTube DAE -> SimplePostingOrchestrator -> Platform adapters
+- FALLBACK: YouTube DAE -> Direct posting (sequential: LinkedIn -> X)
 - VALIDATION: Browser conflict prevention, proper error handling
 """
 
@@ -83,8 +83,8 @@ class TestSocialMediaPosting(unittest.TestCase):
                         
                         # Verify logging
                         mock_logger.info.assert_any_call("[ORCHESTRATOR] Using social media orchestrator for posting")
-                        mock_logger.info.assert_any_call("[ORCHESTRATOR] ✅ linkedin: Posted successfully")
-                        mock_logger.info.assert_any_call("[ORCHESTRATOR] ✅ x_twitter: Posted successfully")
+                        mock_logger.info.assert_any_call("[ORCHESTRATOR] [OK] linkedin: Posted successfully")
+                        mock_logger.info.assert_any_call("[ORCHESTRATOR] [OK] x_twitter: Posted successfully")
         
         asyncio.run(run_test())
     
@@ -203,7 +203,7 @@ class TestSocialMediaPosting(unittest.TestCase):
         asyncio.run(run_test())
 
     def test_simple_solution_stream_trigger(self):
-        """Test the simple solution: Stream detection → Social orchestration trigger"""
+        """Test the simple solution: Stream detection -> Social orchestration trigger"""
         async def run_test():
             # Create AutoModeratorDAE instance
             dae = AutoModeratorDAE()
@@ -286,7 +286,7 @@ def run_tests():
     print("- Fallback direct posting path")
     print("- Sequential posting behavior")
     print("- Content generation")
-    print("- ⭐ SIMPLE SOLUTION: Stream detection → Social orchestration")
+    print("- [U+2B50] SIMPLE SOLUTION: Stream detection -> Social orchestration")
     print("="*60)
     
     unittest.main(verbosity=2, exit=False)

@@ -1,0 +1,35 @@
+{
+  "name": "menu_handler",
+  "version": "0.1.0",
+  "description": "Intelligent menu processing and routing component for AI Intelligence domain",
+  "domain": "ai_intelligence",
+  "type": "component",
+  "dependencies": {
+    "python": ">=3.8",
+    "pathlib": "builtin",
+    "typing": "builtin",
+    "subprocess": "builtin",
+    "sys": "builtin"
+  },
+  "dev_dependencies": {
+    "pytest": ">=7.0.0",
+    "pytest-cov": ">=4.0.0"
+  },
+  "wsp_compliance": {
+    "wsp_1": "Framework principles (modularity, agentic responsibility)",
+    "wsp_3": "AI Intelligence domain enterprise organization",
+    "wsp_5": "Test coverage ≥90%",
+    "wsp_11": "Interface documentation",
+    "wsp_22": "ModLog and Roadmap maintenance",
+    "wsp_60": "Memory architecture compliance"
+  },
+  "features": [
+    "Intelligent menu choice processing",
+    "Route delegation to appropriate handlers",
+    "User interaction management",
+    "Session logging and tracking",
+    "Error handling and validation"
+  ],
+  "status": "foundation",
+  "llme_target": "111"
+} 

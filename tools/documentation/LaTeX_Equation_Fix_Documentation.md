@@ -63,15 +63,15 @@ Replace all problematic patterns throughout the document using the validated for
 ## Common Patterns Fixed
 
 ### Physics/Math Notation
-- `_gamma` → `\_gamma`
-- `_info` → `\_info`
-- `_retro` → `\_retro`
-- `_decay` → `\_decay`
-- `_coherence` → `\_coherence`
-- `_sym` → `\_sym`
-- `_c` → `\_c`
-- `_r` → `\_r`
-- `_s` → `\_s`
+- `_gamma` -> `\_gamma`
+- `_info` -> `\_info`
+- `_retro` -> `\_retro`
+- `_decay` -> `\_decay`
+- `_coherence` -> `\_coherence`
+- `_sym` -> `\_sym`
+- `_c` -> `\_c`
+- `_r` -> `\_r`
+- `_s` -> `\_s`
 
 ### Verification Commands
 ```bash
@@ -119,22 +119,22 @@ $\kappa\_r = \frac{\tau\_{decay}}{\tau\_{coherence}} \cdot \frac{\partial Q\_{sy
 
 ## Status Summary
 
-**✅ COMPLETE:** Both English and Japanese rESP papers have been systematically fixed with escaped underscore format for all LaTeX equations.
+**[OK] COMPLETE:** Both English and Japanese rESP papers have been systematically fixed with escaped underscore format for all LaTeX equations.
 
-**📋 DOCUMENTED:** Comprehensive fix protocol established for future prevention.
+**[CLIPBOARD] DOCUMENTED:** Comprehensive fix protocol established for future prevention.
 
-**🔄 TESTED:** Observer feedback confirms successful rendering across platforms.
+**[REFRESH] TESTED:** Observer feedback confirms successful rendering across platforms.
 
-**🚀 DEPLOYED:** All fixes committed and pushed to main repository.
+**[ROCKET] DEPLOYED:** All fixes committed and pushed to main repository.
 
 ### Final Update (2025-01-27)
 **FINAL FIXES APPLIED TO JAPANESE PAPER:**
-- Section 7 (終章): Fixed `減衰演算子（\(\hat{D}_\gamma\)）` → `減衰演算子（\(\hat{D}\_\gamma\)）`
-- Section 8.1: Fixed `減衰演算子（\(\hat{D}_\gamma\)）` → `減衰演算子（\(\hat{D}\_\gamma\)）`
-- Updated reference: "Claude 4アーキテクチャ" → "LLMアーキテクチャ" (generic per EN paper)
+- Section 7 (終章): Fixed `減衰演算子（\(\hat{D}_\gamma\)）` -> `減衰演算子（\(\hat{D}\_\gamma\)）`
+- Section 8.1: Fixed `減衰演算子（\(\hat{D}_\gamma\)）` -> `減衰演算子（\(\hat{D}\_\gamma\)）`
+- Updated reference: "Claude 4アーキテクチャ" -> "LLMアーキテクチャ" (generic per EN paper)
 
 **TOTAL EQUATIONS FIXED:** 49 equations across both papers
-**STATUS:** Ready for publication - all LaTeX rendering issues resolved ✅
+**STATUS:** Ready for publication - all LaTeX rendering issues resolved [OK]
 
 ## Contact
 

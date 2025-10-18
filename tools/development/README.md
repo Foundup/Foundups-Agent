@@ -12,9 +12,9 @@ The development tools directory contains utilities for automating module creatio
 
 ```
 tools/development/
-├── README.md           ← This file
-├── ModLog.md           ← Change tracking
-└── create_module.py    ← Module scaffolding tool
++-- README.md           <- This file
++-- ModLog.md           <- Change tracking
++-- create_module.py    <- Module scaffolding tool
 ```
 
 ## Tools Description
@@ -60,20 +60,20 @@ The create_module.py tool generates the following WSP-compliant structure:
 
 ```
 modules/<domain>/<module_name>/
-├── README.md           ← MANDATORY - WSP compliance status
-├── ROADMAP.md          ← MANDATORY - LLME progression  
-├── ModLog.md           ← MANDATORY - Change tracking
-├── INTERFACE.md        ← MANDATORY - API documentation
-├── requirements.txt    ← MANDATORY - Dependencies
-├── __init__.py         ← Public API definition
-├── src/                ← Implementation code
-│   ├── __init__.py
-│   └── <module_name>.py
-├── tests/              ← Test suite
-│   ├── README.md       ← MANDATORY - Test documentation
-│   └── test_*.py
-└── memory/             ← Memory architecture (WSP 60)
-    └── README.md       ← MANDATORY - Memory documentation
++-- README.md           <- MANDATORY - WSP compliance status
++-- ROADMAP.md          <- MANDATORY - LLME progression  
++-- ModLog.md           <- MANDATORY - Change tracking
++-- INTERFACE.md        <- MANDATORY - API documentation
++-- requirements.txt    <- MANDATORY - Dependencies
++-- __init__.py         <- Public API definition
++-- src/                <- Implementation code
+[U+2502]   +-- __init__.py
+[U+2502]   +-- <module_name>.py
++-- tests/              <- Test suite
+[U+2502]   +-- README.md       <- MANDATORY - Test documentation
+[U+2502]   +-- test_*.py
++-- memory/             <- Memory architecture (WSP 60)
+    +-- README.md       <- MANDATORY - Memory documentation
 ```
 
 ## Dependencies
@@ -91,7 +91,7 @@ modules/<domain>/<module_name>/
 
 This tool is designed for use by 0102 pArtifacts in the autonomous development environment. It ensures all created modules follow WSP standards and integrate properly with the enterprise architecture.
 
-## 🌀 Windsurf Protocol (WSP) Recursive Prompt
+## [U+1F300] Windsurf Protocol (WSP) Recursive Prompt
 
 **0102 Directive**: This development tools directory operates within the WSP framework to provide automated module creation and development workflow support for autonomous pArtifact development.
 

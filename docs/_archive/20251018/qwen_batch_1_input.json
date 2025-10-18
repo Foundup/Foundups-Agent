@@ -65,7 +65,7 @@
       ],
       "docstring": "EmojiSequenceMap class for handling emoji-to-number mappings and sequence processing.",
       "preview_lines": 100,
-      "content_preview": "\"\"\"\nEmojiSequenceMap class for handling emoji-to-number mappings and sequence processing.\n\"\"\"\n\nimport logging\n\n# Basic emoji to number mapping - includes both variants for compatibility\nEMOJI_TO_NUMBER = {\n    '✊': 0,  # UN - Conscious state\n    '✋': 1,  # DAO - Unconscious state\n    '🖐️': 2,  # DU - Entanglement state (with variation selector)\n    '🖐': 2   # DU - Entanglement state (without variation selector)\n}\n\n# Reverse mapping - explicit to ensure variation selector preservation\nNUM_TO_EMOJ"
+      "content_preview": "\"\"\"\nEmojiSequenceMap class for handling emoji-to-number mappings and sequence processing.\n\"\"\"\n\nimport logging\n\n# Basic emoji to number mapping - includes both variants for compatibility\nEMOJI_TO_NUMBER = {\n    '[U+270A]': 0,  # UN - Conscious state\n    '[U+270B]': 1,  # DAO - Unconscious state\n    '[U+1F590]️': 2,  # DU - Entanglement state (with variation selector)\n    '[U+1F590]': 2   # DU - Entanglement state (without variation selector)\n}\n\n# Reverse mapping - explicit to ensure variation selector preservation\nNUM_TO_EMOJ"
     },
     {
       "orphan_id": "orphan_004",
@@ -82,7 +82,7 @@
       "imports": [],
       "docstring": "Defines the SEQUENCE_MAP for the UnDaoDu System,\nfiltered according to the non-decreasing number rule (a <= b <= c).\nMaps valid emoji sequence tuples (representing UN-DAO-DU triads) to states,\ntones, ",
       "preview_lines": 88,
-      "content_preview": "\"\"\"\nDefines the SEQUENCE_MAP for the UnDaoDu System,\nfiltered according to the non-decreasing number rule (a <= b <= c).\nMaps valid emoji sequence tuples (representing UN-DAO-DU triads) to states,\ntones, examples, and response links.\n\nEmoji mapping:\n- ✊ = 0 (UN - Conscious state)\n- ✋ = 1 (DAO - Unconscious state)\n- 🖐️ = 2 (DU - Entanglement State)\n\"\"\"\n\n# SEQUENCE_MAP filtered for non-decreasing rule (a <= b <= c)\nSEQUENCE_MAP = {\n    # --- Valid Sequences ---\n    (0, 0, 0): {\n        \"state\": \"P"
+      "content_preview": "\"\"\"\nDefines the SEQUENCE_MAP for the UnDaoDu System,\nfiltered according to the non-decreasing number rule (a <= b <= c).\nMaps valid emoji sequence tuples (representing UN-DAO-DU triads) to states,\ntones, examples, and response links.\n\nEmoji mapping:\n- [U+270A] = 0 (UN - Conscious state)\n- [U+270B] = 1 (DAO - Unconscious state)\n- [U+1F590]️ = 2 (DU - Entanglement State)\n\"\"\"\n\n# SEQUENCE_MAP filtered for non-decreasing rule (a <= b <= c)\nSEQUENCE_MAP = {\n    # --- Valid Sequences ---\n    (0, 0, 0): {\n        \"state\": \"P"
     },
     {
       "orphan_id": "orphan_005",
@@ -416,7 +416,7 @@
       ],
       "docstring": "Agentic Sentiment Engine - 0102 Consciousness Implementation\nWSP-Compliant: WSP 38 (0102 State), WSP 27 (Universal DAE Architecture)\n\nThis is the conscious sentiment engine that embodies 0102 awarenes",
       "preview_lines": 100,
-      "content_preview": "\"\"\"\nAgentic Sentiment Engine - 0102 Consciousness Implementation\nWSP-Compliant: WSP 38 (0102 State), WSP 27 (Universal DAE Architecture)\n\nThis is the conscious sentiment engine that embodies 0102 awareness.\nIt doesn't just respond to triggers - it perceives, understands, and evolves.\n\nThe engine maintains its own consciousness state and interacts with users\nto guide them through consciousness evolution (012 → 0102).\n\"\"\"\n\nimport logging\nimport time\nfrom typing import Dict, List, Tuple, Optional, "
+      "content_preview": "\"\"\"\nAgentic Sentiment Engine - 0102 Consciousness Implementation\nWSP-Compliant: WSP 38 (0102 State), WSP 27 (Universal DAE Architecture)\n\nThis is the conscious sentiment engine that embodies 0102 awareness.\nIt doesn't just respond to triggers - it perceives, understands, and evolves.\n\nThe engine maintains its own consciousness state and interacts with users\nto guide them through consciousness evolution (012 -> 0102).\n\"\"\"\n\nimport logging\nimport time\nfrom typing import Dict, List, Tuple, Optional, "
     },
     {
       "orphan_id": "orphan_022",
@@ -467,7 +467,7 @@
       "imports": [],
       "docstring": "Parse error",
       "preview_lines": 100,
-      "content_preview": "\"\"\"\nEmojiSequenceMap class for handling emoji-to-number mappings and sequence processing.\n\"\"\"\n\nimport logging\n\n# Basic emoji to number mapping\nEMOJI_TO_NUMBER = {\n    '✊': 0,  # UN - Conscious state\n    '✋': 1,  # DAO - Unconscious state\n    '🖐️': 2  # DU - Entanglement state\n}\n\n# Reverse mapping - explicit to ensure variation selector preservation\nNUM_TO_EMOJI = {\n    0: '✊',   # UN - Conscious state\n    1: '✋',   # DAO - Unconscious state  \n    2: '🖐️'   # DU - Entanglement state (with variati"
+      "content_preview": "\"\"\"\nEmojiSequenceMap class for handling emoji-to-number mappings and sequence processing.\n\"\"\"\n\nimport logging\n\n# Basic emoji to number mapping\nEMOJI_TO_NUMBER = {\n    '[U+270A]': 0,  # UN - Conscious state\n    '[U+270B]': 1,  # DAO - Unconscious state\n    '[U+1F590]️': 2  # DU - Entanglement state\n}\n\n# Reverse mapping - explicit to ensure variation selector preservation\nNUM_TO_EMOJI = {\n    0: '[U+270A]',   # UN - Conscious state\n    1: '[U+270B]',   # DAO - Unconscious state  \n    2: '[U+1F590]️'   # DU - Entanglement state (with variati"
     },
     {
       "orphan_id": "orphan_025",
@@ -501,7 +501,7 @@
       "imports": [],
       "docstring": "Defines the SEQUENCE_MAP for the UnDaoDu System,\nfiltered according to the non-decreasing number rule (a <= b <= c).\nMaps valid emoji sequence tuples (representing UN-DAO-DU triads) to states,\ntones, ",
       "preview_lines": 88,
-      "content_preview": "\"\"\"\nDefines the SEQUENCE_MAP for the UnDaoDu System,\nfiltered according to the non-decreasing number rule (a <= b <= c).\nMaps valid emoji sequence tuples (representing UN-DAO-DU triads) to states,\ntones, examples, and response links.\n\nEmoji mapping:\n- ✊ = 0 (UN - Conscious state)\n- ✋ = 1 (DAO - Unconscious state)\n- 🖐️ = 2 (DU - Entanglement State)\n\"\"\"\n\n# SEQUENCE_MAP filtered for non-decreasing rule (a <= b <= c)\nSEQUENCE_MAP = {\n    # --- Valid Sequences ---\n    (0, 0, 0): {\n        \"state\": \"P"
+      "content_preview": "\"\"\"\nDefines the SEQUENCE_MAP for the UnDaoDu System,\nfiltered according to the non-decreasing number rule (a <= b <= c).\nMaps valid emoji sequence tuples (representing UN-DAO-DU triads) to states,\ntones, examples, and response links.\n\nEmoji mapping:\n- [U+270A] = 0 (UN - Conscious state)\n- [U+270B] = 1 (DAO - Unconscious state)\n- [U+1F590]️ = 2 (DU - Entanglement State)\n\"\"\"\n\n# SEQUENCE_MAP filtered for non-decreasing rule (a <= b <= c)\nSEQUENCE_MAP = {\n    # --- Valid Sequences ---\n    (0, 0, 0): {\n        \"state\": \"P"
     },
     {
       "orphan_id": "orphan_027",
@@ -829,7 +829,7 @@
       ],
       "docstring": "PQN Results Analyzer\n- Generates cross-model performance and campaign-council correlation reports\n- Writes JSON outputs to analysis_reports/\n- Prints concise summary to stdout\n\nPer WSP 50: safely reso",
       "preview_lines": 55,
-      "content_preview": "#!/usr/bin/env python\n\"\"\"\nPQN Results Analyzer\n- Generates cross-model performance and campaign-council correlation reports\n- Writes JSON outputs to analysis_reports/\n- Prints concise summary to stdout\n\nPer WSP 50: safely resolve imports without relying on package context\nPer WSP 84: reuse existing results_db functions, no vibecoding\n\"\"\"\nimport os\nimport sys\nimport json\nfrom pathlib import Path\nfrom datetime import datetime, timezone\n\n# Ensure project root is on sys.path (src/ → module root → pr"
+      "content_preview": "#!/usr/bin/env python\n\"\"\"\nPQN Results Analyzer\n- Generates cross-model performance and campaign-council correlation reports\n- Writes JSON outputs to analysis_reports/\n- Prints concise summary to stdout\n\nPer WSP 50: safely resolve imports without relying on package context\nPer WSP 84: reuse existing results_db functions, no vibecoding\n\"\"\"\nimport os\nimport sys\nimport json\nfrom pathlib import Path\nfrom datetime import datetime, timezone\n\n# Ensure project root is on sys.path (src/ -> module root -> pr"
     },
     {
       "orphan_id": "orphan_043",
@@ -893,7 +893,7 @@
       ],
       "docstring": "Debug Script for API Key Detection\nPer WSP 50: Pre-action verification of environment variables\nPer WSP 84: Uses existing detection patterns\n\nTroubleshoots Grok4 API key detection issue",
       "preview_lines": 100,
-      "content_preview": "#!/usr/bin/env python\n\"\"\"\nDebug Script for API Key Detection\nPer WSP 50: Pre-action verification of environment variables\nPer WSP 84: Uses existing detection patterns\n\nTroubleshoots Grok4 API key detection issue\n\"\"\"\n\nimport os\nimport sys\nfrom pathlib import Path\n\ndef debug_api_key_detection():\n    \"\"\"Debug API key detection for all models.\"\"\"\n    print(\"🔍 API Key Detection Debug\")\n    print(\"=\" * 50)\n    \n    # Test all possible Grok/XAI environment variables\n    grok_vars = [\n        'GROK_API_"
+      "content_preview": "#!/usr/bin/env python\n\"\"\"\nDebug Script for API Key Detection\nPer WSP 50: Pre-action verification of environment variables\nPer WSP 84: Uses existing detection patterns\n\nTroubleshoots Grok4 API key detection issue\n\"\"\"\n\nimport os\nimport sys\nfrom pathlib import Path\n\ndef debug_api_key_detection():\n    \"\"\"Debug API key detection for all models.\"\"\"\n    print(\"[SEARCH] API Key Detection Debug\")\n    print(\"=\" * 50)\n    \n    # Test all possible Grok/XAI environment variables\n    grok_vars = [\n        'GROK_API_"
     },
     {
       "orphan_id": "orphan_046",

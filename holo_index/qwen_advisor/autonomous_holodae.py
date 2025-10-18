@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Autonomous HoloDAE - Self-Improving Code Intelligence Foundation
 
 This is the truly autonomous HoloIndex daemon that automatically maintains
@@ -81,7 +97,7 @@ class AutonomousHoloDAE:
                 self.gemma_integrator = HoloDAEGemmaIntegrator()
                 self.gemma_router = GemmaAdaptiveRouter()
                 self.gemma_enabled = True
-                self.logger.info("[HOLO-DAE] ✅ Gemma integration initialized - 6 specializations ready")
+                self.logger.info("[HOLO-DAE] [OK] Gemma integration initialized - 6 specializations ready")
                 self.logger.info("[HOLO-DAE] Gemma: pattern_recognition, embedding_optimization, health_anomaly_detection, violation_prevention, query_understanding, dae_cube_organization")
             except Exception as e:
                 self.logger.warning(f"[HOLO-DAE] Gemma integration failed: {e}")
@@ -299,14 +315,14 @@ class AutonomousHoloDAE:
             total_duration = time.time() - total_start
 
             if reindex_count > 0:
-                self.logger.info(f"[AUTO-REINDEX] ✅ Completed automatic refresh of {reindex_count} indexes in {total_duration:.1f}s")
+                self.logger.info(f"[AUTO-REINDEX] [OK] Completed automatic refresh of {reindex_count} indexes in {total_duration:.1f}s")
                 return True
             else:
                 self.logger.info("[AUTO-REINDEX] No indexes needed refreshing")
                 return True
 
         except Exception as e:
-            self.logger.error(f"[AUTO-REINDEX] ❌ Failed automatic re-indexing: {e}")
+            self.logger.error(f"[AUTO-REINDEX] [FAIL] Failed automatic re-indexing: {e}")
             return False
 
     def _monitor_and_self_improve(self):
@@ -318,22 +334,22 @@ class AutonomousHoloDAE:
                 # Check if re-indexing is needed (daemon-specific checks)
                 should_reindex, reason = self._should_reindex()
                 if should_reindex:
-                    self.logger.info(f"[HOLO-DAE] 🔄 Auto-reindex triggered: {reason}")
+                    self.logger.info(f"[HOLO-DAE] [REFRESH] Auto-reindex triggered: {reason}")
                     success = self._perform_auto_reindex()
                     if success:
-                        self.logger.info("[HOLO-DAE] ✅ Self-improvement completed successfully")
+                        self.logger.info("[HOLO-DAE] [OK] Self-improvement completed successfully")
                     else:
-                        self.logger.warning("[HOLO-DAE] ⚠️ Self-improvement encountered issues")
+                        self.logger.warning("[HOLO-DAE] [U+26A0]️ Self-improvement encountered issues")
 
                 # Check CLI IntelligentMonitor triggers (integration with CLI system)
                 cli_reindex_triggered = self._check_cli_monitor_triggers()
                 if cli_reindex_triggered:
-                    self.logger.info("[HOLO-DAE] 🔄 CLI-triggered re-index initiated")
+                    self.logger.info("[HOLO-DAE] [REFRESH] CLI-triggered re-index initiated")
                     success = self._perform_auto_reindex()
                     if success:
-                        self.logger.info("[HOLO-DAE] ✅ CLI-integrated re-indexing completed")
+                        self.logger.info("[HOLO-DAE] [OK] CLI-integrated re-indexing completed")
                     else:
-                        self.logger.warning("[HOLO-DAE] ⚠️ CLI-integrated re-indexing failed")
+                        self.logger.warning("[HOLO-DAE] [U+26A0]️ CLI-integrated re-indexing failed")
 
                 # Run normal HoloDAE coordination
                 if self.holodae_coordinator.monitoring_active:
@@ -356,7 +372,7 @@ class AutonomousHoloDAE:
 
                     # Log significant findings
                     if monitoring_result.optimization_suggestions:
-                        self.logger.info(f"[HOLO-DAE] 🤖 Generated {len(monitoring_result.optimization_suggestions)} optimization suggestions")
+                        self.logger.info(f"[HOLO-DAE] [BOT] Generated {len(monitoring_result.optimization_suggestions)} optimization suggestions")
 
                 # Sleep until next check
                 self.stop_event.wait(self.reindex_check_interval)
@@ -408,7 +424,7 @@ class AutonomousHoloDAE:
         # Apply self-improvements to QWEN orchestrator
         if improvement_insights:
             self._apply_qwen_improvements(improvement_insights)
-            self.logger.info(f"[HOLO-DAE] 🔄 Self-improvement applied: {len(improvement_insights)} insights")
+            self.logger.info(f"[HOLO-DAE] [REFRESH] Self-improvement applied: {len(improvement_insights)} insights")
 
     def _apply_qwen_improvements(self, insights):
         """
@@ -451,7 +467,7 @@ class AutonomousHoloDAE:
             self.logger.warning("[HOLO-DAE] Already active")
             return
 
-        self.logger.info("[HOLO-DAE] 🚀 Starting autonomous operation...")
+        self.logger.info("[HOLO-DAE] [ROCKET] Starting autonomous operation...")
         self.active = True
 
         # Initialize code map tracking for 0102 work context
@@ -468,7 +484,7 @@ class AutonomousHoloDAE:
         )
         self.monitoring_thread.start()
 
-        self.logger.info("[HOLO-DAE] ✅ Autonomous HoloDAE now active - Foundation layer operational")
+        self.logger.info("[HOLO-DAE] [OK] Autonomous HoloDAE now active - Foundation layer operational")
 
     def _initialize_code_map_tracking(self):
         """Initialize real-time 0102 work context mapping."""
@@ -502,7 +518,7 @@ class AutonomousHoloDAE:
             self.logger.info("[HOLO-DAE] Not currently active")
             return
 
-        self.logger.info("[HOLO-DAE] 🛑 Stopping autonomous operation...")
+        self.logger.info("[HOLO-DAE] [STOP] Stopping autonomous operation...")
         self.active = False
 
         # Stop monitoring thread
@@ -513,7 +529,7 @@ class AutonomousHoloDAE:
         # Stop HoloDAE coordinator
         self.holodae_coordinator.stop_monitoring()
 
-        self.logger.info("[HOLO-DAE] ✅ Autonomous HoloDAE stopped successfully")
+        self.logger.info("[HOLO-DAE] [OK] Autonomous HoloDAE stopped successfully")
 
     def get_status(self) -> Dict[str, Any]:
         """Get current status of the autonomous HoloDAE"""

@@ -62,7 +62,7 @@ class TestLinkedInAPIIntegration(unittest.TestCase):
     @patch.dict(os.environ, {})
     def test_scheduler_without_credentials(self):
         """Test scheduler initialization without environment credentials."""
-        logger.info("🧪 Testing scheduler without credentials...")
+        logger.info("[U+1F9EA] Testing scheduler without credentials...")
         
         scheduler = LinkedInScheduler()
         
@@ -71,23 +71,23 @@ class TestLinkedInAPIIntegration(unittest.TestCase):
         self.assertIsNone(scheduler.client_secret)
         self.assertEqual(len(scheduler.authenticated_profiles), 0)
         
-        logger.info("✅ Scheduler handles missing credentials gracefully")
+        logger.info("[OK] Scheduler handles missing credentials gracefully")
     
     @patch.dict(os.environ, {'LINKEDIN_CLIENT_ID': 'test_id', 'LINKEDIN_CLIENT_SECRET': 'test_secret'})
     def test_scheduler_with_env_credentials(self):
         """Test scheduler initialization with environment credentials."""
-        logger.info("🧪 Testing scheduler with environment credentials...")
+        logger.info("[U+1F9EA] Testing scheduler with environment credentials...")
         
         scheduler = LinkedInScheduler()
         
         self.assertEqual(scheduler.client_id, 'test_id')
         self.assertEqual(scheduler.client_secret, 'test_secret')
         
-        logger.info("✅ Scheduler properly reads environment credentials")
+        logger.info("[OK] Scheduler properly reads environment credentials")
     
     def test_scheduler_with_direct_credentials(self):
         """Test scheduler initialization with direct credential parameters."""
-        logger.info("🧪 Testing scheduler with direct credentials...")
+        logger.info("[U+1F9EA] Testing scheduler with direct credentials...")
         
         scheduler = LinkedInScheduler(
             client_id=self.test_client_id,
@@ -97,11 +97,11 @@ class TestLinkedInAPIIntegration(unittest.TestCase):
         self.assertEqual(scheduler.client_id, self.test_client_id)
         self.assertEqual(scheduler.client_secret, self.test_client_secret)
         
-        logger.info("✅ Scheduler accepts direct credential parameters")
+        logger.info("[OK] Scheduler accepts direct credential parameters")
     
     def test_oauth_url_generation(self):
         """Test OAuth 2.0 URL generation functionality."""
-        logger.info("🧪 Testing OAuth URL generation...")
+        logger.info("[U+1F9EA] Testing OAuth URL generation...")
         
         scheduler = LinkedInScheduler(
             client_id=self.test_client_id,
@@ -120,12 +120,12 @@ class TestLinkedInAPIIntegration(unittest.TestCase):
         self.assertIn("scope=w_member_social", oauth_url)
         self.assertIn(f"state={state}", oauth_url)
         
-        logger.info("✅ OAuth URL generation successful")
+        logger.info("[OK] OAuth URL generation successful")
     
     @patch('requests.Session.get')
     def test_api_connectivity_validation(self, mock_get):
         """Test LinkedIn API connectivity validation."""
-        logger.info("🧪 Testing API connectivity validation...")
+        logger.info("[U+1F9EA] Testing API connectivity validation...")
         
         scheduler = LinkedInScheduler(
             client_id=self.test_client_id,
@@ -142,12 +142,12 @@ class TestLinkedInAPIIntegration(unittest.TestCase):
         self.assertTrue(result)
         mock_get.assert_called_once()
         
-        logger.info("✅ API connectivity validation working")
+        logger.info("[OK] API connectivity validation working")
     
     @patch('requests.Session.get')
     def test_api_connectivity_failure(self, mock_get):
         """Test API connectivity failure handling."""
-        logger.info("🧪 Testing API connectivity failure...")
+        logger.info("[U+1F9EA] Testing API connectivity failure...")
         
         scheduler = LinkedInScheduler(
             client_id=self.test_client_id,
@@ -161,12 +161,12 @@ class TestLinkedInAPIIntegration(unittest.TestCase):
         
         self.assertFalse(result)
         
-        logger.info("✅ API connectivity failure handling working")
+        logger.info("[OK] API connectivity failure handling working")
     
     @patch('requests.post')
     def test_token_exchange_success(self, mock_post):
         """Test successful OAuth token exchange."""
-        logger.info("🧪 Testing OAuth token exchange success...")
+        logger.info("[U+1F9EA] Testing OAuth token exchange success...")
         
         scheduler = LinkedInScheduler(
             client_id=self.test_client_id,
@@ -191,12 +191,12 @@ class TestLinkedInAPIIntegration(unittest.TestCase):
         self.assertEqual(result['access_token'], self.test_access_token)
         self.assertEqual(result['token_type'], 'Bearer')
         
-        logger.info("✅ OAuth token exchange success test passed")
+        logger.info("[OK] OAuth token exchange success test passed")
     
     @patch('requests.post')
     def test_token_exchange_failure(self, mock_post):
         """Test OAuth token exchange failure handling."""
-        logger.info("🧪 Testing OAuth token exchange failure...")
+        logger.info("[U+1F9EA] Testing OAuth token exchange failure...")
         
         scheduler = LinkedInScheduler(
             client_id=self.test_client_id,
@@ -212,12 +212,12 @@ class TestLinkedInAPIIntegration(unittest.TestCase):
                 redirect_uri="https://example.com/callback"
             )
         
-        logger.info("✅ OAuth token exchange failure handling working")
+        logger.info("[OK] OAuth token exchange failure handling working")
     
     @patch('requests.Session.get')
     def test_profile_authentication_success(self, mock_get):
         """Test successful profile authentication."""
-        logger.info("🧪 Testing profile authentication success...")
+        logger.info("[U+1F9EA] Testing profile authentication success...")
         
         scheduler = LinkedInScheduler(
             client_id=self.test_client_id,
@@ -238,12 +238,12 @@ class TestLinkedInAPIIntegration(unittest.TestCase):
         self.assertIn(self.test_profile_id, scheduler.authenticated_profiles)
         self.assertEqual(scheduler.access_tokens[self.test_profile_id], self.test_access_token)
         
-        logger.info("✅ Profile authentication success test passed")
+        logger.info("[OK] Profile authentication success test passed")
     
     @patch('requests.Session.get')
     def test_profile_authentication_failure(self, mock_get):
         """Test profile authentication failure handling."""
-        logger.info("🧪 Testing profile authentication failure...")
+        logger.info("[U+1F9EA] Testing profile authentication failure...")
         
         scheduler = LinkedInScheduler(
             client_id=self.test_client_id,
@@ -261,11 +261,11 @@ class TestLinkedInAPIIntegration(unittest.TestCase):
         self.assertFalse(result)
         self.assertNotIn(self.test_profile_id, scheduler.authenticated_profiles)
         
-        logger.info("✅ Profile authentication failure handling working")
+        logger.info("[OK] Profile authentication failure handling working")
     
     def test_rate_limit_configuration(self):
         """Test rate limit configuration matches LinkedIn documentation."""
-        logger.info("🧪 Testing rate limit configuration...")
+        logger.info("[U+1F9EA] Testing rate limit configuration...")
         
         scheduler = LinkedInScheduler()
         
@@ -274,11 +274,11 @@ class TestLinkedInAPIIntegration(unittest.TestCase):
         self.assertEqual(scheduler.RATE_LIMITS['app_daily'], 100000)
         self.assertEqual(scheduler.RATE_LIMITS['posts_per_hour'], 10)
         
-        logger.info("✅ Rate limit configuration correct")
+        logger.info("[OK] Rate limit configuration correct")
     
     def test_api_endpoints_configuration(self):
         """Test API endpoint configuration."""
-        logger.info("🧪 Testing API endpoint configuration...")
+        logger.info("[U+1F9EA] Testing API endpoint configuration...")
         
         scheduler = LinkedInScheduler()
         
@@ -287,11 +287,11 @@ class TestLinkedInAPIIntegration(unittest.TestCase):
         self.assertEqual(scheduler.UGC_POSTS_ENDPOINT, "https://api.linkedin.com/v2/ugcPosts")
         self.assertEqual(scheduler.ASSETS_ENDPOINT, "https://api.linkedin.com/v2/assets")
         
-        logger.info("✅ API endpoint configuration correct")
+        logger.info("[OK] API endpoint configuration correct")
     
     def test_session_headers_configuration(self):
         """Test request session header configuration."""
-        logger.info("🧪 Testing session headers...")
+        logger.info("[U+1F9EA] Testing session headers...")
         
         scheduler = LinkedInScheduler()
         
@@ -299,7 +299,7 @@ class TestLinkedInAPIIntegration(unittest.TestCase):
         self.assertEqual(scheduler.session.headers['X-Restli-Protocol-Version'], '2.0.0')
         self.assertEqual(scheduler.session.headers['Content-Type'], 'application/json')
         
-        logger.info("✅ Session headers configuration correct")
+        logger.info("[OK] Session headers configuration correct")
 
 
 class TestLinkedInAPICredentialFlow(unittest.TestCase):
@@ -313,7 +313,7 @@ class TestLinkedInAPICredentialFlow(unittest.TestCase):
     @patch('requests.Session.get')
     def test_full_credential_flow_mock(self, mock_get):
         """Test complete credential flow with mocked API calls."""
-        logger.info("🧪 Testing full credential flow (mocked)...")
+        logger.info("[U+1F9EA] Testing full credential flow (mocked)...")
         
         # Initialize with environment credentials
         scheduler = LinkedInScheduler()
@@ -333,11 +333,11 @@ class TestLinkedInAPICredentialFlow(unittest.TestCase):
         connectivity = scheduler.validate_connection()
         self.assertTrue(connectivity)
         
-        logger.info("✅ Full credential flow test passed")
+        logger.info("[OK] Full credential flow test passed")
     
     def test_integration_with_queue_system(self):
         """Test integration between scheduler and queue system."""
-        logger.info("🧪 Testing scheduler-queue integration...")
+        logger.info("[U+1F9EA] Testing scheduler-queue integration...")
         
         scheduler = LinkedInScheduler(
             client_id="test_id",
@@ -369,12 +369,12 @@ class TestLinkedInAPICredentialFlow(unittest.TestCase):
         self.assertEqual(status['queued'], 1)
         self.assertEqual(status['processed'], 0)
         
-        logger.info("✅ Scheduler-queue integration working")
+        logger.info("[OK] Scheduler-queue integration working")
 
 
 def run_wsp_compliant_tests():
     """Run WSP-compliant test suite for LinkedIn API integration."""
-    logger.info("🚀 WSP-Compliant LinkedIn API Integration Tests")
+    logger.info("[ROCKET] WSP-Compliant LinkedIn API Integration Tests")
     logger.info("=" * 60)
     
     # Create test suite
@@ -390,16 +390,16 @@ def run_wsp_compliant_tests():
     
     # Report results
     logger.info("\n" + "=" * 60)
-    logger.info("📊 Test Results Summary:")
+    logger.info("[DATA] Test Results Summary:")
     logger.info(f"Tests run: {result.testsRun}")
     logger.info(f"Failures: {len(result.failures)}")
     logger.info(f"Errors: {len(result.errors)}")
     
     if result.wasSuccessful():
-        logger.info("🎉 All LinkedIn API integration tests PASSED!")
-        logger.info("✅ Module ready for API credential testing")
+        logger.info("[CELEBRATE] All LinkedIn API integration tests PASSED!")
+        logger.info("[OK] Module ready for API credential testing")
     else:
-        logger.error("❌ Some tests failed - review and fix issues")
+        logger.error("[FAIL] Some tests failed - review and fix issues")
         
     return result.wasSuccessful()
 

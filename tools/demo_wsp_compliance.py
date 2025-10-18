@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WSP Compliance Engine Demonstration
 
 This script demonstrates the advanced WSP compliance checking capabilities
@@ -28,7 +43,7 @@ try:
     from mps_calculator import MPSCalculator
     from modlog_integration import ModLogIntegration
 except ImportError as e:
-    print(f"❌ Import error: {e}")
+    print(f"[FAIL] Import error: {e}")
     print("Please ensure you're running from the project root directory")
     sys.exit(1)
 
@@ -36,7 +51,7 @@ except ImportError as e:
 def demo_header(title: str):
     """Print a formatted demo section header"""
     print(f"\n{'='*60}")
-    print(f"🎯 {title}")
+    print(f"[TARGET] {title}")
     print('='*60)
 
 
@@ -51,10 +66,10 @@ def demo_mps_integration():
     
     for module in test_modules:
         context = engine.get_task_mps_context(module)
-        print(f"📊 Module: {module}")
+        print(f"[DATA] Module: {module}")
         print(f"   MPS Score: {context['mps_score']}")
         print(f"   Priority: {context['classification']}")
-        print(f"   Exists: {'✅' if context['exists'] else '❌'}")
+        print(f"   Exists: {'[OK]' if context['exists'] else '[FAIL]'}")
         print()
 
 
@@ -63,17 +78,17 @@ def demo_commit_validation():
     demo_header("Commit Message Validation (WSP 7 & WSP 10)")
     
     test_commits = [
-        "feat(tools): ✨ implement WSP compliance engine",
+        "feat(tools): [U+2728] implement WSP compliance engine",
         "fix: resolve quota rotation issues",
         "docs(wsp): update tool review documentation", 
         "Invalid commit message format",
         "feat: add new feature without emoji",
-        "breaking(api): 💥 complete interface redesign"
+        "breaking(api): [U+1F4A5] complete interface redesign"
     ]
     
     for commit_msg in test_commits:
         result = check_commit_message(commit_msg)
-        status = "✅ VALID" if result['is_valid'] else "❌ INVALID"
+        status = "[OK] VALID" if result['is_valid'] else "[FAIL] INVALID"
         print(f"{status} {commit_msg}")
         
         if result['detected_type']:
@@ -81,7 +96,7 @@ def demo_commit_validation():
         if result['detected_scope']:
             print(f"   Scope: {result['detected_scope']}")
         if result['has_emoji']:
-            print(f"   Emoji: ✅")
+            print(f"   Emoji: [OK]")
         if result['errors']:
             print(f"   Errors: {', '.join(result['errors'])}")
         if result['suggestions']:
@@ -105,7 +120,7 @@ def demo_file_path_validation():
     
     for path, is_test in test_paths:
         result = engine.validate_module_file_path(path, is_test)
-        status = "✅ VALID" if result['is_valid'] else "❌ INVALID"
+        status = "[OK] VALID" if result['is_valid'] else "[FAIL] INVALID"
         file_type = "TEST" if is_test else "SOURCE"
         
         print(f"{status} [{file_type}] {path}")
@@ -129,7 +144,7 @@ def demo_test_strategy():
     ]
     
     for module_path, functionality in test_scenarios:
-        print(f"🧪 Module: {module_path}")
+        print(f"[U+1F9EA] Module: {module_path}")
         print(f"   Functionality: {functionality}")
         
         try:
@@ -137,9 +152,9 @@ def demo_test_strategy():
             print(f"   Recommended Action: {strategy.action}")
             print(f"   Target File: {strategy.target_file}")
             print(f"   Rationale: {strategy.rationale}")
-            print(f"   README Update Needed: {'✅' if strategy.readme_needs_update else '❌'}")
+            print(f"   README Update Needed: {'[OK]' if strategy.readme_needs_update else '[FAIL]'}")
         except Exception as e:
-            print(f"   Status: ⚠️ Module structure analysis failed ({str(e)[:50]}...)")
+            print(f"   Status: [U+26A0]️ Module structure analysis failed ({str(e)[:50]}...)")
         print()
 
 
@@ -163,11 +178,11 @@ def demo_modlog_assessment():
             change_type, scope, is_release, is_clean_state
         )
         
-        status = "✅ REQUIRED" if needs_update else "❌ NOT REQUIRED"
+        status = "[OK] REQUIRED" if needs_update else "[FAIL] NOT REQUIRED"
         print(f"{status} {change_type}")
         print(f"   Scope: {scope}")
-        print(f"   Release: {'✅' if is_release else '❌'}")
-        print(f"   Clean State: {'✅' if is_clean_state else '❌'}")
+        print(f"   Release: {'[OK]' if is_release else '[FAIL]'}")
+        print(f"   Clean State: {'[OK]' if is_clean_state else '[FAIL]'}")
         print()
 
 
@@ -196,11 +211,11 @@ def demo_prompt_validation():
     ]
     
     for i, prompt in enumerate(test_prompts, 1):
-        print(f"📋 Test Prompt {i}:")
+        print(f"[CLIPBOARD] Test Prompt {i}:")
         print(f"   Task: {prompt.task[:50]}...")
         
         result = engine.check_prompt_constraints(prompt)
-        status = "✅ VALID" if result['is_valid'] else "❌ INVALID"
+        status = "[OK] VALID" if result['is_valid'] else "[FAIL] INVALID"
         
         print(f"   Status: {status}")
         if result['violations']:
@@ -233,14 +248,14 @@ def demo_comprehensive_report():
     
     compliance_report = check_wsp_compliance(task_context)
     
-    print(f"📊 Overall Status: {compliance_report['overall_status']}")
-    print(f"🎯 Task Context Keys: {list(task_context.keys())}")
-    print(f"🔍 Compliance Checks: {list(compliance_report['compliance_checks'].keys())}")
+    print(f"[DATA] Overall Status: {compliance_report['overall_status']}")
+    print(f"[TARGET] Task Context Keys: {list(task_context.keys())}")
+    print(f"[SEARCH] Compliance Checks: {list(compliance_report['compliance_checks'].keys())}")
     
     # Show detailed results
     for check_name, check_result in compliance_report['compliance_checks'].items():
         if isinstance(check_result, dict) and 'is_valid' in check_result:
-            status = "✅ PASS" if check_result['is_valid'] else "❌ FAIL"
+            status = "[OK] PASS" if check_result['is_valid'] else "[FAIL] FAIL"
             print(f"   {check_name}: {status}")
         elif hasattr(check_result, 'action'):
             print(f"   {check_name}: Action = {check_result.action}")
@@ -249,7 +264,7 @@ def demo_comprehensive_report():
 
 def main():
     """Run all WSP Compliance Engine demonstrations"""
-    print("🚀 WSP Compliance Engine Demonstration")
+    print("[ROCKET] WSP Compliance Engine Demonstration")
     print("======================================")
     print("This demo showcases the advanced automation capabilities")
     print("that enable Agent 0102 to autonomously enforce WSP rules.")
@@ -264,12 +279,12 @@ def main():
         demo_comprehensive_report()
         
         print("\n" + "="*60)
-        print("🎉 All WSP Compliance Engine features demonstrated successfully!")
-        print("🤖 Agent 0102 is ready for autonomous WSP-compliant operation.")
+        print("[CELEBRATE] All WSP Compliance Engine features demonstrated successfully!")
+        print("[BOT] Agent 0102 is ready for autonomous WSP-compliant operation.")
         print("="*60)
         
     except Exception as e:
-        print(f"\n❌ Demo error: {e}")
+        print(f"\n[FAIL] Demo error: {e}")
         import traceback
         traceback.print_exc()
 

@@ -1,4 +1,20 @@
+# -*- coding: utf-8 -*-
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WRE SDK - Enhanced Claude Code SDK Implementation
 Fully autonomous terminal SDK with WSP compliance
 
@@ -155,7 +171,7 @@ class WRESDK:
     
     def envelope(self, source_dae: str, target_dae: str, objective: str) -> Dict:
         """
-        DAE↔DAE communication via WSP 21 envelopes
+        DAE[U+2194]DAE communication via WSP 21 envelopes
         WSP 21: Enhanced prompting protocol
         """
         # Run pre-action hook
@@ -201,10 +217,10 @@ class WRESDK:
                 violations.append("WSP 72: Block independence violated")
         
         if violations:
-            print(f"❌ Validation failed: {violations}")
+            print(f"[FAIL] Validation failed: {violations}")
             return False
         
-        print("✅ WSP validation passed")
+        print("[OK] WSP validation passed")
         return True
     
     def improve(self, error: Exception, context: Dict = None) -> Dict:
@@ -317,7 +333,7 @@ class WRESDK:
     
     def cli(self):
         """Interactive CLI mode - like Claude Code"""
-        print("\n🚀 WRE SDK - Enhanced Claude Code Terminal")
+        print("\n[ROCKET] WRE SDK - Enhanced Claude Code Terminal")
         print("Commands: spawn, recall, validate, improve, todo, envelope, exit")
         
         while True:

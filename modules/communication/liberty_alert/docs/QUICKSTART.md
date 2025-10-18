@@ -163,17 +163,17 @@ ThreatType.ALL_CLEAR            # Safe zone notification
 ### Module Structure (WSP 49 Compliant)
 ```
 modules/communication/evade_net/
-├── src/                    # Core implementation
-│   ├── models.py          # Data models
-│   ├── mesh_network.py    # WebRTC mesh
-│   ├── alert_broadcaster.py # Alert system
-│   └── evade_net_orchestrator.py # Main orchestrator
-├── tests/                  # Test suite
-├── memory/                 # WSP 60 memory architecture
-├── pwa/                   # Progressive Web App (future)
-├── README.md              # Full documentation
-├── INTERFACE.md           # API specification
-└── requirements.txt       # Dependencies
++-- src/                    # Core implementation
+[U+2502]   +-- models.py          # Data models
+[U+2502]   +-- mesh_network.py    # WebRTC mesh
+[U+2502]   +-- alert_broadcaster.py # Alert system
+[U+2502]   +-- evade_net_orchestrator.py # Main orchestrator
++-- tests/                  # Test suite
++-- memory/                 # WSP 60 memory architecture
++-- pwa/                   # Progressive Web App (future)
++-- README.md              # Full documentation
++-- INTERFACE.md           # API specification
++-- requirements.txt       # Dependencies
 ```
 
 ### Technology Stack
@@ -200,7 +200,7 @@ modules/communication/evade_net/
 
 ## Roadmap
 
-### Sprint 1: POC (Current) ✅
+### Sprint 1: POC (Current) [OK]
 - [x] WSP-compliant module structure
 - [x] WebRTC mesh networking
 - [x] Alert broadcasting system

@@ -10,7 +10,7 @@ The Community tab at https://studio.youtube.com/channel/UC-LSSlOZwpGIRIYihaz8zCw
 
 ## What IS Supported
 
-### Video Comments ✅
+### Video Comments [OK]
 - **Read comments**: `commentThreads.list`
 - **Post replies**: `comments.insert`
 - **Delete comments**: `comments.delete`

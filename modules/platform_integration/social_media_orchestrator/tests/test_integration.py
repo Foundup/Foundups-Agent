@@ -32,16 +32,16 @@ def test_refactored_orchestrator():
 
     # Get orchestrator instance
     orchestrator = get_orchestrator()
-    print("\n✅ Orchestrator initialized successfully")
+    print("\n[OK] Orchestrator initialized successfully")
 
     # Validate configuration
-    print("\n🔍 Validating configuration...")
+    print("\n[SEARCH] Validating configuration...")
     validation = orchestrator.validate_configuration()
     print(f"   Configuration valid: {validation['valid']}")
     print(f"   Enabled channels: {validation['components']['channels']['count']}")
 
     # Test duplicate checking
-    print("\n🔍 Testing duplicate prevention...")
+    print("\n[SEARCH] Testing duplicate prevention...")
     test_video_id = "TEST_REFACTOR_123"
 
     # First check - should not be posted
@@ -73,7 +73,7 @@ def test_refactored_orchestrator():
     assert result['already_posted'], "Test video should be marked as posted after marking"
 
     # Test channel configuration
-    print("\n🔍 Testing channel configuration...")
+    print("\n[SEARCH] Testing channel configuration...")
     channels = orchestrator.channel_config.get_enabled_channels()
     print(f"   Enabled channels: {channels}")
 
@@ -82,26 +82,26 @@ def test_refactored_orchestrator():
         print(f"   {channel}: LinkedIn={config.get('linkedin_page')}, X={config.get('x_account')}")
 
     # Test live status verifier
-    print("\n🔍 Testing live status verifier...")
+    print("\n[SEARCH] Testing live status verifier...")
     orchestrator.status_verifier.clear_cache()
     print("   Cache cleared successfully")
 
     # Test posting service configuration
-    print("\n🔍 Testing platform posting service...")
+    print("\n[SEARCH] Testing platform posting service...")
     posting_validation = orchestrator.posting_service.validate_configuration()
     print(f"   Posting service valid: {posting_validation['valid']}")
     if posting_validation.get('errors'):
         for error in posting_validation['errors']:
-            print(f"   ⚠️ {error}")
+            print(f"   [U+26A0]️ {error}")
 
     # Get posting statistics
-    print("\n📊 Posting statistics:")
+    print("\n[DATA] Posting statistics:")
     stats = orchestrator.get_posting_stats()
     print(f"   Total videos in history: {stats.get('total_videos', 0)}")
     print(f"   LinkedIn posts: {stats.get('linkedin_count', 0)}")
     print(f"   X/Twitter posts: {stats.get('x_twitter_count', 0)}")
 
-    print("\n✅ All integration tests passed!")
+    print("\n[OK] All integration tests passed!")
     return True
 
 
@@ -113,21 +113,21 @@ def test_migration_bridge():
 
     # Get migration bridge
     bridge = get_migration_bridge()
-    print("\n✅ Migration bridge initialized")
+    print("\n[OK] Migration bridge initialized")
 
     # Test backward compatible check
     test_video = "MIGRATION_TEST_456"
     result = bridge.check_if_already_posted(test_video)
-    print(f"\n🔍 Checking video {test_video}:")
+    print(f"\n[SEARCH] Checking video {test_video}:")
     print(f"   Already posted: {result['already_posted']}")
     print(f"   Platforms: {result.get('platforms_posted', [])}")
 
     # Test stats through bridge
     stats = bridge.get_posting_stats()
-    print(f"\n📊 Stats through bridge:")
+    print(f"\n[DATA] Stats through bridge:")
     print(f"   Total videos: {stats.get('total_videos', 0)}")
 
-    print("\n✅ Migration bridge tests passed!")
+    print("\n[OK] Migration bridge tests passed!")
     return True
 
 
@@ -147,7 +147,7 @@ def test_sample_stream_flow():
         'channel_name': '@FoundUps'
     }
 
-    print(f"\n📹 Processing sample stream:")
+    print(f"\n[U+1F4F9] Processing sample stream:")
     print(f"   Video: {sample_stream['video_id']}")
     print(f"   Title: {sample_stream['title']}")
     print(f"   Channel: {sample_stream['channel_name']}")
@@ -156,30 +156,30 @@ def test_sample_stream_flow():
     duplicate_check = orchestrator.duplicate_manager.check_if_already_posted(
         sample_stream['video_id']
     )
-    print(f"\n🔍 Duplicate check:")
+    print(f"\n[SEARCH] Duplicate check:")
     print(f"   Already posted: {duplicate_check['already_posted']}")
 
     if not duplicate_check['already_posted']:
-        print("\n✅ Not a duplicate - would proceed with posting")
+        print("\n[OK] Not a duplicate - would proceed with posting")
         print("   (Skipping actual posting in test mode)")
     else:
-        print("\n⚠️ Already posted to: {duplicate_check['platforms_posted']}")
+        print("\n[U+26A0]️ Already posted to: {duplicate_check['platforms_posted']}")
 
     # Test the handle_stream_detected method (non-blocking)
-    print("\n🚀 Testing handle_stream_detected (non-blocking)...")
+    print("\n[ROCKET] Testing handle_stream_detected (non-blocking)...")
     result = orchestrator.handle_stream_detected(**sample_stream)
     print(f"   Request processed: video_id={result['video_id']}")
     print(f"   Errors: {result.get('errors', 'None')}")
 
-    print("\n✅ Stream flow test completed!")
+    print("\n[OK] Stream flow test completed!")
     return True
 
 
 def main():
     """Run all integration tests"""
-    print("\n" + "🚀 "*20)
+    print("\n" + "[ROCKET] "*20)
     print("REFACTORED SOCIAL MEDIA ORCHESTRATOR - INTEGRATION TESTS")
-    print("🚀 "*20)
+    print("[ROCKET] "*20)
 
     try:
         # Run tests
@@ -188,17 +188,17 @@ def main():
         test_sample_stream_flow()
 
         print("\n" + "="*80)
-        print("✅ ALL INTEGRATION TESTS PASSED SUCCESSFULLY!")
+        print("[OK] ALL INTEGRATION TESTS PASSED SUCCESSFULLY!")
         print("="*80)
-        print("\n📝 Summary:")
-        print("   - Refactored orchestrator: ✅ Working")
-        print("   - Core modules: ✅ Integrated")
-        print("   - Migration bridge: ✅ Compatible")
-        print("   - Stream flow: ✅ Functional")
-        print("\n🎉 The refactored modules are ready for production use!")
+        print("\n[NOTE] Summary:")
+        print("   - Refactored orchestrator: [OK] Working")
+        print("   - Core modules: [OK] Integrated")
+        print("   - Migration bridge: [OK] Compatible")
+        print("   - Stream flow: [OK] Functional")
+        print("\n[CELEBRATE] The refactored modules are ready for production use!")
 
     except Exception as e:
-        print(f"\n❌ Integration test failed: {str(e)}")
+        print(f"\n[FAIL] Integration test failed: {str(e)}")
         import traceback
         traceback.print_exc()
         return False

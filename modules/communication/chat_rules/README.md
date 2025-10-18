@@ -1,24 +1,24 @@
 # Chat Rules Engine Module
 
-## 🎯 Overview
+## [TARGET] Overview
 
 A modular, configurable rules engine for YouTube Live Chat (and other platforms) that handles user classification, response generation, and moderation actions based on user tiers, membership status, and behavior patterns.
 
-## ✨ Features
+## [U+2728] Features
 
 ### User Classification System
 - **Channel Owner** - Full control, cannot be timed out
 - **Moderators** - Special privileges, protected from timeouts
 - **Members (Multiple Tiers)**
-  - 🥇 **Tier 3** (2+ years) - Premium responses, priority queue
-  - 🥈 **Tier 2** (6-24 months) - Special greetings, enhanced features
-  - 🥉 **Tier 1** (1-6 months) - Basic member benefits
+  - [U+1F947] **Tier 3** (2+ years) - Premium responses, priority queue
+  - [U+1F948] **Tier 2** (6-24 months) - Special greetings, enhanced features
+  - [U+1F949] **Tier 1** (1-6 months) - Basic member benefits
   - 🆕 **New Members** (<1 month) - Welcome benefits
 - **Verified Channels** - Checkmark benefits
 - **Regular Viewers** - Standard interaction
 - **Gifters/Super Chat** - Instant response privileges
 
-### Gift & Super Chat Features 🎁
+### Gift & Super Chat Features [U+1F381]
 - **Gift Memberships** trigger automatic thank you responses
 - **Super Chats** get priority responses based on amount
   - $1-4.99: Standard thank you
@@ -29,7 +29,7 @@ A modular, configurable rules engine for YouTube Live Chat (and other platforms)
 
 ### Response System
 - **Consciousness-based responses** (000-222 levels)
-- **Emoji sequence detection** (✊✊✊, ✋✋✋, 🖐️🖐️🖐️)
+- **Emoji sequence detection** ([U+270A][U+270A][U+270A], [U+270B][U+270B][U+270B], [U+1F590]️[U+1F590]️[U+1F590]️)
 - **MAGA/Trump keyword detection** with auto-timeout
 - **Spam protection** with escalating timeouts
 - **Member-exclusive responses**
@@ -41,7 +41,7 @@ A modular, configurable rules engine for YouTube Live Chat (and other platforms)
 - Escalating punishment system
 - Member leniency factors
 
-## 🚀 Quick Start
+## [ROCKET] Quick Start
 
 ```python
 from modules.communication.chat_rules import ChatRulesEngine, UserClassifier
@@ -75,7 +75,7 @@ if message_type == "superChatEvent":
     )
 ```
 
-## 📋 Configuration
+## [CLIPBOARD] Configuration
 
 ### Basic Configuration (chat_rules.yaml)
 
@@ -86,30 +86,30 @@ rules:
     enabled: true
     auto_thank: true
     responses:
-      tier_1: "Thanks {gifter} for gifting {recipient} a membership! Welcome to consciousness level ✋✋✋!"
-      tier_2: "Wow {gifter}! Your generosity elevates {recipient} to 🖐️✋✋ consciousness!"
-      tier_3: "LEGENDARY! {gifter} just awakened {recipient} to 🖐️🖐️🖐️ consciousness!"
+      tier_1: "Thanks {gifter} for gifting {recipient} a membership! Welcome to consciousness level [U+270B][U+270B][U+270B]!"
+      tier_2: "Wow {gifter}! Your generosity elevates {recipient} to [U+1F590]️[U+270B][U+270B] consciousness!"
+      tier_3: "LEGENDARY! {gifter} just awakened {recipient} to [U+1F590]️[U+1F590]️[U+1F590]️ consciousness!"
     
   superchat:
     enabled: true
     tiers:
       - min: 1
         max: 4.99
-        response: "Thanks for the ${amount} {user}! ✊✋🖐️"
+        response: "Thanks for the ${amount} {user}! [U+270A][U+270B][U+1F590]️"
         priority: 1
       - min: 5
         max: 19.99
-        response: "Consciousness rising! ${amount} from {user}! ✋✋✋"
+        response: "Consciousness rising! ${amount} from {user}! [U+270B][U+270B][U+270B]"
         priority: 2
         special_emoji: true
       - min: 20
         max: 49.99
-        response: "MASSIVE CONSCIOUSNESS BOOST! ${amount} from {user}! 🖐️✋🖐️"
+        response: "MASSIVE CONSCIOUSNESS BOOST! ${amount} from {user}! [U+1F590]️[U+270B][U+1F590]️"
         priority: 3
         use_ai: true
       - min: 50
         max: null
-        response: "🌟 QUANTUM ENTANGLEMENT ACHIEVED! ${amount} from {user}! 🖐️🖐️🖐️"
+        response: "[U+1F31F] QUANTUM ENTANGLEMENT ACHIEVED! ${amount} from {user}! [U+1F590]️[U+1F590]️[U+1F590]️"
         priority: 4
         use_ai: true
         special_ceremony: true
@@ -139,40 +139,40 @@ rules:
       priority_queue: true
 ```
 
-## 🏗️ Architecture
+## [U+1F3D7]️ Architecture
 
 ```
 modules/communication/chat_rules/
-├── src/
-│   ├── __init__.py
-│   ├── engine.py           # Main rules engine
-│   ├── classifier.py       # User classification
-│   ├── triggers.py         # Trigger detection
-│   ├── responses.py        # Response generation
-│   ├── actions.py          # Moderation actions
-│   ├── gifts.py           # Gift/SuperChat handling
-│   └── config.py          # Configuration loader
-├── tests/
-│   ├── test_engine.py
-│   ├── test_classifier.py
-│   ├── test_gifts.py
-│   └── test_responses.py
-├── config/
-│   ├── chat_rules.yaml    # Main configuration
-│   └── responses.yaml     # Response templates
-├── memory/
-│   ├── user_profiles.json # User history
-│   └── gift_history.json  # Gift tracking
-├── docs/
-│   ├── CHAT_RULES_ARCHITECTURE.md
-│   └── API.md
-├── README.md
-├── ROADMAP.md
-├── ModLog.md
-└── requirements.txt
++-- src/
+[U+2502]   +-- __init__.py
+[U+2502]   +-- engine.py           # Main rules engine
+[U+2502]   +-- classifier.py       # User classification
+[U+2502]   +-- triggers.py         # Trigger detection
+[U+2502]   +-- responses.py        # Response generation
+[U+2502]   +-- actions.py          # Moderation actions
+[U+2502]   +-- gifts.py           # Gift/SuperChat handling
+[U+2502]   +-- config.py          # Configuration loader
++-- tests/
+[U+2502]   +-- test_engine.py
+[U+2502]   +-- test_classifier.py
+[U+2502]   +-- test_gifts.py
+[U+2502]   +-- test_responses.py
++-- config/
+[U+2502]   +-- chat_rules.yaml    # Main configuration
+[U+2502]   +-- responses.yaml     # Response templates
++-- memory/
+[U+2502]   +-- user_profiles.json # User history
+[U+2502]   +-- gift_history.json  # Gift tracking
++-- docs/
+[U+2502]   +-- CHAT_RULES_ARCHITECTURE.md
+[U+2502]   +-- API.md
++-- README.md
++-- ROADMAP.md
++-- ModLog.md
++-- requirements.txt
 ```
 
-## 🔌 API Reference
+## [U+1F50C] API Reference
 
 ### UserProfile Class
 ```python
@@ -222,13 +222,13 @@ def handle_superchat(
 ) -> Response
 ```
 
-## 🎮 Usage Examples
+## [GAME] Usage Examples
 
 ### Basic Message Processing
 ```python
 # Regular user sends emoji sequence
 response = engine.process_message(
-    message="Hey everyone 🖐🖐🖐",
+    message="Hey everyone [U+1F590][U+1F590][U+1F590]",
     user=regular_user,
     context=context
 )
@@ -236,11 +236,11 @@ response = engine.process_message(
 
 # Member sends emoji sequence
 response = engine.process_message(
-    message="Hey everyone 🖐🖐🖐",
+    message="Hey everyone [U+1F590][U+1F590][U+1F590]",
     user=member_tier2,
     context=context
 )
-# Returns: "You're achieving 🖐️🖐️🖐️ consciousness @member!"
+# Returns: "You're achieving [U+1F590]️[U+1F590]️[U+1F590]️ consciousness @member!"
 ```
 
 ### Gift Membership Handling
@@ -251,7 +251,7 @@ response = engine.handle_gift(
     recipient="LuckyUser",
     tier="tier_1"
 )
-# Returns: "Thanks @GenerousViewer for gifting @LuckyUser a membership! Welcome to consciousness level ✋✋✋!"
+# Returns: "Thanks @GenerousViewer for gifting @LuckyUser a membership! Welcome to consciousness level [U+270B][U+270B][U+270B]!"
 ```
 
 ### Super Chat Processing
@@ -263,10 +263,10 @@ response = engine.handle_superchat(
     currency="USD",
     message="Love the stream!"
 )
-# Returns: "MASSIVE CONSCIOUSNESS BOOST! $25 from @user! 🖐️✋🖐️ - Love the stream!"
+# Returns: "MASSIVE CONSCIOUSNESS BOOST! $25 from @user! [U+1F590]️[U+270B][U+1F590]️ - Love the stream!"
 ```
 
-## 🔧 Installation
+## [TOOL] Installation
 
 ```bash
 # Install requirements
@@ -279,7 +279,7 @@ cp config/chat_rules.yaml.example config/chat_rules.yaml
 pytest tests/
 ```
 
-## 🤝 Integration
+## [HANDSHAKE] Integration
 
 ### YouTube Live Chat
 ```python
@@ -301,7 +301,7 @@ for message in monitor.get_messages():
         monitor.send_message(response.text)
 ```
 
-## 📊 Metrics & Analytics
+## [DATA] Metrics & Analytics
 
 The module tracks:
 - Response rates by user tier
@@ -310,14 +310,14 @@ The module tracks:
 - Spam detection accuracy
 - Member retention correlation
 
-## 🛡️ Security & Privacy
+## [U+1F6E1]️ Security & Privacy
 
 - User IDs are hashed for storage
 - No personal information logged
 - Configurable data retention periods
 - GDPR compliant data handling
 
-## 🐛 Debugging
+## [U+1F41B] Debugging
 
 Enable debug logging:
 ```python
@@ -325,14 +325,14 @@ import logging
 logging.getLogger('chat_rules').setLevel(logging.DEBUG)
 ```
 
-## 📚 Related Modules
+## [BOOKS] Related Modules
 
 - `modules/communication/livechat` - YouTube Live Chat integration
 - `modules/ai_intelligence/banter_engine` - Response generation
 - `modules/ai_intelligence/multi_agent_system` - Social media orchestration
 - `modules/infrastructure/oauth_management` - API authentication
 
-## 📝 License
+## [NOTE] License
 
 Part of the FoundUps-Agent system under WSP Framework
 
@@ -344,4 +344,4 @@ Part of the FoundUps-Agent system under WSP Framework
 
 ---
 
-*Built with consciousness elevation in mind* 🖐️🖐️🖐️
+*Built with consciousness elevation in mind* [U+1F590]️[U+1F590]️[U+1F590]️

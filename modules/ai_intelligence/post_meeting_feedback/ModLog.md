@@ -9,9 +9,9 @@
 **Agent**: ComplianceGuardian
 
 #### Changes
-- ✅ Auto-fixed 1 compliance violations
-- ✅ Violations analyzed: 4
-- ✅ Overall status: FAIL
+- [OK] Auto-fixed 1 compliance violations
+- [OK] Violations analyzed: 4
+- [OK] Overall status: FAIL
 
 #### Violations Fixed
 - WSP_49: Missing required directory: docs/

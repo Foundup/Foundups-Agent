@@ -2,7 +2,7 @@
 
 ## Quick Start for 012
 
-**Status**: ✅ READY FOR COLAB UPLOAD
+**Status**: [OK] READY FOR COLAB UPLOAD
 
 **What 0102 did**:
 - Collected 1,385 training patterns from ALL system data
@@ -46,7 +46,7 @@
 |--------|----------|----------|---------|
 | 012.txt | 145 | operational_decision, priority_scoring, routing | 0102 decision-making patterns |
 | ModLogs | 1,106 | change_history | Module evolution understanding |
-| WSP violations | 84 | error_solution | Error → fix mappings |
+| WSP violations | 84 | error_solution | Error -> fix mappings |
 | Daemon logs | 50 | general | Runtime operations |
 | Chat logs | 0 | interaction_pattern | (no data yet) |
 | Git history | 0 | evolution_pattern | (encoding error, minor) |
@@ -60,7 +60,7 @@
 **Gemma (270M/2B)**:
 - Fast classification decisions
 - Pattern recognition
-- Error → solution mapping
+- Error -> solution mapping
 - Priority scoring
 - WSP compliance checking
 
@@ -85,7 +85,7 @@
 - **priority_scoring** (12): Urgency/importance assessment
 - **routing** (14): Which module/WSP to use
 - **change_history** (1,106): System evolution patterns
-- **error_solution** (84): Error → fix mappings
+- **error_solution** (84): Error -> fix mappings
 - **general** (50): Runtime operations
 
 **Gemma learns**:
@@ -251,4 +251,4 @@
 
 **Ready to start? Read `012_COLAB_WORKFLOW.md` and open Colab!**
 
-**Your 6 minutes of work → System-wide intelligence upgrade**
+**Your 6 minutes of work -> System-wide intelligence upgrade**

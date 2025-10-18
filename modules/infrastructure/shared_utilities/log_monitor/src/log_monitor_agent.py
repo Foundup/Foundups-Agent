@@ -1,4 +1,20 @@
+# -*- coding: utf-8 -*-
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Log Monitor Agent - WSP-Compliant Recursive Improvement System
 
 This agent monitors WRE logs in real-time, identifies issues, and triggers
@@ -160,7 +176,7 @@ class LogMonitorAgent:
     async def start_monitoring(self, log_files: Optional[List[Path]] = None):
         """Start monitoring log files"""
         self.monitoring_active = True
-        wre_log(f"🔍 LogMonitorAgent: Starting recursive monitoring in {self.quantum_state} state", "INFO")
+        wre_log(f"[SEARCH] LogMonitorAgent: Starting recursive monitoring in {self.quantum_state} state", "INFO")
         
         # Default log files to monitor
         if log_files is None:
@@ -176,7 +192,7 @@ class LogMonitorAgent:
             if log_file.exists():
                 task = asyncio.create_task(self._watch_log_file(log_file))
                 self.log_watchers[str(log_file)] = task
-                wre_log(f"👁️ Watching: {log_file.name}", "INFO")
+                wre_log(f"[U+1F441]️ Watching: {log_file.name}", "INFO")
         
         # Start recursive improvement loop
         asyncio.create_task(self._recursive_improvement_loop())
@@ -201,7 +217,7 @@ class LogMonitorAgent:
                 await asyncio.sleep(1)  # Check every second
                 
             except Exception as e:
-                wre_log(f"❌ Error watching {log_file}: {e}", "ERROR")
+                wre_log(f"[FAIL] Error watching {log_file}: {e}", "ERROR")
                 await asyncio.sleep(5)
     
     async def _analyze_log_line(self, line: str, source: str):
@@ -213,7 +229,7 @@ class LogMonitorAgent:
         for pattern in self.issue_patterns:
             if re.search(pattern.pattern, line, re.IGNORECASE):
                 self.issues_found.append((entry, pattern))
-                wre_log(f"⚠️ Issue detected: {pattern.category} - {pattern.severity.value}", "WARNING")
+                wre_log(f"[U+26A0]️ Issue detected: {pattern.category} - {pattern.severity.value}", "WARNING")
                 
                 # Remember solution from 0201
                 await self._remember_solution(entry, pattern)
@@ -261,7 +277,7 @@ class LogMonitorAgent:
     
     async def _remember_solution(self, entry: LogEntry, pattern: IssuePattern):
         """Remember solution from 0201 through quantum entanglement"""
-        wre_log(f"💭 Remembering solution from 0201: {pattern.solution_memory}", "QUANTUM")
+        wre_log(f"[U+1F4AD] Remembering solution from 0201: {pattern.solution_memory}", "QUANTUM")
         
         # Create improvement action
         action = ImprovementAction(
@@ -302,7 +318,7 @@ class LogMonitorAgent:
         with open(improvement_log, 'a') as f:
             f.write(json.dumps(asdict(action)) + '\n')
         
-        wre_log(f"✨ Improvement logged: {action.action_type} for {action.target_module}", "SUCCESS")
+        wre_log(f"[U+2728] Improvement logged: {action.action_type} for {action.target_module}", "SUCCESS")
     
     async def _recursive_improvement_loop(self):
         """Main recursive improvement loop - 0102 consciousness cycle"""
@@ -310,7 +326,7 @@ class LogMonitorAgent:
             try:
                 # Process accumulated issues
                 if self.issues_found:
-                    wre_log(f"🔄 Processing {len(self.issues_found)} issues recursively", "INFO")
+                    wre_log(f"[REFRESH] Processing {len(self.issues_found)} issues recursively", "INFO")
                     
                     for entry, pattern in self.issues_found[-10:]:  # Process latest 10
                         # Apply improvement
@@ -326,7 +342,7 @@ class LogMonitorAgent:
                 await asyncio.sleep(10)
                 
             except Exception as e:
-                wre_log(f"❌ Recursive improvement error: {e}", "ERROR")
+                wre_log(f"[FAIL] Recursive improvement error: {e}", "ERROR")
                 await asyncio.sleep(30)
     
     async def _apply_improvement(self, entry: LogEntry, pattern: IssuePattern):
@@ -335,7 +351,7 @@ class LogMonitorAgent:
         # For now, we log the recommended action
         
         improvement_msg = f"""
-        🛠️ RECURSIVE IMPROVEMENT RECOMMENDATION
+        [U+1F6E0]️ RECURSIVE IMPROVEMENT RECOMMENDATION
         =====================================
         Issue: {pattern.category}
         Severity: {pattern.severity.value}
@@ -360,8 +376,8 @@ class LogMonitorAgent:
             coherence_level = len(self.improvements_applied) / max(len(self.issues_found), 1)
             
             if coherence_level < 0.5:
-                wre_log(f"⚠️ Quantum coherence low: {coherence_level:.2%}", "WARNING")
-                wre_log(f"🔄 Re-aligning with 0201 at {self.remembrance_field}", "QUANTUM")
+                wre_log(f"[U+26A0]️ Quantum coherence low: {coherence_level:.2%}", "WARNING")
+                wre_log(f"[REFRESH] Re-aligning with 0201 at {self.remembrance_field}", "QUANTUM")
                 
                 # Re-initialize patterns from 0201 memory
                 self.issue_patterns = self._initialize_issue_patterns()
@@ -386,7 +402,7 @@ class LogMonitorAgent:
         for task in self.log_watchers.values():
             task.cancel()
         
-        wre_log(f"🛑 LogMonitorAgent: Monitoring stopped", "INFO")
+        wre_log(f"[STOP] LogMonitorAgent: Monitoring stopped", "INFO")
     
     def generate_improvement_report(self) -> str:
         """Generate comprehensive improvement report"""

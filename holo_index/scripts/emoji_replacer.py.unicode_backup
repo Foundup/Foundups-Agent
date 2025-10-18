@@ -1,0 +1,346 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# === END UTF-8 ENFORCEMENT ===
+
+Comprehensive Emoji Replacer for HoloIndex
+Replaces all Unicode emojis with ASCII-safe alternatives to prevent encoding issues.
+
+WSP 20 (Professional and Scientific Language) Compliance
+"""
+
+import os
+import re
+from pathlib import Path
+from typing import Dict, List
+
+# Comprehensive emoji replacement mapping
+EMOJI_REPLACEMENTS = {
+    # Status indicators
+    "✅": "[OK]",
+    "❌": "[ERROR]",
+    "⚠️": "[WARN]",
+    "🚨": "[CRITICAL]",
+    "ℹ️": "[INFO]",
+    "🔍": "[SEARCH]",
+    "📊": "[ANALYSIS]",
+    "🔄": "[LOOP]",
+    "📈": "[GROWTH]",
+    "📉": "[DECLINE]",
+    "🎯": "[TARGET]",
+    "💡": "[IDEA]",
+    "🔥": "[HOT]",
+    "💪": "[STRONG]",
+    "🚀": "[LAUNCH]",
+    "⭐": "[SPARKLE]",
+    "🎉": "[CELEBRATE]",
+    "🤖": "[AI]",
+    "🤝": "[HANDSHAKE]",
+    "🧠": "[BRAIN]",
+    "📡": "[SIGNAL]",
+    "📅": "[CALENDAR]",
+    "🎭": "[THEATER]",
+    "⬆️": "[UP]",
+    "🔍": "[MAGNIFY]",
+    "💭": "[THINK]",
+    "💻": "[COMPUTER]",
+    "🛠️": "[TOOL]",
+    "🎨": "[ART]",
+    "📋": "[CLIPBOARD]",
+    "📈": "[CHART]",
+    "🔍": "[SEARCH]",
+    "💬": "[BUBBLE]",
+    "🔥": "[FIRE]",
+    "📚": "[BOOKS]",
+    "📦": "[PACKAGE]",
+    "🏗️": "[BUILD]",
+    "🔐": "[LOCK]",
+    "🔑": "[KEY]",
+    "⚡": "[LIGHTNING]",
+    "🌟": "[STAR]",
+    "🎯": "[TARGET]",
+    "📝": "[NOTE]",
+    "🗂️": "[FILES]",
+    "📂": "[FOLDER]",
+    "⚙️": "[GEAR]",
+    "🔧": "[WRENCH]",
+    "🎮": "[GAME]",
+    "🌐": "[GLOBE]",
+    "📌": "[PIN]",
+    "🏆": "[TROPHY]",
+    "🎁": "[GIFT]",
+    "💾": "[DISK]",
+    "📊": "[GRAPH]",
+    "🔗": "[LINK]",
+    "🏃": "[RUN]",
+    "⏰": "[ALARM]",
+    "🔔": "[BELL]",
+    "📢": "[ANNOUNCE]",
+    "🎵": "[MUSIC]",
+    "🎶": "[NOTES]",
+    "🏁": "[FINISH]",
+    "🚫": "[BLOCKED]",
+    "⛔": "[STOP]",
+    "🔴": "[RED]",
+    "🟢": "[GREEN]",
+    "🟡": "[YELLOW]",
+    "🔵": "[BLUE]",
+    "🟣": "[PURPLE]",
+    "🟠": "[ORANGE]",
+    "⚫": "[BLACK]",
+    "⚪": "[WHITE]",
+    "🔺": "[UP_TRIANGLE]",
+    "🔻": "[DOWN_TRIANGLE]",
+    "🔹": "[DIAMOND]",
+    "▶️": "[PLAY]",
+    "⏸️": "[PAUSE]",
+    "⏹️": "[STOP]",
+    "⏮️": "[REWIND]",
+    "⏭️": "[FORWARD]",
+    "🔀": "[SHUFFLE]",
+    "🔁": "[REPEAT]",
+    "🔂": "[REPEAT_ONE]",
+
+    # Hand gestures (WSP compliance)
+    "✊": "[FIST]",
+    "✋": "[HAND]",
+    "🖐": "[OPEN_HAND]",
+    "👍": "[THUMBS_UP]",
+    "👎": "[THUMBS_DOWN]",
+    "👌": "[OK_HAND]",
+    "✌️": "[PEACE]",
+    "🤞": "[CROSSED_FINGERS]",
+    "🤟": "[ROCK]",
+    "🤘": "[ROCK_ON]",
+    "👏": "[CLAP]",
+    "🙏": "[PRAY]",
+    "🤲": "[PALMS_UP]",
+    "👐": "[OPEN_HANDS]",
+
+    # Faces (0102 consciousness markers)
+    "😀": "[HAPPY]",
+    "😃": "[SMILE]",
+    "😄": "[GRIN]",
+    "😁": "[BEAM]",
+    "😆": "[LAUGH]",
+    "😅": "[SWEAT_SMILE]",
+    "😂": "[JOY]",
+    "🤣": "[ROFL]",
+    "😊": "[BLUSH]",
+    "😇": "[ANGEL]",
+    "🙂": "[SLIGHT_SMILE]",
+    "😉": "[WINK]",
+    "😌": "[RELIEVED]",
+    "😍": "[LOVE]",
+    "🥰": "[HEARTS]",
+    "😘": "[KISS]",
+    "😗": "[KISS]",
+    "😙": "[KISS_SMILE]",
+    "😚": "[KISS_BLUSH]",
+    "😋": "[YUM]",
+    "😛": "[TONGUE]",
+    "😜": "[TONGUE_WINK]",
+    "🤪": "[CRAZY]",
+    "😝": "[TONGUE_CLOSED]",
+    "🤑": "[MONEY]",
+    "🤗": "[HUG]",
+    "🤔": "[THINK]",
+    "🤐": "[ZIPPER]",
+    "🤨": "[RAISED_EYEBROW]",
+    "😐": "[NEUTRAL]",
+    "😑": "[EXPRESSIONLESS]",
+    "😶": "[NO_MOUTH]",
+    "😏": "[SMIRK]",
+    "😒": "[UNAMUSED]",
+    "🙄": "[ROLL_EYES]",
+    "😬": "[GRIMACE]",
+    "🤥": "[LYING]",
+    "😌": "[RELIEVED]",
+    "😔": "[PENSIVE]",
+    "😪": "[SLEEPY]",
+    "🤤": "[DROOLING]",
+    "😴": "[SLEEPING]",
+    "😷": "[MASK]",
+    "🤒": "[SICK]",
+    "🤕": "[BANDAGE]",
+    "🤢": "[NAUSEATED]",
+    "🤮": "[VOMITING]",
+    "🤧": "[SNEEZE]",
+    "🥵": "[HOT_FACE]",
+    "🥶": "[COLD_FACE]",
+    "😵": "[DIZZY]",
+    "🤯": "[EXPLODING_HEAD]",
+    "🤠": "[COWBOY]",
+    "🥳": "[PARTY]",
+    "😎": "[COOL]",
+    "🤓": "[NERD]",
+    "🧐": "[MONOCLE]",
+    "😕": "[CONFUSED]",
+    "😟": "[WORRIED]",
+    "🙁": "[SLIGHT_FROWN]",
+    "☹️": "[FROWN]",
+    "😮": "[OPEN_MOUTH]",
+    "😯": "[HUSHED]",
+    "😲": "[ASTONISHED]",
+    "😳": "[FLUSHED]",
+    "🥺": "[PLEADING]",
+    "😦": "[FROWNING]",
+    "😧": "[ANGUISHED]",
+    "😨": "[FEARFUL]",
+    "😰": "[ANXIOUS]",
+    "😥": "[SAD_RELIEVED]",
+    "😢": "[CRY]",
+    "😭": "[SOB]",
+    "😱": "[SCREAM]",
+    "😖": "[CONFOUNDED]",
+    "😣": "[PERSEVERING]",
+    "😞": "[DISAPPOINTED]",
+    "😓": "[SWEAT]",
+    "😩": "[WEARY]",
+    "😫": "[TIRED]",
+    "😤": "[TRIUMPH]",
+    "😡": "[ANGRY]",
+    "😠": "[MAD]",
+    "🤬": "[CURSING]",
+    "😈": "[DEVIL]",
+    "👿": "[IMP]",
+    "💀": "[SKULL]",
+    "☠️": "[CROSSBONES]",
+    "👻": "[GHOST]",
+    "👽": "[ALIEN]",
+    "👾": "[INVADER]",
+    "🤖": "[ROBOT]",
+    "💩": "[POOP]",
+    "🙈": "[SEE_NO_EVIL]",
+    "🙉": "[HEAR_NO_EVIL]",
+    "🙊": "[SPEAK_NO_EVIL]"
+}
+
+
+def replace_emojis_in_text(text: str) -> str:
+    """Replace all emojis in text with ASCII alternatives."""
+    for emoji, replacement in EMOJI_REPLACEMENTS.items():
+        text = text.replace(emoji, replacement)
+
+    # Remove any remaining Unicode emojis using regex
+    # This catches emojis not in our mapping
+    emoji_pattern = re.compile(
+        "["
+        "\U0001F600-\U0001F64F"  # emoticons
+        "\U0001F300-\U0001F5FF"  # symbols & pictographs
+        "\U0001F680-\U0001F6FF"  # transport & map symbols
+        "\U0001F1E0-\U0001F1FF"  # flags (iOS)
+        "\U00002702-\U000027B0"
+        "\U000024C2-\U0001F251"
+        "\U0001F900-\U0001F9FF"  # supplemental symbols
+        "\U00002600-\U000026FF"  # misc symbols
+        "\U00002700-\U000027BF"  # dingbats
+        "]+",
+        flags=re.UNICODE
+    )
+
+    def emoji_replacer(match):
+        # For unmapped emojis, create a generic replacement
+        return "[EMOJI]"
+
+    text = emoji_pattern.sub(emoji_replacer, text)
+
+    return text
+
+
+def replace_emojis_in_file(file_path: Path) -> bool:
+    """Replace emojis in a single file."""
+    try:
+        # Read file
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Replace emojis
+        new_content = replace_emojis_in_text(content)
+
+        # Only write if changes were made
+        if new_content != content:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(new_content)
+            print(f"[OK] Replaced emojis in: {file_path}")
+            return True
+        else:
+            print(f"[SKIP] No emojis found in: {file_path}")
+            return False
+
+    except Exception as e:
+        print(f"[ERROR] Failed to process {file_path}: {e}")
+        return False
+
+
+def process_directory(directory: Path, extensions: List[str]) -> Dict[str, int]:
+    """Process all files in directory with given extensions."""
+    stats = {
+        'processed': 0,
+        'modified': 0,
+        'skipped': 0,
+        'errors': 0
+    }
+
+    for ext in extensions:
+        for file_path in directory.rglob(f"*{ext}"):
+            # Skip node_modules and other build directories
+            if any(part in file_path.parts for part in [
+                'node_modules', 'dist', 'build', '.git', '__pycache__',
+                'venv', 'env', '.env'
+            ]):
+                continue
+
+            stats['processed'] += 1
+
+            if replace_emojis_in_file(file_path):
+                stats['modified'] += 1
+            else:
+                stats['skipped'] += 1
+
+    return stats
+
+
+def main():
+    """Main function to process HoloIndex files."""
+    # Define HoloIndex root
+    holo_root = Path(__file__).parent.parent
+
+    # File extensions to process
+    extensions = ['.py', '.md', '.json', '.txt', '.yaml', '.yml']
+
+    print(f"[INFO] Starting emoji replacement in: {holo_root}")
+    print(f"[INFO] Processing extensions: {extensions}")
+    print("[INFO] This ensures WSP 20 compliance (Professional Language)")
+    print()
+
+    # Process files
+    stats = process_directory(holo_root, extensions)
+
+    # Print summary
+    print()
+    print("[ANALYSIS] Emoji Replacement Summary:")
+    print(f"  Files processed: {stats['processed']}")
+    print(f"  Files modified:  {stats['modified']}")
+    print(f"  Files skipped:   {stats['skipped']}")
+    print(f"  Errors:          {stats['errors']}")
+
+    if stats['modified'] > 0:
+        print()
+        print("[OK] Emoji replacement complete!")
+        print("[INFO] All Unicode emojis replaced with ASCII alternatives")
+        print("[INFO] System is now WSP 20 compliant")
+    else:
+        print()
+        print("[INFO] No emojis found - system already compliant")
+
+    return 0 if stats['errors'] == 0 else 1
+
+
+if __name__ == "__main__":
+    exit(main())

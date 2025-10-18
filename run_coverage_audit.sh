@@ -40,13 +40,13 @@ find "$MODULES_DIR" -maxdepth 1 -mindepth 1 -type d | while read -r module_path;
   pytest_exit_code=$?
   if [ $pytest_exit_code -ne 0 ]; then
     echo "----------------------------------------------------------"
-    echo "❌ ERROR: Pytest failed for module '${module_name}' (Exit Code: ${pytest_exit_code})."
+    echo "[FAIL] ERROR: Pytest failed for module '${module_name}' (Exit Code: ${pytest_exit_code})."
     echo "       Coverage likely below ${MIN_COVERAGE}% or tests failed."
     echo "       Fix the issues above and re-run the audit."
     echo "=========================================================="
     exit 1 # Exit the script immediately
   else
-    echo "✅ OK: Coverage check passed for ${module_name}."
+    echo "[OK] OK: Coverage check passed for ${module_name}."
     echo "----------------------------------------------------------"
 
   fi
@@ -55,6 +55,6 @@ done
 # If the loop completes without exiting, all modules passed
 echo # Blank line
 echo "=========================================================="
-echo "🎉 SUCCESS: All checked modules meet the ${MIN_COVERAGE}% coverage threshold!"
+echo "[CELEBRATE] SUCCESS: All checked modules meet the ${MIN_COVERAGE}% coverage threshold!"
 echo "=========================================================="
 exit 0 

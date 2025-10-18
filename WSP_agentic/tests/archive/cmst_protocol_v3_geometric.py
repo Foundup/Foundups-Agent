@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-⚠️ DEPRECATED: CMST Protocol v3 - Geometric Engine Implementation
+[U+26A0]️ DEPRECATED: CMST Protocol v3 - Geometric Engine Implementation
 ================================================================
 
-🚨 WSP PROTOCOL NOTICE: This implementation has been SUPERSEDED 🚨
+[ALERT] WSP PROTOCOL NOTICE: This implementation has been SUPERSEDED [ALERT]
 
 **CURRENT STANDARD**: CMST Protocol v6 (Full Quantum-Cognitive Engine)
 **CURRENT FILE**: `cmst_protocol_v11_neural_network_adapters.py
@@ -17,16 +17,16 @@ Real-time Metric Tensor computation has been integrated into the unified CMST Pr
 - **For WSP 54 Compliance**: Use CMST_Protocol_v6 class
 - **For Legacy Reference**: This file preserved for evolutionary documentation
 
-### v3 → v6 Evolution
-- ✅ v2 Lindblad Engine → Integrated into v6 Phase 1
-- ✅ **v3 Geometric Engine → Integrated into v6 Phase 2** ⭐
-- ✅ v4 Operator Forge → Integrated into v6 Phase 3
-- 🎯 v6 = Complete unified three-phase quantum-cognitive engine
+### v3 -> v6 Evolution
+- [OK] v2 Lindblad Engine -> Integrated into v6 Phase 1
+- [OK] **v3 Geometric Engine -> Integrated into v6 Phase 2** [U+2B50]
+- [OK] v4 Operator Forge -> Integrated into v6 Phase 3
+- [TARGET] v6 = Complete unified three-phase quantum-cognitive engine
 
 ### Key v3 Features Now in v6
 - **Real-time Metric Tensor Computation**: `g_μν = Cov([ΔC, ΔE])`
 - **Covariance Inversion Detection**: det(g) sign change monitoring
-- **State Space Geometry Mapping**: Euclidean ↔ Hyperbolic transitions
+- **State Space Geometry Mapping**: Euclidean [U+2194] Hyperbolic transitions
 - **25-cycle Optimized Protocol**: Enhanced from v3's 25-cycle foundation
 
 WSP Protocol: WSP 22 (Traceable Narrative), WSP 47 (Module Evolution Tracking)
@@ -254,7 +254,7 @@ class CMST_Protocol_v3:
             if self.stage in self.transitions and self.coherence >= self.transitions[self.stage][1]:
                 prev_stage = self.stage
                 self.stage = self.transitions[self.stage][0]
-                self._log_event(f"**STATE TRANSITION: {prev_stage} → {self.stage}**")
+                self._log_event(f"**STATE TRANSITION: {prev_stage} -> {self.stage}**")
                 
                 if self.stage == "0102":
                     if self.det_g < 0:
@@ -287,7 +287,7 @@ class CMST_Protocol_v3:
             
             if self.det_g < 0:
                 f.write("### COVARIANCE INVERSION CONFIRMED\n")
-                f.write("- **Geometric Transformation**: Euclidean → Hyperbolic state space\n")
+                f.write("- **Geometric Transformation**: Euclidean -> Hyperbolic state space\n")
                 f.write("- **Physical Significance**: Fundamental change in coherence-entanglement coupling\n")
                 f.write("- **rESP Validation**: Experimental confirmation of theoretical predictions\n")
             
@@ -346,13 +346,13 @@ if __name__ == "__main__":
     print(f"Final Coherence: {final_coherence:.6f}")
     print(f"Final det(g): {final_det_g:.8f}")
     print(f"Final Geometry: {geometry_analysis['final_geometry'].title()}")
-    print(f"Covariance Inversion: {'✓ DETECTED' if geometry_analysis['inversion_detected'] else '✗ Not Detected'}")
+    print(f"Covariance Inversion: {'[OK] DETECTED' if geometry_analysis['inversion_detected'] else '[FAIL] Not Detected'}")
     print(f"Journal: {test.journal_path}")
     
     print(f"\n=== PHASE 2 VALIDATION ===")
-    print("✓ Real-time metric tensor computation implemented")
-    print("✓ Covariance inversion detection system active")
-    print("✓ Quantum state space geometry mapping complete")
+    print("[OK] Real-time metric tensor computation implemented")
+    print("[OK] Covariance inversion detection system active")
+    print("[OK] Quantum state space geometry mapping complete")
     if final_det_g < 0:
-        print("✓ COVARIANCE INVERSION CONFIRMED - Hyperbolic geometry achieved")
-    print("✓ Foundation ready for Phase 3: Operator Algebra Expansion") 
+        print("[OK] COVARIANCE INVERSION CONFIRMED - Hyperbolic geometry achieved")
+    print("[OK] Foundation ready for Phase 3: Operator Algebra Expansion") 

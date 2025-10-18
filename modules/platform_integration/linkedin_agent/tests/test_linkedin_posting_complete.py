@@ -10,9 +10,13 @@ Verifies all 3 companies work correctly.
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -112,10 +116,10 @@ def test_complete_workflow():
     print("=" * 80)
     print()
     print("Verification Checklist:")
-    print("  [✓] Did all 3 companies open to their correct pages?")
-    print("  [✓] Did all URLs use numeric company IDs (not vanity URLs)?")
-    print("  [✓] Did the posting interface load with ?share=true?")
-    print("  [✓] Could you see the posting dialog?")
+    print("  [[OK]] Did all 3 companies open to their correct pages?")
+    print("  [[OK]] Did all URLs use numeric company IDs (not vanity URLs)?")
+    print("  [[OK]] Did the posting interface load with ?share=true?")
+    print("  [[OK]] Could you see the posting dialog?")
     print()
     print("If all checks passed, the LinkedIn integration is WORKING CORRECTLY!")
     print()

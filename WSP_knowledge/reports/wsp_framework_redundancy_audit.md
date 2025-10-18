@@ -17,7 +17,7 @@ The WSP framework exhibits significant redundancy between WSP_knowledge and WSP_
 
 ### Actual Usage Patterns
 
-#### ✅ ACTIVE USAGE (Keep)
+#### [OK] ACTIVE USAGE (Keep)
 **WSP_CORE.md** - Primary reference:
 - Referenced in `modules/wre_core/src/main.py` as foundational protocol
 - Used by `loremaster_agent` and `blockchain_integration`
@@ -28,7 +28,7 @@ The WSP framework exhibits significant redundancy between WSP_knowledge and WSP_
 - Contains operational WSP files used by agents
 - Primary source for WSP protocol implementations
 
-#### ❌ REDUNDANT/UNUSED (Clean up)
+#### [FAIL] REDUNDANT/UNUSED (Clean up)
 **WSP_framework.md** - Limited usage:
 - Only referenced in `loremaster_agent`
 - Contains detailed specifications but not operational
@@ -122,17 +122,17 @@ The WSP framework exhibits significant redundancy between WSP_knowledge and WSP_
 
 ## Compliance Status
 
-### ✅ Compliant
+### [OK] Compliant
 - Three-state architecture exists (WSP 31)
 - WSP_CORE serves as primary reference
 - Basic protection mechanisms in place
 
-### ❌ Non-Compliant  
+### [FAIL] Non-Compliant  
 - Content drift between states (WSP 31 violation)
 - Missing protocols in WSP_knowledge (WSP 57 violation)
 - Unclear authority structure (WSP 31 violation)
 
-### 🔄 Needs Clarification
+### [REFRESH] Needs Clarification
 - WSP_framework.md purpose and usage
 - Protocol distribution optimization
 - Module reference patterns

@@ -7,9 +7,13 @@ WSP 86: Debugging throttling bypass in async context.
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -36,13 +40,13 @@ async def test_async_api_call():
     """Test if async executor bypasses monitoring."""
     
     logger.info("="*60)
-    logger.info("🎯 TESTING ASYNC API CALL MONITORING")
+    logger.info("[TARGET] TESTING ASYNC API CALL MONITORING")
     logger.info("="*60)
     
     # Get monitored service
     raw_service = get_authenticated_service()
     monitored = create_monitored_service(raw_service)
-    logger.info("✅ Created monitored service")
+    logger.info("[OK] Created monitored service")
     
     # Test 1: Direct synchronous call
     logger.info("\n1️⃣ Testing SYNCHRONOUS call...")
@@ -51,9 +55,9 @@ async def test_async_api_call():
             part='snippet',
             mine=True
         ).execute()
-        logger.info("✅ Sync call succeeded")
+        logger.info("[OK] Sync call succeeded")
     except Exception as e:
-        logger.error(f"❌ Sync call failed: {e}")
+        logger.error(f"[FAIL] Sync call failed: {e}")
     
     # Test 2: Async executor call (how ChatPoller does it)
     logger.info("\n2️⃣ Testing ASYNC EXECUTOR call...")
@@ -66,9 +70,9 @@ async def test_async_api_call():
                 mine=True
             ).execute()
         )
-        logger.info("✅ Async executor call succeeded")
+        logger.info("[OK] Async executor call succeeded")
     except Exception as e:
-        logger.error(f"❌ Async executor call failed: {e}")
+        logger.error(f"[FAIL] Async executor call failed: {e}")
     
     # Test 3: Pass service through function (simulate ChatPoller)
     logger.info("\n3️⃣ Testing PASSED SERVICE in async...")
@@ -76,7 +80,7 @@ async def test_async_api_call():
     class MockChatPoller:
         def __init__(self, youtube_service):
             self.youtube = youtube_service
-            logger.info("🧑‍💻 MockChatPoller initialized")
+            logger.info("[U+1F9D1]‍[U+1F4BB] MockChatPoller initialized")
         
         async def make_api_call(self):
             loop = asyncio.get_event_loop()
@@ -91,13 +95,13 @@ async def test_async_api_call():
     poller = MockChatPoller(monitored)
     try:
         response = await poller.make_api_call()
-        logger.info("✅ MockChatPoller async call succeeded")
+        logger.info("[OK] MockChatPoller async call succeeded")
     except Exception as e:
-        logger.error(f"❌ MockChatPoller async call failed: {e}")
+        logger.error(f"[FAIL] MockChatPoller async call failed: {e}")
     
     logger.info("\n" + "="*60)
-    logger.info("🏁 ASYNC TEST COMPLETE")
-    logger.info("Look for 🎬 Intercepted API call messages above")
+    logger.info("[U+1F3C1] ASYNC TEST COMPLETE")
+    logger.info("Look for [U+1F3AC] Intercepted API call messages above")
     logger.info("="*60)
 
 if __name__ == "__main__":

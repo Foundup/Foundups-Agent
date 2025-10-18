@@ -1,4 +1,8 @@
-﻿"""
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+"""
 HoloIndex - Semantic Code Discovery and WSP Compliance Assistant
 
 A sophisticated semantic search system that prevents vibecoding by finding existing code
@@ -10,6 +14,20 @@ Key Components:
 - WSP violation detection and prevention
 - Vector database for instant code discovery
 """
+
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+import sys
+import io
+
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
 
 # Main CLI interface
 from .cli import main

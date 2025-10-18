@@ -12,13 +12,13 @@
 ### Architecture Overview
 
 ```
-YouTube API → MessageProcessor (1240 lines!) → Response Generation
-                      ↓
-    ┌─────────────────┴─────────────────┐
-    ↓                 ↓                  ↓
+YouTube API -> MessageProcessor (1240 lines!) -> Response Generation
+                      v
+    +-----------------+-----------------+
+    v                 v                  v
 Commands         Consciousness       Events
-(slash)          (emoji ✊✋🖐)       (timeout/ban)
-    ↓                 ↓                  ↓
+(slash)          (emoji [U+270A][U+270B][U+1F590])       (timeout/ban)
+    v                 v                  v
 CommandHandler   AgenticEngine    EventHandler
 ```
 
@@ -139,7 +139,7 @@ class GemmaIntentClassifier:
         'command_shorts': ['!createshort', '!shortveo', ...],
         'command_factcheck': ['factcheck @', 'fc @', ...],
         'command_pqn': ['!pqn', '!research', ...],
-        'consciousness': ['✊✋🖐', 'consciousness trigger'],
+        'consciousness': ['[U+270A][U+270B][U+1F590]', 'consciousness trigger'],
         'question_about_command': ['how do i', 'what is', 'explain', ...],
         'spam': ['repeated text', 'all caps', 'excessive emojis'],
         'maga_troll': ['maga', 'trump 2024', ...],
@@ -185,7 +185,7 @@ class GemmaIntentClassifier:
 |--------|----------------|-----------------|------|
 | Accuracy | 75% | 92%+ | +17% |
 | Typo handling | 0% | 85%+ | +85% |
-| Context aware | No | Yes | ✓ |
+| Context aware | No | Yes | [OK] |
 | False positives | 15% | 3% | -80% |
 
 **Latency**: +50-100ms per message (acceptable for chat)
@@ -245,9 +245,9 @@ class GemmaSpamDetector:
 - 200 edge cases (all caps excitement vs spam)
 
 **Expected Improvement**:
-- Reduce false positives (blocking real users): 15% → 2%
-- Catch sophisticated spam (not just rate limits): 60% → 90%
-- Adapt to new spam patterns: Manual updates → Automatic learning
+- Reduce false positives (blocking real users): 15% -> 2%
+- Catch sophisticated spam (not just rate limits): 60% -> 90%
+- Adapt to new spam patterns: Manual updates -> Automatic learning
 
 ---
 
@@ -419,9 +419,9 @@ Answer:
 ```
 
 **Use Cases**:
-- "explain !createshort" → Question (don't execute command)
-- "!shorts" after someone asks "how do I make shorts?" → Likely typo, suggest correct command
-- Sarcastic "great another MAGA troll" → Don't engage MAGA handler
+- "explain !createshort" -> Question (don't execute command)
+- "!shorts" after someone asks "how do I make shorts?" -> Likely typo, suggest correct command
+- Sarcastic "great another MAGA troll" -> Don't engage MAGA handler
 
 ---
 
@@ -584,7 +584,7 @@ class MessageProcessor:
         confidence = intent_result['confidence']
         route_to = intent_result['route_to']
 
-        logger.info(f"[GEMMA-INTENT] {intent} (confidence: {confidence:.2f}) → route to {route_to}")
+        logger.info(f"[GEMMA-INTENT] {intent} (confidence: {confidence:.2f}) -> route to {route_to}")
 
         # Step 2: GEMMA 3 SPAM DETECTION
         spam_result = await self.gemma_mcp.call_tool(
@@ -685,10 +685,10 @@ class MessageProcessor:
 ### Latency
 | Operation | Current (Regex) | Gemma 3 (MCP) | Acceptable? |
 |-----------|-----------------|---------------|-------------|
-| Intent classification | 1-2ms | 50-100ms | ✓ (chat is async) |
-| Spam detection | 1ms | 50ms | ✓ |
-| Response validation | 0ms (none) | 100ms | ✓ (prevents bad output) |
-| **Total overhead** | ~2ms | ~200ms | ✓ (acceptable for chat) |
+| Intent classification | 1-2ms | 50-100ms | [OK] (chat is async) |
+| Spam detection | 1ms | 50ms | [OK] |
+| Response validation | 0ms (none) | 100ms | [OK] (prevents bad output) |
+| **Total overhead** | ~2ms | ~200ms | [OK] (acceptable for chat) |
 
 ### Accuracy
 | Task | Current (Regex) | Gemma 3 (Trained) | Improvement |
@@ -713,7 +713,7 @@ class MessageProcessor:
 - **Storage**: 500MB (ChromaDB training examples)
 
 ### Benefits
-1. **Code Reduction**: 300+ lines of regex → 50 lines of MCP calls
+1. **Code Reduction**: 300+ lines of regex -> 50 lines of MCP calls
 2. **Maintainability**: Add new intent by adding examples, not code
 3. **Adaptability**: Learns from new patterns automatically
 4. **Accuracy**: +20-30% improvement across all classification tasks
@@ -722,7 +722,7 @@ class MessageProcessor:
 ### ROI
 - **Message volume**: ~5000/day (estimated)
 - **Gemma 3 handles**: 100% of classifications (replaces regex)
-- **False positive reduction**: 15% → 3% = save ~600 incorrect blocks/day
+- **False positive reduction**: 15% -> 3% = save ~600 incorrect blocks/day
 - **User satisfaction**: +30% (cleaner, smarter responses)
 - **Dev cost**: 4 weeks
 - **Payback**: 1-2 months
@@ -732,20 +732,20 @@ class MessageProcessor:
 ## Conclusion
 
 **Gemma 3 270M is PERFECT for YouTube DAE** because:
-1. ✓ **Simple classification tasks**: Intent, spam, quality (Gemma's strength)
-2. ✓ **High volume**: 5000 msg/day needs fast inference (Gemma: 50-100ms)
-3. ✓ **Adaptable**: Learn from examples, not hard-coded rules
-4. ✓ **MCP-ready**: Standardized tools for classification tasks
-5. ✓ **Reusable**: Same architecture works for Twitch, Discord, LinkedIn
+1. [OK] **Simple classification tasks**: Intent, spam, quality (Gemma's strength)
+2. [OK] **High volume**: 5000 msg/day needs fast inference (Gemma: 50-100ms)
+3. [OK] **Adaptable**: Learn from examples, not hard-coded rules
+4. [OK] **MCP-ready**: Standardized tools for classification tasks
+5. [OK] **Reusable**: Same architecture works for Twitch, Discord, LinkedIn
 
 **Architecture**:
 ```
 YouTube Chat Message
-        ↓
+        v
 [Gemma MCP Server] (5 tools: intent, spam, validation, priority, context)
-        ↓
+        v
 MessageProcessor (simplified to 100 lines from 1240)
-        ↓
+        v
 Appropriate Handler (commands, consciousness, events)
 ```
 

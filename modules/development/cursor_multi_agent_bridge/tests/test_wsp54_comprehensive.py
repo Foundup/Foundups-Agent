@@ -84,7 +84,7 @@ class WSP54ComprehensiveTester:
         Returns:
             Dict containing comprehensive test results
         """
-        logger.info("🧪 Starting Comprehensive WSP 54 Testing Suite")
+        logger.info("[U+1F9EA] Starting Comprehensive WSP 54 Testing Suite")
         
         try:
             # Initialize components
@@ -114,17 +114,17 @@ class WSP54ComprehensiveTester:
             # Calculate final results
             await self._calculate_final_results()
             
-            logger.info("✅ Comprehensive WSP 54 Testing Suite Completed")
+            logger.info("[OK] Comprehensive WSP 54 Testing Suite Completed")
             return self.test_results
             
         except Exception as e:
-            logger.error(f"❌ Comprehensive testing failed: {e}")
+            logger.error(f"[FAIL] Comprehensive testing failed: {e}")
             self.test_results["failed_tests"] += 1
             return self.test_results
     
     async def _initialize_components(self):
         """Initialize testing components."""
-        logger.info("🔧 Initializing testing components")
+        logger.info("[TOOL] Initializing testing components")
         
         try:
             self.bridge = CursorWSPBridge()
@@ -135,14 +135,14 @@ class WSP54ComprehensiveTester:
             activation_results = self.bridge.activate_wsp_agents()
             active_agents = [agent for agent, status in activation_results.items() if status]
             
-            logger.info(f"✅ Initialized components with {len(active_agents)} active agents")
+            logger.info(f"[OK] Initialized components with {len(active_agents)} active agents")
             
         except Exception as e:
             raise Exception(f"Component initialization failed: {e}")
     
     async def _test_agent_activation_and_states(self):
         """Test Suite 1: Agent Activation and State Management."""
-        logger.info("🤖 Test Suite 1: Agent Activation and State Management")
+        logger.info("[BOT] Test Suite 1: Agent Activation and State Management")
         
         test_cases = [
             ("Agent Activation", self._test_agent_activation),
@@ -157,7 +157,7 @@ class WSP54ComprehensiveTester:
     
     async def _test_wsp_protocol_compliance(self):
         """Test Suite 2: WSP Protocol Compliance."""
-        logger.info("📋 Test Suite 2: WSP Protocol Compliance")
+        logger.info("[CLIPBOARD] Test Suite 2: WSP Protocol Compliance")
         
         test_cases = [
             ("WSP 54 Protocol Validation", self._test_wsp54_protocol),
@@ -172,7 +172,7 @@ class WSP54ComprehensiveTester:
     
     async def _test_agent_coordination(self):
         """Test Suite 3: Agent Coordination and Communication."""
-        logger.info("🤝 Test Suite 3: Agent Coordination and Communication")
+        logger.info("[HANDSHAKE] Test Suite 3: Agent Coordination and Communication")
         
         test_cases = [
             ("Multi-Agent Coordination", self._test_multi_agent_coordination),
@@ -187,7 +187,7 @@ class WSP54ComprehensiveTester:
     
     async def _test_memory_architecture(self):
         """Test Suite 4: Memory Architecture Operations."""
-        logger.info("🧠 Test Suite 4: Memory Architecture Operations")
+        logger.info("[AI] Test Suite 4: Memory Architecture Operations")
         
         test_cases = [
             ("Memory Operations", self._test_memory_operations),
@@ -202,7 +202,7 @@ class WSP54ComprehensiveTester:
     
     async def _test_security_and_access(self):
         """Test Suite 5: Security and Access Control."""
-        logger.info("🔒 Test Suite 5: Security and Access Control")
+        logger.info("[LOCK] Test Suite 5: Security and Access Control")
         
         test_cases = [
             ("Permission Validation", self._test_permission_validation),
@@ -217,7 +217,7 @@ class WSP54ComprehensiveTester:
     
     async def _test_performance_and_stress(self):
         """Test Suite 6: Performance and Stress Testing."""
-        logger.info("⚡ Test Suite 6: Performance and Stress Testing")
+        logger.info("[LIGHTNING] Test Suite 6: Performance and Stress Testing")
         
         test_cases = [
             ("Performance Benchmarking", self._test_performance_benchmarking),
@@ -232,7 +232,7 @@ class WSP54ComprehensiveTester:
     
     async def _test_integration(self):
         """Test Suite 7: Integration Testing."""
-        logger.info("🔗 Test Suite 7: Integration Testing")
+        logger.info("[LINK] Test Suite 7: Integration Testing")
         
         test_cases = [
             ("WRE System Integration", self._test_wre_integration),
@@ -262,7 +262,7 @@ class WSP54ComprehensiveTester:
             }
             
             self.test_results["passed_tests"] += 1
-            logger.info(f"✅ {test_name}: PASSED")
+            logger.info(f"[OK] {test_name}: PASSED")
             
         except Exception as e:
             test_detail = {
@@ -273,7 +273,7 @@ class WSP54ComprehensiveTester:
             }
             
             self.test_results["failed_tests"] += 1
-            logger.error(f"❌ {test_name}: FAILED - {e}")
+            logger.error(f"[FAIL] {test_name}: FAILED - {e}")
         
         self.test_results["test_details"].append(test_detail)
     
@@ -770,7 +770,7 @@ class WSP54ComprehensiveTester:
 
 async def main():
     """Main testing function."""
-    print("🧪 WSP 54 Comprehensive Testing Suite")
+    print("[U+1F9EA] WSP 54 Comprehensive Testing Suite")
     print("=" * 50)
     
     tester = WSP54ComprehensiveTester()
@@ -778,21 +778,21 @@ async def main():
     try:
         results = await tester.run_comprehensive_tests()
         
-        print(f"\n📊 Test Results Summary:")
+        print(f"\n[DATA] Test Results Summary:")
         print(f"Total Tests: {results['total_tests']}")
         print(f"Passed: {results['passed_tests']}")
         print(f"Failed: {results['failed_tests']}")
         print(f"WSP Compliance Score: {results['wsp_compliance_score']:.2%}")
         
         if results['failed_tests'] == 0:
-            print("\n✅ All tests passed! WSP 54 compliance validated.")
+            print("\n[OK] All tests passed! WSP 54 compliance validated.")
         else:
-            print(f"\n⚠️ {results['failed_tests']} tests failed. Review required.")
+            print(f"\n[U+26A0]️ {results['failed_tests']} tests failed. Review required.")
         
         return results
         
     except Exception as e:
-        print(f"\n❌ Testing failed: {e}")
+        print(f"\n[FAIL] Testing failed: {e}")
         return {"error": str(e)}
 
 

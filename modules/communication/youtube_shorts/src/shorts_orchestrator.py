@@ -44,8 +44,8 @@ class ShortsOrchestrator:
             default_engine: Preferred generator ('veo3', 'sora2', or 'auto')
         """
 
-        logger.info("🎬 [SHORTS-INIT] Initializing YouTube Shorts Orchestrator")
-        logger.info(f"📺 [SHORTS-INIT] Target channel: {channel.upper()}")
+        logger.info("[U+1F3AC] [SHORTS-INIT] Initializing YouTube Shorts Orchestrator")
+        logger.info(f"[U+1F4FA] [SHORTS-INIT] Target channel: {channel.upper()}")
 
         self.default_engine = (default_engine or "veo3").lower()
         if self.default_engine not in {"veo3", "sora2", "auto"}:
@@ -76,9 +76,9 @@ class ShortsOrchestrator:
         # Load existing memory
         self.shorts_memory = self._load_memory()
 
-        logger.info(f"✁E[SHORTS-INIT] Orchestrator initialized for {channel.upper()}")
-        logger.info(f"💾 [SHORTS-INIT] Memory: {len(self.shorts_memory)} Shorts tracked")
-        logger.info(f"📁 [SHORTS-INIT] Memory file: {self.memory_file}")
+        logger.info(f"[U+2701]E[SHORTS-INIT] Orchestrator initialized for {channel.upper()}")
+        logger.info(f"[U+1F4BE] [SHORTS-INIT] Memory: {len(self.shorts_memory)} Shorts tracked")
+        logger.info(f"[U+1F4C1] [SHORTS-INIT] Memory file: {self.memory_file}")
 
     def _load_memory(self) -> list:
         """Load Shorts memory from JSON file."""
@@ -127,7 +127,7 @@ class ShortsOrchestrator:
         Lazy-load generator instances with graceful fallbacks.
 
         Catches ImportError specifically to handle missing dependencies.
-        Falls back from Veo3 → Sora2 automatically if Veo3 unavailable.
+        Falls back from Veo3 -> Sora2 automatically if Veo3 unavailable.
         Prevents infinite recursion if both generators fail.
         """
         import sys
@@ -136,50 +136,50 @@ class ShortsOrchestrator:
         if normalized == 'auto':
             normalized = self._suggest_engine('')
 
-        logger.info(f"[SHORTS-ENGINE] 🔍 Requesting {normalized.upper()} generator")
+        logger.info(f"[SHORTS-ENGINE] [SEARCH] Requesting {normalized.upper()} generator")
         logger.debug(f"[SHORTS-ENGINE] Currently cached generators: {list(self.generators.keys())}")
 
         # Return cached generator if available
         if normalized in self.generators:
-            logger.debug(f"[SHORTS-ENGINE] ✅ Using cached {normalized.upper()} generator (no import needed)")
+            logger.debug(f"[SHORTS-ENGINE] [OK] Using cached {normalized.upper()} generator (no import needed)")
             return self.generators[normalized]
 
         # Not cached - need to load
-        logger.info(f"[SHORTS-ENGINE] 📦 Loading {normalized.upper()} generator for first time...")
+        logger.info(f"[SHORTS-ENGINE] [BOX] Loading {normalized.upper()} generator for first time...")
         logger.debug(f"[SHORTS-ENGINE] Python: {sys.executable}")
 
         try:
             if normalized == 'sora2':
-                logger.info(f"[SHORTS-ENGINE] 🔧 Importing Sora2Generator from sora2_generator.py...")
+                logger.info(f"[SHORTS-ENGINE] [TOOL] Importing Sora2Generator from sora2_generator.py...")
                 from .sora2_generator import Sora2Generator
-                logger.info(f"[SHORTS-ENGINE] 🔧 Instantiating Sora2Generator()...")
+                logger.info(f"[SHORTS-ENGINE] [TOOL] Instantiating Sora2Generator()...")
                 generator = Sora2Generator()
-                logger.info(f"[SHORTS-ENGINE] ✅ Sora2Generator loaded successfully")
+                logger.info(f"[SHORTS-ENGINE] [OK] Sora2Generator loaded successfully")
             else:
                 # Veo3Generator already imported at top
-                logger.info(f"[SHORTS-ENGINE] 🔧 Instantiating Veo3Generator() (already imported at module top)...")
+                logger.info(f"[SHORTS-ENGINE] [TOOL] Instantiating Veo3Generator() (already imported at module top)...")
                 generator = Veo3Generator()
-                logger.info(f"[SHORTS-ENGINE] ✅ Veo3Generator loaded successfully")
+                logger.info(f"[SHORTS-ENGINE] [OK] Veo3Generator loaded successfully")
 
         except ImportError as exc:
             # SPECIFIC: Catch dependency import errors (google.genai, etc.)
-            logger.error(f"[SHORTS-ENGINE] ❌ {normalized.upper()} ImportError: {exc}")
-            logger.error(f"[SHORTS-ENGINE] 📍 Error type: {type(exc).__name__}")
-            logger.error(f"[SHORTS-ENGINE] 📍 Error details: {str(exc)}")
+            logger.error(f"[SHORTS-ENGINE] [FAIL] {normalized.upper()} ImportError: {exc}")
+            logger.error(f"[SHORTS-ENGINE] [PIN] Error type: {type(exc).__name__}")
+            logger.error(f"[SHORTS-ENGINE] [PIN] Error details: {str(exc)}")
 
             # Prevent infinite recursion: only fallback if not already trying Sora2
             if normalized == 'veo3':
-                logger.warning(f"[SHORTS-ENGINE] 🔄 FALLBACK TRIGGERED: Veo3 → Sora2")
-                logger.warning(f"[SHORTS-ENGINE] 🔄 Reason: Veo3 dependencies missing ({exc})")
-                logger.warning(f"[SHORTS-ENGINE] 🔄 Attempting Sora2 as fallback...")
+                logger.warning(f"[SHORTS-ENGINE] [REFRESH] FALLBACK TRIGGERED: Veo3 -> Sora2")
+                logger.warning(f"[SHORTS-ENGINE] [REFRESH] Reason: Veo3 dependencies missing ({exc})")
+                logger.warning(f"[SHORTS-ENGINE] [REFRESH] Attempting Sora2 as fallback...")
                 return self._get_generator('sora2')  # One-time fallback
             else:
                 # Both generators failed - re-raise with helpful message
-                logger.error(f"[SHORTS-ENGINE] 🚨 CRITICAL: Both Veo3 AND Sora2 unavailable!")
-                logger.error(f"[SHORTS-ENGINE] 🚨 Veo3 failed with: {exc}")
-                logger.error(f"[SHORTS-ENGINE] 🚨 Sora2 ALSO failed (current error)")
+                logger.error(f"[SHORTS-ENGINE] [ALERT] CRITICAL: Both Veo3 AND Sora2 unavailable!")
+                logger.error(f"[SHORTS-ENGINE] [ALERT] Veo3 failed with: {exc}")
+                logger.error(f"[SHORTS-ENGINE] [ALERT] Sora2 ALSO failed (current error)")
                 logger.error(f"")
-                logger.error(f"[SHORTS-ENGINE] 🔍 TROUBLESHOOTING STEPS:")
+                logger.error(f"[SHORTS-ENGINE] [SEARCH] TROUBLESHOOTING STEPS:")
                 logger.error(f"  1. Check package: pip show google-genai")
                 logger.error(f"  2. Reinstall: pip install google-genai --upgrade")
                 logger.error(f"  3. Test import: python -c 'import google.genai as genai; print(genai.__version__)'")
@@ -190,16 +190,16 @@ class ShortsOrchestrator:
 
         except Exception as exc:
             # OTHER: Runtime errors (config, API keys, etc.)
-            logger.error(f"[SHORTS-ENGINE] ❌ {normalized.upper()} initialization failed (NON-IMPORT ERROR)")
-            logger.error(f"[SHORTS-ENGINE] 📍 Error type: {type(exc).__name__}")
-            logger.error(f"[SHORTS-ENGINE] 📍 Error details: {str(exc)}")
-            logger.warning(f"[SHORTS-ENGINE] ⚠️ NOT falling back - this is a runtime error, not missing dependencies")
+            logger.error(f"[SHORTS-ENGINE] [FAIL] {normalized.upper()} initialization failed (NON-IMPORT ERROR)")
+            logger.error(f"[SHORTS-ENGINE] [PIN] Error type: {type(exc).__name__}")
+            logger.error(f"[SHORTS-ENGINE] [PIN] Error details: {str(exc)}")
+            logger.warning(f"[SHORTS-ENGINE] [U+26A0]️ NOT falling back - this is a runtime error, not missing dependencies")
             raise  # Don't fallback on runtime errors, only import errors
 
         # Cache and return the successfully loaded generator
-        logger.info(f"[SHORTS-ENGINE] 💾 Caching {normalized.upper()} generator for future use")
+        logger.info(f"[SHORTS-ENGINE] [U+1F4BE] Caching {normalized.upper()} generator for future use")
         self.generators[normalized] = generator
-        logger.info(f"[SHORTS-ENGINE] 📊 Available generators: {list(self.generators.keys())}")
+        logger.info(f"[SHORTS-ENGINE] [DATA] Available generators: {list(self.generators.keys())}")
         return generator
 
     def _select_engine(self, topic: str, requested: Optional[str] = None) -> str:
@@ -333,7 +333,7 @@ Generated with AI for Move2Japan
 
             print("[0102 Uploading] Posting to YouTube...")
             if progress_callback:
-                progress_callback("📤 Uploading to YouTube... Almost there!")
+                progress_callback("[U+1F4E4] Uploading to YouTube... Almost there!")
 
             youtube_url = self.uploader.upload_short(
                 video_path=video_path,
@@ -345,7 +345,7 @@ Generated with AI for Move2Japan
 
             # Notify chat with final YouTube link
             if progress_callback:
-                progress_callback(f"🎉 Video LIVE! Watch it here: {youtube_url}")
+                progress_callback(f"[CELEBRATE] Video LIVE! Watch it here: {youtube_url}")
 
             elapsed_time = time.time() - start_time
             estimated_cost = duration * getattr(generator, 'cost_per_second', 0.0)

@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Output Composer for HoloDAE Query Results
 WSP Compliance: WSP 3 (Module Organization), WSP 48 (Recursive Learning)
 
@@ -38,7 +55,7 @@ class OutputComposer:
 
     Reduces noise by:
     - Organizing output into clear sections (INTENT, FINDINGS, MCP, ALERTS)
-    - Deduplicating repeated warnings (87 lines → 1 line)
+    - Deduplicating repeated warnings (87 lines -> 1 line)
     - Intent-aware formatting (different output styles per intent)
 
     Token Budget: ~300 tokens per composition (vs 10,000 unstructured)
@@ -332,7 +349,7 @@ class OutputComposer:
             # Only show critical alerts, suppress noise
             critical_alerts = [a for a in alerts if 'VIOLATION' in a or 'ERROR' in a]
             if not critical_alerts:
-                return "[ALERTS]\n✓ No critical issues"
+                return "[ALERTS]\n[OK] No critical issues"
             alerts = critical_alerts
 
         # Deduplicate alerts
@@ -346,7 +363,7 @@ class OutputComposer:
 
         Example:
             Input: ["ModLog outdated: module1", "ModLog outdated: module2", ...] x87
-            Output: "⚠ 87 modules have outdated ModLog entries"
+            Output: "[U+26A0] 87 modules have outdated ModLog entries"
 
         Args:
             alerts: List of alert strings
@@ -371,15 +388,15 @@ class OutputComposer:
 
             if count > 3:
                 # Collapse many instances into summary
-                deduped_lines.append(f"⚠ {count} instances: {alert_type}")
+                deduped_lines.append(f"[U+26A0] {count} instances: {alert_type}")
             elif count > 1:
                 # Show count for 2-3 instances
-                deduped_lines.append(f"⚠ {count}x {alert_type}")
+                deduped_lines.append(f"[U+26A0] {count}x {alert_type}")
             else:
                 # Show single instance as-is
-                deduped_lines.append(f"⚠ {instances[0]}")
+                deduped_lines.append(f"[U+26A0] {instances[0]}")
 
-        return "\n".join(deduped_lines) if deduped_lines else "✓ No alerts"
+        return "\n".join(deduped_lines) if deduped_lines else "[OK] No alerts"
 
     def _extract_alert_type(self, alert: str) -> str:
         """
@@ -455,7 +472,7 @@ class OutputComposer:
         if 'code' in search_results:
             code_results = search_results['code']
             if code_results:
-                file_lines.append("📁 Code locations:")
+                file_lines.append("[U+1F4C1] Code locations:")
                 for i, result in enumerate(code_results[:10], 1):
                     # Code results use 'location' not 'path'
                     location = result.get('location', 'Unknown')
@@ -475,7 +492,7 @@ class OutputComposer:
             if wsp_results:
                 if file_lines:  # Add spacing if code results exist
                     file_lines.append("")
-                file_lines.append("📚 Documentation:")
+                file_lines.append("[BOOKS] Documentation:")
                 for i, result in enumerate(wsp_results[:5], 1):
                     path = result.get('path', 'Unknown')
                     title = result.get('title', '')
@@ -521,7 +538,7 @@ class OutputComposer:
             ]):
                 health_lines.append(line)
 
-        return "\n".join(health_lines) if health_lines else "✓ No health issues detected"
+        return "\n".join(health_lines) if health_lines else "[OK] No health issues detected"
 
     def _extract_pattern_explanations(self, findings: str) -> str:
         """Extract pattern explanations for research"""

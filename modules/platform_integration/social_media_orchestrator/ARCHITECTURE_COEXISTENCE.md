@@ -8,26 +8,26 @@ After deep analysis, we have **two legitimate systems** that serve **different u
 **Purpose**: YouTube stream notifications
 **Entry Point**: `main.py --youtube`
 **Content Type**: Stream notifications
-**Pattern**: Single event → Multiple platforms simultaneously
+**Pattern**: Single event -> Multiple platforms simultaneously
 **LinkedIn Integration**: Uses **Unified LinkedIn Interface** for centralized duplicate prevention
 
 ```
-YouTube Stream → Simple Orchestrator → Unified Interface → LinkedIn Agent
-                                    → X/Twitter Agent
+YouTube Stream -> Simple Orchestrator -> Unified Interface -> LinkedIn Agent
+                                    -> X/Twitter Agent
 ```
 
 ### **System 2: Multi-Account Manager**
 **Purpose**: Enterprise-scale multi-account management
 **Entry Point**: `main.py` (git push events)
 **Content Type**: Git commits, development updates
-**Pattern**: Event routing → Specific accounts based on rules
+**Pattern**: Event routing -> Specific accounts based on rules
 **LinkedIn Integration**: Direct LinkedIn Agent usage with account routing
 
 ```
-Git Push → Multi-Account Manager → Account Routing → LinkedIn Agent (Account A)
-                                                   → LinkedIn Agent (Account B)
-                                                   → X/Twitter Agent (Account C)
-                                                   → X/Twitter Agent (Account D)
+Git Push -> Multi-Account Manager -> Account Routing -> LinkedIn Agent (Account A)
+                                                   -> LinkedIn Agent (Account B)
+                                                   -> X/Twitter Agent (Account C)
+                                                   -> X/Twitter Agent (Account D)
 ```
 
 ## Account Configuration
@@ -51,7 +51,7 @@ Git Push → Multi-Account Manager → Account Routing → LinkedIn Agent (Accou
 ### **Duplicate Prevention**
 - **Unified Interface**: Centralized tracking in `memory/unified_linkedin_history.json`
 - **Multi-Account Manager**: Event-based routing prevents duplicates
-- **Cross-System**: Different content types → Different accounts → No overlap
+- **Cross-System**: Different content types -> Different accounts -> No overlap
 
 ### **Error Handling**
 - **Unified Interface**: Detects cancellations and auto-corrects
@@ -77,7 +77,7 @@ result = await router.handle_event('git_push', event_data)
 
 ## Benefits of Coexistence
 
-1. **No Conflicts**: Different use cases → Different accounts
+1. **No Conflicts**: Different use cases -> Different accounts
 2. **Specialized Functionality**: Each system optimized for its purpose
 3. **Enterprise Scaling**: Multi-account manager handles complex routing
 4. **Duplicate Prevention**: Unified interface prevents user cancellation issues

@@ -7,41 +7,41 @@ WSP-compliant A/B testing system for finding optimal agent combination recipes.
 ## Architecture
 
 ```
-User Input → 0102 (Feeder) → Prometheus Prompt Agent → Builder Pipeline
-                                    ↓
+User Input -> 0102 (Feeder) -> Prometheus Prompt Agent -> Builder Pipeline
+                                    v
                             A/B Test Different Recipes
-                                    ↓
+                                    v
                             Find Optimal Combination
 ```
 
 ## Available Recipes
 
 ### Recipe A: Classic Pipeline
-- **Pipeline**: General → Builder
+- **Pipeline**: General -> Builder
 - **Use Case**: Simple tasks
 - **Tool Usage**: ~3 tools
 - **WSP**: WSP 1, WSP 49
 
 ### Recipe B: Prometheus Enhanced
-- **Pipeline**: Prometheus → WRE → Builder  
+- **Pipeline**: Prometheus -> WRE -> Builder  
 - **Use Case**: Complex orchestration
 - **Tool Usage**: ~6 tools
 - **WSP**: WSP 21, WSP 77, WSP 49
 
 ### Recipe C: Full Compliance
-- **Pipeline**: Prometheus → Guardian → Builder → Tester
+- **Pipeline**: Prometheus -> Guardian -> Builder -> Tester
 - **Use Case**: Mission-critical with testing
 - **Tool Usage**: ~8 tools
 - **WSP**: WSP 21, WSP 64, WSP 49, WSP 5
 
 ### Recipe D: Learning Pipeline
-- **Pipeline**: Prometheus → Error Learner → Builder
+- **Pipeline**: Prometheus -> Error Learner -> Builder
 - **Use Case**: Self-improving systems
 - **Tool Usage**: ~5 tools
 - **WSP**: WSP 21, WSP 48, WSP 49
 
 ### Recipe E: Documentation First
-- **Pipeline**: Documenter → Prometheus → Builder
+- **Pipeline**: Documenter -> Prometheus -> Builder
 - **Use Case**: Documentation-driven development
 - **Tool Usage**: ~5 tools
 - **WSP**: WSP 22, WSP 21, WSP 49
@@ -71,7 +71,7 @@ Every input is converted to WSP-compliant Prometheus format:
 
 ```python
 {
-    "wsp_type": "WSP∞",  # pArtifact-induced recall
+    "wsp_type": "WSP[INFINITY]",  # pArtifact-induced recall
     "task": "user input here",
     "scope": {
         "files": [],
@@ -82,7 +82,7 @@ Every input is converted to WSP-compliant Prometheus format:
     "wsp_refs": ["WSP_CORE.md", "WSP_framework.md"],
     "constraints": [
         "No vibecoding",
-        "Tool usage ≤5 per task",
+        "Tool usage [U+2264]5 per task",
         "Prefer extend existing"
     ],
     "validation": {
@@ -94,7 +94,7 @@ Every input is converted to WSP-compliant Prometheus format:
 
 ## Metrics Tracked
 
-- **Tool Calls**: Total tools used (optimal ≤5)
+- **Tool Calls**: Total tools used (optimal [U+2264]5)
 - **Completion Time**: Pipeline duration
 - **Error Rate**: Failures per stage
 - **WSP Compliance**: Protocols followed

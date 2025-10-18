@@ -37,7 +37,7 @@ def test_help_command():
     assert "@TestMod" in response
     assert "/toggle" in response  # MOD-only command
     
-    print("✅ /help command works!")
+    print("[OK] /help command works!")
 
 def test_score_command():
     """Test /score command"""
@@ -53,7 +53,7 @@ def test_score_command():
     assert "@TestUser" in response
     assert "XP" in response
     
-    print("✅ /score command works!")
+    print("[OK] /score command works!")
 
 def test_leaderboard_command():
     """Test /leaderboard command"""
@@ -68,17 +68,17 @@ def test_leaderboard_command():
     assert response is not None
     assert "@TestUser" in response
     
-    print("✅ /leaderboard command works!")
+    print("[OK] /leaderboard command works!")
 
 if __name__ == "__main__":
     try:
         test_help_command()
         test_score_command()
         test_leaderboard_command()
-        print("\n🎉 All tests passed!")
+        print("\n[CELEBRATE] All tests passed!")
     except AssertionError as e:
-        print(f"\n❌ Test failed: {e}")
+        print(f"\n[FAIL] Test failed: {e}")
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n[FAIL] Error: {e}")
         import traceback
         traceback.print_exc()

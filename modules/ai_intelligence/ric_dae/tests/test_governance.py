@@ -7,7 +7,7 @@ Tests for governance and compliance including:
 - Audit logging verification
 - Rate limiting enforcement
 
-WSP 5: ≥90% coverage target
+WSP 5: [GREATER_EQUAL]90% coverage target
 WSP 6: Auditable test execution
 """
 

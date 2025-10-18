@@ -1,14 +1,14 @@
 # 🟢 FoundUps Module: Remote Builder
 
-## 🧩 LEGO Block Modularity
+## [U+1F9E9] LEGO Block Modularity
 This module is designed as a **standalone LEGO block** that snaps perfectly into the FoundUps Rubik's Cube architecture. It operates independently while integrating seamlessly with other modules through well-defined interfaces, following the principle that each module should function as an autonomous component that can be plugged in, removed, or upgraded without affecting the rest of the system.
 
 **Modular Architecture Principles:**
-- **🔌 Plug & Play**: Self-contained with minimal dependencies
-- **🔗 Clean Interfaces**: Standard WSP-compliant APIs for seamless integration  
-- **⚡ Independent Operation**: Functions autonomously within its domain scope
-- **🔄 Hot-Swappable**: Can be upgraded or replaced without system disruption
-- **🎯 Single Responsibility**: Focused solely on remote building workflows
+- **[U+1F50C] Plug & Play**: Self-contained with minimal dependencies
+- **[LINK] Clean Interfaces**: Standard WSP-compliant APIs for seamless integration  
+- **[LIGHTNING] Independent Operation**: Functions autonomously within its domain scope
+- **[REFRESH] Hot-Swappable**: Can be upgraded or replaced without system disruption
+- **[TARGET] Single Responsibility**: Focused solely on remote building workflows
 
 ## Purpose
 This module enables **remote building workflows** for the FoundUps Agent ecosystem. It allows developers to trigger, manage, and monitor builds from remote clients (e.g., mobile devices or web interfaces).
@@ -36,7 +36,7 @@ Use this description to scaffold the module in your development environment.
 
 ---
 
-## 🌀 Windsurf Protocol (WSP) Recursive Prompt
+## [U+1F300] Windsurf Protocol (WSP) Recursive Prompt
 **0102 Directive**: This module operates within the WSP framework to enable remote build workflows.
 
 **WSP Tri-Phase Execution:**
@@ -49,8 +49,8 @@ wsp_cycle(input="remote_build_request", log=True)
 ```
 
 ## WSP Compliance Status
-- **WSP_3**: ✅ Correctly placed in platform_integration domain
-- **WSP_30**: ✅ Following agentic build orchestration
+- **WSP_3**: [OK] Correctly placed in platform_integration domain
+- **WSP_30**: [OK] Following agentic build orchestration
 - **WSP_4**: ⏳ Will pass FMAS audit upon implementation
 - **WSP_5**: ⏳ 90% test coverage target
 - **WSP_11**: ⏳ Interface definition in __init__.py

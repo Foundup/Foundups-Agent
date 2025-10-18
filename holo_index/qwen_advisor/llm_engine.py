@@ -1,4 +1,23 @@
+# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Qwen LLM Inference Engine for HoloIndex
 
 This module provides local LLM inference using llama-cpp-python
@@ -6,12 +25,11 @@ to power the Qwen advisor with actual AI capabilities instead of
 rule-based processing.
 
 NAVIGATION: Local LLM inference engine for Qwen advisor
-→ Called by: qwen_advisor/advisor.py
-→ Dependencies: llama-cpp-python, qwen-coder-1.5b.gguf
-→ Config: qwen_advisor/config.py
+-> Called by: qwen_advisor/advisor.py
+-> Dependencies: llama-cpp-python, qwen-coder-1.5b.gguf
+-> Config: qwen_advisor/config.py
 """
 
-from __future__ import annotations
 
 import logging
 from pathlib import Path

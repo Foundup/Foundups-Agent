@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Documentation & Registry DAE - Autonomous Documentation Keeper
 Absorbs 2 agents into single documentation cube
 Token Budget: 4K (vs 40K for individual agents)
@@ -61,10 +78,10 @@ class DocumentationRegistryDAE:
 ## Module Structure (WSP 49 Compliant)
 ```
 {module_path}/
-├── src/           # Source code
-├── tests/         # Test coverage
-├── docs/          # Documentation
-└── memory/        # DAE patterns
++-- src/           # Source code
++-- tests/         # Test coverage
++-- docs/          # Documentation
++-- memory/        # DAE patterns
 ```
 
 ## Usage
@@ -244,7 +261,7 @@ class DocumentationRegistryDAE:
             "date": datetime.now().strftime("%Y-%m-%d"),
             "purpose": f"Autonomous {module_name} operations",
             "usage": f"from {domain}.{module_name} import {module_name.title()}DAE",
-            "wsp_compliance": "✅ WSP 49, 62, 60, 22, 3",
+            "wsp_compliance": "[OK] WSP 49, 62, 60, 22, 3",
             "phase": "PoC",
             "token_budget": "5K-8K",
             "change_description": "Initial DAE implementation",
@@ -323,7 +340,7 @@ class DocumentationRegistryDAE:
     
     def generate_migration_guide(self) -> str:
         """
-        Generate guide for agent→DAE migration.
+        Generate guide for agent->DAE migration.
         """
         guide = """# Agent to DAE Migration Guide
 
@@ -367,7 +384,7 @@ Transforming 23 individual agents into 5 autonomous DAE cubes.
 - **To**: DAEs remembering optimal patterns
 - **Result**: Instant recall vs expensive computation
 
-## Migration Complete! 🎉
+## Migration Complete! [CELEBRATE]
 """
         return guide
     
@@ -391,14 +408,14 @@ Transforming 23 individual agents into 5 autonomous DAE cubes.
                 "token_reduction": f"{((40000 - self.token_budget) / 40000 * 100):.1f}%",
                 "speed": "100x faster (templates vs generation)",
                 "consistency": "100% (same templates)",
-                "complexity": "2 agents → 1 DAE"
+                "complexity": "2 agents -> 1 DAE"
             }
         }
 
 
 def demonstrate_documentation_dae():
     """Demonstrate the Documentation & Registry DAE."""
-    print("📚 Documentation & Registry DAE Demo")
+    print("[BOOKS] Documentation & Registry DAE Demo")
     print("=" * 60)
     
     dae = DocumentationRegistryDAE()
@@ -445,7 +462,7 @@ def demonstrate_documentation_dae():
     print("\n4. Migration Guide:")
     guide = dae.generate_migration_guide()
     print("   Migration guide generated!")
-    print(f"   Shows transformation of 23 agents → 5 DAEs")
+    print(f"   Shows transformation of 23 agents -> 5 DAEs")
     
     # Show comparison
     print("\n5. Efficiency Comparison:")
@@ -454,7 +471,7 @@ def demonstrate_documentation_dae():
     print(f"   Speed: {comparison['improvements']['speed']}")
     print(f"   Consistency: {comparison['improvements']['consistency']}")
     
-    print("\n✅ Single DAE handles all documentation with 90% token reduction!")
+    print("\n[OK] Single DAE handles all documentation with 90% token reduction!")
 
 
 if __name__ == "__main__":

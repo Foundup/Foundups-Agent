@@ -52,7 +52,7 @@ class YouTubeMCPIntegration:
         # Event queue for async processing
         self.event_queue: asyncio.Queue = asyncio.Queue()
         
-        logger.info("🔌 YouTube MCP Integration initialized")
+        logger.info("[U+1F50C] YouTube MCP Integration initialized")
     
     def _configure_servers(self):
         """Configure MCP server connections"""
@@ -76,7 +76,7 @@ class YouTubeMCPIntegration:
             try:
                 # In production, would use actual MCP client library
                 # For now, simulate connection
-                logger.info(f"🔗 Connecting to MCP server: {conn.server_name}")
+                logger.info(f"[LINK] Connecting to MCP server: {conn.server_name}")
                 
                 # Subscribe to events
                 if conn.server_type == "whack":
@@ -85,10 +85,10 @@ class YouTubeMCPIntegration:
                     await self._subscribe_quota_events(conn)
                 
                 conn.connected = True
-                logger.info(f"✅ Connected to {conn.server_name}")
+                logger.info(f"[OK] Connected to {conn.server_name}")
                 
             except Exception as e:
-                logger.error(f"❌ Failed to connect to {conn.server_name}: {e}")
+                logger.error(f"[FAIL] Failed to connect to {conn.server_name}: {e}")
     
     async def _subscribe_whack_events(self, conn: MCPConnection):
         """Subscribe to whack-a-magat events"""
@@ -99,7 +99,7 @@ class YouTubeMCPIntegration:
         }
         
         # In production, would call actual MCP tool
-        logger.info(f"📢 Subscribed to whack events for {conn.client_id}")
+        logger.info(f"[U+1F4E2] Subscribed to whack events for {conn.client_id}")
     
     async def _subscribe_quota_events(self, conn: MCPConnection):
         """Subscribe to quota alerts"""
@@ -108,7 +108,7 @@ class YouTubeMCPIntegration:
             "threshold": 0.8  # Alert at 80% usage
         }
         
-        logger.info(f"📊 Subscribed to quota alerts for {conn.client_id}")
+        logger.info(f"[DATA] Subscribed to quota alerts for {conn.client_id}")
     
     async def process_timeout_event(self, event: Dict) -> Dict:
         """
@@ -132,7 +132,7 @@ class YouTubeMCPIntegration:
             MCP response with points, combo, etc.
         """
         if not self.connections["whack"].connected:
-            logger.warning("⚠️ MCP Whack server not connected")
+            logger.warning("[U+26A0]️ MCP Whack server not connected")
             return {"error": "MCP not connected"}
         
         try:
@@ -249,7 +249,7 @@ class YouTubeMCPIntegration:
         In production, this would use the actual MCP client library.
         For now, we actually call the real timeout_announcer to get proper announcements.
         """
-        logger.debug(f"🔧 MCP Call: {server}.{tool}({params})")
+        logger.debug(f"[TOOL] MCP Call: {server}.{tool}({params})")
         
         # Simulate responses based on tool
         if server == "whack" and tool == "record_whack":
@@ -336,7 +336,7 @@ class YouTubeMCPIntegration:
         """
         Handle incoming MCP events (pushed from servers)
         
-        WSP 21: Process DAE↔DAE envelopes
+        WSP 21: Process DAE[U+2194]DAE envelopes
         """
         if event.get("version") == "WSP21-1.0":
             # WSP 21 compliant envelope
@@ -352,17 +352,17 @@ class YouTubeMCPIntegration:
     
     async def _handle_whack_event(self, data: Dict):
         """Handle incoming whack event from MCP"""
-        logger.info(f"🎯 Whack event: {data.get('moderator_name')} → {data.get('target_name')}")
+        logger.info(f"[TARGET] Whack event: {data.get('moderator_name')} -> {data.get('target_name')}")
         # Process whack event (update local state, etc.)
     
     async def _handle_quota_event(self, data: Dict):
         """Handle quota alert from MCP"""
-        logger.warning(f"📊 Quota alert: {data}")
+        logger.warning(f"[DATA] Quota alert: {data}")
         # Handle quota warning/critical
     
     async def _handle_magadoom_event(self, data: Dict):
         """Handle MAGADOOM announcement from MCP"""
-        logger.info(f"🔥 MAGADOOM: {data.get('message')}")
+        logger.info(f"[U+1F525] MAGADOOM: {data.get('message')}")
         # Trigger special announcement
 
 
@@ -384,13 +384,13 @@ class YouTubeDAEWithMCP:
         
     async def initialize(self):
         """Initialize DAE with MCP connections"""
-        logger.info("🤖 Initializing YouTube DAE with MCP...")
+        logger.info("[BOT] Initializing YouTube DAE with MCP...")
         
         # Connect to MCP servers
         await self.mcp.connect_all()
         self.connected = True
         
-        logger.info("✅ YouTube DAE ready with MCP integration")
+        logger.info("[OK] YouTube DAE ready with MCP integration")
     
     async def process_timeout(self, timeout_event: Dict) -> Optional[str]:
         """
@@ -412,14 +412,14 @@ class YouTubeDAEWithMCP:
             points = result["points"]
             combo = result["combo_multiplier"]
             
-            announcement = f"🎯 {mod_name} whacked {target_name}! "
+            announcement = f"[TARGET] {mod_name} whacked {target_name}! "
             announcement += f"+{points} points"
             
             if combo > 1:
                 announcement += f" (x{combo} combo!)"
             
             if result["is_multi_whack"]:
-                announcement += f" 🔥 MULTI-WHACK x{result['total_whacks']}!"
+                announcement += f" [U+1F525] MULTI-WHACK x{result['total_whacks']}!"
             
             if result["rank"] > 0:
                 announcement += f" [Rank #{result['rank']}]"
@@ -437,7 +437,7 @@ class YouTubeDAEWithMCP:
         if command == "/leaderboard":
             result = await self.mcp.get_leaderboard(5)
             if "leaderboard" in result:
-                response = "🏆 TOP WHACKERS:\n"
+                response = "[U+1F3C6] TOP WHACKERS:\n"
                 for entry in result["leaderboard"]:
                     response += f"{entry['rank']}. {entry['user_name']}: {entry['total_points']} pts\n"
                 return response
@@ -474,7 +474,7 @@ async def test_mcp_integration():
     # Process through MCP (instant!)
     announcement = await dae.process_timeout(timeout)
     if announcement:
-        print(f"📢 Instant announcement: {announcement}")
+        print(f"[U+1F4E2] Instant announcement: {announcement}")
     
     # Test slash commands
     leaderboard = await dae.get_slash_command_response("/leaderboard", "mod_123")

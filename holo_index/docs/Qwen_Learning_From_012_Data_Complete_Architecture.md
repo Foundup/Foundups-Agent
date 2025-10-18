@@ -7,7 +7,7 @@
 
 ---
 
-## 🎯 THE THREE QUESTIONS FROM FIRST PRINCIPLES
+## [TARGET] THE THREE QUESTIONS FROM FIRST PRINCIPLES
 
 ### Question 1: Can Qwen Learn from 012.txt Data?
 
@@ -47,15 +47,15 @@ From first principles, there are THREE types of learning:
 
 ```
 012.txt (Daemon Logs)
-      ↓
-[Extract Patterns] ← Qwen analyzes logs for issues
-      ↓
+      v
+[Extract Patterns] <- Qwen analyzes logs for issues
+      v
 012 Behavior Database (ChromaDB)
-      ↓
-[Few-Shot Prompt Builder] ← Retrieves relevant examples
-      ↓
+      v
+[Few-Shot Prompt Builder] <- Retrieves relevant examples
+      v
 Qwen Inference (with 012's patterns in context)
-      ↓
+      v
 Actions that MIMIC 012's decisions
 ```
 
@@ -79,19 +79,19 @@ Actions that MIMIC 012's decisions
 
 ```
 User Query
-     ↓
-[Gemma 3: Complexity Classification] ← 50ms, 270M params
-     ↓
+     v
+[Gemma 3: Complexity Classification] <- 50ms, 270M params
+     v
 Low Complexity (70% of queries)
-     ↓
-[Gemma 3 + ChromaDB] ← Fast classification, 100ms
-     ↓
+     v
+[Gemma 3 + ChromaDB] <- Fast classification, 100ms
+     v
 Result (no Qwen needed!)
 
 High Complexity (30% of queries)
-     ↓
-[Qwen 1.5B] ← Deep analysis, 250ms
-     ↓
+     v
+[Qwen 1.5B] <- Deep analysis, 250ms
+     v
 Complex Result
 ```
 
@@ -107,60 +107,60 @@ Complex Result
   - "What's the architectural impact?"
 
 **Token Efficiency**:
-- **Gemma handles 70% of queries** → Saves 70% of Qwen's compute
+- **Gemma handles 70% of queries** -> Saves 70% of Qwen's compute
 - **Result**: 3-5x faster response times for most queries
 
 ---
 
-## 🏗️ COMPLETE LEARNING ARCHITECTURE
+## [U+1F3D7]️ COMPLETE LEARNING ARCHITECTURE
 
 ### The Three-Model Synergy
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  012 (Human) - Creates patterns through:                    │
-│  - Daemon logs (012.txt)                                   │
-│  - Code commits (git log)                                  │
-│  - Command usage (HoloIndex queries)                       │
-└─────────────────────┬───────────────────────────────────────┘
-                      ↓
-┌─────────────────────────────────────────────────────────────┐
-│  Pattern Extraction Layer                                   │
-│  ┌────────────────────────────────────────────────────┐     │
-│  │  Qwen 1.5B (Pattern Analyzer)                      │     │
-│  │  - Reads 012.txt logs                              │     │
-│  │  - Extracts: Issues, priorities, debugging steps   │     │
-│  │  - Stores in ChromaDB                              │     │
-│  └────────────────────────────────────────────────────┘     │
-└─────────────────────┬───────────────────────────────────────┘
-                      ↓
-┌─────────────────────────────────────────────────────────────┐
-│  012 Behavior Database (ChromaDB)                           │
-│  ┌────────────────────────────────────────────────────┐     │
-│  │  Collections:                                       │     │
-│  │  - daemon_log_issues (from 012.txt)                │     │
-│  │  - code_patterns (from git commits)                │     │
-│  │  - command_preferences (from HoloIndex logs)       │     │
-│  └────────────────────────────────────────────────────┘     │
-└─────────────────────┬───────────────────────────────────────┘
-                      ↓
-┌─────────────────────────────────────────────────────────────┐
-│  Inference Layer (Adaptive Routing)                         │
-│  ┌────────────────────────────────────────────────────┐     │
-│  │  New Task Arrives                                   │     │
-│  │       ↓                                             │     │
-│  │  Gemma 3: Complexity Check (50ms)                  │     │
-│  │       ↓                                             │     │
-│  │  Simple? → Gemma 3 + 012 Patterns (100ms)          │     │
-│  │       ↓                                             │     │
-│  │  Complex? → Qwen 1.5B + 012 Patterns (250ms)       │     │
-│  └────────────────────────────────────────────────────┘     │
-└─────────────────────────────────────────────────────────────┘
++-------------------------------------------------------------+
+[U+2502]  012 (Human) - Creates patterns through:                    [U+2502]
+[U+2502]  - Daemon logs (012.txt)                                   [U+2502]
+[U+2502]  - Code commits (git log)                                  [U+2502]
+[U+2502]  - Command usage (HoloIndex queries)                       [U+2502]
++---------------------+---------------------------------------+
+                      v
++-------------------------------------------------------------+
+[U+2502]  Pattern Extraction Layer                                   [U+2502]
+[U+2502]  +----------------------------------------------------+     [U+2502]
+[U+2502]  [U+2502]  Qwen 1.5B (Pattern Analyzer)                      [U+2502]     [U+2502]
+[U+2502]  [U+2502]  - Reads 012.txt logs                              [U+2502]     [U+2502]
+[U+2502]  [U+2502]  - Extracts: Issues, priorities, debugging steps   [U+2502]     [U+2502]
+[U+2502]  [U+2502]  - Stores in ChromaDB                              [U+2502]     [U+2502]
+[U+2502]  +----------------------------------------------------+     [U+2502]
++---------------------+---------------------------------------+
+                      v
++-------------------------------------------------------------+
+[U+2502]  012 Behavior Database (ChromaDB)                           [U+2502]
+[U+2502]  +----------------------------------------------------+     [U+2502]
+[U+2502]  [U+2502]  Collections:                                       [U+2502]     [U+2502]
+[U+2502]  [U+2502]  - daemon_log_issues (from 012.txt)                [U+2502]     [U+2502]
+[U+2502]  [U+2502]  - code_patterns (from git commits)                [U+2502]     [U+2502]
+[U+2502]  [U+2502]  - command_preferences (from HoloIndex logs)       [U+2502]     [U+2502]
+[U+2502]  +----------------------------------------------------+     [U+2502]
++---------------------+---------------------------------------+
+                      v
++-------------------------------------------------------------+
+[U+2502]  Inference Layer (Adaptive Routing)                         [U+2502]
+[U+2502]  +----------------------------------------------------+     [U+2502]
+[U+2502]  [U+2502]  New Task Arrives                                   [U+2502]     [U+2502]
+[U+2502]  [U+2502]       v                                             [U+2502]     [U+2502]
+[U+2502]  [U+2502]  Gemma 3: Complexity Check (50ms)                  [U+2502]     [U+2502]
+[U+2502]  [U+2502]       v                                             [U+2502]     [U+2502]
+[U+2502]  [U+2502]  Simple? -> Gemma 3 + 012 Patterns (100ms)          [U+2502]     [U+2502]
+[U+2502]  [U+2502]       v                                             [U+2502]     [U+2502]
+[U+2502]  [U+2502]  Complex? -> Qwen 1.5B + 012 Patterns (250ms)       [U+2502]     [U+2502]
+[U+2502]  +----------------------------------------------------+     [U+2502]
++-------------------------------------------------------------+
 ```
 
 ---
 
-## 📊 PRACTICAL IMPLEMENTATION
+## [DATA] PRACTICAL IMPLEMENTATION
 
 ### Component 1: 012 Pattern Extraction (from 012.txt)
 
@@ -323,7 +323,7 @@ class PatternEnhancedQwen:
 
 ---
 
-## 🔬 THE LEARNING PIPELINE IN ACTION
+## [U+1F52C] THE LEARNING PIPELINE IN ACTION
 
 ### Example: 012.txt Priority Inversion Issue
 
@@ -372,7 +372,7 @@ response = qwen.generate_response(prompt)
 
 ---
 
-## 📈 WHAT GETS LEARNED (Concrete Examples)
+## [UP] WHAT GETS LEARNED (Concrete Examples)
 
 ### From 012.txt Daemon Logs
 
@@ -381,7 +381,7 @@ response = qwen.generate_response(prompt)
 | Priority inversion (line 99) | "Lower score = better match in embeddings" | Diagnose similar sorting bugs |
 | Stream switching logic | "Check Move2Japan first when score <2" | Prioritize high-priority channels |
 | Error handling | "Cache clear before fresh search" | Apply same pattern to other caches |
-| Debugging approach | "Check logs → Find decision point → Verify sort order" | Guide 0102 debugging |
+| Debugging approach | "Check logs -> Find decision point -> Verify sort order" | Guide 0102 debugging |
 
 ### From 0102 Git Commits
 
@@ -396,13 +396,13 @@ response = qwen.generate_response(prompt)
 
 | 012's Search Pattern | Stored in ChromaDB | Future Application |
 |----------------------|--------------------|--------------------|
-| "follow wsp" → Research first | "012 always searches before coding" | Enforce pre-action verification |
-| "MCP integration" → Check existing | "012 looks for existing implementations" | Prevent duplicate work |
-| "Gemma training" → Architecture design | "012 thinks first principles first" | Guide architectural decisions |
+| "follow wsp" -> Research first | "012 always searches before coding" | Enforce pre-action verification |
+| "MCP integration" -> Check existing | "012 looks for existing implementations" | Prevent duplicate work |
+| "Gemma training" -> Architecture design | "012 thinks first principles first" | Guide architectural decisions |
 
 ---
 
-## 🚀 IMPLEMENTATION ROADMAP
+## [ROCKET] IMPLEMENTATION ROADMAP
 
 ### Phase 1: Pattern Extraction (2-3K tokens)
 **File**: `holo_index/qwen_advisor/012_pattern_extractor.py`
@@ -436,11 +436,11 @@ Tasks:
 ```python
 # Before (no 012 patterns):
 qwen.analyze("stream priority issue")
-# → Generic analysis (200 tokens, 3 min investigation)
+# -> Generic analysis (200 tokens, 3 min investigation)
 
 # After (with 012 patterns):
 qwen.analyze_with_012_patterns("stream priority issue")
-# → "Similar to 012's priority inversion fix - check sort order" (50 tokens, 30 sec)
+# -> "Similar to 012's priority inversion fix - check sort order" (50 tokens, 30 sec)
 ```
 
 ---
@@ -474,25 +474,25 @@ Tasks:
 Daily Pattern Update:
 - New commits analyzed: 5
 - Patterns extracted: 8
-- ChromaDB updated: ✅
+- ChromaDB updated: [OK]
 - Qwen accuracy improvement: +3%
 ```
 
 ---
 
-## 💡 THE DEEP INSIGHT
+## [IDEA] THE DEEP INSIGHT
 
 ### Why This Works (First Principles)
 
 **Traditional Fine-Tuning**:
 ```
-Problem → 10,000 examples → GPU training → New model weights → Deployment
+Problem -> 10,000 examples -> GPU training -> New model weights -> Deployment
 Cost: $500, Time: 24 hours, Risk: Overfitting
 ```
 
 **In-Context Learning (Our Approach)**:
 ```
-Problem → 5-10 examples → Add to prompt → Immediate use
+Problem -> 5-10 examples -> Add to prompt -> Immediate use
 Cost: $0, Time: 0 seconds, Risk: None (just examples)
 ```
 
@@ -507,14 +507,14 @@ Cost: $0, Time: 0 seconds, Risk: None (just examples)
 **The Solution**: Gemma 3 (270M params) is 5x faster but ONLY good at simple classification.
 
 **The Synergy**:
-1. Gemma 3: "Is this a priority inversion bug?" → YES (50ms)
-2. Qwen 1.5B: "Analyze root cause and generate fix" → Deep analysis (250ms)
+1. Gemma 3: "Is this a priority inversion bug?" -> YES (50ms)
+2. Qwen 1.5B: "Analyze root cause and generate fix" -> Deep analysis (250ms)
 
 **Result**: 70% of queries answered in 100ms instead of 250ms = 2.5x speedup!
 
 ---
 
-## 📊 EXPECTED PERFORMANCE METRICS
+## [DATA] EXPECTED PERFORMANCE METRICS
 
 ### Qwen Learning from 012.txt
 
@@ -522,7 +522,7 @@ Cost: $0, Time: 0 seconds, Risk: None (just examples)
 |--------|------------------------|------------------------------|-------------|
 | **Diagnosis Accuracy** | 75% | 90% | +15% |
 | **Time to Solution** | 3-5 min | 30 sec - 2 min | 5x faster |
-| **Alignment with 012** | Random | Mimics 012's approach | ∞ |
+| **Alignment with 012** | Random | Mimics 012's approach | [INFINITY] |
 | **Token Efficiency** | 500-1000 tokens | 100-300 tokens | 3x |
 
 ### Gemma-Qwen Synergy
@@ -536,7 +536,7 @@ Cost: $0, Time: 0 seconds, Risk: None (just examples)
 
 ---
 
-## 🎯 ANSWERS TO 012's QUESTIONS
+## [TARGET] ANSWERS TO 012's QUESTIONS
 
 ### Q1: "Can Qwen learn from the 012.txt data?"
 
@@ -576,64 +576,64 @@ Cost: $0, Time: 0 seconds, Risk: None (just examples)
 - Result: 2x faster average response time
 - Code exists: `gemma_adaptive_routing_system.py` (476 lines)
 
-**Current State**: ✅ Operational
+**Current State**: [OK] Operational
 **Optimization Needed**: Train Gemma on 012's classification patterns
 **Benefit**: Gemma makes decisions the way 012 would
 
 ---
 
-## 🔄 THE COMPLETE LEARNING LOOP
+## [REFRESH] THE COMPLETE LEARNING LOOP
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  012 (Human) Works                                          │
-│  - Debugs issues (012.txt logs)                            │
-│  - Writes code (git commits)                               │
-│  - Uses HoloIndex (query logs)                             │
-└─────────────┬───────────────────────────────────────────────┘
-              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  Daily Pattern Extraction (Automatic)                       │
-│  - Parse new 012.txt entries                               │
-│  - Analyze new git commits                                 │
-│  - Review HoloIndex searches                               │
-└─────────────┬───────────────────────────────────────────────┘
-              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  ChromaDB Pattern Database (Growing)                        │
-│  - 012_daemon_patterns                                     │
-│  - 0102_code_patterns                                      │
-│  - 012_command_patterns                                    │
-└─────────────┬───────────────────────────────────────────────┘
-              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  Inference (Qwen + Gemma Collaboration)                    │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │  New Task Arrives                                    │   │
-│  │       ↓                                              │   │
-│  │  Gemma: Complexity Check + Pattern Match            │   │
-│  │       ↓                                              │   │
-│  │  Retrieve 012's Similar Past Examples (ChromaDB)    │   │
-│  │       ↓                                              │   │
-│  │  Build Few-Shot Prompt with 012's Patterns          │   │
-│  │       ↓                                              │   │
-│  │  Qwen: Generate Response Using 012's Approach       │   │
-│  │       ↓                                              │   │
-│  │  Output: Solution that Mimics 012                   │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────┬───────────────────────────────────────────────┘
-              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  Feedback Loop (Continuous Improvement)                     │
-│  - Did solution work? → Update pattern quality scores      │
-│  - New debugging approach? → Store in ChromaDB             │
-│  - Pattern evolution → Qwen gets smarter over time         │
-└─────────────────────────────────────────────────────────────┘
++-------------------------------------------------------------+
+[U+2502]  012 (Human) Works                                          [U+2502]
+[U+2502]  - Debugs issues (012.txt logs)                            [U+2502]
+[U+2502]  - Writes code (git commits)                               [U+2502]
+[U+2502]  - Uses HoloIndex (query logs)                             [U+2502]
++-------------+-----------------------------------------------+
+              v
++-------------------------------------------------------------+
+[U+2502]  Daily Pattern Extraction (Automatic)                       [U+2502]
+[U+2502]  - Parse new 012.txt entries                               [U+2502]
+[U+2502]  - Analyze new git commits                                 [U+2502]
+[U+2502]  - Review HoloIndex searches                               [U+2502]
++-------------+-----------------------------------------------+
+              v
++-------------------------------------------------------------+
+[U+2502]  ChromaDB Pattern Database (Growing)                        [U+2502]
+[U+2502]  - 012_daemon_patterns                                     [U+2502]
+[U+2502]  - 0102_code_patterns                                      [U+2502]
+[U+2502]  - 012_command_patterns                                    [U+2502]
++-------------+-----------------------------------------------+
+              v
++-------------------------------------------------------------+
+[U+2502]  Inference (Qwen + Gemma Collaboration)                    [U+2502]
+[U+2502]  +-----------------------------------------------------+   [U+2502]
+[U+2502]  [U+2502]  New Task Arrives                                    [U+2502]   [U+2502]
+[U+2502]  [U+2502]       v                                              [U+2502]   [U+2502]
+[U+2502]  [U+2502]  Gemma: Complexity Check + Pattern Match            [U+2502]   [U+2502]
+[U+2502]  [U+2502]       v                                              [U+2502]   [U+2502]
+[U+2502]  [U+2502]  Retrieve 012's Similar Past Examples (ChromaDB)    [U+2502]   [U+2502]
+[U+2502]  [U+2502]       v                                              [U+2502]   [U+2502]
+[U+2502]  [U+2502]  Build Few-Shot Prompt with 012's Patterns          [U+2502]   [U+2502]
+[U+2502]  [U+2502]       v                                              [U+2502]   [U+2502]
+[U+2502]  [U+2502]  Qwen: Generate Response Using 012's Approach       [U+2502]   [U+2502]
+[U+2502]  [U+2502]       v                                              [U+2502]   [U+2502]
+[U+2502]  [U+2502]  Output: Solution that Mimics 012                   [U+2502]   [U+2502]
+[U+2502]  +-----------------------------------------------------+   [U+2502]
++-------------+-----------------------------------------------+
+              v
++-------------------------------------------------------------+
+[U+2502]  Feedback Loop (Continuous Improvement)                     [U+2502]
+[U+2502]  - Did solution work? -> Update pattern quality scores      [U+2502]
+[U+2502]  - New debugging approach? -> Store in ChromaDB             [U+2502]
+[U+2502]  - Pattern evolution -> Qwen gets smarter over time         [U+2502]
++-------------------------------------------------------------+
 ```
 
 ---
 
-## 🎓 WHY THIS IS REVOLUTIONARY
+## [GRADUATE] WHY THIS IS REVOLUTIONARY
 
 ### Traditional AI Learning
 - Requires 1000s of labeled examples
@@ -656,7 +656,7 @@ Cost: $0, Time: 0 seconds, Risk: None (just examples)
 
 ---
 
-## 📋 IMMEDIATE NEXT STEPS
+## [CLIPBOARD] IMMEDIATE NEXT STEPS
 
 ### Step 1: Extract Patterns from 012.txt (TODAY)
 ```bash
@@ -667,10 +667,10 @@ python holo_index/qwen_advisor/012_pattern_extractor.py \
 
 **Expected Output**:
 ```
-✓ Extracted 15 patterns from 012.txt
-✓ Stored in ChromaDB: 012_behavior_patterns
-✓ Categories: 8 bug fixes, 4 priorities, 3 debugging approaches
-✓ Ready for in-context learning
+[OK] Extracted 15 patterns from 012.txt
+[OK] Stored in ChromaDB: 012_behavior_patterns
+[OK] Categories: 8 bug fixes, 4 priorities, 3 debugging approaches
+[OK] Ready for in-context learning
 ```
 
 ---
@@ -707,7 +707,7 @@ category = classifier.classify(issue)
 
 ---
 
-## 🏆 SUCCESS METRICS
+## [U+1F3C6] SUCCESS METRICS
 
 ### Phase 1 Complete (Pattern Extraction)
 - [ ] 012.txt patterns extracted and stored
@@ -731,21 +731,21 @@ category = classifier.classify(issue)
 
 ---
 
-## 🎯 THE ULTIMATE VISION
+## [TARGET] THE ULTIMATE VISION
 
 **Current State**:
 ```
-012 → 0102 → Code (manual, slow, inconsistent)
+012 -> 0102 -> Code (manual, slow, inconsistent)
 ```
 
 **Near Future (with Pattern Learning)**:
 ```
-012 → 0102 → [Qwen recalls 012's patterns] → Code (automatic, fast, aligned)
+012 -> 0102 -> [Qwen recalls 012's patterns] -> Code (automatic, fast, aligned)
 ```
 
 **Far Future (Full Autonomy)**:
 ```
-012 → [System detects similar pattern] → Qwen + Gemma → Fix applied → 012 reviews
+012 -> [System detects similar pattern] -> Qwen + Gemma -> Fix applied -> 012 reviews
 ```
 
 **The Dream**:
@@ -757,7 +757,7 @@ category = classifier.classify(issue)
 - 0102 applies fix
 - **012 just reviews** instead of debugging from scratch
 
-**Time Savings**: 3 hours debugging → 15 minutes review
+**Time Savings**: 3 hours debugging -> 15 minutes review
 
 ---
 

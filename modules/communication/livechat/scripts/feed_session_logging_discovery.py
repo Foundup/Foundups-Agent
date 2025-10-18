@@ -17,7 +17,7 @@ import importlib.util
 breadcrumb_path = project_root / "holo_index" / "adaptive_learning" / "breadcrumb_tracer.py"
 
 if not breadcrumb_path.exists():
-    print(f"⚠️ Breadcrumb tracer not found at: {breadcrumb_path}")
+    print(f"[U+26A0]️ Breadcrumb tracer not found at: {breadcrumb_path}")
     print("Creating simple discovery record instead...")
 
     # Create a simple discovery record
@@ -65,7 +65,7 @@ def feed_session_logging_discovery():
     # Add discovery about fact-checking
     tracer.add_discovery(
         discovery_type="fact_check",
-        item="✊✋🖐FC @username fact-checking",
+        item="[U+270A][U+270B][U+1F590]FC @username fact-checking",
         location="modules/communication/livechat/src/consciousness_handler.py:242",
         impact="Mod/Owner fact-check commands tracked in session logs"
     )
@@ -102,7 +102,7 @@ def feed_session_logging_discovery():
         impact="Complete documentation of automatic session logging system"
     )
 
-    print("✅ Fed 8 discoveries about session logging to HoloIndex:")
+    print("[OK] Fed 8 discoveries about session logging to HoloIndex:")
     print("  1. Automatic session logging feature")
     print("  2. start_session() method")
     print("  3. end_session() method")
@@ -112,7 +112,7 @@ def feed_session_logging_discovery():
     print("  7. Test file")
     print("  8. Documentation")
 
-    print("\n🎯 Future 0102 agents can now find this with:")
+    print("\n[TARGET] Future 0102 agents can now find this with:")
     print('  python holo_index.py --search "session logging"')
     print('  python holo_index.py --search "fact check tracking"')
     print('  python holo_index.py --search "mod messages logs"')
@@ -146,16 +146,16 @@ def feed_session_logging_discovery():
     with open(handoff_file, 'w') as f:
         json.dump(handoff, f, indent=2)
 
-    print(f"\n📝 Created handoff contract: {handoff_file.name}")
+    print(f"\n[NOTE] Created handoff contract: {handoff_file.name}")
     print("   Next 0102 can continue enhancing session logging")
 
 
 if __name__ == "__main__":
     try:
         feed_session_logging_discovery()
-        print("\n✅ Successfully fed session logging discovery to HoloIndex!")
-        print("🔍 This helps future 0102 sessions find the code instantly")
+        print("\n[OK] Successfully fed session logging discovery to HoloIndex!")
+        print("[SEARCH] This helps future 0102 sessions find the code instantly")
     except Exception as e:
-        print(f"❌ Error feeding discovery: {e}")
+        print(f"[FAIL] Error feeding discovery: {e}")
         import traceback
         traceback.print_exc()

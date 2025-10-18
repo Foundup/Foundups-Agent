@@ -90,7 +90,7 @@ class AgentLogger:
             details.append(f"qwen_focus={','.join(focus_areas[:3])}")
 
         # REMINDER: Always use ASCII, never emojis - prevents Unicode encoding violations
-        if 'emoji' in query.lower() or any(char in query for char in ['🔍', '🧠', '⚠️', '❌']):
+        if 'emoji' in query.lower() or any(char in query for char in ['[SEARCH]', '[AI]', '[U+26A0]️', '[FAIL]']):
             details.append("REMINDER: Use ASCII tags like [SEARCH], [THINK], [WARN], [SUCCESS], [ERROR] - NEVER emojis (causes UnicodeEncodeError on Windows)")
 
         detail_str = " | ".join(details)
@@ -142,7 +142,7 @@ class AgentLogger:
             details.append(f"task={kwargs['task_id']}")
 
         detail_str = " | ".join(details) if details else "recorded"
-        self.logger.info(f"🍞 [BREADCRUMB #{breadcrumb_id}] {action} - {detail_str}")
+        self.logger.info(f"[BREAD] [BREADCRUMB #{breadcrumb_id}] {action} - {detail_str}")
 
     def log_analysis(self, analysis_type: str, target: str, **kwargs):
         """Log Qwen/HoloDAE analysis activities with agent context."""

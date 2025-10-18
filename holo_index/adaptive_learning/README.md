@@ -68,17 +68,17 @@ Autonomous processing of execution logs for HoloDAE improvement:
 
 ```
 User Query
-    ↓
+    v
 [Query Processor]
-    ↓ Enhanced Query
+    v Enhanced Query
 [Vector Search]
-    ↓ Optimized Results
+    v Optimized Results
 [LLM Response]
-    ↓ Quality Response
+    v Quality Response
 [Memory Evolution]
-    ↓ Stored Patterns
+    v Stored Patterns
 [Metrics Collection]
-    ↓
+    v
 Learning Feedback Loop
 ```
 
@@ -137,10 +137,10 @@ PRUNING_THRESHOLD = 0.3
 ### Storage Locations
 ```
 E:/HoloIndex/adaptive_learning/
-├── query_patterns.json
-├── search_optimizations.json
-├── response_templates.json
-└── memory_evolution.json
++-- query_patterns.json
++-- search_optimizations.json
++-- response_templates.json
++-- memory_evolution.json
 ```
 
 ## Integration

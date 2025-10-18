@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Complete Module Loader - Ensures 100% module integration
 WSP Compliant: WSP 3, 48, 80
 
@@ -148,14 +163,14 @@ def load_all_modules():
             sys.modules[f'integrated_{short_name}'] = module
 
             modules_loaded += 1
-            logger.debug(f"✅ Loaded: {module_path}")
+            logger.debug(f"[OK] Loaded: {module_path}")
 
         except ImportError as e:
             modules_failed += 1
-            logger.warning(f"❌ Failed to load {module_path}: {e}")
+            logger.warning(f"[FAIL] Failed to load {module_path}: {e}")
         except Exception as e:
             modules_failed += 1
-            logger.error(f"❌ Error loading {module_path}: {e}")
+            logger.error(f"[FAIL] Error loading {module_path}: {e}")
 
     # Calculate integration rate (excluding commented modules)
     active_modules = [m for m in all_modules if not m.strip().startswith('#')]
@@ -168,9 +183,9 @@ def load_all_modules():
     logger.info(f"Failed: {modules_failed}")
 
     if success_rate < 100:
-        logger.warning(f"⚠️ Only {success_rate:.1f}% integration - some modules failed")
+        logger.warning(f"[U+26A0]️ Only {success_rate:.1f}% integration - some modules failed")
     else:
-        logger.info("✅ 100% MODULE INTEGRATION ACHIEVED!")
+        logger.info("[OK] 100% MODULE INTEGRATION ACHIEVED!")
 
     logger.info("="*60)
 

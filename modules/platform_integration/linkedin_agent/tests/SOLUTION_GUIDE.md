@@ -65,16 +65,16 @@ These handle OAuth complexity for you.
 
 LinkedIn's security model:
 ```
-App Creator Account ─── Creates App ─── Can Only Post As Creator
-        ↓                    ↓                     ↓
+App Creator Account --- Creates App --- Can Only Post As Creator
+        v                    v                     v
    (Unknown User)    (865rlrxtedx3ao)    (Not openstartup)
 ```
 
 For the app to post as "openstartup":
 ```
-App Creator Account ─── Creates App ─── Can Post As Creator
-        ↓                    ↓                   ↓
-   (openstartup)       (New App ID)       (openstartup ✓)
+App Creator Account --- Creates App --- Can Post As Creator
+        v                    v                   v
+   (openstartup)       (New App ID)       (openstartup [OK])
 ```
 
 ## Quick Fix Priority:

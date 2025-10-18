@@ -11,26 +11,26 @@
 
 ```python
 # This works fine in Python:
-message = "📊 CONFIDENCE: 0.87 | DURATION: 2.3s"
-logger.info(message)  # ✅ Code executes perfectly
+message = "[DATA] CONFIDENCE: 0.87 | DURATION: 2.3s"
+logger.info(message)  # [OK] Code executes perfectly
 
 # Error only happens here:
-print(message)  # ❌ UnicodeEncodeError on Windows cp932 console
+print(message)  # [FAIL] UnicodeEncodeError on Windows cp932 console
 ```
 
 ### Where Emojis Live
 
 **chain_of_thought_logger.py:314**:
 ```python
-print(f"         📊 CONFIDENCE: {confidence:.2f} | DURATION: {thought.duration:.2f}s")
+print(f"         [DATA] CONFIDENCE: {confidence:.2f} | DURATION: {thought.duration:.2f}s")
 ```
 
 This is **daemon observability enhancement** - emojis provide visual markers for:
-- 📊 Metrics
-- 🧠 Thinking processes
-- ✅ Success states
-- ❌ Failure states
-- 🔄 Refresh cycles
+- [DATA] Metrics
+- [AI] Thinking processes
+- [OK] Success states
+- [FAIL] Failure states
+- [REFRESH] Refresh cycles
 
 **Removing them degrades UX** for daemon monitoring.
 
@@ -50,7 +50,7 @@ from typing import Any
 
 class ConsoleSafeOutput:
     """
-    Handles console output with emoji → ASCII conversion only when needed
+    Handles console output with emoji -> ASCII conversion only when needed
 
     Preserves emojis in:
     - Log files (UTF-8)
@@ -96,11 +96,11 @@ def console_print(message: str, **kwargs):
 **Usage**:
 ```python
 # In chain_of_thought_logger.py, replace:
-print(f"         📊 CONFIDENCE: {confidence:.2f}")
+print(f"         [DATA] CONFIDENCE: {confidence:.2f}")
 
 # With:
 from .console_safe_output import console_print
-console_print(f"         📊 CONFIDENCE: {confidence:.2f}")
+console_print(f"         [DATA] CONFIDENCE: {confidence:.2f}")
 ```
 
 ---
@@ -173,8 +173,8 @@ class UnicodeViolationFixer:
 
 ## WSP Compliance
 
-- **WSP 90 (UTF-8 Enforcement)**: Code IS UTF-8 compliant ✅
-- **WSP 91 (DAEMON Observability)**: Emojis enhance observability ✅
-- **WSP 50 (Pre-Action Verification)**: Verified error is display-only ✅
+- **WSP 90 (UTF-8 Enforcement)**: Code IS UTF-8 compliant [OK]
+- **WSP 91 (DAEMON Observability)**: Emojis enhance observability [OK]
+- **WSP 50 (Pre-Action Verification)**: Verified error is display-only [OK]
 
 **Conclusion**: Unicode "violations" are not violations - they're daemon enhancements that need console-safe display handling.

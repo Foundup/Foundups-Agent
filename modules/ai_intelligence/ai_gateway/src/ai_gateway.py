@@ -194,7 +194,7 @@ class AIGateway:
                 )
 
             except Exception as e:
-                logger.warning(f"⚠️ {provider_name} failed: {e}")
+                logger.warning(f"[U+26A0]️ {provider_name} failed: {e}")
                 self.usage_stats['failures'] += 1
                 continue
 

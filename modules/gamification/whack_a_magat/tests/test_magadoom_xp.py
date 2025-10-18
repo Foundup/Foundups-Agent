@@ -11,7 +11,7 @@ from modules.communication.livechat.src.event_handler import EventHandler
 from modules.gamification.whack_a_magat import get_profile
 
 def test_magadoom_xp():
-    print("🎮 Testing MAGADOOM XP System\n")
+    print("[GAME] Testing MAGADOOM XP System\n")
     print("=" * 60)
     
     # Initialize event handler
@@ -23,7 +23,7 @@ def test_magadoom_xp():
     
     # Get initial profile
     initial_profile = get_profile(test_mod_id, test_mod_name)
-    print(f"📊 Initial Profile for {test_mod_name}:")
+    print(f"[DATA] Initial Profile for {test_mod_name}:")
     print(f"   Score: {initial_profile.score} XP")
     print(f"   Rank: {initial_profile.rank}")
     print(f"   Level: {initial_profile.level}")
@@ -60,7 +60,7 @@ def test_magadoom_xp():
         }
     ]
     
-    print("🔨 Processing timeout/ban events:\n")
+    print("[U+1F528] Processing timeout/ban events:\n")
     
     for i, event in enumerate(test_events, 1):
         print(f"Event {i}: {event['type']} - {event['target_name']} ({event['duration_seconds']}s)")
@@ -73,26 +73,26 @@ def test_magadoom_xp():
         
         # Show announcement
         if result.get("announcement"):
-            print(f"📢 Announcement: {result['announcement']}")
+            print(f"[U+1F4E2] Announcement: {result['announcement']}")
         
         if result.get("level_up"):
             print(f"🆙 Level up: {result['level_up']}")
         
         # Get updated profile
         updated_profile = get_profile(test_mod_id, test_mod_name)
-        print(f"📈 Updated stats: {updated_profile.score} XP | {updated_profile.rank} | Level {updated_profile.level} | {updated_profile.frag_count} frags")
+        print(f"[UP] Updated stats: {updated_profile.score} XP | {updated_profile.rank} | Level {updated_profile.level} | {updated_profile.frag_count} frags")
         print()
     
     # Final summary
     final_profile = get_profile(test_mod_id, test_mod_name)
     print("=" * 60)
-    print(f"📊 Final Profile for {test_mod_name}:")
+    print(f"[DATA] Final Profile for {test_mod_name}:")
     print(f"   Score: {final_profile.score} XP (gained {final_profile.score - initial_profile.score})")
     print(f"   Rank: {final_profile.rank}")
     print(f"   Level: {final_profile.level}")
     print(f"   Frags: {final_profile.frag_count} (gained {final_profile.frag_count - initial_profile.frag_count})")
     
-    print("\n✅ Test completed!")
+    print("\n[OK] Test completed!")
 
 if __name__ == "__main__":
     test_magadoom_xp()

@@ -64,7 +64,7 @@ class SecurityProtocolTester:
         Returns:
             Dict containing security test results
         """
-        logger.info("🔒 Starting Security Protocol Testing")
+        logger.info("[LOCK] Starting Security Protocol Testing")
         
         try:
             # Security Test 1: Authentication Testing
@@ -88,11 +88,11 @@ class SecurityProtocolTester:
             # Security Test 7: Security Audit Testing
             await self._test_security_audit()
             
-            logger.info("✅ Security Protocol Testing Completed")
+            logger.info("[OK] Security Protocol Testing Completed")
             return self.security_results
             
         except Exception as e:
-            logger.error(f"❌ Security testing failed: {e}")
+            logger.error(f"[FAIL] Security testing failed: {e}")
             return {"error": str(e)}
     
     async def _test_authentication(self):
@@ -100,7 +100,7 @@ class SecurityProtocolTester:
         self.security_results["total_security_tests"] += 1
         
         try:
-            logger.info("🔐 Testing Authentication Mechanisms")
+            logger.info("[U+1F510] Testing Authentication Mechanisms")
             
             # Test token-based authentication
             token_auth_success = await self._simulate_token_authentication()
@@ -132,18 +132,18 @@ class SecurityProtocolTester:
             self.security_results["passed_security_tests"] += 1
             self.security_results["security_test_details"].append(authentication_result)
             
-            logger.info("✅ Authentication: PASSED - All authentication mechanisms operational")
+            logger.info("[OK] Authentication: PASSED - All authentication mechanisms operational")
             
         except Exception as e:
             self.security_results["failed_security_tests"] += 1
-            logger.error(f"❌ Authentication: FAILED - {e}")
+            logger.error(f"[FAIL] Authentication: FAILED - {e}")
     
     async def _test_authorization(self):
         """Test authorization systems."""
         self.security_results["total_security_tests"] += 1
         
         try:
-            logger.info("🔑 Testing Authorization Systems")
+            logger.info("[U+1F511] Testing Authorization Systems")
             
             # Test role-based access control
             rbac_success = await self._simulate_role_based_access_control()
@@ -175,18 +175,18 @@ class SecurityProtocolTester:
             self.security_results["passed_security_tests"] += 1
             self.security_results["security_test_details"].append(authorization_result)
             
-            logger.info("✅ Authorization: PASSED - All authorization systems operational")
+            logger.info("[OK] Authorization: PASSED - All authorization systems operational")
             
         except Exception as e:
             self.security_results["failed_security_tests"] += 1
-            logger.error(f"❌ Authorization: FAILED - {e}")
+            logger.error(f"[FAIL] Authorization: FAILED - {e}")
     
     async def _test_permission_validation(self):
         """Test permission validation."""
         self.security_results["total_security_tests"] += 1
         
         try:
-            logger.info("📋 Testing Permission Validation")
+            logger.info("[CLIPBOARD] Testing Permission Validation")
             
             # Test permission checking
             permission_check_success = await self._simulate_permission_checking()
@@ -218,18 +218,18 @@ class SecurityProtocolTester:
             self.security_results["passed_security_tests"] += 1
             self.security_results["security_test_details"].append(permission_validation_result)
             
-            logger.info("✅ Permission Validation: PASSED - All permission mechanisms operational")
+            logger.info("[OK] Permission Validation: PASSED - All permission mechanisms operational")
             
         except Exception as e:
             self.security_results["failed_security_tests"] += 1
-            logger.error(f"❌ Permission Validation: FAILED - {e}")
+            logger.error(f"[FAIL] Permission Validation: FAILED - {e}")
     
     async def _test_access_control(self):
         """Test access control mechanisms."""
         self.security_results["total_security_tests"] += 1
         
         try:
-            logger.info("🚪 Testing Access Control Mechanisms")
+            logger.info("[U+1F6AA] Testing Access Control Mechanisms")
             
             # Test file access control
             file_access_success = await self._simulate_file_access_control()
@@ -261,18 +261,18 @@ class SecurityProtocolTester:
             self.security_results["passed_security_tests"] += 1
             self.security_results["security_test_details"].append(access_control_result)
             
-            logger.info("✅ Access Control: PASSED - All access control mechanisms operational")
+            logger.info("[OK] Access Control: PASSED - All access control mechanisms operational")
             
         except Exception as e:
             self.security_results["failed_security_tests"] += 1
-            logger.error(f"❌ Access Control: FAILED - {e}")
+            logger.error(f"[FAIL] Access Control: FAILED - {e}")
     
     async def _test_security_protocol_compliance(self):
         """Test security protocol compliance."""
         self.security_results["total_security_tests"] += 1
         
         try:
-            logger.info("📜 Testing Security Protocol Compliance")
+            logger.info("[U+1F4DC] Testing Security Protocol Compliance")
             
             # Test OAuth 2.0 compliance
             oauth_compliance_success = await self._simulate_oauth_compliance()
@@ -304,18 +304,18 @@ class SecurityProtocolTester:
             self.security_results["passed_security_tests"] += 1
             self.security_results["security_test_details"].append(security_protocol_result)
             
-            logger.info("✅ Security Protocol Compliance: PASSED - All security protocols compliant")
+            logger.info("[OK] Security Protocol Compliance: PASSED - All security protocols compliant")
             
         except Exception as e:
             self.security_results["failed_security_tests"] += 1
-            logger.error(f"❌ Security Protocol Compliance: FAILED - {e}")
+            logger.error(f"[FAIL] Security Protocol Compliance: FAILED - {e}")
     
     async def _test_encryption_validation(self):
         """Test encryption validation."""
         self.security_results["total_security_tests"] += 1
         
         try:
-            logger.info("🔐 Testing Encryption Validation")
+            logger.info("[U+1F510] Testing Encryption Validation")
             
             # Test data encryption
             data_encryption_success = await self._simulate_data_encryption()
@@ -347,18 +347,18 @@ class SecurityProtocolTester:
             self.security_results["passed_security_tests"] += 1
             self.security_results["security_test_details"].append(encryption_validation_result)
             
-            logger.info("✅ Encryption Validation: PASSED - All encryption mechanisms operational")
+            logger.info("[OK] Encryption Validation: PASSED - All encryption mechanisms operational")
             
         except Exception as e:
             self.security_results["failed_security_tests"] += 1
-            logger.error(f"❌ Encryption Validation: FAILED - {e}")
+            logger.error(f"[FAIL] Encryption Validation: FAILED - {e}")
     
     async def _test_security_audit(self):
         """Test security audit mechanisms."""
         self.security_results["total_security_tests"] += 1
         
         try:
-            logger.info("🔍 Testing Security Audit Mechanisms")
+            logger.info("[SEARCH] Testing Security Audit Mechanisms")
             
             # Test security logging
             security_logging_success = await self._simulate_security_logging()
@@ -390,11 +390,11 @@ class SecurityProtocolTester:
             self.security_results["passed_security_tests"] += 1
             self.security_results["security_test_details"].append(security_audit_result)
             
-            logger.info("✅ Security Audit: PASSED - All security audit mechanisms operational")
+            logger.info("[OK] Security Audit: PASSED - All security audit mechanisms operational")
             
         except Exception as e:
             self.security_results["failed_security_tests"] += 1
-            logger.error(f"❌ Security Audit: FAILED - {e}")
+            logger.error(f"[FAIL] Security Audit: FAILED - {e}")
     
     # Helper methods for simulation
     async def _simulate_token_authentication(self) -> bool:
@@ -570,7 +570,7 @@ class SecurityProtocolTester:
 
 async def main():
     """Main security protocol testing function."""
-    print("🔒 Security Protocol Testing Suite")
+    print("[LOCK] Security Protocol Testing Suite")
     print("=" * 50)
     
     security_tester = SecurityProtocolTester()
@@ -578,25 +578,25 @@ async def main():
     try:
         results = await security_tester.run_security_tests()
         
-        print(f"\n📊 Security Test Results:")
+        print(f"\n[DATA] Security Test Results:")
         print(f"Total Security Tests: {results['total_security_tests']}")
         print(f"Passed: {results['passed_security_tests']}")
         print(f"Failed: {results['failed_security_tests']}")
         
         if results['security_test_details']:
-            print(f"\n🔒 Security Test Details:")
+            print(f"\n[LOCK] Security Test Details:")
             for test_detail in results['security_test_details']:
                 print(f"  {test_detail['test_type']}: {'PASSED' if test_detail.get('authentication_successful', False) or test_detail.get('authorization_successful', False) or test_detail.get('permission_validation_successful', False) or test_detail.get('access_control_successful', False) or test_detail.get('security_protocol_compliance_successful', False) or test_detail.get('encryption_validation_successful', False) or test_detail.get('security_audit_successful', False) else 'FAILED'}")
         
         if results['failed_security_tests'] == 0:
-            print("\n✅ All security tests passed! Security protocols are operational.")
+            print("\n[OK] All security tests passed! Security protocols are operational.")
         else:
-            print(f"\n⚠️ {results['failed_security_tests']} security tests failed. Review required.")
+            print(f"\n[U+26A0]️ {results['failed_security_tests']} security tests failed. Review required.")
         
         return results
         
     except Exception as e:
-        print(f"\n❌ Security testing failed: {e}")
+        print(f"\n[FAIL] Security testing failed: {e}")
         return {"error": str(e)}
 
 

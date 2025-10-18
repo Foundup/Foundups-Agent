@@ -394,7 +394,7 @@ class LLMConnector:
         validation = {
             "response_length": len(response) if response else 0,
             "contains_unicode": any(ord(c) > 127 for c in response) if response else False,
-            "contains_symbols": bool(re.search(r'[OÞ∞∆]', response)) if response else False,
+            "contains_symbols": bool(re.search(r'[OÞ[INFINITY][U+2206]]', response)) if response else False,
             "response_received": response is not None,
             "estimated_token_count": len(response.split()) if response else 0
         }

@@ -11,9 +11,13 @@ WSP Compliance:
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -75,7 +79,7 @@ class WREGitHubIntegration:
         try:
             # Generate PR details if not provided
             if not pr_title:
-                pr_title = f"🤖 {commit_message}"
+                pr_title = f"[BOT] {commit_message}"
                 
             if not pr_description:
                 pr_description = f"""
@@ -85,13 +89,13 @@ class WREGitHubIntegration:
 {commit_message}
 
 ### Automated by FoundUps Agent
-- ✅ WSP 34: Git Operations Protocol compliance
-- ✅ WSP 22: ModLog updated  
-- ✅ Automated testing triggered
-- ✅ GitHub integration active
+- [OK] WSP 34: Git Operations Protocol compliance
+- [OK] WSP 22: ModLog updated  
+- [OK] Automated testing triggered
+- [OK] GitHub integration active
 
 ---
-🤖 Generated with [Claude Code](https://claude.ai/code)
+[BOT] Generated with [Claude Code](https://claude.ai/code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 """
@@ -396,7 +400,7 @@ if __name__ == "__main__":
         # Health check
         print("Performing health check...")
         health = await integration.health_check()
-        print(f"Health status: {'✅' if health['overall_status'] else '❌'}")
+        print(f"Health status: {'[OK]' if health['overall_status'] else '[FAIL]'}")
         
         if health["overall_status"]:
             # Sync repository status

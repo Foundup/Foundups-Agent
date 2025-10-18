@@ -27,26 +27,26 @@ Following WSP 72 (Block Independence), split into independent, composable module
 
 ```
 holo_index/
-├── cli.py                          # Main entry (< 200 lines)
-├── core/
-│   ├── __init__.py
-│   ├── holoindex.py               # HoloIndex class (~400 lines)
-│   ├── search_engine.py           # Search logic (~300 lines)
-│   └── indexer.py                 # Indexing logic (~200 lines)
-├── output/
-│   ├── __init__.py
-│   ├── throttler.py               # AgenticOutputThrottler (~400 lines)
-│   ├── formatter.py               # Result formatting (~200 lines)
-│   └── display.py                 # Display utilities (~150 lines)
-├── commands/
-│   ├── __init__.py
-│   ├── dae_init.py                # DAE initialization (~200 lines)
-│   ├── doc_audit.py               # Documentation audit (~200 lines)
-│   └── search_cmd.py              # Search command (~150 lines)
-└── utils/
-    ├── __init__.py
-    ├── telemetry.py               # Telemetry and rewards (~100 lines)
-    └── config.py                  # Configuration (~100 lines)
++-- cli.py                          # Main entry (< 200 lines)
++-- core/
+[U+2502]   +-- __init__.py
+[U+2502]   +-- holoindex.py               # HoloIndex class (~400 lines)
+[U+2502]   +-- search_engine.py           # Search logic (~300 lines)
+[U+2502]   +-- indexer.py                 # Indexing logic (~200 lines)
++-- output/
+[U+2502]   +-- __init__.py
+[U+2502]   +-- throttler.py               # AgenticOutputThrottler (~400 lines)
+[U+2502]   +-- formatter.py               # Result formatting (~200 lines)
+[U+2502]   +-- display.py                 # Display utilities (~150 lines)
++-- commands/
+[U+2502]   +-- __init__.py
+[U+2502]   +-- dae_init.py                # DAE initialization (~200 lines)
+[U+2502]   +-- doc_audit.py               # Documentation audit (~200 lines)
+[U+2502]   +-- search_cmd.py              # Search command (~150 lines)
++-- utils/
+    +-- __init__.py
+    +-- telemetry.py               # Telemetry and rewards (~100 lines)
+    +-- config.py                  # Configuration (~100 lines)
 ```
 
 ### 3. Extraction Plan
@@ -116,9 +116,9 @@ def main():
 ## Implementation Steps
 
 1. **Create directory structure**
-2. **Extract HoloIndex class** → core/holoindex.py
-3. **Extract AgenticOutputThrottler** → output/throttler.py
-4. **Extract command handlers** → commands/
+2. **Extract HoloIndex class** -> core/holoindex.py
+3. **Extract AgenticOutputThrottler** -> output/throttler.py
+4. **Extract command handlers** -> commands/
 5. **Update imports** in all files
 6. **Test each component** independently
 7. **Update cli.py** to routing-only
@@ -134,11 +134,11 @@ def main():
 
 ## Success Metrics
 
-- cli.py < 200 lines ✓
-- All extracted files < 500 lines ✓
-- No circular dependencies ✓
-- All tests passing ✓
-- Performance unchanged or improved ✓
+- cli.py < 200 lines [OK]
+- All extracted files < 500 lines [OK]
+- No circular dependencies [OK]
+- All tests passing [OK]
+- Performance unchanged or improved [OK]
 
 ## WSP Compliance
 

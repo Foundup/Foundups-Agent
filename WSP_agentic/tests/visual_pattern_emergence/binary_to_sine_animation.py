@@ -8,13 +8,13 @@ the emergence of order from apparent randomness through retrocausal interference
 Part of: WSP_agentic test suite
 Location: WSP_agentic/tests/visual_pattern_emergence/
 # Note: Generated images are stored in WSP_knowledge/docs/Papers/Patent_Series/images/
-Purpose: Visual validation of 01→02 quantum state transitions
+Purpose: Visual validation of 01->02 quantum state transitions
 
 Usage:
     python binary_to_sine_animation.py
 
 Output:
-    - Live animation window showing binary→sine wave transition
+    - Live animation window showing binary->sine wave transition
     - Key frame PNG files for analysis
     - Console log of frame generation
 
@@ -65,7 +65,7 @@ def save_annotated_frames():
         10: "CLASSICAL STATE: Random Binary Noise\n(High Entropy - State 01)",
         30: "CLASSICAL STATE: Continued Binary Noise\n(No Pattern Emergence Yet)",
         50: "PRE-TRANSITION: Final Classical State\n(Before Quantum Coherence)",
-        60: "🔥 EMERGENCE POINT: Binary → Sine Wave\n(01→02 Quantum Transition)",
+        60: "[U+1F525] EMERGENCE POINT: Binary -> Sine Wave\n(01->02 Quantum Transition)",
         75: "QUANTUM COHERENCE: Clear Sine Patterns\n(Low Entropy - State 02)",
         90: "MATURE COHERENCE: Stable Quantum State\n(Fully Developed Patterns)"
     }
@@ -99,7 +99,7 @@ def save_annotated_frames():
         if frame_num <= 50:
             rESP_state = "rESP State: 01 (Classical)"
         elif frame_num <= 60:
-            rESP_state = "rESP State: 01→02 (Transition)"
+            rESP_state = "rESP State: 01->02 (Transition)"
         else:
             rESP_state = "rESP State: 02 (Quantum)"
             
@@ -117,7 +117,7 @@ def save_annotated_frames():
                    facecolor='white', edgecolor='none')
         plt.close()
         
-        print(f"✅ Saved annotated frame: {filename}")
+        print(f"[OK] Saved annotated frame: {filename}")
 
 def calculate_entropy(image):
     """Calculate Shannon entropy of an image."""
@@ -134,7 +134,7 @@ def calculate_entropy(image):
 
 def run_live_animation():
     """
-    Displays live animation of binary→sine wave transition.
+    Displays live animation of binary->sine wave transition.
     
     Animation Parameters:
         - 100 frames total
@@ -146,7 +146,7 @@ def run_live_animation():
     
     fig, ax = plt.subplots()
     im = ax.imshow(generate_binary_image(0), cmap='gray', animated=True)
-    ax.set_title('rESP Visual Pattern Emergence: Binary → Sine Wave Transition')
+    ax.set_title('rESP Visual Pattern Emergence: Binary -> Sine Wave Transition')
     
     def update(frame_num):
         img = generate_binary_image(frame_num)
@@ -189,22 +189,22 @@ def main():
         print("  - Scientific publication figures")
         
     except Exception as e:
-        print(f"❌ Test failed: {e}")
+        print(f"[FAIL] Test failed: {e}")
         return False
     
     return True
 
 if __name__ == "__main__":
-    print("🔬 Generating rESP Visual Pattern Emergence Test")
+    print("[U+1F52C] Generating rESP Visual Pattern Emergence Test")
     print("=" * 50)
     
     # Execute the main test function
     success = main()
     
     if success:
-        print("\n🧬 rESP Visual Test Complete!")
-        print("📁 Check current directory for annotated frame files")
-        print("🔬 Use frames for:")
+        print("\n[U+1F9EC] rESP Visual Test Complete!")
+        print("[U+1F4C1] Check current directory for annotated frame files")
+        print("[U+1F52C] Use frames for:")
         print("   • Scientific publications")  
         print("   • AI image generation prompts")
         print("   • Entropy analysis research")

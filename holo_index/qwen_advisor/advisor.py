@@ -1,4 +1,10 @@
+# -*- coding: utf-8 -*-
 from __future__ import annotations
+
+import sys
+import io
+
+
 
 import logging
 import time
@@ -13,6 +19,18 @@ from .wsp_master import WSPMaster
 from .prompts import build_compliance_prompt
 from .telemetry import record_advisor_event
 from .rules_engine import ComplianceRulesEngine
+
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
 
 logger = logging.getLogger(__name__)
 
@@ -1321,15 +1339,15 @@ class QwenAdvisor:
 
         for i, (from_func, to_func) in enumerate(connections):
             lego_parts.append(f"  [BLOCK-{i+1}] {from_func} ⟷ {to_func}")
-            lego_parts.append("    ↳ SNAP POINT: Function call interface")
-            lego_parts.append("    ↳ STABILITY: Modular connection point")
+            lego_parts.append("    [U+21B3] SNAP POINT: Function call interface")
+            lego_parts.append("    [U+21B3] STABILITY: Modular connection point")
         # Identify potential LEGO refactoring opportunities
         complex_functions = [f for f in functions if f.get('complexity', 1) >= 3]
         if complex_functions:
             lego_parts.append("\n[LEGO] BREAK APART CANDIDATES:")
             for func in complex_functions:
                 func_name = func.get('name', 'unknown')
-                lego_parts.append(f"  [BREAK] {func_name} → Split into 2-3 smaller LEGO blocks")
+                lego_parts.append(f"  [BREAK] {func_name} -> Split into 2-3 smaller LEGO blocks")
 
         return "\n".join(lego_parts)
 
@@ -1402,16 +1420,16 @@ class QwenAdvisor:
 
         # Present real choices based on analysis
         choices.append("  [SURGICAL] A) SURGICAL: Fix highest priority issues immediately")
-        choices.append(f"     → Target: {high_priority_fixes[0]['function']} ({high_priority_fixes[0]['line_range']})")
-        choices.append("     → Impact: Reduce complexity, improve maintainability")
+        choices.append(f"     -> Target: {high_priority_fixes[0]['function']} ({high_priority_fixes[0]['line_range']})")
+        choices.append("     -> Impact: Reduce complexity, improve maintainability")
         if len(high_priority_fixes) > 1:
             choices.append("  [GRADUAL] B) GRADUAL: Address issues incrementally")
-            choices.append(f"     → Plan: Fix {len(high_priority_fixes)} functions over multiple sessions")
-            choices.append("     → Strategy: Break down large functions into smaller modules")
+            choices.append(f"     -> Plan: Fix {len(high_priority_fixes)} functions over multiple sessions")
+            choices.append("     -> Strategy: Break down large functions into smaller modules")
 
         choices.append("  [HOLISTIC] C) HOLISTIC: Comprehensive codebase refactoring")
-        choices.append("     → Approach: Full module restructuring with dependency analysis")
-        choices.append("     → Tools: Use CodeIndex for complete system mapping")
+        choices.append("     -> Approach: Full module restructuring with dependency analysis")
+        choices.append("     -> Tools: Use CodeIndex for complete system mapping")
 
         # Add risk assessment
         risk_level = "HIGH" if len(high_priority_fixes) > 3 else "MEDIUM" if len(high_priority_fixes) > 1 else "LOW"

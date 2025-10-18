@@ -7,16 +7,16 @@ Adaptive intelligence layer for YouTube chat processing:
 - Dynamic complexity routing that learns
 
 Architecture (per 012's insight):
-    Query → [Gemma 3: Intent Classifier] (50ms)
-                        ↓
-            Simple?──────┴──────Complex?  ← Float threshold (starts 0.3)
-                ↓                   ↓
-    [Gemma 3 + ChromaDB RAG]   [Qwen 1.5B]  ← Qwen monitors & adjusts
+    Query -> [Gemma 3: Intent Classifier] (50ms)
+                        v
+            Simple?------+------Complex?  <- Float threshold (starts 0.3)
+                v                   v
+    [Gemma 3 + ChromaDB RAG]   [Qwen 1.5B]  <- Qwen monitors & adjusts
          100ms                   250ms
-                        ↓
-            [0102 Architect Layer]  ← Overall system tuning
+                        v
+            [0102 Architect Layer]  <- Overall system tuning
 
-WSP 54: Partner (Gemma) → Principal (Qwen) → Associate (0102)
+WSP 54: Partner (Gemma) -> Principal (Qwen) -> Associate (0102)
 WSP 80: DAE Cube with learning capability
 WSP 77: Intelligent Internet Orchestration
 """
@@ -77,7 +77,7 @@ def classify_intent(
             'intent': str (command_whack, command_shorts, consciousness, etc.),
             'confidence': float (0.0-1.0),
             'route_to': str (handler to route message to),
-            'processing_path': str (gemma | gemma→qwen | qwen),
+            'processing_path': str (gemma | gemma->qwen | qwen),
             'latency_ms': int,
             'quality_score': float (Qwen's evaluation of output),
             'complexity_score': float (computed query complexity)
@@ -286,7 +286,7 @@ def get_routing_stats() -> Dict[str, Any]:
             'gemma_success_rate': 0.75,
             'gemma_correction_rate': 0.15,
             'qwen_usage_rate': 0.10,
-            'current_threshold': 0.28,  ← Learned to trust Gemma more
+            'current_threshold': 0.28,  <- Learned to trust Gemma more
             'avg_latency_ms': 112
         }
     """
@@ -321,7 +321,7 @@ def adjust_threshold(new_threshold: float) -> Dict[str, str]:
     new_threshold = max(0.0, min(1.0, new_threshold))
     router.complexity_threshold = new_threshold
 
-    logger.info(f"0102 architect override: threshold {old_threshold:.3f} → {new_threshold:.3f}")
+    logger.info(f"0102 architect override: threshold {old_threshold:.3f} -> {new_threshold:.3f}")
 
     return {
         'status': 'adjusted',
@@ -348,7 +348,7 @@ def routing_stats_resource() -> str:
 
 ## Routing Distribution
 - Gemma Direct (Success): {stats.get('gemma_success_rate', 0)*100:.1f}%
-- Gemma → Qwen (Corrected): {stats.get('gemma_correction_rate', 0)*100:.1f}%
+- Gemma -> Qwen (Corrected): {stats.get('gemma_correction_rate', 0)*100:.1f}%
 - Qwen Direct (Complex): {stats.get('qwen_usage_rate', 0)*100:.1f}%
 
 ## Learning
@@ -364,6 +364,6 @@ def routing_stats_resource() -> str:
 
 if __name__ == "__main__":
     logger.info("Starting YouTube DAE Gemma Intelligence MCP Server...")
-    logger.info("Adaptive routing: Gemma 3 (fast) ↔ Qwen 1.5B (architect)")
+    logger.info("Adaptive routing: Gemma 3 (fast) [U+2194] Qwen 1.5B (architect)")
     logger.info("0102 architect layer: Monitor stats and adjust threshold as needed")
     mcp.run()

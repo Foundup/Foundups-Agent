@@ -107,20 +107,20 @@ Phase 1 of the Acoustic Lab implements a minimal viable educational platform for
 ### Code Structure
 ```
 modules/platform_integration/acoustic_lab/
-├── src/
-│   ├── audio_library.py      # Synthetic tone management
-│   ├── triangulation_engine.py # Location calculation
-│   ├── acoustic_processor.py # Analysis orchestration
-│   ├── web_app.py           # Flask application
-│   └── ethereum_logger.py   # Blockchain proof logging
-├── scripts/
-│   ├── deploy.sh            # Production deployment
-│   ├── acoustic-lab.service # Systemd configuration
-│   ├── nginx.conf          # Web server configuration
-│   └── gunicorn.conf.py    # WSGI server configuration
-├── tests/                   # Comprehensive test suite
-├── docs/                    # Technical documentation
-└── memory/                  # WSP 60 memory architecture
++-- src/
+[U+2502]   +-- audio_library.py      # Synthetic tone management
+[U+2502]   +-- triangulation_engine.py # Location calculation
+[U+2502]   +-- acoustic_processor.py # Analysis orchestration
+[U+2502]   +-- web_app.py           # Flask application
+[U+2502]   +-- ethereum_logger.py   # Blockchain proof logging
++-- scripts/
+[U+2502]   +-- deploy.sh            # Production deployment
+[U+2502]   +-- acoustic-lab.service # Systemd configuration
+[U+2502]   +-- nginx.conf          # Web server configuration
+[U+2502]   +-- gunicorn.conf.py    # WSGI server configuration
++-- tests/                   # Comprehensive test suite
++-- docs/                    # Technical documentation
++-- memory/                  # WSP 60 memory architecture
 ```
 
 ### Dependencies

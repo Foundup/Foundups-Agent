@@ -3,7 +3,7 @@ WRE Bridge - WebSocket Bridge for Real-Time Agent Communication
 
 WSP Compliance:
 - WSP 4 (FMAS): WebSocket bridge structure validation
-- WSP 5 (Coverage): ≥90% test coverage for bridge functionality
+- WSP 5 (Coverage): [GREATER_EQUAL]90% test coverage for bridge functionality
 - WSP 54 (Agent Duties): Real-time agent communication testing
 - WSP 60 (Memory Architecture): Bridge state persistence
 

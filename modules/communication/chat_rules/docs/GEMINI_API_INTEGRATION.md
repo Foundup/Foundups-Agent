@@ -9,21 +9,21 @@ Integration plan for Google Gemini API to enhance anti-fascist educational conte
 
 ```python
 modules/ai_intelligence/gemini_integration/
-├── src/
-│   ├── __init__.py
-│   ├── gemini_client.py        # Core API client
-│   ├── content_generator.py    # Dynamic content creation
-│   ├── fact_checker.py         # Historical fact verification
-│   ├── quiz_generator.py       # Dynamic quiz generation
-│   └── response_enhancer.py    # AI-powered responses
-├── config/
-│   ├── gemini_config.yaml      # API settings
-│   └── prompts.yaml            # System prompts
-├── memory/
-│   ├── fact_cache.json         # Cached fact checks
-│   └── generated_content.json  # Content history
-└── tests/
-    └── test_gemini_integration.py
++-- src/
+[U+2502]   +-- __init__.py
+[U+2502]   +-- gemini_client.py        # Core API client
+[U+2502]   +-- content_generator.py    # Dynamic content creation
+[U+2502]   +-- fact_checker.py         # Historical fact verification
+[U+2502]   +-- quiz_generator.py       # Dynamic quiz generation
+[U+2502]   +-- response_enhancer.py    # AI-powered responses
++-- config/
+[U+2502]   +-- gemini_config.yaml      # API settings
+[U+2502]   +-- prompts.yaml            # System prompts
++-- memory/
+[U+2502]   +-- fact_cache.json         # Cached fact checks
+[U+2502]   +-- generated_content.json  # Content history
++-- tests/
+    +-- test_gemini_integration.py
 ```
 
 ### 2. Core Components
@@ -109,7 +109,7 @@ async def process_chat_message(message: str):
     if contains_historical_claim(message):
         fact_check = await gemini_client.fact_check(message)
         if not fact_check.accurate:
-            return f"⚠️ Fact Check: {fact_check.correction}"
+            return f"[U+26A0]️ Fact Check: {fact_check.correction}"
 ```
 
 #### C. Dynamic Educational Content

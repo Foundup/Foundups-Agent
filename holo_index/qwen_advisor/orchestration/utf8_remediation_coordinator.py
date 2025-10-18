@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import sys
+import io
+
 """
 UTF-8 Remediation Coordinator - Qwen + Gemma Autonomous Remediation
 ====================================================================
@@ -16,7 +19,7 @@ Architecture:
 
 WSP Compliance:
     - WSP 90: UTF-8 Encoding Enforcement Protocol
-    - WSP 77: Agent Coordination Protocol (Qwen → Gemma → 0102)
+    - WSP 77: Agent Coordination Protocol (Qwen -> Gemma -> 0102)
     - WSP 91: DAEMON Observability (structured logging)
     - WSP 50: Pre-Action Verification (scan before fix)
     - WSP 48: Recursive Self-Improvement (learn from fixes)
@@ -25,9 +28,13 @@ WSP Compliance:
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 import json
@@ -92,39 +99,43 @@ class UTF8RemediationCoordinator:
         self.wsp90_header = """# === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ==="""
 
         # ASCII-safe replacements per WSP 90 Rule 3
         # NOTE: ONLY use these as FALLBACK for non-Python files
         # For .py files: ADD WSP 90 header instead (keeps emojis working!)
         self.emoji_replacements = {
-            '✅': '[SUCCESS]',
-            '❌': '[FAIL]',
-            '⚠️': '[WARNING]',
-            '📁': '[FOLDER]',
-            '📄': '[FILE]',
-            '🔍': '[SEARCH]',
-            '🚀': '[LAUNCH]',
-            '💡': '[IDEA]',
-            '🎯': '[TARGET]',
+            '[OK]': '[SUCCESS]',
+            '[FAIL]': '[FAIL]',
+            '[U+26A0]️': '[WARNING]',
+            '[U+1F4C1]': '[FOLDER]',
+            '[U+1F4C4]': '[FILE]',
+            '[SEARCH]': '[SEARCH]',
+            '[ROCKET]': '[LAUNCH]',
+            '[IDEA]': '[IDEA]',
+            '[TARGET]': '[TARGET]',
             '⏱️': '[TIME]',
-            '✨': '[SPARKLE]',
-            '🔥': '[HOT]',
-            '💊': '[HEALTH]',
-            '🧠': '[BRAIN]',
-            '📊': '[CHART]',
-            '🍞': '[BREADCRUMB]',
-            '🤖': '[AI]',
-            '👻': '[ORPHAN]',
-            '📏': '[MEASURE]',
-            '📦': '[PACKAGE]',
-            '📚': '[DOCS]',
-            '🎨': '[ART]',
-            '🔗': '[LINK]',
-            '✍️': '[WRITE]'
+            '[U+2728]': '[SPARKLE]',
+            '[U+1F525]': '[HOT]',
+            '[PILL]': '[HEALTH]',
+            '[AI]': '[BRAIN]',
+            '[DATA]': '[CHART]',
+            '[BREAD]': '[BREADCRUMB]',
+            '[BOT]': '[AI]',
+            '[GHOST]': '[ORPHAN]',
+            '[RULER]': '[MEASURE]',
+            '[BOX]': '[PACKAGE]',
+            '[BOOKS]': '[DOCS]',
+            '[ART]': '[ART]',
+            '[LINK]': '[LINK]',
+            '[U+270D]️': '[WRITE]'
         }
 
     def _load_patterns(self) -> Dict:
@@ -235,7 +246,7 @@ if sys.platform.startswith('win'):
                             file_path=str(file_path),
                             violation_type="emoji_output",
                             line_number=i,
-                            context=f"Line contains emoji '{emoji}' → replace with '{replacement}'",
+                            context=f"Line contains emoji '{emoji}' -> replace with '{replacement}'",
                             severity="medium"
                         ))
 

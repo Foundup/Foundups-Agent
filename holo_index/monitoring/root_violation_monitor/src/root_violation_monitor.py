@@ -229,8 +229,8 @@ class GemmaRootViolationMonitor:
 
         # Format alert for HoloIndex display
         alert_lines = [
-            "🚨 WSP ROOT VIOLATION - NEEDS IMMEDIATE ATTENTION 0102! 🚨",
-            f"📊 Scan Results: {scan_result['total_root_files']} files, {scan_result['violations_found']} violations",
+            "[ALERT] WSP ROOT VIOLATION - NEEDS IMMEDIATE ATTENTION 0102! [ALERT]",
+            f"[DATA] Scan Results: {scan_result['total_root_files']} files, {scan_result['violations_found']} violations",
             ""
         ]
 
@@ -241,17 +241,17 @@ class GemmaRootViolationMonitor:
         low = [v for v in scan_result['violations'] if v['severity'] == 'low']
 
         if critical:
-            alert_lines.append("🔴 CRITICAL VIOLATIONS:")
+            alert_lines.append("[U+1F534] CRITICAL VIOLATIONS:")
             for v in critical:
                 alert_lines.append(f"   • {v['filename']} - {v['violation_type']}")
-                alert_lines.append(f"     └─ {v['recommended_action']}")
+                alert_lines.append(f"     +- {v['recommended_action']}")
 
         if high:
             alert_lines.append("")
             alert_lines.append("🟠 HIGH PRIORITY VIOLATIONS:")
             for v in high:
                 alert_lines.append(f"   • {v['filename']} - {v['violation_type']}")
-                alert_lines.append(f"     └─ {v['recommended_action']}")
+                alert_lines.append(f"     +- {v['recommended_action']}")
 
         if medium:
             alert_lines.append("")
@@ -267,9 +267,9 @@ class GemmaRootViolationMonitor:
 
         alert_lines.extend([
             "",
-            f"📈 Monitoring Stats: {scan_result['monitoring_stats']['scans_performed']} scans, {scan_result['monitoring_stats']['violations_detected']} violations detected",
+            f"[UP] Monitoring Stats: {scan_result['monitoring_stats']['scans_performed']} scans, {scan_result['monitoring_stats']['violations_detected']} violations detected",
             "",
-            "💡 Auto-correction available for some violations. Use --fix-violations to apply.",
+            "[IDEA] Auto-correction available for some violations. Use --fix-violations to apply.",
             "=" * 80
         ])
 
@@ -355,7 +355,7 @@ class GemmaRootViolationMonitor:
                 print(f"[QWEN] Could not determine target location for {filename}")
                 return False
 
-            print(f"[QWEN] Moving {filename} → {target_location}")
+            print(f"[QWEN] Moving {filename} -> {target_location}")
 
             # Phase 3: Execute move with 0102 supervision (auto-approve for CLI)
             plan = orchestrator.generate_refactoring_plan(

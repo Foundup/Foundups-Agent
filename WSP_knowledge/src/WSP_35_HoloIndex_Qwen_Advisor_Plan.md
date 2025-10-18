@@ -16,11 +16,11 @@ HoloDAE now implements **context-aware output formatting** that prioritizes info
 
 | Intent Type | Priority Order | Verbosity | Key Features |
 |-------------|---------------|-----------|--------------|
-| **DOC_LOOKUP** | Results → Guidance → Compliance | Minimal | Suppresses orchestrator noise, focuses on documentation |
-| **CODE_LOCATION** | Results → Context → Health | Balanced | Shows implementation context, suppresses orchestration |
-| **MODULE_HEALTH** | Alerts → Health → Results | Detailed | Prioritizes system status and compliance issues |
-| **RESEARCH** | Results → Orchestrator → MCP | Comprehensive | Includes full analysis details and research tools |
-| **GENERAL** | Results → Orchestrator → Alerts | Standard | Balanced information for exploratory searches |
+| **DOC_LOOKUP** | Results -> Guidance -> Compliance | Minimal | Suppresses orchestrator noise, focuses on documentation |
+| **CODE_LOCATION** | Results -> Context -> Health | Balanced | Shows implementation context, suppresses orchestration |
+| **MODULE_HEALTH** | Alerts -> Health -> Results | Detailed | Prioritizes system status and compliance issues |
+| **RESEARCH** | Results -> Orchestrator -> MCP | Comprehensive | Includes full analysis details and research tools |
+| **GENERAL** | Results -> Orchestrator -> Alerts | Standard | Balanced information for exploratory searches |
 
 ### Technical Implementation
 - **IntentClassifier** extended with `OutputFormattingRules` dataclass

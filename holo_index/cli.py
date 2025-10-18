@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 HoloIndex - Dual Semantic Navigation for Code + WSP
 Leverages the E: SSD for ultra-fast, persistent search
 
@@ -547,7 +563,7 @@ def main() -> None:
             print("=" * 70)
 
         except Exception as e:
-            print(f"❁EDAE initialization failed: {e}")
+            print(f"[U+2741]EDAE initialization failed: {e}")
             import traceback
             traceback.print_exc()
 
@@ -832,9 +848,9 @@ def main() -> None:
             corrections = asyncio.run(scan_and_correct_violations())
 
             safe_print("\n[RESULTS] Auto-correction completed:")
-            safe_print(f"  ✅ Corrections applied: {corrections['corrections_applied']}")
-            safe_print(f"  ❌ Failed corrections: {corrections['failed_corrections']}")
-            safe_print(f"  📊 Total processed: {corrections['total_processed']}")
+            safe_print(f"  [OK] Corrections applied: {corrections['corrections_applied']}")
+            safe_print(f"  [FAIL] Failed corrections: {corrections['failed_corrections']}")
+            safe_print(f"  [DATA] Total processed: {corrections['total_processed']}")
 
             if corrections['corrections_applied']:
                 safe_print("\n[SUCCESS] Violations auto-corrected. Run search again to verify.")
@@ -869,7 +885,7 @@ def main() -> None:
                 safe_print("\n[DOCUMENTATION]")
 
                 for doc_name, doc_data in doc_info['docs'].items():
-                    status = "✅" if doc_data['exists'] else "❌"
+                    status = "[OK]" if doc_data['exists'] else "[FAIL]"
                     safe_print(f"  {status} {doc_name}: {doc_data['path']}")
 
                 safe_print("\n[COMMANDS]")

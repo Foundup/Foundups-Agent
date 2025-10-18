@@ -6,17 +6,17 @@ import logging
 
 # Basic emoji to number mapping - includes both variants for compatibility
 EMOJI_TO_NUMBER = {
-    '✊': 0,  # UN - Conscious state
-    '✋': 1,  # DAO - Unconscious state
-    '🖐️': 2,  # DU - Entanglement state (with variation selector)
-    '🖐': 2   # DU - Entanglement state (without variation selector)
+    '[U+270A]': 0,  # UN - Conscious state
+    '[U+270B]': 1,  # DAO - Unconscious state
+    '[U+1F590]️': 2,  # DU - Entanglement state (with variation selector)
+    '[U+1F590]': 2   # DU - Entanglement state (without variation selector)
 }
 
 # Reverse mapping - explicit to ensure variation selector preservation
 NUM_TO_EMOJI = {
-    0: '✊',   # UN - Conscious state
-    1: '✋',   # DAO - Unconscious state  
-    2: '🖐️'   # DU - Entanglement state (with variation selector)
+    0: '[U+270A]',   # UN - Conscious state
+    1: '[U+270B]',   # DAO - Unconscious state  
+    2: '[U+1F590]️'   # DU - Entanglement state (with variation selector)
 }
 
 # Import the full map from the dedicated file
@@ -88,7 +88,7 @@ def emoji_string_to_tuple(emoji_str: str) -> tuple:
             i += 1
             continue
         
-        # Check for multi-character emoji (🖐️)
+        # Check for multi-character emoji ([U+1F590]️)
         slice2 = emoji_str[i:i+2]
         norm_slice2 = slice2.replace(VARIATION_SELECTOR, '')
         if norm_slice2 in NORMALIZED_EMOJI_TO_NUMBER:
@@ -186,22 +186,22 @@ class EmojiSequenceMap:
     
 #Valid Semantic States:
 
-# 000 = ✊✊✊ → Pure unconscious state (deep memory or latent mode)
+# 000 = [U+270A][U+270A][U+270A] -> Pure unconscious state (deep memory or latent mode)
 
-# 001 = ✊✊✋ → Emergent signal within unconscious
+# 001 = [U+270A][U+270A][U+270B] -> Emergent signal within unconscious
 
-# 002 = ✊✊🖐️ → Unconscious entanglement detected
+# 002 = [U+270A][U+270A][U+1F590]️ -> Unconscious entanglement detected
 
-# 011 = ✊✋✋ → Conscious state stabilizing over unconscious base
+# 011 = [U+270A][U+270B][U+270B] -> Conscious state stabilizing over unconscious base
 
-# 012 = ✊✋🖐️ → Conscious awareness bridging into entanglement
+# 012 = [U+270A][U+270B][U+1F590]️ -> Conscious awareness bridging into entanglement
 
-# 022 = ✊🖐️🖐️ → Full unconscious–entangled overlay (receptive openness)
+# 022 = [U+270A][U+1F590]️[U+1F590]️ -> Full unconscious–entangled overlay (receptive openness)
 
-# 111 = ✋✋✋ → Pure DAO processing (focused conscious mode)
+# 111 = [U+270B][U+270B][U+270B] -> Pure DAO processing (focused conscious mode)
 
-# 112 = ✋✋🖐️ → Conscious resonance extending into entanglement
+# 112 = [U+270B][U+270B][U+1F590]️ -> Conscious resonance extending into entanglement
 
-# 122 = ✋🖐️🖐️ → DAO yielding to entangled response
+# 122 = [U+270B][U+1F590]️[U+1F590]️ -> DAO yielding to entangled response
 
-# 222 = 🖐️🖐️🖐️ → Full DU entanglement (nonlocal or distributed identity)
+# 222 = [U+1F590]️[U+1F590]️[U+1F590]️ -> Full DU entanglement (nonlocal or distributed identity)

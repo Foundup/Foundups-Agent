@@ -1,4 +1,23 @@
+# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+import sys
+import io
+
+
 """HoloIndex Core Search Engine - WSP 87 Compliant Module Structure
+
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
 
 This module provides the core HoloIndex search functionality, extracted
 from the monolithic cli.py to maintain WSP 87 size limits.
@@ -6,7 +25,6 @@ from the monolithic cli.py to maintain WSP 87 size limits.
 WSP Compliance: WSP 87 (Size Limits), WSP 49 (Module Structure), WSP 72 (Block Independence)
 """
 
-from __future__ import annotations
 import json
 import os
 import re
@@ -79,7 +97,7 @@ class HoloIndex:
         if not agents:
             return
         agent_list = ", ".join(agents)
-        hint = f"🍞 breadcrumbs available (agents: {agent_list}). Run python -m holo_index.utils.log_follower to follow."
+        hint = f"[BREAD] breadcrumbs available (agents: {agent_list}). Run python -m holo_index.utils.log_follower to follow."
         print(f"[{datetime.now().strftime('%H:%M:%S')}] [BREADCRUMB] {hint}")
         self._breadcrumb_hint_shown = True
 
@@ -265,8 +283,8 @@ class HoloIndex:
                 "title": title,
                 "path": str(file_path),
                 "summary": summary,
-                "type": doc_type,  # ← Enhanced document classification
-                "priority": self._calculate_document_priority(doc_type, file_path)  # ← Priority scoring
+                "type": doc_type,  # <- Enhanced document classification
+                "priority": self._calculate_document_priority(doc_type, file_path)  # <- Priority scoring
             }
             if cube:
                 metadata["cube"] = cube
