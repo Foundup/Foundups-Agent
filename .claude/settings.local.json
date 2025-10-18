@@ -12,7 +12,11 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git -C \"O:\\Foundups-Agent\" add ModLog.md)",
-      "Bash(git -C \"O:\\Foundups-Agent\" commit -m \"DOC: Update ModLog with root cleanup session summary\n\nFollowing WSP 22 documentation requirements.\n\nGenerated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")"
+      "Bash(git -C \"O:\\Foundups-Agent\" commit -m \"DOC: Update ModLog with root cleanup session summary\n\nFollowing WSP 22 documentation requirements.\n\nGenerated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
+      "Bash(test:*)",
+      "Bash(for dir in memory prompt temp templates utils)",
+      "Bash(do echo \"=== $dir ===\")",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": [],
