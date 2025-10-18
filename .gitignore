@@ -222,4 +222,4 @@ holo_index_data/models/
 # Browser profiles (large cache files)
 **/browser_profiles/*/edge/
 **/browser_profiles/x_foundups/
-modules/platform_integration/browser_profiles/
+modules/platform_integration/browser_profiles/credentials/
