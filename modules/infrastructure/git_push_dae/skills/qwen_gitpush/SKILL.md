@@ -1,3 +1,15 @@
+---
+name: qwen_gitpush
+description: Analyze uncommitted git changes and decide if/when to commit based on WSP 15 MPS
+version: 1.0.0
+author: 0102_infrastructure_team
+agents: [qwen, gemma]
+dependencies: [git_push_dae, pattern_memory]
+domain: autonomous_operations
+intent_type: DECISION
+promotion_state: prototype
+---
+
 # Qwen GitPush Analyzer Skill
 
 **Skill Type**: Micro Chain-of-Thought (WSP 96)

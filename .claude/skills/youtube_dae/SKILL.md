@@ -3,7 +3,7 @@ name: youtube_dae_content_generation
 description: Generate YouTube Live stream content, consciousness responses, and engagement prompts. Use when creating stream announcements, chat responses, moderation messages, community engagement prompts, or emergency protocol responses.
 version: 1.0
 author: 0102_infrastructure_team
-agents: [0102, qwen, gemma]
+agents: [qwen, gemma]
 dependencies: [livechat, auto_moderator, social_media_orchestrator]
 domain: youtube_live_streaming
 composable_with: [auto_moderation, content_generation, social_media_orchestrator]

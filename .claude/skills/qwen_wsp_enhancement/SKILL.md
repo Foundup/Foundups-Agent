@@ -3,7 +3,7 @@ name: qwen_wsp_enhancement
 description: Enhance WSP protocols using Qwen strategic analysis and 0102 supervision. Use when enhancing WSPs, analyzing protocol gaps, generating WSP recommendations, or coordinating multi-WSP updates.
 version: 1.0
 author: 0102_infrastructure_team
-agents: [qwen, 0102, gemma]
+agents: [qwen, gemma]
 dependencies: [holo_index, pattern_memory, wsp_framework]
 domain: wsp_protocol_enhancement
 composable_with: [code_intelligence, module_analysis]
