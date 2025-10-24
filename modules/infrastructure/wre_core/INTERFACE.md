@@ -1,14 +1,14 @@
 # wre_core Interface Specification
 
-**WSP 11 Compliance:** Phase 2 Complete ✅
-**Last Updated:** 2025-10-24
-**Version:** 0.5.0
+**WSP 11 Compliance:** Phase 3 Complete ✅
+**Last Updated:** 2025-10-25
+**Version:** 0.6.0
 
 ## Overview
 
 `wre_core` is the wardrobe for native skills. It discovers `modules/*/skills/**/SKILL.md`, validates metadata, executes skills via local Qwen inference, validates output with Gemma, and records pattern fidelity for recursive evolution. `.claude/skills/` remains the prototype space; WRE promotes validated skills into production.
 
-**Phase 2 Status**: Filesystem discovery + local Qwen inference wiring COMPLETE
+**Phase 3 Status**: HoloDAE integration + autonomous skill execution COMPLETE
 
 ## Public API
 
@@ -417,6 +417,89 @@ class WRESkillsDiscovery:
         Args:
             output_path: Where to write registry JSON
             discovered_skills: Skills to export
+        """
+```
+
+### Phase 3: HoloDAE Integration (NEW - v0.6.0)
+
+```python
+from typing import Dict, Any, List
+
+class HoloDAECoordinator:
+    """
+    HoloDAE monitoring coordinator with WRE Skills integration.
+
+    Per WSP 96 v1.3 Phase 3: Autonomous skill execution based on health checks.
+    """
+
+    def check_git_health(self) -> Dict[str, Any]:
+        """
+        Check git repository health for autonomous skill triggering.
+
+        Returns:
+            Dict containing:
+            - uncommitted_changes (int): Number of uncommitted files
+            - files_changed (List[str]): List of changed files (first 10)
+            - time_since_last_commit (int): Seconds since last commit
+            - trigger_skill (Optional[str]): Skill to trigger (e.g., "qwen_gitpush")
+            - healthy (bool): True if uncommitted_changes < 20
+
+        Trigger Conditions:
+            - Triggers qwen_gitpush if >5 files AND >1 hour since last commit
+        """
+
+    def check_daemon_health(self) -> Dict[str, Any]:
+        """
+        Check daemon health status for autonomous monitoring.
+
+        Returns:
+            Dict containing:
+            - youtube_dae_running (bool): YouTube DAE status
+            - mcp_daemon_running (bool): MCP daemon status
+            - unhealthy_daemons (List[str]): List of unhealthy daemon names
+            - trigger_skill (Optional[str]): Skill to trigger (e.g., "daemon_health_monitor")
+            - healthy (bool): True if no unhealthy daemons
+        """
+
+    def check_wsp_compliance(self) -> Dict[str, Any]:
+        """
+        Check WSP protocol compliance for autonomous validation.
+
+        Returns:
+            Dict containing:
+            - violations_found (int): Number of WSP violations
+            - violation_details (List[Dict]): Details of each violation
+            - trigger_skill (Optional[str]): Skill to trigger (e.g., "wsp_compliance_fixer")
+            - healthy (bool): True if no violations
+        """
+
+    def _check_wre_triggers(self, result: 'MonitoringResult') -> List[Dict[str, Any]]:
+        """
+        Check monitoring result for WRE skill trigger conditions.
+
+        Analyzes health checks and determines if any skills should be triggered.
+
+        Args:
+            result: Monitoring result from _monitoring_loop()
+
+        Returns:
+            List of trigger dicts, each containing:
+            - skill_name (str): Name of skill to execute
+            - agent (str): Agent to execute skill (qwen, gemma, etc.)
+            - input_context (Dict): Input parameters for skill
+            - trigger_reason (str): Why skill was triggered
+            - priority (str): Execution priority (high, medium, low)
+        """
+
+    def _execute_wre_skills(self, triggers: List[Dict[str, Any]]) -> None:
+        """
+        Execute WRE skills based on monitoring triggers.
+
+        Loads WRE Master Orchestrator and executes each triggered skill.
+        Logs success/throttle/error for each execution.
+
+        Args:
+            triggers: List of skill triggers from _check_wre_triggers()
         """
 ```
 

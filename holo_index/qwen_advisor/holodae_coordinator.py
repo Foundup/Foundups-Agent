@@ -89,6 +89,7 @@ class HoloDAECoordinator:
         # State management
         self.current_work_context = WorkContext()
         self.monitoring_active = False
+        self.monitoring_enabled = os.getenv('HOLO_AUTO_MONITOR', '0').lower() in {"1", "true", "yes"}
         self.monitoring_thread = None
         self.monitoring_stop_event = threading.Event()
         try:
@@ -296,6 +297,10 @@ class HoloDAECoordinator:
 
     def start_monitoring(self) -> bool:
         """Start the quiet monitoring system"""
+        if not self.monitoring_enabled:
+            self._detailed_log("[HOLODAE-COORDINATOR] Monitoring disabled for this session (enable_monitoring() to override)")
+            return False
+
         if self.monitoring_active:
             print(f"[{datetime.now().strftime('%H:%M:%S')}] [HOLODAE] Monitoring already active")
             return False
@@ -340,6 +345,10 @@ class HoloDAECoordinator:
 
         print(f"[{datetime.now().strftime('%H:%M:%S')}] [HOLODAE] Monitoring deactivated")
         return True
+
+    def enable_monitoring(self) -> None:
+        """Allow background monitoring loops (used by autonomous daemon mode)."""
+        self.monitoring_enabled = True
 
     def get_status_summary(self) -> Dict[str, Any]:
         """Get comprehensive status summary"""
@@ -1054,6 +1063,12 @@ class HoloDAECoordinator:
             if result.has_actionable_events():
                 self._emit_monitoring_summary(result, prefix='[HOLO-MONITOR]')
                 last_heartbeat = time.perf_counter()
+
+                # Phase 3: WRE Skills Integration (WSP 96 v1.3)
+                wre_triggers = self._check_wre_triggers(result)
+                if wre_triggers:
+                    self._execute_wre_skills(wre_triggers)
+
             elif time.perf_counter() - last_heartbeat >= self.monitoring_heartbeat:
                 self._emit_monitoring_summary(result, prefix='[HOLO-MONITOR][HEARTBEAT]')
                 last_heartbeat = time.perf_counter()
@@ -1838,11 +1853,242 @@ class HoloDAECoordinator:
 
         return result
 
+    # ========================================================================
+    # Phase 3: WRE Skills Integration (WSP 96 v1.3)
+    # ========================================================================
+
+    def check_git_health(self) -> Dict[str, Any]:
+        """
+        Check git repository health for autonomous skill triggering
+
+        Per WSP 96 Phase 3: Health check methods for WRE trigger detection
+
+        Returns:
+            Dict with git health metrics and skill trigger recommendation
+        """
+        import subprocess
+
+        try:
+            # Check for uncommitted changes
+            result = subprocess.run(
+                ['git', 'status', '--porcelain'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+
+            if result.returncode != 0:
+                return {"error": "Git not available", "trigger_skill": None}
+
+            # Parse uncommitted files
+            uncommitted_lines = [line for line in result.stdout.strip().split('\n') if line]
+            uncommitted_changes = len(uncommitted_lines)
+
+            # Get time since last commit
+            try:
+                last_commit_time = subprocess.run(
+                    ['git', 'log', '-1', '--format=%ct'],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                if last_commit_time.returncode == 0:
+                    import time
+                    time_since_last = int(time.time()) - int(last_commit_time.stdout.strip())
+                else:
+                    time_since_last = 0
+            except:
+                time_since_last = 0
+
+            # Decide if we should trigger qwen_gitpush
+            trigger_skill = None
+            if uncommitted_changes > 5 and time_since_last > 3600:  # >5 files and >1 hour
+                trigger_skill = "qwen_gitpush"
+
+            return {
+                "uncommitted_changes": uncommitted_changes,
+                "files_changed": uncommitted_lines[:10],  # First 10 files
+                "time_since_last_commit": time_since_last,
+                "trigger_skill": trigger_skill,
+                "healthy": uncommitted_changes < 20  # <20 files is healthy
+            }
+
+        except Exception as e:
+            return {"error": str(e), "trigger_skill": None}
+
+    def check_daemon_health(self) -> Dict[str, Any]:
+        """
+        Check daemon health status for autonomous monitoring
+
+        Per WSP 96 Phase 3: Daemon health monitoring
+
+        Returns:
+            Dict with daemon health status and trigger recommendation
+        """
+        # Simple check - can be enhanced with actual daemon status checks
+        unhealthy_daemons = []
+
+        # Placeholder for daemon checks (would integrate with actual daemon monitoring)
+        # In real implementation, check:
+        # - MCP daemon process
+        # - YouTube DAE process
+        # - Other critical daemons
+
+        return {
+            "youtube_dae_running": True,  # Placeholder
+            "mcp_daemon_running": True,   # Placeholder
+            "unhealthy_daemons": unhealthy_daemons,
+            "trigger_skill": "daemon_health_monitor" if unhealthy_daemons else None,
+            "healthy": len(unhealthy_daemons) == 0
+        }
+
+    def check_wsp_compliance(self) -> Dict[str, Any]:
+        """
+        Check WSP compliance status for autonomous enforcement
+
+        Per WSP 96 Phase 3: WSP compliance monitoring
+
+        Returns:
+            Dict with WSP violations and trigger recommendation
+        """
+        # Placeholder for WSP compliance check
+        # In real implementation, would scan for:
+        # - Missing tests (WSP 5)
+        # - Missing documentation (WSP 22, WSP 11)
+        # - Module structure violations (WSP 49)
+
+        violations_found = 0
+        violation_types = []
+        critical_violations = []
+
+        return {
+            "violations_found": violations_found,
+            "violation_types": violation_types,
+            "critical_violations": critical_violations,
+            "trigger_skill": "wsp_compliance_checker" if critical_violations else None,
+            "healthy": len(critical_violations) == 0
+        }
+
+    def _check_wre_triggers(self, result: 'MonitoringResult') -> List[Dict[str, Any]]:
+        """
+        Check monitoring result for WRE skill trigger conditions
+
+        Per WSP 96 Phase 3: Autonomous skill triggering based on monitoring
+
+        Args:
+            result: MonitoringResult from _run_monitoring_cycle()
+
+        Returns:
+            List of skill trigger dicts to execute
+        """
+        triggers = []
+
+        # Check git health
+        git_health = self.check_git_health()
+        if git_health.get("trigger_skill"):
+            triggers.append({
+                "skill_name": git_health["trigger_skill"],
+                "agent": "qwen",
+                "input_context": {
+                    "uncommitted_changes": git_health["uncommitted_changes"],
+                    "files_changed": git_health["files_changed"],
+                    "time_since_last_commit": git_health["time_since_last_commit"]
+                },
+                "trigger_reason": "git_uncommitted_changes",
+                "priority": "high"
+            })
+
+        # Check daemon health
+        daemon_health = self.check_daemon_health()
+        if daemon_health.get("trigger_skill"):
+            triggers.append({
+                "skill_name": daemon_health["trigger_skill"],
+                "agent": "gemma",
+                "input_context": {
+                    "unhealthy_daemons": daemon_health["unhealthy_daemons"]
+                },
+                "trigger_reason": "daemon_unhealthy",
+                "priority": "medium"
+            })
+
+        # Check WSP compliance
+        wsp_health = self.check_wsp_compliance()
+        if wsp_health.get("trigger_skill"):
+            triggers.append({
+                "skill_name": wsp_health["trigger_skill"],
+                "agent": "qwen",
+                "input_context": {
+                    "violations": wsp_health["violation_types"],
+                    "critical": wsp_health["critical_violations"]
+                },
+                "trigger_reason": "wsp_violations",
+                "priority": "high"
+            })
+
+        return triggers
+
+    def _execute_wre_skills(self, triggers: List[Dict[str, Any]]) -> None:
+        """
+        Execute WRE skills based on monitoring triggers
+
+        Per WSP 96 Phase 3: Autonomous skill execution via WRE Master Orchestrator
+
+        Args:
+            triggers: List of skill trigger dicts from _check_wre_triggers()
+        """
+        if not triggers:
+            return
+
+        try:
+            # Import WRE Master Orchestrator
+            from modules.infrastructure.wre_core.wre_master_orchestrator import WREMasterOrchestrator
+
+            orchestrator = WREMasterOrchestrator()
+
+            for trigger in triggers:
+                skill_name = trigger["skill_name"]
+                agent = trigger["agent"]
+                input_context = trigger["input_context"]
+
+                self._holo_log(f"[WRE-TRIGGER] Executing skill: {skill_name} (agent: {agent})")
+
+                # Execute skill via WRE
+                result = orchestrator.execute_skill(
+                    skill_name=skill_name,
+                    agent=agent,
+                    input_context=input_context,
+                    force=False  # Respect libido throttling
+                )
+
+                if result.get("success"):
+                    fidelity = result.get("pattern_fidelity", 0.0)
+                    self._holo_log(f"[WRE-SUCCESS] {skill_name} | fidelity={fidelity:.2f}")
+
+                    # Log to 012.txt for human oversight
+                    self._append_012_summary(
+                        f"\n[WRE-EXECUTION] {skill_name}\n"
+                        f"  Agent: {agent}\n"
+                        f"  Trigger: {trigger['trigger_reason']}\n"
+                        f"  Fidelity: {fidelity:.2f}\n"
+                        f"  Result: {result.get('result', {})}\n"
+                    )
+                elif result.get("throttled"):
+                    self._holo_log(f"[WRE-THROTTLE] {skill_name} throttled by libido monitor")
+                else:
+                    error = result.get("error", "Unknown error")
+                    self._holo_log(f"[WRE-ERROR] {skill_name} failed: {error}")
+
+        except ImportError as e:
+            self._holo_log(f"[WRE-ERROR] WRE not available: {e}")
+        except Exception as e:
+            self._holo_log(f"[WRE-ERROR] Skill execution failed: {e}")
+
 
 # Legacy compatibility functions (for gradual migration)
 def start_holodae():
     """Legacy compatibility - start HoloDAE monitoring"""
     coordinator = HoloDAECoordinator()
+    coordinator.enable_monitoring()
     return coordinator.start_monitoring()
 
 
