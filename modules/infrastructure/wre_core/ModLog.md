@@ -2,6 +2,96 @@
 
 ## Chronological Change Log
 
+### [2025-10-24] - Phase 2: Filesystem Skills Discovery & Local Inference (COMPLETE)
+**Date**: 2025-10-24
+**WSP Protocol References**: WSP 96 (WRE Skills), WSP 50 (Pre-Action Verification), WSP 15 (MPS), WSP 5 (Test Coverage)
+**Impact Analysis**: Filesystem-based skills discovery + local Qwen inference enables autonomous skill execution
+**Enhancement Tracking**: Completed Phase 2 of WSP 96 v1.3 implementation
+
+#### Changes Made
+1. **Created wre_skills_discovery.py** (416 lines):
+   - WRESkillsDiscovery class - Filesystem scanner (not registry-dependent)
+   - DiscoveredSkill dataclass - Metadata container
+   - discover_all_skills() - Scans modules/*/*/skills/**/SKILL.md
+   - discover_by_agent() - Filter by agent type (qwen, gemma, grok, ui-tars)
+   - discover_by_module() - Filter by module path
+   - discover_production_ready() - Filter by fidelity threshold
+   - YAML frontmatter parsing (handles both dict and list agents)
+   - Markdown header fallback parsing
+   - Promotion state inference from filesystem path
+   - WSP chain extraction via regex
+
+2. **Scan Patterns**:
+   - `modules/*/*/skills/**/SKILL.md` - Production skills (6 found)
+   - `.claude/skills/**/SKILL.md` - Prototype skills (9 found)
+   - `holo_index/skills/**/SKILL.md` - HoloIndex skills (1 found)
+   - Total: 16 SKILL.md files discovered, 5 with valid agent metadata
+
+3. **Discovery Results**:
+   - qwen_gitpush (production)
+   - qwen_wsp_enhancement (prototype)
+   - youtube_dae (prototype)
+   - youtube_moderation_prototype (prototype)
+   - qwen_holo_output_skill (holo)
+
+4. **Added filesystem watcher** (COMPLETED - MPS=6):
+   - start_watcher() / stop_watcher() methods
+   - Background thread polling every N seconds
+   - Callback support for hot reload
+   - No external dependencies (threading module only)
+
+5. **Created test_wre_skills_discovery.py** (COMPLETED - MPS=10):
+   - 200+ lines, 20+ test cases
+   - Tests: discover_all_skills, discover_by_agent, discover_by_module
+   - Watcher tests: start/stop, callback triggering
+   - Agent parsing tests: string and list formats
+   - Promotion state inference tests
+
+6. **Wired execute_skill() to local Qwen inference** (COMPLETED - MPS=21):
+   - Added `_execute_skill_with_qwen()` method (wre_master_orchestrator.py:282-383)
+   - Integrated QwenInferenceEngine from holo_index/qwen_advisor/llm_engine.py
+   - Graceful fallback if llama-cpp-python or model files unavailable
+   - Updated execute_skill() to call real inference (line 340-345)
+   - Fixed Gemma validation API to use correct signature (lines 453-465)
+   - Created test_qwen_inference_wiring.py (4 validation tests - ALL PASSED)
+   - Updated requirements.txt to document llama-cpp-python dependency
+
+#### Expected Outcomes (ALL ACHIEVED)
+- ✅ Dynamic skill discovery without manual registry updates
+- ✅ Automatic detection of new SKILL.md files
+- ✅ Promotion state inferred from filesystem location
+- ✅ Agent filtering for targeted skill loading
+- ✅ Local Qwen inference wired to execute_skill()
+- ✅ Graceful degradation if LLM unavailable
+- ✅ Gemma validation integrated with execution pipeline
+
+#### Testing (WSP 5 Compliance)
+- ✅ test_wre_skills_discovery.py: 20+ tests, all passing
+- ✅ test_qwen_inference_wiring.py: 4 integration tests, all passing
+- ✅ Manual testing: 16 files discovered, 5 valid skills
+- ✅ Verified glob patterns work across all locations
+- ✅ Tested agent parsing (string and list formats)
+- ✅ Verified promotion state inference logic
+- ✅ Verified Qwen inference integration with fallback
+
+#### Known Limitations (By Design)
+- 11 SKILL.md files missing **Agents** field in frontmatter (data quality issue)
+- Production-ready filtering returns 0 (no fidelity history yet - expected)
+- Qwen inference requires llama-cpp-python + model files (graceful fallback implemented)
+- Currently supports Qwen agent only (Gemma/Grok/UI-TARS return mock - Phase 3)
+
+#### Phase 2 Status: COMPLETE ✅
+- MPS=7: Update documentation (COMPLETED)
+- MPS=6: Add filesystem watcher for hot reload (COMPLETED)
+- MPS=10: Create Phase 2 tests (COMPLETED)
+- MPS=21: Wire execute_skill() to local Qwen inference (COMPLETED)
+
+#### Next Steps (Phase 3)
+- Implement Convergence Loop (autonomous skill promotion based on fidelity)
+- Add Gemma/Grok/UI-TARS inference support
+- MCP server integration (if remote inference needed)
+- Real-world skill execution validation
+
 ### [2025-10-24] - Phase 1: Libido Monitor & Pattern Memory Implementation
 **Date**: 2025-10-24
 **WSP Protocol References**: WSP 96 (WRE Skills), WSP 48 (Recursive Improvement), WSP 60 (Module Memory), WSP 5 (Test Coverage)

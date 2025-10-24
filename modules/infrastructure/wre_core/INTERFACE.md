@@ -1,12 +1,14 @@
 # wre_core Interface Specification
 
-**WSP 11 Compliance:** Phase 1 Complete
+**WSP 11 Compliance:** Phase 2 Complete ✅
 **Last Updated:** 2025-10-24
-**Version:** 0.3.0
+**Version:** 0.5.0
 
 ## Overview
 
-`wre_core` is the wardrobe for native skills. It discovers `modules/*/skills/**/SKILL.md`, validates metadata, streams instructions to Qwen/Gemma, and records pattern fidelity for recursive evolution. `.claude/skills/` remains the prototype space; WRE promotes validated skills into production.
+`wre_core` is the wardrobe for native skills. It discovers `modules/*/skills/**/SKILL.md`, validates metadata, executes skills via local Qwen inference, validates output with Gemma, and records pattern fidelity for recursive evolution. `.claude/skills/` remains the prototype space; WRE promotes validated skills into production.
+
+**Phase 2 Status**: Filesystem discovery + local Qwen inference wiring COMPLETE
 
 ## Public API
 
@@ -326,6 +328,98 @@ class WREMasterOrchestrator:
         """Get registered plugin by name."""
 ```
 
+### Phase 2: Filesystem Skills Discovery (NEW - v0.4.0)
+
+```python
+from pathlib import Path
+from typing import List, Dict, Any
+from dataclasses import dataclass
+
+@dataclass
+class DiscoveredSkill:
+    """Filesystem-discovered skill (may not be in registry yet)"""
+    skill_path: Path
+    skill_name: str
+    agents: List[str]
+    intent_type: str
+    version: str
+    promotion_state: str  # Inferred from location
+    wsp_chain: List[str]
+    metadata: Dict[str, Any]
+
+class WRESkillsDiscovery:
+    """
+    Filesystem-based skills discovery for WRE Phase 2
+
+    Scans filesystem for SKILL.md files without requiring skills_registry.json.
+    Enables dynamic skill discovery and automatic promotion state inference.
+
+    Per WSP 96 v1.3: Skills are discovered from filesystem, not hardcoded registry.
+    """
+
+    def __init__(self, repo_root: Optional[Path] = None) -> None:
+        """Initialize skills discovery with repository root."""
+
+    def discover_all_skills(self) -> List[DiscoveredSkill]:
+        """
+        Scan filesystem for all SKILL.md files
+
+        Scan Patterns:
+        - modules/*/*/skills/**/SKILL.md (production skills)
+        - .claude/skills/**/SKILL.md (prototype skills)
+        - holo_index/skills/**/SKILL.md (holo skills)
+
+        Returns:
+            List of discovered skills (both registered and unregistered)
+        """
+
+    def discover_by_agent(self, agent_type: str) -> List[DiscoveredSkill]:
+        """
+        Discover skills for specific agent
+
+        Args:
+            agent_type: Agent filter (qwen, gemma, grok, ui-tars)
+
+        Returns:
+            Filtered list of skills
+        """
+
+    def discover_by_module(self, module_path: str) -> List[DiscoveredSkill]:
+        """
+        Discover skills for specific module
+
+        Args:
+            module_path: Module path (e.g., "modules/communication/livechat")
+
+        Returns:
+            Skills belonging to that module
+        """
+
+    def discover_production_ready(self, min_fidelity: float = 0.90) -> List[DiscoveredSkill]:
+        """
+        Discover skills ready for production promotion
+
+        Args:
+            min_fidelity: Minimum pattern fidelity threshold
+
+        Returns:
+            Production-ready skills
+        """
+
+    def export_discovered_to_registry(
+        self,
+        output_path: Path,
+        discovered_skills: List[DiscoveredSkill]
+    ) -> None:
+        """
+        Export discovered skills to registry JSON format
+
+        Args:
+            output_path: Where to write registry JSON
+            discovered_skills: Skills to export
+        """
+```
+
 ### Error Model
 
 ```python
@@ -438,6 +532,28 @@ python -m pytest tests/test_skill_loader.py
 
 ## Version History
 
+### 0.5.0 (2025-10-24) - Phase 2 Complete
+- **IMPLEMENTED**: `_execute_skill_with_qwen()` - Local Qwen inference integration (wre_master_orchestrator.py:282-383)
+- **INTEGRATED**: QwenInferenceEngine from holo_index/qwen_advisor/llm_engine.py
+- **FIXED**: Gemma validation API to use correct signature (step_output + expected_patterns)
+- **ADDED**: Graceful fallback if llama-cpp-python or model files unavailable
+- **ADDED**: Filesystem watcher (start_watcher/stop_watcher) for hot reload
+- **ADDED**: test_qwen_inference_wiring.py (4 integration tests - ALL PASSED)
+- **UPDATED**: requirements.txt to document llama-cpp-python dependency
+- **UPDATED**: ModLog.md with Phase 2 completion details
+- **UPDATED**: INTERFACE.md (v0.4.0 → v0.5.0)
+
+### 0.4.0 (2025-10-24) - Phase 2 Filesystem Discovery
+- **IMPLEMENTED**: `WRESkillsDiscovery` - Filesystem scanner for SKILL.md files (416 lines)
+- **IMPLEMENTED**: `discover_all_skills()` - Scans modules/*/*/skills/**/SKILL.md, .claude/skills/**/SKILL.md, holo_index/skills/**/SKILL.md
+- **IMPLEMENTED**: `discover_by_agent()`, `discover_by_module()`, `discover_production_ready()` filtering
+- **ADDED**: YAML frontmatter parsing (handles both string and list agents)
+- **ADDED**: Markdown header fallback parsing
+- **ADDED**: Promotion state inference from filesystem path
+- **ADDED**: WSP chain extraction via regex
+- **UPDATED**: ModLog.md with Phase 2 entry
+- **UPDATED**: INTERFACE.md (v0.3.0 → v0.4.0)
+
 ### 0.3.0 (2025-10-24) - Phase 1 Complete
 - **IMPLEMENTED**: `GemmaLibidoMonitor` - Pattern frequency sensor (<10ms binary classification)
 - **IMPLEMENTED**: `PatternMemory` - SQLite recursive learning storage (skill_outcomes, skill_variations, learning_events)
@@ -457,13 +573,26 @@ python -m pytest tests/test_skill_loader.py
 
 ## Development Notes
 
-- [x] Documented skills entry responsibilities
-- [x] **Phase 1 COMPLETE**: Libido monitor, pattern memory, execute_skill() pipeline
-- [x] **Phase 1 COMPLETE**: Comprehensive test coverage (65+ tests)
-- [x] **Phase 1 COMPLETE**: WSP 5, WSP 22, WSP 49 compliance
-- [ ] Phase 2: Implement registry discovery + validation
-- [ ] Phase 2: Wire execute_skill() to actual Qwen/Gemma inference (currently mocked)
-- [ ] Phase 3: Convergence loop (autonomous promotion pipeline)
-- [ ] Phase 3: Add watcher + promotion CLI helpers
+### Phase 1 ✅ (Completed 2025-10-24)
+- [x] Libido monitor, pattern memory, execute_skill() pipeline
+- [x] Comprehensive test coverage (65+ tests)
+- [x] WSP 5, WSP 22, WSP 49 compliance
+
+### Phase 2 ✅ (Completed 2025-10-24)
+- [x] Filesystem skills discovery implemented (wre_skills_discovery.py)
+- [x] Filesystem watcher for hot reload (start_watcher/stop_watcher)
+- [x] Wired execute_skill() to local Qwen inference (_execute_skill_with_qwen)
+- [x] Graceful fallback if llama-cpp-python unavailable
+- [x] Fixed Gemma validation API integration
+- [x] Created test_wre_skills_discovery.py (20+ tests)
+- [x] Created test_qwen_inference_wiring.py (4 integration tests - ALL PASSED)
+- [x] Documentation updated (ModLog, INTERFACE, requirements.txt)
+
+### Phase 3 (Roadmap)
+- [ ] Convergence loop (autonomous skill promotion based on fidelity)
+- [ ] Add Gemma/Grok/UI-TARS inference support (currently Qwen only)
+- [ ] MCP server integration (if remote inference needed)
+- [ ] Promotion CLI helpers
+- [ ] Real-world skill execution validation
 
 **First Principles:** Keep the wardrobe simple. One registry, one loader, one promoter. Everything else (versioning, A/B tests, telemetry) builds on top after the entry point works.

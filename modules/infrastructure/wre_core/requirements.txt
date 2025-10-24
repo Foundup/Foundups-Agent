@@ -14,5 +14,6 @@ pyyaml>=6.0  # WSP protocol parsing (if needed)
 # Logging and monitoring
 # (Uses standard library logging)
 
-# Note: No heavy ML dependencies - WRE Core is infrastructure only
-# Qwen/Gemma inference happens via external MCP servers or API calls
+# Note: Qwen/Gemma inference uses llama-cpp-python (optional)
+# Phase 2: Local inference via holo_index/qwen_advisor/llm_engine.py
+# If llama-cpp-python not available, gracefully falls back to mock execution
