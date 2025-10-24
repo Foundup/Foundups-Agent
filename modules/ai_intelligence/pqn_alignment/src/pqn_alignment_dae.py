@@ -28,6 +28,15 @@ import json
 import hashlib
 from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
+
+try:
+    from modules.infrastructure.wre_core.wre_master_orchestrator.src.wre_master_orchestrator import OrchestratorPlugin
+    WRE_AVAILABLE = True
+except ImportError:
+    WRE_AVAILABLE = False
+    # Stub for when WRE not available
+    class OrchestratorPlugin:
+        pass
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
