@@ -1,169 +1,469 @@
 # wre_core Interface Specification
 
-**WSP 11 Compliance:** In Progress
-**Last Updated:** 2025-09-25
-**Version:** 0.1.0
+**WSP 11 Compliance:** Phase 1 Complete
+**Last Updated:** 2025-10-24
+**Version:** 0.3.0
 
-## [OVERVIEW] Module Overview
+## Overview
 
-**Domain:** infrastructure
-**Purpose:** [Brief description of module functionality]
+`wre_core` is the wardrobe for native skills. It discovers `modules/*/skills/**/SKILL.md`, validates metadata, streams instructions to Qwen/Gemma, and records pattern fidelity for recursive evolution. `.claude/skills/` remains the prototype space; WRE promotes validated skills into production.
 
-## [API] Public API
+## Public API
 
-### Primary Classes
+### Data Structures
 
-#### WreCore
 ```python
-class WreCore:
-    """Main class for [module functionality]"""
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Optional
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
-        """Initialize WreCore
+@dataclass
+class WRESkill:
+    """Immutable skill descriptor (trainable weight)."""
+    skill_id: str              # e.g. youtube_moderation.v1
+    path: Path                 # Path to SKILL.md
+    agents: List[str]          # ['qwen', 'gemma', 'ui_tars']
+    wsp_chain: List[str]       # ['WSP 50', 'WSP 64', 'WSP 77']
+    domains: List[str]         # ['streaming', 'compliance']
+    version: str               # 1.0.0
+    pattern_fidelity: float    # Last recorded score (0.0-1.0)
+```
 
-        Args:
-            config: Optional configuration dictionary
+```python
+@dataclass
+class SkillSession:
+    """Runtime binding of a skill to an execution request."""
+    skill: WRESkill
+    context: Dict[str, str]        # Task metadata (module, intent, run_id)
+    tokens_budget: int             # Target 50-200 per WSP 75
+    feedback_hook: Optional[str]   # Path to metrics sink
+```
+
+### Core Services
+
+```python
+class WRESkillsRegistry:
+    def discover(self, roots: Optional[List[Path]] = None) -> List[WRESkill]:
+        """Scan for SKILL.md files, parse YAML frontmatter, validate WSP citations."""
+
+    def refresh(self) -> None:
+        """Hot reload registry when files change (Occam: glob + hash, no DB)."""
+
+    def get(self, skill_id: str) -> Optional[WRESkill]:
+        """Return skill by id/version."""
+```
+
+```python
+class WRESkillLoader:
+    def __init__(self, registry: WRESkillsRegistry) -> None:
+        self.registry = registry
+
+    def mount(self, skill_id: str, task: Dict[str, str]) -> SkillSession:
+        """Create SkillSession for Qwen/Gemma. Raises WREInvalidSkill on failure."""
+
+    def record_feedback(self, session: SkillSession, fidelity: float, notes: str) -> None:
+        """Persist pattern fidelity to recursive_improvement/metrics."""
+```
+
+```python
+class WRESkillPromoter:
+    def promote(self, prototype_path: Path, target_module: Path) -> WRESkill:
         """
+        Copy `.claude/skills/.../SKILL.md` into module wardrobe, stamp CHANGELOG,
+        register with registry. Uses WSP 50 approval before activation.
+        """
+```
 
-    def process(self, [parameters]) -> [ReturnType]:
-        """[Method description]
+### Phase 1: Libido Monitor & Pattern Memory (NEW - v0.3.0)
 
-        Args:
-            [parameters]: [Parameter description]
+```python
+from enum import Enum
+from typing import Dict, List, Optional
+from dataclasses import dataclass
+from datetime import datetime
+
+class LibidoSignal(Enum):
+    """Pattern activation frequency control signals"""
+    CONTINUE = "continue"      # Frequency OK, proceed with execution
+    THROTTLE = "throttle"      # Hit max frequency, skip execution
+    ESCALATE = "escalate"      # Below min frequency, force execution
+
+class GemmaLibidoMonitor:
+    """
+    Pattern frequency sensor - monitors skill activation frequency.
+
+    IBM Typewriter Analogy: Paper feed sensor that monitors typing frequency.
+    Gemma (270M) provides <10ms binary classification: CONTINUE, THROTTLE, or ESCALATE.
+
+    Per WSP 96 v1.3: Micro Chain-of-Thought paradigm.
+    """
+
+    def __init__(
+        self,
+        history_size: int = 100,
+        default_min_frequency: int = 1,
+        default_max_frequency: int = 5,
+        default_cooldown_seconds: int = 600
+    ) -> None:
+        """Initialize libido monitor with frequency thresholds."""
+
+    def should_execute(
+        self,
+        skill_name: str,
+        execution_id: str,
+        force: bool = False
+    ) -> LibidoSignal:
+        """
+        Check if skill should execute based on pattern frequency.
 
         Returns:
-            [ReturnType]: [Return value description]
-
-        Raises:
-            [ExceptionType]: [When exception is raised]
+            LibidoSignal.CONTINUE - Proceed with execution
+            LibidoSignal.THROTTLE - Skip execution (too frequent)
+            LibidoSignal.ESCALATE - Force execution (below minimum)
         """
-```
 
-### Utility Functions
+    def record_execution(
+        self,
+        skill_name: str,
+        agent: str,
+        execution_id: str,
+        fidelity_score: Optional[float] = None
+    ) -> None:
+        """Record skill execution in pattern history."""
 
-#### utility_wre_core
-```python
-def utility_wre_core([parameters]) -> [ReturnType]:
-    """[Function description]
+    def validate_step_fidelity(
+        self,
+        step_output: Dict,
+        expected_patterns: List[str]
+    ) -> float:
+        """
+        Gemma validates if Qwen followed skill instructions for a single step.
 
-    Args:
-        [parameters]: [Parameter description]
+        Per WSP 96 v1.3: Micro Chain-of-Thought paradigm.
+        Each step in skill execution is validated before proceeding.
 
-    Returns:
-        [ReturnType]: [Return value description]
+        Args:
+            step_output: Qwen's output for this step (dict with keys)
+            expected_patterns: List of required output keys/patterns
+
+        Returns:
+            Fidelity score (0.0-1.0)
+        """
+
+    def get_skill_statistics(self, skill_name: str) -> Dict:
+        """Get execution statistics for a skill."""
+
+    def set_thresholds(
+        self,
+        skill_name: str,
+        min_frequency: int,
+        max_frequency: int,
+        cooldown_seconds: int
+    ) -> None:
+        """Set custom thresholds for a skill."""
+
+    def export_history(self, output_path: Path) -> None:
+        """Export pattern history to JSON for analysis."""
+
+@dataclass
+class SkillOutcome:
     """
+    Record of skill execution outcome for recursive learning.
+
+    Per WSP 96: Skills are trainable weights that evolve.
+    """
+    execution_id: str
+    skill_name: str
+    agent: str                  # qwen, gemma, grok, ui-tars
+    timestamp: str              # ISO format
+    input_context: str          # JSON string
+    output_result: str          # JSON string
+    success: bool
+    pattern_fidelity: float     # 0.0-1.0 from Gemma validation
+    outcome_quality: float      # 0.0-1.0 correctness score
+    execution_time_ms: int
+    step_count: int             # Number of steps in micro chain-of-thought
+    failed_at_step: Optional[int] = None
+    notes: Optional[str] = None
+
+class PatternMemory:
+    """
+    SQLite storage for skill outcomes and recursive learning.
+
+    Per WSP 60: Enable recall instead of computation.
+    Per WSP 48: Store outcomes for self-improvement.
+
+    Database Schema:
+    - skill_outcomes: Execution records
+    - skill_variations: A/B test variations
+    - learning_events: Pattern improvement events
+    """
+
+    def __init__(self, db_path: Optional[Path] = None) -> None:
+        """Initialize pattern memory database."""
+
+    def store_outcome(self, outcome: SkillOutcome) -> None:
+        """Store skill execution outcome."""
+
+    def recall_successful_patterns(
+        self,
+        skill_name: str,
+        min_fidelity: float = 0.90,
+        limit: int = 10
+    ) -> List[Dict]:
+        """
+        Recall successful execution patterns for a skill.
+
+        Per WSP 60: Recall instead of compute (50-200 tokens vs 5000+)
+
+        Returns:
+            List of successful execution records sorted by fidelity DESC
+        """
+
+    def recall_failure_patterns(
+        self,
+        skill_name: str,
+        max_fidelity: float = 0.70,
+        limit: int = 10
+    ) -> List[Dict]:
+        """Recall failed execution patterns for learning."""
+
+    def get_skill_metrics(self, skill_name: str, days: int = 7) -> Dict:
+        """
+        Get aggregated metrics for a skill over time period.
+
+        Returns:
+            Dict with avg_fidelity, success_rate, execution_count, etc.
+        """
+
+    def store_variation(
+        self,
+        variation_id: str,
+        skill_name: str,
+        variation_content: str,
+        parent_version: Optional[str] = None,
+        created_by: str = "qwen"
+    ) -> None:
+        """Store skill variation for A/B testing."""
+
+    def record_learning_event(
+        self,
+        event_id: str,
+        skill_name: str,
+        event_type: str,
+        description: str,
+        before_fidelity: Optional[float] = None,
+        after_fidelity: Optional[float] = None,
+        variation_id: Optional[str] = None
+    ) -> None:
+        """
+        Record learning event for skill evolution tracking.
+
+        Event types: variation_created, variation_promoted, threshold_tuned, rollback
+        """
+
+    def get_evolution_history(self, skill_name: str) -> List[Dict]:
+        """Get evolution history for a skill."""
+
+    def close(self) -> None:
+        """Close database connection."""
+
+class WREMasterOrchestrator:
+    """
+    Central hub integrating libido monitor, pattern memory, and skills loader.
+
+    Per WSP 96 v1.3: Full WRE Skills Wardrobe execution pipeline.
+    """
+
+    def __init__(self) -> None:
+        """Initialize orchestrator with all WRE components."""
+        # Original components
+        self.pattern_memory: PatternMemory
+        self.wsp_validator: WSPValidator
+        self.plugins: Dict[str, OrchestratorPlugin]
+
+        # Phase 1 components (NEW in v0.3.0)
+        self.libido_monitor: GemmaLibidoMonitor
+        self.sqlite_memory: PatternMemory
+        self.skills_loader: WRESkillsLoader
+
+    def execute_skill(
+        self,
+        skill_name: str,
+        agent: str,
+        input_context: Dict,
+        force: bool = False
+    ) -> Dict:
+        """
+        Execute skill with libido monitoring and outcome storage.
+
+        Pipeline:
+        1. Check libido (should we execute now?)
+        2. Load skill instructions
+        3. Execute skill (Qwen/Gemma coordination)
+        4. Calculate execution time
+        5. Validate with Gemma (pattern fidelity)
+        6. Record execution in libido monitor
+        7. Store outcome in pattern memory
+
+        Args:
+            skill_name: Name of skill to execute
+            agent: Agent to execute skill (qwen, gemma, grok, ui-tars)
+            input_context: Input parameters for skill
+            force: Force execution regardless of libido (0102 override)
+
+        Returns:
+            Dict with success, pattern_fidelity, execution_id, execution_time_ms
+        """
+
+    def validate_module_path(self, module_path: Path) -> bool:
+        """Validate module path exists."""
+
+    def register_plugin(self, name: str, plugin: OrchestratorPlugin) -> None:
+        """Register orchestrator plugin."""
+
+    def get_plugin(self, name: str) -> Optional[OrchestratorPlugin]:
+        """Get registered plugin by name."""
 ```
 
-## [CONFIG] Configuration
+### Error Model
 
-### Required Configuration
 ```python
-# Example configuration
-config = {
-    "setting1": "value1",
-    "setting2": 42
+class WREInterfaceError(Exception): ...
+class WREInvalidSkill(WREInterfaceError): ...
+class WREValidationError(WREInterfaceError): ...
+class WREPromotionError(WREInterfaceError): ...
+```
+
+## Usage
+
+### Basic Skill Mount
+```python
+from modules.infrastructure.wre_core import WRESkillsRegistry, WRESkillLoader
+
+registry = WRESkillsRegistry()
+registry.refresh()
+
+loader = WRESkillLoader(registry)
+
+session = loader.mount(
+    skill_id="youtube_moderation.v1",
+    task={
+        "module": "modules/communication/livechat",
+        "intent": "stream_start_watchdog",
+        "run_id": "2025-10-20T09:58:00Z"
+    }
+)
+
+qwen.apply_skill(session)   # Executes workflow at 50-200 tokens
+```
+
+### Recording Pattern Fidelity
+```python
+loader.record_feedback(
+    session,
+    fidelity=0.92,
+    notes="Gemma scoring PASS (intent coverage + escalation rule triggered)."
+)
+```
+
+### Promoting from `.claude/skills`
+```python
+from modules.infrastructure.wre_core import WRESkillPromoter
+
+promoter = WRESkillPromoter()
+production_skill = promoter.promote(
+    prototype_path=Path(".claude/skills/youtube_moderation_prototype/SKILL.md"),
+    target_module=Path("modules/communication/livechat/skills/youtube_moderation")
+)
+```
+
+## Configuration
+
+```python
+WRE_SKILLS_CONFIG = {
+    "watch_paths": [
+        "modules/**/skills/**/SKILL.md",
+        ".claude/skills/**/SKILL.md"
+    ],
+    "metadata_required": ["skill_id", "version", "agents", "dependencies", "wsp_chain"],
+    "pattern_threshold": 0.90,   # Minimum fidelity before promotion
+    "metrics_dir": "modules/infrastructure/wre_core/recursive_improvement/metrics",
+    "promotion_log": "modules/infrastructure/wre_core/skills/CHANGELOG.md"
 }
 ```
 
-### Optional Configuration
-```python
-# Optional settings with defaults
-optional_config = {
-    "timeout": 30,  # Default: 30 seconds
-    "retries": 3    # Default: 3 attempts
-}
-```
+### Environment Hooks
+- `WRE_SKILLS_AUTO_REFRESH` (`true`/`false`) – enable watcher thread
+- `WRE_SKILLS_MAX_TOKENS` (default `200`) – cap per execution
+- `WRE_SKILLS_SANDBOX` (`true`/`false`) – dry-run promotion without copying files
 
-## [USAGE] Usage Examples
+## Dependencies
 
-### Basic Usage
-```python
-from modules.infrastructure.wre_core import WreCore
+| Dependency | Purpose |
+|------------|---------|
+| `pyyaml` | Parse SKILL.md frontmatter |
+| `watchdog` | Optional filesystem watcher for hot reload |
+| `jsonschema` (future) | Validate advanced skill metadata |
+| `modules.infrastructure.recursive_improvement` | Persist metrics |
+| `modules.holo_index` | Re-index skills after promotion (WSP 50) |
 
-# Initialize
-instance = WreCore(config)
+## Testing
 
-# Use main functionality
-result = instance.process([example_parameters])
-print(f"Result: {result}")
-```
-
-### Advanced Usage
-```python
-# With custom configuration
-custom_config = {
-    "special_setting": "custom_value"
-}
-advanced_instance = WreCore(custom_config)
-
-# Use utility function
-processed = utility_wre_core([input_data])
-```
-
-## [DEPENDENCIES] Dependencies
-
-### Internal Dependencies
-- modules.[domain].[dependency_module] - [Reason for dependency]
-
-### External Dependencies
-- [package_name]>=x.y.z - [Purpose of dependency]
-
-## [TESTING] Testing
-
-### Running Tests
 ```bash
 cd modules/infrastructure/wre_core
-python -m pytest tests/
+python -m pytest tests/test_skills_registry.py
+python -m pytest tests/test_skill_loader.py
 ```
 
-### Test Coverage
-- **Current:** 0% (implementation needed)
-- **Target:** >=90%
+### Coverage Goals
+- Registry discovery paths (≥ 95%)
+- Metadata validation (≥ 90%)
+- Promotion happy path + failure modes (≥ 90%)
+- Feedback persistence (≥ 90%)
 
-## [PERFORMANCE] Performance Characteristics
+## Performance Expectations
 
-### Expected Performance
-- **Latency:** [expected latency]
-- **Throughput:** [expected throughput]
-- **Resource Usage:** [memory/CPU expectations]
+| Operation | Target |
+|-----------|--------|
+| Registry refresh | < 300 ms for 200 skills |
+| Skill mount | < 50 ms |
+| Feedback write | < 20 ms |
 
-## [ERRORS] Error Handling
+## Error Handling
 
-### Common Errors
-- **[ErrorType1]:** [Description and resolution]
-- **[ErrorType2]:** [Description and resolution]
+- **WREInvalidSkill** – Missing metadata, unsupported agent, or invalid WSP chain
+- **WREValidationError** – Promotion blocked by WSP 50 / WSP 64 guard
+- **WREPromotionError** – Filesystem issues during prototype → wardrobe copy
 
-### Exception Hierarchy
-```python
-class [ModuleName]Error(Exception):
-    """Base exception for [module_name]"""
-    pass
+## Version History
 
-class [SpecificError]([ModuleName]Error):
-    """Specific error type"""
-    pass
-```
+### 0.3.0 (2025-10-24) - Phase 1 Complete
+- **IMPLEMENTED**: `GemmaLibidoMonitor` - Pattern frequency sensor (<10ms binary classification)
+- **IMPLEMENTED**: `PatternMemory` - SQLite recursive learning storage (skill_outcomes, skill_variations, learning_events)
+- **IMPLEMENTED**: `WREMasterOrchestrator.execute_skill()` - Full execution pipeline with libido monitoring
+- **ADDED**: Comprehensive test suites (test_libido_monitor.py, test_pattern_memory.py, test_wre_master_orchestrator.py)
+- **ADDED**: requirements.txt for WSP 49 compliance
+- **UPDATED**: ModLog.md entries for wre_core and git_push_dae
+- **DOCUMENTED**: Micro chain-of-thought paradigm (WSP 96 v1.3)
 
-## [HISTORY] Version History
+### 0.2.0 (2025-10-20)
+- Drafted skills-aware API (`WRESkillsRegistry`, `WRESkillLoader`, `WRESkillPromoter`)
+- Added configuration schema and promotion workflow
+- Documented feedback loop for pattern fidelity scoring
 
 ### 0.1.0 (2025-09-25)
-- Initial interface specification
-- Basic API structure defined
-- Placeholder implementation created
+- Initial placeholder interface for WSP 11 compliance
 
-## [NOTES] Development Notes
+## Development Notes
 
-### Current Status
-- [x] WSP 49 structure compliance
-- [x] Interface specification defined
-- [ ] Functional implementation (TODO)
-- [ ] Comprehensive testing (TODO)
+- [x] Documented skills entry responsibilities
+- [x] **Phase 1 COMPLETE**: Libido monitor, pattern memory, execute_skill() pipeline
+- [x] **Phase 1 COMPLETE**: Comprehensive test coverage (65+ tests)
+- [x] **Phase 1 COMPLETE**: WSP 5, WSP 22, WSP 49 compliance
+- [ ] Phase 2: Implement registry discovery + validation
+- [ ] Phase 2: Wire execute_skill() to actual Qwen/Gemma inference (currently mocked)
+- [ ] Phase 3: Convergence loop (autonomous promotion pipeline)
+- [ ] Phase 3: Add watcher + promotion CLI helpers
 
-### Future Enhancements
-- [Enhancement 1]
-- [Enhancement 2]
-- [Integration with other modules]
-
----
-
-**WSP 11 Interface Compliance:** Structure Complete, Implementation Pending
+**First Principles:** Keep the wardrobe simple. One registry, one loader, one promoter. Everything else (versioning, A/B tests, telemetry) builds on top after the entry point works.

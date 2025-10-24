@@ -1,0 +1,18 @@
+# WRE Core - Wardrobe Recursive Engine Requirements
+# WSP 49 (Module Structure) compliance
+
+# Database
+sqlite3  # Built-in - Pattern Memory SQLite storage
+
+# Testing
+pytest>=7.0.0  # Test framework
+pytest-cov>=4.0.0  # Coverage reporting
+
+# WSP Framework
+pyyaml>=6.0  # WSP protocol parsing (if needed)
+
+# Logging and monitoring
+# (Uses standard library logging)
+
+# Note: No heavy ML dependencies - WRE Core is infrastructure only
+# Qwen/Gemma inference happens via external MCP servers or API calls
