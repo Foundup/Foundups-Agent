@@ -1,0 +1,65 @@
+{
+  "skills": [
+    {
+      "name": "gemma_dead_code_detection",
+      "agent": "gemma",
+      "status": "active",
+      "permission_level": "metrics_write",
+      "confidence_score": 0.5,
+      "promotion_history": [],
+      "description": "Detects dead code patterns in Python modules",
+      "capabilities": [
+        "pattern_recognition",
+        "code_analysis",
+        "dead_code_identification"
+      ],
+      "wsp_compliance": [
+        "WSP 77",
+        "WSP 50",
+        "WSP 91"
+      ]
+    },
+    {
+      "name": "gemma_duplicate_finder",
+      "agent": "gemma",
+      "status": "active",
+      "permission_level": "metrics_write",
+      "confidence_score": 0.5,
+      "promotion_history": [],
+      "description": "Identifies duplicate code patterns across modules",
+      "capabilities": [
+        "pattern_matching",
+        "code_similarity_analysis",
+        "refactoring_suggestions"
+      ],
+      "wsp_compliance": [
+        "WSP 77",
+        "WSP 50",
+        "WSP 91"
+      ]
+    },
+    {
+      "name": "qwen_code_quality_investigator",
+      "agent": "qwen",
+      "status": "active",
+      "permission_level": "edit_access_tests",
+      "confidence_score": 0.5,
+      "promotion_history": [],
+      "description": "Comprehensive code quality analysis and improvement recommendations",
+      "capabilities": [
+        "code_review",
+        "architectural_analysis",
+        "quality_assessment",
+        "refactoring_planning"
+      ],
+      "wsp_compliance": [
+        "WSP 77",
+        "WSP 50",
+        "WSP 91"
+      ]
+    }
+  ],
+  "version": "1.0.0",
+  "last_updated": "2025-10-21"
+}
+

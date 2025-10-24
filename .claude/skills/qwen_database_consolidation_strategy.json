@@ -1,0 +1,155 @@
+{
+  "name": "qwen_database_consolidation_strategy",
+  "agent": "qwen",
+  "version": "1.0.0",
+  "created": "2025-10-21",
+  "status": "prototype",
+
+  "purpose": "Analyze Gemma's JSONL audit and design unified foundups.db consolidation strategy",
+
+  "permission_level": "read_only",
+  "requires_human_approval": true,
+
+  "input": {
+    "from_skill": "gemma_jsonl_database_audit",
+    "file": "data/gemma_jsonl_audit_report.json"
+  },
+
+  "task": {
+    "objective": "Design architectural plan for migrating scattered JSONL files to unified data/foundups.db",
+
+    "analysis_steps": [
+      {
+        "step": 1,
+        "action": "Read Gemma's audit report",
+        "extract": "List of all JSONL files by domain"
+      },
+      {
+        "step": 2,
+        "action": "Design database schema",
+        "output": "CREATE TABLE statements for each domain"
+      },
+      {
+        "step": 3,
+        "action": "Identify migration priorities",
+        "criteria": [
+          "Concurrency risk (high priority)",
+          "Cross-module query needs (high priority)",
+          "Simple single-writer logs (low priority)"
+        ]
+      },
+      {
+        "step": 4,
+        "action": "Design TelemetryStore extension",
+        "pattern": "Extend foundups_selenium/src/telemetry_store.py"
+      },
+      {
+        "step": 5,
+        "action": "Create migration plan",
+        "phases": [
+          "Phase 1: High concurrency risks (permissions, confidence)",
+          "Phase 2: Cross-module queries (chat, sessions)",
+          "Phase 3: Low priority logs (errors, metrics)"
+        ]
+      }
+    ],
+
+    "schema_design": {
+      "database": "data/foundups.db",
+      "tables_to_create": {
+        "permission_events": {
+          "columns": [
+            "id INTEGER PRIMARY KEY AUTOINCREMENT",
+            "timestamp TEXT NOT NULL",
+            "event_type TEXT NOT NULL",
+            "agent_id TEXT NOT NULL",
+            "permission_level TEXT",
+            "granted_by TEXT",
+            "confidence REAL",
+            "justification TEXT",
+            "approval_signature TEXT",
+            "metadata_json TEXT"
+          ],
+          "indexes": [
+            "CREATE INDEX idx_permission_agent ON permission_events(agent_id)",
+            "CREATE INDEX idx_permission_timestamp ON permission_events(timestamp)"
+          ]
+        },
+        "confidence_events": {
+          "columns": [
+            "id INTEGER PRIMARY KEY AUTOINCREMENT",
+            "timestamp TEXT NOT NULL",
+            "agent_id TEXT NOT NULL",
+            "confidence_before REAL",
+            "confidence_after REAL",
+            "event_type TEXT NOT NULL",
+            "success BOOLEAN",
+            "validation TEXT",
+            "metadata_json TEXT"
+          ],
+          "indexes": [
+            "CREATE INDEX idx_confidence_agent ON confidence_events(agent_id)",
+            "CREATE INDEX idx_confidence_timestamp ON confidence_events(timestamp)"
+          ]
+        },
+        "chat_messages": {
+          "purpose": "LiveChat history",
+          "source_jsonl": "modules/communication/livechat/logs/*.jsonl"
+        },
+        "daemon_health": {
+          "purpose": "Daemon heartbeat monitoring",
+          "source_jsonl": "modules/communication/livechat/logs/youtube_dae_heartbeat.jsonl"
+        },
+        "selenium_sessions": {
+          "purpose": "Browser automation telemetry",
+          "note": "Already using TelemetryStore - reference implementation"
+        }
+      }
+    },
+
+    "output": {
+      "format": "Markdown report",
+      "path": "docs/DATABASE_CONSOLIDATION_STRATEGY.md",
+      "sections": [
+        "Executive Summary",
+        "Current State (Gemma's findings)",
+        "Proposed Architecture (unified foundups.db)",
+        "Schema Design (CREATE TABLE statements)",
+        "Migration Plan (3 phases)",
+        "Benefits Analysis",
+        "Risks & Mitigation",
+        "Implementation Checklist"
+      ]
+    }
+  },
+
+  "deliverables": {
+    "strategic_report": "docs/DATABASE_CONSOLIDATION_STRATEGY.md",
+    "sql_schema": "data/foundups_db_schema.sql",
+    "migration_checklist": "data/db_migration_checklist.json"
+  },
+
+  "handoff": {
+    "to_agent": "0102",
+    "requires_approval": true,
+    "approval_for": [
+      "Schema design",
+      "Migration priority order",
+      "Breaking changes to existing JSONL readers"
+    ]
+  },
+
+  "success_metrics": {
+    "schema_tables_designed": ">= 5",
+    "migration_phases_defined": "== 3",
+    "risks_identified": ">= 3",
+    "confidence_threshold": 0.90
+  },
+
+  "wsp_compliance": [
+    "WSP 77: Agent Coordination (Qwen strategic analysis)",
+    "WSP 50: Pre-Action Verification (design before migration)",
+    "WSP 72: Module Independence (minimize coupling during migration)",
+    "WSP 91: Observability (unified telemetry architecture)"
+  ]
+}

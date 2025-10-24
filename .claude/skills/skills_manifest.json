@@ -1,0 +1,198 @@
+{
+  "version": "1.0",
+  "last_updated": "2025-10-22T04:06:40Z",
+  "manifest_purpose": "Fast MCP enumeration of available skills (avoid repeated disk scans)",
+  "skills": [
+    {
+      "skill_id": "gemma_noise_detector_v1_prototype",
+      "name": "gemma_noise_detector",
+      "description": "Fast binary classification of files as noise/signal (JSONL, temp, rotting data)",
+      "agent": "gemma",
+      "intent_type": "CLASSIFICATION",
+      "promotion_state": "prototype",
+      "owning_dae": "doc_dae",
+      "execution_phase": 1,
+      "location": ".claude/skills/gemma_noise_detector_prototype/SKILL.md",
+      "mcp_orchestration": true,
+      "breadcrumb_logging": true,
+      "inputs": [
+        "file_path",
+        "file_extension",
+        "file_size_bytes",
+        "last_modified_days",
+        "parent_directory"
+      ],
+      "outputs": [
+        "data/gemma_noise_labels.jsonl"
+      ],
+      "next_skill": "qwen_cleanup_strategist_v1_prototype",
+      "metrics_path": "modules/infrastructure/wre_core/recursive_improvement/metrics/doc_dae_cleanup_skill_metrics.jsonl"
+    },
+    {
+      "skill_id": "qwen_cleanup_strategist_v1_prototype",
+      "name": "qwen_cleanup_strategist",
+      "description": "Strategic cleanup planning with WSP 15 MPS scoring (WSP 83/64 compliance)",
+      "agent": "qwen",
+      "intent_type": "DECISION",
+      "promotion_state": "prototype",
+      "owning_dae": "doc_dae",
+      "execution_phase": 2,
+      "location": ".claude/skills/qwen_cleanup_strategist_prototype/SKILL.md",
+      "mcp_orchestration": true,
+      "breadcrumb_logging": true,
+      "inputs": [
+        "data/gemma_noise_labels.jsonl"
+      ],
+      "outputs": [
+        "data/cleanup_plan.json"
+      ],
+      "previous_skill": "gemma_noise_detector_v1_prototype",
+      "next_skill": "0102_cleanup_validator",
+      "metrics_path": "modules/infrastructure/wre_core/recursive_improvement/metrics/doc_dae_cleanup_skill_metrics.jsonl"
+    },
+    {
+      "skill_id": "qwen_training_data_miner_v1_prototype",
+      "name": "qwen_training_data_miner",
+      "description": "Mine 012.txt for domain-specific training examples (MPS scoring, WSP patterns, roadmap analysis)",
+      "agent": "qwen",
+      "intent_type": "GENERATION",
+      "promotion_state": "prototype",
+      "owning_dae": "doc_dae",
+      "execution_phase": 1,
+      "location": ".claude/skills/qwen_training_data_miner_prototype/SKILL.md",
+      "mcp_orchestration": true,
+      "breadcrumb_logging": true,
+      "inputs": [
+        "O:/Foundups-Agent/012.txt"
+      ],
+      "outputs": [
+        "data/training_datasets/{domain}_training_data.json"
+      ],
+      "next_skill": "gemma_domain_trainer_v1_prototype"
+    },
+    {
+      "skill_id": "gemma_domain_trainer_v1_prototype",
+      "name": "gemma_domain_trainer",
+      "description": "Fine-tune Gemma 270M on domain-specific training data using LoRA",
+      "agent": "qwen",
+      "intent_type": "GENERATION",
+      "promotion_state": "prototype",
+      "owning_dae": "doc_dae",
+      "execution_phase": 2,
+      "location": ".claude/skills/gemma_domain_trainer_prototype/SKILL.md",
+      "mcp_orchestration": true,
+      "breadcrumb_logging": true,
+      "inputs": [
+        "data/training_datasets/{domain}_training_data.json"
+      ],
+      "outputs": [
+        "E:/HoloIndex/models/gemma-3-270m-{domain}-lora/"
+      ],
+      "previous_skill": "qwen_training_data_miner_v1_prototype",
+      "next_skill": "gemma_domain_specialist_deployed"
+    },
+    {
+      "skill_id": "qwen_roadmap_auditor_v1_prototype",
+      "name": "qwen_roadmap_auditor",
+      "description": "Audit roadmaps for completion status, missing MCP integrations, outdated skills references",
+      "agent": "qwen",
+      "intent_type": "DECISION",
+      "promotion_state": "prototype",
+      "owning_dae": "doc_dae",
+      "execution_phase": 1,
+      "location": ".claude/skills/qwen_roadmap_auditor_prototype/SKILL.md",
+      "mcp_orchestration": true,
+      "breadcrumb_logging": true,
+      "inputs": [
+        "roadmap_files"
+      ],
+      "outputs": [
+        "data/roadmap_audits/{roadmap}_audit_report.json"
+      ],
+      "next_skill": "qwen_roadmap_updater_v1_prototype",
+      "gemma_wardrobe_required": "gemma_roadmap_tracker_v1"
+    }
+  ],
+  "validators": [
+    {
+      "validator_id": "0102_cleanup_validator",
+      "name": "0102_cleanup_validator",
+      "description": "0102 validates Qwen's cleanup plans using HoloIndex research + WSP 15 MPS validation",
+      "agent": "0102",
+      "intent_type": "VALIDATION",
+      "execution_phase": 3,
+      "location": "docs/AUTONOMOUS_CLEANUP_VALIDATOR_0102.md",
+      "mcp_orchestration": true,
+      "breadcrumb_logging": true,
+      "inputs": [
+        "data/cleanup_plan.json"
+      ],
+      "outputs": [
+        "data/cleanup_plan_validated.json"
+      ],
+      "previous_skill": "qwen_cleanup_strategist_v1_prototype",
+      "metrics_path": "modules/infrastructure/wre_core/recursive_improvement/metrics/doc_dae_cleanup_skill_metrics.jsonl"
+    }
+  ],
+  "execution_chains": [
+    {
+      "chain_id": "autonomous_cleanup_cycle",
+      "description": "Complete autonomous cleanup cycle from file scanning to validated plan",
+      "phases": [
+        {
+          "phase": 1,
+          "skill_id": "gemma_noise_detector_v1_prototype",
+          "agent": "gemma",
+          "expected_latency_ms": "50-100 per file",
+          "api_token_burn": 0,
+          "cost_usd": 0,
+          "note": "Local GGUF model (E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf)"
+        },
+        {
+          "phase": 2,
+          "skill_id": "qwen_cleanup_strategist_v1_prototype",
+          "agent": "qwen",
+          "expected_latency_ms": "200-500 total",
+          "api_token_burn": 0,
+          "cost_usd": 0,
+          "note": "Local model via llama-cpp-python"
+        },
+        {
+          "phase": 3,
+          "validator_id": "0102_cleanup_validator",
+          "agent": "0102",
+          "expected_latency_ms": "120000-300000 (2-5 min)",
+          "api_token_burn": "2000-5000",
+          "cost_usd": "0.006-0.015",
+          "note": "Claude Sonnet 4.5 API call ($0.003/1K tokens)"
+        }
+      ],
+      "total_expected_latency": "2-5 minutes",
+      "total_api_token_burn": "2000-5000 (0102 only - Gemma/Qwen are local models)",
+      "total_cost_usd": "0.006-0.015",
+      "cost_savings_vs_manual_0102": "87% reduction ($0.045 → $0.006)",
+      "autonomous_execution": true,
+      "requires_human_approval": false
+    }
+  ],
+  "wsp_compliance": [
+    "WSP_96 (Skills Wardrobe Protocol)",
+    "WSP_77 (Agent Coordination)",
+    "WSP_15 (MPS Scoring)",
+    "WSP_83 (Documentation Protection)",
+    "WSP_64 (Violation Prevention)"
+  ],
+  "mcp_integration": {
+    "orchestrator_path": "modules/infrastructure/wsp_orchestrator/src/wsp_orchestrator.py",
+    "breadcrumb_writer": "holo_index/qwen_advisor/ui/menu_system.py",
+    "skill_loader": "modules/infrastructure/wre_core/skills/wre_skills_loader.py"
+  },
+  "notes": [
+    "This manifest enables fast skill enumeration for MCP without disk scanning",
+    "Skills in prototype phase are in .claude/skills/*_prototype/",
+    "Production skills will move to modules/[domain]/[block]/skills/",
+    "Each skill execution writes breadcrumb with skill_id to HoloIndex timeline",
+    "Telemetry for cleanup skills is appended to modules/infrastructure/wre_core/recursive_improvement/metrics/doc_dae_cleanup_skill_metrics.jsonl",
+    "WSP 77 alignment: Gemma (cheap patterns) → Qwen (strategic scoring) → 0102 (research validation)"
+  ]
+}
