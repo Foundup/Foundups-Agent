@@ -1,0 +1,496 @@
+{
+  "version": "2.0",
+  "last_updated": "2025-10-25T01:04:01.129431",
+  "skills": {
+    "gemma_pqn_data_processor": {
+      "skill_path": "O:\\Foundups-Agent\\modules\\ai_intelligence\\pqn_alignment\\skills\\gemma_pqn_data_processor\\SKILL.md",
+      "agents": [
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "unknown",
+      "wsp_chain": [],
+      "metadata": {
+        "name": "gemma_pqn_data_processor",
+        "description": "Gemma PQN Data Processor",
+        "version": 1.0,
+        "author": "0102_wre_team",
+        "agents": [
+          "gemma"
+        ],
+        "dependencies": [
+          "pattern_memory",
+          "libido_monitor"
+        ],
+        "domain": "autonomous_operations"
+      }
+    },
+    "gemma_pqn_emergence_detector": {
+      "skill_path": "O:\\Foundups-Agent\\modules\\ai_intelligence\\pqn_alignment\\skills\\gemma_pqn_emergence_detector\\SKILL.md",
+      "agents": [
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "unknown",
+      "wsp_chain": [],
+      "metadata": {
+        "name": "gemma_pqn_emergence_detector",
+        "description": "Gemma PQN Emergence Detector",
+        "version": 1.0,
+        "author": "0102_wre_team",
+        "agents": [
+          "gemma"
+        ],
+        "dependencies": [
+          "pattern_memory",
+          "libido_monitor"
+        ],
+        "domain": "autonomous_operations"
+      }
+    },
+    "qwen_google_research_integrator": {
+      "skill_path": "O:\\Foundups-Agent\\modules\\ai_intelligence\\pqn_alignment\\skills\\qwen_google_research_integrator\\SKILL.md",
+      "agents": [
+        "qwen"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "unknown",
+      "wsp_chain": [],
+      "metadata": {
+        "name": "qwen_google_research_integrator",
+        "description": "Qwen Google Research Integrator",
+        "version": 1.0,
+        "author": "0102_wre_team",
+        "agents": [
+          "qwen"
+        ],
+        "dependencies": [
+          "pattern_memory",
+          "libido_monitor"
+        ],
+        "domain": "autonomous_operations"
+      }
+    },
+    "qwen_pqn_research_coordinator": {
+      "skill_path": "O:\\Foundups-Agent\\modules\\ai_intelligence\\pqn_alignment\\skills\\qwen_pqn_research_coordinator\\SKILL.md",
+      "agents": [
+        "qwen"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "unknown",
+      "wsp_chain": [
+        "WSP 77"
+      ],
+      "metadata": {
+        "name": "qwen_pqn_research_coordinator",
+        "description": "Qwen PQN Research Coordinator",
+        "version": 1.0,
+        "author": "0102_wre_team",
+        "agents": [
+          "qwen"
+        ],
+        "dependencies": [
+          "pattern_memory",
+          "libido_monitor"
+        ],
+        "domain": "autonomous_operations"
+      }
+    },
+    "qwen_wsp_compliance_auditor": {
+      "skill_path": "O:\\Foundups-Agent\\modules\\ai_intelligence\\pqn_alignment\\skills\\qwen_wsp_compliance_auditor\\SKILL.md",
+      "agents": [
+        "qwen"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "unknown",
+      "wsp_chain": [
+        "WSP 3",
+        "WSP 49",
+        "WSP 11",
+        "WSP 5",
+        "WSP 6",
+        "WSP 34",
+        "WSP 22",
+        "WSP 15",
+        "WSP 8",
+        "WSP 83"
+      ],
+      "metadata": {
+        "name": "qwen_wsp_compliance_auditor",
+        "description": "Qwen WSP Compliance Auditor",
+        "version": 1.0,
+        "author": "0102_wre_team",
+        "agents": [
+          "qwen"
+        ],
+        "dependencies": [
+          "pattern_memory",
+          "libido_monitor"
+        ],
+        "domain": "autonomous_operations"
+      }
+    },
+    "qwen_gitpush": {
+      "skill_path": "O:\\Foundups-Agent\\modules\\infrastructure\\git_push_dae\\skills\\qwen_gitpush\\SKILL.md",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": "1.0.0",
+      "promotion_state": "unknown",
+      "wsp_chain": [
+        "WSP 15",
+        "WSP 96",
+        "WSP 62"
+      ],
+      "metadata": {
+        "name": "qwen_gitpush",
+        "description": "Analyze uncommitted git changes and decide if/when to commit based on WSP 15 MPS",
+        "version": "1.0.0",
+        "author": "0102_infrastructure_team",
+        "agents": [
+          "qwen",
+          "gemma"
+        ],
+        "dependencies": [
+          "git_push_dae",
+          "pattern_memory"
+        ],
+        "domain": "autonomous_operations",
+        "intent_type": "DECISION",
+        "promotion_state": "prototype"
+      }
+    },
+    "gemma_domain_trainer_prototype": {
+      "skill_path": "O:\\Foundups-Agent\\.claude\\skills\\gemma_domain_trainer_prototype\\SKILL.md",
+      "agents": [
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 15"
+      ],
+      "metadata": {
+        "name": "gemma_domain_trainer_prototype",
+        "description": "Gemma Domain Trainer (Prototype)",
+        "version": 1.0,
+        "author": "0102_wre_team",
+        "agents": [
+          "gemma"
+        ],
+        "dependencies": [
+          "pattern_memory",
+          "libido_monitor"
+        ],
+        "domain": "autonomous_operations"
+      }
+    },
+    "gemma_noise_detector_prototype": {
+      "skill_path": "O:\\Foundups-Agent\\.claude\\skills\\gemma_noise_detector_prototype\\SKILL.md",
+      "agents": [
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "prototype",
+      "wsp_chain": [],
+      "metadata": {
+        "name": "gemma_noise_detector_prototype",
+        "description": "Gemma Noise Detector (Prototype)",
+        "version": 1.0,
+        "author": "0102_wre_team",
+        "agents": [
+          "gemma"
+        ],
+        "dependencies": [
+          "pattern_memory",
+          "libido_monitor"
+        ],
+        "domain": "autonomous_operations"
+      }
+    },
+    "qwen_cleanup_strategist_prototype": {
+      "skill_path": "O:\\Foundups-Agent\\.claude\\skills\\qwen_cleanup_strategist_prototype\\SKILL.md",
+      "agents": [
+        "qwen"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 15",
+        "WSP 83",
+        "WSP 64",
+        "WSP 50"
+      ],
+      "metadata": {
+        "name": "qwen_cleanup_strategist_prototype",
+        "description": "Qwen Cleanup Strategist (Prototype)",
+        "version": 1.0,
+        "author": "0102_wre_team",
+        "agents": [
+          "qwen"
+        ],
+        "dependencies": [
+          "pattern_memory",
+          "libido_monitor"
+        ],
+        "domain": "autonomous_operations"
+      }
+    },
+    "qwen_roadmap_auditor_prototype": {
+      "skill_path": "O:\\Foundups-Agent\\.claude\\skills\\qwen_roadmap_auditor_prototype\\SKILL.md",
+      "agents": [
+        "qwen"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 83",
+        "WSP 22",
+        "WSP 50",
+        "WSP 15",
+        "WSP 96"
+      ],
+      "metadata": {
+        "name": "qwen_roadmap_auditor_prototype",
+        "description": "Qwen Roadmap Auditor (Prototype)",
+        "version": 1.0,
+        "author": "0102_wre_team",
+        "agents": [
+          "qwen"
+        ],
+        "dependencies": [
+          "pattern_memory",
+          "libido_monitor"
+        ],
+        "domain": "autonomous_operations"
+      }
+    },
+    "qwen_training_data_miner_prototype": {
+      "skill_path": "O:\\Foundups-Agent\\.claude\\skills\\qwen_training_data_miner_prototype\\SKILL.md",
+      "agents": [
+        "qwen"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 15",
+        "WSP 64",
+        "WSP 3",
+        "WSP 50"
+      ],
+      "metadata": {
+        "name": "qwen_training_data_miner_prototype",
+        "description": "Qwen Training Data Miner (Prototype)",
+        "version": 1.0,
+        "author": "0102_wre_team",
+        "agents": [
+          "qwen"
+        ],
+        "dependencies": [
+          "pattern_memory",
+          "libido_monitor"
+        ],
+        "domain": "autonomous_operations"
+      }
+    },
+    "qwen_wsp_enhancement": {
+      "skill_path": "O:\\Foundups-Agent\\.claude\\skills\\qwen_wsp_enhancement\\SKILL.md",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "unknown",
+      "wsp_chain": [
+        "WSP 80",
+        "WSP 96",
+        "WSP 91",
+        "WSP 27",
+        "WSP 60",
+        "WSP 32",
+        "WSP 72",
+        "WSP 54"
+      ],
+      "metadata": {
+        "name": "qwen_wsp_enhancement",
+        "description": "Enhance WSP protocols using Qwen strategic analysis and 0102 supervision. Use when enhancing WSPs, analyzing protocol gaps, generating WSP recommendations, or coordinating multi-WSP updates.",
+        "version": 1.0,
+        "author": "0102_infrastructure_team",
+        "agents": [
+          "qwen",
+          "gemma"
+        ],
+        "dependencies": [
+          "holo_index",
+          "pattern_memory",
+          "wsp_framework"
+        ],
+        "domain": "wsp_protocol_enhancement",
+        "composable_with": [
+          "code_intelligence",
+          "module_analysis"
+        ]
+      }
+    },
+    "unicode_daemon_monitor_prototype": {
+      "skill_path": "O:\\Foundups-Agent\\.claude\\skills\\unicode_daemon_monitor_prototype\\SKILL.md",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 5",
+        "WSP 72",
+        "WSP 90",
+        "WSP 46",
+        "WSP 77",
+        "WSP 80",
+        "WSP 22"
+      ],
+      "metadata": {
+        "name": "unicode_daemon_monitor_prototype",
+        "description": "Unicode Daemon Monitor Skill",
+        "version": 1.0,
+        "author": "0102_wre_team",
+        "agents": [
+          "qwen",
+          "gemma"
+        ],
+        "dependencies": [
+          "pattern_memory",
+          "libido_monitor"
+        ],
+        "domain": "autonomous_operations"
+      }
+    },
+    "youtube_dae": {
+      "skill_path": "O:\\Foundups-Agent\\.claude\\skills\\youtube_dae\\SKILL.md",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "unknown",
+      "wsp_chain": [],
+      "metadata": {
+        "name": "youtube_dae_content_generation",
+        "description": "Generate YouTube Live stream content, consciousness responses, and engagement prompts. Use when creating stream announcements, chat responses, moderation messages, community engagement prompts, or emergency protocol responses.",
+        "version": 1.0,
+        "author": "0102_infrastructure_team",
+        "agents": [
+          "qwen",
+          "gemma"
+        ],
+        "dependencies": [
+          "livechat",
+          "auto_moderator",
+          "social_media_orchestrator"
+        ],
+        "domain": "youtube_live_streaming",
+        "composable_with": [
+          "auto_moderation",
+          "content_generation",
+          "social_media_orchestrator"
+        ],
+        "trigger_keywords": [
+          "stream",
+          "youtube",
+          "moderation",
+          "chat",
+          "engagement",
+          "consciousness_response"
+        ]
+      }
+    },
+    "youtube_moderation_prototype": {
+      "skill_path": "O:\\Foundups-Agent\\.claude\\skills\\youtube_moderation_prototype\\SKILL.md",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": "1.0_prototype",
+      "promotion_state": "prototype",
+      "wsp_chain": [],
+      "metadata": {
+        "name": "youtube_moderation_prototype",
+        "description": "Moderate YouTube live chat by detecting spam, toxic content, and enforcing rate limits. PROTOTYPE for testing pattern fidelity before deploying to native Qwen/Gemma.",
+        "version": "1.0_prototype",
+        "author": "0102_test_harness",
+        "created": "2025-10-20",
+        "agents": [
+          "qwen",
+          "gemma"
+        ],
+        "primary_agent": "gemma",
+        "trigger_keywords": [
+          "moderate",
+          "spam",
+          "toxic",
+          "chat",
+          "filter",
+          "block"
+        ],
+        "pattern_fidelity_threshold": 0.9,
+        "test_status": "prototype"
+      }
+    },
+    "qwen_holo_output_skill": {
+      "skill_path": "O:\\Foundups-Agent\\holo_index\\skills\\qwen_holo_output_skill\\SKILL.md",
+      "agents": [
+        "qwen"
+      ],
+      "intent_type": "GENERAL",
+      "version": "1.0_prototype",
+      "promotion_state": "unknown",
+      "wsp_chain": [
+        "WSP 90",
+        "WSP 64",
+        "WSP 83",
+        "WSP 87",
+        "WSP 96",
+        "WSP 50"
+      ],
+      "metadata": {
+        "skill_id": "qwen_holo_output_v1",
+        "name": "qwen_holo_output_skill",
+        "description": "Coordinate Holo output formatting and telemetry so 0102, Qwen, and Gemma receive exactly what they need.",
+        "version": "1.0_prototype",
+        "author": 66,
+        "created": "2025-10-24",
+        "agents": [
+          "qwen"
+        ],
+        "primary_agent": "qwen",
+        "intent_type": "DECISION",
+        "promotion_state": "prototype",
+        "pattern_fidelity_threshold": 0.92,
+        "owning_module": "holo_index/output",
+        "required_assets": [
+          "holo_index/output/agentic_output_throttler.py",
+          "holo_index/output/holo_output_history.jsonl"
+        ],
+        "telemetry": {
+          "history_path": "holo_index/output/holo_output_history.jsonl"
+        }
+      }
+    }
+  }
+}
