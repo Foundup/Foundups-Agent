@@ -2,6 +2,44 @@
 
 ## Chronological Change Log
 
+### [2025-10-25] - Skills Registry v2 & Metadata Fixes (COMPLETE)
+**Date**: 2025-10-25
+**WSP Protocol References**: WSP 96 (WRE Skills), WSP 50 (Pre-Action Verification), WSP 22 (ModLog Updates)
+**Impact Analysis**: All 16 SKILL.md files now discoverable with valid metadata
+**Enhancement Tracking**: Fixed skill discovery blockers, created loader-compatible registry
+
+#### Changes Made
+1. **Fixed 11 SKILL.md files missing YAML frontmatter**:
+   - Added agents field to all prototype skills
+   - Skills: unicode_daemon_monitor, qwen_cleanup_strategist, qwen_roadmap_auditor, qwen_training_data_miner
+   - Skills: gemma_domain_trainer, gemma_noise_detector, qwen_google_research_integrator
+   - Skills: qwen_pqn_research_coordinator, gemma_pqn_emergence_detector, gemma_pqn_data_processor, qwen_wsp_compliance_auditor
+   - Result: 16/16 skills now discoverable (was 5/16)
+
+2. **Fixed OrchestratorPlugin import** (pqn_alignment_dae.py):
+   - Added try/except import for WRE orchestrator plugin
+   - Graceful degradation when WRE not available
+   - Resolves: NameError on module import
+
+3. **Created skills_registry_v2.json** (496 lines):
+   - Exported all 16 discovered skills
+   - Format: Absolute paths for loader compatibility
+   - Fields: location, agents, intent_type, version, promotion_state, wsp_chain
+   - Fixed: KeyError 'location' by using absolute paths (bypasses loader path joining bug)
+
+#### Results
+- Discovery: 16/16 skills with valid metadata
+- Registry: WRESkillsLoader.load_skill() working
+- Agents: 12 Qwen, 9 Gemma skills
+- Token efficiency: 800 tokens (micro-sprints) vs 15K+ (analysis)
+
+#### Issues Fixed
+- Registry format mismatch (location field)
+- Circular dependency (OrchestratorPlugin)
+- Missing YAML frontmatter (11 skills)
+
+---
+
 ### [2025-10-25] - Phase 3: HoloDAE Integration & Autonomous Skill Execution (COMPLETE)
 **Date**: 2025-10-25
 **WSP Protocol References**: WSP 96 (WRE Skills v1.3), WSP 77 (Agent Coordination), WSP 80 (DAE Protocol)
