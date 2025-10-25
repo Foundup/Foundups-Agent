@@ -259,7 +259,7 @@ if result.has_actionable_events():
 
 ---
 
-### Task 4: Testing & Validation (1 hour)
+### Task 4: Testing & Validation (~1K tokens)
 
 **Test Scenarios**:
 1. HoloDAE detects uncommitted changes → triggers qwen_gitpush → commits
@@ -305,7 +305,7 @@ if result.has_actionable_events():
 | Add WRE triggers to HoloDAE | 2 hours | None (just integration) |
 | Create health check methods | 3 hours | Git/daemon/WSP checks |
 | Wire complete chain | 2 hours | Phase 2 MUST be done |
-| Test & validate | 1 hour | All above complete |
+| Test & validate | ~1K tokens | All above complete |
 | **TOTAL** | **7-8 hours** | **Phase 2 required** |
 
 ---

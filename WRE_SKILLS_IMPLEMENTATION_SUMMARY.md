@@ -73,7 +73,7 @@ Total: ~1 second | Fidelity Target: >90%
 
 **Priority Mapping**:
 - 18-20: P0 (Critical - push immediately)
-- 14-17: P1 (High - push within 1 hour)
+- 14-17: P1 (High - push within ~1K tokens)
 - 10-13: P2 (Medium - batch if convenient)
 - 6-9: P3 (Low - batch with next)
 - 4-5: P4 (Backlog - end of day)
@@ -81,9 +81,9 @@ Total: ~1 second | Fidelity Target: >90%
 **Example**:
 - 14 files changed (C=3)
 - Bug fixes in critical modules (I=4)
-- Can wait 1 hour (D=3)
+- Can wait ~1K tokens (D=3)
 - Visible to devs (P=4)
-- **MPS = 14 (P1)** → Commit within 1 hour
+- **MPS = 14 (P1)** → Commit within ~1K tokens
 
 ---
 
@@ -143,7 +143,7 @@ Total: ~1 second | Fidelity Target: >90%
 
 ## Recursive Self-Improvement
 
-**Evolution Cycle** (4 weeks to convergence):
+**Evolution Cycle** (~160K tokens to convergence):
 
 | Week | Fidelity | Status | Action |
 |------|----------|--------|--------|
@@ -258,10 +258,10 @@ def execute_from_skill(self, skill_result: SkillResult):
 - Skill discovery: <100ms (all modules)
 - Pattern fidelity: >90% (Gemma validation)
 - Libido accuracy: <5% false throttles
-- Evolution time: <4 weeks to convergence
+- Evolution time: <~160K tokens to convergence
 
 **Developer Experience**:
-- 0102 intervention: <1hr/week (Week 4)
+- 0102 intervention: <~1K tokens/week (Week 4)
 - Skill creation: <30min (Qwen generates baseline)
 - A/B testing: Automatic
 
