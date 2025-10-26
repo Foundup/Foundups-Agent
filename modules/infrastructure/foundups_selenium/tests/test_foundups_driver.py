@@ -2,6 +2,7 @@
 import io
 
 
+import json
 import os
 import types
 import sys
@@ -227,6 +228,9 @@ def test_analyze_ui_saves_screenshot_and_calls_vision(
     )
 
     driver = FoundUpsDriver()
+    driver._session_snapshot_dir = tmp_path  # noqa: SLF001 - testing internal path
+    recorded = []
+    driver._record_session_hook = recorded.append  # type: ignore[assignment]
     screenshot_bytes = b"fake-bytes"
     monkeypatch.setattr(
         driver,
@@ -256,6 +260,14 @@ def test_analyze_ui_saves_screenshot_and_calls_vision(
     assert os.path.exists(completed_payload["screenshot_path"])
     assert os.path.exists(completed_payload["annotated_screenshot_path"])
     assert completed_payload["screenshot_hash"] == result["screenshot_hash"]
+    snapshot_file = tmp_path / "vision_sessions.jsonl"
+    assert snapshot_file.exists()
+    entries = snapshot_file.read_text(encoding="utf-8").strip().splitlines()
+    assert entries
+    record = json.loads(entries[-1])
+    assert record["payload"]["screenshot_hash"] == result["screenshot_hash"]
+    assert recorded
+    assert recorded[-1]["payload"]["screenshot_hash"] == result["screenshot_hash"]
 
 
 def test_analyze_ui_returns_error_when_vision_disabled(

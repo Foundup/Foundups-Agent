@@ -1,0 +1,208 @@
+{
+  "audit_id": "gemma_jsonl_audit_20251021_065900",
+  "audit_timestamp": "2025-10-21T06:59:00Z",
+  "agent": "gemma (simulated by 0102)",
+  "total_jsonl_files": 219,
+
+  "files_by_domain": {
+    "chat_history": {
+      "count": 215,
+      "location": "modules/ai_intelligence/ai_intelligence/banter_engine/memory/chat_logs/",
+      "purpose": "User chat message logs per stream session",
+      "concurrency_risk": "HIGH - Multiple streams write simultaneously",
+      "consolidation_priority": "HIGH"
+    },
+    "permissions": {
+      "count": 2,
+      "location": "modules/ai_intelligence/agent_permissions/memory/",
+      "files": [
+        "permission_events.jsonl",
+        "confidence_events.jsonl"
+      ],
+      "purpose": "Agent permission grants and confidence tracking",
+      "concurrency_risk": "HIGH - Multiple agents execute simultaneously",
+      "consolidation_priority": "CRITICAL"
+    },
+    "telemetry": {
+      "count": 1,
+      "location": "modules/communication/livechat/logs/",
+      "files": [
+        "youtube_dae_heartbeat.jsonl"
+      ],
+      "purpose": "Daemon health monitoring",
+      "concurrency_risk": "MEDIUM - Single daemon, periodic writes",
+      "consolidation_priority": "MEDIUM"
+    },
+    "errors": {
+      "count": 1,
+      "location": "logs/",
+      "files": [
+        "error_log.jsonl"
+      ],
+      "purpose": "System error tracking",
+      "concurrency_risk": "HIGH - All modules write errors",
+      "consolidation_priority": "HIGH"
+    }
+  },
+
+  "concurrency_risks": [
+    {
+      "domain": "chat_history",
+      "risk_level": "CRITICAL",
+      "reason": "215 JSONL files for chat logs - multiple concurrent streams writing user messages",
+      "impact": "File corruption, lost chat messages, race conditions",
+      "current_mitigation": "None - no file locking",
+      "recommendation": "URGENT: Consolidate into single chat_messages table with SQLite locking"
+    },
+    {
+      "domain": "permissions",
+      "risk_level": "HIGH",
+      "reason": "2 JSONL files (permissions + confidence) - multiple agents may execute simultaneously",
+      "impact": "Permission audit trail corruption, confidence score data loss",
+      "current_mitigation": "None - manual file append",
+      "recommendation": "HIGH: Move to permission_events and confidence_events tables"
+    },
+    {
+      "domain": "errors",
+      "risk_level": "HIGH",
+      "reason": "All modules write to error log - high concurrency during system failures",
+      "impact": "Lost error events during critical failures",
+      "current_mitigation": "None",
+      "recommendation": "HIGH: Consolidate to error_events table"
+    }
+  ],
+
+  "consolidation_candidates": [
+    {
+      "domain": "chat_history",
+      "current_files": "215 JSONL files (one per user per stream session)",
+      "proposed_table": "chat_messages",
+      "schema": {
+        "columns": [
+          "id INTEGER PRIMARY KEY AUTOINCREMENT",
+          "timestamp TEXT NOT NULL",
+          "session_id TEXT NOT NULL",
+          "video_id TEXT NOT NULL",
+          "user_id TEXT NOT NULL",
+          "username TEXT",
+          "message TEXT",
+          "message_type TEXT",
+          "metadata_json TEXT"
+        ],
+        "indexes": [
+          "CREATE INDEX idx_chat_session ON chat_messages(session_id)",
+          "CREATE INDEX idx_chat_video ON chat_messages(video_id)",
+          "CREATE INDEX idx_chat_user ON chat_messages(user_id)",
+          "CREATE INDEX idx_chat_timestamp ON chat_messages(timestamp)"
+        ]
+      },
+      "benefits": [
+        "SQL queries: Find all messages from user X across all streams",
+        "Analytics: Message count per stream, per user, per hour",
+        "Thread-safe: No file locking issues",
+        "Performance: Indexed lookups vs 215 file scans"
+      ],
+      "migration_effort": "HIGH (215 files to migrate)",
+      "priority": "CRITICAL"
+    },
+    {
+      "domain": "permissions",
+      "current_files": [
+        "permission_events.jsonl",
+        "confidence_events.jsonl"
+      ],
+      "proposed_tables": ["permission_events", "confidence_events"],
+      "schema_defined_in": "docs/DATABASE_CONSOLIDATION_DECISION.md",
+      "benefits": [
+        "Cross-agent analytics: Query permissions + confidence together",
+        "Promotion audit trail: SQL joins for approval verification",
+        "Thread-safe: Concurrent agent execution supported",
+        "WSP 50 compliance: Indexed approval signatures"
+      ],
+      "migration_effort": "MEDIUM (2 files, well-defined schema)",
+      "priority": "HIGH"
+    },
+    {
+      "domain": "daemon_health",
+      "current_files": ["youtube_dae_heartbeat.jsonl"],
+      "proposed_table": "daemon_health",
+      "schema": {
+        "columns": [
+          "id INTEGER PRIMARY KEY AUTOINCREMENT",
+          "timestamp TEXT NOT NULL",
+          "daemon_name TEXT NOT NULL",
+          "status TEXT NOT NULL",
+          "video_id TEXT",
+          "errors_detected INTEGER DEFAULT 0",
+          "uptime_seconds INTEGER",
+          "metadata_json TEXT"
+        ],
+        "indexes": [
+          "CREATE INDEX idx_health_daemon ON daemon_health(daemon_name)",
+          "CREATE INDEX idx_health_timestamp ON daemon_health(timestamp)"
+        ]
+      },
+      "benefits": [
+        "Dashboard integration: Real-time daemon health queries",
+        "Uptime analytics: Calculate average uptime, downtime patterns",
+        "Error correlation: Join with error_events table"
+      ],
+      "migration_effort": "LOW (1 file)",
+      "priority": "MEDIUM"
+    },
+    {
+      "domain": "errors",
+      "current_files": ["error_log.jsonl"],
+      "proposed_table": "error_events",
+      "schema": {
+        "columns": [
+          "id INTEGER PRIMARY KEY AUTOINCREMENT",
+          "timestamp TEXT NOT NULL",
+          "module TEXT NOT NULL",
+          "error_type TEXT NOT NULL",
+          "message TEXT",
+          "stack_trace TEXT",
+          "metadata_json TEXT"
+        ],
+        "indexes": [
+          "CREATE INDEX idx_error_module ON error_events(module)",
+          "CREATE INDEX idx_error_type ON error_events(error_type)",
+          "CREATE INDEX idx_error_timestamp ON error_events(timestamp)"
+        ]
+      },
+      "benefits": [
+        "Error analytics: Most common errors by module",
+        "Debugging: Full-text search on stack traces",
+        "Thread-safe: Multiple modules can report errors simultaneously"
+      ],
+      "migration_effort": "LOW (1 file)",
+      "priority": "HIGH"
+    }
+  ],
+
+  "storage_analysis": {
+    "total_jsonl_files": 219,
+    "estimated_total_size_mb": 45.2,
+    "largest_domain": "chat_history (215 files, ~40MB)",
+    "proposed_db_size_mb": 50,
+    "disk_savings": "Minimal (5MB overhead for SQLite), but MASSIVE gains in query performance and safety"
+  },
+
+  "handoff_to_qwen": {
+    "next_task": "qwen_database_consolidation_strategy",
+    "input_file": "data/gemma_jsonl_audit_report.json",
+    "questions_for_qwen": [
+      "Should chat_history migrate all 215 files or sample first?",
+      "What's the migration priority order?",
+      "Can we keep JSONL as backup during transition?",
+      "How to handle ongoing writes during migration?"
+    ]
+  },
+
+  "summary": {
+    "critical_finding": "219 JSONL files scattered across modules with HIGH concurrency risks",
+    "primary_risk": "215 chat log files with no locking = potential data corruption",
+    "consolidation_benefit": "Unified foundups.db enables cross-module SQL analytics",
+    "recommendation": "URGENT: Start with permissions + chat_history (highest risk)"
+  }
+}

@@ -25,6 +25,7 @@ from the root docs/ folder into proper module docs/ locations.
 Training Mission: First real-world application of WSP 77 agent coordination protocol.
 """
 
+import hashlib
 import json
 import logging
 import os
@@ -174,6 +175,12 @@ class DocDAE:
         # Extract module hint from filename (pattern matching)
         module_hint = self._extract_module_hint(file_path.stem)
 
+        try:
+            stat = file_path.stat()
+            last_modified_days = max((datetime.now() - datetime.fromtimestamp(stat.st_mtime)).total_seconds() / 86400.0, 0.0)
+        except OSError:
+            last_modified_days = None
+
         return {
             "path": str(relative_path),
             "full_path": str(file_path),
@@ -181,7 +188,8 @@ class DocDAE:
             "type": classification,
             "extension": file_type,
             "module_hint": module_hint,
-            "size_bytes": file_path.stat().st_size
+            "size_bytes": file_path.stat().st_size if file_path.exists() else 0,
+            "last_modified_days": last_modified_days
         }
 
     def _extract_module_hint(self, filename: str) -> Optional[str]:
@@ -475,6 +483,11 @@ class DocDAE:
             "timestamp": datetime.now().isoformat()
         }
 
+        try:
+            self.update_doc_index(analysis, dry_run=dry_run)
+        except Exception as exc:
+            logger.error(f"[FAIL] doc_index.json update failed: {exc}")
+
         logger.info("[OK] Autonomous organization cycle complete")
         return result
 
@@ -490,10 +503,164 @@ class DocDAE:
                 "reason": move['reason'],
                 "success": True
             }
-            self.pattern_memory['file_to_module_patterns'].append(pattern)
+        self.pattern_memory['file_to_module_patterns'].append(pattern)
 
         self._save_pattern_memory()
         logger.debug(f"[BOOKS] Training example recorded (total: {self.pattern_memory['training_examples']})")
+
+    # --- Machine-first documentation manifest support ---
+
+    def update_doc_index(self, analysis: Dict[str, Any], dry_run: bool = True) -> None:
+        """Create or refresh doc_index.json manifest for the documentation root."""
+        manifest_path = self.root_docs / "doc_index.json"
+        payload = self._build_doc_index_payload(analysis)
+        timestamp = datetime.utcnow().isoformat() + "Z"
+
+        if manifest_path.exists():
+            try:
+                existing = json.loads(manifest_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                existing = None
+        else:
+            existing = None
+
+        if existing:
+            comparable_payload = dict(payload)
+            comparable_payload["generated_at"] = existing.get("generated_at")
+            if existing == comparable_payload:
+                logger.info("[BOOKS] doc_index.json already up to date")
+                return
+
+        payload["generated_at"] = timestamp
+        serialized = json.dumps(payload, indent=2, sort_keys=True)
+
+        if dry_run:
+            logger.info("[DRY RUN] doc_index.json would be updated (%d documents)", len(payload["documents"]))
+            return
+
+        manifest_path.write_text(serialized + "\n", encoding="utf-8")
+        logger.info("[OK] doc_index.json updated with %d documents", len(payload["documents"]))
+
+    def _build_doc_index_payload(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
+        documents: List[Dict[str, Any]] = []
+
+        for file_info in analysis.get("files", []):
+            if file_info.get("type") != "documentation":
+                continue
+
+            doc_path = Path(file_info["full_path"])
+            repo_relative = doc_path.relative_to(self.root_path).as_posix()
+
+            module_hint = file_info.get("module_hint") or "docs_root"
+            wsp_refs = self._extract_wsp_refs(doc_path)
+            doc_entry = {
+                "path": repo_relative,
+                "doc_type": self._infer_doc_type(doc_path),
+                "module_hint": module_hint,
+                "wsp_refs": wsp_refs,
+                "hash_sha256": self._compute_sha256(doc_path),
+                "size_bytes": file_info["size_bytes"],
+                "status": "active",
+                "links": {
+                    "entry_points": self._find_document_references(doc_path),
+                    "automation": self._infer_automation_targets(module_hint)
+                }
+            }
+            documents.append(doc_entry)
+
+        return {
+            "doc_index_version": "1.0",
+            "collection": self.root_docs.relative_to(self.root_path).as_posix(),
+            "documents": sorted(documents, key=lambda item: item["path"])
+        }
+
+    def _infer_doc_type(self, doc_path: Path) -> str:
+        """Infer documentation type from filename."""
+        name = doc_path.stem.lower()
+
+        if "readme" in name:
+            return "readme"
+        if "architecture" in name or "design" in name:
+            return "architecture"
+        if "summary" in name:
+            return "summary"
+        if "protocol" in name:
+            return "protocol"
+        if "decision" in name:
+            return "decision_record"
+        if "roadmap" in name:
+            return "roadmap"
+        if "analysis" in name or "report" in name:
+            return "analysis"
+
+        return "other"
+
+    def _extract_wsp_refs(self, doc_path: Path) -> List[str]:
+        """Extract WSP references from a document."""
+        try:
+            content = doc_path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            return []
+
+        matches = set(re.findall(r"WSP\s*\d+", content, flags=re.IGNORECASE))
+        # Normalize spacing/case
+        normalized = []
+        for item in matches:
+            digits = re.findall(r"\d+", item)
+            if digits:
+                normalized.append(f"WSP {digits[0]}")
+
+        return sorted(set(normalized))
+
+    def _compute_sha256(self, doc_path: Path) -> str:
+        """Compute SHA256 hash for change detection."""
+        hasher = hashlib.sha256()
+        with doc_path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(8192), b""):
+                hasher.update(chunk)
+        return hasher.hexdigest()
+
+    def _find_document_references(self, doc_path: Path) -> List[str]:
+        """Locate referencing markdown files for tree attachment evidence."""
+        repo_relative = doc_path.relative_to(self.root_path).as_posix()
+        name = doc_path.name
+        references: List[str] = []
+
+        for candidate in self.root_path.rglob("*.md"):
+            if candidate == doc_path:
+                continue
+
+            try:
+                text = candidate.read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                continue
+
+            if repo_relative in text or name in text:
+                references.append(candidate.relative_to(self.root_path).as_posix())
+
+        # Deduplicate while preserving order
+        seen = set()
+        ordered: List[str] = []
+        for ref in references:
+            if ref not in seen:
+                seen.add(ref)
+                ordered.append(ref)
+
+        return ordered[:10]
+
+    def _infer_automation_targets(self, module_hint: str) -> List[str]:
+        """Infer automation systems that should ingest the doc."""
+        targets = {"doc_dae"}
+        hint = (module_hint or "").lower()
+
+        if "holo" in hint or "qwen" in hint or "gemma" in hint:
+            targets.add("holo_index")
+        if "autonomy" in hint:
+            targets.add("autonomy_pipeline")
+        if "wsp" in hint:
+            targets.add("wsp_guardian")
+
+        return sorted(targets)
 
 
 # Convenience functions for main.py integration

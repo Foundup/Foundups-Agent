@@ -74,6 +74,7 @@ class AutonomousHoloDAE:
         # Core components
         self.holo_index = HoloIndex()
         self.holodae_coordinator = HoloDAECoordinator()
+        self.holodae_coordinator.enable_monitoring()
         self.intelligent_monitor = IntelligentMonitor()
         self.code_map = DAECubeCodeMap()  # NEW: Real-time 0102 work context mapping
 

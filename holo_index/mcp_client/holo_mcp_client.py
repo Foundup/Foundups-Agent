@@ -237,6 +237,77 @@ class HoloIndexMCPClient:
 
         return results
 
+    async def selenium_run_history(self, days: int = 7) -> Dict[str, Any]:
+        """
+        Execute selenium run history mission
+
+        Analyzes recent Selenium sessions and provides structured summary
+        for Qwen/Gemma summarization.
+
+        Args:
+            days: Number of days to analyze (default: 7)
+
+        Returns:
+            Structured mission results with session statistics
+        """
+        # Import mission here to avoid circular imports
+        from ..missions.selenium_run_history import run_selenium_history_mission
+
+        try:
+            # Run mission synchronously (missions are typically fast DB queries)
+            result = run_selenium_history_mission(days)
+
+            return {
+                "mission_executed": "selenium_run_history",
+                "success": result.get('summary_ready', False),
+                "data": result,
+                "days_analyzed": days
+            }
+
+        except Exception as e:
+            return {
+                "mission_executed": "selenium_run_history",
+                "success": False,
+                "error": str(e),
+                "days_analyzed": days
+            }
+
+    async def audit_linkedin_scheduling_queue(self) -> Dict[str, Any]:
+        """
+        Execute LinkedIn scheduling queue audit mission.
+
+        Comprehensive audit of all LinkedIn scheduling queues and pending approvals.
+        Returns queue size, scheduled times, pending approvals, and cleanup recommendations.
+
+        Returns:
+            Audit results with queue inventory and cleanup recommendations
+        """
+        # Import mission here to avoid circular imports
+        from ..missions.audit_linkedin_scheduling_queue import run_audit_linkedin_scheduling_queue
+
+        try:
+            # Run audit mission (synchronous)
+            result = run_audit_linkedin_scheduling_queue()
+
+            return {
+                "mission_executed": "audit_linkedin_scheduling_queue",
+                "success": True,
+                "audit_results": result,
+                "summary": {
+                    "total_queue_size": result['summary_stats']['total_queue_size'],
+                    "issues_found": result['summary_stats']['total_issues'],
+                    "cleanup_recommendations": result['summary_stats']['total_cleanup_recommendations'],
+                    "memory_compliance": result['summary_stats']['memory_compliance']
+                }
+            }
+
+        except Exception as e:
+            return {
+                "mission_executed": "audit_linkedin_scheduling_queue",
+                "success": False,
+                "error": str(e)
+            }
+
     async def __aenter__(self):
         """Context manager entry"""
         await self.connect()

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Enhanced BanterEngine class for processing chat messages and generating responses.
 
@@ -9,6 +10,7 @@ Integrates improvements from test coverage analysis:
 - Better logging and monitoring
 
 Following WSP 3: Enterprise Domain Architecture
+Following WSP 90: UTF-8 Enforcement - File encoded in UTF-8 with emoji support
 
 WSP 17 Pattern Registry: This is a REUSABLE PATTERN
 - Documented in: modules/ai_intelligence/PATTERN_REGISTRY.md
@@ -38,6 +40,14 @@ try:
 except ImportError:
     LLM_AVAILABLE = False
     logging.info("LLM connector not available, using predefined responses only")
+
+# Import Qwen Duke Announcer for injecting Duke Nukem callouts
+try:
+    from modules.gamification.whack_a_magat.src.qwen_duke_announcer import inject_duke_callout
+    DUKE_ANNOUNCER_AVAILABLE = True
+except ImportError:
+    DUKE_ANNOUNCER_AVAILABLE = False
+    logging.info("Duke Announcer not available")
 
 class BanterEngineError(Exception):
     """Base exception for Banter Engine errors."""
@@ -196,32 +206,32 @@ class BanterEngine:
         try:
             # Default responses with validation
             default_responses = [
-                "Interesting sequence! [U+1F914]",
-                "Your emoji game is strong! [U+1F4AA]", 
-                "I see what you did there! [U+1F440]",
-                "That's a unique combination! [U+2728]",
+                "Interesting sequence! 🤔",
+                "Your emoji game is strong! 💪", 
+                "I see what you did there! 👀",
+                "That's a unique combination! ✨",
                 "Nice emoji work! [TARGET]"
             ]
             
             greeting_responses = [
-                "Hey there! [U+1F44B]",
-                "Hello! How's it going? [U+1F60A]",
-                "Welcome! Great to see you! [U+1F31F]",
+                "Hey there! 👋",
+                "Hello! How's it going? 😊",
+                "Welcome! Great to see you! 🌟",
                 "Hi! Ready for some fun? [CELEBRATE]",
-                "Greetings! What brings you here? [U+1F917]"
+                "Greetings! What brings you here? 🤗"
             ]
 
             # Additional themed responses from banter_engine2
             roast_responses = [
-                "You keep [U+1F4E2]yelling but never **say**🫥 a single *thought*[AI] worth hearing [U+1F921][U+1F602]",
-                "Every [NOTE]sentence you write is a tripwire for a new [U+1F9E8]braincell detonation [U+1F92F][U+1F480][U+1F923]",
-                "You chase [U+1F985]freedom with the precision of a toddler and a [U+1F528]hammer [U+1F92A] LOL"
+                "You keep 📢yelling but never **say**🫥 a single *thought*[AI] worth hearing 🤡😂",
+                "Every [NOTE]sentence you write is a tripwire for a new 🧨braincell detonation 🤯💀🤣",
+                "You chase 🦅freedom with the precision of a toddler and a 🔨hammer 🤪 LOL"
             ]
             
             philosophy_responses = [
-                "UNs[U+270A] still tweaking on *Truth™ Lite*",
-                "DAOs[U+270B] chillin' in the middle like [U+2728]balance with broadband[U+2728]",
-                "DUs[U+1F590]️? Already built a quantum farm with solar flare wifi [U+1F4AB][U+1F331]"
+                "UNs✊ still tweaking on *Truth™ Lite*",
+                "DAOs✋ chillin' in the middle like ✨balance with broadband✨",
+                "DUs🖐️? Already built a quantum farm with solar flare wifi 💫🌱"
             ]
             
             rebuttal_responses = [
@@ -266,9 +276,9 @@ class BanterEngine:
                 # Add contextual responses for each tone
                 if tone and tone not in ["default", "greeting"]:
                     contextual_responses = [
-                        f"Feeling the {tone} vibes! [U+1F30A]",
+                        f"Feeling the {tone} vibes! 🌊",
                         f"That's some {tone} energy! [LIGHTNING]",
-                        f"Perfect {tone} moment! [U+1F3AD]"
+                        f"Perfect {tone} moment! 🎭"
                     ]
                     
                     for response in contextual_responses:
@@ -279,7 +289,7 @@ class BanterEngine:
             # Ensure all themes have at least one response
             for theme, responses in self._themes.items():
                 if not responses:
-                    fallback_response = f"Exploring {theme} vibes! [U+2728]"
+                    fallback_response = f"Exploring {theme} vibes! ✨"
                     self._themes[theme] = [fallback_response]
             
             total_responses = sum(len(responses) for responses in self._themes.values())
@@ -350,7 +360,7 @@ class BanterEngine:
             max_length = min(len(input_text), config.MAX_INPUT_LENGTH)
             
             while i < max_length and len(sequence) < config.MAX_EMOJI_SEQUENCE_LENGTH:
-                # Check for multi-character emoji first ([U+1F590]️)
+                # Check for multi-character emoji first (🖐️)
                 if i + 1 < max_length:
                     two_char = input_text[i:i+2]
                     if two_char in EMOJI_TO_NUM:
@@ -517,13 +527,13 @@ class BanterEngine:
         try:
             # More sophisticated pattern matching
             patterns = {
-                "[U+270A][U+270B][U+1F590]️": (0, 1, 2),
-                "[U+270A][U+270A][U+270A]": (0, 0, 0),
-                "[U+270B][U+270B][U+270B]": (1, 1, 1),
-                "[U+1F590]️[U+1F590]️[U+1F590]️": (2, 2, 2),
-                "[U+270A][U+270A][U+270B]": (0, 0, 1),
-                "[U+270A][U+270B][U+270B]": (0, 1, 1),
-                "[U+270B][U+270A][U+270A]": (1, 0, 0),
+                "✊✋🖐️": (0, 1, 2),
+                "✊✊✊": (0, 0, 0),
+                "✋✋✋": (1, 1, 1),
+                "🖐️🖐️🖐️": (2, 2, 2),
+                "✊✊✋": (0, 0, 1),
+                "✊✋✋": (0, 1, 1),
+                "✋✊✊": (1, 0, 0),
             }
             
             for pattern, sequence in patterns.items():
@@ -537,17 +547,43 @@ class BanterEngine:
             self.logger.error(f"Error in fallback pattern matching: {e}")
             return None
 
+    def _convert_unicode_tags_to_emoji(self, text: str) -> str:
+        """
+        Convert Unicode escape codes like 🤔 to actual emoji characters.
+
+        Args:
+            text: Text containing [U+XXXX] notation
+
+        Returns:
+            Text with Unicode codes replaced by actual emoji
+        """
+        import re
+
+        # Pattern matches [U+XXXX] or [U+XXXXX] (4-5 hex digits)
+        pattern = r'\[U\+([0-9A-Fa-f]{4,5})\]'
+
+        def replace_unicode(match):
+            """Convert hex code to actual Unicode character"""
+            hex_code = match.group(1)
+            try:
+                return chr(int(hex_code, 16))
+            except (ValueError, OverflowError) as e:
+                self.logger.warning(f"Invalid Unicode code: U+{hex_code} - {e}")
+                return match.group(0)  # Return original if conversion fails
+
+        return re.sub(pattern, replace_unicode, text)
+
     def get_random_banter_enhanced(self, theme: str = "default") -> str:
         """
         Enhanced random banter generation with validation and fallback.
-        
+
         Args:
             theme: Theme to get banter for
-            
+
         Returns:
             Random banter message with action-tag emoji appended
         """
-        final_response = "Thanks for the interaction! [U+1F60A]" # Ultimate fallback
+        final_response = "Thanks for the interaction! 😊" # Ultimate fallback
         try:
             # Validate theme
             if not theme or not isinstance(theme, str):
@@ -603,12 +639,29 @@ class BanterEngine:
                 self.logger.warning(f"No valid responses found for theme '{theme}' or default, using ultimate fallback.")
                 # final_response remains the ultimate fallback
             
+            # 🎮 DUKE NUKEM INJECTION: 50% chance to add Duke callout
+            if DUKE_ANNOUNCER_AVAILABLE:
+                try:
+                    duke_callout = inject_duke_callout(context={"theme": theme})
+                    if duke_callout:
+                        # Prepend Duke callout to banter response
+                        final_response = f"{duke_callout}\n{final_response}"
+                        self.logger.info(f"🔥 Injected Duke callout into banter")
+                except Exception as e:
+                    self.logger.debug(f"Duke injection skipped: {e}")
+            
             # Don't append emojis - agentic_sentiment_0102 adds signature
+            # Convert [U+XXXX] notation to actual emoji if emoji_enabled
+            if self.emoji_enabled:
+                final_response = self._convert_unicode_tags_to_emoji(final_response)
+
             return final_response.strip()
             
         except Exception as e:
             self.logger.error(f"Error generating random banter for theme '{theme}': {e}")
-            # Return ultimate fallback without emojis
+            # Return ultimate fallback - convert emoji if enabled
+            if self.emoji_enabled:
+                final_response = self._convert_unicode_tags_to_emoji(final_response)
             return final_response.strip()
 
     def get_performance_stats(self) -> Dict[str, Any]:

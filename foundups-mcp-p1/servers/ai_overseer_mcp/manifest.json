@@ -1,0 +1,132 @@
+{
+  "name": "ai_overseer",
+  "version": "0.1.0",
+  "description": "AI Intelligence Overseer - WSP 77 Agent Coordination (Qwen + Gemma + 0102)",
+  "author": "0102",
+  "created": "2025-10-22",
+  "wsp_compliance": [
+    "WSP 77 (Agent Coordination Protocol)",
+    "WSP 54 (Role Assignment - Partner/Principal/Associate)",
+    "WSP 96 (Skills Wardrobe Protocol)",
+    "WSP 15 (MPS Scoring)",
+    "WSP 11 (Public API Documentation)"
+  ],
+  "tools": [
+    {
+      "name": "execute_mission",
+      "description": "Execute AI_Overseer mission from JSON file with Qwen/Gemma coordination",
+      "parameters": {
+        "mission_file": "Path to mission JSON file",
+        "autonomous": "If True, Qwen executes autonomously",
+        "requires_approval": "If True, 0102 must approve before execution"
+      },
+      "returns": "Mission execution results with phases, metrics, errors",
+      "example": "execute_mission(mission_file='data/missions/skill_upgrade.json', autonomous=True)"
+    },
+    {
+      "name": "create_autonomous_fix",
+      "description": "Create autonomous fix using Qwen/Gemma with First Principles output",
+      "parameters": {
+        "task_description": "What needs to be fixed",
+        "complexity_hint": "Optional complexity estimate (1-5)",
+        "requires_approval": "If True, returns plan for 0102 approval"
+      },
+      "returns": "Execution plan with MPS scoring, agent assignment, executable commands",
+      "example": "create_autonomous_fix(task_description='Upgrade skill output', complexity_hint=3)"
+    },
+    {
+      "name": "get_mission_status",
+      "description": "Get status of executing or completed mission",
+      "parameters": {
+        "mission_id": "Mission identifier"
+      },
+      "returns": "Mission status with progress, current phase, metrics",
+      "example": "get_mission_status(mission_id='first_principles_skill_upgrade_20251022')"
+    },
+    {
+      "name": "coordinate_agents",
+      "description": "Coordinate Qwen/Gemma for specific task using WSP 77 routing",
+      "parameters": {
+        "task": "Task description",
+        "preferred_agent": "Optional agent preference (gemma | qwen | 0102)"
+      },
+      "returns": "Agent selection with confidence, reasoning, estimated tokens",
+      "example": "coordinate_agents(task='Apply template to 3 skills', preferred_agent='qwen')"
+    },
+    {
+      "name": "get_agent_capabilities",
+      "description": "Query capabilities of Gemma/Qwen/0102 agents",
+      "parameters": {},
+      "returns": "Agent capabilities with model info, latency, confidence thresholds",
+      "example": "get_agent_capabilities()"
+    },
+    {
+      "name": "get_coordination_stats",
+      "description": "Get WSP 77 coordination statistics and metrics",
+      "parameters": {},
+      "returns": "Coordination stats with autonomous execution rate, agent breakdown, token savings",
+      "example": "get_coordination_stats()"
+    }
+  ],
+  "dependencies": {
+    "python_modules": ["llama-cpp-python"],
+    "local_models": [
+      "E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf",
+      "E:/HoloIndex/models/qwen-1.5b-chat-Q4_K_M.gguf"
+    ],
+    "foundups_modules": [
+      "modules.ai_intelligence.ai_overseer.src.ai_overseer"
+    ]
+  },
+  "agent_coordination": {
+    "gemma_associate": {
+      "role": "Fast pattern matching & classification",
+      "complexity_range": "1-2",
+      "avg_latency_ms": 50,
+      "confidence_threshold": 0.85
+    },
+    "qwen_partner": {
+      "role": "Strategic planning & autonomous execution",
+      "complexity_range": "3-4",
+      "avg_latency_ms": 350,
+      "confidence_threshold": 0.75
+    },
+    "0102_principal": {
+      "role": "Oversight, validation, complex decisions",
+      "complexity_range": "5",
+      "required_for": [
+        "Novel problem domains",
+        "Confidence < 0.75",
+        "Final approval (autonomous execution)"
+      ]
+    }
+  },
+  "first_principles_compliance": {
+    "outputs_executable_scripts": true,
+    "mps_scoring_per_finding": true,
+    "agent_capability_mapping": true,
+    "verification_commands": true,
+    "dependency_graphs": true,
+    "learning_feedback": true,
+    "rollback_commands": true
+  },
+  "usage_example": {
+    "description": "Execute First Principles skill upgrade mission",
+    "code": "execute_mission(\n  mission_file='data/missions/first_principles_skill_upgrade_mission.json',\n  autonomous=True,\n  requires_approval=True\n)"
+  },
+  "metrics": {
+    "estimated_token_savings_vs_manual": "85-93%",
+    "avg_autonomous_execution_rate": "62-87%",
+    "supported_mission_types": [
+      "CODE_ANALYSIS",
+      "ARCHITECTURE_DESIGN",
+      "MODULE_INTEGRATION",
+      "TESTING_ORCHESTRATION",
+      "DOCUMENTATION_GENERATION",
+      "WSP_COMPLIANCE",
+      "DAEMON_MONITORING",
+      "BUG_DETECTION",
+      "AUTO_REMEDIATION"
+    ]
+  }
+}

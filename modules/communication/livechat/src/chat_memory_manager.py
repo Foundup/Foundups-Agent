@@ -15,6 +15,10 @@ import time
 from typing import Dict, Any, List, Optional
 from collections import defaultdict, deque
 
+from modules.communication.livechat.src.chat_telemetry_store import (
+    ChatTelemetryStore,
+)
+
 logger = logging.getLogger(__name__)
 
 class ChatMemoryManager:
@@ -57,6 +61,7 @@ class ChatMemoryManager:
         self.session_messages = []  # Full transcript for current session
         self.session_mod_messages = []  # Mod-only messages for current session
         self.conversation_dir = os.path.join(self.memory_dir, "conversation")
+        self.telemetry_store = ChatTelemetryStore()
 
         # Ensure memory directories exist
         os.makedirs(memory_dir, exist_ok=True)
@@ -219,9 +224,9 @@ class ChatMemoryManager:
                 full_entry = f"{role_prefix}{author_name}: {message_text}"
                 self.session_messages.append(full_entry)
 
-            # Smart disk persistence (97% I/O reduction)
+            # Smart persistence (97% I/O reduction)
             if self._should_persist(stats):
-                self._persist_to_disk(author_name, message_text)
+                self._persist_to_storage(author_name, message_text, role, stats)
                 logger.debug(f"[U+1F4BE] Persisted message from important user: {author_name}")
             else:
                 logger.debug(f"[NOTE] Buffered message from {author_name} (not persisting)")
@@ -346,49 +351,29 @@ class ChatMemoryManager:
             stats.get('consciousness_triggers', 0) > 0
         )
     
-    def _persist_to_disk(self, author_name: str, message_text: str) -> None:
-        """Persist message to disk for important users."""
+    def _persist_to_storage(self, author_name: str, message_text: str, role: str, stats: Dict[str, Any]) -> None:
+        """Persist message via telemetry store for important users."""
         try:
-            safe_name = "".join(c for c in author_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
-            if not safe_name:
-                safe_name = "Unknown"
-            
-            user_file = os.path.join(self.memory_dir, f"{safe_name}.txt")
-            with open(user_file, "a", encoding="utf-8") as f:
-                f.write(f"{author_name}: {message_text}\n")
-                
+            metadata = {
+                "message_count": stats.get("message_count"),
+                "last_seen": stats.get("last_seen"),
+            }
+            self.telemetry_store.record_message(
+                session_id=self.current_session,
+                author_name=author_name,
+                author_id=stats.get("youtube_id"),
+                youtube_name=stats.get("youtube_name"),
+                role=role,
+                message_text=message_text,
+                importance_score=stats.get("importance_score"),
+                metadata=metadata,
+            )
         except Exception as e:
-            logger.error(f"[FAIL] Error persisting to disk for {author_name}: {e}")
-    
-    def _has_disk_storage(self, author_name: str) -> bool:
-        """Check if user has persistent disk storage."""
-        safe_name = "".join(c for c in author_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
-        if not safe_name:
-            return False
-        
-        user_file = os.path.join(self.memory_dir, f"{safe_name}.txt")
-        return os.path.exists(user_file)
-    
-    def _read_from_disk(self, author_name: str, limit: int) -> List[str]:
-        """Read user's messages from disk storage."""
-        try:
-            safe_name = "".join(c for c in author_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
-            if not safe_name:
-                return []
-            
-            user_file = os.path.join(self.memory_dir, f"{safe_name}.txt")
-            if not os.path.exists(user_file):
-                return []
-            
-            with open(user_file, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-            
-            # Return last N lines, stripped of whitespace
-            return [line.strip() for line in lines[-limit:] if line.strip()]
-            
-        except Exception as e:
-            logger.error(f"[FAIL] Error reading disk storage for {author_name}: {e}")
-            return []
+            logger.error(f"[FAIL] Error persisting message for {author_name}: {e}")
+
+    def _has_persisted_history(self, author_name: str) -> bool:
+        """Check if user has persisted history in SQLite."""
+        return self.telemetry_store.has_history(author_name)
     
     def _detect_patterns(self, recent_messages: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Detect user behavior patterns from recent messages."""

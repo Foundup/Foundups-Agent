@@ -34,6 +34,14 @@ except ImportError as e:
     logger.warning(f"X Twitter DAE Adapter not available: {e}")
     X_ADAPTER_AVAILABLE = False
 
+# AI Delegation imports (fallback when Qwen/Gemma unavailable)
+try:
+    from .ai_delegation_orchestrator import get_ai_delegation_orchestrator
+    AI_DELEGATION_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"AI Delegation Orchestrator not available: {e}")
+    AI_DELEGATION_AVAILABLE = False
+
 # Global lock for thread-safe browser operations (X/Twitter)
 _POSTER_LOCK = threading.Lock()
 _GLOBAL_X_POSTER_FOUNDUPS = None  # Global singleton for @Foundups X account
@@ -492,6 +500,106 @@ class SimplePostingOrchestrator:
 
         self.logger.info(f"[ORCHESTRATOR] Completed {request_id}: {success_count}/{len(results)} successful")
         return response
+
+    async def schedule_stream_notification(self, stream_title: str, stream_url: str,
+                                         delay_hours: int = 24,
+                                         linkedin_page: str = None) -> Dict[str, Any]:
+        """
+        Schedule stream notification using AI delegation pipeline.
+
+        Instead of posting immediately, this method:
+        1. Uses AI delegation orchestrator to draft content
+        2. Schedules post via UI-TARS for later execution
+        3. Allows 012 review and editing before posting
+
+        Args:
+            stream_title: Title of the stream
+            stream_url: URL of the stream
+            delay_hours: Hours to delay scheduling (default: 24)
+            linkedin_page: LinkedIn company page to post to
+
+        Returns:
+            Dict with scheduling result and draft information
+        """
+        if not AI_DELEGATION_AVAILABLE:
+            return {
+                'success': False,
+                'error': 'AI delegation orchestrator not available',
+                'fallback_possible': False
+            }
+
+        try:
+            # Initialize AI delegation orchestrator
+            ai_orchestrator = get_ai_delegation_orchestrator()
+
+            # Create trigger event for AI drafting
+            trigger_event = {
+                'type': 'stream_start',
+                'title': stream_title,
+                'url': stream_url,
+                'description': f"🔴 LIVE: {stream_title} - {stream_url}",
+                'timestamp': datetime.now().isoformat(),
+                'platforms': ['linkedin'],
+                'company_page': linkedin_page or 'foundups'
+            }
+
+            self.logger.info("="*80)
+            self.logger.info("[ORCHESTRATOR] [AI] STARTING SCHEDULED POSTING SEQUENCE")
+            self.logger.info(f"[ORCHESTRATOR] 🎯 Stream: {stream_title}")
+            self.logger.info(f"[ORCHESTRATOR] ⏰ Scheduling for: {delay_hours} hours from now")
+            self.logger.info("="*80)
+
+            # Draft content using AI delegation
+            draft_result = await ai_orchestrator.draft_linkedin_content(
+                trigger_event, target_platform='linkedin'
+            )
+
+            if not draft_result:
+                return {
+                    'success': False,
+                    'error': 'AI content drafting failed',
+                    'trigger_event': trigger_event
+                }
+
+            self.logger.info(f"[ORCHESTRATOR] [AI] Content drafted using {draft_result.get('ai_service', 'unknown')}")
+            self.logger.info(f"[ORCHESTRATOR] 📝 Draft hash: {draft_result['draft_hash'][:8]}...")
+
+            # Schedule the draft using UI-TARS
+            scheduling_success = await ai_orchestrator.schedule_draft(draft_result, delay_hours)
+
+            if scheduling_success:
+                self.logger.info("="*80)
+                self.logger.info("[ORCHESTRATOR] [✅] LINKEDIN POST SCHEDULED SUCCESSFULLY")
+                self.logger.info(f"[ORCHESTRATOR] 📅 Scheduled for: {(datetime.now() + timedelta(hours=delay_hours)).strftime('%Y-%m-%d %H:%M')}")
+                self.logger.info(f"[ORCHESTRATOR] 🔗 Review in LinkedIn: https://linkedin.com/company/foundups/admin/scheduled-posts")
+                self.logger.info("="*80)
+
+                return {
+                    'success': True,
+                    'draft_hash': draft_result['draft_hash'],
+                    'ai_service': draft_result.get('ai_service'),
+                    'scheduled_time': (datetime.now() + timedelta(hours=delay_hours)).isoformat(),
+                    'content_preview': draft_result['content'][:100] + '...',
+                    'review_url': 'https://linkedin.com/company/foundups/admin/scheduled-posts',
+                    'trigger_event': trigger_event,
+                    'draft_result': draft_result
+                }
+            else:
+                self.logger.error("[ORCHESTRATOR] [❌] Failed to schedule post with UI-TARS")
+                return {
+                    'success': False,
+                    'error': 'UI-TARS scheduling failed',
+                    'draft_result': draft_result,
+                    'trigger_event': trigger_event
+                }
+
+        except Exception as e:
+            self.logger.error(f"[ORCHESTRATOR] Scheduled posting failed: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'trigger_event': trigger_event if 'trigger_event' in locals() else None
+            }
 
     async def _verify_live_status_before_posting(self) -> bool:
         """

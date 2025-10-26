@@ -32,6 +32,7 @@ MCP DAEmons
 - **wsp_governance**: WSP compliance and governance
 - **youtube_dae_gemma**: YouTube processing with AI
 - **unicode_cleanup**: AI-powered Unicode cleanup
+- **doc_dae**: Autonomous documentation organization + cleanup chain (Gemma/Qwen/0102)
 
 ## Usage
 

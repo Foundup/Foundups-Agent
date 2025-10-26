@@ -1,0 +1,170 @@
+{
+  "template_id": "first_principles_skill_output_v1",
+  "created": "2025-10-22T12:53:00Z",
+  "extracted_from": ".claude/skills/qwen_roadmap_auditor_prototype/SKILL.md",
+  "purpose": "Template for upgrading ALL skills to execution-ready output per First Principles",
+
+  "first_principles": {
+    "core_question": "How can 0102/AI_Overseer use this data autonomously?",
+    "requirements": [
+      "Executable shell scripts (pipe to bash)",
+      "WSP 15 MPS scoring (every finding)",
+      "Agent capability mapping (who can fix autonomously?)",
+      "Verification commands (know if fix worked)",
+      "Dependency graphs (what blocks what?)",
+      "Learning feedback (store patterns for future)",
+      "Rollback commands (git checkout on failure)"
+    ]
+  },
+
+  "output_structure_template": {
+    "finding_entry": {
+      "file": "O:/Foundups-Agent/path/to/file.ext",
+      "module": "domain/module_name",
+      "line_number": 123,
+      "issue_type": "specific_issue_category",
+      "description": "Detailed issue description",
+
+      "mps_score": {
+        "complexity": 1,
+        "complexity_reason": "Why this complexity score?",
+        "importance": 2,
+        "importance_reason": "Why this importance score?",
+        "deferability": 1,
+        "deferability_reason": "Why this deferability score?",
+        "impact": 2,
+        "impact_reason": "Why this impact score?",
+        "total": 6,
+        "priority": "P3"
+      },
+
+      "autonomous_execution": {
+        "capable": true,
+        "agent": "gemma_specific_wardrobe_v1",
+        "confidence": 0.98,
+        "estimated_tokens": 50,
+        "estimated_time_seconds": 2,
+        "requires_0102_approval": false,
+        "execution_command": "bash -c \"specific command to execute\""
+      },
+
+      "fix_command": "sed -i 's/old/new/g' file.ext",
+      "verify_command": "python holo_index.py --search 'new' | grep -q file.ext",
+      "success_criteria": "Exit code 0 + grep finds reference",
+      "rollback_command": "git checkout file.ext"
+    },
+
+    "dependency_chain": {
+      "blocker": "Issue X blocks downstream items",
+      "blocks": [
+        "Item A (reason)",
+        "Item B (reason)"
+      ],
+      "blocked_by": [],
+      "cascade_impact": "N items directly blocked + M indirectly",
+      "priority_escalation": "P1 → P0 (root blocker in chain)"
+    },
+
+    "autonomous_execution_script": {
+      "script_id": "skill_output_fix_YYYYMMDD_HHMM.sh",
+      "description": "Auto-generated fix script - pipe to bash for autonomous execution",
+      "estimated_runtime_seconds": 25,
+      "total_token_cost": 470,
+      "requires_approval": ["P0_tasks_requiring_architectural_decisions"],
+      "script": "#!/bin/bash\\nset -e\\necho \\\"Executing autonomous fixes...\\\"\\n# Fix 1\\ncommand1\\nverify1 && echo \\\"✓ Verified\\\" || echo \\\"✗ Failed\\\"\\n"
+    },
+
+    "learning_feedback": {
+      "pattern_extraction": [
+        {
+          "pattern_type": "specific_pattern_name",
+          "frequency": 3,
+          "common_causes": [
+            "Root cause 1",
+            "Root cause 2"
+          ],
+          "autonomous_fix_success_rate": 0.98,
+          "recommended_wardrobe": "gemma_specific_patcher_v1",
+          "store_to": "holo_index/adaptive_learning/skill_patterns.jsonl",
+          "future_prevention": "Add automated prevention mechanism"
+        }
+      ],
+      "recommendations_for_next_run": [
+        "Specific actionable recommendation 1",
+        "Specific actionable recommendation 2"
+      ]
+    },
+
+    "executive_summary": {
+      "total_issues": 8,
+      "critical_blockers": 2,
+      "quick_wins": 3,
+      "autonomous_execution_ready": 5,
+      "requires_0102_design": 2,
+      "requires_human_decision": 1
+    }
+  },
+
+  "application_instructions_for_qwen": {
+    "step_1": "Read the skill's existing output structure (usually in Section 6: GENERATE OUTPUT)",
+    "step_2": "Identify all findings/results the skill produces",
+    "step_3": "For EACH finding, add the following fields (use template above):",
+    "required_fields": [
+      "mps_score (with all 4 dimensions + rationale)",
+      "autonomous_execution (agent mapping + confidence + command)",
+      "fix_command (executable command)",
+      "verify_command (how to verify success)",
+      "success_criteria (what success looks like)",
+      "rollback_command (how to undo if fails)"
+    ],
+    "step_4": "Add dependency_chain section if findings block each other",
+    "step_5": "Generate autonomous_execution_script (complete bash script)",
+    "step_6": "Add learning_feedback section (pattern extraction + future prevention)",
+    "step_7": "Add executive_summary with autonomous_execution_ready count"
+  },
+
+  "validation_checklist_for_0102": {
+    "requirement_1_executable_scripts": "autonomous_execution_script.script field present with bash shebang",
+    "requirement_2_mps_scoring": "Every finding has mps_score.complexity/importance/deferability/impact with rationale",
+    "requirement_3_agent_mapping": "Every finding has autonomous_execution.agent + confidence + execution_command",
+    "requirement_4_verification": "Every finding has verify_command + success_criteria",
+    "requirement_5_dependency_graphs": "dependency_chain section present if applicable",
+    "requirement_6_learning_feedback": "learning_feedback.pattern_extraction present with frequency + prevention",
+    "requirement_7_rollback": "Every finding has rollback_command for failure recovery"
+  },
+
+  "example_skills_to_upgrade": [
+    {
+      "skill_id": "qwen_training_data_miner_v1_prototype",
+      "current_output": "Training dataset JSON with examples",
+      "upgraded_output": "Training dataset + recommended wardrobe config + MPS scoring for domain priority + verification commands + learning patterns"
+    },
+    {
+      "skill_id": "gemma_domain_trainer_v1_prototype",
+      "current_output": "Trained LoRA adapters + validation metrics",
+      "upgraded_output": "Trained adapters + deployment config + performance benchmarks + agent capability mapping (which tasks can this wardrobe handle?) + verification tests"
+    },
+    {
+      "skill_id": "gemma_noise_detector_v1_prototype",
+      "current_output": "JSONL with file classifications (noise/signal)",
+      "upgraded_output": "Classifications + suggested cleanup agent + MPS scoring per file + executable cleanup script + verification commands"
+    }
+  ],
+
+  "anti_patterns_to_avoid": {
+    "vague_summaries": "DO NOT: '3 files classified as noise' → DO: 'O:/path/file.txt (line 45) - noise (reason: rotting data, MPS: 12, Agent: gemma_cleanup, Command: rm file.txt)'",
+    "generic_priorities": "DO NOT: 'P2' → DO: 'MPS 9 (C:2, I:3, D:2, P:2) - Easy fix, moderate importance'",
+    "manual_instructions": "DO NOT: 'Fix manually' → DO: 'bash -c \"sed -i 's/old/new/g' file.txt\" + verify: grep -q new file.txt'",
+    "no_verification": "DO NOT: 'Applied fix' → DO: 'verify_command: test -f output.json && jq .valid output.json'",
+    "no_learning": "DO NOT: One-off fix → DO: 'Pattern: outdated_reference (freq: 3), Prevention: Add post-update hook'"
+  },
+
+  "qwen_autonomous_execution_notes": [
+    "Qwen MUST apply template to ALL 3 skills: qwen_training_data_miner, gemma_domain_trainer, gemma_noise_detector",
+    "Qwen MUST preserve existing skill logic - ONLY upgrade output structure",
+    "Qwen MUST use qwen_roadmap_auditor SKILL.md as reference example",
+    "Qwen MUST ensure all 7 First Principles requirements present",
+    "Qwen MUST write breadcrumb to HoloIndex timeline after each skill upgrade",
+    "0102 will validate output meets all requirements before approving"
+  ]
+}

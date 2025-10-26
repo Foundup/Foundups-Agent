@@ -1,5 +1,19 @@
 # HoloIndex Package ModLog
 
+## [2025-10-26] Agentic Output Stream Guardrails
+**Agent**: 0102 Codex  
+**WSP References**: WSP 87 (Size Limits), WSP 75 (Token Discipline), WSP 90 (UTF-8 Compliance)  
+**Status**: [OK] COMPLETE - throttler now enforces section limits, owns rendering, and logs history
+
+### Problem
+Agentic output was still emitting emoji markers (e.g., GREEN_CIRCLE/YELLOW_CIRCLE), never respected the `max_sections` guard, the CLI bypassed `display_results()`, and history logging remained disabled, leaving no telemetry for "use Holo to improve Holo".
+
+### Fixes
+- `holo_index/output/agentic_output_throttler.py`: replaced emoji banners with ASCII `[GREEN] / [YELLOW] / [ERROR]` tags, added `_enforce_section_limit()` with inline hints for hidden sections, gated advisor debug prints behind `HOLO_VERBOSE`, and re-enabled `_record_output_history()` using a daemon thread so logging can't stall the CLI.
+- `holo_index/cli.py`: search results now flow through `throttler.display_results()` + `render_prioritized_output()`, eliminating the duplicate collate/render path.
+
+0102 agents now see concise ASCII output by default, `--verbose` unlocks full detail, and every run is logged for future adaptive learning.
+
 ## [2025-10-17] UTF-8 Remediation Fast Scan Mode - Batch Size Optimization
 **Agent**: 0102 Claude
 **Triggered By**: 012: "is it because the batch is too large?"

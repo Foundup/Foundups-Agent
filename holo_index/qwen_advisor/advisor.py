@@ -7,6 +7,7 @@ import io
 
 
 import logging
+import os
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
@@ -621,13 +622,16 @@ class QwenAdvisor:
             guidance_parts.append("")  # Add spacing
 
         # DEBUG: Check if code index content is in guidance_parts
+        verbose_mode = os.getenv('HOLO_VERBOSE', '').lower() in {'1', 'true', 'yes'}
         code_index_found = any("[CODE-INDEX]" in part for part in guidance_parts)
-        print(f"[DEBUG] CODE INDEX: Content in guidance_parts: {code_index_found}")  # DEBUG
+        if verbose_mode:
+            print(f"[DEBUG] CODE INDEX: Content in guidance_parts: {code_index_found}")  # DEBUG
 
         final_guidance = " ".join(guidance_parts)
         code_index_in_final = "[CODE-INDEX]" in final_guidance
-        print(f"[DEBUG] CODE INDEX: Content in final guidance: {code_index_in_final}")  # DEBUG
-        print(f"[DEBUG] CODE INDEX: Final guidance length: {len(final_guidance)}")  # DEBUG
+        if verbose_mode:
+            print(f"[DEBUG] CODE INDEX: Content in final guidance: {code_index_in_final}")  # DEBUG
+            print(f"[DEBUG] CODE INDEX: Final guidance length: {len(final_guidance)}")  # DEBUG
 
         # NEW: HIGH PRIORITY - Integration Gap Detection
         if integration_gaps and integration_gaps.get('detected_gaps'):

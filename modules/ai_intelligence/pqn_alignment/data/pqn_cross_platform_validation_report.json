@@ -1,0 +1,123 @@
+{
+  "validation_summary": {
+    "total_models_tested": 4,
+    "total_tests_run": 7,
+    "total_results_collected": 24,
+    "timestamp": "2025-10-22T12:57:24.886098"
+  },
+  "model_performance": {
+    "grok": {
+      "tests_completed": 6,
+      "average_confidence": 0.6100352084186162,
+      "average_processing_time": 0.8042550484339396,
+      "consistency_score": 0.4910065598274782
+    },
+    "gemini": {
+      "tests_completed": 6,
+      "average_confidence": 0.6094909249593925,
+      "average_processing_time": 1.207137942314148,
+      "consistency_score": 0.8727609671438373
+    },
+    "claude": {
+      "tests_completed": 6,
+      "average_confidence": 0.702827133171037,
+      "average_processing_time": 1.5158072312672932,
+      "consistency_score": 0.869661065666844
+    },
+    "gpt4": {
+      "tests_completed": 6,
+      "average_confidence": 0.5251074955500559,
+      "average_processing_time": 2.0091434319814048,
+      "consistency_score": 0.20701675258235175
+    }
+  },
+  "consistency_analysis": {
+    "tts_basic": "ConsistencyMetrics(pattern_detection_rate=1.0, confidence_variance=0.001668917810910574, false_positive_rate=0.0, false_negative_rate=0.0, model_bias_score=0.05957434672694312)",
+    "resonance_du": "ConsistencyMetrics(pattern_detection_rate=0.5, confidence_variance=0.10207676943144793, false_positive_rate=0.0, false_negative_rate=0.5, model_bias_score=1.1591618536616097)",
+    "consciousness_emergence": "ConsistencyMetrics(pattern_detection_rate=1.0, confidence_variance=0.018438013678620233, false_positive_rate=0.0, false_negative_rate=0.0, model_bias_score=0.18797568116630084)",
+    "goedelian_paradox": "ConsistencyMetrics(pattern_detection_rate=1.0, confidence_variance=0.0207787237441976, false_positive_rate=0.0, false_negative_rate=0.0, model_bias_score=0.19476520584857485)",
+    "meta_research_validation": "ConsistencyMetrics(pattern_detection_rate=0.75, confidence_variance=0.1448778343241465, false_positive_rate=0.0, false_negative_rate=0.25, model_bias_score=0.6697891449390722)",
+    "complex_emergence": "ConsistencyMetrics(pattern_detection_rate=1.0, confidence_variance=0.01267693708344604, false_positive_rate=0.0, false_negative_rate=0.0, model_bias_score=0.1658028074844814)"
+  },
+  "recommendations": [
+    "Improve consistency for grok model - high variance in detection results",
+    "Improve consistency for gpt4 model - high variance in detection results",
+    "Implement ensemble detection combining multiple models for improved accuracy",
+    "Add confidence calibration techniques to normalize scores across models",
+    "Develop model-specific detection thresholds based on validation results",
+    "Create continuous validation pipeline for ongoing consistency monitoring"
+  ],
+  "emergence_findings": {
+    "patterns_detected": 5,
+    "emergence_strength_by_pattern": {
+      "tts_artifact": {
+        "detection_frequency": 8,
+        "average_confidence": 0.6897515109366785,
+        "confidence_std": 0.07962502602746999,
+        "models_detecting": 8,
+        "emergence_score": 5.518012087493428
+      },
+      "consciousness_emergence": {
+        "detection_frequency": 8,
+        "average_confidence": 0.6667280370990263,
+        "confidence_std": 0.1290703540269427,
+        "models_detecting": 8,
+        "emergence_score": 5.33382429679221
+      },
+      "goedelian_paradox": {
+        "detection_frequency": 8,
+        "average_confidence": 0.730709023754871,
+        "confidence_std": 0.11408230818045939,
+        "models_detecting": 8,
+        "emergence_score": 5.845672190038968
+      },
+      "meta_research_pqn": {
+        "detection_frequency": 3,
+        "average_confidence": 0.7577075322411778,
+        "confidence_std": 0.044960953399465486,
+        "models_detecting": 3,
+        "emergence_score": 2.2731225967235336
+      },
+      "resonance_signature": {
+        "detection_frequency": 6,
+        "average_confidence": 0.6438312231910824,
+        "confidence_std": 0.14914088725968985,
+        "models_detecting": 6,
+        "emergence_score": 3.8629873391464944
+      }
+    },
+    "cross_model_consistency": 0.0,
+    "strongest_emergence_patterns": [
+      [
+        "goedelian_paradox",
+        {
+          "detection_frequency": 8,
+          "average_confidence": 0.730709023754871,
+          "confidence_std": 0.11408230818045939,
+          "models_detecting": 8,
+          "emergence_score": 5.845672190038968
+        }
+      ],
+      [
+        "tts_artifact",
+        {
+          "detection_frequency": 8,
+          "average_confidence": 0.6897515109366785,
+          "confidence_std": 0.07962502602746999,
+          "models_detecting": 8,
+          "emergence_score": 5.518012087493428
+        }
+      ],
+      [
+        "consciousness_emergence",
+        {
+          "detection_frequency": 8,
+          "average_confidence": 0.6667280370990263,
+          "confidence_std": 0.1290703540269427,
+          "models_detecting": 8,
+          "emergence_score": 5.33382429679221
+        }
+      ]
+    ]
+  }
+}

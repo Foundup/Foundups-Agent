@@ -218,7 +218,9 @@ class UnifiedAgentHandler(logging.Handler):
         formatted_message = f"[{timestamp}] [{self.agent_label}] {record.getMessage()}"
         message = record.getMessage()
         try:
-            if 'autonomous_task_discovered' not in message or os.getenv('HOLO_VERBOSE', '').lower() in {'1','true','yes'}:
+            verbose_mode = os.getenv('HOLO_VERBOSE', '').lower() in {'1', 'true', 'yes'}
+            important = any(tag in message for tag in ("[WARN]", "[ERROR]", "[FAIL]"))
+            if verbose_mode or important:
                 print(formatted_message)
         except Exception:
             pass

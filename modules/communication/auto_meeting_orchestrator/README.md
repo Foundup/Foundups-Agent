@@ -286,7 +286,7 @@ Recipient gets instant prompt with full context:
 #### MeetingOrchestrator
 Main orchestration engine handling the complete workflow.
 
-#### MeetingIntent  
+#### MeetingIntent
 Structured meeting request with purpose, outcome, and priority.
 
 #### UnifiedAvailabilityProfile
@@ -295,12 +295,29 @@ Aggregated presence status across all platforms with confidence scoring.
 #### PresenceStatus & Priority Enums
 Standardized status and priority levels for consistent handling.
 
+#### AMOHeartbeatService (Cardiovascular System)
+Autonomous health monitoring service for AMO operational observability.
+
+**Cardiovascular Architecture**:
+- **Heartbeat**: 30-second pulse interval with vital signs (CPU, memory, uptime)
+- **Actions**: Intent creation, presence updates, meeting orchestration
+- **Chain of Action**: 7-step handshake protocol (Intent → Launch)
+- **Reasoning**: Priority calculation, platform selection logic
+- **Thought**: Self-test validation, health status assessment
+
+**WSP 91: DAEMON Observability** implemented via:
+- JSONL telemetry streaming (`logs/amo_heartbeat.jsonl`)
+- MCP endpoints for external monitoring
+- Skills.md domain expertise documentation
+
 ### Key Features
 
-**Event-Driven Architecture:** Presence updates automatically trigger availability checks  
-**Priority-Based Orchestration:** Higher priority meetings get precedence  
-**Platform Abstraction:** Unified interface across different communication platforms  
-**Graceful Degradation:** Fallback mechanisms when platforms are unavailable  
+**Event-Driven Architecture:** Presence updates automatically trigger availability checks
+**Priority-Based Orchestration:** Higher priority meetings get precedence
+**Platform Abstraction:** Unified interface across different communication platforms
+**Graceful Degradation:** Fallback mechanisms when platforms are unavailable
+**Cardiovascular Telemetry:** Real-time health monitoring with JSONL streaming
+**MCP Observability:** Standardized endpoints for 0102/agent monitoring  
 
 ## [U+1F9EA] Testing
 
@@ -362,8 +379,63 @@ Important meetings get precedence while respecting user availability preferences
 ## [BOOKS] Documentation
 
 - **[Interface Documentation](./INTERFACE.md)** - Complete API reference
+- **[Skills Documentation](./Skills.md)** - AMO domain expertise for agent-agnostic operation (WSP 57)
 - **[Development Roadmap](./ROADMAP.md)** - Milestone tracking and plans
 - **[Module Log](./ModLog.md)** - Development history and updates
+
+## [U+1F50C] MCP Server Integration
+
+**AMO MCP Server** provides standardized observability endpoints for 0102 and other agents:
+
+### Available Endpoints (6 total)
+
+```python
+from modules.communication.auto_meeting_orchestrator.mcp import AMOMCPServer
+
+server = AMOMCPServer()
+
+# 1. Heartbeat Health
+health = server.get_heartbeat_health()
+# Returns: Current vital signs from JSONL telemetry
+
+# 2. Active Meeting Intents
+intents = server.get_active_intents(limit=10)
+# Returns: Priority-sorted pending meeting requests
+
+# 3. Presence Status
+presence = server.get_presence_status(user_id="alice")
+# Returns: Cross-platform availability profiles
+
+# 4. Meeting History
+history = server.get_meeting_history(limit=20)
+# Returns: Completed meeting sessions
+
+# 5. Stream Heartbeat Telemetry
+telemetry = server.stream_heartbeat_telemetry(limit=50)
+# Returns: Recent heartbeat events from JSONL
+
+# 6. Cleanup Old Telemetry
+cleanup = server.cleanup_old_telemetry(days_to_keep=30)
+# Returns: Retention enforcement results
+```
+
+### FastMCP Integration
+
+```python
+from modules.communication.auto_meeting_orchestrator.mcp import create_amo_mcp_app
+
+# Create FastMCP app for uvicorn deployment
+app = create_amo_mcp_app()
+
+# Run with: uvicorn amo_mcp_server:create_amo_mcp_app --port 8001
+```
+
+### Telemetry Files
+
+- **Heartbeat**: `logs/amo_heartbeat.jsonl` - JSONL stream of 30s pulse events
+- **Meeting History**: `modules/communication/auto_meeting_orchestrator/memory/meeting_history.jsonl`
+- **Active Intents**: `modules/communication/auto_meeting_orchestrator/memory/active_intents.json`
+- **Presence Profiles**: `modules/communication/auto_meeting_orchestrator/memory/presence_profiles.json`
 
 ## [LINK] Related Modules
 

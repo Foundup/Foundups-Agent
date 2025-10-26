@@ -1,0 +1,2 @@
+# Patch Executor - No external dependencies required
+# Uses Python stdlib only: subprocess, tempfile, pathlib, dataclasses, re, logging

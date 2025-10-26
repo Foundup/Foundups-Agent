@@ -1,0 +1,20 @@
+# Cross-Platform Memory Orchestrator Requirements
+# WSP 60 Enhanced Memory Architecture
+
+# Core dependencies
+asyncio
+dataclasses
+pathlib
+json
+logging
+typing
+datetime
+uuid
+
+# Future extensions (as needed)
+# aiofiles>=0.8.0
+# msgpack>=1.0.0
+
+
+
+

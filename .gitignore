@@ -80,6 +80,8 @@ memory/*
 02_logs/
 build/
 foundups-agent-clean/
+temp/
+temp/*
 
 # BanterEngine specific
 modules/banter_engine/src/emoji_sequence_map.py

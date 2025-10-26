@@ -16,6 +16,42 @@ wre_core/
 +-- wre_sdk_implementation.py  # Enhanced Claude Code SDK
 ```
 
+### Skills Entry Point (First Principles)
+**Problem (Observed):**
+- `.claude/skills/` only activates inside Claude Code (0102 prototype space)
+- Native DAEs (Qwen, Gemma, UI-TARS) call WRE entry points, not Claude directly
+- Without a central loader, every module duplicates skill parsing logic
+
+**Occam Resolution (Minimum Viable Path):**
+1. **Single wardrobe** – WRE becomes the entry point for native skills
+2. **Two wardrobes**  
+   - `.claude/skills/` → prototype + human validation  
+   - `modules/*/skills/` → production wardrobe for WRE
+3. **Loader pipeline** – WRE discovers, validates, and streams skills to Qwen/Gemma
+4. **Feedback loop** – Pattern fidelity + telemetry update the same wardrobe
+
+```
+┌─────────────┐   prototype   ┌────────────────┐   publish   ┌──────────────────────┐
+│ Claude Code │ ─────────────▶ │ .claude/skills │────────────▶│ modules/*/skills/    │
+└─────────────┘                └────────────────┘             │ (WRE wardrobe)       │
+                                              ▲               └─────────┬────────────┘
+                                              │                         │
+                                              │ load + score            │ pattern feedback
+                                              │                         ▼
+                                         ┌─────────────┐         ┌──────────────┐
+                                         │ WRE Loader  │────────▶│ Qwen / Gemma │
+                                         └─────────────┘         └──────────────┘
+```
+
+### Skills-Aware Subsystems
+| Component | Current Role | Skill Adaptation |
+|-----------|--------------|------------------|
+| `wre_master_orchestrator` | Pattern recall, plugin routing | Host `WRESkillsRegistry` for cross-module discovery and hot reload |
+| `wre_gateway` | DAE routing layer | Attach skill metadata to routed tasks, enforce WSP 77 selection rules |
+| `recursive_improvement` | Pattern learning engine | Store pattern fidelity metrics per skill version (versions/, metrics/) |
+| `dae_cube_assembly` | Spawns FoundUp DAEs | Stamp new cubes with starter skills folder + CHANGELOG |
+| `wre_sdk_implementation` | Enhanced SDK for Claude Code | Provide helper to sync `.claude/skills` prototypes into WRE wardrobe |
+
 ### DAE Gateway System
 The new DAE Gateway (`wre_gateway/`) replaces the broken agent-based system:
 - Routes to 5 core infrastructure DAEs
@@ -41,6 +77,14 @@ The 6th core DAE implements WSP 77's Intelligent Internet (II) orchestration vis
 - **II Orchestration**: Coordinates Intelligent Internet operations
 - **Ablation Studies**: Identifies critical components through MLE-STAR framework
 - **Refinement Loops**: Iterative optimization for continuous improvement
+
+### Skills Loading Workflow (WSP 77)
+1. **Discover** `modules/*/skills/**/SKILL.md`
+2. **Validate** YAML metadata + WSP citations (WSP 50/64 guard)
+3. **Mount** skill into active session context (Qwen orchestrator)
+4. **Execute** task with skill instructions (Gemma pattern interpreter)
+5. **Score** outcome via pattern fidelity (store metrics in `recursive_improvement/`)
+6. **Evolve** skill when fidelity < 0.90 (single variation at a time per Occam)
 
 ## Running WRE
 
@@ -97,6 +141,17 @@ python run_wre.py mlestar capabilities
 [OK] **WSP 75**: Token-based measurements (no time!)
 [OK] **WSP 80**: Cube-level DAE orchestration
 [OK] **WSP 64**: Violation prevention built-in
+[OK] **WSP 11**: Interface specification refreshed for skills APIs
+[PENDING] **WSP 77**: Skills loader integration (Qwen/Gemma wardrobe) – see roadmap
+
+## Skills Adoption Roadmap
+1. **Week 0 (Now)** – Document skills responsibilities (README + INTERFACE)
+2. **Week 1** – Add `modules/infrastructure/wre_core/skills/` with bootstrap SKILL.md and `WRESkillsRegistry`
+3. **Week 2** – Extend `wre_master_orchestrator` to mount skills on execute; persist pattern scores in `recursive_improvement/metrics/`
+4. **Week 3** – Sync `.claude/skills` prototypes through `wre_sdk_implementation` helper; automate promotion with WSP 50 review
+5. **Week 4** – Require every module to ship `skills/` folder before DAE launch; enforce via WSP 49 checks
+
+**Occam Check:** Each milestone ships the smallest slice that lets Qwen/Gemma wear skills before enabling the full recursive evolution loop.
 
 ## Key Features
 

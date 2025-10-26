@@ -171,6 +171,27 @@ except ImportError:
 
 # -------------------- CLI Entry Point -------------------- #
 
+def render_response(throttler, outputs, args):
+    """
+    Central throttler flow - render all outputs through the throttler.
+
+    Args:
+        throttler: AgenticOutputThrottler instance
+        outputs: Dict with 'sections' list and 'metadata'
+        args: Parsed CLI arguments
+    """
+    # Set query context if available
+    if 'query' in outputs.get('metadata', {}):
+        throttler.set_query_context(outputs['metadata']['query'], outputs.get('search_results'))
+
+    # Add all sections
+    for section in outputs.get('sections', []):
+        throttler.add_section(**section)
+
+    # Render and print
+    output = throttler.render_prioritized_output(verbose=getattr(args, 'verbose', False))
+    safe_print(output)
+
 # Temporary stub - to be extracted later
 def _get_search_history_for_patterns():
     """Retrieve search history for pattern analysis (Phase 2)."""
@@ -276,6 +297,8 @@ def main() -> None:
     parser.add_argument('--no-advisor', action='store_true', help='Disable advisor (opt-out for 0102 agents)')
     parser.add_argument('--advisor-rating', choices=['useful', 'needs_more'], help='Provide feedback on advisor output')
     parser.add_argument('--ack-reminders', action='store_true', help='Confirm advisor reminders were acted on')
+    parser.add_argument('--adaptive', action='store_true', help='Enable adaptive learning processing (default: off for performance)')
+    parser.add_argument('--quiet-root-alerts', action='store_true', help='Suppress root violation alerts')
 
     parser.add_argument('--support', type=str, nargs='?', const='auto', help='Run support workflow (use values like auto, docs, ascii)')
     parser.add_argument('--diagnose', type=str, help='Run targeted diagnosis (e.g., holodae, compliance, modules)')
@@ -308,8 +331,17 @@ def main() -> None:
     parser.add_argument('--mcp-log', action='store_true', help='Review recent MCP tool activity log')
     parser.add_argument('--thought-log', action='store_true', help='View chain-of-thought breadcrumb trail')
     parser.add_argument('--monitor-work', action='store_true', help='Monitor work completion for auto-publish (ai_intelligence/work_completion_publisher)')
+    parser.add_argument('--organize-docs', action='store_true', help='Allow DocDAE to reorganize docs during auto-refresh')
 
     args = parser.parse_args()
+
+    verbose = bool(getattr(args, 'verbose', False))
+
+    def vprint(message: str) -> None:
+        if verbose:
+            safe_print(message)
+
+    os.environ['HOLO_VERBOSE'] = '1' if verbose else '0'
 
     if args.code_index_report:
         _run_codeindex_report(args.code_index_report)
@@ -334,7 +366,36 @@ def main() -> None:
             except Exception:
                 pass
 
-    print_onboarding(args, ADVISOR_AVAILABLE, run_number)
+    # Initialize Pattern Coach (used in onboarding copy)
+    pattern_coach = None
+    if ADVISOR_AVAILABLE:
+        try:
+            from holo_index.qwen_advisor.pattern_coach import PatternCoach
+            pattern_coach = PatternCoach()
+        except Exception as e:
+            if verbose:
+                safe_print(f"[WARN] Pattern coach unavailable: {e}")
+
+    # Initialize throttler early for all output
+    throttler = AgenticOutputThrottler()
+
+    # Add onboarding to throttler
+    onboarding_text = f"\n[0102] HoloIndex Quickstart (Run {run_number})"
+    onboarding_text += "\n  - Refresh indexes with `python holo_index.py --index-all` at the start of a session."
+    onboarding_text += "\n  - Running search for: " + (args.search if args.search else "benchmark")
+    onboarding_text += "\n  - Add --llm-advisor to receive compliance reminders and TODO checklists."
+    onboarding_text += "\n  - Log outcomes in ModLogs/TESTModLogs (WSP 22) and consult FMAS before coding."
+    onboarding_text += "\n  - Example queries:"
+    onboarding_text += "\n      python holo_index.py --check-module 'youtube_auth'  # Check before coding"
+    onboarding_text += "\n      python holo_index.py --search 'pqn cube' --llm-advisor --limit 5"
+    onboarding_text += "\n      python holo_index.py --search 'unit test plan' --llm-advisor"
+    onboarding_text += "\n      python holo_index.py --search 'navigation schema' --limit 3"
+    onboarding_text += "\n      python holo_index.py --init-dae 'YouTube Live'  # Initialize DAE context"
+    onboarding_text += "\n  - Documentation: WSP_35_HoloIndex_Qwen_Advisor_Plan.md | docs/QWEN_ADVISOR_IMPLEMENTATION_COMPLETE.md | tests/holo_index/TESTModLog.md"
+    onboarding_text += "\n  - Session points summary appears after each run (WSP reward telemetry)."
+    if pattern_coach:
+        onboarding_text += "\n[INFO] Pattern Coach initialized - watching for vibecoding patterns"
+    throttler.add_section('onboarding', onboarding_text, priority=1, tags=['onboarding', 'guidance'])
 
     # CRITICAL: Unicode compliance reminder for 0102 agents
 # Removed noisy Unicode warnings - 0102 doesn't need internal system messages
@@ -350,20 +411,20 @@ def main() -> None:
         # Log detection info if in debug mode
         if os.getenv('HOLOINDEX_DEBUG'):
             env_info = detector.get_environment_info()
-            print(f"[DEBUG] Environment: {'0102 AGENT' if env_info['is_0102'] else '012 HUMAN'}")
-            print(f"[DEBUG] Advisor mode: {env_info['advisor_mode']}")
+            vprint(f"[DEBUG] Environment: {'0102 AGENT' if env_info['is_0102'] else '012 HUMAN'}")
+            vprint(f"[DEBUG] Advisor mode: {env_info['advisor_mode']}")
     else:
         # Fallback to old behavior if detection not available
         should_run_advisor = args.llm_advisor
 
     if should_run_advisor:
         if not ADVISOR_AVAILABLE:
-            print('[WARN] Qwen advisor package unavailable; continuing without advisor output.')
+            safe_print('[WARN] Qwen advisor package unavailable; continuing without advisor output.')
         else:
             advisor = QwenAdvisor()
             # Notify user that advisor is active
-            if not args.llm_advisor:  # Auto-enabled, not explicitly requested
-                print('[INFO] Advisor enabled (0102 agent mode detected)')
+            if not args.llm_advisor and verbose:
+                safe_print('[INFO] Advisor enabled (0102 agent mode detected)')
 
     if advisor is not None:
         telemetry_path = advisor.config.telemetry_path
@@ -373,16 +434,7 @@ def main() -> None:
         except Exception:
             telemetry_path = None
 
-    # Initialize Pattern Coach (intelligent coaching, not time-based)
-    pattern_coach = None
-    try:
-        from holo_index.qwen_advisor.pattern_coach import PatternCoach
-        pattern_coach = PatternCoach()
-# Removed: Pattern Coach init message - internal system info
-    except Exception as e:
-        print(f'[WARN] Pattern coach not available: {e}')
-
-    holo = HoloIndex(ssd_path=args.ssd)
+    holo = HoloIndex(ssd_path=args.ssd, quiet=not verbose)
 
     index_code = args.index_code or args.index or args.index_all
     index_wsp = args.index_wsp or args.index or args.index_all
@@ -433,62 +485,63 @@ def main() -> None:
             needs_wsp_refresh = db.should_refresh_index("wsp", max_age_hours=1)
 
             if needs_code_refresh or needs_wsp_refresh:
-                print(f"[AUTOMATIC] Index refresh needed (last refresh > 1 hour)")
-                print(f"[AUTOMATIC] Code index: {'STALE' if needs_code_refresh else 'FRESH'}")
-                print(f"[AUTOMATIC] WSP index: {'STALE' if needs_wsp_refresh else 'FRESH'}")
+                vprint("[AUTOMATIC] Index refresh needed (last refresh > 1 hour)")
+                vprint(f"[AUTOMATIC] Code index: {'STALE' if needs_code_refresh else 'FRESH'}")
+                vprint(f"[AUTOMATIC] WSP index: {'STALE' if needs_wsp_refresh else 'FRESH'}")
 
-                # DOCDAE: Autonomous documentation organization (WSP 3 compliance)
-                # Runs BEFORE indexing to ensure file system is organized
-                print("[DOCDAE] Checking documentation organization...")
-                try:
-                    from modules.infrastructure.doc_dae.src.doc_dae import DocDAE
-                    dae = DocDAE()
+                if args.organize_docs:
+                    vprint("[DOCDAE] Checking documentation organization...")
+                    try:
+                        from modules.infrastructure.doc_dae.src.doc_dae import DocDAE
+                        dae = DocDAE()
 
-                    # Quick analysis: any misplaced files in root docs/?
-                    analysis = dae.analyze_docs_folder()
-                    misplaced_count = analysis['markdown_docs'] + analysis['json_data']
+                        analysis = dae.analyze_docs_folder()
+                        misplaced_count = analysis['markdown_docs'] + analysis['json_data']
 
-                    if misplaced_count > 0:
-                        print(f"[DOCDAE] Found {misplaced_count} misplaced files - organizing...")
-                        result = dae.run_autonomous_organization(dry_run=False)
-                        print(f"[DOCDAE] Organized: {result['execution']['moves_completed']} moved, "
-                              f"{result['execution']['archives_completed']} archived")
-                    else:
-                        print("[DOCDAE] Documentation already organized")
-                except Exception as e:
-                    print(f"[WARN] DocDAE failed: {e} - continuing with indexing")
+                        if misplaced_count > 0:
+                            vprint(f"[DOCDAE] Found {misplaced_count} misplaced files - organizing...")
+                            result = dae.run_autonomous_organization(dry_run=False)
+                            vprint(f"[DOCDAE] Organized: {result['execution']['moves_completed']} moved, "
+                                   f"{result['execution']['archives_completed']} archived")
+                        else:
+                            vprint("[DOCDAE] Documentation already organized")
+                    except Exception as e:
+                        safe_print(f"[WARN] DocDAE failed: {e} - continuing with indexing")
+                else:
+                    vprint("[DOCDAE] Skipping automatic organization (use --organize-docs to enable)")
 
                 # Automatically refresh stale indexes
                 if needs_code_refresh:
-                    print("[AUTO-REFRESH] Refreshing code index...")
+                    vprint("[AUTO-REFRESH] Refreshing code index...")
                     start_time = time.time()
                     holo.index_code_entries()
                     duration = time.time() - start_time
                     db.record_index_refresh("code", duration, holo.get_code_entry_count())
-                    print(f"[AUTO-REFRESH] Code index refreshed in {duration:.1f}s")
+                    vprint(f"[AUTO-REFRESH] Code index refreshed in {duration:.1f}s")
                 if needs_wsp_refresh:
-                    print("[AUTO-REFRESH] Refreshing WSP index...")
+                    vprint("[AUTO-REFRESH] Refreshing WSP index...")
                     start_time = time.time()
                     holo.index_wsp_entries()
                     duration = time.time() - start_time
                     db.record_index_refresh("wsp", duration, holo.get_wsp_entry_count())
-                    print(f"[AUTO-REFRESH] WSP index refreshed in {duration:.1f}s")
-                print("[SUCCESS] Automatic index refresh completed")
+                    vprint(f"[AUTO-REFRESH] WSP index refreshed in {duration:.1f}s")
+                vprint("[SUCCESS] Automatic index refresh completed")
             else:
-                print("[FRESH] All indexes are up to date (< 1 hour old)")
+                vprint("[FRESH] All indexes are up to date (< 1 hour old)")
 
         except Exception as e:
-            print(f"[WARN] Could not check index freshness: {e}")
+            safe_print(f"[WARN] Could not check index freshness: {e}")
             safe_print("[FALLBACK] Manual refresh: python holo_index.py --index-all")
 
     # Phase 3: Initialize adaptive learning if available
     adaptive_orchestrator = None
-    if ADAPTIVE_LEARNING_AVAILABLE:
-        try:
-            adaptive_orchestrator = AdaptiveLearningOrchestrator()
-    # Removed: Adaptive Learning init message - internal system info
-        except Exception as e:
-            print(f'[WARN] Phase 3: Adaptive Learning initialization failed: {e}')
+    # TEMPORARILY DISABLED: Adaptive learning causing hangs
+    # if ADAPTIVE_LEARNING_AVAILABLE:
+    #     try:
+    #         adaptive_orchestrator = AdaptiveLearningOrchestrator()
+    # # Removed: Adaptive Learning init message - internal system info
+    #     except Exception as e:
+    #         print(f'[WARN] Phase 3: Adaptive Learning initialization failed: {e}')
 
     # Handle DAE initialization requests
     if args.init_dae:
@@ -866,213 +919,90 @@ def main() -> None:
     if args.docs_file:
         # Provide documentation paths for a given file (012's insight: direct doc provision)
 
-        safe_print(f"[0102] DOCUMENTATION PROVISION: '{args.docs_file}'")
-        safe_print("=" * 60)
+        throttler.add_section('header', f"[0102] DOCUMENTATION PROVISION: '{args.docs_file}'", priority=1, tags=['header', 'docs'])
+        throttler.add_section('separator', "=" * 60, priority=5, tags=['separator'])
 
         # Use HoloDAE coordinator for doc provision
+        coordinator = None
         try:
             from holo_index.qwen_advisor import HoloDAECoordinator
+            if not args.verbose:
+                os.environ.setdefault("HOLO_SILENT", "1")
             coordinator = HoloDAECoordinator()
 
             # Get docs for the file
             doc_info = coordinator.provide_docs_for_file(args.docs_file)
 
             if 'error' in doc_info:
-                safe_print(f"[ERROR] {doc_info['error']}")
-                safe_print("\n[TIP] Try using the full path or filename with extension")
+                throttler.add_section('error', f"[ERROR] {doc_info['error']}", priority=1, tags=['error'])
+                throttler.add_section('tip', "\n[TIP] Try using the full path or filename with extension", priority=3, tags=['tip'])
             else:
-                safe_print(f"[MODULE] {doc_info['module']}")
-                safe_print("\n[DOCUMENTATION]")
+                throttler.add_section('module', f"[MODULE] {doc_info['module']}", priority=2, tags=['module'])
+                throttler.add_section('docs_header', "\n[DOCUMENTATION]", priority=3, tags=['docs_header'])
 
                 for doc_name, doc_data in doc_info['docs'].items():
                     status = "[OK]" if doc_data['exists'] else "[FAIL]"
-                    safe_print(f"  {status} {doc_name}: {doc_data['path']}")
+                    throttler.add_section('doc_item', f"  {status} {doc_name}: {doc_data['path']}", priority=4, tags=['doc_item'])
 
-                safe_print("\n[COMMANDS]")
-                safe_print("To read existing docs:")
+                throttler.add_section('commands', "\n[COMMANDS]", priority=3, tags=['commands'])
+                throttler.add_section('commands_text', "To read existing docs:", priority=4, tags=['commands_text'])
                 for doc_name, doc_data in doc_info['docs'].items():
                     if doc_data['exists']:
-                        safe_print(f"  cat \"{doc_data['path']}\"")
+                        throttler.add_section('command', f"  cat \"{doc_data['path']}\"", priority=4, tags=['command'])
 
                 missing_docs = [name for name, data in doc_info['docs'].items() if not data['exists']]
                 if missing_docs:
-                    safe_print("\n[MISSING]")
-                    safe_print(f"  Missing docs: {', '.join(missing_docs)}")
-                    safe_print("  Create these to improve WSP compliance")
+                    throttler.add_section('missing', "\n[MISSING]", priority=2, tags=['missing'])
+                    throttler.add_section('missing_list', f"  Missing docs: {', '.join(missing_docs)}", priority=3, tags=['missing_list'])
+                    throttler.add_section('compliance', "  Create these to improve WSP compliance", priority=3, tags=['compliance'])
 
         except Exception as e:
-            safe_print(f"[ERROR] Failed to get documentation: {e}")
-            safe_print("[TIP] Ensure HoloDAE coordinator is properly initialized")
+            throttler.add_section('error', f"[ERROR] Failed to get documentation: {e}", priority=1, tags=['error'])
+            throttler.add_section('tip', "[TIP] Ensure HoloDAE coordinator is properly initialized", priority=3, tags=['tip'])
+        finally:
+            if coordinator:
+                coordinator.stop_monitoring()
 
-        safe_print("\n" + "=" * 60)
-        safe_print("[PRINCIPLE] HoloIndex provides docs directly - no grep needed (012's insight)")
+        throttler.add_section('separator', "\n" + "=" * 60, priority=5, tags=['separator'])
+        throttler.add_section('principle', "[PRINCIPLE] HoloIndex provides docs directly - no grep needed (012's insight)", priority=4, tags=['principle'])
+
+        # Render and exit
+        output = throttler.render_prioritized_output(verbose=args.verbose if hasattr(args, 'verbose') else False)
+        safe_print(output)
         return  # Exit after doc provision
 
     if args.search:
-        # WSP COMPLIANCE: Check root violations using Gemma monitoring
+        # Use modular components for search processing
         try:
-            from holo_index.monitoring.root_violation_monitor import get_root_violation_alert
-            import asyncio
+            search_payload = holo.search(args.search, limit=args.limit, doc_type_filter=args.doc_type)
+        except Exception as exc:
+            safe_print(f"[ERROR] Search failed: {exc}")
+            return
 
-            # Run violation check synchronously
-            violation_alert = asyncio.run(get_root_violation_alert())
-            if violation_alert:
-                # Display violation alert at the TOP of HoloIndex output
-                safe_print(violation_alert)
-                safe_print("")  # Add spacing
-        except Exception as e:
-            safe_print(f"[WARNING] Root violation monitoring failed: {e}")
-            safe_print("")
+        # Process search results for throttler
+        results = search_payload
+        throttler._search_results = results
+        search_results = results
 
-        # Initialize agentic output throttler
-        throttler = AgenticOutputThrottler()
+        # Set system state
+        total_results = len(results.get('code', [])) + len(results.get('wsps', []))
+        if total_results > 0:
+            throttler.set_system_state("found")
+        else:
+            throttler.set_system_state("missing")
 
-        # QWEN ROUTING: Route through orchestrator for intelligent filtering if available
-        qwen_orchestrator = None
-        try:
-            from .qwen_advisor.orchestration.qwen_orchestrator import QwenOrchestrator
-            qwen_orchestrator = QwenOrchestrator()
-            results = holo.search(args.search, limit=args.limit, doc_type_filter=args.doc_type)
-
-            # Route through QWEN orchestrator for intelligent output filtering
-            orchestrated_response = qwen_orchestrator.orchestrate_holoindex_request(args.search, results)
-
-            # Display QWEN-filtered response
-            print(orchestrated_response)
-
-            # Store results for HoloDAE analysis
-            throttler._search_results = results
-
-        except Exception as e:
-            # Fallback to direct search if QWEN not available
-            logger.debug(f"QWEN orchestrator not available, using direct search: {e}")
-            results = holo.search(args.search, limit=args.limit, doc_type_filter=args.doc_type)
-
-            # Store search results in throttler for state determination
-            throttler._search_results = results
-
-        # HoloDAE: Automatic Context-Driven Analysis
-
-        try:
-            from holo_index.qwen_advisor import HoloDAECoordinator
-
-            # Create HoloDAE coordinator instance to handle the request
-            coordinator = HoloDAECoordinator()
-            holodae_report = coordinator.handle_holoindex_request(args.search, results)
-
-            # Determine actual system state based on results and processing
-            search_results = getattr(throttler, '_search_results', {})
-            total_results = len(search_results.get('code', [])) + len(search_results.get('wsps', []))
-
-            if total_results > 0:
-                throttler.set_system_state("found")
-            else:
-                throttler.set_system_state("missing")
-
-            # Print the detailed HoloDAE analysis (WSP 64 COMPLIANCE - prevent cp932 errors)
-            for line in holodae_report.split('\n'):
-                if line.strip():
-                    safe_print(line)
-
-        except Exception as e:
-            # Set system state to "error" when HoloDAE fails
-            throttler.set_system_state("error", e)
-            safe_print(f"[HOLODAE-ERROR] Context analysis failed: {e}")
-
-        print()  # Add spacing before search results
-
-        # Set query context with search results for module detection
+        # Set query context
         throttler.set_query_context(args.search, results)
 
-        # Run intelligent subroutine analysis
+        # Run subroutine analysis
         target_module = throttler.detected_module
         subroutine_results = throttler.subroutine_engine.run_intelligent_analysis(args.search, target_module)
-
-        # Merge subroutine results into main results for display
         results['intelligent_analysis'] = subroutine_results
 
-        # Track search in pattern coach for intelligent coaching
-        if pattern_coach:
-            # Get health warnings for pattern coach
-            health_warnings = []
-            if 'health_notices' in results:
-                health_warnings = results['health_notices']
-
-            # Convert results to format expected by pattern coach
-            search_results = results.get('code', []) + results.get('wsps', [])
-
-            # Get intelligent coaching based on query and context
-            coaching_msg = pattern_coach.analyze_and_coach(
-                query=args.search,
-                search_results=search_results,
-                health_warnings=health_warnings
-            )
-
-            if coaching_msg:
-                throttler.add_section('coaching', coaching_msg, priority=2, tags=['guidance', 'patterns'])
-
-        # Phase 3: Apply adaptive learning optimization
-        if adaptive_orchestrator:
+        # Advisor processing
+        if advisor:
             try:
-                print('[INFO] Phase 3: Processing with adaptive learning...')
-
-                # Convert search results to the format expected by adaptive learning
-                raw_results = []
-                for hit in results.get('code', []):
-                    raw_results.append({
-                        'content': hit.get('content', ''),
-                        'score': hit.get('score', 0.5),
-                        'metadata': hit
-                    })
-
-                # Generate a basic advisor response for adaptive processing
-                raw_response = "Based on the search results, here are the most relevant findings for your query."
-                if results.get('wsps'):
-                    raw_response += f" Found {len(results['wsps'])} WSP protocol references."
-
-                # Process through adaptive learning system
-                import asyncio
-                adaptive_result = asyncio.run(adaptive_orchestrator.process_adaptive_request(
-                    query=args.search,
-                    raw_results=raw_results,
-                    raw_response=raw_response,
-                    context={
-                        'search_limit': args.limit,
-                        'advisor_enabled': advisor is not None,
-                        'wsp_results_count': len(results.get('wsps', [])),
-                        'code_results_count': len(results.get('code', []))
-                    }
-                ))
-
-                # Add adaptive learning results to search results
-                results['adaptive_learning'] = {
-                    'query_optimization_score': adaptive_result.query_processing.optimization_score,
-                    'search_ranking_stability': adaptive_result.search_optimization.performance_metrics.get('ranking_stability', 0.0),
-                    'response_improvement_score': adaptive_result.response_optimization.quality_metrics.get('improvement_score', 0.0),
-                    'memory_efficiency': adaptive_result.memory_optimization.memory_efficiency,
-                    'system_adaptation_score': adaptive_result.overall_performance.get('system_adaptation_score', 0.0),
-                    'processing_time': adaptive_result.processing_metadata.get('total_processing_time', 0),
-                    'enhanced_query': adaptive_result.query_processing.enhanced_query,
-                    'optimized_response': adaptive_result.response_optimization.optimized_response
-                }
-
-                # Update the query and response for advisor processing
-                enhanced_query = adaptive_result.query_processing.enhanced_query
-                optimized_response = adaptive_result.response_optimization.optimized_response
-
-                throttler.add_section('adaptive', f'[RECURSIVE] Query enhanced: "{args.search}" -> "{enhanced_query}"', priority=4, tags=['learning', 'optimization'])
-                throttler.add_section('adaptive', f'[TARGET] Adaptation Score: {adaptive_result.overall_performance.get("system_adaptation_score", 0.0):.2f}', priority=6, tags=['learning', 'metrics'])
-
-            except Exception as e:
-                throttler.add_section('system', f'[WARN] Adaptive learning failed: {e}', priority=7, tags=['system', 'warning'])
-                enhanced_query = args.search
-                optimized_response = "Based on the search results, here are the most relevant findings for your query."
-
-        if advisor:  # Use advisor if it was initialized (either by flag or auto-detection)
-            try:
-                # Use enhanced query from Phase 3 if available, otherwise original query
-                advisor_query = enhanced_query if 'enhanced_query' in locals() else args.search
-                context = AdvisorContext(query=advisor_query, code_hits=results.get('code', []), wsp_hits=results.get('wsps', []))
+                context = AdvisorContext(query=args.search, code_hits=results.get('code', []), wsp_hits=results.get('wsps', []))
                 advisor_output = advisor.generate_guidance(
                     context,
                     enable_dae_cube_mapping=args.dae_cubes or args.code_index,
@@ -1080,53 +1010,46 @@ def main() -> None:
                 )
                 results['advisor'] = asdict(advisor_output)
 
-                # Extract health notices from advisor metadata and perform health checks
+                # Health notices
                 advisor_meta = advisor_output.metadata
-                health_notices = _perform_health_checks_and_rewards(results, last_query, add_reward_event)
+                health_notices = _perform_health_checks_and_rewards(results, args.search, add_reward_event)
 
-                # Also extract any additional health notices from advisor
                 if advisor_meta and 'violations' in advisor_meta:
                     for violation in advisor_meta.get('violations', []):
-                        # Check if it's a health-related violation (WSP 87 or WSP 49)
                         if 'WSP 87' in violation or 'WSP 49' in violation:
                             health_notices.append(violation)
 
-                    if health_notices:
-                        results['health_notices'] = health_notices
+                if health_notices:
+                    results['health_notices'] = health_notices
 
-            except Exception as exc:  # pragma: no cover - safety guard
+            except Exception as exc:
                 results['advisor_error'] = f'Advisor failed: {exc}'
         else:
-            # Run health checks and award rewards even when advisor is disabled
-            health_notices = _perform_health_checks_and_rewards(results, last_query, add_reward_event)
+            health_notices = _perform_health_checks_and_rewards(results, args.search, add_reward_event)
             if health_notices:
                 results['health_notices'] = health_notices
 
-        # Phase 2: Wire in pattern analysis and health notices (WSP 48)
+        # Pattern analysis
         if advisor:
             try:
-                # Get search history for pattern analysis
                 search_history = _get_search_history_for_patterns()
                 if search_history:
                     pattern_analysis = advisor.analyze_search_patterns(search_history)
-
-                    # Add pattern insights to results
                     if pattern_analysis.get('recommendations'):
                         if 'advisor' not in results:
                             results['advisor'] = {}
-                        results['advisor']['pattern_insights'] = pattern_analysis['recommendations'][:3]  # Top 3
-
+                        results['advisor']['pattern_insights'] = pattern_analysis['recommendations'][:3]
             except Exception as e:
                 logger.debug(f"Pattern analysis failed: {e}")
 
-        # Wire in DAE memory architecture (WSP 84)
-        _record_thought_to_memory(results, last_query, advisor, add_reward_event)
+        # Memory recording
+        _record_thought_to_memory(results, args.search, advisor, add_reward_event)
 
-        search_results = results
+        # Delegate rendering to throttler
+        throttler.display_results(results)
+        final_output = throttler.render_prioritized_output(verbose=args.verbose if hasattr(args, 'verbose') else False)
+        safe_print(final_output)
 
-        # Render state-aware prioritized output for 0102 consumption (tri-state architecture)
-        output = throttler.render_prioritized_output(verbose=args.verbose if hasattr(args, 'verbose') else False)
-        safe_print(output)
         if args.llm_advisor and results.get('advisor'):
             add_reward_event('advisor_usage', 3, 'Consulted Qwen advisor guidance', {'query': last_query})
 
@@ -1199,11 +1122,14 @@ def main() -> None:
         safe_print("Using Qwen advisor to discover and link module documentation...")
         print()  # Empty line for spacing
 
+        coordinator = None
         try:
             from holo_index.qwen_advisor.module_doc_linker import QwenModuleDocLinker
             from holo_index.qwen_advisor.holodae_coordinator import HoloDAECoordinator
 
             # Initialize Qwen coordinator
+            if not args.verbose:
+                os.environ.setdefault("HOLO_SILENT", "1")
             coordinator = HoloDAECoordinator()
 
             # Initialize module doc linker
@@ -1253,6 +1179,9 @@ def main() -> None:
             safe_print(f"[ERROR] Module linking failed: {e}")
             import traceback
             traceback.print_exc()
+        finally:
+            if coordinator:
+                coordinator.stop_monitoring()
 
         return  # Exit after module linking
 
@@ -1482,6 +1411,7 @@ def main() -> None:
         safe_print("  python holo_index.py --start-holodae         # Start autonomous HoloDAE monitoring")
         safe_print("  python holo_index.py --holodae-status        # Check HoloDAE status")
         safe_print("  python holo_index.py --benchmark             # Test SSD performance")
+        safe_print("  python holo_index.py --organize-docs --index-all   # Refresh indexes and allow DocDAE auto-organization")
 
 if __name__ == "__main__":
     main()

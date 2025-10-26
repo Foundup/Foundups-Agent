@@ -180,6 +180,7 @@ class GitPushDAE:
             sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
             from modules.platform_integration.linkedin_agent.src.git_linkedin_bridge import GitLinkedInBridge
             self.git_bridge = GitLinkedInBridge(company_id="1263645")
+            self.git_bridge.auto_mode = True  # Enable autonomous commit message generation
             self.logger.info(f"[{self.daemon_name}] Git bridge initialized successfully")
         except Exception as e:
             self.logger.error(f"[{self.daemon_name}] Failed to initialize git bridge: {e}")
@@ -188,8 +189,8 @@ class GitPushDAE:
     def _init_qwen_advisor(self):
         """Initialize Qwen advisor for intelligent code analysis and post generation."""
         try:
-            from holo_index.qwen_advisor.llm_engine import QwenLLM
-            self.qwen = QwenLLM()
+            from holo_index.qwen_advisor.llm_engine import QwenInferenceEngine
+            self.qwen = QwenInferenceEngine()
             self.logger.info(f"[{self.daemon_name}] Qwen advisor initialized for semantic analysis")
         except Exception as e:
             self.logger.warning(f"[{self.daemon_name}] Qwen advisor not available: {e}")

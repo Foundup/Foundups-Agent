@@ -1,0 +1,176 @@
+{
+  "daemon_name": "YouTube Live Chat",
+  "bash_shell_pattern": "main.py --youtube",
+  "description": "Monitors YouTube daemon for errors using WSP 15 MPS scoring and Qwen autonomous execution",
+  "version": "2.0.0",
+  "wsp_compliance": {
+    "wsp_77": "Agent coordination (Gemma detection \u2192 Qwen MPS evaluation \u2192 Qwen execution)",
+    "wsp_15": "Module Prioritization Scoring for bug classification (P0-P4)",
+    "wsp_96": "Skills-driven monitoring patterns"
+  },
+  "architecture": {
+    "phase_1_gemma": "Fast regex pattern detection (<100ms)",
+    "phase_2_qwen": "WSP 15 MPS scoring + autonomous decision (200-500ms)",
+    "phase_3_learning": "Pattern storage and skill updates",
+    "no_0102_dependency": "Qwen handles complexity 1-2 autonomously, creates reports for 3+"
+  },
+  "error_patterns": {
+    "unicode_error": {
+      "regex": "UnicodeEncodeError|\\[U\\+[0-9A-Fa-f]{4,5}\\]|cp932",
+      "description": "Unicode [U+XXXX] tags in chat_sender not converted to emoji before YouTube API send",
+      "wsp_15_mps": {
+        "complexity": 1,
+        "importance": 4,
+        "deferability": 5,
+        "impact": 4,
+        "total_mps": 14,
+        "priority": "P1",
+        "rationale": "Trivial fix (add emoji conversion), critical for chat, cannot defer, major user impact"
+      },
+      "qwen_action": "auto_fix",
+      "fix_module": "modules.communication.livechat.src.chat_sender",
+      "fix_location": "chat_sender.py:128",
+      "fix_function": "_convert_unicode_tags_to_emoji",
+      "fix_action": "add_unicode_conversion_before_youtube_send",
+      "wre_pattern": "unicode_escape_to_emoji",
+      "announcement_template": "012 fix applied - Unicode emoji conversion restored",
+      "recommended_fix": "Import BanterEngine and call _convert_unicode_tags_to_emoji(message_text) before YouTube API send at line 142"
+    },
+    "oauth_revoked": {
+      "regex": "Token.*REVOKED|FORBIDDEN.*oauth|Token has been REVOKED",
+      "description": "OAuth token revocation - requires user reauthorization",
+      "wsp_15_mps": {
+        "complexity": 2,
+        "importance": 5,
+        "deferability": 5,
+        "impact": 5,
+        "total_mps": 17,
+        "priority": "P0",
+        "rationale": "Low complexity (run script), essential (blocks posting), cannot defer, transformative (restores system)"
+      },
+      "qwen_action": "auto_fix",
+      "fix_action": "run_reauthorization_script",
+      "fix_command": "python modules/platform_integration/youtube_auth/scripts/reauthorize_set1.py",
+      "announcement_template": "012 fix applied - OAuth reauthorized"
+    },
+    "duplicate_post": {
+      "regex": "already.*posted|duplicate.*detected|Attempting to post video_id.*already in database",
+      "description": "Duplicate social media posting - needs prevention logic",
+      "wsp_15_mps": {
+        "complexity": 4,
+        "importance": 3,
+        "deferability": 3,
+        "impact": 3,
+        "total_mps": 13,
+        "priority": "P1",
+        "rationale": "High complexity (API state analysis), important (UX), moderate urgency, moderate impact"
+      },
+      "qwen_action": "bug_report",
+      "needs_0102": true,
+      "report_template": "bugs/youtube_daemon/duplicate_post_analysis.md",
+      "recommended_fix": "Add duplicate prevention check in social_media_orchestrator before API call"
+    },
+    "api_quota_exhausted": {
+      "regex": "quotaExceeded|Quota.*exceeded|API quota.*exhausted",
+      "description": "YouTube API quota exhausted - rotate credentials",
+      "wsp_15_mps": {
+        "complexity": 2,
+        "importance": 4,
+        "deferability": 4,
+        "impact": 4,
+        "total_mps": 14,
+        "priority": "P1",
+        "rationale": "Low complexity (key rotation), critical (blocks API), difficult to defer, major impact"
+      },
+      "qwen_action": "auto_fix",
+      "fix_action": "rotate_api_credentials",
+      "wre_pattern": "quota_key_rotation",
+      "announcement_template": "012 fix applied - API credentials rotated"
+    },
+    "stream_not_found": {
+      "regex": "No.*stream.*found|Stream.*not.*available|No active livestream",
+      "description": "No active livestream detected - normal operation",
+      "wsp_15_mps": {
+        "complexity": 1,
+        "importance": 1,
+        "deferability": 1,
+        "impact": 1,
+        "total_mps": 4,
+        "priority": "P4",
+        "rationale": "Trivial, optional, highly deferrable, minimal impact - normal state, not a bug"
+      },
+      "qwen_action": "ignore",
+      "needs_0102": false,
+      "note": "This is normal when no streams are live"
+    },
+    "livechat_connection_error": {
+      "regex": "LiveChat.*error|Chat.*connection.*failed|Unable to fetch chat messages",
+      "description": "LiveChat connection failure - retry with exponential backoff",
+      "wsp_15_mps": {
+        "complexity": 3,
+        "importance": 4,
+        "deferability": 4,
+        "impact": 4,
+        "total_mps": 15,
+        "priority": "P1",
+        "rationale": "Moderate complexity (network retry logic), critical (chat disabled), difficult to defer, major impact"
+      },
+      "qwen_action": "bug_report",
+      "needs_0102": true,
+      "report_template": "bugs/youtube_daemon/chat_connection_analysis.md",
+      "recommended_fix": "Implement exponential backoff in livechat connection handler"
+    }
+  },
+  "qwen_decision_logic": {
+    "auto_fix_threshold": {
+      "max_complexity": 2,
+      "description": "Qwen autonomously fixes bugs with WSP 15 complexity score 1-2",
+      "examples": [
+        "unicode_error",
+        "oauth_revoked",
+        "api_quota_exhausted"
+      ]
+    },
+    "bug_report_threshold": {
+      "min_complexity": 3,
+      "description": "Qwen creates bug reports for complexity 3+ requiring 0102 architectural review",
+      "examples": [
+        "duplicate_post",
+        "livechat_connection_error"
+      ]
+    },
+    "ignore_threshold": {
+      "max_mps": 6,
+      "priority": "P4",
+      "description": "Ignore P4 backlog items (normal operational states)",
+      "examples": [
+        "stream_not_found"
+      ]
+    }
+  },
+  "health_check_interval": 30,
+  "announcement_channel": "undaodu_livechat",
+  "learning_stats": {
+    "total_bugs_detected": 40,
+    "total_bugs_fixed": 2,
+    "total_reports_generated": 3,
+    "last_detection": null,
+    "last_fix": null,
+    "pattern_accuracy": 0.0
+  },
+  "created_at": "2025-10-20",
+  "last_updated": "2025-10-20T15:30:00",
+  "changelog": [
+    {
+      "version": "2.0.0",
+      "date": "2025-10-20",
+      "changes": "Added WSP 15 MPS scoring, removed 0102 dependency from Phase 3, Qwen autonomous execution"
+    },
+    {
+      "version": "1.0.0",
+      "date": "2025-10-20",
+      "changes": "Initial skill creation with 6 error patterns"
+    }
+  ],
+  "last_monitoring_run": 1761479910.4975193
+}

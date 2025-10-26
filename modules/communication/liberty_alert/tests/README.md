@@ -1,6 +1,6 @@
-# Evade.Net Test Suite
+# Liberty Alert Test Suite
 
-**Module**: evade_net
+**Module**: liberty_alert
 **Coverage Target**: [GREATER_EQUAL]90% (WSP 5)
 
 ## Test Organization

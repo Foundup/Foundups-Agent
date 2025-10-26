@@ -325,6 +325,10 @@ class InstanceLock:
                         continue
                     age_minutes = (datetime.now() - datetime.fromtimestamp(create_time)).total_seconds() / 60
                     if age_minutes > self.ttl_minutes:
+                        # FIX: Check if this process has an active heartbeat before killing
+                        if self._has_active_heartbeat(pid):
+                            logger.info("Monitor %s is old (%.1f min) but heartbeat active - keeping alive", pid, age_minutes)
+                            continue
                         stale_pids.append(pid)
                         logger.warning("Found stale monitor process %s (age: %.1f minutes)", pid, age_minutes)
                 # Also check for orphaned main.py processes that aren't the current one
@@ -366,6 +370,35 @@ class InstanceLock:
             process = psutil.Process(pid)
             return self._looks_like_monitor(process.cmdline())
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            return False
+
+    def _has_active_heartbeat(self, pid: int) -> bool:
+        """Check if a process has an active heartbeat (updated within TTL)."""
+        if not self.lock_file.exists():
+            return False
+
+        try:
+            with open(self.lock_file, "r", encoding="utf-8") as handle:
+                raw_data = json.load(handle)
+            lock_data = self._normalize_lock_data(raw_data)
+
+            # Check if this PID owns the lock
+            lock_pid = lock_data.get("pid")
+            if lock_pid != pid:
+                return False
+
+            # Check heartbeat timestamp
+            heartbeat_iso = lock_data.get("heartbeat", EPOCH_ISO)
+            try:
+                last_heartbeat = datetime.fromisoformat(heartbeat_iso)
+            except ValueError:
+                return False
+
+            # Heartbeat is active if updated within TTL
+            age_minutes = (datetime.now() - last_heartbeat).total_seconds() / 60
+            return age_minutes <= self.ttl_minutes
+
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError, KeyError):
             return False
 
     @staticmethod

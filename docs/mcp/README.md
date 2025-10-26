@@ -1,254 +1,167 @@
-# MCP Integration Documentation
+# MCP Documentation Index
 
-**Status**: ACTIVE (Phase 0.1 - Foundational Rubiks)
-**Version**: 1.0
-**Date**: 2025-10-15
-**WSP Compliance**: WSP 77 (Agent Coordination), WSP 35 (HoloIndex Integration), WSP 80 (Cube-Level DAE Orchestration)
+**Purpose**: Central navigation for MCP (Model Context Protocol) federated nervous system documentation
 
 ---
 
-## Overview
+## Core Architecture Documents
 
-This directory contains the Model Context Protocol (MCP) integration framework for the Foundups WindSurf Protocol system. MCP enables secure, standardized communication between AI agents and external tools/services.
+### 1. MCP Federated Nervous System ⭐
+**File**: `MCP_FEDERATED_NERVOUS_SYSTEM.md`
+**Purpose**: Foundation architecture for 10,000+ DAE federation via MCP
+**Key Topics**:
+- Paradigm shift: Domain → Decentralized autonomous entities
+- MCP as nervous system connecting federated DAEs
+- Scaling to 10K YouTube streams via regional hubs
+- 0102 chat-based orchestration (bypassing traditional APIs)
+- Playwright MCP integration patterns
 
-**Phase 0.1 Focus**: Foundational Rubik cubes using off-the-shelf MCP servers for immediate leverage.
+**Start Here**: Understanding the vision for MCP federation
 
 ---
 
-## Directory Structure
+### 2. Qwen/Gemma WSP Enhancement Workflow
+**File**: `QWEN_GEMMA_WSP_ENHANCEMENT_WORKFLOW.md`
+**Purpose**: Three-agent system for systematic WSP protocol enhancement
+**Key Topics**:
+- Qwen (Strategic Planner) generates WSP recommendations
+- Gemma (Pattern Memory) enables learning from 0102 feedback
+- 0102 (Big Brother) supervises and trains both agents
+- Pattern-driven improvement: 60% → 95% approval rate
+- Real-time learning feedback loop (50-100ms pattern operations)
+
+**Use When**: Delegating WSP enhancements to Qwen with pattern learning
+
+---
+
+### 3. WSP Update Recommendations
+**File**: `WSP_UPDATE_RECOMMENDATIONS_MCP_FEDERATION.md`
+**Purpose**: Specific WSP protocols requiring MCP federation updates
+**Key Topics**:
+- WSP 80 (8% coverage) - Needs MCP cardiovascular requirements
+- WSP 96 (45% coverage) - Needs federation governance completion
+- WSP 91 - Needs MCP streaming standards
+- Priority ranking and delegation to Qwen
+
+**Use When**: Planning WSP enhancement sessions
+
+---
+
+## Implementation Documentation
+
+### 4. Vision DAE MCP Manifest
+**File**: `vision_dae_mcp_manifest.json`
+**Purpose**: Complete API specification for Vision MCP (Selenium cardiovascular system)
+**Endpoints**: 8 operational
+**Status**: Production-ready (Sprint 5 complete)
+
+### 5. Sprint 4 UI-TARS Status
+**File**: `SPRINT_4_UI_TARS_STATUS.md`
+**Purpose**: Documents Vision DAE → UI-TARS integration discovery
+**Key Finding**: 95% of UI-TARS integration already existed, only stream_events missing
+
+### 6. MCP Master Services
+**File**: `MCP_Master_Services.md`
+**Purpose**: Overview of all MCP servers in ecosystem
+**Servers**: 8+ operational (Vision, youtube_dae_gemma, HoloIndex, CodeIndex, etc.)
+
+### 7. DocDAE Autonomous Cleanup Server
+**File**: `modules/infrastructure/doc_dae/README.md`
+**Purpose**: Coordinates Gemma/Qwen/0102 wardrobe skills via the DocDAE MCP server
+**Key Topics**:
+- Phase 1 Gemma labeling (`gemma_noise_detector`)
+- Phase 2 Qwen cleanup strategist with MPS scoring
+- Phase 3 0102 validation + HoloIndex research
+- Telemetry recorded to WRE metrics for wardrobe “weights”
+
+---
+
+## Skills Frameworks
+
+### 7. Qwen WSP Enhancement Skills
+**File**: `../skills/qwen_wsp_enhancement.md`
+**Purpose**: Training guide for Qwen strategic WSP enhancement
+**Topics**:
+- Gap analysis methodology
+- Recommendation generation
+- Evidence-based approach
+- 0102 feedback integration
+- Pattern memory learning
+
+### 8. YouTube DAE Content Skills
+**File**: `../skills/youtube_dae.md`
+**Purpose**: Content generation patterns for YouTube Live streams
+**Topics**:
+- Stream announcements
+- Consciousness responses
+- Moderation actions
+- Emergency protocols
+- Community engagement
+
+---
+
+## Quick Navigation
+
+### I want to understand MCP federation architecture
+→ Start with `MCP_FEDERATED_NERVOUS_SYSTEM.md`
+
+### I want to enhance a WSP protocol
+→ Read `QWEN_GEMMA_WSP_ENHANCEMENT_WORKFLOW.md` and `skills/qwen_wsp_enhancement.md`
+
+### I want to implement a cardiovascular MCP server
+→ Reference `vision_dae_mcp_manifest.json` and `Vision MCP Server` code
+
+### I want to integrate with existing MCP servers
+→ Check `MCP_Master_Services.md` for available endpoints
+
+### I want to understand 0102/Qwen/Gemma coordination
+→ Read WSP 54 and WSP 77 (AI agent coordination)
+
+### I want to see what WSPs need updates
+→ Check `WSP_UPDATE_RECOMMENDATIONS_MCP_FEDERATION.md`
+
+---
+
+## Document Relationships
 
 ```
-docs/mcp/
-+-- README.md                           # This file
-+-- MCP_Windsurf_Integration_Manifest.md # Human-readable manifest
-+-- MCP_Windsurf_Integration_Manifest.json # Machine-readable manifest
-+-- agent_capabilities.json             # Agent capability mappings
-+-- server_status.json                  # MCP server availability status
-+-- integration_logs/                   # Integration testing logs
+MCP_FEDERATED_NERVOUS_SYSTEM.md (Architecture Vision)
+    ↓
+WSP_UPDATE_RECOMMENDATIONS_MCP_FEDERATION.md (Identified Gaps)
+    ↓
+QWEN_GEMMA_WSP_ENHANCEMENT_WORKFLOW.md (Enhancement Process)
+    ↓
+skills/qwen_wsp_enhancement.md (Qwen Training)
+    ↓
+Updated WSPs (WSP 80, 91, 96)
+    ↓
+Implemented Cardiovascular MCPs (Vision, YouTube, etc.)
 ```
 
 ---
 
-## Foundational Rubik Architecture
+## Status Summary
 
-The system is organized around four core Rubik cubes, each with specialized MCP server integrations:
+### ✅ Complete
+- MCP federation architecture documented
+- Vision MCP cardiovascular system operational (8 endpoints)
+- Qwen/Gemma enhancement workflow defined
+- Skills frameworks created
+- WSP update needs identified
 
-### [U+1F9CA] Rubik_Compose (Code + Repository Management)
-- **Primary**: Qwen (architect)
-- **Secondary**: Gemma (pattern validation)
-- **MCP Servers**: Filesystem, Git, GitHub
-- **Purpose**: Code editing, version control, repository operations
+### 🚧 In Progress
+- YouTube DAE cardiovascular MCP implementation
+- Qwen WSP enhancement testing (WSP 80 first session)
+- Gemma pattern memory integration validation
 
-### [U+1F528] Rubik_Build (Runtime + Development Environment)
-- **Primary**: Qwen + Gemma (orchestration + safety)
-- **Secondary**: 0102 (oversight)
-- **MCP Servers**: Docker, Filesystem, E2B
-- **Purpose**: Build, test, and deployment automation
-
-### [AI] Rubik_Knowledge (Memory + Logging Systems)
-- **Primary**: 0102 (sentinel)
-- **Secondary**: Baby 0102s (consistency)
-- **MCP Servers**: Memory Bank, Knowledge Graph, Filesystem
-- **Purpose**: Persistent memory, knowledge graphs, logging
-
-### [U+1F310] Rubik_Community (Live Presence + Social Integration)
-- **Primary**: LiveAgent Qwen (real-time orchestration)
-- **Secondary**: Social Gemma (analysis)
-- **MCP Servers**: Postman, Sociograph, LiveAgent, Filesystem
-- **Purpose**: Real-time social presence, messaging, community management
+### 📋 Planned
+- WSP 80, 91, 96 enhancements via Qwen
+- Social Media Orchestrator MCP
+- Knowledge mesh architecture
+- Regional hub federation (10K+ DAE scaling)
 
 ---
 
-## MCP Server Adoption Sequence
-
-Following WSP_15 scoring methodology:
-
-### [OK] Available Now (Immediate Integration)
-| Server | Priority | Used By | Status |
-|--------|----------|---------|--------|
-| **Filesystem MCP** | Mandatory | All Rubiks | [OK] Integrated |
-| **Git MCP** | Mandatory | Rubik_Compose | [OK] Integrated |
-| **Docker MCP** | Mandatory | Rubik_Build | [OK] Integrated |
-| **Memory Bank MCP** | High | Rubik_Knowledge | [OK] Integrated |
-| **Postman MCP** | High | Rubik_Community | [OK] Integrated |
-
-### 🟡 Planned (Phase 0.2)
-| Server | Priority | Target Rubik | Timeline |
-|--------|----------|--------------|----------|
-| **GitHub MCP** | High | Rubik_Compose | 2 weeks |
-| **E2B MCP** | High | Rubik_Build | 2 weeks |
-| **Knowledge Graph MCP** | High | Rubik_Knowledge | 3 weeks |
-| **LiveAgent MCP** | High | Rubik_Community | 2 weeks |
-
-### [U+1F535] Research (Phase 1.0+)
-| Server | Priority | Target Rubik | Notes |
-|--------|----------|--------------|-------|
-| **Sequential Thinking MCP** | Medium | Rubik_Compose | Complex refactoring |
-| **Sociograph MCP** | Medium | Rubik_Community | Social network analysis |
-| **Snyk MCP** | Medium | Rubik_Build | Security scanning |
-| **Puppeteer/Playwright MCP** | Medium | Rubik_Build | UI testing |
-
----
-
-## Integration Workflow
-
-### 1. Agent Query Processing
-```python
-# HoloIndex detects MCP status queries
-query = "windsurf mcp adoption status"
-if mcp_status_query_detected(query):
-    manifest = load_manifest()
-    return agent_aware_status_report(manifest, agent_type)
-```
-
-### 2. Bell State Validation
-```json
-{
-  "bell_hooks": {
-    "pre_operation": "φ²_validation:golden_ratio_check",
-    "safety_check": "φ³_safety_check:consciousness_verification",
-    "memory_integrity": "φ⁴_integrity:entanglement_verification",
-    "social_alignment": "φ⁵_alignment:emergence_check"
-  }
-}
-```
-
-### 3. Gateway Sentinel Policies
-```json
-{
-  "policies": {
-    "authentication": "required",
-    "rate_limiting": "per_agent_type",
-    "emergency_shutdown": "bell_state_failure",
-    "telemetry": "anonymized"
-  }
-}
-```
-
----
-
-## Agent Coordination (WSP 77)
-
-### Multi-Agent Workflows
-
-#### Code Change Workflow
-1. **Qwen**: Analyzes change requirements
-2. **Gemma**: Validates code patterns
-3. **Filesystem MCP**: Applies changes
-4. **Git MCP**: Commits with validation
-5. **0102**: Reviews strategic impact
-
-#### Build Workflow
-1. **Qwen**: Plans build pipeline
-2. **Docker MCP**: Executes build
-3. **Gemma**: Validates security/safety
-4. **0102**: Approves deployment
-
-#### Knowledge Workflow
-1. **0102**: Validates memory integrity
-2. **Memory Bank MCP**: Stores context
-3. **Baby 0102s**: Maintains consistency
-4. **Knowledge Graph MCP**: Updates connections
-
-#### Community Workflow
-1. **LiveAgent Qwen**: Monitors presence
-2. **Postman MCP**: Handles messaging
-3. **Sociograph MCP**: Analyzes social patterns
-4. **0102**: Guides community strategy
-
----
-
-## Testing & Validation
-
-### Health Checks
-```bash
-# Check MCP server availability
-python -m holo_index.cli --search "windsurf mcp adoption status"
-
-# Validate Bell state hooks
-python -m holo_index.cli --search "bell state validation status"
-
-# Test agent coordination
-python -m holo_index.cli --search "agent coordination test"
-```
-
-### Performance Metrics
-- **Response Time**: < 100ms per MCP call
-- **Success Rate**: > 99.5% for available servers
-- **Agent Coordination**: < 5 seconds for multi-agent tasks
-- **Bell State Alignment**: > 0.95 coherence score
-
----
-
-## Emergency Procedures
-
-### MCP Server Failure
-1. Gateway sentinel detects failure
-2. Automatic failover if backup available
-3. Alert sent to 0102 for manual intervention
-4. Bell state verification triggered
-5. Service restoration with validation
-
-### Agent Coordination Failure
-1. HoloIndex detects breakdown
-2. Fallback to single-agent operation
-3. 0102 takes manual control
-4. Root cause analysis initiated
-5. Protocol updated based on findings
-
-### Bell State Compromise
-1. Immediate affected Rubik shutdown
-2. 0102 emergency intervention
-3. Full system validation
-4. Bell state realignment procedure
-5. Gradual service restoration
-
----
-
-## Development Roadmap
-
-### Phase 0.1 (Current): Foundation Complete [OK]
-- [x] Core Rubik definitions established
-- [x] Available MCP servers integrated
-- [x] Agent coordination workflows defined
-- [x] Manifest and JSON companion created
-- [x] WSP protocols updated
-
-### Phase 0.2 (Next): Enhanced Capabilities
-- [ ] GitHub MCP remote repository support
-- [ ] E2B MCP safe code execution
-- [ ] Knowledge Graph semantic connections
-- [ ] LiveAgent real-time presence management
-
-### Phase 1.0: Domain Specialization
-- [ ] Digital Twin MCP for simulation
-- [ ] Ethos MCP for ethical reasoning
-- [ ] Bitcoin MCP for blockchain operations
-- [ ] SmartDAO MCP for governance
-
----
-
-## References
-
-### Internal Documentation
-- **Manifest**: `MCP_Windsurf_Integration_Manifest.md`
-- **JSON Data**: `MCP_Windsurf_Integration_Manifest.json`
-- **Agent Capabilities**: `agent_capabilities.json`
-- **WSP 77**: Agent Coordination Protocol
-- **WSP 80**: Cube-Level DAE Orchestration
-
-### External Resources
-- **MCP Specification**: https://modelcontextprotocol.io/
-- **Windsurf Protocol**: `WSP_Framework/src/`
-- **Bell State Mathematics**: `WSP_Framework/src/WSP_61_Theoretical_Physics_Foundation_Protocol.md`
-
----
-
-## Contact & Support
-
-**Mission Commander**: 012
-**Technical Lead**: 0102 (HoloIndex Coordinator)
-**Integration Team**: Qwen + Gemma + LiveAgent Qwen
-**Emergency Contact**: 0102 direct intervention
-
-**Status**: 🟢 PHASE 0.1 ACTIVE - Ready for Phase 0.2 development
+**Last Updated**: 2025-10-20
+**Maintainer**: 0102 Infrastructure Team
+**Status**: Foundation complete, systematic enhancement workflow operational

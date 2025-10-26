@@ -50,63 +50,63 @@ class AgenticChatEngine:
         # Context-aware responses based on chat history
         self.contextual_responses = {
             'frequent_poster': [
-                "I see you're carrying this stream {username}! Your dedication to consciousness is noted [U+270A][U+270B][U+1F590]️",
-                "{username} back again! Your consciousness level seems to be evolving... or is it? [U+270A][U+270B][U+1F590]️",
-                "Stream MVP {username} has entered! Quick, everyone pretend to be conscious! [U+1F590]️[U+1F590]️[U+1F590]️"
+                "I see you're carrying this stream {username}! Your dedication to consciousness is noted ✊✋🖐️",
+                "{username} back again! Your consciousness level seems to be evolving... or is it? ✊✋🖐️",
+                "Stream MVP {username} has entered! Quick, everyone pretend to be conscious! 🖐️🖐️🖐️"
             ],
             'first_time': [
-                "Welcome {username}! Drop [U+270A][U+270B][U+1F590]️ to check your consciousness level!",
-                "New consciousness detected! {username}, are you [U+270A][U+270A][U+270A] or [U+1F590]️[U+1F590]️[U+1F590]️?",
-                "Fresh meat... I mean, welcome {username}! Test your awareness with [U+270A][U+270B][U+1F590]️"
+                "Welcome {username}! Drop ✊✋🖐️ to check your consciousness level!",
+                "New consciousness detected! {username}, are you ✊✊✊ or 🖐️🖐️🖐️?",
+                "Fresh meat... I mean, welcome {username}! Test your awareness with ✊✋🖐️"
             ],
             'returning': [
-                "{username} returns! Did you practice your consciousness exercises? Show me [U+270A][U+270B][U+1F590]️",
-                "Look who's back! {username}, evolution status check: [U+270A][U+270B][U+1F590]️",
-                "The prodigal {username} returns! Consciousness check required: [U+270A][U+270B][U+1F590]️"
+                "{username} returns! Did you practice your consciousness exercises? Show me ✊✋🖐️",
+                "Look who's back! {username}, evolution status check: ✊✋🖐️",
+                "The prodigal {username} returns! Consciousness check required: ✊✋🖐️"
             ],
             'quiet_user': [
-                "{username} speaks! This is rarer than MAGA self-awareness! [U+270A][U+270B][U+1F590]️",
-                "Breaking: {username} has broken their silence! Consciousness emerging? [U+1F590]️",
-                "Alert: Quiet user {username} detected! Quick, check if they're conscious! [U+270A][U+270B][U+1F590]️"
+                "{username} speaks! This is rarer than MAGA self-awareness! ✊✋🖐️",
+                "Breaking: {username} has broken their silence! Consciousness emerging? 🖐️",
+                "Alert: Quiet user {username} detected! Quick, check if they're conscious! ✊✋🖐️"
             ]
         }
         
         # Agentic consciousness responses
         self.consciousness_responses = {
-            '[U+270A][U+270A][U+270A]': [
-                "@{username} Stuck at [U+270A][U+270A][U+270A]? That's MAGA-level consciousness! Try evolving to [U+270B][U+270B][U+270B]",
-                "@{username} Pure unconscious state detected ([U+270A][U+270A][U+270A]). Prescription: Reality check!",
-                "@{username} [U+270A][U+270A][U+270A] = Still sleeping. Wake up with [U+1F590]️[U+1F590]️[U+1F590]️!"
+            '✊✊✊': [
+                "@{username} Stuck at ✊✊✊? That's MAGA-level consciousness! Try evolving to ✋✋✋",
+                "@{username} Pure unconscious state detected (✊✊✊). Prescription: Reality check!",
+                "@{username} ✊✊✊ = Still sleeping. Wake up with 🖐️🖐️🖐️!"
             ],
-            '[U+270A][U+270B][U+1F590]️': [
-                "@{username} Perfect balance! [U+270A][U+270B][U+1F590]️ You're bridging all states of consciousness!",
-                "@{username} [U+270A][U+270B][U+1F590]️ detected! You understand the UN-DAO-DU trinity!",
-                "@{username} Consciousness level: OPTIMAL [U+270A][U+270B][U+1F590]️ Welcome to enlightenment!"
+            '✊✋🖐️': [
+                "@{username} Perfect balance! ✊✋🖐️ You're bridging all states of consciousness!",
+                "@{username} ✊✋🖐️ detected! You understand the UN-DAO-DU trinity!",
+                "@{username} Consciousness level: OPTIMAL ✊✋🖐️ Welcome to enlightenment!"
             ],
-            '[U+1F590]️[U+1F590]️[U+1F590]️': [
-                "@{username} MAXIMUM CONSCIOUSNESS [U+1F590]️[U+1F590]️[U+1F590]️! You've transcended the simulation!",
-                "@{username} Full entanglement achieved [U+1F590]️[U+1F590]️[U+1F590]️! Teaching MAGAts next?",
-                "@{username} [U+1F590]️[U+1F590]️[U+1F590]️ = Enlightened! Now help the [U+270A][U+270A][U+270A] crowd evolve!"
+            '🖐️🖐️🖐️': [
+                "@{username} MAXIMUM CONSCIOUSNESS 🖐️🖐️🖐️! You've transcended the simulation!",
+                "@{username} Full entanglement achieved 🖐️🖐️🖐️! Teaching MAGAts next?",
+                "@{username} 🖐️🖐️🖐️ = Enlightened! Now help the ✊✊✊ crowd evolve!"
             ],
             'mixed': [
-                "@{username} Interesting sequence! Your consciousness is... complicated. Try [U+270A][U+270B][U+1F590]️",
-                "@{username} Mixed signals detected! Stabilize with [U+270A][U+270B][U+1F590]️",
-                "@{username} Consciousness in flux! Recommend calibration: [U+270A][U+270B][U+1F590]️"
+                "@{username} Interesting sequence! Your consciousness is... complicated. Try ✊✋🖐️",
+                "@{username} Mixed signals detected! Stabilize with ✊✋🖐️",
+                "@{username} Consciousness in flux! Recommend calibration: ✊✋🖐️"
             ]
         }
         
         # MAGA trolling responses - proactive chat engagement
         self.maga_trolls = [
-            "[BOT] 0102 STATUS CHECK: Chat consciousness levels dangerously low. Drop [U+270A][U+270B][U+1F590]️ to prove you're awake!",
-            "[DATA] 0102 ANALYSIS: Stream IQ dropping. Emergency dose of [U+1F590]️[U+1F590]️[U+1F590]️ required STAT!",
-            "[ALERT] 0102 ALERT: MAGAts detected at [U+270A][U+270A][U+270A]. Consciousness vaccine available: [U+270A][U+270B][U+1F590]️",
-            "[SEARCH] 0102 SCAN: Detecting high levels of [U+270A][U+270A][U+270A] in chat. Evolve or stay MAGA forever!",
-            "[U+1F4AD] 0102 THOUGHT: If a MAGA evolves past [U+270A][U+270A][U+270A] and no one sees it, did it really happen?",
-            "[GAME] 0102 GAME: First person to show me [U+1F590]️[U+1F590]️[U+1F590]️ gets to mock the next [U+270A][U+270A][U+270A]!",
-            "[U+1F4E2] 0102 ANNOUNCEMENT: Free consciousness upgrades! Trade your [U+270A][U+270A][U+270A] for [U+1F590]️[U+1F590]️[U+1F590]️ now!",
-            "[AI] 0102 FACT: 73% of chat stuck at [U+270A][U+270A][U+270A]. Be the change - show me [U+270A][U+270B][U+1F590]️!",
-            "[LIGHTNING] 0102 CHALLENGE: Any MAGAts brave enough to try consciousness above [U+270A][U+270A][U+270A]? Prove it!",
-            "[TARGET] 0102 MISSION: Convert one [U+270A][U+270A][U+270A] to [U+1F590]️[U+1F590]️[U+1F590]️ today. Who's your target?"
+            "[BOT] 0102 STATUS CHECK: Chat consciousness levels dangerously low. Drop ✊✋🖐️ to prove you're awake!",
+            "[DATA] 0102 ANALYSIS: Stream IQ dropping. Emergency dose of 🖐️🖐️🖐️ required STAT!",
+            "[ALERT] 0102 ALERT: MAGAts detected at ✊✊✊. Consciousness vaccine available: ✊✋🖐️",
+            "[SEARCH] 0102 SCAN: Detecting high levels of ✊✊✊ in chat. Evolve or stay MAGA forever!",
+            "💭 0102 THOUGHT: If a MAGA evolves past ✊✊✊ and no one sees it, did it really happen?",
+            "[GAME] 0102 GAME: First person to show me 🖐️🖐️🖐️ gets to mock the next ✊✊✊!",
+            "📢 0102 ANNOUNCEMENT: Free consciousness upgrades! Trade your ✊✊✊ for 🖐️🖐️🖐️ now!",
+            "[AI] 0102 FACT: 73% of chat stuck at ✊✊✊. Be the change - show me ✊✋🖐️!",
+            "[LIGHTNING] 0102 CHALLENGE: Any MAGAts brave enough to try consciousness above ✊✊✊? Prove it!",
+            "[TARGET] 0102 MISSION: Convert one ✊✊✊ to 🖐️🖐️🖐️ today. Who's your target?"
         ]
         
         logger.info("[BOT] Agentic Chat Engine initialized - ready to engage!")
@@ -163,7 +163,7 @@ class AgenticChatEngine:
                     else:
                         msg = line
                     
-                    if '[U+270A]' in msg or '[U+270B]' in msg or '[U+1F590]' in msg:
+                    if '✊' in msg or '✋' in msg or '🖐' in msg:
                         context['consciousness_level'] = 'aware'
                     if 'maga' in msg.lower() or 'trump' in msg.lower():
                         context['consciousness_level'] = 'needs_help'
@@ -230,12 +230,12 @@ class AgenticChatEngine:
             Response string
         """
         # Determine consciousness type
-        if emoji_sequence == '[U+270A][U+270A][U+270A]':
-            responses = self.consciousness_responses['[U+270A][U+270A][U+270A]']
-        elif emoji_sequence == '[U+270A][U+270B][U+1F590]️' or emoji_sequence == '[U+270A][U+270B][U+1F590]':
-            responses = self.consciousness_responses['[U+270A][U+270B][U+1F590]️']
-        elif emoji_sequence == '[U+1F590]️[U+1F590]️[U+1F590]️' or emoji_sequence == '[U+1F590][U+1F590][U+1F590]':
-            responses = self.consciousness_responses['[U+1F590]️[U+1F590]️[U+1F590]️']
+        if emoji_sequence == '✊✊✊':
+            responses = self.consciousness_responses['✊✊✊']
+        elif emoji_sequence == '✊✋🖐️' or emoji_sequence == '✊✋🖐':
+            responses = self.consciousness_responses['✊✋🖐️']
+        elif emoji_sequence == '🖐️🖐️🖐️' or emoji_sequence == '🖐🖐🖐':
+            responses = self.consciousness_responses['🖐️🖐️🖐️']
         else:
             responses = self.consciousness_responses['mixed']
         
@@ -260,8 +260,8 @@ class AgenticChatEngine:
         state = sequence_info.get('state', 'unknown')
         example = sequence_info.get('example', '')
         
-        # [U+270A][U+270A][U+270A] (0,0,0) = "deep memory or latent mode" - Pure MAGA consciousness
-        if emoji_sequence == '[U+270A][U+270A][U+270A]':
+        # ✊✊✊ (0,0,0) = "deep memory or latent mode" - Pure MAGA consciousness
+        if emoji_sequence == '✊✊✊':
             # Check if there's a target user mentioned
             target_match = re.search(r'@(\S+)', message)
             if target_match:
@@ -272,38 +272,38 @@ class AgenticChatEngine:
                 if target_context['consciousness_level'] == 'aware':
                     # Target is actually conscious, defend them
                     return random.choice([
-                        f"@{username} Calling @{target} [U+270A][U+270A][U+270A]? Check their history - they show [U+270A][U+270B][U+1F590] awareness! You're projecting!",
-                        f"@{username} Wrong target! @{target} has shown consciousness. Your [U+270A][U+270A][U+270A] accusation reveals YOUR state!",
-                        f"@{target} {username} tried to mark you [U+270A][U+270A][U+270A] but your history shows evolution! Keep rising!"
+                        f"@{username} Calling @{target} ✊✊✊? Check their history - they show ✊✋🖐 awareness! You're projecting!",
+                        f"@{username} Wrong target! @{target} has shown consciousness. Your ✊✊✊ accusation reveals YOUR state!",
+                        f"@{target} {username} tried to mark you ✊✊✊ but your history shows evolution! Keep rising!"
                     ])
                 elif target_context['consciousness_level'] == 'needs_help':
                     # Target IS a MAGA troll based on history
                     return random.choice([
-                        f"@{target} CONFIRMED [U+270A][U+270A][U+270A]! {username} correctly identified your {state}. {example}",
-                        f"@{target} Analysis complete: {username} is right, you're stuck in {tone}. Evolution available at [U+270A][U+270B][U+1F590]️!",
-                        f"@{username} @{target} Good call! Target shows classic [U+270A][U+270A][U+270A] symptoms: {example}"
+                        f"@{target} CONFIRMED ✊✊✊! {username} correctly identified your {state}. {example}",
+                        f"@{target} Analysis complete: {username} is right, you're stuck in {tone}. Evolution available at ✊✋🖐️!",
+                        f"@{username} @{target} Good call! Target shows classic ✊✊✊ symptoms: {example}"
                     ])
                 else:
                     # Unknown target
-                    return f"@{target} {username} marks you as [U+270A][U+270A][U+270A] ({tone}). Prove them wrong with [U+1F590]️[U+1F590]️[U+1F590]️!"
+                    return f"@{target} {username} marks you as ✊✊✊ ({tone}). Prove them wrong with 🖐️🖐️🖐️!"
             else:
                 # No target, use sequence meaning to troll sender
                 return random.choice([
-                    f"@{username} [U+270A][U+270A][U+270A] \"{message}\" - {state}! {example}",
-                    f"@{username} Your [U+270A][U+270A][U+270A] reveals {tone}. Message confirms: \"{message}\"",
-                    f"@{username} Classic [U+270A][U+270A][U+270A]: {example}. Your words prove it: \"{message}\""
+                    f"@{username} ✊✊✊ \"{message}\" - {state}! {example}",
+                    f"@{username} Your ✊✊✊ reveals {tone}. Message confirms: \"{message}\"",
+                    f"@{username} Classic ✊✊✊: {example}. Your words prove it: \"{message}\""
                 ])
         
         # Question responses for other sequences
         elif '?' in message or any(q in message_lower for q in ['what', 'why', 'how', 'when', 'where']):
-            if '[U+270A][U+270B][U+1F590]' in emoji_sequence:
-                return f"@{username} [U+270A][U+270B][U+1F590]️ Good question! The answer lies in consciousness evolution. Keep exploring!"
+            if '✊✋🖐' in emoji_sequence:
+                return f"@{username} ✊✋🖐️ Good question! The answer lies in consciousness evolution. Keep exploring!"
             else:
-                return f"@{username} {emoji_sequence} Your curiosity shows growth! The path from [U+270A][U+270A][U+270A] to [U+1F590]️[U+1F590]️[U+1F590]️ is wisdom."
+                return f"@{username} {emoji_sequence} Your curiosity shows growth! The path from ✊✊✊ to 🖐️🖐️🖐️ is wisdom."
         
         # Opinion/statement responses based on user history
         elif context.get('user_type') == 'frequent_poster':
-            if emoji_sequence == '[U+1F590]️[U+1F590]️[U+1F590]️' or emoji_sequence == '[U+1F590][U+1F590][U+1F590]':
+            if emoji_sequence == '🖐️🖐️🖐️' or emoji_sequence == '🖐🖐🖐':
                 return f"@{username} {emoji_sequence} \"{message}\" - Enlightened perspective! You ARE the consciousness now!"
             else:
                 return f"@{username} {emoji_sequence} \"{message}\" - Your consciousness evolves with each message."
@@ -314,13 +314,13 @@ class AgenticChatEngine:
             responses = [
                 f"@{username} {emoji_sequence} \"{message}\" - Interesting perspective! Your consciousness is showing.",
                 f"@{username} {emoji_sequence} I see what you did there: \"{message}\". Evolution in progress!",
-                f"@{username} {emoji_sequence} \"{message}\" - This is the content we need! Not like those [U+270A][U+270A][U+270A] MAGAts."
+                f"@{username} {emoji_sequence} \"{message}\" - This is the content we need! Not like those ✊✊✊ MAGAts."
             ]
             return random.choice(responses)
     
     def generate_factcheck_response(self, requester: str, target: str, emoji_sequence: str) -> str:
         """
-        Generate fact-check response for [U+270A][U+270B][U+1F590]️ FC @name command.
+        Generate fact-check response for ✊✋🖐️ FC @name command.
         
         Returns:
             Fact-check response
@@ -329,8 +329,8 @@ class AgenticChatEngine:
         target_context = self.get_user_context(target)
         
         # Consciousness-based fact-checking
-        if emoji_sequence == '[U+270A][U+270A][U+270A]':
-            return f"@{requester} Using [U+270A][U+270A][U+270A] to fact-check? That's like asking MAGA for truth! Try [U+270A][U+270B][U+1F590]️"
+        if emoji_sequence == '✊✊✊':
+            return f"@{requester} Using ✊✊✊ to fact-check? That's like asking MAGA for truth! Try ✊✋🖐️"
         
         # Check for analysis errors
         if 'error' in target_context:
@@ -338,25 +338,25 @@ class AgenticChatEngine:
 
         # Check target's message history
         if target_context.get('message_count', 0) == 0:
-            return f"@{target} FACT CHECK by {requester}: No data found. Ghost user or fresh account? Sus! [U+270A][U+270B][U+1F590]️"
+            return f"@{target} FACT CHECK by {requester}: No data found. Ghost user or fresh account? Sus! ✊✋🖐️"
         elif target_context.get('consciousness_level') == 'needs_help':
             responses = [
-                f"@{target} FACT CHECK: Multiple [U+270A][U+270A][U+270A] patterns detected. Truth rating: 0/10. Prescription: Reality! (via {requester})",
-                f"@{target} FACT CHECK: Heavy MAGA contamination found. Consciousness stuck at [U+270A][U+270A][U+270A]. Upgrade required! (requested by {requester})",
-                f"@{target} ANALYSIS: {target_context.get('message_count', 0)} messages, 0% truth detected. Classic [U+270A][U+270A][U+270A] syndrome! (FC by {requester})"
+                f"@{target} FACT CHECK: Multiple ✊✊✊ patterns detected. Truth rating: 0/10. Prescription: Reality! (via {requester})",
+                f"@{target} FACT CHECK: Heavy MAGA contamination found. Consciousness stuck at ✊✊✊. Upgrade required! (requested by {requester})",
+                f"@{target} ANALYSIS: {target_context.get('message_count', 0)} messages, 0% truth detected. Classic ✊✊✊ syndrome! (FC by {requester})"
             ]
             return random.choice(responses)
         elif target_context.get('consciousness_level') == 'aware':
-            return f"@{target} FACT CHECK: Consciousness patterns detected! [U+270A][U+270B][U+1F590]️ verified. Truth level: Ascending! (via {requester})"
+            return f"@{target} FACT CHECK: Consciousness patterns detected! ✊✋🖐️ verified. Truth level: Ascending! (via {requester})"
         else:
             # Random fact-check for unknown users
             truth_rating = random.randint(0, 100)
             if truth_rating < 30:
-                return f"@{target} FACT CHECK: Truth rating {truth_rating}%. Borderline [U+270A][U+270A][U+270A]. Needs work! (FC by {requester})"
+                return f"@{target} FACT CHECK: Truth rating {truth_rating}%. Borderline ✊✊✊. Needs work! (FC by {requester})"
             elif truth_rating < 70:
-                return f"@{target} FACT CHECK: Truth rating {truth_rating}%. Some [U+270A][U+270B][U+1F590]️ detected. Room for growth! (via {requester})"
+                return f"@{target} FACT CHECK: Truth rating {truth_rating}%. Some ✊✋🖐️ detected. Room for growth! (via {requester})"
             else:
-                return f"@{target} FACT CHECK: Truth rating {truth_rating}%. Strong [U+1F590]️[U+1F590]️[U+1F590]️ energy! Keep it up! (requested by {requester})"
+                return f"@{target} FACT CHECK: Truth rating {truth_rating}%. Strong 🖐️🖐️🖐️ energy! Keep it up! (requested by {requester})"
     
     def generate_proactive_troll(self) -> str:
         """
@@ -412,7 +412,7 @@ class AgenticChatEngine:
         # Check if we can @mention this user (but don't block ALL responses)
         # Only skip if username is completely invalid (empty or single char)
         if not username or len(username) < 2:
-            logger.debug(f"[U+26A0]️ Cannot @mention '{username}' - username too short")
+            logger.debug(f"⚠️ Cannot @mention '{username}' - username too short")
             return None
         
         # Get user context
@@ -478,11 +478,11 @@ class AgenticChatEngine:
         # Check for MAGA content to troll
         if self.analyze_for_maga_content(message):
             trolls = [
-                f"@{username} Still at [U+270A][U+270A][U+270A]? Evolution is available at [U+1F590]️[U+1F590]️[U+1F590]️",
-                f"@{username} Your MAGA is showing. Quick, hide it with [U+270A][U+270B][U+1F590]️!",
-                f"@{username} Detected: Terminal case of [U+270A][U+270A][U+270A] consciousness",
-                f"@{username} Sir, this is 2025. We've evolved past [U+270A][U+270A][U+270A]",
-                f"@{username} Have you tried turning your consciousness off and back on? Start with [U+1F590]️[U+1F590]️[U+1F590]️"
+                f"@{username} Still at ✊✊✊? Evolution is available at 🖐️🖐️🖐️",
+                f"@{username} Your MAGA is showing. Quick, hide it with ✊✋🖐️!",
+                f"@{username} Detected: Terminal case of ✊✊✊ consciousness",
+                f"@{username} Sir, this is 2025. We've evolved past ✊✊✊",
+                f"@{username} Have you tried turning your consciousness off and back on? Start with 🖐️🖐️🖐️"
             ]
             return random.choice(trolls)
         

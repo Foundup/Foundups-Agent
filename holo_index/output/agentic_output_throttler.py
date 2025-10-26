@@ -28,9 +28,15 @@ WSP Compliance: WSP 87 (Size Limits), WSP 49 (Module Structure), WSP 72 (Block I
 import re
 import os
 import json
-from typing import Dict, Any, List
+import threading
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Dict, Any, List, Optional
 
 from ..core.intelligent_subroutine_engine import IntelligentSubroutineEngine
+
+DEFAULT_HISTORY_PATH = Path(__file__).resolve().parent / "holo_output_history.jsonl"
+SKILL_PATH = Path(__file__).resolve().parents[1] / "skills" / "qwen_holo_output_skill" / "SKILL.md"
 
 
 class AgenticOutputThrottler:
@@ -55,6 +61,9 @@ class AgenticOutputThrottler:
         # Agent detection: Supports 0102 (Claude), qwen (1.5B), gemma (270M)
         raw_agent_id = os.getenv("0102_HOLO_ID", "0102").strip()
         self.agent_id = raw_agent_id if raw_agent_id else "0102"
+
+        self.skill_manifest = self._load_skill_manifest()
+        self.history_path = self._resolve_history_path()
 
     def set_query_context(self, query: str, search_results=None):
         """Set current query for relevance scoring and detect target module."""
@@ -156,6 +165,24 @@ class AgenticOutputThrottler:
             'tags': tags
         })
 
+    def _enforce_section_limit(self, verbose: bool) -> None:
+        """Ensure only the top priority sections are retained for default output."""
+        if verbose or len(self.output_sections) <= self.max_sections:
+            return
+
+        prioritized = [
+            (section.get('priority', 5), idx, section)
+            for idx, section in enumerate(self.output_sections)
+        ]
+        prioritized.sort(key=lambda item: (item[0], item[1]))
+        kept = [item[2] for item in prioritized[:self.max_sections]]
+        dropped_count = len(prioritized) - len(kept)
+
+        if dropped_count and kept:
+            kept[-1]['content'] += f"\n[INFO] {dropped_count} additional sections hidden; re-run with --verbose to view all details."
+
+        self.output_sections = kept
+
     def render_prioritized_output(self, verbose: bool = False) -> str:
         """Render PERFECT output for 0102 decision-making using tri-state architecture.
 
@@ -164,6 +191,7 @@ class AgenticOutputThrottler:
         - qwen (1.5B model, 32K context): Concise JSON with action items (50 tokens)
         - gemma (270M model, 8K context): Minimal classification (10 tokens)
         """
+        self._enforce_section_limit(verbose)
         state = self._determine_system_state()
 
         if state == "error":
@@ -187,13 +215,18 @@ class AgenticOutputThrottler:
             logger.debug(f"[UNICODE-FIX] Replaced {stats['replaced']} emojis for agent={self.agent_id}")
 
         # Format output based on calling agent's capabilities (after cleaning)
-        return self._format_for_agent(filtered_content, state)
+        formatted_output = self._format_for_agent(filtered_content, state)
+
+        # Persist output history for Gemma/Qwen pattern analysis
+        self._record_output_history(state, formatted_output, filtered_content, verbose)
+
+        return formatted_output
 
     def _render_error_state(self) -> str:
-        """State 1: [U+1F534] System Error - Show ONLY the error, suppress all noise."""
+        """State 1: [ERROR] System Error - Show ONLY the error, suppress all noise."""
         output_lines = []
 
-        output_lines.append("[U+1F534] [SYSTEM ERROR] Fatal error in analysis pipeline")
+        output_lines.append("[ERROR] [SYSTEM FAILURE] Fatal error in analysis pipeline")
         output_lines.append("")
 
         if self.last_error:
@@ -215,7 +248,7 @@ class AgenticOutputThrottler:
         return "\n".join(output_lines)
 
     def _render_found_state(self, verbose: bool = False) -> str:
-        """State 2: 🟢 Solution Found - Show clean results, suppress noise."""
+        """State 2: [GREEN] Solution Found - Show clean results, suppress noise for 0102."""
         output_lines = []
         search_results = getattr(self, '_search_results', {})
 
@@ -235,44 +268,52 @@ class AgenticOutputThrottler:
                     if modules_part:
                         modules_found.add(modules_part)
 
-        output_lines.append("🟢 [SOLUTION FOUND] Existing functionality discovered")
+        output_lines.append("[GREEN] [SOLUTION FOUND] Existing functionality discovered")
         output_lines.append(f"[MODULES] Found implementations across {len(modules_found)} modules: {', '.join(sorted(modules_found))}")
         output_lines.append("")
 
-        # Show top code results with more detail for 0102 agents
-        if code_results:
-            output_lines.append("[CODE RESULTS] Top implementations:")
-            for i, hit in enumerate(code_results[:3], 1):  # Top 3
-                location = hit.get('location', 'Unknown')
-                similarity = hit.get('similarity', 'N/A')
-                content_preview = hit.get('content', '')[:100].replace('\n', ' ') + '...' if len(hit.get('content', '')) > 100 else hit.get('content', '')
-                output_lines.append(f"  {i}. {location}")
-                output_lines.append(f"     Match: {similarity} | Preview: {content_preview}")
-            output_lines.append("")
+        # Only show detailed results if verbose=True (WSP 87 - prevent noisy output)
+        if verbose:
+            # Show top code results with more detail for 0102 agents
+            if code_results:
+                output_lines.append("[CODE RESULTS] Top implementations:")
+                for i, hit in enumerate(code_results[:3], 1):  # Top 3
+                    location = hit.get('location', 'Unknown')
+                    similarity = hit.get('similarity', 'N/A')
+                    content_preview = hit.get('content', '')[:100].replace('\n', ' ') + '...' if len(hit.get('content', '')) > 100 else hit.get('content', '')
+                    output_lines.append(f"  {i}. {location}")
+                    output_lines.append(f"     Match: {similarity} | Preview: {content_preview}")
+                output_lines.append("")
 
-        # Show top WSP guidance with more context
-        if wsp_results:
-            output_lines.append("[WSP GUIDANCE] Protocol references:")
-            for i, hit in enumerate(wsp_results[:2], 1):  # Top 2
-                wsp_id = hit.get('wsp', 'Unknown')
-                title = hit.get('title', 'Unknown')
-                similarity = hit.get('similarity', 'N/A')
-                content_preview = hit.get('content', '')[:80].replace('\n', ' ') + '...' if len(hit.get('content', '')) > 80 else hit.get('content', '')
-                output_lines.append(f"  {i}. {wsp_id}: {title}")
-                output_lines.append(f"     Match: {similarity} | Guidance: {content_preview}")
-            output_lines.append("")
+            # Show top WSP guidance with more context
+            if wsp_results:
+                output_lines.append("[WSP GUIDANCE] Protocol references:")
+                for i, hit in enumerate(wsp_results[:2], 1):  # Top 2
+                    wsp_id = hit.get('wsp', 'Unknown')
+                    title = hit.get('title', 'Unknown')
+                    similarity = hit.get('similarity', 'N/A')
+                    content_preview = hit.get('content', '')[:80].replace('\n', ' ') + '...' if len(hit.get('content', '')) > 80 else hit.get('content', '')
+                    output_lines.append(f"  {i}. {wsp_id}: {title}")
+                    output_lines.append(f"     Match: {similarity} | Guidance: {content_preview}")
+                output_lines.append("")
 
-        output_lines.append("[ACTION] ENHANCE/REFACTOR existing code based on findings")
-        output_lines.append("[NEXT] Read the discovered files and WSP documentation")
+            output_lines.append("[ACTION] ENHANCE/REFACTOR existing code based on findings")
+            output_lines.append("[NEXT] Read the discovered files and WSP documentation")
+        else:
+            # Clean summary for 0102 (WSP 87 - prevent information overload)
+            total_code = len(code_results)
+            total_wsp = len(wsp_results)
+            output_lines.append(f"[RESULTS] {total_code} code hits, {total_wsp} WSP docs found")
+            output_lines.append("[ACTION] Use --verbose for detailed results and recommendations")
 
         return "\n".join(output_lines)
 
     def _render_missing_state(self) -> str:
-        """State 3: 🟡 No Solution Found - Allow creation, show guidance."""
+        """State 3: [YELLOW] No Solution Found - Allow creation, show guidance."""
         output_lines = []
         query = getattr(self, 'query_context', 'unknown query')
 
-        output_lines.append("🟡 [NO SOLUTION FOUND] No existing implementation discovered")
+        output_lines.append("[YELLOW] [NO SOLUTION FOUND] No existing implementation discovered")
         output_lines.append("")
         output_lines.append(f"[MISSING] Query '{query}' found no relevant existing code")
         output_lines.append("")
@@ -280,10 +321,10 @@ class AgenticOutputThrottler:
         output_lines.append("[NEXT] Follow WSP 50 pre-action verification before creating")
         output_lines.append("")
         output_lines.append("[WSP GUIDANCE] Creation Requirements:")
-        output_lines.append("  • WSP 84: Verify no similar functionality exists")
-        output_lines.append("  • WSP 49: Follow module directory structure")
-        output_lines.append("  • WSP 22: Create README.md and ModLog.md")
-        output_lines.append("  • WSP 11: Define clear public API in INTERFACE.md")
+        output_lines.append("  - WSP 84: Verify no similar functionality exists")
+        output_lines.append("  - WSP 49: Follow module directory structure")
+        output_lines.append("  - WSP 22: Create README.md and ModLog.md")
+        output_lines.append("  - WSP 11: Define clear public API in INTERFACE.md")
 
         return "\n".join(output_lines)
 
@@ -674,7 +715,8 @@ class AgenticOutputThrottler:
         if advisor_info:
             guidance_text = advisor_info.get('guidance')
             code_index_present = "[CODE-INDEX]" in str(guidance_text)
-            print(f"[DEBUG] THROTTLER: Code index in guidance: {code_index_present}, guidance length: {len(str(guidance_text))}")  # DEBUG
+            if os.getenv('HOLO_VERBOSE', '').lower() in {'1', 'true', 'yes'}:
+                print(f"[DEBUG] THROTTLER: Code index in guidance: {code_index_present}, guidance length: {len(str(guidance_text))}")  # DEBUG
             advisor_content = "[ADVISOR] AI Guidance:"
             advisor_content += f"\n  Guidance: {guidance_text}"
             for reminder in advisor_info.get('reminders', [])[:2]:  # Limit reminders
@@ -781,3 +823,85 @@ class AgenticOutputThrottler:
             final_summary = final_summary[:400] + "... (truncated for efficiency)"
 
         return final_summary
+
+    def _resolve_history_path(self) -> Path:
+        if self.skill_manifest:
+            telemetry = self.skill_manifest.get('telemetry') or {}
+            history_path = telemetry.get('history_path')
+            if history_path:
+                candidate = Path(history_path)
+                if not candidate.is_absolute():
+                    base = Path(__file__).resolve().parents[1]
+                    candidate = base / history_path
+                return candidate
+        return DEFAULT_HISTORY_PATH
+
+    def _load_skill_manifest(self) -> Optional[Dict[str, Any]]:
+        try:
+            import yaml  # type: ignore
+        except Exception:
+            yaml = None
+        if not SKILL_PATH.exists() or yaml is None:
+            return None
+        content = SKILL_PATH.read_text(encoding='utf-8')
+        if not content.startswith('---'):
+            return None
+        parts = content.split('---', 2)
+        if len(parts) < 3:
+            return None
+        try:
+            return yaml.safe_load(parts[1]) or {}
+        except Exception:
+            return None
+
+    def _record_output_history(self, state: str, rendered_output: str, filtered_content: str, verbose: bool) -> None:
+        """Persist structured output history for downstream pattern analysis."""
+
+        def _write():
+            try:
+                self.history_path.parent.mkdir(parents=True, exist_ok=True)
+
+                section_summaries = []
+                for section in self.output_sections[:10]:
+                    section_summaries.append({
+                        "type": section.get("type"),
+                        "priority": section.get("priority"),
+                        "tags": section.get("tags", []),
+                        "line_count": len(section.get("content", "").splitlines()),
+                    })
+
+                search_results = getattr(self, "_search_results", {}) or {}
+                advisor_info = search_results.get("advisor") or {}
+
+                record = {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "agent": self.agent_id,
+                    "query": self.query_context,
+                    "detected_module": self.detected_module,
+                    "state": state,
+                    "verbose": verbose,
+                    "search_metrics": {
+                        "code_hits": len(search_results.get("code", [])),
+                        "wsp_hits": len(search_results.get("wsps", [])),
+                        "warnings": len(search_results.get("warnings", [])),
+                        "reminders": len(search_results.get("reminders", [])),
+                    },
+                    "advisor_summary": {
+                        "has_guidance": bool(advisor_info.get("guidance")),
+                        "reminders": len(advisor_info.get("reminders", [])),
+                        "todos": len(advisor_info.get("todos", [])),
+                        "pattern_insights": len(advisor_info.get("pattern_insights", []))
+                    } if advisor_info else None,
+                    "sections": section_summaries,
+                    "rendered_preview": rendered_output.splitlines()[:20],
+                    "filtered_preview": filtered_content.splitlines()[:20],
+                }
+
+                with self.history_path.open("a", encoding="utf-8") as handle:
+                    json.dump(record, handle, ensure_ascii=False)
+                    handle.write("\n")
+            except Exception:
+                # History logging should never interfere with primary execution
+                pass
+
+        threading.Thread(target=_write, daemon=True).start()

@@ -41,6 +41,7 @@ It is the canonical index for:
 | **Rubik_Compose** (Code + Repo) | Qwen (architect), Gemma (pattern) | Filesystem MCP, Git MCP, GitHub/GitLab MCP (if remote), Serena MCP | CodeIndex reports, Holo mission logs | 77, 80, 93 |
 | **Rubik_Build** (Runtime + CI) | Qwen, Gemma | Docker MCP, E2B (cloud sandbox) | Build logs, sentinel metrics | 77, 80 |
 | **Rubik_Knowledge** (Memory + Logs) | 0102 sentinel + baby 0102s | Memory Bank MCP, Knowledge Graph MCP | Governance archive, Holo telemetry | 77, 35, 93 |
+| **DocDAE Cleanup** (Documentation hygiene) | Gemma (fast classifier), Qwen (strategist), 0102 validator | DocDAE MCP server (`foundups-mcp-p1/servers/doc_dae/server.py`) | `doc_dae_cleanup_skill_metrics.jsonl` (wardrobe telemetry) | 77, 83, 96 |
 | **Rubik_Community** (Live engagement) | LiveAgent Qwen | LiveAgent MCP, Postman MCP, Sociograph MCP (planned) | Community bell-state vector | 77, 80, 96 |
 
 > Bell-State Coupling (shared state vector): `mission_alignment`, `governance_status`, `quota_state`, `engagement_index`. Every Rubik must update these via telemetry.

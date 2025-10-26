@@ -1,0 +1,58 @@
+{
+  "mission": "selenium_run_history",
+  "timestamp": "2025-10-19T21:03:38.923353",
+  "parameters": {
+    "days_analyzed": 7,
+    "table_existed": true
+  },
+  "overall_stats": {
+    "total_sessions": 1,
+    "success_rate": 100.0,
+    "avg_duration": 0.0,
+    "unique_urls": 1,
+    "time_range": {
+      "earliest": "2025-10-19T07:55:54.116875+00:00",
+      "latest": "2025-10-19T07:55:54.116875+00:00",
+      "days_span": 0
+    }
+  },
+  "url_breakdown": {
+    "https://test-integration.com": {
+      "total_runs": 1,
+      "success_count": 1,
+      "failed_count": 0,
+      "timeout_count": 0,
+      "error_count": 0,
+      "avg_duration": 0.0,
+      "total_duration": 0,
+      "last_run": "2025-10-19T07:55:54.116875+00:00",
+      "last_hash": "sha256:integration_test",
+      "unique_hashes": [
+        "sha256:integration_test"
+      ],
+      "browsers_used": [
+        "chrome"
+      ],
+      "success_rate": 100.0,
+      "recent_runs": [
+        {
+          "start_time": "2025-10-19T07:55:54.116875+00:00",
+          "status": "success",
+          "duration": 0,
+          "hash": "sha256:integration_test"
+        }
+      ]
+    }
+  },
+  "raw_session_count": 1,
+  "summary_ready": true,
+  "sample_sessions": [
+    {
+      "url": "https://test-integration.com",
+      "start_time": "2025-10-19T07:55:54.116875+00:00",
+      "status": null,
+      "duration_seconds": null,
+      "hash": "sha256:integration_test"
+    }
+  ]
+}

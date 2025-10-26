@@ -1,7 +1,7 @@
 """
 YouTube Shorts Orchestrator
 
-Manages the complete 012ↁE102 interaction flow:
+Manages the complete 012<->0102 interaction flow:
 1. 012 provides topic
 2. 0102 enhances prompt
 3. Veo 3 or Sora2 generates video
@@ -76,7 +76,7 @@ class ShortsOrchestrator:
         # Load existing memory
         self.shorts_memory = self._load_memory()
 
-        logger.info(f"[U+2701]E[SHORTS-INIT] Orchestrator initialized for {channel.upper()}")
+        logger.info(f"[U+2701] [SHORTS-INIT] Orchestrator initialized for {channel.upper()}")
         logger.info(f"[U+1F4BE] [SHORTS-INIT] Memory: {len(self.shorts_memory)} Shorts tracked")
         logger.info(f"[U+1F4C1] [SHORTS-INIT] Memory file: {self.memory_file}")
 
@@ -193,7 +193,7 @@ class ShortsOrchestrator:
             logger.error(f"[SHORTS-ENGINE] [FAIL] {normalized.upper()} initialization failed (NON-IMPORT ERROR)")
             logger.error(f"[SHORTS-ENGINE] [PIN] Error type: {type(exc).__name__}")
             logger.error(f"[SHORTS-ENGINE] [PIN] Error details: {str(exc)}")
-            logger.warning(f"[SHORTS-ENGINE] [U+26A0]️ NOT falling back - this is a runtime error, not missing dependencies")
+            logger.warning(f"[SHORTS-ENGINE] [U+26A0] NOT falling back - this is a runtime error, not missing dependencies")
             raise  # Don't fallback on runtime errors, only import errors
 
         # Cache and return the successfully loaded generator

@@ -96,3 +96,17 @@ MCP DAEmons (Cardiovascular System)
 ```
 
 **Result**: MCP DAEmons provides the infrastructure foundation that enables Qwen/Gemma's intelligent cost optimization, creating a complete autonomous MCP ecosystem.
+
+## DocDAE MCP Server Integration (2025-10-22)
+
+**Added wardrobe-aware documentation cleanup server to autonomous management.**
+
+### Enhancements:
+- **Server Registration**: Included `doc_dae` FastMCP server in default configuration (`setup_mcp_servers.py` and MCPDaemon defaults)
+- **Daemon Awareness**: MCP Daemons now start/monitor DocDAE alongside holo_index/codeindex/wsp_governance/youtube_dae_gemma/unicode_cleanup/secrets_mcp
+- **Documentation Updates**: README + MCP docs highlight DocDAE’s Gemma/Qwen/0102 coordination and telemetry path (`doc_dae_cleanup_skill_metrics.jsonl`)
+
+### Impact:
+- Keeps documentation cleanup wardrobe skills continuously available with zero manual startup
+- Supports WSP 83 compliance by aligning MCP orchestration with the new DocDAE micro-sprint
+- Provides telemetry hook for WRE “skill weights” during autonomous runs

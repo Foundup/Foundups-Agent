@@ -141,6 +141,16 @@ def create_mcp_config() -> dict:
                         "PYTHONPATH": repo_root_str
                     }
                 },
+                "doc_dae": {
+                    "command": python_exe,
+                    "args": [
+                        f"{repo_root_str}/foundups-mcp-p1/servers/doc_dae/server.py"
+                    ],
+                    "env": {
+                        "REPO_ROOT": repo_root_str,
+                        "PYTHONPATH": repo_root_str
+                    }
+                },
                 "secrets_mcp": {
                     "command": python_exe,
                     "args": [

@@ -38,10 +38,15 @@ class AutoModeratorDAE:
      2: Agentic - Autonomous moderation and interaction
     """
     
-    def __init__(self):
-        """Initialize the Auto Moderator DAE."""
+    def __init__(self, enable_ai_monitoring: bool = False):
+        """
+        Initialize the Auto Moderator DAE.
+
+        Args:
+            enable_ai_monitoring: Enable AI Overseer (Qwen/Gemma) monitoring for error detection
+        """
         logger.info("[ROCKET] Initializing Auto Moderator DAE (WSP-Compliant)")
-        
+
         self.service = None
         self.credentials = None
         self.credential_set = None
@@ -49,6 +54,22 @@ class AutoModeratorDAE:
         self.stream_resolver = None
         self._last_stream_id = None
         self.transition_start = None
+        self.start_time = time.time()
+        self.enable_ai_monitoring = enable_ai_monitoring
+        self.heartbeat_service = None
+
+        # YouTube DAE Telemetry Store (WSP 91: DAEMON Observability)
+        try:
+            from .youtube_telemetry_store import YouTubeTelemetryStore
+            self.telemetry = YouTubeTelemetryStore()
+            logger.info("[DATA] YouTube DAE telemetry store initialized")
+        except Exception as e:
+            logger.warning(f"Telemetry store initialization failed: {e}")
+            self.telemetry = None
+
+        # Stream tracking for telemetry
+        self.current_stream_id = None  # SQLite stream session ID
+        self.last_heartbeat_time = time.time()
         
         # WRE Integration for recursive learning
         try:
@@ -304,6 +325,18 @@ class AutoModeratorDAE:
                         logger.info(f"[OK] Accepting stream anyway - video ID: {video_id} [CELEBRATE]")
                 else:
                     logger.info(f"[OK] Found stream on {channel_name} with video ID: {video_id} [CELEBRATE]")
+
+                # === CARDIOVASCULAR: Record stream start (WSP 91) ===
+                if self.telemetry:
+                    try:
+                        self.current_stream_id = self.telemetry.record_stream_start(
+                            video_id=video_id,
+                            channel_name=channel_name,
+                            channel_id=channel_id
+                        )
+                        logger.info(f"[HEART] Stream session started (SQLite ID: {self.current_stream_id})")
+                    except Exception as e:
+                        logger.warning(f"Failed to record stream start: {e}")
 
                 # QWEN learns from successful detection
                 if self.qwen_youtube:
@@ -650,6 +683,12 @@ class AutoModeratorDAE:
         logger.info("👁️ MONITORING CHAT - WSP-COMPLIANT ARCHITECTURE")
         logger.info("="*60)
 
+        # === CARDIOVASCULAR: Start heartbeat task (WSP 91) ===
+        heartbeat_task = None
+        if self.telemetry:
+            heartbeat_task = asyncio.create_task(self._heartbeat_loop())
+            logger.info("[HEART] Heartbeat monitoring started (30s interval)")
+
         try:
             await self.livechat.start_listening()
         except KeyboardInterrupt:
@@ -657,6 +696,23 @@ class AutoModeratorDAE:
         except Exception as e:
             logger.error(f"Monitoring error: {e}")
         finally:
+            # === CARDIOVASCULAR: Stop heartbeat and record stream end (WSP 91) ===
+            if heartbeat_task:
+                heartbeat_task.cancel()
+                try:
+                    await heartbeat_task
+                except asyncio.CancelledError:
+                    pass
+                logger.info("[HEART] Heartbeat monitoring stopped")
+
+            if self.telemetry and self.current_stream_id:
+                try:
+                    self.telemetry.record_stream_end(self.current_stream_id)
+                    logger.info(f"[HEART] Stream session ended (SQLite ID: {self.current_stream_id})")
+                    self.current_stream_id = None
+                except Exception as e:
+                    logger.warning(f"Failed to record stream end: {e}")
+
             if self.livechat:
                 self.livechat.stop_listening()
     
@@ -667,8 +723,26 @@ class AutoModeratorDAE:
         logger.info("=" * 60)
         logger.info("[AI] AUTO MODERATOR DAE STARTING")
         logger.info("WSP-Compliant: Using livechat_core architecture")
+        if self.enable_ai_monitoring:
+            logger.info("[AI] AI Overseer (Qwen/Gemma) monitoring: ENABLED")
         logger.info("=" * 60)
-        
+
+        # Initialize AI Overseer heartbeat monitoring if enabled
+        if self.enable_ai_monitoring:
+            try:
+                from .youtube_dae_heartbeat import YouTubeDAEHeartbeat
+                self.heartbeat_service = YouTubeDAEHeartbeat(
+                    dae_instance=self,
+                    heartbeat_interval=30,
+                    enable_ai_overseer=True
+                )
+                # Start heartbeat in background
+                asyncio.create_task(self.heartbeat_service.start_heartbeat())
+                logger.info("[HEARTBEAT] AI Overseer monitoring started - Qwen/Gemma watching for errors")
+            except Exception as e:
+                logger.warning(f"[HEARTBEAT] Failed to start AI Overseer monitoring: {e}")
+                logger.warning("[HEARTBEAT] Continuing without AI monitoring")
+
         # Phase -1/0: Connect and authenticate
         if not self.connect():
             logger.error("Failed to connect to YouTube")
@@ -754,6 +828,160 @@ class AutoModeratorDAE:
                     if self.stream_resolver:
                         self.stream_resolver.clear_cache()
     
+    async def _heartbeat_loop(self):
+        """
+        Background cardiovascular heartbeat loop (WSP 91: DAEMON Observability).
+
+        Writes dual telemetry:
+        - SQLite: Structured data for queries (youtube_heartbeats table)
+        - JSONL: Streaming append-only data for tailing (logs/youtube_dae_heartbeat.jsonl)
+        """
+        import json
+        from pathlib import Path
+
+        heartbeat_count = 0
+
+        try:
+            while True:
+                await asyncio.sleep(30)  # 30-second heartbeat interval
+                heartbeat_count += 1
+
+                try:
+                    # Calculate uptime
+                    uptime_seconds = time.time() - self.start_time
+
+                    # Determine stream active status
+                    stream_active = bool(self.livechat and self.livechat.is_running)
+
+                    # Get moderation stats if available
+                    chat_messages_per_min = 0.0
+                    moderation_actions = 0
+                    banter_responses = 0
+
+                    if self.livechat:
+                        try:
+                            stats = self.livechat.get_moderation_stats()
+                            # Calculate messages per minute (estimate from total / uptime)
+                            total_messages = stats.get('total_messages', 0)
+                            if uptime_seconds > 0:
+                                chat_messages_per_min = (total_messages / uptime_seconds) * 60
+
+                            moderation_actions = stats.get('spam_blocks', 0) + stats.get('toxic_blocks', 0)
+                            banter_responses = stats.get('responses_sent', 0)
+                        except Exception as e:
+                            logger.debug(f"Stats collection failed: {e}")
+
+                    # Get system resource usage (optional)
+                    memory_mb = None
+                    cpu_percent = None
+                    try:
+                        import psutil
+                        process = psutil.Process()
+                        memory_mb = process.memory_info().rss / 1024 / 1024
+                        cpu_percent = process.cpu_percent()
+                    except (ImportError, Exception):
+                        pass
+
+                    # Determine health status
+                    status = "healthy"
+                    if not stream_active:
+                        status = "idle"
+                    elif moderation_actions > 100:
+                        status = "warning"  # High moderation activity
+
+                    # === SQLite Write (structured data) ===
+                    if self.telemetry:
+                        self.telemetry.record_heartbeat(
+                            status=status,
+                            stream_active=stream_active,
+                            chat_messages_per_min=chat_messages_per_min,
+                            moderation_actions=moderation_actions,
+                            banter_responses=banter_responses,
+                            uptime_seconds=uptime_seconds,
+                            memory_mb=memory_mb,
+                            cpu_percent=cpu_percent
+                        )
+
+                    # === JSONL Write (streaming telemetry) ===
+                    jsonl_path = Path("logs/youtube_dae_heartbeat.jsonl")
+                    jsonl_path.parent.mkdir(parents=True, exist_ok=True)
+
+                    heartbeat_data = {
+                        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                        "status": status,
+                        "stream_active": stream_active,
+                        "chat_messages_per_min": round(chat_messages_per_min, 2),
+                        "moderation_actions": moderation_actions,
+                        "banter_responses": banter_responses,
+                        "uptime_seconds": round(uptime_seconds, 1),
+                        "memory_mb": round(memory_mb, 2) if memory_mb else None,
+                        "cpu_percent": round(cpu_percent, 2) if cpu_percent else None,
+                        "heartbeat_count": heartbeat_count
+                    }
+
+                    with open(jsonl_path, 'a', encoding='utf-8') as f:
+                        json.dump(heartbeat_data, f)
+                        f.write('\n')
+
+                    # Log heartbeat every 10 pulses (every 5 minutes)
+                    if heartbeat_count % 10 == 0:
+                        logger.info(f"[HEART] Heartbeat #{heartbeat_count} - Status: {status}, Stream: {'ACTIVE' if stream_active else 'IDLE'}")
+
+                        # === AI OVERSEER: Autonomous monitoring (every 5 minutes) ===
+                        try:
+                            from modules.ai_intelligence.ai_overseer.src.ai_overseer import AIIntelligenceOverseer
+                            from pathlib import Path as OverseerPath
+
+                            # Initialize AI Overseer
+                            repo_root = OverseerPath(__file__).resolve().parent.parent.parent.parent
+                            overseer = AIIntelligenceOverseer(repo_root)
+
+                            # Read recent JSONL telemetry for error detection
+                            recent_log_lines = []
+                            with open(jsonl_path, 'r', encoding='utf-8') as f:
+                                all_lines = f.readlines()
+                                recent_log_lines = all_lines[-50:] if len(all_lines) > 50 else all_lines
+
+                            if recent_log_lines:
+                                # Convert JSONL to text for AI Overseer
+                                bash_output = "".join(recent_log_lines)
+
+                                # Monitor daemon with autonomous fixing enabled
+                                skill_path = repo_root / "modules" / "communication" / "livechat" / "skills" / "youtube_daemon_monitor.json"
+
+                                # Run in executor to avoid blocking async loop
+                                loop = asyncio.get_event_loop()
+                                result = await loop.run_in_executor(
+                                    None,
+                                    lambda: overseer.monitor_daemon(
+                                        bash_output=bash_output,
+                                        skill_path=skill_path,
+                                        auto_fix=True,
+                                        chat_sender=None,
+                                        announce_to_chat=False
+                                    )
+                                )
+
+                                # Log AI Overseer results
+                                if result.get("bugs_detected", 0) > 0:
+                                    logger.warning(f"[AI-OVERSEER] Detected {result['bugs_detected']} errors in daemon")
+
+                                if result.get("bugs_fixed", 0) > 0:
+                                    logger.info(f"[AI-OVERSEER] Applied {result['bugs_fixed']} autonomous fixes")
+                                    for fix in result.get("fixes_applied", []):
+                                        if fix.get("needs_restart"):
+                                            logger.warning("[AI-OVERSEER] Fix requires restart - daemon will restart on next cycle")
+
+                        except Exception as e:
+                            logger.debug(f"[AI-OVERSEER] Monitoring check failed: {e}")
+
+                except Exception as e:
+                    logger.error(f"[HEART] Heartbeat pulse failed: {e}")
+
+        except asyncio.CancelledError:
+            logger.info(f"[HEART] Heartbeat loop cancelled after {heartbeat_count} pulses")
+            raise
+
     def get_status(self) -> dict:
         """Get current DAE status."""
         status = {
@@ -772,10 +1000,10 @@ class AutoModeratorDAE:
                 'throttle': True
             }
         }
-        
+
         if self.livechat:
             status['stats'] = self.livechat.get_moderation_stats()
-        
+
         return status
 
 

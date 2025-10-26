@@ -1,0 +1,86 @@
+{
+  "version": "1.0",
+  "description": "WRE Skills Registry - Single source of truth for skill promotion states",
+  "last_updated": "2025-10-20T00:00:00Z",
+  "skills": {
+    "youtube_spam_detection": {
+      "skill_name": "youtube_spam_detection",
+      "promotion_state": "prototype",
+      "location": ".claude/skills/youtube_spam_detection_prototype/",
+      "primary_agent": "gemma",
+      "fallback_agent": null,
+      "intent_type": "CLASSIFICATION",
+      "module": "modules/communication/livechat",
+      "entry_point": "auto_moderator_dae.py",
+      "created_at": "2025-10-20T00:00:00Z",
+      "last_promoted": null,
+      "last_rollback": null,
+      "metrics_path": "modules/infrastructure/wre_core/recursive_improvement/metrics/youtube_spam_detection_*.json",
+      "production_path_target": "modules/communication/livechat/skills/youtube_spam_detection/"
+    },
+    "youtube_toxic_filtering": {
+      "skill_name": "youtube_toxic_filtering",
+      "promotion_state": "prototype",
+      "location": ".claude/skills/youtube_toxic_filtering_prototype/",
+      "primary_agent": "gemma",
+      "fallback_agent": "qwen",
+      "intent_type": "CLASSIFICATION/DECISION",
+      "module": "modules/communication/livechat",
+      "entry_point": "auto_moderator_dae.py",
+      "created_at": "2025-10-20T00:00:00Z",
+      "last_promoted": null,
+      "last_rollback": null,
+      "metrics_path": "modules/infrastructure/wre_core/recursive_improvement/metrics/youtube_toxic_filtering_*.json",
+      "production_path_target": "modules/communication/livechat/skills/youtube_toxic_filtering/"
+    },
+    "youtube_message_classification": {
+      "skill_name": "youtube_message_classification",
+      "promotion_state": "prototype",
+      "location": ".claude/skills/youtube_message_classification_prototype/",
+      "primary_agent": "gemma",
+      "fallback_agent": null,
+      "intent_type": "CLASSIFICATION",
+      "module": "modules/communication/livechat",
+      "entry_point": "auto_moderator_dae.py",
+      "created_at": "2025-10-20T00:00:00Z",
+      "last_promoted": null,
+      "last_rollback": null,
+      "metrics_path": "modules/infrastructure/wre_core/recursive_improvement/metrics/youtube_message_classification_*.json",
+      "production_path_target": "modules/communication/livechat/skills/youtube_message_classification/"
+    },
+    "youtube_intelligent_monitoring": {
+      "skill_name": "youtube_intelligent_monitoring",
+      "promotion_state": "prototype",
+      "location": ".claude/skills/youtube_intelligent_monitoring_prototype/",
+      "primary_agent": "qwen",
+      "fallback_agent": null,
+      "intent_type": "TELEMETRY/DECISION",
+      "module": "modules/communication/livechat",
+      "entry_point": "auto_moderator_dae.py",
+      "created_at": "2025-10-20T00:00:00Z",
+      "last_promoted": null,
+      "last_rollback": null,
+      "metrics_path": "modules/infrastructure/wre_core/recursive_improvement/metrics/youtube_intelligent_monitoring_*.json",
+      "production_path_target": "modules/communication/livechat/skills/youtube_intelligent_monitoring/"
+    }
+  },
+  "promotion_states": {
+    "prototype": "0102 validation only, manual testing",
+    "staged": "Live testing with automated metrics collection",
+    "production": "WRE entry point, full production load"
+  },
+  "metadata": {
+    "total_skills": 4,
+    "by_state": {
+      "prototype": 4,
+      "staged": 0,
+      "production": 0
+    },
+    "by_agent": {
+      "gemma": 3,
+      "qwen": 1,
+      "grok": 0,
+      "ui-tars": 0
+    }
+  }
+}

@@ -76,7 +76,8 @@ class HoloIndex:
     def _log_agent_action(self, message: str, action_tag: str = "0102"):
         """Real-time logging for multi-agent coordination - allows other 0102 agents to follow."""
         timestamp = datetime.now().strftime("%H:%M:%S")
-        print(f"[{timestamp}] [HOLO-{action_tag}] {message}")
+        if not getattr(self, "quiet", False):
+            print(f"[{timestamp}] [HOLO-{action_tag}] {message}")
 
         # Also log to shared file for other agents to follow
         try:
@@ -101,7 +102,8 @@ class HoloIndex:
         print(f"[{datetime.now().strftime('%H:%M:%S')}] [BREADCRUMB] {hint}")
         self._breadcrumb_hint_shown = True
 
-    def __init__(self, ssd_path: str = "E:/HoloIndex") -> None:
+    def __init__(self, ssd_path: str = "E:/HoloIndex", quiet: bool = False) -> None:
+        self.quiet = quiet
         self._log_agent_action(f"Initializing HoloIndex on SSD: {ssd_path}", "INIT")
         self.ssd_path = Path(ssd_path)
         self.vector_path = self.ssd_path / "vectors"

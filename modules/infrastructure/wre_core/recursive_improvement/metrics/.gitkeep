@@ -1,0 +1,16 @@
+# WRE Skills Metrics Storage
+
+This directory stores JSON append-only metrics for skill pattern fidelity scoring.
+
+## Structure
+
+Each skill has separate metric files:
+- `[skill_name]_fidelity.json` - Pattern fidelity scores per execution
+- `[skill_name]_outcomes.json` - Decision outcomes & correctness
+- `[skill_name]_performance.json` - Execution time & resource usage
+- `[skill_name]_promotion_log.json` - Promotion/rollback events
+
+## Usage
+
+Metrics are appended in real-time during skill execution (staged/production).
+Hourly batch ingestion moves data to SQLite for analytics.

@@ -1,8 +1,9 @@
 # PQN Portal FoundUp (PoC -> Prototype -> MVP)
 
-- Purpose: Public, DAE‑neutral PQN portal to experience "Hello PQN" — live demo, gallery, and non‑technical explainer
+- Purpose: Public, DAE‑neutral PQN portal to experience "Hello PQN" — live demo, gallery, and non‑technical explainer with enhanced meta-research capabilities
 - Domain: `modules/foundups/` (WSP 3 functional distribution)
-- Reuse: Calls `modules/ai_intelligence/pqn_alignment` library APIs and `results_db`
+- Reuse: Calls `modules/ai_intelligence/pqn_alignment` library APIs, `pqn_mcp` server, and `results_db`
+- Enhanced Features: Meta-research validation, neural self-detection, research stream scanning, high-volume processing (400+ PQNs)
 - DAE Access: Ships WSP 22 docs and a programmatic docs index (`src/docs.py`) plus `module.json`
 
 ## Non‑Technical Explainer

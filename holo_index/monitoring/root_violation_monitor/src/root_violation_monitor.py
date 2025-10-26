@@ -240,38 +240,53 @@ class GemmaRootViolationMonitor:
         medium = [v for v in scan_result['violations'] if v['severity'] == 'medium']
         low = [v for v in scan_result['violations'] if v['severity'] == 'low']
 
-        if critical:
-            alert_lines.append("[U+1F534] CRITICAL VIOLATIONS:")
-            for v in critical:
+        total_violations = len(scan_result['violations'])
+
+        severity_buckets = {
+            "critical": critical,
+            "high": high,
+            "medium": medium,
+            "low": low,
+        }
+
+        summary_parts = []
+        for name, bucket in severity_buckets.items():
+            if bucket:
+                summary_parts.append(f"{name}:{len(bucket)}")
+
+        if summary_parts:
+            alert_lines.append(f"[SUMMARY] Severity counts -> {', '.join(summary_parts)}")
+            alert_lines.append("")
+
+        max_per_bucket = 3
+        total_displayed = 0
+
+        for label, bucket, heading in [
+            ("[U+1F534] CRITICAL", critical, "PRIORITY VIOLATIONS"),
+            ("🟠 HIGH", high, "PRIORITY VIOLATIONS"),
+            ("🟡 MEDIUM", medium, "PRIORITY VIOLATIONS"),
+        ]:
+            if not bucket:
+                continue
+
+            limited = bucket[:max_per_bucket]
+            total_displayed += len(limited)
+
+            if len(bucket) > max_per_bucket:
+                alert_lines.append(f"{label} {heading}: {len(bucket)} total (showing {len(limited)})")
+            else:
+                alert_lines.append(f"{label} {heading}:")
+
+            for v in limited:
                 alert_lines.append(f"   • {v['filename']} - {v['violation_type']}")
                 alert_lines.append(f"     +- {v['recommended_action']}")
-
-        if high:
             alert_lines.append("")
-            alert_lines.append("🟠 HIGH PRIORITY VIOLATIONS:")
-            for v in high:
-                alert_lines.append(f"   • {v['filename']} - {v['violation_type']}")
-                alert_lines.append(f"     +- {v['recommended_action']}")
 
-        if medium:
-            alert_lines.append("")
-            alert_lines.append("🟡 MEDIUM PRIORITY VIOLATIONS:")
-            for v in medium:
-                alert_lines.append(f"   • {v['filename']} - {v['violation_type']}")
+        remaining = total_violations - total_displayed
+        if remaining > 0:
+            alert_lines.append(f"[INFO] {remaining} additional violations not displayed.")
 
-        if low:
-            alert_lines.append("")
-            alert_lines.append("🟢 LOW PRIORITY VIOLATIONS:")
-            for v in low:
-                alert_lines.append(f"   • {v['filename']} - {v['violation_type']}")
-
-        alert_lines.extend([
-            "",
-            f"[UP] Monitoring Stats: {scan_result['monitoring_stats']['scans_performed']} scans, {scan_result['monitoring_stats']['violations_detected']} violations detected",
-            "",
-            "[IDEA] Auto-correction available for some violations. Use --fix-violations to apply.",
-            "=" * 80
-        ])
+        alert_lines.append("[TIP] Run `python holo_index.py --fix-violations` to review and auto-correct the full list.")
 
         return "\n".join(alert_lines)
 

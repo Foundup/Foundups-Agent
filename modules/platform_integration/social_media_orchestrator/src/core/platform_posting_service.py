@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 """
 Platform Posting Service
 Handles platform-specific posting logic (LinkedIn, X/Twitter)
 Extracted from simple_posting_orchestrator.py for better separation of concerns
+WSP 90 Compliant: UTF-8 encoding enforced
 """
 
 import os
@@ -368,7 +370,7 @@ class PlatformPostingService:
             Formatted post content
         """
         # LinkedIn allows up to 3000 characters
-        content = f"[U+1F534] LIVE NOW: {title}\n\n"
+        content = f"🔴 LIVE NOW: {title}\n\n"
         content += f"Join the conversation: {url}\n\n"
         content += "#LiveStream #Tech #Coding #AI #Innovation"
 
@@ -390,7 +392,7 @@ class PlatformPostingService:
             Formatted post content
         """
         # X has 280 character limit
-        content = f"[U+1F534] LIVE: {title}\n{url}"
+        content = f"🔴 LIVE: {title}\n{url}"
 
         # Add hashtags if room
         hashtags = " #live #coding #AI"
@@ -402,7 +404,7 @@ class PlatformPostingService:
             # Reserve space for URL (23 chars) and ellipsis
             max_title_len = 280 - 23 - 10  # URL + "LIVE: " + "..."
             truncated_title = title[:max_title_len] + "..."
-            content = f"[U+1F534] LIVE: {truncated_title}\n{url}"
+            content = f"🔴 LIVE: {truncated_title}\n{url}"
 
         return content
 

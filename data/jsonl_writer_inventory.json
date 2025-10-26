@@ -1,0 +1,192 @@
+{
+  "inventory_id": "jsonl_writer_inventory_20251021",
+  "total_jsonl_files": 219,
+  "inventory_by_domain": {
+
+    "chat_history": {
+      "file_count": 215,
+      "writer_module": "modules/ai_intelligence/banter_engine",
+      "writer_class": "BanterEngine (inferred)",
+      "write_pattern": "One JSONL file per user per stream session",
+      "location_pattern": "modules/ai_intelligence/ai_intelligence/banter_engine/memory/chat_logs/",
+      "concurrency": "HIGH - Multiple concurrent streams",
+      "migration_priority": "CRITICAL",
+      "proposed_table": "chat_messages",
+      "schema": {
+        "columns": [
+          "id INTEGER PRIMARY KEY AUTOINCREMENT",
+          "user_id TEXT NOT NULL",
+          "stream_id TEXT NOT NULL",
+          "sent_at TEXT NOT NULL",
+          "message TEXT",
+          "message_type TEXT",
+          "metadata_json TEXT"
+        ],
+        "indexes": [
+          "CREATE INDEX idx_chat_user ON chat_messages(user_id)",
+          "CREATE INDEX idx_chat_stream ON chat_messages(stream_id)",
+          "CREATE INDEX idx_chat_sent ON chat_messages(sent_at)"
+        ]
+      }
+    },
+
+    "permissions": {
+      "file_count": 1,
+      "writer_module": "modules/ai_intelligence/agent_permissions",
+      "writer_class": "AgentPermissionManager",
+      "writer_method": "_append_permission_event()",
+      "file": "modules/ai_intelligence/agent_permissions/memory/permission_events.jsonl",
+      "write_pattern": "Append each permission grant/revoke",
+      "concurrency": "HIGH - Multiple agents may execute simultaneously",
+      "migration_priority": "HIGH",
+      "proposed_table": "permission_events",
+      "schema": {
+        "columns": [
+          "id INTEGER PRIMARY KEY AUTOINCREMENT",
+          "agent_id TEXT NOT NULL",
+          "event_type TEXT NOT NULL",
+          "permission_level TEXT",
+          "granted_at TEXT NOT NULL",
+          "granted_by TEXT",
+          "confidence REAL",
+          "justification TEXT",
+          "approval_signature TEXT",
+          "metadata_json TEXT"
+        ],
+        "indexes": [
+          "CREATE INDEX idx_perm_agent ON permission_events(agent_id)",
+          "CREATE INDEX idx_perm_timestamp ON permission_events(granted_at)"
+        ]
+      }
+    },
+
+    "confidence": {
+      "file_count": 1,
+      "writer_module": "modules/ai_intelligence/agent_permissions",
+      "writer_class": "ConfidenceTracker",
+      "writer_method": "_append_event() (inferred)",
+      "file": "modules/ai_intelligence/agent_permissions/memory/confidence_events.jsonl",
+      "write_pattern": "Append each confidence update",
+      "concurrency": "HIGH - Multiple agents execute tasks",
+      "migration_priority": "HIGH",
+      "proposed_table": "confidence_events",
+      "schema": {
+        "columns": [
+          "id INTEGER PRIMARY KEY AUTOINCREMENT",
+          "agent_id TEXT NOT NULL",
+          "confidence_before REAL",
+          "confidence_after REAL",
+          "event_type TEXT NOT NULL",
+          "success BOOLEAN",
+          "validation TEXT",
+          "recorded_at TEXT NOT NULL",
+          "metadata_json TEXT"
+        ],
+        "indexes": [
+          "CREATE INDEX idx_conf_agent ON confidence_events(agent_id)",
+          "CREATE INDEX idx_conf_timestamp ON confidence_events(recorded_at)"
+        ]
+      }
+    },
+
+    "daemon_health": {
+      "file_count": 1,
+      "writer_module": "modules/communication/livechat",
+      "writer_class": "YouTubeDAEHeartbeat (if exists)",
+      "file": "modules/communication/livechat/logs/youtube_dae_heartbeat.jsonl",
+      "write_pattern": "Periodic heartbeat (every 30s)",
+      "concurrency": "MEDIUM - Single daemon, periodic writes",
+      "migration_priority": "MEDIUM",
+      "proposed_table": "daemon_health",
+      "schema": {
+        "columns": [
+          "id INTEGER PRIMARY KEY AUTOINCREMENT",
+          "daemon_name TEXT NOT NULL",
+          "heartbeat_at TEXT NOT NULL",
+          "status TEXT NOT NULL",
+          "video_id TEXT",
+          "errors_detected INTEGER DEFAULT 0",
+          "uptime_seconds INTEGER",
+          "metrics_json TEXT"
+        ],
+        "indexes": [
+          "CREATE INDEX idx_health_daemon ON daemon_health(daemon_name)",
+          "CREATE INDEX idx_health_timestamp ON daemon_health(heartbeat_at)"
+        ]
+      }
+    },
+
+    "error_events": {
+      "file_count": 1,
+      "writer_module": "SYSTEM_WIDE",
+      "writer_pattern": "Multiple modules write errors",
+      "file": "logs/error_log.jsonl (inferred)",
+      "write_pattern": "Append on exception/error",
+      "concurrency": "HIGH - All modules may write errors",
+      "migration_priority": "HIGH",
+      "proposed_table": "error_events",
+      "schema": {
+        "columns": [
+          "id INTEGER PRIMARY KEY AUTOINCREMENT",
+          "source_module TEXT NOT NULL",
+          "raised_at TEXT NOT NULL",
+          "severity TEXT NOT NULL",
+          "error_type TEXT",
+          "message TEXT",
+          "stack_trace TEXT",
+          "payload_json TEXT"
+        ],
+        "indexes": [
+          "CREATE INDEX idx_error_module ON error_events(source_module)",
+          "CREATE INDEX idx_error_severity ON error_events(severity)",
+          "CREATE INDEX idx_error_timestamp ON error_events(raised_at)"
+        ]
+      }
+    },
+
+    "skill_metrics": {
+      "file_count": 0,
+      "note": "MetricsAppender already uses SQLite-like storage (reuse pattern)",
+      "writer_module": "modules/infrastructure/metrics_appender",
+      "migration_priority": "LOW - Already using better storage",
+      "action": "Review MetricsAppender pattern and apply to other domains"
+    }
+  },
+
+  "migration_phases": {
+    "phase_1_critical": {
+      "domains": ["chat_history"],
+      "file_count": 215,
+      "reason": "Highest concurrency risk - multiple streams writing simultaneously",
+      "estimated_effort": "HIGH (most files)",
+      "deliverable": "chat_messages table + migration script"
+    },
+    "phase_2_high": {
+      "domains": ["permissions", "confidence", "error_events"],
+      "file_count": 3,
+      "reason": "High concurrency, critical for WSP 77 coordination",
+      "estimated_effort": "MEDIUM",
+      "deliverable": "permission_events, confidence_events, error_events tables"
+    },
+    "phase_3_medium": {
+      "domains": ["daemon_health"],
+      "file_count": 1,
+      "reason": "Medium concurrency, operational visibility",
+      "estimated_effort": "LOW",
+      "deliverable": "daemon_health table"
+    }
+  },
+
+  "unified_schema_path": "data/foundup.db",
+  "total_tables": 5,
+
+  "next_steps": [
+    "Create data/foundup.db with unified schema",
+    "Write migration script for chat_messages (215 JSONL → SQLite)",
+    "Update BanterEngine to write to SQLite instead of JSONL",
+    "Test with one stream session",
+    "Repeat for permissions + confidence",
+    "Add LibertyAlert change feed publisher",
+    "Deprecate JSONL writers (keep files as backups)"
+  ]
+}

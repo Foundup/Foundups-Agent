@@ -21,6 +21,28 @@ Centralized orchestration system providing unified social media management acros
 
 ## Recent Changes
 
+### WSP 90 Compliance: UTF-8 Encoding for Social Media Posts
+**WSP References**: WSP 90, WSP 1, WSP 49
+
+**Problem Identified**
+- LinkedIn posts showing: `[U+1F534] LIVE NOW` instead of `🔴 LIVE NOW`
+- X/Twitter posts also had Unicode escape sequences
+- Violates WSP 90 (UTF-8 Encoding Enforcement Protocol)
+- Posts to social media platforms looked broken with escape codes
+
+**Changes Made**
+1. Added UTF-8 encoding header to `platform_posting_service.py`: `# -*- coding: utf-8 -*-`
+2. Fixed `_format_linkedin_post()`: `[U+1F534]` → `🔴`
+3. Fixed `_format_x_post()`: `[U+1F534]` → `🔴`
+
+**Impact**
+- ✅ LinkedIn posts now show: "🔴 LIVE NOW: Move2Japan..."
+- ✅ X/Twitter posts display properly with emoji
+- ✅ WSP 90 compliant across all social media posting
+- ✅ Professional appearance on social platforms
+
+---
+
 ### V029 - Architectural Direction: X/Twitter DAE Child Integration (Planned)
 **Type**: Architecture Documentation
 **Date**: 2025-10-18

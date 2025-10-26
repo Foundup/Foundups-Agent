@@ -302,6 +302,15 @@ class RefactoredPostingOrchestrator:
                 else:
                     self.logger.warning("[FLOWER]E[FINGERPRINT-4] LINKEDIN FAILED - X will be skipped")
                     results['errors'].append(f"LinkedIn failed: {linkedin_result.message}")
+
+                    # Mark as posted (FAILED status) to prevent infinite retries
+                    self.duplicate_manager.mark_as_posted(
+                        video_id=video_id,
+                        platform='linkedin',
+                        title=title,
+                        url=url
+                    )
+                    self.logger.info("[CUT]E[FINGERPRINT-4B] LinkedIn marked as FAILED to prevent retries")
                     time.sleep(1)
 
             # Post to X ONLY if LinkedIn succeeded

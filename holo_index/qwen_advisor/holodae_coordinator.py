@@ -1928,14 +1928,33 @@ class HoloDAECoordinator:
         # Simple check - can be enhanced with actual daemon status checks
         unhealthy_daemons = []
 
-        # Placeholder for daemon checks (would integrate with actual daemon monitoring)
-        # In real implementation, check:
-        # - MCP daemon process
-        # - YouTube DAE process
-        # - Other critical daemons
+        # Check YouTube DAE telemetry for recent activity
+        youtube_active = False
+        recent_activity_count = 0
+        try:
+            import sqlite3
+            from datetime import datetime, timedelta, timezone
+            db_path = self.repo_root / "data" / "foundups.db"
+            if db_path.exists():
+                conn = sqlite3.connect(str(db_path), timeout=5.0)
+                cursor = conn.cursor()
+
+                # Check for heartbeats in last 5 minutes (10 pulses at 30s interval)
+                five_min_ago = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+                cursor.execute(
+                    "SELECT COUNT(*) FROM youtube_heartbeats WHERE timestamp > ?",
+                    (five_min_ago,)
+                )
+                recent_activity_count = cursor.fetchone()[0]
+                youtube_active = recent_activity_count > 0
+
+                conn.close()
+        except Exception as e:
+            self._holo_log(f"[DAEMON-HEALTH] YouTube telemetry check failed: {e}")
 
         return {
-            "youtube_dae_running": True,  # Placeholder
+            "youtube_dae_running": youtube_active,
+            "youtube_recent_heartbeats": recent_activity_count,
             "mcp_daemon_running": True,   # Placeholder
             "unhealthy_daemons": unhealthy_daemons,
             "trigger_skill": "daemon_health_monitor" if unhealthy_daemons else None,
@@ -2011,6 +2030,25 @@ class HoloDAECoordinator:
                 "priority": "medium"
             })
 
+        # Check YouTube DAE activity - if active + git changes, suggest commit
+        if daemon_health.get("youtube_dae_running") and git_health.get("uncommitted_changes", 0) > 3:
+            youtube_heartbeats = daemon_health.get("youtube_recent_heartbeats", 0)
+            # YouTube active = interesting chat activity = potential commit-worthy content
+            if youtube_heartbeats >= 5:  # At least 2.5 minutes of activity (5 pulses * 30s)
+                triggers.append({
+                    "skill_name": "qwen_gitpush",
+                    "agent": "qwen",
+                    "input_context": {
+                        "youtube_active": True,
+                        "youtube_heartbeats": youtube_heartbeats,
+                        "uncommitted_changes": git_health["uncommitted_changes"],
+                        "files_changed": git_health.get("files_changed", []),
+                        "context": "YouTube DAE active - chat moderation in progress"
+                    },
+                    "trigger_reason": "youtube_activity_with_changes",
+                    "priority": "medium"
+                })
+
         # Check WSP compliance
         wsp_health = self.check_wsp_compliance()
         if wsp_health.get("trigger_skill"):
@@ -2063,6 +2101,17 @@ class HoloDAECoordinator:
                 if result.get("success"):
                     fidelity = result.get("pattern_fidelity", 0.0)
                     self._holo_log(f"[WRE-SUCCESS] {skill_name} | fidelity={fidelity:.2f}")
+
+                    # If qwen_gitpush succeeded, trigger GitLinkedInBridge directly
+                    if skill_name == "qwen_gitpush" and fidelity >= 0.80:
+                        try:
+                            from modules.platform_integration.linkedin_agent.src.git_linkedin_bridge import GitLinkedInBridge
+                            git_bridge = GitLinkedInBridge(company_id="1263645")
+                            git_bridge.auto_mode = True  # Enable autonomous commit message generation
+                            success = git_bridge.push_and_post()
+                            self._holo_log(f"[GIT-COMMIT] {'SUCCESS' if success else 'FAILED'}")
+                        except Exception as e:
+                            self._holo_log(f"[GIT-ERROR] GitLinkedInBridge failed: {e}")
 
                     # Log to 012.txt for human oversight
                     self._append_012_summary(

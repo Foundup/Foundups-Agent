@@ -24,7 +24,7 @@ import sqlite3
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import logging
 

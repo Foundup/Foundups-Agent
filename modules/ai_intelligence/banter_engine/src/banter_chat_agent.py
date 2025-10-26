@@ -177,9 +177,9 @@ class BanterChatAgent:
             return 'gratitude'
         elif '?' in text:
             return 'question'
-        elif any(word in text for word in ['lol', 'haha', 'funny', '[U+1F602]', '[U+1F923]']):
+        elif any(word in text for word in ['lol', 'haha', 'funny', '😂', '🤣']):
             return 'humor'
-        elif any(word in text for word in ['love', 'like', 'awesome', 'great', '[U+2764]️', '[U+1F44D]']):
+        elif any(word in text for word in ['love', 'like', 'awesome', 'great', '❤️', '👍']):
             return 'positive'
         elif any(word in text for word in ['trump', 'maga', 'politics']):
             return 'political'
@@ -215,42 +215,42 @@ class BanterChatAgent:
             'greeting': [
                 f"Hey {message['author']}! Welcome to the stream! [CELEBRATE]",
                 f"What's up {message['author']}! Good to see you here!",
-                f"Yo {message['author']}! Thanks for joining! [U+1F64C]"
+                f"Yo {message['author']}! Thanks for joining! 🙌"
             ],
             'gratitude': [
-                f"You're welcome {message['author']}! [U+1F60A]",
+                f"You're welcome {message['author']}! 😊",
                 f"No problem at all, {message['author']}!",
-                f"Happy to help, {message['author']}! [U+1F4AA]"
+                f"Happy to help, {message['author']}! 💪"
             ],
             'question': [
                 f"Great question, {message['author']}! Let me think about that...",
-                f"Hmm {message['author']}, that's interesting... [U+1F914]",
+                f"Hmm {message['author']}, that's interesting... 🤔",
                 f"{message['author']}, I'll need to ponder that one! [AI]"
             ],
             'humor': [
-                f"[U+1F602] {message['author']}, you're hilarious!",
+                f"😂 {message['author']}, you're hilarious!",
                 f"LMAO {message['author']}! That's a good one!",
-                f"Haha, {message['author']} bringing the comedy gold! [U+1F3C6]"
+                f"Haha, {message['author']} bringing the comedy gold! 🏆"
             ],
             'positive': [
-                f"Thanks {message['author']}! Spreading the good vibes! [U+2728]",
-                f"Appreciate you {message['author']}! Keep that energy! [U+1F525]",
-                f"{message['author']}, you're awesome! Much love! [U+2764]️"
+                f"Thanks {message['author']}! Spreading the good vibes! ✨",
+                f"Appreciate you {message['author']}! Keep that energy! 🔥",
+                f"{message['author']}, you're awesome! Much love! ❤️"
             ],
             'political': [
-                f"{message['author']}, let's keep it chill and enjoy the stream! [U+1F60E]",
+                f"{message['author']}, let's keep it chill and enjoy the stream! 😎",
                 f"Politics aside {message['author']}, we're all friends here! [HANDSHAKE]",
-                f"{message['author']}, save the politics for Twitter! [U+1F604]"
+                f"{message['author']}, save the politics for Twitter! 😄"
             ],
             'japan': [
-                f"{message['author']}, Japan is amazing! [U+1F5FE] Have you been?",
+                f"{message['author']}, Japan is amazing! 🗾 Have you been?",
                 f"Ah {message['author']}, talking about the best country! 🇯🇵",
-                f"{message['author']}, Japan talk? Now we're speaking my language! [U+1F35C]"
+                f"{message['author']}, Japan talk? Now we're speaking my language! 🍜"
             ],
             'general': [
-                f"Thanks for chatting, {message['author']}! [U+1F44B]",
-                f"{message['author']}, appreciate your input! [U+1F4AC]",
-                f"Good point, {message['author']}! [U+1F44D]"
+                f"Thanks for chatting, {message['author']}! 👋",
+                f"{message['author']}, appreciate your input! 💬",
+                f"Good point, {message['author']}! 👍"
             ]
         }
         
@@ -303,7 +303,7 @@ class BanterChatAgent:
         print("[INFO] Press Ctrl+C to stop\n")
         
         # Send initial greeting
-        self.send_chat_message("[BOT] Banter Bot activated! Ready to chat! Say hello! [U+1F44B]")
+        self.send_chat_message("[BOT] Banter Bot activated! Ready to chat! Say hello! 👋")
         
         # Main monitoring loop
         try:
@@ -329,7 +329,7 @@ class BanterChatAgent:
                 
         except KeyboardInterrupt:
             print("\n[INFO] Stopping Banter Chat Agent...")
-            self.send_chat_message("[BOT] Banter Bot signing off! Thanks for chatting! [U+1F44B]")
+            self.send_chat_message("[BOT] Banter Bot signing off! Thanks for chatting! 👋")
             print("[OK] Agent stopped")
 
 if __name__ == "__main__":

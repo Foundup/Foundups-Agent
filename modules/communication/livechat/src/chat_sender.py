@@ -126,7 +126,14 @@ class ChatSender:
                 await asyncio.sleep(random_delay)
             
             logger.info(f"[U+1F4E4] Sending message: {message_text}")
-            
+
+            # CRITICAL FIX: Convert Unicode tags to emoji before YouTube send
+            # YouTube API doesn't render [U+XXXX] tags - need actual emoji characters
+            from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
+            banter = BanterEngine(emoji_enabled=True)
+            message_text = banter._convert_unicode_tags_to_emoji(message_text)
+            logger.debug(f"[EMOJI] After conversion: {message_text}")
+
             # Prepare message data
             message_data = {
                 "snippet": {

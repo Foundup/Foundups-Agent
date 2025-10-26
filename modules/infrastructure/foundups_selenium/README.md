@@ -106,6 +106,58 @@ These hooks map cleanly onto the MCP Browser faﾃｧade described in
 `docs/mcp/MCP_Master_Services.md`, giving Gemma 3 270M and Qwen 1.5B real-time
 visibility into 0102 execution trails.
 
+### Telemetry Storage - SQLite Database
+
+Browser telemetry sessions are automatically persisted to `data/foundups.db` for offline analysis and pattern learning. The `selenium_sessions` table stores:
+
+**Schema**:
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INTEGER PRIMARY KEY | Auto-increment session ID |
+| `timestamp` | TEXT | ISO8601 UTC timestamp (auto-generated) |
+| `url` | TEXT | Page URL being browsed (required) |
+| `screenshot_hash` | TEXT | SHA256 hash for deduplication |
+| `screenshot_path` | TEXT | Absolute path to raw screenshot |
+| `annotated_path` | TEXT | Path to Gemini-annotated screenshot |
+| `analysis_json` | TEXT | Raw JSON dump of Gemini Vision analysis |
+
+**Indexes**:
+- `idx_selenium_sessions_timestamp` - Efficient time-based queries
+- `idx_selenium_sessions_hash` - Screenshot deduplication
+
+**Usage Example**:
+
+```python
+from modules.infrastructure.foundups_selenium.src.telemetry_store import record_session
+
+# Record a telemetry session
+session_id = record_session({
+    "url": "https://x.com/compose/post",
+    "screenshot_hash": "sha256:abc123...",
+    "screenshot_path": "/tmp/screenshots/session_001.png",
+    "annotated_path": "/tmp/annotated/session_001_annotated.png",
+    "analysis_json": {
+        "post_button": {"found": True, "enabled": True},
+        "ui_state": "ready_to_post",
+        "confidence": 0.95
+    }
+})
+```
+
+**Implementation**:
+- Module: `src/telemetry_store.py`
+- Tests: `tests/test_telemetry_store.py` (17/17 passing)
+- Thread-safe: Uses SQLite autocommit mode for concurrent writes
+- Auto-creation: Table and indexes created automatically on first use
+- WSP References: WSP 72 (Module Independence), WSP 22 (Documentation)
+
+**MCP Integration**:
+The telemetry store can be queried by MCP servers and Gemma/Qwen agents for:
+- Session replay and debugging
+- Pattern learning from successful automations
+- UI state transition analysis
+- Performance profiling (screenshot timing, analysis duration)
+
 ---
 
 ## Installation
@@ -428,6 +480,26 @@ We chose to **extend** rather than **fork** because:
 - [ ] Built-in vision integration
 - [ ] Custom browser driver optimizations
 - [ ] Contribute improvements back to Selenium
+
+### Sprint Execution Plan (0102 Autonomous Loop)
+- **Sprint 1 – Stabilise Selenium DAE (✅ complete)**  
+  Harden driver init, fallback, and vision workflows with pytest coverage so Qwen/Gemma have a reliable browser worker.
+- **Sprint 2 – Telemetry & Logging (🚧 in progress)**  
+  Persist hashed screenshots plus session JSONL/SQL telemetry so Holo + Gemma can summarise runs; expose the data over MCP.
+- **Sprint 3 – MCP Interface Stub (⏭ queued)**  
+  Publish driver actions through a lightweight MCP server (`connect_or_create`, `analyze_ui`, `post_to_x`) for Overseer teams.
+- **Sprint 4 – Credential Vault Hook (⏭ queued)**  
+  Replace raw environment lookups with Secrets MCP fetches while keeping pytest doubles for offline CI.
+- **Sprint 5 – Human-in-the-loop UX (⏭ queued)**  
+  Add preview/approve checkpoints and ensure telemetry records the approvals for auditing.
+
+**Qwen execution routing:**
+Default to the FoundUps Selenium driver for browser-only automations; escalate to **UI‑TARS‑1.5** when missions cross into desktop or multi-application control so the autonomous loop respects WSP 3 modular boundaries.
+
+### Sprint 6 – Draft & Schedule Loop (Planned)
+- Integrate `skills.md` templates with the Social Media DAE so Claude/Grok/Gemini author LinkedIn copy.
+- Use UI‑TARS to populate LinkedIn scheduler with 012-approved drafts instead of immediate posting.
+- Expand Vision DAE telemetry for approval feedback so Qwen/Gemma learn from 012 edits.
 
 ---
 

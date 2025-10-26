@@ -117,20 +117,20 @@ class AMOHeartbeatService:
         try:
             # Calculate uptime
             uptime = (datetime.now() - self.start_time).total_seconds()
-            
+
             # Get system metrics
             memory_usage = self._get_memory_usage()
             cpu_usage = self._get_cpu_usage()
-            
+
             # Get AMO status
             active_intents = len(self.orchestrator.get_active_intents())
             presence_updates = len(self.orchestrator.user_profiles)
-            
+
             # Determine health status
             status = self._calculate_health_status(
                 uptime, active_intents, memory_usage, cpu_usage
             )
-            
+
             # Create heartbeat data
             heartbeat = HeartbeatData(
                 timestamp=datetime.now(),
@@ -141,21 +141,25 @@ class AMOHeartbeatService:
                 memory_usage_mb=memory_usage,
                 cpu_usage_percent=cpu_usage
             )
-            
+
             # Store heartbeat
             self.last_heartbeat = heartbeat
             self.pulse_count += 1
-            
+
             # Add to history (keep only recent entries)
             self.health_history.append(heartbeat)
             if len(self.health_history) > self.max_history_size:
                 self.health_history.pop(0)
-            
+
+            # === CARDIOVASCULAR TELEMETRY (WSP 91: DAEMON Observability) ===
+            # Write heartbeat data to JSONL for streaming observability
+            await self._write_telemetry(heartbeat)
+
             # Log pulse (reduced frequency to avoid spam)
             if self.pulse_count % 10 == 0:  # Log every 10th pulse (every 5 minutes with 30s interval)
                 logger.info(f"[U+1F497] AMO Heartbeat #{self.pulse_count} - Status: {status.value}")
                 logger.info(f"   Uptime: {uptime:.0f}s, Active Intents: {active_intents}")
-            
+
             # Perform minimal housekeeping
             await self._no_op_schedule_tasks()
             
@@ -211,6 +215,29 @@ class AMOHeartbeatService:
         except Exception as e:
             logger.error(f"[FAIL] No-op schedule task failed: {e}")
     
+    async def _write_telemetry(self, heartbeat: HeartbeatData):
+        """
+        Write heartbeat telemetry to JSONL file for streaming observability.
+
+        Enables MCP servers, dashboards, and analytics to monitor AMO health
+        in real-time without querying the heartbeat service directly.
+
+        WSP 91: DAEMON Observability Protocol
+        """
+        try:
+            # Telemetry file path
+            telemetry_file = Path("logs/amo_heartbeat.jsonl")
+            telemetry_file.parent.mkdir(parents=True, exist_ok=True)
+
+            # Write heartbeat as JSONL (one JSON object per line)
+            with open(telemetry_file, 'a', encoding='utf-8') as f:
+                json.dump(heartbeat.to_dict(), f)
+                f.write('\n')
+
+        except Exception as e:
+            # Log error but don't crash the heartbeat service
+            logger.error(f"[FAIL] Failed to write telemetry: {e}")
+
     async def _self_test(self):
         """Perform lightweight self-test to verify AMO functionality"""
         try:

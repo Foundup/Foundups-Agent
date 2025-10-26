@@ -164,7 +164,7 @@ Network Growth:
 
 ### What We Protect Against
 - Surveillance vehicle tracking
-- Immigration enforcement coordination
+- Authority surveillance coordination
 - Community targeting patterns
 - Data harvesting by authorities
 

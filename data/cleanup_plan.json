@@ -1,0 +1,12 @@
+{
+  "plan_id": "cleanup_plan_20251022_200300",
+  "generated_at": "2025-10-22T20:03:00.517029+00:00",
+  "batches": [],
+  "flagged_for_review": [],
+  "skill_id": "qwen_cleanup_strategist_v1_prototype",
+  "metrics": {
+    "total_noise_candidates": 0,
+    "autonomous_batches": 0,
+    "manual_review": 0
+  }
+}

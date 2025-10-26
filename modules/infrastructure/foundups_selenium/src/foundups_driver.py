@@ -25,11 +25,18 @@ while layering FoundUps capabilities on top.
 """
 
 import hashlib
+import json
 import os
 import shutil
 import time
 import random
+from pathlib import Path
 from typing import Optional, Dict, Any, Callable, List
+
+try:
+    from .telemetry_store import record_session as _record_session  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    _record_session = None
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -54,6 +61,8 @@ class FoundUpsDriver(webdriver.Chrome):
         """Initialise the FoundUps WebDriver with optional telemetry observers."""
 
         self._observers: List[Callable[[str, Dict[str, Any]], None]] = list(observers or [])
+        self._session_snapshot_dir = Path("docs/session_backups/foundups_selenium")
+        self._record_session_hook = _record_session
 
         options: ChromeOptions = kwargs.get("options", ChromeOptions())
 
@@ -349,6 +358,7 @@ class FoundUpsDriver(webdriver.Chrome):
                 event_payload["annotated_screenshot_path"] = annotated_path
 
         self._emit_event("vision_analyze_completed", event_payload)
+        self._persist_session_snapshot(event_payload, analysis)
 
         return analysis
 
@@ -397,6 +407,30 @@ class FoundUpsDriver(webdriver.Chrome):
                 return annotated_path
             except Exception:
                 return None
+
+    def _persist_session_snapshot(self, event_payload: Dict[str, Any], analysis: Dict[str, Any]) -> None:
+        """Append a JSON telemetric snapshot for Sprint 2 archives."""
+
+        try:
+            self._session_snapshot_dir.mkdir(parents=True, exist_ok=True)
+            entry = {
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "event": "vision_analyze",
+                "url": getattr(self, "current_url", None),
+                "payload": event_payload,
+                "analysis": analysis,
+            }
+            snapshot_file = self._session_snapshot_dir / "vision_sessions.jsonl"
+            with snapshot_file.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+            if self._record_session_hook:
+                try:
+                    self._record_session_hook(entry)
+                except Exception as hook_exc:  # pragma: no cover - DB best effort
+                    print(f"[FoundUps] sqlite telemetry failed: {hook_exc}")
+        except Exception as exc:  # pragma: no cover - archival best effort
+            print(f"[FoundUps] snapshot persistence failed: {exc}")
 
     def human_type(
         self,

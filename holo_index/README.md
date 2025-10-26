@@ -84,9 +84,16 @@ HoloIndex + **HoloDAE** = Complete autonomous code intelligence system:
 - **HoloDAE**: Autonomous 0102 intelligence agent that monitors and enhances all searches
 
 ## Operational Documentation
+- **[CLI_REFERENCE.md](CLI_REFERENCE.md)** — Verbatim menu snapshot and CLI command mappings (for 0102_gpt parsing)
 - [Operational Playbook](docs/OPERATIONAL_PLAYBOOK.md) — step-by-step pre-code checklist, TODO workflow, and doc compliance rules for 0102.
 - [Telemetry & Breadcrumb Guide](docs/MULTI_AGENT_BREADCRUMB_EXAMPLE.md) — how to follow the live JSONL stream (`holo_index/logs/telemetry/`) and coordinate hand-offs between sessions.
 - [CLI Refactoring Plan](docs/CLI_REFACTORING_PLAN.md) — deeper design notes for the search/CLI pipeline.
+
+### Agentic Output Stream (WSP 87/75/90)
+- **Throttled Sections**: AgenticOutputThrottler now enforces `max_sections` automatically; additional sections are suppressed with an inline hint to re-run with `--verbose`.
+- **ASCII-Only Signals**: Success/error banners are pure ASCII (`[GREEN]`, `[YELLOW]`, `[ERROR]`) so Unicode scrubbers stay dormant by default.
+- **Single Rendering Path**: CLI search results are routed through `throttler.display_results()` + `render_prioritized_output()`—no duplicate collate logic.
+- **Adaptive History**: Each run asynchronously logs code/WSP hit counts plus advisor/todo metadata, feeding Gemma/Qwen learning without blocking the CLI loop.
 ## Revolutionary Architecture
 
 ### [AI] HoloDAE - Chain-of-Thought Logging for Recursive Self-Improvement

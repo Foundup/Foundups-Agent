@@ -70,6 +70,7 @@ QWEN LLM (Primary Orchestrator - Circulatory System)
 - **FileSystemWatcher/ContextAnalyzer**: Invoked by HoloDAECoordinator during monitoring cycles and request orchestration
 - **Quiet Logging**: start_monitoring() emits a single actionable summary; archived Δ heartbeat logs remain in _archive/
 - **MonitoringResult Model**: Unified in models/monitoring_types.py; intelligent_monitor.py now adapts to the shared dataclasses
+- **CLI Usage**: Monitoring is disabled by default for single-shot Holo CLI queries; call `HoloDAECoordinator.enable_monitoring()` or use `start_holodae_monitoring()` when running the autonomous daemon.
 
 ### Intelligence Flow
 

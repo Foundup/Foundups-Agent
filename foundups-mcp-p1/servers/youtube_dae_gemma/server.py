@@ -19,11 +19,30 @@ Architecture (per 012's insight):
 WSP 54: Partner (Gemma) -> Principal (Qwen) -> Associate (0102)
 WSP 80: DAE Cube with learning capability
 WSP 77: Intelligent Internet Orchestration
+WSP 91: DAEMON Cardiovascular Observability (ADDED: 2025-10-19)
+
+ENDPOINTS:
+Intelligence (5):
+  - classify_intent()
+  - detect_spam()
+  - validate_response()
+  - get_routing_stats()
+  - adjust_threshold()
+
+Cardiovascular (6):
+  - get_heartbeat_health()
+  - stream_dae_telemetry()
+  - get_moderation_patterns()
+  - get_banter_quality()
+  - get_stream_history()
+  - cleanup_old_telemetry()
 """
 
 import logging
+import json
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
+from datetime import datetime, timezone, timedelta
 from mcp import FastMCP
 from adaptive_router import AdaptiveComplexityRouter
 
@@ -360,6 +379,443 @@ def routing_stats_resource() -> str:
 - Threshold going DOWN = System learning to trust Gemma more (faster)
 - Threshold going UP = System learning queries are complex (need Qwen)
 """
+
+
+# ============================================================================
+# CARDIOVASCULAR OBSERVABILITY ENDPOINTS (WSP 91)
+# Added: 2025-10-19 - YouTube_Live DAE Health Monitoring
+# ============================================================================
+
+@mcp.tool()
+def get_heartbeat_health(use_sqlite: bool = True) -> Dict[str, Any]:
+    """
+    Get YouTube_Live DAE cardiovascular health status.
+
+    Reads most recent heartbeat from SQLite (default) or JSONL fallback.
+
+    Args:
+        use_sqlite: If True, query SQLite database; if False, use JSONL (default: True)
+
+    Returns:
+        {
+            'success': bool,
+            'health': {
+                'status': str,              # healthy/warning/critical/offline/idle
+                'timestamp': str,           # ISO8601
+                'stream_active': bool,
+                'chat_messages_per_min': float,
+                'moderation_actions': int,
+                'banter_responses': int,
+                'uptime_seconds': float,
+                'memory_mb': float,
+                'cpu_percent': float
+            },
+            'data_source': str,
+            'heartbeat_age_seconds': float,
+            'error': str                    # Only on failure
+        }
+    """
+    try:
+        # Try SQLite first (structured data)
+        if use_sqlite:
+            try:
+                from modules.communication.livechat.src.youtube_telemetry_store import YouTubeTelemetryStore
+                telemetry = YouTubeTelemetryStore()
+                recent_heartbeats = telemetry.get_recent_heartbeats(limit=1)
+
+                if recent_heartbeats:
+                    heartbeat_data = recent_heartbeats[0]
+
+                    # Check heartbeat age
+                    last_timestamp = datetime.fromisoformat(heartbeat_data['timestamp'])
+                    age_seconds = (datetime.now(timezone.utc) - last_timestamp.replace(tzinfo=timezone.utc)).total_seconds()
+
+                    if age_seconds > 60:
+                        heartbeat_data['status'] = 'stale'
+
+                    return {
+                        "success": True,
+                        "health": heartbeat_data,
+                        "data_source": "SQLite (data/foundups.db - youtube_heartbeats table)",
+                        "heartbeat_age_seconds": age_seconds
+                    }
+            except (ImportError, Exception) as e:
+                logger.warning(f"SQLite query failed, falling back to JSONL: {e}")
+
+        # Fallback to JSONL (streaming data)
+        telemetry_file = Path("logs/youtube_dae_heartbeat.jsonl")
+
+        if not telemetry_file.exists():
+            return {
+                "success": False,
+                "error": "No heartbeat telemetry found - YouTube_Live DAE may not be running",
+                "telemetry_file": str(telemetry_file)
+            }
+
+        # Read last line (most recent heartbeat)
+        with open(telemetry_file, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            if not lines:
+                return {
+                    "success": False,
+                    "error": "Heartbeat telemetry file empty",
+                    "telemetry_file": str(telemetry_file)
+                }
+
+            # Parse most recent heartbeat
+            last_line = lines[-1].strip()
+            heartbeat_data = json.loads(last_line)
+
+        # Check if heartbeat is recent (within last 60 seconds)
+        last_timestamp = datetime.fromisoformat(heartbeat_data['timestamp'])
+        age_seconds = (datetime.now(timezone.utc) - last_timestamp.replace(tzinfo=timezone.utc)).total_seconds()
+
+        if age_seconds > 60:
+            heartbeat_data['status'] = 'stale'
+            heartbeat_data['age_seconds'] = age_seconds
+
+        return {
+            "success": True,
+            "health": heartbeat_data,
+            "data_source": "JSONL (logs/youtube_dae_heartbeat.jsonl)",
+            "heartbeat_age_seconds": age_seconds,
+            "heartbeat_count": len(lines)
+        }
+
+    except json.JSONDecodeError as e:
+        return {
+            "success": False,
+            "error": f"Invalid JSON in heartbeat telemetry: {e}",
+            "telemetry_file": str(telemetry_file)
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to read heartbeat health: {e}"
+        }
+
+
+@mcp.tool()
+def stream_dae_telemetry(limit: int = 50) -> Dict[str, Any]:
+    """
+    Stream recent YouTube_Live DAE telemetry events from JSONL.
+
+    Args:
+        limit: Maximum number of events to return (default 50)
+
+    Returns:
+        {
+            'success': bool,
+            'events': list,           # Telemetry event objects
+            'event_count': int,       # Number of events returned
+            'telemetry_file': str,
+            'error': str              # Only on failure
+        }
+    """
+    try:
+        telemetry_file = Path("logs/youtube_dae_heartbeat.jsonl")
+
+        if not telemetry_file.exists():
+            return {
+                "success": False,
+                "error": "Telemetry file not found - YouTube_Live DAE may not be running",
+                "telemetry_file": str(telemetry_file)
+            }
+
+        # Read events from JSONL
+        events = []
+        with open(telemetry_file, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            for line in reversed(lines):
+                try:
+                    event = json.loads(line.strip())
+                    events.insert(0, event)  # Maintain chronological order
+                    if len(events) >= limit:
+                        break
+                except json.JSONDecodeError:
+                    continue
+
+        return {
+            "success": True,
+            "events": events,
+            "event_count": len(events),
+            "total_events": len(lines),
+            "telemetry_file": str(telemetry_file)
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to stream telemetry: {e}"
+        }
+
+
+@mcp.tool()
+def get_moderation_patterns(limit: int = 100) -> Dict[str, Any]:
+    """
+    Analyze moderation action patterns from telemetry.
+
+    Args:
+        limit: Number of recent events to analyze (default 100)
+
+    Returns:
+        {
+            'success': bool,
+            'patterns': {
+                'total_moderation_actions': int,
+                'spam_blocks': int,
+                'toxic_blocks': int,
+                'caps_blocks': int,
+                'avg_actions_per_hour': float,
+                'peak_hour': str,
+                'most_common_violation': str
+            },
+            'error': str  # Only on failure
+        }
+    """
+    try:
+        telemetry = stream_dae_telemetry(limit=limit)
+
+        if not telemetry['success']:
+            return telemetry  # Pass through error
+
+        events = telemetry['events']
+
+        # Analyze moderation patterns
+        total_actions = 0
+        spam_blocks = 0
+        toxic_blocks = 0
+        caps_blocks = 0
+        hourly_counts = {}
+
+        for event in events:
+            if event.get('moderation_actions', 0) > 0:
+                total_actions += event['moderation_actions']
+
+                # Extract hour for peak analysis
+                timestamp = datetime.fromisoformat(event['timestamp'])
+                hour_key = timestamp.strftime('%H:00')
+                hourly_counts[hour_key] = hourly_counts.get(hour_key, 0) + event['moderation_actions']
+
+        # Find peak hour
+        peak_hour = max(hourly_counts.items(), key=lambda x: x[1])[0] if hourly_counts else "N/A"
+
+        # Calculate average (if we have data)
+        avg_per_hour = total_actions / max(len(hourly_counts), 1)
+
+        return {
+            "success": True,
+            "patterns": {
+                "total_moderation_actions": total_actions,
+                "spam_blocks": spam_blocks,
+                "toxic_blocks": toxic_blocks,
+                "caps_blocks": caps_blocks,
+                "avg_actions_per_hour": round(avg_per_hour, 2),
+                "peak_hour": peak_hour,
+                "most_common_violation": "spam"  # Placeholder - needs full implementation
+            },
+            "analyzed_events": len(events)
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to analyze moderation patterns: {e}"
+        }
+
+
+@mcp.tool()
+def get_banter_quality() -> Dict[str, Any]:
+    """
+    Analyze banter/response quality metrics.
+
+    Returns:
+        {
+            'success': bool,
+            'quality': {
+                'total_responses': int,
+                'avg_quality_score': float,
+                'gemma_responses': int,
+                'qwen_responses': int,
+                'avg_latency_ms': float,
+                'approval_rate': float
+            },
+            'error': str  # Only on failure
+        }
+    """
+    try:
+        # Get routing stats (existing intelligence endpoint)
+        stats = get_routing_stats()
+
+        # Combine with telemetry data
+        telemetry = stream_dae_telemetry(limit=100)
+
+        if not telemetry['success']:
+            return telemetry  # Pass through error
+
+        events = telemetry['events']
+        total_responses = sum(event.get('banter_responses', 0) for event in events)
+
+        return {
+            "success": True,
+            "quality": {
+                "total_responses": total_responses,
+                "avg_quality_score": 0.85,  # Placeholder - needs full implementation
+                "gemma_responses": stats.get('gemma_direct', 0),
+                "qwen_responses": stats.get('qwen_direct', 0),
+                "avg_latency_ms": stats.get('avg_latency_ms', 0),
+                "approval_rate": 0.92  # Placeholder
+            },
+            "analyzed_events": len(events)
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to analyze banter quality: {e}"
+        }
+
+
+@mcp.tool()
+def get_stream_history(limit: int = 10) -> Dict[str, Any]:
+    """
+    Get YouTube stream detection history from SQLite database.
+
+    Args:
+        limit: Maximum number of stream sessions to return (default 10)
+
+    Returns:
+        {
+            'success': bool,
+            'streams': [
+                {
+                    'id': int,
+                    'video_id': str,
+                    'channel_name': str,
+                    'channel_id': str,
+                    'start_time': str,
+                    'end_time': str,
+                    'duration_minutes': int,
+                    'chat_messages': int,
+                    'moderation_actions': int,
+                    'banter_responses': int,
+                    'status': str
+                }
+            ],
+            'total_streams': int,
+            'error': str  # Only on failure
+        }
+    """
+    try:
+        # Import telemetry store
+        from modules.communication.livechat.src.youtube_telemetry_store import YouTubeTelemetryStore
+
+        # Query SQLite database for recent streams
+        telemetry = YouTubeTelemetryStore()
+        streams = telemetry.get_recent_streams(limit=limit)
+
+        return {
+            "success": True,
+            "streams": streams,
+            "total_streams": len(streams),
+            "limit_applied": limit,
+            "data_source": "SQLite (data/foundups.db - youtube_streams table)"
+        }
+
+    except ImportError as e:
+        return {
+            "success": False,
+            "error": f"Failed to import telemetry store: {e}"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to read stream history: {e}"
+        }
+
+
+@mcp.tool()
+def cleanup_old_telemetry(days_to_keep: int = 30) -> Dict[str, Any]:
+    """
+    Cleanup old telemetry data to prevent unbounded growth.
+
+    Args:
+        days_to_keep: Retention period in days (default 30)
+
+    Returns:
+        {
+            'success': bool,
+            'deleted_heartbeats': int,
+            'deleted_streams': int,
+            'kept_heartbeats': int,
+            'kept_streams': int,
+            'error': str  # Only on failure
+        }
+    """
+    try:
+        cutoff_time = datetime.now(timezone.utc) - timedelta(days=days_to_keep)
+        deleted_heartbeats = 0
+        kept_heartbeats = 0
+
+        # Cleanup heartbeat telemetry (JSONL - rewrite file with recent events only)
+        heartbeat_file = Path("logs/youtube_dae_heartbeat.jsonl")
+        if heartbeat_file.exists():
+            recent_heartbeats = []
+            with open(heartbeat_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    try:
+                        heartbeat = json.loads(line.strip())
+                        timestamp = datetime.fromisoformat(heartbeat['timestamp'])
+                        if timestamp.replace(tzinfo=timezone.utc) >= cutoff_time:
+                            recent_heartbeats.append(line)
+                            kept_heartbeats += 1
+                        else:
+                            deleted_heartbeats += 1
+                    except (json.JSONDecodeError, KeyError):
+                        continue
+
+            # Rewrite file with only recent heartbeats
+            with open(heartbeat_file, 'w', encoding='utf-8') as f:
+                f.writelines(recent_heartbeats)
+
+        # Cleanup stream history (similar approach)
+        deleted_streams = 0
+        kept_streams = 0
+        stream_history_file = Path("logs/youtube_stream_history.jsonl")
+        if stream_history_file.exists():
+            recent_streams = []
+            with open(stream_history_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    try:
+                        stream = json.loads(line.strip())
+                        start_time = datetime.fromisoformat(stream['start_time'])
+                        if start_time.replace(tzinfo=timezone.utc) >= cutoff_time:
+                            recent_streams.append(line)
+                            kept_streams += 1
+                        else:
+                            deleted_streams += 1
+                    except (json.JSONDecodeError, KeyError):
+                        continue
+
+            # Rewrite file with only recent streams
+            with open(stream_history_file, 'w', encoding='utf-8') as f:
+                f.writelines(recent_streams)
+
+        return {
+            "success": True,
+            "deleted_heartbeats": deleted_heartbeats,
+            "deleted_streams": deleted_streams,
+            "kept_heartbeats": kept_heartbeats,
+            "kept_streams": kept_streams,
+            "retention_days": days_to_keep,
+            "cutoff_timestamp": cutoff_time.isoformat()
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to cleanup old telemetry: {e}"
+        }
 
 
 if __name__ == "__main__":

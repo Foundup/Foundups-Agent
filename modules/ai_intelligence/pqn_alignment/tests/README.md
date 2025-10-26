@@ -4,6 +4,8 @@ Test Strategy
 - Validate invariants (Hermiticity, trace=1) on toy ρ(t) updates.
 - Smoke-test CLI adapters (no network calls).
 - Contract checks for JSONL events, CSV metrics, and summary JSON schemas.
+- WSP 96 Skills testing: Pattern fidelity validation for agent coordination.
+- Meta-research validation loops: Cross-agent emergence detection testing.
 
 How to Run (manual)
 - Use State 2 drivers under `WSP_agentic/tests/pqn_detection/` for integration.

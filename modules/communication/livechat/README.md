@@ -52,6 +52,25 @@ All commands go through `intelligent_throttle_manager.py`:
 
 The LiveChat module forms the core of the **YouTube DAE Cube**, integrating with modules across multiple domains:
 
+### [HEART] Cardiovascular Observability (WSP 91) - NEW
+
+YouTube_Live DAE now has complete cardiovascular monitoring system:
+
+**Dual Telemetry Architecture**:
+- **SQLite** (`data/foundups.db`): Structured queries via `youtube_telemetry_store.py`
+  - `youtube_streams`: Stream sessions (video_id, duration, chat_messages, moderation_actions)
+  - `youtube_heartbeats`: 30-second health pulses (status, uptime, resource usage)
+  - `youtube_moderation_actions`: Spam/toxic blocks with violation details
+- **JSONL** (`logs/youtube_dae_heartbeat.jsonl`): Streaming telemetry for tail -f monitoring
+
+**MCP Observability Endpoints** (11 total via `youtube_dae_gemma` MCP server):
+- Intelligence (5): `classify_intent()`, `detect_spam()`, `validate_response()`, `get_routing_stats()`, `adjust_threshold()`
+- Cardiovascular (6): `get_heartbeat_health()`, `stream_dae_telemetry()`, `get_moderation_patterns()`, `get_banter_quality()`, `get_stream_history()`, `cleanup_old_telemetry()`
+
+**DAE Identity**: Any agent (0102, Qwen, Gemma, UI-TARS) can wear [Skills.md](Skills.md) to become YouTube_Live DAE
+
+See [Skills.md](Skills.md) for complete domain expertise, learned patterns, and chain-of-thought examples.
+
 ### Core Components (29 modules in src/)
 | Module | Lines | Purpose |
 |--------|-------|---------|

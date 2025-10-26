@@ -190,6 +190,12 @@ Output: [SEARCH] EXPLORATION ANALYSIS:
 - [OK] Exploration: Full detailed analysis when requested
 - [OK] Standard queries: Clean, relevant information only
 
+## Telemetry and Skill Integration
+
+- Output history now persisted to holo_index/output/holo_output_history.jsonl for Gemma pattern analysis.
+- holo_index/skills/qwen_holo_output_skill/SKILL.md instructs Qwen on intent-aware formatting and telemetry responsibilities.
+- Histories are capped at 20 lines per record to satisfy WSP 87 while giving Gemma structured training data.
+
 ## Future Enhancements
 
 1. **Adaptive Filtering**: Learn from user feedback to improve filtering
