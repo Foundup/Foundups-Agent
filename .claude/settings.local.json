@@ -22,7 +22,9 @@
       "Bash(pip show:*)",
       "Bash(sqlite3:*)",
       "Bash(powershell -Command:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(git reset:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

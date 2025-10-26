@@ -82,6 +82,10 @@ build/
 foundups-agent-clean/
 temp/
 temp/*
+temp_utilities/
+**/temp/
+holo_index/temp/
+modules/**/temp/
 
 # BanterEngine specific
 modules/banter_engine/src/emoji_sequence_map.py
