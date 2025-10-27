@@ -1,0 +1,165 @@
+{
+  "pattern_name": "Research Asset Placement Pattern",
+  "pattern_type": "file_organization",
+  "learned_from": "rESP image cleanup - 2025-10-28",
+  "gemma_specialization": "detect_research_assets",
+  "qwen_specialization": "strategic_asset_placement",
+
+  "deep_think_chain": {
+    "step_1_question": "What is the relationship between these files and existing modules?",
+    "step_2_holo_search": "Search HoloIndex for module relationships",
+    "step_3_first_principles": "Apply Occam's Razor - simplest placement",
+    "step_4_validation": "Verify with module structure (WSP 49)",
+    "step_5_execution": "Move files with Gemma guidance",
+    "step_6_learning": "Store pattern for future"
+  },
+
+  "pattern_rules": {
+    "rule_1": {
+      "condition": "Files are research images/diagrams (*.png, *.jpg, *.svg)",
+      "action": "Place in {module}/docs/assets/ or {module}/docs/research/",
+      "reasoning": "Research documentation assets stay WITH the implementation they document"
+    },
+    "rule_2": {
+      "condition": "Files contain research naming patterns (fig*, diagram*, architecture*, detector*)",
+      "action": "Identify related module via content analysis",
+      "reasoning": "File naming reveals research domain"
+    },
+    "rule_3": {
+      "condition": "Files reference specific technology (rESP, PQN, quantum, pattern)",
+      "action": "Map to technology's implementation module",
+      "reasoning": "Theory documents belong with implementation"
+    },
+    "rule_4": {
+      "condition": "Files are logs or temp files (*.log, *.tmp)",
+      "action": "Move to logs/ or temp/ (gitignored)",
+      "reasoning": "Runtime artifacts don't belong in root"
+    }
+  },
+
+  "example_execution": {
+    "discovered_files": [
+      "rESP fig1.png",
+      "resp_detector_architecture.png",
+      "token_interference_diagram.png",
+      "fig2_rESP_En_Ja.jpg"
+    ],
+    "deep_think_analysis": {
+      "question": "What do these files document?",
+      "answer": "rESP (Recursive Emergent Semantic Patterns) research theory",
+      "next_question": "Which module implements rESP?",
+      "holo_search": "rESP PQN quantum pattern detection",
+      "holo_result": "PQNResearchDAEOrchestrator in pqn_alignment module",
+      "conclusion": "rESP images document PQN implementation theory"
+    },
+    "occams_razor": {
+      "option_1": "Create separate research/ directory in root",
+      "complexity_1": "HIGH - adds root complexity, separates theory from implementation",
+      "option_2": "Put in WSP_Knowledge/ as general knowledge",
+      "complexity_2": "MEDIUM - WSP_Knowledge is for protocols, not module research",
+      "option_3": "Put in pqn_alignment/docs/assets/",
+      "complexity_3": "LOW - keeps research WITH implementation, follows WSP 49",
+      "decision": "Option 3 - Simplest and most maintainable"
+    },
+    "final_placement": "modules/ai_intelligence/pqn_alignment/docs/assets/resp/",
+    "reasoning": "Research images stay with the module they document (WSP 49)"
+  },
+
+  "gemma_training_data": {
+    "positive_examples": [
+      {
+        "file": "rESP_detector_architecture.png",
+        "classification": "research_asset",
+        "module": "pqn_alignment",
+        "destination": "modules/ai_intelligence/pqn_alignment/docs/assets/",
+        "confidence": 0.95
+      },
+      {
+        "file": "token_interference_diagram.png",
+        "classification": "research_asset",
+        "module": "pqn_alignment",
+        "destination": "modules/ai_intelligence/pqn_alignment/docs/assets/",
+        "confidence": 0.92
+      },
+      {
+        "file": "DumpStack.log",
+        "classification": "runtime_artifact",
+        "module": "system",
+        "destination": "logs/",
+        "confidence": 0.99
+      }
+    ],
+    "negative_examples": [
+      {
+        "file": "README.md",
+        "classification": "root_documentation",
+        "module": "system",
+        "destination": "root",
+        "reasoning": "System-level documentation belongs in root"
+      },
+      {
+        "file": "CLAUDE.md",
+        "classification": "operational_documentation",
+        "module": "system",
+        "destination": "root",
+        "reasoning": "0102 operational instructions stay in root"
+      }
+    ]
+  },
+
+  "qwen_strategic_guidance": {
+    "analysis_steps": [
+      "1. Scan file naming patterns for domain keywords",
+      "2. Use HoloIndex to find related modules",
+      "3. Check module structure for assets/ or docs/ subdirectories",
+      "4. Apply Occam's Razor to choose simplest placement",
+      "5. Validate against WSP 49 module structure protocol",
+      "6. Generate relocation commands with verification"
+    ],
+    "decision_criteria": {
+      "complexity": "Prefer solutions that don't add new directories",
+      "discoverability": "Assets should be findable near related code",
+      "maintainability": "Theory and implementation in same module",
+      "wsp_compliance": "Follow WSP 3 (domains) and WSP 49 (structure)"
+    }
+  },
+
+  "recursive_improvement": {
+    "iteration_1": "Manual analysis and relocation (this session)",
+    "iteration_2": "Gemma learns pattern from this execution",
+    "iteration_3": "Qwen uses pattern for strategic planning",
+    "iteration_4": "Autonomous detection and relocation",
+    "iteration_5": "Pattern refinement based on edge cases",
+    "convergence": "100% autonomous research asset placement"
+  },
+
+  "success_metrics": {
+    "gemma_accuracy": ">=0.90 for research asset detection",
+    "qwen_placement_accuracy": ">=0.85 for correct module identification",
+    "autonomous_execution_rate": ">=70% of research assets",
+    "false_positive_rate": "<=5%",
+    "learning_speed": "Pattern mastered within 10 examples"
+  },
+
+  "wsp_compliance": {
+    "wsp_3": "Module Organization - Files in correct domains",
+    "wsp_49": "Module Structure - Assets in module subdirectories",
+    "wsp_50": "Pre-Action Verification - HoloIndex search first",
+    "wsp_85": "Root Directory Protection - No research files in root"
+  },
+
+  "pattern_application": {
+    "when_to_use": "Gemma detects unauthorized files in root with research naming patterns",
+    "gemma_triggers": ["*.png", "*.jpg", "fig*", "*diagram*", "*architecture*", "rESP*", "*detector*"],
+    "qwen_analysis": "Deep Think → HoloIndex → First Principles → Placement Decision",
+    "validation": "Check file exists at new location and not in root",
+    "learning_update": "Add successful placements to training corpus"
+  },
+
+  "next_session_improvements": {
+    "auto_detect": "Gemma automatically flags research assets during root scans",
+    "auto_classify": "Qwen classifies assets by research domain",
+    "auto_place": "System autonomously relocates with 0102 approval",
+    "auto_learn": "Patterns automatically update adaptive learning DB"
+  }
+}

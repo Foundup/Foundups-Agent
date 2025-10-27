@@ -214,6 +214,10 @@ class AIIntelligenceOverseer:
         )
         self.patch_executor = PatchExecutor(repo_root=repo_root, allowlist=patch_allowlist)
 
+        # Fix attempt tracking - prevent spam and limit retries
+        # pattern_key → {attempts: int, last_attempt: float, disabled: bool, first_seen: float}
+        self.fix_attempts = {}
+
         # Load learning patterns
         self.patterns = self._load_patterns()
 
@@ -787,8 +791,46 @@ class AIIntelligenceOverseer:
 
         # Phase 3 (0102): Execute fixes or generate reports
         for bug in classified_bugs:
-            # Announce detection to live chat (012's vision!)
-            if chat_sender and announce_to_chat:
+            # Deduplication: Generate unique key for this bug pattern + match content
+            pattern_key = f"{bug['pattern_name']}_{hash(str(bug['matches']))}"
+
+            # Check if already attempted and should skip
+            if pattern_key in self.fix_attempts:
+                attempt_data = self.fix_attempts[pattern_key]
+
+                # Skip if disabled after 3 failures
+                if attempt_data.get('disabled'):
+                    logger.info(f"[SKIP] Pattern {bug['pattern_name']} disabled after 3 failed attempts")
+                    continue
+
+                # Skip if attempted recently (within 5 minutes = 300s)
+                time_since = time.time() - attempt_data['last_attempt']
+                if time_since < 300:
+                    logger.debug(f"[SKIP] Recently attempted {bug['pattern_name']} ({time_since:.0f}s ago)")
+                    continue
+
+                # Increment attempts if we're going to try again
+                attempt_data['attempts'] += 1
+                attempt_data['last_attempt'] = time.time()
+
+                # Disable if this will be 3rd failure
+                if attempt_data['attempts'] >= 3:
+                    logger.warning(f"[LIMIT] Final attempt (3/{attempt_data['attempts']}) for {bug['pattern_name']}")
+
+                # Suppress announcement for retries (already announced first time)
+                announce_this_bug = False
+            else:
+                # First time seeing this bug - track it and announce
+                self.fix_attempts[pattern_key] = {
+                    'attempts': 1,
+                    'last_attempt': time.time(),
+                    'first_seen': time.time(),
+                    'disabled': False
+                }
+                announce_this_bug = True
+
+            # Announce detection to live chat (only first time!)
+            if chat_sender and announce_to_chat and announce_this_bug:
                 self._announce_to_chat(chat_sender, "detection", bug)
 
             if bug["auto_fixable"] and auto_fix:
@@ -799,20 +841,31 @@ class AIIntelligenceOverseer:
                 # Low-hanging fruit: Auto-fix using WRE pattern memory
                 fix_result = self._apply_auto_fix(bug, skill)
 
-                # Announce completion
-            if chat_sender and announce_to_chat:
-                self._announce_to_chat(
-                    chat_sender,
-                    "complete",
-                    bug,
-                    fix_result,
-                    verification=fix_result.get("verification")
-                )
+                # Check if fix succeeded - if failed and this was 3rd attempt, disable
+                if not fix_result.get("success") and pattern_key in self.fix_attempts:
+                    attempt_data = self.fix_attempts[pattern_key]
+                    if attempt_data['attempts'] >= 3:
+                        attempt_data['disabled'] = True
+                        logger.error(f"[DISABLED] Pattern {bug['pattern_name']} disabled after 3 failed attempts")
 
-                if fix_result["success"]:
+                # Announce completion
+                if chat_sender and announce_to_chat and announce_this_bug:
+                    self._announce_to_chat(
+                        chat_sender,
+                        "complete",
+                        bug,
+                        fix_result,
+                        verification=fix_result.get("verification")
+                    )
+
+                if fix_result.get("success"):
                     results["bugs_fixed"] += 1
                     results["fixes_applied"].append(fix_result)
                     logger.info(f"[AUTO-FIX] Applied fix for {bug['pattern_name']}")
+
+                    # Clear fix attempts on success so it can detect new instances
+                    if pattern_key in self.fix_attempts:
+                        del self.fix_attempts[pattern_key]
 
             elif bug["needs_0102"] and report_complex:
                 # Complex bug: Generate report for 0102 review
@@ -1096,7 +1149,7 @@ class AIIntelligenceOverseer:
                 }
 
             # Code Fix: Unicode conversion (Complexity 1 - uses PatchExecutor)
-            elif fix_action == "apply_unicode_conversion_fix":
+            elif fix_action == "add_unicode_conversion_before_youtube_send":
                 logger.info(f"[AUTO-FIX] Applying Unicode conversion patch via PatchExecutor")
 
                 try:
@@ -1219,6 +1272,8 @@ index 0000000..1111111 100644
 
             # Unknown fix action
             else:
+                logger.error(f"[AUTO-FIX] Unknown fix_action: {fix_action} for pattern {pattern_name}")
+                logger.error(f"[AUTO-FIX] Available actions: run_reauthorization_script, rotate_api_credentials, reconnect_service, add_unicode_conversion_before_youtube_send")
                 execution_time_ms = int((time.time() - start_time) * 1000)
                 self.metrics.append_performance_metric(
                     skill_name=skill_name,
