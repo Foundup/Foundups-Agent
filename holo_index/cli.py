@@ -994,6 +994,49 @@ def main() -> None:
         # Set query context
         throttler.set_query_context(args.search, results)
 
+        # P0 FIX: Integrate Gemma root violation monitor alerts
+        # Shows real-time root directory violations in HoloIndex output
+        if not args.quiet_root_alerts:
+            try:
+                import asyncio
+                from holo_index.monitoring.root_violation_monitor.src.root_violation_monitor import GemmaRootViolationMonitor
+
+                # Run Gemma monitor asynchronously
+                async def get_root_violations():
+                    monitor = GemmaRootViolationMonitor()
+                    return await monitor.scan_root_violations()
+
+                # Execute async monitor
+                loop = asyncio.get_event_loop() if asyncio.get_event_loop().is_running() else asyncio.new_event_loop()
+                if not loop.is_running():
+                    violations_data = loop.run_until_complete(get_root_violations())
+                else:
+                    # If event loop already running (rare), skip for this session
+                    violations_data = None
+
+                # Add violations to results if found
+                if violations_data and violations_data.get('violations_found', 0) > 0:
+                    gemma_alert = f"[GEMMA-ALERT] {violations_data['violations_found']} root directory violations detected"
+                    if violations_data.get('auto_correctable', 0) > 0:
+                        gemma_alert += f" ({violations_data['auto_correctable']} auto-correctable)"
+
+                    # Add to warnings section
+                    if 'warnings' not in results:
+                        results['warnings'] = []
+                    results['warnings'].insert(0, gemma_alert)
+
+                    # Add detailed breakdown to results
+                    results['gemma_violations'] = {
+                        'total': violations_data['violations_found'],
+                        'auto_correctable': violations_data.get('auto_correctable', 0),
+                        'categories': violations_data.get('breakdown_by_category', {}),
+                        'timestamp': violations_data.get('timestamp', '')
+                    }
+
+            except Exception as e:
+                # Graceful degradation - don't break search if Gemma monitor fails
+                logger.debug(f"[GEMMA-MONITOR] Failed to check root violations: {e}")
+
         # Run subroutine analysis
         target_module = throttler.detected_module
         subroutine_results = throttler.subroutine_engine.run_intelligent_analysis(args.search, target_module)
