@@ -156,6 +156,114 @@ curl https://gotjunk-56566376153.us-west1.run.app
 
 ## Troubleshooting
 
+### Cloud Build Trigger Not Activating
+
+**Problem**: PR merged to main, but Cloud Build didn't trigger automatically.
+
+**Investigation Steps**:
+
+1. **Check Cloud Build Trigger Configuration**:
+   ```bash
+   # Via GCP Console (recommended)
+   https://console.cloud.google.com/cloud-build/triggers?project=gen-lang-client-0061781628
+
+   # Verify trigger: gotjunk-deploy-trigger
+   # - Branch pattern: ^main$
+   # - File filter: modules/foundups/gotjunk/**
+   # - Status: Enabled
+   ```
+
+2. **Check Recent Build History**:
+   ```bash
+   # Via GCP Console
+   https://console.cloud.google.com/cloud-build/builds?project=gen-lang-client-0061781628
+
+   # Look for builds triggered by recent commits
+   # Status: SUCCESS / FAILURE / QUEUED / WORKING
+   ```
+
+3. **Verify Git Commit Matches Trigger Pattern**:
+   ```bash
+   # Check recent commits to main branch
+   git log origin/main --oneline -5
+
+   # Verify changed files match trigger filter
+   git show <commit-hash> --stat | grep "modules/foundups/gotjunk/"
+
+   # Example:
+   git show 72359a04 --stat | grep "modules/foundups/gotjunk/"
+   # Should show: modules/foundups/gotjunk/frontend/App.tsx
+   ```
+
+4. **Check GitHub Webhook Connection**:
+   ```bash
+   # Via GCP Console
+   https://console.cloud.google.com/cloud-build/connections?project=gen-lang-client-0061781628
+
+   # Verify connection: foundups-agent-github
+   # Status: Connected
+   ```
+
+5. **Investigate Build Logs** (if build ran but failed):
+   ```bash
+   # Via GCP Console - click on failed build
+   https://console.cloud.google.com/cloud-build/builds?project=gen-lang-client-0061781628
+
+   # Common issues:
+   # - npm install failed (dependency error)
+   # - npm run build failed (TypeScript errors)
+   # - gcloud run deploy failed (permission error)
+   # - Secret Manager access denied
+   ```
+
+**Solutions**:
+
+- **Trigger Not Enabled**: Enable in Cloud Build Triggers console
+- **Branch Pattern Mismatch**: Trigger watches `^main$`, verify PR merged to `main` (not a feature branch)
+- **File Filter Mismatch**: Trigger watches `modules/foundups/gotjunk/**`, verify changed files match
+- **Webhook Not Firing**: Reconnect GitHub in Cloud Build Connections
+- **First-Time Setup - MOST COMMON**: Manual trigger activation required (see below)
+
+### First-Time Trigger Activation (REQUIRED)
+
+Cloud Build triggers require **manual first activation** even if configuration is correct.
+
+**Step 1: Verify Trigger Exists**
+1. Go to: https://console.cloud.google.com/cloud-build/triggers?project=gen-lang-client-0061781628
+2. Look for trigger: `gotjunk-deploy-trigger`
+3. Check status: Should show "Enabled" (not "Disabled")
+
+**Step 2: Manually Run Trigger**
+1. Click on `gotjunk-deploy-trigger`
+2. Click **"RUN"** button at top right
+3. Select branch: `main`
+4. Click "RUN TRIGGER"
+5. Wait 3-5 minutes for build to complete
+
+**Step 3: Verify Build Success**
+1. Go to: https://console.cloud.google.com/cloud-build/builds?project=gen-lang-client-0061781628
+2. Latest build should show: **SUCCESS** (green checkmark)
+3. Build logs should show:
+   - ✓ npm install completed
+   - ✓ npm run build completed
+   - ✓ gcloud run deploy completed
+   - ✓ Service URL: https://gotjunk-56566376153.us-west1.run.app
+
+**Step 4: Verify Deployment**
+1. Open: https://gotjunk-56566376153.us-west1.run.app
+2. Check welcome message shows latest code changes
+3. If successful, automatic deployments now work on every git push to main
+
+**Root Cause**: Previous session used semi-automated setup script (`gcp_console_automator.py`) which requires manual form completion at step 3 (line 265). The trigger may exist but was never fully activated.
+
+**Automated Monitoring** (0102 + GCP Console Automation):
+```bash
+# Use gcp_console_automation skill to monitor builds
+# Skill: modules/communication/livechat/skills/gcp_console_automation.json
+# Action: monitor_cloud_build
+# Notification: YouTube Live Chat when deployment succeeds/fails
+```
+
 ### Error: "gcloud: command not found"
 
 **Solution**: Install Google Cloud CLI (see Prerequisites)
