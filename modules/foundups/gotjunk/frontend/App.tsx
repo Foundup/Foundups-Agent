@@ -139,8 +139,8 @@ const App: React.FC = () => {
         
         {reviewItems.length === 0 && !isRecording && (
           <div className="text-center p-8">
-               <h2 className="text-2xl font-bold text-white">Welcome</h2>
-               <p className="text-gray-300 mt-1 max-w-xs">Use the camera below to capture your first item.</p>
+               <h2 className="text-2xl font-bold text-white">Welcome to GotJunk!</h2>
+               <p className="text-gray-300 mt-1 max-w-xs">It's Tinder for Your Junk! 1. Swipe what you want or Snap what you have. AI does the rest.</p>
           </div>
         )}
       </div>
