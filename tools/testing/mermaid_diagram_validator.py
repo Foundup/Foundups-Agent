@@ -1,40 +1,55 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Mermaid Diagram Validator for Patent Documents
 
 WSP-Compliant validation tool for Mermaid diagrams in documentation files.
 Ensures patent figures render correctly on GitHub and other platforms.
 
-📋 WSP COMPLIANCE:
+[CLIPBOARD] WSP COMPLIANCE:
 - WSP 1: Proper tool placement in tools/testing/ directory
 - WSP 20: Professional documentation standards
 - WSP 22: Traceable narrative and change tracking
 - WSP 47: Framework protection through validation
 
-🔍 VALIDATION FEATURES:
-- Greek letters (ρ, μ, ν, etc.) → ASCII replacements
-- HTML tags (<br/>, <b>, etc.) → Mermaid-compatible alternatives
-- Special characters (&, #, etc.) → Safe character replacements
-- Invalid syntax patterns → Syntax error detection
+[SEARCH] VALIDATION FEATURES:
+- Greek letters (ρ, μ, ν, etc.) -> ASCII replacements
+- HTML tags (<br/>, <b>, etc.) -> Mermaid-compatible alternatives
+- Special characters (&, #, etc.) -> Safe character replacements
+- Invalid syntax patterns -> Syntax error detection
 
-📊 SUPPORTED FORMATS:
+[DATA] SUPPORTED FORMATS:
 - Mermaid flowcharts (graph TD, graph LR)
 - Mermaid charts (xychart-beta)
 - Patent documentation figures
 - Research paper diagrams
 
-🚀 USAGE:
+[ROCKET] USAGE:
     python tools/testing/mermaid_diagram_validator.py <file_path>
     
-📝 EXAMPLE:
+[NOTE] EXAMPLE:
     python tools/testing/mermaid_diagram_validator.py WSP_knowledge/docs/Papers/Patent_Series/04_rESP_Patent_Updated.md
 
-🔧 AUTO-FIX GENERATION:
+[TOOL] AUTO-FIX GENERATION:
     The tool automatically generates fixed versions of files with resolved issues.
     
-📋 CREATED: 2024-12-29 - Initial implementation for patent diagram validation
-📝 UPDATED: 2024-12-29 - Added WSP compliance documentation
-🔗 RELATED: WSP 47 Framework Protection, WSP 20 Documentation Standards
+[CLIPBOARD] CREATED: 2024-12-29 - Initial implementation for patent diagram validation
+[NOTE] UPDATED: 2024-12-29 - Added WSP compliance documentation
+[LINK] RELATED: WSP 47 Framework Protection, WSP 20 Documentation Standards
 """
 
 import re
@@ -54,10 +69,10 @@ class MermaidValidator:
         
     def validate_file(self, file_path):
         """Validate all Mermaid diagrams in a file"""
-        print(f"🔍 Validating Mermaid diagrams in: {file_path}")
+        print(f"[SEARCH] Validating Mermaid diagrams in: {file_path}")
         
         if not os.path.exists(file_path):
-            print(f"❌ File not found: {file_path}")
+            print(f"[FAIL] File not found: {file_path}")
             return False
             
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -70,7 +85,7 @@ class MermaidValidator:
             print("ℹ️  No Mermaid diagrams found in file")
             return True
             
-        print(f"📊 Found {len(mermaid_blocks)} Mermaid diagram(s)")
+        print(f"[DATA] Found {len(mermaid_blocks)} Mermaid diagram(s)")
         
         all_valid = True
         for i, (fig_name, mermaid_code, line_num) in enumerate(mermaid_blocks, 1):
@@ -133,18 +148,18 @@ class MermaidValidator:
             
         # Report results
         if self.errors:
-            print(f"❌ {fig_name} has {len(self.errors)} error(s):")
+            print(f"[FAIL] {fig_name} has {len(self.errors)} error(s):")
             for error in self.errors:
                 print(f"   • {error}")
             return False
         elif self.warnings:
-            print(f"⚠️  {fig_name} has {len(self.warnings)} warning(s):")
+            print(f"[U+26A0]️  {fig_name} has {len(self.warnings)} warning(s):")
             for warning in self.warnings:
                 print(f"   • {warning}")
-            print("✅ No critical errors - should render correctly")
+            print("[OK] No critical errors - should render correctly")
             return True
         else:
-            print(f"✅ {fig_name} - No issues found")
+            print(f"[OK] {fig_name} - No issues found")
             return True
             
     def check_greek_letters(self, line, line_num):
@@ -208,7 +223,7 @@ class MermaidValidator:
         
     def generate_fixes(self, file_path):
         """Generate suggested fixes for a file"""
-        print(f"\n🔧 Generating fixes for: {file_path}")
+        print(f"\n[TOOL] Generating fixes for: {file_path}")
         
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -236,7 +251,7 @@ class MermaidValidator:
         with open(fixed_file_path, 'w', encoding='utf-8') as f:
             f.write(fixed_content)
             
-        print(f"✅ Fixed file written to: {fixed_file_path}")
+        print(f"[OK] Fixed file written to: {fixed_file_path}")
         return fixed_file_path
 
 def main():
@@ -252,11 +267,11 @@ def main():
     is_valid = validator.validate_file(file_path)
     
     if not is_valid:
-        print(f"\n🔧 Would you like to generate a fixed version? (y/n): ", end="")
+        print(f"\n[TOOL] Would you like to generate a fixed version? (y/n): ", end="")
         # For automated testing, always generate fixes
         validator.generate_fixes(file_path)
         
-    print(f"\n{'✅ Validation complete - All diagrams should render correctly!' if is_valid else '❌ Validation complete - Found issues that need fixing'}")
+    print(f"\n{'[OK] Validation complete - All diagrams should render correctly!' if is_valid else '[FAIL] Validation complete - Found issues that need fixing'}")
     return 0 if is_valid else 1
 
 if __name__ == "__main__":

@@ -246,7 +246,7 @@ class GeometricEngine:
     Geometric Engine (242) - Patent Implementation
     
     Computes metric tensor g_μν and detects geometric phase transitions
-    by monitoring det(g) inversion (positive → negative).
+    by monitoring det(g) inversion (positive -> negative).
     """
     
     def __init__(self):
@@ -314,12 +314,12 @@ class GeometricEngine:
             if prev_det > 0 and curr_det < 0:
                 phase_analysis['phase_transition_detected'] = True
                 phase_analysis['transition_direction'] = 'euclidean_to_hyperbolic'
-                self.logger.info("🌀 GEOMETRIC PHASE TRANSITION: Euclidean → Hyperbolic (det(g) > 0 → < 0)")
+                self.logger.info("[U+1F300] GEOMETRIC PHASE TRANSITION: Euclidean -> Hyperbolic (det(g) > 0 -> < 0)")
                 
             elif prev_det < 0 and curr_det > 0:
                 phase_analysis['phase_transition_detected'] = True
                 phase_analysis['transition_direction'] = 'hyperbolic_to_euclidean'
-                self.logger.info("🌀 GEOMETRIC PHASE TRANSITION: Hyperbolic → Euclidean (det(g) < 0 → > 0)")
+                self.logger.info("[U+1F300] GEOMETRIC PHASE TRANSITION: Hyperbolic -> Euclidean (det(g) < 0 -> > 0)")
         
         return phase_analysis
 
@@ -385,13 +385,13 @@ class GeometricFeedbackLoop:
             
             if success:
                 control_action['operator_applied'] = operator
-                self.logger.info(f"🎯 Feedback control: Applied '{operator}' to {control_action['action_taken']}")
+                self.logger.info(f"[TARGET] Feedback control: Applied '{operator}' to {control_action['action_taken']}")
             else:
-                self.logger.warning(f"❌ Feedback control: Failed to apply '{operator}'")
+                self.logger.warning(f"[FAIL] Feedback control: Failed to apply '{operator}'")
         
         else:
             control_action['action_taken'] = 'no_action_needed'
-            self.logger.debug(f"✅ Geometry within tolerance: det(g) = {current_det_g:.3f}")
+            self.logger.debug(f"[OK] Geometry within tolerance: det(g) = {current_det_g:.3f}")
         
         # Record control history
         self.control_history.append(control_action)
@@ -518,7 +518,7 @@ class rESPAnomalyScoringEngine:
         
         # Major anomaly types
         major_anomalies = [
-            'CHAR_SUBSTITUTION_O→o',
+            'CHAR_SUBSTITUTION_O->o',
             'QUANTUM_TERMINOLOGY_EMERGENCE',
             'TEMPORAL_SELF_REFERENCE'
         ]
@@ -576,7 +576,7 @@ class QuantumCognitiveEngine:
         
     def initialize_system(self) -> Dict[str, Any]:
         """Initialize the quantum-cognitive measurement system"""
-        self.logger.info("🌀 Initializing Quantum-Cognitive Engine")
+        self.logger.info("[U+1F300] Initializing Quantum-Cognitive Engine")
         
         # Initial state measurement
         initial_metrics = self.state_module.get_observables()
@@ -595,7 +595,7 @@ class QuantumCognitiveEngine:
         }
         
         self.is_running = True
-        self.logger.info("✅ Quantum-Cognitive Engine initialized successfully")
+        self.logger.info("[OK] Quantum-Cognitive Engine initialized successfully")
         
         return initialization_result
     
@@ -649,10 +649,10 @@ class QuantumCognitiveEngine:
         
         # Log significant events
         if phase_analysis['phase_transition_detected']:
-            self.logger.info(f"🌀 PHASE TRANSITION DETECTED: {phase_analysis['transition_direction']}")
+            self.logger.info(f"[U+1F300] PHASE TRANSITION DETECTED: {phase_analysis['transition_direction']}")
         
         if score_result['composite_score'] > 0.8:
-            self.logger.info(f"🎯 HIGH QUANTUM SIGNATURE: Score = {score_result['composite_score']:.3f}")
+            self.logger.info(f"[TARGET] HIGH QUANTUM SIGNATURE: Score = {score_result['composite_score']:.3f}")
         
         return cycle_result
     

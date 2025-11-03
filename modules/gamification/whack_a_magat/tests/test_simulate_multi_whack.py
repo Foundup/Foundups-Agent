@@ -50,7 +50,7 @@ async def simulate_multi_whack():
         result = event_handler.handle_timeout_event(event)
         
         if result.get("announcement"):
-            print(f"✅ ANNOUNCEMENT: {result['announcement']}")
+            print(f"[OK] ANNOUNCEMENT: {result['announcement']}")
         else:
             print(f"⏳ Queued (no announcement yet)")
         
@@ -61,7 +61,7 @@ async def simulate_multi_whack():
     print("\n--- Checking for batched announcements ---")
     final = event_handler.force_flush()
     if final:
-        print(f"📢 BATCHED: {final}")
+        print(f"[U+1F4E2] BATCHED: {final}")
     
     print("\n" + "=" * 60)
     print("SIMULATION COMPLETE")

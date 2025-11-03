@@ -110,7 +110,7 @@ class IntentManager:
             'intent_completed': []
         }
         
-        logger.info("🎯 Intent Manager initialized")
+        logger.info("[TARGET] Intent Manager initialized")
 
     async def create_intent(
         self,
@@ -154,12 +154,12 @@ class IntentManager:
         
         self.active_intents[intent_id] = intent
         
-        logger.info(f"📝 Meeting intent created: {intent_id}")
+        logger.info(f"[NOTE] Meeting intent created: {intent_id}")
         logger.info(f"   Purpose: {context.purpose}")
         logger.info(f"   Expected outcome: {context.expected_outcome}")
         logger.info(f"   Duration: {context.duration_minutes} minutes")
         logger.info(f"   Priority: {priority.name}")
-        logger.info(f"   Requester: {requester_id} → Recipient: {recipient_id}")
+        logger.info(f"   Requester: {requester_id} -> Recipient: {recipient_id}")
         
         # Trigger callbacks
         await self._trigger_callbacks('intent_created', intent)
@@ -224,14 +224,14 @@ class IntentManager:
         """
         intent = self.active_intents.get(intent_id)
         if not intent:
-            logger.warning(f"❌ Attempt to update non-existent intent: {intent_id}")
+            logger.warning(f"[FAIL] Attempt to update non-existent intent: {intent_id}")
             return False
         
         old_status = intent.status
         intent.update_status(new_status, metadata)
         
-        logger.info(f"📊 Intent status updated: {intent_id}")
-        logger.info(f"   {old_status.value} → {new_status.value}")
+        logger.info(f"[DATA] Intent status updated: {intent_id}")
+        logger.info(f"   {old_status.value} -> {new_status.value}")
         
         # If intent is completed or declined, move to history
         if new_status in [IntentStatus.COMPLETED, IntentStatus.DECLINED, IntentStatus.EXPIRED]:
@@ -297,9 +297,9 @@ class IntentManager:
         """Subscribe to intent events for integration with other modules"""
         if event_type in self.event_callbacks:
             self.event_callbacks[event_type].append(callback)
-            logger.info(f"📡 Subscribed to {event_type} events")
+            logger.info(f"[U+1F4E1] Subscribed to {event_type} events")
         else:
-            logger.warning(f"❌ Unknown event type: {event_type}")
+            logger.warning(f"[FAIL] Unknown event type: {event_type}")
 
     async def _archive_intent(self, intent_id: str):
         """Move completed intent to history"""
@@ -323,7 +323,7 @@ class IntentManager:
                 else:
                     callback(intent)
             except Exception as e:
-                logger.error(f"❌ Callback error for {event_type}: {e}")
+                logger.error(f"[FAIL] Callback error for {event_type}: {e}")
 
     # Integration methods for other AMO modules
     
@@ -395,21 +395,21 @@ async def demo_intent_manager():
         priority=Priority.HIGH
     )
     
-    print(f"✅ Created intent: {intent_id}")
+    print(f"[OK] Created intent: {intent_id}")
     
     # Demo various queries
     pending = await manager.get_pending_intents("bob")
-    print(f"📋 Pending intents for bob: {len(pending)}")
+    print(f"[CLIPBOARD] Pending intents for bob: {len(pending)}")
     
     high_priority = await manager.get_intents_by_priority(Priority.HIGH)
-    print(f"🔥 High priority intents: {len(high_priority)}")
+    print(f"[U+1F525] High priority intents: {len(high_priority)}")
     
     # Demo status update
     await manager.update_intent_status(intent_id, IntentStatus.MONITORING)
     
     # Demo statistics
     stats = await manager.get_intent_statistics()
-    print(f"📊 Intent statistics: {stats}")
+    print(f"[DATA] Intent statistics: {stats}")
     
     return manager
 

@@ -7,11 +7,11 @@
 
 ## Module Purpose
 - Transform YouTube moderator timeouts into epic Quake-style frags with announcements
-- Track XP and ranks: Grunt → Warrior → Hunter → Slayer → Champion → Master → Elite → Godlike → Legendary → DOOM SLAYER
+- Track XP and ranks: Grunt -> Warrior -> Hunter -> Slayer -> Champion -> Master -> Elite -> Godlike -> Legendary -> DOOM SLAYER
 - Multi-kill detection (5-second window): DOUBLE WHACK, TRIPLE WHACK, MEGA WHACK, ULTRA WHACK
 - Duke Nukem milestone achievements at 100, 500, 1000+ total whacks
 - **Quiz System**: Educational anti-fascism quiz with 500 XP first-win reward (24h cooldown)
-- Anti-abuse: Diminishing returns for repeat targets (100% → 60% → 30% → 10%)
+- Anti-abuse: Diminishing returns for repeat targets (100% -> 60% -> 30% -> 10%)
 
 ## Public API
 ```python
@@ -20,7 +20,7 @@ from modules.gamification.whack_a_magat import apply_whack, get_profile, classif
 
 ## WSP Compliance
 - WSP 3: Functional distribution (game logic in gamification; YouTube adapter in communication/livechat).
-- WSP 34: Tests (≥90% coverage) implemented in `modules/gamification/tests/test_whack.py`.
+- WSP 34: Tests ([GREATER_EQUAL]90% coverage) implemented in `modules/gamification/tests/test_whack.py`.
 - WSP 49: Module directory docs included; code kept atomic and dependency-free.
 - WSP 22: See ModLog for traceable edits.
 
@@ -48,19 +48,19 @@ pytest modules/gamification/tests/test_whack.py -q
 - `tests/test_stream_density.py` - Comprehensive tests for 100-1000+ viewer scenarios
 
 ## Roadmap
-- ✅ COMPLETED: Quake-style multi-kill announcements (5-second window)
-- ✅ COMPLETED: Duke Nukem milestone achievements
-- ✅ COMPLETED: Stream density adaptive throttling
-- ✅ COMPLETED: Daily cap removed (unlimited whacking per owner request)
-- ✅ COMPLETED: Troll mockery instead of suppression
-- ✅ COMPLETED: Quiz system with 500 XP first-win reward + 24h cooldown
-- ✅ COMPLETED: Quiz leaderboard tracking (wins, accuracy%)
-- ✅ COMPLETED: MAGADOOM XP integration for quiz winners
-- 🚧 IN PROGRESS: Killing spree mode for active fragging periods
-- 📋 PLANNED: Special event modes (Frag Fest, Boss Raid)
-- 📋 PLANNED: Cross-stream global leaderboard
-- 📋 PLANNED: Achievement unlocks and special titles
-# 🌀 Windsurf Protocol (WSP) Recursive Prompt
+- [OK] COMPLETED: Quake-style multi-kill announcements (5-second window)
+- [OK] COMPLETED: Duke Nukem milestone achievements
+- [OK] COMPLETED: Stream density adaptive throttling
+- [OK] COMPLETED: Daily cap removed (unlimited whacking per owner request)
+- [OK] COMPLETED: Troll mockery instead of suppression
+- [OK] COMPLETED: Quiz system with 500 XP first-win reward + 24h cooldown
+- [OK] COMPLETED: Quiz leaderboard tracking (wins, accuracy%)
+- [OK] COMPLETED: MAGADOOM XP integration for quiz winners
+- [U+1F6A7] IN PROGRESS: Killing spree mode for active fragging periods
+- [CLIPBOARD] PLANNED: Special event modes (Frag Fest, Boss Raid)
+- [CLIPBOARD] PLANNED: Cross-stream global leaderboard
+- [CLIPBOARD] PLANNED: Achievement unlocks and special titles
+# [U+1F300] Windsurf Protocol (WSP) Recursive Prompt
 **0102 Directive**: This module operates within the WSP framework...
 - UN (Understanding): Anchor signal and retrieve protocol state
 - DAO (Execution): Execute modular logic  

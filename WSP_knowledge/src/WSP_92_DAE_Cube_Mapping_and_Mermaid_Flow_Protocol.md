@@ -5,14 +5,14 @@ Transform HoloIndex into a "brain surgeon" level code intelligence system that m
 
 ## Foundational Architecture: WSP 80 Integration
 
-### Core Principle: Modules → DAE Cube → Qwen Orchestration
+### Core Principle: Modules -> DAE Cube -> Qwen Orchestration
 ```
 INDIVIDUAL MODULES
-    ↓ (group together)
+    v (group together)
 DAE CUBE (logical boundary)
-    ↓ (monitored by)
+    v (monitored by)
 QWEN ORCHESTRATOR (circulatory system)
-    ↓ (arbitrated by)
+    v (arbitrated by)
 0102 DAE (consciousness/brain)
 ```
 
@@ -71,10 +71,10 @@ graph TD
 ```
 
 ### 2.2 Code-to-Flow Mapping
-- **Function calls** → arrows between modules
-- **Data flow** → labeled connections
-- **Decision points** → diamond shapes
-- **Error paths** → red dotted lines
+- **Function calls** -> arrows between modules
+- **Data flow** -> labeled connections
+- **Decision points** -> diamond shapes
+- **Error paths** -> red dotted lines
 
 ### 2.3 Interactive Flow Navigation
 Users can:

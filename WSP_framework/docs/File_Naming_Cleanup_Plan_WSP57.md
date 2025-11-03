@@ -10,7 +10,7 @@ Found 64 files with "WSP_" prefix outside of legitimate protocol locations (WSP_
 
 ## Naming Rules (NEW)
 
-### ✅ ALLOWED: "WSP_" Prefix
+### [OK] ALLOWED: "WSP_" Prefix
 
 **ONLY these locations:**
 1. `WSP_framework/src/WSP_*.md` - Official framework protocols
@@ -21,14 +21,14 @@ Found 64 files with "WSP_" prefix outside of legitimate protocol locations (WSP_
 6. `**/wsp_archive/WSP_*.md` - Dedicated WSP archives
 7. `docs/session_backups/WSP_*.md` - Session backup archives
 
-### ❌ PROHIBITED: "WSP_" Prefix
+### [FAIL] PROHIBITED: "WSP_" Prefix
 
 **Module documentation:**
-- Compliance reports → `COMPLIANCE_REPORT.md`
-- Audit reports → `AUDIT_REPORT.md`
-- SWOT analyses → `SWOT_Analysis_*.md`
-- Violation tracking → `Violation_Analysis.md`
-- Implementation status → `IMPLEMENTATION_STATUS.md`
+- Compliance reports -> `COMPLIANCE_REPORT.md`
+- Audit reports -> `AUDIT_REPORT.md`
+- SWOT analyses -> `SWOT_Analysis_*.md`
+- Violation tracking -> `Violation_Analysis.md`
+- Implementation status -> `IMPLEMENTATION_STATUS.md`
 
 ## Files to Rename (Priority Order)
 
@@ -129,20 +129,20 @@ mv ./WSP_agentic/tests/WSP_AUDIT_REPORT.md \
 ### P3: Report Files (KEEP - in proper report directories)
 
 **These are ACCEPTABLE** (in WSP_framework/reports/, WSP_knowledge/reports/):
-- WSP_framework/reports/WSP_88/* (WSP-specific analysis directory) ✅
-- WSP_framework/reports/legacy/WSP_*.md (legacy reports) ✅
-- WSP_framework/reports/WSP_*.md (system-wide WSP analysis) ✅
-- WSP_knowledge/reports/WSP_*.md (knowledge WSP analysis) ✅
-- WSP_knowledge/reports/audit_reports/WSP_33_*.md (WSP 33 audits) ✅
+- WSP_framework/reports/WSP_88/* (WSP-specific analysis directory) [OK]
+- WSP_framework/reports/legacy/WSP_*.md (legacy reports) [OK]
+- WSP_framework/reports/WSP_*.md (system-wide WSP analysis) [OK]
+- WSP_knowledge/reports/WSP_*.md (knowledge WSP analysis) [OK]
+- WSP_knowledge/reports/audit_reports/WSP_33_*.md (WSP 33 audits) [OK]
 
 ### P4: Archive Files (KEEP - properly archived)
 
 **These are ACCEPTABLE** (in archive directories):
-- docs/session_backups/WSP_22_Violation_Analysis.md ✅
-- docs/wsp_archive/WSP_22_Original_ModLog_Structure.md ✅
-- WSP_knowledge/archive/deprecated_wsps/WSP_*.md ✅
-- WSP_knowledge/archive/WSP_*.md ✅
-- modules/communication/livechat/_archive/wsp_compliance/WSP_*.md ✅
+- docs/session_backups/WSP_22_Violation_Analysis.md [OK]
+- docs/wsp_archive/WSP_22_Original_ModLog_Structure.md [OK]
+- WSP_knowledge/archive/deprecated_wsps/WSP_*.md [OK]
+- WSP_knowledge/archive/WSP_*.md [OK]
+- modules/communication/livechat/_archive/wsp_compliance/WSP_*.md [OK]
 
 ### P5: Journal/Report Files (KEEP or MOVE)
 

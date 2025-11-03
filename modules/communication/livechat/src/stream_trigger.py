@@ -81,13 +81,13 @@ class StreamTrigger:
                 # Check content for explicit trigger
                 content = self.trigger_file.read_text().strip()
                 if "TRIGGER" in content.upper():
-                    logger.info("🚨 Stream trigger activated via file!")
+                    logger.info("[ALERT] Stream trigger activated via file!")
                     # Clear the file after reading
                     self.trigger_file.write_text("")
                     return True
                     
                 # Any modification counts as trigger
-                logger.info("📝 Trigger file modified - checking for stream")
+                logger.info("[NOTE] Trigger file modified - checking for stream")
                 return True
                 
         except Exception as e:
@@ -166,19 +166,19 @@ if __name__ == "__main__":
     trigger = StreamTrigger()
     trigger.create_trigger_instructions()
     
-    print("🎯 Stream Trigger Test")
+    print("[TARGET] Stream Trigger Test")
     print("=" * 60)
     
     # Test trigger checking
     for i in range(5):
         if trigger.check_trigger():
-            print(f"✅ Trigger activated at iteration {i}!")
+            print(f"[OK] Trigger activated at iteration {i}!")
             trigger.reset()
         else:
             print(f"⏳ No trigger at iteration {i}")
         time.sleep(2)
     
-    print("\n📊 Intelligent Delay Examples:")
+    print("\n[DATA] Intelligent Delay Examples:")
     print("=" * 60)
     
     # Show delay progression

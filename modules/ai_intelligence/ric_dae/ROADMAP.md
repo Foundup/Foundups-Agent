@@ -33,10 +33,10 @@ ricDAE supplies HoloDAE with a sovereign, continuously updated research intellig
 - Expand compliance dashboards + ModLog automation
 
 ## Success Metrics
-- ≥95% ingestion job success rate (per source)
+- [GREATER_EQUAL]95% ingestion job success rate (per source)
 - <5 min latency from external release to internal availability
 - Audit trail coverage 100% for source fetch -> MCP surfacing
-- WSP 5/6 test suite coverage ≥90%
+- WSP 5/6 test suite coverage [GREATER_EQUAL]90%
 
 ## Dependencies
 - ai_gateway (for outbound model calls)
@@ -44,6 +44,6 @@ ricDAE supplies HoloDAE with a sovereign, continuously updated research intellig
 - holo_index infrastructure
 
 ## Risks & Mitigations
-- **Source policy changes** → maintain modular connector definitions, switchable via config
-- **Data drift** → automated schema validation + alerting
-- **Overload** → throttle ingestion jobs by priority and maintain backlog metrics
+- **Source policy changes** -> maintain modular connector definitions, switchable via config
+- **Data drift** -> automated schema validation + alerting
+- **Overload** -> throttle ingestion jobs by priority and maintain backlog metrics

@@ -238,30 +238,30 @@ class ValidationResult:
 ### Template Directory Structure
 ```
 templates/
-├── base/                     # Base templates
-│   ├── basic_module/
-│   │   ├── template.yaml     # Template metadata
-│   │   ├── README.md.j2      # Jinja2 template files
-│   │   ├── INTERFACE.md.j2
-│   │   ├── ModLog.md.j2
-│   │   ├── ROADMAP.md.j2
-│   │   ├── requirements.txt.j2
-│   │   ├── __init__.py.j2
-│   │   └── src/
-│   │       └── module.py.j2
-├── domain_specific/          # Domain-specific templates
-│   ├── ai_intelligence/
-│   │   ├── llm_processor/
-│   │   ├── model_trainer/
-│   │   └── inference_engine/
-│   ├── communication/
-│   │   ├── chat_processor/
-│   │   ├── protocol_handler/
-│   │   └── message_router/
-└── block_specific/           # Block-specific templates
-    ├── youtube_block/
-    ├── meeting_orchestration/
-    └── development_tools/
++-- base/                     # Base templates
+[U+2502]   +-- basic_module/
+[U+2502]   [U+2502]   +-- template.yaml     # Template metadata
+[U+2502]   [U+2502]   +-- README.md.j2      # Jinja2 template files
+[U+2502]   [U+2502]   +-- INTERFACE.md.j2
+[U+2502]   [U+2502]   +-- ModLog.md.j2
+[U+2502]   [U+2502]   +-- ROADMAP.md.j2
+[U+2502]   [U+2502]   +-- requirements.txt.j2
+[U+2502]   [U+2502]   +-- __init__.py.j2
+[U+2502]   [U+2502]   +-- src/
+[U+2502]   [U+2502]       +-- module.py.j2
++-- domain_specific/          # Domain-specific templates
+[U+2502]   +-- ai_intelligence/
+[U+2502]   [U+2502]   +-- llm_processor/
+[U+2502]   [U+2502]   +-- model_trainer/
+[U+2502]   [U+2502]   +-- inference_engine/
+[U+2502]   +-- communication/
+[U+2502]   [U+2502]   +-- chat_processor/
+[U+2502]   [U+2502]   +-- protocol_handler/
+[U+2502]   [U+2502]   +-- message_router/
++-- block_specific/           # Block-specific templates
+    +-- youtube_block/
+    +-- meeting_orchestration/
+    +-- development_tools/
 ```
 
 ### Template Metadata Format
@@ -405,9 +405,9 @@ results = creator.batch_create(batch_specs)
 # Process results
 for result in results:
     if result.success:
-        print(f"✅ {result.module_name} created at {result.module_path}")
+        print(f"[OK] {result.module_name} created at {result.module_path}")
     else:
-        print(f"❌ {result.module_name} failed: {result.errors}")
+        print(f"[FAIL] {result.module_name} failed: {result.errors}")
 ```
 
 ### Template Management

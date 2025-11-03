@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Test Gemma RAG Inference Integration with Pattern Memory
 
 Tests the complete flow:
@@ -37,20 +54,20 @@ def test_pattern_memory_integration():
     memory = PatternMemory()
     stats = memory.get_stats()
 
-    print(f"✓ Pattern memory initialized")
+    print(f"[OK] Pattern memory initialized")
     print(f"  Total patterns: {stats['total_patterns']}")
     print(f"  012.txt progress: {stats['checkpoint_line']}/28326")
 
     if stats['total_patterns'] == 0:
-        print("\n⚠️  Warning: No patterns stored yet")
-        print("   Run training first: python main.py → option 12 → option 1")
+        print("\n[U+26A0]️  Warning: No patterns stored yet")
+        print("   Run training first: python main.py -> option 12 -> option 1")
         return False
 
     # Test pattern recall
     test_query = "YouTube authentication module"
     patterns = memory.recall_similar(test_query, n=3, min_similarity=0.3)
 
-    print(f"\n✓ Pattern recall test: '{test_query}'")
+    print(f"\n[OK] Pattern recall test: '{test_query}'")
     print(f"  Retrieved {len(patterns)} relevant patterns")
 
     for i, pattern in enumerate(patterns, 1):
@@ -72,15 +89,15 @@ def test_gemma_inference():
     qwen_path = Path("E:/HoloIndex/models/qwen-coder-1.5b.gguf")
 
     if not gemma_path.exists():
-        print(f"✗ Gemma model not found: {gemma_path}")
+        print(f"[FAIL] Gemma model not found: {gemma_path}")
         return False
 
     if not qwen_path.exists():
-        print(f"✗ Qwen model not found: {qwen_path}")
+        print(f"[FAIL] Qwen model not found: {qwen_path}")
         return False
 
-    print(f"✓ Gemma model found: {gemma_path}")
-    print(f"✓ Qwen model found: {qwen_path}")
+    print(f"[OK] Gemma model found: {gemma_path}")
+    print(f"[OK] Qwen model found: {qwen_path}")
 
     # Initialize inference engine
     engine = GemmaRAGInference(
@@ -89,7 +106,7 @@ def test_gemma_inference():
         confidence_threshold=0.7
     )
 
-    print("\n✓ Inference engine initialized")
+    print("\n[OK] Inference engine initialized")
     return engine
 
 
@@ -161,9 +178,9 @@ def test_performance_stats(engine, results):
     qwen_target_met = 10 <= stats['qwen_percentage'] <= 50
 
     if gemma_target_met and qwen_target_met:
-        print("\n✓ Performance targets met!")
+        print("\n[OK] Performance targets met!")
     else:
-        print("\n⚠️  Performance targets need tuning")
+        print("\n[U+26A0]️  Performance targets need tuning")
         print("   Adjust confidence_threshold or complexity classification")
 
 
@@ -171,19 +188,19 @@ def main():
     """Run complete test suite"""
     print("\n" + "="*60)
     print("GEMMA RAG INFERENCE TEST SUITE")
-    print("WRE Pattern: 012 → 0102 → Qwen → Gemma")
+    print("WRE Pattern: 012 -> 0102 -> Qwen -> Gemma")
     print("="*60)
 
     # Test 1: Pattern Memory
     if not test_pattern_memory_integration():
-        print("\n✗ Test suite aborted: No patterns in memory")
-        print("   Run training first: python main.py → option 12 → option 1")
+        print("\n[FAIL] Test suite aborted: No patterns in memory")
+        print("   Run training first: python main.py -> option 12 -> option 1")
         return
 
     # Test 2: Gemma Inference Setup
     engine = test_gemma_inference()
     if not engine:
-        print("\n✗ Test suite aborted: Model setup failed")
+        print("\n[FAIL] Test suite aborted: Model setup failed")
         return
 
     # Test 3: Adaptive Routing
@@ -195,13 +212,13 @@ def main():
     print("\n" + "="*60)
     print("TEST SUITE COMPLETE")
     print("="*60)
-    print("\n✓ All tests passed")
-    print("✓ Gemma RAG inference operational")
-    print("✓ Adaptive routing functional")
-    print("✓ Pattern memory integration working")
+    print("\n[OK] All tests passed")
+    print("[OK] Gemma RAG inference operational")
+    print("[OK] Adaptive routing functional")
+    print("[OK] Pattern memory integration working")
 
     print("\n[NEXT STEPS]")
-    print("1. Integrate into main.py menu (option 12 → option 4)")
+    print("1. Integrate into main.py menu (option 12 -> option 4)")
     print("2. Add live chat training integration")
     print("3. Monitor performance in production")
 

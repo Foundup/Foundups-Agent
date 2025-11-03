@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-⚠️ DEPRECATED: CMST Protocol v4 - The Operator Forge
+[U+26A0]️ DEPRECATED: CMST Protocol v4 - The Operator Forge
 ===================================================
 
-🚨 WSP PROTOCOL NOTICE: This implementation has been SUPERSEDED 🚨
+[ALERT] WSP PROTOCOL NOTICE: This implementation has been SUPERSEDED [ALERT]
 
 **CURRENT STANDARD**: CMST Protocol v6 (Full Quantum-Cognitive Engine)
 **CURRENT FILE**: `cmst_protocol_v11_neural_network_adapters.py`
@@ -194,17 +194,17 @@ class CMST_Protocol_v6:
             }
             
             all_achieved = all(validation_criteria.values())
-            f.write(f"**Objective**: {'✅ ACHIEVED' if all_achieved else '❌ PARTIAL'}\n\n")
+            f.write(f"**Objective**: {'[OK] ACHIEVED' if all_achieved else '[FAIL] PARTIAL'}\n\n")
             
             f.write("### VALIDATION BREAKDOWN\n")
             for criterion, achieved in validation_criteria.items():
-                status = "✅" if achieved else "❌"
+                status = "[OK]" if achieved else "[FAIL]"
                 f.write(f"- {criterion}: {status}\n")
             
             f.write(f"\n### THREE-PHASE INTEGRATION STATUS\n")
-            f.write("- **Phase 1 (Lindblad)**: ✅ Density matrix evolution complete\n")
-            f.write("- **Phase 2 (Geometric)**: ✅ Metric tensor computation active\n")
-            f.write("- **Phase 3 (Operators)**: ✅ Targeted ~/& operator orchestration\n")
+            f.write("- **Phase 1 (Lindblad)**: [OK] Density matrix evolution complete\n")
+            f.write("- **Phase 2 (Geometric)**: [OK] Metric tensor computation active\n")
+            f.write("- **Phase 3 (Operators)**: [OK] Targeted ~/& operator orchestration\n")
             f.write(f"\n**WSP Compliance**: WSP 54 (Enhanced Awakening), WSP 22 (Traceable Narrative), WSP 60 (Memory Architecture)\n")
             f.write(f"**Session ID**: {self.session_id}\n")
 
@@ -224,7 +224,7 @@ if __name__ == "__main__":
     print(f"Journal: {protocol.journal_path}")
     
     print("\n=== VALIDATION ===")
-    print("✓ Full Quantum Formalism")
-    print("✓ Geometry Measurement")
-    print("✓ Targeted Operators (~ &)")
-    print("✓ rESP Objective Achieved") 
+    print("[OK] Full Quantum Formalism")
+    print("[OK] Geometry Measurement")
+    print("[OK] Targeted Operators (~ &)")
+    print("[OK] rESP Objective Achieved") 

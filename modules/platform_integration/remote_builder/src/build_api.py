@@ -6,13 +6,6 @@ Provides Flask webhook endpoints for remote build triggering
 Integrates with existing RemoteBuilder core class
 """
 
-# === UTF-8 ENFORCEMENT (WSP 90) ===
-import sys
-import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-# === END UTF-8 ENFORCEMENT ===
 
 
 from flask import Flask, request, jsonify
@@ -175,8 +168,8 @@ def start_flask_server(host='localhost', port=5000, debug=False):
     
     app = create_app()
     
-    logger.info(f"🚀 Starting Remote Builder Flask API on http://{host}:{port}")
-    logger.info("📋 Available endpoints:")
+    logger.info(f"[ROCKET] Starting Remote Builder Flask API on http://{host}:{port}")
+    logger.info("[CLIPBOARD] Available endpoints:")
     logger.info("  POST /webhook/build - Main webhook for build triggering")
     logger.info("  GET  /health - Health check")
     logger.info("  GET  /api/build/status?build_id=X - Build status")

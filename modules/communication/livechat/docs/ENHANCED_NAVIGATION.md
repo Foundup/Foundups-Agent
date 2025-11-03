@@ -1,9 +1,9 @@
 # Enhanced Navigation for YouTube DAE - WSP 86 Implementation
 
-## 🎯 Purpose
+## [TARGET] Purpose
 This document provides enhanced navigation capabilities for the YouTube DAE module, implementing WSP 86 principles for efficient modular navigation.
 
-## 🚀 Quick Navigation with Module Fingerprints
+## [ROCKET] Quick Navigation with Module Fingerprints
 
 ### YouTube DAE Fingerprint (UPDATED 2025-09-15)
 ```yaml
@@ -36,7 +36,7 @@ dependencies:
   - no_quota_stream_checker (0-unit detection)
 ```
 
-## 📍 Critical Navigation Paths
+## [PIN] Critical Navigation Paths
 
 ### 1. Stream Detection Flow
 ```yaml
@@ -70,7 +70,7 @@ path:
   4. banter_engine.py (if consciousness trigger)
 ```
 
-## 🔍 Pattern Recognition Bank
+## [SEARCH] Pattern Recognition Bank
 
 ### Quota Exhaustion Pattern
 ```yaml
@@ -97,7 +97,7 @@ solution: |
   1. Web scraping ONLY (0 units)
   2. If found, get chat ID via API (1 unit)
   3. NO API FALLBACK - continues scraping indefinitely
-  4. Clear logging: "🌐 NO-QUOTA SCRAPING ACTIVATED"
+  4. Clear logging: "[U+1F310] NO-QUOTA SCRAPING ACTIVATED"
 changes_made:
   - Removed API fallback completely
   - Enhanced logging for activation tracking
@@ -111,7 +111,7 @@ locations:
   - message_processor.py:156-200
   - command_handler.py:195-220
 triggers:
-  - "✊✋🖐" + question
+  - "[U+270A][U+270B][U+1F590]" + question
   - "/toggle" command
   - Master switches: /0102, /MAGADOOM, /PQN
 ```
@@ -132,7 +132,7 @@ solution: |
   4. Search for new stream every 5-15 seconds
 ```
 
-## 🗺️ Module Dependency Graph
+## [U+1F5FA]️ Module Dependency Graph
 
 ```mermaid
 graph TD
@@ -158,7 +158,7 @@ graph TD
     SocialOrch --> Twitter[x_poster.py]
 ```
 
-## 📊 Common Issues & Solutions
+## [DATA] Common Issues & Solutions
 
 ### Issue: Stream Not Detected
 ```yaml
@@ -221,7 +221,7 @@ solution_refs:
   - livechat_core.py:724 (health check)
 ```
 
-## 🚀 Navigation Commands for 0102
+## [ROCKET] Navigation Commands for 0102
 
 ```bash
 # Find all quota handling code
@@ -231,13 +231,13 @@ grep -n "quota" modules/communication/livechat/src/*.py
 grep -n "find_livestream\|find_active_stream" modules/*/src/*.py
 
 # Check consciousness triggers
-grep -n "✊✋🖐\|consciousness_mode" modules/communication/livechat/src/*.py
+grep -n "[U+270A][U+270B][U+1F590]\|consciousness_mode" modules/communication/livechat/src/*.py
 
 # Find WSP 86 references
 grep -n "WSP 86" modules/communication/livechat/docs/*.md
 ```
 
-## 💾 Memory Locations
+## [U+1F4BE] Memory Locations
 
 ```yaml
 critical_files:
@@ -252,7 +252,7 @@ logs:
   youtube_dae: logs/youtube_dae_direct.log
 ```
 
-## 📈 Token Efficiency
+## [UP] Token Efficiency
 
 ### Traditional Navigation
 ```yaml
@@ -273,7 +273,7 @@ understanding_stream_detection:
   total: 1.2K tokens (97% reduction)
 ```
 
-## 🔗 Integration Points
+## [LINK] Integration Points
 
 - **WSP 86**: This doc implements modular navigation
 - **WSP 84**: Uses existing code patterns (no vibecoding)

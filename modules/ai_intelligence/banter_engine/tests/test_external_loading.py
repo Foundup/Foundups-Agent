@@ -12,7 +12,7 @@ from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
 
 def test_external_json_loading():
     """Test that BanterEngine can load custom banter from external JSON file"""
-    print("\n🧪 Testing external JSON loading feature")
+    print("\n[U+1F9EA] Testing external JSON loading feature")
     
     # Create a temporary JSON file with custom banter
     custom_banter = {
@@ -46,7 +46,7 @@ def test_external_json_loading():
         assert any(custom_resp in response for custom_resp in custom_banter["custom_greeting"]), \
             "Response not from custom data"
         
-        print("✅ External JSON loading test passed!")
+        print("[OK] External JSON loading test passed!")
         
     finally:
         # Clean up temp file
@@ -55,7 +55,7 @@ def test_external_json_loading():
 
 def test_backward_compatibility():
     """Test that BanterEngine still works without external file (backward compatibility)"""
-    print("\n🧪 Testing backward compatibility (no external file)")
+    print("\n[U+1F9EA] Testing backward compatibility (no external file)")
     
     # Create engine without external file
     engine = BanterEngine()
@@ -80,12 +80,12 @@ def test_backward_compatibility():
     print(f"Philosophy response: {response}")
     assert isinstance(response, str) and len(response) > 0, "Invalid philosophy response"
     
-    print("✅ Backward compatibility test passed!")
+    print("[OK] Backward compatibility test passed!")
 
 
 def test_theme_merging():
     """Test that external themes merge with internal ones"""
-    print("\n🧪 Testing theme merging (external + internal)")
+    print("\n[U+1F9EA] Testing theme merging (external + internal)")
     
     # Create JSON with overlapping theme
     custom_banter = {
@@ -111,7 +111,7 @@ def test_theme_merging():
         response = engine.get_random_banter(theme="greeting")
         assert isinstance(response, str) and len(response) > 0
         
-        print("✅ Theme merging test passed!")
+        print("[OK] Theme merging test passed!")
         
     finally:
         os.unlink(temp_path)
@@ -121,4 +121,4 @@ if __name__ == "__main__":
     test_external_json_loading()
     test_backward_compatibility()
     test_theme_merging()
-    print("\n🎉 All external loading tests passed!")
+    print("\n[CELEBRATE] All external loading tests passed!")

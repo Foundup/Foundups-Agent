@@ -523,7 +523,7 @@ async def demo_{module_name}_specialization():
         "module": "{module_name}",
         "operations_tested": operations,
         "results": results,
-        "coordination_model": "{spec['qwen_role']} ←→ {spec['gemini_role']}",
+        "coordination_model": "{spec['qwen_role']} <--> {spec['gemini_role']}",
         "expected_improvement": "{spec['expected_improvement']}"
     }}
 

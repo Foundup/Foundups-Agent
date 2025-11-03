@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 GitPushDAE - WSP 91 Compliant Autonomous Git Push Daemon
 
 Fully autonomous daemon that monitors code changes and makes agentic decisions
@@ -165,6 +180,7 @@ class GitPushDAE:
             sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
             from modules.platform_integration.linkedin_agent.src.git_linkedin_bridge import GitLinkedInBridge
             self.git_bridge = GitLinkedInBridge(company_id="1263645")
+            self.git_bridge.auto_mode = True  # Enable autonomous commit message generation
             self.logger.info(f"[{self.daemon_name}] Git bridge initialized successfully")
         except Exception as e:
             self.logger.error(f"[{self.daemon_name}] Failed to initialize git bridge: {e}")
@@ -173,8 +189,8 @@ class GitPushDAE:
     def _init_qwen_advisor(self):
         """Initialize Qwen advisor for intelligent code analysis and post generation."""
         try:
-            from holo_index.qwen_advisor.llm_engine import QwenLLM
-            self.qwen = QwenLLM()
+            from holo_index.qwen_advisor.llm_engine import QwenInferenceEngine
+            self.qwen = QwenInferenceEngine()
             self.logger.info(f"[{self.daemon_name}] Qwen advisor initialized for semantic analysis")
         except Exception as e:
             self.logger.warning(f"[{self.daemon_name}] Qwen advisor not available: {e}")
@@ -217,7 +233,7 @@ class GitPushDAE:
             self.logger.warning(f"[{self.daemon_name}] Already active")
             return
 
-        self.logger.info(f"[{self.daemon_name}] 🚀 Starting autonomous operation")
+        self.logger.info(f"[{self.daemon_name}] [ROCKET] Starting autonomous operation")
         self.logger.info(f"[{self.daemon_name}] Monitoring: {self.domain}")
         self.logger.info(f"[{self.daemon_name}] Check interval: {self.check_interval}s")
 
@@ -232,7 +248,7 @@ class GitPushDAE:
         )
         self.monitoring_thread.start()
 
-        self.logger.info(f"[{self.daemon_name}] ✅ Autonomous operation started")
+        self.logger.info(f"[{self.daemon_name}] [OK] Autonomous operation started")
 
     def stop(self):
         """Stop the daemon with full lifecycle logging."""
@@ -242,7 +258,7 @@ class GitPushDAE:
 
         uptime = datetime.now() - self.start_time if self.start_time else timedelta(0)
 
-        self.logger.info(f"[{self.daemon_name}] 🛑 Stopping autonomous operation")
+        self.logger.info(f"[{self.daemon_name}] [STOP] Stopping autonomous operation")
         self.logger.info(f"[{self.daemon_name}] Uptime: {uptime}")
         self.logger.info(f"[{self.daemon_name}] Operations completed: {self.operation_count}")
 
@@ -261,7 +277,7 @@ class GitPushDAE:
         total_cost = self.cost_tracker.total_tokens * 0.0001  # Rough USD estimate
         self.logger.info(f"[{self.daemon_name}] Total tokens used: {self.cost_tracker.total_tokens}")
         self.logger.info(f"[{self.daemon_name}] Estimated cost: ${total_cost:.4f}")
-        self.logger.info(f"[{self.daemon_name}] ✅ Shutdown complete")
+        self.logger.info(f"[{self.daemon_name}] [OK] Shutdown complete")
 
     def _monitor_loop(self):
         """Main monitoring loop with WSP 91 health checks."""
@@ -497,17 +513,17 @@ class GitPushDAE:
             if success:
                 self.last_push_time = datetime.now()
                 self.circuit_breaker.record_success()
-                self.logger.info(f"[{self.daemon_name}] ✅ Autonomous push completed successfully")
+                self.logger.info(f"[{self.daemon_name}] [OK] Autonomous push completed successfully")
             else:
                 self.circuit_breaker.record_failure()
-                self.logger.warning(f"[{self.daemon_name}] ⚠️ Push completed but posting failed")
+                self.logger.warning(f"[{self.daemon_name}] [U+26A0]️ Push completed but posting failed")
 
             # Save state
             self._save_state()
 
         except Exception as e:
             self.circuit_breaker.record_failure()
-            self.logger.error(f"[{self.daemon_name}] ❌ Push execution failed: {e}")
+            self.logger.error(f"[{self.daemon_name}] [FAIL] Push execution failed: {e}")
             raise
 
     def health_check(self) -> HealthStatus:
@@ -845,18 +861,18 @@ def launch_daemon(domain: str = "foundups_development", check_interval: int = 30
 
 if __name__ == "__main__":
     # Allow direct execution for testing
-    print("🚀 GitPushDAE - Starting autonomous git push daemon...")
+    print("[ROCKET] GitPushDAE - Starting autonomous git push daemon...")
 
     dae = GitPushDAE(domain="foundups_development")
     dae.start()
 
-    print("✅ Daemon started. Press Ctrl+C to stop.")
+    print("[OK] Daemon started. Press Ctrl+C to stop.")
 
     try:
         while dae.active:
             time.sleep(1)
     except KeyboardInterrupt:
-        print("\n🛑 Stopping daemon...")
+        print("\n[STOP] Stopping daemon...")
         dae.stop()
 
-    print("✅ Daemon stopped.")
+    print("[OK] Daemon stopped.")

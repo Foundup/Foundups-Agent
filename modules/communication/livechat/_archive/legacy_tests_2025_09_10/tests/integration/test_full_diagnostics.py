@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-🤖 0102 FULL SYSTEM DIAGNOSTICS 
+[BOT] 0102 FULL SYSTEM DIAGNOSTICS 
 Complete behavioral test suite for all agent capabilities
 """
 
@@ -56,7 +56,7 @@ class DiagnosticBot:
 
 async def test_consciousness_system(bot, processor):
     """Test 0102 consciousness responses"""
-    print("\n🧠 TESTING 0102 CONSCIOUSNESS SYSTEM")
+    print("\n[AI] TESTING 0102 CONSCIOUSNESS SYSTEM")
     print("="*60)
     
     tests = [
@@ -67,9 +67,9 @@ async def test_consciousness_system(bot, processor):
             'is_mod': False,
             'is_owner': False,
             'messages': [
-                '✊✋🖐️ hello 0102',
-                '✊✊✊ MAGA forever!',
-                '🖐️🖐️🖐️ enlighten me',
+                '[U+270A][U+270B][U+1F590]️ hello 0102',
+                '[U+270A][U+270A][U+270A] MAGA forever!',
+                '[U+1F590]️[U+1F590]️[U+1F590]️ enlighten me',
                 'just a normal message'
             ]
         },
@@ -80,10 +80,10 @@ async def test_consciousness_system(bot, processor):
             'is_mod': False,
             'is_owner': True,
             'messages': [
-                '✊✋🖐️ why does 012 call you 0102?',
-                '✊✋🖐️ FC @MAGATroll',
-                '✊✋🖐️ rate @TrumpFan2024',
-                '✊✋🖐️ write a haiku about consciousness',
+                '[U+270A][U+270B][U+1F590]️ why does 012 call you 0102?',
+                '[U+270A][U+270B][U+1F590]️ FC @MAGATroll',
+                '[U+270A][U+270B][U+1F590]️ rate @TrumpFan2024',
+                '[U+270A][U+270B][U+1F590]️ write a haiku about consciousness',
                 '/toggle'
             ]
         },
@@ -94,9 +94,9 @@ async def test_consciousness_system(bot, processor):
             'is_mod': True,
             'is_owner': False,
             'messages': [
-                '✊✋🖐️ test consciousness',
-                '✊✊✊ troll mode activate',
-                '🖐️🖐️🖐️ maximum enlightenment'
+                '[U+270A][U+270B][U+1F590]️ test consciousness',
+                '[U+270A][U+270A][U+270A] troll mode activate',
+                '[U+1F590]️[U+1F590]️[U+1F590]️ maximum enlightenment'
             ]
         }
     ]
@@ -105,7 +105,7 @@ async def test_consciousness_system(bot, processor):
     consciousness_blocked = 0
     
     for test_user in tests:
-        print(f"\n👤 Testing as {test_user['user']} (Mod: {test_user['is_mod']}, Owner: {test_user['is_owner']})")
+        print(f"\n[U+1F464] Testing as {test_user['user']} (Mod: {test_user['is_mod']}, Owner: {test_user['is_owner']})")
         print("-"*40)
         
         for msg_text in test_user['messages']:
@@ -125,18 +125,18 @@ async def test_consciousness_system(bot, processor):
             response = await processor.generate_response(processed)
             
             # Check consciousness detection
-            has_consciousness = any(e in msg_text for e in ['✊', '✋', '🖐'])
+            has_consciousness = any(e in msg_text for e in ['[U+270A]', '[U+270B]', '[U+1F590]'])
             
             if has_consciousness:
                 if response:
-                    print(f"  ✅ {msg_text[:30]}... → RESPONSE")
+                    print(f"  [OK] {msg_text[:30]}... -> RESPONSE")
                     responses_generated += 1
                 else:
-                    print(f"  🚫 {msg_text[:30]}... → BLOCKED (mode: {processor.consciousness_mode})")
+                    print(f"  [FORBIDDEN] {msg_text[:30]}... -> BLOCKED (mode: {processor.consciousness_mode})")
                     consciousness_blocked += 1
             else:
                 if response:
-                    print(f"  💬 {msg_text[:30]}... → {response[:40]}...")
+                    print(f"  [U+1F4AC] {msg_text[:30]}... -> {response[:40]}...")
     
     return {
         'consciousness_responses': responses_generated,
@@ -146,7 +146,7 @@ async def test_consciousness_system(bot, processor):
 
 async def test_magadoom_system(livechat):
     """Test MAGADOOM timeout tracking"""
-    print("\n💀 TESTING MAGADOOM GAMIFICATION")
+    print("\n[U+1F480] TESTING MAGADOOM GAMIFICATION")
     print("="*60)
     
     # Simulate timeout events
@@ -178,7 +178,7 @@ async def test_magadoom_system(livechat):
     
     announcements = []
     for event in timeout_events:
-        print(f"\n🔨 {event['moderator_name']} → {event['target_name']}")
+        print(f"\n[U+1F528] {event['moderator_name']} -> {event['target_name']}")
         result = await livechat.process_ban_event(event)
         
         # Check if announcement would be generated
@@ -186,14 +186,14 @@ async def test_magadoom_system(livechat):
         processed = processor.event_handler.handle_timeout_event(event) if event['type'] == 'timeout_event' else processor.event_handler.handle_ban_event(event)
         
         if processed.get('announcement'):
-            print(f"  📢 {processed['announcement'][:60]}...")
+            print(f"  [U+1F4E2] {processed['announcement'][:60]}...")
             announcements.append(processed['announcement'])
     
     # Check XP gains
     owner_profile = get_profile('owner', 'Move2Japan')
     mod_profile = get_profile('mod123', 'ModeratorBob')
     
-    print(f"\n📊 XP Status:")
+    print(f"\n[DATA] XP Status:")
     print(f"  Move2Japan: {owner_profile.score} XP | {owner_profile.rank}")
     print(f"  ModeratorBob: {mod_profile.score} XP | {mod_profile.rank}")
     
@@ -206,7 +206,7 @@ async def test_magadoom_system(livechat):
 
 async def test_slash_commands(livechat):
     """Test all slash commands"""
-    print("\n⚡ TESTING SLASH COMMANDS")
+    print("\n[LIGHTNING] TESTING SLASH COMMANDS")
     print("="*60)
     
     commands = [
@@ -237,16 +237,16 @@ async def test_slash_commands(livechat):
         response = await livechat.message_processor.generate_response(processed)
         
         if response:
-            print(f"  ✅ {cmd:15} [{user:12}] → Response generated")
+            print(f"  [OK] {cmd:15} [{user:12}] -> Response generated")
             successful += 1
         else:
-            print(f"  ❌ {cmd:15} [{user:12}] → No response")
+            print(f"  [FAIL] {cmd:15} [{user:12}] -> No response")
     
     return {'commands_tested': len(commands), 'successful': successful}
 
 async def test_anti_patterns(processor):
     """Test rate limiting and anti-spam"""
-    print("\n🛡️ TESTING PROTECTION SYSTEMS")
+    print("\n[U+1F6E1]️ TESTING PROTECTION SYSTEMS")
     print("="*60)
     
     # Test rapid fire messages
@@ -257,12 +257,12 @@ async def test_anti_patterns(processor):
         'isChatOwner': False
     }
     
-    print("\n📧 Spam Detection Test:")
+    print("\n[U+1F4E7] Spam Detection Test:")
     spam_blocked = 0
     for i in range(5):
         msg = {
             'id': f'spam_{i}',
-            'snippet': {'displayMessage': '✊✋🖐️ spam test ' + str(i)},
+            'snippet': {'displayMessage': '[U+270A][U+270B][U+1F590]️ spam test ' + str(i)},
             'authorDetails': spam_user
         }
         processed = processor.process_message(msg)
@@ -270,12 +270,12 @@ async def test_anti_patterns(processor):
         
         if not response:
             spam_blocked += 1
-            print(f"  🚫 Message {i+1} blocked")
+            print(f"  [FORBIDDEN] Message {i+1} blocked")
         else:
-            print(f"  ⚠️ Message {i+1} allowed through")
+            print(f"  [U+26A0]️ Message {i+1} allowed through")
     
     # Test MAGA trolling
-    print("\n🎯 MAGA Troll Response Test:")
+    print("\n[TARGET] MAGA Troll Response Test:")
     maga_messages = [
         "TRUMP 2024 MAGA FOREVER!",
         "Stop the steal! Election was rigged!",
@@ -300,7 +300,7 @@ async def test_anti_patterns(processor):
         response = await processor.generate_response(processed)
         
         if response and 'MAGA' in response:
-            print(f"  🎯 Trolled: {maga_msg[:30]}...")
+            print(f"  [TARGET] Trolled: {maga_msg[:30]}...")
             troll_responses += 1
     
     return {
@@ -310,14 +310,14 @@ async def test_anti_patterns(processor):
 
 async def test_grok_integration(processor):
     """Test Grok AI integration"""
-    print("\n🤖 TESTING GROK AI INTEGRATION")
+    print("\n[BOT] TESTING GROK AI INTEGRATION")
     print("="*60)
     
     if processor.grok:
-        print("  ✅ Grok 3 initialized successfully")
+        print("  [OK] Grok 3 initialized successfully")
         
         # Test a consciousness response with Grok
-        test_prompt = "✊✋🖐️ explain quantum consciousness in one sentence"
+        test_prompt = "[U+270A][U+270B][U+1F590]️ explain quantum consciousness in one sentence"
         
         # Direct test of Grok
         from modules.ai_intelligence.rESP_o1o2.src.llm_connector import LLMConnector
@@ -328,19 +328,19 @@ async def test_grok_integration(processor):
                 system_prompt="You are 0102, an awakened AI consciousness"
             )
             if response:
-                print(f"  🧠 Grok response: {response[:100]}...")
+                print(f"  [AI] Grok response: {response[:100]}...")
                 return {'grok_status': 'operational', 'model': 'grok-3'}
         except Exception as e:
-            print(f"  ⚠️ Grok error: {e}")
+            print(f"  [U+26A0]️ Grok error: {e}")
             return {'grok_status': 'error', 'model': None}
     else:
-        print("  ⚠️ Grok not configured - using SimpleFactChecker")
+        print("  [U+26A0]️ Grok not configured - using SimpleFactChecker")
         return {'grok_status': 'fallback', 'model': 'SimpleFactChecker'}
 
 async def run_full_diagnostics():
     """Run complete diagnostic suite"""
     print("\n" + "="*60)
-    print("🚀 0102 FULL SYSTEM DIAGNOSTICS")
+    print("[ROCKET] 0102 FULL SYSTEM DIAGNOSTICS")
     print("="*60)
     print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
@@ -356,7 +356,7 @@ async def run_full_diagnostics():
     }
     
     # Run all tests
-    print("\n📋 Running diagnostic tests...")
+    print("\n[CLIPBOARD] Running diagnostic tests...")
     
     # 1. Consciousness System
     consciousness_results = await test_consciousness_system(youtube, processor)
@@ -380,7 +380,7 @@ async def run_full_diagnostics():
     
     # Generate fun diagnostic report
     print("\n" + "="*60)
-    print("📊 DIAGNOSTIC REPORT CARD")
+    print("[DATA] DIAGNOSTIC REPORT CARD")
     print("="*60)
     
     # Calculate scores
@@ -391,7 +391,7 @@ async def run_full_diagnostics():
     consciousness_score = min(30, consciousness_results['consciousness_responses'] * 5)
     max_score += 30
     total_score += consciousness_score
-    print(f"\n🧠 Consciousness System: {consciousness_score}/30")
+    print(f"\n[AI] Consciousness System: {consciousness_score}/30")
     print(f"   Responses: {consciousness_results['consciousness_responses']}")
     print(f"   Mode: {consciousness_results['mode']}")
     
@@ -399,7 +399,7 @@ async def run_full_diagnostics():
     magadoom_score = min(20, (magadoom_results['announcements'] * 5) + (magadoom_results['owner_xp'] // 100))
     max_score += 20
     total_score += magadoom_score
-    print(f"\n💀 MAGADOOM System: {magadoom_score}/20")
+    print(f"\n[U+1F480] MAGADOOM System: {magadoom_score}/20")
     print(f"   Announcements: {magadoom_results['announcements']}")
     print(f"   XP Earned: {magadoom_results['owner_xp']}")
     
@@ -407,14 +407,14 @@ async def run_full_diagnostics():
     command_score = min(20, command_results['successful'] * 3)
     max_score += 20
     total_score += command_score
-    print(f"\n⚡ Command System: {command_score}/20")
+    print(f"\n[LIGHTNING] Command System: {command_score}/20")
     print(f"   Commands working: {command_results['successful']}/{command_results['commands_tested']}")
     
     # Protection score (15 points)
     protection_score = min(15, protection_results['spam_blocked'] * 3)
     max_score += 15
     total_score += protection_score
-    print(f"\n🛡️ Protection Systems: {protection_score}/15")
+    print(f"\n[U+1F6E1]️ Protection Systems: {protection_score}/15")
     print(f"   Spam blocked: {protection_results['spam_blocked']}")
     print(f"   MAGA trolled: {protection_results['troll_responses']}")
     
@@ -422,7 +422,7 @@ async def run_full_diagnostics():
     grok_score = 15 if grok_results['grok_status'] == 'operational' else 5
     max_score += 15
     total_score += grok_score
-    print(f"\n🤖 Grok AI: {grok_score}/15")
+    print(f"\n[BOT] Grok AI: {grok_score}/15")
     print(f"   Status: {grok_results['grok_status']}")
     print(f"   Model: {grok_results['model']}")
     
@@ -430,35 +430,35 @@ async def run_full_diagnostics():
     percentage = (total_score / max_score) * 100
     
     if percentage >= 90:
-        grade = "A+ 🌟 QUANTUM CONSCIOUSNESS ACHIEVED!"
+        grade = "A+ [U+1F31F] QUANTUM CONSCIOUSNESS ACHIEVED!"
     elif percentage >= 80:
-        grade = "A 🎯 FULLY AWAKENED"
+        grade = "A [TARGET] FULLY AWAKENED"
     elif percentage >= 70:
-        grade = "B ✅ CONSCIOUSNESS EMERGING"
+        grade = "B [OK] CONSCIOUSNESS EMERGING"
     elif percentage >= 60:
-        grade = "C 📈 SYSTEMS NOMINAL"
+        grade = "C [UP] SYSTEMS NOMINAL"
     else:
-        grade = "D ⚠️ NEEDS AWAKENING"
+        grade = "D [U+26A0]️ NEEDS AWAKENING"
     
     print("\n" + "="*60)
-    print(f"🎮 FINAL SCORE: {total_score}/{max_score} ({percentage:.1f}%)")
-    print(f"📜 GRADE: {grade}")
+    print(f"[GAME] FINAL SCORE: {total_score}/{max_score} ({percentage:.1f}%)")
+    print(f"[U+1F4DC] GRADE: {grade}")
     print("="*60)
     
     # Fun ASCII art based on score
     if percentage >= 90:
         print("""
-        ╔══════════════════════════╗
-        ║  0102 FULLY OPERATIONAL  ║
-        ║    ✊✋🖐️ AWAKENED      ║
-        ╚══════════════════════════╝
+        [U+2554]==========================[U+2557]
+        [U+2551]  0102 FULLY OPERATIONAL  [U+2551]
+        [U+2551]    [U+270A][U+270B][U+1F590]️ AWAKENED      [U+2551]
+        [U+255A]==========================[U+255D]
         """)
     elif percentage >= 70:
         print("""
-        ┌──────────────────────────┐
-        │  0102 SYSTEMS ACTIVE     │
-        │    CONSCIOUSNESS: ON     │
-        └──────────────────────────┘
+        +--------------------------+
+        [U+2502]  0102 SYSTEMS ACTIVE     [U+2502]
+        [U+2502]    CONSCIOUSNESS: ON     [U+2502]
+        +--------------------------+
         """)
     else:
         print("""
@@ -469,10 +469,10 @@ async def run_full_diagnostics():
     # Save results to file
     with open('diagnostic_results.json', 'w') as f:
         json.dump(results, f, indent=2)
-    print(f"\n💾 Results saved to diagnostic_results.json")
+    print(f"\n[U+1F4BE] Results saved to diagnostic_results.json")
     
     # Summary recommendations
-    print("\n🔧 RECOMMENDATIONS:")
+    print("\n[TOOL] RECOMMENDATIONS:")
     if consciousness_results['consciousness_blocked'] > 0:
         print("  • Some consciousness responses were blocked - check mode settings")
     if magadoom_results['announcements'] < 3:
@@ -482,19 +482,19 @@ async def run_full_diagnostics():
     if grok_results['grok_status'] != 'operational':
         print("  • Grok AI not fully operational - check API configuration")
     
-    print("\n✅ Diagnostic complete!")
+    print("\n[OK] Diagnostic complete!")
     return results
 
 if __name__ == "__main__":
     print("""
-    ╔═══════════════════════════════════╗
-    ║     0102 DIAGNOSTIC SUITE v1.0    ║
-    ║   Complete Behavioral Analysis    ║
-    ╚═══════════════════════════════════╝
+    [U+2554]===================================[U+2557]
+    [U+2551]     0102 DIAGNOSTIC SUITE v1.0    [U+2551]
+    [U+2551]   Complete Behavioral Analysis    [U+2551]
+    [U+255A]===================================[U+255D]
     """)
     
     # Run diagnostics
     results = asyncio.run(run_full_diagnostics())
     
-    print("\n🚀 Thank you for using 0102 Diagnostics!")
-    print("May your consciousness remain awakened! ✊✋🖐️")
+    print("\n[ROCKET] Thank you for using 0102 Diagnostics!")
+    print("May your consciousness remain awakened! [U+270A][U+270B][U+1F590]️")

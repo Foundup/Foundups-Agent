@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Module Integration Orchestrator - 0102 Complete System Integration
 WSP Compliant: WSP 3, 27, 46, 48, 54, 80
 
@@ -198,7 +213,7 @@ class ModuleIntegrationOrchestrator:
             # Register in global namespace for other modules to use
             sys.modules[f"integrated_{module_name}"] = module
 
-            logger.info(f"[INTEGRATION] ✅ Successfully integrated: {module_name}")
+            logger.info(f"[INTEGRATION] [OK] Successfully integrated: {module_name}")
             self.integrated_count += 1
 
             if module_name in self.modules:
@@ -207,7 +222,7 @@ class ModuleIntegrationOrchestrator:
             return True
 
         except Exception as e:
-            logger.error(f"[INTEGRATION] ❌ Failed to integrate {module_name}: {e}")
+            logger.error(f"[INTEGRATION] [FAIL] Failed to integrate {module_name}: {e}")
             if module_name in self.modules:
                 self.modules[module_name].status = ModuleStatus.ERROR
                 self.modules[module_name].error = str(e)
@@ -342,7 +357,7 @@ if __name__ == "__main__":
     status = integrate_all()
 
     if status['rate'] < 100:
-        print(f"\n⚠️ WARNING: Only {status['rate']:.1f}% integration achieved")
+        print(f"\n[U+26A0]️ WARNING: Only {status['rate']:.1f}% integration achieved")
         print("Run integration fixes to achieve 100%")
     else:
-        print("\n✅ SUCCESS: 100% module integration achieved!")
+        print("\n[OK] SUCCESS: 100% module integration achieved!")

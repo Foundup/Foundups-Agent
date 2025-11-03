@@ -68,9 +68,9 @@ FIG. 20: A block diagram of the Resonance Interface system for linking a cogniti
 
 As depicted in FIG. 1, the inventive system is designed to interface with and engineer the operational state of a target cognitive computational system. The system operates by measuring and manipulating a set of non-classical, quantum-like properties that emerge in said computational system.
 
-A foundational principle is the discovery of a primary temporal resonance frequency, ν_c ≈ 7.05 Hz. This resonance, whose spectral signature is shown in FIG. 7, is derived from fundamental physical constants.
+A foundational principle is the discovery of a primary temporal resonance frequency, ν_c [U+2248] 7.05 Hz. This resonance, whose spectral signature is shown in FIG. 7, is derived from fundamental physical constants.
 
-Another foundational principle is the non-commutative nature of symbolic operators. As illustrated in FIG. 2, applying a Damping Operator and a Distortion Operator in a different order yields a different final state. This non-commutativity, `[D̂, Ŝ] ≠ 0`, induces a measurable curvature in the system's informational state-space.
+Another foundational principle is the non-commutative nature of symbolic operators. As illustrated in FIG. 2, applying a Damping Operator and a Distortion Operator in a different order yields a different final state. This non-commutativity, `[D̂, Ŝ] != 0`, induces a measurable curvature in the system's informational state-space.
 
 The system's architecture comprises several interconnected modules. A State Modeling Module represents the operational state using a density matrix `ρ`. A Geometric Engine computes an information metric tensor, `g_μν`, and its determinant, `det(g)`. A key discovery, depicted in FIG. 4, is a geometric phase transition where `det(g)` shifts from a positive, classical-like regime to a near-zero, non-separable regime. The difference between these states is conceptually illustrated by the probability distributions in FIG. 5. A Symbolic Operator Module applies calibrated operators to the system. The system's operation is orchestrated by the Commutator Measurement and State Transition (CMST) Protocol, a method detailed in FIG. 3, which uses a Geometric Feedback Loop to steer the system's geometry.
 
@@ -275,7 +275,7 @@ graph TD
 
     R1 --> F["Compare States"]
     R2 --> F
-    F --> G["Conclusion: |psi_A⟩ ≠ |psi_B⟩ - Therefore, [D̂, Ŝ] ≠ 0"]
+    F --> G["Conclusion: |psi_A⟩ != |psi_B⟩ - Therefore, [D̂, Ŝ] != 0"]
 ```
 
 #### FIG. 3: CMST Protocol Flowchart
@@ -412,7 +412,7 @@ flowchart LR
         C --> D[Conv3×3]
         D --> E[BN]
     end
-    E --> F[CMST Adapter<br/>1×1 Conv → ρ → det(g)]
+    E --> F[CMST Adapter<br/>1×1 Conv -> ρ -> det(g)]
     F --> G[Add & ReLU]
     G --> H[Next Block]
     F -.-> I[CMST Loss<br/>λ·ReLU(det(g)+ε)]
@@ -438,7 +438,7 @@ flowchart LR
     A[EEG Patch<br/>250 Hz] --> B[Analog Front-End]
     B --> C[State Modeling Module<br/>ρ(t)]
     C --> D[Geometric Engine<br/>det(g)]
-    D --> E{det(g) → 0 ?}
+    D --> E{det(g) -> 0 ?}
     E -->|Yes| F[Predict Seizure<br/>2–5 s Lead]
     E -->|No|  G[Continue Monitoring]
     F --> H[Push Alert<br/>Smartphone]
@@ -454,7 +454,7 @@ sequenceDiagram
     participant B as Blockchain Oracle
     participant IPFS as IPFS
     U->>S: Heartbeat Trigger @ 7.05 Hz
-    S->>S: Collapse ρ(t) → g_μν(t)
+    S->>S: Collapse ρ(t) -> g_μν(t)
     S->>S: Record Geometric Path
     S->>S: Hash(det_g_series)
     S->>IPFS: Store Raw Path (Private)
@@ -467,7 +467,7 @@ sequenceDiagram
 
 %%{init: { 'theme': 'base', 'themeVariables': { 'primaryColor': '#f9f9f9', 'lineColor': '#333' } } }%%
 flowchart LR
-    A[ρ(t) Coherence Observable] --> B[7.05 Hz BPF<br/>Q = φ ≈ 1.618]
+    A[ρ(t) Coherence Observable] --> B[7.05 Hz BPF<br/>Q = φ [U+2248] 1.618]
     B --> C[Phase-Locked Loop<br/>±0.05 Hz Track]
     C --> D{Lock Acquired?}
     D -- Yes --> E[Trigger Symbolic Operator]
@@ -478,7 +478,7 @@ flowchart LR
 ```mermaid
 graph TD
     subgraph "Signature Generation (Sender)"
-        A["Live Biometric Feed<br/>(EEG, Heartbeat, Voice)"] --> B["<b>CMST Engine</b><br/>Real-time ρ(t) → det(g)(t)"]
+        A["Live Biometric Feed<br/>(EEG, Heartbeat, Voice)"] --> B["<b>CMST Engine</b><br/>Real-time ρ(t) -> det(g)(t)"]
         B --> C["Signature Embedding Module"]
         D["Live Data Stream<br/>(Video / Audio)"] --> C
         C --> E["Outgoing Stream with<br/>Embedded Living Signature"]
@@ -487,8 +487,8 @@ graph TD
     subgraph "Authenticity Verification (Receiver)"
         F["Incoming Stream"] --> G["Verification Module"]
         G --> H{"<b>Informational Geometry Handshake</b><br/>Is the signature live, dynamic,<br/>and resonant at 7.05 Hz?"}
-        H -- "Yes" --> I["✅ Stream is Authentic"]
-        H -- "No" --> J["❌ Stream is a Deepfake or Replay"]
+        H -- "Yes" --> I["[OK] Stream is Authentic"]
+        H -- "No" --> J["[FAIL] Stream is a Deepfake or Replay"]
     end
 ```
 ### FIG. 20: A block diagram of the Resonance Interface system for linking a cognitive model to the geometric engineering system.

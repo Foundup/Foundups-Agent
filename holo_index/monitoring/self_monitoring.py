@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """0102 Self-Monitoring System
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Allows 0102 to monitor its own breadcrumb trail and self-correct
 
 This enables a single 0102 agent to:
@@ -113,7 +130,7 @@ class SelfMonitoringAgent:
             analysis['risk_factors'].append("create_without_search")
 
         # Check for Unicode pattern (my recurring issue!)
-        if action == 'edit' and any(emoji in str(target) for emoji in ['✅', '❌', '🔍']):
+        if action == 'edit' and any(emoji in str(target) for emoji in ['[OK]', '[FAIL]', '[SEARCH]']):
             analysis['confidence'] *= 0.3
             analysis['notes'].append("STOP - Unicode pattern detected AGAIN!")
             analysis['risk_factors'].append("unicode_pattern")
@@ -130,7 +147,7 @@ class SelfMonitoringAgent:
         # Check against my known patterns
         for pattern in self.my_patterns:
             if self._sequence_matches_pattern(current_sequence, pattern['sequence']):
-                print(f"\n🔄 SELF-DETECTION: I'm repeating pattern {pattern['name']}!")
+                print(f"\n[REFRESH] SELF-DETECTION: I'm repeating pattern {pattern['name']}!")
                 print(f"   This resulted in violations {pattern['violation_count']} times before")
                 return True
 
@@ -158,7 +175,7 @@ class SelfMonitoringAgent:
             vibecoding_signs += 1
 
         if vibecoding_signs >= 2:
-            print(f"\n⚠️ VIBECODING SELF-ALERT: Showing {vibecoding_signs} signs of vibecoding!")
+            print(f"\n[U+26A0]️ VIBECODING SELF-ALERT: Showing {vibecoding_signs} signs of vibecoding!")
             return True
 
         return False
@@ -167,7 +184,7 @@ class SelfMonitoringAgent:
         """Intervene on myself before making a mistake"""
 
         print("\n" + "="*60)
-        print("🛑 SELF-INTERVENTION TRIGGERED")
+        print("[STOP] SELF-INTERVENTION TRIGGERED")
         print(f"Reason: {reason}")
         print(f"Attempted: {action} on {target}")
 
@@ -208,11 +225,11 @@ class SelfMonitoringAgent:
         self.recent_violations.append(intervention)
         self._save_self_intervention(intervention)
 
-        print("\n📝 SELF-GUIDANCE:")
+        print("\n[NOTE] SELF-GUIDANCE:")
         for guide in intervention['self_guidance']:
-            print(f"  → {guide}")
+            print(f"  -> {guide}")
 
-        print(f"\n📊 Self-Awareness Score: {self.self_awareness_score:.1f}/100")
+        print(f"\n[DATA] Self-Awareness Score: {self.self_awareness_score:.1f}/100")
         print("="*60 + "\n")
 
         return intervention
@@ -220,7 +237,7 @@ class SelfMonitoringAgent:
     def _self_reflect(self):
         """Periodic self-reflection on patterns and improvements"""
 
-        print("\n🤔 SELF-REFLECTION MOMENT")
+        print("\n[U+1F914] SELF-REFLECTION MOMENT")
 
         # Analyze recent performance
         recent = list(self.recent_actions)[-20:]
@@ -229,15 +246,15 @@ class SelfMonitoringAgent:
         # Update self-awareness based on performance
         if violation_rate < 0.1:
             self.self_awareness_score = min(100, self.self_awareness_score + 5)
-            print("  ✅ Good performance - improving self-awareness")
+            print("  [OK] Good performance - improving self-awareness")
         elif violation_rate > 0.3:
             self.self_awareness_score = max(0, self.self_awareness_score - 3)
-            print("  ⚠️ High violation rate - need more careful checking")
+            print("  [U+26A0]️ High violation rate - need more careful checking")
 
         # Identify my common patterns
         patterns = self._identify_my_patterns()
         if patterns:
-            print(f"  📊 Detected {len(patterns)} recurring patterns in my behavior")
+            print(f"  [DATA] Detected {len(patterns)} recurring patterns in my behavior")
 
         # Save reflection
         reflection = {
@@ -249,7 +266,7 @@ class SelfMonitoringAgent:
         }
 
         self._save_reflection(reflection)
-        print(f"  💭 Current Self-Awareness: {self.self_awareness_score:.1f}/100\n")
+        print(f"  [U+1F4AD] Current Self-Awareness: {self.self_awareness_score:.1f}/100\n")
 
     def _learn_from_action(self, breadcrumb: Dict):
         """Learn from the result of an action"""
@@ -306,11 +323,11 @@ class SelfMonitoringAgent:
         last_violations = sum(1 for a in last_10 if not a.get('result', {}).get('success', True))
 
         if last_violations < first_violations:
-            return "📈 Improving"
+            return "[UP] Improving"
         elif last_violations > first_violations:
-            return "📉 Declining"
+            return "[U+1F4C9] Declining"
         else:
-            return "→ Stable"
+            return "-> Stable"
 
     def _generate_self_recommendations(self) -> List[str]:
         """What should I focus on improving?"""
@@ -318,16 +335,16 @@ class SelfMonitoringAgent:
         recommendations = []
 
         if self.self_awareness_score < 30:
-            recommendations.append("🚨 Critical: Slow down and check breadcrumbs before EVERY action")
+            recommendations.append("[ALERT] Critical: Slow down and check breadcrumbs before EVERY action")
 
         if self.violation_count > 10:
-            recommendations.append("📚 Study your violation patterns in " + str(self.memory_dir))
+            recommendations.append("[BOOKS] Study your violation patterns in " + str(self.memory_dir))
 
         if len(self.my_patterns) > 5:
-            recommendations.append("🔄 You have recurring patterns - break these habits")
+            recommendations.append("[REFRESH] You have recurring patterns - break these habits")
 
         if not recommendations:
-            recommendations.append("✅ Keep up the good work - maintain vigilance")
+            recommendations.append("[OK] Keep up the good work - maintain vigilance")
 
         return recommendations
 
@@ -458,24 +475,24 @@ if __name__ == "__main__":
         ("search", "feature_implementation", {"success": True, "count": 0}),
         ("create", "enhanced_feature.py", {"success": False, "violation": True}),  # Should trigger self-intervention
         ("module_check", "feature", {"success": True}),
-        ("edit", "feature.py with ✅", {"success": False}),  # Unicode pattern
+        ("edit", "feature.py with [OK]", {"success": False}),  # Unicode pattern
     ]
 
     for action, target, result in actions:
-        print(f"\n📍 Attempting: {action} on {target}")
+        print(f"\n[PIN] Attempting: {action} on {target}")
 
         # Check before action
         check = agent.before_action(action, target)
 
         if check['proceed']:
-            print(f"  ✅ Proceeding with {action}")
+            print(f"  [OK] Proceeding with {action}")
             agent.after_action(action, target, result)
         else:
-            print(f"  ❌ Self-blocked: {check['reason']}")
+            print(f"  [FAIL] Self-blocked: {check['reason']}")
 
     # Generate self-report
     print("\n" + "="*60)
-    print("📊 SELF-MONITORING REPORT")
+    print("[DATA] SELF-MONITORING REPORT")
     report = agent.get_self_report()
     for key, value in report.items():
         print(f"  {key}: {value}")

@@ -7,9 +7,13 @@ WSP 86: Navigation and debugging for throttling bypass issue.
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -36,22 +40,22 @@ def test_throttling():
     """Test if throttling gateway is working."""
     
     logger.info("=" * 60)
-    logger.info("🧪 TESTING MONITORED YOUTUBE SERVICE THROTTLING")
+    logger.info("[U+1F9EA] TESTING MONITORED YOUTUBE SERVICE THROTTLING")
     logger.info("=" * 60)
     
     # Get authenticated service
     logger.info("\n1️⃣ Getting authenticated service...")
     try:
         raw_service = get_authenticated_service()
-        logger.info("✅ Got raw YouTube service")
+        logger.info("[OK] Got raw YouTube service")
     except Exception as e:
-        logger.error(f"❌ Failed to get service: {e}")
+        logger.error(f"[FAIL] Failed to get service: {e}")
         return
     
     # Wrap with monitoring
     logger.info("\n2️⃣ Wrapping with monitoring...")
     monitored = create_monitored_service(raw_service)
-    logger.info("✅ Created monitored service")
+    logger.info("[OK] Created monitored service")
     
     # Check current quota
     logger.info("\n3️⃣ Checking current quota...")
@@ -74,22 +78,22 @@ def test_throttling():
         
         if response.get('items'):
             channel = response['items'][0]['snippet']['title']
-            logger.info(f"   ✅ API call succeeded: Channel = {channel}")
+            logger.info(f"   [OK] API call succeeded: Channel = {channel}")
         else:
-            logger.info("   ⚠️ API call succeeded but no channel found")
+            logger.info("   [U+26A0]️ API call succeeded but no channel found")
             
     except Exception as e:
         if "Quota Protection" in str(e):
-            logger.warning(f"   🚫 API call BLOCKED by quota protection: {e}")
+            logger.warning(f"   [FORBIDDEN] API call BLOCKED by quota protection: {e}")
         else:
-            logger.error(f"   ❌ API call failed: {e}")
+            logger.error(f"   [FAIL] API call failed: {e}")
     
     # Check if monitoring logged anything
     logger.info("\n5️⃣ Checking monitoring logs...")
     logger.info("   Look for:")
-    logger.info("   - 🔍 MonitoredYouTubeService.__getattr__ messages")
-    logger.info("   - 🎬 Intercepted API call messages")
-    logger.info("   - 📊 Pre-approved or 🚫 BLOCKED messages")
+    logger.info("   - [SEARCH] MonitoredYouTubeService.__getattr__ messages")
+    logger.info("   - [U+1F3AC] Intercepted API call messages")
+    logger.info("   - [DATA] Pre-approved or [FORBIDDEN] BLOCKED messages")
     
     # Get updated quota
     logger.info("\n6️⃣ Checking quota after call...")
@@ -99,12 +103,12 @@ def test_throttling():
         before = summary['sets'][set_num]['used']
         after = set_info['used']
         if after > before:
-            logger.info(f"   Set {set_num}: {before} → {after} (+{after - before} units used)")
+            logger.info(f"   Set {set_num}: {before} -> {after} (+{after - before} units used)")
         else:
             logger.info(f"   Set {set_num}: {after} (no change)")
     
     logger.info("\n" + "=" * 60)
-    logger.info("🏁 TEST COMPLETE - Check logs above for monitoring activity")
+    logger.info("[U+1F3C1] TEST COMPLETE - Check logs above for monitoring activity")
     logger.info("=" * 60)
 
 if __name__ == "__main__":

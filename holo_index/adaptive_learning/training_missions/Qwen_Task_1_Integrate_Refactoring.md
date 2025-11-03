@@ -12,10 +12,10 @@ Add autonomous_refactoring.py as a component in qwen_orchestrator.py
 **Add**:
 ```python
 COMPONENT_META = {
-    'health_analysis': ('💊✅', 'Health & WSP Compliance'),
-    'vibecoding_analysis': ('🧠', 'Vibecoding Analysis'),
+    'health_analysis': ('[PILL][OK]', 'Health & WSP Compliance'),
+    'vibecoding_analysis': ('[AI]', 'Vibecoding Analysis'),
     ...existing entries...
-    'autonomous_refactoring': ('🔄', 'Autonomous Refactoring'),  # ADD THIS
+    'autonomous_refactoring': ('[REFRESH]', 'Autonomous Refactoring'),  # ADD THIS
 }
 ```
 
@@ -66,10 +66,10 @@ def trigger_autonomous_refactoring(self, module_path: str, target_location: str)
 **Validate**: Does method exist? Test with `python -c "from holo_index.qwen_advisor.orchestration.qwen_orchestrator import QwenOrchestrator; print(hasattr(QwenOrchestrator, 'trigger_autonomous_refactoring'))"`
 
 ## Success Criteria
-- ✅ Component metadata added
-- ✅ Import works without error
-- ✅ Method callable from orchestrator
-- ✅ No breaking changes to existing code
+- [OK] Component metadata added
+- [OK] Import works without error
+- [OK] Method callable from orchestrator
+- [OK] No breaking changes to existing code
 
 ## Submission
 After completing all 3 steps and validating each:

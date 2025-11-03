@@ -81,19 +81,19 @@ class MenuHandler:
             
     def _handle_module_development(self, module_name: str, engine):
         """Handle module-specific development workflow."""
-        wre_log(f"🏗️ Entering module development for: {module_name}", "INFO")
+        wre_log(f"[U+1F3D7]️ Entering module development for: {module_name}", "INFO")
         self.session_manager.log_module_access(module_name, "development")
         
         # Special handling for YouTube module - redirect to main.py
         if module_name == "youtube_module":
-            wre_log("📺 YouTube module selected - redirecting to main.py", "INFO")
+            wre_log("[U+1F4FA] YouTube module selected - redirecting to main.py", "INFO")
             self.ui_interface.display_success("Launching FoundUps Agent main.py for YouTube module...")
             
             try:
                 # Launch main.py in the same terminal
                 subprocess.run([sys.executable, "main.py"], cwd=self.project_root)
             except Exception as e:
-                wre_log(f"❌ Failed to launch main.py: {e}", "ERROR")
+                wre_log(f"[FAIL] Failed to launch main.py: {e}", "ERROR")
                 self.ui_interface.display_error(f"Failed to launch main.py: {e}")
         else:
             # Use module development handler
@@ -101,7 +101,7 @@ class MenuHandler:
             
     def _handle_wsp30_orchestration(self, engine):
         """Handle WSP_30 Agentic Module Build Orchestration."""
-        wre_log("🎯 WSP_30 Agentic Module Build Orchestration", "INFO")
+        wre_log("[TARGET] WSP_30 Agentic Module Build Orchestration", "INFO")
         self.session_manager.log_operation("wsp30_orchestration", {"action": "start"})
         
         # Get WSP30 orchestrator from engine
@@ -133,7 +133,7 @@ class MenuHandler:
             
     def _start_agentic_build(self, module_name: str, orchestrator):
         """Start agentic build for a module."""
-        wre_log(f"🤖 Starting agentic build for: {module_name}", "INFO")
+        wre_log(f"[BOT] Starting agentic build for: {module_name}", "INFO")
         
         try:
             # Use orchestrator to start build
@@ -146,12 +146,12 @@ class MenuHandler:
                 self.ui_interface.display_error(f"Failed to start agentic build for {module_name}")
                 
         except Exception as e:
-            wre_log(f"❌ Agentic build failed: {e}", "ERROR")
+            wre_log(f"[FAIL] Agentic build failed: {e}", "ERROR")
             self.ui_interface.display_error(f"Agentic build failed: {e}")
             
     def _orchestrate_new_module(self, module_name: str, orchestrator):
         """Orchestrate creation of a new module."""
-        wre_log(f"🎼 Orchestrating new module: {module_name}", "INFO")
+        wre_log(f"[MUSIC] Orchestrating new module: {module_name}", "INFO")
         
         try:
             # Use orchestrator to create new module
@@ -164,12 +164,12 @@ class MenuHandler:
                 self.ui_interface.display_error(f"Failed to orchestrate new module {module_name}")
                 
         except Exception as e:
-            wre_log(f"❌ Module orchestration failed: {e}", "ERROR")
+            wre_log(f"[FAIL] Module orchestration failed: {e}", "ERROR")
             self.ui_interface.display_error(f"Module orchestration failed: {e}")
             
     def _enter_manual_mode(self, module_name: str, engine):
         """Enter manual development mode for a module."""
-        wre_log(f"🔧 Entering manual mode for: {module_name}", "INFO")
+        wre_log(f"[TOOL] Entering manual mode for: {module_name}", "INFO")
         self.session_manager.log_operation("manual_mode", {"module": module_name})
         
         # Use module development handler for manual mode
@@ -177,7 +177,7 @@ class MenuHandler:
         
     def _display_roadmap(self, engine):
         """Display development roadmap."""
-        wre_log("🗺️ Displaying development roadmap", "INFO")
+        wre_log("[U+1F5FA]️ Displaying development roadmap", "INFO")
         
         try:
             # Get module prioritizer from engine
@@ -188,12 +188,12 @@ class MenuHandler:
             self.ui_interface.display_roadmap(roadmap)
             
         except Exception as e:
-            wre_log(f"❌ Failed to display roadmap: {e}", "ERROR")
+            wre_log(f"[FAIL] Failed to display roadmap: {e}", "ERROR")
             self.ui_interface.display_error(f"Failed to display roadmap: {e}")
             
     def _handle_system_management(self, engine):
         """Handle system management operations."""
-        wre_log("⚙️ System management", "INFO")
+        wre_log("[U+2699]️ System management", "INFO")
         
         # Get system manager from engine
         system_manager = engine.system_manager
@@ -209,7 +209,7 @@ class MenuHandler:
         
     def _display_session_status(self, engine):
         """Display current session status."""
-        wre_log("📊 Displaying session status", "INFO")
+        wre_log("[DATA] Displaying session status", "INFO")
         
         try:
             # Get session manager from engine
@@ -220,12 +220,12 @@ class MenuHandler:
             self.ui_interface.display_session_status(status)
             
         except Exception as e:
-            wre_log(f"❌ Failed to display session status: {e}", "ERROR")
+            wre_log(f"[FAIL] Failed to display session status: {e}", "ERROR")
             self.ui_interface.display_error(f"Failed to display session status: {e}")
             
     def _handle_module_analysis(self, engine):
         """Handle module analysis operations."""
-        wre_log("🔍 Module analysis", "INFO")
+        wre_log("[SEARCH] Module analysis", "INFO")
         
         # Get module analyzer from engine
         module_analyzer = engine.module_analyzer
@@ -241,7 +241,7 @@ class MenuHandler:
         
     def _follow_wsp_compliance(self, engine):
         """Follow WSP compliance workflow (ModLog + Git Push)."""
-        wre_log("📋 Following WSP compliance workflow", "INFO")
+        wre_log("[CLIPBOARD] Following WSP compliance workflow", "INFO")
         
         # Get system manager from engine
         system_manager = engine.system_manager

@@ -2,7 +2,7 @@
 **Date**: 2025-09-16
 **WSP**: 48 (Recursive Improvement), 86 (Navigation)
 
-## 🎯 Why Vision Would Transform Posting
+## [TARGET] Why Vision Would Transform Posting
 
 ### Current Problems (DOM-Based):
 1. **Brittle Selectors** - LinkedIn/X change their HTML frequently
@@ -13,7 +13,7 @@
 
 ### Vision-Enhanced Solution:
 
-## 🔍 Implementation Approach
+## [SEARCH] Implementation Approach
 
 ### Phase 1: Screenshot Verification
 ```python
@@ -102,7 +102,7 @@ async def smart_post_recovery(self):
         await self.click_visual_element(analysis['suggested_action'])
 ```
 
-## 🎨 Vision API Integration Options
+## [ART] Vision API Integration Options
 
 ### Option 1: Claude Vision (Recommended)
 ```python
@@ -163,7 +163,7 @@ class LocalVisionNavigator:
                 return (x + w//2, y + h//2)  # Center of button
 ```
 
-## 📊 Benefits of Vision Enhancement
+## [DATA] Benefits of Vision Enhancement
 
 ### Reliability
 - **Adaptable**: Works even when LinkedIn/X change their HTML
@@ -180,7 +180,7 @@ class LocalVisionNavigator:
 - **Error Recovery**: Can handle unexpected popups/dialogs
 - **Learning**: Patterns improve over time (WSP 48)
 
-## 🚀 Implementation Steps
+## [ROCKET] Implementation Steps
 
 ### Step 1: Add Vision Dependencies
 ```bash
@@ -214,7 +214,7 @@ class VisionNavigator:
 - Learn from failures
 - Build visual memory of UI elements
 
-## 🎯 Expected Outcomes
+## [TARGET] Expected Outcomes
 
 ### Immediate (1 Week)
 - 90% reduction in posting failures
@@ -231,7 +231,7 @@ class VisionNavigator:
 - Self-improving through pattern learning
 - Could extend to any web platform
 
-## 📈 Success Metrics
+## [UP] Success Metrics
 
 - **Posting Success Rate**: 95%+ (from current ~70%)
 - **Recovery Rate**: 100% from UI changes

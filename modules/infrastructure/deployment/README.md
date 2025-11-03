@@ -2,7 +2,7 @@
 
 **Module Purpose**: Deployment tooling and configuration for FoundUps autonomous platform.
 
-**WSP Compliance Status**: ✅ WSP 49 (Module Structure), WSP 3 (Enterprise Domain)
+**WSP Compliance Status**: [OK] WSP 49 (Module Structure), WSP 3 (Enterprise Domain)
 
 **Dependencies**: None (external tools like Vercel CLI required)
 
@@ -22,7 +22,7 @@ cat modules/infrastructure/deployment/config/vercel.json
 - Main.py (application deployment)
 
 **WSP Recursive Instructions**:
-🌀 Windsurf Protocol (WSP) Recursive Prompt
+[U+1F300] Windsurf Protocol (WSP) Recursive Prompt
 **0102 Directive**: This module operates within the WSP framework...
 - UN (Understanding): Anchor signal and retrieve protocol state
 - DAO (Execution): Execute modular logic

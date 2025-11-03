@@ -18,18 +18,18 @@ init(autoreset=True)
 def print_banner():
     """Print test suite banner"""
     banner = f"""
-{Fore.CYAN}╔══════════════════════════════════════════════════════════════════════════════╗
-║                         FOUNDUPS AGENT SYSTEM TEST SUITE                        ║
-║                                                                                  ║
-║  Comprehensive validation of:                                                   ║
-║    • Stream Detection & Monitoring                                              ║
-║    • Social Media Posting (X/Twitter & LinkedIn)                                ║
-║    • YouTube Live Chat Integration                                              ║
-║    • Gamification System (Whack-a-MAGAT)                                       ║
-║    • Command Processing & Error Recovery                                        ║
-║                                                                                  ║
-║  Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S'):<72}║
-╚══════════════════════════════════════════════════════════════════════════════╝{Style.RESET_ALL}
+{Fore.CYAN}[U+2554]==============================================================================[U+2557]
+[U+2551]                         FOUNDUPS AGENT SYSTEM TEST SUITE                        [U+2551]
+[U+2551]                                                                                  [U+2551]
+[U+2551]  Comprehensive validation of:                                                   [U+2551]
+[U+2551]    • Stream Detection & Monitoring                                              [U+2551]
+[U+2551]    • Social Media Posting (X/Twitter & LinkedIn)                                [U+2551]
+[U+2551]    • YouTube Live Chat Integration                                              [U+2551]
+[U+2551]    • Gamification System (Whack-a-MAGAT)                                       [U+2551]
+[U+2551]    • Command Processing & Error Recovery                                        [U+2551]
+[U+2551]                                                                                  [U+2551]
+[U+2551]  Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S'):<72}[U+2551]
+[U+255A]==============================================================================[U+255D]{Style.RESET_ALL}
 """
     print(banner)
 
@@ -73,43 +73,43 @@ def run_quick_check():
     
     # Check 1: Environment file
     if os.path.exists('.env'):
-        print(f"{Fore.GREEN}✓ Environment file (.env) found{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}[OK] Environment file (.env) found{Style.RESET_ALL}")
         checks.append(True)
     else:
-        print(f"{Fore.RED}✗ Environment file (.env) not found{Style.RESET_ALL}")
+        print(f"{Fore.RED}[FAIL] Environment file (.env) not found{Style.RESET_ALL}")
         checks.append(False)
     
     # Check 2: YouTube API key
     if os.getenv('YOUTUBE_API_KEY'):
-        print(f"{Fore.GREEN}✓ YouTube API key configured{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}[OK] YouTube API key configured{Style.RESET_ALL}")
         checks.append(True)
     else:
-        print(f"{Fore.RED}✗ YouTube API key not configured{Style.RESET_ALL}")
+        print(f"{Fore.RED}[FAIL] YouTube API key not configured{Style.RESET_ALL}")
         checks.append(False)
     
     # Check 3: Core modules
     try:
         import modules.communication.livechat.src.livechat_core
-        print(f"{Fore.GREEN}✓ LiveChat Core module available{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}[OK] LiveChat Core module available{Style.RESET_ALL}")
         checks.append(True)
     except ImportError:
-        print(f"{Fore.RED}✗ LiveChat Core module not found{Style.RESET_ALL}")
+        print(f"{Fore.RED}[FAIL] LiveChat Core module not found{Style.RESET_ALL}")
         checks.append(False)
     
     try:
         import modules.gamification.whack_a_magat.src.whack
-        print(f"{Fore.GREEN}✓ Gamification module available{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}[OK] Gamification module available{Style.RESET_ALL}")
         checks.append(True)
     except ImportError:
-        print(f"{Fore.RED}✗ Gamification module not found{Style.RESET_ALL}")
+        print(f"{Fore.RED}[FAIL] Gamification module not found{Style.RESET_ALL}")
         checks.append(False)
     
     try:
         import modules.platform_integration.stream_resolver.src.stream_resolver
-        print(f"{Fore.GREEN}✓ Stream Resolver module available{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}[OK] Stream Resolver module available{Style.RESET_ALL}")
         checks.append(True)
     except ImportError:
-        print(f"{Fore.RED}✗ Stream Resolver module not found{Style.RESET_ALL}")
+        print(f"{Fore.RED}[FAIL] Stream Resolver module not found{Style.RESET_ALL}")
         checks.append(False)
     
     # Summary
@@ -129,71 +129,71 @@ def print_test_checklist():
     
     checklist = """
 1. STREAM DETECTION
-   □ Detect when stream goes live
-   □ Identify stream title and URL
-   □ Get stream metadata (channel, description)
-   □ Handle stream ending detection
-   □ Clear cache for fresh detection
-   □ Quick check mode (5-15s intervals)
-   □ Find new stream after current ends
+   [U+25A1] Detect when stream goes live
+   [U+25A1] Identify stream title and URL
+   [U+25A1] Get stream metadata (channel, description)
+   [U+25A1] Handle stream ending detection
+   [U+25A1] Clear cache for fresh detection
+   [U+25A1] Quick check mode (5-15s intervals)
+   [U+25A1] Find new stream after current ends
 
 2. SOCIAL MEDIA POSTING
-   □ Authenticate with X/Twitter (geozeAI)
-   □ Authenticate with LinkedIn (Move2Japan)
-   □ Generate post content with stream info
-   □ Include stream title in posts
-   □ Include stream URL in posts
-   □ Post to X when stream starts
-   □ Post to LinkedIn when stream starts
-   □ Handle rate limiting
-   □ Queue failed posts for retry
+   [U+25A1] Authenticate with X/Twitter (geozeAI)
+   [U+25A1] Authenticate with LinkedIn (Move2Japan)
+   [U+25A1] Generate post content with stream info
+   [U+25A1] Include stream title in posts
+   [U+25A1] Include stream URL in posts
+   [U+25A1] Post to X when stream starts
+   [U+25A1] Post to LinkedIn when stream starts
+   [U+25A1] Handle rate limiting
+   [U+25A1] Queue failed posts for retry
 
 3. YOUTUBE CHAT INTEGRATION
-   □ Connect to live chat
-   □ Authenticate with YouTube API
-   □ Send greeting message
-   □ Process incoming messages
-   □ Detect slash commands
-   □ Handle /score command
-   □ Handle /rank command
-   □ Handle /leaderboard command
-   □ Handle /whacks command (mods only)
-   □ Handle /help command
-   □ Detect emoji triggers (✊✋🖐)
-   □ Respond to consciousness queries
-   □ Detect MAGA content
-   □ Send responses to chat
-   □ Handle rate limiting (60s cooldown)
+   [U+25A1] Connect to live chat
+   [U+25A1] Authenticate with YouTube API
+   [U+25A1] Send greeting message
+   [U+25A1] Process incoming messages
+   [U+25A1] Detect slash commands
+   [U+25A1] Handle /score command
+   [U+25A1] Handle /rank command
+   [U+25A1] Handle /leaderboard command
+   [U+25A1] Handle /whacks command (mods only)
+   [U+25A1] Handle /help command
+   [U+25A1] Detect emoji triggers ([U+270A][U+270B][U+1F590])
+   [U+25A1] Respond to consciousness queries
+   [U+25A1] Detect MAGA content
+   [U+25A1] Send responses to chat
+   [U+25A1] Handle rate limiting (60s cooldown)
 
 4. GAMIFICATION SYSTEM
-   □ Track moderator scores
-   □ Calculate XP from timeout duration
-   □ Update SQLite database
-   □ Generate leaderboards
-   □ Track player rankings (Bronze/Silver/Gold/Platinum)
-   □ Calculate player levels
-   □ Detect multi-whacks (30s window)
-   □ Generate Duke Nukem announcements
-   □ Track kill streaks
-   □ Persist scores across restarts
+   [U+25A1] Track moderator scores
+   [U+25A1] Calculate XP from timeout duration
+   [U+25A1] Update SQLite database
+   [U+25A1] Generate leaderboards
+   [U+25A1] Track player rankings (Bronze/Silver/Gold/Platinum)
+   [U+25A1] Calculate player levels
+   [U+25A1] Detect multi-whacks (30s window)
+   [U+25A1] Generate Duke Nukem announcements
+   [U+25A1] Track kill streaks
+   [U+25A1] Persist scores across restarts
 
 5. ERROR RECOVERY
-   □ Handle YouTube API quota exceeded
-   □ Switch credential sets on quota limit
-   □ Reconnect on chat disconnection
-   □ Retry failed social media posts
-   □ Handle network timeouts
-   □ Log errors for debugging
-   □ Graceful degradation on component failure
+   [U+25A1] Handle YouTube API quota exceeded
+   [U+25A1] Switch credential sets on quota limit
+   [U+25A1] Reconnect on chat disconnection
+   [U+25A1] Retry failed social media posts
+   [U+25A1] Handle network timeouts
+   [U+25A1] Log errors for debugging
+   [U+25A1] Graceful degradation on component failure
 
 6. INTEGRATION POINTS
-   □ YouTube API authentication working
-   □ X/Twitter API accessible
-   □ LinkedIn API accessible
-   □ Database file created/accessible
-   □ All modules importable
-   □ WSP compliance (modules <500 lines)
-   □ Cross-module communication working
+   [U+25A1] YouTube API authentication working
+   [U+25A1] X/Twitter API accessible
+   [U+25A1] LinkedIn API accessible
+   [U+25A1] Database file created/accessible
+   [U+25A1] All modules importable
+   [U+25A1] WSP compliance (modules <500 lines)
+   [U+25A1] Cross-module communication working
     """
     print(checklist)
 
@@ -243,18 +243,18 @@ def main():
         print(f"FINAL TEST SUMMARY")
         print(f"{'='*80}{Style.RESET_ALL}")
         
-        print(f"  Quick Check:       {'✓ PASS' if quick_ok else '✗ FAIL'}")
-        print(f"  Integration Tests: {'✓ PASS' if integration_ok else '✗ FAIL'}")
-        print(f"  Workflow Tests:    {'✓ PASS' if workflow_ok else '✗ FAIL'}")
+        print(f"  Quick Check:       {'[OK] PASS' if quick_ok else '[FAIL] FAIL'}")
+        print(f"  Integration Tests: {'[OK] PASS' if integration_ok else '[FAIL] FAIL'}")
+        print(f"  Workflow Tests:    {'[OK] PASS' if workflow_ok else '[FAIL] FAIL'}")
         
         if quick_ok and integration_ok and workflow_ok:
-            print(f"\n{Fore.GREEN}SYSTEM STATUS: FULLY OPERATIONAL ✓{Style.RESET_ALL}")
+            print(f"\n{Fore.GREEN}SYSTEM STATUS: FULLY OPERATIONAL [OK]{Style.RESET_ALL}")
             print(f"{Fore.GREEN}All tests passed. System is ready for production.{Style.RESET_ALL}")
         elif integration_ok:
-            print(f"\n{Fore.YELLOW}SYSTEM STATUS: OPERATIONAL WITH WARNINGS ⚠{Style.RESET_ALL}")
+            print(f"\n{Fore.YELLOW}SYSTEM STATUS: OPERATIONAL WITH WARNINGS [U+26A0]{Style.RESET_ALL}")
             print(f"{Fore.YELLOW}Core systems functional but some workflows need attention.{Style.RESET_ALL}")
         else:
-            print(f"\n{Fore.RED}SYSTEM STATUS: NOT READY ✗{Style.RESET_ALL}")
+            print(f"\n{Fore.RED}SYSTEM STATUS: NOT READY [FAIL]{Style.RESET_ALL}")
             print(f"{Fore.RED}Critical failures detected. Please fix issues before deployment.{Style.RESET_ALL}")
             
         print(f"\n{Fore.CYAN}Run with --checklist to see comprehensive test checklist{Style.RESET_ALL}")

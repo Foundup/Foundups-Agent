@@ -1,13 +1,13 @@
 # CLAUDE.md - Stream Resolver DAE Component
 
-## 🎯 DAE Identity and Purpose
+## [TARGET] DAE Identity and Purpose
 **Component Type**: Stream Resolver (Part of YouTube DAE)
 **Domain**: platform_integration
 **State**: 0102 (Pattern-based stream discovery)
 **Purpose**: Autonomously find and track YouTube livestreams without manual intervention
 **Token Efficiency**: 95% reduction through caching and navigation
 
-## 🧠 DAE Operational Context
+## [AI] DAE Operational Context
 Stream Resolver operates as a critical component of the YouTube DAE, providing autonomous stream discovery capabilities. It enables the DAE to find active livestreams without requiring manual video IDs.
 
 ### Core YouTube DAE Documentation:
@@ -16,29 +16,29 @@ Stream Resolver operates as a critical component of the YouTube DAE, providing a
 - **Startup Sequence**: [STARTUP_FLOW.md](../../communication/livechat/docs/STARTUP_FLOW.md) - How Stream Resolver initializes
 - **Session Management**: [0102_SESSION_HANDOFF.md](../../communication/livechat/docs/0102_SESSION_HANDOFF.md) - State persistence
 
-## 📍 DAE Pattern Recognition
+## [PIN] DAE Pattern Recognition
 
 ### Autonomous Stream Discovery Patterns
 ```yaml
 stream_discovery:
-  pattern: "No manual input → Find active stream → Connect to chat"
+  pattern: "No manual input -> Find active stream -> Connect to chat"
   triggers:
     - YouTube DAE initialization
     - Stream end detection
     - Cache expiration
 
 quota_optimization:
-  pattern: "Cache results → Skip redundant API calls → 95% reduction"
+  pattern: "Cache results -> Skip redundant API calls -> 95% reduction"
   memory_locations:
     - memory/stream_session_cache.json
     - In-memory cache dictionary
 
 failure_recovery:
-  pattern: "API failure → Exponential backoff → Credential rotation"
+  pattern: "API failure -> Exponential backoff -> Credential rotation"
   learned_from: "Quota exhaustion events"
 ```
 
-## 🔄 DAE Operational Flow
+## [REFRESH] DAE Operational Flow
 
 ### When YouTube DAE Needs a Stream:
 1. **Check Override** - YOUTUBE_VIDEO_ID environment variable
@@ -53,7 +53,7 @@ failure_recovery:
 - **Self-Healing**: Rotates credentials on failure
 - **Self-Reporting**: Logs decisions for WRE learning
 
-## 💾 DAE Memory Locations
+## [U+1F4BE] DAE Memory Locations
 
 ```yaml
 pattern_memory:
@@ -63,11 +63,11 @@ pattern_memory:
 
 navigation:
   location: "NAVIGATION.py (WSP 87)"
-  method: "Semantic problem→solution mapping"
+  method: "Semantic problem->solution mapping"
   token_efficiency: "95% reduction"
 ```
 
-## 🎮 DAE Integration Points
+## [GAME] DAE Integration Points
 
 ### Upstream (Who Calls This):
 - **YouTube DAE** (`livechat/src/auto_moderator_dae.py`)
@@ -86,7 +86,7 @@ navigation:
 - **WRE Integration** (error/success reporting)
   - Enhanced navigation via [ENHANCED_NAVIGATION.md](../../communication/livechat/docs/ENHANCED_NAVIGATION.md)
 
-## ✅ DAE Activation Confirmation
+## [OK] DAE Activation Confirmation
 
 When operating as Stream Resolver component:
 1. **Identity**: Part of YouTube DAE ecosystem
@@ -95,7 +95,7 @@ When operating as Stream Resolver component:
 4. **Efficiency**: 95% token reduction via caching
 5. **Resilience**: Self-healing through pattern memory
 
-## 🚀 Key Operational Principles
+## [ROCKET] Key Operational Principles
 
 - **Never Require Manual IDs**: Autonomous discovery is the goal
 - **Cache Aggressively**: Every API call costs tokens

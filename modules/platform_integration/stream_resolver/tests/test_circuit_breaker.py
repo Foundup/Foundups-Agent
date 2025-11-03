@@ -14,13 +14,6 @@ WSP Compliance:
 - Validates credential rotation reset functionality
 """
 
-# === UTF-8 ENFORCEMENT (WSP 90) ===
-import sys
-import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-# === END UTF-8 ENFORCEMENT ===
 
 
 import unittest
@@ -271,7 +264,7 @@ class TestCircuitBreakerEdgeCases(unittest.TestCase):
 
 def run_circuit_breaker_tests():
     """Run all circuit breaker tests."""
-    print("🧪 Running Circuit Breaker Test Suite")
+    print("[U+1F9EA] Running Circuit Breaker Test Suite")
     print("=" * 50)
     
     # Create test suite
@@ -293,12 +286,12 @@ def run_circuit_breaker_tests():
 if __name__ == '__main__':
     success = run_circuit_breaker_tests()
     if success:
-        print("\n✅ All circuit breaker tests passed!")
+        print("\n[OK] All circuit breaker tests passed!")
     else:
-        print("\n❌ Some circuit breaker tests failed!")
+        print("\n[FAIL] Some circuit breaker tests failed!")
     
-    print("\n🎯 Circuit breaker functionality verified for:")
-    print("   • State transitions (CLOSED → OPEN → HALF_OPEN → CLOSED)")
+    print("\n[TARGET] Circuit breaker functionality verified for:")
+    print("   • State transitions (CLOSED -> OPEN -> HALF_OPEN -> CLOSED)")
     print("   • Failure threshold enforcement")
     print("   • Timeout-based recovery")
     print("   • Manual reset for credential rotation")

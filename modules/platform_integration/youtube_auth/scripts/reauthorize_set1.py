@@ -55,7 +55,7 @@ from modules.platform_integration.youtube_auth.src.youtube_auth import get_authe
 
 try:
     # This will trigger OAuth flow with new credentials
-    service = get_authenticated_service(0)
+    service = get_authenticated_service(1)  # 1-based index for Set 1
     
     # Test the service
     response = service.channels().list(part='snippet', mine=True).execute()

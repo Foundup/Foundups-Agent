@@ -27,13 +27,13 @@ All LinkedIn posting now routes through the **Unified LinkedIn Interface** in th
 ## Archival Directory Structure
 ```
 modules/platform_integration/linkedin_agent/_archive/
-├── direct_usage_tests/
-│   ├── test_direct_post.py
-│   ├── test_youtube_detection_post.py
-│   └── test_anti_detection_login.py
-├── deprecated_interfaces/
-│   └── unified_posting_interface.py
-└── ARCHIVE_README.md
++-- direct_usage_tests/
+[U+2502]   +-- test_direct_post.py
+[U+2502]   +-- test_youtube_detection_post.py
+[U+2502]   +-- test_anti_detection_login.py
++-- deprecated_interfaces/
+[U+2502]   +-- unified_posting_interface.py
++-- ARCHIVE_README.md
 ```
 
 ## Benefits of Archival

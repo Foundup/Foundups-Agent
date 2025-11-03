@@ -45,7 +45,7 @@ def test_veo3_api():
         for model in models:
             if 'video' in model.name.lower() or 'veo' in model.name.lower():
                 video_models.append(model.name)
-                print(f"  ✓ Found: {model.name}")
+                print(f"  [OK] Found: {model.name}")
                 print(f"    Supported methods: {model.supported_generation_methods}")
 
         if video_models:

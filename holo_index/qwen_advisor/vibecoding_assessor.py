@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 HoloIndex Vibecoding Assessment Module
 ======================================
 
@@ -216,57 +232,57 @@ class VibecodingAssessor:
 
         if self.metrics.holoindex_searches_performed < 5:
             recommendations.append(
-                "🚨 [VIOLATION] You have NOT been using HoloIndex! RUN IT NOW!"
+                "[ALERT] [VIOLATION] You have NOT been using HoloIndex! RUN IT NOW!"
             )
             recommendations.append(
-                "   → python holo_index.py --search 'your current task'"
+                "   -> python holo_index.py --search 'your current task'"
             )
 
         if self.metrics.new_files_created > self.metrics.existing_files_enhanced:
             recommendations.append(
-                "❌ [STOP] STOP CREATING NEW FILES! Enhance existing modules!"
+                "[FAIL] [STOP] STOP CREATING NEW FILES! Enhance existing modules!"
             )
             recommendations.append(
-                "   → Use --check-module BEFORE creating ANYTHING"
+                "   -> Use --check-module BEFORE creating ANYTHING"
             )
 
         if self.metrics.duplicate_functions_created > 0:
             recommendations.append(
-                "🔴 [DUPLICATE] You created DUPLICATE functions! This is VIBECODING!"
+                "[U+1F534] [DUPLICATE] You created DUPLICATE functions! This is VIBECODING!"
             )
             recommendations.append(
-                "   → ALWAYS search first: python holo_index.py --search"
+                "   -> ALWAYS search first: python holo_index.py --search"
             )
 
         if self.metrics.wsp_violations_detected > 0:
             recommendations.append(
-                f"⚠️ [WSP VIOLATION x{self.metrics.wsp_violations_detected}] You violated WSP {self.metrics.wsp_violations_detected} times!"
+                f"[U+26A0]️ [WSP VIOLATION x{self.metrics.wsp_violations_detected}] You violated WSP {self.metrics.wsp_violations_detected} times!"
             )
             recommendations.append(
-                "   → READ WSP_MASTER_INDEX.md NOW"
+                "   -> READ WSP_MASTER_INDEX.md NOW"
             )
 
         if score < 30:
-            recommendations.append("✅ [GOOD] Acceptable WSP compliance - maintain this")
+            recommendations.append("[OK] [GOOD] Acceptable WSP compliance - maintain this")
         elif score >= 60:
             recommendations.append(
-                "🚨🚨 [CRITICAL VIBECODING] You are NOT following WSP!"
+                "[ALERT][ALERT] [CRITICAL VIBECODING] You are NOT following WSP!"
             )
             recommendations.append(
-                "   → STOP ALL CODING until you run HoloIndex"
+                "   -> STOP ALL CODING until you run HoloIndex"
             )
 
         if self.metrics.code_reuse_ratio < 0.5:
             recommendations.append(
-                f"📊 [LOW REUSE] Only {self.metrics.code_reuse_ratio:.0%} code reuse - TARGET: >70%"
+                f"[DATA] [LOW REUSE] Only {self.metrics.code_reuse_ratio:.0%} code reuse - TARGET: >70%"
             )
             recommendations.append(
-                "   → Search for existing code BEFORE writing new"
+                "   -> Search for existing code BEFORE writing new"
             )
 
         # Add the constant reminder
         recommendations.append("")
-        recommendations.append("🎯 GOLDEN RULE: 'follow WSP' = USE HOLOINDEX FIRST!")
+        recommendations.append("[TARGET] GOLDEN RULE: 'follow WSP' = USE HOLOINDEX FIRST!")
 
         return recommendations
 
@@ -285,7 +301,7 @@ class VibecodingAssessor:
         # MUCH MORE ASSERTIVE LANGUAGE
         prompt = f"""
 ==============================================================
-🚨 MANDATORY WSP COMPLIANCE CHECK - STOP AND READ 🚨
+[ALERT] MANDATORY WSP COMPLIANCE CHECK - STOP AND READ [ALERT]
 ==============================================================
 
 Vibecode Score: {result.vibecode_score:.1f}/100 (lower is better)
@@ -307,7 +323,7 @@ Recommendations:
         # MORE DIRECTIVE LANGUAGE
         if result.vibecode_score > 50:
             prompt += """
-⚠️ HIGH VIBECODING DETECTED - IMMEDIATE ACTION REQUIRED:
+[U+26A0]️ HIGH VIBECODING DETECTED - IMMEDIATE ACTION REQUIRED:
 ===========================================================
 STOP! You are writing code WITHOUT using HoloIndex!
 
@@ -327,7 +343,7 @@ THIS IS YOUR {:.0f}th REMINDER - USE HOLOINDEX!
 """.format(self.metrics.assessment_count + 1)
         else:
             prompt += """
-✅ GOOD WSP COMPLIANCE - MAINTAIN THIS BEHAVIOR:
+[OK] GOOD WSP COMPLIANCE - MAINTAIN THIS BEHAVIOR:
 ================================================
 Continue to:
 1. ALWAYS run HoloIndex BEFORE coding
@@ -338,7 +354,7 @@ Continue to:
 
         prompt += """
 ==============================================================
-🎯 REMEMBER THE GOLDEN RULE:
+[TARGET] REMEMBER THE GOLDEN RULE:
 "follow WSP" = USE HOLOINDEX FIRST, ALWAYS!
 ==============================================================
 

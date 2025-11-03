@@ -47,13 +47,13 @@ with open("memory/git_posted_commits.json", "w", encoding="utf-8") as f:
 with open("memory/git_post_log.json", "w", encoding="utf-8") as f:
     json.dump(test_log, f, indent=2)
 
-print("\n✅ Created test data files:")
+print("\n[OK] Created test data files:")
 print("   - memory/git_posted_commits.json")
 print("   - memory/git_post_log.json")
 
 # Now test reading the history (non-interactive version)
 print("\n" + "="*60)
-print("📊 GIT POST HISTORY")
+print("[DATA] GIT POST HISTORY")
 print("="*60)
 
 # Check posted commits
@@ -62,16 +62,16 @@ if os.path.exists(posted_commits_file):
     try:
         with open(posted_commits_file, 'r', encoding="utf-8") as f:
             posted_commits = json.load(f)
-            print(f"\n✅ {len(posted_commits)} commits posted to social media")
+            print(f"\n[OK] {len(posted_commits)} commits posted to social media")
             print("\nPosted commit hashes:")
             for commit in posted_commits[-10:]:  # Show last 10
                 print(f"  • {commit}")
             if len(posted_commits) > 10:
                 print(f"  ... and {len(posted_commits) - 10} more")
     except Exception as e:
-        print(f"❌ Error reading posted commits: {e}")
+        print(f"[FAIL] Error reading posted commits: {e}")
 else:
-    print("📭 No posted commits found")
+    print("[U+1F4ED] No posted commits found")
 
 # Check detailed log
 log_file = "memory/git_post_log.json"
@@ -79,18 +79,18 @@ if os.path.exists(log_file):
     try:
         with open(log_file, 'r', encoding="utf-8") as f:
             log_entries = json.load(f)
-            print(f"\n📋 Detailed posting log ({len(log_entries)} entries):")
+            print(f"\n[CLIPBOARD] Detailed posting log ({len(log_entries)} entries):")
             print("-" * 60)
 
             # Show all entries for test
             for entry in log_entries:
                 timestamp = entry.get('timestamp', 'Unknown')
                 commit_msg = entry.get('commit_msg', 'No message')[:50]
-                linkedin = "✅" if entry.get('linkedin') else "❌"
-                x_twitter = "✅" if entry.get('x_twitter') else "❌"
+                linkedin = "[OK]" if entry.get('linkedin') else "[FAIL]"
+                x_twitter = "[OK]" if entry.get('x_twitter') else "[FAIL]"
                 files = entry.get('file_count', 0)
 
-                print(f"\n📌 {timestamp[:19]}")
+                print(f"\n[U+1F4CC] {timestamp[:19]}")
                 print(f"   Commit: {commit_msg}...")
                 print(f"   Files: {files}")
                 print(f"   LinkedIn: {linkedin}  X/Twitter: {x_twitter}")
@@ -100,17 +100,17 @@ if os.path.exists(log_file):
             linkedin_success = sum(1 for e in log_entries if e.get('linkedin'))
             x_success = sum(1 for e in log_entries if e.get('x_twitter'))
 
-            print("\n📈 Statistics:")
+            print("\n[UP] Statistics:")
             print(f"   Total posts: {total_posts}")
             print(f"   LinkedIn success rate: {linkedin_success}/{total_posts} ({linkedin_success*100//max(total_posts,1)}%)")
             print(f"   X/Twitter success rate: {x_success}/{total_posts} ({x_success*100//max(total_posts,1)}%)")
 
     except Exception as e:
-        print(f"❌ Error reading log file: {e}")
+        print(f"[FAIL] Error reading log file: {e}")
 else:
-    print("\n📭 No posting log found")
+    print("\n[U+1F4ED] No posting log found")
 
 print("\n" + "="*60)
-print("✅ History viewer test complete!")
+print("[OK] History viewer test complete!")
 print("The actual function also offers an option to clear history")
 print("="*60)

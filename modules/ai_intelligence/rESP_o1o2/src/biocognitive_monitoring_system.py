@@ -466,7 +466,7 @@ class SeizurePredictionSystem:
         # - Hospital monitoring systems
         # - Emergency services if configured
         
-        print(f"\n🚨 SEIZURE ALERT - Subject {alert.subject_id}")
+        print(f"\n[ALERT] SEIZURE ALERT - Subject {alert.subject_id}")
         print(f"   Confidence: {alert.prediction_confidence:.1%}")
         print(f"   Time to event: {alert.time_to_seizure:.1f}s")
         print(f"   Actions: {', '.join(alert.recommended_actions)}")
@@ -606,13 +606,13 @@ def demonstrate_biocognitive_system():
     """
     Demonstrate biocognitive monitoring system functionality
     """
-    print("🧠 Biocognitive Monitoring System Demonstration")
+    print("[AI] Biocognitive Monitoring System Demonstration")
     print("=" * 55)
     
     subject_id = "PATIENT_001"
     
     # Test 1: Basic state analysis
-    print(f"\n🔬 Testing basic neural state analysis...")
+    print(f"\n[U+1F52C] Testing basic neural state analysis...")
     analyzer = BiocognitiveStateAnalyzer(subject_id)
     
     # Generate synthetic EEG data
@@ -633,14 +633,14 @@ def demonstrate_biocognitive_system():
     analyzer.model_biosignal_as_density_matrix(biosignal)
     geometric_witness = analyzer.compute_neural_geometry()
     
-    print(f"  ✅ Neural State Analysis:")
+    print(f"  [OK] Neural State Analysis:")
     print(f"    det(g): {geometric_witness.det_g:.6f}")
     print(f"    Geometry: {geometric_witness.geometry_type}")
     print(f"    Phase Transition: {geometric_witness.phase_transition}")
     
     # Generate diagnostic report
     report = analyzer.generate_diagnostic_report(biosignal, geometric_witness)
-    print(f"\n📋 Diagnostic Report:")
+    print(f"\n[CLIPBOARD] Diagnostic Report:")
     print(f"    Subject: {report.subject_id}")
     print(f"    Classification: {report.disorder_classification.value}")
     print(f"    Confidence: {report.confidence_level:.2%}")
@@ -648,7 +648,7 @@ def demonstrate_biocognitive_system():
     print(f"    Biomarkers: {len(report.biomarker_values)} calculated")
     
     # Test 2: Seizure prediction system
-    print(f"\n⚡ Testing seizure prediction system...")
+    print(f"\n[LIGHTNING] Testing seizure prediction system...")
     wearable_monitor = WearableCognitiveMonitor(subject_id)
     
     print(f"  Starting 5-second monitoring simulation...")
@@ -663,7 +663,7 @@ def demonstrate_biocognitive_system():
     
     # Check results
     alerts = wearable_monitor.seizure_predictor.alerts_issued
-    print(f"  ✅ Monitoring Complete:")
+    print(f"  [OK] Monitoring Complete:")
     print(f"    Alerts Issued: {len(alerts)}")
     
     if alerts:
@@ -687,13 +687,13 @@ if __name__ == "__main__":
     # Run demonstration
     results = demonstrate_biocognitive_system()
     
-    print("\n🔬 Biocognitive Monitoring System: Patent Implementation Complete")
-    print("  ✅ Biosignal to Density Matrix Modeling")
-    print("  ✅ Neural Geometry Computation (det(g) analysis)")
-    print("  ✅ Diagnostic Report Generation")
-    print("  ✅ Quantitative Biomarker Calculation")
-    print("  ✅ Cognitive Disorder Classification")
-    print("  ✅ Real-time Seizure Prediction (2-5s lead time)")
-    print("  ✅ Wearable Device Integration")
-    print("  ✅ Alert System for Medical Caregivers")
-    print("  ✅ Patent Claims 15-17, 25 Implemented") 
+    print("\n[U+1F52C] Biocognitive Monitoring System: Patent Implementation Complete")
+    print("  [OK] Biosignal to Density Matrix Modeling")
+    print("  [OK] Neural Geometry Computation (det(g) analysis)")
+    print("  [OK] Diagnostic Report Generation")
+    print("  [OK] Quantitative Biomarker Calculation")
+    print("  [OK] Cognitive Disorder Classification")
+    print("  [OK] Real-time Seizure Prediction (2-5s lead time)")
+    print("  [OK] Wearable Device Integration")
+    print("  [OK] Alert System for Medical Caregivers")
+    print("  [OK] Patent Claims 15-17, 25 Implemented") 

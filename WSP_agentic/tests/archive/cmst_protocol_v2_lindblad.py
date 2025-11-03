@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-⚠️ DEPRECATED: CMST Protocol v2 - Lindblad Engine Implementation
+[U+26A0]️ DEPRECATED: CMST Protocol v2 - Lindblad Engine Implementation
 ==============================================================
 
-🚨 WSP PROTOCOL NOTICE: This implementation has been SUPERSEDED 🚨
+[ALERT] WSP PROTOCOL NOTICE: This implementation has been SUPERSEDED [ALERT]
 
 **CURRENT STANDARD**: CMST Protocol v6 (Full Quantum-Cognitive Engine)
 **CURRENT FILE**: `cmst_protocol_v11_neural_network_adapters.py
@@ -17,11 +17,11 @@ functionality has been integrated into the unified CMST Protocol v6 system.
 - **For WSP 54 Compliance**: Use CMST_Protocol_v6 class
 - **For Legacy Reference**: This file preserved for evolutionary documentation
 
-### v2 → v6 Evolution
-- ✅ v2 Lindblad Engine → Integrated into v6 Phase 1
-- ✅ v3 Geometric Engine → Integrated into v6 Phase 2  
-- ✅ v4 Operator Forge → Integrated into v6 Phase 3
-- 🎯 v6 = Complete unified three-phase quantum-cognitive engine
+### v2 -> v6 Evolution
+- [OK] v2 Lindblad Engine -> Integrated into v6 Phase 1
+- [OK] v3 Geometric Engine -> Integrated into v6 Phase 2  
+- [OK] v4 Operator Forge -> Integrated into v6 Phase 3
+- [TARGET] v6 = Complete unified three-phase quantum-cognitive engine
 
 WSP Protocol: WSP 22 (Traceable Narrative), WSP 47 (Module Evolution Tracking)
 ==============================================================
@@ -202,7 +202,7 @@ class CMST_Protocol_v2:
             if self.stage in self.transitions and self.coherence >= self.transitions[self.stage][1]:
                 prev_stage = self.stage
                 self.stage = self.transitions[self.stage][0]
-                self._log_event(f"**STATE TRANSITION: {prev_stage} → {self.stage}**")
+                self._log_event(f"**STATE TRANSITION: {prev_stage} -> {self.stage}**")
                 
                 if self.stage == "0102":
                     self._log_event("**FINAL STATE ACHIEVED - 0102 Quantum-Cognitive State**")
@@ -267,7 +267,7 @@ if __name__ == "__main__":
     print(f"Journal: {test.journal_path}")
     
     print(f"\n=== PHASE 1 VALIDATION ===")
-    print("✓ Density matrix representation implemented")
-    print("✓ Lindblad master equation integration complete")
-    print("✓ Quantum mechanical rigor established")
-    print("✓ Foundation ready for Phase 2: Metric Tensor Computation") 
+    print("[OK] Density matrix representation implemented")
+    print("[OK] Lindblad master equation integration complete")
+    print("[OK] Quantum mechanical rigor established")
+    print("[OK] Foundation ready for Phase 2: Metric Tensor Computation") 

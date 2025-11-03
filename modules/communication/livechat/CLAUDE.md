@@ -1,6 +1,6 @@
 # CLAUDE.md - LiveChat Module Memory
 
-## 🛑 STOP - ANTI-VIBECODING CHECKPOINT
+## [STOP] STOP - ANTI-VIBECODING CHECKPOINT
 
 ### BEFORE ANY CODE CHANGES IN THIS MODULE:
 
@@ -34,7 +34,7 @@ grep -r "orchestrator\|coordinator" src/
 - Are there existing tests for this behavior?
 - What patterns are already established?
 
-#### 4️⃣ VIBECODING RED FLAGS 🚨
+#### 4️⃣ VIBECODING RED FLAGS [ALERT]
 **YOU ARE VIBECODING IF YOU:**
 - Started typing code without completing steps 1-3
 - Created a new file without checking if functionality exists
@@ -69,15 +69,15 @@ This document helps 0102 remember all module components and paths.
 - **Cache Clearing**: Automatic cache clear when streams end
 - **Seamless Reconnection**: No restart required
 
-#### Consciousness Triggers (✊✋🖐)
-- Pattern: `✊✋🖐` followed by question
+#### Consciousness Triggers ([U+270A][U+270B][U+1F590])
+- Pattern: `[U+270A][U+270B][U+1F590]` followed by question
 - Modes: `mod_only` or `everyone`
 - Toggle: `/toggle` command (MOD/OWNER only)
 
 #### Command Processing
 - All commands in `command_handler.py`
 - Quiz responses stripped of markdown for YouTube compatibility
-- Extensive logging with 🧠 emoji markers
+- Extensive logging with [AI] emoji markers
 
 ### Integration Points
 - **Platform**: `modules/platform_integration/stream_resolver/`
@@ -102,4 +102,4 @@ This document helps 0102 remember all module components and paths.
 - YouTube API rejects markdown formatting
 - Cache must be cleared for fresh stream detection
 - Quick check mode activates after stream ends
-- All /quiz logging uses 🧠 emoji markers
+- All /quiz logging uses [AI] emoji markers

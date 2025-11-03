@@ -16,20 +16,20 @@
 
 ## User's Vision: Snake & Ladders Game
 
-**Entry Point**: `main.py --youtube --live` (line 708 →  asyncio.run(monitor_youtube()))
+**Entry Point**: `main.py --youtube --live` (line 708 ->  asyncio.run(monitor_youtube()))
 
 **Snake Pattern**: Follow imports recursively through execution graph
 **Ladders Pattern**: Jump to imported modules and continue tracing
 
 ```
 main.py:103
-  ↓ import
+  v import
 modules/communication/livechat/src/auto_moderator_dae.py:22
-  ↓ import
+  v import
 modules/platform_integration/stream_resolver/src/stream_resolver.py
-  ↓ import
+  v import
 modules/platform_integration/youtube_api_operations/...
-  ↓ ...continues...
+  v ...continues...
 ```
 
 ## Execution Trace from auto_moderator_dae.py
@@ -417,7 +417,7 @@ def analyze_execution_graph_with_qwen(trace_result: dict) -> dict:
 
 ## Next Steps
 
-1. ✅ **Design Complete**: This document
+1. [OK] **Design Complete**: This document
 2. ⏳ **Start Phase 1**: Implement AST import parser
 3. **Test**: Run on auto_moderator_dae.py (expect 11+ imports found)
 4. **Phase 2**: Build execution tracer

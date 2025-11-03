@@ -1,0 +1,5 @@
+# Secrets MCP Server Requirements
+# WSP 90 UTF-8 Enforcement compliant
+
+fastmcp>=0.9.0
+pathlib2>=2.3.0  # For Python 2/3 compatibility

@@ -209,7 +209,7 @@ class MeetingOrchestrator:
         Send meeting prompt to recipient with full context
         """
         prompt = f"""
-🤝 Meeting Request Available Now
+[HANDSHAKE] Meeting Request Available Now
 
 {intent.requester_id} is available to meet about:
 • Purpose: {intent.purpose}
@@ -290,12 +290,12 @@ Both parties are currently online. Accept this meeting?
     async def run_standalone(self) -> None:
         """Enable standalone block testing per WSP 72"""
         self.logger = logging.getLogger(__name__)
-        self.logger.info("🤝 Starting Auto Meeting Orchestrator in standalone mode...")
+        self.logger.info("[HANDSHAKE] Starting Auto Meeting Orchestrator in standalone mode...")
         await self._interactive_mode()
 
     async def _interactive_mode(self) -> None:
         """Interactive command interface per WSP 11 & WSP 72"""
-        print("\n🤝 Auto Meeting Orchestrator Interactive Mode")
+        print("\n[HANDSHAKE] Auto Meeting Orchestrator Interactive Mode")
         print("Available commands:")
         print("  1. status     - Show orchestrator status")
         print("  2. intents    - Show active meeting intents") 
@@ -334,7 +334,7 @@ Both parties are currently online. Accept this meeting?
                 except KeyboardInterrupt:
                     break
                 except Exception as e:
-                    print(f"❌ Error: {e}")
+                    print(f"[FAIL] Error: {e}")
                     
         except KeyboardInterrupt:
             pass
@@ -347,45 +347,45 @@ Both parties are currently online. Accept this meeting?
         completed_meetings = len(self.get_meeting_history())
         presence_platforms = len(self.presence_data)
         
-        print("📊 Auto Meeting Orchestrator Status:")
+        print("[DATA] Auto Meeting Orchestrator Status:")
         print(f"  Active Intents: {active_intents}")
         print(f"  Completed Meetings: {completed_meetings}")  
         print(f"  Presence Platforms: {presence_platforms}")
-        print(f"  Orchestrator State: ✅ Operational")
-        print(f"  AMO Cube Status: 🔄 PoC Phase (85% complete)")
+        print(f"  Orchestrator State: [OK] Operational")
+        print(f"  AMO Cube Status: [REFRESH] PoC Phase (85% complete)")
 
     async def _show_intents(self) -> None:
         """Show active meeting intents"""
         intents = self.get_active_intents()
-        print(f"📝 Active Meeting Intents ({len(intents)}):")
+        print(f"[NOTE] Active Meeting Intents ({len(intents)}):")
         
         if not intents:
             print("  No active intents")
             return
             
         for i, intent in enumerate(intents, 1):
-            print(f"  {i}. {intent.requester_id} → {intent.recipient_id}")
+            print(f"  {i}. {intent.requester_id} -> {intent.recipient_id}")
             print(f"     Purpose: {intent.purpose}")
             print(f"     Priority: {intent.priority.name}")
             print(f"     Duration: {intent.duration_minutes}min")
 
     async def _show_presence(self) -> None:
         """Show presence aggregation data"""
-        print("📡 Presence Aggregation Data:")
+        print("[U+1F4E1] Presence Aggregation Data:")
         
         if not self.presence_data:
             print("  No presence data available")
             return
             
         for user_id, platforms in self.presence_data.items():
-            print(f"  👤 {user_id}:")
+            print(f"  [U+1F464] {user_id}:")
             for platform, status in platforms.items():
-                status_emoji = {"online": "🟢", "offline": "🔴", "idle": "🟡", "busy": "🔶", "unknown": "⚪"}.get(status.value, "⚪")
+                status_emoji = {"online": "🟢", "offline": "[U+1F534]", "idle": "🟡", "busy": "[U+1F536]", "unknown": "[U+26AA]"}.get(status.value, "[U+26AA]")
                 print(f"    {status_emoji} {platform}: {status.value}")
 
     async def _create_test_intent(self) -> None:
         """Create a test meeting intent"""
-        print("📝 Creating test meeting intent...")
+        print("[NOTE] Creating test meeting intent...")
         
         intent_id = await self.create_meeting_intent(
             requester_id="test_user_1",
@@ -396,37 +396,37 @@ Both parties are currently online. Accept this meeting?
             priority=Priority.MEDIUM
         )
         
-        print(f"✅ Test intent created: {intent_id}")
+        print(f"[OK] Test intent created: {intent_id}")
 
     async def _show_documentation(self) -> None:
         """Show documentation links per WSP 72"""
-        print("📚 AMO Cube Documentation:")
-        print("  📖 README: modules/communication/auto_meeting_orchestrator/README.md")
-        print("  🗺️ ROADMAP: modules/communication/auto_meeting_orchestrator/ROADMAP.md")
-        print("  📝 ModLog: modules/communication/auto_meeting_orchestrator/ModLog.md")
-        print("  🔌 INTERFACE: modules/communication/auto_meeting_orchestrator/INTERFACE.md")
-        print("  🧪 Testing: modules/communication/auto_meeting_orchestrator/tests/README.md")
-        print("\n🧩 Related Cube Modules:")
-        print("  📍 Intent Manager: modules/communication/intent_manager/")
-        print("  📊 Presence Aggregator: modules/aggregation/presence_aggregator/")
-        print("  🔐 Consent Engine: modules/infrastructure/consent_engine/")
-        print("  🚀 Session Launcher: modules/platform_integration/session_launcher/")
-        print("\n💡 Use WSP 72 protocol for complete cube assessment")
+        print("[BOOKS] AMO Cube Documentation:")
+        print("  [U+1F4D6] README: modules/communication/auto_meeting_orchestrator/README.md")
+        print("  [U+1F5FA]️ ROADMAP: modules/communication/auto_meeting_orchestrator/ROADMAP.md")
+        print("  [NOTE] ModLog: modules/communication/auto_meeting_orchestrator/ModLog.md")
+        print("  [U+1F50C] INTERFACE: modules/communication/auto_meeting_orchestrator/INTERFACE.md")
+        print("  [U+1F9EA] Testing: modules/communication/auto_meeting_orchestrator/tests/README.md")
+        print("\n[U+1F9E9] Related Cube Modules:")
+        print("  [PIN] Intent Manager: modules/communication/intent_manager/")
+        print("  [DATA] Presence Aggregator: modules/aggregation/presence_aggregator/")
+        print("  [U+1F510] Consent Engine: modules/infrastructure/consent_engine/")
+        print("  [ROCKET] Session Launcher: modules/platform_integration/session_launcher/")
+        print("\n[IDEA] Use WSP 72 protocol for complete cube assessment")
 
     async def _run_cube_tests(self) -> None:
         """Run AMO cube integration tests"""
-        print("🧪 Running AMO Cube Tests...")
-        print("  ✅ Intent Creation: PASS")
-        print("  ✅ Presence Updates: PASS") 
-        print("  ✅ Priority Scoring: PASS")
-        print("  ⚠️  Cross-Module Integration: PARTIAL (4/5 modules)")
-        print("  ✅ Mock Component Fallbacks: PASS")
-        print("\n📊 Cube Test Results: 90% PASS")
-        print("🎯 Next: Complete session_launcher integration")
+        print("[U+1F9EA] Running AMO Cube Tests...")
+        print("  [OK] Intent Creation: PASS")
+        print("  [OK] Presence Updates: PASS") 
+        print("  [OK] Priority Scoring: PASS")
+        print("  [U+26A0]️  Cross-Module Integration: PARTIAL (4/5 modules)")
+        print("  [OK] Mock Component Fallbacks: PASS")
+        print("\n[DATA] Cube Test Results: 90% PASS")
+        print("[TARGET] Next: Complete session_launcher integration")
 
     async def _cleanup(self) -> None:
         """Cleanup AMO resources"""
-        print("\n🧹 AMO cleanup complete")
+        print("\n[U+1F9F9] AMO cleanup complete")
 
     def get_module_status(self) -> Dict[str, Any]:
         """Get comprehensive status for cube assessment per WSP 72"""
@@ -504,10 +504,10 @@ async def demo_amo_poc():
         priority=Priority.HIGH
     )
     
-    print(f"\n✅ Meeting intent created: {intent_id}")
+    print(f"\n[OK] Meeting intent created: {intent_id}")
     
     # Step 2: Simulate presence updates
-    print("\n📡 Simulating presence updates...")
+    print("\n[U+1F4E1] Simulating presence updates...")
     await amo.update_presence("alice", "discord", PresenceStatus.ONLINE)
     await amo.update_presence("alice", "whatsapp", PresenceStatus.ONLINE)
     await amo.update_presence("bob", "discord", PresenceStatus.IDLE)
@@ -516,7 +516,7 @@ async def demo_amo_poc():
     # Allow time for meeting orchestration
     await asyncio.sleep(1)
     
-    print("\n📊 Final Status:")
+    print("\n[DATA] Final Status:")
     print(f"Active intents: {len(amo.get_active_intents())}")
     print(f"Completed meetings: {len(amo.get_meeting_history())}")
     

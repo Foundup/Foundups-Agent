@@ -14,9 +14,9 @@
 - Create comprehensive tests
 
 ### Tasks
-- [ ] Convert social_media_orchestrator → plugin
-- [ ] Convert mlestar_orchestrator → plugin  
-- [ ] Convert 0102_orchestrator → plugin
+- [ ] Convert social_media_orchestrator -> plugin
+- [ ] Convert mlestar_orchestrator -> plugin  
+- [ ] Convert 0102_orchestrator -> plugin
 - [ ] Build pattern library from existing code
 - [ ] Add test coverage (>90% per WSP 5)
 
@@ -49,11 +49,11 @@
 
 ## Success Metrics
 Per WSP 70 (System Status Reporting):
-- **Token Usage**: 5000+ → 50-200 (97% reduction)
-- **Orchestrator Count**: 40+ → 1 master
-- **Pattern Library**: 0 → 100+ patterns
-- **Plugin Count**: 0 → 40+
-- **Test Coverage**: 0% → 90%+
+- **Token Usage**: 5000+ -> 50-200 (97% reduction)
+- **Orchestrator Count**: 40+ -> 1 master
+- **Pattern Library**: 0 -> 100+ patterns
+- **Plugin Count**: 0 -> 40+
+- **Test Coverage**: 0% -> 90%+
 
 ## Dependencies
 - WSP 46: WRE Protocol (architecture)

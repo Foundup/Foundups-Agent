@@ -16,7 +16,7 @@ def test_send():
         token_file = f'credentials/oauth_token{i}.json' if i > 1 else 'credentials/oauth_token.json'
         
         if not os.path.exists(token_file):
-            print(f"❌ {token_file} not found")
+            print(f"[FAIL] {token_file} not found")
             continue
             
         try:
@@ -34,7 +34,7 @@ def test_send():
             
             # Check if token is valid
             if creds and creds.expired and creds.refresh_token:
-                print(f"🔄 Refreshing {token_file}")
+                print(f"[REFRESH] Refreshing {token_file}")
                 creds.refresh(Request())
             
             # Build service
@@ -48,28 +48,28 @@ def test_send():
             
             if response.get('items'):
                 channel = response['items'][0]['snippet']
-                print(f"✅ {token_file}: {channel['title']} (ID: {response['items'][0]['id']})")
+                print(f"[OK] {token_file}: {channel['title']} (ID: {response['items'][0]['id']})")
                 
                 # This is the account being used
                 return youtube, channel['title'], response['items'][0]['id']
             else:
-                print(f"❌ {token_file}: No channel info")
+                print(f"[FAIL] {token_file}: No channel info")
                 
         except Exception as e:
-            print(f"❌ {token_file}: {str(e)[:100]}")
+            print(f"[FAIL] {token_file}: {str(e)[:100]}")
     
     return None, None, None
 
 def main():
-    print("🔍 Testing which YouTube account the bot is using...")
+    print("[SEARCH] Testing which YouTube account the bot is using...")
     print("=" * 60)
     
     youtube, channel_name, channel_id = test_send()
     
     if youtube and channel_name:
         print("\n" + "=" * 60)
-        print(f"🤖 Bot is using account: {channel_name}")
-        print(f"📍 Channel ID: {channel_id}")
+        print(f"[BOT] Bot is using account: {channel_name}")
+        print(f"[PIN] Channel ID: {channel_id}")
         print("=" * 60)
         
         # Now test sending to the stream
@@ -85,10 +85,10 @@ def main():
             if video_response.get('items'):
                 live_chat_id = video_response['items'][0]['liveStreamingDetails'].get('activeLiveChatId')
                 if live_chat_id:
-                    print(f"📺 Found live chat: {live_chat_id}")
+                    print(f"[U+1F4FA] Found live chat: {live_chat_id}")
                     
                     # Send test message
-                    message = f"🤖 Bot Status Check - Account: {channel_name} - System operational ✅"
+                    message = f"[BOT] Bot Status Check - Account: {channel_name} - System operational [OK]"
                     
                     result = youtube.liveChatMessages().insert(
                         part="snippet",
@@ -103,17 +103,17 @@ def main():
                         }
                     ).execute()
                     
-                    print(f"✅ Test message sent! ID: {result.get('id')}")
-                    print(f"📝 Message: {message}")
+                    print(f"[OK] Test message sent! ID: {result.get('id')}")
+                    print(f"[NOTE] Message: {message}")
                 else:
-                    print("❌ No active live chat found")
+                    print("[FAIL] No active live chat found")
             else:
-                print("❌ Video not found")
+                print("[FAIL] Video not found")
                 
         except Exception as e:
-            print(f"❌ Error sending test message: {e}")
+            print(f"[FAIL] Error sending test message: {e}")
     else:
-        print("\n❌ Could not determine which account is being used")
+        print("\n[FAIL] Could not determine which account is being used")
 
 if __name__ == "__main__":
     main()

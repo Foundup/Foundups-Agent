@@ -34,9 +34,9 @@ class LiveStatusVerifier:
         try:
             from modules.communication.livechat.src.qwen_youtube_integration import get_qwen_youtube
             self.qwen_intelligence = get_qwen_youtube()
-            self.logger.info("🤖🧠 [QWEN-STATUS] Qwen intelligence connected to LiveStatusVerifier")
+            self.logger.info("[BOT][AI] [QWEN-STATUS] Qwen intelligence connected to LiveStatusVerifier")
         except Exception as e:
-            self.logger.debug(f"🤖🧠 [QWEN-STATUS] Qwen not available: {e}")
+            self.logger.debug(f"[BOT][AI] [QWEN-STATUS] Qwen not available: {e}")
 
         # Initialize duplicate prevention manager for checking posted videos
         self.duplicate_manager = None
@@ -170,10 +170,10 @@ class LiveStatusVerifier:
 
             if should_skip_logging:
                 if is_live:
-                    self.logger.info(f"✅ [STATUS] Stream {video_id} is LIVE")
+                    self.logger.info(f"[OK] [STATUS] Stream {video_id} is LIVE")
                 else:
                     reason = self._get_not_live_reason(live_broadcast, actual_end, scheduled_start, actual_start)
-                    self.logger.debug(f"❌ [STATUS] Stream {video_id} is NOT live (filtered): {reason}")
+                    self.logger.debug(f"[FAIL] [STATUS] Stream {video_id} is NOT live (filtered): {reason}")
                 return is_live
 
             # Detailed logging for recent/active streams only
@@ -192,10 +192,10 @@ class LiveStatusVerifier:
                 self.logger.info(f"  • Scheduled for: {scheduled_start}")
 
             if is_live:
-                self.logger.info(f"✅ [STATUS] Stream {video_id} is LIVE")
+                self.logger.info(f"[OK] [STATUS] Stream {video_id} is LIVE")
             else:
                 reason = self._get_not_live_reason(live_broadcast, actual_end, scheduled_start, actual_start)
-                self.logger.info(f"❌ [STATUS] Stream {video_id} is NOT live: {reason}")
+                self.logger.info(f"[FAIL] [STATUS] Stream {video_id} is NOT live: {reason}")
 
             return is_live
 
@@ -211,7 +211,7 @@ class LiveStatusVerifier:
                     # Attempt credential rotation
                     rotation_success = self.rotate_credentials()
                     if rotation_success:
-                        self.logger.info(f"[QUOTA] ✅ Credential rotation successful - retrying with new credentials")
+                        self.logger.info(f"[QUOTA] [OK] Credential rotation successful - retrying with new credentials")
 
                         # Retry once with new credentials
                         try:
@@ -227,7 +227,7 @@ class LiveStatusVerifier:
                                 live_broadcast = snippet.get('liveBroadcastContent', 'none')
                                 is_live = live_broadcast == 'live'
 
-                                self.logger.info(f"[QUOTA] ✅ Retry successful after rotation - {video_id} is {'LIVE' if is_live else 'NOT live'}")
+                                self.logger.info(f"[QUOTA] [OK] Retry successful after rotation - {video_id} is {'LIVE' if is_live else 'NOT live'}")
                                 self._cache_status(video_id, is_live)
                                 return is_live
                             else:
@@ -235,14 +235,14 @@ class LiveStatusVerifier:
                                 return False
 
                         except Exception as retry_error:
-                            self.logger.error(f"[QUOTA] ❌ Retry failed after rotation: {retry_error}")
+                            self.logger.error(f"[QUOTA] [FAIL] Retry failed after rotation: {retry_error}")
                             return False
                     else:
-                        self.logger.error(f"[QUOTA] ❌ Credential rotation failed - cannot retry")
+                        self.logger.error(f"[QUOTA] [FAIL] Credential rotation failed - cannot retry")
                         return False
 
                 except Exception as rotation_error:
-                    self.logger.error(f"[QUOTA] ❌ Credential rotation error: {rotation_error}")
+                    self.logger.error(f"[QUOTA] [FAIL] Credential rotation error: {rotation_error}")
                     return False
 
             return False
@@ -261,7 +261,7 @@ class LiveStatusVerifier:
             # Import the OAuth manager to trigger rotation
             from modules.platform_integration.utilities.oauth_management.src.oauth_manager import get_authenticated_service_with_fallback
 
-            self.logger.info("[QUOTA] 🔄 Triggering credential rotation via OAuth manager")
+            self.logger.info("[QUOTA] [REFRESH] Triggering credential rotation via OAuth manager")
 
             # Get a fresh service with rotation logic
             auth_result = get_authenticated_service_with_fallback()
@@ -269,14 +269,14 @@ class LiveStatusVerifier:
             if auth_result:
                 # Update our internal service reference
                 new_service, new_creds, new_set = auth_result
-                self.logger.info(f"[QUOTA] ✅ Successfully rotated to credential set: {new_set}")
+                self.logger.info(f"[QUOTA] [OK] Successfully rotated to credential set: {new_set}")
                 return True
             else:
-                self.logger.error("[QUOTA] ❌ Credential rotation failed - no valid credentials available")
+                self.logger.error("[QUOTA] [FAIL] Credential rotation failed - no valid credentials available")
                 return False
 
         except Exception as e:
-            self.logger.error(f"[QUOTA] ❌ Error during credential rotation: {e}")
+            self.logger.error(f"[QUOTA] [FAIL] Error during credential rotation: {e}")
             return False
 
     def _should_skip_detailed_logging(self, video_id: str, broadcast_content: str,
@@ -335,10 +335,10 @@ class LiveStatusVerifier:
                 }
                 should_log = self.qwen_intelligence.should_investigate_stream(stream_info)
                 if not should_log:
-                    self.logger.debug(f"🤖🧠 [QWEN-FILTER] Qwen recommends skipping detailed logging for {video_id}")
+                    self.logger.debug(f"[BOT][AI] [QWEN-FILTER] Qwen recommends skipping detailed logging for {video_id}")
                     return True
             except Exception as e:
-                self.logger.debug(f"🤖🧠 [QWEN-FILTER] Qwen filtering failed: {e}")
+                self.logger.debug(f"[BOT][AI] [QWEN-FILTER] Qwen filtering failed: {e}")
 
         # Default: log everything that's recent or uncertain
         return False
@@ -433,7 +433,7 @@ class LiveStatusVerifier:
             True if user confirms stream is live
         """
         self.logger.info("="*50)
-        self.logger.info("🔍 MANUAL LIVE STATUS VERIFICATION REQUIRED")
+        self.logger.info("[SEARCH] MANUAL LIVE STATUS VERIFICATION REQUIRED")
         self.logger.info("="*50)
 
         try:
@@ -441,9 +441,9 @@ class LiveStatusVerifier:
             is_live = response in ['yes', 'y', 'true', '1']
 
             if is_live:
-                self.logger.info("✅ User confirmed: Stream is LIVE")
+                self.logger.info("[OK] User confirmed: Stream is LIVE")
             else:
-                self.logger.info("❌ User confirmed: Stream is NOT live")
+                self.logger.info("[FAIL] User confirmed: Stream is NOT live")
 
             return is_live
 

@@ -213,7 +213,7 @@ class BanterChatAgent:
         # Fallback responses if banter engine isn't available
         fallback_responses = {
             'greeting': [
-                f"Hey {message['author']}! Welcome to the stream! 🎉",
+                f"Hey {message['author']}! Welcome to the stream! [CELEBRATE]",
                 f"What's up {message['author']}! Good to see you here!",
                 f"Yo {message['author']}! Thanks for joining! 🙌"
             ],
@@ -225,7 +225,7 @@ class BanterChatAgent:
             'question': [
                 f"Great question, {message['author']}! Let me think about that...",
                 f"Hmm {message['author']}, that's interesting... 🤔",
-                f"{message['author']}, I'll need to ponder that one! 🧠"
+                f"{message['author']}, I'll need to ponder that one! [AI]"
             ],
             'humor': [
                 f"😂 {message['author']}, you're hilarious!",
@@ -239,7 +239,7 @@ class BanterChatAgent:
             ],
             'political': [
                 f"{message['author']}, let's keep it chill and enjoy the stream! 😎",
-                f"Politics aside {message['author']}, we're all friends here! 🤝",
+                f"Politics aside {message['author']}, we're all friends here! [HANDSHAKE]",
                 f"{message['author']}, save the politics for Twitter! 😄"
             ],
             'japan': [
@@ -303,7 +303,7 @@ class BanterChatAgent:
         print("[INFO] Press Ctrl+C to stop\n")
         
         # Send initial greeting
-        self.send_chat_message("🤖 Banter Bot activated! Ready to chat! Say hello! 👋")
+        self.send_chat_message("[BOT] Banter Bot activated! Ready to chat! Say hello! 👋")
         
         # Main monitoring loop
         try:
@@ -329,7 +329,7 @@ class BanterChatAgent:
                 
         except KeyboardInterrupt:
             print("\n[INFO] Stopping Banter Chat Agent...")
-            self.send_chat_message("🤖 Banter Bot signing off! Thanks for chatting! 👋")
+            self.send_chat_message("[BOT] Banter Bot signing off! Thanks for chatting! 👋")
             print("[OK] Agent stopped")
 
 if __name__ == "__main__":

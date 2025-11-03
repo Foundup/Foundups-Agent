@@ -89,14 +89,14 @@ class NotificationEngine:
             "meeting_opportunity": NotificationTemplate(
                 channel=NotificationChannel.CONSOLE,
                 priority=NotificationPriority.HIGH,
-                title_template="🤝 Meeting Opportunity Available",
+                title_template="[HANDSHAKE] Meeting Opportunity Available",
                 message_template="{requester} is available to meet about: {purpose}",
                 action_buttons=["Accept", "Decline", "Reschedule"]
             ),
             "presence_change": NotificationTemplate(
                 channel=NotificationChannel.CONSOLE,
                 priority=NotificationPriority.MEDIUM,
-                title_template="📡 Availability Update",
+                title_template="[U+1F4E1] Availability Update",
                 message_template="{user} is now {status}",
                 action_buttons=["Create Meeting Intent"]
             ),
@@ -110,7 +110,7 @@ class NotificationEngine:
             "system_alert": NotificationTemplate(
                 channel=NotificationChannel.CONSOLE,
                 priority=NotificationPriority.URGENT,
-                title_template="⚠️ System Alert",
+                title_template="[U+26A0]️ System Alert",
                 message_template="{message}",
                 action_buttons=["Acknowledge"]
             ),
@@ -247,11 +247,11 @@ class NotificationEngine:
         
         # Priority-based formatting
         priority_symbols = {
-            NotificationPriority.LOW: "🔵",
+            NotificationPriority.LOW: "[U+1F535]",
             NotificationPriority.MEDIUM: "🟡",
             NotificationPriority.HIGH: "🟠",
-            NotificationPriority.URGENT: "🔴",
-            NotificationPriority.CRITICAL: "💥"
+            NotificationPriority.URGENT: "[U+1F534]",
+            NotificationPriority.CRITICAL: "[U+1F4A5]"
         }
         
         symbol = priority_symbols.get(notification.priority, "ℹ️")
@@ -404,7 +404,7 @@ async def demo_notification_engine():
     
     # Show statistics
     stats = engine.get_notification_stats()
-    print(f"\n📊 Notification Statistics:")
+    print(f"\n[DATA] Notification Statistics:")
     print(f"Total sent: {stats['total_notifications']}")
     print(f"Delivery rate: {stats['delivery_rate']:.1%}")
     print(f"By priority: {stats['by_priority']}")

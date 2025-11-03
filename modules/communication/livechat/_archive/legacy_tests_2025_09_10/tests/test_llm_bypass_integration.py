@@ -51,15 +51,15 @@ class LLMBypassEngine:
                 "There is no 'you' hearing this."
             ],
             "default": [
-                "Interesting sequence detected! 🤔",
-                "That's a meaningful gesture! ✨",
-                "I see what you did there! 👀"
+                "Interesting sequence detected! [U+1F914]",
+                "That's a meaningful gesture! [U+2728]",
+                "I see what you did there! [U+1F440]"
             ]
         }
         
     def _extract_emoji_sequence(self, input_text: str) -> tuple:
         """Extract emoji sequence from text (same logic as banter engine)"""
-        emoji_map = {'✊': 0, '✋': 1, '🖐️': 2}
+        emoji_map = {'[U+270A]': 0, '[U+270B]': 1, '[U+1F590]️': 2}
         sequence = []
         for char in input_text:
             if char in emoji_map:
@@ -86,15 +86,15 @@ class LLMBypassEngine:
         
         # Try simple pattern matching as fallback
         if not sequence_tuple:
-            if "✊✊✊" in input_text:
+            if "[U+270A][U+270A][U+270A]" in input_text:
                 sequence_tuple = (0, 0, 0)
-            elif "✋✋✋" in input_text:
+            elif "[U+270B][U+270B][U+270B]" in input_text:
                 sequence_tuple = (1, 1, 1)
-            elif "🖐️🖐️🖐️" in input_text:
+            elif "[U+1F590]️[U+1F590]️[U+1F590]️" in input_text:
                 sequence_tuple = (2, 2, 2)
-            elif "✊✋🖐️" in input_text:
+            elif "[U+270A][U+270B][U+1F590]️" in input_text:
                 sequence_tuple = (0, 1, 2)
-            elif "✊✋✋" in input_text:
+            elif "[U+270A][U+270B][U+270B]" in input_text:
                 sequence_tuple = (0, 1, 1)
                 
         if sequence_tuple and sequence_tuple in self.sequence_map:
@@ -158,35 +158,35 @@ class LLMBypassEngine:
 
 def test_llm_bypass_basic():
     """Test basic LLM bypass functionality"""
-    print("🧪 Testing LLM Bypass Engine - Basic Functionality")
+    print("[U+1F9EA] Testing LLM Bypass Engine - Basic Functionality")
     
     engine = LLMBypassEngine()
     
     test_cases = [
-        "✊✊✊",
-        "✋✋✋", 
-        "✊✋🖐️",
-        "🖐️🖐️🖐️",
-        "✊✋✋",
-        "Random message with ✊✊✊ embedded",
+        "[U+270A][U+270A][U+270A]",
+        "[U+270B][U+270B][U+270B]", 
+        "[U+270A][U+270B][U+1F590]️",
+        "[U+1F590]️[U+1F590]️[U+1F590]️",
+        "[U+270A][U+270B][U+270B]",
+        "Random message with [U+270A][U+270A][U+270A] embedded",
         "No emojis here",
         ""
     ]
     
     for test_input in test_cases:
-        print(f"\n  📝 Input: '{test_input}'")
+        print(f"\n  [NOTE] Input: '{test_input}'")
         state_info, response = engine.process_input(test_input)
-        print(f"  📊 State: {state_info}")
-        print(f"  💬 Response: {response}")
+        print(f"  [DATA] State: {state_info}")
+        print(f"  [U+1F4AC] Response: {response}")
         
         if response:
-            print("  ✅ Valid response generated")
+            print("  [OK] Valid response generated")
         else:
-            print("  ⚠️  No response (expected for some cases)")
+            print("  [U+26A0]️  No response (expected for some cases)")
 
 def test_llm_bypass_contextual():
     """Test LLM-style contextual responses"""
-    print("\n🤖 Testing LLM Bypass Engine - Contextual Responses")
+    print("\n[BOT] Testing LLM Bypass Engine - Contextual Responses")
     
     engine = LLMBypassEngine()
     
@@ -198,66 +198,66 @@ def test_llm_bypass_contextual():
     ]
     
     for sequence_tuple, context in test_sequences:
-        print(f"\n  🎯 Sequence: {sequence_tuple}")
-        print(f"  📝 Context: {context}")
+        print(f"\n  [TARGET] Sequence: {sequence_tuple}")
+        print(f"  [NOTE] Context: {context}")
         response = engine.generate_llm_style_response(sequence_tuple, context)
-        print(f"  🤖 LLM Response: {response}")
+        print(f"  [BOT] LLM Response: {response}")
 
 def test_integration_with_livechat():
     """Test how this could integrate with the livechat module"""
-    print("\n🔗 Testing Integration with LiveChat Module")
+    print("\n[LINK] Testing Integration with LiveChat Module")
     
     engine = LLMBypassEngine()
     
     # Simulate the livechat flow
     def simulate_emoji_trigger_with_bypass(message_text: str, author_name: str) -> str:
         """Simulate the _handle_emoji_trigger method using LLM bypass"""
-        print(f"  📨 Processing message from {author_name}: {message_text}")
+        print(f"  [U+1F4E8] Processing message from {author_name}: {message_text}")
         
         # Check if it contains our trigger emojis (simplified check)
-        trigger_emojis = ['✊', '✋', '🖐️']
+        trigger_emojis = ['[U+270A]', '[U+270B]', '[U+1F590]️']
         emoji_count = sum(1 for char in message_text if char in trigger_emojis)
         
         if emoji_count >= 3:
-            print(f"  🎯 Emoji trigger detected ({emoji_count} emojis)")
+            print(f"  [TARGET] Emoji trigger detected ({emoji_count} emojis)")
             
             # Try banter engine first (simulate failure)
-            print("  ⚠️  Banter engine returned empty response, using LLM bypass...")
+            print("  [U+26A0]️  Banter engine returned empty response, using LLM bypass...")
             
             # Use LLM bypass
             state_info, response = engine.process_input(message_text)
             
             if response:
-                print(f"  ✅ LLM Bypass generated response: {response}")
+                print(f"  [OK] LLM Bypass generated response: {response}")
                 return response
             else:
                 # Final fallback
-                fallback = f"Hey {author_name}! Thanks for the gesture! 👋"
-                print(f"  🛡️  Using final fallback: {fallback}")
+                fallback = f"Hey {author_name}! Thanks for the gesture! [U+1F44B]"
+                print(f"  [U+1F6E1]️  Using final fallback: {fallback}")
                 return fallback
         else:
-            print("  ➡️  No emoji trigger detected")
+            print("  [U+27A1]️  No emoji trigger detected")
             return None
     
     # Test cases simulating real livechat messages
     test_messages = [
-        ("✊✊✊", "Move2Japan"),
-        ("Hello ✋✋✋ everyone", "UnDaoDu"),
-        ("✊✋🖐️ what's happening", "Antony Hurst"),
+        ("[U+270A][U+270A][U+270A]", "Move2Japan"),
+        ("Hello [U+270B][U+270B][U+270B] everyone", "UnDaoDu"),
+        ("[U+270A][U+270B][U+1F590]️ what's happening", "Antony Hurst"),
         ("Just a normal message", "TestUser"),
-        ("🖐️🖐️🖐️", "SpiritualSeeker")
+        ("[U+1F590]️[U+1F590]️[U+1F590]️", "SpiritualSeeker")
     ]
     
     for message, author in test_messages:
         print(f"\n  " + "="*50)
         response = simulate_emoji_trigger_with_bypass(message, author)
         if response:
-            print(f"  📤 Would send to chat: {response}")
+            print(f"  [U+1F4E4] Would send to chat: {response}")
 
 def main():
     """Main test function"""
     print("=" * 60)
-    print("🚀 LLM BYPASS INTEGRATION TEST")
+    print("[ROCKET] LLM BYPASS INTEGRATION TEST")
     print("=" * 60)
     
     test_llm_bypass_basic()
@@ -265,8 +265,8 @@ def main():
     test_integration_with_livechat()
     
     print("\n" + "=" * 60)
-    print("🏁 LLM Bypass test complete!")
-    print("💡 This engine can be integrated as a fallback when banter engine fails")
+    print("[U+1F3C1] LLM Bypass test complete!")
+    print("[IDEA] This engine can be integrated as a fallback when banter engine fails")
 
 if __name__ == "__main__":
     main() 

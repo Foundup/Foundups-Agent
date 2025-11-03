@@ -6,9 +6,13 @@ This script should be run manually to authorize each set with browser authentica
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -48,13 +52,13 @@ def authorize_set(set_number):
     
     # Check if client secret exists
     if not os.path.exists(client_secret_file):
-        print(f"❌ Client secret not found: {client_secret_file}")
+        print(f"[FAIL] Client secret not found: {client_secret_file}")
         print(f"   Please ensure {client_secret_file} exists")
         return False
     
     # Check if token already exists
     if os.path.exists(token_file):
-        print(f"⚠️ Warning: Token file already exists: {token_file}")
+        print(f"[U+26A0]️ Warning: Token file already exists: {token_file}")
         print("   This will overwrite the existing token.")
     
     try:
@@ -66,9 +70,9 @@ def authorize_set(set_number):
         port = 8080 + set_number
         
         # This will open a browser for authorization
-        print(f"\n🌐 Opening browser for authorization on port {port}...")
+        print(f"\n[U+1F310] Opening browser for authorization on port {port}...")
         print("Please log in with a Google account and authorize the application.")
-        print("\n⚠️ IMPORTANT: Each set should use a DIFFERENT Google account")
+        print("\n[U+26A0]️ IMPORTANT: Each set should use a DIFFERENT Google account")
         print("   to maximize available quota (10,000 units per account per day)")
         
         creds = flow.run_local_server(port=port)
@@ -77,20 +81,20 @@ def authorize_set(set_number):
         with open(token_file, 'w', encoding="utf-8") as token:
             token.write(creds.to_json())
         
-        print(f"✅ Successfully authorized Set {set_number}")
-        print(f"💾 Token saved to: {token_file}")
+        print(f"[OK] Successfully authorized Set {set_number}")
+        print(f"[U+1F4BE] Token saved to: {token_file}")
         
         # Test the credentials
         service = build('youtube', 'v3', credentials=creds)
         response = service.channels().list(part='snippet', mine=True).execute()
         if response.get('items'):
             channel = response['items'][0]['snippet']['title']
-            print(f"✨ Authenticated as channel: {channel}")
+            print(f"[U+2728] Authenticated as channel: {channel}")
         
         return True
         
     except Exception as e:
-        print(f"❌ Failed to authorize Set {set_number}: {e}")
+        print(f"[FAIL] Failed to authorize Set {set_number}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -124,7 +128,7 @@ Note: Each set should use a DIFFERENT Google account for maximum quota.
         sets_to_authorize = [8, 9, 10]
     elif args.set_number:
         if args.set_number not in [8, 9, 10]:
-            print(f"❌ Invalid set number: {args.set_number}")
+            print(f"[FAIL] Invalid set number: {args.set_number}")
             print("   Please specify 8, 9, or 10")
             sys.exit(1)
         sets_to_authorize = [args.set_number]
@@ -150,14 +154,14 @@ Note: Each set should use a DIFFERENT Google account for maximum quota.
     print("="*60)
     
     if successful:
-        print(f"✅ Successfully authorized: {successful}")
+        print(f"[OK] Successfully authorized: {successful}")
     
     if failed:
-        print(f"❌ Failed to authorize: {failed}")
+        print(f"[FAIL] Failed to authorize: {failed}")
     
     # Instructions for next steps
     if successful:
-        print("\n📝 Next steps:")
+        print("\n[NOTE] Next steps:")
         print("1. The .env file already has entries for sets 8, 9, 10")
         print("2. Update youtube_auth.py to include these sets in rotation:")
         print("   - Add sets 8, 9, 10 to the all_sets list")

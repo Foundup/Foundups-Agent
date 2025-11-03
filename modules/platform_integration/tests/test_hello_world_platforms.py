@@ -14,9 +14,13 @@ These tests prove the platform integrations are operational at a basic level.
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -42,24 +46,24 @@ def test_youtube_hello_world():
         
         # Create YouTube OAuth manager
         oauth_manager = OAuthManager(platform="youtube", logger=logger)
-        logger.info("✅ YouTube OAuthManager created successfully")
+        logger.info("[OK] YouTube OAuthManager created successfully")
         
         # Test authentication (dry run)
-        logger.info("📡 Testing YouTube authentication...")
+        logger.info("[U+1F4E1] Testing YouTube authentication...")
         service = oauth_manager.authenticate()
         
         if service:
-            logger.info("✅ YouTube Hello World: PASS - Authentication successful")
+            logger.info("[OK] YouTube Hello World: PASS - Authentication successful")
             return True
         else:
-            logger.warning("⚠️ YouTube Hello World: Service creation failed (credentials may be missing)")
+            logger.warning("[U+26A0]️ YouTube Hello World: Service creation failed (credentials may be missing)")
             return False
             
     except ImportError as e:
-        logger.error(f"❌ YouTube Hello World: Import Error - {e}")
+        logger.error(f"[FAIL] YouTube Hello World: Import Error - {e}")
         return False
     except Exception as e:
-        logger.error(f"❌ YouTube Hello World: Unexpected Error - {e}")
+        logger.error(f"[FAIL] YouTube Hello World: Unexpected Error - {e}")
         return False
 
 def test_linkedin_hello_world():
@@ -71,7 +75,7 @@ def test_linkedin_hello_world():
         
         # Create LinkedIn OAuth manager (will use mock service)
         oauth_manager = OAuthManager(platform="linkedin", logger=logger)
-        logger.info("✅ LinkedIn OAuthManager created successfully")
+        logger.info("[OK] LinkedIn OAuthManager created successfully")
         
         # Test mock service
         service = oauth_manager.authenticate()
@@ -79,18 +83,18 @@ def test_linkedin_hello_world():
         if service:
             # Test mock service functionality
             result = service.test_connection()
-            logger.info(f"📡 LinkedIn mock service response: {result}")
-            logger.info("✅ LinkedIn Hello World: PASS - Mock service operational")
+            logger.info(f"[U+1F4E1] LinkedIn mock service response: {result}")
+            logger.info("[OK] LinkedIn Hello World: PASS - Mock service operational")
             return True
         else:
-            logger.error("❌ LinkedIn Hello World: Mock service creation failed")
+            logger.error("[FAIL] LinkedIn Hello World: Mock service creation failed")
             return False
             
     except ImportError as e:
-        logger.error(f"❌ LinkedIn Hello World: Import Error - {e}")
+        logger.error(f"[FAIL] LinkedIn Hello World: Import Error - {e}")
         return False
     except Exception as e:
-        logger.error(f"❌ LinkedIn Hello World: Unexpected Error - {e}")
+        logger.error(f"[FAIL] LinkedIn Hello World: Unexpected Error - {e}")
         return False
 
 def test_twitter_hello_world():
@@ -102,7 +106,7 @@ def test_twitter_hello_world():
         
         # Create Twitter OAuth manager (will use mock service)
         oauth_manager = OAuthManager(platform="twitter", logger=logger)
-        logger.info("✅ Twitter OAuthManager created successfully")
+        logger.info("[OK] Twitter OAuthManager created successfully")
         
         # Test mock service
         service = oauth_manager.authenticate()
@@ -110,23 +114,23 @@ def test_twitter_hello_world():
         if service:
             # Test mock service functionality
             result = service.test_tweet()
-            logger.info(f"📡 Twitter mock service response: {result}")
-            logger.info("✅ Twitter Hello World: PASS - Mock service operational")
+            logger.info(f"[U+1F4E1] Twitter mock service response: {result}")
+            logger.info("[OK] Twitter Hello World: PASS - Mock service operational")
             return True
         else:
-            logger.error("❌ Twitter Hello World: Mock service creation failed")
+            logger.error("[FAIL] Twitter Hello World: Mock service creation failed")
             return False
             
     except ImportError as e:
-        logger.error(f"❌ Twitter Hello World: Import Error - {e}")
+        logger.error(f"[FAIL] Twitter Hello World: Import Error - {e}")
         return False
     except Exception as e:
-        logger.error(f"❌ Twitter Hello World: Unexpected Error - {e}")
+        logger.error(f"[FAIL] Twitter Hello World: Unexpected Error - {e}")
         return False
 
 def run_all_hello_world_tests():
     """Run all platform Hello World tests"""
-    logger.info("🚀 Starting Platform Integration Hello World Tests")
+    logger.info("[ROCKET] Starting Platform Integration Hello World Tests")
     logger.info("=" * 60)
     
     results = {
@@ -136,24 +140,24 @@ def run_all_hello_world_tests():
     }
     
     logger.info("=" * 60)
-    logger.info("📊 Hello World Test Results:")
+    logger.info("[DATA] Hello World Test Results:")
     
     passed = 0
     total = len(results)
     
     for platform, result in results.items():
-        status = "✅ PASS" if result else "❌ FAIL"
+        status = "[OK] PASS" if result else "[FAIL] FAIL"
         logger.info(f"  {platform}: {status}")
         if result:
             passed += 1
     
-    logger.info(f"📈 Summary: {passed}/{total} platforms operational")
+    logger.info(f"[UP] Summary: {passed}/{total} platforms operational")
     
     if passed == total:
-        logger.info("🎉 All Hello World tests PASSED - Platform integrations operational")
+        logger.info("[CELEBRATE] All Hello World tests PASSED - Platform integrations operational")
         return True
     else:
-        logger.warning("⚠️ Some Hello World tests FAILED - Check platform configurations")
+        logger.warning("[U+26A0]️ Some Hello World tests FAILED - Check platform configurations")
         return False
 
 if __name__ == "__main__":
@@ -161,8 +165,8 @@ if __name__ == "__main__":
         success = run_all_hello_world_tests()
         sys.exit(0 if success else 1)
     except KeyboardInterrupt:
-        logger.info("🛑 Hello World tests interrupted by user")
+        logger.info("[STOP] Hello World tests interrupted by user")
         sys.exit(1)
     except Exception as e:
-        logger.error(f"❌ Unexpected error in Hello World tests: {e}")
+        logger.error(f"[FAIL] Unexpected error in Hello World tests: {e}")
         sys.exit(1)

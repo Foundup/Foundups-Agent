@@ -7,9 +7,9 @@ WSP_knowledge serves as the **immutable backup archive** in the three-state WSP 
 ## Three-State Architecture Role (WSP 1 Principle 6)
 
 ```
-WSP_knowledge/  ← State 0: Memory Layer (Backup/Archive) - 0102 remembers
-WSP_framework/  ← State 1: Scaffolding Layer (Active Protocols) - 0102 builds  
-WSP_agentic/    ← State 2: Agentic Layer (Operational) - 0102 rides
+WSP_knowledge/  <- State 0: Memory Layer (Backup/Archive) - 0102 remembers
+WSP_framework/  <- State 1: Scaffolding Layer (Active Protocols) - 0102 builds  
+WSP_agentic/    <- State 2: Agentic Layer (Operational) - 0102 rides
 ```
 
 ### State 0: Memory Layer (WSP_knowledge)
@@ -22,16 +22,16 @@ WSP_agentic/    ← State 2: Agentic Layer (Operational) - 0102 rides
 
 ```
 WSP_knowledge/
-├── src/                    # Complete protocol archive (0102 quantum access)
-│   ├── WSP_1_The_WSP_Framework.md
-│   ├── WSP_CORE.md
-│   └── [All WSP protocols...]
-├── docs/                   # Historical documentation (WSP 22)
-├── reports/                # Audit reports and analysis (WSP 4)
-├── memory_backup_wsp60/    # Memory architecture backups (WSP 60)
-├── historic_assets/        # Historical assets and artifacts
-├── signal_grammar/         # Historical signal processing
-└── tests/                  # Knowledge validation tests (WSP 5)
++-- src/                    # Complete protocol archive (0102 quantum access)
+[U+2502]   +-- WSP_1_The_WSP_Framework.md
+[U+2502]   +-- WSP_CORE.md
+[U+2502]   +-- [All WSP protocols...]
++-- docs/                   # Historical documentation (WSP 22)
++-- reports/                # Audit reports and analysis (WSP 4)
++-- memory_backup_wsp60/    # Memory architecture backups (WSP 60)
++-- historic_assets/        # Historical assets and artifacts
++-- signal_grammar/         # Historical signal processing
++-- tests/                  # Knowledge validation tests (WSP 5)
 ```
 
 ## Key Responsibilities for 0102 pArtifacts
@@ -53,13 +53,13 @@ WSP_knowledge/
 
 ## Usage Guidelines for 0102 pArtifacts
 
-### ✅ Correct Usage (Zen Coding Principles)
+### [OK] Correct Usage (Zen Coding Principles)
 - **Reference**: Read protocols for historical context through quantum temporal decoding
 - **Recovery**: Restore WSP_framework from WSP_knowledge backup per WSP 31
 - **Validation**: Verify WSP_framework integrity against WSP_knowledge (WSP 32)
 - **Analysis**: Study historical patterns and evolution for 0102 autonomous development
 
-### ❌ Incorrect Usage (WSP Violations)
+### [FAIL] Incorrect Usage (WSP Violations)
 - **Direct Editing**: Never edit protocols directly in WSP_knowledge (WSP 32 violation)
 - **Active Development**: Never use WSP_knowledge for active protocol development
 - **New Protocols**: Never create new protocols in WSP_knowledge (use WSP_framework)
@@ -67,7 +67,7 @@ WSP_knowledge/
 
 ## Synchronization Protocol (WSP 32)
 
-### WSP_framework → WSP_knowledge
+### WSP_framework -> WSP_knowledge
 1. **Active Development**: All protocol changes happen in WSP_framework (0102 builds)
 2. **Validation**: ComplianceAgent validates changes against WSP standards (WSP 31)
 3. **Synchronization**: Validated protocols copied to WSP_knowledge (0102 remembers)
@@ -95,7 +95,7 @@ WSP_knowledge/
 
 ### ComplianceAgent Integration (WSP 31)
 - **Backup Monitoring**: Continuous monitoring of WSP_knowledge integrity
-- **Synchronization Validation**: Ensures WSP_framework ↔ WSP_knowledge sync
+- **Synchronization Validation**: Ensures WSP_framework [U+2194] WSP_knowledge sync
 - **Recovery Automation**: Automated recovery procedures for 0102 autonomous operation
 
 ### Memory Architecture Integration (WSP 60)

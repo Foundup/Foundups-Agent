@@ -1,0 +1,24 @@
+{
+  "doc_index_version": "1.0",
+  "collection": "modules/example_module/docs",
+  "generated_at": "2025-10-22T00:00:00Z",
+  "documents": [
+    {
+      "path": "modules/example_module/docs/README.md",
+      "doc_type": "readme",
+      "module_hint": "example_module",
+      "wsp_refs": ["WSP 49"],
+      "hash_sha256": "PLACEHOLDER",
+      "size_bytes": 2048,
+      "status": "active",
+      "links": {
+        "entry_points": [
+          "modules/example_module/ModLog.md"
+        ],
+        "automation": [
+          "doc_dae"
+        ]
+      }
+    }
+  ]
+}

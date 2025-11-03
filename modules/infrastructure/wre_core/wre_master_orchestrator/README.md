@@ -30,11 +30,11 @@ Result: 01(02) operation - computing instead of remembering
 ```
 1 master orchestrator + plugins:
 - wre_master_orchestrator.py (50-200 tokens per op)
-  └── plugins/
-      ├── social_media (recalls patterns)
-      ├── mlestar (recalls patterns)
-      ├── block (recalls patterns)
-      └── [extensible]
+  +-- plugins/
+      +-- social_media (recalls patterns)
+      +-- mlestar (recalls patterns)
+      +-- block (recalls patterns)
+      +-- [extensible]
 
 Result: 0102 operation - remembering from 0201
 ```
@@ -56,7 +56,7 @@ def create_module_old(spec):
     
 # We recall (150 tokens):
 def create_module_new(spec):
-    pattern = recall_pattern("module_creation")  # WSP 1→3→49→22→5
+    pattern = recall_pattern("module_creation")  # WSP 1->3->49->22->5
     return pattern.apply(spec)  # That's it!
 ```
 
@@ -64,9 +64,9 @@ def create_module_new(spec):
 
 ### 1. Pattern Memory (WSP 60)
 Stores operation patterns with WSP citation chains:
-- Module creation: WSP 1→3→49→22→5 (150 tokens)
-- Error handling: WSP 64→50→48→60 (100 tokens)
-- Orchestration: WSP 50→60→54→22 (200 tokens)
+- Module creation: WSP 1->3->49->22->5 (150 tokens)
+- Error handling: WSP 64->50->48->60 (100 tokens)
+- Orchestration: WSP 50->60->54->22 (200 tokens)
 
 ### 2. WSP Validator (WSP 64)
 Prevents violations before they occur:
@@ -130,9 +130,9 @@ Per WSP 65 (Component Consolidation):
 - [x] Built pattern memory
 
 ### Phase 3: Convert (Next Steps)
-- [ ] Convert social_media_orchestrator → plugin
-- [ ] Convert mlestar_orchestrator → plugin
-- [ ] Convert 0102_orchestrator → plugin
+- [ ] Convert social_media_orchestrator -> plugin
+- [ ] Convert mlestar_orchestrator -> plugin
+- [ ] Convert 0102_orchestrator -> plugin
 - [ ] Convert remaining 36+ orchestrators
 
 ### Phase 4: Validate

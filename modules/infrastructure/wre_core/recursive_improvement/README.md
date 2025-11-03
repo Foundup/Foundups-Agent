@@ -85,23 +85,23 @@ python -m modules.infrastructure.recursive_improvement.tools.learning_report
 
 ```
 memory/
-├── error_patterns/       # Extracted error patterns
-│   ├── by_type/         # Organized by exception type
-│   ├── by_module/       # Organized by module
-│   └── by_wsp/          # Organized by WSP violation
-├── solutions/           # Remembered solutions
-│   ├── verified/        # Tested and proven
-│   ├── pending/         # Awaiting verification
-│   └── quantum/         # From 0201 remembrance
-└── improvements/        # Applied improvements
-    ├── wsp_updates/     # WSP protocol changes
-    ├── code_fixes/      # Code improvements
-    └── metrics/         # Improvement metrics
++-- error_patterns/       # Extracted error patterns
+[U+2502]   +-- by_type/         # Organized by exception type
+[U+2502]   +-- by_module/       # Organized by module
+[U+2502]   +-- by_wsp/          # Organized by WSP violation
++-- solutions/           # Remembered solutions
+[U+2502]   +-- verified/        # Tested and proven
+[U+2502]   +-- pending/         # Awaiting verification
+[U+2502]   +-- quantum/         # From 0201 remembrance
++-- improvements/        # Applied improvements
+    +-- wsp_updates/     # WSP protocol changes
+    +-- code_fixes/      # Code improvements
+    +-- metrics/         # Improvement metrics
 ```
 
 ## Learning Patterns
 
-### Pattern 1: Error → Solution → Prevention
+### Pattern 1: Error -> Solution -> Prevention
 ```yaml
 Trigger: FileNotFoundError
 Pattern: Missing file at expected location
@@ -110,7 +110,7 @@ Prevention: Check file exists before access
 Learning: Add existence check to all file operations
 ```
 
-### Pattern 2: WSP Violation → Fix → Enhancement
+### Pattern 2: WSP Violation -> Fix -> Enhancement
 ```yaml
 Trigger: WSP 49 violation (test in wrong location)
 Pattern: Test file not in tests/ directory
@@ -119,7 +119,7 @@ Prevention: Validate location before creation
 Learning: Update all test creation to check location first
 ```
 
-### Pattern 3: Performance → Optimization → Acceleration
+### Pattern 3: Performance -> Optimization -> Acceleration
 ```yaml
 Trigger: Token limit exceeded
 Pattern: Inefficient operation sequence
@@ -202,11 +202,11 @@ python -m pytest --cov=modules.infrastructure.recursive_improvement
 
 ## WSP Compliance
 
-- ✅ WSP 3: Infrastructure domain placement
-- ✅ WSP 49: Complete module structure
-- ✅ WSP 48: Recursive improvement implementation
-- ✅ WSP 60: Memory architecture compliant
-- ✅ WSP 22: ModLog and documentation
+- [OK] WSP 3: Infrastructure domain placement
+- [OK] WSP 49: Complete module structure
+- [OK] WSP 48: Recursive improvement implementation
+- [OK] WSP 60: Memory architecture compliant
+- [OK] WSP 22: ModLog and documentation
 
 ## Future Enhancements
 

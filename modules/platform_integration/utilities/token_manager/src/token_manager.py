@@ -141,21 +141,21 @@ class TokenManager:
         original_index = self.current_token_index
         all_indices = list(range(4))  # Assuming 4 token sets
         
-        logger.info(f"🔄 Starting token rotation from set_{original_index + 1}")
+        logger.info(f"[REFRESH] Starting token rotation from set_{original_index + 1}")
         
         # Try all tokens in parallel first (improved parallel logic)
         try:
             healthy_token = await self._check_tokens_parallel(all_indices)
             if healthy_token is not None:
                 self.current_token_index = healthy_token
-                logger.info(f"✅ Parallel rotation successful to set_{self.current_token_index + 1}")
+                logger.info(f"[OK] Parallel rotation successful to set_{self.current_token_index + 1}")
                 return self.current_token_index
         except Exception as e:
-            logger.warning(f"⚠️ Parallel token check failed: {e}, falling back to sequential")
+            logger.warning(f"[U+26A0]️ Parallel token check failed: {e}, falling back to sequential")
             
         # If parallel check fails, fall back to sequential checking with retry logic
         for retry_attempt in range(self.max_retries):
-            logger.info(f"🔄 Sequential rotation attempt {retry_attempt + 1}/{self.max_retries}")
+            logger.info(f"[REFRESH] Sequential rotation attempt {retry_attempt + 1}/{self.max_retries}")
             
             tokens_tried = 0
             while tokens_tried < 4:  # Try all 4 tokens
@@ -165,16 +165,16 @@ class TokenManager:
                 
                 # Skip if we're back to the original (all tokens tried)
                 if self.current_token_index == original_index and tokens_tried > 1:
-                    logger.warning(f"⚠️ Completed full token cycle, no healthy tokens found")
+                    logger.warning(f"[U+26A0]️ Completed full token cycle, no healthy tokens found")
                     break
                     
                 # Check if token is healthy
                 try:
                     if self.check_token_health(self.current_token_index):
-                        logger.info(f"✅ Sequential rotation successful to set_{self.current_token_index + 1}")
+                        logger.info(f"[OK] Sequential rotation successful to set_{self.current_token_index + 1}")
                         return self.current_token_index
                 except Exception as e:
-                    logger.error(f"❌ Health check failed for set_{self.current_token_index + 1}: {e}")
+                    logger.error(f"[FAIL] Health check failed for set_{self.current_token_index + 1}: {e}")
                     continue
                     
             # If we get here, no healthy tokens found in this attempt
@@ -182,11 +182,11 @@ class TokenManager:
                 logger.warning(f"⏳ Retry attempt {retry_attempt + 1} failed, waiting {self.retry_delay}s...")
                 await asyncio.sleep(self.retry_delay)
             else:
-                logger.error("❌ All retry attempts exhausted")
+                logger.error("[FAIL] All retry attempts exhausted")
                 
         # Reset to original index if rotation completely failed
         self.current_token_index = original_index
-        logger.error(f"💥 Token rotation failed completely, staying with set_{original_index + 1}")
+        logger.error(f"[U+1F4A5] Token rotation failed completely, staying with set_{original_index + 1}")
         return None
 
 # Initialize token manager

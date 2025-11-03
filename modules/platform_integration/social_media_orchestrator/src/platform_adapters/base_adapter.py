@@ -189,7 +189,7 @@ class BasePlatformAdapter(ABC):
         Returns:
             PostResult: Result of the hello world test
         """
-        hello_content = f"🚀 Hello World from FoundUps {self.platform_name.title()} integration! #FoundUps #HelloWorld"
+        hello_content = f"[ROCKET] Hello World from FoundUps {self.platform_name.title()} integration! #FoundUps #HelloWorld"
         
         if test_mode:
             # Simulate the post without actually posting

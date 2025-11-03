@@ -49,7 +49,7 @@ class ChatSender:
             True if message was sent successfully, False otherwise
         """
         if not message_text or not message_text.strip():
-            logger.warning("⚠️ Cannot send empty message")
+            logger.warning("[U+26A0]️ Cannot send empty message")
             return False
 
         # CRITICAL FIX: YouTube Live Chat has 200 character limit
@@ -69,15 +69,15 @@ class ChatSender:
                     remaining_space = MAX_MESSAGE_LENGTH - len(mention) - 3
                     rest = message_text[len(mention):remaining_space + len(mention)]
                     message_text = mention + rest + "..."
-                    logger.info(f"✂️ Smart truncate: Preserved @mention, {original_length}→{len(message_text)} chars")
+                    logger.info(f"[U+2702]️ Smart truncate: Preserved @mention, {original_length}->{len(message_text)} chars")
                 else:
                     # Fallback to simple truncation
                     message_text = message_text[:MAX_MESSAGE_LENGTH - 3] + "..."
-                    logger.warning(f"⚠️ Message truncated from {original_length} to {MAX_MESSAGE_LENGTH} chars (YouTube limit)")
+                    logger.warning(f"[U+26A0]️ Message truncated from {original_length} to {MAX_MESSAGE_LENGTH} chars (YouTube limit)")
             else:
                 # No @mention at start, simple truncation
                 message_text = message_text[:MAX_MESSAGE_LENGTH - 3] + "..."
-                logger.warning(f"⚠️ Message truncated from {original_length} to {MAX_MESSAGE_LENGTH} chars (YouTube limit)")
+                logger.warning(f"[U+26A0]️ Message truncated from {original_length} to {MAX_MESSAGE_LENGTH} chars (YouTube limit)")
 
             logger.debug(f"Original message: {message_text[:50]}...")
         
@@ -91,11 +91,11 @@ class ChatSender:
             for username in mentions:
                 # Check if username can be properly mentioned
                 if not self._is_valid_mention(username):
-                    logger.warning(f"🚫 BLOCKING message - cannot @mention '{username}': {message_text[:100]}...")
+                    logger.warning(f"[FORBIDDEN] BLOCKING message - cannot @mention '{username}': {message_text[:100]}...")
                     return False  # Don't send if ANY mention is invalid
             
             # All mentions are valid, proceed with sending
-            logger.debug(f"✅ All @mentions validated in message")
+            logger.debug(f"[OK] All @mentions validated in message")
         
         # GLOBAL THROTTLING: Apply minimum delays to ALL messages to prevent spam
         # Even "priority" messages get throttled to avoid quota exhaustion
@@ -108,9 +108,9 @@ class ChatSender:
 
             # Apply additional random delays for human-like behavior (except highest priority)
             if skip_delay and response_type == 'timeout_announcement':
-                logger.info("⚡🎮 ULTIMATE PRIORITY: Minimal throttling for timeout announcement")
+                logger.info("[LIGHTNING][GAME] ULTIMATE PRIORITY: Minimal throttling for timeout announcement")
             elif skip_delay:
-                logger.info("⚡ Reduced throttling for priority message")
+                logger.info("[LIGHTNING] Reduced throttling for priority message")
                 # Still apply some minimum delay even for priority messages
                 if self.random_delay_enabled:
                     min_delay = min(0.5, self.min_random_delay)
@@ -125,8 +125,15 @@ class ChatSender:
                 logger.debug(f"⏱️ Additional random delay: {random_delay:.2f}s")
                 await asyncio.sleep(random_delay)
             
-            logger.info(f"📤 Sending message: {message_text}")
-            
+            logger.info(f"[U+1F4E4] Sending message: {message_text}")
+
+            # CRITICAL FIX: Convert Unicode tags to emoji before YouTube send
+            # YouTube API doesn't render [U+XXXX] tags - need actual emoji characters
+            from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
+            banter = BanterEngine(emoji_enabled=True)
+            message_text = banter._convert_unicode_tags_to_emoji(message_text)
+            logger.debug(f"[EMOJI] After conversion: {message_text}")
+
             # Prepare message data
             message_data = {
                 "snippet": {
@@ -145,7 +152,7 @@ class ChatSender:
             ).execute()
             
             message_id = response.get("id", "unknown")
-            logger.info(f"✅ Message sent successfully (ID: {message_id})")
+            logger.info(f"[OK] Message sent successfully (ID: {message_id})")
 
             # NOTE: Response recording is handled by livechat_core.py's IntelligentThrottleManager
             
@@ -158,19 +165,19 @@ class ChatSender:
             error_details = str(e)
             
             if "quotaExceeded" in error_details or "quota" in error_details.lower():
-                logger.error(f"📊 Quota exceeded while sending message: {e}")
+                logger.error(f"[DATA] Quota exceeded while sending message: {e}")
             elif "forbidden" in error_details.lower():
-                logger.error(f"🚫 Forbidden error sending message (check permissions): {e}")
+                logger.error(f"[FORBIDDEN] Forbidden error sending message (check permissions): {e}")
             elif "unauthorized" in error_details.lower():
-                logger.error(f"🔐 Unauthorized error sending message: {e}")
+                logger.error(f"[U+1F510] Unauthorized error sending message: {e}")
                 raise  # Let caller handle auth errors
             else:
-                logger.error(f"❌ HTTP error sending message: {e}")
+                logger.error(f"[FAIL] HTTP error sending message: {e}")
             
             return False
             
         except Exception as e:
-            logger.error(f"❌ Unexpected error sending message: {e}")
+            logger.error(f"[FAIL] Unexpected error sending message: {e}")
             return False
     
     def configure_random_delays(self, enabled: bool = True, min_delay: float = 0.5, max_delay: float = 3.0):
@@ -186,7 +193,7 @@ class ChatSender:
         self.min_random_delay = max(0.1, min_delay)  # Ensure minimum of 0.1s
         self.max_random_delay = max(self.min_random_delay + 0.1, max_delay)  # Ensure max > min
         
-        logger.info(f"🎲 Random delays configured: enabled={enabled}, range={self.min_random_delay:.1f}s-{self.max_random_delay:.1f}s")
+        logger.info(f"[U+1F3B2] Random delays configured: enabled={enabled}, range={self.min_random_delay:.1f}s-{self.max_random_delay:.1f}s")
     
     async def send_greeting(self, greeting_message: str) -> bool:
         """
@@ -198,24 +205,24 @@ class ChatSender:
         Returns:
             True if greeting was sent successfully, False otherwise
         """
-        logger.info("👋 Sending greeting message to chat")
+        logger.info("[U+1F44B] Sending greeting message to chat")
         
         if not greeting_message:
-            greeting_message = "FoundUps Agent reporting in! 🤖"
+            greeting_message = "FoundUps Agent reporting in! [BOT]"
         
         success = await self.send_message(greeting_message)
         
         if success:
-            logger.info("✅ Greeting message sent successfully")
+            logger.info("[OK] Greeting message sent successfully")
         else:
-            logger.warning("⚠️ Failed to send greeting message")
+            logger.warning("[U+26A0]️ Failed to send greeting message")
         
         return success
     
     async def _get_bot_channel_id(self) -> Optional[str]:
         """Get the bot's channel ID for message sending."""
         try:
-            logger.debug("🔍 Fetching bot channel ID")
+            logger.debug("[SEARCH] Fetching bot channel ID")
             
             response = self.youtube.channels().list(
                 part="id",
@@ -225,14 +232,14 @@ class ChatSender:
             items = response.get("items", [])
             if items:
                 self.bot_channel_id = items[0]["id"]
-                logger.info(f"🤖 Bot channel ID: {self.bot_channel_id}")
+                logger.info(f"[BOT] Bot channel ID: {self.bot_channel_id}")
                 return self.bot_channel_id
             else:
-                logger.error("❌ No channel found for authenticated user")
+                logger.error("[FAIL] No channel found for authenticated user")
                 return None
                 
         except Exception as e:
-            logger.error(f"❌ Error getting bot channel ID: {e}")
+            logger.error(f"[FAIL] Error getting bot channel ID: {e}")
             return None
     
     def update_youtube_service(self, new_service):
@@ -244,7 +251,7 @@ class ChatSender:
         """
         self.youtube = new_service
         self.bot_channel_id = None  # Reset channel ID to refetch with new service
-        logger.info("🔄 YouTube service updated")
+        logger.info("[REFRESH] YouTube service updated")
     
     def _is_valid_mention(self, username: str) -> bool:
         """
@@ -324,10 +331,10 @@ class ChatSender:
         if time_since_last < min_delay:
             # Need to wait
             wait_time = min_delay - time_since_last
-            logger.info(f"🛡️ GLOBAL THROTTLE: Waiting {wait_time:.1f}s before sending {response_type} message")
+            logger.info(f"[U+1F6E1]️ GLOBAL THROTTLE: Waiting {wait_time:.1f}s before sending {response_type} message")
             await asyncio.sleep(wait_time)
         else:
-            logger.debug(f"✅ GLOBAL THROTTLE: OK to send {response_type} message (gap: {time_since_last:.1f}s)")
+            logger.debug(f"[OK] GLOBAL THROTTLE: OK to send {response_type} message (gap: {time_since_last:.1f}s)")
 
         # Update tracking
         self._last_message_time = time.time()
@@ -335,4 +342,4 @@ class ChatSender:
 
         # Log spam prevention stats periodically
         if self._message_count % 10 == 0:
-            logger.info(f"📊 GLOBAL THROTTLE: Sent {self._message_count} messages, enforcing anti-spam delays") 
+            logger.info(f"[DATA] GLOBAL THROTTLE: Sent {self._message_count} messages, enforcing anti-spam delays") 

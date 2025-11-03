@@ -14,7 +14,7 @@ Architecture:
     Phase 4 (Learning): Store patterns for recursive improvement
 
 WSP Compliance:
-    - WSP 77: Agent Coordination Protocol (Qwen → Gemma → 0102)
+    - WSP 77: Agent Coordination Protocol (Qwen -> Gemma -> 0102)
     - WSP 50: Pre-Action Verification (analyze before execute)
     - WSP 48: Recursive Self-Improvement (learn from refactorings)
     - WSP 84: Code Memory Verification (no duplication)
@@ -201,6 +201,17 @@ class AutonomousRefactoringOrchestrator:
 
         # WSP 91: Initialize structured daemon logger
         self.daemon_logger = DaemonLogger("AutonomousRefactoring")
+
+        # P0 FIX: Initialize HoloAdapter for Qwen → HoloIndex semantic search
+        # Enables Deep Think → HoloIndex → Occam's Razor chain for autonomous agents
+        self.holo_adapter = None
+        try:
+            from modules.ai_intelligence.ai_overseer.src.holo_adapter import HoloAdapter
+            self.holo_adapter = HoloAdapter(self.repo_root)
+            logger.info("[HOLO-ADAPTER] HoloAdapter initialized for Qwen semantic search")
+        except Exception as e:
+            logger.warning(f"[HOLO-ADAPTER] Could not initialize HoloAdapter: {e}")
+            # Graceful degradation - Qwen operates without HoloIndex context
 
         # Initialize Qwen LLM for strategic planning
         self.qwen_engine = None
@@ -487,6 +498,62 @@ Which method should handle this file? Respond with just the letter (A, B, or C) 
                 "reasoning": "Error during heuristic analysis - safe fallback"
             }
 
+    def _holo_research(self, query: str, limit: int = 5) -> Dict:
+        """
+        P0 FIX: Enable Qwen to perform HoloIndex semantic search
+
+        This implements the Deep Think → HoloIndex → Occam's Razor chain:
+        1. Qwen formulates research question (Deep Think)
+        2. HoloIndex performs semantic search (Research)
+        3. Qwen applies Occam's Razor to results (Decision)
+
+        Returns HoloIndex search results for Qwen to use in strategic planning
+        """
+        if self.holo_adapter is None:
+            return {
+                "query": query,
+                "code": [],
+                "wsps": [],
+                "warnings": ["[WARN] HoloAdapter not available - operating without semantic search"],
+                "reminders": [],
+                "elapsed_ms": "0.0"
+            }
+
+        try:
+            research_start = time.time()
+            results = self.holo_adapter.search(query, limit=limit)
+            research_time = (time.time() - research_start) * 1000
+
+            # WSP 91: Log HoloIndex research operation
+            self.daemon_logger.log_performance(
+                operation="holo_semantic_search",
+                duration_ms=research_time,
+                items_processed=len(results.get('code', [])) + len(results.get('wsps', [])),
+                success=True,
+                query=query[:100],  # Truncate for logging
+                results_found=len(results.get('code', []))
+            )
+
+            logger.info(f"[HOLO-RESEARCH] Found {len(results.get('code', []))} code results for: {query[:50]}...")
+            return results
+
+        except Exception as e:
+            logger.warning(f"[HOLO-RESEARCH] Search failed: {e}")
+            self.daemon_logger.log_error(
+                error_type="holo_search_failure",
+                error_message=str(e),
+                context={"query": query[:100]},
+                recoverable=True
+            )
+            return {
+                "query": query,
+                "code": [],
+                "wsps": [],
+                "warnings": [f"[ERROR] HoloIndex search failed: {str(e)}"],
+                "reminders": [],
+                "elapsed_ms": "0.0"
+            }
+
     def _find_import_references(self, module_path: str) -> List[Tuple[str, int, str]]:
         """Gemma pattern: Find all files importing this module"""
         refs = []
@@ -668,7 +735,7 @@ Analyze and provide detailed findings:"""
         Returns:
             Complete RefactoringPlan with all tasks
         """
-        logger.info(f"[QWEN] Generating refactoring plan: {module_path} → {target_location}")
+        logger.info(f"[QWEN] Generating refactoring plan: {module_path} -> {target_location}")
 
         # Use Qwen LLM for intelligent planning if available
         if self.qwen_engine:
@@ -915,7 +982,7 @@ Recommend strategy: """
         Returns:
             Results dict with success status and metrics
         """
-        logger.info(f"[START] Autonomous refactoring: {module_path} → {target_location}")
+        logger.info(f"[START] Autonomous refactoring: {module_path} -> {target_location}")
 
         # Phase 1: Gemma analysis
         analysis = self.analyze_module_dependencies(module_path)

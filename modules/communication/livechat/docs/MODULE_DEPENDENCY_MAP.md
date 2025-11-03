@@ -7,7 +7,7 @@
 
 ---
 
-## 🏗️ **CORE MODULE DEPENDENCIES**
+## [U+1F3D7]️ **CORE MODULE DEPENDENCIES**
 
 ### Primary Orchestration Layer
 ```mermaid
@@ -57,7 +57,7 @@ flowchart TD
 
 ---
 
-## 🌐 **CROSS-DOMAIN INTEGRATIONS**
+## [U+1F310] **CROSS-DOMAIN INTEGRATIONS**
 
 ### Platform Integration Domain
 | Local Module | External Module | Purpose | Integration Type | Risk Level |
@@ -100,18 +100,18 @@ flowchart TD
 
 ---
 
-## ⚡ **CRITICAL DEPENDENCY PATHS**
+## [LIGHTNING] **CRITICAL DEPENDENCY PATHS**
 
 ### 1. **Authentication Chain** (High Risk)
 ```
 auto_moderator_dae.py 
-  ↓ imports
+  v imports
 youtube_auth.get_authenticated_service()
-  ↓ creates  
+  v creates  
 monitored_youtube_service.MonitoredYouTubeService
-  ↓ monitors
+  v monitors
 quota_monitor.QuotaMonitor
-  ↓ triggers
+  v triggers
 intelligent_throttle_manager.switch_credential_set()
 ```
 **Risk**: Cascade failure if any authentication component fails  
@@ -120,13 +120,13 @@ intelligent_throttle_manager.switch_credential_set()
 ### 2. **Message Processing Chain** (Medium Risk)
 ```
 livechat_core.py.poll_messages()
-  ↓ calls
+  v calls
 chat_poller.py.poll_messages() 
-  ↓ returns to
+  v returns to
 livechat_core.py.process_message()
-  ↓ routes to
+  v routes to
 message_processor.py.process()
-  ↓ dispatches to
+  v dispatches to
 [consciousness_handler.py | command_handler.py | event_handler.py]
 ```
 **Risk**: Message loss if any component in chain fails  
@@ -135,13 +135,13 @@ message_processor.py.process()
 ### 3. **Greeting System Chain** (Low Risk - Recently Fixed)
 ```
 auto_moderator_dae.py.connect()
-  ↓ calls
+  v calls
 livechat_core.py.initialize_session()
-  ↓ calls  
+  v calls  
 session_manager.py.send_greeting()
-  ↓ calls
+  v calls
 livechat_core.py.send_chat_message()  # FIXED: Variable scope
-  ↓ calls
+  v calls
 chat_sender.py.send_message()
 ```
 **Risk**: Greeting failures (now resolved with variable scope fix)  
@@ -149,7 +149,7 @@ chat_sender.py.send_message()
 
 ---
 
-## 🔧 **DEPENDENCY FAILURE MODES**
+## [TOOL] **DEPENDENCY FAILURE MODES**
 
 ### High-Risk Dependencies (System Critical)
 1. **youtube_auth**: Complete system failure if OAuth breaks
@@ -171,7 +171,7 @@ chat_sender.py.send_message()
 
 ---
 
-## 📊 **DEPENDENCY METRICS**
+## [DATA] **DEPENDENCY METRICS**
 
 ### Complexity Analysis
 - **Total Dependencies**: 47 tracked relationships
@@ -193,7 +193,7 @@ chat_sender.py.send_message()
 
 ---
 
-## 🎯 **0102 NAVIGATION HELPERS**
+## [TARGET] **0102 NAVIGATION HELPERS**
 
 ### Dependency Lookup Commands
 ```bash
@@ -207,7 +207,7 @@ wsp86 reverse-deps message_processor.py
 
 # Check critical path for functionality
 wsp86 critical-path greeting_system
-# Returns: auto_moderator_dae.py → livechat_core.py → session_manager.py → chat_sender.py
+# Returns: auto_moderator_dae.py -> livechat_core.py -> session_manager.py -> chat_sender.py
 
 # Analyze failure impact
 wsp86 failure-impact youtube_auth

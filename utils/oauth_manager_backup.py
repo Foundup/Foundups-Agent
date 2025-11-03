@@ -1,7 +1,7 @@
 """
 LEGACY COMPATIBILITY SHIM - utils/oauth_manager.py
 
-⚠️  DEPRECATION NOTICE ⚠️
+[U+26A0]️  DEPRECATION NOTICE [U+26A0]️
 ========================
 This file is a COMPATIBILITY SHIM only. The actual OAuth Manager has been moved to:
 modules/infrastructure/oauth_management/oauth_management/src/oauth_manager.py

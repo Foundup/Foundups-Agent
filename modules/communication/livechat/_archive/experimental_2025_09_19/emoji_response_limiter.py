@@ -50,18 +50,18 @@ class EmojiResponseLimiter:
             self.user_daily_counts.clear()
             self.daily_count = 0
             self.last_reset = now
-            logger.info("🔄 Reset daily emoji response counts")
+            logger.info("[REFRESH] Reset daily emoji response counts")
         
         # Check global daily limit
         if self.daily_count >= self.global_daily_limit:
-            logger.warning(f"🚫 Global daily emoji limit reached ({self.global_daily_limit})")
+            logger.warning(f"[FORBIDDEN] Global daily emoji limit reached ({self.global_daily_limit})")
             return False, "daily_limit"
         
         # Check global hourly limit
         hour_ago = now - 3600
         recent_global = [t for t in self.global_emoji_responses if t > hour_ago]
         if len(recent_global) >= self.global_hourly_limit:
-            logger.warning(f"🚫 Global hourly emoji limit reached ({self.global_hourly_limit}/hr)")
+            logger.warning(f"[FORBIDDEN] Global hourly emoji limit reached ({self.global_hourly_limit}/hr)")
             return False, "hourly_limit"
         
         # Check global cooldown
@@ -72,14 +72,14 @@ class EmojiResponseLimiter:
         
         # Check user daily limit
         if self.user_daily_counts[user_id] >= self.user_daily_limit:
-            logger.info(f"🚫 User {username} reached daily emoji limit ({self.user_daily_limit})")
+            logger.info(f"[FORBIDDEN] User {username} reached daily emoji limit ({self.user_daily_limit})")
             return False, "user_daily_limit"
         
         # Check user hourly limit
         user_history = self.user_response_history[user_id]
         recent_user = [t for t in user_history if t > hour_ago]
         if len(recent_user) >= self.user_hourly_limit:
-            logger.info(f"🚫 User {username} reached hourly emoji limit ({self.user_hourly_limit}/hr)")
+            logger.info(f"[FORBIDDEN] User {username} reached hourly emoji limit ({self.user_hourly_limit}/hr)")
             return False, "user_hourly_limit"
         
         # Check user cooldown
@@ -89,7 +89,7 @@ class EmojiResponseLimiter:
             return False, "user_cooldown"
         
         # All checks passed
-        logger.info(f"✅ Emoji response approved for {username}")
+        logger.info(f"[OK] Emoji response approved for {username}")
         return True, "approved"
     
     def record_emoji_response(self, user_id: str, username: str):
@@ -104,7 +104,7 @@ class EmojiResponseLimiter:
         self.user_daily_counts[user_id] += 1
         self.daily_count += 1
         
-        logger.info(f"📊 Emoji response recorded for {username}: "
+        logger.info(f"[DATA] Emoji response recorded for {username}: "
                    f"User daily: {self.user_daily_counts[user_id]}/{self.user_daily_limit}, "
                    f"Global daily: {self.daily_count}/{self.global_daily_limit}")
     
@@ -141,7 +141,7 @@ class EmojiResponseLimiter:
             self.user_daily_limit = 3
             self.user_cooldown = 1800  # 30 minutes
             self.global_cooldown = 300  # 5 minutes
-            logger.warning("🚨 EMERGENCY: Emoji limits reduced due to low quota")
+            logger.warning("[ALERT] EMERGENCY: Emoji limits reduced due to low quota")
             
         elif quota_percentage < 0.5:  # Less than 50% quota
             # Conservative mode
@@ -151,7 +151,7 @@ class EmojiResponseLimiter:
             self.user_daily_limit = 5
             self.user_cooldown = 600  # 10 minutes
             self.global_cooldown = 120  # 2 minutes
-            logger.info("⚠️ Conservative emoji limits due to moderate quota")
+            logger.info("[U+26A0]️ Conservative emoji limits due to moderate quota")
             
         else:
             # Normal mode (default values)
@@ -161,4 +161,4 @@ class EmojiResponseLimiter:
             self.user_daily_limit = 10
             self.user_cooldown = 300  # 5 minutes
             self.global_cooldown = 60  # 1 minute
-            logger.info("✅ Normal emoji limits - quota healthy")
+            logger.info("[OK] Normal emoji limits - quota healthy")

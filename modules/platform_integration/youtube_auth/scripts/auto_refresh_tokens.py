@@ -14,9 +14,13 @@ WSP Compliance: WSP 84 (Code Memory Verification) - Enhancing existing youtube_a
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -110,10 +114,10 @@ def refresh_credential_set(index: int, force_refresh: bool = False) -> dict:
                 needs_refresh = True
                 refresh_reason = f"Token expiring in {hours_until_expiry:.1f} hours"
             else:
-                logger.info(f"  ✅ Token valid for {hours_until_expiry:.1f} more hours")
+                logger.info(f"  [OK] Token valid for {hours_until_expiry:.1f} more hours")
 
         if needs_refresh and creds.refresh_token:
-            logger.info(f"  🔄 Refreshing token: {refresh_reason}")
+            logger.info(f"  [REFRESH] Refreshing token: {refresh_reason}")
 
             try:
                 # Perform the refresh
@@ -130,7 +134,7 @@ def refresh_credential_set(index: int, force_refresh: bool = False) -> dict:
                     if new_expiry.tzinfo is None:
                         new_expiry = new_expiry.replace(tzinfo=timezone.utc)
                     hours_valid = (new_expiry - now).total_seconds() / 3600
-                    logger.info(f"  ✅ Token refreshed! Valid for {hours_valid:.1f} hours")
+                    logger.info(f"  [OK] Token refreshed! Valid for {hours_valid:.1f} hours")
                     logger.info(f"     New expiry: {new_expiry.isoformat()}")
 
                 # Test the refreshed credentials
@@ -139,7 +143,7 @@ def refresh_credential_set(index: int, force_refresh: bool = False) -> dict:
 
                 if response.get('items'):
                     channel_name = response['items'][0]['snippet']['title']
-                    logger.info(f"  📺 Verified access to: {channel_name}")
+                    logger.info(f"  [U+1F4FA] Verified access to: {channel_name}")
                     return {
                         'status': 'refreshed',
                         'channel': channel_name,
@@ -148,28 +152,28 @@ def refresh_credential_set(index: int, force_refresh: bool = False) -> dict:
 
             except HttpError as e:
                 if 'quotaExceeded' in str(e):
-                    logger.warning(f"  ⚠️ Quota exceeded during verification, but token should be valid")
+                    logger.warning(f"  [U+26A0]️ Quota exceeded during verification, but token should be valid")
                     return {'status': 'refreshed', 'note': 'Quota exceeded during test'}
                 else:
-                    logger.error(f"  ❌ API error during refresh: {e}")
+                    logger.error(f"  [FAIL] API error during refresh: {e}")
                     return {'status': 'error', 'reason': f'API error: {e}'}
 
             except Exception as e:
                 error_msg = str(e)
                 if 'invalid_grant' in error_msg:
                     if 'Token has been expired or revoked' in error_msg:
-                        logger.error(f"  ❌ Refresh token expired or revoked!")
+                        logger.error(f"  [FAIL] Refresh token expired or revoked!")
                         logger.info(f"     Fix: python modules/platform_integration/youtube_auth/scripts/authorize_set{index}.py")
                         return {'status': 'error', 'reason': 'Token revoked - needs reauthorization'}
                     else:
-                        logger.error(f"  ❌ Invalid grant: {error_msg}")
+                        logger.error(f"  [FAIL] Invalid grant: {error_msg}")
                         return {'status': 'error', 'reason': 'Invalid grant'}
                 else:
-                    logger.error(f"  ❌ Refresh failed: {e}")
+                    logger.error(f"  [FAIL] Refresh failed: {e}")
                     return {'status': 'error', 'reason': str(e)}
 
         elif needs_refresh and not creds.refresh_token:
-            logger.error(f"  ❌ Token needs refresh but no refresh token available")
+            logger.error(f"  [FAIL] Token needs refresh but no refresh token available")
             logger.info(f"     Fix: python modules/platform_integration/youtube_auth/scripts/authorize_set{index}.py")
             return {'status': 'error', 'reason': 'No refresh token'}
 
@@ -177,7 +181,7 @@ def refresh_credential_set(index: int, force_refresh: bool = False) -> dict:
             return {'status': 'valid', 'hours_remaining': hours_until_expiry if 'hours_until_expiry' in locals() else None}
 
     except Exception as e:
-        logger.error(f"  ❌ Error loading credentials: {e}")
+        logger.error(f"  [FAIL] Error loading credentials: {e}")
         return {'status': 'error', 'reason': str(e)}
 
 def main():
@@ -214,13 +218,13 @@ def main():
         status = result['status']
 
         if status == 'refreshed':
-            logger.info(f"  Set {set_index} ({set_name}): ✅ Refreshed")
+            logger.info(f"  Set {set_index} ({set_name}): [OK] Refreshed")
         elif status == 'valid':
             hours = result.get('hours_remaining', 0)
-            logger.info(f"  Set {set_index} ({set_name}): ✅ Valid ({hours:.1f}h remaining)")
+            logger.info(f"  Set {set_index} ({set_name}): [OK] Valid ({hours:.1f}h remaining)")
         elif status == 'error':
             reason = result.get('reason', 'Unknown error')
-            logger.info(f"  Set {set_index} ({set_name}): ❌ {reason}")
+            logger.info(f"  Set {set_index} ({set_name}): [FAIL] {reason}")
 
     logger.info("=" * 60)
 

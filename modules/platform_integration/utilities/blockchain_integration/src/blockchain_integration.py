@@ -77,7 +77,7 @@ class BlockchainIntegration:
         
         self.transaction_pool.append(transaction)
         
-        print(f"📝 Created transaction: {transaction_type} ({transaction['id'][:8]}...)")
+        print(f"[NOTE] Created transaction: {transaction_type} ({transaction['id'][:8]}...)")
         
         return {
             "status": "success",
@@ -101,7 +101,7 @@ class BlockchainIntegration:
                 "message": "No pending transactions to mine"
             }
         
-        print(f"⛏️  Mining new block with {len(self.transaction_pool)} transactions...")
+        print(f"[U+26CF]️  Mining new block with {len(self.transaction_pool)} transactions...")
         
         # Create new block
         new_block = {
@@ -122,7 +122,7 @@ class BlockchainIntegration:
             
             if new_block["hash"].startswith(target):
                 mining_time = time.time() - start_time
-                print(f"✅ Block mined! Hash: {new_block['hash'][:16]}... (took {mining_time:.2f}s)")
+                print(f"[OK] Block mined! Hash: {new_block['hash'][:16]}... (took {mining_time:.2f}s)")
                 break
             
             new_block["nonce"] += 1
@@ -145,7 +145,7 @@ class BlockchainIntegration:
 
     def validate_chain(self) -> Dict:
         """Validate the entire blockchain for integrity."""
-        print("🔍 Validating blockchain integrity...")
+        print("[SEARCH] Validating blockchain integrity...")
         
         validation_results = {
             "valid": True,
@@ -173,7 +173,7 @@ class BlockchainIntegration:
                 validation_results["errors"].append(f"Block {i}: Invalid previous hash reference")
         
         status = "valid" if validation_results["valid"] else "invalid"
-        print(f"{'✅' if validation_results['valid'] else '❌'} Blockchain validation: {status}")
+        print(f"{'[OK]' if validation_results['valid'] else '[FAIL]'} Blockchain validation: {status}")
         
         return {
             "status": "success",
@@ -349,7 +349,7 @@ class BlockchainIntegration:
             wsp_integration
         )
         
-        print(f"📜 Deployed smart contract: {contract_name} ({contract_id})")
+        print(f"[U+1F4DC] Deployed smart contract: {contract_name} ({contract_id})")
         
         return {
             "status": "success",

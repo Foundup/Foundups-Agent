@@ -7,7 +7,7 @@ Tests for MCP tool functionality including:
 - trend_digest analysis generation
 - source_register validation
 
-WSP 5: ≥90% coverage target
+WSP 5: [GREATER_EQUAL]90% coverage target
 WSP 6: Auditable test execution
 """
 

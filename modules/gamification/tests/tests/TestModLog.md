@@ -12,7 +12,7 @@ Initialize test change log per WSP 34.
 ### Current Test Status
 - **Test Files**: None yet - module has 0% test coverage
 - **Implementation Files**: 6 Python files identified
-- **Next Steps**: Implement tests per WSP 5 (≥90% coverage target)
+- **Next Steps**: Implement tests per WSP 5 ([GREATER_EQUAL]90% coverage target)
 
 ### Module Structure
 Located at: `modules/gamification/tests/`
@@ -24,7 +24,7 @@ Located at: `modules/gamification/tests/`
 - **WSP 22**: Traceable narrative - TestModLog now exists
 - **WSP 34**: Test documentation framework established
 - **WSP 49**: Module directory structure - proper tests/ subdirectory
-- **WSP 5**: Test coverage target ≥90% (pending implementation)
+- **WSP 5**: Test coverage target [GREATER_EQUAL]90% (pending implementation)
 
 ### Discovered Via
 HoloIndex search: "WSP 22 traceable narrative TestModLog structure"

@@ -111,7 +111,7 @@ class DuplicatePreventionManager:
         # Load QWEN patterns if enabled
         if self.qwen_enabled:
             self._load_qwen_patterns()
-            self.logger.info("🤖🧠 [QWEN-SOCIAL] Intelligence features enabled")
+            self.logger.info("[BOT][AI] [QWEN-SOCIAL] Intelligence features enabled")
 
     def _ensure_database_exists(self) -> None:
         """Ensure database and tables exist"""
@@ -321,11 +321,11 @@ class DuplicatePreventionManager:
                     'notes': f"Auto-blocked: {stale_check['reason']}"
                 }
 
-                self.logger.info(f'[DUPLICATE] ❌ BLOCKED: {stale_check["reason"]}')
+                self.logger.info(f'[DUPLICATE] [FAIL] BLOCKED: {stale_check["reason"]}')
                 self.logger.info('=' * 60)
                 return default_result
 
-        self.logger.info('[DUPLICATE] ✅ Video not recorded and not stale; safe to post')
+        self.logger.info('[DUPLICATE] [OK] Video not recorded and not stale; safe to post')
         self.logger.info('=' * 60)
         return default_result
 
@@ -388,11 +388,11 @@ class DuplicatePreventionManager:
         status = result.get('status', 'unknown')
 
         if platforms:
-            self.logger.info(f'[{source.upper()}] ❌ BLOCKED: Already posted to {platforms}')
+            self.logger.info(f'[{source.upper()}] [FAIL] BLOCKED: Already posted to {platforms}')
         elif blocked_reason != 'already posted':
-            self.logger.info(f'[{source.upper()}] ❌ BLOCKED: {blocked_reason}')
+            self.logger.info(f'[{source.upper()}] [FAIL] BLOCKED: {blocked_reason}')
         else:
-            self.logger.info(f'[{source.upper()}] ❌ BLOCKED: Status {status}')
+            self.logger.info(f'[{source.upper()}] [FAIL] BLOCKED: Status {status}')
 
     def _check_database_for_post(self, video_id: str) -> Optional[Dict[str, Any]]:
         """Check database for posted video"""
@@ -593,7 +593,7 @@ class DuplicatePreventionManager:
                 'qwen_active': False
             }
 
-        self.logger.info("🤖🧠 [QWEN-PRE-POST] ======== PRE-POSTING ANALYSIS ========")
+        self.logger.info("[BOT][AI] [QWEN-PRE-POST] ======== PRE-POSTING ANALYSIS ========")
 
         decision = {
             'should_post': True,
@@ -611,7 +611,7 @@ class DuplicatePreventionManager:
         # 1. Enhanced duplicate check with time window
         duplicate_check = self._qwen_check_duplicate_window(video_id)
         if duplicate_check['is_duplicate']:
-            self.logger.warning(f"🤖🧠 [QWEN-DUPLICATE] Posted {duplicate_check['minutes_ago']} minutes ago!")
+            self.logger.warning(f"[BOT][AI] [QWEN-DUPLICATE] Posted {duplicate_check['minutes_ago']} minutes ago!")
             decision['should_post'] = False
             decision['warnings'].append(f"Duplicate - posted {duplicate_check['minutes_ago']}m ago")
             return decision
@@ -625,7 +625,7 @@ class DuplicatePreventionManager:
                 decision['delays'][platform] = health_check['recommended_delay']
             else:
                 decision['rejected_platforms'][platform] = health_check['reason']
-                self.logger.info(f"🤖🧠 [QWEN-REJECT] {platform}: {health_check['reason']}")
+                self.logger.info(f"[BOT][AI] [QWEN-REJECT] {platform}: {health_check['reason']}")
 
         # 3. Optimize posting order
         if decision['approved_platforms']:
@@ -638,8 +638,8 @@ class DuplicatePreventionManager:
         optimizations = self._qwen_get_posting_optimizations(stream_info)
         decision['optimizations'] = optimizations
 
-        self.logger.info(f"🤖🧠 [QWEN-DECISION] Approved: {decision['approved_platforms']}")
-        self.logger.info(f"🤖🧠 [QWEN-ORDER] Posting order: {decision['posting_order']}")
+        self.logger.info(f"[BOT][AI] [QWEN-DECISION] Approved: {decision['approved_platforms']}")
+        self.logger.info(f"[BOT][AI] [QWEN-ORDER] Posting order: {decision['posting_order']}")
 
         return decision
 
@@ -705,7 +705,7 @@ class DuplicatePreventionManager:
 
             if time_since < min_delay:
                 result['recommended_delay'] = min_delay - time_since
-                self.logger.info(f"🤖🧠 [QWEN-DELAY] {platform}: Wait {result['recommended_delay']:.0f}s")
+                self.logger.info(f"[BOT][AI] [QWEN-DELAY] {platform}: Wait {result['recommended_delay']:.0f}s")
 
         # Adjust delay based on heat
         if heat >= 3:
@@ -766,7 +766,7 @@ class DuplicatePreventionManager:
 
             base_delay += stagger
 
-            self.logger.info(f"🤖🧠 [QWEN-STAGGER] {platform}: {decision['delays'][platform]}s delay")
+            self.logger.info(f"[BOT][AI] [QWEN-STAGGER] {platform}: {decision['delays'][platform]}s delay")
 
     def _qwen_get_posting_optimizations(self, stream_info: Dict[str, Any]) -> List[str]:
         """Get optimization recommendations based on patterns"""
@@ -804,7 +804,7 @@ class DuplicatePreventionManager:
         if not self.qwen_enabled:
             return
 
-        self.logger.info(f"🤖🧠 [QWEN-MONITOR] {platform}: {status.value}")
+        self.logger.info(f"[BOT][AI] [QWEN-MONITOR] {platform}: {status.value}")
 
         # Update active posts
         if status == PostingStatus.IN_PROGRESS:
@@ -843,14 +843,14 @@ class DuplicatePreventionManager:
             elif platform_data['heat'] <= 2:
                 platform_data['health'] = PlatformHealth.WARMING
 
-            self.logger.info(f"🤖🧠 [QWEN-HEALTH] {platform}: {platform_data['health'].value} (heat={platform_data['heat']})")
+            self.logger.info(f"[BOT][AI] [QWEN-HEALTH] {platform}: {platform_data['health'].value} (heat={platform_data['heat']})")
 
         elif status == PostingStatus.RATE_LIMITED:
             # Heat up on rate limit
             platform_data['heat'] = min(5, platform_data['heat'] + 2)
             platform_data['health'] = PlatformHealth.OVERHEATED
 
-            self.logger.warning(f"🤖🧠 [QWEN-HEAT] {platform}: OVERHEATED! (heat={platform_data['heat']})")
+            self.logger.warning(f"[BOT][AI] [QWEN-HEAT] {platform}: OVERHEATED! (heat={platform_data['heat']})")
 
         elif status == PostingStatus.FAILED:
             # Slight heat increase on failure
@@ -882,7 +882,7 @@ class DuplicatePreventionManager:
         if self.qwen_enabled:
             self._save_qwen_patterns()
 
-        self.logger.info(f"🤖🧠 [QWEN-LEARN] Recorded {platform} pattern: {status.value}")
+        self.logger.info(f"[BOT][AI] [QWEN-LEARN] Recorded {platform} pattern: {status.value}")
 
     def _load_qwen_patterns(self) -> None:
         """Load QWEN patterns from memory"""
@@ -891,9 +891,9 @@ class DuplicatePreventionManager:
             try:
                 with open(patterns_file, 'r', encoding="utf-8") as f:
                     self.posting_patterns = json.load(f)
-                self.logger.info(f"🤖🧠 [QWEN-LOAD] Loaded {len(self.posting_patterns)} patterns")
+                self.logger.info(f"[BOT][AI] [QWEN-LOAD] Loaded {len(self.posting_patterns)} patterns")
             except Exception as e:
-                self.logger.error(f"🤖🧠 [QWEN-ERROR] Failed to load patterns: {e}")
+                self.logger.error(f"[BOT][AI] [QWEN-ERROR] Failed to load patterns: {e}")
 
         # Load platform heat levels
         heat_file = self.qwen_memory_path / "platform_heat.json"
@@ -905,7 +905,7 @@ class DuplicatePreventionManager:
                         if platform in self.platform_status:
                             self.platform_status[platform]['heat'] = heat
             except Exception as e:
-                self.logger.error(f"🤖🧠 [QWEN-ERROR] Failed to load heat levels: {e}")
+                self.logger.error(f"[BOT][AI] [QWEN-ERROR] Failed to load heat levels: {e}")
 
     def _save_qwen_patterns(self) -> None:
         """Save QWEN patterns to memory"""
@@ -925,7 +925,7 @@ class DuplicatePreventionManager:
                 json.dump(heat_data, f, indent=2)
 
         except Exception as e:
-            self.logger.error(f"🤖🧠 [QWEN-ERROR] Failed to save patterns: {e}")
+            self.logger.error(f"[BOT][AI] [QWEN-ERROR] Failed to save patterns: {e}")
 
     def qwen_get_posting_report(self) -> Dict[str, Any]:
         """Get QWEN intelligence report on posting status"""

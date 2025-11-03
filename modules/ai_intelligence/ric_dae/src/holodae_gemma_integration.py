@@ -109,7 +109,7 @@ class HoloDAEGemmaIntegrator:
                     'function_complexity': function_complexity,
                     'gemma_benefit_score': self._calculate_gemma_benefit(function_complexity, config),
                     'integration_tokens': config['tokens'],
-                    'qwen_gemma_split': f'{config["qwen_role"]} ←→ {config["gemma_role"]}',
+                    'qwen_gemma_split': f'{config["qwen_role"]} <--> {config["gemma_role"]}',
                     'expected_improvement': config['benefit']
                 }
 
@@ -316,7 +316,7 @@ async def demo_{specialization}_integration():
     return {{
         "simple_result": simple_result,
         "complex_result": complex_result,
-        "architecture": "{config['qwen_role']} ←→ {config['gemma_role']}",
+        "architecture": "{config['qwen_role']} <--> {config['gemma_role']}",
         "benefit": "{config['benefit']}"
     }}
 

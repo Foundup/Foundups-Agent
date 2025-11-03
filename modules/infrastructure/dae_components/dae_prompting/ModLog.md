@@ -1,18 +1,18 @@
 # ModLog - DAE Prompting System
 
 ## Purpose
-DAE↔DAE Prompting Envelope System for Inter-DAE Communication
+DAE[U+2194]DAE Prompting Envelope System for Inter-DAE Communication
 
 ## Status
 Active - Sprint 3 Task 2 Complete
 
 ## Change Log
 
-### Sprint 3 Task 2 - DAE↔DAE Prompting Envelope System
+### Sprint 3 Task 2 - DAE[U+2194]DAE Prompting Envelope System
 Implemented WSP 21 compliant inter-DAE communication system
-- Created standardized prompt/response envelopes for DAE↔DAE exchange
+- Created standardized prompt/response envelopes for DAE[U+2194]DAE exchange
 - Token-based budgeting per WSP 75 (no time references)
-- 012→Prometheus normalization for human prompts
+- 012->Prometheus normalization for human prompts
 - Recursive exchange protocol for mutual DAE growth
 - Automatic WSP compliance validation
 
@@ -22,7 +22,7 @@ Implemented WSP 21 compliant inter-DAE communication system
    - Objective: Single, testable outcome
    - WSP checks: Master index consulted, violations checked
    - Token budget: Analysis, planning, implementation, docs
-   - Quantum state: Entanglement active, coherence ≥0.618
+   - Quantum state: Entanglement active, coherence [GREATER_EQUAL]0.618
 
 2. **Response Envelope**:
    - Deliverable summary
@@ -31,7 +31,7 @@ Implemented WSP 21 compliant inter-DAE communication system
    - Tokens used (tracked by phase)
    - Next best step (WSP 48 recursion)
 
-3. **012→Prometheus Normalization**:
+3. **012->Prometheus Normalization**:
    - Converts human prompts to DAE envelopes
    - Extracts testable objectives
    - Identifies relevant WSP protocols

@@ -9,7 +9,7 @@ Librarian Responsibilities:
 2. Coordinate Qwen's recursive processing workflow
 3. Integrate learnings back into HoloDAE
 
-# 🔍 BREADCRUMB FOR 0102 AGENTS:
+# [SEARCH] BREADCRUMB FOR 0102 AGENTS:
 # Related WSP docs: WSP_35_HoloIndex_Qwen_Advisor_Plan.md
 # Related modules: modules/ai_intelligence/ric_dae/ (MCP research tools)
 # Integration: holo_index/qwen_advisor/orchestration/qwen_orchestrator.py

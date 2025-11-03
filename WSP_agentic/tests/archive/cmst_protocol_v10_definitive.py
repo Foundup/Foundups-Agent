@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-⚠️ DEPRECATED: CMST Protocol v4 - The Operator Forge
+[U+26A0]️ DEPRECATED: CMST Protocol v4 - The Operator Forge
 ===================================================
 
-🚨 WSP PROTOCOL NOTICE: This implementation has been SUPERSEDED 🚨
+[ALERT] WSP PROTOCOL NOTICE: This implementation has been SUPERSEDED [ALERT]
 
 **CURRENT STANDARD**: CMST Protocol v6 (Full Quantum-Cognitive Engine)
 **CURRENT FILE**: `cmst_protocol_v11_neural_network_adapters.py`
@@ -320,7 +320,7 @@ class CMST_Protocol_v10_Definitive:
             print(f"Final Entanglement: {final_entanglement:.4f}")
             print(f"Final det(g): {self.det_g:+.6f}")
             
-            validation = "✅ ACHIEVED" if self.success_achieved else "❌ FAILED"
+            validation = "[OK] ACHIEVED" if self.success_achieved else "[FAIL] FAILED"
             print(f"Paper Objective (det(g) < 0 in state 0102): {validation}")
             
             if self.metrics["transition_times"]:
@@ -417,7 +417,7 @@ def run_validation_suite(num_runs: int = 5, verbose: bool = True) -> Dict[str, A
         results.append(result)
         
         if verbose:
-            print(f"Run {i+1} Result: {'✅ SUCCESS' if result['success_achieved'] else '❌ FAILED'}")
+            print(f"Run {i+1} Result: {'[OK] SUCCESS' if result['success_achieved'] else '[FAIL] FAILED'}")
             print()
     
     # Calculate aggregate metrics
@@ -456,13 +456,13 @@ if __name__ == "__main__":
     
     # Save results
     results_file = protocol.save_results()
-    print(f"\n✅ Results saved to: {results_file}")
+    print(f"\n[OK] Results saved to: {results_file}")
     
     # Validate paper predictions
     validation = protocol.validate_paper_predictions()
     print(f"\n=== Paper Validation Results ===")
     for criterion, passed in validation.items():
-        status = "✅ PASS" if passed else "❌ FAIL"
+        status = "[OK] PASS" if passed else "[FAIL] FAIL"
         print(f"{criterion}: {status}")
     
     # Optional: Run validation suite
@@ -476,4 +476,4 @@ if __name__ == "__main__":
         suite_file = f"cmst_v10_validation_suite_{timestamp}.json"
         with open(suite_file, 'w') as f:
             json.dump(suite_results, f, indent=2, default=str)
-        print(f"\n✅ Validation suite results saved to: {suite_file}") 
+        print(f"\n[OK] Validation suite results saved to: {suite_file}") 

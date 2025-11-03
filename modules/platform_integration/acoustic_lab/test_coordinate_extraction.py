@@ -6,9 +6,13 @@ Test coordinate extraction functionality independent of Google Maps.
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -66,7 +70,7 @@ def test_coordinate_extraction_logic():
             # Extract coordinates using the same logic as the JavaScript
             at_index = url.find('@')
             if at_index == -1:
-                print("❌ No @ symbol found")
+                print("[FAIL] No @ symbol found")
                 all_passed = False
                 continue
 
@@ -74,7 +78,7 @@ def test_coordinate_extraction_logic():
             coord_parts = coord_part.split(',')
 
             if len(coord_parts) < 2:
-                print("❌ Could not parse coordinates")
+                print("[FAIL] Could not parse coordinates")
                 all_passed = False
                 continue
 

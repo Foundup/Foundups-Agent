@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class MessageType(Enum):
     """Clear message categories that match actual functionality"""
-    CONSCIOUSNESS_TRIGGER = "consciousness"    # ✊✋🖐️ patterns
+    CONSCIOUSNESS_TRIGGER = "consciousness"    # [U+270A][U+270B][U+1F590]️ patterns
     RESEARCH_COMMAND = "research"              # /PQN, /quiz, /facts
     GAMIFICATION_COMMAND = "gamification"     # /score, /rank, /whacks
     SYSTEM_COMMAND = "system"                 # /help, /toggle, /stats
@@ -123,13 +123,13 @@ class UnifiedMessageRouter:
                     response = handler(context)
                 
                 if response:
-                    self.logger.info(f"✅ {context.message_type.value} response for {context.author_name}")
+                    self.logger.info(f"[OK] {context.message_type.value} response for {context.author_name}")
                 return response
             except Exception as e:
-                self.logger.error(f"❌ Handler error for {context.message_type.value}: {e}")
+                self.logger.error(f"[FAIL] Handler error for {context.message_type.value}: {e}")
                 return None
         
-        self.logger.warning(f"🤷 No handler for message type: {context.message_type.value}")
+        self.logger.warning(f"[U+1F937] No handler for message type: {context.message_type.value}")
         return None
     
     # ====== ROUTING METHODS (Use existing handlers) ======

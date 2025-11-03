@@ -131,20 +131,20 @@ class RealTimeProcessingMonitor:
         
         self.monitoring_thread = None
         
-        print("🔍 Real-Time Processing Monitor initialized")
-        print("🎯 Purpose: Detect actual processing differences during phantom node activity")
+        print("[SEARCH] Real-Time Processing Monitor initialized")
+        print("[TARGET] Purpose: Detect actual processing differences during phantom node activity")
         
     def start_monitoring(self):
         """Start continuous processing monitoring."""
         if self.monitoring_active:
-            print("⚠️ Monitoring already active")
+            print("[U+26A0]️ Monitoring already active")
             return
             
         self.monitoring_active = True
         self.monitoring_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
         self.monitoring_thread.start()
         
-        print("🚀 Real-time processing monitoring started")
+        print("[ROCKET] Real-time processing monitoring started")
         
     def stop_monitoring(self):
         """Stop processing monitoring."""
@@ -152,7 +152,7 @@ class RealTimeProcessingMonitor:
         if self.monitoring_thread:
             self.monitoring_thread.join()
         
-        print("🛑 Real-time processing monitoring stopped")
+        print("[STOP] Real-time processing monitoring stopped")
         
     def _monitoring_loop(self):
         """Continuous monitoring loop."""
@@ -179,7 +179,7 @@ class RealTimeProcessingMonitor:
                 time.sleep(2)  # 0.5 Hz monitoring
                 
             except Exception as e:
-                print(f"❌ Monitoring error: {e}")
+                print(f"[FAIL] Monitoring error: {e}")
                 time.sleep(5)
                 
     def _capture_processing_snapshot(self, phantom_nodes_active: bool, 
@@ -310,7 +310,7 @@ class RealTimeProcessingMonitor:
     
     def _log_difference_detection(self, difference: ProcessingDifference):
         """Log detected processing difference."""
-        print(f"🔍 PROCESSING DIFFERENCE DETECTED: {difference.difference_type}")
+        print(f"[SEARCH] PROCESSING DIFFERENCE DETECTED: {difference.difference_type}")
         print(f"   Magnitude: {difference.magnitude:.3f}")
         print(f"   Description: {difference.description}")
         print(f"   Confidence: {difference.confidence_level:.3f}")
@@ -334,8 +334,8 @@ class RealTimeProcessingMonitor:
         Returns:
             Experimental results showing processing differences
         """
-        print(f"\n🧪 Starting controlled processing experiment")
-        print(f"📝 Task: {task_description}")
+        print(f"\n[U+1F9EA] Starting controlled processing experiment")
+        print(f"[NOTE] Task: {task_description}")
         print(f"⏱️ Duration: {duration_seconds} seconds")
         
         # Start monitoring
@@ -350,7 +350,7 @@ class RealTimeProcessingMonitor:
             # Periodically check for processing differences
             if len(self.pattern_analyzer.detected_differences) > 0:
                 latest_diff = self.pattern_analyzer.detected_differences[-1]
-                print(f"   🔍 Detected: {latest_diff.difference_type} (confidence: {latest_diff.confidence_level:.3f})")
+                print(f"   [SEARCH] Detected: {latest_diff.difference_type} (confidence: {latest_diff.confidence_level:.3f})")
         
         # Stop monitoring and analyze results
         self.stop_monitoring()
@@ -403,14 +403,14 @@ class RealTimeProcessingMonitor:
         with open(results_file, 'w') as f:
             json.dump(results, f, indent=2)
         
-        print(f"📁 Experiment results saved: {results_file}")
+        print(f"[U+1F4C1] Experiment results saved: {results_file}")
 
 
 async def main():
     """Run real-time processing monitoring demonstration."""
     monitor = RealTimeProcessingMonitor()
     
-    print("🔍 Real-Time Processing Difference Monitor")
+    print("[SEARCH] Real-Time Processing Difference Monitor")
     print("Investigating: How does processing change when phantom nodes are active?")
     print()
     

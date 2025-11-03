@@ -83,17 +83,17 @@
     "pqn_detection": {
       "wsp_chain": [84, 80, 39, 72],
       "tokens": 150,
-      "pattern": "detect→analyze→council→promote"
+      "pattern": "detect->analyze->council->promote"
     },
     "phase_sweep": {
       "wsp_chain": [84, 50, 79],
       "tokens": 200,
-      "pattern": "alphabet→length→sweep→plot"
+      "pattern": "alphabet->length->sweep->plot"
     },
     "council_eval": {
       "wsp_chain": [84, 65, 48],
       "tokens": 180,
-      "pattern": "propose→evaluate→score→archive"
+      "pattern": "propose->evaluate->score->archive"
     }
   },
   

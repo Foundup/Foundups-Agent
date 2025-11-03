@@ -1,6 +1,22 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Instance Lock Manager - prevents multiple YouTube monitor instances.
 """
 
@@ -246,7 +262,7 @@ class InstanceLock:
         closed_count = 0
         browser_names = ["chrome.exe", "msedge.exe", "msedgedriver.exe", "chromedriver.exe"]
 
-        logger.info("🔍 Checking for stale browser windows...")
+        logger.info("[SEARCH] Checking for stale browser windows...")
 
         for process in psutil.process_iter(["pid", "name", "cmdline"]):
             try:
@@ -266,11 +282,11 @@ class InstanceLock:
                         "user-data-dir"
                     ]):
                         pid = process.info.get("pid")
-                        logger.warning(f"🚨 Found stale browser: {process_name} (PID: {pid})")
+                        logger.warning(f"[ALERT] Found stale browser: {process_name} (PID: {pid})")
                         try:
                             process.terminate()
                             closed_count += 1
-                            logger.info(f"✅ Terminated {process_name} (PID: {pid})")
+                            logger.info(f"[OK] Terminated {process_name} (PID: {pid})")
                         except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                             logger.warning(f"Could not terminate {process_name}: {e}")
 
@@ -278,9 +294,9 @@ class InstanceLock:
                 continue
 
         if closed_count > 0:
-            logger.info(f"🧹 Cleaned up {closed_count} stale browser window(s)")
+            logger.info(f"[U+1F9F9] Cleaned up {closed_count} stale browser window(s)")
         else:
-            logger.info("✅ No stale browser windows found")
+            logger.info("[OK] No stale browser windows found")
 
         return closed_count
 
@@ -309,6 +325,10 @@ class InstanceLock:
                         continue
                     age_minutes = (datetime.now() - datetime.fromtimestamp(create_time)).total_seconds() / 60
                     if age_minutes > self.ttl_minutes:
+                        # FIX: Check if this process has an active heartbeat before killing
+                        if self._has_active_heartbeat(pid):
+                            logger.info("Monitor %s is old (%.1f min) but heartbeat active - keeping alive", pid, age_minutes)
+                            continue
                         stale_pids.append(pid)
                         logger.warning("Found stale monitor process %s (age: %.1f minutes)", pid, age_minutes)
                 # Also check for orphaned main.py processes that aren't the current one
@@ -350,6 +370,35 @@ class InstanceLock:
             process = psutil.Process(pid)
             return self._looks_like_monitor(process.cmdline())
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            return False
+
+    def _has_active_heartbeat(self, pid: int) -> bool:
+        """Check if a process has an active heartbeat (updated within TTL)."""
+        if not self.lock_file.exists():
+            return False
+
+        try:
+            with open(self.lock_file, "r", encoding="utf-8") as handle:
+                raw_data = json.load(handle)
+            lock_data = self._normalize_lock_data(raw_data)
+
+            # Check if this PID owns the lock
+            lock_pid = lock_data.get("pid")
+            if lock_pid != pid:
+                return False
+
+            # Check heartbeat timestamp
+            heartbeat_iso = lock_data.get("heartbeat", EPOCH_ISO)
+            try:
+                last_heartbeat = datetime.fromisoformat(heartbeat_iso)
+            except ValueError:
+                return False
+
+            # Heartbeat is active if updated within TTL
+            age_minutes = (datetime.now() - last_heartbeat).total_seconds() / 60
+            return age_minutes <= self.ttl_minutes
+
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError, KeyError):
             return False
 
     @staticmethod
@@ -431,7 +480,7 @@ class InstanceLock:
             logger.warning("Found duplicate YouTube monitors: %s", duplicates)
             # Only show detailed output if not in quiet mode (for menu usage)
             if not quiet:
-                print("\n🔴 Duplicate main.py Instances Detected!")
+                print("\n[U+1F534] Duplicate main.py Instances Detected!")
                 print(f"\n  Found {len(duplicates)} instances of main.py running:")
                 print()
 

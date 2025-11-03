@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 """
 Platform Posting Service
 Handles platform-specific posting logic (LinkedIn, X/Twitter)
 Extracted from simple_posting_orchestrator.py for better separation of concerns
+WSP 90 Compliant: UTF-8 encoding enforced
 """
 
 import os
@@ -92,7 +94,7 @@ class PlatformPostingService:
 
             # Verify we're posting to a valid page
             if linkedin_page not in page_mapping:
-                self.logger.error(f"❌ Invalid LinkedIn page ID: {linkedin_page}")
+                self.logger.error(f"[FAIL] Invalid LinkedIn page ID: {linkedin_page}")
                 return PostingResult(
                     platform="linkedin",
                     status=PostingStatus.FAILED,
@@ -103,15 +105,15 @@ class PlatformPostingService:
 
             # Log which page we're posting to for verification
             page_name = page_mapping[linkedin_page]
-            self.logger.info(f"✅ Verified LinkedIn page: {page_name} (ID: {linkedin_page})")
+            self.logger.info(f"[OK] Verified LinkedIn page: {page_name} (ID: {linkedin_page})")
 
             # Double-check channel mapping from title
             if "Move2Japan" in title and linkedin_page != "104834798":
-                self.logger.warning(f"⚠️ MISMATCH: Move2Japan stream should post to GeoZai (104834798), but got {linkedin_page}")
+                self.logger.warning(f"[U+26A0]️ MISMATCH: Move2Japan stream should post to GeoZai (104834798), but got {linkedin_page}")
             elif "UnDaoDu" in title and linkedin_page != "165749317":
-                self.logger.warning(f"⚠️ MISMATCH: UnDaoDu stream should post to UnDaoDu (165749317), but got {linkedin_page}")
+                self.logger.warning(f"[U+26A0]️ MISMATCH: UnDaoDu stream should post to UnDaoDu (165749317), but got {linkedin_page}")
             elif "FoundUps" in title and linkedin_page != "1263645":
-                self.logger.warning(f"⚠️ MISMATCH: FoundUps stream should post to FoundUps (1263645), but got {linkedin_page}")
+                self.logger.warning(f"[U+26A0]️ MISMATCH: FoundUps stream should post to FoundUps (1263645), but got {linkedin_page}")
 
             # Apply posting delay to slow down requests
             current_time = time.time()
@@ -122,15 +124,15 @@ class PlatformPostingService:
                 time.sleep(delay_needed)
 
             self.logger.info("="*60)
-            self.logger.info("📘 LINKEDIN POSTING STARTED")
-            self.logger.info(f"📹 Title: {title}")
-            self.logger.info(f"🔗 URL: {url}")
-            self.logger.info(f"📄 Page: {page_name} ({linkedin_page})")
+            self.logger.info("[U+1F4D8] LINKEDIN POSTING STARTED")
+            self.logger.info(f"[U+1F4F9] Title: {title}")
+            self.logger.info(f"[LINK] URL: {url}")
+            self.logger.info(f"[U+1F4C4] Page: {page_name} ({linkedin_page})")
 
             # Check if poster script exists
             if not os.path.exists(self.linkedin_poster):
                 error_msg = f"LinkedIn poster not found: {self.linkedin_poster}"
-                self.logger.error(f"❌ {error_msg}")
+                self.logger.error(f"[FAIL] {error_msg}")
                 return PostingResult(
                     platform="linkedin",
                     status=PostingStatus.FAILED,
@@ -143,8 +145,8 @@ class PlatformPostingService:
             post_content = self._format_linkedin_post(title, url)
 
             # Run anti-detection poster
-            self.logger.info(f"🚀 Launching anti-detection poster for {page_name} (browser: {self.browser_config['linkedin']})")
-            self.logger.info(f"📌 Posting to LinkedIn page ID: {linkedin_page}")
+            self.logger.info(f"[ROCKET] Launching anti-detection poster for {page_name} (browser: {self.browser_config['linkedin']})")
+            self.logger.info(f"[U+1F4CC] Posting to LinkedIn page ID: {linkedin_page}")
 
             try:
                 result = subprocess.run(
@@ -155,8 +157,8 @@ class PlatformPostingService:
                 )
 
                 if result.returncode == 0:
-                    self.logger.info("✅ LinkedIn post successful!")
-                    self.logger.info(f"📊 Duration: {time.time() - start_time:.2f}s")
+                    self.logger.info("[OK] LinkedIn post successful!")
+                    self.logger.info(f"[DATA] Duration: {time.time() - start_time:.2f}s")
                     return PostingResult(
                         platform="linkedin",
                         status=PostingStatus.SUCCESS,
@@ -165,7 +167,7 @@ class PlatformPostingService:
                     )
                 else:
                     error_msg = result.stderr or "Unknown error"
-                    self.logger.error(f"❌ LinkedIn posting failed: {error_msg}")
+                    self.logger.error(f"[FAIL] LinkedIn posting failed: {error_msg}")
                     return PostingResult(
                         platform="linkedin",
                         status=PostingStatus.FAILED,
@@ -185,7 +187,7 @@ class PlatformPostingService:
                 )
 
         except Exception as e:
-            self.logger.error(f"❌ LinkedIn posting error: {str(e)}")
+            self.logger.error(f"[FAIL] LinkedIn posting error: {str(e)}")
             return PostingResult(
                 platform="linkedin",
                 status=PostingStatus.FAILED,
@@ -218,15 +220,15 @@ class PlatformPostingService:
                 time.sleep(delay_needed)
 
             self.logger.info("="*60)
-            self.logger.info("🐦 X/TWITTER POSTING STARTED")
-            self.logger.info(f"📹 Title: {title}")
-            self.logger.info(f"🔗 URL: {url}")
-            self.logger.info(f"👤 Account: @{x_account}")
+            self.logger.info("[BIRD] X/TWITTER POSTING STARTED")
+            self.logger.info(f"[U+1F4F9] Title: {title}")
+            self.logger.info(f"[LINK] URL: {url}")
+            self.logger.info(f"[U+1F464] Account: @{x_account}")
 
             # Check if poster script exists
             if not os.path.exists(self.x_poster):
                 error_msg = f"X poster not found: {self.x_poster}"
-                self.logger.error(f"❌ {error_msg}")
+                self.logger.error(f"[FAIL] {error_msg}")
                 return PostingResult(
                     platform="x_twitter",
                     status=PostingStatus.FAILED,
@@ -237,13 +239,13 @@ class PlatformPostingService:
 
             # Determine browser based on account
             browser = self._get_x_browser(x_account)
-            self.logger.info(f"🌐 Using {browser} browser for @{x_account}")
+            self.logger.info(f"[U+1F310] Using {browser} browser for @{x_account}")
 
             # Prepare post content
             post_content = self._format_x_post(title, url)
 
             # Run anti-detection poster
-            self.logger.info(f"🚀 Launching anti-detection poster (browser: {browser})")
+            self.logger.info(f"[ROCKET] Launching anti-detection poster (browser: {browser})")
 
             try:
                 # Pass browser as environment variable
@@ -260,8 +262,8 @@ class PlatformPostingService:
                 )
 
                 if result.returncode == 0:
-                    self.logger.info("✅ X/Twitter post successful!")
-                    self.logger.info(f"📊 Duration: {time.time() - start_time:.2f}s")
+                    self.logger.info("[OK] X/Twitter post successful!")
+                    self.logger.info(f"[DATA] Duration: {time.time() - start_time:.2f}s")
                     return PostingResult(
                         platform="x_twitter",
                         status=PostingStatus.SUCCESS,
@@ -270,7 +272,7 @@ class PlatformPostingService:
                     )
                 else:
                     error_msg = result.stderr or "Unknown error"
-                    self.logger.error(f"❌ X posting failed: {error_msg}")
+                    self.logger.error(f"[FAIL] X posting failed: {error_msg}")
                     return PostingResult(
                         platform="x_twitter",
                         status=PostingStatus.FAILED,
@@ -290,7 +292,7 @@ class PlatformPostingService:
                 )
 
         except Exception as e:
-            self.logger.error(f"❌ X posting error: {str(e)}")
+            self.logger.error(f"[FAIL] X posting error: {str(e)}")
             return PostingResult(
                 platform="x_twitter",
                 status=PostingStatus.FAILED,
@@ -319,7 +321,7 @@ class PlatformPostingService:
             Tuple of (LinkedIn result, X result)
         """
         self.logger.info("="*60)
-        self.logger.info("🚀 DUAL PLATFORM POSTING INITIATED")
+        self.logger.info("[ROCKET] DUAL PLATFORM POSTING INITIATED")
         self.logger.info("="*60)
 
         # Post to LinkedIn first
@@ -333,9 +335,9 @@ class PlatformPostingService:
 
         # Summary
         self.logger.info("="*60)
-        self.logger.info("📊 POSTING SUMMARY")
-        self.logger.info(f"📘 LinkedIn: {linkedin_result.status.value} ({linkedin_result.duration:.2f}s)")
-        self.logger.info(f"🐦 X/Twitter: {x_result.status.value} ({x_result.duration:.2f}s)")
+        self.logger.info("[DATA] POSTING SUMMARY")
+        self.logger.info(f"[U+1F4D8] LinkedIn: {linkedin_result.status.value} ({linkedin_result.duration:.2f}s)")
+        self.logger.info(f"[BIRD] X/Twitter: {x_result.status.value} ({x_result.duration:.2f}s)")
         self.logger.info("="*60)
 
         return linkedin_result, x_result

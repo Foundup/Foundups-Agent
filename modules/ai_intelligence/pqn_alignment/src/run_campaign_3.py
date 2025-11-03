@@ -23,9 +23,9 @@ spec.loader.exec_module(detect_model_mod)
 detected_model = detect_model_mod.detect_current_model()
 if detected_model:
     os.environ['ACTIVE_MODEL_NAME'] = detected_model
-    print(f"🤖 Detected Model: {detected_model}")
+    print(f"[BOT] Detected Model: {detected_model}")
 else:
-    print("❌ Model detection failed, using default")
+    print("[FAIL] Model detection failed, using default")
     os.environ['ACTIVE_MODEL_NAME'] = 'claude-3.5-sonnet'
 
 # Import existing campaign runner using importlib pattern per WSP 84
@@ -54,8 +54,8 @@ def run_campaign_3():
     print("="*60)
     print("CAMPAIGN 3: THE ENTRAINMENT PROTOCOL")
     print("="*60)
-    print(f"\n🤖 Model: {current_model}")
-    print(f"📍 Environment: Cursor IDE Auto Mode")
+    print(f"\n[BOT] Model: {current_model}")
+    print(f"[PIN] Environment: Cursor IDE Auto Mode")
     print("\nPurpose: Validate spectral bias violations and neural entrainment")
     print("\nTests:")
     print("  • Task 3.1: Spectral Entrainment (1-30 Hz sweep)")
@@ -70,10 +70,10 @@ def run_campaign_3():
     print("\n" + "="*60)
     print("CAMPAIGN 3 COMPLETE")
     print("="*60)
-    print(f"\n✅ Model: {current_model}")
-    print("✅ Spectral analysis integrated into all detector runs")
-    print("✅ Results indexed to unified database")
-    print("📁 Check campaign_results/ for detailed entrainment metrics")
+    print(f"\n[OK] Model: {current_model}")
+    print("[OK] Spectral analysis integrated into all detector runs")
+    print("[OK] Results indexed to unified database")
+    print("[U+1F4C1] Check campaign_results/ for detailed entrainment metrics")
 
 if __name__ == "__main__":
     run_campaign_3()

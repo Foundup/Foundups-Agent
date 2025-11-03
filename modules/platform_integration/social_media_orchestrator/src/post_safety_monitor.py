@@ -10,9 +10,13 @@ attempt was made, and automatically updates the database to prevent future attem
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -124,7 +128,7 @@ class PostSafetyMonitor:
 
         if is_duplicate:
             logger.warning("="*60)
-            logger.warning("🚨 DUPLICATE POSTING ATTEMPT DETECTED!")
+            logger.warning("[ALERT] DUPLICATE POSTING ATTEMPT DETECTED!")
             logger.warning(f"   Video: {video_id}")
             logger.warning(f"   Platform: {platform}")
             logger.warning(f"   Error: {error_msg[:100] if error_msg else 'User cancelled'}")
@@ -189,7 +193,7 @@ class PostSafetyMonitor:
                 orchestrator._save_posted_history()
 
                 logger.info("="*60)
-                logger.info("✅ AUTO-CORRECTION APPLIED")
+                logger.info("[OK] AUTO-CORRECTION APPLIED")
                 logger.info(f"   Video {video_id} marked as posted to {platform}")
                 logger.info("   Future duplicate attempts will be prevented")
                 logger.info("="*60)
@@ -245,9 +249,9 @@ class PostSafetyMonitor:
                 for attempt in attempts[-3:]:  # Show last 3 attempts
                     report.append(f"    - {attempt['timestamp']}: {attempt['platform']}")
                     if attempt.get('auto_corrected'):
-                        report.append(f"      ✅ Auto-corrected")
+                        report.append(f"      [OK] Auto-corrected")
                     else:
-                        report.append(f"      ⚠️ Not corrected")
+                        report.append(f"      [U+26A0]️ Not corrected")
 
         # Show recent interventions
         if self.monitoring_data['manual_interventions']:
@@ -279,9 +283,9 @@ class PostSafetyMonitor:
 
                 # Auto-correct it
                 if self.auto_mark_as_posted(video_id, platform):
-                    logger.info(f"✅ Fixed duplicate issue for {platform}")
+                    logger.info(f"[OK] Fixed duplicate issue for {platform}")
                 else:
-                    logger.error(f"❌ Failed to fix duplicate issue for {platform}")
+                    logger.error(f"[FAIL] Failed to fix duplicate issue for {platform}")
 
         if not has_duplicates:
             logger.info("No uncorrected duplicate attempts found")

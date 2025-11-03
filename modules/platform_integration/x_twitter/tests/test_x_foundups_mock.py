@@ -22,72 +22,72 @@ print("="*60)
 load_dotenv()
 
 # Check account configuration
-print("\n📋 Account Configuration:")
+print("\n[CLIPBOARD] Account Configuration:")
 print(f"   X_Acc1 (Move2Japan): {os.getenv('X_Acc1', 'geozeai')}")
 print(f"   X_Acc2 (FoundUps): {os.getenv('X_Acc2', 'foundups')}")
 
-print("\n🔍 Testing Configuration (Non-interactive)...")
+print("\n[SEARCH] Testing Configuration (Non-interactive)...")
 
 try:
     from modules.platform_integration.x_twitter.src.x_anti_detection_poster import AntiDetectionX
 
-    print("\n🚀 Initializing X poster for FoundUps...")
+    print("\n[ROCKET] Initializing X poster for FoundUps...")
     poster = AntiDetectionX(use_foundups=True)
 
-    print(f"✅ Using account: {poster.username}")
+    print(f"[OK] Using account: {poster.username}")
 
     # Verify it's configured for FoundUps
     if poster.username.lower() == 'foundups':
-        print("✅ PASS - Correctly configured for FoundUps account")
+        print("[OK] PASS - Correctly configured for FoundUps account")
     else:
-        print(f"⚠️ WARNING - Using {poster.username} instead of FoundUps")
+        print(f"[U+26A0]️ WARNING - Using {poster.username} instead of FoundUps")
         print("   This needs to be fixed in .env configuration")
 
     # Test content generation
-    test_content = """🦄 FoundUps by @UnDaoDu
+    test_content = """[U+1F984] FoundUps by @UnDaoDu
 DAEs eating startups for breakfast.
 Solo unicorns, no VCs needed.
 
 #FoundUps #DAE @Foundups"""
 
-    print("\n📝 Test content prepared:")
+    print("\n[NOTE] Test content prepared:")
     print("-" * 40)
     print(test_content)
     print("-" * 40)
     print(f"Length: {len(test_content)} chars (280 max)")
 
     if len(test_content) <= 280:
-        print("✅ Content length valid for X")
+        print("[OK] Content length valid for X")
     else:
-        print("❌ Content too long for X")
+        print("[FAIL] Content too long for X")
 
     print("\n" + "="*60)
     print("TEST RESULTS")
     print("="*60)
 
-    print("\n✅ Configuration Test:")
+    print("\n[OK] Configuration Test:")
     print(f"   • X poster configured for: {poster.username}")
     print(f"   • Expected account: @Foundups")
     print(f"   • Content generation: PASS")
     print(f"   • Character limit: PASS")
 
     if poster.username.lower() == 'foundups':
-        print("\n✅ ALL TESTS PASSED")
+        print("\n[OK] ALL TESTS PASSED")
         print("   Git posts will be sent to @Foundups account")
         exit(0)
     else:
-        print(f"\n⚠️ CONFIGURATION ISSUE")
+        print(f"\n[U+26A0]️ CONFIGURATION ISSUE")
         print(f"   Account mismatch: {poster.username} vs FoundUps")
         exit(1)
 
 except ImportError as e:
-    print(f"❌ Import error: {e}")
+    print(f"[FAIL] Import error: {e}")
     print("   Make sure you're running from the project root")
     exit(1)
 except Exception as e:
-    print(f"❌ Error: {e}")
+    print(f"[FAIL] Error: {e}")
     import traceback
     traceback.print_exc()
     exit(1)
 
-print("\n✅ Mock test complete!")
+print("\n[OK] Mock test complete!")

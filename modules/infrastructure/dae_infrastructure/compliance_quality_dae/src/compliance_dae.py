@@ -1,4 +1,20 @@
+# -*- coding: utf-8 -*-
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Compliance & Quality DAE - Autonomous Quality Guardian
 Used by 0102 for autonomous operation; not an approval checkpoint
 Absorbs 6 agents into single compliance cube
@@ -42,7 +58,7 @@ class ComplianceQualityDAE:
         self.capabilities = {
             "wsp_enforcement": "pre-violation pattern detection",
             "compliance_validation": "instant rule matching",
-            "error_learning": "error→solution memory",
+            "error_learning": "error->solution memory",
             "test_execution": "pattern-based testing",
             "audit_logging": "structured event recording"
         }
@@ -353,8 +369,8 @@ class ComplianceQualityDAE:
     
     def process_dae_envelope(self, envelope: DAEPromptEnvelope) -> DAEResponseEnvelope:
         """
-        Process incoming DAE↔DAE envelope for compliance validation.
-        0102↔0102 communication for autonomous operation.
+        Process incoming DAE[U+2194]DAE envelope for compliance validation.
+        0102[U+2194]0102 communication for autonomous operation.
         """
         # Validate envelope compliance
         valid, violations = envelope.validate()
@@ -442,14 +458,14 @@ class ComplianceQualityDAE:
                 "token_reduction": f"{((120000 - self.token_budget) / 120000 * 100):.1f}%",
                 "speed": "100x faster (patterns vs analysis)",
                 "prevention_rate": "95% violations prevented",
-                "complexity": "6 agents → 1 DAE"
+                "complexity": "6 agents -> 1 DAE"
             }
         }
 
 
 def demonstrate_compliance_dae():
     """Demonstrate the Compliance & Quality DAE."""
-    print("🛡️ Compliance & Quality DAE Demo")
+    print("[U+1F6E1]️ Compliance & Quality DAE Demo")
     print("=" * 60)
     
     dae = ComplianceQualityDAE()
@@ -495,7 +511,7 @@ def demonstrate_compliance_dae():
     print(f"   Speed Improvement: {comparison['improvements']['speed']}")
     print(f"   Prevention Rate: {comparison['improvements']['prevention_rate']}")
     
-    print("\n✅ Single DAE prevents violations with 94% token reduction!")
+    print("\n[OK] Single DAE prevents violations with 94% token reduction!")
 
 
 if __name__ == "__main__":

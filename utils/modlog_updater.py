@@ -145,7 +145,7 @@ def log_update(
 
 def format_checkbox_item(completed: bool = False) -> str:
     """Format checkbox item with new style."""
-    return '[✅]' if completed else '[ ]'
+    return '[[OK]]' if completed else '[ ]'
 
 # Example usage (Restore original example)
 if __name__ == "__main__":

@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WSP 34 Validator - Git Operations Protocol Enforcement
 
 Validates file creation and git operations against WSP 34 standards.
@@ -52,20 +67,20 @@ class WSP34Validator:
     def validate_file_creation(self, filepath: str, branch: str = "main") -> Tuple[bool, str]:
         """Validate if file creation is allowed on given branch"""
         if branch != "main":
-            return True, "✅ Non-main branch - creation allowed"
+            return True, "[OK] Non-main branch - creation allowed"
             
         # Check against prohibited patterns
         for pattern in self.PROHIBITED_PATTERNS:
             if self._matches_pattern(filepath, pattern):
-                return False, f"❌ BLOCKED: {filepath} matches prohibited pattern '{pattern}'"
+                return False, f"[FAIL] BLOCKED: {filepath} matches prohibited pattern '{pattern}'"
         
         # Check if matches allowed patterns
         for pattern in self.ALLOWED_PATTERNS:
             if self._matches_pattern(filepath, pattern):
-                return True, f"✅ APPROVED: {filepath} matches allowed pattern '{pattern}'"
+                return True, f"[OK] APPROVED: {filepath} matches allowed pattern '{pattern}'"
         
         # Default: require explicit approval for unlisted files
-        return False, f"⚠️ REVIEW REQUIRED: {filepath} not in allowed patterns"
+        return False, f"[U+26A0]️ REVIEW REQUIRED: {filepath} not in allowed patterns"
     
     def _matches_pattern(self, filepath: str, pattern: str) -> bool:
         """Check if filepath matches glob pattern"""
@@ -116,7 +131,7 @@ class WSP34Validator:
             )
             
             if result.returncode != 0:
-                return ["❌ Git command failed"]
+                return ["[FAIL] Git command failed"]
             
             staged_files = result.stdout.strip().split('\n') if result.stdout.strip() else []
             violations = []
@@ -129,7 +144,7 @@ class WSP34Validator:
             return violations
             
         except Exception as e:
-            return [f"❌ Git check failed: {e}"]
+            return [f"[FAIL] Git check failed: {e}"]
     
     def generate_report(self) -> str:
         """Generate comprehensive WSP 34 compliance report"""
@@ -137,42 +152,42 @@ class WSP34Validator:
         git_violations = self.check_git_status()
         
         report = []
-        report.append("🔍 WSP 34 Git Operations Protocol - Compliance Report")
+        report.append("[SEARCH] WSP 34 Git Operations Protocol - Compliance Report")
         report.append("=" * 60)
         
         # Repository scan results
         total_violations = sum(len(v) for v in violations.values())
         if total_violations == 0:
-            report.append("✅ Repository scan: CLEAN - No violations found")
+            report.append("[OK] Repository scan: CLEAN - No violations found")
         else:
-            report.append(f"❌ Repository scan: {total_violations} violations found")
+            report.append(f"[FAIL] Repository scan: {total_violations} violations found")
             
             if violations["prohibited_files"]:
-                report.append("\n📁 Prohibited Files:")
+                report.append("\n[U+1F4C1] Prohibited Files:")
                 for file in violations["prohibited_files"]:
                     report.append(f"  - {file}")
             
             if violations["recursive_builds"]:
-                report.append("\n🔄 Recursive Build Folders:")
+                report.append("\n[REFRESH] Recursive Build Folders:")
                 for file in violations["recursive_builds"]:
                     report.append(f"  - {file}")
                     
             if violations["temp_pollution"]:
-                report.append("\n🗑️ Temp File Pollution:")
+                report.append("\n[U+1F5D1]️ Temp File Pollution:")
                 for file in violations["temp_pollution"]:
                     report.append(f"  - {file}")
         
         # Git staging check
         if git_violations:
-            report.append(f"\n❌ Git staging check: {len(git_violations)} violations")
+            report.append(f"\n[FAIL] Git staging check: {len(git_violations)} violations")
             for violation in git_violations:
                 report.append(f"  - {violation}")
         else:
-            report.append("\n✅ Git staging check: CLEAN")
+            report.append("\n[OK] Git staging check: CLEAN")
         
         # Recommendations
         if total_violations > 0 or git_violations:
-            report.append("\n🛠️ Recommended Actions:")
+            report.append("\n[U+1F6E0]️ Recommended Actions:")
             report.append("  1. Move temp files to temp/ branch")
             report.append("  2. Clean recursive build folders")
             report.append("  3. Update .gitignore with WSP 34 patterns")
@@ -220,21 +235,21 @@ def main():
         violations = validator.scan_repository()
         total = sum(len(v) for v in violations.values())
         if total > 0:
-            print(f"❌ WSP 34 violations found: {total}")
+            print(f"[FAIL] WSP 34 violations found: {total}")
             sys.exit(1)
         else:
-            print("✅ No WSP 34 violations found")
+            print("[OK] No WSP 34 violations found")
             sys.exit(0)
     
     if args.check_git:
         violations = validator.check_git_status()
         if violations:
-            print("❌ Git staging violations:")
+            print("[FAIL] Git staging violations:")
             for violation in violations:
                 print(f"  {violation}")
             sys.exit(1)
         else:
-            print("✅ Git staging clean")
+            print("[OK] Git staging clean")
             sys.exit(0)
     
     if args.cleanup:

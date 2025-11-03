@@ -1,0 +1,37 @@
+{
+  "name": "gotjunk",
+  "version": "0.1.0",
+  "type": "foundup",
+  "description": "Rapid-capture PWA for photo organization with AI-powered swipe interface",
+  "deployment": {
+    "platform": "google_cloud_run",
+    "ai_studio_project": "1R_lBYHwMJHOxWjI_HAAx5DU9fqePG9nA",
+    "ai_studio_url": "https://ai.studio/apps/drive/1R_lBYHwMJHOxWjI_HAAx5DU9fqePG9nA"
+  },
+  "tech_stack": {
+    "frontend": "React 19 + TypeScript + Vite",
+    "ai": "Google Gemini",
+    "storage": "IndexedDB (localforage)",
+    "features": ["PWA", "Geolocation", "Camera API", "Offline-first"]
+  },
+  "wsp_compliance": {
+    "wsp_3": "Enterprise domain organization (foundups)",
+    "wsp_49": "Module structure",
+    "wsp_22": "Documentation and ModLog",
+    "wsp_89": "Production deployment"
+  },
+  "docs": {
+    "readme": "README.md",
+    "interface": "INTERFACE.md",
+    "roadmap": "ROADMAP.md",
+    "modlog": "ModLog.md"
+  },
+  "api": {
+    "type": "PWA",
+    "endpoints": []
+  },
+  "memory": {
+    "path": "memory/",
+    "type": "module_memory"
+  }
+}

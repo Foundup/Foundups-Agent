@@ -123,7 +123,7 @@ class ComplianceGitHubExtension:
 {violation.get("fix_suggestion", "Manual resolution required")}
 
 ### Auto-Fix Available
-{"✅ Yes" if violation.get("auto_fixable", False) else "❌ No"}
+{"[OK] Yes" if violation.get("auto_fixable", False) else "[FAIL] No"}
 
 ---
 *Issue created automatically by ComplianceAgent via GitHub Integration*
@@ -194,7 +194,7 @@ class ComplianceGitHubExtension:
         fixes = compliance_fixes.get("fixes", [])
         fixed_count = len(fixes)
         
-        title = f"🤖 WSP Compliance Fixes - {fixed_count} violations resolved"
+        title = f"[BOT] WSP Compliance Fixes - {fixed_count} violations resolved"
         
         branch_name = f"compliance/auto-fix-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
         
@@ -214,10 +214,10 @@ Automatically resolved {fixed_count} WSP compliance violations.
 {chr(10).join(f'- WSP {fix.get("wsp_protocol", "?")}' for fix in fixes if fix.get("wsp_protocol"))}
 
 ### Automated Validation
-- ✅ All fixes verified by ComplianceAgent
-- ✅ No WSP violations introduced
-- ✅ Files follow WSP standards
-- ✅ ModLog updated where required
+- [OK] All fixes verified by ComplianceAgent
+- [OK] No WSP violations introduced
+- [OK] Files follow WSP standards
+- [OK] ModLog updated where required
 
 ### Testing
 - [ ] Compliance tests pass
@@ -230,7 +230,7 @@ Automatically resolved {fixed_count} WSP compliance violations.
 **Agent**: ComplianceGitHubExtension  
 **Generated**: {datetime.now().isoformat()}
 
-🤖 Generated with FoundUps Agent System
+[BOT] Generated with FoundUps Agent System
 
 Co-Authored-By: ComplianceAgent <compliance@foundups.com>
 """
@@ -272,7 +272,7 @@ Co-Authored-By: ComplianceAgent <compliance@foundups.com>
             }
             
             # Would update PR status via GitHub API
-            self.logger.info(f"PR #{pr_number} compliance check: {'✅ PASS' if compliance_result['compliant'] else '❌ FAIL'}")
+            self.logger.info(f"PR #{pr_number} compliance check: {'[OK] PASS' if compliance_result['compliant'] else '[FAIL] FAIL'}")
             
             return compliance_result
             

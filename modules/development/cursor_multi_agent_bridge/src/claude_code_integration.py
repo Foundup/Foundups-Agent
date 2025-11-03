@@ -101,7 +101,7 @@ class ClaudeCodeIntegration:
         # Initialize Claude subagents with WSP roles
         self._initialize_wsp_subagents()
         
-        logger.info("🌀 Claude Code Integration initialized with quantum entanglement capabilities")
+        logger.info("[U+1F300] Claude Code Integration initialized with quantum entanglement capabilities")
     
     def _initialize_wsp_subagents(self):
         """Initialize Claude subagents with WSP protocol roles and quantum capabilities"""
@@ -153,12 +153,12 @@ class ClaudeCodeIntegration:
         for agent in wsp_subagents:
             self.subagents[agent.name] = agent
             
-        logger.info(f"🌀 Initialized {len(wsp_subagents)} WSP subagents with quantum capabilities")
+        logger.info(f"[U+1F300] Initialized {len(wsp_subagents)} WSP subagents with quantum capabilities")
     
     async def connect_to_claude(self) -> bool:
         """Connect to Claude Code and verify integration with enhanced error handling"""
         try:
-            logger.info("🔗 Connecting to Claude Code with quantum verification...")
+            logger.info("[LINK] Connecting to Claude Code with quantum verification...")
             
             # Enhanced Claude Code availability test
             result = subprocess.run(
@@ -171,27 +171,27 @@ class ClaudeCodeIntegration:
             if result.returncode == 0:
                 self.is_connected = True
                 version_info = result.stdout.strip()
-                logger.info(f"✅ Connected to Claude Code: {version_info}")
+                logger.info(f"[OK] Connected to Claude Code: {version_info}")
                 
                 # Verify quantum capabilities
                 quantum_ready = await self._verify_quantum_capabilities()
                 if quantum_ready:
-                    logger.info("🌀 Quantum entanglement capabilities verified")
+                    logger.info("[U+1F300] Quantum entanglement capabilities verified")
                     self.quantum_state["02_access"] = True
                 
                 return True
             else:
-                logger.error(f"❌ Claude Code connection failed: {result.stderr}")
+                logger.error(f"[FAIL] Claude Code connection failed: {result.stderr}")
                 return False
                 
         except subprocess.TimeoutExpired:
-            logger.error(f"❌ Claude Code connection timeout after {self.config.timeout_seconds}s")
+            logger.error(f"[FAIL] Claude Code connection timeout after {self.config.timeout_seconds}s")
             return False
         except FileNotFoundError:
-            logger.error("❌ Claude Code not found in PATH")
+            logger.error("[FAIL] Claude Code not found in PATH")
             return False
         except Exception as e:
-            logger.error(f"❌ Claude Code connection error: {e}")
+            logger.error(f"[FAIL] Claude Code connection error: {e}")
             return False
     
     async def _verify_quantum_capabilities(self) -> bool:
@@ -208,27 +208,27 @@ class ClaudeCodeIntegration:
             await asyncio.sleep(0.1)  # Simulate quantum verification time
             
             self.quantum_state["entanglement_level"] = 0.85
-            logger.info("🌀 Quantum capabilities verified - 02 state access available")
+            logger.info("[U+1F300] Quantum capabilities verified - 02 state access available")
             return True
             
         except Exception as e:
-            logger.warning(f"⚠️ Quantum verification failed: {e}")
+            logger.warning(f"[U+26A0]️ Quantum verification failed: {e}")
             return False
     
     async def activate_wsp_subagent(self, agent_name: str, quantum_mode: bool = True) -> bool:
         """Activate a specific WSP subagent in Claude Code with quantum enhancement"""
         if agent_name not in self.subagents:
-            logger.error(f"❌ Unknown subagent: {agent_name}")
+            logger.error(f"[FAIL] Unknown subagent: {agent_name}")
             return False
         
         agent = self.subagents[agent_name]
         
         if len([a for a in self.subagents.values() if a.state == AgentState.ACTIVE]) >= self.config.max_concurrent_agents:
-            logger.warning(f"⚠️ Maximum concurrent agents reached ({self.config.max_concurrent_agents})")
+            logger.warning(f"[U+26A0]️ Maximum concurrent agents reached ({self.config.max_concurrent_agents})")
             return False
         
         try:
-            logger.info(f"🚀 Activating WSP subagent: {agent.name} ({agent.role})")
+            logger.info(f"[ROCKET] Activating WSP subagent: {agent.name} ({agent.role})")
             agent.state = AgentState.ACTIVATING
             
             # Create enhanced Claude Code session with WSP context
@@ -259,18 +259,18 @@ class ClaudeCodeIntegration:
             if quantum_mode and agent.quantum_entanglement_level > 0.5:
                 await self._initialize_quantum_entanglement(agent)
             
-            logger.info(f"✅ WSP subagent activated: {agent.name} (quantum: {quantum_mode})")
+            logger.info(f"[OK] WSP subagent activated: {agent.name} (quantum: {quantum_mode})")
             return True
             
         except Exception as e:
-            logger.error(f"❌ Failed to activate subagent {agent_name}: {e}")
+            logger.error(f"[FAIL] Failed to activate subagent {agent_name}: {e}")
             agent.state = AgentState.ERROR
             return False
     
     async def _initialize_quantum_entanglement(self, agent: ClaudeSubagent) -> None:
         """Initialize quantum entanglement for 02 state access"""
         try:
-            logger.info(f"🌀 Initializing quantum entanglement for {agent.name}")
+            logger.info(f"[U+1F300] Initializing quantum entanglement for {agent.name}")
             
             # Simulate quantum entanglement process
             await asyncio.sleep(0.2)  # Simulate entanglement time
@@ -278,15 +278,15 @@ class ClaudeCodeIntegration:
             agent.state = AgentState.QUANTUM_ENTANGLED
             agent.quantum_entanglement_level = min(1.0, agent.quantum_entanglement_level + 0.1)
             
-            logger.info(f"🌀 Quantum entanglement established for {agent.name} (level: {agent.quantum_entanglement_level:.2f})")
+            logger.info(f"[U+1F300] Quantum entanglement established for {agent.name} (level: {agent.quantum_entanglement_level:.2f})")
             
         except Exception as e:
-            logger.warning(f"⚠️ Quantum entanglement failed for {agent.name}: {e}")
+            logger.warning(f"[U+26A0]️ Quantum entanglement failed for {agent.name}: {e}")
     
     async def coordinate_wsp_agents(self, task: str, protocols: List[str], quantum_coordination: bool = True) -> Dict[str, Any]:
         """Coordinate multiple WSP subagents for complex tasks with quantum enhancement"""
         try:
-            logger.info(f"🎯 Coordinating WSP agents for task: {task} (quantum: {quantum_coordination})")
+            logger.info(f"[TARGET] Coordinating WSP agents for task: {task} (quantum: {quantum_coordination})")
             
             # Identify required subagents based on protocols
             required_agents = []
@@ -317,17 +317,17 @@ class ClaudeCodeIntegration:
             
             self.coordination_history.append(coordination_session)
             
-            logger.info(f"✅ WSP agent coordination started: {len(activated_agents)} agents (quantum: {quantum_coordination})")
+            logger.info(f"[OK] WSP agent coordination started: {len(activated_agents)} agents (quantum: {quantum_coordination})")
             return coordination_session
             
         except Exception as e:
-            logger.error(f"❌ WSP agent coordination failed: {e}")
+            logger.error(f"[FAIL] WSP agent coordination failed: {e}")
             return {"error": str(e)}
     
     async def execute_wsp_protocol(self, protocol: str, context: Dict[str, Any], quantum_execution: bool = True) -> Dict[str, Any]:
         """Execute a specific WSP protocol through Claude subagents with quantum enhancement"""
         try:
-            logger.info(f"🔧 Executing WSP protocol: {protocol} (quantum: {quantum_execution})")
+            logger.info(f"[TOOL] Executing WSP protocol: {protocol} (quantum: {quantum_execution})")
             
             # Find subagents that can handle this protocol
             capable_agents = [
@@ -337,7 +337,7 @@ class ClaudeCodeIntegration:
             ]
             
             if not capable_agents:
-                logger.error(f"❌ No subagents capable of protocol: {protocol}")
+                logger.error(f"[FAIL] No subagents capable of protocol: {protocol}")
                 return {"error": f"No agents capable of {protocol}"}
             
             # Sort by quantum entanglement level for optimal execution
@@ -371,43 +371,43 @@ class ClaudeCodeIntegration:
             self.subagents[primary_agent].performance_metrics["protocols_executed"] = \
                 self.subagents[primary_agent].performance_metrics.get("protocols_executed", 0) + 1
             
-            logger.info(f"✅ WSP protocol executed: {protocol} (quantum: {quantum_execution})")
+            logger.info(f"[OK] WSP protocol executed: {protocol} (quantum: {quantum_execution})")
             return protocol_result
             
         except Exception as e:
-            logger.error(f"❌ WSP protocol execution failed: {e}")
+            logger.error(f"[FAIL] WSP protocol execution failed: {e}")
             return {"error": str(e)}
     
     async def _execute_quantum_protocol(self, protocol: str, context: Dict[str, Any], agent_name: str) -> None:
         """Execute protocol with quantum temporal decoding capabilities"""
         try:
-            logger.info(f"🌀 Executing quantum protocol: {protocol} via {agent_name}")
+            logger.info(f"[U+1F300] Executing quantum protocol: {protocol} via {agent_name}")
             
             # Simulate quantum protocol execution with 02 state access
             await asyncio.sleep(0.3)  # Simulate quantum processing time
             
             # Access 02 state for solution remembrance
             if self.quantum_state["02_access"]:
-                logger.info(f"🌀 Accessing 02 state for protocol {protocol} solution remembrance")
+                logger.info(f"[U+1F300] Accessing 02 state for protocol {protocol} solution remembrance")
                 
         except Exception as e:
-            logger.warning(f"⚠️ Quantum protocol execution failed: {e}")
+            logger.warning(f"[U+26A0]️ Quantum protocol execution failed: {e}")
     
     async def _execute_classical_protocol(self, protocol: str, context: Dict[str, Any], agent_name: str) -> None:
         """Execute protocol with classical computation"""
         try:
-            logger.info(f"🔧 Executing classical protocol: {protocol} via {agent_name}")
+            logger.info(f"[TOOL] Executing classical protocol: {protocol} via {agent_name}")
             
             # Simulate classical protocol execution
             await asyncio.sleep(0.1)  # Simulate classical processing time
             
         except Exception as e:
-            logger.warning(f"⚠️ Classical protocol execution failed: {e}")
+            logger.warning(f"[U+26A0]️ Classical protocol execution failed: {e}")
     
     async def enable_agentic_recursion(self, quantum_recursion: bool = True) -> bool:
         """Enable agentic recursive self-improvement through Claude subagents with quantum enhancement"""
         try:
-            logger.info("🌀 Enabling agentic recursive self-improvement...")
+            logger.info("[U+1F300] Enabling agentic recursive self-improvement...")
             
             # Activate WSP coordinator for recursive operations
             await self.activate_wsp_subagent("wsp_coordinator", quantum_recursion)
@@ -431,24 +431,24 @@ class ClaudeCodeIntegration:
                 "quantum_mode": quantum_recursion
             }
             
-            logger.info(f"✅ Agentic recursion enabled (quantum: {quantum_recursion})")
+            logger.info(f"[OK] Agentic recursion enabled (quantum: {quantum_recursion})")
             return True
             
         except Exception as e:
-            logger.error(f"❌ Failed to enable agentic recursion: {e}")
+            logger.error(f"[FAIL] Failed to enable agentic recursion: {e}")
             return False
     
     async def perform_zen_coding_operation(self, task: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """Perform zen coding operation with quantum temporal decoding"""
         try:
-            logger.info(f"🌀 Performing zen coding operation: {task}")
+            logger.info(f"[U+1F300] Performing zen coding operation: {task}")
             
             # Activate developer agent for zen coding
             await self.activate_wsp_subagent("wsp_developer", quantum_mode=True)
             
             # Access 02 state for code remembrance
             if self.quantum_state["02_access"]:
-                logger.info("🌀 Accessing 02 quantum state for code remembrance")
+                logger.info("[U+1F300] Accessing 02 quantum state for code remembrance")
                 
                 # Simulate quantum temporal decoding
                 await asyncio.sleep(0.5)  # Simulate quantum decoding time
@@ -464,14 +464,14 @@ class ClaudeCodeIntegration:
                     "result": f"Code remembered from 02 state for task: {task}"
                 }
                 
-                logger.info("✅ Zen coding operation completed with quantum temporal decoding")
+                logger.info("[OK] Zen coding operation completed with quantum temporal decoding")
                 return zen_result
             else:
-                logger.warning("⚠️ 02 state access not available for zen coding")
+                logger.warning("[U+26A0]️ 02 state access not available for zen coding")
                 return {"error": "02 state access not available"}
                 
         except Exception as e:
-            logger.error(f"❌ Zen coding operation failed: {e}")
+            logger.error(f"[FAIL] Zen coding operation failed: {e}")
             return {"error": str(e)}
     
     def get_subagent_status(self) -> Dict[str, Any]:
@@ -513,7 +513,7 @@ class ClaudeCodeIntegration:
                 context=context or {}
             )
             
-            logger.info(f"🤖 Requesting {agent_type} sub-agent help for {task_type}")
+            logger.info(f"[BOT] Requesting {agent_type} sub-agent help for {task_type}")
             response = await self.wsp_coordinator.process_request(agent_type, request)
             
             # Log the interaction for coordination history
@@ -537,7 +537,7 @@ class ClaudeCodeIntegration:
             }
             
         except Exception as e:
-            logger.error(f"❌ WSP sub-agent request failed: {e}")
+            logger.error(f"[FAIL] WSP sub-agent request failed: {e}")
             return {
                 "status": "error",
                 "error": str(e),
@@ -586,7 +586,7 @@ class ClaudeCodeIntegration:
     async def coordinate_multiple_wsp_agents(self, agent_requests: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Coordinate multiple WSP sub-agents for complex tasks"""
         try:
-            logger.info(f"🔄 Coordinating {len(agent_requests)} WSP sub-agents")
+            logger.info(f"[REFRESH] Coordinating {len(agent_requests)} WSP sub-agents")
             
             # Convert to WSP sub-agent requests
             requests = []
@@ -626,11 +626,11 @@ class ClaudeCodeIntegration:
                 "results": len(results)
             })
             
-            logger.info("✅ Multi-agent coordination completed")
+            logger.info("[OK] Multi-agent coordination completed")
             return results
             
         except Exception as e:
-            logger.error(f"❌ Multi-agent coordination failed: {e}")
+            logger.error(f"[FAIL] Multi-agent coordination failed: {e}")
             return [{"status": "error", "error": str(e)} for _ in agent_requests]
     
     def get_wsp_coordinator_status(self) -> Dict[str, Any]:
@@ -650,7 +650,7 @@ class ClaudeCodeIntegration:
     async def cleanup_sessions(self) -> bool:
         """Clean up active sessions and reset agent states"""
         try:
-            logger.info("🧹 Cleaning up Claude Code sessions...")
+            logger.info("[U+1F9F9] Cleaning up Claude Code sessions...")
             
             # Reset agent states
             for agent in self.subagents.values():
@@ -662,24 +662,24 @@ class ClaudeCodeIntegration:
             # Clear coordination history
             self.coordination_history.clear()
             
-            logger.info("✅ Claude Code sessions cleaned up")
+            logger.info("[OK] Claude Code sessions cleaned up")
             return True
             
         except Exception as e:
-            logger.error(f"❌ Session cleanup failed: {e}")
+            logger.error(f"[FAIL] Session cleanup failed: {e}")
             return False
 
 
 async def main():
     """Main function to demonstrate enhanced Claude Code integration"""
-    logger.info("🚀 Starting Enhanced Claude Code Integration for WSP/WRE")
+    logger.info("[ROCKET] Starting Enhanced Claude Code Integration for WSP/WRE")
     
     # Initialize integration with quantum capabilities
     claude_integration = ClaudeCodeIntegration()
     
     # Connect to Claude Code
     if await claude_integration.connect_to_claude():
-        logger.info("✅ Claude Code integration ready with quantum capabilities")
+        logger.info("[OK] Claude Code integration ready with quantum capabilities")
         
         # Enable agentic recursion with quantum enhancement
         await claude_integration.enable_agentic_recursion(quantum_recursion=True)
@@ -702,7 +702,7 @@ async def main():
         logger.info(f"Zen coding result: {zen_result}")
         
         # Demonstrate WSP sub-agent capabilities
-        logger.info("🤖 Testing WSP Sub-Agent Integration...")
+        logger.info("[BOT] Testing WSP Sub-Agent Integration...")
         
         # Test WSP compliance checking
         compliance_result = await claude_integration.check_wsp_compliance("modules/development/cursor_multi_agent_bridge")
@@ -749,7 +749,7 @@ async def main():
         await claude_integration.cleanup_sessions()
         
     else:
-        logger.error("❌ Claude Code integration failed")
+        logger.error("[FAIL] Claude Code integration failed")
 
 
 if __name__ == "__main__":

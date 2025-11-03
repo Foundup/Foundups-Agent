@@ -438,8 +438,8 @@ class QuizEngine:
             started_at=datetime.now()
         )
         
-        message = f"📚 FASCISM AWARENESS QUIZ\n"
-        message += f"Difficulty: {'⭐' * question.difficulty}\n"
+        message = f"[BOOKS] FASCISM AWARENESS QUIZ\n"
+        message += f"Difficulty: {'[U+2B50]' * question.difficulty}\n"
         message += f"Category: {question.category.replace('_', ' ').title()}\n\n"
         message += f"Question: {question.question}\n\n"
         
@@ -467,12 +467,12 @@ class QuizEngine:
         
         if is_correct:
             session.score += question.difficulty
-            message = f"✅ CORRECT! (+{question.difficulty} points)\n"
+            message = f"[OK] CORRECT! (+{question.difficulty} points)\n"
         else:
             correct_option = question.options[question.correct_index]
-            message = f"❌ INCORRECT! The answer was: {correct_option}\n"
+            message = f"[FAIL] INCORRECT! The answer was: {correct_option}\n"
         
-        message += f"\n📖 {question.explanation}\n"
+        message += f"\n[U+1F4D6] {question.explanation}\n"
         message += f"\nYour session score: {session.score} points"
         
         # Update database
@@ -496,7 +496,7 @@ class QuizEngine:
         
         self.sessions[user_id].current_fscale = question
         
-        message = f"📊 F-SCALE AUTHORITARIAN TEST\n"
+        message = f"[DATA] F-SCALE AUTHORITARIAN TEST\n"
         message += f"Rate your agreement (1-5):\n"
         message += f'"{question.question}"\n\n'
         message += "1 = Strongly Disagree\n"
@@ -553,7 +553,7 @@ class QuizEngine:
         
         self._update_fscale_score(user_id, question.dimension, score)
         
-        message = f"📊 Response recorded: {auth_level}\n"
+        message = f"[DATA] Response recorded: {auth_level}\n"
         message += f"Dimension measured: {question.dimension.replace('_', ' ').title()}\n"
         message += "\nHigher scores indicate greater susceptibility to fascist ideology."
         
@@ -580,7 +580,7 @@ class QuizEngine:
             """, (user_id,))
             fscale_data = cursor.fetchone()
         
-        message = f"📊 EDUCATIONAL STATS\n"
+        message = f"[DATA] EDUCATIONAL STATS\n"
         
         if quiz_data:
             accuracy = (quiz_data[0] / (quiz_data[1] * quiz_data[2] or 1)) * 100

@@ -185,11 +185,11 @@ def test_implementation_plan():
 
     # Validate that this is a safe change
     safety_checks = [
-        "✓ No existing method signatures change",
-        "✓ Optional parameter doesn't break existing calls",
-        "✓ Fallback to legacy processing if router fails",
-        "✓ Can be tested with existing test suite",
-        "✓ Can be rolled back easily if issues"
+        "[OK] No existing method signatures change",
+        "[OK] Optional parameter doesn't break existing calls",
+        "[OK] Fallback to legacy processing if router fails",
+        "[OK] Can be tested with existing test suite",
+        "[OK] Can be rolled back easily if issues"
     ]
 
     for check in safety_checks:

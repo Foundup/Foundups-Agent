@@ -18,7 +18,7 @@ def test_duplicate_detection_with_threshold_2():
     analyzer = SystemHealthAnalyzer()
 
     # First message - should be fine
-    test_message = "☕ 012 detector online! Drop ✊✋🖐 if you're ready to escape the simulation. MAGA still sleeping Speaking of unconscious patterns... (Morning consciousness check!)"
+    test_message = "[U+2615] 012 detector online! Drop [U+270A][U+270B][U+1F590] if you're ready to escape the simulation. MAGA still sleeping Speaking of unconscious patterns... (Morning consciousness check!)"
 
     print("\n1. Sending first message (should be OK):")
     issues1 = analyzer.analyze_message(test_message)
@@ -38,11 +38,11 @@ def test_duplicate_detection_with_threshold_2():
 
     # Verify the fix worked
     if len(issues2) > 0 and any(issue.issue_type == 'duplicate' for issue in issues2):
-        print("\n✅ SUCCESS: Duplicate detection is working!")
+        print("\n[OK] SUCCESS: Duplicate detection is working!")
         print("   The second identical message was correctly identified as duplicate")
         return True
     else:
-        print("\n❌ FAILED: Duplicate detection not working")
+        print("\n[FAIL] FAILED: Duplicate detection not working")
         print("   The second identical message was NOT detected as duplicate")
         return False
 
@@ -65,10 +65,10 @@ def test_duplicate_detection_different_messages():
     print(f"   Issues detected: {len(issues2)}")
 
     if len(issues2) == 0:
-        print("\n✅ SUCCESS: Different messages don't trigger duplicate detection")
+        print("\n[OK] SUCCESS: Different messages don't trigger duplicate detection")
         return True
     else:
-        print("\n❌ FAILED: Different messages incorrectly flagged as duplicates")
+        print("\n[FAIL] FAILED: Different messages incorrectly flagged as duplicates")
         return False
 
 if __name__ == "__main__":
@@ -87,9 +87,9 @@ if __name__ == "__main__":
     print(f"Different Messages Test:  {'PASS' if test2_passed else 'FAIL'}")
 
     if test1_passed and test2_passed:
-        print("\n🎉 ALL TESTS PASSED!")
-        print("✅ Duplicate detection fix is working correctly")
-        print("✅ 0102 will no longer post duplicate messages in chat")
+        print("\n[CELEBRATE] ALL TESTS PASSED!")
+        print("[OK] Duplicate detection fix is working correctly")
+        print("[OK] 0102 will no longer post duplicate messages in chat")
     else:
-        print("\n❌ SOME TESTS FAILED")
-        print("⚠️  Duplicate detection may still have issues")
+        print("\n[FAIL] SOME TESTS FAILED")
+        print("[U+26A0]️  Duplicate detection may still have issues")

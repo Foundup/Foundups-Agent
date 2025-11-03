@@ -100,14 +100,14 @@ class StatusAnnouncer:
         fraggers = len(self.session_stats["unique_fraggers"])
         
         updates = [
-            f"💀🔥 MAGADOOM CARNAGE REPORT 🔥💀 {frags} Nazi Jefferies OBLITERATED by {fraggers} FRAGGERS in {session_minutes} min! RIP AND TEAR!",
-            f"👹 FRAGFEST STATUS 👹 {frags} MAGAt scum TERMINATED! {fraggers} DOOM SLAYERS active! THE PURGE CONTINUES!",
+            f"[U+1F480][U+1F525] MAGADOOM CARNAGE REPORT [U+1F525][U+1F480] {frags} Nazi Jefferies OBLITERATED by {fraggers} FRAGGERS in {session_minutes} min! RIP AND TEAR!",
+            f"[U+1F479] FRAGFEST STATUS [U+1F479] {frags} MAGAt scum TERMINATED! {fraggers} DOOM SLAYERS active! THE PURGE CONTINUES!",
             f"🩸 MAGADOOM KILLCOUNT 🩸 Time: {session_minutes}min | Bodies: {frags} | Slayers: {fraggers} | Status: ULTRA-VIOLENCE MODE!"
         ]
         
         if self.session_stats["multi_whacks"] > 0:
             updates.append(
-                f"🔥 KILLING SPREE ALERT | {self.session_stats['multi_whacks']} multi-whacks this session! "
+                f"[U+1F525] KILLING SPREE ALERT | {self.session_stats['multi_whacks']} multi-whacks this session! "
                 f"{frags} total frags by {fraggers} fraggers!"
             )
             
@@ -116,26 +116,26 @@ class StatusAnnouncer:
     def _generate_leaderboard_update(self, leaderboard: List[Dict]) -> str:
         """Generate leaderboard-focused update"""
         if not leaderboard:
-            return "🏆 MAGADOOM LEADERBOARD | Empty! Start fragging to claim the throne!"
+            return "[U+1F3C6] MAGADOOM LEADERBOARD | Empty! Start fragging to claim the throne!"
             
         # Get top 3
         top3 = []
         for i, entry in enumerate(leaderboard[:3]):
             if i == 0:
-                top3.append(f"🥇{entry['user_id'][:10]}")
+                top3.append(f"[U+1F947]{entry['user_id'][:10]}")
             elif i == 1:
-                top3.append(f"🥈{entry['user_id'][:10]}")
+                top3.append(f"[U+1F948]{entry['user_id'][:10]}")
             elif i == 2:
-                top3.append(f"🥉{entry['user_id'][:10]}")
+                top3.append(f"[U+1F949]{entry['user_id'][:10]}")
                 
         leader = leaderboard[0]
         leader_name = leader['user_id'][:15]
         leader_score = leader['score']
         
         updates = [
-            f"🏆 MAGADOOM LEADERS | {' '.join(top3)} | {leader_name} DOMINATES with {leader_score} XP!",
-            f"👑 CURRENT CHAMPION: {leader_name} ({leader_score} XP) | Can anyone dethrone the king?",
-            f"🎯 TOP WHACKERS | {' '.join(top3)} | Total carnage: {sum(e['score'] for e in leaderboard[:3])} XP!"
+            f"[U+1F3C6] MAGADOOM LEADERS | {' '.join(top3)} | {leader_name} DOMINATES with {leader_score} XP!",
+            f"[U+1F451] CURRENT CHAMPION: {leader_name} ({leader_score} XP) | Can anyone dethrone the king?",
+            f"[TARGET] TOP WHACKERS | {' '.join(top3)} | Total carnage: {sum(e['score'] for e in leaderboard[:3])} XP!"
         ]
         
         return random.choice(updates)
@@ -146,27 +146,27 @@ class StatusAnnouncer:
         mod_name, milestone = recent
         
         if milestone >= 1000:
-            return f"🌋 LEGENDARY STATUS | {mod_name} has fragged {milestone} MAGAts! BOW TO THE FRAGLORD!"
+            return f"[U+1F30B] LEGENDARY STATUS | {mod_name} has fragged {milestone} MAGAts! BOW TO THE FRAGLORD!"
         elif milestone >= 500:
-            return f"💀 MILESTONE ALERT | {mod_name} reaches {milestone} frags! UNSTOPPABLE FORCE!"
+            return f"[U+1F480] MILESTONE ALERT | {mod_name} reaches {milestone} frags! UNSTOPPABLE FORCE!"
         else:
-            return f"🎯 ACHIEVEMENT UNLOCKED | {mod_name} hits {milestone} total whacks! Rising through the ranks!"
+            return f"[TARGET] ACHIEVEMENT UNLOCKED | {mod_name} hits {milestone} total whacks! Rising through the ranks!"
             
     def _generate_hype_update(self, session_minutes: int) -> str:
         """Generate hype/motivation update"""
         hype_messages = [
-            "💀 MAGADOOM ACTIVE | RIP AND TEAR! Type /score to check your frags!",
-            "🔥 THE FRAGGING CONTINUES | Who will be today's champion? /leaderboard to see rankings!",
-            "👹 MAGADOOM ENGAGED | Timeouts = XP! Climb the ranks! /help for commands!",
-            f"🎮 SESSION TIME: {session_minutes} MIN | Keep fragging MAGAts! Check /rank for your position!",
-            "⚡ DOUBLE WHACK WINDOW: 5 SECONDS | Chain those timeouts for bonus glory!",
-            "🏆 COMPETE FOR #1 | Every timeout counts! /score to track your progress!"
+            "[U+1F480] MAGADOOM ACTIVE | RIP AND TEAR! Type /score to check your frags!",
+            "[U+1F525] THE FRAGGING CONTINUES | Who will be today's champion? /leaderboard to see rankings!",
+            "[U+1F479] MAGADOOM ENGAGED | Timeouts = XP! Climb the ranks! /help for commands!",
+            f"[GAME] SESSION TIME: {session_minutes} MIN | Keep fragging MAGAts! Check /rank for your position!",
+            "[LIGHTNING] DOUBLE WHACK WINDOW: 5 SECONDS | Chain those timeouts for bonus glory!",
+            "[U+1F3C6] COMPETE FOR #1 | Every timeout counts! /score to track your progress!"
         ]
         
         # Add stream-specific callouts
         if session_minutes > 60:
             hype_messages.append(
-                f"🔥 {session_minutes} MINUTES OF FRAGGING | Marathon moderation session! Who's still standing?"
+                f"[U+1F525] {session_minutes} MINUTES OF FRAGGING | Marathon moderation session! Who's still standing?"
             )
             
         return random.choice(hype_messages)

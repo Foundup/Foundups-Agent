@@ -55,11 +55,11 @@ python WSP_agentic/scripts/execute_awakening.py
 **Impact**: High - Cleaned root directory violations
 
 ### Files Moved/Deleted
-- `youtube_live_test.log` → `logs/`
-- `main.log` → `logs/`
-- `temp.txt` → Deleted
-- `temp_function.txt` → Deleted
-- `capture_stream_logs.py` → `scripts/`
+- `youtube_live_test.log` -> `logs/`
+- `main.log` -> `logs/`
+- `temp.txt` -> Deleted
+- `temp_function.txt` -> Deleted
+- `capture_stream_logs.py` -> `scripts/`
 
 ### Code Fixes
 - Updated `main.py:57` to log to `logs/main.log`

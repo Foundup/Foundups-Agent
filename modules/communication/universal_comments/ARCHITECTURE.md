@@ -8,15 +8,15 @@ Following WSP 42 (Universal Platform Protocol) and WSP 80 (Cube-Level DAE), this
 ### 1.1 Three-Tier Hierarchy (Per WSP 46)
 ```
 Universal Comment Orchestrator (UCO)
-    ├── Platform DAE Orchestrators (Domain Level)
-    │   ├── YouTube Comment DAE
-    │   ├── X/Twitter Comment DAE  
-    │   ├── LinkedIn Comment DAE
-    │   └── [Future Platform DAEs]
-    └── Module Orchestrators (Implementation Level)
-        ├── Comment Polling Modules
-        ├── Response Generation Modules
-        └── Account Management Modules
+    +-- Platform DAE Orchestrators (Domain Level)
+    [U+2502]   +-- YouTube Comment DAE
+    [U+2502]   +-- X/Twitter Comment DAE  
+    [U+2502]   +-- LinkedIn Comment DAE
+    [U+2502]   +-- [Future Platform DAEs]
+    +-- Module Orchestrators (Implementation Level)
+        +-- Comment Polling Modules
+        +-- Response Generation Modules
+        +-- Account Management Modules
 ```
 
 ### 1.2 Universal Abstraction Layer (Per WSP 42)
@@ -187,7 +187,7 @@ class UniversalCommentOrchestrator:
             await dae.apply_learned_patterns(common_patterns)
 ```
 
-## 5. PoC → Proto → MVP Evolution Path
+## 5. PoC -> Proto -> MVP Evolution Path
 
 ### 5.1 Phase 1: PoC (Proof of Concept)
 ```python
@@ -243,7 +243,7 @@ MVP_IMPLEMENTATION = {
 
 ## 6. Decision: Shared Orchestrator vs Separate
 
-### ✅ RECOMMENDED: Hybrid Approach
+### [OK] RECOMMENDED: Hybrid Approach
 
 **Universal Orchestrator + Platform-Specific DAEs**
 
@@ -289,38 +289,38 @@ MVP_IMPLEMENTATION = {
 
 ## 8. WSP Compliance
 
-- ✅ **WSP 42**: Universal Platform Protocol - unified abstraction
-- ✅ **WSP 80**: Cube-Level DAE - each platform gets its DAE
-- ✅ **WSP 27**: 4-phase DAE pattern for each platform
-- ✅ **WSP 17**: Pattern Registry - shared components
-- ✅ **WSP 46**: WRE orchestration hierarchy
-- ✅ **WSP 48**: Cross-platform learning
-- ✅ **WSP 84**: Reuse existing code (70% shared)
+- [OK] **WSP 42**: Universal Platform Protocol - unified abstraction
+- [OK] **WSP 80**: Cube-Level DAE - each platform gets its DAE
+- [OK] **WSP 27**: 4-phase DAE pattern for each platform
+- [OK] **WSP 17**: Pattern Registry - shared components
+- [OK] **WSP 46**: WRE orchestration hierarchy
+- [OK] **WSP 48**: Cross-platform learning
+- [OK] **WSP 84**: Reuse existing code (70% shared)
 
 ## 9. File Structure
 
 ```
 modules/communication/universal_comments/
-├── ARCHITECTURE.md                      # This file
-├── src/
-│   ├── orchestrator/
-│   │   └── universal_comment_orchestrator.py
-│   ├── interfaces/
-│   │   └── universal_comment_interface.py
-│   ├── shared/
-│   │   ├── comment_memory.py           # Reused from livechat
-│   │   ├── comment_processor.py        # Reused from livechat
-│   │   ├── throttle_manager.py         # Reused from livechat
-│   │   └── response_generator.py       # New universal
-│   └── platforms/
-│       ├── youtube/
-│       │   └── youtube_comment_dae.py
-│       ├── twitter/
-│       │   └── twitter_comment_dae.py
-│       └── linkedin/
-│           └── linkedin_comment_dae.py
-├── tests/
-└── memory/
++-- ARCHITECTURE.md                      # This file
++-- src/
+[U+2502]   +-- orchestrator/
+[U+2502]   [U+2502]   +-- universal_comment_orchestrator.py
+[U+2502]   +-- interfaces/
+[U+2502]   [U+2502]   +-- universal_comment_interface.py
+[U+2502]   +-- shared/
+[U+2502]   [U+2502]   +-- comment_memory.py           # Reused from livechat
+[U+2502]   [U+2502]   +-- comment_processor.py        # Reused from livechat
+[U+2502]   [U+2502]   +-- throttle_manager.py         # Reused from livechat
+[U+2502]   [U+2502]   +-- response_generator.py       # New universal
+[U+2502]   +-- platforms/
+[U+2502]       +-- youtube/
+[U+2502]       [U+2502]   +-- youtube_comment_dae.py
+[U+2502]       +-- twitter/
+[U+2502]       [U+2502]   +-- twitter_comment_dae.py
+[U+2502]       +-- linkedin/
+[U+2502]           +-- linkedin_comment_dae.py
++-- tests/
++-- memory/
 ```
 
 ## Remember

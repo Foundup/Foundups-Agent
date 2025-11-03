@@ -9,9 +9,13 @@ enterprise domains for complete autonomous functionality.
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -100,7 +104,7 @@ class YouTubeProxy:
         # Initialize components (with fallbacks for standalone mode)
         self._initialize_components()
         
-        self.logger.info("🎬 YouTube Proxy initialized successfully")
+        self.logger.info("[U+1F3AC] YouTube Proxy initialized successfully")
     
     def _create_default_logger(self) -> logging.Logger:
         """Create default logger for standalone operation"""
@@ -131,10 +135,10 @@ class YouTubeProxy:
             # Infrastructure Components
             self.agent_manager = AgentManager(logger=self.logger)
             
-            self.logger.info("✅ All enterprise domain components initialized")
+            self.logger.info("[OK] All enterprise domain components initialized")
             
         except Exception as e:
-            self.logger.warning(f"⚠️  Using mock components for standalone mode: {e}")
+            self.logger.warning(f"[U+26A0]️  Using mock components for standalone mode: {e}")
             self._initialize_mock_components()
     
     def _initialize_mock_components(self):
@@ -145,11 +149,11 @@ class YouTubeProxy:
                 self.logger = logger
                 
             async def initialize(self): 
-                self.logger.info(f"🔧 Mock {self.name} initialized")
+                self.logger.info(f"[TOOL] Mock {self.name} initialized")
                 return True
                 
             async def start(self): 
-                self.logger.info(f"▶️  Mock {self.name} started")
+                self.logger.info(f"[U+25B6]️  Mock {self.name} started")
                 return True
                 
             async def stop(self): 
@@ -162,7 +166,7 @@ class YouTubeProxy:
         self.banter_engine = MockComponent("BanterEngine", self.logger)
         self.agent_manager = MockComponent("AgentManager", self.logger)
         
-        self.logger.info("🔧 Mock components initialized for standalone mode")
+        self.logger.info("[TOOL] Mock components initialized for standalone mode")
 
     async def connect_to_active_stream(self) -> Optional[StreamInfo]:
         """
@@ -170,7 +174,7 @@ class YouTubeProxy:
         by delegating to appropriate domain modules
         """
         try:
-            self.logger.info("🔍 Orchestrating stream connection across domains...")
+            self.logger.info("[SEARCH] Orchestrating stream connection across domains...")
             
             # 1. Authenticate via infrastructure domain
             if hasattr(self.oauth_manager, 'authenticate'):
@@ -192,17 +196,17 @@ class YouTubeProxy:
             
             self.status.stream_active = True
             self.status.chat_monitoring = True
-            self.logger.info(f"✅ Connected to stream: {self.current_stream.title if self.current_stream else 'Mock Stream'}")
+            self.logger.info(f"[OK] Connected to stream: {self.current_stream.title if self.current_stream else 'Mock Stream'}")
             
             return self.current_stream
             
         except Exception as e:
-            self.logger.error(f"❌ Stream connection failed: {e}")
+            self.logger.error(f"[FAIL] Stream connection failed: {e}")
             return None
 
     async def run_standalone(self):
         """Run YouTube proxy in standalone mode for testing"""
-        self.logger.info("🚀 Starting YouTube Proxy in standalone mode...")
+        self.logger.info("[ROCKET] Starting YouTube Proxy in standalone mode...")
         
         try:
             # Initialize all components
@@ -215,10 +219,10 @@ class YouTubeProxy:
             await self._interactive_mode()
             
         except KeyboardInterrupt:
-            self.logger.info("🛑 Shutting down YouTube Proxy...")
+            self.logger.info("[STOP] Shutting down YouTube Proxy...")
             await self._cleanup()
         except Exception as e:
-            self.logger.error(f"❌ Standalone execution failed: {e}")
+            self.logger.error(f"[FAIL] Standalone execution failed: {e}")
             raise
     
     async def _initialize_all_components(self):
@@ -236,13 +240,13 @@ class YouTubeProxy:
                 if hasattr(component, 'initialize'):
                     await component.initialize()
                 self.active_components[name] = component
-                self.logger.info(f"✅ {name} ready")
+                self.logger.info(f"[OK] {name} ready")
             except Exception as e:
-                self.logger.warning(f"⚠️  {name} initialization failed: {e}")
+                self.logger.warning(f"[U+26A0]️  {name} initialization failed: {e}")
     
     async def _interactive_mode(self):
         """Interactive mode for standalone testing"""
-        print("\n🎬 YouTube Proxy Interactive Mode")
+        print("\n[U+1F3AC] YouTube Proxy Interactive Mode")
         print("Available commands:")
         print("  1. status     - Show current status")
         print("  2. stream     - Show stream info")
@@ -270,24 +274,24 @@ class YouTubeProxy:
                 elif cmd == "":
                     continue
                 else:
-                    print(f"❌ Unknown command: {cmd}")
-                    print("💡 Use numbers 1-5 or command names (status, stream, components, connect, quit)")
+                    print(f"[FAIL] Unknown command: {cmd}")
+                    print("[IDEA] Use numbers 1-5 or command names (status, stream, components, connect, quit)")
                     
             except EOFError:
                 break
     
     async def _show_status(self):
         """Show current proxy status"""
-        print(f"\n📊 YouTube Proxy Status:")
-        print(f"  Stream Active: {'✅' if self.status.stream_active else '❌'}")
-        print(f"  Chat Monitoring: {'✅' if self.status.chat_monitoring else '❌'}")
+        print(f"\n[DATA] YouTube Proxy Status:")
+        print(f"  Stream Active: {'[OK]' if self.status.stream_active else '[FAIL]'}")
+        print(f"  Chat Monitoring: {'[OK]' if self.status.chat_monitoring else '[FAIL]'}")
         print(f"  Active Components: {len(self.active_components)}")
         print()
     
     async def _show_stream_info(self):
         """Show current stream information"""
         if self.current_stream:
-            print(f"\n🎬 Stream Information:")
+            print(f"\n[U+1F3AC] Stream Information:")
             print(f"  ID: {self.current_stream.stream_id}")
             print(f"  Title: {self.current_stream.title}")
             print(f"  Status: {self.current_stream.status}")
@@ -298,22 +302,22 @@ class YouTubeProxy:
     
     async def _show_components(self):
         """Show active components across domains"""
-        print(f"\n🧩 Active Components ({len(self.active_components)}):")
+        print(f"\n[U+1F9E9] Active Components ({len(self.active_components)}):")
         for name, component in self.active_components.items():
             print(f"  • {name}: {type(component).__name__}")
         print()
     
     async def _cleanup(self):
         """Cleanup resources"""
-        self.logger.info("🧹 Cleaning up resources...")
+        self.logger.info("[U+1F9F9] Cleaning up resources...")
         
         for name, component in self.active_components.items():
             try:
                 if hasattr(component, 'stop'):
                     await component.stop()
-                self.logger.info(f"✅ {name} stopped")
+                self.logger.info(f"[OK] {name} stopped")
             except Exception as e:
-                self.logger.warning(f"⚠️  {name} cleanup failed: {e}")
+                self.logger.warning(f"[U+26A0]️  {name} cleanup failed: {e}")
 
 def create_youtube_proxy(credentials: Optional[Any] = None, config: Optional[Dict[str, Any]] = None) -> YouTubeProxy:
     """

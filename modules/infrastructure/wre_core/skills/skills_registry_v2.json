@@ -1,0 +1,231 @@
+{
+  "version": "2.0",
+  "last_updated": "2025-10-25T19:38:23.224007",
+  "total_skills": 16,
+  "skills": {
+    "gemma_pqn_data_processor": {
+      "location": "O:\\Foundups-Agent\\modules\\ai_intelligence\\pqn_alignment\\skills\\gemma_pqn_data_processor",
+      "agents": [
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "unknown",
+      "wsp_chain": []
+    },
+    "gemma_pqn_emergence_detector": {
+      "location": "O:\\Foundups-Agent\\modules\\ai_intelligence\\pqn_alignment\\skills\\gemma_pqn_emergence_detector",
+      "agents": [
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "unknown",
+      "wsp_chain": []
+    },
+    "qwen_google_research_integrator": {
+      "location": "O:\\Foundups-Agent\\modules\\ai_intelligence\\pqn_alignment\\skills\\qwen_google_research_integrator",
+      "agents": [
+        "qwen"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "unknown",
+      "wsp_chain": []
+    },
+    "qwen_pqn_research_coordinator": {
+      "location": "O:\\Foundups-Agent\\modules\\ai_intelligence\\pqn_alignment\\skills\\qwen_pqn_research_coordinator",
+      "agents": [
+        "qwen"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "unknown",
+      "wsp_chain": [
+        "WSP 77"
+      ]
+    },
+    "qwen_wsp_compliance_auditor": {
+      "location": "O:\\Foundups-Agent\\modules\\ai_intelligence\\pqn_alignment\\skills\\qwen_wsp_compliance_auditor",
+      "agents": [
+        "qwen"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "unknown",
+      "wsp_chain": [
+        "WSP 3",
+        "WSP 49",
+        "WSP 11",
+        "WSP 5",
+        "WSP 6",
+        "WSP 34",
+        "WSP 22",
+        "WSP 15",
+        "WSP 8",
+        "WSP 83"
+      ]
+    },
+    "qwen_gitpush": {
+      "location": "O:\\Foundups-Agent\\modules\\infrastructure\\git_push_dae\\skills\\qwen_gitpush",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": "1.0.0",
+      "promotion_state": "unknown",
+      "wsp_chain": [
+        "WSP 15",
+        "WSP 96",
+        "WSP 62"
+      ]
+    },
+    "gemma_domain_trainer_prototype": {
+      "location": "O:\\Foundups-Agent\\.claude\\skills\\gemma_domain_trainer_prototype",
+      "agents": [
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 15"
+      ]
+    },
+    "gemma_noise_detector_prototype": {
+      "location": "O:\\Foundups-Agent\\.claude\\skills\\gemma_noise_detector_prototype",
+      "agents": [
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "prototype",
+      "wsp_chain": []
+    },
+    "qwen_cleanup_strategist_prototype": {
+      "location": "O:\\Foundups-Agent\\.claude\\skills\\qwen_cleanup_strategist_prototype",
+      "agents": [
+        "qwen"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 15",
+        "WSP 83",
+        "WSP 64",
+        "WSP 50"
+      ]
+    },
+    "qwen_roadmap_auditor_prototype": {
+      "location": "O:\\Foundups-Agent\\.claude\\skills\\qwen_roadmap_auditor_prototype",
+      "agents": [
+        "qwen"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 83",
+        "WSP 22",
+        "WSP 50",
+        "WSP 15",
+        "WSP 96"
+      ]
+    },
+    "qwen_training_data_miner_prototype": {
+      "location": "O:\\Foundups-Agent\\.claude\\skills\\qwen_training_data_miner_prototype",
+      "agents": [
+        "qwen"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 15",
+        "WSP 64",
+        "WSP 3",
+        "WSP 50"
+      ]
+    },
+    "qwen_wsp_enhancement": {
+      "location": "O:\\Foundups-Agent\\.claude\\skills\\qwen_wsp_enhancement",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "unknown",
+      "wsp_chain": [
+        "WSP 80",
+        "WSP 96",
+        "WSP 91",
+        "WSP 27",
+        "WSP 60",
+        "WSP 32",
+        "WSP 72",
+        "WSP 54"
+      ]
+    },
+    "unicode_daemon_monitor_prototype": {
+      "location": "O:\\Foundups-Agent\\.claude\\skills\\unicode_daemon_monitor_prototype",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 5",
+        "WSP 72",
+        "WSP 90",
+        "WSP 46",
+        "WSP 77",
+        "WSP 80",
+        "WSP 22"
+      ]
+    },
+    "youtube_dae": {
+      "location": "O:\\Foundups-Agent\\.claude\\skills\\youtube_dae",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": 1.0,
+      "promotion_state": "unknown",
+      "wsp_chain": []
+    },
+    "youtube_moderation_prototype": {
+      "location": "O:\\Foundups-Agent\\.claude\\skills\\youtube_moderation_prototype",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "GENERAL",
+      "version": "1.0_prototype",
+      "promotion_state": "prototype",
+      "wsp_chain": []
+    },
+    "qwen_holo_output_skill": {
+      "location": "O:\\Foundups-Agent\\holo_index\\skills\\qwen_holo_output_skill",
+      "agents": [
+        "qwen"
+      ],
+      "intent_type": "GENERAL",
+      "version": "1.0_prototype",
+      "promotion_state": "unknown",
+      "wsp_chain": [
+        "WSP 90",
+        "WSP 64",
+        "WSP 83",
+        "WSP 87",
+        "WSP 96",
+        "WSP 50"
+      ]
+    }
+  }
+}

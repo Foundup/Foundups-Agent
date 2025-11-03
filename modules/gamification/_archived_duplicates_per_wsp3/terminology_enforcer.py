@@ -89,7 +89,7 @@ class TerminologyEnforcer:
                 text = re.sub(old_term, new_term, text, flags=re.IGNORECASE)
         
         if text != original:
-            logger.warning(f"🔧 Terminology corrected: '{original[:100]}...' -> '{text[:100]}...'")
+            logger.warning(f"[TOOL] Terminology corrected: '{original[:100]}...' -> '{text[:100]}...'")
             
         return text
     
@@ -151,7 +151,7 @@ class TerminologyEnforcer:
     def clear_cache(self):
         """Clear the corrections tracking cache."""
         self.corrections_made = []
-        logger.info("🔄 Terminology enforcer cache cleared")
+        logger.info("[REFRESH] Terminology enforcer cache cleared")
 
 
 # Module-level singleton for easy access

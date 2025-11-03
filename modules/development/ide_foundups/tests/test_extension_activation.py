@@ -3,7 +3,7 @@ FoundUps Multi-Agent IDE Extension - Core Activation Tests
 
 WSP Compliance:
 - WSP 4 (FMAS): Extension structure validation
-- WSP 5 (Coverage): ≥90% test coverage requirement  
+- WSP 5 (Coverage): [GREATER_EQUAL]90% test coverage requirement  
 - WSP 54 (Agent Duties): 8 specialized 0102 agents testing
 - WSP 60 (Memory Architecture): Extension memory persistence
 
@@ -391,4 +391,4 @@ def test_wsp_compliance_markers():
     # WSP 54: Agent duties testing - verified by agent coordination tests
     # WSP 60: Memory architecture - verified by persistence tests
     
-    print("✅ WSP compliance markers validated for extension activation tests") 
+    print("[OK] WSP compliance markers validated for extension activation tests") 

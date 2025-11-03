@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 DocDAE - Autonomous Documentation Organization
 WSP Compliance: WSP 3 (Domain Organization), WSP 77 (Agent Coordination), WSP 27 (DAE Architecture)
 
@@ -8,6 +25,7 @@ from the root docs/ folder into proper module docs/ locations.
 Training Mission: First real-world application of WSP 77 agent coordination protocol.
 """
 
+import hashlib
 import json
 import logging
 import os
@@ -32,7 +50,7 @@ class DocDAE:
 
     def __init__(self, root_docs_path: Optional[Path] = None):
         """Initialize DocDAE with WSP 77 agent coordination."""
-        logger.info("🚀 Initializing DocDAE - Autonomous Documentation Organization")
+        logger.info("[ROCKET] Initializing DocDAE - Autonomous Documentation Organization")
 
         self.root_path = Path(__file__).parent.parent.parent.parent.parent
         self.root_docs = root_docs_path or (self.root_path / "docs")
@@ -48,7 +66,7 @@ class DocDAE:
         # Pattern memory for training
         self.pattern_memory = self._load_pattern_memory()
 
-        logger.info("✅ DocDAE initialized with WSP 77 agent coordination")
+        logger.info("[OK] DocDAE initialized with WSP 77 agent coordination")
 
     def _initialize_agents(self):
         """Initialize Qwen/Gemma agents for WSP 77 coordination."""
@@ -65,11 +83,11 @@ class DocDAE:
                     qwen_model_path=qwen_path,
                     confidence_threshold=0.7
                 )
-                logger.info("✅ WSP 77 agents initialized (Gemma + Qwen)")
+                logger.info("[OK] WSP 77 agents initialized (Gemma + Qwen)")
             else:
-                logger.warning("⚠️  Gemma/Qwen models not found, using rule-based fallback")
+                logger.warning("[U+26A0]️  Gemma/Qwen models not found, using rule-based fallback")
         except Exception as e:
-            logger.warning(f"⚠️  Agent initialization failed: {e}, using rule-based fallback")
+            logger.warning(f"[U+26A0]️  Agent initialization failed: {e}, using rule-based fallback")
 
     def _load_pattern_memory(self) -> Dict[str, Any]:
         """Load pattern memory for training."""
@@ -96,7 +114,7 @@ class DocDAE:
         try:
             with open(memory_file, 'w') as f:
                 json.dump(self.pattern_memory, f, indent=2, default=str)
-            logger.debug("✅ Pattern memory saved")
+            logger.debug("[OK] Pattern memory saved")
         except Exception as e:
             logger.error(f"Failed to save pattern memory: {e}")
 
@@ -108,7 +126,7 @@ class DocDAE:
         - Is it documentation (MD) or operational data (JSON)?
         - Extract module hints from filename
         """
-        logger.info("📊 Phase 1: Analyzing docs folder (Gemma classification)")
+        logger.info("[DATA] Phase 1: Analyzing docs folder (Gemma classification)")
 
         if not self.root_docs.exists():
             return {"error": "docs folder not found", "files": []}
@@ -128,10 +146,10 @@ class DocDAE:
             "timestamp": datetime.now().isoformat()
         }
 
-        logger.info(f"✅ Analysis complete: {result['total_files']} files")
-        logger.info(f"   📄 Markdown: {result['markdown_docs']}")
-        logger.info(f"   📊 JSON: {result['json_data']}")
-        logger.info(f"   ❓ Other: {result['other']}")
+        logger.info(f"[OK] Analysis complete: {result['total_files']} files")
+        logger.info(f"   [U+1F4C4] Markdown: {result['markdown_docs']}")
+        logger.info(f"   [DATA] JSON: {result['json_data']}")
+        logger.info(f"   [U+2753] Other: {result['other']}")
 
         return result
 
@@ -157,6 +175,12 @@ class DocDAE:
         # Extract module hint from filename (pattern matching)
         module_hint = self._extract_module_hint(file_path.stem)
 
+        try:
+            stat = file_path.stat()
+            last_modified_days = max((datetime.now() - datetime.fromtimestamp(stat.st_mtime)).total_seconds() / 86400.0, 0.0)
+        except OSError:
+            last_modified_days = None
+
         return {
             "path": str(relative_path),
             "full_path": str(file_path),
@@ -164,16 +188,17 @@ class DocDAE:
             "type": classification,
             "extension": file_type,
             "module_hint": module_hint,
-            "size_bytes": file_path.stat().st_size
+            "size_bytes": file_path.stat().st_size if file_path.exists() else 0,
+            "last_modified_days": last_modified_days
         }
 
     def _extract_module_hint(self, filename: str) -> Optional[str]:
         """
         Extract module hint from filename using pattern matching.
         Examples:
-        - "Gemma3_YouTube_DAE_First_Principles_Analysis" → youtube_dae
-        - "HoloIndex_MCP_ricDAE_Integration" → holo_index
-        - "adaptive_router_wsp_integration_report" → ric_dae
+        - "Gemma3_YouTube_DAE_First_Principles_Analysis" -> youtube_dae
+        - "HoloIndex_MCP_ricDAE_Integration" -> holo_index
+        - "adaptive_router_wsp_integration_report" -> ric_dae
         """
         filename_lower = filename.lower()
 
@@ -216,7 +241,7 @@ class DocDAE:
         - Decide: Move, Archive, or Keep
         - Build safe execution plan
         """
-        logger.info("🧠 Phase 2: Generating movement plan (Qwen coordination)")
+        logger.info("[AI] Phase 2: Generating movement plan (Qwen coordination)")
 
         plan = {
             "moves": [],
@@ -260,11 +285,11 @@ class DocDAE:
             "unmatched": len(plan['unmatched'])
         }
 
-        logger.info(f"✅ Movement plan generated:")
-        logger.info(f"   📦 Move: {plan['summary']['to_move']}")
-        logger.info(f"   🗄️  Archive: {plan['summary']['to_archive']}")
-        logger.info(f"   ✅ Keep: {plan['summary']['to_keep']}")
-        logger.info(f"   ❓ Unmatched: {plan['summary']['unmatched']}")
+        logger.info(f"[OK] Movement plan generated:")
+        logger.info(f"   [BOX] Move: {plan['summary']['to_move']}")
+        logger.info(f"   [U+1F5C4]️  Archive: {plan['summary']['to_archive']}")
+        logger.info(f"   [OK] Keep: {plan['summary']['to_keep']}")
+        logger.info(f"   [U+2753] Unmatched: {plan['summary']['unmatched']}")
 
         return plan
 
@@ -273,11 +298,11 @@ class DocDAE:
         Qwen Task: Complex reasoning for file destination.
 
         Decision Matrix:
-        1. JSON reports/analysis (documentation) → Move to module/docs/
-        2. JSON operational data (batch files, temp data) → Archive
-        3. Documentation with module hint → Move to module/docs/
-        4. Documentation without hint → Keep (needs manual review)
-        5. Other files → Archive
+        1. JSON reports/analysis (documentation) -> Move to module/docs/
+        2. JSON operational data (batch files, temp data) -> Archive
+        3. Documentation with module hint -> Move to module/docs/
+        4. Documentation without hint -> Keep (needs manual review)
+        5. Other files -> Archive
         """
         file_type = file_info['type']
         module_hint = file_info['module_hint']
@@ -371,7 +396,7 @@ class DocDAE:
         - Execute with git tracking
         - Validate results
         """
-        logger.info(f"🚀 Phase 3: Executing movement plan (dry_run={dry_run})")
+        logger.info(f"[ROCKET] Phase 3: Executing movement plan (dry_run={dry_run})")
 
         result = {
             "moves_completed": 0,
@@ -386,12 +411,12 @@ class DocDAE:
                 if not dry_run:
                     self._safe_move_file(move['source'], move['destination'])
                     result['moves_completed'] += 1
-                    logger.info(f"✅ Moved: {Path(move['source']).name} → {move['module']}")
+                    logger.info(f"[OK] Moved: {Path(move['source']).name} -> {move['module']}")
                 else:
-                    logger.info(f"[DRY RUN] Would move: {Path(move['source']).name} → {move['module']}")
+                    logger.info(f"[DRY RUN] Would move: {Path(move['source']).name} -> {move['module']}")
             except Exception as e:
                 result['errors'].append(f"Move failed: {move['source']} - {e}")
-                logger.error(f"❌ Move failed: {e}")
+                logger.error(f"[FAIL] Move failed: {e}")
 
         # Execute archives
         archive_dir = self.root_path / "docs" / "_archive" / datetime.now().strftime("%Y%m%d")
@@ -402,17 +427,17 @@ class DocDAE:
                     dest = archive_dir / Path(archive['source']).name
                     shutil.move(archive['source'], dest)
                     result['archives_completed'] += 1
-                    logger.info(f"🗄️  Archived: {Path(archive['source']).name}")
+                    logger.info(f"[U+1F5C4]️  Archived: {Path(archive['source']).name}")
                 else:
                     logger.info(f"[DRY RUN] Would archive: {Path(archive['source']).name}")
             except Exception as e:
                 result['errors'].append(f"Archive failed: {archive['source']} - {e}")
-                logger.error(f"❌ Archive failed: {e}")
+                logger.error(f"[FAIL] Archive failed: {e}")
 
-        logger.info(f"✅ Execution complete:")
-        logger.info(f"   📦 Moved: {result['moves_completed']}")
-        logger.info(f"   🗄️  Archived: {result['archives_completed']}")
-        logger.info(f"   ❌ Errors: {len(result['errors'])}")
+        logger.info(f"[OK] Execution complete:")
+        logger.info(f"   [BOX] Moved: {result['moves_completed']}")
+        logger.info(f"   [U+1F5C4]️  Archived: {result['archives_completed']}")
+        logger.info(f"   [FAIL] Errors: {len(result['errors'])}")
 
         return result
 
@@ -436,7 +461,7 @@ class DocDAE:
         2. Qwen: Complex coordination
         3. 0102: Strategic execution
         """
-        logger.info("🤖 Starting Autonomous Documentation Organization (WSP 77)")
+        logger.info("[BOT] Starting Autonomous Documentation Organization (WSP 77)")
         logger.info(f"   Mode: {'DRY RUN' if dry_run else 'LIVE EXECUTION'}")
 
         # Phase 1: Analyze (Gemma)
@@ -458,7 +483,12 @@ class DocDAE:
             "timestamp": datetime.now().isoformat()
         }
 
-        logger.info("✅ Autonomous organization cycle complete")
+        try:
+            self.update_doc_index(analysis, dry_run=dry_run)
+        except Exception as exc:
+            logger.error(f"[FAIL] doc_index.json update failed: {exc}")
+
+        logger.info("[OK] Autonomous organization cycle complete")
         return result
 
     def _record_training_example(self, analysis: Dict, plan: Dict, execution: Dict):
@@ -473,10 +503,164 @@ class DocDAE:
                 "reason": move['reason'],
                 "success": True
             }
-            self.pattern_memory['file_to_module_patterns'].append(pattern)
+        self.pattern_memory['file_to_module_patterns'].append(pattern)
 
         self._save_pattern_memory()
-        logger.debug(f"📚 Training example recorded (total: {self.pattern_memory['training_examples']})")
+        logger.debug(f"[BOOKS] Training example recorded (total: {self.pattern_memory['training_examples']})")
+
+    # --- Machine-first documentation manifest support ---
+
+    def update_doc_index(self, analysis: Dict[str, Any], dry_run: bool = True) -> None:
+        """Create or refresh doc_index.json manifest for the documentation root."""
+        manifest_path = self.root_docs / "doc_index.json"
+        payload = self._build_doc_index_payload(analysis)
+        timestamp = datetime.utcnow().isoformat() + "Z"
+
+        if manifest_path.exists():
+            try:
+                existing = json.loads(manifest_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                existing = None
+        else:
+            existing = None
+
+        if existing:
+            comparable_payload = dict(payload)
+            comparable_payload["generated_at"] = existing.get("generated_at")
+            if existing == comparable_payload:
+                logger.info("[BOOKS] doc_index.json already up to date")
+                return
+
+        payload["generated_at"] = timestamp
+        serialized = json.dumps(payload, indent=2, sort_keys=True)
+
+        if dry_run:
+            logger.info("[DRY RUN] doc_index.json would be updated (%d documents)", len(payload["documents"]))
+            return
+
+        manifest_path.write_text(serialized + "\n", encoding="utf-8")
+        logger.info("[OK] doc_index.json updated with %d documents", len(payload["documents"]))
+
+    def _build_doc_index_payload(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
+        documents: List[Dict[str, Any]] = []
+
+        for file_info in analysis.get("files", []):
+            if file_info.get("type") != "documentation":
+                continue
+
+            doc_path = Path(file_info["full_path"])
+            repo_relative = doc_path.relative_to(self.root_path).as_posix()
+
+            module_hint = file_info.get("module_hint") or "docs_root"
+            wsp_refs = self._extract_wsp_refs(doc_path)
+            doc_entry = {
+                "path": repo_relative,
+                "doc_type": self._infer_doc_type(doc_path),
+                "module_hint": module_hint,
+                "wsp_refs": wsp_refs,
+                "hash_sha256": self._compute_sha256(doc_path),
+                "size_bytes": file_info["size_bytes"],
+                "status": "active",
+                "links": {
+                    "entry_points": self._find_document_references(doc_path),
+                    "automation": self._infer_automation_targets(module_hint)
+                }
+            }
+            documents.append(doc_entry)
+
+        return {
+            "doc_index_version": "1.0",
+            "collection": self.root_docs.relative_to(self.root_path).as_posix(),
+            "documents": sorted(documents, key=lambda item: item["path"])
+        }
+
+    def _infer_doc_type(self, doc_path: Path) -> str:
+        """Infer documentation type from filename."""
+        name = doc_path.stem.lower()
+
+        if "readme" in name:
+            return "readme"
+        if "architecture" in name or "design" in name:
+            return "architecture"
+        if "summary" in name:
+            return "summary"
+        if "protocol" in name:
+            return "protocol"
+        if "decision" in name:
+            return "decision_record"
+        if "roadmap" in name:
+            return "roadmap"
+        if "analysis" in name or "report" in name:
+            return "analysis"
+
+        return "other"
+
+    def _extract_wsp_refs(self, doc_path: Path) -> List[str]:
+        """Extract WSP references from a document."""
+        try:
+            content = doc_path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            return []
+
+        matches = set(re.findall(r"WSP\s*\d+", content, flags=re.IGNORECASE))
+        # Normalize spacing/case
+        normalized = []
+        for item in matches:
+            digits = re.findall(r"\d+", item)
+            if digits:
+                normalized.append(f"WSP {digits[0]}")
+
+        return sorted(set(normalized))
+
+    def _compute_sha256(self, doc_path: Path) -> str:
+        """Compute SHA256 hash for change detection."""
+        hasher = hashlib.sha256()
+        with doc_path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(8192), b""):
+                hasher.update(chunk)
+        return hasher.hexdigest()
+
+    def _find_document_references(self, doc_path: Path) -> List[str]:
+        """Locate referencing markdown files for tree attachment evidence."""
+        repo_relative = doc_path.relative_to(self.root_path).as_posix()
+        name = doc_path.name
+        references: List[str] = []
+
+        for candidate in self.root_path.rglob("*.md"):
+            if candidate == doc_path:
+                continue
+
+            try:
+                text = candidate.read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                continue
+
+            if repo_relative in text or name in text:
+                references.append(candidate.relative_to(self.root_path).as_posix())
+
+        # Deduplicate while preserving order
+        seen = set()
+        ordered: List[str] = []
+        for ref in references:
+            if ref not in seen:
+                seen.add(ref)
+                ordered.append(ref)
+
+        return ordered[:10]
+
+    def _infer_automation_targets(self, module_hint: str) -> List[str]:
+        """Infer automation systems that should ingest the doc."""
+        targets = {"doc_dae"}
+        hint = (module_hint or "").lower()
+
+        if "holo" in hint or "qwen" in hint or "gemma" in hint:
+            targets.add("holo_index")
+        if "autonomy" in hint:
+            targets.add("autonomy_pipeline")
+        if "wsp" in hint:
+            targets.add("wsp_guardian")
+
+        return sorted(targets)
 
 
 # Convenience functions for main.py integration

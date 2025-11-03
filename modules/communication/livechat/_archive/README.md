@@ -5,7 +5,7 @@ Historical documents preserved for reference but not needed for daily operations
 
 ## Archive Structure
 
-### 📁 Folders
+### [U+1F4C1] Folders
 
 - **navigation/** - Superseded navigation documents (replaced by ENHANCED_NAVIGATION.md)
 - **wsp_compliance/** - Historical WSP compliance reports (module is now compliant)
@@ -17,7 +17,7 @@ Historical documents preserved for reference but not needed for daily operations
 ## Why Archived?
 
 These documents were archived to:
-1. Reduce documentation bloat (30 → 7 essential docs)
+1. Reduce documentation bloat (30 -> 7 essential docs)
 2. Achieve WSP 83 compliance (no orphaned docs)
 3. Improve navigation efficiency (90% token reduction)
 4. Focus on operational documentation only

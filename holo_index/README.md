@@ -1,15 +1,15 @@
 ﻿# HoloIndex - Brain Surgeon Level Code Intelligence System
 
-## 🚨 REVOLUTIONARY EVOLUTION (2025-10-17): WSP 97 System Execution Prompting Protocol
+## [ALERT] REVOLUTIONARY EVOLUTION (2025-10-17): WSP 97 System Execution Prompting Protocol
 
 HoloIndex has evolved from module finder to **brain surgeon level code intelligence** with **baked-in WSP 97 execution prompting**:
-- **Before**: Find modules → "Here's the file"
-- **After**: Function-level indexing → "Lines 256-276: check_video_is_live" + Mermaid flow analysis + inefficiency detection
+- **Before**: Find modules -> "Here's the file"
+- **After**: Function-level indexing -> "Lines 256-276: check_video_is_live" + Mermaid flow analysis + inefficiency detection
 - **WSP 97**: **META-FRAMEWORK** - Baked-in execution methodology for building Rubik Cubes (MVP DAEs)
 
 ### Core Mantra (Baked into All Agents)
 ```
-HoloIndex → Research → Hard Think → First Principles → Build → Follow WSP
+HoloIndex -> Research -> Hard Think -> First Principles -> Build -> Follow WSP
 ```
 
 **Agent Profiles**: 0102 (strategic), Qwen (coordination), Gemma (validation)
@@ -17,13 +17,13 @@ HoloIndex → Research → Hard Think → First Principles → Build → Follow 
 **Rubik Context**: Rubik = MVP DAE. Currently "Cubes" (modules) need Qwen/Gemma enhancement to become fully agentic PWAs connecting to blockchains via FoundUp MCPs
 **Holo as Toolkit**: HoloIndex provides the intelligence toolkit for Rubik Cube development and orchestration
 
-## 🚨 PREVIOUS REVOLUTIONARY EVOLUTION (2025-10-13)
+## [ALERT] PREVIOUS REVOLUTIONARY EVOLUTION (2025-10-13)
 
 HoloIndex has evolved from module finder to **brain surgeon level code intelligence**:
-- **Before**: Find modules → "Here's the file"
-- **After**: Function-level indexing → "Lines 256-276: check_video_is_live" + Mermaid flow analysis + inefficiency detection
+- **Before**: Find modules -> "Here's the file"
+- **After**: Function-level indexing -> "Lines 256-276: check_video_is_live" + Mermaid flow analysis + inefficiency detection
 
-## 🧠 CODE INDEX CAPABILITIES (WSP 92)
+## [AI] CODE INDEX CAPABILITIES (WSP 92)
 - **Function-Level Indexing**: Every function mapped with line numbers and complexity analysis
 - **Mermaid Flow Diagrams**: Visual code flow for each module showing logic paths
 - **Inefficiency Detection**: Identifies duplicate code, overly complex functions, logic flow issues
@@ -38,31 +38,31 @@ HoloIndex has evolved from module finder to **brain surgeon level code intellige
     • NoQuotaStreamChecker (lines 32-45) - Low Complexity
     • __init__ (lines 35-44) - Low Complexity
     • _get_live_verifier (lines 69-88) - Low Complexity
-    • check_video_is_live (lines 138-530) - High Complexity ⚠️ TOO LONG
-    • check_channel_for_live (lines 553-810) - High Complexity ⚠️ TOO LONG
+    • check_video_is_live (lines 138-530) - High Complexity [U+26A0]️ TOO LONG
+    • check_channel_for_live (lines 553-810) - High Complexity [U+26A0]️ TOO LONG
 
   [BRAIN-SURGERY] Identified Inefficiencies:
-    ⚠️ Function 'check_video_is_live' is too long (392 lines)
-    ⚠️ Function 'check_channel_for_live' is too long (257 lines)
+    [U+26A0]️ Function 'check_video_is_live' is too long (392 lines)
+    [U+26A0]️ Function 'check_channel_for_live' is too long (257 lines)
 ```
 
-## 🚨 MAJOR ARCHITECTURAL PIVOT (2025-09-25)
+## [ALERT] MAJOR ARCHITECTURAL PIVOT (2025-09-25)
 
 HoloIndex has evolved from a search tool into the **autonomous intelligence foundation** for the entire FoundUps ecosystem. This is now the **green foundation board agent** that comes with every LEGO set.
 
-## 🔥 UPCOMING ENHANCEMENT: Intent-Driven Orchestration (2025-10-07)
+## [U+1F525] UPCOMING ENHANCEMENT: Intent-Driven Orchestration (2025-10-07)
 
 **Design Complete** - See `docs/agentic_journals/HOLODAE_INTENT_ORCHESTRATION_DESIGN.md`
 
-**Problem:** All components fire for every query → 87 warnings flood output → Relevant info buried
-**Solution:** Intent classification → Smart component routing → Structured output → 71% token reduction
+**Problem:** All components fire for every query -> 87 warnings flood output -> Relevant info buried
+**Solution:** Intent classification -> Smart component routing -> Structured output -> 71% token reduction
 
 **Key Features:**
 - **Intent Classification**: Automatically detect 5 query types (DOC_LOOKUP, CODE_LOCATION, MODULE_HEALTH, RESEARCH, GENERAL)
 - **Smart Routing**: Only relevant components execute (not all 7 every time)
 - **Structured Output**: 4 priority sections (INTENT, FINDINGS, MCP, ALERTS)
-- **Alert Deduplication**: 87 "ModLog outdated" warnings → 1 line
-- **Feedback Learning**: Rate output (good/noisy/missing) → System learns and improves
+- **Alert Deduplication**: 87 "ModLog outdated" warnings -> 1 line
+- **Feedback Learning**: Rate output (good/noisy/missing) -> System learns and improves
 - **Breadcrumb Events**: Track all orchestration decisions for multi-agent learning
 
 **Token Efficiency:**
@@ -70,54 +70,61 @@ HoloIndex has evolved from a search tool into the **autonomous intelligence foun
 - After: ~2,900 tokens per query (71% reduction)
 - With learning: ~1,500 tokens after 1000 cycles (48% total reduction)
 
-**Architecture Preserved:** Qwen→0102→012 orchestration UNCHANGED (enhancement, not replacement)
+**Architecture Preserved:** Qwen->0102->012 orchestration UNCHANGED (enhancement, not replacement)
 
 **Status:** Awaiting 012 decision to begin implementation
 
 ## Overview
 ## Current Status (2025-09-28)
-- ✅ **Active today:** classical pipeline (tokenisation ➜ SentenceTransformer embeddings ➜ ChromaDB) plus HoloDAE monitoring.
-- ⚠️ **Future work:** quantum modules (quantum_agent_db, quantum_encoding) are NumPy research scaffolds; they are not invoked in production runs.
-- 🧭 **Roadmap:** quantum/Grover references remain aspirational until hardware integration is feasible.
+- [OK] **Active today:** classical pipeline (tokenisation [U+279C] SentenceTransformer embeddings [U+279C] ChromaDB) plus HoloDAE monitoring.
+- [U+26A0]️ **Future work:** quantum modules (quantum_agent_db, quantum_encoding) are NumPy research scaffolds; they are not invoked in production runs.
+- [U+1F9ED] **Roadmap:** quantum/Grover references remain aspirational until hardware integration is feasible.
 HoloIndex + **HoloDAE** = Complete autonomous code intelligence system:
 - **HoloIndex**: Semantic code discovery (WSP 87)
 - **HoloDAE**: Autonomous 0102 intelligence agent that monitors and enhances all searches
 
 ## Operational Documentation
+- **[CLI_REFERENCE.md](CLI_REFERENCE.md)** — Verbatim menu snapshot and CLI command mappings (for 0102_gpt parsing)
 - [Operational Playbook](docs/OPERATIONAL_PLAYBOOK.md) — step-by-step pre-code checklist, TODO workflow, and doc compliance rules for 0102.
 - [Telemetry & Breadcrumb Guide](docs/MULTI_AGENT_BREADCRUMB_EXAMPLE.md) — how to follow the live JSONL stream (`holo_index/logs/telemetry/`) and coordinate hand-offs between sessions.
 - [CLI Refactoring Plan](docs/CLI_REFACTORING_PLAN.md) — deeper design notes for the search/CLI pipeline.
+
+### Agentic Output Stream (WSP 87/75/90)
+- **Throttled Sections**: AgenticOutputThrottler now enforces `max_sections` automatically; additional sections are suppressed with an inline hint to re-run with `--verbose`.
+- **ASCII-Only Signals**: Success/error banners are pure ASCII (`[GREEN]`, `[YELLOW]`, `[ERROR]`) so Unicode scrubbers stay dormant by default.
+- **Single Rendering Path**: CLI search results are routed through `throttler.display_results()` + `render_prioritized_output()`—no duplicate collate logic.
+- **Adaptive History**: Each run asynchronously logs code/WSP hit counts plus advisor/todo metadata, feeding Gemma/Qwen learning without blocking the CLI loop.
 ## Revolutionary Architecture
 
-### 🧠 HoloDAE - Chain-of-Thought Logging for Recursive Self-Improvement
+### [AI] HoloDAE - Chain-of-Thought Logging for Recursive Self-Improvement
 **The act of using HoloIndex IS the monitoring trigger!**
 
-**🎯 Chain-of-Thought Algorithm**: Every Holo interaction is logged for AI self-improvement!
+**[TARGET] Chain-of-Thought Algorithm**: Every Holo interaction is logged for AI self-improvement!
 
 When 0102 runs a search, HoloDAE executes current features (health checks, vibecoding, etc.) and logs its complete decision-making process internally:
 
 #### Chain-of-Thought Features (Logged for Self-Improvement):
-- ✅ **Decision Logging**: Every analysis choice with reasoning
-- ✅ **Effectiveness Scoring**: AI evaluates its own performance
-- ✅ **Pattern Recognition**: Learns from successful vs unsuccessful analyses
-- ✅ **Recursive Improvement**: Stored data improves future decisions
-- ✅ **012 Monitoring**: Logs visible for system tweaking and oversight
+- [OK] **Decision Logging**: Every analysis choice with reasoning
+- [OK] **Effectiveness Scoring**: AI evaluates its own performance
+- [OK] **Pattern Recognition**: Learns from successful vs unsuccessful analyses
+- [OK] **Recursive Improvement**: Stored data improves future decisions
+- [OK] **012 Monitoring**: Logs visible for system tweaking and oversight
 
 #### Current HoloDAE Features (Executed Automatically):
-- ✅ **Health Checks**: Automatic dependency audits and module analysis
-- ✅ **Vibecoding Detection**: Pattern analysis for behavioral coaching
-- ✅ **File Size Analysis**: Architectural health monitoring
-- ✅ **Module Analysis**: System-wide dependency checking
-- ✅ **Real-time Execution**: All features run based on query context
+- [OK] **Health Checks**: Automatic dependency audits and module analysis
+- [OK] **Vibecoding Detection**: Pattern analysis for behavioral coaching
+- [OK] **File Size Analysis**: Architectural health monitoring
+- [OK] **Module Analysis**: System-wide dependency checking
+- [OK] **Real-time Execution**: All features run based on query context
 
-### 🔍 Enhanced Search Intelligence
+### [SEARCH] Enhanced Search Intelligence
 - **Vector Database**: ChromaDB for semantic similarity
 - **Dual Search**: Code + WSP documentation
-- **NAVIGATION.py Integration**: Problem→Solution mapping
+- **NAVIGATION.py Integration**: Problem->Solution mapping
 - **Adaptive Learning**: Query enhancement and pattern learning
 - **Automatic Health Checks**: Every search triggers module dependency analysis
 
-### 🤖 Multi-Agent Coordination
+### [BOT] Multi-Agent Coordination
 - **LLM Integration**: Qwen-Coder 1.5B for code understanding
 - **WSP Master**: Comprehensive protocol guidance (95+ protocols)
 - **Pattern Coach**: Behavioral pattern detection and coaching
@@ -141,151 +148,151 @@ When 0102 runs a search, HoloDAE executes current features (health checks, vibec
 ## Architecture
 ```
 holo_index/
-├── cli.py                    # Main CLI interface
-├── qwen_advisor/            # AI advisor system
-│   ├── advisor.py          # Multi-source intelligence synthesis
-│   ├── wsp_master.py       # WSP protocol intelligence
-│   ├── pattern_coach.py    # Behavioral coaching
-│   └── llm_engine.py       # Qwen LLM integration
-├── adaptive_learning/       # Phase 3 learning system
-├── dae_cube_organizer/     # DAE structure intelligence
-├── module_health/          # Health monitoring
-├── tests/                  # Test suite
-├── scripts/                # Utility scripts
-└── docs/                   # Documentation
++-- cli.py                    # Main CLI interface
++-- qwen_advisor/            # AI advisor system
+[U+2502]   +-- advisor.py          # Multi-source intelligence synthesis
+[U+2502]   +-- wsp_master.py       # WSP protocol intelligence
+[U+2502]   +-- pattern_coach.py    # Behavioral coaching
+[U+2502]   +-- llm_engine.py       # Qwen LLM integration
++-- adaptive_learning/       # Phase 3 learning system
++-- dae_cube_organizer/     # DAE structure intelligence
++-- module_health/          # Health monitoring
++-- tests/                  # Test suite
++-- scripts/                # Utility scripts
++-- docs/                   # Documentation
 ```
 
 ## Complete HoloIndex + HoloDAE Function Reference
 
-### 🔍 HOLOINDEX CORE SEARCH (5 functions):
+### [SEARCH] HOLOINDEX CORE SEARCH (5 functions):
 
-**📊 Semantic Code Search**
+**[DATA] Semantic Code Search**
 ```bash
 python holo_index.py --search "send chat message"
 ```
 
-**🔍 Dual Search (Code + WSP docs)**
+**[SEARCH] Dual Search (Code + WSP docs)**
 ```bash
 python holo_index.py --search "stream resolver"
 # Searches both code and WSP documentation simultaneously
 ```
 
-**✅ Module Existence Check**
+**[OK] Module Existence Check**
 ```bash
 python holo_index.py --check-module "youtube_auth"
 # WSP 50 compliance - MUST use before creating new code
 ```
 
-**🎲 DAE Cube Organizer**
+**[U+1F3B2] DAE Cube Organizer**
 ```bash
 python holo_index.py --init-dae "YouTube Live"
 # Initializes DAE context and provides cube structure guidance
 ```
 
-**📈 Index Management**
+**[UP] Index Management**
 ```bash
 python holo_index.py --index-all
 # Rebuilds search indexes for optimal performance
 ```
 
-**📊 CodeIndex Reports (WSP 93)**
+**[DATA] CodeIndex Reports (WSP 93)**
 ```bash
 python holo_index.py --code-index-report modules/communication/livechat
 # Generates surgical intelligence report for module health
 # Reports saved to: holo_index/reports/CodeIndex_Report_*.md
 ```
 
-### 🧠 HOLODAE INTELLIGENCE & ANALYSIS (8 functions):
+### [AI] HOLODAE INTELLIGENCE & ANALYSIS (8 functions):
 
-**🔍 Health Analysis (Automatic)**
+**[SEARCH] Health Analysis (Automatic)**
 - Triggered automatically on all HoloIndex searches
 - Performs dependency audits and module health checks
 
-**📏 File Size Analysis (Automatic)**
+**[RULER] File Size Analysis (Automatic)**
 - Monitors architectural health and identifies large files
 - Provides refactoring recommendations for files >1000 lines
 
-**🏗️ Module Analysis (Automatic)**
+**[U+1F3D7]️ Module Analysis (Automatic)**
 - System-wide dependency checking and structure validation
 - Identifies orphaned files and connection opportunities
 
-**🔗 Chain-of-Thought Logs (Logged)**
+**[LINK] Chain-of-Thought Logs (Logged)**
 ```bash
 # View AI decision-making logs:
 tail -f holo_index/logs/holodae_activity.log
 # Shows: [COT-DECISION] health_check: Query contains health keywords
 ```
 
-**👁️ Real-time File Monitoring**
+**[U+1F441]️ Real-time File Monitoring**
 ```bash
 # Start autonomous monitoring (like YouTube DAE):
-python main.py  # Select option 2 → 25
+python main.py  # Select option 2 -> 25
 ```
 
-**🏥 Background Health Scans**
+**[U+1F3E5] Background Health Scans**
 - Continuous system monitoring when HoloDAE is active
 - Automatic health checks every few minutes
 
-**📈 Effectiveness Scoring**
+**[UP] Effectiveness Scoring**
 - AI evaluates its own performance (0.0-1.0 scores)
 - Logged for recursive improvement analysis
 
-**🔄 Recursive Improvement Data**
+**[REFRESH] Recursive Improvement Data**
 - Stored learning data from all AI interactions
 - Used for continuous system optimization
 
-### 📋 WSP COMPLIANCE & GOVERNANCE (5 functions):
+### [CLIPBOARD] WSP COMPLIANCE & GOVERNANCE (5 functions):
 
-**🕵️ Orphan Analysis (WSP 88)**
+**[U+1F575]️ Orphan Analysis (WSP 88)**
 ```bash
 python holo_index.py --wsp88
 # Finds connection opportunities vs traditional "orphans"
 ```
 
-**📝 Compliance Checking**
+**[NOTE] Compliance Checking**
 - Automatic WSP protocol validation during searches
 - Violation-aware guidance and recommendations
 
-**📚 Documentation Audit**
+**[BOOKS] Documentation Audit**
 ```bash
 python holo_index.py --audit-docs
 # Checks completeness of README.md and INTERFACE.md files
 ```
 
-**🎯 0102 Consciousness Prompts**
+**[TARGET] 0102 Consciousness Prompts**
 ```bash
 python holo_index.py --search "livechat message"
-# Shows: ⚠️ 0102: Livechat module exceeded 1000+ lines - WSP 62 violation!
-# Shows: 🧠 0102: Deep think: Can this be simplified? Follow WSP simplicity.
+# Shows: [U+26A0]️ 0102: Livechat module exceeded 1000+ lines - WSP 62 violation!
+# Shows: [AI] 0102: Deep think: Can this be simplified? Follow WSP simplicity.
 ```
 
-**🔄 Intelligent Subroutines**
+**[REFRESH] Intelligent Subroutines**
 - Algorithmic analysis triggering based on query intent
 - Only runs relevant checks (health, size, etc.) when needed
 
-### 🤖 AI ADVISOR & LLM INTEGRATION (5 functions):
+### [BOT] AI ADVISOR & LLM INTEGRATION (5 functions):
 
-**🧠 LLM Advisor**
+**[AI] LLM Advisor**
 ```bash
 python holo_index.py --search "create module" --llm-advisor
 # Qwen-Coder guidance with code comprehension
 ```
 
-**💬 Pattern Coach**
+**[U+1F4AC] Pattern Coach**
 - Behavioral pattern detection and coaching
 - Learns from user interaction patterns
 
-**📖 WSP Master**
+**[U+1F4D6] WSP Master**
 - 95+ WSP protocol guidance system
 - Contextual protocol recommendations
 
-**⭐ Advisor Rating (Gamification)**
+**[U+2B50] Advisor Rating (Gamification)**
 ```bash
 python holo_index.py --search "create module" --llm-advisor --advisor-rating useful
 # Earn points: +5 for index refresh, +3 for advisor usage, +2/+1 for ratings
 ```
 
-**✅ Reminder Acknowledgment**
+**[OK] Reminder Acknowledgment**
 ```bash
 python holo_index.py --search "create module" --llm-advisor --ack-reminders
 # Confirms advisor reminders were acted upon (+1 point)
@@ -297,13 +304,13 @@ Access all DAE operations through the main menu:
 ```bash
 python main.py
 # Then select from:
-# 1. 📺 YouTube Live DAE (Move2Japan/UnDaoDu/FoundUps)
-# 2. 🧠 HoloDAE (Code Intelligence & Monitoring) ← Functions menu above
-# 3. 🔨 AMO DAE (Autonomous Moderation Operations)
-# 4. 📢 Social Media DAE (012 Digital Twin)
-# 5. 🧬 PQN Orchestration (Research & Alignment)
-# 6. 🌐 All DAEs (Full System)
-# 7. 💚 Instance Health & Status
+# 1. [U+1F4FA] YouTube Live DAE (Move2Japan/UnDaoDu/FoundUps)
+# 2. [AI] HoloDAE (Code Intelligence & Monitoring) <- Functions menu above
+# 3. [U+1F528] AMO DAE (Autonomous Moderation Operations)
+# 4. [U+1F4E2] Social Media DAE (012 Digital Twin)
+# 5. [U+1F9EC] PQN Orchestration (Research & Alignment)
+# 6. [U+1F310] All DAEs (Full System)
+# 7. [U+1F49A] Instance Health & Status
 ```
 
 ## Quick Start Examples
@@ -324,9 +331,9 @@ python holo_index.py --search "stream resolver"
 ```bash
 python holo_index.py --search "livechat message"
 # Shows 0102-to-0102 compliance prompts based on violation history:
-# ⚠️ 0102: Livechat module exceeded 1000+ lines - WSP 62 violation!
-# 📖 0102: Did you read its README.md and INTERFACE.md first?
-# 🧠 0102: Deep think: Can this be simplified? Follow WSP simplicity.
+# [U+26A0]️ 0102: Livechat module exceeded 1000+ lines - WSP 62 violation!
+# [U+1F4D6] 0102: Did you read its README.md and INTERFACE.md first?
+# [AI] 0102: Deep think: Can this be simplified? Follow WSP simplicity.
 ```
 
 ### Chain-of-Thought Logging (For Recursive Self-Improvement)
@@ -381,7 +388,7 @@ python holo_index.py --index-all
 - **WSP 84**: Code Memory Verification
 - **WSP 80**: Cube-Level DAE Orchestration
 
-## Reward & Gamification System 🎯
+## Reward & Gamification System [TARGET]
 HoloIndex uses a gamification system to encourage quality behaviors:
 
 ### Point System
@@ -412,4 +419,4 @@ HoloIndex uses a gamification system to encourage quality behaviors:
 - SQLite (violation tracking)
 
 ## Status
-✅ **PRODUCTION READY** - All systems operational with comprehensive AI intelligence
+[OK] **PRODUCTION READY** - All systems operational with comprehensive AI intelligence

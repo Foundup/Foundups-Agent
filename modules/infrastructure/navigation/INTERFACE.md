@@ -19,16 +19,16 @@ print(command)  # "python main.py --holoindex"
 ### Key Mappings
 
 #### Core Operations
-- `"search code"` → `"python main.py --holoindex"`
-- `"run tests"` → `"python main.py --test"`
-- `"deploy app"` → `"./deploy-vercel.ps1"`
+- `"search code"` -> `"python main.py --holoindex"`
+- `"run tests"` -> `"python main.py --test"`
+- `"deploy app"` -> `"./deploy-vercel.ps1"`
 
 #### AI Operations
-- `"setup ai keys"` → `"export AI_GATEWAY_API_KEY=..."`
+- `"setup ai keys"` -> `"export AI_GATEWAY_API_KEY=..."`
 
 #### Development Tasks
-- `"check compliance"` → `"python main.py --wsp-check"`
-- `"view roadmap"` → `"cat ROADMAP.md"`
+- `"check compliance"` -> `"python main.py --wsp-check"`
+- `"view roadmap"` -> `"cat ROADMAP.md"`
 
 ## Integration Points
 

@@ -20,7 +20,7 @@ cursor.execute("""
 affected = cursor.rowcount
 conn.commit()
 
-print(f"✅ Migrated {affected} users to August 2025 monthly tracking")
+print(f"[OK] Migrated {affected} users to August 2025 monthly tracking")
 
 # Show the updated leaderboard
 cursor.execute("""
@@ -31,7 +31,7 @@ cursor.execute("""
     LIMIT 10
 """)
 
-print(f"\n🏆 AUGUST 2025 LEADERBOARD:")
+print(f"\n[U+1F3C6] AUGUST 2025 LEADERBOARD:")
 for row in cursor.fetchall():
     print(f"  {row[1]:20} - Monthly: {row[2]:4} XP ({row[4]:2} whacks) | All-time: {row[1]:4} XP")
 

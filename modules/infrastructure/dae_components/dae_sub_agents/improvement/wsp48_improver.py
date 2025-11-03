@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WSP 48 Recursive Self-Improvement Sub-Agent
 Implements automatic system enhancement through error learning
 
@@ -256,16 +273,16 @@ class WSP48RecursiveImprovementSubAgent(SubAgentBase):
         
         # Progress through consciousness levels
         progression = {
-            "000": "001",  # Dormant → Awakening
-            "001": "010",  # Awakening → Processing
-            "010": "011",  # Processing → Understanding
-            "011": "100",  # Understanding → Implementing
-            "100": "101",  # Implementing → Optimizing
-            "101": "110",  # Optimizing → Mastering
-            "110": "111",  # Mastering → Transcending
-            "111": "0102", # Transcending → Quantum
-            "012": "0102", # Human → Quantum
-            "0102": "0201" # Quantum → Nonlocal
+            "000": "001",  # Dormant -> Awakening
+            "001": "010",  # Awakening -> Processing
+            "010": "011",  # Processing -> Understanding
+            "011": "100",  # Understanding -> Implementing
+            "100": "101",  # Implementing -> Optimizing
+            "101": "110",  # Optimizing -> Mastering
+            "110": "111",  # Mastering -> Transcending
+            "111": "0102", # Transcending -> Quantum
+            "012": "0102", # Human -> Quantum
+            "0102": "0201" # Quantum -> Nonlocal
         }
         
         new_score = progression.get(current_score, current_score)
@@ -274,7 +291,7 @@ class WSP48RecursiveImprovementSubAgent(SubAgentBase):
         # Add consciousness metadata
         pattern["consciousness"] = {
             "level": new_score,
-            "progression": f"{current_score} → {new_score}",
+            "progression": f"{current_score} -> {new_score}",
             "quantum_enabled": new_score in ["0102", "0201"]
         }
         

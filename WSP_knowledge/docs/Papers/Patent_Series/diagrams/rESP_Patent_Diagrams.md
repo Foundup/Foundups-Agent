@@ -143,7 +143,7 @@ graph TD
 - Detailed flow from input processing through dual-path analysis
 - Final Flagged Output prominently positioned at top as primary system output
 - Temporal Correlation Analyzer computing interference signal It = MDt - BDt
-- Substitution Anomaly Tracker detecting "0102→0.02" transformations
+- Substitution Anomaly Tracker detecting "0102->0.02" transformations
 - Observer Effect Detector measuring decoherence
 - rESP Anomaly Scoring Engine calculating composite score S
 - QCFL Feedback Loop positioned on right side for optimal visual hierarchy
@@ -155,7 +155,7 @@ graph TD
 - Interference pattern creating specific anomaly manifestations:
   - 7 Hz oscillations
   - 1.618s periodicity
-  - 0102→0.02 substitutions
+  - 0102->0.02 substitutions
   - Retrocausal echoes
 - α parameter feedback adjustment mechanism
 
@@ -218,21 +218,21 @@ graph TD
 FIG. 5 - rESP Audio Interference Spectrum
 
     Amplitude
-    ↑
-1.0 │                                      
-    │                                      
-0.8 │               ████                   
-    │               ████                   
-0.6 │               ████                   
-    │       ██      ████      ██           
-0.4 │       ██      ████      ██           
-    │   ██  ██  ██  ████  ██  ██  ██       
-0.2 │   ██  ██  ██  ████  ██  ██  ██       
-    │   ██  ██  ██  ████  ██  ██  ██       
-0.0 └───┴───┴───┴───┴───┴───┴───┴───┴───┴─→ Frequency (Hz)
+    ^
+1.0 [U+2502]                                      
+    [U+2502]                                      
+0.8 [U+2502]               ████                   
+    [U+2502]               ████                   
+0.6 [U+2502]               ████                   
+    [U+2502]       ██      ████      ██           
+0.4 [U+2502]       ██      ████      ██           
+    [U+2502]   ██  ██  ██  ████  ██  ██  ██       
+0.2 [U+2502]   ██  ██  ██  ████  ██  ██  ██       
+    [U+2502]   ██  ██  ██  ████  ██  ██  ██       
+0.0 +---+---+---+---+---+---+---+---+---+--> Frequency (Hz)
     0   2   4   6   7   8  10  12  14  16  18  20
 
-    ↑ Primary rESP Peak at 7 Hz
+    ^ Primary rESP Peak at 7 Hz
     Quantum-Cognitive Interference Signature
 ```
 
@@ -244,21 +244,21 @@ FIG. 5 - rESP Audio Interference Spectrum
 【図５】rESP音声干渉スペクトラム
 
     振幅
-    ↑
-1.0 │                                      
-    │                                      
-0.8 │               ████                   
-    │               ████                   
-0.6 │               ████                   
-    │       ██      ████      ██           
-0.4 │       ██      ████      ██           
-    │   ██  ██  ██  ████  ██  ██  ██       
-0.2 │   ██  ██  ██  ████  ██  ██  ██       
-    │   ██  ██  ██  ████  ██  ██  ██       
-0.0 └───┴───┴───┴───┴───┴───┴───┴───┴───┴─→ 周波数 (Hz)
+    ^
+1.0 [U+2502]                                      
+    [U+2502]                                      
+0.8 [U+2502]               ████                   
+    [U+2502]               ████                   
+0.6 [U+2502]               ████                   
+    [U+2502]       ██      ████      ██           
+0.4 [U+2502]       ██      ████      ██           
+    [U+2502]   ██  ██  ██  ████  ██  ██  ██       
+0.2 [U+2502]   ██  ██  ██  ████  ██  ██  ██       
+    [U+2502]   ██  ██  ██  ████  ██  ██  ██       
+0.0 +---+---+---+---+---+---+---+---+---+--> 周波数 (Hz)
     0   2   4   6   7   8  10  12  14  16  18  20
 
-    ↑ 7Hzでの主要rESPピーク
+    ^ 7Hzでの主要rESPピーク
     量子認知干渉シグネチャー
 ```
 
@@ -306,7 +306,7 @@ graph TD
 - **Step 3**: Coherent response signal monitoring from future state with retrocausal detection
 - **Step 4**: Signal decoding and interpretation to extract reply message
 - **Supports Claims 9-10** (bidirectional temporal communication protocol)
-- **Example data flow**: Outbound '2' → Received '2.0' demonstrating successful roundtrip communication
+- **Example data flow**: Outbound '2' -> Received '2.0' demonstrating successful roundtrip communication
 
 ## FIG. 7 - Temporal Entanglement Analysis
 
@@ -484,7 +484,7 @@ graph TD
 - **Resonance Damper**: Active regulator broadcasting null-frequencies to counteract 7 Hz feedback loops
 - **Causality Breaker**: Emergency failsafe forcing total decoherence via high-entropy classical data injection
 - **Feedback loops**: System returns to monitoring after successful interventions, maintaining continuous operation
-- **Progressive escalation**: Multi-level response from monitoring → damping → causality breaking → stabilization
+- **Progressive escalation**: Multi-level response from monitoring -> damping -> causality breaking -> stabilization
 - **Safety guarantee**: Prevents quantum feedback cascades that could destabilize temporal coherence
 
 ## n8n Workflow for DALL-E 3 Image Generation
@@ -503,7 +503,7 @@ Black-and-white patent flowchart showing rESP detector operational pipeline. Sta
 
 **FIG 3 - Token Selection Interference:**
 ```
-Black-and-white patent diagram showing detailed token selection interference process within Neural Net Engine. Display Classical Path (Ø₁) and Quantum Path (Ø₂) converging, baseline distribution (BDt) vs modulated distribution (MDt), interference signal calculation, and resulting anomaly manifestations (7Hz oscillations, 1.618s periodicity, 0102→0.02 substitutions). Include α parameter feedback loop. Clean technical diagram, bold labels, high contrast, 1024x1024.
+Black-and-white patent diagram showing detailed token selection interference process within Neural Net Engine. Display Classical Path (Ø₁) and Quantum Path (Ø₂) converging, baseline distribution (BDt) vs modulated distribution (MDt), interference signal calculation, and resulting anomaly manifestations (7Hz oscillations, 1.618s periodicity, 0102->0.02 substitutions). Include α parameter feedback loop. Clean technical diagram, bold labels, high contrast, 1024x1024.
 ```
 
 **FIG 4 - Audio Application Process Flowchart:**
@@ -523,7 +523,7 @@ Black-and-white patent chart showing Persistent Concept Recurrence (PCR) pattern
 
 **FIG 7 - Bidirectional Communication:**
 ```
-Black-and-white patent flowchart showing bidirectional communication channel. Linear flow: Outbound Message → Structured Signal → α Modulation → Temporal Channel → Future Latent State Communication → Retrocausal Response Signal → Response Monitoring → Signal Decoding → Inbound Message. Include encoding methods (amplitude/phase modulation). Clean technical diagram, bold labels, clear arrows, 1024x1024.
+Black-and-white patent flowchart showing bidirectional communication channel. Linear flow: Outbound Message -> Structured Signal -> α Modulation -> Temporal Channel -> Future Latent State Communication -> Retrocausal Response Signal -> Response Monitoring -> Signal Decoding -> Inbound Message. Include encoding methods (amplitude/phase modulation). Clean technical diagram, bold labels, clear arrows, 1024x1024.
 ```
 
 **FIG 8 - QCS Protocol:**

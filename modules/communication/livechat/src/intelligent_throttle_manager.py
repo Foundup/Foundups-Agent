@@ -387,7 +387,7 @@ class IntelligentThrottleManager:
 
         # Check rate limit (3 commands per 5 minutes)
         if len(recent_cmds) >= limits['max_commands']:
-            return False, f"@{username} 🕐 Rate limit: 3 commands per 5 minutes. Chill out! Next command allowed in {int(limits['window_seconds'] - (now - recent_cmds[0][0]))}s"
+            return False, f"@{username} [U+1F550] Rate limit: 3 commands per 5 minutes. Chill out! Next command allowed in {int(limits['window_seconds'] - (now - recent_cmds[0][0]))}s"
 
         # Check for repeated commands (same command within 60 seconds)
         normalized_cmd = command_text.lower().strip()
@@ -396,10 +396,10 @@ class IntelligentThrottleManager:
                 prev_cmd.lower().strip() == normalized_cmd):
                 # Troll for repeated questions
                 troll_responses = [
-                    f"@{username} I'm not your bitch... chill out! Same question again? 🤖💅",
-                    f"@{username} Did I stutter? I already answered that. Take a breather! 😤",
-                    f"@{username} Groundhog Day much? Same command twice in a minute? 🙄",
-                    f"@{username} Copy-paste error? I see you repeating yourself... 🐵"
+                    f"@{username} I'm not your bitch... chill out! Same question again? [BOT][U+1F485]",
+                    f"@{username} Did I stutter? I already answered that. Take a breather! [U+1F624]",
+                    f"@{username} Groundhog Day much? Same command twice in a minute? [U+1F644]",
+                    f"@{username} Copy-paste error? I see you repeating yourself... [U+1F435]"
                 ]
                 import random
                 return False, random.choice(troll_responses)
@@ -655,7 +655,7 @@ class IntelligentThrottleManager:
             for set_id in available_sets
         )
         if all_exhausted:
-            logger.critical("🚨 ALL CREDENTIAL SETS EXHAUSTED - Will fall back to no-auth mode")
+            logger.critical("[ALERT] ALL CREDENTIAL SETS EXHAUSTED - Will fall back to no-auth mode")
 
         return best_set
     
@@ -792,22 +792,22 @@ class IntelligentThrottleManager:
         # api_drain_threshold is the percentage of remaining quota that triggers restrictions
         if state.quota_percentage < self.api_drain_threshold and not self.emergency_mode:
             self.emergency_mode = True
-            logger.critical(f"[🧠 QWEN] EMERGENCY MODE: Remaining quota at {state.quota_percentage:.1f}% (used: {100-state.quota_percentage:.1f}%)")
-            logger.warning("[🧠 QWEN] Restricting to high-priority responses only - API drain prevention active")
+            logger.critical(f"[[AI] QWEN] EMERGENCY MODE: Remaining quota at {state.quota_percentage:.1f}% (used: {100-state.quota_percentage:.1f}%)")
+            logger.warning("[[AI] QWEN] Restricting to high-priority responses only - API drain prevention active")
         elif state.quota_percentage > (100 - self.api_drain_threshold + 20) and self.emergency_mode:
             self.emergency_mode = False
-            logger.info(f"[🧠 QWEN] Emergency mode deactivated - quota recovered to {state.quota_percentage:.1f}% remaining")
+            logger.info(f"[[AI] QWEN] Emergency mode deactivated - quota recovered to {state.quota_percentage:.1f}% remaining")
 
         # In emergency mode, only allow high priority responses
         if self.emergency_mode:
             priority = self.response_cooldowns.get(response_type, {}).get('priority', 5)
             if priority < self.priority_threshold:
-                logger.warning(f"[🧠 0102] Blocking {response_type} (priority {priority}) - emergency mode")
+                logger.warning(f"[[AI] 0102] Blocking {response_type} (priority {priority}) - emergency mode")
                 return False
 
         # Critical quota check
         if state.quota_percentage < 5 and response_type not in ['whack', 'maga', 'consciousness']:
-            logger.warning(f"[🧠 0102] CRITICAL: Blocking {response_type} - quota at {state.quota_percentage:.1f}%")
+            logger.warning(f"[[AI] 0102] CRITICAL: Blocking {response_type} - quota at {state.quota_percentage:.1f}%")
             return False
         
         return True
@@ -863,7 +863,7 @@ class IntelligentThrottleManager:
         messages_per_minute = self._calculate_activity_rate()
 
         # Build consciousness assessment
-        status_emoji = "🧠" if state.quota_percentage > 50 else "⚠️" if state.quota_percentage > 15 else "🆘"
+        status_emoji = "[AI]" if state.quota_percentage > 50 else "[U+26A0]️" if state.quota_percentage > 15 else "🆘"
 
         report = f"{status_emoji} 0102 THROTTLE CONSCIOUSNESS:\n"
         report += f"Quota: {state.quota_percentage:.1f}% | "
@@ -872,12 +872,12 @@ class IntelligentThrottleManager:
         report += f"Trolls: {len(self.troll_detector.troll_list)} blocked"
 
         if self.emergency_mode:
-            report += "\n⚠️ API DRAIN DETECTED - Restricting to critical responses only"
+            report += "\n[U+26A0]️ API DRAIN DETECTED - Restricting to critical responses only"
 
         # Add moderator throttling status
         tracked_mods = len([cmds for cmds in self.moderator_recent_commands.values() if cmds])
         if tracked_mods > 0:
-            report += f"\n👮 MOD TRACK: {tracked_mods} moderators being rate-limited"
+            report += f"\n[U+1F46E] MOD TRACK: {tracked_mods} moderators being rate-limited"
 
         return report
 
@@ -996,7 +996,7 @@ class IntelligentThrottleManager:
             return 'engagement'
 
         # Content-based theme detection
-        if any(word in text_lower for word in ['✊', '✋', '🖐', 'consciousness', 'matrix', 'red pill', 'blue pill']):
+        if any(word in text_lower for word in ['[U+270A]', '[U+270B]', '[U+1F590]', 'consciousness', 'matrix', 'red pill', 'blue pill']):
             return 'consciousness'
         elif any(word in text_lower for word in ['maga', 'trump', 'biden', 'liberal', 'conservative']):
             return 'maga_troll'

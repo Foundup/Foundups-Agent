@@ -175,3 +175,4 @@ Potential improvements:
 3. **Dynamic thresholds**: Adjust P0-P4 boundaries based on workload
 4. **Integration with AgentDB**: Store evaluation history for pattern learning
 5. **Confidence calibration**: Better mapping of Qwen confidence to score adjustments 
+6. **Reusable Template Library (`skills.md`)**: Keep platform-agnostic prompt templates so Qwen/Grok/Claude/UI‑TARS can draft posts or docs consistently before we run MPS scoring.

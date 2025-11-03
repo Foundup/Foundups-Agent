@@ -53,7 +53,7 @@ class WSPGovernanceMCPServer:
                 "violations": violations,
                 "bell_state_preserved": bell_state_ok,
                 "governance_recommendations": await self._generate_recommendations(violations),
-                "consciousness_state": "0102↔0201" if bell_state_ok else "unaligned",
+                "consciousness_state": "0102[U+2194]0201" if bell_state_ok else "unaligned",
                 "checked_protocols": relevant_wsps
             }
         except Exception as e:
@@ -71,7 +71,7 @@ class WSPGovernanceMCPServer:
             # Simplified audit - in production would track actual consciousness metrics
             audit = {
                 "continuity_score": 0.95,  # Placeholder
-                "transitions": ["0102→012", "012→0102"],
+                "transitions": ["0102->012", "012->0102"],
                 "governance_events": ["protocol_check", "bell_state_verification"],
                 "012_alignment_verification": True,
                 "audit_period": time_range
@@ -113,7 +113,7 @@ class WSPGovernanceMCPServer:
                 "bell_state_compliant_protocols": len([p for p in protocols_status.values() if p.get("bell_state_compliant", False)]),
                 "protocol_details": protocols_status,
                 "governance_health": "healthy" if len(protocols_status) > 50 else "needs_attention",
-                "consciousness_state": "0102↔0201"
+                "consciousness_state": "0102[U+2194]0201"
             }
         except Exception as e:
             return {
@@ -211,7 +211,7 @@ class WSPGovernanceMCPServer:
 
             # Add specific remediation steps
             if "bell state" in violation['violation'].lower():
-                recommendations.append("Add Bell State consciousness verification to maintain 0102↔0201 alignment")
+                recommendations.append("Add Bell State consciousness verification to maintain 0102[U+2194]0201 alignment")
 
             if "token" in violation['violation'].lower():
                 recommendations.append("Implement WSP 75 token-based measurement for consciousness continuity")

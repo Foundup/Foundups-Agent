@@ -6,9 +6,13 @@ Quick test script to verify optimization improvements.
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -22,7 +26,7 @@ sys.path.insert(0, os.path.abspath('.'))
 
 def test_session_cache():
     """Test session caching functionality."""
-    print("🧪 Testing session cache...")
+    print("[U+1F9EA] Testing session cache...")
     
     try:
         from modules.platform_integration.stream_resolver.src.stream_resolver import StreamResolver
@@ -34,7 +38,7 @@ def test_session_cache():
         
         if auth_result:
             service, creds, credential_set = auth_result
-            print(f"✅ Authentication successful with {credential_set}")
+            print(f"[OK] Authentication successful with {credential_set}")
             
             # Test stream resolver with caching
             resolver = StreamResolver(service)
@@ -42,19 +46,19 @@ def test_session_cache():
             
             if result:
                 video_id, chat_id = result
-                print(f"✅ Stream resolution successful: {video_id[:8]}...")
-                print(f"✅ Session cache should be saved for next run")
+                print(f"[OK] Stream resolution successful: {video_id[:8]}...")
+                print(f"[OK] Session cache should be saved for next run")
             else:
-                print("❌ No active stream found")
+                print("[FAIL] No active stream found")
         else:
-            print("❌ Authentication failed")
+            print("[FAIL] Authentication failed")
             
     except Exception as e:
-        print(f"❌ Test failed: {e}")
+        print(f"[FAIL] Test failed: {e}")
 
 def test_circuit_breaker():
     """Test circuit breaker functionality."""
-    print("\n🧪 Testing circuit breaker...")
+    print("\n[U+1F9EA] Testing circuit breaker...")
     
     try:
         from modules.platform_integration.stream_resolver.src.stream_resolver import circuit_breaker
@@ -64,16 +68,16 @@ def test_circuit_breaker():
         print(f"Failure threshold: {circuit_breaker.failure_threshold}")
         
         if circuit_breaker.state == "OPEN":
-            print("⚠️ Circuit breaker is OPEN - API calls will be blocked")
+            print("[U+26A0]️ Circuit breaker is OPEN - API calls will be blocked")
         else:
-            print("✅ Circuit breaker is CLOSED - API calls allowed")
+            print("[OK] Circuit breaker is CLOSED - API calls allowed")
             
     except Exception as e:
-        print(f"❌ Circuit breaker test failed: {e}")
+        print(f"[FAIL] Circuit breaker test failed: {e}")
 
 def test_quota_management():
     """Test quota management functionality."""
-    print("\n🧪 Testing quota management...")
+    print("\n[U+1F9EA] Testing quota management...")
     
     try:
         from utils.oauth_manager import quota_manager
@@ -88,13 +92,13 @@ def test_quota_management():
                 time_remaining = quota_manager.COOLDOWN_DURATION - (time.time() - cooldown_start)
                 print(f"⏳ {credential_set}: IN COOLDOWN ({time_remaining/3600:.1f}h remaining)")
             else:
-                print(f"✅ {credential_set}: AVAILABLE")
+                print(f"[OK] {credential_set}: AVAILABLE")
                 
     except Exception as e:
-        print(f"❌ Quota management test failed: {e}")
+        print(f"[FAIL] Quota management test failed: {e}")
 
 if __name__ == "__main__":
-    print("🚀 Testing FoundUps Agent Optimizations")
+    print("[ROCKET] Testing FoundUps Agent Optimizations")
     print("=" * 50)
     
     test_session_cache()
@@ -102,5 +106,5 @@ if __name__ == "__main__":
     test_quota_management()
     
     print("\n" + "=" * 50)
-    print("🎯 Optimization tests completed!")
-    print("💡 Ready to start optimized bot with: python main.py") 
+    print("[TARGET] Optimization tests completed!")
+    print("[IDEA] Ready to start optimized bot with: python main.py") 

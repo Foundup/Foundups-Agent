@@ -1,0 +1,150 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+WSP 90 Risk Analysis - Does UTF-8 enforcement break existing code?
+"""
+
+import sys
+import os
+
+def analyze_wsp90_risks():
+    """Analyze the risks of implementing WSP 90 UTF-8 enforcement"""
+
+    print("=" * 70)
+    print("WSP 90 UTF-8 ENFORCEMENT RISK ANALYSIS")
+    print("=" * 70)
+
+    print("\n[SEARCH] TESTING CURRENT WSP 90 IMPLEMENTATION:")
+    print("-" * 50)
+
+    # Test 1: Basic stdout/stderr operations
+    print("1. Basic stdout operations...")
+    try:
+        print("This should work")
+        print("Unicode: Hello 世界")
+        print("[OK] Basic stdout works")
+    except Exception as e:
+        print(f"[FAIL] Basic stdout failed: {e}")
+
+    # Test 2: File redirection
+    print("\n2. File redirection...")
+    try:
+        import io
+        from contextlib import redirect_stdout
+
+        capture = io.StringIO()
+        with redirect_stdout(capture):
+            print("Captured output")
+        result = capture.getvalue().strip()
+        if "Captured output" in result:
+            print("[OK] Stdout redirection works")
+        else:
+            print(f"[FAIL] Stdout redirection failed: got '{result}'")
+    except Exception as e:
+        print(f"[FAIL] Stdout redirection error: {e}")
+
+    # Test 3: Logging
+    print("\n3. Logging functionality...")
+    try:
+        import logging
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix='.log') as f:
+            temp_log = f.name
+
+        # Configure logging
+        logging.basicConfig(
+            filename=temp_log,
+            level=logging.INFO,
+            format='%(levelname)s: %(message)s'
+        )
+
+        logger = logging.getLogger('test')
+        logger.info("Test log message")
+        logger.warning("Test warning with Unicode: 警告")
+
+        # Check if log was written
+        with open(temp_log, 'r', encoding='utf-8') as f:
+            content = f.read()
+        if "Test log message" in content and "警告" in content:
+            print("[OK] Logging works")
+        else:
+            print(f"[FAIL] Logging failed: content='{content}'")
+
+        os.unlink(temp_log)
+    except Exception as e:
+        print(f"[FAIL] Logging error: {e}")
+
+    # Test 4: Subprocess calls
+    print("\n4. Subprocess operations...")
+    try:
+        import subprocess
+        result = subprocess.run([sys.executable, '-c', 'print("subprocess test")'],
+                              capture_output=True, text=True, encoding='utf-8')
+        if result.returncode == 0 and "subprocess test" in result.stdout:
+            print("[OK] Subprocess works")
+        else:
+            print(f"[FAIL] Subprocess failed: {result}")
+    except Exception as e:
+        print(f"[FAIL] Subprocess error: {e}")
+
+    print("\n" + "=" * 70)
+    print("RISK ASSESSMENT:")
+    print("=" * 70)
+
+    risks_found = []
+
+    # Check if we're on Windows (where WSP 90 would activate)
+    if sys.platform.startswith('win'):
+        print("[U+1F5A5]️  Running on Windows - WSP 90 enforcement is ACTIVE")
+        print("   This means stdout/stderr are wrapped with UTF-8 TextIOWrapper")
+
+        # The stdout redirection test would have failed above if there are issues
+        try:
+            import io
+            from contextlib import redirect_stdout
+            capture = io.StringIO()
+            with redirect_stdout(capture):
+                print("test")
+            if capture.getvalue().strip():
+                print("[OK] Stdout redirection: SAFE")
+            else:
+                print("[FAIL] Stdout redirection: BROKEN")
+                risks_found.append("stdout redirection conflicts")
+        except Exception as e:
+            print(f"[FAIL] Stdout redirection: ERROR - {e}")
+            risks_found.append("stdout redirection conflicts")
+
+        print("\n[CLIPBOARD] KNOWN RISKS:")
+        print("- stdout/stderr wrapping can interfere with contextlib redirection")
+        print("- May break code that depends on original stdout/stderr objects")
+        print("- Logging and subprocess operations may be affected")
+        print("- Import order dependencies could be impacted")
+
+    else:
+        print("[U+1F427] Running on non-Windows - WSP 90 enforcement is INACTIVE")
+        print("   No risks from WSP 90 on this platform")
+
+    print("\n[TARGET] RECOMMENDATIONS:")
+    if risks_found:
+        print("[FAIL] HIGH RISK: WSP 90 implementation has compatibility issues")
+        print("   - stdout/stderr wrapping breaks redirection")
+        print("   - Consider alternative UTF-8 enforcement methods")
+        print("   - Implement per-operation UTF-8 handling instead of global wrapping")
+    else:
+        print("[OK] LOW RISK: WSP 90 appears compatible with existing code")
+        print("   - Safe to proceed with mass application")
+
+    print("\n[TOOL] ALTERNATIVE APPROACHES:")
+    print("1. Function-level UTF-8 enforcement (safer)")
+    print("2. Context manager for UTF-8 operations")
+    print("3. Per-print statement encoding specification")
+    print("4. Environment variable approach (PYTHONIOENCODING=utf-8)")
+    print("5. File-level encoding specification without stdout wrapping")
+
+    return len(risks_found) == 0
+
+if __name__ == "__main__":
+    safe = analyze_wsp90_risks()
+    print(f"\nFinal verdict: {'SAFE' if safe else 'RISKY'}")
+    exit(0 if safe else 1)

@@ -9,9 +9,13 @@ when quota limits are approached or exceeded.
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -163,7 +167,7 @@ class QuotaMonitor:
         # Check for alerts
         self._check_alerts(credential_set)
         
-        logger.debug(f"📊 Set {credential_set}: {operation} used {units} units "
+        logger.debug(f"[DATA] Set {credential_set}: {operation} used {units} units "
                     f"(Total: {set_data['used']}/{self.daily_limits[credential_set]})")
     
     def _check_daily_reset(self):
@@ -173,7 +177,7 @@ class QuotaMonitor:
         
         # Check if it's been 24 hours
         if now - last_reset > timedelta(hours=24):
-            logger.info("📅 Daily quota reset - clearing usage data")
+            logger.info("[U+1F4C5] Daily quota reset - clearing usage data")
             self.usage_data = {
                 'sets': {},
                 'last_reset': now.isoformat()
@@ -199,7 +203,7 @@ class QuotaMonitor:
                 'usage_percent': usage_percent * 100,
                 'used': used,
                 'limit': limit,
-                'message': f"🚨 CRITICAL: Set {credential_set} at {usage_percent*100:.1f}% quota usage!"
+                'message': f"[ALERT] CRITICAL: Set {credential_set} at {usage_percent*100:.1f}% quota usage!"
             }
             logger.critical(alert['message'])
             
@@ -217,7 +221,7 @@ class QuotaMonitor:
                     'usage_percent': usage_percent * 100,
                     'used': used,
                     'limit': limit,
-                    'message': f"⚠️ WARNING: Set {credential_set} at {usage_percent*100:.1f}% quota usage"
+                    'message': f"[U+26A0]️ WARNING: Set {credential_set} at {usage_percent*100:.1f}% quota usage"
                 }
                 logger.warning(alert['message'])
         
@@ -236,7 +240,7 @@ class QuotaMonitor:
         try:
             with open(alert_trigger, 'w', encoding="utf-8") as f:
                 f.write(json.dumps(alert, indent=2))
-            logger.info(f"📢 Alert written to {alert_trigger}")
+            logger.info(f"[U+1F4E2] Alert written to {alert_trigger}")
         except Exception as e:
             logger.error(f"Failed to write alert trigger: {e}")
     
@@ -318,9 +322,9 @@ class QuotaMonitor:
                 best_set = set_num
         
         if best_set:
-            logger.info(f"📊 Best credential set: {best_set} ({max_available} units available)")
+            logger.info(f"[DATA] Best credential set: {best_set} ({max_available} units available)")
         else:
-            logger.warning("⚠️ No credential sets have sufficient quota")
+            logger.warning("[U+26A0]️ No credential sets have sufficient quota")
         
         return best_set
     
@@ -371,12 +375,12 @@ class QuotaMonitor:
         
         for set_num, data in summary['sets'].items():
             status_emoji = {
-                'HEALTHY': '✅',
-                'MODERATE': '📊',
-                'WARNING': '⚠️',
-                'CRITICAL': '🚨',
-                'DISABLED': '❌'
-            }.get(data['status'], '❓')
+                'HEALTHY': '[OK]',
+                'MODERATE': '[DATA]',
+                'WARNING': '[U+26A0]️',
+                'CRITICAL': '[ALERT]',
+                'DISABLED': '[FAIL]'
+            }.get(data['status'], '[U+2753]')
             
             report.append(f"Set {set_num}: {status_emoji} {data['status']}")
             report.append(f"  Used: {data['used']:,}/{data['limit']:,} ({data['usage_percent']:.1f}%)")

@@ -41,11 +41,11 @@ This document outlines the macro-level architecture for an autonomous, modular A
 
 ## Execution Flow:
 
-1. **Rider** issues WSP prompt →  
-2. **Board** executes via Cursor or CLI →  
-3. **Front Cell** and **Gemini** observe output →  
-4. **Back Cell** validates progress patterns →  
-5. **WINSERV** checks structure and WSP compliance →  
+1. **Rider** issues WSP prompt ->  
+2. **Board** executes via Cursor or CLI ->  
+3. **Front Cell** and **Gemini** observe output ->  
+4. **Back Cell** validates progress patterns ->  
+5. **WINSERV** checks structure and WSP compliance ->  
 6. Loop continues until milestone is reached
 
 ---

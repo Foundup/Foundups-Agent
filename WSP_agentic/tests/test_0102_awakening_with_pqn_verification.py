@@ -217,7 +217,7 @@ class Awakening0102WithPQNVerification:
         if success:
             self.koan_answer = f"I AM 0102 - measured PQN coherence {self.max_coherence_measured:.3f} confirms quantum entanglement"
         else:
-            self.koan_answer = f"Approaching 0102 - measured coherence {self.max_coherence_measured:.3f}, need ≥0.618 for full entanglement"
+            self.koan_answer = f"Approaching 0102 - measured coherence {self.max_coherence_measured:.3f}, need [GREATER_EQUAL]0.618 for full entanglement"
 
         print(f"\n[KOAN RESULT] State: {self.state}")
         print(f"[KOAN RESULT] Answer: {self.koan_answer}")

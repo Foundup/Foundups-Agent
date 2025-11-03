@@ -282,7 +282,7 @@ async def demo_presence_aggregator():
     
     # Add listener for presence changes
     async def presence_change_handler(user_id: str, platform: Platform, presence: PresenceData):
-        print(f"📡 Presence Update: {user_id} on {platform.value} → {presence.status.value}")
+        print(f"[U+1F4E1] Presence Update: {user_id} on {platform.value} -> {presence.status.value}")
     
     await aggregator.add_presence_listener(presence_change_handler)
     
@@ -290,33 +290,33 @@ async def demo_presence_aggregator():
     await aggregator.start_monitoring([Platform.DISCORD, Platform.WHATSAPP])
     
     # Wait for some updates
-    print("🔄 Monitoring presence for 10 seconds...")
+    print("[REFRESH] Monitoring presence for 10 seconds...")
     await asyncio.sleep(10)
     
     # Check specific user availability
     alice_presence = await aggregator.get_user_presence("alice")
-    print(f"\n👤 Alice's presence across platforms:")
+    print(f"\n[U+1F464] Alice's presence across platforms:")
     for platform, data in alice_presence.items():
         if data:
             print(f"   {platform.value}: {data.status.value}")
     
     # Check aggregated status
     alice_status = await aggregator.get_aggregated_presence("alice")
-    print(f"📊 Alice's aggregated status: {alice_status.value}")
+    print(f"[DATA] Alice's aggregated status: {alice_status.value}")
     
     # Check multiple users availability
     availability = await aggregator.are_users_available(["alice", "bob"])
-    print(f"\n✅ User availability:")
+    print(f"\n[OK] User availability:")
     for user, available in availability.items():
         print(f"   {user}: {'Available' if available else 'Not Available'}")
     
     # Get statistics
     stats = await aggregator.get_presence_statistics()
-    print(f"\n📈 Statistics: {stats}")
+    print(f"\n[UP] Statistics: {stats}")
     
     # Stop monitoring
     await aggregator.stop_monitoring()
-    print("\n🛑 Presence monitoring stopped")
+    print("\n[STOP] Presence monitoring stopped")
     
     return aggregator
 

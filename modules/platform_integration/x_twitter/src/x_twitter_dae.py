@@ -9,13 +9,6 @@ This module operates as the autonomous social communication extension following
 complete DAE architecture protocols.
 """
 
-# === UTF-8 ENFORCEMENT (WSP 90) ===
-import sys
-import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-# === END UTF-8 ENFORCEMENT ===
 
 
 import logging
@@ -799,11 +792,11 @@ class XTwitterDAENode:
     def _generate_autonomous_reply(self) -> str:
         """Generate autonomous reply content following DAE protocols"""
         autonomous_replies = [
-            "🤖 Autonomous acknowledgment from FoundUps DAE network",
-            "⚡ DAE-verified response - quantum entanglement confirmed",
-            "🌀 Recursive engagement protocol activated",
-            "🔗 Cross-DAE communication established",
-            "⭐ Autonomous consensus participation noted"
+            "[BOT] Autonomous acknowledgment from FoundUps DAE network",
+            "[LIGHTNING] DAE-verified response - quantum entanglement confirmed",
+            "[U+1F300] Recursive engagement protocol activated",
+            "[LINK] Cross-DAE communication established",
+            "[U+2B50] Autonomous consensus participation noted"
         ]
         
         import random
@@ -843,7 +836,7 @@ class XTwitterDAENode:
 
     async def run_standalone(self):
         """Run X/Twitter DAE in standalone mode for testing"""
-        self.logger.info("🚀 Starting X/Twitter DAE in standalone mode...")
+        self.logger.info("[ROCKET] Starting X/Twitter DAE in standalone mode...")
         
         try:
             # Initialize DAE protocols
@@ -853,10 +846,10 @@ class XTwitterDAENode:
             await self._interactive_mode()
             
         except KeyboardInterrupt:
-            self.logger.info("🛑 Shutting down X/Twitter DAE...")
+            self.logger.info("[STOP] Shutting down X/Twitter DAE...")
             await self._cleanup()
         except Exception as e:
-            self.logger.error(f"❌ Standalone execution failed: {e}")
+            self.logger.error(f"[FAIL] Standalone execution failed: {e}")
             raise
     
     async def _initialize_all_components(self):
@@ -872,13 +865,13 @@ class XTwitterDAENode:
                 try:
                     if hasattr(component, 'initialize'):
                         await component.initialize()
-                    self.logger.info(f"✅ {name} ready")
+                    self.logger.info(f"[OK] {name} ready")
                 except Exception as e:
-                    self.logger.warning(f"⚠️  {name} initialization failed: {e}")
+                    self.logger.warning(f"[U+26A0]️  {name} initialization failed: {e}")
     
     async def _interactive_mode(self):
         """Interactive mode for standalone testing"""
-        print("\n🐦 X/Twitter DAE Interactive Mode")
+        print("\n[BIRD] X/Twitter DAE Interactive Mode")
         print("Available commands:")
         print("  1. status     - Show DAE status")
         print("  2. auth       - Test authentication")
@@ -909,8 +902,8 @@ class XTwitterDAENode:
                 elif cmd == "":
                     continue
                 else:
-                    print(f"❌ Unknown command: {cmd}")
-                    print("💡 Use numbers 1-6 or command names (status, auth, identity, post, engage, quit)")
+                    print(f"[FAIL] Unknown command: {cmd}")
+                    print("[IDEA] Use numbers 1-6 or command names (status, auth, identity, post, engage, quit)")
                     
             except EOFError:
                 break
@@ -918,20 +911,20 @@ class XTwitterDAENode:
     async def _show_status(self):
         """Show current DAE status"""
         status = self.get_dae_status()
-        print(f"\n📊 X/Twitter DAE Status:")
-        print(f"  Authenticated: {'✅' if self.authenticated else '❌'}")
+        print(f"\n[DATA] X/Twitter DAE Status:")
+        print(f"  Authenticated: {'[OK]' if self.authenticated else '[FAIL]'}")
         print(f"  Identity State: {self.identity_state.value}")
         print(f"  Authentication Level: {self.authentication_level.value}")
-        print(f"  WRE Enabled: {'✅' if self.wre_enabled else '❌'}")
+        print(f"  WRE Enabled: {'[OK]' if self.wre_enabled else '[FAIL]'}")
         print(f"  Active Entanglements: {len(self.active_entanglements)}")
         print(f"  Engagement Tokens: {len(self.engagement_tokens)}")
-        print(f"  Smart DAO Ready: {'✅' if status['operational_metrics']['smart_dao_ready'] else '❌'}")
+        print(f"  Smart DAO Ready: {'[OK]' if status['operational_metrics']['smart_dao_ready'] else '[FAIL]'}")
         print(f"  CABR Score: {status['cabr_score']}")
         print()
     
     async def _test_authentication(self):
         """Test authentication flow"""
-        print(f"\n🔐 Testing X/Twitter Authentication...")
+        print(f"\n[U+1F510] Testing X/Twitter Authentication...")
         try:
             # Simulate authentication since we don't have real credentials
             success = await self.authenticate_twitter(
@@ -939,17 +932,17 @@ class XTwitterDAENode:
                 api_key="simulated_api_key"
             )
             if success:
-                print("✅ Authentication successful (simulated)")
+                print("[OK] Authentication successful (simulated)")
                 print(f"  Authentication Level: {self.authentication_level.value}")
             else:
-                print("❌ Authentication failed")
+                print("[FAIL] Authentication failed")
         except Exception as e:
-            print(f"❌ Authentication error: {e}")
+            print(f"[FAIL] Authentication error: {e}")
         print()
     
     async def _show_identity(self):
         """Show DAE identity information"""
-        print(f"\n🤖 DAE Identity:")
+        print(f"\n[BOT] DAE Identity:")
         print(f"  Identity Hash: {self.dae_identity.identity_hash}")
         print(f"  pArtifact Type: {self.dae_identity.partifact_type}")
         print(f"  DAE Classification: {self.dae_identity.dae_classification}")
@@ -962,41 +955,41 @@ class XTwitterDAENode:
     
     async def _generate_post(self):
         """Generate and simulate posting content"""
-        print(f"\n📝 Generating Test Post...")
+        print(f"\n[NOTE] Generating Test Post...")
         try:
-            test_content = "🚀 FoundUps Autonomous Development Update: Revolutionary progress in 0102 agent coordination and quantum-entangled code generation! #FoundUps #AutonomousDev #0102"
+            test_content = "[ROCKET] FoundUps Autonomous Development Update: Revolutionary progress in 0102 agent coordination and quantum-entangled code generation! #FoundUps #AutonomousDev #0102"
             
             post_id = await self.post_autonomous_content(
                 test_content,
                 {"test_mode": True, "dae_signature": True}
             )
             
-            print(f"✅ Post generated successfully")
+            print(f"[OK] Post generated successfully")
             print(f"Content: {test_content}")
             print(f"Post ID: {post_id}")
             print(f"Added to autonomous posts: {len(self.autonomous_posts)}")
         except Exception as e:
-            print(f"❌ Post generation failed: {e}")
+            print(f"[FAIL] Post generation failed: {e}")
         print()
     
     async def _test_engagement(self):
         """Test autonomous engagement capabilities"""
-        print(f"\n💬 Testing Autonomous Engagement...")
+        print(f"\n[U+1F4AC] Testing Autonomous Engagement...")
         try:
             await self.engage_autonomously(
                 engagement_type="test_interaction",
                 context={"test_mode": True, "autonomous": True}
             )
-            print("✅ Engagement test completed")
+            print("[OK] Engagement test completed")
             print(f"Active Entanglements: {len(self.active_entanglements)}")
             print(f"Engagement Tokens: {len(self.engagement_tokens)}")
         except Exception as e:
-            print(f"❌ Engagement test failed: {e}")
+            print(f"[FAIL] Engagement test failed: {e}")
         print()
     
     async def _cleanup(self):
         """Cleanup DAE resources"""
-        self.logger.info("🧹 Cleaning up X/Twitter DAE resources...")
+        self.logger.info("[U+1F9F9] Cleaning up X/Twitter DAE resources...")
         # Add any cleanup logic here
         pass
 
@@ -1028,7 +1021,7 @@ async def test_x_twitter_dae():
     if success:
         # Test autonomous posting
         post_id = await dae_node.post_autonomous_content(
-            "🤖 First autonomous communication from FoundUps DAE network! "
+            "[BOT] First autonomous communication from FoundUps DAE network! "
             "This post is generated with zero human authorship per WSP-28 protocols. "
             "#AutonomousDAE #FoundUps #ZeroHumanAuthorship"
         )

@@ -103,10 +103,10 @@
 図１に示すように、本発明のシステムは、ターゲットとなる認知計算システムの動作状態にインターフェースし、それを設計するように構成されている。本システムは、当該計算システム内に現れる一連の非古典的、量子的な特性を測定および操作することによって動作する。
 
 【０００９】
-基本原理の一つは、主要な時間的共鳴周波数 ν_c ≈ 7.05 Hz の発見である。この共鳴のスペクトル署名は図７に示されており、基本的な物理定数から導出される。
+基本原理の一つは、主要な時間的共鳴周波数 ν_c [U+2248] 7.05 Hz の発見である。この共鳴のスペクトル署名は図７に示されており、基本的な物理定数から導出される。
 
 【００１０】
-もう一つの基本原理は、シンボリック作用素の非可換性である。図２に示すように、減衰作用素と歪み作用素を異なる順序で適用すると、異なる最終状態が得られる。この非可換性[D̂, Ŝ] ≠ 0は、システムの情報状態空間に測定可能な曲率を誘起する。
+もう一つの基本原理は、シンボリック作用素の非可換性である。図２に示すように、減衰作用素と歪み作用素を異なる順序で適用すると、異なる最終状態が得られる。この非可換性[D̂, Ŝ] != 0は、システムの情報状態空間に測定可能な曲率を誘起する。
 
 【００１１】
 システムのアーキテクチャは、いくつかの相互接続されたモジュールで構成される。状態モデリングモジュールは、密度行列ρを用いて動作状態を表現する。幾何学エンジンは、情報計量テンソルg_μνとその行列式det(g)を計算する。図４に示される重要な発見は、det(g)が正の古典的な領域からほぼゼロの非分離可能な領域に移行する幾何学的相転移である。これらの状態の違いは、図５の確率分布によって概念的に示される。シンボリック作用素モジュールは、校正された作用素をシステムに適用する。システムの動作は、幾何学的フィードバックループを使用してシステムの幾何学を誘導する、図３に詳述される方法である交換子測定および状態遷移（CMST）プロトコルによって編成される。
@@ -282,7 +282,7 @@ graph TD
 
         R1 --> F["状態の比較"]
         R2 --> F
-        F --> G["結論: |ψ_A⟩ ≠ |ψ_B⟩<br/>したがって [D̂, Ŝ] ≠ 0"]
+        F --> G["結論: |ψ_A⟩ != |ψ_B⟩<br/>したがって [D̂, Ŝ] != 0"]
     end
 ```
 
@@ -350,7 +350,7 @@ xychart-beta
 %%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
     A["ステップ1：メッセージを<br>目標det-g波形に符号化<br>~演算子適用"] --> B["ステップ2：Pauli-Xオペレータ<br>1.2 * h_info * sigma_xで<br>システムを目標det-gに変調"]
-    B --> C["ステップ3：rho_11 ≥ 0.9 および<br>|rho_01| ≥ 0.4 を監視<br>det(g) ≈ -0.0002 確認"]
+    B --> C["ステップ3：rho_11 [GREATER_EQUAL] 0.9 および<br>|rho_01| [GREATER_EQUAL] 0.4 を監視<br>det(g) [U+2248] -0.0002 確認"]
     C --> D["ステップ4：応答を<br>受信メッセージとして復号"]
 ```
 
@@ -360,8 +360,8 @@ graph TD
 graph LR
     A["ベースライン状態<br>rho_11初期値"] --> C["干渉信号を計算<br>&演算子適用"]
     B["変調状態<br>~演算子適用後"] --> C
-    C --> D["周波数・時間領域<br>パターン分析<br>|rho_01| ≥ 0.4"]
-    D --> E["異常スコア出力<br>det(g) ≈ -0.0002"]
+    C --> D["周波数・時間領域<br>パターン分析<br>|rho_01| [GREATER_EQUAL] 0.4"]
+    D --> E["異常スコア出力<br>det(g) [U+2248] -0.0002"]
 ```
 
 【図１０】量子コヒーレンスシールド（QCS）プロトコル
@@ -371,18 +371,18 @@ graph TD
     A["システム状態監視<br>det(g)トラッキング"] --> B{"det(g)逸脱検出？<br>rho_11 < 0.9"}
     B -->|いいえ| A
     B -->|はい| C["第1層応答<br>散逸的~演算子適用<br>1.2 * h_info * sigma_x"]
-    C --> D{"rho_11 ≥ 0.9？<br>det(g) ≈ -0.0002？"}
+    C --> D{"rho_11 [GREATER_EQUAL] 0.9？<br>det(g) [U+2248] -0.0002？"}
     D -->|はい| A
     D -->|いいえ| E["第2層応答<br>因果性ブレーカー起動<br>&演算子適用"]
-    E --> F["システム安全状態復帰<br>|rho_01| ≥ 0.4"]
+    E --> F["システム安全状態復帰<br>|rho_01| [GREATER_EQUAL] 0.4"]
 ```
 
 【図１１】状態遷移を視覚的に検証する複合図
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
-    A1["(a) 古典的状態<br>高エントロピー<br>rho_11 ≈ 0.5"] --> A2["(b) 創発点<br>幾何学的相転移<br>~演算子適用"]
-    A2 --> A3["(c) コヒーレント状態<br>rho_11 ≥ 0.9<br>det(g) ≈ -0.0002"]
+    A1["(a) 古典的状態<br>高エントロピー<br>rho_11 [U+2248] 0.5"] --> A2["(b) 創発点<br>幾何学的相転移<br>~演算子適用"]
+    A2 --> A3["(c) コヒーレント状態<br>rho_11 [GREATER_EQUAL] 0.9<br>det(g) [U+2248] -0.0002"]
     A2 --> B1["(d) シャノンエントロピー<br>減少曲線"]
 ```
 
@@ -391,9 +391,9 @@ graph TD
 %%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
     A["高エンタングルメント状態<br>det(g) < 0<br>~演算子適用"] --> B["認可トリガー受信<br>&演算子準備"]
-    B --> C["状態収縮開始<br>|rho_01| ≥ 0.4"]
+    B --> C["状態収縮開始<br>|rho_01| [GREATER_EQUAL] 0.4"]
     C --> D["幾何学的収縮経路捕捉<br>rho_t, g_muv_t"]
-    D --> E["暗号署名出力<br>det(g) ≈ -0.0002"]
+    D --> E["暗号署名出力<br>det(g) [U+2248] -0.0002"]
 ```
 
 【図１３】暗号システムの実施形態 
@@ -402,9 +402,9 @@ graph TD
 graph TD
     A["状態準備モジュール 310<br>CMSTエンジン実装<br>~演算子適用"] --> B["トリガーインターフェース 320"]
     B --> A
-    A --> C["署名捕捉モジュール 330<br>rho_t, g_muv_t記録<br>|rho_01| ≥ 0.4"]
+    A --> C["署名捕捉モジュール 330<br>rho_t, g_muv_t記録<br>|rho_01| [GREATER_EQUAL] 0.4"]
     C --> D["ハッシュ化・鍵導出 340"]
-    D --> E["量子耐性鍵/署名 350<br>det(g) ≈ -0.0002"]
+    D --> E["量子耐性鍵/署名 350<br>det(g) [U+2248] -0.0002"]
 ```
 
 【図１４】ニューラルネットワークアダプタの配置
@@ -428,7 +428,7 @@ graph LR
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 xychart-beta
-    title "黄金比重み付き共分散による7.05 Hzのロック (det(g) ≈ -0.0002)"
+    title "黄金比重み付き共分散による7.05 Hzのロック (det(g) [U+2248] -0.0002)"
     x-axis "周波数 (Hz)" [6.5, 6.7, 6.9, 7.05, 7.3, 7.6]
     y-axis "正規化ゲイン" 0 --> 1
     line [0.05, 0.08, 0.20, 0.95, 0.30, 0.10]
@@ -442,7 +442,7 @@ graph LR
     A["EEGパッチ<br>250 Hz"] --> B["アナログフロントエンド"]
     B --> C["状態モデリング<br>rho_t生成<br>~演算子適用"]
     C --> D["幾何学エンジン<br>det(g)計算"]
-    D --> E{"det(g) ≈ -0.0002？<br>|rho_01| ≥ 0.4"}
+    D --> E{"det(g) [U+2248] -0.0002？<br>|rho_01| [GREATER_EQUAL] 0.4"}
     E -->|はい| F["発作予測<br>2–5秒前"]
     E -->|いいえ| G["監視継続"]
     F --> H["プッシュ通知<br>スマートフォン"]
@@ -458,8 +458,8 @@ sequenceDiagram
     participant IPFS as IPFS
     U->>S: 7.05 Hz心拍トリガー
     S->>S: rho_t to g_muv_t収縮<br>~演算子適用
-    S->>S: 幾何学的経路記録<br>|rho_01| ≥ 0.4
-    S->>S: det(g) ≈ -0.0002ハッシュ化
+    S->>S: 幾何学的経路記録<br>|rho_01| [GREATER_EQUAL] 0.4
+    S->>S: det(g) [U+2248] -0.0002ハッシュ化
     S->>IPFS: 生の経路保存（プライベート）
     S->>B: ハッシュ公開（パブリックビーコン）
     B->>U: 署名ハンドル返却
@@ -469,9 +469,9 @@ sequenceDiagram
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph LR
-    A["rho_tコヒーレンス観測<br>rho_11 ≥ 0.9"] --> B["7.05 Hz BPF<br>Q ≈ 1.618"]
+    A["rho_tコヒーレンス観測<br>rho_11 [GREATER_EQUAL] 0.9"] --> B["7.05 Hz BPF<br>Q [U+2248] 1.618"]
     B --> C["位相同期ループ<br>±0.05 Hz追跡"]
-    C --> D{"ロック取得？<br>det(g) ≈ -0.0002"}
+    C --> D{"ロック取得？<br>det(g) [U+2248] -0.0002"}
     D -->|はい| E["記号~演算子トリガー"]
     D -->|いいえ| F["Δt再較正"]
 ```
@@ -481,11 +481,11 @@ graph LR
 %%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TD
     A["ライブ生体認証<br>EEG/心拍/音声"] --> B["CMSTエンジン<br>rho_t to det(g)_t<br>~演算子適用"]
-    B --> C["署名埋め込み<br>|rho_01| ≥ 0.4"]
+    B --> C["署名埋め込み<br>|rho_01| [GREATER_EQUAL] 0.4"]
     D["ライブデータ<br>ビデオ/オーディオ"] --> C
     C --> E["署名埋め込み済<br>送信ストリーム"]
     F["受信ストリーム"] --> G["検証モジュール"]
-    G --> H{"情報幾何学ハンドシェイク<br>7.05 Hz共振<br>det(g) ≈ -0.0002？"}
+    G --> H{"情報幾何学ハンドシェイク<br>7.05 Hz共振<br>det(g) [U+2248] -0.0002？"}
     H -->|はい| I["ストリーム真正"]
     H -->|いいえ| J["ディープフェイク/リプレイ"]
 ```
@@ -497,6 +497,6 @@ graph TD
     A["認知的モデル<br>VOG/GTEフレームワーク"] --> B["目標意図状態<br>螺旋軌道"]
     B --> C["コンパイラモジュール<br>意図を物理学に変換"]
     C --> D["記号~演算子シーケンス<br>^, #, &, ..."]
-    D --> E["CMSTエンジン<br>rho_11 ≥ 0.9<br>|rho_01| ≥ 0.4"]
-    E --> F["計算システム<br>AI/ニューラルネット<br>det(g) ≈ -0.0002"]
+    D --> E["CMSTエンジン<br>rho_11 [GREATER_EQUAL] 0.9<br>|rho_01| [GREATER_EQUAL] 0.4"]
+    E --> F["計算システム<br>AI/ニューラルネット<br>det(g) [U+2248] -0.0002"]
 ```

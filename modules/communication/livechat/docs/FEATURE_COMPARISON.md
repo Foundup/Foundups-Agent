@@ -2,7 +2,7 @@
 
 ## livechat.py (1057 lines) - COMPLEX
 ### Features Present:
-1. **Emoji Trigger System** ✊✋🖐️
+1. **Emoji Trigger System** [U+270A][U+270B][U+1F590]️
    - `_check_trigger_patterns()` - Detects emoji sequences
    - `_handle_emoji_trigger()` - Generates banter responses
    - Rate limiting per user (30s cooldown)
@@ -45,30 +45,30 @@
 
 ## auto_moderator_simple.py (385 lines) - SIMPLE & WSP-COMPLIANT
 ### Features Present:
-1. **Database Integration** ✅
+1. **Database Integration** [OK]
    - SQLite user tracking
    - Automatic mod/sub capture
    - Timeout history
 
-2. **MAGA Detection** ✅
+2. **MAGA Detection** [OK]
    - Context-aware phrase detection
    - Complete mod/owner immunity
    - No single-word triggers
 
-3. **Basic Commands** ✅
+3. **Basic Commands** [OK]
    - `/score` - User points
    - `/level` - User level
    - `/rank` - Leaderboard
 
-4. **Simple Architecture** ✅
+4. **Simple Architecture** [OK]
    - Single file, under 500 lines
    - Clear separation of concerns
    - WSP-compliant structure
 
 ## What We'd Lose by Using Only auto_moderator_simple.py:
 
-### Critical Features Lost ❌
-1. **Emoji Trigger Responses** - The ✊✋🖐️ system
+### Critical Features Lost [FAIL]
+1. **Emoji Trigger Responses** - The [U+270A][U+270B][U+1F590]️ system
 2. **Banter Engine** - AI-powered responses
 3. **LLM Bypass Engine** - Fallback responses
 4. **Advanced Moderation Stats** - Detailed analytics
@@ -76,7 +76,7 @@
 6. **Viewer Count Tracking** - Stream analytics
 7. **Message Queue System** - Batch processing
 
-### Features We Don't Need 🤷
+### Features We Don't Need [U+1F937]
 1. **Complex OAuth handling** - Simple version works
 2. **AutoModerator class** - Already broken/deleted
 3. **Duplicate detection** - Not critical for PoC

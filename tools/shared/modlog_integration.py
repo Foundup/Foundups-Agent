@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WSP Shared Module: ModLog Integration
 ====================================
 
@@ -29,7 +44,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'utils'))
 try:
     from modlog_updater import update_modlog_entry
 except ImportError:
-    logging.warning("⚠️ modlog_updater not available - ModLog integration disabled")
+    logging.warning("[U+26A0]️ modlog_updater not available - ModLog integration disabled")
     update_modlog_entry = None
 
 logger = logging.getLogger(__name__)
@@ -56,9 +71,9 @@ class ModLogIntegration:
         self.modlog_available = update_modlog_entry is not None
         
         if not self.modlog_available:
-            logger.warning("⚠️ ModLog updater not available - entries will be logged only")
+            logger.warning("[U+26A0]️ ModLog updater not available - entries will be logged only")
         
-        logger.info("📝 ModLog Integration initialized")
+        logger.info("[NOTE] ModLog Integration initialized")
     
     def log_mps_calculation(self, modules: List[Dict[str, Any]], tool_name: str) -> bool:
         """
@@ -72,7 +87,7 @@ class ModLogIntegration:
             bool: True if successfully logged, False otherwise
         """
         if not modules:
-            logger.warning("⚠️ No modules provided for MPS calculation logging")
+            logger.warning("[U+26A0]️ No modules provided for MPS calculation logging")
             return False
         
         # Find highest priority module
@@ -115,7 +130,7 @@ class ModLogIntegration:
         # Identify changes
         changes = []
         if len(new_ranking) != len(old_ranking):
-            changes.append(f"Module count changed: {len(old_ranking)} → {len(new_ranking)}")
+            changes.append(f"Module count changed: {len(old_ranking)} -> {len(new_ranking)}")
         
         # Check position changes
         for i, module in enumerate(new_ranking[:3]):  # Top 3 changes
@@ -123,7 +138,7 @@ class ModLogIntegration:
                 old_pos = old_ranking.index(module) + 1
                 new_pos = i + 1
                 if old_pos != new_pos:
-                    changes.append(f"{module}: #{old_pos} → #{new_pos}")
+                    changes.append(f"{module}: #{old_pos} -> #{new_pos}")
             except ValueError:
                 changes.append(f"{module}: NEW entry at #{i+1}")
         
@@ -186,9 +201,9 @@ class ModLogIntegration:
             bool: True if successfully logged, False otherwise
         """
         emoji_map = {
-            "PASS": "✅",
-            "FAIL": "❌", 
-            "WARNING": "⚠️"
+            "PASS": "[OK]",
+            "FAIL": "[FAIL]", 
+            "WARNING": "[U+26A0]️"
         }
         
         emoji = emoji_map.get(compliance_status, "ℹ️")
@@ -220,24 +235,24 @@ class ModLogIntegration:
             bool: True if successfully written, False otherwise
         """
         if not self.auto_update:
-            logger.info(f"📝 ModLog entry prepared (auto-update disabled): {update_data['description']}")
+            logger.info(f"[NOTE] ModLog entry prepared (auto-update disabled): {update_data['description']}")
             return True
         
         if not self.modlog_available:
-            logger.warning(f"⚠️ ModLog updater unavailable - logging entry: {update_data['description']}")
+            logger.warning(f"[U+26A0]️ ModLog updater unavailable - logging entry: {update_data['description']}")
             logger.info(f"   Changes: {update_data['changes']}")
             return False
         
         try:
             success = update_modlog_entry(update_data)
             if success:
-                logger.info(f"✅ ModLog entry written: {update_data['description']}")
+                logger.info(f"[OK] ModLog entry written: {update_data['description']}")
             else:
-                logger.error(f"❌ Failed to write ModLog entry: {update_data['description']}")
+                logger.error(f"[FAIL] Failed to write ModLog entry: {update_data['description']}")
             return success
             
         except Exception as e:
-            logger.error(f"❌ Error writing ModLog entry: {e}")
+            logger.error(f"[FAIL] Error writing ModLog entry: {e}")
             return False
     
     def create_manual_entry_template(self, entry_type: str, description: str) -> str:
@@ -255,7 +270,7 @@ class ModLogIntegration:
         
         template = f"""
 ### v1.0.0 - {timestamp}
-- **Type**: 🔧 {entry_type.title()}
+- **Type**: [TOOL] {entry_type.title()}
 - **Module**: agent_utilities
 - **Description**: {description}
 - **Changes**:
@@ -287,7 +302,7 @@ def log_automation_activity(tool_name: str, automation_type: str, details: Dict[
 
 # Example usage and testing
 if __name__ == "__main__":
-    print("🧪 Testing ModLog Integration")
+    print("[U+1F9EA] Testing ModLog Integration")
     print("=" * 40)
     
     integrator = ModLogIntegration(auto_update=False)  # Disable auto-update for testing
@@ -300,14 +315,14 @@ if __name__ == "__main__":
         {"name": "stream_resolver", "mps": 75.0}
     ]
     success = integrator.log_mps_calculation(test_modules, "process_and_score_modules.py")
-    print(f"   MPS logging: {'✅ Success' if success else '❌ Failed'}")
+    print(f"   MPS logging: {'[OK] Success' if success else '[FAIL] Failed'}")
     
     # Test priority change logging
     print("\n2. Priority Change Logging:")
     old_ranking = ["livechat", "banter_engine", "stream_resolver"]
     new_ranking = ["banter_engine", "livechat", "stream_resolver"]
     success = integrator.log_priority_change(old_ranking, new_ranking, "Updated MPS weights")
-    print(f"   Priority logging: {'✅ Success' if success else '❌ Failed'}")
+    print(f"   Priority logging: {'[OK] Success' if success else '[FAIL] Failed'}")
     
     # Test automation logging
     print("\n3. Automation Activity Logging:")
@@ -317,17 +332,17 @@ if __name__ == "__main__":
         "output_format": "markdown+csv"
     }
     success = integrator.log_tool_automation("guided_dev_protocol.py", "scheduled", automation_details)
-    print(f"   Automation logging: {'✅ Success' if success else '❌ Failed'}")
+    print(f"   Automation logging: {'[OK] Success' if success else '[FAIL] Failed'}")
     
     # Test protocol compliance logging
     print("\n4. Protocol Compliance Logging:")
     compliance_details = [
-        "✅ All modules have MPS scores",
-        "✅ Priority ranking is up to date", 
-        "⚠️ Manual verification recommended"
+        "[OK] All modules have MPS scores",
+        "[OK] Priority ranking is up to date", 
+        "[U+26A0]️ Manual verification recommended"
     ]
     success = integrator.log_protocol_compliance("WSP 5 (MPS)", "WARNING", compliance_details)
-    print(f"   Compliance logging: {'✅ Success' if success else '❌ Failed'}")
+    print(f"   Compliance logging: {'[OK] Success' if success else '[FAIL] Failed'}")
     
     # Test manual template generation
     print("\n5. Manual Entry Template:")
@@ -335,4 +350,4 @@ if __name__ == "__main__":
     print("   Template generated:")
     print("   " + "\n   ".join(template.split("\n")[:5]) + "...")
     
-    print("\n✅ All tests completed successfully!") 
+    print("\n[OK] All tests completed successfully!") 

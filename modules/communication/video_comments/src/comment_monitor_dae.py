@@ -66,7 +66,7 @@ class CommentMonitorDAE:
     async def start(self):
         """Start autonomous comment monitoring"""
         self.is_running = True
-        logger.info("🤖 Comment Monitor DAE starting autonomous operation")
+        logger.info("[BOT] Comment Monitor DAE starting autonomous operation")
         
         while self.is_running:
             try:
@@ -91,7 +91,7 @@ class CommentMonitorDAE:
             if not comments:
                 return
             
-            logger.info(f"📝 Found {len(comments)} new comments to process")
+            logger.info(f"[NOTE] Found {len(comments)} new comments to process")
             
             # Phase 1: Protocol - Process each comment
             for comment in comments:
@@ -151,24 +151,24 @@ class CommentMonitorDAE:
         author = comment.get('snippet', {}).get('authorDisplayName', '')
         
         # Check for consciousness triggers
-        if '✊✋🖐' in text:
-            logger.info(f"🧠 Consciousness trigger detected from {author}")
+        if '[U+270A][U+270B][U+1F590]' in text:
+            logger.info(f"[AI] Consciousness trigger detected from {author}")
             return True
         
         # Check for questions
         if any(q in text for q in ['?', 'why', 'how', 'what', 'when', 'where', 'who']):
-            logger.info(f"❓ Question detected from {author}")
+            logger.info(f"[U+2753] Question detected from {author}")
             return True
         
         # Check for mentions
         if any(mention in text for mention in ['0102', 'bot', '@undaodu', '@move2japan']):
-            logger.info(f"📢 Mention detected from {author}")
+            logger.info(f"[U+1F4E2] Mention detected from {author}")
             return True
         
         # Check memory for this user
         user_memory = self.memory_manager.get_user_memory(author)
         if user_memory and user_memory.get('interaction_count', 0) > 5:
-            logger.info(f"👤 Recognized user {author}")
+            logger.info(f"[U+1F464] Recognized user {author}")
             return True
         
         return False
@@ -186,7 +186,7 @@ class CommentMonitorDAE:
             if response:
                 # Post the reply
                 reply_to_comment(self.youtube, comment_id, response)
-                logger.info(f"✅ Responded to {author}: {response[:100]}...")
+                logger.info(f"[OK] Responded to {author}: {response[:100]}...")
                 
                 # Update memory
                 self.memory_manager.update_user_memory(author, {

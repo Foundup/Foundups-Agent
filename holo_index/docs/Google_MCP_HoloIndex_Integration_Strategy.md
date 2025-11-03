@@ -193,7 +193,7 @@ async def extract_training_data(self, dae_name: str, behavior_type: str) -> dict
 ## Recommended Integration Strategy
 
 ### Phase 1: Database Toolbox Integration (P0)
-**MPS**: Complexity=3, Importance=5, Deferability=2, Impact=5 → **P0** (15)
+**MPS**: Complexity=3, Importance=5, Deferability=2, Impact=5 -> **P0** (15)
 
 **Why**: Enables 012 behavior pattern extraction for Gemma training
 **Blocks**: YouTube DAE WRE implementation
@@ -207,7 +207,7 @@ async def extract_training_data(self, dae_name: str, behavior_type: str) -> dict
 5. Store in ChromaDB for few-shot prompting
 
 ### Phase 2: Data Commons Integration (P1)
-**MPS**: Complexity=2, Importance=4, Deferability=4, Impact=4 → **P2** (14)
+**MPS**: Complexity=2, Importance=4, Deferability=4, Impact=4 -> **P2** (14)
 
 **Why**: Validates FoundUp ideas with market data
 **Use Case**: Research mode for new FoundUp creation
@@ -220,7 +220,7 @@ async def extract_training_data(self, dae_name: str, behavior_type: str) -> dict
 4. Ground ideas in statistical reality
 
 ### Phase 3: Analytics Integration (P2)
-**MPS**: Complexity=3, Importance=3, Deferability=4, Impact=3 → **P3** (13)
+**MPS**: Complexity=3, Importance=3, Deferability=4, Impact=3 -> **P3** (13)
 
 **Why**: DAE performance monitoring
 **Use Case**: Optimize existing DAEs
@@ -323,7 +323,7 @@ poc_result = await build_gemma_enhanced_module(
 **Why this pushes the edge**:
 - Combines Google's enterprise data access with HoloIndex semantic intelligence
 - Automates 012 behavior pattern extraction (never done before)
-- Enables true WRE learning (012 → 0102 → Qwen → Gemma)
+- Enables true WRE learning (012 -> 0102 -> Qwen -> Gemma)
 - Tests MCP server composition (HoloIndex + Google MCP)
 
 **What we'll discover at the edge**:
@@ -333,7 +333,7 @@ poc_result = await build_gemma_enhanced_module(
 - What's the token cost of cross-MCP operations?
 
 **Implementation Path** (No Vibecoding):
-1. ✅ Research Google MCP (complete)
+1. [OK] Research Google MCP (complete)
 2. ⏳ Check if Database Toolbox module exists in our codebase (HoloIndex search)
 3. ⏳ Read Database Toolbox documentation
 4. ⏳ Design integration architecture

@@ -89,18 +89,18 @@ All DAEMONs MUST log:
 # Initialization
 self.logger.info(f"[{DAEMON_NAME}] Initializing Domain Autonomous Entity MONitoring")
 self.logger.info(f"[{DAEMON_NAME}] Configuration: {json.dumps(config_summary)}")
-self.logger.info(f"[{DAEMON_NAME}] ✅ Initialization complete")
+self.logger.info(f"[{DAEMON_NAME}] [OK] Initialization complete")
 
 # Start
-self.logger.info(f"[{DAEMON_NAME}] 🚀 Starting autonomous operation")
+self.logger.info(f"[{DAEMON_NAME}] [ROCKET] Starting autonomous operation")
 self.logger.info(f"[{DAEMON_NAME}] Monitoring: {domain_description}")
 self.logger.info(f"[{DAEMON_NAME}] Check interval: {interval_seconds}s")
 
 # Stop
-self.logger.info(f"[{DAEMON_NAME}] 🛑 Stopping autonomous operation")
+self.logger.info(f"[{DAEMON_NAME}] [STOP] Stopping autonomous operation")
 self.logger.info(f"[{DAEMON_NAME}] Uptime: {uptime_seconds}s")
 self.logger.info(f"[{DAEMON_NAME}] Operations completed: {operation_count}")
-self.logger.info(f"[{DAEMON_NAME}] ✅ Shutdown complete")
+self.logger.info(f"[{DAEMON_NAME}] [OK] Shutdown complete")
 ```
 
 **Rationale**: Cardiovascular system must have clear heartbeat start/stop monitoring.
@@ -627,13 +627,13 @@ HEALTH_THRESHOLDS = {
 
 Every DAEMON MUST implement:
 
-1. ✅ Lifecycle logging (init, start, stop)
-2. ✅ Decision path logging (all autonomous decisions)
-3. ✅ Cost tracking (tokens, LLM calls, estimated USD)
-4. ✅ Performance metrics (duration, throughput, success rate)
-5. ✅ Error handling with context
-6. ✅ Health checks every monitoring cycle
-7. ✅ Semantic conventions (OpenTelemetry-aligned)
+1. [OK] Lifecycle logging (init, start, stop)
+2. [OK] Decision path logging (all autonomous decisions)
+3. [OK] Cost tracking (tokens, LLM calls, estimated USD)
+4. [OK] Performance metrics (duration, throughput, success rate)
+5. [OK] Error handling with context
+6. [OK] Health checks every monitoring cycle
+7. [OK] Semantic conventions (OpenTelemetry-aligned)
 
 ### 9.2 DAEMON Base Class Template
 
@@ -695,7 +695,7 @@ class DAEMONBase:
             self.logger.warning(f"[{self.daemon_name}] Already active")
             return
 
-        self.logger.info(f"[{self.daemon_name}] 🚀 Starting autonomous operation")
+        self.logger.info(f"[{self.daemon_name}] [ROCKET] Starting autonomous operation")
         self.logger.info(f"[{self.daemon_name}] Monitoring: {self.domain}")
         self.logger.info(f"[{self.daemon_name}] Check interval: {self.config['check_interval']}s")
 
@@ -709,7 +709,7 @@ class DAEMONBase:
         )
         self.monitoring_thread.start()
 
-        self.logger.info(f"[{self.daemon_name}] ✅ Autonomous operation started")
+        self.logger.info(f"[{self.daemon_name}] [OK] Autonomous operation started")
 
     def stop(self):
         """Stop DAEMON with full lifecycle logging"""
@@ -719,7 +719,7 @@ class DAEMONBase:
 
         start_time = time.time()
 
-        self.logger.info(f"[{self.daemon_name}] 🛑 Stopping autonomous operation")
+        self.logger.info(f"[{self.daemon_name}] [STOP] Stopping autonomous operation")
 
         # Signal stop
         self.active = False
@@ -734,7 +734,7 @@ class DAEMONBase:
         self.logger.info(f"[{self.daemon_name}] Uptime: {uptime:.1f}s")
         self.logger.info(f"[{self.daemon_name}] Operations completed: {self.operation_count}")
         self.logger.info(f"[{self.daemon_name}] Total tokens used: {self.cost_tracker.total_tokens}")
-        self.logger.info(f"[{self.daemon_name}] ✅ Shutdown complete")
+        self.logger.info(f"[{self.daemon_name}] [OK] Shutdown complete")
 
     def health_check(self) -> HealthStatus:
         """WSP 91 compliant health check"""
@@ -928,11 +928,11 @@ def verify_wsp91_compliance(daemon_instance) -> ComplianceReport:
 
 WSP 91 establishes DAEMON (Domain Autonomous Entity MONitoring) as the **cardiovascular system of FoundUps**, with comprehensive observability standards ensuring:
 
-1. ✅ **Full traceability**: Every decision, action, and outcome logged
-2. ✅ **Cost transparency**: Token usage, LLM calls, and costs tracked
-3. ✅ **Self-improvement visibility**: What was learned and whether it worked
-4. ✅ **Health monitoring**: Vital signs like a cardiovascular system
-5. ✅ **Industry alignment**: OpenTelemetry GenAI best practices (2024-2025)
+1. [OK] **Full traceability**: Every decision, action, and outcome logged
+2. [OK] **Cost transparency**: Token usage, LLM calls, and costs tracked
+3. [OK] **Self-improvement visibility**: What was learned and whether it worked
+4. [OK] **Health monitoring**: Vital signs like a cardiovascular system
+5. [OK] **Industry alignment**: OpenTelemetry GenAI best practices (2024-2025)
 
 **The cardiovascular principle**: Just as we monitor heart rate, blood pressure, and oxygen levels in biological systems, we must monitor operations, costs, and effectiveness in autonomous agent systems.
 

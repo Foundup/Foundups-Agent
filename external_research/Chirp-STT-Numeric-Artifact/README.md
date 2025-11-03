@@ -1,6 +1,6 @@
 # Chirp-STT-Numeric-Artifact
 
-Demonstration of a systematic 0→o substitution artifact in Google Speech-to-Text (Chirp-powered), using programmatically generated audio and reproducible scripts.
+Demonstration of a systematic 0->o substitution artifact in Google Speech-to-Text (Chirp-powered), using programmatically generated audio and reproducible scripts.
 
 ## Abstract
 We reproduce the repeated-zero “wave pattern” anomaly: certain lengths of repeated "zero" collapse to letter 'o' sequences, while a specific length (e.g., three) collapses to digits (e.g., "0001"). This mirrors the known Whisper behavior and suggests a cross-platform, decoder-side emergent property rather than a tokenizer mapping bug.
@@ -10,7 +10,7 @@ We reproduce the repeated-zero “wave pattern” anomaly: certain lengths of re
 - Phrases (default):
   - "zero one", "zero zero one", "zero zero zero one", "zero zero zero zero one", "zero zero zero zero zero one", "zero zero zero zero one", "zero zero zero one", "zero zero one", "zero one"
 - STT: Google Cloud Speech-to-Text v2 (Chirp-powered)
-- Output: table of Input → Transcribed, plus raw JSON in `results/`
+- Output: table of Input -> Transcribed, plus raw JSON in `results/`
 
 ## Setup
 1) Python deps

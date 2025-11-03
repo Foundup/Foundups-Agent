@@ -4,7 +4,7 @@
 This playbook replaces strategic roadmaps with **actionable operational guidance** for 0102.
 Based on 012's observation: "Roadmap is really for 012, 0102 needs operational checklists."
 
-## 🎯 Before ANY Code Changes
+## [TARGET] Before ANY Code Changes
 
 ### 1. MANDATORY Pre-Code Checklist
 ```bash
@@ -29,12 +29,12 @@ python holo_index.py --search "duplicate [module]"         # Duplication warning
 cat holo_index/logs/telemetry/*.jsonl | grep "module_status"
 ```
 
-## 📊 Understanding HoloIndex Output
+## [DATA] Understanding HoloIndex Output
 
 ### Clean Output Structure (NEW)
 ```
 [SUMMARY]
-  - Search: "your query" → X code hits, Y WSP docs
+  - Search: "your query" -> X code hits, Y WSP docs
   - Modules flagged: module1 (WSP 62), module2 (WSP 49)
 
 [TODO]
@@ -53,7 +53,7 @@ cat holo_index/logs/telemetry/*.jsonl | grep "module_status"
 - **TODO**: EXACTLY what you need to do (numbered priority list)
 - **DETAILS**: Evidence backing the TODOs (use --verbose flag)
 
-## 🔧 Common Tasks
+## [TOOL] Common Tasks
 
 ### Task: "I need to add a new feature"
 1. **Search First**
@@ -61,8 +61,8 @@ cat holo_index/logs/telemetry/*.jsonl | grep "module_status"
    python holo_index.py --search "[feature name]"
    ```
 2. **Check Results**
-   - If similar exists → Enhance it (don't create new)
-   - If nothing exists → Check which module should own it
+   - If similar exists -> Enhance it (don't create new)
+   - If nothing exists -> Check which module should own it
 3. **Read Module Docs**
    - Open README.md and INTERFACE.md for target module
 4. **Write Tests First**
@@ -134,7 +134,7 @@ cat holo_index/logs/telemetry/*.jsonl | grep "module_status"
    - Document that you added missing docs
    - Reference WSP 22 compliance
 
-## 📈 Telemetry & Learning
+## [UP] Telemetry & Learning
 
 ### Where Telemetry Lives
 ```
@@ -161,7 +161,7 @@ grep "module_status.*critical" holo_index/logs/telemetry/*.jsonl
 grep "doc_read" holo_index/logs/telemetry/*.jsonl | wc -l
 ```
 
-## ⚠️ Critical Rules
+## [U+26A0]️ Critical Rules
 
 ### NEVER Do These
 1. **NEVER create new file without searching first**
@@ -177,7 +177,7 @@ grep "doc_read" holo_index/logs/telemetry/*.jsonl | wc -l
 4. **ALWAYS write tests for new features**
 5. **ALWAYS follow existing patterns in module**
 
-## 🚀 Quick Commands Reference
+## [ROCKET] Quick Commands Reference
 
 ```bash
 # Before coding
@@ -193,7 +193,7 @@ python holo_index.py --validate "module"          # Validate changes
 grep "module_status" logs/telemetry/*.jsonl       # Check telemetry
 ```
 
-## 📝 ModLog Template
+## [NOTE] ModLog Template
 
 When updating ModLog.md, use this format:
 ```markdown
@@ -206,19 +206,19 @@ When updating ModLog.md, use this format:
 - Test coverage added/modified
 ```
 
-## 🔄 Feedback Loop
+## [REFRESH] Feedback Loop
 
-1. **Run HoloIndex** → Get TODOs
-2. **Complete TODOs** → Update docs
-3. **Check Telemetry** → See patterns
-4. **Improve Process** → Learn from telemetry
+1. **Run HoloIndex** -> Get TODOs
+2. **Complete TODOs** -> Update docs
+3. **Check Telemetry** -> See patterns
+4. **Improve Process** -> Learn from telemetry
 
 ---
 
 **Remember**: This playbook is for OPERATIONAL TASKS. For strategic planning, see ROADMAP.md.
 For WSP compliance details, see WSP documentation.
 
-## 🤝 Real-Time Collaboration (Breadcrumb Rally)
+## [HANDSHAKE] Real-Time Collaboration (Breadcrumb Rally)
 - Every Holo run writes JSONL events to `holo_index/logs/telemetry/holo-<timestamp>.jsonl`.
 - To follow live hand-offs: `python -m holo_index.utils.log_follower --telemetry` (streams new events as they append).
 - Use event types:

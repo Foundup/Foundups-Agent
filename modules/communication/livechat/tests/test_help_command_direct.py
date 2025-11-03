@@ -17,7 +17,7 @@ def test_help_detection():
     assert processor._check_whack_command("/HELP") == True
     assert processor._check_whack_command("  /help  ") == True
     
-    print("✅ /help detection works!")
+    print("[OK] /help detection works!")
 
 def test_help_processing():
     """Test that /help generates a response"""
@@ -42,7 +42,7 @@ def test_help_processing():
     print(f"Processed message: {processed}")
     
     assert processed.get("has_whack_command") == True
-    print("✅ /help is detected as whack command!")
+    print("[OK] /help is detected as whack command!")
     
     # Now test response generation
     import asyncio
@@ -55,7 +55,7 @@ def test_help_processing():
         return response
     
     response = asyncio.run(test_response())
-    print(f"✅ /help generates response: {response}")
+    print(f"[OK] /help generates response: {response}")
 
 if __name__ == "__main__":
     test_help_detection()

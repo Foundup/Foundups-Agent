@@ -1,0 +1,347 @@
+{
+  "module_id": "foundups_vision_dae",
+  "module_name": "FoundUps Vision DAE",
+  "version": "0.4.0",
+  "sprint": "Sprint 5 - Complete Cardiovascular System",
+  "domain": "infrastructure",
+  "governing_wsps": [
+    "WSP_77",
+    "WSP_80",
+    "WSP_72",
+    "WSP_60",
+    "WSP_90"
+  ],
+  "mcp_servers": [
+    {
+      "name": "vision_dae_mcp_server",
+      "endpoint": "mcp://local/vision_dae",
+      "protocol_version": "1.0",
+      "description": "MCP server providing Vision DAE telemetry summaries and worker state access",
+      "implementation": "modules/infrastructure/dae_infrastructure/foundups_vision_dae/mcp/vision_mcp_server.py",
+      "status": "operational",
+      "tools": [
+        {
+          "name": "vision_dae.get_latest_summary",
+          "description": "Get the most recent Vision DAE run history summary",
+          "parameters": [],
+          "returns": {
+            "success": "boolean",
+            "summary": "object - Full summary JSON",
+            "timestamp": "string - ISO8601 UTC",
+            "source": "string - module_memory or docs_backup",
+            "file_path": "string",
+            "size_bytes": "integer"
+          },
+          "example": {
+            "success": true,
+            "summary": {
+              "mission": "selenium_run_history",
+              "raw_session_count": 42,
+              "timespan_days": 7,
+              "aggregates": {
+                "total_urls": 15,
+                "unique_domains": 8
+              }
+            },
+            "timestamp": "2025-10-19T20:00:00Z",
+            "source": "module_memory",
+            "file_path": "modules/infrastructure/dae_infrastructure/foundups_vision_dae/memory/session_summaries/latest_run_history.json",
+            "size_bytes": 1024
+          }
+        },
+        {
+          "name": "vision_dae.list_recent_summaries",
+          "description": "List recent Vision DAE summaries with metadata (paginated)",
+          "parameters": [
+            {
+              "name": "limit",
+              "type": "integer",
+              "default": 10,
+              "description": "Maximum number of summaries to return"
+            }
+          ],
+          "returns": {
+            "success": "boolean",
+            "summaries": "array of summary metadata objects",
+            "total_found": "integer",
+            "limit_applied": "integer",
+            "scanned_directories": "array of strings"
+          },
+          "example": {
+            "success": true,
+            "summaries": [
+              {
+                "filename": "run_history_20251019_200000.json",
+                "timestamp": "2025-10-19T20:00:00Z",
+                "size_bytes": 1024,
+                "source": "module_memory",
+                "session_count": 42,
+                "timespan_days": 7,
+                "file_path": "modules/.../session_summaries/run_history_20251019_200000.json"
+              }
+            ],
+            "total_found": 15,
+            "limit_applied": 10
+          }
+        },
+        {
+          "name": "vision_dae.stream_events",
+          "description": "Stream Vision DAE browser telemetry events from JSONL session bundles",
+          "parameters": [
+            {
+              "name": "session_index",
+              "type": "integer",
+              "optional": true,
+              "description": "Session bundle index to stream (default: latest)"
+            },
+            {
+              "name": "limit",
+              "type": "integer",
+              "default": 50,
+              "description": "Maximum number of events to return"
+            }
+          ],
+          "returns": {
+            "success": "boolean",
+            "events": "array of telemetry event objects",
+            "session_index": "integer",
+            "event_count": "integer",
+            "session_file": "string"
+          },
+          "implementation_status": "operational",
+          "notes": "Implemented in Sprint 4 - streams JSONL telemetry from holo_index/telemetry/vision_dae/"
+        },
+        {
+          "name": "vision_dae.stream_live_telemetry",
+          "description": "Stream live telemetry events in real-time for immediate 0102 observation and recursive improvement",
+          "parameters": [
+            {
+              "name": "max_events",
+              "type": "integer",
+              "default": 100,
+              "description": "Maximum number of events to collect before returning"
+            },
+            {
+              "name": "timeout_seconds",
+              "type": "integer",
+              "default": 30,
+              "description": "How long to wait for events before timing out"
+            }
+          ],
+          "returns": {
+            "success": "boolean",
+            "events_collected": "integer",
+            "events": "array of live telemetry event objects",
+            "collection_duration": "number - seconds spent collecting",
+            "max_events_requested": "integer",
+            "timeout_seconds": "integer",
+            "telemetry_source": "string - log file path",
+            "live_streaming": "boolean",
+            "collection_method": "string"
+          },
+          "implementation_status": "operational",
+          "notes": "Implemented in Sprint 5 - enables real-time cardiovascular observability for 0102 recursive improvement"
+        },
+        {
+          "name": "vision_dae.get_worker_state",
+          "description": "Get current Vision DAE worker checkpoint state for graceful restart",
+          "parameters": [],
+          "returns": {
+            "success": "boolean",
+            "worker_state": {
+              "browser_offset": "integer - Last byte offset in browser log",
+              "batch_index": "integer - Last session batch index",
+              "last_session_id": "integer - Last processed session ID from SQLite"
+            },
+            "checkpoint_timestamp": "string - ISO8601 UTC or null",
+            "checkpoint_files": "object - Paths to checkpoint files"
+          },
+          "example": {
+            "success": true,
+            "worker_state": {
+              "browser_offset": 1024,
+              "batch_index": 5,
+              "last_session_id": 42
+            },
+            "checkpoint_timestamp": "2025-10-19T20:00:00Z",
+            "checkpoint_files": {
+              "browser_offset": "memory/worker_state/browser_telemetry_offset.txt",
+              "batch_index": "memory/worker_state/session_batch_index.txt",
+              "last_session_id": "memory/worker_state/last_session_id.txt"
+            }
+          }
+        },
+        {
+          "name": "vision_dae.update_worker_checkpoint",
+          "description": "Update Vision DAE worker checkpoint for graceful restart",
+          "parameters": [
+            {
+              "name": "browser_offset",
+              "type": "integer",
+              "optional": true,
+              "description": "New byte offset in browser log"
+            },
+            {
+              "name": "batch_index",
+              "type": "integer",
+              "optional": true,
+              "description": "New session batch index"
+            },
+            {
+              "name": "last_session_id",
+              "type": "integer",
+              "optional": true,
+              "description": "New last processed session ID"
+            }
+          ],
+          "returns": {
+            "success": "boolean",
+            "updated_fields": "array of strings",
+            "timestamp": "string - ISO8601 UTC"
+          }
+        },
+        {
+          "name": "vision_dae.cleanup_old_summaries",
+          "description": "Delete session summaries older than retention period (protects latest_run_history.json)",
+          "parameters": [
+            {
+              "name": "days_to_keep",
+              "type": "integer",
+              "default": 30,
+              "description": "Retention period in days"
+            }
+          ],
+          "returns": {
+            "success": "boolean",
+            "deleted_count": "integer",
+            "kept_count": "integer",
+            "deleted_files": "array of strings",
+            "retention_days": "integer",
+            "cutoff_timestamp": "string - ISO8601 UTC"
+          }
+        },
+        {
+          "name": "vision_dae.cleanup_old_dispatches",
+          "description": "Delete UI-TARS dispatch audit files older than retention period",
+          "parameters": [
+            {
+              "name": "days_to_keep",
+              "type": "integer",
+              "default": 14,
+              "description": "Retention period in days"
+            }
+          ],
+          "returns": {
+            "success": "boolean",
+            "deleted_count": "integer",
+            "kept_count": "integer",
+            "deleted_files": "array of strings",
+            "retention_days": "integer",
+            "cutoff_timestamp": "string - ISO8601 UTC"
+          }
+        }
+      ]
+    }
+  ],
+  "integration_points": {
+    "qwen_gemma": {
+      "description": "Qwen/Gemma pattern learning from Vision DAE summaries",
+      "endpoints": [
+        "vision_dae.get_latest_summary",
+        "vision_dae.list_recent_summaries"
+      ],
+      "usage": "Qwen analyzes 7-day run history summaries for strategic insights, Gemma performs fast classification on session bundles"
+    },
+    "ui_tars": {
+      "description": "UI-TARS desktop automation integration",
+      "dispatch_inbox": "E:/HoloIndex/models/ui-tars-1.5/telemetry/inbox/",
+      "audit_trail": "modules/infrastructure/dae_infrastructure/foundups_vision_dae/memory/ui_tars_dispatches/",
+      "retention": "14 days",
+      "status": "operational",
+      "features": [
+        "Vision summary dispatching to UI-TARS inbox",
+        "LinkedIn post scheduling from insights",
+        "Automated content generation (performance, errors, trends)",
+        "Business day scheduling logic"
+      ]
+    },
+    "social_media_orchestrator": {
+      "description": "Social Media DAE LinkedIn posting integration",
+      "scheduler": "modules/platform_integration/social_media_orchestrator/src/ui_tars_scheduler.py",
+      "status": "operational",
+      "flow": "Vision DAE insights → ScheduledPost → UI-TARS scheduler → LinkedIn automation"
+    }
+  },
+  "telemetry_outputs": {
+    "jsonl_session_bundles": {
+      "location": "holo_index/telemetry/vision_dae/",
+      "format": "JSONL (JSON Lines)",
+      "batch_size": 50,
+      "description": "Browser telemetry events aggregated into session files"
+    },
+    "run_history_summaries": {
+      "location": "modules/infrastructure/dae_infrastructure/foundups_vision_dae/memory/session_summaries/",
+      "format": "JSON",
+      "retention": "30 days",
+      "description": "7-day aggregated summaries from SeleniumRunHistoryMission"
+    },
+    "ui_tars_dispatches": {
+      "location": "modules/infrastructure/dae_infrastructure/foundups_vision_dae/memory/ui_tars_dispatches/",
+      "format": "JSON",
+      "retention": "14 days",
+      "description": "Audit trail of summaries forwarded to UI-TARS inbox"
+    },
+    "worker_checkpoints": {
+      "location": "modules/infrastructure/dae_infrastructure/foundups_vision_dae/memory/worker_state/",
+      "format": "Plain text (integers)",
+      "files": [
+        "browser_telemetry_offset.txt",
+        "session_batch_index.txt",
+        "last_session_id.txt"
+      ],
+      "description": "Worker state for graceful daemon restart"
+    }
+  },
+  "test_coverage": {
+    "unit_tests": "tests/test_vision_mcp_server.py",
+    "test_count": 21,
+    "pass_rate": "100%",
+    "test_command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/test_vision_mcp_server.py -v"
+  },
+  "documentation": {
+    "readme": "modules/infrastructure/dae_infrastructure/foundups_vision_dae/README.md",
+    "interface": "modules/infrastructure/dae_infrastructure/foundups_vision_dae/INTERFACE.md",
+    "modlog": "modules/infrastructure/dae_infrastructure/foundups_vision_dae/ModLog.md",
+    "memory_architecture": "modules/infrastructure/dae_infrastructure/foundups_vision_dae/memory/README.md"
+  },
+  "deployment": {
+    "fastmcp_app": {
+      "factory": "create_vision_mcp_app()",
+      "server_command": "uvicorn vision_mcp_server:app --host 0.0.0.0 --port 8000",
+      "status": "ready for deployment"
+    },
+    "standalone_usage": {
+      "import": "from modules.infrastructure.dae_infrastructure.foundups_vision_dae.mcp.vision_mcp_server import VisionMCPServer",
+      "example": "server = VisionMCPServer(); latest = server.get_latest_summary()"
+    }
+  },
+  "future_enhancements": {
+    "completed_sprint_5": [
+      "Complete cardiovascular system with real-time telemetry streaming",
+      "JSONL pattern analysis bridging Pipeline A to Pipeline B",
+      "Automated memory retention management",
+      "Enhanced 0102 recursive improvement capabilities"
+    ],
+    "sprint_5": [
+      "Desktop activity monitoring (window focus, keystroke cadence)",
+      "Voice command triggers (Windows SAPI / Vosk integration)",
+      "Automated remediation flows from summary regression detection"
+    ]
+  },
+  "metadata": {
+    "created": "2025-10-19",
+    "last_updated": "2025-10-19",
+    "maintainer": "0102 Infrastructure Team",
+    "status": "Complete Cardiovascular System - Sprint 5 full telemetry pipeline operational"
+  }
+}

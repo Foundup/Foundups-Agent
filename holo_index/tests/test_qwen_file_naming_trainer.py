@@ -350,7 +350,7 @@ def test_qwen_training():
     print("How Qwen learns (baby 0102 training process):")
     print("  1. Feed WSP 57 naming rules as training corpus")
     print("  2. Provide correct/incorrect examples with explanations")
-    print("  3. Show replacement patterns (WSP_COMPLIANCE → COMPLIANCE_STATUS.md)")
+    print("  3. Show replacement patterns (WSP_COMPLIANCE -> COMPLIANCE_STATUS.md)")
     print("  4. Let Qwen analyze new files using learned patterns")
     print("  5. Store successful fixes in ChromaDB for future reference")
     print()

@@ -7,9 +7,13 @@ Maps old simple_posting_orchestrator API to new core components
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -38,7 +42,7 @@ class MigrationBridge:
     def __init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.new_orchestrator = get_orchestrator()
-        self.logger.info("🌉 Migration bridge initialized - using refactored modules")
+        self.logger.info("[U+1F309] Migration bridge initialized - using refactored modules")
 
     def handle_stream_detected(
         self,
@@ -60,7 +64,7 @@ class MigrationBridge:
         Returns:
             Results dictionary (same format as before)
         """
-        self.logger.info("🔄 Routing through migration bridge to refactored modules")
+        self.logger.info("[REFRESH] Routing through migration bridge to refactored modules")
         return self.new_orchestrator.handle_stream_detected(
             video_id=video_id,
             title=title,
@@ -230,12 +234,12 @@ if not duplicate_mgr.check_if_already_posted(video_id)['already_posted']:
 
 BENEFITS OF REFACTORING:
 ------------------------
-✅ Single Responsibility - Each module does one thing well
-✅ Testability - Easy to write unit tests for each component
-✅ Maintainability - Changes isolated to specific modules
-✅ Reusability - Components can be used independently
-✅ Clarity - 996 lines split into 5 focused modules
-✅ Performance - Same functionality, better organized
+[OK] Single Responsibility - Each module does one thing well
+[OK] Testability - Easy to write unit tests for each component
+[OK] Maintainability - Changes isolated to specific modules
+[OK] Reusability - Components can be used independently
+[OK] Clarity - 996 lines split into 5 focused modules
+[OK] Performance - Same functionality, better organized
 
 NEXT STEPS:
 -----------

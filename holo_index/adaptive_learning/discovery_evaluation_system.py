@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 HoloDAE vs Grep: Comprehensive Evaluation System
 ===============================================
 
@@ -68,7 +85,7 @@ class DiscoveryEvaluationSystem:
 
     Evaluates discovery systems against fundamental principles:
     1. Information Access: Semantic understanding vs raw data
-    2. Decision Quality: Better information → better decisions
+    2. Decision Quality: Better information -> better decisions
     3. Learning Velocity: Self-directed improvement capability
     4. Ecosystem Flow: Cross-boundary knowledge propagation
     5. Autonomous Evolution: Self-organizing adaptation

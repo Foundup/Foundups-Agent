@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 Menu System - User interface components for HoloDAE
 
@@ -18,26 +18,26 @@ class HoloDAEMenuSystem:
     def __init__(self):
         """Initialize the menu system"""
         self.menu_options = {
-            '00': ('🔄 MANUAL INDEX', 'Refresh HoloIndex while 0102 works (--index-all)'),
-            '0': ('🚀 LAUNCH HOLODAE', 'Start Continuous Monitoring (--start-holodae)'),
-            '1': ('🔍 Semantic Search', 'Find existing code before creating (--search)'),
-            '2': ('✅ WSP Compliance Check', 'Validate protocol adherence (--check-module)'),
-            '3': ('🧠 Pattern Coach', 'Prevent behavioral vibecoding patterns (--pattern-coach)'),
-            '4': ('📦 Module Analysis', 'Detect duplicate implementations (--module-analysis)'),
-            '5': ('💊 Health Analysis', 'Check system architectural integrity (--health-check)'),
-            '6': ('👻 Orphan Analysis', 'Find dead code and unused modules (--wsp88)'),
-            '7': ('📊 Performance Metrics', 'View effectiveness scores (--performance-metrics)'),
-            '8': ('🤖 LLM Advisor', 'Get AI-powered guidance (--llm-advisor with search)'),
-            '9': ('👁️ Start Monitoring', 'Toggle continuous operation (--start-holodae)'),
-            '10': ('🧵 Chain-of-Thought Log', 'View AI decision process (--thought-log)'),
-            '11': ('🐌 Slow Mode', 'Enable recursive feedback 2-3s delays (--slow-mode)'),
-            '12': ('🧠 Pattern Memory', 'View learned interventions (--pattern-memory)'),
-            '13': ('🛰 MCP Hook Map', 'Inspect registered connectors & health (--mcp-hooks)'),
-            '14': ('📡 MCP Action Log', 'Review recent MCP tool activity (--mcp-log)'),
-            '15': ('🔧 PID Detective', 'Detect & manage HoloDAE processes'),
-            '16': ('📊 Execution Log Analyzer', 'Process massive logs for HoloDAE improvement'),
-            '17': ('📤 Work Publisher', 'Monitor work completion for auto-publish (--monitor-work)'),
-            '18': ('🧹 UTF-8 Fix', 'Auto-fix UTF-8 violations with Qwen/Gemma (main.py --training-command utf8_fix --targets <scope>)')
+            '00': ('[REFRESH] Manual Index', 'Refresh HoloIndex while 0102 works (--index-all)'),
+            '0': ('[ROCKET] Launch HoloDAE', 'Start continuous monitoring (--start-holodae)'),
+            '1': ('[SEARCH] Semantic Search', 'Find existing code before creating (--search)'),
+            '2': ('[OK] WSP Compliance Check', 'Validate protocol adherence (--check-module)'),
+            '3': ('[AI] Pattern Coach', 'Prevent behavioral vibecoding patterns (--pattern-coach)'),
+            '4': ('[BOX] Module Analysis', 'Detect duplicate implementations (--module-analysis)'),
+            '5': ('[PILL] Health Analysis', 'Check system architectural integrity (--health-check)'),
+            '6': ('[GHOST] Orphan Analysis', 'Find dead code and unused modules (--wsp88)'),
+            '7': ('[DATA] Performance Metrics', 'View effectiveness scores (--performance-metrics)'),
+            '8': ('[BOT] LLM Advisor', 'Get AI-powered guidance (--llm-advisor with search)'),
+            '9': ('[EYE] Start Monitoring', 'Toggle continuous operation (--start-holodae)'),
+            '10': ('[COG] Chain-of-Thought Log', 'View AI decision process (--thought-log)'),
+            '11': ('[SLOW] Slow Mode', 'Enable recursive feedback 2-3s delays (--slow-mode)'),
+            '12': ('[MEMORY] Pattern Memory', 'View learned interventions (--pattern-memory)'),
+            '13': ('[HOOK] MCP Hook Map', 'Inspect registered connectors and health (--mcp-hooks)'),
+            '14': ('[LOG] MCP Action Log', 'Review recent MCP tool activity (--mcp-log)'),
+            '15': ('[TOOL] PID Detective', 'Detect & manage HoloDAE processes'),
+            '16': ('[DATA] Execution Log Analyzer', 'Process massive logs for HoloDAE improvement'),
+            '17': ('[PUBLISH] Work Publisher', 'Monitor work completion for auto-publish (--monitor-work)'),
+            '18': ('[UTF8] UTF-8 Fix', 'Auto-fix UTF-8 violations with Qwen/Gemma (main.py --training-command utf8_fix --targets <scope>)')
         }
 
     def show_main_menu(self) -> None:
@@ -45,39 +45,39 @@ class HoloDAEMenuSystem:
         print("\n" + "=" * 60)
         print("HoloDAE Code Intelligence & WSP Compliance Observatory")
         print("=" * 60)
-        print("0. Launch HoloDAE (Autonomous Monitoring)       | --start-holodae")
+        print("0. [ROCKET] Launch HoloDAE (Autonomous Monitoring) | --start-holodae")
         print()
         print("CORE PREVENTION (Stay out of vibecoding)")
-        print("1. Semantic Search                              | --search")
-        print("2. WSP Compliance Check                         | --check-module")
-        print("3. Pattern Coach                                | --pattern-coach")
-        print("4. Module Analysis                              | --module-analysis")
+        print("1. [SEARCH] Semantic Search                        | --search")
+        print("2. [OK] WSP Compliance Check                       | --check-module")
+        print("3. [AI] Pattern Coach                              | --pattern-coach")
+        print("4. [BOX] Module Analysis                           | --module-analysis")
         print()
         print("SUPPORT SYSTEMS (Diagnostics)")
-        print("5. Health Analysis                              | --health-check")
-        print("6. Orphan Analysis                              | --wsp88")
-        print("7. Performance Metrics                          | --performance-metrics")
-        print("8. LLM Advisor (with search)                    | --llm-advisor")
+        print("5. [PILL] Health Analysis                          | --health-check")
+        print("6. [GHOST] Orphan Analysis                         | --wsp88")
+        print("7. [DATA] Performance Metrics                      | --performance-metrics")
+        print("8. [BOT] LLM Advisor (with search)                 | --llm-advisor")
         print()
         print("CONTINUOUS OBSERVABILITY")
-        print("9. Start Monitoring                             | --start-holodae")
-        print("10. Chain-of-Thought Log                        | --thought-log")
-        print("11. Slow Mode                                   | --slow-mode")
-        print("12. Pattern Memory                              | --pattern-memory")
+        print("9. [EYE] Start Monitoring                          | --start-holodae")
+        print("10. [COG] Chain-of-Thought Log                     | --thought-log")
+        print("11. [SLOW] Slow Mode                               | --slow-mode")
+        print("12. [MEMORY] Pattern Memory                        | --pattern-memory")
         print()
         print("MCP RESEARCH BRIDGE")
-        print("13. MCP Hook Map                                | --mcp-hooks")
-        print("14. MCP Action Log                              | --mcp-log")
+        print("13. [HOOK] MCP Hook Map                            | --mcp-hooks")
+        print("14. [LOG] MCP Action Log                           | --mcp-log")
         print()
         print("SYSTEM CONTROLS")
-        print("17. Work Publisher (Auto Git/Social)            | --monitor-work")
+        print("17. [PUBLISH] Work Publisher (Auto Git/Social)     | --monitor-work")
         print()
         print("QWEN/GEMMA AUTONOMOUS TRAINING")
-        print("18. UTF-8 Fix (Autonomous Remediation)          | main.py --training-command utf8_fix --targets <scope>")
+        print("18. [UTF8] UTF-8 Fix (Autonomous Remediation)      | main.py --training-command utf8_fix --targets <scope>")
         print()
         print("98. Exit")
         print("------------------------------------------------------------")
-        print("00. Manual Index Refresh                        | --index-all")
+        print("00. [REFRESH] Manual Index Refresh                 | --index-all")
         print("=" * 60)
     def show_sprint_dashboard(self, component_status: Optional[Dict[str, Any]] = None) -> None:
         """Display the WSP 37 sprint dashboard with component status"""
@@ -104,14 +104,14 @@ class HoloDAEMenuSystem:
             status_icon = status_info.get('status_icon', '[UNKNOWN]')
             effectiveness = status_info.get('effectiveness', 0.0)
 
-            print(f"{status_icon} {comp_name} → {comp_desc}")
+            print(f"{status_icon} {comp_name} -> {comp_desc}")
             print(f"   [STATS] Effectiveness: {effectiveness:.2f}")
             print()
 
     def show_status_summary(self, monitoring_state: Optional[Dict[str, Any]] = None) -> None:
         """Show a compact status summary"""
         print("[DICE] WSP 37 CUBE SYSTEM: [CRITICAL] Critical [CORE] Core [ENHANCED] Enhanced [COMPLETE] Complete [EXPERIMENTAL] Experimental")
-        print("[TARGET] SPRINT PRIORITY: RED → ORANGE → YELLOW → GREEN → BLUE")
+        print("[TARGET] SPRINT PRIORITY: RED -> ORANGE -> YELLOW -> GREEN -> BLUE")
 
         if monitoring_state:
             is_active = monitoring_state.get('is_active', False)
@@ -197,7 +197,7 @@ class StatusDisplay:
         last_change = state.get('last_change_time', 'never')
 
         if idle_minutes > 0:
-            print(f"[{now}] [HOLODAE] ⏳ idle {idle_minutes}m – watching {watched_paths} paths (last change {last_change})")
+            print(f"[{now}] [HOLODAE] 竢ｳ idle {idle_minutes}m 窶・watching {watched_paths} paths (last change {last_change})")
         else:
             print(f"[{now}] [HOLODAE] [ACTIVE] monitoring {watched_paths} paths")
 

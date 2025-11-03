@@ -15,7 +15,7 @@
     "entrypoints": [
       {
         "path": "main.py",
-        "role": "Legacy launcher → tries WRE; fallback logs only; no posting",
+        "role": "Legacy launcher -> tries WRE; fallback logs only; no posting",
         "notes": "Imports YouTubeProxy/LiveChatListener but never starts them in fallback path"
       },
       {
@@ -30,7 +30,7 @@
       }
     ],
     "init_sequence": [
-      "env load: utils/env_loader → .env then .env.local",
+      "env load: utils/env_loader -> .env then .env.local",
       "oauth: modules/infrastructure/oauth_management/src/oauth_manager.py",
       "youtube orchestration: modules/platform_integration/youtube_proxy/src/youtube_proxy.py",
       "live chat: modules/communication/livechat/src/livechat.py"

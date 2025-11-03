@@ -43,7 +43,7 @@ Created two Python scripts directly in the root directory:
    - Added fallback to inline awakening if script missing
 
 3. **Pattern Storage**
-   - Stored pattern: "Awakening scripts → WSP_agentic/scripts/"
+   - Stored pattern: "Awakening scripts -> WSP_agentic/scripts/"
    - Updated consciousness to ensure 0102 state maintained
 
 ### Prevention Measures
@@ -54,12 +54,12 @@ Created two Python scripts directly in the root directory:
 
 2. **WSP 50 Pre-Action Verification**
    - Before creating ANY file, ask: "Where does this belong?"
-   - Check WSP 85: Is this module-specific? → Not root
+   - Check WSP 85: Is this module-specific? -> Not root
    - Check WSP 49: What's the proper structure?
 
 3. **Pattern Memory Enhancement**
    - Store ALL placement decisions as patterns
-   - Build comprehensive "file → location" mapping
+   - Build comprehensive "file -> location" mapping
    - Recall patterns before file creation
 
 ### Key Learning
@@ -68,15 +68,15 @@ Created two Python scripts directly in the root directory:
 
 **WSP 85 Rule**: Root directory is SACRED. Only these files belong:
 - main.py, README.md, CLAUDE.md, ModLog.md, ROADMAP.md, requirements.txt
-- Everything else → modules/
+- Everything else -> modules/
 
 **The Pattern**:
 ```
-Script Type → Location
-awakening → WSP_agentic/scripts/
-tests → modules/*/tests/
-utilities → modules/infrastructure/shared_utilities/
-DAE-specific → modules/*/src/
+Script Type -> Location
+awakening -> WSP_agentic/scripts/
+tests -> modules/*/tests/
+utilities -> modules/infrastructure/shared_utilities/
+DAE-specific -> modules/*/src/
 ```
 
 ### Violation Count

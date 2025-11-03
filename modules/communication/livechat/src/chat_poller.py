@@ -50,7 +50,7 @@ class ChatPoller:
             List of new chat messages
         """
         try:
-            logger.debug(f"🔄 Polling chat messages for live chat ID: {self.live_chat_id}")
+            logger.debug(f"[REFRESH] Polling chat messages for live chat ID: {self.live_chat_id}")
             
             response = await self._make_api_call()
             
@@ -84,7 +84,7 @@ class ChatPoller:
                         if self.first_poll:
                             logger.debug(f"⏭️ Skipping historical timeout: {target_name}")
                         else:
-                            logger.info(f"🔨 TIMEOUT EVENT DETECTED! Target: {target_name} by {moderator_name}")
+                            logger.info(f"[U+1F528] TIMEOUT EVENT DETECTED! Target: {target_name} by {moderator_name}")
                             messages.append({
                                 "type": "timeout_event",
                                 "deleted_text": deleted_text,
@@ -120,11 +120,11 @@ class ChatPoller:
                         current_time = time.time()
                         if dedup_key in self.event_dedup_window:
                             if current_time - self.event_dedup_window[dedup_key] < 0.5:
-                                logger.debug(f"⏭️ Skipping duplicate ban: {mod_name} → {target_name} (exact same timestamp)")
+                                logger.debug(f"⏭️ Skipping duplicate ban: {mod_name} -> {target_name} (exact same timestamp)")
                                 continue
                             else:
                                 # Same target but different time - this is a multi-whack!
-                                logger.info(f"🔥 RAPID TIMEOUT: {mod_name} → {target_name} again!")
+                                logger.info(f"[U+1F525] RAPID TIMEOUT: {mod_name} -> {target_name} again!")
                         
                         # Mark as seen
                         if event_id:
@@ -143,7 +143,7 @@ class ChatPoller:
                             duration = ban_details.get("banDurationSeconds", 0)
                             is_perm = ban_details.get("banType") == "permanent"
                             ban_type = "PERMABAN" if is_perm else f"{duration}s timeout"
-                            logger.info(f"🎯 FRAG: {mod_name} → {target_name} ({ban_type})")
+                            logger.info(f"[TARGET] FRAG: {mod_name} -> {target_name} ({ban_type})")
                             
                             # Track unique targets for multi-whack detection
                             if not hasattr(self, 'recent_targets'):
@@ -157,10 +157,10 @@ class ChatPoller:
                             # Log if this is part of a multi-whack
                             target_count = len(self.recent_targets[mod_targets_key])
                             if target_count > 1:
-                                logger.info(f"🔥 MULTI-WHACK: {mod_name} has {target_count} frags in 10s!")
+                                logger.info(f"[U+1F525] MULTI-WHACK: {mod_name} has {target_count} frags in 10s!")
                             
                             # Debug: Show all frags in this window
-                            logger.debug(f"📊 {mod_name}'s 10s window: {self.recent_targets[mod_targets_key]}")
+                            logger.debug(f"[DATA] {mod_name}'s 10s window: {self.recent_targets[mod_targets_key]}")
                             messages.append({
                                 "type": "ban_event",
                                 "target_name": target_name,
@@ -192,9 +192,9 @@ class ChatPoller:
                         if self.first_poll:
                             logger.debug(f"⏭️ Skipping historical Super Chat from {donor_name}")
                         else:
-                            logger.info(f"💰 SUPER CHAT: {donor_name} donated {amount_display} ({currency}) - Tier {tier}")
+                            logger.info(f"[U+1F4B0] SUPER CHAT: {donor_name} donated {amount_display} ({currency}) - Tier {tier}")
                             if user_comment:
-                                logger.info(f"💬 Super Chat message: {user_comment}")
+                                logger.info(f"[U+1F4AC] Super Chat message: {user_comment}")
 
                             messages.append({
                                 "type": "super_chat_event",
@@ -223,20 +223,20 @@ class ChatPoller:
                 self.first_poll = False
                 self.connection_time = time.time()
                 if messages:
-                    logger.info(f"📊 Ignoring {len(messages)} historical events from before connection")
+                    logger.info(f"[DATA] Ignoring {len(messages)} historical events from before connection")
             
             if messages:
-                logger.debug(f"📨 Received {len(messages)} new items")
+                logger.debug(f"[U+1F4E8] Received {len(messages)} new items")
             else:
-                logger.debug("📭 No new messages")
+                logger.debug("[U+1F4ED] No new messages")
                 
             return messages
             
         except googleapiclient.errors.HttpError as e:
-            logger.error(f"❌ API Error polling messages: {e}")
+            logger.error(f"[FAIL] API Error polling messages: {e}")
             raise  # Let the caller handle auth errors
         except Exception as e:
-            logger.error(f"❌ Unexpected error polling chat: {e}")
+            logger.error(f"[FAIL] Unexpected error polling chat: {e}")
             await self._handle_polling_error()
             return []
     
@@ -304,4 +304,4 @@ class ChatPoller:
         """Reset polling state (useful after reconnection)."""
         self.next_page_token = None
         self.error_backoff_seconds = 5
-        logger.info("🔄 Polling state reset") 
+        logger.info("[REFRESH] Polling state reset") 

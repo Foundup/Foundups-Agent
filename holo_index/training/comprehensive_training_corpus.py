@@ -11,7 +11,7 @@ Collects training data from ALL sources in the system:
 6. Git history - Commit messages, file renames, fixes
 
 Purpose: Train Gemma to understand the ENTIRE system like 0102 does
-Architecture: Gemma assists Qwen → Together they become DAE for Rubik's Cube
+Architecture: Gemma assists Qwen -> Together they become DAE for Rubik's Cube
 
 WSP Compliance: WSP 90 (UTF-8), WSP 49 (Module Structure), WSP 22 (ModLog)
 """
@@ -71,7 +71,7 @@ class ComprehensiveTrainingCorpus:
         # Priority 2: ModLog files (module change history)
         self._collect_modlogs()
 
-        # Priority 3: WSP violations (violation → fix patterns)
+        # Priority 3: WSP violations (violation -> fix patterns)
         self._collect_wsp_violations()
 
         # Priority 4: Chat logs (conversation memory)
@@ -118,8 +118,8 @@ class ComprehensiveTrainingCorpus:
             for i, line in enumerate(lines):
                 # Qwen decision markers
                 if any(marker in line for marker in [
-                    "🤖🧠 [QWEN-SCORE]",
-                    "🤖🧠 [QWEN-DECISION]",
+                    "[BOT][AI] [QWEN-SCORE]",
+                    "[BOT][AI] [QWEN-DECISION]",
                     "[QWEN-INIT]",
                     "[QWEN-ROUTING]"
                 ]):
@@ -192,7 +192,7 @@ class ComprehensiveTrainingCorpus:
 
     def _collect_wsp_violations(self):
         """
-        Collect WSP_MODULE_VIOLATIONS.md - Violation → Fix patterns.
+        Collect WSP_MODULE_VIOLATIONS.md - Violation -> Fix patterns.
 
         This teaches Gemma what NOT to do and how to fix violations.
         """

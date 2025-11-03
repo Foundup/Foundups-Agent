@@ -1,0 +1,1 @@
+{"mission": "selenium_run_history", "summary_ready": true, "timestamp": "2025-10-19T11:31:15.360385+00:00", "raw_session_count": 42, "timespan_days": 7, "aggregates": {"total_urls": 15, "unique_domains": 8}, "patterns": ["frequent_navigation", "form_interaction"]}

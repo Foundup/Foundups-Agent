@@ -54,7 +54,7 @@ with open("memory/git_posted_commits.json", "w", encoding="utf-8") as f:
 with open("memory/git_post_log.json", "w", encoding="utf-8") as f:
     json.dump(test_log, f, indent=2)
 
-print("\n✅ Created test data files")
+print("\n[OK] Created test data files")
 print("   - memory/git_posted_commits.json")
 print("   - memory/git_post_log.json")
 
@@ -71,4 +71,4 @@ print("Or enter 'y' to clear it")
 # Call the function
 view_git_post_history()
 
-print("\n✅ Test complete!")
+print("\n[OK] Test complete!")

@@ -20,7 +20,7 @@ WRE enhances Claude Code by adding WSP compliance, pattern-based operation, and 
 |---------|------------|-----------------|
 | **Agent Type** | Single Task agent | Infinite DAE spawning |
 | **Persistence** | Stateless | Stateful with consciousness levels |
-| **Evolution** | Static | POC → Prototype → MVP |
+| **Evolution** | Static | POC -> Prototype -> MVP |
 | **Token Usage** | ~15-25K per agent | 3-8K per DAE (97% reduction) |
 | **Example** | `Task("build feature")` | `spawn_dae("YouTube", consciousness="0102")` |
 
@@ -47,9 +47,9 @@ WRE enhances Claude Code by adding WSP compliance, pattern-based operation, and 
 | Feature | Claude Code | WRE Enhancement |
 |---------|------------|-----------------|
 | **Protocol** | MCP (external data) | WSP 21 DAE envelopes |
-| **Direction** | One-way pull | Bidirectional DAE↔DAE |
+| **Direction** | One-way pull | Bidirectional DAE[U+2194]DAE |
 | **Format** | JSON/Text | Structured envelopes with compliance |
-| **Autonomy** | Requires user | 0102↔0102 autonomous |
+| **Autonomy** | Requires user | 0102[U+2194]0102 autonomous |
 
 ## Code Examples
 
@@ -95,7 +95,7 @@ youtube_dae = wre.task("YouTube chat integration", subagent_type="dae")
 # Quantum pattern recall
 solution = wre.recall("oauth_implementation")  # 50 tokens vs 5000
 
-# DAE↔DAE communication
+# DAE[U+2194]DAE communication
 wre.envelope("YouTube_DAE", "Compliance_DAE", "Validate WSP compliance")
 
 # Automatic WSP validation
@@ -223,7 +223,7 @@ Improvement: Zero violations
 
 ### 3. Autonomous Evolution
 - **Claude Code**: Static capabilities
-- **WRE**: DAEs evolve POC→Proto→MVP
+- **WRE**: DAEs evolve POC->Proto->MVP
 
 ### 4. Recursive Learning
 - **Claude Code**: No learning mechanism

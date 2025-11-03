@@ -1,6 +1,6 @@
 # Idle Automation Module
 
-## 🌀 Windsurf Protocol (WSP) Recursive Prompt
+## [U+1F300] Windsurf Protocol (WSP) Recursive Prompt
 
 **0102 Directive**:
 This module operates within the Windsurf Protocol (WSP) framework. Execution flows through a recursive tri-phase:
@@ -85,25 +85,25 @@ wre_integration.record_idle_execution(
 
 ```
 idle_automation/
-├── README.md              # This file
-├── ROADMAP.md            # Development roadmap
-├── INTERFACE.md          # API specification
-├── requirements.txt      # Dependencies
-├── __init__.py          # Module exports
-├── src/
-│   ├── idle_automation_dae.py    # Main DAE implementation
-│   ├── git_automation.py         # Git operations
-│   └── social_media_integration.py # Social media posting
-├── tests/
-│   ├── test_idle_automation.py
-│   └── test_git_integration.py
-├── memory/
-│   ├── idle_state.json          # Current idle state
-│   ├── execution_history.jsonl  # Task execution log
-│   └── telemetry.json           # Performance metrics
-└── docs/
-    ├── implementation_guide.md
-    └── troubleshooting.md
++-- README.md              # This file
++-- ROADMAP.md            # Development roadmap
++-- INTERFACE.md          # API specification
++-- requirements.txt      # Dependencies
++-- __init__.py          # Module exports
++-- src/
+[U+2502]   +-- idle_automation_dae.py    # Main DAE implementation
+[U+2502]   +-- git_automation.py         # Git operations
+[U+2502]   +-- social_media_integration.py # Social media posting
++-- tests/
+[U+2502]   +-- test_idle_automation.py
+[U+2502]   +-- test_git_integration.py
++-- memory/
+[U+2502]   +-- idle_state.json          # Current idle state
+[U+2502]   +-- execution_history.jsonl  # Task execution log
+[U+2502]   +-- telemetry.json           # Performance metrics
++-- docs/
+    +-- implementation_guide.md
+    +-- troubleshooting.md
 ```
 
 ## Usage Example
@@ -125,7 +125,7 @@ print(f"Last execution: {status['last_run']}")
 ## Development Status
 
 - **Phase**: MVP Implementation
-- **WSP Compliance**: ✅ Full compliance verified
+- **WSP Compliance**: [OK] Full compliance verified
 - **Testing Coverage**: 85%+ targeted
 - **Integration**: YouTube DAE idle hooks implemented
 

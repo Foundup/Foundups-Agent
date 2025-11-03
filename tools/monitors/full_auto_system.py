@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Full Automatic System Orchestrator
 Complete autonomous operation with all features
 """
@@ -53,21 +68,21 @@ class FullAutoSystem:
             from modules.platform_integration.youtube_auth.src.youtube_auth import get_authenticated_service
             self.components['youtube'] = get_authenticated_service()
             if self.components['youtube']:
-                print("  ✓ YouTube API initialized")
+                print("  [OK] YouTube API initialized")
             else:
-                print("  ✗ YouTube API failed")
+                print("  [FAIL] YouTube API failed")
                 success = False
         except Exception as e:
-            print(f"  ✗ YouTube API error: {e}")
+            print(f"  [FAIL] YouTube API error: {e}")
             success = False
             
         # 2. Stream Resolver
         try:
             from modules.platform_integration.stream_resolver.src.stream_resolver import StreamResolver
             self.components['resolver'] = StreamResolver(self.components['youtube'])
-            print("  ✓ Stream Resolver initialized")
+            print("  [OK] Stream Resolver initialized")
         except Exception as e:
-            print(f"  ✗ Stream Resolver error: {e}")
+            print(f"  [FAIL] Stream Resolver error: {e}")
             success = False
             
         # 3. Live Chat Core
@@ -75,9 +90,9 @@ class FullAutoSystem:
             from modules.communication.livechat.src.livechat_core import LiveChatCore
             # Will initialize when stream is found
             self.components['chat_class'] = LiveChatCore
-            print("  ✓ LiveChat Core ready")
+            print("  [OK] LiveChat Core ready")
         except Exception as e:
-            print(f"  ✗ LiveChat Core error: {e}")
+            print(f"  [FAIL] LiveChat Core error: {e}")
             
         # 4. Gamification
         try:
@@ -85,9 +100,9 @@ class FullAutoSystem:
             from modules.gamification.whack_a_magat.src.timeout_announcer import TimeoutAnnouncer
             self.components['whack'] = WhackAMagat()
             self.components['announcer'] = TimeoutAnnouncer()
-            print("  ✓ Gamification system initialized")
+            print("  [OK] Gamification system initialized")
         except Exception as e:
-            print(f"  ✗ Gamification error: {e}")
+            print(f"  [FAIL] Gamification error: {e}")
             
         # 5. Command Handler
         try:
@@ -95,9 +110,9 @@ class FullAutoSystem:
             # Initialize with whack component if available
             if 'whack' in self.components:
                 self.components['commands'] = CommandHandler(self.components['whack'])
-            print("  ✓ Command system initialized")
+            print("  [OK] Command system initialized")
         except Exception as e:
-            print(f"  ✗ Command system error: {e}")
+            print(f"  [FAIL] Command system error: {e}")
             
         print(f"\n[INIT] Initialization {'complete' if success else 'completed with errors'}")
         return success
@@ -211,9 +226,9 @@ class FullAutoSystem:
         print(f"\n[SOCIAL] Posting to social media...")
         
         # X/Twitter Post
-        x_content = f"""🔴 LIVE NOW: {self.current_stream['title'][:100]}
+        x_content = f"""[U+1F534] LIVE NOW: {self.current_stream['title'][:100]}
 
-📺 {self.current_stream['url']}
+[U+1F4FA] {self.current_stream['url']}
 
 Join the AI development stream!
 
@@ -227,20 +242,20 @@ Join the AI development stream!
             # Check if we have X credentials
             if os.getenv('X_Acc2') and os.getenv('x_Acc_pass'):
                 # Would post here with anti-detection poster
-                print(f"[X/Twitter] ✓ Post queued for @geozeAI")
+                print(f"[X/Twitter] [OK] Post queued for @geozeAI")
             else:
-                print(f"[X/Twitter] ⚠ No credentials configured")
+                print(f"[X/Twitter] [U+26A0] No credentials configured")
         except Exception as e:
-            print(f"[X/Twitter] ✗ Error: {e}")
+            print(f"[X/Twitter] [FAIL] Error: {e}")
             
         # LinkedIn Post
-        ln_content = f"""🚀 We're LIVE!
+        ln_content = f"""[ROCKET] We're LIVE!
 
 {self.current_stream['title']}
 
 Join our AI development session where we're building autonomous systems.
 
-🔗 {self.current_stream['url']}
+[LINK] {self.current_stream['url']}
 
 #ArtificialIntelligence #Innovation #LiveCoding"""
         
@@ -249,11 +264,11 @@ Join our AI development session where we're building autonomous systems.
         
         try:
             if os.getenv('LN_Acc1') and os.getenv('ln_Acc_pass'):
-                print(f"[LinkedIn] ✓ Post queued for Move2Japan")
+                print(f"[LinkedIn] [OK] Post queued for Move2Japan")
             else:
-                print(f"[LinkedIn] ⚠ No credentials configured")
+                print(f"[LinkedIn] [U+26A0] No credentials configured")
         except Exception as e:
-            print(f"[LinkedIn] ✗ Error: {e}")
+            print(f"[LinkedIn] [FAIL] Error: {e}")
             
         self.status['social_poster'] = 'POSTED'
         
@@ -273,17 +288,17 @@ Join our AI development session where we're building autonomous systems.
             )
             
             # Send greeting
-            greeting = f"🤖 UnDaoDu Bot online! Stream: {self.current_stream['title'][:50]}... | /help for commands"
+            greeting = f"[BOT] UnDaoDu Bot online! Stream: {self.current_stream['title'][:50]}... | /help for commands"
             print(f"[CHAT] Sending greeting: {greeting}")
             
             # Start chat monitoring in background
             asyncio.create_task(self.chat_monitor_loop())
             
             self.status['chat_bot'] = 'RUNNING'
-            print(f"[CHAT] ✓ Chat bot started")
+            print(f"[CHAT] [OK] Chat bot started")
             
         except Exception as e:
-            print(f"[CHAT] ✗ Failed to start: {e}")
+            print(f"[CHAT] [FAIL] Failed to start: {e}")
             self.status['chat_bot'] = 'ERROR'
             
     async def chat_monitor_loop(self):
@@ -358,7 +373,7 @@ Join our AI development session where we're building autonomous systems.
         
         # Initialize components
         if not await self.initialize_all_components():
-            print("[SYSTEM] ⚠ Some components failed to initialize")
+            print("[SYSTEM] [U+26A0] Some components failed to initialize")
             print("[SYSTEM] Continuing with available components...")
             
         # Start all loops
@@ -367,7 +382,7 @@ Join our AI development session where we're building autonomous systems.
             asyncio.create_task(self.status_display_loop())
         ]
         
-        print(f"\n[SYSTEM] ✓ All systems operational")
+        print(f"\n[SYSTEM] [OK] All systems operational")
         print("[SYSTEM] Press Ctrl+C to stop\n")
         
         try:

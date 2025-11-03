@@ -74,14 +74,14 @@ poster.post_to_x(post_content)
 
 ## How These Systems Can Train Gemma
 
-### Architecture: Selenium + Gemini Vision → Training Data
+### Architecture: Selenium + Gemini Vision -> Training Data
 
 **Problem**: Traditional Colab training requires GPU and manual data prep
 
 **Solution**: Use existing automation systems to collect real-world patterns
 
 ```
-Selenium Automation → Real Posts → Gemini Vision Analysis → Training Patterns → Gemma Training
+Selenium Automation -> Real Posts -> Gemini Vision Analysis -> Training Patterns -> Gemma Training
 ```
 
 ### Process Flow:
@@ -436,18 +436,18 @@ def _collect_selenium_patterns(self) -> list:
 ## Advantages Over Colab GPU Training
 
 ### Colab Approach:
-- ❌ Requires GPU (free tier limited to 12 hours)
-- ❌ Requires manual upload/download
-- ❌ 30-60 minutes of active GPU time
-- ❌ Static training data (doesn't update)
-- ❌ 012 needs to do work
+- [FAIL] Requires GPU (free tier limited to 12 hours)
+- [FAIL] Requires manual upload/download
+- [FAIL] 30-60 minutes of active GPU time
+- [FAIL] Static training data (doesn't update)
+- [FAIL] 012 needs to do work
 
 ### Selenium + Gemini Vision Approach:
-- ✅ No GPU needed (Gemini Vision = cloud, Selenium = local)
-- ✅ Automatic data collection (during normal operations)
-- ✅ Real-time learning (every post = new training data)
-- ✅ Dynamic data (adapts to UI changes)
-- ✅ 0102 does everything automatically
+- [OK] No GPU needed (Gemini Vision = cloud, Selenium = local)
+- [OK] Automatic data collection (during normal operations)
+- [OK] Real-time learning (every post = new training data)
+- [OK] Dynamic data (adapts to UI changes)
+- [OK] 0102 does everything automatically
 
 ---
 
@@ -507,43 +507,43 @@ print(f"Gemini Vision Analysis: {analysis}")
 ## Gemini Vision Training Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                   Normal Operations                      │
-│  (LinkedIn posting, X posting, git commits)              │
-└────────────┬────────────────────────────────────────────┘
-             │
-             ▼
-┌─────────────────────────────────────────────────────────┐
-│              Selenium Browser Automation                 │
-│  - Take screenshots at key moments                       │
-│  - Capture UI state                                      │
-│  - Record success/failure                                │
-└────────────┬────────────────────────────────────────────┘
-             │
-             ▼
-┌─────────────────────────────────────────────────────────┐
-│              Gemini Vision Analysis                      │
-│  - Analyze UI visually (FREE with AI Studio key)        │
-│  - Detect errors                                         │
-│  - Identify UI changes                                   │
-│  - Suggest solutions                                     │
-└────────────┬────────────────────────────────────────────┘
-             │
-             ▼
-┌─────────────────────────────────────────────────────────┐
-│              Training Pattern Storage                    │
-│  - Save input/output pairs                               │
-│  - Categorize patterns                                   │
-│  - Build training corpus automatically                   │
-└────────────┬────────────────────────────────────────────┘
-             │
-             ▼
-┌─────────────────────────────────────────────────────────┐
-│           Gemma Training (Local, No GPU)                 │
-│  - Use collected patterns                                │
-│  - Train on real operational data                        │
-│  - Continuous improvement                                │
-└─────────────────────────────────────────────────────────┘
++---------------------------------------------------------+
+[U+2502]                   Normal Operations                      [U+2502]
+[U+2502]  (LinkedIn posting, X posting, git commits)              [U+2502]
++------------+--------------------------------------------+
+             [U+2502]
+             [U+25BC]
++---------------------------------------------------------+
+[U+2502]              Selenium Browser Automation                 [U+2502]
+[U+2502]  - Take screenshots at key moments                       [U+2502]
+[U+2502]  - Capture UI state                                      [U+2502]
+[U+2502]  - Record success/failure                                [U+2502]
++------------+--------------------------------------------+
+             [U+2502]
+             [U+25BC]
++---------------------------------------------------------+
+[U+2502]              Gemini Vision Analysis                      [U+2502]
+[U+2502]  - Analyze UI visually (FREE with AI Studio key)        [U+2502]
+[U+2502]  - Detect errors                                         [U+2502]
+[U+2502]  - Identify UI changes                                   [U+2502]
+[U+2502]  - Suggest solutions                                     [U+2502]
++------------+--------------------------------------------+
+             [U+2502]
+             [U+25BC]
++---------------------------------------------------------+
+[U+2502]              Training Pattern Storage                    [U+2502]
+[U+2502]  - Save input/output pairs                               [U+2502]
+[U+2502]  - Categorize patterns                                   [U+2502]
+[U+2502]  - Build training corpus automatically                   [U+2502]
++------------+--------------------------------------------+
+             [U+2502]
+             [U+25BC]
++---------------------------------------------------------+
+[U+2502]           Gemma Training (Local, No GPU)                 [U+2502]
+[U+2502]  - Use collected patterns                                [U+2502]
+[U+2502]  - Train on real operational data                        [U+2502]
+[U+2502]  - Continuous improvement                                [U+2502]
++---------------------------------------------------------+
 ```
 
 ---

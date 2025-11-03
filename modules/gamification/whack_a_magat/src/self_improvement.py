@@ -79,7 +79,7 @@ class MAGADOOMSelfImprovement:
         
         # Load previous learnings
         self._load_memory()
-        logger.info(f"🧠 Self-Improvement Engine initialized with {len(self.patterns)} patterns")
+        logger.info(f"[AI] Self-Improvement Engine initialized with {len(self.patterns)} patterns")
     
     def observe_timeout(self, mod_id: str, duration: int, stream_density: str):
         """Learn from timeout patterns"""
@@ -151,7 +151,7 @@ class MAGADOOMSelfImprovement:
                 last_seen=datetime.now().isoformat()
             )
             self.patterns[pattern.pattern_id] = pattern
-            logger.warning(f"🚨 Critical error pattern logged: {context.get('error_type')}")
+            logger.warning(f"[ALERT] Critical error pattern logged: {context.get('error_type')}")
     
     def _analyze_timeout_patterns(self):
         """Analyze timeout patterns and suggest optimizations"""
@@ -218,7 +218,7 @@ class MAGADOOMSelfImprovement:
                 last_seen=datetime.now().isoformat()
             )
             self.patterns[pattern.pattern_id] = pattern
-            logger.info(f"📊 Popular commands: {popular}")
+            logger.info(f"[DATA] Popular commands: {popular}")
     
     def _apply_suggestion(self, suggestion: OptimizationSuggestion):
         """Apply an optimization suggestion"""
@@ -227,7 +227,7 @@ class MAGADOOMSelfImprovement:
             self.thresholds[suggestion.target] = suggestion.suggested_value
             self.suggestions[suggestion.suggestion_id] = suggestion
             
-            logger.info(f"🔧 Applied optimization: {suggestion.target} {old_value} → {suggestion.suggested_value}")
+            logger.info(f"[TOOL] Applied optimization: {suggestion.target} {old_value} -> {suggestion.suggested_value}")
             logger.info(f"   Reason: {suggestion.reason}")
             
             # Save to memory
@@ -298,7 +298,7 @@ class MAGADOOMSelfImprovement:
                 self.metrics["spree_achievements"] = metrics.get("spree_achievements", 0)
                 self.metrics["commands_processed"] = metrics.get("commands_processed", 0)
                 
-                logger.info(f"📚 Loaded {len(self.patterns)} patterns from memory")
+                logger.info(f"[BOOKS] Loaded {len(self.patterns)} patterns from memory")
             except Exception as e:
                 logger.warning(f"Could not load memory: {e}")
 

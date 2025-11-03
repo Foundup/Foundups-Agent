@@ -63,13 +63,13 @@ if video_response.get('items'):
                 }
             ).execute()
             
-            print(f"✅ Sent: {msg}")
+            print(f"[OK] Sent: {msg}")
             print(f"   ID: {result.get('id')}")
             
             import time
             time.sleep(3)  # Wait between messages
             
         except Exception as e:
-            print(f"❌ Failed to send '{msg}': {e}")
+            print(f"[FAIL] Failed to send '{msg}': {e}")
 else:
-    print("❌ Stream not found")
+    print("[FAIL] Stream not found")

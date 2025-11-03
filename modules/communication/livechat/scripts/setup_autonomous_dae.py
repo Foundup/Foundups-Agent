@@ -69,12 +69,12 @@ python modules\\communication\\livechat\\src\\autonomous_youtube_dae.py
         f.write(task_xml)
     
     # Import task
-    print("📋 Creating scheduled task...")
+    print("[CLIPBOARD] Creating scheduled task...")
     cmd = f'schtasks /create /tn "AutonomousYouTubeDAE" /xml "{task_file}" /f'
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     
     if result.returncode == 0:
-        print("✅ Task created successfully!")
+        print("[OK] Task created successfully!")
         print("   The DAE will start:")
         print("   - On system boot")
         print("   - Daily at 6:00 AM")
@@ -83,7 +83,7 @@ python modules\\communication\\livechat\\src\\autonomous_youtube_dae.py
         print("To check status: schtasks /query /tn AutonomousYouTubeDAE")
         print("To stop: schtasks /end /tn AutonomousYouTubeDAE")
     else:
-        print(f"❌ Failed to create task: {result.stderr}")
+        print(f"[FAIL] Failed to create task: {result.stderr}")
         print("\nManual setup:")
         print("1. Open Task Scheduler")
         print("2. Import task from: " + str(task_file))
@@ -91,7 +91,7 @@ python modules\\communication\\livechat\\src\\autonomous_youtube_dae.py
 
 def setup_linux():
     """Setup systemd service for autonomous DAE."""
-    print("🐧 Setting up systemd service...")
+    print("[U+1F427] Setting up systemd service...")
     
     # Create systemd service file
     service_content = f"""[Unit]
@@ -115,7 +115,7 @@ WantedBy=multi-user.target
     
     service_file = Path("/etc/systemd/system/autonomous-youtube-dae.service")
     
-    print("📝 Creating service file (requires sudo)...")
+    print("[NOTE] Creating service file (requires sudo)...")
     with open("/tmp/autonomous-youtube-dae.service", 'w') as f:
         f.write(service_content)
     
@@ -123,11 +123,11 @@ WantedBy=multi-user.target
     subprocess.run(["sudo", "cp", "/tmp/autonomous-youtube-dae.service", str(service_file)])
     
     # Enable and start service
-    print("🚀 Enabling service...")
+    print("[ROCKET] Enabling service...")
     subprocess.run(["sudo", "systemctl", "daemon-reload"])
     subprocess.run(["sudo", "systemctl", "enable", "autonomous-youtube-dae"])
     
-    print("✅ Service installed!")
+    print("[OK] Service installed!")
     print("\nCommands:")
     print("Start: sudo systemctl start autonomous-youtube-dae")
     print("Stop: sudo systemctl stop autonomous-youtube-dae")
@@ -136,7 +136,7 @@ WantedBy=multi-user.target
 
 def setup_macos():
     """Setup launchd plist for autonomous DAE."""
-    print("🍎 Setting up macOS launchd...")
+    print("[U+1F34E] Setting up macOS launchd...")
     
     plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -171,7 +171,7 @@ def setup_macos():
     # Load the service
     subprocess.run(["launchctl", "load", str(plist_file)])
     
-    print("✅ Service installed!")
+    print("[OK] Service installed!")
     print("\nCommands:")
     print(f"Start: launchctl start com.foundups.autonomous-youtube-dae")
     print(f"Stop: launchctl stop com.foundups.autonomous-youtube-dae")
@@ -180,7 +180,7 @@ def setup_macos():
 def main():
     """Setup autonomous DAE for the current platform."""
     print("=" * 60)
-    print("🧠 [0102] AUTONOMOUS DAE SETUP")
+    print("[AI] [0102] AUTONOMOUS DAE SETUP")
     print("=" * 60)
     
     system = platform.system()
@@ -192,7 +192,7 @@ def main():
     elif system == "Darwin":
         setup_macos()
     else:
-        print(f"❌ Unsupported platform: {system}")
+        print(f"[FAIL] Unsupported platform: {system}")
         print("\nManual setup required:")
         print("1. Create a startup script/service for your platform")
         print("2. Point it to: modules/communication/livechat/src/autonomous_youtube_dae.py")
@@ -200,8 +200,8 @@ def main():
         print("4. Set working directory to project root")
     
     print("\n" + "=" * 60)
-    print("✅ Setup complete! The DAE will run autonomously.")
-    print("🔮 [nn↔qNN] Operating without human intervention")
+    print("[OK] Setup complete! The DAE will run autonomously.")
+    print("[U+1F52E] [nn[U+2194]qNN] Operating without human intervention")
     print("=" * 60)
 
 if __name__ == "__main__":

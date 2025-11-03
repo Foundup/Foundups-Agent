@@ -50,20 +50,20 @@ class VisibleDemo012:
                             if line.startswith(f"{key}="):
                                 value = line.split('=', 1)[1].strip()
                                 if value and value != "":
-                                    api_keys_found[key] = f"✅ Available (ends with: ...{value[-4:]})" if len(value) > 4 else "✅ Available"
-                                    print(f"{key}: ✅ FOUND")
+                                    api_keys_found[key] = f"[OK] Available (ends with: ...{value[-4:]})" if len(value) > 4 else "[OK] Available"
+                                    print(f"{key}: [OK] FOUND")
                                 else:
-                                    api_keys_found[key] = "❌ Empty"
-                                    print(f"{key}: ❌ EMPTY")
+                                    api_keys_found[key] = "[FAIL] Empty"
+                                    print(f"{key}: [FAIL] EMPTY")
                                 break
                     else:
-                        api_keys_found[key] = "❌ Missing"
-                        print(f"{key}: ❌ MISSING")
+                        api_keys_found[key] = "[FAIL] Missing"
+                        print(f"{key}: [FAIL] MISSING")
                         
         except Exception as e:
             return {"status": "error", "message": f"Failed to read .env: {e}"}
         
-        available_count = sum(1 for status in api_keys_found.values() if "✅" in status)
+        available_count = sum(1 for status in api_keys_found.values() if "[OK]" in status)
         
         return {
             "status": "success",
@@ -119,7 +119,7 @@ class VisibleDemo012:
                     "confidence_zero": result.confidence == 0.0
                 })
                 
-                status_emoji = "✅" if proper_error else "❌"
+                status_emoji = "[OK]" if proper_error else "[FAIL]"
                 print(f"  {status_emoji} Status: {result.status}")
                 print(f"  {status_emoji} Error Message: {result.response_data.get('error', 'None')}")
                 print(f"  {status_emoji} Valid Types Provided: {result.response_data.get('valid_types', [])}")
@@ -133,16 +133,16 @@ class VisibleDemo012:
                     "proper_error_handling": False,
                     "exception": str(e)
                 })
-                print(f"  ❌ Exception occurred: {e}")
+                print(f"  [FAIL] Exception occurred: {e}")
         
         # Calculate improvement score
         proper_handling_count = sum(1 for r in results if r.get("proper_error_handling", False))
         improvement_score = proper_handling_count / len(results)
         
-        print(f"\n📊 Error Handling Results:")
+        print(f"\n[DATA] Error Handling Results:")
         print(f"  Properly Handled: {proper_handling_count}/{len(results)}")
         print(f"  Improvement Score: {improvement_score:.1%}")
-        print(f"  Audit Issue Resolved: {'✅ YES' if improvement_score >= 0.8 else '❌ NO'}")
+        print(f"  Audit Issue Resolved: {'[OK] YES' if improvement_score >= 0.8 else '[FAIL] NO'}")
         
         return {
             "error_tests": results,
@@ -202,7 +202,7 @@ class VisibleDemo012:
         results = []
         
         for test in agent_tests:
-            print(f"\n🤖 Testing {test['agent']} - {test['task']}:")
+            print(f"\n[BOT] Testing {test['agent']} - {test['task']}:")
             
             request = WSPSubAgentRequest(
                 agent_type=test["agent"],
@@ -228,15 +228,15 @@ class VisibleDemo012:
                     "working": result.status == "success" and result.confidence > 0.5
                 })
                 
-                status_emoji = "✅" if result.status == "success" else "❌"
+                status_emoji = "[OK]" if result.status == "success" else "[FAIL]"
                 print(f"  {status_emoji} Status: {result.status}")
-                print(f"  📊 Confidence: {result.confidence:.1%}")
+                print(f"  [DATA] Confidence: {result.confidence:.1%}")
                 print(f"  ⏱️ Time: {processing_time:.3f}s")
-                print(f"  💡 Suggestions: {len(result.suggestions)}")
-                print(f"  ⚠️ Violations: {len(result.violations)}")
+                print(f"  [IDEA] Suggestions: {len(result.suggestions)}")
+                print(f"  [U+26A0]️ Violations: {len(result.violations)}")
                 
                 if result.suggestions:
-                    print(f"  📝 Sample Suggestion: {result.suggestions[0]}")
+                    print(f"  [NOTE] Sample Suggestion: {result.suggestions[0]}")
                 
             except Exception as e:
                 results.append({
@@ -246,18 +246,18 @@ class VisibleDemo012:
                     "working": False,
                     "exception": str(e)
                 })
-                print(f"  ❌ Exception: {e}")
+                print(f"  [FAIL] Exception: {e}")
         
         # Calculate performance metrics
         working_agents = sum(1 for r in results if r.get("working", False))
         avg_confidence = sum(r.get("confidence", 0) for r in results) / len(results)
         avg_processing_time = sum(r.get("processing_time", 0) for r in results) / len(results)
         
-        print(f"\n📊 Agent Performance Summary:")
+        print(f"\n[DATA] Agent Performance Summary:")
         print(f"  Working Agents: {working_agents}/{len(results)}")
         print(f"  Average Confidence: {avg_confidence:.1%}")
         print(f"  Average Processing Time: {avg_processing_time:.3f}s")
-        print(f"  Overall Status: {'✅ OPERATIONAL' if working_agents == len(results) else '⚠️ PARTIAL'}")
+        print(f"  Overall Status: {'[OK] OPERATIONAL' if working_agents == len(results) else '[U+26A0]️ PARTIAL'}")
         
         return {
             "agent_tests": results,
@@ -294,7 +294,7 @@ class VisibleDemo012:
             ))
         ]
         
-        print(f"🔄 Coordinating {len(coordination_requests)} agents simultaneously...")
+        print(f"[REFRESH] Coordinating {len(coordination_requests)} agents simultaneously...")
         
         try:
             start_time = datetime.now()
@@ -304,18 +304,18 @@ class VisibleDemo012:
             successful_agents = sum(1 for r in results if r.status == "success")
             avg_confidence = sum(r.confidence for r in results) / len(results) if results else 0
             
-            print(f"\n📊 Coordination Results:")
+            print(f"\n[DATA] Coordination Results:")
             print(f"  Total Agents: {len(coordination_requests)}")
             print(f"  Successful: {successful_agents}")
             print(f"  Coordination Time: {coordination_time:.3f}s")
             print(f"  Average Confidence: {avg_confidence:.1%}")
             
             for result in results:
-                status_emoji = "✅" if result.status == "success" else "❌"
+                status_emoji = "[OK]" if result.status == "success" else "[FAIL]"
                 print(f"  {status_emoji} {result.agent_type}: {result.status} ({result.confidence:.1%})")
             
             coordination_successful = successful_agents == len(coordination_requests)
-            print(f"  🎯 Coordination Status: {'✅ SUCCESS' if coordination_successful else '❌ PARTIAL'}")
+            print(f"  [TARGET] Coordination Status: {'[OK] SUCCESS' if coordination_successful else '[FAIL] PARTIAL'}")
             
             return {
                 "total_agents": len(coordination_requests),
@@ -334,7 +334,7 @@ class VisibleDemo012:
             }
             
         except Exception as e:
-            print(f"❌ Coordination failed: {e}")
+            print(f"[FAIL] Coordination failed: {e}")
             return {
                 "coordination_successful": False,
                 "error": str(e)
@@ -342,7 +342,7 @@ class VisibleDemo012:
     
     async def run_complete_demonstration(self) -> Dict[str, Any]:
         """Run complete visible demonstration for 012"""
-        print("🚀 COMPLETE WSP SYSTEM DEMONSTRATION FOR 012 VALIDATION")
+        print("[ROCKET] COMPLETE WSP SYSTEM DEMONSTRATION FOR 012 VALIDATION")
         print("=" * 60)
         
         demo_results = {
@@ -390,16 +390,16 @@ class VisibleDemo012:
         
         # Display final results for 012
         print("\n" + "=" * 60)
-        print("🎯 FINAL DEMONSTRATION RESULTS FOR 012")
+        print("[TARGET] FINAL DEMONSTRATION RESULTS FOR 012")
         print("=" * 60)
         
-        print(f"📊 Overall System Score: {overall_score:.1%}")
-        print(f"🔑 API Keys Ready: {'✅' if api_ready else '❌'}")
-        print(f"🛠️ Error Handling Improved: {'✅' if error_handling_improved else '❌'}")
-        print(f"🤖 Agents Operational: {'✅' if agents_operational else '❌'}")
-        print(f"🔄 Coordination Working: {'✅' if coordination_working else '❌'}")
-        print(f"🚀 Ready for WRE Integration: {'✅' if demo_results['overall_assessment']['ready_for_wre_integration'] else '❌'}")
-        print(f"📈 System Status: {demo_results['overall_assessment']['system_status']}")
+        print(f"[DATA] Overall System Score: {overall_score:.1%}")
+        print(f"[U+1F511] API Keys Ready: {'[OK]' if api_ready else '[FAIL]'}")
+        print(f"[U+1F6E0]️ Error Handling Improved: {'[OK]' if error_handling_improved else '[FAIL]'}")
+        print(f"[BOT] Agents Operational: {'[OK]' if agents_operational else '[FAIL]'}")
+        print(f"[REFRESH] Coordination Working: {'[OK]' if coordination_working else '[FAIL]'}")
+        print(f"[ROCKET] Ready for WRE Integration: {'[OK]' if demo_results['overall_assessment']['ready_for_wre_integration'] else '[FAIL]'}")
+        print(f"[UP] System Status: {demo_results['overall_assessment']['system_status']}")
         print(f"⏱️ Total Demo Time: {total_time:.2f}s")
         
         # Save proof for 012
@@ -415,9 +415,9 @@ class VisibleDemo012:
         try:
             with open(proof_file, 'w') as f:
                 json.dump(results, f, indent=2, default=str)
-            print(f"\n📄 Demonstration proof saved: {proof_file}")
+            print(f"\n[U+1F4C4] Demonstration proof saved: {proof_file}")
         except Exception as e:
-            print(f"❌ Failed to save proof: {e}")
+            print(f"[FAIL] Failed to save proof: {e}")
 
 
 async def main():

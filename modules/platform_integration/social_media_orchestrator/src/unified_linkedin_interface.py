@@ -15,9 +15,13 @@ WSP Compliance:
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -238,7 +242,7 @@ class UnifiedLinkedInInterface:
             error_message = result.get("error", None) if not success else None
 
             if success:
-                logger.info(f"[UNIFIED LINKEDIN] ✅ MCP post successful to page {request.company_page.value}")
+                logger.info(f"[UNIFIED LINKEDIN] [OK] MCP post successful to page {request.company_page.value}")
                 logger.info(f"[UNIFIED LINKEDIN] Training pattern saved: {result.get('training_pattern_id')}")
 
                 # Log Gemini Vision analysis if available
@@ -247,7 +251,7 @@ class UnifiedLinkedInInterface:
                     logger.info(f"[UNIFIED LINKEDIN] Gemini Vision UI analysis: {gemini_analysis.get('ui_state', 'N/A')}")
             else:
                 error_message = error_message or "MCP posting failed"
-                logger.warning(f"[UNIFIED LINKEDIN] ❌ MCP post failed: {error_message}")
+                logger.warning(f"[UNIFIED LINKEDIN] [FAIL] MCP post failed: {error_message}")
 
         except Exception as e:
             error_message = str(e)
@@ -275,7 +279,7 @@ class UnifiedLinkedInInterface:
                 # Import unified X interface
                 from .unified_x_interface import unified_x, XPostRequest, XContentType, XAccount
 
-                # Prepare X content (must be ≤280 chars)
+                # Prepare X content (must be [U+2264]280 chars)
                 x_content = request.metadata.get('x_content')
                 if not x_content:
                     # Auto-generate condensed version from LinkedIn content
@@ -295,9 +299,9 @@ class UnifiedLinkedInInterface:
                 x_post_message = x_result.message
 
                 if x_post_success:
-                    logger.info("[UNIFIED LINKEDIN] ✅ X post auto-triggered successfully")
+                    logger.info("[UNIFIED LINKEDIN] [OK] X post auto-triggered successfully")
                 else:
-                    logger.warning(f"[UNIFIED LINKEDIN] ⚠️ X post auto-trigger failed: {x_post_message}")
+                    logger.warning(f"[UNIFIED LINKEDIN] [U+26A0]️ X post auto-trigger failed: {x_post_message}")
 
             except Exception as e:
                 logger.error(f"[UNIFIED LINKEDIN] Exception during X auto-trigger: {e}")
@@ -351,7 +355,7 @@ unified_linkedin = UnifiedLinkedInInterface()
 async def post_stream_notification(stream_title: str, stream_url: str, video_id: str,
                                  company_page: LinkedInCompanyPage = LinkedInCompanyPage.FOUNDUPS) -> LinkedInPostResult:
     """Post a stream notification to LinkedIn"""
-    content = f"🔴 LIVE: {stream_title}\n\nWatch: {stream_url}\n\n#LiveStream #AI #Technology"
+    content = f"[U+1F534] LIVE: {stream_title}\n\nWatch: {stream_url}\n\n#LiveStream #AI #Technology"
 
     request = LinkedInPostRequest(
         content=content,

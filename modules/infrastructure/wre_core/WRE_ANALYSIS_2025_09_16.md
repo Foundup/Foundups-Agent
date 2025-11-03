@@ -5,7 +5,7 @@
 
 ---
 
-## 🎯 EXPECTED BEHAVIOR (Per WSP 46 & 48)
+## [TARGET] EXPECTED BEHAVIOR (Per WSP 46 & 48)
 
 ### What WRE Should Be:
 1. **Central Module Building Engine** - Builds ALL modules following WSP protocols
@@ -16,8 +16,8 @@
 
 ### How It Should Work:
 ```
-Error Occurs → Pattern Extracted → Solution Stored → Next Time Applied Automatically
-Success Happens → Pattern Reinforced → Efficiency Increases → System Improves
+Error Occurs -> Pattern Extracted -> Solution Stored -> Next Time Applied Automatically
+Success Happens -> Pattern Reinforced -> Efficiency Increases -> System Improves
 ```
 
 ### Key Principles:
@@ -28,7 +28,7 @@ Success Happens → Pattern Reinforced → Efficiency Increases → System Impro
 
 ---
 
-## ❌ ACTUAL BEHAVIOR (Current State)
+## [FAIL] ACTUAL BEHAVIOR (Current State)
 
 ### What WRE Actually Is:
 1. **Partially Connected** - Error recording added today but not complete cycle
@@ -42,16 +42,16 @@ Success Happens → Pattern Reinforced → Efficiency Increases → System Impro
 #### 1. Split Directory Structure
 ```
 modules/infrastructure/
-├── wre_core/          # Active directory (used by main.py)
-│   └── memory/        # Empty of patterns
-└── wre_core_main/     # Old directory with patterns from August
-    └── memory/        # Has 15 pattern files from Aug 28
++-- wre_core/          # Active directory (used by main.py)
+[U+2502]   +-- memory/        # Empty of patterns
++-- wre_core_main/     # Old directory with patterns from August
+    +-- memory/        # Has 15 pattern files from Aug 28
 ```
 
 #### 2. Learning Loop Incomplete
 ```
-Current: Error → Recorded → Stored → [STOPS HERE]
-Should:  Error → Recorded → Pattern → Solution → Auto-Applied
+Current: Error -> Recorded -> Stored -> [STOPS HERE]
+Should:  Error -> Recorded -> Pattern -> Solution -> Auto-Applied
 ```
 
 #### 3. DAEs Not Coordinated
@@ -68,7 +68,7 @@ Should:  Error → Recorded → Pattern → Solution → Auto-Applied
 
 ---
 
-## 🔍 ROOT CAUSE ANALYSIS
+## [SEARCH] ROOT CAUSE ANALYSIS
 
 ### Why It's Not Working:
 
@@ -86,7 +86,7 @@ Should:  Error → Recorded → Pattern → Solution → Auto-Applied
 
 ---
 
-## ✅ WHAT'S NEEDED
+## [OK] WHAT'S NEEDED
 
 ### Immediate Actions:
 1. **Merge Pattern Memory** - Copy August patterns to active wre_core
@@ -124,7 +124,7 @@ except Exception as e:
 
 ---
 
-## 📊 METRICS TO TRACK
+## [DATA] METRICS TO TRACK
 
 ### Current (Broken):
 - Errors recorded: 0
@@ -142,13 +142,13 @@ except Exception as e:
 
 ---
 
-## 🎯 CONCLUSION
+## [TARGET] CONCLUSION
 
 The WRE architecture is **brilliantly designed** but **incompletely implemented**. It's like having a Formula 1 car with the engine disconnected from the wheels. All the components exist:
-- Learning engine ✅
-- Pattern storage ✅
-- Error recording ✅
-- DAE architecture ✅
+- Learning engine [OK]
+- Pattern storage [OK]
+- Error recording [OK]
+- DAE architecture [OK]
 
 But they're not connected in a complete loop. The system records errors but doesn't learn from them. It has patterns but doesn't recall them. It has DAEs but they don't coordinate.
 
@@ -156,7 +156,7 @@ But they're not connected in a complete loop. The system records errors but does
 
 ---
 
-## 🚀 RECOMMENDATION
+## [ROCKET] RECOMMENDATION
 
 Focus on completing the learning loop:
 1. Before ANY operation, check pattern memory

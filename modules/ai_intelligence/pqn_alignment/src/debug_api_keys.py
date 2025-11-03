@@ -13,7 +13,7 @@ from pathlib import Path
 
 def debug_api_key_detection():
     """Debug API key detection for all models."""
-    print("🔍 API Key Detection Debug")
+    print("[SEARCH] API Key Detection Debug")
     print("=" * 50)
     
     # Test all possible Grok/XAI environment variables
@@ -26,15 +26,15 @@ def debug_api_key_detection():
         'XAI_KEY'
     ]
     
-    print("\n🔍 Testing Grok/XAI Environment Variables:")
+    print("\n[SEARCH] Testing Grok/XAI Environment Variables:")
     for var in grok_vars:
         value = os.getenv(var)
         if value:
-            print(f"✅ {var}: FOUND (length: {len(value)})")
+            print(f"[OK] {var}: FOUND (length: {len(value)})")
             # Show first few characters for verification
             print(f"   Preview: {value[:10]}...")
         else:
-            print(f"❌ {var}: NOT FOUND")
+            print(f"[FAIL] {var}: NOT FOUND")
     
     # Test all model API keys
     all_api_keys = {
@@ -45,16 +45,16 @@ def debug_api_key_detection():
         'XAI_API_KEY': 'XAI'
     }
     
-    print(f"\n🔍 All Model API Keys:")
+    print(f"\n[SEARCH] All Model API Keys:")
     for var, model in all_api_keys.items():
         value = os.getenv(var)
         if value:
-            print(f"✅ {var} ({model}): FOUND")
+            print(f"[OK] {var} ({model}): FOUND")
         else:
-            print(f"❌ {var} ({model}): NOT FOUND")
+            print(f"[FAIL] {var} ({model}): NOT FOUND")
     
     # Test the exact detection logic from multi-model runner
-    print(f"\n🔍 Testing Multi-Model Detection Logic:")
+    print(f"\n[SEARCH] Testing Multi-Model Detection Logic:")
     
     api_key_env = {
         'anthropic': 'ANTHROPIC_API_KEY',
@@ -66,16 +66,16 @@ def debug_api_key_detection():
     for provider, env_key in api_key_env.items():
         value = os.getenv(env_key)
         if value:
-            print(f"✅ {provider} ({env_key}): AVAILABLE")
+            print(f"[OK] {provider} ({env_key}): AVAILABLE")
         else:
-            print(f"❌ {provider} ({env_key}): NOT AVAILABLE")
+            print(f"[FAIL] {provider} ({env_key}): NOT AVAILABLE")
     
     # Test campaign config loading
-    print(f"\n🔍 Testing Campaign Config Loading:")
+    print(f"\n[SEARCH] Testing Campaign Config Loading:")
     try:
         config_path = Path(__file__).parent.parent / "campaigns" / "campaign_3_entrainment.yml"
         if config_path.exists():
-            print(f"✅ Config file exists: {config_path}")
+            print(f"[OK] Config file exists: {config_path}")
             
             # Try to load and parse
             import yaml
@@ -83,28 +83,28 @@ def debug_api_key_detection():
                 config = yaml.safe_load(f)
             
             models = config.get('models', [])
-            print(f"✅ Config loaded successfully with {len(models)} models")
+            print(f"[OK] Config loaded successfully with {len(models)} models")
             
-            print(f"\n🔍 Models in Config:")
+            print(f"\n[SEARCH] Models in Config:")
             for model in models:
                 name = model.get('name', 'Unknown')
                 api = model.get('api', 'Unknown')
                 print(f"  - {name} (API: {api})")
                 
         else:
-            print(f"❌ Config file not found: {config_path}")
+            print(f"[FAIL] Config file not found: {config_path}")
     except Exception as e:
-        print(f"❌ Error loading config: {e}")
+        print(f"[FAIL] Error loading config: {e}")
     
     # Test environment variable setting
-    print(f"\n🔍 Testing Environment Variable Setting:")
+    print(f"\n[SEARCH] Testing Environment Variable Setting:")
     test_var = "TEST_GROK_DEBUG"
     os.environ[test_var] = "test_value"
     retrieved = os.getenv(test_var)
     if retrieved == "test_value":
-        print(f"✅ Environment variable setting works")
+        print(f"[OK] Environment variable setting works")
     else:
-        print(f"❌ Environment variable setting failed")
+        print(f"[FAIL] Environment variable setting failed")
     
     # Clean up test variable
     if test_var in os.environ:

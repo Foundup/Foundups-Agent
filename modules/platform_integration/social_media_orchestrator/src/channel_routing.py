@@ -2,7 +2,7 @@
 Channel Routing Configuration
 Maps YouTube channels to social media accounts per WSP 3 functional distribution.
 
-This module centralizes channel → social media routing logic that was previously
+This module centralizes channel -> social media routing logic that was previously
 scattered across stream_resolver and social_media_orchestrator.
 
 WSP 3: Functional Distribution - Routing is social media concern, not stream resolution
@@ -27,12 +27,12 @@ class ChannelRouting:
     enabled: bool = True
 
     def __str__(self) -> str:
-        return f"{self.channel_name} → LinkedIn:{self.linkedin_page_id}, X:@{self.x_account}"
+        return f"{self.channel_name} -> LinkedIn:{self.linkedin_page_id}, X:@{self.x_account}"
 
 
 class SocialMediaRouter:
     """
-    Centralized routing for YouTube channels → social media accounts.
+    Centralized routing for YouTube channels -> social media accounts.
 
     Replaces inline routing logic from:
     - stream_resolver.py:_get_linkedin_page_for_channel()
@@ -110,7 +110,7 @@ class SocialMediaRouter:
         """
         routing = cls.get_routing(channel_id)
         if routing and routing.enabled:
-            logger.info(f"[ROUTING] {channel_id} → LinkedIn page: {routing.linkedin_page_id} ({routing.channel_name})")
+            logger.info(f"[ROUTING] {channel_id} -> LinkedIn page: {routing.linkedin_page_id} ({routing.channel_name})")
             return routing.linkedin_page_id
 
         # Fallback to FoundUps (default)

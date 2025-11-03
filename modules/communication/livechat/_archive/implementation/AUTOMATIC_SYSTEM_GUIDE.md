@@ -37,7 +37,7 @@ The FoundUps Agent now includes a **fully automatic system** that:
 ### Stream Detection Flow:
 ```
 1. Monitor checks YouTube every 60 seconds
-2. Stream detected → Get metadata (title, URL, viewers)
+2. Stream detected -> Get metadata (title, URL, viewers)
 3. Check if already posted (avoid duplicates)
 4. Post to X/Twitter with stream info
 5. Post to LinkedIn with stream info
@@ -50,13 +50,13 @@ The FoundUps Agent now includes a **fully automatic system** that:
 
 ### Automatic Features:
 
-#### 🔄 **Continuous Monitoring**
+#### [REFRESH] **Continuous Monitoring**
 - Runs 24/7 without manual intervention
 - Checks every 60 seconds normally
 - Quick checks every 10 seconds after stream ends
 - Automatically clears cache for fresh detection
 
-#### 📢 **Social Media Posting**
+#### [U+1F4E2] **Social Media Posting**
 - Posts include:
   - Stream title
   - Direct YouTube URL
@@ -64,14 +64,14 @@ The FoundUps Agent now includes a **fully automatic system** that:
   - Relevant hashtags
   - Call to action
 
-#### 💬 **Chat Bot Integration**
+#### [U+1F4AC] **Chat Bot Integration**
 - Automatically connects to live chat
 - Sends greeting message
 - Responds to commands (/score, /rank, etc.)
 - Handles timeouts for gamification
 - Tracks user interactions
 
-#### 🔧 **Error Recovery**
+#### [TOOL] **Error Recovery**
 - Retries on API failures
 - Switches credential sets on quota limits
 - Continues with available components if some fail
@@ -123,7 +123,7 @@ LN_Acc1=your_linkedin_email
 ln_Acc_pass=your_linkedin_password
 
 # Bot Configuration
-AGENT_GREETING_MESSAGE=🤖 UnDaoDu Bot is online! Type /help for commands
+AGENT_GREETING_MESSAGE=[BOT] UnDaoDu Bot is online! Type /help for commands
 ```
 
 ## System Output Example
@@ -175,9 +175,9 @@ AGENT_GREETING_MESSAGE=🤖 UnDaoDu Bot is online! Type /help for commands
 - Professional formatting
 
 ### 4. **Error Handling**
-- API quota exceeded → Switch credential sets
-- Network timeout → Retry after delay
-- Component failure → Continue with working parts
+- API quota exceeded -> Switch credential sets
+- Network timeout -> Retry after delay
+- Component failure -> Continue with working parts
 - All errors logged with timestamps
 
 ## Testing the System
@@ -248,63 +248,63 @@ asyncio.run(test())
 ## System Architecture
 
 ```
-┌─────────────────────────────────────┐
-│      AUTO STREAM MONITOR            │
-│   (Runs continuously 24/7)          │
-└──────────────┬──────────────────────┘
-               │
-               ▼
++-------------------------------------+
+[U+2502]      AUTO STREAM MONITOR            [U+2502]
+[U+2502]   (Runs continuously 24/7)          [U+2502]
++--------------+----------------------+
+               [U+2502]
+               [U+25BC]
         Check YouTube API
          Every 60 seconds
-               │
-    ┌──────────┴──────────┐
-    │                     │
-    ▼                     ▼
+               [U+2502]
+    +----------+----------+
+    [U+2502]                     [U+2502]
+    [U+25BC]                     [U+25BC]
 No Stream            Stream Found!
-(Wait 60s)                │
-                         ▼
+(Wait 60s)                [U+2502]
+                         [U+25BC]
                    Get Stream Info
                    (title, URL, etc)
-                         │
-                         ▼
+                         [U+2502]
+                         [U+25BC]
                 Check if Already Posted
-                         │
-           ┌─────────────┴────────────┐
-           │                          │
-           ▼                          ▼
+                         [U+2502]
+           +-------------+------------+
+           [U+2502]                          [U+2502]
+           [U+25BC]                          [U+25BC]
      Already Posted              New Stream
-       (Skip)                        │
-                                    ▼
+       (Skip)                        [U+2502]
+                                    [U+25BC]
                             Post to Social Media
-                            ├── X/Twitter
-                            └── LinkedIn
-                                    │
-                                    ▼
+                            +-- X/Twitter
+                            +-- LinkedIn
+                                    [U+2502]
+                                    [U+25BC]
                             Start Chat Bot
-                            ├── Send Greeting
-                            ├── Process Commands
-                            └── Handle Timeouts
-                                    │
-                                    ▼
+                            +-- Send Greeting
+                            +-- Process Commands
+                            +-- Handle Timeouts
+                                    [U+2502]
+                                    [U+25BC]
                             Monitor Until End
-                                    │
-                                    ▼
+                                    [U+2502]
+                                    [U+25BC]
                             Stream Ended
-                                    │
-                                    ▼
+                                    [U+2502]
+                                    [U+25BC]
                         Quick Check Mode
                         (10 second intervals)
 ```
 
 ## Benefits
 
-✅ **Fully Automatic** - No manual intervention needed
-✅ **Fast Detection** - Finds streams within 60 seconds
-✅ **Smart Posting** - Never posts duplicates
-✅ **Error Recovery** - Handles failures gracefully
-✅ **Complete Integration** - All systems work together
-✅ **Professional Posts** - Well-formatted social media content
-✅ **Continuous Operation** - Runs 24/7 reliably
+[OK] **Fully Automatic** - No manual intervention needed
+[OK] **Fast Detection** - Finds streams within 60 seconds
+[OK] **Smart Posting** - Never posts duplicates
+[OK] **Error Recovery** - Handles failures gracefully
+[OK] **Complete Integration** - All systems work together
+[OK] **Professional Posts** - Well-formatted social media content
+[OK] **Continuous Operation** - Runs 24/7 reliably
 
 ## Conclusion
 

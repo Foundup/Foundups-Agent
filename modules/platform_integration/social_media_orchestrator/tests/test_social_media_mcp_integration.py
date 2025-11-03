@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Test Social Media MCP Integration
-Tests: LinkedIn → X auto-trigger, Gemini Vision, Training Data Collection
+Tests: LinkedIn -> X auto-trigger, Gemini Vision, Training Data Collection
 
 This validates the complete flow:
 1. MCP Server receives posting request
@@ -17,9 +17,13 @@ Run: python test_social_media_mcp_integration.py
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -45,44 +49,44 @@ async def test_social_media_posting():
     # Test content
     test_commit_hash = f"test_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-    linkedin_content = """🤖 Testing MCP Integration
+    linkedin_content = """[BOT] Testing MCP Integration
 
-✅ Social Media DAE orchestration
-✅ Selenium browser automation
-✅ Gemini Vision UI analysis (FREE API)
-✅ Training data collection for Gemma
-✅ Anti-detection timing (13-23 seconds)
+[OK] Social Media DAE orchestration
+[OK] Selenium browser automation
+[OK] Gemini Vision UI analysis (FREE API)
+[OK] Training data collection for Gemma
+[OK] Anti-detection timing (13-23 seconds)
 
 This post tests the complete flow:
-LinkedIn → Auto X → Training Patterns
+LinkedIn -> Auto X -> Training Patterns
 
 #AI #Automation #Testing"""
 
-    x_content = """🤖 MCP Integration Test
+    x_content = """[BOT] MCP Integration Test
 
-✅ Social Media DAE
-✅ Gemini Vision
-✅ Training Data
-✅ Anti-Detection
+[OK] Social Media DAE
+[OK] Gemini Vision
+[OK] Training Data
+[OK] Anti-Detection
 
-LinkedIn → Auto X → Training
+LinkedIn -> Auto X -> Training
 
 #AI #Testing"""
 
-    print(f"📝 Test Commit Hash: {test_commit_hash}")
+    print(f"[NOTE] Test Commit Hash: {test_commit_hash}")
     print()
-    print("📋 LinkedIn Content:")
+    print("[CLIPBOARD] LinkedIn Content:")
     print(linkedin_content)
     print()
-    print("📋 X Content:")
+    print("[CLIPBOARD] X Content:")
     print(x_content)
     print()
     print("-"*80)
     print()
 
     # STEP 1: Post via unified interface (auto-triggers both platforms)
-    print("🚀 STEP 1: Posting via Social Media DAE...")
-    print("   - MCP Client → MCP Server")
+    print("[ROCKET] STEP 1: Posting via Social Media DAE...")
+    print("   - MCP Client -> MCP Server")
     print("   - Selenium + Gemini Vision")
     print("   - Auto-trigger X after LinkedIn")
     print("   - Anti-detection delays: 13-23 seconds total")
@@ -100,11 +104,11 @@ LinkedIn → Auto X → Training
         print("="*80)
         print("POSTING RESULT")
         print("="*80)
-        print(f"✅ Success: {result.success}")
-        print(f"📝 Message: {result.message}")
+        print(f"[OK] Success: {result.success}")
+        print(f"[NOTE] Message: {result.message}")
         print(f"⏰ Timestamp: {result.timestamp}")
-        print(f"🎯 Content Type: {result.content_type.value}")
-        print(f"🏢 Company Page: {result.company_page.value}")
+        print(f"[TARGET] Content Type: {result.content_type.value}")
+        print(f"[U+1F3E2] Company Page: {result.company_page.value}")
         print()
 
     except Exception as e:
@@ -112,7 +116,7 @@ LinkedIn → Auto X → Training
         print("="*80)
         print("ERROR DURING POSTING")
         print("="*80)
-        print(f"❌ Exception: {e}")
+        print(f"[FAIL] Exception: {e}")
         print()
         print("This is expected if:")
         print("  - MCP server not running")
@@ -124,7 +128,7 @@ LinkedIn → Auto X → Training
     # STEP 2: Check training patterns saved
     print("-"*80)
     print()
-    print("🔍 STEP 2: Verifying Training Data Collection...")
+    print("[SEARCH] STEP 2: Verifying Training Data Collection...")
     print()
 
     training_file = "holo_index/training/selenium_patterns.json"
@@ -133,15 +137,15 @@ LinkedIn → Auto X → Training
         with open(training_file, 'r', encoding="utf-8") as f:
             patterns = json.load(f)
 
-        print(f"✅ Training patterns file exists: {training_file}")
-        print(f"📊 Total patterns collected: {len(patterns)}")
+        print(f"[OK] Training patterns file exists: {training_file}")
+        print(f"[DATA] Total patterns collected: {len(patterns)}")
         print()
 
         # Find our test pattern
         test_patterns = [p for p in patterns if test_commit_hash in str(p.get('input', {}))]
 
         if test_patterns:
-            print(f"✅ Found {len(test_patterns)} pattern(s) for this test")
+            print(f"[OK] Found {len(test_patterns)} pattern(s) for this test")
             print()
 
             for i, pattern in enumerate(test_patterns, 1):
@@ -160,17 +164,17 @@ LinkedIn → Auto X → Training
                     print(f"      Success Indicators: {gemini.get('success_indicators', [])}")
                 print()
         else:
-            print("⚠️  Test pattern not found yet (may still be processing)")
+            print("[U+26A0]️  Test pattern not found yet (may still be processing)")
             print()
     else:
-        print(f"⚠️  Training patterns file not found: {training_file}")
+        print(f"[U+26A0]️  Training patterns file not found: {training_file}")
         print("   This is expected if no posts have been made yet")
         print()
 
     # STEP 3: Show Gemma training readiness
     print("-"*80)
     print()
-    print("🎓 STEP 3: Gemma Training Readiness")
+    print("[GRADUATE] STEP 3: Gemma Training Readiness")
     print()
     print("Your Colab notebook can now:")
     print(f"  1. Load patterns from: {training_file}")

@@ -35,22 +35,22 @@
     "commands": [
       {
         "command": "wre.activate",
-        "title": "🐕 WRE: Activate Red Dog",
+        "title": "[U+1F415] WRE: Activate Red Dog",
         "category": "WRE"
       },
       {
         "command": "wre.openTerminal",
-        "title": "🐕 WRE: Open Terminal",
+        "title": "[U+1F415] WRE: Open Terminal",
         "category": "WRE"
       },
       {
         "command": "wre.runAutonomous",
-        "title": "🤖 WRE: Run Autonomous Mode",
+        "title": "[BOT] WRE: Run Autonomous Mode",
         "category": "WRE"
       },
       {
         "command": "wre.checkAgents",
-        "title": "🔍 WRE: Check Agent Status",
+        "title": "[SEARCH] WRE: Check Agent Status",
         "category": "WRE"
       },
       {
@@ -70,11 +70,11 @@
       "commandPalette": [
         {
           "command": "wre.activate",
-          "title": "🐕 Activate WRE Red Dog"
+          "title": "[U+1F415] Activate WRE Red Dog"
         },
         {
           "command": "wre.openTerminal",
-          "title": "🐕 Open WRE Terminal"
+          "title": "[U+1F415] Open WRE Terminal"
         }
       ]
     },

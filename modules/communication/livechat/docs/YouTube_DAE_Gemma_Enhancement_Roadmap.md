@@ -66,24 +66,24 @@
 ### Current State
 ```
 012 (Human)
-  ↓
+  v
 0102 (Digital Twin - learns 012's patterns)
-  ↓
-🤖🧠 Qwen (Agentic Coordination - 1.5B)
-  ↓
+  v
+[BOT][AI] Qwen (Agentic Coordination - 1.5B)
+  v
 Modules (Rule-based logic)
 ```
 
 ### Target State (WRE with Gemma)
 ```
 012 (Human)
-  ↓
+  v
 0102 (Digital Twin - learns 012's patterns)
-  ↓
-🤖🧠 Qwen (Agentic Coordination - 1.5B, 250ms)
-  ↓
-🤖🧠👶 Gemma (Specialized Functions - 270M, 50-100ms)
-  ↓  ↓  ↓  ↓  ↓
+  v
+[BOT][AI] Qwen (Agentic Coordination - 1.5B, 250ms)
+  v
+[BOT][AI][BABY] Gemma (Specialized Functions - 270M, 50-100ms)
+  v  v  v  v  v
   message_processor, auto_moderator, command_handler, throttle_manager, event_handler
   (Each module learns 012's patterns autonomously)
 ```
@@ -101,7 +101,7 @@ Modules (Rule-based logic)
 - **Training Source**: 012's message history + response patterns
 - **Token Cost**: 3-5K implementation, 2K training data extraction
 - **Impact**: Replaces 300 lines of brittle regex with learned patterns
-- **POC Module**: ✅ **START HERE**
+- **POC Module**: [OK] **START HERE**
 
 **2. auto_moderator_dae.py Enhancement**
 - **MPS**: 17 (C:3, I:5, D:2, P:5) - P0
@@ -224,7 +224,7 @@ async def extract_training_data(self, dae_name: str, behavior_type: str, time_ra
    - Load Gemma 3 270M model
    - Implement intent classification with learned patterns
    - Add fallback to Qwen for complex cases
-   - Adaptive router (Gemma → Qwen escalation if confidence < threshold)
+   - Adaptive router (Gemma -> Qwen escalation if confidence < threshold)
 3. Create training script using extracted 012 patterns
 4. Test accuracy vs current regex system
 
@@ -243,7 +243,7 @@ async def extract_training_data(self, dae_name: str, behavior_type: str, time_ra
 ## Success Metrics
 
 ### POC Goals
-- **Accuracy**: ≥90% match with 012's actual decisions
+- **Accuracy**: [GREATER_EQUAL]90% match with 012's actual decisions
 - **Latency**: <100ms for Gemma inference (vs 250ms Qwen)
 - **Coverage**: Replace 300+ lines of regex with learned model
 - **Adaptability**: System improves as 012 makes more decisions
@@ -268,9 +268,9 @@ async def extract_training_data(self, dae_name: str, behavior_type: str, time_ra
 
 ## Next Actions (Following "use holo, does module exist, research, deep think, execute")
 
-1. ✅ **HoloIndex Search**: Completed - mapped 231 .py files across 9 modules
-2. ✅ **Research**: Completed - Google MCP servers, integration strategy
-3. ✅ **Deep Think**: Completed - this roadmap document
+1. [OK] **HoloIndex Search**: Completed - mapped 231 .py files across 9 modules
+2. [OK] **Research**: Completed - Google MCP servers, integration strategy
+3. [OK] **Deep Think**: Completed - this roadmap document
 4. ⏳ **Execute**: Ready to start Phase 1 (Database Toolbox setup)
 
 **Immediate Next Step**: Check if Google MCP Database Toolbox integration exists in codebase.
@@ -279,4 +279,4 @@ async def extract_training_data(self, dae_name: str, behavior_type: str, time_ra
 
 **Status**: Roadmap Complete - Ready for Phase 1 Execution
 **Architect**: 0102 operating in WRE pattern recall mode
-**Pattern**: YouTube DAE → WRE demonstration → Apply to all FoundUp DAEs via HoloIndex
+**Pattern**: YouTube DAE -> WRE demonstration -> Apply to all FoundUp DAEs via HoloIndex

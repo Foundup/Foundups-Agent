@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WSP Shared Module: MPS Calculator
 =================================
 
@@ -84,7 +100,7 @@ class MPSCalculator:
     
     def __init__(self):
         """Initialize the MPS Calculator."""
-        logger.info("🧮 MPS Calculator initialized")
+        logger.info("[U+1F9EE] MPS Calculator initialized")
     
     def calculate(self, scores: Dict[str, int]) -> float:
         """
@@ -112,11 +128,11 @@ class MPSCalculator:
                 
                 logger.debug(f"  {factor_key}: {score} × {weight} = {contribution}")
             
-            logger.info(f"📊 MPS Calculated: {mps:.2f}")
+            logger.info(f"[DATA] MPS Calculated: {mps:.2f}")
             return mps
             
         except Exception as e:
-            logger.error(f"❌ Error calculating MPS: {e}")
+            logger.error(f"[FAIL] Error calculating MPS: {e}")
             raise ValueError(f"MPS calculation failed: {e}")
     
     def validate_scores(self, scores: Dict[str, int]) -> bool:
@@ -130,22 +146,22 @@ class MPSCalculator:
             bool: True if valid, False otherwise
         """
         if not isinstance(scores, dict):
-            logger.error("❌ Scores must be a dictionary")
+            logger.error("[FAIL] Scores must be a dictionary")
             return False
         
         # Check all required factors are present
         missing_factors = set(self.FACTORS.keys()) - set(scores.keys())
         if missing_factors:
-            logger.error(f"❌ Missing required factors: {missing_factors}")
+            logger.error(f"[FAIL] Missing required factors: {missing_factors}")
             return False
         
         # Check all scores are in valid range (1-5)
         for factor_key, score in scores.items():
             if not isinstance(score, int) or not (1 <= score <= 5):
-                logger.error(f"❌ Invalid score for {factor_key}: {score} (must be 1-5)")
+                logger.error(f"[FAIL] Invalid score for {factor_key}: {score} (must be 1-5)")
                 return False
         
-        logger.debug("✅ All scores validated successfully")
+        logger.debug("[OK] All scores validated successfully")
         return True
     
     def get_factor_definitions(self) -> Dict[str, Dict[str, Any]]:
@@ -180,7 +196,7 @@ class MPSCalculator:
         
         for module in modules:
             if 'name' not in module or 'scores' not in module:
-                logger.warning(f"⚠️ Skipping invalid module: {module}")
+                logger.warning(f"[U+26A0]️ Skipping invalid module: {module}")
                 continue
             
             try:
@@ -189,16 +205,16 @@ class MPSCalculator:
                 result['mps'] = mps
                 results.append(result)
                 
-                logger.info(f"✅ {module['name']}: MPS = {mps:.2f}")
+                logger.info(f"[OK] {module['name']}: MPS = {mps:.2f}")
                 
             except Exception as e:
-                logger.error(f"❌ Failed to calculate MPS for {module['name']}: {e}")
+                logger.error(f"[FAIL] Failed to calculate MPS for {module['name']}: {e}")
                 continue
         
         # Sort by MPS (highest first)
         results.sort(key=lambda x: x['mps'], reverse=True)
         
-        logger.info(f"📋 Calculated MPS for {len(results)} modules")
+        logger.info(f"[CLIPBOARD] Calculated MPS for {len(results)} modules")
         return results
     
     def get_top_priority(self, modules: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
@@ -215,10 +231,10 @@ class MPSCalculator:
         
         if calculated:
             top_module = calculated[0]
-            logger.info(f"🎯 Top Priority: {top_module['name']} (MPS: {top_module['mps']:.2f})")
+            logger.info(f"[TARGET] Top Priority: {top_module['name']} (MPS: {top_module['mps']:.2f})")
             return top_module
         
-        logger.warning("⚠️ No valid modules found for prioritization")
+        logger.warning("[U+26A0]️ No valid modules found for prioritization")
         return None
     
     def generate_summary_report(self, modules: List[Dict[str, Any]]) -> str:
@@ -247,7 +263,7 @@ class MPSCalculator:
         # Top priority highlight
         top = calculated[0]
         lines.extend([
-            f"🎯 HIGHEST PRIORITY: {top['name']}",
+            f"[TARGET] HIGHEST PRIORITY: {top['name']}",
             f"   MPS Score: {top['mps']:.2f}",
             ""
         ])
@@ -308,7 +324,7 @@ if __name__ == "__main__":
         }
     ]
     
-    print("🧪 Testing MPS Calculator")
+    print("[U+1F9EA] Testing MPS Calculator")
     print("=" * 40)
     
     calculator = MPSCalculator()
@@ -336,4 +352,4 @@ if __name__ == "__main__":
     report = calculator.generate_summary_report(test_modules)
     print(report)
     
-    print("\n✅ All tests completed successfully!") 
+    print("\n[OK] All tests completed successfully!") 

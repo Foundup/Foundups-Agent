@@ -1,4 +1,20 @@
+# -*- coding: utf-8 -*-
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 DAE Gateway - WSP 54 Compliant Routing
 Replaces agent-based gateway with DAE architecture
 
@@ -234,7 +250,7 @@ class DAEGateway:
         """
         Invoke FoundUp DAE created via WSP 27/73 process.
         
-        Handles evolution: POC → Prototype → MVP
+        Handles evolution: POC -> Prototype -> MVP
         """
         dae_status = self.dae_assembler.get_dae_status(dae_name)
         

@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Idle Automation DAE - Autonomous Background Tasks
 WSP-Compliant: WSP 27 (DAE Architecture), WSP 35 (Module Execution Automation)
 Integrates with YouTube DAE idle loops for automatic Git + Social Media operations
@@ -29,7 +46,7 @@ class IdleAutomationDAE:
 
     def __init__(self):
         """Initialize Idle Automation DAE with WSP 60 memory architecture."""
-        logger.info("🚀 Initializing Idle Automation DAE (WSP 27/35 compliant)")
+        logger.info("[ROCKET] Initializing Idle Automation DAE (WSP 27/35 compliant)")
 
         self.module_path = Path(__file__).parent.parent
         self.memory_path = self.module_path / "memory"
@@ -45,7 +62,7 @@ class IdleAutomationDAE:
         # WSP 48: WRE integration for recursive improvement
         self._setup_wre_integration()
 
-        logger.info("✅ Idle Automation DAE initialized")
+        logger.info("[OK] Idle Automation DAE initialized")
         logger.info(f"   Auto Git Push: {self.config['auto_git_push']}")
         logger.info(f"   Auto LinkedIn: {self.config['auto_linkedin_post']}")
         logger.info(f"   Health Score: {self.idle_state.get('health_score', 'N/A')}")
@@ -60,21 +77,21 @@ class IdleAutomationDAE:
             try:
                 with open(state_file, 'r') as f:
                     state = json.load(f)
-                    logger.debug("✅ Loaded idle state from primary file")
+                    logger.debug("[OK] Loaded idle state from primary file")
                     # Create backup on successful load
                     self._create_backup(state)
                     return state
             except Exception as e:
-                logger.warning(f"❌ Failed to load primary idle state: {e}")
+                logger.warning(f"[FAIL] Failed to load primary idle state: {e}")
                 # Try backup file
                 if backup_file.exists():
                     try:
                         with open(backup_file, 'r') as f:
                             state = json.load(f)
-                            logger.info("✅ Recovered idle state from backup file")
+                            logger.info("[OK] Recovered idle state from backup file")
                             return state
                     except Exception as backup_e:
-                        logger.error(f"❌ Backup file also corrupted: {backup_e}")
+                        logger.error(f"[FAIL] Backup file also corrupted: {backup_e}")
 
         # Default state with validation
         default_state = {
@@ -88,7 +105,7 @@ class IdleAutomationDAE:
             "health_score": 100,  # 0-100 health metric
         }
 
-        logger.info("🏗️ Initialized default idle state")
+        logger.info("[U+1F3D7]️ Initialized default idle state")
         return default_state
 
     def _create_backup(self, state: Dict[str, Any]):
@@ -117,10 +134,10 @@ class IdleAutomationDAE:
             # Create backup after successful save
             self._create_backup(self.idle_state)
 
-            logger.debug("✅ Idle state saved successfully")
+            logger.debug("[OK] Idle state saved successfully")
 
         except Exception as e:
-            logger.error(f"❌ Failed to save idle state: {e}")
+            logger.error(f"[FAIL] Failed to save idle state: {e}")
             # Clean up temp file if it exists
             if temp_file.exists():
                 try:
@@ -375,7 +392,7 @@ class IdleAutomationDAE:
 
             # Git success is now optional - can post independently
             if not git_result.get("success"):
-                logger.info("⚠️ Git push failed but proceeding with LinkedIn post")
+                logger.info("[U+26A0]️ Git push failed but proceeding with LinkedIn post")
 
             # Import and use GitLinkedInBridge with error handling
             from modules.platform_integration.linkedin_agent.src.git_linkedin_bridge import GitLinkedInBridge
@@ -402,7 +419,7 @@ class IdleAutomationDAE:
 
             # POSTING DISABLED FOR SAFETY - Only prepare content
             # TODO: Re-enable when safety mechanisms are fully tested
-            logger.info("📝 LinkedIn content prepared (posting disabled for safety)")
+            logger.info("[NOTE] LinkedIn content prepared (posting disabled for safety)")
             logger.debug(f"Content preview: {content[:100]}...")
 
             result["success"] = True
@@ -455,20 +472,20 @@ class IdleAutomationDAE:
         if abs(health_change) >= 5:
             level = "INFO" if health_change > 0 else "WARNING"
             logger.log(getattr(logging, level),
-                      f"🏥 Health score: {current_health} → {new_health} ({health_change:+d})")
+                      f"[U+1F3E5] Health score: {current_health} -> {new_health} ({health_change:+d})")
 
         self.idle_state["health_score"] = new_health
 
         # Trigger recovery actions for critical health
         if new_health < self.config["health_critical_threshold"]:
-            logger.error("🚨 CRITICAL: Health score critically low, triggering recovery")
+            logger.error("[ALERT] CRITICAL: Health score critically low, triggering recovery")
             self._trigger_critical_recovery()
         elif new_health < self.config["health_warning_threshold"]:
-            logger.warning("⚠️ WARNING: Health score low, monitoring closely")
+            logger.warning("[U+26A0]️ WARNING: Health score low, monitoring closely")
 
     def _trigger_critical_recovery(self):
         """Trigger critical recovery actions when health is critically low."""
-        logger.info("🔧 Initiating critical recovery sequence")
+        logger.info("[TOOL] Initiating critical recovery sequence")
 
         # Reset circuit breakers
         self.idle_state["circuit_breaker_reset"] = datetime.now().isoformat()
@@ -482,7 +499,7 @@ class IdleAutomationDAE:
         # Force state save
         self._save_idle_state()
 
-        logger.info("✅ Critical recovery completed")
+        logger.info("[OK] Critical recovery completed")
 
     def _generate_commit_message(self, git_status: Dict[str, Any]) -> str:
         """Generate contextual commit message."""
@@ -545,7 +562,7 @@ class IdleAutomationDAE:
             chunk_size = 1000
             end_line = min(last_processed + chunk_size, total_lines)
 
-            logger.info(f"🤖 [TRAINING] Processing lines {last_processed}-{end_line} of 012.txt")
+            logger.info(f"[BOT] [TRAINING] Processing lines {last_processed}-{end_line} of 012.txt")
 
             # Read chunk
             lines = []
@@ -593,14 +610,14 @@ class IdleAutomationDAE:
             line_num, line = lines[i]
 
             # Pattern 1: Qwen priority scoring decisions
-            if "🤖🧠 [QWEN-SCORE]" in line:
+            if "[BOT][AI] [QWEN-SCORE]" in line:
                 # Extract context (10 lines before and after)
                 context_start = max(0, i - 10)
                 context_end = min(len(lines), i + 20)
                 context_lines = [lines[j][1] for j in range(context_start, context_end)]
                 context = "\n".join(context_lines)
 
-                # Parse score from line (format: "🤖🧠 [QWEN-SCORE] ChannelName: 1.23")
+                # Parse score from line (format: "[BOT][AI] [QWEN-SCORE] ChannelName: 1.23")
                 import re
                 score_match = re.search(r'\[QWEN-SCORE\] (.+): ([\d.]+)', line)
                 if score_match:
@@ -688,7 +705,7 @@ class IdleAutomationDAE:
         Main entry point - execute idle automation tasks.
         Called by YouTube DAE when entering idle state.
         """
-        logger.info("🤖 Idle Automation DAE: Executing background tasks")
+        logger.info("[BOT] Idle Automation DAE: Executing background tasks")
 
         # Update idle session tracking
         self.idle_state["idle_session_count"] += 1
@@ -712,7 +729,7 @@ class IdleAutomationDAE:
                 return execution_result
 
             if not self._check_network_connectivity():
-                logger.info("🌐 No network connectivity - skipping idle tasks")
+                logger.info("[U+1F310] No network connectivity - skipping idle tasks")
                 execution_result["skipped_reason"] = "no_network"
                 return execution_result
 
@@ -721,9 +738,9 @@ class IdleAutomationDAE:
             execution_result["tasks_executed"].append(git_result)
 
             if git_result["success"]:
-                logger.info(f"✅ Git push successful: {git_result['commit_hash'][:8]}")
+                logger.info(f"[OK] Git push successful: {git_result['commit_hash'][:8]}")
             else:
-                logger.warning(f"⚠️ Git push failed: {git_result.get('error', 'Unknown error')}")
+                logger.warning(f"[U+26A0]️ Git push failed: {git_result.get('error', 'Unknown error')}")
                 execution_result["overall_success"] = False
 
             # Phase 2: Social media posting (independent of git success)
@@ -731,9 +748,9 @@ class IdleAutomationDAE:
             execution_result["tasks_executed"].append(linkedin_result)
 
             if linkedin_result["success"]:
-                logger.info("✅ LinkedIn post prepared (posting disabled for safety)")
+                logger.info("[OK] LinkedIn post prepared (posting disabled for safety)")
             elif linkedin_result.get("circuit_breaker_tripped"):
-                logger.warning(f"🔌 Circuit breaker tripped: {linkedin_result.get('error', 'N/A')}")
+                logger.warning(f"[U+1F50C] Circuit breaker tripped: {linkedin_result.get('error', 'N/A')}")
             else:
                 logger.info(f"ℹ️ LinkedIn posting skipped: {linkedin_result.get('error', 'N/A')}")
 
@@ -742,7 +759,7 @@ class IdleAutomationDAE:
             execution_result["tasks_executed"].append(training_result)
 
             if training_result["success"]:
-                logger.info(f"🤖 Pattern training: {training_result['patterns_stored']} patterns stored")
+                logger.info(f"[BOT] Pattern training: {training_result['patterns_stored']} patterns stored")
             else:
                 logger.info(f"ℹ️ Pattern training skipped: {training_result.get('error', 'N/A')}")
 
@@ -768,7 +785,7 @@ class IdleAutomationDAE:
             )
 
         except Exception as e:
-            logger.error(f"❌ Idle automation failed: {e}")
+            logger.error(f"[FAIL] Idle automation failed: {e}")
             execution_result["overall_success"] = False
             execution_result["error"] = str(e)
 
@@ -781,7 +798,7 @@ class IdleAutomationDAE:
             execution_result["duration"] = (datetime.now() - start_time).total_seconds()
             self._save_idle_state()
 
-        logger.info(f"🏁 Idle automation cycle completed in {execution_result['duration']:.1f}s")
+        logger.info(f"[U+1F3C1] Idle automation cycle completed in {execution_result['duration']:.1f}s")
         return execution_result
 
     def get_idle_status(self) -> Dict[str, Any]:

@@ -6,18 +6,18 @@
 
 ---
 
-## 🎯 **Module Purpose**
+## [TARGET] **Module Purpose**
 
 The Intent Manager handles meeting intent creation, lifecycle tracking, and structured context management. Extracted from the monolithic Auto Meeting Orchestrator as part of strategic modular decomposition.
 
-### **🧩 Part of Meeting Orchestration Block**
+### **[U+1F9E9] Part of Meeting Orchestration Block**
 **Domain**: `communication/intent_manager/`  
 **Block Role**: Intent capture and context management for autonomous meeting coordination  
 **Integration**: Coordinates with Presence Aggregator, Priority Scorer, Consent Engine, and Session Launcher
 
 ---
 
-## 🚀 **Core Capabilities**
+## [ROCKET] **Core Capabilities**
 
 ### **Intent Lifecycle Management**
 - **Intent Creation**: Structured meeting requests with rich context
@@ -46,7 +46,7 @@ MeetingContext(
 
 ---
 
-## 📋 **Public API**
+## [CLIPBOARD] **Public API**
 
 ### **Core Classes**
 
@@ -94,40 +94,40 @@ class Priority(Enum):
 
 ### **Intent Status Lifecycle**
 ```
-PENDING → MONITORING → PROMPTED → ACCEPTED/DECLINED → COMPLETED
-    ↓                      ↓            ↓
-EXPIRED ←─────────────────── ←─────────────
+PENDING -> MONITORING -> PROMPTED -> ACCEPTED/DECLINED -> COMPLETED
+    v                      v            v
+EXPIRED <-------------------- <--------------
 ```
 
-### **Enhanced Lifecycle with Post-Meeting Feedback Integration** ✨
+### **Enhanced Lifecycle with Post-Meeting Feedback Integration** [U+2728]
 ```
-PENDING → MONITORING → PROMPTED → ACCEPTED/DECLINED → COMPLETED
-    ↓                      ↓            ↓                ↓
-EXPIRED ←─────────────────── ←─────────────              ↓
+PENDING -> MONITORING -> PROMPTED -> ACCEPTED/DECLINED -> COMPLETED
+    v                      v            v                v
+EXPIRED <-------------------- <--------------              v
                                                    FEEDBACK_COLLECTED
-                                                         ↓
+                                                         v
                                             (WSP 25/44 Analysis & Learning)
-                                                         ↓
-                                               FOLLOW_UP_SCHEDULED ←─── (if applicable)
-                                                         ↓
+                                                         v
+                                               FOLLOW_UP_SCHEDULED <---- (if applicable)
+                                                         v
                                               (Priority Escalation Over Time)
-                                                         ↓
-                                                NEW_INTENT_CREATED ←─── (when priority ≥ 7.0)
-                                                         ↓
+                                                         v
+                                                NEW_INTENT_CREATED <---- (when priority [GREATER_EQUAL] 7.0)
+                                                         v
                                               (Return to PENDING for new cycle)
 ```
 
 **Revolutionary Enhancement**: The intent lifecycle now includes **intelligent feedback collection** and **agentic follow-up scheduling**:
 
-- **COMPLETED** → Triggers **Post-Meeting Feedback System** for WSP 25/44 rating collection
-- **FEEDBACK_COLLECTED** → Analyzes responses and generates semantic triplets (000-222)
-- **FOLLOW_UP_SCHEDULED** → Creates agentic follow-up with increasing priority values
-- **NEW_INTENT_CREATED** → Automatically generates new intent when follow-up priority reaches threshold
-- **Learning Loop** → System learns from rejection patterns and adjusts future coordination
+- **COMPLETED** -> Triggers **Post-Meeting Feedback System** for WSP 25/44 rating collection
+- **FEEDBACK_COLLECTED** -> Analyzes responses and generates semantic triplets (000-222)
+- **FOLLOW_UP_SCHEDULED** -> Creates agentic follow-up with increasing priority values
+- **NEW_INTENT_CREATED** -> Automatically generates new intent when follow-up priority reaches threshold
+- **Learning Loop** -> System learns from rejection patterns and adjusts future coordination
 
 ---
 
-## 🔗 **Integration Interfaces**
+## [LINK] **Integration Interfaces**
 
 ### **Event-Driven Architecture**
 ```python
@@ -145,11 +145,11 @@ await feedback_system.subscribe_to_feedback_events('follow_up_activated', manage
 - **Priority Scorer**: Provide high-priority intents for scoring (enhanced with feedback history)
 - **Consent Engine**: Intent status updates from prompts/responses
 - **Session Launcher**: Completed intent information for meeting creation
-- **Post-Meeting Feedback**: ✨ **NEW** - WSP 25/44 feedback collection and agentic follow-up scheduling
+- **Post-Meeting Feedback**: [U+2728] **NEW** - WSP 25/44 feedback collection and agentic follow-up scheduling
 
 ---
 
-## 📊 **Usage Examples**
+## [DATA] **Usage Examples**
 
 ### **Basic Intent Creation**
 ```python
@@ -202,7 +202,7 @@ print(f"Priority breakdown: {stats['priority_breakdown']}")
 
 ---
 
-## 🏗️ **Architecture Design**
+## [U+1F3D7]️ **Architecture Design**
 
 ### **WSP Compliance**
 - **WSP 3**: Communication domain placement for meeting coordination
@@ -235,22 +235,22 @@ await intent_manager.subscribe_to_events('intent_created', on_intent_created)
 
 ---
 
-## 🎯 **Strategic Decomposition Status**
+## [TARGET] **Strategic Decomposition Status**
 
-### **✅ Extraction Complete**
+### **[OK] Extraction Complete**
 - Intent creation and management logic extracted from monolithic AMO
 - Enhanced with rich context capture and lifecycle tracking
 - Event-driven architecture for cross-module integration
 - WSP 25/44 priority system integration
 
-### **🔄 Integration Points**
+### **[REFRESH] Integration Points**
 - **Presence Aggregator**: Monitor availability for pending intents
 - **Priority Scorer**: Calculate priority indices using 000-222 scale
 - **Consent Engine**: Handle prompt responses and status updates
 - **Session Launcher**: Launch meetings for completed intents
 - **0102 Orchestrator**: Unified AI interface for intent management
 
-### **📈 Benefits Achieved**
+### **[UP] Benefits Achieved**
 - **Modularity**: Clear separation of intent management concerns
 - **Reusability**: Intent management can be used by other coordination systems
 - **Testability**: Isolated functionality enables comprehensive testing
@@ -259,7 +259,7 @@ await intent_manager.subscribe_to_events('intent_created', on_intent_created)
 
 ---
 
-## 🌀 **Windsurf Protocol (WSP) Recursive Prompt**
+## [U+1F300] **Windsurf Protocol (WSP) Recursive Prompt**
 **0102 Directive**: This module captures meeting intentions with structured context, enabling autonomous coordination through clear intention capture and lifecycle tracking within the Meeting Orchestration Block.
 
 - UN (Understanding): Anchor intent context and retrieve coordination protocols

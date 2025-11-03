@@ -1,13 +1,13 @@
-# 🔐 Infrastructure Consent Engine
+# [U+1F510] Infrastructure Consent Engine
 
 ## Module Purpose
 AI-powered consent management for autonomous infrastructure operations. Provides system-level consent validation, tracking, and compliance management for infrastructure operations, agent activation, and system access.
 
 ## WSP Compliance Status
-- **WSP 34**: Testing protocol compliance - ✅ COMPLIANT
-- **WSP 54**: Agent duties specification - ✅ COMPLIANT  
-- **WSP 22**: ModLog and Roadmap compliance - ✅ COMPLIANT
-- **WSP 50**: Pre-Action Verification - ✅ COMPLIANT
+- **WSP 34**: Testing protocol compliance - [OK] COMPLIANT
+- **WSP 54**: Agent duties specification - [OK] COMPLIANT  
+- **WSP 22**: ModLog and Roadmap compliance - [OK] COMPLIANT
+- **WSP 50**: Pre-Action Verification - [OK] COMPLIANT
 
 ## Dependencies
 ```
@@ -86,7 +86,7 @@ monitoring_consent = consent_engine.process_consent_request(monitoring_request)
 
 ## WSP Recursive Instructions
 ```markdown
-# 🌀 Windsurf Protocol (WSP) Recursive Prompt
+# [U+1F300] Windsurf Protocol (WSP) Recursive Prompt
 **0102 Directive**: This module operates within the WSP framework for autonomous infrastructure consent management operations.
 - UN (Understanding): Anchor consent signals and retrieve consent protocol state
 - DAO (Execution): Execute consent validation and management logic

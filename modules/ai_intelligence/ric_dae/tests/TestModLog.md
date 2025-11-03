@@ -5,7 +5,7 @@ This log tracks changes to the ricDAE test suite, ensuring WSP 22 compliance for
 
 ## Test Architecture
 - **Framework**: pytest with standard fixtures
-- **Coverage Target**: ≥90% (WSP 5)
+- **Coverage Target**: [GREATER_EQUAL]90% (WSP 5)
 - **CI Integration**: Automated test execution with results logging (WSP 6)
 
 ## Test Suites Status
@@ -28,7 +28,7 @@ This log tracks changes to the ricDAE test suite, ensuring WSP 22 compliance for
 - Governance tests will validate ToS compliance and kill-switch functionality
 
 ## WSP Compliance Tracking
-- **WSP 5**: Test coverage tracking (currently 0%, target ≥90%)
+- **WSP 5**: Test coverage tracking (currently 0%, target [GREATER_EQUAL]90%)
 - **WSP 6**: Test execution auditability (pytest with logging)
 - **WSP 22**: This documentation file
 - **WSP 34**: Test documentation maintained alongside code
@@ -53,7 +53,7 @@ This log tracks changes to the ricDAE test suite, ensuring WSP 22 compliance for
 - Implement actual test logic after Phase 1 ingestion code
 - Add test fixtures and mock data
 - Integrate with CI/CD pipeline
-- Achieve ≥90% coverage target
+- Achieve [GREATER_EQUAL]90% coverage target
 
 ---
 *Last Updated: 2025-10-07*

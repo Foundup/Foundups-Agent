@@ -4,11 +4,11 @@ WSP-Compliant: WSP 3 (Module Organization), WSP 27 (DAE Architecture)
 
 Handles all consciousness-related emoji sequence processing and responses.
 
-NAVIGATION: Detects and processes ✊✋🖐 consciousness triggers.
-→ Called by: message_processor.py::process_message()
-→ Delegates to: llm_integration.py, chat_sender.py
-→ Related: NAVIGATION.py → PROBLEMS["Consciousness trigger not working"]
-→ Quick ref: NAVIGATION.py → NEED_TO["handle consciousness trigger"]
+NAVIGATION: Detects and processes [U+270A][U+270B][U+1F590] consciousness triggers.
+-> Called by: message_processor.py::process_message()
+-> Delegates to: llm_integration.py, chat_sender.py
+-> Related: NAVIGATION.py -> PROBLEMS["Consciousness trigger not working"]
+-> Quick ref: NAVIGATION.py -> NEED_TO["handle consciousness trigger"]
 """
 
 import logging
@@ -33,9 +33,9 @@ class ConsciousnessHandler:
         self.grok = grok_integration
 
         # Emoji patterns with skin tone support
-        self.fist_pattern = r'✊[\U0001F3FB-\U0001F3FF]?'
-        self.hand_pattern = r'✋[\U0001F3FB-\U0001F3FF]?'
-        self.open_pattern = r'🖐️?[\U0001F3FB-\U0001F3FF]?'
+        self.fist_pattern = r'[U+270A][\U0001F3FB-\U0001F3FF]?'
+        self.hand_pattern = r'[U+270B][\U0001F3FB-\U0001F3FF]?'
+        self.open_pattern = r'[U+1F590]️?[\U0001F3FB-\U0001F3FF]?'
 
         # HoloIndex path (prefer root version)
         self.holoindex_available = False
@@ -48,13 +48,13 @@ class ConsciousnessHandler:
             if os.path.exists(root_holo):
                 self.holoindex_path = root_holo
                 self.holoindex_available = True
-                logger.info("✅ HoloIndex integration enabled (using root holo_index.py)")
+                logger.info("[OK] HoloIndex integration enabled (using root holo_index.py)")
             elif os.path.exists(r"E:\HoloIndex\enhanced_holo_index.py"):
                 self.holoindex_path = r"E:\HoloIndex\enhanced_holo_index.py"
                 self.holoindex_available = True
-                logger.info("✅ HoloIndex integration enabled (using E: drive version)")
+                logger.info("[OK] HoloIndex integration enabled (using E: drive version)")
         except:
-            logger.warning("⚠️ HoloIndex not available for chat commands")
+            logger.warning("[U+26A0]️ HoloIndex not available for chat commands")
         
     def search_with_holoindex(self, query: str, username: str, role: str) -> str:
         """
@@ -69,7 +69,7 @@ class ConsciousnessHandler:
             Search results formatted for chat
         """
         if not self.holoindex_available:
-            return f"@{username} 🔍 HoloIndex not available. Install at E:\\HoloIndex"
+            return f"@{username} [SEARCH] HoloIndex not available. Install at E:\\HoloIndex"
 
         try:
             import subprocess
@@ -95,24 +95,24 @@ class ConsciousnessHandler:
 
                     if confidence > 50:
                         # High confidence - found it!
-                        response = f"@{username} 🎯 Found: {top_match[1]} ({confidence:.0f}% match) → {top_match[2][:60]}"
+                        response = f"@{username} [TARGET] Found: {top_match[1]} ({confidence:.0f}% match) -> {top_match[2][:60]}"
                     else:
                         # Low confidence - show options
-                        response = f"@{username} 🔍 Possible matches for '{query}': "
+                        response = f"@{username} [SEARCH] Possible matches for '{query}': "
                         for match in matches[:2]:
                             response += f"[{match[0]}%] {match[1][:30]}... "
 
                     return response[:400]  # YouTube comment length limit
                 else:
-                    return f"@{username} 🔍 No code found for '{query}'. Try different keywords?"
+                    return f"@{username} [SEARCH] No code found for '{query}'. Try different keywords?"
             else:
-                return f"@{username} ❌ Search failed. Try simpler keywords?"
+                return f"@{username} [FAIL] Search failed. Try simpler keywords?"
 
         except subprocess.TimeoutExpired:
             return f"@{username} ⏱️ Search timed out. Try a simpler query?"
         except Exception as e:
             logger.error(f"HoloIndex search error: {e}")
-            return f"@{username} ❌ Search error. Try again later?"
+            return f"@{username} [FAIL] Search error. Try again later?"
 
     def extract_emoji_sequence(self, text: str) -> str:
         """
@@ -122,18 +122,18 @@ class ConsciousnessHandler:
             text: Message text containing emojis
             
         Returns:
-            Normalized emoji sequence (e.g., '✊✋🖐')
+            Normalized emoji sequence (e.g., '[U+270A][U+270B][U+1F590]')
         """
         emoji_chars = []
         pattern = f'{self.fist_pattern}|{self.hand_pattern}|{self.open_pattern}'
         
         for match in re.findall(pattern, text):
-            if '✊' in match:
-                emoji_chars.append('✊')
-            elif '✋' in match:
-                emoji_chars.append('✋')
-            elif '🖐' in match:
-                emoji_chars.append('🖐')
+            if '[U+270A]' in match:
+                emoji_chars.append('[U+270A]')
+            elif '[U+270B]' in match:
+                emoji_chars.append('[U+270B]')
+            elif '[U+1F590]' in match:
+                emoji_chars.append('[U+1F590]')
                 
         return ''.join(emoji_chars)
     
@@ -148,7 +148,7 @@ class ConsciousnessHandler:
             Target username or None
         """
         # Match @username including spaces (e.g., @T K, @John Smith)
-        mention_match = re.search(r'@([^✊✋🖐\n]+?)(?:\s+(?:fc|factcheck|rate)|✊|✋|🖐|$)', text)
+        mention_match = re.search(r'@([^[U+270A][U+270B][U+1F590]\n]+?)(?:\s+(?:fc|factcheck|rate)|[U+270A]|[U+270B]|[U+1F590]|$)', text)
         if mention_match:
             return mention_match.group(1).strip()
         
@@ -166,7 +166,7 @@ class ConsciousnessHandler:
         Returns:
             Request text or None
         """
-        pattern = r'[✊✋🖐🖐️][\U0001F3FB-\U0001F3FF]?'
+        pattern = r'[[U+270A][U+270B][U+1F590][U+1F590]️][\U0001F3FB-\U0001F3FF]?'
         matches = list(re.finditer(pattern, text))
         
         if matches:
@@ -225,7 +225,7 @@ class ConsciousnessHandler:
         if command_type == 'holoindex':
             # Check role restriction - MOD/OWNER only for security
             if role not in ['MOD', 'OWNER']:
-                return f"@{username} 🔒 HoloIndex search is restricted to mods/owners only"
+                return f"@{username} [LOCK] HoloIndex search is restricted to mods/owners only"
 
             # Extract search query from the message
             query = self.extract_creative_request(text)
@@ -235,9 +235,9 @@ class ConsciousnessHandler:
                 if query:
                     return self.search_with_holoindex(query, username, role)
                 else:
-                    return f"@{username} 🔍 HoloIndex: What code should I search for? Example: ✊✋🖐 holoindex send messages"
+                    return f"@{username} [SEARCH] HoloIndex: What code should I search for? Example: [U+270A][U+270B][U+1F590] holoindex send messages"
             else:
-                return f"@{username} 🔍 Use: ✊✋🖐 holoindex [what you're looking for]"
+                return f"@{username} [SEARCH] Use: [U+270A][U+270B][U+1F590] holoindex [what you're looking for]"
 
         elif command_type == 'factcheck' and self.grok:
             if role in ['MOD', 'OWNER']:
@@ -280,4 +280,4 @@ class ConsciousnessHandler:
     
     def has_consciousness_emojis(self, text: str) -> bool:
         """Check if text contains consciousness emojis."""
-        return any(emoji in text for emoji in ['✊', '✋', '🖐', '🖐️'])
+        return any(emoji in text for emoji in ['[U+270A]', '[U+270B]', '[U+1F590]', '[U+1F590]️'])

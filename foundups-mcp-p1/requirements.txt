@@ -1,3 +1,5 @@
 fastmcp>=2.12.3
+# Twitter/X API integration
+tweepy>=4.14.0
 # Foundups-specific dependencies
 # Add as needed based on integration requirements

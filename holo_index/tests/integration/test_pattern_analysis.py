@@ -45,39 +45,39 @@ mock_search_history = [
 
 def test_pattern_analysis():
     """Test the Phase 2 pattern analysis functionality."""
-    print("🧠 Testing Phase 2: HoloIndex Pattern Analysis")
+    print("[AI] Testing Phase 2: HoloIndex Pattern Analysis")
     print("="*60)
 
     # Create rules engine
     engine = ComplianceRulesEngine()
 
     # Run pattern analysis
-    print("📊 Analyzing search patterns...")
+    print("[DATA] Analyzing search patterns...")
     analysis = engine.analyze_search_patterns(mock_search_history)
 
-    print("\n✅ Analysis Results:")
+    print("\n[OK] Analysis Results:")
     print(".2%")
-    print(f"   📈 Success Patterns: {len(analysis['success_patterns'])}")
-    print(f"   📉 Failure Patterns: {len(analysis['failure_patterns'])}")
-    print(f"   🔗 Context Correlations: {len(analysis.get('context_correlations', {}))}")
+    print(f"   [UP] Success Patterns: {len(analysis['success_patterns'])}")
+    print(f"   [U+1F4C9] Failure Patterns: {len(analysis['failure_patterns'])}")
+    print(f"   [LINK] Context Correlations: {len(analysis.get('context_correlations', {}))}")
 
-    print("\n🎯 Recommendations:")
+    print("\n[TARGET] Recommendations:")
     for rec in analysis['recommendations'][:5]:  # Show top 5
         print(f"   {rec}")
 
-    print("\n📈 Success Patterns:")
+    print("\n[UP] Success Patterns:")
     for pattern in analysis['success_patterns']:
         print(".1%")
 
-    print("\n📉 Failure Patterns:")
+    print("\n[U+1F4C9] Failure Patterns:")
     for pattern in analysis['failure_patterns']:
         print(".1%")
 
-    print("\n✅ Phase 2 Pattern Analysis: OPERATIONAL")
-    print("   - Success/failure detection: ✅")
-    print("   - Context correlation analysis: ✅")
-    print("   - Automated pattern reporting: ✅")
-    print("   - Module health integration: ✅")
+    print("\n[OK] Phase 2 Pattern Analysis: OPERATIONAL")
+    print("   - Success/failure detection: [OK]")
+    print("   - Context correlation analysis: [OK]")
+    print("   - Automated pattern reporting: [OK]")
+    print("   - Module health integration: [OK]")
 
 if __name__ == "__main__":
     test_pattern_analysis()

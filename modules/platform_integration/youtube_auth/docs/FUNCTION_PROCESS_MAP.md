@@ -16,70 +16,70 @@
 ## Debug Trace Routes
 
 ### Authentication Flow
-**Path**: `get_authenticated_service()` → credential selection → exhaustion check → service building
+**Path**: `get_authenticated_service()` -> credential selection -> exhaustion check -> service building
 ```
 youtube_auth.py:36 (entry point)
-  ↓
+  v
 youtube_auth.py:72-86 (load exhausted sets from memory/exhausted_credentials.json)
-  ↓
+  v
 youtube_auth.py:87-112 (check midnight PT reset, clear if needed)
-  ↓
+  v
 youtube_auth.py:119-136 (determine credential sets to try)
-  ↓
+  v
 youtube_auth.py:138-224 (iterate sets, authenticate, handle exhaustion)
-  ↓
+  v
 monitored_youtube_service.py:17-20 (wrap service with monitoring)
 ```
 
 ### Quota Check Flow
-**Path**: API call → interception → quota check → allow/block decision
+**Path**: API call -> interception -> quota check -> allow/block decision
 ```
 Any API call (e.g., liveChatMessages().list())
-  ↓
+  v
 monitored_youtube_service.py:123 (__getattr__ intercepts)
-  ↓
+  v
 monitored_youtube_service.py:130 (_intercept_api_call)
-  ↓
+  v
 quota_intelligence.py:63 (can_perform_operation)
-  ↓
+  v
 quota_monitor.py:250 (get_usage_summary for current state)
-  ↓
+  v
 quota_intelligence.py:98-176 (evaluate rules and limits)
-  ↓
+  v
 Return decision with suggestions
 ```
 
 ### Credential Exhaustion Flow
-**Path**: Quota exceeded → mark exhausted → persist to disk → prevent reuse
+**Path**: Quota exceeded -> mark exhausted -> persist to disk -> prevent reuse
 ```
 API returns quotaExceeded error
-  ↓
+  v
 youtube_auth.py:232 (mark_credential_exhausted called)
-  ↓
+  v
 youtube_auth.py:247-262 (load current exhausted data)
-  ↓
+  v
 youtube_auth.py:264 (add to exhausted_sets)
-  ↓
+  v
 youtube_auth.py:267-276 (calculate next midnight PT)
-  ↓
+  v
 youtube_auth.py:279-299 (save to memory/exhausted_credentials.json)
-  ↓
+  v
 youtube_auth.py:304 (update in-memory set)
 ```
 
 ### Quota Reset Flow
-**Path**: Time check → midnight detection → clear exhausted → reset counters
+**Path**: Time check -> midnight detection -> clear exhausted -> reset counters
 ```
 get_authenticated_service() called
-  ↓
+  v
 youtube_auth.py:87-100 (calculate current time in PT)
-  ↓
+  v
 youtube_auth.py:101 (check if past midnight)
-  ↓
+  v
 youtube_auth.py:102-103 (clear exhausted_sets if true)
-  ↓
+  v
 youtube_auth.py:106-112 (save reset state to disk)
-  ↓
+  v
 quota_monitor.py:211-229 (_check_reset for usage counters)
 ```
 
@@ -88,25 +88,25 @@ quota_monitor.py:211-229 (_check_reset for usage counters)
 ### pytz Module Missing
 - **Symptom**: `No module named 'pytz'`
 - **Location**: youtube_auth.py:62-65
-- **Trace Path**: Import attempt → ImportError → Fallback to UTC-8
+- **Trace Path**: Import attempt -> ImportError -> Fallback to UTC-8
 - **Solution**: Uses UTC-8 approximation (not perfect for DST)
 
 ### Throttling Bypass (2,343 calls)
 - **Symptom**: API calls not being monitored/throttled
 - **Location**: monitored_youtube_service.py:123-140
-- **Trace Path**: Old process → No MonitoredYouTubeService → Direct API calls
+- **Trace Path**: Old process -> No MonitoredYouTubeService -> Direct API calls
 - **Solution**: Kill old processes, ensure single instance
 
 ### False Quota Exhaustion
 - **Symptom**: Valid credentials marked as exhausted
 - **Location**: youtube_auth.py:206-212 (removed validation)
-- **Trace Path**: Auth → Validation test → Quota consumed → False exhaustion
+- **Trace Path**: Auth -> Validation test -> Quota consumed -> False exhaustion
 - **Solution**: Skip validation during authentication
 
 ### Midnight Reset Failure
 - **Symptom**: Exhausted sets not clearing after midnight PT
 - **Location**: youtube_auth.py:87-112
-- **Trace Path**: Time check → Timezone calculation → Reset logic
+- **Trace Path**: Time check -> Timezone calculation -> Reset logic
 - **Solution**: Verify timezone handling and persistent state file
 
 ## Performance Bottlenecks
@@ -121,15 +121,15 @@ quota_monitor.py:211-229 (_check_reset for usage counters)
 ## Integration Points
 
 ### Incoming Dependencies
-- **auto_moderator_dae.py** → Requests authenticated service
-- **livechat_core.py** → Uses service for API calls
-- **social_media_orchestrator** → Needs YouTube API access
+- **auto_moderator_dae.py** -> Requests authenticated service
+- **livechat_core.py** -> Uses service for API calls
+- **social_media_orchestrator** -> Needs YouTube API access
 
 ### Outgoing Dependencies
-- **google.oauth2.credentials** → OAuth handling
-- **googleapiclient.discovery** → API service building
-- **memory/exhausted_credentials.json** → Persistent state
-- **memory/quota_usage.json** → Usage tracking
+- **google.oauth2.credentials** -> OAuth handling
+- **googleapiclient.discovery** -> API service building
+- **memory/exhausted_credentials.json** -> Persistent state
+- **memory/quota_usage.json** -> Usage tracking
 
 ## WSP 86 Navigation Commands
 

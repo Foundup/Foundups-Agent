@@ -1,0 +1,284 @@
+{
+  "metadata": {
+    "generated": "2025-10-20T10:23:39",
+    "source": "modules/infrastructure/wre_core/AI_ENTRY_POINTS_MAPPING.md",
+    "description": "Skill-to-entry-point graph for WRE wardrobe integration",
+    "schema": {
+      "node": {
+        "id": "unique skill identifier",
+        "category": "high-level domain",
+        "module": "code module owning the entry point",
+        "intent": [
+          "DECISION",
+          "CLASSIFICATION",
+          "GENERATION",
+          "TELEMETRY"
+        ],
+        "agents": [
+          "qwen",
+          "gemma",
+          "ui_tars",
+          "grok"
+        ],
+        "dependencies": [
+          "data stores, MCP endpoints, throttles"
+        ],
+        "promotion_state": "prototype|staged|production"
+      },
+      "edge": {
+        "from": "skill id",
+        "to": "skill id",
+        "type": "relationship semantics (composition|feeds|shares_context)",
+        "notes": "additional context"
+      }
+    }
+  },
+  "nodes": [
+    {
+      "id": "youtube_spam_detection",
+      "label": "YouTube Spam Detection",
+      "category": "livechat_moderation",
+      "module": "modules/communication/livechat/src/auto_moderator_dae.py",
+      "intent": [
+        "CLASSIFICATION"
+      ],
+      "agents": [
+        "gemma"
+      ],
+      "dependencies": [
+        "youtube_telemetry_store",
+        "message_history_last_100"
+      ],
+      "promotion_state": "prototype"
+    },
+    {
+      "id": "youtube_toxic_filtering",
+      "label": "YouTube Toxic Filtering",
+      "category": "livechat_moderation",
+      "module": "modules/communication/livechat/src/auto_moderator_dae.py",
+      "intent": [
+        "CLASSIFICATION",
+        "DECISION"
+      ],
+      "agents": [
+        "gemma",
+        "qwen"
+      ],
+      "dependencies": [
+        "youtube_telemetry_store",
+        "moderation_policy"
+      ],
+      "promotion_state": "prototype"
+    },
+    {
+      "id": "youtube_intelligent_monitoring",
+      "label": "YouTube Intelligent Monitor",
+      "category": "livechat_moderation",
+      "module": "modules/communication/livechat/src/auto_moderator_dae.py",
+      "intent": [
+        "DECISION",
+        "TELEMETRY"
+      ],
+      "agents": [
+        "qwen"
+      ],
+      "dependencies": [
+        "pattern_memory",
+        "rate_limiter",
+        "youtube_telemetry_store"
+      ],
+      "promotion_state": "prototype"
+    },
+    {
+      "id": "youtube_channel_prioritization",
+      "label": "Channel Prioritization",
+      "category": "stream_detection",
+      "module": "modules/communication/livechat/src/qwen_youtube_integration.py",
+      "intent": [
+        "DECISION"
+      ],
+      "agents": [
+        "qwen"
+      ],
+      "dependencies": [
+        "channel_heat_scores",
+        "schedule_cache"
+      ],
+      "promotion_state": "prototype"
+    },
+    {
+      "id": "youtube_stream_prediction",
+      "label": "Stream Prediction",
+      "category": "stream_detection",
+      "module": "modules/communication/livechat/src/qwen_youtube_integration.py",
+      "intent": [
+        "DECISION",
+        "TELEMETRY"
+      ],
+      "agents": [
+        "qwen"
+      ],
+      "dependencies": [
+        "historical_streams",
+        "confidence_model"
+      ],
+      "promotion_state": "prototype"
+    },
+    {
+      "id": "amo_handshake_intelligence",
+      "label": "AMO Handshake Intelligence",
+      "category": "meeting_orchestration",
+      "module": "modules/communication/auto_meeting_orchestrator/src/handshake_engine.py",
+      "intent": [
+        "DECISION"
+      ],
+      "agents": [
+        "qwen"
+      ],
+      "dependencies": [
+        "availability_graph",
+        "intent_queue"
+      ],
+      "promotion_state": "prototype"
+    },
+    {
+      "id": "amo_presence_classification",
+      "label": "Presence Classification",
+      "category": "meeting_orchestration",
+      "module": "modules/communication/auto_meeting_orchestrator/src/presence_analyzer.py",
+      "intent": [
+        "CLASSIFICATION"
+      ],
+      "agents": [
+        "gemma"
+      ],
+      "dependencies": [
+        "presence_cache",
+        "status_history"
+      ],
+      "promotion_state": "prototype"
+    },
+    {
+      "id": "social_linkedin_posting",
+      "label": "LinkedIn Post Drafting",
+      "category": "social_media",
+      "module": "modules/platform_integration/social_media_orchestrator/src/ai_delegation_orchestrator.py",
+      "intent": [
+        "GENERATION"
+      ],
+      "agents": [
+        "qwen",
+        "grok"
+      ],
+      "dependencies": [
+        "content_templates",
+        "brand_voice_guidelines",
+        "throttle_post_frequency"
+      ],
+      "promotion_state": "prototype"
+    },
+    {
+      "id": "git_commit_synthesis",
+      "label": "Git Commit Synthesis",
+      "category": "git_automation",
+      "module": "modules/infrastructure/gitpush_dae/src/commit_generator.py",
+      "intent": [
+        "GENERATION"
+      ],
+      "agents": [
+        "qwen"
+      ],
+      "dependencies": [
+        "diff_context",
+        "modlog_templates"
+      ],
+      "promotion_state": "prototype"
+    },
+    {
+      "id": "vision_observability_classification",
+      "label": "Vision Observability Classification",
+      "category": "vision_dae",
+      "module": "modules/infrastructure/dae_infrastructure/foundups_vision_dae/src/vision_dae.py",
+      "intent": [
+        "CLASSIFICATION",
+        "TELEMETRY"
+      ],
+      "agents": [
+        "gemma"
+      ],
+      "dependencies": [
+        "vision_metrics_db",
+        "mcp_vision_stream"
+      ],
+      "promotion_state": "prototype"
+    },
+    {
+      "id": "wre_pattern_optimization",
+      "label": "WRE Pattern Optimization",
+      "category": "wre_core",
+      "module": "modules/infrastructure/wre_core/wre_master_orchestrator/src/wre_master_orchestrator.py",
+      "intent": [
+        "DECISION",
+        "TELEMETRY"
+      ],
+      "agents": [
+        "qwen"
+      ],
+      "dependencies": [
+        "pattern_memory",
+        "recursive_improvement_metrics"
+      ],
+      "promotion_state": "prototype"
+    }
+  ],
+  "edges": [
+    {
+      "from": "youtube_spam_detection",
+      "to": "youtube_intelligent_monitoring",
+      "type": "feeds_metrics",
+      "notes": "Spam classifications inform monitoring dashboards"
+    },
+    {
+      "from": "youtube_toxic_filtering",
+      "to": "youtube_intelligent_monitoring",
+      "type": "escalates",
+      "notes": "Toxic decisions trigger monitor escalation"
+    },
+    {
+      "from": "youtube_channel_prioritization",
+      "to": "youtube_stream_prediction",
+      "type": "shares_context",
+      "notes": "Heat scores feed prediction models"
+    },
+    {
+      "from": "youtube_stream_prediction",
+      "to": "youtube_intelligent_monitoring",
+      "type": "feeds_metrics",
+      "notes": "Prediction confidence alters monitoring thresholds"
+    },
+    {
+      "from": "amo_presence_classification",
+      "to": "amo_handshake_intelligence",
+      "type": "feeds",
+      "notes": "Presence confidence drives handshake decisions"
+    },
+    {
+      "from": "vision_observability_classification",
+      "to": "wre_pattern_optimization",
+      "type": "metrics_input",
+      "notes": "Vision telemetry informs pattern updates"
+    },
+    {
+      "from": "social_linkedin_posting",
+      "to": "git_commit_synthesis",
+      "type": "shares_context",
+      "notes": "Content summaries reused in commit narratives"
+    },
+    {
+      "from": "wre_pattern_optimization",
+      "to": "youtube_intelligent_monitoring",
+      "type": "pattern_sync",
+      "notes": "Updated patterns pushed via WRE"
+    }
+  ]
+}

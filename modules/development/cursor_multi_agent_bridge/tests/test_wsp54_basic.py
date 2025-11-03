@@ -36,7 +36,7 @@ class WSP54BasicTester:
     
     async def run_basic_tests(self):
         """Run basic WSP 54 tests."""
-        logger.info("🧪 Starting Basic WSP 54 Testing")
+        logger.info("[U+1F9EA] Starting Basic WSP 54 Testing")
         
         try:
             # Test 1: Agent Activation
@@ -54,11 +54,11 @@ class WSP54BasicTester:
             # Calculate results
             self._calculate_results()
             
-            logger.info("✅ Basic WSP 54 Testing Completed")
+            logger.info("[OK] Basic WSP 54 Testing Completed")
             return self.test_results
             
         except Exception as e:
-            logger.error(f"❌ Basic testing failed: {e}")
+            logger.error(f"[FAIL] Basic testing failed: {e}")
             return {"error": str(e)}
     
     async def _test_agent_activation(self):
@@ -80,11 +80,11 @@ class WSP54BasicTester:
             assert active_count >= 6, f"Expected 6+ active agents, got {active_count}"
             
             self.test_results["passed_tests"] += 1
-            logger.info("✅ Agent Activation: PASSED")
+            logger.info("[OK] Agent Activation: PASSED")
             
         except Exception as e:
             self.test_results["failed_tests"] += 1
-            logger.error(f"❌ Agent Activation: FAILED - {e}")
+            logger.error(f"[FAIL] Agent Activation: FAILED - {e}")
     
     async def _test_wsp_protocol_compliance(self):
         """Test WSP protocol compliance."""
@@ -101,11 +101,11 @@ class WSP54BasicTester:
             assert wsp54_compliance["compliance_score"] >= 0.8, "WSP 54 compliance below threshold"
             
             self.test_results["passed_tests"] += 1
-            logger.info("✅ WSP Protocol Compliance: PASSED")
+            logger.info("[OK] WSP Protocol Compliance: PASSED")
             
         except Exception as e:
             self.test_results["failed_tests"] += 1
-            logger.error(f"❌ WSP Protocol Compliance: FAILED - {e}")
+            logger.error(f"[FAIL] WSP Protocol Compliance: FAILED - {e}")
     
     async def _test_agent_coordination(self):
         """Test agent coordination."""
@@ -123,11 +123,11 @@ class WSP54BasicTester:
             assert coordination_result["coordination_successful"], "Agent coordination failed"
             
             self.test_results["passed_tests"] += 1
-            logger.info("✅ Agent Coordination: PASSED")
+            logger.info("[OK] Agent Coordination: PASSED")
             
         except Exception as e:
             self.test_results["failed_tests"] += 1
-            logger.error(f"❌ Agent Coordination: FAILED - {e}")
+            logger.error(f"[FAIL] Agent Coordination: FAILED - {e}")
     
     async def _test_memory_architecture(self):
         """Test memory architecture."""
@@ -144,11 +144,11 @@ class WSP54BasicTester:
             assert memory_result["memory_operations"] == "successful", "Memory operations failed"
             
             self.test_results["passed_tests"] += 1
-            logger.info("✅ Memory Architecture: PASSED")
+            logger.info("[OK] Memory Architecture: PASSED")
             
         except Exception as e:
             self.test_results["failed_tests"] += 1
-            logger.error(f"❌ Memory Architecture: FAILED - {e}")
+            logger.error(f"[FAIL] Memory Architecture: FAILED - {e}")
     
     def _calculate_results(self):
         """Calculate final results."""
@@ -161,22 +161,22 @@ class WSP54BasicTester:
 
 async def main():
     """Main testing function."""
-    print("🧪 WSP 54 Basic Testing Suite")
+    print("[U+1F9EA] WSP 54 Basic Testing Suite")
     print("=" * 40)
     
     tester = WSP54BasicTester()
     results = await tester.run_basic_tests()
     
-    print(f"\n📊 Test Results:")
+    print(f"\n[DATA] Test Results:")
     print(f"Total Tests: {results['total_tests']}")
     print(f"Passed: {results['passed_tests']}")
     print(f"Failed: {results['failed_tests']}")
     print(f"WSP Compliance Score: {results['wsp_compliance_score']:.2%}")
     
     if results['failed_tests'] == 0:
-        print("\n✅ All WSP 54 tests passed!")
+        print("\n[OK] All WSP 54 tests passed!")
     else:
-        print(f"\n⚠️ {results['failed_tests']} tests failed.")
+        print(f"\n[U+26A0]️ {results['failed_tests']} tests failed.")
     
     return results
 

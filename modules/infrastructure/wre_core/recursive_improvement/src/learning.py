@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+import io
+
+
 import asyncio
 import json
 import multiprocessing
@@ -13,6 +17,18 @@ import time
 from .core import ErrorPattern, Solution, Improvement, PatternType
 from .persistence import QuantumStatePersistence, QuantumState
 from .utils import load_memory, save_pattern, save_solution, save_improvement
+
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
 
 class RecursiveLearningEngine:
     """
@@ -689,7 +705,7 @@ def install_global_handler():
             engine.process_error(exc_value, {"global_handler": True})
         )
         
-        print(f"\n🧠 Learned from error: {improvement.improvement_id}")
+        print(f"\n[AI] Learned from error: {improvement.improvement_id}")
         print(f"   Pattern: {improvement.pattern_id}")
         print(f"   Solution: {improvement.solution_id}")
         print(f"   Target: {improvement.target}")

@@ -113,7 +113,7 @@ class ColabExporter:
         Categories match Gemma's role:
         - classification: Simple yes/no decisions
         - routing: Which module/WSP applies
-        - error_solution: Error → Fix mappings
+        - error_solution: Error -> Fix mappings
         - priority_scoring: Urgency/importance decisions
         """
         source_type = pattern.get('source_type', '')
@@ -254,7 +254,7 @@ This export contains training data from ALL system sources:
 
 1. **012.txt**: 0102 operational decisions (PRIMARY)
 2. **ModLog files**: Module change history
-3. **WSP violations**: Violation → Fix patterns
+3. **WSP violations**: Violation -> Fix patterns
 4. **Chat logs**: LiveChat conversation memory
 5. **Git history**: Commits, renames, fixes
 6. **Daemon logs**: DAE operational data
@@ -265,7 +265,7 @@ This export contains training data from ALL system sources:
 
 1. Go to https://colab.research.google.com/
 2. Click "New Notebook"
-3. Change runtime to GPU: Runtime → Change runtime type → GPU (T4)
+3. Change runtime to GPU: Runtime -> Change runtime type -> GPU (T4)
 
 ### Step 2: Upload Training Data
 

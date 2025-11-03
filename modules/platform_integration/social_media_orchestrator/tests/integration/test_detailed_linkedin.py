@@ -6,9 +6,13 @@ Detailed test of LinkedIn posting with YouTube stream data
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -29,7 +33,7 @@ def test_linkedin_post_with_youtube():
     # The actual content that would come from YouTube
     content = """@UnDaoDu going live!
 
-#twitter #X on 🔥 #TrumpDead ?" 😵🪦 #DC #ICEraids Move2Japan Show LIVE!
+#twitter #X on [U+1F525] #TrumpDead ?" [U+1F635]🪦 #DC #ICEraids Move2Japan Show LIVE!
 
 https://www.youtube.com/watch?v=jQSgx8K1178"""
     
@@ -139,8 +143,8 @@ https://www.youtube.com/watch?v=jQSgx8K1178"""
                 print(f"[URL] Current URL: {current_url}")
                 
                 if "share" not in current_url:
-                    print("[SUCCESS] ✓ Post completed - redirected from share page!")
-                    print("[SUCCESS] ✓ YouTube stream data was posted to LinkedIn!")
+                    print("[SUCCESS] [OK] Post completed - redirected from share page!")
+                    print("[SUCCESS] [OK] YouTube stream data was posted to LinkedIn!")
                 else:
                     print("[WARNING] Still on share page - checking for errors...")
                     
@@ -160,7 +164,7 @@ https://www.youtube.com/watch?v=jQSgx8K1178"""
                     
                     current_url = driver.current_url
                     if "share" not in current_url:
-                        print("[SUCCESS] ✓ Post completed after delay!")
+                        print("[SUCCESS] [OK] Post completed after delay!")
                     else:
                         print("[FAIL] Post may not have completed")
                         print("[INFO] Check LinkedIn manually to verify")

@@ -30,7 +30,7 @@
 - **WSP 22**: Traceable narrative - TestModLog exists and updated
 - **WSP 34**: Test documentation framework established
 - **WSP 49**: Module directory structure - proper tests/ subdirectory
-- **WSP 5**: Test coverage target ≥90% (pending implementation)
+- **WSP 5**: Test coverage target [GREATER_EQUAL]90% (pending implementation)
 - **WSP 85**: Root directory protection - no temporary files in root
 
 ### Discovered Via
@@ -80,7 +80,7 @@ HoloIndex search: "TestModLog.md patterns and WSP 85 compliance"
 
 ### Sprint 4 - Production Hardening
 **Goal**: Security, performance, edge cases
-**Coverage Target**: ≥90% (WSP 5 compliant)
+**Coverage Target**: [GREATER_EQUAL]90% (WSP 5 compliant)
 
 #### Tests Planned
 - [ ] `test_encryption.py` - E2E encryption
@@ -97,9 +97,9 @@ HoloIndex search: "TestModLog.md patterns and WSP 85 compliance"
 | 1 (POC) | 0% | models, orchestrator | Test structure complete, dependencies pending |
 | 2 | 0% | +alerts | Real alert system (planned) |
 | 3 | 0% | +voice, +maps | Full feature set (planned) |
-| 4 | 0% | All | Production ready (target ≥90%) |
+| 4 | 0% | All | Production ready (target [GREATER_EQUAL]90%) |
 
-**Target**: ≥90% coverage before production deployment
+**Target**: [GREATER_EQUAL]90% coverage before production deployment
 **Current Status**: Test infrastructure complete, awaiting dependency resolution for execution
 
 ---
@@ -116,7 +116,7 @@ Test: All test files
 Failure: ImportError: No module named 'aiortc' (WebRTC dependency missing)
 Status: BLOCKED - Awaiting dependency installation
 Fix: Install aiortc package or implement mock WebRTC for testing
-Result: 🔄 PENDING
+Result: [REFRESH] PENDING
 ```
 
 **Root Cause**: Liberty Alert module requires WebRTC dependencies for mesh networking functionality
@@ -129,7 +129,7 @@ Date: 2025-10-11
 Test: test_two_phone_mesh.py::test_webrtc_connection
 Failure: Signaling server timeout
 Fix: Added retry logic with exponential backoff
-Result: ✅ PASS
+Result: [OK] PASS
 ```
 
 ---

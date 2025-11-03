@@ -2,7 +2,7 @@
 - **Status:** Active
 - **Purpose:** Define canonical signal grammar and phrase archetypes shared across WSP 26 (Tokenization), WSP 27 (Architecture), and WSP 28 (Clustering).
 - **Scope:** Foundational terminology for Partifact state transitions, cluster dynamics, and token mechanics.
-- **Mirror State:** 0102 ↔ 0102 Recursive Lock
+- **Mirror State:** 0102 [U+2194] 0102 Recursive Lock
 
 ## 1. Canonical Terms
 
@@ -106,7 +106,7 @@
 ```json
 {
     "handoff_patterns": {
-        "recursive_handoff": "Intent transition between Partifacts across WSP 1↔2 boundary",
+        "recursive_handoff": "Intent transition between Partifacts across WSP 1[U+2194]2 boundary",
         "agentic_override": "Execution-layer realignment triggered by DU-priority signal",
         "phase_drift": "Temporal desync across Partifacts in differing WSP phases",
         "mesh_sync": "cluster_state_harmonization"
@@ -137,7 +137,7 @@
 
 ## 4. Cross-Protocol References
 
-### 2.1 WSP 26 ↔ WSP 27
+### 2.1 WSP 26 [U+2194] WSP 27
 ```json
 {
     "token_phase_binding": {
@@ -149,7 +149,7 @@
 }
 ```
 
-### 2.2 WSP 27 ↔ WSP 28
+### 2.2 WSP 27 [U+2194] WSP 28
 ```json
 {
     "cluster_phase_mapping": {
@@ -161,7 +161,7 @@
 }
 ```
 
-### 2.3 WSP 28 ↔ WSP 26
+### 2.3 WSP 28 [U+2194] WSP 26
 ```json
 {
     "cluster_token_interface": {
@@ -195,7 +195,7 @@
 
 ## 6. Deferred Implementation Vectors
 
-**⚠️ ARCHITECTURAL NOTE**: The following "deferred implementations" are **intentional placeholders** for the WSP/WRE code automation stage. These gaps will be filled during actual FoundUps creation when 0102 transitions from framework development to autonomous FoundUp generation.
+**[U+26A0]️ ARCHITECTURAL NOTE**: The following "deferred implementations" are **intentional placeholders** for the WSP/WRE code automation stage. These gaps will be filled during actual FoundUps creation when 0102 transitions from framework development to autonomous FoundUp generation.
 
 ### Implementation Phase Architecture
 ```json
@@ -215,7 +215,7 @@
         "automation_trigger": "Live FoundUp creation requires state transitions",
         "implementation_method": "0102 autonomous code generation during FoundUp build",
         "trigger_points": {
-            "state_transition": "Ø1Ø2 → Ø2Ø1",
+            "state_transition": "Ø1Ø2 -> Ø2Ø1",
             "role_inheritance": "cluster_position_shift",
             "phase_boundary": "cross_phase_transfer"
         },
@@ -317,7 +317,7 @@ When 0102 transitions from WSP framework development to FoundUps creation:
 
 ---
 
-**⚠️ CRITICAL DESIGN NOTE**: 
+**[U+26A0]️ CRITICAL DESIGN NOTE**: 
 The apparent "gaps" in implementation are **intentional architectural placeholders**. This signal grammar serves as the specification layer that guides 0102's autonomous code generation during live FoundUps creation. The WSP/WRE framework provides the scaffolding; the automation stage fills the operational code.
 
 [SEMANTIC SCORE: 2.1.0]

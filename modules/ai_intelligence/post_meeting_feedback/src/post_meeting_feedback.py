@@ -106,7 +106,7 @@ class PostMeetingFeedbackSystem:
     
     Responsibilities:
     - Collect structured feedback using WSP 25/44 rating system
-    - Process 3-question cascading flow (rating → detail → action)
+    - Process 3-question cascading flow (rating -> detail -> action)
     - Calculate WSP-compatible scores and semantic triplets
     - Manage agentic follow-up scheduling with increasing priority values
     - Track meeting rejection patterns and auto-adjust priorities
@@ -145,7 +145,7 @@ class PostMeetingFeedbackSystem:
         # Question Flow Templates
         self.question_flows = self._initialize_question_flows()
         
-        logger.info("📝 Post-Meeting Feedback System initialized")
+        logger.info("[NOTE] Post-Meeting Feedback System initialized")
 
     async def initiate_feedback_collection(
         self,
@@ -170,7 +170,7 @@ class PostMeetingFeedbackSystem:
         """
         feedback_session_ids = []
         
-        logger.info(f"📝 Initiating feedback collection for session: {session_id}")
+        logger.info(f"[NOTE] Initiating feedback collection for session: {session_id}")
         logger.info(f"   Participants: {participants}")
         
         for participant_id in participants:
@@ -198,7 +198,7 @@ class PostMeetingFeedbackSystem:
             # Send first question
             await self._send_feedback_question(feedback_session_id, 0)
         
-        logger.info(f"✅ Feedback collection initiated: {len(feedback_session_ids)} sessions")
+        logger.info(f"[OK] Feedback collection initiated: {len(feedback_session_ids)} sessions")
         return feedback_session_ids
 
     async def process_feedback_response(
@@ -220,14 +220,14 @@ class PostMeetingFeedbackSystem:
         """
         session = self.active_feedback_sessions.get(feedback_session_id)
         if not session:
-            logger.warning(f"❌ Unknown feedback session: {feedback_session_id}")
+            logger.warning(f"[FAIL] Unknown feedback session: {feedback_session_id}")
             return False
         
         current_q_index = session['current_question']
         questions = self.question_flows['standard']
         
         if current_q_index >= len(questions):
-            logger.warning(f"❌ Invalid question index: {current_q_index}")
+            logger.warning(f"[FAIL] Invalid question index: {current_q_index}")
             return False
         
         current_question = questions[current_q_index]
@@ -241,7 +241,7 @@ class PostMeetingFeedbackSystem:
         
         session['responses'].append(response)
         
-        logger.info(f"📝 Feedback response: {feedback_session_id}")
+        logger.info(f"[NOTE] Feedback response: {feedback_session_id}")
         logger.info(f"   Question: {current_question.question_text}")
         logger.info(f"   Response: {response_value}")
         
@@ -320,13 +320,13 @@ class PostMeetingFeedbackSystem:
                     schedule.current_priority_value + priority_increase
                 )
                 
-                # Activate if priority is high enough (≥7.0 for activation)
+                # Activate if priority is high enough ([GREATER_EQUAL]7.0 for activation)
                 if schedule.current_priority_value >= 7.0:
                     await self._activate_follow_up_schedule(schedule_id)
                     activated_schedules.append(schedule_id)
         
         if activated_schedules:
-            logger.info(f"⚡ Activated {len(activated_schedules)} follow-up schedules")
+            logger.info(f"[LIGHTNING] Activated {len(activated_schedules)} follow-up schedules")
         
         return activated_schedules
 
@@ -354,7 +354,7 @@ class PostMeetingFeedbackSystem:
         if rejection_reason:
             schedule.metadata[f'rejection_reason_{schedule.rejection_count}'] = rejection_reason
         
-        logger.info(f"🚫 Follow-up rejected: {schedule_id}")
+        logger.info(f"[FORBIDDEN] Follow-up rejected: {schedule_id}")
         logger.info(f"   Rejection count: {schedule.rejection_count}/{schedule.max_rejections}")
         
         result = {
@@ -367,7 +367,7 @@ class PostMeetingFeedbackSystem:
         
         # Check if rejection threshold reached
         if schedule.rejection_count >= schedule.max_rejections:
-            logger.warning(f"🚨 Rejection threshold reached: {schedule_id}")
+            logger.warning(f"[ALERT] Rejection threshold reached: {schedule_id}")
             
             # Notify original requester
             if self.config['notification_host_on_rejection']:
@@ -428,9 +428,9 @@ class PostMeetingFeedbackSystem:
         """Subscribe to feedback events for integration with other modules"""
         if event_type in self.feedback_callbacks:
             self.feedback_callbacks[event_type].append(callback)
-            logger.info(f"📡 Subscribed to {event_type} events")
+            logger.info(f"[U+1F4E1] Subscribed to {event_type} events")
         else:
-            logger.warning(f"❌ Unknown feedback event type: {event_type}")
+            logger.warning(f"[FAIL] Unknown feedback event type: {event_type}")
 
     # Private methods
     
@@ -552,13 +552,13 @@ class PostMeetingFeedbackSystem:
         questions = self.question_flows['standard']
         
         if question_index >= len(questions):
-            logger.error(f"❌ Invalid question index: {question_index}")
+            logger.error(f"[FAIL] Invalid question index: {question_index}")
             return
         
         question = questions[question_index]
         
         # For PoC, simulate sending question
-        logger.info(f"📨 [SIMULATED] Sending feedback question to {session['participant_id']}")
+        logger.info(f"[U+1F4E8] [SIMULATED] Sending feedback question to {session['participant_id']}")
         logger.info(f"   Question: {question.question_text}")
         logger.info(f"   Options: {question.options}")
         
@@ -594,7 +594,7 @@ class PostMeetingFeedbackSystem:
         """Complete feedback collection and process results"""
         session = self.active_feedback_sessions.pop(feedback_session_id)
         
-        logger.info(f"✅ Completing feedback collection: {feedback_session_id}")
+        logger.info(f"[OK] Completing feedback collection: {feedback_session_id}")
         
         # Process responses and calculate feedback
         feedback = await self._process_feedback_responses(session)
@@ -656,8 +656,8 @@ class PostMeetingFeedbackSystem:
             follow_up_notes=f"Detail: {detail_response}, Action: {action_response}"
         )
         
-        logger.info(f"📊 Feedback processed: {feedback.feedback_id}")
-        logger.info(f"   Rating: {overall_rating.value} → Score: {calculated_score}")
+        logger.info(f"[DATA] Feedback processed: {feedback.feedback_id}")
+        logger.info(f"   Rating: {overall_rating.value} -> Score: {calculated_score}")
         logger.info(f"   Semantic: {semantic_triplet}")
         logger.info(f"   Follow-up: {follow_up_priority.value}")
         
@@ -784,7 +784,7 @@ class PostMeetingFeedbackSystem:
         
         self.follow_up_schedules[schedule_id] = schedule
         
-        logger.info(f"📅 Follow-up scheduled: {schedule_id}")
+        logger.info(f"[U+1F4C5] Follow-up scheduled: {schedule_id}")
         logger.info(f"   Priority: {feedback.follow_up_priority.value}")
         logger.info(f"   Timeframe: {feedback.follow_up_timeframe.value} days")
         logger.info(f"   Target date: {target_date}")
@@ -801,12 +801,12 @@ class PostMeetingFeedbackSystem:
         schedule = self.follow_up_schedules[schedule_id]
         schedule.status = 'active'
         
-        logger.info(f"⚡ Activating follow-up schedule: {schedule_id}")
+        logger.info(f"[LIGHTNING] Activating follow-up schedule: {schedule_id}")
         
         # This would integrate with Intent Manager to create new meeting intent
         # For now, simulate the activation
-        logger.info(f"📝 [SIMULATED] Creating follow-up meeting intent")
-        logger.info(f"   From: {schedule.requester_id} → To: {schedule.target_id}")
+        logger.info(f"[NOTE] [SIMULATED] Creating follow-up meeting intent")
+        logger.info(f"   From: {schedule.requester_id} -> To: {schedule.target_id}")
         logger.info(f"   Priority: {schedule.current_priority_value}/10.0")
         
         await self._trigger_callbacks('follow_up_activated', schedule, {
@@ -816,12 +816,12 @@ class PostMeetingFeedbackSystem:
 
     async def _notify_requester_of_rejections(self, schedule: FollowUpSchedule):
         """Notify original requester about rejection threshold"""
-        logger.info(f"🚨 Notifying requester of rejections: {schedule.requester_id}")
+        logger.info(f"[ALERT] Notifying requester of rejections: {schedule.requester_id}")
         logger.info(f"   Target: {schedule.target_id}")
         logger.info(f"   Rejection count: {schedule.rejection_count}")
         
         # Simulate notification
-        logger.info(f"📧 [SIMULATED] Notification sent to {schedule.requester_id}")
+        logger.info(f"[U+1F4E7] [SIMULATED] Notification sent to {schedule.requester_id}")
         logger.info(f"   Message: {schedule.target_id} has declined {schedule.rejection_count} follow-up requests")
 
     async def _auto_downgrade_follow_up(self, schedule_id: str):
@@ -833,7 +833,7 @@ class PostMeetingFeedbackSystem:
         schedule.max_priority_value = schedule.current_priority_value * 2
         schedule.status = 'downgraded'
         
-        logger.info(f"📉 Auto-downgraded follow-up: {schedule_id}")
+        logger.info(f"[U+1F4C9] Auto-downgraded follow-up: {schedule_id}")
         logger.info(f"   New priority: {schedule.current_priority_value}")
         
         await self._trigger_callbacks('priority_auto_adjusted', schedule, {
@@ -907,7 +907,7 @@ class PostMeetingFeedbackSystem:
                 else:
                     callback(data, metadata)
             except Exception as e:
-                logger.error(f"❌ Feedback callback error for {event_type}: {e}")
+                logger.error(f"[FAIL] Feedback callback error for {event_type}: {e}")
 
 # Factory function for easy integration
 def create_post_meeting_feedback_system() -> PostMeetingFeedbackSystem:
@@ -929,7 +929,7 @@ async def demo_post_meeting_feedback():
         host_id="alice"
     )
     
-    print(f"✅ Initiated feedback collection: {len(session_ids)} sessions")
+    print(f"[OK] Initiated feedback collection: {len(session_ids)} sessions")
     
     # Simulate feedback responses
     for session_id in session_ids[:1]:  # Just simulate one for demo
@@ -944,16 +944,16 @@ async def demo_post_meeting_feedback():
     
     # Get feedback summary
     summary = await feedback_system.get_feedback_summary("session_123")
-    print(f"📊 Feedback summary: {summary}")
+    print(f"[DATA] Feedback summary: {summary}")
     
     # Check follow-up schedules
     await asyncio.sleep(1)  # Simulate time passing
     activated = await feedback_system.check_follow_up_schedules()
-    print(f"⚡ Activated follow-ups: {activated}")
+    print(f"[LIGHTNING] Activated follow-ups: {activated}")
     
     # Get statistics
     stats = await feedback_system.get_feedback_statistics()
-    print(f"📈 Statistics: {stats}")
+    print(f"[UP] Statistics: {stats}")
     
     return feedback_system
 

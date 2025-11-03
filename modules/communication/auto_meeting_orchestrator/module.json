@@ -172,7 +172,7 @@
   },
   
   "quality_gates": {
-    "test_coverage": "≥90%",
+    "test_coverage": "[GREATER_EQUAL]90%",
     "performance_targets": "met",
     "documentation": "complete",
     "wsp_compliance": "verified",

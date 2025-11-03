@@ -1,0 +1,19 @@
+# FoundUps Vision DAE - Python Dependencies
+# WSP 49 Compliance - Module Dependency Management
+# WSP 12 - Dependency Management Protocol
+
+# Core async/await runtime (Python 3.12+ stdlib)
+# asyncio - included in Python stdlib
+
+# Internal module dependencies (relative imports, no external install)
+# - modules.infrastructure.dae_infrastructure.base_dae
+# - modules.infrastructure.foundups_selenium.src.telemetry_store
+# - holo_index.missions.selenium_run_history
+
+# No external third-party dependencies required for core functionality
+# (All dependencies are internal FoundUps modules or Python stdlib)
+
+# Optional dependencies for future enhancements:
+# - vosk>=0.3.45  # On-device speech recognition for voice listener
+# - pyaudio>=0.2.13  # Audio input capture for voice worker
+# - numpy>=1.24.0  # Required by vosk for speech processing

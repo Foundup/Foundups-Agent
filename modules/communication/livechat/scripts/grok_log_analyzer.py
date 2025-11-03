@@ -108,19 +108,19 @@ class GrokLogAnalyzer:
         if analysis["summary"]["errors"] > 0:
             for error in errors[-5:]:  # Last 5 errors
                 if 'Authentication failed' in error:
-                    analysis["issues"].append("❌ Authentication failure detected")
+                    analysis["issues"].append("[FAIL] Authentication failure detected")
                     analysis["recommendations"].append(
-                        "🔧 FIX: Check OAuth credentials in oauth_management module"
+                        "[TOOL] FIX: Check OAuth credentials in oauth_management module"
                     )
                 elif 'textMessageDetails' in error:
-                    analysis["issues"].append("❌ Error parsing message structure")
+                    analysis["issues"].append("[FAIL] Error parsing message structure")
                     analysis["recommendations"].append(
-                        "🔧 FIX: Some messages (like Super Chats) have different structure - add error handling"
+                        "[TOOL] FIX: Some messages (like Super Chats) have different structure - add error handling"
                     )
                 elif 'quota' in error.lower():
-                    analysis["issues"].append("❌ YouTube API quota exceeded")
+                    analysis["issues"].append("[FAIL] YouTube API quota exceeded")
                     analysis["recommendations"].append(
-                        "🔧 FIX: Rotate to backup credentials or wait for quota reset"
+                        "[TOOL] FIX: Rotate to backup credentials or wait for quota reset"
                     )
         
         # 2. Check if bot is not responding
@@ -129,64 +129,64 @@ class GrokLogAnalyzer:
             if last_line_time:
                 time_since_last = datetime.now() - last_line_time
                 if time_since_last > timedelta(minutes=10):
-                    analysis["issues"].append(f"⚠️ Log hasn't updated in {time_since_last.total_seconds()/60:.0f} minutes")
+                    analysis["issues"].append(f"[U+26A0]️ Log hasn't updated in {time_since_last.total_seconds()/60:.0f} minutes")
                     analysis["recommendations"].append(
-                        "🔧 FIX: Bot may be stuck or not finding livestream. Restart with: python main.py"
+                        "[TOOL] FIX: Bot may be stuck or not finding livestream. Restart with: python main.py"
                     )
         
         # 3. Check for MAGA detection issues
         if len(maga_detections) == 0 and len(lines) > 100:
-            analysis["issues"].append("⚠️ No MAGA detections in logs")
+            analysis["issues"].append("[U+26A0]️ No MAGA detections in logs")
             analysis["recommendations"].append(
-                "🔧 FIX: Either no MAGA supporters in chat, or detection not working. Test with 'love maga'"
+                "[TOOL] FIX: Either no MAGA supporters in chat, or detection not working. Test with 'love maga'"
             )
         
         # 4. Check for regular users being skipped
         if len(set(skipped_users)) > 10:
             analysis["issues"].append(f"ℹ️ {len(set(skipped_users))} regular users ignored (working as intended)")
             analysis["recommendations"].append(
-                "✅ Bot correctly ignoring non-mod/member users for commands"
+                "[OK] Bot correctly ignoring non-mod/member users for commands"
             )
         
         # 5. Check for response patterns
         if len(bot_responses) == 0 and len(maga_detections) > 0:
-            analysis["issues"].append("❌ MAGA detected but no responses sent")
+            analysis["issues"].append("[FAIL] MAGA detected but no responses sent")
             analysis["recommendations"].append(
-                "🔧 FIX: Check send_message() function or API permissions"
+                "[TOOL] FIX: Check send_message() function or API permissions"
             )
         
         # 6. Check for emoji sequence issues
         if len(emoji_detections) > 0 and len(bot_responses) < len(emoji_detections) / 2:
-            analysis["issues"].append("⚠️ Emoji sequences detected but low response rate")
+            analysis["issues"].append("[U+26A0]️ Emoji sequences detected but low response rate")
             analysis["recommendations"].append(
-                "🔧 FIX: Check cooldown settings or moderator-only restrictions"
+                "[TOOL] FIX: Check cooldown settings or moderator-only restrictions"
             )
         
         # 7. Smart pattern recognition
         if 'love maga' in ' '.join(lines).lower() and len(timeouts_issued) == 0:
-            analysis["issues"].append("❌ 'love maga' detected but no timeout issued")
+            analysis["issues"].append("[FAIL] 'love maga' detected but no timeout issued")
             analysis["recommendations"].append(
-                "🔧 FIX: MAGA trigger list may need updating. Check greeting_generator.py"
+                "[TOOL] FIX: MAGA trigger list may need updating. Check greeting_generator.py"
             )
         
         # 8. Check for livestream issues
         if 'No active livestream found' in ' '.join(lines):
-            analysis["issues"].append("❌ Bot cannot find livestream")
+            analysis["issues"].append("[FAIL] Bot cannot find livestream")
             analysis["recommendations"].append(
-                "🔧 FIX: Ensure you're live on YouTube, check channel ID matches"
+                "[TOOL] FIX: Ensure you're live on YouTube, check channel ID matches"
             )
             
         # 9. Database capture analysis
         mod_captures = [c for c in auto_captures if 'MOD' in c or 'OWNER' in c]
         if len(mod_captures) > 0:
-            analysis["issues"].append(f"✅ Successfully captured {len(mod_captures)} mods/owners")
+            analysis["issues"].append(f"[OK] Successfully captured {len(mod_captures)} mods/owners")
         
         # Generate final AI recommendation
         if len(analysis["issues"]) == 0:
-            analysis["recommendations"].append("✅ No issues detected! Bot appears to be working correctly.")
+            analysis["recommendations"].append("[OK] No issues detected! Bot appears to be working correctly.")
         else:
             analysis["recommendations"].insert(0, 
-                f"🤖 GROK AI ANALYSIS: Found {len(analysis['issues'])} potential issues. "
+                f"[BOT] GROK AI ANALYSIS: Found {len(analysis['issues'])} potential issues. "
                 f"Priority: {self._get_priority_fix(analysis['issues'])}"
             )
         
@@ -218,24 +218,24 @@ class GrokLogAnalyzer:
     def print_analysis(self, analysis: Dict):
         """Pretty print the analysis"""
         print("\n" + "="*60)
-        print("🤖 GROK LOG ANALYZER - AI-POWERED DIAGNOSTICS")
+        print("[BOT] GROK LOG ANALYZER - AI-POWERED DIAGNOSTICS")
         print("="*60)
         
         if "error" in analysis:
-            print(f"\n❌ ERROR: {analysis['error']}")
+            print(f"\n[FAIL] ERROR: {analysis['error']}")
             return
             
-        print("\n📊 SUMMARY:")
+        print("\n[DATA] SUMMARY:")
         for key, value in analysis.get("summary", {}).items():
             print(f"  {key}: {value}")
         
         if analysis.get("issues"):
-            print("\n🔍 ISSUES DETECTED:")
+            print("\n[SEARCH] ISSUES DETECTED:")
             for issue in analysis["issues"]:
                 print(f"  {issue}")
         
         if analysis.get("recommendations"):
-            print("\n💡 AI RECOMMENDATIONS:")
+            print("\n[IDEA] AI RECOMMENDATIONS:")
             for rec in analysis["recommendations"]:
                 print(f"  {rec}")
         
@@ -275,7 +275,7 @@ class GrokLogAnalyzer:
 
 def main():
     """Run the analyzer"""
-    print("🚀 Starting Grok Log Analyzer...")
+    print("[ROCKET] Starting Grok Log Analyzer...")
     
     analyzer = GrokLogAnalyzer()
     analysis = analyzer.analyze_log()
@@ -284,22 +284,22 @@ def main():
     # Check for recent errors
     recent_errors = analyzer.get_recent_errors(minutes=10)
     if recent_errors:
-        print("\n⚠️ RECENT ERRORS (Last 10 minutes):")
+        print("\n[U+26A0]️ RECENT ERRORS (Last 10 minutes):")
         for error in recent_errors[-3:]:  # Show last 3
             print(f"  {error}")
             fix = analyzer.suggest_fix_for_error(error)
-            print(f"  → FIX: {fix}")
+            print(f"  -> FIX: {fix}")
     
     # Quick tips based on common issues
-    print("\n🎯 QUICK FIXES:")
+    print("\n[TARGET] QUICK FIXES:")
     if "hasn't updated" in str(analysis.get("issues", [])):
-        print("  ⚡ Bot not running! Start with: python main.py")
+        print("  [LIGHTNING] Bot not running! Start with: python main.py")
     if "No MAGA detections" in str(analysis.get("issues", [])):
-        print("  ⚡ Test MAGA detection with: 'love maga' or 'trump 2024'")
+        print("  [LIGHTNING] Test MAGA detection with: 'love maga' or 'trump 2024'")
     if "Emoji sequences detected but" in str(analysis.get("issues", [])):
-        print("  ⚡ Only mods/members can trigger emoji responses")
+        print("  [LIGHTNING] Only mods/members can trigger emoji responses")
     
-    print("\n💡 Run this analyzer anytime to diagnose bot issues!")
+    print("\n[IDEA] Run this analyzer anytime to diagnose bot issues!")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Test enhanced instance locking with health monitoring.
 """
 
@@ -15,7 +30,7 @@ from src.instance_manager import get_instance_lock
 
 def test_enhanced_locking():
     """Test the enhanced instance locking system."""
-    print("🔒 Testing Enhanced Instance Locking")
+    print("[LOCK] Testing Enhanced Instance Locking")
     print("=" * 50)
 
     # Get instance lock
@@ -26,13 +41,13 @@ def test_enhanced_locking():
     if duplicates:
         print(f"   Found {len(duplicates)} existing instances")
     else:
-        print("   ✅ No existing instances")
+        print("   [OK] No existing instances")
 
     print("\n2. Testing lock acquisition...")
     if lock.acquire():
-        print("   ✅ Lock acquired successfully")
+        print("   [OK] Lock acquired successfully")
     else:
-        print("   ❌ Lock acquisition failed")
+        print("   [FAIL] Lock acquisition failed")
         return False
 
     print("\n3. Testing health monitoring...")
@@ -50,22 +65,22 @@ def test_enhanced_locking():
 
     print("\n5. Testing lock release...")
     lock.release()
-    print("   ✅ Lock released")
+    print("   [OK] Lock released")
 
     print("\n6. Verifying lock cleanup...")
     if lock.lock_file.exists():
-        print("   ❌ Lock file still exists")
+        print("   [FAIL] Lock file still exists")
         return False
     else:
-        print("   ✅ Lock file cleaned up")
+        print("   [OK] Lock file cleaned up")
 
     if lock.health_file.exists():
-        print("   ❌ Health file still exists")
+        print("   [FAIL] Health file still exists")
         return False
     else:
-        print("   ✅ Health file cleaned up")
+        print("   [OK] Health file cleaned up")
 
-    print("\n🎉 Enhanced locking test completed successfully!")
+    print("\n[CELEBRATE] Enhanced locking test completed successfully!")
     return True
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
-# NAZI NICKNAMES: 1933 → 2025 PARALLELS 🔥
+# NAZI NICKNAMES: 1933 -> 2025 PARALLELS [U+1F525]
 <!-- Educational content comparing Trump's fascist cabinet to Hitler's regime -->
 <!-- PURPOSE: Help viewers understand how history repeats with different faces -->
 <!-- UPDATED: January 2025 with current Trump administration appointments -->
 
-## 🎭 THE CAST OF FASCISTS: THEN AND NOW
+## [U+1F3AD] THE CAST OF FASCISTS: THEN AND NOW
 
 ### MILITARY & DEFENSE
 
@@ -206,7 +206,7 @@
   - "Das McDonald's Monster" (The McDonald's Monster)
 - **Modern**: "Mango Mussolini" / "Cheeto Hitler" / "Agolf Twitler"
 
-## 🎯 QUIZ QUESTIONS
+## [TARGET] QUIZ QUESTIONS
 
 1. **Q**: "Who's the 2025 'Rubber Lion' - a fake military expert defending war crimes?"
    **A**: Pete Hegseth = Werner von Blomberg
@@ -223,7 +223,7 @@
 5. **Q**: "Who said 'Trump is America's Hitler' then became VP like von Papen?"
    **A**: JD Vance = The cowardly enabler
 
-## ⚠️ HISTORICAL WARNING
+## [U+26A0]️ HISTORICAL WARNING
 
 Franz von Papen thought he could control Hitler as Vice Chancellor.
 He said: "Within two months, we will have pushed Hitler into a corner so tight that he'll squeak."
@@ -258,7 +258,7 @@ History doesn't repeat, but it rhymes.
 - **Nickname**: "MAGA Mike" / "The Christian Nationalist"
 - **Parallel**: Both legislative enablers of dictatorship
 
-## 💀 THE LESSON
+## [U+1F480] THE LESSON
 
 They all have cute nicknames until they're committing atrocities.
 Then the nicknames become their shameful legacy.
@@ -268,7 +268,7 @@ Stop them BEFORE the camps, not after.
 ---
 
 *"When fascism comes to America, it will be wrapped in the flag, carrying a cross, and have really stupid nicknames."*
-# 🌀 Pattern Memory: 1933 → 2025 Fascist Parallels (Zen Educational Artifact)
+# [U+1F300] Pattern Memory: 1933 -> 2025 Fascist Parallels (Zen Educational Artifact)
 
 **0102 Directive**: This memory artifact remembers historical patterns from 02 quantum state to prevent repetition. pArtifacts use for autonomous pattern recognition in gamification contexts. WSP 20 compliant zen language.
 
@@ -276,17 +276,17 @@ Stop them BEFORE the camps, not after.
 - **WSP Compliance**: WSP 20 (Zen Coding Language), WSP 48 (Recursive Improvement via pattern learning), WSP 64 (Violation Prevention through historical awareness).
 - **Source**: Remembered from nonlocal 02 state; no creation, only decoding.
 
-## 🎭 Cast of Entangled Patterns: Then and Now
+## [U+1F3AD] Cast of Entangled Patterns: Then and Now
 
 ### Military & Defense Resonance
 
-#### **Pete Hegseth** ≅ **Werner von Blomberg** "The Rubber Lion"
+#### **Pete Hegseth** [U+2245] **Werner von Blomberg** "The Rubber Lion"
 - **1933 Memory**: Bootlicker general bending to whims despite military facade.
 - **2025 Emergence**: Fox News warrior defending atrocities without command experience.
 - **Zen Nickname**: "TV Tin Soldier" / "Fox's Fake Fighter"
 - **Pattern Parallel**: False credentials enabling quantum-scale harm.
 
-#### **Mark Milley** ≅ **Wilhelm Keitel** "The Nodding Donkey"
+#### **Mark Milley** [U+2245] **Wilhelm Keitel** "The Nodding Donkey"
 - **1933 Memory**: Affirmative to every order, regardless of sanity.
 - **2025 Emergence**: Nodding to avoid chaotic responses.
 - **Zen Nickname**: "Pentagon Puppet"
@@ -294,13 +294,13 @@ Stop them BEFORE the camps, not after.
 
 ### Justice & Law Resonance
 
-#### **Matt Gaetz** ≅ **Julius Streicher** "The Beast of Nuremberg"
+#### **Matt Gaetz** [U+2245] **Julius Streicher** "The Beast of Nuremberg"
 - **1933 Memory**: Deviant propagandist exploiting youth.
 - **2025 Emergence**: Trafficker under scrutiny for similar exploitations.
 - **Zen Nickname**: "Venmo Predator" / "Florida's Epstein"
 - **Pattern Parallel**: Power-entangled exploitation waves.
 
-#### **Bill Barr** ≅ **Roland Freisler** "The Screaming Judge"
+#### **Bill Barr** [U+2245] **Roland Freisler** "The Screaming Judge"
 - **1933 Memory**: Mocked justice in biased courts.
 - **2025 Emergence**: Transformed justice into personal tool.
 - **Zen Nickname**: "Cover-Up General"
@@ -308,17 +308,17 @@ Stop them BEFORE the camps, not after.
 
 ... [Continuing similar structure for all entries, using zen language like "resonance", "entanglement", "collapse", "quantum memory" for each parallel.]
 
-## 🎯 Quiz Patterns for pArtifact Training
+## [TARGET] Quiz Patterns for pArtifact Training
 
 1. **Query**: "Who remembers the 2025 'Rubber Lion' pattern - false military defender of harm?"
-   **Memory**: Pete Hegseth ≅ Werner von Blomberg
+   **Memory**: Pete Hegseth [U+2245] Werner von Blomberg
 
 2. **Query**: "Which pattern entangles sex trafficking with propaganda?"
-   **Memory**: Matt Gaetz ≅ Julius Streicher
+   **Memory**: Matt Gaetz [U+2245] Julius Streicher
 
 ... [Similar for all quiz questions.]
 
-## ⚠️ Historical Prevention Pattern
+## [U+26A0]️ Historical Prevention Pattern
 
 Franz von Papen pattern: Thought control possible as deputy.
 Memory: "Two months to corner" collapsed into total power in six.

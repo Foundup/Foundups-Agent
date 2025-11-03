@@ -4,7 +4,7 @@
 **Status:** `[CURRENT_PHASE]` (POC | Prototype | MVP | Production)  
 **WSP Compliance:** `[COMPLIANCE_STATUS]` (Compliant | In Progress | Non-Compliant)
 
-## 📋 Module Overview
+## [CLIPBOARD] Module Overview
 
 **Purpose:** [Brief description of what this module does and why it exists]
 
@@ -18,7 +18,7 @@
 - [External dependency 2]
 - [Internal module dependency 1]
 
-## 🎯 Current Status & Scoring
+## [TARGET] Current Status & Scoring
 
 ### MPS + LLME Scores
 **Last Scored:** `[YYYY-MM-DD]`  
@@ -39,17 +39,17 @@
 
 **LLME Target:** `[ABC]` - [Description of target state and evolution plan]
 
-## 🗺️ Module Roadmap
+## [U+1F5FA]️ Module Roadmap
 
-### Phase Progression: [null] → [001] → [011] → [111]
+### Phase Progression: [null] -> [001] -> [011] -> [111]
 
-#### ✅ Completed Phases
+#### [OK] Completed Phases
 - [ ] **Phase 0 (null):** Module concept and planning
   - [x] MPS/LLME initial scoring
   - [x] WSP structure creation
   - [x] Domain placement decision
 
-#### 🔄 Current Phase: [CURRENT_PHASE_NAME]
+#### [REFRESH] Current Phase: [CURRENT_PHASE_NAME]
 - [ ] **Phase X:** [Phase description]
   - [ ] [Specific deliverable 1]
   - [ ] [Specific deliverable 2] 
@@ -57,18 +57,18 @@
   - [ ] [Testing milestone]
   - [ ] [Documentation milestone]
 
-#### 📋 Upcoming Phases
+#### [CLIPBOARD] Upcoming Phases
 - [ ] **Phase Y:** [Next phase description]
   - [ ] [Future deliverable 1]
   - [ ] [Future deliverable 2]
 
-#### 🎯 Production Goals
+#### [TARGET] Production Goals
 - [ ] **Phase Z (Production):** [Final production criteria]
   - [ ] [Production readiness criteria]
   - [ ] [Performance benchmarks]
   - [ ] [Integration requirements]
 
-## 📚 Public API & Usage
+## [BOOKS] Public API & Usage
 
 ### Exported Functions/Classes
 ```python
@@ -92,20 +92,20 @@ from modules.[domain].[module_name] import [integration_interface]
 
 **WSP 11 Compliance:** [Status of interface definition compliance]
 
-## 🔍 ModLog (Chronological History)
+## [SEARCH] ModLog (Chronological History)
 
 ### [YYYY-MM-DD] - [Event Type: Created|Updated|Refactored|Scored]
 - **By:** [Agent/Developer Name]
 - **Changes:** [Description of what changed]
 - **Impact:** [How this affects the module]
-- **LLME Transition:** [old_score] → [new_score] (if applicable)
+- **LLME Transition:** [old_score] -> [new_score] (if applicable)
 
 ### [YYYY-MM-DD] - [Previous Event]
 - **By:** [Agent/Developer Name]  
 - **Changes:** [Previous change description]
 - **Impact:** [Previous impact]
 
-## ✅ WSP Compliance Checklist
+## [OK] WSP Compliance Checklist
 
 ### Structure Compliance (WSP 1)
 - [ ] **Directory Structure:** `modules/[domain]/[module_name]/`
@@ -119,7 +119,7 @@ from modules.[domain].[module_name] import [integration_interface]
   - [ ] `requirements.txt` (if dependencies exist)
 
 ### Testing Compliance (WSP 13)
-- [ ] **Test Coverage:** ≥90% (Current: [X]%)
+- [ ] **Test Coverage:** [GREATER_EQUAL]90% (Current: [X]%)
 - [ ] **Test Documentation:** `tests/README.md` complete
 - [ ] **Test Patterns:** Follows established module patterns
 - [ ] **Last Test Run:** [YYYY-MM-DD] - [Pass/Fail Status]
@@ -135,7 +135,7 @@ from modules.[domain].[module_name] import [integration_interface]
 - [ ] **Priority Classification:** Matches tactical backlog
 - [ ] **Score Validity:** Reviewed within [timeframe]
 
-## 🔗 Related Modules & Dependencies
+## [LINK] Related Modules & Dependencies
 
 ### Upstream Dependencies
 - `modules.[domain].[dependency_module]` - [How this module depends on it]
@@ -148,7 +148,7 @@ from modules.[domain].[module_name] import [integration_interface]
 - [Platform connections]
 - [Service dependencies]
 
-## 📝 Development Notes
+## [NOTE] Development Notes
 
 ### Current Technical Debt
 - [Technical debt item 1]

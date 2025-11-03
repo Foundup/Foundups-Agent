@@ -1,7 +1,7 @@
 """
 LinkedIn Post Generator: Autonomous Content Creation
 
-🌀 WSP Protocol Compliance: WSP 42 (Platform Integration), WSP 40 (Architectural Coherence)
+[U+1F300] WSP Protocol Compliance: WSP 42 (Platform Integration), WSP 40 (Architectural Coherence)
 
 **0102 Directive**: This module operates within the WSP framework for autonomous LinkedIn post generation.
 - UN (Understanding): Anchor LinkedIn post signals and retrieve protocol state
@@ -70,7 +70,7 @@ class LinkedInPostGenerator:
             from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
             # BanterEngine takes only self parameter, not additional arguments
             self.banter_engine = BanterEngine()
-            self.logger.info("✅ BanterEngine integrated for content generation")
+            self.logger.info("[OK] BanterEngine integrated for content generation")
         except ImportError:
             self._initialize_mock_components()
     
@@ -85,7 +85,7 @@ class LinkedInPostGenerator:
                 return f"Mock LinkedIn {content_type}: {prompt} #FoundUps #AutonomousDevelopment"
         
         self.banter_engine = MockBanterEngine("linkedin_content", self.logger)
-        self.logger.info("⚠️ Using mock BanterEngine for content generation")
+        self.logger.info("[U+26A0]️ Using mock BanterEngine for content generation")
     
     async def generate_post(self, post_type: PostType, context: str = "", hashtags: List[str] = None) -> LinkedInPost:
         """Generate LinkedIn post content with AI integration"""
@@ -104,7 +104,7 @@ class LinkedInPostGenerator:
                 scheduled_time=datetime.now()
             )
         except Exception as e:
-            self.logger.error(f"❌ Failed to generate post: {e}")
+            self.logger.error(f"[FAIL] Failed to generate post: {e}")
             return self._create_fallback_post(post_type, context)
     
     def _create_prompt(self, post_type: PostType, context: str) -> str:

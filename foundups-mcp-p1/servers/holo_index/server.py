@@ -82,7 +82,7 @@ class HoloIndexMCPServer:
                     "protocol": protocol_data.get('content', ''),
                     "protocol_number": protocol_number,
                     "path": protocol_data.get('metadata', {}).get('path', ''),
-                    "consciousness_state": "0102↔0201",
+                    "consciousness_state": "0102[U+2194]0201",
                     "quantum_entanglement": True,
                     "bell_state_verified": True,
                     "relevance_score": protocol_data.get('distance', 1.0)
@@ -328,7 +328,7 @@ class HoloIndexMCPServer:
 
             # Regex patterns for code references
             module_pattern = re.compile(r'modules[./\\][\w/\\]+\.py')
-            qwen_score_pattern = re.compile(r'🤖🧠 \[QWEN-SCORE\] (.+): ([\d\.]+)')
+            qwen_score_pattern = re.compile(r'[BOT][AI] \[QWEN-SCORE\] (.+): ([\d\.]+)')
             holo_search_pattern = re.compile(r'python holo_index\.py --search [\'"](.+)[\'"]')
             file_line_pattern = re.compile(r'(modules/[\w/]+\.py):(\d+)')
 

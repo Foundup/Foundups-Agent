@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Qwen Log Parser - Extract Structured Entries from Daemon Logs
 WSP Compliance: WSP 93 (Surgical Intelligence), WSP 50 (Pre-Action Verification)
 """
@@ -40,8 +56,8 @@ class DaemonLogParser:
     LEVEL_PATTERN = re.compile(r'\[(DEBUG|INFO|WARNING|ERROR|CRITICAL)\]')
 
     # Qwen decision markers
-    QWEN_SCORE_PATTERN = re.compile(r'🤖🧠 \[QWEN-SCORE\] (.+): ([\d\.]+)')
-    QWEN_DECISION_PATTERN = re.compile(r'🤖🧠 \[QWEN-(\w+)\]')
+    QWEN_SCORE_PATTERN = re.compile(r'[BOT][AI] \[QWEN-SCORE\] (.+): ([\d\.]+)')
+    QWEN_DECISION_PATTERN = re.compile(r'[BOT][AI] \[QWEN-(\w+)\]')
 
     # Module path pattern
     MODULE_PATTERN = re.compile(r'modules\.[\w\.]+')
@@ -122,9 +138,9 @@ class DaemonLogParser:
     def _classify_entry(self, line: str, entry: LogEntry) -> str:
         """Classify log entry type"""
         # Qwen decision markers
-        if '🤖🧠 [QWEN-SCORE]' in line:
+        if '[BOT][AI] [QWEN-SCORE]' in line:
             return 'qwen_score'
-        if '🤖🧠 [QWEN-' in line:
+        if '[BOT][AI] [QWEN-' in line:
             return 'qwen_decision'
 
         # Error/warning levels
@@ -178,7 +194,7 @@ class DaemonLogParser:
 
     def _group_by_phase(self):
         """Group log entries by execution phases"""
-        # Identify execution phases: search → detect → connect → poll
+        # Identify execution phases: search -> detect -> connect -> poll
         phases = {
             'search': [],
             'detect': [],

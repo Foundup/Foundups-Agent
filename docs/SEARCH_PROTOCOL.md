@@ -1,6 +1,6 @@
 # Search Protocol: Use HoloIndex First, Then Grep If Needed
 
-## 🔍 PRIMARY SEARCH TOOL: HoloIndex
+## [SEARCH] PRIMARY SEARCH TOOL: HoloIndex
 
 ### ALWAYS Use HoloIndex First
 ```bash
@@ -21,7 +21,7 @@ python holo_index.py --search "duplicate code"
 4. **Module Context**: Shows documentation, tests, and relationships
 5. **Telemetry**: Tracks searches for recursive improvement
 
-## 🔧 FALLBACK: When to Use Grep/Ripgrep
+## [TOOL] FALLBACK: When to Use Grep/Ripgrep
 
 ### Use grep/rg ONLY when:
 1. **Exact String Match Needed**: Looking for a specific variable or function name
@@ -43,37 +43,37 @@ grep -rn "pattern" .            # With line numbers
 test -f .env && echo "exists"   # Check existence only
 ```
 
-## 📋 Search Decision Tree
+## [CLIPBOARD] Search Decision Tree
 
 ```
 Need to find something?
-    ↓
+    v
 1. Run: python holo_index.py --search "concept"
-    ↓
+    v
    Found relevant modules/files?
-    ├─ YES → Read documentation first
-    │        Check module health
-    │        Enhance existing code
-    └─ NO → Try broader search terms
-            ↓
+    +- YES -> Read documentation first
+    [U+2502]        Check module health
+    [U+2502]        Enhance existing code
+    +- NO -> Try broader search terms
+            v
            Still nothing?
-            ↓
+            v
 2. Use grep/rg for exact matches
-    ↓
+    v
    Found matches?
-    ├─ YES → Verify with HoloIndex
-    │        Check module context
-    └─ NO → Consider if truly new
-            ↓
+    +- YES -> Verify with HoloIndex
+    [U+2502]        Check module context
+    +- NO -> Consider if truly new
+            v
 3. Create new ONLY if confirmed needed
    - Follow WSP 49 structure
    - Update ModLog
    - Add to HoloIndex
 ```
 
-## ⚠️ Common Mistakes to Avoid
+## [U+26A0]️ Common Mistakes to Avoid
 
-### ❌ DON'T DO THIS:
+### [FAIL] DON'T DO THIS:
 ```bash
 # Starting with grep instead of HoloIndex
 grep -r "chat handler" .        # WRONG - use HoloIndex first
@@ -85,7 +85,7 @@ grep -r "my_feature" . || touch new_feature.py  # WRONG - vibecoding
 grep "API_KEY" .env             # FORBIDDEN - security violation
 ```
 
-### ✅ DO THIS INSTEAD:
+### [OK] DO THIS INSTEAD:
 ```bash
 # Start with semantic search
 python holo_index.py --search "chat handler"
@@ -97,7 +97,7 @@ python holo_index.py --check-module "communication/chat"
 test -f .env && echo "Environment configured"
 ```
 
-## 📊 Search Effectiveness Metrics
+## [DATA] Search Effectiveness Metrics
 
 ### HoloIndex Advantages:
 - **Speed**: <200ms for semantic search
@@ -111,7 +111,7 @@ test -f .env && echo "Environment configured"
 - **No WSP**: Doesn't know about violations
 - **No Learning**: Same results every time
 
-## 🚀 Quick Reference
+## [ROCKET] Quick Reference
 
 ```bash
 # Most Common HoloIndex Commands
@@ -126,7 +126,7 @@ rg -t py "import.*Handler" .                      # Import search
 rg --stats "pattern" . | tail -n 20               # Summary stats
 ```
 
-## 📝 Updating This Protocol
+## [NOTE] Updating This Protocol
 
 When you find yourself using grep, ask:
 1. Could HoloIndex have found this?

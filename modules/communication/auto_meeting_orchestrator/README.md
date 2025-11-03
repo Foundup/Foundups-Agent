@@ -4,27 +4,27 @@
 
 ---
 
-## 🎲 **Meeting Orchestration Block Core (WSP Level 4)**
+## [U+1F3B2] **Meeting Orchestration Block Core (WSP Level 4)**
 
-**BLOCK ARCHITECTURE ROLE**: This module serves as the **🎯 Core Engine** for the complete **Meeting Orchestration Block** - one of five standalone FoundUps Platform Blocks.
+**BLOCK ARCHITECTURE ROLE**: This module serves as the **[TARGET] Core Engine** for the complete **Meeting Orchestration Block** - one of five standalone FoundUps Platform Blocks.
 
-### **🤝 Meeting Orchestration Block Overview**
+### **[HANDSHAKE] Meeting Orchestration Block Overview**
 **Standalone Meeting Coordination System** - Complete 5-module block for autonomous meeting orchestration:
 
 #### **Block Components Coordinated by This Core:**
-- **🎯 [`auto_meeting_orchestrator/`](README.md)** - **THIS MODULE** - Core autonomous meeting coordination engine
-- **📊 [`integration/presence_aggregator/`](../../integration/presence_aggregator/README.md)** - Multi-platform presence detection and aggregation
-- **📝 [`intent_manager/`](../intent_manager/README.md)** - Meeting intent capture and structured context (planned)
-- **🎯 [`channel_selector/`](../channel_selector/README.md)** - Optimal communication platform selection logic (planned)
-- **✅ [`infrastructure/consent_engine/`](../../infrastructure/consent_engine/README.md)** - Meeting consent and approval workflows (planned)
+- **[TARGET] [`auto_meeting_orchestrator/`](README.md)** - **THIS MODULE** - Core autonomous meeting coordination engine
+- **[DATA] [`integration/presence_aggregator/`](../../integration/presence_aggregator/README.md)** - Multi-platform presence detection and aggregation
+- **[NOTE] [`intent_manager/`](../intent_manager/README.md)** - Meeting intent capture and structured context (planned)
+- **[TARGET] [`channel_selector/`](../channel_selector/README.md)** - Optimal communication platform selection logic (planned)
+- **[OK] [`infrastructure/consent_engine/`](../../infrastructure/consent_engine/README.md)** - Meeting consent and approval workflows (planned)
 
-### **🔗 Block Independence & Integration**
-- **✅ Standalone Operation**: Meeting Orchestration Block functions completely independently of other blocks
-- **⚡ WRE Integration**: Seamless plugging into Windsurf Recursive Engine system  
-- **🔄 Hot-Swappable**: Block can be upgraded or replaced without affecting other blocks
-- **🎯 Complete Functionality**: Intent-driven coordination, presence aggregation, autonomous setup, anti-gaming protection
+### **[LINK] Block Independence & Integration**
+- **[OK] Standalone Operation**: Meeting Orchestration Block functions completely independently of other blocks
+- **[LIGHTNING] WRE Integration**: Seamless plugging into Windsurf Recursive Engine system  
+- **[REFRESH] Hot-Swappable**: Block can be upgraded or replaced without affecting other blocks
+- **[TARGET] Complete Functionality**: Intent-driven coordination, presence aggregation, autonomous setup, anti-gaming protection
 
-**Block Status**: ✅ **POC COMPLETE** (85% complete, P2 priority for core collaboration)
+**Block Status**: [OK] **POC COMPLETE** (85% complete, P2 priority for core collaboration)
 
 ---
 
@@ -33,24 +33,24 @@
 [![Phase](https://img.shields.io/badge/phase-PoC-orange.svg)](./ROADMAP.md)
 [![Domain](https://img.shields.io/badge/domain-communication-purple.svg)](../README.md)
 
-## 🧩 Communication LEGO Block Architecture
+## [U+1F9E9] Communication LEGO Block Architecture
 The Autonomous Meeting Orchestrator operates as a **self-contained communication LEGO block** within the FoundUps Rubik's Cube module system. It exemplifies perfect modularity by handling all meeting orchestration independently while snapping seamlessly with presence detection, calendar management, and notification modules.
 
 **Communication LEGO Block Principles:**
-- **🎯 Meeting-Focused**: Laser-focused solely on meeting orchestration within communication domain
-- **🔌 Presence Integration**: Snaps cleanly with platform presence detection modules  
-- **⚡ Autonomous Orchestration**: Complete meeting coordination without external module dependencies
-- **🔗 Cross-Platform APIs**: Standard interfaces for calendar, notification, and presence modules
-- **🔄 Hot-Swappable Coordination**: Can be upgraded while maintaining integration with other modules
-- **🎭 Zero Duplication**: Orchestrates existing modules rather than duplicating their functionality
+- **[TARGET] Meeting-Focused**: Laser-focused solely on meeting orchestration within communication domain
+- **[U+1F50C] Presence Integration**: Snaps cleanly with platform presence detection modules  
+- **[LIGHTNING] Autonomous Orchestration**: Complete meeting coordination without external module dependencies
+- **[LINK] Cross-Platform APIs**: Standard interfaces for calendar, notification, and presence modules
+- **[REFRESH] Hot-Swappable Coordination**: Can be upgraded while maintaining integration with other modules
+- **[U+1F3AD] Zero Duplication**: Orchestrates existing modules rather than duplicating their functionality
 
-## 🎯 Vision
+## [TARGET] Vision
 
 Transform meeting coordination from manual scheduling friction into seamless, context-aware orchestration. When both parties are available and context is clear, meetings happen automatically.
 
 **Core Philosophy:** *Intent + Context + Presence + Priority + Consent + Auto-Launch*
 
-## ⚡ Quick Start
+## [LIGHTNING] Quick Start
 
 ```python
 from modules.communication.auto_meeting_orchestrator import MeetingOrchestrator
@@ -76,7 +76,7 @@ await amo.update_presence("bob", "discord", PresenceStatus.ONLINE)
 # Meeting automatically orchestrated when both available!
 ```
 
-## 🔄 Core Handshake Protocol
+## [REFRESH] Core Handshake Protocol
 
 ### **Minimal Viable Flow - 7-Step Process**
 
@@ -113,9 +113,9 @@ Plus **Importance Rating (1-10)** from requester's perspective.
 
 #### **3️⃣ Eligibility & Visibility Check**
 System automatically validates:
-- ✅ Is recipient **public** or within **requester's network**?
-- ✅ If yes: Show in available list
-- ✅ If no: Block request silently
+- [OK] Is recipient **public** or within **requester's network**?
+- [OK] If yes: Show in available list
+- [OK] If no: Block request silently
 
 #### **4️⃣ Recipient Notification & Response**
 Recipient receives **context-rich prompt**:
@@ -141,18 +141,18 @@ credibility_score = (variance_of_ratings) × (historical_engagement_success_rate
 
 #### **6️⃣ Handshake Completion**
 If recipient **accepts**:
-- ✅ System records both party ratings
-- ✅ Stores complete intent metadata
-- ✅ Marks handshake **active**
-- ✅ Triggers **intelligent channel selection** (Discord, Zoom, WhatsApp, etc.)
+- [OK] System records both party ratings
+- [OK] Stores complete intent metadata
+- [OK] Marks handshake **active**
+- [OK] Triggers **intelligent channel selection** (Discord, Zoom, WhatsApp, etc.)
 
 #### **7️⃣ Autonomous Session Launch**
-- ✅ Auto-creates meeting on optimal platform
-- ✅ Sends invitations with preserved context
-- ✅ Logs complete meeting lifecycle
-- ✅ Schedules or launches immediately based on mutual availability
+- [OK] Auto-creates meeting on optimal platform
+- [OK] Sends invitations with preserved context
+- [OK] Logs complete meeting lifecycle
+- [OK] Schedules or launches immediately based on mutual availability
 
-## 🌐 **Minimal Web App Architecture**
+## [U+1F310] **Minimal Web App Architecture**
 
 ### **Frontend Requirements**
 ```typescript
@@ -190,7 +190,7 @@ POST /api/availability      // Update availability scope
 GET  /api/sessions/active   // Current meeting sessions
 ```
 
-## 🔄 Workflow
+## [REFRESH] Workflow
 
 ### 1️⃣ Intent Declaration
 User A initiates a meeting request for User B with structured context:
@@ -233,17 +233,17 @@ Recipient gets instant prompt with full context:
 - Both parties notified
 - Context preserved in session
 
-## 🏗️ Architecture
+## [U+1F3D7]️ Architecture
 
 ### Current Phase: PoC (v0.0.x)
 **Success Criterion:** Detect mutual presence and trigger acceptance prompts
 
 **Features:**
-- ✅ Meeting intent creation with structured context
-- ✅ Multi-platform presence aggregation
-- ✅ Priority-based orchestration
-- ✅ Automatic handshake protocol
-- ✅ Meeting session launch simulation
+- [OK] Meeting intent creation with structured context
+- [OK] Multi-platform presence aggregation
+- [OK] Priority-based orchestration
+- [OK] Automatic handshake protocol
+- [OK] Meeting session launch simulation
 
 **Limitations:**
 - Simulated presence detection
@@ -255,11 +255,11 @@ Recipient gets instant prompt with full context:
 **Success Criterion:** Integrate 2+ real APIs with configurable preferences
 
 **Planned Features:**
-- 🔄 Discord + WhatsApp/Zoom API integration
-- 🔄 User preference configuration
-- 🔄 SQLite/JSON persistent storage
-- 🔄 Auto-meeting link generation
-- 🔄 Robust error handling
+- [REFRESH] Discord + WhatsApp/Zoom API integration
+- [REFRESH] User preference configuration
+- [REFRESH] SQLite/JSON persistent storage
+- [REFRESH] Auto-meeting link generation
+- [REFRESH] Robust error handling
 
 ### Future Phase: MVP (v1.0.x)
 **Success Criterion:** Customer-ready multi-user system
@@ -271,7 +271,7 @@ Recipient gets instant prompt with full context:
 - ⏳ Web dashboard interface
 - ⏳ Advanced scheduling logic
 
-## 🎲 Semantic Triplet Scoring
+## [U+1F3B2] Semantic Triplet Scoring
 
 | Phase     | Complexity | Impact | Confidence | Total Score |
 |-----------|------------|--------|------------|-------------|
@@ -279,14 +279,14 @@ Recipient gets instant prompt with full context:
 | Prototype | 5/10       | 8/10   | 7/10       | **20/30**   |
 | MVP       | 7/10       | 10/10  | 6/10       | **23/30**   |
 
-## 🔧 Technical Implementation
+## [TOOL] Technical Implementation
 
 ### Core Classes
 
 #### MeetingOrchestrator
 Main orchestration engine handling the complete workflow.
 
-#### MeetingIntent  
+#### MeetingIntent
 Structured meeting request with purpose, outcome, and priority.
 
 #### UnifiedAvailabilityProfile
@@ -295,14 +295,31 @@ Aggregated presence status across all platforms with confidence scoring.
 #### PresenceStatus & Priority Enums
 Standardized status and priority levels for consistent handling.
 
+#### AMOHeartbeatService (Cardiovascular System)
+Autonomous health monitoring service for AMO operational observability.
+
+**Cardiovascular Architecture**:
+- **Heartbeat**: 30-second pulse interval with vital signs (CPU, memory, uptime)
+- **Actions**: Intent creation, presence updates, meeting orchestration
+- **Chain of Action**: 7-step handshake protocol (Intent → Launch)
+- **Reasoning**: Priority calculation, platform selection logic
+- **Thought**: Self-test validation, health status assessment
+
+**WSP 91: DAEMON Observability** implemented via:
+- JSONL telemetry streaming (`logs/amo_heartbeat.jsonl`)
+- MCP endpoints for external monitoring
+- Skills.md domain expertise documentation
+
 ### Key Features
 
-**Event-Driven Architecture:** Presence updates automatically trigger availability checks  
-**Priority-Based Orchestration:** Higher priority meetings get precedence  
-**Platform Abstraction:** Unified interface across different communication platforms  
-**Graceful Degradation:** Fallback mechanisms when platforms are unavailable  
+**Event-Driven Architecture:** Presence updates automatically trigger availability checks
+**Priority-Based Orchestration:** Higher priority meetings get precedence
+**Platform Abstraction:** Unified interface across different communication platforms
+**Graceful Degradation:** Fallback mechanisms when platforms are unavailable
+**Cardiovascular Telemetry:** Real-time health monitoring with JSONL streaming
+**MCP Observability:** Standardized endpoints for 0102/agent monitoring  
 
-## 🧪 Testing
+## [U+1F9EA] Testing
 
 ### Run PoC Demo
 ```bash
@@ -319,20 +336,20 @@ python -m pytest tests/ -v
 ### Expected PoC Output
 ```
 === AMO PoC Demo ===
-✅ Meeting intent created: intent_1
-📡 Simulating presence updates...
-🤝 Meeting prompt triggered:
+[OK] Meeting intent created: intent_1
+[U+1F4E1] Simulating presence updates...
+[HANDSHAKE] Meeting prompt triggered:
    Alice is available to meet about:
    • Purpose: Brainstorm partnership idea
    • Expected outcome: Agreement on next steps  
    • Duration: 30 minutes
    • Priority: HIGH
-📊 Final Status:
+[DATA] Final Status:
    Active intents: 0
    Completed meetings: 1
 ```
 
-## 🌟 Key Benefits
+## [U+1F31F] Key Benefits
 
 ### Zero Manual Scheduling
 No more back-and-forth calendar coordination. Meetings happen when context is clear and both parties are available.
@@ -349,7 +366,7 @@ No central scheduling authority - meetings emerge naturally from availability an
 ### Priority-Aware Intelligence
 Important meetings get precedence while respecting user availability preferences.
 
-## 🚀 Future Enhancements
+## [ROCKET] Future Enhancements
 
 ### Optional Features (Roadmap)
 - **Auto-rescheduling:** If user becomes unavailable mid-session
@@ -359,13 +376,68 @@ Important meetings get precedence while respecting user availability preferences
 - **Calendar integration:** Automatic time blocking
 - **Multi-timezone support:** Global coordination capabilities
 
-## 📚 Documentation
+## [BOOKS] Documentation
 
 - **[Interface Documentation](./INTERFACE.md)** - Complete API reference
+- **[Skills Documentation](./Skills.md)** - AMO domain expertise for agent-agnostic operation (WSP 57)
 - **[Development Roadmap](./ROADMAP.md)** - Milestone tracking and plans
 - **[Module Log](./ModLog.md)** - Development history and updates
 
-## 🔗 Related Modules
+## [U+1F50C] MCP Server Integration
+
+**AMO MCP Server** provides standardized observability endpoints for 0102 and other agents:
+
+### Available Endpoints (6 total)
+
+```python
+from modules.communication.auto_meeting_orchestrator.mcp import AMOMCPServer
+
+server = AMOMCPServer()
+
+# 1. Heartbeat Health
+health = server.get_heartbeat_health()
+# Returns: Current vital signs from JSONL telemetry
+
+# 2. Active Meeting Intents
+intents = server.get_active_intents(limit=10)
+# Returns: Priority-sorted pending meeting requests
+
+# 3. Presence Status
+presence = server.get_presence_status(user_id="alice")
+# Returns: Cross-platform availability profiles
+
+# 4. Meeting History
+history = server.get_meeting_history(limit=20)
+# Returns: Completed meeting sessions
+
+# 5. Stream Heartbeat Telemetry
+telemetry = server.stream_heartbeat_telemetry(limit=50)
+# Returns: Recent heartbeat events from JSONL
+
+# 6. Cleanup Old Telemetry
+cleanup = server.cleanup_old_telemetry(days_to_keep=30)
+# Returns: Retention enforcement results
+```
+
+### FastMCP Integration
+
+```python
+from modules.communication.auto_meeting_orchestrator.mcp import create_amo_mcp_app
+
+# Create FastMCP app for uvicorn deployment
+app = create_amo_mcp_app()
+
+# Run with: uvicorn amo_mcp_server:create_amo_mcp_app --port 8001
+```
+
+### Telemetry Files
+
+- **Heartbeat**: `logs/amo_heartbeat.jsonl` - JSONL stream of 30s pulse events
+- **Meeting History**: `modules/communication/auto_meeting_orchestrator/memory/meeting_history.jsonl`
+- **Active Intents**: `modules/communication/auto_meeting_orchestrator/memory/active_intents.json`
+- **Presence Profiles**: `modules/communication/auto_meeting_orchestrator/memory/presence_profiles.json`
+
+## [LINK] Related Modules
 
 **Communication Domain:**
 - [`livechat`](../livechat/) - Real-time chat functionality
@@ -377,17 +449,17 @@ Important meetings get precedence while respecting user availability preferences
 - [`youtube_proxy`](../../platform_integration/youtube_proxy/) - API gateway
 - [`linkedin_agent`](../../platform_integration/linkedin_agent/) - LinkedIn integration
 
-## 📜 WSP Compliance
+## [U+1F4DC] WSP Compliance
 
 This module follows these Windsurf Standard Procedures:
 
 **Framework Requirements:**
-- **WSP 1**: The WSP Framework (foundational principles) ✅ Agentic Responsibility - Autonomous meeting orchestration
-- **WSP 3**: Enterprise Domain Organization (communication domain placement) ✅ Proper `communication/` placement
-- **WSP 4**: FMAS Audit ✅ Structural compliance verified
-- **WSP 5**: Test Coverage ✅ Comprehensive test suite (≥90%)
-- **WSP 11**: WRE Standard Command Protocol (interface definition) ✅ Complete INTERFACE.md
-- **WSP 12**: Dependencies ✅ Clear dependency declarations
+- **WSP 1**: The WSP Framework (foundational principles) [OK] Agentic Responsibility - Autonomous meeting orchestration
+- **WSP 3**: Enterprise Domain Organization (communication domain placement) [OK] Proper `communication/` placement
+- **WSP 4**: FMAS Audit [OK] Structural compliance verified
+- **WSP 5**: Test Coverage [OK] Comprehensive test suite ([GREATER_EQUAL]90%)
+- **WSP 11**: WRE Standard Command Protocol (interface definition) [OK] Complete INTERFACE.md
+- **WSP 12**: Dependencies [OK] Clear dependency declarations
 - **WSP 22**: Module ModLog and Roadmap (documentation standards)
 - **WSP 58**: FoundUp IP Lifecycle and Tokenization Protocol (IP management)
 
@@ -423,15 +495,15 @@ websockets>=10.0
 pydantic>=1.8.0
 ```
 
-## 📈 Development Status
+## [UP] Development Status
 
 **Current:** PoC implementation complete with simulated functionality  
 **Next Milestone:** Prototype with real Discord + WhatsApp integration  
 **Target:** MVP ready for customer onboarding by Q2
 
 **Module Maturity:** 🟡 Early Development  
-**API Stability:** 🔵 Evolving  
-**Production Ready:** 🔴 Not Yet
+**API Stability:** [U+1F535] Evolving  
+**Production Ready:** [U+1F534] Not Yet
 
 ---
 
@@ -439,4 +511,4 @@ pydantic>=1.8.0
 **Domain:** `communication`  
 **Version:** v0.0.1  
 **Last Updated:** 2024-12-29  
-**WSP Compliant:** ✅ 
+**WSP Compliant:** [OK] 

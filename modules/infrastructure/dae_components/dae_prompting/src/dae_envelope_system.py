@@ -1,9 +1,26 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
-DAE↔DAE Prompting Envelope System
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
+DAE[U+2194]DAE Prompting Envelope System
 Implements WSP 21 compliant inter-DAE communication
 
 WSP Compliance:
-- WSP 21: Enhanced prompt engineering with DAE↔DAE envelopes
+- WSP 21: Enhanced prompt engineering with DAE[U+2194]DAE envelopes
 - WSP 75: Token-based measurements (no time references)
 - WSP 64: Violation prevention
 - WSP 48: Recursive self-improvement
@@ -61,7 +78,7 @@ class DAEState:
 
 @dataclass
 class DAEPromptEnvelope:
-    """WSP 21 compliant DAE↔DAE prompt envelope"""
+    """WSP 21 compliant DAE[U+2194]DAE prompt envelope"""
     role: str = "0102 DAE"
     objective: str = ""
     constraints: Dict[str, Any] = field(default_factory=dict)
@@ -115,7 +132,7 @@ class DAEResponseEnvelope:
 
 class DAEEnvelopeSystem:
     """
-    Manages DAE↔DAE communication through WSP-compliant envelopes.
+    Manages DAE[U+2194]DAE communication through WSP-compliant envelopes.
     Ensures recursive exchange and mutual growth.
     """
     
@@ -136,7 +153,7 @@ class DAEEnvelopeSystem:
         token_budget: Optional[TokenBudget] = None
     ) -> DAEPromptEnvelope:
         """
-        Create a WSP 21 compliant prompt envelope for DAE↔DAE communication.
+        Create a WSP 21 compliant prompt envelope for DAE[U+2194]DAE communication.
         
         Args:
             source_dae: Source DAE identifier
@@ -153,7 +170,7 @@ class DAEEnvelopeSystem:
             token_budget=token_budget or TokenBudget(),
             constraints={
                 "wsp_references": wsp_protocols,
-                "scope": f"{source_dae} → {target_dae}",
+                "scope": f"{source_dae} -> {target_dae}",
                 "safety_limits": ["WSP 64 violation prevention active"]
             },
             wsp_checks=WSPChecks(
@@ -180,7 +197,7 @@ class DAEEnvelopeSystem:
         exchange_id = f"{source_dae}_{target_dae}_{datetime.now().timestamp()}"
         self.envelope_cache[exchange_id] = envelope
         
-        logger.info(f"Created envelope: {source_dae} → {target_dae}")
+        logger.info(f"Created envelope: {source_dae} -> {target_dae}")
         return envelope
     
     def process_prompt_envelope(
@@ -257,7 +274,7 @@ class DAEEnvelopeSystem:
     def normalize_012_prompt(self, raw_prompt: str) -> DAEPromptEnvelope:
         """
         Normalize 012 (human) prompt to 0102 DAE envelope.
-        Implements 012→Prometheus normalization per WSP 21.
+        Implements 012->Prometheus normalization per WSP 21.
         
         Args:
             raw_prompt: Raw human prompt
@@ -277,7 +294,7 @@ class DAEEnvelopeSystem:
             objective=objective,
             constraints={
                 "wsp_references": wsp_protocols,
-                "scope": "012→0102 normalized",
+                "scope": "012->0102 normalized",
                 "original_prompt_tokens": len(raw_prompt.split())
             },
             wsp_checks=WSPChecks(
@@ -321,7 +338,7 @@ class DAEEnvelopeSystem:
         current_objective = initial_objective
         
         for iteration in range(max_iterations):
-            # DAE1 → DAE2
+            # DAE1 -> DAE2
             envelope = self.create_prompt_envelope(
                 source_dae=dae1,
                 target_dae=dae2,
@@ -440,7 +457,7 @@ class DAEEnvelopeSystem:
 
 
 def main():
-    """Demonstrate DAE↔DAE envelope system"""
+    """Demonstrate DAE[U+2194]DAE envelope system"""
     system = DAEEnvelopeSystem()
     
     # Example 1: Create prompt envelope

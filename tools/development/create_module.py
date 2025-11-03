@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WSP 35: Module Creation Automation Tool
 
 This script automates the creation of new, WSP-compliant modules.
@@ -31,9 +46,9 @@ README_TEMPLATE = """
 
 | Protocol | Status | Notes |
 |----------|--------|-------|
-| WSP 1    | ✅      | `src/` and `tests/` structure is present. |
-| WSP 3    | ✅      | Located in a valid Enterprise Domain and Feature Group. |
-| WSP 13   | ✅      | `requirements.txt` and `tests/README.md` are present. |
+| WSP 1    | [OK]      | `src/` and `tests/` structure is present. |
+| WSP 3    | [OK]      | Located in a valid Enterprise Domain and Feature Group. |
+| WSP 13   | [OK]      | `requirements.txt` and `tests/README.md` are present. |
 
 """
 
@@ -101,7 +116,7 @@ def create_module(module_path: str):
     """
     Validates the path and creates the module structure.
     """
-    print(f"🔧 Initializing creation for module: {module_path}")
+    print(f"[TOOL] Initializing creation for module: {module_path}")
 
     # 1. --- Validation Steps ---
     try:
@@ -121,16 +136,16 @@ def create_module(module_path: str):
             raise ValueError(f"Module path '{module_path}' already exists.")
 
     except ValueError as e:
-        print(f"❌ Validation Failed: {e}")
+        print(f"[FAIL] Validation Failed: {e}")
         sys.exit(1)
 
-    print("✅ Path validation successful.")
+    print("[OK] Path validation successful.")
     print(f"   - Enterprise Domain: {domain}")
     print(f"   - Feature Group:     {group}")
     print(f"   - Module Name:       {module_name}")
 
     # 2. --- Scaffolding Process ---
-    print("\n🏗️  Creating directory structure...")
+    print("\n[U+1F3D7]️  Creating directory structure...")
     src_path = path / "src"
     tests_path = path / "tests"
     src_path.mkdir(parents=True, exist_ok=False)
@@ -140,7 +155,7 @@ def create_module(module_path: str):
     print(f"   - Created: {tests_path}/")
 
     # 3. --- Placeholder File Generation ---
-    print("\n📄 Generating placeholder files...")
+    print("\n[U+1F4C4] Generating placeholder files...")
     files_to_create = {
         path / "README.md": README_TEMPLATE.format(module_name=module_name),
         path / "__init__.py": INIT_TEMPLATE.format(module_name=module_name),
@@ -159,13 +174,13 @@ def create_module(module_path: str):
             file_path.write_text(content.strip())
             print(f"   - Created: {file_path}")
         except IOError as e:
-            print(f"❌ Error writing to {file_path}: {e}")
+            print(f"[FAIL] Error writing to {file_path}: {e}")
             sys.exit(1)
 
-    print("\n✨ Module scaffolding complete!")
+    print("\n[U+2728] Module scaffolding complete!")
 
     # 4. --- Post-Creation Hook ---
-    print("\n🔍 Running compliance audit on the new module...")
+    print("\n[SEARCH] Running compliance audit on the new module...")
     os.system(f"python tools/modular_audit/modular_audit.py {module_path}")
 
 

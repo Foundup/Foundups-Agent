@@ -202,11 +202,11 @@ class MeshMessage:
     ttl: int  # Time to live (hops)
 ```
 
-### EvadeNetConfig
+### LibertyAlertConfig
 
 ```python
 @dataclass
-class EvadeNetConfig:
+class LibertyAlertConfig:
     mesh_enabled: bool = True
     webrtc_signaling_server: Optional[str] = None  # Optional bootstrap
     meshtastic_enabled: bool = False
@@ -222,7 +222,7 @@ class EvadeNetConfig:
 ### Event System
 
 ```python
-class EvadeNetEvents:
+class LibertyAlertEvents:
     """Event types emitted by system"""
 
     # Mesh events
@@ -249,11 +249,11 @@ class EvadeNetEvents:
 ```python
 orchestrator = LibertyAlertOrchestrator(config)
 
-@orchestrator.on(EvadeNetEvents.ALERT_RECEIVED)
+@orchestrator.on(LibertyAlertEvents.ALERT_RECEIVED)
 async def handle_alert(alert: Alert):
     print(f"Alert received: {alert.message}")
 
-@orchestrator.on(EvadeNetEvents.PEER_CONNECTED)
+@orchestrator.on(LibertyAlertEvents.PEER_CONNECTED)
 async def handle_peer(peer_id: str):
     print(f"New peer connected: {peer_id}")
 ```
@@ -328,21 +328,21 @@ print(f"Avoiding {len(safe_route.avoided_zones)} danger zones")
 
 ```python
 # In main.py
-from modules.communication.evade_net import LibertyAlertOrchestrator
+from modules.communication.liberty_alert import LibertyAlertOrchestrator
 
-evade_net = LibertyAlertOrchestrator(config=load_config())
-await evade_net.start()
+liberty_alert = LibertyAlertOrchestrator(config=load_config())
+await liberty_alert.start()
 
 # Run event loop for mesh coordination
-await evade_net.run()
+await liberty_alert.run()
 ```
 
 ### PWA Frontend Integration
 
 ```javascript
 // PWA frontend connects to WebRTC mesh
-const mesh = new EvadeNetMesh({
-    signaling: 'wss://optional-bootstrap.evade.net',
+const mesh = new LibertyAlertMesh({
+    signaling: 'wss://optional-bootstrap.libertyalert.net',
     autoDiscovery: true
 });
 

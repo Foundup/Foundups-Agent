@@ -366,7 +366,7 @@ grep -r "old_name" --include="*.json" --include="*.yaml"
 
 ---
 
-## 🤖 Sentinel Augmentation Analysis
+## [BOT] Sentinel Augmentation Analysis
 
 **SAI Score**: `211` (Speed: 2, Automation: 1, Intelligence: 1)
 
@@ -377,7 +377,7 @@ grep -r "old_name" --include="*.json" --include="*.yaml"
 Gemma 3 270M Sentinel operates as the **Instant Pre-Action Verification Engine**, autonomously checking file existence, path validity, and naming conventions BEFORE any file operation. This Sentinel embodies the "verify-before-action" principle with millisecond-level response time, catching assumption-based errors before they propagate through the system.
 
 **Core Capabilities**:
-- **Instant File Existence Checks**: Query "does X exist?" → Returns verified path in <20ms
+- **Instant File Existence Checks**: Query "does X exist?" -> Returns verified path in <20ms
 - **Path Validation**: Automatically validates file paths against WSP 3 domain structure
 - **Naming Convention Enforcement**: Checks file names follow WSP 57 coherence standards
 - **Documentation Completeness**: Verifies README.md, INTERFACE.md, ModLog.md presence before operations
@@ -385,7 +385,7 @@ Gemma 3 270M Sentinel operates as the **Instant Pre-Action Verification Engine**
 
 ### Expected Benefits
 
-- **Latency Reduction**: Manual verification sequence (10-30 seconds) → Sentinel instant check (<50ms, **200-600x faster**)
+- **Latency Reduction**: Manual verification sequence (10-30 seconds) -> Sentinel instant check (<50ms, **200-600x faster**)
 - **Automation Level**: **Assisted** (Sentinel blocks obvious violations automatically, escalates ambiguous cases to human judgment)
 - **Resource Savings**:
   - 90% reduction in assumption-based errors
@@ -603,7 +603,7 @@ class PreActionSentinel:
 
     def predict_verification(self, operation: FileOperation) -> dict:
         """
-        Main inference: File Operation → Verification Decision
+        Main inference: File Operation -> Verification Decision
         Latency: <50ms on-device (no API calls)
         """
         # Extract features from operation
@@ -659,10 +659,10 @@ class PreActionSentinel:
 try:
     result = sentinel.verify_file_operation(operation)
 except SentinelModelError:
-    # Sentinel unavailable → Use rule-based fallback
+    # Sentinel unavailable -> Use rule-based fallback
     result = rule_based_verifier.verify(operation)
 except Exception as e:
-    # Complete failure → Escalate to manual verification
+    # Complete failure -> Escalate to manual verification
     logger.warning(f"Pre-action Sentinel failed: {e}")
     result = manual_verification_prompt(operation)
 ```
@@ -733,7 +733,7 @@ Target Metrics:
 ### Success Criteria
 
 **Quantitative**:
-- **Verification Speed**: 10-30 seconds → <50ms (**200-600x improvement**)
+- **Verification Speed**: 10-30 seconds -> <50ms (**200-600x improvement**)
 - **Error Prevention**: 90% reduction in file-not-found errors
 - **Bloat Detection**: >85% accuracy in identifying duplicate functionality
 - **False Positive Rate**: <2% (minimal disruption to legitimate operations)
@@ -759,9 +759,9 @@ Total: ~15-30 seconds
 
 NEW (Sentinel-Assisted):
 1. Sentinel.verify_file_operation() - <50ms (instant)
-   ├─> Blocked → Show recommendation
-   ├─> Warning → Proceed with caution
-   └─> Allowed → Continue to step 2
+   +-> Blocked -> Show recommendation
+   +-> Warning -> Proceed with caution
+   +-> Allowed -> Continue to step 2
 2. read_file() with verified path - 1-2 seconds
 3. Process content - varies
 Total: ~1-2 seconds (15x faster)
@@ -778,7 +778,7 @@ Total: ~1-2 seconds (15x faster)
 
 ---
 
-**Sentinel Integration Status**: 🔧 READY FOR IMPLEMENTATION
+**Sentinel Integration Status**: [TOOL] READY FOR IMPLEMENTATION
 **Synergy with WSP 50**: PERFECT - Embodies the "verify-before-action" principle with instant execution
 **Implementation Priority**: P0 - Critical for all file operations (foundational protocol)
 **Expected ROI**: 200-600x speed improvement + 90% error reduction + proactive bloat prevention

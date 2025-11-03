@@ -12,9 +12,13 @@ WSP Compliance:
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -202,7 +206,7 @@ class UnifiedXInterface:
             error_message = result.get("error", None) if not success else None
 
             if success:
-                logger.info(f"[UNIFIED X] ✅ MCP post successful to @{request.account.value}")
+                logger.info(f"[UNIFIED X] [OK] MCP post successful to @{request.account.value}")
                 logger.info(f"[UNIFIED X] Training pattern saved: {result.get('training_pattern_id')}")
 
                 # Log Gemini Vision analysis if available
@@ -211,7 +215,7 @@ class UnifiedXInterface:
                     logger.info(f"[UNIFIED X] Gemini Vision UI analysis: {gemini_analysis.get('ui_state', 'N/A')}")
             else:
                 error_message = error_message or "MCP posting failed"
-                logger.warning(f"[UNIFIED X] ❌ MCP post failed: {error_message}")
+                logger.warning(f"[UNIFIED X] [FAIL] MCP post failed: {error_message}")
 
         except Exception as e:
             error_message = str(e)
@@ -262,11 +266,11 @@ async def post_stream_notification_x(stream_title: str, stream_url: str, video_i
                                     account: XAccount = XAccount.FOUNDUPS) -> XPostResult:
     """Post stream notification to X/Twitter (280 char limit)"""
     # Ultra-condensed for Twitter
-    content = f"🔴 LIVE: {stream_title[:50]}\n\n{stream_url}\n\n#LiveStream"
+    content = f"[U+1F534] LIVE: {stream_title[:50]}\n\n{stream_url}\n\n#LiveStream"
 
     # Enforce 280 char limit
     if len(content) > 280:
-        content = f"🔴 LIVE\n\n{stream_url}\n\n#LiveStream"
+        content = f"[U+1F534] LIVE\n\n{stream_url}\n\n#LiveStream"
 
     request = XPostRequest(
         content=content,

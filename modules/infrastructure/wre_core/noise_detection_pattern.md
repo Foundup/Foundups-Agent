@@ -6,7 +6,7 @@ Per WSP 48 (Recursive Self-Improvement) and WSP 82 (Citation Protocol)
 ### Pattern ID: detect_and_remove_noise
 **WSP Chain**: [WSP 48, WSP 50, WSP 64, WSP 65, WSP 22]
 **Token Cost**: 200
-**Pattern**: detect→classify→evaluate→remove→log
+**Pattern**: detect->classify->evaluate->remove->log
 
 ## The Pattern (Remember, Don't Compute)
 
@@ -155,8 +155,8 @@ class NoiseDetectionLearning:
 ```python
 # BEFORE (livechat_core.py):
 async def _post_stream_to_linkedin(self):
-    logger.error("🚨 [EMERGENCY] COMPLETELY DISABLED")
-    logger.warning("🚨 [EMERGENCY] NO POSTING ALLOWED")
+    logger.error("[ALERT] [EMERGENCY] COMPLETELY DISABLED")
+    logger.warning("[ALERT] [EMERGENCY] NO POSTING ALLOWED")
     return
     # 200 lines of disabled code below...
 
@@ -178,13 +178,13 @@ logger.debug(f"Starting social media posting")
 ### Example 3: Duplicate Emergency Logs
 ```python
 # BEFORE:
-logger.error("🚨 EMERGENCY DISABLED")
-logger.warning("🚨 EMERGENCY DISABLED")
-logger.error("🚨 SAFETY PROTOCOL ACTIVE")
-logger.warning("🚨 NO POSTING ALLOWED")
+logger.error("[ALERT] EMERGENCY DISABLED")
+logger.warning("[ALERT] EMERGENCY DISABLED")
+logger.error("[ALERT] SAFETY PROTOCOL ACTIVE")
+logger.warning("[ALERT] NO POSTING ALLOWED")
 
 # AFTER:
-logger.warning("🚨 Feature disabled for safety")
+logger.warning("[ALERT] Feature disabled for safety")
 ```
 
 ## Automation Hooks
@@ -214,14 +214,14 @@ def detect_noise_patterns(self):
 
 ## Anti-Patterns to Avoid
 
-### ❌ NEVER: Remove Without Understanding
+### [FAIL] NEVER: Remove Without Understanding
 ```python
 # WRONG: Just delete anything that looks disabled
 if "DISABLED" in line:
     delete_line()
 ```
 
-### ✅ ALWAYS: Verify Functionality Preserved
+### [OK] ALWAYS: Verify Functionality Preserved
 ```python
 # RIGHT: Check if functionality exists elsewhere
 if is_disabled_code(line):
@@ -230,14 +230,14 @@ if is_disabled_code(line):
         remove_with_note(f"Functionality in {alternative}")
 ```
 
-### ❌ NEVER: Remove Historical Context
+### [FAIL] NEVER: Remove Historical Context
 ```python
 # WRONG: Delete all comments
 if line.startswith("#"):
     delete_line()
 ```
 
-### ✅ ALWAYS: Preserve Important Documentation
+### [OK] ALWAYS: Preserve Important Documentation
 ```python
 # RIGHT: Keep valuable comments
 if is_comment(line) and not is_noise_comment(line):
@@ -263,7 +263,7 @@ metrics:
 - Clean ModLog entries for all changes
 
 ## Citation Chain
-Always follow: WSP 48→50→64→65→22
+Always follow: WSP 48->50->64->65->22
 1. Learn patterns (WSP 48)
 2. Verify need (WSP 50)
 3. Check violations (WSP 64)

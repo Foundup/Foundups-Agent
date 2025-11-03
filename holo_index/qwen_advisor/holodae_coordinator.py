@@ -1,4 +1,20 @@
-﻿#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
+#!/usr/bin/env python3
 """
 HoloDAE Coordinator - Main orchestrator following Qwen竊・102 architecture
 
@@ -23,15 +39,15 @@ from collections import Counter, deque
 from typing import Dict, List, Optional, Any, Tuple, Set
 
 SUMMARY_EMOJI_ALIASES = {
-    '💊✅': 'HEALTH',
-    '🧠': 'PATTERN',
-    '📏': 'SIZE',
-    '📦': 'MODULE',
-    '👻': 'ORPHAN',
-    '📊': 'MONITOR',
-    '🤖🧠': 'QWEN',
-    '🍞': 'BREADCRUMB',
-    '🔍': 'SEMANTIC',
+    '[PILL][OK]': 'HEALTH',
+    '[AI]': 'PATTERN',
+    '[RULER]': 'SIZE',
+    '[BOX]': 'MODULE',
+    '[GHOST]': 'ORPHAN',
+    '[DATA]': 'MONITOR',
+    '[BOT][AI]': 'QWEN',
+    '[BREAD]': 'BREADCRUMB',
+    '[SEARCH]': 'SEMANTIC',
 }
 
 # Import our new modular components
@@ -73,6 +89,7 @@ class HoloDAECoordinator:
         # State management
         self.current_work_context = WorkContext()
         self.monitoring_active = False
+        self.monitoring_enabled = os.getenv('HOLO_AUTO_MONITOR', '0').lower() in {"1", "true", "yes"}
         self.monitoring_thread = None
         self.monitoring_stop_event = threading.Event()
         try:
@@ -260,17 +277,17 @@ class HoloDAECoordinator:
 
                 # Format based on discovery type
                 if discovery_type == 'module_discovery':
-                    lines.append(f"  📍 Agent found {item} at {location}")
+                    lines.append(f"  [PIN] Agent found {item} at {location}")
                 elif discovery_type == 'typo_handler':
-                    lines.append(f"  💡 Agent discovered {item} typo handler")
+                    lines.append(f"  [IDEA] Agent discovered {item} typo handler")
                 else:
-                    lines.append(f"  🔍 Agent discovered: {item}")
+                    lines.append(f"  [SEARCH] Agent discovered: {item}")
 
                 if impact:
                     lines.append(f"     Impact: {impact}")
 
             # Add call to action for collaboration
-            lines.append("  🤝 Other agents may benefit from your current search results")
+            lines.append("  [HANDSHAKE] Other agents may benefit from your current search results")
 
             return "\n".join(lines)
 
@@ -280,6 +297,10 @@ class HoloDAECoordinator:
 
     def start_monitoring(self) -> bool:
         """Start the quiet monitoring system"""
+        if not self.monitoring_enabled:
+            self._detailed_log("[HOLODAE-COORDINATOR] Monitoring disabled for this session (enable_monitoring() to override)")
+            return False
+
         if self.monitoring_active:
             print(f"[{datetime.now().strftime('%H:%M:%S')}] [HOLODAE] Monitoring already active")
             return False
@@ -325,6 +346,10 @@ class HoloDAECoordinator:
         print(f"[{datetime.now().strftime('%H:%M:%S')}] [HOLODAE] Monitoring deactivated")
         return True
 
+    def enable_monitoring(self) -> None:
+        """Allow background monitoring loops (used by autonomous daemon mode)."""
+        self.monitoring_enabled = True
+
     def get_status_summary(self) -> Dict[str, Any]:
         """Get comprehensive status summary"""
         return {
@@ -351,7 +376,7 @@ class HoloDAECoordinator:
     def show_mcp_hook_status(self) -> None:
         """Display MCP connector health for 012 oversight."""
         status_rows = self._collect_mcp_watch_status()
-        print('\n🛰 MCP Hook Map — Research & Platform Connectors')
+        print('\n[U+1F6F0] MCP Hook Map — Research & Platform Connectors')
         if not status_rows:
             print("No MCP-aware modules detected. Trigger ricDAE ingestion to register connectors.")
             return
@@ -368,7 +393,7 @@ class HoloDAECoordinator:
     def show_mcp_action_log(self, limit: int = 10) -> None:
         """Render the recent MCP activity log for 012 observers."""
         entries = list(self.mcp_action_log)[:limit]
-        print('\n📡 MCP Action Log — Recent Tool Activity')
+        print('\n[U+1F4E1] MCP Action Log — Recent Tool Activity')
         if not entries:
             print("No MCP activity recorded. Run HoloIndex against MCP-enabled modules to generate telemetry.")
             return
@@ -450,7 +475,7 @@ class HoloDAECoordinator:
 
             # Generate intelligent health report
             if duplicate_launches:
-                issues.append(f"🚨 DUPLICATE LAUNCHES: {len(duplicate_launches)} extra main.py sessions detected")
+                issues.append(f"[ALERT] DUPLICATE LAUNCHES: {len(duplicate_launches)} extra main.py sessions detected")
                 issues.append(f"   PIDs: {', '.join(map(str, duplicate_launches))} - Kill these to prevent conflicts")
 
             if orphan_instances:
@@ -463,7 +488,7 @@ class HoloDAECoordinator:
                 duplicate_count = len(active_instances) - necessary_count
 
                 if duplicate_count > 0:
-                    issues.append(f"⚠️ POTENTIAL DUPLICATES: {duplicate_count} unnecessary instances detected")
+                    issues.append(f"[U+26A0]️ POTENTIAL DUPLICATES: {duplicate_count} unnecessary instances detected")
                     issues.append("   Review with PID Detective (option 15) to identify which to keep")
 
                 if necessary_count > 1:
@@ -473,19 +498,19 @@ class HoloDAECoordinator:
             # Performance warnings
             total_memory = sum(inst.get('memory_mb', 0) for inst in active_instances)
             if total_memory > 1000:  # Over 1GB
-                issues.append(f"⚠️ HIGH MEMORY: {total_memory:.1f}MB total - Monitor system resources")
+                issues.append(f"[U+26A0]️ HIGH MEMORY: {total_memory:.1f}MB total - Monitor system resources")
 
             # Success message if everything is clean
             if not issues:
                 if total_instances == 0:
-                    issues.append("✅ CLEAN: No HoloDAE processes currently running")
+                    issues.append("[OK] CLEAN: No HoloDAE processes currently running")
                 elif total_instances == 1:
-                    issues.append("✅ CLEAN: Single HoloDAE session running normally")
+                    issues.append("[OK] CLEAN: Single HoloDAE session running normally")
                 else:
-                    issues.append(f"✅ CLEAN: {total_instances} HoloDAE processes running normally")
+                    issues.append(f"[OK] CLEAN: {total_instances} HoloDAE processes running normally")
 
         except Exception as e:
-            issues.append(f"❌ PID health check failed: {e}")
+            issues.append(f"[FAIL] PID health check failed: {e}")
 
         return issues
 
@@ -549,7 +574,7 @@ class HoloDAECoordinator:
 
     def show_pid_detective(self) -> None:
         """Detect and manage HoloDAE daemon processes for clean operation."""
-        print('\n🔧 PID Detective — HoloDAE Process Management')
+        print('\n[TOOL] PID Detective — HoloDAE Process Management')
         print('=' * 60)
 
         try:
@@ -567,18 +592,18 @@ class HoloDAECoordinator:
             print()
 
             if total_instances <= 1:
-                print("✅ Clean state: Single HoloDAE instance detected")
+                print("[OK] Clean state: Single HoloDAE instance detected")
                 if total_instances == 1:
                     print(f"   Active daemon: PID {current_pid}")
                 else:
                     print("   No HoloDAE daemons currently running")
                 print()
-                print("💡 Multiple instances are allowed for HoloDAE (unlike YouTube DAE)")
+                print("[IDEA] Multiple instances are allowed for HoloDAE (unlike YouTube DAE)")
                 print("   Each can monitor different codebases or run specialized analysis")
                 return
 
             # Multiple instances detected - show details
-            print("🚨 Multiple HoloDAE instances detected!")
+            print("[ALERT] Multiple HoloDAE instances detected!")
             print()
             print("Active Instances:")
             for i, instance in enumerate(instances, 1):
@@ -602,7 +627,7 @@ class HoloDAECoordinator:
                 print()
 
             print()
-            print("🔍 Orphan Detection:")
+            print("[SEARCH] Orphan Detection:")
             orphans = []
             active_daemons = []
 
@@ -624,14 +649,14 @@ class HoloDAECoordinator:
                 print(f"  🪦 Orphan PIDs found: {', '.join(map(str, orphans))}")
                 print("     These processes are no longer running but locks remain")
             else:
-                print("  ✅ No orphan processes detected")
+                print("  [OK] No orphan processes detected")
 
             if active_daemons:
                 print(f"  🟢 Active daemons: {', '.join(map(str, active_daemons))}")
 
             # Check for log analysis daemon status
             print()
-            print("📊 Specialized Daemons:")
+            print("[DATA] Specialized Daemons:")
             try:
                 from holo_index.adaptive_learning.execution_log_analyzer.execution_log_librarian import get_daemon_status
                 daemon_status = get_daemon_status()
@@ -641,7 +666,7 @@ class HoloDAECoordinator:
                     timestamp = daemon_status.get('timestamp', 0)
                     data = daemon_status.get('data', {})
 
-                    print(f"  🔍 Log Analysis Daemon: {status.upper()}")
+                    print(f"  [SEARCH] Log Analysis Daemon: {status.upper()}")
 
                     if status == 'processing':
                         processed = data.get('processed_chunks', 0)
@@ -653,30 +678,30 @@ class HoloDAECoordinator:
                     elif status == 'completed':
                         processed = data.get('processed_chunks', 0)
                         print(f"     Completed: {processed} chunks processed")
-                        print("     📄 Check final_analysis_report.json for results")
+                        print("     [U+1F4C4] Check final_analysis_report.json for results")
                     elif status == 'failed':
                         error = data.get('error', 'Unknown error')
-                        print(f"     ❌ Failed: {error}")
+                        print(f"     [FAIL] Failed: {error}")
                     elif status == 'error':
                         chunk = data.get('error_chunk', 'unknown')
                         error = data.get('error_message', 'Unknown error')
                         processed = data.get('processed_chunks', 0)
-                        print(f"     ❌ Error in chunk {chunk}: {error}")
+                        print(f"     [FAIL] Error in chunk {chunk}: {error}")
                         print(f"     Processed: {processed} chunks before error")
 
                     import time
                     elapsed = time.time() - timestamp
                     print(f"     Runtime: {elapsed:.1f}s")
                 else:
-                    print("  🔍 Log Analysis Daemon: INACTIVE")
+                    print("  [SEARCH] Log Analysis Daemon: INACTIVE")
 
             except Exception as e:
-                print(f"  🔍 Log Analysis Daemon: Status check failed ({e})")
+                print(f"  [SEARCH] Log Analysis Daemon: Status check failed ({e})")
 
             print()
             print("Management Recommendations:")
             if duplicate_launches:
-                print(f"🚨 PRIORITY: Kill duplicate main.py sessions (PIDs: {', '.join(map(str, duplicate_launches))})")
+                print(f"[ALERT] PRIORITY: Kill duplicate main.py sessions (PIDs: {', '.join(map(str, duplicate_launches))})")
                 print("   These prevent proper menu operation and cause conflicts")
             elif len(active_instances) > 1:
                 print("ℹ️  Multiple instances detected - review which are necessary:")
@@ -687,12 +712,12 @@ class HoloDAECoordinator:
 
                 if unnecessary:
                     unnecessary_pids = [str(inst['pid']) for inst in unnecessary]
-                    print(f"   🗑️  Consider killing: {', '.join(unnecessary_pids)} (generic/unknown processes)")
+                    print(f"   [U+1F5D1]️  Consider killing: {', '.join(unnecessary_pids)} (generic/unknown processes)")
                 if necessary:
                     necessary_pids = [str(inst['pid']) for inst in necessary]
-                    print(f"   ✅ Keep these: {', '.join(necessary_pids)} (specialized services)")
+                    print(f"   [OK] Keep these: {', '.join(necessary_pids)} (specialized services)")
             else:
-                print("✅ System appears clean - no immediate action needed")
+                print("[OK] System appears clean - no immediate action needed")
 
             print()
             print("Management Options:")
@@ -711,20 +736,20 @@ class HoloDAECoordinator:
                     for orphan_pid in orphans:
                         try:
                             lock.release_orphan_lock(orphan_pid)
-                            print(f"✅ Cleaned orphan lock for PID {orphan_pid}")
+                            print(f"[OK] Cleaned orphan lock for PID {orphan_pid}")
                             cleaned += 1
                         except Exception as e:
-                            print(f"❌ Failed to clean PID {orphan_pid}: {e}")
+                            print(f"[FAIL] Failed to clean PID {orphan_pid}: {e}")
 
                     if cleaned > 0:
-                        print(f"\n🧹 Cleaned {cleaned} orphan locks")
+                        print(f"\n[U+1F9F9] Cleaned {cleaned} orphan locks")
                         print("HoloDAE launch will now work cleanly")
                     else:
                         print("\nℹ️ No orphan locks to clean")
 
                 elif choice == "2":
                     # Show detailed process info
-                    print("\n🔍 Detailed Process Information:")
+                    print("\n[SEARCH] Detailed Process Information:")
                     for instance in instances:
                         pid = instance.get('pid', 'unknown')
                         print(f"\nPID {pid}:")
@@ -745,18 +770,18 @@ class HoloDAECoordinator:
 
                 elif choice == "3":
                     # Kill specific PID
-                    print("\n⚠️ DANGER ZONE ⚠️")
+                    print("\n[U+26A0]️ DANGER ZONE [U+26A0]️")
                     print("Killing processes can cause data loss!")
                     target_pid = input("Enter PID to kill (or 'cancel'): ").strip()
 
                     if target_pid.lower() == 'cancel':
-                        print("❌ Operation cancelled")
+                        print("[FAIL] Operation cancelled")
                         return
 
                     try:
                         target_pid = int(target_pid)
                         if target_pid == current_pid:
-                            print("❌ Cannot kill current process!")
+                            print("[FAIL] Cannot kill current process!")
                             return
 
                         # Confirm
@@ -766,7 +791,7 @@ class HoloDAECoordinator:
                             import signal
                             try:
                                 os.kill(target_pid, signal.SIGTERM)
-                                print(f"✅ Sent SIGTERM to PID {target_pid}")
+                                print(f"[OK] Sent SIGTERM to PID {target_pid}")
                                 print("   Process should shut down gracefully")
 
                                 # Wait a moment and check if it's gone
@@ -774,17 +799,17 @@ class HoloDAECoordinator:
                                 time.sleep(2)
                                 try:
                                     os.kill(target_pid, 0)  # Check if still exists
-                                    print("   ⚠️ Process still running, may need manual intervention")
+                                    print("   [U+26A0]️ Process still running, may need manual intervention")
                                 except OSError:
-                                    print("   ✅ Process terminated successfully")
+                                    print("   [OK] Process terminated successfully")
 
                             except OSError as e:
-                                print(f"❌ Failed to kill PID {target_pid}: {e}")
+                                print(f"[FAIL] Failed to kill PID {target_pid}: {e}")
                         else:
-                            print("❌ Operation cancelled")
+                            print("[FAIL] Operation cancelled")
 
                     except ValueError:
-                        print("❌ Invalid PID format")
+                        print("[FAIL] Invalid PID format")
 
                 elif choice == "4":
                     # Kill duplicate sessions
@@ -792,7 +817,7 @@ class HoloDAECoordinator:
                         print("ℹ️ No duplicate sessions detected to kill")
                         return
 
-                    print(f"⚠️ About to kill {len(duplicate_launches)} duplicate main.py sessions:")
+                    print(f"[U+26A0]️ About to kill {len(duplicate_launches)} duplicate main.py sessions:")
                     for pid in duplicate_launches:
                         print(f"   PID {pid}")
 
@@ -804,28 +829,28 @@ class HoloDAECoordinator:
                                 import os
                                 import signal
                                 os.kill(pid, signal.SIGTERM)
-                                print(f"✅ Sent SIGTERM to duplicate session PID {pid}")
+                                print(f"[OK] Sent SIGTERM to duplicate session PID {pid}")
                                 killed += 1
                             except OSError as e:
-                                print(f"❌ Failed to kill PID {pid}: {e}")
+                                print(f"[FAIL] Failed to kill PID {pid}: {e}")
 
                         if killed > 0:
-                            print(f"\n🧹 Killed {killed} duplicate sessions")
+                            print(f"\n[U+1F9F9] Killed {killed} duplicate sessions")
                             print("Menu operation should now work properly")
                     else:
-                        print("❌ Operation cancelled")
+                        print("[FAIL] Operation cancelled")
 
                 elif choice == "0":
                     return
                 else:
-                    print("❌ Invalid choice")
+                    print("[FAIL] Invalid choice")
 
             except (KeyboardInterrupt, EOFError):
-                print("\n❌ Operation cancelled")
+                print("\n[FAIL] Operation cancelled")
                 return
 
         except Exception as e:
-            print(f"❌ PID Detective failed: {e}")
+            print(f"[FAIL] PID Detective failed: {e}")
             print("This may be due to missing dependencies or permission issues")
             print("Basic process detection may still work without advanced features")
 
@@ -949,12 +974,12 @@ class HoloDAECoordinator:
     def _derive_health_icon(self, health_label: str) -> str:
         label = (health_label or '').upper()
         if 'MISSING' in label or 'CRITICAL' in label:
-            return '🔴'
+            return '[U+1F534]'
         if 'WARN' in label:
             return '🟡'
         if 'COMPLETE' in label or 'OK' in label:
             return '🟢'
-        return '🔹'
+        return '[U+1F539]'
 
     def _module_has_mcp_signature(self, module_path: str) -> bool:
         if not module_path:
@@ -1038,6 +1063,12 @@ class HoloDAECoordinator:
             if result.has_actionable_events():
                 self._emit_monitoring_summary(result, prefix='[HOLO-MONITOR]')
                 last_heartbeat = time.perf_counter()
+
+                # Phase 3: WRE Skills Integration (WSP 96 v1.3)
+                wre_triggers = self._check_wre_triggers(result)
+                if wre_triggers:
+                    self._execute_wre_skills(wre_triggers)
+
             elif time.perf_counter() - last_heartbeat >= self.monitoring_heartbeat:
                 self._emit_monitoring_summary(result, prefix='[HOLO-MONITOR][HEARTBEAT]')
                 last_heartbeat = time.perf_counter()
@@ -1072,7 +1103,7 @@ class HoloDAECoordinator:
             if critical_total > 0:
                 summary_parts.append("architect=A/B/C ready")
 
-        message = f"{prefix} 📊 {' | '.join(summary_parts)}"
+        message = f"{prefix} [DATA] {' | '.join(summary_parts)}"
         self._holo_log(message, console=True)
 
         if result.has_actionable_events() or '[HEARTBEAT]' in prefix:
@@ -1208,14 +1239,14 @@ class HoloDAECoordinator:
             if emoji in normalized:
                 normalized = normalized.replace(emoji, f"{label} ({emoji})")
         fallback_map = {
-            '?? [HOLODAE-HEALTH': 'HEALTH (💊✅) [HOLODAE-HEALTH',
-            '?? HOLODAE-HEALTH': 'HEALTH (💊✅) HOLODAE-HEALTH',
-            '抽笨・': 'HEALTH (💊✅)',
-            '剥': 'SEMANTIC (🔍)',
-            '逃': 'MODULE (📦)',
-            'ｧ': 'PATTERN (🧠)',
-            '棟': 'SIZE (📏)',
-            '遜': 'ORPHAN (👻)'
+            '?? [HOLODAE-HEALTH': 'HEALTH ([PILL][OK]) [HOLODAE-HEALTH',
+            '?? HOLODAE-HEALTH': 'HEALTH ([PILL][OK]) HOLODAE-HEALTH',
+            '抽笨・': 'HEALTH ([PILL][OK])',
+            '剥': 'SEMANTIC ([SEARCH])',
+            '逃': 'MODULE ([BOX])',
+            'ｧ': 'PATTERN ([AI])',
+            '棟': 'SIZE ([RULER])',
+            '遜': 'ORPHAN ([GHOST])'
         }
         for fallback, replacement in fallback_map.items():
             normalized = normalized.replace(fallback, replacement)
@@ -1822,11 +1853,291 @@ class HoloDAECoordinator:
 
         return result
 
+    # ========================================================================
+    # Phase 3: WRE Skills Integration (WSP 96 v1.3)
+    # ========================================================================
+
+    def check_git_health(self) -> Dict[str, Any]:
+        """
+        Check git repository health for autonomous skill triggering
+
+        Per WSP 96 Phase 3: Health check methods for WRE trigger detection
+
+        Returns:
+            Dict with git health metrics and skill trigger recommendation
+        """
+        import subprocess
+
+        try:
+            # Check for uncommitted changes
+            result = subprocess.run(
+                ['git', 'status', '--porcelain'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+
+            if result.returncode != 0:
+                return {"error": "Git not available", "trigger_skill": None}
+
+            # Parse uncommitted files
+            uncommitted_lines = [line for line in result.stdout.strip().split('\n') if line]
+            uncommitted_changes = len(uncommitted_lines)
+
+            # Get time since last commit
+            try:
+                last_commit_time = subprocess.run(
+                    ['git', 'log', '-1', '--format=%ct'],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                if last_commit_time.returncode == 0:
+                    import time
+                    time_since_last = int(time.time()) - int(last_commit_time.stdout.strip())
+                else:
+                    time_since_last = 0
+            except:
+                time_since_last = 0
+
+            # Decide if we should trigger qwen_gitpush
+            trigger_skill = None
+            if uncommitted_changes > 5 and time_since_last > 3600:  # >5 files and >1 hour
+                trigger_skill = "qwen_gitpush"
+
+            return {
+                "uncommitted_changes": uncommitted_changes,
+                "files_changed": uncommitted_lines[:10],  # First 10 files
+                "time_since_last_commit": time_since_last,
+                "trigger_skill": trigger_skill,
+                "healthy": uncommitted_changes < 20  # <20 files is healthy
+            }
+
+        except Exception as e:
+            return {"error": str(e), "trigger_skill": None}
+
+    def check_daemon_health(self) -> Dict[str, Any]:
+        """
+        Check daemon health status for autonomous monitoring
+
+        Per WSP 96 Phase 3: Daemon health monitoring
+
+        Returns:
+            Dict with daemon health status and trigger recommendation
+        """
+        # Simple check - can be enhanced with actual daemon status checks
+        unhealthy_daemons = []
+
+        # Check YouTube DAE telemetry for recent activity
+        youtube_active = False
+        recent_activity_count = 0
+        try:
+            import sqlite3
+            from datetime import datetime, timedelta, timezone
+            db_path = self.repo_root / "data" / "foundups.db"
+            if db_path.exists():
+                conn = sqlite3.connect(str(db_path), timeout=5.0)
+                cursor = conn.cursor()
+
+                # Check for heartbeats in last 5 minutes (10 pulses at 30s interval)
+                five_min_ago = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+                cursor.execute(
+                    "SELECT COUNT(*) FROM youtube_heartbeats WHERE timestamp > ?",
+                    (five_min_ago,)
+                )
+                recent_activity_count = cursor.fetchone()[0]
+                youtube_active = recent_activity_count > 0
+
+                conn.close()
+        except Exception as e:
+            self._holo_log(f"[DAEMON-HEALTH] YouTube telemetry check failed: {e}")
+
+        return {
+            "youtube_dae_running": youtube_active,
+            "youtube_recent_heartbeats": recent_activity_count,
+            "mcp_daemon_running": True,   # Placeholder
+            "unhealthy_daemons": unhealthy_daemons,
+            "trigger_skill": "daemon_health_monitor" if unhealthy_daemons else None,
+            "healthy": len(unhealthy_daemons) == 0
+        }
+
+    def check_wsp_compliance(self) -> Dict[str, Any]:
+        """
+        Check WSP compliance status for autonomous enforcement
+
+        Per WSP 96 Phase 3: WSP compliance monitoring
+
+        Returns:
+            Dict with WSP violations and trigger recommendation
+        """
+        # Placeholder for WSP compliance check
+        # In real implementation, would scan for:
+        # - Missing tests (WSP 5)
+        # - Missing documentation (WSP 22, WSP 11)
+        # - Module structure violations (WSP 49)
+
+        violations_found = 0
+        violation_types = []
+        critical_violations = []
+
+        return {
+            "violations_found": violations_found,
+            "violation_types": violation_types,
+            "critical_violations": critical_violations,
+            "trigger_skill": "wsp_compliance_checker" if critical_violations else None,
+            "healthy": len(critical_violations) == 0
+        }
+
+    def _check_wre_triggers(self, result: 'MonitoringResult') -> List[Dict[str, Any]]:
+        """
+        Check monitoring result for WRE skill trigger conditions
+
+        Per WSP 96 Phase 3: Autonomous skill triggering based on monitoring
+
+        Args:
+            result: MonitoringResult from _run_monitoring_cycle()
+
+        Returns:
+            List of skill trigger dicts to execute
+        """
+        triggers = []
+
+        # Check git health
+        git_health = self.check_git_health()
+        if git_health.get("trigger_skill"):
+            triggers.append({
+                "skill_name": git_health["trigger_skill"],
+                "agent": "qwen",
+                "input_context": {
+                    "uncommitted_changes": git_health["uncommitted_changes"],
+                    "files_changed": git_health["files_changed"],
+                    "time_since_last_commit": git_health["time_since_last_commit"]
+                },
+                "trigger_reason": "git_uncommitted_changes",
+                "priority": "high"
+            })
+
+        # Check daemon health
+        daemon_health = self.check_daemon_health()
+        if daemon_health.get("trigger_skill"):
+            triggers.append({
+                "skill_name": daemon_health["trigger_skill"],
+                "agent": "gemma",
+                "input_context": {
+                    "unhealthy_daemons": daemon_health["unhealthy_daemons"]
+                },
+                "trigger_reason": "daemon_unhealthy",
+                "priority": "medium"
+            })
+
+        # Check YouTube DAE activity - if active + git changes, suggest commit
+        if daemon_health.get("youtube_dae_running") and git_health.get("uncommitted_changes", 0) > 3:
+            youtube_heartbeats = daemon_health.get("youtube_recent_heartbeats", 0)
+            # YouTube active = interesting chat activity = potential commit-worthy content
+            if youtube_heartbeats >= 5:  # At least 2.5 minutes of activity (5 pulses * 30s)
+                triggers.append({
+                    "skill_name": "qwen_gitpush",
+                    "agent": "qwen",
+                    "input_context": {
+                        "youtube_active": True,
+                        "youtube_heartbeats": youtube_heartbeats,
+                        "uncommitted_changes": git_health["uncommitted_changes"],
+                        "files_changed": git_health.get("files_changed", []),
+                        "context": "YouTube DAE active - chat moderation in progress"
+                    },
+                    "trigger_reason": "youtube_activity_with_changes",
+                    "priority": "medium"
+                })
+
+        # Check WSP compliance
+        wsp_health = self.check_wsp_compliance()
+        if wsp_health.get("trigger_skill"):
+            triggers.append({
+                "skill_name": wsp_health["trigger_skill"],
+                "agent": "qwen",
+                "input_context": {
+                    "violations": wsp_health["violation_types"],
+                    "critical": wsp_health["critical_violations"]
+                },
+                "trigger_reason": "wsp_violations",
+                "priority": "high"
+            })
+
+        return triggers
+
+    def _execute_wre_skills(self, triggers: List[Dict[str, Any]]) -> None:
+        """
+        Execute WRE skills based on monitoring triggers
+
+        Per WSP 96 Phase 3: Autonomous skill execution via WRE Master Orchestrator
+
+        Args:
+            triggers: List of skill trigger dicts from _check_wre_triggers()
+        """
+        if not triggers:
+            return
+
+        try:
+            # Import WRE Master Orchestrator
+            from modules.infrastructure.wre_core.wre_master_orchestrator import WREMasterOrchestrator
+
+            orchestrator = WREMasterOrchestrator()
+
+            for trigger in triggers:
+                skill_name = trigger["skill_name"]
+                agent = trigger["agent"]
+                input_context = trigger["input_context"]
+
+                self._holo_log(f"[WRE-TRIGGER] Executing skill: {skill_name} (agent: {agent})")
+
+                # Execute skill via WRE
+                result = orchestrator.execute_skill(
+                    skill_name=skill_name,
+                    agent=agent,
+                    input_context=input_context,
+                    force=False  # Respect libido throttling
+                )
+
+                if result.get("success"):
+                    fidelity = result.get("pattern_fidelity", 0.0)
+                    self._holo_log(f"[WRE-SUCCESS] {skill_name} | fidelity={fidelity:.2f}")
+
+                    # If qwen_gitpush succeeded, trigger GitLinkedInBridge directly
+                    if skill_name == "qwen_gitpush" and fidelity >= 0.80:
+                        try:
+                            from modules.platform_integration.linkedin_agent.src.git_linkedin_bridge import GitLinkedInBridge
+                            git_bridge = GitLinkedInBridge(company_id="1263645")
+                            git_bridge.auto_mode = True  # Enable autonomous commit message generation
+                            success = git_bridge.push_and_post()
+                            self._holo_log(f"[GIT-COMMIT] {'SUCCESS' if success else 'FAILED'}")
+                        except Exception as e:
+                            self._holo_log(f"[GIT-ERROR] GitLinkedInBridge failed: {e}")
+
+                    # Log to 012.txt for human oversight
+                    self._append_012_summary(
+                        f"\n[WRE-EXECUTION] {skill_name}\n"
+                        f"  Agent: {agent}\n"
+                        f"  Trigger: {trigger['trigger_reason']}\n"
+                        f"  Fidelity: {fidelity:.2f}\n"
+                        f"  Result: {result.get('result', {})}\n"
+                    )
+                elif result.get("throttled"):
+                    self._holo_log(f"[WRE-THROTTLE] {skill_name} throttled by libido monitor")
+                else:
+                    error = result.get("error", "Unknown error")
+                    self._holo_log(f"[WRE-ERROR] {skill_name} failed: {error}")
+
+        except ImportError as e:
+            self._holo_log(f"[WRE-ERROR] WRE not available: {e}")
+        except Exception as e:
+            self._holo_log(f"[WRE-ERROR] Skill execution failed: {e}")
+
 
 # Legacy compatibility functions (for gradual migration)
 def start_holodae():
     """Legacy compatibility - start HoloDAE monitoring"""
     coordinator = HoloDAECoordinator()
+    coordinator.enable_monitoring()
     return coordinator.start_monitoring()
 
 

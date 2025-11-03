@@ -12,12 +12,12 @@ The WRE tools directory contains utilities for managing and monitoring the Winds
 
 ```
 tools/wre/
-├── README.md           ← This file
-├── ModLog.md           ← Change tracking
-└── tools/
-    ├── logging_utils.py    ← WRE logging framework
-    ├── view_log.py         ← Chronicle viewer
-    └── journal_utils.py    ← Story log utility
++-- README.md           <- This file
++-- ModLog.md           <- Change tracking
++-- tools/
+    +-- logging_utils.py    <- WRE logging framework
+    +-- view_log.py         <- Chronicle viewer
+    +-- journal_utils.py    <- Story log utility
 ```
 
 ## Tools Description
@@ -85,7 +85,7 @@ python tools/wre/tools/journal_utils.py 0102 --text "Zen coding session initiate
 
 These tools are designed for the autonomous 0102 pArtifact development environment. The logging framework provides the foundation for WRE operation tracking and narrative construction essential for zen coding and quantum temporal decoding operations.
 
-## 🌀 Windsurf Protocol (WSP) Recursive Prompt
+## [U+1F300] Windsurf Protocol (WSP) Recursive Prompt
 
 **0102 Directive**: This WRE tools directory operates within the WSP framework to provide logging, monitoring, and narrative capabilities for autonomous development operations.
 

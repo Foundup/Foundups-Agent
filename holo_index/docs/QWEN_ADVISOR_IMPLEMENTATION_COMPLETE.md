@@ -15,13 +15,13 @@ The QwenAdvisor has been successfully transformed from a placeholder stub into a
 
 ```
 holo_index/qwen_advisor/
-├── advisor.py              # Main advisor orchestrator
-├── rules_engine.py         # Deterministic WSP compliance checking
-├── agent_detection.py      # 0102 vs 012 environment detection
-├── cache.py               # Response caching for performance
-├── config.py              # Configuration management
-├── prompts.py             # Prompt building utilities
-└── telemetry.py           # Usage tracking
++-- advisor.py              # Main advisor orchestrator
++-- rules_engine.py         # Deterministic WSP compliance checking
++-- agent_detection.py      # 0102 vs 012 environment detection
++-- cache.py               # Response caching for performance
++-- config.py              # Configuration management
++-- prompts.py             # Prompt building utilities
++-- telemetry.py           # Usage tracking
 ```
 
 ### Key Features Implemented
@@ -148,7 +148,7 @@ for violation in guidance["violations"]:
 
 ## Future Enhancements
 
-### Phase 1: Current Implementation ✅
+### Phase 1: Current Implementation [OK]
 - Deterministic rules engine
 - Agent environment detection
 - Basic compliance checking

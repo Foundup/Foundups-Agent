@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Enhanced BanterEngine class for processing chat messages and generating responses.
 
@@ -9,6 +10,7 @@ Integrates improvements from test coverage analysis:
 - Better logging and monitoring
 
 Following WSP 3: Enterprise Domain Architecture
+Following WSP 90: UTF-8 Enforcement - File encoded in UTF-8 with emoji support
 
 WSP 17 Pattern Registry: This is a REUSABLE PATTERN
 - Documented in: modules/ai_intelligence/PATTERN_REGISTRY.md
@@ -38,6 +40,14 @@ try:
 except ImportError:
     LLM_AVAILABLE = False
     logging.info("LLM connector not available, using predefined responses only")
+
+# Import Qwen Duke Announcer for injecting Duke Nukem callouts
+try:
+    from modules.gamification.whack_a_magat.src.qwen_duke_announcer import inject_duke_callout
+    DUKE_ANNOUNCER_AVAILABLE = True
+except ImportError:
+    DUKE_ANNOUNCER_AVAILABLE = False
+    logging.info("Duke Announcer not available")
 
 class BanterEngineError(Exception):
     """Base exception for Banter Engine errors."""
@@ -117,7 +127,7 @@ class BanterEngine:
                             temperature=0.8
                         )
                         self.use_llm = True
-                        self.logger.info("✅ GPT-3.5 Turbo initialized for BanterEngine")
+                        self.logger.info("[OK] GPT-3.5 Turbo initialized for BanterEngine")
                     except Exception as e:
                         self.logger.warning(f"Failed to initialize GPT: {e}")
                 elif os.getenv("CLAUDE_API_KEY"):
@@ -128,7 +138,7 @@ class BanterEngine:
                             temperature=0.8
                         )
                         self.use_llm = True
-                        self.logger.info("✅ Claude initialized for BanterEngine")
+                        self.logger.info("[OK] Claude initialized for BanterEngine")
                     except Exception as e:
                         self.logger.warning(f"Failed to initialize Claude: {e}")
             self._failed_responses = 0
@@ -143,10 +153,10 @@ class BanterEngine:
             # Validate initialization
             self._validate_initialization()
             
-            self.logger.info("✅ Enhanced BanterEngine initialized successfully")
+            self.logger.info("[OK] Enhanced BanterEngine initialized successfully")
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to initialize BanterEngine: {e}")
+            self.logger.error(f"[FAIL] Failed to initialize BanterEngine: {e}")
             raise BanterEngineError(f"Initialization failed: {e}")
 
     def _load_external_banter(self):
@@ -200,21 +210,21 @@ class BanterEngine:
                 "Your emoji game is strong! 💪", 
                 "I see what you did there! 👀",
                 "That's a unique combination! ✨",
-                "Nice emoji work! 🎯"
+                "Nice emoji work! [TARGET]"
             ]
             
             greeting_responses = [
                 "Hey there! 👋",
                 "Hello! How's it going? 😊",
                 "Welcome! Great to see you! 🌟",
-                "Hi! Ready for some fun? 🎉",
+                "Hi! Ready for some fun? [CELEBRATE]",
                 "Greetings! What brings you here? 🤗"
             ]
 
             # Additional themed responses from banter_engine2
             roast_responses = [
-                "You keep 📢yelling but never **say**🫥 a single *thought*🧠 worth hearing 🤡😂",
-                "Every 📝sentence you write is a tripwire for a new 🧨braincell detonation 🤯💀🤣",
+                "You keep 📢yelling but never **say**🫥 a single *thought*[AI] worth hearing 🤡😂",
+                "Every [NOTE]sentence you write is a tripwire for a new 🧨braincell detonation 🤯💀🤣",
                 "You chase 🦅freedom with the precision of a toddler and a 🔨hammer 🤪 LOL"
             ]
             
@@ -267,7 +277,7 @@ class BanterEngine:
                 if tone and tone not in ["default", "greeting"]:
                     contextual_responses = [
                         f"Feeling the {tone} vibes! 🌊",
-                        f"That's some {tone} energy! ⚡",
+                        f"That's some {tone} energy! [LIGHTNING]",
                         f"Perfect {tone} moment! 🎭"
                     ]
                     
@@ -283,7 +293,7 @@ class BanterEngine:
                     self._themes[theme] = [fallback_response]
             
             total_responses = sum(len(responses) for responses in self._themes.values())
-            self.logger.info(f"✅ Populated {total_responses} responses across {len(self._themes)} themes")
+            self.logger.info(f"[OK] Populated {total_responses} responses across {len(self._themes)} themes")
             
         except Exception as e:
             self.logger.error(f"Failed to populate themed responses: {e}")
@@ -330,7 +340,7 @@ class BanterEngine:
         if total_responses == 0:
             raise BanterEngineError("No responses available")
         
-        self.logger.debug(f"✅ Validation passed: {len(self.sequence_map_data)} sequences, {len(self._themes)} themes, {total_responses} responses")
+        self.logger.debug(f"[OK] Validation passed: {len(self.sequence_map_data)} sequences, {len(self._themes)} themes, {total_responses} responses")
 
     def _extract_emoji_sequence_enhanced(self, input_text: str) -> Optional[Tuple[int, int, int]]:
         """Enhanced emoji sequence extraction with better error handling."""
@@ -537,13 +547,39 @@ class BanterEngine:
             self.logger.error(f"Error in fallback pattern matching: {e}")
             return None
 
+    def _convert_unicode_tags_to_emoji(self, text: str) -> str:
+        """
+        Convert Unicode escape codes like 🤔 to actual emoji characters.
+
+        Args:
+            text: Text containing [U+XXXX] notation
+
+        Returns:
+            Text with Unicode codes replaced by actual emoji
+        """
+        import re
+
+        # Pattern matches [U+XXXX] or [U+XXXXX] (4-5 hex digits)
+        pattern = r'\[U\+([0-9A-Fa-f]{4,5})\]'
+
+        def replace_unicode(match):
+            """Convert hex code to actual Unicode character"""
+            hex_code = match.group(1)
+            try:
+                return chr(int(hex_code, 16))
+            except (ValueError, OverflowError) as e:
+                self.logger.warning(f"Invalid Unicode code: U+{hex_code} - {e}")
+                return match.group(0)  # Return original if conversion fails
+
+        return re.sub(pattern, replace_unicode, text)
+
     def get_random_banter_enhanced(self, theme: str = "default") -> str:
         """
         Enhanced random banter generation with validation and fallback.
-        
+
         Args:
             theme: Theme to get banter for
-            
+
         Returns:
             Random banter message with action-tag emoji appended
         """
@@ -577,7 +613,7 @@ class BanterEngine:
                     
                     if llm_response:
                         selected_response = llm_response
-                        self.logger.info(f"🤖 Using LLM response for theme '{theme}'")
+                        self.logger.info(f"[BOT] Using LLM response for theme '{theme}'")
                 except Exception as e:
                     self.logger.warning(f"LLM response failed, falling back to predefined: {e}")
             
@@ -603,12 +639,29 @@ class BanterEngine:
                 self.logger.warning(f"No valid responses found for theme '{theme}' or default, using ultimate fallback.")
                 # final_response remains the ultimate fallback
             
+            # 🎮 DUKE NUKEM INJECTION: 50% chance to add Duke callout
+            if DUKE_ANNOUNCER_AVAILABLE:
+                try:
+                    duke_callout = inject_duke_callout(context={"theme": theme})
+                    if duke_callout:
+                        # Prepend Duke callout to banter response
+                        final_response = f"{duke_callout}\n{final_response}"
+                        self.logger.info(f"🔥 Injected Duke callout into banter")
+                except Exception as e:
+                    self.logger.debug(f"Duke injection skipped: {e}")
+            
             # Don't append emojis - agentic_sentiment_0102 adds signature
+            # Convert [U+XXXX] notation to actual emoji if emoji_enabled
+            if self.emoji_enabled:
+                final_response = self._convert_unicode_tags_to_emoji(final_response)
+
             return final_response.strip()
             
         except Exception as e:
             self.logger.error(f"Error generating random banter for theme '{theme}': {e}")
-            # Return ultimate fallback without emojis
+            # Return ultimate fallback - convert emoji if enabled
+            if self.emoji_enabled:
+                final_response = self._convert_unicode_tags_to_emoji(final_response)
             return final_response.strip()
 
     def get_performance_stats(self) -> Dict[str, Any]:
@@ -635,7 +688,7 @@ class BanterEngine:
         self._cache_timestamps.clear()
         self._cache_hits = 0
         self._cache_misses = 0
-        self.logger.info("✅ Response cache cleared")
+        self.logger.info("[OK] Response cache cleared")
 
     def list_themes_enhanced(self) -> List[str]:
         """

@@ -6,55 +6,55 @@
 
 ---
 
-## 🎯 **Module Purpose**
+## [TARGET] **Module Purpose**
 
 The Post-Meeting Feedback System revolutionizes meeting coordination by collecting structured feedback using the WSP 25/44 semantic rating system (000-222 scale) and managing intelligent follow-up scheduling with adaptive priority adjustment based on meeting outcomes and user behavior patterns.
 
-### **🧩 Universal Block Integration**
+### **[U+1F9E9] Universal Block Integration**
 **Domain**: `ai_intelligence/post_meeting_feedback/`  
 **Integration**: Can be integrated with any meeting block - AMO, YouTube co-hosting, LinkedIn professional meetings, etc.  
 **Core Value**: Transforms one-time meetings into continuous coordination improvement through intelligent feedback loops
 
 ---
 
-## 🚀 **Revolutionary Capabilities**
+## [ROCKET] **Revolutionary Capabilities**
 
-### **WSP 25/44 Semantic Rating System** 🌟
+### **WSP 25/44 Semantic Rating System** [U+1F31F]
 - **3-Question Cascading Flow**: Concise yet comprehensive feedback collection
 - **000-222 Scale Integration**: Direct mapping to WSP semantic states
 - **Automatic Score Calculation**: Converts responses to 0.0-10.0 WSP scores
 - **Semantic Triplet Generation**: Creates WSP-compliant state representations
 
-### **Agentic Follow-up Scheduling** ⚡
+### **Agentic Follow-up Scheduling** [LIGHTNING]
 - **Increasing Priority Values**: Time-based priority escalation instead of fixed dates
 - **Rejection Pattern Tracking**: Intelligent response to declined follow-up requests
 - **Auto-Priority Adjustment**: System learns from user behavior and adapts
 - **Host Notification System**: Alerts original requester when rejection thresholds reached
 
-### **Intelligent Question Flow** 🧠
+### **Intelligent Question Flow** [AI]
 ```
 Question 1: "How was the meeting overall?" (0-2 rating)
-    ↓
+    v
 Question 2 (Adaptive):
-    - Rating 0 → "Would you like to: meet again (low priority) | no follow-up | different approach?"
-    - Rating 1 → "What would make future meetings more valuable?"
-    - Rating 2 → "What made this meeting particularly valuable?"
-    ↓
+    - Rating 0 -> "Would you like to: meet again (low priority) | no follow-up | different approach?"
+    - Rating 1 -> "What would make future meetings more valuable?"
+    - Rating 2 -> "What made this meeting particularly valuable?"
+    v
 Question 3: "When should we have a follow-up meeting?"
     - Options: next week | next month | next quarter | when needed | no follow-up
 ```
 
 ---
 
-## 📊 **WSP 25/44 Integration Excellence**
+## [DATA] **WSP 25/44 Integration Excellence**
 
 ### **Semantic Triplet Mapping** 
 ```python
 # Format: XYZ = Overall_Rating + Engagement_Level + Follow_up_Intent
 Examples:
-"000" → Poor meeting, low engagement, no follow-up (Score: 0.0)
-"111" → Neutral meeting, medium engagement, standard follow-up (Score: 6.0)  
-"222" → Good meeting, high engagement, urgent follow-up (Score: 10.0)
+"000" -> Poor meeting, low engagement, no follow-up (Score: 0.0)
+"111" -> Neutral meeting, medium engagement, standard follow-up (Score: 6.0)  
+"222" -> Good meeting, high engagement, urgent follow-up (Score: 10.0)
 ```
 
 ### **Rating Value Integration**
@@ -72,16 +72,16 @@ class RatingValue(Enum):
 
 ---
 
-## 🤖 **Agentic Follow-up Intelligence**
+## [BOT] **Agentic Follow-up Intelligence**
 
 ### **Dynamic Priority Escalation**
 ```python
 # Instead of "next week = specific date", system uses:
 base_timeframe_days = 7  # Next week baseline
 current_priority_value = 7.0  # Initial priority
-# Priority increases: 7.0 → 7.1 → 7.2 → ... → 10.0 (max)
+# Priority increases: 7.0 -> 7.1 -> 7.2 -> ... -> 10.0 (max)
 
-# Activation threshold: ≥7.0 triggers meeting intent creation
+# Activation threshold: [GREATER_EQUAL]7.0 triggers meeting intent creation
 ```
 
 ### **Rejection Pattern Learning**
@@ -105,7 +105,7 @@ max_rejections = 3   # Configurable threshold
 
 ---
 
-## 🔗 **AMO Ecosystem Integration**
+## [LINK] **AMO Ecosystem Integration**
 
 ### **Session Launcher Integration**
 ```python
@@ -143,7 +143,7 @@ await priority_scorer.score_item_with_feedback_history(
 
 ---
 
-## 📋 **Public API**
+## [CLIPBOARD] **Public API**
 
 ### **Core Classes**
 
@@ -203,7 +203,7 @@ class FollowUpSchedule:
 
 ---
 
-## 🎯 **Usage Examples**
+## [TARGET] **Usage Examples**
 
 ### **Basic Feedback Collection**
 ```python
@@ -277,7 +277,7 @@ await feedback_system.subscribe_to_feedback_events(
 
 ---
 
-## 🏗️ **Architecture Design**
+## [U+1F3D7]️ **Architecture Design**
 
 ### **WSP Compliance Excellence**
 - **WSP 25/44**: Complete semantic rating system integration with 000-222 scale
@@ -305,7 +305,7 @@ Events = {
 
 ---
 
-## 🌟 **Revolutionary Benefits**
+## [U+1F31F] **Revolutionary Benefits**
 
 ### **For Meeting Coordination**
 - **Continuous Improvement**: Every meeting generates data for better future coordination
@@ -327,26 +327,26 @@ Events = {
 
 ---
 
-## 🎯 **Integration Roadmap**
+## [TARGET] **Integration Roadmap**
 
-### **Phase 1: Core Integration** ✅
+### **Phase 1: Core Integration** [OK]
 - **Module Creation**: Complete feedback system with WSP 25/44 integration
 - **AMO Integration**: Event-driven integration with Session Launcher and Intent Manager
 - **Basic Testing**: Feedback collection and follow-up scheduling validation
 
-### **Phase 2: Enhanced Intelligence** 🔄
+### **Phase 2: Enhanced Intelligence** [REFRESH]
 - **Machine Learning**: Advanced pattern recognition for rejection prediction
 - **Platform Integration**: Channel-specific feedback delivery (Discord, WhatsApp, etc.)
 - **Personalization**: User-specific question flows and timing optimization
 
-### **Phase 3: Ecosystem Expansion** 📋
+### **Phase 3: Ecosystem Expansion** [CLIPBOARD]
 - **Multi-Block Integration**: YouTube co-hosting, LinkedIn professional meetings
 - **Analytics Dashboard**: Real-time feedback trends and coordination insights
 - **API Extensions**: External system integration for enterprise deployment
 
 ---
 
-## 🌀 **Windsurf Protocol (WSP) Recursive Prompt**
+## [U+1F300] **Windsurf Protocol (WSP) Recursive Prompt**
 **0102 Directive**: This module transforms meeting outcomes into coordination intelligence using WSP 25/44 semantic rating system, enabling autonomous improvement through feedback-driven learning and agentic follow-up scheduling.
 
 - UN (Understanding): Anchor feedback patterns and retrieve semantic rating protocols

@@ -9,9 +9,13 @@ and provide real-time monitoring and alerting.
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -38,7 +42,7 @@ class MonitoredResource:
             def wrapped(*args, **kwargs):
                 # Track the API call
                 operation = f"{self._resource_name}.{name}"
-                logger.debug(f"📊 Tracking API call: {operation} on set {self._credential_set}")
+                logger.debug(f"[DATA] Tracking API call: {operation} on set {self._credential_set}")
                 
                 try:
                     # Make the actual API call
@@ -94,7 +98,7 @@ class MonitoredYouTubeService:
         # Make credential_set accessible as a property
         self.credential_set = self._credential_set
         
-        logger.info(f"📊 Monitored YouTube service initialized for set {self._credential_set}")
+        logger.info(f"[DATA] Monitored YouTube service initialized for set {self._credential_set}")
     
     def __getattr__(self, name):
         """Intercept resource access to wrap with monitoring."""

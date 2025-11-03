@@ -36,20 +36,20 @@ def test_dependency_imports():
     # Test importing core holo_index components
     try:
         from holo_index.module_health.dependency_audit import DependencyAuditor
-        print("✅ Successfully imported DependencyAuditor")
+        print("[OK] Successfully imported DependencyAuditor")
     except ImportError as e:
-        print(f"❌ Failed to import DependencyAuditor: {e}")
+        print(f"[FAIL] Failed to import DependencyAuditor: {e}")
         return False
 
     # Test basic functionality
     try:
         auditor = DependencyAuditor(root_path=".", scan_path="holo_index")
-        print("✅ Successfully created DependencyAuditor instance")
+        print("[OK] Successfully created DependencyAuditor instance")
     except Exception as e:
-        print(f"❌ Failed to create DependencyAuditor: {e}")
+        print(f"[FAIL] Failed to create DependencyAuditor: {e}")
         return False
 
-    print("✅ All basic dependency imports working")
+    print("[OK] All basic dependency imports working")
     return True
 
 def test_module_parsing():
@@ -60,7 +60,7 @@ def test_module_parsing():
     holo_index_path = Path(__file__).parent.parent / "module_health" / "dependency_audit.py"
 
     if not holo_index_path.exists():
-        print(f"❌ Test file not found: {holo_index_path}")
+        print(f"[FAIL] Test file not found: {holo_index_path}")
         return False
 
     try:
@@ -70,7 +70,7 @@ def test_module_parsing():
         tree = ast.parse(source_code)
         imports = extract_imports(tree)
 
-        print(f"✅ Successfully parsed {holo_index_path.name}")
+        print(f"[OK] Successfully parsed {holo_index_path.name}")
         print(f"   Found {len(imports)} import statements:")
         for imp in sorted(imports)[:5]:  # Show first 5
             print(f"   - {imp}")
@@ -78,7 +78,7 @@ def test_module_parsing():
         return True
 
     except Exception as e:
-        print(f"❌ Failed to parse module: {e}")
+        print(f"[FAIL] Failed to parse module: {e}")
         return False
 
 if __name__ == "__main__":
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     success &= test_module_parsing()
 
     if success:
-        print("\n🎉 All tests passed!")
+        print("\n[CELEBRATE] All tests passed!")
     else:
-        print("\n❌ Some tests failed!")
+        print("\n[FAIL] Some tests failed!")
         sys.exit(1)

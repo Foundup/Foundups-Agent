@@ -23,12 +23,12 @@
 ## Module Structure
 ```
 integration_tests/
-├── README.md           # Module overview
-├── ModLog.md          # This file
-├── TestModLog.md      # Test documentation
-└── tests/             # Test files
-    ├── system_integration_test.py
-    └── detailed_workflow_test.py
++-- README.md           # Module overview
++-- ModLog.md          # This file
++-- TestModLog.md      # Test documentation
++-- tests/             # Test files
+    +-- system_integration_test.py
+    +-- detailed_workflow_test.py
 ```
 
 ## Dependencies

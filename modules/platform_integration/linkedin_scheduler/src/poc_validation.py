@@ -6,9 +6,13 @@ Test script to validate proof of concept functionality
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -31,17 +35,17 @@ def validate_scheduler_initialization():
         scheduler = LinkedInScheduler()
         assert scheduler.profiles == []
         assert not scheduler.authenticated
-        logger.info("✅ Empty initialization successful")
+        logger.info("[OK] Empty initialization successful")
         
         # Test initialization with profiles
         test_profiles = ['profile1', 'profile2']
         scheduler = LinkedInScheduler(profiles=test_profiles)
         assert scheduler.profiles == test_profiles
-        logger.info("✅ Profile initialization successful")
+        logger.info("[OK] Profile initialization successful")
         
         return True
     except Exception as e:
-        logger.error(f"❌ Initialization test failed: {e}")
+        logger.error(f"[FAIL] Initialization test failed: {e}")
         return False
 
 
@@ -56,11 +60,11 @@ def validate_authentication():
         result = scheduler.authenticate_profile('test_profile')
         assert result is True
         assert scheduler.authenticated is True
-        logger.info("✅ Authentication test successful")
+        logger.info("[OK] Authentication test successful")
         
         return True
     except Exception as e:
-        logger.error(f"❌ Authentication test failed: {e}")
+        logger.error(f"[FAIL] Authentication test failed: {e}")
         return False
 
 
@@ -82,7 +86,7 @@ def validate_post_scheduling():
         
         assert result['success'] is True
         assert result['scheduled_posts'] == 1
-        logger.info("✅ Valid post scheduling successful")
+        logger.info("[OK] Valid post scheduling successful")
         
         # Test scheduling without authentication
         scheduler.authenticated = False
@@ -92,7 +96,7 @@ def validate_post_scheduling():
         )
         assert result['success'] is False
         assert 'Not authenticated' in result['error']
-        logger.info("✅ Authentication check successful")
+        logger.info("[OK] Authentication check successful")
         
         # Test scheduling in the past
         scheduler.authenticated = True
@@ -103,7 +107,7 @@ def validate_post_scheduling():
         )
         assert result['success'] is False
         assert 'past' in result['error']
-        logger.info("✅ Past scheduling validation successful")
+        logger.info("[OK] Past scheduling validation successful")
         
         # Test content length validation
         long_content = "A" * 3001  # Exceeds LinkedIn limit
@@ -113,11 +117,11 @@ def validate_post_scheduling():
         )
         assert result['success'] is False
         assert 'character limit' in result['error']
-        logger.info("✅ Content length validation successful")
+        logger.info("[OK] Content length validation successful")
         
         return True
     except Exception as e:
-        logger.error(f"❌ Post scheduling test failed: {e}")
+        logger.error(f"[FAIL] Post scheduling test failed: {e}")
         return False
 
 
@@ -129,11 +133,11 @@ def validate_connection():
         scheduler = LinkedInScheduler()
         result = scheduler.validate_connection()
         assert result is True
-        logger.info("✅ Connection validation successful")
+        logger.info("[OK] Connection validation successful")
         
         return True
     except Exception as e:
-        logger.error(f"❌ Connection validation test failed: {e}")
+        logger.error(f"[FAIL] Connection validation test failed: {e}")
         return False
 
 
@@ -154,12 +158,12 @@ def validate_post_queue():
         
         assert post_id is not None
         assert len(queue.queue) == 1
-        logger.info("✅ Post addition successful")
+        logger.info("[OK] Post addition successful")
         
         # Test getting pending posts (should be empty - future time)
         pending = queue.get_pending_posts()
         assert len(pending) == 0
-        logger.info("✅ Future post filtering successful")
+        logger.info("[OK] Future post filtering successful")
         
         # Test with past time
         past_time = datetime.now() - timedelta(minutes=5)
@@ -172,23 +176,23 @@ def validate_post_queue():
         pending = queue.get_pending_posts()
         assert len(pending) == 1
         assert pending[0]['id'] == post_id_2
-        logger.info("✅ Pending post retrieval successful")
+        logger.info("[OK] Pending post retrieval successful")
         
         # Test marking as processed
         result = queue.mark_processed(post_id_2, success=True)
         assert result is True
         assert len(queue.processed) == 1
-        logger.info("✅ Post processing successful")
+        logger.info("[OK] Post processing successful")
         
         return True
     except Exception as e:
-        logger.error(f"❌ PostQueue test failed: {e}")
+        logger.error(f"[FAIL] PostQueue test failed: {e}")
         return False
 
 
 def run_poc_validation():
     """Run complete POC validation suite"""
-    logger.info("🚀 Starting LinkedIn Scheduler POC Validation")
+    logger.info("[ROCKET] Starting LinkedIn Scheduler POC Validation")
     logger.info("=" * 50)
     
     tests = [
@@ -210,16 +214,16 @@ def run_poc_validation():
         logger.info("")  # Empty line for readability
     
     logger.info("=" * 50)
-    logger.info(f"📊 POC Validation Results:")
-    logger.info(f"✅ Tests Passed: {passed}")
-    logger.info(f"❌ Tests Failed: {failed}")
-    logger.info(f"📈 Success Rate: {(passed/(passed+failed))*100:.1f}%")
+    logger.info(f"[DATA] POC Validation Results:")
+    logger.info(f"[OK] Tests Passed: {passed}")
+    logger.info(f"[FAIL] Tests Failed: {failed}")
+    logger.info(f"[UP] Success Rate: {(passed/(passed+failed))*100:.1f}%")
     
     if failed == 0:
-        logger.info("🎉 POC Validation SUCCESSFUL - All tests passed!")
+        logger.info("[CELEBRATE] POC Validation SUCCESSFUL - All tests passed!")
         return True
     else:
-        logger.error("⚠️  POC Validation INCOMPLETE - Some tests failed!")
+        logger.error("[U+26A0]️  POC Validation INCOMPLETE - Some tests failed!")
         return False
 
 

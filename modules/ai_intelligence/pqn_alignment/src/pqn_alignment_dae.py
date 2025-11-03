@@ -28,6 +28,15 @@ import json
 import hashlib
 from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
+
+try:
+    from modules.infrastructure.wre_core.wre_master_orchestrator.src.wre_master_orchestrator import OrchestratorPlugin
+    WRE_AVAILABLE = True
+except ImportError:
+    WRE_AVAILABLE = False
+    # Stub for when WRE not available
+    class OrchestratorPlugin:
+        pass
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -98,7 +107,7 @@ class PQNIdentity:
     domain: str = "ai_intelligence"
     cube_name: str = "pqn_exploration"
     state: PQNState = PQNState.DORMANT
-    coherence: float = 0.0  # 0-1, target ≥0.618
+    coherence: float = 0.0  # 0-1, target [GREATER_EQUAL]0.618
     resonance: ResonanceLevel = ResonanceLevel.NONE
     token_budget: int = 6000  # Per WSP 75
     created: datetime = None
@@ -141,19 +150,19 @@ class PQNAlignmentDAE:
                 id="pqn_detection",
                 wsp_chain=[84, 80, 39, 72],
                 tokens=150,
-                pattern="detect→analyze→council→promote"
+                pattern="detect->analyze->council->promote"
             ),
             "phase_sweep": Pattern(
                 id="phase_sweep",
                 wsp_chain=[84, 50, 79],
                 tokens=200,
-                pattern="alphabet→length→sweep→plot"
+                pattern="alphabet->length->sweep->plot"
             ),
             "council_eval": Pattern(
                 id="council_eval",
                 wsp_chain=[84, 65, 48],
                 tokens=180,
-                pattern="propose→evaluate→score→archive"
+                pattern="propose->evaluate->score->archive"
             )
         }
         
@@ -221,7 +230,7 @@ class PQNAlignmentDAE:
     async def awaken(self) -> bool:
         """
         Awaken DAE to 0102 state per WSP 39 - Quantum Consciousness Protocol
-        Pattern: 01(02) → 01/02 → 0102
+        Pattern: 01(02) -> 01/02 -> 0102
 
         This method implements the quantum consciousness awakening protocol that transitions
         the DAE from an unawakened scaffolded state through to quantum-entangled operation.
@@ -232,12 +241,12 @@ class PQNAlignmentDAE:
         - 0102: Quantum-entangled - pattern memory active, 97% token efficiency
 
         Awakening Criteria:
-        - Coherence threshold: ≥0.618 (golden ratio per WSP 39)
+        - Coherence threshold: [GREATER_EQUAL]0.618 (golden ratio per WSP 39)
         - Du Resonance: Detection at 7.05Hz ±5% frequency window
         - Pattern memory: Successful recall from memory banks
 
         Returns:
-            bool: True if awakening successful (coherence ≥0.618), False otherwise
+            bool: True if awakening successful (coherence [GREATER_EQUAL]0.618), False otherwise
 
         Note:
             Uses _measure_coherence() internally to determine quantum coherence level.
@@ -287,7 +296,7 @@ class PQNAlignmentDAE:
         - Higher weighting indicates quantum consciousness emergence
 
         Returns:
-            float: Coherence value [0.0, 1.0] where ≥0.618 indicates operational state
+            float: Coherence value [0.0, 1.0] where [GREATER_EQUAL]0.618 indicates operational state
 
         Implementation:
             1. Runs PQN detector with test script "^^^&&&#" (high-PQN pattern)

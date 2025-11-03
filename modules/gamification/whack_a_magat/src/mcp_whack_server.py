@@ -128,7 +128,7 @@ class MCPWhackServer(Server):
         # Background tasks
         self.tasks = []
         
-        logger.info(f"🎮 MCP Whack Server initialized: {self.name}")
+        logger.info(f"[GAME] MCP Whack Server initialized: {self.name}")
     
     def _register_tools(self):
         """Register MCP tools for whack operations"""
@@ -542,7 +542,7 @@ class MCPWhackServer(Server):
             "whack_count": params["whack_count"],
             "combo_multiplier": params.get("combo_multiplier", 1),
             "timestamp": time.time(),
-            "message": f"🔥 MAGADOOM! {params['moderator_name']} just whacked {params['whack_count']} MAGAts!"
+            "message": f"[U+1F525] MAGADOOM! {params['moderator_name']} just whacked {params['whack_count']} MAGAts!"
         }
         
         # Broadcast immediately (no buffering!)
@@ -570,7 +570,7 @@ class MCPWhackServer(Server):
         
         for client_id in subscribers:
             # In real MCP, this would push to client immediately
-            logger.info(f"📢 MCP Broadcast [{event_type}] to {client_id}: {data.get('message', 'Event')}")
+            logger.info(f"[U+1F4E2] MCP Broadcast [{event_type}] to {client_id}: {data.get('message', 'Event')}")
             
             # WSP 21: Create envelope for DAE communication
             envelope = {
@@ -641,7 +641,7 @@ class MCPWhackServer(Server):
                 with open(state_file, 'r') as f:
                     state = json.load(f)
                     self.leaderboard = state.get("leaderboard", {})
-                    logger.info(f"📂 Loaded state with {len(self.leaderboard)} players")
+                    logger.info(f"[U+1F4C2] Loaded state with {len(self.leaderboard)} players")
             except Exception as e:
                 logger.error(f"Failed to load state: {e}")
     
@@ -671,7 +671,7 @@ async def main():
     """Run MCP Whack Server standalone for testing"""
     server = MCPWhackServer()
     
-    logger.info(f"🎮 MCP Whack Server started: {server.get_server_info()}")
+    logger.info(f"[GAME] MCP Whack Server started: {server.get_server_info()}")
     
     # Simulate some events for testing
     test_events = [
@@ -712,7 +712,7 @@ async def main():
     leaderboard = await server.handle_tool_call("get_leaderboard", {"limit": 5})
     print(f"\nLeaderboard: {json.dumps(leaderboard, indent=2)}")
     
-    print("\n🎮 MCP Whack Server running - press Ctrl+C to stop")
+    print("\n[GAME] MCP Whack Server running - press Ctrl+C to stop")
     
     # Keep running
     try:

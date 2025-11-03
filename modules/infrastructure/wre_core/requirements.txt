@@ -1,0 +1,19 @@
+# WRE Core - Wardrobe Recursive Engine Requirements
+# WSP 49 (Module Structure) compliance
+
+# Database
+sqlite3  # Built-in - Pattern Memory SQLite storage
+
+# Testing
+pytest>=7.0.0  # Test framework
+pytest-cov>=4.0.0  # Coverage reporting
+
+# WSP Framework
+pyyaml>=6.0  # WSP protocol parsing (if needed)
+
+# Logging and monitoring
+# (Uses standard library logging)
+
+# Note: Qwen/Gemma inference uses llama-cpp-python (optional)
+# Phase 2: Local inference via holo_index/qwen_advisor/llm_engine.py
+# If llama-cpp-python not available, gracefully falls back to mock execution

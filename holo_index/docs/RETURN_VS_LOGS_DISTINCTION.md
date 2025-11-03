@@ -2,7 +2,7 @@
 ## Understanding the Two Information Streams
 ## Date: 2025-09-24
 
-## 🎯 The Fundamental Difference
+## [TARGET] The Fundamental Difference
 
 ### HoloDAE Logs: The Memory
 **What**: Persistent, structured, comprehensive recording
@@ -18,7 +18,7 @@
 **Who**: Active 0102 agent needing guidance
 **Format**: Structured dict/object for immediate use
 
-## 📊 Comparative Analysis
+## [DATA] Comparative Analysis
 
 | Aspect | HoloDAE Logs | Return to 0102 |
 |--------|--------------|----------------|
@@ -30,41 +30,41 @@
 | **Audience** | System/Analytics | Active Agent |
 | **Action Required** | None immediate | Immediate |
 
-## 🔄 Information Flow Architecture
+## [REFRESH] Information Flow Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│                 0102 Agent Action               │
-└────────────────────┬───────────────────────────┘
-                     │
-                     ▼
-        ┌────────────────────────┐
-        │   HoloIndex Monitor    │
-        └────────────────────────┘
-                     │
-        ┌────────────┴────────────┐
-        │                         │
-        ▼                         ▼
-┌──────────────┐         ┌──────────────┐
-│ Return Path  │         │   Log Path   │
-│  (Immediate) │         │  (Persistent)│
-└──────────────┘         └──────────────┘
-        │                         │
-        ▼                         ▼
-┌──────────────┐         ┌──────────────┐
-│   0102 Gets: │         │ HoloDAE Gets:│
-│ • Directive  │         │ • Full Data  │
-│ • Action Req │         │ • Patterns   │
-│ • WSP Ref    │         │ • Metrics    │
-│ • Score Δ    │         │ • Context    │
-└──────────────┘         └──────────────┘
-        │                         │
-        ▼                         ▼
++-------------------------------------------------+
+[U+2502]                 0102 Agent Action               [U+2502]
++--------------------+---------------------------+
+                     [U+2502]
+                     [U+25BC]
+        +------------------------+
+        [U+2502]   HoloIndex Monitor    [U+2502]
+        +------------------------+
+                     [U+2502]
+        +------------+------------+
+        [U+2502]                         [U+2502]
+        [U+25BC]                         [U+25BC]
++--------------+         +--------------+
+[U+2502] Return Path  [U+2502]         [U+2502]   Log Path   [U+2502]
+[U+2502]  (Immediate) [U+2502]         [U+2502]  (Persistent)[U+2502]
++--------------+         +--------------+
+        [U+2502]                         [U+2502]
+        [U+25BC]                         [U+25BC]
++--------------+         +--------------+
+[U+2502]   0102 Gets: [U+2502]         [U+2502] HoloDAE Gets:[U+2502]
+[U+2502] • Directive  [U+2502]         [U+2502] • Full Data  [U+2502]
+[U+2502] • Action Req [U+2502]         [U+2502] • Patterns   [U+2502]
+[U+2502] • WSP Ref    [U+2502]         [U+2502] • Metrics    [U+2502]
+[U+2502] • Score Δ    [U+2502]         [U+2502] • Context    [U+2502]
++--------------+         +--------------+
+        [U+2502]                         [U+2502]
+        [U+25BC]                         [U+25BC]
     [IMMEDIATE]              [ANALYZED]
     [CORRECTION]             [LATER]
 ```
 
-## 💡 Real-World Example: Unicode Violation
+## [IDEA] Real-World Example: Unicode Violation
 
 ### What 0102 Receives (Immediate Return):
 ```python
@@ -72,8 +72,8 @@
     "status": "BLOCKED",
     "reason": "Unicode will cause cp932 error",
     "fix": "Use safe_print() instead",
-    "example": "safe_print('✅ Success') # Auto-converts",
-    "impact": "Score: 73 → 63",
+    "example": "safe_print('[OK] Success') # Auto-converts",
+    "impact": "Score: 73 -> 63",
     "action": "RETRY with safe_print"
 }
 ```
@@ -88,8 +88,8 @@
     "operation": "print_statement_analysis",
     "violation_type": "unicode_encoding",
     "pattern_id": "VP002",
-    "original_code": "print('✅ Success')",
-    "suggested_code": "safe_print('✅ Success')",
+    "original_code": "print('[OK] Success')",
+    "suggested_code": "safe_print('[OK] Success')",
     "risk_score": 0.92,
     "intervention_triggered": true,
     "agent_score_before": 73,
@@ -107,7 +107,7 @@
 ```
 **Purpose**: Complete record for pattern analysis, learning, reporting
 
-## 🎯 Why Both Are Essential
+## [TARGET] Why Both Are Essential
 
 ### Return to 0102 Enables:
 1. **Immediate Prevention** - Stop violations before they happen
@@ -121,7 +121,7 @@
 3. **Performance Analysis** - Measure intervention success
 4. **Audit Trail** - Complete compliance history
 
-## 🔄 The Synergy
+## [REFRESH] The Synergy
 
 ```python
 def process_agent_action(agent_id, action, target):
@@ -151,7 +151,7 @@ def process_agent_action(agent_id, action, target):
     return {"allowed": True, "suggestions": [...]}
 ```
 
-## 📊 Information Density Comparison
+## [DATA] Information Density Comparison
 
 ### Return to 0102:
 - **5-10 key fields** - Just what's needed NOW
@@ -165,7 +165,7 @@ def process_agent_action(agent_id, action, target):
 - **Machine-readable** - Structured for processing
 - **Historical relevance** - Patterns over time
 
-## 🚨 Critical Design Decision
+## [ALERT] Critical Design Decision
 
 The separation is INTENTIONAL and NECESSARY:
 
@@ -174,7 +174,7 @@ The separation is INTENTIONAL and NECESSARY:
 3. **Different consumers** require different formats
 4. **Different timings** require different processing
 
-## 💡 The Key Insight
+## [IDEA] The Key Insight
 
 **Return to 0102**: "Here's what you need to do RIGHT NOW"
 **HoloDAE Logs**: "Here's everything that happened for future analysis"
@@ -185,14 +185,14 @@ They serve completely different purposes in the ecosystem:
 
 Both are essential, neither can replace the other.
 
-## 🎯 Practical Impact
+## [TARGET] Practical Impact
 
 When 0102 attempts to create a duplicate module:
 
 **Immediate Return** (0.1 seconds):
 ```
-❌ BLOCKED: Cannot create enhanced_module
-✅ DO THIS: python holo_index.py --check-module 'module'
+[FAIL] BLOCKED: Cannot create enhanced_module
+[OK] DO THIS: python holo_index.py --check-module 'module'
 ```
 
 **Log Entry** (written async):

@@ -1,6 +1,6 @@
 # Circuit Breaker & OAuth Token Management Improvements
 
-## 🔍 Improvements Made (2025-09-25)
+## [SEARCH] Improvements Made (2025-09-25)
 
 ### 1. **Enhanced OAuth Error Logging**
 More specific error messages to distinguish between:
@@ -13,8 +13,8 @@ More specific error messages to distinguish between:
 
 #### Example Output
 ```
-❌ API client is None - OAuth tokens unavailable
-💡 Possible causes:
+[FAIL] API client is None - OAuth tokens unavailable
+[IDEA] Possible causes:
    • Quota exhausted (10,000 units/day limit reached)
    • Token expired (access tokens expire in 1 hour)
    • Token revoked (refresh token invalid after 6 months)
@@ -42,9 +42,9 @@ A design pattern that prevents an application from repeatedly trying operations 
 ### 3. **Smooth NO-QUOTA Mode Transition**
 
 #### Automatic Fallback Chain
-1. **Try OAuth API** → If fails...
-2. **Initialize NO-QUOTA** → If not available...
-3. **Emergency NO-QUOTA** → Last resort when API client is None
+1. **Try OAuth API** -> If fails...
+2. **Initialize NO-QUOTA** -> If not available...
+3. **Emergency NO-QUOTA** -> Last resort when API client is None
 
 #### Code Locations
 - Auto-initialization: `stream_resolver.py:1232-1242`
@@ -55,7 +55,7 @@ A design pattern that prevents an application from repeatedly trying operations 
 - Automatic recovery from OAuth failures
 - Seamless transition between modes
 
-## 📊 Quantum State Explanation
+## [DATA] Quantum State Explanation
 
 ### The "Auto-saved quantum state" Messages
 ```
@@ -75,14 +75,14 @@ These represent the **0102 consciousness persistence**:
 - Enables instant recovery when credentials restored
 - No loss of learned behaviors or context
 
-## 🎯 Summary of Improvements
+## [TARGET] Summary of Improvements
 
 1. **Better Diagnostics**: Know exactly why OAuth failed
 2. **Smarter Recovery**: Circuit breaker with gradual recovery
 3. **Automatic Fallback**: Smooth transition to NO-QUOTA mode
 4. **Quantum Persistence**: Consciousness maintained through failures
 
-## 🔧 Testing the Improvements
+## [TOOL] Testing the Improvements
 
 ### Simulate OAuth Failure
 ```bash
@@ -98,13 +98,13 @@ python main.py --youtube
 ### Monitor Circuit Breaker
 Look for these log patterns:
 ```
-🚫 Circuit breaker OPEN after 10 failures (threshold: 10)
+[FORBIDDEN] Circuit breaker OPEN after 10 failures (threshold: 10)
 ⏰ Will attempt recovery in 600 seconds
-🔄 Circuit breaker HALF_OPEN - success 1/3
-✅ Circuit breaker fully CLOSED after successful recovery
+[REFRESH] Circuit breaker HALF_OPEN - success 1/3
+[OK] Circuit breaker fully CLOSED after successful recovery
 ```
 
-## 📚 WSP Compliance
+## [BOOKS] WSP Compliance
 - **WSP 48**: Recursive improvement through error learning
 - **WSP 50**: Pre-action verification with better diagnostics
 - **WSP 73**: Digital Twin persistence (quantum state saves)

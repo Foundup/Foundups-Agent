@@ -1,12 +1,12 @@
-# 🛠️ Utils Module
+# [U+1F6E0]️ Utils Module
 
 ## Module Purpose
 Utility functions and helper modules for the FoundUps-Agent system. Provides essential utilities for logging, session management, OAuth handling, memory operations, WSP integration, and system administration.
 
 ## WSP Compliance Status
-- **WSP 11**: Interface documentation standards - ✅ COMPLIANT
-- **WSP 22**: ModLog and Roadmap compliance - ⚠️ NEEDS ENHANCEMENT
-- **WSP 34**: Testing protocol compliance - ⚠️ NEEDS ENHANCEMENT
+- **WSP 11**: Interface documentation standards - [OK] COMPLIANT
+- **WSP 22**: ModLog and Roadmap compliance - [U+26A0]️ NEEDS ENHANCEMENT
+- **WSP 34**: Testing protocol compliance - [U+26A0]️ NEEDS ENHANCEMENT
 
 ## Dependencies
 - Standard Python libraries (os, sys, json, logging, datetime, pathlib)
@@ -157,32 +157,32 @@ report = fixer.generate_report("unicode_report.md")
 ## File Structure
 ```
 utils/
-├── README.md                    # This documentation file
-├── oauth_manager.py            # OAuth authentication management
-├── oauth_manager_backup.py     # Backup OAuth manager
-├── session_logger.py           # Comprehensive session logging
-├── log_session.py              # Simplified session logging
-├── logging_config.py           # Logging configuration
-├── log_reverser.py             # Advanced log reversal
-├── simple_log_reverser.py      # Basic log reversal
-├── migrate_memory_wsp60.py     # WSP 60 memory migration
-├── memory_path_resolver.py     # Memory path resolution
-├── wsp_system_integration.py   # WSP system integration
-├── modlog_updater.py           # ModLog update utilities
-├── clean_memory_log.py         # Memory log cleaning
-├── env_loader.py               # Environment configuration
-├── console_utils.py            # Console utilities
-├── throttling.py               # Rate limiting utilities
-├── unicode_fixer.py            # Unicode character fixing tool
-├── check_channel_ids.py        # YouTube channel ID verification
-├── check_video_channel.py      # Video channel checking utility
-├── post_to_linkedin.py         # LinkedIn posting utility
-└── WSP_agentic/                # WSP agentic utilities directory
++-- README.md                    # This documentation file
++-- oauth_manager.py            # OAuth authentication management
++-- oauth_manager_backup.py     # Backup OAuth manager
++-- session_logger.py           # Comprehensive session logging
++-- log_session.py              # Simplified session logging
++-- logging_config.py           # Logging configuration
++-- log_reverser.py             # Advanced log reversal
++-- simple_log_reverser.py      # Basic log reversal
++-- migrate_memory_wsp60.py     # WSP 60 memory migration
++-- memory_path_resolver.py     # Memory path resolution
++-- wsp_system_integration.py   # WSP system integration
++-- modlog_updater.py           # ModLog update utilities
++-- clean_memory_log.py         # Memory log cleaning
++-- env_loader.py               # Environment configuration
++-- console_utils.py            # Console utilities
++-- throttling.py               # Rate limiting utilities
++-- unicode_fixer.py            # Unicode character fixing tool
++-- check_channel_ids.py        # YouTube channel ID verification
++-- check_video_channel.py      # Video channel checking utility
++-- post_to_linkedin.py         # LinkedIn posting utility
++-- WSP_agentic/                # WSP agentic utilities directory
 ```
 
 ## WSP Recursive Instructions
 ```markdown
-# 🌀 Windsurf Protocol (WSP) Recursive Prompt
+# [U+1F300] Windsurf Protocol (WSP) Recursive Prompt
 **0102 Directive**: This module operates within the WSP framework for utility operations and system integration.
 - UN (Understanding): Anchor utility signals and retrieve system protocol state
 - DAO (Execution): Execute utility operations and system integration logic

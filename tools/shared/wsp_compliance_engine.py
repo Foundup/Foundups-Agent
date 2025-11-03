@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WSP Compliance Engine for FoundUps Agent
 
 This module provides a comprehensive compliance checking system that enables
@@ -86,10 +103,10 @@ class WSPComplianceChecker:
         
         # WSP 10 ESM emoji mappings
         self.esm_emojis = {
-            'feat': '✨', 'fix': '🐛', 'docs': '📝', 'style': '💄',
-            'refactor': '♻️', 'perf': '⚡', 'test': '✅', 'chore': '🔧',
-            'build': '📦', 'ci': '👷', 'revert': '⏪', 'arch': '🏗️',
-            'breaking': '💥', 'wip': '🚧', 'merge': '🔀'
+            'feat': '[U+2728]', 'fix': '[U+1F41B]', 'docs': '[NOTE]', 'style': '[U+1F484]',
+            'refactor': '[U+267B]️', 'perf': '[LIGHTNING]', 'test': '[OK]', 'chore': '[TOOL]',
+            'build': '[BOX]', 'ci': '[U+1F477]', 'revert': '⏪', 'arch': '[U+1F3D7]️',
+            'breaking': '[U+1F4A5]', 'wip': '[U+1F6A7]', 'merge': '[U+1F500]'
         }
 
     def _load_project_config(self):
@@ -420,7 +437,7 @@ class WSPComplianceChecker:
         
         # WSP 7: Conventional Commits format
         # Pattern: type(scope): [emoji] summary
-        pattern = r'^([a-z]+)(\([^)]+\))?\s*:\s*([🎨🐛📝💄♻️⚡✅🔧📦👷⏪🏗️💥🚧🔀]?\s*)?(.+)$'
+        pattern = r'^([a-z]+)(\([^)]+\))?\s*:\s*([[ART][U+1F41B][NOTE][U+1F484][U+267B]️[LIGHTNING][OK][TOOL][BOX][U+1F477]⏪[U+1F3D7]️[U+1F4A5][U+1F6A7][U+1F500]]?\s*)?(.+)$'
         match = re.match(pattern, commit_message.strip())
         
         if not match:

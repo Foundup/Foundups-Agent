@@ -109,15 +109,15 @@ class QwenQuotaIntelligence:
                             set_number=set_num,
                             **{k: v for k, v in profile_data.items() if k != 'set_number'}
                         )
-                logger.info(f"🤖🧠 [QWEN-QUOTA] Loaded {len(profiles)} quota profiles from memory")
+                logger.info(f"[BOT][AI] [QWEN-QUOTA] Loaded {len(profiles)} quota profiles from memory")
             except Exception as e:
-                logger.warning(f"🤖🧠 [QWEN-QUOTA] Error loading profiles: {e}")
+                logger.warning(f"[BOT][AI] [QWEN-QUOTA] Error loading profiles: {e}")
 
         # Ensure profiles exist for active credential sets (1, 10)
         for set_num in [1, 10]:
             if set_num not in profiles:
                 profiles[set_num] = QuotaSetProfile(set_number=set_num)
-                logger.info(f"🤖🧠 [QWEN-QUOTA] Created new profile for credential set {set_num}")
+                logger.info(f"[BOT][AI] [QWEN-QUOTA] Created new profile for credential set {set_num}")
 
         return profiles
 
@@ -137,9 +137,9 @@ class QwenQuotaIntelligence:
             with open(profile_file, 'w', encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
 
-            logger.debug(f"🤖🧠 [QWEN-QUOTA] Saved {len(self.profiles)} quota profiles")
+            logger.debug(f"[BOT][AI] [QWEN-QUOTA] Saved {len(self.profiles)} quota profiles")
         except Exception as e:
-            logger.error(f"🤖🧠 [QWEN-QUOTA] Error saving profiles: {e}")
+            logger.error(f"[BOT][AI] [QWEN-QUOTA] Error saving profiles: {e}")
 
     def record_operation(self, operation: str, credential_set: int, cost: int):
         """
@@ -178,7 +178,7 @@ class QwenQuotaIntelligence:
         if profile.total_operations_tracked % 50 == 0:
             self._save_profiles()
 
-        logger.debug(f"🤖🧠 [QWEN-QUOTA] Recorded {operation} on set {credential_set} (cost: {cost})")
+        logger.debug(f"[BOT][AI] [QWEN-QUOTA] Recorded {operation} on set {credential_set} (cost: {cost})")
 
     def record_exhaustion(self, credential_set: int):
         """
@@ -213,7 +213,7 @@ class QwenQuotaIntelligence:
 
         self._save_profiles()
 
-        logger.info(f"🤖🧠 [QWEN-QUOTA] ⚠️ Set {credential_set} exhausted. "
+        logger.info(f"[BOT][AI] [QWEN-QUOTA] [U+26A0]️ Set {credential_set} exhausted. "
                    f"Typical exhaustion hour: {profile.typical_exhaustion_hour}:00 "
                    f"(confidence: {profile.confidence_level:.1%})")
 
@@ -306,13 +306,13 @@ class QwenQuotaIntelligence:
             if current_hour not in profile.peak_usage_hours:
                 score += 25  # Bonus for using during off-peak
 
-            logger.debug(f"🤖🧠 [QWEN-QUOTA] Set {set_num} score: {score:.1f}")
+            logger.debug(f"[BOT][AI] [QWEN-QUOTA] Set {set_num} score: {score:.1f}")
 
             if score > best_score:
                 best_score = score
                 best_set = set_num
 
-        logger.info(f"🤖🧠 [QWEN-QUOTA] 🎯 Recommended credential set: {best_set} (score: {best_score:.1f})")
+        logger.info(f"[BOT][AI] [QWEN-QUOTA] [TARGET] Recommended credential set: {best_set} (score: {best_score:.1f})")
         return best_set
 
     def get_intelligence_summary(self) -> str:

@@ -111,7 +111,7 @@ scheduler.set_access_token("profile_id", token_data["access_token"])
 # Create a LinkedIn post
 response = scheduler.create_text_post(
     profile_id="your_profile_id",
-    text="🚀 Exciting update from our development team! #LinkedIn #API",
+    text="[ROCKET] Exciting update from our development team! #LinkedIn #API",
     visibility="PUBLIC"
 )
 

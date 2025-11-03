@@ -10,15 +10,15 @@ GitPushDAE was blocking ALL push attempts with reasoning:
 
 **The criteria were philosophically wrong about development:**
 
-1. **"dirty" repository = unhealthy** ❌
+1. **"dirty" repository = unhealthy** [FAIL]
    - Reality: "dirty" = active development = HEALTHY
    - Only "conflicts" should block
 
-2. **Evening hours (22:00) blocked** ❌
+2. **Evening hours (22:00) blocked** [FAIL]
    - Reality: 22:00-02:00 is prime coding time
    - Only deep sleep (02:00-06:00) should block
 
-3. **Quality threshold 0.8 unreachable** ❌
+3. **Quality threshold 0.8 unreachable** [FAIL]
    - Reality: Development is iterative, not perfect
    - Heuristic scoring maxes at ~0.5-0.6
 
@@ -42,15 +42,15 @@ GitPushDAE was blocking ALL push attempts with reasoning:
 ## Validation
 
 **Before Fix:**
-- Time: 23:00 → BLOCKED (wrong)
-- Health: "dirty" → BLOCKED (wrong)
-- Quality: 0.5 → BLOCKED (wrong)
+- Time: 23:00 -> BLOCKED (wrong)
+- Health: "dirty" -> BLOCKED (wrong)
+- Quality: 0.5 -> BLOCKED (wrong)
 - **Result**: 4/7 criteria, NO PUSH
 
 **After Fix:**
-- Time: 23:00 → ALLOWED (correct)
-- Health: "dirty" → ALLOWED (correct)
-- Quality: 0.5 → ALLOWED (correct)
+- Time: 23:00 -> ALLOWED (correct)
+- Health: "dirty" -> ALLOWED (correct)
+- Quality: 0.5 -> ALLOWED (correct)
 - **Result**: 6/7 criteria, PUSH SUCCEEDS
 
 ## Future Enhancement (NOT NOW)
@@ -63,7 +63,7 @@ Qwen intelligence layer can be added later for:
 But the immediate issue was **broken logic**, not **insufficient intelligence**.
 
 ## WSP Compliance
-- WSP 50: Pre-action verification via HoloIndex ✅
-- WSP 22: ModLog updated with rationale ✅
-- WSP 64: Violation prevention through research ✅
-- WSP 87: Used HoloIndex not grep ✅
+- WSP 50: Pre-action verification via HoloIndex [OK]
+- WSP 22: ModLog updated with rationale [OK]
+- WSP 64: Violation prevention through research [OK]
+- WSP 87: Used HoloIndex not grep [OK]

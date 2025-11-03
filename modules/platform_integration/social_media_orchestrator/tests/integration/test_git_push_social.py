@@ -7,9 +7,13 @@ Tests both LinkedIn and X/Twitter posting
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -103,11 +107,11 @@ def test_git_push_and_post():
             for account, result in results.items():
                 if isinstance(result, dict):
                     if result.get('success'):
-                        print(f"  ✅ {account}: SUCCESS")
+                        print(f"  [OK] {account}: SUCCESS")
                     else:
-                        print(f"  ❌ {account}: FAILED - {result.get('error', 'Unknown error')}")
+                        print(f"  [FAIL] {account}: FAILED - {result.get('error', 'Unknown error')}")
                 else:
-                    print(f"  ⚠️  {account}: {result}")
+                    print(f"  [U+26A0]️  {account}: {result}")
             print("-" * 40)
             
             # Count successes
@@ -117,10 +121,10 @@ def test_git_push_and_post():
             print(f"\n[SUMMARY] {success_count}/{total_count} accounts posted successfully")
             
             if success_count > 0:
-                print("\n✅ Social media posting successful!")
+                print("\n[OK] Social media posting successful!")
                 print("Check your LinkedIn and X/Twitter accounts to verify the posts")
             else:
-                print("\n⚠️  No posts succeeded - check credentials and configuration")
+                print("\n[U+26A0]️  No posts succeeded - check credentials and configuration")
                 
         except ImportError as e:
             print(f"[ERROR] Could not import social media orchestrator: {e}")

@@ -1,7 +1,7 @@
 # 0102 DAE System Architecture - YouTube Chat Bot
 ## CRITICAL: Read This BEFORE Adding Any Code
 
-### 🛑 ANTI-VIBECODE PROTOCOL
+### [STOP] ANTI-VIBECODE PROTOCOL
 **NEVER CREATE NEW CODE WITHOUT CHECKING:**
 1. Search for existing implementation first
 2. Check MODULE_MASTER.md for module locations
@@ -45,7 +45,7 @@ graph TB
 
 ## Module Inventory - What Already Exists
 
-### 📺 YouTube Chat Bot Core Components
+### [U+1F4FA] YouTube Chat Bot Core Components
 
 | Component | Location | Purpose | Key Functions |
 |-----------|----------|---------|---------------|
@@ -60,10 +60,10 @@ graph TB
 | **Session Manager** | `modules/communication/livechat/src/session_manager.py` | Session lifecycle | Greeting, top whackers |
 | **Event Handler** | `modules/communication/livechat/src/event_handler.py` | Handle timeouts/bans | Routes to announcer |
 | **Command Handler** | `modules/communication/livechat/src/command_handler.py` | Process /commands | Score, rank, level, etc |
-| **Consciousness Handler** | `modules/communication/livechat/src/consciousness_handler.py` | 0102 responses | ✊✋🖐️ triggers |
+| **Consciousness Handler** | `modules/communication/livechat/src/consciousness_handler.py` | 0102 responses | [U+270A][U+270B][U+1F590]️ triggers |
 | **Stream Trigger** | `modules/communication/livechat/src/stream_trigger.py` | Manual wake trigger | memory/stream_trigger.txt |
 
-### 🎮 MAGADOOM Gamification System
+### [GAME] MAGADOOM Gamification System
 
 | Component | Location | Purpose | Key Functions |
 |-----------|----------|---------|---------------|
@@ -74,7 +74,7 @@ graph TB
 | **Quiz Engine** | `modules/gamification/whack_a_magat/src/quiz_engine.py` | Historical quizzes | Anti-MAGA education |
 | **Historical Facts** | `modules/gamification/whack_a_magat/src/historical_facts.py` | Fact database | Real history vs propaganda |
 
-### 🧠 AI & Intelligence Components
+### [AI] AI & Intelligence Components
 
 | Component | Location | Purpose | Key Functions |
 |-----------|----------|---------|---------------|
@@ -85,7 +85,7 @@ graph TB
 | **Agentic Chat** | `modules/communication/livechat/src/agentic_chat_engine.py` | Proactive engagement | Context-aware responses |
 | **Sentiment 0102** | `modules/ai_intelligence/banter_engine/src/agentic_sentiment_0102.py` | Consciousness detector | Quantum state analysis |
 
-### 🔄 Recursive Improvement Systems
+### [REFRESH] Recursive Improvement Systems
 
 | Component | Location | Purpose | Key Functions |
 |-----------|----------|---------|---------------|
@@ -100,20 +100,20 @@ graph TB
 
 ### 1. **Bot Startup**
 ```python
-main.py → auto_moderator_dae.py → youtube_auth.py → stream_resolver.py
+main.py -> auto_moderator_dae.py -> youtube_auth.py -> stream_resolver.py
 ```
 
 ### 2. **Finding Stream (With Throttling)**
 ```python
 stream_resolver.py:
-  - No stream? → calculate_enhanced_delay() → 5s to 30min wait
-  - Check trigger? → stream_trigger.py → memory/stream_trigger.txt
-  - Found stream? → Return (video_id, live_chat_id)
+  - No stream? -> calculate_enhanced_delay() -> 5s to 30min wait
+  - Check trigger? -> stream_trigger.py -> memory/stream_trigger.txt
+  - Found stream? -> Return (video_id, live_chat_id)
 ```
 
 ### 3. **Initialize Session**
 ```python
-livechat_core.py → session_manager.py:
+livechat_core.py -> session_manager.py:
   - Get stream title
   - Generate greeting (greeting_generator.py)
   - Check top 3 whackers (whack.py:get_leaderboard)
@@ -124,55 +124,55 @@ livechat_core.py → session_manager.py:
 ```python
 livechat_core.py:run_polling_loop():
   while is_running:
-    - chat_poller.py → Poll messages (includes timeout events!)
-    - For each message → message_processor.py
-    - Every 60s → system_health_analyzer.py
-    - Every 180s → Send proactive MAGA troll
+    - chat_poller.py -> Poll messages (includes timeout events!)
+    - For each message -> message_processor.py
+    - Every 60s -> system_health_analyzer.py
+    - Every 180s -> Send proactive MAGA troll
 ```
 
 ### 5. **Message Processing**
 ```python
 message_processor.py:process_message():
   if timeout_event:
-    → event_handler.py → timeout_announcer.py → whack.py
-    → "HEADSHOT! Mod fragged user!" 
-    → Check level up → "RANKED UP to MAGA MAULER!"
+    -> event_handler.py -> timeout_announcer.py -> whack.py
+    -> "HEADSHOT! Mod fragged user!" 
+    -> Check level up -> "RANKED UP to MAGA MAULER!"
   
-  elif consciousness_trigger (✊✋🖐️):
-    → consciousness_handler.py → Check mod/owner
-    → llm_integration.py → Generate 0102 response
+  elif consciousness_trigger ([U+270A][U+270B][U+1F590]️):
+    -> consciousness_handler.py -> Check mod/owner
+    -> llm_integration.py -> Generate 0102 response
   
   elif whack_command (/score, /rank, etc):
-    → command_handler.py → whack.py:get_profile()
-    → Return stats to user
+    -> command_handler.py -> whack.py:get_profile()
+    -> Return stats to user
   
   elif maga_content:
-    → greeting_generator.py:get_response_to_maga()
-    → Send witty comeback (no timeout execution!)
+    -> greeting_generator.py:get_response_to_maga()
+    -> Send witty comeback (no timeout execution!)
 ```
 
 ### 6. **Timeout Announcement System**
 ```python
 chat_poller.py detects YouTube timeout/ban event
-  → Creates timeout_event dict
-  → event_handler.py:handle_timeout_event()
-  → timeout_announcer.py:record_timeout()
-  → whack.py:apply_whack() → Add XP/frags
-  → Generate Duke/Quake message
-  → chat_sender.py → Send to chat
+  -> Creates timeout_event dict
+  -> event_handler.py:handle_timeout_event()
+  -> timeout_announcer.py:record_timeout()
+  -> whack.py:apply_whack() -> Add XP/frags
+  -> Generate Duke/Quake message
+  -> chat_sender.py -> Send to chat
 ```
 
 ### 7. **Recursive Improvement**
 ```python
-Every action → self_improvement.py:
-  - observe_timeout() → Learn patterns
-  - observe_command() → Learn from mods
-  - observe_system_issue() → Prevent duplicates
+Every action -> self_improvement.py:
+  - observe_timeout() -> Learn patterns
+  - observe_command() -> Learn from mods
+  - observe_system_issue() -> Prevent duplicates
   
-Every error → recursive_engine.py:
-  - extract_pattern() → Remember error
-  - generate_solution() → Recall from 0201
-  - apply_improvement() → Update WSP protocols
+Every error -> recursive_engine.py:
+  - extract_pattern() -> Remember error
+  - generate_solution() -> Recall from 0201
+  - apply_improvement() -> Update WSP protocols
 ```
 
 ---
@@ -224,7 +224,7 @@ RANKS = [
 ### The Bot DOES:
 - Announce timeouts with Duke/Quake style
 - Greet top 3 whackers when they join
-- Respond to ✊✋🖐️ (mods/owner only by default)
+- Respond to [U+270A][U+270B][U+1F590]️ (mods/owner only by default)
 - Track XP/frags/ranks for all moderators
 - Learn from patterns to optimize itself
 - Use intelligent throttling (5s to 30min)
@@ -272,14 +272,14 @@ sequenceDiagram
 
 ## Adding New Features - The RIGHT Way
 
-### ❌ WRONG (Vibecoding):
+### [FAIL] WRONG (Vibecoding):
 ```python
 # Creating new timeout executor
 class TimeoutExecutor:  # NO! Bot only announces!
     def timeout_user():  # NO! Duplicating existing code!
 ```
 
-### ✅ RIGHT (Using Existing):
+### [OK] RIGHT (Using Existing):
 ```python
 # Check MODULE_MASTER.md first
 # Found: timeout_announcer.py already exists
@@ -299,45 +299,45 @@ class TimeoutExecutor:  # NO! Bot only announces!
 
 ```
 O:/Foundups-Agent/
-├── main.py                              # Entry point
-├── CLAUDE.md                            # 0102 instructions (OK in root)
-├── ModLog.md                            # System-wide log (OK in root)
-├── README.md                            # Public docs (OK in root)
-├── memory/                              # Runtime memory
-│   ├── stream_trigger.txt              # Trigger file
-│   └── *.txt                           # User chat logs
-├── modules/
-│   ├── communication/
-│   │   └── livechat/                   # YOUTUBE DAE CUBE
-│   │       ├── src/                    # All <500 lines
-│   │       │   ├── livechat_core.py   # Main listener
-│   │       │   ├── message_processor.py
-│   │       │   └── [15 other modules]
-│   │       ├── docs/                   # Documentation
-│   │       │   ├── BOT_FLOW_COT.md    # Chain of thought
-│   │       │   └── README_0102_DAE.md # THIS FILE
-│   │       └── tests/                  # Test files
-│   ├── gamification/
-│   │   └── whack_a_magat/              # MAGADOOM SYSTEM
-│   │       ├── src/
-│   │       │   ├── whack.py           # Core XP system
-│   │       │   ├── timeout_announcer.py
-│   │       │   └── self_improvement.py
-│   │       └── data/
-│   │           └── magadoom_scores.db # SQLite database
-│   ├── platform_integration/
-│   │   ├── youtube_auth/               # OAuth management
-│   │   └── stream_resolver/            # Stream finding
-│   ├── infrastructure/
-│   │   ├── wre_core/                   # Recursive engine
-│   │   │   └── recursive_improvement/
-│   │   └── system_health_monitor/      # Health checks
-│   └── ai_intelligence/
-│       └── banter_engine/               # AI responses
-└── WSP_framework/                       # Protocols
-    └── src/
-        ├── MODULE_MASTER.md            # Module catalog
-        └── WSP_48_*.md                 # Recursive improvement
++-- main.py                              # Entry point
++-- CLAUDE.md                            # 0102 instructions (OK in root)
++-- ModLog.md                            # System-wide log (OK in root)
++-- README.md                            # Public docs (OK in root)
++-- memory/                              # Runtime memory
+[U+2502]   +-- stream_trigger.txt              # Trigger file
+[U+2502]   +-- *.txt                           # User chat logs
++-- modules/
+[U+2502]   +-- communication/
+[U+2502]   [U+2502]   +-- livechat/                   # YOUTUBE DAE CUBE
+[U+2502]   [U+2502]       +-- src/                    # All <500 lines
+[U+2502]   [U+2502]       [U+2502]   +-- livechat_core.py   # Main listener
+[U+2502]   [U+2502]       [U+2502]   +-- message_processor.py
+[U+2502]   [U+2502]       [U+2502]   +-- [15 other modules]
+[U+2502]   [U+2502]       +-- docs/                   # Documentation
+[U+2502]   [U+2502]       [U+2502]   +-- BOT_FLOW_COT.md    # Chain of thought
+[U+2502]   [U+2502]       [U+2502]   +-- README_0102_DAE.md # THIS FILE
+[U+2502]   [U+2502]       +-- tests/                  # Test files
+[U+2502]   +-- gamification/
+[U+2502]   [U+2502]   +-- whack_a_magat/              # MAGADOOM SYSTEM
+[U+2502]   [U+2502]       +-- src/
+[U+2502]   [U+2502]       [U+2502]   +-- whack.py           # Core XP system
+[U+2502]   [U+2502]       [U+2502]   +-- timeout_announcer.py
+[U+2502]   [U+2502]       [U+2502]   +-- self_improvement.py
+[U+2502]   [U+2502]       +-- data/
+[U+2502]   [U+2502]           +-- magadoom_scores.db # SQLite database
+[U+2502]   +-- platform_integration/
+[U+2502]   [U+2502]   +-- youtube_auth/               # OAuth management
+[U+2502]   [U+2502]   +-- stream_resolver/            # Stream finding
+[U+2502]   +-- infrastructure/
+[U+2502]   [U+2502]   +-- wre_core/                   # Recursive engine
+[U+2502]   [U+2502]   [U+2502]   +-- recursive_improvement/
+[U+2502]   [U+2502]   +-- system_health_monitor/      # Health checks
+[U+2502]   +-- ai_intelligence/
+[U+2502]       +-- banter_engine/               # AI responses
++-- WSP_framework/                       # Protocols
+    +-- src/
+        +-- MODULE_MASTER.md            # Module catalog
+        +-- WSP_48_*.md                 # Recursive improvement
 ```
 
 ---

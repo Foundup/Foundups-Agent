@@ -1,6 +1,6 @@
 # Navigation Module Roadmap
 
-## Current Status: ✅ Core Navigation Complete
+## Current Status: [OK] Core Navigation Complete
 - NEED_TO command mappings
 - Module relationship documentation
 - 0102 agent guidance

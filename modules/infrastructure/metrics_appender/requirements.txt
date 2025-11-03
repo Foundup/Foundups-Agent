@@ -1,0 +1,2 @@
+# Metrics Appender - No external dependencies required
+# Uses Python stdlib only: json, time, pathlib, datetime, logging

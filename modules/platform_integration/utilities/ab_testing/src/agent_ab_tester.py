@@ -8,9 +8,13 @@ Follows WSP 21 (Prometheus Recursion), WSP 48 (Recursive Improvement)
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -66,7 +70,7 @@ class ABTestingSystem:
             "B": Recipe(
                 name="Prometheus Enhanced",
                 pipeline=[AgentType.PROMETHEUS_PROMPT, AgentType.WRE_COORDINATOR, AgentType.BUILDER],
-                description="Prometheus prompt → WRE → Builder",
+                description="Prometheus prompt -> WRE -> Builder",
                 wsp_compliance=["WSP 21", "WSP 77", "WSP 49"]
             ),
             "C": Recipe(
@@ -103,7 +107,7 @@ class ABTestingSystem:
         Convert user input to WSP 21 compliant Prometheus Prompt
         """
         return {
-            "wsp_type": "WSP∞",  # pArtifact-induced recall
+            "wsp_type": "WSP[INFINITY]",  # pArtifact-induced recall
             "task": user_input,
             "scope": {
                 "files": [],
@@ -119,7 +123,7 @@ class ABTestingSystem:
             "constraints": [
                 "No vibecoding",
                 "Prefer extend existing over new (WSP 1 P5)",
-                "Tool usage ≤5 per task"
+                "Tool usage [U+2264]5 per task"
             ],
             "validation": {
                 "wsp_compliance_required": True,
@@ -342,7 +346,7 @@ def main():
     for recipe_id, result in comparison["results"].items():
         recipe = tester.recipes[recipe_id]
         print(f"\nRecipe {recipe_id}: {recipe.name}")
-        print(f"  Pipeline: {' → '.join(a.value for a in recipe.pipeline)}")
+        print(f"  Pipeline: {' -> '.join(a.value for a in recipe.pipeline)}")
         print(f"  Tool Calls: {result['metrics']['total_tool_calls']}")
         print(f"  Duration: {result['metrics']['total_duration']:.2f}s")
         print(f"  Efficiency: {result['metrics']['efficiency_score']}/100")

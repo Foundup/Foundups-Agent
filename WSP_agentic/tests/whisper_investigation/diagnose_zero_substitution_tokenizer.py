@@ -1,5 +1,5 @@
 """
-Diagnostic: Investigate 0→o substitution by probing Whisper tokenizer behavior directly.
+Diagnostic: Investigate 0->o substitution by probing Whisper tokenizer behavior directly.
 
 Notes:
 - Tokenizer maps between token IDs and text; it does not process acoustics.
@@ -10,7 +10,7 @@ Notes:
 
 Primary tests:
 - Sequences: "01", "0001", "00001", plus controls like "o1", "oooo1".
-- Round-trip: encode → decode → encode to detect unstable mappings.
+- Round-trip: encode -> decode -> encode to detect unstable mappings.
 
 Requires: openai-whisper
 """

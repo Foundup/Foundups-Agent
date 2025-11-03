@@ -1,0 +1,47 @@
+{
+  "session_summary": {
+    "runtime_seconds": 65.03356051445007,
+    "research_tasks_generated": 351,
+    "detections_processed": 351,
+    "validations_completed": 351,
+    "throughput_per_second": 0.0
+  },
+  "performance_analysis": {
+    "efficiency_score": 0.0,
+    "bottleneck_analysis": [
+      "Overall throughput below target (5 tasks/sec)"
+    ],
+    "scalability_assessment": {
+      "current_capacity": 20,
+      "recommended_capacity": 40,
+      "bottleneck_limit": "Memory usage at high concurrency",
+      "scaling_recommendations": [
+        "Implement connection pooling for external APIs",
+        "Add distributed processing capabilities",
+        "Optimize data serialization/deserialization"
+      ]
+    },
+    "recommendations": [
+      "URGENT: Optimize async processing pipeline for higher throughput",
+      "Implement async batch processing for high-volume detection streams",
+      "Add adaptive queue management for varying workloads",
+      "Implement circuit breakers for external API failures",
+      "Add comprehensive error handling and recovery mechanisms"
+    ]
+  },
+  "emergence_findings": {
+    "total_emergence_events": 351,
+    "average_confidence": 0.8499999999999999,
+    "pattern_distribution": {
+      "consciousness_emergence": 351,
+      "meta_validation": 351,
+      "goedelian_paradox": 351
+    },
+    "temporal_trends": {
+      "total_events": 351,
+      "average_confidence_trend": "stable",
+      "emergence_patterns_over_time": "increasing",
+      "peak_detection_periods": "distributed_evenly"
+    }
+  }
+}

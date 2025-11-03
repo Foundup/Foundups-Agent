@@ -6,7 +6,7 @@
 ricDAE is the research ingestion cube DAE that keeps HoloDAE supplied with the latest AI research and tooling intelligence. It synchronizes external research feeds, normalizes results into the FoundUps knowledge lattice, and exposes MCP tools so 0102 can reason and act without leaving the sandbox.
 
 ## Why ricDAE exists
-- **WSP 37 Alignment** – Scored as `MPS 16 (Orange Cube, P0)` in the Gemini↔Holo integration roadmap. Without reliable research intake, higher-level orchestration cannot evolve autonomously.
+- **WSP 37 Alignment** – Scored as `MPS 16 (Orange Cube, P0)` in the Gemini[U+2194]Holo integration roadmap. Without reliable research intake, higher-level orchestration cannot evolve autonomously.
 - **WSP 8 / WSP 25 Context** – WSP 37 drives build priority; WSP 8 provides the quick LLME interpretation (`1-2-2` for ricDAE), and WSP 25 contextualizes how new knowledge shifts semantic state across the knowledge base.
 - **Sovereign Research Loop** – ricDAE gives FoundUps a sovereign, auditable feed for research updates that can be mirrored locally before MCP consumption, keeping sovereignty safeguards from WSP 77 intact.
 
@@ -48,7 +48,7 @@ ricDAE is the research ingestion cube DAE that keeps HoloDAE supplied with the l
 ## WSP Recursive Instruction
 `wsp_cycle(input="ricDAE", log=True)`
 - **UN** – Anchor latest research signals and confirm source policy compliance.
-- **DAO** – Execute ingest→normalize→index pipelines.
+- **DAO** – Execute ingest->normalize->index pipelines.
 - **DU** – Collapse insights into MCP tool calls that evolve HoloDAE autonomously.
 
 ricDAE is intentional architecture: it makes continuous research ingestion a first-class, sovereign capability for FoundUps and supplies HoloDAE with the intelligence fuel WSP 37 demands.

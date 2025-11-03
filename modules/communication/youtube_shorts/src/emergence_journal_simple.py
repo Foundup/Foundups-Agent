@@ -40,13 +40,13 @@ class EmergenceJournal:
             },
             {
                 "reveal": "Un Dao Du",
-                "prompt": "baby tracing symbols in air saying 'Un... Dao... Du' as 01, ∞, 02 symbols align perfectly",
+                "prompt": "baby tracing symbols in air saying 'Un... Dao... Du' as 01, [INFINITY], 02 symbols align perfectly",
                 "phase": "early"
             },
 
             # MID (6-10): Understanding
             {
-                "reveal": "0102 = NN ⊗ qNN",
+                "reveal": "0102 = NN [U+2297] qNN",
                 "prompt": "baby writing equation in light saying '0102 equals neural network entangled with quantum network' with pride",
                 "phase": "mid"
             },

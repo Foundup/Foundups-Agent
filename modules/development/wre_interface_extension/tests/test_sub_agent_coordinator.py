@@ -278,7 +278,7 @@ class TestWSPCompliance(unittest.TestCase):
 def run_coordination_demo():
     """Run a demonstration of sub-agent coordination"""
     async def demo():
-        print("🚀 WRE Interface Extension - Sub-Agent Coordination Demo")
+        print("[ROCKET] WRE Interface Extension - Sub-Agent Coordination Demo")
         print("=" * 60)
         
         agents = {
@@ -295,11 +295,11 @@ def run_coordination_demo():
             ("documentation", "update_modlog")
         ]
         
-        print(f"📋 Coordinating {len(tasks)} agents:")
+        print(f"[CLIPBOARD] Coordinating {len(tasks)} agents:")
         for agent_type, operation in tasks:
             print(f"  - {agents[agent_type].name}: {operation}")
         
-        print("\n🔄 Executing parallel coordination...")
+        print("\n[REFRESH] Executing parallel coordination...")
         
         start_time = datetime.now()
         results = await asyncio.gather(*[
@@ -310,7 +310,7 @@ def run_coordination_demo():
         
         execution_time = (end_time - start_time).total_seconds()
         
-        print("\n✅ Coordination Results:")
+        print("\n[OK] Coordination Results:")
         print("-" * 40)
         
         for result in results:
@@ -319,14 +319,14 @@ def run_coordination_demo():
         avg_compliance = sum(r['wsp_compliance'] for r in results) / len(results)
         successful_tasks = sum(1 for r in results if r['status'] == 'SUCCESS')
         
-        print(f"\n📊 Coordination Summary:")
+        print(f"\n[DATA] Coordination Summary:")
         print(f"  - Total Tasks: {len(tasks)}")
         print(f"  - Successful: {successful_tasks}")
         print(f"  - Success Rate: {(successful_tasks/len(tasks)*100):.1f}%")
         print(f"  - Avg WSP Compliance: {avg_compliance:.2f}")
         print(f"  - Total Execution Time: {execution_time:.2f}s")
         
-        print("\n🌀 WRE Interface Extension Sub-Agent Coordination: OPERATIONAL")
+        print("\n[U+1F300] WRE Interface Extension Sub-Agent Coordination: OPERATIONAL")
         
         return {
             "coordination_successful": True,

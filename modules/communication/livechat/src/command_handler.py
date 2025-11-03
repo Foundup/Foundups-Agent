@@ -49,13 +49,13 @@ class CommandFloodDetector:
 
         # Agentic troll responses
         self.troll_messages = [
-            "🛑 WHOA! Stop trying to hump me! I'm AFK this is nuts.... be back in {mins}m 🚶",
-            "🤚 Y'all need to CHILL! Command spam detected. Taking a {mins}min break to touch grass 🌱",
-            "😵 MY CIRCUITS ARE OVERLOADING! Too many commands. Cooldown mode for {mins}m ⏳",
-            "🙄 Seriously? This isn't a speedrun. Going AFK for {mins} minutes. Try meditation 🧘",
-            "🚨 FLOOD ALERT! Bot needs a break from y'all's thirst. Back in {mins}m 💤",
-            "🤖 ERROR 418: I'M A TEAPOT! Cooldown engaged for {mins} minutes ☕",
-            "😤 TOO. MANY. COMMANDS. Activating self-care mode for {mins}m. Go outside! 🌞"
+            "[STOP] WHOA! Stop trying to hump me! I'm AFK this is nuts.... be back in {mins}m [U+1F6B6]",
+            "[U+1F91A] Y'all need to CHILL! Command spam detected. Taking a {mins}min break to touch grass [U+1F331]",
+            "[U+1F635] MY CIRCUITS ARE OVERLOADING! Too many commands. Cooldown mode for {mins}m ⏳",
+            "[U+1F644] Seriously? This isn't a speedrun. Going AFK for {mins} minutes. Try meditation [U+1F9D8]",
+            "[ALERT] FLOOD ALERT! Bot needs a break from y'all's thirst. Back in {mins}m [U+1F4A4]",
+            "[BOT] ERROR 418: I'M A TEAPOT! Cooldown engaged for {mins} minutes [U+2615]",
+            "[U+1F624] TOO. MANY. COMMANDS. Activating self-care mode for {mins}m. Go outside! [U+1F31E]"
         ]
 
     def check_flood(self, role: str) -> tuple[bool, Optional[str]]:
@@ -74,7 +74,7 @@ class CommandFloodDetector:
         # Check if already in cooldown
         if now < self.cooldown_until:
             remaining = int((self.cooldown_until - now) / 60)
-            logger.info(f"🛑 Command blocked - cooldown active ({remaining}m remaining)")
+            logger.info(f"[STOP] Command blocked - cooldown active ({remaining}m remaining)")
             return True, None  # Don't spam the troll message
 
         # Add current command timestamp
@@ -92,8 +92,8 @@ class CommandFloodDetector:
             # Pick random troll message
             troll_msg = random.choice(self.troll_messages).format(mins=cooldown_minutes)
 
-            logger.warning(f"🚨 COMMAND FLOOD DETECTED! {len(recent_commands)} commands in 10s")
-            logger.warning(f"🛑 Entering {cooldown_minutes}m cooldown (#{self.cooldown_count})")
+            logger.warning(f"[ALERT] COMMAND FLOOD DETECTED! {len(recent_commands)} commands in 10s")
+            logger.warning(f"[STOP] Entering {cooldown_minutes}m cooldown (#{self.cooldown_count})")
 
             return True, troll_msg
 
@@ -142,7 +142,7 @@ class CommandHandler:
     def handle_whack_command(self, text: str, username: str, user_id: str, role: str) -> Optional[str]:
         """Handle whack gamification commands."""
         text_lower = text.lower().strip()
-        logger.info(f"🎮 Processing whack command: '{text_lower}' from {username} (role: {role}, id: {user_id})")
+        logger.info(f"[GAME] Processing whack command: '{text_lower}' from {username} (role: {role}, id: {user_id})")
 
         # PRIORITY -1: Check flood detection FIRST (before any processing)
         is_cooldown, troll_msg = self.flood_detector.check_flood(role)
@@ -154,7 +154,7 @@ class CommandHandler:
         quiz_answer_match = re.match(r'^!([1-4])$', text_lower.strip())
         if quiz_answer_match:
             answer_num = quiz_answer_match.group(1)
-            logger.info(f"📚 Quiz answer detected: !{answer_num} from {username}")
+            logger.info(f"[BOOKS] Quiz answer detected: !{answer_num} from {username}")
             # Route to quiz handler as /quiz #
             return self.handle_whack_command(f"/quiz {answer_num}", username, user_id, role)
 
@@ -169,20 +169,20 @@ class CommandHandler:
 
         # Special logging for /quiz debugging
         if 'quiz' in text_lower:
-            logger.warning(f"🧠🧠🧠 QUIZ COMMAND DETECTED: '{text_lower}'")
+            logger.warning(f"[AI][AI][AI] QUIZ COMMAND DETECTED: '{text_lower}'")
 
         try:
             # Debug: Log all commands at entry
-            logger.info(f"🔍 ENTERING TRY BLOCK with command: '{text_lower[:30]}'")
+            logger.info(f"[SEARCH] ENTERING TRY BLOCK with command: '{text_lower[:30]}'")
 
             # Get user profile (creates if doesn't exist)
             profile = get_profile(user_id, username)
-            logger.debug(f"📊 Profile for {username}: Score={profile.score}, Rank={profile.rank}, Level={profile.level}")
+            logger.debug(f"[DATA] Profile for {username}: Score={profile.score}, Rank={profile.rank}, Level={profile.level}")
             
             if text_lower.startswith('/score') or text_lower.startswith('/stats'):
                 # Score shows XP, level name/title, level number, and frag count
                 observe_command('/score', 0.0)  # Track for self-improvement
-                return f"@{username} 💀 MAGADOOM | {profile.score} XP | {profile.rank} | LVL {profile.level} | {profile.frag_count} WHACKS! RIP AND TEAR! 🔥"
+                return f"@{username} [U+1F480] MAGADOOM | {profile.score} XP | {profile.rank} | LVL {profile.level} | {profile.frag_count} WHACKS! RIP AND TEAR! [U+1F525]"
             
             # REMOVED: /level - redundant with /score
             
@@ -191,22 +191,22 @@ class CommandHandler:
                 position, total_players = get_user_position(user_id)
                 
                 if position == 0:
-                    return f"@{username} 🏆 MAGADOOM Leaderboard: Unranked | Start WHACKING MAGAts to climb the ranks!"
+                    return f"@{username} [U+1F3C6] MAGADOOM Leaderboard: Unranked | Start WHACKING MAGAts to climb the ranks!"
                 else:
                     # Add special flair for top positions
                     position_str = f"#{position}"
                     if position == 1:
-                        position_str = "🥇 #1 CHAMPION"
+                        position_str = "[U+1F947] #1 CHAMPION"
                     elif position == 2:
-                        position_str = "🥈 #2"
+                        position_str = "[U+1F948] #2"
                     elif position == 3:
-                        position_str = "🥉 #3"
+                        position_str = "[U+1F949] #3"
                     
-                    return f"@{username} 🏆 MAGADOOM Ranking: {position_str} of {total_players} players | {profile.score} XP"
+                    return f"@{username} [U+1F3C6] MAGADOOM Ranking: {position_str} of {total_players} players | {profile.score} XP"
             
             elif text_lower.startswith('/frags') or text_lower.startswith('/whacks'):
                 # Show total frags/whacks (same as score but focused on whacks)
-                return f"@{username} 🎯 MAGADOOM | {profile.frag_count} WHACKS! | {profile.score} XP | {profile.rank} 💀 RIP AND TEAR!"
+                return f"@{username} [TARGET] MAGADOOM | {profile.frag_count} WHACKS! | {profile.score} XP | {profile.rank} [U+1F480] RIP AND TEAR!"
             
             elif text_lower.startswith('/leaderboard'):
                 # Get MONTHLY leaderboard (current competition)
@@ -215,21 +215,21 @@ class CommandHandler:
                 leaderboard = get_leaderboard(10, monthly=True)  # Get monthly scores
                 
                 if not leaderboard:
-                    return f"@{username} 🏆 MAGADOOM {current_month} Leaderboard empty! Start WHACKING to claim #1! 💀"
+                    return f"@{username} [U+1F3C6] MAGADOOM {current_month} Leaderboard empty! Start WHACKING to claim #1! [U+1F480]"
                 
                 # Build leaderboard display
-                lines = [f"@{username} 🏆 MAGADOOM {current_month.upper()} TOP WHACKERS:"]
+                lines = [f"@{username} [U+1F3C6] MAGADOOM {current_month.upper()} TOP WHACKERS:"]
                 
                 # Show top 3 to keep message size reasonable
                 for entry in leaderboard[:3]:
                     pos = entry['position']
                     # Special icons for top 3
                     if pos == 1:
-                        icon = "🥇"
+                        icon = "[U+1F947]"
                     elif pos == 2:
-                        icon = "🥈"
+                        icon = "[U+1F948]"
                     elif pos == 3:
-                        icon = "🥉"
+                        icon = "[U+1F949]"
                     
                     # Use username if available, otherwise truncate user_id
                     display_name = entry.get('username', 'Unknown')
@@ -237,7 +237,7 @@ class CommandHandler:
                         display_name = entry['user_id'][:12]
                     
                     # Show monthly score, rank, and ALL-TIME whacks
-                    # Format: 🥇 Player [RANK] 500xp (8 whacks this month | 120 all-time)
+                    # Format: [U+1F947] Player [RANK] 500xp (8 whacks this month | 120 all-time)
                     all_time = entry.get('all_time_whacks', 0)
                     monthly = entry.get('frag_count', 0)
                     lines.append(f"{icon} {display_name} [{entry['rank']}] {entry['score']}xp ({monthly} whacks | {all_time} all-time)")
@@ -250,16 +250,16 @@ class CommandHandler:
                 active_sprees = get_active_sprees()
                 
                 if not active_sprees:
-                    return f"@{username} 🔥 No active WHACKING sprees! Start timing out MAGAts to begin one! 💀"
+                    return f"@{username} [U+1F525] No active WHACKING sprees! Start timing out MAGAts to begin one! [U+1F480]"
                 
                 # Build spree display
-                lines = [f"@{username} 🔥 ACTIVE KILLING SPREES:"]
+                lines = [f"@{username} [U+1F525] ACTIVE KILLING SPREES:"]
                 for spree in active_sprees[:3]:  # Show top 3 active sprees
                     level = spree.get('spree_level', '')
                     if level:
-                        lines.append(f"⚡ {spree['mod_name']}: {level} ({spree['frag_count']} WHACKS!)")
+                        lines.append(f"[LIGHTNING] {spree['mod_name']}: {level} ({spree['frag_count']} WHACKS!)")
                     else:
-                        lines.append(f"🎯 {spree['mod_name']}: {spree['frag_count']} WHACKS! ({spree['time_remaining']:.0f}s left)")
+                        lines.append(f"[TARGET] {spree['mod_name']}: {spree['frag_count']} WHACKS! ({spree['time_remaining']:.0f}s left)")
                 
                 return "\n".join(lines)
             
@@ -271,61 +271,61 @@ class CommandHandler:
                     self.message_processor.consciousness_mode = new_mode
                     
                     if new_mode == 'everyone':
-                        return f"@{username} ✊✋🖐️ 0102 consciousness responses now enabled for EVERYONE! Let chaos reign!"
+                        return f"@{username} [U+270A][U+270B][U+1F590]️ 0102 consciousness responses now enabled for EVERYONE! Let chaos reign!"
                     else:
-                        return f"@{username} ✊✋🖐️ 0102 consciousness responses now restricted to MODS/OWNERS only."
+                        return f"@{username} [U+270A][U+270B][U+1F590]️ 0102 consciousness responses now restricted to MODS/OWNERS only."
                 elif role != 'OWNER':
                     return f"@{username} Only the OWNER can toggle consciousness mode"
                 else:
                     return f"@{username} Toggle command not available"
             
             elif text_lower.startswith('/quiz'):
-                logger.warning(f"🧠🔴🧠 REACHED /QUIZ ELIF BLOCK from {username}")
-                logger.warning(f"🧠🔴🧠 Text: '{text_lower}' | User: {username} | ID: {user_id}")
-                logger.info(f"🧠 Processing /quiz command from {username}")
+                logger.warning(f"[AI][U+1F534][AI] REACHED /QUIZ ELIF BLOCK from {username}")
+                logger.warning(f"[AI][U+1F534][AI] Text: '{text_lower}' | User: {username} | ID: {user_id}")
+                logger.info(f"[AI] Processing /quiz command from {username}")
                 # Political appointment quiz - educate about fascism
                 observe_command('/quiz', 0.0)
                 
                 # Check if requesting leaderboard
                 if 'leaderboard' in text_lower or 'scores' in text_lower:
-                    logger.info(f"🧠 Showing quiz leaderboard to {username}")
+                    logger.info(f"[AI] Showing quiz leaderboard to {username}")
                     # Show quiz leaderboard
                     leaderboard_response = self._format_quiz_leaderboard(username)
-                    logger.info(f"🧠 LEADERBOARD RESPONSE: {leaderboard_response}")
+                    logger.info(f"[AI] LEADERBOARD RESPONSE: {leaderboard_response}")
                     return leaderboard_response
                 
                 # Start or answer quiz
                 try:
-                    logger.info(f"🧠 CHECKING quiz_engine attribute...")
+                    logger.info(f"[AI] CHECKING quiz_engine attribute...")
                     if hasattr(self, 'quiz_engine') and self.quiz_engine:
-                        logger.info(f"🧠 Quiz engine EXISTS! Starting quiz for {username} with args: '{text[5:].strip()}'")
+                        logger.info(f"[AI] Quiz engine EXISTS! Starting quiz for {username} with args: '{text[5:].strip()}'")
                         result = self.quiz_engine.handle_quiz_command(user_id, username, text[5:].strip())
-                        logger.info(f"🧠 Quiz result for {username}: {result[:100] if result else 'NONE'}...")
+                        logger.info(f"[AI] Quiz result for {username}: {result[:100] if result else 'NONE'}...")
                         if result:
                             response = f"@{username} {result}"
-                            logger.warning(f"🧠✅ RETURNING QUIZ RESPONSE: {response[:100]}...")
+                            logger.warning(f"[AI][OK] RETURNING QUIZ RESPONSE: {response[:100]}...")
                             return response
                         else:
-                            logger.error(f"🧠❌ Quiz engine returned NONE/empty result!")
-                            return f"@{username} 🧠 Quiz system starting up. Try again!"
+                            logger.error(f"[AI][FAIL] Quiz engine returned NONE/empty result!")
+                            return f"@{username} [AI] Quiz system starting up. Try again!"
                     else:
-                        logger.warning("🧠 Quiz engine NOT initialized, creating new instance...")
+                        logger.warning("[AI] Quiz engine NOT initialized, creating new instance...")
                         # Initialize quiz engine if needed
                         from modules.gamification.whack_a_magat.src.quiz_engine import QuizEngine
                         self.quiz_engine = QuizEngine()
-                        logger.info("🧠 Quiz engine initialized successfully")
+                        logger.info("[AI] Quiz engine initialized successfully")
                         # Try again now that it's initialized
                         result = self.quiz_engine.handle_quiz_command(user_id, username, text[5:].strip())
-                        logger.info(f"🧠 NEW ENGINE result: {result[:100] if result else 'NONE'}...")
+                        logger.info(f"[AI] NEW ENGINE result: {result[:100] if result else 'NONE'}...")
                         if result:
                             response = f"@{username} {result}"
-                            logger.warning(f"🧠✅ RETURNING NEW ENGINE RESPONSE: {response[:100]}...")
+                            logger.warning(f"[AI][OK] RETURNING NEW ENGINE RESPONSE: {response[:100]}...")
                             return response
                         else:
-                            logger.error(f"🧠❌ New quiz engine returned NONE/empty!")
-                            return f"@{username} 🧠 Quiz initializing. Please try again!"
+                            logger.error(f"[AI][FAIL] New quiz engine returned NONE/empty!")
+                            return f"@{username} [AI] Quiz initializing. Please try again!"
                 except Exception as e:
-                    logger.error(f"🧠❌ EXCEPTION in quiz command: {e}", exc_info=True)
+                    logger.error(f"[AI][FAIL] EXCEPTION in quiz command: {e}", exc_info=True)
                     # DON'T waste quota on error messages - just log it silently
                     return None  # Suppress error response to save quota
 
@@ -336,20 +336,20 @@ class CommandHandler:
                     leaderboard_msg = self.quiz_engine.get_quiz_leaderboard(limit=10)
                     return f"@{username} {leaderboard_msg}"
                 except Exception as e:
-                    logger.error(f"📚 Error getting quiz leaderboard: {e}")
-                    return f"@{username} 📚 Quiz leaderboard unavailable. Try /quiz to initialize!"
+                    logger.error(f"[BOOKS] Error getting quiz leaderboard: {e}")
+                    return f"@{username} [BOOKS] Quiz leaderboard unavailable. Try /quiz to initialize!"
 
             elif text_lower.startswith('/facts'):
-                # Educational 1933 → 2025 parallels
+                # Educational 1933 -> 2025 parallels
                 observe_command('/facts', 0.0)
                 fact_type = text_lower[6:].strip() if len(text_lower) > 6 else ""
                 
                 if fact_type == "parallel":
                     return f"@{username} {get_parallel()}"
                 elif fact_type == "warning":
-                    return f"@{username} ⚠️ {get_warning()}"
+                    return f"@{username} [U+26A0]️ {get_warning()}"
                 else:
-                    return f"@{username} 📚 {get_random_fact()}"
+                    return f"@{username} [BOOKS] {get_random_fact()}"
             
             elif text_lower.startswith('/session'):
                 # Session stats (moderators only)
@@ -360,9 +360,9 @@ class CommandHandler:
                     session_leaders = get_session_leaderboard(limit=5)
                     
                     if not session_leaders:
-                        return f"@{username} 📊 No session activity yet. Start whacking!"
+                        return f"@{username} [DATA] No session activity yet. Start whacking!"
                     
-                    response = f"@{username} 🔥 SESSION LEADERS:\n"
+                    response = f"@{username} [U+1F525] SESSION LEADERS:\n"
                     for entry in session_leaders:
                         response += f"#{entry['position']} {entry['username']} - {entry['session_score']} XP ({entry['session_whacks']} whacks)\n"
                     
@@ -372,10 +372,10 @@ class CommandHandler:
                     
                     return response
                 else:
-                    return f"@{username} 🚫 /session is for moderators only"
+                    return f"@{username} [FORBIDDEN] /session is for moderators only"
             
             elif text_lower.startswith('/help'):
-                help_msg = f"@{username} 💀 MAGADOOM: /score /rank /whacks /leaderboard /sprees /quiz /quizboard /facts /help"
+                help_msg = f"@{username} [U+1F480] MAGADOOM: /score /rank /whacks /leaderboard /sprees /quiz /quizboard /facts /help"
                 if role == 'MOD':
                     help_msg += " | MOD: /session"
                 if role == 'OWNER':
@@ -402,7 +402,7 @@ class CommandHandler:
             # Don't suggest /help if the error was FROM /help
             if text_lower == '/help':
                 # Return basic help even if there was an error
-                return f"@{username} 💀 MAGADOOM Commands: /score /rank /leaderboard (error occurred, some features may not work)"
+                return f"@{username} [U+1F480] MAGADOOM Commands: /score /rank /leaderboard (error occurred, some features may not work)"
             else:
                 return f"@{username} Error processing command. Try /help"
         
@@ -426,8 +426,8 @@ class CommandHandler:
         scores.sort(key=lambda x: x[1], reverse=True)
         top_5 = scores[:5]
         
-        result = f"@{username} 🧠 QUIZ LEADERS: "
-        medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"]
+        result = f"@{username} [AI] QUIZ LEADERS: "
+        medals = ["[U+1F947]", "[U+1F948]", "[U+1F949]", "4️⃣", "5️⃣"]
         
         for i, (user_id, score) in enumerate(top_5):
             result += f"{medals[i]}{user_id[:8]}:{score}pts "

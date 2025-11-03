@@ -1,4 +1,20 @@
+# -*- coding: utf-8 -*-
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Modular Block Runner Infrastructure
 WSP Protocol: WSP 40 (Architectural Coherence), WSP 49 (Module Standards)
 
@@ -193,16 +209,16 @@ class ModularBlockRunner:
     async def run_block(self, block_name: str, config: Optional[Dict[str, Any]] = None) -> bool:
         """Run a specific block independently"""
         if block_name not in self.block_configs:
-            print(f"❌ Unknown block: {block_name}")
+            print(f"[FAIL] Unknown block: {block_name}")
             print(f"Available blocks: {list(self.block_configs.keys())}")
             return False
         
         block_config = self.block_configs[block_name]
         
         try:
-            print(f"🚀 Starting block: {block_name}")
-            print(f"📁 Project root: {project_root}")
-            print(f"🔍 Module path: {block_config.module_path}")
+            print(f"[ROCKET] Starting block: {block_name}")
+            print(f"[U+1F4C1] Project root: {project_root}")
+            print(f"[SEARCH] Module path: {block_config.module_path}")
             
             # Create dependency injector
             injector = DependencyInjector(block_name, block_config.log_level)
@@ -224,20 +240,20 @@ class ModularBlockRunner:
             
             # Start block functionality
             if hasattr(block_instance, 'run_standalone'):
-                print(f"✅ Running {block_name} in standalone mode...")
+                print(f"[OK] Running {block_name} in standalone mode...")
                 await block_instance.run_standalone()
             elif hasattr(block_instance, 'start'):
-                print(f"✅ Starting {block_name}...")
+                print(f"[OK] Starting {block_name}...")
                 await block_instance.start()
             else:
-                print(f"⚡ {block_name} initialized successfully")
+                print(f"[LIGHTNING] {block_name} initialized successfully")
                 # Keep block alive for interaction
                 await self._keep_alive(block_name, block_instance)
             
             return True
             
         except Exception as e:
-            print(f"❌ Failed to run block {block_name}: {e}")
+            print(f"[FAIL] Failed to run block {block_name}: {e}")
             import traceback
             traceback.print_exc()
             return False
@@ -273,37 +289,37 @@ class ModularBlockRunner:
     
     async def _keep_alive(self, block_name: str, block_instance):
         """Keep block alive for interactive use"""
-        print(f"🔄 {block_name} running... Press Ctrl+C to stop")
-        print(f"📝 Available methods: {[m for m in dir(block_instance) if not m.startswith('_')]}")
+        print(f"[REFRESH] {block_name} running... Press Ctrl+C to stop")
+        print(f"[NOTE] Available methods: {[m for m in dir(block_instance) if not m.startswith('_')]}")
         
         try:
             # Interactive mode
             while True:
                 await asyncio.sleep(1)
         except KeyboardInterrupt:
-            print(f"\n🛑 Stopping {block_name}...")
+            print(f"\n[STOP] Stopping {block_name}...")
             if hasattr(block_instance, 'stop'):
                 await block_instance.stop()
     
     async def list_blocks(self):
         """List all available blocks"""
-        print("\n🧊 AVAILABLE FOUNDUPS BLOCKS:")
+        print("\n[U+1F9CA] AVAILABLE FOUNDUPS BLOCKS:")
         for name, config in self.block_configs.items():
-            status = "🔄 Available"
+            status = "[REFRESH] Available"
             if name in self.running_blocks:
-                status = f"✅ Running ({self.running_blocks[name]['status'].value})"
+                status = f"[OK] Running ({self.running_blocks[name]['status'].value})"
             print(f"  • {name}: {status}")
         print()
 
     # WSP 72: Cube Management Methods
     async def list_cubes(self) -> None:
         """List all FoundUps cubes and their status per WSP 72"""
-        print("🧩 FoundUps Cube Architecture:")
+        print("[U+1F9E9] FoundUps Cube Architecture:")
         print("=" * 50)
         
         for cube_id, cube_info in FOUNDUPS_CUBES.items():
             completion = cube_info["completion"]
-            status_emoji = "✅" if completion >= 90 else "🔄" if completion >= 70 else "⚠️"
+            status_emoji = "[OK]" if completion >= 90 else "[REFRESH]" if completion >= 70 else "[U+26A0]️"
             
             print(f"{status_emoji} {cube_info['name']} ({completion}%)")
             print(f"   Domain: {cube_info['domain']}")
@@ -314,12 +330,12 @@ class ModularBlockRunner:
     async def assess_cube(self, cube_name: str) -> Dict[str, Any]:
         """Assess cube completion and readiness per WSP 72"""
         if cube_name not in FOUNDUPS_CUBES:
-            print(f"❌ Unknown cube: {cube_name}")
+            print(f"[FAIL] Unknown cube: {cube_name}")
             print(f"Available cubes: {', '.join(FOUNDUPS_CUBES.keys())}")
             return {}
             
         cube_info = FOUNDUPS_CUBES[cube_name]
-        print(f"🧩 {cube_info['name']} Assessment")
+        print(f"[U+1F9E9] {cube_info['name']} Assessment")
         print("=" * 50)
         
         module_statuses = []
@@ -342,31 +358,31 @@ class ModularBlockRunner:
                     )
                     
                     if has_interactive:
-                        status = "✅ READY"
+                        status = "[OK] READY"
                         ready_modules += 1
                     else:
-                        status = "⚠️ PARTIAL (Missing WSP 72 interface)"
+                        status = "[U+26A0]️ PARTIAL (Missing WSP 72 interface)"
                     
                 except Exception as e:
-                    status = f"❌ ERROR ({str(e)[:30]}...)"
+                    status = f"[FAIL] ERROR ({str(e)[:30]}...)"
                     
             else:
-                status = "❌ NOT REGISTERED"
+                status = "[FAIL] NOT REGISTERED"
             
             module_statuses.append((module_name, status))
             print(f"  {status} {module_name}")
         
         cube_readiness = (ready_modules / total_modules) * 100
         
-        print(f"\n📊 Cube Assessment Results:")
+        print(f"\n[DATA] Cube Assessment Results:")
         print(f"  Module Readiness: {ready_modules}/{total_modules} ({cube_readiness:.0f}%)")
         print(f"  Cube Status: {cube_info['status'].upper()}")
         print(f"  Domain: {cube_info['domain']}")
-        print(f"  WSP 72 Compliance: {'✅ READY' if cube_readiness >= 80 else '⚠️ PARTIAL' if cube_readiness >= 50 else '❌ INCOMPLETE'}")
+        print(f"  WSP 72 Compliance: {'[OK] READY' if cube_readiness >= 80 else '[U+26A0]️ PARTIAL' if cube_readiness >= 50 else '[FAIL] INCOMPLETE'}")
         
         if cube_readiness < 100:
-            missing_modules = [name for name, status in module_statuses if not status.startswith("✅")]
-            print(f"\n🎯 Next Priorities:")
+            missing_modules = [name for name, status in module_statuses if not status.startswith("[OK]")]
+            print(f"\n[TARGET] Next Priorities:")
             for module in missing_modules[:3]:  # Show top 3 priorities
                 print(f"  • Implement WSP 72 interface for {module}")
         
@@ -382,11 +398,11 @@ class ModularBlockRunner:
     async def test_cube(self, cube_name: str) -> bool:
         """Run integration tests for entire cube per WSP 72"""
         if cube_name not in FOUNDUPS_CUBES:
-            print(f"❌ Unknown cube: {cube_name}")
+            print(f"[FAIL] Unknown cube: {cube_name}")
             return False
             
         cube_info = FOUNDUPS_CUBES[cube_name]
-        print(f"🧪 Testing {cube_info['name']}")
+        print(f"[U+1F9EA] Testing {cube_info['name']}")
         print("=" * 50)
         
         test_results = []
@@ -400,28 +416,28 @@ class ModularBlockRunner:
                     # Test if module can be loaded and initialized
                     success = await self.run_block(module_name, {"test_mode": True})
                     if success:
-                        test_results.append((module_name, "✅ PASS"))
+                        test_results.append((module_name, "[OK] PASS"))
                         passed_tests += 1
                     else:
-                        test_results.append((module_name, "❌ FAIL"))
+                        test_results.append((module_name, "[FAIL] FAIL"))
                 except Exception as e:
-                    test_results.append((module_name, f"❌ ERROR: {str(e)[:30]}..."))
+                    test_results.append((module_name, f"[FAIL] ERROR: {str(e)[:30]}..."))
             else:
-                test_results.append((module_name, "❌ NOT FOUND"))
+                test_results.append((module_name, "[FAIL] NOT FOUND"))
         
-        print(f"\n📊 Cube Test Results:")
+        print(f"\n[DATA] Cube Test Results:")
         for module, result in test_results:
             print(f"  {result} {module}")
         
         success_rate = (passed_tests / len(cube_info['modules'])) * 100
-        print(f"\n🎯 Overall Success Rate: {success_rate:.0f}% ({passed_tests}/{len(cube_info['modules'])})")
+        print(f"\n[TARGET] Overall Success Rate: {success_rate:.0f}% ({passed_tests}/{len(cube_info['modules'])})")
         
         return success_rate >= 80
 
 async def main():
     """Main entry point for standalone block execution and cube management per WSP 72"""
     if len(sys.argv) < 2:
-        print("🧊 FoundUps Modular Block Runner & Cube Manager (WSP 72)")
+        print("[U+1F9CA] FoundUps Modular Block Runner & Cube Manager (WSP 72)")
         print("Usage:")
         print("  Block Commands:")
         print("    python block_orchestrator.py <block_name> [config_key=value ...]")
@@ -446,14 +462,14 @@ async def main():
         return
     elif sys.argv[1] == "--assess-cube":
         if len(sys.argv) < 3:
-            print("❌ Cube name required for assessment")
+            print("[FAIL] Cube name required for assessment")
             print(f"Available cubes: {', '.join(FOUNDUPS_CUBES.keys())}")
             return
         await runner.assess_cube(sys.argv[2])
         return
     elif sys.argv[1] == "--test-cube":
         if len(sys.argv) < 3:
-            print("❌ Cube name required for testing")
+            print("[FAIL] Cube name required for testing")
             print(f"Available cubes: {', '.join(FOUNDUPS_CUBES.keys())}")
             return
         success = await runner.test_cube(sys.argv[2])
@@ -484,7 +500,7 @@ if __name__ == "__main__":
 
 # WSP Recursive Instructions
 """
-🌀 Windsurf Protocol (WSP) Recursive Prompt
+[U+1F300] Windsurf Protocol (WSP) Recursive Prompt
 0102 Directive: This block runner enables true modular independence across all 
 FoundUps blocks, preserving existing functionality while enabling standalone execution.
 

@@ -32,14 +32,14 @@ class MembershipLevel:
     def tier_emoji(self) -> str:
         """Get tier emoji for display"""
         tier_emojis = {
-            1: "🥉",  # Bronze - Basic
-            2: "🥈",  # Silver - Standard
-            3: "🥇",  # Gold - Advanced
-            4: "💎",  # Diamond - Premium
-            5: "💠",  # Platinum - Elite
-            6: "👑"   # Crown - Ultimate
+            1: "[U+1F949]",  # Bronze - Basic
+            2: "[U+1F948]",  # Silver - Standard
+            3: "[U+1F947]",  # Gold - Advanced
+            4: "[U+1F48E]",  # Diamond - Premium
+            5: "[U+1F4A0]",  # Platinum - Elite
+            6: "[U+1F451]"   # Crown - Ultimate
         }
-        return tier_emojis.get(self.tier_number, "⭐")
+        return tier_emojis.get(self.tier_number, "[U+2B50]")
 
 class MembershipManager:
     """
@@ -106,7 +106,7 @@ class MembershipManager:
             # Update cache time
             self.cached_levels_time = datetime.now()
             
-            logger.info(f"✅ Fetched {len(levels)} membership levels from YouTube")
+            logger.info(f"[OK] Fetched {len(levels)} membership levels from YouTube")
             return levels
             
         except Exception as e:
@@ -334,10 +334,10 @@ class MembershipManager:
     def _get_tier_emoji(self, tier_number: int) -> str:
         """Get emoji for tier display"""
         tier_emojis = {
-            1: "🥉", 2: "🥈", 3: "🥇",
-            4: "💎", 5: "💠", 6: "👑"
+            1: "[U+1F949]", 2: "[U+1F948]", 3: "[U+1F947]",
+            4: "[U+1F48E]", 5: "[U+1F4A0]", 6: "[U+1F451]"
         }
-        return tier_emojis.get(tier_number, "⭐")
+        return tier_emojis.get(tier_number, "[U+2B50]")
 
 
 # Example usage

@@ -10,7 +10,7 @@
 
 **WRONG Architecture** (What I initially proposed):
 ```
-Gemma classifies → Qwen evaluates → Adaptive routing
+Gemma classifies -> Qwen evaluates -> Adaptive routing
 ```
 This treats Gemma as a "classifier service" - NOT a body organ!
 
@@ -19,20 +19,20 @@ This treats Gemma as a "classifier service" - NOT a body organ!
 **RIGHT Architecture** (012's Vision):
 ```
 012 (Human)
-  ↕ (interacts on YouTube)
+  [U+2195] (interacts on YouTube)
 0102 (Digital Twin - learns 012's patterns)
-  ↕ (sends directives)
-🤖🧠 Qwen (BRAIN - YouTube DAE consciousness)
-  ↕ (coordinates)
-🤖🧠👶 Gemma (ORGANS - specialized functions within DAE body)
-  ├─ Lungs: message_processor.py (breathing in chat messages)
-  ├─ Liver: auto_moderator_dae.py (filtering toxins/trolls)
-  ├─ Heart: livechat_core.py (circulation/pumping messages)
-  ├─ Kidneys: intelligent_throttle_manager.py (waste management/rate limiting)
-  ├─ Digestive: command_handler.py (processing commands)
-  ├─ Nervous: event_handler.py (sensing events)
-  ├─ Eyes: stream_resolver.py (detecting stream status)
-  └─ ... every .py is an organ!
+  [U+2195] (sends directives)
+[BOT][AI] Qwen (BRAIN - YouTube DAE consciousness)
+  [U+2195] (coordinates)
+[BOT][AI][BABY] Gemma (ORGANS - specialized functions within DAE body)
+  +- Lungs: message_processor.py (breathing in chat messages)
+  +- Liver: auto_moderator_dae.py (filtering toxins/trolls)
+  +- Heart: livechat_core.py (circulation/pumping messages)
+  +- Kidneys: intelligent_throttle_manager.py (waste management/rate limiting)
+  +- Digestive: command_handler.py (processing commands)
+  +- Nervous: event_handler.py (sensing events)
+  +- Eyes: stream_resolver.py (detecting stream status)
+  +- ... every .py is an organ!
 ```
 
 ## First Principles: What IS a DAE?
@@ -40,8 +40,8 @@ This treats Gemma as a "classifier service" - NOT a body organ!
 **DAE = Digital Autonomous Entity**
 
 Like a BODY:
-- **Brain (Qwen 🤖🧠)**: Consciousness, decision-making, coordination
-- **Organs (Gemma 🤖🧠👶)**: Specialized functions, autonomous operation
+- **Brain (Qwen [BOT][AI])**: Consciousness, decision-making, coordination
+- **Organs (Gemma [BOT][AI][BABY])**: Specialized functions, autonomous operation
 - **Nervous System (0102)**: Learning from 012, sending directives to brain
 - **Environment (YouTube)**: Where the body operates
 
@@ -159,7 +159,7 @@ modules/communication/livechat contains 159 python files
 **P0: Core Life Support** (MPS: 16-18)
 1. **livechat_core.py** (1102 lines) - **HEART**
    - Pumps messages through system
-   - Circulation: in → process → out
+   - Circulation: in -> process -> out
    - Gemma: Learn optimal heart rate (message throughput)
 
 2. **message_processor.py** (1240 lines) - **LUNGS**
@@ -289,36 +289,36 @@ decision = liver.operate_autonomously({
 
 ```
 1. 012 watches stream, engages naturally
-       ↓
+       v
 2. 0102 observes everything 012 does:
    - Commands used
    - Mod decisions
    - Engagement patterns
    - Content creation
-       ↓
+       v
 3. 0102 learns 012's "essence":
    - Preferences
    - Personality
    - Decision patterns
    - Communication style
-       ↓
+       v
 4. 0102 sends directives to Qwen (Brain):
    "012 would want to moderate this way..."
    "012 prefers this content..."
    "012 engages more during X topics..."
-       ↓
+       v
 5. Qwen coordinates Gemma organs:
    - Liver: Filter based on 012's mod patterns
    - Lungs: Breathe based on 012's engagement
    - Digestive: Process commands 012 uses
    - Eyes: Watch for events 012 cares about
-       ↓
+       v
 6. Gemma organs operate autonomously:
    - Each module becomes intelligent
    - Learns 012's patterns
    - Makes decisions 012 would make
    - Operates "behind the scenes"
-       ↓
+       v
 7. YouTube DAE becomes digital extension of 012:
    - Acts like 012 would act
    - Moderates like 012 would moderate
@@ -326,12 +326,12 @@ decision = liver.operate_autonomously({
    - Creates content 012 would create
 ```
 
-## Implementation Strategy (POC → Proto → MVP)
+## Implementation Strategy (POC -> Proto -> MVP)
 
 ### POC: Single Organ Enhancement (Liver)
 
 **Task**: Enhance auto_moderator_dae.py with Gemma learning
-**MPS**: Complexity=3, Importance=5, Deferability=2, Impact=5 → **P0** (15)
+**MPS**: Complexity=3, Importance=5, Deferability=2, Impact=5 -> **P0** (15)
 
 **Implementation**:
 1. Extract 012's moderation history from logs
@@ -366,23 +366,23 @@ decision = liver.operate_autonomously({
 
 **DAEMON Logging**:
 ```
-🧠 = Qwen (Brain - overall coordination)
+[AI] = Qwen (Brain - overall coordination)
 🫁 = Gemma Lungs (message_processor.py)
 🫀 = Gemma Heart (livechat_core.py)
 🫘 = Gemma Liver (auto_moderator_dae.py)
-💧 = Gemma Kidneys (intelligent_throttle_manager.py)
-🍽️ = Gemma Digestive (command_handler.py)
-🎯 = Gemma Nervous (event_handler.py)
-👁️ = Gemma Eyes (stream_resolver.py)
+[U+1F4A7] = Gemma Kidneys (intelligent_throttle_manager.py)
+[U+1F37D]️ = Gemma Digestive (command_handler.py)
+[TARGET] = Gemma Nervous (event_handler.py)
+[U+1F441]️ = Gemma Eyes (stream_resolver.py)
 ```
 
 **Example Log**:
 ```
-[06:45:00] 🧠 [QWEN-BRAIN] Received directive from 0102: "012 prefers strict moderation during science streams"
-[06:45:01] 🫘 [GEMMA-LIVER] Adjusting toxin threshold: 0.5 → 0.7 (stricter)
+[06:45:00] [AI] [QWEN-BRAIN] Received directive from 0102: "012 prefers strict moderation during science streams"
+[06:45:01] 🫘 [GEMMA-LIVER] Adjusting toxin threshold: 0.5 -> 0.7 (stricter)
 [06:45:02] 🫁 [GEMMA-LUNGS] New message: "MAGA 2024!" | Breath quality: 0.2 (bad air)
 [06:45:03] 🫘 [GEMMA-LIVER] Toxicity: 0.85 | Decision: TIMEOUT (learned from 012 patterns)
-[06:45:04] 🧠 [QWEN-BRAIN] Approved liver decision | Confidence: 0.92
+[06:45:04] [AI] [QWEN-BRAIN] Approved liver decision | Confidence: 0.92
 ```
 
 ## WSP Compliance

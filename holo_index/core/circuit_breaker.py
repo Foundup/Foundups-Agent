@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Circuit Breaker Pattern Implementation for HoloIndex
 Prevents cascading failures in semantic search operations
 
@@ -95,7 +112,7 @@ class HoloIndexCircuitBreaker:
             # If we have a cached result, return it as fallback
             if self.last_successful_result is not None:
                 logger.warning(
-                    f"⚠️ {self.operation_name} operation failed, returning cached result: {str(e)}"
+                    f"[U+26A0]️ {self.operation_name} operation failed, returning cached result: {str(e)}"
                 )
                 return self.last_successful_result
             raise
@@ -129,11 +146,11 @@ class HoloIndexCircuitBreaker:
                 self.failure_count = 0
                 self.state = "CLOSED"
                 self.consecutive_successes = 0
-                logger.info(f"🎉 {self.operation_name} circuit breaker fully CLOSED after recovery")
+                logger.info(f"[CELEBRATE] {self.operation_name} circuit breaker fully CLOSED after recovery")
         elif self.state == "CLOSED":
             # Reset failure count on success
             if self.failure_count > 0:
-                logger.debug(f"📉 {self.operation_name} failure count reset from {self.failure_count}")
+                logger.debug(f"[U+1F4C9] {self.operation_name} failure count reset from {self.failure_count}")
             self.failure_count = 0
 
     def _on_failure(self):
@@ -148,7 +165,7 @@ class HoloIndexCircuitBreaker:
             self.consecutive_successes = 0
             self.circuit_opens += 1
             logger.error(
-                f"❌ {self.operation_name} circuit breaker recovery failed - "
+                f"[FAIL] {self.operation_name} circuit breaker recovery failed - "
                 f"back to OPEN state (will retry in {self.timeout}s)"
             )
         elif self.failure_count >= self.failure_threshold:
@@ -156,7 +173,7 @@ class HoloIndexCircuitBreaker:
             self.state = "OPEN"
             self.circuit_opens += 1
             logger.error(
-                f"🚨 {self.operation_name} circuit breaker OPEN after "
+                f"[ALERT] {self.operation_name} circuit breaker OPEN after "
                 f"{self.failure_count} failures (threshold: {self.failure_threshold})"
             )
             logger.info(f"⏰ Will attempt recovery in {self.timeout} seconds")
@@ -185,7 +202,7 @@ class HoloIndexCircuitBreaker:
 
     def reset(self):
         """Manually reset the circuit breaker (for testing or recovery)"""
-        logger.info(f"🔧 Manually resetting {self.operation_name} circuit breaker")
+        logger.info(f"[TOOL] Manually resetting {self.operation_name} circuit breaker")
         self.state = "CLOSED"
         self.failure_count = 0
         self.consecutive_successes = 0

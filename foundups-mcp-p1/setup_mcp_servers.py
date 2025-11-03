@@ -19,9 +19,13 @@ WSP Compliance:
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 import json
@@ -92,7 +96,8 @@ def create_mcp_config() -> dict:
                 ],
                 "env": {
                     "REPO_ROOT": repo_root_str,
-                    "HOLO_INDEX_PATH": "E:/HoloIndex"
+                    "HOLO_INDEX_PATH": "E:/HoloIndex",
+                    "PYTHONPATH": repo_root_str
                 }
             },
             "codeindex": {
@@ -101,7 +106,8 @@ def create_mcp_config() -> dict:
                     f"{repo_root_str}/foundups-mcp-p1/servers/codeindex/server.py"
                 ],
                 "env": {
-                    "REPO_ROOT": repo_root_str
+                    "REPO_ROOT": repo_root_str,
+                    "PYTHONPATH": repo_root_str
                 }
             },
             "wsp_governance": {
@@ -111,7 +117,8 @@ def create_mcp_config() -> dict:
                 ],
                 "env": {
                     "REPO_ROOT": repo_root_str,
-                    "WSP_FRAMEWORK_PATH": f"{repo_root_str}/WSP_framework"
+                    "WSP_FRAMEWORK_PATH": f"{repo_root_str}/WSP_framework",
+                    "PYTHONPATH": repo_root_str
                 }
             },
             "youtube_dae_gemma": {
@@ -120,9 +127,40 @@ def create_mcp_config() -> dict:
                     f"{repo_root_str}/foundups-mcp-p1/servers/youtube_dae_gemma/server.py"
                 ],
                 "env": {
-                    "REPO_ROOT": repo_root_str
+                    "REPO_ROOT": repo_root_str,
+                    "PYTHONPATH": repo_root_str
                 }
             },
+                "unicode_cleanup": {
+                    "command": python_exe,
+                    "args": [
+                        f"{repo_root_str}/foundups-mcp-p1/servers/unicode_cleanup/server.py"
+                    ],
+                    "env": {
+                        "REPO_ROOT": repo_root_str,
+                        "PYTHONPATH": repo_root_str
+                    }
+                },
+                "doc_dae": {
+                    "command": python_exe,
+                    "args": [
+                        f"{repo_root_str}/foundups-mcp-p1/servers/doc_dae/server.py"
+                    ],
+                    "env": {
+                        "REPO_ROOT": repo_root_str,
+                        "PYTHONPATH": repo_root_str
+                    }
+                },
+                "secrets_mcp": {
+                    "command": python_exe,
+                    "args": [
+                        f"{repo_root_str}/foundups-mcp-p1/servers/secrets_mcp/server.py"
+                    ],
+                    "env": {
+                        "REPO_ROOT": repo_root_str,
+                        "PYTHONPATH": repo_root_str
+                    }
+                },
             "playwright": {
                 "command": "npx",
                 "args": [
@@ -213,7 +251,7 @@ def setup_mcp_servers():
         print("    - mcp__playwright__navigate (fast navigation)")
         print("    - mcp__playwright__screenshot (lightweight)")
         print("    - mcp__playwright__click (precise interaction)")
-        print("  → 0102 can now choose based on task requirements!")
+        print("  -> 0102 can now choose based on task requirements!")
         print()
 
         # Show config preview

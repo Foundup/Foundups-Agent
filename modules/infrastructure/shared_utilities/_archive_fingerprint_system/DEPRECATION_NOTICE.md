@@ -16,7 +16,7 @@ The fingerprint system was found ineffective after analysis:
 
 ## What Replaced It
 
-**NAVIGATION.py** - A semantic problem→solution mapping that:
+**NAVIGATION.py** - A semantic problem->solution mapping that:
 - Maps common tasks to exact code locations
 - Shows module relationships via graph structure
 - Provides debug guidance for common problems

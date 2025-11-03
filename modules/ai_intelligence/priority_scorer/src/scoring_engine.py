@@ -125,39 +125,39 @@ class ScoringEngine:
 
         # Factor-based recommendations
         if factors.complexity > 7:
-            recommendations.append("🔧 Break down into smaller, manageable tasks")
+            recommendations.append("[TOOL] Break down into smaller, manageable tasks")
 
         if factors.risk > 7:
-            recommendations.append("🛡️ Implement comprehensive testing and validation")
+            recommendations.append("[U+1F6E1]️ Implement comprehensive testing and validation")
 
         if factors.wsp_compliance < 3:
-            recommendations.append("📋 PRIORITY: Address WSP compliance violations immediately")
+            recommendations.append("[CLIPBOARD] PRIORITY: Address WSP compliance violations immediately")
 
         if factors.technical_debt > 7:
-            recommendations.append("🔄 Consider refactoring to reduce technical debt")
+            recommendations.append("[REFRESH] Consider refactoring to reduce technical debt")
 
         if factors.dependencies > 7:
-            recommendations.append("🤝 Coordinate with dependent modules and teams")
+            recommendations.append("[HANDSHAKE] Coordinate with dependent modules and teams")
 
         if factors.resources > 7:
-            recommendations.append("💰 Ensure adequate resources are allocated")
+            recommendations.append("[U+1F4B0] Ensure adequate resources are allocated")
 
         # Score-based recommendations
         if score <= 20:
-            recommendations.append("🚨 CRITICAL: Immediate attention required")
+            recommendations.append("[ALERT] CRITICAL: Immediate attention required")
         elif score <= 40:
-            recommendations.append("🔥 HIGH: Schedule for next development cycle")
+            recommendations.append("[U+1F525] HIGH: Schedule for next development cycle")
         elif score <= 60:
-            recommendations.append("📅 MEDIUM: Include in regular development planning")
+            recommendations.append("[U+1F4C5] MEDIUM: Include in regular development planning")
         else:
-            recommendations.append("📝 LOW: Consider for future development cycles")
+            recommendations.append("[NOTE] LOW: Consider for future development cycles")
 
         # Intelligent suggestions based on factor combinations
         if factors.complexity > 6 and factors.risk > 6:
-            recommendations.append("🎯 Consider pair programming or expert consultation")
+            recommendations.append("[TARGET] Consider pair programming or expert consultation")
 
         if factors.importance > 7 and factors.urgency > 7:
-            recommendations.append("⚡ Fast-track implementation with dedicated resources")
+            recommendations.append("[LIGHTNING] Fast-track implementation with dedicated resources")
 
         return recommendations
 

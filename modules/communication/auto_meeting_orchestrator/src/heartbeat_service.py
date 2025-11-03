@@ -98,39 +98,39 @@ class AMOHeartbeatService:
         self.running = True
         self.start_time = datetime.now()
         
-        logger.info("🔄 AMO Heartbeat Service started")
+        logger.info("[REFRESH] AMO Heartbeat Service started")
         
         try:
             while self.running:
                 await self._pulse()
                 await asyncio.sleep(self.heartbeat_interval)
         except asyncio.CancelledError:
-            logger.info("🛑 AMO Heartbeat Service cancelled")
+            logger.info("[STOP] AMO Heartbeat Service cancelled")
         except Exception as e:
-            logger.error(f"❌ AMO Heartbeat Service error: {e}")
+            logger.error(f"[FAIL] AMO Heartbeat Service error: {e}")
         finally:
             self.running = False
-            logger.info("💤 AMO Heartbeat Service stopped")
+            logger.info("[U+1F4A4] AMO Heartbeat Service stopped")
     
     async def _pulse(self):
         """Generate a single heartbeat pulse"""
         try:
             # Calculate uptime
             uptime = (datetime.now() - self.start_time).total_seconds()
-            
+
             # Get system metrics
             memory_usage = self._get_memory_usage()
             cpu_usage = self._get_cpu_usage()
-            
+
             # Get AMO status
             active_intents = len(self.orchestrator.get_active_intents())
             presence_updates = len(self.orchestrator.user_profiles)
-            
+
             # Determine health status
             status = self._calculate_health_status(
                 uptime, active_intents, memory_usage, cpu_usage
             )
-            
+
             # Create heartbeat data
             heartbeat = HeartbeatData(
                 timestamp=datetime.now(),
@@ -141,26 +141,30 @@ class AMOHeartbeatService:
                 memory_usage_mb=memory_usage,
                 cpu_usage_percent=cpu_usage
             )
-            
+
             # Store heartbeat
             self.last_heartbeat = heartbeat
             self.pulse_count += 1
-            
+
             # Add to history (keep only recent entries)
             self.health_history.append(heartbeat)
             if len(self.health_history) > self.max_history_size:
                 self.health_history.pop(0)
-            
+
+            # === CARDIOVASCULAR TELEMETRY (WSP 91: DAEMON Observability) ===
+            # Write heartbeat data to JSONL for streaming observability
+            await self._write_telemetry(heartbeat)
+
             # Log pulse (reduced frequency to avoid spam)
             if self.pulse_count % 10 == 0:  # Log every 10th pulse (every 5 minutes with 30s interval)
-                logger.info(f"💗 AMO Heartbeat #{self.pulse_count} - Status: {status.value}")
+                logger.info(f"[U+1F497] AMO Heartbeat #{self.pulse_count} - Status: {status.value}")
                 logger.info(f"   Uptime: {uptime:.0f}s, Active Intents: {active_intents}")
-            
+
             # Perform minimal housekeeping
             await self._no_op_schedule_tasks()
             
         except Exception as e:
-            logger.error(f"❌ Heartbeat pulse failed: {e}")
+            logger.error(f"[FAIL] Heartbeat pulse failed: {e}")
             # Create error heartbeat
             self.last_heartbeat = HeartbeatData(
                 timestamp=datetime.now(),
@@ -187,7 +191,7 @@ class AMOHeartbeatService:
                 ]
                 
                 if expired_intents:
-                    logger.info(f"🧹 Cleaning up {len(expired_intents)} expired intents")
+                    logger.info(f"[U+1F9F9] Cleaning up {len(expired_intents)} expired intents")
                     for intent in expired_intents:
                         self.orchestrator.active_intents.remove(intent)
             
@@ -209,12 +213,35 @@ class AMOHeartbeatService:
                 await self._self_test()
                 
         except Exception as e:
-            logger.error(f"❌ No-op schedule task failed: {e}")
+            logger.error(f"[FAIL] No-op schedule task failed: {e}")
     
+    async def _write_telemetry(self, heartbeat: HeartbeatData):
+        """
+        Write heartbeat telemetry to JSONL file for streaming observability.
+
+        Enables MCP servers, dashboards, and analytics to monitor AMO health
+        in real-time without querying the heartbeat service directly.
+
+        WSP 91: DAEMON Observability Protocol
+        """
+        try:
+            # Telemetry file path
+            telemetry_file = Path("logs/amo_heartbeat.jsonl")
+            telemetry_file.parent.mkdir(parents=True, exist_ok=True)
+
+            # Write heartbeat as JSONL (one JSON object per line)
+            with open(telemetry_file, 'a', encoding='utf-8') as f:
+                json.dump(heartbeat.to_dict(), f)
+                f.write('\n')
+
+        except Exception as e:
+            # Log error but don't crash the heartbeat service
+            logger.error(f"[FAIL] Failed to write telemetry: {e}")
+
     async def _self_test(self):
         """Perform lightweight self-test to verify AMO functionality"""
         try:
-            logger.info("🧪 AMO Self-Test initiated")
+            logger.info("[U+1F9EA] AMO Self-Test initiated")
             
             # Test 1: Create and immediately remove a test intent
             test_intent_id = await self.orchestrator.create_meeting_intent(
@@ -243,10 +270,10 @@ class AMOHeartbeatService:
             if "heartbeat_test" in self.orchestrator.user_profiles:
                 del self.orchestrator.user_profiles["heartbeat_test"]
             
-            logger.info("✅ AMO Self-Test completed successfully")
+            logger.info("[OK] AMO Self-Test completed successfully")
             
         except Exception as e:
-            logger.error(f"❌ AMO Self-Test failed: {e}")
+            logger.error(f"[FAIL] AMO Self-Test failed: {e}")
     
     def _calculate_health_status(
         self, 
@@ -324,7 +351,7 @@ class AMOHeartbeatService:
     
     def stop_heartbeat(self):
         """Stop the heartbeat service"""
-        logger.info("🛑 Stopping AMO Heartbeat Service...")
+        logger.info("[STOP] Stopping AMO Heartbeat Service...")
         self.running = False
 
 # Convenience function to start AMO with heartbeat
@@ -338,7 +365,7 @@ async def start_amo_with_heartbeat(heartbeat_interval: int = 30) -> tuple[Meetin
     Returns:
         Tuple of (orchestrator, heartbeat_service)
     """
-    logger.info("🚀 Starting AMO with Heartbeat Service")
+    logger.info("[ROCKET] Starting AMO with Heartbeat Service")
     
     # Create AMO orchestrator
     orchestrator = MeetingOrchestrator()
@@ -349,7 +376,7 @@ async def start_amo_with_heartbeat(heartbeat_interval: int = 30) -> tuple[Meetin
     # Start heartbeat in background
     asyncio.create_task(heartbeat.start_heartbeat())
     
-    logger.info("✅ AMO with Heartbeat Service started successfully")
+    logger.info("[OK] AMO with Heartbeat Service started successfully")
     
     return orchestrator, heartbeat
 

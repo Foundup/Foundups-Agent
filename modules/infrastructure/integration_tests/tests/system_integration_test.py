@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Systematic Integration Test Suite for FoundUps Agent
 Comprehensive validation of all core system functionality
 """
@@ -45,19 +60,19 @@ class SystemIntegrationTest:
         
         if status == "PASS":
             self.passed_tests += 1
-            symbol = "✓"
+            symbol = "[OK]"
             color = Fore.GREEN
         elif status == "FAIL":
             self.failed_tests += 1
-            symbol = "✗"
+            symbol = "[FAIL]"
             color = Fore.RED
             self.critical_failures.append(f"{name}: {details}")
         elif status == "WARN":
-            symbol = "⚠"
+            symbol = "[U+26A0]"
             color = Fore.YELLOW
             self.warnings.append(f"{name}: {details}")
         else:
-            symbol = "○"
+            symbol = "[U+25CB]"
             color = Fore.WHITE
             
         print(f"{color}[{symbol}] {name:<50} {status:>8}{Style.RESET_ALL}")
@@ -237,7 +252,7 @@ class SystemIntegrationTest:
             self.print_test("X/Twitter Poster Init", "PASS", "Anti-detection poster ready")
             
             # Create test post content
-            x_content = f"🔴 LIVE NOW: {stream_info['title']}\n\n📺 Watch: {stream_info['url']}\n\n#AI #Livestream"
+            x_content = f"[U+1F534] LIVE NOW: {stream_info['title']}\n\n[U+1F4FA] Watch: {stream_info['url']}\n\n#AI #Livestream"
             self.print_test("X Post Content", "PASS", x_content[:50] + "...")
             
             # Dry run test (don't actually post)
@@ -259,7 +274,7 @@ class SystemIntegrationTest:
             self.print_test("LinkedIn Poster Init", "PASS", "Anti-detection poster ready")
             
             # Create test post content
-            ln_content = f"🔴 Now streaming: {stream_info['title']}\n\nJoin us for an AI-powered development session!\n\n📺 {stream_info['url']}"
+            ln_content = f"[U+1F534] Now streaming: {stream_info['title']}\n\nJoin us for an AI-powered development session!\n\n[U+1F4FA] {stream_info['url']}"
             self.print_test("LinkedIn Content", "PASS", ln_content[:50] + "...")
             
             # Dry run test
@@ -562,35 +577,35 @@ class SystemIntegrationTest:
         )
         
         if core_ready:
-            print(f"  {Fore.GREEN}✓ Core Systems: READY{Style.RESET_ALL}")
+            print(f"  {Fore.GREEN}[OK] Core Systems: READY{Style.RESET_ALL}")
         else:
-            print(f"  {Fore.RED}✗ Core Systems: NOT READY{Style.RESET_ALL}")
+            print(f"  {Fore.RED}[FAIL] Core Systems: NOT READY{Style.RESET_ALL}")
             
         if stream_info and stream_info.get('video_id') != 'TEST_VIDEO_ID':
-            print(f"  {Fore.GREEN}✓ Live Stream: DETECTED{Style.RESET_ALL}")
+            print(f"  {Fore.GREEN}[OK] Live Stream: DETECTED{Style.RESET_ALL}")
             print(f"    Stream: {stream_info['title'][:50]}")
             print(f"    URL: {stream_info['url']}")
         else:
-            print(f"  {Fore.YELLOW}⚠ Live Stream: NOT DETECTED{Style.RESET_ALL}")
+            print(f"  {Fore.YELLOW}[U+26A0] Live Stream: NOT DETECTED{Style.RESET_ALL}")
             
         if social_results.get('x_twitter'):
-            print(f"  {Fore.GREEN}✓ X/Twitter: READY{Style.RESET_ALL}")
+            print(f"  {Fore.GREEN}[OK] X/Twitter: READY{Style.RESET_ALL}")
         else:
-            print(f"  {Fore.YELLOW}⚠ X/Twitter: NOT CONFIGURED{Style.RESET_ALL}")
+            print(f"  {Fore.YELLOW}[U+26A0] X/Twitter: NOT CONFIGURED{Style.RESET_ALL}")
             
         if social_results.get('linkedin'):
-            print(f"  {Fore.GREEN}✓ LinkedIn: READY{Style.RESET_ALL}")
+            print(f"  {Fore.GREEN}[OK] LinkedIn: READY{Style.RESET_ALL}")
         else:
-            print(f"  {Fore.YELLOW}⚠ LinkedIn: NOT CONFIGURED{Style.RESET_ALL}")
+            print(f"  {Fore.YELLOW}[U+26A0] LinkedIn: NOT CONFIGURED{Style.RESET_ALL}")
             
         # Final status
         print(f"\n{Fore.CYAN}{'='*80}{Style.RESET_ALL}")
         if self.failed_tests == 0:
-            print(f"{Fore.GREEN}SYSTEM STATUS: ALL TESTS PASSED ✓{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}SYSTEM STATUS: ALL TESTS PASSED [OK]{Style.RESET_ALL}")
         elif self.failed_tests <= 3:
-            print(f"{Fore.YELLOW}SYSTEM STATUS: OPERATIONAL WITH ISSUES ⚠{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}SYSTEM STATUS: OPERATIONAL WITH ISSUES [U+26A0]{Style.RESET_ALL}")
         else:
-            print(f"{Fore.RED}SYSTEM STATUS: CRITICAL FAILURES DETECTED ✗{Style.RESET_ALL}")
+            print(f"{Fore.RED}SYSTEM STATUS: CRITICAL FAILURES DETECTED [FAIL]{Style.RESET_ALL}")
         print(f"{Fore.CYAN}{'='*80}{Style.RESET_ALL}")
 
 

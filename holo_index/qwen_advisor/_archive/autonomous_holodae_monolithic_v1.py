@@ -275,14 +275,14 @@ class AutonomousHoloDAE:
         change_files = [Path(f).name for f in changes[:3]]  # Show first 3 files
         file_desc = f"{len(changes)} files changed ({', '.join(change_files)}" + (f", +{len(changes)-3} more" if len(changes) > 3 else "") + ")"
 
-        print(f"[{now}] [HOLODAE] Δ detected ({file_desc}) → running health scan…")
+        print(f"[{now}] [HOLODAE] Δ detected ({file_desc}) -> running health scan…")
         self._detailed_log(f"[HOLODAE] Actionable change detected: {len(changes)} files: {', '.join(changes)}")
 
     def _report_wsp_violations(self, violations: List[str]):
         """Report WSP violations found during scans"""
         for violation in violations:
             now = datetime.now().strftime('%H:%M:%S')
-            print(f"[{now}] [HEALTH] ⚠ {violation}")
+            print(f"[{now}] [HEALTH] [U+26A0] {violation}")
             self._detailed_log(f"[HEALTH-VIOLATION] {violation}")
 
     def _monitoring_loop(self):
@@ -367,7 +367,7 @@ class AutonomousHoloDAE:
             pattern_alerts = self._run_intelligent_analysis_quiet(changed_files)
             for alert in pattern_alerts:
                 now = datetime.now().strftime('%H:%M:%S')
-                print(f"[{now}] [MICRO-ACTION] ⚠ vibecoding pattern \"{alert['pattern']}\" confidence {alert['confidence']:.2f}")
+                print(f"[{now}] [MICRO-ACTION] [U+26A0] vibecoding pattern \"{alert['pattern']}\" confidence {alert['confidence']:.2f}")
                 self._detailed_log(f"[PATTERN-ALERT] {alert['pattern']} confidence {alert['confidence']:.2f}")
 
         return violations
@@ -650,7 +650,7 @@ class AutonomousHoloDAE:
 
         self.record_action(f"holoindex_search:{query}")
 
-        # 🎯 DATA-DRIVEN ORCHESTRATION: Use performance data to decide what to execute
+        # [TARGET] DATA-DRIVEN ORCHESTRATION: Use performance data to decide what to execute
         if involved_files:
             analysis_report = self._orchestrate_analysis(query, involved_files, list(involved_modules))
             return analysis_report
@@ -659,7 +659,7 @@ class AutonomousHoloDAE:
             return "[HOLODAE-ANALYZE] No files found to analyze"
 
     def _orchestrate_analysis(self, query: str, files: list, modules: list) -> str:
-        """🎯 DATA-DRIVEN ANALYSIS: Performance orchestrator decides what to execute based on REAL data"""
+        """[TARGET] DATA-DRIVEN ANALYSIS: Performance orchestrator decides what to execute based on REAL data"""
 
         start_time = datetime.now()
 
@@ -686,7 +686,7 @@ class AutonomousHoloDAE:
             "query_contains_vibecoding": any(kw in query.lower() for kw in ['vibe', 'pattern', 'behavior', 'coach'])
         }
 
-        # 🎯 GET ORCHESTRATION DECISIONS BASED ON REAL PERFORMANCE DATA
+        # [TARGET] GET ORCHESTRATION DECISIONS BASED ON REAL PERFORMANCE DATA
         orchestration_decisions = self.performance_orchestrator.orchestrate_execution(
             list(available_components.keys()), context
         )
@@ -704,7 +704,7 @@ class AutonomousHoloDAE:
             decision_type = decision.decision_type
 
             # Log the detailed orchestration reasoning for 012 monitoring
-            reasoning_summary = " → ".join(decision.reasoning_chain)
+            reasoning_summary = " -> ".join(decision.reasoning_chain)
             self.log(f"[ORCHESTRATION-{component_name.upper()}] {decision_type.upper()} "
                     f"(confidence: {decision.confidence_score:.2f}) | {reasoning_summary}")
 
@@ -738,7 +738,7 @@ class AutonomousHoloDAE:
                 # Component was skipped/delayed based on performance data
                 skipped_components.append(component_name)
                 reason = decision.reasoning_chain[-1] if decision.reasoning_chain else "Performance-based decision"
-                report_lines.append(f"[ORCHESTRATION] {component_name} → {decision_type.upper()} "
+                report_lines.append(f"[ORCHESTRATION] {component_name} -> {decision_type.upper()} "
                                   f"(reason: {reason})")
 
         # Performance summary and gamification feedback
@@ -864,8 +864,8 @@ class AutonomousHoloDAE:
 
             if any(word in query_lower for word in ['create', 'new', 'build', 'implement']):
                 if not any(word in query_lower for word in ['existing', 'check', 'search', 'find']):
-                    results.append("[PATTERN-COACH] ⚠️  Potential vibecoding detected: Creating without checking existing code")
-                    results.append("[PATTERN-COACH] 💡 Recommendation: Always search for existing implementations first")
+                    results.append("[PATTERN-COACH] [U+26A0]️  Potential vibecoding detected: Creating without checking existing code")
+                    results.append("[PATTERN-COACH] [IDEA] Recommendation: Always search for existing implementations first")
 
             # Analyze file patterns
             if len(files) > 0:
@@ -878,7 +878,7 @@ class AutonomousHoloDAE:
 
                 duplicates = [name for name, count in name_counts.items() if count > 1]
                 if duplicates:
-                    results.append(f"[PATTERN-COACH] 📋 Found {len(duplicates)} potential file name duplications")
+                    results.append(f"[PATTERN-COACH] [CLIPBOARD] Found {len(duplicates)} potential file name duplications")
                     for dup in duplicates[:3]:  # Show top 3
                         results.append(f"[PATTERN-COACH]   - '{dup}' appears {name_counts[dup]} times")
 
@@ -1125,7 +1125,7 @@ def start_holodae_monitoring():
     # Set up logging
     logger = logging.getLogger(__name__)
 
-    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.qwen_advisor.autonomous_holodae - INFO - 🧠 Starting HoloDAE - Code Intelligence & Monitoring System...")
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.qwen_advisor.autonomous_holodae - INFO - [AI] Starting HoloDAE - Code Intelligence & Monitoring System...")
 
     # 1. Instance Lock Acquisition
     try:
@@ -1141,42 +1141,42 @@ def start_holodae_monitoring():
     # 2. Pattern Memory Loading
     try:
         pattern_count = len(autonomous_holodae.pattern_memory) if hasattr(autonomous_holodae, 'pattern_memory') else 0
-        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.adaptive_learning.pattern_memory - INFO - 📚 Loaded {pattern_count} patterns from memory")
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.adaptive_learning.pattern_memory - INFO - [BOOKS] Loaded {pattern_count} patterns from memory")
     except Exception as e:
         print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.qwen_advisor.autonomous_holodae - WARNING - Pattern memory load failed: {e}")
 
     # 3. Self-Improvement Engine Initialization
     try:
         effectiveness_score = autonomous_holodae.get_effectiveness_score() if hasattr(autonomous_holodae, 'get_effectiveness_score') else 0.0
-        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.qwen_advisor.self_improvement - INFO - 🧠 Self-Improvement Engine initialized with effectiveness score: {effectiveness_score:.2f}")
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.qwen_advisor.self_improvement - INFO - [AI] Self-Improvement Engine initialized with effectiveness score: {effectiveness_score:.2f}")
     except Exception as e:
         print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.qwen_advisor.autonomous_holodae - WARNING - Self-improvement engine init failed: {e}")
 
     # 4. File System Monitoring Setup
     try:
         monitored_paths = ["holo_index/", "modules/", "WSP_framework/"]
-        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.monitoring.filesystem - INFO - 👁️ File system monitoring activated for {len(monitored_paths)} paths")
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.monitoring.filesystem - INFO - [U+1F441]️ File system monitoring activated for {len(monitored_paths)} paths")
         for path in monitored_paths:
             if Path(path).exists():
-                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.monitoring.filesystem - INFO - 📁 Monitoring: {path}")
+                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.monitoring.filesystem - INFO - [U+1F4C1] Monitoring: {path}")
     except Exception as e:
         print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.qwen_advisor.autonomous_holodae - WARNING - File monitoring setup failed: {e}")
 
     # 5. WSP Protocol Loading
     try:
         wsp_count = len(autonomous_holodae.wsp_master.wsp_cache) if hasattr(autonomous_holodae, 'wsp_master') and hasattr(autonomous_holodae.wsp_master, 'wsp_cache') else 0
-        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.qwen_advisor.wsp_master - INFO - 📋 Loaded {wsp_count} WSP protocols for compliance monitoring")
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.qwen_advisor.wsp_master - INFO - [CLIPBOARD] Loaded {wsp_count} WSP protocols for compliance monitoring")
     except Exception as e:
         print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.qwen_advisor.autonomous_holodae - WARNING - WSP protocol loading failed: {e}")
 
     # 6. LLM Engine Status
     try:
         llm_status = "loaded" if hasattr(autonomous_holodae, 'llm_engine') and autonomous_holodae.llm_engine else "not_initialized"
-        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.qwen_advisor.llm_engine - INFO - 🤖 LLM Engine status: {llm_status}")
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.qwen_advisor.llm_engine - INFO - [BOT] LLM Engine status: {llm_status}")
     except Exception as e:
         print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.qwen_advisor.autonomous_holodae - WARNING - LLM engine check failed: {e}")
 
-    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.qwen_advisor.autonomous_holodae - INFO - 🎯 HoloDAE initialization complete - ready for code intelligence operations")
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]} - holo_index.qwen_advisor.autonomous_holodae - INFO - [TARGET] HoloDAE initialization complete - ready for code intelligence operations")
 
     return autonomous_holodae
 
@@ -1186,7 +1186,7 @@ def get_holodae_status():
 
 def show_holodae_menu():
     """Display HoloDAE monitoring status dashboard with REAL-TIME performance data"""
-    print("\n🎲 HoloDAE Codebase Monitoring - DATA-DRIVEN Performance Dashboard")
+    print("\n[U+1F3B2] HoloDAE Codebase Monitoring - DATA-DRIVEN Performance Dashboard")
     print("=" * 75)
     print("0102 Autonomous Monitoring Status | Real-Time Performance Metrics | Dynamic Prioritization")
     print("=" * 75)
@@ -1204,9 +1204,9 @@ def show_holodae_menu():
 
     # Show current top performers
     if rankings:
-        print(f"🏆 CURRENT TOP PERFORMERS: {', '.join([f'{name}({score:.2f})' for name, score in rankings[:3]])}")
+        print(f"[U+1F3C6] CURRENT TOP PERFORMERS: {', '.join([f'{name}({score:.2f})' for name, score in rankings[:3]])}")
     else:
-        print("🏆 CURRENT TOP PERFORMERS: No performance data yet - components will establish baselines")
+        print("[U+1F3C6] CURRENT TOP PERFORMERS: No performance data yet - components will establish baselines")
     print()
 
     # Display components with REAL-TIME status based on performance data
@@ -1233,7 +1233,7 @@ def show_holodae_menu():
         elif avg_effectiveness >= 0.5 or success_rate >= 0.5:
             status_icon = "🟡"  # Partial/needs improvement
         else:
-            status_icon = "🔴"  # Not working well
+            status_icon = "[U+1F534]"  # Not working well
 
         component_status[comp_name] = {
             'status_icon': status_icon,
@@ -1242,10 +1242,10 @@ def show_holodae_menu():
             'success_rate': success_rate
         }
 
-    # 🎯 LIVING SPRINT DASHBOARD - WSP 37 PRIORITY MATRIX
+    # [TARGET] LIVING SPRINT DASHBOARD - WSP 37 PRIORITY MATRIX
     # Components become GREEN as they're completed, following development priority
 
-    print("🎯 HOLODAE LIVING SPRINT - WSP 37 PRIORITY MATRIX")
+    print("[TARGET] HOLODAE LIVING SPRINT - WSP 37 PRIORITY MATRIX")
     print("Components turn GREEN as development completes | Real-time status & ratings")
     print("=" * 80)
 
@@ -1284,8 +1284,8 @@ def show_holodae_menu():
 
         return final_completion, agentic_potential
 
-    # 🔴 RED CUBE - MISSION CRITICAL VIBECODING PREVENTION (20/20 MPS)
-    print("🔴 RED CUBE - MISSION CRITICAL (Complete these first):")
+    # [U+1F534] RED CUBE - MISSION CRITICAL VIBECODING PREVENTION (20/20 MPS)
+    print("[U+1F534] RED CUBE - MISSION CRITICAL (Complete these first):")
     components = [
         ("chain_of_thought", "Chain-of-Thought Orchestrator", "COORDINATES ALL COMPONENTS"),
         ("self_improvement_engine", "Self-Improvement Engine", "LEARNS FROM VIBECODING PATTERNS"),
@@ -1295,10 +1295,10 @@ def show_holodae_menu():
 
     for comp_id, comp_name, comp_desc in components:
         status_data = component_status.get(comp_id, {})
-        status_icon = status_data.get('status_icon', '⚪')
+        status_icon = status_data.get('status_icon', '[U+26AA]')
         completion, agentic = get_functionality_rating(comp_id)
-        print(f"{status_icon} {comp_name} → {comp_desc}")
-        print(f"   📊 {completion}% Complete | 🤖 {agentic}% Agentic | "
+        print(f"{status_icon} {comp_name} -> {comp_desc}")
+        print(f"   [DATA] {completion}% Complete | [BOT] {agentic}% Agentic | "
               f"Effectiveness: {status_data.get('effectiveness', 0.0):.2f}")
     print()
 
@@ -1313,10 +1313,10 @@ def show_holodae_menu():
 
     for comp_id, comp_name, comp_desc in components:
         status_data = component_status.get(comp_id, {})
-        status_icon = status_data.get('status_icon', '⚪')
+        status_icon = status_data.get('status_icon', '[U+26AA]')
         completion, agentic = get_functionality_rating(comp_id)
-        print(f"{status_icon} {comp_name} → {comp_desc}")
-        print(f"   📊 {completion}% Complete | 🤖 {agentic}% Agentic | "
+        print(f"{status_icon} {comp_name} -> {comp_desc}")
+        print(f"   [DATA] {completion}% Complete | [BOT] {agentic}% Agentic | "
               f"Effectiveness: {status_data.get('effectiveness', 0.0):.2f}")
     print()
 
@@ -1330,10 +1330,10 @@ def show_holodae_menu():
 
     for comp_id, comp_name, comp_desc in components:
         status_data = component_status.get(comp_id, {})
-        status_icon = status_data.get('status_icon', '⚪')
+        status_icon = status_data.get('status_icon', '[U+26AA]')
         completion, agentic = get_functionality_rating(comp_id)
-        print(f"{status_icon} {comp_name} → {comp_desc}")
-        print(f"   📊 {completion}% Complete | 🤖 {agentic}% Agentic | "
+        print(f"{status_icon} {comp_name} -> {comp_desc}")
+        print(f"   [DATA] {completion}% Complete | [BOT] {agentic}% Agentic | "
               f"Effectiveness: {status_data.get('effectiveness', 0.0):.2f}")
     print()
 
@@ -1346,44 +1346,44 @@ def show_holodae_menu():
 
     for comp_id, comp_name, comp_desc in components:
         status_data = component_status.get(comp_id, {})
-        status_icon = status_data.get('status_icon', '⚪')
+        status_icon = status_data.get('status_icon', '[U+26AA]')
         completion, agentic = get_functionality_rating(comp_id)
-        print(f"{status_icon} {comp_name} → {comp_desc}")
-        print(f"   📊 {completion}% Complete | 🤖 {agentic}% Agentic | "
+        print(f"{status_icon} {comp_name} -> {comp_desc}")
+        print(f"   [DATA] {completion}% Complete | [BOT] {agentic}% Agentic | "
               f"Effectiveness: {status_data.get('effectiveness', 0.0):.2f}")
     print()
 
-    # 🔵 BLUE CUBE - EXPERIMENTAL FEATURES (7-9/20 MPS)
-    print("🔵 BLUE CUBE - EXPERIMENTAL (Future development):")
+    # [U+1F535] BLUE CUBE - EXPERIMENTAL FEATURES (7-9/20 MPS)
+    print("[U+1F535] BLUE CUBE - EXPERIMENTAL (Future development):")
     components = [
         ("llm_integration", "LLM Integration (Qwen-Coder)", "AI-POWERED VIBECODING DETECTION")
     ]
 
     for comp_id, comp_name, comp_desc in components:
         status_data = component_status.get(comp_id, {})
-        status_icon = status_data.get('status_icon', '⚪')
+        status_icon = status_data.get('status_icon', '[U+26AA]')
         completion, agentic = get_functionality_rating(comp_id)
-        print(f"{status_icon} {comp_name} → {comp_desc}")
-        print(f"   📊 {completion}% Complete | 🤖 {agentic}% Agentic | "
+        print(f"{status_icon} {comp_name} -> {comp_desc}")
+        print(f"   [DATA] {completion}% Complete | [BOT] {agentic}% Agentic | "
               f"Effectiveness: {status_data.get('effectiveness', 0.0):.2f}")
     print()
 
-    # 🎮 INTERACTIVE CONTROLS - Sprint Actions
-    print("🎮 SPRINT ACTIONS:")
-    print("1. 🚀 Launch RED CUBE Focus     → Prioritize mission-critical components")
-    print("2. 📊 View Detailed Performance  → Deep-dive into component metrics")
-    print("3. 🔧 Run System Diagnostics     → Check overall HoloDAE health")
-    print("4. 🎯 Configure Orchestrator     → Adjust weights, priorities, thresholds")
-    print("5. 📈 View Development Progress  → Sprint completion tracking")
-    print("6. 🧠 Launch Brain Logging       → Start Chain-of-Thought brain visibility")
+    # [GAME] INTERACTIVE CONTROLS - Sprint Actions
+    print("[GAME] SPRINT ACTIONS:")
+    print("1. [ROCKET] Launch RED CUBE Focus     -> Prioritize mission-critical components")
+    print("2. [DATA] View Detailed Performance  -> Deep-dive into component metrics")
+    print("3. [TOOL] Run System Diagnostics     -> Check overall HoloDAE health")
+    print("4. [TARGET] Configure Orchestrator     -> Adjust weights, priorities, thresholds")
+    print("5. [UP] View Development Progress  -> Sprint completion tracking")
+    print("6. [AI] Launch Brain Logging       -> Start Chain-of-Thought brain visibility")
     print()
 
     print("0. Exit to Main Menu")
     print("99. Return to Main Menu")
     print("-" * 80)
-    print("🎲 WSP 37 CUBE SYSTEM: 🔴 Critical 🟠 Core 🟡 Enhanced 🟢 Complete 🔵 Experimental")
-    print("📊 STATUS: 🟢 Working 🔴 Broken 🟡 Partial | 📈 % Complete | 🤖 % Agentic")
-    print("🎯 SPRINT PRIORITY: RED → ORANGE → YELLOW → GREEN → BLUE")
+    print("[U+1F3B2] WSP 37 CUBE SYSTEM: [U+1F534] Critical 🟠 Core 🟡 Enhanced 🟢 Complete [U+1F535] Experimental")
+    print("[DATA] STATUS: 🟢 Working [U+1F534] Broken 🟡 Partial | [UP] % Complete | [BOT] % Agentic")
+    print("[TARGET] SPRINT PRIORITY: RED -> ORANGE -> YELLOW -> GREEN -> BLUE")
     print("=" * 80)
 
     return input("Select sprint action (0-6, 99): ").strip()
@@ -1391,7 +1391,7 @@ def show_holodae_menu():
 
 if __name__ == "__main__":
     # Test the autonomous HoloDAE
-    print("🚀 Starting Autonomous HoloDAE test...")
+    print("[ROCKET] Starting Autonomous HoloDAE test...")
 
     holodae = AutonomousHoloDAE()
     holodae.start_autonomous_monitoring()
@@ -1402,4 +1402,4 @@ if __name__ == "__main__":
     finally:
         holodae.stop_autonomous_monitoring()
 
-    print("🛑 Test completed")
+    print("[STOP] Test completed")

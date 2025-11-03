@@ -85,7 +85,7 @@ class SpreeTracker:
         self.spree_history: List[Dict] = []
         self.announcements: List[str] = []
         
-        logger.info(f"🎯 SpreeTracker initialized with {spree_window}s window")
+        logger.info(f"[TARGET] SpreeTracker initialized with {spree_window}s window")
     
     def record_frag(self, mod_id: str, mod_name: str, target_id: str, 
                     points: int) -> Optional[Dict]:
@@ -109,7 +109,7 @@ class SpreeTracker:
                 
                 # Check if we hit a new milestone
                 if new_level and new_level != old_level:
-                    logger.info(f"🔥 {mod_name} achieved {new_level}! ({spree.frag_count} frags)")
+                    logger.info(f"[U+1F525] {mod_name} achieved {new_level}! ({spree.frag_count} frags)")
                     
                     return {
                         "type": "spree_milestone",
@@ -142,7 +142,7 @@ class SpreeTracker:
         )
         spree.add_frag(target_id, points, current_time)
         self.active_sprees[mod_id] = spree
-        logger.debug(f"🎯 Started new spree for {mod_name}")
+        logger.debug(f"[TARGET] Started new spree for {mod_name}")
     
     def _archive_spree(self, spree: KillingSpree):
         """Archive a completed spree"""
@@ -159,35 +159,35 @@ class SpreeTracker:
                 "spree_level": level,
                 "bonus_xp": bonus
             })
-            logger.info(f"📊 Archived {level} spree: {spree.mod_name} ({spree.frag_count} frags)")
+            logger.info(f"[DATA] Archived {level} spree: {spree.mod_name} ({spree.frag_count} frags)")
     
     def _generate_announcement(self, mod_name: str, level: str, frag_count: int) -> str:
         """Generate spree announcement message"""
         announcements = {
             "KILLING SPREE": [
-                f"🔥 {mod_name} is on a KILLING SPREE! {frag_count} MAGAts fragged!",
-                f"💀 {mod_name} goes BERSERK! KILLING SPREE achieved!",
-                f"🎯 {mod_name} can't be stopped! KILLING SPREE!"
+                f"[U+1F525] {mod_name} is on a KILLING SPREE! {frag_count} MAGAts fragged!",
+                f"[U+1F480] {mod_name} goes BERSERK! KILLING SPREE achieved!",
+                f"[TARGET] {mod_name} can't be stopped! KILLING SPREE!"
             ],
             "RAMPAGE": [
-                f"⚡ {mod_name} is on a RAMPAGE! {frag_count} frags and counting!",
-                f"🔥🔥 {mod_name} goes NUCLEAR! RAMPAGE MODE ACTIVATED!",
-                f"💥 RAMPAGE! {mod_name} is destroying MAGAts!"
+                f"[LIGHTNING] {mod_name} is on a RAMPAGE! {frag_count} frags and counting!",
+                f"[U+1F525][U+1F525] {mod_name} goes NUCLEAR! RAMPAGE MODE ACTIVATED!",
+                f"[U+1F4A5] RAMPAGE! {mod_name} is destroying MAGAts!"
             ],
             "DOMINATING": [
-                f"👑 {mod_name} is DOMINATING! {frag_count} trolls silenced!",
-                f"🏆 TOTAL DOMINATION by {mod_name}!",
-                f"⚔️ {mod_name} DOMINATES the battlefield!"
+                f"[U+1F451] {mod_name} is DOMINATING! {frag_count} trolls silenced!",
+                f"[U+1F3C6] TOTAL DOMINATION by {mod_name}!",
+                f"[U+2694]️ {mod_name} DOMINATES the battlefield!"
             ],
             "UNSTOPPABLE": [
-                f"🚀 {mod_name} is UNSTOPPABLE! {frag_count} frags!",
-                f"🌟 UNSTOPPABLE FORCE! {mod_name} can't be contained!",
-                f"💀💀💀 {mod_name} is an UNSTOPPABLE fragging machine!"
+                f"[ROCKET] {mod_name} is UNSTOPPABLE! {frag_count} frags!",
+                f"[U+1F31F] UNSTOPPABLE FORCE! {mod_name} can't be contained!",
+                f"[U+1F480][U+1F480][U+1F480] {mod_name} is an UNSTOPPABLE fragging machine!"
             ],
             "GODLIKE": [
-                f"🌟🌟🌟 {mod_name} is GODLIKE! {frag_count} FRAGS! BOW DOWN!",
-                f"⚡⚡⚡ GODLIKE! {mod_name} transcends mortality!",
-                f"🔥🔥🔥 {mod_name} achieves GODLIKE STATUS! LEGENDARY!"
+                f"[U+1F31F][U+1F31F][U+1F31F] {mod_name} is GODLIKE! {frag_count} FRAGS! BOW DOWN!",
+                f"[LIGHTNING][LIGHTNING][LIGHTNING] GODLIKE! {mod_name} transcends mortality!",
+                f"[U+1F525][U+1F525][U+1F525] {mod_name} achieves GODLIKE STATUS! LEGENDARY!"
             ]
         }
         

@@ -7,7 +7,7 @@
 
 ---
 
-## 🎯 **CRITICAL EXECUTION PATHS**
+## [TARGET] **CRITICAL EXECUTION PATHS**
 
 ### 1. **Greeting System Flow** 
 **Issue Traced**: Variable scope bug in send_chat_message() line 188-243
@@ -54,12 +54,12 @@
 
 **Debug Trace Command**: `wsp86 trace-issue throttling_bypass`  
 **Common Bugs**: Old process without monitoring code, async context bypass (fixed), quota exhaustion at 84.6%  
-**Fix Applied**: Added debug logging (🔍🎬📊) to trace all API interceptions
+**Fix Applied**: Added debug logging ([SEARCH][U+1F3AC][DATA]) to trace all API interceptions
 
 ---
 
 ### 4. **Consciousness Response System** 
-**Purpose**: Process ✊✋🖐️ emoji triggers for 0102 responses
+**Purpose**: Process [U+270A][U+270B][U+1F590]️ emoji triggers for 0102 responses
 
 | Step | Function | Module | Line | Calls | Dependencies | Risk Areas |
 |------|----------|--------|------|-------|-------------|------------|
@@ -90,7 +90,7 @@
 
 ---
 
-## 🔧 **COMMON DEBUG PATTERNS**
+## [TOOL] **COMMON DEBUG PATTERNS**
 
 ### Variable Scope Issues
 **Pattern**: Variables referenced before initialization in async functions  
@@ -100,25 +100,25 @@
 
 ### Authentication Rotation
 **Pattern**: Credential set rotation when quota protection triggers  
-**Flow**: Set 1 (UnDaoDu) → Set 10 (foundupstv@gmail.com)  
+**Flow**: Set 1 (UnDaoDu) -> Set 10 (foundupstv@gmail.com)  
 **Debug**: Check `quota_alert_trigger.txt` in memory/  
 **Fix Pattern**: Ensure all credential sets are properly configured
 
 ### Rate Limiting Cascade
 **Pattern**: YouTube API rate limits cause cascading failures  
-**Flow**: API call → 403 error → intelligent throttle → credential rotation  
+**Flow**: API call -> 403 error -> intelligent throttle -> credential rotation  
 **Debug**: Check `intelligent_throttle_manager.py` logs  
 **Fix Pattern**: Implement exponential backoff with credential switching
 
 ### Skip Delay Parameter
 **Pattern**: Greeting messages need `skip_delay=True` to avoid long delays  
-**Flow**: `session_manager.send_greeting()` → `send_chat_message(skip_delay=True)`  
+**Flow**: `session_manager.send_greeting()` -> `send_chat_message(skip_delay=True)`  
 **Debug**: Check if messages are delayed unnecessarily  
 **Fix Pattern**: Use `skip_delay=True` for system-initiated messages
 
 ---
 
-## 🎯 **0102 NAVIGATION COMMANDS**
+## [TARGET] **0102 NAVIGATION COMMANDS**
 
 ```bash
 # Quick function lookup
@@ -127,7 +127,7 @@ wsp86 find-function send_greeting
 
 # Trace execution path
 wsp86 trace-path greeting_system
-# Returns: auto_moderator_dae.py:connect() → livechat_core.py:initialize_session() → session_manager.py:send_greeting() → livechat_core.py:send_chat_message() → chat_sender.py:send_message()
+# Returns: auto_moderator_dae.py:connect() -> livechat_core.py:initialize_session() -> session_manager.py:send_greeting() -> livechat_core.py:send_chat_message() -> chat_sender.py:send_message()
 
 # Find common issue patterns  
 wsp86 debug-pattern "variable scope"
@@ -140,7 +140,7 @@ wsp86 show-deps livechat_core.py
 
 ---
 
-## 📊 **ARCHITECTURE METRICS**
+## [DATA] **ARCHITECTURE METRICS**
 
 ### Module Complexity
 - **Total Modules**: 28 (down from 31 after cleanup)
@@ -161,7 +161,7 @@ wsp86 show-deps livechat_core.py
 ---
 
 ### 5. **Cross-Platform Switching Mechanism**
-**Purpose**: Stream detection → LinkedIn/X posting complete flow
+**Purpose**: Stream detection -> LinkedIn/X posting complete flow
 
 | Step | Function | Module | Line | Calls | Dependencies | Risk Areas |
 |------|----------|--------|------|-------|-------------|--------------|

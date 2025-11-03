@@ -1,0 +1,97 @@
+{
+  "name": "gemma_jsonl_database_audit",
+  "agent": "gemma",
+  "version": "1.0.0",
+  "created": "2025-10-21",
+  "status": "prototype",
+
+  "purpose": "Audit all JSONL telemetry files and identify candidates for foundups.db consolidation",
+
+  "permission_level": "read_only",
+  "requires_human_approval": false,
+
+  "task": {
+    "objective": "Find ALL scattered JSONL files across modules and categorize for database migration",
+
+    "search_operations": [
+      {
+        "type": "file_pattern",
+        "pattern": "**/*.jsonl",
+        "purpose": "Find all JSONL files"
+      },
+      {
+        "type": "code_grep",
+        "pattern": "open.*\\.jsonl.*'[aw]'",
+        "purpose": "Find all JSONL write operations"
+      },
+      {
+        "type": "code_grep",
+        "pattern": "json\\.dumps.*\\n",
+        "purpose": "Find manual JSON serialization to files"
+      }
+    ],
+
+    "categorization": {
+      "domains": [
+        "permissions",
+        "confidence_tracking",
+        "chat_history",
+        "telemetry",
+        "daemon_health",
+        "errors",
+        "metrics",
+        "sessions"
+      ],
+
+      "for_each_file": {
+        "extract": [
+          "file_path",
+          "module",
+          "domain_category",
+          "event_types_logged",
+          "writers (which modules write to it)",
+          "readers (which modules read from it)",
+          "concurrency_risk (high/medium/low)",
+          "file_size_kb"
+        ]
+      }
+    },
+
+    "risk_assessment": {
+      "concurrency_high": "Multiple processes/modules write to same file",
+      "concurrency_medium": "Single module, multiple threads possible",
+      "concurrency_low": "Single-threaded writes only"
+    },
+
+    "output": {
+      "format": "JSON",
+      "path": "data/gemma_jsonl_audit_report.json",
+      "include": [
+        "total_jsonl_files",
+        "files_by_domain",
+        "concurrency_risks",
+        "consolidation_candidates",
+        "proposed_db_tables"
+      ]
+    }
+  },
+
+  "handoff": {
+    "to_agent": "qwen",
+    "next_skill": "qwen_database_consolidation_strategy",
+    "input_file": "data/gemma_jsonl_audit_report.json"
+  },
+
+  "success_metrics": {
+    "files_discovered": ">= 10",
+    "domains_categorized": ">= 5",
+    "risks_identified": ">= 3",
+    "confidence_threshold": 0.85
+  },
+
+  "wsp_compliance": [
+    "WSP 50: Pre-Action Verification (search before audit)",
+    "WSP 72: Module Independence (identify coupling)",
+    "WSP 91: Observability (audit telemetry patterns)"
+  ]
+}

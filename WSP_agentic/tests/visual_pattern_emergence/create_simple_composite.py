@@ -5,9 +5,9 @@ Generates Figure 9: Visual Verification of rESP State Transitions
 
 This script creates a 2x2 composite image combining:
 - frame_010.png: Classical state (random binary noise)
-- frame_060.png: Emergence point (binary→sine transition)  
+- frame_060.png: Emergence point (binary->sine transition)  
 - frame_090.png: Quantum coherence (stable sine waves)
-- Entropy graph: Shannon entropy reduction (8.0→2.0 bits)
+- Entropy graph: Shannon entropy reduction (8.0->2.0 bits)
 """
 
 import matplotlib.pyplot as plt
@@ -69,23 +69,23 @@ def create_composite_figure():
     missing_files = [f for f in frame_files if not os.path.exists(f)]
     
     if missing_files:
-        print(f"❌ Missing frame files: {missing_files}")
-        print("🔧 Generating frames first...")
+        print(f"[FAIL] Missing frame files: {missing_files}")
+        print("[TOOL] Generating frames first...")
         os.system('python binary_to_sine_animation.py')
     
     # Create entropy graph
-    print("📊 Creating entropy graph...")
+    print("[DATA] Creating entropy graph...")
     entropy_path = create_entropy_graph()
     
     # Load images
-    print("🖼️ Loading frame images...")
+    print("[U+1F5BC]️ Loading frame images...")
     try:
         img_010 = Image.open('frame_010.png')
         img_060 = Image.open('frame_060.png') 
         img_090 = Image.open('frame_090.png')
         img_entropy = Image.open(entropy_path)
     except FileNotFoundError as e:
-        print(f"❌ Error loading images: {e}")
+        print(f"[FAIL] Error loading images: {e}")
         return None
     
     # Resize all images to same size
@@ -96,7 +96,7 @@ def create_composite_figure():
     img_entropy = img_entropy.resize(target_size, Image.Resampling.LANCZOS)
     
     # Create composite figure with extra spacing
-    print("🎨 Creating composite figure...")
+    print("[ART] Creating composite figure...")
     fig, axes = plt.subplots(2, 2, figsize=(16, 16))
     fig.suptitle('FIG 9: Visual Verification of rESP State Transitions    \n    \n    \n    ', 
                  fontsize=24, fontweight='bold', y=0.98)
@@ -104,9 +104,9 @@ def create_composite_figure():
     # Configure subplots with improved spacing
     subplot_config = [
         (0, 0, img_010, '(a) Frame 010\nClassical State: Random Binary Noise\nHigh Entropy (~8.0 bits)', 'red'),
-        (0, 1, img_060, '(b) Frame 060\n🔥 Emergence Point: Binary→Sine Transition\n01→02 Quantum Transition', 'orange'),
+        (0, 1, img_060, '(b) Frame 060\n[U+1F525] Emergence Point: Binary->Sine Transition\n01->02 Quantum Transition', 'orange'),
         (1, 0, img_090, '  \n  \n(c) Frame 090\nQuantum Coherence: Stable Sine Waves\nLow Entropy (~2.0 bits)', 'cyan'),
-        (1, 1, img_entropy, '  \n  \n(d) Entropy Analysis\nShannon Entropy Reduction\n8.0→2.0 bit transition', 'green')
+        (1, 1, img_entropy, '  \n  \n(d) Entropy Analysis\nShannon Entropy Reduction\n8.0->2.0 bit transition', 'green')
     ]
     
     for row, col, image, title, color in subplot_config:
@@ -123,10 +123,10 @@ def create_composite_figure():
     
     # Add explanation text at bottom
     explanation = (
-        "This figure visually demonstrates the 01→02 quantum state transition detected by the rESP system.\n\n"
+        "This figure visually demonstrates the 01->02 quantum state transition detected by the rESP system.\n\n"
         "Scientific Significance:\n"
         "• Measurable transition from classical computational state to quantum coherence state\n"
-        "• Quantitative Shannon entropy reduction (8.0→2.0 bits)\n"
+        "• Quantitative Shannon entropy reduction (8.0->2.0 bits)\n"
         "• Concrete evidence of Retrospective Entanglement Signal Phenomena\n"
         "• Visual verification of patent claims"
     )
@@ -147,29 +147,29 @@ def create_composite_figure():
     if os.path.exists(entropy_path):
         os.remove(entropy_path)
     
-    print(f"✅ Composite figure saved: {output_path}")
+    print(f"[OK] Composite figure saved: {output_path}")
     return output_path
 
 def main():
     """Main execution function."""
-    print("🔬 Creating Patent Composite Figure")
+    print("[U+1F52C] Creating Patent Composite Figure")
     print("=" * 50)
     
     # Create composite figure
     output_file = create_composite_figure()
     
     if output_file:
-        print("\n🎯 SUCCESS!")
-        print(f"📁 Composite figure created: {output_file}")
-        print("\n📋 Usage Instructions:")
+        print("\n[TARGET] SUCCESS!")
+        print(f"[U+1F4C1] Composite figure created: {output_file}")
+        print("\n[CLIPBOARD] Usage Instructions:")
         print("1. Copy fig9_composite_english.png to Patent documents")
         print("2. Add to patent as Figure 9")
         print("3. Reference in patent claims as visual verification")
-        print("\n🔧 Patent Integration:")
+        print("\n[TOOL] Patent Integration:")
         print("Figure 9: Visual Verification of rESP State Transitions")
         print("![rESP State Transitions](images/fig9_composite_english.png)")
     else:
-        print("\n❌ FAILED to create composite figure")
+        print("\n[FAIL] FAILED to create composite figure")
         return 1
     
     return 0

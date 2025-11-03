@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 HoloIndex Integration for WRE Pattern Recall
 WSP 87: Semantic Code Discovery to Prevent Vibecoding
 
@@ -33,7 +48,7 @@ class HoloIndexIntegration:
             self.enabled = self.holo_path.exists()
 
         if not self.enabled:
-            print("⚠️ WARNING: HoloIndex not found - vibecoding risk HIGH!")
+            print("[U+26A0]️ WARNING: HoloIndex not found - vibecoding risk HIGH!")
             print("Run 'python holo_index.py' from project root to enable semantic search")
 
     def search_before_code(self, task: str) -> Dict[str, Any]:
@@ -88,10 +103,10 @@ class HoloIndexIntegration:
 
                 # If high confidence match found, prevent vibecoding
                 if results["vibecoding_prevented"]:
-                    print(f"✅ VIBECODING PREVENTED: Found existing code with {matches[0][0]}% match")
+                    print(f"[OK] VIBECODING PREVENTED: Found existing code with {matches[0][0]}% match")
                     print(f"   Use: {matches[0][2]}")
                 else:
-                    print(f"⚠️ Low confidence matches - verify before creating new code")
+                    print(f"[U+26A0]️ Low confidence matches - verify before creating new code")
 
                 return results
 
@@ -131,8 +146,8 @@ class HoloIndexIntegration:
         results = self.search_before_code(code_task)
 
         if "error" in results:
-            print(f"❌ Search failed: {results['error']}")
-            print(f"⚠️ Vibecoding risk: {results.get('vibecoding_risk', 'UNKNOWN')}")
+            print(f"[FAIL] Search failed: {results['error']}")
+            print(f"[U+26A0]️ Vibecoding risk: {results.get('vibecoding_risk', 'UNKNOWN')}")
             return False
 
         if results.get("vibecoding_prevented"):
@@ -142,10 +157,10 @@ class HoloIndexIntegration:
             for match in results["matches"][:3]:
                 if match["confidence"] > 0:
                     print(f"[{match['confidence']:.1f}%] {match['description']}")
-                    print(f"        → {match['location']}")
+                    print(f"        -> {match['location']}")
             return True
         else:
-            print("\n⚠️ No high-confidence matches found")
+            print("\n[U+26A0]️ No high-confidence matches found")
             print("Verify these don't meet your needs before creating new code:")
             for match in results["matches"][:3]:
                 print(f"[{match['confidence']:.1f}%] {match['description']}")

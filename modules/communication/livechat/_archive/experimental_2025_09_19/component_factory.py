@@ -37,7 +37,7 @@ class ComponentFactory:
     def __init__(self):
         """Initialize factory if not already done."""
         if not getattr(self, '_initialized', False):
-            logger.info("🏭 Initializing Component Factory (WSP-Compliant)")
+            logger.info("[FACTORY] Initializing Component Factory (WSP-Compliant)")
             
             # Shared component instances
             self._banter_engine = None
@@ -50,10 +50,10 @@ class ComponentFactory:
             
             # Configuration
             self._memory_dir = "memory"
-            self._trigger_emojis = ["✊", "✋", "🖐️"]  # Centralized emoji config
+            self._trigger_emojis = ["[U+270A]", "[U+270B]", "[U+1F590]️"]  # Centralized emoji config
             
             self._initialized = True
-            logger.info("✅ Component Factory initialized")
+            logger.info("[OK] Component Factory initialized")
     
     @property
     def memory_dir(self) -> str:
@@ -71,7 +71,7 @@ class ComponentFactory:
             try:
                 from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
                 self._banter_engine = BanterEngine()
-                logger.info("🎭 BanterEngine instance created")
+                logger.info("[U+1F3AD] BanterEngine instance created")
             except ImportError as e:
                 logger.warning(f"BanterEngine not available: {e}")
                 self._banter_engine = None
@@ -83,7 +83,7 @@ class ComponentFactory:
             try:
                 from modules.communication.livechat.src.greeting_generator import GrokGreetingGenerator
                 self._greeting_generator = GrokGreetingGenerator(stream_title=stream_title)
-                logger.info("👋 GrokGreetingGenerator instance created")
+                logger.info("[U+1F44B] GrokGreetingGenerator instance created")
             except ImportError as e:
                 logger.warning(f"GrokGreetingGenerator not available: {e}")
                 self._greeting_generator = None
@@ -96,7 +96,7 @@ class ComponentFactory:
                 from modules.communication.livechat.src.chat_memory_manager import ChatMemoryManager
                 dir_path = memory_dir or self._memory_dir
                 self._memory_manager = ChatMemoryManager(dir_path)
-                logger.info("🧠 ChatMemoryManager instance created")
+                logger.info("[AI] ChatMemoryManager instance created")
             except ImportError as e:
                 logger.warning(f"ChatMemoryManager not available: {e}")
                 self._memory_manager = None
@@ -108,7 +108,7 @@ class ComponentFactory:
             try:
                 from modules.communication.livechat.src.llm_bypass_engine import LLMBypassEngine
                 self._llm_bypass_engine = LLMBypassEngine()
-                logger.info("🔄 LLMBypassEngine instance created")
+                logger.info("[REFRESH] LLMBypassEngine instance created")
             except ImportError as e:
                 logger.warning(f"LLMBypassEngine not available: {e}")
                 self._llm_bypass_engine = None
@@ -120,7 +120,7 @@ class ComponentFactory:
             try:
                 from modules.communication.livechat.src.emoji_response_limiter import EmojiResponseLimiter
                 self._emoji_limiter = EmojiResponseLimiter()
-                logger.info("⚡ EmojiResponseLimiter instance created")
+                logger.info("[LIGHTNING] EmojiResponseLimiter instance created")
             except ImportError as e:
                 logger.debug(f"EmojiResponseLimiter not available: {e}")
                 self._emoji_limiter = None
@@ -132,7 +132,7 @@ class ComponentFactory:
             try:
                 from modules.communication.livechat.src.consciousness_handler import ConsciousnessHandler
                 self._consciousness_handler = ConsciousnessHandler(sentiment_engine, grok_integration)
-                logger.info("🧠 ConsciousnessHandler instance created")
+                logger.info("[AI] ConsciousnessHandler instance created")
             except ImportError as e:
                 logger.warning(f"ConsciousnessHandler not available: {e}")
                 self._consciousness_handler = None
@@ -144,7 +144,7 @@ class ComponentFactory:
             try:
                 from modules.ai_intelligence.banter_engine.src.agentic_sentiment_0102 import AgenticSentiment0102
                 self._sentiment_engine_0102 = AgenticSentiment0102()
-                logger.info("🧠✨ AgenticSentiment0102 (Pure 0102 Intelligence) instance created")
+                logger.info("[AI][U+2728] AgenticSentiment0102 (Pure 0102 Intelligence) instance created")
             except ImportError as e:
                 logger.warning(f"AgenticSentiment0102 not available: {e}")
                 self._sentiment_engine_0102 = None
@@ -171,7 +171,7 @@ class ComponentFactory:
     
     def reset_factory(self):
         """Reset all cached instances (for testing or configuration changes)."""
-        logger.info("🔄 Resetting Component Factory")
+        logger.info("[REFRESH] Resetting Component Factory")
         self._banter_engine = None
         self._greeting_generator = None
         self._memory_manager = None
@@ -179,7 +179,7 @@ class ComponentFactory:
         self._emoji_limiter = None
         self._consciousness_handler = None
         self._sentiment_engine_0102 = None  # Pure 0102 intelligence
-        logger.info("✅ Component Factory reset complete")
+        logger.info("[OK] Component Factory reset complete")
 
 
 # Convenience function for easy access

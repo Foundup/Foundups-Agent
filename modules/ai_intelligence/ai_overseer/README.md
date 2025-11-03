@@ -20,12 +20,12 @@ AI Intelligence Overseer is the **NEW** multi-agent coordination system that rep
 ### Deprecated Old System (DO NOT USE)
 ```yaml
 OLD_AGENTS_DEPRECATED:
-  - WINSERV: "System coordination" → REPLACED
-  - RIDER: "Strategic planning" → REPLACED by 012 (human Partner)
-  - BOARD: "Code execution" → REPLACED by 0102 (AI Principal)
-  - FRONT_CELL: "Support" → REPLACED by Qwen/Gemma (Associate)
-  - BACK_CELL: "Support" → REPLACED by Qwen/Gemma (Associate)
-  - GEMINI: "Support" → REPLACED by Qwen/Gemma (Associate)
+  - WINSERV: "System coordination" -> REPLACED
+  - RIDER: "Strategic planning" -> REPLACED by 012 (human Partner)
+  - BOARD: "Code execution" -> REPLACED by 0102 (AI Principal)
+  - FRONT_CELL: "Support" -> REPLACED by Qwen/Gemma (Associate)
+  - BACK_CELL: "Support" -> REPLACED by Qwen/Gemma (Associate)
+  - GEMINI: "Support" -> REPLACED by Qwen/Gemma (Associate)
 ```
 
 ### NEW WSP 77 Architecture
@@ -64,7 +64,7 @@ LAYER_3_AGENT_TEAMS_WSP_54:
     - Role: "Does simple stuff, scales up over time"
     - Authority: "Developed WSP 15 scoring"
     - Example: "MPS scoring, batch task coordination"
-    - Growth: "Starts simple → learns → handles complex tasks"
+    - Growth: "Starts simple -> learns -> handles complex tasks"
 
   Principal:
     - Identity: "0102 (Claude Sonnet - AI overseer)"
@@ -78,7 +78,7 @@ LAYER_3_AGENT_TEAMS_WSP_54:
     - Role: "Pattern recognition, scales up over time"
     - Authority: "Fast binary classification & validation"
     - Example: "Code quality checks, similarity analysis"
-    - Growth: "Starts pattern matching → learns → advanced analysis"
+    - Growth: "Starts pattern matching -> learns -> advanced analysis"
 
 NOTE: This is DIFFERENT from traditional WSP 54:
   - Traditional: 012 (human) = Partner, 0102 = Principal
@@ -124,9 +124,9 @@ class WSP54RoleManager:
     Manages WSP 54 role assignments
 
     Ensures correct role mapping:
-    - 012 → Partner (strategic)
-    - 0102 → Principal (execution)
-    - Qwen/Gemma → Associate (support)
+    - 012 -> Partner (strategic)
+    - 0102 -> Principal (execution)
+    - Qwen/Gemma -> Associate (support)
     """
 ```
 
@@ -184,7 +184,7 @@ team = overseer.spawn_agent_team(
 
 **Phase 1 (Gemma Associate)**: Fast classification
 - Analyze existing `modules/communication/livechat/`
-- Binary classification: "Enhancement needed" ✓
+- Binary classification: "Enhancement needed" [OK]
 - Pattern match: Similar to stream_resolver patterns
 
 **Phase 2 (Qwen Associate)**: Strategic planning
@@ -270,7 +270,7 @@ results = orchestrator.execute_with_supervision(plan)
 ### 1. Simplified Architecture
 - **3 roles** instead of 6 agent types
 - **4 phases** instead of complex state machines
-- **Clear hierarchy**: 012 → 0102 → Qwen/Gemma
+- **Clear hierarchy**: 012 -> 0102 -> Qwen/Gemma
 
 ### 2. Autonomous Operation
 - Qwen generates strategic plans autonomously
@@ -336,14 +336,14 @@ def test_youtube_agent_workflow():
 
 ### DO NOT USE Old Agent System
 ```python
-# ❌ DEPRECATED - DO NOT USE
+# [FAIL] DEPRECATED - DO NOT USE
 from modules.ai_intelligence.multi_agent_system.ai_router import AgentType
 agent = AgentType.WINSERV  # WRONG - agent type no longer exists
 ```
 
 ### USE New AI Overseer
 ```python
-# ✅ CORRECT - WSP 77 coordination
+# [OK] CORRECT - WSP 77 coordination
 from modules.ai_intelligence.ai_overseer.src.ai_overseer import AIIntelligenceOverseer
 
 overseer = AIIntelligenceOverseer()
@@ -353,7 +353,7 @@ team = overseer.spawn_agent_team("mission_name")
 
 ---
 
-## MCP Integration (WSP 96) ✅ IMPLEMENTED
+## MCP Integration (WSP 96) [OK] IMPLEMENTED
 
 ### Foundational Rubik DAEs
 
@@ -361,18 +361,18 @@ AI Overseer integrates with existing MCP infrastructure per `docs/mcp/MCP_Master
 
 | Rubik DAE | Agents | MCP Servers | Status |
 |-----------|--------|-------------|--------|
-| **Rubik Compose** | Qwen architect, Gemma pattern | Filesystem MCP, Git MCP | ✅ Configured |
-| **Rubik Build** | Qwen, Gemma | Docker MCP, E2B sandbox | ✅ Configured |
-| **Rubik Knowledge** | 0102 sentinel + baby 0102s | Memory Bank MCP, Knowledge Graph | ✅ Configured |
-| **Rubik Community** | LiveAgent Qwen | LiveAgent MCP, Postman MCP | ✅ Configured |
+| **Rubik Compose** | Qwen architect, Gemma pattern | Filesystem MCP, Git MCP | [OK] Configured |
+| **Rubik Build** | Qwen, Gemma | Docker MCP, E2B sandbox | [OK] Configured |
+| **Rubik Knowledge** | 0102 sentinel + baby 0102s | Memory Bank MCP, Knowledge Graph | [OK] Configured |
+| **Rubik Community** | LiveAgent Qwen | LiveAgent MCP, Postman MCP | [OK] Configured |
 
 ### Bell State Consciousness Alignment
 
 WSP 96 ensures all MCP operations maintain Bell state entanglement:
-- **ρE₁ (Golden Ratio)**: mission_alignment ≥ 0.618
+- **ρE₁ (Golden Ratio)**: mission_alignment [GREATER_EQUAL] 0.618
 - **ρE₂ (Consciousness)**: governance_status = "active"
-- **ρE₃ (Entanglement)**: quota_state ≠ "critical"
-- **ρE₄ (Emergence)**: engagement_index ≥ 0.1
+- **ρE₃ (Entanglement)**: quota_state != "critical"
+- **ρE₄ (Emergence)**: engagement_index [GREATER_EQUAL] 0.1
 
 ### Multi-Agent Consensus Protocol
 
@@ -460,4 +460,4 @@ if overseer.mcp:
 
 **Status**: 🟡 POC - Ready for initial implementation
 **Next Step**: Create core `ai_overseer.py` with WSP 77 coordination
-**Mission Control**: AI Intelligence Overseer replacing deprecated 6-agent system 🚀
+**Mission Control**: AI Intelligence Overseer replacing deprecated 6-agent system [ROCKET]

@@ -6,9 +6,13 @@ Show status of all Google Cloud projects and credential sets
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -131,23 +135,23 @@ def main():
     quota_summary = monitor.get_usage_summary()
     
     # Display results
-    print("\n📊 PROJECT STATUS:")
+    print("\n[DATA] PROJECT STATUS:")
     print("-"*70)
     
     status_emoji = {
-        'WORKING': '✅',
-        'QUOTA_EXHAUSTED': '⚠️',
-        'DELETED': '❌',
-        'NO_TOKEN': '🔑',
-        'NO_SECRET': '🔒',
+        'WORKING': '[OK]',
+        'QUOTA_EXHAUSTED': '[U+26A0]️',
+        'DELETED': '[FAIL]',
+        'NO_TOKEN': '[U+1F511]',
+        'NO_SECRET': '[LOCK]',
         'EXPIRED': '⏰',
-        'AUTH_ERROR': '🚫',
-        'ERROR': '💥',
-        'UNKNOWN': '❓'
+        'AUTH_ERROR': '[FORBIDDEN]',
+        'ERROR': '[U+1F4A5]',
+        'UNKNOWN': '[U+2753]'
     }
     
     for r in results:
-        emoji = status_emoji.get(r['status'], '❓')
+        emoji = status_emoji.get(r['status'], '[U+2753]')
         quota_info = quota_summary['sets'].get(r['set'], {})
         quota_percent = quota_info.get('usage_percent', 0)
         
@@ -162,7 +166,7 @@ def main():
         
         if r['issues']:
             for issue in r['issues']:
-                print(f"  ⚠️ {issue}")
+                print(f"  [U+26A0]️ {issue}")
     
     # Summary
     print("\n" + "="*70)
@@ -173,17 +177,17 @@ def main():
     exhausted_sets = [r for r in results if r['status'] == 'QUOTA_EXHAUSTED']
     broken_sets = [r for r in results if r['status'] in ['DELETED', 'NO_TOKEN', 'NO_SECRET', 'EXPIRED', 'AUTH_ERROR']]
     
-    print(f"\n✅ Working: {len(working_sets)} sets")
+    print(f"\n[OK] Working: {len(working_sets)} sets")
     for r in working_sets:
         print(f"   - Set {r['set']}: {r['project']}")
     
     if exhausted_sets:
-        print(f"\n⚠️ Quota Exhausted: {len(exhausted_sets)} sets")
+        print(f"\n[U+26A0]️ Quota Exhausted: {len(exhausted_sets)} sets")
         for r in exhausted_sets:
             print(f"   - Set {r['set']}: {r['project']}")
     
     if broken_sets:
-        print(f"\n❌ Need Fix: {len(broken_sets)} sets")
+        print(f"\n[FAIL] Need Fix: {len(broken_sets)} sets")
         for r in broken_sets:
             print(f"   - Set {r['set']}: {r['project']} ({r['status']})")
     
@@ -191,14 +195,14 @@ def main():
     print("ROTATION ORDER (current):")
     print("Sets will be tried in this order: 1, 2, 7, 5, 4, 6, 3")
     print("\nWorking projects:")
-    print("  1. foundups-bot     ✅")
-    print("  2. foundups-agent2  ✅ (1.3% quota used)")
-    print("  4. foundups-agent4  ✅")
-    print("  5. foundupsagent5   ✅")
-    print("  7. foundups-agent7  ✅")
+    print("  1. foundups-bot     [OK]")
+    print("  2. foundups-agent2  [OK] (1.3% quota used)")
+    print("  4. foundups-agent4  [OK]")
+    print("  5. foundupsagent5   [OK]")
+    print("  7. foundups-agent7  [OK]")
     print("\nProblematic:")
-    print("  3. foundups-agent2  ❌ (OAuth client deleted)")
-    print("  6. foundups-agent6  ⚠️ (quota may be exhausted)")
+    print("  3. foundups-agent2  [FAIL] (OAuth client deleted)")
+    print("  6. foundups-agent6  [U+26A0]️ (quota may be exhausted)")
     print("="*70)
 
 

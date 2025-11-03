@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 async def verify_channels_live_status_ARCHIVED(self) -> bool:
     """
-    🚨 ENHANCEMENT: Verify @UnDaoDu and Move2Japan are actually live
+    [ALERT] ENHANCEMENT: Verify @UnDaoDu and Move2Japan are actually live
 
     This method performs an independent verification check that can be called
     before any social media posting to ensure 012 is actually broadcasting.
@@ -28,7 +28,7 @@ async def verify_channels_live_status_ARCHIVED(self) -> bool:
     should already verify streams are live.
     """
     try:
-        logger.info("🚨 [ENHANCEMENT TRIGGER] Checking @UnDaoDu and Move2Japan live status...")
+        logger.info("[ALERT] [ENHANCEMENT TRIGGER] Checking @UnDaoDu and Move2Japan live status...")
 
         # Use the existing stream resolver for verification
         if not self.stream_resolver:
@@ -45,13 +45,13 @@ async def verify_channels_live_status_ARCHIVED(self) -> bool:
         verification_channels = [ch for ch in verification_channels if ch]
 
         if not verification_channels:
-            logger.warning("🚨 [ENHANCEMENT TRIGGER] No channels configured for verification")
+            logger.warning("[ALERT] [ENHANCEMENT TRIGGER] No channels configured for verification")
             return False
 
         # Check each channel for active live streams
         for channel_id in verification_channels:
             try:
-                logger.info(f"🚨 [ENHANCEMENT TRIGGER] Verifying channel: {channel_id}")
+                logger.info(f"[ALERT] [ENHANCEMENT TRIGGER] Verifying channel: {channel_id}")
                 result = self.stream_resolver.resolve_stream(channel_id)
 
                 if result and result[0] and result[1]:
@@ -73,29 +73,29 @@ async def verify_channels_live_status_ARCHIVED(self) -> bool:
                             not live_details.get("actualEndTime") and
                             status.get("privacyStatus") != "private"):
 
-                            logger.info(f"🚨 [ENHANCEMENT TRIGGER] ✅ VERIFICATION PASSED!")
-                            logger.info(f"🚨 [ENHANCEMENT TRIGGER] 📺 Channel {channel_id} is LIVE")
-                            logger.info(f"🚨 [ENHANCEMENT TRIGGER] 🎬 Video ID: {video_id}")
+                            logger.info(f"[ALERT] [ENHANCEMENT TRIGGER] [OK] VERIFICATION PASSED!")
+                            logger.info(f"[ALERT] [ENHANCEMENT TRIGGER] [U+1F4FA] Channel {channel_id} is LIVE")
+                            logger.info(f"[ALERT] [ENHANCEMENT TRIGGER] [U+1F3AC] Video ID: {video_id}")
                             return True
                         else:
-                            logger.info(f"🚨 [ENHANCEMENT TRIGGER] ⏸️ Channel {channel_id} stream not actively live")
+                            logger.info(f"[ALERT] [ENHANCEMENT TRIGGER] ⏸️ Channel {channel_id} stream not actively live")
 
             except Exception as e:
-                logger.warning(f"🚨 [ENHANCEMENT TRIGGER] Error verifying channel {channel_id}: {e}")
+                logger.warning(f"[ALERT] [ENHANCEMENT TRIGGER] Error verifying channel {channel_id}: {e}")
                 continue
 
-        logger.warning("🚨 [ENHANCEMENT TRIGGER] ❌ VERIFICATION FAILED")
-        logger.warning("🚨 [ENHANCEMENT TRIGGER] 💡 @UnDaoDu and Move2Japan are not currently live")
+        logger.warning("[ALERT] [ENHANCEMENT TRIGGER] [FAIL] VERIFICATION FAILED")
+        logger.warning("[ALERT] [ENHANCEMENT TRIGGER] [IDEA] @UnDaoDu and Move2Japan are not currently live")
         return False
 
     except Exception as e:
-        logger.error(f"🚨 [ENHANCEMENT TRIGGER] Verification error: {e}")
+        logger.error(f"[ALERT] [ENHANCEMENT TRIGGER] Verification error: {e}")
         return False
 
 
 async def _track_live_pattern_ARCHIVED(self):
     """
-    🎯 TRACK WHEN 012 NORMALLY GOES LIVE
+    [TARGET] TRACK WHEN 012 NORMALLY GOES LIVE
     Agentic learning: Record successful live detection times for pattern recognition.
     
     ARCHIVED: This pattern learning might be useful, but adds complexity.
@@ -132,7 +132,7 @@ async def _track_live_pattern_ARCHIVED(self):
         with open(pattern_file, 'w') as f:
             json.dump(live_patterns, f, indent=2)
 
-        logger.info(f"📊 Live pattern tracked: {time_key} (confidence: {pattern['confidence']:.2f})")
+        logger.info(f"[DATA] Live pattern tracked: {time_key} (confidence: {pattern['confidence']:.2f})")
 
     except Exception as e:
         logger.debug(f"Live pattern tracking error: {e}")

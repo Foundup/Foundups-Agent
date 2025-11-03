@@ -241,7 +241,7 @@ def enhanced_should_reindex() -> Tuple[bool, str]:
 def _apply_qwen_improvements(self, insights):
     for insight in insights:
         if insight == "INCREASE_WSP_FILTERING_STRENGTH":
-            # NO LOGGING ❌
+            # NO LOGGING [FAIL]
             orchestrator._component_info['health']['triggers'].append('has_wsp_violations')
 ```
 
@@ -332,7 +332,7 @@ def enhanced_apply_improvements(insights: List[str]):
 
 **Before WSP-Aware Logging**:
 ```
-[HOLO-DAE] 🔄 Self-improvement applied: 3 insights
+[HOLO-DAE] [REFRESH] Self-improvement applied: 3 insights
 ```
 **Can Answer**: That 3 insights were applied
 **Cannot Answer**: WHAT insights, WHY chosen, WHICH WSPs, EXPECTED IMPACT
@@ -439,7 +439,7 @@ print(json.dumps(report, indent=2))
 
 ## Files Modified/Created
 
-### 1. WSP 91 Added to Master Index ✅
+### 1. WSP 91 Added to Master Index [OK]
 **File**: `WSP_knowledge/src/WSP_MASTER_INDEX.md`
 **Changes**:
 - Added WSP 91 entry after WSP 89
@@ -447,7 +447,7 @@ print(json.dumps(report, indent=2))
 - Updated active WSPs count from 84 to 85
 - Updated layer range to 60-91
 
-### 2. WSP-Aware Logging Enhancement Module Created ✅
+### 2. WSP-Aware Logging Enhancement Module Created [OK]
 **File**: `holo_index/qwen_advisor/wsp_aware_logging_enhancement.py`
 **Contents**:
 - `WSPAwareLogger` class with 6 key logging methods
@@ -455,7 +455,7 @@ print(json.dumps(report, indent=2))
 - Enhanced versions of `_should_reindex`, `_perform_auto_reindex`, `_apply_qwen_improvements`
 - Full WSP compliance tracking and reporting
 
-### 3. This Documentation Created ✅
+### 3. This Documentation Created [OK]
 **File**: `docs/session_backups/WSP_Aware_DAEMON_Logging_Implementation.md`
 
 ---

@@ -2,7 +2,7 @@
 Test script to verify fact-check command priority with consciousness emojis.
 
 This demonstrates the enhanced priority system where fact-check commands
-containing consciousness emojis (✊✋🖐) get the highest priority (Priority 0).
+containing consciousness emojis ([U+270A][U+270B][U+1F590]) get the highest priority (Priority 0).
 
 WSP Compliance: WSP 5 (Test Coverage), WSP 84 (Code Memory)
 """
@@ -16,10 +16,10 @@ def test_priority_examples():
 
     # Priority 0: Fact-check with consciousness emojis (HIGHEST PRIORITY)
     priority_0_examples = [
-        "factcheck @BadActor ✊✋🖐 Is this true?",
-        "fc @Troll 🖐✋✊ Check their claims",
-        "factcheck @User ✊ Claims need verification",
-        "fc @Person consciousness check ✋🖐✊"
+        "factcheck @BadActor [U+270A][U+270B][U+1F590] Is this true?",
+        "fc @Troll [U+1F590][U+270B][U+270A] Check their claims",
+        "factcheck @User [U+270A] Claims need verification",
+        "fc @Person consciousness check [U+270B][U+1F590][U+270A]"
     ]
 
     # Priority 1: PQN Research Commands
@@ -31,8 +31,8 @@ def test_priority_examples():
 
     # Priority 2: Regular consciousness responses
     priority_2_examples = [
-        "✊✋🖐 What is consciousness?",
-        "🖐✋✊ Explain this concept"
+        "[U+270A][U+270B][U+1F590] What is consciousness?",
+        "[U+1F590][U+270B][U+270A] Explain this concept"
     ]
 
     # Priority 3: Regular fact-check (without consciousness emojis)
@@ -64,7 +64,7 @@ def test_priority_examples():
         print(f"  {i}. {example}")
     print()
 
-    print("✅ Priority system ensures consciousness-enhanced fact-checks get immediate attention!")
+    print("[OK] Priority system ensures consciousness-enhanced fact-checks get immediate attention!")
 
     return True
 
@@ -76,12 +76,12 @@ def test_emoji_detection_logic():
     # Test cases
     test_cases = [
         # (message, expected_has_factcheck, expected_has_consciousness_emojis)
-        ("factcheck @User ✊✋🖐 test", True, True),
-        ("fc @Person 🖐 check this", True, True),
+        ("factcheck @User [U+270A][U+270B][U+1F590] test", True, True),
+        ("fc @Person [U+1F590] check this", True, True),
         ("factcheck @Someone normal", True, False),
-        ("✊✋🖐 not a factcheck", False, True),
+        ("[U+270A][U+270B][U+1F590] not a factcheck", False, True),
         ("normal message", False, False),
-        ("factcheck @User ✊ partial", True, True),
+        ("factcheck @User [U+270A] partial", True, True),
     ]
 
     print("=== EMOJI DETECTION LOGIC TEST ===")
@@ -93,7 +93,7 @@ def test_emoji_detection_logic():
         import re
         pattern = r'(?:factcheck|fc)\s+@[\w\s]+'
         has_factcheck = bool(re.search(pattern, message.lower()))
-        consciousness_emojis = ['✊', '✋', '🖐']
+        consciousness_emojis = ['[U+270A]', '[U+270B]', '[U+1F590]']
         has_consciousness = any(emoji in message for emoji in consciousness_emojis)
 
         would_be_priority_0 = has_factcheck and has_consciousness
@@ -108,7 +108,7 @@ def test_emoji_detection_logic():
         assert has_factcheck == expected_factcheck, f"Fact-check detection failed for: {message}"
         assert has_consciousness == expected_consciousness, f"Consciousness detection failed for: {message}"
 
-    print("✅ All emoji detection tests passed!")
+    print("[OK] All emoji detection tests passed!")
     return True
 
 if __name__ == "__main__":
@@ -118,8 +118,8 @@ if __name__ == "__main__":
     print()
     test_emoji_detection_logic()
 
-    print("\n🎯 Summary:")
-    print("- Fact-check commands with consciousness emojis (✊✋🖐) now have Priority 0 (highest)")
+    print("\n[TARGET] Summary:")
+    print("- Fact-check commands with consciousness emojis ([U+270A][U+270B][U+1F590]) now have Priority 0 (highest)")
     print("- This ensures immediate processing of consciousness-enhanced fact-checking")
     print("- The system maintains backward compatibility with regular fact-checks")
     print("- WSP 15 (Module Prioritization) compliance achieved")

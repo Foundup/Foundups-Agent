@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WSP 85 Violation Prevention Script
 Automatically detects and prevents root directory pollution
 
@@ -106,35 +121,35 @@ class WSP85Validator:
         
         if has_violations:
             print("\n" + "="*60)
-            print("🚨 WSP 85 ROOT DIRECTORY VIOLATIONS DETECTED")
+            print("[ALERT] WSP 85 ROOT DIRECTORY VIOLATIONS DETECTED")
             print("="*60)
             
             if violations["prohibited_files"]:
-                print("\n❌ PROHIBITED FILES IN ROOT:")
+                print("\n[FAIL] PROHIBITED FILES IN ROOT:")
                 for file_path in violations["prohibited_files"]:
                     filename = Path(file_path).name
                     correct_location = self.get_correct_placement(filename)
                     print(f"  • {filename}")
-                    print(f"    → MOVE TO: {correct_location}")
+                    print(f"    -> MOVE TO: {correct_location}")
             
             if violations["prohibited_dirs"]:
-                print("\n❌ PROHIBITED DIRECTORIES IN ROOT:")
+                print("\n[FAIL] PROHIBITED DIRECTORIES IN ROOT:")
                 for dir_path in violations["prohibited_dirs"]:
                     dirname = Path(dir_path).name
-                    print(f"  • {dirname}/ → Contents should be in module subdirectories")
+                    print(f"  • {dirname}/ -> Contents should be in module subdirectories")
             
             if violations["unknown_files"]:
-                print("\n⚠️  UNKNOWN FILES IN ROOT (may violate WSP 85):")
+                print("\n[U+26A0]️  UNKNOWN FILES IN ROOT (may violate WSP 85):")
                 for file_path in violations["unknown_files"]:
                     filename = Path(file_path).name
-                    print(f"  • {filename} → Consider moving to appropriate module")
+                    print(f"  • {filename} -> Consider moving to appropriate module")
             
-            print(f"\n📖 WSP 85 Reference: Root Directory Anti-Pollution Protocol")
-            print(f"📍 Only these files allowed in root: {', '.join(self.ALLOWED_ROOT_FILES)}")
+            print(f"\n[U+1F4D6] WSP 85 Reference: Root Directory Anti-Pollution Protocol")
+            print(f"[PIN] Only these files allowed in root: {', '.join(self.ALLOWED_ROOT_FILES)}")
             print("="*60)
             
         else:
-            print("✅ WSP 85 COMPLIANCE: Root directory is clean")
+            print("[OK] WSP 85 COMPLIANCE: Root directory is clean")
             
         return not has_violations
     
@@ -162,14 +177,14 @@ class WSP85Validator:
 
 def main():
     """Main validation function"""
-    print("🔍 WSP 85 Root Directory Validation")
+    print("[SEARCH] WSP 85 Root Directory Validation")
     print("Checking for Anti-Pollution Protocol violations...")
     
     validator = WSP85Validator()
     is_compliant = validator.validate_and_report()
     
     if not is_compliant:
-        print("\n🛠️  FIX VIOLATIONS IMMEDIATELY")
+        print("\n[U+1F6E0]️  FIX VIOLATIONS IMMEDIATELY")
         print("WSP 85 violations must be resolved before continuing development")
         return 1
     

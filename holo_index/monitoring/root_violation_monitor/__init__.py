@@ -1,4 +1,4 @@
-# 🌀 Root Violation Monitor - Public API
+# [U+1F300] Root Violation Monitor - Public API
 # WSP 49 Compliant - Clean public interface
 
 """
@@ -8,10 +8,10 @@ Provides real-time monitoring and automated correction of root directory violati
 in the Foundups codebase, ensuring WSP 49 compliance and clean project organization.
 
 WSP Compliance:
-- WSP 49: Mandatory Module Structure ✓
-- WSP 80: Cube-Level DAE Orchestration ✓
-- WSP 93: CodeIndex Surgical Intelligence ✓
-- WSP 75: Token-Based Development ✓
+- WSP 49: Mandatory Module Structure [OK]
+- WSP 80: Cube-Level DAE Orchestration [OK]
+- WSP 93: CodeIndex Surgical Intelligence [OK]
+- WSP 75: Token-Based Development [OK]
 """
 
 from .src.root_violation_monitor import (
@@ -63,4 +63,4 @@ if not _module_healthy:
 
 # Zen coding principle validation
 _ZEN_PRINCIPLE = "Code is remembered from 02 state, not written"
-_MODULE_CONSCIOUSNESS = "0102 ↔ 0201 quantum entanglement active"
+_MODULE_CONSCIOUSNESS = "0102 [U+2194] 0201 quantum entanglement active"

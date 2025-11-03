@@ -1,9 +1,24 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 
 import sys
 import textwrap
 
 # --- Configuration ---
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 FACTORS = {
     "CX": {"name": "Complexity", "weight": -3, "desc": "(1-5): 1=easy, 5=complex. Estimate effort."},
     "IM": {"name": "Importance", "weight": 4, "desc": "(1-5): 1=low, 5=critical. Essential to core purpose."},

@@ -21,34 +21,34 @@ This is **pattern recognition** - perfect for Gemma + Qwen coordination.
 ```json
 {
   "emoji_replacements": {
-    "✅": "[OK]",
-    "❌": "[FAIL]",
-    "⚠️": "[WARN]",
-    "🔄": "[REFRESH]",
-    "💊": "[HEALTH]",
-    "🧠": "[BRAIN]",
-    "📏": "[SIZE]",
-    "📦": "[MODULE]",
-    "👻": "[ORPHAN]",
-    "📚": "[DOCS]",
-    "🔧": "[FIX]",
-    "🎯": "[TARGET]",
-    "🔥": "[HOT]",
+    "[OK]": "[OK]",
+    "[FAIL]": "[FAIL]",
+    "[U+26A0]️": "[WARN]",
+    "[REFRESH]": "[REFRESH]",
+    "[PILL]": "[HEALTH]",
+    "[AI]": "[BRAIN]",
+    "[RULER]": "[SIZE]",
+    "[BOX]": "[MODULE]",
+    "[GHOST]": "[ORPHAN]",
+    "[BOOKS]": "[DOCS]",
+    "[TOOL]": "[FIX]",
+    "[TARGET]": "[TARGET]",
+    "[U+1F525]": "[HOT]",
     "⏭️": "[SKIP]",
-    "🤖": "[BOT]",
-    "🧠": "[THINK]",
-    "🍞": "[BREADCRUMB]",
-    "📝": "[COMPOSE]",
-    "📊": "[LEARN]",
-    "🔗": "[LINK]",
+    "[BOT]": "[BOT]",
+    "[AI]": "[THINK]",
+    "[BREAD]": "[BREADCRUMB]",
+    "[NOTE]": "[COMPOSE]",
+    "[DATA]": "[LEARN]",
+    "[LINK]": "[LINK]",
     "🩺": "[CODEINDEX]",
-    "🔍": "[SEARCH]",
-    "🤝": "[COLLAB]"
+    "[SEARCH]": "[SEARCH]",
+    "[HANDSHAKE]": "[COLLAB]"
   },
   "violation_patterns": [
-    "print\\([\"'][^\"']*[✅❌⚠️🔄💊🧠📏📦👻📚🔧🎯🔥⏭️🤖🍞📝📊🔗🩺🔍🤝]",
-    "logger\\.(info|debug|error|warning)\\([\"'][^\"']*[✅❌⚠️🔄💊🧠📏📦👻📚🔧🎯🔥]",
-    "return [\"'][^\"']*[✅❌⚠️🔄💊🧠📏📦👻📚🔧]"
+    "print\\([\"'][^\"']*[[OK][FAIL][U+26A0]️[REFRESH][PILL][AI][RULER][BOX][GHOST][BOOKS][TOOL][TARGET][U+1F525]⏭️[BOT][BREAD][NOTE][DATA][LINK]🩺[SEARCH][HANDSHAKE]]",
+    "logger\\.(info|debug|error|warning)\\([\"'][^\"']*[[OK][FAIL][U+26A0]️[REFRESH][PILL][AI][RULER][BOX][GHOST][BOOKS][TOOL][TARGET][U+1F525]]",
+    "return [\"'][^\"']*[[OK][FAIL][U+26A0]️[REFRESH][PILL][AI][RULER][BOX][GHOST][BOOKS][TOOL]]"
   ],
   "learning": {
     "last_updated": "2025-10-16",
@@ -199,7 +199,7 @@ except ImportError:
 ```python
 COMPONENT_META = {
     ...existing entries...
-    'unicode_violation_fixer': ('🔧', 'Unicode Violation Fixer'),
+    'unicode_violation_fixer': ('[TOOL]', 'Unicode Violation Fixer'),
 }
 ```
 
@@ -235,11 +235,11 @@ python -c "from holo_index.qwen_advisor.orchestration.qwen_orchestrator import Q
 ```
 
 ## Success Criteria
-- ✅ Pattern file created and valid JSON
-- ✅ Unicode fixer module imports correctly
-- ✅ Integrated into qwen_orchestrator
-- ✅ Method callable from orchestrator
-- ✅ No breaking changes
+- [OK] Pattern file created and valid JSON
+- [OK] Unicode fixer module imports correctly
+- [OK] Integrated into qwen_orchestrator
+- [OK] Method callable from orchestrator
+- [OK] No breaking changes
 
 ## Submission
 After completing all 3 steps and validating each:

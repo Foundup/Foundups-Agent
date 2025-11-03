@@ -1,10 +1,26 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """Verify Phase 2: HoloIndex Pattern Analysis Implementation"""
 
 from holo_index.qwen_advisor.rules_engine import ComplianceRulesEngine
 
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 def verify_phase2():
-    print('🧠 Phase 2 Verification: HoloIndex Pattern Analysis')
+    print('[AI] Phase 2 Verification: HoloIndex Pattern Analysis')
     print('='*60)
 
     # Create test data
@@ -19,16 +35,16 @@ def verify_phase2():
     engine = ComplianceRulesEngine()
     analysis = engine.analyze_search_patterns(test_history)
 
-    print(f'✅ Analysis Confidence: {analysis["overall_confidence"]:.1%}')
-    print(f'✅ Success Patterns Found: {len(analysis["success_patterns"])}')
-    print(f'✅ Failure Patterns Found: {len(analysis["failure_patterns"])}')
-    print(f'✅ Recommendations Generated: {len(analysis["recommendations"])}')
+    print(f'[OK] Analysis Confidence: {analysis["overall_confidence"]:.1%}')
+    print(f'[OK] Success Patterns Found: {len(analysis["success_patterns"])}')
+    print(f'[OK] Failure Patterns Found: {len(analysis["failure_patterns"])}')
+    print(f'[OK] Recommendations Generated: {len(analysis["recommendations"])}')
 
-    print('\n🎯 Top Recommendations:')
+    print('\n[TARGET] Top Recommendations:')
     for rec in analysis['recommendations'][:3]:
         print(f'   {rec}')
 
-    print('\n📊 Context Correlations:')
+    print('\n[DATA] Context Correlations:')
     time_patterns = analysis.get('context_correlations', {}).get('time_patterns', {})
     if time_patterns:
         print(f'   Time-based patterns: {len(time_patterns)} insights')
@@ -37,11 +53,11 @@ def verify_phase2():
     if complexity_patterns:
         print(f'   Complexity patterns: {len(complexity_patterns)} insights')
 
-    print('\n✅ VERIFICATION: Phase 2 Pattern Analysis is OPERATIONAL')
-    print('   - Success/failure detection: ✅')
-    print('   - Context correlation analysis: ✅')
-    print('   - Automated pattern reporting: ✅')
-    print('   - Module health integration: ✅')
+    print('\n[OK] VERIFICATION: Phase 2 Pattern Analysis is OPERATIONAL')
+    print('   - Success/failure detection: [OK]')
+    print('   - Context correlation analysis: [OK]')
+    print('   - Automated pattern reporting: [OK]')
+    print('   - Module health integration: [OK]')
 
     return True
 

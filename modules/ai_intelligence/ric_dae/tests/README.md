@@ -10,7 +10,7 @@ Tests ensure ingestion pipelines, normalization, and MCP tool adapters operate r
 - `test_governance.py`: Confirm kill-switch + ToS compliance behaviours
 
 ## WSP Alignment
-- WSP 5: Coverage target ≥90%
+- WSP 5: Coverage target [GREATER_EQUAL]90%
 - WSP 6: Auditable test execution with command examples
 - WSP 34: Documentation produced alongside implementation
 

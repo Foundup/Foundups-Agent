@@ -39,15 +39,15 @@ python main.py --liberty
 ### Run Tests
 ```bash
 # Unit tests
-pytest modules/communication/evade_net/tests/test_models.py -v
+pytest modules/communication/liberty_alert/tests/test_models.py -v
 
 # POC demo test
-pytest modules/communication/evade_net/tests/test_poc_demo.py -v --asyncio-mode=auto
+pytest modules/communication/liberty_alert/tests/test_poc_demo.py -v --asyncio-mode=auto
 ```
 
 ### Run Demo Directly
 ```python
-from modules.communication.evade_net.src.evade_net_orchestrator import demo_two_phone_mesh
+from modules.communication.liberty_alert.src.liberty_alert_orchestrator import demo_two_phone_mesh
 import asyncio
 
 asyncio.run(demo_two_phone_mesh())
@@ -57,16 +57,16 @@ asyncio.run(demo_two_phone_mesh())
 
 ### Create Alert
 ```python
-from modules.communication.evade_net.src import (
-    EvadeNetOrchestrator,
-    EvadeNetConfig,
+from modules.communication.liberty_alert.src import (
+    LibertyAlertOrchestrator,
+    LibertyAlertConfig,
     GeoPoint,
     ThreatType
 )
 import asyncio
 
 # Configure system
-config = EvadeNetConfig(
+config = LibertyAlertConfig(
     mesh_enabled=True,
     default_language="es",
     voice_enabled=True,
@@ -74,7 +74,7 @@ config = EvadeNetConfig(
 )
 
 # Start orchestrator
-orchestrator = EvadeNetOrchestrator(config)
+orchestrator = LibertyAlertOrchestrator(config)
 await orchestrator.start()
 
 # Create alert
@@ -112,7 +112,7 @@ print(f"Mesh healthy: {status.is_healthy}")
 
 ### Basic Config
 ```python
-config = EvadeNetConfig(
+config = LibertyAlertConfig(
     mesh_enabled=True,          # Enable WebRTC mesh
     voice_enabled=True,          # Enable AI voice
     default_language="es",       # Spanish by default
@@ -123,9 +123,9 @@ config = EvadeNetConfig(
 
 ### Advanced Config
 ```python
-config = EvadeNetConfig(
+config = LibertyAlertConfig(
     # Mesh settings
-    webrtc_signaling_server="wss://optional-bootstrap.evade.net",
+    webrtc_signaling_server="wss://optional-bootstrap.libertyalert.net",
     meshtastic_enabled=False,    # LoRa extension (future)
     auto_discovery=True,          # Auto-discover nearby peers
     max_peers=50,                 # Max peer connections
@@ -147,7 +147,7 @@ config = EvadeNetConfig(
 ## Threat Types
 
 ```python
-from modules.communication.evade_net.src.models import ThreatType
+from modules.communication.liberty_alert.src.models import ThreatType
 
 # Available threat types:
 ThreatType.SURVEILLANCE_VEHICLE   # Unmarked vans, ICE vehicles
@@ -162,18 +162,18 @@ ThreatType.ALL_CLEAR            # Safe zone notification
 
 ### Module Structure (WSP 49 Compliant)
 ```
-modules/communication/evade_net/
-├── src/                    # Core implementation
-│   ├── models.py          # Data models
-│   ├── mesh_network.py    # WebRTC mesh
-│   ├── alert_broadcaster.py # Alert system
-│   └── evade_net_orchestrator.py # Main orchestrator
-├── tests/                  # Test suite
-├── memory/                 # WSP 60 memory architecture
-├── pwa/                   # Progressive Web App (future)
-├── README.md              # Full documentation
-├── INTERFACE.md           # API specification
-└── requirements.txt       # Dependencies
+modules/communication/liberty_alert/
++-- src/                    # Core implementation
+[U+2502]   +-- models.py          # Data models
+[U+2502]   +-- mesh_network.py    # WebRTC mesh
+[U+2502]   +-- alert_broadcaster.py # Alert system
+[U+2502]   +-- liberty_alert_orchestrator.py # Main orchestrator
++-- tests/                  # Test suite
++-- memory/                 # WSP 60 memory architecture
++-- pwa/                   # Progressive Web App (future)
++-- README.md              # Full documentation
++-- INTERFACE.md           # API specification
++-- requirements.txt       # Dependencies
 ```
 
 ### Technology Stack
@@ -200,7 +200,7 @@ modules/communication/evade_net/
 
 ## Roadmap
 
-### Sprint 1: POC (Current) ✅
+### Sprint 1: POC (Current) [OK]
 - [x] WSP-compliant module structure
 - [x] WebRTC mesh networking
 - [x] Alert broadcasting system
@@ -228,7 +228,7 @@ modules/communication/evade_net/
 
 ## Contributing
 
-Evade.Net is open source and community-owned. Contributions welcome!
+Liberty Alert is open source and community-owned. Contributions welcome!
 
 **License**: MIT (pending legal review for community protection)
 

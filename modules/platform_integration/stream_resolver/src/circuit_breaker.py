@@ -94,12 +94,12 @@ class CircuitBreaker:
         """Handle successful call with gradual recovery."""
         if self.state == CircuitBreakerState.HALF_OPEN:
             self.consecutive_successes += 1
-            logger.info(f"🔄 Circuit breaker HALF_OPEN - success {self.consecutive_successes}/{self.recovery_threshold}")
+            logger.info(f"[REFRESH] Circuit breaker HALF_OPEN - success {self.consecutive_successes}/{self.recovery_threshold}")
             if self.consecutive_successes >= self.recovery_threshold:
                 self.failure_count = 0
                 self.state = CircuitBreakerState.CLOSED
                 self.consecutive_successes = 0
-                logger.info("✅ Circuit breaker fully CLOSED after successful recovery")
+                logger.info("[OK] Circuit breaker fully CLOSED after successful recovery")
         else:
             self.failure_count = 0
             self.state = CircuitBreakerState.CLOSED
@@ -113,12 +113,12 @@ class CircuitBreaker:
             # Failed in HALF_OPEN state - go back to OPEN
             self.state = CircuitBreakerState.OPEN
             self.consecutive_successes = 0
-            logger.warning(f"🔴 Circuit breaker failed in HALF_OPEN state - back to OPEN (failure {self.failure_count}/{self.failure_threshold})")
+            logger.warning(f"[U+1F534] Circuit breaker failed in HALF_OPEN state - back to OPEN (failure {self.failure_count}/{self.failure_threshold})")
         elif self.failure_count >= self.failure_threshold:
             self.state = CircuitBreakerState.OPEN
-            logger.error(f"🔴 Circuit breaker OPEN after {self.failure_count} failures - blocking API calls for {self.timeout}s")
+            logger.error(f"[U+1F534] Circuit breaker OPEN after {self.failure_count} failures - blocking API calls for {self.timeout}s")
         else:
-            logger.warning(f"⚠️ Circuit breaker failure {self.failure_count}/{self.failure_threshold}")
+            logger.warning(f"[U+26A0]️ Circuit breaker failure {self.failure_count}/{self.failure_threshold}")
 
     def reset(self):
         """Manually reset the circuit breaker (for testing/debugging)."""
@@ -126,7 +126,7 @@ class CircuitBreaker:
         self.last_failure_time = None
         self.state = CircuitBreakerState.CLOSED
         self.consecutive_successes = 0
-        logger.info("🔄 Circuit breaker manually reset to CLOSED state")
+        logger.info("[REFRESH] Circuit breaker manually reset to CLOSED state")
 
     def get_status(self) -> dict:
         """Get current circuit breaker status for monitoring."""

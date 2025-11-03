@@ -11,9 +11,13 @@ This test validates WSP 3 compliance (functional distribution).
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -54,11 +58,11 @@ def test_unified_interface():
 
         # Test 2: Git commits (git_linkedin_bridge use case)
         print("\n--- Test 2: Git Commits ---")
-        commit_content = """🚀 Development Update: Feature Enhancement
+        commit_content = """[ROCKET] Development Update: Feature Enhancement
 
-✨ Add unified LinkedIn interface for centralized posting
+[U+2728] Add unified LinkedIn interface for centralized posting
 
-📝 3 files updated
+[NOTE] 3 files updated
 Key changes:
   • unified_linkedin_interface.py
   • simple_posting_orchestrator.py
@@ -66,7 +70,7 @@ Key changes:
 
 #SoftwareDevelopment #OpenSource #Coding #TechUpdates #AI #Automation
 
-🔗 github.com/Foundups-Agent"""
+[LINK] github.com/Foundups-Agent"""
 
         result2 = await post_git_commits(commit_content, ["abc123", "def456"])
         print(f"Git commits: {result2.success} - {result2.message}")
@@ -75,17 +79,17 @@ Key changes:
 
         # Test 3: Development update (git_monitor_dae use case)
         print("\n--- Test 3: Development Update ---")
-        dev_content = """🚀 WRE Development Updates - 3 New Changes
+        dev_content = """[ROCKET] WRE Development Updates - 3 New Changes
 
-✨ New Features:
+[U+2728] New Features:
   • Add unified LinkedIn posting interface
   • Implement centralized duplicate prevention
 
-🔧 Bug Fixes:
+[TOOL] Bug Fixes:
   • Fix duplicate LinkedIn posting attempts
 
-📈 Stats: 5 files modified, 200+ lines enhanced
-🎯 WSP Compliance: Enhanced functional distribution
+[UP] Stats: 5 files modified, 200+ lines enhanced
+[TARGET] WSP Compliance: Enhanced functional distribution
 
 #WRE #SoftwareDevelopment #WSPCompliant #FoundUps"""
 
@@ -217,11 +221,11 @@ def test_architecture_compliance():
     print("TESTING WSP 3 ARCHITECTURE COMPLIANCE")
     print("="*80)
 
-    print("✅ All LinkedIn posting routes through social_media_orchestrator")
-    print("✅ Platform-specific logic contained in linkedin_agent")
-    print("✅ Centralized duplicate prevention")
-    print("✅ Single browser session management")
-    print("✅ Unified error handling and cancellation detection")
+    print("[OK] All LinkedIn posting routes through social_media_orchestrator")
+    print("[OK] Platform-specific logic contained in linkedin_agent")
+    print("[OK] Centralized duplicate prevention")
+    print("[OK] Single browser session management")
+    print("[OK] Unified error handling and cancellation detection")
 
     # Verify no direct imports remain
     import ast
@@ -248,12 +252,12 @@ def test_architecture_compliance():
                 continue  # Skip files that can't be read
 
     if violating_files:
-        print(f"⚠️ Found {len(violating_files)} files still importing AntiDetectionLinkedIn:")
+        print(f"[U+26A0]️ Found {len(violating_files)} files still importing AntiDetectionLinkedIn:")
         for file_path in violating_files[:5]:  # Show first 5
             print(f"   {file_path}")
         return False
     else:
-        print("✅ No remaining direct AntiDetectionLinkedIn imports found")
+        print("[OK] No remaining direct AntiDetectionLinkedIn imports found")
         return True
 
 def main():

@@ -15,7 +15,7 @@
 
 ## The Problem
 
-**Current limitation**: 0102 cannot access web/Colab → You must do manual work → Blocks autonomous operation
+**Current limitation**: 0102 cannot access web/Colab -> You must do manual work -> Blocks autonomous operation
 
 **Your manual work**:
 1. Open browser
@@ -57,7 +57,7 @@
 ## How It Works
 
 ```
-0102 → MCP Browser → Headless Chrome → Google Colab → Training → Download → Integration
+0102 -> MCP Browser -> Headless Chrome -> Google Colab -> Training -> Download -> Integration
 ```
 
 **Architecture**:

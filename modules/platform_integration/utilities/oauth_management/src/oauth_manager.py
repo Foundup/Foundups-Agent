@@ -26,13 +26,6 @@ Features:
 - Support for forced credential selection via environment variables
 """
 
-# === UTF-8 ENFORCEMENT (WSP 90) ===
-import sys
-import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-# === END UTF-8 ENFORCEMENT ===
 
 
 import os
@@ -318,15 +311,15 @@ class OAuthManager:
             bool: True if rotation was successful
         """
         try:
-            self.logger.info("🔄 HOLOINDEX FIX: Rotating OAuth credentials due to quota exhaustion")
+            self.logger.info("[REFRESH] HOLOINDEX FIX: Rotating OAuth credentials due to quota exhaustion")
 
             # Get current credential set index
             current_set = getattr(self, '_credential_set_index', 0)
 
-            # Rotate to next credential set (0 → 1 → 2 → 3 → 0)
+            # Rotate to next credential set (0 -> 1 -> 2 -> 3 -> 0)
             next_set = (current_set + 1) % 4
 
-            self.logger.info(f"🔄 HOLOINDEX FIX: Switching from credential set {current_set} to {next_set}")
+            self.logger.info(f"[REFRESH] HOLOINDEX FIX: Switching from credential set {current_set} to {next_set}")
 
             # Update the credential set
             self._credential_set_index = next_set
@@ -339,14 +332,14 @@ class OAuthManager:
             # Attempt to get new service (this will trigger authentication with new credentials)
             new_service = self.authenticate()
             if new_service:
-                self.logger.info(f"✅ HOLOINDEX FIX: Successfully rotated to credential set {next_set}")
+                self.logger.info(f"[OK] HOLOINDEX FIX: Successfully rotated to credential set {next_set}")
                 return True
             else:
-                self.logger.error(f"❌ HOLOINDEX FIX: Failed to authenticate with credential set {next_set}")
+                self.logger.error(f"[FAIL] HOLOINDEX FIX: Failed to authenticate with credential set {next_set}")
                 return False
 
         except Exception as e:
-            self.logger.error(f"❌ HOLOINDEX FIX: Credential rotation failed: {e}")
+            self.logger.error(f"[FAIL] HOLOINDEX FIX: Credential rotation failed: {e}")
             return False
 
 
@@ -403,7 +396,7 @@ def authenticate_with_config(client_secrets_file: str, token_file: str, config_n
                         logger.info(f"{config_name}: Token file is empty, triggering OAuth login")
                         creds = None
                     else:
-                        # WSP Patch ❶: Validate OAuth token structure
+                        # WSP Patch [U+2776]: Validate OAuth token structure
                         # Check for required OAuth token keys to skip malformed files
                         required_oauth_keys = ['token', 'refresh_token', 'client_id']
                         missing_keys = [key for key in required_oauth_keys if key not in token_data]
@@ -545,7 +538,7 @@ def get_authenticated_service_with_fallback() -> Optional[Any]:
             forced_index = int(forced_set) - 1  # Convert to 0-based index
             if 0 <= forced_index <= 3:  # Updated to support 4 credential sets
                 credential_set = f"set_{forced_index+1}"
-                logger.info(f"🎯 FORCED credential set via environment: {credential_set}")
+                logger.info(f"[TARGET] FORCED credential set via environment: {credential_set}")
                 
                 # Check if forced set is in cooldown
                 if quota_manager.is_in_cooldown(credential_set):
@@ -631,7 +624,7 @@ def get_authenticated_service_with_fallback() -> Optional[Any]:
     # Try available sets first
     for credential_set, i in available_sets:
         try:
-            logger.info(f"🔑 Attempting to use credential set: {credential_set}")
+            logger.info(f"[U+1F511] Attempting to use credential set: {credential_set}")
                 
             auth_result = get_authenticated_service(i)
             if auth_result:
@@ -639,7 +632,7 @@ def get_authenticated_service_with_fallback() -> Optional[Any]:
                 
                 # Test the service with a simple API call to detect quota issues
                 try:
-                    logger.debug(f"🧪 Testing {credential_set} with API call...")
+                    logger.debug(f"[U+1F9EA] Testing {credential_set} with API call...")
                     test_response = service.channels().list(part='snippet', mine=True).execute()
                     if test_response.get('items'):
                         logger.info(f"[OK] Successfully authenticated and tested {credential_set}")
@@ -677,13 +670,13 @@ def get_authenticated_service_with_fallback() -> Optional[Any]:
     
     # If all available sets failed, try cooldown sets (emergency fallback)
     if cooldown_sets:
-        logger.warning("🚨 All available credential sets failed, trying cooldown sets as emergency fallback...")
+        logger.warning("[ALERT] All available credential sets failed, trying cooldown sets as emergency fallback...")
         # Sort by shortest remaining cooldown time
         cooldown_sets.sort(key=lambda x: x[1])
         
         for credential_set, time_remaining, i in cooldown_sets[:2]:  # Try only 2 shortest cooldowns
             try:
-                logger.warning(f"🚨 Emergency attempt with {credential_set} (cooldown: {time_remaining/3600:.1f}h remaining)")
+                logger.warning(f"[ALERT] Emergency attempt with {credential_set} (cooldown: {time_remaining/3600:.1f}h remaining)")
                 
                 auth_result = get_authenticated_service(i)
                 if auth_result:

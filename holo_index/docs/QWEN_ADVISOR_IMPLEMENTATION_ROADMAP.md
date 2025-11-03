@@ -7,7 +7,7 @@
 
 ---
 
-## 🎯 Vision: The Intelligent Advisor
+## [TARGET] Vision: The Intelligent Advisor
 
 ### Core Principle
 **HoloIndex is for 0102 agents, not 012 human developers**. The advisor should be:
@@ -18,7 +18,7 @@
 
 ---
 
-## 📋 Implementation Phases
+## [CLIPBOARD] Implementation Phases
 
 ### Phase 1: Wire Actual Inference Engine (Week 1-2)
 **Goal**: Replace stub with intelligent guidance generation
@@ -326,7 +326,7 @@ def test_advisor_telemetry_tracking():
 
 ---
 
-## 🚀 Quick Wins Implementation Order
+## [ROCKET] Quick Wins Implementation Order
 
 ### Week 1: Minimum Viable Intelligence
 1. **Replace stub with rules engine** (no LLM needed initially)
@@ -350,7 +350,7 @@ def test_advisor_telemetry_tracking():
 
 ---
 
-## 📊 Success Metrics
+## [DATA] Success Metrics
 
 ### Phase 1 Success (Minimum Viable)
 - [ ] Advisor generates context-aware guidance (not fixed strings)
@@ -369,7 +369,7 @@ def test_advisor_telemetry_tracking():
 
 ---
 
-## 🔧 Implementation Notes
+## [TOOL] Implementation Notes
 
 ### LLM vs Rules Engine Decision
 **Start with rules engine** for quick deployment:
@@ -406,7 +406,7 @@ export HOLOINDEX_ADVISOR=opt_in
 
 ---
 
-## 🎯 End State: The Perfect Advisor
+## [TARGET] End State: The Perfect Advisor
 
 When complete, QwenAdvisor will:
 1. **Automatically activate** for all 0102 agents

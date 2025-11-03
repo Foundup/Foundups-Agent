@@ -72,26 +72,26 @@ This happened because:
 ### Phase 1: Extract Commands (Urgent)
 ```python
 commands/
-├── dae_init.py      # ~200 lines from main()
-├── doc_audit.py     # ~200 lines from main()
-└── search_cmd.py    # ~100 lines from main()
++-- dae_init.py      # ~200 lines from main()
++-- doc_audit.py     # ~200 lines from main()
++-- search_cmd.py    # ~100 lines from main()
 ```
 
 ### Phase 2: Extract Classes
 ```python
 output/
-└── throttler.py     # AgenticOutputThrottler class
++-- throttler.py     # AgenticOutputThrottler class
 
 monitoring/
-└── subroutines.py   # IntelligentSubroutineEngine class
++-- subroutines.py   # IntelligentSubroutineEngine class
 ```
 
 ### Phase 3: Split HoloIndex
 ```python
 core/
-├── search.py        # Search logic
-├── indexing.py      # Indexing logic
-└── cache.py         # Cache management
++-- search.py        # Search logic
++-- indexing.py      # Indexing logic
++-- cache.py         # Cache management
 ```
 
 ### Result

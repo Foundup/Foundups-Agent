@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Conversation Log Cleanup Utility
 
 Cleanup script for conversation logs - removes duplicates and organizes with new naming convention.
@@ -32,7 +48,7 @@ import json
 def cleanup_conversation_logs():
     """Clean up duplicate conversation logs and organize with new naming convention."""
     
-    print("🧹 Starting conversation log cleanup...")
+    print("[U+1F9F9] Starting conversation log cleanup...")
     
     # Define directories
     memory_dir = "memory"
@@ -40,7 +56,7 @@ def cleanup_conversation_logs():
     backup_dir = os.path.join(memory_dir, "backup_old_logs")
     
     if not os.path.exists(conversations_dir):
-        print("❌ No conversations directory found")
+        print("[FAIL] No conversations directory found")
         return
     
     # Create backup directory
@@ -49,7 +65,7 @@ def cleanup_conversation_logs():
     # Get all conversation files
     conversation_files = glob.glob(os.path.join(conversations_dir, "*.txt"))
     
-    print(f"📁 Found {len(conversation_files)} conversation files")
+    print(f"[U+1F4C1] Found {len(conversation_files)} conversation files")
     
     # Categorize files
     stream_files = []
@@ -72,14 +88,14 @@ def cleanup_conversation_logs():
             # Unknown format
             old_format_files.append(file_path)
     
-    print(f"📊 File categorization:")
+    print(f"[DATA] File categorization:")
     print(f"  - Stream files (new format): {len(stream_files)}")
     print(f"  - Daily summary files: {len(daily_files)}")
     print(f"  - Old format files: {len(old_format_files)}")
     
     # Move old format files to backup
     if old_format_files:
-        print(f"📦 Moving {len(old_format_files)} old format files to backup...")
+        print(f"[BOX] Moving {len(old_format_files)} old format files to backup...")
         for file_path in old_format_files:
             filename = os.path.basename(file_path)
             backup_path = os.path.join(backup_dir, filename)
@@ -87,7 +103,7 @@ def cleanup_conversation_logs():
             print(f"  Moved: {filename}")
     
     # Check for duplicate content in remaining files
-    print("🔍 Checking for duplicate content...")
+    print("[SEARCH] Checking for duplicate content...")
     
     file_hashes = {}
     duplicates = []
@@ -106,11 +122,11 @@ def cleanup_conversation_logs():
                 file_hashes[content_hash] = file_path
                 
         except Exception as e:
-            print(f"⚠️ Error reading {file_path}: {e}")
+            print(f"[U+26A0]️ Error reading {file_path}: {e}")
     
     # Handle duplicates
     if duplicates:
-        print(f"🗑️ Found {len(duplicates)} duplicate files:")
+        print(f"[U+1F5D1]️ Found {len(duplicates)} duplicate files:")
         for duplicate_path, original_path in duplicates:
             duplicate_name = os.path.basename(duplicate_path)
             original_name = os.path.basename(original_path)
@@ -121,20 +137,20 @@ def cleanup_conversation_logs():
             # Move duplicate to backup
             backup_path = os.path.join(backup_dir, f"duplicate_{duplicate_name}")
             shutil.move(duplicate_path, backup_path)
-            print(f"  → Moved duplicate to backup")
+            print(f"  -> Moved duplicate to backup")
     else:
-        print("✅ No duplicates found")
+        print("[OK] No duplicates found")
     
     # Show final summary
     remaining_files = glob.glob(os.path.join(conversations_dir, "*.txt"))
-    print(f"\n📋 Cleanup Summary:")
+    print(f"\n[CLIPBOARD] Cleanup Summary:")
     print(f"  - Files remaining: {len(remaining_files)}")
     print(f"  - Files backed up: {len(old_format_files) + len(duplicates)}")
     print(f"  - Backup location: {backup_dir}")
     
     # Show current file structure
     if remaining_files:
-        print(f"\n📁 Current conversation files:")
+        print(f"\n[U+1F4C1] Current conversation files:")
         for file_path in sorted(remaining_files):
             filename = os.path.basename(file_path)
             file_size = os.path.getsize(file_path)
@@ -143,26 +159,26 @@ def cleanup_conversation_logs():
 def show_conversation_structure():
     """Show the current conversation log structure."""
     
-    print("\n📊 Current Conversation Log Structure:")
+    print("\n[DATA] Current Conversation Log Structure:")
     print("=" * 50)
     
     conversations_dir = os.path.join("memory", "conversations")
     
     if not os.path.exists(conversations_dir):
-        print("❌ No conversations directory found")
+        print("[FAIL] No conversations directory found")
         return
     
     files = glob.glob(os.path.join(conversations_dir, "*.txt"))
     
     if not files:
-        print("📭 No conversation files found")
+        print("[U+1F4ED] No conversation files found")
         return
     
     # Group by type
     stream_files = [f for f in files if not os.path.basename(f).startswith("daily_summary_")]
     daily_files = [f for f in files if os.path.basename(f).startswith("daily_summary_")]
     
-    print(f"📺 Stream-specific logs ({len(stream_files)}):")
+    print(f"[U+1F4FA] Stream-specific logs ({len(stream_files)}):")
     for file_path in sorted(stream_files):
         filename = os.path.basename(file_path)
         file_size = os.path.getsize(file_path)
@@ -170,7 +186,7 @@ def show_conversation_structure():
         print(f"  - {filename}")
         print(f"    Size: {file_size} bytes | Modified: {mod_time.strftime('%Y-%m-%d %H:%M:%S')}")
     
-    print(f"\n📅 Daily summary logs ({len(daily_files)}):")
+    print(f"\n[U+1F4C5] Daily summary logs ({len(daily_files)}):")
     for file_path in sorted(daily_files):
         filename = os.path.basename(file_path)
         file_size = os.path.getsize(file_path)
@@ -179,7 +195,7 @@ def show_conversation_structure():
         print(f"    Size: {file_size} bytes | Modified: {mod_time.strftime('%Y-%m-%d %H:%M:%S')}")
 
 if __name__ == "__main__":
-    print("🚀 FoundUps Agent - Conversation Log Cleanup")
+    print("[ROCKET] FoundUps Agent - Conversation Log Cleanup")
     print("=" * 50)
     
     # Show current structure
@@ -187,12 +203,12 @@ if __name__ == "__main__":
     
     # Ask for confirmation
     print("\n" + "=" * 50)
-    response = input("🤔 Do you want to proceed with cleanup? (y/N): ").strip().lower()
+    response = input("[U+1F914] Do you want to proceed with cleanup? (y/N): ").strip().lower()
     
     if response in ['y', 'yes']:
         cleanup_conversation_logs()
         print("\n" + "=" * 50)
         show_conversation_structure()
-        print("\n✅ Cleanup completed!")
+        print("\n[OK] Cleanup completed!")
     else:
-        print("❌ Cleanup cancelled") 
+        print("[FAIL] Cleanup cancelled") 

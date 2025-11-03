@@ -1,6 +1,6 @@
 # YouTube Shorts Super Chat Monetization
 
-**Status**: ✅ Implementation Complete
+**Status**: [OK] Implementation Complete
 **Date**: 2025-10-05
 **Module**: `modules/communication/youtube_shorts/`
 
@@ -24,9 +24,9 @@ This creates a **revenue-generating monetization model** while providing exclusi
    Message: "Cherry blossoms in Tokyo"
 
 2. Bot immediately responds:
-   "@User 💰 Thank you for the $25.00 Super Chat!
+   "@User [U+1F4B0] Thank you for the $25.00 Super Chat!
     Creating YouTube Short for: 'Cherry blossoms in Tokyo'
-    | This will take 1-2 minutes... 🎥✨"
+    | This will take 1-2 minutes... [CAMERA][U+2728]"
 
 3. Background: Veo 3 generates 30-second AI video ($12 cost)
 
@@ -39,19 +39,19 @@ This creates a **revenue-generating monetization model** while providing exclusi
 
 ```
 YouTube Live Stream
-    ↓ User sends $25 Super Chat
+    v User sends $25 Super Chat
 YouTube API Event (superChatEvent)
-    ↓ amountMicros: 25000000, userComment: "Cherry blossoms in Tokyo"
+    v amountMicros: 25000000, userComment: "Cherry blossoms in Tokyo"
 chat_poller.py (modules/communication/livechat/src/)
-    ↓ Detects event, converts micros → $25 USD
+    v Detects event, converts micros -> $25 USD
 message_processor.py
-    ↓ Routes super_chat_event to Shorts handler
+    v Routes super_chat_event to Shorts handler
 chat_commands.py (modules/communication/youtube_shorts/src/)
-    ↓ Checks: $25 ≥ $20 ✅
-    ↓ Extract topic: "Cherry blossoms in Tokyo"
+    v Checks: $25 [GREATER_EQUAL] $20 [OK]
+    v Extract topic: "Cherry blossoms in Tokyo"
 shorts_orchestrator.py
-    ↓ veo3_generator.py → Generate 30s video
-    ↓ youtube_uploader.py → Upload to channel
+    v veo3_generator.py -> Generate 30s video
+    v youtube_uploader.py -> Upload to channel
 Bot Response Posted to Chat
 ```
 
@@ -146,18 +146,18 @@ def handle_super_chat_short(self, donor_name, donor_id, amount_usd, message):
     # Extract topic from message
     topic = message.strip()
     if not topic:
-        return f"@{donor_name} 💰 Please include video topic in message!"
+        return f"@{donor_name} [U+1F4B0] Please include video topic in message!"
 
     # Check concurrent generation
     if self.generating:
-        return f"@{donor_name} 💰 Thank you! Short in progress..."
+        return f"@{donor_name} [U+1F4B0] Thank you! Short in progress..."
 
     # Start background generation
     self.generating = True
     thread = threading.Thread(target=self._generate_short, args=(topic,))
     thread.start()
 
-    return f"@{donor_name} 💰 Thank you for ${amount_usd:.2f}! Creating Short: '{topic}'..."
+    return f"@{donor_name} [U+1F4B0] Thank you for ${amount_usd:.2f}! Creating Short: '{topic}'..."
 ```
 
 ### YouTube API Structure
@@ -228,7 +228,7 @@ def handle_super_chat_short(self, donor_name, donor_id, amount_usd, message):
 
 **Pre-Live Testing**:
 - [ ] Test with simulated Super Chat events ($15, $20, $25, $50)
-- [ ] Verify amount conversion (micros → USD)
+- [ ] Verify amount conversion (micros -> USD)
 - [ ] Test topic extraction from userComment field
 - [ ] Confirm concurrent generation blocking
 - [ ] Test empty topic rejection
@@ -419,7 +419,7 @@ from modules.communication.livechat.src.message_processor import MessageProcesso
 
 **Event-Driven Architecture**:
 ```
-LiveChat → Detect Event → Route to Handler → Generate Short
+LiveChat -> Detect Event -> Route to Handler -> Generate Short
           (existing)     (new routing)       (new module)
 ```
 

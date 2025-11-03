@@ -8,7 +8,7 @@
 ## New Modules Created
 
 ### 1. EmojiResponseLimiter (`emoji_response_limiter.py`)
-Prevents spam from emoji triggers (✊✋🖐)
+Prevents spam from emoji triggers ([U+270A][U+270B][U+1F590])
 
 **Features:**
 - Per-user limits: 3/hour, 10/day
@@ -59,7 +59,7 @@ Intelligent polling based on quota usage
 if self.emoji_limiter:
     should_respond, reason = self.emoji_limiter.should_respond_to_emoji(user_id, username)
     if not should_respond:
-        logger.info(f"🚫 Emoji blocked: {reason}")
+        logger.info(f"[FORBIDDEN] Emoji blocked: {reason}")
         return None
 ```
 
@@ -69,7 +69,7 @@ if self.emoji_limiter:
 if self.quota_poller:
     should_poll, wait_time = self.quota_poller.should_poll()
     if not should_poll:
-        logger.critical("🚨 QUOTA EXHAUSTED")
+        logger.critical("[ALERT] QUOTA EXHAUSTED")
         break
 ```
 

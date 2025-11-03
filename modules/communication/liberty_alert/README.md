@@ -164,7 +164,7 @@ Network Growth:
 
 ### What We Protect Against
 - Surveillance vehicle tracking
-- Immigration enforcement coordination
+- Authority surveillance coordination
 - Community targeting patterns
 - Data harvesting by authorities
 
@@ -184,13 +184,13 @@ Network Growth:
 
 ```
 modules/
-├── communication/
-│   ├── liberty_mesh/         # Mesh networking core
-│   └── liberty_alerts/      # Alert broadcast system
-├── platform_integration/
-│   └── liberty_maps/         # Leaflet + OSM integration
-└── ai_intelligence/
-    └── liberty_voice/       # AI voice synthesis
++-- communication/
+[U+2502]   +-- liberty_mesh/         # Mesh networking core
+[U+2502]   +-- liberty_alerts/      # Alert broadcast system
++-- platform_integration/
+[U+2502]   +-- liberty_maps/         # Leaflet + OSM integration
++-- ai_intelligence/
+    +-- liberty_voice/       # AI voice synthesis
 ```
 
 ## License

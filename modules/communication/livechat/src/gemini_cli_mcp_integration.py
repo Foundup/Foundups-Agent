@@ -201,7 +201,7 @@ class GeminiCLIMCPIntegrator:
             'average_improvement': sum([c['improvement_factor'] for c in capability_matrix.values()]) / len(capability_matrix),
             'key_insights': [
                 'MCP integration transforms Gemini CLI from chat interface to development orchestrator',
-                'Base capabilities: 3/8 → Enhanced capabilities: 8/8 (100% coverage)',
+                'Base capabilities: 3/8 -> Enhanced capabilities: 8/8 (100% coverage)',
                 'Average capability improvement: 3.5x through MCP specialization',
                 'Semantic search enables 10x faster codebase understanding',
                 'Automated compliance checking prevents WSP violations before they occur'
@@ -221,7 +221,7 @@ class GeminiCLIMCPIntegrator:
                     'Execute /refactor surgical_refactor_analysis for optimization opportunities'
                 ],
                 'tokens_saved': 1500,
-                'time_equivalent': '2 hours manual exploration → 15 minutes with MCP'
+                'time_equivalent': '2 hours manual exploration -> 15 minutes with MCP'
             },
 
             {
@@ -233,7 +233,7 @@ class GeminiCLIMCPIntegrator:
                     'Apply /refactor dae_cube_mapping for architectural compliance'
                 ],
                 'tokens_saved': 2000,
-                'time_equivalent': '1 hour compliance checking → 5 minutes automated'
+                'time_equivalent': '1 hour compliance checking -> 5 minutes automated'
             },
 
             {
@@ -245,7 +245,7 @@ class GeminiCLIMCPIntegrator:
                     'Apply /refactor performance_optimization with learned templates'
                 ],
                 'tokens_saved': 1800,
-                'time_equivalent': '3 hours performance analysis → 20 minutes automated'
+                'time_equivalent': '3 hours performance analysis -> 20 minutes automated'
             },
 
             {
@@ -257,7 +257,7 @@ class GeminiCLIMCPIntegrator:
                     'Execute /orchestrate performance_monitoring for optimization'
                 ],
                 'tokens_saved': 2500,
-                'time_equivalent': '4 hours coordination → 30 minutes intelligent orchestration'
+                'time_equivalent': '4 hours coordination -> 30 minutes intelligent orchestration'
             }
         ]
 
@@ -276,8 +276,8 @@ class GeminiCLIMCPIntegrator:
 
         report = {
             'executive_summary': {
-                'transformation': 'Gemini CLI: Chat Interface → Foundups Development Orchestrator',
-                'capability_improvement': f'{capability_analysis["total_base_capabilities"]}/8 → {capability_analysis["total_enhanced_capabilities"]}/8 capabilities',
+                'transformation': 'Gemini CLI: Chat Interface -> Foundups Development Orchestrator',
+                'capability_improvement': f'{capability_analysis["total_base_capabilities"]}/8 -> {capability_analysis["total_enhanced_capabilities"]}/8 capabilities',
                 'token_efficiency': f'{total_tokens_saved} tokens saved across {total_workflows} workflows',
                 'mcp_servers': len(self.mcp_servers),
                 'integration_mcp_tools': sum(len(server['tools']) for server in self.mcp_servers.values())
@@ -413,7 +413,7 @@ def main():
         print(f'  • {insight}')
 
     print()
-    print('[READY FOR EXECUTION] Gemini CLI → Foundups Development Orchestrator')
+    print('[READY FOR EXECUTION] Gemini CLI -> Foundups Development Orchestrator')
     print('0102 architects | MCP servers orchestrate | Development accelerates')
 
 if __name__ == "__main__":

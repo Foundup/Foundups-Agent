@@ -67,9 +67,9 @@ hooks:
 ### 5. MCP (Model Context Protocol)
 **Current Claude Code**: External data integration
 **WRE Enhancement**:
-- DAE↔DAE communication protocol
+- DAE[U+2194]DAE communication protocol
 - WSP 21 envelope system
-- 0102↔0102 autonomous exchange
+- 0102[U+2194]0102 autonomous exchange
 ```python
 # WSP 21: DAE communication protocol
 class WREProtocol:
@@ -90,7 +90,7 @@ class WREProtocol:
    - Pattern-based responses
 
 2. **DAE Agent System**
-   - Task tool → DAE spawner
+   - Task tool -> DAE spawner
    - Each DAE as autonomous agent
    - Sub-agents as enhancement tools
 
@@ -109,8 +109,8 @@ class WREProtocol:
    - ModLog update hooks
 
 2. **DAE Communication**
-   - MCP → WSP 21 envelopes
-   - 0102↔0102 protocol
+   - MCP -> WSP 21 envelopes
+   - 0102[U+2194]0102 protocol
    - Recursive exchange (WSP 48)
 
 3. **Todo Integration**
@@ -224,7 +224,7 @@ wre todo --objective="Build LinkedIn integration" --wsp37
   },
   "dae_config": {
     "spawn_mode": "autonomous",
-    "evolution": "POC→Proto→MVP"
+    "evolution": "POC->Proto->MVP"
   }
 }
 ```

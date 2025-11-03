@@ -1,0 +1,25 @@
+{
+  "mission": "anthropomorphic_time_cleanup",
+  "violations_found": 24,
+  "fixes_approved": 24,
+  "token_conversions": {
+    "hour": 1000,
+    "hr": 1000,
+    "hrs": 1000,
+    "day": 8000,
+    "week": 40000,
+    "month": 160000
+  },
+  "pattern": "Replace 'N hours/weeks' with '~NK tokens'",
+  "example": "7-8 hours \u2192 ~7.5K tokens",
+  "agents_used": [
+    "gemma",
+    "qwen",
+    "0102"
+  ],
+  "wsp_compliance": [
+    "WSP 77",
+    "WSP 50",
+    "WSP 22"
+  ]
+}

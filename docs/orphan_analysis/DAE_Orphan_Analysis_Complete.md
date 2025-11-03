@@ -16,13 +16,13 @@
 ```yaml
 Architecture Pattern:
   main.py (Entry Point)
-    ├─> 35 Shared Infrastructure Modules
-    │   ├─> communication/* (livechat, youtube_shorts, liberty_alert)
-    │   ├─> platform_integration/* (stream_resolver, youtube_auth, social_media)
-    │   ├─> infrastructure/* (database, instance_lock, git_push_dae)
-    │   └─> holo_index/* (qwen_advisor, adaptive_learning, violation_tracker)
-    │
-    └─> 7 DAE Entry Points (all use same 35 modules):
+    +-> 35 Shared Infrastructure Modules
+    [U+2502]   +-> communication/* (livechat, youtube_shorts, liberty_alert)
+    [U+2502]   +-> platform_integration/* (stream_resolver, youtube_auth, social_media)
+    [U+2502]   +-> infrastructure/* (database, instance_lock, git_push_dae)
+    [U+2502]   +-> holo_index/* (qwen_advisor, adaptive_learning, violation_tracker)
+    [U+2502]
+    +-> 7 DAE Entry Points (all use same 35 modules):
         1. YouTube DAE (monitor_youtube)
         2. HoloDAE (holodae_loop)
         3. AMO DAE (amo_loop)
@@ -73,7 +73,7 @@ Orphaned Modules: 464 modules exist but are NOT imported by main.py or any of it
 
 **Why Orphaned**: Test files are executed directly by pytest, not imported by production code.
 
-**Status**: ✅ EXPECTED - Test modules should be orphaned from production execution graph.
+**Status**: [OK] EXPECTED - Test modules should be orphaned from production execution graph.
 
 ### Category 3: General Orphans (403 modules)
 

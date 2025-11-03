@@ -1,7 +1,7 @@
 """
 Test Super Chat Integration for YouTube Shorts
 
-Tests the complete Super Chat → Shorts creation pipeline without
+Tests the complete Super Chat -> Shorts creation pipeline without
 requiring live YouTube streams.
 
 WSP 5/6 Compliance: Test coverage for Super Chat monetization
@@ -60,20 +60,20 @@ def test_super_chat_detection():
     ]
 
     for event in events:
-        print(f"\n💰 Super Chat: ${event['amount_usd']:.2f}")
+        print(f"\n[U+1F4B0] Super Chat: ${event['amount_usd']:.2f}")
         print(f"   Donor: {event['donor_name']}")
         print(f"   Topic: {event['message']}")
         print(f"   Micros: {event['amount_micros']:,}")
         print(f"   Tier: {event['tier']}")
 
-    print("\n✅ Event structure validation passed")
+    print("\n[OK] Event structure validation passed")
     return True
 
 
 def test_amount_conversion():
-    """Test 2: Verify micros → USD conversion"""
+    """Test 2: Verify micros -> USD conversion"""
     print("\n" + "="*60)
-    print("TEST 2: Amount Conversion (micros → USD)")
+    print("TEST 2: Amount Conversion (micros -> USD)")
     print("="*60)
 
     test_cases = [
@@ -87,8 +87,8 @@ def test_amount_conversion():
     passed = True
     for micros, expected_usd in test_cases:
         actual_usd = micros / 1_000_000
-        status = "✅" if actual_usd == expected_usd else "❌"
-        print(f"{status} {micros:,} micros → ${actual_usd:.2f} (expected ${expected_usd:.2f})")
+        status = "[OK]" if actual_usd == expected_usd else "[FAIL]"
+        print(f"{status} {micros:,} micros -> ${actual_usd:.2f} (expected ${expected_usd:.2f})")
         if actual_usd != expected_usd:
             passed = False
 
@@ -123,7 +123,7 @@ def test_threshold_check():
         )
 
         processed = response is not None
-        status = "✅" if processed == should_process else "❌"
+        status = "[OK]" if processed == should_process else "[FAIL]"
         result = "Processed" if processed else "Rejected"
 
         print(f"{status} ${amount:.2f} ({description}): {result}")
@@ -149,7 +149,7 @@ def test_topic_extraction():
         ("Mount Fuji at sunrise", True, "Valid topic"),
         ("", False, "Empty topic"),
         ("   ", False, "Whitespace only"),
-        ("🌸 Sakura season 🌸", True, "Topic with emoji"),
+        ("[U+1F338] Sakura season [U+1F338]", True, "Topic with emoji"),
     ]
 
     passed = True
@@ -162,7 +162,7 @@ def test_topic_extraction():
         )
 
         accepted = response is not None and "Please include" not in response
-        status = "✅" if accepted == should_accept else "❌"
+        status = "[OK]" if accepted == should_accept else "[FAIL]"
         result = "Accepted" if accepted else "Rejected"
 
         print(f"{status} '{message}' ({description}): {result}")
@@ -203,8 +203,8 @@ def test_concurrent_generation_lock():
     first_started = response1 and "Creating" in response1
     second_blocked = response2 and "in progress" in response2
 
-    print(f"{'✅' if first_started else '❌'} First request started generation")
-    print(f"{'✅' if second_blocked else '❌'} Second request blocked")
+    print(f"{'[OK]' if first_started else '[FAIL]'} First request started generation")
+    print(f"{'[OK]' if second_blocked else '[FAIL]'} Second request blocked")
 
     # Reset state
     handler.generating = False
@@ -232,8 +232,8 @@ def test_message_processor_routing():
         routed_correctly = result is not None
         has_response = "response" in result if result else False
 
-        print(f"{'✅' if routed_correctly else '❌'} Event routed to handler")
-        print(f"{'✅' if has_response else '❌'} Response generated")
+        print(f"{'[OK]' if routed_correctly else '[FAIL]'} Event routed to handler")
+        print(f"{'[OK]' if has_response else '[FAIL]'} Response generated")
 
         if result:
             print(f"\nResult: {result}")
@@ -241,7 +241,7 @@ def test_message_processor_routing():
         return routed_correctly
 
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[FAIL] Error: {e}")
         return False
 
 
@@ -251,7 +251,7 @@ def test_full_pipeline_dry_run():
     print("TEST 7: Full Pipeline Dry Run")
     print("="*60)
 
-    print("\n📋 Simulating complete Super Chat flow:")
+    print("\n[CLIPBOARD] Simulating complete Super Chat flow:")
     print("   1. User sends $25 Super Chat")
     print("   2. YouTube API sends superChatEvent")
     print("   3. chat_poller detects event")
@@ -262,14 +262,14 @@ def test_full_pipeline_dry_run():
 
     # Step 1-2: Create event
     event = create_mock_super_chat_event(25.00, "Cherry blossoms in Tokyo", "JohnDoe")
-    print(f"\n✅ Step 1-2: Super Chat event created")
+    print(f"\n[OK] Step 1-2: Super Chat event created")
     print(f"   Amount: ${event['amount_usd']:.2f}")
     print(f"   Topic: {event['message']}")
 
     # Step 3: chat_poller detection (simulated)
-    print(f"✅ Step 3: Event detected by chat_poller")
+    print(f"[OK] Step 3: Event detected by chat_poller")
     print(f"   Type: {event['type']}")
-    print(f"   Micros: {event['amount_micros']:,} → ${event['amount_usd']:.2f}")
+    print(f"   Micros: {event['amount_micros']:,} -> ${event['amount_usd']:.2f}")
 
     # Step 4: Route to handler
     try:
@@ -277,7 +277,7 @@ def test_full_pipeline_dry_run():
         handler = ShortsCommandHandler()
         handler.generating = False
 
-        print(f"✅ Step 4: Routed to Shorts handler")
+        print(f"[OK] Step 4: Routed to Shorts handler")
 
         # Step 5: Validate and prepare
         response = handler.handle_super_chat_short(
@@ -288,7 +288,7 @@ def test_full_pipeline_dry_run():
         )
 
         if response:
-            print(f"✅ Step 5: Validation passed")
+            print(f"[OK] Step 5: Validation passed")
             print(f"   Response: {response}")
             print(f"\n⏸️ Step 6-7: Skipped (dry run)")
             print(f"   Would generate: 30s video with Veo 3 ($12 cost)")
@@ -300,11 +300,11 @@ def test_full_pipeline_dry_run():
 
             return True
         else:
-            print(f"❌ Step 5: Validation failed")
+            print(f"[FAIL] Step 5: Validation failed")
             return False
 
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[FAIL] Error: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -333,7 +333,7 @@ def run_all_tests():
         try:
             results[test_name] = test_func()
         except Exception as e:
-            print(f"\n❌ {test_name} FAILED with exception: {e}")
+            print(f"\n[FAIL] {test_name} FAILED with exception: {e}")
             import traceback
             traceback.print_exc()
             results[test_name] = False
@@ -347,7 +347,7 @@ def run_all_tests():
     total = len(results)
 
     for test_name, result in results.items():
-        status = "✅ PASSED" if result else "❌ FAILED"
+        status = "[OK] PASSED" if result else "[FAIL] FAILED"
         print(f"{status}: {test_name}")
 
     print(f"\n{'='*60}")

@@ -1,0 +1,923 @@
+{
+  "collection": "docs",
+  "doc_index_version": "1.0",
+  "documents": [
+    {
+      "doc_type": "other",
+      "hash_sha256": "32a2a266adc21205b930b561c78f30c6338bdc11c30309e4713ce91329e489b7",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": []
+      },
+      "module_hint": "docs_root",
+      "path": "docs/AUTONOMOUS_CLEANUP_VALIDATOR_0102.md",
+      "size_bytes": 17982,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 15",
+        "WSP 50",
+        "WSP 64",
+        "WSP 83"
+      ]
+    },
+    {
+      "doc_type": "decision_record",
+      "hash_sha256": "165083678596edb0b848ae9e3f17e6f7468a12677cde32d4c8b392bf98df156d",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "docs/SKILLS_FIRST_PRINCIPLES_OUTPUT_DESIGN.md",
+          ".claude/skills/qwen_roadmap_auditor_prototype/SKILL.md",
+          "modules/ai_intelligence/agent_permissions/ModLog.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/DATABASE_CONSOLIDATION_DECISION.md",
+      "size_bytes": 7486,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 50",
+        "WSP 72",
+        "WSP 77",
+        "WSP 91"
+      ]
+    },
+    {
+      "doc_type": "architecture",
+      "hash_sha256": "5cf210eb950f7cfdcf3dc0975ed21d711a47d94782b5d4e273162f1ad8d18337",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "ModLog.md",
+          "modules/ai_intelligence/agent_permissions/ModLog.md",
+          "modules/ai_intelligence/agent_permissions/README.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/GRADUATED_AUTONOMY_DESIGN_UPGRADES.md",
+      "size_bytes": 47207,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 22",
+        "WSP 50"
+      ]
+    },
+    {
+      "doc_type": "summary",
+      "hash_sha256": "240c22ca38d76f6d27c30745bfddbbbdbd8ebd982df3ef35e8fefd3b62d1b760",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "ModLog.md",
+          "modules/ai_intelligence/agent_permissions/ModLog.md",
+          "modules/ai_intelligence/agent_permissions/README.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/GRADUATED_AUTONOMY_SUMMARY.md",
+      "size_bytes": 8374,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 49"
+      ]
+    },
+    {
+      "doc_type": "architecture",
+      "hash_sha256": "487057239b8937670248a59c5ab029ee6a3d7142dcf79b1ce29a52a285054f05",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "ModLog.md",
+          "docs/GRADUATED_AUTONOMY_DESIGN_UPGRADES.md",
+          "docs/GRADUATED_AUTONOMY_SUMMARY.md",
+          ".claude/skills/qwen_roadmap_auditor_prototype/SKILL.md",
+          "modules/ai_intelligence/agent_permissions/ModLog.md",
+          "modules/ai_intelligence/agent_permissions/README.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/GRADUATED_AUTONOMY_SYSTEM_DESIGN.md",
+      "size_bytes": 20230,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 3",
+        "WSP 49",
+        "WSP 54",
+        "WSP 77",
+        "WSP 91"
+      ]
+    },
+    {
+      "doc_type": "architecture",
+      "hash_sha256": "4379ffefbd4bd8dff160fdb4d9f5c5eebab7ae2b5f16de9d392cfa0d9f2d1f3d",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": []
+      },
+      "module_hint": "docs_root",
+      "path": "docs/KNOWLEDGE_ARCHITECTURE_FIRST_PRINCIPLES.md",
+      "size_bytes": 16195,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 1",
+        "WSP 15",
+        "WSP 31",
+        "WSP 49",
+        "WSP 60",
+        "WSP 85",
+        "WSP 91"
+      ]
+    },
+    {
+      "doc_type": "protocol",
+      "hash_sha256": "b1363b9751195f729f945c4a53641e3ef5b60b48d0a65e05b9ec4a0d43909896",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "holo_index/qwen_advisor/ModLog.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/SEARCH_PROTOCOL.md",
+      "size_bytes": 4507,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 49"
+      ]
+    },
+    {
+      "doc_type": "architecture",
+      "hash_sha256": "6388ed8788607476d455a21a675c5b6e987d32f8b72362325807f3df46bb703e",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "docs/TRAINING_WARDROBE_SYSTEM_COMPLETE.md",
+          "foundups-mcp-p1/servers/ai_overseer_mcp/README.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/SKILLS_FIRST_PRINCIPLES_OUTPUT_DESIGN.md",
+      "size_bytes": 14283,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 15",
+        "WSP 77",
+        "WSP 96"
+      ]
+    },
+    {
+      "doc_type": "architecture",
+      "hash_sha256": "20fb3cf44f26a2aac5313eb7de1d84a9f1652940ceaace344ab64bb6452e7e7d",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": []
+      },
+      "module_hint": "docs_root",
+      "path": "docs/THREE_STATE_ARCHITECTURE_COMPLETE.md",
+      "size_bytes": 14482,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 22",
+        "WSP 3",
+        "WSP 38",
+        "WSP 49",
+        "WSP 60",
+        "WSP 76"
+      ]
+    },
+    {
+      "doc_type": "other",
+      "hash_sha256": "e7a3db0ed30abb8a073a8e58d63139a37f0b97215c22cab8cb72f2aa6bbd17d8",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": []
+      },
+      "module_hint": "docs_root",
+      "path": "docs/TRAINING_WARDROBE_SYSTEM_COMPLETE.md",
+      "size_bytes": 14802,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 11",
+        "WSP 15",
+        "WSP 22",
+        "WSP 3",
+        "WSP 50",
+        "WSP 54",
+        "WSP 77",
+        "WSP 96"
+      ]
+    },
+    {
+      "doc_type": "analysis",
+      "hash_sha256": "e51e0d6efab8829f5a998997afa92b1814d049e765af7e5fcd8571aa553e9a0c",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": []
+      },
+      "module_hint": "docs_root",
+      "path": "docs/UNICODE_EMOJI_ANALYSIS.md",
+      "size_bytes": 8336,
+      "status": "active",
+      "wsp_refs": []
+    },
+    {
+      "doc_type": "other",
+      "hash_sha256": "352b4ad1e97dacfb7229467d1fad9dd1d62256686d8200793857c3e7c5f5a2ee",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "ModLog.md",
+          "temp/HoloIndex_Document_Classification_MCP_Analysis.md",
+          "modules/infrastructure/doc_dae/ModLog.md",
+          "modules/infrastructure/doc_dae/README.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/foundups_vision.md",
+      "size_bytes": 19228,
+      "status": "active",
+      "wsp_refs": []
+    },
+    {
+      "doc_type": "other",
+      "hash_sha256": "661f0a25143b8b47ad4fa25eb70156405b29029a3f76a09ebb4309f2ad6d9f1c",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "docs/SKILLS_FIRST_PRINCIPLES_OUTPUT_DESIGN.md",
+          ".claude/skills/qwen_roadmap_auditor_prototype/SKILL.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/mcp/AI_COLLABORATIVE_SOCIAL_POSTING_VISION.md",
+      "size_bytes": 9148,
+      "status": "active",
+      "wsp_refs": []
+    },
+    {
+      "doc_type": "architecture",
+      "hash_sha256": "3320591a8a42f8aeb5b628bdc03998d027b97beab3b6034cebde4446102d1e93",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          ".claude/skills/qwen_roadmap_auditor_prototype/SKILL.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/mcp/AI_Delegation_Pipeline_Architecture.md",
+      "size_bytes": 9479,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 77",
+        "WSP 84",
+        "WSP 90"
+      ]
+    },
+    {
+      "doc_type": "other",
+      "hash_sha256": "eafae1a8493a423632f174408f46d3bc5f9dd5fbd2c76453cb26e53fd169ceb1",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          ".claude/skills/qwen_roadmap_auditor_prototype/SKILL.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/mcp/AI_OVERSEER_AUTONOMOUS_MONITORING.md",
+      "size_bytes": 6672,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 15",
+        "WSP 50",
+        "WSP 77",
+        "WSP 96"
+      ]
+    },
+    {
+      "doc_type": "other",
+      "hash_sha256": "7947cd5561d65e7b27e74b1b4e7b14b30f5f1ab7a37da8bff618bee05eadf89d",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": []
+      },
+      "module_hint": "mcp_integration",
+      "path": "docs/mcp/Gemini_CLI_MCP_Integration.md",
+      "size_bytes": 19561,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 31",
+        "WSP 39",
+        "WSP 75",
+        "WSP 93",
+        "WSP 96"
+      ]
+    },
+    {
+      "doc_type": "other",
+      "hash_sha256": "2cc6eee91cf3c02bd87eb438f24df350249e3bd15f446730accceef2a69c5e6d",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": []
+      },
+      "module_hint": "mcp_integration",
+      "path": "docs/mcp/Gemini_CLI_MCP_Phase1_Install_Plan.md",
+      "size_bytes": 21513,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 31",
+        "WSP 64",
+        "WSP 75",
+        "WSP 96"
+      ]
+    },
+    {
+      "doc_type": "summary",
+      "hash_sha256": "715ec5ef441ae4600e333a7204ba851a62f943db3ccb6a3113ea4adde28f1b29",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          ".claude/skills/qwen_roadmap_auditor_prototype/SKILL.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/mcp/HEALTH_CHECK_SELF_HEALING_SUMMARY.md",
+      "size_bytes": 13294,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 22",
+        "WSP 46",
+        "WSP 50",
+        "WSP 77",
+        "WSP 80",
+        "WSP 90"
+      ]
+    },
+    {
+      "doc_type": "other",
+      "hash_sha256": "328fc55e3cdb99677a58e40c6967ac24c0c36c8d95d38f6180943cdc92cec20e",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "docs/mcp/MCP_Colab_Automation_Summary.md",
+          "holo_index/training/README.md"
+        ]
+      },
+      "module_hint": "mcp_integration",
+      "path": "docs/mcp/MCP_Colab_Automation_Enhancement_Plan.md",
+      "size_bytes": 24233,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 35",
+        "WSP 77",
+        "WSP 80",
+        "WSP 96"
+      ]
+    },
+    {
+      "doc_type": "summary",
+      "hash_sha256": "4697fb591e7d145d0a7364cf9a875342419cfb7871e85ce084df5f314ebdd78c",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "holo_index/training/README.md"
+        ]
+      },
+      "module_hint": "mcp_integration",
+      "path": "docs/mcp/MCP_Colab_Automation_Summary.md",
+      "size_bytes": 6582,
+      "status": "active",
+      "wsp_refs": []
+    },
+    {
+      "doc_type": "architecture",
+      "hash_sha256": "55a59718bf17a394d133cc58610d5302b4d1d38a0eed76514c23984b6bba9394",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "ModLog.md",
+          "docs/mcp/MCP_Master_Services.md",
+          "WSP_knowledge/src/WSP_96_MCP_Governance_and_Consensus_Protocol.md"
+        ]
+      },
+      "module_hint": "mcp_integration",
+      "path": "docs/mcp/MCP_DAE_Integration_Architecture.md",
+      "size_bytes": 78428,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 17",
+        "WSP 21",
+        "WSP 48",
+        "WSP 64",
+        "WSP 77",
+        "WSP 80",
+        "WSP 91",
+        "WSP 96"
+      ]
+    },
+    {
+      "doc_type": "other",
+      "hash_sha256": "ef27eddf04b180cad82db4874ab5f34e0f8be7877dcdfa1c36fe4b58091d47e4",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "docs/mcp/MCP_Master_Services.md"
+        ]
+      },
+      "module_hint": "mcp_integration",
+      "path": "docs/mcp/MCP_DAE_Integration_Deep_Dive_0102_Enhanced.md",
+      "size_bytes": 16407,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 13",
+        "WSP 21",
+        "WSP 3",
+        "WSP 39",
+        "WSP 49",
+        "WSP 75",
+        "WSP 80",
+        "WSP 84",
+        "WSP 96"
+      ]
+    },
+    {
+      "doc_type": "other",
+      "hash_sha256": "002674e40453ec8632a73d293935ea746e4f3750b1d6ae5275408eef14184f63",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "docs/SKILLS_FIRST_PRINCIPLES_OUTPUT_DESIGN.md",
+          ".claude/skills/qwen_roadmap_auditor_prototype/SKILL.md",
+          ".claude/skills/qwen_wsp_enhancement/SKILL.md",
+          "archive/skills_legacy_20251020/qwen_wsp_enhancement.md",
+          "docs/mcp/README.md",
+          "docs/mcp/WSP_UPDATE_RECOMMENDATIONS_MCP_FEDERATION.md",
+          "holo_index/docs/QWEN_GEMMA_WSP_ENHANCEMENT_WORKFLOW.md",
+          "modules/infrastructure/dae_infrastructure/foundups_vision_dae/ModLog.md",
+          "modules/infrastructure/dae_infrastructure/foundups_vision_dae/README.md"
+        ]
+      },
+      "module_hint": "mcp_integration",
+      "path": "docs/mcp/MCP_FEDERATED_NERVOUS_SYSTEM.md",
+      "size_bytes": 24404,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 22",
+        "WSP 54",
+        "WSP 60",
+        "WSP 72",
+        "WSP 77",
+        "WSP 80",
+        "WSP 90",
+        "WSP 91",
+        "WSP 96"
+      ]
+    },
+    {
+      "doc_type": "other",
+      "hash_sha256": "ba430833b87eec3bbf73aa99f28161993dba58000d09351a56b46152ddfdf2b9",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "docs/mcp/MCP_Colab_Automation_Enhancement_Plan.md",
+          "docs/mcp/MCP_FEDERATED_NERVOUS_SYSTEM.md",
+          "docs/mcp/README.md",
+          "modules/ai_intelligence/ai_overseer/ModLog.md",
+          "modules/ai_intelligence/ai_overseer/README.md",
+          "modules/infrastructure/foundups_selenium/README.md",
+          "modules/infrastructure/dae_infrastructure/foundups_vision_dae/README.md",
+          "WSP_framework/src/WSP_96_MCP_Governance_and_Consensus_Protocol.md"
+        ]
+      },
+      "module_hint": "mcp_integration",
+      "path": "docs/mcp/MCP_Master_Services.md",
+      "size_bytes": 6869,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 15",
+        "WSP 77",
+        "WSP 80",
+        "WSP 93",
+        "WSP 96"
+      ]
+    },
+    {
+      "doc_type": "other",
+      "hash_sha256": "bfa6f6c91c5e312faab6131dd50307419c1c28a40ef45992fa229f6c2d7bc56e",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "ModLog.md",
+          "holo_index/ModLog.md",
+          "docs/mcp/MCP_Colab_Automation_Enhancement_Plan.md",
+          "docs/mcp/MCP_Master_Services.md",
+          "WSP_framework/src/WSP_35_HoloIndex_Qwen_Advisor_Plan.md",
+          "WSP_framework/src/WSP_80_Cube_Level_DAE_Orchestration_Protocol.md",
+          "WSP_framework/src/WSP_93_CodeIndex_Surgical_Intelligence_Protocol.md"
+        ]
+      },
+      "module_hint": "mcp_integration",
+      "path": "docs/mcp/MCP_Windsurf_Integration_Manifest.md",
+      "size_bytes": 11419,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 35",
+        "WSP 77",
+        "WSP 80",
+        "WSP 93",
+        "WSP 96",
+        "WSP 97"
+      ]
+    },
+    {
+      "doc_type": "readme",
+      "hash_sha256": "679932437404889b18f1309635421f58c73146e4eb1993b6485ef142fe862641",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "CLAUDE.md",
+          "ModLog.md",
+          "WRE_PHASE1_WSP_COMPLIANCE_AUDIT.md",
+          "docs/GRADUATED_AUTONOMY_SYSTEM_DESIGN.md",
+          "docs/KNOWLEDGE_ARCHITECTURE_FIRST_PRINCIPLES.md",
+          "docs/THREE_STATE_ARCHITECTURE_COMPLETE.md",
+          "docs/TRAINING_WARDROBE_SYSTEM_COMPLETE.md",
+          "holo_index/ModLog.md",
+          "holo_index/README.md",
+          "memory/README.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/mcp/README.md",
+      "size_bytes": 5341,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 54",
+        "WSP 77",
+        "WSP 80",
+        "WSP 91",
+        "WSP 96"
+      ]
+    },
+    {
+      "doc_type": "other",
+      "hash_sha256": "94a95242fa5bcf7083dc048a0af33351d5f052ac0d70e26ab4c59ce3133b032b",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "docs/SKILLS_FIRST_PRINCIPLES_OUTPUT_DESIGN.md",
+          ".claude/skills/qwen_roadmap_auditor_prototype/SKILL.md",
+          "docs/mcp/MCP_FEDERATED_NERVOUS_SYSTEM.md",
+          "docs/mcp/README.md",
+          "docs/mcp/WSP_UPDATE_RECOMMENDATIONS_MCP_FEDERATION.md",
+          "modules/infrastructure/dae_infrastructure/foundups_vision_dae/ModLog.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/mcp/SPRINT_4_UI_TARS_STATUS.md",
+      "size_bytes": 13680,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 22",
+        "WSP 50",
+        "WSP 77",
+        "WSP 80"
+      ]
+    },
+    {
+      "doc_type": "other",
+      "hash_sha256": "50c241dd8bd2b5ac52b6cb308b0ece2013d9ea2cb0fbb6f751a2886f29b3b16c",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          ".claude/skills/qwen_roadmap_auditor_prototype/SKILL.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/mcp/Selenium_Run_History_Mission.md",
+      "size_bytes": 4718,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 77",
+        "WSP 90"
+      ]
+    },
+    {
+      "doc_type": "other",
+      "hash_sha256": "2902f7817641cff18f365b4104f4040d29c9ab6ee5e844323a94cc0d68cb761b",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "docs/mcp/MCP_FEDERATED_NERVOUS_SYSTEM.md",
+          "docs/mcp/README.md",
+          "holo_index/docs/QWEN_GEMMA_WSP_ENHANCEMENT_WORKFLOW.md",
+          "modules/infrastructure/dae_infrastructure/foundups_vision_dae/ModLog.md",
+          "modules/infrastructure/dae_infrastructure/foundups_vision_dae/README.md"
+        ]
+      },
+      "module_hint": "mcp_integration",
+      "path": "docs/mcp/WSP_UPDATE_RECOMMENDATIONS_MCP_FEDERATION.md",
+      "size_bytes": 12528,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 32",
+        "WSP 60",
+        "WSP 72",
+        "WSP 77",
+        "WSP 80",
+        "WSP 91",
+        "WSP 96"
+      ]
+    },
+    {
+      "doc_type": "analysis",
+      "hash_sha256": "d00d3e0d1a8149cdf3bbaf4a49271f5eb1f030afab9cc5266bfe7337bb09c664",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": []
+      },
+      "module_hint": "orphan_analysis",
+      "path": "docs/orphan_analysis/DAE_Orphan_Analysis_Complete.md",
+      "size_bytes": 12261,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 3",
+        "WSP 87",
+        "WSP 93"
+      ]
+    },
+    {
+      "doc_type": "summary",
+      "hash_sha256": "6db9254d31a5c0df5c55864d1f600197a6b923808918604069e0b78b01c61e3e",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": []
+      },
+      "module_hint": "orphan_analysis",
+      "path": "docs/orphan_analysis/ORPHAN_ANALYSIS_EXECUTIVE_SUMMARY.md",
+      "size_bytes": 10309,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 22"
+      ]
+    },
+    {
+      "doc_type": "analysis",
+      "hash_sha256": "7f9064a8abb52d110fe41ceb328d4cff81defa145bfcc436021177f3059bef3f",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": []
+      },
+      "module_hint": "orphan_analysis",
+      "path": "docs/orphan_analysis/ORPHAN_BATCH_ANALYSIS_SESSION_COMPLETE.md",
+      "size_bytes": 13495,
+      "status": "active",
+      "wsp_refs": []
+    },
+    {
+      "doc_type": "roadmap",
+      "hash_sha256": "a69a5a5aee9c6e03183230d2ba1b568f8a7c46ab9aabdd7c99f61470ce844645",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "docs/orphan_analysis/ORPHAN_ANALYSIS_EXECUTIVE_SUMMARY.md",
+          "holo_index/docs/Qwen_Gemma_Orphan_Analysis_Mission.md"
+        ]
+      },
+      "module_hint": "orphan_analysis",
+      "path": "docs/orphan_analysis/Orphan_Integration_Roadmap.md",
+      "size_bytes": 11742,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 22",
+        "WSP 3",
+        "WSP 49",
+        "WSP 84"
+      ]
+    },
+    {
+      "doc_type": "other",
+      "hash_sha256": "f2be1077000365e0ba770e041bfbcdb09f4cdc3b66557f6edf6b9e457dd0831c",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": []
+      },
+      "module_hint": "docs_root",
+      "path": "docs/security/git_history_cleanup_required.md",
+      "size_bytes": 2832,
+      "status": "active",
+      "wsp_refs": []
+    },
+    {
+      "doc_type": "protocol",
+      "hash_sha256": "f2f6b6d6f7b8de63cad4cf1ba903c2576c187678794c991996f43fac21332ca7",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "WSP_framework/docs/File_Naming_Cleanup_Plan_WSP57.md",
+          "WSP_framework/docs/WSP57_Naming_Cleanup_Session_2025-10-14.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/session_backups/AMIW_Execution_Protocol_Implementation.md",
+      "size_bytes": 4404,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 33"
+      ]
+    },
+    {
+      "doc_type": "analysis",
+      "hash_sha256": "5ebcd5e1e943ac21e170a1a4fef6d139c1e7a9bee8137f670a9324201f66b841",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "ModLog.md",
+          "WSP_framework/docs/File_Naming_Cleanup_Plan_WSP57.md",
+          "WSP_framework/docs/WSP57_Naming_Cleanup_Session_2025-10-14.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/session_backups/Agentic_Audit_Report_0102_Comprehensive.md",
+      "size_bytes": 12202,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 11",
+        "WSP 22",
+        "WSP 3",
+        "WSP 40",
+        "WSP 46",
+        "WSP 49",
+        "WSP 5",
+        "WSP 50",
+        "WSP 54"
+      ]
+    },
+    {
+      "doc_type": "other",
+      "hash_sha256": "88f36de6fc9711f60a8a2d77d259768d30a5bb352f8ef4780f5ec312d0f68e31",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "WSP_framework/docs/File_Naming_Cleanup_Plan_WSP57.md",
+          "WSP_framework/docs/WSP57_Naming_Cleanup_Session_2025-10-14.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/session_backups/Compliance_Implementation_2025-09-16.md",
+      "size_bytes": 5323,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 27",
+        "WSP 38",
+        "WSP 39",
+        "WSP 48",
+        "WSP 54",
+        "WSP 73"
+      ]
+    },
+    {
+      "doc_type": "decision_record",
+      "hash_sha256": "4248fce99cdf9f9a2b9c0bb4b68ec623c1d5514f730d64332f862027db768a21",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "holo_index/docs/QWEN_INTEGRATION_COMPLETE.md",
+          "modules/infrastructure/git_push_dae/ModLog.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/session_backups/DECISION_LOGIC_FIX.md",
+      "size_bytes": 2229,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 22",
+        "WSP 50",
+        "WSP 64",
+        "WSP 87"
+      ]
+    },
+    {
+      "doc_type": "analysis",
+      "hash_sha256": "77eae24f258e891e94d9393edadd39aa7b78b357e9b8ec3b60c2492d26cf3784",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "ModLog.md",
+          "WSP_framework/docs/WSP57_Naming_Cleanup_Session_2025-10-14.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/session_backups/ModLog_Violation_Analysis_and_Prevention.md",
+      "size_bytes": 11751,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 1",
+        "WSP 22",
+        "WSP 48",
+        "WSP 49",
+        "WSP 64",
+        "WSP 90"
+      ]
+    },
+    {
+      "doc_type": "other",
+      "hash_sha256": "8fc1fa6b2c65998dc1b41a005323abe07efc469b627a6b01a4342334e2b56373",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "WSP_framework/docs/File_Naming_Cleanup_Plan_WSP57.md",
+          "WSP_framework/docs/WSP57_Naming_Cleanup_Session_2025-10-14.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/session_backups/Pre_Action_Verification_Implementation.md",
+      "size_bytes": 1746,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 3",
+        "WSP 47"
+      ]
+    }
+  ],
+  "generated_at": "2025-10-23T22:09:45.185526Z"
+}

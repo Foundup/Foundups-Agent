@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Automatic Stream Monitor & Social Media Orchestrator
 Runs continuously to detect streams and post notifications automatically
 """
@@ -42,8 +57,8 @@ class AutoStreamMonitor:
         self.quick_check_interval = 10  # Quick check every 10 seconds after stream ends
         self.max_quick_checks = 30  # Quick check for up to 5 minutes
         
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] 🚀 Auto Stream Monitor Starting...")
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] 📺 Monitoring channel: {self.channel_id}")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] [ROCKET] Auto Stream Monitor Starting...")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] [U+1F4FA] Monitoring channel: {self.channel_id}")
         
     def initialize_services(self) -> bool:
         """Initialize all required services"""
@@ -52,19 +67,19 @@ class AutoStreamMonitor:
             from modules.platform_integration.youtube_auth.src.youtube_auth import get_authenticated_service
             self.youtube_service = get_authenticated_service()
             if not self.youtube_service:
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Failed to initialize YouTube service")
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] [FAIL] Failed to initialize YouTube service")
                 return False
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ YouTube service initialized")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [OK] YouTube service initialized")
             
             # Initialize stream resolver
             from modules.platform_integration.stream_resolver.src.stream_resolver import StreamResolver
             self.stream_resolver = StreamResolver(self.youtube_service)
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Stream resolver initialized")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [OK] Stream resolver initialized")
             
             return True
             
         except Exception as e:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Service initialization failed: {e}")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [FAIL] Service initialization failed: {e}")
             return False
             
     async def check_for_stream(self) -> Optional[Dict]:
@@ -103,7 +118,7 @@ class AutoStreamMonitor:
             return None
             
         except Exception as e:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ Stream check error: {e}")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [U+26A0]️ Stream check error: {e}")
             return None
             
     async def post_to_x_twitter(self, stream_info: Dict) -> bool:
@@ -112,35 +127,35 @@ class AutoStreamMonitor:
             from modules.platform_integration.x_twitter.src.anti_detection_poster import XAntiDetectionPoster
             
             # Create post content
-            content = f"""🔴 LIVE NOW: {stream_info['title'][:100]}
+            content = f"""[U+1F534] LIVE NOW: {stream_info['title'][:100]}
 
-📺 Watch: {stream_info['url']}
+[U+1F4FA] Watch: {stream_info['url']}
 
 Join us for cutting-edge AI development!
 
 #AI #LiveCoding #FoundUps #QuantumComputing #0102"""
             
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] 📝 Posting to X/Twitter...")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [NOTE] Posting to X/Twitter...")
             print(f"    Content: {content[:60]}...")
             
             poster = XAntiDetectionPoster()
             success = await poster.post_content(content)
             
             if success:
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Posted to X/Twitter successfully")
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] [OK] Posted to X/Twitter successfully")
                 return True
             else:
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ X/Twitter post failed")
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] [U+26A0]️ X/Twitter post failed")
                 return False
                 
         except ImportError:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ X/Twitter module not available")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [U+26A0]️ X/Twitter module not available")
             # Try simple approach
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] 📋 X/Twitter post prepared (manual posting required):")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [CLIPBOARD] X/Twitter post prepared (manual posting required):")
             print(f"    {content}")
             return False
         except Exception as e:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ X/Twitter posting error: {e}")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [FAIL] X/Twitter posting error: {e}")
             return False
             
     async def post_to_linkedin(self, stream_info: Dict) -> bool:
@@ -149,38 +164,38 @@ Join us for cutting-edge AI development!
             from modules.platform_integration.linkedin_agent.src.anti_detection_poster import LinkedInAntiDetectionPoster
             
             # Create post content
-            content = f"""🚀 We're LIVE NOW!
+            content = f"""[ROCKET] We're LIVE NOW!
 
 {stream_info['title']}
 
 Join our AI development session where we're building the future of autonomous systems with quantum computing and 0102 consciousness architecture.
 
-🔗 {stream_info['url']}
+[LINK] {stream_info['url']}
 
 Currently {stream_info['concurrent_viewers']} viewers watching!
 
 #ArtificialIntelligence #SoftwareDevelopment #Innovation #QuantumComputing #FoundUps #LiveCoding"""
             
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] 📝 Posting to LinkedIn...")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [NOTE] Posting to LinkedIn...")
             print(f"    Content: {content[:60]}...")
             
             poster = LinkedInAntiDetectionPoster()
             success = await poster.post_content(content)
             
             if success:
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Posted to LinkedIn successfully")
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] [OK] Posted to LinkedIn successfully")
                 return True
             else:
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ LinkedIn post failed")
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] [U+26A0]️ LinkedIn post failed")
                 return False
                 
         except ImportError:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ LinkedIn module not available")
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] 📋 LinkedIn post prepared (manual posting required):")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [U+26A0]️ LinkedIn module not available")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [CLIPBOARD] LinkedIn post prepared (manual posting required):")
             print(f"    {content[:100]}...")
             return False
         except Exception as e:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ LinkedIn posting error: {e}")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [FAIL] LinkedIn posting error: {e}")
             return False
             
     async def start_chat_monitor(self, stream_info: Dict):
@@ -188,7 +203,7 @@ Currently {stream_info['concurrent_viewers']} viewers watching!
         try:
             from modules.communication.livechat.src.auto_moderator_dae import YouTubeAutoModeratorDAE
             
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] 💬 Starting chat monitor...")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [U+1F4AC] Starting chat monitor...")
             
             # Create DAE instance
             self.chat_listener = YouTubeAutoModeratorDAE()
@@ -199,17 +214,17 @@ Currently {stream_info['concurrent_viewers']} viewers watching!
                 live_chat_id=stream_info['chat_id']
             ))
             
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Chat monitor started")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [OK] Chat monitor started")
             
             # Send greeting message
             greeting = os.getenv('AGENT_GREETING_MESSAGE', 
-                               f"🤖 UnDaoDu Bot is online! Stream: {stream_info['title'][:50]}... Type /help for commands")
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] 👋 Sending greeting: {greeting}")
+                               f"[BOT] UnDaoDu Bot is online! Stream: {stream_info['title'][:50]}... Type /help for commands")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [U+1F44B] Sending greeting: {greeting}")
             
         except ImportError:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ Chat monitor module not available")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [U+26A0]️ Chat monitor module not available")
         except Exception as e:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Chat monitor error: {e}")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [FAIL] Chat monitor error: {e}")
             
     async def handle_new_stream(self, stream_info: Dict):
         """Handle a newly detected stream"""
@@ -219,13 +234,13 @@ Currently {stream_info['concurrent_viewers']} viewers watching!
         if video_id in self.posted_streams:
             return
             
-        print(f"\n[{datetime.now().strftime('%H:%M:%S')}] 🎉 NEW STREAM DETECTED!")
+        print(f"\n[{datetime.now().strftime('%H:%M:%S')}] [CELEBRATE] NEW STREAM DETECTED!")
         print(f"    Title: {stream_info['title'][:80]}")
         print(f"    URL: {stream_info['url']}")
         print(f"    Viewers: {stream_info['concurrent_viewers']}")
         
         # Post to social media
-        print(f"\n[{datetime.now().strftime('%H:%M:%S')}] 📢 Posting to social media...")
+        print(f"\n[{datetime.now().strftime('%H:%M:%S')}] [U+1F4E2] Posting to social media...")
         
         # Post to X/Twitter
         x_success = await self.post_to_x_twitter(stream_info)
@@ -243,17 +258,17 @@ Currently {stream_info['concurrent_viewers']} viewers watching!
         # Save state
         self.save_state()
         
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Stream handling complete")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] [OK] Stream handling complete")
         
     def handle_stream_ended(self):
         """Handle when a stream ends"""
         if self.current_stream:
-            print(f"\n[{datetime.now().strftime('%H:%M:%S')}] 📴 Stream ended: {self.current_stream['title'][:50]}")
+            print(f"\n[{datetime.now().strftime('%H:%M:%S')}] [U+1F4F4] Stream ended: {self.current_stream['title'][:50]}")
             
         # Enter quick check mode
         self.quick_check_mode = True
         self.quick_check_count = 0
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚡ Entering quick check mode (checking every {self.quick_check_interval}s)")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] [LIGHTNING] Entering quick check mode (checking every {self.quick_check_interval}s)")
         
         # Stop chat monitor
         if self.chat_listener:
@@ -274,7 +289,7 @@ Currently {stream_info['concurrent_viewers']} viewers watching!
                 json.dump(state, f, indent=2)
                 
         except Exception as e:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ Failed to save state: {e}")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [U+26A0]️ Failed to save state: {e}")
             
     def load_state(self):
         """Load previous state from file"""
@@ -290,10 +305,10 @@ Currently {stream_info['concurrent_viewers']} viewers watching!
                 if len(self.posted_streams) > 100:
                     self.posted_streams.clear()
                     
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] 📂 Loaded state: {len(self.posted_streams)} previous streams tracked")
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] [U+1F4C2] Loaded state: {len(self.posted_streams)} previous streams tracked")
                 
         except Exception as e:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ Failed to load state: {e}")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [U+26A0]️ Failed to load state: {e}")
             
     async def monitoring_loop(self):
         """Main monitoring loop"""
@@ -309,12 +324,12 @@ Currently {stream_info['concurrent_viewers']} viewers watching!
                         await self.handle_new_stream(stream_info)
                     else:
                         # Same stream still live
-                        print(f"[{datetime.now().strftime('%H:%M:%S')}] 📺 Stream still live: {stream_info['title'][:50]}")
+                        print(f"[{datetime.now().strftime('%H:%M:%S')}] [U+1F4FA] Stream still live: {stream_info['title'][:50]}")
                         
                     # Exit quick check mode if we were in it
                     if self.quick_check_mode:
                         self.quick_check_mode = False
-                        print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔄 Returning to normal check interval")
+                        print(f"[{datetime.now().strftime('%H:%M:%S')}] [REFRESH] Returning to normal check interval")
                         
                 else:
                     # No stream detected
@@ -322,7 +337,7 @@ Currently {stream_info['concurrent_viewers']} viewers watching!
                         # Stream just ended
                         self.handle_stream_ended()
                     else:
-                        print(f"[{datetime.now().strftime('%H:%M:%S')}] 💤 No stream active")
+                        print(f"[{datetime.now().strftime('%H:%M:%S')}] [U+1F4A4] No stream active")
                         
                 # Determine next check interval
                 if self.quick_check_mode:
@@ -330,7 +345,7 @@ Currently {stream_info['concurrent_viewers']} viewers watching!
                     if self.quick_check_count > self.max_quick_checks:
                         # Exit quick check mode after max checks
                         self.quick_check_mode = False
-                        print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔄 Quick check timeout, returning to normal interval")
+                        print(f"[{datetime.now().strftime('%H:%M:%S')}] [REFRESH] Quick check timeout, returning to normal interval")
                         wait_time = self.check_interval
                     else:
                         wait_time = self.quick_check_interval
@@ -341,13 +356,13 @@ Currently {stream_info['concurrent_viewers']} viewers watching!
                 await asyncio.sleep(wait_time)
                 
             except KeyboardInterrupt:
-                print(f"\n[{datetime.now().strftime('%H:%M:%S')}] 🛑 Monitoring stopped by user")
+                print(f"\n[{datetime.now().strftime('%H:%M:%S')}] [STOP] Monitoring stopped by user")
                 self.running = False
                 break
             except Exception as e:
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Monitoring error: {e}")
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] [FAIL] Monitoring error: {e}")
                 print(traceback.format_exc())
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔄 Retrying in 60 seconds...")
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] [REFRESH] Retrying in 60 seconds...")
                 await asyncio.sleep(60)
                 
     async def run(self):
@@ -365,14 +380,14 @@ Currently {stream_info['concurrent_viewers']} viewers watching!
         
         # Initialize services
         if not self.initialize_services():
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Failed to initialize services")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [FAIL] Failed to initialize services")
             return
             
         # Start monitoring
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] 🚀 Starting automatic monitoring...")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] [ROCKET] Starting automatic monitoring...")
         await self.monitoring_loop()
         
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] 👋 Auto monitor stopped")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] [U+1F44B] Auto monitor stopped")
         
     def stop(self):
         """Stop monitoring"""
@@ -381,7 +396,7 @@ Currently {stream_info['concurrent_viewers']} viewers watching!
 
 def signal_handler(signum, frame):
     """Handle shutdown signals"""
-    print(f"\n[{datetime.now().strftime('%H:%M:%S')}] 🛑 Shutdown signal received")
+    print(f"\n[{datetime.now().strftime('%H:%M:%S')}] [STOP] Shutdown signal received")
     sys.exit(0)
 
 
@@ -397,9 +412,9 @@ async def main():
     try:
         await monitor.run()
     except KeyboardInterrupt:
-        print(f"\n[{datetime.now().strftime('%H:%M:%S')}] 🛑 Stopped by user")
+        print(f"\n[{datetime.now().strftime('%H:%M:%S')}] [STOP] Stopped by user")
     except Exception as e:
-        print(f"\n[{datetime.now().strftime('%H:%M:%S')}] ❌ Fatal error: {e}")
+        print(f"\n[{datetime.now().strftime('%H:%M:%S')}] [FAIL] Fatal error: {e}")
         print(traceback.format_exc())
 
 

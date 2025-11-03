@@ -32,15 +32,15 @@ def test_prompt_enhancement():
     # Enhance (now includes talking baby automatically)
     enhanced = enhancer.enhance(topic)
 
-    print(f"\n📝 Original Topic: {topic}")
-    print(f"\n✨ Enhanced Prompt:\n{enhanced}")
+    print(f"\n[NOTE] Original Topic: {topic}")
+    print(f"\n[U+2728] Enhanced Prompt:\n{enhanced}")
 
     # Verify talking baby is included
     if "baby" in enhanced.lower():
-        print("\n✅ SUCCESS: Talking baby element detected in prompt!")
+        print("\n[OK] SUCCESS: Talking baby element detected in prompt!")
         return True
     else:
-        print("\n❌ FAIL: Talking baby missing from prompt!")
+        print("\n[FAIL] FAIL: Talking baby missing from prompt!")
         return False
 
 
@@ -61,10 +61,10 @@ def test_promo_prompt():
 
     enhanced_promo = enhancer.enhance(promo_topic.strip(), use_trending=True)
 
-    print(f"\n🎬 PROMO PROMPT:\n{enhanced_promo}")
+    print(f"\n[U+1F3AC] PROMO PROMPT:\n{enhanced_promo}")
 
-    print(f"\n📝 YOUTUBE METADATA:")
-    print(f"Title: How To Get Talking Babies To Make Your Japan Video 👶🎥")
+    print(f"\n[NOTE] YOUTUBE METADATA:")
+    print(f"Title: How To Get Talking Babies To Make Your Japan Video [BABY][CAMERA]")
     print(f"Description:")
     print(f"  Want a custom AI video about Japan? Just Super Chat $20 in our live stream!")
     print(f"  Our talking baby will narrate YOUR topic in adorable baby-English.")
@@ -81,19 +81,19 @@ def test_video_generation_dry_run():
 
     try:
         generator = Veo3Generator()
-        print(f"\n✅ Veo3Generator initialized successfully!")
+        print(f"\n[OK] Veo3Generator initialized successfully!")
         print(f"   Output dir: {generator.output_dir}")
         print(f"   Cost per second: ${generator.cost_per_second}")
         return True
     except Exception as e:
-        print(f"\n❌ FAIL: {e}")
+        print(f"\n[FAIL] FAIL: {e}")
         return False
 
 
 def generate_promo_video():
     """ACTUAL GENERATION: Generate promotional video (COSTS $12!)"""
     print("\n" + "="*80)
-    print("⚠️  ACTUAL VIDEO GENERATION - THIS COSTS $12!")
+    print("[U+26A0]️  ACTUAL VIDEO GENERATION - THIS COSTS $12!")
     print("="*80)
 
     response = input("\nAre you SURE you want to generate the promo video? (yes/no): ")
@@ -102,7 +102,7 @@ def generate_promo_video():
         print("\n⏸️  Skipped video generation (wise choice for testing!)")
         return False
 
-    print("\n🎬 Generating promotional video...")
+    print("\n[U+1F3AC] Generating promotional video...")
 
     try:
         # Initialize
@@ -120,7 +120,7 @@ def generate_promo_video():
         # Enhance
         enhanced_promo = enhancer.enhance(promo_topic.strip(), use_trending=True)
 
-        print(f"\n📝 Prompt: {enhanced_promo[:100]}...")
+        print(f"\n[NOTE] Prompt: {enhanced_promo[:100]}...")
 
         # Generate video (30 seconds, $12 cost)
         video_path = generator.generate_video(
@@ -129,21 +129,21 @@ def generate_promo_video():
             fast_mode=True
         )
 
-        print(f"\n✅ SUCCESS!")
+        print(f"\n[OK] SUCCESS!")
         print(f"   Video: {video_path}")
         print(f"   Cost: $12.00")
-        print(f"\n📤 Next: Upload to YouTube with title:")
-        print(f"   'How To Get Talking Babies To Make Your Japan Video 👶🎥'")
+        print(f"\n[U+1F4E4] Next: Upload to YouTube with title:")
+        print(f"   'How To Get Talking Babies To Make Your Japan Video [BABY][CAMERA]'")
 
         return True
 
     except Exception as e:
-        print(f"\n❌ GENERATION FAILED: {e}")
+        print(f"\n[FAIL] GENERATION FAILED: {e}")
         return False
 
 
 if __name__ == "__main__":
-    print("\n🎬 YouTube Shorts Promo - Talking Baby Feature")
+    print("\n[U+1F3AC] YouTube Shorts Promo - Talking Baby Feature")
     print("="*80)
 
     # Run safe tests first
@@ -154,17 +154,17 @@ if __name__ == "__main__":
     print("\n" + "="*80)
     print("TEST RESULTS:")
     print("="*80)
-    print(f"  Prompt Enhancement: {'✅ PASS' if test1_pass else '❌ FAIL'}")
-    print(f"  Promo Prompt: {'✅ PASS' if test2_pass else '❌ FAIL'}")
-    print(f"  Generator Init: {'✅ PASS' if test3_pass else '❌ FAIL'}")
+    print(f"  Prompt Enhancement: {'[OK] PASS' if test1_pass else '[FAIL] FAIL'}")
+    print(f"  Promo Prompt: {'[OK] PASS' if test2_pass else '[FAIL] FAIL'}")
+    print(f"  Generator Init: {'[OK] PASS' if test3_pass else '[FAIL] FAIL'}")
 
     # Offer actual generation (costs money!)
     print("\n" + "="*80)
     print("ACTUAL VIDEO GENERATION:")
     print("="*80)
-    print("⚠️  This will cost $12 (30-second video)")
+    print("[U+26A0]️  This will cost $12 (30-second video)")
     print("⏳ Takes 1-2 minutes to generate")
-    print("🎥 Creates promotional Short about the feature")
+    print("[CAMERA] Creates promotional Short about the feature")
     print()
 
     generate_promo_video()

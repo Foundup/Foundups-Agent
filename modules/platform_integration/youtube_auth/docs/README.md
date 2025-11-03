@@ -4,7 +4,7 @@
 
 This documentation follows WSP 86 (0102 Modular Navigation Protocol) to enable efficient DAE navigation and debugging.
 
-### 📁 Documentation Files
+### [U+1F4C1] Documentation Files
 
 1. **[FUNCTION_PROCESS_MAP.md](FUNCTION_PROCESS_MAP.md)**
    - Critical execution paths
@@ -27,10 +27,10 @@ This documentation follows WSP 86 (0102 Modular Navigation Protocol) to enable e
 4. **[../ModLog.md](../ModLog.md)**
    - Module change history
    - WSP compliance updates
-   - Error→solution learnings
+   - Error->solution learnings
    - Feature implementations
 
-## 🎯 Quick Navigation
+## [TARGET] Quick Navigation
 
 ### For Debugging Issues
 
@@ -80,7 +80,7 @@ See [FUNCTION_PROCESS_MAP.md#quota-check-flow](FUNCTION_PROCESS_MAP.md#quota-che
 #### Dependency Chain
 See [MODULE_DEPENDENCY_MAP.md#core-dependencies](MODULE_DEPENDENCY_MAP.md#core-dependencies)
 
-## 📊 Module Metrics
+## [DATA] Module Metrics
 
 - **Credential Sets**: 2 (Set 1: UnDaoDu, Set 10: FoundUps)
 - **Daily Quota**: 10,000 units per set
@@ -88,7 +88,7 @@ See [MODULE_DEPENDENCY_MAP.md#core-dependencies](MODULE_DEPENDENCY_MAP.md#core-d
 - **Reset Time**: Midnight Pacific Time
 - **Token Efficiency**: 50-200 tokens per operation
 
-## 🔧 Common Operations
+## [TOOL] Common Operations
 
 ### Check Quota Status
 ```python
@@ -112,7 +112,7 @@ from modules.platform_integration.youtube_auth.src.youtube_auth import mark_cred
 mark_credential_exhausted(1)  # Mark Set 1 as exhausted
 ```
 
-## 🚨 Alert Thresholds
+## [ALERT] Alert Thresholds
 
 | Level | Threshold | Action |
 |-------|-----------|--------|
@@ -121,7 +121,7 @@ mark_credential_exhausted(1)  # Mark Set 1 as exhausted
 | Critical | > 95% | Emergency operations only |
 | Exhausted | 100% | Switch credential set |
 
-## 🔗 Integration Points
+## [LINK] Integration Points
 
 ### Provides To
 - `communication/livechat` - Authenticated YouTube service
@@ -133,7 +133,7 @@ mark_credential_exhausted(1)  # Mark Set 1 as exhausted
 - `google-auth-oauthlib` - OAuth2 flow
 - `pytz` (optional) - Timezone handling
 
-## 📝 WSP Compliance
+## [NOTE] WSP Compliance
 
 This module follows:
 - **WSP 3**: Functional domain organization (platform_integration)

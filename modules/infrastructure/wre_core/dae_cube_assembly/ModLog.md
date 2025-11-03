@@ -13,8 +13,8 @@ Implemented infinite FoundUp DAE spawning system per WSP 80
 - Created 5 core infrastructure DAEs (system-wide)
 - Enabled infinite FoundUp DAE spawning via WSP 27/73
 - Each FoundUp DAE gets its own WSP 54 agent hierarchy
-- Evolution path: POC → Prototype → MVP with consciousness progression
-- Token optimization: 8000 → 5000 → 3000 as DAE evolves
+- Evolution path: POC -> Prototype -> MVP with consciousness progression
+- Token optimization: 8000 -> 5000 -> 3000 as DAE evolves
 
 ### Key Components:
 1. **Core Infrastructure DAEs**:

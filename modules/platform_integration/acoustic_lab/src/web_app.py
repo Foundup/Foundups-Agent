@@ -6,13 +6,6 @@ Educational web application for acoustic triangulation and audio signature analy
 Provides REST API endpoint for processing synthetic audio files with IP geofencing.
 """
 
-# === UTF-8 ENFORCEMENT (WSP 90) ===
-import sys
-import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-# === END UTF-8 ENFORCEMENT ===
 
 
 import os
@@ -331,7 +324,7 @@ def get_html_template() -> str:
                 mapContainer.innerHTML = `
                     <div style="height: 100%; display: flex; align-items: center; justify-content: center; background: #f5f5f5; border-radius: 10px;">
                         <div style="text-align: center; padding: 20px;">
-                            <div style="font-size: 48px; color: #666; margin-bottom: 10px;">🗺️</div>
+                            <div style="font-size: 48px; color: #666; margin-bottom: 10px;">[U+1F5FA]️</div>
                             <div style="color: #666; font-size: 14px;">Interactive map requires Google Maps API key</div>
                             <div style="color: #999; font-size: 12px; margin-top: 10px;">You can still use manual coordinates below</div>
                         </div>
@@ -700,7 +693,7 @@ def get_html_template() -> str:
 <body>
     <!-- Hero Section -->
     <div class="hero">
-        <h1>🎯 Acoustic Lab</h1>
+        <h1>[TARGET] Acoustic Lab</h1>
         <p>Learn acoustic triangulation and audio fingerprinting through hands-on experimentation</p>
     </div>
 
@@ -726,7 +719,7 @@ def get_html_template() -> str:
 
         <!-- Map Section -->
         <div class="map-section">
-            <h3 style="text-align: center; margin-bottom: 20px; color: #333;">📍 Step 1: Select Recording Location</h3>
+            <h3 style="text-align: center; margin-bottom: 20px; color: #333;">[PIN] Step 1: Select Recording Location</h3>
             <div id="map" class="map-container"></div>
 
             <div class="coordinates-display" id="coordinatesDisplay">
@@ -734,7 +727,7 @@ def get_html_template() -> str:
             </div>
 
             <div class="advanced-toggle">
-                <button onclick="toggleAdvancedOptions()">Advanced Options ▼</button>
+                <button onclick="toggleAdvancedOptions()">Advanced Options [U+25BC]</button>
             </div>
 
             <div class="advanced-options" id="advancedOptions">
@@ -769,12 +762,12 @@ def get_html_template() -> str:
 
         <!-- Upload Section -->
         <div class="upload-section">
-            <h3 style="text-align: center; margin-bottom: 20px; color: #333;">🎵 Step 2: Upload Audio for Analysis</h3>
+            <h3 style="text-align: center; margin-bottom: 20px; color: #333;">[U+1F3B5] Step 2: Upload Audio for Analysis</h3>
 
             <div class="upload-zone" id="uploadZone">
                 <input type="file" id="audioFile" accept=".wav" />
                 <label for="audioFile">
-                    <div class="upload-icon">🎵</div>
+                    <div class="upload-icon">[U+1F3B5]</div>
                     <h4>Drop WAV File Here</h4>
                     <p>Or click to browse your computer</p>
                     <p style="font-size: 12px; color: #888;">Synthetic audio files only - for educational purposes</p>
@@ -790,7 +783,7 @@ def get_html_template() -> str:
 
         <!-- Results Section -->
         <div class="results-section" id="resultsSection">
-            <h3>🔍 Step 3: Analysis Results</h3>
+            <h3>[SEARCH] Step 3: Analysis Results</h3>
             <div id="results" style="display: none;"></div>
             <div id="error" class="error" style="display: none;"></div>
             <div style="text-align: center; color: #999; margin-top: 20px;">
@@ -1282,10 +1275,10 @@ def get_html_template() -> str:
 
             if (advancedOptions.style.display === 'none' || advancedOptions.style.display === '') {
                 advancedOptions.style.display = 'block';
-                toggleButton.textContent = 'Advanced Options ▲';
+                toggleButton.textContent = 'Advanced Options [U+25B2]';
             } else {
                 advancedOptions.style.display = 'none';
-                toggleButton.textContent = 'Advanced Options ▼';
+                toggleButton.textContent = 'Advanced Options [U+25BC]';
             }
         }
 
@@ -1318,7 +1311,7 @@ def get_html_template() -> str:
                 </div>
 
                 <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
-                    <h4 style="margin-top: 0; color: #333;">📊 Detailed Analysis</h4>
+                    <h4 style="margin-top: 0; color: #333;">[DATA] Detailed Analysis</h4>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
                         <div>
                             <strong>Recording Location:</strong><br>
@@ -1340,7 +1333,7 @@ def get_html_template() -> str:
                 </div>
 
                 <div style="margin-top: 20px; padding: 15px; background: #e8f4fd; border-radius: 8px; border-left: 4px solid #667eea;">
-                    <strong>🎓 Educational Insight:</strong> The triangulation algorithm calculated the sound source location
+                    <strong>[GRADUATE] Educational Insight:</strong> The triangulation algorithm calculated the sound source location
                     using time-of-arrival differences from multiple sensors. This demonstrates how mathematics can precisely
                     locate audio events in physical space using geometric principles.
                 </div>

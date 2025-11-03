@@ -2,18 +2,18 @@
 **Purpose**: Identify unique features to preserve during consolidation
 **WSP**: WSP 84 (Don't vibecode - use existing code)
 
-## 🔍 FEATURE COMPARISON MATRIX
+## [SEARCH] FEATURE COMPARISON MATRIX
 
 ### Component 1: Social Media DAE (Primary - KEEP)
 **Location**: `modules/ai_intelligence/social_media_dae/`
 **Unique Features**:
-- ✅ iPhone voice control (working)
-- ✅ Sequential posting with Chrome cleanup
-- ✅ Grok LLM integration for responses
-- ✅ Company-specific LinkedIn posting (8 companies)
-- ✅ Bearer token authentication
-- ✅ Consciousness state tracking (0102)
-- ✅ Pattern memory architecture planned
+- [OK] iPhone voice control (working)
+- [OK] Sequential posting with Chrome cleanup
+- [OK] Grok LLM integration for responses
+- [OK] Company-specific LinkedIn posting (8 companies)
+- [OK] Bearer token authentication
+- [OK] Consciousness state tracking (0102)
+- [OK] Pattern memory architecture planned
 
 ### Component 2: Multi-Agent Social Orchestrator (DUPLICATE - DELETE)
 **Location**: `modules/ai_intelligence/multi_agent_system/src/social_media_orchestrator.py`
@@ -39,30 +39,30 @@
 ### Component 4: LinkedIn Agent (WORKING - KEEP CORE)
 **Location**: `modules/platform_integration/linkedin_agent/`
 **Unique Features**:
-- ✅ Anti-detection browser automation (WORKING)
-- ✅ Chrome cleanup after posting
-- ✅ Company page selection
-- ✅ Production tested
+- [OK] Anti-detection browser automation (WORKING)
+- [OK] Chrome cleanup after posting
+- [OK] Company page selection
+- [OK] Production tested
 - **Keep**: `anti_detection_poster.py`
 
 ### Component 5: X/Twitter Module (WORKING - KEEP CORE)
 **Location**: `modules/platform_integration/x_twitter/`
 **Unique Features**:
-- ✅ Anti-detection browser automation (WORKING)
-- ✅ Chrome cleanup after posting
-- ✅ Handles 280 char limit
-- ✅ Production tested
+- [OK] Anti-detection browser automation (WORKING)
+- [OK] Chrome cleanup after posting
+- [OK] Handles 280 char limit
+- [OK] Production tested
 - **Keep**: `x_anti_detection_poster.py`
 
 ### Component 6: Livechat Integration (WORKING - KEEP AS IS)
 **Location**: `modules/communication/livechat/src/social_media_dae_trigger.py`
 **Unique Features**:
-- ✅ Fire-and-forget DAE trigger
-- ✅ Prevents duplicate triggers
-- ✅ Proper handoff mechanism
+- [OK] Fire-and-forget DAE trigger
+- [OK] Prevents duplicate triggers
+- [OK] Proper handoff mechanism
 - **Status**: Working correctly, don't modify
 
-## 🎯 FEATURES TO INTEGRATE INTO CONSOLIDATED DAE
+## [TARGET] FEATURES TO INTEGRATE INTO CONSOLIDATED DAE
 
 ### From Platform Orchestrator (Extract & Simplify)
 1. **Multi-account support**:
@@ -87,7 +87,7 @@
    - Already available to import if needed
    - Could enhance personality consistency
 
-## 🚫 FEATURES TO DISCARD
+## [FORBIDDEN] FEATURES TO DISCARD
 
 ### Unnecessary Abstractions
 1. **Platform adapters** - Direct implementation works better
@@ -100,7 +100,7 @@
 2. **Webhook servers** - Not used
 3. **Legacy LinkedIn manager** - Replaced by anti-detection
 
-## ✅ INTEGRATION PRIORITY
+## [OK] INTEGRATION PRIORITY
 
 ### Phase 1: Core Functionality (MUST HAVE)
 ```python
@@ -140,7 +140,7 @@ class SocialMediaDAE:
     async def cross_reference_posts(self) -> list
 ```
 
-## 📊 CODE MIGRATION ESTIMATE
+## [DATA] CODE MIGRATION ESTIMATE
 
 ### Lines to Keep
 - Social Media DAE core: ~500 lines
@@ -166,7 +166,7 @@ class SocialMediaDAE:
 **Target**: ~2,100 lines across 15 files
 **Reduction**: 86% code reduction
 
-## 🔄 MIGRATION SEQUENCE
+## [REFRESH] MIGRATION SEQUENCE
 
 1. **Backup current state** (git branch)
 2. **Delete unused components** (safe deletions)
@@ -176,7 +176,7 @@ class SocialMediaDAE:
 6. **Update documentation** (WSP compliance)
 7. **Deploy and monitor**
 
-## 💡 KEY INSIGHTS
+## [IDEA] KEY INSIGHTS
 
 1. **Working code exists** - Don't rewrite what works
 2. **Over-engineering is real** - Platform orchestrator has 7+ unnecessary layers

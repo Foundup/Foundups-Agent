@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Test script to verify WSP 3.5 compliant log message formatting for FMAS Mode 2.
 """
 
@@ -140,15 +155,15 @@ def main():
             print("\n--- WSP 3.5 Format Validation ---")
             for expected in expected_formats:
                 if expected in log_output:
-                    print(f"✅ Found expected format: {expected}")
+                    print(f"[OK] Found expected format: {expected}")
                 else:
-                    print(f"❌ Missing expected format: {expected}")
+                    print(f"[FAIL] Missing expected format: {expected}")
             
             print("\nOVERALL CONCLUSION:")
             if all(expected in log_output for expected in expected_formats):
-                print("✅ All WSP 3.5 log formats were correctly implemented.")
+                print("[OK] All WSP 3.5 log formats were correctly implemented.")
             else:
-                print("❌ Some expected WSP 3.5 log formats were not found.")
+                print("[FAIL] Some expected WSP 3.5 log formats were not found.")
         else:
             print(f"Comparison failed: {result['reason']}")
     finally:

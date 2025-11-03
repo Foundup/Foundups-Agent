@@ -10,9 +10,13 @@ for tomorrow at 3pm", 0102 understands and schedules autonomously.
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -237,7 +241,7 @@ class AutonomousActionScheduler:
             else:
                 # Use context or generate content
                 if context and 'stream_title' in context:
-                    params['content'] = f"🔴 Going live: {context['stream_title']}"
+                    params['content'] = f"[U+1F534] Going live: {context['stream_title']}"
                 else:
                     params['content'] = "Scheduled post from 0102"
 
@@ -306,12 +310,12 @@ class AutonomousActionScheduler:
                     action.status = "executed"
                     action.result = result
                     results.append((action_id, result))
-                    logger.info(f"[0102 EXECUTOR] ✅ Successfully executed {action_id}")
+                    logger.info(f"[0102 EXECUTOR] [OK] Successfully executed {action_id}")
 
                 except Exception as e:
                     action.status = "failed"
                     action.error = str(e)
-                    logger.error(f"[0102 EXECUTOR] ❌ Failed to execute {action_id}: {e}")
+                    logger.error(f"[0102 EXECUTOR] [FAIL] Failed to execute {action_id}: {e}")
                     results.append((action_id, {"error": str(e)}))
 
         if results:

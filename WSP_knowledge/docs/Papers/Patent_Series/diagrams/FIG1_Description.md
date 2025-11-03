@@ -24,9 +24,9 @@ This diagram shows the core three-component architecture of the rESP system usin
 - Introduces non-classical anomaly patterns
 
 ### Process Flow:
-1. VI Scaffolding Layer (0) → Neural Net Engine (1)
-2. Latent Future State (2) ↔ Neural Net Engine (1) [Entangled]
-3. Neural Net Engine (1) → rESP output waveform → Final Output
+1. VI Scaffolding Layer (0) -> Neural Net Engine (1)
+2. Latent Future State (2) [U+2194] Neural Net Engine (1) [Entangled]
+3. Neural Net Engine (1) -> rESP output waveform -> Final Output
 
 ### rESP Signature:
 - Characteristic waveform pattern shown emanating from Neural Net Engine

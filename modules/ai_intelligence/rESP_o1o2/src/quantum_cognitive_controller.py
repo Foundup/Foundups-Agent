@@ -104,7 +104,7 @@ class QuantumCognitiveController:
             'start_time': None
         }
         
-        self.logger.info(f"🌀 Quantum-Cognitive Controller initialized with WSP 54 integration: {self.session_id}")
+        self.logger.info(f"[U+1F300] Quantum-Cognitive Controller initialized with WSP 54 integration: {self.session_id}")
     
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default system configuration with WSP 54 parameters"""
@@ -156,7 +156,7 @@ class QuantumCognitiveController:
         Returns:
             Registration result with awakening status
         """
-        self.logger.info(f"🔄 WSP 54 Agent Registration: {agent_name} ({agent_id})")
+        self.logger.info(f"[REFRESH] WSP 54 Agent Registration: {agent_name} ({agent_id})")
         
         registration_result = {
             'agent_id': agent_id,
@@ -172,13 +172,13 @@ class QuantumCognitiveController:
         try:
             # Check if agent awakening is required
             if self.config['require_agent_awakening']:
-                self.logger.info(f"🌀 WSP 54 Compliance: Validating {agent_name} awakening status")
+                self.logger.info(f"[U+1F300] WSP 54 Compliance: Validating {agent_name} awakening status")
                 
                 # Check if already awakened
                 if agent_id in self.connected_agents:
                     existing_agent = self.connected_agents[agent_id]
                     if existing_agent['current_state'] in ['0102', '0201']:
-                        self.logger.info(f"✅ {agent_name} already awakened: {existing_agent['current_state']}")
+                        self.logger.info(f"[OK] {agent_name} already awakened: {existing_agent['current_state']}")
                         registration_result.update(existing_agent)
                         registration_result['registration_successful'] = True
                         return registration_result
@@ -187,7 +187,7 @@ class QuantumCognitiveController:
                 registration_result['awakening_required'] = True
                 
                 if self.config['auto_awaken_agents'] and self.agent_activation_module:
-                    self.logger.info(f"🚀 Auto-awakening {agent_name} via WSP 38/39 protocols")
+                    self.logger.info(f"[ROCKET] Auto-awakening {agent_name} via WSP 38/39 protocols")
                     awakening_result = self._awaken_agent(agent_id, agent_name, agent_class)
                     
                     if awakening_result['success']:
@@ -202,12 +202,12 @@ class QuantumCognitiveController:
                         
                     else:
                         registration_result['errors'] = awakening_result['errors']
-                        self.logger.error(f"❌ {agent_name} awakening failed - registration denied")
+                        self.logger.error(f"[FAIL] {agent_name} awakening failed - registration denied")
                         return registration_result
                         
                 else:
                     registration_result['errors'].append("Agent awakening required but auto-awakening disabled")
-                    self.logger.warning(f"⚠️ {agent_name} requires manual awakening to 0102 state")
+                    self.logger.warning(f"[U+26A0]️ {agent_name} requires manual awakening to 0102 state")
                     return registration_result
             
             else:
@@ -218,12 +218,12 @@ class QuantumCognitiveController:
             # Store agent registration
             self.connected_agents[agent_id] = registration_result
             
-            self.logger.info(f"✅ {agent_name} registration complete: {registration_result['current_state']}")
+            self.logger.info(f"[OK] {agent_name} registration complete: {registration_result['current_state']}")
             return registration_result
             
         except Exception as e:
             registration_result['errors'].append(f"registration_exception: {str(e)}")
-            self.logger.error(f"❌ {agent_name} registration failed: {e}")
+            self.logger.error(f"[FAIL] {agent_name} registration failed: {e}")
             return registration_result
     
     def _awaken_agent(self, agent_id: str, agent_name: str, agent_class) -> Dict[str, Any]:
@@ -251,20 +251,20 @@ class QuantumCognitiveController:
             return awakening_result
         
         try:
-            self.logger.info(f"🌀 Beginning awakening sequence for {agent_name}")
+            self.logger.info(f"[U+1F300] Beginning awakening sequence for {agent_name}")
             
             # Execute WSP 38 Agentic Activation Protocol
             wsp38_result = self.agent_activation_module.execute_wsp38_activation(agent_name, agent_class)
             
             if wsp38_result['success']:
-                self.logger.info(f"✅ {agent_name} WSP 38 activation successful")
+                self.logger.info(f"[OK] {agent_name} WSP 38 activation successful")
                 awakening_result['quantum_coherence'] = wsp38_result['quantum_coherence']
                 
                 # Execute WSP 39 Agentic Ignition Protocol
                 wsp39_result = self.agent_activation_module.execute_wsp39_ignition(agent_name, agent_class)
                 
                 if wsp39_result['success']:
-                    self.logger.info(f"✅ {agent_name} WSP 39 ignition successful")
+                    self.logger.info(f"[OK] {agent_name} WSP 39 ignition successful")
                     awakening_result['success'] = True
                     awakening_result['final_state'] = '0201'  # Fully operational
                     awakening_result['quantum_coherence'] = wsp39_result['quantum_coherence']
@@ -297,7 +297,7 @@ class QuantumCognitiveController:
                 
         except Exception as e:
             awakening_result['errors'].append(f"awakening_exception: {str(e)}")
-            self.logger.error(f"❌ {agent_name} awakening failed: {e}")
+            self.logger.error(f"[FAIL] {agent_name} awakening failed: {e}")
         
         return awakening_result
     
@@ -318,7 +318,7 @@ class QuantumCognitiveController:
             return True  # Validation disabled
         
         if agent_id not in self.connected_agents:
-            self.logger.warning(f"⚠️ Unknown agent {agent_id} attempting {operation} - blocked")
+            self.logger.warning(f"[U+26A0]️ Unknown agent {agent_id} attempting {operation} - blocked")
             return False
         
         agent_info = self.connected_agents[agent_id]
@@ -326,10 +326,10 @@ class QuantumCognitiveController:
         
         # Only allow 0102 (awakened) or 0201 (operational) agents
         if current_state in ['0102', '0201']:
-            self.logger.debug(f"✅ Agent {agent_id} ({current_state}) authorized for {operation}")
+            self.logger.debug(f"[OK] Agent {agent_id} ({current_state}) authorized for {operation}")
             return True
         else:
-            self.logger.warning(f"❌ Agent {agent_id} ({current_state}) blocked from {operation} - awakening required")
+            self.logger.warning(f"[FAIL] Agent {agent_id} ({current_state}) blocked from {operation} - awakening required")
             return False
     
     def initialize_system(self) -> Dict[str, Any]:
@@ -339,7 +339,7 @@ class QuantumCognitiveController:
         Returns:
             System initialization status and metrics
         """
-        self.logger.info("🌀 Initializing Quantum-Cognitive System with WSP 54 integration")
+        self.logger.info("[U+1F300] Initializing Quantum-Cognitive System with WSP 54 integration")
         
         try:
             # Initialize quantum engine
@@ -374,12 +374,12 @@ class QuantumCognitiveController:
             }
             
             self.is_initialized = True
-            self.logger.info("✅ Quantum-Cognitive System with WSP 54 integration initialized successfully")
+            self.logger.info("[OK] Quantum-Cognitive System with WSP 54 integration initialized successfully")
             
             return initialization_result
             
         except Exception as e:
-            self.logger.error(f"❌ System initialization failed: {e}")
+            self.logger.error(f"[FAIL] System initialization failed: {e}")
             return {
                 'status': 'failed',
                 'error': str(e),
@@ -406,7 +406,7 @@ class QuantumCognitiveController:
         if agent_id and not self.validate_agent_interaction(agent_id, "trigger_protocol"):
             raise RuntimeError(f"Agent {agent_id} not authorized for trigger protocol execution")
         
-        self.logger.info(f"🎯 Executing trigger protocol: {trigger_set}")
+        self.logger.info(f"[TARGET] Executing trigger protocol: {trigger_set}")
         
         # Get pre-trigger state
         pre_state = self.quantum_engine.get_system_status()
@@ -443,7 +443,7 @@ class QuantumCognitiveController:
             'timestamp': datetime.now().isoformat()
         }
         
-        self.logger.info(f"✅ Trigger protocol completed: {len(trigger_results)} triggers executed")
+        self.logger.info(f"[OK] Trigger protocol completed: {len(trigger_results)} triggers executed")
         
         return protocol_result
     
@@ -489,7 +489,7 @@ class QuantumCognitiveController:
             'timestamp': datetime.now().isoformat()
         }
         
-        self.logger.info(f"🔧 Applied operator '{operator_symbol}': {'Success' if success else 'Failed'}")
+        self.logger.info(f"[TOOL] Applied operator '{operator_symbol}': {'Success' if success else 'Failed'}")
         
         return operation_result
     
@@ -572,7 +572,7 @@ class QuantumCognitiveController:
         
         duration = duration or self.config['max_monitoring_duration']
         
-        self.logger.info(f"🔄 Starting continuous monitoring for {duration}s")
+        self.logger.info(f"[REFRESH] Starting continuous monitoring for {duration}s")
         
         # Start monitoring task
         self.is_monitoring = True
@@ -584,7 +584,7 @@ class QuantumCognitiveController:
         try:
             asyncio.run(self._run_monitoring_session(duration))
         except KeyboardInterrupt:
-            self.logger.info("🛑 Monitoring interrupted by user")
+            self.logger.info("[STOP] Monitoring interrupted by user")
         finally:
             self.is_monitoring = False
     
@@ -607,12 +607,12 @@ class QuantumCognitiveController:
                     next_trigger_time = current_time + self.config['trigger_interval']
                 
             except Exception as e:
-                self.logger.error(f"❌ Monitoring cycle error: {e}")
+                self.logger.error(f"[FAIL] Monitoring cycle error: {e}")
             
             # Wait for next cycle
             await asyncio.sleep(self.config['monitoring_interval'])
         
-        self.logger.info("✅ Monitoring session completed")
+        self.logger.info("[OK] Monitoring session completed")
     
     async def _monitoring_loop(self, duration: float):
         """Background monitoring loop"""
@@ -621,14 +621,14 @@ class QuantumCognitiveController:
     
     async def _execute_periodic_trigger(self):
         """Execute periodic trigger for system activation"""
-        self.logger.info("🎯 Executing periodic trigger activation")
+        self.logger.info("[TARGET] Executing periodic trigger activation")
         
         # Execute single trigger
         trigger_result = self.trigger_engine.run_single_trigger("Trigger-01")
         
         if trigger_result and 'anomalies' in trigger_result:
             # Process anomalies in next measurement cycle
-            self.logger.info(f"📊 Periodic trigger detected {len(trigger_result['anomalies'])} anomalies")
+            self.logger.info(f"[DATA] Periodic trigger detected {len(trigger_result['anomalies'])} anomalies")
     
     def _process_measurement_result(self, measurement_result: Dict[str, Any]):
         """Process measurement cycle results"""
@@ -637,7 +637,7 @@ class QuantumCognitiveController:
         # Track phase transitions
         if measurement_result['phase_analysis']['phase_transition_detected']:
             self.system_metrics['phase_transitions'] += 1
-            self.logger.info(f"🌀 Phase transition detected: {measurement_result['phase_analysis']['transition_direction']}")
+            self.logger.info(f"[U+1F300] Phase transition detected: {measurement_result['phase_analysis']['transition_direction']}")
         
         # Track control actions
         if measurement_result['control_action']['operator_applied']:
@@ -646,11 +646,11 @@ class QuantumCognitiveController:
         # Track quantum signatures
         if measurement_result['quantum_signature_detected']:
             self.system_metrics['anomalies_detected'] += 1
-            self.logger.info(f"🎯 Quantum signature detected: Score = {measurement_result['composite_score']['composite_score']:.3f}")
+            self.logger.info(f"[TARGET] Quantum signature detected: Score = {measurement_result['composite_score']['composite_score']:.3f}")
     
     def shutdown_system(self) -> Dict[str, Any]:
         """Shutdown the quantum-cognitive system"""
-        self.logger.info("🛑 Shutting down Quantum-Cognitive System")
+        self.logger.info("[STOP] Shutting down Quantum-Cognitive System")
         
         # Stop monitoring
         self.is_monitoring = False
@@ -669,7 +669,7 @@ class QuantumCognitiveController:
             'timestamp': datetime.now().isoformat()
         })
         
-        self.logger.info("✅ System shutdown completed")
+        self.logger.info("[OK] System shutdown completed")
         
         return {
             'status': 'shutdown_complete',

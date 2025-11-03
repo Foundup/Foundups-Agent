@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WSP 88 Enhanced Module Remediation with HoloIndex Integration
 Implements 0102's surgical precision through semantic intelligence.
 
@@ -238,7 +253,7 @@ class WSP88HoloIndexEnhanced:
         CHECKPOINT 1: Detection Upgrades
         Run standard audit + HoloIndex semantic cross-reference
         """
-        logger.info("🔍 WSP 88 Enhanced Detection - Phase 1")
+        logger.info("[SEARCH] WSP 88 Enhanced Detection - Phase 1")
         
         # Step 1: Run standard module usage audit
         self.log_wsp_50_verification("Running standard module usage audit")
@@ -296,7 +311,7 @@ class WSP88HoloIndexEnhanced:
         CHECKPOINT 2: Assessment Assistance  
         Generate comprehensive contextual dossier
         """
-        logger.info(f"📋 Generating dossier for {module_name}")
+        logger.info(f"[CLIPBOARD] Generating dossier for {module_name}")
         self.log_wsp_50_verification("Dossier generation", module_name)
         
         # Get basic module data
@@ -365,7 +380,7 @@ class WSP88HoloIndexEnhanced:
         CHECKPOINT 3: Action Validation
         Execute remediation with automated verification
         """
-        logger.info(f"✁EValidated remediation: {module_name} -> {action}")
+        logger.info(f"[U+2701]EValidated remediation: {module_name} -> {action}")
         self.log_wsp_50_verification(f"Remediation action", f"{module_name} -> {action}")
         
         # Pre-action HoloIndex snapshot
@@ -416,7 +431,7 @@ class WSP88HoloIndexEnhanced:
         CHECKPOINT 4: Knowledge Capture
         Store remediation decision as searchable metadata
         """
-        logger.info(f"🧠 Capturing decision: {module_name} -> {decision}")
+        logger.info(f"[AI] Capturing decision: {module_name} -> {decision}")
         
         metadata = {
             "module": module_name,
@@ -460,7 +475,7 @@ def main():
                 enhancer.audit_results = json.load(f)
         
         dossier = enhancer.generate_dossier(args.assess)
-        print(f"\n📋 DOSSIER: {dossier.name}")
+        print(f"\n[CLIPBOARD] DOSSIER: {dossier.name}")
         print(f"   Recommendation: {dossier.recommendation} ({dossier.confidence:.1%} confidence)")
         print(f"   Rationale: {dossier.rationale}")
         print(f"   Semantic Duplicates: {len(dossier.semantic_duplicates)}")

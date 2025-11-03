@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Feedback Learner for HoloDAE Intent Orchestration
 WSP Compliance: WSP 48 (Recursive Learning), WSP 37 (Roadmap Scoring), WSP 3 (Module Organization)
 
@@ -415,7 +432,7 @@ class FeedbackLearner:
             self.metrics["weight_adjustments"] += 1
 
             logger.debug(
-                "[FEEDBACK-LEARNER] Adjusted weight: %s/%s: %.2f → %.2f (delta: %+.2f)",
+                "[FEEDBACK-LEARNER] Adjusted weight: %s/%s: %.2f -> %.2f (delta: %+.2f)",
                 intent_key, component, current_weight, new_weight, weight_delta
             )
 
@@ -485,7 +502,7 @@ class FeedbackLearner:
             self.metrics["weight_adjustments"] += 1
 
             logger.debug(
-                "[FEEDBACK-LEARNER] WSP37 adjusted weight: %s/%s: %.2f → %.2f (delta: %+.3f)",
+                "[FEEDBACK-LEARNER] WSP37 adjusted weight: %s/%s: %.2f -> %.2f (delta: %+.3f)",
                 intent_key, component, current_weight, new_weight, weight_delta
             )
 
@@ -511,9 +528,9 @@ class FeedbackLearner:
         quality = dimensions.calculate_overall_quality()
 
         # Map quality to delta range
-        # Quality 0.0 → delta -0.20 (strong negative)
-        # Quality 0.5 → delta  0.00 (neutral)
-        # Quality 1.0 → delta +0.20 (strong positive)
+        # Quality 0.0 -> delta -0.20 (strong negative)
+        # Quality 0.5 -> delta  0.00 (neutral)
+        # Quality 1.0 -> delta +0.20 (strong positive)
         delta = (quality - 0.5) * 0.4
 
         # Apply dimension-specific modifiers
@@ -575,7 +592,7 @@ class FeedbackLearner:
             self.metrics["affinity_calculations"] += 1
 
             logger.debug(
-                "[FEEDBACK-LEARNER] WSP37 affinity: %s/%s: %.3f → %.3f (score: %.3f)",
+                "[FEEDBACK-LEARNER] WSP37 affinity: %s/%s: %.3f -> %.3f (score: %.3f)",
                 intent_key, component, current_affinity, new_affinity, affinity_score
             )
 

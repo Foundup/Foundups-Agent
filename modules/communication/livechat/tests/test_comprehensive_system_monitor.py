@@ -47,7 +47,7 @@ class SystemMonitor:
 
 def monitor_orchestrator_components():
     """Deep analysis of orchestrator components"""
-    print("🔍 DEEP COMPONENT ANALYSIS - ORCHESTRATOR")
+    print("[SEARCH] DEEP COMPONENT ANALYSIS - ORCHESTRATOR")
     print("=" * 60)
 
     monitor = SystemMonitor()
@@ -151,7 +151,7 @@ def monitor_orchestrator_components():
 
 def monitor_livechat_core_integration():
     """Deep analysis of LiveChatCore integration with orchestrator"""
-    print("\n🔍 DEEP COMPONENT ANALYSIS - LIVECHAT CORE INTEGRATION")
+    print("\n[SEARCH] DEEP COMPONENT ANALYSIS - LIVECHAT CORE INTEGRATION")
     print("=" * 60)
 
     monitor = SystemMonitor()
@@ -211,7 +211,7 @@ def monitor_livechat_core_integration():
 
 async def monitor_message_flow():
     """Deep analysis of message flow through the system"""
-    print("\n🔍 DEEP COMPONENT ANALYSIS - MESSAGE FLOW")
+    print("\n[SEARCH] DEEP COMPONENT ANALYSIS - MESSAGE FLOW")
     print("=" * 60)
 
     monitor = SystemMonitor()
@@ -304,7 +304,7 @@ async def monitor_message_flow():
 
 def monitor_handler_adapters():
     """Deep analysis of handler adapters and their integration"""
-    print("\n🔍 DEEP COMPONENT ANALYSIS - HANDLER ADAPTERS")
+    print("\n[SEARCH] DEEP COMPONENT ANALYSIS - HANDLER ADAPTERS")
     print("=" * 60)
 
     monitor = SystemMonitor()
@@ -371,7 +371,7 @@ def monitor_handler_adapters():
 
 def monitor_performance_metrics():
     """Analyze performance characteristics"""
-    print("\n🔍 DEEP COMPONENT ANALYSIS - PERFORMANCE METRICS")
+    print("\n[SEARCH] DEEP COMPONENT ANALYSIS - PERFORMANCE METRICS")
     print("=" * 60)
 
     monitor = SystemMonitor()
@@ -428,7 +428,7 @@ def monitor_performance_metrics():
 
 def monitor_integration_points():
     """Check integration points and dependencies"""
-    print("\n🔍 DEEP COMPONENT ANALYSIS - INTEGRATION POINTS")
+    print("\n[SEARCH] DEEP COMPONENT ANALYSIS - INTEGRATION POINTS")
     print("=" * 60)
 
     monitor = SystemMonitor()
@@ -450,11 +450,11 @@ def monitor_integration_points():
             try:
                 module = __import__(module_path, fromlist=[name])
                 cls = getattr(module, name)
-                import_results.append(f"{name}: ✓")
+                import_results.append(f"{name}: [OK]")
             except Exception as e:
-                import_results.append(f"{name}: ✗ ({str(e)[:20]})")
+                import_results.append(f"{name}: [FAIL] ({str(e)[:20]})")
 
-        successful_imports = sum(1 for r in import_results if "✓" in r)
+        successful_imports = sum(1 for r in import_results if "[OK]" in r)
         monitor.log_result("ImportTests", "PASS" if successful_imports == len(import_tests) else "WARN",
                           f"{successful_imports}/{len(import_tests)} imports successful")
 
@@ -504,7 +504,7 @@ def monitor_integration_points():
 
 async def run_comprehensive_monitor():
     """Run all monitoring components"""
-    print("🚀 COMPREHENSIVE SYSTEM MONITOR - POST-MIGRATION ANALYSIS")
+    print("[ROCKET] COMPREHENSIVE SYSTEM MONITOR - POST-MIGRATION ANALYSIS")
     print("=" * 100)
     print("Deep thinking through all components...")
     print()
@@ -532,36 +532,36 @@ async def run_comprehensive_monitor():
         all_successes.extend(monitor.successes)
 
     # Generate comprehensive report
-    print("\n🏁 COMPREHENSIVE ANALYSIS RESULTS")
+    print("\n[U+1F3C1] COMPREHENSIVE ANALYSIS RESULTS")
     print("=" * 100)
 
-    print(f"📊 METRICS:")
+    print(f"[DATA] METRICS:")
     print(f"   Total Components Analyzed: {len(all_results)}")
     print(f"   Successful Checks: {len(all_successes)}")
     print(f"   Warnings: {len(all_warnings)}")
     print(f"   Issues: {len(all_issues)}")
 
-    print(f"\n✅ SUCCESSES ({len(all_successes)}):")
+    print(f"\n[OK] SUCCESSES ({len(all_successes)}):")
     for success in all_successes[:10]:  # Show top 10
-        print(f"   ✓ {success}")
+        print(f"   [OK] {success}")
     if len(all_successes) > 10:
         print(f"   ... and {len(all_successes) - 10} more")
 
     if all_warnings:
-        print(f"\n⚠️ WARNINGS ({len(all_warnings)}):")
+        print(f"\n[U+26A0]️ WARNINGS ({len(all_warnings)}):")
         for warning in all_warnings:
-            print(f"   ⚠ {warning}")
+            print(f"   [U+26A0] {warning}")
 
     if all_issues:
-        print(f"\n❌ ISSUES ({len(all_issues)}):")
+        print(f"\n[FAIL] ISSUES ({len(all_issues)}):")
         for issue in all_issues:
-            print(f"   ❌ {issue}")
+            print(f"   [FAIL] {issue}")
 
     # Overall system health assessment
     total_checks = len(all_results)
     success_rate = len(all_successes) / total_checks if total_checks > 0 else 0
 
-    print(f"\n🎯 OVERALL SYSTEM HEALTH:")
+    print(f"\n[TARGET] OVERALL SYSTEM HEALTH:")
     print(f"   Success Rate: {success_rate:.1%}")
 
     if success_rate >= 0.9:
@@ -575,12 +575,12 @@ async def run_comprehensive_monitor():
         health_icon = "🟠"
     else:
         health_status = "NEEDS ATTENTION"
-        health_icon = "🔴"
+        health_icon = "[U+1F534]"
 
     print(f"   System Status: {health_icon} {health_status}")
 
     # Migration-specific assessment
-    print(f"\n🔄 MIGRATION ASSESSMENT:")
+    print(f"\n[REFRESH] MIGRATION ASSESSMENT:")
     migration_components = [
         "RouterMode", "LegacyMode", "RouterReference", "BackwardCompat",
         "MessageFlow", "HandlerTypes", "AdapterFunction"
@@ -594,11 +594,11 @@ async def run_comprehensive_monitor():
     print(f"   Critical Components: {migration_successes}/{len(migration_results)} operational")
 
     if migration_rate >= 0.9:
-        print(f"   Migration Status: 🎉 SUCCESSFUL - Production Ready")
+        print(f"   Migration Status: [CELEBRATE] SUCCESSFUL - Production Ready")
     elif migration_rate >= 0.8:
-        print(f"   Migration Status: ✅ MOSTLY SUCCESSFUL - Minor issues to address")
+        print(f"   Migration Status: [OK] MOSTLY SUCCESSFUL - Minor issues to address")
     else:
-        print(f"   Migration Status: ⚠️ NEEDS WORK - Address critical issues before production")
+        print(f"   Migration Status: [U+26A0]️ NEEDS WORK - Address critical issues before production")
 
     print("\n" + "=" * 100)
     return success_rate >= 0.8
@@ -606,4 +606,4 @@ async def run_comprehensive_monitor():
 if __name__ == "__main__":
     result = asyncio.run(run_comprehensive_monitor())
 
-    print(f"\n🏆 FINAL ASSESSMENT: {'SYSTEM READY' if result else 'NEEDS ATTENTION'}")
+    print(f"\n[U+1F3C6] FINAL ASSESSMENT: {'SYSTEM READY' if result else 'NEEDS ATTENTION'}")

@@ -89,8 +89,8 @@
 
 2. **Integration Architecture**:
    ```python
-   # Flow: orchestrator → unified_interface → adapter → scheduler (API)
-   # NOT: orchestrator → unified_interface → anti_detection_poster (browser)
+   # Flow: orchestrator -> unified_interface -> adapter -> scheduler (API)
+   # NOT: orchestrator -> unified_interface -> anti_detection_poster (browser)
    ```
 
 ### Phase 3: Cleanup (Delete 100+ Files)

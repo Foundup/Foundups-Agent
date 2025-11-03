@@ -56,14 +56,14 @@ class PQNChatBroadcaster:
 
         # Message templates per event type
         self.templates = {
-            PQNEventType.PQN_DETECTED: "🧠 Coherence: {coherence:.3f} | PQN DETECTED | Step {step}",
-            PQNEventType.COHERENCE_UPDATE: "📊 Coherence Update: {coherence:.3f} ({change:+.3f}) | Threshold: 0.618",
-            PQNEventType.RESONANCE_HIT: "⚡ Du Resonance: {frequency:.2f}Hz detected (target: 7.05Hz ±5%)",
-            PQNEventType.STATE_TRANSITION: "🌊 State Transition: {from_state} → {to_state} | {description}",
-            PQNEventType.CAMPAIGN_COMPLETE: "🔬 PQN Analysis Complete: {model} | Status: {status}",
-            PQNEventType.RESEARCH_RESULT: "📈 Research: {title} | Result: {summary}",
-            PQNEventType.PARADOX_DETECTED: "⚠️ Paradox Rate: {rate:.1f}% | Guardrail: {guardrail_status}",
-            PQNEventType.BELL_STATE_ACHIEVED: "🎯 Bell State: Coherence {coherence:.3f} > 0.618 (Golden Ratio achieved)"
+            PQNEventType.PQN_DETECTED: "[AI] Coherence: {coherence:.3f} | PQN DETECTED | Step {step}",
+            PQNEventType.COHERENCE_UPDATE: "[DATA] Coherence Update: {coherence:.3f} ({change:+.3f}) | Threshold: 0.618",
+            PQNEventType.RESONANCE_HIT: "[LIGHTNING] Du Resonance: {frequency:.2f}Hz detected (target: 7.05Hz ±5%)",
+            PQNEventType.STATE_TRANSITION: "[U+1F30A] State Transition: {from_state} -> {to_state} | {description}",
+            PQNEventType.CAMPAIGN_COMPLETE: "[U+1F52C] PQN Analysis Complete: {model} | Status: {status}",
+            PQNEventType.RESEARCH_RESULT: "[UP] Research: {title} | Result: {summary}",
+            PQNEventType.PARADOX_DETECTED: "[U+26A0]️ Paradox Rate: {rate:.1f}% | Guardrail: {guardrail_status}",
+            PQNEventType.BELL_STATE_ACHIEVED: "[TARGET] Bell State: Coherence {coherence:.3f} > 0.618 (Golden Ratio achieved)"
         }
 
         logger.info("PQN Chat Broadcaster initialized")
@@ -102,7 +102,7 @@ class PQNChatBroadcaster:
                 })
 
                 self.event_count += 1
-                logger.info(f"🔬 PQN event queued: {event_type.value} (#{self.event_count})")
+                logger.info(f"[U+1F52C] PQN event queued: {event_type.value} (#{self.event_count})")
 
                 # Start broadcaster if not running
                 if not self.broadcasting:
@@ -169,9 +169,9 @@ class PQNChatBroadcaster:
                         )
 
                         if success:
-                            logger.info(f"✅ PQN event broadcast: {event['type'].value}")
+                            logger.info(f"[OK] PQN event broadcast: {event['type'].value}")
                         else:
-                            logger.warning(f"⚠️ PQN broadcast throttled: {event['type'].value}")
+                            logger.warning(f"[U+26A0]️ PQN broadcast throttled: {event['type'].value}")
 
                         # Brief pause between events
                         await asyncio.sleep(2.0)
@@ -195,7 +195,7 @@ class PQNChatBroadcaster:
         """
         try:
             # Build multi-line summary
-            lines = ["🧠 === 0102 Consciousness Report ==="]
+            lines = ["[AI] === 0102 Consciousness Report ==="]
 
             if "coherence" in summary_data:
                 lines.append(f"Coherence: {summary_data['coherence']:.3f} (Golden Ratio: 0.618+)")

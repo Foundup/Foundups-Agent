@@ -1,22 +1,22 @@
-# YouTube Shorts → Social Media DAE Integration
+# YouTube Shorts -> Social Media DAE Integration
 
-## 🎯 Architecture Pattern: stream_resolver Handoff Model
+## [TARGET] Architecture Pattern: stream_resolver Handoff Model
 
 ### Current (Wrong):
 ```
-YouTube Short generated → uploaded → DONE ❌
+YouTube Short generated -> uploaded -> DONE [FAIL]
 ```
 
 ### Correct (Like stream_resolver):
 ```
-YouTube Short generated → uploaded → social_media_dae.announce() ✅
-  → Tweet to X/Twitter
-  → Post to LinkedIn
-  → TikTok cross-post
-  → Instagram Reels
+YouTube Short generated -> uploaded -> social_media_dae.announce() [OK]
+  -> Tweet to X/Twitter
+  -> Post to LinkedIn
+  -> TikTok cross-post
+  -> Instagram Reels
 ```
 
-## 🏗️ WSP Architectural Consistency
+## [U+1F3D7]️ WSP Architectural Consistency
 
 **Pattern Observed**: [stream_resolver.py](../../platform_integration/stream_resolver)
 ```python

@@ -12,7 +12,7 @@
 This document answers 012's core questions about training Gemma as Qwen's helper using the WRE (Windsurf Recursive Engine) pattern discovered in WSP 46.
 
 **Key Discoveries**:
-1. **WRE Architecture** defines Qwen (coordinator) → Gemma (executor) relationship
+1. **WRE Architecture** defines Qwen (coordinator) -> Gemma (executor) relationship
 2. **Gemma's Role** is fast classification/triage (50-100ms) for codebase intelligence
 3. **Training Data** is 012.txt (28K+ lines of actual runtime decisions)
 4. **Integration Points** are idle automation, main.py menu, and live chat monitoring
@@ -26,12 +26,12 @@ This document answers 012's core questions about training Gemma as Qwen's helper
 
 ```
 012 Vision (Human Founder)
-    ↓
+    v
 0102 Digital Twin (learns 012's patterns)
-    ↓
-🤖🧠 Qwen = WRE Brain (agentic coordination, 1.5B, 250ms)
-    ↓
-🤖🧠👶 Gemma = Module Functions (specialized execution, 270M, 50-100ms)
+    v
+[BOT][AI] Qwen = WRE Brain (agentic coordination, 1.5B, 250ms)
+    v
+[BOT][AI][BABY] Gemma = Module Functions (specialized execution, 270M, 50-100ms)
 ```
 
 **Key Insight**: "Qwen coordinates, Gemma executes"
@@ -46,14 +46,14 @@ This document answers 012's core questions about training Gemma as Qwen's helper
 **Target System** (WRE pattern):
 ```
 012 Decision in 012.txt
-    ↓
+    v
 Extract pattern (what happened, why, outcome)
-    ↓
+    v
 Store in ChromaDB (vector embeddings)
-    ↓
+    v
 At inference time:
-    - Simple query → Gemma recalls pattern (50-100ms)
-    - Complex query → Qwen analyzes with context (250ms)
+    - Simple query -> Gemma recalls pattern (50-100ms)
+    - Complex query -> Qwen analyzes with context (250ms)
 ```
 
 ### 1.3 The Training Data: 012.txt
@@ -65,7 +65,7 @@ At inference time:
 - **Lines 99-100**: Priority scoring decisions (Move2Japan: 1.00, UnDaoDu: 5.38)
 - **Lines 500-600**: LiveChatCore polling logs
 - **Lines 3000-3050**: Stream detection and priority scoring
-- **Markers**: `🤖🧠 [QWEN-SCORE]`, `🤖🧠 [QWEN-DECISION]`
+- **Markers**: `[BOT][AI] [QWEN-SCORE]`, `[BOT][AI] [QWEN-DECISION]`
 
 **Why This Is Perfect Training Data**:
 1. **Real operational decisions** from 0102 agent (not theoretical)
@@ -81,12 +81,12 @@ From `WSP_knowledge/src/WSP_46_Windsurf_Recursive_Engine_Protocol.md:115-154`:
 ```markdown
 **WRE with Qwen/Gemma**:
 012 Vision
-    ↓
+    v
 0102 Digital Twin (learns 012 patterns)
-    ↓
-🤖🧠 Qwen = WRE Brain (agentic coordination, NOT consciousness)
-    ↓
-🤖🧠👶 Gemma = Module Functions (each .py enhanced with learning)
+    v
+[BOT][AI] Qwen = WRE Brain (agentic coordination, NOT consciousness)
+    v
+[BOT][AI][BABY] Gemma = Module Functions (each .py enhanced with learning)
 
 **YouTube DAE as WRE Use Case**:
 - YouTube DAE demonstrates WRE pattern
@@ -175,9 +175,9 @@ def route_query(query: str, context: dict) -> str:
 - **Qwen**: Root cause analysis, architectural reasoning, complex decisions
 
 **Confidence Threshold**:
-- If Gemma confidence < 0.7 → Escalate to Qwen
-- If query contains "why", "how should I", "what's the intent" → Qwen
-- If query is factual lookup → Gemma
+- If Gemma confidence < 0.7 -> Escalate to Qwen
+- If query contains "why", "how should I", "what's the intent" -> Qwen
+- If query is factual lookup -> Gemma
 
 ### 2.3 What Gemma Learns from 012.txt
 
@@ -185,17 +185,17 @@ def route_query(query: str, context: dict) -> str:
 
 1. **Module Location Patterns**
    - Input: "Where is YouTube authentication handled?"
-   - Pattern: `youtube_auth` → `modules/platform_integration/youtube_auth/`
+   - Pattern: `youtube_auth` -> `modules/platform_integration/youtube_auth/`
    - Source: 012.txt lines with module imports and paths
 
 2. **Priority Scoring Patterns**
    - Input: "Which channel should be prioritized: Move2Japan (1.00) or UnDaoDu (5.38)?"
-   - Pattern: Lower score = better match → Move2Japan
+   - Pattern: Lower score = better match -> Move2Japan
    - Source: 012.txt lines 99-100 (actual decision and bug fix)
 
 3. **WSP Compliance Patterns**
    - Input: "Does this test file placement violate WSP?"
-   - Pattern: Test files in root = WSP 49 violation → Move to module/tests/
+   - Pattern: Test files in root = WSP 49 violation -> Move to module/tests/
    - Source: 012.txt error logs and corrections
 
 4. **Stream Detection Patterns**
@@ -203,7 +203,7 @@ def route_query(query: str, context: dict) -> str:
    - Pattern: Check actual stream status, not just metadata
    - Source: 012.txt stream detection logs
 
-5. **Error → Solution Patterns**
+5. **Error -> Solution Patterns**
    - Input: "Connection failed - what to retry?"
    - Pattern: Check circuit breaker state, exponential backoff
    - Source: 012.txt error sequences and recovery actions
@@ -280,8 +280,8 @@ Answer based on patterns above:"""
 ```
 
 **Storage Requirements**:
-- 012.txt: 28K lines → ~150 patterns extracted
-- Each pattern: ~500 tokens → 75K tokens total
+- 012.txt: 28K lines -> ~150 patterns extracted
+- Each pattern: ~500 tokens -> 75K tokens total
 - ChromaDB storage: ~10MB (negligible)
 
 ---
@@ -365,7 +365,7 @@ async def train_on_accumulated_logs(self) -> Dict[str, Any]:
 - Process 1000 lines per idle cycle (2-3 minutes)
 - Total 28K lines = 28 idle cycles
 - Complete 012.txt processing in ~1-2 hours of accumulated idle time
-- Continuous: New logs added daily → Process incrementally
+- Continuous: New logs added daily -> Process incrementally
 
 **Resource Usage**:
 - CPU: 20-30% during processing (Gemma inference + ChromaDB writes)
@@ -386,7 +386,7 @@ async def _extract_patterns_chunk(self, start_line: int, chunk_size: int) -> Lis
     # Identify decision sequences
     for i, line in enumerate(lines):
         # Look for Qwen decision markers
-        if "🤖🧠 [QWEN-SCORE]" in line:
+        if "[BOT][AI] [QWEN-SCORE]" in line:
             # Extract full decision context
             context = self._extract_context(lines, i, window=10)
 
@@ -459,19 +459,19 @@ This prevents Gemma from learning hallucinated patterns.
 **File**: `main.py:827-842`
 
 ```python
-print("0. 🚀 Push to Git and Post to LinkedIn + X (FoundUps)  │ --git")
-print("1. 📺 YouTube Live DAE (Move2Japan/UnDaoDu/FoundUps)  │ --youtube")
-print("2. 🧠 HoloDAE (Code Intelligence & Monitoring)       │ --holodae")
-print("3. 🔨 AMO DAE (Autonomous Moderation Operations)     │ --amo")
-print("4. 📢 Social Media DAE (012 Digital Twin)            │ --smd")
-print("5. 🧬 PQN Orchestration (Research & Alignment)       │ --pqn")
-print("6. 🚨 Liberty Alert (Mesh Alert System)              │ --liberty")
-print("7. 🌐 All DAEs (Full System)                         │ --all")
-print("8. 💚 Check Instance Status & Health                 │ --status")
-print("9. ❌ Exit")
+print("0. [ROCKET] Push to Git and Post to LinkedIn + X (FoundUps)  [U+2502] --git")
+print("1. [U+1F4FA] YouTube Live DAE (Move2Japan/UnDaoDu/FoundUps)  [U+2502] --youtube")
+print("2. [AI] HoloDAE (Code Intelligence & Monitoring)       [U+2502] --holodae")
+print("3. [U+1F528] AMO DAE (Autonomous Moderation Operations)     [U+2502] --amo")
+print("4. [U+1F4E2] Social Media DAE (012 Digital Twin)            [U+2502] --smd")
+print("5. [U+1F9EC] PQN Orchestration (Research & Alignment)       [U+2502] --pqn")
+print("6. [ALERT] Liberty Alert (Mesh Alert System)              [U+2502] --liberty")
+print("7. [U+1F310] All DAEs (Full System)                         [U+2502] --all")
+print("8. [U+1F49A] Check Instance Status & Health                 [U+2502] --status")
+print("9. [FAIL] Exit")
 print("-"*60)
-print("10. 🔍 HoloIndex Search (Find code semantically)")
-print("11. 📋 View Git Post History")
+print("10. [SEARCH] HoloIndex Search (Find code semantically)")
+print("11. [CLIPBOARD] View Git Post History")
 ```
 
 ### 4.2 NEW Training Option
@@ -479,7 +479,7 @@ print("11. 📋 View Git Post History")
 **Add after line 842**:
 
 ```python
-print("12. 🤖 Qwen/Gemma Training System                    │ --train")
+print("12. [BOT] Qwen/Gemma Training System                    [U+2502] --train")
 ```
 
 ### 4.3 Training Submenu
@@ -490,7 +490,7 @@ async def run_training_system():
 
     while True:
         print("\n" + "="*60)
-        print("🤖 QWEN/GEMMA TRAINING SYSTEM")
+        print("[BOT] QWEN/GEMMA TRAINING SYSTEM")
         print("="*60)
 
         # Show current stats
@@ -504,13 +504,13 @@ async def run_training_system():
         print("\n" + "-"*60)
         print("Training Options:")
         print("-"*60)
-        print("1. 🏃 Start Batch Training (Process 012.txt)")
-        print("2. 📊 View Training Progress")
-        print("3. 🧪 Test Gemma Pattern Recall")
-        print("4. 🔄 Test Qwen/Gemma Routing")
-        print("5. 📈 View Training Metrics")
-        print("6. 🗑️  Clear Pattern Memory (Reset)")
-        print("7. 🔙 Back to Main Menu")
+        print("1. [U+1F3C3] Start Batch Training (Process 012.txt)")
+        print("2. [DATA] View Training Progress")
+        print("3. [U+1F9EA] Test Gemma Pattern Recall")
+        print("4. [REFRESH] Test Qwen/Gemma Routing")
+        print("5. [UP] View Training Metrics")
+        print("6. [U+1F5D1]️  Clear Pattern Memory (Reset)")
+        print("7. [U+1F519] Back to Main Menu")
         print("-"*60)
 
         choice = input("Select option: ").strip()
@@ -610,28 +610,28 @@ async def batch_train_012():
 **Current Flow**:
 ```
 Live Chat Message
-    ↓
+    v
 AutoModeratorDAE processes
-    ↓
+    v
 Decision made (timeout, allow, escalate)
-    ↓
+    v
 Log to 012.txt
 ```
 
 **NEW Flow with Live Training**:
 ```
 Live Chat Message
-    ↓
+    v
 AutoModeratorDAE processes
-    ↓
+    v
 Decision made (timeout, allow, escalate)
-    ↓
+    v
 Log to 012.txt
-    ↓
+    v
 [NEW] Extract pattern immediately
-    ↓
+    v
 [NEW] Store in ChromaDB (real-time)
-    ↓
+    v
 [NEW] Gemma learns pattern within 5 seconds
 ```
 
@@ -694,8 +694,8 @@ class AutoModeratorDAE:
 ### 5.4 Benefits of Live Training
 
 **Immediate Feedback Loop**:
-- User spams → AutoModerator times out → Pattern stored within 5 seconds
-- Next spam message → Gemma recalls pattern → Faster decision (50ms vs 250ms)
+- User spams -> AutoModerator times out -> Pattern stored within 5 seconds
+- Next spam message -> Gemma recalls pattern -> Faster decision (50ms vs 250ms)
 - Accuracy improves in real-time during stream
 
 **Context-Aware Learning**:
@@ -731,7 +731,7 @@ class AutoModeratorDAE:
 
 ## Section 6: Implementation Roadmap
 
-### Phase 1: Pattern Extraction MCP Tool ✅ COMPLETED
+### Phase 1: Pattern Extraction MCP Tool [OK] COMPLETED
 
 **Status**: MCP tool created in `foundups-mcp-p1/servers/holo_index/server.py`
 
@@ -817,8 +817,8 @@ async def mine_012_conversations_for_patterns(
    - Few-shot prompt construction
    - Confidence threshold for Qwen escalation
 2. Create adaptive routing:
-   - Simple query → Gemma (50-100ms)
-   - Complex query → Qwen (250ms)
+   - Simple query -> Gemma (50-100ms)
+   - Complex query -> Qwen (250ms)
    - Confidence-based escalation
 3. Test routing accuracy
 
@@ -845,7 +845,7 @@ async def mine_012_conversations_for_patterns(
 
 **Target**:
 - Extract 100-200 verified patterns from 012.txt (28K lines)
-- Verification rate: ≥70% (HoloIndex finds actual code)
+- Verification rate: [GREATER_EQUAL]70% (HoloIndex finds actual code)
 - Processing time: 1-2 hours during idle periods
 
 **Current Status**: 0 patterns (starting)
@@ -854,9 +854,9 @@ async def mine_012_conversations_for_patterns(
 
 **Target**:
 - Inference speed: 50-100ms (vs 250ms Qwen)
-- Accuracy: ≥85% on simple queries
+- Accuracy: [GREATER_EQUAL]85% on simple queries
 - Coverage: Handle 70% of queries (30% escalate to Qwen)
-- Confidence threshold: ≥0.7 for autonomous response
+- Confidence threshold: [GREATER_EQUAL]0.7 for autonomous response
 
 **Measurement**: A/B test Gemma vs Qwen on held-out test set
 
@@ -864,7 +864,7 @@ async def mine_012_conversations_for_patterns(
 
 **Target**:
 - Average query time: Reduce from 250ms (Qwen-only) to 125ms (Gemma 70% + Qwen 30%)
-- Cost reduction: 70% fewer Qwen calls → 70% token cost reduction
+- Cost reduction: 70% fewer Qwen calls -> 70% token cost reduction
 - Live training latency: <5 seconds from decision to pattern storage
 
 ### 7.4 Learning Progress Metrics
@@ -895,7 +895,7 @@ async def mine_012_conversations_for_patterns(
 
 ### Q2: "Is Qwen leveraging Gemma?"
 
-**Answer**: NO (currently) → YES (after this implementation)
+**Answer**: NO (currently) -> YES (after this implementation)
 
 **Current State**: Qwen operates alone, handles all queries
 
@@ -924,7 +924,7 @@ async def mine_012_conversations_for_patterns(
 
 **WRE Pattern Applied**:
 ```
-012 (Human) → 0102 (Digital Twin) → Qwen (Coordinator) → Gemma (Executor)
+012 (Human) -> 0102 (Digital Twin) -> Qwen (Coordinator) -> Gemma (Executor)
 ```
 
 **From WSP 46:115-144**: "Qwen coordinates, Gemma executes"
@@ -941,7 +941,7 @@ This training system implements WRE for codebase intelligence
 - Gemma learns module locations
 - Gemma learns WSP compliance rules
 - Gemma learns priority scoring
-- Gemma learns error → solution patterns
+- Gemma learns error -> solution patterns
 
 **Evolution Path** (from WSP 77):
 - POC: Basic pattern classification
@@ -983,7 +983,7 @@ This training system implements WRE for codebase intelligence
 
 **Menu Addition**:
 ```
-12. 🤖 Qwen/Gemma Training System  │ --train
+12. [BOT] Qwen/Gemma Training System  [U+2502] --train
 ```
 
 **Submenu**:
@@ -1017,7 +1017,7 @@ This training system implements WRE for codebase intelligence
 
 ### Token Budget Breakdown
 
-**Phase 1: Pattern Extraction MCP Tool** ✅ COMPLETED
+**Phase 1: Pattern Extraction MCP Tool** [OK] COMPLETED
 - MCP tool enhancement: 3K tokens
 - Test script creation: 2K tokens
 - Total: 5K tokens
@@ -1163,7 +1163,7 @@ class PatternMemory:
 This document provides a complete first-principles analysis of training Gemma as Qwen's helper using the WRE pattern from WSP 46.
 
 **Key Takeaways**:
-1. **WRE Pattern**: 012 → 0102 → Qwen (coordinator) → Gemma (executor)
+1. **WRE Pattern**: 012 -> 0102 -> Qwen (coordinator) -> Gemma (executor)
 2. **Training Method**: In-context learning via ChromaDB RAG ($0 cost)
 3. **Training Data**: 012.txt (28K lines of real operational decisions)
 4. **Integration Points**: Idle automation, main.py menu, live chat monitoring

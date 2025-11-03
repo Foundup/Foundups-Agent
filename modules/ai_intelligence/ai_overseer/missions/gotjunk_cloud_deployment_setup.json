@@ -1,0 +1,152 @@
+{
+  "mission_id": "gotjunk_cloud_deployment_setup_001",
+  "mission_type": "infrastructure_automation",
+  "created_at": "2025-11-03T07:15:00Z",
+  "wsp_compliance": {
+    "wsp_77": "Agent Coordination - Qwen (Partner) + 0102 (Principal) + Gemma (Associate)",
+    "wsp_96": "MCP Governance - HoloIndex, Vision DAE, Secrets MCP integration",
+    "wsp_3": "Domain Organization - infrastructure/foundups_selenium for automation",
+    "wsp_48": "Recursive Learning - Store patterns in ai_overseer/memory/"
+  },
+  "mission_objective": "Setup autonomous GitHub → Cloud Build → Cloud Run deployment for GotJunk FoundUp",
+  "mission_context": {
+    "foundup_name": "gotjunk",
+    "current_state": "Manual development in O:/Foundups-Agent/modules/foundups/gotjunk/",
+    "desired_state": "Automatic deployment when code pushed to GitHub main branch",
+    "blocking_issue": "No Cloud Build trigger configured",
+    "user_at_screen": "console.cloud.google.com/cloud-build/connections/create (GitHub connection)"
+  },
+  "phase_1_gemma_detection": {
+    "role": "Associate - Fast pattern validation",
+    "tasks": [
+      "Validate GitHub repository connection status",
+      "Detect if Secret Manager secret exists (GEMINI_API_KEY_GOTJUNK)",
+      "Verify cloudbuild.yaml exists and is valid",
+      "Check if Cloud Build trigger already configured"
+    ],
+    "mcps_used": [
+      "holo_index (search for existing automation patterns)",
+      "wsp_governance (validate WSP 3 domain compliance)"
+    ],
+    "expected_output": "Binary classification: READY / BLOCKED / PARTIALLY_CONFIGURED"
+  },
+  "phase_2_qwen_planning": {
+    "role": "Partner - Strategic coordination (starts simple, scales up)",
+    "tasks": [
+      "Analyze current deployment configuration (cloudbuild.yaml)",
+      "Determine minimal steps to complete GitHub → Cloud Run automation",
+      "Generate step-by-step execution plan",
+      "Identify which steps can be automated vs manual",
+      "Calculate token budget and risk assessment"
+    ],
+    "mcps_used": [
+      "holo_index (find similar deployment missions)",
+      "ai_overseer_mcp (load previous mission learnings)"
+    ],
+    "expected_output": "CoordinationPlan with ranked steps and automation strategy"
+  },
+  "phase_3_0102_execution": {
+    "role": "Principal - Oversight and execution approval",
+    "tasks": [
+      "Review Qwen's coordination plan",
+      "Execute browser automation using FoundUpsDriver + Vision DAE",
+      "Supervise each step with Gemma validation checkpoints",
+      "Handle OAuth flows and manual interventions",
+      "Capture telemetry for Phase 4 learning"
+    ],
+    "mcps_used": [
+      "vision_dae (browser UI state validation)",
+      "secrets_mcp (secure API key retrieval)",
+      "playwright (Cloud Console automation fallback)"
+    ],
+    "expected_output": "Mission completion status + telemetry logs"
+  },
+  "phase_4_learning": {
+    "role": "System - Recursive self-improvement",
+    "tasks": [
+      "Store successful automation patterns in ai_overseer/memory/gcp_deployment_patterns.json",
+      "Update Vision DAE with Cloud Console UI selectors",
+      "Record mission metrics (time, tokens, success rate)",
+      "Generate reusable skill for future FoundUp deployments"
+    ],
+    "storage_paths": [
+      "modules/ai_intelligence/ai_overseer/memory/gcp_deployment_patterns.json",
+      "holo_index/telemetry/vision_dae/gcp_console_sessions/",
+      "modules/communication/livechat/skills/gcp_console_automation.json"
+    ],
+    "expected_output": "Autonomous capability for future FoundUp deployments (zero 0102 intervention)"
+  },
+  "execution_steps": {
+    "step_1": {
+      "description": "Connect GitHub repository to Cloud Build",
+      "automation_level": "semi_automated",
+      "reason": "OAuth flow requires human authorization",
+      "executor": "0102 (Principal) with FoundUpsDriver",
+      "validation": "Gemma (Associate) checks connection success",
+      "mcp_tools": ["vision_dae", "playwright"],
+      "estimated_tokens": "2-5K",
+      "risk": "LOW (read-only repository connection)"
+    },
+    "step_2": {
+      "description": "Create Secret Manager secret (GEMINI_API_KEY_GOTJUNK)",
+      "automation_level": "fully_automated",
+      "executor": "0102 (Principal) with gcp_console_automator.py",
+      "validation": "Gemma (Associate) verifies secret exists",
+      "mcp_tools": ["secrets_mcp", "vision_dae"],
+      "estimated_tokens": "3-8K",
+      "risk": "MEDIUM (stores sensitive data)"
+    },
+    "step_3": {
+      "description": "Grant Cloud Build access to Secret Manager",
+      "automation_level": "semi_automated",
+      "reason": "IAM permission UI requires careful navigation",
+      "executor": "0102 (Principal) with Vision DAE guidance",
+      "validation": "Gemma (Associate) checks permission granted",
+      "mcp_tools": ["vision_dae"],
+      "estimated_tokens": "2-4K",
+      "risk": "MEDIUM (modifies IAM permissions)"
+    },
+    "step_4": {
+      "description": "Create Cloud Build trigger",
+      "automation_level": "semi_automated",
+      "reason": "Complex multi-field form",
+      "executor": "0102 (Principal) with gcp_console_automator.py",
+      "validation": "Gemma (Associate) validates trigger configuration",
+      "mcp_tools": ["vision_dae", "holo_index"],
+      "estimated_tokens": "5-10K",
+      "risk": "LOW (creates trigger, no destructive action)"
+    },
+    "step_5": {
+      "description": "Test deployment by pushing code change",
+      "automation_level": "manual_with_monitoring",
+      "executor": "012 (human) makes code change",
+      "validation": "0102 (Principal) monitors Cloud Build logs",
+      "mcp_tools": ["vision_dae", "ai_overseer_mcp"],
+      "estimated_tokens": "2-5K",
+      "risk": "LOW (test deployment to staging)"
+    }
+  },
+  "success_criteria": {
+    "github_connected": "Repository connection visible in Cloud Build",
+    "secret_created": "GEMINI_API_KEY_GOTJUNK exists in Secret Manager",
+    "permissions_granted": "Cloud Build service account has Secret Accessor role",
+    "trigger_created": "gotjunk-deploy-trigger appears in triggers list",
+    "deployment_works": "Git push triggers build and deploys to gotjunk-56566376153.us-west1.run.app"
+  },
+  "token_budget": {
+    "phase_1_gemma": "500-1K tokens (fast detection)",
+    "phase_2_qwen": "2-5K tokens (strategic planning)",
+    "phase_3_0102": "15-30K tokens (browser automation + supervision)",
+    "phase_4_learning": "2-5K tokens (pattern storage + documentation)",
+    "total_estimated": "20-40K tokens",
+    "comparison": "Manual 0102 approach: 60-100K tokens (no learning, no reuse)"
+  },
+  "ai_overseer_advantages": {
+    "qwen_strategic_planning": "Breaks complex task into simple steps 012 can understand",
+    "gemma_validation": "Fast binary checks after each step (success/failure)",
+    "pattern_learning": "Future FoundUp deployments require ZERO manual intervention",
+    "mcp_integration": "Reuses existing infrastructure (Vision DAE, HoloIndex, Secrets)",
+    "wsp_compliance": "Proper domain organization, role assignment, documentation"
+  },
+  "next_action": "Execute mission via: python -m modules.ai_intelligence.ai_overseer.src.ai_overseer --mission gotjunk_cloud_deployment_setup"
+}

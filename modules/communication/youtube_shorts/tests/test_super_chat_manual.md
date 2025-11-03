@@ -1,7 +1,7 @@
 # Manual Testing Guide - Super Chat Monetization
 
 **Module**: `youtube_shorts`
-**Feature**: Super Chat → YouTube Shorts creation
+**Feature**: Super Chat -> YouTube Shorts creation
 **Test Date**: _________________
 **Tester**: _________________
 
@@ -16,10 +16,10 @@
 cd O:\Foundups-Agent
 
 # Check Gemini API key
-python -c "import os; print('Gemini API:', '✅ Set' if os.getenv('GEMINI_API_KEY') else '❌ Missing')"
+python -c "import os; print('Gemini API:', '[OK] Set' if os.getenv('GEMINI_API_KEY') else '[FAIL] Missing')"
 
 # Check YouTube OAuth
-python -c "from pathlib import Path; print('OAuth Token:', '✅ Exists' if Path('credentials/oauth_token.json').exists() else '❌ Missing')"
+python -c "from pathlib import Path; print('OAuth Token:', '[OK] Exists' if Path('credentials/oauth_token.json').exists() else '[FAIL] Missing')"
 ```
 
 **Checklist**:
@@ -49,28 +49,28 @@ YOUTUBE SHORTS SUPER CHAT INTEGRATION TESTS
 ==============================================================
 
 TEST 1: Super Chat Event Structure
-✅ Event structure validation passed
+[OK] Event structure validation passed
 
-TEST 2: Amount Conversion (micros → USD)
-✅ All conversions passed
+TEST 2: Amount Conversion (micros -> USD)
+[OK] All conversions passed
 
 TEST 3: $20 Minimum Threshold Check
-✅ $15.00 (Below minimum): Rejected
-✅ $20.00 (Exact minimum): Processed
-✅ $50.00 (Well above): Processed
+[OK] $15.00 (Below minimum): Rejected
+[OK] $20.00 (Exact minimum): Processed
+[OK] $50.00 (Well above): Processed
 
 TEST 4: Topic Extraction
-✅ All topic extractions passed
+[OK] All topic extractions passed
 
 TEST 5: Concurrent Generation Lock
-✅ First request started generation
-✅ Second request blocked
+[OK] First request started generation
+[OK] Second request blocked
 
 TEST 6: Message Processor Routing
-✅ Event routed to handler
+[OK] Event routed to handler
 
 TEST 7: Full Pipeline Dry Run
-✅ Complete pipeline validated
+[OK] Complete pipeline validated
 
 ==============================================================
 TEST SUMMARY
@@ -83,7 +83,7 @@ Results: 7/7 tests passed (100.0%)
 - [ ] All 7 tests passed
 - [ ] No exceptions or errors
 - [ ] Event structure matches YouTube API
-- [ ] Amount conversion accurate (micros → USD)
+- [ ] Amount conversion accurate (micros -> USD)
 - [ ] $20 threshold enforced
 - [ ] Topic extraction working
 - [ ] Concurrent generation blocked
@@ -92,7 +92,7 @@ Results: 7/7 tests passed (100.0%)
 
 ## Test 2: Video Generation (Costs Money!)
 
-**⚠️ WARNING**: This test will charge ~$12 to your Google Cloud account
+**[U+26A0]️ WARNING**: This test will charge ~$12 to your Google Cloud account
 
 ### Test Short Video Generation
 
@@ -112,7 +112,7 @@ result = gen.generate_video(
     duration=5  # 5 seconds = $2.00
 )
 
-print(f'✅ Video generated: {result}')
+print(f'[OK] Video generated: {result}')
 "
 ```
 
@@ -123,8 +123,8 @@ Testing Veo 3 generation...
 [Veo3] Generating 5s video...
 [Veo3] Operation: projects/.../operations/...
 [Veo3] Polling for completion...
-[Veo3] ✅ Video ready!
-✅ Video generated: {'video_url': 'gs://...', 'metadata': {...}}
+[Veo3] [OK] Video ready!
+[OK] Video generated: {'video_url': 'gs://...', 'metadata': {...}}
 ```
 
 ### Checklist
@@ -147,7 +147,7 @@ result = gen.generate_video(
     prompt='Cherry blossoms in Tokyo with Mount Fuji in background',
     duration=30  # 30 seconds = $12.00
 )
-print(f'✅ Full Short generated: {result}')
+print(f'[OK] Full Short generated: {result}')
 "
 ```
 
@@ -179,7 +179,7 @@ result = uploader.upload_short(
     privacy='unlisted'  # Use 'unlisted' for testing
 )
 
-print(f'✅ Uploaded: https://youtube.com/shorts/{result['video_id']}')
+print(f'[OK] Uploaded: https://youtube.com/shorts/{result['video_id']}')
 "
 ```
 
@@ -214,7 +214,7 @@ result = orchestrator.create_and_upload(
     privacy='unlisted'
 )
 
-print(f'✅ Complete flow: {result}')
+print(f'[OK] Complete flow: {result}')
 "
 ```
 
@@ -227,8 +227,8 @@ print(f'✅ Complete flow: {result}')
 [Orchestrator] Generating video with Veo 3...
 [Orchestrator] Video ready!
 [Orchestrator] Uploading to YouTube...
-[Orchestrator] ✅ Complete!
-✅ Complete flow: https://youtube.com/shorts/ABC123
+[Orchestrator] [OK] Complete!
+[OK] Complete flow: https://youtube.com/shorts/ABC123
 ```
 
 ### Checklist
@@ -253,7 +253,7 @@ result = orchestrator.create_and_upload(
     duration=30,
     privacy='unlisted'
 )
-print(f'✅ Full Short: {result}')
+print(f'[OK] Full Short: {result}')
 "
 ```
 
@@ -264,7 +264,7 @@ print(f'✅ Full Short: {result}')
 
 ## Test 5: Super Chat Integration (Full Pipeline)
 
-**Purpose**: Test complete Super Chat → Short creation flow
+**Purpose**: Test complete Super Chat -> Short creation flow
 
 ### Simulate Super Chat Event
 
@@ -295,7 +295,7 @@ response = handler.handle_super_chat_short(
 
 print(f'Bot response: {response}')
 print()
-print('⚠️ Note: Generation happens in background thread')
+print('[U+26A0]️ Note: Generation happens in background thread')
 print('Check logs for generation progress')
 "
 ```
@@ -310,19 +310,19 @@ tail -f logs/youtube_shorts.log
 ### Expected Log Output
 
 ```
-[ShortsChat] 💰 TestDonor ($25.00 SC) requested Short: Cherry blossoms in Tokyo
+[ShortsChat] [U+1F4B0] TestDonor ($25.00 SC) requested Short: Cherry blossoms in Tokyo
 [Orchestrator] Starting Short creation...
 [Veo3] Generating video...
-[Veo3] ✅ Video ready!
+[Veo3] [OK] Video ready!
 [Uploader] Uploading to YouTube...
-[Uploader] ✅ Uploaded: youtube.com/shorts/ABC123
-[ShortsChat] ✅ Super Chat Short created: youtube.com/shorts/ABC123
+[Uploader] [OK] Uploaded: youtube.com/shorts/ABC123
+[ShortsChat] [OK] Super Chat Short created: youtube.com/shorts/ABC123
 ```
 
 ### Checklist
 
 - [ ] Super Chat event processed
-- [ ] $25 validated (≥ $20 threshold)
+- [ ] $25 validated ([GREATER_EQUAL] $20 threshold)
 - [ ] Topic extracted: "Cherry blossoms in Tokyo"
 - [ ] Bot response sent immediately
 - [ ] Background generation started
@@ -375,14 +375,14 @@ tail -f logs/youtube_shorts.log
 
 ```
 # In livechat.log:
-💰 SUPER CHAT: TestUser donated $25.00 (USD) - Tier 2
-💬 Super Chat message: Cherry blossoms in Tokyo
-🎬 YouTube Shorts: @TestUser 💰 Thank you for $25.00! Creating Short...
+[U+1F4B0] SUPER CHAT: TestUser donated $25.00 (USD) - Tier 2
+[U+1F4AC] Super Chat message: Cherry blossoms in Tokyo
+[U+1F3AC] YouTube Shorts: @TestUser [U+1F4B0] Thank you for $25.00! Creating Short...
 
 # In chat:
-Bot: @TestUser 💰 Thank you for the $25.00 Super Chat!
+Bot: @TestUser [U+1F4B0] Thank you for the $25.00 Super Chat!
      Creating YouTube Short for: 'Cherry blossoms in Tokyo'
-     | This will take 1-2 minutes... 🎥✨
+     | This will take 1-2 minutes... [CAMERA][U+2728]
 
 # 1-2 minutes later (completion notification would require chat_sender integration):
 # [Currently: Check YouTube channel for new Short]
@@ -404,14 +404,14 @@ Bot: @TestUser 💰 Thank you for the $25.00 Super Chat!
 
 | Test | Status | Cost | Notes |
 |------|--------|------|-------|
-| 1. Automated Tests | ⬜ Pass / ⬜ Fail | $0 | |
-| 2. Video Generation (5s) | ⬜ Pass / ⬜ Fail | $2 | |
-| 2. Video Generation (30s) | ⬜ Pass / ⬜ Fail | $12 | |
-| 3. YouTube Upload | ⬜ Pass / ⬜ Fail | $0 | |
-| 4. Orchestrator (5s) | ⬜ Pass / ⬜ Fail | $2 | |
-| 4. Orchestrator (30s) | ⬜ Pass / ⬜ Fail | $12 | |
-| 5. Super Chat Integration | ⬜ Pass / ⬜ Fail | $12 | |
-| 6. Live Stream Test | ⬜ Pass / ⬜ Fail | $12 | |
+| 1. Automated Tests | [U+2B1C] Pass / [U+2B1C] Fail | $0 | |
+| 2. Video Generation (5s) | [U+2B1C] Pass / [U+2B1C] Fail | $2 | |
+| 2. Video Generation (30s) | [U+2B1C] Pass / [U+2B1C] Fail | $12 | |
+| 3. YouTube Upload | [U+2B1C] Pass / [U+2B1C] Fail | $0 | |
+| 4. Orchestrator (5s) | [U+2B1C] Pass / [U+2B1C] Fail | $2 | |
+| 4. Orchestrator (30s) | [U+2B1C] Pass / [U+2B1C] Fail | $12 | |
+| 5. Super Chat Integration | [U+2B1C] Pass / [U+2B1C] Fail | $12 | |
+| 6. Live Stream Test | [U+2B1C] Pass / [U+2B1C] Fail | $12 | |
 
 **Total Testing Cost**: $52 (if all tests run)
 
@@ -461,7 +461,7 @@ python modules/platform_integration/youtube_auth/scripts/authorize_set1.py
 
 **Tester**: _________________
 **Date**: _________________
-**Overall Result**: ⬜ PASS / ⬜ FAIL
+**Overall Result**: [U+2B1C] PASS / [U+2B1C] FAIL
 
 **Notes**:
 _________________________________________________________________

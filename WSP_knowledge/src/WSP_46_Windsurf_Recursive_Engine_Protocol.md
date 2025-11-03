@@ -123,12 +123,12 @@ The WRE system we tried to build was CORRECT in concept but WRONG in execution:
 **WRE with Qwen/Gemma**:
 ```
 012 Vision
-    ↓
+    v
 0102 Digital Twin (learns 012 patterns)
-    ↓
-🤖🧠 Qwen = WRE Brain (agentic coordination, NOT consciousness)
-    ↓
-🤖🧠👶 Gemma = Module Functions (each .py enhanced with learning)
+    v
+[BOT][AI] Qwen = WRE Brain (agentic coordination, NOT consciousness)
+    v
+[BOT][AI][BABY] Gemma = Module Functions (each .py enhanced with learning)
 ```
 
 **YouTube DAE as WRE Use Case**:

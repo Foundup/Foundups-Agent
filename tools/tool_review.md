@@ -20,7 +20,7 @@ The analysis supports consolidating existing tools into a comprehensive **WSP_Co
 ## Tools Analysis
 
 ### 1. guided_dev_protocol.py (238 lines)
-**Current Purpose:** Interactive guided development with MPS prioritization and 3-phase protocol enforcement (PoC→Prototype→MVP)
+**Current Purpose:** Interactive guided development with MPS prioritization and 3-phase protocol enforcement (PoC->Prototype->MVP)
 
 **Key Features:**
 - User interaction prompts for development guidance
@@ -47,10 +47,10 @@ grep -r "guided_dev_protocol" modules/ docs/ --include="*.py" --include="*.md"
 **Purpose:** Standalone MPS calculator for module prioritization
 
 **Current Capabilities:**
-- ✅ Interactive MPS calculation
-- ✅ Module ranking by score
-- ✅ Basic validation and error handling
-- ✅ AI assistant integration prompts
+- [OK] Interactive MPS calculation
+- [OK] Module ranking by score
+- [OK] Basic validation and error handling
+- [OK] AI assistant integration prompts
 
 **Usage Status:** 🟡 Referenced in WSP documentation (`python prioritize_module.py --update StreamListener`)
 **Note:** CLI flags (`--update`, `--report`) mentioned in docs but not implemented
@@ -71,13 +71,13 @@ grep -r "guided_dev_protocol" modules/ docs/ --include="*.py" --include="*.md"
 **Purpose:** Comprehensive module processing with scorecard generation and directory setup
 
 **Current Capabilities:**
-- ✅ YAML-based module input
-- ✅ Automated scorecard generation (Markdown + CSV)
-- ✅ Module directory structure creation
-- ✅ README.md template generation
-- ✅ File I/O and data persistence
+- [OK] YAML-based module input
+- [OK] Automated scorecard generation (Markdown + CSV)
+- [OK] Module directory structure creation
+- [OK] README.md template generation
+- [OK] File I/O and data persistence
 
-**Usage Status:** ✅ **ACTIVE** - Evidence of recent scorecard generation in `/reports`
+**Usage Status:** [OK] **ACTIVE** - Evidence of recent scorecard generation in `/reports`
 **Generated Files:** Multiple scorecard files (2025-05-25 timestamps)
 
 **Strengths:**
@@ -93,7 +93,7 @@ grep -r "guided_dev_protocol" modules/ docs/ --include="*.py" --include="*.md"
 
 ## Functional Overlap Analysis
 
-### 🔄 MPS Calculation Logic (100% Overlap)
+### [REFRESH] MPS Calculation Logic (100% Overlap)
 
 All three tools implement identical MPS calculation:
 
@@ -111,11 +111,11 @@ def calculate_mps(scores):
     return mps
 ```
 
-### 🔄 Factor Definitions (100% Overlap)
+### [REFRESH] Factor Definitions (100% Overlap)
 
 All tools share identical FACTORS dictionary with same weights and descriptions.
 
-### 🔄 Score Validation (80% Overlap)
+### [REFRESH] Score Validation (80% Overlap)
 
 Similar input validation patterns across tools, with minor variations in error handling.
 
@@ -239,7 +239,7 @@ def execute_wsp_task(task_context):
 
 ## Migration Strategy
 
-### Immediate Actions (Tools → WSP Compliance Engine)
+### Immediate Actions (Tools -> WSP Compliance Engine)
 1. **Existing Tool Integration**
    - Migrate `prioritize_module.py` MPS logic to engine
    - Consolidate `process_and_score_modules.py` scorecard functionality
@@ -258,33 +258,33 @@ def execute_wsp_task(task_context):
 
 ## Validation Results
 
-✅ **WSP 13 Compliance (Test Creation & Management)**
+[OK] **WSP 13 Compliance (Test Creation & Management)**
 - All target tools analyzed for test strategy enhancement potential
 - Comprehensive test coverage evaluation methodology defined
 - Automated test creation/extension logic implemented
 
-✅ **WSP 10 Compliance (ModLog Integration)**
+[OK] **WSP 10 Compliance (ModLog Integration)**
 - Automated ModLog decision logic implemented
 - Integration with existing `utils/modlog_updater.py` infrastructure
 - Smart documentation necessity assessment based on change impact
 
-✅ **Each Tool Scanned & Analyzed**
+[OK] **Each Tool Scanned & Analyzed**
 - `guided_dev_protocol.py`: 238 lines, interactive development guidance
 - `prioritize_module.py`: 115 lines, MPS calculation and ranking
 - `process_and_score_modules.py`: 412 lines, comprehensive scorecard generation
 
-✅ **Usage Status Confirmed**
+[OK] **Usage Status Confirmed**
 - Active usage documented with evidence from `/reports` directory
 - Recent scorecard generation timestamps (2025-05-25) confirm ongoing utilization
 - WSP documentation references validate tool integration status
 
-✅ **Functional Overlaps Identified**
+[OK] **Functional Overlaps Identified**
 - 100% MPS calculation logic duplication across all tools
 - 100% factor definitions and scoring methodology overlap
 - 80% input validation and error handling pattern similarity
 
-✅ **Improvement Recommendations Documented**
-- 4-tier priority system (Critical → Medium) with implementation timelines
+[OK] **Improvement Recommendations Documented**
+- 4-tier priority system (Critical -> Medium) with implementation timelines
 - Specific consolidation strategies for each identified overlap
 - Comprehensive migration path with backward compatibility preservation
 
@@ -371,14 +371,14 @@ By adding this clarity, 0102 will understand that the WSP_Compliance_Engine is n
 
 #### Decision Flow Example:
 ```
-WSP Prompt Received → check_prompt_constraints() → Valid?
-├─ No → Request clarification/halt
-└─ Yes → Continue
-    ├─ File operations? → validate_module_file_path()
-    ├─ Test operations? → evaluate_test_strategy()
-    └─ Execute task
-        └─ Post-execution → assess_modlog_update_necessity()
-            └─ Commit prep → validate_commit_message()
+WSP Prompt Received -> check_prompt_constraints() -> Valid?
++- No -> Request clarification/halt
++- Yes -> Continue
+    +- File operations? -> validate_module_file_path()
+    +- Test operations? -> evaluate_test_strategy()
+    +- Execute task
+        +- Post-execution -> assess_modlog_update_necessity()
+            +- Commit prep -> validate_commit_message()
 ```
 
 #### Integration Points:

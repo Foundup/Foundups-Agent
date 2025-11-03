@@ -6,7 +6,7 @@ Per WSP 22, this roadmap defines the development phases for the tests module.
 ## Development Phases
 
 ### Phase 1: POC (Proof of Concept) - v0.x.x
-**Status**: 🚧 In Progress
+**Status**: [U+1F6A7] In Progress
 **Target**: Basic functionality demonstration
 
 #### Objectives
@@ -15,7 +15,7 @@ Per WSP 22, this roadmap defines the development phases for the tests module.
 - [ ] Initial documentation
 
 ### Phase 2: Prototype - v1.x.x
-**Status**: 📋 Planned
+**Status**: [CLIPBOARD] Planned
 **Target**: Enhanced integration
 
 #### Objectives
@@ -24,7 +24,7 @@ Per WSP 22, this roadmap defines the development phases for the tests module.
 - [ ] WSP compliance validation
 
 ### Phase 3: MVP (Minimum Viable Product) - v2.x.x
-**Status**: 🔮 Future
+**Status**: [U+1F52E] Future
 **Target**: Production-ready
 
 #### Objectives

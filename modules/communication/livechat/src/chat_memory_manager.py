@@ -15,6 +15,10 @@ import time
 from typing import Dict, Any, List, Optional
 from collections import defaultdict, deque
 
+from modules.communication.livechat.src.chat_telemetry_store import (
+    ChatTelemetryStore,
+)
+
 logger = logging.getLogger(__name__)
 
 class ChatMemoryManager:
@@ -57,11 +61,12 @@ class ChatMemoryManager:
         self.session_messages = []  # Full transcript for current session
         self.session_mod_messages = []  # Mod-only messages for current session
         self.conversation_dir = os.path.join(self.memory_dir, "conversation")
+        self.telemetry_store = ChatTelemetryStore()
 
         # Ensure memory directories exist
         os.makedirs(memory_dir, exist_ok=True)
         os.makedirs(self.conversation_dir, exist_ok=True)
-        logger.info(f"💾 ChatMemoryManager initialized: buffer={buffer_size}, dir={memory_dir}")
+        logger.info(f"[U+1F4BE] ChatMemoryManager initialized: buffer={buffer_size}, dir={memory_dir}")
     
     def start_session(self, session_id: str, stream_title: str = None) -> None:
         """
@@ -78,11 +83,11 @@ class ChatMemoryManager:
             self.session_messages = []
             self.session_mod_messages = []
 
-            logger.info(f"📹 Started session: {self.current_session}")
+            logger.info(f"[U+1F4F9] Started session: {self.current_session}")
             if stream_title:
-                logger.info(f"📺 Stream: {stream_title}")
+                logger.info(f"[U+1F4FA] Stream: {stream_title}")
         except Exception as e:
-            logger.error(f"❌ Error starting session: {e}")
+            logger.error(f"[FAIL] Error starting session: {e}")
 
     def end_session(self) -> None:
         """
@@ -108,7 +113,7 @@ class ChatMemoryManager:
                     f.write("=" * 60 + "\n\n")
                     for msg in self.session_messages:
                         f.write(f"{msg}\n")
-                logger.info(f"💾 Saved {len(self.session_messages)} messages to full transcript")
+                logger.info(f"[U+1F4BE] Saved {len(self.session_messages)} messages to full transcript")
 
             # Save mod-only transcript
             if self.session_mod_messages:
@@ -120,7 +125,7 @@ class ChatMemoryManager:
                     f.write("=" * 60 + "\n\n")
                     for msg in self.session_mod_messages:
                         f.write(f"{msg}\n")
-                logger.info(f"🛡️ Saved {len(self.session_mod_messages)} mod messages")
+                logger.info(f"[U+1F6E1]️ Saved {len(self.session_mod_messages)} mod messages")
 
             # Save session summary
             summary_file = os.path.join(session_path, "session_summary.txt")
@@ -146,7 +151,7 @@ class ChatMemoryManager:
                 f.write(f"Active Mods: {len(mod_users)}\n")
 
                 # Consciousness triggers
-                consciousness_count = sum(1 for msg in self.session_messages if "✊" in msg or "✋" in msg or "🖐" in msg)
+                consciousness_count = sum(1 for msg in self.session_messages if "[U+270A]" in msg or "[U+270B]" in msg or "[U+1F590]" in msg)
                 f.write(f"Consciousness Triggers: {consciousness_count}\n")
 
                 # Fact checks
@@ -160,7 +165,7 @@ class ChatMemoryManager:
                                   if keyword.lower() in msg.lower())
                 f.write(f"Defense Mechanisms Triggered: {defense_count}\n")
 
-            logger.info(f"📊 Session ended: {self.current_session} - {len(self.session_messages)} total, {len(self.session_mod_messages)} mod messages")
+            logger.info(f"[DATA] Session ended: {self.current_session} - {len(self.session_messages)} total, {len(self.session_mod_messages)} mod messages")
 
             # Reset session
             self.current_session = None
@@ -168,7 +173,7 @@ class ChatMemoryManager:
             self.session_mod_messages = []
 
         except Exception as e:
-            logger.error(f"❌ Error ending session: {e}")
+            logger.error(f"[FAIL] Error ending session: {e}")
 
     def store_message(self, author_name: str, message_text: str, role: str = 'USER',
                      author_id: str = None, youtube_name: str = None) -> None:
@@ -219,15 +224,15 @@ class ChatMemoryManager:
                 full_entry = f"{role_prefix}{author_name}: {message_text}"
                 self.session_messages.append(full_entry)
 
-            # Smart disk persistence (97% I/O reduction)
+            # Smart persistence (97% I/O reduction)
             if self._should_persist(stats):
-                self._persist_to_disk(author_name, message_text)
-                logger.debug(f"💾 Persisted message from important user: {author_name}")
+                self._persist_to_storage(author_name, message_text, role, stats)
+                logger.debug(f"[U+1F4BE] Persisted message from important user: {author_name}")
             else:
-                logger.debug(f"📝 Buffered message from {author_name} (not persisting)")
+                logger.debug(f"[NOTE] Buffered message from {author_name} (not persisting)")
 
         except Exception as e:
-            logger.error(f"❌ Error storing message from {author_name}: {e}")
+            logger.error(f"[FAIL] Error storing message from {author_name}: {e}")
     
     def get_history(self, author_name: str, limit: int = 10) -> List[str]:
         """
@@ -256,7 +261,7 @@ class ChatMemoryManager:
             return messages[-limit:]  # Return latest N messages
             
         except Exception as e:
-            logger.error(f"❌ Error getting history for {author_name}: {e}")
+            logger.error(f"[FAIL] Error getting history for {author_name}: {e}")
             return []
     
     def analyze_user(self, author_name: str) -> Dict[str, Any]:
@@ -292,11 +297,11 @@ class ChatMemoryManager:
                 'patterns': self._detect_patterns(recent_messages)
             }
             
-            logger.debug(f"🔍 Analyzed {author_name}: {analysis['message_count']} msgs, importance={analysis['importance_score']}")
+            logger.debug(f"[SEARCH] Analyzed {author_name}: {analysis['message_count']} msgs, importance={analysis['importance_score']}")
             return analysis
             
         except Exception as e:
-            logger.error(f"❌ Error analyzing user {author_name}: {e}")
+            logger.error(f"[FAIL] Error analyzing user {author_name}: {e}")
             return {'username': author_name, 'error': str(e)}
     
     def _calculate_importance(self, stats: Dict[str, Any], message_text: str) -> int:
@@ -308,8 +313,8 @@ class ChatMemoryManager:
         - 600s timeout: 20 XP
         - 1800s timeout: 30 XP
         - 86400s timeout: 50 XP
-        - Prestige levels: Novice(0-100) → Apprentice(100-500) → Journeyman(500-1000) →
-                         Expert(1000-2000) → Master(2000-5000) → Grandmaster(5000+)
+        - Prestige levels: Novice(0-100) -> Apprentice(100-500) -> Journeyman(500-1000) ->
+                         Expert(1000-2000) -> Master(2000-5000) -> Grandmaster(5000+)
         """
         score = 0
         
@@ -327,7 +332,7 @@ class ChatMemoryManager:
             score += 1
         
         # Consciousness emoji triggers
-        consciousness_emojis = ['✊', '✋', '🖐️']
+        consciousness_emojis = ['[U+270A]', '[U+270B]', '[U+1F590]️']
         if any(emoji in message_text for emoji in consciousness_emojis):
             score += 3
             stats['consciousness_triggers'] = stats.get('consciousness_triggers', 0) + 1
@@ -346,49 +351,29 @@ class ChatMemoryManager:
             stats.get('consciousness_triggers', 0) > 0
         )
     
-    def _persist_to_disk(self, author_name: str, message_text: str) -> None:
-        """Persist message to disk for important users."""
+    def _persist_to_storage(self, author_name: str, message_text: str, role: str, stats: Dict[str, Any]) -> None:
+        """Persist message via telemetry store for important users."""
         try:
-            safe_name = "".join(c for c in author_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
-            if not safe_name:
-                safe_name = "Unknown"
-            
-            user_file = os.path.join(self.memory_dir, f"{safe_name}.txt")
-            with open(user_file, "a", encoding="utf-8") as f:
-                f.write(f"{author_name}: {message_text}\n")
-                
+            metadata = {
+                "message_count": stats.get("message_count"),
+                "last_seen": stats.get("last_seen"),
+            }
+            self.telemetry_store.record_message(
+                session_id=self.current_session,
+                author_name=author_name,
+                author_id=stats.get("youtube_id"),
+                youtube_name=stats.get("youtube_name"),
+                role=role,
+                message_text=message_text,
+                importance_score=stats.get("importance_score"),
+                metadata=metadata,
+            )
         except Exception as e:
-            logger.error(f"❌ Error persisting to disk for {author_name}: {e}")
-    
-    def _has_disk_storage(self, author_name: str) -> bool:
-        """Check if user has persistent disk storage."""
-        safe_name = "".join(c for c in author_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
-        if not safe_name:
-            return False
-        
-        user_file = os.path.join(self.memory_dir, f"{safe_name}.txt")
-        return os.path.exists(user_file)
-    
-    def _read_from_disk(self, author_name: str, limit: int) -> List[str]:
-        """Read user's messages from disk storage."""
-        try:
-            safe_name = "".join(c for c in author_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
-            if not safe_name:
-                return []
-            
-            user_file = os.path.join(self.memory_dir, f"{safe_name}.txt")
-            if not os.path.exists(user_file):
-                return []
-            
-            with open(user_file, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-            
-            # Return last N lines, stripped of whitespace
-            return [line.strip() for line in lines[-limit:] if line.strip()]
-            
-        except Exception as e:
-            logger.error(f"❌ Error reading disk storage for {author_name}: {e}")
-            return []
+            logger.error(f"[FAIL] Error persisting message for {author_name}: {e}")
+
+    def _has_persisted_history(self, author_name: str) -> bool:
+        """Check if user has persisted history in SQLite."""
+        return self.telemetry_store.has_history(author_name)
     
     def _detect_patterns(self, recent_messages: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Detect user behavior patterns from recent messages."""
@@ -398,7 +383,7 @@ class ChatMemoryManager:
         patterns = {
             'avg_message_length': sum(len(msg['text']) for msg in recent_messages) / len(recent_messages),
             'command_user': sum(1 for msg in recent_messages if msg['text'].startswith('/')) > 0,
-            'emoji_user': sum(1 for msg in recent_messages if any(e in msg['text'] for e in ['✊', '✋', '🖐️'])) > 0,
+            'emoji_user': sum(1 for msg in recent_messages if any(e in msg['text'] for e in ['[U+270A]', '[U+270B]', '[U+1F590]️'])) > 0,
             'active_timespan': recent_messages[-1]['timestamp'] - recent_messages[0]['timestamp'] if len(recent_messages) > 1 else 0
         }
         
@@ -413,7 +398,7 @@ class ChatMemoryManager:
         
         # Check recent messages for MAGA content and consciousness indicators
         maga_keywords = ['maga', 'trump', 'biden', 'liberal', 'conservative', 'woke']
-        consciousness_emojis = ['✊', '✋', '🖐️']
+        consciousness_emojis = ['[U+270A]', '[U+270B]', '[U+1F590]️']
         
         maga_count = 0
         consciousness_count = 0
@@ -465,14 +450,14 @@ class ChatMemoryManager:
         if self.current_session:
             from datetime import datetime
             timestamp = datetime.now().strftime('%H:%M:%S')
-            fact_check_entry = f"[{timestamp}] FACT-CHECK: {requester} → {target_user}"
+            fact_check_entry = f"[{timestamp}] FACT-CHECK: {requester} -> {target_user}"
             if defense_mechanism:
                 fact_check_entry += f" | Defense: {defense_mechanism}"
 
             # Add to session messages for tracking
             self.session_messages.append(f"[SYSTEM] {fact_check_entry}")
 
-            logger.info(f"🎯 Logged fact-check: {target_user} by {requester}")
+            logger.info(f"[TARGET] Logged fact-check: {target_user} by {requester}")
 
     def get_stats(self) -> Dict[str, Any]:
         """Get memory manager statistics."""

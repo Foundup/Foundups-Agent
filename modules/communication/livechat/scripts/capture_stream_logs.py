@@ -39,8 +39,8 @@ class StreamLogCapture:
         terminal_log = session_dir / "terminal_output.log"
         summary_file = session_dir / "session_summary.txt"
 
-        print(f"📹 Starting stream session capture: {session_name}")
-        print(f"📁 Logs will be saved to: {session_dir}")
+        print(f"[U+1F4F9] Starting stream session capture: {session_name}")
+        print(f"[U+1F4C1] Logs will be saved to: {session_dir}")
         print("=" * 60)
 
         # Run the main YouTube DAE and capture output
@@ -80,19 +80,19 @@ class StreamLogCapture:
             process.wait()
 
         except KeyboardInterrupt:
-            print("\n\n🛑 Stream session interrupted by user")
+            print("\n\n[STOP] Stream session interrupted by user")
             if process:
                 process.terminate()
 
         except Exception as e:
-            print(f"\n❌ Error during capture: {e}")
+            print(f"\n[FAIL] Error during capture: {e}")
 
         finally:
             # Save session summary
             self._save_summary(summary_file)
             print("\n" + "=" * 60)
-            print(f"📁 Session logs saved to: {session_dir}")
-            print(f"📊 Total lines captured: {len(self.current_log)}")
+            print(f"[U+1F4C1] Session logs saved to: {session_dir}")
+            print(f"[DATA] Total lines captured: {len(self.current_log)}")
 
     def _save_summary(self, summary_file: Path):
         """Save session summary with statistics"""
@@ -100,7 +100,7 @@ class StreamLogCapture:
         # Calculate statistics
         mod_messages = sum(1 for line in self.current_log if "[MOD]" in line or "[OWNER]" in line)
         bot_responses = sum(1 for line in self.current_log if "Sending message:" in line)
-        consciousness = sum(1 for line in self.current_log if "✊✋🖐" in line)
+        consciousness = sum(1 for line in self.current_log if "[U+270A][U+270B][U+1F590]" in line)
         errors = sum(1 for line in self.current_log if "ERROR" in line)
 
         duration = datetime.now() - self.session_start
@@ -129,7 +129,7 @@ class StreamLogCapture:
 
 
 if __name__ == "__main__":
-    print("🎬 STREAM SESSION LOG CAPTURE")
+    print("[U+1F3AC] STREAM SESSION LOG CAPTURE")
     print("=" * 60)
     print("This will run the YouTube DAE and capture all terminal output")
     print("for 0102 analysis and pattern learning.\n")

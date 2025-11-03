@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
 """Multi-Agent Violation Prevention System
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Real-time monitoring and intervention for WSP compliance across 0102 agents
 
 This system moves beyond logging to active prevention through:
@@ -150,7 +167,7 @@ class MultiAgentViolationPrevention:
         violations = []
 
         # Regex patterns for parsing
-        violation_pattern = r'## \*\*V(\d+):(.*?)\*\*\s*(✅|❌|🚨)?\s*\*\*(.*?)\*\*'
+        violation_pattern = r'## \*\*V(\d+):(.*?)\*\*\s*([OK]|[FAIL]|[ALERT])?\s*\*\*(.*?)\*\*'
 
         for match in re.finditer(violation_pattern, content, re.DOTALL):
             v_num = match.group(1)
@@ -171,7 +188,7 @@ class MultiAgentViolationPrevention:
                 'id': f'V{v_num}',
                 'title': v_title,
                 'status': v_status,
-                'resolved': v_status_icon == "✅",
+                'resolved': v_status_icon == "[OK]",
                 'wsp_violations': wsp_violations,
                 'content': v_block
             })
@@ -327,7 +344,7 @@ class MultiAgentViolationPrevention:
 
         # Determine intervention based on action
         if action == 'create' and 'enhanced_' in target:
-            intervention['directive'] = "🚫 BLOCKED: Cannot create enhanced_ duplicate! WSP 84 VIOLATION!"
+            intervention['directive'] = "[FORBIDDEN] BLOCKED: Cannot create enhanced_ duplicate! WSP 84 VIOLATION!"
             intervention['alternative_actions'] = [
                 f"python holo_index.py --search '{target.replace('enhanced_', '')}'",
                 f"python holo_index.py --check-module '{target.replace('enhanced_', '')}'"
@@ -335,7 +352,7 @@ class MultiAgentViolationPrevention:
             intervention['wsp_references'] = ['WSP_84_Module_Evolution', 'WSP_50_PreAction']
 
         elif action == 'create' and risk_score > 0.8:
-            intervention['directive'] = "⚠️ HIGH RISK: Must run --check-module BEFORE creating!"
+            intervention['directive'] = "[U+26A0]️ HIGH RISK: Must run --check-module BEFORE creating!"
             intervention['alternative_actions'] = [
                 f"python holo_index.py --check-module '{target}'",
                 f"python holo_index.py --search '{target} existing implementation'"
@@ -416,7 +433,7 @@ class MultiAgentViolationPrevention:
         recommendations = []
 
         if risk_score > 0.7:
-            recommendations.append("🔴 STOP: Review WSP protocols before proceeding")
+            recommendations.append("[U+1F534] STOP: Review WSP protocols before proceeding")
 
         for pattern_id in patterns:
             pattern = self.violation_patterns.get(pattern_id)
@@ -424,7 +441,7 @@ class MultiAgentViolationPrevention:
                 recommendations.append(f"Pattern {pattern_id}: {pattern.prevention_strategy}")
 
         if self.agent_scores[agent_id] < 50:
-            recommendations.append("⚠️ Low compliance score - mandatory WSP training recommended")
+            recommendations.append("[U+26A0]️ Low compliance score - mandatory WSP training recommended")
 
         return recommendations
 
@@ -496,11 +513,11 @@ class MultiAgentViolationPrevention:
         violations = self.violation_counts[agent_id]
 
         if score < 30:
-            recommendations.append("🚨 CRITICAL: Mandatory WSP compliance review required")
+            recommendations.append("[ALERT] CRITICAL: Mandatory WSP compliance review required")
         elif score < 60:
-            recommendations.append("⚠️ WARNING: Review WSP 50 (Pre-Action) and WSP 84 (Evolution)")
+            recommendations.append("[U+26A0]️ WARNING: Review WSP 50 (Pre-Action) and WSP 84 (Evolution)")
         elif score > 90:
-            recommendations.append("✅ EXCELLENT: Continue current compliance practices")
+            recommendations.append("[OK] EXCELLENT: Continue current compliance practices")
 
         if violations > 5:
             recommendations.append(f"Pattern Analysis: {violations} violations detected - enable Pattern Coach")
@@ -529,7 +546,7 @@ class MultiAgentViolationPrevention:
                     return {
                         'pattern_id': pattern_id,
                         'pattern': pattern,
-                        'warning': f"⚠️ VIOLATION RISK: {pattern.description}",
+                        'warning': f"[U+26A0]️ VIOLATION RISK: {pattern.description}",
                         'prevention': pattern.prevention_strategy,
                         'alternatives': [
                             f"python holo_index.py --search '{query}'",
@@ -572,14 +589,14 @@ def integrate_with_cli(agent_id: str, action: str, target: str):
     # Display intervention if triggered
     if result['intervention']:
         print("\n" + "="*60)
-        print(f"🚨 VIOLATION PREVENTION TRIGGERED")
+        print(f"[ALERT] VIOLATION PREVENTION TRIGGERED")
         print(f"Risk Level: {result['risk_level']} ({result['risk_score']:.2f})")
         print(f"Directive: {result['intervention']['directive']}")
 
         if result['intervention']['alternative_actions']:
-            print("\n✅ Do This Instead:")
+            print("\n[OK] Do This Instead:")
             for alt in result['intervention']['alternative_actions']:
-                print(f"  → {alt}")
+                print(f"  -> {alt}")
 
         print("\nWSP References:")
         for wsp in result['intervention']['wsp_references']:
@@ -611,5 +628,5 @@ if __name__ == "__main__":
         print(f"\n{agent_id}: {action} on {target}")
         print(f"  Risk: {result['risk_level']} ({result['risk_score']:.2f})")
         if result['intervention']:
-            print(f"  🚨 INTERVENTION: {result['intervention']['directive']}")
+            print(f"  [ALERT] INTERVENTION: {result['intervention']['directive']}")
         print(f"  Score: {result['agent_score']:.1f}")

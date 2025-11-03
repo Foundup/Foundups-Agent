@@ -378,7 +378,7 @@ class SocialMediaOrchestrator:
         if platform not in self.adapters:
             return {'success': False, 'error': f'Unsupported platform: {platform}'}
             
-        test_content = f"🤖 Hello World from FoundUps Social Media Orchestrator! #TestMode #FoundUps"
+        test_content = f"[BOT] Hello World from FoundUps Social Media Orchestrator! #TestMode #FoundUps"
         
         try:
             adapter = self.adapters[platform]

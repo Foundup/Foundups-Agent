@@ -5,12 +5,12 @@ The LiveChat module now automatically captures all stream sessions for 0102 anal
 
 ## Features
 
-### 🚀 Automatic Operation
+### [ROCKET] Automatic Operation
 - **Session Start**: Automatically begins when stream is detected
 - **Session End**: Automatically saves when stream ends or switches
 - **No Manual Action**: Fully agentic - no 012 intervention required
 
-### 📊 Data Captured
+### [DATA] Data Captured
 
 #### Full Transcript (`full_transcript.txt`)
 - Every message from every user
@@ -30,14 +30,14 @@ Analytics including:
 - Total message count
 - Unique user count
 - Active mod count
-- Consciousness triggers (✊✋🖐)
+- Consciousness triggers ([U+270A][U+270B][U+1F590])
 - Fact-check requests
 - Defense mechanism triggers
 
 ## Fact-Checking Integration
 
 ### Command Pattern
-When a mod/owner types: `✊✋🖐FC @username`
+When a mod/owner types: `[U+270A][U+270B][U+1F590]FC @username`
 
 ### What Gets Logged
 1. The fact-check request in full transcript
@@ -54,11 +54,11 @@ The system tracks these defense patterns:
 ## File Structure
 ```
 memory/
-└── conversation/
-    └── session_YYYYMMDD_HHMMSS_videoID/
-        ├── full_transcript.txt     # All messages
-        ├── mod_messages.txt         # Mod/Owner only
-        └── session_summary.txt      # Statistics
++-- conversation/
+    +-- session_YYYYMMDD_HHMMSS_videoID/
+        +-- full_transcript.txt     # All messages
+        +-- mod_messages.txt         # Mod/Owner only
+        +-- session_summary.txt      # Statistics
 ```
 
 ## Implementation Details

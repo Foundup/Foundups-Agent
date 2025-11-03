@@ -1,5 +1,5 @@
 """
-Historical Facts: 1933 Nazi Germany → 2025 MAGA America Parallels
+Historical Facts: 1933 Nazi Germany -> 2025 MAGA America Parallels
 Educational content comparing the rise of fascism then and now
 WSP-Compliant: Facts for stream education
 """
@@ -168,7 +168,7 @@ class HistoricalFacts:
     
     def format_parallel_for_chat(self, parallel: Dict) -> str:
         """Format a parallel for chat display"""
-        return f"📚 [{parallel['category']}] 1933: {parallel['1933']} → 2025: {parallel['2025']}"
+        return f"[BOOKS] [{parallel['category']}] 1933: {parallel['1933']} -> 2025: {parallel['2025']}"
     
     def get_fact_by_category(self, category: str) -> Optional[Dict]:
         """Get a fact from specific category"""

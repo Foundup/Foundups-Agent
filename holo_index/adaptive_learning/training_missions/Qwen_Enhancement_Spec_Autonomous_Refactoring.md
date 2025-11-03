@@ -12,7 +12,7 @@
 1. Integration with existing `qwen_orchestrator.py` patterns
 2. Real Gemma pattern matching (currently using subprocess grep)
 3. Learning integration with `adaptive_learning/` infrastructure
-4. WSP 77 delegation pattern (Qwen → Gemma → 0102)
+4. WSP 77 delegation pattern (Qwen -> Gemma -> 0102)
 
 ## Qwen's Enhancement Tasks
 
@@ -27,7 +27,7 @@
 # Add to qwen_orchestrator.py COMPONENT_META:
 COMPONENT_META = {
     ...existing components...
-    'autonomous_refactoring': ('🔄', 'Autonomous Refactoring'),
+    'autonomous_refactoring': ('[REFRESH]', 'Autonomous Refactoring'),
 }
 
 # Add to INTENT_COMPONENT_MAP:
@@ -199,11 +199,11 @@ def complete_refactoring_with_learning(self, ...):
 
 ### Qwen Successfully Enhanced When:
 
-1. ✅ **Integration**: Works with existing qwen_orchestrator.py
-2. ✅ **Performance**: Gemma pattern matching < 100ms per file
-3. ✅ **Learning**: Stores patterns in adaptive_learning/
-4. ✅ **Delegation**: Can detect when to delegate vs escalate
-5. ✅ **WSP 77**: Full training feedback loop implemented
+1. [OK] **Integration**: Works with existing qwen_orchestrator.py
+2. [OK] **Performance**: Gemma pattern matching < 100ms per file
+3. [OK] **Learning**: Stores patterns in adaptive_learning/
+4. [OK] **Delegation**: Can detect when to delegate vs escalate
+5. [OK] **WSP 77**: Full training feedback loop implemented
 
 ### Metrics to Track:
 
@@ -287,7 +287,7 @@ After Qwen implementation, 0102 reviews:
 - 0102 supervises and approves (review)
 - Pattern stored for future delegation decisions (learning)
 
-This IS the heartbeat: **SEARCH → THINK → DELEGATE → SUPERVISE → LEARN**
+This IS the heartbeat: **SEARCH -> THINK -> DELEGATE -> SUPERVISE -> LEARN**
 
 ---
 

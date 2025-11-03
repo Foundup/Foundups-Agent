@@ -18,12 +18,12 @@ from modules.communication.youtube_shorts.src.youtube_uploader import YouTubeSho
 test_video = Path(__file__).parent.parent / "assets" / "test" / "test_upload.mp4"
 
 if not test_video.exists():
-    print(f"❌ Test video not found: {test_video}")
+    print(f"[FAIL] Test video not found: {test_video}")
     print("   Run: python modules/communication/youtube_shorts/tests/test_upload_to_youtube.py")
     print("   to create the test video first.")
     sys.exit(1)
 
-print("\n🎬 Uploading test video to YouTube Shorts...")
+print("\n[U+1F3AC] Uploading test video to YouTube Shorts...")
 print(f"   Video: {test_video}")
 print(f"   Privacy: UNLISTED")
 print()
@@ -38,7 +38,7 @@ shorts_url = uploader.upload_short(
     privacy="unlisted"
 )
 
-print(f"\n✅ SUCCESS!")
+print(f"\n[OK] SUCCESS!")
 print(f"   Shorts URL: {shorts_url}")
-print(f"\n🔗 View your upload: {shorts_url}")
+print(f"\n[LINK] View your upload: {shorts_url}")
 print(f"   Status: Unlisted (not public)")

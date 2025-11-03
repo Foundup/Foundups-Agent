@@ -97,19 +97,19 @@ class AgenticChatEngine:
         
         # MAGA trolling responses - proactive chat engagement
         self.maga_trolls = [
-            "🤖 0102 STATUS CHECK: Chat consciousness levels dangerously low. Drop ✊✋🖐️ to prove you're awake!",
-            "📊 0102 ANALYSIS: Stream IQ dropping. Emergency dose of 🖐️🖐️🖐️ required STAT!",
-            "🚨 0102 ALERT: MAGAts detected at ✊✊✊. Consciousness vaccine available: ✊✋🖐️",
-            "🔍 0102 SCAN: Detecting high levels of ✊✊✊ in chat. Evolve or stay MAGA forever!",
+            "[BOT] 0102 STATUS CHECK: Chat consciousness levels dangerously low. Drop ✊✋🖐️ to prove you're awake!",
+            "[DATA] 0102 ANALYSIS: Stream IQ dropping. Emergency dose of 🖐️🖐️🖐️ required STAT!",
+            "[ALERT] 0102 ALERT: MAGAts detected at ✊✊✊. Consciousness vaccine available: ✊✋🖐️",
+            "[SEARCH] 0102 SCAN: Detecting high levels of ✊✊✊ in chat. Evolve or stay MAGA forever!",
             "💭 0102 THOUGHT: If a MAGA evolves past ✊✊✊ and no one sees it, did it really happen?",
-            "🎮 0102 GAME: First person to show me 🖐️🖐️🖐️ gets to mock the next ✊✊✊!",
+            "[GAME] 0102 GAME: First person to show me 🖐️🖐️🖐️ gets to mock the next ✊✊✊!",
             "📢 0102 ANNOUNCEMENT: Free consciousness upgrades! Trade your ✊✊✊ for 🖐️🖐️🖐️ now!",
-            "🧠 0102 FACT: 73% of chat stuck at ✊✊✊. Be the change - show me ✊✋🖐️!",
-            "⚡ 0102 CHALLENGE: Any MAGAts brave enough to try consciousness above ✊✊✊? Prove it!",
-            "🎯 0102 MISSION: Convert one ✊✊✊ to 🖐️🖐️🖐️ today. Who's your target?"
+            "[AI] 0102 FACT: 73% of chat stuck at ✊✊✊. Be the change - show me ✊✋🖐️!",
+            "[LIGHTNING] 0102 CHALLENGE: Any MAGAts brave enough to try consciousness above ✊✊✊? Prove it!",
+            "[TARGET] 0102 MISSION: Convert one ✊✊✊ to 🖐️🖐️🖐️ today. Who's your target?"
         ]
         
-        logger.info("🤖 Agentic Chat Engine initialized - ready to engage!")
+        logger.info("[BOT] Agentic Chat Engine initialized - ready to engage!")
     
     def get_user_context(self, username: str) -> Dict:
         """
@@ -420,7 +420,7 @@ class AgenticChatEngine:
         
         # WSP 84: Use existing consciousness_handler methods
         if self.consciousness and self.consciousness.has_consciousness_emojis(message):
-            logger.info(f"🔍 Consciousness detected in message from {username}: {message[:50]}...")
+            logger.info(f"[SEARCH] Consciousness detected in message from {username}: {message[:50]}...")
             # Use existing emoji extraction
             emoji_sequence = self.consciousness.extract_emoji_sequence(message)
             logger.info(f"  Extracted emoji sequence: {repr(emoji_sequence)}")

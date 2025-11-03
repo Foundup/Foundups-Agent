@@ -656,22 +656,22 @@ async def demo_0102_comprehensive():
         
         # Initial greeting
         greeting = await zero_one_zero_two.greet_user(user_id)
-        print(f"🤖 0102: {greeting.message}")
+        print(f"[BOT] 0102: {greeting.message}")
         
         # Process meeting creation with NLP
-        print(f"\n👤 User: I need to meet with Alice about the project roadmap for 30 minutes")
+        print(f"\n[U+1F464] User: I need to meet with Alice about the project roadmap for 30 minutes")
         response = await zero_one_zero_two.process_user_input(
             user_id, "I need to meet with Alice about the project roadmap for 30 minutes"
         )
-        print(f"🤖 0102: {response.message}")
+        print(f"[BOT] 0102: {response.message}")
         
         # Test learning by setting preferences
         personality_response = await zero_one_zero_two.set_personality_mode(user_id, mode)
-        print(f"🤖 0102: {personality_response.message}")
+        print(f"[BOT] 0102: {personality_response.message}")
         
         # Get insights
         insights = await zero_one_zero_two.get_user_insights(user_id)
-        print(f"🤖 0102: {insights.message}")
+        print(f"[BOT] 0102: {insights.message}")
         
         print("-" * 50)
     
@@ -686,12 +686,12 @@ async def demo_0102_comprehensive():
         platform="discord",
         context={"purpose": "Demo meeting", "duration": 30}
     )
-    print(f"🚀 Session Launch: {session_response.message}")
+    print(f"[ROCKET] Session Launch: {session_response.message}")
     
     # System status
     print(f"\n--- System Status ---")
     status = await zero_one_zero_two.get_system_status()
-    print(f"📊 System Status: {status}")
+    print(f"[DATA] System Status: {status}")
     
     return zero_one_zero_two
 

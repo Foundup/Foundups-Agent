@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Test 012.txt Pattern Mining via MCP
 Verifies that HoloIndex MCP can extract and verify code patterns from conversations
 WSP Compliance: WSP 93 (CodeIndex Surgical Intelligence)
@@ -73,13 +89,13 @@ async def test_pattern_mining():
 
     print(f"\n[EVALUATION]")
     if verification_rate >= 70:
-        print(f"✅ EXCELLENT: {verification_rate}% verification rate")
+        print(f"[OK] EXCELLENT: {verification_rate}% verification rate")
     elif verification_rate >= 50:
-        print(f"✅ GOOD: {verification_rate}% verification rate")
+        print(f"[OK] GOOD: {verification_rate}% verification rate")
     elif verification_rate >= 30:
-        print(f"⚠️ FAIR: {verification_rate}% verification rate - some patterns unverified")
+        print(f"[U+26A0]️ FAIR: {verification_rate}% verification rate - some patterns unverified")
     else:
-        print(f"❌ POOR: {verification_rate}% verification rate - most patterns unverified")
+        print(f"[FAIL] POOR: {verification_rate}% verification rate - most patterns unverified")
 
     print("\n" + "=" * 80)
     print("TEST COMPLETE")
@@ -116,10 +132,10 @@ async def test_specific_priority_inversion():
         # Verify this is the priority inversion bug location
         expected_file = "modules/communication/livechat/src/qwen_youtube_integration.py"
         if expected_file in top_result.get('path', ''):
-            print(f"\n✅ CORRECT FILE FOUND: {expected_file}")
+            print(f"\n[OK] CORRECT FILE FOUND: {expected_file}")
             print("Priority inversion bug location successfully identified via HoloIndex!")
         else:
-            print(f"\n⚠️ Different file found: {top_result.get('path', 'unknown')}")
+            print(f"\n[U+26A0]️ Different file found: {top_result.get('path', 'unknown')}")
 
     print("\n" + "=" * 80)
 

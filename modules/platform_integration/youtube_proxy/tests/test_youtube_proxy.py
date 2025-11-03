@@ -1,16 +1,20 @@
 """
 YouTube Proxy Test Suite
 
-Comprehensive test coverage for YouTube Proxy module achieving WSP 5 compliance (≥90% coverage).
+Comprehensive test coverage for YouTube Proxy module achieving WSP 5 compliance ([GREATER_EQUAL]90% coverage).
 Tests cover authentication, stream discovery, community engagement, component orchestration, and WRE integration.
 """
 
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 

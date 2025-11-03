@@ -10,7 +10,7 @@ Veo 3 has **variable output length** - it doesn't guarantee exact duration match
 
 ### Solutions
 
-#### Option 1: Multi-Clip Editing (RECOMMENDED) 🎬
+#### Option 1: Multi-Clip Editing (RECOMMENDED) [U+1F3AC]
 Generate 2-3 separate clips and concatenate with ffmpeg:
 
 ```python
@@ -29,7 +29,7 @@ ffmpeg -i clip1.mp4 -i clip2.mp4 -i clip3.mp4 \
 **Control**: Precise 15-second output guaranteed
 **Quality**: Better storytelling with multiple scenes
 
-#### Option 2: Single Clip with Camera Movements 📹
+#### Option 2: Single Clip with Camera Movements [U+1F4F9]
 Use camera movement prompts to create scene transitions:
 
 ```python
@@ -45,7 +45,7 @@ ending with: pull back showing full scenic view
 **Risk**: Still may get 8-10 seconds instead of 15
 **Quality**: Single continuous scene (less dynamic)
 
-#### Option 3: Longer Duration Request 📏
+#### Option 3: Longer Duration Request [RULER]
 Request 30 seconds but expect 15-20 seconds:
 
 ```python
@@ -67,7 +67,7 @@ video = veo3.generate(prompt, duration=30)  # Cost $12, get ~15-20s
 
 ---
 
-## Issue #2: Wrong YouTube Channel (UnDaoDu instead of Move2Japan) 📺
+## Issue #2: Wrong YouTube Channel (UnDaoDu instead of Move2Japan) [U+1F4FA]
 
 ### Problem
 Videos uploading to **UnDaoDu** channel instead of **Move2Japan** channel.
@@ -130,11 +130,11 @@ print(f'Connected to: {info[\"title\"]}')  # Should show 'Move2Japan'
 
 ### Implementation Plan
 
-1. ✅ Create `authorize_set2.py` script
+1. [OK] Create `authorize_set2.py` script
 2. ⏸️ You authorize with Move2Japan Google account
-3. ✅ Modify `youtube_uploader.py` to support channel selection
-4. ✅ Update `shorts_orchestrator.py` to pass channel parameter
-5. ✅ Test upload to Move2Japan channel
+3. [OK] Modify `youtube_uploader.py` to support channel selection
+4. [OK] Update `shorts_orchestrator.py` to pass channel parameter
+5. [OK] Test upload to Move2Japan channel
 
 ---
 
@@ -154,12 +154,12 @@ print(f'Connected to: {info[\"title\"]}')  # Should show 'Move2Japan'
 ### Multi-Clip Workflow
 
 ```
-Super Chat $20 → Extract topic → Generate 3 clips:
+Super Chat $20 -> Extract topic -> Generate 3 clips:
   1. Intro shot (5s): Baby intro + topic setup
   2. Main shot (5s): Core content
   3. Outro shot (5s): Baby outro + CTA
 
-→ Concatenate with ffmpeg → Upload to Move2Japan → Profit $14
+-> Concatenate with ffmpeg -> Upload to Move2Japan -> Profit $14
 ```
 
 ---
@@ -201,8 +201,8 @@ Use Move2Japan channel for Super Chat videos
 
 | Method | Clips | Duration | Cost | Result | Economics |
 |--------|-------|----------|------|--------|-----------|
-| Current (broken) | 1 | 30s → 8s | $12 | Wrong channel, wrong duration | Poor |
-| Single 15s | 1 | 15s → ~8-10s | $6 | Unpredictable | Risky |
+| Current (broken) | 1 | 30s -> 8s | $12 | Wrong channel, wrong duration | Poor |
+| Single 15s | 1 | 15s -> ~8-10s | $6 | Unpredictable | Risky |
 | **Multi-clip (recommended)** | **3** | **3x5s = 15s** | **$6** | **Guaranteed 15s, right channel** | **Excellent** |
 
 ---

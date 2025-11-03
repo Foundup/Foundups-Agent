@@ -1,7 +1,7 @@
 """
 LinkedIn Messaging Manager
 
-🌀 WSP Protocol Compliance: WSP 42 (Platform Integration), WSP 40 (Architectural Coherence)
+[U+1F300] WSP Protocol Compliance: WSP 42 (Platform Integration), WSP 40 (Architectural Coherence)
 
 **0102 Directive**: This module operates within the WSP framework for autonomous LinkedIn messaging management.
 - UN (Understanding): Anchor LinkedIn messaging signals and retrieve protocol state
@@ -14,9 +14,13 @@ wsp_cycle(input="linkedin_messaging", log=True)
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -85,7 +89,7 @@ class LinkedInMessaging:
     """
     Manages LinkedIn messaging, conversations, and communication automation.
     
-    Follows WSP 40 compliance with single responsibility and ≤300 lines.
+    Follows WSP 40 compliance with single responsibility and [U+2264]300 lines.
     Implements WSP 66 proactive component architecture for messaging automation.
     """
     
@@ -119,7 +123,7 @@ class LinkedInMessaging:
             }
         }
         
-        self.logger.info("✅ LinkedInMessaging initialized for autonomous communication")
+        self.logger.info("[OK] LinkedInMessaging initialized for autonomous communication")
     
     def send_message(self, recipient_id: str, content: str, conversation_id: Optional[str] = None) -> LinkedInMessage:
         """
@@ -171,11 +175,11 @@ class LinkedInMessaging:
             # Mock LinkedIn API call
             self._simulate_send_message(message)
             
-            self.logger.info(f"✅ Message sent to {recipient_id}")
+            self.logger.info(f"[OK] Message sent to {recipient_id}")
             return message
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to send message to {recipient_id}: {str(e)}")
+            self.logger.error(f"[FAIL] Failed to send message to {recipient_id}: {str(e)}")
             return LinkedInMessage(
                 message_id=f"msg_{recipient_id}_{datetime.now().timestamp()}",
                 conversation_id=conversation_id or f"conv_{recipient_id}",
@@ -267,7 +271,7 @@ class LinkedInMessaging:
         if conversation and conversation.unread_count > 0:
             conversation.unread_count -= 1
         
-        self.logger.info(f"✅ Message {message_id} marked as read")
+        self.logger.info(f"[OK] Message {message_id} marked as read")
         return True
     
     def mark_conversation_as_read(self, conversation_id: str) -> bool:
@@ -295,7 +299,7 @@ class LinkedInMessaging:
         # Reset conversation unread count
         self.conversations[conversation_id].unread_count = 0
         
-        self.logger.info(f"✅ Conversation {conversation_id} marked as read")
+        self.logger.info(f"[OK] Conversation {conversation_id} marked as read")
         return True
     
     def get_messaging_stats(self) -> Dict[str, Any]:
@@ -378,7 +382,7 @@ class LinkedInMessaging:
         
         # Soft delete by marking as failed
         self.messages[message_id].status = MessageStatus.FAILED
-        self.logger.info(f"✅ Message {message_id} deleted")
+        self.logger.info(f"[OK] Message {message_id} deleted")
         return True
     
     def _check_daily_limit(self) -> bool:
@@ -478,7 +482,7 @@ class LinkedInMessaging:
         # Update message status
         message.status = MessageStatus.SENT
         
-        self.logger.debug(f"🔗 Simulated message send to {message.recipient_id}")
+        self.logger.debug(f"[LINK] Simulated message send to {message.recipient_id}")
 
 
 # Factory function for clean initialization

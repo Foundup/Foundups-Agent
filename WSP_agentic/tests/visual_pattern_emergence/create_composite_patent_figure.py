@@ -5,9 +5,9 @@ Generates Figure 9: Visual Verification of rESP State Transitions
 
 This script creates a 2x2 composite image combining:
 - frame_010.png: Classical state (random binary noise)
-- frame_060.png: Emergence point (binary→sine transition)  
+- frame_060.png: Emergence point (binary->sine transition)  
 - frame_090.png: Quantum coherence (stable sine waves)
-- Entropy graph: Shannon entropy reduction (8.0→2.0 bits)
+- Entropy graph: Shannon entropy reduction (8.0->2.0 bits)
 
 For Japanese Patent: 図９: rESP状態遷移の視覚的検証
 """
@@ -72,24 +72,24 @@ def create_composite_figure():
     missing_files = [f for f in frame_files if not os.path.exists(f)]
     
     if missing_files:
-        print(f"❌ Missing frame files: {missing_files}")
-        print("🔧 Generating frames first...")
+        print(f"[FAIL] Missing frame files: {missing_files}")
+        print("[TOOL] Generating frames first...")
         # Run the animation script to generate frames
         os.system('python binary_to_sine_animation.py')
     
     # Create entropy graph
-    print("📊 Creating entropy graph...")
+    print("[DATA] Creating entropy graph...")
     entropy_path = create_entropy_graph()
     
     # Load images
-    print("🖼️ Loading frame images...")
+    print("[U+1F5BC]️ Loading frame images...")
     try:
         img_010 = Image.open('frame_010.png')
         img_060 = Image.open('frame_060.png') 
         img_090 = Image.open('frame_090.png')
         img_entropy = Image.open(entropy_path)
     except FileNotFoundError as e:
-        print(f"❌ Error loading images: {e}")
+        print(f"[FAIL] Error loading images: {e}")
         return None
     
     # Resize all images to same size
@@ -100,7 +100,7 @@ def create_composite_figure():
     img_entropy = img_entropy.resize(target_size, Image.Resampling.LANCZOS)
     
     # Create composite figure
-    print("🎨 Creating composite figure...")
+    print("[ART] Creating composite figure...")
     fig, axes = plt.subplots(2, 2, figsize=(16, 16))
     fig.suptitle('図９: rESP状態遷移の視覚的検証    \n    \n    \nVisual Verification of rESP State Transitions', 
                  fontsize=24, fontweight='bold', y=0.98)
@@ -108,9 +108,9 @@ def create_composite_figure():
     # Configure subplots
     subplot_config = [
         (0, 0, img_010, '(a) Frame 010\n古典状態: ランダムバイナリノイズ\n高エントロピー (~8.0ビット)', 'red'),
-        (0, 1, img_060, '(b) Frame 060\n🔥 遷移点: バイナリ→正弦波\n01→02量子遷移', 'orange'),
+        (0, 1, img_060, '(b) Frame 060\n[U+1F525] 遷移点: バイナリ->正弦波\n01->02量子遷移', 'orange'),
         (1, 0, img_090, '  \n  \n(c) Frame 090\n量子コヒーレンス: 安定正弦波\n低エントロピー (~2.0ビット)', 'cyan'),
-        (1, 1, img_entropy, '  \n  \n(d) エントロピー分析\nシャノンエントロピー減少\n8.0→2.0ビット遷移', 'green')
+        (1, 1, img_entropy, '  \n  \n(d) エントロピー分析\nシャノンエントロピー減少\n8.0->2.0ビット遷移', 'green')
     ]
     
     for row, col, image, title, color in subplot_config:
@@ -127,11 +127,11 @@ def create_composite_figure():
     
     # Add explanation text at bottom
     explanation = (
-        "本図は、rESP検出システムによって検出された01→02量子状態遷移を視覚的に実証する。\n"
-        "This figure visually demonstrates the 01→02 quantum state transition detected by the rESP system.\n\n"
+        "本図は、rESP検出システムによって検出された01->02量子状態遷移を視覚的に実証する。\n"
+        "This figure visually demonstrates the 01->02 quantum state transition detected by the rESP system.\n\n"
         "科学的意義 (Scientific Significance):\n"
         "• 古典的計算状態から量子コヒーレンス状態への測定可能な遷移\n"
-        "• シャノンエントロピーの定量的減少 (8.0→2.0ビット)\n"
+        "• シャノンエントロピーの定量的減少 (8.0->2.0ビット)\n"
         "• 遡及的エンタングルメント信号現象の具体的証拠\n"
         "• 特許請求項【００１１】の視覚的検証"
     )
@@ -152,29 +152,29 @@ def create_composite_figure():
     if os.path.exists(entropy_path):
         os.remove(entropy_path)
     
-    print(f"✅ Composite figure saved: {output_path}")
+    print(f"[OK] Composite figure saved: {output_path}")
     return output_path
 
 def main():
     """Main execution function."""
-    print("🔬 Creating Japanese Patent Composite Figure (図９)")
+    print("[U+1F52C] Creating Japanese Patent Composite Figure (図９)")
     print("=" * 60)
     
     # Create composite figure
     output_file = create_composite_figure()
     
     if output_file:
-        print("\n🎯 SUCCESS!")
-        print(f"📁 Composite figure created: {output_file}")
-        print("\n📋 Usage Instructions:")
+        print("\n[TARGET] SUCCESS!")
+        print(f"[U+1F4C1] Composite figure created: {output_file}")
+        print("\n[CLIPBOARD] Usage Instructions:")
         print("1. Copy fig9_composite_ja.jpg to Patent_Series/images/")
         print("2. Add to Japanese patent as 図９")
         print("3. Reference in patent claims as visual verification")
-        print("\n🔧 Patent Integration:")
+        print("\n[TOOL] Patent Integration:")
         print("【図９】rESP状態遷移の視覚的検証")
         print("![rESP状態遷移の視覚的検証](images/fig9_composite_ja.jpg)")
     else:
-        print("\n❌ FAILED to create composite figure")
+        print("\n[FAIL] FAILED to create composite figure")
         return 1
     
     return 0

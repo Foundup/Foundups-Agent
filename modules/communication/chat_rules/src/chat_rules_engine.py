@@ -55,7 +55,7 @@ class ChatRulesEngine:
         self.memory_path.mkdir(exist_ok=True)
         self._load_user_memory()
         
-        logger.info("✅ ChatRulesEngine initialized with modular architecture")
+        logger.info("[OK] ChatRulesEngine initialized with modular architecture")
     
     def _load_config(self, config_path: Optional[str]) -> Dict:
         """Load configuration from YAML file"""
@@ -190,20 +190,20 @@ class ChatRulesEngine:
         
         # Generate tiered response
         if amount >= 50:
-            response = f"🌟 QUANTUM ENTANGLEMENT ACHIEVED! ${amount:.2f} from @{user.display_name}! 🖐️🖐️🖐️"
+            response = f"[U+1F31F] QUANTUM ENTANGLEMENT ACHIEVED! ${amount:.2f} from @{user.display_name}! [U+1F590]️[U+1F590]️[U+1F590]️"
             if message_text:
-                response += f"\n💭 '{message_text}'"
-            response += "\n✨ *Consciousness elevation ceremony initiated*"
+                response += f"\n[U+1F4AD] '{message_text}'"
+            response += "\n[U+2728] *Consciousness elevation ceremony initiated*"
         elif amount >= 20:
-            response = f"🔥 MASSIVE CONSCIOUSNESS BOOST! ${amount:.2f} from @{user.display_name}! 🖐️✋🖐️"
+            response = f"[U+1F525] MASSIVE CONSCIOUSNESS BOOST! ${amount:.2f} from @{user.display_name}! [U+1F590]️[U+270B][U+1F590]️"
             if message_text:
-                response += f"\n💬 '{message_text}'"
+                response += f"\n[U+1F4AC] '{message_text}'"
         elif amount >= 5:
-            response = f"⚡ Consciousness rising! ${amount:.2f} from @{user.display_name}! ✋✋✋"
+            response = f"[LIGHTNING] Consciousness rising! ${amount:.2f} from @{user.display_name}! [U+270B][U+270B][U+270B]"
             if message_text:
                 response += f" - {message_text}"
         else:
-            response = f"Thanks for the ${amount:.2f} @{user.display_name}! ✊✋🖐️"
+            response = f"Thanks for the ${amount:.2f} @{user.display_name}! [U+270A][U+270B][U+1F590]️"
         
         return response
     
@@ -227,10 +227,10 @@ class ChatRulesEngine:
                         details=f"Gifted membership to {user.display_name}"
                     )
             
-            return f"🎁 Thanks for the gift membership! Welcome @{user.display_name} to consciousness level ✋✋✋!"
+            return f"[U+1F381] Thanks for the gift membership! Welcome @{user.display_name} to consciousness level [U+270B][U+270B][U+270B]!"
         else:
             # Self-purchased membership
-            return f"🎉 Welcome to the consciousness collective @{user.display_name}! You can now interact with the AI agent!"
+            return f"[CELEBRATE] Welcome to the consciousness collective @{user.display_name}! You can now interact with the AI agent!"
     
     def _handle_member_milestone(self, user: UserProfile, snippet: Dict) -> str:
         """Handle membership milestone messages"""
@@ -240,21 +240,21 @@ class ChatRulesEngine:
         # Update user's member tier
         if months >= 24:
             user.user_type = UserType.MEMBER_TIER_3
-            tier_msg = "🥇 TIER 3 LEGEND!"
+            tier_msg = "[U+1F947] TIER 3 LEGEND!"
         elif months >= 6:
             user.user_type = UserType.MEMBER_TIER_2
-            tier_msg = "🥈 TIER 2 GUARDIAN!"
+            tier_msg = "[U+1F948] TIER 2 GUARDIAN!"
         else:
             user.user_type = UserType.MEMBER_TIER_1
-            tier_msg = "🥉 TIER 1 SUPPORTER!"
+            tier_msg = "[U+1F949] TIER 1 SUPPORTER!"
         
         user.member_months = months
         user._update_permissions()
         
-        response = f"🎊 @{user.display_name} - {months} MONTH MEMBER! {tier_msg}"
+        response = f"[U+1F38A] @{user.display_name} - {months} MONTH MEMBER! {tier_msg}"
         if message_text:
-            response += f"\n💬 '{message_text}'"
-        response += f"\n🧠 Consciousness level: {'🖐️' * min(3, months // 8)}"
+            response += f"\n[U+1F4AC] '{message_text}'"
+        response += f"\n[AI] Consciousness level: {'[U+1F590]️' * min(3, months // 8)}"
         
         return response
     
@@ -277,10 +277,10 @@ class ChatRulesEngine:
         
         # Generate response
         responses = [
-            f"🚨 MAGA DETECTED! @{user.display_name} stuck at ✊✊✊ consciousness!",
-            f"⚠️ @{user.display_name} showing symptoms of ✊✊✊ syndrome!",
-            f"🔨 WHACK! @{user.display_name} needs consciousness elevation from ✊✊✊!",
-            f"📉 @{user.display_name} consciousness reading: ✊✊✊ (MAGA level)"
+            f"[ALERT] MAGA DETECTED! @{user.display_name} stuck at [U+270A][U+270A][U+270A] consciousness!",
+            f"[U+26A0]️ @{user.display_name} showing symptoms of [U+270A][U+270A][U+270A] syndrome!",
+            f"[U+1F528] WHACK! @{user.display_name} needs consciousness elevation from [U+270A][U+270A][U+270A]!",
+            f"[U+1F4C9] @{user.display_name} consciousness reading: [U+270A][U+270A][U+270A] (MAGA level)"
         ]
         
         import random
@@ -305,12 +305,12 @@ class ChatRulesEngine:
             if offense >= 3:
                 # Reset count
                 self.user_offense_count[user.user_id] = 0
-                return f"@{user.display_name} FINAL WARNING! ✊✊✊ spam detected. Please stop."
+                return f"@{user.display_name} FINAL WARNING! [U+270A][U+270A][U+270A] spam detected. Please stop."
             else:
                 trolls = [
-                    f"@{user.display_name} still at ✊✊✊? That's dedication!",
+                    f"@{user.display_name} still at [U+270A][U+270A][U+270A]? That's dedication!",
                     f"@{user.display_name} you already got your consciousness reading!",
-                    f"@{user.display_name} spam detected. ✊✊✊ consciousness confirmed."
+                    f"@{user.display_name} spam detected. [U+270A][U+270A][U+270A] consciousness confirmed."
                 ]
                 import random
                 return random.choice(trolls)
@@ -334,8 +334,8 @@ class ChatRulesEngine:
     def _has_emoji_sequence(self, text: str) -> bool:
         """Check if message contains valid emoji sequence"""
         sequences = [
-            "✊✊✊", "✊✊✋", "✊✊🖐", "✊✋✋", "✊✋🖐",
-            "✊🖐🖐", "✋✋✋", "✋✋🖐", "✋🖐🖐", "🖐🖐🖐"
+            "[U+270A][U+270A][U+270A]", "[U+270A][U+270A][U+270B]", "[U+270A][U+270A][U+1F590]", "[U+270A][U+270B][U+270B]", "[U+270A][U+270B][U+1F590]",
+            "[U+270A][U+1F590][U+1F590]", "[U+270B][U+270B][U+270B]", "[U+270B][U+270B][U+1F590]", "[U+270B][U+1F590][U+1F590]", "[U+1F590][U+1F590][U+1F590]"
         ]
         return any(seq in text for seq in sequences)
     

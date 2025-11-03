@@ -1,7 +1,7 @@
 # LinkedIn Posting Integration - LiveChat DAE Documentation
 
-**Status**: ✅ PRODUCTION READY (2025-10-01)
-**Integration**: LiveChat DAE → Social Media Orchestrator → LinkedIn Posting
+**Status**: [OK] PRODUCTION READY (2025-10-01)
+**Integration**: LiveChat DAE -> Social Media Orchestrator -> LinkedIn Posting
 **Testing**: All 3 company pages verified working
 
 ---
@@ -15,60 +15,60 @@ When the LiveChat DAE (YouTube stream monitor) detects a live stream, it automat
 ## Architecture Flow
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                    LIVECHAT DAE (Stream Monitor)                     │
-│                                                                      │
-│  Files:                                                              │
-│  • auto_moderator_dae.py - Main orchestrator                        │
-│  • qwen_youtube_integration.py - QWEN channel prioritization        │
-│                                                                      │
-│  Function: Continuously monitors 3 YouTube channels for live        │
-│            streams using NO-QUOTA web scraping                      │
-└──────────────────────────────────────────────────────────────────────┘
-                                 ↓
++----------------------------------------------------------------------+
+[U+2502]                    LIVECHAT DAE (Stream Monitor)                     [U+2502]
+[U+2502]                                                                      [U+2502]
+[U+2502]  Files:                                                              [U+2502]
+[U+2502]  • auto_moderator_dae.py - Main orchestrator                        [U+2502]
+[U+2502]  • qwen_youtube_integration.py - QWEN channel prioritization        [U+2502]
+[U+2502]                                                                      [U+2502]
+[U+2502]  Function: Continuously monitors 3 YouTube channels for live        [U+2502]
+[U+2502]            streams using NO-QUOTA web scraping                      [U+2502]
++----------------------------------------------------------------------+
+                                 v
                     Stream Detected (Video ID + Title + URL)
-                                 ↓
-┌──────────────────────────────────────────────────────────────────────┐
-│               SOCIAL MEDIA ORCHESTRATOR (Posting Hub)                │
-│                                                                      │
-│  Files:                                                              │
-│  • refactored_posting_orchestrator.py - Main coordinator            │
-│  • duplicate_prevention_manager.py - Duplicate check                │
-│  • channel_configuration_manager.py - Channel routing               │
-│  • platform_posting_service.py - Platform adapters                  │
-│                                                                      │
-│  Function: Coordinates posting across platforms (LinkedIn + X)      │
-│            with duplicate prevention and platform health checks     │
-└──────────────────────────────────────────────────────────────────────┘
-                                 ↓
+                                 v
++----------------------------------------------------------------------+
+[U+2502]               SOCIAL MEDIA ORCHESTRATOR (Posting Hub)                [U+2502]
+[U+2502]                                                                      [U+2502]
+[U+2502]  Files:                                                              [U+2502]
+[U+2502]  • refactored_posting_orchestrator.py - Main coordinator            [U+2502]
+[U+2502]  • duplicate_prevention_manager.py - Duplicate check                [U+2502]
+[U+2502]  • channel_configuration_manager.py - Channel routing               [U+2502]
+[U+2502]  • platform_posting_service.py - Platform adapters                  [U+2502]
+[U+2502]                                                                      [U+2502]
+[U+2502]  Function: Coordinates posting across platforms (LinkedIn + X)      [U+2502]
+[U+2502]            with duplicate prevention and platform health checks     [U+2502]
++----------------------------------------------------------------------+
+                                 v
                      Check Duplicate in SQLite DB
-                                 ↓
-                    Map Channel → LinkedIn Company
-                                 ↓
-┌──────────────────────────────────────────────────────────────────────┐
-│              UNIFIED LINKEDIN INTERFACE (Posting Layer)              │
-│                                                                      │
-│  File: unified_linkedin_interface.py                                │
-│                                                                      │
-│  Function: Unified posting interface for all LinkedIn operations    │
-│            Provides post_stream_notification() convenience method   │
-└──────────────────────────────────────────────────────────────────────┘
-                                 ↓
+                                 v
+                    Map Channel -> LinkedIn Company
+                                 v
++----------------------------------------------------------------------+
+[U+2502]              UNIFIED LINKEDIN INTERFACE (Posting Layer)              [U+2502]
+[U+2502]                                                                      [U+2502]
+[U+2502]  File: unified_linkedin_interface.py                                [U+2502]
+[U+2502]                                                                      [U+2502]
+[U+2502]  Function: Unified posting interface for all LinkedIn operations    [U+2502]
+[U+2502]            Provides post_stream_notification() convenience method   [U+2502]
++----------------------------------------------------------------------+
+                                 v
                     Set Company ID + Build URL
-                                 ↓
-┌──────────────────────────────────────────────────────────────────────┐
-│              LINKEDIN AGENT (Browser Automation)                     │
-│                                                                      │
-│  File: anti_detection_poster.py                                     │
-│                                                                      │
-│  Function: Opens browser with Selenium, navigates to LinkedIn       │
-│            posting page, keeps browser open for manual posting      │
-│                                                                      │
-│  URL Format:                                                         │
-│  https://www.linkedin.com/company/{NUMERIC_ID}/admin/page-posts/... │
-└──────────────────────────────────────────────────────────────────────┘
-                                 ↓
-                    Browser Opens → Manual Posting
+                                 v
++----------------------------------------------------------------------+
+[U+2502]              LINKEDIN AGENT (Browser Automation)                     [U+2502]
+[U+2502]                                                                      [U+2502]
+[U+2502]  File: anti_detection_poster.py                                     [U+2502]
+[U+2502]                                                                      [U+2502]
+[U+2502]  Function: Opens browser with Selenium, navigates to LinkedIn       [U+2502]
+[U+2502]            posting page, keeps browser open for manual posting      [U+2502]
+[U+2502]                                                                      [U+2502]
+[U+2502]  URL Format:                                                         [U+2502]
+[U+2502]  https://www.linkedin.com/company/{NUMERIC_ID}/admin/page-posts/... [U+2502]
++----------------------------------------------------------------------+
+                                 v
+                    Browser Opens -> Manual Posting
 ```
 
 ---
@@ -108,13 +108,13 @@ def handle_stream_detected(self, video_id, title, url, channel_id):
 
     Flow:
     1. Check if already posted (duplicate prevention)
-    2. Map channel_id → LinkedIn company page
+    2. Map channel_id -> LinkedIn company page
     3. Post to LinkedIn first, then X/Twitter
     4. Mark as posted in database
     """
 ```
 
-**Channel → Company Mapping**:
+**Channel -> Company Mapping**:
 | YouTube Channel         | LinkedIn Company ID | Company Name      |
 |-------------------------|---------------------|-------------------|
 | UCklMTNnu5POwRmQsg5JJumA | 104834798          | Move2Japan/GeoZai |
@@ -164,8 +164,8 @@ async def post_stream_notification(
 **Purpose**: Selenium browser automation for LinkedIn posting
 
 **Critical Fix (2025-10-01)**:
-❌ **Old**: Used vanity URLs → redirected to `/unavailable/`
-✅ **New**: Uses numeric company IDs → works perfectly
+[FAIL] **Old**: Used vanity URLs -> redirected to `/unavailable/`
+[OK] **New**: Uses numeric company IDs -> works perfectly
 
 **URL Structure**:
 ```
@@ -198,8 +198,8 @@ LinkedIn was redirecting to `/unavailable/` when using vanity URLs in admin URLs
 
 ### Root Cause
 LinkedIn admin URLs require **numeric company IDs**, not vanity names:
-- ❌ `linkedin.com/company/geozai/admin/...` → redirects to `/unavailable/`
-- ✅ `linkedin.com/company/104834798/admin/...` → works correctly
+- [FAIL] `linkedin.com/company/geozai/admin/...` -> redirects to `/unavailable/`
+- [OK] `linkedin.com/company/104834798/admin/...` -> works correctly
 
 ### Solution
 Changed URL construction to always use numeric IDs:
@@ -218,14 +218,14 @@ share_url = f"https://www.linkedin.com/company/{self.company_id}/admin/page-post
 ### Company ID Corrections
 
 **UnDaoDu ID was wrong**:
-- ❌ Old: `165749317`
-- ✅ New: `68706058`
+- [FAIL] Old: `165749317`
+- [OK] New: `68706058`
 - Source: User verified correct URL working
 
 **All IDs verified working**:
-- Move2Japan: `104834798` ✅
-- UnDaoDu: `68706058` ✅
-- FoundUps: `1263645` ✅
+- Move2Japan: `104834798` [OK]
+- UnDaoDu: `68706058` [OK]
+- FoundUps: `1263645` [OK]
 
 ---
 
@@ -290,9 +290,9 @@ python test_linkedin_urls_visual.py
 
 **Expected Results**:
 ```
-✅ Move2Japan (104834798): Browser opens to posting page
-✅ UnDaoDu (68706058):     Browser opens to posting page
-✅ FoundUps (1263645):     Browser opens to posting page
+[OK] Move2Japan (104834798): Browser opens to posting page
+[OK] UnDaoDu (68706058):     Browser opens to posting page
+[OK] FoundUps (1263645):     Browser opens to posting page
 ```
 
 ### Integration Test
@@ -435,26 +435,26 @@ The automation opens the browser but doesn't click "Post" - this is by design:
 Currently using **browser automation** (Selenium), not LinkedIn API:
 
 **Browser Automation Pros**:
-- ✅ No API setup required
-- ✅ Works with any LinkedIn account
-- ✅ No rate limits or API quotas
-- ✅ Supports all LinkedIn features
+- [OK] No API setup required
+- [OK] Works with any LinkedIn account
+- [OK] No rate limits or API quotas
+- [OK] Supports all LinkedIn features
 
 **Browser Automation Cons**:
-- ❌ Requires manual posting step
-- ❌ Susceptible to UI changes
-- ❌ Slower than API
+- [FAIL] Requires manual posting step
+- [FAIL] Susceptible to UI changes
+- [FAIL] Slower than API
 
 **LinkedIn API Pros**:
-- ✅ Fully automated posting
-- ✅ Programmatic control
-- ✅ Faster execution
+- [OK] Fully automated posting
+- [OK] Programmatic control
+- [OK] Faster execution
 
 **LinkedIn API Cons**:
-- ❌ Requires OAuth setup per company
-- ❌ API rate limits
-- ❌ Limited feature access
-- ❌ Requires app approval
+- [FAIL] Requires OAuth setup per company
+- [FAIL] API rate limits
+- [FAIL] Limited feature access
+- [FAIL] Requires app approval
 
 **Decision**: Browser automation chosen for flexibility and ease of setup.
 
@@ -470,5 +470,5 @@ Currently using **browser automation** (Selenium), not LinkedIn API:
 ---
 
 **Last Updated**: 2025-10-01
-**Status**: ✅ Production Ready
+**Status**: [OK] Production Ready
 **Tested**: All 3 company pages verified working

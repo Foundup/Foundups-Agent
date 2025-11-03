@@ -156,8 +156,8 @@ usage_frequency = (1 - alpha) * old_usage + alpha * 1.0
 ```
 
 **What this means**:
-- Frequently searched modules → High usage_frequency → Indicates importance
-- Never searched modules → Low usage_frequency → Possibly deprecated
+- Frequently searched modules -> High usage_frequency -> Indicates importance
+- Never searched modules -> Low usage_frequency -> Possibly deprecated
 
 **First Principle**: If developers search for it, it matters.
 
@@ -169,8 +169,8 @@ search_satisfaction = (1 - alpha) * old_satisfaction + alpha * user_rating
 ```
 
 **What this means**:
-- High ratings → Module is well-designed (easy to find what you need)
-- Low ratings → Module is confusing or poorly structured
+- High ratings -> Module is well-designed (easy to find what you need)
+- Low ratings -> Module is confusing or poorly structured
 
 **First Principle**: If developers are satisfied, the code is healthy.
 
@@ -184,8 +184,8 @@ centrality_score = import_count / max_imports
 ```
 
 **What this means**:
-- High centrality → Foundational infrastructure
-- Low centrality → Leaf module or unused
+- High centrality -> Foundational infrastructure
+- Low centrality -> Leaf module or unused
 
 **First Principle**: If many modules depend on it, it's foundational.
 
@@ -258,22 +258,22 @@ else:
 ### Improving Health Indicators
 
 Module health **increasing** when:
-- Documentation added → knowledge_score ↑
-- Tests added → test_coverage ↑
-- Bugs fixed → bug_density ↓
-- Changes stabilize → stability_score ↑
-- High satisfaction ratings → search_satisfaction ↑
+- Documentation added -> knowledge_score ^
+- Tests added -> test_coverage ^
+- Bugs fixed -> bug_density v
+- Changes stabilize -> stability_score ^
+- High satisfaction ratings -> search_satisfaction ^
 
 **System health improving** = avg(module_healths) trending up
 
 ### Declining Health Indicators
 
 Module health **decreasing** when:
-- Frequent changes → stability_score ↓
-- Bug reports → bug_density ↑
-- Low satisfaction → search_satisfaction ↓
-- WSP violations → wsp_compliance ↓
-- Dependencies increase → coupling_score ↓
+- Frequent changes -> stability_score v
+- Bug reports -> bug_density ^
+- Low satisfaction -> search_satisfaction v
+- WSP violations -> wsp_compliance v
+- Dependencies increase -> coupling_score v
 
 **System health declining** = avg(module_healths) trending down
 
@@ -317,10 +317,10 @@ HoloIndex: See health declining before crisis
 ### 5. **Smart Decision Support**
 
 Questions like:
-- "What should we refactor first?" → Low health + high foundational
-- "Can we deprecate this?" → Low health + low foundational
-- "Where should we add tests?" → Low test_coverage + high foundational
-- "What's our technical debt?" → Sum of (1 - health) weighted by foundational
+- "What should we refactor first?" -> Low health + high foundational
+- "Can we deprecate this?" -> Low health + low foundational
+- "Where should we add tests?" -> Low test_coverage + high foundational
+- "What's our technical debt?" -> Sum of (1 - health) weighted by foundational
 
 **First Principle**: Decisions should be data-driven, not opinion-driven.
 
@@ -337,11 +337,11 @@ Every interaction with HoloIndex:
 4. **Improves future searches**
 
 This is **recursive learning**:
-- Use HoloIndex → Learn about code
-- Learn about code → Improve HoloIndex
-- Improved HoloIndex → Better development
-- Better development → Healthier code
-- Healthier code → Better HoloIndex results
+- Use HoloIndex -> Learn about code
+- Learn about code -> Improve HoloIndex
+- Improved HoloIndex -> Better development
+- Better development -> Healthier code
+- Healthier code -> Better HoloIndex results
 
 **Positive feedback loop of continuous improvement**
 
@@ -349,15 +349,15 @@ This is **recursive learning**:
 
 Traditional computation:
 ```
-Search query → Calculate results → Return → Forget
+Search query -> Calculate results -> Return -> Forget
 ```
 
 HoloIndex pattern memory:
 ```
-Search query → Calculate results → Return → REMEMBER
-                                              ↓
+Search query -> Calculate results -> Return -> REMEMBER
+                                              v
                                     Update health map
-                                              ↓
+                                              v
                                     Improve future searches
 ```
 
@@ -402,7 +402,7 @@ HoloIndex doesn't just help you FIND code.
 HoloIndex LEARNS what code is important.
 And by learning, it helps you BUILD healthier systems.
 
-**This is the quantum leap**: From search tool → To system intelligence.
+**This is the quantum leap**: From search tool -> To system intelligence.
 
 ---
 

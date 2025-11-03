@@ -131,10 +131,10 @@ TEST_MODULE_PATHS = [
 ## **Test Coverage Goals**
 
 ### **Code Coverage Targets**
-- **Overall Coverage**: ≥90%
+- **Overall Coverage**: [GREATER_EQUAL]90%
 - **Critical Paths**: 100%
-- **Error Handling**: ≥95%
-- **Agent Coordination**: ≥95%
+- **Error Handling**: [GREATER_EQUAL]95%
+- **Agent Coordination**: [GREATER_EQUAL]95%
 - **Protocol Validation**: 100%
 
 ### **Test Categories Coverage**

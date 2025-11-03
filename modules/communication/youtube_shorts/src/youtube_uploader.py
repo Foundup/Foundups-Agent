@@ -68,7 +68,7 @@ class YouTubeShortsUploader:
             )
 
         try:
-            logger.info(f"🔐 [UPLOAD-AUTH] Loading OAuth credentials from {token_file}")
+            logger.info(f"[U+1F510] [UPLOAD-AUTH] Loading OAuth credentials from {token_file}")
             # Load credentials from token file
             with open(token_file, 'r') as f:
                 creds_data = json.load(f)
@@ -78,21 +78,21 @@ class YouTubeShortsUploader:
 
             # Refresh if expired
             if creds.expired and creds.refresh_token:
-                logger.info("🔄 [UPLOAD-AUTH] Refreshing expired OAuth token...")
+                logger.info("[REFRESH] [UPLOAD-AUTH] Refreshing expired OAuth token...")
                 creds.refresh(Request())
 
                 # Save refreshed token
                 with open(token_file, 'w') as f:
                     f.write(creds.to_json())
-                logger.info("✅ [UPLOAD-AUTH] OAuth token refreshed and saved")
+                logger.info("[OK] [UPLOAD-AUTH] OAuth token refreshed and saved")
 
             # Build YouTube API service
             self.youtube = build('youtube', 'v3', credentials=creds)
             self.channel = channel
-            logger.info(f"✅ [UPLOAD-INIT] YouTube API service initialized for {channel.upper()} channel")
+            logger.info(f"[OK] [UPLOAD-INIT] YouTube API service initialized for {channel.upper()} channel")
 
         except Exception as e:
-            logger.error(f"❌ [UPLOAD-ERROR] Failed to initialize YouTube auth: {e}")
+            logger.error(f"[FAIL] [UPLOAD-ERROR] Failed to initialize YouTube auth: {e}")
             raise YouTubeUploadError(f"Failed to get YouTube auth for {channel}: {e}")
 
     def upload_short(
@@ -120,14 +120,14 @@ class YouTubeShortsUploader:
             YouTubeUploadError: If upload fails
         """
 
-        logger.info("📤 [UPLOAD-START] Starting YouTube Short upload")
-        logger.info(f"📝 [UPLOAD-START] Title: {title}")
-        logger.info(f"📁 [UPLOAD-START] File: {video_path}")
-        logger.info(f"🔒 [UPLOAD-START] Privacy: {privacy}")
+        logger.info("[U+1F4E4] [UPLOAD-START] Starting YouTube Short upload")
+        logger.info(f"[NOTE] [UPLOAD-START] Title: {title}")
+        logger.info(f"[U+1F4C1] [UPLOAD-START] File: {video_path}")
+        logger.info(f"[LOCK] [UPLOAD-START] Privacy: {privacy}")
 
         # Validate file exists
         if not Path(video_path).exists():
-            logger.error(f"❌ [UPLOAD-ERROR] Video file not found: {video_path}")
+            logger.error(f"[FAIL] [UPLOAD-ERROR] Video file not found: {video_path}")
             raise YouTubeUploadError(f"Video file not found: {video_path}")
 
         # Default tags
@@ -137,9 +137,9 @@ class YouTubeShortsUploader:
         # Ensure #Shorts in description for proper categorization
         if "#Shorts" not in description and "#shorts" not in description:
             description = description + " #Shorts"
-            logger.info("✅ [UPLOAD-PREP] Added #Shorts tag to description")
+            logger.info("[OK] [UPLOAD-PREP] Added #Shorts tag to description")
 
-        logger.info(f"🏷️  [UPLOAD-PREP] Tags: {', '.join(tags)}")
+        logger.info(f"[U+1F3F7]️  [UPLOAD-PREP] Tags: {', '.join(tags)}")
 
         try:
             # Prepare video metadata
@@ -155,8 +155,8 @@ class YouTubeShortsUploader:
                     "selfDeclaredMadeForKids": False
                 }
             }
-            logger.info("📋 [UPLOAD-PREP] Video metadata prepared")
-            logger.info("📂 [UPLOAD-PREP] Category: 22 (People & Blogs)")
+            logger.info("[CLIPBOARD] [UPLOAD-PREP] Video metadata prepared")
+            logger.info("[U+1F4C2] [UPLOAD-PREP] Category: 22 (People & Blogs)")
 
             # Create media upload
             media = MediaFileUpload(
@@ -165,10 +165,10 @@ class YouTubeShortsUploader:
                 resumable=True,
                 chunksize=1024*1024  # 1MB chunks
             )
-            logger.info("📦 [UPLOAD-PREP] Media upload object created (1MB chunks)")
+            logger.info("[BOX] [UPLOAD-PREP] Media upload object created (1MB chunks)")
 
             # Execute upload
-            logger.info("🚀 [UPLOAD-PROGRESS] Starting YouTube API upload...")
+            logger.info("[ROCKET] [UPLOAD-PROGRESS] Starting YouTube API upload...")
 
             request = self.youtube.videos().insert(
                 part="snippet,status",
@@ -184,24 +184,24 @@ class YouTubeShortsUploader:
                     progress = int(status.progress() * 100)
                     # Log every 10% to avoid spam
                     if progress >= last_logged + 10:
-                        logger.info(f"📊 [UPLOAD-PROGRESS] Upload progress: {progress}%")
+                        logger.info(f"[DATA] [UPLOAD-PROGRESS] Upload progress: {progress}%")
                         last_logged = progress
 
             # Get video ID
             video_id = response['id']
-            logger.info(f"✅ [UPLOAD-SUCCESS] Upload complete! Video ID: {video_id}")
+            logger.info(f"[OK] [UPLOAD-SUCCESS] Upload complete! Video ID: {video_id}")
 
             # Construct Shorts URL
             # YouTube automatically detects vertical videos <60s as Shorts
             shorts_url = f"https://youtube.com/shorts/{video_id}"
 
-            logger.info(f"🎬 [UPLOAD-SUCCESS] Shorts URL: {shorts_url}")
-            logger.info(f"📺 [UPLOAD-SUCCESS] Channel: {self.channel.upper()}")
+            logger.info(f"[U+1F3AC] [UPLOAD-SUCCESS] Shorts URL: {shorts_url}")
+            logger.info(f"[U+1F4FA] [UPLOAD-SUCCESS] Channel: {self.channel.upper()}")
 
             return shorts_url
 
         except Exception as e:
-            logger.error(f"❌ [UPLOAD-ERROR] Upload failed: {e}")
+            logger.error(f"[FAIL] [UPLOAD-ERROR] Upload failed: {e}")
             raise YouTubeUploadError(f"Upload failed: {e}")
 
     def get_channel_info(self) -> dict:

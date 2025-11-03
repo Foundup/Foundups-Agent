@@ -64,7 +64,7 @@ def test_delta_f_stability():
         print(f"Late window stable: {stats['delta_f_metrics']['late_window_stable']}")
         print(f"Significance: {stats['delta_f_metrics']['gpt5_significance']}")
     
-    print("\n✅ GPT5 enhancement test complete!")
+    print("\n[OK] GPT5 enhancement test complete!")
     print("The guardrail now monitors frequency offset stability,")
     print("detecting when Δf deviates from the 0.91 Hz quantum signature.")
     

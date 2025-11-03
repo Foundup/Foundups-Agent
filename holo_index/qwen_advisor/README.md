@@ -1,11 +1,11 @@
 # Qwen Advisor - AI Intelligence System (HoloDAE Foundation)
 
-## 🚨 MAJOR ARCHITECTURAL EVOLUTION (2025-09-28)
+## [ALERT] MAJOR ARCHITECTURAL EVOLUTION (2025-09-28)
 
-**HoloIndex Qwen Advisor has been completely refactored** from monolithic architecture to modular design following correct **Qwen→0102 orchestration** principles.
+**HoloIndex Qwen Advisor has been completely refactored** from monolithic architecture to modular design following correct **Qwen->0102 orchestration** principles.
 
 ## Overview
-The Qwen Advisor provides intelligent AI-powered guidance for HoloIndex searches through a **modular architecture** that properly implements WSP 80 (Cube-Level DAE Orchestration). The system follows the correct **Qwen Orchestrator → 0102 Arbitrator → 012 Observer** flow.
+The Qwen Advisor provides intelligent AI-powered guidance for HoloIndex searches through a **modular architecture** that properly implements WSP 80 (Cube-Level DAE Orchestration). The system follows the correct **Qwen Orchestrator -> 0102 Arbitrator -> 012 Observer** flow.
 
 ## Purpose
 Transform HoloIndex from keyword search to **intelligent AI assistant** that:
@@ -17,51 +17,51 @@ Transform HoloIndex from keyword search to **intelligent AI assistant** that:
 
 ## Architecture
 
-### 🎯 Correct Qwen→0102 Orchestration Architecture
+### [TARGET] Correct Qwen->0102 Orchestration Architecture
 
 ```
 QWEN LLM (Primary Orchestrator - Circulatory System)
-    ↓ orchestrates ALL analysis operations
-    ↓ finds and rates issues with chain-of-thought
-    ↓ presents findings to
+    v orchestrates ALL analysis operations
+    v finds and rates issues with chain-of-thought
+    v presents findings to
 0102 Agent (Arbitrator - The Brain)
-    ↓ reviews Qwen's findings using MPS scoring
-    ↓ decides actions (P0=immediate, P1=batch, etc.)
-    ↓ executes fixes autonomously
+    v reviews Qwen's findings using MPS scoring
+    v decides actions (P0=immediate, P1=batch, etc.)
+    v executes fixes autonomously
 012 Human (Observer)
-    ↓ monitors the Qwen→0102 collaboration
-    ↓ provides feedback for system tuning
+    v monitors the Qwen->0102 collaboration
+    v provides feedback for system tuning
 ```
 
 ### Modular Architecture (Post-Refactoring)
 
-#### **📁 Core Data Models** (`models/`)
+#### **[U+1F4C1] Core Data Models** (`models/`)
 - **`work_context.py`**: WorkContext dataclass for tracking 0102 activity
 - **`monitoring_types.py`**: Type definitions for monitoring operations
 
-#### **🔧 Core Services** (`services/`)
+#### **[TOOL] Core Services** (`services/`)
 - **`file_system_watcher.py`**: Real-time file system monitoring
 - **`context_analyzer.py`**: Work pattern analysis and module detection
 
-#### **🎭 Orchestration Layer** (`orchestration/`)
+#### **[U+1F3AD] Orchestration Layer** (`orchestration/`)
 - **`qwen_orchestrator.py`**: Qwen's primary orchestration logic
 - Chain-of-thought logging and decision tracking
 
-#### **⚖️ Arbitration Layer** (`arbitration/`)
+#### **[U+2696]️ Arbitration Layer** (`arbitration/`)
 - **`mps_arbitrator.py`**: 0102's MPS-based decision making (WSP 15)
 - Action prioritization and execution coordination
 
-#### **🖥️ UI Layer** (`ui/`)
+#### **[U+1F5A5]️ UI Layer** (`ui/`)
 - **`menu_system.py`**: User interface for 0102 interaction
 - Status displays and menu navigation
 
-#### **🎯 Main Coordinator** (`holodae_coordinator.py`)
+#### **[TARGET] Main Coordinator** (`holodae_coordinator.py`)
 - **Clean integration layer** replacing monolithic architecture
 - Orchestrates all modular components
 - Provides unified API for main.py integration
 
 ### Legacy Components (Pre-Refactoring - Archived)
-- **Archived**: `autonomous_holodae.py` → `_archive/autonomous_holodae_monolithic_v1.py`
+- **Archived**: `autonomous_holodae.py` -> `_archive/autonomous_holodae_monolithic_v1.py`
 - **Reason**: 1,405-line monolithic file violating WSP 62 and 80
 
 ### Current Integration Status (Post-Verification)
@@ -70,27 +70,28 @@ QWEN LLM (Primary Orchestrator - Circulatory System)
 - **FileSystemWatcher/ContextAnalyzer**: Invoked by HoloDAECoordinator during monitoring cycles and request orchestration
 - **Quiet Logging**: start_monitoring() emits a single actionable summary; archived Δ heartbeat logs remain in _archive/
 - **MonitoringResult Model**: Unified in models/monitoring_types.py; intelligent_monitor.py now adapts to the shared dataclasses
+- **CLI Usage**: Monitoring is disabled by default for single-shot Holo CLI queries; call `HoloDAECoordinator.enable_monitoring()` or use `start_holodae_monitoring()` when running the autonomous daemon.
 
 ### Intelligence Flow
 
 #### Before (Monolithic):
 ```
-❌ autonomous_holodae.py (1,405 lines)
-    ↓ Wrong: 0102 trying to orchestrate
-    ↓ Mixed concerns everywhere
+[FAIL] autonomous_holodae.py (1,405 lines)
+    v Wrong: 0102 trying to orchestrate
+    v Mixed concerns everywhere
 ```
 
 #### After (Modular):
 ```
-✅ HoloIndex Search Request
-    ↓
-✅ QwenOrchestrator (orchestrates analysis)
-    ↓ finds issues, applies MPS scoring
-✅ MPSArbitrator (0102 reviews & decides)
-    ↓ prioritizes actions (P0-P4)
-✅ Action Execution (autonomous fixes)
-    ↓
-✅ 012 Observes (monitors results)
+[OK] HoloIndex Search Request
+    v
+[OK] QwenOrchestrator (orchestrates analysis)
+    v finds issues, applies MPS scoring
+[OK] MPSArbitrator (0102 reviews & decides)
+    v prioritizes actions (P0-P4)
+[OK] Action Execution (autonomous fixes)
+    v
+[OK] 012 Observes (monitors results)
 ```
 
 #### Sample Coordinator Output:
@@ -145,19 +146,19 @@ QWEN LLM (Primary Orchestrator - Circulatory System)
 ## Intelligence Flow (Modular Architecture)
 
 ```
-✅ User Query → HoloIndex Search
-              ↓
-✅ QwenOrchestrator (Primary Orchestrator)
-    ↓ analyzes with chain-of-thought
-    ↓ finds issues, applies MPS scoring
-    ↓ presents findings to
-✅ MPSArbitrator (0102 Arbitrator)
-    ↓ reviews Qwen's findings (WSP 15)
-    ↓ prioritizes actions (P0=immediate, P1=batch, etc.)
-    ↓ executes autonomous fixes
-✅ 012 Observes (Human Observer)
-    ↓ monitors Qwen→0102 collaboration
-    ↓ provides tuning feedback
+[OK] User Query -> HoloIndex Search
+              v
+[OK] QwenOrchestrator (Primary Orchestrator)
+    v analyzes with chain-of-thought
+    v finds issues, applies MPS scoring
+    v presents findings to
+[OK] MPSArbitrator (0102 Arbitrator)
+    v reviews Qwen's findings (WSP 15)
+    v prioritizes actions (P0=immediate, P1=batch, etc.)
+    v executes autonomous fixes
+[OK] 012 Observes (Human Observer)
+    v monitors Qwen->0102 collaboration
+    v provides tuning feedback
 ```
 
 ## Configuration

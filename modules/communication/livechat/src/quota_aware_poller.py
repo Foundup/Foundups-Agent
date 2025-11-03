@@ -89,26 +89,26 @@ class QuotaAwarePoller:
         
         # CRITICAL: Over quota or near limit - EMERGENCY SHUTOFF
         if quota_percentage >= 0.98:  # Stop at 98% to prevent death spiral
-            logger.critical(f"🚨 QUOTA EXHAUSTED: {units_used}/{self.daily_limit} units ({quota_percentage:.1%})")
-            logger.critical("🛑 EMERGENCY SHUTOFF - Stopping polling to preserve quota")
+            logger.critical(f"[ALERT] QUOTA EXHAUSTED: {units_used}/{self.daily_limit} units ({quota_percentage:.1%})")
+            logger.critical("[STOP] EMERGENCY SHUTOFF - Stopping polling to preserve quota")
             return None  # Stop polling entirely
         
         if quota_percentage >= 0.95:
-            logger.error(f"🔴 QUOTA CRITICAL: {units_used}/{self.daily_limit} units ({quota_percentage:.1%})")
+            logger.error(f"[U+1F534] QUOTA CRITICAL: {units_used}/{self.daily_limit} units ({quota_percentage:.1%})")
 
             # HOLOINDEX IMPROVEMENT: Integration Gap Fix - Rotate OAuth tokens when quota critical
             if self.oauth_manager and hasattr(self.oauth_manager, 'rotate_credentials'):
-                logger.warning("🔄 HOLOINDEX FIX: Attempting OAuth token rotation due to quota exhaustion")
+                logger.warning("[REFRESH] HOLOINDEX FIX: Attempting OAuth token rotation due to quota exhaustion")
                 try:
                     rotation_success = self.oauth_manager.rotate_credentials()
                     if rotation_success:
-                        logger.info("✅ HOLOINDEX FIX: OAuth token rotation successful - quota reset")
+                        logger.info("[OK] HOLOINDEX FIX: OAuth token rotation successful - quota reset")
                         # Reset quota tracking for new credential set
                         # Note: Actual quota reset happens on YouTube's side, we just switch credentials
                     else:
-                        logger.error("❌ HOLOINDEX FIX: OAuth token rotation failed")
+                        logger.error("[FAIL] HOLOINDEX FIX: OAuth token rotation failed")
                 except Exception as e:
-                    logger.error(f"❌ HOLOINDEX FIX: OAuth rotation error: {e}")
+                    logger.error(f"[FAIL] HOLOINDEX FIX: OAuth rotation error: {e}")
 
             return self.EMERGENCY_INTERVAL
         
@@ -130,7 +130,7 @@ class QuotaAwarePoller:
         
         # CAUTION: 50-70% quota used
         if quota_percentage >= 0.5:
-            logger.info(f"⚠️ QUOTA CAUTION: {units_used}/{self.daily_limit} units ({quota_percentage:.1%})")
+            logger.info(f"[U+26A0]️ QUOTA CAUTION: {units_used}/{self.daily_limit} units ({quota_percentage:.1%})")
             # Adaptive based on activity
             if time_since_message > 180:  # No messages for 3 minutes
                 return self.CONSERVATIVE_INTERVAL
@@ -140,7 +140,7 @@ class QuotaAwarePoller:
                 return self.MODERATE_INTERVAL
         
         # NORMAL: Under 50% quota
-        logger.debug(f"✅ Quota healthy: {units_used}/{self.daily_limit} units ({quota_percentage:.1%})")
+        logger.debug(f"[OK] Quota healthy: {units_used}/{self.daily_limit} units ({quota_percentage:.1%})")
         
         # Adjust based on chat activity
         if not stream_active:
@@ -173,7 +173,7 @@ class QuotaAwarePoller:
         
         # NEVER poll if over quota
         if quota_percentage >= 1.0:
-            logger.critical(f"🚨 POLLING STOPPED: Quota exhausted ({units_used}/{self.daily_limit})")
+            logger.critical(f"[ALERT] POLLING STOPPED: Quota exhausted ({units_used}/{self.daily_limit})")
             return False, None
         
         # Calculate optimal interval

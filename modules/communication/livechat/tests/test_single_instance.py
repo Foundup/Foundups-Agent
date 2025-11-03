@@ -26,7 +26,7 @@ def test_single_instance():
     """Test single instance enforcement."""
     
     logger.info("="*60)
-    logger.info("🧪 TESTING SINGLE INSTANCE ENFORCEMENT")
+    logger.info("[U+1F9EA] TESTING SINGLE INSTANCE ENFORCEMENT")
     logger.info("="*60)
     
     # Test 1: Basic lock acquisition
@@ -34,9 +34,9 @@ def test_single_instance():
     enforcer1 = SingleInstanceEnforcer("test_process")
     
     if enforcer1.acquire_lock():
-        logger.info("✅ First instance acquired lock")
+        logger.info("[OK] First instance acquired lock")
     else:
-        logger.error("❌ First instance failed to acquire lock")
+        logger.error("[FAIL] First instance failed to acquire lock")
         return
     
     # Test 2: Try to acquire lock again (should fail)
@@ -44,53 +44,53 @@ def test_single_instance():
     enforcer2 = SingleInstanceEnforcer("test_process")
     
     if enforcer2.acquire_lock():
-        logger.error("❌ Second instance acquired lock (should have failed!)")
+        logger.error("[FAIL] Second instance acquired lock (should have failed!)")
     else:
-        logger.info("✅ Second instance blocked as expected")
+        logger.info("[OK] Second instance blocked as expected")
     
     # Test 3: Check status
     logger.info("\n3️⃣ Testing status check...")
     existing_pid = enforcer2.check_status()
     if existing_pid:
-        logger.info(f"✅ Detected existing instance (PID: {existing_pid})")
+        logger.info(f"[OK] Detected existing instance (PID: {existing_pid})")
     else:
-        logger.error("❌ Failed to detect existing instance")
+        logger.error("[FAIL] Failed to detect existing instance")
     
     # Test 4: Release and re-acquire
     logger.info("\n4️⃣ Testing lock release...")
     enforcer1.release_lock()
-    logger.info("🔓 Released first lock")
+    logger.info("[U+1F513] Released first lock")
     
     if enforcer2.acquire_lock():
-        logger.info("✅ Second instance acquired lock after release")
+        logger.info("[OK] Second instance acquired lock after release")
         enforcer2.release_lock()
     else:
-        logger.error("❌ Second instance still blocked after release")
+        logger.error("[FAIL] Second instance still blocked after release")
     
     # Test 5: Context manager
     logger.info("\n5️⃣ Testing context manager...")
     try:
         with SingleInstanceEnforcer("context_test") as lock:
-            logger.info("✅ Context manager acquired lock")
+            logger.info("[OK] Context manager acquired lock")
             # Try duplicate in context
             enforcer3 = SingleInstanceEnforcer("context_test")
             if not enforcer3.acquire_lock():
-                logger.info("✅ Duplicate blocked in context")
+                logger.info("[OK] Duplicate blocked in context")
             else:
-                logger.error("❌ Duplicate not blocked in context")
+                logger.error("[FAIL] Duplicate not blocked in context")
     except Exception as e:
-        logger.error(f"❌ Context manager failed: {e}")
+        logger.error(f"[FAIL] Context manager failed: {e}")
     
     # Verify lock released after context
     enforcer4 = SingleInstanceEnforcer("context_test")
     if enforcer4.acquire_lock():
-        logger.info("✅ Lock released after context exit")
+        logger.info("[OK] Lock released after context exit")
         enforcer4.release_lock()
     else:
-        logger.error("❌ Lock still held after context exit")
+        logger.error("[FAIL] Lock still held after context exit")
     
     logger.info("\n" + "="*60)
-    logger.info("🏁 SINGLE INSTANCE TEST COMPLETE")
+    logger.info("[U+1F3C1] SINGLE INSTANCE TEST COMPLETE")
     logger.info("="*60)
 
 if __name__ == "__main__":

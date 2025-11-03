@@ -7,7 +7,7 @@ Comprehensive audit of HoloIndex modules after refactoring from 1724 lines to 66
 
 ## Module Usage Status
 
-### ✅ ACTIVELY USED MODULES
+### [OK] ACTIVELY USED MODULES
 | Module | Purpose | Usage Location | Status |
 |--------|---------|----------------|--------|
 | **qwen_advisor** | WSP compliance & agent advice | cli.py:21-26 | ACTIVE - Core functionality |
@@ -18,49 +18,49 @@ Comprehensive audit of HoloIndex modules after refactoring from 1724 lines to 66
 | **output** | Output throttling & organization | cli.py:47 | ACTIVE - Output management |
 | **utils** | Helper functions | cli.py:48 | ACTIVE - Utilities |
 
-### 🔍 MODULE DETAILS
+### [SEARCH] MODULE DETAILS
 
 #### 1. **qwen_advisor/** (HEAVILY USED)
 - **Files**: advisor.py, config.py, telemetry.py, rules_engine.py, agent_detection.py, pattern_coach.py
 - **Purpose**: Provides WSP compliance checking, agent detection, pattern coaching
 - **Integration**: Deep integration throughout cli.py
 - **Dependencies**: module_health for auditing
-- **Status**: ✅ CRITICAL - Do not remove
+- **Status**: [OK] CRITICAL - Do not remove
 
 #### 2. **adaptive_learning/** (PHASE 3)
 - **Files**: adaptive_learning_orchestrator.py, adaptive_query_processor.py, llm_response_optimizer.py
 - **Purpose**: Enhances queries and optimizes responses using LLM
 - **Integration**: Optional Phase 3 feature (try/except wrapped)
-- **Status**: ✅ ACTIVE - Advanced feature
+- **Status**: [OK] ACTIVE - Advanced feature
 
 #### 3. **dae_cube_organizer/** (DAE MANAGEMENT)
 - **Files**: dae_cube_organizer.py
 - **Purpose**: Initializes and manages DAE contexts
 - **Integration**: Used in --init-dae command
-- **Status**: ✅ ACTIVE - DAE functionality
+- **Status**: [OK] ACTIVE - DAE functionality
 
 #### 4. **module_health/** (INDIRECT USE)
 - **Files**: size_audit.py, structure_audit.py
 - **Purpose**: Audits module size and structure for WSP compliance
 - **Integration**: Used by qwen_advisor.rules_engine
-- **Status**: ✅ ACTIVE - Health monitoring
+- **Status**: [OK] ACTIVE - Health monitoring
 
 #### 5. **core/** (REFACTORED)
 - **Files**: intelligent_subroutine_engine.py, holo_index.py
 - **Purpose**: Core HoloIndex functionality and subroutine management
-- **Status**: ✅ ACTIVE - Recently refactored
+- **Status**: [OK] ACTIVE - Recently refactored
 
 #### 6. **output/** (REFACTORED)
 - **Files**: agentic_output_throttler.py
 - **Purpose**: Manages and prioritizes output for agents
-- **Status**: ✅ ACTIVE - Recently refactored
+- **Status**: [OK] ACTIVE - Recently refactored
 
 #### 7. **utils/** (REFACTORED)
 - **Files**: helpers.py
 - **Purpose**: Utility functions (safe_print, onboarding)
-- **Status**: ✅ ACTIVE - Recently refactored
+- **Status**: [OK] ACTIVE - Recently refactored
 
-### ⚠️ ISSUES FOUND
+### [U+26A0]️ ISSUES FOUND
 
 1. **Missing display_results Method**
    - Error: `AttributeError: 'HoloIndex' object has no attribute 'display_results'`
@@ -77,7 +77,7 @@ Comprehensive audit of HoloIndex modules after refactoring from 1724 lines to 66
    - Multiple corrupted Unicode characters fixed
    - Some may remain in untested code paths
 
-### 📊 REFACTORING METRICS
+### [DATA] REFACTORING METRICS
 
 **Before Refactoring:**
 - cli.py: 1724 lines
@@ -93,12 +93,12 @@ Comprehensive audit of HoloIndex modules after refactoring from 1724 lines to 66
 - Total extracted: ~1060 lines
 
 **Compliance Status:**
-- ❌ cli.py: Still 664 lines (Target: <200)
-- ❌ HoloIndex class: 490 lines (Target: <200)
-- ✅ main(): Reduced significantly
-- ✅ Modules properly structured
+- [FAIL] cli.py: Still 664 lines (Target: <200)
+- [FAIL] HoloIndex class: 490 lines (Target: <200)
+- [OK] main(): Reduced significantly
+- [OK] Modules properly structured
 
-### 🚨 NO ABANDONED MODULES
+### [ALERT] NO ABANDONED MODULES
 All modules in holo_index/ are actively used:
 - No orphaned imports found
 - No dead code directories
@@ -113,7 +113,7 @@ All modules in holo_index/ are actively used:
 - **Advisor**: [INFO] Pattern Coach, Advisor mode
 - **Errors**: Basic exception messages
 
-### ❌ CRITICAL GAPS IN LOGGING
+### [FAIL] CRITICAL GAPS IN LOGGING
 1. **No detailed operation logs** for self-improvement
 2. **No structured logging** for external agent monitoring
 3. **No performance metrics** beyond basic timing

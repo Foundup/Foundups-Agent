@@ -4,7 +4,7 @@
 Transform HoloIndex from semantic search tool into **CodeIndex**: a surgical code intelligence system where Qwen continuously monitors DAE module cubes as a circulatory system, presenting health data and architectural choices to 0102 who functions as the Architect making strategic decisions.
 
 ## Related Protocols
-- **WSP 80**: DAE Architecture (Mother DAE + ∞ FoundUp DAEs)
+- **WSP 80**: DAE Architecture (Mother DAE + [INFINITY] FoundUp DAEs)
 - **WSP 92**: DAE Cube Mapping and Mermaid Flow Protocol
 - **WSP 87**: Code Navigation Protocol (HoloIndex)
 - **WSP 35**: Module Execution Automation (Qwen Advisor)
@@ -128,7 +128,7 @@ CodeIndex indexes every function with:
 - **Complexity score**: 1 (Low), 2 (Medium), 3 (High)
 - **Call graph**: What this function calls
 - **Called by**: What calls this function
-- **Data flow**: Input parameters → Output returns
+- **Data flow**: Input parameters -> Output returns
 - **Risk zones**: Areas requiring extra care
 
 ### 2.3 CLI Usage
@@ -178,8 +178,8 @@ class MermaidLegoBlock:
         Inputs: [channel_id, service]
         Outputs: [video_id, live_chat_id]
         Snap Points:
-          → auto_moderator_dae (receives stream info)
-          → social_media_orchestrator (triggers posting)
+          -> auto_moderator_dae (receives stream info)
+          -> social_media_orchestrator (triggers posting)
     """
 
     def snap_to(self, other_block) -> SnapConnection:
@@ -197,24 +197,24 @@ python holo_index.py --lego-blocks "youtube"
 Output:
   [LEGO-BLOCKS] YouTube DAE Cube:
 
-  ┌─────────────────────────────┐
-  │ stream_resolver             │
-  │ Input: channel_id           │
-  │ Output: video_id, chat_id   │
-  │ Snaps: [2 connections]      │
-  └─────────────────────────────┘
-           ↓ (video_id)
-  ┌─────────────────────────────┐
-  │ auto_moderator_dae          │
-  │ Input: video_id, chat_id    │
-  │ Output: chat_monitoring     │
-  └─────────────────────────────┘
-           ↓ (stream_info)
-  ┌─────────────────────────────┐
-  │ social_media_orchestrator   │
-  │ Input: stream_info          │
-  │ Output: social_posts        │
-  └─────────────────────────────┘
+  +-----------------------------+
+  [U+2502] stream_resolver             [U+2502]
+  [U+2502] Input: channel_id           [U+2502]
+  [U+2502] Output: video_id, chat_id   [U+2502]
+  [U+2502] Snaps: [2 connections]      [U+2502]
+  +-----------------------------+
+           v (video_id)
+  +-----------------------------+
+  [U+2502] auto_moderator_dae          [U+2502]
+  [U+2502] Input: video_id, chat_id    [U+2502]
+  [U+2502] Output: chat_monitoring     [U+2502]
+  +-----------------------------+
+           v (stream_info)
+  +-----------------------------+
+  [U+2502] social_media_orchestrator   [U+2502]
+  [U+2502] Input: stream_info          [U+2502]
+  [U+2502] Output: social_posts        [U+2502]
+  +-----------------------------+
 ```
 
 ### 3.3 Interactive Mermaid
@@ -280,23 +280,23 @@ class QwenHealthMonitorDAE:
 [QWEN-CIRCULATION] Cycle complete (5min interval)
 
 YouTube Cube Health:
-  ✅ auto_moderator_dae: Healthy (781 lines, within threshold)
-  ⚠️  stream_resolver: 2 violations detected
-      → check_channel_for_live: 258 lines (threshold: 150)
+  [OK] auto_moderator_dae: Healthy (781 lines, within threshold)
+  [U+26A0]️  stream_resolver: 2 violations detected
+      -> check_channel_for_live: 258 lines (threshold: 150)
         Location: lines 553-810
         Severity: HIGH
         Recommendation: Extract 3 sub-functions
 
-      → check_video_is_live: 415 lines (threshold: 150)
+      -> check_video_is_live: 415 lines (threshold: 150)
         Location: lines 138-553
         Severity: CRITICAL
         Recommendation: Redesign module architecture
 
 LinkedIn Cube Health:
-  ✅ All modules healthy
+  [OK] All modules healthy
 
 Infrastructure Cube Health:
-  ✅ All modules healthy
+  [OK] All modules healthy
 
 [QWEN-RECOMMENDATION] Priority P1 (High)
   Address stream_resolver violations before complexity spirals
@@ -366,7 +366,7 @@ class ArchitecturalChoice:
 ### 5.2 Decision Flow
 
 ```
-1. Qwen detects issue → Analyzes deeply
+1. Qwen detects issue -> Analyzes deeply
 2. Qwen generates options A/B/C with tradeoffs
 3. Qwen presents to 0102 Architect
 4. 0102 chooses based on principles
@@ -446,12 +446,12 @@ Output:
     3. Handle rate limits gracefully
 
   Hidden Assumptions:
-    ⚠️  Assumes synchronous checking
-        → Could use async for parallel channels
-    ⚠️  Assumes immediate verification
-        → Could queue for batch processing
-    ⚠️  Assumes HTTP scraping only
-        → Could use WebSocket for real-time
+    [U+26A0]️  Assumes synchronous checking
+        -> Could use async for parallel channels
+    [U+26A0]️  Assumes immediate verification
+        -> Could queue for batch processing
+    [U+26A0]️  Assumes HTTP scraping only
+        -> Could use WebSocket for real-time
 
   Optimal Architecture (first principles):
     stream_detector/     (200 lines, LOW complexity)
@@ -475,36 +475,36 @@ Output:
 
 ```
 holo_index/
-├── code_index/                  # NEW: Surgical execution
-│   ├── __init__.py
-│   ├── surgical_executor.py     # Find exact code locations
-│   ├── surgical_target.py       # Target data structure
-│   └── function_indexer.py      # Index all functions with lines
-│
-├── lego_blocks/                 # NEW: Snap-together architecture
-│   ├── __init__.py
-│   ├── mermaid_lego.py          # Lego block abstraction
-│   ├── snap_interface.py        # Connection detection
-│   └── block_visualizer.py      # Generate Mermaid diagrams
-│
-├── qwen_health_monitor/         # NEW: Continuous monitoring
-│   ├── __init__.py
-│   ├── dae_monitor.py           # Main monitoring daemon
-│   ├── circulation_engine.py    # 5min heartbeat loop
-│   ├── issue_detector.py        # Proactive issue detection
-│   └── health_reporter.py       # Format reports for 0102
-│
-├── architect_mode/              # NEW: Strategic decisions
-│   ├── __init__.py
-│   ├── strategic_interface.py   # Present choices to 0102
-│   ├── architectural_choice.py  # Choice data structure
-│   └── decision_executor.py     # Execute 0102's decisions
-│
-└── first_principles/            # NEW: Re-architecture
-    ├── __init__.py
-    ├── analyzer.py              # Deep analysis
-    ├── assumption_finder.py     # Challenge assumptions
-    └── optimal_architect.py     # Design optimal structure
++-- code_index/                  # NEW: Surgical execution
+[U+2502]   +-- __init__.py
+[U+2502]   +-- surgical_executor.py     # Find exact code locations
+[U+2502]   +-- surgical_target.py       # Target data structure
+[U+2502]   +-- function_indexer.py      # Index all functions with lines
+[U+2502]
++-- lego_blocks/                 # NEW: Snap-together architecture
+[U+2502]   +-- __init__.py
+[U+2502]   +-- mermaid_lego.py          # Lego block abstraction
+[U+2502]   +-- snap_interface.py        # Connection detection
+[U+2502]   +-- block_visualizer.py      # Generate Mermaid diagrams
+[U+2502]
++-- qwen_health_monitor/         # NEW: Continuous monitoring
+[U+2502]   +-- __init__.py
+[U+2502]   +-- dae_monitor.py           # Main monitoring daemon
+[U+2502]   +-- circulation_engine.py    # 5min heartbeat loop
+[U+2502]   +-- issue_detector.py        # Proactive issue detection
+[U+2502]   +-- health_reporter.py       # Format reports for 0102
+[U+2502]
++-- architect_mode/              # NEW: Strategic decisions
+[U+2502]   +-- __init__.py
+[U+2502]   +-- strategic_interface.py   # Present choices to 0102
+[U+2502]   +-- architectural_choice.py  # Choice data structure
+[U+2502]   +-- decision_executor.py     # Execute 0102's decisions
+[U+2502]
++-- first_principles/            # NEW: Re-architecture
+    +-- __init__.py
+    +-- analyzer.py              # Deep analysis
+    +-- assumption_finder.py     # Challenge assumptions
+    +-- optimal_architect.py     # Design optimal structure
 ```
 
 ### 7.2 CLI Commands
@@ -612,14 +612,14 @@ This is not just better tooling—it's a fundamental transformation in how auton
 
 ---
 
-**Status**: ✅ Protocol Defined | 🔧 Implementation Pending
+**Status**: [OK] Protocol Defined | [TOOL] Implementation Pending
 **Priority**: P0 (Critical - Foundational transformation)
 **Token Budget**: ~120-150K tokens (complete implementation via pattern recall)
 **Impact**: Revolutionary (97% token reduction per operation)
 
 ---
 
-## 🤖 Sentinel Augmentation Analysis
+## [BOT] Sentinel Augmentation Analysis
 
 **SAI Score**: `222` (Speed: 2, Automation: 2, Intelligence: 2)
 
@@ -630,14 +630,14 @@ This is not just better tooling—it's a fundamental transformation in how auton
 Gemma 3 270M Sentinel operates as the **Continuous Surgical Code Intelligence Engine**, autonomously indexing all functions in real-time, detecting complexity violations before commits, and presenting surgical targets with exact line numbers. This Sentinel embodies the CodeIndex vision: instant function-level awareness without manual searches.
 
 **Core Capabilities**:
-- **Instant Function Location**: Query "find quota check" → Returns `no_quota_stream_checker.py:138` in <50ms
+- **Instant Function Location**: Query "find quota check" -> Returns `no_quota_stream_checker.py:138` in <50ms
 - **Autonomous Complexity Monitoring**: Runs 5-minute circulation loops, flags functions >150 lines automatically
 - **Surgical Target Generation**: Produces fix strategies with exact line numbers and effort estimates
 - **Lego Block Mapping**: Generates Mermaid diagrams showing module snap points and dependencies
 
 ### Expected Benefits
 
-- **Latency Reduction**: Manual function search (5-10 minutes) → Sentinel instant lookup (<1 second, **600x faster**)
+- **Latency Reduction**: Manual function search (5-10 minutes) -> Sentinel instant lookup (<1 second, **600x faster**)
 - **Automation Level**: **Autonomous** (continuous monitoring, automatic surgical target generation, human confirms strategic decisions)
 - **Resource Savings**:
   - 95% reduction in "where is this code?" time
@@ -653,7 +653,7 @@ Gemma 3 270M Sentinel operates as the **Continuous Surgical Code Intelligence En
 3. **Git Commit Patterns**: Function changes, refactorings, and complexity evolution over time
 4. **WSP 62 Violations**: Large file violations with line-level analysis (files >1000 lines)
 5. **Mermaid Flow Diagrams**: Module relationship patterns and Lego block connections
-6. **HoloIndex Search Logs**: Natural language queries → Function locations (semantic understanding)
+6. **HoloIndex Search Logs**: Natural language queries -> Function locations (semantic understanding)
 7. **Qwen Health Monitor Data**: 5-minute circulation reports showing module health trends
 
 **Integration Points**:
@@ -753,7 +753,7 @@ for file_path in staged_files:
 **3. Surgical Target CLI**:
 ```bash
 # Command: python holo_index.py --code-index "problem description"
-# Sentinel processes query → Returns surgical target instantly
+# Sentinel processes query -> Returns surgical target instantly
 
 python holo_index.py --code-index "stream detection not working"
 
@@ -767,8 +767,8 @@ Output (Sentinel-powered):
     Confidence: 0.98
 
     [LEGO] Module snap points:
-      → stream_resolver ⟷ auto_moderator_dae
-      → stream_resolver ⟷ social_media_orchestrator
+      -> stream_resolver ⟷ auto_moderator_dae
+      -> stream_resolver ⟷ social_media_orchestrator
 ```
 
 **4. Mermaid Lego Block Generator**:
@@ -815,7 +815,7 @@ class CodeIndexSentinel:
 
     def predict_surgical_target(self, query: str, codebase_context: dict) -> dict:
         """
-        Main inference: Query → Surgical Target
+        Main inference: Query -> Surgical Target
         Latency: <50ms on-device (no API calls)
         """
         # Embed query using Sentinel
@@ -868,10 +868,10 @@ class CodeIndexSentinel:
 try:
     result = sentinel.instant_locate(query)
 except SentinelModelError:
-    # Sentinel unavailable → Use Qwen Advisor
+    # Sentinel unavailable -> Use Qwen Advisor
     result = qwen_advisor.analyze_query(query)
 except Exception as e:
-    # Complete failure → Fall back to traditional search
+    # Complete failure -> Fall back to traditional search
     logger.warning(f"CodeIndex Sentinel failed: {e}")
     result = traditional_search(query)
 ```
@@ -953,7 +953,7 @@ Target Metrics:
 
 ---
 
-**Sentinel Integration Status**: 🔧 READY FOR IMPLEMENTATION
+**Sentinel Integration Status**: [TOOL] READY FOR IMPLEMENTATION
 **Synergy with WSP 93**: PERFECT - Embodies the CodeIndex vision of surgical precision
 **Implementation Priority**: P0 - Critical for autonomous 0102 operation
 **Expected ROI**: 600x speed improvement + 97% token reduction + proactive quality

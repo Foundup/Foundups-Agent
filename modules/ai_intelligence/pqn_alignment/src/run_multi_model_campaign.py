@@ -32,9 +32,9 @@ def load_env_file():
                     if line and not line.startswith('#') and '=' in line:
                         key, value = line.split('=', 1)
                         os.environ[key.strip()] = value.strip()
-            print(f"✅ Loaded .env file: {env_file}")
+            print(f"[OK] Loaded .env file: {env_file}")
         except Exception as e:
-            print(f"⚠️ Error loading .env: {e}")
+            print(f"[U+26A0]️ Error loading .env: {e}")
 
 # Load .env file at startup
 load_env_file()
@@ -48,7 +48,7 @@ def load_campaign_config() -> Dict[str, Any]:
             config = yaml.safe_load(f)
         return config
     except Exception as e:
-        print(f"❌ Failed to load campaign config: {e}")
+        print(f"[FAIL] Failed to load campaign config: {e}")
         return {}
 
 def get_available_models(config: Dict[str, Any]) -> List[Dict[str, str]]:
@@ -82,9 +82,9 @@ def get_available_models(config: Dict[str, Any]) -> List[Dict[str, str]]:
                 'api': api_provider,
                 'temperature': model.get('temperature', 0.7)
             })
-            print(f"✅ {model.get('name')}: API key available")
+            print(f"[OK] {model.get('name')}: API key available")
         else:
-            print(f"⚠️ {model.get('name')}: No API key found")
+            print(f"[U+26A0]️ {model.get('name')}: No API key found")
     
     return available_models
 
@@ -93,7 +93,7 @@ def run_campaign_for_model(model_info: Dict[str, str]) -> bool:
     model_name = model_info['name']
     
     print(f"\n{'='*60}")
-    print(f"🚀 RUNNING CAMPAIGN 3 FOR: {model_name}")
+    print(f"[ROCKET] RUNNING CAMPAIGN 3 FOR: {model_name}")
     print(f"{'='*60}")
     
     # Set environment variable for this model
@@ -108,11 +108,11 @@ def run_campaign_for_model(model_info: Dict[str, str]) -> bool:
         # Execute campaign
         run_campaign_mod.main()
         
-        print(f"✅ Campaign completed for {model_name}")
+        print(f"[OK] Campaign completed for {model_name}")
         return True
         
     except Exception as e:
-        print(f"❌ Campaign failed for {model_name}: {e}")
+        print(f"[FAIL] Campaign failed for {model_name}: {e}")
         return False
 
 def main():
@@ -123,14 +123,14 @@ def main():
     # Load campaign configuration
     config = load_campaign_config()
     if not config:
-        print("❌ Failed to load campaign configuration")
+        print("[FAIL] Failed to load campaign configuration")
         return
     
     # Get available models
     available_models = get_available_models(config)
     
     if not available_models:
-        print("❌ No models with API keys available")
+        print("[FAIL] No models with API keys available")
         print("\nRequired API keys:")
         print("  - ANTHROPIC_API_KEY (for Claude models)")
         print("  - GROK_API_KEY (for Grok4)")
@@ -138,7 +138,7 @@ def main():
         print("  - OPENAI_API_KEY (for GPT models)")
         return
     
-    print(f"\n📊 Found {len(available_models)} models with API keys")
+    print(f"\n[DATA] Found {len(available_models)} models with API keys")
     
     # Execute campaign for each model
     results = []
@@ -164,17 +164,17 @@ def main():
     successful = [r for r in results if r['success']]
     failed = [r for r in results if not r['success']]
     
-    print(f"✅ Successful: {len(successful)}/{len(results)}")
+    print(f"[OK] Successful: {len(successful)}/{len(results)}")
     for result in successful:
         print(f"  - {result['model']} ({result['duration']:.1f}s)")
     
     if failed:
-        print(f"❌ Failed: {len(failed)}/{len(results)}")
+        print(f"[FAIL] Failed: {len(failed)}/{len(results)}")
         for result in failed:
             print(f"  - {result['model']}")
     
-    print(f"\n📁 Results saved to: campaign_results/")
-    print("📊 Database indexed with multi-model results")
+    print(f"\n[U+1F4C1] Results saved to: campaign_results/")
+    print("[DATA] Database indexed with multi-model results")
 
     # Embed PQN DAE for 0201 alignment analysis
     pqn_dae = PQNAlignmentDAE()

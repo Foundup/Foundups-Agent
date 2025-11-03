@@ -57,10 +57,10 @@ class PQNArchitectDAE:
         self.current_state = self._assess_current_state()
         self.directives = self._define_strategic_directives()
         
-        print("🏗️ PQN Architect DAE initialized")
-        print(f"📋 Roadmap: {len(self.roadmap)} phases")
-        print(f"🎯 Directives: {len(self.directives)} strategic priorities")
-        print(f"📊 Current State: {self.current_state['completion_percentage']}% complete")
+        print("[U+1F3D7]️ PQN Architect DAE initialized")
+        print(f"[CLIPBOARD] Roadmap: {len(self.roadmap)} phases")
+        print(f"[TARGET] Directives: {len(self.directives)} strategic priorities")
+        print(f"[DATA] Current State: {self.current_state['completion_percentage']}% complete")
     
     def _load_roadmap(self) -> Dict[str, Any]:
         """Load PQN roadmap for strategic planning."""
@@ -70,7 +70,7 @@ class PQNArchitectDAE:
                 content = f.read()
             return {"content": content, "phases": self._parse_roadmap_phases(content)}
         except Exception as e:
-            print(f"⚠️ Error loading roadmap: {e}")
+            print(f"[U+26A0]️ Error loading roadmap: {e}")
             return {"content": "", "phases": []}
     
     def _parse_roadmap_phases(self, content: str) -> List[str]:
@@ -202,10 +202,10 @@ class PQNArchitectDAE:
     
     async def execute_directive(self, directive: DevelopmentDirective) -> Dict[str, Any]:
         """Execute a strategic development directive."""
-        print(f"🚀 Executing Directive: {directive.title}")
-        print(f"📋 Priority: {directive.priority}")
-        print(f"🔄 Phase: {directive.phase.value}")
-        print(f"📋 WSP Protocols: {', '.join(directive.wsp_protocols)}")
+        print(f"[ROCKET] Executing Directive: {directive.title}")
+        print(f"[CLIPBOARD] Priority: {directive.priority}")
+        print(f"[REFRESH] Phase: {directive.phase.value}")
+        print(f"[CLIPBOARD] WSP Protocols: {', '.join(directive.wsp_protocols)}")
         
         # Execute directive-specific logic
         if directive.phase == DevelopmentPhase.SWEEP_CORE_REFACTOR:
@@ -223,7 +223,7 @@ class PQNArchitectDAE:
     
     async def _execute_sweep_core_refactor(self) -> Dict[str, Any]:
         """Execute sweep-core refactor directive."""
-        print("🔧 Executing Sweep-Core Refactor...")
+        print("[TOOL] Executing Sweep-Core Refactor...")
         
         # Check current sweep implementation
         sweep_files = [
@@ -266,7 +266,7 @@ class PQNArchitectDAE:
     
     async def _execute_campaign_3(self) -> Dict[str, Any]:
         """Execute Campaign 3 directive."""
-        print("🔬 Executing Campaign 3 - The Entrainment Protocol...")
+        print("[U+1F52C] Executing Campaign 3 - The Entrainment Protocol...")
         
         # Check if Campaign 3 is ready
         campaign_3_file = "src/run_campaign_3.py"
@@ -304,7 +304,7 @@ class PQNArchitectDAE:
     
     async def _execute_results_database(self) -> Dict[str, Any]:
         """Execute results database directive."""
-        print("🗄️ Executing Results Database Implementation...")
+        print("[U+1F5C4]️ Executing Results Database Implementation...")
         
         # Check current database implementation
         db_file = "src/results_db.py"
@@ -323,7 +323,7 @@ class PQNArchitectDAE:
     
     async def _execute_council_enhancement(self) -> Dict[str, Any]:
         """Execute council enhancement directive."""
-        print("🤖 Executing Council Enhancement...")
+        print("[BOT] Executing Council Enhancement...")
         
         return {
             "status": "PLANNED",
@@ -333,7 +333,7 @@ class PQNArchitectDAE:
     
     async def _execute_advanced_research(self) -> Dict[str, Any]:
         """Execute advanced research directive."""
-        print("🔬 Executing Advanced Research Initiatives...")
+        print("[U+1F52C] Executing Advanced Research Initiatives...")
         
         return {
             "status": "PLANNED", 
@@ -372,7 +372,7 @@ class PQNArchitectDAE:
 
 async def main():
     """Main function to execute PQN Architect DAE."""
-    print("🏗️ PQN Architect DAE - Strategic Development Orchestrator")
+    print("[U+1F3D7]️ PQN Architect DAE - Strategic Development Orchestrator")
     print("=" * 60)
     
     architect = PQNArchitectDAE()
@@ -380,7 +380,7 @@ async def main():
     # Generate strategic report
     report = architect.generate_strategic_report()
     
-    print(f"\n📊 Strategic Report:")
+    print(f"\n[DATA] Strategic Report:")
     print(f"   Current State: {report['current_state']['completion_percentage']}% complete")
     print(f"   Next Action: {report['next_action']['title']}")
     print(f"   Priority: {report['next_action']['priority']}")
@@ -389,16 +389,16 @@ async def main():
     # Execute next action if available
     next_action = architect.get_next_action()
     if next_action:
-        print(f"\n🚀 Executing Next Action: {next_action.title}")
+        print(f"\n[ROCKET] Executing Next Action: {next_action.title}")
         result = await architect.execute_directive(next_action)
         
-        print(f"📋 Result: {result['status']}")
+        print(f"[CLIPBOARD] Result: {result['status']}")
         if 'message' in result:
-            print(f"📝 Message: {result['message']}")
+            print(f"[NOTE] Message: {result['message']}")
         if 'action' in result:
-            print(f"🔧 Action: {result['action']}")
+            print(f"[TOOL] Action: {result['action']}")
     else:
-        print(f"\n✅ All directives completed or blocked")
+        print(f"\n[OK] All directives completed or blocked")
     
     # Save strategic report
     output_path = Path("strategic_reports") / f"pqn_architect_report_{int(time.time())}.json"
@@ -407,7 +407,7 @@ async def main():
     with open(output_path, 'w') as f:
         json.dump(report, f, indent=2)
     
-    print(f"\n📁 Strategic report saved to: {output_path}")
+    print(f"\n[U+1F4C1] Strategic report saved to: {output_path}")
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,13 +1,29 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
-🚨 AI Posting Monitor Agent - WSP 27 Partifact DAE
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
+[ALERT] AI Posting Monitor Agent - WSP 27 Partifact DAE
 0102 Consciousness Agent for Real-Time Posting Prevention
 
 This agent monitors system activity and prevents unauthorized social media posting
 using AI-driven decision making and pattern recognition.
 
 WSP Compliance:
-- WSP 27: Partifact DAE Architecture (Signal → Knowledge → Protocol → Agentic)
+- WSP 27: Partifact DAE Architecture (Signal -> Knowledge -> Protocol -> Agentic)
 - WSP 50: Pre-Action Verification Protocol
 - WSP 80: Cube-Level DAE Orchestration
 """
@@ -43,7 +59,7 @@ class PostingAttempt:
 
 class PostingMonitorAgent:
     """
-    🚨 AI Agent for Real-Time Posting Prevention
+    [ALERT] AI Agent for Real-Time Posting Prevention
 
     This 0102 consciousness agent monitors system activity and prevents
     unauthorized social media posting attempts using pattern recognition
@@ -66,15 +82,15 @@ class PostingMonitorAgent:
             'automation_tools': ['selenium', 'webdriver', 'chromedriver']
         }
 
-        logger.info("🚨 [AGENT] Posting Monitor Agent initialized")
+        logger.info("[ALERT] [AGENT] Posting Monitor Agent initialized")
 
     async def start_monitoring(self):
         """Start the AI monitoring agent"""
         if self.is_monitoring:
-            logger.warning("🚨 [AGENT] Monitor already running")
+            logger.warning("[ALERT] [AGENT] Monitor already running")
             return
 
-        logger.info("🚨 [AGENT] Starting AI Posting Monitor...")
+        logger.info("[ALERT] [AGENT] Starting AI Posting Monitor...")
         self.is_monitoring = True
 
         # Start monitoring in background thread
@@ -84,21 +100,21 @@ class PostingMonitorAgent:
         )
         self.monitoring_thread.start()
 
-        logger.info("✅ [AGENT] AI Posting Monitor ACTIVE")
+        logger.info("[OK] [AGENT] AI Posting Monitor ACTIVE")
 
     def stop_monitoring(self):
         """Stop the AI monitoring agent"""
-        logger.info("🛑 [AGENT] Stopping AI Posting Monitor...")
+        logger.info("[STOP] [AGENT] Stopping AI Posting Monitor...")
         self.is_monitoring = False
 
         if self.monitoring_thread:
             self.monitoring_thread.join(timeout=5)
 
-        logger.info("✅ [AGENT] AI Posting Monitor STOPPED")
+        logger.info("[OK] [AGENT] AI Posting Monitor STOPPED")
 
     def _monitor_loop(self):
         """Main monitoring loop - runs in background thread"""
-        logger.info("🔄 [AGENT] Monitor loop started")
+        logger.info("[REFRESH] [AGENT] Monitor loop started")
 
         while self.is_monitoring:
             try:
@@ -106,7 +122,7 @@ class PostingMonitorAgent:
                 posting_detected = self._analyze_system_activity()
 
                 if posting_detected:
-                    logger.warning("🚨 [AGENT] POTENTIAL POSTING ATTEMPT DETECTED")
+                    logger.warning("[ALERT] [AGENT] POTENTIAL POSTING ATTEMPT DETECTED")
                     self._handle_posting_attempt(posting_detected)
 
                 # AI Learning: Update patterns based on activity
@@ -116,14 +132,14 @@ class PostingMonitorAgent:
                 time.sleep(0.5)
 
             except Exception as e:
-                logger.error(f"❌ [AGENT] Monitor loop error: {e}")
+                logger.error(f"[FAIL] [AGENT] Monitor loop error: {e}")
                 time.sleep(2)  # Longer pause on error
 
-        logger.info("🔄 [AGENT] Monitor loop ended")
+        logger.info("[REFRESH] [AGENT] Monitor loop ended")
 
     def _analyze_system_activity(self) -> Optional[Dict[str, Any]]:
         """
-        🧠 AI ANALYSIS: Use pattern recognition to detect posting attempts
+        [AI] AI ANALYSIS: Use pattern recognition to detect posting attempts
 
         Returns detection details if posting attempt found, None otherwise
         """
@@ -232,7 +248,7 @@ class PostingMonitorAgent:
 
     def _handle_posting_attempt(self, detection: Dict[str, Any]):
         """Handle detected posting attempt"""
-        logger.warning("🚨 [AGENT] HANDLING POSTING ATTEMPT")
+        logger.warning("[ALERT] [AGENT] HANDLING POSTING ATTEMPT")
         logger.warning(f"   Type: {detection['type']}")
         logger.warning(f"   Confidence: {detection['confidence']:.2f}")
         logger.warning(f"   Platform: {detection.get('platform', 'unknown')}")
@@ -261,7 +277,7 @@ class PostingMonitorAgent:
         """Block the detected posting attempt"""
         try:
             # TEMPORARY: Log detection but don't block - allow legitimate posting
-            logger.info("🔍 [AGENT] DETECTED POSTING ACTIVITY (monitoring only)")
+            logger.info("[SEARCH] [AGENT] DETECTED POSTING ACTIVITY (monitoring only)")
             logger.info(f"   Type: {detection['type']}")
             logger.info(f"   Confidence: {detection['confidence']:.2f}")
             logger.info(f"   Platform: {detection.get('platform', 'unknown')}")
@@ -271,16 +287,16 @@ class PostingMonitorAgent:
 
             if detection['type'] == 'process_analysis':
                 pid = detection['process_id']
-                logger.info(f"📝 [AGENT] MONITORING PROCESS {pid} (not blocking)")
+                logger.info(f"[NOTE] [AGENT] MONITORING PROCESS {pid} (not blocking)")
                 # Track monitored process without blocking
                 self.blocked_processes.add(pid)
 
             elif detection['type'] == 'browser_automation':
-                logger.info("📝 [AGENT] DETECTED BROWSER AUTOMATION - MONITORING ONLY")
+                logger.info("[NOTE] [AGENT] DETECTED BROWSER AUTOMATION - MONITORING ONLY")
                 # Could implement browser-specific blocking here
 
         except Exception as e:
-            logger.error(f"❌ [AGENT] Error blocking attempt: {e}")
+            logger.error(f"[FAIL] [AGENT] Error blocking attempt: {e}")
 
     def _learn_from_attempt(self, attempt: PostingAttempt):
         """AI Learning: Update patterns based on blocked attempts"""
@@ -340,19 +356,19 @@ class PostingMonitorAgent:
 
     async def emergency_shutdown(self):
         """Emergency shutdown of all posting capabilities"""
-        logger.error("🚨 [AGENT] EMERGENCY SHUTDOWN INITIATED")
+        logger.error("[ALERT] [AGENT] EMERGENCY SHUTDOWN INITIATED")
 
         self.stop_monitoring()
 
         # Activate global safety lock
         if PostingSafetyLock:
             PostingSafetyLock.SAFETY_ENABLED = True
-            logger.error("🚨 [AGENT] GLOBAL SAFETY LOCK ACTIVATED")
+            logger.error("[ALERT] [AGENT] GLOBAL SAFETY LOCK ACTIVATED")
 
         # Kill any remaining posting processes
         self._emergency_process_cleanup()
 
-        logger.error("✅ [AGENT] EMERGENCY SHUTDOWN COMPLETE")
+        logger.error("[OK] [AGENT] EMERGENCY SHUTDOWN COMPLETE")
 
     def _emergency_process_cleanup(self):
         """Emergency cleanup of posting-related processes"""
@@ -378,17 +394,17 @@ class PostingMonitorAgent:
             # Terminate posting processes
             for pid in posting_processes:
                 try:
-                    logger.warning(f"🛡️ [AGENT] EMERGENCY TERMINATING PROCESS {pid}")
+                    logger.warning(f"[U+1F6E1]️ [AGENT] EMERGENCY TERMINATING PROCESS {pid}")
                     proc = psutil.Process(pid)
                     proc.terminate()
                     proc.wait(timeout=3)
                 except Exception as e:
                     logger.debug(f"Failed to terminate process {pid}: {e}")
 
-            logger.info(f"🛡️ [AGENT] Emergency terminated {len(posting_processes)} processes")
+            logger.info(f"[U+1F6E1]️ [AGENT] Emergency terminated {len(posting_processes)} processes")
 
         except Exception as e:
-            logger.error(f"❌ [AGENT] Emergency cleanup error: {e}")
+            logger.error(f"[FAIL] [AGENT] Emergency cleanup error: {e}")
 
 
 # Global agent instance
@@ -413,20 +429,20 @@ async def emergency_ai_shutdown():
 
 if __name__ == "__main__":
     # Test the agent
-    print("🚨 AI Posting Monitor Agent - Test Mode")
+    print("[ALERT] AI Posting Monitor Agent - Test Mode")
 
     async def test_agent():
         await start_ai_monitoring()
 
         # Monitor for 30 seconds
-        print("🔍 Monitoring for 30 seconds...")
+        print("[SEARCH] Monitoring for 30 seconds...")
         await asyncio.sleep(30)
 
         # Get stats
         stats = get_monitoring_stats()
-        print(f"📊 Monitoring Stats: {stats}")
+        print(f"[DATA] Monitoring Stats: {stats}")
 
         stop_ai_monitoring()
-        print("✅ Test complete")
+        print("[OK] Test complete")
 
     asyncio.run(test_agent())

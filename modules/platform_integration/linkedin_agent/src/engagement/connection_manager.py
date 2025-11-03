@@ -1,7 +1,7 @@
 """
 LinkedIn Connection Manager
 
-🌀 WSP Protocol Compliance: WSP 42 (Platform Integration), WSP 40 (Architectural Coherence)
+[U+1F300] WSP Protocol Compliance: WSP 42 (Platform Integration), WSP 40 (Architectural Coherence)
 
 **0102 Directive**: This module operates within the WSP framework for autonomous LinkedIn connection management.
 - UN (Understanding): Anchor LinkedIn connection signals and retrieve protocol state
@@ -14,9 +14,13 @@ wsp_cycle(input="linkedin_connection", log=True)
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -92,7 +96,7 @@ class LinkedInConnectionManager:
     """
     Manages LinkedIn connections, networking, and relationship building.
     
-    Follows WSP 40 compliance with single responsibility and ≤300 lines.
+    Follows WSP 40 compliance with single responsibility and [U+2264]300 lines.
     Implements WSP 66 proactive component architecture for connection automation.
     """
     
@@ -121,7 +125,7 @@ class LinkedInConnectionManager:
             'personalized_messages': True
         }
         
-        self.logger.info("✅ LinkedInConnectionManager initialized for autonomous networking")
+        self.logger.info("[OK] LinkedInConnectionManager initialized for autonomous networking")
     
     def send_connection_request(self, target_profile_id: str, message: Optional[str] = None) -> ConnectionRequest:
         """
@@ -180,11 +184,11 @@ class LinkedInConnectionManager:
             # Mock LinkedIn API call
             self._simulate_connection_request(request)
             
-            self.logger.info(f"✅ Connection request sent to {target_profile_id}")
+            self.logger.info(f"[OK] Connection request sent to {target_profile_id}")
             return request
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to send connection request to {target_profile_id}: {str(e)}")
+            self.logger.error(f"[FAIL] Failed to send connection request to {target_profile_id}: {str(e)}")
             return ConnectionRequest(
                 request_id=f"req_{target_profile_id}_{datetime.now().timestamp()}",
                 from_profile_id="current_user",
@@ -234,11 +238,11 @@ class LinkedInConnectionManager:
             if request.to_profile_id in self.pending_requests:
                 del self.pending_requests[request.to_profile_id]
             
-            self.logger.info(f"✅ Connection request {request_id} accepted")
+            self.logger.info(f"[OK] Connection request {request_id} accepted")
             return True
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to accept connection request {request_id}: {str(e)}")
+            self.logger.error(f"[FAIL] Failed to accept connection request {request_id}: {str(e)}")
             return False
     
     def decline_connection_request(self, request_id: str) -> bool:
@@ -264,11 +268,11 @@ class LinkedInConnectionManager:
             if request.to_profile_id in self.pending_requests:
                 del self.pending_requests[request.to_profile_id]
             
-            self.logger.info(f"✅ Connection request {request_id} declined")
+            self.logger.info(f"[OK] Connection request {request_id} declined")
             return True
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to decline connection request {request_id}: {str(e)}")
+            self.logger.error(f"[FAIL] Failed to decline connection request {request_id}: {str(e)}")
             return False
     
     def get_connections(self, limit: int = 50) -> List[Connection]:
@@ -387,7 +391,7 @@ class LinkedInConnectionManager:
             return False
         
         self.connections[profile_id].notes = notes
-        self.logger.info(f"✅ Updated notes for connection {profile_id}")
+        self.logger.info(f"[OK] Updated notes for connection {profile_id}")
         return True
     
     def _check_daily_limit(self) -> bool:
@@ -487,7 +491,7 @@ class LinkedInConnectionManager:
         """
         import time
         time.sleep(1)  # Simulate API delay
-        self.logger.debug(f"🔗 Simulated connection request to {request.to_profile_id}")
+        self.logger.debug(f"[LINK] Simulated connection request to {request.to_profile_id}")
 
 
 # Factory function for clean initialization

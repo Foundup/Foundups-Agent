@@ -21,20 +21,20 @@ The Acoustic Lab implements a microservices-inspired architecture within a singl
 ### 3. Modular Component Architecture
 ```
 Acoustic Lab
-├── Input Processing Layer
-│   ├── File Upload Handler
-│   └── X Video Processor
-├── Analysis Engine
-│   ├── Audio Processor
-│   ├── Fingerprint Library
-│   └── Triangulation Engine
-├── Security Layer
-│   ├── IP Geofencing
-│   ├── Rate Limiting
-│   └── Input Validation
-└── Output Layer
-    ├── Results Formatter
-    └── Ethereum Logger
++-- Input Processing Layer
+[U+2502]   +-- File Upload Handler
+[U+2502]   +-- X Video Processor
++-- Analysis Engine
+[U+2502]   +-- Audio Processor
+[U+2502]   +-- Fingerprint Library
+[U+2502]   +-- Triangulation Engine
++-- Security Layer
+[U+2502]   +-- IP Geofencing
+[U+2502]   +-- Rate Limiting
+[U+2502]   +-- Input Validation
++-- Output Layer
+    +-- Results Formatter
+    +-- Ethereum Logger
 ```
 
 ## Component Design Details
@@ -47,7 +47,7 @@ Acoustic Lab
 - **Format Restriction**: WAV only to ensure Librosa compatibility
 - **Size Limits**: 16MB maximum to prevent abuse
 - **Memory Streaming**: Direct BytesIO processing without temp files
-- **Validation Chain**: Format → Size → Content → Processing
+- **Validation Chain**: Format -> Size -> Content -> Processing
 
 #### X Video Processor
 **Purpose**: Extract and process audio from X (Twitter) video URLs
@@ -62,7 +62,7 @@ Acoustic Lab
 #### Audio Processor (`acoustic_processor.py`)
 **Core Algorithm Flow**:
 ```
-Input Audio → Peak Detection → Window Extraction → MFCC → Fingerprint Matching → Triangulation
+Input Audio -> Peak Detection -> Window Extraction -> MFCC -> Fingerprint Matching -> Triangulation
 ```
 
 **Key Design Decisions**:
@@ -180,11 +180,11 @@ class EthereumLogger:
 **Comprehensive Exception Hierarchy**:
 ```
 AcousticLabError (Base)
-├── AudioValidationError (Invalid audio format/content)
-├── GPSValidationError (Missing/invalid coordinates)
-├── IPGeofencingError (Geographic access restriction)
-├── XProcessingError (Video download/extraction failure)
-└── TriangulationError (Geometric calculation failure)
++-- AudioValidationError (Invalid audio format/content)
++-- GPSValidationError (Missing/invalid coordinates)
++-- IPGeofencingError (Geographic access restriction)
++-- XProcessingError (Video download/extraction failure)
++-- TriangulationError (Geometric calculation failure)
 ```
 
 **Design Decisions**:
@@ -216,8 +216,8 @@ def process_audio(audio_bytes: bytes) -> dict:
 ### Performance Optimization
 **Streaming Processing Pipeline**:
 ```
-Input → Validation → Feature Extraction → Matching → Triangulation → Output
-     ↓         ↓             ↓            ↓           ↓          ↓
+Input -> Validation -> Feature Extraction -> Matching -> Triangulation -> Output
+     v         v             v            v           v          v
    <100ms    <200ms       <500ms       <100ms     <50ms     <10ms
 ```
 
@@ -231,15 +231,15 @@ Input → Validation → Feature Extraction → Matching → Triangulation → O
 
 ### File Upload Flow
 ```
-User Upload → IP Check → File Validation → Audio Processing → Results → Ethereum Log → Response
-      ↓          ↓            ↓              ↓            ↓          ↓          ↓
+User Upload -> IP Check -> File Validation -> Audio Processing -> Results -> Ethereum Log -> Response
+      v          v            v              v            v          v          v
    Browser    Geofence    Format/Size    MFCC/Matching  JSON     SHA-256    Client
 ```
 
 ### X Video Flow
 ```
-X URL → IP Check → URL Validation → yt-dlp Download → ffmpeg Extract → Audio Processing → Results
-    ↓        ↓            ↓                ↓                ↓              ↓            ↓
+X URL -> IP Check -> URL Validation -> yt-dlp Download -> ffmpeg Extract -> Audio Processing -> Results
+    v        v            v                v                v              v            v
  Browser   Geofence     Domain Check     Memory Buffer    WAV Bytes     Analysis     JSON
 ```
 
@@ -299,8 +299,8 @@ X URL → IP Check → URL Validation → yt-dlp Download → ffmpeg Extract →
 
 ### Production Stack
 ```
-Client Browser → Nginx (SSL/TLS) → Gunicorn → Flask App → Analysis Pipeline → Response
-       ↓             ↓              ↓          ↓              ↓            ↓
+Client Browser -> Nginx (SSL/TLS) -> Gunicorn -> Flask App -> Analysis Pipeline -> Response
+       v             v              v          v              v            v
      HTTPS        Reverse Proxy   WSGI Server  Routes    Processing   JSON/Errors
 ```
 

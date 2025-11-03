@@ -9,7 +9,7 @@ Successfully implemented Phase 1 quantum schema extensions for AgentDB following
 
 ### 1. Quantum Schema Extensions (`quantum_schema.sql`)
 - Quantum states table with BLOB amplitude storage
-- Oracle marking for Grover's algorithm (O(√N) search)
+- Oracle marking for Grover's algorithm (O([U+221A]N) search)
 - Quantum attention mechanism tables
 - Coherence and decoherence tracking
 - Entanglement mapping
@@ -26,7 +26,7 @@ Successfully implemented Phase 1 quantum schema extensions for AgentDB following
 - Extends AgentDB with quantum capabilities
 - Maintains full backward compatibility
 - Quantum state storage and retrieval
-- Grover's algorithm O(√N) search implementation
+- Grover's algorithm O([U+221A]N) search implementation
 - Quantum attention for pattern matching
 - Entanglement creation and tracking
 - Measurement with decoherence simulation
@@ -39,12 +39,12 @@ Successfully implemented Phase 1 quantum schema extensions for AgentDB following
 
 ## Key Features Implemented
 
-### Grover's Algorithm (O(√N) Search)
+### Grover's Algorithm (O([U+221A]N) Search)
 ```python
 # Mark patterns for quantum search
 quantum_db.mark_for_grover("vibecode_pattern", "vibecode")
 
-# Perform O(√N) search
+# Perform O([U+221A]N) search
 results = quantum_db.grover_search(patterns)
 # Returns patterns with high probability amplitudes
 ```
@@ -102,9 +102,9 @@ breadcrumb_id = quantum_db.add_breadcrumb(
 
 ### Grover's Algorithm
 - Classical search: O(N)
-- Grover's search: O(√N)
+- Grover's search: O([U+221A]N)
 - Optimal for 1-10% marked items
-- Example: 100 items, 5 marked → ~10 iterations vs 100
+- Example: 100 items, 5 marked -> ~10 iterations vs 100
 
 ### Storage Efficiency
 - BLOB encoding: 16 bytes per complex number

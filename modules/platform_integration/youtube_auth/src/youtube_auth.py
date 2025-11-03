@@ -22,13 +22,6 @@ def get_credentials_for_index(index):
     Returns tuple of (client_secrets_file, token_file) or None if not found.
     """
 
-# === UTF-8 ENFORCEMENT (WSP 90) ===
-import sys
-import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-# === END UTF-8 ENFORCEMENT ===
 
     client_secrets = os.getenv(f'GOOGLE_CLIENT_SECRETS_FILE_{index}')
     token_file = os.getenv(f'OAUTH_TOKEN_FILE_{index}')
@@ -74,7 +67,7 @@ def get_authenticated_service(token_index=None):
     import time
     current_time = time.time()
     if current_time - get_authenticated_service.last_reset > 86400:  # 24 hours
-        logger.info("🔄 Daily reset: Clearing exhausted credential sets")
+        logger.info("[REFRESH] Daily reset: Clearing exhausted credential sets")
         get_authenticated_service.exhausted_sets.clear()
         get_authenticated_service.last_reset = current_time
 
@@ -82,7 +75,7 @@ def get_authenticated_service(token_index=None):
     if token_index is not None:
         # Use specific token index (already 1-based from caller)
         indices_to_try = [token_index]
-        logger.info(f"🎯 Using specific credential set {token_index}")
+        logger.info(f"[TARGET] Using specific credential set {token_index}")
     else:
         # Auto-rotation: Only use available credential sets (dynamic detection)
         from modules.platform_integration.youtube_auth.src.quota_monitor import get_available_credential_sets
@@ -91,19 +84,19 @@ def get_authenticated_service(token_index=None):
         
         if not available_sets:
             # All exhausted - try all again (quotas might have reset)
-            logger.warning("⚠️ All credential sets exhausted, retrying all...")
+            logger.warning("[U+26A0]️ All credential sets exhausted, retrying all...")
             get_authenticated_service.exhausted_sets.clear()
             available_sets = all_sets
         
         indices_to_try = available_sets
-        logger.info(f"🔄 Auto-rotating through sets: {indices_to_try} (Exhausted: {get_authenticated_service.exhausted_sets})")
+        logger.info(f"[REFRESH] Auto-rotating through sets: {indices_to_try} (Exhausted: {get_authenticated_service.exhausted_sets})")
     
     for index in indices_to_try:
-        logger.info(f"🔑 Attempting authentication with credential set {index}")
+        logger.info(f"[U+1F511] Attempting authentication with credential set {index}")
         creds_data = get_credentials_for_index(index)
         if not creds_data:
             # This should not happen with dynamic detection, but log it as debug instead of warning
-            logger.debug(f"🔍 Credential set {index} not configured or files missing")
+            logger.debug(f"[SEARCH] Credential set {index} not configured or files missing")
             continue
             
         client_secrets_file, token_file = creds_data
@@ -130,32 +123,32 @@ def get_authenticated_service(token_index=None):
                 # If expiry is aware, use aware comparison
                 time_until_expiry = creds.expiry - datetime.now(timezone.utc)
             if time_until_expiry < timedelta(minutes=10):
-                logger.info(f"🔄 Token expiring in {time_until_expiry.seconds // 60} minutes for set {index}, proactively refreshing...")
+                logger.info(f"[REFRESH] Token expiring in {time_until_expiry.seconds // 60} minutes for set {index}, proactively refreshing...")
                 try:
                     creds.refresh(Request())
-                    logger.info(f"✅ Proactive refresh successful for set {index} (new expiry: {creds.expiry})")
+                    logger.info(f"[OK] Proactive refresh successful for set {index} (new expiry: {creds.expiry})")
                     # Save the refreshed credentials
                     try:
                         with open(token_file, 'w', encoding="utf-8") as token:
                             token.write(creds.to_json())
-                        logger.info(f"💾 Refreshed credentials saved for set {index}")
+                        logger.info(f"[U+1F4BE] Refreshed credentials saved for set {index}")
                     except Exception as save_e:
-                        logger.warning(f"⚠️ Could not save refreshed credentials: {save_e}")
+                        logger.warning(f"[U+26A0]️ Could not save refreshed credentials: {save_e}")
                 except Exception as refresh_e:
-                    logger.warning(f"⚠️ Proactive refresh failed for set {index}: {refresh_e}")
+                    logger.warning(f"[U+26A0]️ Proactive refresh failed for set {index}: {refresh_e}")
                     # Mark as invalid to trigger normal refresh flow
                     creds = None
 
         # Handle credential refresh or new authentication
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
-                logger.info(f"🔄 Credentials expired for set {index}, attempting refresh...")
+                logger.info(f"[REFRESH] Credentials expired for set {index}, attempting refresh...")
                 try:
                     creds.refresh(Request())
-                    logger.info(f"✅ Credentials refreshed successfully for set {index}")
+                    logger.info(f"[OK] Credentials refreshed successfully for set {index}")
                     # Log the new expiration time
                     if creds.expiry:
-                        logger.info(f"📅 New token expires at: {creds.expiry} (valid for ~1 hour)")
+                        logger.info(f"[U+1F4C5] New token expires at: {creds.expiry} (valid for ~1 hour)")
                 except Exception as e:
                     error_msg = str(e)
                     # Better error distinction
@@ -163,21 +156,21 @@ def get_authenticated_service(token_index=None):
                         if 'Token has been expired or revoked' in error_msg:
                             # Try to distinguish between expired and revoked
                             if 'revoked' in error_msg.lower():
-                                logger.error(f"🚫 Token has been REVOKED for set {index} - user action required")
+                                logger.error(f"[FORBIDDEN] Token has been REVOKED for set {index} - user action required")
                                 logger.info(f"ℹ️ To fix: Run 'python modules/platform_integration/youtube_auth/scripts/authorize_set{index}.py'")
                             else:
                                 logger.error(f"⏰ Refresh token EXPIRED for set {index} (tokens last 6 months if unused)")
                                 logger.info(f"ℹ️ To fix: Run 'python modules/platform_integration/youtube_auth/scripts/authorize_set{index}.py'")
                         else:
-                            logger.error(f"❌ Invalid grant error for set {index}: {error_msg}")
+                            logger.error(f"[FAIL] Invalid grant error for set {index}: {error_msg}")
                     else:
-                        logger.error(f"❌ Failed to refresh token for set {index}: {e}")
+                        logger.error(f"[FAIL] Failed to refresh token for set {index}: {e}")
 
                     # Continue to next credential set instead of trying OAuth flow
                     continue
             else:
                 if creds and creds.expired and not creds.refresh_token:
-                    logger.warning(f"⚠️ Credentials expired for set {index} but no refresh token available")
+                    logger.warning(f"[U+26A0]️ Credentials expired for set {index} but no refresh token available")
                     logger.info(f"ℹ️ To fix: Run 'python modules/platform_integration/youtube_auth/scripts/authorize_set{index}.py'")
                 else:
                     logger.info(f"🆕 No valid credentials found for set {index}, initiating OAuth flow...")
@@ -186,11 +179,11 @@ def get_authenticated_service(token_index=None):
                     flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
                         client_secrets_file, scopes)
                     creds = flow.run_local_server(port=0)
-                    logger.info(f"✅ OAuth flow completed successfully for set {index}")
+                    logger.info(f"[OK] OAuth flow completed successfully for set {index}")
                     if creds.expiry:
-                        logger.info(f"📅 Token expires at: {creds.expiry}")
+                        logger.info(f"[U+1F4C5] Token expires at: {creds.expiry}")
                 except Exception as e:
-                    logger.error(f"❌ OAuth flow failed for set {index}: {e}")
+                    logger.error(f"[FAIL] OAuth flow failed for set {index}: {e}")
                     continue
 
             # Save the credentials with improved error handling
@@ -199,20 +192,20 @@ def get_authenticated_service(token_index=None):
                     os.makedirs(os.path.dirname(token_file), exist_ok=True)
                     with open(token_file, 'w', encoding="utf-8") as token:
                         token.write(creds.to_json())
-                    logger.info(f"💾 Credentials saved to {token_file}")
+                    logger.info(f"[U+1F4BE] Credentials saved to {token_file}")
                 except Exception as e:
-                    logger.error(f"❌ Failed to save credentials to {token_file}: {e}")
+                    logger.error(f"[FAIL] Failed to save credentials to {token_file}: {e}")
                     # Don't continue here - we can still use the credentials even if saving fails
-                    logger.warning(f"⚠️ Proceeding with unsaved credentials for set {index}")
+                    logger.warning(f"[U+26A0]️ Proceeding with unsaved credentials for set {index}")
 
         if not creds:
-            logger.error(f"❌ Failed to obtain credentials for set {index}")
+            logger.error(f"[FAIL] Failed to obtain credentials for set {index}")
             continue
 
         try:
             # Try to build service with current credentials
             youtube_service = build('youtube', 'v3', credentials=creds)
-            logger.info(f"🎉 YouTube API service built successfully with credential set {index}")
+            logger.info(f"[CELEBRATE] YouTube API service built successfully with credential set {index}")
             
             # Test the service with a lightweight call to ensure it's working
             try:
@@ -221,16 +214,16 @@ def get_authenticated_service(token_index=None):
                 quota_monitor.track_api_call(index, 'channels.list')
                 
                 if test_response.get('items'):
-                    logger.info(f"✅ Service validation successful for set {index}")
+                    logger.info(f"[OK] Service validation successful for set {index}")
                     # Store the active set for tracking
                     youtube_service._credential_set = index
                     return youtube_service
                 else:
-                    logger.warning(f"⚠️ Service built but no channel data returned for set {index}")
+                    logger.warning(f"[U+26A0]️ Service built but no channel data returned for set {index}")
                     continue
             except Exception as test_e:
                 if 'quotaExceeded' in str(test_e):
-                    logger.warning(f"📊 Validation failed due to quota for set {index}, marking as exhausted...")
+                    logger.warning(f"[DATA] Validation failed due to quota for set {index}, marking as exhausted...")
                     get_authenticated_service.exhausted_sets.add(index)
                     continue  # Try next set
                 else:
@@ -238,38 +231,38 @@ def get_authenticated_service(token_index=None):
                     error_msg = str(test_e)
                     if error_msg == str(index):
                         # This is the weird case where just the number is returned
-                        logger.warning(f"⚠️ Service built but validation returned credential set number {index} as error")
+                        logger.warning(f"[U+26A0]️ Service built but validation returned credential set number {index} as error")
                     else:
-                        logger.warning(f"⚠️ Service built but validation failed for set {index}: {test_e}")
+                        logger.warning(f"[U+26A0]️ Service built but validation failed for set {index}: {test_e}")
                     # Continue to next credential set instead of returning
                     continue
                 
         except HttpError as e:
             if 'quotaExceeded' in str(e) or 'quota' in str(e).lower():
-                logger.warning(f"📊 Quota exceeded for credential set {index}, marking as exhausted...")
+                logger.warning(f"[DATA] Quota exceeded for credential set {index}, marking as exhausted...")
                 get_authenticated_service.exhausted_sets.add(index)
                 continue
             else:
-                logger.error(f"❌ HTTP error building YouTube service with set {index}: {e}")
+                logger.error(f"[FAIL] HTTP error building YouTube service with set {index}: {e}")
                 continue
         except Exception as e:
-            logger.error(f"❌ Failed to build YouTube service with set {index}: {e}")
+            logger.error(f"[FAIL] Failed to build YouTube service with set {index}: {e}")
             continue
 
     # If we get here, all credential sets failed
-    error_msg = f"💥 All credential sets failed to authenticate (tried {len(indices_to_try)} sets)"
+    error_msg = f"[U+1F4A5] All credential sets failed to authenticate (tried {len(indices_to_try)} sets)"
     logger.critical(error_msg)
-    logger.critical("🔓 FALLING BACK TO NO-AUTH MODE - Read-only YouTube operations")
+    logger.critical("[U+1F513] FALLING BACK TO NO-AUTH MODE - Read-only YouTube operations")
 
     # Return a no-auth YouTube service for read-only operations
     # This allows checking if streams are live without consuming quota
     try:
         youtube_service = build('youtube', 'v3', developerKey=os.getenv('YOUTUBE_API_KEY', None))
         if youtube_service:
-            logger.warning("✅ No-auth YouTube service created - Limited to public read-only operations")
+            logger.warning("[OK] No-auth YouTube service created - Limited to public read-only operations")
             return youtube_service
     except Exception as e:
-        logger.error(f"❌ Failed to create no-auth service: {e}")
+        logger.error(f"[FAIL] Failed to create no-auth service: {e}")
 
     # Only raise if we can't even create a no-auth service
     raise Exception("Could not authenticate with any Google credential set and no API key available.")
@@ -319,10 +312,10 @@ def reply_to_comment(youtube_service, parent_id: str, text: str):
             }
         )
         response = request.execute()
-        logger.info(f"✅ Posted reply to comment {parent_id}")
+        logger.info(f"[OK] Posted reply to comment {parent_id}")
         return response
     except Exception as e:
-        logger.error(f"❌ Error replying to comment {parent_id}: {e}")
+        logger.error(f"[FAIL] Error replying to comment {parent_id}: {e}")
         return None
 
 def get_latest_video_id(youtube_service, channel_id: str):

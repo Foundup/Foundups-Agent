@@ -14,4 +14,4 @@ pytest modules/infrastructure/llm_client/llm_client/tests/ -v
 
 ## Test Coverage
 
-Tests should maintain ≥90% coverage as per WSP 6 requirements. 
+Tests should maintain [GREATER_EQUAL]90% coverage as per WSP 6 requirements. 

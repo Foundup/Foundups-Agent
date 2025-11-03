@@ -7,7 +7,7 @@ Architecture:
 - Complexity threshold adjusts dynamically based on performance
 - 0102 acts as architect over the entire system
 
-WSP 54: Partner (Gemma) → Principal (Qwen) → Associate (0102 architect)
+WSP 54: Partner (Gemma) -> Principal (Qwen) -> Associate (0102 architect)
 WSP 80: DAE Cube orchestration with learning
 """
 
@@ -27,9 +27,9 @@ class AdaptiveComplexityRouter:
     Adaptive router that learns which queries need Qwen vs Gemma.
 
     Flow:
-    1. Query → Gemma 3 (fast path, 50-100ms)
+    1. Query -> Gemma 3 (fast path, 50-100ms)
     2. Qwen evaluates Gemma output (quality check, 250ms)
-    3. If low quality → route to Qwen for re-processing
+    3. If low quality -> route to Qwen for re-processing
     4. Adjust complexity threshold based on performance
     5. 0102 monitors overall architecture and tunes system
     """
@@ -96,9 +96,9 @@ class AdaptiveComplexityRouter:
 
         Flow:
         1. Compute complexity score (0.0-1.0)
-        2. If complexity < threshold → Gemma 3 (fast)
+        2. If complexity < threshold -> Gemma 3 (fast)
         3. Qwen evaluates Gemma output
-        4. If Qwen rejects → re-process with Qwen
+        4. If Qwen rejects -> re-process with Qwen
         5. Adjust threshold based on result
 
         Returns:
@@ -106,7 +106,7 @@ class AdaptiveComplexityRouter:
                 'intent': str,
                 'confidence': float,
                 'route_to': str,
-                'processing_path': 'gemma' | 'gemma→qwen' | 'qwen',
+                'processing_path': 'gemma' | 'gemma->qwen' | 'qwen',
                 'latency_ms': int,
                 'quality_score': float (from Qwen)
             }
@@ -154,7 +154,7 @@ class AdaptiveComplexityRouter:
 
                 result = {
                     **qwen_result,
-                    'processing_path': 'gemma→qwen',
+                    'processing_path': 'gemma->qwen',
                     'latency_ms': int(latency_ms),
                     'quality_score': 1.0,  # Qwen is authoritative
                     'complexity_score': complexity_score,
@@ -355,9 +355,9 @@ Quality score:"""
 
         Learning rules:
         - If Gemma succeeded on query with complexity X:
-          → Lower threshold slightly (trust Gemma more)
+          -> Lower threshold slightly (trust Gemma more)
         - If Gemma failed on query with complexity X:
-          → Raise threshold (route similar queries to Qwen)
+          -> Raise threshold (route similar queries to Qwen)
 
         Threshold moves slowly: ±0.02 per adjustment
         """
@@ -374,7 +374,7 @@ Quality score:"""
         old_threshold = self.complexity_threshold
         self.complexity_threshold = max(0.1, min(0.8, self.complexity_threshold + adjustment))
 
-        logger.info(f"Threshold adjusted: {old_threshold:.3f} → {self.complexity_threshold:.3f}")
+        logger.info(f"Threshold adjusted: {old_threshold:.3f} -> {self.complexity_threshold:.3f}")
 
     def _build_intent_prompt(
         self,
@@ -416,7 +416,7 @@ Intent (one of: command_whack, command_shorts, command_factcheck, consciousness,
             'command_whack': ['whack', '/score', '/rank', '/quiz'],
             'command_shorts': ['shorts', 'createshort', 'shortveo'],
             'command_factcheck': ['factcheck', 'fc'],
-            'consciousness': ['consciousness', '✊✋🖐'],
+            'consciousness': ['consciousness', '[U+270A][U+270B][U+1F590]'],
             'question': ['question', 'how', 'what', 'why'],
             'spam': ['spam', 'troll'],
             'conversation': ['conversation', 'chat']

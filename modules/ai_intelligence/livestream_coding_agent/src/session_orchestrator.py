@@ -307,7 +307,7 @@ class SessionOrchestrator:
     async def _update_audience(self, message: str):
         """Send update to livestream audience via chat"""
         await self.chat_processor.send_message(
-            message=f"🤖 AI Agents: {message}",
+            message=f"[BOT] AI Agents: {message}",
             sender="livestream_orchestrator"
         )
     

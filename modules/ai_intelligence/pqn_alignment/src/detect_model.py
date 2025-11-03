@@ -131,23 +131,23 @@ def main():
     detected_model = detect_current_model()
     
     if detected_model:
-        print(f"✅ Detected Model: {detected_model}")
+        print(f"[OK] Detected Model: {detected_model}")
         
         # Get model metadata
         metadata = get_model_metadata(detected_model)
-        print(f"📊 Provider: {metadata['provider']}")
-        print(f"📊 Family: {metadata['family']} {metadata['version']}")
-        print(f"📊 Variant: {metadata['variant']}")
+        print(f"[DATA] Provider: {metadata['provider']}")
+        print(f"[DATA] Family: {metadata['family']} {metadata['version']}")
+        print(f"[DATA] Variant: {metadata['variant']}")
         
         # Set environment variable
         if set_model_environment(detected_model):
-            print(f"✅ ACTIVE_MODEL_NAME set to: {detected_model}")
+            print(f"[OK] ACTIVE_MODEL_NAME set to: {detected_model}")
         else:
-            print("❌ Failed to set ACTIVE_MODEL_NAME")
+            print("[FAIL] Failed to set ACTIVE_MODEL_NAME")
             
         return detected_model
     else:
-        print("❌ Unable to detect current model")
+        print("[FAIL] Unable to detect current model")
         print("ℹ️  Defaulting to: claude-3.5-sonnet")
         default_model = 'claude-3.5-sonnet'
         set_model_environment(default_model)

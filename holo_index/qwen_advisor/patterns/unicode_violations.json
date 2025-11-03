@@ -1,37 +1,37 @@
 {
   "emoji_replacements": {
-    "✅": "[OK]",
-    "❌": "[FAIL]",
-    "⚠️": "[WARN]",
-    "🔄": "[REFRESH]",
-    "💊": "[HEALTH]",
-    "🧠": "[BRAIN]",
-    "📏": "[SIZE]",
-    "📦": "[MODULE]",
-    "👻": "[ORPHAN]",
-    "📚": "[DOCS]",
-    "🔧": "[FIX]",
-    "🎯": "[TARGET]",
-    "🔥": "[HOT]",
+    "[OK]": "[OK]",
+    "[FAIL]": "[FAIL]",
+    "[U+26A0]️": "[WARN]",
+    "[REFRESH]": "[REFRESH]",
+    "[PILL]": "[HEALTH]",
+    "[AI]": "[BRAIN]",
+    "[RULER]": "[SIZE]",
+    "[BOX]": "[MODULE]",
+    "[GHOST]": "[ORPHAN]",
+    "[BOOKS]": "[DOCS]",
+    "[TOOL]": "[FIX]",
+    "[TARGET]": "[TARGET]",
+    "[U+1F525]": "[HOT]",
     "⏭️": "[SKIP]",
-    "🤖": "[BOT]",
-    "🍞": "[BREADCRUMB]",
-    "📝": "[COMPOSE]",
-    "📊": "[LEARN]",
-    "🔗": "[LINK]",
+    "[BOT]": "[BOT]",
+    "[BREAD]": "[BREADCRUMB]",
+    "[NOTE]": "[COMPOSE]",
+    "[DATA]": "[LEARN]",
+    "[LINK]": "[LINK]",
     "🩺": "[CODEINDEX]",
-    "🔍": "[SEARCH]",
-    "🤝": "[COLLAB]",
-    "🔴": "[RED]",
+    "[SEARCH]": "[SEARCH]",
+    "[HANDSHAKE]": "[COLLAB]",
+    "[U+1F534]": "[RED]",
     "🟢": "[GREEN]",
     "🟡": "[YELLOW]",
-    "💡": "[IDEA]",
-    "🚨": "[ALERT]"
+    "[IDEA]": "[IDEA]",
+    "[ALERT]": "[ALERT]"
   },
   "violation_patterns": [
-    "print\\([\"'][^\"']*[✅❌⚠️🔄💊🧠📏📦👻📚🔧🎯🔥⏭️🤖🍞📝📊🔗🩺🔍🤝]",
-    "logger\\.(info|debug|error|warning)\\([\"'][^\"']*[✅❌⚠️🔄💊🧠📏📦👻📚🔧🎯🔥]",
-    "return [\"'][^\"']*[✅❌⚠️🔄💊🧠📏📦👻📚🔧]"
+    "print\\([\"'][^\"']*[[OK][FAIL][U+26A0]️[REFRESH][PILL][AI][RULER][BOX][GHOST][BOOKS][TOOL][TARGET][U+1F525]⏭️[BOT][BREAD][NOTE][DATA][LINK]🩺[SEARCH][HANDSHAKE]]",
+    "logger\\.(info|debug|error|warning)\\([\"'][^\"']*[[OK][FAIL][U+26A0]️[REFRESH][PILL][AI][RULER][BOX][GHOST][BOOKS][TOOL][TARGET][U+1F525]]",
+    "return [\"'][^\"']*[[OK][FAIL][U+26A0]️[REFRESH][PILL][AI][RULER][BOX][GHOST][BOOKS][TOOL]]"
   ],
   "learning": {
     "last_updated": "2025-10-16",

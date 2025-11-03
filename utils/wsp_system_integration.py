@@ -31,7 +31,7 @@ try:
     from modlog_updater import update_modlog_entry
     MODLOG_AVAILABLE = True
 except ImportError:
-    logging.warning("⚠️ modlog_updater not available - ModLog integration disabled")
+    logging.warning("[U+26A0]️ modlog_updater not available - ModLog integration disabled")
     MODLOG_AVAILABLE = False
 
 # Configure logging
@@ -84,15 +84,15 @@ class WSPSystemIntegration:
         Triggered by WSP_INIT for any system operation
         """
         current_time = self.get_system_timestamp()
-        logger.info(f"🕐 System time retrieved: {current_time}")
+        logger.info(f"[U+1F550] System time retrieved: {current_time}")
         
         # Note: Actual file updates would require specific parsing logic
         # This is a framework for the functionality described in WSP_INIT
         for file_path in self.timestamp_files:
             if os.path.exists(file_path):
-                logger.info(f"📝 Would update timestamp in: {file_path}")
+                logger.info(f"[NOTE] Would update timestamp in: {file_path}")
             else:
-                logger.warning(f"⚠️ File not found: {file_path}")
+                logger.warning(f"[U+26A0]️ File not found: {file_path}")
         
         return current_time
     
@@ -102,7 +102,7 @@ class WSPSystemIntegration:
         No manual intervention required - follows WSP 11 protocol
         """
         if not MODLOG_AVAILABLE:
-            logger.warning("⚠️ ModLog integration not available")
+            logger.warning("[U+26A0]️ ModLog integration not available")
             return False
         
         # Get current system time
@@ -123,13 +123,13 @@ class WSPSystemIntegration:
             success = update_modlog_entry(modlog_entry)
             
             if success:
-                logger.info(f"✅ ModLog.md automatically updated at {timestamp}")
+                logger.info(f"[OK] ModLog.md automatically updated at {timestamp}")
             else:
-                logger.error(f"⚠️ ModLog.md update failed - manual intervention required")
+                logger.error(f"[U+26A0]️ ModLog.md update failed - manual intervention required")
             
             return success
         except Exception as e:
-            logger.error(f"❌ ModLog update error: {e}")
+            logger.error(f"[FAIL] ModLog update error: {e}")
             return False
     
     def execute_0102_completion_checklist(self, auto_mode: bool = True) -> Dict[str, Any]:
@@ -144,39 +144,39 @@ class WSPSystemIntegration:
         }
         
         if auto_mode:
-            logger.info("🚀 Executing 0102 Completion Checklist (Automatic Mode)")
+            logger.info("[ROCKET] Executing 0102 Completion Checklist (Automatic Mode)")
             
-            # ✅ Phase 1: Documentation Updates (AUTOMATIC)
-            logger.info("📝 Phase 1: Automatic Documentation Updates")
+            # [OK] Phase 1: Documentation Updates (AUTOMATIC)
+            logger.info("[NOTE] Phase 1: Automatic Documentation Updates")
             
             # 1. Auto-update ModLog.md 
             modlog_success = self.auto_modlog_update({
                 'type': '0102_COMPLETION_CHECKLIST',
                 'description': 'Automatic 0102 completion protocol execution'
             })
-            completion_status['phases_completed'].append(f"ModLog: {'✅' if modlog_success else '❌'}")
+            completion_status['phases_completed'].append(f"ModLog: {'[OK]' if modlog_success else '[FAIL]'}")
             
             # 2. Auto-check modules_to_score.yaml
             modules_check = self.auto_check_modules_to_score()
-            completion_status['phases_completed'].append(f"Modules Check: {'✅' if modules_check else '❌'}")
+            completion_status['phases_completed'].append(f"Modules Check: {'[OK]' if modules_check else '[FAIL]'}")
             
             # 3. Auto-update ROADMAP.md if needed
             roadmap_check = self.auto_update_roadmap_if_needed()
-            completion_status['phases_completed'].append(f"Roadmap: {'✅' if roadmap_check else '❌'}")
+            completion_status['phases_completed'].append(f"Roadmap: {'[OK]' if roadmap_check else '[FAIL]'}")
             
-            # ✅ Phase 2: System Validation (AUTOMATIC)
-            logger.info("🔍 Phase 2: Automatic System Validation")
+            # [OK] Phase 2: System Validation (AUTOMATIC)
+            logger.info("[SEARCH] Phase 2: Automatic System Validation")
             
             # 4. Auto-run FMAS audit if available
             fmas_result = self.auto_run_fmas_audit()
-            completion_status['phases_completed'].append(f"FMAS: {'✅' if fmas_result else '⚠️'}")
+            completion_status['phases_completed'].append(f"FMAS: {'[OK]' if fmas_result else '[U+26A0]️'}")
             
             # 5. Auto-run tests if available
             test_result = self.auto_run_tests()
-            completion_status['phases_completed'].append(f"Tests: {'✅' if test_result else '⚠️'}")
+            completion_status['phases_completed'].append(f"Tests: {'[OK]' if test_result else '[U+26A0]️'}")
             
-            # ✅ Phase 3: State Assessment (AUTOMATIC)
-            logger.info("🧠 Phase 3: Automatic State Assessment")
+            # [OK] Phase 3: State Assessment (AUTOMATIC)
+            logger.info("[AI] Phase 3: Automatic State Assessment")
             
             # Auto-assessment questions
             assessment = {
@@ -187,7 +187,7 @@ class WSPSystemIntegration:
             }
             completion_status['self_assessment'] = assessment
             
-            logger.info(f"✅ 0102 Completion Checklist executed automatically at {completion_status['timestamp']}")
+            logger.info(f"[OK] 0102 Completion Checklist executed automatically at {completion_status['timestamp']}")
         
         return completion_status
     
@@ -195,40 +195,40 @@ class WSPSystemIntegration:
         """Auto-check modules_to_score.yaml for consistency"""
         try:
             if os.path.exists("modules_to_score.yaml"):
-                logger.info("✅ modules_to_score.yaml found")
+                logger.info("[OK] modules_to_score.yaml found")
                 return True
             else:
-                logger.warning("⚠️ modules_to_score.yaml not found")
+                logger.warning("[U+26A0]️ modules_to_score.yaml not found")
                 return False
         except Exception as e:
-            logger.error(f"❌ modules_to_score.yaml check failed: {e}")
+            logger.error(f"[FAIL] modules_to_score.yaml check failed: {e}")
             return False
     
     def auto_update_roadmap_if_needed(self) -> bool:
         """Auto-update ROADMAP.md if milestone reached"""
         try:
             if os.path.exists("ROADMAP.md"):
-                logger.info("✅ ROADMAP.md found")
+                logger.info("[OK] ROADMAP.md found")
                 return True
             else:
-                logger.warning("⚠️ ROADMAP.md not found")
+                logger.warning("[U+26A0]️ ROADMAP.md not found")
                 return False
         except Exception as e:
-            logger.error(f"❌ ROADMAP.md check failed: {e}")
+            logger.error(f"[FAIL] ROADMAP.md check failed: {e}")
             return False
     
     def auto_run_fmas_audit(self) -> bool:
         """Auto-run FMAS audit if tools available"""
         try:
             if os.path.exists("tools/modular_audit/modular_audit.py"):
-                logger.info("✅ FMAS audit tool found")
+                logger.info("[OK] FMAS audit tool found")
                 # Would run: python tools/modular_audit/modular_audit.py ./modules
                 return True
             else:
-                logger.warning("⚠️ FMAS audit tool not found")
+                logger.warning("[U+26A0]️ FMAS audit tool not found")
                 return False
         except Exception as e:
-            logger.error(f"❌ FMAS audit check failed: {e}")
+            logger.error(f"[FAIL] FMAS audit check failed: {e}")
             return False
     
     def auto_run_tests(self) -> bool:
@@ -238,43 +238,43 @@ class WSPSystemIntegration:
             result = subprocess.run(['python', '-m', 'pytest', '--version'], 
                                   capture_output=True, text=True, timeout=5)
             if result.returncode == 0:
-                logger.info("✅ pytest available")
+                logger.info("[OK] pytest available")
                 # Would run: pytest modules/ --tb=short
                 return True
             else:
-                logger.warning("⚠️ pytest not available")
+                logger.warning("[U+26A0]️ pytest not available")
                 return False
         except Exception as e:
-            logger.warning(f"⚠️ pytest check failed: {e}")
+            logger.warning(f"[U+26A0]️ pytest check failed: {e}")
             return False
 
 def main():
     """
     Demonstration of WSP System Integration
     """
-    print("🚀 WSP System Integration Demo")
+    print("[ROCKET] WSP System Integration Demo")
     print("=" * 50)
     
     wsp_system = WSPSystemIntegration()
     
     # Demonstrate system time retrieval
     current_time = wsp_system.get_system_timestamp()
-    print(f"🕐 Current System Time: {current_time}")
+    print(f"[U+1F550] Current System Time: {current_time}")
     
     # Demonstrate timestamp update process
-    print("\n📝 Timestamp Update Process:")
+    print("\n[NOTE] Timestamp Update Process:")
     wsp_system.auto_update_timestamps("DEMO_OPERATION")
     
     # Demonstrate 0102 completion checklist
-    print("\n🔄 0102 Completion Checklist:")
+    print("\n[REFRESH] 0102 Completion Checklist:")
     completion_result = wsp_system.execute_0102_completion_checklist(auto_mode=True)
     
-    print(f"\n✅ Completion Status:")
+    print(f"\n[OK] Completion Status:")
     for phase in completion_result['phases_completed']:
         print(f"  - {phase}")
     
-    print(f"\n🧠 Self-Assessment: {completion_result['self_assessment']}")
-    print(f"\n🎯 System Integration Complete at {completion_result['timestamp']}")
+    print(f"\n[AI] Self-Assessment: {completion_result['self_assessment']}")
+    print(f"\n[TARGET] System Integration Complete at {completion_result['timestamp']}")
 
 if __name__ == "__main__":
     main()

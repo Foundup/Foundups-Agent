@@ -13,9 +13,13 @@ WSP 17 Pattern Registry: MCP Server Pattern
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -105,7 +109,7 @@ class MCPQuotaServer(Server):
         # Start background monitoring
         self.monitoring_task = None
         
-        logger.info(f"🚀 MCP Quota Server initialized: {self.name}")
+        logger.info(f"[ROCKET] MCP Quota Server initialized: {self.name}")
     
     def _register_tools(self):
         """Register MCP tools for quota operations"""
@@ -220,7 +224,7 @@ class MCPQuotaServer(Server):
         """
         Handle MCP tool calls from connected DAEs
         
-        WSP 21: Process DAE↔DAE communication envelopes
+        WSP 21: Process DAE[U+2194]DAE communication envelopes
         """
         try:
             if tool_name == "get_quota_status":
@@ -349,7 +353,7 @@ class MCPQuotaServer(Server):
         }
         self.quota_monitor._save_usage_data()
         
-        logger.warning("⚡ Quota force reset by admin")
+        logger.warning("[LIGHTNING] Quota force reset by admin")
         
         return {
             "reset": True,
@@ -397,7 +401,7 @@ class MCPQuotaServer(Server):
         """
         Create WSP 21 compliant envelope for DAE communication
         
-        WSP 21: Standard envelope format for DAE↔DAE exchange
+        WSP 21: Standard envelope format for DAE[U+2194]DAE exchange
         """
         return {
             "version": "WSP21-1.0",
@@ -412,13 +416,13 @@ class MCPQuotaServer(Server):
     async def _broadcast_to_daes(self, envelope: Dict):
         """Broadcast envelope to all connected DAEs"""
         for dae_id in self.connected_daes:
-            logger.info(f"📢 Broadcasting to DAE {dae_id}: {envelope['protocol']}")
+            logger.info(f"[U+1F4E2] Broadcasting to DAE {dae_id}: {envelope['protocol']}")
             # In real implementation, would send via MCP connection
             # For now, just log
     
     async def start_monitoring(self):
         """Start background quota monitoring"""
-        logger.info("🔄 Starting quota monitoring loop")
+        logger.info("[REFRESH] Starting quota monitoring loop")
         
         while True:
             try:
@@ -477,7 +481,7 @@ async def main():
     """Run MCP Quota Server standalone"""
     server = MCPQuotaServer()
     
-    logger.info(f"🚀 MCP Quota Server started: {server.get_server_info()}")
+    logger.info(f"[ROCKET] MCP Quota Server started: {server.get_server_info()}")
     
     # Start monitoring
     await server.start_monitoring()

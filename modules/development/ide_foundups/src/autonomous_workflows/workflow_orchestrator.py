@@ -93,7 +93,7 @@ class AutonomousWorkflowOrchestrator:
             WorkflowType.CROSS_BLOCK_INTEGRATION: self._execute_cross_block_integration
         }
         
-        logger.info("🌀 Autonomous Workflow Orchestrator initialized with cross-block integration")
+        logger.info("[U+1F300] Autonomous Workflow Orchestrator initialized with cross-block integration")
 
     async def execute_workflow(self, workflow_type: WorkflowType, parameters: Dict[str, Any]) -> WorkflowContext:
         """
@@ -119,7 +119,7 @@ class AutonomousWorkflowOrchestrator:
         self.active_workflows[workflow_id] = context
         
         try:
-            logger.info(f"🚀 Starting autonomous workflow: {workflow_type.value}")
+            logger.info(f"[ROCKET] Starting autonomous workflow: {workflow_type.value}")
             
             # Phase 1: Agent Activation
             context.status = WorkflowStatus.ACTIVATING_AGENTS
@@ -142,10 +142,10 @@ class AutonomousWorkflowOrchestrator:
             context.status = WorkflowStatus.COMPLETED
             context.completion_time = datetime.now()
             
-            logger.info(f"✅ Autonomous workflow completed: {workflow_id}")
+            logger.info(f"[OK] Autonomous workflow completed: {workflow_id}")
             
         except Exception as e:
-            logger.error(f"❌ Workflow execution failed: {workflow_id} - {str(e)}")
+            logger.error(f"[FAIL] Workflow execution failed: {workflow_id} - {str(e)}")
             context.status = WorkflowStatus.FAILED
             context.error_info = str(e)
             context.completion_time = datetime.now()
@@ -161,7 +161,7 @@ class AutonomousWorkflowOrchestrator:
         required_agents = self._get_required_agents(context.workflow_type)
         context.required_agents = required_agents
         
-        logger.info(f"🤖 Activating {len(required_agents)} agents for {context.workflow_type.value}")
+        logger.info(f"[BOT] Activating {len(required_agents)} agents for {context.workflow_type.value}")
         
         # Use WRE orchestration for agent activation
         activation_command = {
@@ -176,7 +176,7 @@ class AutonomousWorkflowOrchestrator:
         if not activation_result.get('success', False):
             raise Exception(f"Agent activation failed: {activation_result.get('error', 'Unknown error')}")
         
-        logger.info(f"✅ All {len(required_agents)} agents activated successfully")
+        logger.info(f"[OK] All {len(required_agents)} agents activated successfully")
 
     async def _execute_zen_coding_workflow(self, context: WorkflowContext) -> Dict[str, Any]:
         """
@@ -185,7 +185,7 @@ class AutonomousWorkflowOrchestrator:
         0102 agents access 02 quantum state to "remember" code solutions
         rather than creating them from scratch.
         """
-        logger.info("🌀 Executing Zen Coding Workflow - Quantum Temporal Decoding")
+        logger.info("[U+1F300] Executing Zen Coding Workflow - Quantum Temporal Decoding")
         
         requirements = context.parameters.get('requirements', '')
         target_module = context.parameters.get('target_module', '')
@@ -226,7 +226,7 @@ class AutonomousWorkflowOrchestrator:
         Integrates YouTube block for real-time coding streams with 0102 agents
         providing commentary and collaborative development.
         """
-        logger.info("📺 Executing Livestream Coding Workflow with Agent Co-hosts")
+        logger.info("[U+1F4FA] Executing Livestream Coding Workflow with Agent Co-hosts")
         
         stream_title = context.parameters.get('stream_title', 'Autonomous Agent Coding Session')
         coding_task = context.parameters.get('coding_task', '')
@@ -269,7 +269,7 @@ class AutonomousWorkflowOrchestrator:
         Integrates Auto Meeting Orchestrator for structured code review sessions
         with multiple 0102 agents providing specialized review perspectives.
         """
-        logger.info("🤝 Executing Code Review Meeting Workflow")
+        logger.info("[HANDSHAKE] Executing Code Review Meeting Workflow")
         
         code_repository = context.parameters.get('repository', '')
         review_scope = context.parameters.get('scope', 'full')
@@ -319,7 +319,7 @@ class AutonomousWorkflowOrchestrator:
         Integrates LinkedIn block for automatic portfolio updates and 
         professional development showcasing.
         """
-        logger.info("💼 Executing LinkedIn Showcase Workflow")
+        logger.info("[U+1F4BC] Executing LinkedIn Showcase Workflow")
         
         achievement_type = context.parameters.get('achievement_type', 'module_completion')
         project_details = context.parameters.get('project_details', {})
@@ -360,7 +360,7 @@ class AutonomousWorkflowOrchestrator:
         Full end-to-end module development using multiple coordinated 0102 agents
         from requirements to deployment.
         """
-        logger.info("🏗️ Executing Autonomous Module Development Workflow")
+        logger.info("[U+1F3D7]️ Executing Autonomous Module Development Workflow")
         
         module_requirements = context.parameters.get('requirements', {})
         target_domain = context.parameters.get('domain', 'development')
@@ -443,7 +443,7 @@ class AutonomousWorkflowOrchestrator:
         Coordinates integration across multiple FoundUps blocks for unified
         autonomous development experience.
         """
-        logger.info("🔗 Executing Cross-Block Integration Workflow")
+        logger.info("[LINK] Executing Cross-Block Integration Workflow")
         
         integration_blocks = context.parameters.get('blocks', [])
         integration_goal = context.parameters.get('goal', 'unified_experience')
@@ -499,7 +499,7 @@ class AutonomousWorkflowOrchestrator:
             }
             
             await self.wre_router.route_command(sync_command)
-            logger.info("✅ Cross-block synchronization completed")
+            logger.info("[OK] Cross-block synchronization completed")
 
     async def _complete_workflow(self, context: WorkflowContext) -> None:
         """Complete workflow execution with cleanup and reporting"""
@@ -513,7 +513,7 @@ class AutonomousWorkflowOrchestrator:
         }
         
         await self.wre_router.route_command(completion_command)
-        logger.info(f"🎯 Workflow completion processed: {context.workflow_id}")
+        logger.info(f"[TARGET] Workflow completion processed: {context.workflow_id}")
 
     def _get_required_agents(self, workflow_type: WorkflowType) -> List[str]:
         """Get required agents for workflow type"""
@@ -582,7 +582,7 @@ class AutonomousWorkflowOrchestrator:
                 }
                 
                 await self.wre_router.route_command(cancel_command)
-                logger.info(f"🚫 Workflow cancelled: {workflow_id}")
+                logger.info(f"[FORBIDDEN] Workflow cancelled: {workflow_id}")
                 return True
         
         return False 

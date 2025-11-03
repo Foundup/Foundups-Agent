@@ -1,4 +1,21 @@
-﻿#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
+
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
+#!/usr/bin/env python3
 """
 FoundUps Selenium Driver
 Extended Selenium WebDriver with anti-detection, vision, and platform helpers built-in.
@@ -7,10 +24,19 @@ This is a wrapper around the official Selenium driver so we inherit upstream fix
 while layering FoundUps capabilities on top.
 """
 
+import hashlib
+import json
 import os
+import shutil
 import time
 import random
+from pathlib import Path
 from typing import Optional, Dict, Any, Callable, List
+
+try:
+    from .telemetry_store import record_session as _record_session  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    _record_session = None
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -35,6 +61,8 @@ class FoundUpsDriver(webdriver.Chrome):
         """Initialise the FoundUps WebDriver with optional telemetry observers."""
 
         self._observers: List[Callable[[str, Dict[str, Any]], None]] = list(observers or [])
+        self._session_snapshot_dir = Path("docs/session_backups/foundups_selenium")
+        self._record_session_hook = _record_session
 
         options: ChromeOptions = kwargs.get("options", ChromeOptions())
 
@@ -298,9 +326,13 @@ class FoundUpsDriver(webdriver.Chrome):
         screenshot_bytes = self.get_screenshot_as_png()
         analysis = self.vision_analyzer.analyze_posting_ui(screenshot_bytes)
 
+        screenshot_hash = hashlib.sha256(screenshot_bytes).hexdigest()
+        analysis["screenshot_hash"] = screenshot_hash
+
         event_payload: Dict[str, Any] = {
             "save_screenshot": save_screenshot,
             "analysis_keys": list(analysis.keys()),
+            "screenshot_hash": screenshot_hash,
         }
 
         if save_screenshot:
@@ -315,9 +347,90 @@ class FoundUpsDriver(webdriver.Chrome):
             event_payload["screenshot_path"] = screenshot_path
             print(f"[FoundUps] screenshot saved: {screenshot_path}")
 
+            annotated_path = self._create_annotated_screenshot(
+                screenshot_path,
+                analysis,
+                screenshot_dir,
+                timestamp,
+            )
+            if annotated_path:
+                analysis["annotated_screenshot_path"] = annotated_path
+                event_payload["annotated_screenshot_path"] = annotated_path
+
         self._emit_event("vision_analyze_completed", event_payload)
+        self._persist_session_snapshot(event_payload, analysis)
 
         return analysis
+
+    def _create_annotated_screenshot(
+        self,
+        screenshot_path: str,
+        analysis: Dict[str, Any],
+        screenshot_dir: str,
+        timestamp: str,
+    ) -> Optional[str]:
+        """Create a lightweight annotated copy of the latest screenshot."""
+
+        annotated_path = os.path.join(screenshot_dir, f"screenshot_{timestamp}_annotated.png")
+        summary = analysis.get("ui_state") or analysis.get("status") or "analysis"
+        details = []
+
+        if "post_button" in analysis:
+            details.append(f"post:{analysis['post_button'].get('enabled')}")
+        if "text_area" in analysis:
+            details.append(f"text:{analysis['text_area'].get('has_text')}")
+        if analysis.get("errors"):
+            details.append("errors")
+
+        label = f"UI:{summary}"
+        if details:
+            label = f"{label} | {'/'.join(map(str, details))}"
+
+        try:
+            from PIL import Image, ImageDraw
+
+            image = Image.open(screenshot_path).convert("RGBA")
+            overlay = Image.new("RGBA", image.size, (0, 0, 0, 0))
+            draw = ImageDraw.Draw(overlay)
+
+            padding = 12
+            text_box = [padding, padding, image.width - padding, padding + 32]
+            draw.rectangle(text_box, fill=(0, 0, 0, 128))
+            draw.text((padding + 4, padding + 6), label, fill=(255, 255, 255, 255))
+
+            annotated = Image.alpha_composite(image, overlay).convert("RGB")
+            annotated.save(annotated_path, format="PNG")
+            return annotated_path
+        except Exception:
+            try:
+                shutil.copyfile(screenshot_path, annotated_path)
+                return annotated_path
+            except Exception:
+                return None
+
+    def _persist_session_snapshot(self, event_payload: Dict[str, Any], analysis: Dict[str, Any]) -> None:
+        """Append a JSON telemetric snapshot for Sprint 2 archives."""
+
+        try:
+            self._session_snapshot_dir.mkdir(parents=True, exist_ok=True)
+            entry = {
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "event": "vision_analyze",
+                "url": getattr(self, "current_url", None),
+                "payload": event_payload,
+                "analysis": analysis,
+            }
+            snapshot_file = self._session_snapshot_dir / "vision_sessions.jsonl"
+            with snapshot_file.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+            if self._record_session_hook:
+                try:
+                    self._record_session_hook(entry)
+                except Exception as hook_exc:  # pragma: no cover - DB best effort
+                    print(f"[FoundUps] sqlite telemetry failed: {hook_exc}")
+        except Exception as exc:  # pragma: no cover - archival best effort
+            print(f"[FoundUps] snapshot persistence failed: {exc}")
 
     def human_type(
         self,

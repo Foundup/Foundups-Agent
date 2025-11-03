@@ -12,7 +12,7 @@ from modules.communication.livechat.src.session_manager import SessionManager
 from modules.communication.livechat.src.message_processor import MessageProcessor
 
 async def test_broadcast():
-    print("🔬 Testing 0102 Live Broadcast System\n")
+    print("[U+1F52C] Testing 0102 Live Broadcast System\n")
     print("=" * 60)
     
     # Mock YouTube service
@@ -36,7 +36,7 @@ async def test_broadcast():
     # Mock send function to capture messages
     sent_messages = []
     async def mock_send(message):
-        print(f"📤 SENT TO CHAT: {message}")
+        print(f"[U+1F4E4] SENT TO CHAT: {message}")
         sent_messages.append(message)
         return True
     
@@ -45,28 +45,28 @@ async def test_broadcast():
     session = SessionManager(youtube_service, "test-video-123")
     
     # Initialize session
-    print("\n🚀 Initializing session...")
+    print("\n[ROCKET] Initializing session...")
     await session.initialize_session()
-    print(f"✅ Session initialized: {session.stream_title_short}")
+    print(f"[OK] Session initialized: {session.stream_title_short}")
     
     # Send greeting and update broadcast
-    print("\n📢 Sending greeting and update broadcast...")
+    print("\n[U+1F4E2] Sending greeting and update broadcast...")
     await session.send_greeting(mock_send)
     
     print("\n" + "=" * 60)
-    print("📋 Summary of messages sent:")
+    print("[CLIPBOARD] Summary of messages sent:")
     for i, msg in enumerate(sent_messages, 1):
         print(f"{i}. {msg}")
     
     print("\n" + "=" * 60)
     
     # Test message processor with consciousness commands
-    print("\n🧠 Testing consciousness message processing...")
+    print("\n[AI] Testing consciousness message processing...")
     processor = MessageProcessor()
     
     test_messages = [
         {
-            "snippet": {"displayMessage": "✊✋🖐️ hello 0102!"},
+            "snippet": {"displayMessage": "[U+270A][U+270B][U+1F590]️ hello 0102!"},
             "authorDetails": {
                 "displayName": "TestUser1",
                 "channelId": "user1",
@@ -75,7 +75,7 @@ async def test_broadcast():
             }
         },
         {
-            "snippet": {"displayMessage": "✊✋🖐️FC @MAGATroll"},
+            "snippet": {"displayMessage": "[U+270A][U+270B][U+1F590]️FC @MAGATroll"},
             "authorDetails": {
                 "displayName": "ModUser",
                 "channelId": "mod1",
@@ -84,7 +84,7 @@ async def test_broadcast():
             }
         },
         {
-            "snippet": {"displayMessage": "✊✋🖐️ what is consciousness?"},
+            "snippet": {"displayMessage": "[U+270A][U+270B][U+1F590]️ what is consciousness?"},
             "authorDetails": {
                 "displayName": "CuriousUser",
                 "channelId": "user2",
@@ -98,7 +98,7 @@ async def test_broadcast():
         print("\n" + "-" * 40)
         username = msg_data["authorDetails"]["displayName"]
         message = msg_data["snippet"]["displayMessage"]
-        print(f"📥 {username}: {message}")
+        print(f"[U+1F4E5] {username}: {message}")
         
         # Process message
         processed = processor.process_message(msg_data)
@@ -107,11 +107,11 @@ async def test_broadcast():
         if processed and not processed.get("skip"):
             response = await processor.generate_response(processed)
             if response:
-                print(f"💬 0102: {response}")
+                print(f"[U+1F4AC] 0102: {response}")
             else:
-                print(f"🔇 No response generated")
+                print(f"[U+1F507] No response generated")
     
-    print("\n✅ Test completed!")
+    print("\n[OK] Test completed!")
 
 if __name__ == "__main__":
     asyncio.run(test_broadcast())

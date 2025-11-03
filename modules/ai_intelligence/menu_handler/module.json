@@ -18,7 +18,7 @@
   "wsp_compliance": {
     "wsp_1": "Framework principles (modularity, agentic responsibility)",
     "wsp_3": "AI Intelligence domain enterprise organization",
-    "wsp_5": "Test coverage ≥90%",
+    "wsp_5": "Test coverage [GREATER_EQUAL]90%",
     "wsp_11": "Interface documentation",
     "wsp_22": "ModLog and Roadmap maintenance",
     "wsp_60": "Memory architecture compliance"

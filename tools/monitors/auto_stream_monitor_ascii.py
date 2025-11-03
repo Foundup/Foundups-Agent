@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Automatic Stream Monitor & Social Media Orchestrator
 Runs continuously to detect streams and post notifications automatically
 """
@@ -203,7 +218,7 @@ Currently {stream_info['concurrent_viewers']} viewers watching!
             
             # Send greeting message
             greeting = os.getenv('AGENT_GREETING_MESSAGE', 
-                               f"🤖 UnDaoDu Bot is online! Stream: {stream_info['title'][:50]}... Type /help for commands")
+                               f"[BOT] UnDaoDu Bot is online! Stream: {stream_info['title'][:50]}... Type /help for commands")
             print(f"[{datetime.now().strftime('%H:%M:%S')}] [WAVE] Sending greeting: {greeting}")
             
         except ImportError:

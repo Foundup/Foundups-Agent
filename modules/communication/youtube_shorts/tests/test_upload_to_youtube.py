@@ -4,7 +4,7 @@ Test YouTube Shorts Upload Functionality
 This script tests if we can actually upload a video to YouTube.
 We'll create a simple test video and attempt to upload it as unlisted.
 
-⚠️  WARNING: This will actually upload to YouTube!
+[U+26A0]️  WARNING: This will actually upload to YouTube!
 """
 
 import sys
@@ -25,18 +25,18 @@ def test_upload_capability():
         from modules.communication.youtube_shorts.src.youtube_uploader import YouTubeShortsUploader
 
         uploader = YouTubeShortsUploader()
-        print("\n✅ YouTube uploader initialized successfully!")
+        print("\n[OK] YouTube uploader initialized successfully!")
 
         # Get channel info to verify auth works
         channel_info = uploader.get_channel_info()
-        print(f"\n📺 Connected to Channel:")
+        print(f"\n[U+1F4FA] Connected to Channel:")
         print(f"   Name: {channel_info.get('title', 'Unknown')}")
         print(f"   ID: {channel_info.get('id', 'Unknown')}")
 
         return True
 
     except Exception as e:
-        print(f"\n❌ FAIL: {e}")
+        print(f"\n[FAIL] FAIL: {e}")
         return False
 
 
@@ -50,13 +50,13 @@ def test_orchestrator_init():
         from modules.communication.youtube_shorts.src.shorts_orchestrator import ShortsOrchestrator
 
         orchestrator = ShortsOrchestrator()
-        print("\n✅ Shorts orchestrator initialized!")
+        print("\n[OK] Shorts orchestrator initialized!")
         print(f"   Memory: {len(orchestrator.shorts_memory)} tracked Shorts")
 
         return True
 
     except Exception as e:
-        print(f"\n❌ FAIL: {e}")
+        print(f"\n[FAIL] FAIL: {e}")
         return False
 
 
@@ -79,12 +79,12 @@ def create_test_video():
         try:
             subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True)
         except (subprocess.CalledProcessError, FileNotFoundError):
-            print("\n⚠️  SKIP: ffmpeg not found")
+            print("\n[U+26A0]️  SKIP: ffmpeg not found")
             print("   Install: choco install ffmpeg (Windows)")
             return None
 
         # Create 5-second black video (vertical 9:16 for Shorts)
-        print("\n📹 Creating 5-second test video (vertical 9:16)...")
+        print("\n[U+1F4F9] Creating 5-second test video (vertical 9:16)...")
 
         cmd = [
             "ffmpeg", "-y",
@@ -99,23 +99,23 @@ def create_test_video():
         result = subprocess.run(cmd, capture_output=True)
 
         if test_video.exists():
-            print(f"✅ Test video created: {test_video}")
+            print(f"[OK] Test video created: {test_video}")
             print(f"   Size: {test_video.stat().st_size / 1024:.1f} KB")
             return str(test_video)
         else:
-            print(f"❌ FAIL: Video creation failed")
+            print(f"[FAIL] FAIL: Video creation failed")
             print(f"   Error: {result.stderr.decode()}")
             return None
 
     except Exception as e:
-        print(f"\n❌ FAIL: {e}")
+        print(f"\n[FAIL] FAIL: {e}")
         return None
 
 
 def upload_test_video(video_path: str):
     """Upload test video to YouTube as unlisted"""
     print("\n" + "="*80)
-    print("⚠️  ACTUAL UPLOAD TO YOUTUBE - UNLISTED")
+    print("[U+26A0]️  ACTUAL UPLOAD TO YOUTUBE - UNLISTED")
     print("="*80)
 
     response = input("\nAre you SURE you want to upload test video to YouTube? (yes/no): ")
@@ -129,7 +129,7 @@ def upload_test_video(video_path: str):
 
         uploader = YouTubeShortsUploader()
 
-        print("\n📤 Uploading test video...")
+        print("\n[U+1F4E4] Uploading test video...")
 
         shorts_url = uploader.upload_short(
             video_path=video_path,
@@ -139,20 +139,20 @@ def upload_test_video(video_path: str):
             privacy="unlisted"  # Unlisted so it doesn't appear on channel
         )
 
-        print(f"\n✅ SUCCESS!")
+        print(f"\n[OK] SUCCESS!")
         print(f"   Shorts URL: {shorts_url}")
-        print(f"\n🔗 View: {shorts_url}")
+        print(f"\n[LINK] View: {shorts_url}")
         print(f"   Status: Unlisted (not public)")
 
         return True
 
     except Exception as e:
-        print(f"\n❌ UPLOAD FAILED: {e}")
+        print(f"\n[FAIL] UPLOAD FAILED: {e}")
         return False
 
 
 if __name__ == "__main__":
-    print("\n🎬 YouTube Shorts Upload Test")
+    print("\n[U+1F3AC] YouTube Shorts Upload Test")
     print("="*80)
 
     # Test 1: Verify upload capability
@@ -167,16 +167,16 @@ if __name__ == "__main__":
     print("\n" + "="*80)
     print("TEST RESULTS:")
     print("="*80)
-    print(f"  Upload Capability: {'✅ PASS' if test1_pass else '❌ FAIL'}")
-    print(f"  Orchestrator Init: {'✅ PASS' if test2_pass else '❌ FAIL'}")
-    print(f"  Test Video Created: {'✅ PASS' if test_video_path else '⏭️  SKIP (no ffmpeg)'}")
+    print(f"  Upload Capability: {'[OK] PASS' if test1_pass else '[FAIL] FAIL'}")
+    print(f"  Orchestrator Init: {'[OK] PASS' if test2_pass else '[FAIL] FAIL'}")
+    print(f"  Test Video Created: {'[OK] PASS' if test_video_path else '⏭️  SKIP (no ffmpeg)'}")
 
     # Offer actual upload if test video exists
     if test_video_path:
         print("\n" + "="*80)
         print("ACTUAL YOUTUBE UPLOAD TEST:")
         print("="*80)
-        print("⚠️  This will upload a 5-second test video to YouTube")
+        print("[U+26A0]️  This will upload a 5-second test video to YouTube")
         print("   Privacy: Unlisted (won't appear on channel)")
         print("   Title: Move2Japan Test Upload - Talking Baby Feature")
         print()

@@ -34,7 +34,7 @@ pytest modules/platform_integration/youtube_proxy/tests/ \
 ## WSP Compliance
 - WSP 3: Functional domain alignment (platform_integration)
 - WSP 34: Test docs present; suite runnable commands included
-- WSP 5: Target ≥90% coverage; tracked in TestModLog
+- WSP 5: Target [GREATER_EQUAL]90% coverage; tracked in TestModLog
 - WSP 49: Tests under module tests/
 - WSP 50/64: No test file creation outside module; audited for duplicates
 

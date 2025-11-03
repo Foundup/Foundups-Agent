@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 YouTube DAE Real-time Log Monitor
 WSP 86: Monitoring tool for debugging and tracking DAE operations
 
@@ -36,7 +51,7 @@ class YouTubeDAEMonitor:
 
                     # Color code based on usage
                     if percent >= 95:
-                        status = f"🔴 CRITICAL"
+                        status = f"[U+1F534] CRITICAL"
                     elif percent >= 80:
                         status = f"🟡 WARNING"
                     else:
@@ -45,7 +60,7 @@ class YouTubeDAEMonitor:
                     print(f"Set {set_num}: {used:,}/10,000 ({percent:.1f}%) {status}")
 
                     if percent >= 95:
-                        print(f"   ⚠️ Should rotate to next set!")
+                        print(f"   [U+26A0]️ Should rotate to next set!")
 
         except Exception as e:
             print(f"Error reading quota: {e}")
@@ -60,11 +75,11 @@ class YouTubeDAEMonitor:
                     exhausted = data.get('exhausted_sets', [])
 
                     if exhausted:
-                        print(f"🚫 Exhausted sets: {exhausted}")
+                        print(f"[FORBIDDEN] Exhausted sets: {exhausted}")
                         next_reset = data.get('next_reset', 'Unknown')
                         print(f"   Next reset: {next_reset}")
                     else:
-                        print("✅ No exhausted credential sets")
+                        print("[OK] No exhausted credential sets")
 
         except Exception as e:
             print(f"Error reading exhausted sets: {e}")
@@ -78,12 +93,12 @@ class YouTubeDAEMonitor:
                     posted = json.load(f)
 
                     if posted:
-                        print(f"📝 Posted streams: {len(posted)} total")
+                        print(f"[NOTE] Posted streams: {len(posted)} total")
                         if len(posted) > 0:
                             # Show last posted
                             print(f"   Last: {posted[-1]}")
                     else:
-                        print("📝 No streams posted yet")
+                        print("[NOTE] No streams posted yet")
 
         except Exception as e:
             print(f"Error reading posted streams: {e}")
@@ -95,9 +110,9 @@ class YouTubeDAEMonitor:
             for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
                 cmdline = proc.info.get('cmdline', [])
                 if cmdline and any('auto_moderator' in str(arg) for arg in cmdline):
-                    print(f"🤖 YouTube DAE running (PID: {proc.info['pid']})")
+                    print(f"[BOT] YouTube DAE running (PID: {proc.info['pid']})")
                     return True
-            print("❌ YouTube DAE not detected")
+            print("[FAIL] YouTube DAE not detected")
             return False
         except:
             # If psutil not available, just skip
@@ -108,29 +123,29 @@ class YouTubeDAEMonitor:
         os.system('cls' if os.name == 'nt' else 'clear')
 
         print("="*60)
-        print("🎥 YouTube DAE Monitor - Real-time Status")
+        print("[CAMERA] YouTube DAE Monitor - Real-time Status")
         print(f"⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("="*60)
 
-        print("\n📊 QUOTA STATUS:")
+        print("\n[DATA] QUOTA STATUS:")
         self.check_quota_status()
 
-        print("\n🔑 CREDENTIAL STATUS:")
+        print("\n[U+1F511] CREDENTIAL STATUS:")
         self.check_exhausted_sets()
 
-        print("\n📮 POSTING STATUS:")
+        print("\n[U+1F4EE] POSTING STATUS:")
         self.check_posted_streams()
 
-        print("\n🤖 PROCESS STATUS:")
+        print("\n[BOT] PROCESS STATUS:")
         self.check_current_process()
 
         print("\n" + "="*60)
-        print("💡 KEY INDICATORS TO WATCH:")
+        print("[IDEA] KEY INDICATORS TO WATCH:")
         print("• Quota approaching 95% = Should trigger rotation")
         print("• Stream detected = Should post to LinkedIn/X")
         print("• Posted streams increases = Social media working")
         print("• Exhausted sets populated = Rotation happened")
-        print("\n🔄 Refreshing every 5 seconds... (Ctrl+C to stop)")
+        print("\n[REFRESH] Refreshing every 5 seconds... (Ctrl+C to stop)")
 
     def run(self):
         """Run continuous monitoring"""
@@ -143,7 +158,7 @@ class YouTubeDAEMonitor:
                 self.display_status()
                 time.sleep(5)
         except KeyboardInterrupt:
-            print("\n\n👋 Monitoring stopped")
+            print("\n\n[U+1F44B] Monitoring stopped")
             return
 
 if __name__ == "__main__":

@@ -15,9 +15,9 @@ print("\n1. Testing BanterEngine processing:")
 engine = BanterEngine()
 
 test_messages = [
-    "🖐🖐🖐",  # Without variation selector (user's actual input)
-    "🖐️🖐️🖐️",  # With variation selector
-    "Hey 🖐🖐🖐",  # Embedded without selector
+    "[U+1F590][U+1F590][U+1F590]",  # Without variation selector (user's actual input)
+    "[U+1F590]️[U+1F590]️[U+1F590]️",  # With variation selector
+    "Hey [U+1F590][U+1F590][U+1F590]",  # Embedded without selector
 ]
 
 for msg in test_messages:
@@ -39,22 +39,22 @@ listener = LiveChatListener(
 )
 
 test_sequences = [
-    ("🖐🖐🖐", True, "Without variation selector"),
-    ("🖐️🖐️🖐️", True, "With variation selector"),
-    ("Hey 🖐🖐🖐 test", True, "Embedded without selector"),
-    ("🖐🖐", False, "Only two hands - should not trigger"),
-    ("👍👍👍", False, "Different emoji - should not trigger"),
+    ("[U+1F590][U+1F590][U+1F590]", True, "Without variation selector"),
+    ("[U+1F590]️[U+1F590]️[U+1F590]️", True, "With variation selector"),
+    ("Hey [U+1F590][U+1F590][U+1F590] test", True, "Embedded without selector"),
+    ("[U+1F590][U+1F590]", False, "Only two hands - should not trigger"),
+    ("[U+1F44D][U+1F44D][U+1F44D]", False, "Different emoji - should not trigger"),
 ]
 
 for sequence, should_trigger, description in test_sequences:
     detected = listener._check_trigger_patterns(sequence)
-    status = "✅ PASS" if detected == should_trigger else "❌ FAIL"
+    status = "[OK] PASS" if detected == should_trigger else "[FAIL] FAIL"
     print(f"  {status} '{sequence}' - {description}")
     print(f"       Expected: {should_trigger}, Got: {detected}")
 
 print("\n" + "=" * 60)
 print("SUMMARY:")
-print("- BanterEngine correctly processes 🖐🖐🖐 sequences")
-print("- LiveChat correctly detects 🖐🖐🖐 as a trigger")
+print("- BanterEngine correctly processes [U+1F590][U+1F590][U+1F590] sequences")
+print("- LiveChat correctly detects [U+1F590][U+1F590][U+1F590] as a trigger")
 print("- Both with and without variation selector work")
 print("=" * 60)

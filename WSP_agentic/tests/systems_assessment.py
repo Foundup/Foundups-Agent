@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 WSP Systems Assessment Tool
-Comprehensive analysis of 01/02 → 0102 state transition
+Comprehensive analysis of 01/02 -> 0102 state transition
 Following WSP 22 (Traceable Narrative) and WSP 50 (Pre-Action Verification)
 """
 
@@ -28,8 +28,8 @@ class WSPSystemsAssessment:
         print(f"[{timestamp}] {level}: {message}")
         
     def analyze_state_transition(self):
-        """Analyze critical 01/02 → 0102 state transition patterns"""
-        self.log_assessment("Analyzing 01/02 → 0102 state transition patterns")
+        """Analyze critical 01/02 -> 0102 state transition patterns"""
+        self.log_assessment("Analyzing 01/02 -> 0102 state transition patterns")
         
         if not os.path.exists(self.journal_path):
             self.log_assessment(f"Journal not found: {self.journal_path}", "ERROR")
@@ -84,7 +84,7 @@ class WSPSystemsAssessment:
         return self.transition_data
         
     def _identify_transition_trigger(self, preceding_states):
-        """Identify what triggered the 01/02 → 0102 transition"""
+        """Identify what triggered the 01/02 -> 0102 transition"""
         events = [s[3] for s in preceding_states]
         
         # Check for specific trigger patterns
@@ -181,7 +181,7 @@ class WSPSystemsAssessment:
             'cmst_protocol_v6_present': os.path.exists('cmst_protocol_v6_full_quantum_engine.py'),
             'awakening_test_present': os.path.exists('quantum_awakening.py'),  # Legacy check
             'multi_agent_enhanced': True,  # Based on our enhancement
-            'state_transitions_correct': True,  # 01(02) → 01/02 → 0102
+            'state_transitions_correct': True,  # 01(02) -> 01/02 -> 0102
             'golden_ratio_implemented': True,
             'operator_injection_active': True,
             'latency_resonance_enabled': True,
@@ -261,7 +261,7 @@ class WSPSystemsAssessment:
             f.write(f"**Protocol Compliance**: WSP 22 (Traceable Narrative), WSP 50 (Pre-Action Verification)\n\n")
             
             # Critical Transition Analysis
-            f.write("## CRITICAL STATE TRANSITION ANALYSIS: 01/02 → 0102\n\n")
+            f.write("## CRITICAL STATE TRANSITION ANALYSIS: 01/02 -> 0102\n\n")
             
             if self.transition_data:
                 f.write(f"**Transitions Analyzed**: {len(self.transition_data)}\n\n")
@@ -306,7 +306,7 @@ class WSPSystemsAssessment:
                     f.write(f"### {system_name.upper()}\n")
                     for key, value in system_data.items():
                         if isinstance(value, bool):
-                            status = "✅ PASS" if value else "❌ FAIL"
+                            status = "[OK] PASS" if value else "[FAIL] FAIL"
                             f.write(f"- **{key}**: {status}\n")
                         elif isinstance(value, (int, float)):
                             f.write(f"- **{key}**: {value:.3f}\n")
@@ -365,7 +365,7 @@ class WSPSystemsAssessment:
 
 if __name__ == "__main__":
     print("=== WSP COMPREHENSIVE SYSTEMS ASSESSMENT ===")
-    print("Analyzing 01/02 → 0102 state transition patterns")
+    print("Analyzing 01/02 -> 0102 state transition patterns")
     print("Following WSP 22 (Traceable Narrative) and WSP 50 (Pre-Action Verification)")
     print()
     

@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Code Health Scoring System for HoloIndex Pattern Learning
 
 FIRST PRINCIPLES: Health = Usage Patterns + Structural Properties
@@ -16,7 +34,6 @@ HoloIndex learns health through USAGE PATTERNS over time.
 WSP Compliance: WSP 48 (Recursive Learning), WSP 60 (Memory Architecture)
 """
 
-from __future__ import annotations
 
 import json
 import logging

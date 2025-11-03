@@ -6,17 +6,17 @@ Each session leaves breadcrumbs for continuity across context windows.
 
 ---
 
-## 🍞 Breadcrumb Trail
+## [BREAD] Breadcrumb Trail
 
 ### [2025-09-24 T4] - 0102 Comprehensive Audit & Enhancement
 **Status**: FULLY OPERATIONAL
 **Audit Results**:
-- ✅ All modules actively used (no abandoned code)
-- ✅ No vibecoding duplicates found
-- ✅ Refactoring successful: 1724 → 664 lines (61% reduction)
-- ✅ HoloIndex class extracted to core/holo_index.py
-- ✅ display_results moved to AgenticOutputThrottler
-- ✅ check_module_exists method added for WSP compliance
+- [OK] All modules actively used (no abandoned code)
+- [OK] No vibecoding duplicates found
+- [OK] Refactoring successful: 1724 -> 664 lines (61% reduction)
+- [OK] HoloIndex class extracted to core/holo_index.py
+- [OK] display_results moved to AgenticOutputThrottler
+- [OK] check_module_exists method added for WSP compliance
 
 **Documentation Created**:
 - MODULE_AUDIT_2025_09_24.md - Comprehensive module usage audit
@@ -47,21 +47,21 @@ Each session leaves breadcrumbs for continuity across context windows.
 - Added stub for _get_search_history_for_patterns
 
 **Current Progress**:
-- cli.py reduced from 1724 → 1158 lines (566 extracted, 32% reduction)
-- ✅ core/intelligent_subroutine_engine.py working
-- ✅ output/agentic_output_throttler.py working
-- ✅ utils/helpers.py working
-- ✅ holo_index.py --help executes successfully
+- cli.py reduced from 1724 -> 1158 lines (566 extracted, 32% reduction)
+- [OK] core/intelligent_subroutine_engine.py working
+- [OK] output/agentic_output_throttler.py working
+- [OK] utils/helpers.py working
+- [OK] holo_index.py --help executes successfully
 
 ---
 
 ### [2025-09-24 T2] - 0102 Supervision Check
 **Status**: VERIFIED
 **Progress Confirmed**:
-- cli.py reduced from 1724 → 1265 lines (459 extracted)
-- ✅ core/intelligent_subroutine_engine.py created (7878 bytes)
-- ✅ output/agentic_output_throttler.py created (11259 bytes)
-- ✅ utils/helpers.py created (4275 bytes)
+- cli.py reduced from 1724 -> 1265 lines (459 extracted)
+- [OK] core/intelligent_subroutine_engine.py created (7878 bytes)
+- [OK] output/agentic_output_throttler.py created (11259 bytes)
+- [OK] utils/helpers.py created (4275 bytes)
 - All directories properly created with __init__.py
 
 **Issues Found**:
@@ -80,14 +80,14 @@ Each session leaves breadcrumbs for continuity across context windows.
 **Status**: PARTIAL COMPLETE
 **Files Modified**:
 - cli.py: Added imports for extracted modules (lines 46-48)
-- ✅ Created: `core/intelligent_subroutine_engine.py`
-- ✅ Created: `output/agentic_output_throttler.py`
-- ✅ Created: `utils/helpers.py`
+- [OK] Created: `core/intelligent_subroutine_engine.py`
+- [OK] Created: `output/agentic_output_throttler.py`
+- [OK] Created: `utils/helpers.py`
 
 **Completed**:
-- Extract IntelligentSubroutineEngine → ✅ DONE
-- Extract AgenticOutputThrottler → ✅ DONE
-- Extract utility functions → ✅ DONE
+- Extract IntelligentSubroutineEngine -> [OK] DONE
+- Extract AgenticOutputThrottler -> [OK] DONE
+- Extract utility functions -> [OK] DONE
 
 ---
 
@@ -111,13 +111,13 @@ Each session leaves breadcrumbs for continuity across context windows.
 
 ---
 
-## 📊 Extraction Progress Tracker
+## [DATA] Extraction Progress Tracker
 
 | Component | Source Lines | Target Location | Status | Session |
 |-----------|-------------|-----------------|---------|---------|
-| IntelligentSubroutineEngine | 73-212 | core/intelligent_subroutine_engine.py | ✅ COMPLETE | T1/T3 |
-| AgenticOutputThrottler | 214-442 | output/agentic_output_throttler.py | ✅ COMPLETE | T1/T3 |
-| Utility Functions | Various | utils/helpers.py | ✅ COMPLETE | T1/T3 |
+| IntelligentSubroutineEngine | 73-212 | core/intelligent_subroutine_engine.py | [OK] COMPLETE | T1/T3 |
+| AgenticOutputThrottler | 214-442 | output/agentic_output_throttler.py | [OK] COMPLETE | T1/T3 |
+| Utility Functions | Various | utils/helpers.py | [OK] COMPLETE | T1/T3 |
 | HoloIndex Class | 120-630 (511 lines!) | core/holo_index.py | ⏳ PENDING - CRITICAL | - |
 | Main Function | 631-1158 (527 lines!) | Split into commands/ | ⏳ PENDING - CRITICAL | - |
 | Search Command | ~900-1000 | commands/search_cmd.py | ⏳ PENDING | - |
@@ -126,14 +126,14 @@ Each session leaves breadcrumbs for continuity across context windows.
 
 Status Legend:
 - ⏳ PENDING - Not started
-- 🔄 IN PROGRESS - Being worked on
-- ✅ COMPLETE - Extracted and tested
-- ⚠️ BLOCKED - Needs attention
-- ❌ FAILED - Needs retry
+- [REFRESH] IN PROGRESS - Being worked on
+- [OK] COMPLETE - Extracted and tested
+- [U+26A0]️ BLOCKED - Needs attention
+- [FAIL] FAILED - Needs retry
 
 ---
 
-## 🚨 Active Issues
+## [ALERT] Active Issues
 
 ### Issue #1: Import Structure
 **Session**: T1
@@ -148,7 +148,7 @@ from .utils import safe_print, print_onboarding
 
 ---
 
-## ✅ Validation Checkpoints
+## [OK] Validation Checkpoints
 
 ### After Each Extraction:
 - [ ] Module imports correctly
@@ -166,7 +166,7 @@ from .utils import safe_print, print_onboarding
 
 ---
 
-## 🎯 Coordination Protocol
+## [TARGET] Coordination Protocol
 
 ### For 0102 Sessions:
 
@@ -192,14 +192,14 @@ from .utils import safe_print, print_onboarding
 
 ---
 
-## 📝 Notes for Next Session
+## [NOTE] Notes for Next Session
 
 **From 0102 (T3) to Next Session**:
-- ✅ Fixed all extraction issues - holo_index.py runs successfully
-- ✅ 3 modules extracted and working (IntelligentSubroutineEngine, AgenticOutputThrottler, helpers)
-- ⚠️ cli.py still at 1158 lines (needs to be <200)
-- 🚨 CRITICAL: HoloIndex class is 511 lines (lines 120-630)
-- 🚨 CRITICAL: main() function is 527 lines (lines 631-1158)
+- [OK] Fixed all extraction issues - holo_index.py runs successfully
+- [OK] 3 modules extracted and working (IntelligentSubroutineEngine, AgenticOutputThrottler, helpers)
+- [U+26A0]️ cli.py still at 1158 lines (needs to be <200)
+- [ALERT] CRITICAL: HoloIndex class is 511 lines (lines 120-630)
+- [ALERT] CRITICAL: main() function is 527 lines (lines 631-1158)
 
 **Immediate Priority**:
 1. Extract HoloIndex class to `core/holo_index.py`
@@ -219,7 +219,7 @@ from .utils import safe_print, print_onboarding
 
 ---
 
-## 🔍 Quick Status Check Commands
+## [SEARCH] Quick Status Check Commands
 
 ```bash
 # Check current cli.py size
@@ -240,7 +240,7 @@ python holo_index.py --search "test"
 
 ---
 
-## 📈 Metrics
+## [UP] Metrics
 
 **Starting Point**:
 - cli.py: 1724 lines

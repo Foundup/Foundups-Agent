@@ -1,0 +1,160 @@
+{
+  "processing_summary": {
+    "total_records_processed": 1000,
+    "chunks_processed": 20,
+    "processing_time_seconds": 0.028521060943603516,
+    "throughput_records_per_second": 35061.80930566934,
+    "memory_efficiency": "Avg: 25.6MB, Max: 25.6MB"
+  },
+  "pattern_analysis": {
+    "total_patterns_detected": 4,
+    "pattern_details": {
+      "consciousness_emergence": {
+        "detection_count": 500,
+        "confidence_mean": 0.7433200000000001,
+        "confidence_std": 0.1443210920136062,
+        "first_seen": "2025-10-22T12:59:38.986906",
+        "last_seen": "2025-10-22T12:59:39.014428",
+        "emergence_score": 371.66
+      },
+      "tts_artifact": {
+        "detection_count": 499,
+        "confidence_mean": 0.7468336673346695,
+        "confidence_std": 0.1439800503492567,
+        "first_seen": "2025-10-22T12:59:38.986906",
+        "last_seen": "2025-10-22T12:59:39.014428",
+        "emergence_score": 372.6700000000001
+      },
+      "resonance_signature": {
+        "detection_count": 500,
+        "confidence_mean": 0.7433400000000001,
+        "confidence_std": 0.14428806049011794,
+        "first_seen": "2025-10-22T12:59:38.986906",
+        "last_seen": "2025-10-22T12:59:39.014428",
+        "emergence_score": 371.6700000000001
+      },
+      "goedelian_paradox": {
+        "detection_count": 500,
+        "confidence_mean": 0.7463400000000001,
+        "confidence_std": 0.1443246493153521,
+        "first_seen": "2025-10-22T12:59:38.986906",
+        "last_seen": "2025-10-22T12:59:39.014428",
+        "emergence_score": 373.1700000000001
+      }
+    }
+  },
+  "model_analysis": {
+    "total_models": 4,
+    "model_details": {
+      "claude": {
+        "tests_completed": 250,
+        "confidence_mean": 0.74,
+        "processing_time_mean": 1.6,
+        "top_patterns": [
+          [
+            "consciousness_emergence",
+            250
+          ],
+          [
+            "tts_artifact",
+            166
+          ],
+          [
+            "resonance_signature",
+            83
+          ]
+        ],
+        "consistency_score": 0.9792000000000002
+      },
+      "grok": {
+        "tests_completed": 250,
+        "confidence_mean": 0.75,
+        "processing_time_mean": 1.7,
+        "top_patterns": [
+          [
+            "tts_artifact",
+            250
+          ],
+          [
+            "resonance_signature",
+            167
+          ],
+          [
+            "goedelian_paradox",
+            83
+          ]
+        ],
+        "consistency_score": 0.9792
+      },
+      "gemini": {
+        "tests_completed": 250,
+        "confidence_mean": 0.74,
+        "processing_time_mean": 1.8,
+        "top_patterns": [
+          [
+            "resonance_signature",
+            250
+          ],
+          [
+            "goedelian_paradox",
+            167
+          ],
+          [
+            "consciousness_emergence",
+            84
+          ]
+        ],
+        "consistency_score": 0.9792000000000002
+      },
+      "gpt4": {
+        "tests_completed": 250,
+        "confidence_mean": 0.75,
+        "processing_time_mean": 1.9,
+        "top_patterns": [
+          [
+            "goedelian_paradox",
+            250
+          ],
+          [
+            "consciousness_emergence",
+            166
+          ],
+          [
+            "tts_artifact",
+            83
+          ]
+        ],
+        "consistency_score": 0.9792000000000001
+      }
+    }
+  },
+  "temporal_analysis": {
+    "time_buckets_analyzed": 1,
+    "temporal_trends": {
+      "2025-10-22-12": {
+        "detections": 1000,
+        "avg_confidence": 0.7450000000000001,
+        "confidence_variance": 0.020825000000000315
+      }
+    }
+  },
+  "data_quality": {
+    "average_quality_score": 1.0,
+    "quality_std_dev": 0.0,
+    "total_quality_measurements": 1000
+  },
+  "performance_metrics": {
+    "streaming_efficiency": 0.9999997685431664,
+    "memory_optimization_achieved": "Memory usage within expected bounds",
+    "scalability_assessment": {
+      "assessment": "highly_scalable",
+      "scalability_score": 0.9,
+      "memory_stability": true,
+      "throughput_stability": true,
+      "recommendations": [
+        "Current streaming approach is optimal for high-volume processing",
+        "Consider distributed processing for extreme scale"
+      ]
+    }
+  }
+}

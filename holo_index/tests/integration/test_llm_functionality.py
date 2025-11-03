@@ -15,7 +15,7 @@ sys.path.insert(0, str(project_root))
 
 def test_llm_inference():
     """Test actual LLM inference."""
-    print("🧠 Testing Qwen LLM Inference...")
+    print("[AI] Testing Qwen LLM Inference...")
 
     try:
         from holo_index.qwen_advisor.llm_engine import QwenInferenceEngine
@@ -27,7 +27,7 @@ def test_llm_inference():
         print(f"Model exists: {config.model_path.exists()}")
 
         if not config.model_path.exists():
-            print("❌ Model file not found!")
+            print("[FAIL] Model file not found!")
             return False
 
         # Create engine
@@ -43,11 +43,11 @@ def test_llm_inference():
         init_time = time.time() - start_time
 
         if not success:
-            print("❌ Model initialization failed!")
+            print("[FAIL] Model initialization failed!")
             return False
 
         print(".2f")
-        print("✓ Model loaded successfully")
+        print("[OK] Model loaded successfully")
 
         # Test simple inference
         print("\nTesting inference with simple prompt...")
@@ -61,21 +61,21 @@ def test_llm_inference():
         print(f"'{response}'")
 
         if len(response.strip()) > 10:
-            print("✅ LLM inference successful!")
+            print("[OK] LLM inference successful!")
             return True
         else:
-            print("❌ LLM response too short or empty")
+            print("[FAIL] LLM response too short or empty")
             return False
 
     except Exception as e:
-        print(f"❌ LLM test failed: {e}")
+        print(f"[FAIL] LLM test failed: {e}")
         import traceback
         traceback.print_exc()
         return False
 
 def test_code_analysis():
     """Test code analysis capabilities."""
-    print("\n🔍 Testing Code Analysis...")
+    print("\n[SEARCH] Testing Code Analysis...")
 
     try:
         from holo_index.qwen_advisor.llm_engine import QwenInferenceEngine
@@ -89,7 +89,7 @@ def test_code_analysis():
         )
 
         if not engine.initialize():
-            print("❌ Could not initialize for code analysis")
+            print("[FAIL] Could not initialize for code analysis")
             return False
 
         # Test code analysis
@@ -108,19 +108,19 @@ def test_code_analysis():
         print(f"  Recommendations: {len(analysis.get('recommendations', []))}")
 
         if analysis.get('guidance') and len(analysis['guidance']) > 20:
-            print("✅ Code analysis successful!")
+            print("[OK] Code analysis successful!")
             return True
         else:
-            print("❌ Code analysis failed")
+            print("[FAIL] Code analysis failed")
             return False
 
     except Exception as e:
-        print(f"❌ Code analysis test failed: {e}")
+        print(f"[FAIL] Code analysis test failed: {e}")
         return False
 
 def main():
     """Run LLM functionality tests."""
-    print("🚀 Qwen LLM Functionality Test")
+    print("[ROCKET] Qwen LLM Functionality Test")
     print("=" * 50)
 
     # Test basic inference
@@ -135,7 +135,7 @@ def main():
 
     # Summary
     print("\n" + "=" * 50)
-    print("📊 FUNCTIONALITY TEST RESULTS")
+    print("[DATA] FUNCTIONALITY TEST RESULTS")
 
     tests = [
         ("Basic Inference", inference_ok),
@@ -144,7 +144,7 @@ def main():
 
     passed = 0
     for test_name, success in tests:
-        status = "✅ PASS" if success else "❌ FAIL"
+        status = "[OK] PASS" if success else "[FAIL] FAIL"
         print(f"  {test_name}: {status}")
         if success:
             passed += 1
@@ -152,12 +152,12 @@ def main():
     print(f"\nOverall: {passed}/{len(tests)} functionality tests passed")
 
     if passed == len(tests):
-        print("🎉 Full LLM functionality working!")
-        print("🤖 HoloIndex now has REAL AI intelligence!")
+        print("[CELEBRATE] Full LLM functionality working!")
+        print("[BOT] HoloIndex now has REAL AI intelligence!")
     elif passed > 0:
-        print("⚠️  Partial functionality - some features working")
+        print("[U+26A0]️  Partial functionality - some features working")
     else:
-        print("💥 No LLM functionality working")
+        print("[U+1F4A5] No LLM functionality working")
 
     return passed == len(tests)
 

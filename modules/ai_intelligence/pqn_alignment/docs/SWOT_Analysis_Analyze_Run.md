@@ -8,102 +8,102 @@
 
 ---
 
-## 🔍 **STRENGTHS**
+## [SEARCH] **STRENGTHS**
 
 ### Functionality
-- ✅ **Complete analysis pipeline** - Reads results.csv and prints concise summary
-- ✅ **Pandas integration** - Uses mature data analysis library
-- ✅ **Error handling** - Proper FileNotFoundError and RuntimeError handling
-- ✅ **Labeling integration** - Uses existing `classify_rows()` from labeling.py
-- ✅ **Clear output format** - Structured top stable/unstable motifs display
+- [OK] **Complete analysis pipeline** - Reads results.csv and prints concise summary
+- [OK] **Pandas integration** - Uses mature data analysis library
+- [OK] **Error handling** - Proper FileNotFoundError and RuntimeError handling
+- [OK] **Labeling integration** - Uses existing `classify_rows()` from labeling.py
+- [OK] **Clear output format** - Structured top stable/unstable motifs display
 
 ### Code Quality
-- ✅ **Lightweight** - Only 32 lines, well under WSP 62 limit
-- ✅ **Single responsibility** - Clear purpose as run directory analyzer
-- ✅ **Type hints** - Returns `Tuple[int, int]` with clear semantics
-- ✅ **Local imports** - pandas imported only when needed
+- [OK] **Lightweight** - Only 32 lines, well under WSP 62 limit
+- [OK] **Single responsibility** - Clear purpose as run directory analyzer
+- [OK] **Type hints** - Returns `Tuple[int, int]` with clear semantics
+- [OK] **Local imports** - pandas imported only when needed
 
 ### WSP Compliance
-- ✅ **WSP 84 compliant** - Uses existing `classify_rows()` instead of reimplementing
-- ✅ **WSP 49 compliant** - Proper module structure and documentation
+- [OK] **WSP 84 compliant** - Uses existing `classify_rows()` instead of reimplementing
+- [OK] **WSP 49 compliant** - Proper module structure and documentation
 
 ---
 
-## ⚠️ **WEAKNESSES**
+## [U+26A0]️ **WEAKNESSES**
 
 ### Usage
-- ❌ **Zero inbound references** - No other modules import or use this
-- ❌ **Standalone tool** - Not integrated into any DAE or workflow
-- ❌ **Manual execution only** - No automated or programmatic usage
+- [FAIL] **Zero inbound references** - No other modules import or use this
+- [FAIL] **Standalone tool** - Not integrated into any DAE or workflow
+- [FAIL] **Manual execution only** - No automated or programmatic usage
 
 ### Integration
-- ❌ **Not integrated with YouTube DAE** - No chat commands or PQN orchestrator usage
-- ❌ **Not integrated with main.py** - No CLI option or menu integration
-- ❌ **No test coverage** - No tests verify functionality
+- [FAIL] **Not integrated with YouTube DAE** - No chat commands or PQN orchestrator usage
+- [FAIL] **Not integrated with main.py** - No CLI option or menu integration
+- [FAIL] **No test coverage** - No tests verify functionality
 
 ### Dependencies
-- ❌ **Heavy dependency** - Requires pandas for simple CSV analysis
-- ❌ **Indirect dependency chain** - Depends on `labeling.py` which may have own dependencies
+- [FAIL] **Heavy dependency** - Requires pandas for simple CSV analysis
+- [FAIL] **Indirect dependency chain** - Depends on `labeling.py` which may have own dependencies
 
 ---
 
-## 🚀 **OPPORTUNITIES**
+## [ROCKET] **OPPORTUNITIES**
 
 ### Integration Potential
-- 🔄 **YouTube DAE integration** - Could add `/analyze` command for PQN run analysis
-- 🔄 **PQN orchestrator integration** - Could be called after campaign completion
-- 🔄 **CLI integration** - Could add to main.py PQN menu options
+- [REFRESH] **YouTube DAE integration** - Could add `/analyze` command for PQN run analysis
+- [REFRESH] **PQN orchestrator integration** - Could be called after campaign completion
+- [REFRESH] **CLI integration** - Could add to main.py PQN menu options
 
 ### Enhancement Potential
-- 🔄 **Web interface** - Could create simple web UI for run analysis
-- 🔄 **Automated analysis** - Could trigger automatically after PQN runs
-- 🔄 **Enhanced output** - Could generate charts, reports, or export formats
+- [REFRESH] **Web interface** - Could create simple web UI for run analysis
+- [REFRESH] **Automated analysis** - Could trigger automatically after PQN runs
+- [REFRESH] **Enhanced output** - Could generate charts, reports, or export formats
 
 ### Consolidation Opportunities
-- 🔄 **Merge with spectral_analyzer** - Both analyze PQN run data
-- 🔄 **Integrate into orchestrator** - Make part of PQN research workflow
+- [REFRESH] **Merge with spectral_analyzer** - Both analyze PQN run data
+- [REFRESH] **Integrate into orchestrator** - Make part of PQN research workflow
 
 ---
 
-## 🚨 **THREATS**
+## [ALERT] **THREATS**
 
 ### Dependency Risks
-- ⚠️ **labeling.py dependency** - If labeling.py is archived, this breaks
-- ⚠️ **pandas dependency** - Heavy library for simple CSV reading
-- ⚠️ **Orphaned functionality** - No integration means functionality could be lost
+- [U+26A0]️ **labeling.py dependency** - If labeling.py is archived, this breaks
+- [U+26A0]️ **pandas dependency** - Heavy library for simple CSV reading
+- [U+26A0]️ **Orphaned functionality** - No integration means functionality could be lost
 
 ### Compatibility Issues
-- ⚠️ **CSV format assumptions** - Hardcoded column names may break with format changes
-- ⚠️ **File path assumptions** - Expects specific directory structure
+- [U+26A0]️ **CSV format assumptions** - Hardcoded column names may break with format changes
+- [U+26A0]️ **File path assumptions** - Expects specific directory structure
 
 ### WSP Violation Potential
-- ⚠️ **WSP 65 risk** - Archiving could lose unique analysis capability
-- ⚠️ **WSP 84 risk** - Future developers might recreate this functionality
+- [U+26A0]️ **WSP 65 risk** - Archiving could lose unique analysis capability
+- [U+26A0]️ **WSP 84 risk** - Future developers might recreate this functionality
 
 ---
 
-## 📊 **COMPARATIVE ANALYSIS**
+## [DATA] **COMPARATIVE ANALYSIS**
 
 ### Similar Modules
 | Feature | analyze_run.py | spectral_analyzer.py | Winner | Notes |
 |---------|----------------|---------------------|---------|--------|
-| CSV Analysis | ✅ Direct | ❌ No | analyze_run | Core strength |
-| PQN Integration | ❌ No | ✅ Yes | spectral_analyzer | Better integration |
-| Automation | ❌ Manual | ✅ Automated | spectral_analyzer | Workflow integration |
-| Output Format | ✅ Human readable | ❌ Technical | analyze_run | Better UX |
-| Dependencies | ❌ Heavy (pandas) | ✅ Light | spectral_analyzer | Better architecture |
+| CSV Analysis | [OK] Direct | [FAIL] No | analyze_run | Core strength |
+| PQN Integration | [FAIL] No | [OK] Yes | spectral_analyzer | Better integration |
+| Automation | [FAIL] Manual | [OK] Automated | spectral_analyzer | Workflow integration |
+| Output Format | [OK] Human readable | [FAIL] Technical | analyze_run | Better UX |
+| Dependencies | [FAIL] Heavy (pandas) | [OK] Light | spectral_analyzer | Better architecture |
 
 ---
 
-## 🎯 **WSP 79 DECISION MATRIX**
+## [TARGET] **WSP 79 DECISION MATRIX**
 
 ### Functionality Preservation Checklist
-- [ ] **All features documented** - ✅ Simple CSV analysis documented
-- [ ] **Migration plan created** - ⚠️ Need to decide: integrate or archive
-- [ ] **No functionality will be lost** - ⚠️ Risk if not integrated elsewhere
-- [ ] **WSP compliance maintained** - ✅ Current WSP compliant
-- [ ] **Tests will still pass** - ✅ No tests to break
-- [ ] **Rollback plan exists** - ✅ Git history preservation
+- [ ] **All features documented** - [OK] Simple CSV analysis documented
+- [ ] **Migration plan created** - [U+26A0]️ Need to decide: integrate or archive
+- [ ] **No functionality will be lost** - [U+26A0]️ Risk if not integrated elsewhere
+- [ ] **WSP compliance maintained** - [OK] Current WSP compliant
+- [ ] **Tests will still pass** - [OK] No tests to break
+- [ ] **Rollback plan exists** - [OK] Git history preservation
 
 ### Recommended Action: **CONDITIONAL ARCHIVE**
 
@@ -113,18 +113,18 @@
 - Could be recreated easily if needed (32 lines, simple logic)
 
 **Conditions for Archive**:
-1. ✅ Verify `labeling.py` is preserved (dependency)
-2. ✅ Document functionality in PQN alignment docs
-3. ✅ Create git tag `pre-consolidation-analyze_run`
-4. ✅ Archive to `modules/ai_intelligence/pqn_alignment/_archive/`
+1. [OK] Verify `labeling.py` is preserved (dependency)
+2. [OK] Document functionality in PQN alignment docs
+3. [OK] Create git tag `pre-consolidation-analyze_run`
+4. [OK] Archive to `modules/ai_intelligence/pqn_alignment/_archive/`
 
 **Alternative**: Integrate into `spectral_analyzer.py` or `pqn_research_dae_orchestrator.py`
 
 ---
 
-## 📋 **WSP 79 IMPLEMENTATION PLAN**
+## [CLIPBOARD] **WSP 79 IMPLEMENTATION PLAN**
 
-### Phase 1: Verification ✅
+### Phase 1: Verification [OK]
 - [x] Complete SWOT analysis
 - [x] Verify no active imports (confirmed: zero references)
 - [x] Check functionality exists elsewhere (similar in spectral_analyzer)
@@ -139,4 +139,4 @@
 - [ ] Move to `_archive/analyze_run_2025_09_20/`
 - [ ] Update WSP 88 remediation log
 
-**Status**: ✅ **APPROVED FOR ARCHIVE** - Safe to proceed with WSP 88 surgical removal
+**Status**: [OK] **APPROVED FOR ARCHIVE** - Safe to proceed with WSP 88 surgical removal

@@ -169,12 +169,12 @@ WSP 37 integrates with the Discovery Evaluation System (`holo_index/adaptive_lea
 
 **Integration with WSP 37:**
 ```
-Discovery Score → MPS Complexity/Impact Assessment
-├── Information Access (8/10) → High Impact on Decision Quality
-├── Decision Support (9/10) → Critical for Autonomous Operations
-├── Learning Velocity (7/10) → Medium Complexity Implementation
-├── Ecosystem Integration (6/10) → High Priority for Scaling
-└── Autonomous Evolution (5/10) → Foundation for Future Enhancement
+Discovery Score -> MPS Complexity/Impact Assessment
++-- Information Access (8/10) -> High Impact on Decision Quality
++-- Decision Support (9/10) -> Critical for Autonomous Operations
++-- Learning Velocity (7/10) -> Medium Complexity Implementation
++-- Ecosystem Integration (6/10) -> High Priority for Scaling
++-- Autonomous Evolution (5/10) -> Foundation for Future Enhancement
 ```
 
 ### 37.4.2. Continuous Evaluation Integration

@@ -10,7 +10,7 @@
 - Telemetry + rate limits; incident path
 - Minimal GCP deploy (Cloud Run + static frontend)
 
-## MVP (freemium→premium)
+## MVP (freemium->premium)
 - Auth (Firebase), quotas (free tier), optional premium toggle
 - Evidence attestation (EAS or minimal registry) + badge mint (optional)
 - SLO/status page; feedback intake loop

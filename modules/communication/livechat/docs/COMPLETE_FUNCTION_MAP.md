@@ -1,12 +1,12 @@
 # Complete YouTube DAE Function Map - Step-by-Step Guide
 
-## 🎯 YouTube DAE Complete Architecture
+## [TARGET] YouTube DAE Complete Architecture
 
 This document provides a comprehensive step-by-step map of ALL functions in the YouTube DAE system, showing exactly how data flows through the entire module.
 
 ---
 
-## 🚀 PHASE 1: System Startup
+## [ROCKET] PHASE 1: System Startup
 
 ### 1.1 Main Entry Point
 ```yaml
@@ -19,8 +19,8 @@ main.py:
     3. Initialize YouTube DAE
     4. Start monitoring loop
   calls:
-    → auto_moderator_dae.py:YouTubeDAE.__init__()
-    → auto_moderator_dae.py:run()
+    -> auto_moderator_dae.py:YouTubeDAE.__init__()
+    -> auto_moderator_dae.py:run()
 ```
 
 ### 1.2 DAE Initialization
@@ -39,9 +39,9 @@ auto_moderator_dae.py:
     - self.orchestrator (SocialMediaOrchestrator)
     - self.posted_streams (memory dict)
   calls:
-    → livechat_core.py:LiveChatCore.__init__()
-    → social_media_orchestrator.py:SocialMediaOrchestrator.__init__()
-    → single_instance.py:SingleInstance.acquire_lock()
+    -> livechat_core.py:LiveChatCore.__init__()
+    -> social_media_orchestrator.py:SocialMediaOrchestrator.__init__()
+    -> single_instance.py:SingleInstance.acquire_lock()
 ```
 
 ### 1.3 LiveChat Core Setup
@@ -61,15 +61,15 @@ livechat_core.py:
     - self.chat_sender (ChatSender)
     - self.message_processor (MessageProcessor)
   calls:
-    → youtube_auth.py:get_authenticated_service()
-    → chat_poller.py:ChatPoller.__init__()
-    → chat_sender.py:ChatSender.__init__()
-    → message_processor.py:MessageProcessor.__init__()
+    -> youtube_auth.py:get_authenticated_service()
+    -> chat_poller.py:ChatPoller.__init__()
+    -> chat_sender.py:ChatSender.__init__()
+    -> message_processor.py:MessageProcessor.__init__()
 ```
 
 ---
 
-## 🔍 PHASE 2: Stream Detection
+## [SEARCH] PHASE 2: Stream Detection
 
 ### 2.1 Find Active Stream
 ```yaml
@@ -83,8 +83,8 @@ auto_moderator_dae.py:
     4. Validate stream is live
     5. Return video_id and chat_id
   calls:
-    → stream_resolver.py:find_active_stream()
-    → stream_resolver.py:clear_cache()
+    -> stream_resolver.py:find_active_stream()
+    -> stream_resolver.py:clear_cache()
 ```
 
 ### 2.2 Stream Resolution (No-Quota First)
@@ -99,9 +99,9 @@ stream_resolver.py:
     4. Fallback to API search if needed
     5. Cache successful result
   calls:
-    → no_quota_stream_checker.py:check_channel_for_live()
-    → stream_resolver.py:_get_live_chat_id()
-    → stream_resolver.py:_find_live_stream_from_videos() [fallback]
+    -> no_quota_stream_checker.py:check_channel_for_live()
+    -> stream_resolver.py:_get_live_chat_id()
+    -> stream_resolver.py:_find_live_stream_from_videos() [fallback]
 ```
 
 ### 2.3 No-Quota Stream Checker
@@ -136,7 +136,7 @@ stream_resolver.py:
 
 ---
 
-## 💬 PHASE 3: Chat Monitoring
+## [U+1F4AC] PHASE 3: Chat Monitoring
 
 ### 3.1 Initialize Session
 ```yaml
@@ -149,9 +149,9 @@ livechat_core.py:
     3. Send greeting message
     4. Start monitoring
   calls:
-    → session_manager.py:SessionManager.__init__()
-    → greeting_generator.py:generate_greeting()
-    → chat_sender.py:send_chat_message()
+    -> session_manager.py:SessionManager.__init__()
+    -> greeting_generator.py:generate_greeting()
+    -> chat_sender.py:send_chat_message()
 ```
 
 ### 3.2 Poll Messages Loop
@@ -166,9 +166,9 @@ livechat_core.py:
     4. Handle rate limiting
     5. Sleep for poll interval
   calls:
-    → chat_poller.py:poll_messages()
-    → message_processor.py:process_message()
-    → throttle_manager.py:check_rate_limit()
+    -> chat_poller.py:poll_messages()
+    -> message_processor.py:process_message()
+    -> throttle_manager.py:check_rate_limit()
 ```
 
 ### 3.3 Chat Polling
@@ -193,18 +193,18 @@ message_processor.py:
   steps:
     1. Extract message content
     2. Check for slash commands
-    3. Check consciousness triggers (✊✋🖐)
+    3. Check consciousness triggers ([U+270A][U+270B][U+1F590])
     4. Check for mentions
     5. Route to appropriate handler
   calls:
-    → command_handler.py:handle_command() [if command]
-    → banter_engine.py:generate_response() [if trigger]
-    → quiz_handler.py:process_quiz_response() [if quiz]
+    -> command_handler.py:handle_command() [if command]
+    -> banter_engine.py:generate_response() [if trigger]
+    -> quiz_handler.py:process_quiz_response() [if quiz]
 ```
 
 ---
 
-## 🎮 PHASE 4: Command Handling
+## [GAME] PHASE 4: Command Handling
 
 ### 4.1 Command Router
 ```yaml
@@ -218,14 +218,14 @@ command_handler.py:
     4. Format response
     5. Send to chat
   commands:
-    /help → show_help()
-    /stats → show_stats()
-    /toggle → toggle_consciousness()
-    /quiz → start_quiz()
-    /whack → whack_player()
-    /scores → show_scores()
-    /0102 → master_switch()
-    /PQN → pqn_research()
+    /help -> show_help()
+    /stats -> show_stats()
+    /toggle -> toggle_consciousness()
+    /quiz -> start_quiz()
+    /whack -> whack_player()
+    /scores -> show_scores()
+    /0102 -> master_switch()
+    /PQN -> pqn_research()
 ```
 
 ### 4.2 Consciousness Toggle
@@ -255,12 +255,12 @@ quiz_handler.py:
     4. Send to chat
     5. Track active quiz
   calls:
-    → chat_sender.py:send_chat_message()
+    -> chat_sender.py:send_chat_message()
 ```
 
 ---
 
-## 📢 PHASE 5: Social Media Posting
+## [U+1F4E2] PHASE 5: Social Media Posting
 
 ### 5.1 Trigger Posting
 ```yaml
@@ -274,9 +274,9 @@ auto_moderator_dae.py:
     4. Post to platforms
     5. Save to memory
   calls:
-    → _check_duplicate_posting()
-    → _get_stream_details()
-    → social_media_orchestrator.py:post_stream_notification()
+    -> _check_duplicate_posting()
+    -> _get_stream_details()
+    -> social_media_orchestrator.py:post_stream_notification()
 ```
 
 ### 5.2 Duplicate Prevention
@@ -305,13 +305,13 @@ social_media_orchestrator.py:
     4. Log results
     5. Return success/failure
   calls:
-    → linkedin_agent.py:post_update()
-    → x_twitter_dae.py:post_tweet()
+    -> linkedin_agent.py:post_update()
+    -> x_twitter_dae.py:post_tweet()
 ```
 
 ---
 
-## 🔄 PHASE 6: Stream Switching
+## [REFRESH] PHASE 6: Stream Switching
 
 ### 6.1 Detect Stream End
 ```yaml
@@ -356,7 +356,7 @@ stream_resolver.py:
 
 ---
 
-## 🤖 PHASE 7: AI Response Generation
+## [BOT] PHASE 7: AI Response Generation
 
 ### 7.1 Banter Engine
 ```yaml
@@ -370,8 +370,8 @@ banter_engine.py:
     4. Format response
     5. Remove markdown for YouTube
   calls:
-    → grok_api.py:generate()
-    → chat_sender.py:send_chat_message()
+    -> grok_api.py:generate()
+    -> chat_sender.py:send_chat_message()
 ```
 
 ### 7.2 PQN Research Integration
@@ -389,7 +389,7 @@ pqn_alignment/detector/api.py:
 
 ---
 
-## 🔐 PHASE 8: Authentication & Quota
+## [U+1F510] PHASE 8: Authentication & Quota
 
 ### 8.1 YouTube Authentication
 ```yaml
@@ -434,7 +434,7 @@ youtube_auth.py:
 
 ---
 
-## 💾 PHASE 9: Memory & State
+## [U+1F4BE] PHASE 9: Memory & State
 
 ### 9.1 Memory Files
 ```yaml
@@ -461,7 +461,7 @@ session_manager.py:
 
 ---
 
-## 🚨 PHASE 10: Error Handling
+## [ALERT] PHASE 10: Error Handling
 
 ### 10.1 Quota Exhaustion Handler
 ```yaml
@@ -491,7 +491,7 @@ livechat_core.py:
 
 ---
 
-## 📊 Complete Function Statistics
+## [DATA] Complete Function Statistics
 
 ```yaml
 total_modules: 28
@@ -510,7 +510,7 @@ key_metrics:
 
 ---
 
-## 🎯 Navigation Shortcuts
+## [TARGET] Navigation Shortcuts
 
 ### Find Specific Functionality
 ```bash
@@ -530,13 +530,13 @@ grep -n "post_stream\|trigger_social" modules/*/src/*.py
 ### Trace Execution Path
 ```bash
 # From startup to chat monitoring
-main.py → auto_moderator_dae.py → livechat_core.py → chat_poller.py
+main.py -> auto_moderator_dae.py -> livechat_core.py -> chat_poller.py
 
 # From message to response
-chat_poller.py → message_processor.py → command_handler.py → chat_sender.py
+chat_poller.py -> message_processor.py -> command_handler.py -> chat_sender.py
 
 # From stream end to reconnect
-auto_moderator_dae.py → stream_resolver.py → no_quota_stream_checker.py → livechat_core.py
+auto_moderator_dae.py -> stream_resolver.py -> no_quota_stream_checker.py -> livechat_core.py
 ```
 
 ---

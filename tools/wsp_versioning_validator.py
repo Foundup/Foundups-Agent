@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WSP Versioning Validator
 Automated tool to validate WSP semantic versioning compliance across all ModLog files.
 Prevents versioning errors like 2.6.0 instead of 0.2.6.
@@ -152,16 +167,16 @@ class WSPVersioningValidator:
         modlog_files = self.scan_modlog_files()
         all_violations = []
         
-        print(f"🔍 Scanning {len(modlog_files)} ModLog files for versioning compliance...")
+        print(f"[SEARCH] Scanning {len(modlog_files)} ModLog files for versioning compliance...")
         
         for file_path in modlog_files:
             violations = self.validate_file(file_path)
             all_violations.extend(violations)
             
             if violations:
-                print(f"❌ {file_path}: {len(violations)} violations found")
+                print(f"[FAIL] {file_path}: {len(violations)} violations found")
             else:
-                print(f"✅ {file_path}: Compliant")
+                print(f"[OK] {file_path}: Compliant")
         
         return {
             'total_files': len(modlog_files),
@@ -175,16 +190,16 @@ class WSPVersioningValidator:
         modlog_files = self.scan_modlog_files()
         all_fixes = []
         
-        print(f"🔧 Fixing versioning errors in {len(modlog_files)} ModLog files...")
+        print(f"[TOOL] Fixing versioning errors in {len(modlog_files)} ModLog files...")
         
         for file_path in modlog_files:
             fixes = self.fix_versioning_errors(file_path)
             all_fixes.extend(fixes)
             
             if fixes:
-                print(f"✅ {file_path}: Fixed")
+                print(f"[OK] {file_path}: Fixed")
             else:
-                print(f"✅ {file_path}: No fixes needed")
+                print(f"[OK] {file_path}: No fixes needed")
         
         return {
             'total_files': len(modlog_files),
@@ -199,7 +214,7 @@ class WSPVersioningValidator:
         report.append("")
         
         # Summary
-        report.append("## 📊 Summary")
+        report.append("## [DATA] Summary")
         report.append(f"- **Total Files Scanned**: {validation_result['total_files']}")
         report.append(f"- **Compliant Files**: {validation_result['compliant_files']}")
         report.append(f"- **Files with Violations**: {validation_result['files_with_violations']}")
@@ -208,7 +223,7 @@ class WSPVersioningValidator:
         
         # Violations Details
         if validation_result['violations']:
-            report.append("## ❌ Violations Found")
+            report.append("## [FAIL] Violations Found")
             report.append("")
             
             for violation in validation_result['violations']:
@@ -219,18 +234,18 @@ class WSPVersioningValidator:
                 report.append(f"- **Pattern**: `{violation['pattern']}`")
                 report.append("")
         else:
-            report.append("## ✅ All Files Compliant")
+            report.append("## [OK] All Files Compliant")
             report.append("No versioning violations found!")
             report.append("")
         
         # Recommendations
-        report.append("## 🛡️ WSP Versioning Requirements")
+        report.append("## [U+1F6E1]️ WSP Versioning Requirements")
         report.append("")
-        report.append("### ✅ Correct Patterns:")
+        report.append("### [OK] Correct Patterns:")
         report.append("- `Version: 0.2.6`")
         report.append("- `Git Tag: v0.2.6-feature-name`")
         report.append("")
-        report.append("### ❌ Forbidden Patterns:")
+        report.append("### [FAIL] Forbidden Patterns:")
         report.append("- `Version: 2.6.0` (Major version 2+ forbidden)")
         report.append("- `Version: 1.5.0` (Major version 1+ until MVP)")
         report.append("- `Git Tag: v2.6.0-feature-name`")
@@ -254,7 +269,7 @@ def main():
     validator = WSPVersioningValidator()
     
     if args.check_modlog or args.validate_all:
-        print("🔍 WSP Versioning Compliance Check")
+        print("[SEARCH] WSP Versioning Compliance Check")
         print("=" * 50)
         
         result = validator.validate_all()
@@ -263,29 +278,29 @@ def main():
         if args.output_report:
             with open(args.output_report, 'w', encoding='utf-8') as f:
                 f.write(report)
-            print(f"📄 Report saved to: {args.output_report}")
+            print(f"[U+1F4C4] Report saved to: {args.output_report}")
         else:
             print(report)
         
         if result['violations']:
-            print("\n❌ Versioning violations found!")
+            print("\n[FAIL] Versioning violations found!")
             sys.exit(1)
         else:
-            print("\n✅ All files compliant with WSP versioning!")
+            print("\n[OK] All files compliant with WSP versioning!")
     
     elif args.fix_modlog:
-        print("🔧 WSP Versioning Error Fix")
+        print("[TOOL] WSP Versioning Error Fix")
         print("=" * 50)
         
         result = validator.fix_all()
         
-        print(f"\n📊 Fix Summary:")
+        print(f"\n[DATA] Fix Summary:")
         print(f"- Files processed: {result['total_files']}")
         print(f"- Files fixed: {result['files_fixed']}")
         print(f"- Total fixes applied: {len(result['fixes_applied'])}")
         
         if result['fixes_applied']:
-            print("\n🔧 Fixes Applied:")
+            print("\n[TOOL] Fixes Applied:")
             for fix in result['fixes_applied']:
                 print(f"- {fix['file']}: {fix['changes']}")
     

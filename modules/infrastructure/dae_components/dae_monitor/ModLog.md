@@ -40,7 +40,7 @@ Implemented comprehensive monitoring system for all DAE operations
 
 4. **Dashboard Capabilities**:
    - Register new FoundUp DAEs
-   - Track DAE evolution (POC→Prototype→MVP)
+   - Track DAE evolution (POC->Prototype->MVP)
    - Export metrics to JSON
    - Historical data aggregation
    - Top performer identification

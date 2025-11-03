@@ -80,6 +80,12 @@ memory/*
 02_logs/
 build/
 foundups-agent-clean/
+temp/
+temp/*
+temp_utilities/
+**/temp/
+holo_index/temp/
+modules/**/temp/
 
 # BanterEngine specific
 modules/banter_engine/src/emoji_sequence_map.py
@@ -222,4 +228,4 @@ holo_index_data/models/
 # Browser profiles (large cache files)
 **/browser_profiles/*/edge/
 **/browser_profiles/x_foundups/
-modules/platform_integration/browser_profiles/
+modules/platform_integration/browser_profiles/credentials/

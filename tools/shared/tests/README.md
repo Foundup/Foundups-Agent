@@ -62,9 +62,9 @@ When adding tests for shared utilities:
 
 ```
 tools/shared/tests/
-├── README.md              ← This file
-├── test_pagination.py     ← Pagination system testing
-└── [future_test_files]    ← Additional shared utility tests
++-- README.md              <- This file
++-- test_pagination.py     <- Pagination system testing
++-- [future_test_files]    <- Additional shared utility tests
 ```
 
 ## Integration Points

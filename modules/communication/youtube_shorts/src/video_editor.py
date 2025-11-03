@@ -104,7 +104,7 @@ class VideoEditor:
             check=True
         )
 
-        print(f"[VideoEditor] ✅ Concatenated {len(clip_paths)} clips")
+        print(f"[VideoEditor] [OK] Concatenated {len(clip_paths)} clips")
         print(f"  Output: {output_path}")
 
         return str(output_path)
@@ -159,7 +159,7 @@ class VideoEditor:
         print("[VideoEditor] Running ffmpeg (with transitions)...")
         subprocess.run(cmd, capture_output=True, check=True)
 
-        print(f"[VideoEditor] ✅ Concatenated with transitions")
+        print(f"[VideoEditor] [OK] Concatenated with transitions")
         return str(output_path)
 
     def ensure_shorts_format(self, video_path: str) -> str:
@@ -222,11 +222,11 @@ if __name__ == "__main__":
 
     # Check ffmpeg
     if not editor.verify_ffmpeg_installed():
-        print("❌ ffmpeg not installed")
+        print("[FAIL] ffmpeg not installed")
         print("   Install: choco install ffmpeg (Windows)")
         exit(1)
 
-    print("✅ ffmpeg installed and ready!")
+    print("[OK] ffmpeg installed and ready!")
 
     # Test with example clips (if they exist)
     test_clips = [
@@ -239,7 +239,7 @@ if __name__ == "__main__":
     existing_clips = [c for c in test_clips if Path(c).exists()]
 
     if existing_clips:
-        print(f"\n🎬 Testing concatenation with {len(existing_clips)} clips...")
+        print(f"\n[U+1F3AC] Testing concatenation with {len(existing_clips)} clips...")
 
         output = "modules/communication/youtube_shorts/assets/test/concatenated.mp4"
 
@@ -250,6 +250,6 @@ if __name__ == "__main__":
         )
 
         duration = editor.get_video_duration(final_video)
-        print(f"\n✅ Final video: {duration:.1f} seconds")
+        print(f"\n[OK] Final video: {duration:.1f} seconds")
     else:
         print("\n⏭️  No test clips found (will work once Veo 3 generates them)")

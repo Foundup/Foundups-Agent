@@ -8,9 +8,13 @@ Stealth mode evolution
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -486,7 +490,7 @@ class AntiDetectionLinkedIn:
             # LINKEDIN URL FIX - HOW IT WORKS
             # ========================================================================
             #
-            # ⚠️ CRITICAL: DO NOT CHANGE THIS URL LOGIC WITHOUT READING:
+            # [U+26A0]️ CRITICAL: DO NOT CHANGE THIS URL LOGIC WITHOUT READING:
             #    modules/platform_integration/social_media_orchestrator/docs/LINKEDIN_URL_FIX.md
             #
             # PROBLEM: LinkedIn was redirecting to /unavailable/ when using vanity URLs
@@ -515,7 +519,7 @@ class AntiDetectionLinkedIn:
             #   3. Browser stays open for manual verification/posting
             #   4. No Selenium element clicking needed - direct URL does everything
             #
-            # TESTED: All 3 company pages open correctly to posting interface ✅
+            # TESTED: All 3 company pages open correctly to posting interface [OK]
             #
             # DOCUMENTATION:
             #   - Full fix details: modules/platform_integration/social_media_orchestrator/docs/LINKEDIN_URL_FIX.md
@@ -686,7 +690,7 @@ class AntiDetectionLinkedIn:
                         )
                         if post_button:
                             print(f"[OK] Found Post button with selector: {selector}")
-                            logger.info(f"[LINKEDIN] ✅ Found Post button with selector: {selector}")
+                            logger.info(f"[LINKEDIN] [OK] Found Post button with selector: {selector}")
                             logger.info(f"[LINKEDIN] Button text: {post_button.text}, enabled: {post_button.is_enabled()}")
                             break
                     except:

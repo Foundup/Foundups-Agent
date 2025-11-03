@@ -271,7 +271,7 @@ class SessionController:
     def _generate_invitation_message(self, session_info: SessionInfo, participant: str) -> str:
         """Generate invitation message for participant"""
         return f"""
-🤝 Meeting Starting Now!
+[HANDSHAKE] Meeting Starting Now!
 
 Platform: {session_info.platform.title()}
 Meeting Link: {session_info.meeting_link or 'Generating...'}
@@ -347,23 +347,23 @@ async def demo_session_controller():
     
     # Launch session
     session = await controller.launch_session(launch_request)
-    print(f"✅ Session launched: {session.session_id}")
-    print(f"📍 Platform: {session.platform}")
-    print(f"🔗 Link: {session.meeting_link}")
-    print(f"👥 Participants: {', '.join(session.participants)}")
+    print(f"[OK] Session launched: {session.session_id}")
+    print(f"[PIN] Platform: {session.platform}")
+    print(f"[LINK] Link: {session.meeting_link}")
+    print(f"[U+1F465] Participants: {', '.join(session.participants)}")
     
     # Check session status
     await asyncio.sleep(2)
     status = await controller.get_session_status(session.session_id)
-    print(f"📊 Status: {status.status.value}")
+    print(f"[DATA] Status: {status.status.value}")
     
     # Get statistics
     stats = await controller.get_session_statistics()
-    print(f"📈 Statistics: {stats}")
+    print(f"[UP] Statistics: {stats}")
     
     # End session
     await controller.end_session(session.session_id, "demo_completed")
-    print(f"🏁 Session ended")
+    print(f"[U+1F3C1] Session ended")
     
     return controller
 

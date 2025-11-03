@@ -28,7 +28,7 @@ class StreamEndDetector:
             Tuple of (is_live, status_message)
         """
         try:
-            logger.info(f"🔍 Checking stream status for {video_id} (no quota)...")
+            logger.info(f"[SEARCH] Checking stream status for {video_id} (no quota)...")
 
             # Use the no-quota checker
             result = await asyncio.to_thread(
@@ -44,20 +44,20 @@ class StreamEndDetector:
             # Detect status change
             if self.last_known_status is not None and self.last_known_status != is_live:
                 if not is_live:
-                    logger.warning(f"🔚 STREAM ENDED: {title}")
-                    logger.info(f"📊 Detected after {self.check_count} checks (0 API units used)")
+                    logger.warning(f"[U+1F51A] STREAM ENDED: {title}")
+                    logger.info(f"[DATA] Detected after {self.check_count} checks (0 API units used)")
                     return False, f"Stream '{title}' has ended"
                 else:
-                    logger.info(f"🎬 STREAM STARTED: {title}")
+                    logger.info(f"[U+1F3AC] STREAM STARTED: {title}")
                     return True, f"Stream '{title}' is now live"
 
             self.last_known_status = is_live
 
             if is_live:
-                logger.info(f"✅ Stream still live: {title}")
+                logger.info(f"[OK] Stream still live: {title}")
                 return True, f"Stream '{title}' is live"
             else:
-                logger.info(f"❌ Stream not live: {title}")
+                logger.info(f"[FAIL] Stream not live: {title}")
                 return False, f"Stream '{title}' is not live"
 
         except Exception as e:
@@ -73,7 +73,7 @@ class StreamEndDetector:
             video_id: YouTube video ID to monitor
             check_interval: Seconds between checks (default 2 minutes)
         """
-        logger.info(f"👁️ Starting no-quota stream monitoring for {video_id}")
+        logger.info(f"[U+1F441]️ Starting no-quota stream monitoring for {video_id}")
         logger.info(f"⏱️ Will check every {check_interval} seconds")
 
         # Reset state for new monitoring session
@@ -84,18 +84,18 @@ class StreamEndDetector:
             is_live, message = await self.check_stream_status(video_id)
 
             if not is_live:
-                logger.warning(f"🛑 Stream ended: {message}")
-                logger.info(f"💰 Total quota saved: {self.check_count} API units")
+                logger.warning(f"[STOP] Stream ended: {message}")
+                logger.info(f"[U+1F4B0] Total quota saved: {self.check_count} API units")
                 return False  # Stream ended
 
-            logger.info(f"💤 Sleeping {check_interval}s until next check...")
+            logger.info(f"[U+1F4A4] Sleeping {check_interval}s until next check...")
             await asyncio.sleep(check_interval)
 
     def reset(self):
         """Reset detector state for new stream"""
         self.last_known_status = None
         self.check_count = 0
-        logger.info("🔄 Stream end detector reset")
+        logger.info("[REFRESH] Stream end detector reset")
 
 
 async def test_detector():

@@ -1,7 +1,7 @@
 """
 Test suite for Presence Aggregator module.
 
-Achieves ≥80% coverage for PoC milestone.
+Achieves [GREATER_EQUAL]80% coverage for PoC milestone.
 """
 
 import pytest
@@ -320,12 +320,12 @@ if __name__ == "__main__":
         
         # Test aggregator creation
         aggregator = PresenceAggregator()
-        print("✅ Aggregator created successfully")
+        print("[OK] Aggregator created successfully")
         
         # Test platform initialization
         result = await aggregator.initialize_platform(Platform.DISCORD, {})
         assert result is True
-        print("✅ Platform initialization works")
+        print("[OK] Platform initialization works")
         
         # Test presence data
         test_data = PresenceData(
@@ -335,14 +335,14 @@ if __name__ == "__main__":
             last_seen=datetime.now(),
             last_updated=datetime.now()
         )
-        print("✅ Presence data creation works")
+        print("[OK] Presence data creation works")
         
         # Test availability checking
         aggregator.presence_cache["test_user"] = {Platform.DISCORD: test_data}
         availability = await aggregator.are_users_available(["test_user"])
         assert availability["test_user"] is True
-        print("✅ Availability checking works")
+        print("[OK] Availability checking works")
         
-        print("All basic tests passed! 🎉")
+        print("All basic tests passed! [CELEBRATE]")
     
     asyncio.run(run_basic_tests()) 

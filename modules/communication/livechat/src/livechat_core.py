@@ -3,12 +3,12 @@ LiveChat Core - WSP Compliant Module (<500 lines)
 Core YouTube Live Chat listener using modular components
 
 NAVIGATION: This is the central coordinator for YouTube chat
-→ Called by: auto_moderator_dae.py (line 252)
-→ Delegates to: message_processor.py, chat_poller.py, chat_sender.py
-→ For social media: See stream_resolver → simple_posting_orchestrator
-→ For consciousness: See message_processor → consciousness_handler
-→ For throttling: See intelligent_throttle_manager.py
-→ Quick ref: NAVIGATION.py → MODULE_GRAPH['core_flows']['message_processing_flow']
+-> Called by: auto_moderator_dae.py (line 252)
+-> Delegates to: message_processor.py, chat_poller.py, chat_sender.py
+-> For social media: See stream_resolver -> simple_posting_orchestrator
+-> For consciousness: See message_processor -> consciousness_handler
+-> For throttling: See intelligent_throttle_manager.py
+-> Quick ref: NAVIGATION.py -> MODULE_GRAPH['core_flows']['message_processing_flow']
 """
 
 import logging
@@ -155,25 +155,25 @@ class LiveChatCore:
 
         # REVOLUTIONARY: Intelligent credential rotation orchestration
         self.quota_intelligence = None
-        logger.info(f"🔄 [INIT] QuotaIntelligence available: {QuotaIntelligence is not None}")
-        logger.info(f"🔄 [INIT] QuotaMonitor available: {QuotaMonitor is not None}")
+        logger.info(f"[REFRESH] [INIT] QuotaIntelligence available: {QuotaIntelligence is not None}")
+        logger.info(f"[REFRESH] [INIT] QuotaMonitor available: {QuotaMonitor is not None}")
 
         if QuotaIntelligence and QuotaMonitor:
             try:
                 quota_monitor = QuotaMonitor()
                 self.quota_intelligence = QuotaIntelligence(quota_monitor)
-                logger.info("🔄 Intelligent credential rotation system initialized")
+                logger.info("[REFRESH] Intelligent credential rotation system initialized")
             except Exception as e:
-                logger.warning(f"🔄 Could not initialize quota intelligence: {e}", exc_info=True)
+                logger.warning(f"[REFRESH] Could not initialize quota intelligence: {e}", exc_info=True)
                 self.quota_intelligence = None
         else:
-            logger.critical("🔄❌ ROTATION SYSTEM DISABLED - QuotaIntelligence/QuotaMonitor not imported")
+            logger.critical("[REFRESH][FAIL] ROTATION SYSTEM DISABLED - QuotaIntelligence/QuotaMonitor not imported")
 
         # Log final status
         if self.quota_intelligence:
-            logger.info("🔄✅ Rotation intelligence ACTIVE - will check every poll cycle")
+            logger.info("[REFRESH][OK] Rotation intelligence ACTIVE - will check every poll cycle")
         else:
-            logger.critical("🔄❌ Rotation intelligence INACTIVE - manual rotation required")
+            logger.critical("[REFRESH][FAIL] Rotation intelligence INACTIVE - manual rotation required")
         
         # Ensure memory directory exists
         os.makedirs(self.memory_dir, exist_ok=True)
@@ -220,7 +220,7 @@ class LiveChatCore:
         # Start memory manager session for automatic logging
         stream_title = getattr(self.session_manager, 'stream_title', None)
         self.memory_manager.start_session(self.video_id, stream_title)
-        logger.info(f"📹 Started automatic session logging for video {self.video_id}")
+        logger.info(f"[U+1F4F9] Started automatic session logging for video {self.video_id}")
 
         # Send greeting
         await self.session_manager.send_greeting(self.send_chat_message)
@@ -278,7 +278,7 @@ class LiveChatCore:
         if issues:
             for issue in issues:
                 if issue.issue_type == 'duplicate' and issue.severity in ['high', 'critical']:
-                    logger.warning(f"⚠️ Duplicate message detected, skipping: {message_text[:50]}...")
+                    logger.warning(f"[U+26A0]️ Duplicate message detected, skipping: {message_text[:50]}...")
                     # Integrate with self-improvement
                     if hasattr(self.message_processor, 'self_improvement'):
                         self.message_processor.self_improvement.observe_system_issue(
@@ -402,13 +402,13 @@ class LiveChatCore:
                             "has_consciousness": False,  # Router handles this internally
                             "has_whack_command": True if router_response.get("response") else False
                         }
-                        logger.debug(f"🔄 Router processed message from {author_name}")
+                        logger.debug(f"[REFRESH] Router processed message from {author_name}")
                     else:
                         # Router returned no response, use empty processed
                         processed = {}
                 except Exception as e:
                     # Router failed, fallback to legacy processing
-                    logger.warning(f"🔄 Router failed for {author_name}, falling back: {e}")
+                    logger.warning(f"[REFRESH] Router failed for {author_name}, falling back: {e}")
                     processed = self.message_processor.process_message(message)
             else:
                 # Legacy processing mode
@@ -420,16 +420,16 @@ class LiveChatCore:
                 return
 
             # Log ALL messages and their processing result
-            logger.info(f"📨 [{author_name}] ({author_id}): {display_message[:100]}")
+            logger.info(f"[U+1F4E8] [{author_name}] ({author_id}): {display_message[:100]}")
             if processed.get("has_consciousness"):
-                logger.info(f"✨ CONSCIOUSNESS DETECTED from {author_name}!")
+                logger.info(f"[U+2728] CONSCIOUSNESS DETECTED from {author_name}!")
             if processed.get("has_whack_command"):
-                logger.info(f"🎮 WHACK COMMAND DETECTED from {author_name}!")
-                logger.info(f"🔍 DEBUG: Whack command message text: '{display_message}'")
+                logger.info(f"[GAME] WHACK COMMAND DETECTED from {author_name}!")
+                logger.info(f"[SEARCH] DEBUG: Whack command message text: '{display_message}'")
 
             # Debug log for slash commands
             if display_message and display_message.startswith('/'):
-                logger.info(f"🔍 SLASH COMMAND DETECTED: '{display_message}' from {author_name}")
+                logger.info(f"[SEARCH] SLASH COMMAND DETECTED: '{display_message}' from {author_name}")
                 
                 # Check for duplicate command within 5 seconds
                 cache_key = f"{author_id}:{display_message}"
@@ -459,7 +459,7 @@ class LiveChatCore:
                         skip_delay=True,  # Priority message
                         response_type="timeout_announcement"  # Mark as priority
                     )
-                    logger.info(f"⚡🎮 Sent timeout announcement: {processed['announcement'][:50]}...")
+                    logger.info(f"[LIGHTNING][GAME] Sent timeout announcement: {processed['announcement'][:50]}...")
                 if processed.get("level_up"):
                     await asyncio.sleep(0.5)  # Minimal delay between messages
                     # Use centralized send_chat_message for ALL chat
@@ -468,7 +468,7 @@ class LiveChatCore:
                         skip_delay=True,  # Priority message
                         response_type="timeout_announcement"  # Mark as priority
                     )
-                    logger.info(f"⚡🏆 Sent level up: {processed['level_up']}")
+                    logger.info(f"[LIGHTNING][U+1F3C6] Sent level up: {processed['level_up']}")
                 return  # Skip normal processing for events
             
             # Skip if marked to skip
@@ -479,17 +479,17 @@ class LiveChatCore:
             response = await self.message_processor.generate_response(processed)
             
             if response:
-                logger.info(f"📤 Generated response for {author_name}: {response[:100]}")
+                logger.info(f"[U+1F4E4] Generated response for {author_name}: {response[:100]}")
                 # Check if this is a consciousness response or slash command
                 response_type = processed.get("response_type", "general")
                 
                 # SLASH COMMANDS go through intelligent throttling
                 if processed.get("has_whack_command") or display_message.startswith('/'):
-                    logger.info(f"🎮 Sending slash command response (throttled)")
+                    logger.info(f"[GAME] Sending slash command response (throttled)")
                     # Commands use intelligent throttle with 'whack' priority
                     success = await self.send_chat_message(response, response_type="whack")
                 elif response_type == "consciousness":
-                    logger.info(f"🧠 Sending consciousness response (throttled)")
+                    logger.info(f"[AI] Sending consciousness response (throttled)")
                     # Consciousness responses use intelligent throttle
                     success = await self.send_chat_message(response, response_type="consciousness")
                 else:
@@ -497,12 +497,12 @@ class LiveChatCore:
                     actual_type = response_type if response_type != "general" else "maga" if "maga" in response.lower() else "general"
                     success = await self.send_chat_message(response, response_type=actual_type)
                 if success:
-                    logger.info(f"💬 Sent response to {author_name}")
+                    logger.info(f"[U+1F4AC] Sent response to {author_name}")
             else:
                 # Debug: log why no response
                 if display_message.startswith('/'):
-                    logger.warning(f"⚠️ NO RESPONSE for command: '{display_message}' from {author_name}")
-                    logger.warning(f"⚠️ Processed flags: has_whack={processed.get('has_whack_command')}, has_trigger={processed.get('has_trigger')}")
+                    logger.warning(f"[U+26A0]️ NO RESPONSE for command: '{display_message}' from {author_name}")
+                    logger.warning(f"[U+26A0]️ Processed flags: has_whack={processed.get('has_whack_command')}, has_trigger={processed.get('has_trigger')}")
             
             # Log to user file
             self._log_to_user_file(message)
@@ -518,14 +518,14 @@ class LiveChatCore:
             ban_event: Ban event data from chat_poller
         """
         try:
-            logger.info(f"🎯 Processing ban/timeout event: {ban_event.get('type')} - {ban_event.get('target_name')}")
+            logger.info(f"[TARGET] Processing ban/timeout event: {ban_event.get('type')} - {ban_event.get('target_name')}")
             
             # Process through message processor to get announcement
             processed = self.message_processor.process_message(ban_event)
             
             # Check if this was queued for batching
             if processed.get("queued"):
-                logger.info(f"📦 Event queued for batching (pending: {self.message_processor.event_handler.get_pending_count()})")
+                logger.info(f"[BOX] Event queued for batching (pending: {self.message_processor.event_handler.get_pending_count()})")
                 return
             
             # Check if we should skip (already part of a batch)
@@ -533,21 +533,21 @@ class LiveChatCore:
                 logger.info("⏭️ Skipping - part of batch")
                 return
             
-            logger.info(f"📝 Processed result: announcement={bool(processed.get('announcement'))}, is_batched={processed.get('is_batched', False)}")
+            logger.info(f"[NOTE] Processed result: announcement={bool(processed.get('announcement'))}, is_batched={processed.get('is_batched', False)}")
             
             # Send announcements
             if processed.get("announcement"):
                 if processed.get("is_batched"):
-                    logger.info(f"🎯 Sending BATCHED announcement: {processed['announcement'][:50]}...")
+                    logger.info(f"[TARGET] Sending BATCHED announcement: {processed['announcement'][:50]}...")
                 else:
-                    logger.info(f"🎮 Sending timeout announcement: {processed['announcement'][:50]}...")
+                    logger.info(f"[GAME] Sending timeout announcement: {processed['announcement'][:50]}...")
                 await self.send_chat_message(processed["announcement"], response_type="timeout_announcement")
             else:
-                logger.warning("⚠️ No announcement generated for timeout event")
+                logger.warning("[U+26A0]️ No announcement generated for timeout event")
             
             if processed.get("level_up"):
                 await asyncio.sleep(1)  # Small delay between messages
-                logger.info(f"🏆 Sending level up: {processed['level_up']}")
+                logger.info(f"[U+1F3C6] Sending level up: {processed['level_up']}")
                 await self.send_chat_message(processed["level_up"])
                 
         except Exception as e:
@@ -617,11 +617,11 @@ class LiveChatCore:
             else:
                 user_messages.append(message)
 
-        # Process in priority order: OWNER → MOD → USER
+        # Process in priority order: OWNER -> MOD -> USER
         priority_queue = owner_messages + mod_messages + user_messages
 
         if owner_messages:
-            logger.info(f"👑 Processing {len(owner_messages)} OWNER message(s) FIRST (bypassing queue of {len(messages) - len(owner_messages)} others)")
+            logger.info(f"[U+1F451] Processing {len(owner_messages)} OWNER message(s) FIRST (bypassing queue of {len(messages) - len(owner_messages)} others)")
 
         for message in priority_queue:
             await self.process_message(message)
@@ -633,8 +633,8 @@ class LiveChatCore:
         # Check quota status at start
         if self.quota_poller:
             status = self.quota_poller.get_quota_status()
-            logger.warning(f"📊 QUOTA STATUS: {status['status']} - {status['units_used']}/{10000} units used ({status['percentage_used']:.1%})")
-            logger.info(f"💡 Recommendation: {status['recommendation']}")
+            logger.warning(f"[DATA] QUOTA STATUS: {status['status']} - {status['units_used']}/{10000} units used ({status['percentage_used']:.1%})")
+            logger.info(f"[IDEA] Recommendation: {status['recommendation']}")
         last_health_check = time.time()
         last_troll = time.time()
         last_stream_check = time.time()  # Track last stream validation
@@ -654,9 +654,9 @@ class LiveChatCore:
                 if time.time() - last_health_check > health_check_interval:
                     health_report = self.health_analyzer.get_health_report()
                     if health_report['health_score'] < 80:
-                        logger.warning(f"⚠️ System health degraded: {health_report['health_score']:.1f}/100")
+                        logger.warning(f"[U+26A0]️ System health degraded: {health_report['health_score']:.1f}/100")
                         for recommendation in health_report['recommendations']:
-                            logger.info(f"💡 Health recommendation: {recommendation}")
+                            logger.info(f"[IDEA] Health recommendation: {recommendation}")
                     last_health_check = time.time()
                 
                 # Periodic MAGA trolling - ONLY if chat is active
@@ -682,7 +682,7 @@ class LiveChatCore:
                     if hasattr(self.message_processor, 'agentic_engine'):
                         troll_msg = self.message_processor.agentic_engine.generate_proactive_troll()
                         await self.send_chat_message(troll_msg)
-                        logger.info(f"🎯 Sent proactive troll (activity: {recent_msg_count} msgs): {troll_msg[:50]}...")
+                        logger.info(f"[TARGET] Sent proactive troll (activity: {recent_msg_count} msgs): {troll_msg[:50]}...")
                         # Record success pattern for WRE
                         if record_success:
                             record_success('proactive_troll', {'activity': recent_msg_count, 'msg': troll_msg[:50]}, tokens_used=50)
@@ -690,7 +690,7 @@ class LiveChatCore:
                 
                 # Periodic stream health check - detect if stream ended
                 if time.time() - last_stream_check > stream_check_interval:
-                    logger.info("🔍 Checking if stream is still live...")
+                    logger.info("[SEARCH] Checking if stream is still live...")
                     try:
                         if self.youtube:
                             # API mode - check with API
@@ -701,22 +701,22 @@ class LiveChatCore:
 
                             items = response.get('items', [])
                             if not items:
-                                logger.warning("⚠️ Stream not found - may have ended")
+                                logger.warning("[U+26A0]️ Stream not found - may have ended")
                                 consecutive_poll_errors = 5  # Trigger exit
                             else:
                                 live_details = items[0].get('liveStreamingDetails', {})
                                 actual_end_time = live_details.get('actualEndTime')
                                 if actual_end_time:
-                                    logger.warning(f"⚠️ Stream has ended at {actual_end_time}")
-                                    logger.info("🔚 Exiting polling loop - stream ended")
+                                    logger.warning(f"[U+26A0]️ Stream has ended at {actual_end_time}")
+                                    logger.info("[U+1F51A] Exiting polling loop - stream ended")
                                     self.is_running = False
                                     break
                                 else:
-                                    logger.info("✅ Stream is still live")
+                                    logger.info("[OK] Stream is still live")
                                     consecutive_poll_errors = 0  # Reset error counter
                         else:
                             # NO-QUOTA mode - use web scraping to check
-                            logger.info("🌐 NO-QUOTA mode: Checking stream via web scraping...")
+                            logger.info("[U+1F310] NO-QUOTA mode: Checking stream via web scraping...")
                             from modules.platform_integration.stream_resolver.src.no_quota_stream_checker import NoQuotaStreamChecker
 
                             checker = NoQuotaStreamChecker()
@@ -724,15 +724,15 @@ class LiveChatCore:
                             is_live = is_live_result.get('is_live', False)
 
                             if not is_live:
-                                logger.warning("⚠️ Stream appears to have ended (NO-QUOTA check)")
-                                logger.info("🔚 Exiting polling loop - stream ended")
+                                logger.warning("[U+26A0]️ Stream appears to have ended (NO-QUOTA check)")
+                                logger.info("[U+1F51A] Exiting polling loop - stream ended")
                                 self.is_running = False
                                 break
                             else:
-                                logger.info("✅ Stream is still live (NO-QUOTA check)")
+                                logger.info("[OK] Stream is still live (NO-QUOTA check)")
                                 consecutive_poll_errors = 0  # Reset error counter
                     except Exception as e:
-                        logger.warning(f"⚠️ Error checking stream status: {e}")
+                        logger.warning(f"[U+26A0]️ Error checking stream status: {e}")
                     
                     last_stream_check = time.time()
                 
@@ -757,7 +757,7 @@ class LiveChatCore:
                 elif self.quota_poller:
                     should_poll, wait_time = self.quota_poller.should_poll()
                     if not should_poll:
-                        logger.critical("🚨 QUOTA EXHAUSTED - Stopping polling")
+                        logger.critical("[ALERT] QUOTA EXHAUSTED - Stopping polling")
                         self.is_running = False
                         break
 
@@ -771,11 +771,11 @@ class LiveChatCore:
                     try:
                         # Get current credential set (default to 1 if not available)
                         current_set = getattr(self.youtube, 'credential_set', 1)
-                        logger.debug(f"🔄 [ROTATION-CHECK] Checking rotation for Set {current_set}")
+                        logger.debug(f"[REFRESH] [ROTATION-CHECK] Checking rotation for Set {current_set}")
 
                         # Check if rotation is needed
                         rotation_decision = self.quota_intelligence.should_rotate_credentials(current_set)
-                        logger.debug(f"🔄 [ROTATION-CHECK] Decision: should_rotate={rotation_decision['should_rotate']}, urgency={rotation_decision.get('urgency', 'N/A')}")
+                        logger.debug(f"[REFRESH] [ROTATION-CHECK] Decision: should_rotate={rotation_decision['should_rotate']}, urgency={rotation_decision.get('urgency', 'N/A')}")
 
                         if rotation_decision['should_rotate']:
                             urgency = rotation_decision['urgency']
@@ -784,26 +784,26 @@ class LiveChatCore:
 
                             # Log rotation decision with appropriate severity
                             if urgency == 'critical':
-                                logger.critical(f"🔄🚨 CREDENTIAL ROTATION TRIGGERED: {reason}")
+                                logger.critical(f"[REFRESH][ALERT] CREDENTIAL ROTATION TRIGGERED: {reason}")
                             elif urgency == 'high':
-                                logger.warning(f"🔄⚠️ CREDENTIAL ROTATION TRIGGERED: {reason}")
+                                logger.warning(f"[REFRESH][U+26A0]️ CREDENTIAL ROTATION TRIGGERED: {reason}")
                             else:
-                                logger.info(f"🔄 CREDENTIAL ROTATION TRIGGERED: {reason}")
+                                logger.info(f"[REFRESH] CREDENTIAL ROTATION TRIGGERED: {reason}")
 
-                            logger.critical(f"🎯 Rotating from Set {current_set} to Set {target_set}")
-                            logger.info(f"📊 Current available: {rotation_decision['current_available']} units")
-                            logger.info(f"📊 Target available: {rotation_decision['target_available']} units")
-                            logger.info(f"💡 Recommendation: {rotation_decision['recommendation']}")
+                            logger.critical(f"[TARGET] Rotating from Set {current_set} to Set {target_set}")
+                            logger.info(f"[DATA] Current available: {rotation_decision['current_available']} units")
+                            logger.info(f"[DATA] Target available: {rotation_decision['target_available']} units")
+                            logger.info(f"[IDEA] Recommendation: {rotation_decision['recommendation']}")
 
                             # Execute graceful credential rotation
-                            logger.info(f"🔄 EXECUTING ROTATION from Set {current_set} to Set {target_set}")
+                            logger.info(f"[REFRESH] EXECUTING ROTATION from Set {current_set} to Set {target_set}")
 
                             try:
                                 # Import youtube_auth module for service reinitialization
                                 from modules.platform_integration.youtube_auth.src.youtube_auth import get_authenticated_service
 
                                 # Get new YouTube service with target credential set
-                                logger.info(f"🔄 Reinitializing YouTube service with Set {target_set} credentials...")
+                                logger.info(f"[REFRESH] Reinitializing YouTube service with Set {target_set} credentials...")
                                 new_youtube = get_authenticated_service(token_index=target_set)
 
                                 if new_youtube:
@@ -814,26 +814,26 @@ class LiveChatCore:
                                     # Reinitialize quota poller with new service
                                     if hasattr(new_youtube, 'quota_manager'):
                                         self.quota_poller = QuotaAwarePoller(new_youtube.quota_manager)
-                                        logger.info(f"🔄 QuotaAwarePoller reinitialized with Set {target_set}")
+                                        logger.info(f"[REFRESH] QuotaAwarePoller reinitialized with Set {target_set}")
 
-                                    logger.critical(f"✅ ROTATION SUCCESSFUL: Now using Set {target_set} credentials")
-                                    logger.info(f"📊 Available quota on Set {target_set}: {rotation_decision['target_available']} units")
+                                    logger.critical(f"[OK] ROTATION SUCCESSFUL: Now using Set {target_set} credentials")
+                                    logger.info(f"[DATA] Available quota on Set {target_set}: {rotation_decision['target_available']} units")
 
                                     # Continue polling with new credentials
                                     # No need to stop - next poll will use new service
                                 else:
-                                    logger.error(f"❌ ROTATION FAILED: Could not get service for Set {target_set}")
-                                    logger.warning(f"⚠️ Continuing with Set {current_set} credentials")
+                                    logger.error(f"[FAIL] ROTATION FAILED: Could not get service for Set {target_set}")
+                                    logger.warning(f"[U+26A0]️ Continuing with Set {current_set} credentials")
 
                             except Exception as rotation_error:
-                                logger.error(f"❌ ROTATION FAILED: {rotation_error}", exc_info=True)
-                                logger.warning(f"⚠️ Continuing with Set {current_set} credentials")
+                                logger.error(f"[FAIL] ROTATION FAILED: {rotation_error}", exc_info=True)
+                                logger.warning(f"[U+26A0]️ Continuing with Set {current_set} credentials")
 
                     except Exception as e:
-                        logger.error(f"🔄❌ Rotation check failed: {e}", exc_info=True)
+                        logger.error(f"[REFRESH][FAIL] Rotation check failed: {e}", exc_info=True)
 
                 # Poll for messages
-                logger.info(f"🔄 Polling for messages...")
+                logger.info(f"[REFRESH] Polling for messages...")
                 try:
                     messages, original_interval = await self.poll_messages()
                     
@@ -846,8 +846,8 @@ class LiveChatCore:
 
                         # CRITICAL: Handle quota exhaustion (None return)
                         if optimal_interval is None:
-                            logger.critical("🚨 QUOTA EXHAUSTED - calculate_optimal_interval returned None")
-                            logger.critical("🛑 EMERGENCY SHUTDOWN - Stopping all polling to preserve quota")
+                            logger.critical("[ALERT] QUOTA EXHAUSTED - calculate_optimal_interval returned None")
+                            logger.critical("[STOP] EMERGENCY SHUTDOWN - Stopping all polling to preserve quota")
                             self.is_running = False
                             break
 
@@ -860,14 +860,14 @@ class LiveChatCore:
                     if messages:
                         last_activity = time.time()
                         consecutive_empty_polls = 0
-                        logger.debug(f"📬 Got {len(messages)} messages - chat is active")
+                        logger.debug(f"[U+1F4EC] Got {len(messages)} messages - chat is active")
                     else:
                         consecutive_empty_polls += 1
                         time_since_activity = time.time() - last_activity
                         
                         # Agentic detection: Stream might be inactive/ended
                         if time_since_activity > inactivity_timeout:
-                            logger.warning(f"⚠️ No chat activity for {time_since_activity:.0f}s - checking stream status")
+                            logger.warning(f"[U+26A0]️ No chat activity for {time_since_activity:.0f}s - checking stream status")
 
                             # Quick stream validation
                             try:
@@ -880,19 +880,19 @@ class LiveChatCore:
 
                                     items = response.get('items', [])
                                     if not items:
-                                        logger.warning("🔚 Stream disappeared - likely ended")
+                                        logger.warning("[U+1F51A] Stream disappeared - likely ended")
                                         self.is_running = False
                                         break
 
                                     live_details = items[0].get('liveStreamingDetails', {})
                                     actual_end_time = live_details.get('actualEndTime')
                                     if actual_end_time:
-                                        logger.info(f"🔚 Stream confirmed ended at {actual_end_time}")
+                                        logger.info(f"[U+1F51A] Stream confirmed ended at {actual_end_time}")
                                         self.is_running = False
                                         break
                                 else:
                                     # NO-QUOTA mode - use web scraping
-                                    logger.info("🌐 NO-QUOTA mode: Checking if stream ended...")
+                                    logger.info("[U+1F310] NO-QUOTA mode: Checking if stream ended...")
                                     from modules.platform_integration.stream_resolver.src.no_quota_stream_checker import NoQuotaStreamChecker
 
                                     checker = NoQuotaStreamChecker()
@@ -900,21 +900,21 @@ class LiveChatCore:
                                     is_live = is_live_result.get('is_live', False)
 
                                     if not is_live:
-                                        logger.warning("🔚 Stream ended (NO-QUOTA check)")
+                                        logger.warning("[U+1F51A] Stream ended (NO-QUOTA check)")
                                         self.is_running = False
                                         break
 
                                 # Stream exists but no chat activity
                                 if consecutive_empty_polls > 20:  # ~100 seconds of no activity
-                                    logger.warning("💤 Stream appears inactive - may be dead or viewers left")
+                                    logger.warning("[U+1F4A4] Stream appears inactive - may be dead or viewers left")
                                     # Signal to auto_moderator to check for new streams
                                     self.is_running = False
                                     break
 
                             except Exception as e:
-                                logger.warning(f"⚠️ Could not verify stream: {e}")
+                                logger.warning(f"[U+26A0]️ Could not verify stream: {e}")
                                 if consecutive_empty_polls > 30:  # Give up after ~150 seconds
-                                    logger.info("🔄 Assuming stream ended due to prolonged inactivity")
+                                    logger.info("[REFRESH] Assuming stream ended due to prolonged inactivity")
                                     self.is_running = False
                                     break
                 except googleapiclient.errors.HttpError as e:
@@ -933,8 +933,8 @@ class LiveChatCore:
                             )
 
                             if all_exhausted:
-                                logger.critical("🚨 ALL CREDENTIAL SETS EXHAUSTED - EMERGENCY SHUTDOWN")
-                                logger.critical("🛑 Stopping all operations to prevent quota death spiral")
+                                logger.critical("[ALERT] ALL CREDENTIAL SETS EXHAUSTED - EMERGENCY SHUTDOWN")
+                                logger.critical("[STOP] Stopping all operations to prevent quota death spiral")
                                 self.is_running = False
                                 break
 
@@ -949,18 +949,18 @@ class LiveChatCore:
                             break
                     # Check if it's a "live chat ended" error
                     elif "liveChatEnded" in error_details or "forbidden" in error_details.lower():
-                        logger.warning(f"🔚 Live chat has ended: {e}")
+                        logger.warning(f"[U+1F51A] Live chat has ended: {e}")
                         self.is_running = False
                         break
                     elif "notFound" in error_details:
-                        logger.warning(f"🔚 Live chat not found - stream may have ended: {e}")
+                        logger.warning(f"[U+1F51A] Live chat not found - stream may have ended: {e}")
                         self.is_running = False
                         break
                     else:
-                        logger.error(f"❌ Polling error #{consecutive_poll_errors}: {e}")
+                        logger.error(f"[FAIL] Polling error #{consecutive_poll_errors}: {e}")
                         # Only exit after many consecutive API errors (not just quiet chat)
                         if consecutive_poll_errors >= 10:
-                            logger.warning("🔚 Too many API errors - checking if stream ended")
+                            logger.warning("[U+1F51A] Too many API errors - checking if stream ended")
                             # Do one final check before giving up
                             try:
                                 response = self.youtube.videos().list(
@@ -969,7 +969,7 @@ class LiveChatCore:
                                 ).execute()
                                 items = response.get('items', [])
                                 if not items or items[0].get('liveStreamingDetails', {}).get('actualEndTime'):
-                                    logger.warning("🔚 Confirmed: Stream has ended")
+                                    logger.warning("[U+1F51A] Confirmed: Stream has ended")
                                     self.is_running = False
                                     break
                             except:
@@ -979,7 +979,7 @@ class LiveChatCore:
                     poll_interval_ms = 5000
                 except Exception as e:
                     # Other non-API errors
-                    logger.error(f"❌ Unexpected error polling: {e}")
+                    logger.error(f"[FAIL] Unexpected error polling: {e}")
                     messages = []
                     poll_interval_ms = 5000
                 
@@ -992,11 +992,11 @@ class LiveChatCore:
                 if hasattr(self.message_processor, 'event_handler'):
                     pending_count = self.message_processor.event_handler.get_pending_count()
                     if pending_count > 0:
-                        logger.info(f"📦 Checking {pending_count} pending announcements...")
+                        logger.info(f"[BOX] Checking {pending_count} pending announcements...")
                         # Force flush if we have old pending announcements
                         flushed = self.message_processor.event_handler.force_flush()
                         if flushed:
-                            logger.info(f"💥 Flushing batched announcement: {flushed[:50]}...")
+                            logger.info(f"[U+1F4A5] Flushing batched announcement: {flushed[:50]}...")
                             await self.send_chat_message(flushed, response_type="timeout_announcement")
                 
                 # Update viewer count periodically
@@ -1045,7 +1045,7 @@ class LiveChatCore:
 
         # End memory manager session (saves all logs automatically)
         self.memory_manager.end_session()
-        logger.info("📊 Session logs saved to conversation folder")
+        logger.info("[DATA] Session logs saved to conversation folder")
 
         # End session manager session
         self.session_manager.end_session()

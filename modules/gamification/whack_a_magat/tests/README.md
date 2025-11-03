@@ -5,7 +5,7 @@ Run unit tests:
 pytest modules/gamification/tests/test_whack.py -q
 ```
 
-Coverage target: ≥90% for `whack.py`.
+Coverage target: [GREATER_EQUAL]90% for `whack.py`.
 
 ## Test Scripts
 

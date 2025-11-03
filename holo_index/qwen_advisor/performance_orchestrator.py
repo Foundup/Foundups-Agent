@@ -1,11 +1,27 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Performance-Driven Chain-of-Thought Orchestrator
 ===============================================
 
 Data-driven orchestration system that prevents vibecoding through intelligent prioritization.
 
-🎯 Core Mission: Stop vibecoding by orchestrating components based on REAL performance data
+[TARGET] Core Mission: Stop vibecoding by orchestrating components based on REAL performance data
 
 Key Components:
 1. PerformanceTracker - Tracks effectiveness scores over time
@@ -300,8 +316,8 @@ class ChainOfReasoningLogger:
         self.orchestration_sessions.append(reasoning_log)
 
         # Log to system logger with detailed reasoning
-        reasoning_summary = " → ".join(decision.reasoning_chain)
-        logger.info(f"[ORCHESTRATION] {decision.component_name} → {decision.decision_type} "
+        reasoning_summary = " -> ".join(decision.reasoning_chain)
+        logger.info(f"[ORCHESTRATION] {decision.component_name} -> {decision.decision_type} "
                    f"(confidence: {decision.confidence_score:.2f}) | {reasoning_summary}")
 
     def get_recent_reasoning(self, limit: int = 10) -> List[Dict[str, Any]]:

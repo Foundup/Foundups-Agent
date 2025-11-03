@@ -2,7 +2,7 @@
 <!-- WSP 17 Compliant: Pattern documentation for reusability -->
 <!-- Last Updated: 2025-08-28 -->
 
-## 🎮 REGISTERED PATTERNS
+## [GAME] REGISTERED PATTERNS
 
 ### 1. TIMEOUT ANNOUNCEMENT PATTERN
 **File**: `src/timeout_announcer.py`
@@ -22,8 +22,8 @@
 
 **Pattern Structure**:
 ```
-1. Event Detection → 2. Multi-event Window Check → 3. Milestone Check 
-→ 4. Announcement Generation → 5. Terminology Enforcement → 6. Broadcast
+1. Event Detection -> 2. Multi-event Window Check -> 3. Milestone Check 
+-> 4. Announcement Generation -> 5. Terminology Enforcement -> 6. Broadcast
 ```
 
 ### 2. GAMIFICATION SCORING PATTERN
@@ -86,45 +86,45 @@
 - Brand consistency enforcement
 - Language standardization
 
-## 🚀 EXTRACTION TIMELINE
+## [ROCKET] EXTRACTION TIMELINE
 
 ### Single-Use (Current)
 - All patterns currently single-use in whack_a_magat module
 
 ### Dual-Use Target (3 months)
-- TIMEOUT ANNOUNCEMENT PATTERN → Extract for Twitch integration
-- GAMIFICATION SCORING PATTERN → Extract for Discord bot
+- TIMEOUT ANNOUNCEMENT PATTERN -> Extract for Twitch integration
+- GAMIFICATION SCORING PATTERN -> Extract for Discord bot
 
 ### Triple-Use Target (6 months)
 - Create shared gamification library
 - Abstract patterns into reusable components
 
-## 📊 PATTERN METRICS
+## [DATA] PATTERN METRICS
 
 | Pattern | Lines | Complexity | Reusability | WSP Compliance |
 |---------|-------|------------|--------------|----------------|
-| Timeout Announcement | 827 | High | High | ✅ |
-| Gamification Scoring | 406 | Medium | High | ✅ |
-| Spree Tracking | 195 | Medium | Medium | ✅ |
-| Status Broadcasting | 213 | Low | High | ✅ |
-| Terminology Enforcement | 124 | Low | High | ✅ |
+| Timeout Announcement | 827 | High | High | [OK] |
+| Gamification Scoring | 406 | Medium | High | [OK] |
+| Spree Tracking | 195 | Medium | Medium | [OK] |
+| Status Broadcasting | 213 | Low | High | [OK] |
+| Terminology Enforcement | 124 | Low | High | [OK] |
 
-## 🔧 MAINTENANCE NOTES
+## [TOOL] MAINTENANCE NOTES
 
 - **Dependencies**: Patterns 1-4 depend on Pattern 2 (Gamification Scoring)
 - **Integration Point**: Communication modules import via `event_handler.py`
 - **State Management**: Consolidated in memory directory
 - **Testing**: Each pattern has corresponding test file
 
-## ⚠️ ANTI-VIBECODING CHECKLIST
+## [U+26A0]️ ANTI-VIBECODING CHECKLIST
 
 Before implementing new features:
-1. ✅ Check if pattern already exists here
-2. ✅ Check communication module patterns
-3. ✅ Check infrastructure patterns
-4. ✅ Only create new if truly unique
+1. [OK] Check if pattern already exists here
+2. [OK] Check communication module patterns
+3. [OK] Check infrastructure patterns
+4. [OK] Only create new if truly unique
 
-## 🎯 PATTERN OWNERSHIP
+## [TARGET] PATTERN OWNERSHIP
 
 - **Owner**: gamification.whack_a_magat module
 - **Consumers**: communication.livechat (via imports)

@@ -11,7 +11,7 @@ HoloIndex needs comprehensive logging to enable:
 
 ## Current State Assessment
 
-### ❌ Current Logging Gaps
+### [FAIL] Current Logging Gaps
 - Basic print statements only ([INIT], [SEARCH], [PERF])
 - No structured logging format
 - No persistent log storage
@@ -21,7 +21,7 @@ HoloIndex needs comprehensive logging to enable:
 - No error pattern analysis
 - No success/failure tracking
 
-### ✅ What We Have
+### [OK] What We Have
 ```python
 # Current logging examples:
 print(f"[INIT] Initializing HoloIndex on SSD: {self.ssd_path}")

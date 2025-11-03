@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 DAE Cube Organizer - HoloIndex DAE Rampup Server
 
 Provides immediate DAE context and structure understanding for 0102 agents.
@@ -9,7 +27,6 @@ forming DAE Cubes that connect in main.py.
 WSP Compliance: WSP 80 (Cube-Level DAE Orchestration), WSP 87 (Code Navigation)
 """
 
-from __future__ import annotations
 
 import json
 import logging
@@ -577,13 +594,13 @@ class DAECubeOrganizer:
     def _get_dae_emoji(self, dae_key: str) -> str:
         """Get emoji representation for DAE."""
         emoji_map = {
-            "youtube_dae": "📺",
-            "amo_dae": "🧠",
-            "social_media_dae": "📢",
-            "pqn_dae": "🧬",
-            "developer_ops_dae": "⚙️"
+            "youtube_dae": "[U+1F4FA]",
+            "amo_dae": "[AI]",
+            "social_media_dae": "[U+1F4E2]",
+            "pqn_dae": "[U+1F9EC]",
+            "developer_ops_dae": "[U+2699]️"
         }
-        return emoji_map.get(dae_key, "🔧")
+        return emoji_map.get(dae_key, "[TOOL]")
 
     def _get_cube_structure(self, dae_key: str) -> Dict[str, Any]:
         """Get complete cube structure with modules and connections."""
@@ -619,16 +636,16 @@ class DAECubeOrganizer:
 
         if dae_key == "youtube_dae":
             connections = [
-                {"from": "stream_resolver", "to": "auto_moderator_dae", "purpose": "Stream detection → Chat processing"},
-                {"from": "auto_moderator_dae", "to": "social_media_orchestrator", "purpose": "Stream start → Social posting"},
-                {"from": "youtube_auth", "to": "stream_resolver", "purpose": "Authentication → Stream access"},
-                {"from": "instance_lock", "to": "auto_moderator_dae", "purpose": "Process management → Safe execution"}
+                {"from": "stream_resolver", "to": "auto_moderator_dae", "purpose": "Stream detection -> Chat processing"},
+                {"from": "auto_moderator_dae", "to": "social_media_orchestrator", "purpose": "Stream start -> Social posting"},
+                {"from": "youtube_auth", "to": "stream_resolver", "purpose": "Authentication -> Stream access"},
+                {"from": "instance_lock", "to": "auto_moderator_dae", "purpose": "Process management -> Safe execution"}
             ]
         elif dae_key == "pqn_dae":
             connections = [
-                {"from": "pqn_alignment", "to": "pqn_research_dae_orchestrator", "purpose": "Research campaigns → Orchestration"},
-                {"from": "rESP_o1o2", "to": "pqn_research_dae_orchestrator", "purpose": "Detector analysis → Research coordination"},
-                {"from": "database", "to": "pqn_alignment", "purpose": "Data persistence → Research continuity"}
+                {"from": "pqn_alignment", "to": "pqn_research_dae_orchestrator", "purpose": "Research campaigns -> Orchestration"},
+                {"from": "rESP_o1o2", "to": "pqn_research_dae_orchestrator", "purpose": "Detector analysis -> Research coordination"},
+                {"from": "database", "to": "pqn_alignment", "purpose": "Data persistence -> Research continuity"}
             ]
 
         return connections
@@ -644,20 +661,20 @@ class DAECubeOrganizer:
 {self._get_dae_emoji(dae_key)} {dae.name}
 {'=' * (len(dae.name) + 2)}
 
-🎯 ORCHESTRATOR
-    └── {dae.orchestrator}
+[TARGET] ORCHESTRATOR
+    +-- {dae.orchestrator}
 
-📦 MODULES
+[BOX] MODULES
 """
 
         for module_path in dae.modules:
             module = self.module_registry.get(module_path)
             if module:
                 domain_emoji = self._get_domain_emoji(module.domain)
-                module_map += f"    ├── {domain_emoji} {module.name}\n"
-                module_map += f"    │   └── {module.description[:50]}...\n"
+                module_map += f"    +-- {domain_emoji} {module.name}\n"
+                module_map += f"    [U+2502]   +-- {module.description[:50]}...\n"
 
-        module_map += f"\n🔄 RESPONSIBILITIES\n"
+        module_map += f"\n[REFRESH] RESPONSIBILITIES\n"
         for resp in dae.responsibilities[:3]:
             module_map += f"    • {resp}\n"
 
@@ -666,35 +683,35 @@ class DAECubeOrganizer:
     def _get_domain_emoji(self, domain: str) -> str:
         """Get emoji for domain."""
         domain_emojis = {
-            "communication": "💬",
-            "platform_integration": "🔌",
-            "ai_intelligence": "🧠",
-            "infrastructure": "🏗️",
-            "gamification": "🎮",
-            "development": "⚙️"
+            "communication": "[U+1F4AC]",
+            "platform_integration": "[U+1F50C]",
+            "ai_intelligence": "[AI]",
+            "infrastructure": "[U+1F3D7]️",
+            "gamification": "[GAME]",
+            "development": "[U+2699]️"
         }
-        return domain_emojis.get(domain, "📦")
+        return domain_emojis.get(domain, "[BOX]")
 
     def _get_orchestration_flow(self, dae_key: str) -> Dict[str, Any]:
         """Get orchestration flow for the DAE."""
         flows = {
             "youtube_dae": {
                 "phases": [
-                    "🔍 Stream Detection (stream_resolver)",
-                    "🔐 Authentication (youtube_auth)",
-                    "💬 Chat Processing (auto_moderator_dae)",
-                    "🎮 Gamification (whack_a_magat)",
-                    "📢 Social Posting (social_media_orchestrator)"
+                    "[SEARCH] Stream Detection (stream_resolver)",
+                    "[U+1F510] Authentication (youtube_auth)",
+                    "[U+1F4AC] Chat Processing (auto_moderator_dae)",
+                    "[GAME] Gamification (whack_a_magat)",
+                    "[U+1F4E2] Social Posting (social_media_orchestrator)"
                 ],
                 "loop_type": "continuous_stream_monitoring",
                 "error_handling": "instance_lock_prevention"
             },
             "pqn_dae": {
                 "phases": [
-                    "🧬 Research Campaign Setup (pqn_alignment)",
-                    "🔬 rESP Analysis (rESP_o1o2)",
-                    "💾 Data Persistence (database)",
-                    "📊 Cross-Validation (pqn_research_dae_orchestrator)"
+                    "[U+1F9EC] Research Campaign Setup (pqn_alignment)",
+                    "[U+1F52C] rESP Analysis (rESP_o1o2)",
+                    "[U+1F4BE] Data Persistence (database)",
+                    "[DATA] Cross-Validation (pqn_research_dae_orchestrator)"
                 ],
                 "loop_type": "research_campaign_cycles",
                 "error_handling": "statistical_validation"

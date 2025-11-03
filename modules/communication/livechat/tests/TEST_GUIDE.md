@@ -1,17 +1,17 @@
 # YouTube Agent System - Systematic Test Guide
 
-## 🎯 TEST PROTOCOL: PoC → Prototype → MVP
+## [TARGET] TEST PROTOCOL: PoC -> Prototype -> MVP
 
 ### Prerequisites
-1. Bot must be running: `python main.py` → Option 1
+1. Bot must be running: `python main.py` -> Option 1
 2. You must be in a live YouTube stream chat
 3. Have mod permissions for full testing
 
 ---
 
-## 📋 PHASE 1: PoC TESTING (Basic Functionality)
+## [CLIPBOARD] PHASE 1: PoC TESTING (Basic Functionality)
 
-### 1.1 AUTO-CAPTURE TEST ✅
+### 1.1 AUTO-CAPTURE TEST [OK]
 **Test:** Send any message in chat
 **Expected:** 
 - Bot captures your user ID
@@ -26,14 +26,14 @@ Check capture: /score
 ### 1.2 BASIC COMMANDS TEST 
 **Test these commands in chat:**
 ```
-/score     → Shows your XP and level
-/rank      → Shows your position on leaderboard  
-/level     → Shows progress bar to next level
-/points    → Shows point breakdown
-/help      → Shows available commands
+/score     -> Shows your XP and level
+/rank      -> Shows your position on leaderboard  
+/level     -> Shows progress bar to next level
+/points    -> Shows point breakdown
+/help      -> Shows available commands
 ```
 
-### 1.3 WHACK-A-MAGA TEST 🔨
+### 1.3 WHACK-A-MAGA TEST [U+1F528]
 **Test:** Send MAGA/Trump keywords
 ```
 Test messages:
@@ -50,9 +50,9 @@ Test messages:
 ### 1.4 MOD TIMEOUT SCORING
 **As Moderator, test:**
 ```
-/timeout @username 60     → 60 second timeout
-/timeout @username 300    → 5 minute timeout
-/timeout @username 600    → 10 minute timeout
+/timeout @username 60     -> 60 second timeout
+/timeout @username 300    -> 5 minute timeout
+/timeout @username 600    -> 10 minute timeout
 ```
 **Expected:**
 - Timeout executed
@@ -62,42 +62,42 @@ Test messages:
 ### 1.5 EMOJI SEQUENCE TEST
 **Test these sequences:**
 ```
-✊✊✊     → 000 consciousness (blocked)
-✊✊✋     → 001 emergence
-✊✋✋     → 011 formation
-✋✋✋     → 111 DAO (triggers response)
-✋✋🖐️    → 112 resonance
-✋🖐️🖐️   → 122 yielding
-🖐️🖐️🖐️  → 222 full entanglement
+[U+270A][U+270A][U+270A]     -> 000 consciousness (blocked)
+[U+270A][U+270A][U+270B]     -> 001 emergence
+[U+270A][U+270B][U+270B]     -> 011 formation
+[U+270B][U+270B][U+270B]     -> 111 DAO (triggers response)
+[U+270B][U+270B][U+1F590]️    -> 112 resonance
+[U+270B][U+1F590]️[U+1F590]️   -> 122 yielding
+[U+1F590]️[U+1F590]️[U+1F590]️  -> 222 full entanglement
 ```
 **Expected:** BanterEngine responds based on consciousness level
 
 ---
 
-## 📋 PHASE 2: PROTOTYPE TESTING (Enhanced Features)
+## [CLIPBOARD] PHASE 2: PROTOTYPE TESTING (Enhanced Features)
 
 ### 2.1 RPG COMMANDS TEST
 ```
-/stats        → D&D character sheet
-/class        → View/choose character class
-/achievements → List earned achievements
-/leaderboard  → Top 10 players
-/daily        → Claim daily bonus
-/quest        → View daily quests
+/stats        -> D&D character sheet
+/class        -> View/choose character class
+/achievements -> List earned achievements
+/leaderboard  -> Top 10 players
+/daily        -> Claim daily bonus
+/quest        -> View daily quests
 ```
 
 ### 2.2 ACHIEVEMENT TRIGGERS
 **Test these actions:**
-- First timeout → "First Blood" achievement
-- 10 timeouts → "Decimator" achievement  
-- 5 timeouts in 60 seconds → "Speed Demon"
-- Help 2 members → Helper achievement
+- First timeout -> "First Blood" achievement
+- 10 timeouts -> "Decimator" achievement  
+- 5 timeouts in 60 seconds -> "Speed Demon"
+- Help 2 members -> Helper achievement
 
 ### 2.3 ANTI-GAMING MECHANICS
 **Test rapid timeouts:**
-1. Timeout same user twice → Reduced points
-2. Spam 10-second timeouts → No points after 5
-3. Timeout 50+ users in one day → Soft cap
+1. Timeout same user twice -> Reduced points
+2. Spam 10-second timeouts -> No points after 5
+3. Timeout 50+ users in one day -> Soft cap
 
 ### 2.4 DATABASE PERSISTENCE
 1. Note your current XP: `/score`
@@ -107,14 +107,14 @@ Test messages:
 
 ### 2.5 LEADERBOARD COMPETITION
 ```
-/leaderboard      → View top 10
-/leaderboard 25   → View top 25
+/leaderboard      -> View top 10
+/leaderboard 25   -> View top 25
 ```
 **Test:** Multiple users gain XP, verify ranking updates
 
 ---
 
-## 📋 PHASE 3: INTEGRATION TESTING
+## [CLIPBOARD] PHASE 3: INTEGRATION TESTING
 
 ### 3.1 AUTO-MODERATION
 **Test spam detection:**
@@ -134,9 +134,9 @@ Use multiple MAGA keywords
 
 ### 3.3 QUIZ SYSTEM
 ```
-/quiz     → Get fascism awareness question
-/facts    → Get 1933 parallel fact
-/fscale   → F-scale personality test
+/quiz     -> Get fascism awareness question
+/facts    -> Get 1933 parallel fact
+/fscale   -> F-scale personality test
 ```
 
 ### 3.4 PARTY SYSTEM (Prototype)
@@ -148,7 +148,7 @@ Use multiple MAGA keywords
 
 ---
 
-## 🔍 MONITORING & LOGS
+## [SEARCH] MONITORING & LOGS
 
 ### Check Live Logs
 **Log Location:** `modules/communication/livechat/memory/chat_logs/live_chat_debug.log`
@@ -179,9 +179,9 @@ SELECT * FROM cooldowns WHERE expires_at > datetime('now');
 
 ---
 
-## 📊 SUCCESS METRICS
+## [DATA] SUCCESS METRICS
 
-### PoC Success ✅
+### PoC Success [OK]
 - [ ] Users auto-captured with roles
 - [ ] Basic commands working (/score, /rank, etc.)
 - [ ] MAGA detection and timeout working
@@ -204,7 +204,7 @@ SELECT * FROM cooldowns WHERE expires_at > datetime('now');
 
 ---
 
-## 🐛 TROUBLESHOOTING
+## [U+1F41B] TROUBLESHOOTING
 
 ### Bot Not Responding
 1. Check if live stream is active
@@ -232,7 +232,7 @@ SELECT * FROM cooldowns WHERE expires_at > datetime('now');
 
 ---
 
-## 📝 TEST CHECKLIST
+## [NOTE] TEST CHECKLIST
 
 **PoC Features (Must Work):**
 - [ ] Auto-capture users
@@ -260,15 +260,15 @@ SELECT * FROM cooldowns WHERE expires_at > datetime('now');
 
 ---
 
-## 🚀 QUICK TEST SEQUENCE
+## [ROCKET] QUICK TEST SEQUENCE
 
-1. **Start bot:** `python main.py` → 1
+1. **Start bot:** `python main.py` -> 1
 2. **In chat, type:**
    - "Hello" (captures you)
    - "/score" (shows XP)
    - "MAGA 2024" (triggers timeout)
    - "/rank" (shows position)
-   - "✋✋✋" (emoji response)
+   - "[U+270B][U+270B][U+270B]" (emoji response)
    - "/stats" (character sheet)
    - "/daily" (bonus XP)
    - "/leaderboard" (top players)

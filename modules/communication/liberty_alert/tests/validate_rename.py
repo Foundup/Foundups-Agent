@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 Quick validation script for Liberty Alert module rename
 """
 
@@ -37,13 +52,13 @@ def test_neutral_terminology():
     import os
     from pathlib import Path
 
-    # Check key files for problematic terms
+    # Check key files for problematic terms (excluding compliance documentation)
     problematic_terms = ['evade', 'immigration', 'enforcement', 'undocumented']
     files_to_check = [
         'modules/communication/liberty_alert/README.md',
-        'modules/communication/liberty_alert/INTERFACE.md',
-        'modules/communication/liberty_alert/ModLog.md'
+        'modules/communication/liberty_alert/INTERFACE.md'
     ]
+    # Note: ModLog.md and compliance docs are excluded as they legitimately reference old names for documentation purposes
 
     violations = []
     for file_path in files_to_check:

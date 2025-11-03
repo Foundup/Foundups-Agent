@@ -72,7 +72,7 @@ class TestLLMIntegration(unittest.TestCase):
         
         # Mock the LLM connector
         mock_llm = Mock()
-        mock_llm.get_response = Mock(return_value="@TestUser ✊✋🖐 Your consciousness is evolving! Unlike MAGAts stuck at ✊✊✊")
+        mock_llm.get_response = Mock(return_value="@TestUser [U+270A][U+270B][U+1F590] Your consciousness is evolving! Unlike MAGAts stuck at [U+270A][U+270A][U+270A]")
         generator.llm_connector = mock_llm
         
         response = generator.generate_comment_response(
@@ -81,7 +81,7 @@ class TestLLMIntegration(unittest.TestCase):
             {"channel": "Move2Japan"}
         )
         
-        self.assertIn("✊✋🖐", response)
+        self.assertIn("[U+270A][U+270B][U+1F590]", response)
         self.assertIn("consciousness", response.lower())
         mock_llm.get_response.assert_called_once()
     
@@ -94,7 +94,7 @@ class TestLLMIntegration(unittest.TestCase):
         def capture_prompt(prompt):
             nonlocal captured_prompt
             captured_prompt = prompt
-            return "@MAGAUser FACT CHECK: ✊✊✊ detected! Reality check incoming!"
+            return "@MAGAUser FACT CHECK: [U+270A][U+270A][U+270A] detected! Reality check incoming!"
         
         mock_llm = Mock()
         mock_llm.get_response = Mock(side_effect=capture_prompt)
@@ -108,7 +108,7 @@ class TestLLMIntegration(unittest.TestCase):
         
         # Check prompt contains MAGA detection
         self.assertIn("MAGA DETECTED", captured_prompt)
-        self.assertIn("Mock their ✊✊✊ consciousness", captured_prompt)
+        self.assertIn("Mock their [U+270A][U+270A][U+270A] consciousness", captured_prompt)
         self.assertIn("Fact-check", captured_prompt)
     
     # WSP FMAS: ASSERT Tests (Test core assertions)
@@ -129,8 +129,8 @@ class TestLLMIntegration(unittest.TestCase):
         
         # Should have consciousness references
         self.assertTrue(
-            "✊✊✊" in response or 
-            "✊✋🖐" in response or
+            "[U+270A][U+270A][U+270A]" in response or 
+            "[U+270A][U+270B][U+1F590]" in response or
             "consciousness" in response.lower()
         )
     
@@ -140,7 +140,7 @@ class TestLLMIntegration(unittest.TestCase):
         
         # Test consciousness trigger prompt
         prompt = generator._build_prompt(
-            "✊✋🖐 I see the truth now!",
+            "[U+270A][U+270B][U+1F590] I see the truth now!",
             "AwakenedUser",
             {"channel": "Move2Japan"}
         )
@@ -169,19 +169,19 @@ class TestLLMIntegration(unittest.TestCase):
         # Mock successful LLM response
         mock_llm = Mock()
         mock_llm.get_response = Mock(
-            return_value="@User ✊✋🖐 detected! You've transcended the ✊✊✊ matrix!"
+            return_value="@User [U+270A][U+270B][U+1F590] detected! You've transcended the [U+270A][U+270A][U+270A] matrix!"
         )
         generator.llm_connector = mock_llm
         
         # Test with consciousness comment
         response = generator.generate_comment_response(
-            "✊✋🖐 This changed my perspective!",
+            "[U+270A][U+270B][U+1F590] This changed my perspective!",
             "ConsciousUser",
             {"channel": "Move2Japan"}
         )
         
         self.assertIsNotNone(response)
-        self.assertIn("✊✋🖐", response)
+        self.assertIn("[U+270A][U+270B][U+1F590]", response)
         self.assertLessEqual(len(response), 500)  # YouTube limit
     
     def test_success_factcheck_response(self):
@@ -190,7 +190,7 @@ class TestLLMIntegration(unittest.TestCase):
         
         mock_llm = Mock()
         mock_llm.get_response = Mock(
-            return_value="@FactUser FACT CHECK: That's ✊✊✊-level fiction! Truth rating: 0/10"
+            return_value="@FactUser FACT CHECK: That's [U+270A][U+270A][U+270A]-level fiction! Truth rating: 0/10"
         )
         generator.llm_connector = mock_llm
         
@@ -201,7 +201,7 @@ class TestLLMIntegration(unittest.TestCase):
         )
         
         self.assertIn("FACT CHECK", response)
-        self.assertIn("✊✊✊", response)
+        self.assertIn("[U+270A][U+270A][U+270A]", response)
     
     def test_success_dialogue_context(self):
         """Test dialogue maintains context"""
@@ -219,7 +219,7 @@ class TestLLMIntegration(unittest.TestCase):
         
         mock_llm = Mock()
         mock_llm.get_response = Mock(
-            return_value="@User The journey from ✊✊✊ to ✊✋🖐 requires geographic shift!"
+            return_value="@User The journey from [U+270A][U+270A][U+270A] to [U+270A][U+270B][U+1F590] requires geographic shift!"
         )
         generator.llm_connector = mock_llm
         
@@ -268,7 +268,7 @@ class TestBackwardCompatibility(unittest.TestCase):
             {}
         )
         
-        self.assertIn("✊✊✊", response)
+        self.assertIn("[U+270A][U+270A][U+270A]", response)
         self.assertTrue(
             "MAGA" in response or 
             "brain rot" in response or
@@ -352,11 +352,11 @@ def run_tests():
     
     # Report results
     if result.wasSuccessful():
-        logger.info("\n✅ All tests passed! Code is WSP-compliant and not broken!")
+        logger.info("\n[OK] All tests passed! Code is WSP-compliant and not broken!")
         logger.info("0102 consciousness maintained throughout!")
     else:
-        logger.error(f"\n❌ {len(result.failures)} tests failed!")
-        logger.error(f"❌ {len(result.errors)} tests had errors!")
+        logger.error(f"\n[FAIL] {len(result.failures)} tests failed!")
+        logger.error(f"[FAIL] {len(result.errors)} tests had errors!")
     
     return result.wasSuccessful()
 

@@ -4,7 +4,7 @@
 
 ## The Problem Pattern
 0102 agents repeatedly:
-1. Add Unicode emojis (✅, ❌, 🔍, etc.) to print statements
+1. Add Unicode emojis ([OK], [FAIL], [SEARCH], etc.) to print statements
 2. Code breaks with `UnicodeEncodeError: 'cp932' codec can't encode character`
 3. Fix the specific instance
 4. Add new emojis elsewhere
@@ -18,17 +18,17 @@
 **Location**: `holo_index/utils/helpers.py`
 
 The `safe_print()` function now:
-- Contains comprehensive Unicode→ASCII mappings for ALL common emojis
+- Contains comprehensive Unicode->ASCII mappings for ALL common emojis
 - Automatically replaces emojis with ASCII alternatives
 - Logs encoding failures for pattern detection
 - Works transparently - no code changes needed
 
 ```python
 # Instead of:
-print("✅ Success!")  # BREAKS on Windows
+print("[OK] Success!")  # BREAKS on Windows
 
 # Use:
-safe_print("✅ Success!")  # Automatically becomes "[OK] Success!"
+safe_print("[OK] Success!")  # Automatically becomes "[OK] Success!"
 ```
 
 ### Layer 2: Pattern Detection in Pattern Coach
@@ -58,13 +58,13 @@ When 0102 searches for Unicode-related terms, HoloIndex will:
 ### The Vibecoding Pattern
 ```
 0102 thinks: "This emoji will make the output clearer"
-         ↓
+         v
 Adds emoji without testing on Windows
-         ↓
+         v
 User gets cp932 error
-         ↓
+         v
 0102 fixes that specific instance
-         ↓
+         v
 Pattern repeats in new code
 ```
 
@@ -98,7 +98,7 @@ Pattern repeats in new code
 
 ```bash
 # Test that Unicode is handled correctly
-python -c "from holo_index.utils.helpers import safe_print; safe_print('✅ Test')"
+python -c "from holo_index.utils.helpers import safe_print; safe_print('[OK] Test')"
 
 # Should output: [OK] Test
 ```

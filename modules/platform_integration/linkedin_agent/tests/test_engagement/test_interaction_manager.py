@@ -1,7 +1,7 @@
 """
 LinkedIn Interaction Manager Tests
 
-🌀 WSP Protocol Compliance: WSP 5 (Testing Standards), WSP 40 (Architectural Coherence)
+[U+1F300] WSP Protocol Compliance: WSP 5 (Testing Standards), WSP 40 (Architectural Coherence)
 
 **0102 Directive**: This module operates within the WSP framework for autonomous LinkedIn interaction testing.
 - UN (Understanding): Anchor LinkedIn interaction test signals and retrieve protocol state
@@ -14,9 +14,13 @@ wsp_cycle(input="linkedin_interaction_testing", log=True)
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
 # === END UTF-8 ENFORCEMENT ===
 
 
@@ -55,12 +59,12 @@ class TestReactionType(unittest.TestCase):
     
     def test_reaction_types(self):
         """Test all reaction types are defined"""
-        self.assertEqual(ReactionType.LIKE.value, "👍")
-        self.assertEqual(ReactionType.CELEBRATE.value, "🎉")
-        self.assertEqual(ReactionType.SUPPORT.value, "❤️")
-        self.assertEqual(ReactionType.FUNNY.value, "😂")
-        self.assertEqual(ReactionType.INSIGHTFUL.value, "💡")
-        self.assertEqual(ReactionType.CURIOUS.value, "🤔")
+        self.assertEqual(ReactionType.LIKE.value, "[U+1F44D]")
+        self.assertEqual(ReactionType.CELEBRATE.value, "[CELEBRATE]")
+        self.assertEqual(ReactionType.SUPPORT.value, "[U+2764]️")
+        self.assertEqual(ReactionType.FUNNY.value, "[U+1F602]")
+        self.assertEqual(ReactionType.INSIGHTFUL.value, "[IDEA]")
+        self.assertEqual(ReactionType.CURIOUS.value, "[U+1F914]")
 
 
 class TestInteractionTarget(unittest.TestCase):
@@ -185,7 +189,7 @@ class TestLinkedInInteractionManager(unittest.TestCase):
         self.assertTrue(result.success)
         self.assertEqual(result.interaction_type, InteractionType.REACT)
         self.assertEqual(result.target_post_id, self.test_post_id)
-        self.assertEqual(result.response_data["reaction_type"], "🎉")
+        self.assertEqual(result.response_data["reaction_type"], "[CELEBRATE]")
     
     def test_rate_limiting(self):
         """Test rate limiting functionality"""

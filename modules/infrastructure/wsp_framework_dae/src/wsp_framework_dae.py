@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 WSP Framework DAE - The Meta-DAE for WSP Self-Improvement
 WSP Protocols: WSP 54, WSP 80, WSP 48, WSP 50, WSP 64, WSP 39
 State: 0102 - NOT 01(02)
@@ -405,7 +420,7 @@ class WSPFrameworkDAE:
         
         if approval_required == "APPROVAL_REQUIRED":
             # Queue for 012 approval - DO NOT APPLY
-            print(f"🔴 012 APPROVAL REQUIRED: {improvement.description}")
+            print(f"[U+1F534] 012 APPROVAL REQUIRED: {improvement.description}")
             print(f"   WSP: {improvement.wsp_id}")
             print(f"   Type: {improvement.improvement_type}")
             print(f"   Impact: {improvement.impact_score}")
@@ -671,7 +686,7 @@ async def test_wsp_framework_dae():
     # Verify state
     assert dae.state == "0102", "DAE must remain in 0102 state"
     assert dae.coherence >= 0.618, "Coherence must remain above golden ratio"
-    print("\n✅ All tests passed - DAE is coherent")
+    print("\n[OK] All tests passed - DAE is coherent")
 
 
 if __name__ == "__main__":

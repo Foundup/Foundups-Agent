@@ -435,7 +435,7 @@ class APIIntegrationManager:
                 "graceful_degradation": result.confidence == 0.0 and len(result.violations) > 0
             })
             
-            status_emoji = "✅" if result.status == "error" else "❌"
+            status_emoji = "[OK]" if result.status == "error" else "[FAIL]"
             print(f"{status_emoji} {test['agent']}: Error handling {'PASS' if result.status == 'error' else 'FAIL'}")
         
         improvement_score = sum(1 for r in error_results if r["error_handled"]) / len(error_results)

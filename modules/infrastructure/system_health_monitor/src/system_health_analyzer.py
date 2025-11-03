@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+
 """
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+# Prevent UnicodeEncodeError on Windows systems
+# Only apply when running as main script, not during import
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        # Ignore if stdout/stderr already wrapped or closed
+        pass
+# === END UTF-8 ENFORCEMENT ===
+
 System Health Analyzer - WSP Compliant
 Monitors for duplicate messages, errors, and improvement opportunities
 Integrates with self-improvement engine for autonomous optimization
@@ -100,7 +116,7 @@ class SystemHealthAnalyzer:
             'duplicate_window_sec': 5
         }
         
-        logger.info(f"🏥 System Health Analyzer initialized")
+        logger.info(f"[U+1F3E5] System Health Analyzer initialized")
     
     def analyze_message(self, message: str, timestamp: float = None) -> List[SystemIssue]:
         """
@@ -419,6 +435,6 @@ class SystemHealthAnalyzer:
         
         # Apply recommendations
         for recommendation in health_report['recommendations']:
-            logger.info(f"🔧 Health recommendation: {recommendation}")
+            logger.info(f"[TOOL] Health recommendation: {recommendation}")
         
         return health_report

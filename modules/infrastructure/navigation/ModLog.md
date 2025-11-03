@@ -8,7 +8,7 @@
 **Impact:** Improved code organization and 0102 agent navigation
 
 **Files Moved:**
-- `NAVIGATION.py` → `modules/infrastructure/navigation/src/navigation.py`
+- `NAVIGATION.py` -> `modules/infrastructure/navigation/src/navigation.py`
 
 **WSP Protocols Applied:**
 - **WSP 3**: Enterprise Domain placement (infrastructure)

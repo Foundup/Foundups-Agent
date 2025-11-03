@@ -1,0 +1,69 @@
+{
+  "task_id": "gemma_audit_jsonl_telemetry_20251021",
+  "task_type": "code_audit",
+  "priority": "high",
+  "created_by": "0102",
+  "created_at": "2025-10-21T06:57:00Z",
+
+  "objective": "Audit ALL JSONL telemetry files across the codebase and identify what should be consolidated into unified SQLite database",
+
+  "instructions": {
+    "step_1": "Find all *.jsonl files across modules/",
+    "step_2": "For each JSONL file, extract: location, purpose, event types, who writes to it, who reads from it",
+    "step_3": "Categorize by domain: permissions, confidence, chat, metrics, errors, sessions",
+    "step_4": "Identify duplicated patterns (multiple modules doing similar JSONL writes)",
+    "step_5": "Flag concurrency risks (multiple processes writing to same file)",
+    "step_6": "Output JSON report for Qwen analysis"
+  },
+
+  "search_patterns": [
+    "**/*.jsonl",
+    "**/memory/*.jsonl",
+    "**/logs/*.jsonl",
+    "grep -r 'open.*jsonl' modules/",
+    "grep -r 'json.dumps.*\\n' modules/"
+  ],
+
+  "expected_output": {
+    "format": "JSON",
+    "path": "data/gemma_jsonl_audit_report.json",
+    "schema": {
+      "total_jsonl_files": "int",
+      "files_by_domain": {
+        "permissions": ["list of paths"],
+        "confidence": ["list of paths"],
+        "chat_history": ["list of paths"],
+        "telemetry": ["list of paths"],
+        "errors": ["list of paths"]
+      },
+      "concurrency_risks": [
+        {
+          "file": "path",
+          "risk": "high|medium|low",
+          "reason": "explanation"
+        }
+      ],
+      "consolidation_candidates": [
+        {
+          "domain": "permissions",
+          "current_files": ["list"],
+          "proposed_table": "permission_events",
+          "benefit": "explanation"
+        }
+      ]
+    }
+  },
+
+  "success_criteria": [
+    "All JSONL files discovered and catalogued",
+    "Domain categorization complete",
+    "Concurrency risks identified",
+    "Consolidation candidates proposed"
+  ],
+
+  "handoff_to_qwen": {
+    "next_task": "qwen_analyze_database_consolidation",
+    "input_file": "data/gemma_jsonl_audit_report.json",
+    "qwen_objective": "Analyze Gemma's audit and provide architectural recommendation for unified telemetry database"
+  }
+}
