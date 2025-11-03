@@ -1,0 +1,2 @@
+WSP Module Violations Log
+## Purpose This document tracks module-specific violations that are deferred during WSP compliance work per WSP 47 protocol. These are module evolution issues that do not block framework compliance. --- ## **V022: ROOT DIRECTORY SCRIPTS FOLDER VIOLATION** [U+2705] **RESOLVED** - **Type**: **FRAMEWORK-LEVEL VIOLATION** - Scripts folder in project root violating WSP 85ew mo

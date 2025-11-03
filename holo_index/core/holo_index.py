@@ -385,8 +385,55 @@ class HoloIndex:
         self._log_agent_action(f"Searching for: '{query}'", "SEARCH")
         start_time = __import__('time').time()
 
+        # Exact-ID router for WSP queries (deterministic precision)
+        routed_filter = doc_type_filter
+        exact_wsp_match: Optional[Dict[str, Any]] = None
+        wsp_match = re.search(r"\bwsp[\s_]*(\d+)\b", query, re.IGNORECASE)
+        if wsp_match:
+            routed_filter = "wsp_protocol"
+            wsp_key = f"WSP {wsp_match.group(1)}"
+            if self.wsp_summary and wsp_key in self.wsp_summary:
+                s = self.wsp_summary[wsp_key]
+                exact_wsp_match = {
+                    "wsp": wsp_key,
+                    "title": s.get("title"),
+                    "summary": s.get("summary"),
+                    "path": s.get("path"),
+                    "similarity": "100.0%",
+                    "type": "wsp_protocol",
+                    "priority": 10
+                }
+
+        # Alias expansion (deterministic synonyms)
+        ql = query.lower()
+        alias_map = {
+            "mps": "WSP 15",
+            "module prioritization scoring": "WSP 15",
+            "root protection": "WSP 85",
+            "module memory": "WSP 60",
+            "mcp governance": "WSP 96",
+        }
+        for alias, canonical in alias_map.items():
+            if alias in ql and canonical.lower() not in ql:
+                query = f"{query} {canonical}"
+
+        # Intent-based doc_type routing for common doc kinds
+        ql = query.lower()
+        if routed_filter == "all":
+            if any(k in ql for k in ["readme", "interface", "roadmap", "modlog"]):
+                routed_filter = {
+                    "readme": "module_readme",
+                    "interface": "interface",
+                    "roadmap": "roadmap",
+                    "modlog": "modlog"
+                }[[k for k in ["readme", "interface", "roadmap", "modlog"] if k in ql][0]]
+
         code_hits = self._search_collection(self.code_collection, query, limit, kind="code")
-        wsp_hits = self._search_collection(self.wsp_collection, query, limit, kind="wsp", doc_type_filter=doc_type_filter)
+        wsp_hits = self._search_collection(self.wsp_collection, query, limit, kind="wsp", doc_type_filter=routed_filter)
+
+        # Prepend exact WSP match if found and not already present
+        if exact_wsp_match and not any(h.get("wsp") == exact_wsp_match["wsp"] for h in wsp_hits):
+            wsp_hits = [exact_wsp_match] + wsp_hits[:-1] if len(wsp_hits) >= limit else [exact_wsp_match] + wsp_hits
 
         # Track search in breadcrumb tracer for multi-agent discovery sharing
         if self.breadcrumb_tracer:
@@ -485,6 +532,22 @@ class HoloIndex:
             doc_type = meta.get('type', 'other')
             priority = meta.get('priority', 1)
 
+            # Hybrid keyword score (title/path/summary lightweight boosts)
+            keyword_score = 0.0
+            ql = query.lower()
+            title = (meta.get('title') or '').lower()
+            path = (meta.get('path') or '').lower()
+            summary = (meta.get('summary') or '').lower()
+            for token in set(ql.split()):
+                if not token:
+                    continue
+                if token in title:
+                    keyword_score += 2.0
+                if token in path:
+                    keyword_score += 1.0
+                if token in summary:
+                    keyword_score += 0.5
+
             # Apply document type filtering
             if doc_type_filter != "all" and doc_type != doc_type_filter:
                 continue
@@ -497,7 +560,7 @@ class HoloIndex:
                     "cube": meta.get('cube'),
                     "type": doc_type,
                     "priority": priority,
-                    "_sort_key": (priority, similarity)  # For ranking
+                    "_sort_key": (0.5 * priority + 0.3 * similarity + 0.2 * keyword_score, similarity, priority)
                 }
             else:
                 result = {
@@ -509,11 +572,11 @@ class HoloIndex:
                     "cube": meta.get('cube'),
                     "type": doc_type,
                     "priority": priority,
-                    "_sort_key": (priority, similarity)  # For ranking
+                    "_sort_key": (0.5 * priority + 0.3 * similarity + 0.2 * keyword_score, similarity, priority)
                 }
             raw_results.append(result)
 
-        # Sort by priority (descending) then similarity (descending)
+        # Sort by hybrid score (desc), then similarity, then priority
         raw_results.sort(key=lambda x: x["_sort_key"], reverse=True)
 
         # Take top results and remove sort key
