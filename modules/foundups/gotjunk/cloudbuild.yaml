@@ -14,7 +14,7 @@ steps:
     entrypoint: 'npm'
     args: ['run', 'build']
 
-  # Step 3: Deploy to Cloud Run
+  # Step 3: Deploy to Cloud Run with Secret Manager integration
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     dir: 'modules/foundups/gotjunk/frontend'
     entrypoint: 'gcloud'
@@ -26,14 +26,10 @@ steps:
       - '--region=us-west1'
       - '--platform=managed'
       - '--allow-unauthenticated'
-      - '--set-env-vars=GEMINI_API_KEY_GotJunk=$$GEMINI_API_KEY'
+      - '--update-secrets=GEMINI_API_KEY_GotJunk=GEMINI_API_KEY_GOTJUNK:latest'
 
-# Secret Manager integration
-# API key is loaded from Secret Manager and available as $GEMINI_API_KEY
-availableSecrets:
-  secretManager:
-    - versionName: projects/gen-lang-client-0061781628/secrets/GEMINI_API_KEY_GOTJUNK/versions/latest
-      env: 'GEMINI_API_KEY'
+# Cloud Run mounts secrets directly from Secret Manager
+# No availableSecrets/secretEnv needed - Cloud Run accesses Secret Manager directly
 
 # Only trigger on changes to gotjunk module
 options:
