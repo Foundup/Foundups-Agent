@@ -1,5 +1,56 @@
 # ModLog — FoundUps Selenium
 
+## V0.4.0 — GCP Console Automation + AI Overseer Integration (2025-11-03)
+
+**Integration Type**: AI Overseer Infrastructure Automation
+**WSP Compliance**: WSP 77 (Agent Coordination), WSP 96 (MCP Governance), WSP 3 (Module Organization)
+
+### Additions
+- **GCP Console Automator**: New `src/gcp_console_automator.py` for autonomous cloud infrastructure tasks
+  - Class: `GCPConsoleAutomator` - FoundUpsDriver + Gemini Vision automation
+  - Methods: `create_secret_manager_secret()`, `create_cloud_build_trigger()`, `setup_gotjunk_deployment()`
+  - Skills Integration: Reads from `modules/communication/livechat/skills/gcp_console_automation.json`
+  - Vision DAE Integration: Screenshots saved to `docs/session_backups/gcp_automation/screenshots/`
+  - Result Tracking: `AutomationResult` dataclass with success status, steps completed, telemetry
+
+- **Live Test Script**: Created `src/live_test_github_connection.py`
+  - Real-time browser automation for GitHub → Cloud Build connection
+  - OAuth flow handling with human-in-the-loop checkpoints
+  - Vision DAE validation at each step
+  - Connects to existing Chrome instance (port 9222) for session reuse
+
+### AI Overseer Mission Support
+This module now serves as the **execution engine** for AI Overseer infrastructure missions:
+- **Phase 1 (Gemma)**: Uses Vision DAE to validate UI state (binary classification)
+- **Phase 2 (Qwen)**: Receives strategic plan from AI Overseer
+- **Phase 3 (0102)**: Executes browser automation with FoundUpsDriver
+- **Phase 4 (Learning)**: Stores successful patterns for future missions
+
+### First Mission: GotJunk Cloud Deployment
+- Mission Definition: `modules/ai_intelligence/ai_overseer/missions/gotjunk_cloud_deployment_setup.json`
+- Target: Automate GitHub → Cloud Build → Cloud Run deployment
+- Components: Secret Manager, Cloud Build triggers, IAM permissions
+- Outcome: Future FoundUp deployments require ZERO manual intervention
+
+### Technical Details
+- **Smart Element Finding**: Vision-guided selector fallbacks when CSS/XPath fails
+- **Human-Like Interaction**: Random delays, character-by-character typing
+- **Error Handling**: Graceful degradation with detailed error messages
+- **Browser Reuse**: Connects to port 9222 for authenticated session persistence
+
+### WSP Compliance
+- **WSP 77**: Agent coordination (Qwen plans → 0102 executes → Gemma validates)
+- **WSP 96**: MCP governance (HoloIndex, Vision DAE, Secrets MCP integration)
+- **WSP 3**: Module organization (automation in infrastructure/foundups_selenium)
+- **WSP 48**: Recursive learning (patterns stored in ai_overseer/memory/)
+
+### Related Modules
+- `modules/ai_intelligence/ai_overseer` - Mission planning and coordination
+- `modules/infrastructure/dae_infrastructure/foundups_vision_dae` - UI validation
+- `modules/communication/livechat/skills` - Reusable automation skill definitions
+
+---
+
 ## V0.3.0 — Telemetry Storage & Database Integration (2025-10-19)
 
 **Sprint 2 – Telemetry & Logging** ✅

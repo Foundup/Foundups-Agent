@@ -1,0 +1,188 @@
+{
+  "skill_name": "GCP Console Automation",
+  "description": "Autonomous Google Cloud Console automation using FoundUpsDriver + Gemini Vision for deployment workflows",
+  "version": "1.0.0",
+  "wsp_compliance": {
+    "wsp_77": "Agent coordination (Vision DAE → Qwen decision → 0102 execution)",
+    "wsp_80": "DAE orchestration for cloud infrastructure",
+    "wsp_96": "Skills-driven automation patterns"
+  },
+  "architecture": {
+    "phase_1_vision": "Gemini Vision analyzes GCP Console UI state",
+    "phase_2_selenium": "FoundUpsDriver executes browser automation",
+    "phase_3_validation": "Vision DAE validates success/failure",
+    "phase_4_learning": "Store successful automation patterns"
+  },
+  "automation_workflows": {
+    "create_secret_manager_secret": {
+      "description": "Create secret in Secret Manager and grant Cloud Build access",
+      "url_pattern": "https://console.cloud.google.com/security/secret-manager",
+      "steps": [
+        {
+          "step": 1,
+          "action": "navigate",
+          "target": "https://console.cloud.google.com/security/secret-manager?project={project_id}"
+        },
+        {
+          "step": 2,
+          "action": "click",
+          "target_selectors": ["button[aria-label='CREATE SECRET']", "//button[contains(text(), 'CREATE SECRET')]"],
+          "vision_fallback": "blue 'CREATE SECRET' button at top of page"
+        },
+        {
+          "step": 3,
+          "action": "human_type",
+          "target_selectors": ["input[name='name']", "#secret-name"],
+          "value": "{secret_name}",
+          "description": "Secret name input field"
+        },
+        {
+          "step": 4,
+          "action": "human_type",
+          "target_selectors": ["textarea[name='secret-value']", "#secret-value"],
+          "value": "{secret_value}",
+          "description": "Secret value textarea"
+        },
+        {
+          "step": 5,
+          "action": "click",
+          "target_selectors": ["button[type='submit']", "//button[contains(text(), 'CREATE')]"],
+          "vision_fallback": "blue 'CREATE' button at bottom"
+        },
+        {
+          "step": 6,
+          "action": "validate",
+          "vision_check": "Secret created successfully message",
+          "timeout": 10
+        },
+        {
+          "step": 7,
+          "action": "grant_permissions",
+          "target": "Cloud Build service account",
+          "role": "Secret Manager Secret Accessor"
+        }
+      ],
+      "success_pattern": "Secret.*created|Created secret",
+      "error_patterns": ["Secret.*already exists", "Permission denied", "Invalid secret name"],
+      "qwen_action": "auto_execute",
+      "complexity": 2
+    },
+    "create_cloud_build_trigger": {
+      "description": "Create Cloud Build trigger for GitHub repository",
+      "url_pattern": "https://console.cloud.google.com/cloud-build/triggers",
+      "steps": [
+        {
+          "step": 1,
+          "action": "navigate",
+          "target": "https://console.cloud.google.com/cloud-build/triggers?project={project_id}"
+        },
+        {
+          "step": 2,
+          "action": "click",
+          "target_selectors": ["button[aria-label='CREATE TRIGGER']", "//button[contains(text(), 'CREATE TRIGGER')]"],
+          "vision_fallback": "blue 'CREATE TRIGGER' button"
+        },
+        {
+          "step": 3,
+          "action": "configure_trigger",
+          "fields": {
+            "name": "{trigger_name}",
+            "event": "push_to_branch",
+            "repository": "{repo_name}",
+            "branch_pattern": "{branch_pattern}",
+            "config_type": "cloud_build_yaml",
+            "config_path": "{yaml_path}",
+            "included_files_filter": "{file_filter}"
+          }
+        },
+        {
+          "step": 4,
+          "action": "click",
+          "target_selectors": ["button[type='submit']", "//button[contains(text(), 'CREATE')]"],
+          "vision_fallback": "blue 'CREATE' button at bottom"
+        },
+        {
+          "step": 5,
+          "action": "validate",
+          "vision_check": "Trigger created successfully",
+          "timeout": 15
+        }
+      ],
+      "success_pattern": "Trigger.*created|Build trigger created",
+      "error_patterns": ["Trigger.*already exists", "Repository not connected", "Invalid configuration"],
+      "qwen_action": "auto_execute",
+      "complexity": 3
+    },
+    "deploy_to_cloud_run": {
+      "description": "Monitor and validate Cloud Run deployment from Cloud Build",
+      "url_pattern": "https://console.cloud.google.com/cloud-build/builds",
+      "steps": [
+        {
+          "step": 1,
+          "action": "navigate",
+          "target": "https://console.cloud.google.com/cloud-build/builds?project={project_id}"
+        },
+        {
+          "step": 2,
+          "action": "wait_for_build",
+          "timeout": 600,
+          "vision_check": "Build status: SUCCESS or FAILURE"
+        },
+        {
+          "step": 3,
+          "action": "validate_deployment",
+          "check_url": "{cloud_run_url}",
+          "expected_response": 200
+        }
+      ],
+      "success_pattern": "Build.*SUCCESS|Deployment.*successful",
+      "error_patterns": ["Build.*FAILED", "Deployment error", "Timeout exceeded"],
+      "qwen_action": "monitor",
+      "complexity": 2
+    }
+  },
+  "foundups_integration": {
+    "gotjunk": {
+      "project_id": "gen-lang-client-0061781628",
+      "cloud_run_service": "gotjunk",
+      "region": "us-west1",
+      "secret_name": "GEMINI_API_KEY_GOTJUNK",
+      "trigger_name": "gotjunk-deploy-trigger",
+      "repo_name": "Foundups-Agent",
+      "branch_pattern": "^main$",
+      "yaml_path": "modules/foundups/gotjunk/cloudbuild.yaml",
+      "file_filter": "modules/foundups/gotjunk/**",
+      "cloud_run_url": "https://gotjunk-56566376153.us-west1.run.app"
+    }
+  },
+  "autonomous_triggers": {
+    "on_git_push": {
+      "description": "When user pushes to GitHub, 0102 monitors Cloud Build automatically",
+      "trigger": "git push detected in modules/foundups/gotjunk/**",
+      "action": "monitor_cloud_build",
+      "notification": "YouTube Live Chat announcement when deployment succeeds/fails"
+    },
+    "on_deployment_failure": {
+      "description": "When Cloud Build fails, 0102 analyzes logs and suggests fixes",
+      "trigger": "Build FAILED status detected",
+      "action": "analyze_build_logs",
+      "qwen_decision": "Determine if auto-fixable (P0-P1) or needs 012 intervention (P2+)"
+    }
+  },
+  "token_budget": {
+    "create_secret": "2-5K tokens (browser automation + vision validation)",
+    "create_trigger": "3-8K tokens (multi-step form + validation)",
+    "monitor_deployment": "1-3K tokens (periodic checks + vision analysis)",
+    "total_per_foundup": "6-16K tokens (one-time setup)"
+  },
+  "learning_patterns": {
+    "successful_automation": "Store in holo_index/adaptive_learning/gcp_automation_patterns.json",
+    "failed_automation": "Create bug report with Vision DAE screenshots",
+    "ui_changes": "Update selectors when Vision DAE detects layout changes"
+  },
+  "vision_dae_integration": {
+    "telemetry_path": "holo_index/telemetry/vision_dae/gcp_console_sessions/",
+    "screenshot_storage": "docs/session_backups/gcp_automation/screenshots/",
+    "session_logs": "JSONL bundles per automation workflow"
+  }
+}

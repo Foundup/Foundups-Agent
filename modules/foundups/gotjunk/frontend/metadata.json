@@ -1,0 +1,8 @@
+{
+  "name": "GotJUNK?",
+  "description": "A rapid-capture PWA to take photos and organize them with a simple swipe interface.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}

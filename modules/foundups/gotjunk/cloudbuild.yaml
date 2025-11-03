@@ -1,0 +1,43 @@
+# Cloud Build configuration for GotJUNK? FoundUp
+# Deploys from modules/foundups/gotjunk/frontend/ to Cloud Run
+
+steps:
+  # Step 1: Install dependencies
+  - name: 'node:20'
+    dir: 'modules/foundups/gotjunk/frontend'
+    entrypoint: 'npm'
+    args: ['install']
+
+  # Step 2: Build frontend
+  - name: 'node:20'
+    dir: 'modules/foundups/gotjunk/frontend'
+    entrypoint: 'npm'
+    args: ['run', 'build']
+
+  # Step 3: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    dir: 'modules/foundups/gotjunk/frontend'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'gotjunk'
+      - '--source=.'
+      - '--region=us-west1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=GEMINI_API_KEY_GotJunk=$$GEMINI_API_KEY'
+
+# Secret Manager integration
+# API key is loaded from Secret Manager and available as $GEMINI_API_KEY
+availableSecrets:
+  secretManager:
+    - versionName: projects/gen-lang-client-0061781628/secrets/GEMINI_API_KEY_GOTJUNK/versions/latest
+      env: 'GEMINI_API_KEY'
+
+# Only trigger on changes to gotjunk module
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+# Timeout
+timeout: '1200s'
