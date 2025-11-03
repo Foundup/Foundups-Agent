@@ -27,6 +27,7 @@ steps:
       - '--platform=managed'
       - '--allow-unauthenticated'
       - '--set-env-vars=GEMINI_API_KEY_GotJunk=$$GEMINI_API_KEY'
+    secretEnv: ['GEMINI_API_KEY']
 
 # Secret Manager integration
 # API key is loaded from Secret Manager and available as $GEMINI_API_KEY
