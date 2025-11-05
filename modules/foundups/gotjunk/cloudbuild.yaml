@@ -2,34 +2,47 @@
 # Deploys from modules/foundups/gotjunk/frontend/ to Cloud Run
 
 steps:
-  # Step 1: Install dependencies
-  - name: 'node:20'
-    dir: 'modules/foundups/gotjunk/frontend'
-    entrypoint: 'npm'
-    args: ['install']
+  # Step 1: Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/gotjunk:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/gotjunk:latest'
+      - '-f'
+      - 'modules/foundups/gotjunk/frontend/Dockerfile'
+      - 'modules/foundups/gotjunk/frontend'
 
-  # Step 2: Build frontend
-  - name: 'node:20'
-    dir: 'modules/foundups/gotjunk/frontend'
-    entrypoint: 'npm'
-    args: ['run', 'build']
+  # Step 2: Push Docker image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/gotjunk:$COMMIT_SHA'
 
-  # Step 3: Deploy to Cloud Run with Secret Manager integration
+  # Step 3: Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    dir: 'modules/foundups/gotjunk/frontend'
     entrypoint: 'gcloud'
     args:
       - 'run'
       - 'deploy'
       - 'gotjunk'
-      - '--source=.'
+      - '--image=gcr.io/$PROJECT_ID/gotjunk:$COMMIT_SHA'
       - '--region=us-west1'
       - '--platform=managed'
       - '--allow-unauthenticated'
-      - '--update-secrets=GEMINI_API_KEY_GotJunk=GEMINI_API_KEY_GOTJUNK:latest'
+      - '--port=8080'
+      - '--update-secrets=GEMINI_API_KEY_GOTJUNK=GEMINI_API_KEY_GOTJUNK:latest'
+      - '--memory=512Mi'
+      - '--cpu=1'
+      - '--max-instances=10'
+      - '--min-instances=0'
+      - '--set-env-vars=NODE_ENV=production'
 
-# Cloud Run mounts secrets directly from Secret Manager
-# No availableSecrets/secretEnv needed - Cloud Run accesses Secret Manager directly
+# Push image to Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/gotjunk:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/gotjunk:latest'
 
 # Only trigger on changes to gotjunk module
 options:
