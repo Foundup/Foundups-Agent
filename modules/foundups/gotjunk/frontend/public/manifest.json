@@ -1,0 +1,33 @@
+{
+  "name": "GotJUNK?",
+  "short_name": "GotJUNK?",
+  "description": "Tinder for your junk - Swipe, Snap, Deliver!",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["marketplace", "shopping"],
+  "screenshots": [
+    {
+      "src": "/screenshot.png",
+      "sizes": "1170x2532",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ]
+}
