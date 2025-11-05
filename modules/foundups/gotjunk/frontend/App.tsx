@@ -9,6 +9,7 @@ import { FullscreenGallery } from './components/FullscreenGallery';
 import { BottomNavBar } from './components/BottomNavBar';
 import { LeftSidebarNav } from './components/LeftSidebarNav';
 import { RecordingIndicator } from './components/RecordingIndicator';
+import { PhotoGrid } from './components/PhotoGrid';
 // import { PigeonMapView } from './components/PigeonMapView';
 
 export type CaptureMode = 'photo' | 'video';
@@ -356,30 +357,43 @@ const App: React.FC = () => {
         {/* TAB 2: MAP (shown via overlay, content hidden) */}
         {/* Map is rendered separately as overlay */}
 
-        {/* TAB 3: MY ITEMS (my drafts + listed items) */}
+        {/* TAB 3: MY ITEMS - Photo Grid (iPhone-style) */}
         {activeTab === 'myitems' && (
-          <>
+          <div className="w-full h-full overflow-y-auto">
+            <PhotoGrid
+              items={[...myDrafts, ...myListed]}
+              onClick={(item) => {
+                setCurrentReviewItem(item);
+              }}
+              onDelete={(item) => {
+                if (item.status === 'draft') {
+                  setMyDrafts(prev => prev.filter(i => i.id !== item.id));
+                } else {
+                  setMyListed(prev => prev.filter(i => i.id !== item.id));
+                }
+              }}
+            />
+
+            {/* Full-screen item reviewer overlay */}
             <AnimatePresence>
               {currentReviewItem && (
-                <ItemReviewer
-                  key={currentReviewItem.id}
-                  item={currentReviewItem}
-                  onDecision={handleReviewDecision}
-                />
+                <div className="fixed inset-0 z-50 bg-black">
+                  <ItemReviewer
+                    key={currentReviewItem.id}
+                    item={currentReviewItem}
+                    onDecision={handleReviewDecision}
+                  />
+                  {/* Close button */}
+                  <button
+                    onClick={() => setCurrentReviewItem(null)}
+                    className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full z-60"
+                  >
+                    ✕
+                  </button>
+                </div>
               )}
             </AnimatePresence>
-
-            {myDrafts.length === 0 && myListed.length === 0 && !isRecording && (
-              <div className="text-center p-8">
-                <h2 className="text-3xl font-bold text-white mb-3">My Items</h2>
-                <p className="text-xl text-gray-300 font-semibold mb-2">Capture your first item!</p>
-                <p className="text-lg text-green-400 font-bold">
-                  Snap it! 📸 Swipe Up ⬆️ to List
-                </p>
-                <p className="text-sm text-gray-400 mt-3">No items yet</p>
-              </div>
-            )}
-          </>
+          </div>
         )}
 
         {/* TAB 4: CART (items I want from others) */}
