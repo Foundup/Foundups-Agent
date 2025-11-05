@@ -8,7 +8,7 @@ import { ItemReviewer } from './components/ItemReviewer';
 import { FullscreenGallery } from './components/FullscreenGallery';
 import { BottomNavBar } from './components/BottomNavBar';
 import { RecordingIndicator } from './components/RecordingIndicator';
-import { PigeonMapView } from './components/PigeonMapView';
+// import { PigeonMapView } from './components/PigeonMapView';
 
 export type CaptureMode = 'photo' | 'video';
 
@@ -478,25 +478,25 @@ const App: React.FC = () => {
         />
       )}
 
-      {activeTab === 'map' && (
-        <PigeonMapView
-          junkItems={myListed.map(item => ({
-            id: item.id,
-            location: {
-              latitude: item.latitude || userLocation?.latitude || 37.7749,
-              longitude: item.longitude || userLocation?.longitude || -122.4194,
-            },
-            title: item.id.split('-')[0] || 'Item',
-            imageUrl: item.blobUrl || '',
-            status: 'available' as const,
-            timestamp: Date.now(),
-          }))}
-          libertyAlerts={libertyAlerts}
-          userLocation={userLocation}
-          onClose={() => setMapOpen(false)}
-          showLibertyAlerts={libertyEnabled}
-        />
-      )}
+//             {activeTab === 'map' && (
+//               <PigeonMapView
+//                 junkItems={myListed.map(item => ({
+//                   id: item.id,
+//                   location: {
+//                     latitude: item.latitude || userLocation?.latitude || 37.7749,
+//                     longitude: item.longitude || userLocation?.longitude || -122.4194,
+//                   },
+//                   title: item.id.split('-')[0] || 'Item',
+//                   imageUrl: item.blobUrl || '',
+//                   status: 'available' as const,
+//                   timestamp: Date.now(),
+//                 }))}
+//                 libertyAlerts={libertyAlerts}
+//                 userLocation={userLocation}
+//                 onClose={() => setMapOpen(false)}
+//                 showLibertyAlerts={libertyEnabled}
+//               />
+//             )}
     </div>
   );
 };
