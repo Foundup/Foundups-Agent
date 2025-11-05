@@ -7,6 +7,7 @@ import * as storage from './services/storage';
 import { ItemReviewer } from './components/ItemReviewer';
 import { FullscreenGallery } from './components/FullscreenGallery';
 import { BottomNavBar } from './components/BottomNavBar';
+import { LeftSidebarNav } from './components/LeftSidebarNav';
 import { RecordingIndicator } from './components/RecordingIndicator';
 // import { PigeonMapView } from './components/PigeonMapView';
 
@@ -393,17 +394,9 @@ const App: React.FC = () => {
         )}
       </div>
 
-      <BottomNavBar
-        captureMode={captureMode}
-        onToggleCaptureMode={() => setCaptureMode(mode => mode === 'photo' ? 'video' : 'photo')}
-        onCapture={handleCapture}
-        onReviewAction={(action) => {
-          if (activeTab === 'browse' && browseFeed.length > 0) {
-            handleBrowseSwipe(browseFeed[0], action === 'keep' ? 'right' : 'left');
-          } else if (activeTab === 'myitems' && currentReviewItem) {
-            handleReviewDecision(currentReviewItem, action);
-          }
-        }}
+      {/* Left sidebar navigation */}
+      <LeftSidebarNav
+        activeTab={activeTab}
         onGalleryClick={() => {
           if (!sosDetectionActive.current) {
             setActiveTab('browse'); // Tab 1: Browse
@@ -443,31 +436,38 @@ const App: React.FC = () => {
           setActiveTab('map'); // Tab 2: Map
           setMapOpen(true);
         }}
-        isRecording={isRecording}
-        setIsRecording={setIsRecording}
-        countdown={countdown}
-        setCountdown={setCountdown}
-        hasReviewItems={activeTab === 'browse' ? browseFeed.length > 0 : myDrafts.length > 0}
-        libertyEnabled={libertyEnabled}
-        isMapOpen={activeTab === 'map'}
-        onHomeClick={() => {
-          setMapOpen(false);
-          setActiveTab('browse'); // Tab 1: Browse (landing page)
-          console.log('🏠 Home/Browse clicked');
+        onMyItemsClick={() => {
+          setActiveTab('myitems'); // Tab 3: My Items
+          console.log('📦 My Items clicked');
         }}
         onCartClick={() => {
           setActiveTab('cart'); // Tab 4: Cart
           console.log('🛒 Cart clicked');
         }}
-        onMyItemsClick={() => {
-          setActiveTab('myitems'); // Tab 3: My Items
-          console.log('📦 My Items clicked');
+        libertyEnabled={libertyEnabled}
+      />
+
+      {/* Bottom navigation bar */}
+      <BottomNavBar
+        captureMode={captureMode}
+        onToggleCaptureMode={() => setCaptureMode(mode => mode === 'photo' ? 'video' : 'photo')}
+        onCapture={handleCapture}
+        onReviewAction={(action) => {
+          if (activeTab === 'browse' && browseFeed.length > 0) {
+            handleBrowseSwipe(browseFeed[0], action === 'keep' ? 'right' : 'left');
+          } else if (activeTab === 'myitems' && currentReviewItem) {
+            handleReviewDecision(currentReviewItem, action);
+          }
         }}
+        isRecording={isRecording}
+        setIsRecording={setIsRecording}
+        countdown={countdown}
+        setCountdown={setCountdown}
+        hasReviewItems={activeTab === 'browse' ? browseFeed.length > 0 : myDrafts.length > 0}
         onSearchClick={() => {
           console.log('🔍 Search clicked');
           // TODO: Open search modal
         }}
-        activeTab={activeTab} // Pass active tab for highlighting
       />
 
       {isGalleryOpen && (
