@@ -1,16 +1,12 @@
 
 import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
-import { GridIcon } from './icons/GridIcon';
 import { LeftArrowIcon } from './icons/LeftArrowIcon';
 import { RightArrowIcon } from './icons/RightArrowIcon';
 import { PhotoIcon } from './icons/PhotoIcon';
 import { VideoIcon } from './icons/VideoIcon';
 import { Camera, CameraHandle } from './Camera';
 import { CaptureMode } from '../App';
-import { MapIcon } from './icons/MapIcon';
-import { HomeIcon } from './icons/HomeIcon';
-import { CartIcon } from './icons/CartIcon';
 import { SearchIcon } from './icons/SearchIcon';
 import { MicIcon } from './icons/MicIcon';
 
@@ -19,21 +15,12 @@ interface BottomNavBarProps {
   onToggleCaptureMode: () => void;
   onCapture: (blob: Blob) => void;
   onReviewAction: (action: 'keep' | 'delete') => void;
-  onGalleryClick: () => void;
-  onGalleryIconTap?: (duration: number) => void; // SOS morse code detection on GALLERY icon
-  onMapClick: () => void;
   isRecording: boolean;
   setIsRecording: React.Dispatch<React.SetStateAction<boolean>>;
   countdown: number;
   setCountdown: React.Dispatch<React.SetStateAction<number>>;
   hasReviewItems: boolean;
-  libertyEnabled: boolean; // Show 🗽 icon when Liberty Alert is unlocked
-  isMapOpen?: boolean; // Highlight map icon when map is open
-  onHomeClick?: () => void; // Home/Browse navigation (Tab 1)
-  onCartClick?: () => void; // Shopping cart (Tab 4)
-  onMyItemsClick?: () => void; // My items gallery (Tab 3)
   onSearchClick?: () => void; // Search functionality
-  activeTab?: 'browse' | 'map' | 'myitems' | 'cart'; // Current active tab for highlighting
 }
 
 const buttonVariants = {
@@ -46,29 +33,17 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onToggleCaptureMode,
   onCapture,
   onReviewAction,
-  onGalleryClick,
-  onGalleryIconTap,
-  onMapClick,
   isRecording,
   setIsRecording,
   setCountdown,
   hasReviewItems,
-  libertyEnabled,
-  isMapOpen = false,
-  onHomeClick = () => console.log('🏠 Home clicked'),
-  onCartClick = () => console.log('🛒 Cart clicked'),
-  onMyItemsClick = () => console.log('📦 My Items clicked'),
   onSearchClick = () => console.log('🔍 Search clicked'),
-  activeTab = 'browse', // Default to browse tab
 }) => {
   const cameraRef = useRef<CameraHandle>(null);
   const pressTimerRef = useRef<number | null>(null);
   const countdownIntervalRef = useRef<number | null>(null);
   const stopTimeoutRef = useRef<number | null>(null);
   const momentaryRecordingRef = useRef<boolean>(false);
-
-  // SOS Morse Code Detection on GALLERY icon
-  const galleryTapStartTime = useRef<number>(0);
 
   const stopRecording = () => {
     if (countdownIntervalRef.current) {
@@ -136,25 +111,6 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         }
     }
   };
-
-  // Gallery Icon SOS Detection
-  const handleGalleryMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
-    galleryTapStartTime.current = Date.now();
-  };
-
-  const handleGalleryMouseUp = (e: React.MouseEvent | React.TouchEvent) => {
-    const tapDuration = Date.now() - galleryTapStartTime.current;
-
-    // Always send tap duration for SOS detection
-    if (onGalleryIconTap && tapDuration > 0) {
-      onGalleryIconTap(tapDuration);
-    }
-
-    // onGalleryClick will handle whether to open gallery based on SOS detection state
-    // This is controlled in App.tsx with sosDetectionActive ref
-    onGalleryClick();
-  };
-
 
   return (
     <motion.div
@@ -248,75 +204,6 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                     </button>
                 </div>
             </div>
-        </div>
-
-        {/* Right Section: Action Icons - moved up */}
-        <div className="flex items-center space-x-5 pb-6">
-           {libertyEnabled && (
-             <motion.div
-               className="text-2xl"
-               initial={{ scale: 0 }}
-               animate={{ scale: 1 }}
-               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-             >
-               🗽
-             </motion.div>
-           )}
-            <motion.button
-              onMouseDown={handleGalleryMouseDown}
-              onMouseUp={handleGalleryMouseUp}
-              onTouchStart={handleGalleryMouseDown}
-              onTouchEnd={handleGalleryMouseUp}
-              aria-label="Browse (Tab 1)"
-              className={`p-3 rounded-full flex flex-col items-center justify-center text-white transition-colors ${
-                activeTab === 'browse'
-                  ? 'bg-blue-500/50 ring-2 ring-blue-400'
-                  : 'bg-white/10 hover:bg-white/20'
-              }`}
-              variants={buttonVariants}
-              whileTap="tap"
-            >
-              <GridIcon className="w-7 h-7" />
-            </motion.button>
-           <motion.button
-              onClick={onMapClick}
-              aria-label="Map (Tab 2)"
-              className={`p-3 rounded-full flex flex-col items-center justify-center text-white transition-colors ${
-                activeTab === 'map'
-                  ? 'bg-blue-500/50 ring-2 ring-blue-400'
-                  : 'bg-white/10 hover:bg-white/20'
-              }`}
-              variants={buttonVariants}
-              whileTap="tap"
-            >
-              <MapIcon className="w-7 h-7" />
-            </motion.button>
-           <motion.button
-              onClick={onMyItemsClick}
-              aria-label="My Items (Tab 3)"
-              className={`p-3 rounded-full flex flex-col items-center justify-center text-white transition-colors ${
-                activeTab === 'myitems'
-                  ? 'bg-blue-500/50 ring-2 ring-blue-400'
-                  : 'bg-white/10 hover:bg-white/20'
-              }`}
-              variants={buttonVariants}
-              whileTap="tap"
-            >
-              <HomeIcon className="w-7 h-7" />
-            </motion.button>
-            <motion.button
-              onClick={onCartClick}
-              aria-label="Cart (Tab 4)"
-              className={`p-3 rounded-full flex flex-col items-center justify-center text-white transition-colors ${
-                activeTab === 'cart'
-                  ? 'bg-blue-500/50 ring-2 ring-blue-400'
-                  : 'bg-white/10 hover:bg-white/20'
-              }`}
-              variants={buttonVariants}
-              whileTap="tap"
-            >
-              <CartIcon className="w-7 h-7" />
-            </motion.button>
         </div>
       </div>
     </motion.div>
