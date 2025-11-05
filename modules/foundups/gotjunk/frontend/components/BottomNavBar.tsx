@@ -3,11 +3,8 @@ import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { LeftArrowIcon } from './icons/LeftArrowIcon';
 import { RightArrowIcon } from './icons/RightArrowIcon';
-import { PhotoIcon } from './icons/PhotoIcon';
-import { VideoIcon } from './icons/VideoIcon';
 import { Camera, CameraHandle } from './Camera';
 import { CaptureMode } from '../App';
-import { SearchIcon } from './icons/SearchIcon';
 import { MicIcon } from './icons/MicIcon';
 
 interface BottomNavBarProps {
@@ -119,9 +116,52 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         animate={{ y: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
     >
-      {/* Search Bar - positioned above nav bar, to the right of camera */}
-      <div className="relative max-w-2xl mx-auto mb-2 px-6">
-        <div className="absolute left-[280px] bottom-0">
+      {/* Camera Orb - Floating above nav bar */}
+      <div className="absolute left-1/2 -translate-x-1/2 bottom-32 flex flex-col items-center z-[100]">
+          {/* Main capture button with live preview - 2.5x bigger (260px) */}
+          <div
+            className="w-[260px] h-[260px] p-2 bg-gray-800 rounded-full shadow-2xl cursor-pointer"
+            onMouseDown={handlePressStart}
+            onMouseUp={handlePressEnd}
+            onTouchStart={handlePressStart}
+            onTouchEnd={handlePressEnd}
+          >
+               <Camera ref={cameraRef} onCapture={onCapture} captureMode={captureMode} />
+          </div>
+      </div>
+
+      {/* Main Nav Bar */}
+      <div
+        className="relative flex justify-between items-center w-full h-28 bg-gray-800/80 backdrop-blur-lg border-t border-white/10 max-w-2xl mx-auto rounded-t-2xl shadow-2xl px-6 pb-4"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
+
+        {/* Left Section: Arrows */}
+        <div className="flex items-center space-x-6">
+            <motion.button
+                onClick={() => onReviewAction('delete')}
+                aria-label="Delete item"
+                className="p-3 rounded-full transition-colors bg-red-600/50 hover:bg-red-600/70 disabled:opacity-50"
+                variants={buttonVariants}
+                whileTap="tap"
+                disabled={!hasReviewItems || isRecording}
+            >
+                <LeftArrowIcon className="w-6 h-6 text-white" />
+            </motion.button>
+            <motion.button
+                onClick={() => onReviewAction('keep')}
+                aria-label="Keep item"
+                className="p-3 rounded-full transition-colors bg-green-500/50 hover:bg-green-500/70 disabled:opacity-50"
+                variants={buttonVariants}
+                whileTap="tap"
+                disabled={!hasReviewItems || isRecording}
+            >
+                <RightArrowIcon className="w-6 h-6 text-white" />
+            </motion.button>
+        </div>
+
+        {/* Right Section: Search Bar */}
+        <div className="flex-1 max-w-md ml-4">
           <div className="relative">
             <button
               onClick={onSearchClick}
@@ -134,76 +174,9 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               type="text"
               placeholder="Search items..."
               onClick={onSearchClick}
-              className="w-96 pl-12 pr-4 py-2.5 bg-gray-800/90 border-2 border-white/30 rounded-full text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:border-blue-500/70 text-sm backdrop-blur-lg shadow-lg"
+              className="w-full pl-12 pr-4 py-2.5 bg-gray-800/90 border-2 border-white/30 rounded-full text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:border-blue-500/70 text-sm backdrop-blur-lg shadow-lg"
             />
           </div>
-        </div>
-      </div>
-
-      {/* Main Nav Bar */}
-      <div
-        className="relative flex justify-between items-end w-full h-28 bg-gray-800/80 backdrop-blur-lg border-t border-white/10 max-w-2xl mx-auto rounded-t-2xl shadow-2xl px-6 pb-4"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-      >
-
-        {/* Left Section: Arrows + Camera */}
-        <div className="flex items-end space-x-8 pb-2">
-            {/* Navigation Arrows */}
-            <div className="flex items-center space-x-6 pb-4">
-                <motion.button
-                    onClick={() => onReviewAction('delete')}
-                    aria-label="Delete item"
-                    className="p-3 rounded-full transition-colors bg-red-600/50 hover:bg-red-600/70 disabled:opacity-50"
-                    variants={buttonVariants}
-                    whileTap="tap"
-                    disabled={!hasReviewItems || isRecording}
-                >
-                    <LeftArrowIcon className="w-6 h-6 text-white" />
-                </motion.button>
-                <motion.button
-                    onClick={() => onReviewAction('keep')}
-                    aria-label="Keep item"
-                    className="p-3 rounded-full transition-colors bg-green-500/50 hover:bg-green-500/70 disabled:opacity-50"
-                    variants={buttonVariants}
-                    whileTap="tap"
-                    disabled={!hasReviewItems || isRecording}
-                >
-                    <RightArrowIcon className="w-6 h-6 text-white" />
-                </motion.button>
-            </div>
-
-            {/* Camera Orb with Photo/Video Toggle */}
-            <div className="relative flex flex-col items-center pb-3">
-                {/* Main capture button with live preview - 5% bigger (105px) */}
-                <div
-                  className="w-[105px] h-[105px] p-1 bg-gray-800 rounded-full shadow-2xl cursor-pointer mb-2"
-                  onMouseDown={handlePressStart}
-                  onMouseUp={handlePressEnd}
-                  onTouchStart={handlePressStart}
-                  onTouchEnd={handlePressEnd}
-                >
-                     <Camera ref={cameraRef} onCapture={onCapture} captureMode={captureMode} />
-                </div>
-                {/* Photo/Video Toggle */}
-                <div className="flex items-center justify-center space-x-4 bg-black/30 px-3 py-1.5 rounded-full">
-                    <button
-                      onClick={onToggleCaptureMode}
-                      className={`transition-colors ${captureMode === 'photo' && !momentaryRecordingRef.current ? 'text-white' : 'text-gray-500'}`}
-                      aria-label="Photo mode"
-                      disabled={isRecording}
-                    >
-                        <PhotoIcon className="w-6 h-6" />
-                    </button>
-                     <button
-                      onClick={onToggleCaptureMode}
-                      className={`transition-colors ${captureMode === 'video' || momentaryRecordingRef.current ? 'text-white' : 'text-gray-500'}`}
-                      aria-label="Video mode"
-                      disabled={isRecording}
-                    >
-                        <VideoIcon className="w-6 h-6" />
-                    </button>
-                </div>
-            </div>
         </div>
       </div>
     </motion.div>
