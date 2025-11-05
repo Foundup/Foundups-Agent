@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CapturedItem, ItemStatus } from './types';
 import * as storage from './services/storage';
-import * as ipfs from './services/ipfsService';
+// import * as ipfs from './services/ipfsService';
 import { ItemReviewer } from './components/ItemReviewer';
 import { FullscreenGallery } from './components/FullscreenGallery';
 import { BottomNavBar } from './components/BottomNavBar';
@@ -88,13 +88,13 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const initializeApp = async () => {
-      // Initialize IPFS (Helia) for decentralized storage
-      try {
-        await ipfs.initHelia();
-        console.log('[GotJunk] IPFS initialized - decentralized storage ready');
-      } catch (error) {
-        console.error('[GotJunk] IPFS initialization failed:', error);
-      }
+//       // Initialize IPFS (Helia) for decentralized storage
+//       try {
+//         await ipfs.initHelia();
+//         console.log('[GotJunk] IPFS initialized - decentralized storage ready');
+//       } catch (error) {
+//         console.error('[GotJunk] IPFS initialization failed:', error);
+//       }
 
       const allItems = await storage.getAllItems();
 
@@ -260,23 +260,23 @@ const App: React.FC = () => {
         ownership: 'mine' // Ensure ownership is set
       };
 
-      // Upload to IPFS in background for decentralized storage
-      try {
-        console.log('[GotJunk] Uploading to IPFS...');
-        const ipfsCid = await ipfs.uploadToIPFS(item.blob);
-        console.log('[GotJunk] IPFS upload successful:', ipfsCid);
-
-        // Update item with IPFS CID
-        listedItem.ipfsCid = ipfsCid;
-        await storage.updateItemStatus(item.id, 'listed');
-
-        // TODO: Pin item for storage rewards (WSP 98 mesh network)
-        // await ipfs.pinItem(ipfsCid);
-      } catch (error) {
-        console.error('[GotJunk] IPFS upload failed:', error);
-        // Continue with local storage only
-        await storage.updateItemStatus(item.id, 'listed');
-      }
+//       // Upload to IPFS in background for decentralized storage
+//       try {
+//         console.log('[GotJunk] Uploading to IPFS...');
+//         const ipfsCid = await ipfs.uploadToIPFS(item.blob);
+//         console.log('[GotJunk] IPFS upload successful:', ipfsCid);
+// 
+//         // Update item with IPFS CID
+//         listedItem.ipfsCid = ipfsCid;
+//         await storage.updateItemStatus(item.id, 'listed');
+// 
+//         // TODO: Pin item for storage rewards (WSP 98 mesh network)
+//         // await ipfs.pinItem(ipfsCid);
+//       } catch (error) {
+//         console.error('[GotJunk] IPFS upload failed:', error);
+//         // Continue with local storage only
+//         await storage.updateItemStatus(item.id, 'listed');
+//       }
 
       setMyListed(current => [listedItem, ...current]);
     } else {
