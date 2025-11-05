@@ -24,19 +24,11 @@ export default defineConfig(({ mode }) => {
         }
       },
       optimizeDeps: {
-        include: ['leaflet', 'react-leaflet', 'helia', '@helia/unixfs', '@helia/strings', 'blockstore-idb', 'multiformats']
+        include: ['leaflet', 'react-leaflet']
       },
       build: {
         commonjsOptions: {
           transformMixedEsModules: true
-        },
-        rollupOptions: {
-          external: [],
-          output: {
-            manualChunks: {
-              'ipfs': ['helia', '@helia/unixfs', '@helia/strings', 'blockstore-idb', 'multiformats']
-            }
-          }
         }
       }
     };
