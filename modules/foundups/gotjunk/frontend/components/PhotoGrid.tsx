@@ -20,7 +20,7 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({ items, onClick, onDelete }
   }
 
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-1 p-1">
+    <div className="grid grid-cols-5 gap-1 p-1">
       <AnimatePresence>
         {items.map((item, index) => (
           <motion.div
