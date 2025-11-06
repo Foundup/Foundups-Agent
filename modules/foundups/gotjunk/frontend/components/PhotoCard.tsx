@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { CapturedItem } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
@@ -17,10 +17,24 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({ item, onClick, onDelete })
     onDelete(item);
   };
   
+  // Double-tap detection for fullscreen
+  const lastTapRef = useRef<number>(0);
+
+  const handleCardClick = () => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300; // ms
+
+    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+      // Double tap detected - open fullscreen
+      onClick(item);
+    }
+    lastTapRef.current = now;
+  };
+
   const isVideo = item.blob.type.startsWith('video/');
 
   return (
-    <div className="relative group aspect-square w-full rounded-lg overflow-hidden bg-gray-800 shadow-md cursor-pointer" onClick={() => onClick(item)}>
+    <div className="relative group aspect-square w-full rounded-lg overflow-hidden bg-gray-800 shadow-md cursor-pointer" onClick={handleCardClick}>
       {isVideo ? (
          <video
             src={item.url}
