@@ -342,7 +342,7 @@ const App: React.FC = () => {
             </AnimatePresence>
 
             {browseFeed.length === 0 && !isRecording && (
-              <div className="text-center p-8">
+              <div className="absolute top-8 left-0 right-0 text-center px-8">
                 <h2 className="text-3xl font-bold text-white mb-3">GotJunk?!</h2>
                 <p className="text-xl text-gray-300 font-semibold mb-2">Browse items near you</p>
                 <p className="text-lg text-green-400 font-bold">
