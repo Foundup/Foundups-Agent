@@ -363,7 +363,8 @@ const App: React.FC = () => {
             <PhotoGrid
               items={[...myDrafts, ...myListed]}
               onClick={(item) => {
-                setCurrentReviewItem(item);
+                // Keep thumbnails in grid view - do not open full-screen
+                console.log('Thumbnail clicked:', item.id);
               }}
               onDelete={(item) => {
                 if (item.status === 'draft') {
@@ -374,25 +375,6 @@ const App: React.FC = () => {
               }}
             />
 
-            {/* Full-screen item reviewer overlay */}
-            <AnimatePresence>
-              {currentReviewItem && (
-                <div className="fixed inset-0 z-50 bg-black">
-                  <ItemReviewer
-                    key={currentReviewItem.id}
-                    item={currentReviewItem}
-                    onDecision={handleReviewDecision}
-                  />
-                  {/* Close button */}
-                  <button
-                    onClick={() => setCurrentReviewItem(null)}
-                    className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full z-60"
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
-            </AnimatePresence>
           </div>
         )}
 
