@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { CapturedItem } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
 import { PlayIcon } from './icons/PlayIcon';
+import { ClassificationBadge } from './ClassificationBadge';
 
 interface PhotoCardProps {
   item: CapturedItem;
@@ -37,7 +38,12 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({ item, onClick, onDelete })
           draggable="false"
         />
       )}
-      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+      
+      {/* Classification badge overlay */}
+      {item.classification && (
+        <ClassificationBadge classification={item.classification} price={item.price} />
+      )}
+            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
        {isVideo && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <PlayIcon className="w-10 h-10 text-white/80 drop-shadow-lg" />

@@ -2,6 +2,9 @@
 // Item ownership: who owns this item?
 export type ItemOwnership = 'mine' | 'others';
 
+// Item classification: how is this item being sold?
+export type ItemClassification = 'free' | 'discount' | 'bid';
+
 // Item status for MY items
 export type MyItemStatus = 'draft' | 'listed' | 'sold' | 'auction';
 
@@ -21,7 +24,9 @@ export interface CapturedItem {
   longitude?: number;
   status: ItemStatus;
   ownership: ItemOwnership; // Track if this is my item or someone else's
-  price?: number; // For selling items
+  classification?: ItemClassification; // How the item is being sold (free/discount/bid)
+  price?: number; // For selling items (auto-set based on classification)
+  originalPrice?: number; // Detected price from Google Vision API (future)
   description?: string; // Item description
   createdAt: number; // Timestamp
   userId?: string; // Who owns this item (for "others" items)

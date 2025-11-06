@@ -10,6 +10,8 @@ import { BottomNavBar } from './components/BottomNavBar';
 import { LeftSidebarNav } from './components/LeftSidebarNav';
 import { RecordingIndicator } from './components/RecordingIndicator';
 import { PhotoGrid } from './components/PhotoGrid';
+import { ClassificationModal } from './components/ClassificationModal';
+import { ItemClassification } from './types';
 // import { PigeonMapView } from './components/PigeonMapView';
 
 export type CaptureMode = 'photo' | 'video';
@@ -76,6 +78,9 @@ const App: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [countdown, setCountdown] = useState(10);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | undefined>();
+  // === CLASSIFICATION STATE ===
+  const [pendingClassificationItem, setPendingClassificationItem] = useState<{blob: Blob, url: string, location?: {latitude: number, longitude: number}} | null>(null);
+
 
   // Liberty Alert State (unlocked via SOS morse code easter egg)
   const [libertyAlerts, setLibertyAlerts] = useState<LibertyAlert[]>([]);
@@ -211,12 +216,41 @@ const App: React.FC = () => {
       console.error("Could not get location for capture:", error);
     }
 
+    // Show classification modal instead of immediately saving
+    setPendingClassificationItem({
+      blob,
+      url: URL.createObjectURL(blob),
+      location
+    });
+  };
+
+  const handleClassify = async (classification: ItemClassification) => {
+    if (!pendingClassificationItem) return;
+
+    const { blob, url, location } = pendingClassificationItem;
+
+    // Calculate price based on classification
+    // TODO: Get originalPrice from Google Vision API
+    const defaultPrice = 100; // Placeholder until Vision API integration
+    let price = 0;
+
+    if (classification === 'free') {
+      price = 0;
+    } else if (classification === 'discount') {
+      price = defaultPrice * 0.25; // 75% OFF
+    } else if (classification === 'bid') {
+      price = defaultPrice * 0.5; // Starting bid at 50% OFF
+    }
+
     const newItem: CapturedItem = {
       id: `item-${Date.now()}`,
       blob,
-      url: URL.createObjectURL(blob),
-      status: 'draft', // MY items start as drafts
-      ownership: 'mine', // I captured this item
+      url,
+      status: 'draft',
+      ownership: 'mine',
+      classification,
+      price,
+      originalPrice: defaultPrice,
       createdAt: Date.now(),
       ...location,
     };
@@ -224,30 +258,22 @@ const App: React.FC = () => {
     await storage.saveItem(newItem);
     setMyDrafts(current => [newItem, ...current]);
 
+    // Clear pending item
+    setPendingClassificationItem(null);
+
     // Liberty Alert: If keyword detected during video recording, create alert
     if (libertyEnabled && keywordDetected && blob.type.startsWith('video/')) {
       console.log('🧊 Liberty Alert - Creating ice cube marker for video');
-
-      // TODO: Upload video to YouTube as unlisted (user's brilliant idea!)
-      // For now, store video locally and create alert
       const alert: LibertyAlert = {
         id: `alert-${Date.now()}`,
         location: location || { latitude: 0, longitude: 0 },
         message: 'Liberty Alert - Keyword detected',
-        video_url: newItem.url, // Temporary - will be YouTube URL
+        video_url: newItem.url,
         timestamp: Date.now(),
       };
-
       setLibertyAlerts(prev => [alert, ...prev]);
-
-      // TODO: Post to backend API
-      // await fetch('/api/liberty/alert', {
-      //   method: 'POST',
-      //   body: JSON.stringify(alert),
-      // });
-
       console.log('🧊 Ice cube marker created on map!');
-      setKeywordDetected(false); // Reset for next recording
+      setKeywordDetected(false);
     }
   };
   
@@ -342,7 +368,7 @@ const App: React.FC = () => {
             </AnimatePresence>
 
             {browseFeed.length === 0 && !isRecording && (
-              <div className="text-center p-8">
+              <div className="absolute top-8 left-0 right-0 text-center px-8">
                 <h2 className="text-3xl font-bold text-white mb-3">GotJunk?!</h2>
                 <p className="text-xl text-gray-300 font-semibold mb-2">Browse items near you</p>
                 <p className="text-lg text-green-400 font-bold">
@@ -473,6 +499,14 @@ const App: React.FC = () => {
           onDelete={handleDeleteMyItem}
         />
       )}
+
+
+      {/* Classification Modal */}
+      <ClassificationModal
+        isOpen={!!pendingClassificationItem}
+        imageUrl={pendingClassificationItem?.url || ''}
+        onClassify={handleClassify}
+      />
 
     </div>
   );
