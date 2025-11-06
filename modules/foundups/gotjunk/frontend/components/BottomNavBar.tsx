@@ -118,12 +118,12 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
     >
       {/* Camera Orb - Floating above nav bar */}
       <div className="absolute left-1/2 -translate-x-1/2 bottom-32 flex flex-col items-center z-[100]">
-          {/* Main capture button with live preview - Intelligent scaling: iPhone 11=197px, iPhone 16=205px */}
+          {/* Main capture button with live preview - Intelligent scaling: iPhone 11=143px, iPhone 16=149px */}
           <div
             className="p-2 bg-gray-800 rounded-full shadow-2xl cursor-pointer"
             style={{
-              width: 'clamp(180px, 22vh, 260px)',
-              height: 'clamp(180px, 22vh, 260px)'
+              width: 'clamp(128px, 16vh, 192px)',
+              height: 'clamp(128px, 16vh, 192px)'
             }}
             onMouseDown={handlePressStart}
             onMouseUp={handlePressEnd}
