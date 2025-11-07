@@ -1,16 +1,17 @@
 
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, PanInfo } from 'framer-motion';
 import { CapturedItem } from '../types';
 
 interface ItemReviewerProps {
   item: CapturedItem;
   onDecision: (item: CapturedItem, decision: 'keep' | 'delete') => void;
+  onClose?: () => void; // Optional: close fullscreen without making a decision
 }
 
-export const ItemReviewer: React.FC<ItemReviewerProps> = ({ item, onDecision }) => {
+export const ItemReviewer: React.FC<ItemReviewerProps> = ({ item, onDecision, onClose }) => {
   const [swipeDecision, setSwipeDecision] = useState<'keep' | 'delete' | null>(null);
+  const lastTapRef = useRef<number>(0);
 
   useEffect(() => {
     if (swipeDecision) {
@@ -35,6 +36,20 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({ item, onDecision }) 
     }
   };
 
+  // Double-tap to exit fullscreen (same 300ms window as PhotoCard)
+  const handleTap = () => {
+    if (!onClose) return; // Exit early if no onClose handler provided
+
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300; // ms
+
+    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+      // Double tap detected - close fullscreen
+      onClose();
+    }
+    lastTapRef.current = now;
+  };
+
   const isVideo = item.blob.type.startsWith('video/');
 
   return (
@@ -44,6 +59,7 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({ item, onDecision }) 
       dragConstraints={{ left: -150, right: 150 }}
       dragElastic={0.2}
       onDragEnd={handleDragEnd}
+      onClick={handleTap}
       initial={{ opacity: 0, scale: 0.95, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       // FIX: The exit animation now correctly uses state to determine the direction.
