@@ -81,6 +81,10 @@ const App: React.FC = () => {
   // === CLASSIFICATION STATE ===
   const [pendingClassificationItem, setPendingClassificationItem] = useState<{blob: Blob, url: string, location?: {latitude: number, longitude: number}} | null>(null);
 
+  // === FULLSCREEN REVIEW STATE (My Items tab) ===
+  const [reviewingItem, setReviewingItem] = useState<CapturedItem | null>(null);
+  const [reviewQueue, setReviewQueue] = useState<CapturedItem[]>([]);
+
 
   // Liberty Alert State (unlocked via SOS morse code easter egg)
   const [libertyAlerts, setLibertyAlerts] = useState<LibertyAlert[]>([]);
@@ -389,8 +393,13 @@ const App: React.FC = () => {
             <PhotoGrid
               items={[...myDrafts, ...myListed]}
               onClick={(item) => {
-                // Keep thumbnails in grid view - do not open full-screen
-                console.log('Thumbnail clicked:', item.id);
+                // Double-tap detected by PhotoCard - open fullscreen review
+                const allMyItems = [...myDrafts, ...myListed];
+                const currentIndex = allMyItems.findIndex(i => i.id === item.id);
+                const remainingItems = allMyItems.slice(currentIndex + 1);
+
+                setReviewingItem(item);
+                setReviewQueue(remainingItems);
               }}
               onDelete={(item) => {
                 if (item.status === 'draft') {
@@ -400,6 +409,36 @@ const App: React.FC = () => {
                 }
               }}
             />
+
+            {/* Fullscreen Item Reviewer (triggered by double-tap) */}
+            <AnimatePresence>
+              {reviewingItem && (
+                <ItemReviewer
+                  key={reviewingItem.id}
+                  item={reviewingItem}
+                  onDecision={(item, decision) => {
+                    if (decision === 'delete') {
+                      // Delete the item
+                      if (item.status === 'draft') {
+                        setMyDrafts(prev => prev.filter(i => i.id !== item.id));
+                      } else {
+                        setMyListed(prev => prev.filter(i => i.id !== item.id));
+                      }
+                    }
+                    // Both keep and delete: Show next item in queue
+                    if (reviewQueue.length > 0) {
+                      const [nextItem, ...rest] = reviewQueue;
+                      setReviewingItem(nextItem);
+                      setReviewQueue(rest);
+                    } else {
+                      // No more items - close fullscreen
+                      setReviewingItem(null);
+                      setReviewQueue([]);
+                    }
+                  }}
+                />
+              )}
+            </AnimatePresence>
 
           </div>
         )}
