@@ -436,6 +436,11 @@ const App: React.FC = () => {
                       setReviewQueue([]);
                     }
                   }}
+                  onClose={() => {
+                    // Double-tap detected - close fullscreen without making a decision
+                    setReviewingItem(null);
+                    setReviewQueue([]);
+                  }}
                 />
               )}
             </AnimatePresence>
