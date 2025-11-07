@@ -261,6 +261,8 @@ const App: React.FC = () => {
       classification,
       price,
       originalPrice: defaultPrice,
+      discountPercent,
+      bidDurationHours,
       createdAt: Date.now(),
       ...location,
     };
@@ -483,6 +485,16 @@ const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
                   setMyListed(prev => prev.filter(i => i.id !== item.id));
                 }
               }}
+              onBadgeClick={(item) => {
+                // Tap badge to re-classify
+                setReclassifyingItem(item);
+              }}
+              onBadgeLongPress={(item) => {
+                // Long-press badge to edit options (discount % or bid duration)
+                if (item.classification !== 'free') {
+                  setEditingOptionsItem(item);
+                }
+              }}
             />
 
             {/* Fullscreen Item Reviewer (triggered by double-tap) */}
@@ -589,6 +601,26 @@ const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
       />
 
       {/* Bottom navigation bar */}
+
+      {/* Re-classification Modal (tap badge) */}
+      {reclassifyingItem && (
+        <ClassificationModal
+          isOpen={true}
+          imageUrl={reclassifyingItem.url}
+          onClassify={(newClassification) => handleReclassify(reclassifyingItem, newClassification)}
+        />
+      )}
+
+      {/* Options Modal (long-press badge) */}
+      {editingOptionsItem && (
+        <OptionsModal
+          isOpen={true}
+          item={editingOptionsItem}
+          onSave={(discountPercent, bidDurationHours) => handleUpdateOptions(editingOptionsItem, discountPercent, bidDurationHours)}
+          onClose={() => setEditingOptionsItem(null)}
+        />
+      )}
+
       <BottomNavBar
         captureMode={captureMode}
         onToggleCaptureMode={() => setCaptureMode(mode => mode === 'photo' ? 'video' : 'photo')}

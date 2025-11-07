@@ -7,9 +7,11 @@ interface PhotoGridProps {
   items: CapturedItem[];
   onClick: (item: CapturedItem) => void; // Renamed from onView
   onDelete: (item: CapturedItem) => void;
+  onBadgeClick?: (item: CapturedItem) => void;
+  onBadgeLongPress?: (item: CapturedItem) => void;
 }
 
-export const PhotoGrid: React.FC<PhotoGridProps> = ({ items, onClick, onDelete }) => {
+export const PhotoGrid: React.FC<PhotoGridProps> = ({ items, onClick, onDelete, onBadgeClick, onBadgeLongPress }) => {
   if (items.length === 0) {
       return (
           <div className="text-center py-20 px-4">
@@ -40,6 +42,8 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({ items, onClick, onDelete }
               item={item}
               onClick={onClick}
               onDelete={onDelete}
+              onBadgeClick={onBadgeClick}
+              onBadgeLongPress={onBadgeLongPress}
             />
           </motion.div>
         ))}
