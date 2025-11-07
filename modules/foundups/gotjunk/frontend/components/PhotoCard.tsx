@@ -9,9 +9,11 @@ interface PhotoCardProps {
   item: CapturedItem;
   onClick: (item: CapturedItem) => void;
   onDelete: (item: CapturedItem) => void;
+  onBadgeClick?: (item: CapturedItem) => void; // Tap badge to re-classify
+  onBadgeLongPress?: (item: CapturedItem) => void; // Long-press badge to edit options
 }
 
-export const PhotoCard: React.FC<PhotoCardProps> = ({ item, onClick, onDelete }) => {
+export const PhotoCard: React.FC<PhotoCardProps> = ({ item, onClick, onDelete, onBadgeClick, onBadgeLongPress }) => {
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering onClick for the card itself
     onDelete(item);
@@ -55,7 +57,20 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({ item, onClick, onDelete })
       
       {/* Classification badge overlay */}
       {item.classification && (
-        <ClassificationBadge classification={item.classification} price={item.price} />
+        <ClassificationBadge 
+          classification={item.classification} 
+          price={item.price}
+          discountPercent={item.discountPercent}
+          bidDurationHours={item.bidDurationHours}
+          onClick={(e) => {
+            e.stopPropagation(); // Don't trigger card double-tap
+            if (onBadgeClick) onBadgeClick(item);
+          }}
+          onLongPress={(e) => {
+            e.stopPropagation();
+            if (onBadgeLongPress) onBadgeLongPress(item);
+          }}
+        />
       )}
             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
        {isVideo && (

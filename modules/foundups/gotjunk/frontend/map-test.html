@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GotJunk Map Test - Leaflet + Cesium</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+
+  <!-- Cesium CSS -->
+  <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/Widgets/widgets.css">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #1a1a1a;
+      color: white;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .test-section {
+      margin-bottom: 40px;
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 20px;
+      background: #2a2a2a;
+    }
+
+    .test-section h2 {
+      margin-top: 0;
+      color: #4ade80;
+    }
+
+    #leaflet-map {
+      width: 100%;
+      height: 400px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    #cesium-container {
+      width: 100%;
+      height: 400px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    .status.success {
+      background: #166534;
+      color: #4ade80;
+    }
+
+    .status.error {
+      background: #7f1d1d;
+      color: #fca5a5;
+    }
+
+    .status.loading {
+      background: #713f12;
+      color: #fbbf24;
+    }
+
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+
+    button:hover {
+      background: #2563eb;
+    }
+
+    button:disabled {
+      background: #6b7280;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h1>🗺️ GotJunk Map Independence Test</h1>
+
+  <!-- Test 1: Leaflet 2D Map -->
+  <div class="test-section">
+    <h2>Test 1: Leaflet 2D Map (GotJunk Items)</h2>
+    <div id="leaflet-status" class="status loading">Loading Leaflet...</div>
+    <button onclick="testLeafletMarkers()">Add Test Markers</button>
+    <button onclick="clearLeafletMarkers()">Clear Markers</button>
+    <div id="leaflet-map"></div>
+  </div>
+
+  <!-- Test 2: Cesium 3D Globe -->
+  <div class="test-section">
+    <h2>Test 2: Cesium 3D Globe (Liberty Alerts)</h2>
+    <div id="cesium-status" class="status loading">Loading Cesium...</div>
+    <button onclick="testCesiumEntities()">Add Test Entities</button>
+    <button onclick="clearCesiumEntities()">Clear Entities</button>
+    <div id="cesium-container"></div>
+  </div>
+
+  <script>
+    console.log('[DAEmon Beat] map_test_page_loaded');
+
+    let leafletMap = null;
+    let leafletMarkers = [];
+    let cesiumViewer = null;
+
+    // ============================================
+    // TEST 1: LEAFLET 2D MAP
+    // ============================================
+
+    function initLeaflet() {
+      try {
+        console.log('[DAEmon Beat] leaflet_initialization_start');
+
+        // Check if Leaflet is loaded
+        if (typeof L === 'undefined') {
+          throw new Error('Leaflet library not loaded');
+        }
+
+        // Create map centered on San Francisco
+        leafletMap = L.map('leaflet-map').setView([37.7749, -122.4194], 12);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors',
+          maxZoom: 19
+        }).addTo(leafletMap);
+
+        // Success status
+        document.getElementById('leaflet-status').className = 'status success';
+        document.getElementById('leaflet-status').textContent = '✓ Leaflet loaded successfully!';
+
+        console.log('[DAEmon Beat] leaflet_initialized', {
+          center: [37.7749, -122.4194],
+          zoom: 12
+        });
+
+        return true;
+      } catch (error) {
+        console.error('[DAEmon Beat] leaflet_error', error);
+        document.getElementById('leaflet-status').className = 'status error';
+        document.getElementById('leaflet-status').textContent = `✗ Leaflet Error: ${error.message}`;
+        return false;
+      }
+    }
+
+    function testLeafletMarkers() {
+      if (!leafletMap) {
+        alert('Leaflet not initialized!');
+        return;
+      }
+
+      console.log('[DAEmon Beat] leaflet_markers_adding');
+
+      // Add test markers with different colors (simulating GotJunk items)
+      const testItems = [
+        { lat: 37.7749, lng: -122.4194, color: 'green', title: 'Available Item' },
+        { lat: 37.7849, lng: -122.4094, color: 'red', title: 'Sold - Needs Move' },
+        { lat: 37.7649, lng: -122.4294, color: 'gold', title: 'Auction Item' }
+      ];
+
+      testItems.forEach(item => {
+        const marker = L.circleMarker([item.lat, item.lng], {
+          color: item.color,
+          fillColor: item.color,
+          fillOpacity: 0.7,
+          radius: 10
+        }).addTo(leafletMap);
+
+        marker.bindPopup(`<b>${item.title}</b><br>Lat: ${item.lat}<br>Lng: ${item.lng}`);
+        leafletMarkers.push(marker);
+      });
+
+      console.log('[DAEmon Beat] leaflet_markers_added', { count: testItems.length });
+    }
+
+    function clearLeafletMarkers() {
+      leafletMarkers.forEach(marker => marker.remove());
+      leafletMarkers = [];
+      console.log('[DAEmon Beat] leaflet_markers_cleared');
+    }
+
+    // ============================================
+    // TEST 2: CESIUM 3D GLOBE
+    // ============================================
+
+    function initCesium() {
+      try {
+        console.log('[DAEmon Beat] cesium_initialization_start');
+
+        // Check if Cesium is loaded
+        if (typeof Cesium === 'undefined') {
+          throw new Error('Cesium library not loaded');
+        }
+
+        // Cesium ion access token (free default token - replace with your own for production)
+        Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYWE1OWUxNy1mMWZiLTQzYjYtYTQ0OS1kMWFjYmFkNjc5YzciLCJpZCI6NTc3MzMsImlhdCI6MTYyNzg0NTE4Mn0.XcKpgANiY19MC4bdFUXMVEBToBmqS8kuYpUlxJHYZxk';
+
+        cesiumViewer = new Cesium.Viewer('cesium-container', {
+          baseLayerPicker: false,
+          geocoder: false,
+          homeButton: false,
+          sceneModePicker: false,
+          navigationHelpButton: false,
+          animation: false,
+          timeline: false,
+          fullscreenButton: false
+        });
+
+        // Set initial camera view to show Earth from space
+        cesiumViewer.camera.setView({
+          destination: Cesium.Cartesian3.fromDegrees(-95.7129, 37.0902, 15000000)
+        });
+
+        // Success status
+        document.getElementById('cesium-status').className = 'status success';
+        document.getElementById('cesium-status').textContent = '✓ Cesium loaded successfully!';
+
+        console.log('[DAEmon Beat] cesium_initialized');
+
+        return true;
+      } catch (error) {
+        console.error('[DAEmon Beat] cesium_error', error);
+        document.getElementById('cesium-status').className = 'status error';
+        document.getElementById('cesium-status').textContent = `✗ Cesium Error: ${error.message}`;
+        return false;
+      }
+    }
+
+    function testCesiumEntities() {
+      if (!cesiumViewer) {
+        alert('Cesium not initialized!');
+        return;
+      }
+
+      console.log('[DAEmon Beat] cesium_entities_adding');
+
+      // Add test entities (simulating Liberty Alert ice cubes)
+      const testAlerts = [
+        { lat: 40.7128, lng: -74.0060, name: 'New York' },
+        { lat: 34.0522, lng: -118.2437, name: 'Los Angeles' },
+        { lat: 41.8781, lng: -87.6298, name: 'Chicago' }
+      ];
+
+      testAlerts.forEach(alert => {
+        cesiumViewer.entities.add({
+          position: Cesium.Cartesian3.fromDegrees(alert.lng, alert.lat, 0),
+          billboard: {
+            image: createIceCubeSVG(),
+            width: 48,
+            height: 48,
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+          },
+          label: {
+            text: `🧊 ${alert.name}`,
+            font: '14pt sans-serif',
+            fillColor: Cesium.Color.WHITE,
+            outlineColor: Cesium.Color.BLACK,
+            outlineWidth: 2,
+            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+            pixelOffset: new Cesium.Cartesian2(0, -50)
+          }
+        });
+      });
+
+      // Fly to show all alerts
+      cesiumViewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(-95.7129, 37.0902, 5000000),
+        duration: 2
+      });
+
+      console.log('[DAEmon Beat] cesium_entities_added', { count: testAlerts.length });
+    }
+
+    function clearCesiumEntities() {
+      if (cesiumViewer) {
+        cesiumViewer.entities.removeAll();
+        console.log('[DAEmon Beat] cesium_entities_cleared');
+      }
+    }
+
+    function createIceCubeSVG() {
+      // Simple ice cube SVG as data URL
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+        <rect x="8" y="8" width="32" height="32" fill="#bfdbfe" stroke="#3b82f6" stroke-width="2" rx="4"/>
+        <circle cx="18" cy="18" r="3" fill="#dbeafe" opacity="0.7"/>
+        <circle cx="30" cy="30" r="4" fill="#dbeafe" opacity="0.7"/>
+      </svg>`;
+      return 'data:image/svg+xml;base64,' + btoa(svg);
+    }
+
+    // ============================================
+    // INITIALIZE ON PAGE LOAD
+    // ============================================
+
+    window.initMapsWhenReady = function() {
+      console.log('[DAEmon Beat] initializing_maps');
+
+      // Wait for both libraries to load
+      const checkLibraries = setInterval(() => {
+        const leafletReady = typeof L !== 'undefined';
+        const cesiumReady = typeof Cesium !== 'undefined';
+
+        console.log('[DAEmon Beat] checking_libraries', { leafletReady, cesiumReady });
+
+        if (leafletReady && cesiumReady) {
+          clearInterval(checkLibraries);
+
+          const leafletSuccess = initLeaflet();
+          const cesiumSuccess = initCesium();
+
+          console.log('[DAEmon Beat] maps_initialization_complete', {
+            leaflet: leafletSuccess,
+            cesium: cesiumSuccess
+          });
+        }
+      }, 100);
+
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        clearInterval(checkLibraries);
+        if (typeof L === 'undefined') {
+          document.getElementById('leaflet-status').className = 'status error';
+          document.getElementById('leaflet-status').textContent = '✗ Leaflet failed to load from CDN';
+        }
+        if (typeof Cesium === 'undefined') {
+          document.getElementById('cesium-status').className = 'status error';
+          document.getElementById('cesium-status').textContent = '✗ Cesium failed to load from CDN';
+        }
+      }, 10000);
+    };
+  </script>
+
+  <!-- Leaflet JS - Must load AFTER our script definitions -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha512-jy34BInHBiazr4r5AXXSWzauUGvdMZqQGQnMBHKbIcvk4DLSL1rQYpZQFZtQJDEkjU8hJBQqJk9EXMX5wR1gPw=="
+    crossorigin=""></script>
+
+  <!-- Cesium JS - Must load AFTER our script definitions -->
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/Cesium.js"></script>
+
+  <!-- Initialize maps after both libraries loaded -->
+  <script>
+    window.addEventListener('load', window.initMapsWhenReady);
+  </script>
+</body>
+</html>

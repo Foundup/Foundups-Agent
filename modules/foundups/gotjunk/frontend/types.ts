@@ -27,6 +27,8 @@ export interface CapturedItem {
   classification?: ItemClassification; // How the item is being sold (free/discount/bid)
   price?: number; // For selling items (auto-set based on classification)
   originalPrice?: number; // Detected price from Google Vision API (future)
+  discountPercent?: number; // Discount percentage (75 or 50) - default 75
+  bidDurationHours?: number; // Bid duration in hours (24, 48, or 72) - default 48
   description?: string; // Item description
   createdAt: number; // Timestamp
   userId?: string; // Who owns this item (for "others" items)

@@ -11,6 +11,7 @@ import { LeftSidebarNav } from './components/LeftSidebarNav';
 import { RecordingIndicator } from './components/RecordingIndicator';
 import { PhotoGrid } from './components/PhotoGrid';
 import { ClassificationModal } from './components/ClassificationModal';
+import { OptionsModal } from './components/OptionsModal';
 import { ItemClassification } from './types';
 // import { PigeonMapView } from './components/PigeonMapView';
 
@@ -84,6 +85,11 @@ const App: React.FC = () => {
   // === FULLSCREEN REVIEW STATE (My Items tab) ===
   const [reviewingItem, setReviewingItem] = useState<CapturedItem | null>(null);
   const [reviewQueue, setReviewQueue] = useState<CapturedItem[]>([]);
+
+  // === RE-CLASSIFICATION STATE ===
+  const [reclassifyingItem, setReclassifyingItem] = useState<CapturedItem | null>(null);
+  const [editingOptionsItem, setEditingOptionsItem] = useState<CapturedItem | null>(null);
+
 
 
   // Liberty Alert State (unlocked via SOS morse code easter egg)
@@ -255,6 +261,8 @@ const App: React.FC = () => {
       classification,
       price,
       originalPrice: defaultPrice,
+      discountPercent,
+      bidDurationHours,
       createdAt: Date.now(),
       ...location,
     };
@@ -342,7 +350,76 @@ const App: React.FC = () => {
     }
   };
 
-  const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
+  
+  // Re-classify existing item
+  const handleReclassify = async (item: CapturedItem, newClassification: ItemClassification) => {
+    const defaultPrice = 100; // Will be from Google Vision API
+
+    let price = 0;
+    let discountPercent = 75;
+    let bidDurationHours = 48;
+
+    if (newClassification === 'free') {
+      price = 0;
+    } else if (newClassification === 'discount') {
+      price = defaultPrice * 0.25; // 75% OFF by default
+      discountPercent = 75;
+    } else if (newClassification === 'bid') {
+      price = defaultPrice * 0.5; // 50% OFF starting bid
+      bidDurationHours = 48; // default
+    }
+
+    const updatedItem: CapturedItem = {
+      ...item,
+      classification: newClassification,
+      price,
+      discountPercent,
+      bidDurationHours,
+    };
+
+    // Update in state
+    if (item.status === 'draft') {
+      setMyDrafts(prev => prev.map(i => i.id === item.id ? updatedItem : i));
+    } else {
+      setMyListed(prev => prev.map(i => i.id === item.id ? updatedItem : i));
+    }
+
+    // Update in IndexedDB
+    await storage.saveItem(updatedItem);
+
+    setReclassifyingItem(null);
+  };
+
+  // Update options for discount/bid
+  const handleUpdateOptions = async (item: CapturedItem, discountPercent?: number, bidDurationHours?: number) => {
+    const defaultPrice = 100;
+    let price = item.price || 0;
+
+    if (item.classification === 'discount' && discountPercent) {
+      price = defaultPrice * (1 - discountPercent / 100);
+    }
+
+    const updatedItem: CapturedItem = {
+      ...item,
+      price,
+      discountPercent: discountPercent || item.discountPercent,
+      bidDurationHours: bidDurationHours || item.bidDurationHours,
+    };
+
+    // Update in state
+    if (item.status === 'draft') {
+      setMyDrafts(prev => prev.map(i => i.id === item.id ? updatedItem : i));
+    } else {
+      setMyListed(prev => prev.map(i => i.id === item.id ? updatedItem : i));
+    }
+
+    // Update in IndexedDB
+    await storage.saveItem(updatedItem);
+
+    setEditingOptionsItem(null);
+  };
+
+const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
 
   return (
     <div
@@ -406,6 +483,16 @@ const App: React.FC = () => {
                   setMyDrafts(prev => prev.filter(i => i.id !== item.id));
                 } else {
                   setMyListed(prev => prev.filter(i => i.id !== item.id));
+                }
+              }}
+              onBadgeClick={(item) => {
+                // Tap badge to re-classify
+                setReclassifyingItem(item);
+              }}
+              onBadgeLongPress={(item) => {
+                // Long-press badge to edit options (discount % or bid duration)
+                if (item.classification !== 'free') {
+                  setEditingOptionsItem(item);
                 }
               }}
             />
@@ -514,6 +601,26 @@ const App: React.FC = () => {
       />
 
       {/* Bottom navigation bar */}
+
+      {/* Re-classification Modal (tap badge) */}
+      {reclassifyingItem && (
+        <ClassificationModal
+          isOpen={true}
+          imageUrl={reclassifyingItem.url}
+          onClassify={(newClassification) => handleReclassify(reclassifyingItem, newClassification)}
+        />
+      )}
+
+      {/* Options Modal (long-press badge) */}
+      {editingOptionsItem && (
+        <OptionsModal
+          isOpen={true}
+          item={editingOptionsItem}
+          onSave={(discountPercent, bidDurationHours) => handleUpdateOptions(editingOptionsItem, discountPercent, bidDurationHours)}
+          onClose={() => setEditingOptionsItem(null)}
+        />
+      )}
+
       <BottomNavBar
         captureMode={captureMode}
         onToggleCaptureMode={() => setCaptureMode(mode => mode === 'photo' ? 'video' : 'photo')}
