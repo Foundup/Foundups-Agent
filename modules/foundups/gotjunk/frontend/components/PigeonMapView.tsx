@@ -87,6 +87,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
         touchAction: "pan-x pan-y pinch-zoom",
         userSelect: "none",
         WebkitUserSelect: "none",
+        pointerEvents: "auto",
       }}
     >
       {/* Header */}
