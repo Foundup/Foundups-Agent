@@ -26,12 +26,8 @@ export const ActionSheetDiscount: React.FC<ActionSheetDiscountProps> = ({
   ];
 
   const handleSelect = (percent: number) => {
-    // Haptic success feedback
-    if (navigator.vibrate) {
-      navigator.vibrate([10, 50, 10]); // Success pattern
-    }
+    // Just call onSelect - the parent handles close and haptic
     onSelect(percent);
-    onClose();
   };
 
   return (
