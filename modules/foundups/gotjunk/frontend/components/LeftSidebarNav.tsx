@@ -58,9 +58,9 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
       // Active state: bright blue with ring (always visible)
       return 'bg-blue-500/70 ring-2 ring-blue-400 shadow-blue-500/50 border-2 border-blue-300';
     }
-    // Inactive state: high-contrast for map view, subtle for other views
+    // Inactive state: black background for map view, dark gray for other views
     return isMapView
-      ? 'bg-indigo-600/85 hover:bg-indigo-500/90 border-2 border-indigo-400 shadow-2xl shadow-indigo-900/60'
+      ? 'bg-black/90 hover:bg-gray-900/90 border-2 border-white shadow-2xl shadow-black/80'
       : 'bg-gray-800/90 hover:bg-gray-700/90 border-2 border-gray-600 shadow-2xl';
   };
 
