@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, PanInfo } from 'framer-motion';
 import { CapturedItem } from '../types';
+import { Z_LAYERS } from '../constants/zLayers';
 
 interface ItemReviewerProps {
   item: CapturedItem;
@@ -18,6 +19,15 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({ item, onDecision, on
       onDecision(item, swipeDecision);
     }
   }, [swipeDecision, item, onDecision]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
 
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const swipeThreshold = 50;
@@ -54,7 +64,10 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({ item, onDecision, on
 
   return (
     <motion.div
-      className="w-full h-full absolute inset-0 flex items-center justify-center p-4 pb-28"
+      className="fixed inset-0 flex items-center justify-center p-4 pb-28 bg-black/80 backdrop-blur-sm"
+      style={{ zIndex: Z_LAYERS.fullscreen }}
+      role="dialog"
+      aria-modal="true"
       drag="x"
       dragConstraints={{ left: -150, right: 150 }}
       dragElastic={0.2}

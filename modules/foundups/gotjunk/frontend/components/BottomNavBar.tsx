@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { LeftArrowIcon } from './icons/LeftArrowIcon';
@@ -6,6 +5,7 @@ import { RightArrowIcon } from './icons/RightArrowIcon';
 import { Camera, CameraHandle } from './Camera';
 import { CaptureMode } from '../App';
 import { MicIcon } from './icons/MicIcon';
+import { Z_LAYERS } from '../constants/zLayers';
 
 interface BottomNavBarProps {
   captureMode: CaptureMode;
@@ -111,13 +111,17 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 
   return (
     <motion.div
-        className="fixed bottom-0 left-0 right-0 z-50"
+        className="fixed bottom-0 left-0 right-0"
+        style={{ zIndex: Z_LAYERS.floatingControls }}
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
     >
       {/* Camera Orb - Floating above nav bar */}
-      <div className="absolute left-1/2 -translate-x-1/2 bottom-32 flex flex-col items-center z-[100]">
+      <div
+        className="absolute left-1/2 -translate-x-1/2 bottom-32 flex flex-col items-center"
+        style={{ zIndex: Z_LAYERS.floatingControls + 20 }}
+      >
           {/* Main capture button with live preview - Intelligent scaling: iPhone 11=143px, iPhone 16=149px */}
           <div
             className="p-2 bg-gray-800 rounded-full shadow-2xl cursor-pointer"

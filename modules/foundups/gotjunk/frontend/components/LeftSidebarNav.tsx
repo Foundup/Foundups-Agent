@@ -68,10 +68,10 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
     <motion.div
       initial={{ opacity: 0, x: -50 }}
       animate={{ opacity: 1, x: 0 }}
-      className="fixed left-4 sm:left-6 flex flex-col items-center space-y-6 pointer-events-auto"
+      className="fixed left-4 sm:left-6 flex flex-col items-center pointer-events-auto"
       style={{
-        top: 'calc(50% - 150px)',
-        transform: 'translateY(-50%)',
+        top: 'var(--sb-top)',
+        gap: 'var(--sb-gap)',
         zIndex: Z_LAYERS.sidebar,
       }}
     >
@@ -95,9 +95,13 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
         aria-label="Browse (Tab 1)"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        className={`p-4 rounded-2xl backdrop-blur-md shadow-xl transition-all ${getButtonStyle(activeTab === 'browse')}`}
+        className={`grid place-items-center rounded-2xl backdrop-blur-md shadow-xl transition-all ${getButtonStyle(activeTab === 'browse')}`}
+        style={{
+          width: 'var(--sb-size)',
+          height: 'var(--sb-size)',
+        }}
       >
-        <GridIcon className="w-8 h-8 text-white" />
+        <GridIcon style={{ width: 'clamp(20px, 3.5vh, 32px)', height: 'clamp(20px, 3.5vh, 32px)' }} className="text-white" />
       </motion.button>
 
       {/* Tab 2: Map - Map Icon */}
@@ -106,9 +110,13 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
         aria-label="Map (Tab 2)"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        className={`p-4 rounded-2xl backdrop-blur-md shadow-xl transition-all ${getButtonStyle(activeTab === 'map')}`}
+        className={`grid place-items-center rounded-2xl backdrop-blur-md shadow-xl transition-all ${getButtonStyle(activeTab === 'map')}`}
+        style={{
+          width: 'var(--sb-size)',
+          height: 'var(--sb-size)',
+        }}
       >
-        <MapIcon className="w-8 h-8 text-white" />
+        <MapIcon style={{ width: 'clamp(20px, 3.5vh, 32px)', height: 'clamp(20px, 3.5vh, 32px)' }} className="text-white" />
       </motion.button>
 
       {/* Tab 3: My Items - Home Icon */}
@@ -117,9 +125,13 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
         aria-label="My Items (Tab 3)"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        className={`p-4 rounded-2xl backdrop-blur-md shadow-xl transition-all ${getButtonStyle(activeTab === 'myitems')}`}
+        className={`grid place-items-center rounded-2xl backdrop-blur-md shadow-xl transition-all ${getButtonStyle(activeTab === 'myitems')}`}
+        style={{
+          width: 'var(--sb-size)',
+          height: 'var(--sb-size)',
+        }}
       >
-        <HomeIcon className="w-8 h-8 text-white" />
+        <HomeIcon style={{ width: 'clamp(20px, 3.5vh, 32px)', height: 'clamp(20px, 3.5vh, 32px)' }} className="text-white" />
       </motion.button>
 
       {/* Tab 4: Cart - Cart Icon */}
@@ -128,9 +140,13 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
         aria-label="Cart (Tab 4)"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        className={`p-4 rounded-2xl backdrop-blur-md shadow-xl transition-all ${getButtonStyle(activeTab === 'cart')}`}
+        className={`grid place-items-center rounded-2xl backdrop-blur-md shadow-xl transition-all ${getButtonStyle(activeTab === 'cart')}`}
+        style={{
+          width: 'var(--sb-size)',
+          height: 'var(--sb-size)',
+        }}
       >
-        <CartIcon className="w-8 h-8 text-white" />
+        <CartIcon style={{ width: 'clamp(20px, 3.5vh, 32px)', height: 'clamp(20px, 3.5vh, 32px)' }} className="text-white" />
       </motion.button>
     </motion.div>
   );

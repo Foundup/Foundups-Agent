@@ -1,0 +1,41 @@
+/**
+ * GotJunk Responsive Sidebar CSS Variables
+ * Auto-adapts to iPhone 11, 13, 15, 16 via clamp() + safe-area insets
+ * WSP Compliance: WSP 22 (Documentation), WSP 50 (Pre-Action Verification)
+ */
+
+:root {
+  /* Sidebar button size scales with viewport height but never too big/small */
+  --sb-size: clamp(48px, 8vh, 72px);
+  --sb-gap: clamp(10px, 2.6vh, 18px);
+
+  /* Header + status area top offset */
+  --sb-top: calc(max(env(safe-area-inset-top, 0px) + 64px, 88px));
+
+  /* Keep off the bottom toolbar */
+  --sb-bottom-safe: calc(env(safe-area-inset-bottom, 0px) + 120px);
+
+  /* iOS Safari vh fix */
+  --vh: 1vh;
+}
+
+/* iPhone 11 and smaller devices (max-height: 740px) */
+@media (max-height: 740px) {
+  :root {
+    --sb-size: clamp(44px, 7.2vh, 60px);
+    --sb-gap: clamp(8px, 2vh, 14px);
+    --sb-top: calc(max(env(safe-area-inset-top, 0px) + 56px, 76px));
+    --sb-bottom-safe: calc(env(safe-area-inset-bottom, 0px) + 104px);
+  }
+}
+
+/* Ensure minimum tap target size (Apple HIG compliance) */
+button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Prevent horizontal scroll */
+body {
+  overflow-x: hidden;
+}

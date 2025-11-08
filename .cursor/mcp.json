@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "holo_index": {
+      "command": "O:/Foundups-Agent/foundups-mcp-p1/foundups-mcp-env/Scripts/python.exe",
+      "args": [
+        "O:/Foundups-Agent/foundups-mcp-p1/servers/holo_index/server.py"
+      ],
+      "env": {
+        "REPO_ROOT": "O:/Foundups-Agent",
+        "HOLO_INDEX_PATH": "E:/HoloIndex",
+        "PYTHONPATH": "O:/Foundups-Agent"
+      }
+    },
+    "wsp_governance": {
+      "command": "O:/Foundups-Agent/foundups-mcp-p1/foundups-mcp-env/Scripts/python.exe",
+      "args": [
+        "O:/Foundups-Agent/foundups-mcp-p1/servers/wsp_governance/server.py"
+      ],
+      "env": {
+        "REPO_ROOT": "O:/Foundups-Agent",
+        "WSP_FRAMEWORK_PATH": "O:/Foundups-Agent/WSP_framework",
+        "PYTHONPATH": "O:/Foundups-Agent"
+      }
+    }
+  }
+}

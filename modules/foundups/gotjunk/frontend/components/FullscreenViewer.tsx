@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CapturedItem } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
+import { Z_LAYERS } from '../constants/zLayers';
 
 interface FullscreenViewerProps {
   items: CapturedItem[];
@@ -24,6 +25,15 @@ export const FullscreenViewer: React.FC<FullscreenViewerProps> = ({ items, start
 
   if (!item) return null;
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
   const handleDragEnd = (event: any, info: any) => {
     if (info.offset.x > 100) {
       onNavigate('prev');
@@ -37,8 +47,11 @@ export const FullscreenViewer: React.FC<FullscreenViewerProps> = ({ items, start
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
+      className="fixed inset-0 bg-black/90 flex items-center justify-center"
+      style={{ zIndex: Z_LAYERS.fullscreen }}
       onDoubleClick={onClose}
+      role="dialog"
+      aria-modal="true"
     >
         <AnimatePresence initial={false}>
             <motion.img

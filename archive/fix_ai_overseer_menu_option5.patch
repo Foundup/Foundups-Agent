@@ -1,0 +1,31 @@
+diff --git a/main.py b/main.py
+index ORIGINAL..FIXED 100644
+--- a/main.py
++++ b/main.py
+@@ -598,6 +598,7 @@ def main():
+                 print("2. [MENU] YouTube Shorts Generator (Gemini/Veo 3)")
+                 print("3. [MENU] YouTube Shorts Generator (Sora2 Live Action)")
+                 print("4. [INFO] YouTube Stats & Info")
++                print("5. [AI] Launch with AI Overseer Monitoring (Qwen/Gemma Bug Detection)")
+                 print("0. [BACK] Back to Main Menu")
+                 print("="*60)
+
+@@ -687,6 +688,17 @@ def main():
+                     except Exception as e:
+                         print(f"[ERROR]Failed to get stats: {e}")
+
++                elif yt_choice == "5":
++                    # Launch YouTube DAE with AI Overseer monitoring
++                    print("\n[AI] Starting YouTube DAE with AI Overseer monitoring...")
++                    print("[INFO] AI Overseer monitors automatically via YouTubeDAEHeartbeat service\n")
++                    try:
++                        await monitor_youtube(disable_lock=False)
++                    except KeyboardInterrupt:
++                        print("\n[STOP] YouTube daemon stopped by user")
++                    except Exception as e:
++                        print(f"\n[ERROR] Failed to start YouTube daemon: {e}")
++                        logger.error(f"YouTube daemon error: {e}", exc_info=True)
++
+                 elif yt_choice == "0":
+                     print("[BACK] Returning to main menu...")
+                 else:

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { CapturedItem } from '../types';
 import { PhotoGrid } from './PhotoGrid';
+import { Z_LAYERS } from '../constants/zLayers';
 
 interface FullscreenGalleryProps {
   items: CapturedItem[];
@@ -9,9 +10,21 @@ interface FullscreenGalleryProps {
 }
 
 export const FullscreenGallery: React.FC<FullscreenGalleryProps> = ({ items, onClose, onDelete }) => {
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
   return (
     <div
-      className="fixed inset-0 bg-gray-900 z-40 flex flex-col"
+      className="fixed inset-0 bg-gray-900 flex flex-col"
+      style={{ zIndex: Z_LAYERS.gallery }}
+      role="dialog"
+      aria-modal="true"
     >
         <header className="flex-shrink-0 flex items-center justify-between p-4 border-b border-white/10">
             <h2 className="text-xl font-bold text-white">Gallery</h2>

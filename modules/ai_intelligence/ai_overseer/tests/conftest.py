@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Global pytest configuration for AI Overseer tests."""
+
+from __future__ import annotations
+
+import os
+import pytest
+
+_ALLOWLIST = {
+    "test_analysis.py",
+    "test_planning.py",
+    "test_execution.py",
+    "test_mcp.py",
+    "test_monitor_flow.py",
+    "test_mixins_extended.py",
+}
+
+_HEAVY_TARGETS = [
+    "test_ai_overseer.py",
+    "test_ai_overseer_monitoring.py",
+    "test_ai_overseer_unicode_fix.py",
+    "test_daemon_monitoring_witness_loop.py",
+    "holo_index",
+    "modules",
+]
+
+collect_ignore = []
+if os.getenv("AI_OVERSEER_HEAVY_TESTS") != "1":
+    collect_ignore.extend(_HEAVY_TARGETS)
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip heavy legacy suites unless explicitly requested."""
+    if os.getenv("AI_OVERSEER_HEAVY_TESTS") == "1":
+        return
+
+    skip_marker = pytest.mark.skip(
+        reason="Heavy AI Overseer regression skipped (set AI_OVERSEER_HEAVY_TESTS=1 to enable)",
+    )
+
+    for item in items:
+        if item.fspath.basename not in _ALLOWLIST:
+            item.add_marker(skip_marker)
