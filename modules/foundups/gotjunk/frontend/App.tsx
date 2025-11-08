@@ -483,7 +483,10 @@ const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
                 setReviewingItem(item);
                 setReviewQueue(remainingItems);
               }}
-              onDelete={(item) => {
+              onDelete={async (item) => {
+                // Delete from storage and update state
+                URL.revokeObjectURL(item.url);
+                await storage.deleteItem(item.id);
                 if (item.status === 'draft') {
                   setMyDrafts(prev => prev.filter(i => i.id !== item.id));
                 } else {
