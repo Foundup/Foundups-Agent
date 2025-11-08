@@ -79,7 +79,7 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
         className={`p-4 rounded-2xl backdrop-blur-md shadow-xl transition-all ${
           activeTab === 'browse'
             ? 'bg-blue-500/70 ring-2 ring-blue-400 shadow-blue-500/50 border-2 border-blue-300'
-            : 'bg-white/90 hover:bg-white border-2 border-gray-300 shadow-2xl'
+            : 'bg-gray-800/90 hover:bg-gray-700/90 border-2 border-gray-600 shadow-2xl'
         }`}
       >
         <GridIcon className="w-8 h-8 text-white" />
@@ -94,7 +94,7 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
         className={`p-4 rounded-2xl backdrop-blur-md shadow-xl transition-all ${
           activeTab === 'map'
             ? 'bg-blue-500/70 ring-2 ring-blue-400 shadow-blue-500/50 border-2 border-blue-300'
-            : 'bg-white/90 hover:bg-white border-2 border-gray-300 shadow-2xl'
+            : 'bg-gray-800/90 hover:bg-gray-700/90 border-2 border-gray-600 shadow-2xl'
         }`}
       >
         <MapIcon className="w-8 h-8 text-white" />
@@ -109,7 +109,7 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
         className={`p-4 rounded-2xl backdrop-blur-md shadow-xl transition-all ${
           activeTab === 'myitems'
             ? 'bg-blue-500/70 ring-2 ring-blue-400 shadow-blue-500/50 border-2 border-blue-300'
-            : 'bg-white/90 hover:bg-white border-2 border-gray-300 shadow-2xl'
+            : 'bg-gray-800/90 hover:bg-gray-700/90 border-2 border-gray-600 shadow-2xl'
         }`}
       >
         <HomeIcon className="w-8 h-8 text-white" />
@@ -124,7 +124,7 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
         className={`p-4 rounded-2xl backdrop-blur-md shadow-xl transition-all ${
           activeTab === 'cart'
             ? 'bg-blue-500/70 ring-2 ring-blue-400 shadow-blue-500/50 border-2 border-blue-300'
-            : 'bg-white/90 hover:bg-white border-2 border-gray-300 shadow-2xl'
+            : 'bg-gray-800/90 hover:bg-gray-700/90 border-2 border-gray-600 shadow-2xl'
         }`}
       >
         <CartIcon className="w-8 h-8 text-white" />
