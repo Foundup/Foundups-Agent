@@ -81,7 +81,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
 
   return (
     <div
-      className="fixed top-0 left-20 sm:left-24 right-0 bottom-32 bg-black"
+      className="fixed top-0 left-0 right-0 bottom-32 bg-black"
       style={{
         zIndex: Z_LAYERS.mapOverlay,
         touchAction: "pan-x pan-y pinch-zoom",
