@@ -32,9 +32,15 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
   const [discountSheetOpen, setDiscountSheetOpen] = useState(false);
   const [bidSheetOpen, setBidSheetOpen] = useState(false);
 
-  // Current values (defaults)
-  const [discountPercent, setDiscountPercent] = useState(75);
-  const [bidDurationHours, setBidDurationHours] = useState(48);
+  // Load saved defaults from localStorage or use fallbacks
+  const [discountPercent, setDiscountPercent] = useState(() => {
+    const saved = localStorage.getItem('gotjunk_default_discount');
+    return saved ? parseInt(saved, 10) : 75;
+  });
+  const [bidDurationHours, setBidDurationHours] = useState(() => {
+    const saved = localStorage.getItem('gotjunk_default_bid_duration');
+    return saved ? parseInt(saved, 10) : 48;
+  });
 
   // Long-press for Discount button
   const discountLongPress = useLongPress({
@@ -61,13 +67,29 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
   // Handle Discount sheet selection
   const handleDiscountSelect = (percent: number) => {
     setDiscountPercent(percent);
-    onClassify('discount', percent, undefined);
+    setDiscountSheetOpen(false);
+    
+    // Save as default for future captures
+    localStorage.setItem('gotjunk_default_discount', percent.toString());
+    
+    // Haptic success feedback
+    if (navigator.vibrate) {
+      navigator.vibrate([10, 50, 10]);
+    }
   };
 
   // Handle Bid sheet selection
   const handleBidSelect = (hours: number) => {
     setBidDurationHours(hours);
-    onClassify('bid', undefined, hours);
+    setBidSheetOpen(false);
+    
+    // Save as default for future captures
+    localStorage.setItem('gotjunk_default_bid_duration', hours.toString());
+    
+    // Haptic success feedback
+    if (navigator.vibrate) {
+      navigator.vibrate([10, 50, 10]);
+    }
   };
 
   return (
