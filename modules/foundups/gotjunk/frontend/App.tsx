@@ -585,10 +585,13 @@ const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
       <LeftSidebarNav
         activeTab={activeTab}
         onGalleryClick={() => {
-          if (!sosDetectionActive.current) {
-            setActiveTab('browse'); // Tab 1: Browse
-            setMapOpen(false); // Close map when switching to Browse
-          }
+          // Always reset SOS detection and clear timeout (same as Map button)
+          setTapTimes([]);
+          sosDetectionActive.current = false;
+          if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
+          // Navigate to Browse
+          setActiveTab('browse'); // Tab 1: Browse
+          setMapOpen(false); // Close map when switching to Browse
         }}
         onGalleryIconTap={(duration) => {
           const SHORT_TAP = 200;
