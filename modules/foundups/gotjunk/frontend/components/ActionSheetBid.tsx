@@ -26,12 +26,8 @@ export const ActionSheetBid: React.FC<ActionSheetBidProps> = ({
   ];
 
   const handleSelect = (hours: number) => {
-    // Haptic success feedback
-    if (navigator.vibrate) {
-      navigator.vibrate([10, 50, 10]); // Success pattern
-    }
+    // Just call onSelect - the parent handles close and haptic
     onSelect(hours);
-    onClose();
   };
 
   return (
