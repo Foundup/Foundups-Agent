@@ -1,0 +1,281 @@
+{
+  "daemon_name": "GotJunk + Liberty Alert",
+  "bash_shell_pattern": "npm run dev|vite|Cloud Run",
+  "description": "Monitors GotJunk FoundUp and Liberty Alert integration using WSP 15 MPS scoring",
+  "version": "1.0.0",
+  "wsp_compliance": {
+    "wsp_77": "Agent coordination (Gemma detection → Qwen MPS evaluation → Qwen execution)",
+    "wsp_15": "Module Prioritization Scoring for bug classification (P0-P4)",
+    "wsp_96": "Skills-driven monitoring patterns",
+    "wsp_3": "FoundUp domain structure (modules/foundups/gotjunk/)"
+  },
+  "architecture": {
+    "phase_1_gemma": "Fast pattern detection (<100ms)",
+    "phase_2_qwen": "WSP 15 MPS scoring + autonomous decision (200-500ms)",
+    "phase_3_learning": "Pattern storage and skill updates",
+    "no_0102_dependency": "Qwen handles complexity 1-2 autonomously"
+  },
+  "monitored_beats": {
+    "sos_unlock": {
+      "description": "SOS morse code pattern detection and Liberty Alert unlock",
+      "events": [
+        "gallery_icon_tap",
+        "sos_pattern_detected",
+        "liberty_alert_enabled"
+      ],
+      "metrics": {
+        "tap_accuracy": "percentage of correct SOS patterns",
+        "false_positives": "gallery opens during SOS attempt",
+        "unlock_rate": "successful unlocks / total attempts"
+      }
+    },
+    "voice_detection": {
+      "description": "Web Speech API keyword detection during video recording",
+      "events": [
+        "recording_started",
+        "voice_listening_started",
+        "keyword_detected",
+        "recording_stopped"
+      ],
+      "metrics": {
+        "detection_accuracy": "keywords detected / keywords spoken",
+        "false_positives": "non-keyword triggers",
+        "latency": "time from keyword to detection"
+      }
+    },
+    "ice_cube_creation": {
+      "description": "Liberty Alert ice cube marker creation on map",
+      "events": [
+        "keyword_detected",
+        "geolocation_captured",
+        "alert_created",
+        "ice_cube_added_to_map"
+      ],
+      "metrics": {
+        "creation_success_rate": "alerts created / keywords detected",
+        "geolocation_failures": "failed location captures",
+        "video_link_integrity": "video URLs valid"
+      }
+    },
+    "video_upload": {
+      "description": "10-second video upload to YouTube unlisted",
+      "events": [
+        "video_recorded",
+        "upload_started",
+        "youtube_api_called",
+        "upload_completed",
+        "video_linked_to_alert"
+      ],
+      "metrics": {
+        "upload_success_rate": "successful uploads / total videos",
+        "upload_latency": "time from recording to YouTube URL",
+        "api_quota_usage": "YouTube API calls per hour"
+      }
+    },
+    "mesh_network_broadcast": {
+      "description": "Liberty Alert broadcast via existing mesh network modules",
+      "events": [
+        "alert_created",
+        "mesh_broadcast_started",
+        "peers_notified",
+        "broadcast_confirmed"
+      ],
+      "metrics": {
+        "broadcast_success_rate": "peers notified / total peers",
+        "network_latency": "time to reach all peers",
+        "peer_count": "active mesh connections"
+      }
+    },
+    "map_loading": {
+      "description": "2D Leaflet map and 3D Cesium globe loading for GotJunk items and Liberty Alerts",
+      "events": [
+        "map_icon_clicked",
+        "mapview_component_mounted",
+        "leaflet_initialized",
+        "tiles_loaded",
+        "markers_rendered",
+        "globe_view_requested",
+        "cesium_initialized",
+        "globe_entities_created"
+      ],
+      "metrics": {
+        "map_load_success_rate": "successful loads / total attempts",
+        "leaflet_init_time": "time to render 2D map",
+        "cesium_init_time": "time to render 3D globe",
+        "tile_load_failures": "failed OpenStreetMap tile fetches",
+        "white_screen_occurrences": "map failures showing blank screen"
+      }
+    }
+  },
+  "error_patterns": {
+    "map_white_screen": {
+      "regex": "white screen|MapView.*failed|Leaflet.*error|Cesium.*error|Cannot read.*Viewer|map.*not.*loading",
+      "description": "Map view shows white screen instead of rendering - likely Leaflet/Cesium initialization failure",
+      "wsp_15_mps": {
+        "complexity": 3,
+        "importance": 3,
+        "deferability": 2,
+        "impact": 3,
+        "total_mps": 11,
+        "priority": "P2",
+        "rationale": "Moderate complexity (library integration), important (feature broken), difficult to defer (blocks LA map), moderate impact"
+      },
+      "qwen_action": "bug_report",
+      "needs_0102": true,
+      "recommended_fix": "Check browser console for specific error, verify Leaflet CSS loading, test Cesium initialization in isolation"
+    },
+    "web_speech_api_not_supported": {
+      "regex": "Web Speech API not supported|webkitSpeechRecognition.*undefined",
+      "description": "Browser doesn't support Web Speech API - needs fallback or graceful degradation",
+      "wsp_15_mps": {
+        "complexity": 3,
+        "importance": 4,
+        "deferability": 3,
+        "impact": 4,
+        "total_mps": 14,
+        "priority": "P1",
+        "rationale": "Moderate complexity (detect + fallback), critical (LA disabled), moderate urgency, major impact"
+      },
+      "qwen_action": "bug_report",
+      "needs_0102": true,
+      "recommended_fix": "Add browser compatibility check and display warning message"
+    },
+    "sos_false_positive": {
+      "regex": "gallery.*opened.*during.*SOS|sosDetectionActive.*true.*gallery_open",
+      "description": "Gallery opens while SOS pattern is being tapped - timing issue",
+      "wsp_15_mps": {
+        "complexity": 2,
+        "importance": 3,
+        "deferability": 4,
+        "impact": 3,
+        "total_mps": 12,
+        "priority": "P2",
+        "rationale": "Low complexity (adjust timing), important (UX), can defer slightly, moderate impact"
+      },
+      "qwen_action": "auto_fix",
+      "fix_location": "App.tsx:262-304",
+      "fix_action": "increase_sos_timeout_window",
+      "recommended_fix": "Increase sosDetectionActive timeout from 3s to 5s"
+    },
+    "geolocation_permission_denied": {
+      "regex": "Geolocation.*denied|User denied.*geolocation|Position.*error",
+      "description": "User denied location permission - ice cube alert cannot be created",
+      "wsp_15_mps": {
+        "complexity": 2,
+        "importance": 5,
+        "deferability": 5,
+        "impact": 5,
+        "total_mps": 17,
+        "priority": "P0",
+        "rationale": "Low complexity (prompt user), essential (LA broken), cannot defer, transformative"
+      },
+      "qwen_action": "auto_fix",
+      "fix_action": "show_permission_prompt",
+      "recommended_fix": "Display modal explaining why location is needed for Liberty Alert"
+    },
+    "youtube_upload_failed": {
+      "regex": "YouTube.*upload.*failed|Video.*upload.*error|API.*quota.*exceeded",
+      "description": "Failed to upload video to YouTube unlisted - video lost or quota exhausted",
+      "wsp_15_mps": {
+        "complexity": 3,
+        "importance": 5,
+        "deferability": 5,
+        "impact": 5,
+        "total_mps": 18,
+        "priority": "P0",
+        "rationale": "Moderate complexity (retry + fallback), essential (data loss), cannot defer, transformative"
+      },
+      "qwen_action": "bug_report",
+      "needs_0102": true,
+      "recommended_fix": "Implement local storage fallback + retry queue for failed uploads"
+    },
+    "mesh_broadcast_timeout": {
+      "regex": "Mesh.*broadcast.*timeout|Peers.*unreachable|WebRTC.*connection.*failed",
+      "description": "Liberty Alert failed to broadcast to mesh network peers",
+      "wsp_15_mps": {
+        "complexity": 4,
+        "importance": 4,
+        "deferability": 3,
+        "impact": 4,
+        "total_mps": 15,
+        "priority": "P1",
+        "rationale": "High complexity (network debugging), critical (LA disabled), moderate urgency, major impact"
+      },
+      "qwen_action": "bug_report",
+      "needs_0102": true,
+      "recommended_fix": "Add exponential backoff and peer reconnection logic"
+    },
+    "keyword_false_negative": {
+      "regex": "Keyword.*spoken.*not.*detected|Voice.*recognition.*missed",
+      "description": "User spoke keyword but Web Speech API didn't detect it - accuracy issue",
+      "wsp_15_mps": {
+        "complexity": 5,
+        "importance": 4,
+        "deferability": 2,
+        "impact": 4,
+        "total_mps": 15,
+        "priority": "P1",
+        "rationale": "Very high complexity (ML model), critical (LA unreliable), difficult to defer, major impact"
+      },
+      "qwen_action": "bug_report",
+      "needs_0102": true,
+      "recommended_fix": "Add confidence scoring and alternative keyword variations"
+    },
+    "camera_permission_denied": {
+      "regex": "No Camera Access|NotAllowedError|Permission.*denied.*camera",
+      "description": "User denied camera permission - GotJunk cannot function",
+      "wsp_15_mps": {
+        "complexity": 2,
+        "importance": 5,
+        "deferability": 5,
+        "impact": 5,
+        "total_mps": 17,
+        "priority": "P0",
+        "rationale": "Low complexity (prompt user), essential (app broken), cannot defer, transformative"
+      },
+      "qwen_action": "auto_fix",
+      "fix_action": "show_permission_prompt",
+      "recommended_fix": "Display modal explaining camera is required for GotJunk functionality"
+    }
+  },
+  "qwen_decision_logic": {
+    "auto_fix_threshold": {
+      "max_complexity": 2,
+      "description": "Qwen autonomously fixes bugs with WSP 15 complexity score 1-2",
+      "examples": [
+        "sos_false_positive",
+        "geolocation_permission_denied",
+        "camera_permission_denied"
+      ]
+    },
+    "bug_report_threshold": {
+      "min_complexity": 3,
+      "description": "Qwen creates bug reports for complexity 3+ requiring 0102 architectural review",
+      "examples": [
+        "web_speech_api_not_supported",
+        "youtube_upload_failed",
+        "mesh_broadcast_timeout",
+        "keyword_false_negative"
+      ]
+    }
+  },
+  "health_check_interval": 60,
+  "announcement_channel": "gotjunk_alerts",
+  "learning_stats": {
+    "total_bugs_detected": 0,
+    "total_bugs_fixed": 0,
+    "total_reports_generated": 0,
+    "last_detection": null,
+    "last_fix": null,
+    "pattern_accuracy": 0.0
+  },
+  "created_at": "2025-11-03",
+  "last_updated": "2025-11-03T12:38:00",
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2025-11-03",
+      "changes": "Initial GotJunk + Liberty Alert DAEmon monitor skill with 7 error patterns and 5 monitored beats"
+    }
+  ]
+}
