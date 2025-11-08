@@ -53,7 +53,7 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
     <motion.div
       initial={{ opacity: 0, x: -50 }}
       animate={{ opacity: 1, x: 0 }}
-      className="fixed left-6 z-40 flex flex-col items-center space-y-6"
+      className="fixed left-6 z-60 flex flex-col items-center space-y-6"
       style={{ top: 'calc(50% - 150px)', transform: 'translateY(-50%)' }}
     >
       {/* Liberty Alert - Top of sidebar */}
