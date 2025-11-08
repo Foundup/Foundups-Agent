@@ -172,7 +172,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
             width={30}
             anchor={[item.location.latitude, item.location.longitude]}
             color={getMarkerColor(item.status)}
-            onClick={() => setSelectedItem(item)}
+            onClick={onClose}
           />
         ))}
 
