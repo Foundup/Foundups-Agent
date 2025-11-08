@@ -587,6 +587,7 @@ const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
         onGalleryClick={() => {
           if (!sosDetectionActive.current) {
             setActiveTab('browse'); // Tab 1: Browse
+            setMapOpen(false); // Close map when switching to Browse
           }
         }}
         onGalleryIconTap={(duration) => {
@@ -625,10 +626,12 @@ const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
         }}
         onMyItemsClick={() => {
           setActiveTab('myitems'); // Tab 3: My Items
+          setMapOpen(false); // Close map when switching to My Items
           console.log('📦 My Items clicked');
         }}
         onCartClick={() => {
           setActiveTab('cart'); // Tab 4: Cart
+          setMapOpen(false); // Close map when switching to Cart
           console.log('🛒 Cart clicked');
         }}
         libertyEnabled={libertyEnabled}
