@@ -236,7 +236,12 @@ const App: React.FC = () => {
   };
 
   const handleClassify = async (classification: ItemClassification, discountPercent?: number, bidDurationHours?: number) => {
-    if (!pendingClassificationItem) return;
+    console.log('[GotJunk] handleClassify called:', { classification, discountPercent, bidDurationHours, hasPending: !!pendingClassificationItem });
+
+    if (!pendingClassificationItem) {
+      console.warn('[GotJunk] handleClassify called but no pendingClassificationItem!');
+      return;
+    }
 
     const { blob, url, location } = pendingClassificationItem;
 
@@ -273,11 +278,17 @@ const App: React.FC = () => {
       ...location,
     };
 
+    console.log('[GotJunk] Saving new item:', { id: newItem.id, classification, price });
     await storage.saveItem(newItem);
-    setMyDrafts(current => [newItem, ...current]);
+
+    setMyDrafts(current => {
+      console.log('[GotJunk] Adding to myDrafts, current count:', current.length);
+      return [newItem, ...current];
+    });
 
     // Clear pending item
     setPendingClassificationItem(null);
+    console.log('[GotJunk] Cleared pendingClassificationItem');
 
     // Liberty Alert: If keyword detected during video recording, create alert
     if (libertyEnabled && keywordDetected && blob.type.startsWith('video/')) {
@@ -359,6 +370,8 @@ const App: React.FC = () => {
   
   // Re-classify existing item
   const handleReclassify = async (item: CapturedItem, newClassification: ItemClassification, discountPercent?: number, bidDurationHours?: number) => {
+    console.log('[GotJunk] handleReclassify called:', { itemId: item.id, newClassification, discountPercent, bidDurationHours });
+
     const defaultPrice = 100; // Will be from Google Vision API
 
     // Use provided values or defaults
@@ -379,19 +392,31 @@ const App: React.FC = () => {
       ...item,
       classification: newClassification,
       price,
-      discountPercent: classification === 'discount' ? finalDiscountPercent : undefined,
-      bidDurationHours: classification === 'bid' ? finalBidDurationHours : undefined,
+      discountPercent: newClassification === 'discount' ? finalDiscountPercent : undefined,
+      bidDurationHours: newClassification === 'bid' ? finalBidDurationHours : undefined,
     };
+
+    console.log('[GotJunk] Updating item in state:', { id: updatedItem.id, status: item.status });
 
     // Update in state
     if (item.status === 'draft') {
-      setMyDrafts(prev => prev.map(i => i.id === item.id ? updatedItem : i));
+      setMyDrafts(prev => {
+        const updated = prev.map(i => i.id === item.id ? updatedItem : i);
+        console.log('[GotJunk] myDrafts updated, count:', updated.length);
+        return updated;
+      });
     } else {
-      setMyListed(prev => prev.map(i => i.id === item.id ? updatedItem : i));
+      setMyListed(prev => {
+        const updated = prev.map(i => i.id === item.id ? updatedItem : i);
+        console.log('[GotJunk] myListed updated, count:', updated.length);
+        return updated;
+      });
     }
 
     // Update in IndexedDB
+    console.log('[GotJunk] Saving to IndexedDB...');
     await storage.saveItem(updatedItem);
+    console.log('[GotJunk] Saved to IndexedDB successfully');
 
     setReclassifyingItem(null);
   };
