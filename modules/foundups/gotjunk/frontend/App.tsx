@@ -14,6 +14,7 @@ import { ClassificationModal } from './components/ClassificationModal';
 import { OptionsModal } from './components/OptionsModal';
 import { ItemClassification } from './types';
 import { PigeonMapView } from './components/PigeonMapView';
+import { useViewport } from './hooks/useViewport';
 
 export type CaptureMode = 'photo' | 'video';
 
@@ -80,6 +81,10 @@ const App: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [countdown, setCountdown] = useState(10);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | undefined>();
+
+  // === RESPONSIVE VIEWPORT (iOS Safari vh fix) ===
+  useViewport();
+
   // === CLASSIFICATION STATE ===
   const [pendingClassificationItem, setPendingClassificationItem] = useState<{blob: Blob, url: string, location?: {latitude: number, longitude: number}} | null>(null);
 
