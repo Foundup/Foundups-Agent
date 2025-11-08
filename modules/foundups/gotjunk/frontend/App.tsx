@@ -13,7 +13,7 @@ import { PhotoGrid } from './components/PhotoGrid';
 import { ClassificationModal } from './components/ClassificationModal';
 import { OptionsModal } from './components/OptionsModal';
 import { ItemClassification } from './types';
-// import { PigeonMapView } from './components/PigeonMapView';
+import { PigeonMapView } from './components/PigeonMapView';
 
 export type CaptureMode = 'photo' | 'video';
 
@@ -75,6 +75,7 @@ const App: React.FC = () => {
 
   // === UI STATE ===
   const [isGalleryOpen, setGalleryOpen] = useState(false);
+  const [isMapOpen, setMapOpen] = useState(false);
   const [captureMode, setCaptureMode] = useState<CaptureMode>('photo');
   const [isRecording, setIsRecording] = useState(false);
   const [countdown, setCountdown] = useState(10);
@@ -656,6 +657,31 @@ const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
           items={myListed}
           onClose={() => setGalleryOpen(false)}
           onDelete={handleDeleteMyItem}
+        />
+      )}
+
+
+      {/* Map View */}
+      {isMapOpen && (
+        <PigeonMapView
+          junkItems={myListed.map(item => ({
+            id: item.id,
+            location: {
+              latitude: item.location?.latitude || userLocation?.latitude || 37.7749,
+              longitude: item.location?.longitude || userLocation?.longitude || -122.4194,
+            },
+            title: item.id.split('-')[0] || 'Item',
+            imageUrl: item.url || '',
+            status: 'available' as const,
+            timestamp: Date.now(),
+          }))}
+          libertyAlerts={libertyAlerts}
+          userLocation={userLocation || null}
+          onClose={() => {
+            setMapOpen(false);
+            setActiveTab('browse');
+          }}
+          showLibertyAlerts={libertyEnabled}
         />
       )}
 

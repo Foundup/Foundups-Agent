@@ -14,7 +14,8 @@
     "react": "^19.2.0",
     "framer-motion": "^11.3.19",
     "file-saver": "^2.0.5",
-    "localforage": "^1.10.0"
+    "localforage": "^1.10.0",
+    "pigeon-maps": "^0.22.1"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
