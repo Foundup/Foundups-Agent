@@ -69,7 +69,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 bottom-32 bg-black z-30">
+    <div className="fixed top-0 left-0 right-0 bottom-32 bg-black z-30" style={{ touchAction: "pan-x pan-y pinch-zoom", userSelect: "none", WebkitUserSelect: "none" }}>
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/80 to-transparent p-4">
         <div className="flex items-center justify-between">
@@ -92,14 +92,14 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
       <div className="absolute top-24 right-4 z-40 flex flex-col gap-2">
         <button
           onClick={() => setZoom(Math.min(zoom + 1, 18))}
-          className="bg-white/90 hover:bg-white text-black text-2xl w-10 h-10 rounded-lg shadow-lg font-bold"
+          className="bg-white hover:bg-gray-50 text-black text-2xl w-10 h-10 rounded-lg shadow-2xl border-2 border-gray-300 font-bold"
           title="Zoom In"
         >
           +
         </button>
         <button
           onClick={() => setZoom(Math.max(zoom - 1, 1))}
-          className="bg-white/90 hover:bg-white text-black text-2xl w-10 h-10 rounded-lg shadow-lg font-bold"
+          className="bg-white hover:bg-gray-50 text-black text-2xl w-10 h-10 rounded-lg shadow-2xl border-2 border-gray-300 font-bold"
           title="Zoom Out"
         >
           −
@@ -110,7 +110,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
               // Center map on user location
               window.location.reload(); // Simple way to recenter
             }}
-            className="bg-white/90 hover:bg-white text-black text-xl w-10 h-10 rounded-lg shadow-lg"
+            className="bg-white hover:bg-gray-50 text-black text-xl w-10 h-10 rounded-lg shadow-2xl border-2 border-gray-300"
             title="Center on Me"
           >
             📍
@@ -119,7 +119,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
         {isGlobalView && (
           <button
             onClick={() => setZoom(2)} // Reset to global view
-            className="bg-white/90 hover:bg-white text-black text-xl w-10 h-10 rounded-lg shadow-lg"
+            className="bg-white hover:bg-gray-50 text-black text-xl w-10 h-10 rounded-lg shadow-2xl border-2 border-gray-300"
             title="Reset Global View"
           >
             🌍
@@ -240,7 +240,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
         {/* Legend Toggle Button */}
         <button
           onClick={() => setLegendExpanded(!legendExpanded)}
-          className="bg-white/90 hover:bg-white backdrop-blur rounded-full w-12 h-12 shadow-lg flex items-center justify-center transition-all"
+          className="bg-white hover:bg-gray-50 backdrop-blur rounded-full w-12 h-12 shadow-2xl border-2 border-gray-300 flex items-center justify-center transition-all"
           title="Toggle Legend"
         >
           <span className="text-2xl">{legendExpanded ? '✕' : 'ℹ️'}</span>
@@ -248,7 +248,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
 
         {/* Legend Popup (Expanded) */}
         {legendExpanded && (
-          <div className="mt-2 bg-white/95 backdrop-blur rounded-lg p-4 shadow-lg max-w-xs">
+          <div className="mt-2 bg-white backdrop-blur rounded-lg p-4 shadow-2xl border-2 border-gray-300 max-w-xs">
             <h3 className="font-bold mb-3 text-black text-sm">Map Legend</h3>
             <div className="space-y-2 text-xs">
               <div className="flex items-center gap-2">
