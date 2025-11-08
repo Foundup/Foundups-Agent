@@ -92,14 +92,14 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
       <div className="absolute top-24 right-4 z-40 flex flex-col gap-2">
         <button
           onClick={() => setZoom(Math.min(zoom + 1, 18))}
-          className="bg-white hover:bg-gray-50 text-black text-2xl w-10 h-10 rounded-lg shadow-2xl border-2 border-gray-300 font-bold"
+          className="bg-gray-800 hover:bg-gray-700 text-white text-2xl w-10 h-10 rounded-lg shadow-2xl border-2 border-gray-600 font-bold"
           title="Zoom In"
         >
           +
         </button>
         <button
           onClick={() => setZoom(Math.max(zoom - 1, 1))}
-          className="bg-white hover:bg-gray-50 text-black text-2xl w-10 h-10 rounded-lg shadow-2xl border-2 border-gray-300 font-bold"
+          className="bg-gray-800 hover:bg-gray-700 text-white text-2xl w-10 h-10 rounded-lg shadow-2xl border-2 border-gray-600 font-bold"
           title="Zoom Out"
         >
           −
@@ -110,7 +110,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
               // Center map on user location
               window.location.reload(); // Simple way to recenter
             }}
-            className="bg-white hover:bg-gray-50 text-black text-xl w-10 h-10 rounded-lg shadow-2xl border-2 border-gray-300"
+            className="bg-gray-800 hover:bg-gray-700 text-white text-xl w-10 h-10 rounded-lg shadow-2xl border-2 border-gray-600"
             title="Center on Me"
           >
             📍
@@ -119,7 +119,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
         {isGlobalView && (
           <button
             onClick={() => setZoom(2)} // Reset to global view
-            className="bg-white hover:bg-gray-50 text-black text-xl w-10 h-10 rounded-lg shadow-2xl border-2 border-gray-300"
+            className="bg-gray-800 hover:bg-gray-700 text-white text-xl w-10 h-10 rounded-lg shadow-2xl border-2 border-gray-600"
             title="Reset Global View"
           >
             🌍
@@ -240,7 +240,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
         {/* Legend Toggle Button */}
         <button
           onClick={() => setLegendExpanded(!legendExpanded)}
-          className="bg-white hover:bg-gray-50 backdrop-blur rounded-full w-12 h-12 shadow-2xl border-2 border-gray-300 flex items-center justify-center transition-all"
+          className="bg-gray-800 hover:bg-gray-700 backdrop-blur rounded-full w-12 h-12 shadow-2xl border-2 border-gray-600 flex items-center justify-center transition-all"
           title="Toggle Legend"
         >
           <span className="text-2xl">{legendExpanded ? '✕' : 'ℹ️'}</span>
