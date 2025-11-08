@@ -50,14 +50,18 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
     onGalleryClick();
   };
 
-  // Consistent icon styling across all views (home, map, etc)
+  // Adaptive icon styling for map view visibility
+  // Map tiles vary (white streets, dark parks, blue water) - inactive icons need high contrast
+  const isMapView = activeTab === 'map';
   const getButtonStyle = (isActive: boolean) => {
     if (isActive) {
-      // Active state: bright blue with ring
+      // Active state: bright blue with ring (always visible)
       return 'bg-blue-500/70 ring-2 ring-blue-400 shadow-blue-500/50 border-2 border-blue-300';
     }
-    // Inactive state: dark gray background (same for all views)
-    return 'bg-gray-800/90 hover:bg-gray-700/90 border-2 border-gray-600 shadow-2xl';
+    // Inactive state: high-contrast for map view, subtle for other views
+    return isMapView
+      ? 'bg-indigo-600/85 hover:bg-indigo-500/90 border-2 border-indigo-400 shadow-2xl shadow-indigo-900/60'
+      : 'bg-gray-800/90 hover:bg-gray-700/90 border-2 border-gray-600 shadow-2xl';
   };
 
   return (
