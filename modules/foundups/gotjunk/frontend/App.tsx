@@ -234,7 +234,7 @@ const App: React.FC = () => {
     });
   };
 
-  const handleClassify = async (classification: ItemClassification) => {
+  const handleClassify = async (classification: ItemClassification, discountPercent?: number, bidDurationHours?: number) => {
     if (!pendingClassificationItem) return;
 
     const { blob, url, location } = pendingClassificationItem;
@@ -244,10 +244,15 @@ const App: React.FC = () => {
     const defaultPrice = 100; // Placeholder until Vision API integration
     let price = 0;
 
+    // Use provided values or defaults
+    const finalDiscountPercent = discountPercent || 75;
+    const finalBidDurationHours = bidDurationHours || 48;
+
     if (classification === 'free') {
       price = 0;
     } else if (classification === 'discount') {
-      price = defaultPrice * 0.25; // 75% OFF
+      // Use the selected discount percentage
+      price = defaultPrice * (1 - finalDiscountPercent / 100);
     } else if (classification === 'bid') {
       price = defaultPrice * 0.5; // Starting bid at 50% OFF
     }
@@ -261,8 +266,8 @@ const App: React.FC = () => {
       classification,
       price,
       originalPrice: defaultPrice,
-      discountPercent,
-      bidDurationHours,
+      discountPercent: classification === 'discount' ? finalDiscountPercent : undefined,
+      bidDurationHours: classification === 'bid' ? finalBidDurationHours : undefined,
       createdAt: Date.now(),
       ...location,
     };
@@ -352,29 +357,29 @@ const App: React.FC = () => {
 
   
   // Re-classify existing item
-  const handleReclassify = async (item: CapturedItem, newClassification: ItemClassification) => {
+  const handleReclassify = async (item: CapturedItem, newClassification: ItemClassification, discountPercent?: number, bidDurationHours?: number) => {
     const defaultPrice = 100; // Will be from Google Vision API
 
+    // Use provided values or defaults
+    const finalDiscountPercent = discountPercent || 75;
+    const finalBidDurationHours = bidDurationHours || 48;
+
     let price = 0;
-    let discountPercent = 75;
-    let bidDurationHours = 48;
 
     if (newClassification === 'free') {
       price = 0;
     } else if (newClassification === 'discount') {
-      price = defaultPrice * 0.25; // 75% OFF by default
-      discountPercent = 75;
+      price = defaultPrice * (1 - finalDiscountPercent / 100);
     } else if (newClassification === 'bid') {
       price = defaultPrice * 0.5; // 50% OFF starting bid
-      bidDurationHours = 48; // default
     }
 
     const updatedItem: CapturedItem = {
       ...item,
       classification: newClassification,
       price,
-      discountPercent,
-      bidDurationHours,
+      discountPercent: classification === 'discount' ? finalDiscountPercent : undefined,
+      bidDurationHours: classification === 'bid' ? finalBidDurationHours : undefined,
     };
 
     // Update in state
@@ -607,7 +612,7 @@ const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
         <ClassificationModal
           isOpen={true}
           imageUrl={reclassifyingItem.url}
-          onClassify={(newClassification) => handleReclassify(reclassifyingItem, newClassification)}
+          onClassify={(newClassification, discountPercent, bidDurationHours) => handleReclassify(reclassifyingItem, newClassification, discountPercent, bidDurationHours)}
         />
       )}
 
