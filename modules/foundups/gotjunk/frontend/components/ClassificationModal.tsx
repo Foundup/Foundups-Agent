@@ -123,11 +123,9 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
             </motion.button>
 
             {/* Discount button - tap or long-press */}
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
+            <button
               {...discountLongPress}
-              className="w-full flex items-center justify-between p-5 bg-green-500/20 hover:bg-green-500/30 border-2 border-green-400 rounded-2xl transition-all shadow-lg shadow-green-500/20"
+              className="w-full flex items-center justify-between p-5 bg-green-500/20 hover:bg-green-500/30 active:scale-95 border-2 border-green-400 rounded-2xl transition-all shadow-lg shadow-green-500/20"
               style={{
                 touchAction: 'manipulation', // iOS Safari optimization
               }}
@@ -142,14 +140,12 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
                 </div>
               </div>
               <span className="text-lg font-bold text-green-400">{discountPercent}% OFF</span>
-            </motion.button>
+            </button>
 
             {/* Bid button - tap or long-press */}
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
+            <button
               {...bidLongPress}
-              className="w-full flex items-center justify-between p-5 bg-amber-500/20 hover:bg-amber-500/30 border-2 border-amber-400 rounded-2xl transition-all shadow-lg shadow-amber-500/20"
+              className="w-full flex items-center justify-between p-5 bg-amber-500/20 hover:bg-amber-500/30 active:scale-95 border-2 border-amber-400 rounded-2xl transition-all shadow-lg shadow-amber-500/20"
               style={{
                 touchAction: 'manipulation', // iOS Safari optimization
               }}
@@ -164,7 +160,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
                 </div>
               </div>
               <span className="text-lg font-bold text-amber-400">{bidDurationHours}h</span>
-            </motion.button>
+            </button>
           </div>
 
           {/* Helper text */}
