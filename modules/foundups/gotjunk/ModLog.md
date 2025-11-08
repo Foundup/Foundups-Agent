@@ -1,5 +1,51 @@
 # GotJUNK? FoundUp - Module Change Log
 
+## Adaptive Icon Visibility on Map View (2025-11-08)
+
+**Problem**: Sidebar navigation icons (grid, map, home, cart) had low contrast against varied map tile backgrounds:
+- White streets → dark `bg-gray-800/90` icons hard to see ❌
+- Dark parks/water → dark icons invisible ❌
+- Mixed urban areas → inconsistent visibility ❌
+
+**Solution**: Context-aware adaptive styling via `getButtonStyle()` helper function:
+- **Map view**: Inactive icons use bright `bg-indigo-600/85` with strong borders/shadows ✅
+- **Other views**: Inactive icons use subtle `bg-gray-800/90` for consistency ✅
+- **Active state**: Always bright blue `bg-blue-500/70` (unchanged) ✅
+
+**Changes**:
+- `frontend/components/LeftSidebarNav.tsx`:
+  - Added `getButtonStyle()` helper with map-aware conditional logic
+  - All 4 buttons now use helper instead of inline ternary expressions
+  - Preserved `Z_LAYERS.sidebar` (2200) from PR #40 z-index contract
+  - No hardcoded z-index values - maintained centralized layering
+
+**Technical Details**:
+```typescript
+// When activeTab === 'map', inactive icons get high-contrast backgrounds
+const getButtonStyle = (isActive: boolean) => {
+  if (isActive) return 'bg-blue-500/70 ring-2 ring-blue-400...'; // Always visible
+  return isMapView
+    ? 'bg-indigo-600/85 hover:bg-indigo-500/90 border-2 border-indigo-400...' // Bright on map
+    : 'bg-gray-800/90 hover:bg-gray-700/90 border-2 border-gray-600...';      // Subtle elsewhere
+};
+```
+
+**Result**:
+- All icons visible and clickable across light streets, dark parks, blue water, gray buildings
+- No regression on Browse/MyItems/Cart tabs (retain subtle gray backgrounds)
+- Active icon (blue) distinguishable from inactive icons (indigo) on map
+- Build successful: 413.49 kB │ gzip: 130.10 kB (2.68s)
+
+**WSP References**:
+- WSP 50: Searched HoloIndex for existing patterns before implementing
+- WSP 22: ModLog documentation (this entry)
+- WSP 64: Preserved z-index contract from PR #40 (no hardcoded values)
+- WSP 87: Researched existing design system before adding new styles
+
+**Pattern Learned**: UI components over dynamic backgrounds (maps, video, camera) need **context-aware styling** - high contrast for visual overlays, subtle for static content.
+
+---
+
 ## Liberty Alert Integration (2025-11-03)
 
 **Changes**:

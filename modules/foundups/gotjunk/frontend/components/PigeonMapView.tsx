@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Map, Marker, Overlay } from 'pigeon-maps';
+import { Z_LAYERS } from '../constants/zLayers';
 
 interface JunkItem {
   id: string;
@@ -47,6 +48,16 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   const [selectedAlert, setSelectedAlert] = useState<LibertyAlert | null>(null);
   const [legendExpanded, setLegendExpanded] = useState(false); // Collapsible legend
 
+  // Lock body scroll when map is open (prevent Safari from clipping floating controls)
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
   console.log('[DAEmon Beat] pigeon_map_mounted', {
     junkItems: junkItems.length,
     libertyAlerts: libertyAlerts.length,
@@ -69,7 +80,16 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 bottom-32 bg-black z-30" style={{ touchAction: "pan-x pan-y pinch-zoom", userSelect: "none", WebkitUserSelect: "none" }}>
+    <div
+      className="fixed top-0 left-0 right-0 bottom-32 bg-black"
+      style={{
+        zIndex: Z_LAYERS.mapOverlay,
+        touchAction: "pan-x pan-y pinch-zoom",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        pointerEvents: "auto",
+      }}
+    >
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/80 to-transparent p-4">
         <div className="flex items-center justify-between">
