@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Z_LAYERS } from '../constants/zLayers';
 
 interface ActionSheetBidProps {
   isOpen: boolean;
@@ -40,7 +41,8 @@ export const ActionSheetBid: React.FC<ActionSheetBidProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-[250] bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+            style={{ zIndex: Z_LAYERS.actionSheet }}
           />
 
           {/* Action Sheet */}
@@ -49,7 +51,8 @@ export const ActionSheetBid: React.FC<ActionSheetBidProps> = ({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-[251] bg-gray-900 rounded-t-3xl shadow-2xl p-6"
+            className="fixed bottom-0 left-0 right-0 bg-gray-900 rounded-t-3xl shadow-2xl p-6"
+            style={{ zIndex: Z_LAYERS.actionSheet + 1 }}
           >
             {/* Handle bar */}
             <div className="w-12 h-1.5 bg-gray-700 rounded-full mx-auto mb-6" />
