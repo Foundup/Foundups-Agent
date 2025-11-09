@@ -35,7 +35,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             className="fixed left-1/2 -translate-x-1/2 z-50"
             style={{
-              bottom: 'calc(32px + clamp(128px, 16vh, 192px) + 40px)',
+              bottom: 'calc(8rem + clamp(128px, 16vh, 192px) + 40px)',
               width: '80%',
               maxWidth: '340px'
             }}
