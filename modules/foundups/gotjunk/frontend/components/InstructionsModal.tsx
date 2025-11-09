@@ -28,16 +28,16 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
             onClick={onClose}
           />
 
-          {/* Modal - positioned above camera orb */}
+          {/* Modal - centered vertically with max-height for safe viewing */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="fixed left-1/2 -translate-x-1/2 z-50"
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50"
             style={{
-              bottom: 'calc(8rem + clamp(128px, 16vh, 192px) + 40px)',
               width: '80%',
-              maxWidth: '340px'
+              maxWidth: '340px',
+              maxHeight: '80vh'
             }}
             onClick={(e) => e.stopPropagation()}
           >
