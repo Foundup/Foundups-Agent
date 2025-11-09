@@ -94,6 +94,7 @@ const App: React.FC = () => {
 
   // === CLASSIFICATION STATE ===
   const [pendingClassificationItem, setPendingClassificationItem] = useState<{blob: Blob, url: string, location?: {latitude: number, longitude: number}} | null>(null);
+  const [isProcessingClassification, setIsProcessingClassification] = useState(false);
 
   // === FULLSCREEN REVIEW STATE (My Items tab) ===
   const [reviewingItem, setReviewingItem] = useState<CapturedItem | null>(null);
@@ -259,73 +260,83 @@ const App: React.FC = () => {
   };
 
   const handleClassify = async (classification: ItemClassification, discountPercent?: number, bidDurationHours?: number) => {
-    console.log('[GotJunk] handleClassify called:', { classification, discountPercent, bidDurationHours, hasPending: !!pendingClassificationItem });
+    console.log('[GotJunk] handleClassify called:', { classification, discountPercent, bidDurationHours, hasPending: !!pendingClassificationItem, isProcessing: isProcessingClassification });
 
-    if (!pendingClassificationItem) {
-      console.warn('[GotJunk] handleClassify called but no pendingClassificationItem!');
+    // Prevent duplicate calls (race condition guard)
+    if (!pendingClassificationItem || isProcessingClassification) {
+      console.warn('[GotJunk] handleClassify called but no pendingClassificationItem or already processing!');
       return;
     }
 
+    // Immediately capture the item data and clear pending state to prevent race conditions
     const { blob, url, location } = pendingClassificationItem;
-
-    // Calculate price based on classification
-    // TODO: Get originalPrice from Google Vision API
-    const defaultPrice = 100; // Placeholder until Vision API integration
-    let price = 0;
-
-    // Use provided values or defaults
-    const finalDiscountPercent = discountPercent || 75;
-    const finalBidDurationHours = bidDurationHours || 48;
-
-    if (classification === 'free') {
-      price = 0;
-    } else if (classification === 'discount') {
-      // Use the selected discount percentage
-      price = defaultPrice * (1 - finalDiscountPercent / 100);
-    } else if (classification === 'bid') {
-      price = defaultPrice * 0.5; // Starting bid at 50% OFF
-    }
-
-    const newItem: CapturedItem = {
-      id: `item-${Date.now()}`,
-      blob,
-      url,
-      status: 'draft',
-      ownership: 'mine',
-      classification,
-      price,
-      originalPrice: defaultPrice,
-      discountPercent: classification === 'discount' ? finalDiscountPercent : undefined,
-      bidDurationHours: classification === 'bid' ? finalBidDurationHours : undefined,
-      createdAt: Date.now(),
-      ...location,
-    };
-
-    console.log('[GotJunk] Saving new item:', { id: newItem.id, classification, price });
-    await storage.saveItem(newItem);
-
-    setMyDrafts(current => {
-      console.log('[GotJunk] Adding to myDrafts, current count:', current.length);
-      return [newItem, ...current];
-    });
-
-    // Clear pending item
     setPendingClassificationItem(null);
-    console.log('[GotJunk] Cleared pendingClassificationItem');
+    setIsProcessingClassification(true);
 
-    // Liberty Alert: If keyword detected during video recording, create alert
-    if (libertyEnabled && keywordDetected && blob.type.startsWith('video/')) {
-      console.log('🧊 Liberty Alert - Creating ice cube marker for video');
-      const alert: LibertyAlert = {
-        id: `alert-${Date.now()}`,
-        location: location || { latitude: 0, longitude: 0 },
-        message: 'Liberty Alert - Keyword detected',
-        video_url: newItem.url,
-        timestamp: Date.now(),
+    console.log('[GotJunk] Classification processing started, pending item cleared');
+
+    try {
+      // Calculate price based on classification
+      // TODO: Get originalPrice from Google Vision API
+      const defaultPrice = 100; // Placeholder until Vision API integration
+      let price = 0;
+
+      // Use provided values or defaults
+      const finalDiscountPercent = discountPercent || 75;
+      const finalBidDurationHours = bidDurationHours || 48;
+
+      if (classification === 'free') {
+        price = 0;
+      } else if (classification === 'discount') {
+        // Use the selected discount percentage
+        price = defaultPrice * (1 - finalDiscountPercent / 100);
+      } else if (classification === 'bid') {
+        price = defaultPrice * 0.5; // Starting bid at 50% OFF
+      }
+
+      const newItem: CapturedItem = {
+        id: `item-${Date.now()}`,
+        blob,
+        url,
+        status: 'draft',
+        ownership: 'mine',
+        classification,
+        price,
+        originalPrice: defaultPrice,
+        discountPercent: classification === 'discount' ? finalDiscountPercent : undefined,
+        bidDurationHours: classification === 'bid' ? finalBidDurationHours : undefined,
+        createdAt: Date.now(),
+        ...location,
       };
-      setLibertyAlerts(prev => [alert, ...prev]);
-      console.log('🧊 Ice cube marker created on map!');
-      setKeywordDetected(false);
+
+      console.log('[GotJunk] Saving new item:', { id: newItem.id, classification, price });
+      await storage.saveItem(newItem);
+
+      setMyDrafts(current => {
+        console.log('[GotJunk] Adding to myDrafts, current count:', current.length);
+        return [newItem, ...current];
+      });
+
+      console.log('[GotJunk] Item successfully created and added to drafts');
+
+      // Liberty Alert: If keyword detected during video recording, create alert
+      if (libertyEnabled && keywordDetected && blob.type.startsWith('video/')) {
+        console.log('🧊 Liberty Alert - Creating ice cube marker for video');
+        const alert: LibertyAlert = {
+          id: `alert-${Date.now()}`,
+          location: location || { latitude: 0, longitude: 0 },
+          message: 'Liberty Alert - Keyword detected',
+          video_url: newItem.url,
+          timestamp: Date.now(),
+        };
+        setLibertyAlerts(prev => [alert, ...prev]);
+        console.log('🧊 Ice cube marker created on map!');
+        setKeywordDetected(false);
+      }
+    } finally {
+      // Always reset processing flag, even if there's an error
+      setIsProcessingClassification(false);
+      console.log('[GotJunk] Classification processing complete, flag reset');
     }
   };
   
