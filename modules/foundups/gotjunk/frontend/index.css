@@ -15,6 +15,10 @@
   /* Keep off the bottom toolbar */
   --sb-bottom-safe: calc(env(safe-area-inset-bottom, 0px) + 120px);
 
+  /* Image preview responsive sizing */
+  --preview-size: clamp(200px, 50vw, 380px);
+  --preview-max-height: clamp(200px, 60vh, 480px);
+
   /* iOS Safari vh fix */
   --vh: 1vh;
 }
@@ -26,6 +30,10 @@
     --sb-gap: clamp(8px, 2vh, 14px);
     --sb-top: calc(max(env(safe-area-inset-top, 0px) + 56px, 76px));
     --sb-bottom-safe: calc(env(safe-area-inset-bottom, 0px) + 104px);
+
+    /* Smaller preview for compact devices */
+    --preview-size: clamp(180px, 48vw, 320px);
+    --preview-max-height: clamp(180px, 55vh, 400px);
   }
 }
 

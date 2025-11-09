@@ -586,64 +586,66 @@ const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
         )}
       </div>
 
-      {/* Left sidebar navigation */}
-      <LeftSidebarNav
-        activeTab={activeTab}
-        onGalleryClick={() => {
-          // Always reset SOS detection and clear timeout (same as Map button)
-          setTapTimes([]);
-          sosDetectionActive.current = false;
-          if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
-          // Navigate to Browse
-          setActiveTab('browse'); // Tab 1: Browse
-          setMapOpen(false); // Close map when switching to Browse
-        }}
-        onGalleryIconTap={(duration) => {
-          const SHORT_TAP = 200;
-          setTapTimes(prev => {
-            const newTaps = [...prev, duration];
-            if (newTaps.length > 0) {
-              sosDetectionActive.current = true;
-            }
-            if (newTaps.length > 9) newTaps.shift();
-            if (newTaps.length === 9) {
-              const pattern = newTaps.map(d => d < SHORT_TAP ? 'S' : 'L').join('');
-              console.log('🔍 SOS Pattern:', pattern);
-              if (pattern === 'SSSLLLSSS') {
-                console.log('🗽 SOS DETECTED!');
-                setLibertyEnabled(true);
-                alert('🗽 Liberty Alert Unlocked!');
-                sosDetectionActive.current = false;
-                return [];
-              }
-            }
-            return newTaps;
-          });
-          if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
-          tapTimeoutRef.current = window.setTimeout(() => {
+      {/* Left sidebar navigation - hidden when map is open (map has X button) */}
+      {!isMapOpen && (
+        <LeftSidebarNav
+          activeTab={activeTab}
+          onGalleryClick={() => {
+            // Always reset SOS detection and clear timeout (same as Map button)
             setTapTimes([]);
             sosDetectionActive.current = false;
-          }, 3000);
-        }}
-        onMapClick={() => {
-          setTapTimes([]);
-          sosDetectionActive.current = false;
-          if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
-          setActiveTab('map'); // Tab 2: Map
-          setMapOpen(true);
-        }}
-        onMyItemsClick={() => {
-          setActiveTab('myitems'); // Tab 3: My Items
-          setMapOpen(false); // Close map when switching to My Items
-          console.log('📦 My Items clicked');
-        }}
-        onCartClick={() => {
-          setActiveTab('cart'); // Tab 4: Cart
-          setMapOpen(false); // Close map when switching to Cart
-          console.log('🛒 Cart clicked');
-        }}
-        libertyEnabled={libertyEnabled}
-      />
+            if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
+            // Navigate to Browse
+            setActiveTab('browse'); // Tab 1: Browse
+            setMapOpen(false); // Close map when switching to Browse
+          }}
+          onGalleryIconTap={(duration) => {
+            const SHORT_TAP = 200;
+            setTapTimes(prev => {
+              const newTaps = [...prev, duration];
+              if (newTaps.length > 0) {
+                sosDetectionActive.current = true;
+              }
+              if (newTaps.length > 9) newTaps.shift();
+              if (newTaps.length === 9) {
+                const pattern = newTaps.map(d => d < SHORT_TAP ? 'S' : 'L').join('');
+                console.log('🔍 SOS Pattern:', pattern);
+                if (pattern === 'SSSLLLSSS') {
+                  console.log('🗽 SOS DETECTED!');
+                  setLibertyEnabled(true);
+                  alert('🗽 Liberty Alert Unlocked!');
+                  sosDetectionActive.current = false;
+                  return [];
+                }
+              }
+              return newTaps;
+            });
+            if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
+            tapTimeoutRef.current = window.setTimeout(() => {
+              setTapTimes([]);
+              sosDetectionActive.current = false;
+            }, 3000);
+          }}
+          onMapClick={() => {
+            setTapTimes([]);
+            sosDetectionActive.current = false;
+            if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
+            setActiveTab('map'); // Tab 2: Map
+            setMapOpen(true);
+          }}
+          onMyItemsClick={() => {
+            setActiveTab('myitems'); // Tab 3: My Items
+            setMapOpen(false); // Close map when switching to My Items
+            console.log('📦 My Items clicked');
+          }}
+          onCartClick={() => {
+            setActiveTab('cart'); // Tab 4: Cart
+            setMapOpen(false); // Close map when switching to Cart
+            console.log('🛒 Cart clicked');
+          }}
+          libertyEnabled={libertyEnabled}
+        />
+      )}
 
       {/* Bottom navigation bar */}
 
