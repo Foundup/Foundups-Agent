@@ -83,11 +83,8 @@ const App: React.FC = () => {
   const [countdown, setCountdown] = useState(10);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | undefined>();
 
-  // === INSTRUCTIONS MODAL (shows once on first visit) ===
-  const [showInstructions, setShowInstructions] = useState(() => {
-    const hasSeenInstructions = localStorage.getItem('gotjunk_instructions_seen');
-    return !hasSeenInstructions;
-  });
+  // === INSTRUCTIONS MODAL (shows on every page load) ===
+  const [showInstructions, setShowInstructions] = useState(true);
 
   // === CLASSIFICATION FILTER ===
   const [classificationFilter, setClassificationFilter] = useState<'all' | ItemClassification>('all');
@@ -486,7 +483,6 @@ const App: React.FC = () => {
   // Handle instructions modal close
   const handleInstructionsClose = () => {
     setShowInstructions(false);
-    localStorage.setItem('gotjunk_instructions_seen', 'true');
   };
 
   return (
@@ -779,7 +775,7 @@ const App: React.FC = () => {
         onClassify={handleClassify}
       />
 
-      {/* Instructions Modal (shows once on first visit) */}
+      {/* Instructions Modal (shows on every page load) */}
       <InstructionsModal
         isOpen={showInstructions}
         onClose={handleInstructionsClose}

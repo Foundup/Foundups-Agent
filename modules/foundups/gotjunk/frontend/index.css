@@ -13,7 +13,7 @@
   --sb-top: calc(max(env(safe-area-inset-top, 0px) + 64px, 88px));
 
   /* Keep off the bottom toolbar */
-  --sb-bottom-safe: calc(env(safe-area-inset-bottom, 0px) + 120px);
+  --sb-bottom-safe: calc(env(safe-area-inset-bottom, 0px) + 130px);
 
   /* Image preview responsive sizing */
   --preview-size: clamp(200px, 50vw, 380px);
