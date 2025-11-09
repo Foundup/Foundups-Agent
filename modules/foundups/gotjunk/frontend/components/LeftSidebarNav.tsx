@@ -68,7 +68,7 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
     <motion.div
       initial={{ opacity: 0, x: -50 }}
       animate={{ opacity: 1, x: 0 }}
-      className="fixed left-4 sm:left-6 flex flex-col-reverse items-center pointer-events-auto"
+      className="fixed left-4 sm:left-6 flex flex-col items-center pointer-events-auto"
       style={{
         bottom: 'var(--sb-bottom-safe)',
         gap: 'var(--sb-gap)',
@@ -101,7 +101,7 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
           height: 'var(--sb-size)',
         }}
       >
-        <GridIcon style={{ width: '16px', height: '16px' }} className="text-white" />
+        <GridIcon style={{ width: '12px', height: '12px' }} className="text-white" />
       </motion.button>
 
       {/* Tab 2: Map - Map Icon */}
@@ -116,7 +116,7 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
           height: 'var(--sb-size)',
         }}
       >
-        <MapIcon style={{ width: '16px', height: '16px' }} className="text-white" />
+        <MapIcon style={{ width: '12px', height: '12px' }} className="text-white" />
       </motion.button>
 
       {/* Tab 3: My Items - Home Icon */}
@@ -131,7 +131,7 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
           height: 'var(--sb-size)',
         }}
       >
-        <HomeIcon style={{ width: '16px', height: '16px' }} className="text-white" />
+        <HomeIcon style={{ width: '12px', height: '12px' }} className="text-white" />
       </motion.button>
 
       {/* Tab 4: Cart - Cart Icon */}
@@ -146,7 +146,7 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
           height: 'var(--sb-size)',
         }}
       >
-        <CartIcon style={{ width: '16px', height: '16px' }} className="text-white" />
+        <CartIcon style={{ width: '12px', height: '12px' }} className="text-white" />
       </motion.button>
     </motion.div>
   );
