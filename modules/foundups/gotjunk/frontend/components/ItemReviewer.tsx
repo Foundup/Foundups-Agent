@@ -80,17 +80,11 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({ item, onDecision, on
       exit={{ opacity: 0, scale: 0.9, x: swipeDecision === 'keep' ? 300 : -300 }}
       transition={{ type: 'spring', stiffness: 400, damping: 40 }}
     >
-      <div
-        className="w-full h-full relative"
-        style={{
-          maxWidth: 'var(--preview-size)',
-          maxHeight: 'var(--preview-max-height)',
-        }}
-      >
+      <div className="fixed inset-0 bottom-32">
         {isVideo ? (
           <video
             src={item.url}
-            className="w-full h-full object-contain rounded-lg shadow-2xl pointer-events-none"
+            className="w-full h-full object-cover pointer-events-none"
             autoPlay
             loop
             muted
@@ -101,7 +95,7 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({ item, onDecision, on
           <img
             src={item.url}
             alt="Captured item for review"
-            className="w-full h-full object-contain rounded-lg shadow-2xl pointer-events-none"
+            className="w-full h-full object-cover pointer-events-none"
             draggable="false"
           />
         )}
