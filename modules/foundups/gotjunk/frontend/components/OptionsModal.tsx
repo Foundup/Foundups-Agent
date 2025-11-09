@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CapturedItem, ItemClassification } from '../types';
+import { Z_LAYERS } from '../constants/zLayers';
 
 interface OptionsModalProps {
   isOpen: boolean;
@@ -27,7 +28,8 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, item, onSave
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6"
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6"
+          style={{ zIndex: Z_LAYERS.modal }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
