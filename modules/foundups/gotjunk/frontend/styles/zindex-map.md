@@ -4,11 +4,15 @@ _WSP Layering Reference – updated 2025-11-08_
 
 | Layer | Value | Components | Notes |
 |-------|-------|------------|-------|
-| Sidebar Controls | 2200 | `LeftSidebarNav` | Always visible; sits above every popup/overlay. |
-| Floating Controls | 2100 | `BottomNavBar`, camera orb | Includes search bar + capture button. |
+| Tutorial Popup | 2400 | `InstructionsModal` | Safe-area aware onboarding card; always above camera orb. |
+| Action Sheets | 2500 | Discount/Bid sheets | Highest layer; interactive prompts. |
+| Modal Layer | 2300 | Classification/options modals | Confirmation dialogs above nav. |
+| Sidebar Controls | 2150 | `LeftSidebarNav` | Always visible; sits above floating controls. |
+| Camera Orb | 2100 | Capture orb container | Hovers above nav bar but below tutorials. |
+| Floating Controls | 2050 | `BottomNavBar`, search bar | Includes search + capture tray. |
 | Map Overlay | 1600 | `PigeonMapView` | Full-screen map with zoom controls. |
 | Gallery / Fullscreen Review | 1500 | `FullscreenGallery`, `FullscreenViewer`, `ItemReviewer` | Locks background scroll and dims content. |
-| Popup Layer | 1200 | Classification/options modals, other dialogs | Standard modal layer. |
+| Popup Layer | 1200 | Classification/options popups | Standard modal layer. |
 | Content Grid | 500 | Base app surfaces (`App.tsx`) | Anything without an explicit `z-index`. |
 
 Implementation notes:
