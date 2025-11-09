@@ -12,6 +12,7 @@ import { RecordingIndicator } from './components/RecordingIndicator';
 import { PhotoGrid } from './components/PhotoGrid';
 import { ClassificationModal } from './components/ClassificationModal';
 import { OptionsModal } from './components/OptionsModal';
+import { InstructionsModal } from './components/InstructionsModal';
 import { ItemClassification } from './types';
 import { PigeonMapView } from './components/PigeonMapView';
 import { useViewport } from './hooks/useViewport';
@@ -82,6 +83,15 @@ const App: React.FC = () => {
   const [countdown, setCountdown] = useState(10);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | undefined>();
 
+  // === INSTRUCTIONS MODAL (shows once on first visit) ===
+  const [showInstructions, setShowInstructions] = useState(() => {
+    const hasSeenInstructions = localStorage.getItem('gotjunk_instructions_seen');
+    return !hasSeenInstructions;
+  });
+
+  // === CLASSIFICATION FILTER ===
+  const [classificationFilter, setClassificationFilter] = useState<'all' | ItemClassification>('all');
+
   // === RESPONSIVE VIEWPORT (iOS Safari vh fix) ===
   useViewport();
 
@@ -128,10 +138,13 @@ const App: React.FC = () => {
 
         // Separate MY items from OTHER people's items
         const myItems = allItems.filter(item => item.ownership === 'mine');
-        const otherItems = allItems.filter(item => item.ownership === 'others');
 
-        // Filter OTHER people's items by 50km radius
-        const nearby = otherItems.filter(item => {
+        // TODO: Future feature - add owner filter toggle to exclude user's own items from browse feed
+        // For now, show ALL items (including mine) for testing "Tinder for stuff" experience
+        // When filter is added, restore: const otherItems = allItems.filter(item => item.ownership === 'others');
+
+        // Filter ALL items by 50km radius (including my items for testing)
+        const nearby = allItems.filter(item => {
           if (typeof item.latitude !== 'number' || typeof item.longitude !== 'number') {
             return false;
           }
@@ -139,12 +152,12 @@ const App: React.FC = () => {
           return distance <= 50;
         });
 
-        // MY ITEMS: Separate by status
+        // MY ITEMS: Separate by status (for My Items tab)
         setMyDrafts(myItems.filter(item => item.status === 'draft'));
         setMyListed(myItems.filter(item => item.status === 'listed'));
 
-        // OTHER PEOPLE'S ITEMS: Separate by status
-        setBrowseFeed(nearby.filter(item => item.status === 'browsing'));
+        // BROWSE FEED: Show ALL nearby items (including mine) - "Tinder for stuff"
+        setBrowseFeed(nearby.filter(item => item.status === 'browsing' || item.status === 'listed'));
         setCart(nearby.filter(item => item.status === 'in_cart'));
         setSkipped(nearby.filter(item => item.status === 'skipped'));
 
@@ -455,7 +468,18 @@ const App: React.FC = () => {
     setEditingOptionsItem(null);
   };
 
-const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
+// Filter browse feed by classification type
+  const filteredBrowseFeed = classificationFilter === 'all'
+    ? browseFeed
+    : browseFeed.filter(item => item.classification === classificationFilter);
+
+  const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
+
+  // Handle instructions modal close
+  const handleInstructionsClose = () => {
+    setShowInstructions(false);
+    localStorage.setItem('gotjunk_instructions_seen', 'true');
+  };
 
   return (
     <div
@@ -471,27 +495,43 @@ const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
 
       {/* Main Content Area - Tab-Based */}
       <div className="flex-grow relative flex flex-col justify-center items-center">
-        {/* TAB 1: BROWSE FEED (other people's items in 50km radius) */}
+        {/* TAB 1: BROWSE FEED - Tinder for stuff */}
         {activeTab === 'browse' && (
           <>
+            {/* Filter Dropdown (top right) */}
+            <div className="absolute top-4 right-4 z-10">
+              <select
+                value={classificationFilter}
+                onChange={(e) => setClassificationFilter(e.target.value as 'all' | ItemClassification)}
+                className="bg-gray-800/90 text-white px-4 py-2 rounded-xl border-2 border-gray-600 shadow-xl text-sm font-semibold hover:bg-gray-700/90 transition-all"
+              >
+                <option value="all">All Items</option>
+                <option value="free">Free</option>
+                <option value="discount">Discounted</option>
+                <option value="bid">Auction</option>
+              </select>
+            </div>
+
+            {/* Swipeable Item */}
             <AnimatePresence>
-              {browseFeed.length > 0 && (
+              {filteredBrowseFeed.length > 0 && (
                 <ItemReviewer
-                  key={browseFeed[0].id}
-                  item={browseFeed[0]}
-                  onDecision={(decision) => handleBrowseSwipe(browseFeed[0], decision === 'keep' ? 'right' : 'left')}
+                  key={filteredBrowseFeed[0].id}
+                  item={filteredBrowseFeed[0]}
+                  onDecision={(decision) => handleBrowseSwipe(filteredBrowseFeed[0], decision === 'keep' ? 'right' : 'left')}
                 />
               )}
             </AnimatePresence>
 
-            {browseFeed.length === 0 && !isRecording && (
-              <div className="absolute top-8 left-0 right-0 text-center px-8">
-                <h2 className="text-3xl font-bold text-white mb-3">GotJunk?!</h2>
-                <p className="text-xl text-gray-300 font-semibold mb-2">Browse items near you</p>
-                <p className="text-lg text-green-400 font-bold">
-                  Swipe Right ➡️ to Cart | Swipe Left ⬅️ to Skip
+            {/* Empty State */}
+            {filteredBrowseFeed.length === 0 && !isRecording && (
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center px-8">
+                <h2 className="text-3xl font-bold text-white mb-3">No items found</h2>
+                <p className="text-lg text-gray-400">
+                  {classificationFilter === 'all'
+                    ? '50km radius • Try capturing some items!'
+                    : `No ${classificationFilter} items nearby`}
                 </p>
-                <p className="text-sm text-gray-400 mt-3">50km radius • No items found</p>
               </div>
             )}
           </>
@@ -729,6 +769,12 @@ const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
         isOpen={!!pendingClassificationItem}
         imageUrl={pendingClassificationItem?.url || ''}
         onClassify={handleClassify}
+      />
+
+      {/* Instructions Modal (shows once on first visit) */}
+      <InstructionsModal
+        isOpen={showInstructions}
+        onClose={handleInstructionsClose}
       />
 
     </div>
