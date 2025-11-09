@@ -120,7 +120,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
       {/* Camera Orb - Floating above nav bar */}
       <div
         className="absolute left-1/2 -translate-x-1/2 bottom-32 flex flex-col items-center"
-        style={{ zIndex: Z_LAYERS.floatingControls + 20 }}
+        style={{ zIndex: Z_LAYERS.cameraOrb }}
       >
           {/* Main capture button with live preview - Intelligent scaling: iPhone 11=143px, iPhone 16=149px */}
           <div

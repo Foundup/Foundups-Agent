@@ -9,6 +9,28 @@
 
      [OK] DOCUMENT HERE (when pushing to git):
 
+## [2025-11-10] GotJunk Tutorial Popup Alignment (WSP 7 / 57)
+
+**Change Type**: Frontend UX integrity fix  
+**Architect**: Codex (0102)  
+**WSP References**: WSP 3 (module structure), WSP 7 (execution validation before commit), WSP 22 (ModLog), WSP 57 (naming & documentation coherence)
+
+### What Changed
+- Repositioned the GotJunk onboarding popup to a safe-area-aware top-center anchor so it no longer collides with the capture orb or bottom nav on iPhone 11‑16.
+- Introduced dedicated `tutorialPopup` and `cameraOrb` entries in `constants/zLayers.ts`, ensuring the popup always renders above floating controls and the camera orb remains above the nav tray.
+- Updated `BottomNavBar` to consume the new `cameraOrb` layer and refreshed `styles/zindex-map.md` so the documented contract matches runtime behavior.
+
+### Files Modified
+- `modules/foundups/gotjunk/frontend/components/InstructionsModal.tsx`
+- `modules/foundups/gotjunk/frontend/components/BottomNavBar.tsx`
+- `modules/foundups/gotjunk/frontend/constants/zLayers.ts`
+- `modules/foundups/gotjunk/frontend/styles/zindex-map.md`
+
+### Impact
+- Tutorial remains fully visible under all safe-area cutouts (dynamic island/notch) and never overlaps the camera orb or floating controls.
+- Z-index contract stays synchronized across code + docs to prevent future layering regressions.
+- Users get the same glow/animation styling while regaining unobstructed swipe instructions that satisfy WSP UX guardrails.
+
 ## [2025-11-03] MCP Server First Principles Optimization - 78% Reduction
 
 **Change Type**: System-Wide MCP Infrastructure Optimization

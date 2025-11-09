@@ -7,10 +7,12 @@ export const Z_LAYERS = {
   fullscreen: 1400,
   gallery: 1500,
   mapOverlay: 1600,
-  floatingControls: 2100,
-  sidebar: 2200,
+  floatingControls: 2050,
+  cameraOrb: 2100,
+  sidebar: 2150,
   modal: 2300, // Classification, Options - above all controls
-  actionSheet: 2400, // Discount/Bid sheets - above modals
+  tutorialPopup: 2400,
+  actionSheet: 2500, // Discount/Bid sheets - above modals
 } as const;
 
 export type ZLayerKey = keyof typeof Z_LAYERS;
