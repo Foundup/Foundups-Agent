@@ -1,10 +1,13 @@
 /**
  * InstructionsModal - Dismissible welcome modal with swipe instructions
- * Shows on every page load
+ * Shows on every page load, uses actual swipe button components
+ * Positioned above camera orb for compact layout
  */
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { LeftArrowIcon } from './icons/LeftArrowIcon';
+import { RightArrowIcon } from './icons/RightArrowIcon';
 
 interface InstructionsModalProps {
   isOpen: boolean;
@@ -25,52 +28,63 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
             onClick={onClose}
           />
 
-          {/* Modal */}
+          {/* Modal - positioned above camera orb */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-8"
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="fixed left-1/2 -translate-x-1/2 z-50"
+            style={{
+              bottom: 'calc(32px + clamp(128px, 16vh, 192px) + 40px)',
+              width: '80%',
+              maxWidth: '340px'
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl shadow-2xl p-8 max-w-md w-full border-2 border-gray-700">
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl shadow-2xl p-6 border-2 border-gray-700 backdrop-blur-md">
               {/* Header */}
-              <h2 className="text-4xl font-bold text-white mb-4 text-center">
+              <h2 className="text-3xl font-bold text-white mb-2 text-center">
                 GotJunk?!
               </h2>
 
-              <p className="text-xl text-gray-300 font-semibold mb-6 text-center">
+              <p className="text-lg text-gray-300 font-semibold mb-4 text-center">
                 Browse items near you
               </p>
 
-              {/* Instructions */}
-              <div className="space-y-4 mb-8">
-                <div className="flex items-center gap-3 bg-green-500/10 border-2 border-green-500 rounded-xl p-4">
-                  <span className="text-3xl">➡️</span>
-                  <div>
-                    <p className="text-green-400 font-bold">Swipe Right</p>
-                    <p className="text-gray-300 text-sm">Add to Cart</p>
+              {/* Instructions - Using actual swipe button components */}
+              <div className="flex items-center justify-center gap-8 mb-4">
+                {/* Left/Skip Button */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="p-3 rounded-full bg-red-600/50 border-2 border-red-500 pointer-events-none scale-90">
+                    <LeftArrowIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-red-400 font-bold text-sm">Swipe Left</p>
+                    <p className="text-gray-400 text-xs">Skip</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 bg-red-500/10 border-2 border-red-500 rounded-xl p-4">
-                  <span className="text-3xl">⬅️</span>
-                  <div>
-                    <p className="text-red-400 font-bold">Swipe Left</p>
-                    <p className="text-gray-300 text-sm">Skip</p>
+                {/* Right/Keep Button */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="p-3 rounded-full bg-green-500/50 border-2 border-green-500 pointer-events-none scale-90">
+                    <RightArrowIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-green-400 font-bold text-sm">Swipe Right</p>
+                    <p className="text-gray-400 text-xs">Add to Cart</p>
                   </div>
                 </div>
               </div>
 
               {/* Info */}
-              <p className="text-sm text-gray-400 text-center mb-6">
+              <p className="text-xs text-gray-400 text-center mb-4">
                 50km radius • Tinder for stuff
               </p>
 
               {/* Close Button */}
               <button
                 onClick={onClose}
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 rounded-2xl transition-all shadow-lg"
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-2xl transition-all shadow-lg"
               >
                 Got it! Start Swiping
               </button>
