@@ -80,7 +80,13 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({ item, onDecision, on
       exit={{ opacity: 0, scale: 0.9, x: swipeDecision === 'keep' ? 300 : -300 }}
       transition={{ type: 'spring', stiffness: 400, damping: 40 }}
     >
-      <div className="w-full h-full max-w-sm max-h-[75vh] relative">
+      <div
+        className="w-full h-full relative"
+        style={{
+          maxWidth: 'var(--preview-size)',
+          maxHeight: 'var(--preview-max-height)',
+        }}
+      >
         {isVideo ? (
           <video
             src={item.url}
