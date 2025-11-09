@@ -100,10 +100,14 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
           </h2>
           <button
             onClick={onClose}
-            className="text-white text-3xl hover:text-red-500 transition-colors"
+            className="grid place-items-center rounded-2xl backdrop-blur-md shadow-2xl transition-all bg-black/90 hover:bg-gray-900/90 border-2 border-white shadow-black/80"
+            style={{
+              width: 'var(--sb-size)',
+              height: 'var(--sb-size)',
+            }}
             title="Close Map"
           >
-            ✕
+            <span className="text-white text-2xl font-bold">✕</span>
           </button>
         </div>
       </div>
