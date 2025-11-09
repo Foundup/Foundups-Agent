@@ -775,9 +775,9 @@ const App: React.FC = () => {
         onClassify={handleClassify}
       />
 
-      {/* Instructions Modal (shows on every page load) */}
+      {/* Instructions Modal (shows on Browse tab only - landing page) */}
       <InstructionsModal
-        isOpen={showInstructions}
+        isOpen={showInstructions && activeTab === 'browse'}
         onClose={handleInstructionsClose}
       />
 
