@@ -2,11 +2,13 @@ import React from 'react';
 
 interface IconProps {
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export const CartIcon: React.FC<IconProps> = ({ className }) => (
+export const CartIcon: React.FC<IconProps> = ({ className, style }) => (
   <svg
     className={className}
+    style={style}
     viewBox="0 0 24 24"
     strokeWidth="2"
     stroke="currentColor"
