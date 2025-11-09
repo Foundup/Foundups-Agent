@@ -7,6 +7,7 @@ import { BidIcon } from './icons/BidIcon';
 import { useLongPress } from '../hooks/useLongPress';
 import { ActionSheetDiscount } from './ActionSheetDiscount';
 import { ActionSheetBid } from './ActionSheetBid';
+import { Z_LAYERS } from '../constants/zLayers';
 
 interface ClassificationModalProps {
   isOpen: boolean;
@@ -99,8 +100,9 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6"
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6"
           style={{
+            zIndex: Z_LAYERS.modal,
             WebkitTouchCallout: 'none', // Prevent iOS context menu
             WebkitUserSelect: 'none',
             userSelect: 'none',
