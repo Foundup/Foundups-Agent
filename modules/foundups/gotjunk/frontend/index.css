@@ -5,9 +5,9 @@
  */
 
 :root {
-  /* Sidebar button size scales with viewport height but never too big/small */
-  --sb-size: clamp(48px, 8vh, 72px);
-  --sb-gap: clamp(10px, 2.6vh, 18px);
+  /* Sidebar button size - uses vw for stable sizing across devices */
+  --sb-size: clamp(48px, 6vw, 64px);
+  --sb-gap: clamp(10px, 1.8vh, 18px);
 
   /* Header + status area top offset */
   --sb-top: calc(max(env(safe-area-inset-top, 0px) + 64px, 88px));
@@ -26,8 +26,8 @@
 /* iPhone 11 and smaller devices (max-height: 740px) */
 @media (max-height: 740px) {
   :root {
-    --sb-size: clamp(44px, 7.2vh, 60px);
-    --sb-gap: clamp(8px, 2vh, 14px);
+    --sb-size: clamp(48px, 6vw, 60px);
+    --sb-gap: clamp(8px, 1.6vh, 14px);
     --sb-top: calc(max(env(safe-area-inset-top, 0px) + 56px, 76px));
     --sb-bottom-safe: calc(env(safe-area-inset-bottom, 0px) + 104px);
 
