@@ -157,17 +157,25 @@ const App: React.FC = () => {
         setMyListed(myItems.filter(item => item.status === 'listed'));
 
         // BROWSE FEED: Show ALL nearby items (including mine) - "Tinder for stuff"
-        setBrowseFeed(nearby.filter(item => item.status === 'browsing' || item.status === 'listed'));
+        // Include draft, browsing, and listed items for full "My Items on landing" experience
+        setBrowseFeed(nearby.filter(item =>
+          item.status === 'draft' || item.status === 'browsing' || item.status === 'listed'
+        ));
         setCart(nearby.filter(item => item.status === 'in_cart'));
         setSkipped(nearby.filter(item => item.status === 'skipped'));
 
       } catch (error) {
         console.error("Geolocation error or permission denied:", error);
 
-        // Fallback: Load MY items only (no location filtering)
+        // Fallback: Load ALL items (no location filtering) for "Tinder for stuff" experience
         const myItems = allItems.filter(item => item.ownership === 'mine');
         setMyDrafts(myItems.filter(item => item.status === 'draft'));
         setMyListed(myItems.filter(item => item.status === 'listed'));
+
+        // Show all items (draft + browsing + listed) in browse feed even without location
+        setBrowseFeed(allItems.filter(item =>
+          item.status === 'draft' || item.status === 'browsing' || item.status === 'listed'
+        ));
       }
 
       // Store user location for map
