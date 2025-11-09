@@ -5,9 +5,9 @@
  */
 
 :root {
-  /* Sidebar button size - uses vw for stable sizing across devices */
-  --sb-size: clamp(48px, 6vw, 64px);
-  --sb-gap: clamp(10px, 1.8vh, 18px);
+  /* Sidebar button size - fixed for all devices (works on iPhone 11+) */
+  --sb-size: 54px;
+  --sb-gap: 12px;
 
   /* Header + status area top offset */
   --sb-top: calc(max(env(safe-area-inset-top, 0px) + 64px, 88px));
@@ -21,20 +21,6 @@
 
   /* iOS Safari vh fix */
   --vh: 1vh;
-}
-
-/* iPhone 11 and smaller devices (max-height: 740px) */
-@media (max-height: 740px) {
-  :root {
-    --sb-size: clamp(48px, 6vw, 60px);
-    --sb-gap: clamp(8px, 1.6vh, 14px);
-    --sb-top: calc(max(env(safe-area-inset-top, 0px) + 56px, 76px));
-    --sb-bottom-safe: calc(env(safe-area-inset-bottom, 0px) + 104px);
-
-    /* Smaller preview for compact devices */
-    --preview-size: clamp(180px, 48vw, 320px);
-    --preview-max-height: clamp(180px, 55vh, 400px);
-  }
 }
 
 /* Ensure minimum tap target size (Apple HIG compliance) */
