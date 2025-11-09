@@ -1,6 +1,6 @@
 /**
  * InstructionsModal - Dismissible welcome modal with swipe instructions
- * Shows once on first visit, stores state in localStorage
+ * Shows on every page load
  */
 
 import React from 'react';
