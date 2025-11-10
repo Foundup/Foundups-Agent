@@ -65,32 +65,34 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
     threshold: 450,
   });
 
-  // Handle Discount sheet selection
+  // Handle Discount sheet selection - auto-submit after selection
   const handleDiscountSelect = (percent: number) => {
-    setDiscountPercent(percent);
-    setDiscountSheetOpen(false);
-    
     // Save as default for future captures
     localStorage.setItem('gotjunk_default_discount', percent.toString());
-    
+
     // Haptic success feedback
     if (navigator.vibrate) {
       navigator.vibrate([10, 50, 10]);
     }
+
+    // Auto-submit classification immediately (prevents "takes 2 taps" bug)
+    setDiscountSheetOpen(false);
+    onClassify('discount', percent, undefined);
   };
 
-  // Handle Bid sheet selection
+  // Handle Bid sheet selection - auto-submit after selection
   const handleBidSelect = (hours: number) => {
-    setBidDurationHours(hours);
-    setBidSheetOpen(false);
-    
     // Save as default for future captures
     localStorage.setItem('gotjunk_default_bid_duration', hours.toString());
-    
+
     // Haptic success feedback
     if (navigator.vibrate) {
       navigator.vibrate([10, 50, 10]);
     }
+
+    // Auto-submit classification immediately (prevents "takes 2 taps" bug)
+    setBidSheetOpen(false);
+    onClassify('bid', undefined, hours);
   };
 
   return (
