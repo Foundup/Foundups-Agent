@@ -128,18 +128,6 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
         >
           −
         </button>
-        {!isGlobalView && userLocation && (
-          <button
-            onClick={() => {
-              // Center map on user location
-              window.location.reload(); // Simple way to recenter
-            }}
-            className="bg-gray-800 hover:bg-gray-700 text-white text-xl w-12 h-12 rounded-lg shadow-2xl border-2 border-gray-600"
-            title="Center on Me"
-          >
-            📍
-          </button>
-        )}
         {isGlobalView && (
           <button
             onClick={() => setZoom(2)} // Reset to global view
@@ -259,8 +247,8 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
         )}
       </Map>
 
-      {/* Collapsible Legend - Lower position above close button */}
-      <div className="absolute bottom-36 left-4 z-40">
+      {/* Collapsible Legend - Higher position to avoid overlap with close button */}
+      <div className="absolute bottom-48 left-4 z-40">
         {/* Legend Toggle Button */}
         <button
           onClick={() => setLegendExpanded(!legendExpanded)}
