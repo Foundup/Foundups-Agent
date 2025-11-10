@@ -16,6 +16,7 @@ import { InstructionsModal } from './components/InstructionsModal';
 import { ItemClassification } from './types';
 import { PigeonMapView } from './components/PigeonMapView';
 import { useViewport } from './hooks/useViewport';
+import { useViewportHeight } from './hooks/useViewportHeight';
 
 export type CaptureMode = 'photo' | 'video';
 
@@ -91,6 +92,7 @@ const App: React.FC = () => {
 
   // === RESPONSIVE VIEWPORT (iOS Safari vh fix) ===
   useViewport();
+  useViewportHeight(); // Track visualViewport for proper modal centering
 
   // === CLASSIFICATION STATE ===
   const [pendingClassificationItem, setPendingClassificationItem] = useState<{blob: Blob, url: string, location?: {latitude: number, longitude: number}} | null>(null);
