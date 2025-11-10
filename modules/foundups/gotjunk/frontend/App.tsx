@@ -705,7 +705,31 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Bottom navigation bar */}
+      {/* Bottom navigation bar - hidden when map is open (fullscreen map) */}
+      {!isMapOpen && (
+        <BottomNavBar
+          captureMode={captureMode}
+          onToggleCaptureMode={() => setCaptureMode(mode => mode === 'photo' ? 'video' : 'photo')}
+          onCapture={handleCapture}
+          onReviewAction={(action) => {
+            if (activeTab === 'browse' && browseFeed.length > 0) {
+              handleBrowseSwipe(browseFeed[0], action === 'keep' ? 'right' : 'left');
+            } else if (activeTab === 'myitems' && currentReviewItem) {
+              handleReviewDecision(currentReviewItem, action);
+            }
+          }}
+          isRecording={isRecording}
+          setIsRecording={setIsRecording}
+          countdown={countdown}
+          setCountdown={setCountdown}
+          hasReviewItems={activeTab === 'browse' ? browseFeed.length > 0 : myDrafts.length > 0}
+          onSearchClick={() => {
+            console.log('🔍 Search clicked');
+            // TODO: Open search modal
+          }}
+          showCameraOrb={showCameraOrb}
+        />
+      )}
 
       {/* Re-classification Modal (tap badge) */}
       {reclassifyingItem && (
@@ -725,29 +749,6 @@ const App: React.FC = () => {
           onClose={() => setEditingOptionsItem(null)}
         />
       )}
-
-      <BottomNavBar
-        captureMode={captureMode}
-        onToggleCaptureMode={() => setCaptureMode(mode => mode === 'photo' ? 'video' : 'photo')}
-        onCapture={handleCapture}
-        onReviewAction={(action) => {
-          if (activeTab === 'browse' && browseFeed.length > 0) {
-            handleBrowseSwipe(browseFeed[0], action === 'keep' ? 'right' : 'left');
-          } else if (activeTab === 'myitems' && currentReviewItem) {
-            handleReviewDecision(currentReviewItem, action);
-          }
-        }}
-        isRecording={isRecording}
-        setIsRecording={setIsRecording}
-        countdown={countdown}
-        setCountdown={setCountdown}
-        hasReviewItems={activeTab === 'browse' ? browseFeed.length > 0 : myDrafts.length > 0}
-        onSearchClick={() => {
-          console.log('🔍 Search clicked');
-          // TODO: Open search modal
-        }}
-        showCameraOrb={showCameraOrb}
-      />
 
       {isGalleryOpen && (
         <FullscreenGallery
