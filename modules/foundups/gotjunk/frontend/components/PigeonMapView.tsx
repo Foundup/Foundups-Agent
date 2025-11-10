@@ -99,10 +99,10 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
         </h2>
       </div>
 
-      {/* Close Button - Moved to bottom-left thumb zone */}
+      {/* Close Button - Lower position for better thumb reach */}
       <button
         onClick={onClose}
-        className="absolute bottom-36 left-4 z-40 grid place-items-center rounded-2xl backdrop-blur-md shadow-2xl transition-all bg-black/90 hover:bg-gray-900/90 border-2 border-white shadow-black/80"
+        className="absolute bottom-24 left-4 z-40 grid place-items-center rounded-2xl backdrop-blur-md shadow-2xl transition-all bg-black/90 hover:bg-gray-900/90 border-2 border-white shadow-black/80"
         style={{
           width: 'var(--sb-size)',
           height: 'var(--sb-size)',
@@ -112,8 +112,8 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
         <span className="text-white text-2xl font-bold">✕</span>
       </button>
 
-      {/* Zoom Controls - Moved to bottom-right thumb zone */}
-      <div className="absolute bottom-36 right-4 z-40 flex flex-col gap-2">
+      {/* Zoom Controls - Lower position for better thumb reach */}
+      <div className="absolute bottom-24 right-4 z-40 flex flex-col gap-2">
         <button
           onClick={() => setZoom(Math.min(zoom + 1, 18))}
           className="bg-gray-800 hover:bg-gray-700 text-white text-2xl w-12 h-12 rounded-lg shadow-2xl border-2 border-gray-600 font-bold"
@@ -259,8 +259,8 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
         )}
       </Map>
 
-      {/* Collapsible Legend - Moved to bottom-left above close button */}
-      <div className="absolute bottom-52 left-4 z-40">
+      {/* Collapsible Legend - Lower position above close button */}
+      <div className="absolute bottom-36 left-4 z-40">
         {/* Legend Toggle Button */}
         <button
           onClick={() => setLegendExpanded(!legendExpanded)}
