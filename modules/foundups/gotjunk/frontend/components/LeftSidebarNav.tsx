@@ -12,7 +12,7 @@ import { CartIcon } from './icons/CartIcon';
 import { Z_LAYERS } from '../constants/zLayers';
 
 interface LeftSidebarNavProps {
-  activeTab: 'browse' | 'map' | 'myitems' | 'cart';
+  activeTab: 'browse' | 'myitems' | 'cart';
   onGalleryClick: () => void;
   onGalleryIconTap?: (duration: number) => void;
   onMapClick: () => void;
@@ -50,19 +50,17 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
     onGalleryClick();
   };
 
-  // Adaptive icon styling for map view visibility
-  // Map tiles vary (white streets, dark parks, blue water) - inactive icons need high contrast
-  const isMapView = activeTab === 'map';
   const getButtonStyle = (isActive: boolean) => {
     if (isActive) {
       // Active state: bright blue with ring (always visible)
       return 'bg-blue-500/70 ring-2 ring-blue-400 shadow-blue-500/50 border-2 border-blue-300';
     }
-    // Inactive state: black background for map view, dark gray for other views
-    return isMapView
-      ? 'bg-black/90 hover:bg-gray-900/90 border-2 border-white shadow-2xl shadow-black/80'
-      : 'bg-gray-800/90 hover:bg-gray-700/90 border-2 border-gray-600 shadow-2xl';
+    // Inactive state: dark gray background
+    return 'bg-gray-800/90 hover:bg-gray-700/90 border-2 border-gray-600 shadow-2xl';
   };
+
+  const gapValue = 'clamp(12px, 2.5vh, 22px)';
+  const iconSize = 'clamp(48px, 6vh, 64px)';
 
   return (
     <motion.div
@@ -70,8 +68,9 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
       animate={{ opacity: 1, x: 0 }}
       className="fixed left-4 sm:left-6 flex flex-col items-center pointer-events-auto"
       style={{
-        bottom: 'var(--sb-bottom-safe)',
-        gap: 'var(--sb-gap)',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        gap: gapValue,
         zIndex: Z_LAYERS.sidebar,
       }}
     >
@@ -97,8 +96,8 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
         whileTap={{ scale: 0.95 }}
         className={`grid place-items-center rounded-2xl backdrop-blur-md shadow-xl transition-all ${getButtonStyle(activeTab === 'browse')}`}
         style={{
-          width: 'var(--sb-size)',
-          height: 'var(--sb-size)',
+          width: iconSize,
+          height: iconSize,
         }}
       >
         <GridIcon style={{ width: '16px', height: '16px' }} className="text-white" />
@@ -112,8 +111,8 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
         whileTap={{ scale: 0.95 }}
         className={`grid place-items-center rounded-2xl backdrop-blur-md shadow-xl transition-all ${getButtonStyle(activeTab === 'map')}`}
         style={{
-          width: 'var(--sb-size)',
-          height: 'var(--sb-size)',
+          width: iconSize,
+          height: iconSize,
         }}
       >
         <MapIcon style={{ width: '16px', height: '16px' }} className="text-white" />
@@ -127,8 +126,8 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
         whileTap={{ scale: 0.95 }}
         className={`grid place-items-center rounded-2xl backdrop-blur-md shadow-xl transition-all ${getButtonStyle(activeTab === 'myitems')}`}
         style={{
-          width: 'var(--sb-size)',
-          height: 'var(--sb-size)',
+          width: iconSize,
+          height: iconSize,
         }}
       >
         <HomeIcon style={{ width: '16px', height: '16px' }} className="text-white" />
@@ -142,8 +141,8 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
         whileTap={{ scale: 0.95 }}
         className={`grid place-items-center rounded-2xl backdrop-blur-md shadow-xl transition-all ${getButtonStyle(activeTab === 'cart')}`}
         style={{
-          width: 'var(--sb-size)',
-          height: 'var(--sb-size)',
+          width: iconSize,
+          height: iconSize,
         }}
       >
         <CartIcon style={{ width: '16px', height: '16px' }} className="text-white" />
