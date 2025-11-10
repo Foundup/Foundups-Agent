@@ -490,6 +490,7 @@ const App: React.FC = () => {
     : browseFeed.filter(item => item.classification === classificationFilter);
 
   const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
+  const showCameraOrb = !(isMapOpen || activeTab === 'map');
 
   // Handle instructions modal close
   const handleInstructionsClose = () => {
@@ -743,6 +744,7 @@ const App: React.FC = () => {
           console.log('🔍 Search clicked');
           // TODO: Open search modal
         }}
+        showCameraOrb={showCameraOrb}
       />
 
       {isGalleryOpen && (
