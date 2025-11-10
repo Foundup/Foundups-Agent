@@ -43,6 +43,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   const countdownIntervalRef = useRef<number | null>(null);
   const stopTimeoutRef = useRef<number | null>(null);
   const momentaryRecordingRef = useRef<boolean>(false);
+  const captureLockRef = useRef<boolean>(false); // Prevents double-capture from touch+mouse events
 
   const stopRecording = () => {
     if (countdownIntervalRef.current) {
@@ -103,11 +104,24 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
     if (momentaryRecordingRef.current) {
         stopRecording();
     } else if (!isRecording) {
+        // Capture lock prevents double-fire from touch+mouse events
+        if (captureLockRef.current) {
+          console.log('[GotJunk] Capture blocked - lock active');
+          return;
+        }
+
+        captureLockRef.current = true;
+
         if (captureMode === 'photo') {
             cameraRef.current?.takePhoto();
         } else if (captureMode === 'video') {
             startRecording(false);
         }
+
+        // Release lock after 500ms to allow next capture
+        setTimeout(() => {
+          captureLockRef.current = false;
+        }, 500);
     }
   };
 
