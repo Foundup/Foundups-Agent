@@ -23,8 +23,10 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="fixed left-1/2 -translate-x-1/2 w-[min(92vw,360px)]"
+          className="fixed w-[min(92vw,360px)]"
           style={{
+            left: 'calc(50% - 50px)',
+            transform: 'translateX(-50%)',
             top: 'calc(env(safe-area-inset-top, 20px) + 16px)',
             zIndex: Z_LAYERS.tutorialPopup
           }}
