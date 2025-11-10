@@ -74,7 +74,7 @@ const App: React.FC = () => {
   const [skipped, setSkipped] = useState<CapturedItem[]>([]); // status: 'skipped' - hidden
 
   // === NAVIGATION STATE ===
-  const [activeTab, setActiveTab] = useState<'browse' | 'map' | 'myitems' | 'cart'>('browse');
+  const [activeTab, setActiveTab] = useState<'browse' | 'myitems' | 'cart'>('browse');
 
   // === UI STATE ===
   const [isGalleryOpen, setGalleryOpen] = useState(false);
@@ -492,7 +492,7 @@ const App: React.FC = () => {
     : browseFeed.filter(item => item.classification === classificationFilter);
 
   const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
-  const showCameraOrb = !(isMapOpen || activeTab === 'map');
+  const showCameraOrb = !isMapOpen;
 
   // Handle instructions modal close
   const handleInstructionsClose = () => {
@@ -688,8 +688,7 @@ const App: React.FC = () => {
             setTapTimes([]);
             sosDetectionActive.current = false;
             if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
-            setActiveTab('map'); // Tab 2: Map
-            setMapOpen(true);
+            setMapOpen(true); // Open map as overlay
           }}
           onMyItemsClick={() => {
             setActiveTab('myitems'); // Tab 3: My Items
@@ -776,8 +775,7 @@ const App: React.FC = () => {
           libertyAlerts={libertyAlerts}
           userLocation={userLocation || null}
           onClose={() => {
-            setMapOpen(false);
-            setActiveTab('browse');
+            setMapOpen(false); // Close overlay, return to current tab
           }}
           showLibertyAlerts={libertyEnabled}
         />
