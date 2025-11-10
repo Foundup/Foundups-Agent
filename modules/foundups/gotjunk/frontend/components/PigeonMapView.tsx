@@ -90,40 +90,40 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
         pointerEvents: "auto",
       }}
     >
-      {/* Header */}
+      {/* Header - Title only, close button moved to thumb zone */}
       <div className="absolute top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/80 to-transparent p-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-white text-xl font-bold">
-            {showLibertyAlerts && libertyAlerts.length > 0
-              ? '🗽 Liberty Alert Map'
-              : '🗺️ GotJunk Map'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="grid place-items-center rounded-2xl backdrop-blur-md shadow-2xl transition-all bg-black/90 hover:bg-gray-900/90 border-2 border-white shadow-black/80"
-            style={{
-              width: 'var(--sb-size)',
-              height: 'var(--sb-size)',
-            }}
-            title="Close Map"
-          >
-            <span className="text-white text-2xl font-bold">✕</span>
-          </button>
-        </div>
+        <h2 className="text-white text-xl font-bold text-center">
+          {showLibertyAlerts && libertyAlerts.length > 0
+            ? '🗽 Liberty Alert Map'
+            : '🗺️ GotJunk Map'}
+        </h2>
       </div>
 
-      {/* Zoom Controls */}
-      <div className="absolute top-24 right-4 z-40 flex flex-col gap-2">
+      {/* Close Button - Moved to bottom-left thumb zone */}
+      <button
+        onClick={onClose}
+        className="absolute bottom-36 left-4 z-40 grid place-items-center rounded-2xl backdrop-blur-md shadow-2xl transition-all bg-black/90 hover:bg-gray-900/90 border-2 border-white shadow-black/80"
+        style={{
+          width: 'var(--sb-size)',
+          height: 'var(--sb-size)',
+        }}
+        title="Close Map"
+      >
+        <span className="text-white text-2xl font-bold">✕</span>
+      </button>
+
+      {/* Zoom Controls - Moved to bottom-right thumb zone */}
+      <div className="absolute bottom-36 right-4 z-40 flex flex-col gap-2">
         <button
           onClick={() => setZoom(Math.min(zoom + 1, 18))}
-          className="bg-gray-800 hover:bg-gray-700 text-white text-2xl w-10 h-10 rounded-lg shadow-2xl border-2 border-gray-600 font-bold"
+          className="bg-gray-800 hover:bg-gray-700 text-white text-2xl w-12 h-12 rounded-lg shadow-2xl border-2 border-gray-600 font-bold"
           title="Zoom In"
         >
           +
         </button>
         <button
           onClick={() => setZoom(Math.max(zoom - 1, 1))}
-          className="bg-gray-800 hover:bg-gray-700 text-white text-2xl w-10 h-10 rounded-lg shadow-2xl border-2 border-gray-600 font-bold"
+          className="bg-gray-800 hover:bg-gray-700 text-white text-2xl w-12 h-12 rounded-lg shadow-2xl border-2 border-gray-600 font-bold"
           title="Zoom Out"
         >
           −
@@ -134,7 +134,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
               // Center map on user location
               window.location.reload(); // Simple way to recenter
             }}
-            className="bg-gray-800 hover:bg-gray-700 text-white text-xl w-10 h-10 rounded-lg shadow-2xl border-2 border-gray-600"
+            className="bg-gray-800 hover:bg-gray-700 text-white text-xl w-12 h-12 rounded-lg shadow-2xl border-2 border-gray-600"
             title="Center on Me"
           >
             📍
@@ -143,7 +143,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
         {isGlobalView && (
           <button
             onClick={() => setZoom(2)} // Reset to global view
-            className="bg-gray-800 hover:bg-gray-700 text-white text-xl w-10 h-10 rounded-lg shadow-2xl border-2 border-gray-600"
+            className="bg-gray-800 hover:bg-gray-700 text-white text-xl w-12 h-12 rounded-lg shadow-2xl border-2 border-gray-600"
             title="Reset Global View"
           >
             🌍
@@ -259,8 +259,8 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
         )}
       </Map>
 
-      {/* Collapsible Legend - Top Left Popup */}
-      <div className="absolute top-20 left-4 z-40">
+      {/* Collapsible Legend - Moved to bottom-left above close button */}
+      <div className="absolute bottom-52 left-4 z-40">
         {/* Legend Toggle Button */}
         <button
           onClick={() => setLegendExpanded(!legendExpanded)}

@@ -30,6 +30,21 @@
 - Tutorial remains fully visible under all safe-area cutouts (dynamic island/notch) and never overlaps the camera orb or floating controls.
 - Z-index contract stays synchronized across code + docs to prevent future layering regressions.
 - Users get the same glow/animation styling while regaining unobstructed swipe instructions that satisfy WSP UX guardrails.
+- Follow-up tweak (2025-11-10 2nd pass): constrained popup height with safe-area-aware `maxHeight`, tightened typography, and enabled auto-scroll so it never intersects the capture orb even on smaller iPhones.
+
+## [2025-11-10] GotJunk Map Camera Orb Visibility Fix
+
+**Change Type**: UI conditional rendering  
+**Architect**: Codex (0102)  
+**WSP References**: WSP 3 (module boundaries), WSP 7 (pre-commit validation), WSP 22 (ModLog), WSP 57 (UI documentation consistency)
+
+### What Changed
+- Added a `showCameraOrb` prop to `BottomNavBar` so the capture orb can be toggled off per view.
+- Updated `App.tsx` to disable the orb when the map overlay is open or when the user is in the map tab, preventing UI overlap on the GotJunk Map screen.
+
+### Impact
+- Map view now shows only map controls (zoom/info/pins) while camera and list views still get the orb immediately.
+- WSP 87 navigation guidance preserved: no camera controls rendered during non-camera contexts, avoiding accidental capture actions.
 
 ## [2025-11-03] MCP Server First Principles Optimization - 78% Reduction
 
