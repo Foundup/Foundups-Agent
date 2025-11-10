@@ -704,9 +704,9 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Bottom navigation bar - hidden when map is open (fullscreen map) */}
-      {!isMapOpen && (
-        <BottomNavBar
+      {/* Bottom navigation bar - visually hidden when map is open (keeps Camera mounted) */}
+      <BottomNavBar
+        style={{ display: isMapOpen ? 'none' : 'block' }}
           captureMode={captureMode}
           onToggleCaptureMode={() => setCaptureMode(mode => mode === 'photo' ? 'video' : 'photo')}
           onCapture={handleCapture}
@@ -728,7 +728,6 @@ const App: React.FC = () => {
           }}
           showCameraOrb={showCameraOrb}
         />
-      )}
 
       {/* Re-classification Modal (tap badge) */}
       {reclassifyingItem && (
