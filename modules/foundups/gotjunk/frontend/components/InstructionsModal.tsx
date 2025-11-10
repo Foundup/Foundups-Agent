@@ -16,6 +16,10 @@ interface InstructionsModalProps {
 }
 
 export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }) => {
+  const topOffset = 'calc(env(safe-area-inset-top, 20px) + 16px)';
+  const maxHeightDvh = 'min(420px, calc(100dvh - env(safe-area-inset-top, 20px) - 220px))';
+  const maxHeightFallback = 'min(420px, calc(100vh - env(safe-area-inset-top, 20px) - 220px))';
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -23,54 +27,63 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="fixed left-1/2 -translate-x-1/2 w-[min(92vw,360px)]"
+          className="fixed w-[min(92vw,360px)] px-1"
           style={{
-            top: 'calc(env(safe-area-inset-top, 20px) + 16px)',
-            zIndex: Z_LAYERS.tutorialPopup
+            left: '50%',
+            transform: 'translateX(calc(-50% - 50px))',
+            top: topOffset,
+            zIndex: Z_LAYERS.tutorialPopup,
+            maxHeight: maxHeightDvh,
+            overflowY: 'auto'
           }}
           role="dialog"
           aria-modal="true"
+          onClick={onClose}
         >
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl shadow-2xl p-6 border-2 border-gray-700 backdrop-blur-md ring-1 ring-white/10">
+          <div
+            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl shadow-2xl p-5 border border-gray-700 backdrop-blur-md ring-1 ring-white/10"
+            style={{ maxHeight: maxHeightFallback }}
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
-            <h2 className="text-3xl font-bold text-white mb-2 text-center">
+            <h2 className="text-2xl font-bold text-white mb-1 text-center">
               GotJunk?!
             </h2>
 
-            <p className="text-lg text-gray-300 font-semibold mb-4 text-center">
+            <p className="text-base text-gray-300 font-semibold mb-3 text-center">
               Browse items near you
             </p>
 
             {/* Instructions */}
-            <div className="flex items-center justify-center gap-8 mb-4">
-              <div className="flex flex-col items-center gap-2">
-                <div className="p-3 rounded-full bg-red-600/50 border-2 border-red-500 pointer-events-none scale-90">
+            <div className="grid grid-cols-2 gap-4 mb-3">
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="p-2.5 rounded-full bg-red-600/50 border border-red-500 pointer-events-none">
                   <LeftArrowIcon className="w-6 h-6 text-white" />
                 </div>
-                <div className="text-center">
-                  <p className="text-red-400 font-bold text-sm">Swipe Left</p>
+                <div className="text-center leading-tight">
+                  <p className="text-red-400 font-semibold text-sm">Swipe Left</p>
                   <p className="text-gray-400 text-xs">Skip</p>
                 </div>
               </div>
 
-              <div className="flex flex-col items-center gap-2">
-                <div className="p-3 rounded-full bg-green-500/50 border-2 border-green-500 pointer-events-none scale-90">
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="p-2.5 rounded-full bg-green-500/50 border border-green-500 pointer-events-none">
                   <RightArrowIcon className="w-6 h-6 text-white" />
                 </div>
-                <div className="text-center">
-                  <p className="text-green-400 font-bold text-sm">Swipe Right</p>
+                <div className="text-center leading-tight">
+                  <p className="text-green-400 font-semibold text-sm">Swipe Right</p>
                   <p className="text-gray-400 text-xs">Add to Cart</p>
                 </div>
               </div>
             </div>
 
-            <p className="text-xs text-gray-400 text-center mb-4">
+            <p className="text-xs text-gray-400 text-center mb-3">
               50km radius • Tinder for stuff
             </p>
 
             <button
               onClick={onClose}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-2xl transition-all shadow-lg"
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2.5 rounded-2xl transition-all shadow-lg"
             >
               Got it! Start Swiping
             </button>
