@@ -167,6 +167,9 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
         onBoundsChanged={({ zoom: newZoom }) => setZoom(newZoom)}
         mouseEvents={true}
         touchEvents={true}
+        metaWheelZoom={true}
+        twoFingerDrag={true}
+        zoomSnap={false}
       >
         {/* User location marker */}
         {userLocation && (
