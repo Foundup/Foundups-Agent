@@ -33,6 +33,14 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({ item, onDecision, on
     const swipeThreshold = 50;
     const velocityThreshold = 200;
 
+    // Check for vertical swipe UP to close (collapse back to thumbnails)
+    if (onClose && (info.offset.y < -swipeThreshold || info.velocity.y < -velocityThreshold)) {
+      console.log('[ItemReviewer] Swipe up detected - closing fullscreen');
+      onClose();
+      return;
+    }
+
+    // Horizontal swipe for keep/delete
     let decision: 'keep' | 'delete' | null = null;
 
     if (info.offset.x > swipeThreshold || info.velocity.x > velocityThreshold) {
@@ -68,8 +76,8 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({ item, onDecision, on
       style={{ zIndex: Z_LAYERS.fullscreen }}
       role="dialog"
       aria-modal="true"
-      drag="x"
-      dragConstraints={{ left: -150, right: 150 }}
+      drag
+      dragConstraints={{ left: -150, right: 150, top: -200, bottom: 50 }}
       dragElastic={0.2}
       onDragEnd={handleDragEnd}
       onClick={handleTap}
@@ -100,6 +108,32 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({ item, onDecision, on
           />
         )}
       </div>
+
+      {/* Collapse button (-) - Bottom right corner */}
+      {onClose && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent double-tap detection
+            onClose();
+          }}
+          className="absolute bottom-8 right-8 w-14 h-14 bg-gray-800/90 hover:bg-gray-700/90 active:scale-95 rounded-full flex items-center justify-center shadow-2xl border-2 border-gray-600 transition-all z-10"
+          aria-label="Collapse to thumbnails"
+        >
+          <svg
+            className="w-8 h-8 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={3}
+              d="M20 12H4"
+            />
+          </svg>
+        </button>
+      )}
     </motion.div>
   );
 };
