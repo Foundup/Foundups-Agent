@@ -298,9 +298,13 @@ const App: React.FC = () => {
       classificationCompletedRef.current = true;
       pendingClassificationBackupRef.current = null;
 
-      // Directly process with last classification (skip modal)
-      setPendingClassificationItem(capturedItem);
-      await handleClassify(lastClassification.type, lastClassification.discountPercent, lastClassification.bidDurationHours);
+      // Directly process with last classification (skip modal) - pass item directly to avoid race condition
+      await handleClassify(
+        lastClassification.type,
+        lastClassification.discountPercent,
+        lastClassification.bidDurationHours,
+        capturedItem  // Pass item directly instead of relying on setState
+      );
       return;
     }
 
@@ -316,17 +320,25 @@ const App: React.FC = () => {
     setPendingClassificationItem(capturedItem);
   };
 
-  const handleClassify = async (classification: ItemClassification, discountPercent?: number, bidDurationHours?: number) => {
-    console.log('[GotJunk] handleClassify called:', { classification, discountPercent, bidDurationHours, hasPending: !!pendingClassificationItem, isProcessing: isProcessingClassification });
+  const handleClassify = async (
+    classification: ItemClassification,
+    discountPercent?: number,
+    bidDurationHours?: number,
+    itemOverride?: {blob: Blob, url: string, location?: {latitude: number, longitude: number}}
+  ) => {
+    console.log('[GotJunk] handleClassify called:', { classification, discountPercent, bidDurationHours, hasPending: !!pendingClassificationItem, hasOverride: !!itemOverride, isProcessing: isProcessingClassification });
+
+    // Use itemOverride for auto-classify (avoids React setState race condition)
+    const item = itemOverride || pendingClassificationItem;
 
     // Prevent duplicate calls (race condition guard)
-    if (!pendingClassificationItem || isProcessingClassification) {
-      console.warn('[GotJunk] handleClassify called but no pendingClassificationItem or already processing!');
+    if (!item || isProcessingClassification) {
+      console.warn('[GotJunk] handleClassify called but no item or already processing!');
       return;
     }
 
     // Immediately capture the item data and clear pending state to prevent race conditions
-    const { blob, url, location } = pendingClassificationItem;
+    const { blob, url, location } = item;
 
     // Mark classification as completed to prevent safety restore
     classificationCompletedRef.current = true;
