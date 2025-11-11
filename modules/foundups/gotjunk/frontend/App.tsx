@@ -880,6 +880,10 @@ const App: React.FC = () => {
       {/* Map View */}
       {isMapOpen && (
         <PigeonMapView
+          // NEW: Pass raw CapturedItems for clustering with thumbnails
+          capturedItems={browseFeed}
+          useClustering={true}
+          // Legacy: Keep junkItems for backward compatibility (used if clustering disabled)
           junkItems={browseFeed.map(item => ({
             id: item.id,
             location: {
@@ -897,10 +901,10 @@ const App: React.FC = () => {
             setMapOpen(false); // Close overlay, return to current tab
           }}
           onMarkerClick={(location) => {
-            // User clicked map marker → filter Browse view to items at that location
-            console.log('[GotJunk] Map marker clicked:', location);
+            // User clicked cluster marker → filter Browse view to items at that location
+            console.log('[GotJunk] Cluster marker clicked:', location);
             setLocationFilter(location);
-            setActiveTab('browse'); // Switch to Browse tab
+            setActiveTab('browse'); // Switch to Browse tab showing filtered items
             setMapOpen(false); // Close map
           }}
           showLibertyAlerts={libertyEnabled}
