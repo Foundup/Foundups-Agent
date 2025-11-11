@@ -711,8 +711,9 @@ const App: React.FC = () => {
           onToggleCaptureMode={() => setCaptureMode(mode => mode === 'photo' ? 'video' : 'photo')}
           onCapture={handleCapture}
           onReviewAction={(action) => {
-            if (activeTab === 'browse' && browseFeed.length > 0) {
-              handleBrowseSwipe(browseFeed[0], action === 'keep' ? 'right' : 'left');
+            if (activeTab === 'browse' && filteredBrowseFeed.length > 0) {
+              console.log('[GotJunk] Button action:', action, 'on item:', filteredBrowseFeed[0].id);
+              handleBrowseSwipe(filteredBrowseFeed[0], action === 'keep' ? 'right' : 'left');
             } else if (activeTab === 'myitems' && currentReviewItem) {
               handleReviewDecision(currentReviewItem, action);
             }
@@ -721,7 +722,7 @@ const App: React.FC = () => {
           setIsRecording={setIsRecording}
           countdown={countdown}
           setCountdown={setCountdown}
-          hasReviewItems={activeTab === 'browse' ? browseFeed.length > 0 : myDrafts.length > 0}
+          hasReviewItems={activeTab === 'browse' ? filteredBrowseFeed.length > 0 : myDrafts.length > 0}
           onSearchClick={() => {
             console.log('🔍 Search clicked');
             // TODO: Open search modal
