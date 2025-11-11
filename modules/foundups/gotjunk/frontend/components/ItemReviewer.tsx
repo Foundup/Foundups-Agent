@@ -8,9 +8,10 @@ interface ItemReviewerProps {
   item: CapturedItem;
   onDecision: (item: CapturedItem, decision: 'keep' | 'delete') => void;
   onClose?: () => void; // Optional: close fullscreen without making a decision
+  showForwardButton?: boolean; // Optional: show > button for cart purchase
 }
 
-export const ItemReviewer: React.FC<ItemReviewerProps> = ({ item, onDecision, onClose }) => {
+export const ItemReviewer: React.FC<ItemReviewerProps> = ({ item, onDecision, onClose, showForwardButton = false }) => {
   const [swipeDecision, setSwipeDecision] = useState<'keep' | 'delete' | null>(null);
   const lastTapRef = useRef<number>(0);
 
@@ -130,6 +131,32 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({ item, onDecision, on
               strokeLinejoin="round"
               strokeWidth={3}
               d="M20 12H4"
+            />
+          </svg>
+        </button>
+      )}
+
+      {/* Forward button (>) - Bottom left corner (for cart purchase) */}
+      {showForwardButton && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent double-tap detection
+            onDecision(item, 'keep'); // Trigger purchase
+          }}
+          className="absolute bottom-8 left-8 w-14 h-14 bg-green-600/90 hover:bg-green-500/90 active:scale-95 rounded-full flex items-center justify-center shadow-2xl border-2 border-green-400 transition-all z-10"
+          aria-label="Purchase Item"
+        >
+          <svg
+            className="w-8 h-8 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={3}
+              d="M9 5l7 7-7 7"
             />
           </svg>
         </button>
