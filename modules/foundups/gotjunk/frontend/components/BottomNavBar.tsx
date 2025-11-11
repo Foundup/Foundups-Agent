@@ -158,15 +158,15 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
       {/* Camera Orb - Floating above nav bar */}
       {showCameraOrb && (
         <div
-          className="absolute left-1/2 -translate-x-1/2 bottom-32 flex flex-col items-center gap-3"
+          className="absolute left-1/2 -translate-x-1/2 bottom-32 flex flex-row items-center gap-4"
           style={{ zIndex: Z_LAYERS.cameraOrb }}
         >
             {/* Main capture button with live preview - Intelligent scaling: iPhone 11=143px, iPhone 16=149px */}
             <div
               className="p-2 bg-gray-800 rounded-full shadow-2xl cursor-pointer"
               style={{
-                width: 'clamp(128px, 16vh, 192px)',
-                height: 'clamp(128px, 16vh, 192px)'
+                width: 'clamp(147px, 18.4vh, 221px)', // 15% bigger: 128*1.15=147, 192*1.15=221
+                height: 'clamp(147px, 18.4vh, 221px)'
               }}
               onMouseDown={handlePressStart}
               onMouseUp={handlePressEnd}
@@ -176,7 +176,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                  <Camera ref={cameraRef} onCapture={onCapture} captureMode={captureMode} />
             </div>
 
-            {/* Auto-Classify Toggle Button - Tap to toggle ON/OFF, Long-press to select classification */}
+            {/* Auto-Classify Toggle Button - Moved to RIGHT of orb to prevent accidental triggers */}
             <motion.button
               {...autoClassifyLongPress}
               className={`px-4 py-2 rounded-full shadow-lg font-semibold text-sm transition-all ${
