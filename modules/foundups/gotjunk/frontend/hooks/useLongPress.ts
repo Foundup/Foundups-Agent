@@ -43,6 +43,7 @@ export function useLongPress({
   const longPressTriggeredRef = useRef(false);
   const startPosRef = useRef<{ x: number; y: number } | null>(null);
   const lastLongPressTimeRef = useRef<number>(0);
+  const lastTapTimeRef = useRef<number>(0); // Prevent double-tap from touch+mouse events
 
   const clear = useCallback(() => {
     if (timerRef.current) {
@@ -101,6 +102,17 @@ export function useLongPress({
 
     // Fire tap only if long-press wasn't triggered
     if (!longPressTriggeredRef.current && onTap) {
+      const now = Date.now();
+
+      // Prevent double-tap from touch+mouse events (mobile browsers fire both)
+      // Skip if onTap was called within 300ms (debounce)
+      if (now - lastTapTimeRef.current < 300) {
+        console.log('[useLongPress] Skipping duplicate tap event (touch+mouse collision)');
+        startPosRef.current = null;
+        return;
+      }
+
+      lastTapTimeRef.current = now;
       onTap(event);
     }
 
