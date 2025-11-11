@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Map, Marker, Overlay } from 'pigeon-maps';
 import { Z_LAYERS } from '../constants/zLayers';
+import { MapClusterMarker, type ItemCluster } from './MapClusterMarker';
+import { clusterItemsByLocation } from '../utils/clusterItems';
+import type { CapturedItem } from '../types';
 
 interface JunkItem {
   id: string;
@@ -20,21 +23,25 @@ interface LibertyAlert {
 }
 
 interface PigeonMapViewProps {
-  junkItems: JunkItem[];
+  junkItems: JunkItem[];  // Legacy format for Liberty Alerts
+  capturedItems?: CapturedItem[];  // NEW: Pass raw items for clustering
   libertyAlerts?: LibertyAlert[];
   userLocation: { latitude: number; longitude: number } | null;
   onClose: () => void;
   onMarkerClick?: (location: { latitude: number; longitude: number }) => void;
   showLibertyAlerts?: boolean;
+  useClustering?: boolean;  // Enable/disable clustering (default: true)
 }
 
 export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   junkItems,
+  capturedItems = [],
   libertyAlerts = [],
   userLocation,
   onClose,
   onMarkerClick,
   showLibertyAlerts = false,
+  useClustering = true,
 }) => {
   // Global view for Liberty Alerts, local view for GotJunk items
   const isGlobalView = showLibertyAlerts && libertyAlerts.length > 0;
@@ -49,6 +56,17 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   const [selectedItem, setSelectedItem] = useState<JunkItem | null>(null);
   const [selectedAlert, setSelectedAlert] = useState<LibertyAlert | null>(null);
   const [legendExpanded, setLegendExpanded] = useState(false); // Collapsible legend
+
+  // Cluster items by location (memoized to avoid re-computing on every render)
+  const itemClusters = useMemo(() => {
+    if (!useClustering || capturedItems.length === 0) {
+      return [];
+    }
+
+    const clusters = clusterItemsByLocation(capturedItems);
+    console.log('[GotJunk] Clustered', capturedItems.length, 'items into', clusters.length, 'clusters');
+    return clusters;
+  }, [capturedItems, useClustering]);
 
   // Lock body scroll when map is open (prevent Safari from clipping floating controls)
   useEffect(() => {
@@ -159,22 +177,45 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
           />
         )}
 
-        {/* GotJunk item markers */}
-        {junkItems.map((item) => (
-          <Marker
-            key={item.id}
-            width={30}
-            anchor={[item.location.latitude, item.location.longitude]}
-            color={getMarkerColor(item.status)}
-            onClick={() => {
-              if (onMarkerClick) {
-                onMarkerClick(item.location);
-              } else {
-                onClose();
-              }
-            }}
-          />
-        ))}
+        {/* GotJunk item markers - CLUSTERED (with thumbnails) or SIMPLE (fallback) */}
+        {useClustering && itemClusters.length > 0 ? (
+          // CLUSTERED: Show thumbnail grid markers
+          itemClusters.map((cluster, index) => (
+            <Overlay
+              key={`cluster-${index}`}
+              anchor={[cluster.location.latitude, cluster.location.longitude]}
+            >
+              <MapClusterMarker
+                cluster={cluster}
+                onClick={(location) => {
+                  if (onMarkerClick) {
+                    console.log('[GotJunk] Cluster clicked:', location, 'items:', cluster.count);
+                    onMarkerClick(location);
+                  } else {
+                    onClose();
+                  }
+                }}
+              />
+            </Overlay>
+          ))
+        ) : (
+          // SIMPLE: Fallback to colored dots (original behavior)
+          junkItems.map((item) => (
+            <Marker
+              key={item.id}
+              width={30}
+              anchor={[item.location.latitude, item.location.longitude]}
+              color={getMarkerColor(item.status)}
+              onClick={() => {
+                if (onMarkerClick) {
+                  onMarkerClick(item.location);
+                } else {
+                  onClose();
+                }
+              }}
+            />
+          ))
+        )}
 
         {/* Liberty Alert markers (ice cubes) - only if unlocked */}
         {showLibertyAlerts &&
