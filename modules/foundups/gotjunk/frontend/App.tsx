@@ -83,6 +83,7 @@ const App: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [countdown, setCountdown] = useState(10);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | undefined>();
+  const [locationFilter, setLocationFilter] = useState<{ latitude: number; longitude: number } | null>(null);
 
   // === INSTRUCTIONS MODAL (shows on every page load) ===
   const [showInstructions, setShowInstructions] = useState(true);
@@ -300,8 +301,8 @@ const App: React.FC = () => {
         id: `item-${Date.now()}`,
         blob,
         url,
-        status: 'draft',
-        ownership: 'mine',
+        status: 'browsing', // Changed: Photos go to browseFeed (not myDrafts)
+        ownership: 'world', // Changed: Found items are global, not user-owned (yet)
         classification,
         price,
         originalPrice: defaultPrice,
@@ -314,8 +315,8 @@ const App: React.FC = () => {
       console.log('[GotJunk] Saving new item:', { id: newItem.id, classification, price });
       await storage.saveItem(newItem);
 
-      setMyDrafts(current => {
-        console.log('[GotJunk] Adding to myDrafts, current count:', current.length);
+      setBrowseFeed(current => {
+        console.log('[GotJunk] Adding to browseFeed, current count:', current.length);
         return [newItem, ...current];
       });
 
@@ -486,10 +487,20 @@ const App: React.FC = () => {
     setEditingOptionsItem(null);
   };
 
-// Filter browse feed by classification type
-  const filteredBrowseFeed = classificationFilter === 'all'
+// Filter browse feed by classification type AND location (if map marker clicked)
+  let filteredBrowseFeed = classificationFilter === 'all'
     ? browseFeed
     : browseFeed.filter(item => item.classification === classificationFilter);
+
+  // Further filter by location if a map marker was clicked (show only items at that location)
+  if (locationFilter) {
+    const LOCATION_THRESHOLD = 0.001; // ~100m radius
+    filteredBrowseFeed = filteredBrowseFeed.filter(item =>
+      item.latitude && item.longitude &&
+      Math.abs(item.latitude - locationFilter.latitude) < LOCATION_THRESHOLD &&
+      Math.abs(item.longitude - locationFilter.longitude) < LOCATION_THRESHOLD
+    );
+  }
 
   const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
   const showCameraOrb = !isMapOpen && activeTab === 'myItems';
@@ -761,21 +772,28 @@ const App: React.FC = () => {
       {/* Map View */}
       {isMapOpen && (
         <PigeonMapView
-          junkItems={myListed.map(item => ({
+          junkItems={browseFeed.map(item => ({
             id: item.id,
             location: {
-              latitude: item.location?.latitude || userLocation?.latitude || 37.7749,
-              longitude: item.location?.longitude || userLocation?.longitude || -122.4194,
+              latitude: item.latitude || userLocation?.latitude || 37.7749,
+              longitude: item.longitude || userLocation?.longitude || -122.4194,
             },
-            title: item.id.split('-')[0] || 'Item',
+            title: item.classification || 'Item',
             imageUrl: item.url || '',
             status: 'available' as const,
-            timestamp: Date.now(),
+            timestamp: item.createdAt || Date.now(),
           }))}
           libertyAlerts={libertyAlerts}
           userLocation={userLocation || null}
           onClose={() => {
             setMapOpen(false); // Close overlay, return to current tab
+          }}
+          onMarkerClick={(location) => {
+            // User clicked map marker → filter Browse view to items at that location
+            console.log('[GotJunk] Map marker clicked:', location);
+            setLocationFilter(location);
+            setActiveTab('browse'); // Switch to Browse tab
+            setMapOpen(false); // Close map
           }}
           showLibertyAlerts={libertyEnabled}
         />
