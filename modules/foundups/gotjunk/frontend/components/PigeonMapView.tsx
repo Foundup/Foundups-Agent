@@ -179,7 +179,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
 
         {/* GotJunk item markers - CLUSTERED (with thumbnails) or SIMPLE (fallback) */}
         {useClustering && itemClusters.length > 0 ? (
-          // CLUSTERED: Show thumbnail grid markers
+          // CLUSTERED: Show thumbnail grid markers (dynamic based on zoom level)
           itemClusters.map((cluster, index) => (
             <Overlay
               key={`cluster-${index}`}
@@ -187,6 +187,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
             >
               <MapClusterMarker
                 cluster={cluster}
+                zoom={zoom}  // Pass zoom level for dynamic rendering
                 onClick={(location) => {
                   if (onMarkerClick) {
                     console.log('[GotJunk] Cluster clicked:', location, 'items:', cluster.count);
