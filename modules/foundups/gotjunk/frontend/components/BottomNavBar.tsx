@@ -6,6 +6,7 @@ import { Camera, CameraHandle } from './Camera';
 import { CaptureMode } from '../App';
 import { MicIcon } from './icons/MicIcon';
 import { Z_LAYERS } from '../constants/zLayers';
+import { useLongPress } from '../hooks/useLongPress';
 
 interface BottomNavBarProps {
   captureMode: CaptureMode;
@@ -21,6 +22,7 @@ interface BottomNavBarProps {
   showCameraOrb?: boolean;
   autoClassifyEnabled?: boolean;
   onToggleAutoClassify?: () => void;
+  onLongPressAutoClassify?: () => void; // Long press to select classification
   lastClassification?: { type: string, discountPercent?: number, bidDurationHours?: number } | null;
 }
 
@@ -42,6 +44,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   showCameraOrb = true,
   autoClassifyEnabled = false,
   onToggleAutoClassify = () => console.log('🔄 Auto-classify toggled'),
+  onLongPressAutoClassify = () => console.log('🔄 Long-press: Select classification'),
   lastClassification = null,
 }) => {
   const cameraRef = useRef<CameraHandle>(null);
@@ -131,6 +134,19 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
     }
   };
 
+  // Long-press handler for auto-classify toggle button
+  const autoClassifyLongPress = useLongPress({
+    onLongPress: () => {
+      console.log('[GotJunk] Long-press detected on auto-classify toggle');
+      onLongPressAutoClassify();
+    },
+    onTap: () => {
+      console.log('[GotJunk] Short tap on auto-classify toggle');
+      onToggleAutoClassify();
+    },
+    threshold: 450, // 450ms to trigger long-press
+  });
+
   return (
     <motion.div
         className="fixed bottom-0 left-0 right-0"
@@ -160,18 +176,24 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                  <Camera ref={cameraRef} onCapture={onCapture} captureMode={captureMode} />
             </div>
 
-            {/* Auto-Classify Toggle Button */}
+            {/* Auto-Classify Toggle Button - Tap to toggle ON/OFF, Long-press to select classification */}
             <motion.button
-              onClick={onToggleAutoClassify}
+              {...autoClassifyLongPress}
               className={`px-4 py-2 rounded-full shadow-lg font-semibold text-sm transition-all ${
                 autoClassifyEnabled
-                  ? 'bg-green-600 text-white'
-                  : 'bg-red-600/80 text-white'
+                  ? lastClassification?.type === 'free'
+                    ? 'bg-blue-600 text-white'      // Free = Blue
+                    : lastClassification?.type === 'discount'
+                    ? 'bg-green-600 text-white'     // Discount = Green
+                    : lastClassification?.type === 'bid'
+                    ? 'bg-amber-600 text-white'     // Bid = Amber
+                    : 'bg-green-600 text-white'     // Fallback = Green
+                  : 'bg-red-600/80 text-white'      // OFF = Red
               }`}
               variants={buttonVariants}
               whileHover="hover"
               whileTap="tap"
-              aria-label={autoClassifyEnabled ? 'Disable auto-classify' : 'Enable auto-classify'}
+              aria-label={autoClassifyEnabled ? `Auto-classify: ${lastClassification?.type || 'ON'}` : 'Auto-classify: OFF (long-press to select)'}
             >
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${autoClassifyEnabled ? 'bg-white' : 'bg-white/70'}`} />

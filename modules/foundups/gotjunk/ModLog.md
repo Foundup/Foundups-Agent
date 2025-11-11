@@ -1,5 +1,96 @@
 # GotJUNK? FoundUp - Module Change Log
 
+## Long-Press Toggle for Classification Selection + Map Clustering (2025-11-12)
+
+**Session Summary**: Implemented long-press toggle for intuitive classification selection and map thumbnail clustering. User can now long-press the auto-classify toggle to select a classification type (free/discount/bid), and the toggle becomes color-coded to the selected type.
+
+### Map Clustering with Thumbnails (d089d8db)
+**Feature**: Items on map now cluster into thumbnail grids instead of individual markers.
+
+**Implementation**:
+- Created `MapClusterMarker.tsx`: 2x2 thumbnail grid component with count badge
+- Created `clusterItems.ts`: Distance-based clustering algorithm (CLUSTER_RADIUS = 0.001° ≈ 100m)
+- Modified `PigeonMapView.tsx`: Conditional rendering (clusters vs individual markers)
+- Modified `App.tsx`: Pass `capturedItems` to enable clustering
+
+**Visual Design**:
+- Up to 4 thumbnails displayed in 2x2 grid (64-80px)
+- Count badge for clusters with >4 items
+- Classification color dots (green=free, amber=discount, purple=bid)
+- Blue pulse animation to attract attention
+
+**User Flow**:
+1. Take pictures → appear in browse feed
+2. Open map → see clustered thumbnail markers
+3. Click cluster → navigate to browse tab
+4. Browse shows ONLY items from that location
+
+**Technical**:
+- Simple Euclidean distance for fast clustering approximation
+- `useMemo` optimization (recomputes only when items change)
+- Backward compatible with `useClustering` flag (default: true)
+
+### Long-Press Auto-Classify Toggle (current)
+**Feature**: Long-press the auto-classify toggle button to select a classification type.
+
+**User Idea**: "Long press on the orb toggle button should pull up the classification free/discount/bid. The user can select the category and then the toggle becomes the color of the selected category and is 'on'."
+
+**Implementation**:
+1. **BottomNavBar.tsx**:
+   - Imported `useLongPress` hook
+   - Added `onLongPressAutoClassify` prop
+   - Created `autoClassifyLongPress` handler (450ms threshold)
+   - Replaced `onClick` with spread `{...autoClassifyLongPress}` handlers
+   - Updated color logic to be classification-aware:
+     - Free: `bg-blue-600` (blue)
+     - Discount: `bg-green-600` (green)
+     - Bid: `bg-amber-600` (amber)
+     - OFF: `bg-red-600/80` (red)
+
+2. **App.tsx**:
+   - Added `isSelectingClassification` state flag
+   - Created `handleLongPressAutoClassify()` handler:
+     - Sets `isSelectingClassification = true`
+     - Creates phantom item to trigger ClassificationModal
+   - Modified `handleClassify()` to check selection mode:
+     - If `isSelectingClassification === true`:
+       - Store classification in `lastClassification`
+       - Enable `autoClassifyEnabled = true`
+       - Close modal without creating item
+       - Return early
+   - Passed `onLongPressAutoClassify={handleLongPressAutoClassify}` to BottomNavBar
+
+**User Flow**:
+1. **Short tap**: Toggle ON/OFF (existing behavior)
+2. **Long press** (450ms): Opens classification modal
+3. User selects Free/Discount/Bid
+4. Toggle becomes color-coded to selection
+5. Auto-classify automatically enabled
+6. Future captures use selected classification
+
+**Technical**:
+- Uses existing `useLongPress` hook (450ms threshold, 10px move threshold)
+- Reuses existing `ClassificationModal` component
+- Phantom item pattern prevents actual item creation during selection
+- Color-coded toggle provides visual feedback of selected type
+
+**Files Modified**:
+- [BottomNavBar.tsx](modules/foundups/gotjunk/frontend/components/BottomNavBar.tsx) - Long-press handlers + color logic
+- [App.tsx](modules/foundups/gotjunk/frontend/App.tsx) - Selection mode state + handler
+
+**Build Status**: ✓ TypeScript compilation succeeded (425.24 kB)
+
+**WSP Compliance**:
+- WSP 50: Used HoloIndex to search for orb toggle and long-press patterns
+- WSP 22: Updated ModLog with session details
+- WSP 87: Code navigation via HoloIndex (not grep)
+
+**Module Size Assessment**:
+- App.tsx: 932 lines (approaching WSP 62 threshold, but still healthy)
+- 51 component files, 6,911 total lines
+- Largest components: PigeonMapView (359), MapView (335), GlobeView (295)
+- **Verdict**: Module well-structured, no splitting needed yet
+
 ## Modal & Icon UI Refinements (2025-11-09)
 
 **Session Summary**: Fixed critical UX issues with modal layering, instructions popup, and icon sizing based on user feedback.

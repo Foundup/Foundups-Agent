@@ -110,6 +110,7 @@ const App: React.FC = () => {
     discountPercent?: number,
     bidDurationHours?: number
   } | null>(null);
+  const [isSelectingClassification, setIsSelectingClassification] = useState(false); // True when long-pressing toggle to select classification
 
   // Safety verification: Ensure classification modal appears and waits for user selection
   useEffect(() => {
@@ -320,6 +321,24 @@ const App: React.FC = () => {
     setPendingClassificationItem(capturedItem);
   };
 
+  // Handler for long-press on auto-classify toggle
+  const handleLongPressAutoClassify = () => {
+    console.log('[GotJunk] Long-press on auto-classify toggle - opening classification selector');
+
+    // Set flag to indicate we're selecting classification (not classifying an actual item)
+    setIsSelectingClassification(true);
+
+    // Create a phantom item to trigger classification modal (won't be saved)
+    const phantomItem = {
+      blob: new Blob(), // Empty blob
+      url: '', // No preview
+      location: userLocation || undefined
+    };
+
+    // Set pending item to trigger classification modal
+    setPendingClassificationItem(phantomItem);
+  };
+
   const handleClassify = async (
     classification: ItemClassification,
     discountPercent?: number,
@@ -350,7 +369,17 @@ const App: React.FC = () => {
       discountPercent,
       bidDurationHours
     });
-    console.log('[GotJunk] Stored classification for auto-classify:', { classification, discountPercent, bidDurationHours });
+    console.log('[GotJunk] Stored classification for future auto-classify:', { classification, discountPercent, bidDurationHours });
+
+    // SPECIAL CASE: Classification selection mode (long-press on toggle)
+    if (isSelectingClassification) {
+      console.log('[GotJunk] Classification selection mode - enabling auto-classify with selected type:', classification);
+      setAutoClassifyEnabled(true);
+      setIsSelectingClassification(false);
+      setPendingClassificationItem(null);
+      setIsProcessingClassification(false);
+      return; // Don't create an item - just store the classification and enable auto-classify
+    }
 
     setPendingClassificationItem(null);
     setIsProcessingClassification(true);
@@ -846,6 +875,7 @@ const App: React.FC = () => {
           showCameraOrb={showCameraOrb}
           autoClassifyEnabled={autoClassifyEnabled}
           onToggleAutoClassify={() => setAutoClassifyEnabled(!autoClassifyEnabled)}
+          onLongPressAutoClassify={handleLongPressAutoClassify}
           lastClassification={lastClassification}
         />
 
