@@ -24,6 +24,7 @@ interface PigeonMapViewProps {
   libertyAlerts?: LibertyAlert[];
   userLocation: { latitude: number; longitude: number } | null;
   onClose: () => void;
+  onMarkerClick?: (location: { latitude: number; longitude: number }) => void;
   showLibertyAlerts?: boolean;
 }
 
@@ -32,6 +33,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   libertyAlerts = [],
   userLocation,
   onClose,
+  onMarkerClick,
   showLibertyAlerts = false,
 }) => {
   // Global view for Liberty Alerts, local view for GotJunk items
@@ -164,7 +166,13 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
             width={30}
             anchor={[item.location.latitude, item.location.longitude]}
             color={getMarkerColor(item.status)}
-            onClick={onClose}
+            onClick={() => {
+              if (onMarkerClick) {
+                onMarkerClick(item.location);
+              } else {
+                onClose();
+              }
+            }}
           />
         ))}
 

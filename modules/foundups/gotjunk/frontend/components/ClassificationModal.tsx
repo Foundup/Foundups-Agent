@@ -49,7 +49,8 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
       setDiscountSheetOpen(true);
     },
     onTap: () => {
-      setDiscountSheetOpen(true); // Always show sheet - prevents accidental quick-tap bypass
+      // Quick-select with current default (power user feature)
+      onClassify('discount', discountPercent, undefined);
     },
     threshold: 450,
   });
@@ -60,7 +61,8 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
       setBidSheetOpen(true);
     },
     onTap: () => {
-      setBidSheetOpen(true); // Always show sheet - prevents accidental quick-tap bypass
+      // Quick-select with current default (power user feature)
+      onClassify('bid', undefined, bidDurationHours);
     },
     threshold: 450,
   });
