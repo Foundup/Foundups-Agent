@@ -492,7 +492,7 @@ const App: React.FC = () => {
     : browseFeed.filter(item => item.classification === classificationFilter);
 
   const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
-  const showCameraOrb = !isMapOpen;
+  const showCameraOrb = !isMapOpen && activeTab === 'myItems';
 
   // Handle instructions modal close
   const handleInstructionsClose = () => {
