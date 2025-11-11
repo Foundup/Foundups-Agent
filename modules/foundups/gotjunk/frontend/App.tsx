@@ -103,6 +103,14 @@ const App: React.FC = () => {
   const pendingClassificationBackupRef = useRef<{blob: Blob, url: string, location?: {latitude: number, longitude: number}} | null>(null);
   const classificationCompletedRef = useRef(false);
 
+  // === AUTO-CLASSIFY STATE ===
+  const [autoClassifyEnabled, setAutoClassifyEnabled] = useState(false);
+  const [lastClassification, setLastClassification] = useState<{
+    type: ItemClassification,
+    discountPercent?: number,
+    bidDurationHours?: number
+  } | null>(null);
+
   // Safety verification: Ensure classification modal appears and waits for user selection
   useEffect(() => {
     if (!pendingClassificationItem && pendingClassificationBackupRef.current && !classificationCompletedRef.current) {
@@ -282,6 +290,21 @@ const App: React.FC = () => {
       location
     };
 
+    // Check if auto-classify is enabled
+    if (autoClassifyEnabled && lastClassification) {
+      console.log('[GotJunk] Auto-classify enabled - using last classification:', lastClassification);
+
+      // Mark as completed immediately to skip safety verification
+      classificationCompletedRef.current = true;
+      pendingClassificationBackupRef.current = null;
+
+      // Directly process with last classification (skip modal)
+      setPendingClassificationItem(capturedItem);
+      await handleClassify(lastClassification.type, lastClassification.discountPercent, lastClassification.bidDurationHours);
+      return;
+    }
+
+    // Manual mode: Show classification modal
     // Reset classification completion flag for new capture
     classificationCompletedRef.current = false;
 
@@ -308,6 +331,14 @@ const App: React.FC = () => {
     // Mark classification as completed to prevent safety restore
     classificationCompletedRef.current = true;
     pendingClassificationBackupRef.current = null;
+
+    // Store this classification for future auto-classify
+    setLastClassification({
+      type: classification,
+      discountPercent,
+      bidDurationHours
+    });
+    console.log('[GotJunk] Stored classification for auto-classify:', { classification, discountPercent, bidDurationHours });
 
     setPendingClassificationItem(null);
     setIsProcessingClassification(true);
@@ -681,11 +712,37 @@ const App: React.FC = () => {
 
         {/* TAB 4: CART (items I want from others) */}
         {activeTab === 'cart' && (
-          <div className="text-center p-8">
-            <h2 className="text-3xl font-bold text-white mb-3">Shopping Cart</h2>
-            <p className="text-xl text-gray-300 font-semibold mb-2">{cart.length} items</p>
-            {cart.length === 0 && (
-              <p className="text-sm text-gray-400 mt-3">Swipe right on browse items to add them here</p>
+          <div className="w-full h-full overflow-y-auto">
+            {cart.length === 0 ? (
+              <div className="text-center p-8">
+                <h2 className="text-3xl font-bold text-white mb-3">Shopping Cart</h2>
+                <p className="text-xl text-gray-300 font-semibold mb-2">0 items</p>
+                <p className="text-sm text-gray-400 mt-3">Swipe right on browse items to add them here</p>
+              </div>
+            ) : (
+              <PhotoGrid
+                items={cart}
+                onClick={(item) => {
+                  // View cart item in fullscreen
+                  console.log('[GotJunk] Cart item clicked:', item.id);
+                  // TODO: Open fullscreen view
+                }}
+                onDelete={async (item) => {
+                  // Remove from cart
+                  setCart(prev => prev.filter(i => i.id !== item.id));
+                  // Update status back to browsing so it appears in browse feed again
+                  await storage.updateItemStatus(item.id, 'browsing');
+                  console.log('[GotJunk] Removed from cart:', item.id);
+                }}
+                onBadgeClick={(item) => {
+                  // Can't re-classify other people's items
+                  console.log('[GotJunk] Cannot re-classify cart items (not yours)');
+                }}
+                onBadgeLongPress={(item) => {
+                  // Can't edit options on other people's items
+                  console.log('[GotJunk] Cannot edit cart items (not yours)');
+                }}
+              />
             )}
           </div>
         )}
@@ -775,6 +832,9 @@ const App: React.FC = () => {
             // TODO: Open search modal
           }}
           showCameraOrb={showCameraOrb}
+          autoClassifyEnabled={autoClassifyEnabled}
+          onToggleAutoClassify={() => setAutoClassifyEnabled(!autoClassifyEnabled)}
+          lastClassification={lastClassification}
         />
 
       {/* Re-classification Modal (tap badge) */}
