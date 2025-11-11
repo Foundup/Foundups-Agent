@@ -3,11 +3,13 @@
  *
  * - Zoomed out (< 14): Small number badge (compact)
  * - Zoomed in (>= 14): Thumbnail grid with images (detailed)
+ * - Smooth transitions between view modes (no pop)
  *
  * Clicking the marker navigates to browse tab filtered to this location.
  */
 
 import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export interface ItemLocation {
   latitude: number;
@@ -47,40 +49,55 @@ export const MapClusterMarker: React.FC<MapClusterMarkerProps> = ({ cluster, zoo
   // Grid size based on count (detailed view)
   const gridSize = count === 1 ? '64px' : '80px';
 
+  // Smooth transition animations
+  const transitionConfig = {
+    initial: { scale: 0.8, opacity: 0 },
+    animate: { scale: 1, opacity: 1 },
+    exit: { scale: 0.8, opacity: 0 },
+    transition: { duration: 0.2, ease: 'easeOut' }
+  };
+
   // COMPACT VIEW: Zoomed out - show small number badge
   if (isZoomedOut) {
     return (
-      <div
-        className="cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClick(location);
-        }}
-        style={{ position: 'relative' }}
-      >
-        <div
-          className="bg-blue-600 text-white text-sm font-bold rounded-full w-8 h-8 flex items-center justify-center shadow-lg border-2 border-white hover:bg-blue-500 transition-all hover:scale-110"
+      <AnimatePresence mode="wait">
+        <motion.div
+          key="compact"
+          className="cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick(location);
+          }}
+          style={{ position: 'relative' }}
+          {...transitionConfig}
         >
-          {count}
-        </div>
-      </div>
+          <div
+            className="bg-blue-600 text-white text-sm font-bold rounded-full w-8 h-8 flex items-center justify-center shadow-lg border-2 border-white hover:bg-blue-500 transition-all hover:scale-110"
+          >
+            {count}
+          </div>
+        </motion.div>
+      </AnimatePresence>
     );
   }
 
   // DETAILED VIEW: Zoomed in - show thumbnail grid
   return (
-    <div
-      className="map-cluster-marker cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick(location);
-      }}
-      style={{
-        position: 'relative',
-        width: gridSize,
-        height: gridSize,
-      }}
-    >
+    <AnimatePresence mode="wait">
+      <motion.div
+        key="detailed"
+        className="map-cluster-marker cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick(location);
+        }}
+        style={{
+          position: 'relative',
+          width: gridSize,
+          height: gridSize,
+        }}
+        {...transitionConfig}
+      >
       {/* Thumbnail Grid */}
       <div
         className="grid gap-0.5 bg-white rounded-lg shadow-2xl overflow-hidden border-2 border-gray-800"
@@ -139,6 +156,7 @@ export const MapClusterMarker: React.FC<MapClusterMarkerProps> = ({ cluster, zoo
           pointerEvents: 'none',
         }}
       />
-    </div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
