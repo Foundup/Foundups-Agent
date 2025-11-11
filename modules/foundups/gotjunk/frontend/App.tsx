@@ -99,6 +99,28 @@ const App: React.FC = () => {
   const [pendingClassificationItem, setPendingClassificationItem] = useState<{blob: Blob, url: string, location?: {latitude: number, longitude: number}} | null>(null);
   const [isProcessingClassification, setIsProcessingClassification] = useState(false);
 
+  // Safety backup: Store last captured item that needs classification
+  const pendingClassificationBackupRef = useRef<{blob: Blob, url: string, location?: {latitude: number, longitude: number}} | null>(null);
+  const classificationCompletedRef = useRef(false);
+
+  // Safety verification: Ensure classification modal appears and waits for user selection
+  useEffect(() => {
+    if (!pendingClassificationItem && pendingClassificationBackupRef.current && !classificationCompletedRef.current) {
+      // Classification modal disappeared without user completing it!
+      const backup = pendingClassificationBackupRef.current;
+
+      console.warn('[GotJunk] SAFETY CHECK: Classification modal closed without selection! Restoring...');
+
+      // Restore the pending item after a short delay to ensure clean state
+      setTimeout(() => {
+        if (!classificationCompletedRef.current) {
+          console.log('[GotJunk] SAFETY RESTORE: Re-opening classification modal');
+          setPendingClassificationItem(backup);
+        }
+      }, 100);
+    }
+  }, [pendingClassificationItem]);
+
   // === FULLSCREEN REVIEW STATE (My Items tab) ===
   const [reviewingItem, setReviewingItem] = useState<CapturedItem | null>(null);
   const [reviewQueue, setReviewQueue] = useState<CapturedItem[]>([]);
@@ -254,12 +276,21 @@ const App: React.FC = () => {
       console.error("Could not get location for capture:", error);
     }
 
-    // Show classification modal instead of immediately saving
-    setPendingClassificationItem({
+    const capturedItem = {
       blob,
       url: URL.createObjectURL(blob),
       location
-    });
+    };
+
+    // Reset classification completion flag for new capture
+    classificationCompletedRef.current = false;
+
+    // Store backup for safety verification
+    pendingClassificationBackupRef.current = capturedItem;
+
+    // Show classification modal
+    console.log('[GotJunk] Photo captured - opening classification modal');
+    setPendingClassificationItem(capturedItem);
   };
 
   const handleClassify = async (classification: ItemClassification, discountPercent?: number, bidDurationHours?: number) => {
@@ -273,6 +304,11 @@ const App: React.FC = () => {
 
     // Immediately capture the item data and clear pending state to prevent race conditions
     const { blob, url, location } = pendingClassificationItem;
+
+    // Mark classification as completed to prevent safety restore
+    classificationCompletedRef.current = true;
+    pendingClassificationBackupRef.current = null;
+
     setPendingClassificationItem(null);
     setIsProcessingClassification(true);
 
