@@ -158,15 +158,20 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
       {/* Camera Orb - Floating above nav bar */}
       {showCameraOrb && (
         <div
-          className="absolute left-1/2 -translate-x-1/2 bottom-32 flex flex-row items-center gap-4"
-          style={{ zIndex: Z_LAYERS.cameraOrb }}
+          className="absolute bottom-32 flex flex-row items-center gap-4"
+          style={{
+            zIndex: Z_LAYERS.cameraOrb,
+            left: 'calc(50% - 5px)', // Moved 5px left to re-center
+            transform: 'translateX(-50%)'
+          }}
         >
             {/* Main capture button with live preview - Intelligent scaling: iPhone 11=143px, iPhone 16=149px */}
             <div
               className="p-2 bg-gray-800 rounded-full shadow-2xl cursor-pointer"
               style={{
                 width: 'clamp(147px, 18.4vh, 221px)', // 15% bigger: 128*1.15=147, 192*1.15=221
-                height: 'clamp(147px, 18.4vh, 221px)'
+                height: 'clamp(147px, 18.4vh, 221px)',
+                aspectRatio: '1 / 1' // Ensure perfect circle
               }}
               onMouseDown={handlePressStart}
               onMouseUp={handlePressEnd}
@@ -188,8 +193,12 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                     : lastClassification?.type === 'bid'
                     ? 'bg-amber-600 text-white'     // Bid = Amber
                     : 'bg-green-600 text-white'     // Fallback = Green
-                  : 'bg-red-600/80 text-white'      // OFF = Red
+                  : 'bg-red-500/60 text-white'      // OFF = Softer red
               }`}
+              style={{
+                marginLeft: '10px',  // 10px right
+                marginTop: '10px'    // 10px down
+              }}
               variants={buttonVariants}
               whileHover="hover"
               whileTap="tap"

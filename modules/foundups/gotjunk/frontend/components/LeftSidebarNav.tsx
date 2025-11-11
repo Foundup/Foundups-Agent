@@ -68,7 +68,7 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
       animate={{ opacity: 1, x: 0 }}
       className="fixed left-4 sm:left-6 flex flex-col items-center pointer-events-auto"
       style={{
-        top: '50%',
+        top: 'calc(50% - 5px)', // Moved up 5px
         transform: 'translateY(-50%)',
         gap: gapValue,
         zIndex: Z_LAYERS.sidebar,
