@@ -1,5 +1,171 @@
 # GotJUNK? FoundUp - Module Change Log
 
+## Cart Fullscreen + Purchase Modal (2025-11-12)
+
+**Session Summary**: Implemented fullscreen viewer for cart items with double-tap and swipe-up gestures, plus purchase confirmation modal with FoundUps wallet integration (testnet placeholder).
+
+### User Requirements
+User: "on the browse the > is putting items on cart investigate if the right swipe is... i don think it is... next in the cart we need to apply the same fuctionality as my stuff... were the double tap bring the thumbnail to full screen and the swipe up returns it to the thumbnail view... a right swipe or > in the cart triggers 'purchase?' we will add foundups crypto wallet (add to docs)... lets use testnet... and see the wallet with $1000... this will be a conversion... because people do not know crypto... they will not need too. it will just show the fiat equivelent..."
+
+### Investigation: Browse Swipe Behavior
+**HoloIndex Search**: Used WSP 87 protocol to search for browse swipe handlers.
+
+**Finding**: RIGHT SWIPE **does** add items to cart ([App.tsx:502-506](modules/foundups/gotjunk/frontend/App.tsx#L502-L506))
+- Browse feed: PhotoGrid of thumbnails
+- User swipes horizontally to decide
+- Right swipe → `handleBrowseSwipe()` → adds to cart
+- `>` buttons only appear in **fullscreen mode** (ItemReviewer), not in browse grid
+
+**Confirmed**: User was correct that right swipe adds to cart.
+
+### Feature 1: Cart Fullscreen Viewer
+**Goal**: Apply same fullscreen functionality as "My Items" tab to cart.
+
+**Implementation**:
+
+1. **App.tsx** - Added cart fullscreen state:
+   ```typescript
+   const [reviewingCartItem, setReviewingCartItem] = useState<CapturedItem | null>(null);
+   const [cartReviewQueue, setCartReviewQueue] = useState<CapturedItem[]>([]);
+   ```
+
+2. **App.tsx** - Updated cart PhotoGrid onClick handler (line 770-778):
+   ```typescript
+   onClick={(item) => {
+     // Double-tap thumbnail → fullscreen with queue
+     const currentIndex = cart.findIndex(i => i.id === item.id);
+     const remainingItems = cart.slice(currentIndex + 1);
+     setReviewingCartItem(item);
+     setCartReviewQueue(remainingItems);
+   }}
+   ```
+
+3. **App.tsx** - Added cart ItemReviewer component (line 797-836):
+   - Reuses existing `ItemReviewer` component pattern from MyItems tab
+   - Right swipe → triggers purchase modal
+   - Left swipe → removes from cart
+   - Swipe up or double-tap → closes fullscreen
+
+**User Flow**:
+1. **Double-tap** cart thumbnail → fullscreen
+2. **Swipe up** → return to thumbnails
+3. **Left swipe** → remove from cart
+4. **Right swipe** or **>** button → purchase confirmation
+
+### Feature 2: Purchase Confirmation Modal
+**Goal**: Show purchase prompt with FoundUps wallet balance (testnet).
+
+**Implementation**:
+
+1. **Created `PurchaseModal.tsx`** (171 lines):
+   - Full-page modal with item preview
+   - Shows classification type (Free/Discount/Bid)
+   - Displays price in USD (calculated from discount % or bid)
+   - Shows wallet balance: $1,000 (testnet placeholder)
+   - Fiat-first design (hides crypto complexity)
+   - Confirm/Cancel buttons
+
+2. **Updated `zLayers.ts`**:
+   - Added `PURCHASE_MODAL: 2350` (above regular modals)
+
+3. **App.tsx** - Added purchase modal state:
+   ```typescript
+   const [purchasingItem, setPurchasingItem] = useState<CapturedItem | null>(null);
+   ```
+
+4. **App.tsx** - Updated cart ItemReviewer onDecision (line 805-827):
+   ```typescript
+   if (decision === 'keep') {
+     // Right swipe in cart → Purchase confirmation
+     setPurchasingItem(item);
+     // Wait for purchase confirmation before advancing queue
+   }
+   ```
+
+5. **App.tsx** - Added PurchaseModal component (line 1008-1041):
+   ```typescript
+   <PurchaseModal
+     isOpen={!!purchasingItem}
+     item={purchasingItem}
+     onConfirm={async () => {
+       // TODO: Integrate with FoundUps wallet (testnet)
+       setCart(prev => prev.filter(i => i.id !== purchasingItem.id));
+       await storage.deleteItem(purchasingItem.id);
+       // Advance to next item in queue
+     }}
+     onCancel={() => setPurchasingItem(null)}
+   />
+   ```
+
+**Price Calculation**:
+- **Free items**: $0.00
+- **Discount items**: `originalPrice * (1 - discountPercent / 100)`
+  - Example: 50% OFF, $10 → $5.00
+- **Bid items**: Auction placeholder (shows bid duration)
+
+**Wallet Display**:
+```
+💰 Payment via FoundUps Wallet (Testnet)
+   Balance: $1,000.00
+```
+
+### Feature 3: Wallet Architecture Documentation
+**Goal**: Document crypto wallet integration plan.
+
+**Created**: [WALLET_ARCHITECTURE.md](modules/foundups/gotjunk/WALLET_ARCHITECTURE.md) (500+ lines)
+
+**Contents**:
+- User flow diagrams
+- Testnet configuration ($1,000 test balance)
+- Price calculation for Free/Discount/Bid
+- API design (backend TODO)
+- Security considerations
+- Implementation phases (Phase 1 complete, Phase 2-5 pending)
+- User-friendly principles (fiat-first, hide crypto complexity)
+
+**Key Principles**:
+1. Users see **USD prices**, not crypto
+2. Wallet mechanics hidden
+3. Testnet = safe testing (no real money)
+4. $1,000 test balance for all users
+
+### Files Created
+- [PurchaseModal.tsx](modules/foundups/gotjunk/frontend/components/PurchaseModal.tsx) - Purchase confirmation UI
+- [WALLET_ARCHITECTURE.md](modules/foundups/gotjunk/WALLET_ARCHITECTURE.md) - Wallet integration plan
+
+### Files Modified
+- [App.tsx](modules/foundups/gotjunk/frontend/App.tsx) - Cart fullscreen + purchase flow
+- [zLayers.ts](modules/foundups/gotjunk/frontend/constants/zLayers.ts) - Added PURCHASE_MODAL layer
+
+### Build Status
+✓ TypeScript compilation succeeded (429.70 kB)
+- 427 modules transformed
+- gzip: 134.25 kB
+
+### Module Size Assessment (WSP 62)
+- App.tsx: 1,048 lines (within healthy range, no splitting needed)
+- PurchaseModal.tsx: 171 lines
+- Total components: 52 files, 7,082 lines
+- **Verdict**: Module well-structured, no refactoring needed
+
+### WSP Compliance
+- **WSP 50**: Used HoloIndex (`Task/Explore`) to search for swipe handlers before coding
+- **WSP 22**: Updated ModLog with complete session details
+- **WSP 87**: Code navigation via HoloIndex semantic search (not grep)
+- **WSP 3**: Proper module organization (`modules/foundups/gotjunk/`)
+
+### TODO: Next Steps
+1. **Backend wallet service**: Create `walletService.ts` for blockchain integration
+2. **Testnet setup**: Deploy FoundUps blockchain testnet node
+3. **API endpoints**: Implement `/api/wallet/balance`, `/api/wallet/purchase`
+4. **Transaction history**: Add purchase history UI
+5. **Real crypto integration**: Connect to actual testnet blockchain
+
+### Deployment Status
+🚧 **Pending**: Ready for testing, requires `git push` to deploy
+
+---
+
 ## Long-Press Toggle for Classification Selection + Map Clustering (2025-11-12)
 
 **Session Summary**: Implemented long-press toggle for intuitive classification selection and map thumbnail clustering. User can now long-press the auto-classify toggle to select a classification type (free/discount/bid), and the toggle becomes color-coded to the selected type.

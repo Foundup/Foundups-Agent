@@ -13,6 +13,7 @@ import { PhotoGrid } from './components/PhotoGrid';
 import { ClassificationModal } from './components/ClassificationModal';
 import { OptionsModal } from './components/OptionsModal';
 import { InstructionsModal } from './components/InstructionsModal';
+import { PurchaseModal } from './components/PurchaseModal';
 import { ItemClassification } from './types';
 import { PigeonMapView } from './components/PigeonMapView';
 import { useViewport } from './hooks/useViewport';
@@ -134,11 +135,16 @@ const App: React.FC = () => {
   const [reviewingItem, setReviewingItem] = useState<CapturedItem | null>(null);
   const [reviewQueue, setReviewQueue] = useState<CapturedItem[]>([]);
 
+  // === FULLSCREEN REVIEW STATE (Cart tab) ===
+  const [reviewingCartItem, setReviewingCartItem] = useState<CapturedItem | null>(null);
+  const [cartReviewQueue, setCartReviewQueue] = useState<CapturedItem[]>([]);
+
   // === RE-CLASSIFICATION STATE ===
   const [reclassifyingItem, setReclassifyingItem] = useState<CapturedItem | null>(null);
   const [editingOptionsItem, setEditingOptionsItem] = useState<CapturedItem | null>(null);
 
-
+  // === PURCHASE MODAL STATE (Cart items) ===
+  const [purchasingItem, setPurchasingItem] = useState<CapturedItem | null>(null);
 
   // Liberty Alert State (unlocked via SOS morse code easter egg)
   const [libertyAlerts, setLibertyAlerts] = useState<LibertyAlert[]>([]);
@@ -764,9 +770,13 @@ const App: React.FC = () => {
               <PhotoGrid
                 items={cart}
                 onClick={(item) => {
-                  // View cart item in fullscreen
+                  // Double-tap thumbnail → fullscreen with queue
                   console.log('[GotJunk] Cart item clicked:', item.id);
-                  // TODO: Open fullscreen view
+                  const currentIndex = cart.findIndex(i => i.id === item.id);
+                  const remainingItems = cart.slice(currentIndex + 1);
+
+                  setReviewingCartItem(item);
+                  setCartReviewQueue(remainingItems);
                 }}
                 onDelete={async (item) => {
                   // Remove from cart
@@ -785,6 +795,46 @@ const App: React.FC = () => {
                 }}
               />
             )}
+
+            {/* Fullscreen Cart Item Reviewer (triggered by double-tap) */}
+            <AnimatePresence>
+              {reviewingCartItem && (
+                <ItemReviewer
+                  key={reviewingCartItem.id}
+                  item={reviewingCartItem}
+                  onDecision={(item, decision) => {
+                    if (decision === 'keep') {
+                      // Right swipe in cart → Purchase confirmation
+                      console.log('[GotJunk] Opening purchase modal for item:', item.id);
+                      setPurchasingItem(item);
+                      // Don't advance queue yet - wait for purchase confirmation
+                    } else if (decision === 'delete') {
+                      // Left swipe in cart → Remove from cart
+                      setCart(prev => prev.filter(i => i.id !== item.id));
+                      storage.updateItemStatus(item.id, 'browsing');
+                      console.log('[GotJunk] Removed from cart:', item.id);
+
+                      // Show next item in queue
+                      if (cartReviewQueue.length > 0) {
+                        const [nextItem, ...rest] = cartReviewQueue;
+                        setReviewingCartItem(nextItem);
+                        setCartReviewQueue(rest);
+                      } else {
+                        // No more items - close fullscreen
+                        setReviewingCartItem(null);
+                        setCartReviewQueue([]);
+                      }
+                    }
+                  }}
+                  onClose={() => {
+                    // Swipe up or double-tap → close fullscreen without making a decision
+                    setReviewingCartItem(null);
+                    setCartReviewQueue([]);
+                  }}
+                />
+              )}
+            </AnimatePresence>
+
           </div>
         )}
       </div>
@@ -953,6 +1003,42 @@ const App: React.FC = () => {
       <InstructionsModal
         isOpen={showInstructions && activeTab === 'browse'}
         onClose={handleInstructionsClose}
+      />
+
+      {/* Purchase Confirmation Modal (Cart items) */}
+      <PurchaseModal
+        isOpen={!!purchasingItem}
+        item={purchasingItem}
+        onConfirm={async () => {
+          console.log('[GotJunk] Purchase confirmed for item:', purchasingItem?.id);
+
+          // TODO: Integrate with FoundUps wallet (testnet)
+          // For now: Remove from cart and delete (purchase complete)
+          if (purchasingItem) {
+            setCart(prev => prev.filter(i => i.id !== purchasingItem.id));
+            await storage.deleteItem(purchasingItem.id);
+            console.log('[GotJunk] Item purchased and removed:', purchasingItem.id);
+          }
+
+          // Close purchase modal
+          setPurchasingItem(null);
+
+          // Advance to next item in queue
+          if (cartReviewQueue.length > 0) {
+            const [nextItem, ...rest] = cartReviewQueue;
+            setReviewingCartItem(nextItem);
+            setCartReviewQueue(rest);
+          } else {
+            // No more items - close fullscreen
+            setReviewingCartItem(null);
+            setCartReviewQueue([]);
+          }
+        }}
+        onCancel={() => {
+          console.log('[GotJunk] Purchase cancelled');
+          setPurchasingItem(null);
+          // Keep reviewingCartItem and queue - user can try again or swipe to other items
+        }}
       />
 
     </div>

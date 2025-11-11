@@ -43,26 +43,28 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
     return saved ? parseInt(saved, 10) : 48;
   });
 
-  // Long-press for Discount button
+  // Tap to open Discount action sheet (NO auto-classification)
   const discountLongPress = useLongPress({
     onLongPress: () => {
       setDiscountSheetOpen(true);
     },
     onTap: () => {
-      // Quick-select with current default (power user feature)
-      onClassify('discount', discountPercent, undefined);
+      // ALWAYS open action sheet - NO auto-classification!
+      // User MUST explicitly select 25%/50%/75%
+      setDiscountSheetOpen(true);
     },
     threshold: 450,
   });
 
-  // Long-press for Bid button
+  // Tap to open Bid action sheet (NO auto-classification)
   const bidLongPress = useLongPress({
     onLongPress: () => {
       setBidSheetOpen(true);
     },
     onTap: () => {
-      // Quick-select with current default (power user feature)
-      onClassify('bid', undefined, bidDurationHours);
+      // ALWAYS open action sheet - NO auto-classification!
+      // User MUST explicitly select 24h/48h/72h
+      setBidSheetOpen(true);
     },
     threshold: 450,
   });
@@ -193,7 +195,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
 
           {/* Helper text */}
           <p className="text-sm text-gray-400 mt-6 text-center">
-            Tap to select • Long-press to edit
+            Tap Free to give away • Tap Discount or Bid to choose options
           </p>
 
           {/* Action Sheets */}
