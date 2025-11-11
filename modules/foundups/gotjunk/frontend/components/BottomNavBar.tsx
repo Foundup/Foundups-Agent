@@ -19,6 +19,9 @@ interface BottomNavBarProps {
   hasReviewItems: boolean;
   onSearchClick?: () => void; // Search functionality
   showCameraOrb?: boolean;
+  autoClassifyEnabled?: boolean;
+  onToggleAutoClassify?: () => void;
+  lastClassification?: { type: string, discountPercent?: number, bidDurationHours?: number } | null;
 }
 
 const buttonVariants = {
@@ -37,6 +40,9 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   hasReviewItems,
   onSearchClick = () => console.log('🔍 Search clicked'),
   showCameraOrb = true,
+  autoClassifyEnabled = false,
+  onToggleAutoClassify = () => console.log('🔄 Auto-classify toggled'),
+  lastClassification = null,
 }) => {
   const cameraRef = useRef<CameraHandle>(null);
   const pressTimerRef = useRef<number | null>(null);
@@ -136,7 +142,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
       {/* Camera Orb - Floating above nav bar */}
       {showCameraOrb && (
         <div
-          className="absolute left-1/2 -translate-x-1/2 bottom-32 flex flex-col items-center"
+          className="absolute left-1/2 -translate-x-1/2 bottom-32 flex flex-col items-center gap-3"
           style={{ zIndex: Z_LAYERS.cameraOrb }}
         >
             {/* Main capture button with live preview - Intelligent scaling: iPhone 11=143px, iPhone 16=149px */}
@@ -153,6 +159,34 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             >
                  <Camera ref={cameraRef} onCapture={onCapture} captureMode={captureMode} />
             </div>
+
+            {/* Auto-Classify Toggle Button */}
+            <motion.button
+              onClick={onToggleAutoClassify}
+              className={`px-4 py-2 rounded-full shadow-lg font-semibold text-sm transition-all ${
+                autoClassifyEnabled
+                  ? 'bg-green-600 text-white'
+                  : 'bg-red-600/80 text-white'
+              }`}
+              variants={buttonVariants}
+              whileHover="hover"
+              whileTap="tap"
+              aria-label={autoClassifyEnabled ? 'Disable auto-classify' : 'Enable auto-classify'}
+            >
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${autoClassifyEnabled ? 'bg-white' : 'bg-white/70'}`} />
+                <span>
+                  Auto: {autoClassifyEnabled ? 'ON' : 'OFF'}
+                </span>
+              </div>
+              {autoClassifyEnabled && lastClassification && (
+                <div className="text-xs opacity-90 mt-0.5">
+                  {lastClassification.type === 'discount' && `${lastClassification.discountPercent || 75}% OFF`}
+                  {lastClassification.type === 'bid' && `${lastClassification.bidDurationHours || 48}h`}
+                  {lastClassification.type === 'free' && 'FREE'}
+                </div>
+              )}
+            </motion.button>
         </div>
       )}
 

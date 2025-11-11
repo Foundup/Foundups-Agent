@@ -103,6 +103,14 @@ const App: React.FC = () => {
   const pendingClassificationBackupRef = useRef<{blob: Blob, url: string, location?: {latitude: number, longitude: number}} | null>(null);
   const classificationCompletedRef = useRef(false);
 
+  // === AUTO-CLASSIFY STATE ===
+  const [autoClassifyEnabled, setAutoClassifyEnabled] = useState(false);
+  const [lastClassification, setLastClassification] = useState<{
+    type: ItemClassification,
+    discountPercent?: number,
+    bidDurationHours?: number
+  } | null>(null);
+
   // Safety verification: Ensure classification modal appears and waits for user selection
   useEffect(() => {
     if (!pendingClassificationItem && pendingClassificationBackupRef.current && !classificationCompletedRef.current) {
@@ -282,6 +290,21 @@ const App: React.FC = () => {
       location
     };
 
+    // Check if auto-classify is enabled
+    if (autoClassifyEnabled && lastClassification) {
+      console.log('[GotJunk] Auto-classify enabled - using last classification:', lastClassification);
+
+      // Mark as completed immediately to skip safety verification
+      classificationCompletedRef.current = true;
+      pendingClassificationBackupRef.current = null;
+
+      // Directly process with last classification (skip modal)
+      setPendingClassificationItem(capturedItem);
+      await handleClassify(lastClassification.type, lastClassification.discountPercent, lastClassification.bidDurationHours);
+      return;
+    }
+
+    // Manual mode: Show classification modal
     // Reset classification completion flag for new capture
     classificationCompletedRef.current = false;
 
@@ -308,6 +331,14 @@ const App: React.FC = () => {
     // Mark classification as completed to prevent safety restore
     classificationCompletedRef.current = true;
     pendingClassificationBackupRef.current = null;
+
+    // Store this classification for future auto-classify
+    setLastClassification({
+      type: classification,
+      discountPercent,
+      bidDurationHours
+    });
+    console.log('[GotJunk] Stored classification for auto-classify:', { classification, discountPercent, bidDurationHours });
 
     setPendingClassificationItem(null);
     setIsProcessingClassification(true);
@@ -775,6 +806,9 @@ const App: React.FC = () => {
             // TODO: Open search modal
           }}
           showCameraOrb={showCameraOrb}
+          autoClassifyEnabled={autoClassifyEnabled}
+          onToggleAutoClassify={() => setAutoClassifyEnabled(!autoClassifyEnabled)}
+          lastClassification={lastClassification}
         />
 
       {/* Re-classification Modal (tap badge) */}
