@@ -11,6 +11,7 @@ export const Z_LAYERS = {
   cameraOrb: 2100,
   sidebar: 2150,
   modal: 2300, // Classification, Options - above all controls
+  PURCHASE_MODAL: 2350, // Purchase confirmation - above regular modals
   tutorialPopup: 2400,
   actionSheet: 2500, // Discount/Bid sheets - above modals
 } as const;
