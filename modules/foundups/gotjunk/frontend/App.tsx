@@ -712,11 +712,37 @@ const App: React.FC = () => {
 
         {/* TAB 4: CART (items I want from others) */}
         {activeTab === 'cart' && (
-          <div className="text-center p-8">
-            <h2 className="text-3xl font-bold text-white mb-3">Shopping Cart</h2>
-            <p className="text-xl text-gray-300 font-semibold mb-2">{cart.length} items</p>
-            {cart.length === 0 && (
-              <p className="text-sm text-gray-400 mt-3">Swipe right on browse items to add them here</p>
+          <div className="w-full h-full overflow-y-auto">
+            {cart.length === 0 ? (
+              <div className="text-center p-8">
+                <h2 className="text-3xl font-bold text-white mb-3">Shopping Cart</h2>
+                <p className="text-xl text-gray-300 font-semibold mb-2">0 items</p>
+                <p className="text-sm text-gray-400 mt-3">Swipe right on browse items to add them here</p>
+              </div>
+            ) : (
+              <PhotoGrid
+                items={cart}
+                onClick={(item) => {
+                  // View cart item in fullscreen
+                  console.log('[GotJunk] Cart item clicked:', item.id);
+                  // TODO: Open fullscreen view
+                }}
+                onDelete={async (item) => {
+                  // Remove from cart
+                  setCart(prev => prev.filter(i => i.id !== item.id));
+                  // Update status back to browsing so it appears in browse feed again
+                  await storage.updateItemStatus(item.id, 'browsing');
+                  console.log('[GotJunk] Removed from cart:', item.id);
+                }}
+                onBadgeClick={(item) => {
+                  // Can't re-classify other people's items
+                  console.log('[GotJunk] Cannot re-classify cart items (not yours)');
+                }}
+                onBadgeLongPress={(item) => {
+                  // Can't edit options on other people's items
+                  console.log('[GotJunk] Cannot edit cart items (not yours)');
+                }}
+              />
             )}
           </div>
         )}
