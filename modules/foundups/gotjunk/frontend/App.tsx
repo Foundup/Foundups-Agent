@@ -301,8 +301,8 @@ const App: React.FC = () => {
         id: `item-${Date.now()}`,
         blob,
         url,
-        status: 'browsing', // Changed: Photos go to browseFeed (not myDrafts)
-        ownership: 'world', // Changed: Found items are global, not user-owned (yet)
+        status: 'draft', // Photos go to myDrafts (ownership='mine', status='draft')
+        ownership: 'mine', // User's own items
         classification,
         price,
         originalPrice: defaultPrice,
@@ -315,8 +315,8 @@ const App: React.FC = () => {
       console.log('[GotJunk] Saving new item:', { id: newItem.id, classification, price });
       await storage.saveItem(newItem);
 
-      setBrowseFeed(current => {
-        console.log('[GotJunk] Adding to browseFeed, current count:', current.length);
+      setMyDrafts(current => {
+        console.log('[GotJunk] Adding to myDrafts, current count:', current.length);
         return [newItem, ...current];
       });
 
