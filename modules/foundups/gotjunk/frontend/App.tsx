@@ -503,7 +503,7 @@ const App: React.FC = () => {
   }
 
   const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
-  const showCameraOrb = !isMapOpen && activeTab === 'myItems';
+  const showCameraOrb = !isMapOpen && activeTab === 'myitems';
 
   // Handle instructions modal close
   const handleInstructionsClose = () => {
