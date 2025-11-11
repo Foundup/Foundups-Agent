@@ -259,14 +259,11 @@ class AgenticOutputThrottler:
         # Count modules involved
         modules_found = set()
         for hit in code_results[:5]:  # Check top 5 for module diversity
-            location = hit.get('location', '')
-            if location.startswith('modules.'):
-                # Extract module name (first component after modules.)
-                parts = location.split('.')
-                if len(parts) > 1:
-                    modules_part = parts[1]  # Should be the domain like 'platform_integration'
-                    if modules_part:
-                        modules_found.add(modules_part)
+            location = hit.get('location', '') or hit.get('path', '')
+            normalized = location.replace('\\', '/')
+            module_match = re.search(r'modules/([^/]+/[^/]+)', normalized)
+            if module_match:
+                modules_found.add(module_match.group(1))
 
         output_lines.append("[GREEN] [SOLUTION FOUND] Existing functionality discovered")
         output_lines.append(f"[MODULES] Found implementations across {len(modules_found)} modules: {', '.join(sorted(modules_found))}")
@@ -278,11 +275,18 @@ class AgenticOutputThrottler:
             if code_results:
                 output_lines.append("[CODE RESULTS] Top implementations:")
                 for i, hit in enumerate(code_results[:3], 1):  # Top 3
-                    location = hit.get('location', 'Unknown')
+                    location = hit.get('path') or hit.get('location', 'Unknown')
                     similarity = hit.get('similarity', 'N/A')
-                    content_preview = hit.get('content', '')[:100].replace('\n', ' ') + '...' if len(hit.get('content', '')) > 100 else hit.get('content', '')
-                    output_lines.append(f"  {i}. {location}")
-                    output_lines.append(f"     Match: {similarity} | Preview: {content_preview}")
+                    line = hit.get('line')
+                    preview = hit.get('preview') or hit.get('content', '')
+                    preview_inline = preview.replace('\n', ' ').strip()
+                    if len(preview_inline) > 120:
+                        preview_inline = preview_inline[:117] + '...'
+                    header = f"  {i}. {location}"
+                    if line:
+                        header += f":{line}"
+                    output_lines.append(header)
+                    output_lines.append(f"     Match: {similarity} | Preview: {preview_inline or '[No preview]'}")
                 output_lines.append("")
 
             # Show top WSP guidance with more context
@@ -303,7 +307,15 @@ class AgenticOutputThrottler:
             # Clean summary for 0102 (WSP 87 - prevent information overload)
             total_code = len(code_results)
             total_wsp = len(wsp_results)
+            summary_preview = ""
+            if code_results:
+                first_preview = code_results[0].get('preview') or ''
+                summary_preview = first_preview.replace('\n', ' ').strip()
+                if len(summary_preview) > 120:
+                    summary_preview = summary_preview[:117] + '...'
             output_lines.append(f"[RESULTS] {total_code} code hits, {total_wsp} WSP docs found")
+            if summary_preview:
+                output_lines.append(f"[PREVIEW] {summary_preview}")
             output_lines.append("[ACTION] Use --verbose for detailed results and recommendations")
 
         return "\n".join(output_lines)

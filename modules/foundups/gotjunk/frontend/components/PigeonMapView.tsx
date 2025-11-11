@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Map, Marker, Overlay } from 'pigeon-maps';
+import { motion } from 'framer-motion';
 import { Z_LAYERS } from '../constants/zLayers';
 import { MapClusterMarker, type ItemCluster } from './MapClusterMarker';
 import { clusterItemsByLocation } from '../utils/clusterItems';
 import type { CapturedItem } from '../types';
+import { Camera, CameraHandle } from './Camera';
+import type { CaptureMode } from '../App';
 
 interface JunkItem {
   id: string;
@@ -32,6 +35,7 @@ interface PigeonMapViewProps {
   showLibertyAlerts?: boolean;
   useClustering?: boolean;  // Enable/disable clustering (default: true)
   onLibertyActivate?: () => void;  // NEW: Callback when SOS morse code detected
+  onLibertyCapture?: (blob: Blob, location: { latitude: number; longitude: number }) => void;  // NEW: Callback when user captures Liberty Alert
 }
 
 export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
@@ -44,6 +48,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   showLibertyAlerts = false,
   useClustering = true,
   onLibertyActivate,
+  onLibertyCapture,
 }) => {
   // Global view for Liberty Alerts, local view for GotJunk items
   const isGlobalView = showLibertyAlerts && libertyAlerts.length > 0;
@@ -63,6 +68,10 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   const [tapTimes, setTapTimes] = useState<number[]>([]);
   const tapStartTime = useRef<number>(0);
   const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Liberty Alert Camera (for capturing alerts on map)
+  const libertyCameraRef = useRef<CameraHandle>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   // Cluster items by location (memoized to avoid re-computing on every render)
   const itemClusters = useMemo(() => {
@@ -144,6 +153,25 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
     }, 3000);
   };
 
+  // Liberty Alert Camera Handlers
+  const handleCameraOrbClick = () => {
+    console.log('[Liberty] Camera orb clicked - opening camera for alert');
+    setIsCameraOpen(true);
+  };
+
+  const handleLibertyCapture = (blob: Blob) => {
+    console.log('[Liberty] Alert captured:', blob.type, blob.size, 'bytes');
+    setIsCameraOpen(false);
+
+    if (!onLibertyCapture || !userLocation) {
+      console.warn('[Liberty] Cannot capture alert - missing callback or location');
+      return;
+    }
+
+    // Pass blob + GPS coordinates to parent handler
+    onLibertyCapture(blob, userLocation);
+  };
+
   // Color mapping for item status
   const getMarkerColor = (status: JunkItem['status']): string => {
     switch (status) {
@@ -221,6 +249,38 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
           </button>
         )}
       </div>
+
+      {/* Liberty Alert Camera Orb - Center bottom (only when Liberty enabled) */}
+      {showLibertyAlerts && !isCameraOpen && (
+        <motion.button
+          onClick={handleCameraOrbClick}
+          className="absolute bottom-24 left-1/2 -translate-x-1/2 w-20 h-20 bg-amber-500 rounded-full shadow-2xl border-4 border-white z-50 flex items-center justify-center"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          title="Capture Liberty Alert"
+        >
+          <span className="text-4xl">📸</span>
+          {/* Liberty Badge */}
+          <div className="absolute -top-2 -right-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center border-2 border-white">
+            <span className="text-xl">🗽</span>
+          </div>
+        </motion.button>
+      )}
+
+      {/* Liberty Alert Camera Component */}
+      {showLibertyAlerts && isCameraOpen && (
+        <div className="absolute inset-0 z-50">
+          <Camera
+            ref={libertyCameraRef}
+            onCapture={handleLibertyCapture}
+            captureMode="photo" // Liberty alerts are photos only
+          />
+        </div>
+      )}
 
       {/* Pigeon Map */}
       <Map

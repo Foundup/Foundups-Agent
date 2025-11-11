@@ -114,6 +114,11 @@ NEED_TO = {
 - [x] Git pre-commit hook for navigation updates
 - [x] Automated coverage testing via pytest
 
+### Phase 7: Function-Level Intelligence & Preview Guarantees (IMPLEMENTED 2025-11-11)
+- [x] TypeScript/TSX entity extraction wired into `_enhance_code_results_with_previews` so NAVIGATION targets like `App.tsx:handleClassify()` surface real code snippets with line numbers.
+- [x] Dual payload schema (`code_hits` + legacy `code`) to keep CLI, throttler, and Qwen advisor in sync—prevents `[NO SOLUTION FOUND]` false negatives.
+- [x] Breadcrumb+preview contract: every search must emit `[CODE RESULTS]` entries with populated `preview`/`path` fields, enforced by regression tests (`holo_index/tests/test_typescript_entities.py`).
+
 ## Metrics for Success (ACHIEVED)
 
 1. **Discovery Time**: [U+2705] < 10 seconds with SSD-optimized HoloIndex
@@ -121,6 +126,7 @@ NEED_TO = {
 3. **Code Reuse**: [U+2705] 95% with complete navigation breadcrumbs
 4. **Navigation Usage**: [U+2705] Automated via pre-commit hooks
 5. **WSP Violation Prevention**: [U+2705] Structurally impossible with parallel search
+6. **Preview Coverage**: [U+2705] All code hits render a preview + line reference; TypeScript extraction cache audited via `holo_index/tests/test_typescript_entities.py`.
 
 ## Navigation Comment Format
 
@@ -179,7 +185,38 @@ python E:\HoloIndex\holo_index.py --benchmark
 
 # 4. Navigate with complete breadcrumbs
 # All 19 LiveChat modules now have NAVIGATION: comments
+
+# 5. EXPECT PREVIEWS: Verify `[CODE RESULTS]` includes `Preview:` text + `path:line`
+python holo_index.py --search "handle item classification" --limit 3 --verbose
+# Output MUST show `[GREEN] [SOLUTION FOUND]` + code previews. If preview missing, rerun --index-code then escalate.
 ```
+
+## 0102 Usage Checklist (Machine-Language Contract)
+1. **Run HoloIndex First**: `python holo_index.py --search "<need>" --limit 3` (never skip; WSP 50 + WSP 87).
+2. **Confirm `[CODE RESULTS]`**: Output must list at least one code hit with `Preview`, `path`, and `line`. If `[NO SOLUTION FOUND]`, rerun with `--verbose` and inspect HOLO_INDEX_IMPROVEMENT_LOG.md before touching files.
+3. **Read Preview Before Editing**: Follow the provided `path:line`, open the file, and modify in place—no new modules without WSP 49 gating.
+4. **Document Search**: Reference the command + top hit in ModLog/PR description to prove WSP 87 compliance.
+5. **Keep Index Fresh**: If previews look stale, run `python holo_index.py --index-code --index-wsp` then re-search. SSD location must remain `E:\HoloIndex`.
+
+## HoloIndex Command Matrix (0102 Execution Modes)
+
+| Command / Flag | Purpose | When 0102 MUST run it |
+|----------------|---------|-----------------------|
+| `--search "<need>"` (default) | Dual semantic search (code + WSP) with preview enforcement | **Every task** before editing (WSP 50/87). |
+| `--limit N`, `--verbose`, `--quiet-root-alerts` | Tune result volume / advisor output | Use `--limit 3` for console, `--verbose` when previews missing or advisor context needed. |
+| `--index-code`, `--index-wsp`, `--index-all` | Refresh NAVIGATION + WSP embeddings on SSD | Run when search output says `[AUTO-REFRESH] Code/WSP index stale`, after major repo changes, or before production missions. |
+| `--code-index`, `--function-index`, `--dae-cubes` | Enable function-level indexing, LEGO mapping, and DAE flow diagrams | When preparing refactors, surgical audits, or Rubik/DAE planning (0102 “brain surgeon” missions). |
+| `--benchmark` | SSD + vector query health check | Weekly or before large ops to verify E:\ throughput; rerun if latency > 50ms. |
+| `--check-module <name>` | WSP 49 module existence + doc compliance | Before proposing new modules or touching unfamiliar paths; prevents phantom directories. |
+| `--docs-file <path>` | Locate README/INTERFACE/ROADMAP for a Python file | Use when IDE asks for docs or when onboarding to a module you have not touched. |
+| `--check-wsp-docs [--fix-ascii] [--fix-violations]` | WSP Documentation Guardian + ASCII remediation | Run prior to publishing doc-heavy changes or when WSP 22/90 warnings fire. |
+| `--support auto`, `--diagnose holodae`, `--troubleshoot large_files` | Guided troubleshooting workflows | Use when CLI warns about HOLODAE issues, large file violations, or auto-support triggers. |
+| `--pattern-coach`, `--pattern-memory` | Behavioral guardrails / historical reminders | Run when the advisor suggests pattern rehearsal or when 012 flags repeating violations. |
+| `--module-analysis`, `--health-check`, `--performance-metrics` | System-wide module health + telemetry reports | Required before large refactors or WSP 93 CodeIndex missions; provides compliance stats. |
+| `--start-holodae`, `--stop-holodae`, `--holodae-status` | Control autonomous HoloDAE monitoring | Start before long-lived sessions, check status if breadcrumbs stop updating, stop when maintenance needed. |
+| `--mcp-hooks`, `--mcp-log`, `--monitor-work`, `--organize-docs` | MCP integration + doc auto-organization | Use when MCP tools are failing or when 012 authorizes DocDAE re-org during refresh windows. |
+
+**Rule**: If a workflow above matches your intent, run the command through HoloIndex—do not script bespoke queries. This table supersedes ad-hoc memory of flags; keep it in sync with `holo_index/CLI_REFERENCE.md` whenever new switches appear.
 
 ## Compliance
 

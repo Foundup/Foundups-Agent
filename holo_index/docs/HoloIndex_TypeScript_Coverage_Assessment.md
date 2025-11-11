@@ -9,7 +9,7 @@ Context
 
 Summary
 -------
-- Added `_extract_typescript_entities` in `holo_index/core/holo_index.py:594` to index React/TypeScript constructs (components, hooks, classes, interfaces, enums) with contextual snippets.
+- Added `_extract_typescript_entities` helper in `holo_index/core/holo_index.py` (2025-11-11 micro sprint) to index React/TypeScript constructs (components, hooks, classes, interfaces, enums) with contextual snippets and cache them for preview extraction.
 - Assessed remaining frontend coverage: `.tsx/.ts` now indexed; `.jsx` currently absent from owned sources; `.js` predominantly compiled output that should remain excluded unless scoped.
 - Evaluated adjacent ecosystems (foundups MCP, wardrobe skills, blockchain) for indexing priority and overseer workflow changes.
 - Confirmed AI Overseer continues to consume Holo via `HoloSingletonManager` spigot; no additional livechat skill required at this time.
@@ -40,7 +40,7 @@ Decisions
 
 Next Actions
 ------------
-1. Add regression tests for `_extract_typescript_entities` covering components, hooks, and interfaces.  
+1. ✅ Regression tests for `_extract_typescript_entities` live in `holo_index/tests/test_typescript_entities.py` (components, hooks, interfaces, and state setters).  
 2. Extend wardrobe policy to capture GraphRAG snapshot freshness.  
 3. Re-evaluate `.js` inclusion after GotJunk frontend stabilizes or if other teams surface pure-JS modules.
 
@@ -48,4 +48,3 @@ Verification
 ------------
 - `python -m compileall holo_index/core/holo_index.py` (passed)
 - Manual repo scan: `rg --files -g "*.tsx"` and `rg --files -g "*.js" -g "!node_modules/**"` (documented counts above)
-
