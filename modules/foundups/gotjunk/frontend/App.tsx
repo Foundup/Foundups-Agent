@@ -661,7 +661,7 @@ const App: React.FC = () => {
                 <ItemReviewer
                   key={filteredBrowseFeed[0].id}
                   item={filteredBrowseFeed[0]}
-                  onDecision={(decision) => handleBrowseSwipe(filteredBrowseFeed[0], decision === 'keep' ? 'right' : 'left')}
+                  onDecision={(item, decision) => handleBrowseSwipe(item, decision === 'keep' ? 'right' : 'left')}
                 />
               )}
             </AnimatePresence>
