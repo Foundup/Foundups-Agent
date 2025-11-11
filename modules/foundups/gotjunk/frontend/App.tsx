@@ -802,6 +802,7 @@ const App: React.FC = () => {
                 <ItemReviewer
                   key={reviewingCartItem.id}
                   item={reviewingCartItem}
+                  showForwardButton={true}  // Show > button for purchase
                   onDecision={(item, decision) => {
                     if (decision === 'keep') {
                       // Right swipe in cart → Purchase confirmation
@@ -1043,7 +1044,9 @@ const App: React.FC = () => {
         onCancel={() => {
           console.log('[GotJunk] Purchase cancelled');
           setPurchasingItem(null);
-          // Keep reviewingCartItem and queue - user can try again or swipe to other items
+          // Return to cart thumbnails view (close fullscreen)
+          setReviewingCartItem(null);
+          setCartReviewQueue([]);
         }}
       />
 
