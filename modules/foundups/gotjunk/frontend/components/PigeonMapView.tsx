@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Map, Marker, Overlay } from 'pigeon-maps';
 import { Z_LAYERS } from '../constants/zLayers';
 import { MapClusterMarker, type ItemCluster } from './MapClusterMarker';
@@ -31,6 +31,7 @@ interface PigeonMapViewProps {
   onMarkerClick?: (location: { latitude: number; longitude: number }) => void;
   showLibertyAlerts?: boolean;
   useClustering?: boolean;  // Enable/disable clustering (default: true)
+  onLibertyActivate?: () => void;  // NEW: Callback when SOS morse code detected
 }
 
 export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
@@ -42,6 +43,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   onMarkerClick,
   showLibertyAlerts = false,
   useClustering = true,
+  onLibertyActivate,
 }) => {
   // Global view for Liberty Alerts, local view for GotJunk items
   const isGlobalView = showLibertyAlerts && libertyAlerts.length > 0;
@@ -56,6 +58,11 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   const [selectedItem, setSelectedItem] = useState<JunkItem | null>(null);
   const [selectedAlert, setSelectedAlert] = useState<LibertyAlert | null>(null);
   const [legendExpanded, setLegendExpanded] = useState(false); // Collapsible legend
+
+  // SOS Morse Code Detection: ...___... (3 short, 3 long, 3 short)
+  const [tapTimes, setTapTimes] = useState<number[]>([]);
+  const tapStartTime = useRef<number>(0);
+  const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cluster items by location (memoized to avoid re-computing on every render)
   const itemClusters = useMemo(() => {
@@ -85,6 +92,58 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
     userLocation,
   });
 
+  // SOS Tap Detection Handlers
+  const handleMapTapStart = (e: React.MouseEvent | React.TouchEvent) => {
+    // Only detect taps on the map surface (not on buttons/markers)
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('.map-cluster-marker')) {
+      return; // Ignore taps on interactive elements
+    }
+    tapStartTime.current = Date.now();
+  };
+
+  const handleMapTapEnd = (e: React.MouseEvent | React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('.map-cluster-marker')) {
+      return; // Ignore taps on interactive elements
+    }
+
+    const tapDuration = Date.now() - tapStartTime.current;
+    if (tapDuration === 0 || tapDuration > 1000) return; // Invalid tap (too long or no start)
+
+    const SHORT_TAP = 200; // Short tap threshold (dot in morse code)
+
+    setTapTimes(prev => {
+      const newTaps = [...prev, tapDuration];
+      // Keep only last 9 taps
+      if (newTaps.length > 9) newTaps.shift();
+
+      // Check for SOS pattern: SSSLLLSSS (3 short, 3 long, 3 short)
+      if (newTaps.length === 9) {
+        const pattern = newTaps.map(d => d < SHORT_TAP ? 'S' : 'L').join('');
+        console.log('🗺️ Map SOS Pattern:', pattern);
+
+        if (pattern === 'SSSLLLSSS') {
+          console.log('🗽 SOS DETECTED ON MAP!');
+          if (onLibertyActivate) {
+            onLibertyActivate();
+          }
+          // Clear tap history after successful detection
+          return [];
+        }
+      }
+
+      return newTaps;
+    });
+
+    // Reset timeout - clear taps after 3 seconds of inactivity
+    if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
+    tapTimeoutRef.current = setTimeout(() => {
+      setTapTimes([]);
+      console.log('🗺️ Map SOS timeout - taps cleared');
+    }, 3000);
+  };
+
   // Color mapping for item status
   const getMarkerColor = (status: JunkItem['status']): string => {
     switch (status) {
@@ -109,6 +168,10 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
         WebkitUserSelect: "none",
         pointerEvents: "auto",
       }}
+      onMouseDown={handleMapTapStart}
+      onMouseUp={handleMapTapEnd}
+      onTouchStart={handleMapTapStart}
+      onTouchEnd={handleMapTapEnd}
     >
       {/* Header - Title only, close button moved to thumb zone */}
       <div className="absolute top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/80 to-transparent p-4">

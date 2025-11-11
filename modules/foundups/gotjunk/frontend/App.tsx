@@ -988,6 +988,12 @@ const App: React.FC = () => {
             setMapOpen(false); // Close map
           }}
           showLibertyAlerts={libertyEnabled}
+          onLibertyActivate={() => {
+            // SOS morse code detected on map → activate Liberty Alerts
+            console.log('🗽 Liberty Alert activated via map SOS!');
+            setLibertyEnabled(true);
+            alert('🗽 Liberty Alert Unlocked via Map SOS!');
+          }}
         />
       )}
 
