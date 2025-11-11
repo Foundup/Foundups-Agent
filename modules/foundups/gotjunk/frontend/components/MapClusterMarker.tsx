@@ -1,15 +1,10 @@
 /**
- * Map Cluster Marker - Thumbnail Grid with Count Badge
+ * Map Cluster Marker - Dynamic Zoom-Based Rendering
  *
- * Shows up to 4 item thumbnails in a 2x2 grid with a count badge.
+ * - Zoomed out (< 14): Small number badge (compact)
+ * - Zoomed in (>= 14): Thumbnail grid with images (detailed)
+ *
  * Clicking the marker navigates to browse tab filtered to this location.
- *
- * Design:
- * ┌─────────────┐
- * │ [img] [img] │  ← 2x2 grid of thumbnails
- * │ [img] [img] │
- * └─────────────┘
- *      (5)       ← Count badge if more than 4 items
  */
 
 import React from 'react';
@@ -35,19 +30,44 @@ export interface ItemCluster {
 
 interface MapClusterMarkerProps {
   cluster: ItemCluster;
+  zoom?: number;  // Zoom level for dynamic rendering (default: 14)
   onClick: (location: ItemLocation) => void;
 }
 
-export const MapClusterMarker: React.FC<MapClusterMarkerProps> = ({ cluster, onClick }) => {
-  const { location, items, count } = cluster;
+const ZOOM_THRESHOLD = 14; // Switch from compact to detailed view
 
-  // Show up to 4 thumbnails
+export const MapClusterMarker: React.FC<MapClusterMarkerProps> = ({ cluster, zoom = 14, onClick }) => {
+  const { location, items, count } = cluster;
+  const isZoomedOut = zoom < ZOOM_THRESHOLD;
+
+  // Show up to 4 thumbnails (detailed view only)
   const displayItems = items.slice(0, 4);
   const hasMore = count > 4;
 
-  // Grid size based on count
+  // Grid size based on count (detailed view)
   const gridSize = count === 1 ? '64px' : '80px';
 
+  // COMPACT VIEW: Zoomed out - show small number badge
+  if (isZoomedOut) {
+    return (
+      <div
+        className="cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick(location);
+        }}
+        style={{ position: 'relative' }}
+      >
+        <div
+          className="bg-blue-600 text-white text-sm font-bold rounded-full w-8 h-8 flex items-center justify-center shadow-lg border-2 border-white hover:bg-blue-500 transition-all hover:scale-110"
+        >
+          {count}
+        </div>
+      </div>
+    );
+  }
+
+  // DETAILED VIEW: Zoomed in - show thumbnail grid
   return (
     <div
       className="map-cluster-marker cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
