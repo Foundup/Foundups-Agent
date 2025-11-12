@@ -87,6 +87,10 @@ const App: React.FC = () => {
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | undefined>();
   const [locationFilter, setLocationFilter] = useState<{ latitude: number; longitude: number } | null>(null);
 
+  // === MAP NAVIGATION STATE ===
+  const [currentMapItemIndex, setCurrentMapItemIndex] = useState(0);
+  const [mapNavigationCenter, setMapNavigationCenter] = useState<{ latitude: number; longitude: number } | null>(null);
+
   // === INSTRUCTIONS MODAL (shows on every page load) ===
   const [showInstructions, setShowInstructions] = useState(true);
 
@@ -297,6 +301,20 @@ const App: React.FC = () => {
     };
     initializeApp();
   }, []);
+
+  // Reset map navigation when opening map or changing Liberty mode
+  useEffect(() => {
+    if (isMapOpen) {
+      setCurrentMapItemIndex(0);
+      // Center on first item if available
+      if (mapNavigableItems.length > 0) {
+        const firstItem = mapNavigableItems[0];
+        if (firstItem.latitude && firstItem.longitude) {
+          setMapNavigationCenter({ latitude: firstItem.latitude, longitude: firstItem.longitude });
+        }
+      }
+    }
+  }, [isMapOpen, libertyEnabled]); // Reset when map opens or Liberty mode changes
 
   // Liberty Alert: Initialize Web Speech API when recording starts
   useEffect(() => {
@@ -671,12 +689,44 @@ const App: React.FC = () => {
     );
   }
 
+  // Map navigation: Compute navigable items based on Liberty mode
+  const mapNavigableItems = libertyEnabled
+    ? browseFeed.filter(item => item.libertyAlert && item.latitude && item.longitude)
+    : browseFeed.filter(item => !item.libertyAlert && item.latitude && item.longitude);
+
   const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
   const showCameraOrb = !isMapOpen && activeTab === 'myitems';
 
   // Handle instructions modal close
   const handleInstructionsClose = () => {
     setShowInstructions(false);
+  };
+
+  // Map navigation handlers
+  const handleMapNavigateNext = () => {
+    if (mapNavigableItems.length === 0) return;
+
+    const nextIndex = (currentMapItemIndex + 1) % mapNavigableItems.length;
+    setCurrentMapItemIndex(nextIndex);
+
+    const nextItem = mapNavigableItems[nextIndex];
+    if (nextItem.latitude && nextItem.longitude) {
+      setMapNavigationCenter({ latitude: nextItem.latitude, longitude: nextItem.longitude });
+      console.log('[GotJunk] Map navigate next:', nextIndex, nextItem.id);
+    }
+  };
+
+  const handleMapNavigatePrevious = () => {
+    if (mapNavigableItems.length === 0) return;
+
+    const prevIndex = currentMapItemIndex === 0 ? mapNavigableItems.length - 1 : currentMapItemIndex - 1;
+    setCurrentMapItemIndex(prevIndex);
+
+    const prevItem = mapNavigableItems[prevIndex];
+    if (prevItem.latitude && prevItem.longitude) {
+      setMapNavigationCenter({ latitude: prevItem.latitude, longitude: prevItem.longitude });
+      console.log('[GotJunk] Map navigate previous:', prevIndex, prevItem.id);
+    }
   };
 
   return (
@@ -1003,14 +1053,22 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Bottom navigation bar - visually hidden when map is open (keeps Camera mounted) */}
+      {/* Bottom navigation bar - visible on map for navigation arrows */}
       <BottomNavBar
-        style={{ display: isMapOpen ? 'none' : 'block' }}
           captureMode={captureMode}
           onToggleCaptureMode={() => setCaptureMode(mode => mode === 'photo' ? 'video' : 'photo')}
           onCapture={handleCapture}
           onReviewAction={(action) => {
-            if (activeTab === 'browse' && filteredBrowseFeed.length > 0) {
+            // MAP VIEW: Use arrows for navigation (not delete/keep)
+            if (isMapOpen) {
+              if (action === 'delete') {
+                handleMapNavigatePrevious(); // Left arrow = previous item
+              } else {
+                handleMapNavigateNext(); // Right arrow = next item
+              }
+            }
+            // BROWSE/MY ITEMS: Use arrows for delete/keep (existing behavior)
+            else if (activeTab === 'browse' && filteredBrowseFeed.length > 0) {
               console.log('[GotJunk] Button action:', action, 'on item:', filteredBrowseFeed[0].id);
               handleBrowseSwipe(filteredBrowseFeed[0], action === 'keep' ? 'right' : 'left');
             } else if (activeTab === 'myitems' && currentReviewItem) {
@@ -1021,7 +1079,7 @@ const App: React.FC = () => {
           setIsRecording={setIsRecording}
           countdown={countdown}
           setCountdown={setCountdown}
-          hasReviewItems={activeTab === 'browse' ? filteredBrowseFeed.length > 0 : myDrafts.length > 0}
+          hasReviewItems={isMapOpen ? mapNavigableItems.length > 0 : (activeTab === 'browse' ? filteredBrowseFeed.length > 0 : myDrafts.length > 0)}
           onSearchClick={() => {
             console.log('🔍 Search clicked');
             // TODO: Open search modal
@@ -1082,8 +1140,10 @@ const App: React.FC = () => {
           }))}
           libertyAlerts={libertyAlerts}
           userLocation={userLocation || null}
+          navigationCenter={mapNavigationCenter}
           onClose={() => {
             setMapOpen(false); // Close overlay, return to current tab
+            setMapNavigationCenter(null); // Reset navigation center
           }}
           onMarkerClick={(location) => {
             // User clicked cluster marker → filter Browse view to items at that location
@@ -1091,6 +1151,7 @@ const App: React.FC = () => {
             setLocationFilter(location);
             setActiveTab('browse'); // Switch to Browse tab showing filtered items
             setMapOpen(false); // Close map
+            setMapNavigationCenter(null); // Reset navigation center
           }}
           showLibertyAlerts={libertyEnabled}
           onLibertyActivate={() => {
