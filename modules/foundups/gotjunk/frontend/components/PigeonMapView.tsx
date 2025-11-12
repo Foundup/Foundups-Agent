@@ -52,11 +52,11 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   onLibertyActivate,
   onLibertyCapture,
 }) => {
-  // Global view for Liberty Alerts (US map), local view for GotJunk items
+  // Global view for Liberty Alerts (world map), local view for GotJunk items
   const isGlobalView = showLibertyAlerts && isGlobalLiberty;
 
   const center: [number, number] = isGlobalView
-    ? [39.8283, -98.5795] // US center (shows continental US)
+    ? [20, 0] // World center (shows entire globe with all continents)
     : selectedRegion
     ? [selectedRegion.latitude, selectedRegion.longitude] // Zoomed to selected 🗽 region
     : userLocation
@@ -191,7 +191,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
 
     // Zoom to global or local view
     if (!isGlobalLiberty) {
-      setZoom(4); // Zoom out to US map view
+      setZoom(2); // Maximum zoom out - entire world view with all continents
       setSelectedRegion(null); // Clear selected region when going global
     } else {
       setZoom(12); // Zoom back to local view

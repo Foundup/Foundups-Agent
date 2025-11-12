@@ -151,48 +151,75 @@ const App: React.FC = () => {
   const [purchasingItem, setPurchasingItem] = useState<CapturedItem | null>(null);
 
   // Liberty Alert State (unlocked via SOS morse code easter egg)
-  // Pre-populated with US ICE activity hot zones (🗽 Liberty statue markers)
+  // Pre-populated with global human rights concern zones (🗽 Liberty statue markers)
   const SAMPLE_LIBERTY_ALERTS: LibertyAlert[] = [
+    // United States
     {
       id: 'region-texas-border',
       location: { latitude: 26.0714, longitude: -98.2958 }, // McAllen, TX (RGV Border)
-      message: 'ICE Activity - Rio Grande Valley Border Patrol Sector',
-      timestamp: Date.now() - 86400000 * 7, // 7 days ago
-      type: 'region',
-    },
-    {
-      id: 'region-arizona-border',
-      location: { latitude: 31.7686, longitude: -110.9499 }, // Nogales, AZ
-      message: 'ICE Activity - Tucson Border Patrol Sector',
-      timestamp: Date.now() - 86400000 * 14, // 14 days ago
-      type: 'region',
-    },
-    {
-      id: 'region-california-border',
-      location: { latitude: 32.5453, longitude: -117.0382 }, // Tijuana Border / San Ysidro
-      message: 'ICE Activity - San Diego Border Patrol Sector',
-      timestamp: Date.now() - 86400000 * 10, // 10 days ago
-      type: 'region',
-    },
-    {
-      id: 'region-new-york',
-      location: { latitude: 40.7128, longitude: -74.006 }, // New York City
-      message: 'ICE Activity - NYC Enforcement Operations',
-      timestamp: Date.now() - 86400000 * 3, // 3 days ago
+      message: 'Liberty Alert - US Border Region',
+      timestamp: Date.now() - 86400000 * 7,
       type: 'region',
     },
     {
       id: 'region-los-angeles',
       location: { latitude: 34.0522, longitude: -118.2437 }, // Los Angeles
-      message: 'ICE Activity - LA County Enforcement',
-      timestamp: Date.now() - 86400000 * 5, // 5 days ago
+      message: 'Liberty Alert - US West Coast',
+      timestamp: Date.now() - 86400000 * 5,
+      type: 'region',
+    },
+    // Ukraine
+    {
+      id: 'region-ukraine-donbas',
+      location: { latitude: 48.0159, longitude: 37.8028 }, // Donetsk, Ukraine
+      message: 'Liberty Alert - Conflict Zone',
+      timestamp: Date.now() - 86400000 * 14,
+      type: 'region',
+    },
+    // Middle East
+    {
+      id: 'region-gaza',
+      location: { latitude: 31.5, longitude: 34.467 }, // Gaza
+      message: 'Liberty Alert - Humanitarian Crisis',
+      timestamp: Date.now() - 86400000 * 3,
       type: 'region',
     },
     {
-      id: 'region-chicago',
-      location: { latitude: 41.8781, longitude: -87.6298 }, // Chicago
-      message: 'ICE Activity - Chicago Field Office Operations',
-      timestamp: Date.now() - 86400000 * 12, // 12 days ago
+      id: 'region-syria',
+      location: { latitude: 36.2021, longitude: 37.1343 }, // Aleppo, Syria
+      message: 'Liberty Alert - Conflict Zone',
+      timestamp: Date.now() - 86400000 * 21,
+      type: 'region',
+    },
+    // Africa
+    {
+      id: 'region-sudan',
+      location: { latitude: 15.5007, longitude: 32.5599 }, // Khartoum, Sudan
+      message: 'Liberty Alert - Humanitarian Emergency',
+      timestamp: Date.now() - 86400000 * 10,
+      type: 'region',
+    },
+    // Asia
+    {
+      id: 'region-myanmar',
+      location: { latitude: 16.8661, longitude: 96.1951 }, // Yangon, Myanmar
+      message: 'Liberty Alert - Democracy Movement',
+      timestamp: Date.now() - 86400000 * 18,
+      type: 'region',
+    },
+    {
+      id: 'region-xinjiang',
+      location: { latitude: 43.8256, longitude: 87.6168 }, // Urumqi, Xinjiang
+      message: 'Liberty Alert - Human Rights Concern',
+      timestamp: Date.now() - 86400000 * 30,
+      type: 'region',
+    },
+    // Latin America
+    {
+      id: 'region-venezuela',
+      location: { latitude: 10.4806, longitude: -66.9036 }, // Caracas, Venezuela
+      message: 'Liberty Alert - Humanitarian Crisis',
+      timestamp: Date.now() - 86400000 * 12,
       type: 'region',
     },
   ];
