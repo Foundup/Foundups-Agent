@@ -5,8 +5,6 @@ import { Z_LAYERS } from '../constants/zLayers';
 import { MapClusterMarker, type ItemCluster } from './MapClusterMarker';
 import { clusterItemsByLocation } from '../utils/clusterItems';
 import type { CapturedItem } from '../types';
-import { Camera, CameraHandle } from './Camera';
-import type { CaptureMode } from '../App';
 
 interface JunkItem {
   id: string;
@@ -37,7 +35,6 @@ interface PigeonMapViewProps {
   showLibertyAlerts?: boolean;
   useClustering?: boolean;  // Enable/disable clustering (default: true)
   onLibertyActivate?: () => void;  // NEW: Callback when SOS morse code detected
-  onLibertyCapture?: (blob: Blob, location: { latitude: number; longitude: number }) => void;  // NEW: Callback when user captures Liberty Alert
 }
 
 export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
@@ -50,7 +47,6 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   showLibertyAlerts = false,
   useClustering = true,
   onLibertyActivate,
-  onLibertyCapture,
 }) => {
   // Liberty Global View Toggle (MUST be declared before use in center calculation)
   const [isGlobalLiberty, setIsGlobalLiberty] = useState(false);
@@ -77,24 +73,28 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   const tapStartTime = useRef<number>(0);
   const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Liberty Alert Camera (for capturing alerts on map)
-  const libertyCameraRef = useRef<CameraHandle>(null);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-
   // Swipe gesture detection
   const touchStartY = useRef<number>(0);
   const touchEndY = useRef<number>(0);
 
+  // Split items: Liberty Alert items (🧊) vs regular items
+  const { libertyItems, regularItems } = useMemo(() => {
+    const liberty = capturedItems.filter(item => item.libertyAlert);
+    const regular = capturedItems.filter(item => !item.libertyAlert);
+    console.log('[GotJunk] Split items:', liberty.length, 'Liberty (🧊)', regular.length, 'regular');
+    return { libertyItems: liberty, regularItems: regular };
+  }, [capturedItems]);
+
   // Cluster items by location (memoized to avoid re-computing on every render)
   const itemClusters = useMemo(() => {
-    if (!useClustering || capturedItems.length === 0) {
+    if (!useClustering || regularItems.length === 0) {
       return [];
     }
 
-    const clusters = clusterItemsByLocation(capturedItems);
-    console.log('[GotJunk] Clustered', capturedItems.length, 'items into', clusters.length, 'clusters');
+    const clusters = clusterItemsByLocation(regularItems);
+    console.log('[GotJunk] Clustered', regularItems.length, 'items into', clusters.length, 'clusters');
     return clusters;
-  }, [capturedItems, useClustering]);
+  }, [regularItems, useClustering]);
 
   // Lock body scroll when map is open (prevent Safari from clipping floating controls)
   useEffect(() => {
@@ -166,24 +166,6 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   };
 
   // Liberty Alert Camera Handlers
-  const handleCameraOrbClick = () => {
-    console.log('[Liberty] Camera orb clicked - opening camera for alert');
-    setIsCameraOpen(true);
-  };
-
-  const handleLibertyCapture = (blob: Blob) => {
-    console.log('[Liberty] Alert captured:', blob.type, blob.size, 'bytes');
-    setIsCameraOpen(false);
-
-    if (!onLibertyCapture || !userLocation) {
-      console.warn('[Liberty] Cannot capture alert - missing callback or location');
-      return;
-    }
-
-    // Pass blob + GPS coordinates to parent handler
-    onLibertyCapture(blob, userLocation);
-  };
-
   // Liberty Global View Toggle
   const handleLibertyToggle = () => {
     console.log('[Liberty] Toggling global view:', !isGlobalLiberty);
@@ -308,42 +290,6 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
         </button>
       </div>
 
-      {/* Liberty Alert Camera Orb - Center bottom (only in local view, not global) */}
-      {showLibertyAlerts && !isGlobalLiberty && (
-        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-50">
-          <motion.div
-            onClick={handleCameraOrbClick}
-            className="relative w-20 h-20 rounded-full shadow-2xl border-4 border-white flex items-center justify-center cursor-pointer"
-            style={{
-              backgroundColor: isCameraOpen ? 'transparent' : '#f59e0b', // amber-500 when closed, transparent when camera open
-            }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            title="Capture Liberty Alert"
-          >
-            {isCameraOpen ? (
-              // Camera preview fills the orb (same as default camera)
-              <Camera
-                ref={libertyCameraRef}
-                onCapture={handleLibertyCapture}
-                captureMode="photo" // Liberty alerts are photos only
-              />
-            ) : (
-              // Camera icon when closed
-              <span className="text-4xl">📸</span>
-            )}
-            {/* Liberty Badge - always visible */}
-            <div className="absolute -top-2 -right-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center border-2 border-white pointer-events-none">
-              <span className="text-xl">🗽</span>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
       {/* Pigeon Map */}
       <Map
         height={window.innerHeight}
@@ -406,12 +352,36 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
           ))
         )}
 
-        {/* Liberty Alert markers - 🗽 (region hot zones) and 🧊 (user captures) */}
+        {/* Liberty Alert user captures - 🧊 (items with libertyAlert flag) */}
+        {showLibertyAlerts && libertyItems.length > 0 &&
+          libertyItems.map((item) => (
+            <Overlay
+              key={`liberty-${item.id}`}
+              anchor={[item.latitude || 0, item.longitude || 0]}
+            >
+              <div
+                onClick={() => {
+                  console.log('[Liberty] Ice cube clicked:', item.id);
+                  // TODO: Open fullscreen viewer for this item
+                  // For now, clicking closes map and returns to item location filter
+                  if (onMarkerClick && item.latitude && item.longitude) {
+                    onMarkerClick({ latitude: item.latitude, longitude: item.longitude });
+                  }
+                }}
+                className="cursor-pointer hover:scale-110 transition-transform"
+                title={`Liberty Alert - ${item.classification || 'Item'}`}
+              >
+                <span className="text-3xl">🧊</span>
+              </div>
+            </Overlay>
+          ))}
+
+        {/* Liberty Alert region markers - 🗽 (global hot zones only) */}
         {showLibertyAlerts &&
-          libertyAlerts.map((alert) => {
-            const isRegion = alert.type === 'region';
-            const icon = isRegion ? '🗽' : '🧊';
-            const iconSize = isGlobalView && isRegion ? 'text-5xl' : 'text-3xl';
+          libertyAlerts
+            .filter(alert => alert.type === 'region') // Only show 🗽 regions (🧊 captures now come from libertyItems)
+            .map((alert) => {
+            const iconSize = isGlobalView ? 'text-5xl' : 'text-3xl';
 
             return (
               <Overlay
@@ -420,21 +390,21 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
               >
                 <div
                   onClick={() => {
-                    if (isRegion && isGlobalView) {
-                      // Click 🗽 → zoom to that location (local view)
+                    if (isGlobalView) {
+                      // Click 🗽 in global view → zoom to that region (local view)
                       console.log('[Liberty] Region clicked, zooming to:', alert.location);
                       setSelectedRegion(alert.location); // Set center to clicked region
                       setIsGlobalLiberty(false);
                       setZoom(12);
                     } else {
-                      // Show alert details popup (🧊 ice cubes or local 🗽)
+                      // Click 🗽 in local view → show alert details popup
                       setSelectedAlert(alert);
                     }
                   }}
                   className="cursor-pointer hover:scale-110 transition-transform"
                   title={alert.message}
                 >
-                  <span className={iconSize}>{icon}</span>
+                  <span className={iconSize}>🗽</span>
                 </div>
               </Overlay>
             );

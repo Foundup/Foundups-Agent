@@ -24,6 +24,7 @@ interface BottomNavBarProps {
   onToggleAutoClassify?: () => void;
   onLongPressAutoClassify?: () => void; // Long press to select classification
   lastClassification?: { type: string, discountPercent?: number, bidDurationHours?: number } | null;
+  libertyEnabled?: boolean; // Liberty Alert mode (show 🗽 badge on camera)
 }
 
 const buttonVariants = {
@@ -46,6 +47,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onToggleAutoClassify = () => console.log('🔄 Auto-classify toggled'),
   onLongPressAutoClassify = () => console.log('🔄 Long-press: Select classification'),
   lastClassification = null,
+  libertyEnabled = false,
 }) => {
   const cameraRef = useRef<CameraHandle>(null);
   const pressTimerRef = useRef<number | null>(null);
@@ -174,7 +176,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         >
             {/* Main capture button with live preview - Intelligent scaling: iPhone 11=143px, iPhone 16=149px */}
             <div
-              className="p-2 bg-gray-800 rounded-full shadow-2xl cursor-pointer"
+              className="relative p-2 bg-gray-800 rounded-full shadow-2xl cursor-pointer"
               style={{
                 width: 'clamp(147px, 18.4vh, 221px)', // 15% bigger: 128*1.15=147, 192*1.15=221
                 height: 'clamp(147px, 18.4vh, 221px)',
@@ -187,6 +189,18 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             >
                  {/* Defer Camera mount until first press (saves 200-500ms on app load) */}
                  {isCameraInitialized && <Camera ref={cameraRef} onCapture={onCapture} captureMode={captureMode} />}
+
+                 {/* Liberty Alert Badge - Shows when Liberty mode is active */}
+                 {libertyEnabled && (
+                   <motion.div
+                     className="absolute -top-1 -right-1 bg-blue-600 rounded-full w-10 h-10 flex items-center justify-center shadow-lg border-2 border-white"
+                     initial={{ scale: 0 }}
+                     animate={{ scale: 1 }}
+                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                   >
+                     <span className="text-2xl">🗽</span>
+                   </motion.div>
+                 )}
             </div>
 
             {/* Auto-Classify Toggle Button - Moved to RIGHT of orb to prevent accidental triggers */}
