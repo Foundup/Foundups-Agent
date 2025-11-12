@@ -32,4 +32,6 @@ export interface CapturedItem {
   description?: string; // Item description
   createdAt: number; // Timestamp
   userId?: string; // Who owns this item (for "others" items)
+  libertyAlert?: boolean; // Captured during Liberty Alert mode (shows 🧊 on map, 🗽 badge in lists)
+  libertyRegion?: string; // Which Liberty region (optional metadata)
 }

@@ -492,6 +492,7 @@ const App: React.FC = () => {
         bidDurationHours: classification === 'bid' ? finalBidDurationHours : undefined,
         createdAt: Date.now(),
         ...location,
+        libertyAlert: libertyEnabled, // Flag if captured during Liberty Alert mode
       };
 
       console.log('[GotJunk] Saving new item:', { id: newItem.id, classification, price });
@@ -503,21 +504,6 @@ const App: React.FC = () => {
       });
 
       console.log('[GotJunk] Item successfully created and added to drafts');
-
-      // Liberty Alert: If keyword detected during video recording, create alert
-      if (libertyEnabled && keywordDetected && blob.type.startsWith('video/')) {
-        console.log('🧊 Liberty Alert - Creating ice cube marker for video');
-        const alert: LibertyAlert = {
-          id: `alert-${Date.now()}`,
-          location: location || { latitude: 0, longitude: 0 },
-          message: 'Liberty Alert - Keyword detected',
-          video_url: newItem.url,
-          timestamp: Date.now(),
-        };
-        setLibertyAlerts(prev => [alert, ...prev]);
-        console.log('🧊 Ice cube marker created on map!');
-        setKeywordDetected(false);
-      }
     } finally {
       // Always reset processing flag, even if there's an error
       setIsProcessingClassification(false);
@@ -525,26 +511,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Liberty Alert: Handle camera capture from map
-  const handleLibertyCapture = (blob: Blob, location: { latitude: number; longitude: number }) => {
-    console.log('[Liberty] Alert captured from map:', blob.type, blob.size, 'bytes', location);
-
-    // Create Liberty Alert with photo + GPS coordinates (type='capture' for 🧊 ice cube marker)
-    const alert: LibertyAlert = {
-      id: `capture-${Date.now()}`,
-      location,
-      message: 'ICE Activity - User captured event',
-      timestamp: Date.now(),
-      type: 'capture', // 🧊 ice cube marker (user-captured event)
-    };
-
-    // Add to alerts list (shows as 🧊 ice cube on map)
-    setLibertyAlerts(prev => [alert, ...prev]);
-    console.log('🧊 Ice cube marker created on map!', alert);
-
-    // Show confirmation to user
-    alert(`🧊 ICE Event Captured!\nLocation: ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`);
-  };
 
   const handleReviewDecision = async (item: CapturedItem, decision: 'keep' | 'delete') => {
     // Optimistically remove from draft queue for snappy UI
@@ -1065,6 +1031,7 @@ const App: React.FC = () => {
           onToggleAutoClassify={() => setAutoClassifyEnabled(!autoClassifyEnabled)}
           onLongPressAutoClassify={handleLongPressAutoClassify}
           lastClassification={lastClassification}
+          libertyEnabled={libertyEnabled}
         />
 
       {/* Re-classification Modal (tap badge) */}
@@ -1132,7 +1099,6 @@ const App: React.FC = () => {
             setLibertyEnabled(true);
             alert('🗽 Liberty Alert Unlocked via Map SOS!');
           }}
-          onLibertyCapture={handleLibertyCapture}
         />
       )}
 
