@@ -28,6 +28,7 @@ interface LibertyAlert {
   message: string;
   video_url?: string;
   timestamp: number;
+  type: 'region' | 'capture'; // region = 🗽 (global hot zones), capture = 🧊 (user-captured events)
 }
 
 // GotJunk Item for Map Display
@@ -92,6 +93,9 @@ const App: React.FC = () => {
   // === CLASSIFICATION FILTER ===
   const [classificationFilter, setClassificationFilter] = useState<'all' | ItemClassification>('all');
 
+  // === BROWSE GRID MODE (swipe up to show thumbnails) ===
+  const [isBrowseGridMode, setIsBrowseGridMode] = useState(false);
+
   // === RESPONSIVE VIEWPORT (iOS Safari vh fix) ===
   useViewport();
   useViewportHeight(); // Track visualViewport for proper modal centering
@@ -147,7 +151,80 @@ const App: React.FC = () => {
   const [purchasingItem, setPurchasingItem] = useState<CapturedItem | null>(null);
 
   // Liberty Alert State (unlocked via SOS morse code easter egg)
-  const [libertyAlerts, setLibertyAlerts] = useState<LibertyAlert[]>([]);
+  // Pre-populated with global human rights concern zones (🗽 Liberty statue markers)
+  const SAMPLE_LIBERTY_ALERTS: LibertyAlert[] = [
+    // United States
+    {
+      id: 'region-texas-border',
+      location: { latitude: 26.0714, longitude: -98.2958 }, // McAllen, TX (RGV Border)
+      message: 'Liberty Alert - US Border Region',
+      timestamp: Date.now() - 86400000 * 7,
+      type: 'region',
+    },
+    {
+      id: 'region-los-angeles',
+      location: { latitude: 34.0522, longitude: -118.2437 }, // Los Angeles
+      message: 'Liberty Alert - US West Coast',
+      timestamp: Date.now() - 86400000 * 5,
+      type: 'region',
+    },
+    // Ukraine
+    {
+      id: 'region-ukraine-donbas',
+      location: { latitude: 48.0159, longitude: 37.8028 }, // Donetsk, Ukraine
+      message: 'Liberty Alert - Conflict Zone',
+      timestamp: Date.now() - 86400000 * 14,
+      type: 'region',
+    },
+    // Middle East
+    {
+      id: 'region-gaza',
+      location: { latitude: 31.5, longitude: 34.467 }, // Gaza
+      message: 'Liberty Alert - Humanitarian Crisis',
+      timestamp: Date.now() - 86400000 * 3,
+      type: 'region',
+    },
+    {
+      id: 'region-syria',
+      location: { latitude: 36.2021, longitude: 37.1343 }, // Aleppo, Syria
+      message: 'Liberty Alert - Conflict Zone',
+      timestamp: Date.now() - 86400000 * 21,
+      type: 'region',
+    },
+    // Africa
+    {
+      id: 'region-sudan',
+      location: { latitude: 15.5007, longitude: 32.5599 }, // Khartoum, Sudan
+      message: 'Liberty Alert - Humanitarian Emergency',
+      timestamp: Date.now() - 86400000 * 10,
+      type: 'region',
+    },
+    // Asia
+    {
+      id: 'region-myanmar',
+      location: { latitude: 16.8661, longitude: 96.1951 }, // Yangon, Myanmar
+      message: 'Liberty Alert - Democracy Movement',
+      timestamp: Date.now() - 86400000 * 18,
+      type: 'region',
+    },
+    {
+      id: 'region-xinjiang',
+      location: { latitude: 43.8256, longitude: 87.6168 }, // Urumqi, Xinjiang
+      message: 'Liberty Alert - Human Rights Concern',
+      timestamp: Date.now() - 86400000 * 30,
+      type: 'region',
+    },
+    // Latin America
+    {
+      id: 'region-venezuela',
+      location: { latitude: 10.4806, longitude: -66.9036 }, // Caracas, Venezuela
+      message: 'Liberty Alert - Humanitarian Crisis',
+      timestamp: Date.now() - 86400000 * 12,
+      type: 'region',
+    },
+  ];
+
+  const [libertyAlerts, setLibertyAlerts] = useState<LibertyAlert[]>(SAMPLE_LIBERTY_ALERTS);
   const [libertyEnabled, setLibertyEnabled] = useState(false); // OFF until SOS unlock
   const [voiceRecognition, setVoiceRecognition] = useState<any>(null);
   const [keywordDetected, setKeywordDetected] = useState(false);
@@ -167,7 +244,9 @@ const App: React.FC = () => {
 //         console.error('[GotJunk] IPFS initialization failed:', error);
 //       }
 
-      const allItems = await storage.getAllItems();
+      // Load first 50 items (pagination improves initial load time)
+      // TODO: Implement infinite scroll to load more items on demand
+      const allItems = await storage.getAllItems(50);
 
       try {
         const position = await getCurrentPositionPromise();
@@ -214,17 +293,6 @@ const App: React.FC = () => {
         setBrowseFeed(allItems.filter(item =>
           item.status === 'draft' || item.status === 'browsing' || item.status === 'listed'
         ));
-      }
-
-      // Store user location for map
-      try {
-        const position = await getCurrentPositionPromise();
-        setUserLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude
-        });
-      } catch (error) {
-        console.error("Could not get user location for map:", error);
       }
     };
     initializeApp();
@@ -456,7 +524,28 @@ const App: React.FC = () => {
       console.log('[GotJunk] Classification processing complete, flag reset');
     }
   };
-  
+
+  // Liberty Alert: Handle camera capture from map
+  const handleLibertyCapture = (blob: Blob, location: { latitude: number; longitude: number }) => {
+    console.log('[Liberty] Alert captured from map:', blob.type, blob.size, 'bytes', location);
+
+    // Create Liberty Alert with photo + GPS coordinates (type='capture' for 🧊 ice cube marker)
+    const alert: LibertyAlert = {
+      id: `capture-${Date.now()}`,
+      location,
+      message: 'ICE Activity - User captured event',
+      timestamp: Date.now(),
+      type: 'capture', // 🧊 ice cube marker (user-captured event)
+    };
+
+    // Add to alerts list (shows as 🧊 ice cube on map)
+    setLibertyAlerts(prev => [alert, ...prev]);
+    console.log('🧊 Ice cube marker created on map!', alert);
+
+    // Show confirmation to user
+    alert(`🧊 ICE Event Captured!\nLocation: ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`);
+  };
+
   const handleReviewDecision = async (item: CapturedItem, decision: 'keep' | 'delete') => {
     // Optimistically remove from draft queue for snappy UI
     setMyDrafts(current => current.filter(i => i.id !== item.id));
@@ -655,27 +744,75 @@ const App: React.FC = () => {
               </select>
             </div>
 
-            {/* Swipeable Item */}
-            <AnimatePresence>
-              {filteredBrowseFeed.length > 0 && (
-                <ItemReviewer
-                  key={filteredBrowseFeed[0].id}
-                  item={filteredBrowseFeed[0]}
-                  onDecision={(item, decision) => handleBrowseSwipe(item, decision === 'keep' ? 'right' : 'left')}
+            {/* Grid Mode - Thumbnails (when user swipes up) */}
+            {isBrowseGridMode ? (
+              <motion.div
+                className="w-full h-full overflow-y-auto"
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 0 }}
+                dragElastic={0.2}
+                onDragEnd={(event, info) => {
+                  // Swipe down (positive offset.y > 100px) → return to stream mode
+                  if (info.offset.y > 100) {
+                    console.log('[Browse] Swipe down → stream mode');
+                    setIsBrowseGridMode(false);
+                  }
+                }}
+              >
+                <PhotoGrid
+                  items={filteredBrowseFeed}
+                  onClick={(item) => {
+                    // Tap thumbnail → exit grid mode and show this item in fullscreen
+                    console.log('[Browse] Grid item clicked:', item.id);
+                    setIsBrowseGridMode(false);
+                  }}
+                  onDelete={async (item) => {
+                    // Remove from browse feed (mark as skipped)
+                    console.log('[Browse] Delete from grid:', item.id);
+                    await storage.updateItemStatus(item.id, 'skipped');
+                    setBrowseFeed(current => current.filter(i => i.id !== item.id));
+                    setSkipped(current => [...current, { ...item, status: 'skipped' }]);
+                  }}
+                  onBadgeClick={(item) => {
+                    console.log('[Browse] Re-classify from grid:', item.id);
+                    setReclassifyingItem(item);
+                  }}
+                  onBadgeLongPress={(item) => {
+                    console.log('[Browse] Edit options from grid:', item.id);
+                    setEditingOptionsItem(item);
+                  }}
                 />
-              )}
-            </AnimatePresence>
+              </motion.div>
+            ) : (
+              <>
+                {/* Stream Mode - Swipeable Item */}
+                <AnimatePresence>
+                  {filteredBrowseFeed.length > 0 && (
+                    <ItemReviewer
+                      key={filteredBrowseFeed[0].id}
+                      item={filteredBrowseFeed[0]}
+                      onDecision={(item, decision) => handleBrowseSwipe(item, decision === 'keep' ? 'right' : 'left')}
+                      onClose={() => {
+                        // Swipe up detected → switch to grid mode
+                        console.log('[Browse] Swipe up → grid mode');
+                        setIsBrowseGridMode(true);
+                      }}
+                    />
+                  )}
+                </AnimatePresence>
 
-            {/* Empty State */}
-            {filteredBrowseFeed.length === 0 && !isRecording && (
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center px-8">
-                <h2 className="text-3xl font-bold text-white mb-3">No items found</h2>
-                <p className="text-lg text-gray-400">
-                  {classificationFilter === 'all'
-                    ? '50km radius • Try capturing some items!'
-                    : `No ${classificationFilter} items nearby`}
-                </p>
-              </div>
+                {/* Empty State */}
+                {filteredBrowseFeed.length === 0 && !isRecording && (
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center px-8">
+                    <h2 className="text-3xl font-bold text-white mb-3">No items found</h2>
+                    <p className="text-lg text-gray-400">
+                      {classificationFilter === 'all'
+                        ? '50km radius • Try capturing some items!'
+                        : `No ${classificationFilter} items nearby`}
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
@@ -995,6 +1132,7 @@ const App: React.FC = () => {
             setLibertyEnabled(true);
             alert('🗽 Liberty Alert Unlocked via Map SOS!');
           }}
+          onLibertyCapture={handleLibertyCapture}
         />
       )}
 

@@ -46,6 +46,20 @@
 - Map view now shows only map controls (zoom/info/pins) while camera and list views still get the orb immediately.
 - WSP 87 navigation guidance preserved: no camera controls rendered during non-camera contexts, avoiding accidental capture actions.
 
+## [2025-11-10] GotJunk Sidebar Layout Fix
+
+**Change Type**: UI spacing correction  
+**Architect**: Codex (0102)  
+**WSP References**: WSP 3 (module organization), WSP 7 (layout verification), WSP 22 (ModLog)
+
+### What Changed
+- Converted the left sidebar container to an auto-centering flex column with a clamped `gap`, ensuring icon spacing scales with viewport height.
+- Normalized button sizes via `clamp(...)` so grid/map/home/cart buttons no longer compress into one another on smaller screens.
+
+### Impact
+- Sidebar stays evenly spaced and vertically centered on all iPhones, including when the map is open.
+- Prevents icon overlap during safe-area shifts and keeps navigation controls readable against map tiles.
+
 ## [2025-11-03] MCP Server First Principles Optimization - 78% Reduction
 
 **Change Type**: System-Wide MCP Infrastructure Optimization

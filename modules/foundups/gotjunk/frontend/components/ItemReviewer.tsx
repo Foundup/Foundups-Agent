@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, PanInfo } from 'framer-motion';
 import { CapturedItem } from '../types';
 import { Z_LAYERS } from '../constants/zLayers';
+import { ClassificationBadge } from './ClassificationBadge';
 
 interface ItemReviewerProps {
   item: CapturedItem;
@@ -107,6 +108,22 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({ item, onDecision, on
             className="w-full h-full object-cover pointer-events-none"
             draggable="false"
           />
+        )}
+
+        {/* Classification Badge - Top left corner (same as PhotoCard) */}
+        {item.classification && (
+          <div className="absolute top-4 left-4 z-10">
+            <ClassificationBadge
+              classification={item.classification}
+              price={item.price}
+              discountPercent={item.discountPercent}
+              bidDurationHours={item.bidDurationHours}
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log('[ItemReviewer] Classification badge clicked');
+              }}
+            />
+          </div>
         )}
       </div>
 

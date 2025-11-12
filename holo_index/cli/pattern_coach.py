@@ -46,3 +46,4 @@ def get_pattern_coach_guidance(pattern_coach, query: str, search_results: dict, 
         return coaching_msg
     except Exception as e:
         return f"[WARN] Pattern coach failed: {e}"
+

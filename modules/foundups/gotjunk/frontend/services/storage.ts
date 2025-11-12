@@ -24,22 +24,37 @@ export const updateItemStatus = async (id: string, status: ItemStatus): Promise<
     }
 }
 
-export const getAllItems = async (): Promise<CapturedItem[]> => {
+export const getAllItems = async (limit?: number, offset: number = 0): Promise<CapturedItem[]> => {
     const items: CapturedItem[] = [];
+
+    // First pass: collect all items without creating ObjectURLs (fast)
+    const storableItems: Array<{ key: string; value: StorableItem }> = [];
     await localforage.iterate((value: StorableItem, key: string) => {
         // Ensure status defaults to 'review' for legacy items that don't have it.
         if (!value.status) {
             value.status = 'review';
         }
+        storableItems.push({ key, value });
+    });
+
+    // Sort by newest first (using ID timestamp)
+    storableItems.sort((a, b) => {
+        const timeA = parseInt(a.key.split('-')[1] || '0');
+        const timeB = parseInt(b.key.split('-')[1] || '0');
+        return timeB - timeA;
+    });
+
+    // Apply pagination and create ObjectURLs only for requested items (defers expensive blob operations)
+    const paginatedItems = limit !== undefined
+        ? storableItems.slice(offset, offset + limit)
+        : storableItems.slice(offset);
+
+    for (const { key, value } of paginatedItems) {
         const url = URL.createObjectURL(value.blob);
         items.push({ ...value, id: key, url });
-    });
-    // Sort by newest first
-    return items.sort((a, b) => {
-      const timeA = parseInt(a.id.split('-')[1] || '0');
-      const timeB = parseInt(b.id.split('-')[1] || '0');
-      return timeB - timeA;
-    });
+    }
+
+    return items;
 };
 
 export const deleteItem = async (id: string): Promise<void> => {

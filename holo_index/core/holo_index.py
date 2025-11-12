@@ -29,7 +29,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
 import time
 
@@ -103,8 +103,18 @@ class HoloIndex:
         self._breadcrumb_hint_shown = True
 
     def __init__(self, ssd_path: str = "E:/HoloIndex", quiet: bool = False) -> None:
+        """
+        0102: Initialize HoloIndex with WSP-compliant architecture.
+        
+        Args:
+            ssd_path: Path to SSD for persistent storage
+            quiet: Suppress initialization logs
+        """
         self.quiet = quiet
         self._log_agent_action(f"Initializing HoloIndex on SSD: {ssd_path}", "INIT")
+
+        # Persistent storage layout (mirrors pre-rebuild behaviour)
+        self.project_root = Path(__file__).parent.parent.parent
         self.ssd_path = Path(ssd_path)
         self.vector_path = self.ssd_path / "vectors"
         self.cache_path = self.ssd_path / "cache"
@@ -125,8 +135,24 @@ class HoloIndex:
         self.need_to: Dict[str, str] = {}
         self.wsp_summary: Dict[str, Dict[str, str]] = {}
         self.wsp_summary_file = self.indexes_path / "wsp_summary.json"
+        self._ts_entity_cache: Dict[str, Dict[str, Any]] = {}
         self._breadcrumb_hint_shown: bool = False
-        self.breadcrumb_tracer = None  # Initialize breadcrumb_tracer attribute
+        self.breadcrumb_tracer = None
+
+        # Load cached metadata and navigation pointers
+        self._load_wsp_summary()
+        self._load_navigation()
+
+        # Initialize breadcrumb tracer for multi-agent collaboration
+        if BREADCRUMB_AVAILABLE:
+            try:
+                self.breadcrumb_tracer = BreadcrumbTracer()
+                self._log_agent_action("Breadcrumb tracer initialized for multi-agent discovery sharing", "INFO")
+            except Exception as e:
+                self._log_agent_action(f"Breadcrumb tracer initialization failed: {e}", "WARN")
+                self.breadcrumb_tracer = None  # Ensure it's None on failure
+        else:
+            self.breadcrumb_tracer = None  # Ensure it's always defined
 
     def get_code_entry_count(self) -> int:
         """Get count of indexed code entries."""
@@ -141,22 +167,6 @@ class HoloIndex:
             return self.wsp_collection.count()
         except:
             return 0
-
-        self._load_wsp_summary()
-        self._load_navigation()
-
-        # Initialize breadcrumb tracer for multi-agent collaboration
-        self.breadcrumb_tracer = None
-        self._breadcrumb_hint_shown = False
-        if BREADCRUMB_AVAILABLE:
-            try:
-                self.breadcrumb_tracer = BreadcrumbTracer()
-                self._log_agent_action("Breadcrumb tracer initialized for multi-agent discovery sharing", "INFO")
-            except Exception as e:
-                self._log_agent_action(f"Breadcrumb tracer initialization failed: {e}", "WARN")
-                self.breadcrumb_tracer = None  # Ensure it's None on failure
-        else:
-            self.breadcrumb_tracer = None  # Ensure it's always defined
 
     def _infer_cube_tag(self, *values: Any) -> Optional[str]:
         text = ' '.join(v for v in values if isinstance(v, str)).lower()
@@ -392,127 +402,64 @@ class HoloIndex:
 
     # --------- Search --------- #
 
-    def search(self, query: str, limit: int = 5, doc_type_filter: str = "all") -> Dict[str, Any]:
-        # Log to unified agent stream for 012 and other agents to follow
-        if AGENT_LOGGER_AVAILABLE:
-            # Get agent context from environment
-            agent_context = os.getenv("0102_HOLO_ID") or os.getenv("HOLO_AGENT_ID") or "unknown"
-            log_holo_search(query, code_results=[], wsp_results=[], agent_context=agent_context)
+    def search(self, query: str, limit: int = 10, doc_type_filter: str = "all") -> Dict[str, Any]:
+        """
+        0102: Enhanced search with AST preview extraction for TypeScript/JSX files
+        
+        Args:
+            query: Search query string
+            limit: Maximum number of results to return
+            doc_type_filter: Filter by document type ('code', 'wsp', 'all')
+            
+        Returns:
+            Dictionary with legacy keys ('code', 'wsps') and modern keys
+            ('code_hits', 'wsp_hits') plus metadata for telemetry.
+        """
+        try:
+            # Log search initiation
+            self._log_agent_action(f"Searching: '{query}' (limit={limit}, type={doc_type_filter})")
+            
+            # Perform dual search
+            code_hits = []
+            wsp_hits = []
+            
+            # Search code index if requested
+            if doc_type_filter in ["code", "all"]:
+                code_results = self._search_collection(self.code_collection, query, limit, kind="code")
+                # 0102: Enhance with AST previews
+                code_hits = self._enhance_code_results_with_previews(code_results)
+                
+            # Search WSP index if requested  
+            if doc_type_filter in ["wsp", "all"]:
+                wsp_hits = self._search_collection(self.wsp_collection, query, limit, kind="wsp", doc_type_filter=doc_type_filter)
+            
+            # Log completion
+            self._log_agent_action(f"Search complete: {len(code_hits)} code, {len(wsp_hits)} WSP")
 
-        self._announce_breadcrumb_trail()
-
-        # Also log locally for backward compatibility
-        self._log_agent_action(f"Searching for: '{query}'", "SEARCH")
-        start_time = __import__('time').time()
-
-        # Exact-ID router for WSP queries (deterministic precision)
-        routed_filter = doc_type_filter
-        exact_wsp_match: Optional[Dict[str, Any]] = None
-        wsp_match = re.search(r"\bwsp[\s_]*(\d+)\b", query, re.IGNORECASE)
-        if wsp_match:
-            routed_filter = "wsp_protocol"
-            wsp_key = f"WSP {wsp_match.group(1)}"
-            if self.wsp_summary and wsp_key in self.wsp_summary:
-                s = self.wsp_summary[wsp_key]
-                exact_wsp_match = {
-                    "wsp": wsp_key,
-                    "title": s.get("title"),
-                    "summary": s.get("summary"),
-                    "path": s.get("path"),
-                    "similarity": "100.0%",
-                    "type": "wsp_protocol",
-                    "priority": 10
+            # Backward-compatible payload for CLI/Qwen integrations
+            payload = {
+                'code_hits': code_hits,
+                'wsp_hits': wsp_hits,
+                'code': code_hits,   # legacy key expected by throttler + advisors
+                'wsps': wsp_hits,    # legacy key expected by throttler + advisors
+                'metadata': {
+                    'query': query,
+                    'code_count': len(code_hits),
+                    'wsp_count': len(wsp_hits),
+                    'timestamp': datetime.now().isoformat()
                 }
-
-        # Alias expansion (deterministic synonyms)
-        ql = query.lower()
-        alias_map = {
-            "mps": "WSP 15",
-            "module prioritization scoring": "WSP 15",
-            "root protection": "WSP 85",
-            "module memory": "WSP 60",
-            "mcp governance": "WSP 96",
-        }
-        for alias, canonical in alias_map.items():
-            if alias in ql and canonical.lower() not in ql:
-                query = f"{query} {canonical}"
-
-        # Intent-based doc_type routing for common doc kinds
-        ql = query.lower()
-        if routed_filter == "all":
-            if any(k in ql for k in ["readme", "interface", "roadmap", "modlog"]):
-                routed_filter = {
-                    "readme": "module_readme",
-                    "interface": "interface",
-                    "roadmap": "roadmap",
-                    "modlog": "modlog"
-                }[[k for k in ["readme", "interface", "roadmap", "modlog"] if k in ql][0]]
-
-        code_hits = self._search_collection(self.code_collection, query, limit, kind="code")
-        wsp_hits = self._search_collection(self.wsp_collection, query, limit, kind="wsp", doc_type_filter=routed_filter)
-
-        # Prepend exact WSP match if found and not already present
-        if exact_wsp_match and not any(h.get("wsp") == exact_wsp_match["wsp"] for h in wsp_hits):
-            wsp_hits = [exact_wsp_match] + wsp_hits[:-1] if len(wsp_hits) >= limit else [exact_wsp_match] + wsp_hits
-
-        # Track search in breadcrumb tracer for multi-agent discovery sharing
-        if self.breadcrumb_tracer:
-            try:
-                # Record the search and its results
-                all_results = code_hits + wsp_hits
-                related_docs = [hit.get('metadata', {}).get('path', '') for hit in all_results if hit.get('metadata')]
-                self.breadcrumb_tracer.add_search(query, all_results[:3], related_docs[:5])
-
-                # Check if this is a significant discovery
-                if code_hits and code_hits[0].get('distance', 1.0) < 0.3:
-                    self.breadcrumb_tracer.add_discovery(
-                        discovery_type="high_relevance_code",
-                        item=code_hits[0].get('metadata', {}).get('function', 'unknown'),
-                        location=code_hits[0].get('metadata', {}).get('path', 'unknown'),
-                        impact="Direct match found for query"
-                    )
-            except Exception as e:
-                # Don't fail search if breadcrumb tracking fails
-                self._log_agent_action(f"Breadcrumb tracking error: {e}", "DEBUG")
-
-        warnings = self._generate_warnings(query)
-        warnings.extend(self._warnings_from_wsp_hits(wsp_hits))
-        warnings = self._dedupe(warnings)
-
-        reminders = self._generate_context_reminders(query)
-        reminders.extend(self._reminders_from_wsp_hits(wsp_hits))
-        reminders = self._dedupe(reminders)
-
-        elapsed = (__import__('time').time() - start_time) * 1000
-        self._log_agent_action(f"Dual search completed in {elapsed:.1f}ms - {len(code_hits)} code, {len(wsp_hits)} WSP results", "PERF")
-
-        cube_tags = sorted({hit.get('cube') for hit in code_hits + wsp_hits if hit.get('cube')})
-        fmas_hint = self._should_show_fmas_hint(query, code_hits)
-
-        # Log completion to unified agent stream for 012 and other agents to follow
-        if AGENT_LOGGER_AVAILABLE:
-            agent_context = os.getenv("0102_HOLO_ID") or os.getenv("HOLO_AGENT_ID") or "unknown"
-            log_holo_search(query, len(code_hits + wsp_hits),
-                          code_results=code_hits, wsp_results=wsp_hits, agent_context=agent_context)
-
-        # Also log locally for backward compatibility
-        self._log_agent_action(f"Search '{query}' complete - {len(code_hits + wsp_hits)} total results", "COMPLETE")
-
-        # Notify HoloDAE of search activity for agent attribution
-        self._notify_holodae_search()
-
-        return {
-            "query": query,
-            "code": code_hits,
-            "wsps": wsp_hits,
-            "warnings": warnings,
-            "reminders": reminders,
-            "cubes": cube_tags,
-            "warnings_count": len(warnings),
-            "reminders_count": len(reminders),
-            "fmas_hint": fmas_hint,
-            "elapsed_ms": f"{elapsed:.1f}"
-        }
+            }
+            return payload
+            
+        except Exception as e:
+            self._log_agent_action(f"Search error: {str(e)}", "ERROR")
+            return {
+                'code_hits': [],
+                'wsp_hits': [],
+                'code': [],
+                'wsps': [],
+                'metadata': {'error': str(e)}
+            }
 
     def _notify_holodae_search(self):
         """Notify HoloDAE of recent search activity for agent attribution."""
@@ -844,3 +791,309 @@ class HoloIndex:
                                (f"WSP Compliance: {wsp_compliance}. " if wsp_compliance == "[VIOLATION] NON-COMPLIANT" else "[COMPLIANT] WSP Compliant. ") +
                                ("MANDATORY: Read README.md and INTERFACE.md BEFORE making changes. " if readme_exists and interface_exists else "CRITICAL: Create missing documentation FIRST (WSP_22_Documentation). ")
         }
+
+    def _resolve_location_parts(self, location: str) -> Tuple[Optional[Path], Optional[str]]:
+        """
+        Parse a NAVIGATION location string into file path + optional symbol/line descriptor.
+        Returns (Path, symbol_text) or (None, None) if parsing fails.
+        """
+        if not location:
+            return None, None
+
+        normalized = location.strip()
+        if not normalized:
+            return None, None
+
+        symbol = None
+        split_idx = normalized.rfind(':')
+        filepath = normalized
+
+        if split_idx > 1:
+            filepath = normalized[:split_idx]
+            symbol = normalized[split_idx + 1 :].strip() or None
+
+        try:
+            file_path = Path(filepath.strip())
+            if not file_path.is_absolute():
+                file_path = (self.project_root / filepath.strip()).resolve()
+            return file_path, symbol
+        except Exception:
+            return None, symbol
+
+    def _find_symbol_line(self, file_path: Path, symbol: Optional[str]) -> Optional[int]:
+        """Heuristic search for a symbol name within a file to approximate its line number."""
+        if not symbol or not file_path.exists():
+            return None
+
+        target = symbol.replace('()', '').strip()
+        if not target:
+            return None
+
+        primary = target.split()[0]
+        candidates = [target, primary]
+        seen: set[str] = set()
+
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as handle:
+                lines = handle.readlines()
+        except Exception:
+            return None
+
+        for idx, line in enumerate(lines, start=1):
+            lowered = line.lower()
+            for candidate in candidates:
+                key = candidate.lower()
+                if key in seen:
+                    continue
+                if key and key in lowered:
+                    seen.add(key)
+                    return idx
+
+        return None
+
+    def _extract_typescript_entities(self, file_path: Path) -> Dict[str, Dict[str, Any]]:
+        """Parse TypeScript/TSX file for entity metadata with simple caching."""
+        suffix = file_path.suffix.lower()
+        if suffix not in {'.ts', '.tsx', '.jsx'}:
+            return {}
+
+        try:
+            stat = file_path.stat()
+        except FileNotFoundError:
+            return {}
+
+        cache_entry = self._ts_entity_cache.get(str(file_path))
+        if cache_entry and cache_entry.get('mtime') == stat.st_mtime:
+            return cache_entry.get('entities', {})
+
+        try:
+            text = file_path.read_text(encoding='utf-8', errors='ignore')
+        except Exception:
+            return {}
+
+        lines = text.splitlines()
+        entities = parse_typescript_entities(lines)
+        self._ts_entity_cache[str(file_path)] = {
+            "mtime": stat.st_mtime,
+            "entities": entities
+        }
+        return entities
+
+    def _match_typescript_entity(self, symbol: Optional[str], entities: Dict[str, Dict[str, Any]]) -> Tuple[Optional[str], Optional[int]]:
+        """Match a NAVIGATION symbol description to a parsed TypeScript entity."""
+        if not symbol or not entities:
+            return None, None
+
+        cleaned = symbol.strip()
+        if not cleaned:
+            return None, None
+
+        cleaned = cleaned.replace('()', '')
+        candidates = [cleaned]
+
+        if '(' in symbol:
+            candidates.append(symbol.split('(', 1)[0])
+        if ' ' in cleaned:
+            candidates.append(cleaned.split(' ', 1)[0])
+
+        for candidate in candidates:
+            key = _normalize_symbol_key(candidate)
+            if key and key in entities:
+                entry = entities[key]
+                return entry.get('preview'), entry.get('line')
+
+        return None, None
+
+    def _extract_ast_preview(self, filepath: str, match_line: int, context: int = 6) -> str:
+        """
+        0102: Extract surrounding JSX/TSX AST block for preview using fallback extraction
+        
+        Args:
+            filepath: Path to the TypeScript/JSX file
+            match_line: Line number where match was found
+            context: Number of lines to include above and below
+            
+        Returns:
+            Extracted code block for preview
+        """
+        try:
+            from pathlib import Path
+            
+            file_path = Path(filepath)
+            if not file_path.exists():
+                return "[File not found]"
+            
+            # Read file content
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                lines = f.read().splitlines()
+            
+            if not lines or match_line <= 0 or match_line > len(lines):
+                return "[Invalid line range]"
+            
+            # Calculate context boundaries
+            start_line = max(0, match_line - context - 1)  # Convert to 0-based
+            end_line = min(len(lines), match_line + context)
+            
+            # Extract the block
+            preview_lines = lines[start_line:end_line]
+            
+            # Clean up the preview
+            preview = '\n'.join(preview_lines).strip()
+            
+            # Limit preview length for display
+            if len(preview) > 400:
+                preview = preview[:400] + "..."
+            
+            return preview if preview else "[No preview available]"
+            
+        except Exception as e:
+            return f"[0102 preview extraction error: {str(e)}]"
+
+    def _enhance_code_results_with_previews(self, code_hits: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        0102: Enhance code results with AST-based previews for empty results
+        
+        Args:
+            code_hits: List of code search results
+            
+        Returns:
+            Enhanced results with previews
+        """
+        enhanced_hits = []
+        
+        for hit in code_hits:
+            enhanced_hit = hit.copy()
+
+            if enhanced_hit.get('preview'):
+                enhanced_hits.append(enhanced_hit)
+                continue
+
+            location = (hit.get('location') or '').strip()
+            if not location:
+                enhanced_hit['preview'] = "[Location unavailable]"
+                enhanced_hits.append(enhanced_hit)
+                continue
+
+            file_path, symbol = self._resolve_location_parts(location)
+            if not file_path:
+                enhanced_hit['preview'] = "[Location format error]"
+                enhanced_hits.append(enhanced_hit)
+                continue
+
+            enhanced_hit['path'] = str(file_path)
+
+            if not file_path.exists():
+                enhanced_hit['preview'] = "[File not found]"
+                enhanced_hits.append(enhanced_hit)
+                continue
+
+            preview = None
+            line_num = None
+            manual_preview = None
+
+            suffix = file_path.suffix.lower()
+            if symbol and suffix in {'.ts', '.tsx', '.jsx'}:
+                entities = self._extract_typescript_entities(file_path)
+                manual_preview, line_num = self._match_typescript_entity(symbol, entities)
+
+            if line_num is None:
+                line_num = self._find_symbol_line(file_path, symbol)
+
+            if line_num:
+                preview = self._extract_ast_preview(str(file_path), line_num)
+                enhanced_hit['line'] = line_num
+            elif manual_preview:
+                preview = manual_preview
+            else:
+                preview = "[No preview available]"
+
+            enhanced_hit['preview'] = preview
+            enhanced_hits.append(enhanced_hit)
+        
+        return enhanced_hits
+
+
+TS_FUNCTION_PATTERN = re.compile(r'^(?:export\s+)?(?:default\s+)?(?:async\s+)?function\s+(?P<name>[A-Za-z0-9_]+)\s*\(')
+TS_CLASS_PATTERN = re.compile(r'^(?:export\s+)?(?:abstract\s+)?class\s+(?P<name>[A-Za-z0-9_]+)\b')
+TS_INTERFACE_PATTERN = re.compile(r'^(?:export\s+)?interface\s+(?P<name>[A-Za-z0-9_]+)\b')
+TS_TYPE_PATTERN = re.compile(r'^(?:export\s+)?type\s+(?P<name>[A-Za-z0-9_]+)\b')
+TS_ENUM_PATTERN = re.compile(r'^(?:export\s+)?enum\s+(?P<name>[A-Za-z0-9_]+)\b')
+TS_CONST_PATTERN = re.compile(r'^(?:export\s+)?const\s+(?P<name>[A-Za-z0-9_]+)\s*(?::[^=]+)?=')
+TS_ARRAY_STATE_PATTERN = re.compile(r'^(?:export\s+)?const\s+\[\s*(?P<name>[A-Za-z0-9_]+)')
+
+
+def _normalize_symbol_key(symbol: str) -> str:
+    """Normalize symbol names for consistent dictionary lookups."""
+    if not symbol:
+        return ""
+    return re.sub(r'[^a-z0-9]+', '', symbol.lower())
+
+
+def _build_preview_from_lines(lines: List[str], index: int, context: int = 6) -> str:
+    start = max(0, index - context)
+    end = min(len(lines), index + context + 1)
+    preview = '\n'.join(lines[start:end]).strip()
+    if len(preview) > 400:
+        preview = preview[:400] + "..."
+    return preview or "[No preview available]"
+
+
+def parse_typescript_entities(lines: List[str], context: int = 6) -> Dict[str, Dict[str, Any]]:
+    """Extract TypeScript/TSX entities (components, hooks, interfaces, etc.) from raw lines."""
+    entities: Dict[str, Dict[str, Any]] = {}
+
+    for idx, raw_line in enumerate(lines):
+        stripped = raw_line.strip()
+        if not stripped or stripped.startswith('//'):
+            continue
+
+        entry: Optional[Dict[str, Any]] = None
+        match = TS_ARRAY_STATE_PATTERN.match(stripped)
+        if match and ('useState' in stripped or 'useReducer' in stripped):
+            name = match.group('name')
+            entry = {"name": name, "kind": "state"}
+        else:
+            for kind, pattern in (
+                ("function", TS_FUNCTION_PATTERN),
+                ("const", TS_CONST_PATTERN),
+                ("class", TS_CLASS_PATTERN),
+                ("interface", TS_INTERFACE_PATTERN),
+                ("type", TS_TYPE_PATTERN),
+                ("enum", TS_ENUM_PATTERN),
+            ):
+                match = pattern.match(stripped)
+                if match:
+                    name = match.group('name')
+                    entry = {"name": name, "kind": kind}
+                    break
+
+        if not entry:
+            continue
+
+        normalized_key = _normalize_symbol_key(entry["name"])
+        if not normalized_key:
+            continue
+
+        preview = _build_preview_from_lines(lines, idx, context)
+        entities[normalized_key] = {
+            "name": entry["name"],
+            "line": idx + 1,
+            "preview": preview,
+            "kind": entry["kind"]
+        }
+
+        # Capture both state variable and setter for destructured hooks
+        if entry["kind"] == "state" and 'set' in stripped:
+            setter_match = re.search(r'set([A-Za-z0-9_]+)', stripped)
+            if setter_match:
+                setter_name = setter_match.group(1)
+                setter_key = _normalize_symbol_key(setter_name)
+                if setter_key and setter_key not in entities:
+                    entities[setter_key] = {
+                        "name": setter_name,
+                        "line": idx + 1,
+                        "preview": preview,
+                        "kind": "state_setter"
+                    }
+
+    return entities
