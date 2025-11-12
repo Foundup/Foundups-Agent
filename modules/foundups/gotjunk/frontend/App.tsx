@@ -28,6 +28,7 @@ interface LibertyAlert {
   message: string;
   video_url?: string;
   timestamp: number;
+  type: 'region' | 'capture'; // region = 🗽 (global hot zones), capture = 🧊 (user-captured events)
 }
 
 // GotJunk Item for Map Display
@@ -147,43 +148,49 @@ const App: React.FC = () => {
   const [purchasingItem, setPurchasingItem] = useState<CapturedItem | null>(null);
 
   // Liberty Alert State (unlocked via SOS morse code easter egg)
-  // Pre-populated with known conflict zones (ice events)
+  // Pre-populated with US ICE activity hot zones (🗽 Liberty statue markers)
   const SAMPLE_LIBERTY_ALERTS: LibertyAlert[] = [
     {
-      id: 'alert-ukraine-donetsk',
-      location: { latitude: 48.0159, longitude: 37.8028 }, // Donetsk, Ukraine
-      message: 'Liberty Alert - Donbas conflict zone',
-      timestamp: Date.now() - 86400000 * 30, // 30 days ago
+      id: 'region-texas-border',
+      location: { latitude: 26.0714, longitude: -98.2958 }, // McAllen, TX (RGV Border)
+      message: 'ICE Activity - Rio Grande Valley Border Patrol Sector',
+      timestamp: Date.now() - 86400000 * 7, // 7 days ago
+      type: 'region',
     },
     {
-      id: 'alert-gaza',
-      location: { latitude: 31.5, longitude: 34.467 }, // Gaza
-      message: 'Liberty Alert - Gaza humanitarian crisis',
-      timestamp: Date.now() - 86400000 * 60, // 60 days ago
+      id: 'region-arizona-border',
+      location: { latitude: 31.7686, longitude: -110.9499 }, // Nogales, AZ
+      message: 'ICE Activity - Tucson Border Patrol Sector',
+      timestamp: Date.now() - 86400000 * 14, // 14 days ago
+      type: 'region',
     },
     {
-      id: 'alert-syria-aleppo',
-      location: { latitude: 36.2021, longitude: 37.1343 }, // Aleppo, Syria
-      message: 'Liberty Alert - Syrian conflict',
-      timestamp: Date.now() - 86400000 * 90, // 90 days ago
+      id: 'region-california-border',
+      location: { latitude: 32.5453, longitude: -117.0382 }, // Tijuana Border / San Ysidro
+      message: 'ICE Activity - San Diego Border Patrol Sector',
+      timestamp: Date.now() - 86400000 * 10, // 10 days ago
+      type: 'region',
     },
     {
-      id: 'alert-yemen-sanaa',
-      location: { latitude: 15.3694, longitude: 44.191 }, // Sanaa, Yemen
-      message: 'Liberty Alert - Yemen humanitarian crisis',
-      timestamp: Date.now() - 86400000 * 120, // 120 days ago
+      id: 'region-new-york',
+      location: { latitude: 40.7128, longitude: -74.006 }, // New York City
+      message: 'ICE Activity - NYC Enforcement Operations',
+      timestamp: Date.now() - 86400000 * 3, // 3 days ago
+      type: 'region',
     },
     {
-      id: 'alert-myanmar',
-      location: { latitude: 16.8661, longitude: 96.1951 }, // Yangon, Myanmar
-      message: 'Liberty Alert - Myanmar democracy movement',
-      timestamp: Date.now() - 86400000 * 45, // 45 days ago
+      id: 'region-los-angeles',
+      location: { latitude: 34.0522, longitude: -118.2437 }, // Los Angeles
+      message: 'ICE Activity - LA County Enforcement',
+      timestamp: Date.now() - 86400000 * 5, // 5 days ago
+      type: 'region',
     },
     {
-      id: 'alert-sudan-khartoum',
-      location: { latitude: 15.5007, longitude: 32.5599 }, // Khartoum, Sudan
-      message: 'Liberty Alert - Sudan conflict',
-      timestamp: Date.now() - 86400000 * 15, // 15 days ago
+      id: 'region-chicago',
+      location: { latitude: 41.8781, longitude: -87.6298 }, // Chicago
+      message: 'ICE Activity - Chicago Field Office Operations',
+      timestamp: Date.now() - 86400000 * 12, // 12 days ago
+      type: 'region',
     },
   ];
 
@@ -501,12 +508,13 @@ const App: React.FC = () => {
   const handleLibertyCapture = (blob: Blob, location: { latitude: number; longitude: number }) => {
     console.log('[Liberty] Alert captured from map:', blob.type, blob.size, 'bytes', location);
 
-    // Create Liberty Alert with photo + GPS coordinates
+    // Create Liberty Alert with photo + GPS coordinates (type='capture' for 🧊 ice cube marker)
     const alert: LibertyAlert = {
-      id: `alert-${Date.now()}`,
+      id: `capture-${Date.now()}`,
       location,
-      message: 'Liberty Alert - User captured on map',
+      message: 'ICE Activity - User captured event',
       timestamp: Date.now(),
+      type: 'capture', // 🧊 ice cube marker (user-captured event)
     };
 
     // Add to alerts list (shows as 🧊 ice cube on map)
@@ -514,7 +522,7 @@ const App: React.FC = () => {
     console.log('🧊 Ice cube marker created on map!', alert);
 
     // Show confirmation to user
-    alert(`🗽 Liberty Alert Created!\nLocation: ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`);
+    alert(`🧊 ICE Event Captured!\nLocation: ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`);
   };
 
   const handleReviewDecision = async (item: CapturedItem, decision: 'keep' | 'delete') => {

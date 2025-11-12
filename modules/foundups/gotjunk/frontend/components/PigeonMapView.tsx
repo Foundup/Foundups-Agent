@@ -20,8 +20,10 @@ interface JunkItem {
 interface LibertyAlert {
   id: string;
   location: { latitude: number; longitude: number };
-  type: 'checkpoint' | 'raid' | 'ice';
+  message: string;
+  video_url?: string;
   timestamp: number;
+  type: 'region' | 'capture'; // region = 🗽 (global hot zones), capture = 🧊 (user-captured events)
   radius?: number;
 }
 
@@ -50,11 +52,13 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   onLibertyActivate,
   onLibertyCapture,
 }) => {
-  // Global view for Liberty Alerts, local view for GotJunk items
+  // Global view for Liberty Alerts (US map), local view for GotJunk items
   const isGlobalView = showLibertyAlerts && isGlobalLiberty;
 
   const center: [number, number] = isGlobalView
-    ? [20, 0] // Global center (shows full world map)
+    ? [39.8283, -98.5795] // US center (shows continental US)
+    : selectedRegion
+    ? [selectedRegion.latitude, selectedRegion.longitude] // Zoomed to selected 🗽 region
     : userLocation
     ? [userLocation.latitude, userLocation.longitude]
     : [37.7749, -122.4194]; // Default: San Francisco
@@ -75,6 +79,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
 
   // Liberty Global View Toggle
   const [isGlobalLiberty, setIsGlobalLiberty] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState<{ latitude: number; longitude: number } | null>(null);
 
   // Swipe gesture detection
   const touchStartY = useRef<number>(0);
@@ -186,7 +191,8 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
 
     // Zoom to global or local view
     if (!isGlobalLiberty) {
-      setZoom(2); // Zoom out to world view
+      setZoom(4); // Zoom out to US map view
+      setSelectedRegion(null); // Clear selected region when going global
     } else {
       setZoom(12); // Zoom back to local view
     }
@@ -201,10 +207,11 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
     touchEndY.current = e.changedTouches[0].clientY;
     const swipeDistance = touchStartY.current - touchEndY.current;
 
-    // Swipe up (distance > 50px) → return to home
+    // Swipe up (distance > 50px) → return to home location
     if (swipeDistance > 50 && isGlobalLiberty) {
       console.log('[Liberty] Swipe up detected - returning to home location');
       setIsGlobalLiberty(false);
+      setSelectedRegion(null); // Clear selected region
       setZoom(12);
     }
   };
@@ -395,22 +402,39 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
           ))
         )}
 
-        {/* Liberty Alert markers (🗽 statue) - only if unlocked */}
+        {/* Liberty Alert markers - 🗽 (region hot zones) and 🧊 (user captures) */}
         {showLibertyAlerts &&
-          libertyAlerts.map((alert) => (
-            <Overlay
-              key={alert.id}
-              anchor={[alert.location.latitude, alert.location.longitude]}
-            >
-              <div
-                onClick={() => setSelectedAlert(alert)}
-                className="cursor-pointer hover:scale-110 transition-transform"
-                title={alert.message}
+          libertyAlerts.map((alert) => {
+            const isRegion = alert.type === 'region';
+            const icon = isRegion ? '🗽' : '🧊';
+            const iconSize = isGlobalView && isRegion ? 'text-5xl' : 'text-3xl';
+
+            return (
+              <Overlay
+                key={alert.id}
+                anchor={[alert.location.latitude, alert.location.longitude]}
               >
-                <span className={isGlobalView ? "text-5xl" : "text-3xl"}>🗽</span>
-              </div>
-            </Overlay>
-          ))}
+                <div
+                  onClick={() => {
+                    if (isRegion && isGlobalView) {
+                      // Click 🗽 → zoom to that location (local view)
+                      console.log('[Liberty] Region clicked, zooming to:', alert.location);
+                      setSelectedRegion(alert.location); // Set center to clicked region
+                      setIsGlobalLiberty(false);
+                      setZoom(12);
+                    } else {
+                      // Show alert details popup (🧊 ice cubes or local 🗽)
+                      setSelectedAlert(alert);
+                    }
+                  }}
+                  className="cursor-pointer hover:scale-110 transition-transform"
+                  title={alert.message}
+                >
+                  <span className={iconSize}>{icon}</span>
+                </div>
+              </Overlay>
+            );
+          })}
 
         {/* Selected item popup */}
         {selectedItem && (
@@ -460,8 +484,8 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
                 ✕
               </button>
               <h3 className="font-bold text-white flex items-center gap-2">
-                <span className="text-2xl">🗽</span>
-                Liberty Alert
+                <span className="text-2xl">{selectedAlert.type === 'region' ? '🗽' : '🧊'}</span>
+                {selectedAlert.type === 'region' ? 'ICE Activity Region' : 'ICE Event Captured'}
               </h3>
               <p className="text-sm text-blue-200 mt-1">
                 {selectedAlert.message}
