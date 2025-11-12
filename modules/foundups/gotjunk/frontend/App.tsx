@@ -93,6 +93,9 @@ const App: React.FC = () => {
   // === CLASSIFICATION FILTER ===
   const [classificationFilter, setClassificationFilter] = useState<'all' | ItemClassification>('all');
 
+  // === BROWSE GRID MODE (swipe up to show thumbnails) ===
+  const [isBrowseGridMode, setIsBrowseGridMode] = useState(false);
+
   // === RESPONSIVE VIEWPORT (iOS Safari vh fix) ===
   useViewport();
   useViewportHeight(); // Track visualViewport for proper modal centering
@@ -723,27 +726,75 @@ const App: React.FC = () => {
               </select>
             </div>
 
-            {/* Swipeable Item */}
-            <AnimatePresence>
-              {filteredBrowseFeed.length > 0 && (
-                <ItemReviewer
-                  key={filteredBrowseFeed[0].id}
-                  item={filteredBrowseFeed[0]}
-                  onDecision={(item, decision) => handleBrowseSwipe(item, decision === 'keep' ? 'right' : 'left')}
+            {/* Grid Mode - Thumbnails (when user swipes up) */}
+            {isBrowseGridMode ? (
+              <motion.div
+                className="w-full h-full overflow-y-auto"
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 0 }}
+                dragElastic={0.2}
+                onDragEnd={(event, info) => {
+                  // Swipe down (positive offset.y > 100px) → return to stream mode
+                  if (info.offset.y > 100) {
+                    console.log('[Browse] Swipe down → stream mode');
+                    setIsBrowseGridMode(false);
+                  }
+                }}
+              >
+                <PhotoGrid
+                  items={filteredBrowseFeed}
+                  onClick={(item) => {
+                    // Tap thumbnail → exit grid mode and show this item in fullscreen
+                    console.log('[Browse] Grid item clicked:', item.id);
+                    setIsBrowseGridMode(false);
+                  }}
+                  onDelete={async (item) => {
+                    // Remove from browse feed (mark as skipped)
+                    console.log('[Browse] Delete from grid:', item.id);
+                    await storage.updateItemStatus(item.id, 'skipped');
+                    setBrowseFeed(current => current.filter(i => i.id !== item.id));
+                    setSkipped(current => [...current, { ...item, status: 'skipped' }]);
+                  }}
+                  onBadgeClick={(item) => {
+                    console.log('[Browse] Re-classify from grid:', item.id);
+                    setReclassifyingItem(item);
+                  }}
+                  onBadgeLongPress={(item) => {
+                    console.log('[Browse] Edit options from grid:', item.id);
+                    setEditingOptionsItem(item);
+                  }}
                 />
-              )}
-            </AnimatePresence>
+              </motion.div>
+            ) : (
+              <>
+                {/* Stream Mode - Swipeable Item */}
+                <AnimatePresence>
+                  {filteredBrowseFeed.length > 0 && (
+                    <ItemReviewer
+                      key={filteredBrowseFeed[0].id}
+                      item={filteredBrowseFeed[0]}
+                      onDecision={(item, decision) => handleBrowseSwipe(item, decision === 'keep' ? 'right' : 'left')}
+                      onClose={() => {
+                        // Swipe up detected → switch to grid mode
+                        console.log('[Browse] Swipe up → grid mode');
+                        setIsBrowseGridMode(true);
+                      }}
+                    />
+                  )}
+                </AnimatePresence>
 
-            {/* Empty State */}
-            {filteredBrowseFeed.length === 0 && !isRecording && (
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center px-8">
-                <h2 className="text-3xl font-bold text-white mb-3">No items found</h2>
-                <p className="text-lg text-gray-400">
-                  {classificationFilter === 'all'
-                    ? '50km radius • Try capturing some items!'
-                    : `No ${classificationFilter} items nearby`}
-                </p>
-              </div>
+                {/* Empty State */}
+                {filteredBrowseFeed.length === 0 && !isRecording && (
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center px-8">
+                    <h2 className="text-3xl font-bold text-white mb-3">No items found</h2>
+                    <p className="text-lg text-gray-400">
+                      {classificationFilter === 'all'
+                        ? '50km radius • Try capturing some items!'
+                        : `No ${classificationFilter} items nearby`}
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
