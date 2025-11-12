@@ -35,6 +35,7 @@ interface PigeonMapViewProps {
   showLibertyAlerts?: boolean;
   useClustering?: boolean;  // Enable/disable clustering (default: true)
   onLibertyActivate?: () => void;  // NEW: Callback when SOS morse code detected
+  navigationCenter?: { latitude: number; longitude: number } | null;  // NEW: Center map on this location (for arrow navigation)
 }
 
 export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
@@ -47,6 +48,7 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   showLibertyAlerts = false,
   useClustering = true,
   onLibertyActivate,
+  navigationCenter = null,
 }) => {
   // Liberty Global View Toggle (MUST be declared before use in center calculation)
   const [isGlobalLiberty, setIsGlobalLiberty] = useState(false);
@@ -57,6 +59,8 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
 
   const center: [number, number] = isGlobalView
     ? [20, 0] // World center (shows entire globe with all continents)
+    : navigationCenter
+    ? [navigationCenter.latitude, navigationCenter.longitude] // Arrow navigation center (priority)
     : selectedRegion
     ? [selectedRegion.latitude, selectedRegion.longitude] // Zoomed to selected 🗽 region
     : userLocation
