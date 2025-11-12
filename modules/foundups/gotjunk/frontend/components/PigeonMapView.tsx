@@ -309,34 +309,38 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
       </div>
 
       {/* Liberty Alert Camera Orb - Center bottom (only in local view, not global) */}
-      {showLibertyAlerts && !isCameraOpen && !isGlobalLiberty && (
-        <motion.button
-          onClick={handleCameraOrbClick}
-          className="absolute bottom-24 left-1/2 -translate-x-1/2 w-20 h-20 bg-amber-500 rounded-full shadow-2xl border-4 border-white z-50 flex items-center justify-center"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          title="Capture Liberty Alert"
-        >
-          <span className="text-4xl">📸</span>
-          {/* Liberty Badge */}
-          <div className="absolute -top-2 -right-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center border-2 border-white">
-            <span className="text-xl">🗽</span>
-          </div>
-        </motion.button>
-      )}
-
-      {/* Liberty Alert Camera Component */}
-      {showLibertyAlerts && isCameraOpen && (
-        <div className="absolute inset-0 z-50">
-          <Camera
-            ref={libertyCameraRef}
-            onCapture={handleLibertyCapture}
-            captureMode="photo" // Liberty alerts are photos only
-          />
+      {showLibertyAlerts && !isGlobalLiberty && (
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-50">
+          <motion.div
+            onClick={handleCameraOrbClick}
+            className="relative w-20 h-20 rounded-full shadow-2xl border-4 border-white flex items-center justify-center cursor-pointer"
+            style={{
+              backgroundColor: isCameraOpen ? 'transparent' : '#f59e0b', // amber-500 when closed, transparent when camera open
+            }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            title="Capture Liberty Alert"
+          >
+            {isCameraOpen ? (
+              // Camera preview fills the orb (same as default camera)
+              <Camera
+                ref={libertyCameraRef}
+                onCapture={handleLibertyCapture}
+                captureMode="photo" // Liberty alerts are photos only
+              />
+            ) : (
+              // Camera icon when closed
+              <span className="text-4xl">📸</span>
+            )}
+            {/* Liberty Badge - always visible */}
+            <div className="absolute -top-2 -right-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center border-2 border-white pointer-events-none">
+              <span className="text-xl">🗽</span>
+            </div>
+          </motion.div>
         </div>
       )}
 
