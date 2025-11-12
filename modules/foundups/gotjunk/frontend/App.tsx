@@ -147,7 +147,47 @@ const App: React.FC = () => {
   const [purchasingItem, setPurchasingItem] = useState<CapturedItem | null>(null);
 
   // Liberty Alert State (unlocked via SOS morse code easter egg)
-  const [libertyAlerts, setLibertyAlerts] = useState<LibertyAlert[]>([]);
+  // Pre-populated with known conflict zones (ice events)
+  const SAMPLE_LIBERTY_ALERTS: LibertyAlert[] = [
+    {
+      id: 'alert-ukraine-donetsk',
+      location: { latitude: 48.0159, longitude: 37.8028 }, // Donetsk, Ukraine
+      message: 'Liberty Alert - Donbas conflict zone',
+      timestamp: Date.now() - 86400000 * 30, // 30 days ago
+    },
+    {
+      id: 'alert-gaza',
+      location: { latitude: 31.5, longitude: 34.467 }, // Gaza
+      message: 'Liberty Alert - Gaza humanitarian crisis',
+      timestamp: Date.now() - 86400000 * 60, // 60 days ago
+    },
+    {
+      id: 'alert-syria-aleppo',
+      location: { latitude: 36.2021, longitude: 37.1343 }, // Aleppo, Syria
+      message: 'Liberty Alert - Syrian conflict',
+      timestamp: Date.now() - 86400000 * 90, // 90 days ago
+    },
+    {
+      id: 'alert-yemen-sanaa',
+      location: { latitude: 15.3694, longitude: 44.191 }, // Sanaa, Yemen
+      message: 'Liberty Alert - Yemen humanitarian crisis',
+      timestamp: Date.now() - 86400000 * 120, // 120 days ago
+    },
+    {
+      id: 'alert-myanmar',
+      location: { latitude: 16.8661, longitude: 96.1951 }, // Yangon, Myanmar
+      message: 'Liberty Alert - Myanmar democracy movement',
+      timestamp: Date.now() - 86400000 * 45, // 45 days ago
+    },
+    {
+      id: 'alert-sudan-khartoum',
+      location: { latitude: 15.5007, longitude: 32.5599 }, // Khartoum, Sudan
+      message: 'Liberty Alert - Sudan conflict',
+      timestamp: Date.now() - 86400000 * 15, // 15 days ago
+    },
+  ];
+
+  const [libertyAlerts, setLibertyAlerts] = useState<LibertyAlert[]>(SAMPLE_LIBERTY_ALERTS);
   const [libertyEnabled, setLibertyEnabled] = useState(false); // OFF until SOS unlock
   const [voiceRecognition, setVoiceRecognition] = useState<any>(null);
   const [keywordDetected, setKeywordDetected] = useState(false);

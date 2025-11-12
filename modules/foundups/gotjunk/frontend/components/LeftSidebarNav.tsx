@@ -74,17 +74,6 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
         zIndex: Z_LAYERS.sidebar,
       }}
     >
-      {/* Liberty Alert - Top of sidebar */}
-      {libertyEnabled && (
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="text-3xl filter drop-shadow-lg"
-        >
-          🗽
-        </motion.div>
-      )}
-
       {/* Tab 1: Browse - Grid Icon */}
       <motion.button
         onMouseDown={handleGalleryMouseDown}

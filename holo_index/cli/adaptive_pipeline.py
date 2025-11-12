@@ -106,3 +106,4 @@ def run_adaptive_pipeline(holo, args, results, throttler, adaptive_orchestrator=
         throttler.add_section('system', f'[WARN] Adaptive learning failed: {e}', priority=7, tags=['system', 'warning'])
         logging.exception("Adaptive learning failed")
         return {'enabled': True, 'error': str(e)}
+

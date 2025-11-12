@@ -34,3 +34,4 @@ def get_root_alert_summary(verbose: bool = False) -> Optional[str]:
             return f"[WARNING] Root violation monitoring failed: {e}"
 
     return None
+
