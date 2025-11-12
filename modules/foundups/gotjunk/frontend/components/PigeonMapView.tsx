@@ -52,6 +52,10 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   onLibertyActivate,
   onLibertyCapture,
 }) => {
+  // Liberty Global View Toggle (MUST be declared before use in center calculation)
+  const [isGlobalLiberty, setIsGlobalLiberty] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState<{ latitude: number; longitude: number } | null>(null);
+
   // Global view for Liberty Alerts (world map), local view for GotJunk items
   const isGlobalView = showLibertyAlerts && isGlobalLiberty;
 
@@ -76,10 +80,6 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   // Liberty Alert Camera (for capturing alerts on map)
   const libertyCameraRef = useRef<CameraHandle>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-
-  // Liberty Global View Toggle
-  const [isGlobalLiberty, setIsGlobalLiberty] = useState(false);
-  const [selectedRegion, setSelectedRegion] = useState<{ latitude: number; longitude: number } | null>(null);
 
   // Swipe gesture detection
   const touchStartY = useRef<number>(0);
