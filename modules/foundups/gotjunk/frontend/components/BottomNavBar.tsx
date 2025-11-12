@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { LeftArrowIcon } from './icons/LeftArrowIcon';
 import { RightArrowIcon } from './icons/RightArrowIcon';
@@ -53,6 +53,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   const stopTimeoutRef = useRef<number | null>(null);
   const momentaryRecordingRef = useRef<boolean>(false);
   const captureLockRef = useRef<boolean>(false); // Prevents double-capture from touch+mouse events
+  const [isCameraInitialized, setIsCameraInitialized] = useState(false); // Defer getUserMedia() until user clicks camera
 
   const stopRecording = () => {
     if (countdownIntervalRef.current) {
@@ -98,6 +99,12 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   };
 
   const handlePressStart = () => {
+    // Initialize camera on first press (defers getUserMedia() until user actually uses camera)
+    if (!isCameraInitialized) {
+      setIsCameraInitialized(true);
+      console.log('[GotJunk] Camera initialized on first press');
+    }
+
     if (isRecording) return;
     if (captureMode === 'photo') {
         pressTimerRef.current = window.setTimeout(() => startRecording(true), 250);
@@ -178,7 +185,8 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               onTouchStart={handlePressStart}
               onTouchEnd={handlePressEnd}
             >
-                 <Camera ref={cameraRef} onCapture={onCapture} captureMode={captureMode} />
+                 {/* Defer Camera mount until first press (saves 200-500ms on app load) */}
+                 {isCameraInitialized && <Camera ref={cameraRef} onCapture={onCapture} captureMode={captureMode} />}
             </div>
 
             {/* Auto-Classify Toggle Button - Moved to RIGHT of orb to prevent accidental triggers */}

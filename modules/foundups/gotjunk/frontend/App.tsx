@@ -217,7 +217,9 @@ const App: React.FC = () => {
 //         console.error('[GotJunk] IPFS initialization failed:', error);
 //       }
 
-      const allItems = await storage.getAllItems();
+      // Load first 50 items (pagination improves initial load time)
+      // TODO: Implement infinite scroll to load more items on demand
+      const allItems = await storage.getAllItems(50);
 
       try {
         const position = await getCurrentPositionPromise();
@@ -264,17 +266,6 @@ const App: React.FC = () => {
         setBrowseFeed(allItems.filter(item =>
           item.status === 'draft' || item.status === 'browsing' || item.status === 'listed'
         ));
-      }
-
-      // Store user location for map
-      try {
-        const position = await getCurrentPositionPromise();
-        setUserLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude
-        });
-      } catch (error) {
-        console.error("Could not get user location for map:", error);
       }
     };
     initializeApp();
