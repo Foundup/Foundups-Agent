@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { Z_LAYERS } from '../constants/zLayers';
 import { MapClusterMarker, type ItemCluster } from './MapClusterMarker';
 import { clusterItemsByLocation } from '../utils/clusterItems';
-import type { CapturedItem } from '../types';
+import type { CapturedItem, ItemClassification } from '../types';
+import { MapFilterModal } from './MapFilterModal';
 
 interface JunkItem {
   id: string;
@@ -81,13 +82,44 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
   const touchStartY = useRef<number>(0);
   const touchEndY = useRef<number>(0);
 
-  // Split items: Liberty Alert items (🧊) vs regular items
+  // Map Filter Modal state
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<ItemClassification[]>(() => {
+    // Load initial filters from localStorage
+    const stored = localStorage.getItem('gotjunk_map_filters');
+    if (stored) {
+      try {
+        const filters = JSON.parse(stored);
+        return (Object.keys(filters) as ItemClassification[]).filter(
+          key => filters[key]
+        );
+      } catch {
+        // Fall through to default
+      }
+    }
+    // Default: all filters enabled
+    return ['free', 'discount', 'bid', 'share', 'wanted', 'food', 'couch', 'camping', 'housing', 'ice', 'police'];
+  });
+
+  // Split items: Liberty Alert items (🧊) vs regular items, then apply filters
   const { libertyItems, regularItems } = useMemo(() => {
     const liberty = capturedItems.filter(item => item.libertyAlert);
     const regular = capturedItems.filter(item => !item.libertyAlert);
-    console.log('[GotJunk] Split items:', liberty.length, 'Liberty (🧊)', regular.length, 'regular');
-    return { libertyItems: liberty, regularItems: regular };
-  }, [capturedItems]);
+
+    // Apply filters to both Liberty and regular items (based on classification)
+    // Items WITHOUT classification are always visible (bypass filter)
+    // Items WITH classification are only visible if filter is enabled
+    const filteredLiberty = liberty.filter(item =>
+      !item.classification || activeFilters.includes(item.classification)
+    );
+    const filteredRegular = regular.filter(item =>
+      !item.classification || activeFilters.includes(item.classification)
+    );
+
+    console.log('[GotJunk] Split items:', filteredLiberty.length, 'Liberty (🧊)', filteredRegular.length, 'regular');
+    console.log('[GotJunk] Active filters:', activeFilters);
+    return { libertyItems: filteredLiberty, regularItems: filteredRegular };
+  }, [capturedItems, activeFilters]);
 
   // Cluster items by location (memoized to avoid re-computing on every render)
   const itemClusters = useMemo(() => {
@@ -237,13 +269,44 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
         handleTouchEnd(e);
       }}
     >
-      {/* Header - Title only, close button moved to thumb zone */}
+      {/* Header - Title with mic (inactive) and filter icons */}
       <div className="absolute top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/80 to-transparent p-4">
-        <h2 className="text-white text-xl font-bold text-center">
-          {showLibertyAlerts && libertyAlerts.length > 0
-            ? '🗽 Liberty Alert Map'
-            : '🗺️ GotJunk Map'}
-        </h2>
+        <div className="flex items-center justify-between">
+          {/* Left spacer for balance */}
+          <div className="w-20"></div>
+
+          {/* Center title */}
+          <h2 className="text-white text-xl font-bold text-center flex-1">
+            {showLibertyAlerts && libertyAlerts.length > 0
+              ? '🗽 Liberty Alert Map'
+              : '🗺️ GotJunk Map'}
+          </h2>
+
+          {/* Right icons: Mic (inactive) + Filter */}
+          <div className="flex items-center gap-3">
+            {/* Mic icon with red slash (inactive - future voice search) */}
+            <div className="relative" title="Voice search (coming soon)">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              </svg>
+              {/* Red diagonal slash */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-8 h-0.5 bg-red-500 transform rotate-45"></div>
+              </div>
+            </div>
+
+            {/* Filter icon */}
+            <button
+              onClick={() => setShowFilterModal(true)}
+              className="text-white hover:text-blue-400 transition-colors"
+              title="Filter items"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Close Button - Lower thumb zone (bottom-3 = 12px from bottom) */}
@@ -539,6 +602,13 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
           </div>
         )}
       </div>
+
+      {/* Map Filter Modal */}
+      <MapFilterModal
+        isOpen={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={(filters) => setActiveFilters(filters)}
+      />
     </div>
   );
 };
