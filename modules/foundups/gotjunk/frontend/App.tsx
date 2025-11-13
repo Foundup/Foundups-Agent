@@ -1310,6 +1310,7 @@ const App: React.FC = () => {
           isOpen={true}
           imageUrl={reclassifyingItem.url}
           libertyEnabled={libertyEnabled}
+          isMapView={isMapOpen}
           onClassify={(newClassification, discountPercent, bidDurationHours, stayLimitNights, alertTimerMinutes, isPermanent) =>
             handleReclassify(reclassifyingItem, newClassification, discountPercent, bidDurationHours, stayLimitNights, alertTimerMinutes, isPermanent)
           }
@@ -1384,6 +1385,7 @@ const App: React.FC = () => {
         isOpen={!!pendingClassificationItem}
         imageUrl={pendingClassificationItem?.url || ''}
         libertyEnabled={libertyEnabled}
+        isMapView={isMapOpen}
         onClassify={handleClassify}
       />
 
