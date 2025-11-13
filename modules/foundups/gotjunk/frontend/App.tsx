@@ -14,7 +14,8 @@ import { ClassificationModal } from './components/ClassificationModal';
 import { OptionsModal } from './components/OptionsModal';
 import { InstructionsModal } from './components/InstructionsModal';
 import { PurchaseModal } from './components/PurchaseModal';
-import { ItemClassification } from './types';
+import { ActionSheetLibertySelector } from './components/ActionSheetLibertySelector';
+import { ItemClassification, MutualAidClassification, AlertClassification } from './types';
 import { PigeonMapView } from './components/PigeonMapView';
 import { useViewport } from './hooks/useViewport';
 import { useViewportHeight } from './hooks/useViewportHeight';
@@ -97,6 +98,10 @@ const App: React.FC = () => {
   // === CLASSIFICATION FILTER ===
   const [classificationFilter, setClassificationFilter] = useState<'all' | ItemClassification>('all');
 
+  // === MY ITEMS SECTION FILTER (3 compartments) ===
+  type MyItemsSection = 'commerce' | 'share' | 'community';
+  const [myItemsSection, setMyItemsSection] = useState<MyItemsSection>('commerce');
+
   // === BROWSE GRID MODE (swipe up to show thumbnails) ===
   const [isBrowseGridMode, setIsBrowseGridMode] = useState(false);
 
@@ -120,6 +125,17 @@ const App: React.FC = () => {
     bidDurationHours?: number
   } | null>(null);
   const [isSelectingClassification, setIsSelectingClassification] = useState(false); // True when long-pressing toggle to select classification
+
+  // === LIBERTY CLASSIFICATION STATE (PRE-SELECTION PATTERN) ===
+  type LibertyClassification = MutualAidClassification | AlertClassification;
+  const [lastLibertyClassification, setLastLibertyClassification] = useState<{
+    type: LibertyClassification,
+    stayLimitNights?: number,
+    alertTimerMinutes?: number,
+    isPermanent?: boolean
+  } | null>(null);
+  const [isSelectingLibertyClassification, setIsSelectingLibertyClassification] = useState(false); // True when long-pressing 🗽 badge to select classification
+  const [showLibertySelector, setShowLibertySelector] = useState(false); // Controls ActionSheetLibertySelector visibility
 
   // Safety verification: Ensure classification modal appears and waits for user selection
   useEffect(() => {
@@ -383,7 +399,28 @@ const App: React.FC = () => {
       location
     };
 
-    // Check if auto-classify is enabled
+    // Check if Liberty mode auto-classify is enabled (PRE-SELECTION PATTERN)
+    if (libertyEnabled && lastLibertyClassification) {
+      console.log('[GotJunk] Liberty auto-classify enabled - using last Liberty classification:', lastLibertyClassification);
+
+      // Mark as completed immediately to skip safety verification
+      classificationCompletedRef.current = true;
+      pendingClassificationBackupRef.current = null;
+
+      // Directly process with Liberty classification (skip modal) - pass item directly to avoid race condition
+      await handleClassify(
+        lastLibertyClassification.type,
+        undefined, // discountPercent - not used for Liberty
+        undefined, // bidDurationHours - not used for Liberty
+        lastLibertyClassification.stayLimitNights,
+        lastLibertyClassification.alertTimerMinutes,
+        lastLibertyClassification.isPermanent,
+        capturedItem  // Pass item directly instead of relying on setState
+      );
+      return;
+    }
+
+    // Check if commerce auto-classify is enabled
     if (autoClassifyEnabled && lastClassification) {
       console.log('[GotJunk] Auto-classify enabled - using last classification:', lastClassification);
 
@@ -396,6 +433,9 @@ const App: React.FC = () => {
         lastClassification.type,
         lastClassification.discountPercent,
         lastClassification.bidDurationHours,
+        undefined, // stayLimitNights - not used in commerce auto-classify
+        undefined, // alertTimerMinutes - not used in commerce auto-classify
+        undefined, // isPermanent - not used in commerce auto-classify
         capturedItem  // Pass item directly instead of relying on setState
       );
       return;
@@ -431,10 +471,54 @@ const App: React.FC = () => {
     setPendingClassificationItem(phantomItem);
   };
 
+  // Handler for long-press on Liberty badge (🗽)
+  const handleLongPressLibertyBadge = () => {
+    console.log('[GotJunk] Long-press on Liberty badge - opening Liberty classification selector');
+    setShowLibertySelector(true);
+  };
+
+  // Handler for selecting Liberty classification from ActionSheetLibertySelector
+  const handleSelectLibertyClassification = (classification: LibertyClassification) => {
+    console.log('[GotJunk] Liberty classification selected:', classification);
+
+    // Set default values based on classification type
+    let stayLimitNights: number | undefined;
+    let alertTimerMinutes: number | undefined;
+    let isPermanent: boolean | undefined;
+
+    if (classification === 'couch') {
+      stayLimitNights = 1;
+    } else if (classification === 'camping') {
+      stayLimitNights = 2;
+    } else if (classification === 'ice') {
+      alertTimerMinutes = 60;
+      isPermanent = false;
+    } else if (classification === 'police') {
+      alertTimerMinutes = 5;
+      isPermanent = false;
+    }
+
+    // Store selected Liberty classification for auto-classify
+    setLastLibertyClassification({
+      type: classification,
+      stayLimitNights,
+      alertTimerMinutes,
+      isPermanent
+    });
+
+    // Close selector
+    setShowLibertySelector(false);
+
+    console.log('[GotJunk] Liberty auto-classify enabled - captures will use:', classification);
+  };
+
   const handleClassify = async (
     classification: ItemClassification,
     discountPercent?: number,
     bidDurationHours?: number,
+    stayLimitNights?: number,
+    alertTimerMinutes?: number,
+    isPermanent?: boolean,
     itemOverride?: {blob: Blob, url: string, location?: {latitude: number, longitude: number}}
   ) => {
     console.log('[GotJunk] handleClassify called:', { classification, discountPercent, bidDurationHours, hasPending: !!pendingClassificationItem, hasOverride: !!itemOverride, isProcessing: isProcessingClassification });
@@ -497,6 +581,29 @@ const App: React.FC = () => {
         price = defaultPrice * 0.5; // Starting bid at 50% OFF
       }
 
+      // Build alertTimer for ice/police classifications
+      let alertTimer = undefined;
+      if (classification === 'ice' || classification === 'police') {
+        const durationMs = (alertTimerMinutes || (classification === 'police' ? 5 : 60)) * 60 * 1000;
+        const startTime = Date.now();
+        alertTimer = {
+          startTime,
+          duration: durationMs,
+          expiresAt: startTime + durationMs,
+          isPermanent: isPermanent || false,
+        };
+      }
+
+      // Build stayLimit for couch/camping classifications
+      let stayLimit = undefined;
+      if (classification === 'couch' || classification === 'camping') {
+        stayLimit = {
+          maxNights: stayLimitNights || (classification === 'couch' ? 1 : 2),
+          checkIn: undefined,
+          checkOut: undefined,
+        };
+      }
+
       const newItem: CapturedItem = {
         id: `item-${Date.now()}`,
         blob,
@@ -508,6 +615,9 @@ const App: React.FC = () => {
         originalPrice: defaultPrice,
         discountPercent: classification === 'discount' ? finalDiscountPercent : undefined,
         bidDurationHours: classification === 'bid' ? finalBidDurationHours : undefined,
+        alertTimer, // For ice/police alerts
+        stayLimit, // For couch/camping mutual aid
+        alertStatus: (classification === 'ice' || classification === 'police') ? 'active' : undefined,
         createdAt: Date.now(),
         ...location,
         libertyAlert: libertyEnabled, // Flag if captured during Liberty Alert mode
@@ -593,7 +703,15 @@ const App: React.FC = () => {
 
   
   // Re-classify existing item
-  const handleReclassify = async (item: CapturedItem, newClassification: ItemClassification, discountPercent?: number, bidDurationHours?: number) => {
+  const handleReclassify = async (
+    item: CapturedItem,
+    newClassification: ItemClassification,
+    discountPercent?: number,
+    bidDurationHours?: number,
+    stayLimitNights?: number,
+    alertTimerMinutes?: number,
+    isPermanent?: boolean
+  ) => {
     console.log('[GotJunk] handleReclassify called:', { itemId: item.id, newClassification, discountPercent, bidDurationHours });
 
     const defaultPrice = 100; // Will be from Google Vision API
@@ -612,12 +730,38 @@ const App: React.FC = () => {
       price = defaultPrice * 0.5; // 50% OFF starting bid
     }
 
+    // Build alertTimer for ice/police classifications
+    let alertTimer = undefined;
+    if (newClassification === 'ice' || newClassification === 'police') {
+      const durationMs = (alertTimerMinutes || (newClassification === 'police' ? 5 : 60)) * 60 * 1000;
+      const startTime = Date.now();
+      alertTimer = {
+        startTime,
+        duration: durationMs,
+        expiresAt: startTime + durationMs,
+        isPermanent: isPermanent || false,
+      };
+    }
+
+    // Build stayLimit for couch/camping classifications
+    let stayLimit = undefined;
+    if (newClassification === 'couch' || newClassification === 'camping') {
+      stayLimit = {
+        maxNights: stayLimitNights || (newClassification === 'couch' ? 1 : 2),
+        checkIn: undefined,
+        checkOut: undefined,
+      };
+    }
+
     const updatedItem: CapturedItem = {
       ...item,
       classification: newClassification,
       price,
       discountPercent: newClassification === 'discount' ? finalDiscountPercent : undefined,
       bidDurationHours: newClassification === 'bid' ? finalBidDurationHours : undefined,
+      alertTimer, // For ice/police alerts
+      stayLimit, // For couch/camping mutual aid
+      alertStatus: (newClassification === 'ice' || newClassification === 'police') ? 'active' : undefined,
     };
 
     console.log('[GotJunk] Updating item in state:', { id: updatedItem.id, status: item.status });
@@ -836,11 +980,77 @@ const App: React.FC = () => {
         {/* TAB 2: MAP (shown via overlay, content hidden) */}
         {/* Map is rendered separately as overlay */}
 
-        {/* TAB 3: MY ITEMS - Photo Grid (iPhone-style) */}
+        {/* TAB 3: MY ITEMS - Photo Grid (iPhone-style) with 3-section filtering */}
         {activeTab === 'myitems' && (
-          <div className="w-full h-full overflow-y-auto">
-            <PhotoGrid
-              items={[...myDrafts, ...myListed]}
+          <div className="w-full h-full flex flex-col">
+            {/* Segmented Control - 3 Sections */}
+            <div className="flex-shrink-0 px-4 py-3 bg-gray-900/50">
+              <div className="flex bg-gray-800 rounded-xl p-1">
+                {/* Commerce */}
+                <button
+                  onClick={() => setMyItemsSection('commerce')}
+                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    myItemsSection === 'commerce'
+                      ? 'bg-blue-500 text-white shadow-lg'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Commerce
+                </button>
+                {/* Share Economy */}
+                <button
+                  onClick={() => setMyItemsSection('share')}
+                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    myItemsSection === 'share'
+                      ? 'bg-purple-500 text-white shadow-lg'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Share
+                </button>
+                {/* Community Aid + Alerts */}
+                <button
+                  onClick={() => setMyItemsSection('community')}
+                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    myItemsSection === 'community'
+                      ? 'bg-orange-500 text-white shadow-lg'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Community
+                </button>
+              </div>
+            </div>
+
+            {/* Filtered Photo Grid */}
+            <div className="flex-1 overflow-y-auto">
+              <PhotoGrid
+                items={(() => {
+                  const allMyItems = [...myDrafts, ...myListed];
+                  // Filter by section
+                  if (myItemsSection === 'commerce') {
+                    return allMyItems.filter(item =>
+                      item.classification === 'free' ||
+                      item.classification === 'discount' ||
+                      item.classification === 'bid'
+                    );
+                  } else if (myItemsSection === 'share') {
+                    return allMyItems.filter(item =>
+                      item.classification === 'share' ||
+                      item.classification === 'wanted'
+                    );
+                  } else {
+                    // community: mutual aid + alerts
+                    return allMyItems.filter(item =>
+                      item.classification === 'food' ||
+                      item.classification === 'couch' ||
+                      item.classification === 'camping' ||
+                      item.classification === 'housing' ||
+                      item.classification === 'ice' ||
+                      item.classification === 'police'
+                    );
+                  }
+                })()}
               onClick={(item) => {
                 // Double-tap detected by PhotoCard - open fullscreen review
                 const allMyItems = [...myDrafts, ...myListed];
@@ -906,7 +1116,7 @@ const App: React.FC = () => {
                 />
               )}
             </AnimatePresence>
-
+            </div>
           </div>
         )}
 
@@ -1090,6 +1300,8 @@ const App: React.FC = () => {
           onLongPressAutoClassify={handleLongPressAutoClassify}
           lastClassification={lastClassification}
           libertyEnabled={libertyEnabled}
+          onLongPressLibertyBadge={handleLongPressLibertyBadge}
+          lastLibertyClassification={lastLibertyClassification}
         />
 
       {/* Re-classification Modal (tap badge) */}
@@ -1097,7 +1309,10 @@ const App: React.FC = () => {
         <ClassificationModal
           isOpen={true}
           imageUrl={reclassifyingItem.url}
-          onClassify={(newClassification, discountPercent, bidDurationHours) => handleReclassify(reclassifyingItem, newClassification, discountPercent, bidDurationHours)}
+          libertyEnabled={libertyEnabled}
+          onClassify={(newClassification, discountPercent, bidDurationHours, stayLimitNights, alertTimerMinutes, isPermanent) =>
+            handleReclassify(reclassifyingItem, newClassification, discountPercent, bidDurationHours, stayLimitNights, alertTimerMinutes, isPermanent)
+          }
         />
       )}
 
@@ -1168,6 +1383,7 @@ const App: React.FC = () => {
       <ClassificationModal
         isOpen={!!pendingClassificationItem}
         imageUrl={pendingClassificationItem?.url || ''}
+        libertyEnabled={libertyEnabled}
         onClassify={handleClassify}
       />
 
@@ -1213,6 +1429,14 @@ const App: React.FC = () => {
           setReviewingCartItem(null);
           setCartReviewQueue([]);
         }}
+      />
+
+      {/* Liberty Classification Selector (long-press 🗽 badge) */}
+      <ActionSheetLibertySelector
+        isOpen={showLibertySelector}
+        currentSelection={lastLibertyClassification?.type}
+        onSelect={handleSelectLibertyClassification}
+        onClose={() => setShowLibertySelector(false)}
       />
 
     </div>

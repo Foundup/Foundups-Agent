@@ -25,6 +25,8 @@ interface BottomNavBarProps {
   onLongPressAutoClassify?: () => void; // Long press to select classification
   lastClassification?: { type: string, discountPercent?: number, bidDurationHours?: number } | null;
   libertyEnabled?: boolean; // Liberty Alert mode (show 🗽 badge on camera)
+  onLongPressLibertyBadge?: () => void; // Long press 🗽 badge to select Liberty classification
+  lastLibertyClassification?: { type: string, stayLimitNights?: number, alertTimerMinutes?: number, isPermanent?: boolean } | null;
 }
 
 const buttonVariants = {
@@ -48,6 +50,8 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onLongPressAutoClassify = () => console.log('🔄 Long-press: Select classification'),
   lastClassification = null,
   libertyEnabled = false,
+  onLongPressLibertyBadge = () => console.log('🗽 Long-press: Select Liberty classification'),
+  lastLibertyClassification = null,
 }) => {
   const cameraRef = useRef<CameraHandle>(null);
   const pressTimerRef = useRef<number | null>(null);
@@ -156,6 +160,19 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
     threshold: 450, // 450ms to trigger long-press
   });
 
+  // Long-press handler for Liberty badge
+  const libertyBadgeLongPress = useLongPress({
+    onLongPress: () => {
+      console.log('[GotJunk] Long-press detected on Liberty badge');
+      onLongPressLibertyBadge();
+    },
+    onTap: () => {
+      console.log('[GotJunk] Short tap on Liberty badge (no action)');
+      // No action on short tap - badge is just visual indicator with long-press selector
+    },
+    threshold: 450, // 450ms to trigger long-press
+  });
+
   return (
     <motion.div
         className="fixed bottom-0 left-0 right-0"
@@ -190,15 +207,33 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                  {/* Defer Camera mount until first press (saves 200-500ms on app load) */}
                  {isCameraInitialized && <Camera ref={cameraRef} onCapture={onCapture} captureMode={captureMode} />}
 
-                 {/* Liberty Alert Badge - Shows when Liberty mode is active */}
+                 {/* Liberty Alert Badge - Long-press to select classification (PRE-SELECTION) */}
                  {libertyEnabled && (
                    <motion.div
-                     className="absolute -top-1 -right-1 bg-blue-600 rounded-full w-10 h-10 flex items-center justify-center shadow-lg border-2 border-white"
+                     {...libertyBadgeLongPress}
+                     className={`absolute -top-1 -right-1 rounded-full flex items-center justify-center shadow-lg border-2 cursor-pointer ${
+                       lastLibertyClassification
+                         ? 'bg-blue-600 border-white w-14 h-10 px-2' // Expanded when classification selected
+                         : 'bg-blue-600/70 border-white w-10 h-10'    // Regular size when no classification
+                     }`}
                      initial={{ scale: 0 }}
                      animate={{ scale: 1 }}
                      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                     whileHover={{ scale: 1.1 }}
+                     whileTap={{ scale: 0.95 }}
+                     aria-label={lastLibertyClassification ? `Liberty: ${lastLibertyClassification.type}` : 'Liberty mode (long-press to select)'}
                    >
                      <span className="text-2xl">🗽</span>
+                     {lastLibertyClassification && (
+                       <span className="text-xs font-bold text-white ml-1">
+                         {lastLibertyClassification.type === 'food' && '🍞'}
+                         {lastLibertyClassification.type === 'couch' && '🛏️'}
+                         {lastLibertyClassification.type === 'camping' && '⛺'}
+                         {lastLibertyClassification.type === 'housing' && '🏠'}
+                         {lastLibertyClassification.type === 'ice' && '🧊'}
+                         {lastLibertyClassification.type === 'police' && '🚓'}
+                       </span>
+                     )}
                    </motion.div>
                  )}
             </div>
