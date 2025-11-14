@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { LeftArrowIcon } from './icons/LeftArrowIcon';
 import { RightArrowIcon } from './icons/RightArrowIcon';
@@ -59,7 +59,15 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   const stopTimeoutRef = useRef<number | null>(null);
   const momentaryRecordingRef = useRef<boolean>(false);
   const captureLockRef = useRef<boolean>(false); // Prevents double-capture from touch+mouse events
-  const [isCameraInitialized, setIsCameraInitialized] = useState(false); // Defer getUserMedia() until user clicks camera
+  const [isCameraInitialized, setIsCameraInitialized] = useState(false); // Defer getUserMedia() until camera orb visible
+
+  // Pre-initialize camera when orb appears (fixes race condition on first capture)
+  useEffect(() => {
+    if (showCameraOrb && !isCameraInitialized) {
+      setIsCameraInitialized(true);
+      console.log('[GotJunk] Camera pre-initialized when orb appeared');
+    }
+  }, [showCameraOrb, isCameraInitialized]);
 
   const stopRecording = () => {
     if (countdownIntervalRef.current) {
@@ -105,12 +113,6 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   };
 
   const handlePressStart = () => {
-    // Initialize camera on first press (defers getUserMedia() until user actually uses camera)
-    if (!isCameraInitialized) {
-      setIsCameraInitialized(true);
-      console.log('[GotJunk] Camera initialized on first press');
-    }
-
     if (isRecording) return;
     if (captureMode === 'photo') {
         pressTimerRef.current = window.setTimeout(() => startRecording(true), 250);
