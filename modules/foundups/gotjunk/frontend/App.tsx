@@ -839,7 +839,7 @@ const App: React.FC = () => {
     : browseFeed.filter(item => !item.libertyAlert && item.latitude && item.longitude);
 
   const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
-  const showCameraOrb = isMapOpen || activeTab === 'myitems'; // Camera visible on map (for Liberty Alerts) + My Items tab
+  const showCameraOrb = (isMapOpen && libertyEnabled) || activeTab === 'myitems'; // Camera orb appears on map AFTER SOS activation + always on My Items tab
 
   // Handle instructions modal close
   const handleInstructionsClose = () => {
