@@ -52,6 +52,11 @@ export const Camera = forwardRef<CameraHandle, CameraProps>(({ onCapture, captur
         setStream(activeStream);
         if (videoRef.current) {
           videoRef.current.srcObject = activeStream;
+
+          // Log when video metadata is loaded (stream ready for capture)
+          videoRef.current.onloadedmetadata = () => {
+            console.log('[Camera] ✅ Video stream ready! Dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
+          };
         }
       } else {
         console.error("Error accessing any camera or microphone after all fallbacks.");
@@ -71,19 +76,34 @@ export const Camera = forwardRef<CameraHandle, CameraProps>(({ onCapture, captur
 
   useImperativeHandle(ref, () => ({
     takePhoto: () => {
+      console.log('[Camera] takePhoto() called');
+      console.log('[Camera] Video dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
+      console.log('[Camera] Stream ready:', !!stream);
+
       if (videoRef.current?.videoWidth && videoRef.current?.videoHeight) {
+        console.log('[Camera] Creating canvas...');
         const canvas = document.createElement('canvas');
         canvas.width = videoRef.current.videoWidth;
         canvas.height = videoRef.current.videoHeight;
         const context = canvas.getContext('2d');
         if (context) {
+          console.log('[Camera] Drawing image to canvas...');
           context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
           canvas.toBlob(blob => {
             if (blob) {
+              console.log('[Camera] ✅ Photo captured! Blob size:', blob.size);
               onCapture(blob);
+            } else {
+              console.error('[Camera] ❌ Failed to create blob from canvas');
             }
           }, 'image/jpeg', 0.95);
+        } else {
+          console.error('[Camera] ❌ Failed to get 2D context from canvas');
         }
+      } else {
+        console.error('[Camera] ❌ Video not ready! Width:', videoRef.current?.videoWidth, 'Height:', videoRef.current?.videoHeight);
+        console.error('[Camera] Video element:', videoRef.current);
+        console.error('[Camera] Stream:', stream);
       }
     },
     startRecording: () => {
