@@ -184,10 +184,10 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
       {/* Camera Orb - Floating above nav bar */}
       {showCameraOrb && (
         <div
-          className="absolute bottom-32 flex flex-row items-center gap-4"
+          className="absolute bottom-32 flex flex-row items-center gap-2"
           style={{
             zIndex: Z_LAYERS.cameraOrb,
-            left: 'calc(50% - 5px)', // Moved 5px left to re-center
+            left: '50%',
             transform: 'translateX(-50%)'
           }}
         >
@@ -241,7 +241,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             {/* Auto-Classify Toggle Button - Moved to RIGHT of orb to prevent accidental triggers */}
             <motion.button
               {...autoClassifyLongPress}
-              className={`px-4 py-2 rounded-full shadow-lg font-semibold text-sm transition-all ${
+              className={`px-3 py-1.5 rounded-full shadow-lg font-semibold text-xs transition-all ${
                 autoClassifyEnabled
                   ? lastClassification?.type === 'free'
                     ? 'bg-blue-600 text-white'      // Free = Blue
@@ -253,7 +253,6 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                   : 'bg-red-500/60 text-white'      // OFF = Softer red
               }`}
               style={{
-                marginLeft: '10px',  // 10px right
                 marginTop: '10px'    // 10px down
               }}
               variants={buttonVariants}
