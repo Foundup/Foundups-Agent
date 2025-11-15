@@ -56,6 +56,9 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
   const [currentStayLimitType, setCurrentStayLimitType] = useState<'couch' | 'camping'>('couch');
   const [currentAlertType, setCurrentAlertType] = useState<'ice' | 'police'>('police');
 
+  // Expandable category state (for Liberty menu)
+  const [expandedCategory, setExpandedCategory] = useState<'alert' | 'food' | 'shelter' | null>(null);
+
   // Load saved defaults from localStorage
   const [discountPercent, setDiscountPercent] = useState(() => {
     const saved = localStorage.getItem('gotjunk_default_discount');
@@ -119,6 +122,40 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
       setAlertTimerSheetOpen(true);
     },
     onTap: () => onClassify('police', undefined, undefined, undefined, 5), // Default: 5 min
+    threshold: 450,
+  });
+
+  // ============================================================================
+  // LIBERTY CAMERA - Food Subcategory Handlers
+  // ============================================================================
+
+  const soupKitchenLongPress = useLongPress({
+    onLongPress: () => {}, // No customization for food subcategories
+    onTap: () => onClassify('soup_kitchen'),
+    threshold: 450,
+  });
+
+  const bbqLongPress = useLongPress({
+    onLongPress: () => {},
+    onTap: () => onClassify('bbq'),
+    threshold: 450,
+  });
+
+  const dryFoodLongPress = useLongPress({
+    onLongPress: () => {},
+    onTap: () => onClassify('dry_food'),
+    threshold: 450,
+  });
+
+  const pickLongPress = useLongPress({
+    onLongPress: () => {},
+    onTap: () => onClassify('pick'),
+    threshold: 450,
+  });
+
+  const gardenLongPress = useLongPress({
+    onLongPress: () => {},
+    onTap: () => onClassify('garden'),
     threshold: 450,
   });
 
@@ -435,117 +472,148 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
               userSelect: 'none',
             }}
           >
-            {/* Preview image */}
+            {/* Preview image - 15% smaller */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="w-full max-w-sm mb-6 rounded-2xl overflow-hidden shadow-2xl"
+              className="w-full max-w-sm mb-4 rounded-2xl overflow-hidden shadow-2xl"
             >
               <img src={imageUrl} alt="Captured item" className="w-full h-auto" />
             </motion.div>
 
-            {/* Title */}
-            <h2 className="text-2xl font-bold text-white mb-4 text-center">
+            {/* Title - 15% smaller font */}
+            <h2 className="text-xl font-bold text-white mb-3 text-center">
               How would you like to list this?
             </h2>
 
-            {/* Classification buttons */}
-            <div className="w-full max-w-sm space-y-3">
-              {/* Free */}
+            {/* Stuff label with LA icon */}
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <span className="text-sm font-semibold text-gray-400 uppercase tracking-wide">Stuff</span>
+              {libertyEnabled && (
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    // Toggle to Liberty menu
+                    // TODO: Implement switching to Liberty menu view
+                  }}
+                  className="text-xl"
+                >
+                  🗽
+                </motion.button>
+              )}
+            </div>
+
+            {/* Classification buttons - 15% smaller spacing */}
+            <div className="w-full max-w-sm space-y-2.5">
+              {/* Free - 15% smaller */}
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => onClassify('free')}
-                className="w-full flex items-center justify-between p-4 bg-blue-500/20 hover:bg-blue-500/30 border-2 border-blue-400 rounded-2xl transition-all shadow-lg shadow-blue-500/20"
+                className="w-full flex items-center justify-between p-3 bg-blue-500/20 hover:bg-blue-500/30 border-2 border-blue-400 rounded-xl transition-all shadow-lg shadow-blue-500/20"
                 style={{ touchAction: 'manipulation' }}
               >
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-500 rounded-full">
-                    <FreeIcon className="w-6 h-6 text-white" />
+                <div className="flex items-center space-x-2.5">
+                  <div className="p-1.5 bg-blue-500 rounded-full">
+                    <FreeIcon className="w-5 h-5 text-white" />
                   </div>
                   <div className="text-left">
-                    <h3 className="text-lg font-bold text-white">Free</h3>
-                    <p className="text-xs text-blue-200">Give it away</p>
+                    <h3 className="text-base font-bold text-white">Free</h3>
+                    <p className="text-[10px] text-blue-200">Give it away</p>
                   </div>
                 </div>
-                <span className="text-xl font-bold text-blue-400">$0</span>
+                <span className="text-lg font-bold text-blue-400">$0</span>
               </motion.button>
 
-              {/* Discount */}
+              {/* Discount - 15% smaller */}
               <button
                 {...discountLongPress}
-                className="w-full flex items-center justify-between p-4 bg-green-500/20 hover:bg-green-500/30 active:scale-95 border-2 border-green-400 rounded-2xl transition-all shadow-lg shadow-green-500/20"
+                className="w-full flex items-center justify-between p-3 bg-green-500/20 hover:bg-green-500/30 active:scale-95 border-2 border-green-400 rounded-xl transition-all shadow-lg shadow-green-500/20"
                 style={{ touchAction: 'manipulation' }}
               >
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-green-500 rounded-full">
-                    <DiscountIcon className="w-6 h-6 text-white" />
+                <div className="flex items-center space-x-2.5">
+                  <div className="p-1.5 bg-green-500 rounded-full">
+                    <DiscountIcon className="w-5 h-5 text-white" />
                   </div>
                   <div className="text-left">
-                    <h3 className="text-lg font-bold text-white">Discount</h3>
-                    <p className="text-xs text-green-200">Sell it fast</p>
+                    <h3 className="text-base font-bold text-white">Discount</h3>
+                    <p className="text-[10px] text-green-200">Sell it fast</p>
                   </div>
                 </div>
-                <span className="text-sm font-bold text-green-400">{discountPercent}% OFF</span>
+                <span className="text-xs font-bold text-green-400">{discountPercent}% OFF</span>
               </button>
 
-              {/* Bid */}
+              {/* Bid - 15% smaller */}
               <button
                 {...bidLongPress}
-                className="w-full flex items-center justify-between p-4 bg-amber-500/20 hover:bg-amber-500/30 active:scale-95 border-2 border-amber-400 rounded-2xl transition-all shadow-lg shadow-amber-500/20"
+                className="w-full flex items-center justify-between p-3 bg-amber-500/20 hover:bg-amber-500/30 active:scale-95 border-2 border-amber-400 rounded-xl transition-all shadow-lg shadow-amber-500/20"
                 style={{ touchAction: 'manipulation' }}
               >
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-amber-500 rounded-full">
-                    <BidIcon className="w-6 h-6 text-white" />
+                <div className="flex items-center space-x-2.5">
+                  <div className="p-1.5 bg-amber-500 rounded-full">
+                    <BidIcon className="w-5 h-5 text-white" />
                   </div>
                   <div className="text-left">
-                    <h3 className="text-lg font-bold text-white">Bid</h3>
-                    <p className="text-xs text-amber-200">Let buyers compete</p>
+                    <h3 className="text-base font-bold text-white">Bid</h3>
+                    <p className="text-[10px] text-amber-200">Let buyers compete</p>
                   </div>
                 </div>
-                <span className="text-sm font-bold text-amber-400">{bidDurationHours}h</span>
+                <span className="text-xs font-bold text-amber-400">{bidDurationHours}h</span>
               </button>
 
-              {/* Share */}
+              {/* Share - 15% smaller */}
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => onClassify('share')}
-                className="w-full flex items-center justify-between p-4 bg-purple-500/20 hover:bg-purple-500/30 border-2 border-purple-400 rounded-2xl transition-all shadow-lg shadow-purple-500/20"
+                className="w-full flex items-center justify-between p-3 bg-purple-500/20 hover:bg-purple-500/30 border-2 border-purple-400 rounded-xl transition-all shadow-lg shadow-purple-500/20"
                 style={{ touchAction: 'manipulation' }}
               >
-                <div className="flex items-center space-x-3">
-                  <span className="text-3xl">🔄</span>
+                <div className="flex items-center space-x-2.5">
+                  <span className="text-2xl">🔄</span>
                   <div className="text-left">
-                    <h3 className="text-lg font-bold text-white">Share</h3>
-                    <p className="text-xs text-purple-200">Lend it out</p>
+                    <h3 className="text-base font-bold text-white">Share</h3>
+                    <p className="text-[10px] text-purple-200">Lend it out</p>
                   </div>
                 </div>
               </motion.button>
 
-              {/* Wanted */}
+              {/* Wanted - 15% smaller */}
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => onClassify('wanted')}
-                className="w-full flex items-center justify-between p-4 bg-pink-500/20 hover:bg-pink-500/30 border-2 border-pink-400 rounded-2xl transition-all shadow-lg shadow-pink-500/20"
+                className="w-full flex items-center justify-between p-3 bg-pink-500/20 hover:bg-pink-500/30 border-2 border-pink-400 rounded-xl transition-all shadow-lg shadow-pink-500/20"
                 style={{ touchAction: 'manipulation' }}
               >
-                <div className="flex items-center space-x-3">
-                  <span className="text-3xl">🔍</span>
+                <div className="flex items-center space-x-2.5">
+                  <span className="text-2xl">🔍</span>
                   <div className="text-left">
-                    <h3 className="text-lg font-bold text-white">Wanted</h3>
-                    <p className="text-xs text-pink-200">Looking for this</p>
+                    <h3 className="text-base font-bold text-white">Wanted</h3>
+                    <p className="text-[10px] text-pink-200">Looking for this</p>
                   </div>
                 </div>
               </motion.button>
             </div>
 
             {/* Helper text */}
-            <p className="text-xs text-gray-400 mt-4 text-center">
+            <p className="text-xs text-gray-400 mt-3 text-center">
               Tap to select • Hold Discount/Bid to customize
             </p>
+
+            {/* Cancel button */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                // Close modal without classifying
+                window.history.back(); // Or use onClose callback if available
+              }}
+              className="w-full max-w-sm mt-3 py-2.5 bg-gray-700/50 hover:bg-gray-700/70 border border-gray-600 rounded-xl text-white font-semibold text-sm transition-all"
+            >
+              Cancel
+            </motion.button>
 
             {/* Action Sheets */}
             <ActionSheetDiscount
@@ -567,7 +635,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
   }
 
   // ============================================================================
-  // RENDER: LIBERTY CAMERA (Mutual Aid + Alerts)
+  // RENDER: LIBERTY CAMERA (Expandable Categories)
   // ============================================================================
 
   return (
@@ -577,7 +645,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6"
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 overflow-y-auto"
           style={{
             zIndex: Z_LAYERS.modal,
             WebkitTouchCallout: 'none',
@@ -585,125 +653,235 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
             userSelect: 'none',
           }}
         >
-          {/* Preview image */}
+          {/* Preview image - 15% smaller */}
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-full max-w-sm mb-6 rounded-2xl overflow-hidden shadow-2xl"
+            className="w-full max-w-sm mb-4 rounded-2xl overflow-hidden shadow-2xl"
           >
             <img src={imageUrl} alt="Captured item" className="w-full h-auto" />
           </motion.div>
 
-          {/* Title */}
-          <h2 className="text-2xl font-bold text-white mb-4 text-center">
+          {/* Title - 15% smaller */}
+          <h2 className="text-xl font-bold text-white mb-3 text-center">
             🗽 Liberty Alert - Community Aid
           </h2>
 
-          {/* Classification buttons */}
-          <div className="w-full max-w-sm space-y-3">
-            {/* Food */}
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => onClassify('food')}
-              className="w-full flex items-center justify-between p-4 bg-orange-500/20 hover:bg-orange-500/30 border-2 border-orange-400 rounded-2xl transition-all shadow-lg shadow-orange-500/20"
-              style={{ touchAction: 'manipulation' }}
-            >
-              <div className="flex items-center space-x-3">
-                <span className="text-3xl">🍞</span>
-                <div className="text-left">
-                  <h3 className="text-lg font-bold text-white">Food</h3>
-                  <p className="text-xs text-orange-200">Meals & groceries</p>
+          {/* Expandable Categories */}
+          <div className="w-full max-w-sm space-y-2">
+            {/* ALERT! Category */}
+            <div className="border-2 border-red-500/50 rounded-xl overflow-hidden">
+              {/* Alert! Header */}
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => setExpandedCategory(expandedCategory === 'alert' ? null : 'alert')}
+                className="w-full flex items-center justify-between p-3 bg-red-600/30 hover:bg-red-600/40 transition-all"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🚨</span>
+                  <h3 className="text-base font-bold text-white">Alert!</h3>
                 </div>
-              </div>
-            </motion.button>
+                <span className="text-white text-xl">{expandedCategory === 'alert' ? '−' : '+'}</span>
+              </motion.button>
 
-            {/* Couch */}
-            <button
-              {...couchLongPress}
-              className="w-full flex items-center justify-between p-4 bg-indigo-500/20 hover:bg-indigo-500/30 active:scale-95 border-2 border-indigo-400 rounded-2xl transition-all shadow-lg shadow-indigo-500/20"
-              style={{ touchAction: 'manipulation' }}
-            >
-              <div className="flex items-center space-x-3">
-                <span className="text-3xl">🛏️</span>
-                <div className="text-left">
-                  <h3 className="text-lg font-bold text-white">Couch</h3>
-                  <p className="text-xs text-indigo-200">1 night max</p>
-                </div>
-              </div>
-              <span className="text-sm font-bold text-indigo-400">1N</span>
-            </button>
+              {/* Alert Subcategories */}
+              <AnimatePresence>
+                {expandedCategory === 'alert' && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="bg-black/20"
+                  >
+                    <div className="p-2 space-y-2">
+                      {/* ICE */}
+                      <button {...iceLongPress} className="w-full flex items-center justify-between p-2.5 bg-blue-600/20 hover:bg-blue-600/30 active:scale-95 border border-blue-500 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">🧊</span>
+                          <div className="text-left">
+                            <h4 className="text-sm font-bold text-white">ICE Alert</h4>
+                            <p className="text-[10px] text-blue-200">Immigration</p>
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-blue-400">60m</span>
+                      </button>
 
-            {/* Camping */}
-            <button
-              {...campingLongPress}
-              className="w-full flex items-center justify-between p-4 bg-teal-500/20 hover:bg-teal-500/30 active:scale-95 border-2 border-teal-400 rounded-2xl transition-all shadow-lg shadow-teal-500/20"
-              style={{ touchAction: 'manipulation' }}
-            >
-              <div className="flex items-center space-x-3">
-                <span className="text-3xl">⛺</span>
-                <div className="text-left">
-                  <h3 className="text-lg font-bold text-white">Camping</h3>
-                  <p className="text-xs text-teal-200">2 nights max</p>
-                </div>
-              </div>
-              <span className="text-sm font-bold text-teal-400">2N</span>
-            </button>
+                      {/* Police */}
+                      <button {...policeLongPress} className="w-full flex items-center justify-between p-2.5 bg-red-600/20 hover:bg-red-600/30 active:scale-95 border border-red-500 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">🚓</span>
+                          <div className="text-left">
+                            <h4 className="text-sm font-bold text-white">Police Alert</h4>
+                            <p className="text-[10px] text-red-200">Law enforcement</p>
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-red-400">5m</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-            {/* Housing */}
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => onClassify('housing')}
-              className="w-full flex items-center justify-between p-4 bg-cyan-500/20 hover:bg-cyan-500/30 border-2 border-cyan-400 rounded-2xl transition-all shadow-lg shadow-cyan-500/20"
-              style={{ touchAction: 'manipulation' }}
-            >
-              <div className="flex items-center space-x-3">
-                <span className="text-3xl">🏠</span>
-                <div className="text-left">
-                  <h3 className="text-lg font-bold text-white">Housing</h3>
-                  <p className="text-xs text-cyan-200">Long-term shelter</p>
+            {/* FOOD! Category */}
+            <div className="border-2 border-orange-500/50 rounded-xl overflow-hidden">
+              {/* Food! Header */}
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => setExpandedCategory(expandedCategory === 'food' ? null : 'food')}
+                className="w-full flex items-center justify-between p-3 bg-orange-600/30 hover:bg-orange-600/40 transition-all"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🍞</span>
+                  <h3 className="text-base font-bold text-white">Food!</h3>
                 </div>
-              </div>
-            </motion.button>
+                <span className="text-white text-xl">{expandedCategory === 'food' ? '−' : '+'}</span>
+              </motion.button>
 
-            {/* ICE Alert */}
-            <button
-              {...iceLongPress}
-              className="w-full flex items-center justify-between p-4 bg-blue-600/20 hover:bg-blue-600/30 active:scale-95 border-2 border-blue-500 rounded-2xl transition-all shadow-lg shadow-blue-600/20"
-              style={{ touchAction: 'manipulation' }}
-            >
-              <div className="flex items-center space-x-3">
-                <span className="text-3xl">🧊</span>
-                <div className="text-left">
-                  <h3 className="text-lg font-bold text-white">ICE Alert</h3>
-                  <p className="text-xs text-blue-200">Immigration enforcement</p>
-                </div>
-              </div>
-              <span className="text-sm font-bold text-blue-400">60m</span>
-            </button>
+              {/* Food Subcategories */}
+              <AnimatePresence>
+                {expandedCategory === 'food' && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="bg-black/20"
+                  >
+                    <div className="p-2 space-y-2">
+                      {/* Soup Kitchen */}
+                      <button {...soupKitchenLongPress} className="w-full flex items-center gap-2 p-2.5 bg-orange-500/20 hover:bg-orange-500/30 active:scale-95 border border-orange-400 rounded-lg">
+                        <span className="text-xl">🍲</span>
+                        <div className="text-left">
+                          <h4 className="text-sm font-bold text-white">Soup Kitchen</h4>
+                          <p className="text-[10px] text-orange-200">Hot meals</p>
+                        </div>
+                      </button>
 
-            {/* Police Alert */}
-            <button
-              {...policeLongPress}
-              className="w-full flex items-center justify-between p-4 bg-red-600/20 hover:bg-red-600/30 active:scale-95 border-2 border-red-500 rounded-2xl transition-all shadow-lg shadow-red-600/20"
-              style={{ touchAction: 'manipulation' }}
-            >
-              <div className="flex items-center space-x-3">
-                <span className="text-3xl">🚓</span>
-                <div className="text-left">
-                  <h3 className="text-lg font-bold text-white">Police Alert</h3>
-                  <p className="text-xs text-red-200">Law enforcement</p>
+                      {/* BBQ */}
+                      <button {...bbqLongPress} className="w-full flex items-center gap-2 p-2.5 bg-orange-500/20 hover:bg-orange-500/30 active:scale-95 border border-orange-400 rounded-lg">
+                        <span className="text-xl">🍖</span>
+                        <div className="text-left">
+                          <h4 className="text-sm font-bold text-white">BBQ</h4>
+                          <p className="text-[10px] text-orange-200">Community cook-out</p>
+                        </div>
+                      </button>
+
+                      {/* Dry Food */}
+                      <button {...dryFoodLongPress} className="w-full flex items-center gap-2 p-2.5 bg-orange-500/20 hover:bg-orange-500/30 active:scale-95 border border-orange-400 rounded-lg">
+                        <span className="text-xl">📦</span>
+                        <div className="text-left">
+                          <h4 className="text-sm font-bold text-white">Dry Food</h4>
+                          <p className="text-[10px] text-orange-200">Pantry items</p>
+                        </div>
+                      </button>
+
+                      {/* Pick */}
+                      <button {...pickLongPress} className="w-full flex items-center gap-2 p-2.5 bg-orange-500/20 hover:bg-orange-500/30 active:scale-95 border border-orange-400 rounded-lg">
+                        <span className="text-xl">🫐</span>
+                        <div className="text-left">
+                          <h4 className="text-sm font-bold text-white">Pick</h4>
+                          <p className="text-[10px] text-orange-200">Fresh picking</p>
+                        </div>
+                      </button>
+
+                      {/* Garden */}
+                      <button {...gardenLongPress} className="w-full flex items-center gap-2 p-2.5 bg-orange-500/20 hover:bg-orange-500/30 active:scale-95 border border-orange-400 rounded-lg">
+                        <span className="text-xl">🥬</span>
+                        <div className="text-left">
+                          <h4 className="text-sm font-bold text-white">Garden</h4>
+                          <p className="text-[10px] text-orange-200">Fresh produce</p>
+                        </div>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* SHELTER! Category */}
+            <div className="border-2 border-cyan-500/50 rounded-xl overflow-hidden">
+              {/* Shelter! Header */}
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => setExpandedCategory(expandedCategory === 'shelter' ? null : 'shelter')}
+                className="w-full flex items-center justify-between p-3 bg-cyan-600/30 hover:bg-cyan-600/40 transition-all"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🏠</span>
+                  <h3 className="text-base font-bold text-white">Shelter!</h3>
                 </div>
-              </div>
-              <span className="text-sm font-bold text-red-400">5m</span>
-            </button>
+                <span className="text-white text-xl">{expandedCategory === 'shelter' ? '−' : '+'}</span>
+              </motion.button>
+
+              {/* Shelter Subcategories */}
+              <AnimatePresence>
+                {expandedCategory === 'shelter' && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="bg-black/20"
+                  >
+                    <div className="p-2 space-y-2">
+                      {/* Couch */}
+                      <button {...couchLongPress} className="w-full flex items-center justify-between p-2.5 bg-indigo-500/20 hover:bg-indigo-500/30 active:scale-95 border border-indigo-400 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">🛏️</span>
+                          <div className="text-left">
+                            <h4 className="text-sm font-bold text-white">Couch</h4>
+                            <p className="text-[10px] text-indigo-200">1 night max</p>
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-indigo-400">1N</span>
+                      </button>
+
+                      {/* Camping */}
+                      <button {...campingLongPress} className="w-full flex items-center justify-between p-2.5 bg-teal-500/20 hover:bg-teal-500/30 active:scale-95 border border-teal-400 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">⛺</span>
+                          <div className="text-left">
+                            <h4 className="text-sm font-bold text-white">Camping</h4>
+                            <p className="text-[10px] text-teal-200">2 nights max</p>
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-teal-400">2N</span>
+                      </button>
+
+                      {/* Housing */}
+                      <button onClick={() => onClassify('housing')} className="w-full flex items-center gap-2 p-2.5 bg-cyan-500/20 hover:bg-cyan-500/30 active:scale-95 border border-cyan-400 rounded-lg">
+                        <span className="text-xl">🏠</span>
+                        <div className="text-left">
+                          <h4 className="text-sm font-bold text-white">Housing</h4>
+                          <p className="text-[10px] text-cyan-200">Long-term shelter</p>
+                        </div>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* Helper text */}
-          <p className="text-xs text-gray-400 mt-4 text-center">
-            Tap to select • Hold Couch/Camping/Ice/Police to customize
+          <p className="text-xs text-gray-400 mt-3 text-center">
+            Tap category to expand • Hold to customize
           </p>
+
+          {/* Cancel button */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              // Close modal without classifying
+              window.history.back();
+            }}
+            className="w-full max-w-sm mt-3 py-2.5 bg-gray-700/50 hover:bg-gray-700/70 border border-gray-600 rounded-xl text-white font-semibold text-sm transition-all"
+          >
+            Cancel
+          </motion.button>
 
           {/* Action Sheets */}
           <ActionSheetStayLimit

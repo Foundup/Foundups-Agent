@@ -1042,9 +1042,14 @@ const App: React.FC = () => {
                       item.classification === 'wanted'
                     );
                   } else {
-                    // community: mutual aid + alerts
+                    // community: mutual aid + alerts (including food subcategories)
                     return allMyItems.filter(item =>
                       item.classification === 'food' ||
+                      item.classification === 'soup_kitchen' ||
+                      item.classification === 'bbq' ||
+                      item.classification === 'dry_food' ||
+                      item.classification === 'pick' ||
+                      item.classification === 'garden' ||
                       item.classification === 'couch' ||
                       item.classification === 'camping' ||
                       item.classification === 'housing' ||
