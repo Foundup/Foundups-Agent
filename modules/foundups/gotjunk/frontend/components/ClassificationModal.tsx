@@ -63,7 +63,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
   });
   const [bidDurationHours, setBidDurationHours] = useState(() => {
     const saved = localStorage.getItem('gotjunk_default_bid_duration');
-    return saved ? parseInt(saved, 10) : 48;
+    return saved ? parseInt(saved, 10) : 72;
   });
 
   // ============================================================================
@@ -72,13 +72,13 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
 
   const discountLongPress = useLongPress({
     onLongPress: () => setDiscountSheetOpen(true),
-    onTap: () => setDiscountSheetOpen(true), // Always open action sheet
+    onTap: () => onClassify('discount', discountPercent), // Tap = use default 75% off
     threshold: 450,
   });
 
   const bidLongPress = useLongPress({
     onLongPress: () => setBidSheetOpen(true),
-    onTap: () => setBidSheetOpen(true), // Always open action sheet
+    onTap: () => onClassify('bid', undefined, bidDurationHours), // Tap = use default 72h
     threshold: 450,
   });
 

@@ -570,7 +570,7 @@ const App: React.FC = () => {
 
       // Use provided values or defaults
       const finalDiscountPercent = discountPercent || 75;
-      const finalBidDurationHours = bidDurationHours || 48;
+      const finalBidDurationHours = bidDurationHours || 72;
 
       if (classification === 'free') {
         price = 0;
@@ -681,6 +681,8 @@ const App: React.FC = () => {
     URL.revokeObjectURL(itemToDelete.url);
     await storage.deleteItem(itemToDelete.id);
     setMyListed(current => current.filter(item => item.id !== itemToDelete.id));
+    setMyDrafts(current => current.filter(item => item.id !== itemToDelete.id));
+    setBrowseFeed(current => current.filter(item => item.id !== itemToDelete.id));
   };
 
   // BROWSE FEED: Handle swipe actions on other people's items
