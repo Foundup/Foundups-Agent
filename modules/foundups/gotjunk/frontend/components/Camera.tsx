@@ -4,6 +4,7 @@ import { CaptureMode } from '../App';
 interface CameraProps {
   onCapture: (blob: Blob) => void;
   captureMode: CaptureMode;
+  fullscreen?: boolean; // Fullscreen mode (no circular styling)
 }
 
 export interface CameraHandle {
@@ -12,7 +13,7 @@ export interface CameraHandle {
   stopRecording: () => void;
 }
 
-export const Camera = forwardRef<CameraHandle, CameraProps>(({ onCapture, captureMode }, ref) => {
+export const Camera = forwardRef<CameraHandle, CameraProps>(({ onCapture, captureMode, fullscreen = false }, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
@@ -137,17 +138,23 @@ export const Camera = forwardRef<CameraHandle, CameraProps>(({ onCapture, captur
   
   return (
     <div
-      className="w-full h-full rounded-full overflow-hidden bg-black flex items-center justify-center border-2 border-white/50"
+      className={fullscreen
+        ? "w-full h-full overflow-hidden bg-black flex items-center justify-center"
+        : "w-full h-full rounded-full overflow-hidden bg-black flex items-center justify-center border-2 border-white/50"
+      }
     >
       {error ? (
         <div className="text-white text-xs text-center p-1">{error}</div>
       ) : (
-        <video 
-          ref={videoRef} 
-          autoPlay 
-          playsInline 
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
           muted // Mute preview to prevent feedback
-          className="w-full h-full object-cover scale-[1.9]" // Scaled to fill the circle better
+          className={fullscreen
+            ? "w-full h-full object-cover" // Fullscreen: no scaling, cover entire viewport
+            : "w-full h-full object-cover scale-[1.9]" // Orb: scaled to fill the circle better
+          }
         />
       )}
     </div>

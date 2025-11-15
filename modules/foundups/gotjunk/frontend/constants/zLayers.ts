@@ -5,6 +5,7 @@
 export const Z_LAYERS = {
   popup: 1200,
   fullscreen: 1400,
+  fullscreenCamera: 1450, // Fullscreen camera view (below modals)
   gallery: 1500,
   mapOverlay: 1600,
   floatingControls: 2050,

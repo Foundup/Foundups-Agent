@@ -56,7 +56,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
   const [currentStayLimitType, setCurrentStayLimitType] = useState<'couch' | 'camping'>('couch');
   const [currentAlertType, setCurrentAlertType] = useState<'ice' | 'police'>('police');
 
-  // Expandable category state (for Liberty menu)
+  // Expandable category state (for accordion Liberty menu)
   const [expandedCategory, setExpandedCategory] = useState<'alert' | 'food' | 'shelter' | null>(null);
 
   // Load saved defaults from localStorage
@@ -635,7 +635,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
   }
 
   // ============================================================================
-  // RENDER: LIBERTY CAMERA (Expandable Categories)
+  // RENDER: LIBERTY CAMERA (Condensed Categories)
   // ============================================================================
 
   return (
@@ -664,11 +664,12 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
 
           {/* Title - 15% smaller */}
           <h2 className="text-xl font-bold text-white mb-3 text-center">
-            🗽 Liberty Alert - Community Aid
+            🗽 Liberty Alert - Select Category
           </h2>
 
-          {/* Expandable Categories */}
-          <div className="w-full max-w-sm space-y-2">
+          {/* Category Selection */}
+          {/* Main Categories (Order: Alert, Food, Shelter for thumb accessibility) */}
+          <div className="w-full max-w-sm space-y-3">
             {/* ALERT! Category */}
             <div className="border-2 border-red-500/50 rounded-xl overflow-hidden">
               {/* Alert! Header */}
