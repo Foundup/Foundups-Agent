@@ -490,20 +490,9 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
               How would you like to list this?
             </h2>
 
-            {/* Stuff label with LA toggle */}
+            {/* Stuff label */}
             <div className="flex items-center justify-center gap-2 mb-3">
               <span className="text-sm font-semibold text-gray-400 uppercase tracking-wide">Stuff</span>
-              {libertyEnabled && (
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowLibertyView(true)}
-                  className="text-xl"
-                  aria-label="Switch to Liberty Alert categories"
-                >
-                  🗽
-                </motion.button>
-              )}
             </div>
 
             {/* Classification buttons - 15% smaller spacing */}
@@ -597,6 +586,27 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
                   </div>
                 </div>
               </motion.button>
+
+              {/* Liberty Alert Icon - Bottom right for easy thumb access */}
+              {libertyEnabled && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowLibertyView(true)}
+                  className="w-full flex items-center justify-between p-3 bg-blue-600/20 hover:bg-blue-600/30 border-2 border-blue-400 rounded-xl transition-all shadow-lg shadow-blue-500/20"
+                  style={{ touchAction: 'manipulation' }}
+                  aria-label="Switch to Liberty Alert categories"
+                >
+                  <div className="flex items-center space-x-2.5">
+                    <span className="text-2xl">🗽</span>
+                    <div className="text-left">
+                      <h3 className="text-base font-bold text-white">Liberty Alert</h3>
+                      <p className="text-[10px] text-blue-200">Mutual aid & alerts</p>
+                    </div>
+                  </div>
+                  <span className="text-lg font-bold text-blue-400">→</span>
+                </motion.button>
+              )}
             </div>
 
             {/* Helper text */}

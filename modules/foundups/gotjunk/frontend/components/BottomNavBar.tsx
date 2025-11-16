@@ -50,9 +50,9 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onLongPressLibertyBadge = () => console.log('🗽 Long-press: Select Liberty classification'),
   lastLibertyClassification = null,
 }) => {
-  // Navigation Bar Layout: [<] [>] ... [📷] [🎤]
+  // Navigation Bar Layout: [<] [>] ... [📷] [Auto: OFF] [🎤]
   // - Left: Swipe left/right thumb toggles (delete/keep)
-  // - Right: Camera icon (all pages) + AI MIC (voice interface to DAE system)
+  // - Right: Camera icon + Auto toggle + AI MIC (voice interface to DAE system)
 
   return (
     <motion.div
@@ -92,8 +92,9 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           </motion.button>
         </div>
 
-        {/* Right Section: Camera Icon + AI MIC (always visible) */}
-        <div className="flex items-center gap-4">
+        {/* Right Section: Camera Icon + Auto Toggle + AI MIC */}
+        <div className="flex items-center gap-3">
+          {/* Camera Icon */}
           <motion.button
             onClick={onCameraClick}
             className="p-4 rounded-full bg-white/10 hover:bg-white/20 transition-all"
@@ -103,6 +104,33 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             aria-label="Open camera"
           >
             <span className="text-3xl">📷</span>
+          </motion.button>
+
+          {/* Auto Toggle - with long-press for category selection */}
+          <motion.button
+            onClick={onToggleAutoClassify}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              const timer = setTimeout(() => {
+                onLongPressAutoClassify();
+              }, 450);
+              (e.target as HTMLElement).dataset.timer = timer.toString();
+            }}
+            onTouchEnd={(e) => {
+              const timer = (e.target as HTMLElement).dataset.timer;
+              if (timer) clearTimeout(parseInt(timer));
+            }}
+            className={`px-3 py-2 rounded-full text-xs font-bold transition-all ${
+              autoClassifyEnabled
+                ? 'bg-green-500/30 border-2 border-green-400 text-green-300'
+                : 'bg-gray-700/50 border-2 border-gray-600 text-gray-400'
+            }`}
+            variants={buttonVariants}
+            whileHover="hover"
+            whileTap="tap"
+            aria-label={`Auto-classify ${autoClassifyEnabled ? 'ON' : 'OFF'}`}
+          >
+            Auto: {autoClassifyEnabled ? 'ON' : 'OFF'}
           </motion.button>
 
           {/* AI MIC - Voice interface to DAE system (to implement later) */}
