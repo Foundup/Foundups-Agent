@@ -59,6 +59,9 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
   // Expandable category state (for accordion Liberty menu)
   const [expandedCategory, setExpandedCategory] = useState<'alert' | 'food' | 'shelter' | null>(null);
 
+  // View toggle state (regular vs LA) - only active when libertyEnabled=true
+  const [showLibertyView, setShowLibertyView] = useState(false);
+
   // Load saved defaults from localStorage
   const [discountPercent, setDiscountPercent] = useState(() => {
     const saved = localStorage.getItem('gotjunk_default_discount');
@@ -456,7 +459,8 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
   // RENDER: REGULAR CAMERA (Commerce + Share Economy)
   // ============================================================================
 
-  if (!libertyEnabled) {
+  // Show regular view if: LA not unlocked, OR LA unlocked but toggle is OFF
+  if (!showLibertyView) {
     return (
       <AnimatePresence>
         {isOpen && (
@@ -486,18 +490,16 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
               How would you like to list this?
             </h2>
 
-            {/* Stuff label with LA icon */}
+            {/* Stuff label with LA toggle */}
             <div className="flex items-center justify-center gap-2 mb-3">
               <span className="text-sm font-semibold text-gray-400 uppercase tracking-wide">Stuff</span>
               {libertyEnabled && (
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    // Toggle to Liberty menu
-                    // TODO: Implement switching to Liberty menu view
-                  }}
+                  onClick={() => setShowLibertyView(true)}
                   className="text-xl"
+                  aria-label="Switch to Liberty Alert categories"
                 >
                   🗽
                 </motion.button>
@@ -666,6 +668,19 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
           <h2 className="text-xl font-bold text-white mb-3 text-center">
             🗽 Liberty Alert - Select Category
           </h2>
+
+          {/* Toggle back to Stuff view */}
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowLibertyView(false)}
+              className="px-3 py-1 rounded-full bg-gray-700/50 hover:bg-gray-700/70 border border-gray-600 text-gray-300 text-sm font-semibold transition-all"
+              aria-label="Switch back to Stuff categories"
+            >
+              ← Stuff
+            </motion.button>
+          </div>
 
           {/* Category Selection */}
           {/* Main Categories (Order: Alert, Food, Shelter for thumb accessibility) */}

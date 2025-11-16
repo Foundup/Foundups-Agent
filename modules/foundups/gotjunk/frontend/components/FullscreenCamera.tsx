@@ -33,6 +33,8 @@ export const FullscreenCamera: React.FC<FullscreenCameraProps> = ({
   const cameraRef = useRef<CameraHandle>(null);
   const [isCameraReady, setIsCameraReady] = useState(false);
   const captureLockRef = useRef<boolean>(false);
+  const pressTimerRef = useRef<number | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
 
   // Initialize camera when component opens, cleanup when closed
   useEffect(() => {
@@ -64,9 +66,43 @@ export const FullscreenCamera: React.FC<FullscreenCameraProps> = ({
   };
 
   const handleCaptureComplete = (blob: Blob) => {
-    console.log('[FullscreenCamera] Photo captured, size:', blob.size);
+    console.log('[FullscreenCamera] Photo/video captured, size:', blob.size);
     onCapture(blob);
     onClose(); // Close fullscreen camera after capture
+  };
+
+  // Press-and-hold for video capture
+  const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (captureLockRef.current) return;
+
+    // Start timer for long press (800ms threshold)
+    pressTimerRef.current = window.setTimeout(() => {
+      console.log('[FullscreenCamera] Long press detected - starting video');
+      setIsRecording(true);
+      cameraRef.current?.startRecording?.();
+    }, 800);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent | React.MouseEvent) => {
+    e.stopPropagation();
+
+    // Clear long press timer
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+
+    // If recording, stop it
+    if (isRecording) {
+      console.log('[FullscreenCamera] Stopping video recording');
+      setIsRecording(false);
+      cameraRef.current?.stopRecording?.();
+    } else {
+      // Short tap = photo
+      handleTapToCapture();
+    }
   };
 
   return (
@@ -79,7 +115,10 @@ export const FullscreenCamera: React.FC<FullscreenCameraProps> = ({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.5 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          onClick={handleTapToCapture}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleTouchStart}
+          onMouseUp={handleTouchEnd}
         >
           {/* Camera Feed - Full screen */}
           <div className="absolute inset-0">
@@ -93,16 +132,23 @@ export const FullscreenCamera: React.FC<FullscreenCameraProps> = ({
             )}
           </div>
 
-          {/* Tap to Capture Hint */}
+          {/* Tap/Hold Capture Hint or Recording Indicator */}
           <motion.div
             className="absolute bottom-32 left-1/2 transform -translate-x-1/2 px-6 py-3 bg-black/60 rounded-full backdrop-blur-md"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
           >
-            <p className="text-white text-sm font-semibold text-center">
-              Tap anywhere to capture {libertyEnabled && '🗽'}
-            </p>
+            {isRecording ? (
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                <p className="text-white text-sm font-semibold">Recording... Release to stop</p>
+              </div>
+            ) : (
+              <p className="text-white text-sm font-semibold text-center">
+                Tap = Photo • Hold = Video {libertyEnabled && '🗽'}
+              </p>
+            )}
           </motion.div>
 
           {/* Close button */}
@@ -114,6 +160,8 @@ export const FullscreenCamera: React.FC<FullscreenCameraProps> = ({
               e.stopPropagation(); // Prevent triggering capture
               onClose();
             }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
           >
             <span className="text-white text-2xl">✕</span>
           </motion.button>
