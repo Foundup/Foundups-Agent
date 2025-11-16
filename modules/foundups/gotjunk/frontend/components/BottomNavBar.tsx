@@ -50,8 +50,9 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onLongPressLibertyBadge = () => console.log('🗽 Long-press: Select Liberty classification'),
   lastLibertyClassification = null,
 }) => {
-  // Simplified layout: [Delete] [Camera] [Keep]
-  // Search removed - will use AI search in future
+  // Navigation Bar Layout: [<] [>] ... [📷] [🎤]
+  // - Left: Swipe left/right thumb toggles (delete/keep)
+  // - Right: Camera icon (all pages) + AI MIC (voice interface to DAE system)
 
   return (
     <motion.div
@@ -91,8 +92,8 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           </motion.button>
         </div>
 
-        {/* Right Section: Camera Icon (conditional) */}
-        {showCameraOrb && (
+        {/* Right Section: Camera Icon + AI MIC (always visible) */}
+        <div className="flex items-center gap-4">
           <motion.button
             onClick={onCameraClick}
             className="p-4 rounded-full bg-white/10 hover:bg-white/20 transition-all"
@@ -103,7 +104,20 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           >
             <span className="text-3xl">📷</span>
           </motion.button>
-        )}
+
+          {/* AI MIC - Voice interface to DAE system (to implement later) */}
+          <motion.button
+            onClick={() => console.log('🎤 AI MIC clicked - 012 ↔ 0102 voice interaction')}
+            className="p-4 rounded-full bg-white/10 hover:bg-white/20 transition-all opacity-50"
+            variants={buttonVariants}
+            whileHover="hover"
+            whileTap="tap"
+            aria-label="AI Voice Assistant (coming soon)"
+            disabled={true}
+          >
+            <span className="text-3xl">🎤</span>
+          </motion.button>
+        </div>
       </div>
     </motion.div>
   );

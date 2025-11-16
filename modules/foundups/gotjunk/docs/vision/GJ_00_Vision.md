@@ -79,6 +79,12 @@ GotJunk is a **progressive web app (PWA)** that looks like a local "Tinder for s
    - Globs, item storage, LA events, AI coordination.
    - How the PWA + minimal backend manage data safely.
 
+5. **GJ_50_AI_Voice_Assistant.md**
+   - Voice interface for 012 (user) ↔ 0102 (DAE system) interaction.
+   - AI MIC icon in navigation bar for voice commands.
+   - WSP_77 local DAE coordination (Gemma + Qwen routing).
+   - Wardrobe skill selection based on vocal triggers.
+
 Each doc defines **requirements + micro-sprints** that can be fed to 0102 as WSP-compliant build prompts.
 
 ---
