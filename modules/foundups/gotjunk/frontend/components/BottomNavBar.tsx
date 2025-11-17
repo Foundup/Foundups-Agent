@@ -53,7 +53,9 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onLongPressLibertyBadge = () => console.log('🗽 Long-press: Select Liberty classification'),
   lastLibertyClassification = null,
 }) => {
-  // All camera orb logic removed - camera now handled by FullscreenCamera component
+  // Navigation Bar Layout: [<] [>] ... [📷] [Auto: OFF] [🎤]
+  // - Left: Swipe left/right thumb toggles (delete/keep)
+  // - Right: Camera icon + Auto toggle + AI MIC (voice interface to DAE system)
 
   return (
     <motion.div
@@ -63,14 +65,14 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         animate={{ y: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
     >
-      {/* Main Nav Bar */}
+      {/* Main Nav Bar - Layout: [Delete] [Keep] ... [Camera] [Auto] [AI MIC] */}
       <div
-        className="relative flex items-center w-full h-28 bg-gray-800/80 backdrop-blur-lg border-t border-white/10 max-w-2xl mx-auto rounded-t-2xl shadow-2xl px-6 pb-4"
+        className="relative flex items-center justify-between w-full h-28 bg-gray-800/80 backdrop-blur-lg border-t border-white/10 max-w-2xl mx-auto rounded-t-2xl shadow-2xl px-6 pb-4"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
 
-        {/* Left Section: Arrows */}
-        <div className="flex items-center space-x-6">
+        {/* Left Section: Delete & Keep Arrows */}
+        <div className="flex items-center gap-6">
             <motion.button
                 onClick={() => onReviewAction('delete')}
                 aria-label="Delete item"
@@ -81,6 +83,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             >
                 <LeftArrowIcon className="w-6 h-6 text-white" />
             </motion.button>
+
             <motion.button
                 onClick={() => onReviewAction('keep')}
                 aria-label="Keep item"
@@ -93,8 +96,9 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             </motion.button>
         </div>
 
-        {/* Center Section: Camera Icon */}
-        <div className="flex-1 flex justify-center">
+        {/* Right Section: Camera Icon + Auto Toggle + AI MIC */}
+        <div className="flex items-center gap-3">
+          {/* Camera Icon */}
           <motion.button
             onClick={onCameraClick}
             className="p-4 rounded-full bg-white/10 hover:bg-white/20 transition-all"
@@ -105,25 +109,46 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           >
             <span className="text-3xl">📷</span>
           </motion.button>
-        </div>
 
-        {/* Right Section: Search Bar */}
-        <div className="flex-1 max-w-md">
-          <div className="relative">
-            <button
-              onClick={onSearchClick}
-              className="absolute left-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors z-10"
-              aria-label="Voice search"
-            >
-              <MicIcon className="w-5 h-5 text-gray-300" />
-            </button>
-            <input
-              type="text"
-              placeholder="Search items..."
-              onClick={onSearchClick}
-              className="w-full pl-12 pr-4 py-2.5 bg-gray-800/90 border-2 border-white/30 rounded-full text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:border-blue-500/70 text-sm backdrop-blur-lg shadow-lg"
-            />
-          </div>
+          {/* Auto Toggle - with long-press for category selection */}
+          <motion.button
+            onClick={onToggleAutoClassify}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              const timer = setTimeout(() => {
+                onLongPressAutoClassify();
+              }, 450);
+              (e.target as HTMLElement).dataset.timer = timer.toString();
+            }}
+            onTouchEnd={(e) => {
+              const timer = (e.target as HTMLElement).dataset.timer;
+              if (timer) clearTimeout(parseInt(timer));
+            }}
+            className={`px-3 py-2 rounded-full text-xs font-bold transition-all ${
+              autoClassifyEnabled
+                ? 'bg-green-500/30 border-2 border-green-400 text-green-300'
+                : 'bg-gray-700/50 border-2 border-gray-600 text-gray-400'
+            }`}
+            variants={buttonVariants}
+            whileHover="hover"
+            whileTap="tap"
+            aria-label={`Auto-classify ${autoClassifyEnabled ? 'ON' : 'OFF'}`}
+          >
+            Auto: {autoClassifyEnabled ? 'ON' : 'OFF'}
+          </motion.button>
+
+          {/* AI MIC - Voice interface to DAE system (to implement later) */}
+          <motion.button
+            onClick={() => console.log('🎤 AI MIC clicked - 012 ↔ 0102 voice interaction')}
+            className="p-4 rounded-full bg-white/10 hover:bg-white/20 transition-all opacity-50"
+            variants={buttonVariants}
+            whileHover="hover"
+            whileTap="tap"
+            aria-label="AI Voice Assistant (coming soon)"
+            disabled={true}
+          >
+            <span className="text-3xl">🎤</span>
+          </motion.button>
         </div>
       </div>
     </motion.div>
