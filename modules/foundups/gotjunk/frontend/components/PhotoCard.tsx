@@ -4,6 +4,7 @@ import { CapturedItem } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
 import { PlayIcon } from './icons/PlayIcon';
 import { ClassificationBadge } from './ClassificationBadge';
+import { PlusIcon } from './icons/PlusIcon';
 
 interface PhotoCardProps {
   item: CapturedItem;
@@ -11,9 +12,10 @@ interface PhotoCardProps {
   onDelete: (item: CapturedItem) => void;
   onBadgeClick?: (item: CapturedItem) => void; // Tap badge to re-classify
   onBadgeLongPress?: (item: CapturedItem) => void; // Long-press badge to edit options
+  onExpand?: (item: CapturedItem) => void; // Optional: explicit expand button handler
 }
 
-export const PhotoCard: React.FC<PhotoCardProps> = ({ item, onClick, onDelete, onBadgeClick, onBadgeLongPress }) => {
+export const PhotoCard: React.FC<PhotoCardProps> = ({ item, onClick, onDelete, onBadgeClick, onBadgeLongPress, onExpand }) => {
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering onClick for the card itself
     onDelete(item);
@@ -84,6 +86,22 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({ item, onClick, onDelete, o
         aria-label="Delete item"
       >
         <TrashIcon className="w-4 h-4" />
+      </button>
+
+      {/* Manual expand button (alternative to double tap) */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          if (onExpand) {
+            onExpand(item);
+          } else {
+            onClick(item);
+          }
+        }}
+        className="absolute bottom-2 right-2 z-10 w-10 h-10 bg-white text-gray-800 rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200"
+        aria-label="Expand item"
+      >
+        <PlusIcon className="w-5 h-5" />
       </button>
     </div>
   );

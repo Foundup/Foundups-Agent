@@ -22,7 +22,7 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({ items, onClick, onDelete, 
   }
 
   return (
-    <div className="grid grid-cols-5 gap-1 p-1">
+    <div className="grid grid-cols-4 gap-2 p-2">
       <AnimatePresence>
         {items.map((item, index) => (
           <motion.div
@@ -44,6 +44,7 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({ items, onClick, onDelete, 
               onDelete={onDelete}
               onBadgeClick={onBadgeClick}
               onBadgeLongPress={onBadgeLongPress}
+              onExpand={onClick}
             />
           </motion.div>
         ))}

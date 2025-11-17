@@ -17,6 +17,8 @@ import { InstructionsModal } from './components/InstructionsModal';
 import { PurchaseModal } from './components/PurchaseModal';
 import { ActionSheetLibertySelector } from './components/ActionSheetLibertySelector';
 import { ItemClassification, MutualAidClassification, AlertClassification } from './types';
+import { MessageThreadPanel } from './components/MessageThreadPanel';
+import { MessageContextRef } from './src/message/types';
 import { PigeonMapView } from './components/PigeonMapView';
 import { useViewport } from './hooks/useViewport';
 import { useViewportHeight } from './hooks/useViewportHeight';
@@ -64,6 +66,31 @@ const getCurrentPositionPromise = (): Promise<GeolocationPosition> => {
       maximumAge: 0,
     });
   });
+};
+
+const formatClassificationLabel = (classification?: ItemClassification) => {
+  if (!classification) return 'ITEM THREAD';
+  return classification.replace(/_/g, ' ').toUpperCase();
+};
+
+const buildItemSubtitle = (item: CapturedItem) => {
+  if (item.classification === 'discount' && item.price !== undefined) {
+    const percent = item.discountPercent ?? 75;
+    return `$${item.price.toFixed(2)} (${percent}% OFF)`;
+  }
+  if (item.classification === 'bid' && item.bidDurationHours) {
+    return `${item.bidDurationHours}h auction`;
+  }
+  if (item.classification === 'free') {
+    return 'FREE';
+  }
+  if (item.classification === 'share') {
+    return 'Share / Borrow';
+  }
+  if (item.classification === 'wanted') {
+    return 'Wanted item';
+  }
+  return undefined;
 };
 
 
@@ -138,6 +165,27 @@ const App: React.FC = () => {
   } | null>(null);
   const [isSelectingLibertyClassification, setIsSelectingLibertyClassification] = useState(false); // True when long-pressing 🗽 badge to select classification
   const [showLibertySelector, setShowLibertySelector] = useState(false); // Controls ActionSheetLibertySelector visibility
+
+  // === MESSAGE BOARD PANEL STATE ===
+  const [messagePanelContext, setMessagePanelContext] = useState<MessageContextRef | null>(null);
+  const [messagePanelMeta, setMessagePanelMeta] = useState<{ title: string; subtitle?: string } | null>(null);
+
+  const openMessagePanelForItem = (item: CapturedItem) => {
+    setMessagePanelContext({ type: 'item', itemId: item.id });
+    setMessagePanelMeta({
+      title: formatClassificationLabel(item.classification),
+      subtitle: buildItemSubtitle(item),
+    });
+  };
+
+  const closeMessagePanel = () => {
+    setMessagePanelContext(null);
+    setMessagePanelMeta(null);
+  };
+
+  const handleJoinAction = (item: CapturedItem) => {
+    console.log('[GotJunk] Join action placeholder', item.id);
+  };
 
   // Safety verification: Ensure classification modal appears and waits for user selection
   useEffect(() => {
@@ -961,6 +1009,8 @@ const App: React.FC = () => {
                         console.log('[Browse] Swipe up → grid mode');
                         setIsBrowseGridMode(true);
                       }}
+                      onMessageBoard={openMessagePanelForItem}
+                      onJoinAction={handleJoinAction}
                     />
                   )}
                 </AnimatePresence>
@@ -1122,6 +1172,8 @@ const App: React.FC = () => {
                     setReviewingItem(null);
                     setReviewQueue([]);
                   }}
+                  onMessageBoard={openMessagePanelForItem}
+                  onJoinAction={handleJoinAction}
                 />
               )}
             </AnimatePresence>
@@ -1204,6 +1256,8 @@ const App: React.FC = () => {
                     setReviewingCartItem(null);
                     setCartReviewQueue([]);
                   }}
+                  onMessageBoard={openMessagePanelForItem}
+                  onJoinAction={handleJoinAction}
                 />
               )}
             </AnimatePresence>
@@ -1462,6 +1516,15 @@ const App: React.FC = () => {
         onSelect={handleSelectLibertyClassification}
         onClose={() => setShowLibertySelector(false)}
       />
+
+      {messagePanelContext && messagePanelMeta && (
+        <MessageThreadPanel
+          context={messagePanelContext}
+          title={messagePanelMeta.title}
+          subtitle={messagePanelMeta.subtitle}
+          onClose={closeMessagePanel}
+        />
+      )}
 
     </div>
   );
