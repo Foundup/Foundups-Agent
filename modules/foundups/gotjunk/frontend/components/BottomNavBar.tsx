@@ -2,7 +2,9 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { LeftArrowIcon } from './icons/LeftArrowIcon';
 import { RightArrowIcon } from './icons/RightArrowIcon';
+import { CameraIcon } from './icons/CameraIcon';
 import { MicIcon } from './icons/MicIcon';
+import { useLongPress } from '../hooks/useLongPress';
 import { Z_LAYERS } from '../constants/zLayers';
 import { CaptureMode } from '../App';
 
@@ -52,10 +54,23 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   libertyEnabled = false,
   onLongPressLibertyBadge = () => console.log('🗽 Long-press: Select Liberty classification'),
   lastLibertyClassification = null,
-}) => {
+  }) => {
   // Navigation Bar Layout: [<] [>] ... [📷] [Auto: OFF] [🎤]
   // - Left: Swipe left/right thumb toggles (delete/keep)
   // - Right: Camera icon + Auto toggle + AI MIC (voice interface to DAE system)
+
+  // Long-press handler for auto-classify toggle button (ORIGINAL LOGIC - DO NOT MODIFY)
+  const autoClassifyLongPress = useLongPress({
+    onLongPress: () => {
+      console.log('[GotJunk] Long-press detected on auto-classify toggle');
+      onLongPressAutoClassify();
+    },
+    onTap: () => {
+      console.log('[GotJunk] Short tap on auto-classify toggle');
+      onToggleAutoClassify();
+    },
+    threshold: 450, // 450ms to trigger long-press
+  });
 
   return (
     <motion.div
@@ -65,7 +80,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         animate={{ y: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
     >
-      {/* Main Nav Bar - Layout: [Delete] [Keep] ... [Camera] [Auto] [AI MIC] */}
+      {/* Main Nav Bar - Layout: [Delete] [Keep] ... [Camera] [Auto] ... [AI MIC] */}
       <div
         className="relative flex items-center justify-between w-full h-28 bg-gray-800/80 backdrop-blur-lg border-t border-white/10 max-w-2xl mx-auto rounded-t-2xl shadow-2xl px-6 pb-4"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
@@ -76,78 +91,86 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             <motion.button
                 onClick={() => onReviewAction('delete')}
                 aria-label="Delete item"
-                className="p-3 rounded-full transition-colors bg-red-600/50 hover:bg-red-600/70 disabled:opacity-50"
+                className="w-16 h-16 rounded-full flex items-center justify-center transition-colors bg-red-600/50 hover:bg-red-600/70 disabled:opacity-50"
                 variants={buttonVariants}
                 whileTap="tap"
                 disabled={!hasReviewItems || isRecording}
             >
-                <LeftArrowIcon className="w-6 h-6 text-white" />
+                <LeftArrowIcon className="w-7 h-7 text-white" />
             </motion.button>
 
             <motion.button
                 onClick={() => onReviewAction('keep')}
                 aria-label="Keep item"
-                className="p-3 rounded-full transition-colors bg-green-500/50 hover:bg-green-500/70 disabled:opacity-50"
+                className="w-16 h-16 rounded-full flex items-center justify-center transition-colors bg-green-500/50 hover:bg-green-500/70 disabled:opacity-50"
                 variants={buttonVariants}
                 whileTap="tap"
                 disabled={!hasReviewItems || isRecording}
             >
-                <RightArrowIcon className="w-6 h-6 text-white" />
+                <RightArrowIcon className="w-7 h-7 text-white" />
             </motion.button>
         </div>
 
-        {/* Right Section: Camera Icon + Auto Toggle + AI MIC */}
-        <div className="flex items-center gap-3">
-          {/* Camera Icon */}
+        {/* Center Section: Camera Icon + Auto Toggle */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
+          {/* Camera Icon - Clean circular style */}
           <motion.button
             onClick={onCameraClick}
-            className="p-4 rounded-full bg-white/10 hover:bg-white/20 transition-all"
+            className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-lg transition-all hover:scale-105"
             variants={buttonVariants}
-            whileHover="hover"
             whileTap="tap"
             aria-label="Open camera"
           >
-            <span className="text-3xl">📷</span>
+            <CameraIcon className="w-7 h-7 text-gray-800" />
           </motion.button>
 
-          {/* Auto Toggle - with long-press for category selection */}
-          <motion.button
-            onClick={onToggleAutoClassify}
-            onTouchStart={(e) => {
-              e.stopPropagation();
-              const timer = setTimeout(() => {
-                onLongPressAutoClassify();
-              }, 450);
-              (e.target as HTMLElement).dataset.timer = timer.toString();
-            }}
-            onTouchEnd={(e) => {
-              const timer = (e.target as HTMLElement).dataset.timer;
-              if (timer) clearTimeout(parseInt(timer));
-            }}
-            className={`px-3 py-2 rounded-full text-xs font-bold transition-all ${
-              autoClassifyEnabled
-                ? 'bg-green-500/30 border-2 border-green-400 text-green-300'
-                : 'bg-gray-700/50 border-2 border-gray-600 text-gray-400'
-            }`}
-            variants={buttonVariants}
-            whileHover="hover"
-            whileTap="tap"
-            aria-label={`Auto-classify ${autoClassifyEnabled ? 'ON' : 'OFF'}`}
-          >
-            Auto: {autoClassifyEnabled ? 'ON' : 'OFF'}
-          </motion.button>
+         {/* Auto-Classify Toggle Button - ORIGINAL IMPLEMENTATION (relocated to nav bar) */}
+         <motion.button
+           {...autoClassifyLongPress}
+           className={`px-3 py-1.5 rounded-full shadow-lg font-semibold text-xs transition-all ${
+             autoClassifyEnabled
+               ? lastClassification?.type === 'free'
+                 ? 'bg-blue-600 text-white'      // Free = Blue
+                 : lastClassification?.type === 'discount'
+                 ? 'bg-green-600 text-white'     // Discount = Green
+                 : lastClassification?.type === 'bid'
+                 ? 'bg-amber-600 text-white'     // Bid = Amber
+                 : 'bg-green-600 text-white'     // Fallback = Green
+               : 'bg-red-500/60 text-white'      // OFF = Softer red
+           }`}
+           variants={buttonVariants}
+           whileHover="hover"
+           whileTap="tap"
+           aria-label={autoClassifyEnabled ? `Auto-classify: ${lastClassification?.type || 'ON'}` : 'Auto-classify: OFF (long-press to select)'}
+         >
+           <div className="flex items-center gap-2">
+             <div className={`w-2 h-2 rounded-full ${autoClassifyEnabled ? 'bg-white' : 'bg-white/70'}`} />
+             <span>
+               Auto: {autoClassifyEnabled ? 'ON' : 'OFF'}
+             </span>
+           </div>
+           {autoClassifyEnabled && lastClassification && (
+             <div className="text-xs opacity-90 mt-0.5">
+               {lastClassification.type === 'discount' && `${lastClassification.discountPercent || 75}% OFF`}
+               {lastClassification.type === 'bid' && `${lastClassification.bidDurationHours || 48}h`}
+               {lastClassification.type === 'free' && 'FREE'}
+             </div>
+           )}
+         </motion.button>
+        </div>
 
-          {/* AI MIC - Voice interface to DAE system (to implement later) */}
+        {/* Right Section: AI MIC */}
+        <div className="flex items-center">
+          {/* AI MIC - Voice interface to DAE system */}
           <motion.button
             onClick={() => console.log('🎤 AI MIC clicked - 012 ↔ 0102 voice interaction')}
-            className="p-4 rounded-full bg-white/10 hover:bg-white/20 transition-all opacity-50"
+            className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-lg transition-all hover:scale-105 opacity-50"
             variants={buttonVariants}
-            whileHover="hover"
             whileTap="tap"
             aria-label="AI Voice Assistant (coming soon)"
             disabled={true}
           >
-            <span className="text-3xl">🎤</span>
+            <MicIcon className="w-7 h-7 text-gray-800" />
           </motion.button>
         </div>
       </div>

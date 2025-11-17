@@ -1,3 +1,12 @@
+## Message Board Sprint MB-2  EUI Wiring (2025-11-17)
+
+- Added `MessageThreadPanel.tsx` drawer wired to `messageStore` (MB-1 data layer)
+- PhotoCard `onExpand` button kept for fullscreen; ItemReviewer now surfaces message board + join icons
+- `App.tsx` maintains `messagePanelContext` state and passes handlers to all ItemReviewers (browse, my items, cart)
+- Message drawer shows newest messages first and allows quick replies (Occam PoC, no mesh transport yet)
+- Docs updated (`docs/MESSAGE_BOARD.md`) to reflect MB-2 status and roadmap
+- Build verified via `npm run build`
+- WSP: 15 (scoring), 22 (ModLog), 50 (pre-action search), 64 (Occam), 87 (HoloIndex)
 # GotJUNK? FoundUp - Module Change Log
 
 ## Performance Optimization - Layered Cake Loading (2025-11-12)
@@ -110,14 +119,14 @@ Layer 1: CRITICAL (must load immediately)
   - Single geolocation call
 
 Layer 2: LAZY LOAD (defer until needed)
-  - Camera component → load on first button press
-  - PigeonMapView → load when user opens Map tab
-  - FullscreenGallery → load when user opens gallery
+  - Camera component ↁEload on first button press
+  - PigeonMapView ↁEload when user opens Map tab
+  - FullscreenGallery ↁEload when user opens gallery
 
 Layer 3: ON-DEMAND (background/progressive)
-  - Additional items → infinite scroll (TODO)
-  - Framer Motion → code-split for animations
-  - Heavy dependencies → dynamic imports
+  - Additional items ↁEinfinite scroll (TODO)
+  - Framer Motion ↁEcode-split for animations
+  - Heavy dependencies ↁEdynamic imports
 
 Layer 4: OPTIMIZATION (future)
   - Service worker caching
@@ -131,7 +140,7 @@ Layer 4: OPTIMIZATION (future)
 - [storage.ts](frontend/services/storage.ts) - Added pagination support
 
 ### Build Status
-✓ TypeScript compilation succeeded
+✁ETypeScript compilation succeeded
 - No type errors
 - Backward compatible (existing code still works)
 
@@ -181,7 +190,7 @@ User: "on the browse the > is putting items on cart investigate if the right swi
 **Finding**: RIGHT SWIPE **does** add items to cart ([App.tsx:502-506](modules/foundups/gotjunk/frontend/App.tsx#L502-L506))
 - Browse feed: PhotoGrid of thumbnails
 - User swipes horizontally to decide
-- Right swipe → `handleBrowseSwipe()` → adds to cart
+- Right swipe ↁE`handleBrowseSwipe()` ↁEadds to cart
 - `>` buttons only appear in **fullscreen mode** (ItemReviewer), not in browse grid
 
 **Confirmed**: User was correct that right swipe adds to cart.
@@ -200,7 +209,7 @@ User: "on the browse the > is putting items on cart investigate if the right swi
 2. **App.tsx** - Updated cart PhotoGrid onClick handler (line 770-778):
    ```typescript
    onClick={(item) => {
-     // Double-tap thumbnail → fullscreen with queue
+     // Double-tap thumbnail ↁEfullscreen with queue
      const currentIndex = cart.findIndex(i => i.id === item.id);
      const remainingItems = cart.slice(currentIndex + 1);
      setReviewingCartItem(item);
@@ -210,15 +219,15 @@ User: "on the browse the > is putting items on cart investigate if the right swi
 
 3. **App.tsx** - Added cart ItemReviewer component (line 797-836):
    - Reuses existing `ItemReviewer` component pattern from MyItems tab
-   - Right swipe → triggers purchase modal
-   - Left swipe → removes from cart
-   - Swipe up or double-tap → closes fullscreen
+   - Right swipe ↁEtriggers purchase modal
+   - Left swipe ↁEremoves from cart
+   - Swipe up or double-tap ↁEcloses fullscreen
 
 **User Flow**:
-1. **Double-tap** cart thumbnail → fullscreen
-2. **Swipe up** → return to thumbnails
-3. **Left swipe** → remove from cart
-4. **Right swipe** or **>** button → purchase confirmation
+1. **Double-tap** cart thumbnail ↁEfullscreen
+2. **Swipe up** ↁEreturn to thumbnails
+3. **Left swipe** ↁEremove from cart
+4. **Right swipe** or **>** button ↁEpurchase confirmation
 
 ### Feature 2: Purchase Confirmation Modal
 **Goal**: Show purchase prompt with FoundUps wallet balance (testnet).
@@ -244,7 +253,7 @@ User: "on the browse the > is putting items on cart investigate if the right swi
 4. **App.tsx** - Updated cart ItemReviewer onDecision (line 805-827):
    ```typescript
    if (decision === 'keep') {
-     // Right swipe in cart → Purchase confirmation
+     // Right swipe in cart ↁEPurchase confirmation
      setPurchasingItem(item);
      // Wait for purchase confirmation before advancing queue
    }
@@ -268,7 +277,7 @@ User: "on the browse the > is putting items on cart investigate if the right swi
 **Price Calculation**:
 - **Free items**: $0.00
 - **Discount items**: `originalPrice * (1 - discountPercent / 100)`
-  - Example: 50% OFF, $10 → $5.00
+  - Example: 50% OFF, $10 ↁE$5.00
 - **Bid items**: Auction placeholder (shows bid duration)
 
 **Wallet Display**:
@@ -306,7 +315,7 @@ User: "on the browse the > is putting items on cart investigate if the right swi
 - [zLayers.ts](modules/foundups/gotjunk/frontend/constants/zLayers.ts) - Added PURCHASE_MODAL layer
 
 ### Build Status
-✓ TypeScript compilation succeeded (429.70 kB)
+✁ETypeScript compilation succeeded (429.70 kB)
 - 427 modules transformed
 - gzip: 134.25 kB
 
@@ -343,7 +352,7 @@ User: "on the browse the > is putting items on cart investigate if the right swi
 
 **Implementation**:
 - Created `MapClusterMarker.tsx`: 2x2 thumbnail grid component with count badge
-- Created `clusterItems.ts`: Distance-based clustering algorithm (CLUSTER_RADIUS = 0.001° ≈ 100m)
+- Created `clusterItems.ts`: Distance-based clustering algorithm (CLUSTER_RADIUS = 0.001° ≁E100m)
 - Modified `PigeonMapView.tsx`: Conditional rendering (clusters vs individual markers)
 - Modified `App.tsx`: Pass `capturedItems` to enable clustering
 
@@ -354,9 +363,9 @@ User: "on the browse the > is putting items on cart investigate if the right swi
 - Blue pulse animation to attract attention
 
 **User Flow**:
-1. Take pictures → appear in browse feed
-2. Open map → see clustered thumbnail markers
-3. Click cluster → navigate to browse tab
+1. Take pictures ↁEappear in browse feed
+2. Open map ↁEsee clustered thumbnail markers
+3. Click cluster ↁEnavigate to browse tab
 4. Browse shows ONLY items from that location
 
 **Technical**:
@@ -412,7 +421,7 @@ User: "on the browse the > is putting items on cart investigate if the right swi
 - [BottomNavBar.tsx](modules/foundups/gotjunk/frontend/components/BottomNavBar.tsx) - Long-press handlers + color logic
 - [App.tsx](modules/foundups/gotjunk/frontend/App.tsx) - Selection mode state + handler
 
-**Build Status**: ✓ TypeScript compilation succeeded (425.24 kB)
+**Build Status**: ✁ETypeScript compilation succeeded (425.24 kB)
 
 **WSP Compliance**:
 - WSP 50: Used HoloIndex to search for orb toggle and long-press patterns
@@ -431,7 +440,7 @@ User: "on the browse the > is putting items on cart investigate if the right swi
 
 ### PR #62: Sidebar Icon Size Adjustment
 **Problem**: 12px icons were too small for thumb accessibility on mobile.
-**Fix**: Increased icon size from 12px → 16px in `LeftSidebarNav.tsx`
+**Fix**: Increased icon size from 12px ↁE16px in `LeftSidebarNav.tsx`
 - GridIcon, MapIcon, HomeIcon, CartIcon all updated
 - Maintains 54px button size with 19px padding per side
 - User confirmed improved visibility and accessibility
@@ -441,10 +450,10 @@ User: "on the browse the > is putting items on cart investigate if the right swi
 1. **Instructions modal now shows on every page load** (removed localStorage persistence)
    - Before: Showed once, then never again
    - After: Shows on every refresh for consistent onboarding
-   - Changed `useState(() => { ...localStorage... })` → `useState(true)`
+   - Changed `useState(() => { ...localStorage... })` ↁE`useState(true)`
 
 2. **Sidebar moved up 10px** for better thumb reach
-   - Changed `--sb-bottom-safe` from 120px → 130px in `index.css`
+   - Changed `--sb-bottom-safe` from 120px ↁE130px in `index.css`
    - Applies to all 4 navigation icons
 
 ### PR #64: Instructions Modal Visual Improvements
@@ -458,10 +467,10 @@ User: "on the browse the > is putting items on cart investigate if the right swi
 ### PR #65: Instructions Modal Overlap Fix
 **Problem**: Modal used `32px` instead of Tailwind `bottom-32` (8rem = 128px).
 **Fix**: Corrected bottom calculation
-- Changed `calc(32px + ...)` → `calc(8rem + ...)`
+- Changed `calc(32px + ...)` ↁE`calc(8rem + ...)`
 - Fixed 96px positioning error that caused overlap with camera orb
 
-### PR #66: Z-Index Hierarchy Fix ⭐
+### PR #66: Z-Index Hierarchy Fix ⭁E
 **Problem**: ClassificationModal (`z-[200]`) appeared **behind** camera orb (2120) and sidebar (2200).
 **Root Cause**: All modals had hardcoded low z-index values (200-300 range).
 
@@ -480,17 +489,17 @@ export const Z_LAYERS = {
 ```
 
 **Files Updated**:
-- `ClassificationModal.tsx`: z-[200] → `Z_LAYERS.modal` (2300)
-- `OptionsModal.tsx`: z-[300] → `Z_LAYERS.modal` (2300)
-- `ActionSheetDiscount.tsx`: z-[250/251] → `Z_LAYERS.actionSheet` (2400)
-- `ActionSheetBid.tsx`: z-[250/251] → `Z_LAYERS.actionSheet` (2400)
+- `ClassificationModal.tsx`: z-[200] ↁE`Z_LAYERS.modal` (2300)
+- `OptionsModal.tsx`: z-[300] ↁE`Z_LAYERS.modal` (2300)
+- `ActionSheetDiscount.tsx`: z-[250/251] ↁE`Z_LAYERS.actionSheet` (2400)
+- `ActionSheetBid.tsx`: z-[250/251] ↁE`Z_LAYERS.actionSheet` (2400)
 
 **Result**: Classification modal now correctly appears above all controls.
 
 ### PR #67: Instructions Modal - Browse Tab Only
 **Problem**: Modal appeared on ALL tabs (Browse, Map, My Items, Cart).
 **Fix**: Added tab condition to only show on landing page
-- Changed `isOpen={showInstructions}` → `isOpen={showInstructions && activeTab === 'browse'}`
+- Changed `isOpen={showInstructions}` ↁE`isOpen={showInstructions && activeTab === 'browse'}`
 - Prevents confusion when user navigates to other tabs on first load
 
 ### PR #68: Instructions Modal Centering
@@ -528,14 +537,14 @@ style={{ maxHeight: '80vh' }}
 ## Adaptive Icon Visibility on Map View (2025-11-08)
 
 **Problem**: Sidebar navigation icons (grid, map, home, cart) had low contrast against varied map tile backgrounds:
-- White streets → dark `bg-gray-800/90` icons hard to see ❌
-- Dark parks/water → dark icons invisible ❌
-- Mixed urban areas → inconsistent visibility ❌
+- White streets ↁEdark `bg-gray-800/90` icons hard to see ❁E
+- Dark parks/water ↁEdark icons invisible ❁E
+- Mixed urban areas ↁEinconsistent visibility ❁E
 
 **Solution**: Context-aware adaptive styling via `getButtonStyle()` helper function:
-- **Map view**: Inactive icons use bright `bg-indigo-600/85` with strong borders/shadows ✅
-- **Other views**: Inactive icons use subtle `bg-gray-800/90` for consistency ✅
-- **Active state**: Always bright blue `bg-blue-500/70` (unchanged) ✅
+- **Map view**: Inactive icons use bright `bg-indigo-600/85` with strong borders/shadows ✁E
+- **Other views**: Inactive icons use subtle `bg-gray-800/90` for consistency ✁E
+- **Active state**: Always bright blue `bg-blue-500/70` (unchanged) ✁E
 
 **Changes**:
 - `frontend/components/LeftSidebarNav.tsx`:
@@ -559,7 +568,7 @@ const getButtonStyle = (isActive: boolean) => {
 - All icons visible and clickable across light streets, dark parks, blue water, gray buildings
 - No regression on Browse/MyItems/Cart tabs (retain subtle gray backgrounds)
 - Active icon (blue) distinguishable from inactive icons (indigo) on map
-- Build successful: 413.49 kB │ gzip: 130.10 kB (2.68s)
+- Build successful: 413.49 kB ━Egzip: 130.10 kB (2.68s)
 
 **WSP References**:
 - WSP 50: Searched HoloIndex for existing patterns before implementing
@@ -602,7 +611,7 @@ const getButtonStyle = (isActive: boolean) => {
 
 **Next Steps**:
 - Deploy updated GotJunk with Liberty Alert to Cloud Run
-- Add map view with ice cube 🧊 markers for alerts
+- Add map view with ice cube 🧁Emarkers for alerts
 - Integrate video recording with alert creation
 - Test mesh networking between GotJunk users
 
@@ -659,6 +668,7 @@ const getButtonStyle = (isActive: boolean) => {
 
 ---
 
-**Module Lifecycle**: PoC → Prototype (Current) → MVP (Planned)
+**Module Lifecycle**: PoC ↁEPrototype (Current) ↁEMVP (Planned)
 **Last Updated**: Integration into Foundups-Agent repository
 **Next Steps**: See ROADMAP.md for Prototype phase features
+

@@ -149,45 +149,88 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
     userLocation,
   });
 
-  // SOS Tap Detection Handlers
+  // SOS Tap Detection Handlers (ENHANCED DEBUG VERSION)
   const handleMapTapStart = (e: React.MouseEvent | React.TouchEvent) => {
     // Only detect taps on the map surface (not on buttons/markers)
     const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('.map-cluster-marker')) {
+    const isButton = target.closest('button');
+    const isMarker = target.closest('.map-cluster-marker');
+
+    console.log('🗺️ [SOS DEBUG] Tap START detected:', {
+      isButton: !!isButton,
+      isMarker: !!isMarker,
+      targetTag: target.tagName,
+      targetClass: target.className,
+      willRecord: !isButton && !isMarker
+    });
+
+    if (isButton || isMarker) {
+      console.log('🗺️ [SOS DEBUG] Tap FILTERED (interactive element)');
       return; // Ignore taps on interactive elements
     }
+
     tapStartTime.current = Date.now();
+    console.log('🗺️ [SOS DEBUG] Tap START recorded:', tapStartTime.current);
   };
 
   const handleMapTapEnd = (e: React.MouseEvent | React.TouchEvent) => {
     const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('.map-cluster-marker')) {
+    const isButton = target.closest('button');
+    const isMarker = target.closest('.map-cluster-marker');
+
+    if (isButton || isMarker) {
+      console.log('🗺️ [SOS DEBUG] Tap END FILTERED (interactive element)');
       return; // Ignore taps on interactive elements
     }
 
     const tapDuration = Date.now() - tapStartTime.current;
-    if (tapDuration === 0 || tapDuration > 1000) return; // Invalid tap (too long or no start)
+    console.log('🗺️ [SOS DEBUG] Tap END recorded:', {
+      startTime: tapStartTime.current,
+      endTime: Date.now(),
+      duration: tapDuration,
+      valid: tapDuration > 0 && tapDuration <= 1000
+    });
+
+    if (tapDuration === 0 || tapDuration > 1000) {
+      console.log('🗺️ [SOS DEBUG] Tap INVALID (duration:', tapDuration, 'ms)');
+      return; // Invalid tap (too long or no start)
+    }
 
     const SHORT_TAP = 200; // Short tap threshold (dot in morse code)
+    const tapType = tapDuration < SHORT_TAP ? 'SHORT (S)' : 'LONG (L)';
 
     setTapTimes(prev => {
       const newTaps = [...prev, tapDuration];
       // Keep only last 9 taps
       if (newTaps.length > 9) newTaps.shift();
 
+      console.log('🗺️ [SOS DEBUG] Tap recorded:', {
+        duration: tapDuration,
+        type: tapType,
+        tapCount: newTaps.length,
+        allDurations: newTaps,
+        pattern: newTaps.map(d => d < SHORT_TAP ? 'S' : 'L').join('')
+      });
+
       // Check for SOS pattern: SSSLLLSSS (3 short, 3 long, 3 short)
       if (newTaps.length === 9) {
         const pattern = newTaps.map(d => d < SHORT_TAP ? 'S' : 'L').join('');
-        console.log('🗺️ Map SOS Pattern:', pattern);
+        console.log('🗺️ [SOS DEBUG] 9 TAPS COLLECTED! Pattern:', pattern, '| Target: SSSLLLSSS');
 
         if (pattern === 'SSSLLLSSS') {
-          console.log('🗽 SOS DETECTED ON MAP!');
+          console.log('🗽 SOS DETECTED ON MAP! ✓✓✓');
           if (onLibertyActivate) {
             onLibertyActivate();
+          } else {
+            console.warn('🗺️ [SOS DEBUG] onLibertyActivate callback is undefined!');
           }
           // Clear tap history after successful detection
           return [];
+        } else {
+          console.log('🗺️ [SOS DEBUG] Pattern MISMATCH - continuing to collect taps');
         }
+      } else {
+        console.log('🗺️ [SOS DEBUG] Need', 9 - newTaps.length, 'more taps to check pattern');
       }
 
       return newTaps;
@@ -196,8 +239,8 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
     // Reset timeout - clear taps after 3 seconds of inactivity
     if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
     tapTimeoutRef.current = setTimeout(() => {
+      console.log('🗺️ [SOS DEBUG] TIMEOUT - Clearing all taps (3s inactivity)');
       setTapTimes([]);
-      console.log('🗺️ Map SOS timeout - taps cleared');
     }, 3000);
   };
 
