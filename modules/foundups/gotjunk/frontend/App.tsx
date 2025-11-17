@@ -6,6 +6,7 @@ import * as storage from './services/storage';
 // import * as ipfs from './services/ipfsService';
 import { ItemReviewer } from './components/ItemReviewer';
 import { FullscreenGallery } from './components/FullscreenGallery';
+import { FullscreenCamera } from './components/FullscreenCamera';
 import { BottomNavBar } from './components/BottomNavBar';
 import { LeftSidebarNav } from './components/LeftSidebarNav';
 import { RecordingIndicator } from './components/RecordingIndicator';
@@ -82,6 +83,7 @@ const App: React.FC = () => {
   // === UI STATE ===
   const [isGalleryOpen, setGalleryOpen] = useState(false);
   const [isMapOpen, setMapOpen] = useState(false);
+  const [isFullscreenCameraOpen, setIsFullscreenCameraOpen] = useState(false);
   const [captureMode, setCaptureMode] = useState<CaptureMode>('photo');
   const [isRecording, setIsRecording] = useState(false);
   const [countdown, setCountdown] = useState(10);
@@ -1301,6 +1303,10 @@ const App: React.FC = () => {
             console.log('🔍 Search clicked');
             // TODO: Open search modal
           }}
+          onCameraClick={() => {
+            console.log('📷 Camera icon clicked - opening fullscreen camera');
+            setIsFullscreenCameraOpen(true);
+          }}
           showCameraOrb={showCameraOrb}
           autoClassifyEnabled={autoClassifyEnabled}
           onToggleAutoClassify={() => setAutoClassifyEnabled(!autoClassifyEnabled)}
@@ -1386,6 +1392,15 @@ const App: React.FC = () => {
         />
       )}
 
+
+      {/* Fullscreen Camera - Tap to capture */}
+      <FullscreenCamera
+        isOpen={isFullscreenCameraOpen}
+        onCapture={handleCapture}
+        onClose={() => setIsFullscreenCameraOpen(false)}
+        captureMode={captureMode}
+        libertyEnabled={libertyEnabled}
+      />
 
       {/* Classification Modal */}
       <ClassificationModal
