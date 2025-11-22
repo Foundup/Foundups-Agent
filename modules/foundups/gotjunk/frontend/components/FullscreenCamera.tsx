@@ -66,7 +66,7 @@ export const FullscreenCamera: React.FC<FullscreenCameraProps> = ({
   const handleCaptureComplete = (blob: Blob) => {
     console.log('[FullscreenCamera] Photo captured, size:', blob.size);
     onCapture(blob);
-    onClose(); // Close fullscreen camera after capture
+    // Camera stays open - user closes via nav bar camera icon toggle or X button
   };
 
   return (
