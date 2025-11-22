@@ -11,6 +11,7 @@ export const Z_LAYERS = {
   floatingControls: 2050,
   cameraOrb: 2100,
   sidebar: 2150,
+  messagePanel: 2200, // Message panel - above sidebar, below modals (drops from top)
   modal: 2300, // Classification, Options - above all controls
   PURCHASE_MODAL: 2350, // Purchase confirmation - above regular modals
   tutorialPopup: 2400,
