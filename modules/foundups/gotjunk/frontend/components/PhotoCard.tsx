@@ -82,13 +82,13 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({ item, onClick, onDelete, o
       )}
       <button
         onClick={handleDeleteClick}
-        className="absolute top-1 right-1 z-10 w-7 h-7 bg-red-600 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all duration-200 hover:bg-red-500"
+        className="absolute top-1 right-1 z-10 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all duration-200 hover:bg-red-500"
         aria-label="Delete item"
       >
-        <TrashIcon className="w-4 h-4" />
+        <TrashIcon className="w-3.5 h-3.5" />
       </button>
 
-      {/* Manual expand button (alternative to double tap) */}
+      {/* Manual expand button - bottom LEFT corner (10% smaller) */}
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -98,10 +98,10 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({ item, onClick, onDelete, o
             onClick(item);
           }
         }}
-        className="absolute bottom-2 right-2 z-10 w-10 h-10 bg-white text-gray-800 rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200"
+        className="absolute bottom-2 left-2 z-10 w-9 h-9 bg-white text-gray-800 rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200"
         aria-label="Expand item"
       >
-        <PlusIcon className="w-5 h-5" />
+        <PlusIcon className="w-4 h-4" />
       </button>
     </div>
   );

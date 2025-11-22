@@ -163,9 +163,9 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
         )}
       </div>
 
-      {/* Classification details overlay */}
+      {/* Classification details overlay - TOP center (above nav bar) */}
       {item.classification && (
-        <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-10">
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-10">
           <div className="px-5 py-2 bg-black/65 rounded-full text-white text-sm font-semibold flex items-center gap-2 shadow-lg">
             <span>{classificationLabel}</span>
             {classificationMeta && <span className="text-white/70 text-xs">{classificationMeta}</span>}
@@ -173,17 +173,17 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
         </div>
       )}
 
-      {/* Interaction stack - bottom right */}
-      <div className="absolute bottom-6 right-6 flex flex-col items-end gap-3 z-10">
+      {/* Interaction stack - bottom right (10% smaller buttons) */}
+      <div className="absolute bottom-6 right-6 flex flex-col items-end gap-2.5 z-10">
         <button
           onClick={(e) => {
             e.stopPropagation();
             onMessageBoard(item);
           }}
-          className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-2xl hover:scale-105 transition-all"
+          className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-2xl hover:scale-105 transition-all"
           aria-label="Open message board"
         >
-          <MessageBoardIcon className="w-7 h-7 text-gray-900" />
+          <MessageBoardIcon className="w-6 h-6 text-gray-900" />
         </button>
 
         <button
@@ -191,10 +191,10 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
             e.stopPropagation();
             onJoinAction(item);
           }}
-          className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-2xl hover:scale-105 transition-all"
+          className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-2xl hover:scale-105 transition-all"
           aria-label="Join / Request action"
         >
-          <CartIcon className="w-7 h-7 text-gray-900" />
+          <CartIcon className="w-6 h-6 text-gray-900" />
         </button>
 
         {onClose && (
@@ -203,26 +203,26 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
               e.stopPropagation();
               onClose();
             }}
-            className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-2xl hover:scale-105 transition-all"
+            className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-2xl hover:scale-105 transition-all"
             aria-label="Collapse to thumbnails"
           >
-            <span className="text-3xl text-gray-900 leading-none">−</span>
+            <span className="text-2xl text-gray-900 leading-none">−</span>
           </button>
         )}
       </div>
 
-      {/* Forward button (>) - Bottom left corner (for cart purchase) */}
+      {/* Forward button (>) - Bottom left corner (10% smaller) */}
       {showForwardButton && (
         <button
           onClick={(e) => {
             e.stopPropagation(); // Prevent double-tap detection
             onDecision(item, 'keep'); // Trigger purchase
           }}
-          className="absolute bottom-8 left-8 w-14 h-14 bg-green-600/90 hover:bg-green-500/90 active:scale-95 rounded-full flex items-center justify-center shadow-2xl border-2 border-green-400 transition-all z-10"
+          className="absolute bottom-8 left-8 w-12 h-12 bg-green-600/90 hover:bg-green-500/90 active:scale-95 rounded-full flex items-center justify-center shadow-2xl border-2 border-green-400 transition-all z-10"
           aria-label="Purchase Item"
         >
           <svg
-            className="w-8 h-8 text-white"
+            className="w-7 h-7 text-white"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
