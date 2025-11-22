@@ -1358,8 +1358,10 @@ const App: React.FC = () => {
             // TODO: Open search modal
           }}
           onCameraClick={() => {
-            console.log('📷 Camera icon clicked - opening fullscreen camera');
-            setIsFullscreenCameraOpen(true);
+            setIsFullscreenCameraOpen(prev => {
+              console.log(`📷 Camera icon clicked - ${prev ? 'closing' : 'opening'} fullscreen camera`);
+              return !prev;
+            });
           }}
           showCameraOrb={showCameraOrb}
           autoClassifyEnabled={autoClassifyEnabled}

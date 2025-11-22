@@ -81,13 +81,14 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
     >
       {/* Main Nav Bar - Layout: [Delete] [Keep] ... [Camera] [Auto] ... [AI MIC] */}
+      {/* Compact on mobile (h-20), taller on tablets+ (h-28) */}
       <div
-        className="relative flex items-center justify-between w-full h-28 bg-gray-800/80 backdrop-blur-lg border-t border-white/10 max-w-2xl mx-auto rounded-t-2xl shadow-2xl px-6 pb-4"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        className="relative flex items-center justify-between w-full h-20 md:h-28 bg-gray-800/80 backdrop-blur-lg border-t border-white/10 max-w-2xl mx-auto rounded-t-2xl shadow-2xl px-4 md:px-6"
+        style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
       >
 
-        {/* Left Section: Delete & Keep Arrows */}
-        <div className="flex items-center gap-6">
+        {/* Left Section: Delete & Keep Arrows - Hidden on phones, visible on tablets+ */}
+        <div className="hidden md:flex items-center gap-6">
             <motion.button
                 onClick={() => onReviewAction('delete')}
                 aria-label="Delete item"
@@ -112,22 +113,23 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         </div>
 
         {/* Center Section: Camera Icon + Auto Toggle */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
-          {/* Camera Icon - Clean circular style */}
+        {/* On mobile: left-aligned (no arrows), on tablet+: centered */}
+        <div className="flex md:absolute md:left-1/2 md:-translate-x-1/2 items-center gap-2 md:gap-4">
+          {/* Camera Icon - Smaller on mobile */}
           <motion.button
             onClick={onCameraClick}
-            className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-lg transition-all hover:scale-105"
+            className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white flex items-center justify-center shadow-lg transition-all hover:scale-105"
             variants={buttonVariants}
             whileTap="tap"
-            aria-label="Open camera"
+            aria-label="Toggle camera"
           >
-            <CameraIcon className="w-7 h-7 text-gray-800" />
+            <CameraIcon className="w-5 h-5 md:w-7 md:h-7 text-gray-800" />
           </motion.button>
 
-         {/* Auto-Classify Toggle Button - ORIGINAL IMPLEMENTATION (relocated to nav bar) */}
+         {/* Auto-Classify Toggle Button - Compact on mobile */}
          <motion.button
            {...autoClassifyLongPress}
-           className={`px-3 py-1.5 rounded-full shadow-lg font-semibold text-xs transition-all ${
+           className={`px-2 py-0.5 md:px-2.5 md:py-1 rounded-full shadow-lg font-semibold text-[10px] md:text-xs transition-all ${
              autoClassifyEnabled
                ? lastClassification?.type === 'free'
                  ? 'bg-blue-600 text-white'      // Free = Blue
@@ -143,15 +145,15 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
            whileTap="tap"
            aria-label={autoClassifyEnabled ? `Auto-classify: ${lastClassification?.type || 'ON'}` : 'Auto-classify: OFF (long-press to select)'}
          >
-           <div className="flex items-center gap-2">
-             <div className={`w-2 h-2 rounded-full ${autoClassifyEnabled ? 'bg-white' : 'bg-white/70'}`} />
+           <div className="flex items-center gap-1 md:gap-2">
+             <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${autoClassifyEnabled ? 'bg-white' : 'bg-white/70'}`} />
              <span>
-               Auto: {autoClassifyEnabled ? 'ON' : 'OFF'}
+               {autoClassifyEnabled ? 'ON' : 'OFF'}
              </span>
            </div>
            {autoClassifyEnabled && lastClassification && (
-             <div className="text-xs opacity-90 mt-0.5">
-               {lastClassification.type === 'discount' && `${lastClassification.discountPercent || 75}% OFF`}
+             <div className="text-[9px] md:text-xs opacity-90 mt-0.5">
+               {lastClassification.type === 'discount' && `${lastClassification.discountPercent || 75}%`}
                {lastClassification.type === 'bid' && `${lastClassification.bidDurationHours || 48}h`}
                {lastClassification.type === 'free' && 'FREE'}
              </div>
@@ -159,18 +161,18 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
          </motion.button>
         </div>
 
-        {/* Right Section: AI MIC */}
+        {/* Right Section: AI MIC - Smaller on mobile */}
         <div className="flex items-center">
           {/* AI MIC - Voice interface to DAE system */}
           <motion.button
             onClick={() => console.log('🎤 AI MIC clicked - 012 ↔ 0102 voice interaction')}
-            className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-lg transition-all hover:scale-105 opacity-50"
+            className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white flex items-center justify-center shadow-lg transition-all hover:scale-105 opacity-50"
             variants={buttonVariants}
             whileTap="tap"
             aria-label="AI Voice Assistant (coming soon)"
             disabled={true}
           >
-            <MicIcon className="w-7 h-7 text-gray-800" />
+            <MicIcon className="w-5 h-5 md:w-7 md:h-7 text-gray-800" />
           </motion.button>
         </div>
       </div>
