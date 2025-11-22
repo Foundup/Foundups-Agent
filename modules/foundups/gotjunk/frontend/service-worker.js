@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vision-ai-pwa-v2'; // Bumped version to invalidate old cache
+const CACHE_NAME = 'vision-ai-pwa-v3'; // Bumped version to invalidate old cache (2024-11-22)
 const URLS_TO_CACHE = [
   '/',
   '/index.html'
