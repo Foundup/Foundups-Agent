@@ -1,0 +1,13 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // GotJunk item images
+    match /items/{deviceId}/{itemId} {
+      // Anyone can read images
+      allow read: if true;
+      // Anyone can upload (limit file size to 10MB)
+      allow write: if request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

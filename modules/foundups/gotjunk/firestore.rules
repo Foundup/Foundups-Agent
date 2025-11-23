@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // GotJunk Items Collection - Cross-device sync
+    // WSP 98: FoundUps Mesh-Native Architecture Protocol - Layer 2
+    match /gotjunk_items/{itemId} {
+      // Anyone can read (for global item discovery)
+      allow read: if true;
+
+      // Anyone can write (anonymous users supported)
+      // In production, add rate limiting via Cloud Functions
+      allow create: if request.resource.data.keys().hasAll(['id', 'status', 'ownership', 'createdAt']);
+      allow update: if request.resource.data.id == resource.data.id;
+      allow delete: if true; // Allow cleanup of old items
+    }
+
+    // GotJunk Blobs Collection - Image data (base64)
+    match /gotjunk_blobs/{blobId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Liberty Alert Global Index - World map markers
+    // Per MB-3 Database Architecture
+    match /la_global_index/{threadId} {
+      // Anyone can read (world map visibility)
+      allow read: if true;
+
+      // Write: Open for MVP (add geo-verification later)
+      allow create, update: if true;
+
+      // Delete: Anyone can delete expired items
+      allow delete: if true;
+    }
+  }
+}

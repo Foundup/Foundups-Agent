@@ -1,0 +1,29 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "gotjunk_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "gotjunk_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "classification", "order": "ASCENDING" },
+        { "fieldPath": "alertStatus", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "la_global_index",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "regionLevel", "order": "ASCENDING" },
+        { "fieldPath": "expiresAt", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
