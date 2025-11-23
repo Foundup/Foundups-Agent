@@ -1275,6 +1275,7 @@ const App: React.FC = () => {
             // Navigate to Browse
             setActiveTab('browse'); // Tab 1: Browse
             setMapOpen(false); // Close map when switching to Browse
+            setIsFullscreenCameraOpen(false); // Close camera when switching tabs
           }}
           onGalleryIconTap={(duration) => {
             const SHORT_TAP = 200;
@@ -1308,15 +1309,18 @@ const App: React.FC = () => {
             sosDetectionActive.current = false;
             if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
             setMapOpen(true); // Open map as overlay
+            setIsFullscreenCameraOpen(false); // Close camera when opening map
           }}
           onMyItemsClick={() => {
             setActiveTab('myitems'); // Tab 3: My Items
             setMapOpen(false); // Close map when switching to My Items
+            setIsFullscreenCameraOpen(false); // Close camera when switching tabs
             console.log('📦 My Items clicked');
           }}
           onCartClick={() => {
             setActiveTab('cart'); // Tab 4: Cart
             setMapOpen(false); // Close map when switching to Cart
+            setIsFullscreenCameraOpen(false); // Close camera when switching tabs
             console.log('🛒 Cart clicked');
           }}
           libertyEnabled={libertyEnabled}
