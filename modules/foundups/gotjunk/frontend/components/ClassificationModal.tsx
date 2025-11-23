@@ -16,6 +16,7 @@ interface ClassificationModalProps {
   imageUrl: string;
   libertyEnabled?: boolean; // Determines which classifications to show
   isMapView?: boolean; // Show all 11 categories on map, only 5 on My Items
+  isSelectionMode?: boolean; // True when selecting preset (long-press toggle) - hides image
   onClassify: (
     classification: ItemClassification,
     discountPercent?: number,
@@ -46,6 +47,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
   imageUrl,
   libertyEnabled = false,
   isMapView = false,
+  isSelectionMode = false,
   onClassify,
 }) => {
   // Action sheet state
@@ -209,18 +211,20 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
               userSelect: 'none',
             }}
           >
-            {/* Preview image */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="w-full max-w-sm mb-4 rounded-2xl overflow-hidden shadow-2xl"
-            >
-              <img src={imageUrl} alt="Captured item" className="w-full h-auto" />
-            </motion.div>
+            {/* Preview image - hidden in selection mode */}
+            {!isSelectionMode && imageUrl && (
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="w-full max-w-sm mb-4 rounded-2xl overflow-hidden shadow-2xl"
+              >
+                <img src={imageUrl} alt="Captured item" className="w-full h-auto" />
+              </motion.div>
+            )}
 
             {/* Title */}
             <h2 className="text-xl font-bold text-white mb-3 text-center">
-              Select Category (11 Types)
+              {isSelectionMode ? 'Choose Default Category' : 'Select Category (11 Types)'}
             </h2>
 
             {/* Classification buttons - All 11 types */}
@@ -472,18 +476,20 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
               userSelect: 'none',
             }}
           >
-            {/* Preview image - 15% smaller */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="w-full max-w-sm mb-4 rounded-2xl overflow-hidden shadow-2xl"
-            >
-              <img src={imageUrl} alt="Captured item" className="w-full h-auto" />
-            </motion.div>
+            {/* Preview image - hidden in selection mode */}
+            {!isSelectionMode && imageUrl && (
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="w-full max-w-sm mb-4 rounded-2xl overflow-hidden shadow-2xl"
+              >
+                <img src={imageUrl} alt="Captured item" className="w-full h-auto" />
+              </motion.div>
+            )}
 
-            {/* Title - 15% smaller font */}
+            {/* Title */}
             <h2 className="text-xl font-bold text-white mb-3 text-center">
-              How would you like to list this?
+              {isSelectionMode ? 'Choose Default Category' : 'How would you like to list this?'}
             </h2>
 
             {/* Stuff label with LA icon */}
@@ -653,18 +659,20 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
             userSelect: 'none',
           }}
         >
-          {/* Preview image - 15% smaller */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="w-full max-w-sm mb-4 rounded-2xl overflow-hidden shadow-2xl"
-          >
-            <img src={imageUrl} alt="Captured item" className="w-full h-auto" />
-          </motion.div>
+          {/* Preview image - hidden in selection mode */}
+          {!isSelectionMode && imageUrl && (
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-full max-w-sm mb-4 rounded-2xl overflow-hidden shadow-2xl"
+            >
+              <img src={imageUrl} alt="Captured item" className="w-full h-auto" />
+            </motion.div>
+          )}
 
-          {/* Title - 15% smaller */}
+          {/* Title */}
           <h2 className="text-xl font-bold text-white mb-3 text-center">
-            🗽 Liberty Alert - Select Category
+            {isSelectionMode ? '🗽 Choose Default Category' : '🗽 Liberty Alert - Select Category'}
           </h2>
 
           {/* Category Selection */}

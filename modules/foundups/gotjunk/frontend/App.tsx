@@ -20,6 +20,7 @@ import { ItemClassification, MutualAidClassification, AlertClassification } from
 import { MessageThreadPanel } from './components/MessageThreadPanel';
 import { MessageContextRef } from './src/message/types';
 import { PigeonMapView } from './components/PigeonMapView';
+import { VoiceInputOverlay } from './components/VoiceInputOverlay';
 import { useViewport } from './hooks/useViewport';
 import { useViewportHeight } from './hooks/useViewportHeight';
 
@@ -165,6 +166,10 @@ const App: React.FC = () => {
   } | null>(null);
   const [isSelectingLibertyClassification, setIsSelectingLibertyClassification] = useState(false); // True when long-pressing 🗽 badge to select classification
   const [showLibertySelector, setShowLibertySelector] = useState(false); // Controls ActionSheetLibertySelector visibility
+
+  // === VOICE INPUT STATE ===
+  const [voiceInputOpen, setVoiceInputOpen] = useState(false);
+  const [voiceInputText, setVoiceInputText] = useState('');
 
   // === MESSAGE BOARD PANEL STATE ===
   const [messagePanelContext, setMessagePanelContext] = useState<MessageContextRef | null>(null);
@@ -1376,6 +1381,11 @@ const App: React.FC = () => {
           libertyEnabled={libertyEnabled}
           onLongPressLibertyBadge={handleLongPressLibertyBadge}
           lastLibertyClassification={lastLibertyClassification}
+          onVoiceInput={(transcript) => {
+            console.log('[GotJunk] Voice input received:', transcript);
+            setVoiceInputText(transcript);
+            setVoiceInputOpen(true);
+          }}
         />
 
       {/* Re-classification Modal (tap badge) */}
@@ -1469,6 +1479,7 @@ const App: React.FC = () => {
         imageUrl={pendingClassificationItem?.url || ''}
         libertyEnabled={libertyEnabled}
         isMapView={isMapOpen}
+        isSelectionMode={isSelectingClassification}
         onClassify={handleClassify}
       />
 
@@ -1532,6 +1543,22 @@ const App: React.FC = () => {
           onClose={closeMessagePanel}
         />
       )}
+
+      {/* Voice Input Overlay - appears when nav bar mic captures speech */}
+      <VoiceInputOverlay
+        isOpen={voiceInputOpen}
+        initialText={voiceInputText}
+        onSend={(text) => {
+          console.log('[GotJunk] Voice message sent:', text);
+          // TODO: Route to current context (message thread, item note, etc.)
+          // For now, log it - user can wire this up as needed
+        }}
+        onClose={() => {
+          setVoiceInputOpen(false);
+          setVoiceInputText('');
+        }}
+        placeholder="Edit your voice input..."
+      />
 
     </div>
   );
