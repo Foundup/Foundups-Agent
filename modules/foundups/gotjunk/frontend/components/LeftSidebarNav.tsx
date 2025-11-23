@@ -136,6 +136,11 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
       >
         <CartIcon style={{ width: '16px', height: '16px' }} className="text-white" />
       </motion.button>
+
+      {/* Version indicator - subtle at bottom */}
+      <div className="mt-2 text-[8px] text-white/30 font-mono select-none">
+        {typeof __COMMIT_HASH__ !== 'undefined' ? __COMMIT_HASH__ : 'dev'}
+      </div>
     </motion.div>
   );
 };
