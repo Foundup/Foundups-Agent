@@ -681,6 +681,10 @@ const App: React.FC = () => {
         return [newItem, ...current];
       });
 
+      // Close camera and switch to My Items tab so user sees their new item
+      setIsFullscreenCameraOpen(false);
+      setActiveTab('myitems');
+
       console.log('[GotJunk] Item successfully created and added to drafts');
     } finally {
       // Always reset processing flag, even if there's an error
