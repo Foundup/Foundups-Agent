@@ -95,6 +95,11 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
               >
                 Got it! Start Swiping
               </button>
+
+              {/* Version indicator */}
+              <p className="text-[10px] text-gray-500 text-center mt-3 font-mono">
+                Build: {typeof __COMMIT_HASH__ !== 'undefined' ? __COMMIT_HASH__ : 'dev'}
+              </p>
             </div>
           </motion.div>
         </motion.div>
