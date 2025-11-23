@@ -18,9 +18,7 @@ export const MessageThreadPanel: React.FC<MessageThreadPanelProps> = ({ context,
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef<any>(null);
 
   const refreshMessages = () => {
     messageStore.pruneExpired();
@@ -50,44 +48,6 @@ export const MessageThreadPanel: React.FC<MessageThreadPanelProps> = ({ context,
     return () => window.removeEventListener('keydown', handleEscape);
   }, [onClose]);
 
-  // Speech recognition setup (Web Speech API)
-  useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.log('[MessageThreadPanel] Speech recognition not supported');
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setInput(prev => prev ? `${prev} ${transcript}` : transcript);
-      setIsListening(false);
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error('[MessageThreadPanel] Speech recognition error:', event.error);
-      setError('Speech recognition failed. Please try again.');
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognitionRef.current = recognition;
-
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-    };
-  }, []);
-
   useEffect(() => {
     refreshMessages();
   }, [context]);
@@ -108,27 +68,6 @@ export const MessageThreadPanel: React.FC<MessageThreadPanelProps> = ({ context,
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message');
       console.error('[MessageThreadPanel] Send error:', err);
-    }
-  };
-
-  const handleMicClick = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setError('Speech input not supported on this device');
-      return;
-    }
-
-    if (isListening) {
-      recognitionRef.current?.stop();
-    } else {
-      try {
-        recognitionRef.current?.start();
-        setIsListening(true);
-        setError(null);
-      } catch (err) {
-        console.error('[MessageThreadPanel] Failed to start speech recognition:', err);
-        setError('Failed to start speech recognition');
-      }
     }
   };
 
@@ -215,21 +154,12 @@ export const MessageThreadPanel: React.FC<MessageThreadPanelProps> = ({ context,
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleSend();
                 }}
-                placeholder={isListening ? 'Listening...' : 'Share info with nearby community...'}
+                placeholder="Share info with nearby community..."
                 className="flex-1 rounded-2xl bg-gray-900/80 text-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/70"
               />
               <button
-                onClick={handleMicClick}
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${
-                  isListening ? 'bg-red-600 text-white' : 'bg-gray-700/80 text-white hover:bg-gray-600/80'
-                }`}
-                aria-label={isListening ? 'Stop listening' : 'Voice input'}
-              >
-                🎤
-              </button>
-              <button
                 onClick={handleSend}
-                className="w-16 h-12 rounded-2xl bg-blue-600 text-white font-semibold disabled:opacity-50 flex items-center justify-center"
+                className="px-5 h-12 rounded-2xl bg-blue-600 text-white font-semibold disabled:opacity-50 flex items-center justify-center"
                 disabled={!input.trim()}
               >
                 Send

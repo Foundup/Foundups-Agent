@@ -4,7 +4,6 @@ import { motion, PanInfo } from 'framer-motion';
 import { CapturedItem } from '../types';
 import { Z_LAYERS } from '../constants/zLayers';
 import { ClassificationBadge } from './ClassificationBadge';
-import { CartIcon } from './icons/CartIcon';
 import { MessageBoardIcon } from './icons/MessageBoardIcon';
 
 interface ItemReviewerProps {
@@ -12,7 +11,6 @@ interface ItemReviewerProps {
   onDecision: (item: CapturedItem, decision: 'keep' | 'delete') => void;
   onClose?: () => void; // Optional: close fullscreen without making a decision
   showForwardButton?: boolean; // Optional: show > button for cart purchase
-  onJoinAction?: (item: CapturedItem) => void; // Join/request action
   onMessageBoard?: (item: CapturedItem) => void; // Open message board/chat
 }
 
@@ -21,7 +19,6 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
   onDecision,
   onClose,
   showForwardButton = false,
-  onJoinAction = () => console.log('[ItemReviewer] Join action'),
   onMessageBoard = () => console.log('[ItemReviewer] Message board open'),
 }) => {
   const [swipeDecision, setSwipeDecision] = useState<'keep' | 'delete' | null>(null);
@@ -83,31 +80,6 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
 
   const isVideo = item.blob.type.startsWith('video/');
 
-  const classificationLabel = (() => {
-    if (!item.classification) return 'Unclassified';
-    return item.classification.replace('_', ' ').toUpperCase();
-  })();
-
-  const classificationMeta = (() => {
-    if (!item.classification) return '';
-    if (item.classification === 'discount' && item.price) {
-      return `$${item.price} (${item.discountPercent || 75}% OFF)`;
-    }
-    if (item.classification === 'bid' && item.bidDurationHours) {
-      return `${item.bidDurationHours}h auction`;
-    }
-    if (item.classification === 'share') {
-      return 'Share / Borrow';
-    }
-    if (item.classification === 'wanted') {
-      return 'Looking for item';
-    }
-    if (['ice', 'police'].includes(item.classification)) {
-      return 'Liberty Alert';
-    }
-    return '';
-  })();
-
   return (
     <motion.div
       className="fixed inset-0 flex items-center justify-center p-4 pb-28 bg-black/80 backdrop-blur-sm"
@@ -163,18 +135,8 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
         )}
       </div>
 
-      {/* Classification details overlay - TOP center (above nav bar) */}
-      {item.classification && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-10">
-          <div className="px-5 py-2 bg-black/65 rounded-full text-white text-sm font-semibold flex items-center gap-2 shadow-lg">
-            <span>{classificationLabel}</span>
-            {classificationMeta && <span className="text-white/70 text-xs">{classificationMeta}</span>}
-          </div>
-        </div>
-      )}
-
-      {/* Interaction stack - bottom right (10% smaller buttons) */}
-      <div className="absolute bottom-6 right-6 flex flex-col items-end gap-2.5 z-10">
+      {/* Message Board Icon - Mid-right side (Occam's razor: cart is in left sidebar) */}
+      <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-end gap-3 z-10">
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -184,17 +146,6 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
           aria-label="Open message board"
         >
           <MessageBoardIcon className="w-6 h-6 text-gray-900" />
-        </button>
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onJoinAction(item);
-          }}
-          className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-2xl hover:scale-105 transition-all"
-          aria-label="Join / Request action"
-        >
-          <CartIcon className="w-6 h-6 text-gray-900" />
         </button>
 
         {onClose && (

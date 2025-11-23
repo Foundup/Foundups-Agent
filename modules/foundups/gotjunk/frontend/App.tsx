@@ -1010,7 +1010,6 @@ const App: React.FC = () => {
                         setIsBrowseGridMode(true);
                       }}
                       onMessageBoard={openMessagePanelForItem}
-                      onJoinAction={handleJoinAction}
                     />
                   )}
                 </AnimatePresence>
@@ -1173,7 +1172,6 @@ const App: React.FC = () => {
                     setReviewQueue([]);
                   }}
                   onMessageBoard={openMessagePanelForItem}
-                  onJoinAction={handleJoinAction}
                 />
               )}
             </AnimatePresence>
@@ -1257,7 +1255,6 @@ const App: React.FC = () => {
                     setCartReviewQueue([]);
                   }}
                   onMessageBoard={openMessagePanelForItem}
-                  onJoinAction={handleJoinAction}
                 />
               )}
             </AnimatePresence>
