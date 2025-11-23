@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { LeftArrowIcon } from './icons/LeftArrowIcon';
 import { RightArrowIcon } from './icons/RightArrowIcon';
@@ -28,6 +28,7 @@ interface BottomNavBarProps {
   libertyEnabled?: boolean; // Liberty Alert mode (show 🗽 badge on camera)
   onLongPressLibertyBadge?: () => void; // Long press 🗽 badge to select Liberty classification
   lastLibertyClassification?: { type: string, stayLimitNights?: number, alertTimerMinutes?: number, isPermanent?: boolean } | null;
+  onVoiceInput?: (transcript: string) => void; // Voice input callback - receives STT result
 }
 
 const buttonVariants = {
@@ -54,7 +55,57 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   libertyEnabled = false,
   onLongPressLibertyBadge = () => console.log('🗽 Long-press: Select Liberty classification'),
   lastLibertyClassification = null,
+  onVoiceInput = (transcript: string) => console.log('🎤 Voice input:', transcript),
   }) => {
+  // Voice input state (Web Speech API - triggers phone's native STT)
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  // Speech recognition setup
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      console.log('[GotJunk] STT result:', transcript);
+      onVoiceInput(transcript);
+      setIsListening(false);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.log('[GotJunk] STT error:', event.error);
+      setIsListening(false);
+    };
+    recognition.onend = () => setIsListening(false);
+
+    recognitionRef.current = recognition;
+    return () => recognitionRef.current?.stop();
+  }, [onVoiceInput]);
+
+  const handleMicClick = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.log('[GotJunk] Speech recognition not supported on this device');
+      return;
+    }
+    if (isListening) {
+      recognitionRef.current?.stop();
+    } else {
+      try {
+        recognitionRef.current?.start();
+        setIsListening(true);
+        console.log('[GotJunk] STT started - listening...');
+      } catch (err) {
+        console.log('[GotJunk] Failed to start STT:', err);
+      }
+    }
+  };
   // Navigation Bar Layout: [<] [>] ... [📷] [Auto: OFF] [🎤]
   // - Left: Swipe left/right thumb toggles (delete/keep)
   // - Right: Camera icon + Auto toggle + AI MIC (voice interface to DAE system)
@@ -160,18 +211,21 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
          </motion.button>
         </div>
 
-        {/* Right Section: AI MIC - 15% bigger on mobile */}
+        {/* Right Section: Voice Input MIC - 15% bigger on mobile */}
         <div className="absolute right-4 md:right-6 flex items-center">
-          {/* AI MIC - Voice interface to DAE system */}
+          {/* Voice MIC - Triggers phone's native STT via Web Speech API */}
           <motion.button
-            onClick={() => console.log('🎤 AI MIC clicked - 012 ↔ 0102 voice interaction')}
-            className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-white flex items-center justify-center shadow-lg transition-all hover:scale-105 opacity-50"
+            onClick={handleMicClick}
+            className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 ${
+              isListening
+                ? 'bg-red-500 animate-pulse'
+                : 'bg-white'
+            }`}
             variants={buttonVariants}
             whileTap="tap"
-            aria-label="AI Voice Assistant (coming soon)"
-            disabled={true}
+            aria-label={isListening ? 'Stop listening' : 'Voice input'}
           >
-            <MicIcon className="w-6 h-6 md:w-7 md:h-7 text-gray-800" />
+            <MicIcon className={`w-6 h-6 md:w-7 md:h-7 ${isListening ? 'text-white' : 'text-gray-800'}`} />
           </motion.button>
         </div>
       </div>
