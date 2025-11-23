@@ -165,15 +165,15 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 
         {/* Center Section: Camera Icon + Auto Toggle - ALWAYS CENTERED */}
         <div className="flex items-center gap-3 md:gap-4">
-          {/* Camera Icon - 15% bigger on mobile (w-14 h-14) */}
+          {/* Camera Icon - Matches sidebar style */}
           <motion.button
             onClick={onCameraClick}
-            className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-white flex items-center justify-center shadow-lg transition-all hover:scale-105"
+            className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gray-800/90 hover:bg-gray-700/90 border-2 border-gray-600 backdrop-blur-md shadow-xl flex items-center justify-center transition-all"
             variants={buttonVariants}
             whileTap="tap"
             aria-label="Toggle camera"
           >
-            <CameraIcon className="w-6 h-6 md:w-7 md:h-7 text-gray-800" />
+            <CameraIcon className="w-5 h-5 md:w-6 md:h-6 text-white" />
           </motion.button>
 
          {/* Auto-Classify Toggle Button - Oval shaped (more horizontal padding) */}
@@ -211,21 +211,21 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
          </motion.button>
         </div>
 
-        {/* Right Section: Voice Input MIC - 15% bigger on mobile */}
+        {/* Right Section: Voice Input MIC - Matches sidebar style */}
         <div className="absolute right-4 md:right-6 flex items-center">
           {/* Voice MIC - Triggers phone's native STT via Web Speech API */}
           <motion.button
             onClick={handleMicClick}
-            className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 ${
+            className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl backdrop-blur-md shadow-xl flex items-center justify-center transition-all ${
               isListening
-                ? 'bg-red-500 animate-pulse'
-                : 'bg-white'
+                ? 'bg-red-500/90 border-2 border-red-400 animate-pulse'
+                : 'bg-gray-800/90 hover:bg-gray-700/90 border-2 border-gray-600'
             }`}
             variants={buttonVariants}
             whileTap="tap"
             aria-label={isListening ? 'Stop listening' : 'Voice input'}
           >
-            <MicIcon className={`w-6 h-6 md:w-7 md:h-7 ${isListening ? 'text-white' : 'text-gray-800'}`} />
+            <MicIcon className="w-5 h-5 md:w-6 md:h-6 text-white" />
           </motion.button>
         </div>
       </div>
