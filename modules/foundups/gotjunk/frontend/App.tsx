@@ -144,8 +144,9 @@ const App: React.FC = () => {
   // === CLASSIFICATION FILTER ===
   const [classificationFilter, setClassificationFilter] = useState<'all' | ItemClassification>('all');
 
-  // === MY ITEMS SECTION FILTER (3 compartments) ===
-  type MyItemsSection = 'commerce' | 'share' | 'community';
+  // === MY ITEMS SECTION FILTER (2-3 compartments) ===
+  // LA (Liberty Alerts) tab only visible when Liberty unlocked
+  type MyItemsSection = 'commerce' | 'share' | 'la';
   const [myItemsSection, setMyItemsSection] = useState<MyItemsSection>('commerce');
 
   // === MY ITEMS MEDIA FILTER (photos/videos/all) ===
@@ -397,6 +398,14 @@ const App: React.FC = () => {
     };
     initializeApp();
   }, []);
+
+  // Reset LA tab selection if Liberty disabled while on LA tab
+  useEffect(() => {
+    if (!libertyEnabled && myItemsSection === 'la') {
+      setMyItemsSection('commerce');
+      console.log('[GotJunk] Liberty disabled - resetting to Commerce tab');
+    }
+  }, [libertyEnabled, myItemsSection]);
 
   // Reset map navigation when opening map or changing Liberty mode
   useEffect(() => {
@@ -1087,7 +1096,7 @@ const App: React.FC = () => {
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
-                  Commerce
+                  Stuff
                 </button>
                 {/* Share Economy */}
                 <button
@@ -1098,19 +1107,21 @@ const App: React.FC = () => {
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
-                  Share
+                  Wanted
                 </button>
-                {/* Community Aid + Alerts */}
-                <button
-                  onClick={() => setMyItemsSection('community')}
-                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    myItemsSection === 'community'
-                      ? 'bg-orange-500 text-white shadow-lg'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  Community
-                </button>
+                {/* Liberty Alerts - Only visible when unlocked */}
+                {libertyEnabled && (
+                  <button
+                    onClick={() => setMyItemsSection('la')}
+                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                      myItemsSection === 'la'
+                        ? 'bg-orange-500 text-white shadow-lg'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    LA Alerts
+                  </button>
+                )}
               </div>
 
               {/* Media Type Filter Row */}
@@ -1166,8 +1177,8 @@ const App: React.FC = () => {
                       item.classification === 'share' ||
                       item.classification === 'wanted'
                     );
-                  } else {
-                    // community: mutual aid + alerts (including food subcategories)
+                  } else if (myItemsSection === 'la') {
+                    // LA (Liberty Alerts): mutual aid + emergency alerts
                     filtered = filtered.filter(item =>
                       item.classification === 'food' ||
                       item.classification === 'soup_kitchen' ||
