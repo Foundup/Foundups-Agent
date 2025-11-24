@@ -2,6 +2,7 @@ import { useCallback, useRef } from 'react';
 
 interface UseLongPressOptions {
   onLongPress: (event: PointerEvent | TouchEvent | MouseEvent) => void;
+  onLongPressRelease?: (event: PointerEvent | TouchEvent | MouseEvent) => void; // Called when finger lifts after long-press (for video recording)
   onTap?: (event: PointerEvent | TouchEvent | MouseEvent) => void;
   threshold?: number; // ms before long-press fires (default 450ms)
   moveThreshold?: number; // px movement to cancel long-press (default 10px)
@@ -35,6 +36,7 @@ interface UseLongPressReturn {
  */
 export function useLongPress({
   onLongPress,
+  onLongPressRelease,
   onTap,
   threshold = 450,
   moveThreshold = 10,
@@ -100,6 +102,14 @@ export function useLongPress({
   const handleEnd = useCallback((event: PointerEvent | TouchEvent | MouseEvent) => {
     clear();
 
+    // If long-press was triggered, fire release callback (for video recording stop)
+    if (longPressTriggeredRef.current && onLongPressRelease) {
+      onLongPressRelease(event);
+      longPressTriggeredRef.current = false;
+      startPosRef.current = null;
+      return;
+    }
+
     // Fire tap only if long-press wasn't triggered
     if (!longPressTriggeredRef.current && onTap) {
       const now = Date.now();
@@ -117,7 +127,7 @@ export function useLongPress({
     }
 
     startPosRef.current = null;
-  }, [onTap, clear]);
+  }, [onTap, onLongPressRelease, clear]);
 
   const handleCancel = useCallback(() => {
     clear();
