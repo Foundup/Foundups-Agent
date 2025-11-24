@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, PanInfo } from 'framer-motion';
 import { CapturedItem } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
 import { PlayIcon } from './icons/PlayIcon';
@@ -37,8 +37,28 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({ item, onClick, onDelete, o
 
   const isVideo = item.blob.type.startsWith('video/');
 
+  // Swipe-down gesture to open fullscreen
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const swipeThreshold = 80;  // pixels
+    const velocityThreshold = 200;  // pixels/second
+
+    // Swipe DOWN = open fullscreen
+    if (info.offset.y > swipeThreshold || info.velocity.y > velocityThreshold) {
+      console.log('[PhotoCard] Swipe down detected - opening fullscreen');
+      onClick(item);
+    }
+  };
+
   return (
-    <div className="relative group aspect-square w-full rounded-lg overflow-hidden bg-gray-800 shadow-md cursor-pointer" onClick={handleCardClick}>
+    <motion.div
+      className="relative group aspect-square w-full rounded-lg overflow-hidden bg-gray-800 shadow-md cursor-pointer"
+      onClick={handleCardClick}
+      drag="y"
+      dragConstraints={{ top: 0, bottom: 0 }}
+      dragElastic={0.3}
+      onDragEnd={handleDragEnd}
+      whileDrag={{ scale: 1.02, zIndex: 10 }}
+    >
       {isVideo ? (
          <video
             src={item.url}
@@ -103,6 +123,6 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({ item, onClick, onDelete, o
       >
         <PlusIcon className="w-4 h-4" />
       </button>
-    </div>
+    </motion.div>
   );
 };

@@ -50,6 +50,13 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
       return;
     }
 
+    // Check for vertical swipe DOWN to skip to next item
+    if (info.offset.y > swipeThreshold || info.velocity.y > velocityThreshold) {
+      console.log('[ItemReviewer] Swipe down detected - skipping to next item');
+      setSwipeDecision('delete'); // Skip = delete in browse context
+      return;
+    }
+
     // Horizontal swipe for keep/delete
     let decision: 'keep' | 'delete' | null = null;
 
@@ -87,7 +94,7 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
       role="dialog"
       aria-modal="true"
       drag
-      dragConstraints={{ left: -150, right: 150, top: -200, bottom: 50 }}
+      dragConstraints={{ left: -150, right: 150, top: -200, bottom: 150 }}
       dragElastic={0.2}
       onDragEnd={handleDragEnd}
       onClick={handleTap}
