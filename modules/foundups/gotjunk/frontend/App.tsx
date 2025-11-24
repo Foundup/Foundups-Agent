@@ -148,6 +148,10 @@ const App: React.FC = () => {
   type MyItemsSection = 'commerce' | 'share' | 'community';
   const [myItemsSection, setMyItemsSection] = useState<MyItemsSection>('commerce');
 
+  // === MY ITEMS MEDIA FILTER (photos/videos/all) ===
+  type MediaFilter = 'all' | 'photos' | 'videos';
+  const [mediaFilter, setMediaFilter] = useState<MediaFilter>('all');
+
   // === BROWSE GRID MODE (swipe up to show thumbnails) ===
   const [isBrowseGridMode, setIsBrowseGridMode] = useState(false);
 
@@ -1108,28 +1112,63 @@ const App: React.FC = () => {
                   Community
                 </button>
               </div>
+
+              {/* Media Type Filter Row */}
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <button
+                  onClick={() => setMediaFilter('all')}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                    mediaFilter === 'all'
+                      ? 'bg-gray-600 text-white'
+                      : 'bg-gray-800/50 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setMediaFilter('photos')}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
+                    mediaFilter === 'photos'
+                      ? 'bg-gray-600 text-white'
+                      : 'bg-gray-800/50 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <span>📷</span> Photos
+                </button>
+                <button
+                  onClick={() => setMediaFilter('videos')}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
+                    mediaFilter === 'videos'
+                      ? 'bg-gray-600 text-white'
+                      : 'bg-gray-800/50 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <span>🎬</span> Videos
+                </button>
+              </div>
             </div>
 
             {/* Filtered Photo Grid */}
             <div className="flex-1 overflow-y-auto">
               <PhotoGrid
                 items={(() => {
-                  const allMyItems = [...myDrafts, ...myListed];
+                  let filtered = [...myDrafts, ...myListed];
+
                   // Filter by section
                   if (myItemsSection === 'commerce') {
-                    return allMyItems.filter(item =>
+                    filtered = filtered.filter(item =>
                       item.classification === 'free' ||
                       item.classification === 'discount' ||
                       item.classification === 'bid'
                     );
                   } else if (myItemsSection === 'share') {
-                    return allMyItems.filter(item =>
+                    filtered = filtered.filter(item =>
                       item.classification === 'share' ||
                       item.classification === 'wanted'
                     );
                   } else {
                     // community: mutual aid + alerts (including food subcategories)
-                    return allMyItems.filter(item =>
+                    filtered = filtered.filter(item =>
                       item.classification === 'food' ||
                       item.classification === 'soup_kitchen' ||
                       item.classification === 'bbq' ||
@@ -1143,6 +1182,15 @@ const App: React.FC = () => {
                       item.classification === 'police'
                     );
                   }
+
+                  // Filter by media type
+                  if (mediaFilter === 'photos') {
+                    filtered = filtered.filter(item => item.blob.type.startsWith('image/'));
+                  } else if (mediaFilter === 'videos') {
+                    filtered = filtered.filter(item => item.blob.type.startsWith('video/'));
+                  }
+
+                  return filtered;
                 })()}
               onClick={(item) => {
                 // Double-tap detected by PhotoCard - open fullscreen review
@@ -1433,6 +1481,7 @@ const App: React.FC = () => {
           onClassify={(newClassification, discountPercent, bidDurationHours, stayLimitNights, alertTimerMinutes, isPermanent) =>
             handleReclassify(reclassifyingItem, newClassification, discountPercent, bidDurationHours, stayLimitNights, alertTimerMinutes, isPermanent)
           }
+          onCancel={() => setReclassifyingItem(null)}
         />
       )}
 
@@ -1518,6 +1567,14 @@ const App: React.FC = () => {
         isMapView={isMapOpen}
         isSelectionMode={isSelectingClassification}
         onClassify={handleClassify}
+        onCancel={() => {
+          // Revoke blob URL to prevent memory leak
+          if (pendingClassificationItem?.url) {
+            URL.revokeObjectURL(pendingClassificationItem.url);
+          }
+          setPendingClassificationItem(null);
+          console.log('[GotJunk] Classification cancelled - image discarded');
+        }}
       />
 
       {/* Instructions Modal (shows on Browse tab only - landing page) */}

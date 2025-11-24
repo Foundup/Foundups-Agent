@@ -41,6 +41,7 @@ interface ClassificationModalProps {
     alertTimerMinutes?: number,
     isPermanent?: boolean
   ) => void;
+  onCancel?: () => void; // Called when user cancels - discards pending image
 }
 
 /**
@@ -65,6 +66,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
   isMapView = false,
   isSelectionMode = false,
   onClassify,
+  onCancel,
 }) => {
   // Action sheet state
   const [discountSheetOpen, setDiscountSheetOpen] = useState(false);
@@ -628,10 +630,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                // Close modal without classifying
-                window.history.back(); // Or use onClose callback if available
-              }}
+              onClick={() => onCancel?.()}
               className="w-full max-w-sm mt-3 py-2.5 bg-gray-700/50 hover:bg-gray-700/70 border border-gray-600 rounded-xl text-white font-semibold text-sm transition-all"
             >
               Cancel
@@ -899,10 +898,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              // Close modal without classifying
-              window.history.back();
-            }}
+            onClick={() => onCancel?.()}
             className="w-full max-w-sm mt-3 py-2.5 bg-gray-700/50 hover:bg-gray-700/70 border border-gray-600 rounded-xl text-white font-semibold text-sm transition-all"
           >
             Cancel
