@@ -7,25 +7,25 @@
  *
  * Project: gen-lang-client-0061781628
  *
- * Environment Variables (set in Cloud Run):
+ * Environment Variables (set in .env or Cloud Run):
  * - VITE_FIREBASE_API_KEY: Firebase Web API Key
  * - VITE_FIREBASE_APP_ID: Firebase App ID
+ * - VITE_FIREBASE_SENDER_ID: Firebase Messaging Sender ID
  */
 
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 
-// Firebase configuration - Hardcoded for GotJunk PWA
-// These are PUBLIC values (Firebase web config is client-side)
-// Security is enforced via Firestore Security Rules
+// Firebase configuration from environment variables
+// Set these in .env file (gitignored) or Cloud Run secrets
 const firebaseConfig = {
-  apiKey: 'AIzaSyCpvfTJX5nI6UWAPSIPfIIC_wr7AAYkjAo',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
   authDomain: 'gen-lang-client-0061781628.firebaseapp.com',
   projectId: 'gen-lang-client-0061781628',
   storageBucket: 'gen-lang-client-0061781628.firebasestorage.app',
-  messagingSenderId: '56566376153',
-  appId: '1:56566376153:web:3ac1a0798ff20b10ebc0c8',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_SENDER_ID || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
   measurementId: 'G-65KCHXR5VL',
 };
 
@@ -36,10 +36,10 @@ let storage: FirebaseStorage | null = null;
 
 /**
  * Check if Firebase is properly configured
- * Always true now that config is hardcoded
+ * Requires VITE_FIREBASE_API_KEY and VITE_FIREBASE_APP_ID env vars
  */
 export const isFirebaseConfigured = (): boolean => {
-  return true; // Config is hardcoded - always available
+  return !!(firebaseConfig.apiKey && firebaseConfig.appId);
 };
 
 /**
@@ -47,7 +47,7 @@ export const isFirebaseConfigured = (): boolean => {
  */
 export const getFirebaseApp = (): FirebaseApp | null => {
   if (!isFirebaseConfigured()) {
-    console.warn('[Firebase] Not configured - set VITE_FIREBASE_API_KEY and VITE_FIREBASE_APP_ID');
+    console.warn('[Firebase] Not configured - set VITE_FIREBASE_API_KEY and VITE_FIREBASE_APP_ID in .env');
     return null;
   }
 
