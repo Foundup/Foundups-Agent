@@ -10,6 +10,7 @@
 import localforage from 'localforage';
 import { CapturedItem, ItemStatus } from '../types';
 import { syncItemToCloud, fetchItemsFromCloud, getSyncStatus } from './firestoreSync';
+import { MeshDaemon } from './meshDaemon';
 
 localforage.config({
     name: 'got-junk-pwa',
@@ -24,10 +25,18 @@ export const saveItem = async (item: CapturedItem): Promise<void> => {
     const { url, ...storableItem } = item;
     // Layer 1: Save to IndexedDB (immediate, offline-first)
     await localforage.setItem(item.id, storableItem);
-    // Layer 2: Sync to Firestore (async, non-blocking)
+
+    // Layer 2: Sync to Cloud (Legacy/Hybrid)
     syncItemToCloud(item).catch(err =>
         console.log('[Storage] Cloud sync deferred:', err.message)
     );
+
+    // Layer 3: Broadcast to Mesh (Local-First/Gossip)
+    try {
+        MeshDaemon.getInstance().broadcastItem(item);
+    } catch (e) {
+        console.warn('[Storage] Mesh broadcast failed:', e);
+    }
 };
 
 export const updateItemStatus = async (id: string, status: ItemStatus): Promise<void> => {
@@ -35,6 +44,16 @@ export const updateItemStatus = async (id: string, status: ItemStatus): Promise<
     if (item) {
         item.status = status;
         await localforage.setItem(id, item);
+        
+        // Broadcast status update to Mesh
+        try {
+            // We need to mock the URL/Blob since we don't have it here and don't need it for status update
+            // Ideally MeshDaemon accepts a lighter type
+            const meshItem = { ...item, url: '', blob: new Blob() } as CapturedItem;
+            MeshDaemon.getInstance().broadcastItem(meshItem);
+        } catch (e) {
+            console.warn('[Storage] Mesh update failed:', e);
+        }
     }
 }
 
@@ -64,8 +83,19 @@ export const getAllItems = async (limit?: number, offset: number = 0): Promise<C
         : storableItems.slice(offset);
 
     for (const { key, value } of paginatedItems) {
-        const url = URL.createObjectURL(value.blob);
-        items.push({ ...value, id: key, url });
+        // Defensive: Skip items with missing or invalid blobs (prevents white screen crash)
+        if (!value.blob || !(value.blob instanceof Blob)) {
+            console.warn('[Storage] Skipping item with missing blob:', key);
+            continue;
+        }
+
+        try {
+            const url = URL.createObjectURL(value.blob);
+            items.push({ ...value, id: key, url });
+        } catch (err) {
+            console.error('[Storage] Failed to create URL for item:', key, err);
+            // Skip corrupted items instead of crashing
+        }
     }
 
     return items;

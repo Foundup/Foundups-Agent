@@ -1183,11 +1183,11 @@ const App: React.FC = () => {
                     );
                   }
 
-                  // Filter by media type
+                  // Filter by media type (defensive: check blob exists)
                   if (mediaFilter === 'photos') {
-                    filtered = filtered.filter(item => item.blob.type.startsWith('image/'));
+                    filtered = filtered.filter(item => item.blob?.type?.startsWith('image/'));
                   } else if (mediaFilter === 'videos') {
-                    filtered = filtered.filter(item => item.blob.type.startsWith('video/'));
+                    filtered = filtered.filter(item => item.blob?.type?.startsWith('video/'));
                   }
 
                   return filtered;

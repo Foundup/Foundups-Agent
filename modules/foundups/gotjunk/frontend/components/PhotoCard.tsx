@@ -35,7 +35,7 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({ item, onClick, onDelete, o
     lastTapRef.current = now;
   };
 
-  const isVideo = item.blob.type.startsWith('video/');
+  const isVideo = item.blob?.type?.startsWith('video/') ?? false;
 
   // Swipe-down gesture to open fullscreen
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
