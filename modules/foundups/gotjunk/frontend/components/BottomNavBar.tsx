@@ -26,6 +26,7 @@ interface BottomNavBarProps {
   onLongPressAutoClassify?: () => void; // Long press to select classification
   lastClassification?: { type: string, discountPercent?: number, bidDurationHours?: number } | null;
   libertyEnabled?: boolean; // Liberty Alert mode (show 🗽 badge on camera)
+  onToggleLiberty?: () => void; // Toggle Liberty Alert mode ON/OFF
   onLongPressLibertyBadge?: () => void; // Long press 🗽 badge to select Liberty classification
   lastLibertyClassification?: { type: string, stayLimitNights?: number, alertTimerMinutes?: number, isPermanent?: boolean } | null;
   onVoiceInput?: (transcript: string) => void; // Voice input callback - receives STT result
@@ -53,6 +54,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onLongPressAutoClassify = () => console.log('🔄 Long-press: Select classification'),
   lastClassification = null,
   libertyEnabled = false,
+  onToggleLiberty = () => console.log('🗽 Liberty toggled'),
   onLongPressLibertyBadge = () => console.log('🗽 Long-press: Select Liberty classification'),
   lastLibertyClassification = null,
   onVoiceInput = (transcript: string) => console.log('🎤 Voice input:', transcript),
@@ -119,6 +121,19 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
     onTap: () => {
       console.log('[GotJunk] Short tap on auto-classify toggle');
       onToggleAutoClassify();
+    },
+    threshold: 450, // 450ms to trigger long-press
+  });
+
+  // Long-press handler for Liberty toggle button
+  const libertyLongPress = useLongPress({
+    onLongPress: () => {
+      console.log('[GotJunk] Long-press detected on Liberty toggle');
+      onLongPressLibertyBadge();
+    },
+    onTap: () => {
+      console.log('[GotJunk] Short tap on Liberty toggle');
+      onToggleLiberty();
     },
     threshold: 450, // 450ms to trigger long-press
   });
@@ -206,6 +221,39 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                {lastClassification.type === 'discount' && `${lastClassification.discountPercent || 75}%`}
                {lastClassification.type === 'bid' && `${lastClassification.bidDurationHours || 48}h`}
                {lastClassification.type === 'free' && 'FREE'}
+             </div>
+           )}
+         </motion.button>
+
+         {/* Liberty Toggle Button - 🗽 emoji, same pattern as Auto toggle */}
+         <motion.button
+           {...libertyLongPress}
+           className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full shadow-lg font-semibold text-xs md:text-sm transition-all ${
+             libertyEnabled
+               ? lastLibertyClassification?.type === 'ice' || lastLibertyClassification?.type === 'police'
+                 ? 'bg-red-600 text-white'       // Alert = Red
+                 : lastLibertyClassification?.type === 'couch' || lastLibertyClassification?.type === 'camping'
+                 ? 'bg-purple-600 text-white'    // Mutual Aid = Purple
+                 : 'bg-blue-600 text-white'      // Default ON = Blue
+               : 'bg-gray-600/60 text-white/70'  // OFF = Gray
+           }`}
+           variants={buttonVariants}
+           whileHover="hover"
+           whileTap="tap"
+           aria-label={libertyEnabled ? `Liberty: ${lastLibertyClassification?.type || 'ON'}` : 'Liberty: OFF (long-press to select)'}
+         >
+           <div className="flex items-center gap-1">
+             <span className="text-base">🗽</span>
+             <span className="hidden sm:inline">
+               {libertyEnabled ? 'ON' : 'OFF'}
+             </span>
+           </div>
+           {libertyEnabled && lastLibertyClassification && (
+             <div className="text-[10px] md:text-xs opacity-90 mt-0.5">
+               {lastLibertyClassification.type === 'ice' && '❄️ ICE'}
+               {lastLibertyClassification.type === 'police' && '🚔 POLICE'}
+               {lastLibertyClassification.type === 'couch' && '🛋️ COUCH'}
+               {lastLibertyClassification.type === 'camping' && '⛺ CAMP'}
              </div>
            )}
          </motion.button>

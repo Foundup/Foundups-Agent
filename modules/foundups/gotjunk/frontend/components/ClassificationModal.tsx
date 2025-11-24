@@ -1,3 +1,19 @@
+/**
+ * ClassificationModal - Item categorization UI
+ *
+ * TECH DEBT (WSP 87 - File Size):
+ * --------------------------------
+ * Current: ~912 lines | Guideline: 800-1000 | Hard limit: 1500
+ *
+ * Future refactoring candidates (if exceeds 1200 lines):
+ * - Split into CommerceClassificationModal (Free/Discount/Bid) ~400 lines
+ * - Split into LibertyClassificationModal (Alert/Food/Shelter) ~450 lines
+ * - Keep wrapper that switches based on libertyEnabled prop ~100 lines
+ *
+ * Decision: Within acceptable range - defer split
+ * Audit date: 2025-11-24
+ */
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ItemClassification } from '../types';
