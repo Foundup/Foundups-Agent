@@ -1,3 +1,19 @@
+/**
+ * GotJunk App - Main Application Component
+ *
+ * TECH DEBT (WSP 87 - File Size):
+ * --------------------------------
+ * Current: ~1567 lines | Guideline: 800-1000 | Hard limit: 1500
+ *
+ * Future refactoring candidates (when file exceeds 2000 lines):
+ * - Extract useItemsState hook (myDrafts, browseFeed, cart + handlers) ~200 lines
+ * - Extract useClassification hook (capture + classify flow) ~180 lines
+ * - Extract useLibertyAlert hook (LA state + SOS detection) ~150 lines
+ * - Extract useMapNavigation hook (map state + nav handlers) ~100 lines
+ *
+ * Decision: Defer refactoring - code works, risk > reward
+ * Audit date: 2025-11-24
+ */
 
 import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -686,9 +702,9 @@ const App: React.FC = () => {
         return [newItem, ...current];
       });
 
-      // Close camera and switch to My Items tab so user sees their new item
-      setIsFullscreenCameraOpen(false);
-      setActiveTab('myitems');
+      // Camera stays open for continuous capture - user can take multiple photos
+      // User closes camera manually via X button or camera icon toggle
+      // User can switch to My Items tab manually to see their photos
 
       console.log('[GotJunk] Item successfully created and added to drafts');
     } finally {
@@ -900,7 +916,7 @@ const App: React.FC = () => {
     : browseFeed.filter(item => !item.libertyAlert && item.latitude && item.longitude);
 
   const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
-  const showCameraOrb = (isMapOpen && libertyEnabled) || activeTab === 'myitems'; // Camera orb appears on map AFTER SOS activation + always on My Items tab
+  const showCameraOrb = isMapOpen || activeTab === 'myitems'; // Camera orb appears on map (always) + My Items tab
 
   // Handle instructions modal close
   const handleInstructionsClose = () => {
@@ -1332,7 +1348,6 @@ const App: React.FC = () => {
             setIsFullscreenCameraOpen(false); // Close camera when switching tabs
             console.log('🛒 Cart clicked');
           }}
-          libertyEnabled={libertyEnabled}
         />
       )}
 
@@ -1379,6 +1394,7 @@ const App: React.FC = () => {
           onLongPressAutoClassify={handleLongPressAutoClassify}
           lastClassification={lastClassification}
           libertyEnabled={libertyEnabled}
+          onToggleLiberty={() => setLibertyEnabled(!libertyEnabled)}
           onLongPressLibertyBadge={handleLongPressLibertyBadge}
           lastLibertyClassification={lastLibertyClassification}
           onVoiceInput={(transcript) => {
