@@ -18,7 +18,6 @@ interface LeftSidebarNavProps {
   onMapClick: () => void;
   onMyItemsClick: () => void;
   onCartClick: () => void;
-  libertyEnabled: boolean;
 }
 
 export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
@@ -28,7 +27,6 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
   onMapClick,
   onMyItemsClick,
   onCartClick,
-  libertyEnabled,
 }) => {
   // SOS Morse Code Detection on Gallery icon (same as BottomNavBar)
   const galleryTapStartTime = React.useRef<number>(0);
@@ -59,8 +57,10 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
     return 'bg-gray-800/90 hover:bg-gray-700/90 border-2 border-gray-600 shadow-2xl';
   };
 
-  const gapValue = 'clamp(12px, 2.5vh, 22px)';
-  const iconSize = 'clamp(48px, 6vh, 64px)';
+  // Responsive sizing - scales with viewport height
+  const gapValue = 'clamp(8px, 2vh, 18px)';      // Reduced gap for small screens
+  const iconSize = 'clamp(44px, 5.5vh, 58px)';   // Slightly smaller min for tight viewports
+  const innerIconSize = 'clamp(18px, 2.2vh, 22px)'; // Scale inner icons with viewport
 
   return (
     <motion.div
@@ -68,10 +68,15 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
       animate={{ opacity: 1, x: 0 }}
       className="fixed left-4 sm:left-6 flex flex-col items-center pointer-events-auto"
       style={{
-        top: 'calc(50% - 5px)', // Moved up 5px
+        // Center in USABLE area (above 96px bottom nav), not full viewport
+        // Formula: (viewport - navHeight) / 2 = center point of usable area
+        top: 'calc((100% - 96px) / 2)',
         transform: 'translateY(-50%)',
         gap: gapValue,
         zIndex: Z_LAYERS.sidebar,
+        // Prevent overflow on very short viewports (landscape, keyboard)
+        maxHeight: 'calc(100vh - 120px)', // Leave room for nav + padding
+        overflow: 'hidden',
       }}
     >
       {/* Tab 1: Browse - Grid Icon */}
@@ -89,7 +94,7 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
           height: iconSize,
         }}
       >
-        <GridIcon style={{ width: '16px', height: '16px' }} className="text-white" />
+        <GridIcon style={{ width: innerIconSize, height: innerIconSize }} className="text-white" />
       </motion.button>
 
       {/* Tab 2: Map - Map Icon */}
@@ -104,7 +109,7 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
           height: iconSize,
         }}
       >
-        <MapIcon style={{ width: '16px', height: '16px' }} className="text-white" />
+        <MapIcon style={{ width: innerIconSize, height: innerIconSize }} className="text-white" />
       </motion.button>
 
       {/* Tab 3: My Items - Home Icon */}
@@ -119,7 +124,7 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
           height: iconSize,
         }}
       >
-        <HomeIcon style={{ width: '16px', height: '16px' }} className="text-white" />
+        <HomeIcon style={{ width: innerIconSize, height: innerIconSize }} className="text-white" />
       </motion.button>
 
       {/* Tab 4: Cart - Cart Icon */}
@@ -134,7 +139,7 @@ export const LeftSidebarNav: React.FC<LeftSidebarNavProps> = ({
           height: iconSize,
         }}
       >
-        <CartIcon style={{ width: '16px', height: '16px' }} className="text-white" />
+        <CartIcon style={{ width: innerIconSize, height: innerIconSize }} className="text-white" />
       </motion.button>
 
       {/* Version indicator - subtle at bottom */}
