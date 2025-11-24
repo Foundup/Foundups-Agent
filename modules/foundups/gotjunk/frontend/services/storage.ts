@@ -23,8 +23,18 @@ type StorableItem = Omit<CapturedItem, 'url'>;
 
 export const saveItem = async (item: CapturedItem): Promise<void> => {
     const { url, ...storableItem } = item;
+    const mediaType = item.blob.type.startsWith('video/') ? 'VIDEO' : 'PHOTO';
+    console.log(`[Storage] Saving ${mediaType}:`, {
+        id: item.id,
+        blobSize: item.blob.size,
+        blobType: item.blob.type,
+        classification: item.classification,
+        status: item.status
+    });
+
     // Layer 1: Save to IndexedDB (immediate, offline-first)
     await localforage.setItem(item.id, storableItem);
+    console.log(`[Storage] ✅ ${mediaType} saved to IndexedDB:`, item.id);
 
     // Layer 2: Sync to Cloud (Legacy/Hybrid)
     syncItemToCloud(item).catch(err =>

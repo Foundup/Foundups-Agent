@@ -471,6 +471,9 @@ const App: React.FC = () => {
   }, [libertyEnabled, isRecording]);
 
   const handleCapture = async (blob: Blob) => {
+    const mediaType = blob.type.startsWith('video/') ? 'video' : 'photo';
+    console.log(`[GotJunk] ${mediaType.toUpperCase()} captured - size: ${blob.size} bytes, type: ${blob.type}`);
+
     let location: { latitude: number, longitude: number } | undefined = undefined;
     try {
       const position = await getCurrentPositionPromise();
@@ -487,6 +490,14 @@ const App: React.FC = () => {
       url: URL.createObjectURL(blob),
       location
     };
+
+    console.log(`[GotJunk] ${mediaType.toUpperCase()} capturedItem created:`, {
+      hasBlob: !!capturedItem.blob,
+      blobSize: capturedItem.blob.size,
+      blobType: capturedItem.blob.type,
+      hasUrl: !!capturedItem.url,
+      hasLocation: !!capturedItem.location
+    });
 
     // Check if Liberty mode auto-classify is enabled (PRE-SELECTION PATTERN)
     if (libertyEnabled && lastLibertyClassification) {
@@ -538,7 +549,7 @@ const App: React.FC = () => {
     pendingClassificationBackupRef.current = capturedItem;
 
     // Show classification modal
-    console.log('[GotJunk] Photo captured - opening classification modal');
+    console.log(`[GotJunk] ${mediaType.toUpperCase()} captured - opening classification modal`);
     setPendingClassificationItem(capturedItem);
   };
 
@@ -712,19 +723,27 @@ const App: React.FC = () => {
         libertyAlert: libertyEnabled, // Flag if captured during Liberty Alert mode
       };
 
-      console.log('[GotJunk] Saving new item:', { id: newItem.id, classification, price });
+      const itemMediaType = newItem.blob.type.startsWith('video/') ? 'VIDEO' : 'PHOTO';
+      console.log(`[GotJunk] Saving new ${itemMediaType}:`, {
+        id: newItem.id,
+        classification,
+        blobType: newItem.blob.type,
+        blobSize: newItem.blob.size,
+        libertyAlert: newItem.libertyAlert
+      });
       await storage.saveItem(newItem);
 
       setMyDrafts(current => {
-        console.log('[GotJunk] Adding to myDrafts, current count:', current.length);
+        const newCount = current.length + 1;
+        console.log(`[GotJunk] ✅ ${itemMediaType} added to myDrafts (${newCount} total items)`);
         return [newItem, ...current];
       });
 
-      // Camera stays open for continuous capture - user can take multiple photos
+      // Camera stays open for continuous capture - user can take multiple photos/videos
       // User closes camera manually via X button or camera icon toggle
-      // User can switch to My Items tab manually to see their photos
+      // User can switch to My Items tab manually to see their items
 
-      console.log('[GotJunk] Item successfully created and added to drafts');
+      console.log(`[GotJunk] ✅ ${itemMediaType} successfully saved and added to drafts`);
     } finally {
       // Always reset processing flag, even if there's an error
       setIsProcessingClassification(false);
