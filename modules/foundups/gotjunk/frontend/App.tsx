@@ -1469,6 +1469,13 @@ const App: React.FC = () => {
             setVoiceInputText(transcript);
             setVoiceInputOpen(true);
           }}
+          onUnlockLiberty={() => {
+            console.log('🗽 SOS Triggered via Bottom Nav!');
+            setLibertyUnlocked(true);
+            localStorage.setItem('gotjunk_liberty_unlocked', 'true');
+            setLibertyEnabled(true);
+            alert('🗽 Liberty Alert Unlocked! SOS Pattern Detected.');
+          }}
         />
 
       {/* Re-classification Modal (tap badge) */}
