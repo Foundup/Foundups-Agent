@@ -74,7 +74,10 @@ export const FullscreenCamera: React.FC<FullscreenCameraProps> = ({
       {isOpen && (
         <motion.div
           className="fixed inset-0 bg-black"
-          style={{ zIndex: Z_LAYERS.fullscreenCamera }}
+          style={{
+            zIndex: Z_LAYERS.fullscreenCamera,
+            touchAction: 'manipulation', // Prevent pinch-to-zoom affecting UI
+          }}
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.5 }}
