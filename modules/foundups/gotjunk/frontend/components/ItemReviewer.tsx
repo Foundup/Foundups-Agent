@@ -85,7 +85,7 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
     lastTapRef.current = now;
   };
 
-  const isVideo = item.blob.type.startsWith('video/');
+  const isVideo = item.blob?.type?.startsWith('video/') ?? false;
 
   return (
     <motion.div
