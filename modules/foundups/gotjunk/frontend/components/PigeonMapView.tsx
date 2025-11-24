@@ -462,29 +462,69 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
           ))
         )}
 
-        {/* Liberty Alert user captures - 🧊 (items with libertyAlert flag) */}
+        {/* Liberty Alert user captures - Thumbnail at high zoom, icon at low zoom */}
         {showLibertyAlerts && libertyItems.length > 0 &&
-          libertyItems.map((item) => (
-            <Overlay
-              key={`liberty-${item.id}`}
-              anchor={[item.latitude || 0, item.longitude || 0]}
-            >
-              <div
-                onClick={() => {
-                  console.log('[Liberty] Ice cube clicked:', item.id);
-                  // TODO: Open fullscreen viewer for this item
-                  // For now, clicking closes map and returns to item location filter
-                  if (onMarkerClick && item.latitude && item.longitude) {
-                    onMarkerClick({ latitude: item.latitude, longitude: item.longitude });
-                  }
-                }}
-                className="cursor-pointer hover:scale-110 transition-transform"
-                title={`Liberty Alert - ${item.classification || 'Item'}`}
+          libertyItems.map((item) => {
+            // Classification-based icon for zoomed out view
+            const getClassificationIcon = () => {
+              switch (item.classification) {
+                case 'ice': return '🧊';
+                case 'police': return '🚔';
+                case 'couch': return '🛋️';
+                case 'camping': return '⛺';
+                default: return '🧊'; // Default to ice cube for Liberty alerts
+              }
+            };
+
+            // Show thumbnail at zoom >= 10, icon at zoom < 10
+            const showThumbnail = zoom >= 10 && item.url && item.blob?.type?.startsWith('image/');
+            const isVideo = item.blob?.type?.startsWith('video/');
+
+            return (
+              <Overlay
+                key={`liberty-${item.id}`}
+                anchor={[item.latitude || 0, item.longitude || 0]}
               >
-                <span className="text-3xl">🧊</span>
-              </div>
-            </Overlay>
-          ))}
+                <div
+                  onClick={() => {
+                    console.log('[Liberty] Marker clicked:', item.id, item.classification);
+                    if (onMarkerClick && item.latitude && item.longitude) {
+                      onMarkerClick({ latitude: item.latitude, longitude: item.longitude });
+                    }
+                  }}
+                  className="cursor-pointer hover:scale-110 transition-transform"
+                  title={`Liberty Alert - ${item.classification || 'Item'}`}
+                >
+                  {showThumbnail ? (
+                    // Zoomed in: Show photo thumbnail with classification badge
+                    <div className="relative">
+                      <img
+                        src={item.url}
+                        alt="Liberty Alert"
+                        className="w-12 h-12 rounded-lg object-cover border-2 border-red-500 shadow-lg"
+                      />
+                      <span className="absolute -bottom-1 -right-1 text-lg drop-shadow-lg">
+                        {getClassificationIcon()}
+                      </span>
+                    </div>
+                  ) : isVideo && zoom >= 10 ? (
+                    // Zoomed in video: Show play icon with classification badge
+                    <div className="relative w-12 h-12 rounded-lg bg-gray-800 border-2 border-red-500 shadow-lg flex items-center justify-center">
+                      <span className="text-white text-xl">▶️</span>
+                      <span className="absolute -bottom-1 -right-1 text-lg drop-shadow-lg">
+                        {getClassificationIcon()}
+                      </span>
+                    </div>
+                  ) : (
+                    // Zoomed out: Just show classification icon (larger)
+                    <span className={isGlobalView ? 'text-4xl' : 'text-3xl'}>
+                      {getClassificationIcon()}
+                    </span>
+                  )}
+                </div>
+              </Overlay>
+            );
+          })}
 
         {/* Liberty Alert region markers - 🗽 (global hot zones only) */}
         {showLibertyAlerts &&
