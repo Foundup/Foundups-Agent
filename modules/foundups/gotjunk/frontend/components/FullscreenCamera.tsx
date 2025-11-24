@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, CameraHandle } from './Camera';
 import { CaptureMode } from '../App';
 import { Z_LAYERS } from '../constants/zLayers';
+import { useLongPress } from '../hooks/useLongPress';
 
 const VIDEO_RECORDING_MAX_SECONDS = 10;
-const LONG_PRESS_THRESHOLD_MS = 450;
 
 interface FullscreenCameraProps {
   isOpen: boolean;
@@ -29,6 +29,8 @@ interface FullscreenCameraProps {
  * 4. User taps (photo) or holds (video) anywhere on screen
  * 5. Captured media → onCapture callback (Blob)
  * 6. Component stays open - user classifies or continues capturing
+ *
+ * Uses: useLongPress hook (extended with onLongPressRelease for video)
  */
 export const FullscreenCamera: React.FC<FullscreenCameraProps> = ({
   isOpen,
@@ -44,10 +46,8 @@ export const FullscreenCamera: React.FC<FullscreenCameraProps> = ({
   // Video recording state
   const [isRecording, setIsRecording] = useState(false);
   const [recordingProgress, setRecordingProgress] = useState(0);
-  const longPressTimerRef = useRef<number | null>(null);
   const recordingTimerRef = useRef<number | null>(null);
   const progressIntervalRef = useRef<number | null>(null);
-  const isLongPressActiveRef = useRef<boolean>(false);
 
   // Initialize camera when component opens, cleanup when closed
   useEffect(() => {
@@ -59,9 +59,7 @@ export const FullscreenCamera: React.FC<FullscreenCameraProps> = ({
       captureLockRef.current = false;
       setIsRecording(false);
       setRecordingProgress(0);
-      isLongPressActiveRef.current = false;
       // Clear all timers
-      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
       if (recordingTimerRef.current) clearTimeout(recordingTimerRef.current);
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     }
@@ -69,17 +67,15 @@ export const FullscreenCamera: React.FC<FullscreenCameraProps> = ({
 
   // Stop recording helper
   const stopRecording = useCallback(() => {
-    if (isRecording) {
-      console.log('[FullscreenCamera] Stopping video recording');
-      cameraRef.current?.stopRecording();
-      setIsRecording(false);
-      setRecordingProgress(0);
-      if (recordingTimerRef.current) clearTimeout(recordingTimerRef.current);
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-      // Haptic feedback
-      if (navigator.vibrate) navigator.vibrate([20, 50, 20]);
-    }
-  }, [isRecording]);
+    console.log('[FullscreenCamera] Stopping video recording');
+    cameraRef.current?.stopRecording();
+    setIsRecording(false);
+    setRecordingProgress(0);
+    if (recordingTimerRef.current) clearTimeout(recordingTimerRef.current);
+    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    // Haptic feedback
+    if (navigator.vibrate) navigator.vibrate([20, 50, 20]);
+  }, []);
 
   // Start recording helper
   const startRecording = useCallback(() => {
@@ -106,66 +102,33 @@ export const FullscreenCamera: React.FC<FullscreenCameraProps> = ({
     }, VIDEO_RECORDING_MAX_SECONDS * 1000);
   }, [stopRecording]);
 
-  // Touch/Pointer handlers for long-press video
-  const handlePressStart = useCallback((e: React.PointerEvent | React.TouchEvent) => {
-    // Don't capture if already recording
-    if (isRecording || captureLockRef.current) return;
-
-    isLongPressActiveRef.current = false;
-
-    // Start long-press timer
-    longPressTimerRef.current = window.setTimeout(() => {
-      isLongPressActiveRef.current = true;
-      startRecording();
-    }, LONG_PRESS_THRESHOLD_MS);
-  }, [isRecording, startRecording]);
-
-  const handlePressEnd = useCallback((e: React.PointerEvent | React.TouchEvent) => {
-    // Clear long-press timer
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-
-    // If recording, stop it
-    if (isRecording) {
-      stopRecording();
-      return;
-    }
-
-    // If long-press was active, don't take photo (video was recorded)
-    if (isLongPressActiveRef.current) {
-      isLongPressActiveRef.current = false;
-      return;
-    }
-
-    // Short tap: take photo
+  // Take photo helper
+  const takePhoto = useCallback(() => {
     if (captureLockRef.current) {
       console.log('[FullscreenCamera] Capture blocked - lock active');
       return;
     }
-
     captureLockRef.current = true;
     cameraRef.current?.takePhoto();
-
     setTimeout(() => {
       captureLockRef.current = false;
     }, 500);
-  }, [isRecording, stopRecording]);
+  }, []);
 
-  const handlePressCancel = useCallback(() => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-    if (isRecording) {
-      stopRecording();
-    }
-    isLongPressActiveRef.current = false;
-  }, [isRecording, stopRecording]);
+  // Use existing useLongPress hook (extended with onLongPressRelease)
+  const longPressHandlers = useLongPress({
+    onTap: takePhoto,
+    onLongPress: startRecording,
+    onLongPressRelease: () => {
+      if (isRecording) {
+        stopRecording();
+      }
+    },
+    threshold: 450,
+  });
 
   const handleCaptureComplete = (blob: Blob) => {
-    console.log('[FullscreenCamera] Photo captured, size:', blob.size);
+    console.log('[FullscreenCamera] Media captured, size:', blob.size);
     onCapture(blob);
     // Camera stays open - user closes via nav bar camera icon toggle or X button
   };
@@ -183,10 +146,7 @@ export const FullscreenCamera: React.FC<FullscreenCameraProps> = ({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.5 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          onPointerDown={handlePressStart}
-          onPointerUp={handlePressEnd}
-          onPointerCancel={handlePressCancel}
-          onPointerLeave={handlePressCancel}
+          {...longPressHandlers}
         >
           {/* Camera Feed - Full screen */}
           <div className="absolute inset-0">
@@ -265,7 +225,7 @@ export const FullscreenCamera: React.FC<FullscreenCameraProps> = ({
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation(); // Prevent triggering capture
-              handlePressCancel(); // Stop recording if active
+              if (isRecording) stopRecording(); // Stop recording if active
               onClose();
             }}
           >
