@@ -4,6 +4,16 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Build-time arguments for Vite environment variables
+ARG VITE_FIREBASE_API_KEY
+ARG VITE_FIREBASE_APP_ID
+ARG VITE_FIREBASE_SENDER_ID
+
+# Set as environment variables for Vite build
+ENV VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY
+ENV VITE_FIREBASE_APP_ID=$VITE_FIREBASE_APP_ID
+ENV VITE_FIREBASE_SENDER_ID=$VITE_FIREBASE_SENDER_ID
+
 # Copy package files
 COPY package.json package-lock.json* ./
 
@@ -13,7 +23,7 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build for production
+# Build for production (Vite embeds VITE_* vars at build time)
 RUN npm run build
 
 # Stage 2: Serve with nginx
