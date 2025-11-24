@@ -191,20 +191,20 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 
         {/* Center Section: Camera Icon + Auto Toggle - ALWAYS CENTERED */}
         <div className="flex items-center gap-3 md:gap-4">
-          {/* SOS Trigger Button (Invisible/Subtle) - Left of Camera */}
+          {/* SOS Trigger Button - INVISIBLE until pattern entry begins */}
           <motion.button
             {...sosHandlers}
-            className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-colors border border-white/10 ${
-              sosPatternLength > 0 
-                ? 'bg-red-500/20 animate-pulse' // Visual feedback when tapping
-                : 'bg-transparent hover:bg-white/5' 
+            className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all ${
+              sosPatternLength > 0
+                ? 'bg-red-500/20 animate-pulse border border-red-400/30' // Only visible during pattern entry
+                : 'bg-transparent border-transparent' // Completely invisible by default
             }`}
             variants={buttonVariants}
             whileTap="tap"
-            aria-label="Safety Trigger"
+            aria-label="Menu"
           >
             <ShieldIcon className={`w-4 h-4 md:w-5 md:h-5 transition-opacity ${
-              sosPatternLength > 0 ? 'text-red-400 opacity-100' : 'text-gray-500/30 opacity-50'
+              sosPatternLength > 0 ? 'text-red-400 opacity-100' : 'opacity-0' // Hidden until active
             }`} />
           </motion.button>
 
