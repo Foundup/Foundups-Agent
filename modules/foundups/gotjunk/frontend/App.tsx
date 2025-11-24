@@ -316,7 +316,12 @@ const App: React.FC = () => {
   ];
 
   const [libertyAlerts, setLibertyAlerts] = useState<LibertyAlert[]>(SAMPLE_LIBERTY_ALERTS);
-  const [libertyEnabled, setLibertyEnabled] = useState(false); // OFF until SOS unlock
+  // libertyUnlocked: Has user triggered SOS easter egg? (persisted)
+  const [libertyUnlocked, setLibertyUnlocked] = useState(() => {
+    const saved = localStorage.getItem('gotjunk_liberty_unlocked');
+    return saved === 'true';
+  });
+  const [libertyEnabled, setLibertyEnabled] = useState(false); // OFF until toggled ON (only visible if unlocked)
   const [voiceRecognition, setVoiceRecognition] = useState<any>(null);
   const [keywordDetected, setKeywordDetected] = useState(false);
 
@@ -900,6 +905,11 @@ const App: React.FC = () => {
     ? browseFeed
     : browseFeed.filter(item => item.classification === classificationFilter);
 
+  // Hide Liberty Alert items from browse unless LA is unlocked
+  if (!libertyUnlocked) {
+    filteredBrowseFeed = filteredBrowseFeed.filter(item => !item.libertyAlert);
+  }
+
   // Further filter by location if a map marker was clicked (show only items at that location)
   if (locationFilter) {
     const LOCATION_THRESHOLD = 0.001; // ~100m radius
@@ -1315,6 +1325,8 @@ const App: React.FC = () => {
                 console.log('🔍 SOS Pattern:', pattern);
                 if (pattern === 'SSSLLLSSS') {
                   console.log('🗽 SOS DETECTED!');
+                  setLibertyUnlocked(true);
+                  localStorage.setItem('gotjunk_liberty_unlocked', 'true');
                   setLibertyEnabled(true);
                   alert('🗽 Liberty Alert Unlocked!');
                   sosDetectionActive.current = false;
@@ -1384,8 +1396,14 @@ const App: React.FC = () => {
           }}
           onCameraClick={() => {
             setIsFullscreenCameraOpen(prev => {
-              console.log(`📷 Camera icon clicked - ${prev ? 'closing' : 'opening'} fullscreen camera`);
-              return !prev;
+              const opening = !prev;
+              console.log(`📷 Camera icon clicked - ${opening ? 'opening' : 'closing'} fullscreen camera`);
+              // Close map when opening camera (camera z-index is below map)
+              if (opening && isMapOpen) {
+                setMapOpen(false);
+                console.log('🗺️ Map closed to show camera');
+              }
+              return opening;
             });
           }}
           showCameraOrb={showCameraOrb}
@@ -1393,6 +1411,7 @@ const App: React.FC = () => {
           onToggleAutoClassify={() => setAutoClassifyEnabled(!autoClassifyEnabled)}
           onLongPressAutoClassify={handleLongPressAutoClassify}
           lastClassification={lastClassification}
+          libertyUnlocked={libertyUnlocked}
           libertyEnabled={libertyEnabled}
           onToggleLiberty={() => setLibertyEnabled(!libertyEnabled)}
           onLongPressLibertyBadge={handleLongPressLibertyBadge}
@@ -1473,6 +1492,8 @@ const App: React.FC = () => {
           onLibertyActivate={() => {
             // SOS morse code detected on map → activate Liberty Alerts
             console.log('🗽 Liberty Alert activated via map SOS!');
+            setLibertyUnlocked(true);
+            localStorage.setItem('gotjunk_liberty_unlocked', 'true');
             setLibertyEnabled(true);
             alert('🗽 Liberty Alert Unlocked via Map SOS!');
           }}

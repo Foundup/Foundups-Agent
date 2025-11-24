@@ -25,6 +25,7 @@ interface BottomNavBarProps {
   onToggleAutoClassify?: () => void;
   onLongPressAutoClassify?: () => void; // Long press to select classification
   lastClassification?: { type: string, discountPercent?: number, bidDurationHours?: number } | null;
+  libertyUnlocked?: boolean; // Has user triggered SOS easter egg? (only show toggle when true)
   libertyEnabled?: boolean; // Liberty Alert mode (show 🗽 badge on camera)
   onToggleLiberty?: () => void; // Toggle Liberty Alert mode ON/OFF
   onLongPressLibertyBadge?: () => void; // Long press 🗽 badge to select Liberty classification
@@ -53,6 +54,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onToggleAutoClassify = () => console.log('🔄 Auto-classify toggled'),
   onLongPressAutoClassify = () => console.log('🔄 Long-press: Select classification'),
   lastClassification = null,
+  libertyUnlocked = false,
   libertyEnabled = false,
   onToggleLiberty = () => console.log('🗽 Liberty toggled'),
   onLongPressLibertyBadge = () => console.log('🗽 Long-press: Select Liberty classification'),
@@ -225,38 +227,40 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
            )}
          </motion.button>
 
-         {/* Liberty Toggle Button - 🗽 emoji, same pattern as Auto toggle */}
-         <motion.button
-           {...libertyLongPress}
-           className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full shadow-lg font-semibold text-xs md:text-sm transition-all ${
-             libertyEnabled
-               ? lastLibertyClassification?.type === 'ice' || lastLibertyClassification?.type === 'police'
-                 ? 'bg-red-600 text-white'       // Alert = Red
-                 : lastLibertyClassification?.type === 'couch' || lastLibertyClassification?.type === 'camping'
-                 ? 'bg-purple-600 text-white'    // Mutual Aid = Purple
-                 : 'bg-blue-600 text-white'      // Default ON = Blue
-               : 'bg-gray-600/60 text-white/70'  // OFF = Gray
-           }`}
-           variants={buttonVariants}
-           whileHover="hover"
-           whileTap="tap"
-           aria-label={libertyEnabled ? `Liberty: ${lastLibertyClassification?.type || 'ON'}` : 'Liberty: OFF (long-press to select)'}
-         >
-           <div className="flex items-center gap-1">
-             <span className="text-base">🗽</span>
-             <span className="hidden sm:inline">
-               {libertyEnabled ? 'ON' : 'OFF'}
-             </span>
-           </div>
-           {libertyEnabled && lastLibertyClassification && (
-             <div className="text-[10px] md:text-xs opacity-90 mt-0.5">
-               {lastLibertyClassification.type === 'ice' && '❄️ ICE'}
-               {lastLibertyClassification.type === 'police' && '🚔 POLICE'}
-               {lastLibertyClassification.type === 'couch' && '🛋️ COUCH'}
-               {lastLibertyClassification.type === 'camping' && '⛺ CAMP'}
+         {/* Liberty Toggle Button - Only visible after SOS easter egg unlock */}
+         {libertyUnlocked && (
+           <motion.button
+             {...libertyLongPress}
+             className={`px-4 py-2 md:px-5 md:py-2.5 rounded-full shadow-lg font-semibold text-sm md:text-base transition-all ${
+               libertyEnabled
+                 ? lastLibertyClassification?.type === 'ice' || lastLibertyClassification?.type === 'police'
+                   ? 'bg-red-600 text-white'       // Alert = Red
+                   : lastLibertyClassification?.type === 'couch' || lastLibertyClassification?.type === 'camping'
+                   ? 'bg-purple-600 text-white'    // Mutual Aid = Purple
+                   : 'bg-blue-600 text-white'      // Default ON = Blue
+                 : 'bg-gray-600/60 text-white/70'  // OFF = Gray
+             }`}
+             variants={buttonVariants}
+             whileHover="hover"
+             whileTap="tap"
+             aria-label={libertyEnabled ? `Liberty: ${lastLibertyClassification?.type || 'ON'}` : 'Liberty: OFF (long-press to select)'}
+           >
+             <div className="flex items-center gap-1.5">
+               <span className="text-lg md:text-xl">🗽</span>
+               <span>
+                 {libertyEnabled ? 'ON' : 'OFF'}
+               </span>
              </div>
-           )}
-         </motion.button>
+             {libertyEnabled && lastLibertyClassification && (
+               <div className="text-xs md:text-sm opacity-90 mt-0.5">
+                 {lastLibertyClassification.type === 'ice' && '❄️ ICE'}
+                 {lastLibertyClassification.type === 'police' && '🚔 POLICE'}
+                 {lastLibertyClassification.type === 'couch' && '🛋️ COUCH'}
+                 {lastLibertyClassification.type === 'camping' && '⛺ CAMP'}
+               </div>
+             )}
+           </motion.button>
+         )}
         </div>
 
         {/* Right Section: Voice Input MIC - Matches sidebar style */}
