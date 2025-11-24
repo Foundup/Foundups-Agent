@@ -4,7 +4,9 @@ import { LeftArrowIcon } from './icons/LeftArrowIcon';
 import { RightArrowIcon } from './icons/RightArrowIcon';
 import { CameraIcon } from './icons/CameraIcon';
 import { MicIcon } from './icons/MicIcon';
+import { ShieldIcon } from './icons/ShieldIcon';
 import { useLongPress } from '../hooks/useLongPress';
+import { useSOSDetector } from '../hooks/useSOSDetector';
 import { Z_LAYERS } from '../constants/zLayers';
 import { CaptureMode } from '../App';
 
@@ -31,6 +33,7 @@ interface BottomNavBarProps {
   onLongPressLibertyBadge?: () => void; // Long press 🗽 badge to select Liberty classification
   lastLibertyClassification?: { type: string, stayLimitNights?: number, alertTimerMinutes?: number, isPermanent?: boolean } | null;
   onVoiceInput?: (transcript: string) => void; // Voice input callback - receives STT result
+  onUnlockLiberty?: () => void; // Unlock Liberty Alert (triggered by SOS pattern)
 }
 
 const buttonVariants = {
@@ -60,6 +63,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onLongPressLibertyBadge = () => console.log('🗽 Long-press: Select Liberty classification'),
   lastLibertyClassification = null,
   onVoiceInput = (transcript: string) => console.log('🎤 Voice input:', transcript),
+  onUnlockLiberty = () => console.log('🗽 Liberty Unlocked!'),
   }) => {
   // Voice input state (Web Speech API - triggers phone's native STT)
   const [isListening, setIsListening] = useState(false);
@@ -110,6 +114,11 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
       }
     }
   };
+  // SOS Pattern Detector (for invisible trigger button)
+  const { patternLength: sosPatternLength, handlers: sosHandlers } = useSOSDetector({
+    onSOSDetected: onUnlockLiberty,
+  });
+
   // Navigation Bar Layout: [<] [>] ... [📷] [Auto: OFF] [🎤]
   // - Left: Swipe left/right thumb toggles (delete/keep)
   // - Right: Camera icon + Auto toggle + AI MIC (voice interface to DAE system)
@@ -182,6 +191,23 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 
         {/* Center Section: Camera Icon + Auto Toggle - ALWAYS CENTERED */}
         <div className="flex items-center gap-3 md:gap-4">
+          {/* SOS Trigger Button (Invisible/Subtle) - Left of Camera */}
+          <motion.button
+            {...sosHandlers}
+            className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-colors border border-white/10 ${
+              sosPatternLength > 0 
+                ? 'bg-red-500/20 animate-pulse' // Visual feedback when tapping
+                : 'bg-transparent hover:bg-white/5' 
+            }`}
+            variants={buttonVariants}
+            whileTap="tap"
+            aria-label="Safety Trigger"
+          >
+            <ShieldIcon className={`w-4 h-4 md:w-5 md:h-5 transition-opacity ${
+              sosPatternLength > 0 ? 'text-red-400 opacity-100' : 'text-gray-500/30 opacity-50'
+            }`} />
+          </motion.button>
+
           {/* Camera Icon - Matches sidebar style */}
           <motion.button
             onClick={onCameraClick}
