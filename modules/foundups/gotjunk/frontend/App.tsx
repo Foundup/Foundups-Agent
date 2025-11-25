@@ -1143,38 +1143,19 @@ const App: React.FC = () => {
                 )}
               </div>
 
-              {/* Media Type Filter Row */}
-              <div className="flex items-center justify-center gap-2 mt-2">
-                <button
-                  onClick={() => setMediaFilter('all')}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                    mediaFilter === 'all'
-                      ? 'bg-gray-600 text-white'
-                      : 'bg-gray-800/50 text-gray-400 hover:text-white'
-                  }`}
+              {/* Media Type Filter - Dropdown */}
+              <div className="flex items-center justify-end gap-2 mt-2 px-4">
+                <label htmlFor="media-filter" className="text-xs text-gray-400">Filter:</label>
+                <select
+                  id="media-filter"
+                  value={mediaFilter}
+                  onChange={(e) => setMediaFilter(e.target.value as MediaFilter)}
+                  className="px-3 py-1 rounded-lg text-xs font-medium bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  All
-                </button>
-                <button
-                  onClick={() => setMediaFilter('photos')}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
-                    mediaFilter === 'photos'
-                      ? 'bg-gray-600 text-white'
-                      : 'bg-gray-800/50 text-gray-400 hover:text-white'
-                  }`}
-                >
-                  <span>📷</span> Photos
-                </button>
-                <button
-                  onClick={() => setMediaFilter('videos')}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
-                    mediaFilter === 'videos'
-                      ? 'bg-gray-600 text-white'
-                      : 'bg-gray-800/50 text-gray-400 hover:text-white'
-                  }`}
-                >
-                  <span>🎬</span> Videos
-                </button>
+                  <option value="all">All Media</option>
+                  <option value="photos">📷 Photos Only</option>
+                  <option value="videos">🎬 Videos Only</option>
+                </select>
               </div>
             </div>
 

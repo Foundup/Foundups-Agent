@@ -115,7 +115,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
     }
   };
   // SOS Pattern Detector (for invisible trigger button)
-  const { patternLength: sosPatternLength, handlers: sosHandlers } = useSOSDetector({
+  const { patternLength: sosPatternLength, isSuccess: sosSuccess, handlers: sosHandlers } = useSOSDetector({
     onSOSDetected: onUnlockLiberty,
   });
 
