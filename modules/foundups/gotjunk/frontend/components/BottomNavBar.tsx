@@ -238,6 +238,10 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                  ? 'bg-green-600 text-white'     // Discount = Green
                  : lastClassification?.type === 'bid'
                  ? 'bg-amber-600 text-white'     // Bid = Amber
+                 : lastClassification?.type === 'share'
+                 ? 'bg-purple-600 text-white'    // Share = Purple
+                 : lastClassification?.type === 'wanted'
+                 ? 'bg-purple-600 text-white'    // Wanted = Purple
                  : 'bg-green-600 text-white'     // Fallback = Green
                : 'bg-red-500/60 text-white'      // OFF = Softer red
            }`}
@@ -257,6 +261,8 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                {lastClassification.type === 'discount' && `${lastClassification.discountPercent || 75}%`}
                {lastClassification.type === 'bid' && `${lastClassification.bidDurationHours || 48}h`}
                {lastClassification.type === 'free' && 'FREE'}
+               {lastClassification.type === 'share' && 'SHARE'}
+               {lastClassification.type === 'wanted' && 'WANTED'}
              </div>
            )}
          </motion.button>
