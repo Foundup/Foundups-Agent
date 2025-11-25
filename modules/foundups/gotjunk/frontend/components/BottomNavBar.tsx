@@ -190,21 +190,29 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         </div>
 
         {/* Center Section: Camera Icon + Auto Toggle - ALWAYS CENTERED */}
-        <div className="flex items-center gap-3 md:gap-4">
-          {/* SOS Trigger Button - INVISIBLE until pattern entry begins */}
+        {/* Adjusted gap and padding for mobile to prevent overlap with Mic button when Liberty is active */}
+        <div className={`flex items-center ${libertyUnlocked ? 'gap-1.5 md:gap-4' : 'gap-3 md:gap-4'}`}>
+          {/* SOS Trigger Zone - Invisible Easter Egg */}
           <motion.button
             {...sosHandlers}
-            className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all ${
-              sosPatternLength > 0
-                ? 'bg-red-500/20 animate-pulse border border-red-400/30' // Only visible during pattern entry
-                : 'bg-transparent border-transparent' // Completely invisible by default
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+              sosSuccess
+                ? 'bg-green-500/30 animate-pulse' // Green confirmation when pattern matches
+                : sosPatternLength > 0
+                ? 'bg-red-500/10 animate-pulse' // Red feedback during pattern entry
+                : 'bg-transparent' // Completely invisible default
             }`}
             variants={buttonVariants}
             whileTap="tap"
-            aria-label="Menu"
+            aria-label="Secret Zone"
           >
-            <ShieldIcon className={`w-4 h-4 md:w-5 md:h-5 transition-opacity ${
-              sosPatternLength > 0 ? 'text-red-400 opacity-100' : 'opacity-0' // Hidden until active
+            {/* Ghost Shield - Turns green on success, red during entry */}
+            <ShieldIcon className={`w-6 h-6 transition-all duration-300 ${
+              sosSuccess
+                ? 'text-green-400 opacity-100 scale-110' // Bright green on success
+                : sosPatternLength > 0
+                ? 'text-red-500 opacity-[0.15]' // Faint red during entry
+                : 'opacity-0' // Invisible by default
             }`} />
           </motion.button>
 
@@ -222,7 +230,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
          {/* Auto-Classify Toggle Button - Oval shaped (more horizontal padding) */}
          <motion.button
            {...autoClassifyLongPress}
-           className={`px-4 py-1.5 md:px-5 md:py-2 rounded-full shadow-lg font-semibold text-xs md:text-sm transition-all ${
+           className={`px-3 py-1.5 md:px-5 md:py-2 rounded-full shadow-lg font-semibold text-xs md:text-sm transition-all ${
              autoClassifyEnabled
                ? lastClassification?.type === 'free'
                  ? 'bg-blue-600 text-white'      // Free = Blue
@@ -257,7 +265,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
          {libertyUnlocked && (
            <motion.button
              {...libertyLongPress}
-             className={`px-4 py-2 md:px-5 md:py-2.5 rounded-full shadow-lg font-semibold text-sm md:text-base transition-all ${
+             className={`px-3 py-2 md:px-5 md:py-2.5 rounded-full shadow-lg font-semibold text-sm md:text-base transition-all ${
                libertyEnabled
                  ? lastLibertyClassification?.type === 'ice' || lastLibertyClassification?.type === 'police'
                    ? 'bg-red-600 text-white'       // Alert = Red
