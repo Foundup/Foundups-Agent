@@ -15,10 +15,20 @@ export function useSOSDetector({
     // We only expose patternLength for UI feedback
     const patternRef = useRef<string[]>([]);
     const [patternLength, setPatternLength] = useState(0);
-    
+    const [isSuccess, setIsSuccess] = useState(false); // Green confirmation state
+
     const startTimeRef = useRef<number>(0);
     // Use number type for browser compatibility (NodeJS.Timeout is for backend)
     const timeoutRef = useRef<number | null>(null);
+
+    // Multiple easier patterns for Liberty unlock
+    const LIBERTY_PATTERNS = [
+        'SSS',      // Three quick taps (easiest)
+        'LLL',      // Three long presses
+        'SLS',      // Short-Long-Short
+        'LSL',      // Long-Short-Long
+        'SSSLLLSSS' // Original SOS morse code (hardest)
+    ];
 
     const handlePressStart = useCallback(() => {
         startTimeRef.current = Date.now();
@@ -52,14 +62,26 @@ export function useSOSDetector({
 
         console.log('[SOS Detector] Pattern:', newPattern.join(' '));
 
-        // Check for SOS: S S S L L L S S S
+        // Check if current sequence matches any Liberty pattern
         const sequence = newPattern.join('');
-        if (sequence === 'SSSLLLSSS') {
-            console.log('🗽 SOS PATTERN CONFIRMED');
+        const matchedPattern = LIBERTY_PATTERNS.find(pattern => sequence.endsWith(pattern));
+
+        if (matchedPattern) {
+            console.log(`🗽 LIBERTY PATTERN CONFIRMED: ${matchedPattern}`);
+
+            // Show green confirmation
+            setIsSuccess(true);
+
+            // Call the unlock callback
             onSOSDetected();
-            // Reset after success
-            patternRef.current = [];
-            setPatternLength(0);
+
+            // Reset to red after 1 second, ready for next pattern
+            setTimeout(() => {
+                setIsSuccess(false);
+                patternRef.current = [];
+                setPatternLength(0);
+            }, 1000);
+
             return;
         }
 
@@ -74,6 +96,7 @@ export function useSOSDetector({
 
     return {
         patternLength,
+        isSuccess, // Green confirmation state
         handlers: {
             onPointerDown: handlePressStart,
             onPointerUp: handlePressEnd,

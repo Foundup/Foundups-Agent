@@ -49,6 +49,9 @@ export const FullscreenCamera: React.FC<FullscreenCameraProps> = ({
   const recordingTimerRef = useRef<number | null>(null);
   const progressIntervalRef = useRef<number | null>(null);
 
+  // Shutter flash state
+  const [showShutterFlash, setShowShutterFlash] = useState(false);
+
   // Initialize camera when component opens, cleanup when closed
   useEffect(() => {
     if (isOpen) {
@@ -109,6 +112,14 @@ export const FullscreenCamera: React.FC<FullscreenCameraProps> = ({
       return;
     }
     captureLockRef.current = true;
+
+    // Trigger shutter flash animation
+    setShowShutterFlash(true);
+    setTimeout(() => setShowShutterFlash(false), 200);
+
+    // Haptic feedback
+    if (navigator.vibrate) navigator.vibrate(10);
+
     cameraRef.current?.takePhoto();
     setTimeout(() => {
       captureLockRef.current = false;
@@ -159,6 +170,19 @@ export const FullscreenCamera: React.FC<FullscreenCameraProps> = ({
               />
             )}
           </div>
+
+          {/* Shutter Flash - White flash overlay when photo taken */}
+          <AnimatePresence>
+            {showShutterFlash && (
+              <motion.div
+                className="absolute inset-0 bg-white pointer-events-none"
+                initial={{ opacity: 0.9 }}
+                animate={{ opacity: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+              />
+            )}
+          </AnimatePresence>
 
           {/* Recording Indicator - Top of screen */}
           <AnimatePresence>
