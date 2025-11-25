@@ -87,6 +87,33 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
 
   const isVideo = item.blob?.type?.startsWith('video/') ?? false;
 
+  // Check if item has valid URL/blob for rendering
+  if (!item.url || !item.blob) {
+    console.warn('[ItemReviewer] Item missing URL or blob:', item.id);
+    return (
+      <motion.div
+        className="fixed inset-0 flex items-center justify-center p-4 pb-28 bg-black/80 backdrop-blur-sm"
+        style={{ zIndex: Z_LAYERS.fullscreen }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        <div className="text-center">
+          <p className="text-white text-xl mb-2">Media unavailable</p>
+          <p className="text-gray-400 text-sm">This item cannot be displayed</p>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="mt-4 px-4 py-2 bg-gray-700 text-white rounded-lg"
+            >
+              Close
+            </button>
+          )}
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       className="fixed inset-0 flex items-center justify-center p-4 pb-28 bg-black/80 backdrop-blur-sm"
