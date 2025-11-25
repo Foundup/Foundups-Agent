@@ -49,6 +49,16 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({ item, onClick, onDelete, o
     }
   };
 
+  // Check if item has valid URL/blob for rendering
+  if (!item.url || !item.blob) {
+    console.warn('[PhotoCard] Item missing URL or blob:', item.id);
+    return (
+      <div className="relative aspect-square w-full rounded-lg bg-gray-800 flex items-center justify-center">
+        <p className="text-gray-500 text-xs text-center px-2">Media unavailable</p>
+      </div>
+    );
+  }
+
   return (
     <motion.div
       className="relative group aspect-square w-full rounded-lg overflow-hidden bg-gray-800 shadow-md cursor-pointer"
