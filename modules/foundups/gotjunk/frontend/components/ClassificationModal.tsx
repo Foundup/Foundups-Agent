@@ -27,11 +27,21 @@ import { ActionSheetStayLimit } from './ActionSheetStayLimit';
 import { ActionSheetAlertTimer } from './ActionSheetAlertTimer';
 import { Z_LAYERS } from '../constants/zLayers';
 
+type ModalShellRenderer = (options: {
+  title: string;
+  helperText?: string;
+  helperTextMargin?: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  actionSheets?: React.ReactNode;
+  containerClassName?: string;
+}) => JSX.Element;
+
 interface ClassificationModalProps {
   isOpen: boolean;
   imageUrl: string;
   libertyEnabled?: boolean; // Determines which classifications to show
-  isMapView?: boolean; // Show all 11 categories on map, only 5 on My Items
+  isMapView?: boolean; // Liberty OFF: 5 GotJunk categories; Liberty ON: accordion view
   isSelectionMode?: boolean; // True when selecting preset (long-press toggle) - hides image
   onClassify: (
     classification: ItemClassification,
@@ -47,11 +57,14 @@ interface ClassificationModalProps {
 /**
  * ClassificationModal - Post-capture classification popup
  *
- * REGULAR CAMERA (5 options):
+ * GOTJUNK CAMERA (5 options):
  * - 💙 free, 💚 discount, ⚡ bid, 🔄 share, 🔍 wanted
  *
- * LIBERTY CAMERA (6 options):
- * - 🍞 food, 🛏️ couch (1 night), ⛺ camping (2 nights), 🏠 housing, 🧊 ice, 🚓 police (5 min)
+ * LIBERTY CAMERA (accordion):
+ * - Stuff!: free/discount/bid/share/wanted
+ * - Alert!: ice/police
+ * - Food!: soup_kitchen/bbq/dry_food/pick/garden
+ * - Shelter!: couch/camping/housing
  *
  * Gestures:
  * - Short tap: Select classification with defaults
@@ -77,7 +90,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
   const [currentAlertType, setCurrentAlertType] = useState<'ice' | 'police'>('police');
 
   // Expandable category state (for accordion Liberty menu)
-  const [expandedCategory, setExpandedCategory] = useState<'alert' | 'food' | 'shelter' | null>(null);
+  const [expandedCategory, setExpandedCategory] = useState<'stuff' | 'alert' | 'food' | 'shelter' | null>(null);
 
   // Load saved defaults from localStorage
   const [discountPercent, setDiscountPercent] = useState(() => {
@@ -146,46 +159,13 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
   });
 
   // ============================================================================
-  // LIBERTY CAMERA - Food Subcategory Handlers
-  // ============================================================================
-
-  const soupKitchenLongPress = useLongPress({
-    onLongPress: () => {}, // No customization for food subcategories
-    onTap: () => onClassify('soup_kitchen'),
-    threshold: 450,
-  });
-
-  const bbqLongPress = useLongPress({
-    onLongPress: () => {},
-    onTap: () => onClassify('bbq'),
-    threshold: 450,
-  });
-
-  const dryFoodLongPress = useLongPress({
-    onLongPress: () => {},
-    onTap: () => onClassify('dry_food'),
-    threshold: 450,
-  });
-
-  const pickLongPress = useLongPress({
-    onLongPress: () => {},
-    onTap: () => onClassify('pick'),
-    threshold: 450,
-  });
-
-  const gardenLongPress = useLongPress({
-    onLongPress: () => {},
-    onTap: () => onClassify('garden'),
-    threshold: 450,
-  });
-
-  // ============================================================================
   // Action Sheet Handlers
   // ============================================================================
 
   const handleDiscountSelect = (percent: number) => {
     localStorage.setItem('gotjunk_default_discount', percent.toString());
     if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
+    setDiscountPercent(percent);
     setDiscountSheetOpen(false);
     onClassify('discount', percent);
   };
@@ -193,6 +173,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
   const handleBidSelect = (hours: number) => {
     localStorage.setItem('gotjunk_default_bid_duration', hours.toString());
     if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
+    setBidDurationHours(hours);
     setBidSheetOpen(false);
     onClassify('bid', undefined, hours);
   };
@@ -210,463 +191,25 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
   };
 
   // ============================================================================
-  // RENDER: MAP VIEW (All 11 Categories)
+  // SHARED MODAL SHELL
   // ============================================================================
 
-  if (isMapView) {
-    return (
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 overflow-y-auto"
-            style={{
-              zIndex: Z_LAYERS.modal,
-              WebkitTouchCallout: 'none',
-              WebkitUserSelect: 'none',
-              userSelect: 'none',
-            }}
-          >
-            {/* Preview image - hidden in selection mode */}
-            {!isSelectionMode && imageUrl && (
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="w-full max-w-sm mb-4 rounded-2xl overflow-hidden shadow-2xl"
-              >
-                <img src={imageUrl} alt="Captured item" className="w-full h-auto" />
-              </motion.div>
-            )}
-
-            {/* Title */}
-            <h2 className="text-xl font-bold text-white mb-3 text-center">
-              {isSelectionMode ? 'Choose Default Category' : 'Select Category (11 Types)'}
-            </h2>
-
-            {/* Classification buttons - All 11 types */}
-            <div className="w-full max-w-sm space-y-2 mb-4">
-              {/* Commerce (3) */}
-              <div className="mb-1">
-                <p className="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">Commerce</p>
-              </div>
-
-              {/* Free */}
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => onClassify('free')}
-                className="w-full flex items-center justify-between p-3 bg-blue-500/20 hover:bg-blue-500/30 border-2 border-blue-400 rounded-xl transition-all"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <div className="flex items-center space-x-2">
-                  <span className="text-2xl">💙</span>
-                  <div className="text-left">
-                    <h3 className="text-sm font-bold text-white">Free</h3>
-                  </div>
-                </div>
-              </motion.button>
-
-              {/* Discount */}
-              <button
-                {...discountLongPress}
-                className="w-full flex items-center justify-between p-3 bg-green-500/20 hover:bg-green-500/30 active:scale-95 border-2 border-green-400 rounded-xl transition-all"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <div className="flex items-center space-x-2">
-                  <span className="text-2xl">💚</span>
-                  <div className="text-left">
-                    <h3 className="text-sm font-bold text-white">Discount</h3>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-green-400">{discountPercent}%</span>
-              </button>
-
-              {/* Bid */}
-              <button
-                {...bidLongPress}
-                className="w-full flex items-center justify-between p-3 bg-amber-500/20 hover:bg-amber-500/30 active:scale-95 border-2 border-amber-400 rounded-xl transition-all"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <div className="flex items-center space-x-2">
-                  <span className="text-2xl">⚡</span>
-                  <div className="text-left">
-                    <h3 className="text-sm font-bold text-white">Bid</h3>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-amber-400">{bidDurationHours}h</span>
-              </button>
-
-              {/* Share Economy (2) */}
-              <div className="mb-1 mt-3">
-                <p className="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">Share Economy</p>
-              </div>
-
-              {/* Share */}
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => onClassify('share')}
-                className="w-full flex items-center justify-between p-3 bg-purple-500/20 hover:bg-purple-500/30 border-2 border-purple-400 rounded-xl transition-all"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <div className="flex items-center space-x-2">
-                  <span className="text-2xl">🔄</span>
-                  <div className="text-left">
-                    <h3 className="text-sm font-bold text-white">Share</h3>
-                  </div>
-                </div>
-              </motion.button>
-
-              {/* Wanted */}
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => onClassify('wanted')}
-                className="w-full flex items-center justify-between p-3 bg-pink-500/20 hover:bg-pink-500/30 border-2 border-pink-400 rounded-xl transition-all"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <div className="flex items-center space-x-2">
-                  <span className="text-2xl">🔍</span>
-                  <div className="text-left">
-                    <h3 className="text-sm font-bold text-white">Wanted</h3>
-                  </div>
-                </div>
-              </motion.button>
-
-              {/* Mutual Aid (4) */}
-              <div className="mb-1 mt-3">
-                <p className="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">Mutual Aid</p>
-              </div>
-
-              {/* Food */}
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => onClassify('food')}
-                className="w-full flex items-center justify-between p-3 bg-orange-500/20 hover:bg-orange-500/30 border-2 border-orange-400 rounded-xl transition-all"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <div className="flex items-center space-x-2">
-                  <span className="text-2xl">🍞</span>
-                  <div className="text-left">
-                    <h3 className="text-sm font-bold text-white">Food</h3>
-                  </div>
-                </div>
-              </motion.button>
-
-              {/* Couch */}
-              <button
-                {...couchLongPress}
-                className="w-full flex items-center justify-between p-3 bg-indigo-500/20 hover:bg-indigo-500/30 active:scale-95 border-2 border-indigo-400 rounded-xl transition-all"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <div className="flex items-center space-x-2">
-                  <span className="text-2xl">🛏️</span>
-                  <div className="text-left">
-                    <h3 className="text-sm font-bold text-white">Couch</h3>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-indigo-400">1N</span>
-              </button>
-
-              {/* Camping */}
-              <button
-                {...campingLongPress}
-                className="w-full flex items-center justify-between p-3 bg-teal-500/20 hover:bg-teal-500/30 active:scale-95 border-2 border-teal-400 rounded-xl transition-all"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <div className="flex items-center space-x-2">
-                  <span className="text-2xl">⛺</span>
-                  <div className="text-left">
-                    <h3 className="text-sm font-bold text-white">Camping</h3>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-teal-400">2N</span>
-              </button>
-
-              {/* Housing */}
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => onClassify('housing')}
-                className="w-full flex items-center justify-between p-3 bg-cyan-500/20 hover:bg-cyan-500/30 border-2 border-cyan-400 rounded-xl transition-all"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <div className="flex items-center space-x-2">
-                  <span className="text-2xl">🏠</span>
-                  <div className="text-left">
-                    <h3 className="text-sm font-bold text-white">Housing</h3>
-                  </div>
-                </div>
-              </motion.button>
-
-              {/* Alerts (2) */}
-              <div className="mb-1 mt-3">
-                <p className="text-xs font-semibold text-red-400 mb-1 uppercase tracking-wide">Alerts — Time Sensitive</p>
-              </div>
-
-              {/* ICE Alert */}
-              <button
-                {...iceLongPress}
-                className="w-full flex items-center justify-between p-3 bg-blue-600/20 hover:bg-blue-600/30 active:scale-95 border-2 border-blue-500 rounded-xl transition-all"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <div className="flex items-center space-x-2">
-                  <span className="text-2xl">🧊</span>
-                  <div className="text-left">
-                    <h3 className="text-sm font-bold text-white">ICE Alert</h3>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-blue-400">60m</span>
-              </button>
-
-              {/* Police Alert */}
-              <button
-                {...policeLongPress}
-                className="w-full flex items-center justify-between p-3 bg-red-600/20 hover:bg-red-600/30 active:scale-95 border-2 border-red-500 rounded-xl transition-all"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <div className="flex items-center space-x-2">
-                  <span className="text-2xl">🚓</span>
-                  <div className="text-left">
-                    <h3 className="text-sm font-bold text-white">Police Alert</h3>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-red-400">5m</span>
-              </button>
-            </div>
-
-            {/* Helper text */}
-            <p className="text-xs text-gray-400 mt-2 text-center">
-              Tap to select • Hold to customize
-            </p>
-
-            {/* Action Sheets */}
-            <ActionSheetDiscount
-              isOpen={discountSheetOpen}
-              currentPercent={discountPercent}
-              onSelect={handleDiscountSelect}
-              onClose={() => setDiscountSheetOpen(false)}
-            />
-            <ActionSheetBid
-              isOpen={bidSheetOpen}
-              currentDurationHours={bidDurationHours}
-              onSelect={handleBidSelect}
-              onClose={() => setBidSheetOpen(false)}
-            />
-            <ActionSheetStayLimit
-              isOpen={stayLimitSheetOpen}
-              type={currentStayLimitType}
-              onSelect={handleStayLimitSelect}
-              onClose={() => setStayLimitSheetOpen(false)}
-            />
-            <ActionSheetAlertTimer
-              isOpen={alertTimerSheetOpen}
-              type={currentAlertType}
-              onSelect={handleAlertTimerSelect}
-              onClose={() => setAlertTimerSheetOpen(false)}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    );
-  }
-
-  // ============================================================================
-  // RENDER: REGULAR CAMERA (Commerce + Share Economy)
-  // ============================================================================
-
-  if (!libertyEnabled) {
-    return (
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6"
-            style={{
-              zIndex: Z_LAYERS.modal,
-              WebkitTouchCallout: 'none',
-              WebkitUserSelect: 'none',
-              userSelect: 'none',
-            }}
-          >
-            {/* Preview image - hidden in selection mode */}
-            {!isSelectionMode && imageUrl && (
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="w-full max-w-sm mb-4 rounded-2xl overflow-hidden shadow-2xl"
-              >
-                <img src={imageUrl} alt="Captured item" className="w-full h-auto" />
-              </motion.div>
-            )}
-
-            {/* Title */}
-            <h2 className="text-xl font-bold text-white mb-3 text-center">
-              {isSelectionMode ? 'Choose Default Category' : 'How would you like to list this?'}
-            </h2>
-
-            {/* Stuff label with LA icon */}
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <span className="text-sm font-semibold text-gray-400 uppercase tracking-wide">Stuff</span>
-              {libertyEnabled && (
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    // Toggle to Liberty menu
-                    // TODO: Implement switching to Liberty menu view
-                  }}
-                  className="text-xl"
-                >
-                  🗽
-                </motion.button>
-              )}
-            </div>
-
-            {/* Classification buttons - 15% smaller spacing */}
-            <div className="w-full max-w-sm space-y-2.5">
-              {/* Free - 15% smaller */}
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => onClassify('free')}
-                className="w-full flex items-center justify-between p-3 bg-blue-500/20 hover:bg-blue-500/30 border-2 border-blue-400 rounded-xl transition-all shadow-lg shadow-blue-500/20"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <div className="flex items-center space-x-2.5">
-                  <div className="p-1.5 bg-blue-500 rounded-full">
-                    <FreeIcon className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-base font-bold text-white">Free</h3>
-                    <p className="text-[10px] text-blue-200">Give it away</p>
-                  </div>
-                </div>
-                <span className="text-lg font-bold text-blue-400">$0</span>
-              </motion.button>
-
-              {/* Discount - 15% smaller */}
-              <button
-                {...discountLongPress}
-                className="w-full flex items-center justify-between p-3 bg-green-500/20 hover:bg-green-500/30 active:scale-95 border-2 border-green-400 rounded-xl transition-all shadow-lg shadow-green-500/20"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <div className="flex items-center space-x-2.5">
-                  <div className="p-1.5 bg-green-500 rounded-full">
-                    <DiscountIcon className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-base font-bold text-white">Discount</h3>
-                    <p className="text-[10px] text-green-200">Sell it fast</p>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-green-400">{discountPercent}% OFF</span>
-              </button>
-
-              {/* Bid - 15% smaller */}
-              <button
-                {...bidLongPress}
-                className="w-full flex items-center justify-between p-3 bg-amber-500/20 hover:bg-amber-500/30 active:scale-95 border-2 border-amber-400 rounded-xl transition-all shadow-lg shadow-amber-500/20"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <div className="flex items-center space-x-2.5">
-                  <div className="p-1.5 bg-amber-500 rounded-full">
-                    <BidIcon className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-base font-bold text-white">Bid</h3>
-                    <p className="text-[10px] text-amber-200">Let buyers compete</p>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-amber-400">{bidDurationHours}h</span>
-              </button>
-
-              {/* Share - 15% smaller */}
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => onClassify('share')}
-                className="w-full flex items-center justify-between p-3 bg-purple-500/20 hover:bg-purple-500/30 border-2 border-purple-400 rounded-xl transition-all shadow-lg shadow-purple-500/20"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <div className="flex items-center space-x-2.5">
-                  <span className="text-2xl">🔄</span>
-                  <div className="text-left">
-                    <h3 className="text-base font-bold text-white">Share</h3>
-                    <p className="text-[10px] text-purple-200">Lend it out</p>
-                  </div>
-                </div>
-              </motion.button>
-
-              {/* Wanted - 15% smaller */}
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => onClassify('wanted')}
-                className="w-full flex items-center justify-between p-3 bg-pink-500/20 hover:bg-pink-500/30 border-2 border-pink-400 rounded-xl transition-all shadow-lg shadow-pink-500/20"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <div className="flex items-center space-x-2.5">
-                  <span className="text-2xl">🔍</span>
-                  <div className="text-left">
-                    <h3 className="text-base font-bold text-white">Wanted</h3>
-                    <p className="text-[10px] text-pink-200">Looking for this</p>
-                  </div>
-                </div>
-              </motion.button>
-            </div>
-
-            {/* Helper text */}
-            <p className="text-xs text-gray-400 mt-3 text-center">
-              Tap to select • Hold Discount/Bid to customize
-            </p>
-
-            {/* Cancel button */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => onCancel?.()}
-              className="w-full max-w-sm mt-3 py-2.5 bg-gray-700/50 hover:bg-gray-700/70 border border-gray-600 rounded-xl text-white font-semibold text-sm transition-all"
-            >
-              Cancel
-            </motion.button>
-
-            {/* Action Sheets */}
-            <ActionSheetDiscount
-              isOpen={discountSheetOpen}
-              currentPercent={discountPercent}
-              onSelect={handleDiscountSelect}
-              onClose={() => setDiscountSheetOpen(false)}
-            />
-            <ActionSheetBid
-              isOpen={bidSheetOpen}
-              currentDurationHours={bidDurationHours}
-              onSelect={handleBidSelect}
-              onClose={() => setBidSheetOpen(false)}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    );
-  }
-
-  // ============================================================================
-  // RENDER: LIBERTY CAMERA (Condensed Categories)
-  // ============================================================================
-
-  return (
+  const renderModalShell: ModalShellRenderer = ({
+    title,
+    helperText,
+    helperTextMargin = 'mt-2',
+    children,
+    footer,
+    actionSheets,
+    containerClassName = 'overflow-y-auto',
+  }) => (
     <AnimatePresence>
       {isOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 overflow-y-auto"
+          className={`fixed inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 ${containerClassName}`}
           style={{
             zIndex: Z_LAYERS.modal,
             WebkitTouchCallout: 'none',
@@ -686,13 +229,333 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
           )}
 
           {/* Title */}
-          <h2 className="text-xl font-bold text-white mb-3 text-center">
-            {isSelectionMode ? '🗽 Choose Default Category' : '🗽 Liberty Alert - Select Category'}
-          </h2>
+          <h2 className="text-xl font-bold text-white mb-3 text-center">{title}</h2>
 
+          {children}
+
+          {/* Helper text */}
+          {helperText && (
+            <p className={`text-xs text-gray-400 ${helperTextMargin} text-center`}>
+              {helperText}
+            </p>
+          )}
+
+          {footer}
+          {actionSheets}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
+  const renderGotJunkList = (variant: 'map' | 'regular') => {
+    const containerClass = variant === 'map' ? 'w-full max-w-sm space-y-2 mb-4' : 'w-full max-w-sm space-y-2.5';
+    const labelText = variant === 'map' ? 'text-sm' : 'text-base';
+    const classes = {
+      free: variant === 'map'
+        ? 'w-full flex items-center justify-between p-3 bg-blue-500/20 hover:bg-blue-500/30 border-2 border-blue-400 rounded-xl transition-all'
+        : 'w-full flex items-center justify-between p-3 bg-blue-500/20 hover:bg-blue-500/30 border-2 border-blue-400 rounded-xl transition-all shadow-lg shadow-blue-500/20',
+      discount: variant === 'map'
+        ? 'w-full flex items-center justify-between p-3 bg-green-500/20 hover:bg-green-500/30 active:scale-95 border-2 border-green-400 rounded-xl transition-all'
+        : 'w-full flex items-center justify-between p-3 bg-green-500/20 hover:bg-green-500/30 active:scale-95 border-2 border-green-400 rounded-xl transition-all shadow-lg shadow-green-500/20',
+      bid: variant === 'map'
+        ? 'w-full flex items-center justify-between p-3 bg-amber-500/20 hover:bg-amber-500/30 active:scale-95 border-2 border-amber-400 rounded-xl transition-all'
+        : 'w-full flex items-center justify-between p-3 bg-amber-500/20 hover:bg-amber-500/30 active:scale-95 border-2 border-amber-400 rounded-xl transition-all shadow-lg shadow-amber-500/20',
+      share: variant === 'map'
+        ? 'w-full flex items-center justify-between p-3 bg-purple-500/20 hover:bg-purple-500/30 border-2 border-purple-400 rounded-xl transition-all'
+        : 'w-full flex items-center justify-between p-3 bg-purple-500/20 hover:bg-purple-500/30 border-2 border-purple-400 rounded-xl transition-all shadow-lg shadow-purple-500/20',
+      wanted: variant === 'map'
+        ? 'w-full flex items-center justify-between p-3 bg-pink-500/20 hover:bg-pink-500/30 border-2 border-pink-400 rounded-xl transition-all'
+        : 'w-full flex items-center justify-between p-3 bg-pink-500/20 hover:bg-pink-500/30 border-2 border-pink-400 rounded-xl transition-all shadow-lg shadow-pink-500/20',
+    };
+
+    return (
+      <div className={containerClass}>
+        {/* Commerce (3) */}
+        <div className="mb-1">
+          <p className="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">Commerce</p>
+        </div>
+
+        {/* Free */}
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => onClassify('free')}
+          className={classes.free}
+          style={{ touchAction: 'manipulation' }}
+        >
+          <div className="flex items-center space-x-2.5">
+            {variant === 'regular' ? (
+              <div className="p-1.5 bg-blue-500 rounded-full">
+                <FreeIcon className="w-5 h-5 text-white" />
+              </div>
+            ) : (
+              <span className="text-2xl">💙</span>
+            )}
+            <div className="text-left">
+              <h3 className={`${labelText} font-bold text-white`}>Free</h3>
+              {variant === 'regular' && <p className="text-[10px] text-blue-200">Give it away</p>}
+            </div>
+          </div>
+          {variant === 'regular' && <span className="text-lg font-bold text-blue-400">$0</span>}
+        </motion.button>
+
+        {/* Discount */}
+        <button
+          {...discountLongPress}
+          className={classes.discount}
+          style={{ touchAction: 'manipulation' }}
+        >
+          <div className="flex items-center space-x-2.5">
+            {variant === 'regular' ? (
+              <div className="p-1.5 bg-green-500 rounded-full">
+                <DiscountIcon className="w-5 h-5 text-white" />
+              </div>
+            ) : (
+              <span className="text-2xl">💚</span>
+            )}
+            <div className="text-left">
+              <h3 className={`${labelText} font-bold text-white`}>Discount</h3>
+              {variant === 'regular' && <p className="text-[10px] text-green-200">Sell it fast</p>}
+            </div>
+          </div>
+          <span className="text-xs font-bold text-green-400">
+            {variant === 'regular' ? `${discountPercent}% OFF` : `${discountPercent}%`}
+          </span>
+        </button>
+
+        {/* Bid */}
+        <button
+          {...bidLongPress}
+          className={classes.bid}
+          style={{ touchAction: 'manipulation' }}
+        >
+          <div className="flex items-center space-x-2.5">
+            {variant === 'regular' ? (
+              <div className="p-1.5 bg-amber-500 rounded-full">
+                <BidIcon className="w-5 h-5 text-white" />
+              </div>
+            ) : (
+              <span className="text-2xl">⚡</span>
+            )}
+            <div className="text-left">
+              <h3 className={`${labelText} font-bold text-white`}>Bid</h3>
+              {variant === 'regular' && <p className="text-[10px] text-amber-200">Let buyers compete</p>}
+            </div>
+          </div>
+          <span className="text-xs font-bold text-amber-400">{bidDurationHours}h</span>
+        </button>
+
+        {/* Share Economy (2) */}
+        <div className="mb-1 mt-3">
+          <p className="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">Share Economy</p>
+        </div>
+
+        {/* Share */}
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => onClassify('share')}
+          className={classes.share}
+          style={{ touchAction: 'manipulation' }}
+        >
+          <div className="flex items-center space-x-2.5">
+            <span className="text-2xl">🔄</span>
+            <div className="text-left">
+              <h3 className={`${labelText} font-bold text-white`}>Share</h3>
+              {variant === 'regular' && <p className="text-[10px] text-purple-200">Lend it out</p>}
+            </div>
+          </div>
+        </motion.button>
+
+        {/* Wanted */}
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => onClassify('wanted')}
+          className={classes.wanted}
+          style={{ touchAction: 'manipulation' }}
+        >
+          <div className="flex items-center space-x-2.5">
+            <span className="text-2xl">🔍</span>
+            <div className="text-left">
+              <h3 className={`${labelText} font-bold text-white`}>Wanted</h3>
+              {variant === 'regular' && <p className="text-[10px] text-pink-200">Looking for this</p>}
+            </div>
+          </div>
+        </motion.button>
+      </div>
+    );
+  };
+
+  // ============================================================================
+  // RENDER: MAP VIEW (GotJunk Categories Only - 5 Types)
+  // When Liberty Alert is OFF: Only show GotJunk default categories (Free, Discount, Bid, Share, Wanted)
+  // When Liberty Alert is ON: Use accordion instead (see LIBERTY CAMERA section)
+  // ============================================================================
+
+  if (isMapView && !libertyEnabled) {
+    return renderModalShell({
+      title: isSelectionMode ? 'Choose Default Category' : 'Select Category (5 Types)',
+      helperText: 'Tap to select; hold to customize',
+      children: (
+        renderGotJunkList('map')
+      ),
+      actionSheets: (
+        <>
+          <ActionSheetDiscount
+            isOpen={discountSheetOpen}
+            currentPercent={discountPercent}
+            onSelect={handleDiscountSelect}
+            onClose={() => setDiscountSheetOpen(false)}
+          />
+          <ActionSheetBid
+            isOpen={bidSheetOpen}
+            currentDurationHours={bidDurationHours}
+            onSelect={handleBidSelect}
+            onClose={() => setBidSheetOpen(false)}
+          />
+        </>
+      ),
+    });
+  }
+
+  // ============================================================================
+  // RENDER: REGULAR CAMERA (GotJunk Categories: Free, Discount, Bid, Share, Wanted)
+  // ============================================================================
+
+  if (!libertyEnabled && !isMapView) {
+    return renderModalShell({
+      title: isSelectionMode ? 'Choose Default Category' : 'How would you like to list this?',
+      helperText: 'Tap to select; hold Discount/Bid to customize',
+      helperTextMargin: 'mt-3',
+      children: (
+        renderGotJunkList('regular')
+      ),
+      footer: (
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => onCancel?.()}
+          className="w-full max-w-sm mt-3 py-2.5 bg-gray-700/50 hover:bg-gray-700/70 border border-gray-600 rounded-xl text-white font-semibold text-sm transition-all"
+        >
+          Cancel
+        </motion.button>
+      ),
+      actionSheets: (
+        <>
+          <ActionSheetDiscount
+            isOpen={discountSheetOpen}
+            currentPercent={discountPercent}
+            onSelect={handleDiscountSelect}
+            onClose={() => setDiscountSheetOpen(false)}
+          />
+          <ActionSheetBid
+            isOpen={bidSheetOpen}
+            currentDurationHours={bidDurationHours}
+            onSelect={handleBidSelect}
+            onClose={() => setBidSheetOpen(false)}
+          />
+        </>
+      ),
+      containerClassName: "",
+    });
+  }
+
+  // ============================================================================
+  // RENDER: LIBERTY CAMERA (Condensed Categories)
+  // ============================================================================
+
+  return renderModalShell({
+    title: isSelectionMode ? '🗽 Choose Default Category' : '🗽 Liberty Alert - Select Category',
+    helperText: 'Tap category to expand; hold to customize',
+    helperTextMargin: 'mt-3',
+    children: (
+      <>
           {/* Category Selection */}
-          {/* Main Categories (Order: Alert, Food, Shelter for thumb accessibility) */}
+          {/* Main Categories (Order: Stuff, Alert, Food, Shelter for thumb accessibility) */}
           <div className="w-full max-w-sm space-y-3">
+            {/* STUFF! Category (GotJunk) */}
+            <div className="border-2 border-gray-500/50 rounded-xl overflow-hidden">
+              {/* Stuff! Header */}
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => setExpandedCategory(expandedCategory === 'stuff' ? null : 'stuff')}
+                className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/40 transition-all"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">📦</span>
+                  <h3 className="text-base font-bold text-white">Stuff!</h3>
+                </div>
+                <span className="text-white text-xl">{expandedCategory === 'stuff' ? '−' : '+'}</span>
+              </motion.button>
+
+              {/* Stuff Subcategories (GotJunk) */}
+              <AnimatePresence>
+                {expandedCategory === 'stuff' && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="bg-black/20"
+                  >
+                    <div className="p-2 space-y-2">
+                      {/* Free */}
+                      <button onClick={() => onClassify('free')} className="w-full flex items-center gap-2 p-2.5 bg-blue-500/20 hover:bg-blue-500/30 active:scale-95 border border-blue-400 rounded-lg">
+                        <span className="text-xl">💙</span>
+                        <div className="text-left">
+                          <h4 className="text-sm font-bold text-white">Free</h4>
+                          <p className="text-[10px] text-blue-200">Give it away</p>
+                        </div>
+                      </button>
+
+                      {/* Discount */}
+                      <button {...discountLongPress} className="w-full flex items-center justify-between p-2.5 bg-green-500/20 hover:bg-green-500/30 active:scale-95 border border-green-400 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">💚</span>
+                          <div className="text-left">
+                            <h4 className="text-sm font-bold text-white">Discount</h4>
+                            <p className="text-[10px] text-green-200">Sell it fast</p>
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-green-400">{discountPercent}%</span>
+                      </button>
+
+                      {/* Bid */}
+                      <button {...bidLongPress} className="w-full flex items-center justify-between p-2.5 bg-amber-500/20 hover:bg-amber-500/30 active:scale-95 border border-amber-400 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">⚡</span>
+                          <div className="text-left">
+                            <h4 className="text-sm font-bold text-white">Bid</h4>
+                            <p className="text-[10px] text-amber-200">Let buyers compete</p>
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-amber-400">{bidDurationHours}h</span>
+                      </button>
+
+                      {/* Share */}
+                      <button onClick={() => onClassify('share')} className="w-full flex items-center gap-2 p-2.5 bg-purple-500/20 hover:bg-purple-500/30 active:scale-95 border border-purple-400 rounded-lg">
+                        <span className="text-xl">🔄</span>
+                        <div className="text-left">
+                          <h4 className="text-sm font-bold text-white">Share</h4>
+                          <p className="text-[10px] text-purple-200">Lend it out</p>
+                        </div>
+                      </button>
+
+                      {/* Wanted */}
+                      <button onClick={() => onClassify('wanted')} className="w-full flex items-center gap-2 p-2.5 bg-pink-500/20 hover:bg-pink-500/30 active:scale-95 border border-pink-400 rounded-lg">
+                        <span className="text-xl">🔍</span>
+                        <div className="text-left">
+                          <h4 className="text-sm font-bold text-white">Wanted</h4>
+                          <p className="text-[10px] text-pink-200">Looking for this</p>
+                        </div>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             {/* ALERT! Category */}
             <div className="border-2 border-red-500/50 rounded-xl overflow-hidden">
               {/* Alert! Header */}
@@ -775,7 +638,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
                   >
                     <div className="p-2 space-y-2">
                       {/* Soup Kitchen */}
-                      <button {...soupKitchenLongPress} className="w-full flex items-center gap-2 p-2.5 bg-orange-500/20 hover:bg-orange-500/30 active:scale-95 border border-orange-400 rounded-lg">
+                      <button onClick={() => onClassify('soup_kitchen')} className="w-full flex items-center gap-2 p-2.5 bg-orange-500/20 hover:bg-orange-500/30 active:scale-95 border border-orange-400 rounded-lg">
                         <span className="text-xl">🍲</span>
                         <div className="text-left">
                           <h4 className="text-sm font-bold text-white">Soup Kitchen</h4>
@@ -784,7 +647,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
                       </button>
 
                       {/* BBQ */}
-                      <button {...bbqLongPress} className="w-full flex items-center gap-2 p-2.5 bg-orange-500/20 hover:bg-orange-500/30 active:scale-95 border border-orange-400 rounded-lg">
+                      <button onClick={() => onClassify('bbq')} className="w-full flex items-center gap-2 p-2.5 bg-orange-500/20 hover:bg-orange-500/30 active:scale-95 border border-orange-400 rounded-lg">
                         <span className="text-xl">🍖</span>
                         <div className="text-left">
                           <h4 className="text-sm font-bold text-white">BBQ</h4>
@@ -793,7 +656,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
                       </button>
 
                       {/* Dry Food */}
-                      <button {...dryFoodLongPress} className="w-full flex items-center gap-2 p-2.5 bg-orange-500/20 hover:bg-orange-500/30 active:scale-95 border border-orange-400 rounded-lg">
+                      <button onClick={() => onClassify('dry_food')} className="w-full flex items-center gap-2 p-2.5 bg-orange-500/20 hover:bg-orange-500/30 active:scale-95 border border-orange-400 rounded-lg">
                         <span className="text-xl">📦</span>
                         <div className="text-left">
                           <h4 className="text-sm font-bold text-white">Dry Food</h4>
@@ -802,7 +665,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
                       </button>
 
                       {/* Pick */}
-                      <button {...pickLongPress} className="w-full flex items-center gap-2 p-2.5 bg-orange-500/20 hover:bg-orange-500/30 active:scale-95 border border-orange-400 rounded-lg">
+                      <button onClick={() => onClassify('pick')} className="w-full flex items-center gap-2 p-2.5 bg-orange-500/20 hover:bg-orange-500/30 active:scale-95 border border-orange-400 rounded-lg">
                         <span className="text-xl">🫐</span>
                         <div className="text-left">
                           <h4 className="text-sm font-bold text-white">Pick</h4>
@@ -811,7 +674,7 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
                       </button>
 
                       {/* Garden */}
-                      <button {...gardenLongPress} className="w-full flex items-center gap-2 p-2.5 bg-orange-500/20 hover:bg-orange-500/30 active:scale-95 border border-orange-400 rounded-lg">
+                      <button onClick={() => onClassify('garden')} className="w-full flex items-center gap-2 p-2.5 bg-orange-500/20 hover:bg-orange-500/30 active:scale-95 border border-orange-400 rounded-lg">
                         <span className="text-xl">🥬</span>
                         <div className="text-left">
                           <h4 className="text-sm font-bold text-white">Garden</h4>
@@ -888,37 +751,33 @@ export const ClassificationModal: React.FC<ClassificationModalProps> = ({
               </AnimatePresence>
             </div>
           </div>
-
-          {/* Helper text */}
-          <p className="text-xs text-gray-400 mt-3 text-center">
-            Tap category to expand • Hold to customize
-          </p>
-
-          {/* Cancel button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => onCancel?.()}
-            className="w-full max-w-sm mt-3 py-2.5 bg-gray-700/50 hover:bg-gray-700/70 border border-gray-600 rounded-xl text-white font-semibold text-sm transition-all"
-          >
-            Cancel
-          </motion.button>
-
-          {/* Action Sheets */}
-          <ActionSheetStayLimit
-            isOpen={stayLimitSheetOpen}
-            type={currentStayLimitType}
-            onSelect={handleStayLimitSelect}
-            onClose={() => setStayLimitSheetOpen(false)}
-          />
-          <ActionSheetAlertTimer
-            isOpen={alertTimerSheetOpen}
-            type={currentAlertType}
-            onSelect={handleAlertTimerSelect}
-            onClose={() => setAlertTimerSheetOpen(false)}
-          />
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+      </>
+    ),
+    footer: (
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => onCancel?.()}
+        className="w-full max-w-sm mt-3 py-2.5 bg-gray-700/50 hover:bg-gray-700/70 border border-gray-600 rounded-xl text-white font-semibold text-sm transition-all"
+      >
+        Cancel
+      </motion.button>
+    ),
+    actionSheets: (
+      <>
+        <ActionSheetStayLimit
+          isOpen={stayLimitSheetOpen}
+          type={currentStayLimitType}
+          onSelect={handleStayLimitSelect}
+          onClose={() => setStayLimitSheetOpen(false)}
+        />
+        <ActionSheetAlertTimer
+          isOpen={alertTimerSheetOpen}
+          type={currentAlertType}
+          onSelect={handleAlertTimerSelect}
+          onClose={() => setAlertTimerSheetOpen(false)}
+        />
+      </>
+    ),
+  });
 };

@@ -1,3 +1,257 @@
+## ClassificationModal Refactoring - Eliminated Code Duplication (2025-11-27)
+
+**Session Summary**: Applied First Principles thinking and Occam's Razor to audit and improve ClassificationModal. Eliminated ~120 lines of duplicated code by creating unified `renderGotJunkList()` function.
+
+**User Request**: "deep think apply first principles, occums, the follow... improve the code do not break anything... follow wsp..."
+
+**Audit Findings** ([ClassificationModal_AUDIT_V2.md](frontend/components/ClassificationModal_AUDIT_V2.md)):
+1. ✅ **Code Duplication (FIXED)**: Map View and Regular Camera duplicated ~120 lines of category rendering
+2. 🟡 **Liberty Handlers** (ACCEPTED): Always initialized due to React Rules of Hooks - <1ms overhead
+3. ✅ **Outdated Comments (FIXED)**: Updated interface documentation to reflect accordion structure
+
+**First Principles Analysis**:
+- **Problem**: Map View and Regular Camera rendered identical 5 GotJunk categories separately
+- **Root Cause**: No code reuse between rendering paths
+- **Simplest Solution**: Extract into single `renderGotJunkList(variant: 'map' | 'regular')` function
+- **Result**: DRY principle restored, maintainability improved
+
+**Implementation** ([ClassificationModal.tsx:250-374](frontend/components/ClassificationModal.tsx#L250-L374)):
+```typescript
+const renderGotJunkList = (variant: 'map' | 'regular') => {
+  // Conditional styling based on variant
+  const baseButton = (color: string) =>
+    `...` + (variant === 'regular' ? ` shadow-lg shadow-${color}-500/20` : '');
+
+  return (
+    <div>
+      {/* Unified rendering with variant-specific features */}
+      {variant === 'regular' ? <FreeIcon /> : <span>💙</span>}
+      {variant === 'regular' && <p className="text-[10px]">Give it away</p>}
+    </div>
+  );
+};
+```
+
+**Liberty Handlers Decision (Occam's Razor)**:
+- **Cannot fix**: React Rules of Hooks prevent conditional initialization
+- **Alternative**: Split into 3 components (GotJunkModal, LibertyModal, wrapper)
+- **Cost/Benefit**: +800 lines of complexity to save <1ms + 200 bytes
+- **Decision**: Accept minimal overhead, keep code unified
+
+**Metrics**:
+- **Lines Eliminated**: 120 (-12%)
+- **Bundle Size**: 840.95 kB → 839.41 kB (-1.54 kB)
+- **Maintainability**: 🟡 Medium → ✅ High
+- **Build Status**: ✅ (839.41 kB, gzip: 235.11 kB)
+
+**WSP Compliance**:
+- ✅ WSP 84 (Code Memory): No vibecoding, DRY principle restored
+- ✅ WSP 87 (File Size): 863 lines (within 800-1000 guideline)
+- ✅ WSP 50 (Pre-Action): Code verified before refactoring
+
+**Key Insight**: **Occam's Razor beats micro-optimization** - Accepting <1ms overhead for Liberty handlers keeps codebase simple and maintainable. Complexity cost of splitting components outweighs performance gain.
+
+**Audit Report**: [ClassificationModal_AUDIT_FINAL.md](frontend/components/ClassificationModal_AUDIT_FINAL.md)
+
+---
+
+## Grid Hint Toast - Discoverability for Swipe-Up Gesture (2025-11-27)
+
+**Session Summary**: Added one-time toast notification to educate users about swipe-up gesture for grid view and tap-to-focus interaction.
+
+**User Request**: "verify and add small toast hint... If you want, I can also add a small toast hint ('Swipe up to see all items as thumbnails; tap a thumb to open it') to make the gesture clearer."
+
+**Implementation**:
+
+**Toast Component** ([Toast.tsx](frontend/components/Toast.tsx)):
+- Framer-motion animated notification (bottom-center, above nav bar)
+- Auto-dismisses after 5 seconds
+- Manual close button (✕)
+- z-index: 50 (above all content, below modals)
+
+**Grid Hint Logic** ([App.tsx](frontend/App.tsx)):
+- Trigger: First swipe-up gesture in Browse stream mode
+- Storage: localStorage key `hasSeenGridHint` (one-time hint)
+- Message: "Swipe up to see all items as thumbnails; tap a thumb to open it"
+- Duration: 5000ms (5 seconds)
+
+**Existing Grid Features Verified**:
+- `focusBrowseItem()` (line 898-908): Reorders browse feed when thumbnail tapped
+- Grid tap → closes grid → brings selected item to front of swipe stream
+- Works correctly ✅
+
+**User Flow**:
+```
+Browse stream → Swipe up (first time) → Grid opens + Toast shows
+→ "Swipe up to see all items as thumbnails; tap a thumb to open it"
+→ User taps thumbnail → Grid closes → Item opens in stream (at front of queue)
+```
+
+**Build Status**: ✅ (840.95 kB, gzip: 235.06 kB)
+
+**WSP Compliance**: WSP 50 (Progressive disclosure), WSP 22 (ModLog)
+
+---
+
+## Two-Tier Community Moderation System (2025-11-27)
+
+**Session Summary**: Implemented two-tier moderation system separating GotJunk (commerce) from Liberty Alert (crisis documentation) with member categories, content warnings, and context-aware thresholds.
+
+**User Request**: "occums... should we just have a report icon on the image at the top left? Tap it to report it? Abuse consideration... some videos will be violent gross for LA in this case we want to add a sprash screen in the form of a popup... hard think how do we manage the 2? LA will have pics from ICE, rebels, Ukraine etc... Gotjunk is for stuff items people want or get rid off... thoughts?"
+
+**Architecture** (First Principles - Two Content Types):
+
+**1. GotJunk (Commerce/Items):**
+- Expected: Couches, food, tools, stuff
+- Abuse: Dick pics, spam, scams
+- Moderators: Regular users (everyone)
+- Threshold: 5 votes → hide
+- No content warning
+
+**2. Liberty Alert (Crisis Zones):**
+- Expected: ICE raids, police brutality, Ukraine war, refugee camps
+- Content: Graphic violence is **newsworthy, not abuse**
+- Moderators: Trusted members only (prevent censorship)
+- Threshold: 10 votes → hide (higher bar)
+- Content warning splash (user opts in)
+
+**Implementation**:
+
+**Data Model** ([types.ts](frontend/types.ts)):
+- Added `MemberCategory` type: `'regular' | 'trusted'`
+- Added `contentWarning?: boolean` - Auto-set for ice/police
+- Added `moderationThreshold?: number` - 5 (GotJunk) or 10 (LA)
+
+**User Interface** ([ItemReviewer.tsx](frontend/components/ItemReviewer.tsx)):
+- Replaced long-press with visible **Report Icon** (top left, always visible)
+- Added **Content Warning Splash** for LA items (orange/red gradient)
+- Updated moderation badge to show dynamic threshold (5 vs 10)
+- Show "Trusted Members Only" for LA when regular user sees reported item
+
+**Moderation Logic** ([App.tsx](frontend/App.tsx)):
+- Added `currentUserCategory` state (TODO: wire to auth)
+- Auto-set `contentWarning` and `moderationThreshold` during classification
+- Check member category before allowing votes on LA items
+- Use context-aware threshold: LA=10, GotJunk=5
+
+**User Flow**:
+
+**GotJunk:**
+```
+Tap Report Icon → reportCount++ → 3 reports = pending → Community votes (swipe) → 5 remove votes = hidden
+```
+
+**Liberty Alert:**
+```
+Browse feed → Content Warning popup → [I Understand - Continue] → View item → Report icon visible
+→ Only trusted members can vote → 10 remove votes = hidden (prevent censorship)
+```
+
+**Key Insight**: Content warning ≠ Moderation
+- Content warning: "This is graphic" (informational, user choice)
+- Moderation: "This violates rules" (trusted community decision)
+
+LA content is **supposed to be graphic** (it's documenting real crises). The warning protects users who don't want to see violence, but the higher moderation threshold (10 votes) and trusted-members-only voting prevents censorship of legitimate crisis documentation.
+
+**Build Status**: ✅ (839.85 kB, gzip: 234.85 kB)
+
+**WSP Compliance**: WSP 50 (Reuse existing UI), WSP 22 (ModLog), WSP 87 (Simple), WSP 64 (Context-aware)
+
+---
+
+## Camera Orb → Camera Icon Terminology Update (2025-11-27)
+
+**Session Summary**: Updated all references from "camera orb" to "camera icon" to reflect UI redesign where round orb was replaced with camera icon button.
+
+**User Request**: "we need to fix the name camera orb? it is no longer in the app.... camera icon click is more correct"
+
+**Scope**: 31 references across 11 files
+- **Code files** (6 references):
+  - [App.tsx:961](frontend/App.tsx#L961): `showCameraOrb` → `showCameraIcon`
+  - [App.tsx:1468](frontend/App.tsx#L1468): Updated prop name
+  - [BottomNavBar.tsx:25](frontend/components/BottomNavBar.tsx#L25): Interface prop type
+  - [BottomNavBar.tsx:55](frontend/components/BottomNavBar.tsx#L55): Default parameter value
+  - [Camera.tsx:156](frontend/components/Camera.tsx#L156): Comment update
+  - [zLayers.ts:12](frontend/constants/zLayers.ts#L12): `cameraOrb` → `cameraIcon`
+
+- **Documentation files** (25 references):
+  - DAEMON_MONITORING.md (1)
+  - LIBERTY_ALERT_INTEGRATION_PLAN.md (3)
+  - LIBERTY_ALERT_INTEGRATION_STATUS.md (2)
+  - LIBERTY_ALERT_REACT_WEBRTC_ARCHITECTURE.md (11)
+  - ModLog.md (2 in historical entries)
+  - zindex-map.md (3)
+
+**Build Status**: ✅ TypeScript compilation succeeded (839.59 kB, gzip: 233.68 kB)
+
+**WSP Compliance**:
+- WSP 50: Used Task/Explore to find all references before making changes
+- WSP 22: Updated ModLog with complete documentation
+- WSP 57: Improved naming consistency across codebase
+
+---
+
+## Browse Swipe Up Race Condition Fix (2025-11-27)
+
+**Session Summary**: Fixed white screen crash when swiping up on browse items, caused by race condition during AnimatePresence unmount.
+
+**User Report**: "on the browse items investigate why on the swipe up creates a white screen"
+
+**Root Cause**: ItemReviewer's `useEffect` firing during component unmount, calling `onDecision` with stale/changing item props during AnimatePresence exit animation.
+
+**Flow**:
+1. User swipes up on browse item → `onClose()` → `setIsBrowseGridMode(true)`
+2. ItemReviewer starts AnimatePresence exit animation (unmounting)
+3. If `filteredBrowseFeed[0]` changes during unmount → `item` prop changes
+4. useEffect (line 27-31) fires → calls `onDecision(item, swipeDecision)` during unmount
+5. `handleBrowseSwipe` removes item from browseFeed
+6. React tries to re-render unmounting component with new props → **white screen crash**
+
+**Fix Applied** ([ItemReviewer.tsx:26-41](frontend/components/ItemReviewer.tsx#L26-L41)):
+- Added `isMountedRef` to track component mount status
+- Guard `useEffect` from firing during unmount: `if (swipeDecision && isMountedRef.current)`
+- Guard `onClose()` calls in swipe handlers: `if (onClose && isMountedRef.current && ...)`
+- Guard double-tap handler: `if (!onClose || !isMountedRef.current) return`
+
+**Changes**:
+- `ItemReviewer.tsx`: Added mounted ref guard to prevent race conditions during unmount
+
+**Build Status**: ✅ TypeScript compilation succeeded (836.60 kB, gzip: 233.47 kB)
+
+**WSP Compliance**:
+- WSP 50: Researched existing fix (PR #167) before diagnosing new issue
+- WSP 22: Updated ModLog with complete technical analysis
+- WSP 87: Used Task/Explore agent for initial investigation
+
+**Testing Recommendations**:
+1. Browse tab → Swipe up on item → Should switch to grid mode without crash
+2. Browse tab → Swipe up during filter change → Should handle gracefully
+3. Browse tab → Rapid swipe up/down → Should not trigger race condition
+4. Browse tab → Swipe up while item loading → Should not crash
+
+---
+
+## Golden Ticket Invite System - Technical Framework (2025-11-24)
+
+**Session Summary**: Created comprehensive technical framework for PWA-based geo-anchored invite system. Universal launch mechanism for all FoundUps.
+
+**Documentation**: `docs/GOLDEN_TICKET_INVITE_SYSTEM.md` - Complete technical specification with backend architecture, PWA implementation, security measures, and future AR enhancements.
+
+**Roadmap**: Added to Phase 3 MVP as P0 feature. Universal system for all FoundUps launch.
+
+**WSP Compliance**: WSP 3 (domain organization), WSP 11 (interface protocol), WSP 49 (module structure), WSP 83 (documentation tree), WSP 89 (production deployment)
+
+**Key Features**:
+- Geo-anchored QR codes (50m radius, 5-minute validity)
+- Token management (initial grant, viral rewards, expiration)
+- PWA enhancements (offline support, install prompt, push notifications)
+- Security & fraud prevention (server-side validation, rate limiting)
+- Future AR layer (WebXR token catching)
+
+**Universal**: Shared module `modules/infrastructure/invite_system/` will be created for all FoundUps.
+
+---
+
 ## Message Board Sprint MB-2  EUI Wiring (2025-11-17)
 
 - Added `MessageThreadPanel.tsx` drawer wired to `messageStore` (MB-1 data layer)
@@ -342,7 +596,6 @@ User: "on the browse the > is putting items on cart investigate if the right swi
 🚧 **Pending**: Ready for testing, requires `git push` to deploy
 
 ---
-
 ## Long-Press Toggle for Classification Selection + Map Clustering (2025-11-12)
 
 **Session Summary**: Implemented long-press toggle for intuitive classification selection and map thumbnail clustering. User can now long-press the auto-classify toggle to select a classification type (free/discount/bid), and the toggle becomes color-coded to the selected type.
@@ -468,10 +721,10 @@ User: "on the browse the > is putting items on cart investigate if the right swi
 **Problem**: Modal used `32px` instead of Tailwind `bottom-32` (8rem = 128px).
 **Fix**: Corrected bottom calculation
 - Changed `calc(32px + ...)` ↁE`calc(8rem + ...)`
-- Fixed 96px positioning error that caused overlap with camera orb
+- Fixed 96px positioning error that caused overlap with camera icon
 
 ### PR #66: Z-Index Hierarchy Fix ⭁E
-**Problem**: ClassificationModal (`z-[200]`) appeared **behind** camera orb (2120) and sidebar (2200).
+**Problem**: ClassificationModal (`z-[200]`) appeared **behind** camera icon (2120) and sidebar (2200).
 **Root Cause**: All modals had hardcoded low z-index values (200-300 range).
 
 **Fix**: Added centralized z-index constants in `zLayers.ts`
@@ -671,4 +924,5 @@ const getButtonStyle = (isActive: boolean) => {
 **Module Lifecycle**: PoC ↁEPrototype (Current) ↁEMVP (Planned)
 **Last Updated**: Integration into Foundups-Agent repository
 **Next Steps**: See ROADMAP.md for Prototype phase features
+
 
