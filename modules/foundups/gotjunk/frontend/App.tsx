@@ -32,6 +32,7 @@ import { OptionsModal } from './components/OptionsModal';
 import { InstructionsModal } from './components/InstructionsModal';
 import { PurchaseModal } from './components/PurchaseModal';
 import { ActionSheetLibertySelector } from './components/ActionSheetLibertySelector';
+import { Toast } from './components/Toast';
 import { ItemClassification, MutualAidClassification, AlertClassification } from './types';
 import { MessageThreadPanel } from './components/MessageThreadPanel';
 import { MessageContextRef } from './src/message/types';
@@ -121,6 +122,10 @@ const App: React.FC = () => {
   const [cart, setCart] = useState<CapturedItem[]>([]); // status: 'in_cart' - Tab 4
   const [skipped, setSkipped] = useState<CapturedItem[]>([]); // status: 'skipped' - hidden
 
+  // === USER CATEGORY ===
+  // TODO: Get from auth system when implemented
+  const currentUserCategory: 'regular' | 'trusted' = 'regular';
+
   // === NAVIGATION STATE ===
   const [activeTab, setActiveTab] = useState<'browse' | 'myitems' | 'cart'>('browse');
 
@@ -155,6 +160,9 @@ const App: React.FC = () => {
 
   // === BROWSE GRID MODE (swipe up to show thumbnails) ===
   const [isBrowseGridMode, setIsBrowseGridMode] = useState(false);
+
+  // === TOAST NOTIFICATIONS ===
+  const [showGridHintToast, setShowGridHintToast] = useState(false);
 
   // === RESPONSIVE VIEWPORT (iOS Safari vh fix) ===
   useViewport();
@@ -718,6 +726,8 @@ const App: React.FC = () => {
         alertTimer, // For ice/police alerts
         stayLimit, // For couch/camping mutual aid
         alertStatus: (classification === 'ice' || classification === 'police') ? 'active' : undefined,
+        contentWarning: (classification === 'ice' || classification === 'police'), // Graphic crisis content
+        moderationThreshold: (classification === 'ice' || classification === 'police') ? 10 : 5, // LA=10, GotJunk=5
         createdAt: Date.now(),
         ...location,
         libertyAlert: libertyEnabled, // Flag if captured during Liberty Alert mode
@@ -799,6 +809,75 @@ const App: React.FC = () => {
 
   // BROWSE FEED: Handle swipe actions on other people's items
   const handleBrowseSwipe = async (item: CapturedItem, direction: 'left' | 'right') => {
+    const isReportedItem = (item.reportCount || 0) >= 3;
+
+    // If item is reported, track moderation votes
+    if (isReportedItem) {
+      const userId = 'current_user'; // TODO: Get actual user ID from auth
+      const isLibertyAlert = item.classification === 'ice' || item.classification === 'police';
+
+      // Liberty Alert: Only trusted members can moderate
+      if (isLibertyAlert && currentUserCategory !== 'trusted') {
+        console.log('[Moderation] Regular users cannot moderate Liberty Alert content:', item.id);
+        // Skip moderation - continue to normal swipe flow below
+      } else {
+        // Regular users can moderate GotJunk OR trusted users moderating LA
+        const moderationVotes = item.moderationVotes || { keep: [], remove: [] };
+
+        if (direction === 'left') {
+          // Swipe LEFT on reported item = Vote to REMOVE
+          if (!moderationVotes.remove.includes(userId)) {
+            moderationVotes.remove.push(userId);
+            console.log('[Moderation] User voted to remove:', item.id);
+          }
+        } else {
+          // Swipe RIGHT on reported item = Vote to KEEP
+          if (!moderationVotes.keep.includes(userId)) {
+            moderationVotes.keep.push(userId);
+            console.log('[Moderation] User voted to keep:', item.id);
+          }
+        }
+
+        // Use context-aware threshold: LA=10, GotJunk=5
+        const threshold = item.moderationThreshold || 5;
+
+        // Auto-hide if threshold reached
+        if (moderationVotes.remove.length >= threshold) {
+          console.log(`[Moderation] Item hidden by community (${moderationVotes.remove.length}/${threshold} votes):`, item.id);
+          const hiddenItem: CapturedItem = {
+            ...item,
+            moderationStatus: 'hidden',
+            moderationVotes
+          };
+          await storage.saveItem(hiddenItem);
+          setBrowseFeed(current => current.filter(i => i.id !== item.id));
+          return;
+        }
+
+        // Clear if threshold reached
+        if (moderationVotes.keep.length >= threshold) {
+          console.log(`[Moderation] Item cleared by community (${moderationVotes.keep.length}/${threshold} votes):`, item.id);
+          const clearedItem: CapturedItem = {
+            ...item,
+            moderationStatus: 'cleared',
+            reportCount: 0,
+            moderationVotes
+          };
+          await storage.saveItem(clearedItem);
+          setBrowseFeed(current => current.map(i => i.id === item.id ? clearedItem : i));
+          return;
+        }
+
+        // Update moderation votes
+        const updatedItem: CapturedItem = {
+          ...item,
+          moderationVotes
+        };
+        await storage.saveItem(updatedItem);
+        setBrowseFeed(current => current.map(i => i.id === item.id ? updatedItem : i));
+      }
+    }
+
     // Remove from browse feed
     setBrowseFeed(current => current.filter(i => i.id !== item.id));
 
@@ -815,7 +894,48 @@ const App: React.FC = () => {
     }
   };
 
-  
+  // BROWSE FEED: When tapping a thumbnail in grid mode, bring it to the front and exit grid
+  const focusBrowseItem = (item: CapturedItem) => {
+    setBrowseFeed(current => {
+      const index = current.findIndex(i => i.id === item.id);
+      if (index <= 0) return current;
+      const next = [...current];
+      const [selected] = next.splice(index, 1);
+      next.unshift(selected);
+      return next;
+    });
+    setIsBrowseGridMode(false);
+  };
+
+  // Community Moderation: Report inappropriate content
+  const handleReport = async (item: CapturedItem) => {
+    const userId = 'current_user'; // TODO: Get actual user ID from auth
+    const reportedBy = item.reportedBy || [];
+
+    // Prevent duplicate reports from same user
+    if (reportedBy.includes(userId)) {
+      console.log('[Moderation] User already reported this item:', item.id);
+      return;
+    }
+
+    reportedBy.push(userId);
+    const reportCount = (item.reportCount || 0) + 1;
+
+    console.log('[Moderation] Item reported:', item.id, 'Total reports:', reportCount);
+
+    const updatedItem: CapturedItem = {
+      ...item,
+      reportCount,
+      reportedBy,
+      moderationStatus: reportCount >= 3 ? 'pending' : undefined,
+      moderationVotes: item.moderationVotes || { keep: [], remove: [] }
+    };
+
+    await storage.saveItem(updatedItem);
+    setBrowseFeed(current => current.map(i => i.id === item.id ? updatedItem : i));
+  };
+
+
   // Re-classify existing item
   const handleReclassify = async (
     item: CapturedItem,
@@ -952,13 +1072,29 @@ const App: React.FC = () => {
     );
   }
 
+  // Community Moderation: Hide items that were removed by community
+  filteredBrowseFeed = filteredBrowseFeed.filter(item => item.moderationStatus !== 'hidden');
+
+  // Community Moderation: Sort reported items first (priority queue)
+  filteredBrowseFeed = filteredBrowseFeed.sort((a, b) => {
+    const aReported = (a.reportCount || 0) >= 3;
+    const bReported = (b.reportCount || 0) >= 3;
+
+    // Reported items first
+    if (aReported && !bReported) return -1;
+    if (!aReported && bReported) return 1;
+
+    // Then newest first
+    return b.createdAt - a.createdAt;
+  });
+
   // Map navigation: Compute navigable items based on Liberty mode
   const mapNavigableItems = libertyEnabled
     ? browseFeed.filter(item => item.libertyAlert && item.latitude && item.longitude)
     : browseFeed.filter(item => !item.libertyAlert && item.latitude && item.longitude);
 
   const currentReviewItem = myDrafts.length > 0 ? myDrafts[0] : null;
-  const showCameraOrb = isMapOpen || activeTab === 'myitems'; // Camera orb appears on map (always) + My Items tab
+  const showCameraIcon = isMapOpen || activeTab === 'myitems'; // Camera icon appears on map (always) + My Items tab
 
   // Handle instructions modal close
   const handleInstructionsClose = () => {
@@ -1041,9 +1177,9 @@ const App: React.FC = () => {
                 <PhotoGrid
                   items={filteredBrowseFeed}
                   onClick={(item) => {
-                    // Tap thumbnail → exit grid mode and show this item in fullscreen
+                    // Tap thumbnail → exit grid mode and surface this item in the swipe stream
                     console.log('[Browse] Grid item clicked:', item.id);
-                    setIsBrowseGridMode(false);
+                    focusBrowseItem(item);
                   }}
                   onDelete={async (item) => {
                     // Remove from browse feed (mark as skipped)
@@ -1075,8 +1211,17 @@ const App: React.FC = () => {
                         // Swipe up detected → switch to grid mode
                         console.log('[Browse] Swipe up → grid mode');
                         setIsBrowseGridMode(true);
+
+                        // Show hint toast on first grid view (localStorage-based one-time hint)
+                        const hasSeenGridHint = localStorage.getItem('hasSeenGridHint');
+                        if (!hasSeenGridHint) {
+                          setShowGridHintToast(true);
+                          localStorage.setItem('hasSeenGridHint', 'true');
+                        }
                       }}
                       onMessageBoard={openMessagePanelForItem}
+                      onReport={handleReport}
+                      userCategory={currentUserCategory}
                     />
                   )}
                 </AnimatePresence>
@@ -1465,7 +1610,7 @@ const App: React.FC = () => {
               return opening;
             });
           }}
-          showCameraOrb={showCameraOrb}
+          showCameraIcon={showCameraIcon}
           autoClassifyEnabled={autoClassifyEnabled}
           onToggleAutoClassify={() => setAutoClassifyEnabled(!autoClassifyEnabled)}
           onLongPressAutoClassify={handleLongPressAutoClassify}
@@ -1670,6 +1815,14 @@ const App: React.FC = () => {
           setVoiceInputText('');
         }}
         placeholder="Edit your voice input..."
+      />
+
+      {/* Grid Hint Toast - Show on first swipe up */}
+      <Toast
+        message="Swipe up to see all items as thumbnails; tap a thumb to open it"
+        show={showGridHintToast}
+        onClose={() => setShowGridHintToast(false)}
+        duration={5000}
       />
 
     </div>

@@ -3,6 +3,15 @@
 export type ItemOwnership = 'mine' | 'others';
 
 // ============================================================================
+// MEMBER CATEGORY SYSTEM - Moderation Roles
+// ============================================================================
+export type MemberCategory = 'regular' | 'trusted';
+
+// Moderation permissions by member category:
+// - regular: Can moderate GotJunk items (5 vote threshold)
+// - trusted: Can moderate Liberty Alert items (10 vote threshold)
+
+// ============================================================================
 // CLASSIFICATION SYSTEM - 16 Types Across 4 Pillars
 // ============================================================================
 // Commerce: 3 types
@@ -130,6 +139,19 @@ export interface CapturedItem {
   // ============================================================================
   alertTimer?: AlertTimer; // Countdown timer for time-sensitive alerts
   alertStatus?: 'active' | 'ongoing' | 'safe' | 'expired'; // Alert lifecycle status
+
+  // ============================================================================
+  // COMMUNITY MODERATION FIELDS
+  // ============================================================================
+  reportCount?: number; // How many users reported this item
+  moderationVotes?: {
+    keep: string[];    // User IDs who voted to keep
+    remove: string[];  // User IDs who voted to remove
+  };
+  moderationStatus?: 'pending' | 'cleared' | 'hidden'; // Moderation lifecycle
+  reportedBy?: string[]; // User IDs who reported (prevent duplicate reports)
+  contentWarning?: boolean; // Auto-set for ice/police (graphic crisis content)
+  moderationThreshold?: number; // Votes needed to hide: 5 (GotJunk) or 10 (LA trusted only)
 
   // ============================================================================
   // LEGACY/METADATA FIELDS

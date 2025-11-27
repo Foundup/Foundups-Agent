@@ -12,6 +12,8 @@ interface ItemReviewerProps {
   onClose?: () => void; // Optional: close fullscreen without making a decision
   showForwardButton?: boolean; // Optional: show > button for cart purchase
   onMessageBoard?: (item: CapturedItem) => void; // Open message board/chat
+  onReport?: (item: CapturedItem) => void; // Report inappropriate content
+  userCategory?: 'regular' | 'trusted'; // User's moderation category
 }
 
 export const ItemReviewer: React.FC<ItemReviewerProps> = ({
@@ -20,12 +22,31 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
   onClose,
   showForwardButton = false,
   onMessageBoard = () => console.log('[ItemReviewer] Message board open'),
+  onReport,
+  userCategory = 'regular',
 }) => {
   const [swipeDecision, setSwipeDecision] = useState<'keep' | 'delete' | null>(null);
+  const [showReportMenu, setShowReportMenu] = useState(false);
+  const [acceptedContentWarning, setAcceptedContentWarning] = useState(false);
   const lastTapRef = useRef<number>(0);
+  const isMountedRef = useRef<boolean>(true);
+  const longPressTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (swipeDecision) {
+    // Track mount status to prevent effects during unmount
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      // Cleanup long-press timer
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    // Prevent onDecision from firing during unmount (race condition fix)
+    if (swipeDecision && isMountedRef.current) {
       onDecision(item, swipeDecision);
     }
   }, [swipeDecision, item, onDecision]);
@@ -44,7 +65,7 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
     const velocityThreshold = 200;
 
     // Check for vertical swipe UP to close (collapse back to thumbnails)
-    if (onClose && (info.offset.y < -swipeThreshold || info.velocity.y < -velocityThreshold)) {
+    if (onClose && isMountedRef.current && (info.offset.y < -swipeThreshold || info.velocity.y < -velocityThreshold)) {
       console.log('[ItemReviewer] Swipe up detected - closing fullscreen');
       onClose();
       return;
@@ -71,9 +92,26 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
     }
   };
 
+  // Long-press detection for report menu
+  const handleLongPressStart = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!onReport) return; // Only enable if onReport handler exists
+
+    longPressTimerRef.current = window.setTimeout(() => {
+      setShowReportMenu(true);
+      console.log('[ItemReviewer] Long press detected - showing report menu');
+    }, 500); // 500ms long press threshold
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
   // Double-tap to exit fullscreen (same 300ms window as PhotoCard)
   const handleTap = () => {
-    if (!onClose) return; // Exit early if no onClose handler provided
+    if (!onClose || !isMountedRef.current) return; // Exit early if no onClose handler or unmounting
 
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300; // ms
@@ -85,7 +123,16 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
     lastTapRef.current = now;
   };
 
+  const handleReport = () => {
+    if (onReport) {
+      onReport(item);
+      setShowReportMenu(false);
+      console.log('[ItemReviewer] Item reported:', item.id);
+    }
+  };
+
   const isVideo = item.blob?.type?.startsWith('video/') ?? false;
+  const isLibertyAlert = item.classification === 'ice' || item.classification === 'police';
 
   // Check if item has valid URL/blob for rendering
   if (!item.url || !item.blob) {
@@ -109,6 +156,47 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
               Close
             </button>
           )}
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Content Warning Splash - Liberty Alert items only
+  if (item.contentWarning && !acceptedContentWarning) {
+    return (
+      <motion.div
+        className="fixed inset-0 flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm"
+        style={{ zIndex: Z_LAYERS.fullscreen }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl p-8 shadow-2xl max-w-md w-full">
+          <div className="text-center">
+            <div className="text-6xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold text-white mb-4">Content Warning</h2>
+            <p className="text-white/90 text-base mb-6 leading-relaxed">
+              This content may include graphic documentation from crisis zones, including ICE raids,
+              police encounters, conflict areas, or humanitarian emergencies.
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => setAcceptedContentWarning(true)}
+                className="w-full px-6 py-4 bg-white text-red-600 rounded-xl font-bold text-lg hover:bg-gray-100 active:scale-95 transition-all shadow-lg"
+              >
+                I Understand - Continue
+              </button>
+              <button
+                onClick={() => {
+                  if (onClose) onClose();
+                  else setSwipeDecision('delete');
+                }}
+                className="w-full px-6 py-4 bg-black/30 text-white rounded-xl font-semibold hover:bg-black/40 active:scale-95 transition-all"
+              >
+                Back to Feed
+              </button>
+            </div>
+          </div>
         </div>
       </motion.div>
     );
@@ -153,8 +241,8 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
         )}
 
         {/* Classification Badge - Top left corner (same as PhotoCard) */}
-        {item.classification && (
-          <div className="absolute top-4 left-4 z-10">
+        <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+          {item.classification && (
             <ClassificationBadge
               classification={item.classification}
               price={item.price}
@@ -165,6 +253,38 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
                 console.log('[ItemReviewer] Classification badge clicked');
               }}
             />
+          )}
+
+          {/* Report Icon - Always visible (replaced long-press) */}
+          {onReport && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowReportMenu(true);
+              }}
+              className="bg-red-600 hover:bg-red-700 active:scale-95 text-white p-2 rounded-lg shadow-lg transition-all flex items-center gap-1"
+            >
+              <span className="text-lg">🚨</span>
+              <span className="text-xs font-semibold">Report</span>
+            </button>
+          )}
+        </div>
+
+        {/* Moderation Badge - Reported items */}
+        {item.reportCount && item.reportCount >= 3 && (
+          <div className="absolute top-4 right-4 z-10 bg-red-600 text-white px-3 py-2 rounded-lg shadow-lg">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🚨</span>
+              <div className="text-sm">
+                <div className="font-bold">Reported</div>
+                <div className="text-xs opacity-90">
+                  {isLibertyAlert && userCategory !== 'trusted'
+                    ? 'Trusted Members Only'
+                    : `Help Moderate (${item.moderationVotes?.remove.length || 0}/${item.moderationThreshold || 5})`
+                  }
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -220,6 +340,38 @@ export const ItemReviewer: React.FC<ItemReviewerProps> = ({
             />
           </svg>
         </button>
+      )}
+
+      {/* Report Menu - Appears on long press */}
+      {showReportMenu && (
+        <div className="absolute inset-0 flex items-center justify-center z-20 bg-black/50">
+          <div className="bg-white rounded-2xl p-6 shadow-2xl max-w-sm w-11/12">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Report Content</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Help keep our community safe by reporting inappropriate content.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleReport();
+                }}
+                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 active:scale-95 transition-all"
+              >
+                🚨 Report
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowReportMenu(false);
+                }}
+                className="flex-1 px-4 py-3 bg-gray-200 text-gray-900 rounded-lg font-semibold hover:bg-gray-300 active:scale-95 transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </motion.div>
   );
