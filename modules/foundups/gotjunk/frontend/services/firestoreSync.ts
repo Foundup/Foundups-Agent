@@ -30,6 +30,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirestoreDb, getFirebaseStorage, isFirebaseConfigured } from './firebaseConfig';
 import { CapturedItem, ItemStatus } from '../types';
+import { getCurrentUserId } from './firebaseAuth';
 
 // Collection names
 const ITEMS_COLLECTION = 'gotjunk_items';
@@ -38,9 +39,9 @@ const BLOBS_COLLECTION = 'gotjunk_blobs';
 // Types for Firestore documents
 interface FirestoreItemDoc {
   id: string;
+  ownerUid: string;
   classification?: string;
   status: ItemStatus;
-  ownership: string;
   latitude?: number;
   longitude?: number;
   price?: number;
@@ -111,6 +112,12 @@ export const syncItemToCloud = async (item: CapturedItem): Promise<boolean> => {
     return false;
   }
 
+  const ownerUid = getCurrentUserId();
+  if (!ownerUid) {
+    console.warn('[FirestoreSync] No auth user - skipping cloud sync');
+    return false;
+  }
+
   const db = getFirestoreDb();
   const storage = getFirebaseStorage();
   if (!db) return false;
@@ -141,6 +148,7 @@ export const syncItemToCloud = async (item: CapturedItem): Promise<boolean> => {
     // Create Firestore document
     const itemDoc: FirestoreItemDoc = {
       id: item.id,
+      ownerUid,
       classification: item.classification,
       status: item.status,
       ownership: item.ownership,
@@ -294,6 +302,9 @@ const firestoreDocToItem = async (
   data: FirestoreItemDoc & { deviceId: string }
 ): Promise<CapturedItem | null> => {
   try {
+    const currentUid = getCurrentUserId();
+    const ownership = currentUid && data.ownerUid === currentUid ? 'mine' : 'others';
+
     // Reconstruct blob from storage URL or base64
     let blob: Blob;
     if (data.blobBase64) {
@@ -315,7 +326,7 @@ const firestoreDocToItem = async (
       url,
       classification: data.classification as CapturedItem['classification'],
       status: data.status,
-      ownership: data.ownership as CapturedItem['ownership'],
+      ownership: ownership as CapturedItem['ownership'],
       latitude: data.latitude,
       longitude: data.longitude,
       price: data.price,
@@ -325,7 +336,7 @@ const firestoreDocToItem = async (
       createdAt: data.createdAt.toMillis(),
       alertStatus: data.alertStatus as CapturedItem['alertStatus'],
       alertTimer: data.alertTimer,
-      userId: data.deviceId,
+      userId: data.ownerUid,
     };
   } catch (error) {
     console.error('[FirestoreSync] Failed to convert document:', error);

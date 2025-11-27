@@ -1,3 +1,313 @@
+## Google Sign-In UI - Flash Screen Integration (2025-11-28)
+
+**Session Summary**: Added Google Sign-In button to InstructionsModal (flash screen) to enable cross-device sync upgrade from anonymous auth. Occam's Razor solution - reuses existing modal instead of creating separate Settings UI.
+
+**User Request**: "we need a cog for user login account? or add it too the flash screen that pops on load? whats the occums solution?"
+
+**Occam's Razor Analysis**:
+- **Option A**: Create Settings modal with cog icon
+  - Requires new UI components (SettingsModal, cog icon button, settings page)
+  - Users might never find the hidden cog
+  - More complexity, more state management
+
+- **Option B**: Add to InstructionsModal (flash screen)
+  - ✅ Zero new UI components (reuses existing modal)
+  - ✅ Shows on first load (perfect timing for account upgrade prompt)
+  - ✅ Non-intrusive (secondary button below main CTA)
+  - ✅ Progressive disclosure (users see it when they need it)
+
+**Decision**: Flash screen wins (Occam's Razor - simplest solution)
+
+**Implementation** ([InstructionsModal.tsx](frontend/components/InstructionsModal.tsx)):
+
+**1. Added Imports** (lines 7-13):
+```typescript
+import { useState } from 'react';
+import { signInWithGoogle, getCurrentUser } from '../services/firebaseAuth';
+```
+
+**2. Added State & User Detection** (lines 21-23):
+```typescript
+const [signingIn, setSigningIn] = useState(false);
+const currentUser = getCurrentUser();
+const isGoogleUser = currentUser && !currentUser.isAnonymous;
+```
+
+**3. Created Sign-In Handler** (lines 25-39):
+```typescript
+const handleGoogleSignIn = async () => {
+  setSigningIn(true);
+  try {
+    const user = await signInWithGoogle();
+    if (user) {
+      console.log('[InstructionsModal] Signed in with Google:', user.email);
+      // Close modal after successful sign-in
+      setTimeout(() => onClose(), 1000);
+    }
+  } catch (error) {
+    console.error('[InstructionsModal] Google sign-in failed:', error);
+  } finally {
+    setSigningIn(false);
+  }
+};
+```
+
+**4. Added UI Section** (lines 120-154):
+```typescript
+{/* Google Sign-In (Cross-Device Sync) */}
+{isGoogleUser ? (
+  <div className="mt-3 p-3 bg-green-600/20 border border-green-500 rounded-xl">
+    <p className="text-xs text-green-400 text-center font-semibold">
+      ✓ Signed in as {currentUser.email}
+    </p>
+    <p className="text-[10px] text-green-300/70 text-center mt-1">
+      Your items sync across all devices
+    </p>
+  </div>
+) : (
+  <button
+    onClick={handleGoogleSignIn}
+    disabled={signingIn}
+    className="w-full mt-3 bg-white/10 hover:bg-white/20 disabled:bg-gray-700/50 border-2 border-gray-600 text-white font-semibold py-3 rounded-2xl transition-all shadow-lg disabled:cursor-not-allowed"
+  >
+    {signingIn ? (
+      <span className="flex items-center justify-center gap-2">
+        <span className="animate-spin">⏳</span>
+        Signing in...
+      </span>
+    ) : (
+      <span className="flex items-center justify-center gap-2">
+        <span className="text-lg">🔐</span>
+        Sign in with Google
+      </span>
+    )}
+  </button>
+)}
+
+{!isGoogleUser && (
+  <p className="text-[10px] text-gray-500 text-center mt-2">
+    Sync your items across all devices
+  </p>
+)}
+```
+
+**User Flow**:
+1. User opens app → InstructionsModal shows on first load
+2. **Anonymous user** sees:
+   - Main CTA: "Got it! Start Swiping"
+   - Secondary CTA: "🔐 Sign in with Google" (for cross-device sync)
+   - Helper text: "Sync your items across all devices"
+3. **Google user** sees:
+   - Green status box: "✓ Signed in as user@gmail.com"
+   - Helper text: "Your items sync across all devices"
+4. User clicks "Sign in with Google":
+   - Button shows loading state: "⏳ Signing in..."
+   - Google OAuth popup appears
+   - After sign-in: Modal auto-closes (1s delay)
+   - Items created going forward use ownerUid from Google account
+
+**Benefits**:
+- ✅ Zero UI friction (existing modal)
+- ✅ Clear value proposition (sync across devices)
+- ✅ Non-blocking (user can dismiss and use app)
+- ✅ Progressive disclosure (only shows when needed)
+- ✅ Visual confirmation (green box for signed-in users)
+
+**Files Modified**:
+- [InstructionsModal.tsx](frontend/components/InstructionsModal.tsx) - Added Google Sign-In UI
+
+**Build Status**: ✅ (960.05 kB, gzip: 259.25 kB)
+
+**WSP Compliance**:
+- ✅ WSP 50 (Pre-Action Verification): Analyzed existing UI before deciding
+- ✅ WSP 84 (Code Memory): Reused existing modal (no new components)
+- ✅ WSP 22 (ModLog): Documented architecture decision
+- ✅ WSP 64 (Violation Prevention): Applied Occam's Razor before implementation
+
+**Key Insight**: **Flash screen > Settings cog** - Users see account upgrade prompt at the perfect moment (first load), without hunting for hidden settings. Progressive disclosure + zero new UI components = Occam's Razor win.
+
+**Next Steps**:
+1. Test Google Sign-In flow on Phone A
+2. Verify ownerUid persistence across devices
+3. Test cross-device sync with Google account (Phone A + B)
+4. Monitor user adoption of Google Sign-In upgrade
+
+---
+
+## Firebase Auth & Cross-Device Sync - User Identity Layer (2025-11-28)
+
+**Session Summary**: Implemented Firebase Authentication and rewired ownership logic to use `ownerUid` instead of `deviceId`, enabling true cross-device sync when users sign in with the same Google account.
+
+**User Request**: "0102 Key gaps for multi-device, multi-user sync (Holo/WSP check). Deep dive improve the follow using 1st principles Occums follow wsp: Current Firestore sync uses deviceId and an ownership: 'mine' | 'others' flag, not a user ID..."
+
+**Problem Analysis (First Principles)**:
+- **Root Cause**: Identity tied to device (`deviceId`), not user
+- **Gap**: Same user on Phone A + Phone B = Different identities → Items don't sync as "mine"
+- **Missing**: Authentication layer to establish persistent user identity
+- **Risk**: No security rules (anyone can write to Firestore)
+
+**Occam's Razor Solution**:
+1. **Anonymous Auth** (zero friction, auto sign-in)
+2. **Store `ownerUid`** instead of static `ownership` flag
+3. **Compute `ownership` on read** (client-side, `ownerUid === currentUser ? 'mine' : 'others'`)
+4. **Minimal security rules** (authenticated writes only)
+
+**Implementation**:
+
+### 1. Firebase Auth Service ([firebaseAuth.ts](frontend/services/firebaseAuth.ts))
+```typescript
+// Auto sign-in on app startup (zero friction)
+export const initializeAuth = async (): Promise<User | null> => {
+  // Restore session if exists, else sign in anonymously
+  return new Promise((resolve) => {
+    const unsubscribe = onAuthStateChanged(authInstance, async (user) => {
+      if (user) {
+        // Session restored
+        resolve(user);
+      } else {
+        // Auto sign-in anonymously
+        const anonUser = await signInAnonymous();
+        resolve(anonUser);
+      }
+    });
+  });
+};
+
+// Upgrade to Google Sign-In for cross-device sync
+export const signInWithGoogle = async (): Promise<User | null> => {
+  const provider = new GoogleAuthProvider();
+  const result = await signInWithPopup(authInstance, provider);
+  return result.user;
+};
+```
+
+**Authentication Strategy**:
+- **Default**: Anonymous Auth (localStorage-persisted UID per device)
+- **Upgrade**: Google Sign-In (same Google account = same UID across devices)
+- **Privacy**: Anonymous users = zero PII, Google = email/name with consent
+
+### 2. Firestore Sync Updates ([firestoreSync.ts](frontend/services/firestoreSync.ts))
+
+**Write Path** (`syncItemToCloud`):
+```typescript
+const ownerUid = getCurrentUserId(); // Get current user UID
+if (!ownerUid) {
+  console.warn('[FirestoreSync] No auth user - skipping cloud sync');
+  return false;
+}
+
+const itemDoc: FirestoreItemDoc = {
+  id: item.id,
+  ownerUid,  // ✅ User UID (not deviceId)
+  classification: item.classification,
+  // ... other fields
+};
+```
+
+**Read Path** (`firestoreDocToItem`):
+```typescript
+const currentUid = getCurrentUserId();
+const ownership = currentUid && data.ownerUid === currentUid ? 'mine' : 'others';
+
+return {
+  // ... item fields
+  ownership: ownership as CapturedItem['ownership'], // ✅ Computed on read
+  userId: data.ownerUid, // Store original owner UID
+};
+```
+
+**Key Change**: `ownership` is now **computed** (not stored), ensuring correct "mine" vs "others" classification based on current user.
+
+### 3. App Initialization ([App.tsx](frontend/App.tsx#L349-L357))
+```typescript
+// Initialize Firebase Auth (anonymous sign-in for cross-device sync)
+try {
+  const user = await initializeAuth();
+  if (user) {
+    console.log('[GotJunk] Auth initialized:', user.isAnonymous ? 'Anonymous' : 'Google');
+  }
+} catch (error) {
+  console.error('[GotJunk] Auth initialization failed:', error);
+}
+```
+
+### 4. Firestore Security Rules ([firestore.rules](firestore.rules))
+```javascript
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /gotjunk_items/{itemId} {
+      // READ: Public (anyone can browse items)
+      allow read: if true;
+
+      // CREATE: Authenticated users only, must own the item
+      allow create: if isAuthenticated()
+        && isValidItem()
+        && request.resource.data.ownerUid == request.auth.uid;
+
+      // UPDATE: Owner only OR community moderation
+      allow update: if isOwner(resource.data.ownerUid)
+        || (isAuthenticated() && isValidModerationUpdate());
+
+      // DELETE: Owner only
+      allow delete: if isOwner(resource.data.ownerUid);
+    }
+  }
+}
+```
+
+**Security Model**:
+- ✅ Reads: Public (browse feed visible to all)
+- ✅ Writes: Authenticated users only
+- ✅ Ownership: Users can only modify their own items (`ownerUid == auth.uid`)
+- ✅ Moderation: Community voting allowed (separate moderation fields)
+
+**Cross-Device Sync Flow**:
+
+**Anonymous Auth** (default):
+```
+Phone A: Anonymous sign-in → UID_A → Items tagged with UID_A
+Phone B: Anonymous sign-in → UID_B → Items tagged with UID_B
+Result: Different UIDs → NO cross-device sync (items stay on original device)
+```
+
+**Google Sign-In** (upgrade):
+```
+Phone A: Google sign-in → UID_123 (from Google account)
+Phone B: Google sign-in (same account) → UID_123 (same)
+Result: Same UID → ✅ FULL cross-device sync (items show as "mine" on both)
+```
+
+**Metrics**:
+- **Files Created**: 2 (firebaseAuth.ts, firestore.rules)
+- **Files Modified**: 2 (firestoreSync.ts, App.tsx)
+- **Build Status**: ✅ (958.07 kB, gzip: 258.73 kB)
+- **Security**: ✅ (authenticated writes, owner-only updates)
+
+**WSP Compliance**:
+- ✅ WSP 98 (Mesh-Native Architecture): Layer 2 user identity implemented
+- ✅ WSP 50 (Pre-Action Verification): Analyzed gaps before implementation
+- ✅ WSP 84 (Code Memory): Followed existing Firebase patterns
+- ✅ WSP 22 (ModLog): Documented architecture decisions
+
+**Testing Checklist**:
+- [ ] Anonymous auth auto sign-in works on first load
+- [ ] Items sync to Firestore with `ownerUid`
+- [ ] Items show as "mine" when `ownerUid` matches current user
+- [ ] Items show as "others" when `ownerUid` differs
+- [ ] Google Sign-In upgrade works (cross-device identity)
+- [ ] Security rules enforce ownership (owner-only updates)
+
+**Next Steps**:
+1. Deploy Firestore security rules: `firebase deploy --only firestore:rules`
+2. Test anonymous auth on Phone A (create items)
+3. Test Google sign-in on Phone A + B (verify cross-device sync)
+4. Add UI for Google Sign-In upgrade (optional "Sync Across Devices" button)
+5. Monitor Firestore usage/costs
+
+**Key Insight**: **Anonymous Auth First** - Zero UI friction for initial testing, easy upgrade path to Google Sign-In for true cross-device sync. Ownership computation on read (vs stored flag) ensures correct "mine" classification across devices.
+
+---
+
 ## ClassificationModal Refactoring - Eliminated Code Duplication (2025-11-27)
 
 **Session Summary**: Applied First Principles thinking and Occam's Razor to audit and improve ClassificationModal. Eliminated ~120 lines of duplicated code by creating unified `renderGotJunkList()` function.

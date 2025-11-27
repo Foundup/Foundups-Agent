@@ -4,12 +4,13 @@
  * TRULY centered using grid - iOS Safari viewport-safe
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LeftArrowIcon } from './icons/LeftArrowIcon';
 import { RightArrowIcon } from './icons/RightArrowIcon';
 import { Z_LAYERS } from '../constants/zLayers';
+import { signInWithGoogle, getCurrentUser } from '../services/firebaseAuth';
 
 interface InstructionsModalProps {
   isOpen: boolean;
@@ -17,6 +18,26 @@ interface InstructionsModalProps {
 }
 
 export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }) => {
+  const [signingIn, setSigningIn] = useState(false);
+  const currentUser = getCurrentUser();
+  const isGoogleUser = currentUser && !currentUser.isAnonymous;
+
+  const handleGoogleSignIn = async () => {
+    setSigningIn(true);
+    try {
+      const user = await signInWithGoogle();
+      if (user) {
+        console.log('[InstructionsModal] Signed in with Google:', user.email);
+        // Close modal after successful sign-in
+        setTimeout(() => onClose(), 1000);
+      }
+    } catch (error) {
+      console.error('[InstructionsModal] Google sign-in failed:', error);
+    } finally {
+      setSigningIn(false);
+    }
+  };
+
   if (typeof document === 'undefined') return null;
 
   return createPortal(
@@ -95,6 +116,42 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
               >
                 Got it! Start Swiping
               </button>
+
+              {/* Google Sign-In (Cross-Device Sync) */}
+              {isGoogleUser ? (
+                <div className="mt-3 p-3 bg-green-600/20 border border-green-500 rounded-xl">
+                  <p className="text-xs text-green-400 text-center font-semibold">
+                    ✓ Signed in as {currentUser.email}
+                  </p>
+                  <p className="text-[10px] text-green-300/70 text-center mt-1">
+                    Your items sync across all devices
+                  </p>
+                </div>
+              ) : (
+                <button
+                  onClick={handleGoogleSignIn}
+                  disabled={signingIn}
+                  className="w-full mt-3 bg-white/10 hover:bg-white/20 disabled:bg-gray-700/50 border-2 border-gray-600 text-white font-semibold py-3 rounded-2xl transition-all shadow-lg disabled:cursor-not-allowed"
+                >
+                  {signingIn ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="animate-spin">⏳</span>
+                      Signing in...
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="text-lg">🔐</span>
+                      Sign in with Google
+                    </span>
+                  )}
+                </button>
+              )}
+
+              {!isGoogleUser && (
+                <p className="text-[10px] text-gray-500 text-center mt-2">
+                  Sync your items across all devices
+                </p>
+              )}
 
               {/* Version indicator */}
               <p className="text-[10px] text-gray-500 text-center mt-3 font-mono">
