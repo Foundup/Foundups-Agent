@@ -20,6 +20,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { CapturedItem, ItemStatus } from './types';
 import * as storage from './services/storage';
 // import * as ipfs from './services/ipfsService';
+import { initializeAuth } from './services/firebaseAuth';
 import { ItemReviewer } from './components/ItemReviewer';
 import { FullscreenGallery } from './components/FullscreenGallery';
 import { FullscreenCamera } from './components/FullscreenCamera';
@@ -345,6 +346,16 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const initializeApp = async () => {
+      // Initialize Firebase Auth (anonymous sign-in for cross-device sync)
+      try {
+        const user = await initializeAuth();
+        if (user) {
+          console.log('[GotJunk] Auth initialized:', user.isAnonymous ? 'Anonymous' : 'Google');
+        }
+      } catch (error) {
+        console.error('[GotJunk] Auth initialization failed:', error);
+      }
+
 //       // Initialize IPFS (Helia) for decentralized storage
 //       try {
 //         await ipfs.initHelia();
