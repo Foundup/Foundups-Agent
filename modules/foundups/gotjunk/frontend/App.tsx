@@ -21,6 +21,8 @@ import { CapturedItem, ItemStatus } from './types';
 import * as storage from './services/storage';
 // import * as ipfs from './services/ipfsService';
 import { initializeAuth } from './services/firebaseAuth';
+import { createCartReservation, syncReservationToFirestore, filterReservedItems, isReservationExpired, getExpiredCartItems } from './services/cartReservation';
+import { CartCountdown } from './components/CartCountdown';
 import { ItemReviewer } from './components/ItemReviewer';
 import { FullscreenGallery } from './components/FullscreenGallery';
 import { FullscreenCamera } from './components/FullscreenCamera';
@@ -395,7 +397,9 @@ const App: React.FC = () => {
 
         // BROWSE FEED: Show ALL nearby items (including mine) - "Tinder for stuff"
         // Include draft, browsing, and listed items for full "My Items on landing" experience
-        setBrowseFeed(nearby.filter(item =>
+        // EXCLUDE items reserved by other users (5-min cart timeout system)
+        const availableNearby = filterReservedItems(nearby);
+        setBrowseFeed(availableNearby.filter(item =>
           item.status === 'draft' || item.status === 'browsing' || item.status === 'listed'
         ));
         setCart(nearby.filter(item => item.status === 'in_cart'));
@@ -410,7 +414,9 @@ const App: React.FC = () => {
         setMyListed(myItems.filter(item => item.status === 'listed'));
 
         // Show all items (draft + browsing + listed) in browse feed even without location
-        setBrowseFeed(allItems.filter(item =>
+        // EXCLUDE items reserved by other users (5-min cart timeout system)
+        const availableItems = filterReservedItems(allItems);
+        setBrowseFeed(availableItems.filter(item =>
           item.status === 'draft' || item.status === 'browsing' || item.status === 'listed'
         ));
       }
@@ -425,6 +431,42 @@ const App: React.FC = () => {
       console.log('[GotJunk] Liberty disabled - resetting to Commerce tab');
     }
   }, [libertyEnabled, myItemsSection]);
+
+  // Cart Expiration Handler - Check for expired reservations every second
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const expiredItems = getExpiredCartItems(cart);
+
+      if (expiredItems.length > 0) {
+        console.log('[Cart] Found', expiredItems.length, 'expired cart items');
+
+        for (const item of expiredItems) {
+          // Clear reservation from Firestore (cross-device sync)
+          await syncReservationToFirestore(item.id, null);
+
+          // Update item status to browsing
+          await storage.updateItemStatus(item.id, 'browsing');
+
+          console.log('[Cart] Expired reservation for item:', item.id);
+        }
+
+        // Remove expired items from cart state
+        setCart(current => current.filter(item => !isReservationExpired(item)));
+
+        // Return expired items to browse feed
+        const returnedItems = expiredItems.map(item => ({
+          ...item,
+          status: 'browsing' as ItemStatus,
+          cartReservation: undefined
+        }));
+        setBrowseFeed(current => [...returnedItems, ...current]);
+
+        console.log('[Cart] Returned', expiredItems.length, 'items to browse feed');
+      }
+    }, 1000); // Check every second
+
+    return () => clearInterval(interval);
+  }, [cart]); // Re-run when cart changes
 
   // Reset map navigation when opening map or changing Liberty mode
   useEffect(() => {
@@ -893,10 +935,22 @@ const App: React.FC = () => {
     setBrowseFeed(current => current.filter(i => i.id !== item.id));
 
     if (direction === 'right') {
-      // Swipe RIGHT = Add to cart
-      const cartItem: CapturedItem = { ...item, status: 'in_cart' };
+      // Swipe RIGHT = Add to cart with 5-min reservation
+      const reservation = createCartReservation(item.id);
+      const cartItem: CapturedItem = {
+        ...item,
+        status: 'in_cart',
+        cartReservation: reservation || undefined
+      };
+
       setCart(current => [cartItem, ...current]);
       await storage.updateItemStatus(item.id, 'in_cart');
+
+      // Sync reservation to Firestore (cross-device coordination)
+      if (reservation) {
+        await syncReservationToFirestore(item.id, reservation);
+        console.log('[Cart] Reserved item for 5 minutes:', item.id);
+      }
     } else {
       // Swipe LEFT = Skip (don't show again)
       const skippedItem: CapturedItem = { ...item, status: 'skipped' };
@@ -1471,41 +1525,52 @@ const App: React.FC = () => {
             {/* Fullscreen Cart Item Reviewer (triggered by double-tap) */}
             <AnimatePresence>
               {reviewingCartItem && (
-                <ItemReviewer
-                  key={reviewingCartItem.id}
-                  item={reviewingCartItem}
-                  showForwardButton={true}  // Show > button for purchase
-                  onDecision={(item, decision) => {
-                    if (decision === 'keep') {
-                      // Right swipe in cart → Purchase confirmation
-                      console.log('[GotJunk] Opening purchase modal for item:', item.id);
-                      setPurchasingItem(item);
-                      // Don't advance queue yet - wait for purchase confirmation
-                    } else if (decision === 'delete') {
-                      // Left swipe in cart → Remove from cart
-                      setCart(prev => prev.filter(i => i.id !== item.id));
-                      storage.updateItemStatus(item.id, 'browsing');
-                      console.log('[GotJunk] Removed from cart:', item.id);
+                <>
+                  <ItemReviewer
+                    key={reviewingCartItem.id}
+                    item={reviewingCartItem}
+                    showForwardButton={true}  // Show > button for purchase
+                    onDecision={(item, decision) => {
+                      if (decision === 'keep') {
+                        // Right swipe in cart → Purchase confirmation
+                        console.log('[GotJunk] Opening purchase modal for item:', item.id);
+                        setPurchasingItem(item);
+                        // Don't advance queue yet - wait for purchase confirmation
+                      } else if (decision === 'delete') {
+                        // Left swipe in cart → Remove from cart
+                        setCart(prev => prev.filter(i => i.id !== item.id));
+                        storage.updateItemStatus(item.id, 'browsing');
+                        console.log('[GotJunk] Removed from cart:', item.id);
 
-                      // Show next item in queue
-                      if (cartReviewQueue.length > 0) {
-                        const [nextItem, ...rest] = cartReviewQueue;
-                        setReviewingCartItem(nextItem);
-                        setCartReviewQueue(rest);
-                      } else {
-                        // No more items - close fullscreen
-                        setReviewingCartItem(null);
-                        setCartReviewQueue([]);
+                        // Show next item in queue
+                        if (cartReviewQueue.length > 0) {
+                          const [nextItem, ...rest] = cartReviewQueue;
+                          setReviewingCartItem(nextItem);
+                          setCartReviewQueue(rest);
+                        } else {
+                          // No more items - close fullscreen
+                          setReviewingCartItem(null);
+                          setCartReviewQueue([]);
+                        }
                       }
-                    }
-                  }}
-                  onClose={() => {
-                    // Swipe up or double-tap → close fullscreen without making a decision
-                    setReviewingCartItem(null);
-                    setCartReviewQueue([]);
-                  }}
-                  onMessageBoard={openMessagePanelForItem}
-                />
+                    }}
+                    onClose={() => {
+                      // Swipe up or double-tap → close fullscreen without making a decision
+                      setReviewingCartItem(null);
+                      setCartReviewQueue([]);
+                    }}
+                    onMessageBoard={openMessagePanelForItem}
+                  />
+
+                  {/* Cart Countdown Timer (5-min reservation) */}
+                  <CartCountdown
+                    item={reviewingCartItem}
+                    onExpired={() => {
+                      console.log('[Cart] Reservation expired for item:', reviewingCartItem.id);
+                      // Expiration handled by global expiration handler (see useEffect below)
+                    }}
+                  />
+                </>
               )}
             </AnimatePresence>
 
