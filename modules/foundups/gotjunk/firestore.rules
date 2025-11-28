@@ -72,6 +72,18 @@ service cloud.firestore {
       ]);
     }
 
+    /**
+     * Validate cart reservation update (5-min timeout system)
+     */
+    function isValidReservationUpdate() {
+      let data = request.resource.data;
+      // Only allow updating cart reservation and updatedAt
+      return data.diff(resource.data).affectedKeys().hasOnly([
+        'cartReservation',
+        'updatedAt'
+      ]);
+    }
+
     // ============================================================================
     // ITEMS COLLECTION: gotjunk_items
     // ============================================================================
@@ -88,9 +100,10 @@ service cloud.firestore {
         && isValidItem()
         && request.resource.data.ownerUid == request.auth.uid;
 
-      // UPDATE: Owner only OR community moderation
+      // UPDATE: Owner only OR community moderation OR cart reservation
       allow update: if isOwner(resource.data.ownerUid)
-        || (isAuthenticated() && isValidModerationUpdate());
+        || (isAuthenticated() && isValidModerationUpdate())
+        || (isAuthenticated() && isValidReservationUpdate());
 
       // DELETE: Owner only
       allow delete: if isOwner(resource.data.ownerUid);
