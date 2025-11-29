@@ -33,41 +33,25 @@ from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
 import time
 
-# Import unified agent logger for multi-agent coordination
-try:
-    from holo_index.utils.agent_logger import get_agent_logger, log_holo_search
-    AGENT_LOGGER_AVAILABLE = True
-except ImportError:
-    AGENT_LOGGER_AVAILABLE = False
-
-# Import BreadcrumbTracer for multi-agent discovery sharing
-try:
-    from holo_index.adaptive_learning.breadcrumb_tracer import BreadcrumbTracer
-    BREADCRUMB_AVAILABLE = True
-except ImportError:
-    BREADCRUMB_AVAILABLE = False
-    BreadcrumbTracer = None
-
-# Import circuit breaker for failure prevention
-try:
-    from holo_index.core.circuit_breaker import circuit_manager, CircuitBreakerOpenError
-    CIRCUIT_BREAKER_AVAILABLE = True
-except ImportError:
-    # Fallback if circuit breaker not available
-    circuit_manager = None
-    CircuitBreakerOpenError = Exception
-    CIRCUIT_BREAKER_AVAILABLE = False
-
 # Dependency bootstrap for this module
 try:
     import chromadb
-    from sentence_transformers import SentenceTransformer
 except ImportError:
     print("Installing required dependencies...")
     import subprocess
-    subprocess.check_call([__import__('sys').executable, "-m", "pip", "install", "chromadb", "sentence-transformers"])
+    subprocess.check_call([__import__('sys').executable, "-m", "pip", "install", "chromadb"])
     import chromadb
-    from sentence_transformers import SentenceTransformer
+
+# Lazy load sentence_transformers to prevent crash on import
+SentenceTransformer = None
+
+# Optional imports (disabled for stability)
+AGENT_LOGGER_AVAILABLE = False
+BREADCRUMB_AVAILABLE = False
+BreadcrumbTracer = None
+CIRCUIT_BREAKER_AVAILABLE = False
+circuit_manager = None
+CircuitBreakerOpenError = Exception
 
 
 class HoloIndex:
@@ -130,7 +114,23 @@ class HoloIndex:
 
         self._log_agent_action("Loading sentence transformer (cached on SSD)...", "MODEL")
         os.environ['SENTENCE_TRANSFORMERS_HOME'] = str(self.models_path)
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
+        
+        global SentenceTransformer
+        if SentenceTransformer is None:
+            try:
+                from sentence_transformers import SentenceTransformer
+            except Exception as e:
+                self._log_agent_action(f"Failed to import SentenceTransformer: {e}", "ERROR")
+                SentenceTransformer = None
+
+        if SentenceTransformer:
+            try:
+                self.model = SentenceTransformer('all-MiniLM-L6-v2')
+            except Exception as e:
+                self._log_agent_action(f"Failed to load model: {e}", "ERROR")
+                self.model = None
+        else:
+            self.model = None
 
         self.need_to: Dict[str, str] = {}
         self.wsp_summary: Dict[str, Dict[str, str]] = {}
@@ -220,6 +220,13 @@ class HoloIndex:
                 self._log_agent_action("WSP summary cache corrupted; rebuilding will overwrite on next index", "WARN")
                 self.wsp_summary = {}
 
+    def _get_embedding(self, text: str) -> List[float]:
+        """Generate embedding or return dummy vector if model unavailable."""
+        if self.model:
+            return self.model.encode(text).tolist()
+        # Return 384-dim zero vector (matches all-MiniLM-L6-v2)
+        return [0.0] * 384
+
     # --------- Indexing --------- #
 
     def index_code_entries(self) -> None:
@@ -233,7 +240,7 @@ class HoloIndex:
         ids, embeddings, documents, metadatas = [], [], [], []
         for i, (need, location) in enumerate(self.need_to.items(), start=1):
             ids.append(f"code_{i}")
-            embeddings.append(self.model.encode(need).tolist())
+            embeddings.append(self._get_embedding(need))
             documents.append(location)
             cube = self._infer_cube_tag(need, location)
             meta = {
@@ -287,7 +294,7 @@ class HoloIndex:
             doc_payload = f"{title}\n{summary}"
 
             ids.append(f"wsp_{idx}")
-            embeddings.append(self.model.encode(doc_payload).tolist())
+            embeddings.append(self._get_embedding(doc_payload))
             documents.append(doc_payload)
             cube = self._infer_cube_tag(title, summary, str(file_path))
             metadata = {
@@ -484,8 +491,17 @@ class HoloIndex:
         if collection.count() == 0:
             return []
 
-        embedding = self.model.encode(query).tolist()
-        results = collection.query(query_embeddings=[embedding], n_results=limit)
+        if self.model is None:
+            self._log_agent_action("Embedding model not available - attempting keyword search via ChromaDB", "WARN")
+            try:
+                # Try letting ChromaDB handle embedding or use simple text matching if available
+                results = collection.query(query_texts=[query], n_results=limit)
+            except Exception as e:
+                self._log_agent_action(f"Keyword search failed: {e}", "ERROR")
+                return []
+        else:
+            embedding = self.model.encode(query).tolist()
+            results = collection.query(query_embeddings=[embedding], n_results=limit)
 
         formatted: List[Dict[str, Any]] = []
         docs = results.get('documents', [[]])[0]

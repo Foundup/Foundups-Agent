@@ -11,6 +11,7 @@ import localforage from 'localforage';
 import { CapturedItem, ItemStatus } from '../types';
 import { syncItemToCloud, fetchItemsFromCloud, getSyncStatus } from './firestoreSync';
 import { MeshDaemon } from './meshDaemon';
+import { getCurrentUserId } from './firebaseAuth'; // ✅ AUTH: Ensure userId is set
 
 localforage.config({
     name: 'got-junk-pwa',
@@ -23,20 +24,44 @@ type StorableItem = Omit<CapturedItem, 'url'>;
 
 export const saveItem = async (item: CapturedItem): Promise<void> => {
     const { url, ...storableItem } = item;
+
+    // ============================================================================
+    // FIREBASE AUTH PATTERN (ensure userId is set)
+    // ============================================================================
+    // ✅ Set userId from auth if missing (for items created before auth initialized)
+    // This ensures cross-device sync works even if item was created during auth init
+    // ============================================================================
+    if (!storableItem.userId) {
+        const currentUid = getCurrentUserId();
+        if (currentUid) {
+            storableItem.userId = currentUid;
+            console.log('[Storage] ✅ Set userId from auth:', currentUid);
+        }
+    }
+
     const mediaType = item.blob.type.startsWith('video/') ? 'VIDEO' : 'PHOTO';
     console.log(`[Storage] Saving ${mediaType}:`, {
         id: item.id,
         blobSize: item.blob.size,
         blobType: item.blob.type,
         classification: item.classification,
-        status: item.status
+        status: item.status,
+        userId: storableItem.userId // Log userId for debugging
     });
 
     // Layer 1: Save to IndexedDB (immediate, offline-first)
     await localforage.setItem(item.id, storableItem);
     console.log(`[Storage] ✅ ${mediaType} saved to IndexedDB:`, item.id);
 
-    // Layer 2: Sync to Cloud (Legacy/Hybrid)
+    // ============================================================================
+    // SYNC TIMING PATTERN (for Wave Messaging Firestore integration)
+    // ============================================================================
+    // Layer 2: Sync to Cloud (async, non-blocking)
+    // ✅ CORRECT: App.tsx calls initializeAuth() before loading items
+    // By the time items are created/saved, auth is ready
+    // If auth isn't ready (edge case), syncItemToCloud fails gracefully
+    // TODO: Implement sync queue to retry failed syncs after auth completes
+    // ============================================================================
     syncItemToCloud(item).catch(err =>
         console.log('[Storage] Cloud sync deferred:', err.message)
     );

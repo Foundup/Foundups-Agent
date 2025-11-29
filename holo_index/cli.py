@@ -88,15 +88,15 @@ os.environ.setdefault('SENTENCE_TRANSFORMERS_HOME', 'E:/HoloIndex/models')
 os.environ.setdefault('HOLO_CACHE_PATH', 'E:/HoloIndex/cache')
 
 # Dependency bootstrap
-try:
-    import chromadb
-    from sentence_transformers import SentenceTransformer
-except ImportError:
-    print("Installing required dependencies...")
-    import subprocess
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "chromadb", "sentence-transformers"])
-    import chromadb
-    from sentence_transformers import SentenceTransformer
+# try:
+#     import chromadb
+#     from sentence_transformers import SentenceTransformer
+# except ImportError:
+#     print("Installing required dependencies...")
+#     import subprocess
+#     subprocess.check_call([sys.executable, "-m", "pip", "install", "chromadb", "sentence-transformers"])
+#     import chromadb
+#     from sentence_transformers import SentenceTransformer
 
 # Utility functions now imported from utils module
 

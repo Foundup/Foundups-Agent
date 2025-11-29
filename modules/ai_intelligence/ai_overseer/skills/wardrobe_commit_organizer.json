@@ -1,0 +1,49 @@
+{
+  "name": "wardrobe_commit_organizer",
+  "summary": "Organize uncommitted changes into atomic, focused commits following commit hygiene guidelines.",
+  "domain": "git_hygiene",
+  "description": "Analyzes git working directory and stages changes into logical, atomic commits. Uses Qwen for semantic grouping and Gemma for fast classification. Prevents generic commit messages across repository folders.",
+  "steps": [
+    "Analyze git status to identify all uncommitted changes",
+    "Use Gemma to classify changes: code, docs, config, tests",
+    "Use Qwen to semantically group related files (e.g., component + test + story)",
+    "Separate by scope: module-specific changes (gotjunk, wsp_orchestrator, etc.)",
+    "Isolate documentation commits (ModLog.md, README.md) from code commits",
+    "Generate focused commit messages per group using conventional commit format",
+    "Execute atomic commits: git add [files] && git commit -m 'type(scope): description'",
+    "Validate: No single commit touches multiple unrelated modules"
+  ],
+  "tags": ["git", "hygiene", "wardrobe", "atomic-commits", "qwen", "gemma"],
+  "agent_coordination": {
+    "gemma": {
+      "purpose": "Fast binary classification (50-100ms)",
+      "usage": "Classify each file: code|docs|config|test|build"
+    },
+    "qwen": {
+      "purpose": "Semantic grouping (200-500ms)",
+      "usage": "Determine which files are logically related for same commit"
+    }
+  },
+  "commit_hygiene_rules": {
+    "atomic": "One logical change per commit",
+    "focused_scope": "Type(scope) only touches that scope's files",
+    "separate_docs": "Documentation commits separate from code commits",
+    "descriptive": "Describe THIS commit, not the whole feature"
+  },
+  "inputs": {
+    "git_status": "Output from git status --porcelain",
+    "max_files_per_commit": "Maximum files per commit (default: 5)",
+    "enforce_scope_isolation": "Reject commits touching multiple modules (default: true)"
+  },
+  "outputs": {
+    "status": "success|partial|blocked|error",
+    "commits_created": "Number of atomic commits created",
+    "commit_messages": "List of commit messages generated",
+    "ungrouped_files": "Files that couldn't be grouped logically",
+    "details": "Description of actions taken or why blocked"
+  },
+  "integration": {
+    "git_push_dae": "Call this skill BEFORE making push decision to organize commits",
+    "workflow": "wardrobe_commit_organizer → git_push_dae.make_push_decision()"
+  }
+}

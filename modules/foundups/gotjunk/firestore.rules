@@ -17,6 +17,7 @@ rules_version = '2';
  * Collections:
  * - gotjunk_items: Item metadata (classification, price, location, etc.)
  * - gotjunk_blobs: Base64 encoded blobs (for small images <500KB)
+ * - gotjunk_messages: Wave-style message threads (Sprint M2)
  *
  * Future:
  * - Add role-based access for trusted moderators
@@ -123,6 +124,31 @@ service cloud.firestore {
       allow write: if isAuthenticated()
         && exists(/databases/$(database)/documents/gotjunk_items/$(blobId))
         && get(/databases/$(database)/documents/gotjunk_items/$(blobId)).data.ownerUid == request.auth.uid;
+    }
+
+    // ============================================================================
+    // MESSAGES COLLECTION: gotjunk_messages (Sprint M2 + WSP AUDIT FIX)
+    // Wave-style messaging threads per item/alert
+    // ============================================================================
+
+    match /gotjunk_messages/{threadKey} {
+
+      // READ: Public (anyone can read message threads)
+      allow read: if true;
+
+      // CREATE: Authenticated users only
+      // WSP AUDIT: Must set ownerUid to their own UID
+      allow create: if isAuthenticated()
+        && request.resource.data.ownerUid == request.auth.uid;
+
+      // UPDATE: Any authenticated user can add messages
+      // WSP AUDIT: ownerUid cannot be changed after creation
+      allow update: if isAuthenticated()
+        && request.resource.data.ownerUid == resource.data.ownerUid;
+
+      // DELETE: Owner only (for thread cleanup)
+      // WSP AUDIT: Only thread owner can delete
+      allow delete: if isOwner(resource.data.ownerUid);
     }
 
     // ============================================================================

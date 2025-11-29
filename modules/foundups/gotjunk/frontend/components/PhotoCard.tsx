@@ -13,9 +13,20 @@ interface PhotoCardProps {
   onBadgeClick?: (item: CapturedItem) => void; // Tap badge to re-classify
   onBadgeLongPress?: (item: CapturedItem) => void; // Long-press badge to edit options
   onExpand?: (item: CapturedItem) => void; // Optional: explicit expand button handler
+  onMessageBoard?: (item: CapturedItem) => void; // Sprint M6: Open message board
+  unreadMessageCount?: number; // Sprint M6: Number of unread messages for this item
 }
 
-export const PhotoCard: React.FC<PhotoCardProps> = ({ item, onClick, onDelete, onBadgeClick, onBadgeLongPress, onExpand }) => {
+export const PhotoCard: React.FC<PhotoCardProps> = ({ 
+  item, 
+  onClick, 
+  onDelete, 
+  onBadgeClick, 
+  onBadgeLongPress, 
+  onExpand,
+  onMessageBoard,
+  unreadMessageCount = 0,
+}) => {
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering onClick for the card itself
     onDelete(item);
@@ -117,6 +128,21 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({ item, onClick, onDelete, o
       >
         <TrashIcon className="w-3.5 h-3.5" />
       </button>
+
+      {/* Sprint M6: Unread message badge - top LEFT corner */}
+      {unreadMessageCount > 0 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onMessageBoard) onMessageBoard(item);
+          }}
+          className="absolute top-1 left-1 z-10 min-w-6 h-6 px-1.5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg animate-pulse"
+          aria-label={`${unreadMessageCount} unread messages`}
+          title="Open messages"
+        >
+          💬 {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+        </button>
+      )}
 
       {/* Manual expand button - bottom LEFT corner (10% smaller) */}
       <button

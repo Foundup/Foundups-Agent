@@ -1,3 +1,124 @@
+## WSP 3 Violation Fix - Firebase Rules Location (2025-11-29)
+
+**Session Summary**: Removed duplicate firestore.rules from repository root. Module artifacts should stay within module directory per WSP 3.
+
+**Problem**: firestore.rules existed in TWO locations:
+- ❌ `O:\Foundups-Agent\firestore.rules` (root - 21 lines, OLD version)
+- ✅ `O:\Foundups-Agent\modules\foundups\gotjunk\firestore.rules` (module - 178 lines, CURRENT version)
+
+**Root Cause**: Root file was outdated duplicate, missing:
+- WSP AUDIT fixes (lines 134-152 with ownerUid validation)
+- Cart reservation validators (isValidReservationUpdate)
+- Helper functions (isAuthenticated, isOwner, isValidItem)
+- Comprehensive documentation
+
+**Fix Applied**:
+1. Removed root duplicate: `rm O:/Foundups-Agent/firestore.rules`
+2. Updated .gitignore to prevent future root Firebase files:
+   ```gitignore
+   # WSP 3: Module artifacts should stay in modules/
+   /firestore.rules
+   /firebase.json
+   ```
+
+**Verification**:
+- ✅ firebase.json correctly points to module-scoped rules: `modules/foundups/gotjunk/firestore.rules`
+- ✅ Deployment instructions use correct path: `cd modules/foundups/gotjunk && firebase deploy --only firestore:rules`
+- ✅ Lines 134-152 contain WSP AUDIT ownerUid validation (confirmed present)
+
+**WSP Compliance**: WSP 3 (Module Organization) - All module artifacts now properly scoped within `modules/foundups/gotjunk/`
+
+---
+
+## WSP 0102 Re-Audit Verification
+
+**Session Summary**: 0102 auditor re-verified all claimed fixes are present in codebase. One additional race condition fixed.
+
+**Verified Present** (all changes confirmed in files):
+| Claim | File | Line(s) | Status |
+|-------|------|---------|--------|
+| Firestore rules with ownerUid | firestore.rules | 134-152 | ✅ VERIFIED |
+| Auth check before writes | messageSync.ts | 84-89 | ✅ VERIFIED |
+| ownerUid in FirestoreThreadDoc | messageSync.ts | 44, 130 | ✅ VERIFIED |
+| createdAt only on creation | messageSync.ts | 98-100, 127-131 | ✅ VERIFIED |
+| hydrateFromCloud method | messageStore.ts | 60-94 | ✅ VERIFIED |
+| Cloud hydrate called in App | App.tsx | 395-401 | ✅ VERIFIED |
+
+**New Fix**: Unread count re-render race condition
+- Added `messageCloudHydrated` state to trigger re-render after cloud sync
+- `setMessageCloudHydrated(true)` called after hydrateFromCloud completes
+- `getUnreadMessageCount` references this state to ensure counts update
+
+**Code is now 0102 entangled** - all security and sync fixes are in place.
+
+---
+
+## WSP Security Audit - Message Sync Fixes
+
+**Session Summary**: Deep audit of messaging code identified 7 security/functionality gaps. All fixed.
+
+**Issues Found & Fixed**:
+| Issue | Fix | File |
+|-------|-----|------|
+| Auth not checked before cloud writes | Added `getCurrentUserId()` check | messageSync.ts |
+| No ownerUid on thread docs | Added `ownerUid` to FirestoreThreadDoc | messageSync.ts |
+| createdAt overwritten on every sync | Only set on first write (check existingDoc) | messageSync.ts |
+| No cloud hydration on init | Added `hydrateFromCloud()` method | messageStore.ts |
+| Firestore rules too permissive | Added ownerUid validation, owner-only delete | firestore.rules |
+| Cloud hydrate not called | Added non-blocking cloud hydrate after local | App.tsx |
+| Missing cloud fetch exports | Added `fetchAllThreadsFromCloud`, `subscribeToAllThreads` | index.ts |
+
+**Security Model Now**:
+- Reads: Public (anyone can browse threads)
+- Create: Auth required, must set ownerUid = auth.uid
+- Update: Auth required, ownerUid cannot change
+- Delete: Owner only
+
+**Architecture After Audit**:
+```
+App Init:
+1. messageStore.hydrate() → IndexedDB (fast, offline)
+2. messageStore.hydrateFromCloud() → Firestore (cross-device, non-blocking)
+
+On Message Add:
+1. Check auth (getCurrentUserId)
+2. Save to IndexedDB
+3. Sync to Firestore (with ownerUid, preserve createdAt)
+```
+
+---
+
+## Wave-Style Messaging Sprints M1-M5 Complete
+
+**Session Summary**: Implemented persistence, sync, real-time updates, and auto-close for Wave-style messaging.
+
+**Sprints Completed**:
+| Sprint | Status | Files Changed |
+|--------|--------|---------------|
+| M1 | ✅ | messageStorage.ts (new), messageStore.ts, App.tsx |
+| M2 | ✅ | messageSync.ts (new), firestore.rules, index.ts |
+| M3 | ✅ | MessageThreadPanel.tsx |
+| M4 | ✅ | Already wired via context.alertId |
+| M5 | ✅ | App.tsx (purchase/skip → closeThread) |
+| M6 | ✅ | PhotoCard.tsx, PhotoGrid.tsx, App.tsx (already wired) |
+
+**Key Architecture**:
+```
+frontend/src/message/
+├── types.ts           ← Message, Thread, Context types
+├── messageStore.ts    ← In-memory + IndexedDB + Firestore
+├── messageStorage.ts  ← IndexedDB persistence (M1)
+├── messageSync.ts     ← Firestore cloud sync (M2)
+├── geohash.ts         ← Liberty Alert geo-hashing
+└── index.ts           ← Public exports
+```
+
+**WSP Documentation Comments**: Added `// WSP M1:` and `// WSP M2:` comments to persistence calls to prevent future removal during refactoring.
+
+**Status**: ALL SPRINTS COMPLETE ✅
+
+---
+
 ## Wave-Style Messaging System Audit & Micro-Sprint Plan
 
 **Session Summary**: Deep audit of the Google Wave-inspired messaging system. UI is complete (430 lines), but persistence layer is missing. Messages are in-memory only - lost on page refresh. Created micro-sprint plan for incremental implementation following WSP modular development.
