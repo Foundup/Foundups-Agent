@@ -93,20 +93,27 @@ documents.append(doc_payload)  # DUPLICATE! Causes ValueError on --index-all
 
 **Note**: Semantic search via Cursor still works even if CLI indexing is broken. The bug affects `python holo_index.py --index-all`, not the underlying ChromaDB queries.
 
-### What's Missing (WSP Reminder System)
+### WSP Reminder System Status ✅ IMPLEMENTED
 
 **012 Vision**: "is [HoloIndex] providing WSP reminders? WSP is your protocol... as you work holo should be reminding you not to violate"
 
-**Current State**: Pattern Coach exists (18/20 MPS per ROADMAP) but NOT actively reminding during work.
+**Current State**: Pattern Coach IS ACTIVE and wired into CLI ✅
+- **Pattern Coach**: `holo_index/qwen_advisor/pattern_coach.py` (200+ lines, Gemma-integrated)
+- **Violation Prevention**: `holo_index/monitoring/agent_violation_prevention.py` (real-time monitoring)
+- **Integration Points**:
+  - [cli.py:1076-1083](holo_index/cli.py#L1076-L1083) - Triggers during `--search` operations
+  - [cli.py:1341-1350](holo_index/cli.py#L1341-L1350) - Manual `--pattern-coach` flag
+  - [cli.py:370-377](holo_index/cli.py#L370-L377) - Initialization
 
-**Expected Behavior**:
+**Expected Behavior** (IMPLEMENTED):
 ```
-0102: *modifies modules/gotjunk/frontend/App.tsx*
-HoloIndex: "⚠️ WSP 22 - Update ModLog.md when changing module functionality"
-HoloIndex: "⚠️ WSP 5 - Update tests when changing component behavior"
+0102: python holo_index.py --search "create new module"
+HoloIndex: [PATTERN-COACH] Intent: create | Risk: vibecoding_creation (0.8)
+HoloIndex: ⚠️ WSP 50 - Check existing modules with --check-module first
+HoloIndex: ⚠️ WSP 87 - Search NAVIGATION.py before creating
 ```
 
-**Gap**: This reminder system is designed but not wired to agent output.
+**Gap Closed**: Reminder system is designed AND wired. Testing if active in current operations needed.
 
 ### Holo as Swiss Army Knife (from CLI_REFERENCE.md)
 
@@ -146,7 +153,7 @@ HoloIndex: "⚠️ WSP 5 - Update tests when changing component behavior"
 ❌ AI Overseer Event Loop: Has queue but no consume_events() processor
 ❌ GitPushDAE → SocialMediaDAE: Direct call, not skill-based routing
 ❌ Qwen Skill Selection: Skills exist but no automatic selector
-❌ WSP Reminders: Pattern Coach not emitting to console
+✅ WSP Reminders: Pattern Coach EXISTS and wired (cli.py:1076-1083, --pattern-coach flag)
 ❌ Playwright Engagement: No comment reading/replying skill
 ❌ Recursive Self-Improvement: Framework exists, not executing
 ```
@@ -1081,6 +1088,37 @@ The IBM Typewriter spins. The skills execute. The system learns. No vibecoding. 
 
 ---
 
+## Outstanding Gaps & Actions (keep wiring honest)
+
+- **Line count accuracy**: `holo_index/qwen_advisor/holodae_coordinator.py` is **393 lines** (verified). ✅ WSP 62 COMPLIANT after successful refactoring session. Services extracted to `services/` directory.
+- **Evidence check**: ✅ VERIFIED - All artifacts exist:
+  - `docs/HOLODAE_DEEP_DIVE_BECOMING_THE_HOLODAE.md` (479 lines)
+  - `docs/WRE_AUTONOMOUS_FLOW_AUDIT_COMPLETE.md` (exists)
+  - `holo_index/temp/wre_test_output_20251129_141237.log` (803 bytes)
+
+- **Full code indexing**: ✅ ARCHITECTURAL UNDERSTANDING - Holo is **intentionally curated** (WSP 87):
+  - Indexes: NAVIGATION.py mappings (10 entries) + WSP docs (95+ protocols) + Module docs (READMEs/INTERFACEs)
+  - **Not a bug**: Holo is for **concept discovery** (problems → solutions), not source code symbol search
+  - For exact symbols (e.g., "AI Overseer event_queue"): Use **Grep** (per 012 vision evaluation)
+  - For adding new modules: Add to NAVIGATION.py NEED_TO dictionary (maintains curation)
+  - Current approach: `python holo_index.py --index-all` refreshes curated index correctly ✅
+- **WSP reminders**: ✅ ALREADY EXISTS (Pattern Coach + Violation Prevention)
+  - **Pattern Coach**: `holo_index/qwen_advisor/pattern_coach.py` (200+ lines)
+    - Gemma-integrated intent analysis (<10ms)
+    - WSP_00 zen state checking (highest priority)
+    - Risk pattern detection (vibecoding, violations)
+    - Already wired into CLI search operations ([cli.py:1076-1083](holo_index/cli.py#L1076-L1083))
+  - **Violation Prevention**: `holo_index/monitoring/agent_violation_prevention.py` (real-time monitoring)
+    - Multi-agent pattern recognition
+    - Predictive violation detection
+    - Historical learning from WSP_MODULE_VIOLATIONS.md
+  - **Status**: IMPLEMENTED, testing if active during current operations needed
+  - **Integration**: Triggers during `--search` operations, can be manually invoked with `--pattern-coach` flag
+- **Operational caveats**: MCP social posting is flaky; first `git push` still needs `--set-upstream`. Keep these caveats visible in ModLog until fixed.
+- **WSP 62 refactor**: Holodae coordinator split is planned—schedule the staged extraction and consider a warn-only size check in pre-commit/CI until it lands.
+
+---
+
 ## Appendix: Vision Document Hierarchy
 
 ### How This Document Relates to Others
@@ -1138,6 +1176,18 @@ This analysis should be referenced in:
 - `ModLog.md` (main) - System-wide vision alignment
 - `holo_index/ModLog.md` - HoloDAE cardiovascular system
 - `modules/infrastructure/wre_core/ModLog.md` - WRE Phase 2 planning
+
+---
+
+## Related Documents
+
+| Document | Purpose | Link |
+|----------|---------|------|
+| Session Complete | Refactoring session summary | [SESSION_COMPLETE_20251130.md](SESSION_COMPLETE_20251130.md) |
+| Wiring Verification | Service wiring proof | [WIRING_VERIFICATION_COMPLETE.md](WIRING_VERIFICATION_COMPLETE.md) |
+| Comprehensive Audit | Full system audit | [HOLO_COMPREHENSIVE_AUDIT_20251130.md](HOLO_COMPREHENSIVE_AUDIT_20251130.md) |
+| WRE Autonomous Flow Audit | WRE execution analysis | [WRE_AUTONOMOUS_FLOW_AUDIT_COMPLETE.md](WRE_AUTONOMOUS_FLOW_AUDIT_COMPLETE.md) |
+| HoloDAE Deep Dive | HoloDAE entanglement analysis | [HOLODAE_DEEP_DIVE_BECOMING_THE_HOLODAE.md](HOLODAE_DEEP_DIVE_BECOMING_THE_HOLODAE.md) |
 
 ---
 

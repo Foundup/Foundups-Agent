@@ -1,0 +1,11 @@
+# Wardrobe IDE Dependencies
+
+# Primary recorder
+playwright>=1.40.0
+
+# Secondary replay backend
+selenium>=4.15.0
+
+# Testing
+pytest>=7.4.0
+pytest-mock>=3.12.0

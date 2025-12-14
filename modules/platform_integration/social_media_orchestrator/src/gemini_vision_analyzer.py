@@ -65,7 +65,12 @@ Return JSON format:
 }
 """
 
-            response = self.model.generate_content([prompt, img])
+            # SAFETY: Enforce 30s timeout to prevent hanging calls
+            # SAFETY: Heartbeat/Governance check would go here in a full loop
+            response = self.model.generate_content(
+                [prompt, img],
+                request_options={"timeout": 30}
+            )
 
             # Parse response
             try:
@@ -104,28 +109,91 @@ Detect:
 3. New UI patterns
 4. Layout changes
 
-Suggest new Selenium selectors for:
+Suggest specific, ROBUST Selenium selectors for:
 - Post button
 - Text area
 - Error elements
+
+IMPORTANT: This is a React application with dynamic class names.
+- DO NOT use dynamic CSS classes (e.g. .sc-bdVaJa, .css-1a2b3c).
+- PREFER 'aria-label' attributes (e.g. //button[@aria-label='Post']).
+- PREFER text content (e.g. //button[contains(text(), 'Post')]).
+- Use reliable ID attributes if they look static.
 
 Return JSON with:
 {{
   "ui_changed": true/false,
   "changes": ["change1", "change2"],
   "suggested_selectors": {{
-    "post_button": ["xpath1", "xpath2"],
-    "text_area": ["xpath1", "xpath2"]
+    "post_button": ["//best_xpath_selector", "//alternative_xpath"],
+    "text_area": ["//best_xpath_selector", "//alternative_xpath"]
   }}
 }}
 """
 
-            response = self.model.generate_content([prompt, img])
+            # SAFETY: Enforce 30s timeout
+            response = self.model.generate_content(
+                [prompt, img],
+                request_options={"timeout": 30}
+            )
 
             try:
                 return json.loads(response.text)
             except:
                 return {"raw_response": response.text}
+
+        except Exception as e:
+            return {"error": str(e)}
+
+    def find_element_by_description(self, screenshot_bytes: bytes, description: str) -> Dict[str, Any]:
+        """
+        Find an element based on natural language description.
+        Returns robust selectors (XPath/ARIA).
+        """
+        if not self.model:
+            return {"error": "Gemini not initialized"}
+
+        try:
+            import io
+            from PIL import Image
+            img = Image.open(io.BytesIO(screenshot_bytes))
+
+            prompt = f"""Find the element described as: "{description}".
+
+            Analyze the UI and identify this element.
+            
+            Return JSON with:
+            {{
+              "found": true/false,
+              "confidence": "high/medium/low",
+              "reasoning": "why you think this is the element",
+              "suggested_selectors": [
+                "//xpath/to/element",
+                "//button[@aria-label='...']"
+              ]
+            }}
+
+            IMPORTANT:
+            - PREFER 'aria-label' or text content.
+            - AVOID dynamic CSS classes.
+            - Return valid XPath selectors.
+            """
+
+            # SAFETY: Enforce 30s timeout
+            response = self.model.generate_content(
+                [prompt, img],
+                request_options={"timeout": 30}
+            )
+
+            try:
+                text = response.text.strip()
+                if '```json' in text:
+                    text = text.split('```json')[1].split('```')[0]
+                elif '```' in text:
+                    text = text.split('```')[1].split('```')[0]
+                return json.loads(text)
+            except:
+                return {"raw_response": response.text, "error": "Failed to parse JSON"}
 
         except Exception as e:
             return {"error": str(e)}

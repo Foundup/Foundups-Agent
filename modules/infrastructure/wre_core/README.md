@@ -5,6 +5,8 @@ The WRE Core is the central module building engine for 0102 autonomous operation
 
 **For 0102 Autonomy, Not 012 Approval**
 
+**NEW**: Universal PatternMemory for collective false-positive learning integrated with AI Overseer, HoloDAE, and WSP automation. See [PATTERN_MEMORY_ARCHITECTURE.md](PATTERN_MEMORY_ARCHITECTURE.md) for complete architecture and integration guide.
+
 ## Architecture
 
 ### Core Components (4)

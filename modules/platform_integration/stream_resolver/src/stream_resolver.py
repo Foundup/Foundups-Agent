@@ -365,6 +365,80 @@ class StreamResolver:
             stream_title = self._get_stream_title(video_id)
             return self.session_utils.save_cache(video_id, chat_id)
         return False
+
+    def _fetch_chat_id_with_rotation(self, video_id: str) -> Optional[str]:
+        """
+        Fetch liveChatId for a confirmed live video using credential rotation.
+        
+        This is called when vision/NO-QUOTA detection finds a live stream but
+        doesn't have the chat_id. Uses fresh credentials to avoid quota issues.
+        
+        Args:
+            video_id: Video ID of confirmed live stream
+            
+        Returns:
+            activeLiveChatId if found, None otherwise
+        """
+        self.logger.info("="*60)
+        self.logger.info("[CHAT-ID] FETCHING LIVE CHAT ID WITH CREDENTIAL ROTATION")
+        self.logger.info(f"  - Video ID: {video_id}")
+        self.logger.info("="*60)
+        
+        # Try up to 3 credential sets (auto-rotation built into get_authenticated_service)
+        from modules.platform_integration.youtube_auth.src.youtube_auth import get_authenticated_service
+
+        for attempt in range(3):
+            try:
+                # Get fresh credentials via rotation (auto-rotates through available sets)
+                if attempt > 0:
+                    self.logger.info(f"[CHAT-ID] Attempt {attempt + 1}: Retrying with credential rotation...")
+
+                youtube_service = get_authenticated_service()
+                if not youtube_service:
+                    self.logger.warning(f"[CHAT-ID] Attempt {attempt + 1}: No credentials available")
+                    continue
+
+                # Get credential set for logging (attached by youtube_auth)
+                credential_set = getattr(youtube_service, '_credential_set', 'Unknown')
+                self.logger.info(f"[CHAT-ID] Using credential set: {credential_set}")
+
+                # Fetch liveStreamingDetails
+                request = youtube_service.videos().list(
+                    part="liveStreamingDetails",
+                    id=video_id
+                )
+                response = request.execute()
+                
+                if not response.get('items'):
+                    self.logger.warning(f"[CHAT-ID] Video {video_id} not found in API response")
+                    continue
+                
+                video = response['items'][0]
+                live_details = video.get('liveStreamingDetails', {})
+                chat_id = live_details.get('activeLiveChatId')
+                
+                if chat_id:
+                    self.logger.info(f"[CHAT-ID] SUCCESS: Found chat ID: {chat_id[:20]}...")
+                    return chat_id
+                else:
+                    self.logger.warning(f"[CHAT-ID] No activeLiveChatId in response (stream may be ending)")
+                    # Don't retry - if it's not there, it's not there
+                    return None
+                    
+            except Exception as e:
+                error_str = str(e).lower()
+                if 'quota' in error_str or '403' in error_str or 'exceeded' in error_str:
+                    self.logger.warning(f"[CHAT-ID] Quota exhausted on attempt {attempt + 1}, rotating...")
+                    continue
+                else:
+                    self.logger.error(f"[CHAT-ID] Error fetching chat ID: {e}")
+                    if attempt < 2:
+                        self.logger.info("[CHAT-ID] Will retry with different credentials...")
+                        continue
+                    return None
+        
+        self.logger.error("[CHAT-ID] FAILED: Could not fetch chat ID after 3 attempts")
+        return None
     
     def _try_cached_stream(self, cache):
         """Try to connect to cached stream using SessionUtils from infrastructure."""
@@ -384,7 +458,8 @@ class StreamResolver:
         """
         # Record check attempt start (WSP 78)
         check_start_time = datetime.now()
-        search_channel_id = channel_id or CHANNEL_ID
+        # Prefer explicit channel_id, else env defaults, else hard-coded fallback
+        search_channel_id = channel_id or os.getenv('CHANNEL_ID') or CHANNEL_ID
         
         # PRIORITY 1: Try cached stream first for instant reconnection
         cache = self._load_session_cache()
@@ -408,12 +483,101 @@ class StreamResolver:
                 self.logger.error("[ERROR] Circuit breaker still OPEN, cannot search for new streams")
                 return None
         
-        # PRIORITY 3: Use provided channel_id or fall back to config
-        search_channel_id = channel_id or (self.config.CHANNEL_ID if self.config else None)
+        # PRIORITY 3: Use provided channel_id or fall back to env/constant (never None)
+        search_channel_id = channel_id or os.getenv('CHANNEL_ID') or CHANNEL_ID
         if not search_channel_id:
             self.logger.error("[ERROR] No channel ID provided and none configured")
             return None
-        
+
+        # PRIORITY 0: Vision-based detection (CAPTCHA immune, uses authenticated Chrome)
+        try:
+            # Protect Studio comment engagement: vision stream detection navigates the shared Chrome session by default.
+            # Disable vision mode unless explicitly enabled with STREAM_VISION_DISABLED=false.
+            if os.getenv("STREAM_VISION_DISABLED", "true").lower() in ("1", "true", "yes"):
+                logger.info("[VISION] STREAM_VISION_DISABLED=true - skipping vision stream detection (avoids Chrome session hijack)")
+                raise RuntimeError("vision_disabled")
+
+            from .vision_stream_checker import VisionStreamChecker
+            from modules.infrastructure.foundups_vision.src.chrome_preflight_check import is_chrome_debug_port_open
+
+            stream_chrome_port = int(os.getenv("STREAM_CHROME_PORT", os.getenv("FOUNDUPS_CHROME_PORT", "9222")))
+
+            logger.info("="*60)
+            logger.info("[VISION] PRIORITY 0: UI-TARS VISION DETECTION")
+            logger.info("   Using authenticated Chrome (CAPTCHA immune!)")
+            logger.info(f"   Port: {stream_chrome_port} (shared with comment engagement unless separate)")
+            logger.info("="*60)
+
+            # Fast pre-flight check to avoid 60s Selenium timeout
+            if not is_chrome_debug_port_open(port=stream_chrome_port, timeout=1.0):
+                logger.info(f"[VISION] [WARN] Chrome debug port {stream_chrome_port} NOT reachable (< 1s check)")
+                logger.info("[VISION] Tip: Start Chrome with remote debugging:")
+                logger.info("[VISION]    - launch_chrome_youtube_studio.bat")
+                logger.info(f"[VISION]    OR chrome.exe --remote-debugging-port={stream_chrome_port}")
+                logger.info("[VISION] Skipping vision mode - falling back to NO-QUOTA scraping...")
+                raise RuntimeError("Chrome not available")  # Skip to scraping fallback
+
+            logger.info(f"[VISION] Chrome debug port {stream_chrome_port} is reachable - proceeding with vision detection...")
+
+            vision_checker = VisionStreamChecker()
+
+            if vision_checker.vision_available:
+                # Get channels to check
+                channels_to_check = []
+                if channel_id:
+                    channels_to_check = [channel_id]
+                else:
+                    # Check all configured channels
+                    channels_to_check = [
+                        os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UCklMTNnu5POwRmQsg5JJumA'),
+                        os.getenv('CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),
+                        os.getenv('CHANNEL_ID2', 'UCSNTUXjAgpd4sgWYP0xoJgw'),
+                    ]
+                    channels_to_check = [ch for ch in channels_to_check if ch]
+
+                # Try vision detection on each channel
+                for check_channel_id in channels_to_check:
+                    channel_name = self._get_channel_display_name(check_channel_id)
+                    logger.info(f"[VISION] Checking {channel_name}...")
+
+                    result = vision_checker.check_channel_for_live(check_channel_id, channel_name)
+
+                    if result and result.get('live'):
+                        video_id = result.get('video_id')
+                        logger.info(f"[VISION] LIVE STREAM FOUND: {video_id}")
+                        logger.info(f"[VISION] Method: UI-TARS vision (CAPTCHA immune)")
+                        logger.info(f"[VISION] Channel: {channel_name}")
+
+                        # Fetch chat_id safely - don't let exceptions fall through to NO-QUOTA mode
+                        chat_id = None
+                        try:
+                            chat_id = self._fetch_chat_id_with_rotation(video_id)
+                            if chat_id:
+                                self._save_session_cache(video_id, chat_id)
+                        except Exception as e:
+                            logger.warning(f"[VISION] Chat ID fetch failed ({e}), will retry in monitoring loop")
+
+                        logger.info("[VISION] Returning vision result - skipping NO-QUOTA (CAPTCHA avoidance)")
+                        return (video_id, chat_id)  # Return even if chat_id is None
+                    else:
+                        logger.info(f"[VISION] No live stream on {channel_name}")
+
+                logger.info("[VISION] No live streams detected via vision, falling back to scraping...")
+            else:
+                logger.info(f"[VISION] Chrome not available on port {stream_chrome_port} - skipping vision mode")
+                logger.info(f"[VISION] Tip: Launch Chrome with --remote-debugging-port={stream_chrome_port} for vision mode")
+
+        except ImportError:
+            logger.info("[VISION] VisionStreamChecker not available - using scraping only")
+        except RuntimeError as e:
+            # Expected guard-rails (do not alarm): vision disabled or Chrome not reachable.
+            if str(e) in ("vision_disabled", "Chrome not available"):
+                logger.info(f"[VISION] {e} - using scraping only")
+            else:
+                logger.warning(f"[VISION] Vision runtime error: {e} - falling back to scraping")
+        except Exception as e:
+            logger.warning(f"[VISION] Vision check failed: {e} - falling back to scraping")
+
         # PRIORITY 4: NO-QUOTA mode - persistent idle loop (prioritize to conserve API quota)
         if self.no_quota_checker:
             logger.info("="*60)
@@ -478,7 +642,7 @@ class StreamResolver:
                         profile = self.qwen.get_channel_profile(current_channel_id, channel_name)
                         should_check, reason = profile.should_check_now()
                         if not should_check:
-                            logger.info(f"⏭️ Skipping {channel_name}: {reason}")
+                            logger.info(f"[SKIP] Skipping {channel_name}: {reason}")
                             continue
                     except Exception as q_err:
                         logger.debug(f"QWEN profile lookup failed for {channel_name}: {q_err}")
@@ -490,9 +654,9 @@ class StreamResolver:
                     if env_result.get('rate_limited'):
                         cooldown = env_result.get('cooldown')
                         if cooldown:
-                            logger.warning(f"[U+26A0]️ Rate limit hit while checking env video {env_video_id} on {channel_name} – pausing {cooldown:.0f}s")
+                            logger.warning(f"[WARN] Rate limit hit while checking env video {env_video_id} on {channel_name} - pausing {cooldown:.0f}s")
                         else:
-                            logger.warning(f"[U+26A0]️ Rate limit hit while checking env video {env_video_id} on {channel_name}")
+                            logger.warning(f"[WARN] Rate limit hit while checking env video {env_video_id} on {channel_name}")
                         if self.qwen:
                             try:
                                 profile = self.qwen.get_channel_profile(current_channel_id, channel_name)
@@ -509,7 +673,11 @@ class StreamResolver:
                                 self.db.analyze_and_update_patterns(current_channel_id)
                             except Exception as db_err:
                                 logger.warning(f"Database error (non-critical): {db_err}")
-                        return env_video_id, None
+                        # Fetch chat_id with credential rotation
+                        chat_id = self._fetch_chat_id_with_rotation(env_video_id)
+                        if chat_id:
+                            self._save_session_cache(env_video_id, chat_id)
+                        return env_video_id, chat_id
                     logger.info("[ERROR] Specified video not live")
 
                 logger.info(f"[TEST] Searching {channel_name} ({current_channel_id[:12]}...) for live streams...")
@@ -524,9 +692,9 @@ class StreamResolver:
                 if isinstance(result, dict) and result.get('rate_limited'):
                     cooldown = result.get('cooldown')
                     if cooldown:
-                        logger.warning(f"[U+26A0]️ Rate limit encountered while scraping {channel_name} – cooling down for {cooldown:.0f}s")
+                        logger.warning(f"[WARN] Rate limit encountered while scraping {channel_name} - cooling down for {cooldown:.0f}s")
                     else:
-                        logger.warning(f"[U+26A0]️ Rate limit encountered while scraping {channel_name}")
+                        logger.warning(f"[WARN] Rate limit encountered while scraping {channel_name}")
                     if current_channel_id in channel_predictions:
                         channel_predictions[current_channel_id]['confidence'] = 0.0
                     if self.qwen:
@@ -548,12 +716,16 @@ class StreamResolver:
                                 self.db.analyze_and_update_patterns(current_channel_id)
                             except Exception as db_err:
                                 logger.warning(f"Database error (non-critical): {db_err}")
-                        return video_id, None
+                        # Fetch chat_id with credential rotation (NO-QUOTA doesn't provide it)
+                        chat_id = self._fetch_chat_id_with_rotation(video_id)
+                        if chat_id:
+                            self._save_session_cache(video_id, chat_id)
+                        return video_id, chat_id
 
                 if channels_queue:
                     delay = 2.0
                     next_channel = self._get_channel_display_name(channels_queue[0]) if channels_queue else channel_name
-                    logger.info(f"⏳ No stream on {channel_name}, checking {next_channel} in {delay:.1f}s...")
+                    logger.info(f"[IDLE] No stream on {channel_name}, checking {next_channel} in {delay:.1f}s...")
                     time.sleep(delay)
                 else:
                     logger.info(f"[ERROR] No stream on {channel_name} (last channel checked)")
@@ -565,7 +737,7 @@ class StreamResolver:
             return None
         else:
             # NO-QUOTA mode not available but could be initialized
-            logger.info("[U+26A0]️ NO-QUOTA mode not available, attempting to initialize...")
+            logger.info("[WARN] NO-QUOTA mode not available, attempting to initialize...")
             try:
                 from .no_quota_stream_checker import NoQuotaStreamChecker
                 self.no_quota_checker = NoQuotaStreamChecker()
@@ -574,7 +746,7 @@ class StreamResolver:
                 return self.resolve_stream(channel_id)
             except Exception as e:
                 logger.warning(f"[ERROR] Failed to initialize NO-QUOTA mode: {e}")
-                logger.info("[U+26A0]️ Falling back to API mode")
+                logger.info("[WARN] Falling back to API mode")
 
         # PRIORITY 5: Fallback to API mode if NO-QUOTA is not available
         # Check if API client is available before attempting

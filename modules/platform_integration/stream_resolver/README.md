@@ -90,6 +90,8 @@ Key environment variables:
 - `CHANNEL_ID`: YouTube channel ID for stream resolution
 - `YOUTUBE_API_KEY`: Primary API key
 - `YOUTUBE_API_KEY2`: Fallback API key for rotation
+- `STREAM_VISION_DISABLED`: Set to "true" to disable vision stream detection (recommended when Studio comment engagement needs exclusive Chrome)
+- `STREAM_CHROME_PORT`: Chrome debug port for vision stream detection (defaults to `FOUNDUPS_CHROME_PORT` / 9222)
 - `WSP_ALLOW_STREAM_PATCH`: Set to "1" to allow modifications to backup version
 - `FORCE_DEV_DELAY`: Set to "true" for faster testing delays
 
@@ -193,4 +195,3 @@ wsp_cycle(input="012", log=True)
 
 ## Usage
 *(Provide basic instructions on how to use or interact with this module)*
-

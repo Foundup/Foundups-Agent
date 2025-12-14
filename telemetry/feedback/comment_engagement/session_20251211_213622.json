@@ -1,0 +1,20 @@
+{
+  "session_id": "20251211_213622",
+  "total_processed": 1,
+  "stats": {
+    "comments_processed": 1,
+    "likes": 1,
+    "hearts": 0,
+    "replies": 1,
+    "errors": 0
+  },
+  "results": [
+    {
+      "comment_idx": 1,
+      "like": true,
+      "heart": false,
+      "reply": true,
+      "errors": []
+    }
+  ]
+}

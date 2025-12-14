@@ -121,6 +121,17 @@ class LLMConnector:
                 self.grok_api_url = "https://api.x.ai/v1/chat/completions"
                 self.simulation_mode = False
                 logging.info("Grok client initialized successfully")
+
+            elif self.provider == "google":
+                try:
+                    import google.generativeai as genai
+                    genai.configure(api_key=self.api_key)
+                    self.client = genai
+                    self.simulation_mode = False
+                    logging.info("Google Gemini client initialized successfully")
+                except ImportError:
+                    logging.error("google-generativeai library not installed. Install with: pip install google-generativeai")
+                    self.simulation_mode = True
                     
             else:
                 logging.warning(f"Provider {self.provider} not yet supported. Using simulation mode.")
@@ -156,6 +167,8 @@ class LLMConnector:
                 return self._get_openai_response(prompt, max_tokens, temperature)
             elif self.provider == "grok":
                 return self._get_grok_response(prompt, max_tokens, temperature, system_prompt)
+            elif self.provider == "google":
+                return self._get_google_response(prompt, max_tokens, temperature, system_prompt)
             else:
                 return self._get_simulated_response(prompt)
                 
@@ -256,6 +269,35 @@ class LLMConnector:
             logging.error(f"Grok API error: {e}")
             return None
     
+    def _get_google_response(self, prompt: str, max_tokens: int, temperature: float, system_prompt: Optional[str] = None) -> Optional[str]:
+        """Get response from Google Gemini."""
+        try:
+            # Configure generation config
+            generation_config = self.client.types.GenerationConfig(
+                max_output_tokens=max_tokens,
+                temperature=temperature
+            )
+            
+            # Initialize model (supports system prompt if needed)
+            # Use 'gemini-1.5-pro' or 'gemini-1.5-flash' or 'gemini-pro' depending on what's available
+            # We trust self.model holds the valid name (e.g. gemini-pro)
+            
+            if system_prompt:
+                 model = self.client.GenerativeModel(self.model, system_instruction=system_prompt)
+            else:
+                 model = self.client.GenerativeModel(self.model)
+
+            response = model.generate_content(
+                prompt,
+                generation_config=generation_config
+            )
+            
+            return response.text
+                
+        except Exception as e:
+            logging.error(f"Google Gemini API error: {e}")
+            return None
+
     def _get_simulated_response(self, prompt: str) -> str:
         """
         Generate simulated responses for testing rESP triggers.

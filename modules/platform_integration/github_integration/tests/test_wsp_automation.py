@@ -21,9 +21,9 @@ import sys
 from pathlib import Path
 
 # Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 
-from O:.Foundups-Agent.modules.platform_integration.github_integration.src.wsp_automation import *
+from modules.platform_integration.github_integration.src.wsp_automation import WSPAutomationManager
 
 class TestWspAutomation:
     """Test cases for wsp_automation"""

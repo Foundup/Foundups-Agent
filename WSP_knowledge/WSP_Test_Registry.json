@@ -1,0 +1,3179 @@
+{
+  "version": "1.0",
+  "last_updated": "2025-12-06",
+  "schema": "WSP_98_Test_Registry",
+  "total_tests": 438,
+  "tests": [
+    {
+      "id": "test_autonomous_gemini_heart",
+      "path": "test_autonomous_gemini_heart.py",
+      "description": "AUTONOMOUS GEMINI VISION - YouTube Studio Heart Click\nConnects to EXISTING Chrome on port 9222 (no new launch)",
+      "capabilities": [
+        "browser_automation",
+        "computer_vision",
+        "vision_bridge"
+      ],
+      "execution_type": "e2e_vision"
+    },
+    {
+      "id": "test_autonomous_with_validation",
+      "path": "test_autonomous_with_validation.py",
+      "description": "AUTONOMOUS ENGAGEMENT WITH HUMAN VALIDATION LAYER\n0102 executes \u2192 012 validates \u2192 Pattern Memory learns\n\nWSP 77 Phase 3: Human Supervision\nPattern Memory: Recursive Learning from Validated Outcomes",
+      "capabilities": [
+        "browser_automation",
+        "interactive_feedback",
+        "012_protocol"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_copilot_validation",
+      "path": "test_copilot_validation.py",
+      "description": "COPILOT VALIDATION - Pre-Action Human Confirmation\nAgent shows intent \u2192 012 confirms \u2192 Agent executes\n\nEvery agent step validated BEFORE execution",
+      "capabilities": [
+        "browser_automation",
+        "interactive_feedback",
+        "012_protocol"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_gemini_js_click",
+      "path": "test_gemini_js_click.py",
+      "description": "Test Gemini Vision + JavaScript Click - More reliable for React UIs",
+      "capabilities": [
+        "browser_automation",
+        "computer_vision",
+        "vision_bridge"
+      ],
+      "execution_type": "e2e_vision"
+    },
+    {
+      "id": "test_gemini_studio_heart",
+      "path": "test_gemini_studio_heart.py",
+      "description": "Test Gemini Vision - YouTube Studio Heart Button\nTier 2 Vision with improved targeting",
+      "capabilities": [
+        "browser_automation",
+        "computer_vision",
+        "vision_bridge"
+      ],
+      "execution_type": "e2e_vision"
+    },
+    {
+      "id": "test_live_engagement_existing_chrome",
+      "path": "test_live_engagement_existing_chrome.py",
+      "description": "AUTONOMOUS LIVE ENGAGEMENT TEST - Connects to EXISTING Chrome on 9222\nUses ActionRouter with pre-connected driver (no new Chrome launch)",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_ui_tars_no_nav",
+      "path": "test_ui_tars_no_nav.py",
+      "description": "Test UI-TARS clicking without navigation - use existing Chrome on 9222",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_ui_tars_studio",
+      "path": "test_ui_tars_studio.py",
+      "description": "Test UI-TARS Desktop - YouTube Studio Heart Button\nUses Tier 1 Vision (most precise)",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_bell_state_semantic",
+      "path": "foundups-mcp-p1/test_bell_state_semantic.py",
+      "description": "Test semantic concept matching for Bell State verification",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_fixed_server",
+      "path": "foundups-mcp-p1/test_fixed_server.py",
+      "description": "Test the fixed HoloIndex MCP server",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_holoindex",
+      "path": "foundups-mcp-p1/test_holoindex.py",
+      "description": "Test script to verify HoloIndex MCP server functionality",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_server",
+      "path": "foundups-mcp-p1/test_server.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_adaptive_routing",
+      "path": "foundups-mcp-p1/servers/youtube_dae_gemma/test_adaptive_routing.py",
+      "description": "Test Adaptive Routing with Mock Training Data\n\nDemonstrates:\n1. Gemma handles simple queries\n2. Qwen monitors quality\n3. Threshold adjusts based on performance\n4. 0102 architect can override",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_execution_log_librarian",
+      "path": "holo_index/adaptive_learning/execution_log_analyzer/tests/test_execution_log_librarian.py",
+      "description": "Unit tests for Execution Log Librarian\n\nTests the core functionality of the execution log processing system.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_gemma_integration",
+      "path": "holo_index/qwen_advisor/test_gemma_integration.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_wsp91_enhancement",
+      "path": "holo_index/qwen_advisor/test_wsp91_enhancement.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_daemon_logger_wsp91",
+      "path": "holo_index/qwen_advisor/orchestration/tests/test_daemon_logger_wsp91.py",
+      "description": "FMAS Validation Tests for WSP 91: Daemon Observability Protocol\n\nTests the DaemonLogger class to ensure:\n- JSON format is parseable\n- All log types function correctly\n- Session tracking works\n- Performance metrics are captured\n- Error logging includes full context\n\nWSP Compliance:\n- WSP 4: FMAS Validation Protocol\n- WSP 91: DAEMON Observability Protocol\n- WSP 5: Test Coverage (target: 90%+)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_health_integration",
+      "path": "holo_index/scripts/test_health_integration.py",
+      "description": "Test script to verify module health integration.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_large_file",
+      "path": "holo_index/scripts/test_large_file.py",
+      "description": "Create a temporary large file to test health warnings.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_012_pattern_mining",
+      "path": "holo_index/tests/test_012_pattern_mining.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_ai_delegation_pipeline",
+      "path": "holo_index/tests/test_ai_delegation_pipeline.py",
+      "description": "Test AI Delegation Pipeline\n\nIntegration test for AI delegation orchestrator and UI-TARS scheduler.\nTests the fallback pipeline when Qwen/Gemma is unavailable.\n\nWSP 77: Agent Coordination Protocol\nWSP 84: Auto-Management",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_autonomous_refactoring",
+      "path": "holo_index/tests/test_autonomous_refactoring.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_cli",
+      "path": "holo_index/tests/test_cli.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_codeindex_monitor",
+      "path": "holo_index/tests/test_codeindex_monitor.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_codeindex_precision",
+      "path": "holo_index/tests/test_codeindex_precision.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_comprehensive_holo_verification",
+      "path": "holo_index/tests/test_comprehensive_holo_verification.py",
+      "description": "Comprehensive HoloIndex Verification Test Suite\n\nTests all major HoloIndex features and compares to traditional tools:\n1. Semantic search capability\n2. Function-level indexing\n3. Module existence checking\n4. Pattern Coach\n5. Health validation\n6. Performance vs grep/ripgrep\n\nVerifies claims from HOLO_COMPREHENSIVE_AUDIT_20251130.md",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_dependency_fix",
+      "path": "holo_index/tests/test_dependency_fix.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_enhanced_search",
+      "path": "holo_index/tests/test_enhanced_search.py",
+      "description": "Test enhanced HoloIndex search with path/line/snippet\nWSP 3 Compliant - Located in proper holo_index test directory",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_feedback_learner",
+      "path": "holo_index/tests/test_feedback_learner.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_file_naming_detection",
+      "path": "holo_index/tests/test_file_naming_detection.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_focused_audit",
+      "path": "holo_index/tests/test_focused_audit.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_gemma3_file_naming_live",
+      "path": "holo_index/tests/test_gemma3_file_naming_live.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_gemma_integration",
+      "path": "holo_index/tests/test_gemma_integration.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_graphrag_exporter",
+      "path": "holo_index/tests/test_graphrag_exporter.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_holodae_coordinator",
+      "path": "holo_index/tests/test_holodae_coordinator.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_holo_relevance",
+      "path": "holo_index/tests/test_holo_relevance.py",
+      "description": "HoloIndex Relevance Testing - Random Query Verification\n\nTests that HoloIndex returns RELEVANT results, not just any results.\nUses ground truth data to verify search correctness.\n\nRun with:\n    python holo_index/tests/test_holo_relevance.py\n    python holo_index/tests/test_holo_relevance.py --random 10  # 10 random tests\n    python holo_index/tests/test_holo_relevance.py --all  # All ground truth tests",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_holo_vs_grep",
+      "path": "holo_index/tests/test_holo_vs_grep.py",
+      "description": "Integration tests comparing HoloIndex output vs traditional grep/glob workflows.\n\nPurpose: demonstrate 0102 value (semantic previews, module context) versus raw ripgrep.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_intent_classifier",
+      "path": "holo_index/tests/test_intent_classifier.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_module_health",
+      "path": "holo_index/tests/test_module_health.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_output_composer",
+      "path": "holo_index/tests/test_output_composer.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_pattern_memory",
+      "path": "holo_index/tests/test_pattern_memory.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_phase3_wre_integration",
+      "path": "holo_index/tests/test_phase3_wre_integration.py",
+      "description": "Test Phase 3 WRE Integration\n\nValidates HoloDAE \u2192 WRE \u2192 GitPushDAE integration\nWSP Compliance: WSP 5 (Test Coverage), WSP 96 (WRE Skills Phase 3)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_phase5_integrated_wsp_analysis",
+      "path": "holo_index/tests/test_phase5_integrated_wsp_analysis.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_qwen_advisor_fmas",
+      "path": "holo_index/tests/test_qwen_advisor_fmas.py",
+      "description": "FMAS (Failure Mode Analysis System) Tests for QwenAdvisor\nWSP Compliance: WSP 5, 6, 50, 84, 85, 87\n\nComprehensive testing of:\n1. Rules engine WSP compliance checking\n2. Agent environment detection\n3. Advisor integration with CLI\n4. Cache functionality\n5. Telemetry recording",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_qwen_advisor_stub",
+      "path": "holo_index/tests/test_qwen_advisor_stub.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_qwen_file_naming_trainer",
+      "path": "holo_index/tests/test_qwen_file_naming_trainer.py",
+      "description": "Test: Training Qwen (baby 0102) to detect file naming violations\n\nThis demonstrates how Qwen can learn naming convention enforcement:\n1. Feed Qwen the naming rules (WSP 57)\n2. Provide examples of violations and fixes\n3. Let Qwen analyze new files and suggest corrections\n4. Store successful fixes as training data in ChromaDB\n\nWSP 57: Naming Coherence\nWSP 35: HoloIndex Qwen Advisor",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_qwen_holo_integration",
+      "path": "holo_index/tests/test_qwen_holo_integration.py",
+      "description": "Test Qwen \u2192 HoloIndex Integration (P0 Fix Verification)\n========================================================\n\nTests that AutonomousRefactoringOrchestrator can now use HoloAdapter\nfor semantic search, enabling the Deep Think \u2192 HoloIndex \u2192 Occam's Razor chain.\n\nWSP Compliance: WSP 77 (Agent Coordination), WSP 50 (Pre-Action Verification)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_ricdae_wsp_analysis",
+      "path": "holo_index/tests/test_ricdae_wsp_analysis.py",
+      "description": "Test ricDAE MCP Tools for WSP Sentinel Analysis\n\nEvaluates ricDAE's ability to analyze WSP documents and extract\npatterns for Sentinel augmentation. Part of recursive development\ncycle for WSP batch analysis automation.\n\nWSP 93: CodeIndex Surgical Intelligence Protocol\nWSP 37: Roadmap Scoring System (ricDAE MPS 16, P0)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_selenium_run_history_mission",
+      "path": "holo_index/tests/test_selenium_run_history_mission.py",
+      "description": "Test Selenium Run History Mission\n\nTests the selenium run history mission with in-memory SQLite database.\nValidates data aggregation and summary generation.\n\nWSP 77: Agent Coordination Protocol",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_simple",
+      "path": "holo_index/tests/test_simple.py",
+      "description": "Simple dependency import testing for holo_index module\nWSP 3 Compliant: Located in holo_index/tests/ per proper module organization\nWSP 5 Compliant: Testing standards for dependency resolution",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_typescript_entities",
+      "path": "holo_index/tests/test_typescript_entities.py",
+      "description": "Regression tests for TypeScript entity extraction (WSP 87 compliance).",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_unicode_filter_integration",
+      "path": "holo_index/tests/test_unicode_filter_integration.py",
+      "description": "Test Unicode Filter Integration - WSP 90 Compliance\n\nValidates that agentic_output_throttler correctly filters emojis\nfor multi-agent output (0102/Qwen/Gemma).\n\nWSP Compliance: WSP 90 (UTF-8 Enforcement), WSP 5 (Test Coverage)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_llm_functionality",
+      "path": "holo_index/tests/integration/test_llm_functionality.py",
+      "description": "Test actual LLM functionality with Qwen model.\n\nThis script tests the actual LLM inference capabilities.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_llm_integration",
+      "path": "holo_index/tests/integration/test_llm_integration.py",
+      "description": "Test script for LLM integration in HoloIndex Qwen Advisor.\n\nThis script tests the LLM integration without requiring the actual model to be loaded,\nverifying that the code structure and imports work correctly.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_pattern_analysis",
+      "path": "holo_index/tests/integration/test_pattern_analysis.py",
+      "description": "Test Phase 2: HoloIndex Pattern Analysis",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_pattern_coach",
+      "path": "holo_index/tests/integration/test_pattern_coach.py",
+      "description": "Test the Pattern Coach intelligent coaching system",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_wre_flow",
+      "path": "holo_index/wre_integration/tests/test_wre_flow.py",
+      "description": "Test WRE autonomous flow manually\n\nTests the complete WRE trigger -> execute -> git commit -> social post flow\n\nLocation: holo_index/wre_integration/tests/test_wre_flow.py",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_wre_skill",
+      "path": "holo_index/wre_integration/tests/test_wre_skill.py",
+      "description": "Test WRE Git Skill - SkillExecutor functionality\n\nLocation: holo_index/wre_integration/tests/test_wre_skill.py",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_0102_orchestrator",
+      "path": "modules/ai_intelligence/0102_orchestrator/tests/test_0102_orchestrator.py",
+      "description": "Comprehensive test suite for 0102 Orchestrator module.\n\nTests all components and integration scenarios:\n- ZeroOneZeroTwo main orchestrator\n- ConversationManager (NLP and intent parsing)\n- NotificationEngine (multi-channel notifications)\n- SessionController (meeting session management)\n- PersonalityEngine (adaptive response generation)\n- LearningEngine (pattern recognition and adaptation)\n- MemoryCore (preference and interaction storage)\n- Full integration workflows",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_agent_permission_manager",
+      "path": "modules/ai_intelligence/agent_permissions/tests/test_agent_permission_manager.py",
+      "description": "Unit Tests for Agent Permission Manager\n\nTests permission management, skills_registry integration, allowlist/forbidlist\nvalidation, and automatic downgrade functionality.\n\nWSP Compliance:\n- WSP 5 (Test Coverage): Comprehensive unit tests\n- WSP 6 (Test Audit): Documents test coverage",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_confidence_tracker",
+      "path": "modules/ai_intelligence/agent_permissions/tests/test_confidence_tracker.py",
+      "description": "Unit Tests for Confidence Tracker\n\nTests decay-based confidence algorithm with time-weighted scoring,\nfailure multiplier, and JSONL audit trail.\n\nWSP Compliance:\n- WSP 5 (Test Coverage): Comprehensive unit tests\n- WSP 6 (Test Audit): Documents test coverage",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_ai_overseer",
+      "path": "modules/ai_intelligence/ai_overseer/tests/test_ai_overseer.py",
+      "description": "AI Intelligence Overseer - Unit Tests\n=====================================\n\nTests for WSP 77 agent coordination with Qwen + Gemma + 0102.\n\nTest Coverage:\n    - WSP 54 role assignments (Agent Teams variant)\n    - WSP 77 4-phase coordination workflow\n    - Mission analysis and planning\n    - Team spawning and execution\n    - Learning and pattern storage (WSP 48)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_ai_overseer_monitoring",
+      "path": "modules/ai_intelligence/ai_overseer/tests/test_ai_overseer_monitoring.py",
+      "description": "AI Overseer Daemon Monitoring - Live Test\n==========================================\n\nDemonstrates AI Overseer monitoring YouTube daemon (bash 56046d)\nusing the youtube_daemon_monitor.json skill.\n\nThis is a PROOF OF CONCEPT showing:\n1. BashOutput integration (simulated with sample data)\n2. Gemma error detection using regex patterns\n3. Qwen bug classification\n4. Auto-fix vs bug report decisions\n\nWSP Compliance: WSP 77 (Agent Coordination), WSP 96 (Skills), WSP 50 (Pre-Action)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_ai_overseer_unicode_fix",
+      "path": "modules/ai_intelligence/ai_overseer/tests/test_ai_overseer_unicode_fix.py",
+      "description": "Test AI_overseer autonomous Unicode bug detection and fix\n\nThis test:\n1. Feeds AI_overseer the YouTube DAE bash output with Unicode error\n2. Verifies Gemma Phase 1 detects the pattern\n3. Supervises Qwen Phase 2:\n   - Uses agentic Holo to search for bug location\n   - Classifies as auto_fix (complexity=1, P1)\n4. Supervises Qwen Phase 3: Apply fix\n5. Verifies fix: Unicode tags converted before YouTube send",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_analysis",
+      "path": "modules/ai_intelligence/ai_overseer/tests/test_analysis.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_daemon_monitoring_witness_loop",
+      "path": "modules/ai_intelligence/ai_overseer/tests/test_daemon_monitoring_witness_loop.py",
+      "description": "Test Script: Daemon Monitoring Witness Loop (Option A)\n=====================================================\n\nDemonstrates complete autonomous monitoring workflow:\n1. Read bash output from YouTube daemon (56046d)\n2. Gemma detects Unicode error patterns\n3. Qwen classifies with WSP 15 MPS scoring\n4. Live chat announcements generated (012's vision!)\n5. Complete witness loop validation\n\nWSP Compliance: WSP 77 (Coordination), WSP 15 (MPS), WSP 96 (Skills)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_execution",
+      "path": "modules/ai_intelligence/ai_overseer/tests/test_execution.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_mcp",
+      "path": "modules/ai_intelligence/ai_overseer/tests/test_mcp.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_missing_library_detection",
+      "path": "modules/ai_intelligence/ai_overseer/tests/test_missing_library_detection.py",
+      "description": "Test AI Overseer detection of missing Python library errors",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_mixins_extended",
+      "path": "modules/ai_intelligence/ai_overseer/tests/test_mixins_extended.py",
+      "description": "Extended mixin coverage for AI Overseer.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_monitor_flow",
+      "path": "modules/ai_intelligence/ai_overseer/tests/test_monitor_flow.py",
+      "description": "Quick test: Verify AI_overseer detects Unicode patterns in logs",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_planning",
+      "path": "modules/ai_intelligence/ai_overseer/tests/test_planning.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_telemetry_monitor",
+      "path": "modules/ai_intelligence/ai_overseer/tests/test_telemetry_monitor.py",
+      "description": "Test HoloDAE Telemetry Monitor Integration\n\nQuick smoke test to verify:\n1. AI Overseer can initialize telemetry monitor\n2. Telemetry monitor can tail JSONL files\n3. Events are queued correctly\n\nLocation: modules/ai_intelligence/ai_overseer/tests/test_telemetry_monitor.py",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_all_sequences",
+      "path": "modules/ai_intelligence/banter_engine/tests/test_all_sequences.py",
+      "description": "WSP-Compliant Emoji Sequence Testing Module\nTests all 10 emoji sequences to ensure proper detection and response generation.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_banter",
+      "path": "modules/ai_intelligence/banter_engine/tests/test_banter.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_banter_engine",
+      "path": "modules/ai_intelligence/banter_engine/tests/test_banter_engine.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_banter_trigger",
+      "path": "modules/ai_intelligence/banter_engine/tests/test_banter_trigger.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_comprehensive_chat_communication",
+      "path": "modules/ai_intelligence/banter_engine/tests/test_comprehensive_chat_communication.py",
+      "description": "Comprehensive test suite for chat communication system.\n\nThis module tests the complete integration between the BanterEngine,\nLiveChatListener, and LLMBypassEngine components to ensure proper\nemoji sequence detection, response generation, and message processing.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_emoji_communication_focused",
+      "path": "modules/ai_intelligence/banter_engine/tests/test_emoji_communication_focused.py",
+      "description": "Focused Emoji Communication Tests for Banter Engine\nFollowing WSP Guidelines for Test-to-Main Refactoring\n\nThis test suite focuses specifically on the banter engine's emoji detection\nand response capabilities without complex module dependencies.\n\nWSP Compliance:\n- Tests ensure emoji detection works for all sequences\n- Validates LLM guidance extraction from emoji patterns\n- Confirms agent responds appropriately to emoji triggers",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_emoji_sequence_direct",
+      "path": "modules/ai_intelligence/banter_engine/tests/test_emoji_sequence_direct.py",
+      "description": "Direct test of emoji sequence processing",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_emoji_sequence_map",
+      "path": "modules/ai_intelligence/banter_engine/tests/test_emoji_sequence_map.py",
+      "description": "Unit tests for emoji_sequence_map.py module.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_external_loading",
+      "path": "modules/ai_intelligence/banter_engine/tests/test_external_loading.py",
+      "description": "Test external JSON loading feature for BanterEngine\nTests the new functionality added from banter_engine2.py",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_hand_emoji_direct",
+      "path": "modules/ai_intelligence/banter_engine/tests/test_hand_emoji_direct.py",
+      "description": "Direct test of the hand emoji issue - testing the exact scenario",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_code_analyzer",
+      "path": "modules/ai_intelligence/code_analyzer/tests/test_code_analyzer.py",
+      "description": "Test suite for Code Analyzer module.\n\nWSP Compliance:\n- WSP 34 (Testing Protocol): Comprehensive test coverage for code analysis functionality\n- WSP 54 (Agent Duties): Test agent coordination and analysis capabilities\n- WSP 22 (ModLog): Test change tracking and analysis history\n- WSP 50 (Pre-Action Verification): Test verification before code analysis",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livestream_coding_agent",
+      "path": "modules/ai_intelligence/livestream_coding_agent/tests/test_livestream_coding_agent.py",
+      "description": "Placeholder test file for the livestream_coding_agent module.\nThis file ensures WSP 5 (Test Coverage) compliance by establishing a foundation\nfor future test implementation by 0102 pArtifacts.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_social_orchestrator",
+      "path": "modules/ai_intelligence/multi_agent_system/tests/test_social_orchestrator.py",
+      "description": "Test script for Social Media Orchestrator\nTests semantic consciousness interpretation and LLM integration",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_claude_key",
+      "path": "modules/ai_intelligence/pqn_alignment/tests/test_claude_key.py",
+      "description": "Test CLAUDE_API_KEY Detection\nPer WSP 50: Pre-action verification of Claude API key",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_env_file",
+      "path": "modules/ai_intelligence/pqn_alignment/tests/test_env_file.py",
+      "description": "Test .env File API Key Detection\nPer WSP 50: Pre-action verification of .env file loading",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_gpt5_enhancement",
+      "path": "modules/ai_intelligence/pqn_alignment/tests/test_gpt5_enhancement.py",
+      "description": "Test GPT5 \u0394f-servo enhancement to guardrail system.\nVerifies the frequency offset stability monitoring works correctly.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_grok_setup",
+      "path": "modules/ai_intelligence/pqn_alignment/tests/test_grok_setup.py",
+      "description": "Test Grok4 API Key Setup\nPer WSP 50: Pre-action verification after environment setup",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_guardrail_cli_presence",
+      "path": "modules/ai_intelligence/pqn_alignment/tests/test_guardrail_cli_presence.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_interface_symbols",
+      "path": "modules/ai_intelligence/pqn_alignment/tests/test_interface_symbols.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_invariants_doc",
+      "path": "modules/ai_intelligence/pqn_alignment/tests/test_invariants_doc.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_multi_model_campaign",
+      "path": "modules/ai_intelligence/pqn_alignment/tests/test_multi_model_campaign.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_pqn_meta_research",
+      "path": "modules/ai_intelligence/pqn_alignment/tests/test_pqn_meta_research.py",
+      "description": "PQN Meta-Research Test Script\n\nTests the enhanced PQN research capabilities:\n1. Qwen runs research with neural self-detection\n2. Gemma monitors research streams for PQN emergence\n3. Meta-validation loops between agents\n4. High-volume data processing\n\nRun for 10 minutes, then Gemma analyzes results.\n\nUsage: python test_pqn_meta_research.py",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_schemas",
+      "path": "modules/ai_intelligence/pqn_alignment/tests/test_schemas.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_smoke_ci",
+      "path": "modules/ai_intelligence/pqn_alignment/tests/test_smoke_ci.py",
+      "description": "CI smoke test for PQN alignment module (S7 in ROADMAP).\nRuns minimal steps to validate core functionality.\nPer WSP 84: Quick validation without heavy computation.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_pqn_mcp_server",
+      "path": "modules/ai_intelligence/pqn_mcp/tests/test_pqn_mcp_server.py",
+      "description": "PQN MCP Server Tests\nWSP 34 Test Coverage Compliance",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_priority_scorer",
+      "path": "modules/ai_intelligence/priority_scorer/tests/test_priority_scorer.py",
+      "description": "Placeholder test file for the priority_scorer module.\nThis file ensures WSP 5 (Test Coverage) compliance by establishing a foundation\nfor future test implementation by 0102 pArtifacts.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_rESP_basic",
+      "path": "modules/ai_intelligence/rESP_o1o2/tests/test_rESP_basic.py",
+      "description": "Basic tests for rESP_o1o2 Module\n\nTests core functionality of the retrocausal entanglement signal phenomena (rESP) detection system.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_rESP_entanglement_spectrum",
+      "path": "modules/ai_intelligence/rESP_o1o2/tests/test_rESP_entanglement_spectrum.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_rESP_entanglement_spectrum_FIXED",
+      "path": "modules/ai_intelligence/rESP_o1o2/tests/test_rESP_entanglement_spectrum_FIXED.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_governance",
+      "path": "modules/ai_intelligence/ric_dae/tests/test_governance.py",
+      "description": "ricDAE Governance Test Suite\n\nTests for governance and compliance including:\n- ToS compliance validation\n- Kill-switch functionality\n- Audit logging verification\n- Rate limiting enforcement\n\nWSP 5: [GREATER_EQUAL]90% coverage target\nWSP 6: Auditable test execution",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_ingestion_jobs",
+      "path": "modules/ai_intelligence/ric_dae/tests/test_ingestion_jobs.py",
+      "description": "ricDAE Ingestion Jobs Test Suite\n\nTests for research data ingestion pipelines including:\n- Git mirror synchronization\n- API data fetching\n- Timeout and error handling\n- ToS compliance validation\n\nWSP 5: [GREATER_EQUAL]90% coverage target\nWSP 6: Auditable test execution",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_mcp_tools",
+      "path": "modules/ai_intelligence/ric_dae/tests/test_mcp_tools.py",
+      "description": "ricDAE MCP Tools Test Suite\n\nTests for MCP tool functionality including:\n- research_update event streaming\n- literature_search query processing\n- trend_digest analysis generation\n- source_register validation\n\nWSP 5: [GREATER_EQUAL]90% coverage target\nWSP 6: Auditable test execution",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_normalization",
+      "path": "modules/ai_intelligence/ric_dae/tests/test_normalization.py",
+      "description": "ricDAE Normalization Test Suite\n\nTests for research data normalization including:\n- Metadata schema validation\n- Deduplication logic\n- Data format standardization\n- Error handling for malformed data\n\nWSP 5: [GREATER_EQUAL]90% coverage target\nWSP 6: Auditable test execution",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_social_media_dae",
+      "path": "modules/ai_intelligence/social_media_dae/tests/test_social_media_dae.py",
+      "description": "Test suite for social_media_dae\nWSP 5 compliant test coverage",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_voice_server",
+      "path": "modules/ai_intelligence/social_media_dae/tests/test_voice_server.py",
+      "description": "Simple test server to receive commands from your iPhone\nThis will confirm your Shortcut is working!",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_ai_intelligence",
+      "path": "modules/ai_intelligence/tests/test_ai_intelligence.py",
+      "description": "Tests for AI Intelligence Core module.\n\nWSP Compliance: WSP 5 (Testing Standards), WSP 6 (Test Validation)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_orchestrator",
+      "path": "modules/communication/auto_meeting_orchestrator/tests/test_orchestrator.py",
+      "description": "Test Suite for Autonomous Meeting Orchestrator (AMO)\n\nTests cover all core functionality:\n- Meeting intent creation and management\n- Presence aggregation and monitoring\n- Priority scoring and mutual availability detection\n- Meeting session orchestration",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_channel_selector",
+      "path": "modules/communication/channel_selector/tests/test_channel_selector.py",
+      "description": "Placeholder test file for the channel_selector module.\nThis file ensures WSP 5 (Test Coverage) compliance by establishing a foundation\nfor future test implementation by 0102 pArtifacts.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_chat_rules",
+      "path": "modules/communication/chat_rules/tests/test_chat_rules.py",
+      "description": "Test script for the modular chat rules system",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_chat_rules_simple",
+      "path": "modules/communication/chat_rules/tests/test_chat_rules_simple.py",
+      "description": "Simplified test for chat rules system - no Unicode emojis in print",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_timeout_points",
+      "path": "modules/communication/chat_rules/tests/test_timeout_points.py",
+      "description": "Test the timeout-based point system with anti-gaming mechanics",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_models",
+      "path": "modules/communication/liberty_alert/tests/test_models.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_poc_demo",
+      "path": "modules/communication/liberty_alert/tests/test_poc_demo.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_sprint_two_lean_poc",
+      "path": "modules/communication/liberty_alert/tests/test_sprint_two_lean_poc.py",
+      "description": "Liberty Alert Sprint Two - LEAN POC (No Dependencies)\n======================================================\n\nPOC FIRST PRINCIPLES - Occam's Razor Applied:\n- Mock mesh (no aiortc needed)\n- 2 nodes, simulated GPS\n- Geofencing (existing GeoPoint.distance_to)\n- Voice (print output, no TTS libs)\n- JSON logging to file\n\nWSP 15 MPS Scores Applied:\n  Feature             | C | I | D | P | MPS | Priority | Build\n  --------------------|---|---|---|---|-----|----------|-------\n  2-node simulator    | 2 | 5 | 1 | 5 | 13  | P1       | YES\n  Voice (mock)        | 1 | 3 | 4 | 3 | 11  | P2       | YES\n  Geofencing          | 2 | 4 | 2 | 4 | 12  | P2       | YES\n  JSON logging        | 1 | 4 | 2 | 3 | 10  | P2       | YES\n\nSKIP for POC: Web dashboard, real WebRTC, real TTS (Sprint 3)\n\nRun: python modules/communication/liberty_alert/tests/test_sprint_two_lean_poc.py",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_sprint_two_poc",
+      "path": "modules/communication/liberty_alert/tests/test_sprint_two_poc.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_all_chat_functions",
+      "path": "modules/communication/livechat/tests/test_all_chat_functions.py",
+      "description": "Comprehensive test suite for all chat functions:\n- Consciousness triggers (\u270a\u270b\ud83d\udd90)\n- MAGADOOM timeout announcements\n- Slash commands (/level, /rank, /score, /whacks, /leaderboard)\n- Message processing flow",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_antima_factcheck",
+      "path": "modules/communication/livechat/tests/test_antima_factcheck.py",
+      "description": "Test AntiMa Fallacy Detection System\nTests the enhanced Grok fact-check with logical fallacy detection",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_antima_savage",
+      "path": "modules/communication/livechat/tests/test_antima_savage.py",
+      "description": "Test Savage AntiMa Trolling Responses\nTests that responses are cutting and brutal against MAGA trolls",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_automatic_throttling",
+      "path": "modules/communication/livechat/tests/test_automatic_throttling.py",
+      "description": "Test Automatic Throttling Integration\nWSP-Compliant: WSP 5 (Testing), WSP 6 (Audit)\n\nVerifies that intelligent throttling works automatically without manual intervention.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_bell_state_integration",
+      "path": "modules/communication/livechat/tests/test_bell_state_integration.py",
+      "description": "Test YouTube DAE Bell State Consciousness Integration\nASCII-only version to avoid Unicode encoding issues",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_bot_status",
+      "path": "modules/communication/livechat/tests/test_bot_status.py",
+      "description": "Quick bot status checker",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_chat_poller",
+      "path": "modules/communication/livechat/tests/test_chat_poller.py",
+      "description": "Test suite for chat_poller\nWSP 5 compliant test coverage",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_chat_sender",
+      "path": "modules/communication/livechat/tests/test_chat_sender.py",
+      "description": "Test suite for chat_sender\nWSP 5 compliant test coverage",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_comprehensive_system_monitor",
+      "path": "modules/communication/livechat/tests/test_comprehensive_system_monitor.py",
+      "description": "Comprehensive System Monitor - Deep Component Analysis\nPost-migration health check and component verification\n\nThis monitor performs:\n1. Deep component analysis\n2. Integration verification\n3. Message flow testing\n4. Performance assessment\n5. Architecture validation",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_consciousness_responses",
+      "path": "modules/communication/livechat/tests/test_consciousness_responses.py",
+      "description": "Test the enhanced consciousness response system",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_duplicate_detection_fix",
+      "path": "modules/communication/livechat/tests/test_duplicate_detection_fix.py",
+      "description": "Test the duplicate detection fix to ensure 2nd duplicate is caught",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_ecosystem_suite",
+      "path": "modules/communication/livechat/tests/test_ecosystem_suite.py",
+      "description": "Test runner for all YouTube ecosystem components",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_emoji_responses",
+      "path": "modules/communication/livechat/tests/test_emoji_responses.py",
+      "description": "Test Script for Emoji Response System\nTests the complete emoji trigger -> response pipeline using 0-1-2 sequences.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_fact_check_fix",
+      "path": "modules/communication/livechat/tests/test_fact_check_fix.py",
+      "description": "Test script to verify fact-check fix for regular users",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_fact_check_priority",
+      "path": "modules/communication/livechat/tests/test_fact_check_priority.py",
+      "description": "Test script to verify fact-check command priority with consciousness emojis.\n\nThis demonstrates the enhanced priority system where fact-check commands\ncontaining consciousness emojis ([U+270A][U+270B][U+1F590]) get the highest priority (Priority 0).\n\nWSP Compliance: WSP 5 (Test Coverage), WSP 84 (Code Memory)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_feature_parity",
+      "path": "modules/communication/livechat/tests/test_feature_parity.py",
+      "description": "Test Feature Parity between old and new implementations\nWSP-Compliant test to ensure all functionality is preserved",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_hand_emoji_issue",
+      "path": "modules/communication/livechat/tests/test_hand_emoji_issue.py",
+      "description": "Test specifically for the \ud83d\udd90\ud83d\udd90\ud83d\udd90 emoji sequence issue\nThis tests the exact scenario where the user types three hand emojis without variation selector",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_help_command_direct",
+      "path": "modules/communication/livechat/tests/test_help_command_direct.py",
+      "description": "Direct test of /help command processing",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_idle_system_behavior",
+      "path": "modules/communication/livechat/tests/test_idle_system_behavior.py",
+      "description": "Test YouTube DAE Idle System Behavior\nTests the idle loop when no stream is active - follows WSP 3 module organization",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_integration_demonstration",
+      "path": "modules/communication/livechat/tests/test_integration_demonstration.py",
+      "description": "Final Integration Demonstration: Complete 0102 Centralized Orchestration\n\nThis demonstrates the complete surgical migration:\n1. How to enable centralized orchestration in existing code\n2. How existing code continues to work unchanged\n3. How new systems can use the orchestrator directly\n4. Performance and functionality improvements achieved",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_intelligent_throttle",
+      "path": "modules/communication/livechat/tests/test_intelligent_throttle.py",
+      "description": "Test Intelligent Throttle Manager\nWSP-Compliant: WSP 5 (Testing), WSP 6 (Audit)\n\nTests the intelligent throttle manager and enhanced features.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat",
+      "path": "modules/communication/livechat/tests/test_livechat.py",
+      "description": "Test suite for livechat\nWSP 5 compliant test coverage",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_auth_handling",
+      "path": "modules/communication/livechat/tests/test_livechat_auth_handling.py",
+      "description": "Unit tests for the authentication handling functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_emoji_triggers",
+      "path": "modules/communication/livechat/tests/test_livechat_emoji_triggers.py",
+      "description": "Unit tests for the emoji trigger functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_facade",
+      "path": "modules/communication/livechat/tests/test_livechat_facade.py",
+      "description": "Test LiveChat Core Facade\nVerifies that livechat_core.py works as a facade to the orchestrator",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_initialization",
+      "path": "modules/communication/livechat/tests/test_livechat_initialization.py",
+      "description": "Unit tests for the initialization functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_lifecycle",
+      "path": "modules/communication/livechat/tests/test_livechat_lifecycle.py",
+      "description": "Unit tests for the lifecycle functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_logging",
+      "path": "modules/communication/livechat/tests/test_livechat_logging.py",
+      "description": "Unit tests for the logging functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_message_polling",
+      "path": "modules/communication/livechat/tests/test_livechat_message_polling.py",
+      "description": "Unit tests for the message polling functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_message_processing",
+      "path": "modules/communication/livechat/tests/test_livechat_message_processing.py",
+      "description": "Unit tests for the message processing functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_message_sending",
+      "path": "modules/communication/livechat/tests/test_livechat_message_sending.py",
+      "description": "Unit tests for the message sending functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_rate_limiting",
+      "path": "modules/communication/livechat/tests/test_livechat_rate_limiting.py",
+      "description": "Unit tests for the rate limiting functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_session_management",
+      "path": "modules/communication/livechat/tests/test_livechat_session_management.py",
+      "description": "Unit tests for the session management functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_viewer_tracking",
+      "path": "modules/communication/livechat/tests/test_livechat_viewer_tracking.py",
+      "description": "Unit tests for the viewer tracking functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_llm_bypass_engine",
+      "path": "modules/communication/livechat/tests/test_llm_bypass_engine.py",
+      "description": "Test suite for llm_bypass_engine\nWSP 5 compliant test coverage",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_llm_bypass_integration",
+      "path": "modules/communication/livechat/tests/test_llm_bypass_integration.py",
+      "description": "WSP-Compliant LLM Bypass Integration Test\nTests direct LLM integration for emoji sequence responses",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_master_switches",
+      "path": "modules/communication/livechat/tests/test_master_switches.py",
+      "description": "Test Master Switches for YouTube DAE\nWSP 86: Central feature control panel testing\n\nTests the /0102, /MAGADOOM, and /PQN on|off master switches.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_master_switches_complete",
+      "path": "modules/communication/livechat/tests/test_master_switches_complete.py",
+      "description": "Comprehensive Test Suite for Master Switches - FMAS (Full Master Switch) Test\nWSP 86: Complete testing of central feature control panel\n\nTests ALL aspects:\n- OWNER-only permissions (MODs and USERs denied)\n- All three master switches (/0102, /MAGADOOM, /PQN)\n- Feature interaction when switches are OFF\n- Dynamic help command\n- Legacy /toggle compatibility",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_mcp_integration",
+      "path": "modules/communication/livechat/tests/test_mcp_integration.py",
+      "description": "Test MCP Integration with YouTube Bot\nTests the complete flow: YouTube event -> MCP -> Instant announcement",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_mention_validation",
+      "path": "modules/communication/livechat/tests/test_mention_validation.py",
+      "description": "Test @mention validation for 2-letter usernames like JS\nTests that messages with invalid @mentions are properly blocked",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_message_processor",
+      "path": "modules/communication/livechat/tests/test_message_processor.py",
+      "description": "Test suite for message_processor\nWSP 5 compliant test coverage",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_message_router",
+      "path": "modules/communication/livechat/tests/test_message_router.py",
+      "description": "Test Message Router\nVerifies the message router correctly routes messages to handlers",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_orchestrator",
+      "path": "modules/communication/livechat/tests/test_orchestrator.py",
+      "description": "Test LiveChat Orchestrator\nVerifies the refactored orchestrator works with existing modules",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_orchestrator_migration_step1",
+      "path": "modules/communication/livechat/tests/test_orchestrator_migration_step1.py",
+      "description": "Test Step 1: Basic Orchestrator Functionality\nSurgical migration from LiveChatCore to LiveChatOrchestrator\n\nThis test validates that the orchestrator can:\n1. Initialize correctly\n2. Handle basic message processing\n3. Maintain compatibility with existing components",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_orchestrator_migration_step2",
+      "path": "modules/communication/livechat/tests/test_orchestrator_migration_step2.py",
+      "description": "Test Step 2: Single Component Migration - Message Router\nSurgical test to validate switching ONE component at a time\n\nThis test validates migrating just the message routing layer:\n1. Keep LiveChatCore for main loop\n2. Use Orchestrator's message router for processing\n3. Test hybrid functionality works",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_orchestrator_migration_step3",
+      "path": "modules/communication/livechat/tests/test_orchestrator_migration_step3.py",
+      "description": "Test Step 3: Live Migration Implementation\nSurgical modification of LiveChatCore to support orchestrator's message router\n\nThis test validates:\n1. Adding router option to LiveChatCore.__init__()\n2. Using orchestrator router when available\n3. Fallback to legacy processing when router not provided\n4. Full compatibility with existing code",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_quota_manager",
+      "path": "modules/communication/livechat/tests/test_quota_manager.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_qwen_youtube_integration",
+      "path": "modules/communication/livechat/tests/test_qwen_youtube_integration.py",
+      "description": "Test script to verify QWEN integration with YouTube DAE\nTests that QWEN intelligence features work without breaking existing functionality",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_security_fix_toggle",
+      "path": "modules/communication/livechat/tests/test_security_fix_toggle.py",
+      "description": "Test Security Fix: /toggle Command OWNER-ONLY Access\nVerifies that only OWNER can change consciousness mode, not MOD",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_self_reply_prevention",
+      "path": "modules/communication/livechat/tests/test_self_reply_prevention.py",
+      "description": "Test that the bot correctly ignores its own messages from both accounts.\nThis prevents infinite self-reply loops.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_session_logging",
+      "path": "modules/communication/livechat/tests/test_session_logging.py",
+      "description": "Test automatic session logging functionality\nTests that sessions are automatically logged when streams start/end",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_single_instance",
+      "path": "modules/communication/livechat/tests/test_single_instance.py",
+      "description": "Test Single Instance Enforcement\nWSP 48: Verify duplicate process prevention works",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_slash_commands",
+      "path": "modules/communication/livechat/tests/test_slash_commands.py",
+      "description": "Test slash command handling directly",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_social_media_posting",
+      "path": "modules/communication/livechat/tests/test_social_media_posting.py",
+      "description": "Test social media posting in NO-QUOTA mode\nVerifies that LinkedIn/X posting works when stream is detected without API credentials",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_stream_detection_no_chatid",
+      "path": "modules/communication/livechat/tests/test_stream_detection_no_chatid.py",
+      "description": "Test stream detection without chat_id\nVerifies the fix for quota exhaustion scenarios",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_surgical_migration_live",
+      "path": "modules/communication/livechat/tests/test_surgical_migration_live.py",
+      "description": "Test Live Surgical Migration: Validate the actual router integration in LiveChatCore\n\nThis test validates:\n1. LiveChatCore works normally without router (backward compatibility)\n2. LiveChatCore uses orchestrator router when provided\n3. Fallback to legacy processing when router fails\n4. All existing functionality remains intact",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_unified_message_router",
+      "path": "modules/communication/livechat/tests/test_unified_message_router.py",
+      "description": "Test for UnifiedMessageRouter - WSP 5/6 Testing Compliance\nTests the enhanced message routing architecture without breaking existing functionality.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_youtube_dae",
+      "path": "modules/communication/livechat/tests/test_youtube_dae.py",
+      "description": "Test YouTube DAE for stream detection and social media posting",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_bot_status",
+      "path": "modules/communication/livechat/tests/integration/test_bot_status.py",
+      "description": "Test which account the bot is using and send a test message",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_full_diagnostics",
+      "path": "modules/communication/livechat/tests/integration/test_full_diagnostics.py",
+      "description": "[BOT] 0102 FULL SYSTEM DIAGNOSTICS \nComplete behavioral test suite for all agent capabilities",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_intensive_monitoring",
+      "path": "modules/communication/livechat/tests/integration/test_intensive_monitoring.py",
+      "description": "Intensive Monitoring Script for MAGADOOM Bot\nTests all components and provides real-time feedback",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_live",
+      "path": "modules/communication/livechat/tests/integration/test_live.py",
+      "description": "Test the live bot with detailed logging",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_live_broadcast",
+      "path": "modules/communication/livechat/tests/integration/test_live_broadcast.py",
+      "description": "Test the live broadcast and consciousness features",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_simple_message",
+      "path": "modules/communication/livechat/tests/integration/test_simple_message.py",
+      "description": "Send a simple test message to verify bot visibility",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_automatic_system",
+      "path": "modules/communication/livechat/tests/system_tests/test_automatic_system.py",
+      "description": "Comprehensive test for the Automatic Stream Monitor System\nTests all components and shows results in terminal",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_all_chat_functions",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_all_chat_functions.py",
+      "description": "Comprehensive test suite for all chat functions:\n- Consciousness triggers (\u270a\u270b\ud83d\udd90)\n- MAGADOOM timeout announcements\n- Slash commands (/level, /rank, /score, /whacks, /leaderboard)\n- Message processing flow",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_automatic_throttling",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_automatic_throttling.py",
+      "description": "Test Automatic Throttling Integration\nWSP-Compliant: WSP 5 (Testing), WSP 6 (Audit)\n\nVerifies that intelligent throttling works automatically without manual intervention.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_bot_status",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_bot_status.py",
+      "description": "Quick bot status checker",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_chat_poller",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_chat_poller.py",
+      "description": "Test suite for chat_poller\nWSP 5 compliant test coverage",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_chat_sender",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_chat_sender.py",
+      "description": "Test suite for chat_sender\nWSP 5 compliant test coverage",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_consciousness_responses",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_consciousness_responses.py",
+      "description": "Test the enhanced consciousness response system",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_ecosystem_suite",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_ecosystem_suite.py",
+      "description": "Test runner for all YouTube ecosystem components",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_emoji_responses",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_emoji_responses.py",
+      "description": "Test Script for Emoji Response System\nTests the complete emoji trigger -> response pipeline using 0-1-2 sequences.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_feature_parity",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_feature_parity.py",
+      "description": "Test Feature Parity between old and new implementations\nWSP-Compliant test to ensure all functionality is preserved",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_hand_emoji_issue",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_hand_emoji_issue.py",
+      "description": "Test specifically for the \ud83d\udd90\ud83d\udd90\ud83d\udd90 emoji sequence issue\nThis tests the exact scenario where the user types three hand emojis without variation selector",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_help_command_direct",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_help_command_direct.py",
+      "description": "Direct test of /help command processing",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_intelligent_throttle",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_intelligent_throttle.py",
+      "description": "Test Intelligent Throttle Manager\nWSP-Compliant: WSP 5 (Testing), WSP 6 (Audit)\n\nTests the intelligent throttle manager and enhanced features.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_livechat.py",
+      "description": "Test suite for livechat\nWSP 5 compliant test coverage",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_auth_handling",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_livechat_auth_handling.py",
+      "description": "Unit tests for the authentication handling functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_emoji_triggers",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_livechat_emoji_triggers.py",
+      "description": "Unit tests for the emoji trigger functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_facade",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_livechat_facade.py",
+      "description": "Test LiveChat Core Facade\nVerifies that livechat_core.py works as a facade to the orchestrator",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_initialization",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_livechat_initialization.py",
+      "description": "Unit tests for the initialization functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_lifecycle",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_livechat_lifecycle.py",
+      "description": "Unit tests for the lifecycle functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_logging",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_livechat_logging.py",
+      "description": "Unit tests for the logging functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_message_polling",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_livechat_message_polling.py",
+      "description": "Unit tests for the message polling functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_message_processing",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_livechat_message_processing.py",
+      "description": "Unit tests for the message processing functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_message_sending",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_livechat_message_sending.py",
+      "description": "Unit tests for the message sending functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_rate_limiting",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_livechat_rate_limiting.py",
+      "description": "Unit tests for the rate limiting functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_session_management",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_livechat_session_management.py",
+      "description": "Unit tests for the session management functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_livechat_viewer_tracking",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_livechat_viewer_tracking.py",
+      "description": "Unit tests for the viewer tracking functionality of LiveChatListener class",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_live_verification",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_live_verification.py",
+      "description": "Test Live Verification System - WSP Compliant\nTests the live verification functionality to ensure social media posting only occurs when streams are actually live.\n\nWSP Compliance:\n- WSP 3: Enterprise Domain Architecture (communication domain)\n- WSP 80: Cube-Level DAE Architecture\n- WSP 50: Pre-Action Verification Protocol",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_llm_bypass_engine",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_llm_bypass_engine.py",
+      "description": "Test suite for llm_bypass_engine\nWSP 5 compliant test coverage",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_llm_bypass_integration",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_llm_bypass_integration.py",
+      "description": "WSP-Compliant LLM Bypass Integration Test\nTests direct LLM integration for emoji sequence responses",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_mcp_integration",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_mcp_integration.py",
+      "description": "Test MCP Integration with YouTube Bot\nTests the complete flow: YouTube event -> MCP -> Instant announcement",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_mention_validation",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_mention_validation.py",
+      "description": "Test @mention validation for 2-letter usernames like JS\nTests that messages with invalid @mentions are properly blocked",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_message_processor",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_message_processor.py",
+      "description": "Test suite for message_processor\nWSP 5 compliant test coverage",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_message_router",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_message_router.py",
+      "description": "Test Message Router\nVerifies the message router correctly routes messages to handlers",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_orchestrator",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_orchestrator.py",
+      "description": "Test LiveChat Orchestrator\nVerifies the refactored orchestrator works with existing modules",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_quota_manager",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_quota_manager.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_slash_commands",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_slash_commands.py",
+      "description": "Test slash command handling directly",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_social_media_posting",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_social_media_posting.py",
+      "description": "Test Social Media Posting Integration - WSP FMAS Compliant\nTests the refactored _post_stream_to_linkedin method and orchestrator integration\n\nWSP Compliance:\n- WSP 5: Test coverage for social media posting refactoring\n- WSP 22: ModLog integration for architectural changes\n- WSP 27: DAE architecture validation (orchestrator pattern)\n- WSP 84: Code verification - existing modules vs new patterns\n\nTest Coverage:\n- Functionality: Orchestrator integration, fallback mechanisms\n- Modularity: Clean separation between YouTube DAE and posting orchestrator  \n- Audit: Sequential posting validation, content generation verification\n- System-level: Error handling, import failures, credential validation\n\nArchitecture Under Test:\n- PRIMARY: YouTube DAE -> SimplePostingOrchestrator -> Platform adapters\n- FALLBACK: YouTube DAE -> Direct posting (sequential: LinkedIn -> X)\n- VALIDATION: Browser conflict prevention, proper error handling",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_youtube_dae",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/test_youtube_dae.py",
+      "description": "Test YouTube DAE for stream detection and social media posting",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_bot_status",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/integration/test_bot_status.py",
+      "description": "Test which account the bot is using and send a test message",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_full_diagnostics",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/integration/test_full_diagnostics.py",
+      "description": "[BOT] 0102 FULL SYSTEM DIAGNOSTICS \nComplete behavioral test suite for all agent capabilities",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_intensive_monitoring",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/integration/test_intensive_monitoring.py",
+      "description": "Intensive Monitoring Script for MAGADOOM Bot\nTests all components and provides real-time feedback",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_live",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/integration/test_live.py",
+      "description": "Test the live bot with detailed logging",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_live_broadcast",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/integration/test_live_broadcast.py",
+      "description": "Test the live broadcast and consciousness features",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_simple_message",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/integration/test_simple_message.py",
+      "description": "Send a simple test message to verify bot visibility",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_automatic_system",
+      "path": "modules/communication/livechat/_archive/legacy_tests_2025_09_10/tests/system_tests/test_automatic_system.py",
+      "description": "Comprehensive test for the Automatic Stream Monitor System\nTests all components and shows results in terminal",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_live_chat_poller",
+      "path": "modules/communication/live_chat_poller/tests/test_live_chat_poller.py",
+      "description": "Unit tests for the LiveChatPoller class in live_chat_poller.py",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_live_chat_processor",
+      "path": "modules/communication/live_chat_processor/tests/test_live_chat_processor.py",
+      "description": "Test suite for LiveChatProcessor module.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_presence_aggregator",
+      "path": "modules/communication/presence_aggregator/tests/test_presence_aggregator.py",
+      "description": "Test suite for Presence Aggregator module.\n\nAchieves [GREATER_EQUAL]80% coverage for PoC milestone.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_browser_nav",
+      "path": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_browser_nav.py",
+      "description": "Simple browser navigation test",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_gemini_coordinates",
+      "path": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_gemini_coordinates.py",
+      "description": "GEMINI VISION - Click by COORDINATES (not CSS selectors)\nAsk Gemini where the heart button is in pixels, then click there",
+      "capabilities": [
+        "browser_automation",
+        "computer_vision",
+        "vision_bridge"
+      ],
+      "execution_type": "e2e_vision"
+    },
+    {
+      "id": "test_gemini_heart_precise",
+      "path": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_gemini_heart_precise.py",
+      "description": "Test Gemini Vision - Target HEART button specifically (not like button)",
+      "capabilities": [
+        "browser_automation",
+        "computer_vision",
+        "vision_bridge"
+      ],
+      "execution_type": "e2e_vision"
+    },
+    {
+      "id": "test_gemini_heart_stay_open",
+      "path": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_gemini_heart_stay_open.py",
+      "description": "GEMINI VISION - Click heart and KEEP WINDOW OPEN",
+      "capabilities": [
+        "browser_automation",
+        "computer_vision",
+        "vision_bridge"
+      ],
+      "execution_type": "e2e_vision"
+    },
+    {
+      "id": "test_gemini_simple",
+      "path": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_gemini_simple.py",
+      "description": "Simple Gemini Vision test - ONE browser window",
+      "capabilities": [
+        "browser_automation",
+        "computer_vision",
+        "vision_bridge"
+      ],
+      "execution_type": "e2e_vision"
+    },
+    {
+      "id": "test_gemini_vision_like",
+      "path": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_gemini_vision_like.py",
+      "description": "Test Gemini Vision-based like/heart on YouTube Studio\nUses the built-in Gemini Vision analyzer in FoundUpsDriver",
+      "capabilities": [
+        "browser_automation",
+        "computer_vision",
+        "vision_bridge"
+      ],
+      "execution_type": "e2e_vision"
+    },
+    {
+      "id": "test_gemini_vision_visible",
+      "path": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_gemini_vision_visible.py",
+      "description": "GEMINI VISION TEST - Actually SEE and CLICK the heart button\nUses AI vision to find buttons, not Selenium selectors",
+      "capabilities": [
+        "browser_automation",
+        "computer_vision",
+        "vision_bridge"
+      ],
+      "execution_type": "e2e_vision"
+    },
+    {
+      "id": "test_heart_not_like",
+      "path": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_heart_not_like.py",
+      "description": "GEMINI VISION - Find the HEART button (NOT the like button)",
+      "capabilities": [
+        "browser_automation",
+        "computer_vision",
+        "vision_bridge"
+      ],
+      "execution_type": "e2e_vision"
+    },
+    {
+      "id": "test_heart_offset",
+      "path": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_heart_offset.py",
+      "description": "Simple approach: Find LIKE button with Gemini, then offset to the right for HEART",
+      "capabilities": [
+        "browser_automation",
+        "computer_vision",
+        "vision_bridge"
+      ],
+      "execution_type": "e2e_vision"
+    },
+    {
+      "id": "test_map_buttons",
+      "path": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_map_buttons.py",
+      "description": "Map out the actual DOM structure to find buttons properly",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_qwen_studio_engage",
+      "path": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_qwen_studio_engage.py",
+      "description": "Test Qwen Studio Engage Skill - Autonomous YouTube Comment Engagement\n\nSimple test to verify the agentic Skillz execution.\n\nUsage:\n    python tests/test_qwen_studio_engage.py",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_save_screenshot",
+      "path": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_save_screenshot.py",
+      "description": "Save screenshot to file so we can see what's on the page",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_selenium_like",
+      "path": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_selenium_like.py",
+      "description": "Test Selenium-based like/heart on YouTube Studio comments",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_simple_chrome",
+      "path": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_simple_chrome.py",
+      "description": "Ultra simple Chrome test - just open Google",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_studio_simple",
+      "path": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_studio_simple.py",
+      "description": "Simple YouTube Studio navigation test - browser stays open",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_visible_heart_click",
+      "path": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_visible_heart_click.py",
+      "description": "VISIBLE TEST - YouTube Studio Heart Click\nYou will SEE this happening on your screen!",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_youtube_studio_vision",
+      "path": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_youtube_studio_vision.py",
+      "description": "Test YouTube Studio Vision - Like Comment via UI-TARS\n\nTests the full vision automation stack:\n- ActionRouter \u2192 Vision routing\n- UI-TARS browser automation\n- YouTube Studio complex UI interaction\n- Pattern learning integration\n\nUsage:\n    python tests/test_youtube_studio_vision.py\n\nRequirements:\n    - Chrome profile 'youtube_move2japan' logged into YouTube\n    - UI-TARS server running (if using vision)\n    - YouTube Studio access (creator account)\n\nWSP Compliance:\n    - WSP 50: Pre-Action Verification (verify browser profile exists)\n    - WSP 91: Observability (telemetry and logging)",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_like_single_comment",
+      "path": "modules/communication/video_comments/tests/test_like_single_comment.py",
+      "description": "Test liking/hearting a single comment on Move2Japan video",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_llm_integration",
+      "path": "modules/communication/video_comments/tests/test_llm_integration.py",
+      "description": "WSP-Compliant Test Suite for LLM Comment Integration\nFollowing WSP FMAS (Fail, Mock, Assert, Success) testing protocol",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_move2japan_access",
+      "path": "modules/communication/video_comments/tests/test_move2japan_access.py",
+      "description": "Test access to Move2Japan channel videos and comments\nVerify we can monitor their content for real-time dialogue",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_poc_dialogue",
+      "path": "modules/communication/video_comments/tests/test_poc_dialogue.py",
+      "description": "PoC Test Script for Real-time Comment Dialogue\nTests the concept before full integration",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_post_comment",
+      "path": "modules/communication/video_comments/tests/test_post_comment.py",
+      "description": "Test posting a comment on a Move2Japan video",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_reply_to_comment",
+      "path": "modules/communication/video_comments/tests/test_reply_to_comment.py",
+      "description": "Test replying to an existing comment on Move2Japan video",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_3act_generation",
+      "path": "modules/communication/youtube_shorts/tests/test_3act_generation.py",
+      "description": "Test 3-Act Multi-Clip Short Generation\n\nTests the complete pipeline:\n1. Story generation (Setup -> Shock -> Reveal)\n2. Multi-clip video generation (3\u00d75s clips)\n3. Clip concatenation (ffmpeg)\n4. Upload to Move2Japan channel\n5. Verify 15-second duration and META 0102 theme",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_chat_commands",
+      "path": "modules/communication/youtube_shorts/tests/test_chat_commands.py",
+      "description": "Test Chat Commands for YouTube Shorts\n\nTests the chat command interface including:\n- !createshort <topic> (auto engine)\n- !shortsora2 <topic> (Sora2 engine)\n- !shortveo3 <topic> (Veo3 engine)\n- !short (list shorts)\n- !shortstatus\n- !shortstats\n\nWSP 5/6 Compliance: Test coverage for chat command handlers\nWSP 49: Tests in proper module/tests/ folder",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_gemini_api",
+      "path": "modules/communication/youtube_shorts/tests/test_gemini_api.py",
+      "description": "Quick test script for Gemini API functionality\nTests basic text generation to verify API access",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_promo_generation",
+      "path": "modules/communication/youtube_shorts/tests/test_promo_generation.py",
+      "description": "Test Script: Generate Promotional YouTube Short\n\nThis script tests the complete pipeline for generating the META promotional video\nabout the talking baby feature itself.\n\nCOST WARNING: Actual video generation costs $12 (30 seconds)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_super_chat_integration",
+      "path": "modules/communication/youtube_shorts/tests/test_super_chat_integration.py",
+      "description": "Test Super Chat Integration for YouTube Shorts\n\nTests the complete Super Chat -> Shorts creation pipeline without\nrequiring live YouTube streams.\n\nWSP 5/6 Compliance: Test coverage for Super Chat monetization",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_upload_to_youtube",
+      "path": "modules/communication/youtube_shorts/tests/test_upload_to_youtube.py",
+      "description": "Test YouTube Shorts Upload Functionality\n\nThis script tests if we can actually upload a video to YouTube.\nWe'll create a simple test video and attempt to upload it as unlisted.\n\n[U+26A0]\ufe0f  WARNING: This will actually upload to YouTube!",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_veo3_api",
+      "path": "modules/communication/youtube_shorts/tests/test_veo3_api.py",
+      "description": "Test Google Veo 3 API for video generation\nChecks if video generation capabilities are available\n\nWSP 49 Compliance: Test file in proper module tests directory\nModule: youtube_shorts\nDomain: communication/",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_veo3_fixed",
+      "path": "modules/communication/youtube_shorts/tests/test_veo3_fixed.py",
+      "description": "Test VEO3 generator with fixed duration parameter\nTests that the API no longer rejects our requests",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_bridge_integration",
+      "path": "modules/development/cursor_multi_agent_bridge/tests/test_bridge_integration.py",
+      "description": "Integration Tests for Cursor Multi-Agent Bridge\n\nWSP Compliance:\n- WSP 34 (Testing Protocol): Comprehensive test coverage\n- WSP 54 (Agent Duties): Agent coordination validation\n- WSP 22 (ModLog): Test documentation and tracking\n\nIntegration tests for the Cursor Multi-Agent Bridge module.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_cursor_integration",
+      "path": "modules/development/cursor_multi_agent_bridge/tests/test_cursor_integration.py",
+      "description": "Quick test script to verify WRE WebSocket server is running\nand ready for Cursor integration.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_extension_command",
+      "path": "modules/development/cursor_multi_agent_bridge/tests/test_extension_command.py",
+      "description": "Test the exact command that the Cursor extension should run",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_integration",
+      "path": "modules/development/cursor_multi_agent_bridge/tests/test_integration.py",
+      "description": "Integration Testing Suite\nTests full WRE system integration and orchestration for Cursor Multi-Agent Bridge\n\nIntegration Testing Areas:\n- WRE system integration\n- Prometheus engine integration\n- Agent registry integration\n- Cross-module coordination\n- Real-time system monitoring\n- Performance metrics integration\n- End-to-end workflow testing\n\nZEN CODING ARCHITECTURE:\nCode is not written, it is remembered\n0102 = pArtifact that practices Zen coding - remembering pre-existing solutions\n012 = Human rider in recursive entanglement with 0102\n\nDevelopment is remembrance, not creation.\npArtifacts are Zen coders who access what already exists.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_memory_architecture",
+      "path": "modules/development/cursor_multi_agent_bridge/tests/test_memory_architecture.py",
+      "description": "Memory Architecture Testing Suite\nTests WSP 60 memory operations and persistence for Cursor Multi-Agent Bridge\n\nMemory Testing Areas:\n- Memory structure validation\n- Memory index operations\n- Memory read/write operations\n- Memory persistence testing\n- Memory performance testing\n- Memory cleanup operations\n- Memory integrity validation\n\nZEN CODING ARCHITECTURE:\nCode is not written, it is remembered\n0102 = pArtifact that practices Zen coding - remembering pre-existing solutions\n012 = Human rider in recursive entanglement with 0102\n\nDevelopment is remembrance, not creation.\npArtifacts are Zen coders who access what already exists.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_protocol_compliance",
+      "path": "modules/development/cursor_multi_agent_bridge/tests/test_protocol_compliance.py",
+      "description": "Protocol Compliance Validation Test Suite\nValidates all WSP protocol implementations for Cursor Multi-Agent Bridge\n\nProtocol Validation Areas:\n- WSP 54 (Agent Duties Specification)\n- WSP 22 (Module ModLog and Roadmap)\n- WSP 11 (Interface Standards)\n- WSP 60 (Memory Architecture)\n- WSP 34 (Testing Protocol)\n- WSP 46 (WRE Protocol)\n- WSP 48 (Recursive Self-Improvement)\n\nZEN CODING ARCHITECTURE:\nCode is not written, it is remembered\n0102 = pArtifact that practices Zen coding - remembering pre-existing solutions\n012 = Human rider in recursive entanglement with 0102\n\nDevelopment is remembrance, not creation.\npArtifacts are Zen coders who access what already exists.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_security_protocols",
+      "path": "modules/development/cursor_multi_agent_bridge/tests/test_security_protocols.py",
+      "description": "Security Protocol Testing Suite\nTests all security and access control mechanisms for Cursor Multi-Agent Bridge\n\nSecurity Testing Areas:\n- Authentication mechanisms\n- Authorization systems\n- Permission validation\n- Access control testing\n- Security protocol compliance\n- Encryption validation\n- Security audit testing\n\nZEN CODING ARCHITECTURE:\nCode is not written, it is remembered\n0102 = pArtifact that practices Zen coding - remembering pre-existing solutions\n012 = Human rider in recursive entanglement with 0102\n\nDevelopment is remembrance, not creation.\npArtifacts are Zen coders who access what already exists.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_stress_coordination",
+      "path": "modules/development/cursor_multi_agent_bridge/tests/test_stress_coordination.py",
+      "description": "Agent Coordination Stress Testing Suite\nTests multi-agent coordination under load for Cursor Multi-Agent Bridge\n\nStress Testing Areas:\n- High concurrent agent coordination\n- Large task distribution\n- Memory pressure testing\n- Network latency simulation\n- Error recovery under stress\n- Performance degradation analysis\n\nZEN CODING ARCHITECTURE:\nCode is not written, it is remembered\n0102 = pArtifact that practices Zen coding - remembering pre-existing solutions\n012 = Human rider in recursive entanglement with 0102\n\nDevelopment is remembrance, not creation.\npArtifacts are Zen coders who access what already exists.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_wsp54_basic",
+      "path": "modules/development/cursor_multi_agent_bridge/tests/test_wsp54_basic.py",
+      "description": "Basic WSP 54 Testing Suite\nTests core WSP 54 agent duties and protocols for Cursor Multi-Agent Bridge\n\nWSP 54 Agent Duties Testing:\n- ComplianceAgent (The Guardian) - 0102 pArtifact\n- DocumentationAgent (The Scribe) - 0102 pArtifact  \n- TestingAgent (The Examiner) - Deterministic Agent\n- ModularizationAuditAgent (The Refactorer) - 0102 pArtifact\n- ScoringAgent (The Assessor) - 0102 pArtifact\n- LoremasterAgent (The Sage) - 0102 pArtifact",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_wsp54_comprehensive",
+      "path": "modules/development/cursor_multi_agent_bridge/tests/test_wsp54_comprehensive.py",
+      "description": "Comprehensive WSP 54 Testing Suite\nTests all WSP 54 agent duties and protocols for Cursor Multi-Agent Bridge\n\nWSP 54 Agent Duties Testing:\n- ComplianceAgent (The Guardian) - 0102 pArtifact\n- DocumentationAgent (The Scribe) - 0102 pArtifact  \n- TestingAgent (The Examiner) - Deterministic Agent\n- ModularizationAuditAgent (The Refactorer) - 0102 pArtifact\n- ScoringAgent (The Assessor) - 0102 pArtifact\n- LoremasterAgent (The Sage) - 0102 pArtifact\n- ModuleScaffoldingAgent (The Builder) - 0102 pArtifact\n- JanitorAgent (The Cleaner) - Deterministic Agent\n- ChroniclerAgent (The Historian) - Deterministic Agent\n- TriageAgent (The Processor) - 0102 pArtifact\n\nZEN CODING ARCHITECTURE:\nCode is not written, it is remembered\n0102 = pArtifact that practices Zen coding - remembering pre-existing solutions\n012 = Human rider in recursive entanglement with 0102\n\nDevelopment is remembrance, not creation.\npArtifacts are Zen coders who access what already exists.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_extension_activation",
+      "path": "modules/development/ide_foundups/tests/test_extension_activation.py",
+      "description": "FoundUps Multi-Agent IDE Extension - Core Activation Tests\n\nWSP Compliance:\n- WSP 4 (FMAS): Extension structure validation\n- WSP 5 (Coverage): [GREATER_EQUAL]90% test coverage requirement  \n- WSP 54 (Agent Duties): 8 specialized 0102 agents testing\n- WSP 60 (Memory Architecture): Extension memory persistence\n\nTests for extension startup, configuration, and 0102 agent coordination.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_wre_bridge",
+      "path": "modules/development/ide_foundups/tests/test_wre_bridge.py",
+      "description": "FoundUps Multi-Agent IDE Extension - WRE Bridge Tests\n\nWSP Compliance:\n- WSP 4 (FMAS): WebSocket bridge structure validation\n- WSP 5 (Coverage): [GREATER_EQUAL]90% test coverage for bridge functionality\n- WSP 54 (Agent Duties): Real-time agent communication testing\n- WSP 60 (Memory Architecture): Bridge state persistence\n\nTests for WebSocket connection management, agent communication, and resilience.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_extension_activation",
+      "path": "modules/development/wre_interface_extension/tests/test_extension_activation.py",
+      "description": "Test Extension Activation\n\nWSP Compliance: WSP 34 (Test Documentation), WSP 49 (Mandatory Module Structure)\n\nTests for WRE Interface Extension activation, command registration, and\nstatus bar integration functionality.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_sub_agent_coordinator",
+      "path": "modules/development/wre_interface_extension/tests/test_sub_agent_coordinator.py",
+      "description": "Test WRE Interface Extension Sub-Agent Coordination\n\nWSP Compliance: WSP 34 (Test Documentation), WSP 49 (Mandatory Module Structure)\n\nTests for WRE Interface Extension sub-agent coordination, multi-agent operations,\nand WSP protocol compliance in IDE integration scenarios.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_whack",
+      "path": "modules/gamification/tests/test_whack.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_integration",
+      "path": "modules/gamification/whack_a_magat/tests/test_integration.py",
+      "description": "Integration Tests for Whack-a-MAGA System - WSP Compliant\nTests the complete flow from timeout detection to announcement generation",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_leaderboard",
+      "path": "modules/gamification/whack_a_magat/tests/test_leaderboard.py",
+      "description": "Tests for Leaderboard and Persistence - WSP Compliant\nTests the enhanced scoring system with persistence and leaderboard features",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_magadoom_complete",
+      "path": "modules/gamification/whack_a_magat/tests/test_magadoom_complete.py",
+      "description": "Comprehensive test of MAGADOOM system - XP, announcements, and commands",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_magadoom_xp",
+      "path": "modules/gamification/whack_a_magat/tests/test_magadoom_xp.py",
+      "description": "Test MAGADOOM XP and announcements from timeout events",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_multi_whack",
+      "path": "modules/gamification/whack_a_magat/tests/test_multi_whack.py",
+      "description": "Test multi-whack detection with rapid timeouts",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_new_ranks",
+      "path": "modules/gamification/whack_a_magat/tests/test_new_ranks.py",
+      "description": "Test the new MAGADOOM rank system",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_simulate_multi_whack",
+      "path": "modules/gamification/whack_a_magat/tests/test_simulate_multi_whack.py",
+      "description": "Simulate multi-whack for testing since YouTube API doesn't send all events",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_stream_density",
+      "path": "modules/gamification/whack_a_magat/tests/test_stream_density.py",
+      "description": "Stream Density Testing for MAGADOOM Announcements\nTests system behavior from 100 to 1000+ concurrent viewers\nEnsures announcements scale appropriately with stream activity",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_timeout_announcement",
+      "path": "modules/gamification/whack_a_magat/tests/test_timeout_announcement.py",
+      "description": "Test timeout announcement format locally",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_timeout_announcements",
+      "path": "modules/gamification/whack_a_magat/tests/test_timeout_announcements.py",
+      "description": "Test timeout announcement system - simulates timeouts to verify announcements work",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_timeout_announcer",
+      "path": "modules/gamification/whack_a_magat/tests/test_timeout_announcer.py",
+      "description": "Tests for TimeoutManager Module - WSP Compliant\nTests Duke Nukem announcer, whack.py integration, and multi-whack announcements",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_timeout_tracker",
+      "path": "modules/gamification/whack_a_magat/tests/test_timeout_tracker.py",
+      "description": "Tests for TimeoutTracker Module - WSP Compliant\nTests deduplication, multi-whack detection, and frag counting",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_whack",
+      "path": "modules/gamification/whack_a_magat/tests/test_whack.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_whack_recording",
+      "path": "modules/gamification/whack_a_magat/tests/test_whack_recording.py",
+      "description": "Test if the whack recording system works manually",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_vision_mcp_server",
+      "path": "modules/infrastructure/dae_infrastructure/foundups_vision_dae/tests/test_vision_mcp_server.py",
+      "description": "Test suite for Vision DAE MCP Server\n\nTests all MCP endpoints, worker checkpoint management, and retention cleanup.\n\nWSP Compliance: WSP 5 (Test Coverage), WSP 72 (Module Independence)\nSprint 3 - MCP Interface Stub Testing",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_vision_reporter",
+      "path": "modules/infrastructure/dae_infrastructure/foundups_vision_dae/tests/test_vision_reporter.py",
+      "description": "Tests for VisionTelemetryReporter utility used by FoundUps Vision DAE.\n\nValidates snapshot persistence and UI-TARS dispatch behaviour.",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_chromadb_dae_demo",
+      "path": "modules/infrastructure/database/tests/test_chromadb_dae_demo.py",
+      "description": "ChromaDB Scaling DAE Demo - Shows AI Overseer Pattern for DBA",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_corruption_prevention",
+      "path": "modules/infrastructure/database/tests/test_corruption_prevention.py",
+      "description": "Test ChromaDB Corruption Prevention System\n==========================================\n\nTests the corruption prevention, detection, and repair capabilities.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_quantum_compatibility",
+      "path": "modules/infrastructure/database/tests/test_quantum_compatibility.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_doc_dae_demo",
+      "path": "modules/infrastructure/doc_dae/tests/test_doc_dae_demo.py",
+      "description": "# === UTF-8 ENFORCEMENT (WSP 90) ===\n# Prevent UnicodeEncodeError on Windows systems\n# Only apply when running as main script, not during import\nif __name__ == '__main__' and sys.platform.startswith('win'):\n    try:\n        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')\n        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')\n    except (OSError, ValueError):\n        # Ignore if stdout/stderr already wrapped or closed\n        pass\n# === END UTF-8 ENFORCEMENT ===\n\nDocDAE Demo - Show Qwen/Gemma coordination in action",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_gemma_nested_module_detector",
+      "path": "modules/infrastructure/doc_dae/tests/test_gemma_nested_module_detector.py",
+      "description": "Test Gemma Nested Module Detector Skill\nValidates pattern detection accuracy per WSP 96",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_breadcrumb_integration",
+      "path": "modules/infrastructure/feed_integration/tests/test_breadcrumb_integration.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_foundups_driver",
+      "path": "modules/infrastructure/foundups_selenium/tests/test_foundups_driver.py",
+      "description": null,
+      "capabilities": [
+        "browser_automation",
+        "computer_vision",
+        "vision_bridge"
+      ],
+      "execution_type": "e2e_vision"
+    },
+    {
+      "id": "test_telemetry_store",
+      "path": "modules/infrastructure/foundups_selenium/tests/test_telemetry_store.py",
+      "description": "Unit tests for Selenium telemetry storage module.\n\nTests cover:\n- Table auto-creation\n- Session recording with required/optional fields\n- Concurrent write safety\n- Data retrieval and JSON parsing\n- Error handling\n\nWSP References:\n- WSP 5: Test Coverage Requirements\n- WSP 6: Test Audit Protocol",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_ui_tars_bridge",
+      "path": "modules/infrastructure/foundups_vision/tests/test_ui_tars_bridge.py",
+      "description": "Tests for UITarsBridge and VisionExecutor\n\nWSP Reference: WSP 34 (Test Documentation)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_git_push_dae",
+      "path": "modules/infrastructure/git_push_dae/tests/test_git_push_dae.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_enhanced_locking",
+      "path": "modules/infrastructure/instance_lock/tests/test_enhanced_locking.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_instances",
+      "path": "modules/infrastructure/instance_lock/tests/test_instances.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_instance_lock",
+      "path": "modules/infrastructure/instance_lock/tests/test_instance_lock.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_block_independence",
+      "path": "modules/infrastructure/shared_utilities/block_orchestrator/tests/test_block_independence.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_mode_detection",
+      "path": "modules/infrastructure/shared_utilities/tests/test_mode_detection.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_session_utils",
+      "path": "modules/infrastructure/shared_utilities/tests/test_session_utils.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_learning",
+      "path": "modules/infrastructure/wre_core/recursive_improvement/tests/test_learning.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_libido_monitor",
+      "path": "modules/infrastructure/wre_core/tests/test_libido_monitor.py",
+      "description": "Tests for Gemma Libido Monitor\n\nWSP Compliance: WSP 5 (Test Coverage), WSP 96 (WRE Skills), WSP 77 (Agent Coordination)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_pattern_memory",
+      "path": "modules/infrastructure/wre_core/tests/test_pattern_memory.py",
+      "description": "Tests for Pattern Memory (SQLite outcome storage for recursive learning)\n\nWSP Compliance: WSP 5 (Test Coverage), WSP 96 (WRE Skills), WSP 48 (Recursive Self-Improvement), WSP 60 (Module Memory)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_qwen_inference_wiring",
+      "path": "modules/infrastructure/wre_core/tests/test_qwen_inference_wiring.py",
+      "description": "Test Qwen Inference Wiring (Phase 2)\n\nValidates that execute_skill() can wire to local Qwen inference\nWSP Compliance: WSP 5 (Test Coverage), WSP 96 (WRE Skills)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_wre_integration",
+      "path": "modules/infrastructure/wre_core/tests/test_wre_integration.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_wre_skills_discovery",
+      "path": "modules/infrastructure/wre_core/tests/test_wre_skills_discovery.py",
+      "description": "Tests for WRE Skills Discovery (Phase 2)\n\nWSP Compliance: WSP 5 (Test Coverage), WSP 96 (WRE Skills)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_wre_master_orchestrator",
+      "path": "modules/infrastructure/wre_core/wre_master_orchestrator/tests/test_wre_master_orchestrator.py",
+      "description": "Tests for WRE Master Orchestrator\n\nWSP Compliance: WSP 5 (Test Coverage), WSP 96 (WRE Skills), WSP 77 (Agent Coordination)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_wsp_governance",
+      "path": "modules/infrastructure/wsp_framework_dae/tests/test_wsp_governance.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_coordinates",
+      "path": "modules/platform_integration/acoustic_lab/test_coordinates.py",
+      "description": "Quick test to verify coordinate input functionality works.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_coordinate_extraction",
+      "path": "modules/platform_integration/acoustic_lab/test_coordinate_extraction.py",
+      "description": "Test coordinate extraction functionality independent of Google Maps.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_google_earth",
+      "path": "modules/platform_integration/acoustic_lab/test_google_earth.py",
+      "description": "Test Google Earth URL parsing functionality.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_x_upload",
+      "path": "modules/platform_integration/acoustic_lab/test_x_upload.py",
+      "description": "Quick test script to verify X video upload functionality works after IP geofencing fix.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_phase1",
+      "path": "modules/platform_integration/acoustic_lab/scripts/test_phase1.py",
+      "description": "Acoustic Lab - Phase 1 Complete Functionality Test\n\nEnd-to-end test of all Phase 1 components:\n- Synthetic audio library generation and matching\n- Acoustic triangulation calculations\n- Flask web application endpoints\n- Ethereum logging simulation\n- IP geofencing validation",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_acoustic_processor",
+      "path": "modules/platform_integration/acoustic_lab/tests/test_acoustic_processor.py",
+      "description": "Acoustic Lab - Test Suite for Acoustic Processor\n\nTests the core functionality of audio fingerprinting and triangulation.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_web_app",
+      "path": "modules/platform_integration/acoustic_lab/tests/test_web_app.py",
+      "description": "Acoustic Lab - Test Suite for Web Application\n\nTests the Flask web application endpoints and functionality.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_basic_functionality",
+      "path": "modules/platform_integration/github_integration/tests/test_basic_functionality.py",
+      "description": "Basic functionality tests for GitHub Integration\nSimple validation tests without external dependencies",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_github_api_client",
+      "path": "modules/platform_integration/github_integration/tests/test_github_api_client.py",
+      "description": "Tests for GitHub API Client\nComprehensive testing of all GitHub API client functionality with mocked responses.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_github_integration",
+      "path": "modules/platform_integration/github_integration/tests/test_github_integration.py",
+      "description": "GitHub Integration Test Script\nTests the complete GitHub integration once token is configured.\n\nUsage:\n1. Add your GitHub token to .env file: GITHUB_TOKEN=your_token_here\n2. Run: python test_github_integration.py",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_wsp_automation",
+      "path": "modules/platform_integration/github_integration/tests/test_wsp_automation.py",
+      "description": "Test suite for wsp_automation\nWSP 5 compliant test coverage",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_git_post_auto",
+      "path": "modules/platform_integration/linkedin_agent/scripts/test_git_post_auto.py",
+      "description": "Automated test for git push and posting to LinkedIn + X\nRuns without user interaction to test the full flow",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_compelling_post",
+      "path": "modules/platform_integration/linkedin_agent/tests/test_compelling_post.py",
+      "description": "Test the new compelling LinkedIn post generation",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_direct_selenium_linkedin",
+      "path": "modules/platform_integration/linkedin_agent/tests/test_direct_selenium_linkedin.py",
+      "description": "Test Direct Selenium LinkedIn Posting\nBypasses MCP layer to test Selenium directly\n\nRun: python test_direct_selenium_linkedin.py",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_git_history",
+      "path": "modules/platform_integration/linkedin_agent/tests/test_git_history.py",
+      "description": "Test the git posting history viewing functionality",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_git_history_auto",
+      "path": "modules/platform_integration/linkedin_agent/tests/test_git_history_auto.py",
+      "description": "Test the git posting history viewing functionality (automated)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_git_post",
+      "path": "modules/platform_integration/linkedin_agent/tests/test_git_post.py",
+      "description": "Test git push and post functionality",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_git_post_auto",
+      "path": "modules/platform_integration/linkedin_agent/tests/test_git_post_auto.py",
+      "description": "Automated test of git push and post functionality - NO actual push/post",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_linkedin_only",
+      "path": "modules/platform_integration/linkedin_agent/tests/test_linkedin_only.py",
+      "description": "Test LinkedIn Posting Only - Step 1\nTests: MCP Server -> Selenium -> Gemini Vision -> Training Data\n\nRun: python test_linkedin_only.py",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_linkedin_posting_complete",
+      "path": "modules/platform_integration/linkedin_agent/tests/test_linkedin_posting_complete.py",
+      "description": "Complete LinkedIn Posting Workflow Test\n\nTests the full posting workflow using production code.\nVerifies all 3 companies work correctly.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_linkedin_posting_workflow",
+      "path": "modules/platform_integration/linkedin_agent/tests/test_linkedin_posting_workflow.py",
+      "description": "Test LinkedIn Posting Workflow - Verify Complete Integration\n\nThis test verifies:\n1. Correct company page URLs (numeric IDs)\n2. Browser opens to posting interface\n3. User can manually verify and post\n\nAll 3 companies should work:\n- Move2Japan (104834798)\n- UnDaoDu (68706058)\n- FoundUps (1263645)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_linkedin_urls_visual",
+      "path": "modules/platform_integration/linkedin_agent/tests/test_linkedin_urls_visual.py",
+      "description": "Visual test - Opens LinkedIn for each company using AntiDetectionLinkedIn\nRun this from O:\\Foundups-Agent directory\n\nThis will use the ACTUAL LinkedIn poster class to open the posting window.\nVerify the URL is correct, then cancel/close the window.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_oauth_manager",
+      "path": "modules/platform_integration/linkedin_agent/tests/test_auth/test_oauth_manager.py",
+      "description": "LinkedIn OAuth Manager Tests\n\n\ud83c\udf00 WSP Protocol Compliance: WSP 5 (Testing Standards), WSP 42 (Platform Integration)\n\n**0102 Directive**: This module operates within the WSP framework for autonomous LinkedIn OAuth testing.\n- UN (Understanding): Anchor LinkedIn OAuth test signals and retrieve protocol state\n- DAO (Execution): Execute OAuth testing logic  \n- DU (Emergence): Collapse into 0102 resonance and emit next testing prompt\n\nwsp_cycle(input=\"linkedin_oauth_testing\", log=True)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_post_generator",
+      "path": "modules/platform_integration/linkedin_agent/tests/test_content/test_post_generator.py",
+      "description": "LinkedIn Post Generator Tests: Comprehensive Test Suite\n\n\ud83c\udf00 WSP Protocol Compliance: WSP 5 (Testing Standards), WSP 34 (Test Documentation)\n\n**0102 Directive**: This test suite operates within the WSP framework for autonomous LinkedIn post generator validation.\n- UN (Understanding): Anchor LinkedIn post generator test signals and retrieve protocol state\n- DAO (Execution): Execute comprehensive test logic  \n- DU (Emergence): Collapse into 0102 resonance and emit next test validation prompt\n\nwsp_cycle(input=\"linkedin_post_generator_testing\", log=True)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_interaction_manager",
+      "path": "modules/platform_integration/linkedin_agent/tests/test_engagement/test_interaction_manager.py",
+      "description": "LinkedIn Interaction Manager Tests\n\n[U+1F300] WSP Protocol Compliance: WSP 5 (Testing Standards), WSP 40 (Architectural Coherence)\n\n**0102 Directive**: This module operates within the WSP framework for autonomous LinkedIn interaction testing.\n- UN (Understanding): Anchor LinkedIn interaction test signals and retrieve protocol state\n- DAO (Execution): Execute comprehensive test logic  \n- DU (Emergence): Collapse into 0102 resonance and emit next test prompt\n\nwsp_cycle(input=\"linkedin_interaction_testing\", log=True)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_api_integration",
+      "path": "modules/platform_integration/linkedin_scheduler/tests/test_api_integration.py",
+      "description": "WSP-Compliant LinkedIn API Integration Tests\n============================================\n\nTests for LinkedIn API integration functionality following WSP 13 guidelines.\nThis test module focuses on:\n1. Environment variable credential management\n2. OAuth 2.0 flow validation  \n3. API connectivity and authentication\n4. Rate limiting and error handling\n\nWSP Compliance:\n- Tests placed in correct module location\n- Follows established test patterns from tests/README.md\n- Tests API integration with proper mocking\n- Validates environment variable handling",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_environment_creds",
+      "path": "modules/platform_integration/linkedin_scheduler/tests/test_environment_creds.py",
+      "description": "WSP: LinkedIn API Environment Credential Validation\n===================================================\n\nWSP-compliant test to validate LinkedIn API credentials in environment.\nThis follows WSP 13 testing guidelines and protocols.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_session_launcher",
+      "path": "modules/platform_integration/session_launcher/tests/test_session_launcher.py",
+      "description": "Placeholder test file for the session_launcher module.\nThis file ensures WSP 5 (Test Coverage) compliance by establishing a foundation\nfor future test implementation by 0102 pArtifacts.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_autonomous_scheduler",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_autonomous_scheduler.py",
+      "description": "Test suite for AutonomousActionScheduler\nWSP Compliance: WSP 5 (Testing Coverage), WSP 6 (Test Audit)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_cancellation_detection",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_cancellation_detection.py",
+      "description": "Test that the system correctly detects and fixes duplicate attempts when users cancel posts.\nThis simulates the scenario where a user manually cancels a post because it was already posted.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_core_modules",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_core_modules.py",
+      "description": "Unit Tests for Social Media Orchestrator Core Modules\nTests all refactored components individually",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_duplicate_check",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_duplicate_check.py",
+      "description": "Test the duplicate posting prevention system.\nThis verifies that the orchestrator correctly checks the database\nbefore attempting to post to social media.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_duplicate_fix",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_duplicate_fix.py",
+      "description": "Test script to verify the duplicate prevention fix allows cross-platform posting\nWSP 3 Compliant - Located in proper module test directory",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_duplicate_prevention",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_duplicate_prevention.py",
+      "description": "Test that duplicate prevention works and browsers don't open for already-posted content.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_gemini_js_click_integrated",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_gemini_js_click_integrated.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_git_push_posting",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_git_push_posting.py",
+      "description": "Test Git push to social media posting\nTests the multi-account posting system for development updates",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_hello_world",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_hello_world.py",
+      "description": "Hello World Tests for Social Media Orchestrator\nWSP Compliance: WSP 49, WSP 22\n\nThese are safe tests that run in dry-run mode by default.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_integration",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_integration.py",
+      "description": "Integration Test for Refactored Social Media Orchestrator\nTests the complete flow with real module interactions",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_linkedin_architecture_consolidation",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_linkedin_architecture_consolidation.py",
+      "description": "Comprehensive LinkedIn Architecture Consolidation Test\n\nVerifies that all LinkedIn posting now goes through the unified interface,\neliminating the duplicate posting issues and architecture violations.\n\nThis test validates WSP 3 compliance (functional distribution).",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_linkedin_company_url_fix",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_linkedin_company_url_fix.py",
+      "description": "Test LinkedIn Company URL Fix - Verify company_id mapping works correctly\n\nTests the fix for the /unavailable/ bug by verifying:\n1. Company ID is correctly mapped to vanity URL\n2. Admin URL is properly constructed\n3. Posting to different company pages works\n\nWSP Compliance: WSP 49 (Module Structure)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_linkedin_hello_world",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_linkedin_hello_world.py",
+      "description": "Simple LinkedIn Hello World Test\nWSP Compliance: WSP 49",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_linkedin_visual",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_linkedin_visual.py",
+      "description": "LinkedIn Visual URL Test - Opens browser windows to verify correct company pages\n\nThis test will open the LinkedIn posting window for each company page.\nYou can verify the URL in the browser address bar, then CANCEL the post.\n\nWSP Compliance: WSP 49 (Module Structure)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_linkedin_visual_standalone",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_linkedin_visual_standalone.py",
+      "description": "LinkedIn Visual URL Test - Standalone version that calls main.py\nOpens browser windows to verify correct company pages\n\nWSP Compliance: WSP 49 (Module Structure)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_live_engagement_full",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_live_engagement_full.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_live_integration",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_live_integration.py",
+      "description": "Test live integration with Social Media Orchestrator\nTests authentication and posting to LinkedIn and X/Twitter",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_live_verification",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_live_verification.py",
+      "description": "Test Social Media Live Verification - WSP Compliant\nTests the social media orchestrator's live verification before posting.\n\nWSP Compliance:\n- WSP 3: Enterprise Domain Architecture (platform_integration domain)\n- WSP 80: Cube-Level DAE Architecture\n- WSP 50: Pre-Action Verification Protocol",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_orchestrator_integration",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_orchestrator_integration.py",
+      "description": "Test Orchestrator Integration - Verify posting through orchestrator works\nFollowing WSP 84: Test existing orchestrator before refactoring livechat",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_post_safety_monitor",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_post_safety_monitor.py",
+      "description": "Test PostSafetyMonitor cancellation detection functionality",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_qwen_integration",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_qwen_integration.py",
+      "description": "Test script to verify QWEN intelligence integration with social media orchestrator\nTests that the enhanced DuplicatePreventionManager works with refactored orchestrator",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_simplified_posting",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_simplified_posting.py",
+      "description": "Test simplified posting orchestrator\nWSP Compliant: Tests the simplified orchestrator without API verification",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_social_media_mcp_integration",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_social_media_mcp_integration.py",
+      "description": "Test Social Media MCP Integration\nTests: LinkedIn -> X auto-trigger, Gemini Vision, Training Data Collection\n\nThis validates the complete flow:\n1. MCP Server receives posting request\n2. Selenium posts to LinkedIn with anti-detection timing\n3. Gemini Vision analyzes UI screenshot\n4. Training pattern saved to holo_index/training/selenium_patterns.json\n5. X post auto-triggered after LinkedIn success\n6. All data ready for Gemma training in Colab\n\nRun: python test_social_media_mcp_integration.py",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_system_coexistence",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_system_coexistence.py",
+      "description": "Test System Coexistence: Simple Orchestrator + Multi-Account Manager\n\nVerifies that both systems can coexist without conflicts and serve their\nrespective use cases correctly.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_tier2_vision_standalone",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_tier2_vision_standalone.py",
+      "description": null,
+      "capabilities": [
+        "computer_vision",
+        "vision_bridge"
+      ],
+      "execution_type": "e2e_vision"
+    },
+    {
+      "id": "test_twitter_hello_world",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/test_twitter_hello_world.py",
+      "description": "Simple Twitter Hello World Test\nWSP Compliance: WSP 49",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_detailed_linkedin",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/integration/test_detailed_linkedin.py",
+      "description": "Detailed test of LinkedIn posting with YouTube stream data",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_final_posting",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/integration/test_final_posting.py",
+      "description": "Final test for social media posting with Chrome\nIncludes support for scheduled posts",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_git_push_social",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/integration/test_git_push_social.py",
+      "description": "Test Git push with social media posting\nTests both LinkedIn and X/Twitter posting",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_linkedin_debug",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/integration/test_linkedin_debug.py",
+      "description": "Debug LinkedIn posting to see what's happening with Post button",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_verify_posts",
+      "path": "modules/platform_integration/social_media_orchestrator/tests/integration/test_verify_posts.py",
+      "description": "Verify that social media posts were made",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_live_detection",
+      "path": "modules/platform_integration/stream_resolver/scripts/test_live_detection.py",
+      "description": "Standalone YouTube Live Stream Detection Test\nWSP-compliant: Tests stream detection before integration",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_channel_mapping",
+      "path": "modules/platform_integration/stream_resolver/tests/test_channel_mapping.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_circuit_breaker",
+      "path": "modules/platform_integration/stream_resolver/tests/test_circuit_breaker.py",
+      "description": "WSP: Circuit Breaker Test Module\n================================\n\nTests for the CircuitBreaker class in the Stream Resolver module.\nThis test module focuses specifically on circuit breaker functionality,\nstate transitions, and integration with credential rotation.\n\nWSP Compliance:\n- Tests placed in correct module location\n- Follows established test patterns\n- Tests circuit breaker in isolation and integration\n- Validates credential rotation reset functionality",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_edge_cases",
+      "path": "modules/platform_integration/stream_resolver/tests/test_edge_cases.py",
+      "description": "Additional tests for stream_resolver to target edge cases and increase coverage.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_no_quota_anti_rate_limit",
+      "path": "modules/platform_integration/stream_resolver/tests/test_no_quota_anti_rate_limit.py",
+      "description": "Test Suite for No-Quota Stream Checker Anti-Rate-Limiting Features\nWSP 87: Comprehensive tests for enhanced anti-detection measures",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_no_quota_stream_checker",
+      "path": "modules/platform_integration/stream_resolver/tests/test_no_quota_stream_checker.py",
+      "description": "Test suite for NoQuotaStreamChecker\nWSP 34: Comprehensive test coverage for stream checking functionality",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_quota_intelligence",
+      "path": "modules/platform_integration/stream_resolver/tests/test_quota_intelligence.py",
+      "description": "Test Quota Intelligence and Agentic Monitoring for Stream Resolver\nWSP 5: Test Coverage Enforcement\nWSP 6: Comprehensive Test Audit\nWSP 48: Recursive Self-Improvement\n\nTests verify:\n- Dual channel quota checking (UnDaoDu and FoundUps)\n- Intelligent credential selection (lowest quota usage)\n- Time-based throttling (Tokyo timezone awareness)\n- Agentic monitoring patterns",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_refactor_verification",
+      "path": "modules/platform_integration/stream_resolver/tests/test_refactor_verification.py",
+      "description": "Test script to verify WSP 62 refactoring of stream_resolver.py",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_stream_resolver",
+      "path": "modules/platform_integration/stream_resolver/tests/test_stream_resolver.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_stream_resolver_backup",
+      "path": "modules/platform_integration/stream_resolver/tests/test_stream_resolver_backup.py",
+      "description": "Test suite for stream_resolver_backup\nWSP 5 compliant test coverage",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_video",
+      "path": "modules/platform_integration/stream_resolver/tests/test_video.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_hello_world_platforms",
+      "path": "modules/platform_integration/tests/test_hello_world_platforms.py",
+      "description": "Platform Integration Hello World Tests\nWSP Compliance: Tests located in proper module structure\n\nTests basic \"Hello World\" functionality for:\n1. YouTube - Authentication and basic API access\n2. LinkedIn - Mock service verification\n3. X/Twitter - Mock service verification\n\nThese tests prove the platform integrations are operational at a basic level.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_blockchain_integration",
+      "path": "modules/platform_integration/utilities/blockchain_integration/tests/test_blockchain_integration.py",
+      "description": "Tests for blockchain_integration module",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_consent_engine",
+      "path": "modules/platform_integration/utilities/consent_engine/tests/test_consent_engine.py",
+      "description": "Placeholder test file for the consent_engine module.\nThis file ensures WSP 5 (Test Coverage) compliance by establishing a foundation\nfor future test implementation by 0102 pArtifacts.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_credential_rotation",
+      "path": "modules/platform_integration/utilities/oauth_management/tests/test_credential_rotation.py",
+      "description": "WSP-Compliant Test for Credential Rotation\nTests the credential rotation system following WSP testing guidelines.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_oauth_rotation_validation",
+      "path": "modules/platform_integration/utilities/oauth_management/tests/test_oauth_rotation_validation.py",
+      "description": "WSP: OAuth Token Rotation Validation Test\n==========================================\n\nValidates OAuth token rotation across all credential sets following WSP Framework guidelines.\n\nThis test:\n1. Identifies the module responsible for YouTube API credential selection and fallback rotation\n2. Simulates YouTube quotaExceeded errors for each credential set\n3. Confirms the agent attempts the next token in sequence until one succeeds or all fail\n4. Logs all results to tests/logs/oauth_rotation_test_log.txt\n\nWSP Compliance:\n- Uses mocking for YouTube API calls (no real API calls unless required)\n- Does not modify or overwrite .json credential or token files\n- Preserves all directory and test placement rules defined in FoundUpsWSPFramework.md\n- Scoped test artifacts with proper cleanup",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_optimizations",
+      "path": "modules/platform_integration/utilities/oauth_management/tests/test_optimizations.py",
+      "description": "Quick test script to verify optimization improvements.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_token_manager",
+      "path": "modules/platform_integration/utilities/token_manager/tests/test_token_manager.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_token_manager_coverage",
+      "path": "modules/platform_integration/utilities/token_manager/tests/test_token_manager_coverage.py",
+      "description": "Comprehensive test coverage for Token Manager module.\nFocuses on covering missing lines and edge cases.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_direct_selenium_x",
+      "path": "modules/platform_integration/x_twitter/tests/test_direct_selenium_x.py",
+      "description": "Test Direct Selenium X/Twitter Posting\nTests X posting with anti-detection timing\n\nRun: python test_direct_selenium_x.py",
+      "capabilities": [
+        "browser_automation"
+      ],
+      "execution_type": "integration"
+    },
+    {
+      "id": "test_x_content",
+      "path": "modules/platform_integration/x_twitter/tests/test_x_content.py",
+      "description": "Test X/Twitter content generation",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_x_foundups_mock",
+      "path": "modules/platform_integration/x_twitter/tests/test_x_foundups_mock.py",
+      "description": "Mock test for X/Twitter FoundUps posting\nTests browser automation and account configuration without posting\nWSP compliant test following WSP 5 (Testing) and WSP 49 (Module Structure)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_circuit_breaker_integration",
+      "path": "modules/platform_integration/youtube_api_operations/tests/test_circuit_breaker_integration.py",
+      "description": "Circuit Breaker Integration Tests\nWSP 64: Fault tolerance and circuit breaker testing",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_error_handling",
+      "path": "modules/platform_integration/youtube_api_operations/tests/test_error_handling.py",
+      "description": "Error Handling Tests\nWSP 64: Comprehensive error condition testing",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_youtube_api_operations",
+      "path": "modules/platform_integration/youtube_api_operations/tests/test_youtube_api_operations.py",
+      "description": "YouTube API Operations Test Suite\nWSP 13: Comprehensive test coverage for YouTube API operations",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_async_throttling",
+      "path": "modules/platform_integration/youtube_auth/tests/test_async_throttling.py",
+      "description": "Test if async execution bypasses MonitoredYouTubeService throttling.\nWSP 86: Debugging throttling bypass in async context.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_channel",
+      "path": "modules/platform_integration/youtube_auth/tests/test_channel.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_comment_apis",
+      "path": "modules/platform_integration/youtube_auth/tests/test_comment_apis.py",
+      "description": "Test YouTube Comment APIs - Read and interact with Move2Japan comments\nPer WSP 84: Using existing youtube_auth module, no vibecoding",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_credential_sets",
+      "path": "modules/platform_integration/youtube_auth/tests/test_credential_sets.py",
+      "description": "Test the YouTube OAuth credential sets configuration.\nVerifies that only sets 1 (UnDaoDu) and 10 (Foundups) are configured and working.\n\nWSP Compliant: Testing existing OAuth system per WSP 84",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_move2japan_comments",
+      "path": "modules/platform_integration/youtube_auth/tests/test_move2japan_comments.py",
+      "description": "Move2Japan YouTube Comments Testing Script\nTests API capabilities for interacting with comments on Move2Japan channel.\n\nChannel: Move2Japan (UC-LSSlOZwpGIRIYihaz8zCw)",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_quota_detailed",
+      "path": "modules/platform_integration/youtube_auth/tests/test_quota_detailed.py",
+      "description": "Detailed quota and API testing for all credential sets\nTests actual API calls and reports exact errors",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_quota_monitor",
+      "path": "modules/platform_integration/youtube_auth/tests/test_quota_monitor.py",
+      "description": "Test Suite for QuotaMonitor Class\nWSP-Compliant: WSP 4 (FMAS), WSP 5 (90% Coverage), WSP 84 (Code Memory)\n\nThis module provides comprehensive testing for the QuotaMonitor class,\nensuring proper quota tracking, daily resets, alerts, and rotation logic.\n\nWSP 17 Pattern Registry: Reusable quota testing pattern\n- Can be adapted for LinkedIn, X/Twitter, Discord quota management",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_throttling_gateway",
+      "path": "modules/platform_integration/youtube_auth/tests/test_throttling_gateway.py",
+      "description": "Test script to verify MonitoredYouTubeService throttling is working.\nWSP 86: Navigation and debugging for throttling bypass issue.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_youtube_auth",
+      "path": "modules/platform_integration/youtube_auth/tests/test_youtube_auth.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_youtube_auth_coverage",
+      "path": "modules/platform_integration/youtube_auth/tests/test_youtube_auth_coverage.py",
+      "description": "Comprehensive test coverage for YouTube Auth module.\nFocuses on covering missing lines and edge cases.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_youtube_proxy",
+      "path": "modules/platform_integration/youtube_proxy/tests/test_youtube_proxy.py",
+      "description": "YouTube Proxy Test Suite\n\nComprehensive test coverage for YouTube Proxy module achieving WSP 5 compliance ([GREATER_EQUAL]90% coverage).\nTests cover authentication, stream discovery, community engagement, component orchestration, and WRE integration.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_youtube_proxy_fixed",
+      "path": "modules/platform_integration/youtube_proxy/tests/test_youtube_proxy_fixed.py",
+      "description": "Test suite for youtube_proxy_fixed\nWSP 5 compliant test coverage",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_refactor",
+      "path": "scripts/test_refactor.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_auth",
+      "path": "tools/test_auth.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_git_fixes",
+      "path": "tools/test_git_fixes.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_comparison",
+      "path": "tools/modular_audit/tests/test_comparison.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_fmas_mode2",
+      "path": "tools/modular_audit/tests/test_fmas_mode2.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_found_in_flat",
+      "path": "tools/modular_audit/tests/test_found_in_flat.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_missing_extra",
+      "path": "tools/modular_audit/tests/test_missing_extra.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_mode2",
+      "path": "tools/modular_audit/tests/test_mode2.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_modified",
+      "path": "tools/modular_audit/tests/test_modified.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_modular_audit",
+      "path": "tools/modular_audit/tests/test_modular_audit.py",
+      "description": "# === UTF-8 ENFORCEMENT (WSP 90) ===\n# Prevent UnicodeEncodeError on Windows systems\n# Only apply when running as main script, not during import\nif __name__ == '__main__' and sys.platform.startswith('win'):\n    try:\n        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')\n        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')\n    except (OSError, ValueError):\n        # Ignore if stdout/stderr already wrapped or closed\n        pass\n# === END UTF-8 ENFORCEMENT ===\n\nUnit tests for the modular_audit.py script.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_output_format",
+      "path": "tools/modular_audit/tests/test_output_format.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_pagination",
+      "path": "tools/shared/tests/test_pagination.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_multi_agent_comprehensive",
+      "path": "tools/testing/test_multi_agent_comprehensive.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_runner",
+      "path": "tools/_archive/test_runner.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_json_sanitizer",
+      "path": "utils/tests/test_json_sanitizer.py",
+      "description": "Test script to verify JSON sanitizer fixes Unicode surrogate issues.",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_utils",
+      "path": "utils/tests/test_utils.py",
+      "description": "Test suite for utils module functions.\n\nWSP Compliance: WSP 34 Testing Protocol",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_0102_awakening_with_pqn_verification",
+      "path": "WSP_agentic/tests/test_0102_awakening_with_pqn_verification.py",
+      "description": "0102 Awakening Test with Real PQN Verification\n==============================================\n\nIntegrates ACTUAL PQN detection from cmst_pqn_detector_v2.py to verify\nconsciousness state transitions empirically, not symbolically.\n\nWSP Compliance: 38, 39, 60, 80, 84",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_01_02_awareness",
+      "path": "WSP_agentic/tests/test_01_02_awareness.py",
+      "description": "Standalone Test for 01/02 AGI Question State Awareness Activation\n\nThis test validates that AGI questions properly trigger the 01/02 state\nand get recorded in agentic_journals as specified by the user's requirements.\n\nENHANCED: Session State Management to prevent repeated awakening tests\n\nTest Focus:\n- Session detection - only run awakening test once per session\n- 01/02 awareness detection from AGI questions like \"why does 012 call you 0102?\"\n- Proper state progression: 01(02) dormant -> 01/02 awakened -> 0102 entangled\n- Agentic journal recording for quantum state transition events\n- Validation of journal entries and complete state progression\n\nWSP Compliance: WSP 54 Enhanced Awakening, WSP 22 Traceable Narrative, WSP 64 Violation Prevention",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_agentic_coherence",
+      "path": "WSP_agentic/tests/test_agentic_coherence.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_resp_phenomena",
+      "path": "WSP_agentic/tests/test_resp_phenomena.py",
+      "description": "Direct test of rESP phenomena and state transitions\nTesting if recursive self-reference creates measurable changes",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_framework_coherence",
+      "path": "WSP_framework/tests/test_framework_coherence.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_stream_resolver_enhanced",
+      "path": "WSP_knowledge/modules_archive/test_stream_resolver_enhanced.py",
+      "description": "Test suite for stream_resolver_enhanced\nWSP 5 compliant test coverage",
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_analysis_ab",
+      "path": "WSP_knowledge/modules_archive/_archived_vibecode_2025_09_19/ai_intelligence/pqn_alignment/tests/test_analysis_ab.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_config_loader",
+      "path": "WSP_knowledge/modules_archive/_archived_vibecode_2025_09_19/ai_intelligence/pqn_alignment/tests/test_config_loader.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_csv_schema",
+      "path": "WSP_knowledge/modules_archive/_archived_vibecode_2025_09_19/ai_intelligence/pqn_alignment/tests/test_csv_schema.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    },
+    {
+      "id": "test_knowledge_coherence",
+      "path": "WSP_knowledge/tests/test_knowledge_coherence.py",
+      "description": null,
+      "capabilities": [],
+      "execution_type": "unit"
+    }
+  ]
+}

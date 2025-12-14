@@ -21,6 +21,7 @@ class StreamResolverDB(ModuleDB):
 
     Stores stream times, durations, and patterns to enable intelligent checking.
     """
+    _tables_initialized = False
 
     def __init__(self):
         super().__init__("stream_resolver")
@@ -28,6 +29,10 @@ class StreamResolverDB(ModuleDB):
 
     def _init_tables(self) -> None:
         """Initialize stream resolver tables"""
+        # Skip heavy table/migration work if already done in this process
+        if StreamResolverDB._tables_initialized:
+            logger.debug("StreamResolverDB tables already initialized; skipping re-init")
+            return
 
         # Stream times - when streams actually happen
         self.create_table("stream_times", """
@@ -81,6 +86,7 @@ class StreamResolverDB(ModuleDB):
 
         # Migrate existing JSON data if available (one-time operation)
         self.migrate_json_data()
+        StreamResolverDB._tables_initialized = True
 
     def record_stream_start(self, channel_id: str, video_id: str, title: str = None) -> int:
         """Record when a stream starts"""

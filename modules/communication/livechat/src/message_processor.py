@@ -47,6 +47,7 @@ from modules.communication.livechat.src.command_handler import CommandHandler
 from modules.communication.livechat.src.greeting_generator import GrokGreetingGenerator
 from modules.gamification.whack_a_magat.src.self_improvement import MAGADOOMSelfImprovement
 from modules.communication.livechat.src.agentic_chat_engine import AgenticChatEngine
+from modules.communication.livechat.src.intelligent_livechat_reply import get_livechat_reply_generator
 try:
     from modules.communication.livechat.src.emoji_response_limiter import EmojiResponseLimiter
     from modules.communication.livechat.src.agentic_self_improvement import AgenticSelfImprovement
@@ -88,6 +89,9 @@ class MessageProcessor:
         # WSP 84 compliant: Use existing modules, not duplicate code
         self.greeting_generator = GrokGreetingGenerator()
         self.self_improvement = MAGADOOMSelfImprovement()
+        
+        # NEW: Intelligent livechat reply generator (Grok-powered)
+        self.intelligent_reply = get_livechat_reply_generator()
         
         # NEW: Intelligent throttling systems
         self.emoji_limiter = EmojiResponseLimiter() if EmojiResponseLimiter else None
@@ -316,6 +320,7 @@ class MessageProcessor:
                 "maga_response": maga_response,  # Store generated response to prevent double-call
                 "is_moderator": author_details.get("isChatModerator", False),
                 "is_owner": author_details.get("isChatOwner", False),
+                "is_member": author_details.get("isChatSponsor", False),  # Blue badge = channel member
                 "live_chat_id": snippet.get("liveChatId"),  # Add for MAGADOOM timeouts
                 "raw_message": message,
                 # Superchat support
@@ -650,7 +655,22 @@ class MessageProcessor:
                 # Update trigger time for rate limiting
                 self._update_trigger_time(author_id)
                 
-                # Try banter engine first
+                # Try intelligent reply generator (Grok-powered with patterns)
+                if self.intelligent_reply:
+                    is_member = processed_message.get("is_member", False)  # Blue badge
+                    response = self.intelligent_reply.generate_reply(
+                        message=message_text,
+                        username=author_name,
+                        user_id=author_id,
+                        role=role,
+                        is_member=is_member
+                    )
+                    if response:
+                        member_tag = " [ANTIMA]" if is_member else ""
+                        logger.info(f"[GROK] Intelligent reply for {author_name}{member_tag}")
+                        return response
+                
+                # Fallback: Try banter engine
                 response = await self._generate_banter_response(message_text, author_name)
                 
                 if response:

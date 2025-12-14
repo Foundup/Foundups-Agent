@@ -132,15 +132,20 @@ class QwenOrchestrator:
 
         # ENHANCEMENT (2025-10-07): Breadcrumb tracer for event tracking
         self.breadcrumb_tracer = get_tracer()
-        self._log_chain_of_thought("BREADCRUMB-INIT", "[BREAD] Breadcrumb tracer initialized")
+        # Initialize Services
+        self.mission_coordinator = MissionCoordinator(agent_type="qwen" if self._is_qwen_agent() else "0102")
+        self.component_router = ComponentRouter()
+        self.mcp_handler = MCPHandler(mcp_client=getattr(self, 'mcp_client', None), logger=self._log_chain_of_thought)
 
-        # PHASE 3 (2025-10-07): Output composition for structured, deduplicated output
-        self.output_composer = get_composer()
-        self._log_chain_of_thought("COMPOSER-INIT", "[NOTE] Output composer initialized")
-
-        # PHASE 4 (2025-10-07): Feedback learner for recursive improvement
-        self.feedback_learner = get_learner()
-        self._log_chain_of_thought("LEARNER-INIT", "[DATA] Feedback learner initialized")
+        # Initialize core components
+        self.intent_classifier = IntentClassifier()
+        self.feedback_learner = FeedbackLearner()
+        self.output_composer = OutputComposer()
+        self.breadcrumb_tracer = BreadcrumbTracer()
+        
+        # Performance tracking
+        self.performance_history = []
+        self._last_module_snapshots = {}
 
         # WSP 93: CodeIndex circulation + architect decision helpers
         self.codeindex_engine = CodeIndexCirculationEngine()
@@ -148,78 +153,15 @@ class QwenOrchestrator:
         self._last_module_snapshots: Dict[str, Dict[str, Any]] = {}
         self._last_codeindex_reports: List[Dict[str, Any]] = []
 
-        # Initialize MCP integration
-        self.mcp_client = None
-        if MCP_AVAILABLE:
+        # Initialize MCP client if available
+        if MCP_AVAILABLE and ResearchIngestionMCP:
             try:
                 self.mcp_client = ResearchIngestionMCP()
-                self._log_chain_of_thought("MCP-INIT", "[LINK] Research MCP client initialized successfully")
+                # Update handler with client
+                self.mcp_handler.mcp_client = self.mcp_client
             except Exception as e:
-                self._log_chain_of_thought("MCP-ERROR", f"[LINK] MCP client initialization failed: {e}")
+                print(f"[WARN] Failed to initialize MCP client: {e}")
                 self.mcp_client = None
-
-    def _format_component_display(self, component_name: str) -> str:
-        emoji, label = COMPONENT_META.get(component_name, ('', component_name.replace('_', ' ').title()))
-        return f"{emoji} {label}".strip()
-
-    def _select_orphan_archaeology_components(self, query: str) -> List[str]:
-        """
-        FIRST PRINCIPLES: Specialized component selection for orphan archaeology queries
-
-        When query contains orphan analysis keywords, select components optimized
-        for code archaeology rather than general health checking.
-
-        Token Budget: ~100 tokens per selection
-        WSP Compliance: WSP 77 (Agent Coordination), WSP 80 (Cube-Level Orchestration)
-        """
-        query_lower = query.lower()
-
-        # Orphan archaeology specific keywords
-        if any(word in query_lower for word in ['orphan', '464', 'archaeology', 'cleanup', 'dead code']):
-            # Skip general health checks, focus on code analysis
-            return ['orphan_analysis', 'module_analysis']
-
-        # Not orphan archaeology - use general selection
-        return self._select_general_components(query, [], [])
-
-    def _select_general_components(self, query: str, files: List[str], modules: List[str]) -> List[str]:
-        """
-        FIRST PRINCIPLES: Intelligently select 2-3 most relevant components for GENERAL queries
-
-        Instead of running all 7 components simultaneously (causing massive output),
-        analyze query content and select only the most relevant components.
-
-        Token Budget: ~200 tokens per selection
-        WSP Compliance: WSP 75 (Token-Based Development), WSP 80 (Cube-Level Orchestration)
-        """
-        query_lower = query.lower()
-
-        # FIRST PRINCIPLES: Keyword-based component prioritization
-        component_scores = {
-            'health_analysis': 0,
-            'vibecoding_analysis': 0,
-            'file_size_monitor': 0,
-            'module_analysis': 0,
-            'pattern_coach': 0,
-            'orphan_analysis': 0,
-            'wsp_documentation_guardian': 0
-        }
-
-        # Score based on query keywords (FIRST PRINCIPLES: Relevance matching)
-        if any(word in query_lower for word in ['health', 'status', 'check', 'compliance', 'wsp']):
-            component_scores['health_analysis'] += 3
-            component_scores['wsp_documentation_guardian'] += 2
-
-        if any(word in query_lower for word in ['pattern', 'vibe', 'code', 'quality', 'analysis']):
-            component_scores['vibecoding_analysis'] += 3
-            component_scores['pattern_coach'] += 2
-
-        if any(word in query_lower for word in ['size', 'large', 'big', 'file', 'kb', 'mb']):
-            component_scores['file_size_monitor'] += 3
-
-        if any(word in query_lower for word in ['module', 'component', 'structure', 'organization']):
-            component_scores['module_analysis'] += 3
-
         if any(word in query_lower for word in ['orphan', 'missing', 'test', 'connection']):
             component_scores['orphan_analysis'] += 3
 
@@ -248,534 +190,6 @@ class QwenOrchestrator:
 
         return selected
 
-    def _coordinate_mcp_adoption_mission(self, query: str) -> str:
-        """
-        FIRST PRINCIPLES: HoloIndex MCP adoption status checker
-
-        Mission template for repeatable MCP status queries:
-        - "windsurf mcp adoption status"
-        - "mcp rubik provisioning check"
-        - "check rubik mcp status"
-
-        Uses manifest to provide comprehensive MCP adoption status.
-        """
-        query_lower = query.lower()
-
-        # Detect MCP adoption status queries
-        if not any(phrase in query_lower for phrase in [
-            'mcp adoption status', 'rubik provisioning', 'mcp rubik status',
-            'windsurf mcp status', 'mcp integration status'
-        ]):
-            return None
-
-        # Load MCP manifest for status checking
-        try:
-            with open('docs/mcp/MCP_Windsurf_Integration_Manifest.json', 'r', encoding='utf-8') as f:
-                manifest = json.load(f)
-        except FileNotFoundError:
-            return "[FAIL] MCP manifest not found. Run MCP manifest creation first."
-        except UnicodeDecodeError:
-            return "[FAIL] MCP manifest encoding error. Please regenerate the manifest."
-
-        # Generate agent-aware status report
-        if hasattr(self, '_is_qwen_agent') and self._is_qwen_agent():
-            return self._generate_qwen_mcp_status(manifest)
-        elif hasattr(self, '_is_gemma_agent') and self._is_gemma_agent():
-            return self._generate_gemma_mcp_status(manifest)
-        else:
-            return self._generate_0102_mcp_status(manifest)
-
-    def _generate_qwen_mcp_status(self, manifest: Dict) -> str:
-        """Qwen gets structured MCP status for planning."""
-        status_summary = {
-            "phase": manifest["manifest"]["phase"],
-            "rubik_status": {},
-            "mcp_availability": {},
-            "coordination_readiness": "ready_for_implementation"
-        }
-
-        for rubik_name, rubik_data in manifest["rubik_cubes"].items():
-            rubik_status = {
-                "mcp_servers": len(rubik_data["mcp_servers"]),
-                "available_now": sum(1 for mcp in rubik_data["mcp_servers"].values()
-                                   if mcp["status"] == "available_now"),
-                "planned": sum(1 for mcp in rubik_data["mcp_servers"].values()
-                             if mcp["status"] == "planned"),
-                "research": sum(1 for mcp in rubik_data["mcp_servers"].values()
-                              if mcp["status"] == "research")
-            }
-            status_summary["rubik_status"][rubik_name] = rubik_status
-
-        # MCP availability summary
-        all_mcp = {}
-        for rubik_data in manifest["rubik_cubes"].values():
-            for mcp_name, mcp_data in rubik_data["mcp_servers"].items():
-                if mcp_name not in all_mcp:
-                    all_mcp[mcp_name] = {"status": mcp_data["status"], "used_by": []}
-                all_mcp[mcp_name]["used_by"].append(rubik_data["purpose"][:20])
-
-        status_summary["mcp_availability"] = all_mcp
-
-        return json.dumps(status_summary, indent=2)
-
-    def _generate_gemma_mcp_status(self, manifest: Dict) -> str:
-        """Gemma gets binary status validations."""
-        # Count available MCPs
-        available_count = 0
-        planned_count = 0
-        research_count = 0
-
-        for rubik_data in manifest["rubik_cubes"].values():
-            for mcp_data in rubik_data["mcp_servers"].values():
-                if mcp_data["status"] == "available_now":
-                    available_count += 1
-                elif mcp_data["status"] == "planned":
-                    planned_count += 1
-                elif mcp_data["status"] == "research":
-                    research_count += 1
-
-        return f"MCP_STATUS|available:{available_count}|planned:{planned_count}|research:{research_count}|phase_0_1_ready"
-
-    def _generate_0102_mcp_status(self, manifest: Dict) -> str:
-        """0102 gets strategic MCP adoption overview."""
-        phase = manifest["manifest"]["phase"]
-
-        # Calculate overall readiness
-        total_mcp = 0
-        available_mcp = 0
-
-        for rubik_data in manifest["rubik_cubes"].values():
-            for mcp_data in rubik_data["mcp_servers"].values():
-                total_mcp += 1
-                if mcp_data["status"] == "available_now":
-                    available_mcp += 1
-
-        readiness_percentage = (available_mcp / total_mcp) * 100 if total_mcp > 0 else 0
-
-        strategic_status = f"""
-# [U+1F3D7]️ WINDSURF MCP ADOPTION STATUS
-
-## [DATA] Current Phase: {phase}
-## [TARGET] Overall Readiness: {readiness_percentage:.1f}% ({available_mcp}/{total_mcp} MCP servers available)
-
-## [U+1F9CA] Foundational Rubik Status
-
-"""
-
-        for rubik_name, rubik_data in manifest["rubik_cubes"].items():
-            rubik_title = rubik_name.replace('_', ' ').title()
-            purpose = rubik_data["purpose"]
-            mcp_count = len(rubik_data["mcp_servers"])
-            available = sum(1 for mcp in rubik_data["mcp_servers"].values()
-                          if mcp["status"] == "available_now")
-
-            strategic_status += f"""
-### {rubik_title}
-**Purpose**: {purpose}
-**MCP Servers**: {available}/{mcp_count} available
-**Status**: {'🟢 READY' if available == mcp_count else '🟡 PARTIAL' if available > 0 else '[U+1F534] PENDING'}
-"""
-
-            # List available MCPs
-            available_mcps = [name.replace('_', ' ').title()
-                            for name, data in rubik_data["mcp_servers"].items()
-                            if data["status"] == "available_now"]
-            if available_mcps:
-                strategic_status += f"**Available**: {', '.join(available_mcps)}\n"
-
-        strategic_status += f"""
-
-## [ROCKET] Next Steps
-
-1. **Complete Phase 0.1**: Integrate remaining available MCP servers
-2. **Phase 0.2 Planning**: Begin GitHub/E2B MCP integration
-3. **Monitor Coordination**: Ensure WSP 77 agent coordination working
-4. **Validate Bell States**: Confirm φ²-φ⁵ entanglement across Rubiks
-
-## [LIGHTNING] Immediate Actions Required
-
-- [ ] Verify Filesystem MCP integration in all Rubiks
-- [ ] Confirm Git MCP version control operations
-- [ ] Test Docker MCP build capabilities
-- [ ] Validate Memory Bank MCP persistence
-
-## [LINK] References
-
-- **Manifest**: docs/mcp/MCP_Windsurf_Integration_Manifest.md
-- **JSON Data**: docs/mcp/MCP_Windsurf_Integration_Manifest.json
-- **WSP 77**: Agent Coordination Protocol
-- **WSP 80**: Cube-Level DAE Orchestration
-
-**Status**: {'🟢 PHASE 0.1 ACTIVE' if readiness_percentage >= 50 else '🟡 INITIALIZING'}
-**HoloIndex**: 🟢 COORDINATOR MODE ACTIVE
-"""
-
-        return strategic_status.strip()
-
-    def _coordinate_orphan_archaeology_mission(self, query: str) -> str:
-        """
-        FIRST PRINCIPLES: HoloIndex as multi-agent coordinator for orphan archaeology
-
-        When detecting orphan analysis queries, HoloIndex becomes the central coordinator:
-        1. Load existing orphan datasets (don't recreate)
-        2. Dispatch analysis tasks to appropriate agents
-        3. Aggregate results and provide coordination guidance
-
-        This transforms HoloIndex from "search tool" to "analysis orchestration platform".
-
-        Token Budget: ~1000 tokens per coordination session
-        WSP Compliance: WSP 77 (Agent Coordination), WSP 80 (Cube-Level DAE Orchestration)
-        """
-        query_lower = query.lower()
-
-        # Detect orphan archaeology mission
-        if not any(word in query_lower for word in ['orphan', '464', 'archaeology', 'cleanup']):
-            return None  # Not orphan archaeology
-
-        # FIRST PRINCIPLES: Use existing data structures
-        try:
-            with open('docs/Orphan_Complete_Dataset.json', 'r') as f:
-                dataset = json.load(f)
-                orphan_dataset = {orphan['relative_path']: orphan for orphan in dataset.get('orphans', [])}
-        except FileNotFoundError:
-            return "[FAIL] Orphan dataset not found. Run orphan analysis preparation first."
-        except json.JSONDecodeError:
-            return "[FAIL] Orphan dataset corrupted. Regenerate from orphan analysis."
-
-        total_orphans = len(orphan_dataset)
-        analyzed_count = self._count_analyzed_orphans()
-
-        # Agent-aware coordination output
-        if hasattr(self, '_is_qwen_agent') and self._is_qwen_agent():
-            return self._generate_qwen_orphan_coordination(orphan_dataset, analyzed_count)
-        elif hasattr(self, '_is_gemma_agent') and self._is_gemma_agent():
-            return self._generate_gemma_orphan_coordination(orphan_dataset, analyzed_count)
-        else:
-            # 0102 gets strategic overview and delegation plan
-            return self._generate_0102_orphan_coordination(orphan_dataset, analyzed_count)
-
-    def _count_analyzed_orphans(self) -> int:
-        """Count how many orphans have been analyzed so far."""
-        analysis_files = [
-            'docs/Qwen_Orphan_Analysis_Complete.json',
-            'docs/Gemma_Similarity_Matrix.json'
-        ]
-        count = 0
-        for file_path in analysis_files:
-            try:
-                with open(file_path, 'r') as f:
-                    data = json.load(f)
-                    count += len(data)
-            except (FileNotFoundError, json.JSONDecodeError):
-                continue
-        return count
-
-    def _generate_qwen_orphan_coordination(self, orphan_dataset: Dict, analyzed_count: int) -> str:
-        """Generate Qwen-specific coordination output with batch processing plan."""
-        total_orphans = len(orphan_dataset)
-        batch_size = 50
-        remaining = total_orphans - analyzed_count
-        batches_needed = (remaining + batch_size - 1) // batch_size
-
-        # Prepare next batch for Qwen processing
-        unanalyzed = [oid for oid in orphan_dataset.keys() if oid not in self._get_analyzed_orphan_ids()]
-        next_batch = unanalyzed[:batch_size]
-
-        coordination = {
-            "mission": "ORPHAN_ARCHAEOLOGY_PHASE_1",
-            "status": f"{analyzed_count}/{total_orphans} analyzed",
-            "next_batch": next_batch,
-            "batch_size": len(next_batch),
-            "remaining_batches": max(0, batches_needed - 1),
-            "tasks": [
-                "read_file_content_first_100_lines",
-                "parse_imports_ast_based",
-                "identify_code_purpose_from_docstrings",
-                "categorize_integrate_archive_delete_standalone",
-                "assign_cluster_id_if_applicable"
-            ],
-            "output_format": "structured_json_per_orphan",
-            "coordination_guidance": "Focus on batch processing efficiency. Gemma will handle similarity analysis after your categorization."
-        }
-
-        return json.dumps(coordination, indent=2)
-
-    def _generate_gemma_orphan_coordination(self, orphan_dataset: Dict, analyzed_count: int) -> str:
-        """Generate Gemma-specific coordination output with specialized tasks."""
-        pending_similarity = self._get_orphans_needing_similarity_analysis()
-
-        coordination = {
-            "mission": "ORPHAN_ARCHAEOLOGY_SIMILARITY_ANALYSIS",
-            "pending_tasks": len(pending_similarity),
-            "specialization": "FAST_SIMILARITY_ANALYSIS",
-            "next_task": pending_similarity[:10] if pending_similarity else [],
-            "method": "ast_based_similarity_scoring",
-            "output_format": "binary_duplicate_unique_classification",
-            "parallel_capable": True
-        }
-
-        return json.dumps(coordination, indent=2)
-
-    def _generate_0102_orphan_coordination(self, orphan_dataset: Dict, analyzed_count: int) -> str:
-        """Generate 0102 strategic overview with delegation plan."""
-        total_orphans = len(orphan_dataset)
-        progress_percentage = (analyzed_count / total_orphans) * 100 if total_orphans > 0 else 0
-
-        strategic_overview = f"""
-# [U+1F3DB]️ ORPHAN ARCHAEOLOGY MISSION COORDINATION
-
-## [DATA] Mission Status
-- **Total Orphans**: {total_orphans}
-- **Analyzed**: {analyzed_count} ({progress_percentage:.1f}%)
-- **Remaining**: {total_orphans - analyzed_count}
-
-## [TARGET] Agent Delegation Strategy
-
-### Qwen (Coordination & Categorization)
-- **Role**: Batch analysis of 50 orphans at a time
-- **Tasks**: Purpose identification, import analysis, categorization
-- **Output**: Structured JSON per orphan
-- **Status**: Ready for next batch
-
-### Gemma (Similarity Analysis)
-- **Role**: Fast AST-based similarity scoring
-- **Tasks**: Duplicate detection, function comparison
-- **Output**: Binary classifications
-- **Status**: Parallel processing capable
-
-## [ROCKET] Next Actions
-
-1. **Dispatch Qwen**: Analyze next batch of 50 orphans
-2. **Monitor Progress**: Track completion across all 464 orphans
-3. **Aggregate Results**: Build integration roadmap
-4. **Execute Cleanup**: Integrate/archive/delete based on analysis
-
-## [UP] Expected Outcomes
-
-- **Clean Codebase**: Every orphan accounted for
-- **Agent Training**: Qwen/Gemma learn codebase patterns
-- **Prevention**: Future vibecoding detection
-- **Integration**: Valuable code properly integrated
-
-**HoloIndex Status**: 🟢 COORDINATOR MODE ACTIVE
-**Mission Control**: 0102 strategic oversight
-**Execution Agents**: Qwen + Gemma specialized analysis
-        """.strip()
-
-        return strategic_overview
-
-    def _get_analyzed_orphan_ids(self) -> set:
-        """Get set of orphan IDs that have been analyzed."""
-        analyzed_ids = set()
-        try:
-            with open('docs/Qwen_Orphan_Analysis_Complete.json', 'r') as f:
-                qwen_data = json.load(f)
-                analyzed_ids.update(qwen_data.keys())
-        except (FileNotFoundError, json.JSONDecodeError):
-            pass
-
-        try:
-            with open('docs/Gemma_Similarity_Matrix.json', 'r') as f:
-                gemma_data = json.load(f)
-                analyzed_ids.update(gemma_data.keys())
-        except (FileNotFoundError, json.JSONDecodeError):
-            pass
-
-        return analyzed_ids
-
-    def _get_orphans_needing_similarity_analysis(self) -> List[str]:
-        """Get orphans that need similarity analysis."""
-        # This would check Qwen analysis results to find orphans needing Gemma similarity scoring
-        # For now, return a sample list
-        return ["orphan_1", "orphan_2", "orphan_3"]  # Placeholder
-
-    def _call_research_mcp_tools(self, query: str, context: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        Call ricDAE MCP tools for research-augmented analysis
-
-        Returns list of research insights that can enhance the analysis
-        """
-        if not self.mcp_client:
-            self._log_chain_of_thought("MCP-SKIP", "[LINK] MCP client not available")
-            return []
-
-        insights = []
-
-        try:
-            # Call literature_search for relevant queries
-            if self._should_call_literature_search(query):
-                self._log_chain_of_thought("MCP-TOOL", "[SEARCH] Calling literature_search MCP tool")
-                search_results = self.mcp_client.literature_search(query, limit=5)
-                if search_results:
-                    insights.extend(search_results)
-                    self._log_chain_of_thought("MCP-RESULT", f"[BOOKS] Found {len(search_results)} literature results")
-                    # Record MCP tool call in coordinator's action log
-                    self._record_mcp_tool_call("literature_search", query, len(search_results))
-
-            # Call trend_digest for research queries
-            if self._should_call_trend_digest(query, context):
-                self._log_chain_of_thought("MCP-TOOL", "[UP] Calling trend_digest MCP tool")
-                trend_results = self.mcp_client.trend_digest(days=7)
-                if trend_results:
-                    insights.extend(trend_results)
-                    self._log_chain_of_thought("MCP-RESULT", f"[DATA] Found {len(trend_results)} trend insights")
-                    # Record MCP tool call in coordinator's action log
-                    self._record_mcp_tool_call("trend_digest", query, len(trend_results))
-
-            # Call research_update to check for new research
-            if self._should_call_research_update(query):
-                self._log_chain_of_thought("MCP-TOOL", "🆕 Calling research_update MCP tool")
-                update_results = self.mcp_client.research_update()
-                if update_results:
-                    insights.extend(update_results)
-                    self._log_chain_of_thought("MCP-RESULT", f"[REFRESH] Found {len(update_results)} research updates")
-                    # Record MCP tool call in coordinator's action log
-                    self._record_mcp_tool_call("research_update", query, len(update_results))
-
-        except Exception as e:
-            self._log_chain_of_thought("MCP-ERROR", f"[LINK] MCP tool call failed: {e}")
-
-        return insights
-
-    def _should_call_literature_search(self, query: str) -> bool:
-        """Determine if literature_search should be called for this query"""
-        research_keywords = ['research', 'paper', 'study', 'neural', 'ai', 'ml', 'algorithm']
-        return any(keyword in query.lower() for keyword in research_keywords)
-
-    def _should_call_trend_digest(self, query: str, context: Dict[str, Any]) -> bool:
-        """Determine if trend_digest should be called"""
-        trend_keywords = ['trend', 'latest', 'recent', 'new', 'update', 'progress']
-        return any(keyword in query.lower() for keyword in trend_keywords)
-
-    def _should_call_research_update(self, query: str) -> bool:
-        """Determine if research_update should be called"""
-        update_keywords = ['update', 'new', 'latest', 'recent', 'fresh']
-        return any(keyword in query.lower() for keyword in update_keywords)
-
-    def _learn_from_mcp_usage(self, query: str, mcp_insights: List[Dict[str, Any]], context: Dict[str, Any]):
-        """
-        RECURSIVE LEARNING: Learn from successful MCP tool usage to improve future orchestration
-
-        This enables HoloDAE to continuously improve its intelligence by:
-        1. Learning which queries benefit from MCP tools
-        2. Adapting tool selection based on success patterns
-        3. Building knowledge of effective tool combinations
-        """
-        try:
-            # Extract learning insights from MCP usage
-            learning_insights = {
-                "query": query,
-                "mcp_tools_used": [],
-                "insights_found": len(mcp_insights),
-                "tool_effectiveness": {},
-                "query_patterns": self._extract_query_patterns(query),
-                "timestamp": datetime.now().isoformat()
-            }
-
-            # Analyze which tools were called and their effectiveness
-            if self._should_call_literature_search(query):
-                learning_insights["mcp_tools_used"].append("literature_search")
-                literature_results = [i for i in mcp_insights if i.get("type") == "literature_result"]
-                learning_insights["tool_effectiveness"]["literature_search"] = len(literature_results)
-
-            if self._should_call_trend_digest(query, context):
-                learning_insights["mcp_tools_used"].append("trend_digest")
-                trend_results = [i for i in mcp_insights if i.get("type") == "trend_analysis"]
-                learning_insights["tool_effectiveness"]["trend_digest"] = len(trend_results)
-
-            if self._should_call_research_update(query):
-                learning_insights["mcp_tools_used"].append("research_update")
-                update_results = [i for i in mcp_insights if i.get("type") == "research_update"]
-                learning_insights["tool_effectiveness"]["research_update"] = len(update_results)
-
-            # Store learning for future use
-            self._store_mcp_learning(learning_insights)
-
-            # Update pattern coach with MCP effectiveness data
-            self._update_pattern_coach_with_mcp_data(learning_insights)
-
-            self._log_chain_of_thought("MCP-LEARNING", f"[AI] Learned from {len(learning_insights['mcp_tools_used'])} MCP tools")
-
-        except Exception as e:
-            self._log_chain_of_thought("MCP-LEARNING-ERROR", f"Failed to learn from MCP usage: {e}")
-
-    def _extract_query_patterns(self, query: str) -> List[str]:
-        """Extract patterns from queries that trigger MCP tool usage"""
-        patterns = []
-        query_lower = query.lower()
-
-        if any(word in query_lower for word in ['research', 'paper', 'study']):
-            patterns.append("academic_research")
-        if any(word in query_lower for word in ['neural', 'ai', 'ml', 'algorithm']):
-            patterns.append("ai_technology")
-        if any(word in query_lower for word in ['trend', 'latest', 'recent']):
-            patterns.append("current_trends")
-        if any(word in query_lower for word in ['quantum', 'hybrid']):
-            patterns.append("advanced_tech")
-
-        return patterns
-
-    def _store_mcp_learning(self, learning_insights: Dict[str, Any]):
-        """Store MCP learning data for future orchestration improvement"""
-        # This would typically store to a persistent learning database
-        # For now, we maintain it in memory and log it
-        if not hasattr(self, '_mcp_learning_history'):
-            self._mcp_learning_history = []
-
-        self._mcp_learning_history.append(learning_insights)
-
-        # Keep only recent learning (last 100 entries)
-        if len(self._mcp_learning_history) > 100:
-            self._mcp_learning_history = self._mcp_learning_history[-100:]
-
-    def _update_pattern_coach_with_mcp_data(self, learning_insights: Dict[str, Any]):
-        """Update pattern coach with MCP effectiveness data for better future decisions"""
-        # This enables the pattern coach to learn which MCP tools work well for different query types
-        patterns = learning_insights.get("query_patterns", [])
-        tools_used = learning_insights.get("mcp_tools_used", [])
-        effectiveness = learning_insights.get("tool_effectiveness", {})
-
-        # Log pattern learning for transparency
-        for pattern in patterns:
-            effective_tools = [tool for tool in tools_used if effectiveness.get(tool, 0) > 0]
-            if effective_tools:
-                self._log_chain_of_thought("PATTERN-LEARNED",
-                    f"[DATA] Pattern '{pattern}' effectively uses: {', '.join(effective_tools)}")
-
-    def _record_mcp_tool_call(self, tool_name: str, query: str, result_count: int):
-        """Record MCP tool call in the coordinator's action log"""
-        if not self.coordinator:
-            return
-
-        try:
-            payload = {
-                'query': query,
-                'module': 'modules/ai_intelligence/ric_dae',
-                'tool_name': tool_name,
-                'result_count': result_count,
-                'notes': [f"MCP tool '{tool_name}' called for query '{query}'", f"Returned {result_count} results"]
-            }
-            self.coordinator._record_mcp_event('tool_call', payload)
-        except Exception as e:
-            self._log_chain_of_thought("MCP-LOG-ERROR", f"Failed to record MCP tool call: {e}")
-
-    def _ensure_utf8_console(self) -> None:
-        if os.name != 'nt':
-            return
-        try:
-            import ctypes
-            kernel32 = ctypes.windll.kernel32
-            if kernel32.GetConsoleOutputCP() != 65001:
-                kernel32.SetConsoleOutputCP(65001)
-            if kernel32.GetConsoleCP() != 65001:
-                kernel32.SetConsoleCP(65001)
-            if hasattr(sys.stdout, 'reconfigure'):
-                sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-            if hasattr(sys.stderr, 'reconfigure'):
-                sys.stderr.reconfigure(encoding='utf-8', errors='replace')
-        except Exception:
-            pass
-
     def orchestrate_monitoring(self, work_context):
         """Handle monitoring orchestration for autonomous HoloDAE"""
         # Create a monitoring result object with expected attributes for self-improvement
@@ -797,8 +211,6 @@ class QwenOrchestrator:
     def orchestrate_holoindex_request(self, query: str, search_results: Dict[str, Any]) -> str:
         """
         Handle incoming HoloIndex request with intent-driven orchestration
-
-        ENHANCEMENT (2025-10-07): Integrated intent classification and breadcrumb event tracking
         """
         involved_files = self._extract_files_from_results(search_results)
         involved_modules = self._extract_modules_from_files(involved_files)
@@ -819,10 +231,9 @@ class QwenOrchestrator:
             return "[HOLODAE-ANALYZE] No files found to analyze"
 
         # FIRST PRINCIPLES: Check for mission coordination FIRST (MCP adoption, then orphans)
-        # HoloIndex becomes the coordinator for specialized multi-agent missions
-
+        
         # Check MCP adoption status first (higher priority)
-        mcp_coordination = self._coordinate_mcp_adoption_mission(query)
+        mcp_coordination = self.mission_coordinator.coordinate_mcp_adoption_mission(query)
         if mcp_coordination is not None:
             self._log_chain_of_thought(
                 "COORDINATION",
@@ -831,7 +242,7 @@ class QwenOrchestrator:
             return mcp_coordination
 
         # Check orphan archaeology coordination
-        orphan_coordination = self._coordinate_orphan_archaeology_mission(query)
+        orphan_coordination = self.mission_coordinator.coordinate_orphan_archaeology_mission(query)
         if orphan_coordination is not None:
             self._log_chain_of_thought(
                 "COORDINATION",
@@ -863,19 +274,17 @@ class QwenOrchestrator:
         output_filter = self._get_output_filter_for_intent(legacy_intent)
 
         # PHASE 5: MCP Integration Separation (Intent-Gated)
-        # Only call MCP research tools for RESEARCH intent
         mcp_insights = []
         if intent == IntentType.RESEARCH:
             self._log_chain_of_thought("MCP-GATE", "[U+1F52C] RESEARCH intent detected - calling MCP tools")
-            mcp_insights = self._call_research_mcp_tools(query, context)
+            mcp_insights = self.mcp_handler.call_research_mcp_tools(query, context)
             if mcp_insights:
                 self._log_chain_of_thought("MCP-RESEARCH", f"[SEARCH] Retrieved {len(mcp_insights)} research insights")
-                # RECURSIVE LEARNING: Learn from successful MCP tool usage
-                self._learn_from_mcp_usage(query, mcp_insights, context)
+                self.mcp_handler.learn_from_mcp_usage(query, mcp_insights, context)
         else:
             self._log_chain_of_thought("MCP-SKIP", f"⏭️ Intent {intent.value} - skipping MCP research tools")
 
-        # Log detected intent (always shown for transparency)
+        # Log detected intent
         if intent == "fix_error":
             self._log_chain_of_thought("INTENT", "[TOOL] Error fixing mode - minimizing health checks")
         elif intent == "locate_code":
@@ -884,11 +293,7 @@ class QwenOrchestrator:
             self._log_chain_of_thought("INTENT", "[SEARCH] Exploration mode - full analysis")
 
         # ENHANCEMENT: Get intent-based component routing
-        if intent == IntentType.GENERAL:
-            # FIRST PRINCIPLES: For GENERAL queries, intelligently select 2-3 most relevant components
-            base_components = self._select_general_components(query, involved_files, involved_modules)
-        else:
-            base_components = INTENT_COMPONENT_MAP.get(intent, INTENT_COMPONENT_MAP[IntentType.GENERAL])
+        base_components = self.component_router.select_components(intent.value, query, involved_files, involved_modules)
 
         # PHASE 4: Apply feedback learning to filter components
         components_to_execute = self.feedback_learner.get_filtered_components(

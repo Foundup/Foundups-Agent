@@ -1,0 +1,14 @@
+{
+  "success": true,
+  "driver_used": "tars",
+  "action": "type_text",
+  "duration_ms": 11510,
+  "fallback_used": false,
+  "error": null,
+  "result_data": {
+    "confidence": 0.8,
+    "screenshot": null,
+    "tier": "tars"
+  },
+  "timestamp": "2025-12-08T18:53:39.252197Z"
+}

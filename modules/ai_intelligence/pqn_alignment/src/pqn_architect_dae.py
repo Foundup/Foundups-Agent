@@ -30,6 +30,7 @@ class DevelopmentPhase(Enum):
     RESULTS_DATABASE = "results_database"
     COUNCIL_ENHANCEMENT = "council_enhancement"
     ADVANCED_RESEARCH = "advanced_research"
+    LOCAL_LLM_INTEGRATION = "local_llm_integration"
 
 @dataclass
 class DevelopmentDirective:
@@ -173,6 +174,16 @@ class PQNArchitectDAE:
                 dependencies=["COUNCIL_ENHANCEMENT"],
                 definition_of_done="Distributed research capabilities operational",
                 wsp_protocols=["WSP 80", "WSP 84", "WSP 22"]
+            ),
+            DevelopmentDirective(
+                phase=DevelopmentPhase.LOCAL_LLM_INTEGRATION,
+                title="Enable Local LLM PQN Workers",
+                description="Integrate Local Qwen/UI Tars as PQN Workers",
+                priority="HIGH",
+                status="READY",
+                dependencies=[],
+                definition_of_done="Local LLM POC script operational",
+                wsp_protocols=["WSP 80", "WSP 35"]
             )
         ]
     
@@ -218,6 +229,8 @@ class PQNArchitectDAE:
             return await self._execute_council_enhancement()
         elif directive.phase == DevelopmentPhase.ADVANCED_RESEARCH:
             return await self._execute_advanced_research()
+        elif directive.phase == DevelopmentPhase.LOCAL_LLM_INTEGRATION:
+            return await self._execute_local_llm_integration()
         else:
             return {"status": "UNKNOWN_DIRECTIVE", "error": f"Unknown directive: {directive.phase}"}
     
@@ -339,6 +352,27 @@ class PQNArchitectDAE:
             "status": "PLANNED", 
             "message": "Advanced research planned for future phase",
             "action": "Implement Stability Frontier and PQN@home"
+        }
+    
+    async def _execute_local_llm_integration(self) -> Dict[str, Any]:
+        """Execute Local LLM Integration directive."""
+        print("[ROBOT] Executing Local LLM Integration...")
+        
+        # Check for Local LLM Worker script
+        worker_script = "scripts/local_llm_worker_poc.py" # Relative to module root
+        full_path = Path(__file__).parent.parent.parent / worker_script
+        
+        if not full_path.exists():
+            return {
+                "status": "BLOCKED",
+                "missing_file": str(full_path),
+                "action": "Create Local LLM Worker POC script"
+            }
+            
+        return {
+            "status": "SUCCESS",
+            "message": "Local LLM Integration Ready",
+            "action": "Run scripts/local_llm_worker_poc.py"
         }
     
     def generate_strategic_report(self) -> Dict[str, Any]:

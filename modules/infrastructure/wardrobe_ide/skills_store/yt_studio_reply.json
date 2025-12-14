@@ -1,0 +1,51 @@
+{
+  "name": "yt_studio_reply",
+  "backend": "selenium",
+  "steps": [
+    {
+      "action": "click",
+      "selector": "button[aria-label='Reply']",
+      "timestamp": 1.0,
+      "target_tag": "BUTTON",
+      "target_text": "",
+      "target_aria_label": "Reply"
+    },
+    {
+      "action": "click",
+      "selector": "#textarea",
+      "timestamp": 2.0,
+      "target_tag": "TEXTAREA",
+      "target_text": "",
+      "target_aria_label": ""
+    },
+    {
+      "action": "type",
+      "selector": "#textarea",
+      "text": "0102 was here",
+      "timestamp": 3.5
+    },
+    {
+      "action": "click",
+      "selector": "button[aria-label='Reply']",
+      "timestamp": 5.0,
+      "target_tag": "BUTTON",
+      "target_text": "Reply",
+      "target_aria_label": "Reply"
+    }
+  ],
+  "created_at": "2025-12-10T07:09:39.937Z",
+  "meta": {
+    "target_url": "https://studio.youtube.com/channel/UC-LSSlOZwpGIRIYihaz8zCw/comments/inbox",
+    "tags": [
+      "youtube",
+      "studio",
+      "comment",
+      "engagement"
+    ],
+    "notes": "Reply to YouTube Studio comment - Edited with stable aria-label selectors",
+    "step_count": 4,
+    "recorded_with": "wardrobe_chrome_extension",
+    "edited_by": "0102",
+    "selector_strategy": "aria-label for buttons, #id for textarea"
+  }
+}

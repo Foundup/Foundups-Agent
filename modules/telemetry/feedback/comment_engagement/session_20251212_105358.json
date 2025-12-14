@@ -1,0 +1,47 @@
+{
+  "session_id": "20251212_105358",
+  "total_processed": 3,
+  "stats": {
+    "comments_processed": 3,
+    "likes": 3,
+    "hearts": 3,
+    "replies": 3,
+    "errors": 0,
+    "all_processed": false
+  },
+  "results": [
+    {
+      "comment_idx": 1,
+      "like": true,
+      "heart": true,
+      "reply": true,
+      "author_name": "Unknown",
+      "comment_text": "",
+      "commenter_type": "unknown",
+      "reply_text": "Thanks for the comment! \ud83c\udf8c",
+      "errors": []
+    },
+    {
+      "comment_idx": 1,
+      "like": true,
+      "heart": true,
+      "reply": true,
+      "author_name": "Unknown",
+      "comment_text": "TDS is real, lfmao",
+      "commenter_type": "unknown",
+      "reply_text": "Thanks for the comment! \ud83c\udf8c",
+      "errors": []
+    },
+    {
+      "comment_idx": 1,
+      "like": true,
+      "heart": true,
+      "reply": true,
+      "author_name": "Unknown",
+      "comment_text": "UN DAO DU, Be careful, brown people were American before you Mike !\nBubba may be Vance, he is Gay fo",
+      "commenter_type": "unknown",
+      "reply_text": "Thanks for the comment! \ud83c\udf8c",
+      "errors": []
+    }
+  ]
+}

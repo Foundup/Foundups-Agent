@@ -1,0 +1,8 @@
+{
+  "action": "type_text",
+  "description": "reply text input box that appeared below the comment",
+  "context": {
+    "text": "Thanks for watching! This is an autonomous test comment."
+  },
+  "timestamp": "2025-12-08T18:13:17.459484Z"
+}

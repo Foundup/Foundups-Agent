@@ -1,0 +1,10 @@
+{
+  "success": false,
+  "driver_used": "vision",
+  "action": "click_element",
+  "duration_ms": 5718,
+  "fallback_used": false,
+  "error": "Vision bridge not available",
+  "result_data": {},
+  "timestamp": "2025-12-05T21:28:17.756775Z"
+}

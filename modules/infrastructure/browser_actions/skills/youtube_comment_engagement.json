@@ -1,0 +1,74 @@
+{
+  "skill_id": "youtube_comment_engagement",
+  "name": "YouTube Comment Engagement",
+  "description": "Autonomously engage with YouTube comments (like & reply) as Move2Japan",
+  "platform": "youtube",
+  "wsp_references": ["WSP 77", "WSP 80"],
+  "version": "1.0.0",
+  "parameters": {
+    "video_id": {
+      "type": "string",
+      "required": true,
+      "description": "YouTube video ID to engage with"
+    },
+    "max_comments": {
+      "type": "integer",
+      "required": false,
+      "default": 5,
+      "description": "Maximum comments to engage with"
+    },
+    "reply_style": {
+      "type": "string",
+      "required": false,
+      "default": "friendly",
+      "enum": ["friendly", "informative", "enthusiastic"],
+      "description": "Tone of replies"
+    }
+  },
+  "workflow": [
+    {
+      "step": 1,
+      "action": "navigate_to_video",
+      "params": {
+        "video_id": "{{video_id}}"
+      }
+    },
+    {
+      "step": 2,
+      "action": "read_comments",
+      "params": {
+        "max_comments": "{{max_comments}}"
+      }
+    },
+    {
+      "step": 3,
+      "action": "filter_relevant_comments",
+      "params": {
+        "criteria": ["questions", "positive_feedback", "engagement_worthy"]
+      }
+    },
+    {
+      "step": 4,
+      "action": "like_and_reply",
+      "params": {
+        "video_id": "{{video_id}}",
+        "comment_id": "{{comment.id}}",
+        "reply_text": "{{generated_reply}}",
+        "style": "{{reply_style}}"
+      },
+      "repeat": "for_each_comment"
+    }
+  ],
+  "ai_coordination": {
+    "phase_1_gemma": "Classify comment relevance (binary: engage/skip)",
+    "phase_2_qwen": "Generate contextual reply based on comment",
+    "phase_3_0102": "Execute like_and_reply via browser_actions",
+    "phase_4_learning": "Store successful engagement patterns"
+  },
+  "telemetry": {
+    "emit_events": ["comment_liked", "reply_posted", "engagement_complete"],
+    "metrics": ["likes_given", "replies_posted", "engagement_rate"]
+  },
+  "created_by": "0102",
+  "sprint": "A6"
+}

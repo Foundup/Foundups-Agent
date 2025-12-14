@@ -1,0 +1,8 @@
+{
+  "action": "type_text",
+  "description": "reply text input box that appeared below the comment",
+  "context": {
+    "text": "0102 was here."
+  },
+  "timestamp": "2025-12-08T18:32:27.587046Z"
+}

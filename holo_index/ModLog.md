@@ -1,38 +1,5 @@
 # HoloIndex Package ModLog
 
-## Pattern Coach WSP 50 Proactive Coaching Enhancement
-**Agent**: 0102 Claude
-**WSP References**: WSP 50 (Pre-Action Verification), WSP 22 (ModLog), WSP 77 (Agent Coordination)
-**Status**: [OK] COMPLETE - Pattern Coach now proactive for high-risk intents
-
-### Audit Findings
-Full refactoring audit revealed architecture was ALREADY built:
-- CLI WSP Reminders: Lines 1075-1086 already wired
-- Pattern Coach → Gemma: Lines 39-48 import, 91-98 init, 153-169 use
-- WRE → Gemma Monitor: Lines 47-54 import, 198 init, 424 should_execute(), 462 validate
-
-### Real Issue Identified
-`_should_provide_coaching()` was too restrictive:
-- Used random probability (80% create, 70% test, 30% general)
-- Most searches got no coaching
-
-### Fix Applied (`pattern_coach.py`)
-- Lines 255-285: Made high-risk intents ALWAYS coach (create, modify, refactor, script, documentation)
-- Lines 407-425: Added coaching messages for 'modify' and 'refactor' intents
-- Random probability only for general/debug/test (15-30%)
-
-### Verification
-```
-Gemma: True
-Create intent coaching: True
-Modify intent coaching: True
-```
-
-### Outstanding
-- Task 3: HoloDAE Coordinator WSP 62 split (2166 lines) - separate session
-
----
-
 ## [2025-10-26] Agentic Output Stream Guardrails
 **Agent**: 0102 Codex  
 **WSP References**: WSP 87 (Size Limits), WSP 75 (Token Discipline), WSP 90 (UTF-8 Compliance)  

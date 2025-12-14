@@ -2,6 +2,10 @@
 Real-time Comment Dialogue System - WSP 27/80 Compliant
 Enables real-time back-and-forth conversations in YouTube comments
 Similar to Facebook/Messenger comment threading
+
+Enhanced with browser-based like capability (WSP V5 integration)
+- API for replies (fast, reliable)
+- UI-TARS Vision for likes (API doesn't support liking comments)
 """
 
 import asyncio
@@ -23,6 +27,14 @@ try:
     from modules.communication.video_comments.src.llm_comment_generator import LLMCommentGenerator
 except ImportError:
     LLMCommentGenerator = None
+
+# V5 Integration: Browser-based likes via UI-TARS Vision
+try:
+    from modules.infrastructure.browser_actions.src.youtube_actions import YouTubeActions
+    BROWSER_ACTIONS_AVAILABLE = True
+except ImportError:
+    YouTubeActions = None
+    BROWSER_ACTIONS_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +119,20 @@ class RealtimeCommentDialogue:
         self.current_video_id = None
         self.video_check_time = datetime.now()
         
-        logger.info(f"[U+1F534] Real-time Comment Dialogue initialized for channel: {channel_id}")
+        # V5 Integration: Browser-based like capability
+        self.youtube_actions = None
+        self.auto_like_on_reply = True  # Like comments when replying
+        self.likes_enabled = BROWSER_ACTIONS_AVAILABLE
+        if BROWSER_ACTIONS_AVAILABLE:
+            try:
+                self.youtube_actions = YouTubeActions(profile='youtube_move2japan')
+                logger.info("[V5] Browser-based likes enabled via UI-TARS Vision")
+            except Exception as e:
+                logger.warning(f"[V5] Browser actions unavailable: {e}")
+                self.youtube_actions = None
+                self.likes_enabled = False
+        
+        logger.info(f"[LIVE] Real-time Comment Dialogue initialized for channel: {channel_id}")
     
     async def start(self):
         """Start real-time comment monitoring and dialogue"""
@@ -216,10 +241,81 @@ class RealtimeCommentDialogue:
         
         return False
     
+    async def like_comment(self, video_id: str, comment_id: str) -> bool:
+        """
+        Like a comment using browser automation (V5 Integration)
+        
+        YouTube API does NOT support liking comments, so we use
+        UI-TARS Vision to interact with the browser.
+        
+        Args:
+            video_id: YouTube video ID
+            comment_id: Comment thread ID
+            
+        Returns:
+            True if like succeeded
+        """
+        if not self.youtube_actions:
+            logger.warning("[V5] Browser actions not available for liking")
+            return False
+        
+        try:
+            result = await self.youtube_actions.like_comment(video_id, comment_id)
+            if result.success:
+                logger.info(f"[LIKE] Liked comment {comment_id[:10]}...")
+            else:
+                logger.warning(f"[LIKE] Failed to like comment: {result.error}")
+            return result.success
+        except Exception as e:
+            logger.error(f"[V5] Like failed: {e}")
+            return False
+
+    async def like_and_reply(
+        self, 
+        video_id: str, 
+        comment_id: str, 
+        reply_text: str
+    ) -> Dict[str, bool]:
+        """
+        Like and reply to a comment in one operation.
+        
+        Uses:
+        - UI-TARS Vision for liking (browser automation)
+        - YouTube API for replying (fast, reliable)
+        
+        Args:
+            video_id: YouTube video ID
+            comment_id: Comment thread ID
+            reply_text: Response text
+            
+        Returns:
+            Dict with like_success and reply_success
+        """
+        result = {'like_success': False, 'reply_success': False}
+        
+        # Like via browser (background, don't block reply)
+        if self.likes_enabled and self.youtube_actions:
+            try:
+                like_result = await self.youtube_actions.like_comment(video_id, comment_id)
+                result['like_success'] = like_result.success
+                if like_result.success:
+                    logger.info(f"[V5] Liked comment before replying")
+            except Exception as e:
+                logger.warning(f"[V5] Like failed, continuing with reply: {e}")
+        
+        # Reply via API (reliable)
+        try:
+            reply_id = reply_to_comment(self.youtube, comment_id, reply_text)
+            result['reply_success'] = reply_id is not None
+        except Exception as e:
+            logger.error(f"Reply failed: {e}")
+        
+        return result
+
     async def start_conversation(self, comment_id: str, author: str, text: str):
         """Start a new conversation thread"""
         try:
-            logger.info(f"[U+1F4AC] Starting conversation with {author}")
+            logger.info(f"[CHAT] Starting conversation with {author}")
             
             # Create thread
             thread = CommentThread(comment_id, author)
@@ -230,12 +326,22 @@ class RealtimeCommentDialogue:
             response = await self.generate_dialogue_response(thread, text, author)
             
             if response:
-                # Post reply
-                reply_id = reply_to_comment(self.youtube, comment_id, response)
-                self.our_replies[comment_id] = reply_id
-                thread.add_message("0102", response)
+                # V5: Like and reply together if enabled
+                if self.auto_like_on_reply and self.current_video_id:
+                    result = await self.like_and_reply(
+                        self.current_video_id, comment_id, response
+                    )
+                    if result['like_success']:
+                        logger.info(f"[V5] Liked comment from {author}")
+                    reply_id = comment_id if result['reply_success'] else None
+                else:
+                    # Original: Reply only
+                    reply_id = reply_to_comment(self.youtube, comment_id, response)
                 
-                logger.info(f"[OK] Started dialogue with {author}: {response[:50]}...")
+                if reply_id:
+                    self.our_replies[comment_id] = reply_id
+                    thread.add_message("0102", response)
+                    logger.info(f"[OK] Started dialogue with {author}: {response[:50]}...")
                 
                 # Update memory
                 self.memory_manager.update_user_memory(author, {
@@ -410,6 +516,15 @@ class RealtimeCommentDialogue:
     def stop(self):
         """Stop the dialogue system"""
         self.is_running = False
+        
+        # V5: Close browser resources
+        if self.youtube_actions:
+            try:
+                self.youtube_actions.close()
+                logger.info("[V5] Browser actions closed")
+            except Exception as e:
+                logger.warning(f"[V5] Error closing browser: {e}")
+        
         logger.info("Real-time Comment Dialogue stopped")
     
     def get_status(self) -> Dict[str, Any]:
@@ -419,6 +534,9 @@ class RealtimeCommentDialogue:
             'active_threads': len(self.active_threads),
             'processed_comments': len(self.processed_comments),
             'current_video': self.current_video_id,
+            'likes_enabled': self.likes_enabled,
+            'auto_like_on_reply': self.auto_like_on_reply,
+            'v5_integration': BROWSER_ACTIONS_AVAILABLE,
             'threads': [
                 {
                     'author': t.author,

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/pyright/master/packages/pyright-internal/schemas/pyrightconfig.schema.json",
+  "venvPath": ".",
+  "venv": ".venv",
+  "exclude": [
+    "**/.git",
+    "**/.hg",
+    "**/.svn",
+    "**/.venv",
+    "venv",
+    "**/node_modules",
+    "**/.pytest_cache",
+    "**/__pycache__",
+    ".cursor",
+    ".claude",
+    "archive",
+    "campaign_results",
+    "chroma",
+    "data",
+    "foundups-mcp-p1",
+    "holo_index",
+    "logs",
+    "memory",
+    "docs",
+    "WSP_agentic",
+    "WSP_framework",
+    "WSP_knowledge",
+    "**/*.md",
+    "temp",
+    "temp_utilities",
+    "telemetry"
+  ]
+}

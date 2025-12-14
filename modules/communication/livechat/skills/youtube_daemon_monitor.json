@@ -16,8 +16,8 @@
   },
   "error_patterns": {
     "unicode_error": {
-      "regex": "UnicodeEncodeError|\\[U\\+[0-9A-Fa-f]{4,5}\\]|cp932",
-      "description": "Unicode [U+XXXX] tags in chat_sender not converted to emoji before YouTube API send",
+      "regex": "UnicodeEncodeError.*youtube|cp932.*youtube",
+      "description": "Unicode encoding errors in YouTube API calls (not success logs)",
       "wsp_15_mps": {
         "complexity": 1,
         "importance": 4,
@@ -27,14 +27,12 @@
         "priority": "P1",
         "rationale": "Trivial fix (add emoji conversion), critical for chat, cannot defer, major user impact"
       },
-      "qwen_action": "auto_fix",
+      "qwen_action": "bug_report",
+      "needs_0102": true,
       "fix_module": "modules.communication.livechat.src.chat_sender",
-      "fix_location": "chat_sender.py:128",
-      "fix_function": "_convert_unicode_tags_to_emoji",
-      "fix_action": "add_unicode_conversion_before_youtube_send",
-      "wre_pattern": "unicode_escape_to_emoji",
-      "announcement_template": "012 fix applied - Unicode emoji conversion restored",
-      "recommended_fix": "Import BanterEngine and call _convert_unicode_tags_to_emoji(message_text) before YouTube API send at line 142"
+      "fix_location": "chat_sender.py:130-135",
+      "note": "Fix already applied - if error persists, investigate BanterEngine import failure",
+      "recommended_fix": "Verify BanterEngine._convert_unicode_tags_to_emoji() is working correctly"
     },
     "oauth_revoked": {
       "regex": "Token.*REVOKED|FORBIDDEN.*oauth|Token has been REVOKED",
@@ -151,9 +149,9 @@
   "health_check_interval": 30,
   "announcement_channel": "undaodu_livechat",
   "learning_stats": {
-    "total_bugs_detected": 2639,
+    "total_bugs_detected": 4997,
     "total_bugs_fixed": 2,
-    "total_reports_generated": 1499,
+    "total_reports_generated": 2698,
     "last_detection": null,
     "last_fix": null,
     "pattern_accuracy": 0.0
@@ -172,5 +170,5 @@
       "changes": "Initial skill creation with 6 error patterns"
     }
   ],
-  "last_monitoring_run": 1761593994.8536572
+  "last_monitoring_run": 1765527741.2174063
 }

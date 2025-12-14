@@ -8,6 +8,15 @@ Active - Clean WRE Structure Achieved
 
 ## Chronological Change Log
 
+### WSP 44 Semantic State Engine (Scoring Primitive)
+**Date**: 2025-12-14
+**WSP Protocol References**: WSP 44, WSP 22, WSP 3
+**Impact Analysis**: Adds a reusable 000–222 semantic scoring primitive for DAEs/skills; keeps `wsp_core` imports side-effect free.
+
+#### [OK] Implementation Details
+- Added `modules/infrastructure/wsp_core/src/semantic_state_engine.py` (WSP 44 runtime implementation).
+- Simplified `modules/infrastructure/wsp_core/src/__init__.py` to avoid import-time side effects (import modules directly instead).
+
 ### Event Batching System Implementation
 **Date**: 2025-08-28
 **WSP Protocol References**: WSP 48, WSP 22, WSP 84

@@ -346,6 +346,68 @@ python holo_index.py --search "AgentPermissionManager interface changes"
 
 **Key Pattern**: Always verify API matches between implementation and tests. WSP 11 violations are silent until tests run.
 
+### Real-World Example 4: Sprint V6 - Pattern Learning WSP 50 Violation
+
+**Problem**: Create pattern learning for browser automation (Sprint V6 objective)
+
+**Step 1 - Occam's Razor**:
+- Manual implementation: 2-3 hours, 15-20K tokens, HIGH RISK (might miss existing systems)
+- HoloIndex search first: 2 min, 50 tokens, ZERO RISK (find what exists)
+- **Decision**: Should have searched first (FAILED - created without searching)
+
+**Step 2 - HoloIndex**:
+```bash
+# WHAT I SHOULD HAVE DONE:
+python holo_index.py --search "pattern memory outcome storage learning"
+```
+**Result**: Would have found `pattern_memory.py` (709 lines) in wre_core with SQLite storage, A/B testing, outcome tracking
+
+**Step 3 - Deep Think**:
+**Question I SHOULD have asked**: "Can pattern_memory.py handle browser actions?"
+**Answer**: Need to evaluate:
+- SkillOutcome dataclass vs ActionPattern needs
+- SQLite skill_outcomes table vs action patterns
+- WRE layer (skills) vs Infrastructure layer (actions)
+- Extension (~100 lines) vs New system (~580 lines)
+
+**Step 4 - Research**:
+**What I did**: Read first 60 lines of pattern_memory.py
+**What I should have done**: Read FULL 709 lines to understand complete architecture
+
+**Step 5 - Execute**:
+**What I did**: Created action_pattern_learner.py (580 lines) with JSON storage
+**What I should have done**: Compare extension options:
+- Option A: Add browser_action_outcomes table to pattern_memory.py (~100 lines)
+- Option B: Create separate system if different abstraction layer
+- Evaluate: WRE skills ≠ browser actions → Separate systems justified
+
+**Results**:
+- **WSP 50 Violation**: Did NOT search HoloIndex first ❌
+- **Anti-Vibecoding Violation**: Created without checking existing ❌
+- **Functional Overlap**: ~85% duplication with pattern_memory.py
+- **Resolution**: ADR-003 - Keep both (different layers: WRE skills vs browser actions)
+
+**Step 6 - Document**:
+- Created ADR-003 in foundups_vision/ModLog.md
+- Created WSP_VIOLATION_LOG.md for learning
+- Acknowledged violation and architectural justification
+
+**Step 7 - Recurse**: Pattern stored in CLAUDE.md (this example!)
+
+**Metrics Analysis**:
+- Tokens: 580 (new system) vs ~100 (extend existing) vs 50 (search first)
+- Time: 30min (implementation) vs 5min (search + evaluate)
+- Risk: MEDIUM (duplication) vs LOW (extension) vs ZERO (search first)
+- Learning: HIGH (documented violation + resolution pattern)
+
+**Key Lesson**: ALWAYS HoloIndex search FIRST. Even if systems serve different layers, must evaluate extension before creation.
+
+**Vibecoding Indicators**:
+- "Found existing system but created new anyway" ← RED FLAG
+- "JSON when SQLite exists" ← RED FLAG
+- "580 lines for similar functionality" ← RED FLAG
+- "Did not search first" ← RED FLAG
+
 
 ### Real-World Example 3: WRE Phase 1 - Libido Monitor & Pattern Memory Implementation
 

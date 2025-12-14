@@ -1,0 +1,24 @@
+{
+  "session_id": "20251211_231100",
+  "total_processed": 1,
+  "stats": {
+    "comments_processed": 1,
+    "likes": 1,
+    "hearts": 1,
+    "replies": 1,
+    "errors": 0
+  },
+  "results": [
+    {
+      "comment_idx": 1,
+      "like": true,
+      "heart": true,
+      "reply": true,
+      "author_name": "Unknown",
+      "comment_text": "It's all out there. Has been forever. THEN America made a conscious decision to ignore it. FAFO.",
+      "commenter_type": "regular",
+      "reply_text": "Haha, FAFO indeed! America's been hitting the snooze button on some real issues for way too long. \u270a\u270b\ud83d\udd90\ufe0f",
+      "errors": []
+    }
+  ]
+}

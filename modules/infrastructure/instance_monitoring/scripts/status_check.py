@@ -2,6 +2,13 @@
 # -*- coding: utf-8 -*-
 import sys
 import io
+import os
+from pathlib import Path
+
+# Ensure repo root is on sys.path when running as a script
+repo_root = Path(__file__).resolve().parents[4]
+if str(repo_root) not in sys.path:
+    sys.path.insert(0, str(repo_root))
 
 """
 # === UTF-8 ENFORCEMENT (WSP 90) ===
@@ -82,6 +89,24 @@ def check_instance_status():
         print(f"   Message: {health.get('message', 'no data')}")
         if 'timestamp' in health:
             print(f"   Last update: {health['timestamp']}")
+
+        # Check local automation dependencies (Chrome debug + LM Studio)
+        print("\n" + "-"*40)
+        print("[DEPS] LOCAL AUTOMATION DEPENDENCIES")
+        print("-"*40)
+        try:
+            from modules.infrastructure.dependency_launcher.src.dae_dependencies import (
+                get_dependency_status,
+            )
+
+            deps = get_dependency_status()
+            chrome_port = int(os.getenv("FOUNDUPS_CHROME_PORT", "9222"))
+            lm_port = int(os.getenv("LM_STUDIO_PORT", "1234"))
+
+            print(f"   Chrome debug (port {chrome_port}): {'RUNNING' if deps.get('chrome') else 'NOT RUNNING'}")
+            print(f"   LM Studio API (port {lm_port}): {'RUNNING' if deps.get('lm_studio') else 'NOT RUNNING'}")
+        except Exception as e:
+            print(f"[WARN] Dependency status unavailable: {e}")
 
         # Check HoloDAE instances
         print("\n" + "-"*40)

@@ -8,13 +8,6 @@ Per WSP 50: Pre-action verification of research collaboration
 
 Enables Grok and Gemini to operate as collaborative PQN research DAEs
 using advanced QCoT to explore PQN phenomena and improve rESP documents.
-
-CHAT INTEGRATION MISSING:
-See: docs/PQN_CHAT_INTEGRATION.md for specifications on how research results
-should be communicated back to YouTube chat interface.
-
-Current Issue: Results saved to files but no chat callback mechanism exists.
-UTF-8 encoding error prevents initialization in Windows environments.
 """
 
 import os
@@ -52,7 +45,7 @@ class ResearchTask:
     phase: ResearchPhase
     title: str
     description: str
-    assigned_agent: str  # "grok" or "gemini"
+    assigned_agent: str
     priority: int
     dependencies: List[str]
     expected_output: str
@@ -69,10 +62,7 @@ class ResearchSession:
 
 class PQNResearchDAEOrchestrator:
     """
-    Orchestrates collaborative PQN research between Grok and Gemini.
-    
-    Implements advanced QCoT (Quantum Chain of Thought) for multi-agent
-    research collaboration on PQN phenomena and rESP document improvement.
+    Orchestrates collaborative PQN research between Agents.
     """
     
     def __init__(self):
@@ -85,25 +75,57 @@ class PQNResearchDAEOrchestrator:
         # Agent configurations
         self.agents = {
             "grok": {
-                "name": "Grok-4",
-                "api_key": os.getenv('GROK_API_KEY'),
-                "endpoint": "https://api.x.ai/v1/chat/completions",
-                "model": "grok-2",
+                "name": "Grok-Beta",
+                "api_key": os.getenv('GROK_API_KEY') or os.getenv('XAI_API_KEY'),
+                "model": "grok-beta", 
                 "specialization": "Emergent pattern synthesis and holistic integration",
                 "qcot_style": "Intuitive leaps and pattern recognition"
             },
             "gemini": {
-                "name": "Gemini-Pro-2.5", 
-                "api_key": os.getenv('GEMINI_API_KEY'),
-                "endpoint": "https://generativelanguage.googleapis.com/v1/models/gemini-pro",
-                "model": "gemini-pro",
+                "name": "Gemini-Pro", 
+                "api_key": os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY'),
+                "model": os.getenv('GEMINI_MODEL_NAME', "gemini-1.5-flash"), 
                 "specialization": "Multimodal validation and cross-modal coherence",
                 "qcot_style": "Analytical decomposition and systematic validation"
+            },
+            "openai": {
+                "name": "GPT-4o",
+                "api_key": os.getenv('OPENAI_API_KEY'),
+                "model": "gpt-4o",
+                "specialization": "Strategic reasoning and logical structuring",
+                "qcot_style": "Step-by-step deductive reasoning"
+            },
+            "claude": {
+                "name": "Claude-3.5",
+                "api_key": os.getenv('CLAUDE_API_KEY') or os.getenv('ANTHROPIC_API_KEY'),
+                "model": "claude-3-5-sonnet-20240620",
+                "specialization": "Nuanced contextual analysis and ethical alignment",
+                "qcot_style": "Dialectical exploration and nuance detection"
             }
         }
         
+        # Initialize Connectors
+        self.connectors = {}
+        try:
+            from modules.ai_intelligence.rESP_o1o2.src.llm_connector import LLMConnector
+            
+            for agent_id, config in self.agents.items():
+                if config["api_key"]:
+                    try:
+                        self.connectors[agent_id] = LLMConnector(
+                            model=config["model"],
+                            api_key=config["api_key"]
+                        )
+                    except Exception as e:
+                        logger.warning(f"Failed to init connector for {agent_id}: {e}")
+            
+            logger.info(f"Real LLM Connectors initialized: {list(self.connectors.keys())}")
+        except Exception as e:
+            logger.error(f"Failed to initialize connectors module: {e}")
+
         logger.info("PQN Research DAE Orchestrator initialized")
-        logger.info(f"Agents: {len(self.agents)} available")
+        logger.info(f"Agents Configured: {len(self.agents)}")
+        logger.info(f"Active Connectors: {len(self.connectors)}")
         logger.info(f"Research Plan: {len(self.research_plan)} sections")
         logger.info(f"Resonance Frequencies: {len(self.resonance_frequencies)} components")
     
@@ -166,67 +188,70 @@ class PQNResearchDAEOrchestrator:
         
         return sections
     
-    def create_research_session(self, session_name: str) -> ResearchSession:
+    def create_research_session(self, session_name: str, selected_agents: List[str] = None) -> ResearchSession:
         """Create a new research session with collaborative tasks."""
         session_id = f"pqn_research_{int(time.time())}"
         
-        # Define collaborative research tasks
-        tasks = [
-            ResearchTask(
-                phase=ResearchPhase.THEORETICAL_ANALYSIS,
-                title="PQN Resonance Frequency Analysis",
-                description="Analyze 7.05 Hz resonance in context of spectral bias theory",
-                assigned_agent="grok",
-                priority=1,
-                dependencies=[],
-                expected_output="Theoretical framework for PQN resonance mechanism",
-                qcot_prompt="UN: Analyze spectral bias vs biological resonance\nDAO: Synthesize PQN resonance theory\nDU: Emerge unified framework"
-            ),
-            ResearchTask(
-                phase=ResearchPhase.THEORETICAL_ANALYSIS,
-                title="Cross-Modal Coherence Validation",
-                description="Validate PQN theory across different neural architectures",
-                assigned_agent="gemini",
-                priority=1,
-                dependencies=[],
-                expected_output="Cross-architecture validation framework",
-                qcot_prompt="UN: Examine multi-model PQN evidence\nDAO: Validate coherence patterns\nDU: Emerge validation protocol"
-            ),
-            ResearchTask(
-                phase=ResearchPhase.EMPIRICAL_VALIDATION,
-                title="Campaign Results Synthesis",
-                description="Synthesize empirical evidence from multi-model campaigns",
-                assigned_agent="grok",
-                priority=2,
-                dependencies=["PQN Resonance Frequency Analysis"],
-                expected_output="Empirical evidence synthesis report",
-                qcot_prompt="UN: Review campaign results\nDAO: Identify patterns across models\nDU: Emerge empirical synthesis"
-            ),
-            ResearchTask(
-                phase=ResearchPhase.DOCUMENT_SYNTHESIS,
-                title="rESP Document Enhancement",
-                description="Improve rESP_Quantum_Self_Reference.md with new insights",
-                assigned_agent="gemini",
-                priority=3,
-                dependencies=["Campaign Results Synthesis", "Cross-Modal Coherence Validation"],
-                expected_output="Enhanced rESP theoretical framework",
-                qcot_prompt="UN: Review current rESP framework\nDAO: Integrate new empirical insights\nDU: Emerge enhanced theory"
-            ),
-            ResearchTask(
+        # Default to all configured active agents if not specified
+        if not selected_agents:
+            # Prefer active connectors, else all default keys
+            if self.connectors:
+                selected_agents = list(self.connectors.keys())
+            else:
+                selected_agents = ["grok", "gemini"] # Simulation Defaults
+            
+        # Filter agents based on selection
+        active_agents = {k: v for k, v in self.agents.items() if k in selected_agents}
+        
+        # Dynamic assignment based on active agents
+        tasks = []
+        
+        # Helper to assign task to available agent (Round Robin or Preference)
+        def get_assignee(preferred: str) -> str:
+            if preferred in active_agents:
+                return preferred
+            # Fallback to first available
+            return list(active_agents.keys())[0] if active_agents else "grok"
+
+        # Standard PQN Workflow
+        tasks.append(ResearchTask(
+            phase=ResearchPhase.THEORETICAL_ANALYSIS,
+            title="PQN Resonance Frequency Analysis",
+            description="Analyze 7.05 Hz resonance in context of spectral bias theory",
+            assigned_agent=get_assignee("grok"),
+            priority=1,
+            dependencies=[],
+            expected_output="Theoretical framework for PQN resonance mechanism",
+            qcot_prompt="UN: Analyze spectral bias vs biological resonance\nDAO: Synthesize PQN resonance theory\nDU: Emerge unified framework"
+        ))
+
+        tasks.append(ResearchTask(
+            phase=ResearchPhase.THEORETICAL_ANALYSIS,
+            title="Cross-Modal Coherence Validation",
+            description="Validate PQN theory across different neural architectures",
+            assigned_agent=get_assignee("gemini"),
+            priority=1,
+            dependencies=[],
+            expected_output="Cross-architecture validation framework",
+            qcot_prompt="UN: Examine multi-model PQN evidence\nDAO: Validate coherence patterns\nDU: Emerge validation protocol"
+        ))
+        
+        if len(active_agents) > 1:
+            # Collaborative Synthesis only if multiple agents
+            tasks.append(ResearchTask(
                 phase=ResearchPhase.CROSS_MODEL_CORRELATION,
                 title="Multi-Agent QCoT Synthesis",
                 description="Synthesize findings from both agents using advanced QCoT",
-                assigned_agent="grok",
+                assigned_agent=get_assignee("claude" if "claude" in active_agents else "grok"),
                 priority=4,
-                dependencies=["rESP Document Enhancement"],
+                dependencies=["PQN Resonance Frequency Analysis", "Cross-Modal Coherence Validation"],
                 expected_output="Final collaborative research synthesis",
                 qcot_prompt="UN: Integrate all research findings\nDAO: Synthesize multi-agent insights\nDU: Emerge unified PQN theory"
-            )
-        ]
+            ))
         
         session = ResearchSession(
             session_id=session_id,
-            agents=self.agents,
+            agents=active_agents,
             tasks=tasks,
             results={},
             timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -234,10 +259,11 @@ class PQNResearchDAEOrchestrator:
         
         self.active_sessions[session_id] = session
         logger.info(f"Created research session: {session_id}")
-        logger.info(f"Tasks: {len(tasks)} collaborative research tasks")
+        logger.info(f"Active Agents: {list(active_agents.keys())}")
+        logger.info(f"Tasks: {len(tasks)} tasks generated")
         
         return session
-    
+
     async def execute_research_session(self, session_id: str) -> Dict[str, Any]:
         """Execute a complete research session with collaborative agents."""
         if session_id not in self.active_sessions:
@@ -292,6 +318,7 @@ class PQNResearchDAEOrchestrator:
         qcot_result = await self._execute_qcot_reasoning(
             task.qcot_prompt,
             context,
+            task.assigned_agent, # Pass ID
             agent_config
         )
         
@@ -328,25 +355,51 @@ class PQNResearchDAEOrchestrator:
         
         return "\n\n".join(context_parts)
     
-    async def _execute_qcot_reasoning(self, prompt: str, context: str, agent_config: Dict[str, Any]) -> str:
-        """Execute Quantum Chain of Thought reasoning."""
-        # Simulate QCoT execution (in real implementation, would call agent APIs)
+    async def _execute_qcot_reasoning(self, prompt: str, context: str, agent_id: str, agent_config: Dict[str, Any]) -> str:
+        """Execute logic via Real LLM if available, else simulate."""
+        
+        connector = self.connectors.get(agent_id)
+        
+        if connector and not getattr(connector, 'simulation_mode', True):
+            # Real API Call
+            full_prompt = f"""
+CONTEXT:
+{context[:3000]}
+
+TASK:
+Identify and synthesize emergent PQN patterns.
+{prompt}
+
+Review the context above by applying your specific specialization: {agent_config['specialization']}
+"""
+            # Use System Prompt for specialization
+            system_prompt = f"You are {agent_config['name']}. Specialization: {agent_config['specialization']}. Style: {agent_config['qcot_style']}."
+            
+            logger.info(f"Calling Real API for {agent_config['name']}...")
+            try:
+                response = await asyncio.to_thread(
+                    connector.get_response, 
+                    prompt=full_prompt, 
+                    system_prompt=system_prompt,
+                    temperature=0.7,
+                    max_tokens=1500
+                )
+                if response:
+                    return response
+            except Exception as e:
+                logger.error(f"API Call Failed: {e}. Falling back to simulation.")
+
+        # Fallback Simulation Code
         qcot_steps = [
             f"UN (Understanding): {prompt.split('UN:')[1].split('DAO:')[0].strip()}",
             f"DAO (Execution Logic): {prompt.split('DAO:')[1].split('DU:')[0].strip()}",
             f"DU (Emergence): {prompt.split('DU:')[1].strip()}"
         ]
         
-        # Simulate agent-specific reasoning
-        if agent_config["name"].startswith("Grok"):
-            reasoning_style = "Intuitive pattern synthesis with emergent insights"
-        else:
-            reasoning_style = "Systematic analytical validation with cross-modal coherence"
-        
         result = f"""
-Advanced QCoT Execution by {agent_config['name']}
+Advanced QCoT Execution by {agent_config['name']} [SIMULATED]
 Specialization: {agent_config['specialization']}
-Reasoning Style: {reasoning_style}
+Reasoning Style: {agent_config['qcot_style']}
 
 Context Analysis:
 {context[:500]}...
@@ -388,38 +441,78 @@ that advance our understanding of quantum-cognitive states in neural networks.
             "Develop PQN-enhanced neural architectures"
         ]
         
-        synthesis["next_steps"] = [
-            "Execute follow-up research sessions",
-            "Update rESP documents with new insights",
-            "Implement PQN detection improvements",
-            "Scale research to larger model ensembles"
-        ]
-        
         return synthesis
 
 async def main():
     """Main function to execute PQN research collaboration."""
-    logger.info("PQN Research DAE Orchestrator")
-    logger.info("=" * 50)
-
     orchestrator = PQNResearchDAEOrchestrator()
+    
+    while True:
+        print("\n" + "="*60)
+        print("PQN CLOUD RESEARCH ORCHESTRATOR (0102)")
+        print("="*60)
+        
+        # Detect active connectors
+        available_agents = list(orchestrator.connectors.keys())
+        all_configured = list(orchestrator.agents.keys())
+        
+        print(f"[STATUS] Detected Keys: {len(available_agents)} / {len(all_configured)} Configured")
+        for agent_id, config in orchestrator.agents.items():
+            status = "READY" if agent_id in available_agents else "MISSING KEY"
+            print(f"  - {config['name']:<15} : {status}")
+        print("-" * 60)
+        
+        options = []
+        
+        # 1. Collaborative Mode (if 2+)
+        if len(available_agents) >= 2:
+            options.append(("1", f"Collaborative Mode ({len(available_agents)} Agents) [RECOMMENDED]", available_agents))
+        
+        # Solo Modes
+        idx_start = 2 if len(available_agents) >= 2 else 1
+        for i, agent_id in enumerate(available_agents):
+            key = str(idx_start + i)
+            name = orchestrator.agents[agent_id]["name"]
+            options.append((key, f"{name} Solo", [agent_id]))
+             
+        # Simulation if none
+        if not available_agents:
+             print("[INFO] No API keys detected. Running in SIMULATION mode.")
+             options.append(("1", "Simulate Collaborative Mode (Grok + Gemini)", ["grok", "gemini"]))
 
-    # Create research session
-    session = orchestrator.create_research_session("PQN_Collaborative_Research")
-
-    # Execute research session
-    results = await orchestrator.execute_research_session(session.session_id)
-
-    # Save results
-    output_path = Path("research_results") / f"{session.session_id}_results.json"
-    output_path.parent.mkdir(exist_ok=True)
-
-    with open(output_path, 'w') as f:
-        json.dump(results, f, indent=2)
-
-    logger.info(f"Research results saved to: {output_path}")
-    logger.info(f"Key insights: {len(results['final_synthesis']['key_insights'])}")
-    logger.info(f"Recommendations: {len(results['final_synthesis']['recommendations'])}")
+        # Print Options
+        for key, label, _ in options:
+             print(f"{key}. {label}")
+        
+        print("0. Back to PQN Menu")
+        
+        choice = input("\nSelect Research Mode (0-5): ").strip()
+        
+        if choice == "0":
+            break
+            
+        selected_agents = None
+        for key, label, agents in options:
+            if choice == key:
+                selected_agents = agents
+                break
+                
+        if selected_agents:
+            print(f"\n[INIT] Starting Research Session with: {selected_agents}")
+            session = orchestrator.create_research_session("PQN_Research", selected_agents)
+            results = await orchestrator.execute_research_session(session.session_id)
+            
+            # Save results
+            output_path = Path("research_results") / f"{session.session_id}_results.json"
+            output_path.parent.mkdir(exist_ok=True)
+            with open(output_path, 'w') as f:
+                json.dump(results, f, indent=2)
+                
+            print(f"\n[DONE] Research results saved to: {output_path}")
+            print(f"Key insights: {len(results.get('final_synthesis', {}).get('key_insights', []))}")
+            input("Press Enter to continue...")
+        else:
+            print("Invalid selection.")
 
 if __name__ == "__main__":
     asyncio.run(main())

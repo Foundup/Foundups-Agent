@@ -1,0 +1,12 @@
+name: UI-TARS LM Studio Local Browser
+language: en
+operator: Local Browser Operator
+vlmProvider: Hugging Face for UI-TARS-1.5
+# LM Studio OpenAI-compatible server (no auth required by default).
+vlmBaseUrl: http://127.0.0.1:1234/v1
+vlmApiKey: lm-studio
+vlmModelName: ui-tars-1.5-7b
+useResponsesApi: false
+maxLoopCount: 120
+loopIntervalInMs: 1000
+searchEngineForBrowser: google

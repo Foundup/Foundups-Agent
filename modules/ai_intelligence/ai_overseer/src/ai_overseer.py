@@ -47,12 +47,21 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 from enum import Enum
 import time
+import asyncio
 
 # MetricsAppender for WSP 77 promotion tracking (WSP 3 compliant path)
 from modules.infrastructure.metrics_appender.src.metrics_appender import MetricsAppender
 
 # PatchExecutor for autonomous code fixes (WSP 3 compliant path)
 from modules.infrastructure.patch_executor.src.patch_executor import PatchExecutor, PatchAllowlist
+
+# PatternMemory for collective false-positive learning (WSP 48/60)
+try:
+    from modules.infrastructure.wre_core.src.pattern_memory import PatternMemory
+    PATTERN_MEMORY_AVAILABLE = True
+except ImportError:
+    PATTERN_MEMORY_AVAILABLE = False
+    logging.warning("[AI-OVERSEER] PatternMemory unavailable - running without false-positive suppression")
 
 # Import Holo Qwen/Gemma coordination infrastructure
 try:
@@ -197,11 +206,38 @@ class AIIntelligenceOverseer:
             self.mcp = None
             logger.warning("[AI-OVERSEER] Running without MCP integration")
 
+        # WSP 48/60: Pattern memory for false-positive suppression
+        self.pattern_memory = PatternMemory() if PATTERN_MEMORY_AVAILABLE else None
+
+        # Priority 1: HoloDAE Telemetry Monitor (dual-channel architecture)
+        # Bridges HoloDAE JSONL telemetry → AI Overseer event_queue
+        self.telemetry_monitor = None
+        self.telemetry_consumer_task = None
+        if MCP_AVAILABLE and hasattr(self.mcp, 'event_queue'):
+            try:
+                from .holo_telemetry_monitor import HoloTelemetryMonitor
+                self.telemetry_monitor = HoloTelemetryMonitor(
+                    repo_root=repo_root,
+                    event_queue=self.mcp.event_queue
+                )
+                logger.info("[AI-OVERSEER] HoloDAE telemetry monitor initialized")
+            except Exception as e:
+                logger.warning("[AI-OVERSEER] Telemetry monitor unavailable: %s", e)
+
         # Active agent teams
         self.active_teams: Dict[str, AgentTeam] = {}
 
         # Metrics appender for WSP 77 promotion tracking
         self.metrics = MetricsAppender()
+
+        # PatternMemory for collective false-positive learning (WSP 48/60)
+        self.pattern_memory: Optional[Any] = None
+        if PATTERN_MEMORY_AVAILABLE:
+            try:
+                self.pattern_memory = PatternMemory()
+                logger.info("[AI-OVERSEER] PatternMemory initialized for false-positive filtering")
+            except Exception as exc:
+                logger.warning("[AI-OVERSEER] PatternMemory unavailable: %s", exc)
 
         # Patch executor for autonomous code fixes (WSP 90 UTF-8, etc.)
         patch_allowlist = PatchAllowlist(
@@ -239,6 +275,71 @@ class AIIntelligenceOverseer:
         """Save patterns to memory for WSP 48 learning"""
         with open(self.memory_path, 'w', encoding='utf-8') as f:
             json.dump(self.patterns, f, indent=2)
+
+    def _is_known_false_positive(self, entity_type: str, entity_name: str) -> bool:
+        """
+        Check PatternMemory for known false positives before coordinating mission.
+
+        WSP 48/60: Collective learning - skip missions that are known false positives
+        (e.g., "fix holo_dae module" when holo_dae is not a module but a coordinator class)
+
+        Returns:
+            True if this is a learned false positive (skip mission)
+        """
+        if not self.pattern_memory:
+            return False
+
+        try:
+            details = self.pattern_memory.get_false_positive_reason(entity_type, entity_name)
+            if details:
+                reason = details.get("reason", "No reason provided")
+                actual_location = details.get("actual_location", "Unknown")
+                logger.info(
+                    f"[AI-OVERSEER] [LEARNED] Skipping known false positive: {entity_name}\n"
+                    f"  Reason: {reason}\n"
+                    f"  Actual location: {actual_location}"
+                )
+                return True
+        except Exception as exc:
+            logger.debug(f"[AI-OVERSEER] Error checking false positive: {exc}")
+
+        return False
+
+    def record_false_positive(self, entity_type: str, entity_name: str,
+                             reason: str, actual_location: Optional[str] = None) -> bool:
+        """
+        Record a new false positive in PatternMemory for collective learning.
+
+        WSP 48: Enable recursive self-improvement by learning from mistakes
+
+        Args:
+            entity_type: Type of entity (e.g., "mission", "module", "wsp")
+            entity_name: Name to remember as false positive
+            reason: Why this is a false positive
+            actual_location: Where the entity actually exists (if applicable)
+
+        Returns:
+            True if successfully recorded
+        """
+        if not self.pattern_memory:
+            logger.warning("[AI-OVERSEER] Cannot record false positive - PatternMemory unavailable")
+            return False
+
+        try:
+            self.pattern_memory.record_false_positive(
+                entity_type=entity_type,
+                entity_name=entity_name,
+                reason=reason,
+                actual_location=actual_location
+            )
+            logger.info(
+                f"[AI-OVERSEER] [LEARNED] Recorded false positive: {entity_type}/{entity_name}\n"
+                f"  Reason: {reason}"
+            )
+            return True
+        except Exception as exc:
+            logger.error(f"[AI-OVERSEER] Failed to record false positive: {exc}")
+            return False
 
     # ==================== PHASE 1: GEMMA ASSOCIATE ANALYSIS ====================
 
@@ -1510,6 +1611,126 @@ index 0000000..1111111 100644
             "reason": "UTF-8 header confirmed in patched files"
         }
 
+    # ==================== HOLODAE TELEMETRY MONITORING ====================
+
+    async def start_telemetry_monitoring(self, poll_interval: float = 2.0):
+        """
+        Start monitoring HoloDAE JSONL telemetry files.
+
+        Implements Priority 1 from dual-channel architecture:
+        - Tails holo_index/logs/telemetry/*.jsonl
+        - Feeds events to AI Overseer event_queue
+        - Triggers skills on critical module status
+
+        Args:
+            poll_interval: Seconds between telemetry file scans
+        """
+        if not self.telemetry_monitor:
+            logger.warning("[AI-OVERSEER] Telemetry monitor not initialized")
+            return
+
+        await self.telemetry_monitor.start_monitoring(poll_interval)
+        logger.info("[AI-OVERSEER] Telemetry monitoring started | poll_interval=%.1fs", poll_interval)
+
+    async def stop_telemetry_monitoring(self):
+        """Stop HoloDAE telemetry monitoring."""
+        if not self.telemetry_monitor:
+            return
+
+        await self.telemetry_monitor.stop_monitoring()
+        stats = self.telemetry_monitor.get_statistics()
+        logger.info(
+            "[AI-OVERSEER] Telemetry monitoring stopped | events_queued=%d parse_errors=%d",
+            stats.get("events_queued", 0),
+            stats.get("parse_errors", 0)
+        )
+
+    async def start_background_services(self, poll_interval: float = 2.0):
+        """
+        Start telemetry monitor and consumer loop.
+        """
+        if self.telemetry_monitor:
+            await self.telemetry_monitor.start_monitoring(poll_interval)
+            logger.info("[AI-OVERSEER] Telemetry monitor started in background")
+        if MCP_AVAILABLE and hasattr(self.mcp, 'event_queue'):
+            # Kick off consumer loop
+            loop = asyncio.get_running_loop()
+            self.telemetry_consumer_task = loop.create_task(self._consume_telemetry_events())
+
+    async def stop_background_services(self):
+        """
+        Stop telemetry monitor and consumer loop.
+        """
+        if self.telemetry_monitor:
+            await self.telemetry_monitor.stop_monitoring()
+        if self.telemetry_consumer_task:
+            self.telemetry_consumer_task.cancel()
+            try:
+                await self.telemetry_consumer_task
+            except asyncio.CancelledError:
+                pass
+            self.telemetry_consumer_task = None
+
+    def get_telemetry_statistics(self) -> Dict[str, Any]:
+        """
+        Get telemetry monitor statistics.
+
+        Returns:
+            Statistics dict with events_processed, events_queued, parse_errors
+        """
+        if not self.telemetry_monitor:
+            return {"error": "Telemetry monitor not initialized"}
+
+        return self.telemetry_monitor.get_statistics()
+
+    async def _consume_telemetry_events(self):
+        """
+        Consume telemetry events from the MCP event_queue and route to handlers.
+        """
+        if not (MCP_AVAILABLE and hasattr(self.mcp, 'event_queue')):
+            return
+        queue = self.mcp.event_queue
+        while True:
+            event = await queue.get()
+            try:
+                await self._handle_telemetry_event(event)
+            except Exception as e:
+                logger.error("[AI-OVERSEER] Telemetry event handling error: %s", e, exc_info=True)
+            finally:
+                queue.task_done()
+
+    async def _handle_telemetry_event(self, event: Dict[str, Any]):
+        """
+        Handle actionable telemetry events and notify 0102.
+
+        Processes:
+        - module_status (critical): Trigger refactoring
+        - system_alerts: WSP violations, root directory violations
+        """
+        event_type = event.get("event")
+        severity = event.get("severity", "")
+
+        if event_type == "module_status" and severity == "critical":
+            logger.info("[AI-OVERSEER] Critical module_status event queued for action: %s", event.get("module"))
+            # TODO: Map to WRE skill trigger (e.g., compliance/refactor)
+
+        elif event_type == "system_alerts":
+            alerts = event.get("alerts", [])
+            source = event.get("source", "unknown")
+
+            # Notify 0102 via stdout (visible in HoloIndex output)
+            if alerts:
+                logger.warning("[AI-OVERSEER] [GEMMA-ALERT] WSP violations detected by %s", source)
+                print(f"\n[AI-OVERSEER] [WSP-VIOLATION] Detected {len(alerts)} violations:")
+                for alert in alerts[:3]:  # Show top 3
+                    print(f"  - {alert}")
+                if len(alerts) > 3:
+                    print(f"  ... and {len(alerts) - 3} more")
+                print("[AI-OVERSEER] Run 'python holo_index.py --check-module <module>' for details\n")
+
+        else:
+            logger.debug("[AI-OVERSEER] Telemetry event ignored: %s", event_type)
+
     # ==================== PUBLIC API ====================
 
     def coordinate_mission(self, mission_description: str,
@@ -1519,6 +1740,7 @@ index 0000000..1111111 100644
         Main entry point: Coordinate mission with Qwen + Gemma + 0102
 
         Complete WSP 77 workflow:
+            Phase 0: Check PatternMemory for known false positives (WSP 48/60)
             Phase 1: Gemma Associate fast analysis
             Phase 2: Qwen Partner strategic planning
             Phase 3: 0102 Principal execution oversight
@@ -1533,6 +1755,23 @@ index 0000000..1111111 100644
             Results dict with success status and team info
         """
         logger.info(f"[AI-OVERSEER] Coordinating mission: {mission_description}")
+
+        # Phase 0: Check for known false positives (WSP 48/60 collective learning)
+        if self._is_known_false_positive("mission", mission_description):
+            details = None
+            if self.pattern_memory:
+                try:
+                    details = self.pattern_memory.get_false_positive_reason("mission", mission_description)
+                except Exception:
+                    details = None
+            return {
+                "success": True,
+                "skipped": True,
+                "reason": details.get("reason") if details else "Known false positive (learned from collective intelligence)",
+                "actual_location": details.get("actual_location") if details else None,
+                "mission_description": mission_description,
+                "mission_type": mission_type.value
+            }
 
         # Spawn agent team (runs all 4 phases)
         team = self.spawn_agent_team(mission_description, mission_type, auto_approve)

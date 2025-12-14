@@ -70,7 +70,15 @@
   - [+] CI smoke test: minimal steps (e.g., steps=100) to validate core loop
   - Keep ModLog and tests/TestModLog updated per WSP 22/34
 
-### **PHASE V: Advanced Research & Meta-Analysis (FUTURE)**
+- **S10: PQN Corroborating Evidence** (PLANNED)
+  - Resonance Fingerprinting (harmonic detection)
+
+- **S11: Local LLM Integration (System Agent)** (IN PROGRESS)
+  - **Objective**: Empower Local Qwen/UI Tars to act as PQN DAE Workers.
+  - **Task 11.1**: Architect DAE update to support Local LLM directives.
+  - **Task 11.2**: Local LLM Worker script (generates scripts, analyzes results).
+  - **Task 11.3**: Connect Local LLM to 'Council' loop.
+
 - **S9: Stability Frontier Campaign (End-to-End Scientific Slice)**
   - Phase 1 (Discovery): Council run to auto-identify boundary motifs (top-3 unstable, top-3 stable); output `candidates.json`; index via results DB
   - Phase 2 (A/B Core): For each motif, sweep Guardrail {ON,OFF} × noise_H {0.0, 0.01, 0.02, 0.03} × seeds {0..9}; output single `ab_test_results.csv` and index

@@ -112,6 +112,9 @@ class AutoModeratorDAE:
         self.high_priority_pending = False
         self.priority_reason = None
 
+        # Community Monitor for YouTube comments (Phase 3 integration)
+        self.community_monitor = None  # Initialized in run() when channel_id is known
+
         logger.info("[OK] Auto Moderator DAE initialized")
     
     def connect(self) -> bool:
@@ -123,7 +126,7 @@ class AutoModeratorDAE:
         Returns:
             Success status
         """
-        logger.info("🔌 Starting in NO-QUOTA mode to preserve API tokens...")
+        logger.info("[NO-QUOTA] Starting in NO-QUOTA mode to preserve API tokens...")
 
         # TOKEN REFRESH DISABLED DURING STARTUP - Prevents blocking on OAuth
         # Token refresh should be done before starting the daemon using:
@@ -135,9 +138,9 @@ class AutoModeratorDAE:
         # We'll only authenticate when we actually find a stream
         self.service = None
         self.credential_set = "NO-QUOTA"
-        logger.info("🌐 Using NO-QUOTA web scraping for stream discovery")
-        logger.info("🛡️ Smart verification: NO-QUOTA first, API only for live/uncertain videos")
-        logger.info("💰 MAXIMUM API preservation - API only when posting is possible")
+        logger.info("[NO-QUOTA] Using web scraping for stream discovery")
+        logger.info("[NO-QUOTA] Smart verification: NO-QUOTA first, API only for live/uncertain videos")
+        logger.info("[NO-QUOTA] Maximum API preservation - API only when posting is possible")
 
         return True
     
@@ -174,7 +177,7 @@ class AutoModeratorDAE:
                 if analysis:
                     logger.info(f"[BOT][AI] [QWEN-ANALYSIS] {analysis}")
             except Exception as e:
-                logger.info(f"[BOT][AI] [QWEN-MONITOR] ⚠️ Monitor analysis incomplete: {e}")
+                logger.info(f"[BOT][AI] [QWEN-MONITOR] [WARN] Monitor analysis incomplete: {e}")
 
         if not self.stream_resolver:
             # Initialize StreamResolver with service if available, otherwise None to trigger NO-QUOTA mode
@@ -209,7 +212,7 @@ class AutoModeratorDAE:
 
         # PRIORITY 0: [BOT][AI] First Principles - "Is the last video still live?"
         # Check cache + DB BEFORE any channel rotation logic
-        logger.info("[BOT][AI] [QWEN-FIRST-PRINCIPLES] ❓ Is the last video still live?")
+        logger.info("[BOT][AI] [QWEN-FIRST-PRINCIPLES] Is the last video still live?")
         try:
             # Call resolve_stream with None to trigger Priority 1 (cache) and Priority 1.5 (Qwen DB check)
             # This checks: 1) session_cache.json, 2) last stream in DB with lenient threshold + API
@@ -217,8 +220,20 @@ class AutoModeratorDAE:
             if pre_check_result and pre_check_result[0]:
                 logger.info(f"[BOT][AI] [QWEN-SUCCESS] [OK] Last known stream still live! Instant reconnection.")
                 logger.info(f"[ROCKET] Skipping ALL channel rotation - already found active stream: {pre_check_result[0]}")
-                # Return immediately with the cached stream - no need for any other checks
-                return pre_check_result
+
+                # Convert tuple to dict format (resolve_stream returns tuple, but monitor_chat expects dict)
+                video_id = pre_check_result[0]
+                live_chat_id = pre_check_result[1] if len(pre_check_result) > 1 else None
+
+                # Build dict with required keys
+                stream_dict = {
+                    'video_id': video_id,
+                    'live_chat_id': live_chat_id,
+                    'channel_id': None,  # Unknown from cache - will be resolved during authentication
+                    'channel_name': 'Cached Stream'
+                }
+                logger.info(f"[FLOW-TRACE] Converted cache result to dict: {stream_dict}")
+                return stream_dict
             else:
                 logger.info(f"[BOT][AI] [QWEN-INFO] [FAIL] No cached stream or last stream ended - need full channel scan")
         except Exception as e:
@@ -285,13 +300,13 @@ class AutoModeratorDAE:
                 if result and result[0]:
                     check_results[channel_name] = '[OK] LIVE'
                     # Get channel-specific emoji
-                    channel_emoji = "🍣" if "Move2Japan" in channel_name else ("🧘" if "UnDaoDu" in channel_name else ("🐕" if "FoundUps" in channel_name else "🎉"))
-                    logger.info(f"[{channel_emoji} Channel {i}/{len(channels_to_check)}] {channel_name}: STREAM FOUND!")
+                    channel_tag = "MOVE2JAPAN" if "Move2Japan" in channel_name else ("UNDAODU" if "UnDaoDu" in channel_name else ("FOUNDUPS" if "FoundUps" in channel_name else "CHANNEL"))
+                    logger.info(f"[{channel_tag} Channel {i}/{len(channels_to_check)}] {channel_name}: STREAM FOUND!")
                 else:
-                    check_results[channel_name] = '⏳ offline'
-                    logger.info(f"[⏳ Channel {i}/{len(channels_to_check)}] {channel_name}: No active stream")
+                    check_results[channel_name] = "offline"
+                    logger.info(f"[CHECK Channel {i}/{len(channels_to_check)}] {channel_name}: No active stream")
             except Exception as e:
-                logger.error(f"🔎 [{i}/{len(channels_to_check)}] {channel_name}... ERROR: {e}")
+                logger.error(f"[CHECK {i}/{len(channels_to_check)}] {channel_name}... ERROR: {e}")
                 result = None
                 # Continue checking other channels even if one fails
                 continue
@@ -305,7 +320,7 @@ class AutoModeratorDAE:
                 channel_name = self.stream_resolver._get_channel_display_name(channel_id)
                 logger.info(f"[FLOW-TRACE] channel_name={channel_name}")
                 if not live_chat_id:
-                    logger.info(f"⚠️ Found stream on {channel_name} but chat_id not available (likely quota exhausted)")
+                    logger.info(f"[WARN] Found stream on {channel_name} but chat_id not available (likely quota exhausted)")
 
                     # CRITICAL: Attempt to get chat_id with credential rotation
                     logger.info(f"[REFRESH] Attempting to get chat_id with credential rotation...")
@@ -318,7 +333,7 @@ class AutoModeratorDAE:
                             live_chat_id = retry_result[1]
                             logger.info(f"[OK] Got chat_id after credential rotation: {live_chat_id}")
                         else:
-                            logger.warning(f"⚠️ Credential rotation failed - still no chat_id")
+                            logger.warning("[WARN] Credential rotation failed - still no chat_id")
                             logger.info(f"[OK] Accepting stream anyway - video ID: {video_id} [CELEBRATE]")
                     except Exception as e:
                         logger.error(f"[FAIL] Error during credential rotation: {e}")
@@ -357,7 +372,7 @@ class AutoModeratorDAE:
                     # Fallback: Use channel name + "Live Stream"
                     stream_title = f"{channel_name} is LIVE!"
 
-                logger.info(f"📺 Stream title: {stream_title}")
+                logger.info(f"[STREAM] Stream title: {stream_title}")
 
                 # Store the stream info
                 stream_info = {
@@ -407,7 +422,7 @@ class AutoModeratorDAE:
 
             logger.info(f"\n[OK] Found {len(found_streams)} unique stream(s):")
             for stream in found_streams:
-                logger.info(f"  • {stream['channel_name']}: {stream['video_id']}")
+                logger.info(f"  - {stream['channel_name']}: {stream['video_id']}")
 
             # SEMANTIC SWITCHING: Only post if this is a NEW stream (not same one we're already monitoring)
             should_post = True
@@ -431,9 +446,9 @@ class AutoModeratorDAE:
                 self._trigger_social_media_posting_for_streams(found_streams)
                 logger.info(f"[FINGERPRINT-HANDOFF-2] Returned from _trigger_social_media_posting_for_streams")
             else:
-                logger.info(f"⏭️ [SEMANTIC-SWITCH] Skipped posting - stream already active in current session")
+                logger.info("[SEMANTIC-SWITCH] Skipped posting - stream already active in current session")
 
-            logger.info(f"📺 Will monitor first stream: {found_streams[0]['channel_name']}")
+            logger.info(f"[STREAM] Will monitor first stream: {found_streams[0]['channel_name']}")
             logger.info("[BOT][AI] [QWEN-SUCCESS] Stream detection successful - transitioning to monitor phase")
             return first_stream_to_monitor
         else:
@@ -442,7 +457,7 @@ class AutoModeratorDAE:
             logger.info("[CLIPBOARD] ROTATION SUMMARY:")
             for channel, status in check_results.items():
                 logger.info(f"   {channel}: {status}")
-            logger.info(f"\n[FAIL] No active livestreams found (checked {len(channels_to_check)} channels: 🍣🧘🐕)")
+            logger.info(f"\n[FAIL] No active livestreams found (checked {len(channels_to_check)} channels)")
 
             # QWEN provides intelligence summary
             if self.qwen_youtube:
@@ -453,7 +468,7 @@ class AutoModeratorDAE:
                     if line.strip():
                         logger.info(f"    {line}")
 
-            logger.info(f"⏳ Will check again in 30 minutes...")
+            logger.info("Will check again in 30 minutes...")
             logger.info("="*60)
             return None
 
@@ -467,7 +482,7 @@ class AutoModeratorDAE:
         time.sleep(0.5)
         logger.info(f"[FINGERPRINT-HANDOFF-4] Received {len(found_streams)} streams")
         logger.info("="*80)
-        logger.info("📱 SOCIAL MEDIA POSTING ORCHESTRATION")
+        logger.info("[SOCIAL] SOCIAL MEDIA POSTING ORCHESTRATION")
         logger.info("="*80)
 
         try:
@@ -586,11 +601,11 @@ class AutoModeratorDAE:
 
                 # Show different messages based on delay length
                 if delay < 60:
-                    logger.info(f"📺 No stream found. Checking again in {delay:.0f} seconds...")
+                    logger.info(f"[STREAM] No stream found. Checking again in {delay:.0f} seconds...")
                 elif delay < 300:
-                    logger.info(f"⏳ No stream found. Waiting {delay/60:.1f} minutes (adaptive idle)...")
+                    logger.info(f"[IDLE] No stream found. Waiting {delay/60:.1f} minutes (adaptive idle)...")
                 else:
-                    logger.info(f"💤 Idle mode: {delay/60:.1f} minutes (adaptive)")
+                    logger.info(f"[IDLE] Idle mode: {delay/60:.1f} minutes (adaptive)")
             
             # Wait with intelligent delay, but check for triggers every 5 seconds
             elapsed = 0
@@ -615,16 +630,31 @@ class AutoModeratorDAE:
             consecutive_failures += 1
             previous_delay = delay
         
+        # Normalize result into dict (resolve_stream can return a tuple in some branches)
+        if isinstance(result, tuple):
+            # Tuple format: (video_id, chat_id)
+            video_id, chat_id = (result + (None, None))[:2] if isinstance(result, tuple) else (None, None)
+            result = {
+                'video_id': video_id,
+                'live_chat_id': chat_id,
+                'channel_id': None,
+                'channel_name': 'Unknown (tuple)'
+            }
+
         stream_info = result or {}
         video_id = stream_info.get('video_id')
         live_chat_id = stream_info.get('live_chat_id')
         channel_id = stream_info.get('channel_id')
         channel_name = stream_info.get('channel_name')
 
+        # Set current_video_id for heartbeat tracking (fixes "Stream: None" issue)
+        self.current_video_id = video_id
+        logger.info(f"[FLOW-TRACE] Set current_video_id={video_id}")
+
         # Now that we found a stream, try to authenticate for full functionality
         # Authenticate FIRST, then get chat_id with API
         if not self.service and video_id:
-            logger.info("🔐 Stream found! Attempting authentication for chat interaction...")
+            logger.info("[AUTH] Stream found! Attempting authentication for chat interaction...")
             try:
                 service = get_authenticated_service()
                 if service:
@@ -645,17 +675,17 @@ class AutoModeratorDAE:
                         if auth_result and len(auth_result) > 1:
                             resolved_video_id = auth_result[0]
                             if resolved_video_id and resolved_video_id != video_id:
-                                logger.info(f"🔁 API resolved stream {resolved_video_id} (replacing {video_id})")
+                                logger.info(f"[API] Resolved stream {resolved_video_id} (replacing {video_id})")
                                 video_id = resolved_video_id
                                 stream_info['video_id'] = video_id
                             live_chat_id = auth_result[1]
                             stream_info['live_chat_id'] = live_chat_id
                             logger.info(f"[OK] Got chat ID with API: {live_chat_id[:20]}...")
                         else:
-                            logger.warning("⚠️ Could not get chat ID even with API")
+                            logger.warning("[WARN] Could not get chat ID even with API")
             except Exception as e:
-                logger.warning(f"⚠️ Authentication failed: {e}")
-                logger.info("🌐 Continuing in NO-QUOTA mode (view-only)")
+                logger.warning(f"[WARN] Authentication failed: {e}")
+                logger.info("[NO-QUOTA] Continuing in NO-QUOTA mode (view-only)")
 
         # WRE Monitor: Track stream transition completion
         if hasattr(self, 'wre_monitor') and self.wre_monitor:
@@ -678,9 +708,22 @@ class AutoModeratorDAE:
         logger.info("[ROCKET] Initializing LiveChatCore (includes social media posting)...")
         await self.livechat.initialize()
 
+        # Phase 3: Initialize (or update) Community Monitor for YouTube comments
+        try:
+            from .community_monitor import get_community_monitor
+            self.community_monitor = get_community_monitor(
+                channel_id=channel_id,
+                chat_sender=self.livechat,  # For posting announcements
+                telemetry_store=self.telemetry  # For tracking stats
+            )
+            logger.info("[COMMUNITY] Monitor initialized for YouTube Studio comments")
+        except Exception as e:
+            logger.warning(f"[COMMUNITY] Failed to initialize monitor: {e}")
+            self.community_monitor = None
+
         # Start monitoring
         logger.info("="*60)
-        logger.info("👁️ MONITORING CHAT - WSP-COMPLIANT ARCHITECTURE")
+        logger.info("MONITORING CHAT - WSP-COMPLIANT ARCHITECTURE")
         logger.info("="*60)
 
         # === CARDIOVASCULAR: Start heartbeat task (WSP 91) ===
@@ -692,7 +735,7 @@ class AutoModeratorDAE:
         try:
             await self.livechat.start_listening()
         except KeyboardInterrupt:
-            logger.info("⏹️ Monitoring stopped by user")
+            logger.info("[STOP] Monitoring stopped by user")
         except Exception as e:
             logger.error(f"Monitoring error: {e}")
         finally:
@@ -715,7 +758,43 @@ class AutoModeratorDAE:
 
             if self.livechat:
                 self.livechat.stop_listening()
-    
+
+    async def _run_comment_engagement(
+        self,
+        runner,
+        channel_id: str,
+        max_comments: int,
+        mode: str
+    ):
+        """
+        Run comment engagement with pluggable execution strategy.
+
+        Sprint 1+2: Execution modes (subprocess|thread|inproc)
+        - subprocess: Safest (SIGKILL guarantee), default
+        - thread: Fast startup (<500ms), acceptable risk
+        - inproc: Debug only (blocks event loop)
+
+        This method is launched as an async task and does not block main DAE.
+        """
+        try:
+            result = await runner.run_engagement(
+                channel_id=channel_id,
+                max_comments=max_comments
+            )
+
+            # Log result
+            stats = result.get('stats', {})
+            error = result.get('error')
+
+            if error:
+                logger.error(f"[COMMUNITY] Engagement failed ({mode}): {error}")
+                logger.error(f"[COMMUNITY] Stats: {stats}")
+            else:
+                logger.info(f"[COMMUNITY] Engagement complete ({mode}): {stats}")
+
+        except Exception as e:
+            logger.error(f"[COMMUNITY] Engagement exception ({mode}): {e}", exc_info=True)
+
     async def run(self):
         """
         Main entry point - full DAE lifecycle.
@@ -726,6 +805,50 @@ class AutoModeratorDAE:
         if self.enable_ai_monitoring:
             logger.info("[AI] AI Overseer (Qwen/Gemma) monitoring: ENABLED")
         logger.info("=" * 60)
+
+        # Phase -2: Launch dependencies (Chrome + LM Studio for comment engagement)
+        try:
+            from modules.infrastructure.dependency_launcher.src.dae_dependencies import ensure_dependencies
+            # Require LM Studio so UI-TARS vision is available before engagement
+            dep_status = await ensure_dependencies(require_lm_studio=True)
+            if not dep_status.get('chrome'):
+                logger.warning("[DEPS] Chrome not ready - comment engagement may fail")
+                logger.warning("[DEPS] Manual launch: chrome --remote-debugging-port=9222")
+            if dep_status.get('lm_studio'):
+                logger.info("[DEPS] LM Studio ready (UI-TARS vision enabled on port 1234)")
+            else:
+                logger.warning("[DEPS] LM Studio not ready - falling back to DOM-only actions")
+        except ImportError:
+            logger.debug("[DEPS] Dependency launcher not available")
+        except Exception as e:
+            logger.warning(f"[DEPS] Dependency check failed: {e}")
+
+        # Phase -2.1: Startup comment engagement (runs even when no live stream)
+        # First-principles: comments are a persistent backlog; do not gate on live chat.
+        #
+        # Sprint 1+2: Pluggable execution modes (subprocess=safest, thread=fast, inproc=debug)
+        if os.getenv("COMMUNITY_STARTUP_ENGAGE", "true").lower() in ("1", "true", "yes"):
+            try:
+                from .engagement_runner import get_runner
+                from pathlib import Path
+
+                default_channel_id = os.getenv('CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw')
+                startup_max = int(os.getenv("COMMUNITY_STARTUP_MAX_COMMENTS", "0"))
+
+                # Get execution mode (default: subprocess for safety)
+                exec_mode = os.getenv("COMMUNITY_EXEC_MODE", "subprocess")
+                repo_root = Path(__file__).resolve().parents[3]
+
+                runner = get_runner(mode=exec_mode, repo_root=repo_root)
+
+                # Launch as async task
+                asyncio.create_task(
+                    self._run_comment_engagement(runner, default_channel_id, startup_max, exec_mode)
+                )
+                logger.info(f"[COMMUNITY] Startup engagement launched (mode={exec_mode}, max_comments={startup_max})")
+
+            except Exception as e:
+                logger.warning(f"[COMMUNITY] Startup engagement failed to launch: {e}")
 
         # Initialize AI Overseer heartbeat monitoring if enabled
         if self.enable_ai_monitoring:
@@ -776,6 +899,9 @@ class AutoModeratorDAE:
                     self.livechat.stop_listening()
                     self.livechat = None
 
+                # Reset current_video_id for heartbeat tracking
+                self.current_video_id = None
+
                 # Clear cached stream info to force fresh search
                 if self.stream_resolver:
                     # Force stream resolver to use NO-QUOTA mode
@@ -793,7 +919,7 @@ class AutoModeratorDAE:
                     if idle_result.get("overall_success"):
                         logger.info(f"[OK] Idle automation completed successfully ({idle_result.get('duration', 0):.1f}s)")
                     else:
-                        logger.info(f"⚠️ Idle automation completed with issues ({idle_result.get('duration', 0):.1f}s)")
+                        logger.info(f"[WARN] Idle automation completed with issues ({idle_result.get('duration', 0):.1f}s)")
                 except ImportError:
                     logger.debug("Idle automation module not available - skipping")
                 except Exception as e:
@@ -808,7 +934,7 @@ class AutoModeratorDAE:
                 logger.info("[TARGET] Entering quick-check mode for seamless stream detection")
                 
             except KeyboardInterrupt:
-                logger.info("⏹️ Stopped by user")
+                logger.info("[STOP] Stopped by user")
                 break
             except Exception as e:
                 consecutive_failures += 1
@@ -974,6 +1100,27 @@ class AutoModeratorDAE:
 
                         except Exception as e:
                             logger.debug(f"[AI-OVERSEER] Monitoring check failed: {e}")
+
+                    # === COMMUNITY MONITOR: Autonomous comment engagement (every 20 pulses = 10 minutes) ===
+                    # ENHANCED: Uses subprocess to avoid browser hijacking (2025-12-11)
+                    if heartbeat_count % 20 == 0 and self.community_monitor:
+                        try:
+                            logger.info(f"[COMMUNITY] Pulse {heartbeat_count}: Checking for comment engagement...")
+
+                            # Check if we should engage now (verifies stream is active, no engagement in progress)
+                            should_engage = await self.community_monitor.should_check_now(heartbeat_count)
+
+                            if should_engage:
+                                # Launch autonomous engagement as subprocess (fire-and-forget)
+                                # This runs isolated from main.py's process, no browser hijacking!
+                                # max_comments=0 = UNLIMITED - process ALL comments until tab is clear!
+                                asyncio.create_task(self.community_monitor.check_and_engage(max_comments=0))
+                                logger.info("[COMMUNITY] Autonomous engagement launched (UNLIMITED mode - clearing all comments)")
+                            else:
+                                logger.debug("[COMMUNITY] Skipping (stream not active or engagement in progress)")
+
+                        except Exception as e:
+                            logger.error(f"[COMMUNITY] Comment check failed: {e}")
 
                 except Exception as e:
                     logger.error(f"[HEART] Heartbeat pulse failed: {e}")

@@ -1,0 +1,62 @@
+{
+  "validations": [
+    {
+      "timestamp": "2025-12-06T05:35:26.472767",
+      "action": "LIKE",
+      "intent": "Click LIKE button (thumbs up icon, 3rd from left)",
+      "approved_012": true,
+      "comment_012": "https://studio.youtube.com/channel/UC-LSSlOZwpGIRIYihaz8zCw/comments/inbox? = correcct",
+      "executed": true,
+      "execution_success": false,
+      "execution_time_seconds": 4.861021
+    },
+    {
+      "timestamp": "2025-12-06T05:35:57.846655",
+      "action": "HEART",
+      "intent": "Click HEART button (heart icon, between thumbs down and menu)",
+      "approved_012": true,
+      "comment_012": "done",
+      "executed": true,
+      "execution_success": false,
+      "execution_time_seconds": 3.992412
+    },
+    {
+      "timestamp": "2025-12-06T05:37:04.403537",
+      "action": "REPLY",
+      "intent": "Click REPLY button to open reply text box",
+      "approved_012": true,
+      "comment_012": "https://studio.youtube.com/channel/UC-LSSlOZwpGIRIYihaz8zCw/comments/inbox? --- is the popup on this? the popup is not connected to the elelment just popping up over it",
+      "executed": true,
+      "execution_success": false,
+      "execution_time_seconds": 3.521543
+    },
+    {
+      "timestamp": "2025-12-06T06:14:18.873661",
+      "action": "LIKE",
+      "intent": "Click LIKE button (thumbs up icon, 3rd from left)",
+      "action_012": "reject",
+      "comment_012": "",
+      "executed": false,
+      "reason": "012 rejected"
+    },
+    {
+      "timestamp": "2025-12-06T06:15:02.816575",
+      "action": "HEART",
+      "intent": "Click HEART button (heart icon, between thumbs down and menu)",
+      "action_012": "reject",
+      "comment_012": "not sure if you are just a pop up or tied to a specific page?",
+      "executed": false,
+      "reason": "012 rejected"
+    },
+    {
+      "timestamp": "2025-12-06T06:15:22.684482",
+      "action": "REPLY",
+      "intent": "Click REPLY button to open reply text box",
+      "action_012": "approve",
+      "comment_012": "",
+      "executed": true,
+      "execution_success": false,
+      "execution_time_seconds": 4.781968
+    }
+  ]
+}

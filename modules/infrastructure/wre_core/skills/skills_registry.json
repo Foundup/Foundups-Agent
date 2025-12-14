@@ -62,6 +62,21 @@
       "last_rollback": null,
       "metrics_path": "modules/infrastructure/wre_core/recursive_improvement/metrics/youtube_intelligent_monitoring_*.json",
       "production_path_target": "modules/communication/livechat/skills/youtube_intelligent_monitoring/"
+    },
+    "wardrobe_skillz_ide": {
+      "skill_name": "wardrobe_skillz_ide",
+      "promotion_state": "prototype",
+      "location": "modules/infrastructure/wardrobe_ide/",
+      "primary_agent": "playwright",
+      "fallback_agent": "selenium",
+      "intent_type": "RECORDER/REPLAY",
+      "module": "modules/infrastructure/wardrobe_ide",
+      "entry_point": "__main__.py",
+      "created_at": "2025-12-10T00:00:00Z",
+      "last_promoted": null,
+      "last_rollback": null,
+      "metrics_path": "modules/infrastructure/wardrobe_ide/skills/metrics/*.json",
+      "production_path_target": "modules/infrastructure/wardrobe_ide/skills/"
     }
   },
   "promotion_states": {
@@ -70,9 +85,9 @@
     "production": "WRE entry point, full production load"
   },
   "metadata": {
-    "total_skills": 4,
+    "total_skills": 5,
     "by_state": {
-      "prototype": 4,
+      "prototype": 5,
       "staged": 0,
       "production": 0
     },
@@ -80,7 +95,9 @@
       "gemma": 3,
       "qwen": 1,
       "grok": 0,
-      "ui-tars": 0
+      "ui-tars": 0,
+      "playwright": 1,
+      "selenium": 0
     }
   }
 }

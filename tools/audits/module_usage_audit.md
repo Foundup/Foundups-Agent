@@ -640,7 +640,7 @@
 | modules.platform_integration.github_integration.src.extensions.__init__ | keep | 1 | 0 | Entry point or package initialiser. |
 | modules.platform_integration.github_integration.src.github_api_client | keep | 579 | 2 | 2 inbound references. |
 | modules.platform_integration.github_integration.src.wre_integration | keep | 403 | 1 | Entry point or package initialiser. |
-| modules.platform_integration.github_integration.src.wsp_automation | keep | 846 | 1 | Entry point or package initialiser. |
+| modules.infrastructure.wsp_core.src.wsp_compliance_checker | keep | 430 | 1 | Entry point or package initialiser. |
 | modules.platform_integration.github_integration.tests.__init__ | keep | 1 | 0 | Entry point or package initialiser. |
 | modules.platform_integration.github_integration.tests.test_adapters.github_api_adapter | keep | 29 | 0 | Entry point or package initialiser. |
 | modules.platform_integration.github_integration.tests.test_auth.dynamic_token_manager | keep | 29 | 0 | Entry point or package initialiser. |

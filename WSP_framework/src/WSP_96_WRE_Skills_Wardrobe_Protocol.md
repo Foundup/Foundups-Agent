@@ -8,6 +8,10 @@
 
 ---
 
+**Terminology Note**: "Skills" (or "Skillz" for WRE-specific usage) refers to the advanced prompting system used by WRE. Think of it like a wardrobe of outfits - the agent wears the right Skillz for the job. Both terms ("skill" and "skillz") refer to the same concept throughout this protocol.
+
+---
+
 ## First Principles
 
 ### What Is a Skill?

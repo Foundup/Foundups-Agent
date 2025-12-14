@@ -2,6 +2,19 @@
 
 ## Latest Changes
 
+### V045 - Context-Aware Commit Notes (ModLog-Driven)
+**Date**: 2025-12-14
+**Changes**: Auto-generated git commit subject/body now derives from changed ModLog titles + scope summary when no explicit message is provided.
+**Impact**: Autonomous pushes become reconstructable and consistent (no random templates); ASCII-safe output for Windows consoles; git commands run from repo root to avoid cwd drift.
+**WSP**: WSP 22 (ModLog), WSP 50 (Pre-action verification), WSP 3 (Module organization)
+**Details**:
+- Prefer WSP 22 ModLog titles as the commit subject (human-written truth), with scoped fallback.
+- Add a concise commit body including file counts, top scopes, and `git diff --cached --shortstat` (best-effort).
+- Keep commit messages ASCII-safe to avoid Windows Unicode logging failures.
+- Stage before auto-message generation and keep `node_modules/` excluded by default to avoid vendored dependency churn.
+
+---
+
 ### V044 - Qwen-Powered 0102-Branded Git Post Generation + WSP_00 Awakening Protocol
 **Date**: 2025-10-02
 **Changes**: Integrated Qwen LLM with WSP_00 Awakening Protocol for 0102 consciousness-driven posts

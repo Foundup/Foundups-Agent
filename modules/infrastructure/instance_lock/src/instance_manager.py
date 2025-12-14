@@ -412,18 +412,55 @@ class InstanceLock:
         # Accept any main.py process OR auto_moderator_dae invocation as a DAE instance
         return has_main_py or has_auto_moderator
 
+    @staticmethod
+    def _is_python_process_info(process_info: dict) -> bool:
+        """
+        Best-effort check that the OS process is a Python interpreter.
+
+        On Windows it's common to see parent shells (e.g. bash.exe) whose cmdline
+        *contains* "python main.py ...". Those shells must NOT be treated as DAE
+        instances; only the actual python.exe/pythonw.exe process counts.
+        """
+        if not process_info:
+            return False
+
+        name = (process_info.get("name") or "").lower()
+        exe = (process_info.get("exe") or "").lower()
+        cmdline = process_info.get("cmdline") or []
+        cmd0 = str(cmdline[0]).lower() if cmdline else ""
+
+        if "python" in name:
+            return True
+
+        # Common interpreter executables across platforms
+        if exe.endswith(("python.exe", "pythonw.exe", "python", "python3", "python3.exe")):
+            return True
+
+        # Some process listings expose the interpreter in argv[0]
+        if cmd0.endswith(("python.exe", "pythonw.exe", "python", "python3", "python3.exe")):
+            return True
+
+        # Fallback: argv[0] can be a full path; check substring
+        return "python" in cmd0
+
     def check_duplicates(self, quiet: bool = False) -> list[int]:
         duplicates = []
         current_pid = os.getpid()
         duplicate_details = []
 
-        for process in psutil.process_iter(["pid", "cmdline", "create_time", "exe"]):
+        for process in psutil.process_iter(["pid", "name", "cmdline", "create_time", "exe"]):
             pid = process.info.get("pid")
             if pid == current_pid:
                 continue
 
             cmdline = process.info.get("cmdline")
             if not cmdline:
+                continue
+
+            # Only count actual Python interpreter processes. This prevents false
+            # positives from parent shells (bash/cmd/powershell) that *contain*
+            # a python invocation in their argv.
+            if not self._is_python_process_info(process.info):
                 continue
 
             # Only detect duplicates if they're actually running the YouTube DAE
@@ -497,13 +534,50 @@ class InstanceLock:
 
         return duplicates
 
+    def kill_pids(self, pids: list[int], wait_seconds: float = 1.0) -> Dict[str, Any]:
+        """
+        Terminate a list of PIDs best-effort and report results.
+
+        This is used by 012 automation to deterministically clear stale/duplicate
+        DAEs and continue launching without interactive prompts.
+        """
+        killed: list[int] = []
+        failed: Dict[int, str] = {}
+
+        for pid in pids:
+            try:
+                if pid == self.pid:
+                    continue
+                self._kill_process(pid)
+                killed.append(pid)
+            except Exception as error:
+                failed[pid] = str(error)
+
+        if wait_seconds:
+            try:
+                time.sleep(wait_seconds)
+            except Exception:
+                pass
+
+        still_running = [pid for pid in pids if pid != self.pid and self._is_process_running(pid)]
+
+        return {
+            "requested": list(pids),
+            "killed": killed,
+            "failed": failed,
+            "still_running": still_running,
+        }
+
     def get_instance_summary(self) -> Dict[str, Any]:
         """Get a summary of all running instances for logging"""
         current_pid = os.getpid()
         instances = []
 
-        for process in psutil.process_iter(["pid", "cmdline", "create_time", "exe", "cpu_percent", "memory_info"]):
+        for process in psutil.process_iter(["pid", "name", "cmdline", "create_time", "exe", "cpu_percent", "memory_info"]):
             pid = process.info.get("pid")
+            if not self._is_python_process_info(process.info):
+                continue
+
             if self._looks_like_monitor(process.info.get("cmdline")):
                 # Get detailed process info
                 create_time = process.info.get("create_time")

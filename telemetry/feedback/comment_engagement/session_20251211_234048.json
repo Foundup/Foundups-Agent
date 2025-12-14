@@ -1,0 +1,24 @@
+{
+  "session_id": "20251211_234048",
+  "total_processed": 1,
+  "stats": {
+    "comments_processed": 1,
+    "likes": 1,
+    "hearts": 1,
+    "replies": 1,
+    "errors": 0
+  },
+  "results": [
+    {
+      "comment_idx": 1,
+      "like": true,
+      "heart": true,
+      "reply": true,
+      "author_name": "Unknown",
+      "comment_text": "What song is it?",
+      "commenter_type": "regular",
+      "reply_text": "Check out the #FFCPLN playlist at ffc.foundups.com for all our 0102 music! \ud83c\udfb5\ud83c\udf8c \u270a\u270b\ud83d\udd90\ufe0f",
+      "errors": []
+    }
+  ]
+}

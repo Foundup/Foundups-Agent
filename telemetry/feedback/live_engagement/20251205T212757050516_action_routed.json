@@ -1,0 +1,8 @@
+{
+  "action": "click_element",
+  "driver": "vision",
+  "params": {
+    "description": "gray thumbs up icon in the comment action bar, located between the replies counter and thumbs down icon"
+  },
+  "timestamp": "2025-12-05T21:27:57.050516Z"
+}

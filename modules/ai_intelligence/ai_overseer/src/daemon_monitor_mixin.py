@@ -79,7 +79,8 @@ class DaemonMonitorMixin:
         }
 
         for bug in classified_bugs:
-            pattern_key = f"{bug['pattern_name']}_{hash(str(bug['matches']))}"
+            # Use ONLY pattern_name for tracking (matches change frequently, causing spam)
+            pattern_key = bug['pattern_name']
             announce_this_bug = True
 
             if pattern_key in self.fix_attempts:
@@ -100,18 +101,23 @@ class DaemonMonitorMixin:
                     "last_attempt": time.time(),
                     "first_seen": time.time(),
                     "disabled": False,
+                    "last_fix_success": None,
                 }
 
+            fix_succeeded_this_time = False
             if bug["auto_fixable"] and auto_fix:
                 fix_result = self._apply_auto_fix(bug, skill)
                 if fix_result.get("success"):
                     results["bugs_fixed"] += 1
                     results["fixes_applied"].append(fix_result)
+                    fix_succeeded_this_time = True
                     if announce_to_chat and announce_this_bug:
                         self._announce_fix(chat_sender, bug, "applying")
                         self._announce_fix(chat_sender, bug, "complete", fix_result=fix_result)
                 else:
-                    if announce_to_chat and announce_this_bug:
+                    # Only announce first failure, then silence
+                    if announce_to_chat and announce_this_bug and self.fix_attempts[pattern_key]["attempts"] == 1:
+                        self._announce_fix(chat_sender, bug, "applying")
                         self._announce_fix(chat_sender, bug, "complete", fix_result=fix_result)
             elif bug["needs_0102"] and report_complex:
                 report = self._generate_bug_report(bug, skill, bash_id)
@@ -120,9 +126,12 @@ class DaemonMonitorMixin:
                 if announce_to_chat and announce_this_bug:
                     self._announce_fix(chat_sender, bug, "detection")
 
-            if pattern_key in self.fix_attempts and results["bugs_fixed"] == 0:
-                if self.fix_attempts[pattern_key]["attempts"] >= 3:
+            # Per-pattern disable logic: disable after 3 failed attempts
+            if pattern_key in self.fix_attempts:
+                self.fix_attempts[pattern_key]["last_fix_success"] = fix_succeeded_this_time
+                if self.fix_attempts[pattern_key]["attempts"] >= 3 and not fix_succeeded_this_time:
                     self.fix_attempts[pattern_key]["disabled"] = True
+                    logger.warning("[SILENCED] Pattern %s disabled after 3 failures", bug["pattern_name"])
 
         self._store_monitoring_patterns(skill_path, results)
         return results
@@ -632,19 +641,19 @@ index 0000000..1111111 100644
             rendered = banter._convert_unicode_tags_to_emoji(message)
             try:
                 asyncio.create_task(
-                    chat_sender.send_message(rendered, response_type="update", skip_delay=True)
+                    chat_sender.send_message(rendered, response_type="update")
                 )
             except RuntimeError:
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
                     loop.call_soon_threadsafe(
                         lambda: asyncio.create_task(
-                            chat_sender.send_message(rendered, response_type="update", skip_delay=True)
+                            chat_sender.send_message(rendered, response_type="update")
                         )
                     )
                 else:
                     loop.run_until_complete(
-                        chat_sender.send_message(rendered, response_type="update", skip_delay=True)
+                        chat_sender.send_message(rendered, response_type="update")
                     )
             return True
         except Exception as exc:

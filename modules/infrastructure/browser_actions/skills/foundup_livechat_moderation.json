@@ -1,0 +1,97 @@
+{
+  "skill_id": "foundup_livechat_moderation",
+  "name": "FoundUp Livechat Moderation",
+  "description": "Autonomous livechat engagement and moderation for FoundUp streams",
+  "platform": "foundup",
+  "wsp_references": ["WSP 77", "WSP 80", "WSP 27"],
+  "version": "1.0.0",
+  "parameters": {
+    "foundup_id": {
+      "type": "string",
+      "required": true,
+      "description": "FoundUp stream identifier (e.g., 'move2japan', 'gotjunk')"
+    },
+    "duration_minutes": {
+      "type": "integer",
+      "required": false,
+      "default": 30,
+      "description": "Session duration"
+    },
+    "check_interval": {
+      "type": "integer",
+      "required": false,
+      "default": 10,
+      "description": "Seconds between chat checks"
+    },
+    "greeting_enabled": {
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Send greeting at session start"
+    }
+  },
+  "workflow": [
+    {
+      "step": 1,
+      "action": "navigate_to_foundup",
+      "params": {
+        "foundup_id": "{{foundup_id}}"
+      }
+    },
+    {
+      "step": 2,
+      "action": "send_greeting",
+      "params": {
+        "foundup_id": "{{foundup_id}}"
+      },
+      "condition": "greeting_enabled"
+    },
+    {
+      "step": 3,
+      "action": "monitor_livechat",
+      "params": {
+        "foundup_id": "{{foundup_id}}",
+        "duration_minutes": "{{duration_minutes}}",
+        "check_interval": "{{check_interval}}"
+      },
+      "loop": true
+    },
+    {
+      "step": 4,
+      "action": "respond_to_questions",
+      "params": {
+        "foundup_id": "{{foundup_id}}",
+        "message": "{{livechat_message}}"
+      },
+      "trigger": "question_detected",
+      "priority": "high"
+    },
+    {
+      "step": 5,
+      "action": "engage_with_members",
+      "params": {
+        "foundup_id": "{{foundup_id}}",
+        "message": "{{livechat_message}}"
+      },
+      "trigger": "member_message",
+      "priority": "medium"
+    }
+  ],
+  "ai_coordination": {
+    "phase_1_gemma": "Detect questions and priority messages (<10ms)",
+    "phase_2_qwen": "Generate contextual, helpful replies",
+    "phase_3_0102": "Post to livechat with 012 typing speed",
+    "phase_4_learning": "Store successful engagement patterns"
+  },
+  "telemetry": {
+    "emit_events": ["livechat_read", "message_sent", "question_answered", "session_complete"],
+    "metrics": ["messages_read", "messages_sent", "questions_answered", "engagement_rate"]
+  },
+  "typing_behavior": {
+    "speed": "character_by_character",
+    "style": "012_human_like",
+    "no_paste": true
+  },
+  "created_by": "0102",
+  "sprint": "A6"
+}

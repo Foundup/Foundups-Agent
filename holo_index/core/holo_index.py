@@ -56,6 +56,8 @@ CircuitBreakerOpenError = Exception
 
 class HoloIndex:
     """Dual semantic index spanning NAVIGATION entries and WSP protocols."""
+    _initialized: bool = False
+    _shared_state: Dict[str, Any] = {}
 
     def _log_agent_action(self, message: str, action_tag: str = "0102"):
         """Real-time logging for multi-agent coordination - allows other 0102 agents to follow."""
@@ -94,6 +96,14 @@ class HoloIndex:
             ssd_path: Path to SSD for persistent storage
             quiet: Suppress initialization logs
         """
+        # Fast path: reuse already-loaded state to avoid reinitializing models/Chroma
+        if HoloIndex._initialized:
+            self.__dict__.update(HoloIndex._shared_state)
+            self.quiet = quiet  # allow caller to silence logs on reuse
+            # Avoid noisy duplicate init logs; only trace at debug level on reuse
+            logging.getLogger(__name__).debug("HoloIndex already initialized; reusing existing instance")
+            return
+
         self.quiet = quiet
         self._log_agent_action(f"Initializing HoloIndex on SSD: {ssd_path}", "INIT")
 
@@ -111,26 +121,38 @@ class HoloIndex:
         self.client = chromadb.PersistentClient(path=str(self.vector_path))
         self.code_collection = self._ensure_collection("navigation_code")
         self.wsp_collection = self._ensure_collection("navigation_wsp")
+        self.test_collection = self._ensure_collection("navigation_tests")
 
         self._log_agent_action("Loading sentence transformer (cached on SSD)...", "MODEL")
         os.environ['SENTENCE_TRANSFORMERS_HOME'] = str(self.models_path)
-        
-        global SentenceTransformer
-        if SentenceTransformer is None:
-            try:
-                from sentence_transformers import SentenceTransformer
-            except Exception as e:
-                self._log_agent_action(f"Failed to import SentenceTransformer: {e}", "ERROR")
-                SentenceTransformer = None
 
-        if SentenceTransformer:
-            try:
-                self.model = SentenceTransformer('all-MiniLM-L6-v2')
-            except Exception as e:
-                self._log_agent_action(f"Failed to load model: {e}", "ERROR")
-                self.model = None
-        else:
+        # Optional fast-start skip to prevent long imports (set HOLO_SKIP_MODEL=1)
+        if os.environ.get("HOLO_SKIP_MODEL") == "1":
+            self._log_agent_action("HOLO_SKIP_MODEL=1 -> skipping sentence transformer load", "WARN")
             self.model = None
+        else:
+            global SentenceTransformer
+            if SentenceTransformer is None:
+                try:
+                    from sentence_transformers import SentenceTransformer
+                except KeyboardInterrupt:
+                    self._log_agent_action("SentenceTransformer import interrupted; continuing without model", "WARN")
+                    SentenceTransformer = None
+                except Exception as e:
+                    self._log_agent_action(f"Failed to import SentenceTransformer: {e}", "ERROR")
+                    SentenceTransformer = None
+
+            if SentenceTransformer:
+                try:
+                    self.model = SentenceTransformer('all-MiniLM-L6-v2')
+                except KeyboardInterrupt:
+                    self._log_agent_action("SentenceTransformer load interrupted; continuing without model", "WARN")
+                    self.model = None
+                except Exception as e:
+                    self._log_agent_action(f"Failed to load model: {e}", "ERROR")
+                    self.model = None
+            else:
+                self.model = None
 
         self.need_to: Dict[str, str] = {}
         self.wsp_summary: Dict[str, Dict[str, str]] = {}
@@ -153,6 +175,10 @@ class HoloIndex:
                 self.breadcrumb_tracer = None  # Ensure it's None on failure
         else:
             self.breadcrumb_tracer = None  # Ensure it's always defined
+
+        # Cache state for reuse and mark initialized
+        HoloIndex._shared_state = dict(self.__dict__)
+        HoloIndex._initialized = True
 
     def get_code_entry_count(self) -> int:
         """Get count of indexed code entries."""
@@ -315,12 +341,67 @@ class HoloIndex:
             }
 
         if embeddings:
+            print(f"DEBUG: WSP Index - ids: {len(ids)}, docs: {len(documents)}, embeds: {len(embeddings)}")
             self.wsp_collection.add(ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas)
             self.wsp_summary = summary_cache
             self.wsp_summary_file.write_text(json.dumps(self.wsp_summary, indent=2), encoding='utf-8')
             print("[OK] WSP index refreshed and summary cache saved")
         else:
             print("[WARN] No WSP entries were indexed (empty content)")
+
+    def index_test_registry(self) -> None:
+        """
+        WSP 98: Ingest the WSP Test Registry into ChromaDB for semantic search.
+        """
+        registry_path = self.project_root / "WSP_knowledge" / "WSP_Test_Registry.json"
+        
+        if not registry_path.exists():
+            self._log_agent_action("WSP_Test_Registry.json not found", "WARN")
+            return
+            
+        try:
+            registry_data = json.loads(registry_path.read_text(encoding='utf-8'))
+        except Exception as e:
+            self._log_agent_action(f"Failed to load test registry: {e}", "ERROR")
+            return
+            
+        if not registry_data:
+            self._log_agent_action("WSP Test Registry is empty", "WARN")
+            return
+
+        self._log_agent_action(f"Indexing {len(registry_data)} test entries...", "INDEX")
+        self.test_collection = self._reset_collection("navigation_tests")
+        
+        ids, embeddings, documents, metadatas = [], [], [], []
+        
+        for idx, entry in enumerate(registry_data.values(), start=1):
+            test_id = entry.get('id', f'test_{idx}')
+            path = entry.get('path', '')
+            description = entry.get('description', '')
+            capabilities = ", ".join(entry.get('capabilities', []))
+            execution_type = entry.get('execution_type', 'unknown')
+            
+            # Create a rich semantic payload
+            doc_payload = f"Test: {test_id}\nType: {execution_type}\nCapabilities: {capabilities}\nDescription: {description}"
+            
+            ids.append(f"test_{idx}")
+            embeddings.append(self._get_embedding(doc_payload))
+            documents.append(doc_payload)
+            
+            metadatas.append({
+                "test_id": test_id,
+                "path": path,
+                "description": description[:1000], # Truncate for metadata safety
+                "capabilities": capabilities,
+                "type": "test",
+                "priority": 8 # Tests are high value for developers
+            })
+            
+        if embeddings:
+            self.test_collection.add(ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas)
+            self._log_agent_action("Test Registry index refreshed on SSD", "OK")
+        else:
+             self._log_agent_action("No test entries indexed", "WARN")
 
     def _classify_document_type(self, file_path: Path, title: str, lines: List[str]) -> str:
         """
@@ -429,6 +510,7 @@ class HoloIndex:
             # Perform dual search
             code_hits = []
             wsp_hits = []
+            test_hits = []
             
             # Search code index if requested
             if doc_type_filter in ["code", "all"]:
@@ -439,20 +521,27 @@ class HoloIndex:
             # Search WSP index if requested  
             if doc_type_filter in ["wsp", "all"]:
                 wsp_hits = self._search_collection(self.wsp_collection, query, limit, kind="wsp", doc_type_filter=doc_type_filter)
+                
+            # Search Test index if requested
+            if doc_type_filter in ["test", "all"]:
+                test_hits = self._search_collection(self.test_collection, query, limit, kind="test", doc_type_filter=doc_type_filter)
             
             # Log completion
-            self._log_agent_action(f"Search complete: {len(code_hits)} code, {len(wsp_hits)} WSP")
+            self._log_agent_action(f"Search complete: {len(code_hits)} code, {len(wsp_hits)} WSP, {len(test_hits)} Tests")
 
             # Backward-compatible payload for CLI/Qwen integrations
             payload = {
                 'code_hits': code_hits,
                 'wsp_hits': wsp_hits,
+                'test_hits': test_hits,
                 'code': code_hits,   # legacy key expected by throttler + advisors
                 'wsps': wsp_hits,    # legacy key expected by throttler + advisors
+                'tests': test_hits,  # new key for test integration
                 'metadata': {
                     'query': query,
                     'code_count': len(code_hits),
                     'wsp_count': len(wsp_hits),
+                    'test_count': len(test_hits),
                     'timestamp': datetime.now().isoformat()
                 }
             }
@@ -508,9 +597,18 @@ class HoloIndex:
         metas = results.get('metadatas', [[]])[0]
         dists = results.get('distances', [[]])[0]
 
+        formatted = []
+        doc_count = len(docs)
+        if doc_count == 0:
+            return []
+
         # Collect all results first for filtering and ranking
         raw_results = []
-        for doc, meta, distance in zip(docs, metas, dists):
+        for i in range(doc_count):
+            doc = docs[i]
+            meta = metas[i]
+            distance = dists[i]
+            
             similarity = max(0.0, 1 - float(distance))
             doc_type = meta.get('type', 'other')
             priority = meta.get('priority', 1)
@@ -521,6 +619,9 @@ class HoloIndex:
             title = (meta.get('title') or '').lower()
             path = (meta.get('path') or '').lower()
             summary = (meta.get('summary') or '').lower()
+            test_id = (meta.get('test_id') or '').lower() # Support test ID search
+            capabilities = (meta.get('capabilities') or '').lower() # Support capability search
+            
             for token in set(ql.split()):
                 if not token:
                     continue
@@ -530,6 +631,10 @@ class HoloIndex:
                     keyword_score += 1.0
                 if token in summary:
                     keyword_score += 0.5
+                if token in test_id:
+                    keyword_score += 3.0 # High match for direct test ID
+                if token in capabilities:
+                    keyword_score += 1.5
 
             # Apply document type filtering
             if doc_type_filter != "all" and doc_type != doc_type_filter:
@@ -542,6 +647,17 @@ class HoloIndex:
                     "similarity": f"{similarity*100:.1f}%",
                     "cube": meta.get('cube'),
                     "type": doc_type,
+                    "priority": priority,
+                    "_sort_key": (0.5 * priority + 0.3 * similarity + 0.2 * keyword_score, similarity, priority)
+                }
+            elif kind == "test":
+                result = {
+                    "test_id": meta.get('test_id'),
+                    "path": meta.get('path'),
+                    "description": meta.get('description'),
+                    "capabilities": meta.get('capabilities'),
+                    "similarity": f"{similarity*100:.1f}%",
+                    "type": "test",
                     "priority": priority,
                     "_sort_key": (0.5 * priority + 0.3 * similarity + 0.2 * keyword_score, similarity, priority)
                 }

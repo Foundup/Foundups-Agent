@@ -3,6 +3,29 @@
 - **Created**: 2025-10-12
 - **Purpose**: Autonomous git push daemon with WSP 91 observability
 
+## Context-Aware Commit Messages (ModLog-Driven)
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-action verification), WSP 3 (Module organization)
+
+**Type**: Enhancement - Autonomous Commit Notes
+
+**Changes Made**:
+1. When GitPushDAE runs without an explicit commit message, the git bridge now generates a contextual commit subject/body from:
+   - Changed `ModLog.md` titles (preferred subject)
+   - A compact scope summary (e.g. `modules/<domain>/<module>`)
+   - Best-effort `git diff --cached --shortstat` for quick magnitude recall
+2. Commit messages are ASCII-safe to avoid Windows console Unicode failures.
+3. Git commands run from the repo root to avoid cwd drift depending on launcher location.
+4. `node_modules/` is excluded from staging by default to prevent vendored dependency churn from contaminating autonomous commits.
+
+**Impact**:
+- Removes random/generic commit templates in autonomous mode.
+- Makes pushes reconstructable for future 0102/WRE review and post generation.
+- Reduces "what changed?" ambiguity in LinkedIn/X auto-posts derived from git history.
+
+**Files Updated**:
+- `modules/platform_integration/linkedin_agent/src/git_linkedin_bridge.py`
+- `modules/platform_integration/linkedin_agent/ModLog.md`
+
 ## Add WRE Skills Wardrobe Support - qwen_gitpush Skill
 **WSP References**: WSP 96 (WRE Skills), WSP 48 (Recursive Improvement), WSP 60 (Module Memory)
 

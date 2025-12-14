@@ -30,6 +30,8 @@ This module operates within the **communication** enterprise domain following WS
 - [OK] Intelligent throttling (5s to 30min)
 - [OK] Manual wake trigger system
 - [OK] 7 OAuth credential rotation
+- [OK] Community comment engagement (Phase -2.1 startup)
+- [OK] Pluggable execution modes (subprocess/thread/inproc)
 
 #### Architecture Achievements
 - [OK] 17 modular components (all <500 lines per WSP)

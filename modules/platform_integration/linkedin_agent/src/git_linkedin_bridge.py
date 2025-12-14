@@ -11,18 +11,19 @@ Uses Qwen for 0102-branded condensed content generation
 # See: main.py for proper UTF-8 enforcement implementation
 
 import os
+import re
 import sys
 import subprocess
 import json
 import time
 from datetime import datetime
 from typing import Dict, List, Optional
+from pathlib import Path
 # Removed direct LinkedIn import - now using unified interface
 
 # Import Qwen for intelligent content generation
 try:
     from holo_index.qwen_advisor.llm_engine import QwenInferenceEngine
-    from pathlib import Path
     QWEN_AVAILABLE = True
 except ImportError:
     QWEN_AVAILABLE = False
@@ -42,6 +43,7 @@ class GitLinkedInBridge:
             company_id: LinkedIn company page ID (default: 1263645)
         """
         self.company_id = company_id
+        self.repo_root = Path(__file__).resolve().parents[4]
 
         # Initialize Qwen for 0102-branded content generation
         if QWEN_AVAILABLE:
@@ -246,11 +248,176 @@ class GitLinkedInBridge:
         """Get list of files changed in a commit"""
         try:
             cmd = ['git', 'diff-tree', '--no-commit-id', '--name-only', '-r', commit_hash]
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True, cwd=str(self.repo_root))
             return [f for f in result.stdout.strip().split('\n') if f]
         except:
             return []
-    
+
+    def _ascii_safe(self, text: str) -> str:
+        """Avoid Windows console encoding issues by stripping non-ascii for messages we print/commit."""
+        return "".join(ch for ch in (text or "") if ord(ch) < 128)
+
+    def _compact_subject(self, subject: str, max_len: int = 72) -> str:
+        """Compact a subject line to a sane git length without losing the gist."""
+        subject = (subject or "").strip().replace("\r", " ").replace("\n", " ")
+        subject = re.sub(r"\s+", " ", subject).strip()
+        subject = subject.replace("WSP 44", "WSP44").replace("WSP_44", "WSP44")
+        subject = subject.replace("YouTube Studio", "YT Studio").replace("YouTube", "YT")
+        subject = self._ascii_safe(subject)
+
+        if len(subject) <= max_len:
+            return subject
+
+        # Drop parentheticals first
+        without_parens = re.sub(r"\s*\([^)]*\)\s*", " ", subject).strip()
+        without_parens = re.sub(r"\s+", " ", without_parens).strip()
+        without_parens = self._ascii_safe(without_parens)
+        if len(without_parens) <= max_len:
+            return without_parens
+
+        # Hard truncate as last resort (ASCII-safe)
+        return (without_parens[: max_len - 3] + "...") if max_len > 3 else without_parens[:max_len]
+
+    def _extract_context_titles(self, changed_paths: List[str], max_titles: int = 3) -> List[str]:
+        """
+        Extract human-written context titles from ModLogs (WSP 22), if present.
+
+        This is the most reliable source of "what changed" without LLM hallucination.
+        """
+        titles: List[str] = []
+
+        def first_title_from_file(path: Path) -> Optional[str]:
+            try:
+                lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+            except Exception:
+                return None
+
+            # Root ModLog style: ## [YYYY-MM-DD] Title
+            for line in lines:
+                match = re.match(r"^##\s+\[\d{4}-\d{2}-\d{2}\]\s+(.+)$", line.strip())
+                if match:
+                    return match.group(1).strip()
+
+            # Module ModLog style: ### Phase / ### V### ...
+            for line in lines:
+                match = re.match(r"^###\s+(.+)$", line.strip())
+                if match:
+                    return match.group(1).strip()
+
+            return None
+
+        # Prioritize root ModLog, then module ModLogs
+        candidates = [p for p in changed_paths if p.endswith("ModLog.md")]
+        candidates.sort(key=lambda p: (0 if p == "ModLog.md" else 1, p))
+
+        for rel in candidates:
+            if len(titles) >= max_titles:
+                break
+            title = first_title_from_file(self.repo_root / rel)
+            if title:
+                compact = self._compact_subject(title, max_len=90)
+                if compact and compact not in titles:
+                    titles.append(compact)
+
+        return titles
+
+    def _summarize_scope(self, changed_paths: List[str], max_scopes: int = 3) -> List[str]:
+        """Summarize changed paths into WSP3 scopes (domain/module) for commit body."""
+        counts: Dict[str, int] = {}
+        for rel in changed_paths:
+            parts = Path(rel).parts
+            if len(parts) >= 3 and parts[0] == "modules":
+                key = f"{parts[1]}/{parts[2]}"
+            elif parts:
+                key = parts[0]
+            else:
+                continue
+            counts[key] = counts.get(key, 0) + 1
+        ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+        return [item[0] for item in ordered[:max_scopes]]
+
+    def _generate_contextual_commit_message(self, status_lines: List[str]) -> tuple[str, str]:
+        """
+        Generate a subject + body from repo context.
+
+        Goals:
+        - Avoid generic/random templates in autonomous mode
+        - Prefer WSP 22 ModLog titles (human-written truth)
+        - Include a compact scope summary so future 0102 can reconstruct intent
+        """
+        changed_paths: List[str] = []
+        counts = {"added": 0, "modified": 0, "deleted": 0, "untracked": 0, "renamed": 0}
+
+        for raw in status_lines:
+            # Preserve leading spaces: porcelain v1 is fixed-width "XY <path>"
+            line = (raw or "").rstrip("\r\n")
+            if not line.strip():
+                continue
+            status = line[:2]
+            path_part = line[3:].strip() if len(line) > 3 else ""
+            if "->" in path_part:
+                counts["renamed"] += 1
+                path_part = path_part.split("->")[-1].strip()
+            rel = path_part.strip().strip('"')
+            if rel:
+                changed_paths.append(rel)
+
+            if status == "??":
+                counts["untracked"] += 1
+            if "D" in status:
+                counts["deleted"] += 1
+            elif "A" in status:
+                counts["added"] += 1
+            elif "M" in status or "R" in status:
+                counts["modified"] += 1
+
+        titles = self._extract_context_titles(changed_paths)
+        scopes = self._summarize_scope(changed_paths)
+
+        # Subject: prefer ModLog title, else a scoped summary
+        subject = titles[0] if titles else ""
+        if not subject:
+            scope = scopes[0] if scopes else "repo"
+            subject = f"{scope}: update ({len(changed_paths)} files)"
+
+        subject = self._compact_subject(subject, max_len=72)
+        if not subject:
+            subject = "chore: update"
+
+        # Body: short, factual, reconstructable
+        body_lines: List[str] = []
+        if titles:
+            body_lines.append("Context:")
+            for title in titles[:3]:
+                body_lines.append(f"- {self._ascii_safe(title)}")
+            body_lines.append("")
+
+        body_lines.append(
+            f"Files: {len(changed_paths)} (A:{counts['added']} M:{counts['modified']} D:{counts['deleted']} ?: {counts['untracked']})"
+        )
+        if scopes:
+            body_lines.append(f"Scope: {', '.join(scopes)}")
+
+        # Optional diff shortstat (best-effort; ignore failures)
+        try:
+            diff = subprocess.run(
+                ["git", "diff", "--cached", "--shortstat"],
+                capture_output=True,
+                text=True,
+                check=False,
+                cwd=str(self.repo_root),
+            )
+            shortstat = (diff.stdout or "").strip()
+            shortstat = self._ascii_safe(shortstat)
+            if shortstat:
+                body_lines.append(f"Diff: {shortstat}")
+        except Exception:
+            pass
+
+        body = "\n".join(body_lines).strip()
+        body = self._ascii_safe(body)
+        return subject, body
+
     def generate_linkedin_content(self, commits: List[Dict]) -> str:
         """
         Generate LinkedIn post content from Git commits using direct commit messages.
@@ -544,8 +711,8 @@ class GitLinkedInBridge:
             from datetime import datetime
 
             # Check git status
-            status = subprocess.run(['git', 'status', '--porcelain'],
-                                  capture_output=True, text=True, check=True)
+            status = subprocess.run(['git', 'status', '--porcelain=v1'],
+                                  capture_output=True, text=True, check=True, cwd=str(self.repo_root))
 
             if not status.stdout.strip():
                 print("[OK] No changes to commit")
@@ -554,12 +721,30 @@ class GitLinkedInBridge:
             # Show changes
             print("\n[NOTE] Changes detected:")
             print("-" * 40)
-            files = status.stdout.strip().split('\n')
+            # Preserve leading spaces (porcelain v1 is fixed-width "XY <path>")
+            files = status.stdout.splitlines()
             for file in files[:10]:
                 print(f"  {file}")
             if len(files) > 10:
                 print(f"  ... and {len(files) - 10} more files")
             print("-" * 40)
+
+            # Stage changes before generating an auto message so commit notes match what gets committed.
+            # Safety: keep giant vendored deps out of autonomous commits (tracked node_modules churn is common on Windows).
+            subprocess.run(['git', 'add', '-A'], check=True, cwd=str(self.repo_root))
+            subprocess.run(['git', 'reset', '--', 'node_modules'], check=False, cwd=str(self.repo_root))
+
+            staged_status = subprocess.run(['git', 'status', '--porcelain=v1'],
+                                          capture_output=True, text=True, check=True, cwd=str(self.repo_root))
+            staged_lines = [
+                ln for ln in staged_status.stdout.splitlines()
+                if ln and len(ln) >= 2 and ln[:2] != "??" and ln[0] != " "
+            ]
+            staged_file_count = len(staged_lines)
+
+            if staged_file_count == 0:
+                print("[OK] No staged changes to commit (only excluded paths changed?)")
+                return False
 
             # Get commit message (handle both interactive and auto mode)
             if hasattr(self, 'auto_mode') and self.auto_mode:
@@ -574,44 +759,38 @@ class GitLinkedInBridge:
                     print("[BOT] Non-interactive mode - generating message...")
 
             if not commit_msg:
-                # Generate compelling FoundUps message
-                import random
-                templates = [
-                    "[ROCKET] FoundUps: Building solo unicorns without VCs",
-                    "[U+1F984] DAEs eating startups for breakfast - the FoundUps revolution",
-                    "[U+1F48E] Programmatic equity for founders, by @UnDaoDu",
-                    "[U+1F525] No employees, no VCs, just pure founder power",
-                    "[LIGHTNING] The future: DAOs evolved to DAEs, startups evolved to FoundUps",
-                    "[U+1F31F] From DAO to DAE - @UnDaoDu's vision becomes reality",
-                    "[ROCKET] Solo unicorns rising - FoundUps ecosystem expanding",
-                    "[U+1F4AA] Founders keep 100% - the FoundUps way by @UnDaoDu"
-                ]
-                commit_msg = random.choice(templates)
+                commit_msg, commit_body = self._generate_contextual_commit_message(staged_lines)
+            else:
+                commit_body = ""
 
             print(f"\n[REFRESH] Committing: {commit_msg}")
 
             # Git operations
             print("\n[U+2699]️  Executing git commands...")
-            subprocess.run(['git', 'add', '.'], check=True)
-            subprocess.run(['git', 'commit', '-m', commit_msg], check=True)
+            # Changes are staged above; ensure node_modules stays excluded.
+            subprocess.run(['git', 'reset', '--', 'node_modules'], check=False, cwd=str(self.repo_root))
+            commit_cmd = ['git', 'commit', '-m', commit_msg]
+            if commit_body:
+                commit_cmd.extend(['-m', commit_body])
+            subprocess.run(commit_cmd, check=True, cwd=str(self.repo_root))
 
             # Get commit hash
             hash_result = subprocess.run(['git', 'rev-parse', 'HEAD'],
-                                       capture_output=True, text=True, check=True)
+                                       capture_output=True, text=True, check=True, cwd=str(self.repo_root))
             commit_hash = hash_result.stdout.strip()
 
             # Check if already posted
             if commit_hash in self.posted_commits and commit_hash in self.x_posted_commits:
                 print(f"[U+26A0]️  Commit {commit_hash[:10]} already posted to both platforms")
                 print("Pushing to git but skipping social media...")
-                subprocess.run(['git', 'push'], check=True)
+                subprocess.run(['git', 'push'], check=True, cwd=str(self.repo_root))
                 print("[OK] Successfully pushed to git!")
                 return True
 
             # Try to push to git (but continue even if it fails)
             push_success = False
             try:
-                subprocess.run(['git', 'push'], check=True)
+                subprocess.run(['git', 'push'], check=True, cwd=str(self.repo_root))
                 print(f"[OK] Successfully pushed to git! (commit: {commit_hash[:10]})")
                 push_success = True
             except subprocess.CalledProcessError as e:
@@ -628,7 +807,7 @@ class GitLinkedInBridge:
 
             # Generate content
             linkedin_content = self.generate_linkedin_content([commit_info])
-            x_content = self.generate_x_content(commit_msg, len(files))
+            x_content = self.generate_x_content(commit_msg, staged_file_count)
 
             # Show previews
             print(f"\n[U+1F4F1] LinkedIn Post Preview:\n{'-'*40}\n{linkedin_content}\n{'-'*40}")
