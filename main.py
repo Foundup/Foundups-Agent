@@ -776,7 +776,8 @@ def main():
             if choice == "0":
                 # Launch GitPushDAE daemon (WSP 91 compliant)
                 print("[DEBUG-MAIN] Calling launch_git_push_dae()...")
-                launch_git_push_dae()
+                # Run-once so the interactive menu is not blocked by a long-running daemon.
+                launch_git_push_dae(run_once=True)
                 print("[DEBUG-MAIN] Returned from launch_git_push_dae()")
                 # Will return to menu after completion
 

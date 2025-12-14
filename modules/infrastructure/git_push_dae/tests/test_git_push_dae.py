@@ -105,7 +105,11 @@ class TestGitPushDAE:
             change_summary={"modified": 3, "added": 1}
         )
 
-        decision = daemon.make_push_decision(context)
+        # Ensure this test is deterministic regardless of the local clock.
+        # The time window gate should pass in a typical daytime hour.
+        with patch('modules.infrastructure.git_push_dae.src.git_push_dae.datetime') as mock_dt:
+            mock_dt.now.return_value = datetime(2025, 1, 1, 14, 0, 0)
+            decision = daemon.make_push_decision(context)
 
         # Should decide to push with high confidence
         assert decision.should_push

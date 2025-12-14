@@ -28,10 +28,13 @@ import time
 import traceback
 
 
-def launch_git_push_dae():
+def launch_git_push_dae(run_once: bool = False):
     """
     Launch GitPushDAE daemon with WSP 91 full observability.
     Transforms git push from human-triggered action to autonomous DAE.
+
+    Args:
+        run_once: Run a single monitoring cycle and return to caller (menu-safe).
     """
     print("\n" + "="*60)
     print("[MENU] GIT PUSH DAE - AUTONOMOUS DEVELOPMENT")
@@ -49,21 +52,28 @@ def launch_git_push_dae():
         # Create and start the daemon
         print("[DEBUG-MAIN] Creating GitPushDAE instance...")
         dae = GitPushDAE(domain="foundups_development", check_interval=300)  # 5-minute checks
-        print("[DEBUG-MAIN] GitPushDAE instance created, starting daemon...")
-        dae.start()
-        print("[DEBUG-MAIN] GitPushDAE daemon started")
+        print("[DEBUG-MAIN] GitPushDAE instance created")
 
-        print("\n[INFO]GitPushDAE launched successfully!")
-        print("[INFO] Monitor logs at: logs/git_push_dae.log")
-        print("[INFO] Press Ctrl+C to stop the daemon")
+        if run_once:
+            print("[INFO] Running one GitPushDAE monitoring cycle (run-once mode)...")
+            health = dae.run_once()
+            print(f"[INFO] GitPushDAE run-once complete (health: {health.status})")
+        else:
+            print("[DEBUG-MAIN] Starting GitPushDAE daemon...")
+            dae.start()
+            print("[DEBUG-MAIN] GitPushDAE daemon started")
 
-        try:
-            # Keep running until interrupted
-            while dae.active:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            print("\n[INFO] Stopping GitPushDAE...")
-            dae.stop()
+            print("\n[INFO]GitPushDAE launched successfully!")
+            print("[INFO] Monitor logs at: logs/git_push_dae.log")
+            print("[INFO] Press Ctrl+C to stop the daemon")
+
+            try:
+                # Keep running until interrupted
+                while dae.active:
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                print("\n[INFO] Stopping GitPushDAE...")
+                dae.stop()
 
     except ImportError as e:
         print(f"[ERROR]Failed to import GitPushDAE: {e}")
