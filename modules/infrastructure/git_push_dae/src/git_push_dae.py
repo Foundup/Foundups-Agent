@@ -444,7 +444,7 @@ class GitPushDAE:
         Agentic Parameters (no human decision required):
         1. Code Quality: quality_score >= 0.8
         2. Change Significance: len(changes) >= 3
-        3. Time Windows: Not during sleep hours (22:00-06:00)
+        3. Time Windows: Not during deep sleep hours (02:00-06:00)
         4. Frequency Control: time_since_last >= 1800s (30 min)
         5. Social Value: social_value_score >= 0.6
         6. Repository Health: No conflicts, clean state
@@ -514,7 +514,9 @@ class GitPushDAE:
             should_push = (
                 sum(criteria.values()) >= 5 and  # At least 5/7 criteria pass
                 criteria["code_quality"] and     # Quality is mandatory
-                criteria["repository_health"]     # Health is mandatory
+                criteria["repository_health"] and  # Health is mandatory
+                criteria["time_window"] and        # Time window is mandatory
+                criteria["frequency_control"]      # Frequency control is mandatory
             )
 
             decision_log["decision"] = "push_now" if should_push else "wait"
@@ -743,9 +745,9 @@ Return ONLY a decimal score (e.g., 0.75), no explanation."""
     def _is_appropriate_time(self) -> bool:
         """Check if current time is appropriate for pushing."""
         current_hour = datetime.now().hour
-        # Avoid pushing during deep sleep hours only (02:00-06:00)
-        # Evening coding (22:00-02:00) is prime development time
-        return not (2 <= current_hour <= 6)
+        # Avoid pushing during typical sleep hours (23:00-06:00).
+        # This reduces notification noise and prevents late-night automation spam.
+        return not (current_hour >= 23 or current_hour <= 6)
 
     def _assess_social_value(self, changes: List[str]) -> float:
         """Assess social media value of changes."""

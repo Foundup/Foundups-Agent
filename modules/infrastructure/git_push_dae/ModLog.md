@@ -3,6 +3,19 @@
 - **Created**: 2025-10-12
 - **Purpose**: Autonomous git push daemon with WSP 91 observability
 
+## Stabilize Push Time Window + Unit Tests
+**WSP References**: WSP 34 (Testing), WSP 91 (DAEMON observability)
+
+**Type**: Bug Fix / Test Reliability
+
+**Changes Made**:
+1. `_is_appropriate_time()` now treats **23:00–06:00** as sleep hours to reduce late-night notification spam.
+2. `tests/test_git_push_dae.py` uses an isolated daemon fixture for agentic helper-method tests so unit tests do **not** load persistent state or local LLMs (Qwen).
+
+**Impact**:
+- Deterministic, fast unit tests on Windows environments.
+- Push gating aligns with test expectations and reduces overnight noise.
+
 ## Context-Aware Commit Messages (ModLog-Driven)
 **WSP References**: WSP 22 (ModLog), WSP 50 (Pre-action verification), WSP 3 (Module organization)
 

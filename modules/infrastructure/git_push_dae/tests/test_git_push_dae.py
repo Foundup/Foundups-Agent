@@ -37,14 +37,44 @@ from modules.infrastructure.git_push_dae.src.git_push_dae import (
     CircuitBreaker
 )
 
+@pytest.fixture
+def agentic_daemon(tmp_path):
+    """Isolated daemon instance for agentic helper-method tests (no state/model loading)."""
+    with (
+        patch.object(GitPushDAE, "_load_state", lambda self: None),
+        patch.object(GitPushDAE, "_init_git_bridge", lambda self: None),
+        patch.object(GitPushDAE, "_init_qwen_advisor", lambda self: None),
+    ):
+        dae = GitPushDAE(domain="test", check_interval=1)
+
+    dae.state_file = tmp_path / "git_push_dae_state.json"
+    dae.last_push_time = None
+    dae.operation_count = 0
+    dae.git_bridge = None
+    dae.qwen = None
+    return dae
+
 
 class TestGitPushDAE:
     """Test autonomous git push daemon."""
 
     @pytest.fixture
-    def daemon(self):
-        """Create test daemon instance."""
-        return GitPushDAE(domain="test_domain", check_interval=1)
+    def daemon(self, tmp_path):
+        """Create an isolated test daemon instance (no real state/model loading)."""
+        # Prevent tests from reading/writing the real persistent state or loading local LLMs.
+        with (
+            patch.object(GitPushDAE, "_load_state", lambda self: None),
+            patch.object(GitPushDAE, "_init_git_bridge", lambda self: None),
+            patch.object(GitPushDAE, "_init_qwen_advisor", lambda self: None),
+        ):
+            dae = GitPushDAE(domain="test_domain", check_interval=1)
+
+        dae.state_file = tmp_path / "git_push_dae_state.json"
+        dae.last_push_time = None
+        dae.operation_count = 0
+        dae.git_bridge = None
+        dae.qwen = None
+        return dae
 
     def test_initialization(self, daemon):
         """Test daemon initializes with correct state."""
@@ -247,9 +277,9 @@ class TestGitPushDAE:
 class TestAgenticParameters:
     """Test agentic decision parameters."""
 
-    def test_code_quality_assessment(self):
+    def test_code_quality_assessment(self, agentic_daemon):
         """Test code quality assessment logic."""
-        daemon = GitPushDAE(domain="test")
+        daemon = agentic_daemon
 
         # High quality: has tests and docs
         high_quality = ["M src/main.py", "A tests/test_main.py", "M README.md"]
@@ -261,9 +291,9 @@ class TestAgenticParameters:
         score = daemon._assess_code_quality(low_quality)
         assert score <= 0.5
 
-    def test_social_value_assessment(self):
+    def test_social_value_assessment(self, agentic_daemon):
         """Test social media value assessment."""
-        daemon = GitPushDAE(domain="test")
+        daemon = agentic_daemon
 
         # High value: significant changes
         high_value = ["M src/api.py", "M src/interface.py", "A feature.md"]
@@ -275,9 +305,9 @@ class TestAgenticParameters:
         score = daemon._assess_social_value(low_value)
         assert score <= 0.5
 
-    def test_time_window_check(self):
+    def test_time_window_check(self, agentic_daemon):
         """Test appropriate time window checking."""
-        daemon = GitPushDAE(domain="test")
+        daemon = agentic_daemon
 
         # Test various times
         test_times = [
@@ -293,9 +323,9 @@ class TestAgenticParameters:
                 result = daemon._is_appropriate_time()
                 assert result == expected, f"Hour {hour} should be {'OK' if expected else 'blocked'}"
 
-    def test_cost_efficiency_calculation(self):
+    def test_cost_efficiency_calculation(self, agentic_daemon):
         """Test cost-benefit analysis."""
-        daemon = GitPushDAE(domain="test")
+        daemon = agentic_daemon
 
         # High efficiency: many changes
         context = PushContext(
