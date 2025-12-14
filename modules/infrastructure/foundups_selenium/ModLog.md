@@ -1,5 +1,24 @@
 # ModLog — FoundUps Selenium
 
+## V0.5.1 — Cross-DAE Browser Allocation Guard (2025-12-14)
+
+**Integration Type**: Reliability Guardrail (Browser Coordination)
+**WSP Compliance**: WSP 3 (Architecture), WSP 77 (Agent Coordination), WSP 50 (Pre-action verification)
+
+### Problem
+Multiple DAEs can attempt to reuse the same browser/profile session without coordination, causing session hijacking (especially around the shared Chrome debug session used for YouTube Studio work).
+
+### Changes
+- **BrowserManager allocation tracking** (`src/browser_manager.py`)
+  - Added optional `dae_name` parameter to `get_browser(...)` (legacy callers unchanged).
+  - Tracks `browser_key -> dae_name` allocations in-memory and blocks conflicting claims.
+  - Added `release_browser(...)` and `get_allocations()` helpers for future orchestration/telemetry.
+  - Ensures allocations are cleared on browser death/close.
+
+### Impact
+- Enables safe parallel DAEs by preventing accidental cross-domain browser session hijacking.
+- Keeps backwards compatibility: coordination only activates when `dae_name` is provided.
+
 ## V0.5.0 — Browser Manager Migration (Sprint V4 - 2025-12-02)
 
 **Integration Type**: Infrastructure Consolidation

@@ -57,11 +57,14 @@
 1. When `git push` is rejected with GH013 / "Changes must be made through a pull request", the git bridge now falls back to pushing `HEAD` to an `auto-pr/<timestamp>` branch and opening a PR via `modules/platform_integration/github_integration`.
 2. If `GITHUB_TOKEN` is not set or PR creation fails, the branch is still pushed and GitPushDAE skips social posting (manual PR creation path).
 3. `git add` CRLF warning non-zero exit codes are treated as non-fatal to avoid noisy fallback staging/reset behavior.
+4. In `auto_mode` (GitPushDAE), the git bridge attempts to merge PRs automatically via `gh pr merge` and falls back to enabling auto-merge (`--auto`) when checks/reviews are required (012 is observer).
 
 **Operational Notes**:
 - Env: `GITHUB_TOKEN` (preferred for PR creation via API; optional if GitHub CLI `gh` is authenticated)
 - Env: `GIT_PUSH_PR_BASE_BRANCH` (default `main`)
 - Env: `GIT_PUSH_PR_BRANCH_PREFIX` (default `auto-pr`)
+- Env: `GIT_PUSH_PR_AUTO_MERGE` (default: enabled when `auto_mode=True`; set `false` to require manual merges)
+- Env: `GIT_PUSH_PR_MERGE_METHOD` (`merge` default; `squash` or `rebase`)
 
 ## Add WRE Skills Wardrobe Support - qwen_gitpush Skill
 **WSP References**: WSP 96 (WRE Skills), WSP 48 (Recursive Improvement), WSP 60 (Module Memory)

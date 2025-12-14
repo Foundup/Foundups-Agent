@@ -2,6 +2,17 @@
 
 ## Latest Changes
 
+### **V028 - Prevent Chrome :9222 Session Hijack (BrowserManager + dae_name)**
+#### **Change**: Removed the default attempt to attach to the shared Chrome debug port `:9222` and switched to BrowserManager-managed profiles with explicit DAE ownership (`dae_name`).
+#### **Why**: `:9222` is reserved for YouTube Studio engagement; attaching from the X DAE can hijack the active Studio session and break comment processing.
+#### **How**:
+- `x_anti_detection_poster.py`: Deleted the port-9222 attach block and always uses `BrowserManager.get_browser(...)` for Chrome profiles (`x_foundups`, `x_move2japan`).
+- Passes `dae_name` (`x_dae_foundups` / `x_dae_move2japan`) to enable cross-DAE coordination when allocation tracking is active.
+#### **Impact**:
+- Eliminates cross-DAE browser session interference with YouTube comment engagement.
+- Keeps persistent login via profile directories (no need for shared debug Chrome).
+#### **WSP**: WSP 77 (Agent coordination), WSP 50 (Pre-action verification), WSP 3 (Modular build)
+
 ### **V027 - Browser Error Suppression (Git Push Workflow Cleanup)**
 #### **Change**: Suppressed browser error logs during git push + X/Twitter posting workflow
 #### **Why**: Clean console output - eliminate GPU/WebGL/RE2/WebRTC error spam in logs

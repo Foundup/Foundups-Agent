@@ -41,6 +41,8 @@ class BrowserManager:
                     cls._instance.logger = logging.getLogger(__name__)
                     cls._instance._browsers = {}
                     cls._instance._browser_locks = {}
+                    cls._instance._allocations = {}  # browser_key -> dae_name
+                    cls._instance._allocations_lock = threading.Lock()
                     cls._instance._observers = {}
                     cls._instance._telemetry_lock = threading.Lock()
                     telemetry_dir = os.path.join("logs")
@@ -50,19 +52,31 @@ class BrowserManager:
                     )
         return cls._instance
 
-    def get_browser(self, browser_type: str, profile_name: str, options: Dict[str, Any] = None) -> Any:
+    def get_browser(self, browser_type: str, profile_name: str, options: Dict[str, Any] = None, dae_name: Optional[str] = None) -> Any:
         """
-        Get or create a browser instance
+        Get or create a browser instance.
+
+        When `dae_name` is provided, BrowserManager tracks allocations to prevent
+        multiple DAEs from hijacking the same browser/profile session.
 
         Args:
             browser_type: 'chrome' or 'edge'
             profile_name: Unique profile identifier (e.g., 'linkedin', 'x_foundups', 'youtube_move2japan')
             options: Additional browser options
+            dae_name: Optional DAE owner name for cross-DAE coordination
 
         Returns:
             Browser driver instance
         """
         browser_key = f"{browser_type}_{profile_name}"
+
+        if dae_name:
+            with self._allocations_lock:
+                current_owner = self._allocations.get(browser_key)
+                if current_owner and current_owner != dae_name:
+                    raise RuntimeError(
+                        f"Browser {browser_key} is allocated to {current_owner}; cannot use for {dae_name}"
+                    )
 
         # Check if browser exists and is still valid
         if browser_key in self._browsers:
@@ -72,11 +86,16 @@ class BrowserManager:
                 _ = browser.current_url
                 self.logger.info(f"・Reusing existing {browser_type} browser for {profile_name}")
                 self._ensure_observer(browser_key, browser)
+                if dae_name:
+                    with self._allocations_lock:
+                        self._allocations[browser_key] = dae_name
                 return browser
             except Exception as e:
                 self.logger.warning(f"・・Existing browser unresponsive: {e}")
                 # Browser is dead, remove it
                 del self._browsers[browser_key]
+                with self._allocations_lock:
+                    self._allocations.pop(browser_key, None)
 
         # Create new browser instance
         self.logger.info(f" Creating new {browser_type} browser for {profile_name}")
@@ -91,6 +110,9 @@ class BrowserManager:
         # Store browser instance
         self._ensure_observer(browser_key, browser)
         self._browsers[browser_key] = browser
+        if dae_name:
+            with self._allocations_lock:
+                self._allocations[browser_key] = dae_name
         self.logger.info(f"・Browser created and stored: {browser_key}")
 
         return browser
@@ -264,6 +286,8 @@ class BrowserManager:
                 self.logger.warning(f"・・Error closing browser: {e}")
             finally:
                 del self._browsers[browser_key]
+                with self._allocations_lock:
+                    self._allocations.pop(browser_key, None)
 
     def close_all_browsers(self):
         """Close all browser instances"""
@@ -272,6 +296,26 @@ class BrowserManager:
             self.close_browser(browser_type, profile_name)
 
         self.logger.info(" All browsers closed")
+
+    def release_browser(self, browser_type: str, profile_name: str, dae_name: Optional[str] = None) -> None:
+        """
+        Release an allocation without closing the browser.
+
+        If `dae_name` is provided, only releases if the allocation matches.
+        """
+        browser_key = f"{browser_type}_{profile_name}"
+        with self._allocations_lock:
+            current_owner = self._allocations.get(browser_key)
+            if current_owner is None:
+                return
+            if dae_name and current_owner != dae_name:
+                return
+            self._allocations.pop(browser_key, None)
+
+    def get_allocations(self) -> Dict[str, str]:
+        """Return a snapshot of current browser allocations."""
+        with self._allocations_lock:
+            return dict(self._allocations)
 
     def get_active_browsers(self) -> Dict[str, bool]:
         """Get status of all browser instances"""

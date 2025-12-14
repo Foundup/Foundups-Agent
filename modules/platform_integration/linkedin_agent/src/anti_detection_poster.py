@@ -121,13 +121,15 @@ class AntiDetectionLinkedIn:
 
             # Get LinkedIn-specific browser profile
             linkedin_profile = f"linkedin_{self.company_id}"
-            print(f"[INFO] Getting browser for LinkedIn profile: {linkedin_profile}")
+            dae_name = f"linkedin_dae_{self.company_id}"
+            print(f"[INFO] Getting browser for LinkedIn profile: {linkedin_profile} (DAE: {dae_name})")
 
             # Get or reuse existing browser
             self.driver = browser_manager.get_browser(
                 browser_type='chrome',
                 profile_name=linkedin_profile,
-                options={'disable_web_security': True}
+                options={'disable_web_security': True},
+                dae_name=dae_name,
             )
 
             print("[INFO] Using managed Chrome browser with anti-detection measures...")
