@@ -1,0 +1,9 @@
+{
+  "action": "type_text",
+  "driver": "vision",
+  "params": {
+    "description": "reply text input box that appeared below the comment",
+    "text": "Thanks for watching! This is an autonomous test comment."
+  },
+  "timestamp": "2025-12-08T18:13:17.458476Z"
+}

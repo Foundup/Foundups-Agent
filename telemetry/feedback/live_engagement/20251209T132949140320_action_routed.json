@@ -1,0 +1,8 @@
+{
+  "action": "navigate",
+  "driver": "selenium",
+  "params": {
+    "url": "https://studio.youtube.com/channel/UC-LSSlOZwpGIRIYihaz8zCw/comments/inbox"
+  },
+  "timestamp": "2025-12-09T13:29:49.139321Z"
+}

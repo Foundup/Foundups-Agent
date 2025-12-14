@@ -163,6 +163,8 @@ def get_authenticated_service(token_index=None):
                                 logger.info(f"ℹ️ To fix: Run 'python modules/platform_integration/youtube_auth/scripts/authorize_set{index}.py'")
                         else:
                             logger.error(f"[FAIL] Invalid grant error for set {index}: {error_msg}")
+                        # Mark this set offline for this process to avoid repeated retries during fallback flows
+                        get_authenticated_service.exhausted_sets.add(index)
                     else:
                         logger.error(f"[FAIL] Failed to refresh token for set {index}: {e}")
 
@@ -316,6 +318,24 @@ def reply_to_comment(youtube_service, parent_id: str, text: str):
         return response
     except Exception as e:
         logger.error(f"[FAIL] Error replying to comment {parent_id}: {e}")
+    return None
+
+
+# Compatibility wrapper so legacy callers can import from this module.
+# The canonical implementation lives in modules.platform_integration.utilities.oauth_management.
+def get_authenticated_service_with_fallback(token_index=None):
+    """
+    Provide get_authenticated_service_with_fallback for callers that import it
+    directly from youtube_auth. Delegates to the OAuth manager which performs
+    rotation and returns (service, credentials, credential_set).
+    """
+    try:
+        from modules.platform_integration.utilities.oauth_management.src.oauth_manager import (
+            get_authenticated_service_with_fallback as _fallback,
+        )
+        return _fallback()
+    except Exception as e:
+        logger.error(f"[ERROR] Fallback authentication failed: {e}")
         return None
 
 def get_latest_video_id(youtube_service, channel_id: str):

@@ -205,7 +205,22 @@ Generate greeting:"""
             
             # Other political chants
             "build the wall", "lock her up", "drain the swamp",
-            "four more years", "rigged election", "stolen election"
+            "four more years", "rigged election", "stolen election",
+            
+            # Trump defense phrases (new!)
+            "trump is innocent", "trump did nothing wrong", "trump was framed",
+            "trump is not involved", "trump is being targeted", "witch hunt",
+            "fake news", "rigged system", "corrupt fbi", "corrupt doj",
+            "political persecution", "weaponized justice", "leave trump alone",
+            "trump didn't do anything", "fake charges", "not in the files",
+            
+            # QAnon/Conspiracy triggers (WHACK these!)
+            "deep state", "the cabal", "reptilian", "reptilians",
+            "fighting the deep state", "illuminati", "new world order",
+            "great awakening", "wwg1wga", "trust the plan", "white hats",
+            "storm is coming", "the storm", "globalist", "globalists",
+            "pizzagate", "adrenochrome", "satanic cabal", "pedophile elite",
+            "qanon", "q drop", "q anon", "patriots in control"
         ]
         
         # Anti-MAGA phrases to EXCLUDE (don't timeout these)

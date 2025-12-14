@@ -1,0 +1,40 @@
+{
+  "session_id": "20251211_212813",
+  "total_processed": 3,
+  "stats": {
+    "comments_processed": 3,
+    "likes": 1,
+    "hearts": 1,
+    "replies": 0,
+    "errors": 0
+  },
+  "results": [
+    {
+      "comment_idx": 1,
+      "like": true,
+      "heart": true,
+      "reply": false,
+      "errors": []
+    },
+    {
+      "comment_idx": 2,
+      "like": false,
+      "heart": false,
+      "reply": false,
+      "errors": [
+        "Like button not found",
+        "Heart button not found"
+      ]
+    },
+    {
+      "comment_idx": 3,
+      "like": false,
+      "heart": false,
+      "reply": false,
+      "errors": [
+        "Like button not found",
+        "Heart button not found"
+      ]
+    }
+  ]
+}

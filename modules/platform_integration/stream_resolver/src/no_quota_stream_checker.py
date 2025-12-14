@@ -83,6 +83,11 @@ class NoQuotaStreamChecker:
 
         self.channel_cooldowns = {}
         self.last_rate_limit = None
+        
+        # CAPTCHA defense: Global cooldown mode
+        self.captcha_cooldown_until = None
+        self.consecutive_captcha_count = 0
+        self.max_videos_to_check = 3  # Dynamically reduced on CAPTCHA
 
         logger.info("[INFO] NO-QUOTA stream checker initialized")
 
@@ -152,8 +157,62 @@ class NoQuotaStreamChecker:
         self.channel_cooldowns[channel_id] = time.time() + cooldown
         self.last_rate_limit = time.time()
         name = channel_name or channel_id
-        logger.warning(f"[U+26A0]️ Rate limit triggered for {name} – holding for {cooldown:.0f}s before retry")
+        logger.warning(f"⚠️ Rate limit triggered for {name} – holding for {cooldown:.0f}s before retry")
         return cooldown
+
+    def _register_captcha_hit(self) -> float:
+        """
+        Handle CAPTCHA detection with global cooldown and defensive measures.
+        
+        DEFENSIVE STRATEGY:
+        1. Enter global cooldown mode (30-60s before any API call)
+        2. Shrink candidate video list (3 → 1)
+        3. Clear session cookies (appear as new client)
+        4. Track consecutive CAPTCHAs for escalating backoff
+        """
+        self.consecutive_captcha_count += 1
+        
+        # Escalating backoff: more CAPTCHAs = longer cooldown
+        base_cooldown = 30.0
+        escalation = min(self.consecutive_captcha_count * 15, 120)  # Max 2 min extra
+        cooldown = base_cooldown + escalation + random.uniform(0, 15)
+        
+        self.captcha_cooldown_until = time.time() + cooldown
+        
+        # Shrink candidate list when CAPTCHA detected
+        self.max_videos_to_check = 1
+        
+        # Clear session cookies to appear as new client
+        self.session.cookies.clear()
+        
+        logger.warning(f"🛡️ CAPTCHA DEFENSE ACTIVATED:")
+        logger.warning(f"  • Global cooldown: {cooldown:.0f}s before API calls")
+        logger.warning(f"  • Video candidates reduced: 3 → {self.max_videos_to_check}")
+        logger.warning(f"  • Session cookies cleared")
+        logger.warning(f"  • Consecutive CAPTCHAs: {self.consecutive_captcha_count}")
+        
+        return cooldown
+
+    def _is_in_captcha_cooldown(self) -> tuple[bool, float]:
+        """Check if we're in global CAPTCHA cooldown mode."""
+        if not self.captcha_cooldown_until:
+            return False, 0.0
+        remaining = self.captcha_cooldown_until - time.time()
+        if remaining > 0:
+            return True, remaining
+        # Cooldown expired - reset state
+        self.captcha_cooldown_until = None
+        self.max_videos_to_check = 3  # Restore candidate count
+        # Don't reset consecutive count - let it decay over successful requests
+        return False, 0.0
+
+    def _reset_captcha_state(self):
+        """Reset CAPTCHA state after successful request (no CAPTCHA)."""
+        if self.consecutive_captcha_count > 0:
+            self.consecutive_captcha_count = max(0, self.consecutive_captcha_count - 1)
+            if self.consecutive_captcha_count == 0:
+                self.max_videos_to_check = 3  # Fully restore
+                logger.info("✅ CAPTCHA defense: State fully reset after successful requests")
 
     def check_video_is_live(self, video_id: str, channel_name: str = None) -> Dict[str, Any]:
         """
@@ -187,39 +246,51 @@ class NoQuotaStreamChecker:
             response = self.session.get(url, headers=headers, timeout=15)
 
             # Detect CAPTCHA redirect to Google sorry page
+            captcha_hit = False
             if 'google.com/sorry' in response.url or 'www.google.com/sorry' in response.url:
-                logger.warning(f"[U+26A0]️ CAPTCHA detected - YouTube redirected to Google verification page")
+                logger.warning(f"⚠️ CAPTCHA detected - YouTube redirected to Google verification page")
                 logger.warning(f"  Triggered URL: {url}")
-                return {"live": False, "captcha": True}
+                captcha_hit = True
+                # CAPTCHA DEFENSE: Register and enter cooldown mode
+                cooldown = self._register_captcha_hit()
+                logger.info(f"🛡️ Waiting {cooldown:.0f}s before API verification (CAPTCHA defense)")
+                time.sleep(cooldown)  # BACKOFF before API!
 
             if response.status_code == 429:
                 logger.error(f"Rate limit (429) encountered while checking video {video_id}")
-                return {"live": False, "rate_limited": True, "status": 429}
+                captcha_hit = True
+                # CAPTCHA DEFENSE: Treat 429 same as CAPTCHA
+                cooldown = self._register_captcha_hit()
+                logger.info(f"🛡️ Waiting {cooldown:.0f}s before API verification (429 defense)")
+                time.sleep(cooldown)  # BACKOFF before API!
 
-            if response.status_code != 200:
-                logger.warning(f"Failed to fetch page: {response.status_code}")
-                return {"live": False, "error": f"HTTP {response.status_code}"}
+            if not captcha_hit:
+                # Successful scrape - decay CAPTCHA state
+                self._reset_captcha_state()
+                if response.status_code != 200:
+                    logger.warning(f"Failed to fetch page: {response.status_code}")
+                    return {"live": False, "error": f"HTTP {response.status_code}"}
 
-            # Look for live indicators in the page
-            html = response.text
+                # Look for live indicators in the page
+                html = response.text
 
-            # FIRST PRINCIPLES: Quick pre-filter - if NO live indicators, skip API entirely
-            has_any_live_indicator = (
-                '"isLiveNow":true' in html or
-                'BADGE_STYLE_TYPE_LIVE_NOW' in html or
-                'watching now' in html or
-                '"text":"LIVE"' in html or
-                '"liveStreamability"' in html
-            )
+                # FIRST PRINCIPLES: Quick pre-filter - if NO live indicators, skip API entirely
+                has_any_live_indicator = (
+                    '"isLiveNow":true' in html or
+                    'BADGE_STYLE_TYPE_LIVE_NOW' in html or
+                    'watching now' in html or
+                    '"text":"LIVE"' in html or
+                    '"liveStreamability"' in html
+                )
 
-            if not has_any_live_indicator:
-                logger.info(f"[FAIL] SCRAPING PRE-FILTER: No live indicators found for {video_id}")
-                logger.info(f"  • Method: Scraping pre-filter (0 API units saved)")
-                return {"live": False, "method": "scraping_prefilter"}
+                if not has_any_live_indicator:
+                    logger.info(f"[FAIL] SCRAPING PRE-FILTER: No live indicators found for {video_id}")
+                    logger.info(f"  • Method: Scraping pre-filter (0 API units saved)")
+                    return {"live": False, "method": "scraping_prefilter"}
 
-            # If we have live indicators, proceed to API verification for accuracy
-            logger.info(f"[OK] SCRAPING PRE-FILTER: Found live indicators for {video_id}")
-            logger.info(f"  • Proceeding to API confirmation (1 API unit)")
+                # If we have live indicators, proceed to API verification for accuracy
+                logger.info(f"[OK] SCRAPING PRE-FILTER: Found live indicators for {video_id}")
+                logger.info(f"  • Proceeding to API confirmation (1 API unit)")
 
         except Exception as e:
             logger.warning(f"[U+26A0]️ Scraping pre-filter failed: {e}, falling back to direct API check")
@@ -294,13 +365,18 @@ class NoQuotaStreamChecker:
 
             # Detect CAPTCHA redirect to Google sorry page
             if 'google.com/sorry' in response.url or 'www.google.com/sorry' in response.url:
-                logger.warning(f"[U+26A0]️ CAPTCHA detected - YouTube redirected to Google verification page")
+                logger.warning(f"⚠️ CAPTCHA detected in fallback - YouTube redirected to Google verification page")
                 logger.warning(f"  Triggered URL: {url}")
+                self._register_captcha_hit()  # Register for future defense
                 return {"live": False, "rate_limited": True, "captcha": True}
 
             if response.status_code == 429:
-                logger.error(f"Rate limit (429) encountered while checking video {video_id}")
+                logger.error(f"Rate limit (429) encountered in fallback while checking video {video_id}")
+                self._register_captcha_hit()  # Register for future defense
                 return {"live": False, "rate_limited": True, "status": 429}
+            
+            # Successful scrape - decay CAPTCHA state
+            self._reset_captcha_state()
 
             if response.status_code != 200:
                 logger.warning(f"Failed to fetch page: {response.status_code}")
@@ -601,6 +677,13 @@ class NoQuotaStreamChecker:
         Returns:
             Dict with live stream details if found, a rate_limited sentinel, or None
         """
+        # Check global CAPTCHA cooldown first
+        in_captcha_cooldown, captcha_remaining = self._is_in_captcha_cooldown()
+        if in_captcha_cooldown:
+            logger.warning(f"🛡️ Global CAPTCHA cooldown active – {captcha_remaining:.0f}s remaining")
+            logger.info("  Waiting for cooldown to expire before scraping...")
+            time.sleep(captcha_remaining)  # Wait out the cooldown
+        
         in_cooldown, remaining = self._is_channel_rate_limited(channel_id)
         if in_cooldown:
             display_name = channel_name or channel_id
@@ -612,8 +695,8 @@ class NoQuotaStreamChecker:
 
         # Map channel IDs to handles
         channel_handle_map = {
-            'UCSNTUXjAgpd4sgWYP0xoJgw': '@UnDaoDu',     # UnDaoDu
-            'UC-LSSlOZwpGIRIYihaz8zCw': '@Foundups',    # FoundUps
+            'UCSNTUXjAgpd4sgWYP0xoJgw': '@UnDaoDu',     # UnDaoDu (verified from YouTube 2025-12-11)
+            # 'UC-LSSlOZwpGIRIYihaz8zCw': Removed - will use channel ID URL for livestream detection
             'UCklMTNnu5POwRmQsg5JJumA': '@MOVE2JAPAN'   # Move2Japan
         }
 
@@ -646,7 +729,14 @@ class NoQuotaStreamChecker:
 
                 if response.status_code == 429:
                     cooldown = self._register_rate_limit(channel_id, channel_name)
+                    self._register_captcha_hit()  # Also trigger CAPTCHA defense
                     return {"rate_limited": True, "status": 429, "cooldown": cooldown}
+                
+                # Check for CAPTCHA redirect
+                if 'google.com/sorry' in response.url or 'www.google.com/sorry' in response.url:
+                    logger.warning(f"⚠️ CAPTCHA on channel page - YouTube blocked request")
+                    cooldown = self._register_captcha_hit()
+                    return {"rate_limited": True, "captcha": True, "cooldown": cooldown}
 
                 # Log the actual response URL to see what happened
                 logger.info(f"  • Response URL: {response.url}")
@@ -696,10 +786,12 @@ class NoQuotaStreamChecker:
                         if video_ids:
                             logger.info(f"[VIDEO] Found {len(video_ids)} video IDs in page")
 
-                            # Determine which videos to check - use first 3 for initial check
-                            # TODO: Add time-based filtering here if needed
-                            videos_to_check = video_ids[:3]
+                            # Determine which videos to check - dynamically reduced on CAPTCHA
+                            # max_videos_to_check: 3 (normal) → 1 (CAPTCHA defense mode)
+                            videos_to_check = video_ids[:self.max_videos_to_check]
                             logger.info(f"[FILTER] Checking first {len(videos_to_check)} videos from {len(video_ids)} found")
+                            if self.max_videos_to_check < 3:
+                                logger.info(f"  🛡️ CAPTCHA defense: Reduced candidate list ({self.max_videos_to_check} of 3)")
 
                             # QWEN Intelligence: Validate video selection
                             if hasattr(self, 'qwen_intelligence') and self.qwen_intelligence:
@@ -714,17 +806,18 @@ class NoQuotaStreamChecker:
                                     logger.debug(f"[BOT][AI] [QWEN-SELECT] Validation failed: {e}")
 
                             # Try the selected video IDs
+                            captcha_blocked_videos = []  # Track videos that hit CAPTCHA
+                            
                             for idx, video_id in enumerate(videos_to_check):
                                 display_name = channel_name or channel_id
                                 logger.info(f"[VERIFY] Checking video {idx+1}/{len(videos_to_check)} for {display_name}: {video_id}")
                                 result = self.check_video_is_live(video_id, channel_name)
 
-                                # Handle quota exhaustion with rotation
-                                if result.get('rate_limited'):
-                                    logger.warning(f"[QUOTA] Rate limited during verification of {video_id} - rotation should have occurred")
-                                    cooldown = self._register_rate_limit(channel_id, channel_name)
-                                    result['cooldown'] = cooldown
-                                    return result
+                                # Handle CAPTCHA - track but don't fail immediately
+                                if result.get('captcha') or result.get('rate_limited'):
+                                    logger.warning(f"[CAPTCHA] Video {video_id} blocked by CAPTCHA - will trust if live indicators strong")
+                                    captcha_blocked_videos.append(video_id)
+                                    continue  # Try next video instead of returning
 
                                 # Handle successful verification
                                 if result and result.get('live'):
@@ -734,7 +827,25 @@ class NoQuotaStreamChecker:
                                 # Log verification failure for debugging
                                 logger.debug(f"[VERIFY] Video {video_id} verification result: {result}")
 
-                            # Don't fallback to unverified videos - this causes false positives
+                            # NEW: If CAPTCHA blocked all verification BUT we found strong live indicators,
+                            # trust the first video ID (YouTube showed live badge/indicators)
+                            # Calculate indicator strength from boolean flags
+                            indicator_count = sum([has_is_live_now, has_live_badge, has_watching, has_live_text, has_live_stream])
+                            
+                            if captcha_blocked_videos and indicator_count >= 1:
+                                first_video = captcha_blocked_videos[0]
+                                logger.info(f"[TRUST] CAPTCHA blocked verification but live indicators found ({indicator_count} indicators)")
+                                logger.info(f"[TRUST] Trusting first video as LIVE: {first_video}")
+                                return {
+                                    'live': True,
+                                    'video_id': first_video,
+                                    'channel_name': channel_name,
+                                    'title': f"Live stream on {channel_name}",
+                                    'source': 'captcha_bypass_trust',
+                                    'indicator_count': indicator_count
+                                }
+
+                            # No videos verified and no CAPTCHA trust possible
                             logger.info(f"[SKIP] Found video IDs but none verified as actually live")
                             logger.info(f"[INFO] Page had live indicators but videos are not live (stale page?)")
 

@@ -1,0 +1,37 @@
+{
+  "patterns": [
+    {
+      "timestamp": "2025-12-06T05:33:13.769706",
+      "action": "LIKE",
+      "description": "gray thumbs up icon in the comment action bar, located between the replies counter and thumbs down icon",
+      "expected_result": "Thumbs up icon turned BLUE (filled)",
+      "ai_reported_success": false,
+      "human_validated_success": false,
+      "comment_012": "do 1 action at a time... brower? like? heart? provide comment on each step",
+      "execution_time_seconds": 5.086125,
+      "match": true
+    },
+    {
+      "timestamp": "2025-12-06T05:33:28.833669",
+      "action": "HEART",
+      "description": "gray outlined heart icon in the comment action bar, located between thumbs down and three-dot menu",
+      "expected_result": "Heart icon turned RED (filled)",
+      "ai_reported_success": false,
+      "human_validated_success": false,
+      "comment_012": "",
+      "execution_time_seconds": 3.308653,
+      "match": true
+    },
+    {
+      "timestamp": "2025-12-06T05:33:42.338426",
+      "action": "REPLY",
+      "description": "Reply button in the comment action bar",
+      "expected_result": "Reply text box appeared below comment",
+      "ai_reported_success": false,
+      "human_validated_success": false,
+      "comment_012": "",
+      "execution_time_seconds": 3.12829,
+      "match": true
+    }
+  ]
+}

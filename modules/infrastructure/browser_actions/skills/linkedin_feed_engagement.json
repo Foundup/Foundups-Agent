@@ -1,0 +1,78 @@
+{
+  "skill_id": "linkedin_feed_engagement",
+  "name": "LinkedIn Feed Engagement",
+  "description": "Autonomously read and engage with LinkedIn feed posts relevant to 012's interests",
+  "platform": "linkedin",
+  "wsp_references": ["WSP 77", "WSP 80"],
+  "version": "1.0.0",
+  "parameters": {
+    "max_posts": {
+      "type": "integer",
+      "required": false,
+      "default": 10,
+      "description": "Maximum posts to read from feed"
+    },
+    "max_engagements": {
+      "type": "integer",
+      "required": false,
+      "default": 3,
+      "description": "Maximum posts to engage with (like/comment)"
+    },
+    "duration_minutes": {
+      "type": "integer",
+      "required": false,
+      "default": 15,
+      "description": "Maximum session duration"
+    },
+    "interests": {
+      "type": "array",
+      "required": false,
+      "default": ["japan", "software", "ai", "startups", "geospatial"],
+      "description": "Topics of interest for filtering"
+    }
+  },
+  "workflow": [
+    {
+      "step": 1,
+      "action": "navigate_to_feed",
+      "params": {}
+    },
+    {
+      "step": 2,
+      "action": "read_feed",
+      "params": {
+        "max_posts": "{{max_posts}}"
+      }
+    },
+    {
+      "step": 3,
+      "action": "filter_by_relevance",
+      "params": {
+        "interests": "{{interests}}",
+        "min_relevance": 0.7
+      }
+    },
+    {
+      "step": 4,
+      "action": "like_and_reply",
+      "params": {
+        "post_id": "{{post.id}}",
+        "reply_text": "{{generated_comment}}"
+      },
+      "repeat": "for_each_relevant_post",
+      "max_iterations": "{{max_engagements}}"
+    }
+  ],
+  "ai_coordination": {
+    "phase_1_gemma": "Binary relevance check (012's interests)",
+    "phase_2_qwen": "Generate thoughtful, professional comment",
+    "phase_3_0102": "Execute like_and_reply via browser_actions",
+    "phase_4_learning": "Store engagement patterns and responses"
+  },
+  "telemetry": {
+    "emit_events": ["post_read", "post_liked", "comment_posted", "session_complete"],
+    "metrics": ["posts_read", "posts_engaged", "relevance_score_avg"]
+  },
+  "created_by": "0102",
+  "sprint": "A6"
+}

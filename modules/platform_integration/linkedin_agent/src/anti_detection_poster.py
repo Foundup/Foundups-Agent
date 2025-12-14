@@ -116,7 +116,7 @@ class AntiDetectionLinkedIn:
 
         # Try to import browser manager
         try:
-            from modules.platform_integration.social_media_orchestrator.src.core.browser_manager import get_browser_manager
+            from modules.infrastructure.foundups_selenium.src.browser_manager import get_browser_manager
             browser_manager = get_browser_manager()
 
             # Get LinkedIn-specific browser profile

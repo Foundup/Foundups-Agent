@@ -1,0 +1,26 @@
+{
+  "session_id": "20251211_221334",
+  "total_processed": 1,
+  "stats": {
+    "comments_processed": 1,
+    "likes": 0,
+    "hearts": 1,
+    "replies": 1,
+    "errors": 0
+  },
+  "results": [
+    {
+      "comment_idx": 1,
+      "like": false,
+      "heart": true,
+      "reply": true,
+      "author_name": "Unknown",
+      "comment_text": "Bro got the dance moves right here...",
+      "commenter_type": "regular",
+      "reply_text": "I see what you did there! \ud83d\udc40",
+      "errors": [
+        "Like button not found"
+      ]
+    }
+  ]
+}

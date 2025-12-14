@@ -76,6 +76,22 @@ export interface AlertTimer {
 // - ICE facilities: Permanent (isPermanent: true, duration ignored)
 
 // ============================================================================
+// CART RESERVATION SYSTEM - Multi-Device Cart Timeout
+// ============================================================================
+
+export interface CartReservation {
+  reservedBy: string; // UID of user who added to cart
+  reservedAt: number; // Timestamp when added to cart
+  expiresAt: number; // Timestamp when reservation expires (reservedAt + 5 min)
+}
+
+// Cart Reservation Rules:
+// - Duration: 5 minutes (300000ms)
+// - On right-swipe: Item reserved, removed from ALL users' Browse feeds
+// - On expiration: Reservation cleared, item returns to Browse
+// - On purchase: Item deleted entirely
+
+// ============================================================================
 // STAY LIMIT SYSTEM - Mutual Aid Housing Restrictions
 // ============================================================================
 
@@ -139,6 +155,11 @@ export interface CapturedItem {
   // ============================================================================
   alertTimer?: AlertTimer; // Countdown timer for time-sensitive alerts
   alertStatus?: 'active' | 'ongoing' | 'safe' | 'expired'; // Alert lifecycle status
+
+  // ============================================================================
+  // CART RESERVATION FIELDS (multi-device cart coordination)
+  // ============================================================================
+  cartReservation?: CartReservation; // 5-min reservation when added to cart
 
   // ============================================================================
   // COMMUNITY MODERATION FIELDS

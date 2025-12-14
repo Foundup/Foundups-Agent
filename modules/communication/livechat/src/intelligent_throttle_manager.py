@@ -279,6 +279,8 @@ class IntelligentThrottleManager:
             'pqn_research': {'last': None, 'multiplier': 2.5, 'success_rate': 1.0, 'priority': 3},  # NEW: PQN throttling
             'command': {'last': None, 'multiplier': 0.8, 'success_rate': 1.0, 'priority': 7},  # NEW: Command throttling
             'video_progress': {'last': None, 'multiplier': 2.0, 'success_rate': 1.0, 'priority': 4},  # NEW: Shorts video progress messages
+            'comment_engagement_announcement': {'last': None, 'multiplier': 20.0, 'success_rate': 1.0, 'priority': 6},  # Phase 3: Comment processing announcements (max 1 per 10 min)
+            'moderator_notification': {'last': None, 'multiplier': 10.0, 'success_rate': 1.0, 'priority': 7},  # Phase 3: Moderator comment reply notifications (max 3 per session)
             'general': {'last': None, 'multiplier': 1.5, 'success_rate': 1.0, 'priority': 5}
         }
         

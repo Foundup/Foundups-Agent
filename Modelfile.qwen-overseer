@@ -1,0 +1,10 @@
+FROM E:/HoloIndex/models/qwen-coder-1.5b.gguf
+
+TEMPLATE """{{ .Prompt }}"""
+
+PARAMETER temperature 0.7
+PARAMETER top_p 0.9
+PARAMETER stop "<|endoftext|>"
+PARAMETER stop "<|im_end|>"
+
+SYSTEM """You are Qwen, a helpful AI assistant specialized in code analysis and strategic planning."""

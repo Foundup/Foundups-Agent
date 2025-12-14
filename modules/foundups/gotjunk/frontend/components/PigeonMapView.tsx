@@ -492,8 +492,15 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
                       onMarkerClick({ latitude: item.latitude, longitude: item.longitude });
                     }
                   }}
+                  onDoubleClick={() => {
+                    // Sprint M4: Double-click opens message board for this Liberty item
+                    console.log('[Liberty] Message board for item:', item.id);
+                    if (onLibertyMessageBoard) {
+                      onLibertyMessageBoard(item.id);
+                    }
+                  }}
                   className="cursor-pointer hover:scale-110 transition-transform"
-                  title={`Liberty Alert - ${item.classification || 'Item'}`}
+                  title={`Liberty Alert - ${item.classification || 'Item'} (double-click for messages)`}
                 >
                   {showThumbnail ? (
                     // Zoomed in: Show photo thumbnail with classification badge
@@ -551,8 +558,15 @@ export const PigeonMapView: React.FC<PigeonMapViewProps> = ({
                       setSelectedAlert(alert);
                     }
                   }}
+                  onDoubleClick={() => {
+                    // Sprint M4: Double-click opens message board for this region
+                    console.log('[Liberty] Message board for region:', alert.id);
+                    if (onLibertyMessageBoard) {
+                      onLibertyMessageBoard(alert.id);
+                    }
+                  }}
                   className="cursor-pointer hover:scale-110 transition-transform"
-                  title={alert.message}
+                  title={`${alert.message} (double-click for messages)`}
                 >
                   <span className={iconSize}>🗽</span>
                 </div>

@@ -9,9 +9,19 @@ interface PhotoGridProps {
   onDelete: (item: CapturedItem) => void;
   onBadgeClick?: (item: CapturedItem) => void;
   onBadgeLongPress?: (item: CapturedItem) => void;
+  onMessageBoard?: (item: CapturedItem) => void; // Sprint M6: Open message board
+  getUnreadCount?: (itemId: string) => number; // Sprint M6: Get unread count for item
 }
 
-export const PhotoGrid: React.FC<PhotoGridProps> = ({ items, onClick, onDelete, onBadgeClick, onBadgeLongPress }) => {
+export const PhotoGrid: React.FC<PhotoGridProps> = ({ 
+  items, 
+  onClick, 
+  onDelete, 
+  onBadgeClick, 
+  onBadgeLongPress,
+  onMessageBoard,
+  getUnreadCount,
+}) => {
   if (items.length === 0) {
       return (
           <div className="text-center py-20 px-4">
@@ -45,6 +55,8 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({ items, onClick, onDelete, 
               onBadgeClick={onBadgeClick}
               onBadgeLongPress={onBadgeLongPress}
               onExpand={onClick}
+              onMessageBoard={onMessageBoard}
+              unreadMessageCount={getUnreadCount ? getUnreadCount(item.id) : 0}
             />
           </motion.div>
         ))}

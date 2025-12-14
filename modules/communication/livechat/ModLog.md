@@ -12,6 +12,301 @@ This log tracks changes specific to the **livechat** module in the **communicati
 
 ## MODLOG ENTRIES
 
+### 2025-12-14 - Chat Telemetry: Author-ID Query Support
+
+**By:** 0102  
+**WSP References:** WSP 60 (Module Memory), WSP 72 (Module Independence)
+
+**Problem:** Comment engagement needs to pull prior live chat context by stable YouTube channel id; telemetry store only supported lookup by display name.
+
+**Solution:** Added `ChatTelemetryStore.get_recent_messages_by_author_id()` to query `data/foundups.db` by `author_id` and return messages in chronological order for prompt context.
+
+**Files Modified:**
+- `modules/communication/livechat/src/chat_telemetry_store.py`
+
+### 2025-12-14 - Sprint 1+2: Pluggable Comment Engagement Execution Modes
+
+**By:** 0102
+**WSP References:** WSP 27 (DAE Architecture), WSP 64 (Telemetry-Driven Decisions)
+
+**Problem:**
+Comment engagement used subprocess isolation (2-3s startup overhead). User asked if main.py should directly integrate like the test does. First-principles analysis revealed: Selenium/WebDriver is synchronous and blocks event loop - `asyncio.wait_for()` cannot interrupt blocked C/IO calls. Subprocess provides guaranteed SIGKILL recovery.
+
+**Solution (Sprint 1+2)**:
+Implemented pluggable execution strategy interface with 3 modes:
+
+1. **subprocess** (DEFAULT, SAFEST):
+   - SIGKILL guarantee (always recovers Chrome control)
+   - Process isolation (crash doesn't kill main DAE)
+   - 2-3s startup overhead
+
+2. **thread** (FAST, ACCEPTABLE RISK):
+   - <500ms startup (vs 2-3s subprocess)
+   - Thread isolation (main event loop never blocked)
+   - Cannot force-kill thread (accept this limitation)
+
+3. **inproc** (DEBUG ONLY):
+   - Blocks main event loop - DO NOT USE IN PRODUCTION
+
+**Architecture:**
+```python
+# auto_moderator_dae.py (lines 796-812)
+exec_mode = os.getenv("COMMUNITY_EXEC_MODE", "subprocess")
+runner = get_runner(mode=exec_mode, repo_root=repo_root)
+asyncio.create_task(
+    self._run_comment_engagement(runner, channel_id, max_comments, exec_mode)
+)
+```
+
+**Files Created:**
+- `src/engagement_runner.py` (469 lines) - Abstract base + 3 implementations
+
+**Files Modified:**
+- `src/auto_moderator_dae.py` - Integration point + `_run_comment_engagement()` method
+
+**Configuration:**
+```bash
+COMMUNITY_EXEC_MODE=subprocess  # Default (safest)
+COMMUNITY_EXEC_MODE=thread      # Fast startup
+COMMUNITY_EXEC_MODE=inproc      # Debug only
+```
+
+**Testing:**
+- All imports compile
+- Zero behavior change with default `COMMUNITY_EXEC_MODE=subprocess`
+
+**Next Steps (Sprint 3+4)**:
+- Sprint 3: Browser lease/lock system (prevent Chrome :9222 overlap)
+- Sprint 4: Collect telemetry, compare modes, data-driven default switch
+
+**Cross-Reference:** [docs/COMMUNITY_ENGAGEMENT_EXEC_MODES.md](../../../docs/COMMUNITY_ENGAGEMENT_EXEC_MODES.md), [docs/SPRINT_1_2_IMPLEMENTATION_COMPLETE.md](../../../docs/SPRINT_1_2_IMPLEMENTATION_COMPLETE.md)
+
+---
+
+### 2025-12-13 - Fix: Browser Hijacking Resolution (Cross-Reference)
+
+**By:** 0102
+**WSP References:** WSP 77 (Agent Coordination), WSP 27 (DAE Architecture)
+
+**Problem:**
+Comment engagement subprocess was being interrupted by stream detection navigating Chrome browser. User diagnosed the architectural issue: stream detection and comment engagement were fighting over the same Chrome instance (:9222).
+
+**Resolution:**
+Stream detection module now properly skips vision mode (see `stream_resolver/ModLog.md` for details). Comment engagement gets exclusive Chrome access.
+
+**Files in This Module:**
+- `src/community_monitor.py` - Timeout fix already applied (see entry below)
+- `src/auto_moderator_dae.py` - Phase -2.1 startup engagement coordination
+
+**Cross-Reference:** [docs/BROWSER_HIJACKING_FIX_20251213.md](../../../docs/BROWSER_HIJACKING_FIX_20251213.md)
+
+---
+
+### FIX: ASCII-Safe Livechat Logging (Remove Emoji / VS16)
+
+**By:** 0102  
+**WSP References:** WSP 88 (Windows Unicode safety), WSP 91 (Observability)
+
+**Problem:**
+Several livechat runtime logs used emoji or variation selectors (e.g. `[U+1F6E1]️`, `⏱️`, `📺`), which can trigger `UnicodeEncodeError` on Windows consoles configured with non-UTF8 encodings.
+
+**Solution:**
+- Replaced emoji/VS16 markers with ASCII tags (`[WARN]`, `[THROTTLE]`, `[TIMER]`, `[STREAM]`, `[STOP]`).
+- Sanitized debug logging that prints converted emoji text to avoid reintroducing the same encoding failures.
+
+**Files Modified:**
+- `modules/communication/livechat/src/auto_moderator_dae.py`
+- `modules/communication/livechat/src/chat_sender.py`
+- `modules/communication/livechat/src/community_monitor.py`
+
+---
+
+### FIX: CommunityMonitor Subprocess Streaming + Timeout Enforcement (YouTube Studio Comments)
+
+**By:** 0102  
+**WSP References:** WSP 27 (DAE Phases), WSP 91 (Observability), WSP 96 (Skill Execution)
+
+**Problem:**
+Comment engagement subprocess appeared to “hang silently” because stdout/stderr were only collected at process end. Additionally, `max_comments=0` (unlimited) computed a 30s timeout and on timeout the subprocess could continue running in the background, keeping control of Chrome.
+
+**Solution:**
+Updated `community_monitor.py` to:
+- Stream subprocess stdout/stderr line-by-line for real-time visibility (`COMMUNITY_DEBUG_SUBPROCESS=true` default)
+- Fix timeout budgeting for unlimited mode via `COMMUNITY_UNLIMITED_TIMEOUT` (default 1800s)
+- Terminate/kill the subprocess on timeout to avoid orphaned browser control
+
+**Files Modified:**
+- `modules/communication/livechat/src/community_monitor.py`
+
+---
+
+### FEATURE: Intelligent Livechat Reply Generator (Grok-Powered)
+
+**By:** 0102
+**WSP References:** WSP 77 (Banter Engine), WSP 27 (DAE Phases)
+
+**Status:** ✅ **COMPLETE**
+
+**Problem Solved:**
+Live chat responses were using hardcoded templates. Needed contextual, witty responses like the video comments intelligent reply generator.
+
+**Solution:**
+Created `intelligent_livechat_reply.py` that mirrors `video_comments/intelligent_reply_generator.py`:
+- Pattern detection (song → FFCPLN, move2japan, etc.)
+- Emoji-only messages → emoji response
+- Grok for contextual, witty replies
+- Banter engine as fallback
+
+**Files Created/Modified:**
+
+1. **intelligent_livechat_reply.py** (NEW)
+   - `IntelligentLivechatReply` class
+   - `PATTERN_RESPONSES` for keyword triggers
+   - Grok integration via LLMConnector
+   - Chatter classification system
+
+2. **message_processor.py**
+   - Added import for `get_livechat_reply_generator`
+   - Integrated intelligent reply before banter/fallback
+   - Priority: Pattern → Emoji → Grok → Banter → Fallback
+
+**Pattern Responses:**
+| Pattern | Keywords | Response |
+|---------|----------|----------|
+| song | song, music, bgm | 🎵 #FFCPLN playlist at ffc.foundups.com |
+| ffcpln | ffcpln, playlist | 🔥 Play #FFCPLN for ICE! |
+| move2japan | visa, japan, move | 🇯🇵 Check move2japan.com |
+| subscribe | subscribed, subbed | Welcome to consciousness crew! |
+
+---
+
+### FEATURE: !party Command - Reaction Spam via Vision Coordinates
+
+**By:** 0102
+**WSP References:** WSP 77 (Banter Engine), WSP 27 (DAE Phases), WSP 96
+
+**Status:** ✅ **COMPLETE**
+
+**Problem Solved:**
+Needed ability to trigger YouTube Live Chat reaction spam (heart, celebrate, 100%, etc.) as a fun engagement feature via `!party` command.
+
+**Solution:**
+Used UI-TARS grid overlay to discover exact pixel coordinates for the reaction popup and all reaction buttons, then implemented coordinate-based mouse actions.
+
+**Coordinates Discovered:**
+| Element | X | Y | Action |
+|---------|---|---|--------|
+| Toggle (heart) | 359 | 759 | Hover to open popup |
+| 100% | 361 | 735 | Click |
+| Wide eyes | 357 | 708 | Click |
+| Celebrate | 358 | 669 | Click |
+| Smiley | 357 | 635 | Click |
+| Heart | 359 | 599 | Click |
+
+**Files Created/Modified:**
+
+1. **party_reactor.py** (NEW)
+   - `PartyReactor` class: Manages Chrome connection and reaction spam
+   - `party_mode()`: Spam all reactions randomly
+   - `spam_single()`: Spam specific reaction type
+   - 60-second cooldown between parties
+   - Global instance via `get_party_reactor()`
+
+2. **command_handler.py**
+   - Added `!party` command (MOD/OWNER only)
+   - Optional click count: `!party 50` (max 100)
+   - Added to `/help` message
+
+3. **skills/party_reactions.json** (NEW)
+   - Skill definition with all coordinates
+   - Flow documentation
+   - Party mode parameters
+
+**Usage:**
+```
+!party       → 30 random reactions
+!party 50    → 50 random reactions (max 100)
+```
+
+**Flow:**
+```
+Hover (359, 759) → Popup slides up → Click reaction → Repeat!
+```
+
+---
+
+### FEATURE: CommunityMonitor Subprocess Isolation & Unlimited Engagement
+
+**By:** 0102
+**WSP References:** WSP 27 (DAE Architecture), WSP 91 (DAEMON Observability)
+
+**Status:** ✅ **COMPLETE**
+
+**Problem Solved:**
+CommunityMonitor was directly connecting to user's Chrome browser and navigating it away from whatever page they were viewing. This "browser hijacking" interrupted the 012's workflow.
+
+**Solution:**
+Changed CommunityMonitor to launch `test_uitars_comment_engagement.py` as an isolated subprocess instead of sharing the Chrome connection.
+
+**Files Modified:**
+
+1. **community_monitor.py**
+   - `_run_engagement_subprocess()`: Launches engagement as separate Python process
+   - `--json-output` flag: Enables programmatic result parsing
+   - Timeout: 2 min per comment + 30s buffer
+   - Subprocess parses JSON output for stats
+
+2. **auto_moderator_dae.py**
+   - Phase -2: Added dependency launcher integration
+   - `max_comments=0`: UNLIMITED mode - process ALL comments
+   - Log: "Autonomous engagement launched (UNLIMITED mode)"
+
+**Integration with Dependency Launcher:**
+
+```python
+# Phase -2: Launch dependencies (Chrome + LM Studio)
+from modules.infrastructure.dependency_launcher.src.dae_dependencies import ensure_dependencies
+dep_status = await ensure_dependencies(require_lm_studio=True)
+```
+
+**Benefits:**
+- ✅ No browser hijacking - user's Chrome stays on their page
+- ✅ Isolated subprocess - comment engagement doesn't affect main DAE
+- ✅ JSON output - programmatic result parsing
+- ✅ Unlimited mode - clears ALL comments in one session
+- ✅ "Community tab clear!" announcement when done
+
+---
+
+### PATCH: CommunityMonitor Startup + Correct Skill Path + Vision Gate
+
+**Date:** 2025-12-12  
+**By:** 0102  
+**WSP References:** WSP 27 (DAE Architecture), WSP 77 (Vision), WSP 91 (Observability), WSP 96 (Skill runner)
+
+**Problem:**
+- Comment engagement was gated on "live chat active" and did not run when no livestream was found.
+- Engagement script path pointed at a non-existent livechat/video_comments location instead of the WSP 96 skill location.
+- Subprocess forced DOM-only mode, preventing UI-TARS vision verification even when LM Studio is running.
+
+**Fix:**
+1. `modules/communication/livechat/src/community_monitor.py`
+   - Fixed `engagement_script` path to `modules/communication/video_comments/skills/tars_like_heart_reply/run_skill.py`
+   - Vision verification enabled by default when LM Studio is reachable (port 1234)
+   - Added `COMMUNITY_DOM_ONLY=1` override to force DOM-only
+   - Updated `get_community_monitor()` to attach `chat_sender`/`telemetry_store` when LiveChatCore becomes available
+
+2. `modules/communication/livechat/src/auto_moderator_dae.py`
+   - Requires LM Studio during dependency initialization (`ensure_dependencies(require_lm_studio=True)`)
+   - Added startup comment engagement launch (runs even when no livestream):
+     - `COMMUNITY_STARTUP_ENGAGE` (default true)
+     - `COMMUNITY_STARTUP_MAX_COMMENTS` (default 0 = unlimited)
+
+3. `modules/infrastructure/browser_actions/src/action_router.py`
+   - Added fail-fast LM Studio `/v1/models` health check before enabling UI-TARS driver
+
+---
+
 ### FEATURE: AI_overseer Live Chat Announcements (012's Vision!)
 **Date**: 2025-10-26
 **WSP Protocol**: WSP 77 (Agent Coordination), WSP 91 (Daemon Observability)

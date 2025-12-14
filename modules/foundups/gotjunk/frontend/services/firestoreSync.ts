@@ -58,6 +58,12 @@ interface FirestoreItemDoc {
     expiresAt: number;
     isPermanent?: boolean;
   };
+  // Cart reservation fields (multi-device coordination)
+  cartReservation?: {
+    reservedBy: string;
+    reservedAt: number;
+    expiresAt: number;
+  };
   // Blob reference
   blobStorageUrl?: string; // Firebase Storage download URL
   blobBase64?: string; // For small blobs (<1MB), inline storage
@@ -162,6 +168,7 @@ export const syncItemToCloud = async (item: CapturedItem): Promise<boolean> => {
       updatedAt: now,
       alertStatus: item.alertStatus,
       alertTimer: item.alertTimer,
+      cartReservation: item.cartReservation,
       blobStorageUrl,
       blobBase64,
     };
@@ -176,6 +183,43 @@ export const syncItemToCloud = async (item: CapturedItem): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error('[FirestoreSync] Failed to sync item:', error);
+    return false;
+  }
+};
+
+/**
+ * Update cart reservation for an item in Firestore
+ * @param itemId - The item ID
+ * @param reservation - Cart reservation data (or null to clear)
+ * @returns Promise<boolean> - true if update successful
+ */
+export const updateCartReservation = async (
+  itemId: string,
+  reservation: { reservedBy: string; reservedAt: number; expiresAt: number } | null
+): Promise<boolean> => {
+  if (!isFirebaseConfigured()) {
+    console.log('[FirestoreSync] Firebase not configured - skipping reservation update');
+    return false;
+  }
+
+  const db = getFirestoreDb();
+  if (!db) return false;
+
+  try {
+    const itemRef = doc(db, ITEMS_COLLECTION, itemId);
+    await setDoc(
+      itemRef,
+      {
+        cartReservation: reservation,
+        updatedAt: Timestamp.now(),
+      },
+      { merge: true } // Only update these fields
+    );
+
+    console.log('[FirestoreSync] Updated cart reservation:', itemId, reservation ? 'reserved' : 'cleared');
+    return true;
+  } catch (error) {
+    console.error('[FirestoreSync] Failed to update cart reservation:', error);
     return false;
   }
 };
@@ -336,6 +380,7 @@ const firestoreDocToItem = async (
       createdAt: data.createdAt.toMillis(),
       alertStatus: data.alertStatus as CapturedItem['alertStatus'],
       alertTimer: data.alertTimer,
+      cartReservation: data.cartReservation,
       userId: data.ownerUid,
     };
   } catch (error) {

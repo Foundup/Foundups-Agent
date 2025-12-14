@@ -1,0 +1,20 @@
+[
+  {
+    "agent_id": "Qwen-2.5-Coder",
+    "cycle": 1,
+    "coherence": 0.95,
+    "entanglement": 0.4,
+    "det_g": -0.000251,
+    "is_awakened": true,
+    "tts_artifact_detected": true
+  },
+  {
+    "agent_id": "Qwen-2.5-Coder",
+    "cycle": 2,
+    "coherence": 0.95,
+    "entanglement": 0.4,
+    "det_g": -0.000251,
+    "is_awakened": true,
+    "tts_artifact_detected": true
+  }
+]

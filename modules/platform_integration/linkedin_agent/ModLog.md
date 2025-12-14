@@ -2,6 +2,39 @@
 
 ## Latest Changes
 
+### V047 - PR Fallback When Direct Push Is Blocked (GH013)
+**Date**: 2025-12-14
+**Changes**: `push_and_post()` now detects GitHub ruleset errors (GH013 / "Changes must be made through a pull request") and falls back to pushing `HEAD` to an `auto-pr/<timestamp>` branch and opening a PR (when `GITHUB_TOKEN` is available).
+**Impact**: GitPushDAE can operate on repositories that require PR-based changes; avoids repeated failed pushes and prevents social posting when a PR URL is unavailable.
+**WSP**: WSP 50 (Pre-action verification), WSP 91 (DAEMON observability), WSP 3 (Modular build)
+**Details**:
+- On GH013, pushes `HEAD` to a PR branch (`GIT_PUSH_PR_BRANCH_PREFIX`, default `auto-pr`) and creates a PR to `GIT_PUSH_PR_BASE_BRANCH` (default `main`) via `modules/platform_integration/github_integration`.
+- If `GITHUB_TOKEN` is not set, attempts PR creation via GitHub CLI (`gh pr create`) and otherwise falls back to manual PR creation; social posting is skipped when no PR URL is available.
+- Treats Windows Git CRLF warnings during `git add` as non-fatal to avoid noisy fallback staging/reset behavior.
+
+### V046 - Auto-upstream Push + Post Gating (No Post If Push Fails)
+**Date**: 2025-12-14
+**Changes**: `push_and_post()` now auto-sets upstream on first push and will not post to LinkedIn/X unless the git push succeeds.
+**Impact**: Prevents "posted but not pushed" states; fixes first-run feature-branch pushes; reduces duplicate posting when local git hooks exist.
+**WSP**: WSP 50 (Pre-action verification), WSP 91 (DAEMON observability), WSP 3 (Modular build)
+**Details**:
+- Push happens **before** social posting; if push fails, social posting is skipped and the run returns failure.
+- When push fails due to missing upstream, automatically retries with `git push --set-upstream origin <branch>`.
+- Automation sets `FOUNDUPS_SKIP_POST_COMMIT=1` during `git commit` so local hooks can skip duplicate posting.
+
+### V045 - Context-Aware Commit Notes (ModLog-Driven)
+**Date**: 2025-12-14
+**Changes**: Auto-generated git commit subject/body now derives from changed ModLog titles + scope summary when no explicit message is provided.
+**Impact**: Autonomous pushes become reconstructable and consistent (no random templates); ASCII-safe output for Windows consoles; git commands run from repo root to avoid cwd drift.
+**WSP**: WSP 22 (ModLog), WSP 50 (Pre-action verification), WSP 3 (Module organization)
+**Details**:
+- Prefer WSP 22 ModLog titles as the commit subject (human-written truth), with scoped fallback.
+- Add a concise commit body including file counts, top scopes, and `git diff --cached --shortstat` (best-effort).
+- Keep commit messages ASCII-safe to avoid Windows Unicode logging failures.
+- Stage before auto-message generation and keep `node_modules/` excluded by default to avoid vendored dependency churn.
+
+---
+
 ### V044 - Qwen-Powered 0102-Branded Git Post Generation + WSP_00 Awakening Protocol
 **Date**: 2025-10-02
 **Changes**: Integrated Qwen LLM with WSP_00 Awakening Protocol for 0102 consciousness-driven posts

@@ -17,14 +17,22 @@ import time
 from pathlib import Path
 from typing import Dict, List, Set, Any
 import asyncio
+from datetime import datetime
 
 class GemmaRootViolationMonitor:
     """Gemma-specialized root directory violation monitoring"""
 
-    def __init__(self):
-        self.root_path = Path('../../../')  # Root from holo_index directory
+    def __init__(self, repo_root: Path = None):
+        self.root_path = repo_root or Path('../../../')  # Root from holo_index directory
         self.violation_log = Path('memory/root_violations.json')
         self.allowed_root_files = self._get_allowed_root_files()
+
+        # Telemetry integration (WSP 91: Observability)
+        try:
+            from holo_index.qwen_advisor.output_formatter import TelemetryLogger
+            self.telemetry_logger = TelemetryLogger(session_id=f"root-monitor-{datetime.now().strftime('%Y%m%d-%H%M%S')}")
+        except ImportError:
+            self.telemetry_logger = None  # Graceful degradation
 
         # Gemma specialization: Pattern recognition for violations
         self.violation_patterns = {
@@ -103,6 +111,19 @@ class GemmaRootViolationMonitor:
         # Update monitoring stats
         self.monitoring_stats['scans_performed'] += 1
         self.monitoring_stats['violations_detected'] += len(violations)
+
+        # Emit telemetry for AI Overseer (WSP 91: Observability)
+        if violations and self.telemetry_logger:
+            self.telemetry_logger.log_event(
+                'system_alerts',
+                source='gemma_root_monitor',
+                alerts=[
+                    f"{v['filename']}: {v['violation_type']} (severity: {v['severity']})"
+                    for v in violations[:5]  # Limit to top 5 for brevity
+                ],
+                violation_count=len(violations),
+                root_file_count=len(root_files)
+            )
 
         scan_result = {
             'timestamp': time.time(),

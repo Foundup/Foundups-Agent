@@ -1,34 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys
 import io
-
-# === UTF-8 ENFORCEMENT (WSP 90) ===
-# Prevent UnicodeEncodeError on Windows systems
-# Only apply when running as main script, not during import
-if __name__ == '__main__' and sys.platform.startswith('win'):
-    try:
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-    except (OSError, ValueError):
-        # Ignore if stdout/stderr already wrapped or closed
-        pass
-# === END UTF-8 ENFORCEMENT ===
-
-#!/usr/bin/env python3
-"""
-HoloDAE Coordinator - Main orchestrator following Qwen竊・102 architecture
-
-This is the refactored HoloDAE that properly implements the WSP 80 architecture:
-- Qwen LLM as Primary Orchestrator (circulatory system)
-- 0102 Agent as Arbitrator (brain)
-- 012 Human as Observer (monitoring)
-
-WSP Compliance: WSP 80 (Cube-Level DAE Orchestration)
-"""
-
 import time
 import logging
-import sys
 import os
 import json
 import threading
@@ -38,20 +12,17 @@ from pathlib import Path
 from collections import Counter, deque
 from typing import Dict, List, Optional, Any, Tuple, Set
 
-SUMMARY_EMOJI_ALIASES = {
-    '[PILL][OK]': 'HEALTH',
-    '[AI]': 'PATTERN',
-    '[RULER]': 'SIZE',
-    '[BOX]': 'MODULE',
-    '[GHOST]': 'ORPHAN',
-    '[DATA]': 'MONITOR',
-    '[BOT][AI]': 'QWEN',
-    '[BREAD]': 'BREADCRUMB',
-    '[SEARCH]': 'SEMANTIC',
-}
+# === UTF-8 ENFORCEMENT (WSP 90) ===
+if __name__ == '__main__' and sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (OSError, ValueError):
+        pass
+# === END UTF-8 ENFORCEMENT ===
 
-# Import our new modular components
-from .orchestration.qwen_orchestrator import QwenOrchestrator
+# Import core components
+from .orchestration.qwen_orchestrator import QwenOrchestrator, WSP_DOC_CONFIG
 from .arbitration.mps_arbitrator import MPSArbitrator, ArbitrationDecision
 from holo_index.core.intelligent_subroutine_engine import IntelligentSubroutineEngine
 from .services.file_system_watcher import FileSystemWatcher
@@ -63,19 +34,35 @@ from .output_formatter import HoloOutputFormatter, TelemetryLogger
 from .qwen_health_monitor import CodeIndexCirculationEngine
 from .architect_mode import ArchitectDecisionEngine
 
-# Import breadcrumb tracer for multi-agent collaboration
-from holo_index.adaptive_learning.breadcrumb_tracer import get_tracer
+# Import WSP 62 Services
+from .services.pid_detective import PIDDetective
+from .services.mcp_integration import MCPIntegration
+from .services.telemetry_formatter import TelemetryFormatter
+from .services.module_metrics import ModuleMetrics
+from .services.monitoring_loop import MonitoringLoop
+from holo_index.wre_integration.skill_executor import SkillExecutor
 
+# Import breadcrumb tracer
+from holo_index.adaptive_learning.breadcrumb_tracer import get_tracer
+from urllib import request as _urllib_request
+
+# PatternMemory for collective false-positive learning (WSP 48/60)
+try:
+    from modules.infrastructure.wre_core.src.pattern_memory import PatternMemory
+    PATTERN_MEMORY_AVAILABLE = True
+except ImportError:
+    PATTERN_MEMORY_AVAILABLE = False
 
 class HoloDAECoordinator:
     """
     Refactored HoloDAE Coordinator - Clean architecture implementation
-
-    Follows WSP 80: Qwen orchestrates 竊・0102 arbitrates 竊・012 observes
+    Follows WSP 80: Qwen orchestrates -> 0102 arbitrates -> 012 observes
     """
 
     def __init__(self):
         """Initialize the HoloDAE coordinator with all components"""
+        self.repo_root = Path(__file__).resolve().parents[2]
+        
         # Core orchestration components
         self.qwen_orchestrator = QwenOrchestrator(coordinator=self)
         self.mps_arbitrator = MPSArbitrator()
@@ -85,28 +72,9 @@ class HoloDAECoordinator:
         self.context_analyzer = ContextAnalyzer()
         self.codeindex_engine = CodeIndexCirculationEngine()
         self.architect_engine = ArchitectDecisionEngine()
-
+        
         # State management
         self.current_work_context = WorkContext()
-        self.monitoring_active = False
-        self.monitoring_enabled = os.getenv('HOLO_AUTO_MONITOR', '0').lower() in {"1", "true", "yes"}
-        self.monitoring_thread = None
-        self.monitoring_stop_event = threading.Event()
-        try:
-            self.monitoring_interval = max(1.0, float(os.getenv('HOLO_MONITOR_INTERVAL', '5.0')))
-        except ValueError:
-            self.monitoring_interval = 5.0
-        try:
-            self.monitoring_heartbeat = max(self.monitoring_interval, float(os.getenv('HOLO_MONITOR_HEARTBEAT', '60.0')))
-        except ValueError:
-            self.monitoring_heartbeat = max(self.monitoring_interval, 60.0)
-        self.last_monitoring_result: Optional[MonitoringResult] = None
-
-        # UI components
-        self.menu_system = HoloDAEMenuSystem()
-        self.status_display = StatusDisplay()
-
-        # MCP observability
         self.mcp_action_log = deque(maxlen=100)
         self.mcp_watchlist = [
             {
@@ -128,64 +96,199 @@ class HoloDAECoordinator:
                 'priority': 'P2'
             }
         ]
-
-        # Environment + logging context
-        self.repo_root = Path(__file__).resolve().parents[2]
-        self.holo_console_enabled = os.getenv("HOLO_SILENT", "0").lower() not in {"1", "true", "yes"}
-        self.session_id = f"holo-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
-        self.verbose = os.getenv('HOLO_VERBOSE', '').lower() in {"1", "true", "yes"}
-        self.output_formatter = HoloOutputFormatter(verbose=self.verbose)
-        self.telemetry_logger = TelemetryLogger(self.session_id)
-        self._module_metrics_cache: Dict[str, Dict[str, Any]] = {}
+        
+        # Initialize doc tracking
         self.doc_only_modules: Set[str] = set()
         self._initialize_doc_only_modules()
-
-        self._012_summary_path = Path(os.getenv('HOLO_012_PATH', '012.txt')).resolve()
-        try:
-            self._012_summary_limit = max(1, int(os.getenv('HOLO_012_LIMIT', '25')))
-        except ValueError:
-            self._012_summary_limit = 25
-
-        # Module mapping and doc tracking (implements 012's insights)
         self.module_map: Dict[str, Dict[str, Any]] = {}
         self.orphan_candidates: List[str] = []
-        self.doc_hints_given: Dict[str, datetime] = {}
-        self.docs_read: set = set()
 
-        # Setup logging
+        # Environment + logging context
+        self.holo_console_enabled = os.getenv("HOLO_SILENT", "0").lower() not in {"1", "true", "yes"}
+        self.verbose = os.getenv('HOLO_VERBOSE', '').lower() in {"1", "true", "yes"}
+        self.session_id = f"holo-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        
+        # Initialize Telemetry
         self.logger = logging.getLogger('holodae_activity')
-        self._configure_logging()
-        self.holo_agent_id = self._get_holo_agent_id()
-
-        # Initialize breadcrumb tracer for multi-agent collaboration
+        self.telemetry_logger = TelemetryLogger(self.session_id)
+        self.telemetry_formatter = TelemetryFormatter(
+            telemetry_logger=self.telemetry_logger,
+            current_work_context=self.current_work_context,
+            logger=self.logger
+        )
+        self.holo_agent_id = self.telemetry_logger.session_id
+        
+        # Initialize breadcrumb tracer
         self.breadcrumb_tracer = get_tracer()
+
+        # Initialize WSP 62 Services with full wiring
+        self.pid_detective = PIDDetective()
+        
+        self.mcp_integration = MCPIntegration(
+            mcp_watchlist=self.mcp_watchlist,
+            mcp_action_log=self.mcp_action_log,
+            breadcrumb_tracer=self.breadcrumb_tracer,
+            telemetry_logger=self.telemetry_logger
+        )
+        
+        self.module_metrics = ModuleMetrics(
+            repo_root=self.repo_root,
+            doc_only_modules=self.doc_only_modules,
+            module_map=self.module_map,
+            orphan_candidates=self.orphan_candidates
+        )
+        
+        self.skill_executor = SkillExecutor(repo_root=self.repo_root)
+
+        # PatternMemory for false-positive filtering (WSP 48/60)
+        self.pattern_memory: Optional[Any] = None
+        if PATTERN_MEMORY_AVAILABLE:
+            try:
+                self.pattern_memory = PatternMemory()
+                self._detailed_log("[HOLODAE] PatternMemory initialized for result filtering")
+            except Exception as exc:
+                self._detailed_log(f"[HOLODAE] PatternMemory unavailable: {exc}")
+
+        self.monitoring_loop = MonitoringLoop(
+            file_watcher=self.file_watcher,
+            context_analyzer=self.context_analyzer,
+            repo_root=self.repo_root,
+            codeindex_engine=self.codeindex_engine,
+            architect_engine=self.architect_engine,
+            current_work_context=self.current_work_context,
+            telemetry_formatter=self.telemetry_formatter,
+            logger=self.logger,
+            monitoring_interval=max(1.0, float(os.getenv('HOLO_MONITOR_INTERVAL', '5.0'))),
+            monitoring_heartbeat=max(5.0, float(os.getenv('HOLO_MONITOR_HEARTBEAT', '60.0'))),
+            module_metrics_cache=self.module_metrics._module_metrics_cache, # Share cache
+            holo_log_callback=self._holo_log,
+            detailed_log_callback=self._detailed_log,
+            build_monitor_summary_callback=self.telemetry_formatter.build_monitor_summary_block,
+            skill_executor=self.skill_executor
+        )
+
+        # UI components
+        self.menu_system = HoloDAEMenuSystem()
+        self.status_display = StatusDisplay()
+
         self._detailed_log("[HOLODAE-COORDINATOR] Initialized with modular architecture and breadcrumb tracing")
 
-    def handle_holoindex_request(self, query: str, search_results: dict) -> str:
-        """
-        Handle HoloIndex search request - Main orchestration entry point
+    def _initialize_doc_only_modules(self) -> None:
+        """Register documentation-only bundles that skip runtime checks."""
+        wsp_doc_only = WSP_DOC_CONFIG.get('doc_only_modules', set())
+        doc_paths = ['holo_index/docs'] + list(wsp_doc_only)
 
-        This implements the WSP 80 architecture:
-        1. Qwen orchestrates analysis based on query
-        2. 0102 arbitrates using MPS scoring
-        3. Results presented for 012 monitoring
+        for doc_path in doc_paths:
+            normalized = doc_path.replace('\\', '/').strip()
+            if normalized:
+                self.doc_only_modules.add(normalized)
+            absolute = (self.repo_root / normalized).resolve()
+            self.doc_only_modules.add(str(absolute).replace('\\', '/'))
+
+    def _holo_log(self, message: str, console: Optional[bool] = None) -> None:
+        """Log HoloDAE activity visible to 012 with HOLO_AGENT_ID"""
+        timestamp = datetime.now().strftime('%H:%M:%S')
+        sanitized = message.replace('\n', ' ').strip()
+        holo_message = f"[{timestamp}] {self.holo_agent_id} - holo {sanitized}"
+        self.logger.info(holo_message)
+        should_print = self.holo_console_enabled if console is None else console
+        if should_print:
+            print(holo_message)
+
+    def _detailed_log(self, message: str) -> None:
+        """Log detailed information to file only"""
+        self.logger.info(message)
+
+    def _filter_false_positive_results(self, query: str, search_results: dict) -> dict:
         """
+        Filter search results to remove known false positives using PatternMemory.
+
+        WSP 48/60: Collective learning - skip results that are learned false positives
+        (e.g., filter out "holo_dae module" results when searching for modules)
+
+        Args:
+            query: Original search query
+            search_results: Raw search results from HoloIndex
+
+        Returns:
+            Filtered search results with false positives removed
+        """
+        if not self.pattern_memory:
+            return search_results  # No filtering if PatternMemory unavailable
+
+        filtered_results = {
+            'code': [],
+            'wsps': search_results.get('wsps', [])  # WSP docs rarely false positives
+        }
+
+        # Filter code results
+        for result in search_results.get('code', []):
+            file_path = result.get('file', '')
+            module_name = self._extract_module_from_path(file_path)
+
+            # Check if this module/file is a known false positive
+            if module_name and self.pattern_memory.is_false_positive("module", module_name):
+                details = self.pattern_memory.get_false_positive_reason("module", module_name)
+                self._detailed_log(
+                    f"[HOLODAE] [LEARNED] Filtered false positive: {module_name}\n"
+                    f"  Reason: {details.get('reason', 'Unknown')}\n"
+                    f"  Actual: {details.get('actual_location', 'Unknown')}"
+                )
+                continue  # Skip this result
+
+            filtered_results['code'].append(result)
+
+        # Log filtering stats
+        original_count = len(search_results.get('code', []))
+        filtered_count = len(filtered_results['code'])
+        if filtered_count < original_count:
+            self._detailed_log(
+                f"[HOLODAE] [LEARNED] Filtered {original_count - filtered_count} "
+                f"false positive results ({filtered_count} relevant results remain)"
+            )
+
+        return filtered_results
+
+    def _extract_module_from_path(self, file_path: str) -> Optional[str]:
+        """Extract module name from file path (e.g., 'modules/ai_intelligence/ai_overseer/...' -> 'ai_overseer')"""
+        if not file_path:
+            return None
+
+        parts = Path(file_path).parts
+        if 'modules' in parts:
+            idx = parts.index('modules')
+            if len(parts) > idx + 2:
+                return parts[idx + 2]  # Return module name (third part after 'modules')
+        elif 'holo_index' in parts:
+            idx = parts.index('holo_index')
+            if len(parts) > idx + 1:
+                return parts[idx + 1]  # Return submodule (e.g., 'qwen_advisor')
+
+        return None
+
+    def handle_holoindex_request(self, query: str, search_results: dict) -> str:
+        """Handle HoloIndex search request - Main orchestration entry point"""
         self._detailed_log(f"[HOLODAE-COORDINATOR] Processing query: '{query}'")
 
-        # Breadcrumb: Record search initiation
-        self.breadcrumb_tracer.add_search(query, search_results.get('code', [])[:3], [])
+        # Phase 0: Filter false positives using PatternMemory (WSP 48/60)
+        filtered_results = self._filter_false_positive_results(query, search_results)
 
-        # Step 1: Qwen orchestrates the analysis
-        qwen_report = self.qwen_orchestrator.orchestrate_holoindex_request(query, search_results)
+        # Breadcrumb: Record search initiation (with filtered count)
+        self.breadcrumb_tracer.add_search(query, filtered_results.get('code', [])[:3], [])
+
+        # Step 1: Qwen orchestrates the analysis (receives filtered results)
+        qwen_report = self.qwen_orchestrator.orchestrate_holoindex_request(query, filtered_results)
 
         # Extract analysis context and gather module metrics
         analysis_context = self.qwen_orchestrator.get_analysis_context()
         involved_files = analysis_context['files']
         involved_modules = analysis_context['modules']
-        module_metrics = self._collect_module_metrics_for_request(involved_modules)
-        alerts = self._get_system_alerts(list(module_metrics.keys()))
+        
+        # Delegate to ModuleMetrics
+        module_metrics = self.module_metrics.collect_module_metrics_for_request(involved_modules)
+        alerts = self.module_metrics.get_system_alerts(list(module_metrics.keys()))
 
-        # Breadcrumb: Record modules discovered during analysis
+        # Breadcrumb: Record modules discovered
         if involved_modules:
             self.breadcrumb_tracer.add_discovery(
                 "module_discovery",
@@ -194,8 +297,8 @@ class HoloDAECoordinator:
                 f"Found implementations in modules: {', '.join(involved_modules[:3])}"
             )
 
-        # Build module map for orphan detection and doc provision (012's insights)
-        self._build_module_map(module_metrics)
+        # Build module map for orphan detection
+        self.module_metrics.build_module_map(module_metrics)
 
         # Step 2: 0102 arbitrates using MPS
         arbitration_decisions = self.mps_arbitrator.arbitrate_qwen_findings(qwen_report)
@@ -215,32 +318,46 @@ class HoloDAECoordinator:
         # Step 3: Execute arbitration decisions
         execution_results = self.mps_arbitrator.execute_arbitration_decisions(arbitration_decisions)
 
-        # Update work context using analyzer and arbitration actions
+        # Update work context
         analysis_context = self.qwen_orchestrator.get_recent_analysis_context()
         session_actions = [f"{decision.recommended_action.value}:{decision.description}" for decision in arbitration_decisions]
         if analysis_context['files'] or session_actions:
             self.current_work_context = self.context_analyzer.analyze_work_context(analysis_context['files'], session_actions)
+            # Update formatter's context reference
+            self.telemetry_formatter.current_work_context = self.current_work_context
 
         search_summary = {
             'code': search_results.get('code', []),
             'wsps': search_results.get('wsps', [])
         }
-        self._log_request_telemetry(query, search_summary, module_metrics, alerts)
+        
+        # Delegate telemetry logging
+        self.telemetry_formatter.log_request_telemetry(query, search_summary, module_metrics, alerts)
 
-        final_report = self._format_final_report(qwen_report, arbitration_decisions, execution_results)
-        module_summary = self._format_module_metrics_summary(module_metrics, alerts)
+        # Format final report
+        final_report = self.telemetry_formatter.format_final_report(
+            qwen_report, arbitration_decisions, execution_results
+        )
+        
+        module_summary = self.telemetry_formatter.format_module_metrics_summary(module_metrics, alerts)
         if module_summary:
             final_report = f"{final_report}\n{module_summary}" if final_report else module_summary
 
-        self._track_mcp_activity(query, module_metrics, qwen_report)
-
-        findings = self._extract_key_findings(alerts, module_metrics)
-        actions_overview = self._extract_high_priority_actions(high_priority_decisions)
-        self._append_012_summary(
-            self._build_search_summary_block(query, involved_modules, findings, actions_overview)
+        # Delegate MCP tracking
+        self.mcp_integration.track_mcp_activity(
+            query=query,
+            module_metrics=module_metrics,
+            qwen_report=qwen_report
         )
 
-        # Add breadcrumb trail from other agents for collaboration
+        # Extract findings and append to summary (if enabled)
+        findings = self.telemetry_formatter.extract_key_findings(alerts, module_metrics)
+        actions_overview = self.telemetry_formatter.extract_high_priority_actions(high_priority_decisions)
+        
+        # Note: append_012_summary is disabled/manual only, but we keep the call structure if needed
+        # self.telemetry_formatter.append_012_summary(...) 
+
+        # Add breadcrumb trail from other agents
         breadcrumb_summary = self._get_collaborative_breadcrumb_summary()
         if breadcrumb_summary:
             final_report = f"{breadcrumb_summary}\n{final_report}" if final_report else breadcrumb_summary
@@ -251,13 +368,10 @@ class HoloDAECoordinator:
     def _get_collaborative_breadcrumb_summary(self) -> str:
         """Get summary of recent breadcrumbs from other 0102 agents for collaboration."""
         try:
-            # Get recent discoveries from other agents (last 2 hours, limit 5)
             recent_discoveries = self.breadcrumb_tracer.get_recent_discoveries(5)
-
             if not recent_discoveries:
                 return ""
 
-            # Filter to show only other agents' work (not current session)
             other_agent_discoveries = [
                 d for d in recent_discoveries
                 if d.get('session_id') != self.breadcrumb_tracer.session_id
@@ -266,16 +380,13 @@ class HoloDAECoordinator:
             if not other_agent_discoveries:
                 return ""
 
-            # Format for 0102 agent consumption
             lines = ["[0102-COLLABORATION] Recent discoveries from other agents:"]
-
-            for discovery in other_agent_discoveries[:3]:  # Show top 3
+            for discovery in other_agent_discoveries[:3]:
                 discovery_type = discovery.get('type', 'unknown')
                 item = discovery.get('item', 'unknown')
                 location = discovery.get('location', '')
                 impact = discovery.get('impact', '')
 
-                # Format based on discovery type
                 if discovery_type == 'module_discovery':
                     lines.append(f"  [PIN] Agent found {item} at {location}")
                 elif discovery_type == 'typo_handler':
@@ -286,1880 +397,102 @@ class HoloDAECoordinator:
                 if impact:
                     lines.append(f"     Impact: {impact}")
 
-            # Add call to action for collaboration
             lines.append("  [HANDSHAKE] Other agents may benefit from your current search results")
-
             return "\n".join(lines)
 
         except Exception as e:
             self.logger.debug(f"Error getting collaborative breadcrumb summary: {e}")
             return ""
 
+    # =========================================================================
+    # DELEGATED METHODS (WSP 62)
+    # =========================================================================
+
     def start_monitoring(self) -> bool:
-        """Start the quiet monitoring system"""
-        if not self.monitoring_enabled:
-            self._detailed_log("[HOLODAE-COORDINATOR] Monitoring disabled for this session (enable_monitoring() to override)")
-            return False
-
-        if self.monitoring_active:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] [HOLODAE] Monitoring already active")
-            return False
-
-        self.monitoring_active = True
-        self.monitoring_stop_event.clear()
-        self._detailed_log("[HOLODAE-COORDINATOR] Starting quiet monitoring mode")
-
-        result = self._run_monitoring_cycle()
-        if result.has_actionable_events():
-            summary = result.get_summary()
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] [HOLODAE] [LAUNCH] Quiet monitoring activated - {summary}")
-            self._emit_monitoring_summary(result, prefix='[HOLO-MONITOR][INITIAL]')
-        else:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] [HOLODAE] [LAUNCH] Quiet monitoring activated")
-
-        if self.monitoring_thread is None or not self.monitoring_thread.is_alive():
-            self.monitoring_thread = threading.Thread(target=self._monitoring_loop, name='HoloMonitor', daemon=True)
-            self.monitoring_thread.start()
-            self._detailed_log("[HOLODAE-COORDINATOR] Monitoring loop thread started")
-        return True
-
-    def run_monitoring_cycle(self) -> MonitoringResult:
-        """Trigger a monitoring cycle manually"""
-        return self._run_monitoring_cycle()
+        return self.monitoring_loop.start_monitoring()
 
     def stop_monitoring(self) -> bool:
-        """Stop the monitoring system"""
-        if not self.monitoring_active:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] [HOLODAE] Monitoring not active")
-            return False
-
-        self.monitoring_active = False
-        self.monitoring_stop_event.set()
-        self._detailed_log("[HOLODAE-COORDINATOR] Monitoring deactivated")
-
-        if self.monitoring_thread and self.monitoring_thread.is_alive():
-            self.monitoring_thread.join(timeout=5.0)
-            self._detailed_log("[HOLODAE-COORDINATOR] Monitoring loop thread joined")
-        self.monitoring_thread = None
-        self.monitoring_stop_event.clear()
-
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] [HOLODAE] Monitoring deactivated")
-        return True
+        return self.monitoring_loop.stop_monitoring()
 
     def enable_monitoring(self) -> None:
-        """Allow background monitoring loops (used by autonomous daemon mode)."""
-        self.monitoring_enabled = True
+        self.monitoring_loop.enable_monitoring()
 
     def get_status_summary(self) -> Dict[str, Any]:
         """Get comprehensive status summary"""
         return {
-            'monitoring_active': self.monitoring_active,
+            'monitoring_active': self.monitoring_loop.monitoring_active,
             'qwen_status': self.qwen_orchestrator.get_chain_of_thought_summary(),
             'arbitration_status': self.mps_arbitrator.get_arbitration_summary(),
             'files_watched': self.file_watcher.get_watched_files_count(),
             'current_work_context': self.current_work_context.get_summary(),
-            'last_monitoring_summary': self.last_monitoring_result.get_summary() if self.last_monitoring_result else None,
-            'last_monitoring_timestamp': self.last_monitoring_result.timestamp.isoformat() if self.last_monitoring_result else None
+            'last_monitoring_summary': self.monitoring_loop.last_monitoring_result.get_summary() if self.monitoring_loop.last_monitoring_result else None,
+            'last_monitoring_timestamp': self.monitoring_loop.last_monitoring_result.timestamp.isoformat() if self.monitoring_loop.last_monitoring_result else None
         }
 
     def show_menu(self) -> str:
-        """Show the main menu and get user choice"""
         self.menu_system.show_main_menu()
         return self.menu_system.get_menu_choice()
 
     def show_sprint_status(self) -> None:
-        """Show sprint dashboard"""
-        # Get component status (in full implementation, this would be real data)
-        component_status = self._get_component_status()
-        self.menu_system.show_sprint_dashboard(component_status)
-
-    def show_mcp_hook_status(self) -> None:
-        """Display MCP connector health for 012 oversight."""
-        status_rows = self._collect_mcp_watch_status()
-        print('\n[U+1F6F0] MCP Hook Map — Research & Platform Connectors')
-        if not status_rows:
-            print("No MCP-aware modules detected. Trigger ricDAE ingestion to register connectors.")
-            return
-        for row in status_rows:
-            print(f"{row['icon']} {row['name']} ({row['priority']})")
-            print(f"   Path: {row['module']}")
-            print(f"   Health: {row['health']} | Size: {row['size']}")
-            if row['notes']:
-                for note in row['notes'][:3]:
-                    print(f"   - {note}")
-            print(f"   About: {row['description']}")
-            print()
-
-    def show_mcp_action_log(self, limit: int = 10) -> None:
-        """Render the recent MCP activity log for 012 observers."""
-        entries = list(self.mcp_action_log)[:limit]
-        print('\n[U+1F4E1] MCP Action Log — Recent Tool Activity')
-        if not entries:
-            print("No MCP activity recorded. Run HoloIndex against MCP-enabled modules to generate telemetry.")
-            return
-        for entry in entries:
-            timestamp = entry.get('timestamp', '??:??:??')
-            line = f"[{timestamp}] {entry.get('event_type', 'event').upper()}"
-            module = entry.get('module')
-            if module:
-                line += f" · {module}"
-            health = entry.get('health')
-            if health:
-                line += f" · {health}"
-            print(line)
-            notes = entry.get('notes') or []
-            for note in notes[:3]:
-                print(f"   - {note}")
-            query = entry.get('query')
-            if query:
-                print(f"   Query: {query}")
-            print()
-
-    def check_pid_health(self) -> List[str]:
-        """Quick health check for HoloDAE processes - returns list of issues with PID identification."""
-        issues = []
-
-        try:
-            from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
-            lock = get_instance_lock("holodae_daemon")
-
-            instance_summary = lock.get_instance_summary()
-            total_instances = instance_summary["total_instances"]
-            instances = instance_summary.get("instances", [])
-            current_pid = instance_summary["current_pid"]
-
-            # Analyze each instance to identify what they are
-            active_instances = []
-            orphan_instances = []
-            duplicate_launches = []
-
-            for instance in instances:
-                pid = instance.get('pid')
-                if not pid:
-                    continue
-
-                try:
-                    import psutil
-                    if psutil.pid_exists(pid):
-                        proc = psutil.Process(pid)
-                        cmdline = ' '.join(proc.cmdline()) if proc.cmdline() else 'unknown'
-                        name = proc.name()
-
-                        # Identify the type of HoloDAE process
-                        instance_type = self._identify_holodae_instance_type(cmdline, name, pid)
-
-                        active_instances.append({
-                            'pid': pid,
-                            'type': instance_type,
-                            'cmdline': cmdline[:100] + '...' if len(cmdline) > 100 else cmdline,
-                            'cpu_percent': proc.cpu_percent(),
-                            'memory_mb': proc.memory_info().rss / 1024 / 1024 if proc.memory_info() else 0
-                        })
-
-                        # Check for duplicate main.py launches
-                        if 'main.py' in cmdline and pid != current_pid:
-                            duplicate_launches.append(pid)
-
-                    else:
-                        orphan_instances.append(pid)
-
-                except ImportError:
-                    # Without psutil, basic identification
-                    if pid == current_pid:
-                        active_instances.append({'pid': pid, 'type': 'current_session', 'cmdline': 'current'})
-                    else:
-                        orphan_instances.append(pid)
-                except Exception:
-                    # Process might have died between checks
-                    orphan_instances.append(pid)
-
-            # Generate intelligent health report
-            if duplicate_launches:
-                issues.append(f"[ALERT] DUPLICATE LAUNCHES: {len(duplicate_launches)} extra main.py sessions detected")
-                issues.append(f"   PIDs: {', '.join(map(str, duplicate_launches))} - Kill these to prevent conflicts")
-
-            if orphan_instances:
-                issues.append(f"🪦 ORPHAN PROCESSES: {len(orphan_instances)} dead HoloDAE locks detected")
-                issues.append(f"   PIDs: {', '.join(map(str, orphan_instances))} - Safe to clean with option 15")
-
-            if len(active_instances) > 1:
-                # Multiple active instances - analyze if they're necessary
-                necessary_count = sum(1 for inst in active_instances if inst['type'] in ['current_session', 'daemon_monitor', 'specialized_analysis'])
-                duplicate_count = len(active_instances) - necessary_count
-
-                if duplicate_count > 0:
-                    issues.append(f"[U+26A0]️ POTENTIAL DUPLICATES: {duplicate_count} unnecessary instances detected")
-                    issues.append("   Review with PID Detective (option 15) to identify which to keep")
-
-                if necessary_count > 1:
-                    issues.append(f"ℹ️ MULTIPLE LEGITIMATE: {necessary_count} different HoloDAE tasks running")
-                    issues.append("   This is normal for specialized analysis workflows")
-
-            # Performance warnings
-            total_memory = sum(inst.get('memory_mb', 0) for inst in active_instances)
-            if total_memory > 1000:  # Over 1GB
-                issues.append(f"[U+26A0]️ HIGH MEMORY: {total_memory:.1f}MB total - Monitor system resources")
-
-            # Success message if everything is clean
-            if not issues:
-                if total_instances == 0:
-                    issues.append("[OK] CLEAN: No HoloDAE processes currently running")
-                elif total_instances == 1:
-                    issues.append("[OK] CLEAN: Single HoloDAE session running normally")
-                else:
-                    issues.append(f"[OK] CLEAN: {total_instances} HoloDAE processes running normally")
-
-        except Exception as e:
-            issues.append(f"[FAIL] PID health check failed: {e}")
-
-        return issues
-
-    def _identify_holodae_instance_type(self, cmdline: str, name: str, pid: int) -> str:
-        """Identify what type of HoloDAE process this is."""
-        cmdline_lower = cmdline.lower()
-
-        # Current session
-        if 'main.py' in cmdline_lower and 'python' in name.lower():
-            return 'main_menu_session'
-
-        # Daemon monitor
-        if 'holodae' in cmdline_lower and 'monitor' in cmdline_lower:
-            return 'daemon_monitor'
-
-        # MCP-related processes
-        if 'mcp' in cmdline_lower or 'research' in cmdline_lower:
-            return 'mcp_service'
-
-        # Analysis processes
-        if 'analysis' in cmdline_lower or 'intelligence' in cmdline_lower:
-            return 'analysis_worker'
-
-        # Specialized tasks
-        if 'pqn' in cmdline_lower:
-            return 'pqn_analysis'
-        if 'youtube' in cmdline_lower:
-            return 'youtube_analysis'
-        if 'social' in cmdline_lower:
-            return 'social_analysis'
-
-        # Generic daemon
-        if 'holodae' in cmdline_lower:
-            return 'holodae_daemon'
-
-        return 'unknown_holodae'
-
-    def _get_process_details(self, pid: int) -> Dict[str, Any]:
-        """Get detailed information about a specific process."""
-        details = {'type': 'unknown', 'cmdline': '', 'cpu_percent': None, 'memory_mb': None}
-
-        try:
-            import psutil
-            if psutil.pid_exists(pid):
-                proc = psutil.Process(pid)
-                cmdline = ' '.join(proc.cmdline()) if proc.cmdline() else 'unknown'
-                name = proc.name()
-
-                details.update({
-                    'type': self._identify_holodae_instance_type(cmdline, name, pid),
-                    'cmdline': cmdline[:150] + '...' if len(cmdline) > 150 else cmdline,
-                    'cpu_percent': proc.cpu_percent(),
-                    'memory_mb': proc.memory_info().rss / 1024 / 1024 if proc.memory_info() else 0
-                })
-        except ImportError:
-            details['type'] = 'basic_info_unavailable'
-        except Exception as e:
-            details['error'] = str(e)
-
-        return details
-
-    def show_pid_detective(self) -> None:
-        """Detect and manage HoloDAE daemon processes for clean operation."""
-        print('\n[TOOL] PID Detective — HoloDAE Process Management')
-        print('=' * 60)
-
-        try:
-            from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
-            lock = get_instance_lock("holodae_daemon")
-
-            # Get process information
-            instance_summary = lock.get_instance_summary()
-            total_instances = instance_summary["total_instances"]
-            current_pid = instance_summary["current_pid"]
-            instances = instance_summary.get("instances", [])
-
-            print(f"Current Process PID: {current_pid}")
-            print(f"Total HoloDAE Instances: {total_instances}")
-            print()
-
-            if total_instances <= 1:
-                print("[OK] Clean state: Single HoloDAE instance detected")
-                if total_instances == 1:
-                    print(f"   Active daemon: PID {current_pid}")
-                else:
-                    print("   No HoloDAE daemons currently running")
-                print()
-                print("[IDEA] Multiple instances are allowed for HoloDAE (unlike YouTube DAE)")
-                print("   Each can monitor different codebases or run specialized analysis")
-                return
-
-            # Multiple instances detected - show details
-            print("[ALERT] Multiple HoloDAE instances detected!")
-            print()
-            print("Active Instances:")
-            for i, instance in enumerate(instances, 1):
-                pid = instance.get('pid', 'unknown')
-                status = instance.get('status', 'unknown')
-                start_time = instance.get('start_time', 'unknown')
-
-                # Get detailed process info if available
-                process_details = self._get_process_details(pid) if pid != 'unknown' else {}
-                process_type = process_details.get('type', 'unknown')
-                cmdline = process_details.get('cmdline', '')
-
-                print(f"  {i}. PID {pid} - Type: {process_type}")
-                print(f"     Status: {status}")
-                if start_time != 'unknown':
-                    print(f"     Started: {start_time}")
-                if cmdline:
-                    print(f"     Command: {cmdline}")
-                if process_details.get('cpu_percent') is not None:
-                    print(f"     CPU: {process_details['cpu_percent']:.1f}%, Memory: {process_details.get('memory_mb', 0):.1f}MB")
-                print()
-
-            print()
-            print("[SEARCH] Orphan Detection:")
-            orphans = []
-            active_daemons = []
-
-            for instance in instances:
-                pid = instance.get('pid')
-                if pid and pid != current_pid:
-                    try:
-                        # Check if process is actually running
-                        import psutil
-                        if psutil.pid_exists(pid):
-                            active_daemons.append(pid)
-                        else:
-                            orphans.append(pid)
-                    except ImportError:
-                        # psutil not available, use basic check
-                        orphans.append(pid)
-
-            if orphans:
-                print(f"  🪦 Orphan PIDs found: {', '.join(map(str, orphans))}")
-                print("     These processes are no longer running but locks remain")
-            else:
-                print("  [OK] No orphan processes detected")
-
-            if active_daemons:
-                print(f"  🟢 Active daemons: {', '.join(map(str, active_daemons))}")
-
-            # Check for log analysis daemon status
-            print()
-            print("[DATA] Specialized Daemons:")
-            try:
-                from holo_index.adaptive_learning.execution_log_analyzer.execution_log_librarian import get_daemon_status
-                daemon_status = get_daemon_status()
-
-                if daemon_status:
-                    status = daemon_status.get('status', 'unknown')
-                    timestamp = daemon_status.get('timestamp', 0)
-                    data = daemon_status.get('data', {})
-
-                    print(f"  [SEARCH] Log Analysis Daemon: {status.upper()}")
-
-                    if status == 'processing':
-                        processed = data.get('processed_chunks', 0)
-                        total = data.get('total_chunks', 0)
-                        current = data.get('current_chunk', 0)
-                        progress = data.get('progress_percentage', 0)
-                        print(f"     Progress: {processed}/{total} chunks ({progress:.1f}%)")
-                        print(f"     Current: Chunk {current}")
-                    elif status == 'completed':
-                        processed = data.get('processed_chunks', 0)
-                        print(f"     Completed: {processed} chunks processed")
-                        print("     [U+1F4C4] Check final_analysis_report.json for results")
-                    elif status == 'failed':
-                        error = data.get('error', 'Unknown error')
-                        print(f"     [FAIL] Failed: {error}")
-                    elif status == 'error':
-                        chunk = data.get('error_chunk', 'unknown')
-                        error = data.get('error_message', 'Unknown error')
-                        processed = data.get('processed_chunks', 0)
-                        print(f"     [FAIL] Error in chunk {chunk}: {error}")
-                        print(f"     Processed: {processed} chunks before error")
-
-                    import time
-                    elapsed = time.time() - timestamp
-                    print(f"     Runtime: {elapsed:.1f}s")
-                else:
-                    print("  [SEARCH] Log Analysis Daemon: INACTIVE")
-
-            except Exception as e:
-                print(f"  [SEARCH] Log Analysis Daemon: Status check failed ({e})")
-
-            print()
-            print("Management Recommendations:")
-            if duplicate_launches:
-                print(f"[ALERT] PRIORITY: Kill duplicate main.py sessions (PIDs: {', '.join(map(str, duplicate_launches))})")
-                print("   These prevent proper menu operation and cause conflicts")
-            elif len(active_instances) > 1:
-                print("ℹ️  Multiple instances detected - review which are necessary:")
-                necessary = [inst for inst in active_instances if inst.get('type') in
-                           ['daemon_monitor', 'mcp_service', 'specialized_analysis']]
-                unnecessary = [inst for inst in active_instances if inst.get('type') not in
-                             ['daemon_monitor', 'mcp_service', 'specialized_analysis', 'current_session']]
-
-                if unnecessary:
-                    unnecessary_pids = [str(inst['pid']) for inst in unnecessary]
-                    print(f"   [U+1F5D1]️  Consider killing: {', '.join(unnecessary_pids)} (generic/unknown processes)")
-                if necessary:
-                    necessary_pids = [str(inst['pid']) for inst in necessary]
-                    print(f"   [OK] Keep these: {', '.join(necessary_pids)} (specialized services)")
-            else:
-                print("[OK] System appears clean - no immediate action needed")
-
-            print()
-            print("Management Options:")
-            print("  1. Clean orphan locks (safe - removes dead process locks)")
-            print("  2. Show detailed process info (full technical details)")
-            print("  3. Kill specific PID (dangerous - use with caution!)")
-            print("  4. Kill duplicate sessions (recommended if duplicates found)")
-            print("  0. Return to menu")
-
-            try:
-                choice = input("\nSelect option (0-4): ").strip()
-
-                if choice == "1":
-                    # Clean orphan locks
-                    cleaned = 0
-                    for orphan_pid in orphans:
-                        try:
-                            lock.release_orphan_lock(orphan_pid)
-                            print(f"[OK] Cleaned orphan lock for PID {orphan_pid}")
-                            cleaned += 1
-                        except Exception as e:
-                            print(f"[FAIL] Failed to clean PID {orphan_pid}: {e}")
-
-                    if cleaned > 0:
-                        print(f"\n[U+1F9F9] Cleaned {cleaned} orphan locks")
-                        print("HoloDAE launch will now work cleanly")
-                    else:
-                        print("\nℹ️ No orphan locks to clean")
-
-                elif choice == "2":
-                    # Show detailed process info
-                    print("\n[SEARCH] Detailed Process Information:")
-                    for instance in instances:
-                        pid = instance.get('pid', 'unknown')
-                        print(f"\nPID {pid}:")
-                        try:
-                            import psutil
-                            if psutil.pid_exists(pid):
-                                proc = psutil.Process(pid)
-                                print(f"  Command: {proc.name()}")
-                                print(f"  CPU: {proc.cpu_percent()}%")
-                                print(f"  Memory: {proc.memory_info().rss / 1024 / 1024:.1f} MB")
-                                print(f"  Started: {datetime.fromtimestamp(proc.create_time()).strftime('%Y-%m-%d %H:%M:%S')}")
-                            else:
-                                print("  Status: Process not found (possible orphan)")
-                        except ImportError:
-                            print("  Status: Process details unavailable (psutil not installed)")
-                        except Exception as e:
-                            print(f"  Status: Error getting details - {e}")
-
-                elif choice == "3":
-                    # Kill specific PID
-                    print("\n[U+26A0]️ DANGER ZONE [U+26A0]️")
-                    print("Killing processes can cause data loss!")
-                    target_pid = input("Enter PID to kill (or 'cancel'): ").strip()
-
-                    if target_pid.lower() == 'cancel':
-                        print("[FAIL] Operation cancelled")
-                        return
-
-                    try:
-                        target_pid = int(target_pid)
-                        if target_pid == current_pid:
-                            print("[FAIL] Cannot kill current process!")
-                            return
-
-                        # Confirm
-                        confirm = input(f"Are you sure you want to kill PID {target_pid}? (yes/no): ").strip().lower()
-                        if confirm == 'yes':
-                            import os
-                            import signal
-                            try:
-                                os.kill(target_pid, signal.SIGTERM)
-                                print(f"[OK] Sent SIGTERM to PID {target_pid}")
-                                print("   Process should shut down gracefully")
-
-                                # Wait a moment and check if it's gone
-                                import time
-                                time.sleep(2)
-                                try:
-                                    os.kill(target_pid, 0)  # Check if still exists
-                                    print("   [U+26A0]️ Process still running, may need manual intervention")
-                                except OSError:
-                                    print("   [OK] Process terminated successfully")
-
-                            except OSError as e:
-                                print(f"[FAIL] Failed to kill PID {target_pid}: {e}")
-                        else:
-                            print("[FAIL] Operation cancelled")
-
-                    except ValueError:
-                        print("[FAIL] Invalid PID format")
-
-                elif choice == "4":
-                    # Kill duplicate sessions
-                    if not duplicate_launches:
-                        print("ℹ️ No duplicate sessions detected to kill")
-                        return
-
-                    print(f"[U+26A0]️ About to kill {len(duplicate_launches)} duplicate main.py sessions:")
-                    for pid in duplicate_launches:
-                        print(f"   PID {pid}")
-
-                    confirm = input(f"\nKill these {len(duplicate_launches)} duplicate sessions? (yes/no): ").strip().lower()
-                    if confirm == 'yes':
-                        killed = 0
-                        for pid in duplicate_launches:
-                            try:
-                                import os
-                                import signal
-                                os.kill(pid, signal.SIGTERM)
-                                print(f"[OK] Sent SIGTERM to duplicate session PID {pid}")
-                                killed += 1
-                            except OSError as e:
-                                print(f"[FAIL] Failed to kill PID {pid}: {e}")
-
-                        if killed > 0:
-                            print(f"\n[U+1F9F9] Killed {killed} duplicate sessions")
-                            print("Menu operation should now work properly")
-                    else:
-                        print("[FAIL] Operation cancelled")
-
-                elif choice == "0":
-                    return
-                else:
-                    print("[FAIL] Invalid choice")
-
-            except (KeyboardInterrupt, EOFError):
-                print("\n[FAIL] Operation cancelled")
-                return
-
-        except Exception as e:
-            print(f"[FAIL] PID Detective failed: {e}")
-            print("This may be due to missing dependencies or permission issues")
-            print("Basic process detection may still work without advanced features")
-
-    def _track_mcp_activity(self, query: str, module_metrics: Dict[str, Dict[str, Any]], qwen_report: str) -> None:
-        """Capture MCP-related activity for telemetry and breadcrumbs."""
-        events: list[tuple[str, dict]] = []
-        for module_path, metrics in module_metrics.items():
-            if self._module_has_mcp_signature(module_path):
-                alerts = list(metrics.get('module_alerts') or [])
-                recommendations = metrics.get('recommendations') or ()
-                notes = alerts + [f"Recommendation: {rec}" for rec in recommendations if rec]
-                events.append((
-                    'module',
-                    {
-                        'query': query,
-                        'module': module_path,
-                        'health': metrics.get('health_label'),
-                        'size': metrics.get('size_label'),
-                        'notes': notes,
-                    },
-                ))
-        for line in qwen_report.splitlines():
-            upper_line = line.upper()
-            if 'MCP' in upper_line or 'RICDAE' in upper_line:
-                clean_line = line.strip()
-                if clean_line:
-                    events.append((
-                        'telemetry',
-                        {
-                            'query': query,
-                            'notes': [clean_line],
-                        },
-                    ))
-        for event_type, payload in events:
-            self._record_mcp_event(event_type, payload)
-
-    def _record_mcp_event(self, event_type: str, payload: Dict[str, Any]) -> None:
-        """Store MCP events for telemetry, breadcrumbs, and audits."""
-        timestamp = datetime.now()
-        notes = payload.get('notes') or []
-        if isinstance(notes, str):
-            notes = [notes]
-        entry = {
-            'timestamp': timestamp.strftime('%H:%M:%S'),
-            'timestamp_iso': timestamp.isoformat(),
-            'event_type': event_type,
-            'query': payload.get('query'),
-            'module': payload.get('module'),
-            'health': payload.get('health'),
-            'size': payload.get('size'),
-            'notes': notes,
-        }
-        self.mcp_action_log.appendleft(entry)
-        preview = '; '.join(notes[:2]) if notes else ''
-        breadcrumb_target = payload.get('module') or 'mcp'
-        if hasattr(self, 'breadcrumb_tracer') and self.breadcrumb_tracer:
-            try:
-                self.breadcrumb_tracer.add_action(
-                    'mcp_activity',
-                    breadcrumb_target,
-                    preview or 'MCP event captured',
-                    payload.get('query', 'n/a')
-                )
-            except Exception:
-                pass
-        try:
-            self.telemetry_logger.log_event(
-                'mcp_action',
-                timestamp=entry['timestamp_iso'],
-                event_type=event_type,
-                module=entry.get('module'),
-                health=entry.get('health'),
-                size=entry.get('size'),
-                notes=notes,
-                query=entry.get('query'),
-            )
-        except Exception as exc:
-            self._detailed_log(f"[HOLODAE-MCP] Telemetry logging failed: {exc}")
-
-    def _collect_mcp_watch_status(self) -> List[Dict[str, Any]]:
-        """Collect status data for known and detected MCP connectors."""
-        status_rows: List[Dict[str, Any]] = []
-        seen_modules: set[str] = set()
-        for item in self.mcp_watchlist:
-            metrics = self._collect_module_metrics(item['module'])
-            status_rows.append(self._build_mcp_status_row(item, metrics))
-            seen_modules.add(item['module'])
-        for module_path in list(self._module_metrics_cache.keys()):
-            if module_path in seen_modules:
-                continue
-            if self._module_has_mcp_signature(module_path):
-                metrics = self._collect_module_metrics(module_path)
-                dynamic_item = {
-                    'name': module_path,
-                    'module': module_path,
-                    'description': 'Detected MCP signature',
-                    'priority': 'P?'
-                }
-                status_rows.append(self._build_mcp_status_row(dynamic_item, metrics))
-                seen_modules.add(module_path)
-        status_rows.sort(key=lambda row: row['name'])
-        return status_rows
-
-    def _build_mcp_status_row(self, item: Dict[str, Any], metrics: Dict[str, Any]) -> Dict[str, Any]:
-        health = metrics.get('health_label', '[UNKNOWN]')
-        size = metrics.get('size_label', '[UNKNOWN]')
-        notes = list(metrics.get('module_alerts') or [])
-        recommendations = metrics.get('recommendations') or ()
-        notes.extend(recommendations)
-        return {
-            'name': item.get('name', item.get('module', 'MCP Connector')),
-            'module': item.get('module', ''),
-            'description': item.get('description', 'Detected MCP signature'),
-            'priority': item.get('priority', 'P?'),
-            'health': health,
-            'size': size,
-            'notes': notes,
-            'icon': self._derive_health_icon(health),
-        }
-
-    def _derive_health_icon(self, health_label: str) -> str:
-        label = (health_label or '').upper()
-        if 'MISSING' in label or 'CRITICAL' in label:
-            return '[U+1F534]'
-        if 'WARN' in label:
-            return '🟡'
-        if 'COMPLETE' in label or 'OK' in label:
-            return '🟢'
-        return '[U+1F539]'
-
-    def _module_has_mcp_signature(self, module_path: str) -> bool:
-        if not module_path:
-            return False
-        lowered = module_path.lower()
-        if 'mcp' in lowered or 'ric_dae' in lowered:
-            return True
-        for item in self.mcp_watchlist:
-            if lowered.startswith(item['module'].lower()):
-                return True
-        return False
-
-    def _get_component_status(self) -> Dict[str, Any]:
-        """Get current component status for dashboard"""
-        # This would integrate with real performance monitoring
-        # For now, return placeholder data
-        return {
-            'qwen_orchestrator': {'status_icon': '[SUCCESS]', 'effectiveness': 0.85},
-            'mps_arbitrator': {'status_icon': '[SUCCESS]', 'effectiveness': 0.90},
-            'file_watcher': {'status_icon': '[SUCCESS]', 'effectiveness': 0.95},
-            'context_analyzer': {'status_icon': '[SUCCESS]', 'effectiveness': 0.80}
-        }
-
-    def _run_monitoring_cycle(self) -> MonitoringResult:
-        """Run a monitoring cycle and update internal state"""
-        cycle_start = time.perf_counter()
-        changes = self.file_watcher.scan_for_changes()
-        file_changes = [self._build_file_change(path) for path in changes]
-
-        result = MonitoringResult(
-            changes_detected=file_changes,
-            scan_duration=time.perf_counter() - cycle_start,
-            watched_paths=self.file_watcher.get_watched_paths()
-        )
-
-        modules_to_scan: Set[str] = set()
-
-        if file_changes:
-            touched_modules = self.context_analyzer.get_related_modules([change.file_path for change in file_changes])
-            for module in touched_modules:
-                self._module_metrics_cache.pop(module, None)
-            modules_to_scan.update(touched_modules)
-
-            analyzed_context = self.context_analyzer.analyze_work_context(
-                [change.file_path for change in file_changes],
-                self.current_work_context.session_actions
-            )
-            self.current_work_context = analyzed_context
-        elif self.current_work_context.primary_module:
-            modules_to_scan.add(self.current_work_context.primary_module)
-
-        if modules_to_scan:
-            module_paths = []
-            for module in list(modules_to_scan)[:3]:
-                module_path = (self.repo_root / module).resolve()
-                if module_path.exists():
-                    module_paths.append(module_path)
-            if module_paths:
-                health_reports = self.codeindex_engine.evaluate_modules(module_paths)
-                if health_reports:
-                    result.codeindex_reports = [report.to_summary() for report in health_reports]
-                    architect_summaries = [
-                        self.architect_engine.summarize(report) for report in health_reports
-                    ]
-                    if architect_summaries:
-                        result.optimization_suggestions.extend(architect_summaries[:1])
-                        result.metadata['architect_decisions'] = architect_summaries
-
-        self.last_monitoring_result = result
-        return result
-
-    def _monitoring_loop(self) -> None:
-        """Background monitoring loop that throttles noise for 012 oversight"""
-        self._detailed_log('[HOLODAE-COORDINATOR] Monitoring loop active')
-        last_heartbeat = time.perf_counter()
-
-        while not self.monitoring_stop_event.is_set():
-            cycle_start = time.perf_counter()
-            result = self._run_monitoring_cycle()
-
-            if result.has_actionable_events():
-                self._emit_monitoring_summary(result, prefix='[HOLO-MONITOR]')
-                last_heartbeat = time.perf_counter()
-
-                # Phase 3: WRE Skills Integration (WSP 96 v1.3)
-                wre_triggers = self._check_wre_triggers(result)
-                if wre_triggers:
-                    self._execute_wre_skills(wre_triggers)
-
-            elif time.perf_counter() - last_heartbeat >= self.monitoring_heartbeat:
-                self._emit_monitoring_summary(result, prefix='[HOLO-MONITOR][HEARTBEAT]')
-                last_heartbeat = time.perf_counter()
-
-            elapsed = time.perf_counter() - cycle_start
-            sleep_for = max(0.2, self.monitoring_interval - elapsed)
-            if self.monitoring_stop_event.wait(sleep_for):
-                break
-
-        self._detailed_log('[HOLODAE-COORDINATOR] Monitoring loop stopped')
-
-    def _emit_monitoring_summary(self, result: MonitoringResult, prefix: str = '[HOLO-MONITOR]') -> None:
-        """Emit a compact summary of monitoring outcomes with module context"""
-        change_modules = sorted({change.module_path for change in result.changes_detected if change.module_path})
-        module_preview = ', '.join(change_modules[:3]) if change_modules else 'no module activity'
-        summary_parts = [
-            f"changes={len(result.changes_detected)}",
-            f"violations={len(result.violations_found)}",
-            f"patterns={len(result.pattern_alerts)}",
-            f"modules={module_preview}"
-        ]
-
-        if result.pattern_alerts:
-            high_conf = next((alert for alert in result.pattern_alerts if alert.is_high_confidence()), None)
-            if high_conf:
-                summary_parts.append(f"hi-pattern={high_conf.get_summary()}")
-        if result.violations_found:
-            summary_parts.append(f"first-violation={result.violations_found[0].get_summary()}")
-        if result.codeindex_reports:
-            critical_total = sum(report.get('critical_fixes', 0) for report in result.codeindex_reports)
-            summary_parts.append(f"codeindex-critical={critical_total}")
-            if critical_total > 0:
-                summary_parts.append("architect=A/B/C ready")
-
-        message = f"{prefix} [DATA] {' | '.join(summary_parts)}"
-        self._holo_log(message, console=True)
-
-        if result.has_actionable_events() or '[HEARTBEAT]' in prefix:
-            self._append_012_summary(self._build_monitor_summary_block(result, message, prefix))
-
-        if result.has_actionable_events() or '[HEARTBEAT]' in prefix:
-            self._append_012_summary(self._build_monitor_summary_block(result, message, prefix))
-
-    def _build_file_change(self, file_path: str) -> FileChange:
-        """Construct a FileChange record from a watched file"""
-        file_size = None
-        module_path = None
-        try:
-            file_size = os.path.getsize(file_path)
-        except (OSError, IOError):
-            pass
-
-        related_modules = self.context_analyzer.get_related_modules([file_path])
-        module_path = next(iter(related_modules)) if related_modules else None
-
-        return FileChange(
-            file_path=file_path,
-            change_type=ChangeType.MODIFIED,
-            file_size=file_size,
-            is_module_file=module_path is not None,
-            module_path=module_path
-        )
-
-    def _log_request_telemetry(self, query: str, search_summary: Dict[str, List[Any]],
-                               module_metrics: Dict[str, Dict[str, Any]],
-                               alerts: List[str]) -> None:
-        """Record structured telemetry for the current request"""
-        try:
-            code_hits = len(search_summary.get('code', []))
-            wsp_hits = len(search_summary.get('wsps', []))
-            self.telemetry_logger.log_search_request(query=query, code_hits=code_hits, wsp_hits=wsp_hits)
-
-            for module, metrics in module_metrics.items():
-                alerts_for_module = metrics.get('module_alerts') or []
-                if alerts_for_module:
-                    wsp_clause = 'WSP 49'
-                    for rec in metrics.get('recommendations', []):
-                        if 'WSP' in rec:
-                            wsp_clause = rec.split('(')[0].strip()
-                            break
-
-                    severity = 'critical' if '[CRITICAL]' in metrics.get('size_label', '') else 'warning'
-                    evidence = {
-                        'health': metrics.get('health_label'),
-                        'size': metrics.get('size_label'),
-                        'alerts': alerts_for_module,
-                    }
-                    self.telemetry_logger.log_module_status(
-                        module=module,
-                        wsp_clause=wsp_clause,
-                        severity=severity,
-                        evidence=evidence,
-                        next_action='refactor' if severity == 'critical' else 'review',
-                        acknowledged=False,
-                    )
-
-                    health = metrics.get('health_label', '')
-                    if 'Missing:' in health:
-                        missing_part = health.split('Missing:')[1].strip()
-                        for doc in [d.strip() for d in missing_part.split(',') if d.strip()]:
-                            doc_path = f"{module}/{doc}"
-                            self.telemetry_logger.log_doc_hint(module=module, doc_path=doc_path, reason='Missing required documentation')
-
-            if alerts:
-                self.telemetry_logger.log_event('system_alerts', alerts=alerts[:5])
-        except Exception as exc:
-            self._detailed_log(f"[HOLODAE-TELEMETRY] Failed to log telemetry: {exc}")
-
-    def _format_module_metrics_summary(self, module_metrics: Dict[str, Dict[str, Any]], alerts: List[str]) -> str:
-        """Create a concise summary of module metrics for final report"""
-        if not module_metrics and not alerts:
-            return ''
-
-        lines: List[str] = []
-        for module, metrics in module_metrics.items():
-            issues: List[str] = []
-            health_label = metrics.get('health_label')
-            if health_label and health_label != '[COMPLETE]':
-                issues.append(health_label)
-            module_alerts = metrics.get('module_alerts') or []
-            issues.extend(module_alerts)
-            if issues:
-                lines.append(f"[MODULE-ALERT] {module}: {'; '.join(issues)}")
-
-        if alerts:
-            lines.append(f"[SYSTEM-ALERT] {' | '.join(alerts[:3])}")
-
-        if not lines:
-            return ''
-
-        lines.insert(0, '[MODULE-METRICS] Module health recap')
-        return '\n'.join(lines)
-
-    def _format_final_report(self, qwen_report: str,
-                           arbitration_decisions: List[ArbitrationDecision],
-                           execution_results: Dict[str, Any]) -> str:
-        """Format the final report for 012 monitoring"""
-        lines = []
-
-        # Qwen's orchestrated analysis
-        lines.append(qwen_report)
-
-        # 0102's arbitration decisions
-        if arbitration_decisions:
-            lines.append("\n[0102-ARBITRATION] Arbitration Decisions:")
-            for decision in arbitration_decisions:
-                lines.append(f"  {decision.recommended_action.value.upper()}: {decision.description}")
-                lines.append(f"    MPS: {decision.mps_analysis.total_score} | {decision.reasoning}")
-
-        # Execution results
-        if execution_results:
-            executed = len(execution_results.get('executed_immediately', []))
-            batched = len(execution_results.get('batched_for_session', []))
-            lines.append(f"\n[EXECUTION] Immediate: {executed} | Batched: {batched}")
-
-        context_summary = self.current_work_context.get_summary()
-        if context_summary:
-            lines.append(f"\n[WORK-CONTEXT] {context_summary}")
-
-        if self.last_monitoring_result:
-            lines.append(f"[MONITORING] {self.last_monitoring_result.get_summary()}")
-
-        return "\n".join(lines)
-
-    def _normalize_summary_line(self, text: str) -> str:
-        normalized = text.strip()
-        for emoji, label in SUMMARY_EMOJI_ALIASES.items():
-            if emoji in normalized:
-                normalized = normalized.replace(emoji, f"{label} ({emoji})")
-        fallback_map = {
-            '?? [HOLODAE-HEALTH': 'HEALTH ([PILL][OK]) [HOLODAE-HEALTH',
-            '?? HOLODAE-HEALTH': 'HEALTH ([PILL][OK]) HOLODAE-HEALTH',
-            '抽笨・': 'HEALTH ([PILL][OK])',
-            '剥': 'SEMANTIC ([SEARCH])',
-            '逃': 'MODULE ([BOX])',
-            'ｧ': 'PATTERN ([AI])',
-            '棟': 'SIZE ([RULER])',
-            '遜': 'ORPHAN ([GHOST])'
-        }
-        for fallback, replacement in fallback_map.items():
-            normalized = normalized.replace(fallback, replacement)
-        # Strip out any remaining non-ASCII glyphs introduced by noisy logs
-        normalized = ''.join(ch if 32 <= ord(ch) < 127 else ' ' for ch in normalized)
-        normalized = ' '.join(normalized.split())
-        return normalized
-
-    def _format_modules_for_summary(self, modules: List[str]) -> str:
-        module_list = []
-        for module in modules:
-            if module and module not in module_list:
-                module_list.append(module)
-        if not module_list:
-            return 'none'
-        preview = module_list[:4]
-        formatted = ', '.join(preview)
-        if len(module_list) > len(preview):
-            formatted += ' ...'
-        return formatted
-
-    def _extract_key_findings(self, alerts: List[str], module_metrics: Dict[str, Dict[str, Any]]) -> List[str]:
-        findings: List[str] = []
-        seen: Set[str] = set()
-
-        def add_entry(entry: str) -> None:
-            if entry and entry not in seen:
-                seen.add(entry)
-                findings.append(entry)
-
-        for alert in alerts:
-            normalized = self._normalize_summary_line(alert)
-            add_entry(normalized)
-            if len(findings) >= 5:
-                return findings
-
-        for module, metrics in module_metrics.items():
-            health_label = metrics.get('health_label')
-            if health_label and health_label not in {'[COMPLETE]', '[UNKNOWN]'}:
-                add_entry(self._normalize_summary_line(f"{module}: {health_label}"))
-            for module_alert in (metrics.get('module_alerts') or [])[:2]:
-                add_entry(self._normalize_summary_line(f"{module}: {module_alert}"))
-            if len(findings) >= 5:
-                break
-
-        return findings[:5]
-
-    def _extract_high_priority_actions(self, decisions: List[ArbitrationDecision]) -> List[str]:
-        actions: List[str] = []
-        seen: Set[str] = set()
-
-        for decision in decisions:
-            summary = self._normalize_summary_line(decision.description)
-            if not summary or not self._is_meaningful_action(summary):
-                continue
-
-            if summary in seen:
-                continue
-            seen.add(summary)
-
-            action_label = decision.recommended_action.value.replace('_', ' ').title()
-            score = None
-            if getattr(decision, 'mps_analysis', None):
-                score = decision.mps_analysis.total_score
-            if score is not None:
-                actions.append(f"{action_label} (MPS {score}): {summary}")
-            else:
-                actions.append(f"{action_label}: {summary}")
-
-            if len(actions) >= 5:
-                break
-
-        return actions
-
-    def _is_meaningful_action(self, summary: str) -> bool:
-        noise_phrases = (
-            'no high-risk vibecoding patterns detected',
-            'executed components',
-            'no monitoring alerts',
-            'no actionable violations detected',
-        )
-        lowered = summary.lower()
-        return not any(phrase in lowered for phrase in noise_phrases)
-
-    def _build_search_summary_block(self, query: str, modules: List[str], findings: List[str], actions: List[str]) -> List[str]:
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        lines = [f"=== {timestamp} SEARCH ==="]
-        lines.append(f"Query: {self._normalize_summary_line(query)}")
-        lines.append(f"Modules: {self._format_modules_for_summary(modules)}")
-        if findings:
-            lines.append('Key Findings:')
-            lines.extend(f"  - {entry}" for entry in findings)
-        else:
-            lines.append('Key Findings: none')
-        if actions:
-            lines.append('High Priority Actions:')
-            lines.extend(f"  - {entry}" for entry in actions)
-        else:
-            lines.append('High Priority Actions: none')
-        return lines
-
-    def _build_monitor_summary_block(self, result: MonitoringResult, summary_message: str, prefix: str) -> List[str]:
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        label = 'MONITOR-HEARTBEAT' if '[HEARTBEAT]' in prefix else 'MONITOR'
-        lines = [f"=== {timestamp} {label} ==="]
-        lines.append(f"Summary: {self._normalize_summary_line(summary_message)}")
-        modules = sorted({change.module_path for change in result.changes_detected if change.module_path})
-        lines.append(f"Modules: {self._format_modules_for_summary(modules)}")
-        if result.changes_detected:
-            lines.append('Recent Changes:')
-            for change in result.changes_detected[:3]:
-                path_display = change.file_path
-                lines.append(f"  - {self._normalize_summary_line(path_display)}")
-        if result.violations_found:
-            lines.append('Violations:')
-            for violation in result.violations_found[:3]:
-                lines.append(f"  - {self._normalize_summary_line(violation.get_summary())}")
-        if result.pattern_alerts:
-            lines.append('Patterns:')
-            for alert in result.pattern_alerts[:2]:
-                lines.append(f"  - {self._normalize_summary_line(alert.get_summary())}")
-        return lines
-
-    def _append_012_summary(self, block_lines: List[str]) -> None:
-        """DISABLED: 012.txt is user's scratch page - no automated writes allowed."""
-        # Method disabled per user request - 012.txt is for manual use only
+        # Placeholder for sprint status
         pass
 
-    def _sanitize_summary_block(self, block: str) -> str:
-        sanitized_lines: List[str] = []
-        for line in block.splitlines():
-            if not line.strip():
-                sanitized_lines.append('')
-                continue
-            if line.startswith('=== '):
-                sanitized_lines.append(' '.join(line.strip().split()))
-                continue
-            prefix_len = len(line) - len(line.lstrip())
-            prefix = line[:prefix_len]
-            normalized = self._normalize_summary_line(line.strip())
-            sanitized_lines.append(f"{prefix}{normalized}")
-        return '\n'.join(sanitized_lines)
+    def show_mcp_hook_status(self) -> None:
+        self.mcp_integration.show_mcp_hook_status(self.module_metrics)
 
-    def _get_holo_agent_id(self) -> str:
-        """Get the current HOLO_AGENT_ID for logging"""
-        return (os.getenv("0102_HOLO_ID") or os.getenv("HOLO_AGENT_ID") or "0102").strip()
+    def show_mcp_action_log(self, limit: int = 10) -> None:
+        self.mcp_integration.show_mcp_action_log(limit)
 
-    def _holo_log(self, message: str, console: Optional[bool] = None) -> None:
-        """Log HoloDAE activity visible to 012 with HOLO_AGENT_ID"""
-        timestamp = datetime.now().strftime('%H:%M:%S')
-        sanitized = message.replace('\n', ' ').strip()
-        holo_message = f"[{timestamp}] {self.holo_agent_id} - holo {sanitized}"
+    def check_pid_health(self) -> List[str]:
+        return self.pid_detective.check_pid_health()
 
-        # Persist detailed log for audit history
-        self.logger.info(holo_message)
-
-        should_print = self.holo_console_enabled if console is None else console
-        if should_print:
-            print(holo_message)
-
-    def _initialize_doc_only_modules(self) -> None:
-        """Register documentation-only bundles that skip runtime checks."""
-        # Import WSP_DOC_CONFIG to mirror doc-only exemptions
-        try:
-            from .orchestration.qwen_orchestrator import WSP_DOC_CONFIG
-            wsp_doc_only = WSP_DOC_CONFIG.get('doc_only_modules', set())
-        except ImportError:
-            wsp_doc_only = set()
-
-        # Combine local doc paths with WSP config
-        doc_paths = ['holo_index/docs'] + list(wsp_doc_only)
-
-        for doc_path in doc_paths:
-            normalized = doc_path.replace('\\', '/').strip()
-            if normalized:
-                self.doc_only_modules.add(normalized)
-            absolute = (self.repo_root / normalized).resolve()
-            self.doc_only_modules.add(str(absolute).replace('\\', '/'))
-
-    def _is_doc_only_module(self, module_path: str, resolved_path: Optional[Path]) -> bool:
-        """Check if module is a documentation-only bundle."""
-        if not resolved_path:
-            return False
-        normalized = (module_path or '').replace('\\', '/').strip()
-        if normalized in self.doc_only_modules:
-            return True
-        resolved_norm = str(resolved_path.resolve()).replace('\\', '/')
-        if resolved_norm in self.doc_only_modules:
-            return True
-        if resolved_path.name == 'docs' and resolved_path.parent.name == 'holo_index':
-            return True
-        return False
-
-    def _collect_module_metrics(self, module_path: str) -> Dict[str, Any]:
-        cached = self._module_metrics_cache.get(module_path)
-        if cached is not None:
-            return cached
-
-        display_name = module_path or 'unknown-module'
-        resolved_path = self._resolve_component_path(module_path)
-
-        recommendations: List[str] = ["WSP 49 (Module Structure)", "WSP 22 (Documentation)"]
-        module_alerts: List[str] = []
-        health_label = '[UNKNOWN]'
-        size_label = 'N/A'
-
-        if not resolved_path or not resolved_path.exists():
-            health_label = 'Module not found'
-            module_alerts.append('Module not found on disk')
-        else:
-            doc_only = self._is_doc_only_module(module_path, resolved_path)
-            if doc_only:
-                required_files = ("README.md", "INTERFACE.md", "ModLog.md")
-            else:
-                required_files = ("README.md", "INTERFACE.md", "requirements.txt")
-            missing_files = [req for req in required_files if not (resolved_path / req).exists()]
-            if missing_files:
-                if doc_only:
-                    health_label = f"[DOCS-INCOMPLETE] Missing: {', '.join(missing_files)}"
-                else:
-                    health_label = f"Missing: {', '.join(missing_files)}"
-                module_alerts.append(f"Missing documentation: {', '.join(missing_files)}")
-                if not doc_only:
-                    recommendations.append("WSP 11 (Interface Documentation)")
-            else:
-                health_label = "[DOCS-COMPLETE]" if doc_only else '[COMPLETE]'
-
-            if doc_only:
-                size_label = 'Docs bundle (no code files)'
-            else:
-                # Use IntelligentSubroutineEngine for language-specific threshold detection
-                engine = IntelligentSubroutineEngine()
-                total_lines = 0
-                total_files = 0
-                has_tests = False
-                large_file_found = False
-                violations_by_type = {}
-
-                # Scan ALL code files (not just .py) with language-specific thresholds
-                for code_file in resolved_path.rglob('*'):
-                    if not code_file.is_file():
-                        continue
-
-                    # Only check files with known thresholds (WSP 62 Section 2.1)
-                    if code_file.suffix.lower() not in engine.FILE_THRESHOLDS:
-                        continue
-
-                    try:
-                        with open(code_file, 'r', encoding='utf-8', errors='ignore') as handle:
-                            line_count = sum(1 for _ in handle)
-                        total_lines += line_count
-                        total_files += 1
-
-                        # Check for tests
-                        if code_file.name.startswith('test_'):
-                            has_tests = True
-
-                        # Agentic threshold detection per WSP 62/87
-                        threshold, file_type = engine.get_file_threshold(code_file)
-                        if line_count > threshold:
-                            large_file_found = True
-                            severity = engine._classify_severity(line_count, code_file.suffix)
-
-                            # Track violations by file type
-                            if file_type not in violations_by_type:
-                                violations_by_type[file_type] = []
-                            violations_by_type[file_type].append({
-                                'file': code_file.name,
-                                'lines': line_count,
-                                'threshold': threshold,
-                                'severity': severity
-                            })
-
-                    except (OSError, IOError):
-                        continue
-
-                if not has_tests:
-                    recommendations.append("WSP 5 (Testing Standards)")
-
-                if total_files == 0:
-                    size_label = 'No code files'
-                else:
-                    avg_lines = max(1, total_lines // total_files)
-                    if total_lines > 1600:
-                        status = '[CRITICAL]'
-                        module_alerts.append('Exceeds size thresholds (>1600 lines)')
-                    elif total_lines > 1000:
-                        status = '[WARN]'
-                    else:
-                        status = '[GOOD]'
-                    size_label = f"{status} {total_lines} lines in {total_files} files (avg: {avg_lines})"
-
-                if large_file_found:
-                    recommendations.append("WSP 62 (Modularity Enforcement)")
-                    if total_lines <= 1600:
-                        # Build detailed alert with file types
-                        for file_type, violations in violations_by_type.items():
-                            count = len(violations)
-                            module_alerts.append(f'{count} {file_type} file(s) exceed WSP 62/87 thresholds')
-
-        deduped_recommendations = []
-        for rec in recommendations:
-            if rec not in deduped_recommendations:
-                deduped_recommendations.append(rec)
-
-        metrics = {
-            'display_name': display_name,
-            'health_label': health_label,
-            'size_label': size_label,
-            'recommendations': tuple(deduped_recommendations[:3]),
-            'module_alerts': module_alerts,
-        }
-
-        self._module_metrics_cache[module_path] = metrics
-        return metrics
-
-    def _collect_module_metrics_for_request(self, involved_modules: List[str]) -> Dict[str, Dict[str, Any]]:
-        """Collect metrics for all modules involved in a request"""
-        metrics: Dict[str, Dict[str, Any]] = {}
-        if not involved_modules:
-            return metrics
-
-        for module in involved_modules:
-            if module and module not in metrics:
-                metrics[module] = self._collect_module_metrics(module)
-
-        return metrics
-
-    def _resolve_component_path(self, module_path: str) -> Optional[Path]:
-        if not module_path:
-            return None
-
-        candidate = Path(module_path)
-        if candidate.is_absolute() and candidate.exists():
-            return candidate
-
-        search_targets = []
-        relative = candidate if not candidate.is_absolute() else Path(candidate.name)
-        search_targets.append(self.repo_root / relative)
-
-        if not module_path.startswith('modules/'):
-            search_targets.append(self.repo_root / 'modules' / module_path)
-        if not module_path.startswith('holo_index/'):
-            search_targets.append(self.repo_root / 'holo_index' / module_path)
-
-        for target in search_targets:
-            if target.exists():
-                return target
-
-        return None
-
-    def _get_module_health_info(self, module_path: str) -> str:
-        """Get health information for a module"""
-        return self._collect_module_metrics(module_path)['health_label']
-
-    def _get_module_size_info(self, module_path: str) -> str:
-        """Get size information for a module"""
-        return self._collect_module_metrics(module_path)['size_label']
-
-    def _get_recommended_wsps(self, module_path: str) -> str:
-        """Get recommended WSP protocols for a module"""
-        recommendations = self._collect_module_metrics(module_path)['recommendations']
-        return ' | '.join(recommendations) if recommendations else 'WSP guidance unavailable'
-
-    def _get_system_alerts(self, modules: List[str]) -> List[str]:
-        """Get system-wide alerts for the matched modules"""
-        alerts: List[str] = []
-        if not modules:
-            return alerts
-
-        unique_modules: List[str] = []
-        for module in modules:
-            if module and module not in unique_modules:
-                unique_modules.append(module)
-
-        for module in unique_modules:
-            metrics = self._collect_module_metrics(module)
-            for module_alert in metrics['module_alerts']:
-                alerts.append(f"{metrics['display_name']}: {module_alert}")
-
-        name_counts = Counter(m.split('/')[-1] for m in unique_modules if m)
-        for name, count in name_counts.items():
-            if count > 1:
-                alerts.append(f"Multiple modules share the name '{name}' ({count} matches)")
-
-        return alerts
-
-    def _ensure_utf8_console(self) -> None:
-        """Ensure Windows consoles are switched to UTF-8 so emojis render correctly."""
-        if os.name != 'nt':
-            return
-        try:
-            import ctypes
-            kernel32 = ctypes.windll.kernel32
-            if kernel32.GetConsoleOutputCP() != 65001:
-                kernel32.SetConsoleOutputCP(65001)
-            if kernel32.GetConsoleCP() != 65001:
-                kernel32.SetConsoleCP(65001)
-            if hasattr(sys.stdout, 'reconfigure'):
-                sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-            if hasattr(sys.stderr, 'reconfigure'):
-                sys.stderr.reconfigure(encoding='utf-8', errors='replace')
-        except Exception:
-            pass
-
-    def _configure_logging(self) -> None:
-        """Ensure holodae_activity logger writes breadcrumbs to persistent log"""
-        log_dir = (self.repo_root / 'holo_index' / 'logs').resolve()
-        log_dir.mkdir(parents=True, exist_ok=True)
-        log_path = (log_dir / 'holodae_activity.log').resolve()
-
-        existing_handler = None
-        for handler in list(self.logger.handlers):
-            if isinstance(handler, RotatingFileHandler):
-                handler_path = Path(getattr(handler, 'baseFilename', '')).resolve()
-                if handler_path == log_path:
-                    existing_handler = handler
-                    break
-        if existing_handler is None:
-            file_handler = RotatingFileHandler(log_path, maxBytes=2_000_000, backupCount=5, encoding='utf-8')
-            file_handler.setLevel(logging.INFO)
-            file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-            self.logger.addHandler(file_handler)
-        self.logger.setLevel(logging.INFO)
-
-    def _detailed_log(self, message: str) -> None:
-        """Log detailed information to file only"""
-        self.logger.info(message)
-
-    def _build_module_map(self, module_metrics: Dict[str, Dict[str, Any]]) -> None:
-        """Build module map for orphan analysis and save to JSON"""
-        for module_path, metrics in module_metrics.items():
-            resolved_path = Path(module_path)
-            if not resolved_path.exists():
-                continue
-
-            module_info = {
-                'path': module_path,
-                'files': {},
-                'orphans': [],
-                'duplicates': [],
-                'docs': {
-                    'README.md': (resolved_path / 'README.md').exists(),
-                    'INTERFACE.md': (resolved_path / 'INTERFACE.md').exists(),
-                    'ModLog.md': (resolved_path / 'ModLog.md').exists(),
-                    'tests/TestModLog.md': (resolved_path / 'tests' / 'TestModLog.md').exists()
-                }
-            }
-
-            # Scan Python files
-            for py_file in resolved_path.glob('**/*.py'):
-                if '_archive' in str(py_file) or '__pycache__' in str(py_file):
-                    continue
-
-                rel_path = py_file.relative_to(resolved_path)
-                line_count = sum(1 for _ in open(py_file, 'r', encoding='utf-8', errors='ignore'))
-
-                module_info['files'][str(rel_path)] = {
-                    'lines': line_count,
-                    'last_modified': datetime.fromtimestamp(py_file.stat().st_mtime).isoformat(),
-                    'has_tests': self._check_has_tests(module_path, py_file.stem),
-                    'is_imported': self._check_is_imported(module_path, py_file.stem)
-                }
-
-                # Check for orphans
-                if not module_info['files'][str(rel_path)]['is_imported']:
-                    if not module_info['files'][str(rel_path)]['has_tests']:
-                        module_info['orphans'].append(str(rel_path))
-                        self.orphan_candidates.append(f"{module_path}/{rel_path}")
-
-            self.module_map[module_path] = module_info
-
-            # Save module map to JSON
-            map_dir = Path('holo_index/logs/module_map')
-            map_dir.mkdir(parents=True, exist_ok=True)
-
-            module_name = module_path.replace('/', '_').replace('\\', '_')
-            map_file = map_dir / f"{module_name}.json"
-
-            with open(map_file, 'w', encoding='utf-8') as f:
-                json.dump(module_info, f, indent=2)
-
-    def _check_has_tests(self, module_path: str, file_stem: str) -> bool:
-        """Check if a file has associated tests"""
-        test_patterns = [
-            f"test_{file_stem}.py",
-            f"test_{file_stem}_*.py",
-            f"*_test_{file_stem}.py"
-        ]
-
-        test_dir = Path(module_path) / 'tests'
-        if not test_dir.exists():
-            return False
-
-        for pattern in test_patterns:
-            if list(test_dir.glob(pattern)):
-                return True
-
-        return False
-
-    def _check_is_imported(self, module_path: str, file_stem: str) -> bool:
-        """Check if a file is imported anywhere"""
-        # Simple heuristic - check if imported in __init__.py or other files
-        module_root = Path(module_path)
-
-        # Check __init__.py
-        init_file = module_root / '__init__.py'
-        if init_file.exists():
-            content = init_file.read_text(encoding='utf-8', errors='ignore')
-            if file_stem in content:
-                return True
-
-        # Check other Python files
-        for py_file in module_root.glob('**/*.py'):
-            if py_file.stem == file_stem:
-                continue
-            content = py_file.read_text(encoding='utf-8', errors='ignore')
-            if f"from .{file_stem}" in content or f"import {file_stem}" in content:
-                return True
-
-        return False
-
-    def track_doc_read(self, doc_path: str) -> None:
-        """Track that a document was read for compliance tracking"""
-        self.docs_read.add(doc_path)
-        self.telemetry_logger.log_doc_read(doc_path)
-
-        # Remove from hints given since it was read
-        if doc_path in self.doc_hints_given:
-            duration = (datetime.now() - self.doc_hints_given[doc_path]).total_seconds()
-            self.telemetry_logger.log_event(
-                "doc_compliance",
-                doc_path=doc_path,
-                time_to_read_seconds=duration
-            )
-
-    def provide_docs_for_file(self, file_path: str) -> Dict[str, str]:
-        """Provide documentation paths for a given Python file
-
-        This implements 012's insight: HoloIndex should provide docs directly
-        rather than just telling 0102 to find them.
-
-        Args:
-            file_path: Path to a Python file (e.g., 'livechat_core.py')
-
-        Returns:
-            Dict with doc paths and their existence status
-        """
-        # Load existing module maps from disk if not in memory
-        if not self.module_map:
-            map_dir = Path('holo_index/logs/module_map')
-            if map_dir.exists():
-                for map_file in map_dir.glob('*.json'):
-                    try:
-                        with open(map_file, 'r', encoding='utf-8') as f:
-                            module_data = json.load(f)
-                            module_path = module_data.get('path')
-                            if module_path:
-                                self.module_map[module_path] = module_data
-                    except Exception as e:
-                        self._detailed_log(f"Failed to load {map_file}: {e}")
-
-        # Find which module contains this file
-        module_path = None
-        for module in self.module_map:
-            for file_info in self.module_map[module].get('files', {}):
-                if file_path in file_info or file_path.endswith(file_info):
-                    module_path = module
-                    break
-            if module_path:
-                break
-
-        if not module_path:
-            # Try to find module from file path
-            path_parts = Path(file_path).parts
-            if 'modules' in path_parts:
-                idx = path_parts.index('modules')
-                if idx + 2 < len(path_parts):
-                    module_path = f"modules/{path_parts[idx+1]}/{path_parts[idx+2]}"
-
-        if not module_path:
-            return {"error": f"Module not found for {file_path}"}
-
-        # Return documentation paths
-        resolved_path = Path(module_path)
-        docs = {
-            'README.md': str(resolved_path / 'README.md'),
-            'INTERFACE.md': str(resolved_path / 'INTERFACE.md'),
-            'ModLog.md': str(resolved_path / 'ModLog.md'),
-            'tests/TestModLog.md': str(resolved_path / 'tests' / 'TestModLog.md'),
-            'tests/README.md': str(resolved_path / 'tests' / 'README.md')
-        }
-
-        # Check existence
-        result = {
-            'module': module_path,
-            'docs': {}
-        }
-        for doc_name, doc_path in docs.items():
-            result['docs'][doc_name] = {
-                'path': doc_path,
-                'exists': Path(doc_path).exists()
-            }
-
-        return result
-
-    # ========================================================================
-    # Phase 3: WRE Skills Integration (WSP 96 v1.3)
-    # ========================================================================
-
+    def show_pid_detective(self) -> None:
+        self.pid_detective.show_pid_detective()
+        
     def check_git_health(self) -> Dict[str, Any]:
-        """
-        Check git repository health for autonomous skill triggering
-
-        Per WSP 96 Phase 3: Health check methods for WRE trigger detection
-
-        Returns:
-            Dict with git health metrics and skill trigger recommendation
-        """
-        import subprocess
-
-        try:
-            # Check for uncommitted changes
-            result = subprocess.run(
-                ['git', 'status', '--porcelain'],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-
-            if result.returncode != 0:
-                return {"error": "Git not available", "trigger_skill": None}
-
-            # Parse uncommitted files
-            uncommitted_lines = [line for line in result.stdout.strip().split('\n') if line]
-            uncommitted_changes = len(uncommitted_lines)
-
-            # Get time since last commit
-            try:
-                last_commit_time = subprocess.run(
-                    ['git', 'log', '-1', '--format=%ct'],
-                    capture_output=True,
-                    text=True,
-                    timeout=5
-                )
-                if last_commit_time.returncode == 0:
-                    import time
-                    time_since_last = int(time.time()) - int(last_commit_time.stdout.strip())
-                else:
-                    time_since_last = 0
-            except:
-                time_since_last = 0
-
-            # Decide if we should trigger qwen_gitpush
-            trigger_skill = None
-            if uncommitted_changes > 5 and time_since_last > 3600:  # >5 files and >1 hour
-                trigger_skill = "qwen_gitpush"
-
-            return {
-                "uncommitted_changes": uncommitted_changes,
-                "files_changed": uncommitted_lines[:10],  # First 10 files
-                "time_since_last_commit": time_since_last,
-                "trigger_skill": trigger_skill,
-                "healthy": uncommitted_changes < 20  # <20 files is healthy
-            }
-
-        except Exception as e:
-            return {"error": str(e), "trigger_skill": None}
-
-    def check_daemon_health(self) -> Dict[str, Any]:
-        """
-        Check daemon health status for autonomous monitoring
-
-        Per WSP 96 Phase 3: Daemon health monitoring
-
-        Returns:
-            Dict with daemon health status and trigger recommendation
-        """
-        # Simple check - can be enhanced with actual daemon status checks
-        unhealthy_daemons = []
-
-        # Check YouTube DAE telemetry for recent activity
-        youtube_active = False
-        recent_activity_count = 0
-        try:
-            import sqlite3
-            from datetime import datetime, timedelta, timezone
-            db_path = self.repo_root / "data" / "foundups.db"
-            if db_path.exists():
-                conn = sqlite3.connect(str(db_path), timeout=5.0)
-                cursor = conn.cursor()
-
-                # Check for heartbeats in last 5 minutes (10 pulses at 30s interval)
-                five_min_ago = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
-                cursor.execute(
-                    "SELECT COUNT(*) FROM youtube_heartbeats WHERE timestamp > ?",
-                    (five_min_ago,)
-                )
-                recent_activity_count = cursor.fetchone()[0]
-                youtube_active = recent_activity_count > 0
-
-                conn.close()
-        except Exception as e:
-            self._holo_log(f"[DAEMON-HEALTH] YouTube telemetry check failed: {e}")
-
-        return {
-            "youtube_dae_running": youtube_active,
-            "youtube_recent_heartbeats": recent_activity_count,
-            "mcp_daemon_running": True,   # Placeholder
-            "unhealthy_daemons": unhealthy_daemons,
-            "trigger_skill": "daemon_health_monitor" if unhealthy_daemons else None,
-            "healthy": len(unhealthy_daemons) == 0
-        }
-
-    def check_wsp_compliance(self) -> Dict[str, Any]:
-        """
-        Check WSP compliance status for autonomous enforcement
-
-        Per WSP 96 Phase 3: WSP compliance monitoring
-
-        Returns:
-            Dict with WSP violations and trigger recommendation
-        """
-        # Placeholder for WSP compliance check
-        # In real implementation, would scan for:
-        # - Missing tests (WSP 5)
-        # - Missing documentation (WSP 22, WSP 11)
-        # - Module structure violations (WSP 49)
-
-        violations_found = 0
-        violation_types = []
-        critical_violations = []
-
-        return {
-            "violations_found": violations_found,
-            "violation_types": violation_types,
-            "critical_violations": critical_violations,
-            "trigger_skill": "wsp_compliance_checker" if critical_violations else None,
-            "healthy": len(critical_violations) == 0
-        }
-
-    def _check_wre_triggers(self, result: 'MonitoringResult') -> List[Dict[str, Any]]:
-        """
-        Check monitoring result for WRE skill trigger conditions
-
-        Per WSP 96 Phase 3: Autonomous skill triggering based on monitoring
-
-        Args:
-            result: MonitoringResult from _run_monitoring_cycle()
-
-        Returns:
-            List of skill trigger dicts to execute
-        """
-        triggers = []
-
-        # Check git health
-        git_health = self.check_git_health()
-        if git_health.get("trigger_skill"):
-            triggers.append({
-                "skill_name": git_health["trigger_skill"],
-                "agent": "qwen",
-                "input_context": {
-                    "uncommitted_changes": git_health["uncommitted_changes"],
-                    "files_changed": git_health["files_changed"],
-                    "time_since_last_commit": git_health["time_since_last_commit"]
-                },
-                "trigger_reason": "git_uncommitted_changes",
-                "priority": "high"
-            })
-
-        # Check daemon health
-        daemon_health = self.check_daemon_health()
-        if daemon_health.get("trigger_skill"):
-            triggers.append({
-                "skill_name": daemon_health["trigger_skill"],
-                "agent": "gemma",
-                "input_context": {
-                    "unhealthy_daemons": daemon_health["unhealthy_daemons"]
-                },
-                "trigger_reason": "daemon_unhealthy",
-                "priority": "medium"
-            })
-
-        # Check YouTube DAE activity - if active + git changes, suggest commit
-        if daemon_health.get("youtube_dae_running") and git_health.get("uncommitted_changes", 0) > 3:
-            youtube_heartbeats = daemon_health.get("youtube_recent_heartbeats", 0)
-            # YouTube active = interesting chat activity = potential commit-worthy content
-            if youtube_heartbeats >= 5:  # At least 2.5 minutes of activity (5 pulses * 30s)
-                triggers.append({
-                    "skill_name": "qwen_gitpush",
-                    "agent": "qwen",
-                    "input_context": {
-                        "youtube_active": True,
-                        "youtube_heartbeats": youtube_heartbeats,
-                        "uncommitted_changes": git_health["uncommitted_changes"],
-                        "files_changed": git_health.get("files_changed", []),
-                        "context": "YouTube DAE active - chat moderation in progress"
-                    },
-                    "trigger_reason": "youtube_activity_with_changes",
-                    "priority": "medium"
-                })
-
-        # Check WSP compliance
-        wsp_health = self.check_wsp_compliance()
-        if wsp_health.get("trigger_skill"):
-            triggers.append({
-                "skill_name": wsp_health["trigger_skill"],
-                "agent": "qwen",
-                "input_context": {
-                    "violations": wsp_health["violation_types"],
-                    "critical": wsp_health["critical_violations"]
-                },
-                "trigger_reason": "wsp_violations",
-                "priority": "high"
-            })
-
-        return triggers
-
-    def _execute_wre_skills(self, triggers: List[Dict[str, Any]]) -> None:
-        """
-        Execute WRE skills based on monitoring triggers
-
-        Per WSP 96 Phase 3: Autonomous skill execution via WRE Master Orchestrator
-
-        Args:
-            triggers: List of skill trigger dicts from _check_wre_triggers()
-        """
-        if not triggers:
-            return
-
-        try:
-            # Import WRE Master Orchestrator
-            from modules.infrastructure.wre_core.wre_master_orchestrator import WREMasterOrchestrator
-
-            orchestrator = WREMasterOrchestrator()
-
-            for trigger in triggers:
-                skill_name = trigger["skill_name"]
-                agent = trigger["agent"]
-                input_context = trigger["input_context"]
-
-                self._holo_log(f"[WRE-TRIGGER] Executing skill: {skill_name} (agent: {agent})")
-
-                # Execute skill via WRE
-                result = orchestrator.execute_skill(
-                    skill_name=skill_name,
-                    agent=agent,
-                    input_context=input_context,
-                    force=False  # Respect libido throttling
-                )
-
-                if result.get("success"):
-                    fidelity = result.get("pattern_fidelity", 0.0)
-                    self._holo_log(f"[WRE-SUCCESS] {skill_name} | fidelity={fidelity:.2f}")
-
-                    # If qwen_gitpush succeeded, trigger GitLinkedInBridge directly
-                    if skill_name == "qwen_gitpush" and fidelity >= 0.80:
-                        try:
-                            from modules.platform_integration.linkedin_agent.src.git_linkedin_bridge import GitLinkedInBridge
-                            git_bridge = GitLinkedInBridge(company_id="1263645")
-                            git_bridge.auto_mode = True  # Enable autonomous commit message generation
-                            success = git_bridge.push_and_post()
-                            self._holo_log(f"[GIT-COMMIT] {'SUCCESS' if success else 'FAILED'}")
-                        except Exception as e:
-                            self._holo_log(f"[GIT-ERROR] GitLinkedInBridge failed: {e}")
-
-                    # Log to 012.txt for human oversight
-                    self._append_012_summary(
-                        f"\n[WRE-EXECUTION] {skill_name}\n"
-                        f"  Agent: {agent}\n"
-                        f"  Trigger: {trigger['trigger_reason']}\n"
-                        f"  Fidelity: {fidelity:.2f}\n"
-                        f"  Result: {result.get('result', {})}\n"
-                    )
-                elif result.get("throttled"):
-                    self._holo_log(f"[WRE-THROTTLE] {skill_name} throttled by libido monitor")
-                else:
-                    error = result.get("error", "Unknown error")
-                    self._holo_log(f"[WRE-ERROR] {skill_name} failed: {error}")
-
-        except ImportError as e:
-            self._holo_log(f"[WRE-ERROR] WRE not available: {e}")
-        except Exception as e:
-            self._holo_log(f"[WRE-ERROR] Skill execution failed: {e}")
-
+        return self.skill_executor.check_git_health()
 
 # Legacy compatibility functions (for gradual migration)
 def start_holodae():
     """Legacy compatibility - start HoloDAE monitoring"""
+    if not _urllib_request:
+        print("[HOLODAE] Python stdlib urllib not available; aborting.")
+        return False
+
+    base_url = os.getenv("HOLO_LLM_BASE_URL") or ""
+    if not base_url:
+        print("[HOLODAE] Missing HOLO_LLM_BASE_URL. Start overseer (Qwen/Gemma) and set the env before launching.")
+        return False
+
+    probe_url = base_url.rstrip("/") + "/models"
+    try:
+        with _urllib_request.urlopen(probe_url, timeout=5) as resp:
+            if resp.status >= 400:
+                raise RuntimeError(f"HTTP {resp.status}")
+    except Exception as exc:  # pragma: no cover - best effort guard
+        print(f"[HOLODAE] Overseer endpoint not reachable at {probe_url}: {exc}")
+        print("          Start the overseer model server (e.g., LM Studio on port 1235) and retry.")
+        return False
+
     coordinator = HoloDAECoordinator()
     coordinator.enable_monitoring()
     return coordinator.start_monitoring()
-
 
 def stop_holodae():
     """Legacy compatibility - stop HoloDAE monitoring"""
     coordinator = HoloDAECoordinator()
     return coordinator.stop_monitoring()
 
-
 def get_holodae_status():
     """Legacy compatibility - get HoloDAE status"""
     coordinator = HoloDAECoordinator()
     return coordinator.get_status_summary()
-
 
 def show_holodae_menu():
     """Legacy compatibility - show HoloDAE menu"""
     coordinator = HoloDAECoordinator()
     return coordinator.show_menu()
 
-
-# Main entry point for testing
 if __name__ == "__main__":
     coordinator = HoloDAECoordinator()
     print("HoloDAE Coordinator initialized with modular architecture")

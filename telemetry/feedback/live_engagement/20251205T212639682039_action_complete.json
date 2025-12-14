@@ -1,0 +1,10 @@
+{
+  "success": false,
+  "driver_used": "selenium",
+  "action": "navigate",
+  "duration_ms": 3453,
+  "fallback_used": false,
+  "error": "Selenium driver not available",
+  "result_data": {},
+  "timestamp": "2025-12-05T21:26:39.681038Z"
+}

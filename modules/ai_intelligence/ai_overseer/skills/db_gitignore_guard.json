@@ -1,0 +1,15 @@
+{
+  "name": "db_gitignore_guard",
+  "summary": "Prevent DB artifacts from entering git by updating .gitignore and untracking staged db files.",
+  "domain": "git_hygiene",
+  "steps": [
+    "Ensure .gitignore contains patterns for *.db, *.db-shm, *.db-wal and data/foundups.db*",
+    "Untrack any staged db artifacts (git rm --cached --ignore-unmatch data/foundups.db*)",
+    "Warn and block if oversized files remain (handled in caller)"
+  ],
+  "tags": ["git", "hygiene", "wardrobe", "db-artifacts"],
+  "outputs": {
+    "status": "ok|blocked|error",
+    "details": "description of actions taken or why blocked"
+  }
+}

@@ -154,6 +154,36 @@ class ChatTelemetryStore:
             for message, role, persisted_at in rows
         ]
 
+    def get_recent_messages_by_author_id(self, author_id: str, limit: int) -> List[Dict[str, str]]:
+        """
+        Get recent chat messages for a YouTube channel ID.
+
+        This complements `get_recent_messages(author_name, ...)` for cases where the same person
+        may appear under slightly different display names across surfaces (live chat vs comments).
+        """
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                """
+                SELECT message_text, role, persisted_at
+                FROM chat_messages
+                WHERE author_id = ?
+                ORDER BY persisted_at DESC
+                LIMIT ?
+                """,
+                (author_id, limit),
+            )
+            rows = cursor.fetchall()
+
+        rows.reverse()
+        return [
+            {
+                "text": message,
+                "role": role or "USER",
+                "persisted_at": persisted_at,
+            }
+            for message, role, persisted_at in rows
+        ]
+
     def has_history(self, author_name: str) -> bool:
         with self._get_connection() as conn:
             cursor = conn.execute(

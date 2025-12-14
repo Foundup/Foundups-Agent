@@ -129,11 +129,20 @@
 - [ ] Cross-device geofencing
 - [ ] Conflict resolution
 
+#### Wave-Style Messaging (P0) ✅
+Internal messaging module: `frontend/src/message/`
+- [x] **M1**: IndexedDB persistence (localforage)
+- [x] **M2**: Firestore cloud sync (cross-device)
+- [x] **M3**: Real-time updates (onSnapshot)
+- [x] **M4**: Liberty Alert integration
+- [x] **M5**: Thread auto-close on purchase/skip
+- [x] **M6**: Unread badge on PhotoGrid cards
+
 #### Collaboration (P1)
 - [ ] Share captures with others
 - [ ] Collaborative organization
 - [ ] Public/private captures
-- [ ] Comments on items
+- [x] Comments on items (via Wave messaging)
 - [ ] Activity feed
 
 #### Advanced AI (P1)

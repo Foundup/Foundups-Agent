@@ -3,6 +3,66 @@
 - **Created**: 2025-10-12
 - **Purpose**: Autonomous git push daemon with WSP 91 observability
 
+## Context-Aware Commit Messages (ModLog-Driven)
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-action verification), WSP 3 (Module organization)
+
+**Type**: Enhancement - Autonomous Commit Notes
+
+**Changes Made**:
+1. When GitPushDAE runs without an explicit commit message, the git bridge now generates a contextual commit subject/body from:
+   - Changed `ModLog.md` titles (preferred subject)
+   - A compact scope summary (e.g. `modules/<domain>/<module>`)
+   - Best-effort `git diff --cached --shortstat` for quick magnitude recall
+2. Commit messages are ASCII-safe to avoid Windows console Unicode failures.
+3. Git commands run from the repo root to avoid cwd drift depending on launcher location.
+4. `node_modules/` is excluded from staging by default to prevent vendored dependency churn from contaminating autonomous commits.
+
+**Impact**:
+- Removes random/generic commit templates in autonomous mode.
+- Makes pushes reconstructable for future 0102/WRE review and post generation.
+- Reduces "what changed?" ambiguity in LinkedIn/X auto-posts derived from git history.
+
+**Files Updated**:
+- `modules/platform_integration/linkedin_agent/src/git_linkedin_bridge.py`
+- `modules/platform_integration/linkedin_agent/ModLog.md`
+
+## Reliability Guardrails (Upstream Push + Volatile Change Filtering)
+**WSP References**: WSP 91 (DAEMON observability), WSP 50 (Pre-action verification), WSP 3 (Modular build)
+
+**Type**: Reliability Fix - Autonomous Push Correctness
+
+**Changes Made**:
+1. `GitPushDAE` now filters out volatile paths (e.g. `node_modules/`, telemetry output, Holo output history) during decision-making so it doesn't push on runtime churn.
+2. `GitLinkedInBridge.push_and_post()` now pushes **before** social posting, auto-sets upstream when missing, and skips posting when push fails.
+3. `GitPushDAE` Qwen init now reuses the already-initialized Qwen instance from `GitLinkedInBridge` when available (prevents double-load and fixes missing `model_path` init bug).
+4. Local post-commit hooks can be bypassed by automation via `FOUNDUPS_SKIP_POST_COMMIT=1` to prevent duplicate posting.
+5. Git subprocess output is decoded as UTF-8 with `errors=replace` to avoid Windows `cp932` decode crashes during diff/porcelain parsing.
+
+**Impact**:
+- Fixes "posted but not pushed" scenarios and missing-upstream first pushes on feature branches.
+- Prevents noisy/locked runtime files from triggering autonomous push decisions.
+- Improves observability: push failure is treated as a real failure; posting failures no longer masquerade as push failures.
+
+**Files Updated**:
+- `modules/infrastructure/git_push_dae/src/git_push_dae.py`
+- `modules/platform_integration/linkedin_agent/src/git_linkedin_bridge.py`
+- `modules/platform_integration/linkedin_agent/ModLog.md`
+
+## PR-Only Remote Support (GH013 Rulesets)
+**WSP References**: WSP 91 (DAEMON observability), WSP 50 (Pre-action verification), WSP 3 (Modular build)
+
+**Type**: Enhancement - Repository Ruleset Compatibility
+
+**Changes Made**:
+1. When `git push` is rejected with GH013 / "Changes must be made through a pull request", the git bridge now falls back to pushing `HEAD` to an `auto-pr/<timestamp>` branch and opening a PR via `modules/platform_integration/github_integration`.
+2. If `GITHUB_TOKEN` is not set or PR creation fails, the branch is still pushed and GitPushDAE skips social posting (manual PR creation path).
+3. `git add` CRLF warning non-zero exit codes are treated as non-fatal to avoid noisy fallback staging/reset behavior.
+
+**Operational Notes**:
+- Env: `GITHUB_TOKEN` (preferred for PR creation via API; optional if GitHub CLI `gh` is authenticated)
+- Env: `GIT_PUSH_PR_BASE_BRANCH` (default `main`)
+- Env: `GIT_PUSH_PR_BRANCH_PREFIX` (default `auto-pr`)
+
 ## Add WRE Skills Wardrobe Support - qwen_gitpush Skill
 **WSP References**: WSP 96 (WRE Skills), WSP 48 (Recursive Improvement), WSP 60 (Module Memory)
 

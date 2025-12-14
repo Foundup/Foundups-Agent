@@ -1,0 +1,24 @@
+{
+  "session_id": "20251211_232355",
+  "total_processed": 1,
+  "stats": {
+    "comments_processed": 1,
+    "likes": 1,
+    "hearts": 1,
+    "replies": 1,
+    "errors": 0
+  },
+  "results": [
+    {
+      "comment_idx": 1,
+      "like": true,
+      "heart": true,
+      "reply": true,
+      "author_name": "Unknown",
+      "comment_text": "That says a lot about America. #FFCPLN. It might just be the truth that causes the end of the USA.",
+      "commenter_type": "regular",
+      "reply_text": "Oof, that\u2019s a heavy take! Let\u2019s hope truth brings change, not collapse. \u270a\u270b\ud83d\udd90\ufe0f",
+      "errors": []
+    }
+  ]
+}

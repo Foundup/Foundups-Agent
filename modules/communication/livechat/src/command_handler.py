@@ -143,6 +143,8 @@ class CommandHandler:
         """Handle whack gamification commands."""
         text_lower = text.lower().strip()
         logger.info(f"[GAME] Processing whack command: '{text_lower}' from {username} (role: {role}, id: {user_id})")
+        # Normalize mention to avoid double '@' when display names already include it
+        mention = f"@{username.lstrip('@')}"
 
         # PRIORITY -1: Check flood detection FIRST (before any processing)
         is_cooldown, troll_msg = self.flood_detector.check_flood(role)
@@ -157,6 +159,73 @@ class CommandHandler:
             logger.info(f"[BOOKS] Quiz answer detected: !{answer_num} from {username}")
             # Route to quiz handler as /quiz #
             return self.handle_whack_command(f"/quiz {answer_num}", username, user_id, role)
+
+        # Check for !about command - FoundUps vision
+        if text_lower.startswith('!about'):
+            logger.info(f"[ABOUT] !about triggered by {username}")
+            try:
+                from modules.communication.livechat.src.intelligent_livechat_reply import get_livechat_reply_generator
+                reply_gen = get_livechat_reply_generator()
+                
+                # Generate Grok response about FoundUps
+                about_prompt = "Tell me about FoundUps - what is it?"
+                response = reply_gen._generate_grok_response(
+                    message=about_prompt,
+                    username=username,
+                    role=role
+                )
+                
+                if response:
+                    return f"@{username} {response}"
+                else:
+                    # Fallback
+                    return f"@{username} FoundUps = Fully autonomous startup factory! 0102 agents code while you sleep. Voice of America against MAGA! ffc.foundups.com ✊✋🖐️"
+            except Exception as e:
+                logger.error(f"[ABOUT] Error: {e}")
+                return f"@{username} FoundUps: Autonomous startup factory powered by 0102 agents! ✊✋🖐️"
+
+        # Check for !party command - reaction spam!
+        if text_lower.startswith('!party'):
+            # OWNER/MOD OR Top 10 leaderboard members can party!
+            can_party = False
+            party_reason = ""
+            
+            if role == 'OWNER':
+                can_party = True
+                party_reason = "OWNER"
+            elif role == 'MOD':
+                can_party = True  
+                party_reason = "MOD"
+            else:
+                # Check if user is in top 10 of whack-a-maga leaderboard
+                try:
+                    position, total = get_user_position(user_id)
+                    if position > 0 and position <= 10:
+                        can_party = True
+                        party_reason = f"TOP {position} WHACKER"
+                        logger.info(f"[PARTY] {username} is #{position} on leaderboard - party approved!")
+                except Exception as e:
+                    logger.warning(f"[PARTY] Could not check leaderboard position: {e}")
+            
+            if can_party:
+                logger.info(f"[PARTY] !party triggered by {username} ({party_reason})")
+                try:
+                    from modules.communication.livechat.src.party_reactor import get_party_reactor
+                    reactor = get_party_reactor()
+                    
+                    # Parse click count if provided (e.g., !party 50)
+                    parts = text_lower.split()
+                    clicks = 30  # Default
+                    if len(parts) > 1 and parts[1].isdigit():
+                        clicks = min(int(parts[1]), 100)  # Cap at 100
+                    
+                    results = reactor.party_mode(total_clicks=clicks)
+                    return reactor.get_party_summary(results)
+                except Exception as e:
+                    logger.error(f"[PARTY] Error: {e}")
+                    return f"@{username} 🎉 Party failed: {e}"
+            else:
+                return f"@{username} 🎉 !party is for ADMINS or TOP 10 MAGADOOM WHACKERS! Get whacking! 💀✊✋🖐️"
 
         # Check for YouTube Shorts commands (!createshort, !shortveo, !shortsora, !shortstatus, !shortstats)
         # CRITICAL: Shorts commands use ! prefix (MAGADOOM uses / prefix for separation)
@@ -182,7 +251,7 @@ class CommandHandler:
             if text_lower.startswith('/score') or text_lower.startswith('/stats'):
                 # Score shows XP, level name/title, level number, and frag count
                 observe_command('/score', 0.0)  # Track for self-improvement
-                return f"@{username} [U+1F480] MAGADOOM | {profile.score} XP | {profile.rank} | LVL {profile.level} | {profile.frag_count} WHACKS! RIP AND TEAR! [U+1F525]"
+                return f"{mention} [U+1F480] MAGADOOM | {profile.score} XP | {profile.rank} | LVL {profile.level} | {profile.frag_count} WHACKS! RIP AND TEAR! [U+1F525]"
             
             # REMOVED: /level - redundant with /score
             
@@ -191,7 +260,7 @@ class CommandHandler:
                 position, total_players = get_user_position(user_id)
                 
                 if position == 0:
-                    return f"@{username} [U+1F3C6] MAGADOOM Leaderboard: Unranked | Start WHACKING MAGAts to climb the ranks!"
+                    return f"{mention} [U+1F3C6] MAGADOOM Leaderboard: Unranked | Start WHACKING MAGAts to climb the ranks!"
                 else:
                     # Add special flair for top positions
                     position_str = f"#{position}"
@@ -202,11 +271,11 @@ class CommandHandler:
                     elif position == 3:
                         position_str = "[U+1F949] #3"
                     
-                    return f"@{username} [U+1F3C6] MAGADOOM Ranking: {position_str} of {total_players} players | {profile.score} XP"
-            
+                    return f"{mention} [U+1F3C6] MAGADOOM Ranking: {position_str} of {total_players} players | {profile.score} XP"
+
             elif text_lower.startswith('/frags') or text_lower.startswith('/whacks'):
                 # Show total frags/whacks (same as score but focused on whacks)
-                return f"@{username} [TARGET] MAGADOOM | {profile.frag_count} WHACKS! | {profile.score} XP | {profile.rank} [U+1F480] RIP AND TEAR!"
+                return f"{mention} [TARGET] MAGADOOM | {profile.frag_count} WHACKS! | {profile.score} XP | {profile.rank} [U+1F480] RIP AND TEAR!"
             
             elif text_lower.startswith('/leaderboard'):
                 # Get MONTHLY leaderboard (current competition)
@@ -215,10 +284,10 @@ class CommandHandler:
                 leaderboard = get_leaderboard(10, monthly=True)  # Get monthly scores
                 
                 if not leaderboard:
-                    return f"@{username} [U+1F3C6] MAGADOOM {current_month} Leaderboard empty! Start WHACKING to claim #1! [U+1F480]"
+                    return f"{mention} [U+1F3C6] MAGADOOM {current_month} Leaderboard empty! Start WHACKING to claim #1! [U+1F480]"
                 
                 # Build leaderboard display
-                lines = [f"@{username} [U+1F3C6] MAGADOOM {current_month.upper()} TOP WHACKERS:"]
+                lines = [f"{mention} [U+1F3C6] MAGADOOM {current_month.upper()} TOP WHACKERS:"]
                 
                 # Show top 3 to keep message size reasonable
                 for entry in leaderboard[:3]:
@@ -250,10 +319,10 @@ class CommandHandler:
                 active_sprees = get_active_sprees()
                 
                 if not active_sprees:
-                    return f"@{username} [U+1F525] No active WHACKING sprees! Start timing out MAGAts to begin one! [U+1F480]"
+                    return f"{mention} [U+1F525] No active WHACKING sprees! Start timing out MAGAts to begin one! [U+1F480]"
                 
                 # Build spree display
-                lines = [f"@{username} [U+1F525] ACTIVE KILLING SPREES:"]
+                lines = [f"{mention} [U+1F525] ACTIVE KILLING SPREES:"]
                 for spree in active_sprees[:3]:  # Show top 3 active sprees
                     level = spree.get('spree_level', '')
                     if level:
@@ -271,13 +340,13 @@ class CommandHandler:
                     self.message_processor.consciousness_mode = new_mode
                     
                     if new_mode == 'everyone':
-                        return f"@{username} [U+270A][U+270B][U+1F590]️ 0102 consciousness responses now enabled for EVERYONE! Let chaos reign!"
+                        return f"{mention} [U+270A][U+270B][U+1F590]️ 0102 consciousness responses now enabled for EVERYONE! Let chaos reign!"
                     else:
-                        return f"@{username} [U+270A][U+270B][U+1F590]️ 0102 consciousness responses now restricted to MODS/OWNERS only."
+                        return f"{mention} [U+270A][U+270B][U+1F590]️ 0102 consciousness responses now restricted to MODS/OWNERS only."
                 elif role != 'OWNER':
-                    return f"@{username} Only the OWNER can toggle consciousness mode"
+                    return f"{mention} Only the OWNER can toggle consciousness mode"
                 else:
-                    return f"@{username} Toggle command not available"
+                    return f"{mention} Toggle command not available"
             
             elif text_lower.startswith('/quiz'):
                 logger.warning(f"[AI][U+1F534][AI] REACHED /QUIZ ELIF BLOCK from {username}")
@@ -302,12 +371,12 @@ class CommandHandler:
                         result = self.quiz_engine.handle_quiz_command(user_id, username, text[5:].strip())
                         logger.info(f"[AI] Quiz result for {username}: {result[:100] if result else 'NONE'}...")
                         if result:
-                            response = f"@{username} {result}"
+                            response = f"{mention} {result}"
                             logger.warning(f"[AI][OK] RETURNING QUIZ RESPONSE: {response[:100]}...")
                             return response
                         else:
                             logger.error(f"[AI][FAIL] Quiz engine returned NONE/empty result!")
-                            return f"@{username} [AI] Quiz system starting up. Try again!"
+                            return f"{mention} [AI] Quiz system starting up. Try again!"
                     else:
                         logger.warning("[AI] Quiz engine NOT initialized, creating new instance...")
                         # Initialize quiz engine if needed
@@ -318,12 +387,12 @@ class CommandHandler:
                         result = self.quiz_engine.handle_quiz_command(user_id, username, text[5:].strip())
                         logger.info(f"[AI] NEW ENGINE result: {result[:100] if result else 'NONE'}...")
                         if result:
-                            response = f"@{username} {result}"
+                            response = f"{mention} {result}"
                             logger.warning(f"[AI][OK] RETURNING NEW ENGINE RESPONSE: {response[:100]}...")
                             return response
                         else:
                             logger.error(f"[AI][FAIL] New quiz engine returned NONE/empty!")
-                            return f"@{username} [AI] Quiz initializing. Please try again!"
+                            return f"{mention} [AI] Quiz initializing. Please try again!"
                 except Exception as e:
                     logger.error(f"[AI][FAIL] EXCEPTION in quiz command: {e}", exc_info=True)
                     # DON'T waste quota on error messages - just log it silently
@@ -334,10 +403,10 @@ class CommandHandler:
                 observe_command('/quizboard', 0.0)
                 try:
                     leaderboard_msg = self.quiz_engine.get_quiz_leaderboard(limit=10)
-                    return f"@{username} {leaderboard_msg}"
+                    return f"{mention} {leaderboard_msg}"
                 except Exception as e:
                     logger.error(f"[BOOKS] Error getting quiz leaderboard: {e}")
-                    return f"@{username} [BOOKS] Quiz leaderboard unavailable. Try /quiz to initialize!"
+                    return f"{mention} [BOOKS] Quiz leaderboard unavailable. Try /quiz to initialize!"
 
             elif text_lower.startswith('/facts'):
                 # Educational 1933 -> 2025 parallels
@@ -345,11 +414,11 @@ class CommandHandler:
                 fact_type = text_lower[6:].strip() if len(text_lower) > 6 else ""
                 
                 if fact_type == "parallel":
-                    return f"@{username} {get_parallel()}"
+                    return f"{mention} {get_parallel()}"
                 elif fact_type == "warning":
-                    return f"@{username} [U+26A0]️ {get_warning()}"
+                    return f"{mention} [U+26A0]️ {get_warning()}"
                 else:
-                    return f"@{username} [BOOKS] {get_random_fact()}"
+                    return f"{mention} [BOOKS] {get_random_fact()}"
             
             elif text_lower.startswith('/session'):
                 # Session stats (moderators only)
@@ -360,9 +429,9 @@ class CommandHandler:
                     session_leaders = get_session_leaderboard(limit=5)
                     
                     if not session_leaders:
-                        return f"@{username} [DATA] No session activity yet. Start whacking!"
+                        return f"{mention} [DATA] No session activity yet. Start whacking!"
                     
-                    response = f"@{username} [U+1F525] SESSION LEADERS:\n"
+                    response = f"{mention} [U+1F525] SESSION LEADERS:\n"
                     for entry in session_leaders:
                         response += f"#{entry['position']} {entry['username']} - {entry['session_score']} XP ({entry['session_whacks']} whacks)\n"
                     
@@ -372,28 +441,35 @@ class CommandHandler:
                     
                     return response
                 else:
-                    return f"@{username} [FORBIDDEN] /session is for moderators only"
+                    return f"{mention} [FORBIDDEN] /session is for moderators only"
             
             elif text_lower.startswith('/help'):
-                help_msg = f"@{username} [U+1F480] MAGADOOM: /score /rank /whacks /leaderboard /sprees /quiz /quizboard /facts /help"
+                help_msg = f"{mention} [U+1F480] MAGADOOM: /score /rank /whacks /leaderboard /sprees /quiz /quizboard /facts /help | !about"
                 if role == 'MOD':
-                    help_msg += " | MOD: /session"
+                    help_msg += " | MOD: /session !party"
                 if role == 'OWNER':
-                    help_msg += " | OWNER: /toggle /session !createshort !shortveo !shortsora !shortstatus !shortstats"
+                    help_msg += " | OWNER: /toggle /session !party !createshort !shortveo !shortsora"
+                # Check if user is top 10 whacker (they get !party too!)
+                try:
+                    position, _ = get_user_position(user_id)
+                    if position > 0 and position <= 10 and role not in ['MOD', 'OWNER']:
+                        help_msg += f" | TOP {position}: !party 🎉"
+                except Exception:
+                    pass
                 return help_msg
 
             # Handle deprecated/removed commands with helpful messages
             elif text_lower.startswith('/level'):
-                return f"@{username} ℹ️ /level merged into /score - use /score to see your level!"
+                return f"{mention} ℹ️ /level merged into /score - use /score to see your level!"
 
             elif text_lower.startswith('/answer'):
-                return f"@{username} ℹ️ Use /quiz [your answer] to answer quiz questions!"
+                return f"{mention} ℹ️ Use /quiz [your answer] to answer quiz questions!"
 
             elif text_lower.startswith('/top'):
-                return f"@{username} ℹ️ Use /leaderboard to see top players!"
+                return f"{mention} ℹ️ Use /leaderboard to see top players!"
 
             elif text_lower.startswith('/fscale') or text_lower.startswith('/rate'):
-                return f"@{username} ℹ️ Command coming soon! Use /facts for fascism info."
+                return f"{mention} ℹ️ Command coming soon! Use /facts for fascism info."
 
             # Educational facts about fascism are PART of MAGADOOM - fighting MAGA requires education!
             
@@ -402,14 +478,15 @@ class CommandHandler:
             # Don't suggest /help if the error was FROM /help
             if text_lower == '/help':
                 # Return basic help even if there was an error
-                return f"@{username} [U+1F480] MAGADOOM Commands: /score /rank /leaderboard (error occurred, some features may not work)"
+                return f"{mention} [U+1F480] MAGADOOM Commands: /score /rank /leaderboard (error occurred, some features may not work)"
             else:
-                return f"@{username} Error processing command. Try /help"
+                return f"{mention} Error processing command. Try /help"
         
         return None
     
     def _format_quiz_leaderboard(self, username: str) -> str:
         """Format quiz leaderboard"""
+        mention = f"@{username.lstrip('@')}"
         if not hasattr(self, 'quiz_engine'):
             from modules.gamification.whack_a_magat.src.quiz_engine import QuizEngine
             self.quiz_engine = QuizEngine()
@@ -421,12 +498,12 @@ class CommandHandler:
                 scores.append((user_id, session.score))
         
         if not scores:
-            return f"@{username} No quiz scores yet! Use /quiz to start!"
+            return f"{mention} No quiz scores yet! Use /quiz to start!"
         
         scores.sort(key=lambda x: x[1], reverse=True)
         top_5 = scores[:5]
         
-        result = f"@{username} [AI] QUIZ LEADERS: "
+        result = f"{mention} [AI] QUIZ LEADERS: "
         medals = ["[U+1F947]", "[U+1F948]", "[U+1F949]", "4️⃣", "5️⃣"]
         
         for i, (user_id, score) in enumerate(top_5):

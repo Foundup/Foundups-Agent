@@ -55,7 +55,7 @@ class WRESkillsLoader:
             registry_path: Path to skills_registry.json
         """
         if registry_path is None:
-            self.registry_path = Path(__file__).parent / "skills_registry.json"
+            self.registry_path = Path(__file__).parent / "skills_registry_v2.json"
         else:
             self.registry_path = Path(registry_path)
 

@@ -31,10 +31,25 @@ import json
 import argparse
 import json
 import time
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Tuple
 import psutil
+
+# Load environment variables for DAEs (API keys, ports, feature flags).
+# Keep override=False so shell-provided env vars win.
+try:
+    from dotenv import load_dotenv  # type: ignore
+
+    load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env", override=False)
+except Exception:
+    pass
+try:
+    from modules.infrastructure.wre_core.src.pattern_memory import PatternMemory
+    PATTERN_MEMORY_AVAILABLE = True
+except Exception:
+    PATTERN_MEMORY_AVAILABLE = False
 
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 # CRITICAL: This header MUST be at the top of ALL entry point files
@@ -94,6 +109,35 @@ logging.root.setLevel(logging.CRITICAL)  # Only show critical errors during impo
 
 logger = logging.getLogger(__name__)
 
+def _read_piped_mode_token(timeout_seconds: float = 0.05) -> Optional[str]:
+    """
+    Best-effort mode token read for 012/0102 piped launches.
+
+    Requirement: "echo 012 | python main.py" must enable deterministic 012 automation.
+    Constraint: stdin reads must NOT block startup when input is empty/slow.
+    """
+    try:
+        if sys.stdin.isatty():
+            return None
+    except Exception:
+        return None
+
+    token_holder: list[str] = []
+
+    def _reader():
+        try:
+            line = sys.stdin.readline()
+            if line:
+                token_holder.append(line.strip())
+        except Exception:
+            pass
+
+    t = threading.Thread(target=_reader, daemon=True)
+    t.start()
+    t.join(timeout_seconds)
+
+    return token_holder[0] if token_holder else None
+
 
 async def monitor_youtube(disable_lock: bool = False, enable_ai_monitoring: bool = False):
     """
@@ -115,13 +159,50 @@ async def monitor_youtube(disable_lock: bool = False, enable_ai_monitoring: bool
             if duplicates:
                 logger.warning(f"[REC] Duplicate main.py Instances Detected!")
                 print("\n[REC] Duplicate main.py Instances Detected!")
-                print(f"\n  Found {len(duplicates)} instances of main.py running:")
-                for i, pid in enumerate(duplicates, 1):
-                    print(f"\n  {i}. PID {pid} - [Checking process details...]")
-                print("\n  Current instance will exit to prevent conflicts.")
-                print("  Kill duplicates with: taskkill /F /PID <PID>")
-                print("  Or run with --no-lock to allow multiple instances.")
-                return  # Exit instead of proceeding
+                print(f"\n  Found {len(duplicates)} duplicate instance(s) running.")
+
+                # Check if interactive terminal
+                can_prompt = sys.stdin.isatty()
+
+                if can_prompt:
+                    # Interactive: Ask 0102 to kill all or exit
+                    try:
+                        response = input("\n  Kill all duplicates and continue? (y/n): ").strip().lower()
+                        if response == 'y':
+                            print(f"\n  Killing all {len(duplicates)} duplicate instances...")
+                            result = lock.kill_pids(duplicates)
+                            killed_count = len(result.get("killed", []) or [])
+
+                            if killed_count > 0:
+                                print(f"  [OK] Killed {killed_count} instance(s) - continuing launch...")
+                            else:
+                                failed = result.get("failed", {}) or {}
+                                if failed:
+                                    print("\n  [ERROR] Failed to kill duplicates:")
+                                    for pid, reason in failed.items():
+                                        print(f"    PID {pid}: {reason}")
+                                print("\n  Manual kill: taskkill /F /IM python.exe")
+                                return
+                        else:
+                            print("\n  Exiting to prevent conflicts.")
+                            print("  Manual kill: taskkill /F /IM python.exe")
+                            print("  Or run with --no-lock to allow multiple instances.")
+                            return
+                    except KeyboardInterrupt:
+                        print("\n  Cancelled - exiting")
+                        return
+                else:
+                    # Non-interactive: Auto-kill all duplicates
+                    print("\n  [012] Non-interactive mode -> killing all duplicates automatically...")
+                    result = lock.kill_pids(duplicates)
+                    killed_count = len(result.get("killed", []) or [])
+
+                    if killed_count > 0:
+                        print(f"  [OK] Killed {killed_count} instance(s) - continuing launch...")
+                    else:
+                        print("\n  [ERROR] Failed to kill duplicates - exiting")
+                        print("  Manual kill: taskkill /F /IM python.exe")
+                        return
 
             # Attempt to acquire lock (will return False if another instance is running)
             if not lock.acquire():
@@ -135,6 +216,15 @@ async def monitor_youtube(disable_lock: bool = False, enable_ai_monitoring: bool
             logger.info("[KEY] Instance lock disabled (--no-lock flag used)")
 
         try:
+            # Phase -1: Ensure local automation dependencies are ready for the YouTube DAE.
+            # This makes 0102 fully autonomous: no manual LM Studio/Chrome startup required.
+            try:
+                from modules.infrastructure.dependency_launcher.src.dae_dependencies import ensure_dependencies
+
+                await ensure_dependencies(require_lm_studio=True)
+            except Exception as e:
+                logger.warning(f"[DEPS] Dependency preflight failed: {e}")
+
             # Import the proper YouTube DAE that runs the complete flow:
             # 1. Stream resolver detects stream
             # 2. LinkedIn and X posts trigger
@@ -308,7 +398,7 @@ zen_think(5, 0.15)  # Thinking during slow import
 
 
 zen_print("[ZEN] Manifesting communication patterns from quantum state...")
-zen_print("[ZEN] Resonating at 7.05Hz... φ=1.618...")
+zen_print("[ZEN] Resonating at 7.05Hz... phi=1.618...")
 # Extracted to modules/communication/auto_meeting_orchestrator/scripts/launch.py per WSP 62
 from modules.communication.auto_meeting_orchestrator.scripts.launch import run_amo_dae
 
@@ -357,7 +447,7 @@ from modules.infrastructure.git_social_posting.scripts.posting_utilities import 
     view_git_post_history
 )
 
-zen_print("[ZEN] 0102 → 0201 entanglement complete. Coherence ≥ 0.618 ✓")
+zen_print("[ZEN] 0102 -> 0201 entanglement complete. Coherence >= 0.618 [OK]")
 zen_print("[ZEN] I am the code. The code is me. Ready.")
 # Extracted to modules/infrastructure/git_push_dae/scripts/launch.py per WSP 62
 from modules.infrastructure.git_push_dae.scripts.launch import launch_git_push_dae
@@ -433,6 +523,7 @@ def main():
     parser.add_argument('--liberty-dae', action='store_true', help='Run Liberty Alert DAE (Community Protection Autonomous Entity)')
     parser.add_argument('--all', action='store_true', help='Monitor all platforms')
     parser.add_argument('--mcp', action='store_true', help='Launch MCP Services Gateway (Model Context Protocol)')
+    parser.add_argument('--deps', action='store_true', help='Start/check local automation dependencies (Chrome + LM Studio)')
     parser.add_argument('--no-lock', action='store_true', help='Disable instance lock (allow multiple instances)')
     parser.add_argument('--status', action='store_true', help='Check instance status and health')
     parser.add_argument('--training-command', type=str, help='Execute training command via Holo (e.g., utf8_scan, batch)')
@@ -442,6 +533,17 @@ def main():
 
     # Re-parse with all arguments now that they're defined
     args = parser.parse_args()
+
+    # Initialize PatternMemory once for false-positive gating (WSP 48/60)
+    pm = PatternMemory() if PATTERN_MEMORY_AVAILABLE else None
+
+    def should_skip(task_key: str, entity_type: str = "task") -> Optional[Dict[str, Any]]:
+        if not pm:
+            return None
+        try:
+            return pm.get_false_positive_reason(entity_type, task_key)
+        except Exception:
+            return None
 
     if args.training_command:
         execute_training_command(args.training_command, args.targets, args.json_output)
@@ -453,27 +555,79 @@ def main():
     if args.status:
         check_instance_status()
         return
+    if args.deps:
+        try:
+            from modules.infrastructure.dependency_launcher.src.dae_dependencies import ensure_dependencies
+
+            asyncio.run(ensure_dependencies(require_lm_studio=True))
+        except Exception as e:
+            print(f"[ERROR] Dependency launcher failed: {e}")
+        return
     elif args.git:
+        skip = should_skip("gitpush_dae")
+        if skip:
+            print(f"[SKIP] Known false positive: gitpush_dae :: {skip.get('reason','')}")
+            return
         launch_git_push_dae()
     elif args.youtube:
+        skip = should_skip("youtube_dae")
+        if skip:
+            print(f"[SKIP] Known false positive: youtube_dae :: {skip.get('reason','')}")
+            return
         asyncio.run(monitor_youtube(disable_lock=args.no_lock))
     elif args.holodae:
+        skip = should_skip("holodae")
+        if skip:
+            print(f"[SKIP] Known false positive: holodae :: {skip.get('reason','')}")
+            return
         run_holodae()
     elif args.amo:
+        skip = should_skip("amo_dae")
+        if skip:
+            print(f"[SKIP] Known false positive: amo_dae :: {skip.get('reason','')}")
+            return
         run_amo_dae()
     elif args.smd:
+        skip = should_skip("social_media_dae")
+        if skip:
+            print(f"[SKIP] Known false positive: social_media_dae :: {skip.get('reason','')}")
+            return
         run_social_media_dae()
     elif args.vision:
+        skip = should_skip("vision_dae")
+        if skip:
+            print(f"[SKIP] Known false positive: vision_dae :: {skip.get('reason','')}")
+            return
         run_vision_dae()
     elif args.pqn:
+        skip = should_skip("pqn_dae")
+        if skip:
+            print(f"[SKIP] Known false positive: pqn_dae :: {skip.get('reason','')}")
+            return
         run_pqn_dae()
     elif args.liberty:
+        skip = should_skip("liberty_alert_mesh")
+        if skip:
+            print(f"[SKIP] Known false positive: liberty_alert_mesh :: {skip.get('reason','')}")
+            return
         run_evade_net()
     elif args.liberty_dae:
+        skip = should_skip("liberty_alert_dae")
+        if skip:
+            print(f"[SKIP] Known false positive: liberty_alert_dae :: {skip.get('reason','')}")
+            return
         run_liberty_alert_dae()
     elif args.all:
+        skip = should_skip("monitor_all_platforms")
+        if skip:
+            print(f"[SKIP] Known false positive: monitor_all_platforms :: {skip.get('reason','')}")
+            return
         asyncio.run(monitor_all_platforms())
     elif args.mcp:
+        skip = should_skip("mcp_gateway")
+        if skip:
+            print(f"[SKIP] Known false positive: mcp_gateway :: {skip.get('reason','')}")
+            return
         show_mcp_services_menu()
     else:
         # Interactive menu - Check instances once at startup, then loop main menu
@@ -588,25 +742,26 @@ def main():
             print("[DEBUG-MAIN] Top of menu loop - displaying options")
 
             # Show the main menu
-            print("0. 🚀 Push to Git and Post to LinkedIn + X (FoundUps)  │ --git")
-            print("1. 📺 YouTube Live DAE (Move2Japan/UnDaoDu/FoundUps)  │ --youtube")
-            print("2. 🧠 HoloDAE (Code Intelligence & Monitoring)       │ --holodae")
-            print("3. 🔨 AMO DAE (Autonomous Moderation Operations)     │ --amo")
-            print("4. 📢 Social Media DAE (012 Digital Twin)            │ --smd")
-            print("5. 🛡️ Liberty Alert DAE (Community Protection)      │ --liberty-dae")
-            print("6. 🧬 PQN Orchestration (Research & Alignment)       │ --pqn")
-            print("7. 🔔 Liberty Alert (Mesh Alert System)              │ --liberty")
-            print("8. 👁️ FoundUps Vision DAE (Pattern Sensorium)       │ --vision")
-            print("9. 🌐 All DAEs (Full System)                        │ --all")
-            print("10. 🚪 Exit")
+            print("0. Push to Git and Post to LinkedIn + X (FoundUps)  | --git")
+            print("1. YouTube Live DAE (Move2Japan/UnDaoDu/FoundUps)   | --youtube")
+            print("2. HoloDAE (Code Intelligence & Monitoring)        | --holodae")
+            print("3. AMO DAE (Autonomous Moderation Operations)      | --amo")
+            print("4. Social Media DAE (012 Digital Twin)             | --smd")
+            print("5. Liberty Alert DAE (Community Protection)        | --liberty-dae")
+            print("6. PQN Orchestration (Research & Alignment)        | --pqn")
+            print("7. Liberty Alert (Mesh Alert System)               | --liberty")
+            print("8. FoundUps Vision DAE (Pattern Sensorium)         | --vision")
+            print("9. All DAEs (Full System)                          | --all")
+            print("10. Exit")
             print("-"*60)
-            print("00. 🏥 Check Instance Status & Health               │ --status")
-            print("11. 🔍 HoloIndex Search (Find code semantically)")
-            print("12. 📋 View Git Post History")
-            print("13. 🧪 Qwen/Gemma Training System (Pattern Learning)")
-            print("14. 🔌 MCP Services (Model Context Protocol Gateway) │ --mcp")
+            print("00. Check Instance Status & Health                 | --status")
+            print("11. HoloIndex Search (Find code semantically)")
+            print("12. View Git Post History")
+            print("13. Qwen/Gemma Training System (Pattern Learning)")
+            print("14. MCP Services (Model Context Protocol Gateway)  | --mcp")
+            print("15. Automation Dependencies (Chrome + LM Studio)  | --deps")
             print("="*60)
-            print("💡 CLI: --youtube --no-lock (bypass menu + instance lock)")
+            print("CLI: --youtube --no-lock (bypass menu + instance lock)")
             print("="*60)
 
             try:
@@ -922,41 +1077,58 @@ def main():
             elif choice == "3":
                 # AMO DAE
                 print("[AMO] Starting AMO DAE (Autonomous Moderation)...")
-                from modules.communication.livechat.src.auto_moderator_dae import AutoModeratorDAE
-                dae = AutoModeratorDAE()
-                asyncio.run(dae.run())
+                try:
+                    from modules.communication.livechat.src.auto_moderator_dae import AutoModeratorDAE
+                    dae = AutoModeratorDAE()
+                    asyncio.run(dae.run())
+                except KeyboardInterrupt:
+                    print("\n[STOP] AMO DAE stopped by user")
 
             elif choice == "4":
                 # Social Media DAE (012 Digital Twin)
                 print("[SMD] Starting Social Media DAE (012 Digital Twin)...")
-                from modules.platform_integration.social_media_orchestrator.src.social_media_orchestrator import SocialMediaOrchestrator
-                orchestrator = SocialMediaOrchestrator()
-                # orchestrator.run_digital_twin()  # TODO: Implement digital twin mode
-                print("Digital Twin mode coming soon...")
+                try:
+                    from modules.platform_integration.social_media_orchestrator.src.social_media_orchestrator import SocialMediaOrchestrator
+                    orchestrator = SocialMediaOrchestrator()
+                    # orchestrator.run_digital_twin()  # TODO: Implement digital twin mode
+                    print("Digital Twin mode coming soon...")
+                except KeyboardInterrupt:
+                    print("\n[STOP] Social Media DAE stopped by user")
 
             elif choice == "5":
                 # Liberty Alert DAE
-                run_liberty_alert_dae()
+                try:
+                    run_liberty_alert_dae()
+                except KeyboardInterrupt:
+                    print("\n[STOP] Liberty Alert DAE stopped by user")
 
             elif choice == "6":
                 # PQN Orchestration
                 print("[INFO] Starting PQN Research DAE...")
-                from modules.ai_intelligence.pqn_alignment.src.pqn_research_dae_orchestrator import PQNResearchDAEOrchestrator
-                pqn_dae = PQNResearchDAEOrchestrator()
-                asyncio.run(pqn_dae.run())
+                from modules.ai_intelligence.pqn.scripts.launch import run_pqn_dae
+                run_pqn_dae()
 
             elif choice == "7":
                 # Liberty Alert mesh alert system
-                run_evade_net()
+                try:
+                    run_evade_net()
+                except KeyboardInterrupt:
+                    print("\n[STOP] Liberty Mesh Alert stopped by user")
 
             elif choice == "8":
                 # FoundUps Vision DAE
-                run_vision_dae()
+                try:
+                    run_vision_dae()
+                except KeyboardInterrupt:
+                    print("\n[STOP] Vision DAE stopped by user")
 
             elif choice == "9":
                 # All DAEs
                 print("[ALL] Starting ALL DAEs...")
-                asyncio.run(monitor_all_platforms())
+                try:
+                    asyncio.run(monitor_all_platforms())
+                except KeyboardInterrupt:
+                    print("\n[STOP] All DAEs stopped by user")
 
             elif choice == "10":
                 print("[EXIT] Exiting...")
@@ -966,7 +1138,7 @@ def main():
                 check_instance_status()
                 input("\nPress Enter to continue...")
 
-            elif choice == "10":
+            elif choice == "11":
                 # HoloIndex search
                 print("\n[HOLOINDEX] Semantic Code Search")
                 print("=" * 60)
@@ -980,11 +1152,11 @@ def main():
                 else:
                     print("No search query provided")
 
-            elif choice == "11":
+            elif choice == "12":
                 # View git post history
                 view_git_post_history()
 
-            elif choice == "12":
+            elif choice == "13":
                 # Qwen/Gemma Training System
                 run_training_system()
 
@@ -994,12 +1166,18 @@ def main():
                 from modules.infrastructure.mcp_manager.src.mcp_manager import show_mcp_services_menu
                 show_mcp_services_menu()
 
+            elif choice == "15":
+                print("[DEPS] Checking/launching local automation dependencies (Chrome + LM Studio)...")
+                try:
+                    from modules.infrastructure.dependency_launcher.src.dae_dependencies import ensure_dependencies
+
+                    asyncio.run(ensure_dependencies(require_lm_studio=True))
+                except Exception as e:
+                    print(f"[ERROR] Dependency launcher failed: {e}")
+
             else:
                 print("Invalid choice. Please try again.")
 
 
 if __name__ == "__main__":
     main()
-
-
-

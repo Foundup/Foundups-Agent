@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "driver_used": "selenium",
+  "action": "navigate",
+  "duration_ms": 13633,
+  "fallback_used": false,
+  "error": null,
+  "result_data": {},
+  "timestamp": "2025-12-05T21:28:57.497504Z"
+}

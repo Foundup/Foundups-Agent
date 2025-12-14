@@ -2,6 +2,13 @@
 
 ## Latest Changes
 
+### **WSP Hygiene: Root Script Relocation**
+- **Status**: [OK] Completed
+- **Change**: Moved YouTube diagnostic/engagement utilities out of repository root into `modules/platform_integration/youtube_proxy/scripts/manual_tools/` to satisfy WSP 3/85 (no vibecoding at root).
+- **Details**: Added repo-root bootstrap (REPO_ROOT) to ensure imports and relative paths still work after relocation (launchers, comment engagement tools, phase3 verification scripts, diagnostics).
+- **Impact**: Medium. Keeps YouTube tooling discoverable via module paths and HoloIndex while removing root violations.
+- **Follow-up**: Consider wrapping these tools in wardrobe skills for automated execution.
+
 ### **UX Enhancement: Numbered Command Interface**
 
 #### **Change**: Interactive Mode UX Improvement - Numbered Commands  

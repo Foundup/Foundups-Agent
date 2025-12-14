@@ -1,0 +1,6 @@
+{
+  "action": "click_element",
+  "error": "Message: invalid session id; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#invalidsessionidexception\nStacktrace:\nSymbols not available. Dumping unresolved backtrace:\n\t0x7ff6fcc1a235\n\t0x7ff6fc972630\n\t0x7ff6fc7014e5\n\t0x7ff6fc74a151\n\t0x7ff6fc782a12\n\t0x7ff6fc77d27c\n\t0x7ff6fc77c46a\n\t0x7ff6fc6cacb5\n\t0x7ff6fcc45d60\n\t0x7ff6fcc3fe8a\n\t0x7ff6fcc61005\n\t0x7ff6fc98d71e\n\t0x7ff6fc994e1f\n\t0x7ff6fc6c977b\n\t0x7ff6fcd945f8\n\t0x7fff793be8d7\n\t0x7fff7ab8c53c\n",
+  "duration_ms": 2,
+  "timestamp": "2025-12-08T18:45:57.261328Z"
+}

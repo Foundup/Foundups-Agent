@@ -28,6 +28,15 @@ finally:
 
 ## Recent Changes
 
+### 2025-12-12: 012 Duplicate-Termination + Python-Only Duplicate Detection
+**Problem**: Duplicate detection was flagging parent shells (e.g., `bash.exe`) as "main.py instances", blocking launches; 012 non-interactive launches need deterministic auto-cleanup.
+
+**Fix**:
+1. Only treat **actual Python interpreter processes** (`python.exe`/`pythonw.exe`) as duplicates
+2. Added a `kill_pids()` helper for best-effort duplicate termination and structured results
+
+**Result**: 012 can terminate stale duplicate YouTube DAE processes and continue launching without interactive prompts; shells are no longer misclassified as duplicates.
+
 ### 2025-10-24: Heartbeat-Aware Cleanup Fix
 **Problem**: Long-running YouTube DAE (64+ minutes) was killed when starting a new instance, despite active heartbeat.
 

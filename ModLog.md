@@ -9,6 +9,163 @@
 
      [OK] DOCUMENT HERE (when pushing to git):
 
+## [2025-12-14] GitPushDAE Context-Aware Commit Messages (ModLog-Driven)
+
+**Change Type**: Developer UX + Traceability  
+**By**: 0102  
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-action verification), WSP 3 (Module Organization)
+
+### What Changed
+- Git push workflow now derives auto commit subject/body from changed ModLog titles + scope summary (instead of random templates) so autonomous pushes are reconstructable.
+- Commit messages are ASCII-safe to avoid Windows console Unicode failures.
+- Git push stages first and keeps `node_modules/` excluded by default; commit body uses staged diff stats (`--cached`) so notes match what actually got committed.
+
+### Files Updated
+- `modules/platform_integration/linkedin_agent/src/git_linkedin_bridge.py`
+- `modules/platform_integration/linkedin_agent/ModLog.md`
+- `modules/infrastructure/git_push_dae/ModLog.md`
+
+## [2025-12-14] YouTube DAE Dependency Preflight + Commenter Context Memory
+
+**Change Type**: Reliability + Memory Foundation  
+**By**: 0102  
+**WSP References**: WSP 27 (DAE Architecture), WSP 60 (Module Memory), WSP 3 (Module Organization)
+
+### What Changed
+- YouTube DAE now runs a dependency preflight at startup to ensure Chrome debug `:9222` and LM Studio `:1234` are available before running `AutoModeratorDAE`.
+- Comment engagement replies can be personalized using a small context window from:
+  - prior Studio engagements (local `commenter_history.db`)
+  - live chat telemetry (by stable YouTube channel id when available)
+
+### Files Updated
+- `main.py`
+- `modules/communication/livechat/src/chat_telemetry_store.py`
+- `modules/communication/video_comments/src/commenter_history_store.py`
+- `modules/communication/video_comments/src/intelligent_reply_generator.py`
+- `modules/communication/video_comments/skills/tars_like_heart_reply/comment_engagement_dae.py`
+
+## [2025-12-14] WSP 44 Semantic Scoring + 012-Visible Debug Tags (YouTube Studio)
+
+**Change Type**: Observability + Reply Scoring  
+**By**: 0102  
+**WSP References**: WSP 44 (Semantic State Engine), WSP 27 (DAE Architecture), WSP 60 (Module Memory), WSP 96 (Skills Protocol), WSP 22 (ModLog)
+
+### What Changed
+- Added an infrastructure `SemanticStateEngine` implementation (WSP 44) to score interactions on the 000–222 axis.
+- Comment engagement now records per-comment semantic state (`semantic_state`, `semantic_state_name`, `semantic_state_emoji`) and supports opt-in reply debug tags (`--debug-tags`) so 012 can *see* classification + scoring in the posted reply.
+- Added a minimal post-run 012 rating tool (`rate_session.py`) and local feedback store (`engagement_feedback.db`) to capture human semantic-state ratings and commenter-type corrections for learning (WSP 77 Phase 3).
+- Kept learning memory clean by storing the raw reply separately from the posted/tagged reply, and stopped logging raw comment text to avoid Windows console Unicode failures.
+
+### Files Updated
+- `modules/infrastructure/wsp_core/src/semantic_state_engine.py`
+- `modules/infrastructure/wsp_core/src/__init__.py`
+- `modules/communication/video_comments/skills/tars_like_heart_reply/comment_engagement_dae.py`
+- `modules/communication/video_comments/skills/tars_like_heart_reply/run_skill.py`
+
+## [2025-12-14] Sprint 1+2 Compliance Audit + Sprint 3+4 Gap Analysis (WSP 3/11/22/27/50/64/77)
+
+**Change Type**: WSP Compliance Verification + HoloIndex Deep Dive
+**Auditor**: 0102
+**WSP References**: WSP 3 (Module Organization), WSP 11 (Interface Documentation), WSP 22 (ModLog), WSP 27 (DAE Architecture), WSP 50 (Pre-Action Verification), WSP 64 (Violation Prevention), WSP 77 (Agent Coordination)
+
+### Sprint 1+2 Audit Results ✅
+- ✅ **100% WSP Compliance** - ZERO violations detected (7/7 protocols)
+- ✅ **Code Quality** - NO enhancements required (clean, well-documented)
+- ✅ **ROADMAP Alignment** - Phase 3D added to video_comments, execution modes added to livechat
+- ✅ **Documentation** - 8 documents complete with cross-references
+- ✅ **Architecture** - First-principles analysis confirms subprocess safety-first approach
+
+### Sprint 3+4 Gap Analysis (HoloIndex Deep Dive) ❌
+
+**Sprint 3 (Browser Lease/Lock)**: NOT IMPLEMENTED
+- HoloIndex search: "browser lease lock Chrome port overlap" → NO IMPLEMENTATION
+- Module check: `modules/infrastructure/browser_lease` → NOT FOUND
+- Code search: BrowserLease class → NOT FOUND
+- Related module: instance_lock exists (different scope: process-level DAE prevention, not Chrome port locking)
+- **Status**: Architectural gap, 0% complete
+- **Priority**: MEDIUM (critical IF vision stream detection re-enabled)
+- **Mitigation**: STREAM_VISION_DISABLED=true (current default)
+
+**Sprint 4 (Rollout + Telemetry)**: NOT IMPLEMENTED
+- HoloIndex search: "comment engagement telemetry metrics" → NO IMPLEMENTATION
+- Database check: `youtube_comment_engagement` table → NOT FOUND
+- Code search: record_engagement methods → NOT FOUND
+- Related module: YouTubeTelemetryStore exists (missing comment engagement schema)
+- **Status**: No metrics collection, 0% complete
+- **Priority**: LOW (nice-to-have, not blocking)
+- **Impact**: Cannot make data-driven decision on execution mode defaults
+
+**Current State**: Production-ready (Sprint 1+2 complete), browser hijacking resolved (vision disabled), Sprint 3+4 optional enhancements
+
+### Key Findings
+- **WSP 64 Compliance**: Subprocess remains DEFAULT per first-principles (Selenium blocking cannot be interrupted by asyncio.wait_for, only SIGKILL guarantees Chrome recovery)
+- **Thread Mode**: Optional fast-startup (<500ms vs 2-3s), documented "cannot force-kill" limitation
+- **Browser Coordination**: Working via STREAM_VISION_DISABLED=true, no defensive layer (browser lease)
+- **Telemetry**: Not instrumented, relying on first-principles analysis (sufficient for current state)
+- **Error Handling**: Comprehensive (SIGTERM → wait → SIGKILL)
+- **Type/Docstring Coverage**: 100%
+
+### Files Updated
+- `modules/communication/video_comments/ROADMAP.md` (Phase 3D)
+- `modules/communication/livechat/ROADMAP.md` (execution modes)
+- `docs/SPRINT_1_2_WSP_COMPLIANCE_AUDIT.md` (compliance audit)
+- `docs/SPRINT_3_4_AUDIT_REPORT.md` (gap analysis - HoloIndex deep dive)
+
+### Cross-References
+- [docs/SPRINT_1_2_WSP_COMPLIANCE_AUDIT.md](docs/SPRINT_1_2_WSP_COMPLIANCE_AUDIT.md) - Sprint 1+2 audit
+- [docs/SPRINT_3_4_AUDIT_REPORT.md](docs/SPRINT_3_4_AUDIT_REPORT.md) - Sprint 3+4 gap analysis
+- [docs/COMMUNITY_ENGAGEMENT_EXEC_MODES.md](docs/COMMUNITY_ENGAGEMENT_EXEC_MODES.md) - Design doc
+- [docs/SPRINT_1_2_IMPLEMENTATION_COMPLETE.md](docs/SPRINT_1_2_IMPLEMENTATION_COMPLETE.md) - Implementation
+- [docs/BROWSER_HIJACKING_FIX_20251213.md](docs/BROWSER_HIJACKING_FIX_20251213.md) - Architecture
+- [modules/communication/livechat/ModLog.md](modules/communication/livechat/ModLog.md) - Module details
+
+### Impact
+- Sprint 1+2: Production-ready with full WSP compliance ✅
+- Sprint 3: Architectural gap identified (browser_lease module missing) ⚠️
+- Sprint 4: Telemetry gap identified (comment engagement metrics missing) ℹ️
+- Documentation chain complete (design → implementation → audit → gap analysis)
+- Zero code quality issues
+- Subprocess safety-first validated
+
+### Next Steps (Optional Enhancements)
+1. **Sprint 3 (4-6 hours)**: Implement browser_lease module BEFORE re-enabling vision stream detection
+2. **Sprint 4 (6-8 hours)**: Add comment engagement telemetry IF data-driven optimization desired
+
+## [2025-12-13] Automation Dependencies + ASCII-Safe CLI Menu (WSP 22 / 88)
+
+**Change Type**: Operator UX + Windows reliability  
+**Architect**: 0102  
+**WSP References**: WSP 22 (ModLog), WSP 27 (DAE dependencies), WSP 88 (Windows Unicode safety)
+
+### What Changed
+- Added `--deps` CLI flag and menu option `15` to run the dependency launcher (Chrome debug + LM Studio) without starting a DAE.
+- Fixed interactive menu numbering so `11` = HoloIndex search, `12` = Git post history, `13` = Training, `14` = MCP.
+- Removed non-ASCII/emoji characters from the CLI menu output to avoid Windows `UnicodeEncodeError` under non-UTF8 terminals.
+
+### Files Modified
+- `main.py`
+
+## [2025-12-12] Root Script Hygiene (WSP 3 / 85)
+
+**Change Type**: Structure cleanup  
+**Architect**: Codex (0102)  
+**WSP References**: WSP 3 (module boundaries), WSP 22 (ModLog), WSP 85 (root cleanliness)
+
+### What Changed
+- Relocated all YouTube diagnostics/comment-engagement helpers from repository root into `modules/platform_integration/youtube_proxy/scripts/manual_tools/`.
+- Added REPO_ROOT bootstrapper to preserve imports and working-directory expectations after relocation.
+- Updated Phase3A docs to reference the new script paths.
+
+### Files Moved
+- `check_browser_state.py`, `check_page_status.py`, `diagnose_comments.py`, `inspect_auto_moderator_db.py`, `launch_youtube_dae_automated.py`
+- Engagement/vision helpers: `like_*`, `poc_*`, `troubleshoot_vision.py`
+- Verification scripts: `verify_*`, `test_*` (Phase3A/livechat/vision)
+
+### Impact
+- Root is now free of ad-hoc execution files (WSP 3 compliance).
+- YouTube tooling remains discoverable and runnable from the youtube_proxy module tree.
+- HoloIndex/Overseer can index scripts without vibecoding exceptions.
+
 ## [2025-11-10] GotJunk Tutorial Popup Alignment (WSP 7 / 57)
 
 **Change Type**: Frontend UX integrity fix  

@@ -16,6 +16,13 @@ This directory contains comprehensive tests for the Social Media Orchestrator mo
 - `test_integration.py` - Cross-component integration tests
 - `test_hello_world.py` - Platform hello world tests
 
+### Vision-Based Engagement Tests (WSP 77 Phase 3: Human Supervision)
+- `test_autonomous_with_validation.py` - Post-action validation: AI executes → 012 validates → Pattern Memory learns
+- `test_copilot_validation.py` - Pre-action validation: AI announces intent → 012 confirms → AI executes
+- `test_live_engagement_existing_chrome.py` - YouTube engagement using existing Chrome on port 9222
+- `test_ui_tars_studio.py` - UI-TARS Desktop integration for YouTube Studio engagement
+- `test_ui_tars_no_nav.py` - UI-TARS Desktop engagement without navigation
+
 ### Performance Tests
 - `test_performance.py` - Load and performance testing
 

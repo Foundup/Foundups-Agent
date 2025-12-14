@@ -9,9 +9,16 @@ from pathlib import Path
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import json
 from datetime import datetime
+
+# Optional PatternMemory for learned false positives (WSP 48/60)
+try:
+    from modules.infrastructure.wre_core.src.pattern_memory import PatternMemory
+    PATTERN_MEMORY_AVAILABLE = True
+except Exception:
+    PATTERN_MEMORY_AVAILABLE = False
 
 # Add parent directory to path for module imports
 repo_root = Path(__file__).parent.parent.parent.parent
@@ -77,6 +84,14 @@ except ImportError as e:
 
 app = FastAPI(title="GotJunk Liberty Alert API")
 
+# Initialize PatternMemory (best-effort, non-fatal)
+pattern_memory: Optional[Any] = None
+if PATTERN_MEMORY_AVAILABLE:
+    try:
+        pattern_memory = PatternMemory()
+    except Exception:
+        pattern_memory = None
+
 # CORS configuration for frontend
 app.add_middleware(
     CORSMiddleware,
@@ -108,6 +123,19 @@ class AlertResponse(BaseModel):
     video_url: Optional[str]
     timestamp: int
 
+
+def _should_skip(task_key: str) -> Optional[Dict[str, Any]]:
+    """
+    Check PatternMemory for learned false positives (best-effort).
+    """
+    if not pattern_memory:
+        return None
+    try:
+        return pattern_memory.get_false_positive_reason("gotjunk_task", task_key)
+    except Exception:
+        return None
+
+
 @app.get("/")
 async def root():
     """Health check endpoint"""
@@ -128,6 +156,15 @@ async def post_alert(alert_data: AlertCreate):
     Create new Liberty Alert
     Uses EXISTING Alert model and AlertBroadcaster - NO vibecoding!
     """
+    skip = _should_skip("create_liberty_alert")
+    if skip:
+        return {
+            "success": True,
+            "skipped": True,
+            "reason": skip.get("reason"),
+            "actual_location": skip.get("actual_location")
+        }
+
     # Use EXISTING GeoPoint and Alert models
     location = GeoPoint(alert_data.latitude, alert_data.longitude)
     alert = Alert(
@@ -151,6 +188,15 @@ async def upload_alert_video(file: UploadFile = File(...), latitude: float = 0.0
     Upload video for Liberty Alert
     TODO: Implement video storage (Cloud Storage bucket)
     """
+    skip = _should_skip("upload_liberty_alert_video")
+    if skip:
+        return {
+            "success": True,
+            "skipped": True,
+            "reason": skip.get("reason"),
+            "actual_location": skip.get("actual_location")
+        }
+
     # TODO: Upload to Cloud Storage
     # video_url = await upload_to_cloud_storage(file)
 

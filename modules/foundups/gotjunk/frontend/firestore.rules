@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // GotJunk items
+    match /gotjunk_items/{itemId} {
+      allow read: if true; // Public reads (tighten if needed)
+      allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.ownerUid;
+    }
+
+    // Wave-style messaging threads
+    match /gotjunk_messages/{threadKey} {
+      allow read: if true; // Public reads (tighten if needed)
+      allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
+      // Allow any authenticated user to add messages; owner-only delete
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.ownerUid;
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "action": "type_text",
+  "driver": "vision",
+  "params": {
+    "description": "reply text input box that appeared below the comment",
+    "text": "0102 was here."
+  },
+  "timestamp": "2025-12-08T18:32:27.585819Z"
+}

@@ -1,5 +1,6 @@
 # No Python package requirements for this module.
 numpy
+torch
 openai-whisper>=20231117
 librosa>=0.10.1
 soundfile>=0.12.1

@@ -34,6 +34,18 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from collections import defaultdict, deque
+from pathlib import Path
+
+# Gemma Integration
+try:
+    # Add RIC DAE path for Gemma integration
+    ric_dae_path = Path(__file__).parent.parent.parent / 'modules' / 'ai_intelligence' / 'ric_dae' / 'src'
+    if str(ric_dae_path) not in sys.path:
+        sys.path.append(str(ric_dae_path))
+    from holodae_gemma_integration import HoloDAEGemmaIntegrator
+    GEMMA_AVAILABLE = True
+except ImportError:
+    GEMMA_AVAILABLE = False
 
 # WSP_00 Zen State Integration
 try:
@@ -75,6 +87,15 @@ class PatternCoach:
         self.query_history: deque[QueryHistory] = deque(maxlen=memory_size)
         self.reward_tracker = RewardTracker()
         self.wsp_master = None  # Will be injected
+        
+        # Initialize Gemma Integrator
+        self.gemma_integrator = None
+        if GEMMA_AVAILABLE:
+            try:
+                self.gemma_integrator = HoloDAEGemmaIntegrator()
+                logger.info("PatternCoach: Gemma integration initialized")
+            except Exception as e:
+                logger.warning(f"PatternCoach: Gemma initialization failed: {e}")
 
     def set_wsp_master(self, wsp_master):
         """Inject WSP Master for intelligent guidance."""
@@ -129,6 +150,26 @@ class PatternCoach:
 
     def _analyze_intent(self, query: str) -> str:
         """Analyze user intent from query."""
+        # Use Gemma if available (<10ms)
+        if self.gemma_integrator:
+            try:
+                # Use query_understanding specialization
+                result = self.gemma_integrator.route_to_specialization(
+                    'query_understanding',
+                    query=query
+                )
+                if result and isinstance(result, dict) and 'intent' in result:
+                    return result['intent']
+                elif result and isinstance(result, str):
+                    return result
+            except Exception as e:
+                logger.debug(f"Gemma intent analysis failed: {e}")
+        
+        # Fallback to rules
+        return self._analyze_intent_fallback(query)
+
+    def _analyze_intent_fallback(self, query: str) -> str:
+        """Fallback rule-based intent analysis."""
         query_lower = query.lower()
 
         if any(word in query_lower for word in ['create', 'new', 'build', 'implement', 'add']):
@@ -213,26 +254,37 @@ class PatternCoach:
 
     def _should_provide_coaching(self, intent: str, risk_patterns: List[str],
                                health_context: Dict[str, Any]) -> bool:
-        """Determine if coaching should be provided."""
+        """
+        Determine if coaching should be provided.
+        
+        WSP 50: Pre-Action Verification - ALWAYS coach on intents that
+        could lead to vibecoding (create, modify, refactor).
+        """
         # Always coach on high-risk patterns
         if risk_patterns:
-                return True
+            return True
 
         # Coach on health context when user is actively working on problematic files
         if health_context.get('working_on_problematic_file'):
             return True
 
-        # Coach based on intent patterns (simplified)
-        intent_patterns = {
-            'create': 0.8,  # 80% of creation queries need coaching
-            'test': 0.7,    # 70% of test queries
-        }
-
-        base_probability = intent_patterns.get(intent, 0.3)
-
-        # Add some randomization to avoid being too predictable
+        # WSP 50: ALWAYS coach on intents that require verification before coding
+        # These intents could lead to vibecoding if not researched first
+        high_risk_intents = {'create', 'modify', 'refactor', 'script'}
+        if intent in high_risk_intents:
+            return True
+        
+        # Coach on documentation intents (WSP 22 - ModLog/Roadmap)
+        if intent == 'documentation':
+            return True
+        
+        # Coach on debug/test less frequently (they're already verifying)
         import random
-        return random.random() < min(base_probability, 0.9)
+        if intent in {'debug', 'test'}:
+            return random.random() < 0.3  # 30% - they're already being careful
+        
+        # General searches: low probability to avoid noise
+        return random.random() < 0.15  # 15% for general searches
 
     def _generate_contextual_coaching(self, query: str, intent: str,
                                     risk_patterns: List[str],
@@ -355,8 +407,32 @@ class PatternCoach:
             'create': """[INTENT] COACH: Creation intent detected.
 
 **WSP 55**: Use automated module creation workflow.
+**WSP 50**: Pre-Action Verification - NEVER assume, ALWAYS verify.
 
 **Verify**: Search before creating (+3 reward points!)""",
+
+            'modify': """[INTENT] COACH: Modification intent detected.
+
+**WSP 50**: Pre-Action Verification - Research before changing.
+**WSP 22**: Document changes in module ModLog.md
+
+**CHECKLIST**:
+1. Read existing code first (no assumptions)
+2. Check if change already exists elsewhere
+3. Update ModLog after changes
+4. Run tests before committing""",
+
+            'refactor': """[INTENT] COACH: Refactoring intent detected.
+
+**WSP 62**: Large File Refactoring Protocol
+**WSP 50**: Pre-Action Verification - Search for existing patterns
+
+**REFACTOR CHECKLIST**:
+1. Check file size (<500 lines ideal, <1000 max)
+2. Search for similar patterns before extracting
+3. Preserve existing imports/exports
+4. Update all callers after extraction
+5. Document in ModLog.md""",
 
             'test': """[WSP GUIDANCE] COACH: Testing focus detected.
 

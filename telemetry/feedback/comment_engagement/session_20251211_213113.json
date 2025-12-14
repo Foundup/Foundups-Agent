@@ -1,0 +1,34 @@
+{
+  "session_id": "20251211_213113",
+  "total_processed": 3,
+  "stats": {
+    "comments_processed": 3,
+    "likes": 3,
+    "hearts": 3,
+    "replies": 0,
+    "errors": 0
+  },
+  "results": [
+    {
+      "comment_idx": 1,
+      "like": true,
+      "heart": true,
+      "reply": false,
+      "errors": []
+    },
+    {
+      "comment_idx": 2,
+      "like": true,
+      "heart": true,
+      "reply": false,
+      "errors": []
+    },
+    {
+      "comment_idx": 3,
+      "like": true,
+      "heart": true,
+      "reply": false,
+      "errors": []
+    }
+  ]
+}

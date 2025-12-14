@@ -61,9 +61,9 @@ interface ClassificationModalProps {
  *
  * LIBERTY CAMERA (accordion):
  * - Stuff!: free/discount/bid/share/wanted
- * - Alert!: ice/police
  * - Food!: soup_kitchen/bbq/dry_food/pick/garden
  * - Shelter!: couch/camping/housing
+ * - Alert!: ice/police
  *
  * Gestures:
  * - Short tap: Select classification with defaults

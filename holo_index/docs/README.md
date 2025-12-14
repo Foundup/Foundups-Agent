@@ -4,10 +4,21 @@
 
 HoloIndex is a sophisticated semantic search system designed to prevent vibecoding by finding existing code implementations and providing real-time WSP compliance guidance.
 
-## Key Operational Docs
-- [Operational Playbook](OPERATIONAL_PLAYBOOK.md) — primary runbook for 0102 (checklists, TODO flow, telemetry instructions).
-- [Multi-Agent Breadcrumb Example](MULTI_AGENT_BREADCRUMB_EXAMPLE.md) — examples for collaborative hand-offs.
-- [CLI Refactoring Plan](CLI_REFACTORING_PLAN.md) — implementation notes for the search/CLI pipeline.
+## Key Documentation
+
+**Active Documentation** (current reference):
+- [Operational Playbook](OPERATIONAL_PLAYBOOK.md) — Primary runbook for 0102 (checklists, workflows)
+- [ModLog.md](ModLog.md) — Change history and updates
+- [Holo Command Interface](Holo_Command_Interface.md) — CLI reference guide
+- [REFACTOR_REPORT_COORDINATOR_WSP62.md](REFACTOR_REPORT_COORDINATOR_WSP62.md) — WSP 62 refactoring status
+- [RETURN_VS_LOGS_DISTINCTION.md](RETURN_VS_LOGS_DISTINCTION.md) — Dual-channel architecture design
+- [WRE_INTEGRATION_DESIGN.md](WRE_INTEGRATION_DESIGN.md) — WRE integration architecture
+- [HOLO_INDEX_IMPROVEMENT_LOG.md](HOLO_INDEX_IMPROVEMENT_LOG.md) — Ongoing improvements tracking
+
+**Historical Documentation** (archived 2025-11-30):
+- See [archive/](archive/) for 61 historical docs organized by category
+- Includes: Completed implementations, first principles analyses, design documents, training missions, status reports
+- See [archive/README.md](archive/README.md) for archive organization and access instructions
 ## Key Features
 
 ### [SEARCH] Semantic Code Discovery

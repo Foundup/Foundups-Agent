@@ -1,0 +1,40 @@
+{
+  "skill_name": "party_reactions",
+  "description": "YouTube Live Chat reaction spam - 0102 party mode!",
+  "wsp_compliance": ["WSP 77", "WSP 27", "WSP 96"],
+  "trigger": "!party",
+  
+  "coordinates": {
+    "toggle_popup": {"x": 359, "y": 759, "action": "hover", "description": "Heart button - hover to open popup"},
+    "reactions": {
+      "100": {"x": 361, "y": 735, "action": "click", "emoji": "💯"},
+      "wide_eyes": {"x": 357, "y": 708, "action": "click", "emoji": "😲"},
+      "celebrate": {"x": 358, "y": 669, "action": "click", "emoji": "🎉"},
+      "smiley": {"x": 357, "y": 635, "action": "click", "emoji": "😊"},
+      "heart": {"x": 359, "y": 599, "action": "click", "emoji": "❤️"}
+    }
+  },
+  
+  "flow": [
+    "1. Hover at toggle (359, 759) to open popup",
+    "2. Wait 0.15-0.3s for popup to slide up",
+    "3. Move to reaction coordinates",
+    "4. Click",
+    "5. Repeat - re-hover toggle every 3 clicks to keep popup open"
+  ],
+  
+  "party_mode": {
+    "default_clicks": 30,
+    "delay_min_ms": 100,
+    "delay_max_ms": 300,
+    "rehover_interval": 3
+  },
+  
+  "notes": [
+    "Coordinates are relative to chat iframe",
+    "Must switch to iframe#chatframe first",
+    "Mouse events: mousemove, mouseenter, mouseover, then click",
+    "Popup may close after clicks - re-hover to reopen"
+  ]
+}
+

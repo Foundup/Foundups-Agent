@@ -88,15 +88,15 @@ os.environ.setdefault('SENTENCE_TRANSFORMERS_HOME', 'E:/HoloIndex/models')
 os.environ.setdefault('HOLO_CACHE_PATH', 'E:/HoloIndex/cache')
 
 # Dependency bootstrap
-try:
-    import chromadb
-    from sentence_transformers import SentenceTransformer
-except ImportError:
-    print("Installing required dependencies...")
-    import subprocess
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "chromadb", "sentence-transformers"])
-    import chromadb
-    from sentence_transformers import SentenceTransformer
+# try:
+#     import chromadb
+#     from sentence_transformers import SentenceTransformer
+# except ImportError:
+#     print("Installing required dependencies...")
+#     import subprocess
+#     subprocess.check_call([sys.executable, "-m", "pip", "install", "chromadb", "sentence-transformers"])
+#     import chromadb
+#     from sentence_transformers import SentenceTransformer
 
 # Utility functions now imported from utils module
 
@@ -1006,12 +1006,11 @@ def main() -> None:
                     monitor = GemmaRootViolationMonitor()
                     return await monitor.scan_root_violations()
 
-                # Execute async monitor
-                loop = asyncio.get_event_loop() if asyncio.get_event_loop().is_running() else asyncio.new_event_loop()
-                if not loop.is_running():
-                    violations_data = loop.run_until_complete(get_root_violations())
-                else:
-                    # If event loop already running (rare), skip for this session
+                # Execute async monitor (Python 3.10+ compatible)
+                try:
+                    violations_data = asyncio.run(get_root_violations())
+                except RuntimeError:
+                    # Event loop already running (rare), skip for this session
                     violations_data = None
 
                 # Add violations to results if found
@@ -1071,6 +1070,19 @@ def main() -> None:
             health_notices = _perform_health_checks_and_rewards(results, args.search, add_reward_event)
             if health_notices:
                 results['health_notices'] = health_notices
+
+            # [NEW] Pattern Coach Integration (WSP 84)
+            if pattern_coach and results:
+                try:
+                    coach_msg = pattern_coach.analyze_and_coach(
+                        query=args.search,
+                        search_results=results.get('code', []) + results.get('wsps', []),
+                        health_warnings=results.get('health_notices', [])
+                    )
+                    if coach_msg:
+                        safe_print(f"\n[WSP-COACH] {coach_msg}")
+                except Exception as e:
+                    logger.debug(f"Pattern coach analysis failed: {e}")
 
         # Pattern analysis
         if advisor:
@@ -1340,9 +1352,31 @@ def main() -> None:
         safe_print("[MODULE-ANALYSIS] Analyzing modules for duplicates and health issues...")
         try:
             from holo_index.module_health.size_audit import SizeAuditor
-            from holo_index.module_health.structure_audit import StructureAuditor
-            # Run module health analysis
-            safe_print("[MODULE-ANALYSIS] Complete - see results above")
+            from pathlib import Path
+            # from holo_index.module_health.structure_audit import StructureAuditor # TODO: Implement StructureAuditor
+            
+            auditor = SizeAuditor()
+            repo_root = Path(__file__).parent.parent
+            
+            # Audit key directories
+            targets = [repo_root / "holo_index", repo_root / "modules"]
+            issues_found = 0
+            
+            for target in targets:
+                if target.exists():
+                    safe_print(f"\n[AUDIT] Scanning {target.name}...")
+                    results = auditor.audit_module(target)
+                    for res in results:
+                        safe_print(f"  [{res.risk_tier.value.upper()}] {res.path.name}: {res.line_count} lines")
+                        safe_print(f"     Guidance: {res.guidance}")
+                        issues_found += 1
+            
+            if issues_found == 0:
+                safe_print("\n[SUCCESS] No size violations found.")
+            else:
+                safe_print(f"\n[SUMMARY] Found {issues_found} files needing attention.")
+                
+            safe_print("[MODULE-ANALYSIS] Complete")
         except Exception as e:
             safe_print(f"[ERROR] Module analysis failed: {e}")
         return
@@ -1352,7 +1386,7 @@ def main() -> None:
         try:
             # Use intelligent subroutine engine
             from holo_index.core import IntelligentSubroutineEngine
-            engine = IntelligentSubroutineEngine(project_root)
+            engine = IntelligentSubroutineEngine()
             results = engine.run_intelligent_analysis("health check", None)
             safe_print(results.get('summary', '[HEALTH-CHECK] Complete'))
         except Exception as e:
@@ -1417,8 +1451,28 @@ def main() -> None:
         try:
             from holo_index.adaptive_learning.breadcrumb_tracer import BreadcrumbTracer
             tracer = BreadcrumbTracer()
-            # Display recent breadcrumbs
-            safe_print("[THOUGHT-LOG] Showing recent chain-of-thought trail...")
+            summary = tracer.summarize_session()
+            
+            safe_print(f"Session ID: {summary['session_id']}")
+            safe_print(f"Timestamp: {summary['timestamp']}")
+            safe_print(f"Total Actions: {summary['total_actions']}")
+            
+            if summary['searches']:
+                safe_print("\n[SEARCHES]")
+                for s in summary['searches']:
+                    safe_print(f"  - {s['query']} ({s['results']} results)")
+            
+            if summary['actions']:
+                safe_print("\n[ACTIONS]")
+                for a in summary['actions']:
+                    safe_print(f"  - {a['what']} -> {a['target']} ({a['result']})")
+                    
+            if summary['learnings']:
+                safe_print("\n[LEARNINGS]")
+                for l in summary['learnings']:
+                    safe_print(f"  - {l}")
+                    
+            safe_print("\n[THOUGHT-LOG] Complete")
         except Exception as e:
             safe_print(f"[ERROR] Thought log access failed: {e}")
         return

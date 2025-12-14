@@ -49,7 +49,7 @@ class ChatSender:
             True if message was sent successfully, False otherwise
         """
         if not message_text or not message_text.strip():
-            logger.warning("[U+26A0]️ Cannot send empty message")
+            logger.warning("[WARN] Cannot send empty message")
             return False
 
         # CRITICAL FIX: YouTube Live Chat has 200 character limit
@@ -69,15 +69,15 @@ class ChatSender:
                     remaining_space = MAX_MESSAGE_LENGTH - len(mention) - 3
                     rest = message_text[len(mention):remaining_space + len(mention)]
                     message_text = mention + rest + "..."
-                    logger.info(f"[U+2702]️ Smart truncate: Preserved @mention, {original_length}->{len(message_text)} chars")
+                    logger.info(f"[TRUNCATE] Smart truncate: Preserved @mention, {original_length}->{len(message_text)} chars")
                 else:
                     # Fallback to simple truncation
                     message_text = message_text[:MAX_MESSAGE_LENGTH - 3] + "..."
-                    logger.warning(f"[U+26A0]️ Message truncated from {original_length} to {MAX_MESSAGE_LENGTH} chars (YouTube limit)")
+                    logger.warning(f"[WARN] Message truncated from {original_length} to {MAX_MESSAGE_LENGTH} chars (YouTube limit)")
             else:
                 # No @mention at start, simple truncation
                 message_text = message_text[:MAX_MESSAGE_LENGTH - 3] + "..."
-                logger.warning(f"[U+26A0]️ Message truncated from {original_length} to {MAX_MESSAGE_LENGTH} chars (YouTube limit)")
+                logger.warning(f"[WARN] Message truncated from {original_length} to {MAX_MESSAGE_LENGTH} chars (YouTube limit)")
 
             logger.debug(f"Original message: {message_text[:50]}...")
         
@@ -115,14 +115,14 @@ class ChatSender:
                 if self.random_delay_enabled:
                     min_delay = min(0.5, self.min_random_delay)
                     random_delay = random.uniform(min_delay, min_delay + 1.0)
-                    logger.debug(f"⏱️ Priority message delay: {random_delay:.2f}s")
+                    logger.debug(f"[TIMER] Priority message delay: {random_delay:.2f}s")
                     await asyncio.sleep(random_delay)
             
             # WSP Enhancement: Add random pre-send delay for human-like behavior
             # Skip for timeout announcements (highest priority)
             if self.random_delay_enabled and response_type != 'timeout_announcement':
                 random_delay = random.uniform(self.min_random_delay, self.max_random_delay)
-                logger.debug(f"⏱️ Additional random delay: {random_delay:.2f}s")
+                logger.debug(f"[TIMER] Additional random delay: {random_delay:.2f}s")
                 await asyncio.sleep(random_delay)
             
             logger.info(f"[U+1F4E4] Sending message: {message_text}")
@@ -132,7 +132,9 @@ class ChatSender:
             from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
             banter = BanterEngine(emoji_enabled=True)
             message_text = banter._convert_unicode_tags_to_emoji(message_text)
-            logger.debug(f"[EMOJI] After conversion: {message_text}")
+            logger.debug(
+                f"[EMOJI] After conversion: {message_text.encode('ascii', 'backslashreplace').decode('ascii')}"
+            )
 
             # Prepare message data
             message_data = {
@@ -215,7 +217,7 @@ class ChatSender:
         if success:
             logger.info("[OK] Greeting message sent successfully")
         else:
-            logger.warning("[U+26A0]️ Failed to send greeting message")
+            logger.warning("[WARN] Failed to send greeting message")
         
         return success
     
@@ -331,7 +333,7 @@ class ChatSender:
         if time_since_last < min_delay:
             # Need to wait
             wait_time = min_delay - time_since_last
-            logger.info(f"[U+1F6E1]️ GLOBAL THROTTLE: Waiting {wait_time:.1f}s before sending {response_type} message")
+            logger.info(f"[THROTTLE] GLOBAL THROTTLE: Waiting {wait_time:.1f}s before sending {response_type} message")
             await asyncio.sleep(wait_time)
         else:
             logger.debug(f"[OK] GLOBAL THROTTLE: OK to send {response_type} message (gap: {time_since_last:.1f}s)")

@@ -1,0 +1,24 @@
+{
+  "session_id": "20251211_224816",
+  "total_processed": 1,
+  "stats": {
+    "comments_processed": 1,
+    "likes": 1,
+    "hearts": 1,
+    "replies": 1,
+    "errors": 0
+  },
+  "results": [
+    {
+      "comment_idx": 1,
+      "like": true,
+      "heart": true,
+      "reply": true,
+      "author_name": "Unknown",
+      "comment_text": "i don\u2019t follow trump nor do i agree with him But Jesus christ is lord the creator of all things and ",
+      "commenter_type": "regular",
+      "reply_text": "I see what you did there! \ud83d\udc40 \u270a\u270b\ud83d\udd90\ufe0f",
+      "errors": []
+    }
+  ]
+}

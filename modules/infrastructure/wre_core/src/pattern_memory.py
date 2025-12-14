@@ -64,6 +64,7 @@ class PatternMemory:
     - skill_outcomes: Execution records
     - skill_variations: A/B test variations
     - learning_events: Pattern improvement events
+    - false_positives: Learned skip patterns to avoid rework
 
     This enables:
     1. Recall successful patterns (50-200 tokens)
@@ -78,6 +79,12 @@ class PatternMemory:
         Args:
             db_path: Path to SQLite database file
         """
+        # Guard against repeated expensive init in a single process
+        if getattr(PatternMemory, "_initialized", False):
+            self.__dict__.update(getattr(PatternMemory, "_shared_state", {}))
+            logger.debug("[PATTERN-MEMORY] Reusing existing instance (singleton guard)")
+            return
+
         if db_path is None:
             self.db_path = Path(__file__).parent.parent / "data" / "pattern_memory.db"
         else:
@@ -88,10 +95,17 @@ class PatternMemory:
 
         self.conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
         self.conn.row_factory = sqlite3.Row  # Access columns by name
+        self.false_positive_columns: set = set()
 
         self._initialize_schema()
+        self._seed_false_positive_memory()
 
-        logger.info(f"[PATTERN-MEMORY] Initialized - db={self.db_path}")
+        # Log init once per process to reduce telemetry spam
+        if not getattr(PatternMemory, "_initialized", False):
+            logger.info(f"[PATTERN-MEMORY] Initialized - db={self.db_path}")
+        # Cache shared state for fast reuse
+        PatternMemory._shared_state = dict(self.__dict__)
+        PatternMemory._initialized = True
 
     def _initialize_schema(self) -> None:
         """
@@ -161,8 +175,73 @@ class PatternMemory:
             )
         """)
 
+        # False positives table (WSP 48 - learn from mistakes)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS false_positives (
+                entity_type TEXT NOT NULL,
+                entity_name TEXT NOT NULL,
+                reason TEXT NOT NULL,
+                actual_location TEXT,
+                created_at TEXT NOT NULL,
+                PRIMARY KEY (entity_type, entity_name)
+            )
+        """)
+
+        # Backfill columns if table existed before schema upgrade
+        try:
+            cursor.execute("PRAGMA table_info(false_positives)")
+            columns = {row["name"] for row in cursor.fetchall()}
+            if "actual_location" not in columns:
+                cursor.execute("ALTER TABLE false_positives ADD COLUMN actual_location TEXT")
+            if "created_at" not in columns:
+                cursor.execute("ALTER TABLE false_positives ADD COLUMN created_at TEXT")
+        except sqlite3.OperationalError as exc:
+            logger.warning("[PATTERN-MEMORY] False-positive schema verification failed: %s", exc)
+
+        try:
+            cursor.execute("PRAGMA table_info(false_positives)")
+            self.false_positive_columns = {row["name"] for row in cursor.fetchall()}
+        except sqlite3.OperationalError:
+            self.false_positive_columns = set()
+
         self.conn.commit()
         logger.debug("[PATTERN-MEMORY] Schema initialized")
+
+    def _seed_false_positive_memory(self) -> None:
+        """
+        Seed known false positives so automation skips learned mistakes.
+
+        This prevents repeated scaffolding of entities we know are valid.
+        """
+        seeds = [
+            {
+                "entity_type": "module",
+                "entity_name": "holo_dae",
+                "reason": (
+                    "HoloDAE is a coordinator class in holo_index/qwen_advisor/, "
+                    "not a standalone module"
+                ),
+                "actual_location": "holo_index/qwen_advisor/holodae_coordinator.py",
+            }
+        ]
+
+        for seed in seeds:
+            try:
+                existing = self.get_false_positive_reason(seed["entity_type"], seed["entity_name"])
+                if not existing or not existing.get("created_at") or not existing.get("actual_location"):
+                    self.record_false_positive(
+                        entity_type=seed["entity_type"],
+                        entity_name=seed["entity_name"],
+                        reason=seed["reason"],
+                        actual_location=seed.get("actual_location"),
+                    )
+            except Exception as exc:
+                logger.warning(
+                    "[PATTERN-MEMORY] Failed to seed false positive %s/%s: %s",
+                    seed.get("entity_type"),
+                    seed.get("entity_name"),
+                    exc,
+                )
 
     def store_outcome(self, outcome: SkillOutcome) -> None:
         """
@@ -202,6 +281,121 @@ class PatternMemory:
 
         logger.info(f"[PATTERN-MEMORY] Stored outcome - skill={outcome.skill_name}, "
                    f"exec_id={outcome.execution_id}, fidelity={outcome.pattern_fidelity:.2f}")
+
+    def record_false_positive(
+        self,
+        entity_type: str,
+        entity_name: str,
+        reason: str,
+        actual_location: Optional[str] = None
+    ) -> None:
+        """
+        Persist a false positive so automation will skip it next time.
+
+        Args:
+            entity_type: Domain of entity (e.g., 'module', 'file', 'test')
+            entity_name: Identifier or name of the entity
+            reason: Human-readable explanation for skipping
+            actual_location: Where the entity truly lives (if applicable)
+        """
+        cursor = self.conn.cursor()
+
+        # Remove existing records when table lacks uniqueness constraints
+        try:
+            cursor.execute(
+                "DELETE FROM false_positives WHERE entity_type = ? AND entity_name = ?",
+                (entity_type, entity_name)
+            )
+        except sqlite3.OperationalError:
+            pass
+
+        insert_columns = ["entity_type", "entity_name", "reason"]
+        values = [entity_type, entity_name, reason]
+
+        if "recorded_by" in self.false_positive_columns:
+            insert_columns.append("recorded_by")
+            values.append("wsp_automation")
+
+        if "actual_location" in self.false_positive_columns:
+            insert_columns.append("actual_location")
+            values.append(actual_location)
+
+        timestamp_value = datetime.now().isoformat()
+        if "created_at" in self.false_positive_columns:
+            insert_columns.append("created_at")
+            values.append(timestamp_value)
+        if "timestamp" in self.false_positive_columns:
+            insert_columns.append("timestamp")
+            values.append(timestamp_value)
+
+        placeholders = ", ".join(["?"] * len(values))
+        cursor.execute(
+            f"INSERT OR REPLACE INTO false_positives ({', '.join(insert_columns)}) "
+            f"VALUES ({placeholders})",
+            values
+        )
+        self.conn.commit()
+        logger.info(
+            "[PATTERN-MEMORY] Recorded false positive - %s/%s",
+            entity_type,
+            entity_name,
+        )
+
+    def is_false_positive(self, entity_type: str, entity_name: str) -> bool:
+        """Return True if the entity is a known false positive."""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT 1 FROM false_positives
+            WHERE entity_type = ? AND entity_name = ?
+            LIMIT 1
+        """, (entity_type, entity_name))
+        return cursor.fetchone() is not None
+
+    def get_false_positive_reason(
+        self,
+        entity_type: str,
+        entity_name: str
+    ) -> Optional[Dict[str, Optional[str]]]:
+        """
+        Retrieve reason and metadata for a known false positive.
+
+        Returns:
+            Dict with reason and actual_location if found, otherwise None.
+        """
+        cursor = self.conn.cursor()
+
+        select_columns = ["reason"]
+        created_key = None
+
+        if "actual_location" in self.false_positive_columns:
+            select_columns.append("actual_location")
+
+        if "created_at" in self.false_positive_columns:
+            select_columns.append("created_at")
+            created_key = "created_at"
+        elif "timestamp" in self.false_positive_columns:
+            select_columns.append("timestamp")
+            created_key = "timestamp"
+
+        columns_sql = ", ".join(select_columns)
+
+        cursor.execute(f"""
+            SELECT {columns_sql}
+            FROM false_positives
+            WHERE entity_type = ? AND entity_name = ?
+            LIMIT 1
+        """, (entity_type, entity_name))
+        row = cursor.fetchone()
+        if not row:
+            return None
+
+        result = {"reason": row["reason"]}
+        if "actual_location" in self.false_positive_columns:
+            result["actual_location"] = row["actual_location"]
+        if created_key:
+            result["created_at"] = row[created_key]
+
+        return result
 
     def recall_successful_patterns(
         self,

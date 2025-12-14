@@ -1,0 +1,29 @@
+{
+  "name": "yt_studio_like",
+  "backend": "selenium",
+  "steps": [
+    {
+      "action": "click",
+      "selector": "button[aria-label='Like this comment']",
+      "timestamp": 1.0,
+      "target_tag": "BUTTON",
+      "target_text": "",
+      "target_aria_label": "Like this comment"
+    }
+  ],
+  "created_at": "2025-12-10T07:08:09.162Z",
+  "meta": {
+    "target_url": "https://studio.youtube.com/channel/UC-LSSlOZwpGIRIYihaz8zCw/comments/inbox",
+    "tags": [
+      "youtube",
+      "studio",
+      "comment",
+      "engagement"
+    ],
+    "notes": "Like YouTube Studio comment - Edited with stable aria-label selector",
+    "step_count": 1,
+    "recorded_with": "wardrobe_chrome_extension",
+    "edited_by": "0102",
+    "selector_strategy": "aria-label for button stability"
+  }
+}

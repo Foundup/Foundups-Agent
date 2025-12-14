@@ -3,10 +3,28 @@
 .env.*
 !.env.example
 
+# WSP 3: Module artifacts should stay in modules/
+# Firebase rules belong in modules/foundups/gotjunk/firestore.rules
+/firestore.rules
+/firebase.json
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Node / pnpm
+node_modules/
+**/node_modules/
+.pnpm-store/
+**/.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Wardrobe IDE generated skills
+modules/infrastructure/wardrobe_ide/skills/*.json
 *.so
 .Python
 build/
@@ -26,6 +44,7 @@ wheels/
 *.egg
 
 # Virtual Environment
+.venv/
 venv/
 ENV/
 env/
@@ -54,6 +73,11 @@ logs/
 **/chrome_profile/
 **/data/chrome_profile/
 **/*chrome_profile*/
+
+# Browser profiles (local auth/session state) - never commit
+modules/platform_integration/browser_profiles/
+**/browser_profiles/
+**/browser_profiles/**
 *.pma
 nul
 NUL
@@ -136,6 +160,8 @@ local_settings.py
 
 # Database
 *.db
+*.db-wal
+*.db-shm
 *.sqlite3
 
 # Backup files
@@ -229,3 +255,14 @@ holo_index_data/models/
 **/browser_profiles/*/edge/
 **/browser_profiles/x_foundups/
 modules/platform_integration/browser_profiles/credentials/
+
+# Temporary test/debug artifacts
+scripts/test_refactor.py
+scripts/*_test_output*.txt
+scripts/coach_test_output.txt
+test_coordinator_import*.py
+test_wre_integration*.py
+test_output.txt
+scripts/*.txt
+*.wal
+*.shm

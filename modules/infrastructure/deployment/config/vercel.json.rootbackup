@@ -1,0 +1,38 @@
+{
+  "name": "foundups-agent",
+  "version": 2,
+  "builds": [
+    {
+      "src": "main.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "500mb"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/holoindex",
+      "dest": "/main.py"
+    },
+    {
+      "src": "/api/search",
+      "dest": "/main.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/main.py"
+    }
+  ],
+  "env": {
+    "HOLO_QWEN_MODEL": "E:/HoloIndex/models/qwen-coder-1.5b.gguf",
+    "HOLO_QWEN_MAX_TOKENS": "512",
+    "HOLO_QWEN_TEMPERATURE": "0.2"
+  },
+  "functions": {
+    "main.py": {
+      "maxDuration": 30
+    }
+  },
+  "regions": ["iad1"]
+}

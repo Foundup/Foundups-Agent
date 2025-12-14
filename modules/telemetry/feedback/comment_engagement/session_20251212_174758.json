@@ -1,0 +1,25 @@
+{
+  "session_id": "20251212_174758",
+  "total_processed": 1,
+  "stats": {
+    "comments_processed": 1,
+    "likes": 1,
+    "hearts": 1,
+    "replies": 1,
+    "errors": 0,
+    "all_processed": false
+  },
+  "results": [
+    {
+      "comment_idx": 1,
+      "like": true,
+      "heart": true,
+      "reply": true,
+      "author_name": "Unknown",
+      "comment_text": "Leftists always say democracy is failing when they lose",
+      "commenter_type": "unknown",
+      "reply_text": "Thanks for the comment! \ud83c\udf8c",
+      "errors": []
+    }
+  ]
+}

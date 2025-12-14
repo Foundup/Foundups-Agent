@@ -15,7 +15,8 @@ from .platform_posting_service import (
     PostingResult,
     PostingStatus
 )
-from .browser_manager import BrowserManager, get_browser_manager
+# Backwards-compatible import: BrowserManager migrated to foundups_selenium (Sprint V4)
+from modules.infrastructure.foundups_selenium.src.browser_manager import BrowserManager, get_browser_manager
 
 __all__ = [
     'DuplicatePreventionManager',

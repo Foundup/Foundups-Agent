@@ -1,7 +1,7 @@
 # instance_lock Test Suite
 
-**Test Coverage:** 0% (implementation needed)
-**Last Run:** Never
+**Test Coverage:** Basic unit + smoke tests present
+**Last Run:** See CI / local pytest output
 **Framework:** pytest
 
 ## [TEST] Test Categories
@@ -13,10 +13,10 @@
 ### Test Structure
 ```
 tests/
-„¥„Ÿ„Ÿ __init__.py              # Test package
-„¥„Ÿ„Ÿ README.md               # This file
-„¥„Ÿ„Ÿ test_[module_name].py   # Main test file
-„¤„Ÿ„Ÿ TestModLog.md          # Test evolution log
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ __init__.py              # Test package
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ README.md               # This file
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ test_[module_name].py   # Main test file
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ TestModLog.md          # Test evolution log
 ```
 
 ## [RUN] Running Tests

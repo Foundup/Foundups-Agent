@@ -21,6 +21,9 @@ import { CapturedItem, ItemStatus } from './types';
 import * as storage from './services/storage';
 // import * as ipfs from './services/ipfsService';
 import { initializeAuth } from './services/firebaseAuth';
+import { createCartReservation, syncReservationToFirestore, filterReservedItems, isReservationExpired, getExpiredCartItems } from './services/cartReservation';
+import { CartCountdown } from './components/CartCountdown';
+import { getCurrentUserId } from './services/firebaseAuth'; // ✅ AUTH: Get user UID for cross-device ownership
 import { ItemReviewer } from './components/ItemReviewer';
 import { FullscreenGallery } from './components/FullscreenGallery';
 import { FullscreenCamera } from './components/FullscreenCamera';
@@ -36,7 +39,7 @@ import { ActionSheetLibertySelector } from './components/ActionSheetLibertySelec
 import { Toast } from './components/Toast';
 import { ItemClassification, MutualAidClassification, AlertClassification } from './types';
 import { MessageThreadPanel } from './components/MessageThreadPanel';
-import { MessageContextRef } from './src/message/types';
+import { MessageContextRef, messageStore } from './src/message';
 import { PigeonMapView } from './components/PigeonMapView';
 import { VoiceInputOverlay } from './components/VoiceInputOverlay';
 import { useViewport } from './hooks/useViewport';
@@ -204,6 +207,9 @@ const App: React.FC = () => {
   // === MESSAGE BOARD PANEL STATE ===
   const [messagePanelContext, setMessagePanelContext] = useState<MessageContextRef | null>(null);
   const [messagePanelMeta, setMessagePanelMeta] = useState<{ title: string; subtitle?: string } | null>(null);
+  
+  // WSP AUDIT FIX: Track cloud hydration to trigger re-render for unread counts
+  const [messageCloudHydrated, setMessageCloudHydrated] = useState(false);
 
   const openMessagePanelForItem = (item: CapturedItem) => {
     setMessagePanelContext({ type: 'item', itemId: item.id });
@@ -216,6 +222,27 @@ const App: React.FC = () => {
   const closeMessagePanel = () => {
     setMessagePanelContext(null);
     setMessagePanelMeta(null);
+  };
+
+  // Sprint M4: Open message panel for Liberty Alert
+  const openMessagePanelForLiberty = (alertId: string) => {
+    setMessagePanelContext({ type: 'liberty', alertId });
+    setMessagePanelMeta({
+      title: '🗽 Liberty Alert Messages',
+      subtitle: `Community updates for ${alertId}`,
+    });
+  };
+
+  // Sprint M6: Get unread message count for an item
+  // WSP NOTE: This is a simple implementation - counts all messages as "unread" for now
+  // Future enhancement: Track actual read/unread state per user in messageStore
+  // WSP AUDIT FIX: Depends on messageCloudHydrated to trigger re-render after cloud sync
+  const getUnreadMessageCount = (itemId: string): number => {
+    // Reference messageCloudHydrated to ensure re-render after cloud hydration
+    void messageCloudHydrated; // eslint-disable-line @typescript-eslint/no-unused-expressions
+    const thread = messageStore.getThread({ type: 'item', itemId });
+    if (!thread) return 0;
+    return thread.messages.length; // For now, show total message count
   };
 
   const handleJoinAction = (item: CapturedItem) => {
@@ -346,14 +373,43 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const initializeApp = async () => {
+      // ============================================================================
+      // SYNC TIMING PATTERN (for Wave Messaging Firestore integration)
+      // ============================================================================
+      // ✅ CORRECT: Initialize auth FIRST, THEN load items
+      // This ensures getCurrentUserId() is available when filtering ownership
+      // Auth timing: initializeAuth() → onAuthStateChanged → user restored/signed in
+      // ============================================================================
+
       // Initialize Firebase Auth (anonymous sign-in for cross-device sync)
       try {
         const user = await initializeAuth();
         if (user) {
-          console.log('[GotJunk] Auth initialized:', user.isAnonymous ? 'Anonymous' : 'Google');
+          console.log('[GotJunk] ✅ Auth initialized:', user.isAnonymous ? 'Anonymous' : 'Google');
+          console.log('[GotJunk] User UID:', user.uid); // For debugging cross-device sync
         }
       } catch (error) {
         console.error('[GotJunk] Auth initialization failed:', error);
+      }
+
+      // WSP M1: Hydrate message store from IndexedDB (DO NOT REMOVE)
+      // Without this, messages are lost on page refresh
+      try {
+        await messageStore.hydrate();
+        console.log('[GotJunk] Message store hydrated from IndexedDB');
+        
+        // WSP AUDIT FIX: Also hydrate from cloud for cross-device sync
+        // This is non-blocking - local data is available immediately
+        // Setting messageCloudHydrated triggers re-render for accurate unread counts
+        messageStore.hydrateFromCloud().then(() => {
+          console.log('[GotJunk] Message store hydrated from cloud');
+          setMessageCloudHydrated(true); // Trigger re-render for unread counts
+        }).catch((err) => {
+          console.warn('[GotJunk] Cloud hydration failed (non-blocking):', err);
+          setMessageCloudHydrated(true); // Still mark as done to prevent retries
+        });
+      } catch (error) {
+        console.error('[GotJunk] Message store hydration failed:', error);
       }
 
 //       // Initialize IPFS (Helia) for decentralized storage
@@ -364,6 +420,10 @@ const App: React.FC = () => {
 //         console.error('[GotJunk] IPFS initialization failed:', error);
 //       }
 
+      // ============================================================================
+      // IMPORTANT: Load items AFTER auth completes (already correct!)
+      // getCurrentUserId() is now available for ownership filtering
+      // ============================================================================
       // Load first 50 items (pagination improves initial load time)
       // TODO: Implement infinite scroll to load more items on demand
       const allItems = await storage.getAllItems(50);
@@ -373,8 +433,19 @@ const App: React.FC = () => {
         const { latitude, longitude } = position.coords;
         setUserLocation({ latitude, longitude });
 
-        // Separate MY items from OTHER people's items
-        const myItems = allItems.filter(item => item.ownership === 'mine');
+        // ============================================================================
+        // FIREBASE AUTH PATTERN (cross-device ownership filtering)
+        // ============================================================================
+        // ✅ Compare userId with getCurrentUserId() for cross-device sync
+        // ❌ NEVER use item.ownership === 'mine' - it's device-specific!
+        // On Device B, items from Device A won't have ownership='mine'
+        // But they WILL have userId matching same Google account
+        // ============================================================================
+        const currentUid = getCurrentUserId();
+        const myItems = allItems.filter(item => {
+          // Match userId from Firestore with current auth UID
+          return item.userId && item.userId === currentUid;
+        });
 
         // TODO: Future feature - add owner filter toggle to exclude user's own items from browse feed
         // For now, show ALL items (including mine) for testing "Tinder for stuff" experience
@@ -395,7 +466,9 @@ const App: React.FC = () => {
 
         // BROWSE FEED: Show ALL nearby items (including mine) - "Tinder for stuff"
         // Include draft, browsing, and listed items for full "My Items on landing" experience
-        setBrowseFeed(nearby.filter(item =>
+        // EXCLUDE items reserved by other users (5-min cart timeout system)
+        const availableNearby = filterReservedItems(nearby);
+        setBrowseFeed(availableNearby.filter(item =>
           item.status === 'draft' || item.status === 'browsing' || item.status === 'listed'
         ));
         setCart(nearby.filter(item => item.status === 'in_cart'));
@@ -405,12 +478,16 @@ const App: React.FC = () => {
         console.error("Geolocation error or permission denied:", error);
 
         // Fallback: Load ALL items (no location filtering) for "Tinder for stuff" experience
-        const myItems = allItems.filter(item => item.ownership === 'mine');
+        // ✅ AUTH: Use userId comparison for cross-device ownership
+        const currentUid = getCurrentUserId();
+        const myItems = allItems.filter(item => item.userId && item.userId === currentUid);
         setMyDrafts(myItems.filter(item => item.status === 'draft'));
         setMyListed(myItems.filter(item => item.status === 'listed'));
 
         // Show all items (draft + browsing + listed) in browse feed even without location
-        setBrowseFeed(allItems.filter(item =>
+        // EXCLUDE items reserved by other users (5-min cart timeout system)
+        const availableItems = filterReservedItems(allItems);
+        setBrowseFeed(availableItems.filter(item =>
           item.status === 'draft' || item.status === 'browsing' || item.status === 'listed'
         ));
       }
@@ -425,6 +502,42 @@ const App: React.FC = () => {
       console.log('[GotJunk] Liberty disabled - resetting to Commerce tab');
     }
   }, [libertyEnabled, myItemsSection]);
+
+  // Cart Expiration Handler - Check for expired reservations every second
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const expiredItems = getExpiredCartItems(cart);
+
+      if (expiredItems.length > 0) {
+        console.log('[Cart] Found', expiredItems.length, 'expired cart items');
+
+        for (const item of expiredItems) {
+          // Clear reservation from Firestore (cross-device sync)
+          await syncReservationToFirestore(item.id, null);
+
+          // Update item status to browsing
+          await storage.updateItemStatus(item.id, 'browsing');
+
+          console.log('[Cart] Expired reservation for item:', item.id);
+        }
+
+        // Remove expired items from cart state
+        setCart(current => current.filter(item => !isReservationExpired(item)));
+
+        // Return expired items to browse feed
+        const returnedItems = expiredItems.map(item => ({
+          ...item,
+          status: 'browsing' as ItemStatus,
+          cartReservation: undefined
+        }));
+        setBrowseFeed(current => [...returnedItems, ...current]);
+
+        console.log('[Cart] Returned', expiredItems.length, 'items to browse feed');
+      }
+    }, 1000); // Check every second
+
+    return () => clearInterval(interval);
+  }, [cart]); // Re-run when cart changes
 
   // Reset map navigation when opening map or changing Liberty mode
   useEffect(() => {
@@ -723,12 +836,20 @@ const App: React.FC = () => {
         };
       }
 
+      // ============================================================================
+      // FIREBASE AUTH PATTERN (cross-device ownership)
+      // ============================================================================
+      // ✅ Set userId from getCurrentUserId() for cross-device sync
+      // ❌ NEVER hardcode ownership - it's device-specific, not user-specific
+      // Cross-device sync relies on: item.userId === getCurrentUserId()
+      // ============================================================================
       const newItem: CapturedItem = {
         id: `item-${Date.now()}`,
         blob,
         url,
         status: 'draft', // Photos go to myDrafts (ownership='mine', status='draft')
-        ownership: 'mine', // User's own items
+        ownership: 'mine', // Derived locally (always 'mine' for newly created items)
+        userId: getCurrentUserId() || undefined, // ✅ AUTH: Set from Firebase Auth for cross-device sync
         classification,
         price,
         originalPrice: defaultPrice,
@@ -893,15 +1014,33 @@ const App: React.FC = () => {
     setBrowseFeed(current => current.filter(i => i.id !== item.id));
 
     if (direction === 'right') {
-      // Swipe RIGHT = Add to cart
-      const cartItem: CapturedItem = { ...item, status: 'in_cart' };
+      // Swipe RIGHT = Add to cart with 5-min reservation
+      const reservation = createCartReservation(item.id);
+      const cartItem: CapturedItem = {
+        ...item,
+        status: 'in_cart',
+        cartReservation: reservation || undefined
+      };
+
       setCart(current => [cartItem, ...current]);
       await storage.updateItemStatus(item.id, 'in_cart');
+
+      // Sync reservation to Firestore (cross-device coordination)
+      if (reservation) {
+        await syncReservationToFirestore(item.id, reservation);
+        console.log('[Cart] Reserved item for 5 minutes:', item.id);
+      }
     } else {
       // Swipe LEFT = Skip (don't show again)
       const skippedItem: CapturedItem = { ...item, status: 'skipped' };
       setSkipped(current => [skippedItem, ...current]);
       await storage.updateItemStatus(item.id, 'skipped');
+      
+      // WSP M5: Auto-close message thread when item is skipped (DO NOT REMOVE)
+      messageStore.closeThread(
+        { type: 'item', itemId: item.id },
+        'Item skipped by user'
+      );
     }
   };
 
@@ -1198,6 +1337,11 @@ const App: React.FC = () => {
                     await storage.updateItemStatus(item.id, 'skipped');
                     setBrowseFeed(current => current.filter(i => i.id !== item.id));
                     setSkipped(current => [...current, { ...item, status: 'skipped' }]);
+                    // WSP M5: Auto-close message thread when item is skipped (DO NOT REMOVE)
+                    messageStore.closeThread(
+                      { type: 'item', itemId: item.id },
+                      'Item skipped from grid'
+                    );
                   }}
                   onBadgeClick={(item) => {
                     console.log('[Browse] Re-classify from grid:', item.id);
@@ -1207,6 +1351,8 @@ const App: React.FC = () => {
                     console.log('[Browse] Edit options from grid:', item.id);
                     setEditingOptionsItem(item);
                   }}
+                  onMessageBoard={openMessagePanelForItem}
+                  getUnreadCount={getUnreadMessageCount}
                 />
               </motion.div>
             ) : (
@@ -1388,6 +1534,8 @@ const App: React.FC = () => {
                   setEditingOptionsItem(item);
                 }
               }}
+              onMessageBoard={openMessagePanelForItem}
+              getUnreadCount={getUnreadMessageCount}
             />
 
             {/* Fullscreen Item Reviewer (triggered by double-tap) */}
@@ -1465,47 +1613,60 @@ const App: React.FC = () => {
                   // Can't edit options on other people's items
                   console.log('[GotJunk] Cannot edit cart items (not yours)');
                 }}
+                onMessageBoard={openMessagePanelForItem}
+                getUnreadCount={getUnreadMessageCount}
               />
             )}
 
             {/* Fullscreen Cart Item Reviewer (triggered by double-tap) */}
             <AnimatePresence>
               {reviewingCartItem && (
-                <ItemReviewer
-                  key={reviewingCartItem.id}
-                  item={reviewingCartItem}
-                  showForwardButton={true}  // Show > button for purchase
-                  onDecision={(item, decision) => {
-                    if (decision === 'keep') {
-                      // Right swipe in cart → Purchase confirmation
-                      console.log('[GotJunk] Opening purchase modal for item:', item.id);
-                      setPurchasingItem(item);
-                      // Don't advance queue yet - wait for purchase confirmation
-                    } else if (decision === 'delete') {
-                      // Left swipe in cart → Remove from cart
-                      setCart(prev => prev.filter(i => i.id !== item.id));
-                      storage.updateItemStatus(item.id, 'browsing');
-                      console.log('[GotJunk] Removed from cart:', item.id);
+                <>
+                  <ItemReviewer
+                    key={reviewingCartItem.id}
+                    item={reviewingCartItem}
+                    showForwardButton={true}  // Show > button for purchase
+                    onDecision={(item, decision) => {
+                      if (decision === 'keep') {
+                        // Right swipe in cart → Purchase confirmation
+                        console.log('[GotJunk] Opening purchase modal for item:', item.id);
+                        setPurchasingItem(item);
+                        // Don't advance queue yet - wait for purchase confirmation
+                      } else if (decision === 'delete') {
+                        // Left swipe in cart → Remove from cart
+                        setCart(prev => prev.filter(i => i.id !== item.id));
+                        storage.updateItemStatus(item.id, 'browsing');
+                        console.log('[GotJunk] Removed from cart:', item.id);
 
-                      // Show next item in queue
-                      if (cartReviewQueue.length > 0) {
-                        const [nextItem, ...rest] = cartReviewQueue;
-                        setReviewingCartItem(nextItem);
-                        setCartReviewQueue(rest);
-                      } else {
-                        // No more items - close fullscreen
-                        setReviewingCartItem(null);
-                        setCartReviewQueue([]);
+                        // Show next item in queue
+                        if (cartReviewQueue.length > 0) {
+                          const [nextItem, ...rest] = cartReviewQueue;
+                          setReviewingCartItem(nextItem);
+                          setCartReviewQueue(rest);
+                        } else {
+                          // No more items - close fullscreen
+                          setReviewingCartItem(null);
+                          setCartReviewQueue([]);
+                        }
                       }
-                    }
-                  }}
-                  onClose={() => {
-                    // Swipe up or double-tap → close fullscreen without making a decision
-                    setReviewingCartItem(null);
-                    setCartReviewQueue([]);
-                  }}
-                  onMessageBoard={openMessagePanelForItem}
-                />
+                    }}
+                    onClose={() => {
+                      // Swipe up or double-tap → close fullscreen without making a decision
+                      setReviewingCartItem(null);
+                      setCartReviewQueue([]);
+                    }}
+                    onMessageBoard={openMessagePanelForItem}
+                  />
+
+                  {/* Cart Countdown Timer (5-min reservation) */}
+                  <CartCountdown
+                    item={reviewingCartItem}
+                    onExpired={() => {
+                      console.log('[Cart] Reservation expired for item:', reviewingCartItem.id);
+                      // Expiration handled by global expiration handler (see useEffect below)
+                    }}
+                  />
+                </>
               )}
             </AnimatePresence>
 
@@ -1720,6 +1881,7 @@ const App: React.FC = () => {
             setLibertyEnabled(true);
             alert('🗽 Liberty Alert Unlocked via Map SOS!');
           }}
+          onLibertyMessageBoard={openMessagePanelForLiberty}
         />
       )}
 
@@ -1770,6 +1932,12 @@ const App: React.FC = () => {
             setCart(prev => prev.filter(i => i.id !== purchasingItem.id));
             await storage.deleteItem(purchasingItem.id);
             console.log('[GotJunk] Item purchased and removed:', purchasingItem.id);
+            
+            // WSP M5: Auto-close message thread when item is purchased (DO NOT REMOVE)
+            messageStore.closeThread(
+              { type: 'item', itemId: purchasingItem.id },
+              'Item purchased - transaction complete'
+            );
           }
 
           // Close purchase modal
