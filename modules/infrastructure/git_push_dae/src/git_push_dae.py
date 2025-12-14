@@ -371,6 +371,8 @@ class GitPushDAE:
                 ['git', 'status', '--porcelain=v1'],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 check=True,
                 cwd=str(self.repo_root),
             )
@@ -699,10 +701,12 @@ class GitPushDAE:
                 ['git', 'diff', 'HEAD'],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=10,
                 cwd=str(self.repo_root),
             )
-            diff_content = diff_result.stdout[:5000]  # Limit for token budget
+            diff_content = (diff_result.stdout or "")[:5000]  # Limit for token budget
 
             # Construct Qwen prompt
             prompt = f"""Analyze this git diff for code quality (score 0.0-1.0):
@@ -720,7 +724,7 @@ Assess based on:
 Return ONLY a decimal score (e.g., 0.75), no explanation."""
 
             # Query Qwen
-            response = self.qwen.generate(prompt, max_tokens=50, temperature=0.3)
+            response = self.qwen.generate_response(prompt, max_tokens=50, temperature=0.3)
 
             # Extract score from response
             import re
@@ -768,6 +772,8 @@ Return ONLY a decimal score (e.g., 0.75), no explanation."""
                 ['git', 'status', '--porcelain=v1'],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 check=True,
                 cwd=str(self.repo_root),
             )

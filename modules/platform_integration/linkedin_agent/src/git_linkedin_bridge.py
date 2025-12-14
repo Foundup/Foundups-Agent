@@ -221,7 +221,15 @@ class GitLinkedInBridge:
                 '--no-merges'
             ]
             
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=True,
+                cwd=str(self.repo_root),
+            )
             commits = []
             
             for line in result.stdout.strip().split('\n'):
@@ -248,7 +256,15 @@ class GitLinkedInBridge:
         """Get list of files changed in a commit"""
         try:
             cmd = ['git', 'diff-tree', '--no-commit-id', '--name-only', '-r', commit_hash]
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True, cwd=str(self.repo_root))
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=True,
+                cwd=str(self.repo_root),
+            )
             return [f for f in result.stdout.strip().split('\n') if f]
         except:
             return []
@@ -404,6 +420,8 @@ class GitLinkedInBridge:
                 ["git", "diff", "--cached", "--shortstat"],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 check=False,
                 cwd=str(self.repo_root),
             )
@@ -711,8 +729,15 @@ class GitLinkedInBridge:
             from datetime import datetime
 
             # Check git status
-            status = subprocess.run(['git', 'status', '--porcelain=v1'],
-                                  capture_output=True, text=True, check=True, cwd=str(self.repo_root))
+            status = subprocess.run(
+                ['git', 'status', '--porcelain=v1'],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=True,
+                cwd=str(self.repo_root),
+            )
 
             if not status.stdout.strip():
                 print("[OK] No changes to commit")
@@ -748,8 +773,15 @@ class GitLinkedInBridge:
                 for path in excluded_paths:
                     subprocess.run(['git', 'reset', '--', path], check=False, cwd=str(self.repo_root))
 
-            staged_status = subprocess.run(['git', 'status', '--porcelain=v1'],
-                                          capture_output=True, text=True, check=True, cwd=str(self.repo_root))
+            staged_status = subprocess.run(
+                ['git', 'status', '--porcelain=v1'],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=True,
+                cwd=str(self.repo_root),
+            )
             staged_lines = [
                 ln for ln in staged_status.stdout.splitlines()
                 if ln and len(ln) >= 2 and ln[:2] != "??" and ln[0] != " "
@@ -790,8 +822,15 @@ class GitLinkedInBridge:
             subprocess.run(commit_cmd, check=True, cwd=str(self.repo_root), env=git_env)
 
             # Get commit hash
-            hash_result = subprocess.run(['git', 'rev-parse', 'HEAD'],
-                                       capture_output=True, text=True, check=True, cwd=str(self.repo_root))
+            hash_result = subprocess.run(
+                ['git', 'rev-parse', 'HEAD'],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=True,
+                cwd=str(self.repo_root),
+            )
             commit_hash = hash_result.stdout.strip()
 
             def _push_current_branch(remote: str = "origin") -> bool:
@@ -800,6 +839,8 @@ class GitLinkedInBridge:
                     ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
                     capture_output=True,
                     text=True,
+                    encoding="utf-8",
+                    errors="replace",
                     check=True,
                     cwd=str(self.repo_root),
                 )
@@ -809,6 +850,8 @@ class GitLinkedInBridge:
                     ['git', 'push'],
                     capture_output=True,
                     text=True,
+                    encoding="utf-8",
+                    errors="replace",
                     cwd=str(self.repo_root),
                 )
                 if push_result.returncode == 0:
@@ -821,6 +864,8 @@ class GitLinkedInBridge:
                         ['git', 'push', '--set-upstream', remote, branch],
                         capture_output=True,
                         text=True,
+                        encoding="utf-8",
+                        errors="replace",
                         cwd=str(self.repo_root),
                     )
                     if upstream_result.returncode == 0:
