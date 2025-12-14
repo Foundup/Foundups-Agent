@@ -307,10 +307,21 @@ Browser overlap between comment engagement and vision stream detection was causi
 **Blocker**: None
 **Next**: User approval
 
-### Sprint 3.2: Vision Integration
-**Status**: Blocked by 3.1
-**Blocker**: Configuration must exist first
-**Next**: Implement after 3.1 complete
+### Sprint 3.2: Vision Integration ✅ COMPLETE
+**Status**: Implemented (2025-12-14)
+**Blocker**: None
+**Implementation**: [vision_stream_checker.py:49-136](../modules/platform_integration/stream_resolver/src/vision_stream_checker.py#L49-L136)
+
+**Changes Made**:
+1. ✅ Replaced direct Chrome connection with BrowserManager
+2. ✅ Added STREAM_BROWSER_TYPE env variable (edge|chrome)
+3. ✅ Implemented fallback chain: Edge → Chrome :9223 → Chrome :9222 → HTTP scraping
+4. ✅ Updated .env.example with browser configuration
+
+**Browser Separation Achieved**:
+- Vision detection: Uses Edge browser (default)
+- Comment engagement: Uses Chrome :9222
+- No browser overlap = no session hijacking!
 
 ### Sprint 3.3: Comment Logging
 **Status**: Independent (can run parallel to 3.2)

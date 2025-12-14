@@ -764,14 +764,26 @@ class GitLinkedInBridge:
                 'holo_index/holo_index/output',
             ]
 
-            try:
-                add_cmd = ['git', 'add', '-A', '--', '.'] + [f':(exclude){p}' for p in excluded_paths]
-                subprocess.run(add_cmd, check=True, cwd=str(self.repo_root))
-            except subprocess.CalledProcessError:
-                # Fallback for older git versions that don't support pathspec excludes.
-                subprocess.run(['git', 'add', '-A'], check=True, cwd=str(self.repo_root))
-                for path in excluded_paths:
-                    subprocess.run(['git', 'reset', '--', path], check=False, cwd=str(self.repo_root))
+            add_cmd = ['git', 'add', '-A', '--', '.'] + [f':(exclude){p}' for p in excluded_paths]
+            add_result = subprocess.run(
+                add_cmd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                cwd=str(self.repo_root),
+            )
+            add_failure_detail: Optional[str] = None
+            if add_result.returncode != 0:
+                combined_raw = "\n".join(part for part in [add_result.stderr, add_result.stdout] if part).strip()
+                combined = combined_raw.lower()
+
+                # Windows Git can return non-zero for line-ending warnings; treat as non-fatal.
+                allow_ignored_advice = "ignored by one of your .gitignore files" in combined
+                only_warnings = "warning:" in combined and "fatal:" not in combined and "error:" not in combined
+
+                if not (allow_ignored_advice or only_warnings):
+                    add_failure_detail = combined_raw
 
             staged_status = subprocess.run(
                 ['git', 'status', '--porcelain=v1'],
@@ -789,6 +801,8 @@ class GitLinkedInBridge:
             staged_file_count = len(staged_lines)
 
             if staged_file_count == 0:
+                if add_failure_detail:
+                    print(f"[WARN] git add returned {add_result.returncode}: {add_failure_detail}")
                 print("[OK] No staged changes to commit (only excluded paths changed?)")
                 return False
 
@@ -832,6 +846,137 @@ class GitLinkedInBridge:
                 cwd=str(self.repo_root),
             )
             commit_hash = hash_result.stdout.strip()
+            pr_url: Optional[str] = None
+            pr_was_required = False
+            pr_branch: Optional[str] = None
+
+            def _is_pr_required_error(output: str) -> bool:
+                """Detect GitHub rulesets that reject direct pushes and require PRs."""
+                lower = output.lower()
+                if "gh013" in lower and "repository rule violations" in lower:
+                    return True
+                if "changes must be made through a pull request" in lower:
+                    return True
+                if "push declined due to repository rule violations" in lower:
+                    return True
+                return False
+
+            def _create_pr_for_head(remote: str, push_error: str) -> bool:
+                """Push HEAD to an auto branch and open a PR when direct pushes are blocked."""
+                nonlocal pr_url, pr_was_required, pr_branch
+                pr_was_required = True
+
+                pr_branch_prefix = os.getenv("GIT_PUSH_PR_BRANCH_PREFIX", "auto-pr")
+                pr_branch = f"{pr_branch_prefix}/{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+                push_pr_result = subprocess.run(
+                    ['git', 'push', remote, f'HEAD:refs/heads/{pr_branch}'],
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    cwd=str(self.repo_root),
+                )
+                if push_pr_result.returncode != 0:
+                    combined = "\n".join(
+                        part for part in [push_pr_result.stderr, push_pr_result.stdout] if part
+                    ).strip()
+                    print(f"[WARN] Failed to push PR branch {pr_branch}: {combined}")
+                    return False
+
+                base_branch = os.getenv("GIT_PUSH_PR_BASE_BRANCH", "main")
+                pr_title = f"{commit_msg}"
+                pr_body = (
+                    "Automated PR created by GitPushDAE because direct pushes are blocked by repository rules.\n\n"
+                    f"Commit: {commit_hash}\n"
+                    f"Base: {base_branch}\n\n"
+                    "Push error:\n"
+                    f"{push_error}\n"
+                )
+
+                token = os.getenv("GITHUB_TOKEN")
+                if not token:
+                    # Prefer GitHub CLI if installed/authenticated (no env token needed).
+                    gh_result = subprocess.run(
+                        [
+                            "gh",
+                            "pr",
+                            "create",
+                            "--title",
+                            pr_title,
+                            "--body",
+                            pr_body,
+                            "--head",
+                            pr_branch,
+                            "--base",
+                            base_branch,
+                        ],
+                        capture_output=True,
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace",
+                        cwd=str(self.repo_root),
+                    )
+                    if gh_result.returncode == 0:
+                        import re
+
+                        match = re.search(r"https?://\\S+", (gh_result.stdout or ""))
+                        if match:
+                            pr_url = match.group(0).strip()
+                            print(f"[OK] Created PR (gh): {pr_url}")
+                            return True
+
+                    # If PR creation failed (e.g. PR already exists), try to locate an open PR for this head branch.
+                    gh_lookup = subprocess.run(
+                        [
+                            "gh",
+                            "pr",
+                            "list",
+                            "--head",
+                            pr_branch,
+                            "--state",
+                            "open",
+                            "--json",
+                            "url",
+                            "--jq",
+                            ".[0].url",
+                        ],
+                        capture_output=True,
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace",
+                        cwd=str(self.repo_root),
+                    )
+                    if gh_lookup.returncode == 0:
+                        candidate = (gh_lookup.stdout or "").strip()
+                        if candidate:
+                            pr_url = candidate
+                            print(f"[OK] Found existing PR (gh): {pr_url}")
+                            return True
+
+                    print(f"[OK] Pushed {pr_branch}; create a PR manually (no GITHUB_TOKEN and gh PR create failed).")
+                    return True
+
+                try:
+                    import asyncio
+                    from modules.platform_integration.github_integration.src.github_api_client import GitHubAPIClient
+
+                    async def _create() -> str:
+                        async with GitHubAPIClient(token=token) as client:
+                            pr = await client.create_pull_request(
+                                title=pr_title,
+                                body=pr_body,
+                                head_branch=pr_branch,
+                                base_branch=base_branch,
+                            )
+                            return pr.url
+
+                    pr_url = asyncio.run(_create())
+                    print(f"[OK] Created PR: {pr_url}")
+                    return True
+                except Exception as e:
+                    print(f"[WARN] Pushed {pr_branch} but failed to create PR: {e}")
+                    print("[HINT] You can open a PR manually on GitHub using the pushed branch.")
+                    return True
 
             def _push_current_branch(remote: str = "origin") -> bool:
                 """Push current branch; auto-set upstream when missing."""
@@ -875,9 +1020,13 @@ class GitLinkedInBridge:
                     upstream_combined = "\n".join(
                         part for part in [upstream_result.stderr, upstream_result.stdout] if part
                     ).strip()
+                    if _is_pr_required_error(upstream_combined):
+                        return _create_pr_for_head(remote, upstream_combined)
                     print(f"[U+26A0]️  Git push failed after setting upstream: {upstream_combined}")
                     return False
 
+                if _is_pr_required_error(combined):
+                    return _create_pr_for_head(remote, combined)
                 print(f"[U+26A0]️  Git push failed: {combined}")
                 return False
 
@@ -887,6 +1036,18 @@ class GitLinkedInBridge:
                 return False
 
             print(f"[OK] Successfully pushed to git! (commit: {commit_hash[:10]})")
+            self.last_push_details = {
+                "commit_hash": commit_hash,
+                "pr_url": pr_url,
+                "pr_branch": pr_branch,
+                "pr_was_required": pr_was_required,
+                "push_mode": "pull_request" if pr_was_required else "direct",
+                "timestamp": datetime.now().isoformat(),
+            }
+
+            if pr_was_required and not pr_url:
+                print("[NOTE] PR-required push succeeded, but no PR was created; skipping social media posting.")
+                return True
 
             # Skip posting if this commit was already posted to both platforms.
             if commit_hash in self.posted_commits and commit_hash in self.x_posted_commits:
@@ -906,6 +1067,12 @@ class GitLinkedInBridge:
             linkedin_content = self.generate_linkedin_content([commit_info])
             x_content = self.generate_x_content(commit_msg, staged_file_count)
 
+            if pr_url:
+                linkedin_content = f"{linkedin_content}\n\nPR: {pr_url}"
+                pr_suffix = f"\n\nPR: {pr_url}"
+                if len(x_content) + len(pr_suffix) <= 280:
+                    x_content = f"{x_content}{pr_suffix}"
+
             # Show previews
             print(f"\n[U+1F4F1] LinkedIn Post Preview:\n{'-'*40}\n{linkedin_content}\n{'-'*40}")
             print(f"\n[BIRD] X/Twitter Post Preview:\n{'-'*40}\n{x_content}\n{'-'*40}")
@@ -922,7 +1089,7 @@ class GitLinkedInBridge:
                     print("\n[U+1F4E4] Non-interactive mode - auto-posting...")
 
             if confirm != 'y':
-                print("⏭️  Skipped social media posting")
+                print("[NOTE] Skipped social media posting")
                 return True
 
             # Post via Unified Interface (auto-triggers both LinkedIn AND X)

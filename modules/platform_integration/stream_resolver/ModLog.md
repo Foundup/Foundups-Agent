@@ -12,6 +12,43 @@ This log tracks changes specific to the **stream_resolver** module in the **plat
 
 ## MODLOG ENTRIES
 
+### 2025-12-14 - Sprint 3.2: Browser Separation - Edge Integration (WSP 77)
+
+**By:** 0102
+**WSP References:** WSP 50 (Pre-Action Verification), WSP 77 (Multi-tier Vision), WSP 84 (Reuse Existing)
+
+**Context:**
+Vision stream detection was hardcoded to Chrome, causing browser hijacking when comment engagement needed YouTube Studio access simultaneously.
+
+**Changes:**
+- **vision_stream_checker.py**: Integrated BrowserManager for Edge/Chrome browser selection (lines 49-136)
+- Replaced direct `webdriver.Chrome()` connection with BrowserManager architecture
+- Added `STREAM_BROWSER_TYPE` env variable (edge|chrome) for browser selection
+- Implemented intelligent fallback chain: Edge → Chrome :9223 → Chrome :9222 → HTTP scraping
+- Updated .env.example with browser separation configuration
+
+**Architecture:** Browser Separation (Option 2A - Sprint 3 Design)
+- **Vision Detection**: Edge browser (separate instance, no Studio conflict)
+- **Comment Engagement**: Chrome :9222 (exclusive YouTube Studio access)
+- **Result**: Zero browser overlap, no session hijacking
+
+**Configuration** (.env.example):
+```bash
+STREAM_BROWSER_TYPE=edge          # Browser for vision detection (default)
+STREAM_CHROME_PORT=9223           # Port if using Chrome for vision
+STREAM_VISION_DISABLED=true       # Keep disabled until browser separation tested
+```
+
+**Validation:**
+- Edge browser tested and verified working with YouTube Studio (UCfHM9Fw9HD-NwiS0seD_oIA)
+- BrowserManager successfully creates Edge instances with persistent auth
+- DOM selectors identical between Edge and Chrome (ytcp-comment-thread)
+
+**Impact:**
+Can now safely enable vision detection without Chrome session conflicts. Edge for vision, Chrome for comments = parallel execution with zero browser hijacking.
+
+---
+
 ### 2025-12-13 - Fix: Stale .pyc Cache Prevented STREAM_VISION_DISABLED Guard
 
 **By:** 0102

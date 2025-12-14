@@ -44,6 +44,7 @@ wheels/
 *.egg
 
 # Virtual Environment
+.venv/
 venv/
 ENV/
 env/
@@ -159,6 +160,8 @@ local_settings.py
 
 # Database
 *.db
+*.db-wal
+*.db-shm
 *.sqlite3
 
 # Backup files

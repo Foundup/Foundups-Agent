@@ -47,22 +47,91 @@ class VisionStreamChecker:
         self._check_vision_availability()
     
     def _check_vision_availability(self):
-        """Check if Chrome and UI-TARS are available."""
+        """
+        Check if browser and UI-TARS are available.
+
+        Sprint 3.2: Uses BrowserManager for Edge/Chrome browser selection.
+        Fallback chain: Edge → Chrome :9223 → Chrome :9222 → Scraping
+        """
         try:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
-            
-            # Try to connect to existing Chrome
+            from modules.infrastructure.foundups_selenium.src.browser_manager import get_browser_manager
+
+            # Get browser type preference (Edge or Chrome)
+            browser_type = os.getenv("STREAM_BROWSER_TYPE", "edge").lower()
             stream_chrome_port = int(os.getenv("STREAM_CHROME_PORT", os.getenv("FOUNDUPS_CHROME_PORT", "9222")))
-            chrome_options = Options()
-            chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{stream_chrome_port}")
-            
-            self.driver = webdriver.Chrome(options=chrome_options)
-            self.vision_available = True
-            logger.info(f"[VISION] Chrome connected on port {stream_chrome_port} - vision mode available")
-            
+
+            browser_manager = get_browser_manager()
+
+            # Try primary browser type
+            try:
+                if browser_type == "edge":
+                    logger.info(f"[VISION] Attempting Edge browser for vision detection...")
+                    self.driver = browser_manager.get_browser(
+                        browser_type='edge',
+                        profile_name='vision_stream_detection',
+                        options={}
+                    )
+                    self.vision_available = True
+                    logger.info(f"[VISION] ✅ Edge browser connected - vision mode available (browser separation active)")
+                    return
+
+                elif browser_type == "chrome":
+                    logger.info(f"[VISION] Attempting Chrome browser on port {stream_chrome_port}...")
+                    # For Chrome, use debug port if different from comment engagement
+                    if stream_chrome_port != 9222:
+                        logger.info(f"[VISION] Using Chrome on separate port :{ stream_chrome_port}")
+
+                    from selenium import webdriver
+                    from selenium.webdriver.chrome.options import Options
+
+                    chrome_options = Options()
+                    chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{stream_chrome_port}")
+
+                    self.driver = webdriver.Chrome(options=chrome_options)
+                    self.vision_available = True
+                    logger.info(f"[VISION] ✅ Chrome connected on port {stream_chrome_port} - vision mode available")
+                    return
+
+            except Exception as e:
+                logger.warning(f"[VISION] {browser_type.title()} browser failed: {e}")
+
+                # Fallback: Try Edge if Chrome was primary
+                if browser_type == "chrome":
+                    try:
+                        logger.info(f"[VISION] Fallback: Attempting Edge browser...")
+                        self.driver = browser_manager.get_browser(
+                            browser_type='edge',
+                            profile_name='vision_stream_detection',
+                            options={}
+                        )
+                        self.vision_available = True
+                        logger.info(f"[VISION] ✅ Edge browser connected (fallback) - vision mode available")
+                        return
+                    except Exception as edge_err:
+                        logger.warning(f"[VISION] Edge fallback failed: {edge_err}")
+
+                # Final fallback: Try Chrome on default port
+                if browser_type == "edge":
+                    try:
+                        logger.info(f"[VISION] Fallback: Attempting Chrome on port 9222...")
+                        from selenium import webdriver
+                        from selenium.webdriver.chrome.options import Options
+
+                        chrome_options = Options()
+                        chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:9222")
+
+                        self.driver = webdriver.Chrome(options=chrome_options)
+                        self.vision_available = True
+                        logger.info(f"[VISION] ✅ Chrome connected on port 9222 (fallback) - vision mode available")
+                        return
+                    except Exception as chrome_err:
+                        logger.warning(f"[VISION] Chrome fallback failed: {chrome_err}")
+
+            # All fallbacks exhausted
+            raise Exception("All browser options exhausted")
+
         except Exception as e:
-            logger.info(f"[VISION] Chrome not available ({e}) - will use scraping fallback")
+            logger.info(f"[VISION] Browser not available ({e}) - will use scraping fallback")
             self.vision_available = False
             self.driver = None
     
