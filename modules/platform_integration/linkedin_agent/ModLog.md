@@ -2,6 +2,16 @@
 
 ## Latest Changes
 
+### V048 - Autonomous PR Auto-Merge (012 Observer Mode)
+**Date**: 2025-12-14
+**Changes**: When GH013 rules require a PR, `push_and_post()` now attempts to merge the created PR automatically via `gh pr merge` when running in `auto_mode` (GitPushDAE). If immediate merge is blocked (checks/reviews), it falls back to enabling auto-merge (`--auto`).
+**Impact**: GitPushDAE can complete the full PR-only publish loop without any 012/manual steps; reduces "push blocked" stalls.
+**WSP**: WSP 91 (DAEMON autonomy), WSP 50 (Pre-action verification), WSP 3 (Modular build)
+**Details**:
+- Default behavior: auto-merge is enabled when `auto_mode=True` (GitPushDAE). Override with `GIT_PUSH_PR_AUTO_MERGE=true|false`.
+- Merge method configurable via `GIT_PUSH_PR_MERGE_METHOD` (`merge` default, `squash`, `rebase`).
+- LinkedIn browser acquisition now passes a `dae_name` into `BrowserManager.get_browser(...)` to participate in cross-DAE browser coordination (prevents session hijacks when allocation tracking is enabled).
+
 ### V047 - PR Fallback When Direct Push Is Blocked (GH013)
 **Date**: 2025-12-14
 **Changes**: `push_and_post()` now detects GitHub ruleset errors (GH013 / "Changes must be made through a pull request") and falls back to pushing `HEAD` to an `auto-pr/<timestamp>` branch and opening a PR (when `GITHUB_TOKEN` is available).

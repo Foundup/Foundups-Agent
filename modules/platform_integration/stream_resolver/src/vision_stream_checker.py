@@ -69,7 +69,8 @@ class VisionStreamChecker:
                     self.driver = browser_manager.get_browser(
                         browser_type='edge',
                         profile_name='vision_stream_detection',
-                        options={}
+                        options={},
+                        dae_name='youtube_vision_dae',
                     )
                     self.vision_available = True
                     logger.info(f"[VISION] ✅ Edge browser connected - vision mode available (browser separation active)")
@@ -102,7 +103,8 @@ class VisionStreamChecker:
                         self.driver = browser_manager.get_browser(
                             browser_type='edge',
                             profile_name='vision_stream_detection',
-                            options={}
+                            options={},
+                            dae_name='youtube_vision_dae',
                         )
                         self.vision_available = True
                         logger.info(f"[VISION] ✅ Edge browser connected (fallback) - vision mode available")

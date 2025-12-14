@@ -18,7 +18,7 @@ Fully autonomous git push daemon that monitors code changes and publishes develo
 - Filters volatile paths (e.g. `node_modules/`, telemetry output, Holo output history) out of the decision context so runtime churn doesn't trigger pushes.
 - Uses `FOUNDUPS_SKIP_POST_COMMIT=1` during automated commits so local git hooks can skip duplicate social posting.
 - Relies on `GitLinkedInBridge.push_and_post()` to push before posting and to auto-set upstream when missing.
-- If the remote enforces PR-only changes (GH013), the git bridge pushes `HEAD` to an `auto-pr/<timestamp>` branch and opens a PR (prefers `GITHUB_TOKEN`; falls back to GitHub CLI `gh` if authenticated).
+- If the remote enforces PR-only changes (GH013), the git bridge pushes `HEAD` to an `auto-pr/<timestamp>` branch, opens a PR (prefers `GITHUB_TOKEN`; falls back to GitHub CLI `gh` if authenticated), and (in `auto_mode`) attempts to merge it via `gh pr merge` (012 observer).
 
 ## Usage Examples
 ```python

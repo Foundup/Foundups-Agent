@@ -893,6 +893,66 @@ class GitLinkedInBridge:
                     f"{push_error}\n"
                 )
 
+                def _auto_merge_pr(pr_url_to_merge: str) -> None:
+                    """Attempt to merge PR automatically when running in autonomous mode (012 is observer)."""
+                    # Default: auto-merge is enabled when running in auto_mode (GitPushDAE).
+                    env_setting = os.getenv("GIT_PUSH_PR_AUTO_MERGE")
+                    if env_setting is None or env_setting.strip() == "":
+                        enabled = bool(getattr(self, "auto_mode", False))
+                    else:
+                        enabled = env_setting.strip().lower() in ("1", "true", "yes", "y", "on")
+
+                    if not enabled:
+                        return
+
+                    merge_method = os.getenv("GIT_PUSH_PR_MERGE_METHOD", "merge").strip().lower()
+                    merge_flag = {
+                        "merge": "--merge",
+                        "squash": "--squash",
+                        "rebase": "--rebase",
+                    }.get(merge_method, "--merge")
+
+                    def run_merge(args: list[str], *, input_text: str | None = None) -> subprocess.CompletedProcess:
+                        return subprocess.run(
+                            args,
+                            capture_output=True,
+                            text=True,
+                            encoding="utf-8",
+                            errors="replace",
+                            input=input_text,
+                            cwd=str(self.repo_root),
+                        )
+
+                    try:
+                        # First: attempt immediate merge (requires confirmation on some gh builds).
+                        immediate = run_merge(
+                            ["gh", "pr", "merge", pr_url_to_merge, merge_flag, "--delete-branch"],
+                            input_text="y\n",
+                        )
+                        if immediate.returncode == 0:
+                            print(f"[OK] PR merged (gh): {pr_url_to_merge}")
+                            return
+
+                        combined = "\n".join(
+                            part for part in [immediate.stderr, immediate.stdout] if part
+                        ).strip()
+
+                        # Second: enable auto-merge (waits for required checks/reviews).
+                        auto = run_merge(
+                            ["gh", "pr", "merge", pr_url_to_merge, merge_flag, "--delete-branch", "--auto"],
+                            input_text="y\n",
+                        )
+                        if auto.returncode == 0:
+                            print(f"[OK] PR queued for auto-merge (gh): {pr_url_to_merge}")
+                            return
+
+                        auto_combined = "\n".join(part for part in [auto.stderr, auto.stdout] if part).strip()
+                        print(f"[WARN] PR created but could not be merged automatically: {combined or auto_combined}")
+                    except FileNotFoundError:
+                        print("[WARN] gh CLI not found; cannot auto-merge PR.")
+                    except Exception as e:
+                        print(f"[WARN] Auto-merge attempt failed: {e}")
+
                 token = os.getenv("GITHUB_TOKEN")
                 if not token:
                     # Prefer GitHub CLI if installed/authenticated (no env token needed).
@@ -923,35 +983,38 @@ class GitLinkedInBridge:
                         if match:
                             pr_url = match.group(0).strip()
                             print(f"[OK] Created PR (gh): {pr_url}")
-                            return True
 
                     # If PR creation failed (e.g. PR already exists), try to locate an open PR for this head branch.
-                    gh_lookup = subprocess.run(
-                        [
-                            "gh",
-                            "pr",
-                            "list",
-                            "--head",
-                            pr_branch,
-                            "--state",
-                            "open",
-                            "--json",
-                            "url",
-                            "--jq",
-                            ".[0].url",
-                        ],
-                        capture_output=True,
-                        text=True,
-                        encoding="utf-8",
-                        errors="replace",
-                        cwd=str(self.repo_root),
-                    )
-                    if gh_lookup.returncode == 0:
-                        candidate = (gh_lookup.stdout or "").strip()
-                        if candidate:
-                            pr_url = candidate
-                            print(f"[OK] Found existing PR (gh): {pr_url}")
-                            return True
+                    if not pr_url:
+                        gh_lookup = subprocess.run(
+                            [
+                                "gh",
+                                "pr",
+                                "list",
+                                "--head",
+                                pr_branch,
+                                "--state",
+                                "open",
+                                "--json",
+                                "url",
+                                "--jq",
+                                ".[0].url",
+                            ],
+                            capture_output=True,
+                            text=True,
+                            encoding="utf-8",
+                            errors="replace",
+                            cwd=str(self.repo_root),
+                        )
+                        if gh_lookup.returncode == 0:
+                            candidate = (gh_lookup.stdout or "").strip()
+                            if candidate:
+                                pr_url = candidate
+                                print(f"[OK] Found existing PR (gh): {pr_url}")
+
+                    if pr_url:
+                        _auto_merge_pr(pr_url)
+                        return True
 
                     print(f"[OK] Pushed {pr_branch}; create a PR manually (no GITHUB_TOKEN and gh PR create failed).")
                     return True
@@ -972,11 +1035,13 @@ class GitLinkedInBridge:
 
                     pr_url = asyncio.run(_create())
                     print(f"[OK] Created PR: {pr_url}")
-                    return True
                 except Exception as e:
                     print(f"[WARN] Pushed {pr_branch} but failed to create PR: {e}")
                     print("[HINT] You can open a PR manually on GitHub using the pushed branch.")
                     return True
+                if pr_url:
+                    _auto_merge_pr(pr_url)
+                return True
 
             def _push_current_branch(remote: str = "origin") -> bool:
                 """Push current branch; auto-set upstream when missing."""

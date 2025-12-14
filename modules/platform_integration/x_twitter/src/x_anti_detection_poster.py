@@ -241,34 +241,18 @@ class AntiDetectionX:
     def setup_driver(self, use_existing_session=True):
         """Setup browser with anti-detection measures - Edge for FoundUps, Chrome for GeozeAi"""
 
-        # PRIORITY 1: Try to connect to existing Chrome with debugging port 9222
-        # This reuses a browser window you opened manually or via start_chrome_for_selenium.bat
-        try:
-            from selenium.webdriver.chrome.options import Options
-            chrome_options = Options()
-            chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+        # IMPORTANT: Do NOT attach to the shared Chrome :9222 session.
+        # That port is reserved for YouTube Studio engagement and can be hijacked by other DAEs.
+        # Use BrowserManager-managed profiles for X to keep sessions isolated.
 
-            print("[INFO] [U+1F50C] Attempting to connect to existing Chrome on port 9222...")
-            self.driver = webdriver.Chrome(options=chrome_options)
-            print("[SUCCESS] [OK] Connected to existing Chrome browser!")
-            print("[INFO] [TARGET] Reusing browser window - no new window opened")
-            print("[TIP] [IDEA] All tabs in this browser are available to Selenium")
-            return self.driver
-        except Exception as e:
-            print(f"[INFO] [U+26A0]️ Could not connect to existing Chrome on port 9222: {str(e)[:100]}")
-            print("[TIP] [IDEA] To reuse existing browser:")
-            print("[TIP]    1. Run: start_chrome_for_selenium.bat")
-            print("[TIP]    2. Login to X manually if needed")
-            print("[TIP]    3. Run this script again - it will reuse that window")
-            print("[INFO] [REFRESH] Falling back to browser manager...")
-
-        # PRIORITY 2: Try to use browser manager for reusing existing windows
+        # PRIORITY 1: Use browser manager for reusing existing windows
         try:
             from modules.infrastructure.foundups_selenium.src.browser_manager import get_browser_manager
             browser_manager = get_browser_manager()
 
             # Determine if we're using FoundUps or GeozeAi account
             use_foundups = self.username == os.getenv('X_Acc2', 'Foundups')
+            dae_name = "x_dae_foundups" if use_foundups else "x_dae_move2japan"
 
             if use_foundups:
                 # Use Chrome for FoundUps (better anti-detection + Gemini Vision support)
@@ -276,7 +260,8 @@ class AntiDetectionX:
                 self.driver = browser_manager.get_browser(
                     browser_type='chrome',
                     profile_name='x_foundups',
-                    options={'disable_web_security': True}
+                    options={'disable_web_security': True},
+                    dae_name=dae_name,
                 )
             else:
                 # Use Chrome for Move2Japan/GeozeAi
@@ -284,7 +269,8 @@ class AntiDetectionX:
                 self.driver = browser_manager.get_browser(
                     browser_type='chrome',
                     profile_name='x_move2japan',
-                    options={'disable_web_security': True}
+                    options={'disable_web_security': True},
+                    dae_name=dae_name,
                 )
 
             print("[INFO] Using managed browser with anti-detection measures...")

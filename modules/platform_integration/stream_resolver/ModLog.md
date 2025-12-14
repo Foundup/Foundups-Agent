@@ -12,6 +12,20 @@ This log tracks changes specific to the **stream_resolver** module in the **plat
 
 ## MODLOG ENTRIES
 
+### 2025-12-14 - Guard: Declare Vision Browser Ownership (BrowserManager dae_name)
+
+**By:** 0102
+**WSP References:** WSP 77 (Agent Coordination), WSP 50 (Pre-Action Verification), WSP 3 (Modular build)
+
+**Context:**
+As more DAEs reuse BrowserManager, we need explicit ownership to prevent cross-DAE session hijacking.
+
+**Changes:**
+- `vision_stream_checker.py`: Passes `dae_name='youtube_vision_dae'` when requesting the Edge `vision_stream_detection` profile.
+
+**Impact:**
+Enables future allocation-aware coordination while remaining backwards compatible (allocation tracking only activates when `dae_name` is provided).
+
 ### 2025-12-14 - Sprint 3.2: Browser Separation - Edge Integration (WSP 77)
 
 **By:** 0102
