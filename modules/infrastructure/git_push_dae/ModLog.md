@@ -26,6 +26,27 @@
 - `modules/platform_integration/linkedin_agent/src/git_linkedin_bridge.py`
 - `modules/platform_integration/linkedin_agent/ModLog.md`
 
+## Reliability Guardrails (Upstream Push + Volatile Change Filtering)
+**WSP References**: WSP 91 (DAEMON observability), WSP 50 (Pre-action verification), WSP 3 (Modular build)
+
+**Type**: Reliability Fix - Autonomous Push Correctness
+
+**Changes Made**:
+1. `GitPushDAE` now filters out volatile paths (e.g. `node_modules/`, telemetry output, Holo output history) during decision-making so it doesn’t push on runtime churn.
+2. `GitLinkedInBridge.push_and_post()` now pushes **before** social posting, auto-sets upstream when missing, and skips posting when push fails.
+3. `GitPushDAE` Qwen init now reuses the already-initialized Qwen instance from `GitLinkedInBridge` when available (prevents double-load and fixes missing `model_path` init bug).
+4. Local post-commit hooks can be bypassed by automation via `FOUNDUPS_SKIP_POST_COMMIT=1` to prevent duplicate posting.
+
+**Impact**:
+- Fixes “posted but not pushed” scenarios and missing-upstream first pushes on feature branches.
+- Prevents noisy/locked runtime files from triggering autonomous push decisions.
+- Improves observability: push failure is treated as a real failure; posting failures no longer masquerade as push failures.
+
+**Files Updated**:
+- `modules/infrastructure/git_push_dae/src/git_push_dae.py`
+- `modules/platform_integration/linkedin_agent/src/git_linkedin_bridge.py`
+- `modules/platform_integration/linkedin_agent/ModLog.md`
+
 ## Add WRE Skills Wardrobe Support - qwen_gitpush Skill
 **WSP References**: WSP 96 (WRE Skills), WSP 48 (Recursive Improvement), WSP 60 (Module Memory)
 

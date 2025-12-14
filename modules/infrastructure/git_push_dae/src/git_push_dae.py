@@ -100,6 +100,7 @@ class GitPushDAE:
         self.daemon_name = "GitPushDAE"
         self.domain = domain
         self.check_interval = check_interval
+        self.repo_root = Path(__file__).resolve().parents[4]
 
         # State management
         self.active = False
@@ -118,7 +119,7 @@ class GitPushDAE:
         self.logger = self._setup_wsp91_logging()
 
         # Load persistent state
-        self.state_file = Path("memory/git_push_dae_state.json")
+        self.state_file = self.repo_root / "memory/git_push_dae_state.json"
         self._load_state()
 
         # Initialize git bridge for posting
@@ -189,9 +190,28 @@ class GitPushDAE:
     def _init_qwen_advisor(self):
         """Initialize Qwen advisor for intelligent code analysis and post generation."""
         try:
+            # Prefer the already-initialized instance from the Git bridge to avoid double-loading.
+            if self.git_bridge and getattr(self.git_bridge, "qwen", None):
+                self.qwen = self.git_bridge.qwen
+                self.logger.info(f"[{self.daemon_name}] Qwen advisor reused from GitLinkedInBridge")
+                return
+
+            from holo_index.qwen_advisor.config import QwenAdvisorConfig
             from holo_index.qwen_advisor.llm_engine import QwenInferenceEngine
-            self.qwen = QwenInferenceEngine()
-            self.logger.info(f"[{self.daemon_name}] Qwen advisor initialized for semantic analysis")
+
+            config = QwenAdvisorConfig.from_env()
+            engine = QwenInferenceEngine(
+                model_path=config.model_path,
+                max_tokens=config.max_tokens,
+                temperature=config.temperature,
+            )
+
+            if engine.initialize():
+                self.qwen = engine
+                self.logger.info(f"[{self.daemon_name}] Qwen advisor initialized for semantic analysis")
+            else:
+                self.qwen = None
+                self.logger.warning(f"[{self.daemon_name}] Qwen advisor initialization failed (model not loaded)")
         except Exception as e:
             self.logger.warning(f"[{self.daemon_name}] Qwen advisor not available: {e}")
             self.qwen = None
@@ -347,9 +367,15 @@ class GitPushDAE:
         """Gather context for autonomous push decision."""
         try:
             # Check git status
-            result = subprocess.run(['git', 'status', '--porcelain'],
-                                  capture_output=True, text=True, check=True)
-            uncommitted_changes = result.stdout.strip().split('\n') if result.stdout.strip() else []
+            result = subprocess.run(
+                ['git', 'status', '--porcelain=v1'],
+                capture_output=True,
+                text=True,
+                check=True,
+                cwd=str(self.repo_root),
+            )
+            raw_changes = result.stdout.splitlines() if result.stdout else []
+            uncommitted_changes = self._filter_uncommitted_changes(raw_changes)
 
             # Assess code quality
             quality_score = self._assess_code_quality(uncommitted_changes)
@@ -379,6 +405,35 @@ class GitPushDAE:
             self.logger.error(f"[{self.daemon_name}] Failed to gather context: {e}")
             # Return safe defaults
             return PushContext([], 0.0, 0, 0.0, "unknown", {})
+
+    def _filter_uncommitted_changes(self, porcelain_lines: List[str]) -> List[str]:
+        """Filter out volatile paths so GitPushDAE doesn't push on runtime churn."""
+        excluded_prefixes = (
+            "node_modules/",
+            "modules/platform_integration/browser_profiles/",
+            "telemetry/",
+            "modules/telemetry/feedback/",
+            "holo_index/holo_index/output/",
+        )
+
+        filtered: List[str] = []
+        for line in porcelain_lines:
+            if not line or len(line) < 3:
+                continue
+
+            path = line[3:].strip()
+            if " -> " in path:
+                path = path.split(" -> ", 1)[1].strip()
+
+            if path.endswith(".db-wal") or path.endswith(".db-shm"):
+                continue
+
+            if any(path == prefix.rstrip("/") or path.startswith(prefix) for prefix in excluded_prefixes):
+                continue
+
+            filtered.append(line)
+
+        return filtered
 
     def make_push_decision(self, context: PushContext) -> PushDecision:
         """
@@ -516,7 +571,7 @@ class GitPushDAE:
                 self.logger.info(f"[{self.daemon_name}] [OK] Autonomous push completed successfully")
             else:
                 self.circuit_breaker.record_failure()
-                self.logger.warning(f"[{self.daemon_name}] [U+26A0]️ Push completed but posting failed")
+                self.logger.warning(f"[{self.daemon_name}] [U+26A0]️ Autonomous push failed (commit/push did not complete)")
 
             # Save state
             self._save_state()
@@ -640,8 +695,13 @@ class GitPushDAE:
         """Use Qwen to semantically assess code quality."""
         try:
             # Get git diff for semantic analysis
-            diff_result = subprocess.run(['git', 'diff', 'HEAD'],
-                                        capture_output=True, text=True, timeout=10)
+            diff_result = subprocess.run(
+                ['git', 'diff', 'HEAD'],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                cwd=str(self.repo_root),
+            )
             diff_content = diff_result.stdout[:5000]  # Limit for token budget
 
             # Construct Qwen prompt
@@ -704,8 +764,13 @@ Return ONLY a decimal score (e.g., 0.75), no explanation."""
         """Check repository health status."""
         try:
             # Check for ACTUAL merge conflicts (UU, AA, DD, AU, UA, DU, UD markers)
-            result = subprocess.run(['git', 'status', '--porcelain'],
-                                  capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                ['git', 'status', '--porcelain=v1'],
+                capture_output=True,
+                text=True,
+                check=True,
+                cwd=str(self.repo_root),
+            )
 
             # Look for actual conflict markers in status
             has_conflicts = any(line.startswith(('UU', 'AA', 'DD', 'AU', 'UA', 'DU', 'UD'))

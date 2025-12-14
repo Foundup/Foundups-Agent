@@ -2,6 +2,16 @@
 
 ## Latest Changes
 
+### V046 - Auto-upstream Push + Post Gating (No Post If Push Fails)
+**Date**: 2025-12-14
+**Changes**: `push_and_post()` now auto-sets upstream on first push and will not post to LinkedIn/X unless the git push succeeds.
+**Impact**: Prevents “posted but not pushed” states; fixes first-run feature-branch pushes; reduces duplicate posting when local git hooks exist.
+**WSP**: WSP 50 (Pre-action verification), WSP 91 (DAEMON observability), WSP 3 (Modular build)
+**Details**:
+- Push happens **before** social posting; if push fails, social posting is skipped and the run returns failure.
+- When push fails due to missing upstream, automatically retries with `git push --set-upstream origin <branch>`.
+- Automation sets `FOUNDUPS_SKIP_POST_COMMIT=1` during `git commit` so local hooks can skip duplicate posting.
+
 ### V045 - Context-Aware Commit Notes (ModLog-Driven)
 **Date**: 2025-12-14
 **Changes**: Auto-generated git commit subject/body now derives from changed ModLog titles + scope summary when no explicit message is provided.

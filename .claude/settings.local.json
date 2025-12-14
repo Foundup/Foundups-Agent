@@ -81,7 +81,8 @@
       "Bash(cmd /c \"tasklist | findstr /I python\")",
       "Bash(cmd /c \"findstr STDERR O:\\Foundups-Agent\\daemon_output.log\")",
       "Bash(find:*)",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "Bash(cmd /c \"tasklist | findstr /I \"chrome.exe msedge.exe\"\")"
     ],
     "deny": [],
     "ask": []

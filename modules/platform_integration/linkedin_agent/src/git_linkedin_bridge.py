@@ -730,9 +730,23 @@ class GitLinkedInBridge:
             print("-" * 40)
 
             # Stage changes before generating an auto message so commit notes match what gets committed.
-            # Safety: keep giant vendored deps out of autonomous commits (tracked node_modules churn is common on Windows).
-            subprocess.run(['git', 'add', '-A'], check=True, cwd=str(self.repo_root))
-            subprocess.run(['git', 'reset', '--', 'node_modules'], check=False, cwd=str(self.repo_root))
+            # Safety: exclude volatile/large paths from autonomous commits.
+            excluded_paths = [
+                'node_modules',
+                'modules/platform_integration/browser_profiles',
+                'telemetry',
+                'modules/telemetry/feedback',
+                'holo_index/holo_index/output',
+            ]
+
+            try:
+                add_cmd = ['git', 'add', '-A', '--', '.'] + [f':(exclude){p}' for p in excluded_paths]
+                subprocess.run(add_cmd, check=True, cwd=str(self.repo_root))
+            except subprocess.CalledProcessError:
+                # Fallback for older git versions that don't support pathspec excludes.
+                subprocess.run(['git', 'add', '-A'], check=True, cwd=str(self.repo_root))
+                for path in excluded_paths:
+                    subprocess.run(['git', 'reset', '--', path], check=False, cwd=str(self.repo_root))
 
             staged_status = subprocess.run(['git', 'status', '--porcelain=v1'],
                                           capture_output=True, text=True, check=True, cwd=str(self.repo_root))
@@ -767,35 +781,73 @@ class GitLinkedInBridge:
 
             # Git operations
             print("\n[U+2699]️  Executing git commands...")
-            # Changes are staged above; ensure node_modules stays excluded.
-            subprocess.run(['git', 'reset', '--', 'node_modules'], check=False, cwd=str(self.repo_root))
+            # Prevent local git hooks from duplicating posting during automation.
+            git_env = dict(os.environ)
+            git_env["FOUNDUPS_SKIP_POST_COMMIT"] = "1"
             commit_cmd = ['git', 'commit', '-m', commit_msg]
             if commit_body:
                 commit_cmd.extend(['-m', commit_body])
-            subprocess.run(commit_cmd, check=True, cwd=str(self.repo_root))
+            subprocess.run(commit_cmd, check=True, cwd=str(self.repo_root), env=git_env)
 
             # Get commit hash
             hash_result = subprocess.run(['git', 'rev-parse', 'HEAD'],
                                        capture_output=True, text=True, check=True, cwd=str(self.repo_root))
             commit_hash = hash_result.stdout.strip()
 
-            # Check if already posted
+            def _push_current_branch(remote: str = "origin") -> bool:
+                """Push current branch; auto-set upstream when missing."""
+                branch_result = subprocess.run(
+                    ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                    cwd=str(self.repo_root),
+                )
+                branch = branch_result.stdout.strip()
+
+                push_result = subprocess.run(
+                    ['git', 'push'],
+                    capture_output=True,
+                    text=True,
+                    cwd=str(self.repo_root),
+                )
+                if push_result.returncode == 0:
+                    return True
+
+                combined = "\n".join(part for part in [push_result.stderr, push_result.stdout] if part).strip()
+                combined_lower = combined.lower()
+                if "no upstream branch" in combined_lower or "has no upstream branch" in combined_lower:
+                    upstream_result = subprocess.run(
+                        ['git', 'push', '--set-upstream', remote, branch],
+                        capture_output=True,
+                        text=True,
+                        cwd=str(self.repo_root),
+                    )
+                    if upstream_result.returncode == 0:
+                        print(f"[OK] Set upstream and pushed to {remote}/{branch}")
+                        return True
+
+                    upstream_combined = "\n".join(
+                        part for part in [upstream_result.stderr, upstream_result.stdout] if part
+                    ).strip()
+                    print(f"[U+26A0]️  Git push failed after setting upstream: {upstream_combined}")
+                    return False
+
+                print(f"[U+26A0]️  Git push failed: {combined}")
+                return False
+
+            # Always push before social posting; skip posting if push fails.
+            if not _push_current_branch():
+                print("\n[U+26A0]️  Note: Git push failed - skipping social media posting")
+                return False
+
+            print(f"[OK] Successfully pushed to git! (commit: {commit_hash[:10]})")
+
+            # Skip posting if this commit was already posted to both platforms.
             if commit_hash in self.posted_commits and commit_hash in self.x_posted_commits:
                 print(f"[U+26A0]️  Commit {commit_hash[:10]} already posted to both platforms")
-                print("Pushing to git but skipping social media...")
-                subprocess.run(['git', 'push'], check=True, cwd=str(self.repo_root))
-                print("[OK] Successfully pushed to git!")
+                print("[OK] Git push complete; skipping social media.")
                 return True
-
-            # Try to push to git (but continue even if it fails)
-            push_success = False
-            try:
-                subprocess.run(['git', 'push'], check=True, cwd=str(self.repo_root))
-                print(f"[OK] Successfully pushed to git! (commit: {commit_hash[:10]})")
-                push_success = True
-            except subprocess.CalledProcessError as e:
-                print(f"[U+26A0]️  Git push failed: {e}")
-                print("   Will continue with social media posting anyway...")
 
             # Prepare commit info
             commit_info = {
@@ -881,12 +933,6 @@ class GitLinkedInBridge:
                     print("   See daemon logs for complete error details")
             else:
                 print("[OK] Already posted")
-
-            # Git push status
-            if not push_success:
-                print("\n[U+26A0]️  Note: Git push failed - you may need to push manually later")
-                print("   Try: git config http.postBuffer 524288000")
-                print("   Then: git push")
 
             return True
 

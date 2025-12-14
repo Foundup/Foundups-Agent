@@ -14,6 +14,11 @@ Fully autonomous git push daemon that monitors code changes and publishes develo
 - `modules.infrastructure.database` - Commit tracking
 - `holo_index.qwen_advisor` - Quality assessment
 
+## Operational Guardrails
+- Filters volatile paths (e.g. `node_modules/`, telemetry output, Holo output history) out of the decision context so runtime churn doesn’t trigger pushes.
+- Uses `FOUNDUPS_SKIP_POST_COMMIT=1` during automated commits so local git hooks can skip duplicate social posting.
+- Relies on `GitLinkedInBridge.push_and_post()` to push before posting and to auto-set upstream when missing.
+
 ## Usage Examples
 ```python
 from modules.infrastructure.git_push_dae.src.git_push_dae import GitPushDAE
