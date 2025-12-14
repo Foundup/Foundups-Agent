@@ -270,6 +270,35 @@ class GitPushDAE:
 
         self.logger.info(f"[{self.daemon_name}] [OK] Autonomous operation started")
 
+    def run_once(self) -> HealthStatus:
+        """
+        Run a single monitoring cycle and persist state.
+
+        This is intended for interactive menu usage where 0102 should execute
+        one autonomous decision pass and then return control to the caller
+        (012 remains observer).
+        """
+        self.logger.info(f"[{self.daemon_name}] [RUN-ONCE] Starting single monitoring cycle")
+        self.start_time = datetime.now()
+
+        cycle_start = time.time()
+        try:
+            self.monitoring_cycle()
+            cycle_time = time.time() - cycle_start
+            try:
+                self.cost_tracker.track_operation("monitoring_cycle", cycle_time)
+            except Exception:
+                pass
+
+            health = self.health_check()
+            self.logger.info(f"[{self.daemon_name}] [RUN-ONCE] Completed in {cycle_time:.2f}s")
+            return health
+        finally:
+            try:
+                self._save_state()
+            except Exception:
+                pass
+
     def stop(self):
         """Stop the daemon with full lifecycle logging."""
         if not self.active:

@@ -24,7 +24,12 @@ Fully autonomous git push daemon that monitors code changes and publishes develo
 ```python
 from modules.infrastructure.git_push_dae.src.git_push_dae import GitPushDAE
 
-# Launch autonomous daemon
+# Run one autonomous cycle (menu-safe)
+dae = GitPushDAE(domain="foundups_development", check_interval=300)
+health = dae.run_once()
+print(health.status)
+
+# Launch autonomous daemon (long-running)
 dae = GitPushDAE(domain="foundups_development", check_interval=300)
 dae.start()
 
@@ -35,7 +40,7 @@ dae.start()
 ```
 
 ## Integration Points
-- **Main.py Option 0**: Launches the GitPushDAE daemon
+- **Main.py Option 0**: Runs one GitPushDAE cycle and returns to menu
 - **HoloIndex**: Quality assessment for push decisions
 - **Social Media**: LinkedIn/X posting when conditions met
 
