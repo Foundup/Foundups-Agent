@@ -6,5 +6,6 @@ to comply with file size thresholds.
 """
 
 from .reply_executor import BrowserReplyExecutor
+from .comment_processor import CommentProcessor
 
-__all__ = ['BrowserReplyExecutor']
+__all__ = ['BrowserReplyExecutor', 'CommentProcessor']
