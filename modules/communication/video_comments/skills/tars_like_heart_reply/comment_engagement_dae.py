@@ -39,9 +39,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# WSP 62 Refactoring: Extracted modules for size compliance
-from .src.reply_executor import BrowserReplyExecutor
-from .src.comment_processor import CommentProcessor
+# WSP 62 Refactoring: Extracted modules for size compliance (absolute imports for subprocess compatibility)
+from modules.communication.video_comments.skills.tars_like_heart_reply.src.reply_executor import BrowserReplyExecutor
+from modules.communication.video_comments.skills.tars_like_heart_reply.src.comment_processor import CommentProcessor
 
 logger = logging.getLogger(__name__)
 
