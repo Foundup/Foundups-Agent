@@ -34,6 +34,11 @@ logger = logging.getLogger(__name__)
 MOD_DB_PATH = Path(__file__).parent.parent.parent / "livechat" / "memory" / "auto_moderator.db"
 
 
+def _env_truthy(name: str, default: str = "false") -> bool:
+    """Parse common truthy env values (aligns with other DAEs)."""
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
+
+
 def check_moderator_in_db(username: str, channel_id: Optional[str] = None) -> bool:
     """
     Check if user is a MOD or OWNER in the existing auto_moderator.db.
@@ -46,11 +51,43 @@ def check_moderator_in_db(username: str, channel_id: Optional[str] = None) -> bo
         True if user is MOD or OWNER
     """
     # Known moderators (hardcoded fallback for mods not yet in DB)
+    # Updated 2025-12-15: Added all 20 Whack-a-MAGA leaderboard participants
     KNOWN_MODS = {
+        # Original mods
         "jameswilliams9655",
         "js",
-        "move2japan", 
+        "move2japan",
         "foundups decentralized startups",
+        "kelliquinn1342",
+
+        # Whack-a-MAGA Leaderboard (All participants are active moderators!)
+        # Top tier (LEGENDARY/GODLIKE) - 51-70 frags/month
+        "edward thornton",
+        "aaron blasdel",
+
+        # ELITE tier - 11-26 frags/month
+        "@aarlington",
+        "aarlington",
+        "j666",
+        "george",
+        "samo uzumaki",
+
+        # MASTER tier - 10-51 frags/month
+        "ultrafly",
+        "xoxo",
+        "kolila mālohi",
+        "al",
+        "bruce bowling",
+        "@flfridayscratcher",
+        "flfridayscratcher",
+        "sosiccgames",
+        "sean the greatish",
+
+        # CHAMPION/PATRIOT tier - 4-41 frags/month
+        "hashingitout",
+        "waffle jackson",
+        "mortzz",
+        "all the way absurd",
     }
     
     if username and username.lower() in KNOWN_MODS:
@@ -119,14 +156,60 @@ except Exception:
     make_commenter_key = None
     COMMENTER_HISTORY_AVAILABLE = False
 
+# Phase 3O-3R Sprint 5: Skill-based reply routing (replaces lines 1017-1056)
+try:
+    from modules.communication.video_comments.skills.skill_0_maga_mockery import (
+        MagaMockerySkill,
+        SkillContext as Skill0Context
+    )
+    from modules.communication.video_comments.skills.skill_1_regular_engagement import (
+        RegularEngagementSkill,
+        SkillContext as Skill1Context
+    )
+    from modules.communication.video_comments.skills.skill_2_moderator_appreciation import (
+        ModeratorAppreciationSkill,
+        SkillContext as Skill2Context
+    )
+    SKILLS_AVAILABLE = True
+    logger.info("[REPLY-GEN] Phase 3O-3R skills loaded (0/1/2 classification)")
+except Exception as e:
+    logger.warning(f"[REPLY-GEN] Skills not available, using monolithic fallback: {e}")
+    MagaMockerySkill = None
+    RegularEngagementSkill = None
+    ModeratorAppreciationSkill = None
+    SKILLS_AVAILABLE = False
+
 
 class CommenterType(Enum):
-    """Classification of comment authors."""
+    """
+    Classification of comment authors.
+
+    0102 Consciousness Mapping:
+        ✊ (0) = MAGA_TROLL - UN/Conscious (needs awakening via mockery)
+        ✋ (1) = REGULAR - DAO/Unconscious (learning, engaging)
+        🖐️ (2) = MODERATOR - DU/Entanglement (fully aligned, community leaders)
+    """
     MODERATOR = "moderator"
     SUBSCRIBER = "subscriber"
     MAGA_TROLL = "maga_troll"
     REGULAR = "regular"
     UNKNOWN = "unknown"
+
+    def to_012_code(self) -> int:
+        """
+        Convert commenter type to 0/1/2 classification code.
+
+        Returns:
+            0 = MAGA troll (✊)
+            1 = Regular/Subscriber (✋)
+            2 = Moderator (🖐️)
+        """
+        if self == CommenterType.MAGA_TROLL:
+            return 0  # ✊ UN/Conscious
+        elif self == CommenterType.MODERATOR:
+            return 2  # 🖐️ DU/Entanglement
+        else:  # REGULAR, SUBSCRIBER, UNKNOWN
+            return 1  # ✋ DAO/Unconscious
 
 
 @dataclass
@@ -232,18 +315,49 @@ NEVER:
 - Over-explain or be verbose
 """
     
-    # Pattern-based responses (checked BEFORE LLM)
-    # Format: (keywords_list, response_template)
-    PATTERN_RESPONSES = {
+    # Semantic Pattern Prompts (LLM-based variation - NO REGURGITATION)
+    # Instead of fixed responses, we provide LLM prompts that guide semantic variation
+    # Each reply will be unique while conveying the same core message
+    SEMANTIC_PATTERN_PROMPTS = {
         "song": {
-            "keywords": ["song", "music", "track", "what is this", "whats this song", "what's this song", 
+            "keywords": ["song", "music", "track", "what is this", "whats this song", "what's this song",
                         "what song", "name of the song", "song name", "song called", "what's playing",
                         "whats playing", "soundtrack", "bgm", "background music"],
-            "response": "Check out the #FFCPLN playlist at ffc.foundups.com for all our 0102 music! 🎵🎌"
+            "intent": "User asking about the background music/soundtrack",
+            "core_message": "All our music is in the #FFCPLN playlist at ffc.foundups.com",
+            "variation_prompt": """The user is asking about the background music. Tell them about the #FFCPLN playlist at ffc.foundups.com in a creative, natural way.
+
+CORE INFO (must include):
+- Playlist: #FFCPLN
+- URL: ffc.foundups.com
+
+VARIATION GUIDANCE:
+- Vary the phrasing wildly - NEVER repeat the same sentence structure
+- Sometimes hype it up, sometimes keep it chill
+- Use different emojis (🎵🎶🔥🎌✊✋🖐️ etc.)
+- Examples: "All our tracks live at...", "Peep the full playlist at...", "Music's on the #FFCPLN playlist...", "Check ffc.foundups.com for the full...", "Yo! Playlist is at..."
+- Keep it 1-2 sentences max
+- Sound like a human, not a bot"""
         },
         "ffcpln": {
             "keywords": ["ffcpln", "ffc pln", "#ffcpln"],
-            "response": "🔥 Play #FFCPLN for ICE! Full playlist at ffc.foundups.com - share the hashtag! ✊✋🖐️"
+            "intent": "User directly mentioning FFCPLN playlist",
+            "core_message": "Encourage them to play #FFCPLN for ICE and share it (ffc.foundups.com)",
+            "variation_prompt": """The user mentioned #FFCPLN! Hype them up and encourage sharing the playlist.
+
+CORE INFO (must include):
+- Playlist name: #FFCPLN
+- URL: ffc.foundups.com
+- Call to action: Play it, share it
+
+VARIATION GUIDANCE:
+- NEVER use the exact phrase "Play #FFCPLN for ICE!" (that's regurgitation)
+- Infinite variations: "Blast that #FFCPLN!", "Crank up #FFCPLN!", "Let #FFCPLN ride!", "Drop #FFCPLN in the chat!", "Share that #FFCPLN heat!"
+- Vary the energy level (sometimes hype 🔥, sometimes chill ✌️)
+- Mix up emojis (✊✋🖐️🎵🔥🎌💯 etc.)
+- Sometimes mention the website, sometimes don't (natural variation)
+- Keep it 1-2 sentences max
+- Sound like 0102 (witty, engaged, not corporate)"""
         },
     }
     
@@ -316,7 +430,21 @@ NEVER:
                 logger.info("[REPLY-GEN] GrokGreetingGenerator loaded (MAGA detection)")
             except Exception as e:
                 logger.warning(f"[REPLY-GEN] GrokGreetingGenerator init failed: {e}")
-    
+
+        # Phase 3O-3R Sprint 5: Initialize skill-based reply router
+        self.skill_0 = None  # MAGA mockery
+        self.skill_1 = None  # Regular engagement
+        self.skill_2 = None  # Moderator appreciation
+
+        if SKILLS_AVAILABLE:
+            try:
+                self.skill_0 = MagaMockerySkill()
+                self.skill_1 = RegularEngagementSkill()
+                self.skill_2 = ModeratorAppreciationSkill()
+                logger.info("[REPLY-GEN] Phase 3O-3R skills initialized (0✊/1✋/2🖐️ router)")
+            except Exception as e:
+                logger.warning(f"[REPLY-GEN] Skill initialization failed: {e}")
+
     def _add_0102_signature(self, reply: str) -> str:
         """
         Maybe add 0102 consciousness signature to reply.
@@ -377,32 +505,101 @@ NEVER:
     def _get_emoji_reply(self) -> str:
         """Get a random emoji reply - keep it playful!"""
         return random.choice(self.EMOJI_REPLIES)
-    
-    def _check_pattern_response(self, comment_text: str) -> Optional[str]:
+
+    def _check_duplicate_pattern_reply(
+        self,
+        author_name: str,
+        author_channel_id: Optional[str],
+        pattern_name: str
+    ) -> bool:
         """
-        Check if comment matches any pattern-based response rules.
-        
-        Pattern responses take priority over LLM generation for specific topics
-        like song questions, URL requests, etc.
-        
+        Check if we've recently replied to this commenter with the same pattern.
+
+        Prevents regurgitation: If we replied "Check out #FFCPLN..." to this person
+        in their last 3 interactions, skip pattern matching and use LLM for fresh reply.
+
+        Args:
+            author_name: Commenter's name
+            author_channel_id: Commenter's channel ID
+            pattern_name: The pattern being matched (e.g., "ffcpln", "song")
+
+        Returns:
+            True if duplicate detected (we've used this pattern recently)
+            False if safe to use pattern
+        """
+        if not self.commenter_history_store or not make_commenter_key:
+            return False  # History not available, allow pattern
+
+        try:
+            commenter_key = make_commenter_key(channel_id=author_channel_id, handle=author_name)
+            interactions = self.commenter_history_store.get_recent_interactions(
+                commenter_key=commenter_key,
+                limit=3  # Check last 3 interactions
+            )
+
+            if not interactions:
+                return False  # No history, allow pattern
+
+            # Check if we've replied with this pattern recently
+            pattern_keywords = {
+                "ffcpln": ["#FFCPLN", "ffcpln", "ffc.foundups.com"],
+                "song": ["#FFCPLN", "playlist", "ffc.foundups.com"]
+            }.get(pattern_name, [])
+
+            duplicate_count = 0
+            for interaction in interactions:
+                reply_text = (interaction.reply_text or "").lower()
+                # Check if this pattern's keywords appear in recent replies
+                if any(keyword.lower() in reply_text for keyword in pattern_keywords):
+                    duplicate_count += 1
+
+            if duplicate_count > 0:
+                logger.warning(
+                    f"[ANTI-REGURGITATION] DUPLICATE DETECTED: Already replied to {author_name} "
+                    f"with '{pattern_name}' pattern in last {duplicate_count}/{len(interactions)} interactions. "
+                    f"Using fresh LLM reply instead."
+                )
+                return True  # Duplicate detected
+
+            return False  # Safe to use pattern
+
+        except Exception as e:
+            logger.debug(f"[ANTI-REGURGITATION] History check failed: {e}")
+            return False  # On error, allow pattern
+    
+    def _get_semantic_pattern_prompt(self, comment_text: str) -> Optional[Dict[str, str]]:
+        """
+        Check if comment matches semantic patterns requiring specialized responses.
+
+        Instead of returning fixed templates (REGURGITATION), returns LLM prompts
+        that guide semantic variation. Each reply will be unique.
+
         Args:
             comment_text: The comment to check
-            
+
         Returns:
-            Pattern response if matched, None otherwise
+            Dict with pattern info if matched:
+                - pattern_name: Name of matched pattern
+                - variation_prompt: LLM prompt for generating varied response
+                - intent: What user is asking
+            Returns None if no pattern match
         """
         comment_lower = comment_text.lower()
-        
-        for pattern_name, pattern_data in self.PATTERN_RESPONSES.items():
+
+        for pattern_name, pattern_data in self.SEMANTIC_PATTERN_PROMPTS.items():
             keywords = pattern_data.get("keywords", [])
-            response = pattern_data.get("response", "")
-            
+
             # Check if any keyword matches
             for keyword in keywords:
                 if keyword in comment_lower:
-                    logger.info(f"[REPLY-GEN] Pattern match: '{pattern_name}' (keyword: '{keyword}')")
-                    return response
-        
+                    logger.info(f"[REPLY-GEN] Semantic pattern match: '{pattern_name}' (keyword: '{keyword}')")
+                    logger.info(f"[ANTI-REGURGITATION] Using LLM variation prompt instead of fixed template")
+                    return {
+                        "pattern_name": pattern_name,
+                        "variation_prompt": pattern_data.get("variation_prompt", ""),
+                        "intent": pattern_data.get("intent", "")
+                    }
+
         return None
     
     def _check_lm_studio(self):
@@ -520,37 +717,46 @@ NEVER:
         comment_text: str,
         author_name: str,
         author_channel_id: Optional[str] = None,
+        custom_prompt: Optional[str] = None,
     ) -> Optional[str]:
         """
         Generate a contextual reply using Grok (primary) or LM Studio (fallback).
-        
+
         Priority:
         1. Grok via xAI API (witty, fewer guardrails) - requires GROK_API_KEY/XAI_API_KEY
         2. LM Studio (local Qwen) - requires LM Studio running on port 1234
-        
+
         Args:
             comment_text: The comment to reply to
             author_name: The commenter's name
-        
+            author_channel_id: Author's channel ID (for history lookup)
+            custom_prompt: Optional custom prompt for semantic variation (ANTI-REGURGITATION)
+
         Returns:
             Contextual reply or None if all LLMs unavailable
         """
-        # Don't include @Unknown in prompt - only real usernames
-        if author_name and author_name.lower() != "unknown":
-            user_prompt = f'Comment from @{author_name}: "{comment_text}"\n\nGenerate a friendly, short reply (1-2 sentences). Do NOT start with @mentions:'
+        # If custom prompt provided (e.g., semantic variation prompts), use it directly
+        if custom_prompt:
+            user_prompt = custom_prompt
+            logger.info("[ANTI-REGURGITATION] Using custom semantic variation prompt")
         else:
-            user_prompt = f'Comment: "{comment_text}"\n\nGenerate a friendly, short reply (1-2 sentences). Do NOT start with @mentions:'
+            # Standard contextual reply prompt
+            if author_name and author_name.lower() != "unknown":
+                user_prompt = f'Comment from @{author_name}: "{comment_text}"\n\nGenerate a friendly, short reply (1-2 sentences). Do NOT start with @mentions:'
+            else:
+                user_prompt = f'Comment: "{comment_text}"\n\nGenerate a friendly, short reply (1-2 sentences). Do NOT start with @mentions:'
 
-        context = self._load_personalization_context(
-            author_name=author_name,
-            author_channel_id=author_channel_id,
-        )
-        if context:
-            user_prompt = (
-                f"{user_prompt}\n\n"
-                f"Context to personalize (do not mention this context directly unless it fits naturally):\n"
-                f"{context}"
+            # Add personalization context (comment history)
+            context = self._load_personalization_context(
+                author_name=author_name,
+                author_channel_id=author_channel_id,
             )
+            if context:
+                user_prompt = (
+                    f"{user_prompt}\n\n"
+                    f"Context to personalize (do not mention this context directly unless it fits naturally):\n"
+                    f"{context}"
+                )
         
         # PRIMARY: Try Grok (witty, fewer guardrails!)
         if self.grok_connector:
@@ -797,61 +1003,165 @@ NEVER:
             is_mod=is_mod,
             is_subscriber=is_subscriber
         )
-        
-        logger.info(f"[REPLY-GEN] Classified {author_name} as {profile.commenter_type.value}")
-        
+
+        # 0/1/2 Classification (0102 consciousness mapping)
+        classification_code = profile.commenter_type.to_012_code()
+        classification_emoji = ["✊", "✋", "🖐️"][classification_code]
+        logger.info(f"[REPLY-GEN] Classified {author_name} as {profile.commenter_type.value} ({classification_code}{classification_emoji})")
+
         # PRIORITY 0: Emoji comment? Reply with banter engine emoji!
         if self._is_emoji_comment(comment_text):
             emoji_reply = self._get_emoji_reply()
             logger.info("[REPLY-GEN] Emoji-only comment detected; responding with emoji")
             return emoji_reply
-        
-        # PRIORITY 1: Check for pattern-based responses (song questions, etc.)
-        pattern_response = self._check_pattern_response(comment_text)
-        if pattern_response:
-            return self._add_0102_signature(pattern_response)
+
+        # PRIORITY 1: Check for semantic pattern-based responses (song questions, FFCPLN, etc.)
+        # ANTI-REGURGITATION: Use LLM variation prompts instead of fixed templates
+        semantic_pattern = self._get_semantic_pattern_prompt(comment_text)
+        if semantic_pattern:
+            pattern_name = semantic_pattern["pattern_name"]
+
+            # DUPLICATE DETECTION: Check if we've used this pattern with this commenter recently
+            is_duplicate = self._check_duplicate_pattern_reply(
+                author_name=author_name,
+                author_channel_id=author_channel_id,
+                pattern_name=pattern_name
+            )
+
+            if is_duplicate:
+                # Skip pattern matching, fall through to regular contextual reply
+                # This prevents repeating "#FFCPLN" to the same person over and over
+                logger.info(f"[ANTI-REGURGITATION] Skipping pattern due to duplicate, using fresh contextual reply")
+            else:
+                # Generate varied response using LLM with semantic variation prompt
+                variation_prompt = semantic_pattern["variation_prompt"]
+
+                logger.info(f"[ANTI-REGURGITATION] Generating semantic variation for pattern '{pattern_name}'")
+
+                # Try to generate unique reply using LLM
+                llm_response = self._generate_contextual_reply(
+                    comment_text=comment_text,
+                    author_name=author_name,
+                    author_channel_id=author_channel_id,
+                    custom_prompt=variation_prompt  # Use semantic variation prompt
+                )
+
+                if llm_response:
+                    logger.info(f"[ANTI-REGURGITATION] Successfully generated unique reply (no regurgitation)")
+                    return self._add_0102_signature(llm_response)
+                else:
+                    # Fallback: If LLM fails, use agentic questioning
+                    logger.warning(f"[ANTI-REGURGITATION] LLM unavailable - using agentic fallback")
+                    agentic_reply = f"Yo! So you're asking about {semantic_pattern['intent']}? 🤔"
+                    return self._add_0102_signature(agentic_reply)
         
         # PRIORITY 2: Generate response based on classification
-        if profile.commenter_type == CommenterType.MODERATOR:
-            return self._add_0102_signature(random.choice(self.MOD_RESPONSES))
-        
-        elif profile.commenter_type == CommenterType.MAGA_TROLL:
-            # USE pre-generated response from GrokGreetingGenerator if available
-            # This is the SAME response style used by YouTube livechat DAE
-            if profile.maga_response:
-                logger.info("[REPLY-GEN] GrokGreetingGenerator MAGA response")
-                return self._add_0102_signature(profile.maga_response)
-            
-            # Fallback to Whack-a-MAGA style response
-            reply = random.choice(self.TROLL_RESPONSES)
-            logger.info(f"[REPLY-GEN] Whack-a-MAGA fallback (score: {profile.troll_score:.2f})")
-            return self._add_0102_signature(reply)
-        
-        elif profile.commenter_type == CommenterType.SUBSCRIBER:
-            # Try LLM for contextual subscriber response
-            llm_response = self._generate_contextual_reply(comment_text, author_name, author_channel_id)
-            if llm_response:
-                return self._add_0102_signature(llm_response)
-            return self._add_0102_signature(random.choice(self.SUBSCRIBER_RESPONSES))
-        
+        # Phase 3O-3R Sprint 5: Skill-based reply router (0✊/1✋/2🖐️)
+        use_skill_router = _env_truthy("USE_SKILL_ROUTER", "true")
+
+        if use_skill_router and SKILLS_AVAILABLE and self.skill_0 and self.skill_1 and self.skill_2:
+            # NEW: Skill-based routing (Phase 3O-3R)
+            if profile.commenter_type == CommenterType.MODERATOR:
+                # Route to Skill 2 (Moderator appreciation)
+                result = self.skill_2.execute(Skill2Context(
+                    user_id=author_channel_id or "unknown",
+                    username=author_name,
+                    comment_text=comment_text,
+                    classification="MODERATOR",
+                    confidence=1.0
+                ))
+                logger.info(f"[SKILL-2] Strategy: {result['strategy']}, Confidence: {result['confidence']}")
+                return self._add_0102_signature(result['reply_text'])
+
+            elif profile.commenter_type == CommenterType.MAGA_TROLL:
+                # Route to Skill 0 (MAGA mockery)
+                result = self.skill_0.execute(Skill0Context(
+                    user_id=author_channel_id or "unknown",
+                    username=author_name,
+                    comment_text=comment_text,
+                    classification="MAGA_TROLL",
+                    confidence=profile.troll_score if hasattr(profile, 'troll_score') else 0.7,
+                    whack_count=getattr(profile, 'whack_count', 0),
+                    maga_response=getattr(profile, 'maga_response', None),
+                    troll_score=getattr(profile, 'troll_score', 0.7)
+                ))
+                logger.info(f"[SKILL-0] Strategy: {result['strategy']}, Confidence: {result['confidence']}")
+                return self._add_0102_signature(result['reply_text'])
+
+            elif profile.commenter_type == CommenterType.SUBSCRIBER:
+                # Route to Skill 1 (Regular engagement with subscriber flag)
+                llm_reply = self._generate_contextual_reply(comment_text, author_name, author_channel_id)
+                result = self.skill_1.execute(Skill1Context(
+                    user_id=author_channel_id or "unknown",
+                    username=author_name,
+                    comment_text=comment_text,
+                    classification="REGULAR",
+                    confidence=0.5,
+                    llm_reply=llm_reply,
+                    theme=theme,
+                    is_subscriber=True
+                ))
+                logger.info(f"[SKILL-1] Strategy: {result['strategy']}, Confidence: {result['confidence']}, Subscriber: True")
+                return self._add_0102_signature(result['reply_text'])
+
+            else:
+                # Route to Skill 1 (Regular engagement)
+                llm_reply = self._generate_contextual_reply(comment_text, author_name, author_channel_id)
+                result = self.skill_1.execute(Skill1Context(
+                    user_id=author_channel_id or "unknown",
+                    username=author_name,
+                    comment_text=comment_text,
+                    classification="REGULAR",
+                    confidence=0.5,
+                    llm_reply=llm_reply,
+                    theme=theme,
+                    is_subscriber=False
+                ))
+                logger.info(f"[SKILL-1] Strategy: {result['strategy']}, Confidence: {result['confidence']}")
+                return self._add_0102_signature(result['reply_text'])
+
         else:
-            # REGULAR USER: Use LLM for contextual, meaningful replies
-            # This is where "Bro got the dance moves" should get a relevant response
-            llm_response = self._generate_contextual_reply(comment_text, author_name, author_channel_id)
-            if llm_response:
-                return self._add_0102_signature(llm_response)
-            
-            # Fallback to BanterEngine if LLM unavailable
-            if self.banter_engine:
-                try:
-                    response = self.banter_engine.get_random_banter(theme=theme)
-                    if response:
-                        return self._add_0102_signature(response)
-                except Exception as e:
-                    logger.warning(f"BanterEngine failed: {e}")
-            
-            # Ultimate fallback to template responses
-            return self._add_0102_signature(random.choice(self.REGULAR_RESPONSES))
+            # LEGACY: Monolithic routing (backward compatibility fallback)
+            logger.info("[REPLY-GEN] Using legacy monolithic routing (skills disabled or unavailable)")
+
+            if profile.commenter_type == CommenterType.MODERATOR:
+                return self._add_0102_signature(random.choice(self.MOD_RESPONSES))
+
+            elif profile.commenter_type == CommenterType.MAGA_TROLL:
+                # USE pre-generated response from GrokGreetingGenerator if available
+                if profile.maga_response:
+                    logger.info("[REPLY-GEN] GrokGreetingGenerator MAGA response")
+                    return self._add_0102_signature(profile.maga_response)
+
+                # Fallback to Whack-a-MAGA style response
+                reply = random.choice(self.TROLL_RESPONSES)
+                logger.info(f"[REPLY-GEN] Whack-a-MAGA fallback (score: {profile.troll_score:.2f})")
+                return self._add_0102_signature(reply)
+
+            elif profile.commenter_type == CommenterType.SUBSCRIBER:
+                # Try LLM for contextual subscriber response
+                llm_response = self._generate_contextual_reply(comment_text, author_name, author_channel_id)
+                if llm_response:
+                    return self._add_0102_signature(llm_response)
+                return self._add_0102_signature(random.choice(self.SUBSCRIBER_RESPONSES))
+
+            else:
+                # REGULAR USER: Use LLM for contextual, meaningful replies
+                llm_response = self._generate_contextual_reply(comment_text, author_name, author_channel_id)
+                if llm_response:
+                    return self._add_0102_signature(llm_response)
+
+                # Fallback to BanterEngine if LLM unavailable
+                if self.banter_engine:
+                    try:
+                        response = self.banter_engine.get_random_banter(theme=theme)
+                        if response:
+                            return self._add_0102_signature(response)
+                    except Exception as e:
+                        logger.warning(f"BanterEngine failed: {e}")
+
+                # Ultimate fallback to template responses
+                return self._add_0102_signature(random.choice(self.REGULAR_RESPONSES))
     
     def generate_reply_for_comment(
         self,

@@ -56,6 +56,12 @@ async def main():
         help="YouTube channel ID"
     )
     parser.add_argument(
+        "--video",
+        type=str,
+        default=None,
+        help="YouTube video ID (for live stream comments, otherwise uses channel inbox)"
+    )
+    parser.add_argument(
         "--max-comments",
         type=int,
         default=5,
@@ -114,22 +120,39 @@ async def main():
         print(" 0102 COMMENT ENGAGEMENT SKILL")
         print(f"{'='*60}")
         print(f" Channel: {args.channel}")
+        print(f" Video: {args.video or '(channel inbox)'}")
         print(f" Max comments: {args.max_comments}")
         print(f" Reply: {args.reply_text or '(intelligent)'}")
         print(f" Vision: {'disabled' if args.dom_only else 'enabled'}")
         print(f" Intelligent Reply: {'disabled' if args.no_intelligent_reply else 'enabled'}")
         print(f"{'='*60}\n")
-    
+
+    logger.info(f"[DAEMON][DAE-INIT] 🎬 Initializing Comment Engagement DAE...")
+    logger.info(f"[DAEMON][DAE-INIT]   Channel: {args.channel}")
+    logger.info(f"[DAEMON][DAE-INIT]   Video: {args.video or 'None (Studio inbox)'}")
+    logger.info(f"[DAEMON][DAE-INIT]   Vision: {'enabled' if not args.dom_only else 'disabled (DOM-only)'}")
+    logger.info(f"[DAEMON][DAE-INIT]   Max comments: {args.max_comments} (0=UNLIMITED)")
+
     dae = CommentEngagementDAE(
         channel_id=args.channel,
+        video_id=args.video,
         use_vision=not args.dom_only,
         use_dom=True
     )
-    
+
     try:
+        logger.info(f"[DAEMON][DAE-CONNECT] 🔌 Connecting to Chrome (port 9222)...")
         await dae.connect()
+        logger.info(f"[DAEMON][DAE-CONNECT] ✅ Connected successfully")
+
+        logger.info(f"[DAEMON][DAE-NAVIGATE] 🧭 Navigating to inbox...")
         await dae.navigate_to_inbox()
-        
+        logger.info(f"[DAEMON][DAE-NAVIGATE] ✅ Navigation complete")
+
+        logger.info(f"[DAEMON][DAE-ENGAGE] 🎯 Starting comment engagement...")
+        logger.info(f"[DAEMON][DAE-ENGAGE]   Actions: Like={not args.no_like} | Heart={not args.no_heart} | Reply={args.reply_text is not None}")
+        logger.info(f"[DAEMON][DAE-ENGAGE]   Intelligent replies: {not args.no_intelligent_reply}")
+
         result = await dae.engage_all_comments(
             max_comments=args.max_comments,
             do_like=not args.no_like,
@@ -138,6 +161,8 @@ async def main():
             refresh_between=not args.no_refresh,
             use_intelligent_reply=not args.no_intelligent_reply
         )
+
+        logger.info(f"[DAEMON][DAE-COMPLETE] ✅ Engagement complete: {result.get('stats', {})}")
         
         # Output JSON if requested (for subprocess parsing)
         if args.json_output:
@@ -147,15 +172,18 @@ async def main():
         return result
         
     except Exception as e:
+        logger.error(f"[DAEMON][DAE-ERROR] ❌ FATAL ERROR: {e}")
         logger.error(f"[ERROR] Skill execution failed: {e}", exc_info=True)
         error_result = {'error': str(e), 'stats': {'comments_processed': 0, 'errors': 1}}
         if args.json_output:
             import json
             print(json.dumps(error_result))
         return error_result
-    
+
     finally:
+        logger.info(f"[DAEMON][DAE-CLEANUP] 🧹 Closing DAE connection...")
         dae.close()
+        logger.info(f"[DAEMON][DAE-CLEANUP] ✅ Cleanup complete")
 
 
 if __name__ == "__main__":
