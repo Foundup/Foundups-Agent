@@ -12,6 +12,41 @@ This log tracks changes specific to the **youtube_auth** module in the **platfor
 
 ## MODLOG ENTRIES
 
+
+### 2025-12-16 - WSP 49 Compliance: Relocated OAuth Reauth Script
+
+**By:** 0102
+**WSP References:** WSP 49 (Module Structure), WSP 85 (Root Directory Protection)
+
+**Problem:** `reauth_set1_chrome_manual.py` found in root directory (WSP 85 violation)
+
+**Solution:**
+- Moved `reauth_set1_chrome_manual.py` from root → `scripts/reauth_set1_chrome_manual.py`
+- Script now properly co-located with other OAuth authorization utilities
+- No code changes needed - script works from new location
+
+**Files Modified:**
+- Moved: `reauth_set1_chrome_manual.py` → `modules/platform_integration/youtube_auth/scripts/reauth_set1_chrome_manual.py`
+
+**Impact:**
+- [OK] WSP 85 compliant - Root directory protected
+- [OK] Proper module organization per WSP 3
+- [OK] Script co-located with related authorization tools (authorize_set10_nonemoji.py, etc.)
+
+### 2025-12-15 - Reduce googleapiclient Discovery Cache Noise
+
+**By:** 0102  
+**WSP References:** WSP 91 (Observability)
+
+**Problem:** `googleapiclient.discovery_cache` emits an INFO log (`file_cache is only supported with oauth2client<4.0.0`) during service creation. This is not actionable for Foundups DAEs and adds noise to stream detection logs.
+
+**Solution:**
+- Set `googleapiclient.discovery_cache` log level to `WARNING` inside the YouTube auth module.
+- Passed `cache_discovery=False` to `googleapiclient.discovery.build(...)` so the discovery cache code path is not used (removes the INFO noise on Windows).
+
+**Files Modified:**
+- `modules/platform_integration/youtube_auth/src/youtube_auth.py`
+
 ### [2025-10-15] WSP 85 Root Directory Violation Fixed
 **Date**: 2025-10-15
 **WSP Protocol**: WSP 85 (Root Directory Protection), WSP 84 (Code Memory)

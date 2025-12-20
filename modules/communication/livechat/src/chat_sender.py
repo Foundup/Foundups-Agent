@@ -11,13 +11,19 @@ NAVIGATION: Outputs responses to chat with throttle safeguards.
 """
 
 import logging
+import os
 import asyncio
 import random
 import time
 from typing import Optional
 import googleapiclient.errors
 
+from modules.communication.livechat.src.automation_gates import stop_active, stop_file_path
+
 logger = logging.getLogger(__name__)
+
+def _env_truthy(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
 
 class ChatSender:
     """Handles sending messages to YouTube Live Chat with human-like random delays."""
@@ -26,6 +32,7 @@ class ChatSender:
         self.youtube = youtube_service
         self.live_chat_id = live_chat_id
         self.bot_channel_id = None
+        self._send_lock = asyncio.Lock()  # Prevent concurrent sends (anti-spam + consistent throttling)
         self.send_delay = 2.0  # Base delay between sends to avoid rate limiting
         
         # WSP Enhancement: Random delay configuration for human-like behavior
@@ -48,139 +55,150 @@ class ChatSender:
         Returns:
             True if message was sent successfully, False otherwise
         """
+        if stop_active():
+            run_id = os.getenv("YT_AUTOMATION_RUN_ID", "").strip()
+            logger.warning(
+                f"[AUTOMATION-AUDIT] run_id={run_id or 'unset'} livechat_send=disabled (stop_file={stop_file_path()})"
+            )
+            return False
+
+        if not _env_truthy("YT_AUTOMATION_ENABLED", "true"):
+            run_id = os.getenv("YT_AUTOMATION_RUN_ID", "").strip()
+            logger.warning(f"[AUTOMATION-AUDIT] run_id={run_id or 'unset'} livechat_send=disabled (YT_AUTOMATION_ENABLED=false)")
+            return False
+
+        if not _env_truthy("YT_LIVECHAT_SEND_ENABLED", "true"):
+            run_id = os.getenv("YT_AUTOMATION_RUN_ID", "").strip()
+            logger.warning(f"[AUTOMATION-AUDIT] run_id={run_id or 'unset'} livechat_send=disabled (YT_LIVECHAT_SEND_ENABLED=false)")
+            return False
+
+        if _env_truthy("YT_LIVECHAT_DRY_RUN", "false"):
+            run_id = os.getenv("YT_AUTOMATION_RUN_ID", "").strip()
+            logger.info(f"[AUTOMATION-AUDIT] run_id={run_id or 'unset'} livechat_send=dry_run type={response_type} chars={len(message_text or '')}")
+            logger.info(f"[DRY-RUN] Would send: {message_text}")
+            return True
+
         if not message_text or not message_text.strip():
             logger.warning("[WARN] Cannot send empty message")
             return False
 
-        # CRITICAL FIX: YouTube Live Chat has 200 character limit
-        # Truncate messages that exceed limit to prevent INVALID_REQUEST_METADATA error
-        MAX_MESSAGE_LENGTH = 200
-        if len(message_text) > MAX_MESSAGE_LENGTH:
-            original_length = len(message_text)
+        # Serialize all sends to avoid bursty multi-task behavior (multiple modules calling send at once).
+        async with self._send_lock:
+            # CRITICAL FIX: YouTube Live Chat has 200 character limit
+            # Truncate messages that exceed limit to prevent INVALID_REQUEST_METADATA error
+            MAX_MESSAGE_LENGTH = 200
+            if len(message_text) > MAX_MESSAGE_LENGTH:
+                original_length = len(message_text)
 
-            # Smart truncation: Preserve @mentions at start
-            if message_text.startswith('@'):
-                # Find the end of the @mention (space, punctuation, or colon)
-                import re
-                mention_match = re.match(r'(@[A-Za-z0-9_-]+[\s:,!]*)', message_text)
-                if mention_match:
-                    mention = mention_match.group(1)
-                    # Keep @mention + truncated rest + ellipsis
-                    remaining_space = MAX_MESSAGE_LENGTH - len(mention) - 3
-                    rest = message_text[len(mention):remaining_space + len(mention)]
-                    message_text = mention + rest + "..."
-                    logger.info(f"[TRUNCATE] Smart truncate: Preserved @mention, {original_length}->{len(message_text)} chars")
+                # Smart truncation: Preserve @mentions at start
+                if message_text.startswith('@'):
+                    import re
+                    mention_match = re.match(r'(@[A-Za-z0-9_-]+[\s:,!]*)', message_text)
+                    if mention_match:
+                        mention = mention_match.group(1)
+                        remaining_space = MAX_MESSAGE_LENGTH - len(mention) - 3
+                        rest = message_text[len(mention):remaining_space + len(mention)]
+                        message_text = mention + rest + "..."
+                        logger.info(f"[TRUNCATE] Smart truncate: Preserved @mention, {original_length}->{len(message_text)} chars")
+                    else:
+                        message_text = message_text[:MAX_MESSAGE_LENGTH - 3] + "..."
+                        logger.warning(f"[WARN] Message truncated from {original_length} to {MAX_MESSAGE_LENGTH} chars (YouTube limit)")
                 else:
-                    # Fallback to simple truncation
                     message_text = message_text[:MAX_MESSAGE_LENGTH - 3] + "..."
                     logger.warning(f"[WARN] Message truncated from {original_length} to {MAX_MESSAGE_LENGTH} chars (YouTube limit)")
-            else:
-                # No @mention at start, simple truncation
-                message_text = message_text[:MAX_MESSAGE_LENGTH - 3] + "..."
-                logger.warning(f"[WARN] Message truncated from {original_length} to {MAX_MESSAGE_LENGTH} chars (YouTube limit)")
 
-            logger.debug(f"Original message: {message_text[:50]}...")
-        
-        # CRITICAL: Validate all @mentions in the message before sending
-        # If we can't @mention properly, don't send the message at all
-        if '@' in message_text:
-            import re
-            # Find all @mentions in the message
-            # This regex extracts usernames stopping at punctuation or whitespace
-            mentions = re.findall(r'@([A-Za-z0-9_-]+)', message_text)
-            for username in mentions:
-                # Check if username can be properly mentioned
-                if not self._is_valid_mention(username):
-                    logger.warning(f"[FORBIDDEN] BLOCKING message - cannot @mention '{username}': {message_text[:100]}...")
-                    return False  # Don't send if ANY mention is invalid
-            
-            # All mentions are valid, proceed with sending
-            logger.debug(f"[OK] All @mentions validated in message")
-        
-        # GLOBAL THROTTLING: Apply minimum delays to ALL messages to prevent spam
-        # Even "priority" messages get throttled to avoid quota exhaustion
-        await self._apply_global_throttling(response_type, skip_delay)
+            # CRITICAL: Validate all @mentions in the message before sending
+            # If we can't @mention properly, don't send the message at all
+            if '@' in message_text:
+                import re
+                mentions = re.findall(r'@([A-Za-z0-9_-]+)', message_text)
+                for username in mentions:
+                    if not self._is_valid_mention(username):
+                        logger.warning(f"[FORBIDDEN] BLOCKING message - cannot @mention '{username}': {message_text[:100]}...")
+                        return False
+                logger.debug("[OK] All @mentions validated in message")
 
-        try:
-            # Ensure we have bot channel ID
-            if not self.bot_channel_id:
-                await self._get_bot_channel_id()
+            # GLOBAL THROTTLING: Apply minimum delays to ALL messages to prevent spam
+            # Even "priority" messages get throttled to avoid quota exhaustion
+            await self._apply_global_throttling(response_type, skip_delay)
 
-            # Apply additional random delays for human-like behavior (except highest priority)
-            if skip_delay and response_type == 'timeout_announcement':
-                logger.info("[LIGHTNING][GAME] ULTIMATE PRIORITY: Minimal throttling for timeout announcement")
-            elif skip_delay:
-                logger.info("[LIGHTNING] Reduced throttling for priority message")
-                # Still apply some minimum delay even for priority messages
-                if self.random_delay_enabled:
-                    min_delay = min(0.5, self.min_random_delay)
-                    random_delay = random.uniform(min_delay, min_delay + 1.0)
-                    logger.debug(f"[TIMER] Priority message delay: {random_delay:.2f}s")
+            try:
+                # Ensure we have bot channel ID
+                if not self.bot_channel_id:
+                    await self._get_bot_channel_id()
+
+                # Apply additional random delays for human-like behavior (except highest priority)
+                if skip_delay and response_type == 'timeout_announcement':
+                    logger.info("[LIGHTNING][GAME] ULTIMATE PRIORITY: Minimal throttling for timeout announcement")
+                elif skip_delay:
+                    logger.info("[LIGHTNING] Reduced throttling for priority message")
+                    if self.random_delay_enabled:
+                        min_delay = min(0.5, self.min_random_delay)
+                        random_delay = random.uniform(min_delay, min_delay + 1.0)
+                        logger.debug(f"[TIMER] Priority message delay: {random_delay:.2f}s")
+                        await asyncio.sleep(random_delay)
+
+                # WSP Enhancement: Add random pre-send delay for human-like behavior
+                # Skip for timeout announcements (highest priority)
+                if self.random_delay_enabled and response_type != 'timeout_announcement':
+                    random_delay = random.uniform(self.min_random_delay, self.max_random_delay)
+                    logger.debug(f"[TIMER] Additional random delay: {random_delay:.2f}s")
                     await asyncio.sleep(random_delay)
-            
-            # WSP Enhancement: Add random pre-send delay for human-like behavior
-            # Skip for timeout announcements (highest priority)
-            if self.random_delay_enabled and response_type != 'timeout_announcement':
-                random_delay = random.uniform(self.min_random_delay, self.max_random_delay)
-                logger.debug(f"[TIMER] Additional random delay: {random_delay:.2f}s")
-                await asyncio.sleep(random_delay)
-            
-            logger.info(f"[U+1F4E4] Sending message: {message_text}")
 
-            # CRITICAL FIX: Convert Unicode tags to emoji before YouTube send
-            # YouTube API doesn't render [U+XXXX] tags - need actual emoji characters
-            from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
-            banter = BanterEngine(emoji_enabled=True)
-            message_text = banter._convert_unicode_tags_to_emoji(message_text)
-            logger.debug(
-                f"[EMOJI] After conversion: {message_text.encode('ascii', 'backslashreplace').decode('ascii')}"
-            )
+                run_id = os.getenv("YT_AUTOMATION_RUN_ID", "").strip() or "unset"
+                logger.info(f"[U+1F4E4] Sending message (type={response_type} run_id={run_id}): {message_text}")
 
-            # Prepare message data
-            message_data = {
-                "snippet": {
-                    "liveChatId": self.live_chat_id,
-                    "type": "textMessageEvent",
-                    "textMessageDetails": {
-                        "messageText": message_text
+                # CRITICAL FIX: Convert Unicode tags to emoji before YouTube send
+                # YouTube API doesn't render [U+XXXX] tags - need actual emoji characters
+                from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
+                banter = BanterEngine(emoji_enabled=True)
+                message_text = banter._convert_unicode_tags_to_emoji(message_text)
+                logger.debug(
+                    f"[EMOJI] After conversion: {message_text.encode('ascii', 'backslashreplace').decode('ascii')}"
+                )
+
+                # Prepare message data
+                message_data = {
+                    "snippet": {
+                        "liveChatId": self.live_chat_id,
+                        "type": "textMessageEvent",
+                        "textMessageDetails": {
+                            "messageText": message_text
+                        }
                     }
                 }
-            }
-            
-            # Send the message
-            response = self.youtube.liveChatMessages().insert(
-                part="snippet",
-                body=message_data
-            ).execute()
-            
-            message_id = response.get("id", "unknown")
-            logger.info(f"[OK] Message sent successfully (ID: {message_id})")
 
-            # NOTE: Response recording is handled by livechat_core.py's IntelligentThrottleManager
-            
-            # Add base delay to avoid rate limiting
-            await asyncio.sleep(self.send_delay)
-            
-            return True
-            
-        except googleapiclient.errors.HttpError as e:
-            error_details = str(e)
-            
-            if "quotaExceeded" in error_details or "quota" in error_details.lower():
-                logger.error(f"[DATA] Quota exceeded while sending message: {e}")
-            elif "forbidden" in error_details.lower():
-                logger.error(f"[FORBIDDEN] Forbidden error sending message (check permissions): {e}")
-            elif "unauthorized" in error_details.lower():
-                logger.error(f"[U+1F510] Unauthorized error sending message: {e}")
-                raise  # Let caller handle auth errors
-            else:
-                logger.error(f"[FAIL] HTTP error sending message: {e}")
-            
-            return False
-            
-        except Exception as e:
-            logger.error(f"[FAIL] Unexpected error sending message: {e}")
-            return False
+                # Send the message
+                response = self.youtube.liveChatMessages().insert(
+                    part="snippet",
+                    body=message_data
+                ).execute()
+
+                message_id = response.get("id", "unknown")
+                logger.info(f"[OK] Message sent successfully (ID: {message_id})")
+
+                # NOTE: Response recording is handled by livechat_core.py's IntelligentThrottleManager
+                await asyncio.sleep(self.send_delay)
+                return True
+
+            except googleapiclient.errors.HttpError as e:
+                error_details = str(e)
+
+                if "quotaExceeded" in error_details or "quota" in error_details.lower():
+                    logger.error(f"[DATA] Quota exceeded while sending message: {e}")
+                elif "forbidden" in error_details.lower():
+                    logger.error(f"[FORBIDDEN] Forbidden error sending message (check permissions): {e}")
+                elif "unauthorized" in error_details.lower():
+                    logger.error(f"[U+1F510] Unauthorized error sending message: {e}")
+                    raise
+                else:
+                    logger.error(f"[FAIL] HTTP error sending message: {e}")
+
+                return False
+
+            except Exception as e:
+                logger.error(f"[FAIL] Unexpected error sending message: {e}")
+                return False
     
     def configure_random_delays(self, enabled: bool = True, min_delay: float = 0.5, max_delay: float = 3.0):
         """

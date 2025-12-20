@@ -22,10 +22,12 @@ WSP References:
 """
 
 import asyncio
+import json
 import logging
 import os
 import subprocess
 import sys
+import time
 from typing import Dict, Optional
 from datetime import datetime
 from pathlib import Path
@@ -34,6 +36,20 @@ logger = logging.getLogger(__name__)
 
 # Browser lock to prevent multiple Selenium sessions
 _browser_in_use = False
+
+
+def _env_truthy(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
+
+
+def _get_run_id() -> str:
+    run_id = os.getenv("YT_AUTOMATION_RUN_ID", "").strip()
+    if run_id:
+        return run_id
+
+    run_id = f"yt_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    os.environ["YT_AUTOMATION_RUN_ID"] = run_id
+    return run_id
 
 
 class CommunityMonitor:
@@ -58,16 +74,28 @@ class CommunityMonitor:
     - Track telemetry
     """
 
-    def __init__(self, channel_id: str, chat_sender=None, telemetry_store=None):
+    def __init__(self, channel_id: str, chat_sender=None, telemetry_store=None, all_channels: list = None):
         """
         Initialize Community Monitor.
 
         Args:
-            channel_id: YouTube channel ID
+            channel_id: Primary YouTube channel ID (for backward compatibility)
             chat_sender: LiveChatCore instance for announcements
             telemetry_store: YouTubeTelemetryStore for tracking
+            all_channels: List of all channel IDs to rotate through (if None, uses single channel)
         """
-        self.channel_id = channel_id
+        # Channel rotation support (Phase 3P: 24/7 multi-channel processing)
+        if all_channels:
+            self.all_channels = all_channels
+            self.channel_rotation_enabled = True
+            self.current_channel_index = 0
+            logger.info(f"[COMMUNITY] Monitor initialized with {len(all_channels)} channels for rotation")
+        else:
+            self.all_channels = [channel_id]
+            self.channel_rotation_enabled = False
+            logger.info(f"[COMMUNITY] Monitor initialized for single channel {channel_id}")
+
+        self.channel_id = channel_id  # Primary channel (backward compatibility)
         self.chat_sender = chat_sender
         self.telemetry_store = telemetry_store
 
@@ -88,7 +116,32 @@ class CommunityMonitor:
             "tars_like_heart_reply" / "run_skill.py"
         )
 
-        logger.info(f"[COMMUNITY] Monitor initialized for channel {channel_id}")
+    def get_next_channel(self) -> str:
+        """
+        Get next channel ID in rotation.
+
+        Phase 3P: Rotates through all channels (Move2Japan → FoundUps → UnDaoDu → repeat)
+
+        Returns:
+            str: Channel ID to process
+        """
+        if not self.channel_rotation_enabled:
+            logger.debug(f"[DAEMON][CARDIOVASCULAR] 📌 Single channel mode: {self.channel_id}")
+            return self.channel_id
+
+        # Get current channel
+        channel = self.all_channels[self.current_channel_index]
+
+        # Advance to next channel for next time
+        self.current_channel_index = (self.current_channel_index + 1) % len(self.all_channels)
+
+        logger.info(f"[DAEMON][CARDIOVASCULAR] 🔄 CHANNEL ROTATION:")
+        logger.info(f"[DAEMON][CARDIOVASCULAR]   Current: {channel} (index {self.current_channel_index - 1 if self.current_channel_index > 0 else len(self.all_channels) - 1})")
+        logger.info(f"[DAEMON][CARDIOVASCULAR]   Next: {self.all_channels[self.current_channel_index]} (index {self.current_channel_index})")
+        logger.info(f"[DAEMON][CARDIOVASCULAR]   Total channels: {len(self.all_channels)}")
+        logger.info(f"[COMMUNITY] Channel rotation: {channel} (next will be {self.all_channels[self.current_channel_index]})")
+
+        return channel
 
     async def should_check_now(self, pulse_count: int) -> bool:
         """
@@ -96,8 +149,10 @@ class CommunityMonitor:
 
         Phase 1: Protocol Decision
         - Check every 20 pulses (10 minutes)
-        - Only if live stream is active (chat_sender exists)
+        - Runs 24/7 regardless of stream status (background processing)
+        - Reports to live chat if stream is active
         - Skip if engagement already in progress
+        - ANTI-DETECTION: Skip if on break (human-like rest periods)
 
         Args:
             pulse_count: Current heartbeat pulse count
@@ -107,18 +162,39 @@ class CommunityMonitor:
         """
         # Skip if engagement already running
         if self.engagement_in_progress:
+            logger.debug("[DAEMON][CARDIOVASCULAR] ⏭️ Pulse {pulse_count}: Skipping - engagement already in progress")
             logger.debug("[COMMUNITY] Skipping - engagement already in progress")
             return False
 
-        # Only check if chat is active (implies live stream)
-        if not self.chat_sender:
-            return False
+        # ANTI-DETECTION: Check if on break (read persistent state)
+        # Pattern learned from break system in comment_engagement_dae.py
+        break_state_file = Path(__file__).parent.parent.parent / "video_comments" / "memory" / ".break_state.json"
+        if break_state_file.exists():
+            try:
+                with open(break_state_file, 'r') as f:
+                    state = json.load(f)
+                    on_break_until = state.get('on_break_until', 0)
+                    if time.time() < on_break_until:
+                        remaining_minutes = (on_break_until - time.time()) / 60
+                        break_reason = state.get('last_break_reason', 'unknown')
+                        logger.info(f"[DAEMON][CARDIOVASCULAR] 💤 Pulse {pulse_count}: On {break_reason} break ({remaining_minutes:.0f} min remaining)")
+                        logger.info(f"[COMMUNITY] On {break_reason} break - skipping engagement ({remaining_minutes:.0f} min remaining)")
+                        return False
+            except Exception as e:
+                logger.warning(f"[COMMUNITY] Failed to read break state: {e}")
+                # Continue on error (fail open)
 
-        # Check every 20 pulses (10 minutes)
+        # Check every 20 pulses (10 minutes) - runs 24/7, not just during streams
         should_check = (pulse_count % self.check_interval_pulses) == 0
 
         if should_check:
-            logger.info(f"[COMMUNITY] Pulse {pulse_count}: Triggering comment engagement")
+            stream_status = "with live stream" if self.chat_sender else "background (no stream)"
+            logger.info(f"[DAEMON][CARDIOVASCULAR] 💓 HEARTBEAT TRIGGER: Pulse {pulse_count} - 10 minutes elapsed")
+            logger.info(f"[DAEMON][CARDIOVASCULAR] 📍 Mode: {stream_status}")
+            logger.info(f"[DAEMON][CARDIOVASCULAR] 🎯 Initiating comment engagement cycle...")
+            logger.info(f"[COMMUNITY] Pulse {pulse_count}: Triggering comment engagement ({stream_status})")
+        else:
+            logger.debug(f"[DAEMON][CARDIOVASCULAR] 💗 Pulse {pulse_count}: No trigger (next at {((pulse_count // self.check_interval_pulses) + 1) * self.check_interval_pulses})")
 
         return should_check
 
@@ -141,6 +217,7 @@ class CommunityMonitor:
             max_comments = self.max_comments_per_run
 
         if _browser_in_use or self.engagement_in_progress:
+            logger.warning("[DAEMON][CARDIOVASCULAR] 🚫 Browser locked - cannot engage")
             logger.warning("[COMMUNITY] Browser in use, skipping engagement")
             return {'skipped': True, 'reason': 'browser_in_use'}
 
@@ -149,6 +226,9 @@ class CommunityMonitor:
             _browser_in_use = True
             self.last_check_time = datetime.now()
 
+            logger.info(f"[DAEMON][CARDIOVASCULAR] 🔓 Browser lock acquired")
+            logger.info(f"[DAEMON][CARDIOVASCULAR] 🎬 Starting engagement subprocess...")
+            logger.info(f"[DAEMON][CARDIOVASCULAR]   Max comments: {max_comments} (0=UNLIMITED)")
             logger.info(f"[COMMUNITY] Launching autonomous engagement (max: {max_comments} comments)...")
 
             # Launch engagement as subprocess (isolated browser session)
@@ -160,16 +240,22 @@ class CommunityMonitor:
             self.last_comment_count = processed
 
             if processed > 0:
+                logger.info(f"[DAEMON][CARDIOVASCULAR] ✅ SUCCESS: Processed {processed} comments this cycle")
+                logger.info(f"[DAEMON][CARDIOVASCULAR] 📈 Session total: {self.total_processed_this_session} comments")
                 logger.info(f"[COMMUNITY] [OK] Processed {processed} comments")
-                
+
                 # Post announcement to chat
-                await self._announce_engagement(result)
+                if self.chat_sender:
+                    logger.info(f"[DAEMON][CARDIOVASCULAR] 📢 Announcing to live chat...")
+                    await self._announce_engagement(result)
             else:
+                logger.info(f"[DAEMON][CARDIOVASCULAR] ⚪ No comments found to process")
                 logger.info("[COMMUNITY] No comments to process")
 
             return result
 
         except Exception as e:
+            logger.error(f"[DAEMON][CARDIOVASCULAR] ❌ ENGAGEMENT FAILED: {e}")
             logger.error(f"[COMMUNITY] Engagement failed: {e}")
             return {
                 'error': str(e),
@@ -185,6 +271,8 @@ class CommunityMonitor:
         finally:
             self.engagement_in_progress = False
             _browser_in_use = False
+            logger.info(f"[DAEMON][CARDIOVASCULAR] 🔐 Browser lock released")
+            logger.debug(f"[DAEMON][CARDIOVASCULAR] 🏁 Engagement cycle complete")
 
     async def _run_engagement_subprocess(self, max_comments: int) -> Dict:
         """
@@ -202,18 +290,67 @@ class CommunityMonitor:
         import json
 
         try:
+            run_id = _get_run_id()
+            if not (_env_truthy("YT_AUTOMATION_ENABLED", "true") and _env_truthy("YT_COMMENT_ENGAGEMENT_ENABLED", "true")):
+                logger.warning(f"[AUTOMATION-AUDIT] run_id={run_id} comment_engagement=disabled mode=community_monitor_subprocess")
+                return {
+                    "skipped": True,
+                    "reason": "comment_engagement_disabled",
+                    "stats": {"comments_processed": 0, "likes": 0, "hearts": 0, "replies": 0, "errors": 0},
+                }
+
             if not self.engagement_script.exists():
                 logger.error(f"[COMMUNITY] Engagement script missing: {self.engagement_script}")
                 return {'error': 'missing_script', 'stats': {'comments_processed': 0, 'errors': 1}}
+
+            actions = os.getenv("YT_COMMENT_ACTIONS", "").strip()
+            do_like = True
+            do_heart = True
+            do_reply = True
+            if actions:
+                allowed = {a.strip().lower() for a in actions.split(",") if a.strip()}
+                do_like = "like" in allowed
+                do_heart = "heart" in allowed
+                do_reply = "reply" in allowed
+
+            if "YT_COMMENT_LIKE_ENABLED" in os.environ:
+                do_like = _env_truthy("YT_COMMENT_LIKE_ENABLED", "true")
+            if "YT_COMMENT_HEART_ENABLED" in os.environ:
+                do_heart = _env_truthy("YT_COMMENT_HEART_ENABLED", "true")
+            if "YT_COMMENT_REPLY_ENABLED" in os.environ:
+                do_reply = _env_truthy("YT_COMMENT_REPLY_ENABLED", "true")
+
+            reply_text = os.getenv("YT_COMMENT_REPLY_TEXT", "")
+            use_intelligent_reply = _env_truthy("YT_COMMENT_INTELLIGENT_REPLY_ENABLED", "true")
+            if not do_reply:
+                reply_text = ""
+                use_intelligent_reply = False
+
+            debug_tags = _env_truthy("YT_REPLY_DEBUG_TAGS", "false")
+
+            # Get next channel in rotation (Phase 3P: Multi-channel support)
+            target_channel = self.get_next_channel()
 
             # Build command
             cmd = [
                 sys.executable,
                 "-u",  # Unbuffered output for real-time logs via pipes
                 str(self.engagement_script),
+                "--channel", target_channel,
                 "--max-comments", str(max_comments),
                 "--json-output"  # Output JSON for parsing
             ]
+
+            if not do_like:
+                cmd.append("--no-like")
+            if not do_heart:
+                cmd.append("--no-heart")
+            if not use_intelligent_reply:
+                cmd.append("--no-intelligent-reply")
+            if reply_text:
+                cmd.extend(["--reply-text", reply_text])
+            if debug_tags:
+                cmd.append("--debug-tags")
 
             # Default: enable UI-TARS vision verification when LM Studio is available.
             # Override with COMMUNITY_DOM_ONLY=1 to force DOM-only mode.
@@ -230,6 +367,18 @@ class CommunityMonitor:
             if dom_only:
                 cmd.append("--dom-only")
 
+            logger.info(
+                "[AUTOMATION-AUDIT] run_id=%s mode=community_monitor_subprocess channel_id=%s max_comments=%s dom_only=%s like=%s heart=%s reply=%s intelligent_reply=%s debug_tags=%s",
+                run_id,
+                self.channel_id,
+                max_comments,
+                dom_only,
+                do_like,
+                do_heart,
+                do_reply,
+                use_intelligent_reply,
+                debug_tags,
+            )
             logger.info(f"[COMMUNITY] Running: {' '.join(cmd)}")
 
             # Run subprocess
@@ -255,6 +404,7 @@ class CommunityMonitor:
             stderr_lines: list[str] = []
 
             async def _drain_stream(stream, sink: list[str], prefix: str) -> None:
+                skip_backtrace = 0  # Counter for skipping hex backtrace lines
                 while True:
                     line = await stream.readline()
                     if not line:
@@ -263,6 +413,31 @@ class CommunityMonitor:
                     if text:
                         sink.append(text)
                         if stream_logs:
+                            # Skip Selenium backtrace spam
+                            if skip_backtrace > 0:
+                                skip_backtrace -= 1
+                                continue
+
+                            # Detect start of backtrace (skip next ~30 hex lines)
+                            if 'Symbols not available. Dumping unresolved backtrace:' in text:
+                                skip_backtrace = 30
+                                continue
+
+                            # Skip individual hex addresses and "Stacktrace:" lines
+                            if text.strip().startswith('0x') or text.strip() == 'Stacktrace:':
+                                continue
+
+                            # Skip expected import warnings (logged once at subprocess startup)
+                            if any(skip_pattern in text for skip_pattern in [
+                                'Recursive systems not available',
+                                'WRE components not available',
+                                'Tweepy not available',
+                                'pyperclip not available',
+                                'LLM not available for greetings',
+                            ]):
+                                continue
+
+                            # Log everything else (errors, warnings, info)
                             logger.info(f"[COMMUNITY-{prefix}] {text}")
 
             stdout_task = asyncio.create_task(_drain_stream(process.stdout, stdout_lines, "STDOUT"))
@@ -370,6 +545,9 @@ class CommunityMonitor:
         if not self.chat_sender:
             return
 
+        if not _env_truthy("YT_LIVECHAT_ANNOUNCEMENTS_ENABLED", "true"):
+            return
+
         stats = result.get('stats', {})
         processed = stats.get('comments_processed', 0)
         replies = stats.get('replies', 0)
@@ -418,14 +596,15 @@ class CommunityMonitor:
 _community_monitor_instance = None
 
 
-def get_community_monitor(channel_id: str, chat_sender=None, telemetry_store=None) -> CommunityMonitor:
+def get_community_monitor(channel_id: str, chat_sender=None, telemetry_store=None, all_channels: list = None) -> CommunityMonitor:
     """
     Get or create singleton CommunityMonitor instance.
 
     Args:
-        channel_id: YouTube channel ID
+        channel_id: Primary YouTube channel ID
         chat_sender: LiveChatCore instance
         telemetry_store: YouTubeTelemetryStore instance
+        all_channels: List of all channel IDs to rotate through (Phase 3P: Multi-channel support)
 
     Returns:
         CommunityMonitor: Singleton instance
@@ -436,7 +615,8 @@ def get_community_monitor(channel_id: str, chat_sender=None, telemetry_store=Non
         _community_monitor_instance = CommunityMonitor(
             channel_id=channel_id,
             chat_sender=chat_sender,
-            telemetry_store=telemetry_store
+            telemetry_store=telemetry_store,
+            all_channels=all_channels  # Phase 3P: Channel rotation
         )
     else:
         # Update wiring when higher-level services become available (e.g., LiveChatCore after stream detection).

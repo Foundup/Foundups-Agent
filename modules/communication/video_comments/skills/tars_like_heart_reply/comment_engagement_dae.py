@@ -545,7 +545,13 @@ class CommentEngagementDAE:
                 human=self.human,
                 stats=self.stats,
                 reply_executor=self.reply_executor,
-                selectors=self.SELECTORS
+                selectors=self.SELECTORS,
+                vision_descriptions=self.VISION_DESCRIPTIONS,
+                use_vision=self.use_vision,
+                use_dom=True,
+                ui_tars_bridge=None,  # Will be set after vision connection
+                check_moderators=self.check_moderators,
+                mod_lookup=self.mod_lookup
             )
             logger.info("[DAE-CONNECT] Comment processor initialized")
         except Exception as e:
@@ -557,10 +563,13 @@ class CommentEngagementDAE:
                 from modules.infrastructure.foundups_vision.src.ui_tars_bridge import UITarsBridge
                 self.ui_tars_bridge = UITarsBridge(browser_port=CHROME_PORT)
                 await self.ui_tars_bridge.connect()
+                # Update CommentProcessor with vision bridge
+                self.comment_processor.ui_tars_bridge = self.ui_tars_bridge
                 logger.info(f"[DAE-CONNECT] UI-TARS Vision ready (LM Studio: {TARS_API_URL})")
             except Exception as e:
                 logger.warning(f"[DAE-CONNECT] UI-TARS unavailable: {e}")
                 self.use_vision = False
+                self.comment_processor.use_vision = False
         
         return True
     

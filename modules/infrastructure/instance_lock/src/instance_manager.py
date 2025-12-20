@@ -259,8 +259,26 @@ class InstanceLock:
     def cleanup_browser_windows(self) -> int:
         """Find and close any stale browser windows from social media posting.
         Returns the number of browser processes closed."""
+        cleanup_enabled = os.getenv("INSTANCE_LOCK_CLEANUP_BROWSERS", "false").lower() in ("1", "true", "yes")
+        if not cleanup_enabled:
+            # Safety-first default: never terminate user browsers unless explicitly enabled.
+            logger.debug("[SEARCH] Browser cleanup disabled (INSTANCE_LOCK_CLEANUP_BROWSERS not enabled)")
+            return 0
+
         closed_count = 0
         browser_names = ["chrome.exe", "msedge.exe", "msedgedriver.exe", "chromedriver.exe"]
+        automation_markers = [
+            # Prefer explicit, app-specific markers; avoid broad flags like
+            # "--remote-debugging" / "user-data-dir" which match legitimate sessions
+            # (e.g., the persistent YouTube Studio Chrome session on port 9222).
+            "edge_profile_foundups",
+            "chrome_profile",
+            "linkedin_agent",
+            "x_twitter",
+        ]
+
+        # Never terminate the primary Chrome debug session used by the YouTube DAE.
+        protected_chrome_port = str(int(os.getenv("FOUNDUPS_CHROME_PORT", "9222")))
 
         logger.info("[SEARCH] Checking for stale browser windows...")
 
@@ -272,15 +290,12 @@ class InstanceLock:
 
                 # Check if it's a browser process
                 if any(browser in process_name for browser in browser_names):
-                    # Check if it's related to our automation (look for specific profiles)
-                    if any(marker in cmdline_str for marker in [
-                        "edge_profile_foundups",
-                        "chrome_profile",
-                        "linkedin_agent",
-                        "x_twitter",
-                        "--remote-debugging",
-                        "user-data-dir"
-                    ]):
+                    # Do not kill the primary Chrome debug session (used for YouTube Studio automation/login).
+                    if f"--remote-debugging-port={protected_chrome_port}" in cmdline_str:
+                        continue
+
+                    # Check if it's related to our automation (look for explicit markers)
+                    if any(marker in cmdline_str for marker in automation_markers):
                         pid = process.info.get("pid")
                         logger.warning(f"[ALERT] Found stale browser: {process_name} (PID: {pid})")
                         try:
@@ -650,6 +665,5 @@ def get_instance_lock(lock_name: str = "youtube_monitor") -> InstanceLock:
 def check_single_instance() -> bool:
     lock = get_instance_lock()
     return len(lock.check_duplicates()) == 0
-
 
 

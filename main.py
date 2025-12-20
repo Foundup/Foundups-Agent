@@ -512,7 +512,8 @@ def main():
             logger.debug("[DIAG] UTF-8 encoding confirmed")
 
     # Add remaining arguments to existing parser
-    parser.add_argument('--git', action='store_true', help='Launch GitPushDAE (autonomous git push + social posting)')
+    parser.add_argument('--git', action='store_true', help='Run GitPushDAE once (autonomous git push + social posting)')
+    parser.add_argument('--git-daemon', action='store_true', help='Run GitPushDAE continuously (daemon mode)')
     parser.add_argument('--youtube', action='store_true', help='Monitor YouTube only')
     parser.add_argument('--holodae', '--holo', action='store_true', help='Run HoloDAE (Code Intelligence & Monitoring)')
     parser.add_argument('--amo', action='store_true', help='Run AMO DAE (Autonomous Moderation Operations)')
@@ -563,12 +564,20 @@ def main():
         except Exception as e:
             print(f"[ERROR] Dependency launcher failed: {e}")
         return
+    elif args.git_daemon:
+        skip = should_skip("gitpush_dae")
+        if skip:
+            print(f"[SKIP] Known false positive: gitpush_dae :: {skip.get('reason','')}")
+            return
+        launch_git_push_dae(run_once=False)
+        return
     elif args.git:
         skip = should_skip("gitpush_dae")
         if skip:
             print(f"[SKIP] Known false positive: gitpush_dae :: {skip.get('reason','')}")
             return
-        launch_git_push_dae()
+        launch_git_push_dae(run_once=True)
+        return
     elif args.youtube:
         skip = should_skip("youtube_dae")
         if skip:

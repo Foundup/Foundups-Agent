@@ -2,7 +2,7 @@
 
 **Date**: 2025-12-14
 **Approach**: WSP 50 (Pre-Action Verification) - Test infrastructure BEFORE architecture commit
-**Test Script**: [test_edge_youtube_studio.py](../test_edge_youtube_studio.py)
+**Test Script**: [test_edge_youtube_studio.py](../modules/infrastructure/foundups_selenium/tests/test_edge_youtube_studio.py)
 
 ---
 
@@ -88,7 +88,7 @@ Status: Architectural pivot
 ### Step 1: Execute Test Script
 ```bash
 cd O:\Foundups-Agent
-python test_edge_youtube_studio.py
+python -m pytest modules/infrastructure/foundups_selenium/tests/test_edge_youtube_studio.py -v
 ```
 
 ### Step 2: Observe Output
@@ -315,7 +315,7 @@ FOUNDUPS_CHROME_PORT=9222  # Comments
 
 - [SPRINT_3_FIRST_PRINCIPLES_MICRO_SPRINTS.md](SPRINT_3_FIRST_PRINCIPLES_MICRO_SPRINTS.md) - Full Sprint 3 design
 - [SPRINT_3_4_AUDIT_REPORT.md](SPRINT_3_4_AUDIT_REPORT.md) - Gap analysis
-- [test_edge_youtube_studio.py](../test_edge_youtube_studio.py) - Validation test script
+- [test_edge_youtube_studio.py](../modules/infrastructure/foundups_selenium/tests/test_edge_youtube_studio.py) - Validation test script
 - [BrowserManager](../modules/infrastructure/foundups_selenium/src/browser_manager.py) - Infrastructure
 
 ---
@@ -323,7 +323,7 @@ FOUNDUPS_CHROME_PORT=9222  # Comments
 ## Next Steps
 
 **Immediate**:
-1. Run `python test_edge_youtube_studio.py`
+1. Run `python -m pytest modules/infrastructure/foundups_selenium/tests/test_edge_youtube_studio.py -v`
 2. Observe results
 3. Document outcome below
 

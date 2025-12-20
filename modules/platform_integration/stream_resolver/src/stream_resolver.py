@@ -456,6 +456,14 @@ class StreamResolver:
         Returns:
             Tuple of (video_id, chat_id) if found, None otherwise
         """
+        # Safety switchboard: allow disabling *all* stream detection/scraping while debugging automation warnings.
+        if os.getenv("YT_AUTOMATION_ENABLED", "true").strip().lower() not in ("1", "true", "yes", "y", "on"):
+            self.logger.info("[AUTOMATION-AUDIT] stream_detection=disabled reason=YT_AUTOMATION_ENABLED=false")
+            return None
+        if os.getenv("YT_STREAM_SCRAPING_ENABLED", "true").strip().lower() not in ("1", "true", "yes", "y", "on"):
+            self.logger.info("[AUTOMATION-AUDIT] stream_detection=disabled reason=YT_STREAM_SCRAPING_ENABLED=false")
+            return None
+
         # Record check attempt start (WSP 78)
         check_start_time = datetime.now()
         # Prefer explicit channel_id, else env defaults, else hard-coded fallback
@@ -529,9 +537,9 @@ class StreamResolver:
                 else:
                     # Check all configured channels
                     channels_to_check = [
-                        os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UCklMTNnu5POwRmQsg5JJumA'),
-                        os.getenv('CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),
-                        os.getenv('CHANNEL_ID2', 'UCSNTUXjAgpd4sgWYP0xoJgw'),
+                        os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),
+                        os.getenv('UNDAODU_CHANNEL_ID', 'UCfHM9Fw9HD-NwiS0seD_oIA'),
+                        os.getenv('FOUNDUPS_CHANNEL_ID', 'UCSNTUXjAgpd4sgWYP0xoJgw'),
                     ]
                     channels_to_check = [ch for ch in channels_to_check if ch]
 
@@ -585,11 +593,17 @@ class StreamResolver:
             logger.info(f"   Using web scraping (0 API units)")
 
             # Get all channels to rotate through in idle mode
-            channels_to_rotate = [
-                os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UCklMTNnu5POwRmQsg5JJumA'),  # Move2Japan first
-                os.getenv('CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),         # UnDaoDu second
-                os.getenv('CHANNEL_ID2', 'UCSNTUXjAgpd4sgWYP0xoJgw'),       # FoundUps last
-            ]
+            channels_override = os.getenv("YT_CHANNELS_TO_CHECK", "").strip()
+            if channels_override:
+                channels_to_rotate = [ch.strip() for ch in channels_override.split(",") if ch.strip()]
+                logger.info(f"[CONFIG] Using YT_CHANNELS_TO_CHECK override for stream rotation ({len(channels_to_rotate)} channels)")
+            else:
+                channels_to_rotate = [
+                    os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),  # Move2Japan first - FIXED!
+                    os.getenv('UNDAODU_CHANNEL_ID', 'UCfHM9Fw9HD-NwiS0seD_oIA'),         # UnDaoDu second - FIXED!
+                    os.getenv('FOUNDUPS_CHANNEL_ID', 'UCSNTUXjAgpd4sgWYP0xoJgw'),       # FoundUps last
+                    os.getenv('TEST_CHANNEL_ID', ''),                           # Optional: safe test channel
+                ]
             channels_to_rotate = [ch for ch in channels_to_rotate if ch]  # Filter None values
 
             if channel_id:
@@ -678,7 +692,7 @@ class StreamResolver:
                         if chat_id:
                             self._save_session_cache(env_video_id, chat_id)
                         return env_video_id, chat_id
-                    logger.info("[ERROR] Specified video not live")
+                    logger.info("[OK] Specified video not live")
 
                 logger.info(f"[TEST] Searching {channel_name} ({current_channel_id[:12]}...) for live streams...")
                 check_start = time.time()
@@ -728,12 +742,12 @@ class StreamResolver:
                     logger.info(f"[IDLE] No stream on {channel_name}, checking {next_channel} in {delay:.1f}s...")
                     time.sleep(delay)
                 else:
-                    logger.info(f"[ERROR] No stream on {channel_name} (last channel checked)")
+                    logger.info(f"[OFFLINE] No live stream on {channel_name} (last channel checked)")
 
             if channel_id:
-                logger.info(f"[ERROR] No stream found on {self._get_channel_display_name(channel_id)}")
+                logger.info(f"[OFFLINE] No live stream found on {self._get_channel_display_name(channel_id)}")
             else:
-                logger.info(f"[ERROR] No streams found on any of the {total_channels} channels")
+                logger.info(f"[OFFLINE] No live streams found on any of the {total_channels} channels")
             return None
         else:
             # NO-QUOTA mode not available but could be initialized

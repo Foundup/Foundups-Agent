@@ -21,6 +21,10 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
+def _env_truthy(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
+
+
 class VisionChatSender:
     """Posts messages to YouTube Live Chat via browser automation."""
     
@@ -125,6 +129,13 @@ class VisionChatSender:
         Returns:
             True if message was posted successfully
         """
+        if not _env_truthy("YT_AUTOMATION_ENABLED", "true"):
+            logger.warning("[VISION-CHAT] Disabled (YT_AUTOMATION_ENABLED=false)")
+            return False
+        if not _env_truthy("YT_LIVECHAT_UI_ACTIONS_ENABLED", "true"):
+            logger.warning("[VISION-CHAT] Disabled (YT_LIVECHAT_UI_ACTIONS_ENABLED=false)")
+            return False
+
         # Rate limiting
         now = time.time()
         if now - self._last_post_time < self._min_post_interval:
@@ -192,4 +203,6 @@ def get_vision_chat_sender() -> VisionChatSender:
     if _vision_sender is None:
         _vision_sender = VisionChatSender()
     return _vision_sender
+
+
 

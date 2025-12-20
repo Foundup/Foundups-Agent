@@ -324,7 +324,15 @@ class TimeoutManager:
         
         if is_valid:
             logger.info(f"[TARGET] Tracked whack: {mod_name} -> {target_name} (Total: {self.tracker.get_mod_stats(mod_id).get('frag_count', 0)})")
-        
+
+            # PHASE 3O-3R: Record whacked user for 0/1/2 classification
+            try:
+                from modules.gamification.whack_a_magat.src.whack import get_profile_store
+                profile_store = get_profile_store()
+                profile_store.record_whacked_user(target_id, target_name, mod_id)
+            except Exception as e:
+                logger.error(f"[WHACK-DB] Failed to record whacked user: {e}")
+
         # Persist to database
         if self.db:
             try:

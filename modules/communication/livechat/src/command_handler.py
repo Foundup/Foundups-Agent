@@ -11,6 +11,7 @@ NAVIGATION: Routes /commands into gamification systems.
 """
 
 import logging
+import os
 from typing import Optional, Dict, Any
 from modules.gamification.whack_a_magat import (
     get_profile, get_leaderboard, get_user_position,
@@ -32,6 +33,10 @@ logger = logging.getLogger(__name__)
 import time
 import random
 from collections import deque
+
+
+def _env_truthy(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
 
 
 class CommandFloodDetector:
@@ -186,45 +191,95 @@ class CommandHandler:
 
         # Check for !party command - reaction spam!
         if text_lower.startswith('!party'):
+            logger.debug(f"[PARTY-DEBUG] !party command detected from @{username} (role={role}, user_id={user_id})")
+
+            if not _env_truthy("YT_AUTOMATION_ENABLED", "true"):
+                logger.warning(f"[PARTY-DEBUG] Blocked: YT_AUTOMATION_ENABLED=false")
+                return f"@{username} !party disabled (YT_AUTOMATION_ENABLED=false)"
+            if not _env_truthy("YT_LIVECHAT_UI_ACTIONS_ENABLED", "true"):
+                logger.warning(f"[PARTY-DEBUG] Blocked: YT_LIVECHAT_UI_ACTIONS_ENABLED=false")
+                return f"@{username} !party disabled (YT_LIVECHAT_UI_ACTIONS_ENABLED=false)"
+            if not _env_truthy("YT_PARTY_REACTIONS_ENABLED", "true"):
+                logger.warning(f"[PARTY-DEBUG] Blocked: YT_PARTY_REACTIONS_ENABLED=false")
+                return f"@{username} !party disabled (YT_PARTY_REACTIONS_ENABLED=false)"
+
             # OWNER/MOD OR Top 10 leaderboard members can party!
             can_party = False
             party_reason = ""
-            
+
             if role == 'OWNER':
                 can_party = True
                 party_reason = "OWNER"
+                logger.debug(f"[PARTY-DEBUG] Permission granted: OWNER role")
             elif role == 'MOD':
-                can_party = True  
+                can_party = True
                 party_reason = "MOD"
+                logger.debug(f"[PARTY-DEBUG] Permission granted: MOD role")
             else:
                 # Check if user is in top 10 of whack-a-maga leaderboard
+                logger.debug(f"[PARTY-DEBUG] Checking leaderboard position for user_id={user_id}")
                 try:
                     position, total = get_user_position(user_id)
+                    logger.debug(f"[PARTY-DEBUG] Leaderboard result: position={position}, total={total}")
                     if position > 0 and position <= 10:
                         can_party = True
                         party_reason = f"TOP {position} WHACKER"
                         logger.info(f"[PARTY] {username} is #{position} on leaderboard - party approved!")
+                    else:
+                        logger.debug(f"[PARTY-DEBUG] Permission denied: position={position} (must be ≤10)")
                 except Exception as e:
                     logger.warning(f"[PARTY] Could not check leaderboard position: {e}")
-            
+                    logger.debug(f"[PARTY-DEBUG] Leaderboard check error: {type(e).__name__}: {str(e)}")
+
             if can_party:
                 logger.info(f"[PARTY] !party triggered by {username} ({party_reason})")
                 try:
-                    from modules.communication.livechat.src.party_reactor import get_party_reactor
-                    reactor = get_party_reactor()
-                    
+                    import asyncio
+                    from modules.communication.livechat.src.party_reactor import trigger_party
+
                     # Parse click count if provided (e.g., !party 50)
                     parts = text_lower.split()
                     clicks = 30  # Default
                     if len(parts) > 1 and parts[1].isdigit():
                         clicks = min(int(parts[1]), 100)  # Cap at 100
-                    
-                    results = reactor.party_mode(total_clicks=clicks)
-                    return reactor.get_party_summary(results)
+                        logger.debug(f"[PARTY-DEBUG] Custom click count: {clicks} (capped at 100)")
+                    else:
+                        logger.debug(f"[PARTY-DEBUG] Using default click count: {clicks}")
+
+                    logger.debug(f"[PARTY-DEBUG] Calling trigger_party(total_clicks={clicks})")
+
+                    async def _run_party_background() -> None:
+                        try:
+                            result = await trigger_party(total_clicks=clicks)
+                            logger.info(f"[PARTY] {result}")
+                        except Exception as e:
+                            logger.error(f"[PARTY] Background party failed: {e}", exc_info=True)
+
+                    # If we're already inside the LiveChat async loop, schedule in background
+                    # to avoid blocking polling (and to avoid asyncio.run() in a running loop).
+                    try:
+                        loop = asyncio.get_running_loop()
+                    except RuntimeError:
+                        loop = None
+
+                    if loop and loop.is_running():
+                        loop.create_task(_run_party_background())
+                        return f"{mention} 🎉 Party started ({clicks} reactions) — check logs for progress"
+
+                    # Fallback for non-async contexts (e.g., manual scripts)
+                    result = asyncio.run(trigger_party(total_clicks=clicks))
+                    logger.debug(f"[PARTY-DEBUG] trigger_party() returned: {result[:50]}...")
+                    return result
                 except Exception as e:
                     logger.error(f"[PARTY] Error: {e}")
+                    logger.error(f"[PARTY-DEBUG] Exception details:")
+                    logger.error(f"[PARTY-DEBUG]   Type: {type(e).__name__}")
+                    logger.error(f"[PARTY-DEBUG]   Message: {str(e)}")
+                    import traceback
+                    logger.error(f"[PARTY-DEBUG]   Traceback: {traceback.format_exc()}")
                     return f"@{username} 🎉 Party failed: {e}"
             else:
+                logger.warning(f"[PARTY-DEBUG] Permission denied for @{username} (role={role}, not in top 10)")
                 return f"@{username} 🎉 !party is for ADMINS or TOP 10 MAGADOOM WHACKERS! Get whacking! 💀✊✋🖐️"
 
         # Check for YouTube Shorts commands (!createshort, !shortveo, !shortsora, !shortstatus, !shortstats)

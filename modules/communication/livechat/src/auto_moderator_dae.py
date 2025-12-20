@@ -16,6 +16,7 @@ import asyncio
 import logging
 import os
 import time
+from datetime import datetime
 from typing import Optional, Dict
 from modules.platform_integration.youtube_auth.src.youtube_auth import get_authenticated_service
 from modules.platform_integration.youtube_auth.src.monitored_youtube_service import create_monitored_service
@@ -25,6 +26,10 @@ from modules.platform_integration.stream_resolver.src.stream_resolver import Str
 from .livechat_core import LiveChatCore
 
 logger = logging.getLogger(__name__)
+
+
+def _env_truthy(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
 
 
 class AutoModeratorDAE:
@@ -115,6 +120,9 @@ class AutoModeratorDAE:
         # Community Monitor for YouTube comments (Phase 3 integration)
         self.community_monitor = None  # Initialized in run() when channel_id is known
 
+        # AI Overseer singleton (initialized once, reused forever - saves 490-505ms every 5 minutes)
+        self.ai_overseer = None  # Lazy init on first heartbeat
+
         logger.info("[OK] Auto Moderator DAE initialized")
     
     def connect(self) -> bool:
@@ -196,11 +204,17 @@ class AutoModeratorDAE:
         self.priority_reason = None
 
         # List of channels to check - PRIORITIZE MOVE2JAPAN FIRST (WSP 3: Multi-channel support)
-        channels_to_check = [
-            os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UCklMTNnu5POwRmQsg5JJumA'),  # Move2Japan channel - PRIORITY 1
-            os.getenv('CHANNEL_ID2', 'UCSNTUXjAgpd4sgWYP0xoJgw'),  # FoundUps channel - PRIORITY 2
-            os.getenv('CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),   # UnDaoDu main channel - PRIORITY 3
-        ]
+        channels_override = os.getenv("YT_CHANNELS_TO_CHECK", "").strip()
+        if channels_override:
+            channels_to_check = [ch.strip() for ch in channels_override.split(",") if ch.strip()]
+            logger.info(f"[CONFIG] Using YT_CHANNELS_TO_CHECK override ({len(channels_to_check)} channels)")
+        else:
+            channels_to_check = [
+                os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),  # Move2Japan channel - PRIORITY 1 - FIXED!
+                os.getenv('FOUNDUPS_CHANNEL_ID', 'UCSNTUXjAgpd4sgWYP0xoJgw'),  # FoundUps channel - PRIORITY 2
+                os.getenv('UNDAODU_CHANNEL_ID', 'UCfHM9Fw9HD-NwiS0seD_oIA'),   # UnDaoDu channel - PRIORITY 3 - FIXED!
+                os.getenv('TEST_CHANNEL_ID', ''),  # Optional: safe test channel (disabled for social posting by default)
+            ]
         
         # Filter out None values and remove duplicates
         channels_to_check = [ch for ch in channels_to_check if ch]
@@ -644,8 +658,8 @@ class AutoModeratorDAE:
         stream_info = result or {}
         video_id = stream_info.get('video_id')
         live_chat_id = stream_info.get('live_chat_id')
-        channel_id = stream_info.get('channel_id')
-        channel_name = stream_info.get('channel_name')
+        channel_id = stream_info.get('channel_id') or os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw')
+        channel_name = stream_info.get('channel_name') or 'Default Channel'
 
         # Set current_video_id for heartbeat tracking (fixes "Stream: None" issue)
         self.current_video_id = video_id
@@ -670,7 +684,7 @@ class AutoModeratorDAE:
                             self.stream_resolver.service = self.service
                         else:
                             self.stream_resolver = StreamResolver(self.service)
-                        target_channel_id = channel_id or os.getenv('CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw')
+                        target_channel_id = channel_id or os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw')
                         auth_result = self.stream_resolver.resolve_stream(target_channel_id)
                         if auth_result and len(auth_result) > 1:
                             resolved_video_id = auth_result[0]
@@ -709,17 +723,57 @@ class AutoModeratorDAE:
         await self.livechat.initialize()
 
         # Phase 3: Initialize (or update) Community Monitor for YouTube comments
+        # Phase 3P: Build channel rotation list for 24/7 processing
+        channels_override = os.getenv("YT_CHANNELS_TO_CHECK", "").strip()
+        if channels_override:
+            all_channels = [ch.strip() for ch in channels_override.split(",") if ch.strip()]
+        else:
+            all_channels = [
+                os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),  # Move2Japan - PRIORITY 1 - FIXED!
+                os.getenv('FOUNDUPS_CHANNEL_ID', 'UCSNTUXjAgpd4sgWYP0xoJgw'),  # FoundUps - PRIORITY 2
+                os.getenv('UNDAODU_CHANNEL_ID', 'UCfHM9Fw9HD-NwiS0seD_oIA'),   # UnDaoDu - PRIORITY 3 - FIXED!
+            ]
+        all_channels = [ch for ch in all_channels if ch]  # Filter empty strings
+
         try:
             from .community_monitor import get_community_monitor
             self.community_monitor = get_community_monitor(
                 channel_id=channel_id,
                 chat_sender=self.livechat,  # For posting announcements
-                telemetry_store=self.telemetry  # For tracking stats
+                telemetry_store=self.telemetry,  # For tracking stats
+                all_channels=all_channels  # Phase 3P: Channel rotation list
             )
-            logger.info("[COMMUNITY] Monitor initialized for YouTube Studio comments")
+            logger.info(f"[COMMUNITY] Monitor initialized for {len(all_channels)} channels (24/7 rotation)")
         except Exception as e:
             logger.warning(f"[COMMUNITY] Failed to initialize monitor: {e}")
             self.community_monitor = None
+
+        # Phase 4: Trigger comment engagement when live stream detected
+        # Auto-engage comments for the detected live stream channel
+        if os.getenv("YT_COMMENT_ENGAGEMENT_ENABLED", "true").lower() in ("1", "true", "yes"):
+            try:
+                from .engagement_runner import get_runner
+                from pathlib import Path
+
+                exec_mode = os.getenv("YT_COMMENT_ENGAGEMENT_MODE", "subprocess").lower()
+                max_comments = int(os.getenv("YT_COMMENT_ENGAGEMENT_MAX", "0"))  # 0 = UNLIMITED
+
+                runner = get_runner(
+                    repo_root=Path(__file__).resolve().parents[4],
+                    mode=exec_mode
+                )
+
+                # Launch engagement as async task (non-blocking)
+                # CRITICAL: Always use Studio inbox (video_id=None), NEVER video-specific comments
+                asyncio.create_task(
+                    self._run_comment_engagement(runner, channel_id, video_id=None, max_comments=max_comments, mode=exec_mode)
+                )
+                # CRITICAL: Yield control to event loop so task can start immediately
+                await asyncio.sleep(0)
+                logger.info(f"[COMMUNITY] Auto-engagement launched for {channel_name} (channel_id={channel_id}, mode={exec_mode}, max_comments={max_comments}) - Studio inbox processing")
+
+            except Exception as e:
+                logger.warning(f"[COMMUNITY] Auto-engagement failed to launch: {e}")
 
         # Start monitoring
         logger.info("="*60)
@@ -763,6 +817,7 @@ class AutoModeratorDAE:
         self,
         runner,
         channel_id: str,
+        video_id: str,
         max_comments: int,
         mode: str
     ):
@@ -776,11 +831,20 @@ class AutoModeratorDAE:
 
         This method is launched as an async task and does not block main DAE.
         """
+        logger.info(f"[DAEMON][CARDIOVASCULAR] 🎬 _run_comment_engagement STARTED")
+        logger.info(f"[DAEMON][CARDIOVASCULAR]   Channel: {channel_id}")
+        logger.info(f"[DAEMON][CARDIOVASCULAR]   Video ID: {video_id}")
+        logger.info(f"[DAEMON][CARDIOVASCULAR]   Max comments: {max_comments}")
+        logger.info(f"[DAEMON][CARDIOVASCULAR]   Mode: {mode}")
+
         try:
+            logger.info(f"[DAEMON][CARDIOVASCULAR] 🚀 Calling runner.run_engagement()...")
             result = await runner.run_engagement(
                 channel_id=channel_id,
+                video_id=video_id,
                 max_comments=max_comments
             )
+            logger.info(f"[DAEMON][CARDIOVASCULAR] ✅ runner.run_engagement() returned!")
 
             # Log result
             stats = result.get('stats', {})
@@ -806,22 +870,48 @@ class AutoModeratorDAE:
             logger.info("[AI] AI Overseer (Qwen/Gemma) monitoring: ENABLED")
         logger.info("=" * 60)
 
+        # Central automation audit run id (propagates to subprocesses via env inheritance)
+        run_id = os.getenv("YT_AUTOMATION_RUN_ID", "").strip()
+        if not run_id:
+            run_id = f"yt_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            os.environ["YT_AUTOMATION_RUN_ID"] = run_id
+
+        logger.info(
+            "[AUTOMATION-AUDIT] run_id=%s yt_automation=%s comment_engagement=%s livechat_send=%s stream_scraping=%s stream_vision_disabled=%s",
+            run_id,
+            _env_truthy("YT_AUTOMATION_ENABLED", "true"),
+            _env_truthy("YT_COMMENT_ENGAGEMENT_ENABLED", "true"),
+            _env_truthy("YT_LIVECHAT_SEND_ENABLED", "true"),
+            _env_truthy("YT_STREAM_SCRAPING_ENABLED", "true"),
+            os.getenv("STREAM_VISION_DISABLED", "true"),
+        )
+        logger.info(
+            "[AUTOMATION-AUDIT] run_id=%s livechat_ui_actions=%s party_reactions=%s announcements=%s",
+            run_id,
+            _env_truthy("YT_LIVECHAT_UI_ACTIONS_ENABLED", "true"),
+            _env_truthy("YT_PARTY_REACTIONS_ENABLED", "true"),
+            _env_truthy("YT_LIVECHAT_ANNOUNCEMENTS_ENABLED", "true"),
+        )
+
         # Phase -2: Launch dependencies (Chrome + LM Studio for comment engagement)
-        try:
-            from modules.infrastructure.dependency_launcher.src.dae_dependencies import ensure_dependencies
-            # Require LM Studio so UI-TARS vision is available before engagement
-            dep_status = await ensure_dependencies(require_lm_studio=True)
-            if not dep_status.get('chrome'):
-                logger.warning("[DEPS] Chrome not ready - comment engagement may fail")
-                logger.warning("[DEPS] Manual launch: chrome --remote-debugging-port=9222")
-            if dep_status.get('lm_studio'):
-                logger.info("[DEPS] LM Studio ready (UI-TARS vision enabled on port 1234)")
-            else:
-                logger.warning("[DEPS] LM Studio not ready - falling back to DOM-only actions")
-        except ImportError:
-            logger.debug("[DEPS] Dependency launcher not available")
-        except Exception as e:
-            logger.warning(f"[DEPS] Dependency check failed: {e}")
+        if _env_truthy("YT_DEPS_AUTO_LAUNCH", "true"):
+            try:
+                from modules.infrastructure.dependency_launcher.src.dae_dependencies import ensure_dependencies
+                # Require LM Studio so UI-TARS vision is available before engagement
+                dep_status = await ensure_dependencies(require_lm_studio=True)
+                if not dep_status.get('chrome'):
+                    logger.warning("[DEPS] Chrome not ready - comment engagement may fail")
+                    logger.warning("[DEPS] Manual launch: chrome --remote-debugging-port=9222")
+                if dep_status.get('lm_studio'):
+                    logger.info("[DEPS] LM Studio ready (UI-TARS vision enabled on port 1234)")
+                else:
+                    logger.warning("[DEPS] LM Studio not ready - falling back to DOM-only actions")
+            except ImportError:
+                logger.debug("[DEPS] Dependency launcher not available")
+            except Exception as e:
+                logger.warning(f"[DEPS] Dependency check failed: {e}")
+        else:
+            logger.info("[DEPS] Auto-launch disabled (YT_DEPS_AUTO_LAUNCH=false)")
 
         # Phase -2.1: Startup comment engagement (runs even when no live stream)
         # First-principles: comments are a persistent backlog; do not gate on live chat.
@@ -832,20 +922,26 @@ class AutoModeratorDAE:
                 from .engagement_runner import get_runner
                 from pathlib import Path
 
-                default_channel_id = os.getenv('CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw')
+                default_channel_id = os.getenv("COMMUNITY_CHANNEL_ID") or os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw')
                 startup_max = int(os.getenv("COMMUNITY_STARTUP_MAX_COMMENTS", "0"))
 
                 # Get execution mode (default: subprocess for safety)
                 exec_mode = os.getenv("COMMUNITY_EXEC_MODE", "subprocess")
-                repo_root = Path(__file__).resolve().parents[3]
+                # Repo root (auto_moderator_dae.py is at modules/communication/livechat/src/)
+                repo_root = Path(__file__).resolve().parents[4]
 
                 runner = get_runner(mode=exec_mode, repo_root=repo_root)
 
                 # Launch as async task
-                asyncio.create_task(
-                    self._run_comment_engagement(runner, default_channel_id, startup_max, exec_mode)
+                # CRITICAL: video_id=None to use Studio inbox (NOT video-specific comments)
+                task = asyncio.create_task(
+                    self._run_comment_engagement(runner, default_channel_id, video_id=None, max_comments=startup_max, mode=exec_mode)
                 )
-                logger.info(f"[COMMUNITY] Startup engagement launched (mode={exec_mode}, max_comments={startup_max})")
+                # CRITICAL: Give subprocess 3 seconds to launch before stream detection starts
+                # This ensures Chrome opens Studio inbox before stream resolver hijacks the browser
+                logger.info(f"[COMMUNITY] Startup engagement task created - waiting 3s for subprocess launch...")
+                await asyncio.sleep(3)
+                logger.info(f"[COMMUNITY] Startup engagement launched (channel_id={default_channel_id}, mode={exec_mode}, max_comments={startup_max}) - Studio inbox processing")
 
             except Exception as e:
                 logger.warning(f"[COMMUNITY] Startup engagement failed to launch: {e}")
@@ -870,11 +966,27 @@ class AutoModeratorDAE:
         if not self.connect():
             logger.error("Failed to connect to YouTube")
             return
-        
+
+        # COMMENT-ONLY MODE: Skip stream detection, only run comment engagement
+        comment_only_mode = os.getenv("YT_COMMENT_ONLY_MODE", "false").lower() in ("1", "true", "yes")
+        if comment_only_mode:
+            logger.info("=" * 60)
+            logger.info("[COMMENT-ONLY] Running in COMMENT-ONLY mode")
+            logger.info("[COMMENT-ONLY] Stream detection DISABLED - only processing comments")
+            logger.info("[COMMENT-ONLY] Press Ctrl+C to stop")
+            logger.info("=" * 60)
+            # Just wait indefinitely - comment engagement task runs in background
+            try:
+                while True:
+                    await asyncio.sleep(60)  # Keep alive, let comment engagement run
+            except KeyboardInterrupt:
+                logger.info("[COMMENT-ONLY] Shutting down...")
+            return
+
         # Phase 2: Monitor autonomously - loop forever looking for streams
         consecutive_failures = 0
         stream_ended_normally = False
-        
+
         while True:
             try:
                 await self.monitor_chat()
@@ -1058,9 +1170,14 @@ class AutoModeratorDAE:
                             from modules.ai_intelligence.ai_overseer.src.ai_overseer import AIIntelligenceOverseer
                             from pathlib import Path as OverseerPath
 
-                            # Initialize AI Overseer
-                            repo_root = OverseerPath(__file__).resolve().parent.parent.parent.parent
-                            overseer = AIIntelligenceOverseer(repo_root)
+                            # Initialize AI Overseer ONCE, reuse forever (saves 490-505ms per heartbeat)
+                            # Repo root (auto_moderator_dae.py is at modules/communication/livechat/src/)
+                            if self.ai_overseer is None:
+                                repo_root = OverseerPath(__file__).resolve().parents[4]
+                                self.ai_overseer = AIIntelligenceOverseer(repo_root)
+                                logger.info("[AI-OVERSEER] Initialized singleton (first use)")
+
+                            overseer = self.ai_overseer  # Reuse existing instance
 
                             # Read recent JSONL telemetry for error detection
                             recent_log_lines = []

@@ -10,9 +10,20 @@ Pattern: Dependency injection (driver, stats, reply_executor passed to construct
 import asyncio
 import logging
 import os
+import random
 from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
+
+# Import commenter history store (WSP 60 module memory)
+try:
+    from modules.communication.video_comments.src.commenter_history_store import (
+        get_commenter_history_store,
+    )
+    COMMENTER_HISTORY_AVAILABLE = True
+except ImportError as e:
+    COMMENTER_HISTORY_AVAILABLE = False
+    logger.warning(f"[CommentProcessor] Commenter history store not available: {e}")
 
 
 class CommentProcessor:
@@ -26,7 +37,7 @@ class CommentProcessor:
     - Update engagement stats
     """
     
-    def __init__(self, driver, human, stats, reply_executor, selectors):
+    def __init__(self, driver, human, stats, reply_executor, selectors, vision_descriptions=None, use_vision=False, use_dom=True, ui_tars_bridge=None, check_moderators=False, mod_lookup=None):
         """
         Args:
             driver: Selenium WebDriver instance
@@ -34,12 +45,24 @@ class CommentProcessor:
             stats: Dict tracking engagement stats
             reply_executor: BrowserReplyExecutor instance
             selectors: Dict of DOM selectors
+            vision_descriptions: Dict of vision descriptions for UI-TARS (optional)
+            use_vision: Enable vision verification (default False)
+            use_dom: Enable DOM-based actions (default True)
+            ui_tars_bridge: UITarsBridge instance for vision (optional)
+            check_moderators: Enable moderator detection (default False)
+            mod_lookup: ModeratorLookup instance (optional)
         """
         self.driver = driver
         self.human = human
         self.stats = stats
         self.reply_executor = reply_executor
         self.selectors = selectors
+        self.VISION_DESCRIPTIONS = vision_descriptions or {}
+        self.use_vision = use_vision
+        self.use_dom = use_dom
+        self.ui_tars_bridge = ui_tars_bridge
+        self.check_moderators = check_moderators
+        self.mod_lookup = mod_lookup
 
     async def click_element_dom(self, comment_idx: int, element_type: str) -> bool:
         """
@@ -513,4 +536,67 @@ class CommentProcessor:
                 logger.debug(f"[DAE] Failed to record commenter history: {e}")
 
         return results
+
+    def get_comment_count(self) -> int:
+        """Phase 0: Knowledge - Count visible comments."""
+        count = self.driver.execute_script(
+            f"return document.querySelectorAll('{self.selectors['comment_thread']}').length"
+        )
+        return count or 0
+
+    async def _verify_action_with_vision(self, action: str, description: str, min_confidence: float = 0.6, timeout: float = 8.0) -> bool:
+        """
+        Wrap vision verification with timeout, confidence threshold, and safe fallback.
+        Returns True when vision is disabled/unavailable to avoid blocking the flow.
+        """
+        if not self.use_vision or not self.ui_tars_bridge:
+            return True
+        try:
+            verify = await asyncio.wait_for(self._verify_with_vision(description), timeout=timeout)
+        except asyncio.TimeoutError:
+            logger.warning(f"[VISION] {action} verification timed out after {timeout}s - trusting DOM action")
+            return True
+        except Exception as e:
+            logger.warning(f"[VISION] {action} verification error: {e} - trusting DOM action")
+            return True
+
+        ok = verify.get('success', False) and verify.get('confidence', 0) >= min_confidence
+        logger.info(f"[VISION] {action} verification: success={verify.get('success')} confidence={verify.get('confidence',0):.2f} threshold={min_confidence}")
+        return ok
+
+    async def _verify_with_vision(self, description: str) -> Dict[str, Any]:
+        """Vision verification via UI-TARS."""
+        if not self.ui_tars_bridge:
+            return {'success': True, 'confidence': 0.5, 'note': 'Vision unavailable'}
+
+        try:
+            result = await self.ui_tars_bridge.verify(description, driver=self.driver)
+            return {'success': result.success, 'confidence': result.confidence}
+        except Exception as e:
+            return {'success': False, 'confidence': 0, 'error': str(e)}
+
+    async def _vision_click_verified(
+        self,
+        action_name: str,
+        click_description: str,
+        verify_description: str = None,
+        max_retries: int = 3,
+        min_confidence: float = 0.6,
+        post_click_sleep: float = 0.8,
+        timeout: float = 90.0,
+        require_verification: bool = True,
+    ) -> bool:
+        """
+        Self-correcting vision loop:
+        - Verify pre-state (if verify_description provided) to avoid toggling.
+        - Click by vision.
+        - Verify post-state (vision).
+        """
+        if not self.use_vision or not self.ui_tars_bridge:
+            return False
+
+        # For now, return False since vision is complex and optional
+        # The DOM path (click_element_dom) is the primary method
+        logger.info(f"[VISION] {action_name} vision click requested but vision disabled/unavailable")
+        return False
 

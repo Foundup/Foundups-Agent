@@ -82,6 +82,11 @@ class ChannelConfigurationManager:
                 'x_account': XAccount.MOVE2JAPAN.value,
                 'use_foundups_x': False,
                 'enabled': True
+            },
+            'FoundUps1934 [TEST]': {
+                'channel_id': 'UCROkIz1wOCP3tPk-1j3umyQ',
+                'channel_name': 'FoundUps1934 [TEST]',
+                'enabled': False
             }
         }
 

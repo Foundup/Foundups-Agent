@@ -21,6 +21,7 @@ Architecture:
 import asyncio
 import logging
 import json
+import os
 import sys
 from datetime import datetime
 from typing import Dict, Optional, Any, List
@@ -28,7 +29,14 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+from modules.communication.livechat.src.automation_gates import gate_snapshot
+
 logger = logging.getLogger(__name__)
+
+
+def _env_truthy(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
+
 
 class HeartbeatStatus(Enum):
     """Health status indicators"""
@@ -329,9 +337,14 @@ class YouTubeDAEHeartbeat:
             telemetry_file = Path("logs/youtube_dae_heartbeat.jsonl")
             telemetry_file.parent.mkdir(parents=True, exist_ok=True)
 
+            payload = heartbeat.to_dict()
+            run_id = os.getenv("YT_AUTOMATION_RUN_ID", "").strip()
+            payload["run_id"] = run_id or None
+            payload["automation_gates"] = gate_snapshot()
+
             # Write as JSONL (one JSON object per line)
             with open(telemetry_file, 'a', encoding='utf-8') as f:
-                json.dump(heartbeat.to_dict(), f)
+                json.dump(payload, f, ensure_ascii=False)
                 f.write('\n')
 
         except Exception as e:

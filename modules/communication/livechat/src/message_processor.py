@@ -943,6 +943,9 @@ class MessageProcessor:
         # Quiz answer shortcuts
         quiz_answers = ['!1', '!2', '!3', '!4']
 
+        # Additional ! commands routed through CommandHandler (non-quiz)
+        bang_commands = ['!party']
+
         text_lower = text.lower().strip()
 
         # Check / commands
@@ -951,7 +954,10 @@ class MessageProcessor:
         # Check quiz answers (!1-!4)
         has_quiz_answer = any(text_lower.startswith(cmd) for cmd in quiz_answers)
 
-        has_command = has_slash_command or has_quiz_answer
+        # Check non-quiz ! commands
+        has_bang_command = any(text_lower.startswith(cmd) for cmd in bang_commands)
+
+        has_command = has_slash_command or has_quiz_answer or has_bang_command
 
         if has_command:
             logger.info(f"[GAME] Detected gamification command: {text_lower}")

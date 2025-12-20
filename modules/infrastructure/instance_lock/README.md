@@ -28,6 +28,16 @@ finally:
 
 ## Recent Changes
 
+### 2025-12-15: Safety Gate for Browser Cleanup (Prevents Killing YouTube Chrome)
+**Problem**: InstanceLock startup cleanup was terminating any `chrome.exe` process with broad markers like `--remote-debugging` / `user-data-dir`, which can kill the persistent YouTube Studio Chrome session (port `9222`) and break comment engagement/login.
+
+**Fix**:
+1. Added an explicit opt-in flag: `INSTANCE_LOCK_CLEANUP_BROWSERS=1`
+2. Tightened “automation process” detection to only use explicit markers (e.g., `linkedin_agent`, `x_twitter`)
+3. Always protect the primary YouTube Chrome debug session: `--remote-debugging-port=$FOUNDUPS_CHROME_PORT` (default `9222`)
+
+**Result**: Default behavior is non-destructive; browser cleanup runs only when explicitly enabled and won’t kill the YouTube DAE’s primary Chrome session.
+
 ### 2025-12-12: 012 Duplicate-Termination + Python-Only Duplicate Detection
 **Problem**: Duplicate detection was flagging parent shells (e.g., `bash.exe`) as "main.py instances", blocking launches; 012 non-interactive launches need deterministic auto-cleanup.
 

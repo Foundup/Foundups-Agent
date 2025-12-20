@@ -1,0 +1,86 @@
+{
+  "platform": "youtube_chat",
+  "description": "YouTube Live Chat interactions (reactions, messages)",
+  "iframe": {
+    "selector": "iframe#chatframe",
+    "required": true,
+    "description": "YouTube live chat is in an iframe"
+  },
+  "actions": {
+    "party_toggle": {
+      "coordinates": {"x": 359, "y": 759},
+      "variance": {"x": 8, "y": 8},
+      "action": "hover",
+      "description": "Heart button - hover to open reaction popup",
+      "timing": {
+        "before_hover": {"min": 0.15, "max": 0.35},
+        "after_hover": {"min": 0.15, "max": 0.30}
+      }
+    },
+    "reaction_100": {
+      "coordinates": {"x": 361, "y": 735},
+      "variance": {"x": 8, "y": 8},
+      "action": "click",
+      "emoji": "💯",
+      "description": "100% reaction",
+      "timing": {
+        "before_click": {"min": 0.10, "max": 0.25},
+        "after_click": {"min": 0.10, "max": 0.30}
+      }
+    },
+    "reaction_wide_eyes": {
+      "coordinates": {"x": 357, "y": 708},
+      "variance": {"x": 8, "y": 8},
+      "action": "click",
+      "emoji": "😲",
+      "description": "Wide eyes reaction",
+      "timing": {
+        "before_click": {"min": 0.10, "max": 0.25},
+        "after_click": {"min": 0.10, "max": 0.30}
+      }
+    },
+    "reaction_celebrate": {
+      "coordinates": {"x": 358, "y": 669},
+      "variance": {"x": 8, "y": 8},
+      "action": "click",
+      "emoji": "🎉",
+      "description": "Celebrate reaction",
+      "timing": {
+        "before_click": {"min": 0.10, "max": 0.25},
+        "after_click": {"min": 0.10, "max": 0.30}
+      }
+    },
+    "reaction_smiley": {
+      "coordinates": {"x": 357, "y": 635},
+      "variance": {"x": 8, "y": 8},
+      "action": "click",
+      "emoji": "😊",
+      "description": "Smiley reaction",
+      "timing": {
+        "before_click": {"min": 0.10, "max": 0.25},
+        "after_click": {"min": 0.10, "max": 0.30}
+      }
+    },
+    "reaction_heart": {
+      "coordinates": {"x": 359, "y": 599},
+      "variance": {"x": 8, "y": 8},
+      "action": "click",
+      "emoji": "❤️",
+      "description": "Heart reaction",
+      "timing": {
+        "before_click": {"min": 0.10, "max": 0.25},
+        "after_click": {"min": 0.10, "max": 0.30}
+      }
+    }
+  },
+  "global_timing": {
+    "thinking_pause": {"min": 0.50, "max": 2.00, "probability": 0.30},
+    "popup_reopen_interval": 3,
+    "fatigue_threshold": 20
+  },
+  "error_simulation": {
+    "base_rate": 0.08,
+    "fatigue_increase": 0.05,
+    "max_error_rate": 0.13
+  }
+}
