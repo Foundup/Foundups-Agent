@@ -40,6 +40,76 @@ class CommentProcessor:
         self.stats = stats
         self.reply_executor = reply_executor
         self.selectors = selectors
+
+    async def click_element_dom(self, comment_idx: int, element_type: str) -> bool:
+        """
+        Phase 2: Agentic - DOM click execution with HUMAN-LIKE behavior.
+
+        Args:
+            comment_idx: 1-based comment index
+            element_type: 'like', 'heart'
+
+        Anti-Detection (WSP 49):
+        - Primary: Selenium-native clicks with Bezier curves (anti-detection)
+        - Fallback: execute_script() if Selenium fails (compatibility)
+        """
+        from selenium.webdriver.common.by import By
+
+        # Try Selenium-native click first (anti-detection)
+        if self.human:
+            try:
+                # Find the comment thread
+                threads = self.driver.find_elements(By.CSS_SELECTOR, self.selectors["comment_thread"])
+                if comment_idx > len(threads):
+                    logger.warning(f"[DOM] Thread {comment_idx} not found (only {len(threads)} threads)")
+                    raise ValueError(f"Thread {comment_idx} not found")
+
+                thread = threads[comment_idx - 1]
+
+                # Find the target element within the thread
+                element_selector = self.selectors[element_type]
+                element = thread.find_element(By.CSS_SELECTOR, element_selector)
+
+                # Human-like interaction (anti-detection)
+                # Scroll to element with smooth scrolling
+                self.human.scroll_to_element(element)
+                # Random pause before click (thinking time)
+                await asyncio.sleep(self.human.human_delay(0.3, 0.5))
+                # Click with Bezier curve mouse movement
+                self.human.human_click(element)
+
+                logger.info(f"[DOM] {element_type.upper()} clicked (human-like=True, method=selenium-native)")
+                return True
+
+            except Exception as selenium_error:
+                logger.warning(f"[DOM] Selenium-native click failed: {selenium_error}, falling back to execute_script()")
+                # Fall through to execute_script() fallback below
+
+        # Fallback: execute_script() (works with Shadow DOM, less anti-detection)
+        try:
+            element_selector = self.selectors[element_type]
+
+            result = self.driver.execute_script(f"""
+                const threads = document.querySelectorAll('{self.selectors["comment_thread"]}');
+                const thread = threads[arguments[0]];
+                if (!thread) return {{success: false, error: 'Thread not found'}};
+
+                const el = thread.querySelector(arguments[1]);
+                if (!el) return {{success: false, error: 'Element not found'}};
+
+                thread.scrollIntoView({{behavior: 'smooth', block: 'center'}});
+                el.click();
+                return {{success: true}};
+            """, comment_idx - 1, element_selector)
+
+            success = result.get('success', False) if result else False
+            logger.info(f"[DOM] {element_type.upper()} clicked (human-like={bool(self.human)}, method=execute_script, success={success})")
+            return success
+
+        except Exception as e:
+            logger.warning(f"[DOM] {element_type} click failed (all methods): {e}")
+            return False
+
     def extract_comment_data(self, comment_idx: int) -> Dict[str, Any]:
         """
         Extract comment text and author info from DOM.
