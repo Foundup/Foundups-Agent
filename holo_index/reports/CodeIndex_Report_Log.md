@@ -1,3 +1,7 @@
+## 2025-12-20T20:01:52.665325+00:00 UTC — modules/communication/video_comments
+- Report: `holo_index\reports\CodeIndex_Report_modules_communication_video_comments_20251220-200152.md`
+- Modules: video_comments
+- Critical Fixes: video_comments:0
 ## 2025-12-15T03:06:19.719917+00:00 UTC — modules/communication/livechat/src
 - Report: `holo_index\reports\CodeIndex_Report_modules_communication_livechat_src_20251215-030619.md`
 - Modules: src

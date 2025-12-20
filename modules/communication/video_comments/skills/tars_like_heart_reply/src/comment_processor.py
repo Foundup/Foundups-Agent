@@ -575,6 +575,21 @@ class CommentProcessor:
         except Exception as e:
             return {'success': False, 'confidence': 0, 'error': str(e)}
 
+    async def _vision_exists(self, description: str, min_confidence: float = 0.4, timeout: float = 90.0) -> bool:
+        """Return True if UI-TARS can locate the described element/state."""
+        if not self.use_vision or not self.ui_tars_bridge:
+            return False
+        try:
+            bridge_timeout = int(max(timeout, 90))
+            result = await asyncio.wait_for(
+                self.ui_tars_bridge.verify(description, driver=self.driver, timeout=bridge_timeout),
+                timeout=timeout + 10,
+            )
+            return bool(result.success and result.confidence >= min_confidence)
+        except Exception as e:
+            logger.debug(f"[VISION] exists check failed: {e}")
+            return False
+
     async def _vision_click_verified(
         self,
         action_name: str,
@@ -595,8 +610,33 @@ class CommentProcessor:
         if not self.use_vision or not self.ui_tars_bridge:
             return False
 
-        # For now, return False since vision is complex and optional
-        # The DOM path (click_element_dom) is the primary method
-        logger.info(f"[VISION] {action_name} vision click requested but vision disabled/unavailable")
+        for attempt in range(1, max_retries + 1):
+            # Pre-verify (prevents accidental un-like toggles)
+            if verify_description:
+                if await self._vision_exists(verify_description, min_confidence=min_confidence, timeout=timeout):
+                    logger.info(f"[VISION] {action_name}: already satisfied (pre-verify)")
+                    return True
+
+            click_res = await self.ui_tars_bridge.click(click_description, driver=self.driver, timeout=int(timeout))
+            if not click_res.success:
+                logger.warning(f"[VISION] {action_name}: click failed (attempt {attempt}/{max_retries}): {click_res.error}")
+                continue
+
+            await asyncio.sleep(post_click_sleep)
+
+            if not verify_description:
+                return True
+
+            verify_res = await self.ui_tars_bridge.verify(verify_description, driver=self.driver, timeout=int(timeout))
+            ok = bool(verify_res.success and verify_res.confidence >= min_confidence)
+            logger.info(
+                f"[VISION] {action_name}: verify={ok} confidence={verify_res.confidence:.2f} (attempt {attempt}/{max_retries})"
+            )
+            if ok:
+                return True
+            if not require_verification:
+                logger.warning(f"[VISION] {action_name}: click executed but verification uncertain; proceeding to avoid toggling")
+                return True
+
         return False
 
