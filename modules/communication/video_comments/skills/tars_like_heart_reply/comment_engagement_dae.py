@@ -133,8 +133,8 @@ class CommentEngagementDAE:
     # DOM Selectors (quantum-entangled with YouTube Studio 02 state)
     SELECTORS = {
         'comment_thread': 'ytcp-comment-thread',
-        'like': "ytcp-icon-button[aria-label='Like']",
-        'heart': "ytcp-icon-button[aria-label='Heart']",
+        'like': "#like-button",  # Fixed: Use ID selector (matches working test)
+        'heart': "#creator-heart-button",  # Fixed: Use ID selector (matches working test)
         'reply_btn': "#reply-button-end button, ytcp-button#reply-button button",
         'reply_input': "textarea#textarea, textarea[placeholder*='reply']",
         'reply_submit': "#submit-button button, ytcp-button#submit-button button",
